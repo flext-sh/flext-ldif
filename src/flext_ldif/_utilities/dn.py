@@ -11,13 +11,10 @@ from collections.abc import (
     MutableMapping,
 )
 from pathlib import Path
-from typing import TYPE_CHECKING, overload
+from typing import overload
 
 from flext_core import u
 from flext_ldif import c, m, r, t
-
-if TYPE_CHECKING:
-    from flext_ldif import FlextLdifModelsDomainEntry as mde
 
 
 class FlextLdifUtilitiesDN:
@@ -737,7 +734,7 @@ class FlextLdifUtilitiesDN:
                         parsed_pairs.extend(parsed_component.value)
                     if failure_message is None and parsed_pairs:
                         result = r[t.MutableSequenceOf[tuple[str, str]]].ok(
-                            parsed_pairs
+                            parsed_pairs,
                         )
                     else:
                         result = r[t.MutableSequenceOf[tuple[str, str]]].fail(
@@ -945,11 +942,11 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def transform_entry_base_dn(
-        entry: mde.Entry,
+        entry: m.Ldif.Entry,
         source_dn: str,
         target_dn: str,
         dn_valued_attributes: frozenset[str] | None = None,
-    ) -> mde.Entry:
+    ) -> m.Ldif.Entry:
         """Transform an entry's DN and DN-valued attributes from source to target base DN.
 
         Rewrites:
@@ -965,7 +962,9 @@ class FlextLdifUtilitiesDN:
             dn_str = FlextLdifUtilitiesDN.get_dn_value(entry_dn)
             if dn_str:
                 new_dn_str = FlextLdifUtilitiesDN.transform_dn_attribute(
-                    dn_str, source_dn, target_dn
+                    dn_str,
+                    source_dn,
+                    target_dn,
                 )
                 if new_dn_str != dn_str:
                     updates["dn"] = m.Ldif.DN(value=new_dn_str)
@@ -979,7 +978,9 @@ class FlextLdifUtilitiesDN:
                     attr_changed = False
                     for val in values:
                         new_val = FlextLdifUtilitiesDN.transform_dn_attribute(
-                            val, source_dn, target_dn
+                            val,
+                            source_dn,
+                            target_dn,
                         )
                         new_values.append(new_val)
                         if new_val != val:
@@ -1014,7 +1015,9 @@ class FlextLdifUtilitiesDN:
         for ldif_file in sorted(directory.glob("*.ldif")):
             content = ldif_file.read_text(encoding=c.Ldif.DEFAULT_ENCODING)
             new_content = FlextLdifUtilitiesDN._transform_ldif_content(
-                content, source_basedn, target_basedn
+                content,
+                source_basedn,
+                target_basedn,
             )
             if new_content != content:
                 _ = ldif_file.write_text(new_content, encoding=c.Ldif.DEFAULT_ENCODING)

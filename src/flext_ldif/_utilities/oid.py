@@ -25,7 +25,7 @@ class FlextLdifUtilitiesOID:
         Generic method for checking if a schema definition matches an OID pattern.
         Works with raw definition strings BEFORE parsing.
 
-        This is a pure utility function with no dependencies on quirks or services.
+        This is a pure utility function with no dependencies on servers or services.
 
         Example:
             # Check if attribute matches Oracle OID pattern

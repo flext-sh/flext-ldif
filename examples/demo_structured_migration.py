@@ -16,13 +16,13 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-from flext_ldif import FlextLdif, ldif
+from flext_ldif import ldif, p
 
 
 def main() -> None:
     """Run structured migration demo."""
     test_ldif = "dn: cn=schema\nobjectClass: subschema\ncn: schema\nattributeTypes: ( 1.2.3.4 NAME 'customAttr' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )\n\ndn: dc=example,dc=com\nobjectClass: organization\ndc: example\no: Example Organization\n\ndn: ou=People,dc=example,dc=com\nobjectClass: organizationalUnit\nou: People\n\ndn: ou=Groups,dc=example,dc=com\nobjectClass: organizationalUnit\nou: Groups\n\ndn: cn=john,ou=People,dc=example,dc=com\nobjectClass: inetOrgPerson\ncn: john\nsn: Doe\nuid: john\nmail: john@example.com\nuserPassword: {SSHA}...\npwdChangedTime: 20230101000000Z\nmodifiersName: cn=REDACTED_LDAP_BIND_PASSWORD\n\ndn: cn=jane,ou=People,dc=example,dc=com\nobjectClass: inetOrgPerson\ncn: jane\nsn: Smith\nuid: jane\nmail: jane@example.com\npwdChangedTime: 20230115000000Z\n\ndn: cn=REDACTED_LDAP_BIND_PASSWORDs,ou=Groups,dc=example,dc=com\nobjectClass: groupOfNames\ncn: REDACTED_LDAP_BIND_PASSWORDs\nmember: cn=john,ou=People,dc=example,dc=com\nmember: cn=jane,ou=People,dc=example,dc=com\n\ndn: cn=app-data,dc=example,dc=com\nobjectClass: applicationProcess\ncn: app-data\ndescription: Application data entry\n"
-    api: FlextLdif = ldif()
+    api: p.Ldif.LdifClient = ldif()
     with tempfile.TemporaryDirectory() as tmpdir:
         input_dir = Path(tmpdir) / "input"
         output_dir = Path(tmpdir) / "output"

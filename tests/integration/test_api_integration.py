@@ -3,7 +3,7 @@
 Tests the complete ldif facade with all major operations:
 - Parsing LDIF files with different servers
 - Building entries with unified API
-- Configuration and quirks integration
+- Configuration and servers integration
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

@@ -1,4 +1,4 @@
-"""RFC 4512 Compliant Server Quirks - Base LDAP Schema/ACL/Entry Implementation."""
+"""RFC 4512 Compliant Server Servers - Base LDAP Schema/ACL/Entry Implementation."""
 
 from __future__ import annotations
 

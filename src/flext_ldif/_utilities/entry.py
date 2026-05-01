@@ -571,7 +571,8 @@ class FlextLdifUtilitiesEntry:
     def analyze_differences(
         entry_attrs: t.Ldif.MetadataInputMapping,
         converted_attrs: MutableMapping[
-            str, t.MutableSequenceOf[t.Ldif.AttributeValue]
+            str,
+            t.MutableSequenceOf[t.Ldif.AttributeValue],
         ],
         original_dn: str,
         cleaned_dn: str,

@@ -14,7 +14,7 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ".test_cross_direction_conversion": (
             "TestsTestFlextLdifCrossDirectionConversion",
         ),
-        ".test_cross_quirk_conversion": ("TestsFlextLdifCrossQuirkConversion",),
+        ".test_cross_server_conversion": ("TestsFlextLdifCrossServerConversion",),
         ".test_dn_case_handling": ("TestsFlextLdifDnCaseHandling",),
         ".test_edge_cases": ("TestsFlextLdifEdgeCasesInt",),
         ".test_error_recovery": ("TestsFlextLdifErrorRecovery",),

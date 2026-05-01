@@ -1,4 +1,4 @@
-"""Oracle Internet Directory (OID) Quirks."""
+"""Oracle Internet Directory (OID) Servers."""
 
 from __future__ import annotations
 
@@ -139,7 +139,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
     def _denormalize_oid_attributes_for_output(
         self,
         attrs: t.MutableStrSequenceMapping,
-        metadata: m.Ldif.QuirkMetadata | None,
+        metadata: m.Ldif.ServerMetadata | None,
     ) -> t.MutableStrSequenceMapping:
         """Denormalize RFC attributes to OID format."""
         mk = c.Ldif
@@ -371,12 +371,12 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             return r[m.Ldif.Entry].ok(entry)
         normalized_attrs = entry.attributes.attributes
         if not entry.metadata:
-            entry.metadata = m.Ldif.QuirkMetadata.create_for(
+            entry.metadata = m.Ldif.ServerMetadata.create_for(
                 "oid",
                 extensions=m.Ldif.DynamicMetadata(),
             )
-        elif entry.metadata.quirk_type != "oid":
-            entry.metadata = entry.metadata.model_copy(update={"quirk_type": "oid"})
+        elif entry.metadata.server_type != "oid":
+            entry.metadata = entry.metadata.model_copy(update={"server_type": "oid"})
         current_extensions: t.Ldif.MutableMetadataMapping = (
             dict(entry.metadata.extensions) if entry.metadata.extensions else {}
         )
@@ -450,7 +450,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 if not entry.metadata.extensions:
                     entry.metadata.extensions = m.Ldif.DynamicMetadata()
                 converted_attrs_list: t.MutableSequenceOf[t.JsonValue] = list(
-                    converted_attrs
+                    converted_attrs,
                 )
                 converted_attrs_json: t.JsonList = (
                     t.Cli.JSON_LIST_ADAPTER.validate_python(
@@ -495,10 +495,9 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                         converted_attrs_json,
                     )
                 if name_renames:
-                    setattr(
-                        entry.metadata.extensions,
-                        "attribute_name_renames",
-                        dict(name_renames),
+                    rename_metadata: dict[str, t.JsonValue] = dict(name_renames)
+                    entry.metadata.extensions["attribute_name_renames"] = (
+                        rename_metadata
                     )
             return r[m.Ldif.Entry].ok(entry)
         except (
@@ -519,7 +518,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         """Transform OID-specific DN and attributes before RFC parsing."""
         cleaned_dn, _ = u.Ldif.clean_dn_with_statistics(dn)
         normalized_dn = cleaned_dn
-        if cleaned_dn.lower() == FlextLdifServersOidConstants.SCHEMA_DN_QUIRK.lower():
+        if cleaned_dn.lower() == FlextLdifServersOidConstants.SCHEMA_DN_SERVER.lower():
             normalized_dn = FlextLdifServersRfc.Constants.SCHEMA_DN
             logger.debug(
                 "OID→RFC transform: Normalizing schema DN",
@@ -533,13 +532,13 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
     def _merge_parsed_acl_extensions(
         self,
-        acl_quirk: p.Ldif.AclQuirk,
+        acl_server: p.Ldif.AclServer,
         acl_value: str,
         current_extensions: t.Ldif.MutableMetadataMapping,
     ) -> None:
         """Parse ACL and merge additional extensions from parsed model."""
         try:
-            acl_result = acl_quirk.parse_quirk(acl_value)
+            acl_result = acl_server.parse_server(acl_value)
             if not acl_result.success:
                 return
             acl_model = m.Ldif.Acl.model_validate(acl_result.value)
@@ -597,7 +596,8 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                     substr_token = f"SUBSTR {oid_rule}"
                     if substr_token in new_value:
                         new_value = new_value.replace(
-                            substr_token, f"SUBSTR {rfc_rule}"
+                            substr_token,
+                            f"SUBSTR {rfc_rule}",
                         )
                         changed = True
                 for oid_syntax, rfc_syntax in syntax_map.items():
@@ -608,7 +608,8 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                         changed = True
                     elif f" {oid_syntax} " in new_value:
                         new_value = new_value.replace(
-                            f" {oid_syntax} ", f" {rfc_syntax} "
+                            f" {oid_syntax} ",
+                            f" {rfc_syntax} ",
                         )
                         changed = True
                 if attr_name.lower() in {"objectclasses", "attributetypes"}:
@@ -634,7 +635,8 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
     @override
     def _parse_entry_from_lines(
-        self, lines: t.MutableSequenceOf[str]
+        self,
+        lines: t.MutableSequenceOf[str],
     ) -> r[m.Ldif.Entry]:
         """Parse entry from LDIF lines, apply OID→RFC normalization, finalize metadata."""
         result = super()._parse_entry_from_lines(lines)
@@ -648,7 +650,9 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         original_dn = entry.dn.value if entry.dn else ""
         original_attrs = entry.attributes.attributes if entry.attributes else {}
         finalize_result = self._hook_finalize_entry_parse(
-            entry, original_dn, original_attrs
+            entry,
+            original_dn,
+            original_attrs,
         )
         if finalize_result.failure:
             return finalize_result
@@ -662,8 +666,8 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         """Process orclaci values and extract ACL metadata."""
         if not orclaci_values:
             return
-        parent = self._get_parent_quirk_safe()
-        acl_quirk = parent.acl_quirk if parent is not None else None
+        parent = self._get_parent_server_safe()
+        acl_server = parent.acl_server if parent is not None else None
         acl_list = (
             list(orclaci_values)
             if u.matches_type(orclaci_values, (list, tuple))
@@ -673,9 +677,9 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             if not u.matches_type(acl_value, str):
                 continue
             self._extract_acl_metadata_from_string(acl_value, current_extensions)
-            if acl_quirk is not None:
+            if acl_server is not None:
                 self._merge_parsed_acl_extensions(
-                    acl_quirk,
+                    acl_server,
                     acl_value,
                     current_extensions,
                 )

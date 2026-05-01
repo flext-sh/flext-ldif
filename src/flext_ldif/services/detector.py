@@ -8,17 +8,17 @@ from typing import override
 
 from flext_ldif import (
     FlextLdifServer,
-    FlextLdifServiceBase,
     c,
     m,
     p,
     r,
+    s,
     t,
     u,
 )
 
 
-class FlextLdifDetector(FlextLdifServiceBase):
+class FlextLdifDetector(s):
     """Detector service composed directly into the LDIF facade via MRO.
 
     Overrides ``_get_effective_server_type_value`` from parser and writer
@@ -48,14 +48,14 @@ class FlextLdifDetector(FlextLdifServiceBase):
     ) -> type[p.Ldif.ServerDetectionConstants] | None:
         """Get server Constants class dynamically via FlextLdifServer registry."""
         registry = FlextLdifServer.fetch_global_instance()
-        server_quirk_result = registry.quirk(server_type)
-        if not server_quirk_result.success:
+        server_server_result = registry.server(server_type)
+        if not server_server_result.success:
             return None
-        server_quirk = server_quirk_result.value
-        quirk_class = type(server_quirk)
-        if not getattr(quirk_class, "Constants", None) is not None:
+        server_server = server_server_result.value
+        server_class = type(server_server)
+        if not getattr(server_class, "Constants", None) is not None:
             return None
-        constants = getattr(quirk_class, "Constants", None)
+        constants = getattr(server_class, "Constants", None)
         if constants is None:
             return None
         if (

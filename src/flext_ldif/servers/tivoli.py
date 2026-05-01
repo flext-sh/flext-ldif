@@ -1,4 +1,4 @@
-"""IBM Tivoli Directory Server quirks implementation."""
+"""IBM Tivoli Directory Server servers implementation."""
 
 from __future__ import annotations
 
@@ -16,10 +16,10 @@ from flext_ldif import (
 
 
 class FlextLdifServersTivoli(FlextLdifServersRfc):
-    """Schema quirks for IBM Tivoli Directory Server."""
+    """Schema servers for IBM Tivoli Directory Server."""
 
     class Constants(FlextLdifServersRfc.Constants):
-        """Standardized constants for IBM Tivoli Directory Server quirk."""
+        """Standardized constants for IBM Tivoli Directory Server server."""
 
         SERVER_TYPE: ClassVar[str] = "ibm_tivoli"
         PRIORITY: ClassVar[int] = 30
@@ -102,7 +102,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         ACL_SEPARATOR: ClassVar[str] = "#"
 
     class Schema(FlextLdifServersRfc.Schema):
-        """IBM Tivoli Directory Server schema quirks implementation."""
+        """IBM Tivoli Directory Server schema servers implementation."""
 
         @override
         def can_handle_attribute(
@@ -157,7 +157,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             result = super()._parse_attribute(attr_definition)
             if result.success:
                 attr_data = result.value
-                metadata = m.Ldif.QuirkMetadata.create_for("ibm_tivoli")
+                metadata = m.Ldif.ServerMetadata.create_for("ibm_tivoli")
                 return r[m.Ldif.SchemaAttribute].ok(
                     attr_data.model_copy(update={"metadata": metadata}),
                 )
@@ -169,14 +169,14 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             result = super()._parse_objectclass(oc_definition)
             if result.success:
                 oc_data = result.value
-                metadata = m.Ldif.QuirkMetadata.create_for("ibm_tivoli")
+                metadata = m.Ldif.ServerMetadata.create_for("ibm_tivoli")
                 return r[m.Ldif.SchemaObjectClass].ok(
                     oc_data.model_copy(update={"metadata": metadata}),
                 )
             return r[m.Ldif.SchemaObjectClass].from_result(result)
 
     class Acl(FlextLdifServersRfc.Acl):
-        """IBM Tivoli Directory Server ACL quirks implementation."""
+        """IBM Tivoli Directory Server ACL servers implementation."""
 
         @override
         def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
@@ -305,7 +305,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 return r[str].fail(f"IBM Tivoli DS ACL write failed: {exc}")
 
     class Entry(FlextLdifServersRfc.Entry):
-        """IBM Tivoli DS entry quirk."""
+        """IBM Tivoli DS entry server."""
 
         @override
         def can_handle(
@@ -373,14 +373,14 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 for attr_name, attr_values in processed_attributes.items():
                     processed_values: t.MutableSequenceOf[str] = list(attr_values)
                     processed_attributes[attr_name] = processed_values
-                processed_attributes[c.Ldif.QuirkMetadataKeys.SERVER_TYPE] = [
+                processed_attributes[c.Ldif.ServerMetadataKeys.SERVER_TYPE] = [
                     self._get_server_type(),
                 ]
                 is_config = any(
                     marker in dn_lower
                     for marker in FlextLdifServersTivoli.Constants.DETECTION_DN_MARKERS
                 )
-                processed_attributes[c.Ldif.QuirkMetadataKeys.IS_CONFIG_ENTRY] = [
+                processed_attributes[c.Ldif.ServerMetadataKeys.IS_CONFIG_ENTRY] = [
                     str(is_config),
                 ]
                 processed_attributes[c.Ldif.DictKeys.OBJECTCLASS] = object_classes

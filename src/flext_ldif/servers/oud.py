@@ -1,4 +1,4 @@
-"""Oracle Unified Directory (OUD) Quirks."""
+"""Oracle Unified Directory (OUD) Servers."""
 
 from __future__ import annotations
 
@@ -18,13 +18,13 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         """OUD server constants."""
 
     class Acl(FlextLdifServersOudAcl):
-        """OUD ACL quirk."""
+        """OUD ACL server."""
 
     class Schema(FlextLdifServersOudSchema):
-        """OUD Schema quirk."""
+        """OUD Schema server."""
 
     class Entry(FlextLdifServersOudEntry):
-        """OUD Entry quirk."""
+        """OUD Entry server."""
 
 
 __all__: list[str] = ["FlextLdifServersOud"]

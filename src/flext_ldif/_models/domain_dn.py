@@ -133,7 +133,7 @@ class FlextLdifModelsDomainDN:
             return result
 
     class DNStatisticsFlags(m.FrozenModel):
-        """Flags capturing DN transformation quirks and validation state."""
+        """Flags capturing DN transformation servers and validation state."""
 
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
         had_tab_chars: Annotated[
@@ -200,7 +200,7 @@ class FlextLdifModelsDomainDN:
         metadata: Annotated[
             mdm.EntryMetadata,
             u.Field(
-                description="Quirk-specific metadata for preserving original format",
+                description="Server-specific metadata for preserving original format",
             ),
         ] = u.Field(default_factory=mdm.EntryMetadata)
         _DN_COMPONENT_PATTERN: ClassVar[re.Pattern[str]] = re.compile(

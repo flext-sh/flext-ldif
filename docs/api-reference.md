@@ -5,7 +5,7 @@
   - [Generic RFC-Based Architecture with ZERO Bypass Paths](#generic-rfc-based-architecture-with-zero-bypass-paths)
 - [Core API Classes](#core-api-classes)
   - [ldif](#ldif)
-  - [QuirksConversionMatrix](#quirksconversionmatrix)
+  - [ServersConversionMatrix](#serversconversionmatrix)
   - [DnCaseRegistry](#dncaseregistry)
 - [Domain Models](#domain-models)
   - [FlextLdifModels.Entry](#flextldifmodelsentry)
@@ -26,14 +26,14 @@
   - [RfcSchemaParserService](#rfcschemaparserservice)
 - [Migration Pipeline API](#migration-pipeline-api)
   - [FlextLdifMigration](#flextldifmigration)
-- [Quirks Registry API](#quirks-registry-api)
-  - [QuirkRegistryService](#quirkregistryservice)
+- [Servers Registry API](#servers-registry-api)
+  - [ServerRegistryService](#serverregistryservice)
 - [Integration with FLEXT Ecosystem](#integration-with-flext-ecosystem)
   - [FlextContainer Usage](#flextcontainer-usage)
   - [FlextLogger Integration](#flextlogger-integration)
 - [🚀 Quick Start Guide](#quick-start-guide)
   - [Basic Usage - Parse, Validate, Write](#basic-usage-parse-validate-write)
-  - [Server-Specific Parsing with Quirks](#server-specific-parsing-with-quirks)
+  - [Server-Specific Parsing with Servers](#server-specific-parsing-with-servers)
   - [Generic Migration Pipeline](#generic-migration-pipeline)
   - [Railway-Oriented Pipeline](#railway-oriented-pipeline)
   - [Supported LDAP Servers](#supported-ldap-servers)
@@ -50,12 +50,12 @@ Complete API documentation for FLEXT-LDIF, including all public classes, methods
 
 ### Generic RFC-Based Architecture with ZERO Bypass Paths
 
-FLEXT-LDIF enforces a **strict RFC-first design** with **mandatory quirks system**:
+FLEXT-LDIF enforces a **strict RFC-first design** with **mandatory servers system**:
 
 **Critical Architecture Principles**:
 
-1. ✅ **RFC-First Enforcement**: ALL parse/write/validate operations go through RFC parsers + quirks
-1. ✅ **MANDATORY quirk_registry**: All RFC parsers/writers REQUIRE quirk_registry parameter (not Optional)
+1. ✅ **RFC-First Enforcement**: ALL parse/write/validate operations go through RFC parsers + servers
+1. ✅ **MANDATORY server_registry**: All RFC parsers/writers REQUIRE server_registry parameter (not Optional)
 1. ✅ **Zero Bypass Paths**: NO direct usage of parsers/writers - ALL operations through handlers/facade
 1. ✅ **Generic Transformation**: Source → RFC → Target pipeline works with ANY LDAP server
 1. ✅ **Library-Only Interface**: NO CLI code, tools, or applications - API-only through ldif facade
@@ -63,10 +63,10 @@ FLEXT-LDIF enforces a **strict RFC-first design** with **mandatory quirks system
 **Architecture Benefits**:
 
 - Works with **any LDAP server** (known or unknown) without code changes
-- Easy to add support for new servers via quirks (no core changes needed)
-- Server-specific code isolated in quirk modules
+- Easy to add support for new servers via servers (no core changes needed)
+- Server-specific code isolated in server modules
 - Core parsers remain simple, maintainable, and generic
-- Guaranteed consistency: all code paths use same RFC + quirks logic
+- Guaranteed consistency: all code paths use same RFC + servers logic
 
 **Supported Servers**:
 
@@ -329,15 +329,15 @@ def analyze_entries(self, entries: t.SequenceOf[FlextLdifModels.Entry]) -> p.Res
     """
 ```
 
-### QuirksConversionMatrix
+### ServersConversionMatrix
 
 Universal facade for N×N server conversions using RFC as intermediate format.
 
 ```text
-class QuirksConversionMatrix:
-    """Facade for universal quirk-to-quirk conversion via RFC intermediate format.
+class ServersConversionMatrix:
+    """Facade for universal server-to-server conversion via RFC intermediate format.
 
-    Enables seamless conversion between any LDAP server quirks using RFC standards
+    Enables seamless conversion between any LDAP server servers using RFC standards
     as the universal intermediate representation.
 
     Attributes:
@@ -355,16 +355,16 @@ class QuirksConversionMatrix:
         data_type: Literal["attribute", "objectclass", "acl", "entry"],
         data: str | t.JsonMapping,
     ) -> p.Result[str | t.JsonMapping]:
-        """Convert data from source quirk format to target quirk format via RFC.
+        """Convert data from source server format to target server format via RFC.
 
         Args:
-            source: Source quirk instance (e.g., OUD, OID)
-            target: Target quirk instance (e.g., OUD, OID)
+            source: Source server instance (e.g., OUD, OID)
+            target: Target server instance (e.g., OUD, OID)
             data_type: Type of data - "attribute", "objectclass", "acl", or "entry"
             data: Data to convert (string or dict)
 
         Returns:
-            r containing converted data in target quirk format
+            r containing converted data in target server format
 
         """
 
@@ -375,11 +375,11 @@ class QuirksConversionMatrix:
         data_type: Literal["attribute", "objectclass", "acl", "entry"],
         data_batch: t.SequenceOf[str | t.JsonMapping],
     ) -> p.Result[Sequence[str | t.JsonMapping]]:
-        """Convert batch of data from source to target quirk format via RFC.
+        """Convert batch of data from source to target server format via RFC.
 
         Args:
-            source: Source quirk instance
-            target: Target quirk instance
+            source: Source server instance
+            target: Target server instance
             data_type: Type of data being converted
             data_batch: Sequence of data items to convert
 
@@ -869,34 +869,34 @@ def filter_by_custom_criteria(
 
 ### RfcSchemaParserService
 
-Parse LDAP schema definitions with RFC 4512 compliance and **MANDATORY quirks support**.
+Parse LDAP schema definitions with RFC 4512 compliance and **MANDATORY servers support**.
 
 ```python
 # ✅ v1.0+ Flat imports
 from flext_ldif import FlextLdifParser
-from flext_ldif import QuirkRegistryService  # Unchanged - quirks subdirectory
+from flext_ldif import ServerRegistryService  # Unchanged - servers subdirectory
 
 
 class RfcSchemaParserService:
-    """RFC 4512 compliant schema parser with MANDATORY quirks integration."""
+    """RFC 4512 compliant schema parser with MANDATORY servers integration."""
 
     def __init__(
         self,
         *,
         params: dict,
-        quirk_registry: QuirkRegistryService,  # ⚠️ MANDATORY parameter
+        server_registry: ServerRegistryService,  # ⚠️ MANDATORY parameter
         server_type: str | None = None,
     ) -> None:
         """Initialize RFC schema parser.
 
         Args:
             params: Parsing parameters (file_path, parse_attributes, parse_objectclasses)
-            quirk_registry: ⚠️ MANDATORY quirk registry for RFC-first architecture
-            server_type: Optional server type to select specific quirks (None = pure RFC)
+            server_registry: ⚠️ MANDATORY server registry for RFC-first architecture
+            server_type: Optional server type to select specific servers (None = pure RFC)
         """
 
     def execute(self) -> p.Result[m.Dict]:
-        """Execute RFC-compliant schema parsing with quirks.
+        """Execute RFC-compliant schema parsing with servers.
 
         Returns:
             r with parsed schema data containing:
@@ -907,29 +907,29 @@ class RfcSchemaParserService:
         """
 ```
 
-**⚠️ CRITICAL: quirk_registry is MANDATORY**
+**⚠️ CRITICAL: server_registry is MANDATORY**
 
-The `quirk_registry` parameter is **MANDATORY** (not Optional) to enforce RFC-first architecture with zero bypass paths.
+The `server_registry` parameter is **MANDATORY** (not Optional) to enforce RFC-first architecture with zero bypass paths.
 
 **Example Usage**:
 
 ```python
-# ✅ CORRECT: v1.0+ flat imports with MANDATORY quirk_registry
+# ✅ CORRECT: v1.0+ flat imports with MANDATORY server_registry
 from flext_ldif import FlextLdifParser
-from flext_ldif import QuirkRegistryService
+from flext_ldif import ServerRegistryService
 
-# Initialize registry FIRST (auto-discovers all standard quirks)
-quirk_registry = QuirkRegistryService()
+# Initialize registry FIRST (auto-discovers all standard servers)
+server_registry = ServerRegistryService()
 
-# Parse with OID quirks
+# Parse with OID servers
 oid_parser = RfcSchemaParserService(
     params={
         "file_path": "oid_schema.ldif",
         "parse_attributes": True,
         "parse_objectclasses": True,
     },
-    quirk_registry=quirk_registry,  # ⚠️ MANDATORY parameter
-    server_type="oid",  # Selects OID-specific quirks
+    server_registry=server_registry,  # ⚠️ MANDATORY parameter
+    server_type="oid",  # Selects OID-specific servers
 )
 
 result = oid_parser.execute()
@@ -938,22 +938,22 @@ if result.success:
     print(f"Attributes: {len(schema_data['attributes'])}")
     print(f"ObjectClasses: {len(schema_data['objectclasses'])}")
 
-# ✅ CORRECT: Parse pure RFC 4512 (still requires quirk_registry)
+# ✅ CORRECT: Parse pure RFC 4512 (still requires server_registry)
 rfc_parser = RfcSchemaParserService(
     params={"file_path": "standard_schema.ldif"},
-    quirk_registry=quirk_registry,  # ⚠️ MANDATORY even for pure RFC
-    server_type=None,  # None = no server-specific quirks, pure RFC baseline
+    server_registry=server_registry,  # ⚠️ MANDATORY even for pure RFC
+    server_type=None,  # None = no server-specific servers, pure RFC baseline
 )
 
-# ❌ INCORRECT: Omitting quirk_registry (will cause errors)
+# ❌ INCORRECT: Omitting server_registry (will cause errors)
 # parser = RfcSchemaParserService(params={"file_path": "schema.ldif"})
 ```
 
-**Why quirk_registry is MANDATORY**:
+**Why server_registry is MANDATORY**:
 
 1. **Enforces RFC-first architecture** - Zero bypass paths guarantee
 1. **Enables generic transformation** - Source → RFC → Target pipeline requires registry
-1. **Auto-discovery** - QuirkRegistryService automatically discovers all standard quirks
+1. **Auto-discovery** - ServerRegistryService automatically discovers all standard servers
 1. **Future-proof** - New servers can be added without API changes
 
 ## Migration Pipeline API
@@ -978,7 +978,7 @@ class p:
 
 
 class FlextLdifMigration:
-    """Generic LDIF migration pipeline using quirks-based transformation."""
+    """Generic LDIF migration pipeline using servers-based transformation."""
 
     def __init__(
         self,
@@ -1060,47 +1060,47 @@ if result.success:
 # OpenLDAP to OUD, AD to 389 DS, etc.
 ```
 
-## Quirks Registry API
+## Servers Registry API
 
-### QuirkRegistryService
+### ServerRegistryService
 
-Central registry for managing server-specific quirks.
+Central registry for managing server-specific servers.
 
 ```python
-from flext_ldif import QuirkRegistryService
+from flext_ldif import ServerRegistryService
 
 
-class QuirkRegistryService:
-    """Registry for managing LDAP server quirks."""
+class ServerRegistryService:
+    """Registry for managing LDAP server servers."""
 
     def get_schemas(self, server_type: str) -> t.SequenceOf[Schema]:
-        """Get schema quirks for server type.
+        """Get schema servers for server type.
 
         Args:
             server_type: Server type identifier
 
         Returns:
-            List of schema quirks sorted by priority
+            List of schema servers sorted by priority
         """
 
     def get_entrys(self, server_type: str) -> t.SequenceOf[Entry]:
-        """Get entry quirks for server type.
+        """Get entry servers for server type.
 
         Args:
             server_type: Server type identifier
 
         Returns:
-            List of entry quirks sorted by priority
+            List of entry servers sorted by priority
         """
 
     def get_acls(self, server_type: str) -> t.SequenceOf[Acl]:
-        """Get ACL quirks for server type.
+        """Get ACL servers for server type.
 
         Args:
             server_type: Server type identifier
 
         Returns:
-            List of ACL quirks sorted by priority
+            List of ACL servers sorted by priority
         """
 ```
 
@@ -1109,14 +1109,14 @@ class QuirkRegistryService:
 ```python
 from flext_ldif import FlextLdif
 
-# Initialize the public facade and query server quirks
+# Initialize the public facade and query server servers
 client = FlextLdif()
 
-schema_quirk = client.schema_quirk("oid")
-entry_quirk = client.entry("oud")
-acl_quirk = client.acl("openldap")
+schema_server = client.schema_server("oid")
+entry_server = client.entry("oud")
+acl_server = client.acl("openldap")
 
-# Quirks are automatically resolved by the registered server registry
+# Servers are automatically resolved by the registered server registry
 # and exposed through the facade API.
 ```
 
@@ -1357,7 +1357,7 @@ server_type = "my_custom_ldap_v5"  # Unknown server = RFC baseline
 
 ______________________________________________________________________
 
-This API reference provides complete coverage of FLEXT-LDIF functionality, including the library-only interface, RFC-first architecture with MANDATORY quirk_registry, generic migration pipeline, and comprehensive quirks system, while demonstrating integration with FLEXT ecosystem patterns and professional Python development practices.
+This API reference provides complete coverage of FLEXT-LDIF functionality, including the library-only interface, RFC-first architecture with MANDATORY server_registry, generic migration pipeline, and comprehensive servers system, while demonstrating integration with FLEXT ecosystem patterns and professional Python development practices.
 
 ## Related Documentation
 

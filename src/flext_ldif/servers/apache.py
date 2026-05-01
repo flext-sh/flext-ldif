@@ -1,4 +1,4 @@
-"""Apache Directory Server quirks implementation."""
+"""Apache Directory Server servers implementation."""
 
 from __future__ import annotations
 
@@ -12,10 +12,10 @@ from flext_ldif import FlextLdifModelsDomainsEntries, FlextLdifServersRfc, c, m,
 
 
 class FlextLdifServersApache(FlextLdifServersRfc):
-    """Apache Directory Server quirks implementation."""
+    """Apache Directory Server servers implementation."""
 
     class Constants(FlextLdifServersRfc.Constants):
-        """Standardized constants for Apache Directory Server quirk."""
+        """Standardized constants for Apache Directory Server server."""
 
         SERVER_TYPE: ClassVar[str] = "apache"
         PRIORITY: ClassVar[int] = 15
@@ -65,7 +65,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         DN_CONFIG_ENTRY_MARKER: ClassVar[str] = "ou=settings"
 
     class Schema(FlextLdifServersRfc.Schema):
-        """Schema quirks for Apache Directory Server (ApacheDS)."""
+        """Schema servers for Apache Directory Server (ApacheDS)."""
 
         @override
         def can_handle_attribute(
@@ -124,7 +124,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             result = super()._parse_attribute(attr_definition)
             if result.success:
                 attr_data = result.value
-                metadata = m.Ldif.QuirkMetadata.create_for("apache")
+                metadata = m.Ldif.ServerMetadata.create_for("apache")
                 return r[m.Ldif.SchemaAttribute].ok(
                     attr_data.model_copy(update={"metadata": metadata}),
                 )
@@ -138,14 +138,14 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 oc_data = result.value
                 u.Ldif.fix_missing_sup(oc_data)
                 u.Ldif.fix_kind_mismatch(oc_data)
-                metadata = m.Ldif.QuirkMetadata.create_for(self._get_server_type())
+                metadata = m.Ldif.ServerMetadata.create_for(self._get_server_type())
                 return r[m.Ldif.SchemaObjectClass].ok(
                     oc_data.model_copy(update={"metadata": metadata}),
                 )
             return r[m.Ldif.SchemaObjectClass].from_result(result)
 
     class Acl(FlextLdifServersRfc.Acl):
-        """Apache Directory Server ACI quirk."""
+        """Apache Directory Server ACI server."""
 
         @override
         def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
@@ -196,7 +196,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             return r[str].from_result(parent_result)
 
     class Entry(FlextLdifServersRfc.Entry):
-        """Entry quirks for Apache Directory Server."""
+        """Entry servers for Apache Directory Server."""
 
         @override
         def can_handle(
@@ -204,7 +204,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             entry_dn: str,
             attributes: t.MutableStrSequenceMapping,
         ) -> bool:
-            """Check if this quirk can handle the entry."""
+            """Check if this server can handle the entry."""
             _ = entry_dn
             _ = attributes
             return True
@@ -226,13 +226,13 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             try:
                 if not entry.dn:
                     return r[m.Ldif.Entry].ok(entry)
-                metadata = entry.metadata or m.Ldif.QuirkMetadata(
-                    quirk_type=self._get_server_type(),
+                metadata = entry.metadata or m.Ldif.ServerMetadata(
+                    server_type=self._get_server_type(),
                 )
                 dn_lower = entry.dn.value.lower()
                 if not metadata.extensions:
                     metadata.extensions = m.Ldif.DynamicMetadata()
-                metadata.extensions[c.Ldif.QuirkMetadataKeys.IS_CONFIG_ENTRY] = (
+                metadata.extensions[c.Ldif.ServerMetadataKeys.IS_CONFIG_ENTRY] = (
                     FlextLdifServersApache.Constants.DN_CONFIG_ENTRY_MARKER in dn_lower
                 )
                 processed_entry = entry.model_copy(update={"metadata": metadata})

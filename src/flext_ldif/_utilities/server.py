@@ -192,7 +192,7 @@ class FlextLdifUtilitiesServer:
         r"""Check if value matches server-specific detection patterns.
 
         Universal detection logic for can_handle_attribute and can_handle_objectclass
-        methods across all server quirks. Reduces code duplication by centralizing
+        methods across all server servers. Reduces code duplication by centralizing
         the OID pattern, detection string, and attribute name checking.
 
         Args:

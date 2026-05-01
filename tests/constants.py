@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Mapping
 from pathlib import Path
 from types import MappingProxyType
 from typing import Final, Literal
@@ -51,13 +50,15 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             OUD,
             OPENLDAP,
         )
-        FIXTURE_KIND_SERVERS: Final[Mapping[str, tuple[str, ...]]] = MappingProxyType(
-            {
-                SCHEMA: FIXTURE_SERVERS_SCHEMA,
-                ACL: FIXTURE_SERVERS_COMMON,
-                ENTRIES: FIXTURE_SERVERS_COMMON,
-                INTEGRATION: FIXTURE_SERVERS_COMMON,
-            },
+        FIXTURE_KIND_SERVERS: Final[t.MappingKV[str, tuple[str, ...]]] = (
+            MappingProxyType(
+                {
+                    SCHEMA: FIXTURE_SERVERS_SCHEMA,
+                    ACL: FIXTURE_SERVERS_COMMON,
+                    ENTRIES: FIXTURE_SERVERS_COMMON,
+                    INTEGRATION: FIXTURE_SERVERS_COMMON,
+                },
+            )
         )
         FIXTURE_KINDS: Final[frozenset[str]] = frozenset(
             FIXTURE_KIND_SERVERS.keys(),
@@ -157,7 +158,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             OPENLDAP,
             RFC,
         )
-        CONFIG_SERVER_CONTENT: Final[Mapping[str, str]] = MappingProxyType(
+        CONFIG_SERVER_CONTENT: Final[t.MappingKV[str, str]] = MappingProxyType(
             {
                 OID: (
                     "dn: cn=OID Test,dc=example,dc=com\n"
@@ -182,31 +183,31 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             },
         )
 
-        CROSS_QUIRK_OID_ATTRIBUTE_ORCLGUID: Final[str] = (
+        CROSS_SERVER_OID_ATTRIBUTE_ORCLGUID: Final[str] = (
             "( 2.16.840.1.113894.1.1.1 NAME 'orclguid' DESC 'Oracle GUID' "
             "EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )"
         )
-        CROSS_QUIRK_OID_OBJECTCLASS_ORCLCONTAINER: Final[str] = (
+        CROSS_SERVER_OID_OBJECTCLASS_ORCLCONTAINER: Final[str] = (
             "( 2.16.840.1.113894.2.1.1 NAME 'orclContainer' DESC 'Oracle Container' "
             "SUP top STRUCTURAL MUST cn MAY description )"
         )
-        CROSS_QUIRK_OID_OBJECTCLASS_ORCLCONTEXT: Final[str] = (
+        CROSS_SERVER_OID_OBJECTCLASS_ORCLCONTEXT: Final[str] = (
             "( 2.16.840.1.113894.1.2.1 NAME 'orclContext' SUP top STRUCTURAL MUST cn )"
         )
-        CROSS_QUIRK_OID_ACL_ANONYMOUS: Final[str] = (
+        CROSS_SERVER_OID_ACL_ANONYMOUS: Final[str] = (
             "orclaci: access to entry by * (browse)"
         )
-        CROSS_QUIRK_OUD_ACI_ANONYMOUS: Final[str] = (
+        CROSS_SERVER_OUD_ACI_ANONYMOUS: Final[str] = (
             'aci: (targetattr="*")(version 3.0; acl "Test ACL"; allow (read,search) userdn="ldap:///anyone";)'
         )
-        CROSS_QUIRK_OUD_ATTRIBUTE_ORCLGUID: Final[str] = (
+        CROSS_SERVER_OUD_ATTRIBUTE_ORCLGUID: Final[str] = (
             "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )"
         )
 
-        BOOLEAN_RFC_TO_OID: Final[Mapping[str, str]] = MappingProxyType(
+        BOOLEAN_RFC_TO_OID: Final[t.MappingKV[str, str]] = MappingProxyType(
             {"TRUE": "1", "FALSE": "0"},
         )
-        BOOLEAN_OID_TO_RFC: Final[Mapping[str, str]] = MappingProxyType(
+        BOOLEAN_OID_TO_RFC: Final[t.MappingKV[str, str]] = MappingProxyType(
             {"1": "TRUE", "0": "FALSE"},
         )
         MIGRATION_BOOLEAN_ENTRY_TEMPLATE: Final[str] = (
@@ -237,7 +238,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             r"(^|\\n)aci:",
             re.MULTILINE,
         )
-        MIGRATION_BOOLEAN_CASES: Final[Mapping[str, tuple[str, str, str, str]]] = (
+        MIGRATION_BOOLEAN_CASES: Final[t.MappingKV[str, tuple[str, str, str, str]]] = (
             MappingProxyType(
                 {
                     "oid_to_rfc": (
@@ -255,7 +256,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                 },
             )
         )
-        MIGRATION_ACL_CASES: Final[Mapping[str, tuple[str, str, str, str]]] = (
+        MIGRATION_ACL_CASES: Final[t.MappingKV[str, tuple[str, str, str, str]]] = (
             MappingProxyType(
                 {
                     "oid_to_rfc": (
@@ -281,7 +282,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                 "cn=writer-gamma,dc=example,dc=com",
             },
         )
-        WRITER_SERVER_CASES: Final[Mapping[str, str]] = MappingProxyType(
+        WRITER_SERVER_CASES: Final[t.MappingKV[str, str]] = MappingProxyType(
             {
                 "writer_rfc": RFC,
                 "writer_oid": OID,
@@ -320,7 +321,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
         DETECTOR_RFC_SNIPPET: Final[str] = (
             "dn: cn=basic,dc=example,dc=com\nobjectClass: person\ncn: basic\nsn: user\n"
         )
-        DETECTOR_SERVER_SNIPPETS: Final[Mapping[str, tuple[str, str]]] = (
+        DETECTOR_SERVER_SNIPPETS: Final[t.MappingKV[str, tuple[str, str]]] = (
             MappingProxyType(
                 {
                     "oid": (DETECTOR_OID_SNIPPET, OID),
@@ -376,7 +377,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             },
         )
         ENTRIES_REMOVE_OPERATION: Final[str] = "remove_attributes"
-        ENTRIES_OP_CASES: Final[Mapping[str, tuple[str | None, bool]]] = (
+        ENTRIES_OP_CASES: Final[t.MappingKV[str, tuple[str | None, bool]]] = (
             MappingProxyType(
                 {
                     "no_op": (None, False),
@@ -429,7 +430,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
         PARSER_RELATIVE_PREFIX: Final[str] = "tmp_parser_relative"
         PARSER_MISSING_PREFIX: Final[str] = "missing"
         PARSER_UNKNOWN_PREFIX: Final[str] = "unknown"
-        FILTERS_ALLOWED_OIDS_FULL: Final[Mapping[str, frozenset[str]]] = (
+        FILTERS_ALLOWED_OIDS_FULL: Final[t.MappingKV[str, frozenset[str]]] = (
             MappingProxyType(
                 {
                     FILTERS_ALLOWED_ATTR_KEY: frozenset({
@@ -442,7 +443,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                 },
             )
         )
-        FILTERS_ALLOWED_OIDS_EMPTY: Final[Mapping[str, frozenset[str]]] = (
+        FILTERS_ALLOWED_OIDS_EMPTY: Final[t.MappingKV[str, frozenset[str]]] = (
             MappingProxyType(
                 {
                     FILTERS_ALLOWED_ATTR_KEY: frozenset(),
@@ -493,7 +494,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                 "deep_dn": (EDGE_CASE_DEEP_DN_LDIF, 1, 7, False),
             },
         )
-        EDGE_CASE_ROUNDTRIP_CASES: Final[Mapping[str, tuple[str, str]]] = (
+        EDGE_CASE_ROUNDTRIP_CASES: Final[t.MappingKV[str, tuple[str, str]]] = (
             MappingProxyType(
                 {
                     "unicode": (
@@ -522,19 +523,19 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                     ("aci", "acl", "olcAccess", "aclRights", "aclEntry"),
                     (),
                 ),
-                "get_acl_attributes_oid_quirks": (
+                "get_acl_attributes_oid_servers": (
                     OID,
                     OID,
                     ("orclaci", "orclentrylevelaci", "aci", "acl"),
                     (),
                 ),
-                "get_acl_attributes_oud_quirks": (
+                "get_acl_attributes_oud_servers": (
                     OUD,
                     OUD,
                     ("orclaci", "orclentrylevelaci", "aci"),
                     (),
                 ),
-                "get_acl_attributes_ad_quirks": (
+                "get_acl_attributes_ad_servers": (
                     AD,
                     AD,
                     ("nTSecurityDescriptor", "aci"),
@@ -618,7 +619,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             },
         )
 
-        RELAXED_ATTRIBUTE_DEFINITIONS: Final[Mapping[str, tuple[str, bool]]] = (
+        RELAXED_ATTRIBUTE_DEFINITIONS: Final[t.MappingKV[str, tuple[str, bool]]] = (
             MappingProxyType(
                 {
                     RELAXED_PARSE_VALID: (
@@ -644,7 +645,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                 },
             )
         )
-        RELAXED_OBJECTCLASS_DEFINITIONS: Final[Mapping[str, tuple[str, bool]]] = (
+        RELAXED_OBJECTCLASS_DEFINITIONS: Final[t.MappingKV[str, tuple[str, bool]]] = (
             MappingProxyType(
                 {
                     RELAXED_PARSE_VALID: (
@@ -660,7 +661,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                 },
             )
         )
-        RELAXED_ACL_DEFINITIONS: Final[Mapping[str, tuple[str, bool]]] = (
+        RELAXED_ACL_DEFINITIONS: Final[t.MappingKV[str, tuple[str, bool]]] = (
             MappingProxyType(
                 {
                     RELAXED_PARSE_VALID: (
@@ -1019,14 +1020,14 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
         ACL_OID_STRING: Final[str] = "access to entry by * (browse)"
         ACL_OPENLDAP_STRING: Final[str] = "to * by * read"
         ACL_RFC_STRING: Final[str] = "access to entry by * (read)"
-        ACL_SERVER_CASES: Final[Mapping[str, tuple[str, str]]] = MappingProxyType(
+        ACL_SERVER_CASES: Final[t.MappingKV[str, tuple[str, str]]] = MappingProxyType(
             {
                 "oud": (ACL_OUD_STRING, OUD),
                 "oid": (ACL_OID_STRING, OID),
                 "rfc": (ACL_RFC_STRING, RFC),
             },
         )
-        ACL_PERMISSIONS_READ_ONLY: Final[Mapping[str, bool]] = MappingProxyType(
+        ACL_PERMISSIONS_READ_ONLY: Final[t.MappingKV[str, bool]] = MappingProxyType(
             {
                 "read": True,
                 "write": False,
@@ -1036,7 +1037,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                 "compare": False,
             },
         )
-        ACL_PERMISSIONS_EMPTY: Final[Mapping[str, bool]] = MappingProxyType(
+        ACL_PERMISSIONS_EMPTY: Final[t.MappingKV[str, bool]] = MappingProxyType(
             {
                 "read": False,
                 "write": False,
@@ -1052,11 +1053,11 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             '(targetattr="*")(version 3.0; acl "Entry ACL"; allow (read,search) userdn="ldap:///anyone";)'
         )
         ACL_INVALID_SERVER_TYPE: Final[str] = "NOT_A_VALID_SERVER_XYZ"
-        ACL_PARSE_FAILURE_CASES: Final[Mapping[str, tuple[str, str]]] = (
+        ACL_PARSE_FAILURE_CASES: Final[t.MappingKV[str, tuple[str, str]]] = (
             MappingProxyType(
                 {
                     "invalid_server": (ACL_OUD_STRING, ACL_INVALID_SERVER_TYPE),
-                    "generic_server_without_acl_quirk": (ACL_OUD_STRING, GENERIC),
+                    "generic_server_without_acl_server": (ACL_OUD_STRING, GENERIC),
                     "openldap_invalid_acl_format": (ACL_INVALID_SERVER_TYPE, OPENLDAP),
                 },
             )
@@ -1070,14 +1071,16 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
         ANALYSIS_ATTR_INVALID_NAME: Final[str] = "invalid_attr"
         ANALYSIS_OC_PERSON: Final[str] = "person"
         ANALYSIS_OC_INVALID: Final[str] = "invalid_oc"
-        ANALYSIS_VALID_ENTRY_ATTRS: Final[Mapping[str, list[str]]] = MappingProxyType(
-            {
-                "objectClass": [ANALYSIS_OC_PERSON, "top"],
-                "cn": [ANALYSIS_ATTR_CN_VALUE],
-                "sn": ["user"],
-            },
+        ANALYSIS_VALID_ENTRY_ATTRS: Final[t.MappingKV[str, list[str]]] = (
+            MappingProxyType(
+                {
+                    "objectClass": [ANALYSIS_OC_PERSON, "top"],
+                    "cn": [ANALYSIS_ATTR_CN_VALUE],
+                    "sn": ["user"],
+                },
+            )
         )
-        ANALYSIS_INVALID_ATTR_ENTRY_ATTRS: Final[Mapping[str, list[str]]] = (
+        ANALYSIS_INVALID_ATTR_ENTRY_ATTRS: Final[t.MappingKV[str, list[str]]] = (
             MappingProxyType(
                 {
                     "objectClass": [ANALYSIS_OC_PERSON],
@@ -1085,7 +1088,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                 },
             )
         )
-        ANALYSIS_INVALID_OC_ENTRY_ATTRS: Final[Mapping[str, list[str]]] = (
+        ANALYSIS_INVALID_OC_ENTRY_ATTRS: Final[t.MappingKV[str, list[str]]] = (
             MappingProxyType(
                 {
                     "objectClass": [ANALYSIS_OC_INVALID],
@@ -1120,21 +1123,25 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             "dn: cn=user1,dc=example,dc=com\nobjectClass: person\ncn: user1\n\n"
             "dn: cn=user2,dc=example,dc=com\nobjectClass: person\ncn: user2\n"
         )
-        MIGRATION_SERVER_PAIRS: Final[Mapping[str, tuple[str, str]]] = MappingProxyType(
-            {
-                "oid_to_rfc": (OID, RFC),
-                "oud_to_rfc": (OUD, RFC),
-                "rfc_to_oid": (RFC, OID),
-                "rfc_to_oud": (RFC, OUD),
-            },
+        MIGRATION_SERVER_PAIRS: Final[t.MappingKV[str, tuple[str, str]]] = (
+            MappingProxyType(
+                {
+                    "oid_to_rfc": (OID, RFC),
+                    "oud_to_rfc": (OUD, RFC),
+                    "rfc_to_oid": (RFC, OID),
+                    "rfc_to_oud": (RFC, OUD),
+                },
+            )
         )
         MIGRATION_UNKNOWN_SERVER: Final[str] = "TOTALLY_UNKNOWN_SERVER_XYZ"
-        MIGRATION_COERCE_CASES: Final[Mapping[str, tuple[str, str]]] = MappingProxyType(
-            {
-                "rfc_lower": ("rfc", RFC),
-                "oid_upper": ("OID", OID),
-                "unknown_falls_back": (MIGRATION_UNKNOWN_SERVER, RFC),
-            },
+        MIGRATION_COERCE_CASES: Final[t.MappingKV[str, tuple[str, str]]] = (
+            MappingProxyType(
+                {
+                    "rfc_lower": ("rfc", RFC),
+                    "oid_upper": ("OID", OID),
+                    "unknown_falls_back": (MIGRATION_UNKNOWN_SERVER, RFC),
+                },
+            )
         )
 
         # ── Writer advanced constants ────────────────────────────────────
@@ -1154,7 +1161,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
         WRITER_KNOWN_SERVER_TYPES: Final[frozenset[str]] = frozenset(
             {RFC, OID, OUD, OPENLDAP},
         )
-        WRITER_FILE_WRITE_CASES: Final[Mapping[str, tuple[str, str]]] = (
+        WRITER_FILE_WRITE_CASES: Final[t.MappingKV[str, tuple[str, str]]] = (
             MappingProxyType(
                 {
                     "rfc_file": (RFC, "out_rfc.ldif"),
@@ -1167,13 +1174,13 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
         SERVER_VALID_TYPES: Final[frozenset[str]] = frozenset(
             {RFC, OID, OUD, OPENLDAP},
         )
-        SERVER_QUIRK_ENTRY_DN: Final[str] = "cn=quirk-entry,dc=example,dc=com"
-        SERVER_QUIRK_ATTRS: Final[Mapping[str, list[str]]] = MappingProxyType(
-            {"objectClass": ["person"], "cn": ["quirk-entry"]},
+        SERVER_SERVER_ENTRY_DN: Final[str] = "cn=server-entry,dc=example,dc=com"
+        SERVER_SERVER_ATTRS: Final[t.MappingKV[str, list[str]]] = MappingProxyType(
+            {"objectClass": ["person"], "cn": ["server-entry"]},
         )
-        SERVER_INVALID_QUIRK_TYPE: Final[str] = "invalid_server_xyz"
+        SERVER_INVALID_SERVER_TYPE: Final[str] = "invalid_server_xyz"
         SERVER_SCHEMA_ENTRY_DN: Final[str] = "cn=schema"
-        SERVER_SCHEMA_ATTRS: Final[Mapping[str, list[str]]] = MappingProxyType(
+        SERVER_SCHEMA_ATTRS: Final[t.MappingKV[str, list[str]]] = MappingProxyType(
             {"objectClass": ["subschema", "top"]},
         )
 
@@ -1209,7 +1216,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
 
         # ── Pipeline constants ───────────────────────────────────────────
         PIPELINE_ENTRY_DN: Final[str] = "cn=pipeline-entry,dc=example,dc=com"
-        PIPELINE_ENTRY_ATTRS: Final[Mapping[str, list[str]]] = MappingProxyType(
+        PIPELINE_ENTRY_ATTRS: Final[t.MappingKV[str, list[str]]] = MappingProxyType(
             {"objectClass": ["person"], "cn": ["pipeline-entry"]},
         )
         PIPELINE_LDIF_CONTENT: Final[str] = (
@@ -1217,11 +1224,13 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             "objectClass: person\n"
             "cn: pipeline-entry\n"
         )
-        PIPELINE_SERVER_PAIRS: Final[Mapping[str, tuple[str, str]]] = MappingProxyType(
-            {
-                "rfc_to_oid": (RFC, OID),
-                "oid_to_rfc": (OID, RFC),
-            },
+        PIPELINE_SERVER_PAIRS: Final[t.MappingKV[str, tuple[str, str]]] = (
+            MappingProxyType(
+                {
+                    "rfc_to_oid": (RFC, OID),
+                    "oid_to_rfc": (OID, RFC),
+                },
+            )
         )
 
         # ── Processing service constants ───────────────────────────────
@@ -1229,7 +1238,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             "cn=processing-one,dc=example,dc=com",
             "cn=processing-two,dc=example,dc=com",
         )
-        PROCESSING_ATTRS: Final[Mapping[str, list[str]]] = MappingProxyType(
+        PROCESSING_ATTRS: Final[t.MappingKV[str, list[str]]] = MappingProxyType(
             {
                 "objectClass": ["person", "top"],
                 "cn": ["processing-user"],

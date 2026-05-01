@@ -18,7 +18,7 @@
   - [CLI Installation and Usage](#cli-installation-and-usage)
   - [CLI Help](#cli-help)
 - [Common Use Cases](#common-use-cases)
-  - [Generic Schema Parsing with Server Quirks](#generic-schema-parsing-with-server-quirks)
+  - [Generic Schema Parsing with Server Servers](#generic-schema-parsing-with-server-servers)
   - [Generic Entry Migration Between Servers](#generic-entry-migration-between-servers)
   - [Working with Multiple Server Types](#working-with-multiple-server-types)
   - [Data Validation and Cleaning](#data-validation-and-cleaning)
@@ -31,7 +31,7 @@
 
 **Version**: 0.12.0-dev | **Updated**: October 10, 2025
 
-This guide provides step-by-step instructions for installing and using FLEXT-LDIF, an RFC 2849/4512 compliant LDIF processing library with server-specific quirks for the FLEXT ecosystem.
+This guide provides step-by-step instructions for installing and using FLEXT-LDIF, an RFC 2849/4512 compliant LDIF processing library with server-specific servers for the FLEXT ecosystem.
 
 ## Prerequisites
 
@@ -235,7 +235,7 @@ python -m flext_ldif parse --help
 
 ## Common Use Cases
 
-### Generic Schema Parsing with Server Quirks
+### Generic Schema Parsing with Server Servers
 
 Parse LDAP schema files with automatic server-specific handling:
 
@@ -306,8 +306,8 @@ if result.success:
     print(f"Schema files: {migration_data.get('schema_files', [])}")
 
 # Generic transformation pipeline:
-# 1. Source quirks normalize entries to RFC format
-# 2. Target quirks transform from RFC to target format
+# 1. Source servers normalize entries to RFC format
+# 2. Target servers transform from RFC to target format
 # 3. Works with ANY server combination (even unknown servers)
 ```
 
@@ -316,19 +316,19 @@ if result.success:
 Handle entries from different LDAP servers in the same workflow:
 
 ```python
-from flext_ldif import QuirkRegistryService
+from flext_ldif import ServerRegistryService
 
 # Initialize registry once
-quirk_registry = QuirkRegistryService()
+server_registry = ServerRegistryService()
 
-# Get quirks for different servers
-openldap = quirk_registry.get_entrys("openldap")
-oid = quirk_registry.get_entrys("oid")
-ouds = quirk_registry.get_entrys("oud")
+# Get servers for different servers
+openldap = server_registry.get_entrys("openldap")
+oid = server_registry.get_entrys("oid")
+ouds = server_registry.get_entrys("oud")
 
-# Each quirk knows how to handle server-specific extensions
-# All quirks follow the same Protocol interface
-# Quirks are tried in priority order (lower number = higher priority)
+# Each server knows how to handle server-specific extensions
+# All servers follow the same Protocol interface
+# Servers are tried in priority order (lower number = higher priority)
 ```
 
 ### Data Validation and Cleaning

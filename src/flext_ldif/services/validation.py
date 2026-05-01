@@ -5,8 +5,8 @@ from __future__ import annotations
 import struct
 from typing import Annotated
 
-from flext_core import r
 from flext_ldif import (
+    r,
     s,
     t,
     u,

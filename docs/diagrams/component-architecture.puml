@@ -12,28 +12,28 @@ Container_Boundary(flext_ldif_lib, "FLEXT-LDIF Library") {
     }
 
     Component_Boundary(conversion_layer, "Conversion Layer") {
-        Component(conversion, "QuirksConversionMatrix", "Python Class", "Universal conversion facade", "N×N server conversions")
+        Component(conversion, "ServersConversionMatrix", "Python Class", "Universal conversion facade", "N×N server conversions")
         Component(dn_registry, "DnCaseRegistry", "Python Class", "DN case tracking", "OUD compatibility assurance")
         Component(batch_processor, "BatchProcessor", "Python Class", "Batch operations", "Efficient bulk conversions")
     }
 
     Component_Boundary(parsing_layer, "Parsing Layer") {
-        Component(ldif_parser_svc, "RfcLdifParserService", "Python Service", "LDIF parsing", "RFC 2849 + quirks")
-        Component(schema_parser_svc, "RfcSchemaParserService", "Python Service", "Schema parsing", "RFC 4512 + quirks")
+        Component(ldif_parser_svc, "RfcLdifParserService", "Python Service", "LDIF parsing", "RFC 2849 + servers")
+        Component(schema_parser_svc, "RfcSchemaParserService", "Python Service", "Schema parsing", "RFC 4512 + servers")
         Component(acl_parser_svc, "AclParserService", "Python Service", "ACL parsing", "Access control syntax")
         Component(line_parser, "LineParser", "Python Class", "Line-by-line parsing", "Handles continuations, comments")
         Component(base64_decoder, "Base64Decoder", "Python Class", "Base64 handling", "RFC 2849 :: syntax")
     }
 
-    Component_Boundary(quirks_layer, "Quirks System") {
-        Component(quirk_registry, "FlextLdifServer", "Python Class", "Quirk discovery", "Auto-loads server implementations")
-        Component(quirk_base, "QuirkBase", "Abstract Class", "Standard interface", "to_rfc(), from_rfc() methods")
+    Component_Boundary(servers_layer, "Servers System") {
+        Component(server_registry, "FlextLdifServer", "Python Class", "Server discovery", "Auto-loads server implementations")
+        Component(server_base, "ServerBase", "Abstract Class", "Standard interface", "to_rfc(), from_rfc() methods")
 
         Component_Boundary(server_implementations, "Server Implementations") {
-            Component(oid, "OidQuirks", "Python Class", "Oracle Internet Directory", "Complete implementation")
-            Component(ouds, "OudQuirks", "Python Class", "Oracle Unified Directory", "Complete implementation")
-            Component(openldap, "OpenLdapQuirks", "Python Class", "OpenLDAP 2.x", "Complete implementation")
-            Component(openldap1, "OpenLdap1Quirks", "Python Class", "OpenLDAP 1.x", "Complete implementation")
+            Component(oid, "OidServers", "Python Class", "Oracle Internet Directory", "Complete implementation")
+            Component(ouds, "OudServers", "Python Class", "Oracle Unified Directory", "Complete implementation")
+            Component(openldap, "OpenLdapServers", "Python Class", "OpenLDAP 2.x", "Complete implementation")
+            Component(openldap1, "OpenLdap1Servers", "Python Class", "OpenLDAP 1.x", "Complete implementation")
             Component(ad_stub, "ActiveDirectoryStub", "Python Class", "Active Directory", "Stub implementation")
             Component(apache_stub, "ApacheDsStub", "Python Class", "Apache Directory Server", "Stub implementation")
             Component(ds389_stub, "Ds389Stub", "Python Class", "389 Directory Server", "Stub implementation")
@@ -69,13 +69,13 @@ Rel(api_facade, conversion_layer, "Uses for", "Server conversions")
 Rel(api_facade, parsing_layer, "Uses for", "Data parsing")
 Rel(api_facade, service_layer, "Uses for", "Business operations")
 
-Rel(conversion_layer, quirks_layer, "Uses server", "implementations for conversions")
+Rel(conversion_layer, servers_layer, "Uses server", "implementations for conversions")
 Rel(conversion_layer, dn_registry, "Maintains", "case consistency")
 
-Rel(parsing_layer, quirks_layer, "Applies server", "quirks as enhancements")
+Rel(parsing_layer, servers_layer, "Applies server", "servers as enhancements")
 Rel(parsing_layer, model_layer, "Produces", "validated domain objects")
 
-Rel(quirks_layer, server_implementations, "Manages", "server-specific logic")
+Rel(servers_layer, server_implementations, "Manages", "server-specific logic")
 Rel(service_layer, model_layer, "Operates on", "domain objects")
 
 Rel(infrastructure, flext_ldif_lib, "Provides foundation", "for all components")
@@ -88,8 +88,8 @@ note right of conversion
     - DN case consistency tracking
 end note
 
-note right of quirk_registry
-    **Pluggable Quirks System**
+note right of server_registry
+    **Pluggable Servers System**
     - Auto-discovery of implementations
     - Priority-based resolution
     - Zero core code changes for new servers

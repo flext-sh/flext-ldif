@@ -138,7 +138,7 @@ class FlextLdifAcl(s):
         )
 
     def parse_acl_string(self, acl_string: str, server_type: str) -> r[m.Ldif.Acl]:
-        """Parse ACL string using server-specific quirks."""
+        """Parse ACL string using server-specific servers."""
         try:
             normalized_server_type = u.Ldif.normalize_server_type(server_type)
         except (ValueError, TypeError) as error:
@@ -146,21 +146,21 @@ class FlextLdifAcl(s):
                 f"Invalid server type: {server_type} - {error}",
             )
         try:
-            acl_quirk = self._server.acl(
+            acl_server = self._server.acl(
                 "openldap1" if server_type == "openldap" else normalized_server_type,
             )
-            if acl_quirk is None and server_type == "openldap":
-                acl_quirk = self._server.acl("openldap2")
+            if acl_server is None and server_type == "openldap":
+                acl_server = self._server.acl("openldap2")
         except ValueError as error:
             return r[m.Ldif.Acl].fail(str(error))
-        if acl_quirk is None:
+        if acl_server is None:
             return r[m.Ldif.Acl].fail(
-                f"No ACL quirk found for server type: {normalized_server_type}",
+                f"No ACL server found for server type: {normalized_server_type}",
             )
         return (
             r[m.Ldif.Acl]
             .from_result(
-                acl_quirk.parse_quirk(acl_string),
+                acl_server.parse_server(acl_string),
             )
             .map(
                 m.Ldif.Acl.model_validate,

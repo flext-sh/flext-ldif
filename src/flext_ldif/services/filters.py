@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import struct
 
-from flext_ldif import m, r, s, t
+from flext_ldif import m, p, r, s, t
 
 
 class FlextLdifFilters(s):
@@ -41,7 +41,8 @@ class FlextLdifFilters(s):
 
     @classmethod
     def _extract_oid_from_schema_attr(
-        cls, values: t.MutableSequenceOf[str]
+        cls,
+        values: t.MutableSequenceOf[str],
     ) -> str | None:
         """Extract OID from schema attribute value."""
         if not values:
@@ -144,12 +145,17 @@ class FlextLdifFilters(s):
     @classmethod
     def filter_entry_attributes(
         cls,
-        entry: m.Ldif.Entry,
+        entry: m.Ldif.Entry | p.Ldif.Entry,
         forbidden_attrs: t.StrSequence,
         forbidden_ocs: t.StrSequence,
     ) -> m.Ldif.Entry:
         """Strip forbidden attributes and objectClasses from an entry."""
-        filtered_entry = entry
+        concrete = (
+            entry
+            if isinstance(entry, m.Ldif.Entry)
+            else m.Ldif.Entry.model_validate(entry)
+        )
+        filtered_entry = concrete
         if entry.attributes and forbidden_attrs:
             attrs_dict = entry.attributes.attributes
             forbidden_set = {attr.lower() for attr in forbidden_attrs}
@@ -163,7 +169,7 @@ class FlextLdifFilters(s):
                 filtered_entry = filtered_entry.model_copy(
                     update={
                         "attributes": m.Ldif.Attributes.model_validate({
-                            "attributes": filtered_attrs
+                            "attributes": filtered_attrs,
                         }),
                     },
                 )
@@ -171,7 +177,8 @@ class FlextLdifFilters(s):
             oc_attrs = filtered_entry.attributes.attributes
             forbidden_ocs_lower = {oc.lower() for oc in forbidden_ocs}
             oc_key: str | None = next(
-                (k for k in oc_attrs if k.lower() == "objectclass"), None
+                (k for k in oc_attrs if k.lower() == "objectclass"),
+                None,
             )
             if oc_key is not None:
                 filtered_ocs: list[str] = [
@@ -185,7 +192,7 @@ class FlextLdifFilters(s):
                 filtered_entry = filtered_entry.model_copy(
                     update={
                         "attributes": m.Ldif.Attributes.model_validate({
-                            "attributes": updated
+                            "attributes": updated,
                         }),
                     },
                 )
@@ -194,13 +201,18 @@ class FlextLdifFilters(s):
     @classmethod
     def filter_schema_attribute_values(
         cls,
-        entry: m.Ldif.Entry,
+        entry: m.Ldif.Entry | p.Ldif.Entry,
         allowed_oids: t.MappingKV[str, frozenset[str]],
     ) -> m.Ldif.Entry:
         """Filter individual OID values within schema entry attributes."""
-        if entry.attributes is None:
-            return entry
-        attrs_dict = entry.attributes.attributes
+        concrete = (
+            entry
+            if isinstance(entry, m.Ldif.Entry)
+            else m.Ldif.Entry.model_validate(entry)
+        )
+        if concrete.attributes is None:
+            return concrete
+        attrs_dict = concrete.attributes.attributes
         updated_attrs: dict[str, list[str]] = {
             k: list(v) for k, v in attrs_dict.items()
         }
@@ -223,11 +235,11 @@ class FlextLdifFilters(s):
             else:
                 del updated_attrs[attr_name]
         if not changed:
-            return entry
-        copied: m.Ldif.Entry = entry.model_copy(
+            return concrete
+        copied: m.Ldif.Entry = concrete.model_copy(
             update={
                 "attributes": m.Ldif.Attributes.model_validate({
-                    "attributes": updated_attrs
+                    "attributes": updated_attrs,
                 }),
             },
         )

@@ -1,7 +1,7 @@
 """Systematic fixture coverage for all server×fixture type combinations.
 
 Test suite ensuring every LDAP server type can process every fixture type:
-- Tests all server quirks (OID, OUD, OpenLDAP, RFC) across all fixture types
+- Tests all server servers (OID, OUD, OpenLDAP, RFC) across all fixture types
 - Validates parse→write→parse cycles for each combination
 - Ensures complete coverage matrix (servers × fixture types)
 - Provides baseline validation that fixtures load and can be processed
@@ -27,7 +27,7 @@ from flext_ldif import FlextLdif, ldif
 class TestsFlextLdifSystematicFixtureCoverage:
     """Systematic validation of server×fixture type combinations.
 
-    Tests that each LDAP server quirk can process every fixture type,
+    Tests that each LDAP server server can process every fixture type,
     providing complete baseline coverage of the fixture matrix.
     """
 
@@ -265,7 +265,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
         """Baseline test that all server types support basic LDIF operations.
 
         Creates simple LDIF content and validates it can be parsed and written
-        regardless of server quirk detection.
+        regardless of server server detection.
 
         This validates that the baseline RFC functionality is always available
         as a fallback for all server types.

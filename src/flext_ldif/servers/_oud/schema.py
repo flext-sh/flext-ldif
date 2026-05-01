@@ -1,4 +1,4 @@
-"""Oracle Unified Directory (OUD) Quirks."""
+"""Oracle Unified Directory (OUD) Servers."""
 
 from __future__ import annotations
 
@@ -27,25 +27,25 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
 
     def __init__(
         self,
-        schema_service: p.Ldif.SchemaQuirk | None = None,
-        parent_quirk: p.Ldif.SchemaQuirk | None = None,
+        schema_service: p.Ldif.SchemaServer | None = None,
+        parent_server: p.Ldif.SchemaServer | None = None,
         **kwargs: t.Ldif.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> None:
-        """Initialize OUD schema quirk."""
+        """Initialize OUD schema server."""
         filtered_kwargs: t.MutableConfigValueMapping = {
             k: v
             for k, v in kwargs.items()
-            if k not in {"_parent_quirk", "_schema_service"}
+            if k not in {"_parent_server", "_schema_service"}
             and isinstance(v, (str, float, bool))
         }
         FlextLdifServersBaseSchema.__init__(
             self,
             _schema_service=schema_service,
-            _parent_quirk=None,
+            _parent_server=None,
             **filtered_kwargs,
         )
-        if parent_quirk is not None:
-            object.__setattr__(self, "_parent_quirk", parent_quirk)
+        if parent_server is not None:
+            object.__setattr__(self, "_parent_server", parent_server)
 
     @override
     def extract_schemas_from_ldif(
@@ -85,7 +85,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
             and fixed_equality == "caseIgnoreMatch"
         ):
             logger.warning(
-                "OUD QUIRK: FOUND REDUNDANT EQUALITY+SUBSTR - Removing redundant EQUALITY",
+                "OUD SERVER: FOUND REDUNDANT EQUALITY+SUBSTR - Removing redundant EQUALITY",
                 attribute_name=attr_data.name,
                 attribute_oid=attr_data.oid,
                 original_equality=fixed_equality or "unknown",
@@ -124,7 +124,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         is_valid_oud_oid = oid_validation.value
         existing_metadata = attr.metadata
         if not existing_metadata:
-            existing_metadata = m.Ldif.QuirkMetadata.create_for("oud")
+            existing_metadata = m.Ldif.ServerMetadata.create_for("oud")
         current_extensions = (
             dict(existing_metadata.extensions) if existing_metadata.extensions else {}
         )
@@ -193,7 +193,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         is_valid_oud_oid = oid_validation.value
         existing_metadata = attr.metadata
         if not existing_metadata:
-            existing_metadata = m.Ldif.QuirkMetadata.create_for("oud")
+            existing_metadata = m.Ldif.ServerMetadata.create_for("oud")
         current_extensions = (
             dict(existing_metadata.extensions) if existing_metadata.extensions else {}
         )
@@ -303,7 +303,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
             is_valid_oud_oid = oid_validation.value
             existing_oc_metadata = oc.metadata
             if not existing_oc_metadata:
-                existing_oc_metadata = m.Ldif.QuirkMetadata.create_for("oud")
+                existing_oc_metadata = m.Ldif.ServerMetadata.create_for("oud")
             oc_extensions = (
                 dict(existing_oc_metadata.extensions)
                 if existing_oc_metadata.extensions

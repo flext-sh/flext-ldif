@@ -22,7 +22,7 @@ class TestsFlextLdifTypes(FlextTestsTypes, t):
         type FixtureServer = str
         type FixtureKind = str
         type ParseMethod = Literal[
-            "parse_quirk",
+            "parse_server",
             "parse_attribute",
             "parse_objectclass",
             "parse_input",

@@ -8,17 +8,17 @@ Container_Boundary(flext_ecosystem, "FLEXT Ecosystem") {
 
     Container_Boundary(flext_ldif, "FLEXT-LDIF Library") {
         Container(api_facade, "ldif Facade", "Python Class", "Unified API entry point for all operations")
-        Container(conversion, "QuirksConversionMatrix", "Python Class", "Universal N×N server conversion facade")
+        Container(conversion, "ServersConversionMatrix", "Python Class", "Universal N×N server conversion facade")
         Container(dn_registry, "DnCaseRegistry", "Python Class", "Canonical DN case tracking")
 
         Container_Boundary(rfc_parsing, "RFC Parsing Layer") {
-            Container(ldif_parser, "RfcLdifParser", "Python Service", "RFC 2849 LDIF parsing with quirks")
-            Container(schema_parser, "RfcSchemaParser", "Python Service", "RFC 4512 schema parsing with quirks")
+            Container(ldif_parser, "RfcLdifParser", "Python Service", "RFC 2849 LDIF parsing with servers")
+            Container(schema_parser, "RfcSchemaParser", "Python Service", "RFC 4512 schema parsing with servers")
         }
 
-        Container_Boundary(quirks_system, "Quirks System") {
-            Container(quirk_registry, "QuirkRegistry", "Python Class", "Auto-discovery of server quirk implementations")
-            Container(servers, "Server Quirks", "Python Classes", "9 server-specific quirk implementations")
+        Container_Boundary(servers_system, "Servers System") {
+            Container(server_registry, "ServerRegistry", "Python Class", "Auto-discovery of server server implementations")
+            Container(servers, "Server Servers", "Python Classes", "9 server-specific server implementations")
         }
 
         Container_Boundary(domain_models, "Domain Models") {
@@ -39,15 +39,15 @@ Container_Ext(python_runtime, "Python Runtime", "CPython 3.13+", "Execution envi
 
 Rel(api_facade, ldif_client, "Delegates I/O", "Path objects, encoding detection")
 Rel(api_facade, conversion, "Uses for conversions", "Server migration operations")
-Rel(api_facade, rfc_parsing, "Uses for parsing", "RFC compliance with quirks")
+Rel(api_facade, rfc_parsing, "Uses for parsing", "RFC compliance with servers")
 
 Rel(conversion, dn_registry, "Tracks case consistency", "OUD compatibility during conversions")
 Rel(conversion, servers, "Uses server implementations", "Source/target format conversions")
 
-Rel(rfc_parsing, quirk_registry, "Applies server quirks", "Server-specific enhancements")
+Rel(rfc_parsing, server_registry, "Applies server servers", "Server-specific enhancements")
 Rel(rfc_parsing, domain_models, "Produces validated", "Type-safe domain objects")
 
-Rel(quirks_system, servers, "Manages implementations", "Auto-discovery and instantiation")
+Rel(servers_system, servers, "Manages implementations", "Auto-discovery and instantiation")
 
 Rel(flext_oud_mig, api_facade, "Uses for", "Oracle directory migrations")
 Rel(flext_api, api_facade, "Integrates for", "LDIF processing in APIs")

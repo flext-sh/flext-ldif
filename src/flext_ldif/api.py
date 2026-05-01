@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import (
-    MutableMapping,
-)
 from pathlib import Path
 from typing import Self, override
 
@@ -20,17 +17,13 @@ from flext_ldif import (
     FlextLdifParser,
     FlextLdifProcessing,
     FlextLdifProcessingPipeline,
-    FlextLdifServer,
-    FlextLdifServersBase,
-    FlextLdifServersBaseEntry,
-    FlextLdifServersBaseSchema,
-    FlextLdifServersBaseSchemaAcl,
     FlextLdifSettings,
     FlextLdifStatistics,
     FlextLdifValidation,
     FlextLdifWriter,
     c,
     m,
+    p,
     r,
     t,
 )
@@ -58,7 +51,7 @@ class FlextLdif(
     def __init__(
         self,
         *,
-        server: FlextLdifServer | None = None,
+        server: p.Ldif.ServerRegistry | None = None,
         settings: FlextLdifSettings | None = None,
     ) -> None:
         """Initialize the LDIF facade with the canonical shared registry."""
@@ -67,7 +60,7 @@ class FlextLdif(
     def __call__(
         self,
         *,
-        server: FlextLdifServer | None = None,
+        server: p.Ldif.ServerRegistry | None = None,
         settings: FlextLdifSettings | None = None,
     ) -> Self:
         """Return a configured facade instance while keeping the DSL alias callable."""
@@ -85,7 +78,7 @@ class FlextLdif(
         forbidden_objectclasses: t.MutableSequenceOf[str] | None = None,
         base_dn: str | None = None,
         server_type: str = c.Ldif.ServerTypes.RFC.value,
-    ) -> FlextLdifCategorization:
+    ) -> p.Ldif.CategorizationService:
         """Create a categorization service bound to the facade registry."""
         return FlextLdifCategorization(
             categorization_rules=categorization_rules,
@@ -101,72 +94,83 @@ class FlextLdif(
 
     def filter_entry_attributes(
         self,
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         forbidden_attrs: t.StrSequence,
         forbidden_ocs: t.StrSequence,
-    ) -> m.Ldif.Entry:
+    ) -> p.Ldif.Entry:
         """Expose the stateless filter helper through the facade DSL."""
+        concrete = (
+            entry
+            if isinstance(entry, m.Ldif.Entry)
+            else m.Ldif.Entry.model_validate(entry)
+        )
         return FlextLdifFilters.filter_entry_attributes(
-            entry=entry,
+            entry=concrete,
             forbidden_attrs=forbidden_attrs,
             forbidden_ocs=forbidden_ocs,
         )
 
     def filter_schema_attribute_values(
         self,
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         allowed_oids: t.MappingKV[str, frozenset[str]],
-    ) -> m.Ldif.Entry:
+    ) -> p.Ldif.Entry:
         """Expose schema-attribute OID filtering through the facade DSL."""
+        concrete = (
+            entry
+            if isinstance(entry, m.Ldif.Entry)
+            else m.Ldif.Entry.model_validate(entry)
+        )
         return FlextLdifFilters.filter_schema_attribute_values(
-            entry=entry,
+            entry=concrete,
             allowed_oids=allowed_oids,
         )
 
-    def acl(self, server_type: str) -> FlextLdifServersBaseSchemaAcl | None:
-        """Expose ACL quirk lookup through the public facade."""
+    def acl(self, server_type: str) -> p.Ldif.AclServer | None:
+        """Expose ACL server lookup through the public facade."""
         return self._server.acl(server_type)
 
-    def entry(self, server_type: str) -> FlextLdifServersBaseEntry | None:
-        """Expose entry quirk lookup through the public facade."""
+    def entry(self, server_type: str) -> p.Ldif.EntryServer | None:
+        """Expose entry server lookup through the public facade."""
         return self._server.entry(server_type)
 
-    def quirk(self, server_type: str) -> r[FlextLdifServersBase]:
-        """Expose base quirk lookup through the public facade."""
-        return self._server.quirk(server_type)
+    def resolve_base_server(self, server_type: str) -> r[p.Ldif.ServerServer]:
+        """Expose base server resolution through the public facade."""
+        return r[p.Ldif.ServerServer].from_result(
+            self._server.resolve_base_server(server_type),
+        )
 
-    def resolve_base_quirk(self, server_type: str) -> r[FlextLdifServersBase]:
-        """Expose base quirk resolution through the public facade."""
-        return self._server.resolve_base_quirk(server_type)
+    def schema_server(self, server_type: str) -> p.Ldif.SchemaServer | None:
+        """Expose schema server lookup through the public facade."""
+        return self._server.schema_server(server_type)
 
-    def schema_quirk(self, server_type: str) -> FlextLdifServersBaseSchema | None:
-        """Expose schema quirk lookup through the public facade."""
-        return self._server.schema_quirk(server_type)
-
-    def resolve_schema_quirk(
+    def resolve_schema_server(
         self,
         server_type: str,
-    ) -> FlextLdifServersBaseSchema | None:
-        """Expose canonical schema quirk resolution through the public facade."""
-        return self._server.resolve_schema_quirk(server_type)
+    ) -> p.Ldif.SchemaServer | None:
+        """Expose canonical schema server resolution through the public facade."""
+        return self._server.resolve_schema_server(server_type)
 
-    def resolve_quirk_bundle(
+    def resolve_server_bundle(
         self,
         server_type: str,
     ) -> r[
-        MutableMapping[
+        t.MappingKV[
             str,
-            FlextLdifServersBaseSchema
-            | FlextLdifServersBaseSchemaAcl
-            | FlextLdifServersBaseEntry,
+            p.Ldif.SchemaServer | p.Ldif.AclServer | p.Ldif.EntryServer,
         ]
     ]:
-        """Expose full quirk bundle resolution through the public facade."""
-        return self._server.resolve_quirk_bundle(server_type)
+        """Expose full server bundle resolution through the public facade."""
+        return r[
+            t.MappingKV[
+                str,
+                p.Ldif.SchemaServer | p.Ldif.AclServer | p.Ldif.EntryServer,
+            ]
+        ].from_result(self._server.resolve_server_bundle(server_type))
 
     def resolve_server_constants(self, server_type: str) -> r[type]:
         """Expose server constants lookup through the public facade."""
-        return self._server.resolve_server_constants(server_type)
+        return r[type].from_result(self._server.resolve_server_constants(server_type))
 
     def list_registered_servers(self) -> t.MutableSequenceOf[str]:
         """Expose the normalized registered server list through the facade."""
@@ -182,7 +186,7 @@ class FlextLdif(
         settings: m.Ldif.TransformConfig | None = None,
         source_server: str | c.Ldif.ServerTypes | None = None,
         target_server: str | c.Ldif.ServerTypes | None = None,
-    ) -> FlextLdifProcessingPipeline:
+    ) -> p.Ldif.ProcessingPipeline:
         """Create a processing pipeline from explicit config or server pair."""
         if settings is not None:
             return FlextLdifProcessingPipeline(transform_config=settings)
@@ -201,7 +205,7 @@ class FlextLdif(
         source_server: str | c.Ldif.ServerTypes = c.Ldif.ServerTypes.RFC.value,
         target_server: str | c.Ldif.ServerTypes = c.Ldif.ServerTypes.RFC.value,
         output_filename: str | None = None,
-    ) -> FlextLdifMigrationPipeline:
+    ) -> p.Ldif.MigrationPipeline:
         """Create a configured migration pipeline bound to the facade runtime."""
         return FlextLdifMigrationPipeline(
             input_dir=input_dir,
@@ -220,7 +224,7 @@ class FlextLdif(
         source_server: str = c.Ldif.ServerTypes.RFC.value,
         target_server: str = c.Ldif.ServerTypes.RFC.value,
         options: m.Ldif.MigrateOptions | None = None,
-    ) -> r[m.Ldif.MigrationPipelineResult]:
+    ) -> p.Result[m.Ldif.MigrationPipelineResult]:
         """Migrate LDIF data between servers."""
         output_filename = options.output_filename if options else None
         pipeline = self.migration_pipeline(
@@ -232,15 +236,15 @@ class FlextLdif(
         )
         return pipeline.execute()
 
-    @staticmethod
     @override
     def validate_entries(
+        self,
         entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
-        validation_service: FlextLdifValidation | None = None,
+        validation_service: p.Ldif.ValidationService | None = None,
     ) -> r[m.Ldif.ValidationResult]:
         """Validate list of entries."""
-        resolved_validation_service = validation_service or FlextLdifValidation()
-        return FlextLdifAnalysis.validate_entries(
+        resolved_validation_service = validation_service or self
+        return FlextLdifAnalysis().validate_entries(
             entries,
             resolved_validation_service,
         )

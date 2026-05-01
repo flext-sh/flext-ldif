@@ -1,10 +1,10 @@
 """Integration tests for OUD to OID migration.
 
 Tests complete migration workflow from Oracle Unified Directory (OUD) to
-Oracle Internet Directory (OID) using quirks system:
-- Read OUD LDIF fixtures with OUD quirks
+Oracle Internet Directory (OID) using servers system:
+- Read OUD LDIF fixtures with OUD servers
 - Convert to RFC intermediate format
-- Convert from RFC to OID format with OID quirks
+- Convert from RFC to OID format with OID servers
 - Write OID LDIF
 - Validate migration integrity and data preservation
 
@@ -26,12 +26,12 @@ class TestsFlextLdifOudToOidMigration:
 
     @pytest.fixture
     def oud(self) -> FlextLdifServersOud:
-        """Create OUD schema quirk instance."""
+        """Create OUD schema server instance."""
         return FlextLdifServersOud()
 
     @pytest.fixture
     def oid(self) -> FlextLdifServersOid:
-        """Create OID schema quirk instance."""
+        """Create OID schema server instance."""
         return FlextLdifServersOid()
 
     @pytest.fixture
@@ -43,19 +43,19 @@ class TestsFlextLdifOudToOidMigration:
 
     @pytest.fixture
     def oud_acl(self) -> FlextLdifServersOud.Acl:
-        """Create OUD ACL quirk instance."""
+        """Create OUD ACL server instance."""
         return FlextLdifServersOud.Acl()
 
     @pytest.fixture
     def oid_acl(self) -> FlextLdifServersOid.Acl:
-        """Create OID ACL quirk instance."""
+        """Create OID ACL server instance."""
         return FlextLdifServersOid.Acl()
 
     """Test OUD to OID entry migration."""
 
     @pytest.fixture
     def oud_entry(self) -> FlextLdifServersOud.Entry:
-        """Create OUD entry quirk instance."""
+        """Create OUD entry server instance."""
         return FlextLdifServersOud.Entry()
 
     """Test complete OUD to OID migration workflow."""
@@ -67,7 +67,7 @@ class TestsFlextLdifOudToOidMigration:
 
     @pytest.fixture
     def oid_entry(self) -> FlextLdifServersOid.Entry:
-        """Create OID entry quirk."""
+        """Create OID entry server."""
         return FlextLdifServersOid.Entry()
 
 

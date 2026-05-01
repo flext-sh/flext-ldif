@@ -1,4 +1,4 @@
-"""Oracle Unified Directory (OUD) Quirks."""
+"""Oracle Unified Directory (OUD) Servers."""
 
 from __future__ import annotations
 

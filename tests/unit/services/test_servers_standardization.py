@@ -1,6 +1,6 @@
-"""Tests for standardized quirk implementations.
+"""Tests for standardized server implementations.
 
-This module verifies that all quirk implementations across different LDAP server
+This module verifies that all server implementations across different LDAP server
 types (RFC, OID, OUD, OpenLDAP, etc.) have standardized Constants with expected
 attributes like CANONICAL_NAME, ALIASES, and PRIORITY values.
 """
@@ -21,10 +21,10 @@ from tests import c
 
 
 @pytest.mark.unit
-class TestsFlextLdifQuirksStandardization:
-    """Verify all quirks have standardized Constants."""
+class TestsFlextLdifServersStandardization:
+    """Verify all servers have standardized Constants."""
 
-    """Test quirks with real LDIF fixture data."""
+    """Test servers with real LDIF fixture data."""
 
     @staticmethod
     def _sample_ldif_records(ldif_content: str, max_records: int = 25) -> str:
@@ -75,19 +75,19 @@ class TestsFlextLdifQuirksStandardization:
         return self._sample_ldif_records(fixture_path.read_text(encoding="utf-8"))
 
     def test_oid_can_handle_real_oid_ldif(self, oid_schema_ldif: str) -> None:
-        """OID quirk must handle real OID LDIF data."""
+        """OID server must handle real OID LDIF data."""
         oid = FlextLdifServersOid.Entry()
         result = oid.parse_input(oid_schema_ldif)
         tm.that(result, none=False)
 
     def test_rfc_handles_all_ldif(self, oid_schema_ldif: str) -> None:
-        """RFC quirk must handle any valid LDIF (lowest priority fallback)."""
+        """RFC server must handle any valid LDIF (lowest priority fallback)."""
         rfc = FlextLdifServersRfc.Entry()
         result = rfc.parse_input(oid_schema_ldif)
         tm.that(result, none=False)
 
     def test_oud_can_handle_oud_ldif(self, oud_schema_ldif: str) -> None:
-        """OUD quirk must handle real OUD LDIF data."""
+        """OUD server must handle real OUD LDIF data."""
         oud = FlextLdifServersOud.Entry()
         result = oud.parse_input(oud_schema_ldif)
         tm.that(result, none=False)

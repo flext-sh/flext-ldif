@@ -40,7 +40,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
         def create_server_from_url(
             server_url: str,
             *,
-            get_info: t.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.ALL,
+            get_info: c.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.ALL,
         ) -> p.Ldap.Ldap3Server:
             """Create an LDAP server from a URL for test connectivity checks."""
             return u.Ldap.create_server_from_url(server_url, get_info=get_info)
@@ -50,7 +50,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             host: str,
             *,
             port: int = c.Tests.DOCKER_PORT,
-            get_info: t.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.NO_INFO,
+            get_info: c.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.NO_INFO,
         ) -> p.Ldap.Ldap3Server:
             """Create a minimal LDAP server for connectivity checks."""
             return u.Ldap.create_server_from_url(
@@ -264,8 +264,8 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             return fallback
 
         @staticmethod
-        def assert_quirk_schema_parse_and_properties(
-            quirk: p.Ldif.SchemaQuirk,
+        def assert_server_schema_parse_and_properties(
+            server: p.Ldif.SchemaServer,
             schema_def: str,
             *,
             expected_oid: str | None = None,
@@ -289,9 +289,9 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                 )
             )
             result = (
-                quirk.parse_objectclass(schema_def)
+                server.parse_objectclass(schema_def)
                 if is_objectclass
-                else quirk.parse_attribute(schema_def)
+                else server.parse_attribute(schema_def)
             )
             if result.failure:
                 msg = f"Parsing failed: {result.error}"
@@ -357,11 +357,11 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             return value
 
         @staticmethod
-        def quirk_parse_and_unwrap(
-            quirk: (p.Ldif.SchemaQuirk | p.Tests.ParseInputQuirk),
+        def server_parse_and_unwrap(
+            server: (p.Ldif.SchemaServer | p.Tests.ParseInputServer),
             content: str,
             *,
-            parse_method: t.Tests.ParseMethod = "parse_quirk",
+            parse_method: t.Tests.ParseMethod = "parse_server",
             expected_type: (
                 type[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl]
                 | None
@@ -369,26 +369,26 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             should_succeed: bool | None = None,
             message: str | None = None,
         ) -> m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl | None:
-            """Parse content with a quirk and unwrap the typed result."""
+            """Parse content with a server and unwrap the typed result."""
             if parse_method == "parse_attribute":
-                if not isinstance(quirk, p.Ldif.SchemaQuirk):
-                    msg = "parse_attribute requires a schema quirk"
+                if not isinstance(server, p.Ldif.SchemaServer):
+                    msg = "parse_attribute requires a schema server"
                     raise AssertionError(msg)
-                result = quirk.parse_attribute(content)
+                result = server.parse_attribute(content)
             elif parse_method == "parse_objectclass":
-                if not isinstance(quirk, p.Ldif.SchemaQuirk):
-                    msg = "parse_objectclass requires a schema quirk"
+                if not isinstance(server, p.Ldif.SchemaServer):
+                    msg = "parse_objectclass requires a schema server"
                     raise AssertionError(
                         msg,
                     )
-                result = quirk.parse_objectclass(content)
+                result = server.parse_objectclass(content)
             elif parse_method == "parse_input":
-                if not isinstance(quirk, p.Tests.ParseInputQuirk):
-                    msg = "parse_input is not supported by this quirk"
+                if not isinstance(server, p.Tests.ParseInputServer):
+                    msg = "parse_input is not supported by this server"
                     raise AssertionError(msg)
-                result = quirk.parse_input(content)
+                result = server.parse_input(content)
             else:
-                msg = f"{parse_method} is not supported by this quirk"
+                msg = f"{parse_method} is not supported by this server"
                 raise AssertionError(msg)
             if should_succeed is False:
                 if result.success:
@@ -418,7 +418,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
 
         @staticmethod
         def acl_parse_and_unwrap(
-            quirk: p.Tests.ParseAclQuirk,
+            server: p.Tests.ParseAclServer,
             content: str,
             *,
             expected_type: type[m.Ldif.Acl] | None = None,
@@ -426,7 +426,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             message: str | None = None,
         ) -> m.Ldif.Acl | None:
             """Parse ACL content and unwrap the resulting model."""
-            result = quirk.parse_quirk(content)
+            result = server.parse_server(content)
             if should_succeed is False:
                 if result.success:
                     msg = message or "Expected failure but parse succeeded"
@@ -443,20 +443,20 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             return value
 
         @staticmethod
-        def quirk_write_and_unwrap(
-            quirk: p.Tests.WriteAttributeQuirk
-            | p.Tests.WriteObjectClassQuirk
-            | p.Tests.WriteAclQuirk,
+        def server_write_and_unwrap(
+            server: p.Tests.WriteAttributeServer
+            | p.Tests.WriteObjectClassServer
+            | p.Tests.WriteAclServer,
             data: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl,
             *,
             write_method: t.Tests.WriteMethod = "write",
             must_contain: t.StrSequence | None = None,
             message: str | None = None,
         ) -> str:
-            """Write content with a quirk and unwrap the serialized output."""
+            """Write content with a server and unwrap the serialized output."""
             if write_method == "_write_attribute":
-                if not isinstance(quirk, p.Tests.WriteAttributeQuirk):
-                    msg = "_write_attribute is not supported by this quirk"
+                if not isinstance(server, p.Tests.WriteAttributeServer):
+                    msg = "_write_attribute is not supported by this server"
                     raise AssertionError(
                         msg,
                     )
@@ -465,10 +465,10 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                     raise AssertionError(
                         msg,
                     )
-                result = quirk._write_attribute(data)
+                result = server._write_attribute(data)
             elif write_method == "_write_objectclass":
-                if not isinstance(quirk, p.Tests.WriteObjectClassQuirk):
-                    msg = "_write_objectclass is not supported by this quirk"
+                if not isinstance(server, p.Tests.WriteObjectClassServer):
+                    msg = "_write_objectclass is not supported by this server"
                     raise AssertionError(
                         msg,
                     )
@@ -477,17 +477,17 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                     raise AssertionError(
                         msg,
                     )
-                result = quirk._write_objectclass(data)
+                result = server._write_objectclass(data)
             elif write_method == "_write_acl":
-                if not isinstance(quirk, p.Tests.WriteAclQuirk):
-                    msg = "_write_acl is not supported by this quirk"
+                if not isinstance(server, p.Tests.WriteAclServer):
+                    msg = "_write_acl is not supported by this server"
                     raise AssertionError(msg)
                 if not isinstance(data, m.Ldif.Acl):
                     msg = "_write_acl requires an ACL model"
                     raise AssertionError(msg)
-                result = quirk._write_acl(data)
+                result = server._write_acl(data)
             else:
-                msg = f"{write_method} is not supported by this quirk"
+                msg = f"{write_method} is not supported by this server"
                 raise AssertionError(msg)
             if result.failure:
                 msg = message or f"Write failed: {result.error}"
@@ -503,14 +503,14 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
 
         @staticmethod
         def acl_write_and_unwrap(
-            quirk: p.Tests.WriteAclContentQuirk,
+            server: p.Tests.WriteAclContentServer,
             data: m.Ldif.Acl,
             *,
             must_contain: t.StrSequence | None = None,
             message: str | None = None,
         ) -> str:
             """Write ACL content and unwrap the serialized output."""
-            result = quirk.write(data)
+            result = server.write(data)
             if result.failure:
                 msg = message or f"Write failed: {result.error}"
                 raise AssertionError(msg)

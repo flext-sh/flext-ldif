@@ -59,7 +59,7 @@ class FlextLdifUtilitiesMetadata:
                 t.Cli.JSON_MAPPING_ADAPTER.validate_python({
                     inner_key: u.normalize_to_metadata(inner_value)
                     for inner_key, inner_value in value.items()
-                })
+                }),
             )
             for write_option_key, inner_value in item_data.items():
                 merged_value[write_option_key] = u.normalize_to_metadata(
@@ -647,7 +647,7 @@ class FlextLdifUtilitiesMetadata:
         """Update entry with new processing stats using model_copy."""
         entry_metadata = entry.metadata
         if entry_metadata is None:
-            entry_metadata = m.Ldif.QuirkMetadata.create_for(
+            entry_metadata = m.Ldif.ServerMetadata.create_for(
                 us.normalize_server_type(
                     c.Ldif.ServerTypes.RFC.value,
                 ),
@@ -679,7 +679,7 @@ class FlextLdifUtilitiesMetadata:
                 "differences": empty_diffs,
                 "original_length": len(original),
                 "converted_length": len(converted) if converted else len(original),
-            })
+            }),
         )
         if converted is None or original == converted:
             return differences
@@ -704,14 +704,14 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def build_acl_metadata_complete(
-        quirk_type: str,
+        server_type: str,
         _original_acl_format: str | None = None,
         **extra: t.Ldif.Scalar,
     ) -> t.MutableConfigurationMapping:
         """Build metadata for ACL parsing as a dictionary."""
         result: t.MutableConfigurationMapping = {
-            "quirk_type": quirk_type,
-            "source_server": quirk_type,
+            "server_type": server_type,
+            "source_server": server_type,
         }
         result.update({
             key: value
@@ -722,16 +722,16 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def build_entry_metadata_extensions(
-        quirk_type: str,
+        server_type: str,
     ) -> t.Ldif.MutableMetadataMapping:
         """Build metadata extensions for entry as a dictionary."""
-        return {"quirk_type": quirk_type, "source_server": quirk_type}
+        return {"server_type": server_type, "source_server": server_type}
 
     @staticmethod
     def build_entry_parse_metadata(
         settings: m.Ldif.EntryParseMetadataConfig,
-    ) -> m.Ldif.QuirkMetadata:
-        """Build QuirkMetadata for entry parsing with format preservation."""
+    ) -> m.Ldif.ServerMetadata:
+        """Build ServerMetadata for entry parsing with format preservation."""
         server_data_dict: t.Ldif.MutableMetadataMapping = {}
         server_data_dict["original_entry_dn"] = settings.original_entry_dn
         server_data_dict["cleaned_dn"] = settings.cleaned_dn
@@ -761,8 +761,8 @@ class FlextLdifUtilitiesMetadata:
         dynamic_extensions = m.Ldif.DynamicMetadata.from_dict(
             extensions_dict,
         )
-        metadata = m.Ldif.QuirkMetadata(
-            quirk_type=settings.quirk_type,
+        metadata = m.Ldif.ServerMetadata(
+            server_type=settings.server_type,
             server_specific_data=server_data,
             extensions=dynamic_extensions,
         )
@@ -772,7 +772,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def build_original_format_details(
-        quirk_type: str,
+        server_type: str,
         **extra: t.Ldif.Scalar,
     ) -> m.Ldif.FormatDetails:
         """Build original format details for round-trip preservation."""
@@ -780,12 +780,12 @@ class FlextLdifUtilitiesMetadata:
         dn_line = str(original_dn_line) if original_dn_line is not None else None
         return m.Ldif.FormatDetails(
             dn_line=dn_line,
-            trailing_info=f"server={quirk_type}",
+            trailing_info=f"server={server_type}",
         )
 
     @staticmethod
     def build_rfc_compliance_metadata(
-        quirk_type: str,
+        server_type: str,
         **extra: t.Ldif.Scalar,
     ) -> MutableMapping[
         str,
@@ -796,8 +796,8 @@ class FlextLdifUtilitiesMetadata:
             str,
             str | bool | t.MutableSequenceOf[str] | t.MutableAttributeMapping,
         ] = {
-            "quirk_type": quirk_type,
-            "source_server": quirk_type,
+            "server_type": server_type,
+            "source_server": server_type,
         }
         if "rfc_violations" in extra:
             violations_val = extra["rfc_violations"]
@@ -811,7 +811,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def preserve_schema_formatting(
-        metadata: m.Ldif.QuirkMetadata,
+        metadata: m.Ldif.ServerMetadata,
         definition: str,
     ) -> None:
         """Preserve complete schema formatting details for round-trip."""
@@ -821,13 +821,13 @@ class FlextLdifUtilitiesMetadata:
         object.__setattr__(metadata, "schema_format_details", formatting_details)
         logger.debug(
             "Schema formatting preserved in metadata",
-            quirk_type=metadata.quirk_type,
+            server_type=metadata.server_type,
             fields_preserved=len(formatting_details.model_fields_set),
         )
 
     @staticmethod
     def store_minimal_differences(
-        metadata: m.Ldif.QuirkMetadata,
+        metadata: m.Ldif.ServerMetadata,
         **extra: t.Ldif.Scalar,
     ) -> None:
         """Store minimal differences in metadata for delta tracking."""
@@ -836,7 +836,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def track_boolean_conversion(
-        metadata: m.Ldif.QuirkMetadata,
+        metadata: m.Ldif.ServerMetadata,
         attr_name: str,
         original_value: str,
         converted_value: str,

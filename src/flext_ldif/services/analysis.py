@@ -2,28 +2,25 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from flext_ldif import (
-    FlextLdifServiceBase,
+    FlextLdifValidation,
     m,
+    p,
     r,
+    s,
     t,
     u,
 )
 
-if TYPE_CHECKING:
-    from flext_ldif import FlextLdifValidation
 
-
-class FlextLdifAnalysis(FlextLdifServiceBase):
+class FlextLdifAnalysis(s):
     """Service for entry analysis and validation."""
 
     @staticmethod
     def _validate_entry_attributes(
         entry: m.Ldif.Entry,
         dn_str: str,
-        validation_service: FlextLdifValidation,
+        validation_service: p.Ldif.ValidationService,
     ) -> tuple[bool, t.MutableSequenceOf[str]]:
         """Validate entry attributes."""
         errors: t.MutableSequenceOf[str] = []
@@ -61,7 +58,7 @@ class FlextLdifAnalysis(FlextLdifServiceBase):
     def _validate_entry_objectclasses(
         entry: m.Ldif.Entry,
         dn_str: str,
-        validation_service: FlextLdifValidation,
+        validation_service: p.Ldif.ValidationService,
     ) -> tuple[bool, t.MutableSequenceOf[str]]:
         """Validate entry objectClass values."""
         errors: t.MutableSequenceOf[str] = []
@@ -85,7 +82,7 @@ class FlextLdifAnalysis(FlextLdifServiceBase):
     @staticmethod
     def _validate_single_entry(
         entry: m.Ldif.Entry,
-        validation_service: FlextLdifValidation,
+        validation_service: p.Ldif.ValidationService,
     ) -> tuple[bool, t.MutableSequenceOf[str]]:
         """Validate a single LDIF entry."""
         errors: t.MutableSequenceOf[str] = []
@@ -116,7 +113,7 @@ class FlextLdifAnalysis(FlextLdifServiceBase):
     @staticmethod
     def validate_entries(
         entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
-        validation_service: FlextLdifValidation,
+        validation_service: p.Ldif.ValidationService | None = None,
     ) -> r[m.Ldif.ValidationResult]:
         """Validate LDIF entries against RFC 2849/4512 standards."""
         normalized_entries = (
@@ -124,12 +121,17 @@ class FlextLdifAnalysis(FlextLdifServiceBase):
         )
         errors: t.MutableSequenceOf[str] = []
         valid_count = 0
+        svc: p.Ldif.ValidationService = (
+            validation_service
+            if validation_service is not None
+            else FlextLdifValidation()
+        )
 
         def validate_entry(entry: m.Ldif.Entry) -> bool:
             """Validate single entry and collect errors."""
             is_entry_valid, entry_errors = FlextLdifAnalysis._validate_single_entry(
                 entry,
-                validation_service,
+                svc,
             )
             errors.extend(entry_errors)
             return is_entry_valid

@@ -15,7 +15,7 @@ from __future__ import annotations
 import pytest
 
 from flext_ldif import FlextLdif, ldif
-from tests import c
+from tests import c, p
 
 
 class TestsFlextLdifLdifFixturesIntegration:
@@ -26,7 +26,7 @@ class TestsFlextLdifLdifFixturesIntegration:
         """Initialize LDIF processor."""
         return ldif
 
-    def test_rfc_fixture_parsing(self, ldif_client: FlextLdif) -> None:
+    def test_rfc_fixture_parsing(self, ldif_client: p.Ldif.LdifClient) -> None:
         """Test parsing RFC fixture with current baseline entries."""
         fixture = c.Tests.FIXTURES_DIR / c.Tests.RFC / "rfc_entries_fixtures.ldif"
         result = ldif_client.parse_ldif(fixture)
@@ -36,7 +36,7 @@ class TestsFlextLdifLdifFixturesIntegration:
             f"Expected at least 14 RFC entries, got {len(entries_raw)}"
         )
 
-    def test_rfc_fixture_validation(self, ldif_client: FlextLdif) -> None:
+    def test_rfc_fixture_validation(self, ldif_client: p.Ldif.LdifClient) -> None:
         """Test RFC fixture entries are valid."""
         fixture = c.Tests.FIXTURES_DIR / c.Tests.RFC / "rfc_entries_fixtures.ldif"
         parse_result = ldif_client.parse_ldif(fixture)
@@ -46,7 +46,7 @@ class TestsFlextLdifLdifFixturesIntegration:
             assert entry.dn is not None
             assert entry.dn.value
 
-    def test_oid_fixture_parsing(self, ldif_client: FlextLdif) -> None:
+    def test_oid_fixture_parsing(self, ldif_client: p.Ldif.LdifClient) -> None:
         """Test parsing OID fixture."""
         fixture = c.Tests.FIXTURES_DIR / c.Tests.OID / "oid_entries_fixtures.ldif"
         result = ldif_client.parse_ldif(fixture)
@@ -54,7 +54,7 @@ class TestsFlextLdifLdifFixturesIntegration:
         entries_raw = result.value.entries
         assert len(entries_raw) >= 1
 
-    def test_oud_fixture_parsing(self, ldif_client: FlextLdif) -> None:
+    def test_oud_fixture_parsing(self, ldif_client: p.Ldif.LdifClient) -> None:
         """Test parsing OUD fixture."""
         fixture = c.Tests.FIXTURES_DIR / c.Tests.OUD / "oud_entries_fixtures.ldif"
         result = ldif_client.parse_ldif(fixture)
@@ -62,7 +62,7 @@ class TestsFlextLdifLdifFixturesIntegration:
         entries_raw = result.value.entries
         assert len(entries_raw) >= 1
 
-    def test_openldap2_fixture_parsing(self, ldif_client: FlextLdif) -> None:
+    def test_openldap2_fixture_parsing(self, ldif_client: p.Ldif.LdifClient) -> None:
         """Test parsing OpenLDAP2 fixture with 45+ entries."""
         fixture = (
             c.Tests.FIXTURES_DIR / "openldap2" / "openldap2_integration_fixtures.ldif"
@@ -74,7 +74,7 @@ class TestsFlextLdifLdifFixturesIntegration:
             f"Expected 45+ OpenLDAP2 entries, got {len(entries_raw)}"
         )
 
-    def test_cross_server_fixture_parsing(self, ldif_client: FlextLdif) -> None:
+    def test_cross_server_fixture_parsing(self, ldif_client: p.Ldif.LdifClient) -> None:
         """Test parsing fixtures from all servers."""
         fixtures = [
             c.Tests.FIXTURES_DIR / c.Tests.RFC / "rfc_entries_fixtures.ldif",
@@ -90,7 +90,7 @@ class TestsFlextLdifLdifFixturesIntegration:
                 f"Expected at least 1 entry from {fixture_path}"
             )
 
-    def test_rfc_entries_have_valid_dns(self, ldif_client: FlextLdif) -> None:
+    def test_rfc_entries_have_valid_dns(self, ldif_client: p.Ldif.LdifClient) -> None:
         """Test all RFC entries have valid DNs."""
         fixture = c.Tests.FIXTURES_DIR / c.Tests.RFC / "rfc_entries_fixtures.ldif"
         result = ldif_client.parse_ldif(fixture)

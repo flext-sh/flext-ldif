@@ -1,4 +1,4 @@
-"""Tests for Novell eDirectory (NDS) server-specific LDIF quirks handling.
+"""Tests for Novell eDirectory (NDS) server-specific LDIF servers handling.
 
 This module tests the FlextLdifServersNovell implementation for handling Novell
 eDirectory-specific attributes, object classes, and entries in LDIF format.
@@ -20,25 +20,25 @@ def novell_server() -> FlextLdifServersNovell:
 
 
 @pytest.fixture
-def schema_quirk(
+def schema_server(
     novell_server: FlextLdifServersNovell,
 ) -> FlextLdifServersNovell.Schema:
-    """Get schema quirk from Novell server."""
-    quirk = novell_server.schema_quirk
-    assert isinstance(quirk, FlextLdifServersNovell.Schema)
-    return quirk
+    """Get schema server from Novell server."""
+    server = novell_server.schema_server
+    assert isinstance(server, FlextLdifServersNovell.Schema)
+    return server
 
 
 @pytest.fixture
-def entry_quirk(novell_server: FlextLdifServersNovell) -> FlextLdifServersNovell.Entry:
-    """Get entry quirk from Novell server."""
-    quirk = novell_server.entry_quirk
-    assert isinstance(quirk, FlextLdifServersNovell.Entry)
-    return quirk
+def entry_server(novell_server: FlextLdifServersNovell) -> FlextLdifServersNovell.Entry:
+    """Get entry server from Novell server."""
+    server = novell_server.entry_server
+    assert isinstance(server, FlextLdifServersNovell.Entry)
+    return server
 
 
-class TestsFlextLdifNovellQuirks:
-    """Test initialization of Novell quirks."""
+class TestsFlextLdifNovellServers:
+    """Test initialization of Novell servers."""
 
     """Test schema attribute detection."""
 
@@ -46,22 +46,22 @@ class TestsFlextLdifNovellQuirks:
     def test_can_handle_attribute(
         self,
         test_case: m.Tests.AttributeTestCase,
-        schema_quirk: FlextLdifServersNovell.Schema,
+        schema_server: FlextLdifServersNovell.Schema,
     ) -> None:
         """Test attribute detection for various scenarios."""
-        result = schema_quirk.can_handle_attribute(test_case.attr_definition)
+        result = schema_server.can_handle_attribute(test_case.attr_definition)
         tm.that(result is test_case.expected_can_handle, eq=True)
 
     """Test schema attribute parsing."""
 
     def test_parse_attribute_success(
         self,
-        schema_quirk: FlextLdifServersNovell.Schema,
+        schema_server: FlextLdifServersNovell.Schema,
     ) -> None:
         """Test parsing Novell eDirectory attribute definition."""
         attr_def = "( 2.16.840.1.113719.1.1.4.1.501 NAME 'nspmPasswordPolicyDN' DESC 'Password Policy DN' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 SINGLE-VALUE )"
-        u.Tests.assert_quirk_schema_parse_and_properties(
-            schema_quirk,
+        u.Tests.assert_server_schema_parse_and_properties(
+            schema_server,
             attr_def,
             expected_oid="2.16.840.1.113719.1.1.4.1.501",
             expected_name="nspmPasswordPolicyDN",
@@ -72,12 +72,12 @@ class TestsFlextLdifNovellQuirks:
 
     def test_parse_attribute_with_syntax_length(
         self,
-        schema_quirk: FlextLdifServersNovell.Schema,
+        schema_server: FlextLdifServersNovell.Schema,
     ) -> None:
         """Test parsing attribute with syntax length specification."""
         attr_def = "( 2.16.840.1.113719.1.1.4.1.1 NAME 'nspmAdminGroup' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )"
-        u.Tests.assert_quirk_schema_parse_and_properties(
-            schema_quirk,
+        u.Tests.assert_server_schema_parse_and_properties(
+            schema_server,
             attr_def,
             expected_syntax="1.3.6.1.4.1.1466.115.121.1.15",
             expected_length=256,
@@ -85,11 +85,11 @@ class TestsFlextLdifNovellQuirks:
 
     def test_parse_attribute_missing_oid(
         self,
-        schema_quirk: FlextLdifServersNovell.Schema,
+        schema_server: FlextLdifServersNovell.Schema,
     ) -> None:
         """Test parsing attribute without OID fails."""
         attr_def = "NAME 'nspmPasswordPolicy' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15"
-        result = schema_quirk.parse_attribute(attr_def)
+        result = schema_server.parse_attribute(attr_def)
         tm.that(result.failure, eq=True)
         tm.that(result.error, none=False)
         if result.error is not None:
@@ -101,22 +101,22 @@ class TestsFlextLdifNovellQuirks:
     def test_can_handle_objectclass(
         self,
         test_case: m.Tests.ObjectClassTestCase,
-        schema_quirk: FlextLdifServersNovell.Schema,
+        schema_server: FlextLdifServersNovell.Schema,
     ) -> None:
         """Test objectClass detection for various scenarios."""
-        result = schema_quirk.can_handle_objectclass(test_case.oc_definition)
+        result = schema_server.can_handle_objectclass(test_case.oc_definition)
         tm.that(result is test_case.expected_can_handle, eq=True)
 
     """Test schema objectClass parsing."""
 
     def test_parse_objectclass_structural(
         self,
-        schema_quirk: FlextLdifServersNovell.Schema,
+        schema_server: FlextLdifServersNovell.Schema,
     ) -> None:
         """Test parsing STRUCTURAL objectClass."""
         oc_def = "( 2.16.840.1.113719.2.2.6.1 NAME 'ndsPerson' DESC 'NDS Person' SUP top STRUCTURAL MUST ( cn ) MAY ( loginDisabled ) )"
-        u.Tests.assert_quirk_schema_parse_and_properties(
-            schema_quirk,
+        u.Tests.assert_server_schema_parse_and_properties(
+            schema_server,
             oc_def,
             expected_oid="2.16.840.1.113719.2.2.6.1",
             expected_name="ndsPerson",
@@ -128,36 +128,36 @@ class TestsFlextLdifNovellQuirks:
 
     def test_parse_objectclass_auxiliary(
         self,
-        schema_quirk: FlextLdifServersNovell.Schema,
+        schema_server: FlextLdifServersNovell.Schema,
     ) -> None:
         """Test parsing AUXILIARY objectClass."""
         oc_def = "( 2.16.840.1.113719.2.2.6.2 NAME 'nspmPasswordPolicy' AUXILIARY MAY ( nspmPasswordPolicyDN ) )"
-        u.Tests.assert_quirk_schema_parse_and_properties(
-            schema_quirk,
+        u.Tests.assert_server_schema_parse_and_properties(
+            schema_server,
             oc_def,
             expected_kind="AUXILIARY",
         )
 
     def test_parse_objectclass_abstract(
         self,
-        schema_quirk: FlextLdifServersNovell.Schema,
+        schema_server: FlextLdifServersNovell.Schema,
     ) -> None:
         """Test parsing ABSTRACT objectClass."""
         oc_def = "( 2.16.840.1.113719.2.2.6.3 NAME 'ndsbase' ABSTRACT )"
-        u.Tests.assert_quirk_schema_parse_and_properties(
-            schema_quirk,
+        u.Tests.assert_server_schema_parse_and_properties(
+            schema_server,
             oc_def,
             expected_kind="ABSTRACT",
         )
 
     def test_parse_objectclass_missing_oid(
         self,
-        schema_quirk: FlextLdifServersNovell.Schema,
+        schema_server: FlextLdifServersNovell.Schema,
     ) -> None:
         """Test parsing objectClass without OID fails."""
         oc_def = "NAME 'ndsPerson' SUP top STRUCTURAL"
-        quirk_schema = schema_quirk
-        result = quirk_schema.parse_objectclass(oc_def)
+        server_schema = schema_server
+        result = server_schema.parse_objectclass(oc_def)
         tm.that(result.failure, eq=True)
         tm.that(result.error, none=False)
         if result.error is not None:
@@ -169,9 +169,9 @@ class TestsFlextLdifNovellQuirks:
     def test_can_handle_entry(
         self,
         test_case: m.Tests.EntryTestCase,
-        entry_quirk: FlextLdifServersNovell.Entry,
+        entry_server: FlextLdifServersNovell.Entry,
     ) -> None:
         """Test entry detection for various scenarios."""
-        quirk_entry = entry_quirk
-        result = quirk_entry.can_handle(test_case.entry_dn, test_case.attributes)
+        server_entry = entry_server
+        result = server_entry.can_handle(test_case.entry_dn, test_case.attributes)
         tm.that(result is test_case.expected_can_handle, eq=True)

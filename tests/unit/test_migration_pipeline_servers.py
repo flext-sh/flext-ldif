@@ -1,6 +1,6 @@
-"""Tests for migration pipeline server-specific quirks.
+"""Tests for migration pipeline server-specific servers.
 
-This module tests the FlextLdifMigrationPipeline with server-specific quirk
+This module tests the FlextLdifMigrationPipeline with server-specific server
 handling, validating server-to-server transformations including boolean value
 conversions and other server-specific attribute transformations during migrations.
 """
@@ -20,8 +20,8 @@ from flext_ldif import (
 from tests import c
 
 
-class TestsFlextLdifMigrationPipelineQuirks:
-    """Test suite for migration pipeline quirks."""
+class TestsFlextLdifMigrationPipelineServers:
+    """Test suite for migration pipeline servers."""
 
     @pytest.mark.parametrize(
         ("source_server", "target_server", "input_true", "input_false"),
@@ -154,7 +154,7 @@ class TestsFlextLdifMigrationPipelineQuirks:
         input_dir.mkdir()
         output_dir.mkdir()
         ldif_content = c.Tests.MIGRATION_SCHEMA_ENTRY_TEMPLATE.format(
-            dn=FlextLdifServersOidConstants.SCHEMA_DN_QUIRK,
+            dn=FlextLdifServersOidConstants.SCHEMA_DN_SERVER,
             objectclass=c.Tests.NAME_OBJECTCLASS,
             top=c.Tests.NAME_TOP,
             subschema=c.Tests.NAME_SUBSCHEMA,
@@ -175,12 +175,12 @@ class TestsFlextLdifMigrationPipelineQuirks:
         content = output_file.read_text(encoding="utf-8")
         tm.that(content, has=f"dn: {FlextLdifServersRfc.Constants.SCHEMA_DN}")
         tm.that(
-            f"dn: {FlextLdifServersOidConstants.SCHEMA_DN_QUIRK}" not in content,
+            f"dn: {FlextLdifServersOidConstants.SCHEMA_DN_SERVER}" not in content,
             eq=True,
         )
 
-    def test_pipeline_enforces_quirks(self, tmp_path: Path) -> None:
-        """Test that pipeline enforces quirks even if input looks like c.Tests.RFC."""
+    def test_pipeline_enforces_servers(self, tmp_path: Path) -> None:
+        """Test that pipeline enforces servers even if input looks like c.Tests.RFC."""
         input_dir = tmp_path / "input"
         output_dir = tmp_path / "output"
         input_dir.mkdir()

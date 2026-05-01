@@ -1,4 +1,4 @@
-"""Oracle Unified Directory (OUD) Quirks."""
+"""Oracle Unified Directory (OUD) Servers."""
 
 from __future__ import annotations
 
@@ -38,28 +38,28 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
 
     def __init__(
         self,
-        acl_service: p.Ldif.AclQuirk | None = None,
-        parent_quirk: Self | None = None,
+        acl_service: p.Ldif.AclServer | None = None,
+        parent_server: Self | None = None,
         **kwargs: t.Ldif.Scalar,
     ) -> None:
-        """Initialize OUD ACL quirk."""
+        """Initialize OUD ACL server."""
         filtered_kwargs: t.MutableConfigValueMapping = {
             k: v
             for k, v in kwargs.items()
-            if k != "_parent_quirk" and isinstance(v, (str, float, bool))
+            if k != "_parent_server" and isinstance(v, (str, float, bool))
         }
-        acl_service_typed: p.Ldif.AclQuirk | None = (
+        acl_service_typed: p.Ldif.AclServer | None = (
             acl_service if acl_service is not None else None
         )
-        parent_quirk_typed: FlextLdifServersBaseSchemaAcl | None = (
-            parent_quirk
-            if isinstance(parent_quirk, FlextLdifServersBaseSchemaAcl)
+        parent_server_typed: FlextLdifServersBaseSchemaAcl | None = (
+            parent_server
+            if isinstance(parent_server, FlextLdifServersBaseSchemaAcl)
             else None
         )
         FlextLdifServersBaseSchemaAcl.__init__(
             self,
             acl_service=acl_service_typed,
-            _parent_quirk=parent_quirk_typed,
+            _parent_server=parent_server_typed,
             **filtered_kwargs,
         )
 
@@ -112,14 +112,14 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                 struct.error,
             ):
                 return False
-            if acl_model.metadata and acl_model.metadata.quirk_type:
-                return str(acl_model.metadata.quirk_type) == self._get_server_type()
+            if acl_model.metadata and acl_model.metadata.server_type:
+                return str(acl_model.metadata.server_type) == self._get_server_type()
             return bool(
                 acl_model.name
                 and u.Ldif.normalize_attribute_name(acl_model.name)
                 == u.Ldif.normalize_attribute_name(
                     FlextLdifServersOudConstants.ACL_ATTRIBUTE_NAME,
-                )
+                ),
             )
         normalized = acl_line.strip()
         if not normalized:
@@ -344,7 +344,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         """Parse and add accumulated ACI to ACL list."""
         if current_aci:
             aci_text = "\n".join(current_aci)
-            result = self.parse_quirk(aci_text)
+            result = self.parse_server(aci_text)
             if result.success:
                 acls.append(result.value)
 
@@ -371,11 +371,11 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         if ssf_match:
             extensions[c.Ldif.ACL_SSF] = f"{ssf_match.group(1)}{ssf_match.group(2)}"
         server_type_value = settings.server_type if settings else "oud"
-        new_metadata = m.Ldif.QuirkMetadata.create_for(
+        new_metadata = m.Ldif.ServerMetadata.create_for(
             server_type_value,
             extensions=extensions,
         )
-        update_dict: MutableMapping[str, m.Ldif.QuirkMetadata] = {
+        update_dict: MutableMapping[str, m.Ldif.ServerMetadata] = {
             "metadata": new_metadata,
         }
         acl_updated = acl.model_copy(update=update_dict)
@@ -408,8 +408,8 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                 raw_line=privilege_name,
                 raw_acl=privilege_name,
                 validation_violations=[],
-                metadata=m.Ldif.QuirkMetadata(
-                    quirk_type=c.Ldif.ServerTypes.OUD,
+                metadata=m.Ldif.ServerMetadata(
+                    server_type=c.Ldif.ServerTypes.OUD,
                     extensions=m.Ldif.DynamicMetadata.from_dict({
                         FlextLdifServersOudConstants.DS_PRIVILEGE_NAME_KEY: privilege_name,
                         FlextLdifServersOudConstants.FORMAT_TYPE_KEY: FlextLdifServersOudConstants.FORMAT_TYPE_DS_PRIVILEGE,

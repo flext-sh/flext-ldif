@@ -5,15 +5,15 @@ from __future__ import annotations
 from collections import Counter
 
 from flext_ldif import (
-    FlextLdifServiceBase,
     m,
     r,
+    s,
     t,
     u,
 )
 
 
-class FlextLdifStatistics(FlextLdifServiceBase):
+class FlextLdifStatistics(s):
     """Statistics service for LDIF processing pipeline."""
 
     def calculate_for_entries(

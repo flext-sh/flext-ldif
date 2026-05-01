@@ -22,23 +22,23 @@ class TestsTestFlextLdifApiServerRegistry:
         tm.that(c.Tests.OID in registered_servers, eq=True)
         tm.that(c.Tests.OUD in registered_servers, eq=True)
 
-    def test_quirk_resolution_returns_real_registered_server(
+    def test_server_resolution_returns_real_registered_server(
         self,
         api: FlextLdif,
     ) -> None:
-        """The facade should resolve the real quirk registry entry by type."""
-        quirk = u.Tests.assert_success(
-            api.quirk(c.Tests.OID),
-            error_msg="OID quirk must resolve from the facade",
+        """The facade should resolve the real server registry entry by type."""
+        server = u.Tests.assert_success(
+            api.resolve_base_server(c.Tests.OID),
+            error_msg="OID server must resolve from the facade",
         )
 
-        tm.that(quirk.server_type, eq=c.Tests.OID)
-        base_quirk = u.Tests.assert_success(
-            api.resolve_base_quirk(c.Tests.OID),
-            error_msg="OID base quirk must resolve from the facade",
+        tm.that(server.server_type, eq=c.Tests.OID)
+        base_server = u.Tests.assert_success(
+            api.resolve_base_server(c.Tests.OID),
+            error_msg="OID base server must resolve from the facade",
         )
-        tm.that(base_quirk.server_type, eq=c.Tests.OID)
-        tm.that(api.schema_quirk(c.Tests.OID), none=False)
+        tm.that(base_server.server_type, eq=c.Tests.OID)
+        tm.that(api.schema_server(c.Tests.OID), none=False)
         tm.that(api.acl(c.Tests.OID), none=False)
         tm.that(api.entry(c.Tests.OID), none=False)
 
@@ -47,9 +47,9 @@ class TestsTestFlextLdifApiServerRegistry:
         api: FlextLdif,
     ) -> None:
         """The facade should expose the same registry metadata as the server API."""
-        quirk_bundle = u.Tests.assert_success(
-            api.resolve_quirk_bundle(c.Tests.OUD),
-            error_msg="OUD quirk bundle must resolve from the facade",
+        server_bundle = u.Tests.assert_success(
+            api.resolve_server_bundle(c.Tests.OUD),
+            error_msg="OUD server bundle must resolve from the facade",
         )
         constants = u.Tests.assert_success(
             api.resolve_server_constants(c.Tests.OUD),
@@ -57,11 +57,11 @@ class TestsTestFlextLdifApiServerRegistry:
         )
         stats = api.summarize_registry()
 
-        tm.that("schema" in quirk_bundle, eq=True)
-        tm.that("acl" in quirk_bundle, eq=True)
-        tm.that("entry" in quirk_bundle, eq=True)
+        tm.that("schema" in server_bundle, eq=True)
+        tm.that("acl" in server_bundle, eq=True)
+        tm.that("entry" in server_bundle, eq=True)
         tm.that(getattr(constants, "CATEGORIZATION_PRIORITY", None), none=False)
-        tm.that("quirks_by_server" in stats, eq=True)
+        tm.that("servers_by_server" in stats, eq=True)
         tm.that("server_priorities" in stats, eq=True)
 
     def test_invalid_server_type_returns_public_failures(
@@ -69,18 +69,18 @@ class TestsTestFlextLdifApiServerRegistry:
         api: FlextLdif,
     ) -> None:
         """Invalid server identifiers should fail gracefully via public APIs."""
-        invalid_server = c.Tests.SERVER_INVALID_QUIRK_TYPE
+        invalid_server = c.Tests.SERVER_INVALID_SERVER_TYPE
 
         tm.that(api.acl(invalid_server), eq=None)
         tm.that(api.entry(invalid_server), eq=None)
-        tm.that(api.schema_quirk(invalid_server), eq=None)
-        tm.that(api.resolve_schema_quirk(invalid_server), eq=None)
+        tm.that(api.schema_server(invalid_server), eq=None)
+        tm.that(api.resolve_schema_server(invalid_server), eq=None)
 
-        quirk_result = api.quirk(invalid_server)
-        bundle_result = api.resolve_quirk_bundle(invalid_server)
+        server_result = api.resolve_base_server(invalid_server)
+        bundle_result = api.resolve_server_bundle(invalid_server)
         constants_result = api.resolve_server_constants(invalid_server)
 
-        tm.that(quirk_result.failure, eq=True)
+        tm.that(server_result.failure, eq=True)
         tm.that(bundle_result.failure, eq=True)
         tm.that(constants_result.failure, eq=True)
 
@@ -88,15 +88,15 @@ class TestsTestFlextLdifApiServerRegistry:
         self,
         api: FlextLdif,
     ) -> None:
-        """A valid normalized type without registered quirk should fail gracefully."""
+        """A valid normalized type without registered server should fail gracefully."""
         valid_unregistered_server = c.Tests.GENERIC
 
-        quirk_result = api.quirk(valid_unregistered_server)
-        base_result = api.resolve_base_quirk(valid_unregistered_server)
-        bundle_result = api.resolve_quirk_bundle(valid_unregistered_server)
+        server_result = api.resolve_base_server(valid_unregistered_server)
+        base_result = api.resolve_base_server(valid_unregistered_server)
+        bundle_result = api.resolve_server_bundle(valid_unregistered_server)
         constants_result = api.resolve_server_constants(valid_unregistered_server)
 
-        tm.that(quirk_result.failure, eq=True)
+        tm.that(server_result.failure, eq=True)
         tm.that(base_result.failure, eq=True)
         tm.that(bundle_result.failure, eq=True)
         tm.that(constants_result.failure, eq=True)

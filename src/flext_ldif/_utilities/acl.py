@@ -109,7 +109,7 @@ class FlextLdifUtilitiesACL:
             settings.permission_map,
         )
         permissions_dict: t.MutableBoolMapping = dict(
-            dict(permissions_dict_raw).items()
+            dict(permissions_dict_raw).items(),
         )
         return (subject_type, subject_value, permissions_dict)
 
@@ -263,7 +263,7 @@ class FlextLdifUtilitiesACL:
     def build_metadata_extensions(
         settings: m.Ldif.AclMetadataConfig,
     ) -> t.Ldif.MutableMetadataMapping:
-        """Build QuirkMetadata extensions for ACL."""
+        """Build ServerMetadata extensions for ACL."""
         result: t.Ldif.MutableMetadataMapping = {}
         if settings.line_breaks is not None:
             result["line_breaks"] = settings.line_breaks
@@ -368,14 +368,14 @@ class FlextLdifUtilitiesACL:
                                 value=value_val,
                             )
                             if has_operator_placeholder
-                            else format_template.format(value=value_val)
+                            else format_template.format(value=value_val),
                         )
                     case _ if has_operator_placeholder and operator_default is not None:
                         result.append(
                             format_template.format(
                                 operator=operator_default,
                                 value=str(value_raw),
-                            )
+                            ),
                         )
                     case _:
                         result.append(format_template.format(value=str(value_raw)))
@@ -719,7 +719,7 @@ class FlextLdifUtilitiesACL:
             permissions=m.Ldif.AclPermissions(**permissions_dict),
             server_type=c.Ldif.ServerTypes(settings.server_type),
             raw_acl=acl_line,
-            metadata=m.Ldif.QuirkMetadata.create_for(
+            metadata=m.Ldif.ServerMetadata.create_for(
                 settings.server_type,
                 extensions=m.Ldif.DynamicMetadata.from_dict(extensions)
                 if extensions

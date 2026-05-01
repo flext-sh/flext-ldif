@@ -29,10 +29,10 @@ class FlextLdifUtilitiesDispatch:
     """Override dispatchers that route between parent classes."""
 
     _ENTRY_LIST_ADAPTER: ClassVar[m.TypeAdapter[list[m.Ldif.Entry]]] = m.TypeAdapter(
-        list[m.Ldif.Entry]
+        list[m.Ldif.Entry],
     )
     _ACL_LIST_ADAPTER: ClassVar[m.TypeAdapter[list[m.Ldif.Acl]]] = m.TypeAdapter(
-        list[m.Ldif.Acl]
+        list[m.Ldif.Acl],
     )
 
     @staticmethod

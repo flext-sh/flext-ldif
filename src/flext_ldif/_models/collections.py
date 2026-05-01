@@ -23,7 +23,8 @@ from flext_ldif import (
 class FlextLdifModelsCollections:
     class DynamicCounts(m.DynamicModel):
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
-            extra="allow", validate_assignment=True
+            extra="allow",
+            validate_assignment=True,
         )
 
         @override

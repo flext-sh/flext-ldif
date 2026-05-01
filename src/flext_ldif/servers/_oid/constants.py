@@ -1,4 +1,4 @@
-"""Oracle Internet Directory (OID) Quirks."""
+"""Oracle Internet Directory (OID) Servers."""
 
 from __future__ import annotations
 
@@ -79,7 +79,7 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
         "matchingrules",
         "ldapsyntaxes",
     ])
-    SCHEMA_DN_QUIRK: ClassVar[str] = "cn=subschemasubentry"
+    SCHEMA_DN_SERVER: ClassVar[str] = "cn=subschemasubentry"
     BOOLEAN_ATTRIBUTES: ClassVar[frozenset[str]] = c.Ldif.OID_BOOLEAN_ATTRIBUTES
     ATTRIBUTE_FIELDS: ClassVar[frozenset[str]] = frozenset(["usage", "x_origin"])
     OBJECTCLASS_REQUIREMENTS: ClassVar[t.BoolMapping] = MappingProxyType({

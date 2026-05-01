@@ -27,16 +27,20 @@ class FlextLdifModelsMetadata:
             u.Field(description="List of transformations applied to this metadata"),
         ] = None
         original_format: Annotated[
-            str | None, u.Field(description="Original LDIF format before conversion")
+            str | None,
+            u.Field(description="Original LDIF format before conversion"),
         ] = None
         schema_source_server: Annotated[
-            str | None, u.Field(description="Server type that provided the schema")
+            str | None,
+            u.Field(description="Server type that provided the schema"),
         ] = None
         server_type: Annotated[
-            str | None, u.Field(description="LDAP server type identifier")
+            str | None,
+            u.Field(description="LDAP server type identifier"),
         ] = None
         relaxed_mode: Annotated[
-            bool | None, u.Field(description="Whether relaxed parsing mode was used")
+            bool | None,
+            u.Field(description="Whether relaxed parsing mode was used"),
         ] = None
         server_specific_violations: Annotated[
             t.MutableSequenceOf[t.JsonValue] | None,

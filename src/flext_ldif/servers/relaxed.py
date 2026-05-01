@@ -1,4 +1,4 @@
-"""Relaxed Quirks for Lenient LDIF Processing."""
+"""Relaxed Servers for Lenient LDIF Processing."""
 
 from __future__ import annotations
 
@@ -20,10 +20,10 @@ from flext_ldif import (
 
 
 class FlextLdifServersRelaxed(FlextLdifServersRfc):
-    """Relaxed mode server quirks for non-compliant LDIF."""
+    """Relaxed mode server servers for non-compliant LDIF."""
 
     class Constants(FlextLdifServersRfc.Constants):
-        """Standardized constants for Relaxed (lenient) quirk."""
+        """Standardized constants for Relaxed (lenient) server."""
 
         SERVER_TYPE: ClassVar[str] = "relaxed"
         PRIORITY: ClassVar[int] = 200
@@ -52,7 +52,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         LDIF_JOIN_SEPARATOR: ClassVar[str] = "\n"
 
     class Schema(FlextLdifServersRfc.Schema):
-        """Relaxed schema quirk - main class for lenient LDIF processing."""
+        """Relaxed schema server - main class for lenient LDIF processing."""
 
         def _enhance_schema_item_metadata(
             self,
@@ -60,8 +60,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             original_definition: str,
         ) -> m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass:
             if not schema_item.metadata:
-                schema_item.metadata = m.Ldif.QuirkMetadata.model_validate({
-                    "quirk_type": self._get_server_type(),
+                schema_item.metadata = m.Ldif.ServerMetadata.model_validate({
+                    "server_type": self._get_server_type(),
                     "extensions": m.Ldif.DynamicMetadata.model_validate({
                         "original_format": original_definition.strip(),
                         "schema_source_server": "relaxed",
@@ -70,7 +70,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 return schema_item
             if not schema_item.metadata.extensions:
                 schema_item.metadata.extensions = m.Ldif.DynamicMetadata()
-            schema_item.metadata.quirk_type = self._get_server_type()
+            schema_item.metadata.server_type = self._get_server_type()
             if not schema_item.metadata.extensions.get("original_format"):
                 schema_item.metadata.extensions["original_format"] = (
                     original_definition.strip()
@@ -235,8 +235,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     re.IGNORECASE,
                 )
                 name = name_match.group(1) if name_match else oid
-                metadata = m.Ldif.QuirkMetadata.model_validate({
-                    "quirk_type": self._get_server_type(),
+                metadata = m.Ldif.ServerMetadata.model_validate({
+                    "server_type": self._get_server_type(),
                     "extensions": m.Ldif.DynamicMetadata.model_validate({
                         "original_format": attr_definition.strip(),
                         "schema_source_server": "relaxed",
@@ -275,7 +275,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 struct.error,
             ) as e:
                 self.logger.debug(
-                    f"Relaxed attribute parse exception: {e}",
+                    "Relaxed attribute parse exception: %s",
+                    e,
                 )
                 return r[m.Ldif.SchemaAttribute].fail(
                     f"Failed to parse attribute definition: {e}",
@@ -330,8 +331,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 else c.Ldif.SchemaKind.STRUCTURAL.value
             )
             must, may = self._extract_must_may_from_objectclass(oc_definition)
-            metadata = m.Ldif.QuirkMetadata.model_validate({
-                "quirk_type": self._get_server_type(),
+            metadata = m.Ldif.ServerMetadata.model_validate({
+                "server_type": self._get_server_type(),
                 "extensions": m.Ldif.DynamicMetadata.model_validate({
                     "original_format": oc_definition.strip(),
                     "schema_source_server": "relaxed",
@@ -416,7 +417,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             return r[str].ok(f"( {oc_data.oid} NAME '{oc_name}' {oc_kind} )")
 
     class Acl(FlextLdifServersRfc.Acl):
-        """Relaxed ACL quirk for lenient LDIF processing."""
+        """Relaxed ACL server for lenient LDIF processing."""
 
         @override
         def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
@@ -436,13 +437,13 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         @override
         def can_handle_attribute(self, attribute: m.Ldif.SchemaAttribute) -> bool:
-            """Check if this ACL quirk should be aware of a specific attribute definition."""
+            """Check if this ACL server should be aware of a specific attribute definition."""
             _ = attribute
             return True
 
         @override
         def can_handle_objectclass(self, objectclass: m.Ldif.SchemaObjectClass) -> bool:
-            """Check if this ACL quirk should be aware of a specific objectClass definition."""
+            """Check if this ACL server should be aware of a specific objectClass definition."""
             _ = objectclass
             return True
 
@@ -458,8 +459,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     if not acl.metadata:
                         updated_acl = acl.model_copy(
                             update={
-                                "metadata": m.Ldif.QuirkMetadata.model_validate({
-                                    "quirk_type": self._get_server_type(),
+                                "metadata": m.Ldif.ServerMetadata.model_validate({
+                                    "server_type": self._get_server_type(),
                                     "extensions": m.Ldif.DynamicMetadata.model_validate({
                                         "original_format": acl_line.strip(),
                                     }),
@@ -472,7 +473,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                         )
                         updated_metadata = acl.metadata.model_copy(
                             update={
-                                "quirk_type": self._get_server_type(),
+                                "server_type": self._get_server_type(),
                                 "extensions": updated_extensions,
                             },
                         )
@@ -495,8 +496,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     "validation_violations": [],
                     "raw_line": acl_line,
                     "raw_acl": acl_line,
-                    "metadata": m.Ldif.QuirkMetadata.model_validate({
-                        "quirk_type": self._get_server_type(),
+                    "metadata": m.Ldif.ServerMetadata.model_validate({
+                        "server_type": self._get_server_type(),
                         "extensions": m.Ldif.DynamicMetadata.model_validate({
                             "original_format": acl_line.strip(),
                         }),
@@ -511,7 +512,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 struct.error,
             ) as e:
                 self.logger.debug(
-                    f"Relaxed ACL parse failed: {e}",
+                    "Relaxed ACL parse failed: %s",
+                    e,
                 )
                 return r[m.Ldif.Acl].fail(f"Failed to parse ACL: {e}")
 
@@ -531,7 +533,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             )
 
     class Entry(FlextLdifServersRfc.Entry):
-        """Relaxed entry quirk for lenient LDIF processing."""
+        """Relaxed entry server for lenient LDIF processing."""
 
         @override
         def can_handle(
@@ -546,13 +548,13 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         @override
         def can_handle_attribute(self, attribute: m.Ldif.SchemaAttribute) -> bool:
-            """Check if this Entry quirk has special handling for an attribute definition."""
+            """Check if this Entry server has special handling for an attribute definition."""
             _ = attribute
             return True
 
         @override
         def can_handle_objectclass(self, objectclass: m.Ldif.SchemaObjectClass) -> bool:
-            """Check if this Entry quirk has special handling for an objectClass definition."""
+            """Check if this Entry server has special handling for an objectClass definition."""
             _ = objectclass
             return True
 
@@ -575,7 +577,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 struct.error,
             ) as e:
                 self.logger.debug(
-                    f"DN normalization exception: {e}",
+                    "DN normalization exception: %s",
+                    e,
                 )
                 return r[str].fail(f"DN normalization failed: {e}")
 
@@ -613,7 +616,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         @override
         def _parse_content(
-            self, ldif_content: str
+            self,
+            ldif_content: str,
         ) -> r[t.MutableSequenceOf[m.Ldif.Entry]]:
             """Parse raw LDIF content string into Entry models (internal)."""
             parent_result = super()._parse_content(ldif_content)
@@ -719,8 +723,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 case_metadata = m.Ldif.DynamicMetadata.model_validate(
                     original_attribute_case,
                 )
-                metadata = m.Ldif.QuirkMetadata.model_validate({
-                    "quirk_type": "relaxed",
+                metadata = m.Ldif.ServerMetadata.model_validate({
+                    "server_type": "relaxed",
                     "original_format_details": format_details,
                     "original_attribute_case": case_metadata,
                     "extensions": m.Ldif.DynamicMetadata.model_validate({
@@ -743,7 +747,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 struct.error,
             ) as e:
                 self.logger.debug(
-                    f"Relaxed entry creation failed: {e}",
+                    "Relaxed entry creation failed: %s",
+                    e,
                 )
                 return r[m.Ldif.Entry].fail(f"Failed to parse entry: {e}")
 
@@ -789,7 +794,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 UnicodeDecodeError,
                 struct.error,
             ) as e:
-                self.logger.debug(f"Write entry failed: {e}")
+                self.logger.debug("Write entry failed: %s", e)
                 return r[str].fail(f"Failed to write entry: {e}")
 
 

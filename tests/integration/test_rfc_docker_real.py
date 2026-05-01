@@ -39,7 +39,7 @@ class TestsFlextLdifRfcDockerReal:
 
     def test_parse_real_oid_schema(
         self,
-        quirk_registry: FlextLdifServer,
+        server_registry: FlextLdifServer,
         oid_fixtures_dir: Path,
     ) -> None:
         """Test parsing real OID schema from fixtures."""
@@ -63,7 +63,7 @@ class TestsFlextLdifRfcDockerReal:
 
     def test_parse_real_oud_entries(
         self,
-        quirk_registry: FlextLdifServer,
+        server_registry: FlextLdifServer,
         oud_fixtures_dir: Path,
     ) -> None:
         """Test parsing real OUD entries from fixtures."""
@@ -80,7 +80,7 @@ class TestsFlextLdifRfcDockerReal:
 
     def test_parse_openldap_integration_data(
         self,
-        quirk_registry: FlextLdifServer,
+        server_registry: FlextLdifServer,
         openldap_fixtures_dir: Path,
     ) -> None:
         """Test parsing real OpenLDAP integration data."""
@@ -99,7 +99,7 @@ class TestsFlextLdifRfcDockerReal:
 
     def test_roundtrip_oid_to_file(
         self,
-        quirk_registry: FlextLdifServer,
+        server_registry: FlextLdifServer,
         oid_fixtures_dir: Path,
         tmp_path: Path,
     ) -> None:
@@ -139,7 +139,7 @@ class TestsFlextLdifRfcDockerReal:
 
     def test_parse_oud_acl_entries(
         self,
-        quirk_registry: FlextLdifServer,
+        server_registry: FlextLdifServer,
         oud_fixtures_dir: Path,
     ) -> None:
         """Test parsing OUD ACL entries from fixtures."""
@@ -158,7 +158,7 @@ class TestsFlextLdifRfcDockerReal:
         ]
         assert acl_entries, "No ACL entries found in OUD fixtures"
 
-    def test_parse_edge_case_unicode(self, quirk_registry: FlextLdifServer) -> None:
+    def test_parse_edge_case_unicode(self, server_registry: FlextLdifServer) -> None:
         """Test parsing Unicode edge cases."""
         unicode_dir = c.Tests.FIXTURES_DIR / "edge_cases" / "unicode"
         if not unicode_dir.exists():
@@ -175,7 +175,7 @@ class TestsFlextLdifRfcDockerReal:
 
     def test_write_with_exception_handling(
         self,
-        quirk_registry: FlextLdifServer,
+        server_registry: FlextLdifServer,
         tmp_path: Path,
     ) -> None:
         """Test RFC writer exception handling (now exposed without pragmas)."""
@@ -207,7 +207,7 @@ class TestsFlextLdifRfcDockerReal:
 
     def test_parse_broken_ldif_relaxed_mode(
         self,
-        quirk_registry: FlextLdifServer,
+        server_registry: FlextLdifServer,
     ) -> None:
         """Test relaxed parsing of broken/malformed LDIF."""
         broken_dir = c.Tests.FIXTURES_DIR / "broken" / "structure"
@@ -224,7 +224,7 @@ class TestsFlextLdifRfcDockerReal:
 
     def test_rfc_schema_parser_with_real_data(
         self,
-        quirk_registry: FlextLdifServer,
+        server_registry: FlextLdifServer,
     ) -> None:
         """Test RFC schema parser with real OID schema."""
         schema_file = c.Tests.FIXTURES_DIR / c.Tests.OID / "oid_schema_fixtures.ldif"
@@ -248,11 +248,11 @@ class TestsFlextLdifRfcDockerReal:
     """Real-world RFC integration scenarios."""
 
     @pytest.fixture
-    def quirk_registry(self) -> FlextLdifServer:
-        """Create quirk registry."""
+    def server_registry(self) -> FlextLdifServer:
+        """Create server registry."""
         return FlextLdifServer()
 
-    def test_large_oid_schema_parsing(self, quirk_registry: FlextLdifServer) -> None:
+    def test_large_oid_schema_parsing(self, server_registry: FlextLdifServer) -> None:
         """Test parsing large real OID schema (345KB fixture)."""
         schema_file = c.Tests.FIXTURES_DIR / c.Tests.OID / "oid_schema_fixtures.ldif"
         if not schema_file.exists():
@@ -263,7 +263,7 @@ class TestsFlextLdifRfcDockerReal:
         result = parser.parse_ldif_file(schema_file)
         assert result.success, f"Failed to parse large schema: {result.error}"
 
-    def test_large_oud_integration_data(self, quirk_registry: FlextLdifServer) -> None:
+    def test_large_oud_integration_data(self, server_registry: FlextLdifServer) -> None:
         """Test parsing large real OUD integration data (31KB)."""
         integration_file = (
             c.Tests.FIXTURES_DIR / c.Tests.OUD / "oud_integration_fixtures.ldif"
@@ -279,7 +279,7 @@ class TestsFlextLdifRfcDockerReal:
 
     def test_write_large_dataset(
         self,
-        quirk_registry: FlextLdifServer,
+        server_registry: FlextLdifServer,
         tmp_path: Path,
     ) -> None:
         """Test writing large dataset to file."""
@@ -299,7 +299,7 @@ class TestsFlextLdifRfcDockerReal:
             for i in range(100)
         ]
         output_file = tmp_path / "large_output.ldif"
-        writer = FlextLdifWriter(server=quirk_registry)
+        writer = FlextLdifWriter(server=server_registry)
         result = writer.write_ldif_file(
             entry_models,
             output_file,

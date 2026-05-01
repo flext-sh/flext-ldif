@@ -1,4 +1,4 @@
-"""Oracle Internet Directory (OID) Quirks."""
+"""Oracle Internet Directory (OID) Servers."""
 
 from __future__ import annotations
 
@@ -161,7 +161,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     @staticmethod
     def _normalize_to_dict(
         value: m.Ldif.AclSubject
-        | m.Ldif.QuirkMetadata
+        | m.Ldif.ServerMetadata
         | t.MutableConfigurationMapping
         | MutableMapping[
             str,
@@ -241,8 +241,8 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 struct.error,
             ):
                 acl_model = None
-            if acl_model and acl_model.metadata and acl_model.metadata.quirk_type:
-                can_handle = acl_model.metadata.quirk_type == self._get_server_type()
+            if acl_model and acl_model.metadata and acl_model.metadata.server_type:
+                can_handle = acl_model.metadata.server_type == self._get_server_type()
         else:
             acl_line_lower = acl_line.strip().lower()
             can_handle = bool(acl_line_lower) and acl_line_lower.startswith((
@@ -264,7 +264,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     def _build_metadata_extensions(
         self,
-        metadata: m.Ldif.QuirkMetadata
+        metadata: m.Ldif.ServerMetadata
         | MutableMapping[
             str,
             t.Ldif.Scalar | t.MutableSequenceOf[str] | t.MutableAttributeMapping | None,
@@ -297,7 +297,6 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         metadata_raw = u.Ldif.build_acl_metadata_complete(
             "oid",
             acl_line=settings.acl_line,
-            server_type="oid",
             subject_type=settings.oid_subject_type,
             subject_value=settings.oid_subject_value,
             target_dn=settings.target_dn,
@@ -324,7 +323,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     def _extract_extensions_dict(
         self,
-        metadata: m.Ldif.QuirkMetadata
+        metadata: m.Ldif.ServerMetadata
         | MutableMapping[
             str,
             t.Ldif.Scalar | t.MutableSequenceOf[str] | t.MutableAttributeMapping | None,
@@ -332,7 +331,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     ) -> t.Ldif.MutableMetadataMapping:
         """Extract extensions dict from metadata, converting types if needed."""
         try:
-            metadata = m.Ldif.QuirkMetadata.model_validate(metadata)
+            metadata = m.Ldif.ServerMetadata.model_validate(metadata)
         except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
             return {}
         extensions = getattr(metadata, "extensions", None)
@@ -375,7 +374,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     def _get_source_subject_type(
         self,
-        metadata: m.Ldif.QuirkMetadata | None,
+        metadata: m.Ldif.ServerMetadata | None,
     ) -> str | None:
         """Get source subject type from metadata."""
         if not metadata or not metadata.extensions:
@@ -446,7 +445,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     def _map_rfc_subject_to_oid(
         self,
         rfc_subject: m.Ldif.AclSubject,
-        metadata: m.Ldif.QuirkMetadata | None,
+        metadata: m.Ldif.ServerMetadata | None,
     ) -> str:
         """Map RFC subject type to OID subject type for writing."""
         rfc_subject_type = str(rfc_subject.subject_type)
@@ -625,8 +624,8 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 }),
                 "permissions": m.Ldif.AclPermissions(**rfc_compliant_perms),
                 "server_type": server_type,
-                "metadata": m.Ldif.QuirkMetadata.model_validate({
-                    "quirk_type": server_type,
+                "metadata": m.Ldif.ServerMetadata.model_validate({
+                    "server_type": server_type,
                     "extensions": extensions_metadata,
                 }),
                 "raw_acl": acl_line,
@@ -656,7 +655,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         self,
         acl_subject: m.Ldif.AclSubject | t.MutableConfigurationMapping,
         acl_permissions: m.Ldif.AclPermissions | t.MutableBoolMapping | None,
-        metadata: m.Ldif.QuirkMetadata
+        metadata: m.Ldif.ServerMetadata
         | MutableMapping[
             str,
             t.Ldif.Scalar | t.MutableSequenceOf[str] | t.MutableAttributeMapping | None,
@@ -666,10 +665,10 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         """Prepare OID subject and permissions clauses for ACL write."""
         subject_dict = self._normalize_to_dict(acl_subject)
         subject_public = m.Ldif.AclSubject.model_validate(subject_dict)
-        metadata_public: m.Ldif.QuirkMetadata | None = None
+        metadata_public: m.Ldif.ServerMetadata | None = None
         if metadata:
             try:
-                metadata_public = m.Ldif.QuirkMetadata.model_validate(metadata)
+                metadata_public = m.Ldif.ServerMetadata.model_validate(metadata)
             except (
                 ValueError,
                 KeyError,
@@ -678,7 +677,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 struct.error,
             ):
                 metadata_dict = self._normalize_to_dict(metadata)
-                metadata_public = m.Ldif.QuirkMetadata.model_validate(metadata_dict)
+                metadata_public = m.Ldif.ServerMetadata.model_validate(metadata_dict)
         oid_subject_type = self._map_rfc_subject_to_oid(subject_public, metadata_public)
         subject_value = self._prepare_subject_value_with_suffix(
             subject_public.subject_value,
@@ -722,9 +721,9 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         """Update ACL with OID server type and metadata."""
         server_type = FlextLdifServersOidConstants.SERVER_TYPE
         updated_metadata = (
-            acl_data.metadata.model_copy(update={"quirk_type": server_type})
+            acl_data.metadata.model_copy(update={"server_type": server_type})
             if acl_data.metadata
-            else m.Ldif.QuirkMetadata.create_for(
+            else m.Ldif.ServerMetadata.create_for(
                 server_type,
                 extensions=m.Ldif.DynamicMetadata(),
             )
@@ -770,7 +769,9 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             else:
                 permissions_public = None
             if acl_data.metadata:
-                metadata_public = m.Ldif.QuirkMetadata.model_validate(acl_data.metadata)
+                metadata_public = m.Ldif.ServerMetadata.model_validate(
+                    acl_data.metadata,
+                )
             else:
                 metadata_public = None
             subject_clause, permissions_clause = self._authorize_write_permissions(
@@ -784,7 +785,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 permissions_clause,
             ])
         if acl_data.metadata:
-            metadata_public = m.Ldif.QuirkMetadata.model_validate(acl_data.metadata)
+            metadata_public = m.Ldif.ServerMetadata.model_validate(acl_data.metadata)
         else:
             metadata_public = None
         acl_parts.extend(self._build_metadata_extensions(metadata_public))

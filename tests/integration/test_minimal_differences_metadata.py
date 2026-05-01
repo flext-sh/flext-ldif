@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 
 from flext_ldif import FlextLdif, FlextLdifParser, ldif
-from tests import c, m, t, u
+from tests import c, m, p, t, u
 
 
 class TestsFlextLdifMinimalDifferencesMetadata:
@@ -33,7 +33,7 @@ class TestsFlextLdifMinimalDifferencesMetadata:
     def test_oid_fixture_all_differences_captured(
         self,
         parser: FlextLdifParser,
-        writer: FlextLdif,
+        writer: p.Ldif.LdifClient,
     ) -> None:
         """Test that ALL minimal differences in OID fixtures are captured in metadata."""
         fixture_path = (
@@ -53,14 +53,14 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         assert entries, "No entries parsed from OID fixture"
         for entry in entries:
             assert entry.metadata is not None, f"Entry {entry.dn} missing metadata"
-            assert entry.metadata.quirk_type == c.Tests.OID, (
-                f"Entry {entry.dn} should have quirk_type='{c.Tests.OID}', got {entry.metadata.quirk_type}"
+            assert entry.metadata.server_type == c.Tests.OID, (
+                f"Entry {entry.dn} should have server_type='{c.Tests.OID}', got {entry.metadata.server_type}"
             )
 
     def test_oud_fixture_all_differences_captured(
         self,
         parser: FlextLdifParser,
-        writer: FlextLdif,
+        writer: p.Ldif.LdifClient,
     ) -> None:
         """Test that ALL minimal differences in OUD fixtures are captured in metadata."""
         fixture_path = (
@@ -82,7 +82,7 @@ class TestsFlextLdifMinimalDifferencesMetadata:
     def test_round_trip_oid_preserves_all_differences(
         self,
         parser: FlextLdifParser,
-        writer: FlextLdif,
+        writer: p.Ldif.LdifClient,
     ) -> None:
         """Test round-trip: OID -> RFC -> OID preserves ALL differences."""
         oid_ldif = "dn: cn=test, dc=example, dc=com\nobjectClass: top\nobjectClass: person\ncn: test\nsn: User\norcldasisenabled: 1\n"

@@ -115,7 +115,7 @@ class FlextLdifEntries(s):
                 return r[t.MutableSequenceOf[str]].ok(list(values))
             case _:
                 return r[t.MutableSequenceOf[str]].fail(
-                    "Unsupported attribute input type"
+                    "Unsupported attribute input type",
                 )
 
     @staticmethod
@@ -157,7 +157,7 @@ class FlextLdifEntries(s):
             if attr_name.lower() == "objectclass":
                 return r[t.MutableSequenceOf[str]].ok(list(attr_values))
         return r[t.MutableSequenceOf[str]].fail(
-            "Entry is missing objectClass attribute"
+            "Entry is missing objectClass attribute",
         )
 
     @staticmethod

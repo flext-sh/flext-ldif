@@ -1,9 +1,9 @@
-"""Oracle Unified Directory (OUD) Quirks.
+"""Oracle Unified Directory (OUD) Servers.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
-Provides OUD-specific quirks for schema, ACL, and entry processing.
+Provides OUD-specific servers for schema, ACL, and entry processing.
 """
 
 from __future__ import annotations
@@ -138,9 +138,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     ::
 
-        quirk = FlextLdifServersOudEntry()
-        if quirk.can_handle_entry(entry):
-            result = quirk.parse_entry(entry.dn.value, entry.attributes.attributes)
+        server = FlextLdifServersOudEntry()
+        if server.can_handle_entry(entry):
+            result = server.parse_entry(entry.dn.value, entry.attributes.attributes)
             if result.success:
                 parsed_entry = result.value
                 # Access OUD-specific operational attributes
@@ -149,34 +149,34 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     def __init__(
         self,
-        entry_service: p.Ldif.EntryQuirk | None = None,
-        _parent_quirk: FlextLdifServersBase | None = None,
+        entry_service: p.Ldif.EntryServer | None = None,
+        _parent_server: FlextLdifServersBase | None = None,
         **kwargs: str | float | bool | None,
     ) -> None:
-        """Initialize OUD entry quirk.
+        """Initialize OUD entry server.
 
         Args:
             entry_service: Injected entry service (optional, must satisfy HasParseMethod)
-            _parent_quirk: Reference to parent FlextLdifServersBase (optional)
+            _parent_server: Reference to parent FlextLdifServersBase (optional)
             **kwargs: Additional arguments passed to parent
 
         """
         {
             k: v
             for k, v in kwargs.items()
-            if k != "_parent_quirk"
+            if k != "_parent_server"
             and u.matches_type(v, (str, float, bool, type(None)))
         }
-        entry_service_typed: p.Ldif.EntryQuirk | None = (
+        entry_service_typed: p.Ldif.EntryServer | None = (
             entry_service if entry_service is not None else None
         )
         FlextLdifServersBaseEntry.__init__(
             self,
             entry_service_typed,
-            _parent_quirk=None,
+            _parent_server=None,
         )
-        if _parent_quirk is not None:
-            object.__setattr__(self, "_parent_quirk", _parent_quirk)
+        if _parent_server is not None:
+            object.__setattr__(self, "_parent_server", _parent_server)
 
     @staticmethod
     def _comment_acl_attributes(
@@ -201,9 +201,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             return entry_data
         existing_metadata = entry_data.metadata
         if not existing_metadata:
-            existing_metadata = m.Ldif.QuirkMetadata.create_for("oud")
+            existing_metadata = m.Ldif.ServerMetadata.create_for("oud")
         else:
-            existing_metadata = m.Ldif.QuirkMetadata.model_validate(
+            existing_metadata = m.Ldif.ServerMetadata.model_validate(
                 existing_metadata.model_dump(),
             )
         new_attributes_dict, commented_acl_values, hidden_attrs = (
@@ -340,7 +340,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         })
         corrected_entry = entry.model_copy(update={"attributes": corrected_ldif_attrs})
         logger.debug(
-            "OUD quirks: Applied syntax corrections before writing (structure preserved)",
+            "OUD servers: Applied syntax corrections before writing (structure preserved)",
             entry_dn=entry.dn.value if entry.dn else "",
             corrections_count=len(syntax_corrections) if syntax_corrections else 0,
         )
@@ -418,16 +418,16 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     @staticmethod
     def update_metadata_with_commented_acls(
-        metadata: m.Ldif.QuirkMetadata,
+        metadata: m.Ldif.ServerMetadata,
         acl_attribute_names: t.MutableSequenceOf[str],
         commented_acl_values: t.MutableStrSequenceMapping,
         hidden_attrs: set[str],
         entry_attributes_dict: t.MutableStrSequenceMapping,
-    ) -> m.Ldif.QuirkMetadata:
+    ) -> m.Ldif.ServerMetadata:
         """Update metadata with commented ACL information.
 
         Args:
-            metadata: Existing metadata (must be m.Ldif.QuirkMetadata, not internal model)
+            metadata: Existing metadata (must be m.Ldif.ServerMetadata, not internal model)
             acl_attribute_names: List of ACL attribute names
             commented_acl_values: Dictionary of commented ACL values
             hidden_attrs: Set of hidden attribute names
@@ -437,7 +437,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             Updated metadata with ACL information
 
         """
-        metadata_typed: m.Ldif.QuirkMetadata = metadata
+        metadata_typed: m.Ldif.ServerMetadata = metadata
         current_extensions: t.Ldif.MutableMetadataInputMapping = (
             metadata_typed.extensions.to_dict() if metadata_typed.extensions else {}
         )
@@ -447,7 +447,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             hidden_attribute_names = {str(item).lower() for item in hidden_attrs_raw}
         if metadata_typed.write_options is not None:
             legacy_hidden_attrs = getattr(
-                metadata_typed.write_options, "hidden_attrs", []
+                metadata_typed.write_options,
+                "hidden_attrs",
+                [],
             )
             if isinstance(legacy_hidden_attrs, (list, tuple, frozenset, set)):
                 hidden_attribute_names.update(
@@ -479,7 +481,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 }).model_dump_json()
             )
         commented_attrs_raw = current_extensions.get(
-            c.Ldif.ACL_COMMENTED_ATTRIBUTES, []
+            c.Ldif.ACL_COMMENTED_ATTRIBUTES,
+            [],
         )
         commented_attrs: t.MutableSequenceOf[str] = (
             [str(x) for x in commented_attrs_raw]
@@ -496,7 +499,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         update_dict_final: MutableMapping[str, t.Ldif.MutableMetadataInputMapping] = {
             "extensions": current_extensions,
         }
-        copy_result: m.Ldif.QuirkMetadata = metadata_typed.model_copy(
+        copy_result: m.Ldif.ServerMetadata = metadata_typed.model_copy(
             update=update_dict_final,
         )
         return copy_result
@@ -578,7 +581,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             attributes: Entry attributes dictionary
 
         Returns:
-            True if this quirk should handle the entry
+            True if this server should handle the entry
 
         References:
             - Oracle OUD LDIF Format: https://docs.oracle.com/cd/E22289_01/html/821-1273/understanding-ldif-files.html
@@ -597,9 +600,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         )
 
     @override
-    def parse_quirk(self, value: str) -> r[t.MutableSequenceOf[m.Ldif.Entry]]:
+    def parse_server(self, value: str) -> r[t.MutableSequenceOf[m.Ldif.Entry]]:
         """Parse LDIF content and apply OUD post-processing hooks."""
-        parsed_result = super().parse_quirk(value)
+        parsed_result = super().parse_server(value)
         if parsed_result.failure:
             return parsed_result
         processed_entries: t.MutableSequenceOf[m.Ldif.Entry] = []
@@ -642,7 +645,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
         **RFC Baseline** (in rfc.py ``parse_entry``):
         - Creates Entry model with RFC defaults
-        - Metadata has quirk_type='rfc'
+        - Metadata has server_type='rfc'
         - No server-specific format tracking
 
         **OUD Override** (this method):
@@ -698,7 +701,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             for attr_name in entry_attrs:
                 original_attribute_case[attr_name.lower()] = attr_name
         metadata_config = m.Ldif.EntryParseMetadataConfig.model_validate({
-            "quirk_type": c.Ldif.ServerTypes.OUD,
+            "server_type": c.Ldif.ServerTypes.OUD,
             "original_entry_dn": entry_dn,
             "cleaned_dn": entry.dn.value if entry.dn else entry_dn,
             "original_dn_line": f"dn: {entry_dn}",
@@ -1269,7 +1272,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 )
             )
             if not entry.metadata:
-                entry.metadata = m.Ldif.QuirkMetadata.create_for(
+                entry.metadata = m.Ldif.ServerMetadata.create_for(
                     "oud",
                     extensions=m.Ldif.DynamicMetadata(),
                 )
@@ -1407,7 +1410,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         if not aci_values:
             return r[m.Ldif.Entry].ok(entry)
         if not entry.metadata:
-            entry.metadata = m.Ldif.QuirkMetadata.create_for(
+            entry.metadata = m.Ldif.ServerMetadata.create_for(
                 "oud",
                 extensions=m.Ldif.DynamicMetadata(),
             )
@@ -1416,11 +1419,11 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             if entry.metadata and entry.metadata.extensions
             else {}
         )
-        parent = self._get_parent_quirk_safe()
-        acl_quirk = parent.acl_quirk if parent is not None else None
-        if acl_quirk is None:
+        parent = self._get_parent_server_safe()
+        acl_server = parent.acl_server if parent is not None else None
+        if acl_server is None:
             return r[m.Ldif.Entry].ok(entry)
-        self._process_aci_list_for_finalize(aci_values, acl_quirk, current_extensions)
+        self._process_aci_list_for_finalize(aci_values, acl_server, current_extensions)
         if current_extensions:
             existing_extensions = (
                 dict(entry.metadata.extensions.to_dict())
@@ -1587,7 +1590,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 deep=True,
             )
             return merged_entry
-        entry_metadata = m.Ldif.QuirkMetadata.create_for(
+        entry_metadata = m.Ldif.ServerMetadata.create_for(
             "oud",
             extensions=m.Ldif.DynamicMetadata.from_dict(
                 acl_metadata_extensions,
@@ -1687,7 +1690,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     def _process_aci_list_for_finalize(
         self,
         aci_values: t.MutableSequenceOf[str] | str,
-        acl_quirk: p.Ldif.AclQuirk,
+        acl_server: p.Ldif.AclServer,
         current_extensions: t.Ldif.MutableMetadataInputMapping,
     ) -> None:
         """Process list of ACI values and extract metadata."""
@@ -1698,7 +1701,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             normalized_aci = aci_value.strip()
             if not normalized_aci.startswith("aci:"):
                 normalized_aci = f"aci: {normalized_aci}"
-            acl_result = acl_quirk.parse_quirk(normalized_aci)
+            acl_result = acl_server.parse_server(normalized_aci)
             if acl_result.success:
                 acl_model = m.Ldif.Acl.model_validate(acl_result.value)
                 if acl_model.metadata and acl_model.metadata.extensions:
@@ -1807,8 +1810,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         normalized_aci = aci_value.strip()
         if not normalized_aci.startswith("aci:"):
             normalized_aci = f"aci: {normalized_aci}"
-        acl_quirk = FlextLdifServersOudAcl()
-        parse_result = acl_quirk.parse_quirk(normalized_aci)
+        acl_server = FlextLdifServersOudAcl()
+        parse_result = acl_server.parse_server(normalized_aci)
         if parse_result.success:
             parsed_acl = parse_result.value
             if parsed_acl.metadata and parsed_acl.metadata.extensions:
@@ -1856,7 +1859,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         **1. DN Restoration** (if differences detected):
            - Checks ``minimal_differences_dn.has_differences``
            - Uses ``original_dn_complete`` from extensions
-           - Restores DN with original spacing quirks
+           - Restores DN with original spacing servers
 
         **2. Attribute Restoration** (if case mapping available):
            - Uses ``original_attribute_case`` mapping

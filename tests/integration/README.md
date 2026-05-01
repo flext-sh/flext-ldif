@@ -63,7 +63,7 @@ tests/integration/
 │
 ├── test_oid_integration.py                       # OID server-specific tests
 ├── test_oud_integration.py                       # OUD server-specific tests
-├── test_cross_quirk_conversion.py                # Server-to-server conversion tests
+├── test_cross_server_conversion.py                # Server-to-server conversion tests
 │
 ├── test_real_ldap_export.py                      # Real LDAP container export tests
 ├── test_real_ldap_import.py                      # Real LDAP container import tests
@@ -130,14 +130,14 @@ These tests validate core LDIF functionality across all server types using centr
 **test_oid_integration.py**
 
 - Tests: Oracle Internet Directory specific features
-- Uses: OID-specific fixtures and OID quirks
+- Uses: OID-specific fixtures and OID servers
 
 **test_oud_integration.py**
 
 - Tests: Oracle Unified Directory specific features
-- Uses: OUD-specific fixtures and OUD quirks
+- Uses: OUD-specific fixtures and OUD servers
 
-**test_cross_quirk_conversion.py**
+**test_cross_server_conversion.py**
 
 - Tests: Server-to-server conversion (OID ↔ OUD)
 - Validates: Data integrity during server-specific transformations
@@ -198,7 +198,7 @@ PYTHONPATH=src poetry run pytest tests/integration/test_roundtrip_deep_validatio
 PYTHONPATH=src poetry run pytest tests/integration/test_roundtrip_deep_validation.py tests/integration/test_rfc_compliance_validation.py tests/integration/test_systematic_fixture_coverage.py tests/integration/test_error_recovery.py tests/integration/test_edge_cases.py -v
 
 # Run server-specific tests (no Docker required)
-PYTHONPATH=src poetry run pytest tests/integration/test_oid_integration.py tests/integration/test_oud_integration.py tests/integration/test_cross_quirk_conversion.py -v
+PYTHONPATH=src poetry run pytest tests/integration/test_oid_integration.py tests/integration/test_oud_integration.py tests/integration/test_cross_server_conversion.py -v
 
 # Run real LDAP tests (requires Docker)
 PYTHONPATH=src poetry run pytest tests/integration/test_real_ldap_*.py -v
@@ -706,7 +706,7 @@ Tests run with:
 ## 📚 References
 
 - **[ldif API Documentation](../README.md)**: Main project documentation
-- **[HOOK_PATTERNS.md](../HOOK_PATTERNS.md)**: Server quirk hook patterns
+- **[HOOK_PATTERNS.md](../HOOK_PATTERNS.md)**: Server server hook patterns
 - **[RFC 2849](https://tools.ietf.org/html/rfc2849)**: LDIF specification
 - **[RFC 4512](https://tools.ietf.org/html/rfc4512)**: LDAP schema specification
 - **[RFC 4514](https://tools.ietf.org/html/rfc4514)**: DN syntax specification

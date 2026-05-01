@@ -1,4 +1,4 @@
-"""Tests for edge cases in quirks server handling.
+"""Tests for edge cases in servers server handling.
 
 This module tests boundary conditions, error cases, and unusual LDIF
 content patterns across different LDAP server implementations.

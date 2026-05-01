@@ -1,4 +1,4 @@
-"""RFC 4512 Compliant Server Quirks - Base LDAP Schema/ACL/Entry Implementation."""
+"""RFC 4512 Compliant Server Servers - Base LDAP Schema/ACL/Entry Implementation."""
 
 from __future__ import annotations
 
@@ -18,28 +18,28 @@ logger = u.fetch_logger(__name__)
 
 
 class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
-    """LDAP ACL Quirk - Base Implementation."""
+    """LDAP ACL Server - Base Implementation."""
 
     def __new__(
         cls,
-        acl_service: p.Ldif.AclQuirk | None = None,
-        parent_quirk: Self | None = None,
+        acl_service: p.Ldif.AclServer | None = None,
+        parent_server: Self | None = None,
         **kwargs: t.Ldif.Scalar,
     ) -> Self:
         """Override __new__ to support auto-execute and processor instantiation."""
         _ = acl_service
         instance = super().__new__(cls)
-        auto_execute_kwargs = {"data", "operation", "parent_quirk", "_parent_quirk"}
+        auto_execute_kwargs = {"data", "operation", "parent_server", "_parent_server"}
         _ = {k: v for k, v in kwargs.items() if k not in auto_execute_kwargs}
-        parent_quirk_raw = (
-            parent_quirk if parent_quirk is not None else kwargs.get("_parent_quirk")
+        parent_server_raw = (
+            parent_server if parent_server is not None else kwargs.get("_parent_server")
         )
-        parent_quirk_value: Self | None = (
-            parent_quirk_raw if isinstance(parent_quirk_raw, cls) else None
+        parent_server_value: Self | None = (
+            parent_server_raw if isinstance(parent_server_raw, cls) else None
         )
         acl_instance: Self = instance
-        if parent_quirk_value is not None:
-            object.__setattr__(acl_instance, "_parent_quirk", parent_quirk_value)
+        if parent_server_value is not None:
+            object.__setattr__(acl_instance, "_parent_server", parent_server_value)
         if cls.auto_execute:
             data_raw = kwargs.get("data")
             data: str | m.Ldif.Acl | None = (
@@ -56,22 +56,22 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
 
     def __init__(
         self,
-        acl_service: p.Ldif.AclQuirk | None = None,
-        parent_quirk: Self | None = None,
+        acl_service: p.Ldif.AclServer | None = None,
+        parent_server: Self | None = None,
         **kwargs: t.Ldif.Scalar,
     ) -> None:
-        """Initialize RFC ACL quirk service."""
+        """Initialize RFC ACL server service."""
         _ = kwargs
-        acl_service_typed: p.Ldif.AclQuirk | None = (
+        acl_service_typed: p.Ldif.AclServer | None = (
             acl_service if acl_service is not None else None
         )
         FlextLdifServersBaseSchemaAcl.__init__(
             self,
             acl_service=acl_service_typed,
-            _parent_quirk=None,
+            _parent_server=None,
         )
-        if parent_quirk is not None:
-            object.__setattr__(self, "_parent_quirk", parent_quirk)
+        if parent_server is not None:
+            object.__setattr__(self, "_parent_server", parent_server)
 
     @overload
     def __call__(self, data: str, *, operation: str | None = None) -> m.Ldif.Acl: ...
@@ -101,19 +101,19 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
 
     @override
     def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
-        """Check if this quirk can handle the ACL definition."""
+        """Check if this server can handle the ACL definition."""
         _ = acl_line
         return True
 
     @override
     def can_handle_attribute(self, attribute: m.Ldif.SchemaAttribute) -> bool:
-        """Check if quirk handles schema attributes."""
+        """Check if server handles schema attributes."""
         _ = attribute
         return False
 
     @override
     def can_handle_objectclass(self, objectclass: m.Ldif.SchemaObjectClass) -> bool:
-        """Check if quirk handles objectclasses."""
+        """Check if server handles objectclasses."""
         _ = objectclass
         return False
 
@@ -153,8 +153,8 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         acl_model = m.Ldif.Acl(
             raw_acl=acl_line,
             server_type=server_type_value,
-            metadata=m.Ldif.QuirkMetadata(
-                quirk_type=server_type_value,
+            metadata=m.Ldif.ServerMetadata(
+                server_type=server_type_value,
                 extensions=extensions_meta,
             ),
         )

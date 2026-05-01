@@ -5,18 +5,18 @@ from __future__ import annotations
 from typing import Annotated, Self, override
 
 from flext_ldif import (
-    FlextLdifServiceBase,
     FlextLdifTransformer,
     c,
     m,
     r,
+    s,
     t,
     u,
 )
 
 
 class FlextLdifProcessingPipeline(
-    FlextLdifServiceBase[t.MutableSequenceOf[m.Ldif.Entry]]
+    s[t.MutableSequenceOf[m.Ldif.Entry]],
 ):
     """Full processing pipeline with configuration."""
 
@@ -84,10 +84,9 @@ class FlextLdifProcessingPipeline(
     @override
     def execute(
         self,
-        entries: t.MutableSequenceOf[m.Ldif.Entry] | None = None,
     ) -> r[t.MutableSequenceOf[m.Ldif.Entry]]:
         """Execute the processing pipeline."""
-        batch = entries if entries is not None else self.entries_input
+        batch = self.entries_input
         if batch is None:
             return r[t.MutableSequenceOf[m.Ldif.Entry]].fail("No entries provided")
         return r[t.MutableSequenceOf[m.Ldif.Entry]].from_result(

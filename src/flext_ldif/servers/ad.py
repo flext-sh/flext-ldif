@@ -1,4 +1,4 @@
-"""Active Directory Quirks Implementation."""
+"""Active Directory Servers Implementation."""
 
 from __future__ import annotations
 
@@ -18,10 +18,10 @@ from flext_ldif import (
 
 
 class FlextLdifServersAd(FlextLdifServersRfc):
-    """Active Directory server quirks implementation."""
+    """Active Directory server servers implementation."""
 
     class Constants(FlextLdifServersRfc.Constants):
-        """Standardized constants for Active Directory quirk."""
+        """Standardized constants for Active Directory server."""
 
         SERVER_TYPE: ClassVar[str] = "ad"
         PRIORITY: ClassVar[int] = 10
@@ -144,7 +144,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         ACL_TARGET_WILDCARD: ClassVar[str] = "*"
 
     class Schema(FlextLdifServersRfc.Schema):
-        """Active Directory schema quirk."""
+        """Active Directory schema server."""
 
         @override
         def can_handle_attribute(
@@ -179,7 +179,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             result = super()._parse_attribute(attr_definition)
             if result.success:
                 attr_data = result.value
-                metadata = m.Ldif.QuirkMetadata.create_for(self._get_server_type())
+                metadata = m.Ldif.ServerMetadata.create_for(self._get_server_type())
                 attr_updated = attr_data.model_copy(update={"metadata": metadata})
                 return r[m.Ldif.SchemaAttribute].ok(attr_updated)
             return r[m.Ldif.SchemaAttribute].from_result(result)
@@ -192,13 +192,13 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 oc_data = result.value
                 u.Ldif.fix_missing_sup(oc_data)
                 u.Ldif.fix_kind_mismatch(oc_data)
-                metadata = m.Ldif.QuirkMetadata.create_for(self._get_server_type())
+                metadata = m.Ldif.ServerMetadata.create_for(self._get_server_type())
                 oc_updated = oc_data.model_copy(update={"metadata": metadata})
                 return r[m.Ldif.SchemaObjectClass].ok(oc_updated)
             return r[m.Ldif.SchemaObjectClass].from_result(result)
 
     class Acl(FlextLdifServersRfc.Acl):
-        """Active Directory ACL quirk handling nTSecurityDescriptor entries."""
+        """Active Directory ACL server handling nTSecurityDescriptor entries."""
 
         @override
         def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
@@ -306,7 +306,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                         subject_value=decoded_sddl or (raw_value or ""),
                     ),
                     permissions=m.Ldif.AclPermissions(),
-                    metadata=m.Ldif.QuirkMetadata.create_for(self._get_server_type()),
+                    metadata=m.Ldif.ServerMetadata.create_for(self._get_server_type()),
                     raw_acl=acl_line,
                 )
                 if acl_model.metadata:
@@ -335,7 +335,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 return r[str].fail(f"Active Directory ACL write failed: {exc}")
 
     class Entry(FlextLdifServersRfc.Entry):
-        """Active Directory entry processing quirk."""
+        """Active Directory entry processing server."""
 
         @override
         def can_handle(

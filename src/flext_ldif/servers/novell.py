@@ -1,4 +1,4 @@
-"""Novell eDirectory Quirks — eDirectory flavor detection and schema handling."""
+"""Novell eDirectory Servers — eDirectory flavor detection and schema handling."""
 
 from __future__ import annotations
 
@@ -9,10 +9,10 @@ from flext_ldif import FlextLdifServersRfc, c, m, r, t, u
 
 
 class FlextLdifServersNovell(FlextLdifServersRfc):
-    """Novell eDirectory quirks implementation."""
+    """Novell eDirectory servers implementation."""
 
     class Constants(FlextLdifServersRfc.Constants):
-        """Standardized constants for Novell eDirectory quirk."""
+        """Standardized constants for Novell eDirectory server."""
 
         SERVER_TYPE: ClassVar[str] = "novell"
         PRIORITY: ClassVar[int] = 20
@@ -98,7 +98,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         NOVELL_PERMISSION_ENTRY: ClassVar[str] = "entry"
 
     class Schema(FlextLdifServersRfc.Schema):
-        """Novell eDirectory schema quirk."""
+        """Novell eDirectory schema server."""
 
         @override
         def can_handle_attribute(
@@ -159,7 +159,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             result = super()._parse_attribute(attr_definition)
             if result.success:
                 attr_data = result.value
-                metadata = m.Ldif.QuirkMetadata.create_for(self._get_server_type())
+                metadata = m.Ldif.ServerMetadata.create_for(self._get_server_type())
                 return r[m.Ldif.SchemaAttribute].ok(
                     attr_data.model_copy(update={"metadata": metadata}),
                 )
@@ -171,14 +171,14 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             result = super()._parse_objectclass(oc_definition)
             if result.success:
                 oc_data = result.value
-                metadata = m.Ldif.QuirkMetadata.create_for(self._get_server_type())
+                metadata = m.Ldif.ServerMetadata.create_for(self._get_server_type())
                 return r[m.Ldif.SchemaObjectClass].ok(
                     oc_data.model_copy(update={"metadata": metadata}),
                 )
             return result
 
     class Acl(FlextLdifServersRfc.Acl):
-        """Novell eDirectory ACL quirk."""
+        """Novell eDirectory ACL server."""
 
         @staticmethod
         def splitacl_line(acl_line: str) -> tuple[str, str]:
@@ -320,7 +320,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                             },
                         ),
                     ),
-                    metadata=m.Ldif.QuirkMetadata.create_for(
+                    metadata=m.Ldif.ServerMetadata.create_for(
                         self._get_server_type(),
                         extensions=m.Ldif.DynamicMetadata(original_format=acl_line),
                     ),
@@ -375,7 +375,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 return r[str].fail(f"Novell eDirectory ACL write failed: {exc}")
 
     class Entry(FlextLdifServersRfc.Entry):
-        """Novell eDirectory entry quirk."""
+        """Novell eDirectory entry server."""
 
         @override
         def can_handle(
@@ -413,7 +413,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             __context: t.JsonMapping | None,
             /,
         ) -> None:
-            """Initialize eDirectory entry quirk."""
+            """Initialize eDirectory entry server."""
 
         def process_entry(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
             """Normalise eDirectory entries and expose metadata."""
@@ -428,7 +428,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 for attr_name, attr_values in attributes.items():
                     processed_values: t.MutableSequenceOf[str] = list(attr_values)
                     processed_attributes[attr_name] = processed_values
-                processed_attributes[c.Ldif.QuirkMetadataKeys.SERVER_TYPE] = [
+                processed_attributes[c.Ldif.ServerMetadataKeys.SERVER_TYPE] = [
                     self._get_server_type(),
                 ]
                 processed_attributes[c.Ldif.DictKeys.OBJECTCLASS] = object_classes

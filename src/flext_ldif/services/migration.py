@@ -9,17 +9,17 @@ from typing import Annotated, Final, override
 from flext_ldif import (
     FlextLdifParser,
     FlextLdifProcessingPipeline,
-    FlextLdifServiceBase,
     FlextLdifWriter,
     c,
     m,
     r,
+    s,
     t,
     u,
 )
 
 
-class FlextLdifMigrationPipeline(FlextLdifServiceBase[m.Ldif.MigrationPipelineResult]):
+class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
     """Migration Pipeline for Server-to-Server LDIF Migration."""
 
     _DEFAULT_SERVER: Final[c.Ldif.ServerTypes] = c.Ldif.ServerTypes.RFC
@@ -215,7 +215,7 @@ class FlextLdifMigrationPipeline(FlextLdifServiceBase[m.Ldif.MigrationPipelineRe
                 source_server=source_server,
                 target_server=target_server,
             )
-            return pipeline.execute(entries)
+            return pipeline.model_copy(update={"entries_input": entries}).execute()
         except (
             ValueError,
             KeyError,

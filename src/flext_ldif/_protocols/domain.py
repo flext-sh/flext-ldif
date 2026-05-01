@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core import p
+from flext_cli import p
 
 if TYPE_CHECKING:
-    from flext_ldif import m, p as lp, t
+    from flext_ldif import m, t
 
 
 class FlextLdifProtocolsDomain(Protocol):
@@ -22,8 +22,8 @@ class FlextLdifProtocolsDomain(Protocol):
             ...
 
     @runtime_checkable
-    class ServerQuirk(Protocol):
-        """Structured server quirk contract used by services and tests."""
+    class ServerServer(Protocol):
+        """Structured server server contract used by services and tests."""
 
         @property
         def server_type(self) -> str:
@@ -32,35 +32,47 @@ class FlextLdifProtocolsDomain(Protocol):
 
         @property
         def priority(self) -> int:
-            """Return quirk priority."""
+            """Return server priority."""
             ...
 
         @property
-        def schema_quirk(self) -> FlextLdifProtocolsDomain.SchemaQuirk:
-            """Return schema quirk implementation."""
+        def schema_server(self) -> FlextLdifProtocolsDomain.SchemaServer:
+            """Return schema server implementation."""
             ...
 
         @property
-        def acl_quirk(self) -> FlextLdifProtocolsDomain.AclQuirk:
-            """Return ACL quirk implementation."""
+        def acl_server(self) -> FlextLdifProtocolsDomain.AclServer:
+            """Return ACL server implementation."""
             ...
 
         @property
-        def entry_quirk(self) -> FlextLdifProtocolsDomain.EntryQuirk:
-            """Return entry quirk implementation."""
+        def entry_server(self) -> FlextLdifProtocolsDomain.EntryServer:
+            """Return entry server implementation."""
+            ...
+
+        def parse_ldif(self, value: str) -> p.Result[m.Ldif.ParseResponse]:
+            """Parse LDIF text through the server's entry implementation."""
+            ...
+
+        def write(
+            self,
+            entries: t.MutableSequenceOf[m.Ldif.Entry],
+            write_options: m.Ldif.WriteFormatOptions | None = None,
+        ) -> p.Result[str]:
+            """Write canonical entries through the server's entry implementation."""
             ...
 
     @runtime_checkable
-    class SchemaQuirk(Protocol):
-        """Schema quirk contract.
+    class SchemaServer(Protocol):
+        """Schema server contract.
 
-        ``acl_quirk`` was removed — it had zero workspace consumers
-        (per AGENTS.md §3.5 + STRICT YAGNI). Server-level ``acl_quirk``
-        access lives on the parent ``Quirk`` protocol above, where the
+        ``acl_server`` was removed — it had zero workspace consumers
+        (per AGENTS.md §3.5 + STRICT YAGNI). Server-level ``acl_server``
+        access lives on the parent ``Server`` protocol above, where the
         actual entry-conversion code reads it.
         """
 
-        def parse_quirk(
+        def parse_server(
             self,
             value: str,
         ) -> p.Result[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
@@ -100,10 +112,10 @@ class FlextLdifProtocolsDomain(Protocol):
             ...
 
     @runtime_checkable
-    class AclQuirk(Protocol):
-        """ACL quirk contract."""
+    class AclServer(Protocol):
+        """ACL server contract."""
 
-        def parse_quirk(self, value: str) -> p.Result[t.Ldif.AclLike]:
+        def parse_server(self, value: str) -> p.Result[t.Ldif.AclLike]:
             """Parse an ACL line into an ACL model."""
             ...
 
@@ -112,10 +124,10 @@ class FlextLdifProtocolsDomain(Protocol):
             ...
 
     @runtime_checkable
-    class EntryQuirk(Protocol):
-        """Entry quirk contract."""
+    class EntryServer(Protocol):
+        """Entry server contract."""
 
-        def parse_quirk(self, value: str) -> p.Result[t.Ldif.EntrySequence]:
+        def parse_server(self, value: str) -> p.Result[t.Ldif.EntrySequence]:
             """Parse LDIF text into entry models."""
             ...
 
@@ -130,34 +142,91 @@ class FlextLdifProtocolsDomain(Protocol):
         def write(
             self,
             entry_data: t.Ldif.EntryOrEntries,
-            write_options: lp.Ldif.WriteFormatOptions | None = None,
+            write_options: m.Ldif.WriteFormatOptions | None = None,
         ) -> p.Result[str]:
             """Serialize one or more entries."""
             ...
 
     @runtime_checkable
-    class QuirkRegistry(Protocol):
-        """Registry contract for server-specific quirks."""
+    class ServerRegistry(Protocol):
+        """Registry contract for server-specific servers."""
+
+        def server(
+            self,
+            server_type: str,
+        ) -> p.Result[FlextLdifProtocolsDomain.ServerServer]:
+            """Return base server for a server type."""
+            ...
+
+        def resolve_base_server(
+            self,
+            server_type: str,
+        ) -> p.Result[FlextLdifProtocolsDomain.ServerServer]:
+            """Resolve base server for a server type."""
+            ...
 
         def schema(
             self,
             server_type: str,
-        ) -> FlextLdifProtocolsDomain.SchemaQuirk | None:
-            """Return schema quirk for a server type."""
+        ) -> FlextLdifProtocolsDomain.SchemaServer | None:
+            """Return schema server for a server type."""
+            ...
+
+        def schema_server(
+            self,
+            server_type: str,
+        ) -> FlextLdifProtocolsDomain.SchemaServer | None:
+            """Return schema server for a server type."""
+            ...
+
+        def resolve_schema_server(
+            self,
+            server_type: str,
+        ) -> FlextLdifProtocolsDomain.SchemaServer | None:
+            """Resolve schema server for a server type."""
             ...
 
         def acl(
             self,
             server_type: str,
-        ) -> FlextLdifProtocolsDomain.AclQuirk | None:
-            """Return ACL quirk for a server type."""
+        ) -> FlextLdifProtocolsDomain.AclServer | None:
+            """Return ACL server for a server type."""
             ...
 
         def entry(
             self,
             server_type: str,
-        ) -> FlextLdifProtocolsDomain.EntryQuirk | None:
-            """Return entry quirk for a server type."""
+        ) -> FlextLdifProtocolsDomain.EntryServer | None:
+            """Return entry server for a server type."""
+            ...
+
+        def resolve_server_bundle(
+            self,
+            server_type: str,
+        ) -> p.Result[
+            t.MappingKV[
+                str,
+                FlextLdifProtocolsDomain.SchemaServer
+                | FlextLdifProtocolsDomain.AclServer
+                | FlextLdifProtocolsDomain.EntryServer,
+            ]
+        ]:
+            """Return schema/acl/entry server bundle for a server type."""
+            ...
+
+        def resolve_server_constants(
+            self,
+            server_type: str,
+        ) -> p.Result[type]:
+            """Resolve constants class for a server type."""
+            ...
+
+        def list_registered_servers(self) -> t.MutableSequenceOf[str]:
+            """Return all registered normalized server types."""
+            ...
+
+        def summarize_registry(self) -> t.Ldif.MutableMetadataInputMapping:
+            """Return registry summary metadata."""
             ...
 
 

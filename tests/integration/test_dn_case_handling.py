@@ -1,7 +1,7 @@
-"""Integration tests for DN case handling during quirk conversions.
+"""Integration tests for DN case handling during server conversions.
 
 Tests the DN Case Registry system that ensures DN case consistency when
-converting between quirks with different case sensitivity (OID vs OUD).
+converting between servers with different case sensitivity (OID vs OUD).
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

@@ -1,8 +1,8 @@
-"""Integration tests for OID (Oracle Internet Directory) quirks.
+"""Integration tests for OID (Oracle Internet Directory) servers.
 
 Tests complete workflow with real fixture data:
 - Parse OID LDIF fixtures via ldif API
-- Process entries with OID quirks automatically
+- Process entries with OID servers automatically
 - Convert to RFC format
 - Write back to LDIF
 - Validate round-trip integrity

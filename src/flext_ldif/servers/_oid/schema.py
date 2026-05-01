@@ -1,4 +1,4 @@
-"""Oracle Internet Directory (OID) Quirks."""
+"""Oracle Internet Directory (OID) Servers."""
 
 from __future__ import annotations
 
@@ -25,32 +25,32 @@ logger = u.fetch_logger(__name__)
 
 
 class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
-    """Oracle Internet Directory (OID) schema quirks implementation."""
+    """Oracle Internet Directory (OID) schema servers implementation."""
 
     def __init__(
         self,
-        schema_service: p.Ldif.SchemaQuirk | None = None,
-        parent_quirk: p.Ldif.SchemaQuirk | None = None,
+        schema_service: p.Ldif.SchemaServer | None = None,
+        parent_server: p.Ldif.SchemaServer | None = None,
         **kwargs: t.Ldif.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> None:
-        """Initialize OID schema quirk."""
+        """Initialize OID schema server."""
         filtered_kwargs: t.MutableConfigValueMapping = {
             k: v
             for k, v in kwargs.items()
-            if k not in {"_parent_quirk", "_schema_service"}
+            if k not in {"_parent_server", "_schema_service"}
             and isinstance(v, (str, float, bool))
         }
-        schema_service_typed: p.Ldif.SchemaQuirk | None = (
+        schema_service_typed: p.Ldif.SchemaServer | None = (
             schema_service if schema_service is not None else None
         )
         FlextLdifServersBaseSchema.__init__(
             self,
             _schema_service=schema_service_typed,
-            _parent_quirk=None,
+            _parent_server=None,
             **filtered_kwargs,
         )
-        if parent_quirk is not None:
-            object.__setattr__(self, "_parent_quirk", parent_quirk)
+        if parent_server is not None:
+            object.__setattr__(self, "_parent_server", parent_server)
 
     @override
     def extract_schemas_from_ldif(
@@ -546,4 +546,4 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
         return super()._write_attribute(attr_copy)
 
 
-"Oracle Internet Directory (OID) Quirks.\n\nCopyright (c) 2025 FLEXT Team. All rights reserved.\nSPDX-License-Identifier: MIT\n\nImplements Oracle OID-specific extensions as quirks on top of RFC-compliant\nbase parsers. This wraps existing OID parser logic as composable quirks.\n\nOID-specific features:\n- Oracle OID attribute types (2.16.840.1.113894.* namespace)\n- Oracle orclaci and orclentrylevelaci ACLs\n- Oracle-specific schema attributes\n- Oracle operational attributes\n"
+"Oracle Internet Directory (OID) Servers.\n\nCopyright (c) 2025 FLEXT Team. All rights reserved.\nSPDX-License-Identifier: MIT\n\nImplements Oracle OID-specific extensions as servers on top of RFC-compliant\nbase parsers. This wraps existing OID parser logic as composable servers.\n\nOID-specific features:\n- Oracle OID attribute types (2.16.840.1.113894.* namespace)\n- Oracle orclaci and orclentrylevelaci ACLs\n- Oracle-specific schema attributes\n- Oracle operational attributes\n"

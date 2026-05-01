@@ -2,7 +2,7 @@
 
 Namespace mixin extracted from domain_entries.py containing
 ValidationMetadata, WriteOptions, FormatDetails, SchemaFormatDetails,
-and QuirkMetadata inner classes.
+and ServerMetadata inner classes.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -32,7 +32,7 @@ class FlextLdifModelsDomainMetadata:
     class ValidationMetadata(m.FrozenModel):
         """Validation results and error tracking metadata.
 
-        Composed model for QuirkMetadata.validation_results field.
+        Composed model for ServerMetadata.validation_results field.
         """
 
         rfc_violations: Annotated[
@@ -67,7 +67,7 @@ class FlextLdifModelsDomainMetadata:
     class WriteOptions(m.FrozenModel):
         """LDIF writing configuration options.
 
-        Composed model for QuirkMetadata.write_options field.
+        Composed model for ServerMetadata.write_options field.
         """
 
         format: Annotated[
@@ -104,7 +104,7 @@ class FlextLdifModelsDomainMetadata:
     class FormatDetails(m.FrozenModel):
         """Original formatting details for round-trip preservation.
 
-        Composed model for QuirkMetadata.original_format_details field.
+        Composed model for ServerMetadata.original_format_details field.
         """
 
         dn_line: Annotated[
@@ -131,7 +131,7 @@ class FlextLdifModelsDomainMetadata:
     class SchemaFormatDetails(m.FrozenModel):
         """Schema formatting details for perfect round-trip conversion.
 
-        Composed model for QuirkMetadata.schema_format_details field.
+        Composed model for ServerMetadata.schema_format_details field.
         """
 
         original_string_complete: Annotated[
@@ -171,18 +171,18 @@ class FlextLdifModelsDomainMetadata:
             ),
         ] = u.Field(default_factory=FlextLdifModelsMetadata.DynamicMetadata)
 
-    class QuirkMetadata(m.DynamicModel):
-        """Universal metadata container for quirk-specific data preservation.
+    class ServerMetadata(m.DynamicModel):
+        """Universal metadata container for server-specific data preservation.
 
-        Used to store server-specific quirks, transformations, and metadata
+        Used to store server-specific servers, transformations, and metadata
         that needs to be preserved during LDIF processing operations.
 
         Extended with RFC compliance tracking, conversion history, and
         server-specific data preservation for complete audit trails.
 
         Attributes:
-            quirk_type: Type of quirk this metadata represents
-            extensions: Extensible metadata storage for quirk-specific data
+            server_type: Type of server this metadata represents
+            extensions: Extensible metadata storage for server-specific data
 
             # RFC Compliance Tracking (Phase 1: Enhanced Validation)
             rfc_violations: List of RFC violations detected in entry/attribute
@@ -199,17 +199,17 @@ class FlextLdifModelsDomainMetadata:
 
         """
 
-        quirk_type: Annotated[
+        server_type: Annotated[
             c.Ldif.ServerTypes,
             u.Field(
                 ...,
-                description="Type of quirk this metadata represents (ServerTypes enum or literal)",
+                description="Type of server this metadata represents (ServerTypes enum or literal)",
             ),
         ]
         extensions: Annotated[
             FlextLdifModelsMetadata.DynamicMetadata,
             u.Field(
-                description="Extensible metadata storage for quirk-specific data (server-injected validation rules, unconverted attributes, etc.)",
+                description="Extensible metadata storage for server-specific data (server-injected validation rules, unconverted attributes, etc.)",
             ),
         ] = u.Field(default_factory=FlextLdifModelsMetadata.DynamicMetadata)
         rfc_violations: Annotated[
@@ -317,10 +317,10 @@ class FlextLdifModelsDomainMetadata:
                 description="Original case of attribute names: {'objectclass': 'objectClass', 'cn': 'CN'}. Used to restore original case during reverse conversion.",
             ),
         ] = u.Field(default_factory=FlextLdifModelsMetadata.DynamicMetadata)
-        schema_quirks_applied: Annotated[
+        schema_servers_applied: Annotated[
             t.MutableSequenceOf[str],
             u.Field(
-                description="List of schema quirks applied during parsing: ['matching_rule_normalization', 'syntax_oid_conversion', 'schema_dn_quirk']",
+                description="List of schema servers applied during parsing: ['matching_rule_normalization', 'syntax_oid_conversion', 'schema_dn_server']",
             ),
         ] = u.Field(default_factory=list)
         boolean_conversions: Annotated[
@@ -348,9 +348,9 @@ class FlextLdifModelsDomainMetadata:
             ),
         ] = u.Field(default_factory=lambda: list[t.MutableStrMapping]())
 
-        @u.field_validator("quirk_type", mode="before")
+        @u.field_validator("server_type", mode="before")
         @classmethod
-        def _coerce_quirk_type(
+        def _coerce_server_type(
             cls,
             value: c.Ldif.ServerTypes | str,
         ) -> c.Ldif.ServerTypes:
@@ -362,24 +362,24 @@ class FlextLdifModelsDomainMetadata:
         @classmethod
         def create_for(
             cls,
-            quirk_type: str | c.Ldif.ServerTypes | None = None,
+            server_type: str | c.Ldif.ServerTypes | None = None,
             extensions: FlextLdifModelsMetadata.DynamicMetadata
             | t.Ldif.MetadataInputMapping
             | None = None,
         ) -> Self:
-            """Factory method to create QuirkMetadata with extensions.
+            """Factory method to create ServerMetadata with extensions.
 
             Args:
-                quirk_type: Quirk type identifier. Defaults to RFC if not provided.
+                server_type: Server type identifier. Defaults to RFC if not provided.
                 extensions: Extensions as DynamicMetadata or dict. Defaults to empty if not provided.
 
             Returns:
-                QuirkMetadata instance with defaults from Constants.
+                ServerMetadata instance with defaults from Constants.
 
             """
-            default_quirk_type: c.Ldif.ServerTypes = (
-                FlextLdifShared.normalize_server_type(quirk_type)
-                if quirk_type is not None
+            default_server_type: c.Ldif.ServerTypes = (
+                FlextLdifShared.normalize_server_type(server_type)
+                if server_type is not None
                 else c.Ldif.ServerTypes.RFC
             )
             extensions_model: FlextLdifModelsMetadata.DynamicMetadata
@@ -392,7 +392,7 @@ class FlextLdifModelsDomainMetadata:
                     extensions,
                 )
             validated: Self = cls.model_validate({
-                "quirk_type": default_quirk_type,
+                "server_type": default_server_type,
                 "extensions": extensions_model,
             })
             return validated

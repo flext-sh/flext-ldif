@@ -3,7 +3,7 @@
 Tests comprehensive settings integration with ldif facade including:
 - Configuration initialization with facade
 - Server type selection and behavior
-- Quirks mode handling
+- Servers mode handling
 - Configuration impacts on parsing
 - Config consistency across operations
 

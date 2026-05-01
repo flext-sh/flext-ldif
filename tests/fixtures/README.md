@@ -21,7 +21,7 @@
 
 <!-- TOC END -->
 
-Comprehensive fixture collection for LDAP server testing and quirks validation.
+Comprehensive fixture collection for LDAP server testing and servers validation.
 
 ## Overview
 
@@ -73,13 +73,13 @@ schema = u.Tests.load(
 
 ```bash
 # Run all fixture-based tests
-pytest -m fixtures tests/unit/quirks/
+pytest -m fixtures tests/unit/servers/
 
 # Run operational tests
-pytest -m operational tests/unit/quirks/
+pytest -m operational tests/unit/servers/
 
 # Run with specific markers
-pytest -m "operational and real_data" tests/unit/quirks/
+pytest -m "operational and real_data" tests/unit/servers/
 ```
 
 ### Pytest Markers
@@ -91,7 +91,7 @@ Available markers:
 - `real_data` - Tests using real fixture data
 - `conversion` - Conversion operation tests
 - `roundtrip` - Bidirectional conversion tests
-- `quirks` - LDAP server quirks tests
+- `servers` - LDAP server servers tests
 
 ## Helper Utilities
 
@@ -128,7 +128,7 @@ def test_parse_real_attributes(oid_schema_attributes, attr_index):
         pytest.skip("Not enough attributes")
 
     attr = oid_schema_attributes[attr_index]
-    result = quirk.parse_attribute(attr)
+    result = server.parse_attribute(attr)
     assert result.is_success
 ```
 

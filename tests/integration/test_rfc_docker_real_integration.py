@@ -23,11 +23,11 @@ class TestsFlextLdifRfcDockerRealIntegration:
     """Test RFC parser with real fixture data."""
 
     @pytest.fixture
-    def quirk_registry(self) -> FlextLdifServer:
-        """Create quirk registry."""
+    def server_registry(self) -> FlextLdifServer:
+        """Create server registry."""
         return FlextLdifServer()
 
-    def test_parse_oid_entries_fixture(self, quirk_registry: FlextLdifServer) -> None:
+    def test_parse_oid_entries_fixture(self, server_registry: FlextLdifServer) -> None:
         """Test parsing real OID entries from fixtures."""
         entries_file = c.Tests.FIXTURES_DIR / c.Tests.OID / "oid_entries_fixtures.ldif"
         if not entries_file.exists():
@@ -46,7 +46,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
         ]
         assert typed_entries
 
-    def test_parse_oud_entries_fixture(self, quirk_registry: FlextLdifServer) -> None:
+    def test_parse_oud_entries_fixture(self, server_registry: FlextLdifServer) -> None:
         """Test parsing real OUD entries from fixtures."""
         entries_file = c.Tests.FIXTURES_DIR / c.Tests.OUD / "oud_entries_fixtures.ldif"
         if not entries_file.exists():
@@ -59,7 +59,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
 
     def test_parse_openldap_entries_fixture(
         self,
-        quirk_registry: FlextLdifServer,
+        server_registry: FlextLdifServer,
     ) -> None:
         """Test parsing real OpenLDAP entries from fixtures."""
         entries_file = (
@@ -73,7 +73,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
         parse_response = result.value
         assert parse_response.entries
 
-    def test_parse_oid_schema_fixture(self, quirk_registry: FlextLdifServer) -> None:
+    def test_parse_oid_schema_fixture(self, server_registry: FlextLdifServer) -> None:
         """Test parsing real OID schema from fixtures."""
         schema_file = c.Tests.FIXTURES_DIR / c.Tests.OID / "oid_schema_fixtures.ldif"
         if not schema_file.exists():
@@ -84,7 +84,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
         parse_response = result.value
         assert parse_response.entries
 
-    def test_parse_oud_schema_fixture(self, quirk_registry: FlextLdifServer) -> None:
+    def test_parse_oud_schema_fixture(self, server_registry: FlextLdifServer) -> None:
         """Test parsing real OUD schema from fixtures."""
         schema_file = c.Tests.FIXTURES_DIR / c.Tests.OUD / "oud_schema_fixtures.ldif"
         if not schema_file.exists():
@@ -95,7 +95,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
 
     def test_write_and_reparse_oid_entries(
         self,
-        quirk_registry: FlextLdifServer,
+        server_registry: FlextLdifServer,
         tmp_path: Path,
     ) -> None:
         """Test roundtrip: parse OID fixture, write, and re-parse."""
@@ -117,7 +117,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
         ]
         original_count = len(entries)
         output_file = tmp_path / "roundtrip.ldif"
-        writer = FlextLdifWriter(server=quirk_registry)
+        writer = FlextLdifWriter(server=server_registry)
         write_result = writer.write_ldif_file(
             typed_entries,
             output_file,
@@ -133,7 +133,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
 
     def test_write_oud_acl_entries(
         self,
-        quirk_registry: FlextLdifServer,
+        server_registry: FlextLdifServer,
         tmp_path: Path,
     ) -> None:
         """Test writing OUD ACL entries to file."""
@@ -155,7 +155,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
             for entry in entries
         ]
         output_file = tmp_path / "acl_output.ldif"
-        writer = FlextLdifWriter(server=quirk_registry)
+        writer = FlextLdifWriter(server=server_registry)
         result = writer.write_ldif_file(
             typed_entries,
             output_file,
@@ -164,7 +164,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
         assert result.success, f"Failed to write ACL entries: {result.error}"
         assert output_file.exists()
 
-    def test_parse_nonexistent_file(self, quirk_registry: FlextLdifServer) -> None:
+    def test_parse_nonexistent_file(self, server_registry: FlextLdifServer) -> None:
         """Test parsing nonexistent file returns error."""
         parser = FlextLdifParser()
         result = parser.parse_ldif_file(Path("/nonexistent/file.ldif"))
@@ -173,7 +173,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
 
     def test_write_to_readonly_directory(
         self,
-        quirk_registry: FlextLdifServer,
+        server_registry: FlextLdifServer,
         tmp_path: Path,
     ) -> None:
         """Test write to read-only directory returns error."""
@@ -187,7 +187,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
                     attributes={"cn": ["test"]}, attribute_metadata={}
                 ),
             )
-            writer = FlextLdifWriter(server=quirk_registry)
+            writer = FlextLdifWriter(server=server_registry)
             result = writer.write_ldif_file(
                 [test_entry],
                 readonly_dir / "test.ldif",
@@ -204,7 +204,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
 
     def test_parse_empty_file(
         self,
-        quirk_registry: FlextLdifServer,
+        server_registry: FlextLdifServer,
         tmp_path: Path,
     ) -> None:
         """Test parsing empty file."""

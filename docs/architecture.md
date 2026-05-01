@@ -7,7 +7,7 @@
   - [Facade (`api.py`)](#facade-apipy)
   - [Service Base (`base.py`)](#service-base-basepy)
   - [Services (`services/`)](#services-services)
-  - [Quirks (`services/server.py` and `servers/`)](#quirks-servicesserverpy-and-servers)
+  - [Servers (`services/server.py` and `servers/`)](#servers-servicesserverpy-and-servers)
   - [Models and Typing](#models-and-typing)
 - [Control Flow Examples](#control-flow-examples)
   - [Parsing LDIF Text](#parsing-ldif-text)
@@ -20,7 +20,7 @@
 **Version**: 0.9.0 | **Updated**: 2025-02-17
 
 This document describes the architecture in `src/flext_ldif`. It connects the
-public facade to the underlying service layer, quirk discovery, and typed models
+public facade to the underlying service layer, server discovery, and typed models
 to show how the library processes LDIF while adapting to different LDAP servers.
 
 ## Architectural Goals
@@ -28,7 +28,7 @@ to show how the library processes LDIF while adapting to different LDAP servers.
 - Keep a single, stable facade for callers while allowing the implementation to
   evolve behind it.
 - Separate RFC-compliant behaviour from server-specific differences via
-  discoverable quirks.
+  discoverable servers.
 - Provide predictable, typed inputs/outputs using Pydantic v2 models and
   flext-core `r`.
 - Keep services small and focused so changes remain localized.
@@ -42,9 +42,9 @@ src/flext_ldif/
 ├── settings.py             # Configuration namespace for LDIF options
 ├── constants.py          # Enumerations and literal helpers
 ├── models.py             # Public aggregation of domain, processing, and result models
-├── protocols.py          # Protocol contracts for services and quirks
+├── protocols.py          # Protocol contracts for services and servers
 ├── services/             # Services for parsing, writing, conversion, filtering, etc.
-├── servers/              # Server-specific quirks (Schema, Acl, Entry) auto-discovered at runtime
+├── servers/              # Server-specific servers (Schema, Acl, Entry) auto-discovered at runtime
 ├── typings.py            # Typed helper aliases for service responses
 └── utilities.py          # Cross-cutting helpers for DN, ACL, detection, validation
 ```
@@ -75,18 +75,18 @@ property.
 Each service owns one responsibility:
 
 - **Parsing (`services/parser.py`):** converts LDIF strings, files, or ldap3
-  tuples into `ParseResponse` objects using entry quirks from the quirk
+  tuples into `ParseResponse` objects using entry servers from the server
   registry.
 - **Writing (`services/writer.py`):** serializes entries back to LDIF text with
   configurable encoding and wrapping.
 - **Conversion (`services/conversion.py`):** translates entries between server
-  types using source/target quirks.
+  types using source/target servers.
 - **Filtering & Categorization (`services/filters.py`, `services/categorization.py`):**
   apply typed filter criteria and grouping rules; factories are pre-registered to
   resolve circular dependencies.
 - **Validation & Syntax (`services/validation.py`, `services/syntax.py`):**
   validate entries, schemas, and attribute syntax, delegating server nuances to
-  quirks.
+  servers.
 - **Analysis, Sorting, and Statistics (`services/analysis.py`, `services/sorting.py`,
   `services/statistics.py`):** provide helper routines for inspecting, ordering,
   and summarizing parsed datasets.
@@ -96,20 +96,20 @@ Each service owns one responsibility:
   flows.
 
 All services return `r[T]` and share logging/configuration through the
-base class. The writer and conversion services receive the quirk registry so
+base class. The writer and conversion services receive the server registry so
 they can format entries for the target server type.
 
-### Quirks (`services/server.py` and `servers/`)
+### Servers (`services/server.py` and `servers/`)
 
-`FlextLdifServer` discovers quirk implementations in `flext_ldif.servers` using
+`FlextLdifServer` discovers server implementations in `flext_ldif.servers` using
 reflection. For each subclass of `FlextLdifServersBase`, it instantiates the
 class, validates that nested `Schema`, `Acl`, and `Entry` components exist, and
 registers them by `server_type`. Accessors (`schema`, `acl`, `entry`) return the
-appropriate quirk instance for a normalized server type supplied by
+appropriate server instance for a normalized server type supplied by
 `FlextLdifConstants`.
 
-Concrete quirks include RFC, Oracle (OID/OUD), OpenLDAP variants, Active
-Directory, 389 DS, Apache DS, Novell, Tivoli, and a relaxed fallback. Each quirk
+Concrete servers include RFC, Oracle (OID/OUD), OpenLDAP variants, Active
+Directory, 389 DS, Apache DS, Novell, Tivoli, and a relaxed fallback. Each server
 encapsulates server-specific parsing, ACL handling, and schema interpretation
 while keeping the facade and services unchanged.
 
@@ -127,8 +127,8 @@ encodings.
 
 1. Caller invokes `ldif.parse` or `FlextLdifParser.parse`.
 1. The parser resolves the effective server type (default `rfc`) and requests the
-   entry quirk from `FlextLdifServer`.
-1. The quirk parses the content and returns entries; the parser wraps them in
+   entry server from `FlextLdifServer`.
+1. The server parses the content and returns entries; the parser wraps them in
    `ParseResponse` with statistics and server metadata.
 
 ### Writing LDIF Text
@@ -136,12 +136,12 @@ encodings.
 1. Caller invokes `ldif.write` with entries and optional format overrides.
 1. Writer options are merged through `u.build_options_from_kwargs`
    to combine defaults and explicit values.
-1. The writer uses the shared quirk registry to format entries for the chosen
+1. The writer uses the shared server registry to format entries for the chosen
    server type before emitting LDIF text or writing to disk.
 
 ### Migration and Conversion
 
-- Conversion services request both source and target quirks to normalize entries
+- Conversion services request both source and target servers to normalize entries
   between server types.
 - Migration pipelines compose parser, filters, conversion, and writer services to
   move datasets while preserving server-specific expectations.
@@ -154,7 +154,7 @@ encodings.
   the next discovery cycle.
 - **Adding a service:** subclass `s`, register a factory in
   `FlextLdifServiceRegistry`, and expose it through the facade mapping.
-- **Reliability:** quirk discovery is idempotent and cached; typed models and
+- **Reliability:** server discovery is idempotent and cached; typed models and
   `r` help prevent unexpected exceptions crossing boundaries.
 
 The architecture favors discoverability and small, composable services so that

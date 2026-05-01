@@ -1,4 +1,4 @@
-"""Base Quirk Classes for LDIF/LDAP Server Extensions."""
+"""Base Server Classes for LDIF/LDAP Server Extensions."""
 
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ class FlextLdifServersBaseSchemaAcl(
     s[t.Ldif.AclPayload],
     FlextLdifServerMethodsMixin,
 ):
-    """Base class for ACL quirks - satisfies Acl (structural typing)."""
+    """Base class for ACL servers - satisfies Acl (structural typing)."""
 
     acl_attribute_name: ClassVar[str] = "acl"
     server_type: Annotated[
@@ -35,28 +35,28 @@ class FlextLdifServersBaseSchemaAcl(
     priority: Annotated[
         int,
         u.Field(
-            description="Quirk priority (lower number = higher priority)",
+            description="Server priority (lower number = higher priority)",
         ),
     ] = 0
-    parent_quirk: Annotated[
+    parent_server: Annotated[
         Self | None,
         u.Field(
             exclude=True,
             repr=False,
-            description="Reference to parent quirk instance for server-level access",
+            description="Reference to parent server instance for server-level access",
         ),
     ] = None
 
     def __init__(
         self,
-        acl_service: p.Ldif.AclQuirk | None = None,
-        _parent_quirk: Self | None = None,
+        acl_service: p.Ldif.AclServer | None = None,
+        _parent_server: Self | None = None,
     ) -> None:
-        """Initialize ACL quirk service with optional DI service injection."""
+        """Initialize ACL server service with optional DI service injection."""
         super().__init__()
         self._acl_service = acl_service
-        if _parent_quirk is not None:
-            object.__setattr__(self, "_parent_quirk", _parent_quirk)
+        if _parent_server is not None:
+            object.__setattr__(self, "_parent_server", _parent_server)
 
     RFC_ACL_ATTRIBUTES: ClassVar[tuple[str, ...]] = c.Ldif.RFC_ACL_ATTRIBUTES
 
@@ -77,17 +77,17 @@ class FlextLdifServersBaseSchemaAcl(
         return True
 
     def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
-        """Check if this quirk can handle the ACL definition."""
+        """Check if this server can handle the ACL definition."""
         _ = acl_line
         return False
 
     def can_handle_attribute(self, attribute: m.Ldif.SchemaAttribute) -> bool:
-        """Check if this ACL quirk should be aware of a specific attribute definition."""
+        """Check if this ACL server should be aware of a specific attribute definition."""
         _ = attribute
         return False
 
     def can_handle_objectclass(self, objectclass: m.Ldif.SchemaObjectClass) -> bool:
-        """Check if this ACL quirk should be aware of a specific objectClass definition."""
+        """Check if this ACL server should be aware of a specific objectClass definition."""
         _ = objectclass
         return False
 
@@ -104,8 +104,8 @@ class FlextLdifServersBaseSchemaAcl(
         self,
         original_format: str,
         extensions: t.Ldif.MetadataInputMapping | None = None,
-    ) -> m.Ldif.QuirkMetadata:
-        """Create ACL quirk metadata."""
+    ) -> m.Ldif.ServerMetadata:
+        """Create ACL server metadata."""
         all_extensions: t.Ldif.MutableMetadataInputMapping = {
             "original_format": original_format,
         }
@@ -114,8 +114,8 @@ class FlextLdifServersBaseSchemaAcl(
         extensions_model = m.Ldif.DynamicMetadata.from_dict(
             all_extensions,
         )
-        return m.Ldif.QuirkMetadata(
-            quirk_type=self._get_server_type(),
+        return m.Ldif.ServerMetadata(
+            server_type=self._get_server_type(),
             extensions=extensions_model,
         )
 
@@ -171,13 +171,13 @@ class FlextLdifServersBaseSchemaAcl(
         )
         return r[str].ok(formatted_value)
 
-    def parse_quirk(self, value: str) -> r[m.Ldif.Acl]:
+    def parse_server(self, value: str) -> r[m.Ldif.Acl]:
         """Parse ACL line to Acl model."""
         return self._parse_acl(value)
 
     def parse_input(self, acl_text: str) -> r[m.Ldif.Acl]:
-        """Compatibility parser entrypoint for direct ACL quirk consumers."""
-        return self.parse_quirk(acl_text)
+        """Compatibility parser entrypoint for direct ACL server consumers."""
+        return self.parse_server(acl_text)
 
     def write(self, acl_data: m.Ldif.Acl) -> r[str]:
         """Write Acl model to string format."""
@@ -217,7 +217,7 @@ class FlextLdifServersBaseSchemaAcl(
 
     def _execute_acl_parse(self, data: str) -> r[t.Ldif.AclPayload]:
         """Execute ACL parse operation."""
-        parse_result = self.parse_quirk(data)
+        parse_result = self.parse_server(data)
         if parse_result.success:
             return r[t.Ldif.AclPayload].ok(parse_result.value)
         return r[t.Ldif.AclPayload].fail(parse_result.error or "Parse failed")

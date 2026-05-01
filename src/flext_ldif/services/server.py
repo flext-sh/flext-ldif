@@ -1,21 +1,16 @@
-"""Server quirk registry using the canonical `p.Registry` DSL."""
+"""Server server registry using the canonical `p.Registry` DSL."""
 
 from __future__ import annotations
 
 import inspect
-from collections.abc import (
-    MutableMapping,
-)
-from typing import ClassVar
+from typing import Annotated, ClassVar, override
 
 from flext_ldif import (
     FlextLdifServersBase,
-    FlextLdifServersBaseEntry,
-    FlextLdifServersBaseSchema,
-    FlextLdifServersBaseSchemaAcl,
     c,
     p,
     r,
+    s,
     servers,
     t,
     u,
@@ -24,84 +19,85 @@ from flext_ldif import (
 logger = u.fetch_logger(__name__)
 
 
-class FlextLdifServer:
-    """Server quirk registry using the canonical registry DSL."""
+class FlextLdifServer(s):
+    """Server server registry using the canonical registry DSL."""
 
     SERVERS: ClassVar[str] = "ldif_servers"
     _discovery_initialized: ClassVar[bool] = False
-    _registry: p.Registry
+    _global_instance: ClassVar[FlextLdifServer | None] = None
 
-    def __init__(
-        self,
-        dispatcher: p.Dispatcher | None = None,
-        **data: t.Ldif.Scalar,
-    ) -> None:
+    dispatcher: Annotated[
+        p.Dispatcher | None,
+        u.Field(
+            default=None,
+            exclude=True,
+            description="Optional dispatcher used to build the registry backend.",
+        ),
+    ]
+    _registry: p.Registry = u.PrivateAttr()
+
+    @override
+    def model_post_init(self, __context: t.JsonMapping | None, /) -> None:
         """Initialize registry and trigger auto-discovery."""
-        _ = data
-        self._registry = u.build_registry(dispatcher=dispatcher)
+        super().model_post_init(__context)
+        self._registry = u.build_registry(dispatcher=self.dispatcher)
         if not type(self)._discovery_initialized:
             self._auto_discover()
             type(self)._discovery_initialized = True
 
-    def acl(self, server_type: str) -> FlextLdifServersBaseSchemaAcl | None:
-        """Get ACL quirk for a server type."""
-        base = self._lookup_base_quirk(server_type)
+    def acl(self, server_type: str) -> p.Ldif.AclServer | None:
+        """Get ACL server for a server type."""
+        base = self._lookup_base_server(server_type)
         if base is None:
             return None
-        return base.acl_quirk
+        return base.acl_server
 
-    def entry(self, server_type: str) -> FlextLdifServersBaseEntry | None:
-        """Get entry quirk for a server type."""
-        base = self._lookup_base_quirk(server_type)
+    def entry(self, server_type: str) -> p.Ldif.EntryServer | None:
+        """Get entry server for a server type."""
+        base = self._lookup_base_server(server_type)
         if base is None:
             return None
-        return base.entry_quirk
+        return base.entry_server
 
-    def resolve_quirk_bundle(
+    def resolve_server_bundle(
         self,
         server_type: str,
     ) -> r[
-        MutableMapping[
+        t.MappingKV[
             str,
-            FlextLdifServersBaseSchema
-            | FlextLdifServersBaseSchemaAcl
-            | FlextLdifServersBaseEntry,
+            p.Ldif.SchemaServer | p.Ldif.AclServer | p.Ldif.EntryServer,
         ]
     ]:
-        """Get all quirk types for a server."""
-        base = self._lookup_base_quirk(server_type)
+        """Get all server types for a server."""
+        base = self._lookup_base_server(server_type)
         if base is None:
             return r[
-                MutableMapping[
+                t.MappingKV[
                     str,
-                    FlextLdifServersBaseSchema
-                    | FlextLdifServersBaseSchemaAcl
-                    | FlextLdifServersBaseEntry,
+                    p.Ldif.SchemaServer | p.Ldif.AclServer | p.Ldif.EntryServer,
                 ]
-            ].fail(f"Unknown server type: {server_type}")
+            ].fail_op("resolve_server_bundle", ValueError(server_type))
         return r[
-            MutableMapping[
+            t.MappingKV[
                 str,
-                FlextLdifServersBaseSchema
-                | FlextLdifServersBaseSchemaAcl
-                | FlextLdifServersBaseEntry,
+                p.Ldif.SchemaServer | p.Ldif.AclServer | p.Ldif.EntryServer,
             ]
         ].ok({
-            "schema": base.schema_quirk,
-            "acl": base.acl_quirk,
-            "entry": base.entry_quirk,
+            "schema": base.schema_server,
+            "acl": base.acl_server,
+            "entry": base.entry_server,
         })
 
-    def resolve_base_quirk(self, server_type: str) -> r[FlextLdifServersBase]:
-        """Get base quirk for a given server type."""
-        return self.quirk(server_type)
+    def resolve_base_server(self, server_type: str) -> r[p.Ldif.ServerServer]:
+        """Get base server for a given server type."""
+        return self.server(server_type)
 
     def resolve_server_constants(self, server_type: str) -> r[type]:
-        """Get Constants class from server quirk."""
-        quirk_result = self.quirk(server_type)
-        if quirk_result.failure:
-            return r[type].fail(quirk_result.error or server_type)
-        base = quirk_result.value
+        """Get Constants class from server server."""
+        server_result = self.server(server_type)
+        if server_result.failure:
+            return r[type].fail(server_result.error or server_type)
+        base = server_result.value
         constants = getattr(type(base), "Constants", None)
         if constants is None:
             return r[type].fail(f"Server {server_type} missing Constants")
@@ -113,48 +109,55 @@ class FlextLdifServer:
 
     def summarize_registry(self) -> t.Ldif.MutableMetadataInputMapping:
         """Get comprehensive registry statistics."""
-        servers = self.list_registered_servers()
-        quirks_by_server: dict[str, t.JsonValue] = {}
+        server_types = self.list_registered_servers()
+        servers_by_server: dict[str, t.JsonValue] = {}
         priorities: dict[str, t.JsonValue] = {}
-        for st in servers:
-            base = self._lookup_base_quirk(st)
+        for st in server_types:
+            base = self._lookup_base_server(st)
             if base is None:
                 continue
-            quirks_by_server[st] = {
-                "schema": type(base.schema_quirk).__name__
-                if base.schema_quirk
+            servers_by_server[st] = {
+                "schema": type(base.schema_server).__name__
+                if base.schema_server
                 else None,
-                "acl": type(base.acl_quirk).__name__ if base.acl_quirk else None,
-                "entry": type(base.entry_quirk).__name__ if base.entry_quirk else None,
+                "acl": type(base.acl_server).__name__ if base.acl_server else None,
+                "entry": type(base.entry_server).__name__
+                if base.entry_server
+                else None,
             }
             priorities[st] = base.priority
         stats: dict[str, t.JsonValue] = {
-            "total_servers": len(servers),
-            "quirks_by_server": quirks_by_server,
+            "total_servers": len(server_types),
+            "servers_by_server": servers_by_server,
             "server_priorities": priorities,
         }
         return stats
 
-    def schema_quirk(self, server_type: str) -> FlextLdifServersBaseSchema | None:
-        """Get schema quirk for a server type."""
-        return self.resolve_schema_quirk(server_type)
+    def schema_server(self, server_type: str) -> p.Ldif.SchemaServer | None:
+        """Get schema server for a server type."""
+        return self.resolve_schema_server(server_type)
 
-    def resolve_schema_quirk(
+    @override
+    def schema(self, server_type: str) -> p.Ldif.SchemaServer | None:
+        """Alias for schema lookup required by the registry protocol."""
+        return self.schema_server(server_type)
+
+    def resolve_schema_server(
         self,
         server_type: str,
-    ) -> FlextLdifServersBaseSchema | None:
-        """Get schema quirk for a server type."""
-        base = self._lookup_base_quirk(server_type)
+    ) -> p.Ldif.SchemaServer | None:
+        """Get schema server for a server type."""
+        base = self._lookup_base_server(server_type)
         if base is None:
             return None
-        return base.schema_quirk
+        return base.schema_server
 
-    def _lookup_base_quirk(self, server_type: str) -> FlextLdifServersBase | None:
-        """Resolve a concrete base quirk or return None on lookup failure."""
-        quirk_result = self.quirk(server_type)
-        if quirk_result.failure:
+    def _lookup_base_server(self, server_type: str) -> p.Ldif.ServerServer | None:
+        """Resolve a concrete base server or return None on lookup failure."""
+        server_result = self.server(server_type)
+        if server_result.failure:
             return None
-        return quirk_result.value
+        return server_result.value
 
     def list_registered_servers(self) -> t.MutableSequenceOf[str]:
         """List all registered server types."""
@@ -163,30 +166,31 @@ class FlextLdifServer:
                 self.SERVERS,
                 scope=c.RegistrationScope.CLASS,
             ).value
-            or []
+            or [],
         )
 
-    def quirk(self, server_type: str) -> r[FlextLdifServersBase]:
-        """Get base quirk for a server type."""
+    @override
+    def server(self, server_type: str) -> r[p.Ldif.ServerServer]:
+        """Get base server for a server type."""
         try:
             normalized = u.Ldif.normalize_server_type(server_type)
         except ValueError as e:
-            return r[FlextLdifServersBase].fail(str(e))
+            return r[p.Ldif.ServerServer].fail(str(e))
         plugin_result = self._registry.fetch_plugin(
             self.SERVERS,
             normalized,
             scope=c.RegistrationScope.CLASS,
         )
         if plugin_result.failure:
-            return r[FlextLdifServersBase].fail(plugin_result.error or normalized)
+            return r[p.Ldif.ServerServer].fail(plugin_result.error or normalized)
         plugin = plugin_result.unwrap()
-        if isinstance(plugin, FlextLdifServersBase):
-            return r[FlextLdifServersBase].ok(plugin)
+        if isinstance(plugin, p.Ldif.ServerServer):
+            return r[p.Ldif.ServerServer].ok(plugin)
         plugin_type = type(plugin).__name__
-        return r[FlextLdifServersBase].fail(f"Invalid quirk type: {plugin_type}")
+        return r[p.Ldif.ServerServer].fail(f"Invalid server type: {plugin_type}")
 
     def _auto_discover(self) -> None:
-        """Discover and register concrete quirk classes from servers package."""
+        """Discover and register concrete server classes from servers package."""
         for name, obj in inspect.getmembers(servers):
             if (
                 name.startswith("_")
@@ -200,9 +204,9 @@ class FlextLdifServer:
                 server_type = getattr(instance, "server_type", None)
                 if not issubclass(server_type.__class__, str):
                     continue
-                quirk_class = type(instance)
+                server_class = type(instance)
                 if not all(
-                    getattr(quirk_class, c, None) is not None
+                    getattr(server_class, c, None) is not None
                     for c in ("Schema", "Acl", "Entry")
                 ):
                     continue
@@ -215,8 +219,6 @@ class FlextLdifServer:
                     )
             except (TypeError, AttributeError):
                 continue
-
-    _global_instance: ClassVar[FlextLdifServer | None] = None
 
     @classmethod
     def fetch_global_instance(cls) -> FlextLdifServer:

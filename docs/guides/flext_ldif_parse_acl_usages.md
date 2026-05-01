@@ -5,8 +5,8 @@
 - [1. METHOD DEFINITIONS](#1-method-definitions)
   - [Base Class Definition](#base-class-definition)
   - [Protocol Definition](#protocol-definition)
-- [2. SERVER QUIRKS IMPLEMENTATIONS](#2-server-quirks-implementations)
-  - [13 Server Quirks Classes Implementing parse()](#13-server-quirks-classes-implementing-parse)
+- [2. SERVER SERVERS IMPLEMENTATIONS](#2-server-servers-implementations)
+  - [13 Server Servers Classes Implementing parse()](#13-server-servers-classes-implementing-parse)
   - [Implementation Pattern](#implementation-pattern)
 - [3. SERVICE LAYER USAGE](#3-service-layer-usage)
   - [ACL Service](#acl-service)
@@ -38,10 +38,10 @@ ______________________________________________________________________
 
 ## SUMMARY
 
-The `parse()` and `format_acl()` methods are defined in the flext-ldif library and have **13 server quirks implementations** plus extensive test coverage.
+The `parse()` and `format_acl()` methods are defined in the flext-ldif library and have **13 server servers implementations** plus extensive test coverage.
 
 **Files Affected by Return Type Change**: ~45+ files
-**Lines of Code Affected**: ~520+ lines in quirks implementations + ~1000+ lines in tests
+**Lines of Code Affected**: ~520+ lines in servers implementations + ~1000+ lines in tests
 **Risk Level**: HIGH - Extensive refactoring required
 
 ______________________________________________________________________
@@ -50,11 +50,11 @@ ______________________________________________________________________
 
 ### Base Class Definition
 
-**File**: `/home/marlonsc/flext/flext-ldif/src/flext_ldif/quirks/base.py`
+**File**: `/home/marlonsc/flext/flext-ldif/src/flext_ldif/servers/base.py`
 
 ```python
-class FlextLdifServersBase.Acl(ABC, QuirkRegistrationMixin):
-    """Base class for ACL quirks."""
+class FlextLdifServersBase.Acl(ABC, ServerRegistrationMixin):
+    """Base class for ACL servers."""
 
     def parse(self, acl_line: str) -> p.Result[FlextLdifModels.Acl]:
         """Parse server-specific ACL definition.
@@ -73,7 +73,7 @@ class FlextLdifServersBase.Acl(ABC, QuirkRegistrationMixin):
 
 ```python
 class Acl(Protocol):
-    """Protocol for ACL quirks."""
+    """Protocol for ACL servers."""
 
     def parse(self, acl_line: str) -> p.Result[t.JsonMapping]:
         """Parse ACL - returns r with dict or Acl model."""
@@ -81,29 +81,29 @@ class Acl(Protocol):
 
 ______________________________________________________________________
 
-## 2. SERVER QUIRKS IMPLEMENTATIONS
+## 2. SERVER SERVERS IMPLEMENTATIONS
 
-### 13 Server Quirks Classes Implementing parse()
+### 13 Server Servers Classes Implementing parse()
 
 | #   | File            | Location                                   | Server Type             |
 | --- | --------------- | ------------------------------------------ | ----------------------- |
-| 1   | `oid.py`        | `/flext_ldif/quirks/servers/oid.py`        | Oracle OID              |
-| 2   | `ouds.py`       | `/flext_ldif/quirks/servers/ouds.py`       | Oracle OUD              |
-| 3   | `openldap.py`   | `/flext_ldif/quirks/servers/openldap.py`   | OpenLDAP (generic)      |
-| 4   | `openldap1.py`  | `/flext_ldif/quirks/servers/openldap1.py`  | OpenLDAP 1.x            |
-| 5   | `openldap2s.py` | `/flext_ldif/quirks/servers/openldap2s.py` | OpenLDAP 2.x            |
-| 6   | `tivoli.py`     | `/flext_ldif/quirks/servers/tivoli.py`     | IBM Tivoli              |
-| 7   | `novell.py`     | `/flext_ldif/quirks/servers/novell.py`     | Novell eDirectory       |
-| 8   | `ad.py`         | `/flext_ldif/quirks/servers/ad.py`         | Active Directory        |
-| 9   | `ds389.py`      | `/flext_ldif/quirks/servers/ds389.py`      | 389 Directory Server    |
-| 10  | `apache.py`     | `/flext_ldif/quirks/servers/apache.py`     | Apache DS               |
-| 11  | `relaxed.py`    | `/flext_ldif/quirks/servers/relaxed.py`    | RFC-compliant (relaxed) |
-| 12  | `rfcs.py`       | `/flext_ldif/quirks/servers/rfcs.py`       | RFC baseline            |
-| 13  | `generics.py`   | `/flext_ldif/quirks/servers/generics.py`   | Generic fallback        |
+| 1   | `oid.py`        | `/flext_ldif/servers/servers/oid.py`        | Oracle OID              |
+| 2   | `ouds.py`       | `/flext_ldif/servers/servers/ouds.py`       | Oracle OUD              |
+| 3   | `openldap.py`   | `/flext_ldif/servers/servers/openldap.py`   | OpenLDAP (generic)      |
+| 4   | `openldap1.py`  | `/flext_ldif/servers/servers/openldap1.py`  | OpenLDAP 1.x            |
+| 5   | `openldap2s.py` | `/flext_ldif/servers/servers/openldap2s.py` | OpenLDAP 2.x            |
+| 6   | `tivoli.py`     | `/flext_ldif/servers/servers/tivoli.py`     | IBM Tivoli              |
+| 7   | `novell.py`     | `/flext_ldif/servers/servers/novell.py`     | Novell eDirectory       |
+| 8   | `ad.py`         | `/flext_ldif/servers/servers/ad.py`         | Active Directory        |
+| 9   | `ds389.py`      | `/flext_ldif/servers/servers/ds389.py`      | 389 Directory Server    |
+| 10  | `apache.py`     | `/flext_ldif/servers/servers/apache.py`     | Apache DS               |
+| 11  | `relaxed.py`    | `/flext_ldif/servers/servers/relaxed.py`    | RFC-compliant (relaxed) |
+| 12  | `rfcs.py`       | `/flext_ldif/servers/servers/rfcs.py`       | RFC baseline            |
+| 13  | `generics.py`   | `/flext_ldif/servers/servers/generics.py`   | Generic fallback        |
 
 ### Implementation Pattern
 
-Each server quirks class has:
+Each server servers class has:
 
 - `class XyzAcl(FlextLdifServersBase.Acl):`
 - `def parse(self, acl_line: str) -> p.Result[FlextLdifModels.Acl]:`
@@ -126,16 +126,16 @@ ______________________________________________________________________
 def parse(
     self, acl_line: str, server_type: str | None = None
 ) -> p.Result[FlextLdifModels.Acl]:
-    """Parse ACL line using appropriate quirks.
+    """Parse ACL line using appropriate servers.
 
-    Delegates to quirks.parse() internally.
+    Delegates to servers.parse() internally.
     """
-    quirk_result = self._get_for_server(server_type)
-    if quirk_result.failure:
+    server_result = self._get_for_server(server_type)
+    if server_result.failure:
         return r[FlextLdifModels.Acl].fail(...)
 
-    quirk = quirk_result.unwrap()
-    return quirk.parse(acl_line)  # ← Calls quirk.parse()
+    server = server_result.unwrap()
+    return server.parse(acl_line)  # ← Calls server.parse()
 ```
 
 **Lines Affected**: 30-40 lines
@@ -171,8 +171,8 @@ ______________________________________________________________________
 
 | File                                 | Location                                     | Test Count   |
 | ------------------------------------ | -------------------------------------------- | ------------ |
-| `tests_acl.py`                       | `/tests/unit/quirks/tests_acl.py`            | 20+ tests    |
-| `tests_acl_conversion.py`            | `/tests/unit/quirks/tests_acl_conversion.py` | 15+ tests    |
+| `tests_acl.py`                       | `/tests/unit/servers/tests_acl.py`            | 20+ tests    |
+| `tests_acl_conversion.py`            | `/tests/unit/servers/tests_acl_conversion.py` | 15+ tests    |
 | `test_acl_service.py`                | `/tests/unit/test_acl_service.py`            | 10+ tests    |
 | `test_acl_utils.py`                  | `/tests/unit/test_acl_utils.py`              | 5+ tests     |
 | `test_acl_service_operations.py.bak` | Backup file                                  | Legacy tests |
@@ -182,10 +182,10 @@ ______________________________________________________________________
 ```python
 def test_parse_oracle_oid():
     """Test OID ACL parsing."""
-    quirk = FlextLdifServersOid.Acl()
+    server = FlextLdifServersOid.Acl()
     acl_line = "orclaci: access to entry by * (browse)"
 
-    result = quirk.parse(acl_line)
+    result = server.parse(acl_line)
 
     assert result.success
     acl = result.unwrap()
@@ -205,7 +205,7 @@ ______________________________________________________________________
 
 **Usage Context**:
 
-- Initializes OID and OUD quirks
+- Initializes OID and OUD servers
 - Calls `_transform_categories()` which uses parse()
 - Returns transformed entries with OUD format ACLs
 
@@ -217,7 +217,7 @@ ______________________________________________________________________
 
 **Exposure**:
 
-- `ldif.parse()` uses quirks internally but doesn't expose parse()
+- `ldif.parse()` uses servers internally but doesn't expose parse()
 - Higher-level API returns Entry models (not Acl models)
 - algar-oud-mig uses this API (already compatible with Entry return)
 
@@ -229,7 +229,7 @@ ______________________________________________________________________
 Input LDIF with OID ACL (orclaci:)
     ↓
 ldif.parse() → FlextLdifModels.Entry[]
-    ↓ (internal quirks usage)
+    ↓ (internal servers usage)
 parse(acl_line: str) → r[FlextLdifModels.Acl]
     ↓
 Entry model with aci attributes (after transformation)
@@ -249,11 +249,11 @@ ______________________________________________________________________
 
 1. **Base Class** (10-15 lines)
 
-   - `/flext_ldif/quirks/base.py` - Update FlextLdifServersBase.Acl.parse()
+   - `/flext_ldif/servers/base.py` - Update FlextLdifServersBase.Acl.parse()
 
-1. **13 Server Quirks** (520-650 lines)
+1. **13 Server Servers** (520-650 lines)
 
-   - All 13 quirks files in `/flext_ldif/quirks/servers/`
+   - All 13 servers files in `/flext_ldif/servers/servers/`
    - Each file needs parse() method signature updated
 
 1. **Service Layer** (30-50 lines)
@@ -287,12 +287,12 @@ ______________________________________________________________________
 ### Phase 1: Update Interfaces (2-3 hours)
 
 - [ ] Update protocol definition in protocols.py
-- [ ] Update base class in quirks/base.py
+- [ ] Update base class in servers/base.py
 - [ ] Update service wrapper in services/acl.py
 
 ### Phase 2: Update Implementations (4-6 hours)
 
-- [ ] Update all 13 server quirks
+- [ ] Update all 13 server servers
 - [ ] Create Entry wrapper logic if needed
 - [ ] Update categorized_pipeline.py
 
@@ -335,7 +335,7 @@ The parse() and format_acl() return type change requires **significant refactori
 
 1. algar-oud-mig uses `ldif.parse()` (high-level API) which returns Entry models
 1. algar-oud-mig does not directly call parse() or format_acl()
-1. The change is internal to flext-ldif's quirks system
+1. The change is internal to flext-ldif's servers system
 
 **Recommendation**: Implement the change in flext-ldif, test thoroughly, then verify algar-oud-mig continues to work (should be automatic with no code changes).
 

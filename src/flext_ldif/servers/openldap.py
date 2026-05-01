@@ -1,4 +1,4 @@
-"""OpenLDAP 2.x Quirks - Complete Implementation."""
+"""OpenLDAP 2.x Servers - Complete Implementation."""
 
 from __future__ import annotations
 
@@ -20,10 +20,10 @@ logger = u.fetch_logger(__name__)
 
 
 class FlextLdifServersOpenldap(FlextLdifServersRfc):
-    """OpenLDAP 2.x Quirks - Complete Implementation."""
+    """OpenLDAP 2.x Servers - Complete Implementation."""
 
     class Constants(FlextLdifServersRfc.Constants):
-        """Standardized constants for OpenLDAP 2.x quirk."""
+        """Standardized constants for OpenLDAP 2.x server."""
 
         SERVER_TYPE: ClassVar[str] = "openldap2"
         PRIORITY: ClassVar[int] = 20
@@ -144,7 +144,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         )
 
     class Schema(FlextLdifServersRfc.Schema):
-        """OpenLDAP 2.x schema quirk."""
+        """OpenLDAP 2.x schema server."""
 
         @override
         def can_handle_attribute(
@@ -213,7 +213,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             return super()._transform_objectclass_for_write(oc_data)
 
     class Acl(FlextLdifServersRfc.Acl):
-        """OpenLDAP 2.x ACL quirk (nested)."""
+        """OpenLDAP 2.x ACL server (nested)."""
 
         @override
         def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
@@ -277,7 +277,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                     search="read" in access,
                     compare="read" in access,
                 ),
-                metadata=m.Ldif.QuirkMetadata.create_for(
+                metadata=m.Ldif.ServerMetadata.create_for(
                     self._get_server_type(),
                     extensions=m.Ldif.DynamicMetadata.from_dict({
                         "original_format": acl_line,
@@ -432,7 +432,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 return r[str].fail(f"OpenLDAP 2.x ACL write failed: {e}")
 
     class Entry(FlextLdifServersRfc.Entry):
-        """OpenLDAP 2.x entry quirk (nested)."""
+        """OpenLDAP 2.x entry server (nested)."""
 
         @override
         def can_handle(
@@ -440,7 +440,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             entry_dn: str,
             attributes: t.MutableStrSequenceMapping,
         ) -> bool:
-            """Check if this quirk should handle the entry (PRIVATE)."""
+            """Check if this server should handle the entry (PRIVATE)."""
             if not entry_dn:
                 return False
             is_config_dn = any(
@@ -490,7 +490,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             if entry.metadata is None:
                 entry = entry.model_copy(
                     update={
-                        "metadata": m.Ldif.QuirkMetadata.create_for(
+                        "metadata": m.Ldif.ServerMetadata.create_for(
                             "openldap",
                             extensions=m.Ldif.DynamicMetadata(),
                         ),

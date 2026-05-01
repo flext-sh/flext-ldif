@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_ldif import FlextLdifServiceBase, m, r
+from flext_ldif import m, r, s
 
 
-class FlextLdifParser(FlextLdifServiceBase):
-    """LDIF parser orchestrator over the server quirk registry."""
+class FlextLdifParser(s):
+    """LDIF parser orchestrator over the server server registry."""
 
     def parse_ldif(
         self,
@@ -51,16 +51,16 @@ class FlextLdifParser(FlextLdifServiceBase):
         content: str,
         server_type: str | None = None,
     ) -> r[m.Ldif.ParseResponse]:
-        """Parse LDIF content from a string through the selected base quirk."""
+        """Parse LDIF content from a string through the selected base server."""
         effective_server_type = server_type or self._get_effective_server_type_value()
-        return (
+        return r[m.Ldif.ParseResponse].from_result(
             self._server
-            .quirk(effective_server_type)
+            .server(effective_server_type)
             .map_error(
-                lambda error: error or "Failed to resolve LDIF server quirk",
+                lambda error: error or "Failed to resolve LDIF server server",
             )
-            .flat_map(lambda quirk: quirk.parse_ldif(content))
-            .map_error(lambda error: error or "LDIF parsing failed")
+            .flat_map(lambda server: server.parse_ldif(content))
+            .map_error(lambda error: error or "LDIF parsing failed"),
         )
 
 

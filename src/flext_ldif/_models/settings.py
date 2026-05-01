@@ -131,68 +131,84 @@ class FlextLdifModelsSettings:
         """Configuration for DN normalization."""
 
         case_sensitive: Annotated[
-            bool, u.Field(description="Whether DN comparison is case-sensitive")
+            bool,
+            u.Field(description="Whether DN comparison is case-sensitive"),
         ] = False
         remove_spaces: Annotated[
-            bool, u.Field(description="Remove spaces around DN component separators")
+            bool,
+            u.Field(description="Remove spaces around DN component separators"),
         ] = True
         case_fold: Annotated[
-            str | None, u.Field(description="Case folding strategy for DN comparison")
+            str | None,
+            u.Field(description="Case folding strategy for DN comparison"),
         ] = None
         space_handling: Annotated[
-            str | None, u.Field(description="Strategy for handling spaces in DN values")
+            str | None,
+            u.Field(description="Strategy for handling spaces in DN values"),
         ] = None
         escape_handling: Annotated[
             str | None,
             u.Field(description="Strategy for handling escape sequences in DN"),
         ] = None
         validate_before: Annotated[
-            bool, u.Field(description="Validate DN format before normalization")
+            bool,
+            u.Field(description="Validate DN format before normalization"),
         ] = True
 
     class AttrNormalizationConfig(m.Value):
         """Configuration for attribute normalization."""
 
         lowercase_keys: Annotated[
-            bool, u.Field(description="Convert attribute names to lowercase")
+            bool,
+            u.Field(description="Convert attribute names to lowercase"),
         ] = True
         sort_values: Annotated[
-            bool, u.Field(description="Sort attribute values alphabetically")
+            bool,
+            u.Field(description="Sort attribute values alphabetically"),
         ] = True
         sort_attributes: Annotated[
-            str | None, u.Field(description="Attribute sorting strategy")
+            str | None,
+            u.Field(description="Attribute sorting strategy"),
         ] = None
         normalize_whitespace: Annotated[
-            bool, u.Field(description="Normalize whitespace in attribute values")
+            bool,
+            u.Field(description="Normalize whitespace in attribute values"),
         ] = True
         case_fold_names: Annotated[
-            bool, u.Field(description="Case-fold attribute names for comparison")
+            bool,
+            u.Field(description="Case-fold attribute names for comparison"),
         ] = True
         trim_values: Annotated[
             bool,
             u.Field(description="Trim leading and trailing whitespace from values"),
         ] = True
         remove_empty: Annotated[
-            bool, u.Field(description="Remove attributes with empty values")
+            bool,
+            u.Field(description="Remove attributes with empty values"),
         ] = False
 
     class ProcessConfig(m.Value):
         """Configuration for processing operations."""
 
         batch_size: Annotated[
-            int, u.Field(description="Number of entries to process per batch")
+            int,
+            u.Field(description="Number of entries to process per batch"),
         ] = 100
         timeout_seconds: Annotated[
-            int, u.Field(description="Maximum processing time in seconds")
+            int,
+            u.Field(description="Maximum processing time in seconds"),
         ] = 300
         max_retries: Annotated[
-            int, u.Field(description="Maximum retry attempts on failure")
+            int,
+            u.Field(description="Maximum retry attempts on failure"),
         ] = 3
         source_server: Annotated[
-            str | None, u.Field(description="Source LDAP server type identifier")
+            str | None,
+            u.Field(description="Source LDAP server type identifier"),
         ] = None
         target_server: Annotated[
-            str | None, u.Field(description="Target LDAP server type identifier")
+            str | None,
+            u.Field(description="Target LDAP server type identifier"),
         ] = None
         dn_config: Annotated[
             FlextLdifModelsSettings.DnNormalizationConfig | None,
@@ -228,19 +244,24 @@ class FlextLdifModelsSettings:
         """Configuration for transformation operations."""
 
         fail_fast: Annotated[
-            bool, u.Field(description="Stop on first transformation error")
+            bool,
+            u.Field(description="Stop on first transformation error"),
         ] = False
         preserve_order: Annotated[
-            bool, u.Field(description="Preserve original entry ordering")
+            bool,
+            u.Field(description="Preserve original entry ordering"),
         ] = True
         track_changes: Annotated[
-            bool, u.Field(description="Track attribute-level changes for audit")
+            bool,
+            u.Field(description="Track attribute-level changes for audit"),
         ] = False
         normalize_dns: Annotated[
-            bool, u.Field(description="Normalize DNs during transformation")
+            bool,
+            u.Field(description="Normalize DNs during transformation"),
         ] = False
         normalize_attrs: Annotated[
-            bool, u.Field(description="Normalize attributes during transformation")
+            bool,
+            u.Field(description="Normalize attributes during transformation"),
         ] = False
         process_config: Annotated[
             FlextLdifModelsSettings.ProcessConfig | None,
@@ -339,7 +360,7 @@ class FlextLdifModelsSettings:
 
         Example:
             settings = FlextLdifModelsSettings.EntryParseMetadataConfig(
-                quirk_type="oid",
+                server_type="oid",
                 original_entry_dn="cn=test,dc=example",
                 cleaned_dn="cn=test,dc=example",
                 original_dn_line="dn: cn=test,dc=example",
@@ -348,7 +369,7 @@ class FlextLdifModelsSettings:
 
         """
 
-        quirk_type: Annotated[
+        server_type: Annotated[
             c.Ldif.ServerTypes,
             u.Field(
                 ...,
@@ -902,31 +923,31 @@ class FlextLdifModelsSettings:
         show_operational_attributes: Annotated[
             str,
             u.Field(
-                description="How to handle operational attributes in output. Options: 'show' (write normally), 'hide' (don't write), 'comment' (write as LDIF comment)."
+                description="How to handle operational attributes in output. Options: 'show' (write normally), 'hide' (don't write), 'comment' (write as LDIF comment).",
             ),
         ] = "hide"
         show_removed_attributes: Annotated[
             str,
             u.Field(
-                description="How to handle removed attributes in output. Default 'comment' writes removed attrs as '# [REMOVED] attr: value'."
+                description="How to handle removed attributes in output. Default 'comment' writes removed attrs as '# [REMOVED] attr: value'.",
             ),
         ] = "comment"
         show_filtered_attributes: Annotated[
             str,
             u.Field(
-                description="How to handle filtered attributes in output. Default 'hide' completely omits filtered attributes."
+                description="How to handle filtered attributes in output. Default 'hide' completely omits filtered attributes.",
             ),
         ] = "hide"
         show_hidden_attributes: Annotated[
             str,
             u.Field(
-                description="How to handle explicitly hidden attributes in output. Default 'hide' completely omits hidden attributes."
+                description="How to handle explicitly hidden attributes in output. Default 'hide' completely omits hidden attributes.",
             ),
         ] = "hide"
         show_renamed_original: Annotated[
             str,
             u.Field(
-                description="How to handle original names of renamed attributes. Default 'comment' writes '# [RENAMED] old -> new: value'."
+                description="How to handle original names of renamed attributes. Default 'comment' writes '# [RENAMED] old -> new: value'.",
             ),
         ] = "comment"
 
@@ -1023,7 +1044,8 @@ class FlextLdifModelsSettings:
             ),
         ]
         target: Annotated[
-            str, u.Field(description="Sort target (entries, attributes, acl)")
+            str,
+            u.Field(description="Sort target (entries, attributes, acl)"),
         ] = "entries"
         by: Annotated[str, u.Field(description="Sort strategy")] = "hierarchy"
         traversal: Annotated[str, u.Field(description="Traversal order")] = (
@@ -1036,7 +1058,8 @@ class FlextLdifModelsSettings:
             ),
         ] = None
         sort_attributes: Annotated[
-            bool, u.Field(description="Sort attributes within entries")
+            bool,
+            u.Field(description="Sort attributes within entries"),
         ] = False
         attribute_order: Annotated[
             t.MutableSequenceOf[str] | None,
@@ -1066,12 +1089,12 @@ class FlextLdifModelsSettings:
         """Config for schema attribute conversion pipeline (discriminated union)."""
 
         source_schema: Annotated[
-            p.Ldif.SchemaQuirk,
-            u.Field(..., description="Source schema quirk"),
+            p.Ldif.SchemaServer,
+            u.Field(..., description="Source schema server"),
         ]
         target_schema: Annotated[
-            p.Ldif.SchemaQuirk,
-            u.Field(..., description="Target schema quirk"),
+            p.Ldif.SchemaServer,
+            u.Field(..., description="Target schema server"),
         ]
         item_type: Annotated[
             c.Ldif.SchemaItemKind,
@@ -1092,12 +1115,12 @@ class FlextLdifModelsSettings:
         """Config for schema objectclass conversion pipeline (discriminated union)."""
 
         source_schema: Annotated[
-            p.Ldif.SchemaQuirk,
-            u.Field(..., description="Source schema quirk"),
+            p.Ldif.SchemaServer,
+            u.Field(..., description="Source schema server"),
         ]
         target_schema: Annotated[
-            p.Ldif.SchemaQuirk,
-            u.Field(..., description="Target schema quirk"),
+            p.Ldif.SchemaServer,
+            u.Field(..., description="Target schema server"),
         ]
         item_type: Annotated[
             c.Ldif.SchemaItemKind,
@@ -1158,7 +1181,7 @@ class FlextLdifModelsSettings:
         requires_binary_option: Annotated[
             bool,
             u.Field(
-                description="Whether server requires ;binary option for non-ASCII values"
+                description="Whether server requires ;binary option for non-ASCII values",
             ),
         ] = False
         requires_naming_attr: Annotated[

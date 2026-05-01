@@ -27,7 +27,7 @@ class FlextLdifTypesDomain:
     type ValidationResultLike = p.Ldif.ValidationResult
     type MigrationPipelineResultLike = p.Ldif.MigrationPipelineResult
     type WriteResponseLike = p.Ldif.WriteResponse
-    type ServerQuirkLike = p.Ldif.ServerQuirk
+    type ServerServerLike = p.Ldif.ServerServer
 
 
 __all__: list[str] = ["FlextLdifTypesDomain"]

@@ -29,8 +29,8 @@ if _t.TYPE_CHECKING:
     from tests.integration.test_cross_direction_conversion import (
         TestsTestFlextLdifCrossDirectionConversion,
     )
-    from tests.integration.test_cross_quirk_conversion import (
-        TestsFlextLdifCrossQuirkConversion,
+    from tests.integration.test_cross_server_conversion import (
+        TestsFlextLdifCrossServerConversion,
     )
     from tests.integration.test_dn_case_handling import TestsFlextLdifDnCaseHandling
     from tests.integration.test_edge_cases import TestsFlextLdifEdgeCasesInt
@@ -69,12 +69,12 @@ if _t.TYPE_CHECKING:
     from tests.models import TestsFlextLdifModels, m
     from tests.protocols import TestsFlextLdifProtocols, p
     from tests.typings import TestsFlextLdifTypes, t
-    from tests.unit.servers.test_apache_quirks import TestsTestFlextLdifApacheQuirks
-    from tests.unit.servers.test_ds389_quirks import TestsTestFlextLdifDs389Quirks
+    from tests.unit.servers.test_apache_servers import TestsTestFlextLdifApacheServers
+    from tests.unit.servers.test_ds389_servers import TestsTestFlextLdifDs389Servers
     from tests.unit.servers.test_edge_cases import TestsFlextLdifEdgeCases
-    from tests.unit.servers.test_novell_quirks import TestsFlextLdifNovellQuirks
-    from tests.unit.servers.test_oid_quirks import TestsTestFlextLdifOidQuirks
-    from tests.unit.servers.test_relaxed_quirks import TestsTestFlextLdifRelaxedQuirks
+    from tests.unit.servers.test_novell_servers import TestsFlextLdifNovellServers
+    from tests.unit.servers.test_oid_servers import TestsTestFlextLdifOidServers
+    from tests.unit.servers.test_relaxed_servers import TestsTestFlextLdifRelaxedServers
     from tests.unit.servers.test_schema_transformer import (
         TestsFlextLdifSchemaTransformer,
     )
@@ -94,8 +94,8 @@ if _t.TYPE_CHECKING:
     from tests.unit.services.test_processing_service import (
         TestsFlextLdifProcessingService,
     )
-    from tests.unit.services.test_quirks_standardization import (
-        TestsFlextLdifQuirksStandardization,
+    from tests.unit.services.test_servers_standardization import (
+        TestsFlextLdifServersStandardization,
     )
     from tests.unit.services.test_statistics_service import (
         TestsFlextLdifStatisticsService,
@@ -106,8 +106,8 @@ if _t.TYPE_CHECKING:
     from tests.unit.services.test_writer_service import TestsFlextLdifWriterService
     from tests.unit.test_acl_registry import TestsFlextLdifAclRegistry
     from tests.unit.test_constants_data_driven import TestsFlextLdifConstantsDataDriven
-    from tests.unit.test_migration_pipeline_quirks import (
-        TestsFlextLdifMigrationPipelineQuirks,
+    from tests.unit.test_migration_pipeline_servers import (
+        TestsFlextLdifMigrationPipelineServers,
     )
     from tests.unit.test_oid_utilities import TestsFlextLdifOidUtilities
     from tests.unit.test_parser_utilities import TestsFlextLdifParserUtilities
@@ -141,8 +141,8 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".integration.test_cross_direction_conversion": (
                 "TestsTestFlextLdifCrossDirectionConversion",
             ),
-            ".integration.test_cross_quirk_conversion": (
-                "TestsFlextLdifCrossQuirkConversion",
+            ".integration.test_cross_server_conversion": (
+                "TestsFlextLdifCrossServerConversion",
             ),
             ".integration.test_dn_case_handling": ("TestsFlextLdifDnCaseHandling",),
             ".integration.test_edge_cases": ("TestsFlextLdifEdgeCasesInt",),
@@ -190,12 +190,12 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestsFlextLdifTypes",
                 "t",
             ),
-            ".unit.servers.test_apache_quirks": ("TestsTestFlextLdifApacheQuirks",),
-            ".unit.servers.test_ds389_quirks": ("TestsTestFlextLdifDs389Quirks",),
+            ".unit.servers.test_apache_servers": ("TestsTestFlextLdifApacheServers",),
+            ".unit.servers.test_ds389_servers": ("TestsTestFlextLdifDs389Servers",),
             ".unit.servers.test_edge_cases": ("TestsFlextLdifEdgeCases",),
-            ".unit.servers.test_novell_quirks": ("TestsFlextLdifNovellQuirks",),
-            ".unit.servers.test_oid_quirks": ("TestsTestFlextLdifOidQuirks",),
-            ".unit.servers.test_relaxed_quirks": ("TestsTestFlextLdifRelaxedQuirks",),
+            ".unit.servers.test_novell_servers": ("TestsFlextLdifNovellServers",),
+            ".unit.servers.test_oid_servers": ("TestsTestFlextLdifOidServers",),
+            ".unit.servers.test_relaxed_servers": ("TestsTestFlextLdifRelaxedServers",),
             ".unit.servers.test_schema_transformer": (
                 "TestsFlextLdifSchemaTransformer",
             ),
@@ -215,8 +215,8 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".unit.services.test_processing_service": (
                 "TestsFlextLdifProcessingService",
             ),
-            ".unit.services.test_quirks_standardization": (
-                "TestsFlextLdifQuirksStandardization",
+            ".unit.services.test_servers_standardization": (
+                "TestsFlextLdifServersStandardization",
             ),
             ".unit.services.test_statistics_service": (
                 "TestsFlextLdifStatisticsService",
@@ -227,8 +227,8 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".unit.services.test_writer_service": ("TestsFlextLdifWriterService",),
             ".unit.test_acl_registry": ("TestsFlextLdifAclRegistry",),
             ".unit.test_constants_data_driven": ("TestsFlextLdifConstantsDataDriven",),
-            ".unit.test_migration_pipeline_quirks": (
-                "TestsFlextLdifMigrationPipelineQuirks",
+            ".unit.test_migration_pipeline_servers": (
+                "TestsFlextLdifMigrationPipelineServers",
             ),
             ".unit.test_oid_utilities": ("TestsFlextLdifOidUtilities",),
             ".unit.test_parser_utilities": ("TestsFlextLdifParserUtilities",),
@@ -293,7 +293,7 @@ __all__: list[str] = [
     "TestsFlextLdifConfigIntegration",
     "TestsFlextLdifConstants",
     "TestsFlextLdifConstantsDataDriven",
-    "TestsFlextLdifCrossQuirkConversion",
+    "TestsFlextLdifCrossServerConversion",
     "TestsFlextLdifDetectorService",
     "TestsFlextLdifDnCaseHandling",
     "TestsFlextLdifEdgeCases",
@@ -302,10 +302,10 @@ __all__: list[str] = [
     "TestsFlextLdifErrorRecovery",
     "TestsFlextLdifFiltersService",
     "TestsFlextLdifLdifFixturesIntegration",
-    "TestsFlextLdifMigrationPipelineQuirks",
+    "TestsFlextLdifMigrationPipelineServers",
     "TestsFlextLdifMinimalDifferencesMetadata",
     "TestsFlextLdifModels",
-    "TestsFlextLdifNovellQuirks",
+    "TestsFlextLdifNovellServers",
     "TestsFlextLdifOidIntegration",
     "TestsFlextLdifOidUtilities",
     "TestsFlextLdifOudIntegration",
@@ -316,7 +316,6 @@ __all__: list[str] = [
     "TestsFlextLdifProcessingPipeline",
     "TestsFlextLdifProcessingService",
     "TestsFlextLdifProtocols",
-    "TestsFlextLdifQuirksStandardization",
     "TestsFlextLdifRealLdapConfig",
     "TestsFlextLdifRealLdapExport",
     "TestsFlextLdifRealLdapImport",
@@ -324,6 +323,7 @@ __all__: list[str] = [
     "TestsFlextLdifRfcDockerReal",
     "TestsFlextLdifRfcDockerRealIntegration",
     "TestsFlextLdifSchemaTransformer",
+    "TestsFlextLdifServersStandardization",
     "TestsFlextLdifSimpleLdap",
     "TestsFlextLdifStatisticsService",
     "TestsFlextLdifSystematicFixtureCoverage",
@@ -335,13 +335,13 @@ __all__: list[str] = [
     "TestsFlextLdifVersion",
     "TestsFlextLdifWriterService",
     "TestsFlextLdifZeroDataLossOidOud",
-    "TestsTestFlextLdifApacheQuirks",
+    "TestsTestFlextLdifApacheServers",
     "TestsTestFlextLdifApiServerRegistry",
     "TestsTestFlextLdifCrossDirectionConversion",
-    "TestsTestFlextLdifDs389Quirks",
+    "TestsTestFlextLdifDs389Servers",
     "TestsTestFlextLdifMigrationPipeline",
-    "TestsTestFlextLdifOidQuirks",
-    "TestsTestFlextLdifRelaxedQuirks",
+    "TestsTestFlextLdifOidServers",
+    "TestsTestFlextLdifRelaxedServers",
     "c",
     "d",
     "e",

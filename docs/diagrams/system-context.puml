@@ -6,7 +6,7 @@ title FLEXT-LDIF System Context (C4 Level 1)
 Person(user, "LDAP Administrator", "Manages LDAP directory data and performs server migrations")
 Person(developer, "Application Developer", "Integrates LDIF processing into FLEXT applications")
 
-System(flext_ldif, "FLEXT-LDIF", "RFC-compliant LDIF processing library with server-specific quirks system")
+System(flext_ldif, "FLEXT-LDIF", "RFC-compliant LDIF processing library with server-specific servers system")
 
 System_Ext(flext_core, "FLEXT-Core", "Foundation library providing r, FlextContainer, FlextModels")
 System_Ext(ldap_servers, "LDAP Directory Servers", "OID, OUD, OpenLDAP, Active Directory, Apache DS, 389 DS, Novell, Tivoli")
@@ -32,7 +32,7 @@ Rel_Back(flext_ldif, enterprise_systems, "Provides", "standards-compliant direct
 
 note right of flext_ldif : **Key Capabilities:**
 - RFC 2849/4512 compliance
-- 9+ server quirk support
+- 9+ server server support
 - Universal conversion matrix
 - Memory-bound processing
 - Type-safe operations

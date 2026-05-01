@@ -146,8 +146,8 @@ class FlextLdifModelsDomainSchema:
             ),
         ] = None
         metadata: Annotated[
-            mdm.QuirkMetadata | None,
-            u.Field(description="Quirk-specific metadata for schema attribute"),
+            mdm.ServerMetadata | None,
+            u.Field(description="Server-specific metadata for schema attribute"),
         ] = None
 
     class Syntax(mb.SchemaElement):
@@ -219,8 +219,8 @@ class FlextLdifModelsDomainSchema:
             u.Field(description="Optional regex pattern for value validation"),
         ] = None
         metadata: Annotated[
-            mdm.QuirkMetadata | None,
-            u.Field(description="Server-specific quirk metadata"),
+            mdm.ServerMetadata | None,
+            u.Field(description="Server-specific server metadata"),
         ] = None
 
         @classmethod
@@ -236,7 +236,7 @@ class FlextLdifModelsDomainSchema:
 
             Args:
                 oid: Syntax OID to resolve
-                server_type: LDAP server type for quirk metadata
+                server_type: LDAP server type for server metadata
 
             Returns:
                 Resolved Syntax model with RFC 4517 compliance details, or None if:
@@ -259,8 +259,8 @@ class FlextLdifModelsDomainSchema:
                     else "string"
                 )
                 metadata = (
-                    mdm.QuirkMetadata.model_validate({
-                        "quirk_type": server_type,
+                    mdm.ServerMetadata.model_validate({
+                        "server_type": server_type,
                     })
                     if server_type != c.Ldif.ServerTypes.RFC.value
                     else None
@@ -337,8 +337,8 @@ class FlextLdifModelsDomainSchema:
             u.Field(description="Optional attributes (RFC 4512 MAY)"),
         ] = None
         metadata: Annotated[
-            mdm.QuirkMetadata | None,
-            u.Field(description="Quirk-specific metadata for schema object class"),
+            mdm.ServerMetadata | None,
+            u.Field(description="Server-specific metadata for schema object class"),
         ] = None
 
 

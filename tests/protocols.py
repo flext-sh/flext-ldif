@@ -20,8 +20,8 @@ class TestsFlextLdifProtocols(FlextTestsProtocols, p):
         """LDIF helper protocols used only by tests."""
 
         @runtime_checkable
-        class ParseInputQuirk(Protocol):
-            """Quirk exposing `parse_input` for schema or ACL helpers."""
+        class ParseInputServer(Protocol):
+            """Server exposing `parse_input` for schema or ACL helpers."""
 
             def parse_input(
                 self,
@@ -31,8 +31,8 @@ class TestsFlextLdifProtocols(FlextTestsProtocols, p):
                 ...
 
         @runtime_checkable
-        class WriteAttributeQuirk(Protocol):
-            """Quirk exposing Apache/Novell attribute writer."""
+        class WriteAttributeServer(Protocol):
+            """Server exposing Apache/Novell attribute writer."""
 
             def _write_attribute(
                 self,
@@ -42,8 +42,8 @@ class TestsFlextLdifProtocols(FlextTestsProtocols, p):
                 ...
 
         @runtime_checkable
-        class WriteObjectClassQuirk(Protocol):
-            """Quirk exposing Apache/Novell objectclass writer."""
+        class WriteObjectClassServer(Protocol):
+            """Server exposing Apache/Novell objectclass writer."""
 
             def _write_objectclass(
                 self,
@@ -53,8 +53,8 @@ class TestsFlextLdifProtocols(FlextTestsProtocols, p):
                 ...
 
         @runtime_checkable
-        class WriteAclQuirk(Protocol):
-            """Quirk exposing Apache ACL writer helper."""
+        class WriteAclServer(Protocol):
+            """Server exposing Apache ACL writer helper."""
 
             def _write_acl(
                 self,
@@ -64,10 +64,10 @@ class TestsFlextLdifProtocols(FlextTestsProtocols, p):
                 ...
 
         @runtime_checkable
-        class ParseAclQuirk(Protocol):
-            """Quirk exposing ACL parse helper with test models."""
+        class ParseAclServer(Protocol):
+            """Server exposing ACL parse helper with test models."""
 
-            def parse_quirk(
+            def parse_server(
                 self,
                 value: str,
             ) -> r[m.Ldif.Acl]:
@@ -75,8 +75,8 @@ class TestsFlextLdifProtocols(FlextTestsProtocols, p):
                 ...
 
         @runtime_checkable
-        class WriteAclContentQuirk(Protocol):
-            """Quirk exposing ACL write helper with test models."""
+        class WriteAclContentServer(Protocol):
+            """Server exposing ACL write helper with test models."""
 
             def write(
                 self,

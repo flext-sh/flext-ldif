@@ -141,10 +141,10 @@ class FlextLdifModelsDomainAcl:
         Inherits from mb.AclElement:
         - model_config (strict=True, validate_default=True, validate_assignment=True)
         - server_type field with default "rfc"
-        - metadata field (QuirkMetadata | None)
+        - metadata field (ServerMetadata | None)
         - validation_violations field (list[str])
         - is_valid computed field
-        - has_server_quirks computed field
+        - has_server_servers computed field
         """
 
         name: Annotated[str, u.Field(description="ACL name")] = ""
@@ -161,15 +161,17 @@ class FlextLdifModelsDomainAcl:
             u.Field(description="ACL permission flags"),
         ] = None
         raw_line: Annotated[
-            str, u.Field(description="Original raw ACL line from LDIF")
+            str,
+            u.Field(description="Original raw ACL line from LDIF"),
         ] = ""
         raw_acl: Annotated[
-            str, u.Field(description="Original ACL string from LDIF")
+            str,
+            u.Field(description="Original ACL string from LDIF"),
         ] = ""
         metadata: Annotated[
-            FlextLdifModelsDomainMetadata.QuirkMetadata | None,
+            FlextLdifModelsDomainMetadata.ServerMetadata | None,
             u.Field(
-                description="Quirk-specific metadata for ACL processing",
+                description="Server-specific metadata for ACL processing",
             ),
         ] = None
 
@@ -252,10 +254,10 @@ class FlextLdifModelsDomainAcl:
     class AclWriteMetadata(m.FrozenModel):
         """Metadata for ACL write formatting operations.
 
-        This frozen model encapsulates ACL metadata extracted from QuirkMetadata.extensions
+        This frozen model encapsulates ACL metadata extracted from ServerMetadata.extensions
         for use in ACL formatting during LDIF writing operations.
 
-        Used by Entry quirks to format ACI attributes with original ACL format names,
+        Used by Entry servers to format ACI attributes with original ACL format names,
         following SRP by separating ACL formatting from Writer serialization.
 
         Attributes:
@@ -299,13 +301,13 @@ class FlextLdifModelsDomainAcl:
             cls,
             extensions: t.Ldif.MetadataInputMapping | None,
         ) -> Self:
-            """Extract ACL write metadata from QuirkMetadata extensions.
+            """Extract ACL write metadata from ServerMetadata extensions.
 
             Factory method to create AclWriteMetadata from the extensions dict
-            stored in QuirkMetadata.extensions, using MetadataKeys constants.
+            stored in ServerMetadata.extensions, using MetadataKeys constants.
 
             Args:
-                extensions: QuirkMetadata.extensions dict containing ACL metadata.
+                extensions: ServerMetadata.extensions dict containing ACL metadata.
                     Expected keys: ACL_ORIGINAL_FORMAT, ACL_SOURCE_SERVER,
                     ACL_NAME_SANITIZED, ACL_ORIGINAL_NAME_RAW.
 

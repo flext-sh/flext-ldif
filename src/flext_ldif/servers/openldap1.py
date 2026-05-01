@@ -1,4 +1,4 @@
-"""OpenLDAP 1.x Legacy Quirks - Complete Implementation."""
+"""OpenLDAP 1.x Legacy Servers - Complete Implementation."""
 
 from __future__ import annotations
 
@@ -10,10 +10,10 @@ from flext_ldif import FlextLdifServersRfc, c, m, r, t
 
 
 class FlextLdifServersOpenldap1(FlextLdifServersRfc):
-    """OpenLDAP 1.x Legacy Quirks - Complete Implementation."""
+    """OpenLDAP 1.x Legacy Servers - Complete Implementation."""
 
     class Constants(FlextLdifServersRfc.Constants):
-        """Standardized constants for OpenLDAP 1.x quirk."""
+        """Standardized constants for OpenLDAP 1.x server."""
 
         SERVER_TYPE: ClassVar[str] = c.Ldif.ServerTypes.OPENLDAP1
         PRIORITY: ClassVar[int] = 10
@@ -88,7 +88,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         ACL_OPS_SEPARATOR: ClassVar[str] = ","
 
     class Schema(FlextLdifServersRfc.Schema):
-        """OpenLDAP 1.x schema quirk."""
+        """OpenLDAP 1.x schema server."""
 
         @override
         def can_handle_attribute(
@@ -142,7 +142,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             result = super()._parse_attribute(stripped)
             if result.success:
                 attr_data = result.value
-                metadata = m.Ldif.QuirkMetadata.create_for(
+                metadata = m.Ldif.ServerMetadata.create_for(
                     FlextLdifServersOpenldap1.Constants.SERVER_TYPE,
                 )
                 return r[m.Ldif.SchemaAttribute].ok(
@@ -161,7 +161,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             result = super()._parse_objectclass(stripped)
             if result.success:
                 oc_data = result.value
-                metadata = m.Ldif.QuirkMetadata.create_for(
+                metadata = m.Ldif.ServerMetadata.create_for(
                     FlextLdifServersOpenldap1.Constants.SERVER_TYPE,
                 )
                 return r[m.Ldif.SchemaObjectClass].ok(
@@ -243,7 +243,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 return r[str].fail(f"OpenLDAP 1.x objectClass write failed: {e}")
 
     class Acl(FlextLdifServersRfc.Acl):
-        """OpenLDAP 1.x ACL quirk (nested)."""
+        """OpenLDAP 1.x ACL server (nested)."""
 
         @override
         def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
@@ -356,8 +356,8 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                         subject_value=first_who,
                     ),
                     permissions=permissions,
-                    metadata=m.Ldif.QuirkMetadata.create_for(
-                        quirk_type=self._get_server_type(),
+                    metadata=m.Ldif.ServerMetadata.create_for(
+                        server_type=self._get_server_type(),
                         extensions=acl_extensions,
                     ),
                     raw_acl=acl_line,
@@ -404,7 +404,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 return r[str].fail(f"OpenLDAP 1.x ACL write failed: {e}")
 
     class Entry(FlextLdifServersRfc.Entry):
-        """OpenLDAP 1.x entry quirk (nested)."""
+        """OpenLDAP 1.x entry server (nested)."""
 
         @override
         def can_handle(
@@ -412,7 +412,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             entry_dn: str,
             attributes: t.MutableStrSequenceMapping,
         ) -> bool:
-            """Check if this quirk should handle the entry."""
+            """Check if this server should handle the entry."""
             if not entry_dn:
                 return False
             config_marker = "cn=settings"
@@ -425,10 +425,10 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         def process_entry(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
             """Process entry for OpenLDAP 1.x format."""
             try:
-                metadata = entry.metadata or m.Ldif.QuirkMetadata(
-                    quirk_type=c.Ldif.ServerTypes.OPENLDAP1,
+                metadata = entry.metadata or m.Ldif.ServerMetadata(
+                    server_type=c.Ldif.ServerTypes.OPENLDAP1,
                 )
-                metadata.extensions[c.Ldif.QuirkMetadataKeys.IS_TRADITIONAL_DIT] = True
+                metadata.extensions[c.Ldif.ServerMetadataKeys.IS_TRADITIONAL_DIT] = True
                 processed_entry = m.Ldif.Entry(
                     dn=entry.dn,
                     attributes=entry.attributes,

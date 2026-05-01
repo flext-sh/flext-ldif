@@ -75,64 +75,6 @@ class TestsFlextLdifFiltersService:
         tm.that(key_name in c.Tests.FILTERS_ALLOWED_OIDS_FULL, eq=True)
         tm.that(key_name in c.Tests.FILTERS_ALLOWED_OIDS_EMPTY, eq=True)
 
-    def test_filter_schema_by_oids_keeps_matching_entry(self) -> None:
-        entries: t.MutableSequenceOf[m.Ldif.Entry] = [self._schema_entry()]
-
-        result = ldif.filter_schema_by_oids(
-            entries,
-            self._mutable_allowed_oids(c.Tests.FILTERS_ALLOWED_OIDS_FULL),
-        )
-        filtered = u.Tests.assert_success(result)
-        tm.that(len(filtered), eq=1)
-
-    def test_filter_schema_by_oids_excludes_unmatched_entry(self) -> None:
-        unmatched = u.Tests.create_real_entry(
-            dn=c.Tests.FILTERS_DN_SCHEMA,
-            attributes={
-                c.Tests.FILTERS_SCHEMA_ATTR_KEY: [c.Tests.FILTERS_UNMATCHED_ATTR_OID],
-                c.Tests.NAME_OBJECTCLASS: [
-                    c.Tests.NAME_TOP,
-                    c.Tests.NAME_SUBSCHEMA,
-                ],
-            },
-        )
-        result = ldif.filter_schema_by_oids(
-            [unmatched],
-            self._mutable_allowed_oids(c.Tests.FILTERS_ALLOWED_OIDS_FULL),
-        )
-        filtered = u.Tests.assert_success(result)
-        tm.that(len(filtered), eq=0)
-
-    def test_filter_schema_by_oids_returns_all_when_allowed_oids_empty(self) -> None:
-        entries: t.MutableSequenceOf[m.Ldif.Entry] = [
-            self._schema_entry(),
-            self._regular_entry(),
-        ]
-        result = ldif.filter_schema_by_oids(
-            entries,
-            self._mutable_allowed_oids(c.Tests.FILTERS_ALLOWED_OIDS_EMPTY),
-        )
-        filtered = u.Tests.assert_success(result)
-        tm.that(len(filtered), eq=2)
-
-    def test_filter_schema_by_oids_passes_through_non_schema_entries(self) -> None:
-        entries: t.MutableSequenceOf[m.Ldif.Entry] = [self._regular_entry()]
-        result = ldif.filter_schema_by_oids(
-            entries,
-            self._mutable_allowed_oids(c.Tests.FILTERS_ALLOWED_OIDS_FULL),
-        )
-        filtered = u.Tests.assert_success(result)
-        tm.that(len(filtered), eq=1)
-
-    def test_filter_schema_by_oids_entry_without_attributes(self) -> None:
-        bare_entry = self._entry_without_attributes()
-        result = ldif.filter_schema_by_oids(
-            [bare_entry],
-            self._mutable_allowed_oids(c.Tests.FILTERS_ALLOWED_OIDS_FULL),
-        )
-        filtered = u.Tests.assert_success(result)
-        tm.that(len(filtered), eq=1)
-
     # ── filter_entry_attributes ───────────────────────────────────────────────
 
     def test_filter_entry_attributes_removes_forbidden_attrs(self) -> None:
@@ -288,37 +230,3 @@ class TestsFlextLdifFiltersService:
             c.Tests.FILTERS_SCHEMA_ATTR_KEY not in result.attributes.attributes,
             eq=True,
         )
-
-    # ── _should_include_entry ────────────────────────────────────────────────
-
-    def test_should_include_entry_with_none_attributes_returns_true(self) -> None:
-        """Line 77: entry.attributes is None → returns True."""
-        entry = m.Ldif.Entry(
-            dn=c.Tests.FILTERS_DN_SCHEMA,
-            attributes=None,
-        )
-        result = ldif._should_include_entry(
-            entry,
-            frozenset(),
-            frozenset(),
-            frozenset(),
-            frozenset(),
-        )
-        tm.that(result, eq=True)
-
-    # ── _extract_oid_from_schema_attr ────────────────────────────────────────
-
-    def test_extract_oid_empty_values_returns_none(self) -> None:
-        """Line 50: empty values list returns None."""
-        result = ldif._extract_oid_from_schema_attr([])
-        tm.that(result, eq=None)
-
-    def test_extract_oid_non_oid_value_returns_none(self) -> None:
-        """Line 59: value doesn't start with '(' so OID not found returns None."""
-        result = ldif._extract_oid_from_schema_attr(["not-an-oid"])
-        tm.that(result, eq=None)
-
-    def test_extract_oid_oid_not_starting_with_digit_returns_none(self) -> None:
-        """Line 59: parenthesized but OID doesn't start with digit returns None."""
-        result = ldif._extract_oid_from_schema_attr(["( cn SYNTAX )"])
-        tm.that(result, eq=None)

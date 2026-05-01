@@ -99,11 +99,11 @@ Ensure data quality:
 
 ### 04_server_migration.py - Server-Specific Operations
 
-**Demonstrates**: `migrate()`, server_type parameter, quirks handling
+**Demonstrates**: `migrate()`, server_type parameter, servers handling
 
 Handle server differences:
 
-- Parse with server-specific quirks (OID, OUD, OpenLDAP, RFC)
+- Parse with server-specific servers (OID, OUD, OpenLDAP, RFC)
 - Migrate between different LDAP servers
 - Server-agnostic migration pipeline
 - Compare server parsing behavior

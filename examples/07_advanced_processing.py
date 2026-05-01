@@ -20,12 +20,12 @@ from collections.abc import (
 from datetime import UTC, datetime
 from pathlib import Path
 
-from flext_ldif import FlextLdif, ldif, m, u
+from flext_ldif import ldif, m, p, u
 
 
 def basic_batch_processing() -> None:
     """Process entries in batches using direct API method."""
-    api: FlextLdif = ldif()
+    api: p.Ldif.LdifClient = ldif
     ldif_content = "dn: cn=User1,ou=People,dc=example,dc=com\nobjectClass: person\ncn: User1\nsn: One\n\ndn: cn=User2,ou=People,dc=example,dc=com\nobjectClass: person\ncn: User2\nsn: Two\n\ndn: cn=User3,ou=People,dc=example,dc=com\nobjectClass: person\ncn: User3\nsn: Three\n"
     parse_result = api.parse_ldif(ldif_content)
     if parse_result.failure:
@@ -43,7 +43,7 @@ def parallel_processing() -> None:
 
     Demonstrates creating entries directly via models and validating in batch.
     """
-    api: FlextLdif = ldif()
+    api: p.Ldif.LdifClient = ldif
     entries: list[m.Ldif.Entry] = []
     for i in range(10):
         entry = m.Ldif.Entry(
@@ -107,7 +107,7 @@ def use_validation_utilities() -> None:
 
 def use_ldif_utilities() -> None:
     """Use LDIF-specific utilities."""
-    api: FlextLdif = ldif()
+    api: p.Ldif.LdifClient = ldif
     ldif_content = (
         "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\nsn: user\n"
     )
@@ -155,7 +155,7 @@ def use_file_utilities() -> None:
 
 def complete_processing_pipeline() -> None:
     """Complete pipeline using utilities and direct processing methods."""
-    api: FlextLdif = ldif()
+    api: p.Ldif.LdifClient = ldif
     ldif_content = "dn: cn=Pipeline,ou=People,dc=example,dc=com\nobjectClass: person\ncn: Pipeline\nsn: User\n"
     parse_result = api.parse_ldif(ldif_content)
     if parse_result.failure:

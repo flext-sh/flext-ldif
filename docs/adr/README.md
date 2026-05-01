@@ -85,7 +85,7 @@ ADRs are numbered sequentially as created. The format is `ADR-XXX.md` where XXX 
 | ADR-002 | Universal Conversion Matrix Architecture | Accepted | 2026-04-14 |
 | ADR-003 | DN Case Registry for OUD Compatibility   | Accepted | 2026-04-14 |
 | ADR-004 | Memory-Bound Processing Architecture     | Accepted | 2026-04-14 |
-| ADR-005 | Pluggable Quirks System                  | Accepted | 2026-04-14 |
+| ADR-005 | Pluggable Servers System                  | Accepted | 2026-04-14 |
 
 ## ADR Maintenance
 

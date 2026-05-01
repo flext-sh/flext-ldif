@@ -1,4 +1,4 @@
-"""Base Constants for Server Quirks."""
+"""Base Constants for Server Servers."""
 
 from __future__ import annotations
 

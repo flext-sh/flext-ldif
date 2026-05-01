@@ -9,7 +9,7 @@
 **Date**: 2026-04-14
 
 **Context**:
-FLEXT-LDIF supports 9+ LDAP server implementations (OID, OUD, OpenLDAP, Active Directory, etc.), each with different syntax requirements and quirks. The challenge was providing seamless conversion between any server pair without implementing N×N conversion functions.
+FLEXT-LDIF supports 9+ LDAP server implementations (OID, OUD, OpenLDAP, Active Directory, etc.), each with different syntax requirements and servers. The challenge was providing seamless conversion between any server pair without implementing N×N conversion functions.
 
 Traditional approaches would require:
 
@@ -31,16 +31,16 @@ Source Format → Source.to_rfc() → RFC Format → Target.from_rfc() → Targe
 
 **Key Components**:
 
-1. **QuirksConversionMatrix**: Facade providing N×N conversion interface
+1. **ServersConversionMatrix**: Facade providing N×N conversion interface
 1. **DnCaseRegistry**: Tracks canonical DN case for OUD compatibility
-1. **QuirkBase Interface**: Defines `to_rfc()` and `from_rfc()` methods
+1. **ServerBase Interface**: Defines `to_rfc()` and `from_rfc()` methods
 1. **RFC Intermediate Format**: Standards-compliant representation
 
 **Implementation**:
 
 ```python
 # N×N conversion with only 2×N implementations
-matrix = QuirksConversionMatrix()
+matrix = ServersConversionMatrix()
 
 # Convert between any server combination
 result = matrix.convert(
@@ -88,7 +88,7 @@ result = matrix.convert(
 
 - ADR-001 - RFC-first foundation
 - ADR-003 - DN case handling
-- ADR-005 - Server quirk implementations
+- ADR-005 - Server server implementations
 
 **Notes**:
 The universal conversion matrix is a key innovation enabling FLEXT-LDIF's server migration capabilities. It reduces implementation complexity from O(n²) to O(n) while maintaining standards compliance. The DN case registry integration ensures OUD compatibility during conversions.

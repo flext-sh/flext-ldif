@@ -37,15 +37,15 @@
 - [🤝 Contributing to Documentation](#contributing-to-documentation)
 <!-- TOC END -->
 
-**Version**: 0.12.0-dev RC | **Updated**: October 10, 2025 | **Status**: RFC-first LDIF Processing with Server Quirks · Production-Ready
+**Version**: 0.12.0-dev RC | **Updated**: October 10, 2025 | **Status**: RFC-first LDIF Processing with Server Servers · Production-Ready
 
 This directory contains documentation for FLEXT-LDIF, a Python library for processing LDAP Data Interchange Format (LDIF) files within the FLEXT ecosystem.
 
 ## 🎯 Library Overview
 
-FLEXT-LDIF provides RFC 2849/4512 compliant LDIF processing with server-specific quirks for the FLEXT ecosystem. The library features:
+FLEXT-LDIF provides RFC 2849/4512 compliant LDIF processing with server-specific servers for the FLEXT ecosystem. The library features:
 
-- **RFC-First Architecture**: Generic RFC foundation with pluggable quirks system
+- **RFC-First Architecture**: Generic RFC foundation with pluggable servers system
 - **Server Support**: 4 fully implemented (OID, OUD, OpenLDAP 1.x/2.x), 5 stubs ready
 - **Generic Migration**: Server-agnostic transformation pipeline (Source → RFC → Target)
 - **Type Safety**: 100% Pyrefly strict mode compliance
@@ -83,10 +83,10 @@ docs/
 
 ### 🏗️ Architecture Documentation (`architecture.md`)
 
-**architecture.md** - RFC-first design with quirks system:
+**architecture.md** - RFC-first design with servers system:
 
 - **RFC-First Architecture**: Generic RFC 2849/4512 foundation with ZERO bypass paths
-- **Quirks System**: Priority-based server-specific extensions (4 complete, 5 stubs)
+- **Servers System**: Priority-based server-specific extensions (4 complete, 5 stubs)
 - **Generic Migration Pipeline**: Source → RFC → Target transformation for ANY server
 - **CQRS Handlers**: Command/Query separation with RFC parser delegation
 - **r Integration**: Railway-oriented programming patterns throughout
@@ -146,7 +146,7 @@ Working code examples organized by complexity:
 ### Current Implementation (v0.12.0-dev)
 
 - **RFC 2849/4512 Compliance**: Full standard compliance with strict enforcement
-- **Quirks System**: 4 fully implemented servers (OID, OUD, OpenLDAP 1.x/2.x), 5 stubs ready
+- **Servers System**: 4 fully implemented servers (OID, OUD, OpenLDAP 1.x/2.x), 5 stubs ready
 - **Generic Migration**: Server-agnostic transformation pipeline works with ANY LDAP server
 - **Type Safety**: 100% Pyrefly (MyPy successor) strict mode compliance
 - **Test Coverage**: 990/990 tests passing (100% pass rate)
@@ -164,8 +164,8 @@ Working code examples organized by complexity:
 **Phase 1 - Production Hardening** (Current):
 
 - Maintain 100% test pass rate and type safety
-- Enhance error messages for quirk-related failures
-- Document server-specific quirk behaviors
+- Enhance error messages for server-related failures
+- Document server-specific server behaviors
 - Expand integration test coverage
 
 **Phase 2 - Performance Optimization**:

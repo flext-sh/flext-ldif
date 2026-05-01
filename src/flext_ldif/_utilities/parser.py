@@ -30,7 +30,7 @@ class FlextLdifUtilitiesParser:
         syntax: str | None,
         syntax_validation_error: str | None,
         server_type: str | None = None,
-    ) -> m.Ldif.QuirkMetadata | None:
+    ) -> m.Ldif.ServerMetadata | None:
         """Build metadata for attribute including extensions."""
         metadata_extensions = FlextLdifUtilitiesParser.extract_extensions(
             attr_definition,
@@ -45,7 +45,7 @@ class FlextLdifUtilitiesParser:
                 ]
         metadata_extensions["original_format"] = [attr_definition.strip()]
         metadata_extensions["schema_original_string_complete"] = [attr_definition]
-        quirk_type = (
+        server_type = (
             us.normalize_server_type(server_type)
             if server_type
             else us.normalize_server_type("rfc")
@@ -55,8 +55,8 @@ class FlextLdifUtilitiesParser:
             for key, val in metadata_extensions.items():
                 val_payload: list[t.JsonValue] = list(val)
                 extensions_typed[key] = val_payload
-            return m.Ldif.QuirkMetadata(
-                quirk_type=quirk_type,
+            return m.Ldif.ServerMetadata(
+                server_type=server_type,
                 extensions=m.Ldif.DynamicMetadata.from_dict(
                     extensions_typed,
                 ),
@@ -99,9 +99,9 @@ class FlextLdifUtilitiesParser:
         dn: str,
         raw_record_lines: t.MutableSequenceOf[str],
         comments: t.MutableSequenceOf[str],
-    ) -> m.Ldif.QuirkMetadata:
+    ) -> m.Ldif.ServerMetadata:
         """Build RFC metadata for a parsed LDIF record."""
-        metadata = m.Ldif.QuirkMetadata.create_for("rfc")
+        metadata = m.Ldif.ServerMetadata.create_for("rfc")
         metadata.original_server_type = c.Ldif.ServerTypes.RFC
         metadata.target_server_type = c.Ldif.ServerTypes.RFC
         metadata.original_strings["dn_original"] = dn
@@ -192,7 +192,7 @@ class FlextLdifUtilitiesParser:
             key_lower = key.lower()
             if key_lower == "control":
                 controls.append(
-                    FlextLdifUtilitiesParser.build_control(remainder.lstrip())
+                    FlextLdifUtilitiesParser.build_control(remainder.lstrip()),
                 )
                 continue
             value, value_origin, raw_value = FlextLdifUtilitiesParser.decode_value(
@@ -326,7 +326,7 @@ class FlextLdifUtilitiesParser:
             return None
 
         result: t.MappingKV[str, t.JsonValue] | t.JsonValue | None = metadata.get(
-            "extensions"
+            "extensions",
         )
         if not isinstance(result, Mapping):
             extensions: t.MutableStrSequenceMapping = {}

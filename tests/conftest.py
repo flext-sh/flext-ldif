@@ -23,9 +23,6 @@ from flext_ldif import (
     FlextLdifConversion,
     FlextLdifParser,
     FlextLdifServer,
-    FlextLdifServersBase,
-    FlextLdifServersBaseSchema,
-    FlextLdifServersBaseSchemaAcl,
     FlextLdifSettings,
     FlextLdifWriter,
     ldif,
@@ -327,58 +324,58 @@ def conversion_matrix() -> FlextLdifConversion:
 
 @pytest.fixture
 def server() -> FlextLdifServer:
-    """Get FlextLdifServer instance for quirk management."""
+    """Get FlextLdifServer instance for server management."""
     return FlextLdifServer.fetch_global_instance()
 
 
 @pytest.fixture
-def oid_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
-    """Get OID server quirk via FlextLdifServer API."""
+def oid_server(server: FlextLdifServer) -> p.Ldif.ServerServer:
+    """Get OID server server via FlextLdifServer API."""
     return u.Tests.assert_success(
-        server.quirk("oid"),
-        error_msg="OID quirk must be registered",
+        server.server("oid"),
+        error_msg="OID server must be registered",
     )
 
 
 @pytest.fixture
-def oud_quirk(server: FlextLdifServer) -> FlextLdifServersBase:
-    """Get OUD server quirk via FlextLdifServer API."""
+def oud_server(server: FlextLdifServer) -> p.Ldif.ServerServer:
+    """Get OUD server server via FlextLdifServer API."""
     return u.Tests.assert_success(
-        server.resolve_base_quirk("oud"),
-        error_msg="OUD quirk must be registered",
+        server.resolve_base_server("oud"),
+        error_msg="OUD server must be registered",
     )
 
 
 @pytest.fixture
-def oid_schema_quirk(
-    oid_quirk: FlextLdifServersBase,
-) -> FlextLdifServersBaseSchema:
-    """Create OID schema quirk instance for conversion tests."""
-    return oid_quirk.schema_quirk
+def oid_schema_server(
+    oid_server: p.Ldif.ServerServer,
+) -> p.Ldif.SchemaServer:
+    """Create OID schema server instance for conversion tests."""
+    return oid_server.schema_server
 
 
 @pytest.fixture
-def oud_schema_quirk(
-    oud_quirk: FlextLdifServersBase,
-) -> FlextLdifServersBaseSchema:
-    """Create OUD schema quirk instance for conversion tests."""
-    return oud_quirk.schema_quirk
+def oud_schema_server(
+    oud_server: p.Ldif.ServerServer,
+) -> p.Ldif.SchemaServer:
+    """Create OUD schema server instance for conversion tests."""
+    return oud_server.schema_server
 
 
 @pytest.fixture
-def oid_acl_quirk(
-    oid_quirk: FlextLdifServersBase,
-) -> FlextLdifServersBaseSchemaAcl:
-    """Create OID ACL quirk instance for conversion tests."""
-    return oid_quirk.acl_quirk
+def oid_acl_server(
+    oid_server: p.Ldif.ServerServer,
+) -> p.Ldif.AclServer:
+    """Create OID ACL server instance for conversion tests."""
+    return oid_server.acl_server
 
 
 @pytest.fixture
-def oud_acl_quirk(
-    oud_quirk: FlextLdifServersBase,
-) -> FlextLdifServersBaseSchemaAcl:
-    """Create OUD ACL quirk instance for conversion tests."""
-    return oud_quirk.acl_quirk
+def oud_acl_server(
+    oud_server: p.Ldif.ServerServer,
+) -> p.Ldif.AclServer:
+    """Create OUD ACL server instance for conversion tests."""
+    return oud_server.acl_server
 
 
 @pytest.fixture(scope="session")

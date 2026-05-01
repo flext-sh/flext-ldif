@@ -2,7 +2,7 @@
 
 This module manages all configuration aspects for flext-ldif package including
 parsing, writing, server detection, and validation settings. Provides
-comprehensive LDIF processing configuration with server-specific quirks
+comprehensive LDIF processing configuration with server-specific servers
 handling, format options for parsing and writing, and advanced validation rules.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -23,7 +23,8 @@ class FlextLdifSettings(FlextSettings):
     """LDIF processing settings inheriting base FLEXT configuration."""
 
     model_config: ClassVar[m.SettingsConfigDict] = m.SettingsConfigDict(
-        env_prefix="FLEXT_LDIF_", extra="ignore"
+        env_prefix="FLEXT_LDIF_",
+        extra="ignore",
     )
 
     ldif_encoding: Annotated[

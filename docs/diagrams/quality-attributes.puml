@@ -51,7 +51,7 @@ rectangle "Reliability" as Reliability {
         - Unit test coverage: 100%
         - Integration tests: Comprehensive
         - RFC compliance validation
-        - Server quirk testing
+        - Server server testing
     }
 }
 
@@ -94,7 +94,7 @@ rectangle "Maintainability" as Maintainability {
     }
 
     rectangle "Evolvability" as Evolvability {
-        - Server quirk extensibility
+        - Server server extensibility
         - Configuration-driven behavior
         - Backward compatibility
         - Versioned APIs

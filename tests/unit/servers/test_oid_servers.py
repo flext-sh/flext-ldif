@@ -1,4 +1,4 @@
-"""Tests for OID (Oracle Internet Directory) quirks."""
+"""Tests for OID (Oracle Internet Directory) servers."""
 
 from __future__ import annotations
 
@@ -7,8 +7,8 @@ import pytest
 from flext_ldif import FlextLdifServer
 
 
-class TestsTestFlextLdifOidQuirks:
-    """Test OID-specific quirks and behavior."""
+class TestsTestFlextLdifOidServers:
+    """Test OID-specific servers and behavior."""
 
     @pytest.fixture
     def server_registry(self) -> FlextLdifServer:
@@ -20,7 +20,7 @@ class TestsTestFlextLdifOidQuirks:
         server_registry: FlextLdifServer,
     ) -> None:
         """OID Boolean syntax should normalize to RFC DirectoryString."""
-        schema = server_registry.resolve_schema_quirk("oid")
+        schema = server_registry.resolve_schema_server("oid")
         assert schema is not None
         attr_def = (
             "( 2.16.840.1.113894.1.1.1 NAME 'orclIsEnabled' "
@@ -36,7 +36,7 @@ class TestsTestFlextLdifOidQuirks:
         server_registry: FlextLdifServer,
     ) -> None:
         """OID equality substrings rule should normalize to RFC fields."""
-        schema = server_registry.resolve_schema_quirk("oid")
+        schema = server_registry.resolve_schema_server("oid")
         assert schema is not None
         attr_def = (
             "( 2.16.840.1.113894.1.1.327 NAME 'orclDASUIType' "
@@ -55,7 +55,7 @@ class TestsTestFlextLdifOidQuirks:
         server_registry: FlextLdifServer,
     ) -> None:
         """OID-specific accessDirectiveMatch should normalize to caseIgnoreMatch."""
-        schema = server_registry.resolve_schema_quirk("oid")
+        schema = server_registry.resolve_schema_server("oid")
         assert schema is not None
         attr_def = (
             "( 2.16.840.1.113894.1.1.500 NAME 'orclAccessDir' "
@@ -71,7 +71,7 @@ class TestsTestFlextLdifOidQuirks:
         server_registry: FlextLdifServer,
     ) -> None:
         """OID DN case variants should normalize to distinguishedNameMatch."""
-        schema = server_registry.resolve_schema_quirk("oid")
+        schema = server_registry.resolve_schema_server("oid")
         assert schema is not None
         attr_def = (
             "( 2.16.840.1.113894.1.1.600 NAME 'orclMemberRef' "
@@ -87,7 +87,7 @@ class TestsTestFlextLdifOidQuirks:
         server_registry: FlextLdifServer,
     ) -> None:
         """Quoted SUP 'top' should parse as bare top."""
-        schema = server_registry.resolve_schema_quirk("oid")
+        schema = server_registry.resolve_schema_server("oid")
         assert schema is not None
         oc_def = (
             "( 2.16.840.1.113894.1.2.64 NAME 'orclReferenceObject' "
@@ -102,7 +102,7 @@ class TestsTestFlextLdifOidQuirks:
         server_registry: FlextLdifServer,
     ) -> None:
         """OID AUXILLARY typo should normalize to AUXILIARY."""
-        schema = server_registry.resolve_schema_quirk("oid")
+        schema = server_registry.resolve_schema_server("oid")
         assert schema is not None
         oc_def = (
             "( 2.16.840.1.113894.1.2.99 NAME 'orclTestAux' "
@@ -117,7 +117,7 @@ class TestsTestFlextLdifOidQuirks:
         server_registry: FlextLdifServer,
     ) -> None:
         """Parenthesized SUP should parse as a single superior class."""
-        schema = server_registry.resolve_schema_quirk("oid")
+        schema = server_registry.resolve_schema_server("oid")
         assert schema is not None
         oc_def = (
             "( 2.16.840.1.113894.1.2.50 NAME 'orclParenSup' "
@@ -132,7 +132,7 @@ class TestsTestFlextLdifOidQuirks:
         server_registry: FlextLdifServer,
     ) -> None:
         """OID same-server round-trip should preserve original matching-rule text."""
-        schema = server_registry.resolve_schema_quirk("oid")
+        schema = server_registry.resolve_schema_server("oid")
         assert schema is not None
         attr_def = (
             "( 2.16.840.1.113894.1.1.327 NAME 'orclDASUIType' "
@@ -147,4 +147,4 @@ class TestsTestFlextLdifOidQuirks:
         assert "EQUALITY caseIgnoreSubstringsMatch" in written
 
 
-__all__: list[str] = ["TestsTestFlextLdifOidQuirks"]
+__all__: list[str] = ["TestsTestFlextLdifOidServers"]

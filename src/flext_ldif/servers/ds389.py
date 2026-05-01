@@ -1,4 +1,4 @@
-"""389 Directory Server Quirks — DS389 flavor detection and schema handling."""
+"""389 Directory Server Servers — DS389 flavor detection and schema handling."""
 
 from __future__ import annotations
 
@@ -16,10 +16,10 @@ from flext_ldif import (
 
 
 class FlextLdifServersDs389(FlextLdifServersRfc):
-    """389 Directory Server quirks implementation."""
+    """389 Directory Server servers implementation."""
 
     class Constants(FlextLdifServersRfc.Constants):
-        """Standardized constants for 389 Directory Server quirk."""
+        """Standardized constants for 389 Directory Server server."""
 
         SERVER_TYPE: ClassVar[str] = "ds389"
         PRIORITY: ClassVar[int] = 30
@@ -123,7 +123,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         )
 
     class Schema(FlextLdifServersRfc.Schema):
-        """Schema quirks for Red Hat / 389 Directory Server."""
+        """Schema servers for Red Hat / 389 Directory Server."""
 
         @override
         def can_handle_attribute(
@@ -194,7 +194,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             result = super()._parse_attribute(attr_definition)
             if result.success:
                 attr_data = result.value
-                metadata = m.Ldif.QuirkMetadata.create_for(self._get_server_type())
+                metadata = m.Ldif.ServerMetadata.create_for(self._get_server_type())
                 return r[m.Ldif.SchemaAttribute].ok(
                     attr_data.model_copy(update={"metadata": metadata}),
                 )
@@ -208,14 +208,14 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 oc_data = result.value
                 u.Ldif.fix_missing_sup(oc_data)
                 u.Ldif.fix_kind_mismatch(oc_data)
-                metadata = m.Ldif.QuirkMetadata.create_for(self._get_server_type())
+                metadata = m.Ldif.ServerMetadata.create_for(self._get_server_type())
                 return r[m.Ldif.SchemaObjectClass].ok(
                     oc_data.model_copy(update={"metadata": metadata}),
                 )
             return r[m.Ldif.SchemaObjectClass].from_result(result)
 
     class Acl(FlextLdifServersRfc.Acl):
-        """389 Directory Server ACI quirk."""
+        """389 Directory Server ACI server."""
 
         @staticmethod
         def _resolve_acl_targetattr(
@@ -384,7 +384,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                         target_dn = target_clause[len(dn_prefix) :]
                     else:
                         target_dn = target_clause
-                metadata = m.Ldif.QuirkMetadata.create_for(self._get_server_type())
+                metadata = m.Ldif.ServerMetadata.create_for(self._get_server_type())
                 metadata.extensions["original_format"] = acl_line.strip()
                 acl_name = (
                     acl_name_match.group(1)
@@ -454,7 +454,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 )
 
     class Entry(FlextLdifServersRfc.Entry):
-        """Entry quirks for 389 Directory Server."""
+        """Entry servers for 389 Directory Server."""
 
         @override
         def can_handle(
@@ -500,10 +500,10 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 }
                 entry_dn = entry.dn.value
                 dn_lower = entry_dn.lower()
-                metadata = entry.metadata or m.Ldif.QuirkMetadata(
-                    quirk_type=c.Ldif.ServerTypes.DS389,
+                metadata = entry.metadata or m.Ldif.ServerMetadata(
+                    server_type=c.Ldif.ServerTypes.DS389,
                 )
-                metadata.extensions[c.Ldif.QuirkMetadataKeys.IS_CONFIG_ENTRY] = any(
+                metadata.extensions[c.Ldif.ServerMetadataKeys.IS_CONFIG_ENTRY] = any(
                     marker in dn_lower
                     for marker in FlextLdifServersDs389.Constants.DETECTION_DN_MARKERS
                 )

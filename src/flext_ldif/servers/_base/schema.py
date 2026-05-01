@@ -1,4 +1,4 @@
-"""Base Quirk Classes for LDIF/LDAP Server Extensions."""
+"""Base Server Classes for LDIF/LDAP Server Extensions."""
 
 from __future__ import annotations
 
@@ -27,7 +27,7 @@ class FlextLdifServersBaseSchema(
     s[t.Ldif.SchemaConversionValue],
     FlextLdifServerMethodsMixin,
 ):
-    """Base class for schema quirks using `s` with enhanced usability."""
+    """Base class for schema servers using `s` with enhanced usability."""
 
     server_type: Annotated[
         str,
@@ -38,15 +38,15 @@ class FlextLdifServersBaseSchema(
     priority: Annotated[
         int,
         u.Field(
-            description="Quirk priority (lower number = higher priority)",
+            description="Server priority (lower number = higher priority)",
         ),
     ] = 0
-    parent_quirk: Annotated[
+    parent_server: Annotated[
         Self | None,
         u.Field(
             exclude=True,
             repr=False,
-            description="Reference to parent quirk instance for server-level access",
+            description="Reference to parent server instance for server-level access",
         ),
     ] = None
     attr_definition: Annotated[
@@ -92,25 +92,25 @@ class FlextLdifServersBaseSchema(
 
     def __new__(
         cls,
-        _schema_service: p.Ldif.SchemaQuirk | None = None,
-        _parent_quirk: Self | None = None,
+        _schema_service: p.Ldif.SchemaServer | None = None,
+        _parent_server: Self | None = None,
         **kwargs: t.Ldif.Scalar,
     ) -> Self:
-        """Override __new__ to filter _parent_quirk before passing to s."""
-        filtered_kwargs = {k: v for k, v in kwargs.items() if k != "_parent_quirk"}
+        """Override __new__ to filter _parent_server before passing to s."""
+        filtered_kwargs = {k: v for k, v in kwargs.items() if k != "_parent_server"}
         instance = super().__new__(cls, **filtered_kwargs)
-        if _parent_quirk is not None:
-            object.__setattr__(instance, "_parent_quirk", _parent_quirk)
+        if _parent_server is not None:
+            object.__setattr__(instance, "_parent_server", _parent_server)
         return instance
 
     def __init__(
         self,
-        _schema_service: p.Ldif.SchemaQuirk | None = None,
-        _parent_quirk: Self | None = None,
+        _schema_service: p.Ldif.SchemaServer | None = None,
+        _parent_server: Self | None = None,
         **kwargs: t.Ldif.Scalar,
     ) -> None:
-        """Initialize schema quirk service with optional DI service injection."""
-        filtered_kwargs = {k: v for k, v in kwargs.items() if k != "_parent_quirk"}
+        """Initialize schema server service with optional DI service injection."""
+        filtered_kwargs = {k: v for k, v in kwargs.items() if k != "_parent_server"}
         service_kwargs: MutableMapping[
             str,
             t.Ldif.Scalar | m.ConfigMap | t.MutableSequenceOf[t.Ldif.Scalar],
@@ -123,8 +123,8 @@ class FlextLdifServersBaseSchema(
                 service_kwargs[key] = value
         super().__init__()
         self._schema_service = _schema_service
-        if _parent_quirk is not None:
-            object.__setattr__(self, "_parent_quirk", _parent_quirk)
+        if _parent_server is not None:
+            object.__setattr__(self, "_parent_server", _parent_server)
 
     auto_execute: ClassVar[bool] = False
 
@@ -151,7 +151,7 @@ class FlextLdifServersBaseSchema(
 
     @staticmethod
     def _preserve_formatting(
-        metadata: m.Ldif.QuirkMetadata,
+        metadata: m.Ldif.ServerMetadata,
         attr_definition: str,
     ) -> None:
         """Preserve schema formatting via FlextLdifUtilities.Metadata."""
@@ -160,7 +160,7 @@ class FlextLdifServersBaseSchema(
             _ = preserve_method(metadata, attr_definition)
 
     @staticmethod
-    def _resolve_quirk_type(server_type: str | None) -> c.Ldif.ServerTypes:
+    def _resolve_server_type(server_type: str | None) -> c.Ldif.ServerTypes:
         """Resolve server type to valid StrEnum, defaulting to GENERIC."""
         if not server_type:
             return c.Ldif.ServerTypes.RFC
@@ -181,7 +181,7 @@ class FlextLdifServersBaseSchema(
         substr_oid: str | None = None,
         sup_oid: str | None = None,
         server_type: str | None = None,
-    ) -> m.Ldif.QuirkMetadata | None:
+    ) -> m.Ldif.ServerMetadata | None:
         """Build metadata for attribute including extensions and OID validation."""
         metadata_extensions = FlextLdifServersBaseSchema._extract_metadata_extensions(
             attr_definition,
@@ -212,21 +212,21 @@ class FlextLdifServersBaseSchema(
         )
         metadata_extensions["original_format"] = attr_definition.strip()
         metadata_extensions["schema_original_string_complete"] = attr_definition
-        quirk_type = FlextLdifServersBaseSchema._resolve_quirk_type(server_type)
-        metadata_extensions[c.Ldif.SCHEMA_SOURCE_SERVER] = quirk_type.value
+        server_type = FlextLdifServersBaseSchema._resolve_server_type(server_type)
+        metadata_extensions[c.Ldif.SCHEMA_SOURCE_SERVER] = server_type.value
         extensions_typed: t.Ldif.MutableMetadataMapping = {}
         for key, val in metadata_extensions.items():
             if val is not None:
                 extensions_typed[key] = u.normalize_to_metadata(val)
-        metadata = m.Ldif.QuirkMetadata(
-            quirk_type=quirk_type,
+        metadata = m.Ldif.ServerMetadata(
+            server_type=server_type,
             extensions=m.Ldif.DynamicMetadata.from_dict(
                 extensions_typed,
             )
             if extensions_typed
             else m.Ldif.DynamicMetadata(),
-            original_server_type=quirk_type,
-            target_server_type=quirk_type,
+            original_server_type=server_type,
+            target_server_type=server_type,
         )
         FlextLdifServersBaseSchema._preserve_formatting(metadata, attr_definition)
         preview_len = 100
@@ -278,7 +278,7 @@ class FlextLdifServersBaseSchema(
         self,
         attr_definition: str | m.Ldif.SchemaAttribute,
     ) -> bool:
-        """Check if this quirk can handle the attribute definition."""
+        """Check if this server can handle the attribute definition."""
         _ = attr_definition
         return False
 
@@ -286,7 +286,7 @@ class FlextLdifServersBaseSchema(
         self,
         oc_definition: str | m.Ldif.SchemaObjectClass,
     ) -> bool:
-        """Check if this quirk can handle the objectClass definition."""
+        """Check if this server can handle the objectClass definition."""
         _ = oc_definition
         return False
 
@@ -416,7 +416,7 @@ class FlextLdifServersBaseSchema(
             return None
         return self._coerce_operation(raw_operation)
 
-    def parse_quirk(
+    def parse_server(
         self,
         value: str,
     ) -> r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
@@ -427,8 +427,8 @@ class FlextLdifServersBaseSchema(
         self,
         schema_text: str,
     ) -> r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
-        """Compatibility parser entrypoint for direct schema quirk consumers."""
-        return self.parse_quirk(schema_text)
+        """Compatibility parser entrypoint for direct schema server consumers."""
+        return self.parse_server(schema_text)
 
     def parse_attribute(self, definition: str) -> r[m.Ldif.SchemaAttribute]:
         """Parse attribute definition (public API)."""
@@ -506,7 +506,7 @@ class FlextLdifServersBaseSchema(
         attr_definition: str | None,
         oc_definition: str | None,
     ) -> r[t.Ldif.SchemaConversionValue]:
-        """Handle parse operation for schema quirk."""
+        """Handle parse operation for schema server."""
         if attr_definition:
             attr_result = self.parse_attribute(attr_definition)
             if attr_result.success:
@@ -542,7 +542,7 @@ class FlextLdifServersBaseSchema(
         attr_model: m.Ldif.SchemaAttribute | None,
         oc_model: m.Ldif.SchemaObjectClass | None,
     ) -> r[t.Ldif.SchemaConversionValue]:
-        """Handle write operation for schema quirk."""
+        """Handle write operation for schema server."""
         if attr_model:
             write_result = self.write_attribute(attr_model)
             if write_result.success:

@@ -34,7 +34,7 @@ class FlextLdifModelsBases:
         @u.computed_field()
         @property
         def has_metadata(self) -> bool:
-            """Check if schema element has quirk metadata."""
+            """Check if schema element has server metadata."""
             metadata = getattr(self, "metadata", None)
             return metadata is not None
 
@@ -54,10 +54,10 @@ class FlextLdifModelsBases:
             """Get server type from metadata, default to RFC."""
             metadata = getattr(self, "metadata", None)
             if metadata is not None:
-                quirk_type = getattr(metadata, "quirk_type", None)
-                if quirk_type is not None:
+                server_type = getattr(metadata, "server_type", None)
+                if server_type is not None:
                     try:
-                        return FlextLdifShared.normalize_server_type(str(quirk_type))
+                        return FlextLdifShared.normalize_server_type(str(server_type))
                     except ValueError:
                         pass
             return "rfc"
@@ -87,8 +87,8 @@ class FlextLdifModelsBases:
 
         @u.computed_field()
         @property
-        def has_server_quirks(self) -> bool:
-            """Check if element uses server-specific quirks."""
+        def has_server_servers(self) -> bool:
+            """Check if element uses server-specific servers."""
             return self.server_type != "rfc"
 
         @u.computed_field()

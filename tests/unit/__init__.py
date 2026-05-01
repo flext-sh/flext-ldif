@@ -17,12 +17,12 @@ _LAZY_IMPORTS = merge_lazy_imports(
     ),
     build_lazy_import_map(
         {
-            ".servers.test_apache_quirks": ("TestsTestFlextLdifApacheQuirks",),
-            ".servers.test_ds389_quirks": ("TestsTestFlextLdifDs389Quirks",),
+            ".servers.test_apache_servers": ("TestsTestFlextLdifApacheServers",),
+            ".servers.test_ds389_servers": ("TestsTestFlextLdifDs389Servers",),
             ".servers.test_edge_cases": ("TestsFlextLdifEdgeCases",),
-            ".servers.test_novell_quirks": ("TestsFlextLdifNovellQuirks",),
-            ".servers.test_oid_quirks": ("TestsTestFlextLdifOidQuirks",),
-            ".servers.test_relaxed_quirks": ("TestsTestFlextLdifRelaxedQuirks",),
+            ".servers.test_novell_servers": ("TestsFlextLdifNovellServers",),
+            ".servers.test_oid_servers": ("TestsTestFlextLdifOidServers",),
+            ".servers.test_relaxed_servers": ("TestsTestFlextLdifRelaxedServers",),
             ".servers.test_schema_transformer": ("TestsFlextLdifSchemaTransformer",),
             ".services.test_acl_service": ("TestsFlextLdifAclService",),
             ".services.test_analysis_service": ("TestsFlextLdifAnalysisService",),
@@ -38,8 +38,8 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ),
             ".services.test_parser_service": ("TestsFlextLdifParserService",),
             ".services.test_processing_service": ("TestsFlextLdifProcessingService",),
-            ".services.test_quirks_standardization": (
-                "TestsFlextLdifQuirksStandardization",
+            ".services.test_servers_standardization": (
+                "TestsFlextLdifServersStandardization",
             ),
             ".services.test_statistics_service": ("TestsFlextLdifStatisticsService",),
             ".services.test_transformers_service": (
@@ -48,8 +48,8 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".services.test_writer_service": ("TestsFlextLdifWriterService",),
             ".test_acl_registry": ("TestsFlextLdifAclRegistry",),
             ".test_constants_data_driven": ("TestsFlextLdifConstantsDataDriven",),
-            ".test_migration_pipeline_quirks": (
-                "TestsFlextLdifMigrationPipelineQuirks",
+            ".test_migration_pipeline_servers": (
+                "TestsFlextLdifMigrationPipelineServers",
             ),
             ".test_oid_utilities": ("TestsFlextLdifOidUtilities",),
             ".test_parser_utilities": ("TestsFlextLdifParserUtilities",),

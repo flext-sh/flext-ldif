@@ -1,4 +1,4 @@
-"""Base Quirk Classes for LDIF/LDAP Server Extensions."""
+"""Base Server Classes for LDIF/LDAP Server Extensions."""
 
 from __future__ import annotations
 
@@ -30,7 +30,7 @@ class FlextLdifServersBaseEntry(
     s[t.Ldif.EntryPayload],
     FlextLdifServerMethodsMixin,
 ):
-    """Base class for entry processing quirks - satisfies Entry (structural typing)."""
+    """Base class for entry processing servers - satisfies Entry (structural typing)."""
 
     server_type: Annotated[
         str,
@@ -41,34 +41,34 @@ class FlextLdifServersBaseEntry(
     priority: Annotated[
         int,
         u.Field(
-            description="Quirk priority (lower number = higher priority)",
+            description="Server priority (lower number = higher priority)",
         ),
     ] = 0
-    parent_quirk: Annotated[
+    parent_server: Annotated[
         Self | None,
         u.Field(
             exclude=True,
             repr=False,
-            description="Reference to parent quirk instance for server-level access",
+            description="Reference to parent server instance for server-level access",
         ),
     ] = None
 
     def __init__(
         self,
-        entry_service: p.Ldif.EntryQuirk | None = None,
-        _parent_quirk: Self | None = None,
+        entry_service: p.Ldif.EntryServer | None = None,
+        _parent_server: Self | None = None,
     ) -> None:
-        """Initialize entry quirk service with optional DI service injection."""
+        """Initialize entry server service with optional DI service injection."""
         super().__init__()
         self._entry_service = entry_service
-        if _parent_quirk is not None:
-            object.__setattr__(self, "_parent_quirk", _parent_quirk)
+        if _parent_server is not None:
+            object.__setattr__(self, "_parent_server", _parent_server)
 
     auto_execute: ClassVar[bool] = False
 
     @staticmethod
     def _extract_write_format_options(
-        metadata: m.Ldif.QuirkMetadata | None,
+        metadata: m.Ldif.ServerMetadata | None,
     ) -> m.Ldif.WriteFormatOptions | None:
         if metadata is None:
             return None
@@ -96,18 +96,18 @@ class FlextLdifServersBaseEntry(
         entry_dn: str,
         attributes: t.MutableStrSequenceMapping,
     ) -> bool:
-        """Check if this quirk can handle the entry."""
+        """Check if this server can handle the entry."""
         _ = entry_dn
         _ = attributes
         return False
 
     def can_handle_attribute(self, attribute: m.Ldif.SchemaAttribute) -> bool:
-        """Check if this quirk can handle a schema attribute."""
+        """Check if this server can handle a schema attribute."""
         _ = attribute
         return False
 
     def can_handle_objectclass(self, objectclass: m.Ldif.SchemaObjectClass) -> bool:
-        """Check if this quirk can handle a schema objectClass."""
+        """Check if this server can handle a schema objectClass."""
         _ = objectclass
         return False
 
@@ -130,13 +130,13 @@ class FlextLdifServersBaseEntry(
             return r[t.Ldif.EntryPayload].ok(str_result.map_or(""))
         return r[t.Ldif.EntryPayload].ok("")
 
-    def parse_quirk(self, value: str) -> r[t.MutableSequenceOf[m.Ldif.Entry]]:
+    def parse_server(self, value: str) -> r[t.MutableSequenceOf[m.Ldif.Entry]]:
         """Parse LDIF content string into Entry models."""
         return self._parse_content(value)
 
     def parse_input(self, ldif_text: str) -> t.MutableSequenceOf[m.Ldif.Entry] | None:
-        """Compatibility parser entrypoint for direct quirk consumers."""
-        parse_result = self.parse_quirk(ldif_text)
+        """Compatibility parser entrypoint for direct server consumers."""
+        parse_result = self.parse_server(ldif_text)
         if parse_result.failure:
             return None
         return parse_result.value
@@ -257,8 +257,8 @@ class FlextLdifServersBaseEntry(
                 },
             )
         else:
-            updated_metadata = m.Ldif.QuirkMetadata(
-                quirk_type=c.Ldif.ServerTypes.RFC,
+            updated_metadata = m.Ldif.ServerMetadata(
+                server_type=c.Ldif.ServerTypes.RFC,
                 extensions=existing_extensions,
             )
         copied: m.Ldif.Entry = entry.model_copy(update={"metadata": updated_metadata})
@@ -280,7 +280,7 @@ class FlextLdifServersBaseEntry(
         """Parse raw LDIF content string into Entry models (internal)."""
         _ = ldif_content
         return r[t.MutableSequenceOf[m.Ldif.Entry]].fail(
-            "Must be implemented by subclass"
+            "Must be implemented by subclass",
         )
 
     def _write_entry(self, entry_data: m.Ldif.Entry) -> r[str]:
@@ -430,7 +430,7 @@ class FlextLdifServersBaseEntry(
 
         if should_restore_original() and entry_data.metadata is not None:
             original_ldif_raw: object = entry_data.metadata.original_strings.get(
-                "entry_original_ldif"
+                "entry_original_ldif",
             )
             if not original_ldif_raw:
                 return r[str].ok("")

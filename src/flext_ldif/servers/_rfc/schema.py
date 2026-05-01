@@ -1,4 +1,4 @@
-"""RFC 4512 Compliant Server Quirks - Base LDAP Schema/ACL/Entry Implementation."""
+"""RFC 4512 Compliant Server Servers - Base LDAP Schema/ACL/Entry Implementation."""
 
 from __future__ import annotations
 
@@ -26,30 +26,30 @@ logger = u.fetch_logger(__name__)
 
 
 class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
-    """RFC 4512 Compliant Schema Quirk - STRICT Implementation."""
+    """RFC 4512 Compliant Schema Server - STRICT Implementation."""
 
     def __new__(
         cls,
-        schema_service: p.Ldif.SchemaQuirk | None = None,
-        parent_quirk: p.Ldif.SchemaQuirk | None = None,
+        schema_service: p.Ldif.SchemaServer | None = None,
+        parent_server: p.Ldif.SchemaServer | None = None,
         **kwargs: t.Ldif.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> Self:
         """Override __new__ to support auto-execute and processor instantiation."""
         instance = object.__new__(cls)
-        parent_quirk_raw = (
-            parent_quirk if parent_quirk is not None else kwargs.get("_parent_quirk")
+        parent_server_raw = (
+            parent_server if parent_server is not None else kwargs.get("_parent_server")
         )
-        parent_quirk_value: p.Ldif.SchemaQuirk | None = (
-            parent_quirk_raw
-            if isinstance(parent_quirk_raw, p.Ldif.SchemaQuirk)
+        parent_server_value: p.Ldif.SchemaServer | None = (
+            parent_server_raw
+            if isinstance(parent_server_raw, p.Ldif.SchemaServer)
             else None
         )
         schema_instance: Self = instance
         super(FlextLdifServersBase.Schema, schema_instance).__init__()
         if schema_service is not None:
             object.__setattr__(schema_instance, "_schema_service", schema_service)
-        if parent_quirk_value is not None:
-            object.__setattr__(schema_instance, "_parent_quirk", parent_quirk_value)
+        if parent_server_value is not None:
+            object.__setattr__(schema_instance, "_parent_server", parent_server_value)
         if cls.auto_execute:
             attr_def_raw = kwargs.get("attr_definition")
             attr_def: str | None = (
@@ -84,15 +84,15 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
     def __init__(
         self,
-        schema_service: p.Ldif.SchemaQuirk | None = None,
-        parent_quirk: p.Ldif.SchemaQuirk | None = None,
+        schema_service: p.Ldif.SchemaServer | None = None,
+        parent_server: p.Ldif.SchemaServer | None = None,
         **kwargs: t.Ldif.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> None:
-        """Initialize RFC schema quirk service."""
+        """Initialize RFC schema server service."""
         filtered_kwargs: dict[str, t.Primitives | None] = {}
         excluded_keys = {
-            "_parent_quirk",
-            "parent_quirk",
+            "_parent_server",
+            "parent_server",
             "_schema_service",
             "attr_definition",
             "oc_definition",
@@ -105,15 +105,15 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 continue
             if isinstance(value, t.PRIMITIVES_TYPES):
                 filtered_kwargs[key] = value
-        schema_service_typed: p.Ldif.SchemaQuirk | None = schema_service
+        schema_service_typed: p.Ldif.SchemaServer | None = schema_service
         FlextLdifServersBaseSchema.__init__(
             self,
             _schema_service=schema_service_typed,
-            _parent_quirk=None,
+            _parent_server=None,
             **filtered_kwargs,
         )
-        if parent_quirk is not None:
-            object.__setattr__(self, "_parent_quirk", parent_quirk)
+        if parent_server is not None:
+            object.__setattr__(self, "_parent_server", parent_server)
 
     @overload
     def __call__(
@@ -196,7 +196,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             return m.Ldif.DynamicMetadata()
 
     @staticmethod
-    def _convert_extensions_for_quirk(
+    def _convert_extensions_for_server(
         metadata: m.Ldif.DynamicMetadata,
     ) -> t.Ldif.SchemaExtensionsMapping:
         extensions: t.Ldif.SchemaExtensionsMapping = {}
@@ -266,7 +266,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         self,
         attr_definition: str | m.Ldif.SchemaAttribute,
     ) -> bool:
-        """Check if RFC quirk can handle attribute definitions (abstract impl)."""
+        """Check if RFC server can handle attribute definitions (abstract impl)."""
         _ = (self, attr_definition)
         return True
 
@@ -275,7 +275,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         self,
         oc_definition: str | m.Ldif.SchemaObjectClass,
     ) -> bool:
-        """Check if RFC quirk can handle objectClass definitions (abstract impl)."""
+        """Check if RFC server can handle objectClass definitions (abstract impl)."""
         _ = (self, oc_definition)
         return True
 
@@ -304,15 +304,15 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         self,
         original_format: str,
         extensions: m.Ldif.DynamicMetadata | None = None,
-    ) -> m.Ldif.QuirkMetadata:
-        """Create quirk metadata with consistent server-specific extensions."""
+    ) -> m.Ldif.ServerMetadata:
+        """Create server metadata with consistent server-specific extensions."""
         server_type_value = self._get_server_type()
         all_extensions = m.Ldif.DynamicMetadata()
         all_extensions[c.Ldif.ACL_ORIGINAL_FORMAT] = original_format
         if extensions:
             all_extensions.update(extensions.to_dict())
-        return m.Ldif.QuirkMetadata(
-            quirk_type=server_type_value,
+        return m.Ldif.ServerMetadata(
+            server_type=server_type_value,
             extensions=all_extensions,
         )
 
@@ -412,7 +412,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             ].fail(f"Schema extraction failed: {e}")
 
     def should_filter_out_attribute(self, _attribute: m.Ldif.SchemaAttribute) -> bool:
-        """RFC quirk does not filter attributes."""
+        """RFC server does not filter attributes."""
         _ = self
         return False
 
@@ -420,7 +420,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         self,
         _objectclass: m.Ldif.SchemaObjectClass,
     ) -> bool:
-        """RFC quirk does not filter objectClasses."""
+        """RFC server does not filter objectClasses."""
         _ = (self, _objectclass)
         return False
 
@@ -445,12 +445,12 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             str,
             t.MutableSequenceOf[str] | str | bool | None,
         ],
-    ) -> m.Ldif.QuirkMetadata:
+    ) -> m.Ldif.ServerMetadata:
         """Build objectClass metadata with extensions."""
         server_type = self._get_server_type()
         metadata_extensions[c.Ldif.SCHEMA_SOURCE_SERVER] = server_type
-        metadata = m.Ldif.QuirkMetadata(
-            quirk_type=server_type,
+        metadata = m.Ldif.ServerMetadata(
+            server_type=server_type,
             extensions=m.Ldif.DynamicMetadata.model_validate(metadata_extensions)
             if metadata_extensions
             else m.Ldif.DynamicMetadata(),
@@ -477,7 +477,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
     def _ensure_x_origin(
         self,
         output_str: str,
-        metadata: m.Ldif.QuirkMetadata | None,
+        metadata: m.Ldif.ServerMetadata | None,
     ) -> str:
         """Ensure X-ORIGIN extension is present if in metadata."""
         if metadata is None:
@@ -575,7 +575,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         """Core RFC 4512 objectClass parsing per Section 4.1.1."""
         try:
             parsed = u.Ldif.parse_objectclass(oc_definition)
-            metadata_extensions = self._convert_extensions_for_quirk(
+            metadata_extensions = self._convert_extensions_for_server(
                 self._coerce_dynamic_metadata(parsed.get("metadata_extensions")),
             )
             metadata_extensions[c.Ldif.ORIGINAL_FORMAT] = oc_definition.strip()

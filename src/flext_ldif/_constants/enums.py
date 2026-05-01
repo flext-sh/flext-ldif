@@ -270,8 +270,8 @@ class FlextLdifConstantsEnums:
         OID = "oid"
 
     @unique
-    class QuirkMetadataKeys(StrEnum):
-        """Dictionary keys for quirk metadata and server-specific entry properties."""
+    class ServerMetadataKeys(StrEnum):
+        """Dictionary keys for server metadata and server-specific entry properties."""
 
         SERVER_TYPE = "server_type"
         IS_CONFIG_ENTRY = "is_config_entry"

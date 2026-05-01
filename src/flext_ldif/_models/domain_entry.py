@@ -36,7 +36,7 @@ class FlextLdifModelsDomainEntry:
 
         Tracks complete entry lifecycle from parsing through validation,
         transformation, filtering, and output. Captures all attribute
-        modifications, quirk applications, and rejection reasons.
+        modifications, server applications, and rejection reasons.
 
         Designed for aggregation across large LDIF files to provide
         comprehensive migration diagnostics.
@@ -112,15 +112,15 @@ class FlextLdifModelsDomainEntry:
                 description="Final objectClass values after transformation",
             ),
         ]
-        quirks_applied: Annotated[
+        servers_applied: Annotated[
             t.MutableSequenceOf[str],
             u.Field(
-                description="List of quirk types applied to this entry",
+                description="List of server types applied to this entry",
             ),
         ]
-        quirk_transformations: Annotated[
+        server_transformations: Annotated[
             int,
-            u.Field(description="Count of quirk transformations applied"),
+            u.Field(description="Count of server transformations applied"),
         ] = 0
         dn_statistics: Annotated[
             mdn.DNStatistics | None,
@@ -208,7 +208,8 @@ class FlextLdifModelsDomainEntry:
         @u.field_validator("filters_applied", mode="after")
         @classmethod
         def deduplicate_filters(
-            cls, v: t.MutableSequenceOf[str]
+            cls,
+            v: t.MutableSequenceOf[str],
         ) -> t.MutableSequenceOf[str]:
             """Remove duplicate filters while preserving order."""
             seen: set[str] = set()
@@ -219,12 +220,13 @@ class FlextLdifModelsDomainEntry:
                     result.append(item)
             return result
 
-        @u.field_validator("quirks_applied", mode="after")
+        @u.field_validator("servers_applied", mode="after")
         @classmethod
-        def deduplicate_quirks(
-            cls, v: t.MutableSequenceOf[str]
+        def deduplicate_servers(
+            cls,
+            v: t.MutableSequenceOf[str],
         ) -> t.MutableSequenceOf[str]:
-            """Remove duplicate quirks while preserving order."""
+            """Remove duplicate servers while preserving order."""
             seen: set[str] = set()
             result: t.MutableSequenceOf[str] = []
             for item in v:
@@ -418,7 +420,7 @@ class FlextLdifModelsDomainEntry:
         change_operations: Annotated[
             t.MutableSequenceOf[FlextLdifModelsDomainEntry.ChangeOperation],
             u.Field(
-                description="Structured modify operation blocks for changetype=modify"
+                description="Structured modify operation blocks for changetype=modify",
             ),
         ] = u.Field(default_factory=list)
 
@@ -510,13 +512,13 @@ class FlextLdifModelsDomainEntry:
         raw_record_lines: Annotated[
             t.MutableSequenceOf[str],
             u.Field(
-                description="Original unfolded LDIF lines for loss-aware round-trip"
+                description="Original unfolded LDIF lines for loss-aware round-trip",
             ),
         ] = u.Field(default_factory=list)
         metadata: Annotated[
-            mdm.QuirkMetadata | None,
+            mdm.ServerMetadata | None,
             u.Field(
-                description="Quirk-specific metadata for processing data, ACLs, statistics, validation (non-RFC data)",
+                description="Server-specific metadata for processing data, ACLs, statistics, validation (non-RFC data)",
             ),
         ] = None
         validation_metadata: Annotated[
@@ -576,9 +578,9 @@ class FlextLdifModelsDomainEntry:
             data: t.MutableJsonMapping,
         ) -> MutableMapping[
             str,
-            t.JsonValue | datetime | mdm.QuirkMetadata,
+            t.JsonValue | datetime | mdm.ServerMetadata,
         ]:
-            """Ensure metadata field is always initialized to a QuirkMetadata instance.
+            """Ensure metadata field is always initialized to a ServerMetadata instance.
 
             Also handles datetime coercion from ISO strings for JSON round-trips.
             This is necessary because strict=True doesn't auto-coerce strings to datetime.
@@ -597,7 +599,7 @@ class FlextLdifModelsDomainEntry:
             """
             data_dict: MutableMapping[
                 str,
-                t.JsonValue | datetime | mdm.QuirkMetadata,
+                t.JsonValue | datetime | mdm.ServerMetadata,
             ] = dict(data)
             for dt_field in cls._DATETIME_FIELDS:
                 field_value = data_dict.get(dt_field)
@@ -607,17 +609,17 @@ class FlextLdifModelsDomainEntry:
                     except ValueError:
                         data_dict[dt_field] = field_value
             if data_dict.get("metadata") is None:
-                quirk_type_value = data_dict.get("quirk_type")
-                final_quirk_type_val: c.Ldif.ServerTypes
-                if isinstance(quirk_type_value, str):
+                server_type_value = data_dict.get("server_type")
+                final_server_type_val: c.Ldif.ServerTypes
+                if isinstance(server_type_value, str):
                     try:
-                        final_quirk_type_val = c.Ldif.ServerTypes(quirk_type_value)
+                        final_server_type_val = c.Ldif.ServerTypes(server_type_value)
                     except ValueError:
-                        final_quirk_type_val = c.Ldif.ServerTypes.RFC
+                        final_server_type_val = c.Ldif.ServerTypes.RFC
                 else:
-                    final_quirk_type_val = c.Ldif.ServerTypes.RFC
-                metadata_obj = mdm.QuirkMetadata.create_for(
-                    quirk_type=final_quirk_type_val,
+                    final_server_type_val = c.Ldif.ServerTypes.RFC
+                metadata_obj = mdm.ServerMetadata.create_for(
+                    server_type=final_server_type_val,
                 )
                 data_dict["metadata"] = metadata_obj
             return data_dict
@@ -635,7 +637,7 @@ class FlextLdifModelsDomainEntry:
             and prevent infinite re-validation recursion (Pydantic v2 pattern).
             """
             if self.metadata is None:
-                self.metadata = mdm.QuirkMetadata.create_for()
+                self.metadata = mdm.ServerMetadata.create_for()
 
         @u.model_validator(mode="after")
         def normalize_record_kind(self) -> Self:
@@ -680,6 +682,7 @@ class FlextLdifModelsDomainEntry:
             capture violations in validation_metadata for downstream handling.
             """
             violations: t.MutableSequenceOf[str] = []
+
             dn_value = "<None>"
             if self.dn is None:
                 violations.append("RFC 2849 § 2: DN is required")
@@ -696,11 +699,11 @@ class FlextLdifModelsDomainEntry:
                     FlextLdifUtilitiesEntry.validate_objectclass(self, dn_value),
                 )
                 violations.extend(
-                    FlextLdifUtilitiesEntry.validate_naming_attribute(self, dn_value)
+                    FlextLdifUtilitiesEntry.validate_naming_attribute(self, dn_value),
                 )
                 violations.extend(FlextLdifUtilitiesEntry.validate_binary_options(self))
                 violations.extend(
-                    FlextLdifUtilitiesEntry.validate_attribute_syntax(self)
+                    FlextLdifUtilitiesEntry.validate_attribute_syntax(self),
                 )
                 violations.extend(FlextLdifUtilitiesEntry.validate_changetype(self))
             if violations and self.metadata is not None:
@@ -737,6 +740,7 @@ class FlextLdifModelsDomainEntry:
             if self._VALIDATION_RULES_KEY not in self.metadata.extensions:
                 return self
             validation_rules = self.metadata.extensions.get(self._VALIDATION_RULES_KEY)
+
             if not validation_rules:
                 return self
             normalized_validation_rules = u.normalize_to_json_value(validation_rules)
@@ -748,17 +752,17 @@ class FlextLdifModelsDomainEntry:
             dn_value = self.dn.value if self.dn else ""
             server_violations: t.MutableSequenceOf[str] = []
             server_violations.extend(
-                FlextLdifUtilitiesEntry.check_objectclass_rule(self, rules, dn_value)
+                FlextLdifUtilitiesEntry.check_objectclass_rule(self, rules, dn_value),
             )
             server_violations.extend(
-                FlextLdifUtilitiesEntry.check_naming_attr_rule(self, rules, dn_value)
+                FlextLdifUtilitiesEntry.check_naming_attr_rule(self, rules, dn_value),
             )
             server_violations.extend(
-                FlextLdifUtilitiesEntry.check_binary_option_rule(self, rules)
+                FlextLdifUtilitiesEntry.check_binary_option_rule(self, rules),
             )
             if self.metadata:
                 self.metadata.extensions[self._VALIDATION_SERVER_TYPE_KEY] = (
-                    self.metadata.quirk_type
+                    self.metadata.server_type
                 )
             if server_violations and self.metadata:
                 if self.metadata.validation_results is None:
@@ -767,7 +771,7 @@ class FlextLdifModelsDomainEntry:
                     self.metadata.validation_results.model_copy(
                         update={
                             "server_specific_violations": server_violations,
-                            "validation_server_type": self.metadata.quirk_type,
+                            "validation_server_type": self.metadata.server_type,
                         },
                     )
                 )
@@ -878,11 +882,11 @@ class FlextLdifModelsDomainEntry:
         @classmethod
         def _build_metadata(
             cls,
-            metadata: mdm.QuirkMetadata | None,
+            metadata: mdm.ServerMetadata | None,
             server_type: c.Ldif.ServerTypes | None,
             source_entry: str | None,
             unconverted_attributes: mm.DynamicMetadata | None,
-        ) -> mdm.QuirkMetadata | None:
+        ) -> mdm.ServerMetadata | None:
             """Build or update metadata with server-specific extensions."""
             has_new_metadata = server_type or source_entry or unconverted_attributes
             if metadata is None and has_new_metadata:
@@ -894,8 +898,8 @@ class FlextLdifModelsDomainEntry:
                 extensions = mm.DynamicMetadata.from_dict(
                     ext_kwargs,
                 )
-                return mdm.QuirkMetadata.create_for(
-                    quirk_type=c.Ldif.ServerTypes.GENERIC,
+                return mdm.ServerMetadata.create_for(
+                    server_type=c.Ldif.ServerTypes.GENERIC,
                     extensions=extensions,
                 )
             if metadata is not None and has_new_metadata:
@@ -946,7 +950,7 @@ class FlextLdifModelsDomainEntry:
         @classmethod
         def _update_existing_metadata(
             cls,
-            metadata: mdm.QuirkMetadata,
+            metadata: mdm.ServerMetadata,
             server_type: c.Ldif.ServerTypes | None,
             source_entry: str | None,
             unconverted_attributes: mm.DynamicMetadata | None,
@@ -967,7 +971,7 @@ class FlextLdifModelsDomainEntry:
             cls,
             dn: str | mdn.DN,
             attributes: t.MutableAttributeMapping | mda.Attributes,
-            metadata: mdm.QuirkMetadata | None = None,
+            metadata: mdm.ServerMetadata | None = None,
             acls: t.MutableSequenceOf[mdac.Acl] | None = None,
             objectclasses: t.MutableSequenceOf[mds.SchemaObjectClass] | None = None,
             attributes_schema: t.MutableSequenceOf[mds.SchemaAttribute] | None = None,

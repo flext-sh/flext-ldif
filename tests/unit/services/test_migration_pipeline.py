@@ -380,7 +380,7 @@ class TestsFlextLdifProcessingPipeline:
     def test_execute_without_entries_fails(self) -> None:
         """Line 93: execute with no entries and no entries_input fails."""
         pipeline = FlextLdifProcessingPipeline(transform_config=None)
-        result = pipeline.execute(None)
+        result = pipeline.execute()
         tm.that(result.failure, eq=True)
         tm.that("No entries provided" in (result.error or ""), eq=True)
 
@@ -390,8 +390,10 @@ class TestsFlextLdifProcessingPipeline:
             dn=c.Tests.ANALYSIS_DN_VALID,
             attributes=m.Ldif.Attributes(attributes={}),
         )
-        pipeline = FlextLdifProcessingPipeline(transform_config=None)
-        result = pipeline.execute([entry])
+        pipeline = FlextLdifProcessingPipeline(
+            transform_config=None, entries_input=[entry]
+        )
+        result = pipeline.execute()
         tm.that(result.success, eq=True)
 
     def test_build_pipeline_with_normalize_dns_and_process_config(self) -> None:
@@ -403,8 +405,10 @@ class TestsFlextLdifProcessingPipeline:
                 target_server=c.Tests.RFC,
             ),
         )
-        pipeline = FlextLdifProcessingPipeline(transform_config=transform_config)
-        result = pipeline.execute([])
+        pipeline = FlextLdifProcessingPipeline(
+            transform_config=transform_config, entries_input=[]
+        )
+        result = pipeline.execute()
         tm.that(result.success, eq=True)
 
     def test_build_pipeline_with_normalize_attrs_and_process_config(self) -> None:
@@ -416,6 +420,8 @@ class TestsFlextLdifProcessingPipeline:
                 target_server=c.Tests.RFC,
             ),
         )
-        pipeline = FlextLdifProcessingPipeline(transform_config=transform_config)
-        result = pipeline.execute([])
+        pipeline = FlextLdifProcessingPipeline(
+            transform_config=transform_config, entries_input=[]
+        )
+        result = pipeline.execute()
         tm.that(result.success, eq=True)

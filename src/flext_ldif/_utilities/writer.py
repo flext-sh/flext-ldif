@@ -64,6 +64,7 @@ class FlextLdifUtilitiesWriter:
         """Fold long LDIF line according to RFC 2849 §3."""
         if not line:
             return [line]
+        keyword_token_max_length = 12
         line_bytes = line.encode(c.Ldif.DEFAULT_ENCODING)
         if len(line_bytes) <= width:
             return [line]
@@ -83,8 +84,39 @@ class FlextLdifUtilitiesWriter:
             else:
                 chunk_end = pos + 1
                 chunk = line_bytes[pos:chunk_end].decode(
-                    c.Ldif.DEFAULT_ENCODING, errors="replace"
+                    c.Ldif.DEFAULT_ENCODING,
+                    errors="replace",
                 )
+
+            # Prefer folding at whitespace to avoid splitting tokens across lines.
+            if chunk_end < len(line_bytes):
+                split_index = max(
+                    chunk.rfind(c.Ldif.LINE_CONTINUATION_SPACE),
+                    chunk.rfind("\t"),
+                )
+                if split_index > 0:
+                    left_text = chunk[:split_index].rstrip()
+                    right_text = chunk[split_index + 1 :].lstrip()
+                    left_parts = left_text.rsplit(None, 1)
+                    if left_parts and right_text:
+                        left_token = left_parts[-1]
+                        if (
+                            left_token.isupper()
+                            and len(left_token) <= keyword_token_max_length
+                        ):
+                            earlier_space = left_text.rfind(
+                                c.Ldif.LINE_CONTINUATION_SPACE,
+                            )
+                            earlier_tab = left_text.rfind("\t")
+                            earlier_split = max(earlier_space, earlier_tab)
+                            if earlier_split > 0:
+                                split_index = earlier_split
+                    split_chunk = chunk[: split_index + 1]
+                    split_bytes = split_chunk.encode(c.Ldif.DEFAULT_ENCODING)
+                    if split_bytes:
+                        chunk = split_chunk
+                        chunk_end = pos + len(split_bytes)
+
             if folded:
                 folded.append(c.Ldif.LINE_CONTINUATION_SPACE + chunk)
             else:

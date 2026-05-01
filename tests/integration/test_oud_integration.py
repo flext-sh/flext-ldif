@@ -1,8 +1,8 @@
-"""Integration tests for OUD (Oracle Unified Directory) quirks.
+"""Integration tests for OUD (Oracle Unified Directory) servers.
 
 Tests complete workflow with real fixture data:
 - Parse OUD LDIF fixtures via ldif API
-- Process entries with OUD quirks automatically
+- Process entries with OUD servers automatically
 - Convert to RFC format
 - Write back to LDIF
 - Validate round-trip integrity with metadata preservation
@@ -276,7 +276,7 @@ class TestsFlextLdifOudIntegration:
             parsed_rdns = re.split(r"\\s*,\\s*", parsed_dn)
             assert len(original_rdns) == len(parsed_rdns), "RDN count mismatch"
 
-    """Integration tests for metadata preservation in OUD quirks."""
+    """Integration tests for metadata preservation in OUD servers."""
 
     @pytest.fixture
     def api(self) -> FlextLdif:

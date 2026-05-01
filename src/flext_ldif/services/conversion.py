@@ -1,4 +1,4 @@
-"""Quirks conversion matrix for LDAP server translation."""
+"""Servers conversion matrix for LDAP server translation."""
 
 from __future__ import annotations
 
@@ -6,17 +6,11 @@ import struct
 import time
 from collections.abc import (
     Mapping,
-    MutableMapping,
     Sequence,
-)
-from typing import (
-    Self,
-    TypeIs,
 )
 
 from flext_ldif import (
     FlextLdifServer,
-    FlextLdifServersBase,
     c,
     m,
     p,
@@ -32,49 +26,24 @@ logger = u.fetch_logger(__name__)
 class FlextLdifConversion(
     s,
 ):
-    """Facade for universal, model-driven quirk-to-quirk conversion."""
-
-    @staticmethod
-    def _get_schema_from_attribute(
-        quirk: FlextLdifServersBase,
-    ) -> p.Ldif.SchemaQuirk:
-        if hasattr(quirk, "schema_quirk"):
-            schema = quirk.schema_quirk
-            if FlextLdifConversion._is_schema_quirk_protocol(schema):
-                return schema
-        msg = "Quirk must be a Schema quirk or have schema_quirk attribute"
-        raise TypeError(msg)
-
-    @staticmethod
-    def _is_schema_quirk_protocol(
-        obj: t.JsonPayload | m.BaseModel | p.Ldif.SchemaQuirk | type,
-    ) -> TypeIs[p.Ldif.SchemaQuirk]:
-        return (
-            hasattr(obj, "parse_attribute")
-            and hasattr(obj, "parse_objectclass")
-            and hasattr(obj, "write_attribute")
-            and hasattr(obj, "write_objectclass")
-        )
+    """Facade for universal, model-driven server-to-server conversion."""
 
     dn_registry: m.Ldif.DnRegistry = u.Field(
         default_factory=m.Ldif.DnRegistry,
         description="DN registry for tracking distinguished names during conversion",
     )
 
-    def __new__(cls, *args: object, **kwargs: object) -> Self:
-        """Create service instance with matching signature for type checker."""
-        _ = args, kwargs
-        instance = super().__new__(cls)
-        if not isinstance(instance, cls):
-            msg = f"Expected {cls.__name__}, got {type(instance).__name__}"
-            raise TypeError(msg)
-        return instance
+    @staticmethod
+    def _get_schema_from_attribute(
+        server: p.Ldif.ServerServer,
+    ) -> p.Ldif.SchemaServer:
+        return server.schema_server
 
     @staticmethod
     def _analyze_attribute_case(
         original_attribute_case: t.JsonMapping,
         target_server_type: str,
-    ) -> MutableMapping[str, t.Ldif.MutableMetadataInputMapping]:
+    ) -> t.MutableMappingKV[str, t.Ldif.MutableMetadataInputMapping]:
         """Analyze attribute case for target compatibility."""
         if bool(original_attribute_case):
             return {
@@ -92,11 +61,11 @@ class FlextLdifConversion(
     def _analyze_boolean_conversions(
         boolean_conversions: t.JsonMapping,
         target_server_type: str,
-    ) -> MutableMapping[str, t.Ldif.MutableMetadataInputMapping]:
+    ) -> t.MutableMappingKV[str, t.Ldif.MutableMetadataInputMapping]:
         """Analyze boolean conversions for target compatibility."""
         if not boolean_conversions:
             return {}
-        result: MutableMapping[str, t.Ldif.MutableMetadataInputMapping] = {}
+        result: t.MutableMappingKV[str, t.Ldif.MutableMetadataInputMapping] = {}
         for attr_name, conv_info in boolean_conversions.items():
             source_format = ""
             if isinstance(conv_info, Mapping):
@@ -115,7 +84,7 @@ class FlextLdifConversion(
     def _analyze_dn_format(
         original_format_details: t.JsonMapping,
         target_server_type: str,
-    ) -> MutableMapping[str, t.Ldif.MutableMetadataInputMapping]:
+    ) -> t.MutableMappingKV[str, t.Ldif.MutableMetadataInputMapping]:
         """Analyze DN spacing for target compatibility."""
         spacing = original_format_details.get("dn_spacing")
         if spacing:
@@ -132,14 +101,15 @@ class FlextLdifConversion(
 
     @staticmethod
     def _analyze_metadata_for_conversion(
-        source_metadata: m.Ldif.QuirkMetadata | m.Ldif.DynamicMetadata | None,
+        source_metadata: m.Ldif.ServerMetadata | m.Ldif.DynamicMetadata | None,
         target_server_type: str,
-    ) -> MutableMapping[str, t.Ldif.MutableMetadataInputMapping]:
+    ) -> t.MutableMappingKV[str, t.Ldif.MutableMetadataInputMapping]:
         """Analyze source metadata for intelligent conversion to target server."""
-        conversion_analysis: MutableMapping[
-            str, t.Ldif.MutableMetadataInputMapping
+        conversion_analysis: t.MutableMappingKV[
+            str,
+            t.Ldif.MutableMetadataInputMapping,
         ] = {}
-        if not source_metadata or not hasattr(source_metadata, "boolean_conversions"):
+        if not source_metadata:
             return conversion_analysis
         target_server_str = target_server_type
         get_boolean = u.prop("boolean_conversions")
@@ -151,7 +121,7 @@ class FlextLdifConversion(
             boolean_conversions,
             target_server_str,
         )
-        acc_typed: MutableMapping[str, t.Ldif.MutableMetadataInputMapping] = {}
+        acc_typed: t.MutableMappingKV[str, t.Ldif.MutableMetadataInputMapping] = {}
         for key, value in boolean_analysis.items():
             if isinstance(value, dict):
                 acc_typed[key] = {
@@ -184,66 +154,6 @@ class FlextLdifConversion(
                 }
         return acc_typed
 
-    def _convert_schema_attribute(
-        self,
-        source_quirk: FlextLdifServersBase,
-        target_quirk: FlextLdifServersBase,
-        attribute: m.Ldif.SchemaAttribute,
-    ) -> r[t.Ldif.ConvertedModel]:
-        """Convert SchemaAttribute model through Entry bridge orchestration."""
-        source_schema_result = self._resolve_schema_quirk(source_quirk, role="Source")
-        if source_schema_result.failure:
-            return r[t.Ldif.ConvertedModel].fail(
-                source_schema_result.error or "Source schema not available",
-            )
-        target_schema_result = self._resolve_schema_quirk(target_quirk, role="Target")
-        if target_schema_result.failure:
-            return r[t.Ldif.ConvertedModel].fail(
-                target_schema_result.error or "Target schema not available",
-            )
-        conversion_config = (
-            m.Ldif.SchemaAttributeConversionPipelineConfig.model_validate({
-                "source_schema": source_schema_result.value,
-                "target_schema": target_schema_result.value,
-                "item": attribute,
-            })
-        )
-        return self._convert_schema_model_via_entry(
-            source_quirk,
-            target_quirk,
-            conversion_config=conversion_config,
-        )
-
-    def _convert_schema_objectclass(
-        self,
-        source_quirk: FlextLdifServersBase,
-        target_quirk: FlextLdifServersBase,
-        objectclass: m.Ldif.SchemaObjectClass,
-    ) -> r[t.Ldif.ConvertedModel]:
-        """Convert SchemaObjectClass model through Entry bridge orchestration."""
-        source_schema_result = self._resolve_schema_quirk(source_quirk, role="Source")
-        if source_schema_result.failure:
-            return r[t.Ldif.ConvertedModel].fail(
-                source_schema_result.error or "Source schema not available",
-            )
-        target_schema_result = self._resolve_schema_quirk(target_quirk, role="Target")
-        if target_schema_result.failure:
-            return r[t.Ldif.ConvertedModel].fail(
-                target_schema_result.error or "Target schema not available",
-            )
-        conversion_config = (
-            m.Ldif.SchemaObjectClassConversionPipelineConfig.model_validate({
-                "source_schema": source_schema_result.value,
-                "target_schema": target_schema_result.value,
-                "item": objectclass,
-            })
-        )
-        return self._convert_schema_model_via_entry(
-            source_quirk,
-            target_quirk,
-            conversion_config=conversion_config,
-        )
-
     @staticmethod
     def _extract_schema_values_from_entry(
         entry: m.Ldif.Entry,
@@ -259,16 +169,16 @@ class FlextLdifConversion(
 
     def _build_schema_bridge_entry(
         self,
-        source_quirk: FlextLdifServersBase,
+        source_server: p.Ldif.ServerServer,
         schema_item_kind: c.Ldif.SchemaItemKind,
         schema_value: str,
     ) -> m.Ldif.Entry:
         source_server_type = u.try_(
             lambda: u.Ldif.normalize_server_type(
-                str(getattr(source_quirk, "server_type", "")),
+                source_server.server_type,
             ),
         ).map_or(None)
-        metadata = m.Ldif.QuirkMetadata.create_for(source_server_type, extensions=None)
+        metadata = m.Ldif.ServerMetadata.create_for(source_server_type, extensions=None)
         field_name = (
             c.Ldif.ATTRIBUTE_TYPES
             if schema_item_kind == c.Ldif.SchemaItemKind.ATTRIBUTE
@@ -295,99 +205,87 @@ class FlextLdifConversion(
 
     def _convert_schema_model_via_entry(
         self,
-        source_quirk: FlextLdifServersBase,
-        target_quirk: FlextLdifServersBase,
-        conversion_config: (
-            m.Ldif.SchemaAttributeConversionPipelineConfig
-            | m.Ldif.SchemaObjectClassConversionPipelineConfig
-        ),
+        source_server: p.Ldif.ServerServer,
+        target_server: p.Ldif.ServerServer,
+        item: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        source_schema: p.Ldif.SchemaServer,
+        target_schema: p.Ldif.SchemaServer,
     ) -> r[t.Ldif.ConvertedModel]:
         """Orchestrate schema conversion through m.Ldif.Entry intermediary."""
-        result = r[t.Ldif.ConvertedModel].fail(
-            f"Failed to convert {conversion_config.item_name} via Entry intermediary",
+        is_attribute = isinstance(item, m.Ldif.SchemaAttribute)
+        item_name = "attribute" if is_attribute else "objectclass"
+        item_type = (
+            c.Ldif.SchemaItemKind.ATTRIBUTE
+            if is_attribute
+            else c.Ldif.SchemaItemKind.OBJECTCLASS
         )
-        if isinstance(
-            conversion_config,
-            m.Ldif.SchemaAttributeConversionPipelineConfig,
-        ):
-            write_result = conversion_config.source_schema.write_attribute(
-                conversion_config.item,
-            )
-            field_name = c.Ldif.ATTRIBUTE_TYPES
-        else:
-            write_result = conversion_config.source_schema.write_objectclass(
-                conversion_config.item,
-            )
-            field_name = c.Ldif.OBJECT_CLASSES
+        write_result = (
+            source_schema.write_attribute(item)
+            if is_attribute
+            else source_schema.write_objectclass(item)
+        )
+        field_name = c.Ldif.ATTRIBUTE_TYPES if is_attribute else c.Ldif.OBJECT_CLASSES
         source_value_result = (
             r[str]
             .from_result(write_result)
             .map_error(
                 lambda error: (
-                    f"Failed to write {conversion_config.item_name} in source format: "
+                    f"Failed to write {item_name} in source format: "
                     f"{error or 'Unknown write error'}"
                 ),
             )
         )
-        if source_value_result.success:
-            bridge_entry = self._build_schema_bridge_entry(
-                source_quirk,
-                conversion_config.item_type,
-                source_value_result.value,
-            )
-            converted_entry_result = self._convert_entry(
-                source_quirk,
-                target_quirk,
-                bridge_entry,
-            )
-            if converted_entry_result.failure:
-                result = r[t.Ldif.ConvertedModel].fail(
-                    converted_entry_result.error
-                    or f"Failed to convert {conversion_config.item_name} via Entry intermediary",
-                )
-            else:
-                converted_entry_value = converted_entry_result.value
-                if not isinstance(converted_entry_value, m.Ldif.Entry):
-                    result = r[t.Ldif.ConvertedModel].fail(
-                        "Entry intermediary returned unexpected type: "
-                        f"{type(converted_entry_value).__name__}",
-                    )
-                else:
-                    converted_values = self._extract_schema_values_from_entry(
-                        converted_entry_value,
-                        field_name,
-                    )
-                    if not converted_values:
-                        result = r[t.Ldif.ConvertedModel].fail(
-                            f"Converted Entry does not contain {field_name}",
-                        )
-                    else:
-                        first_value = converted_values[0]
-                        if isinstance(
-                            conversion_config,
-                            m.Ldif.SchemaAttributeConversionPipelineConfig,
-                        ):
-                            result = self._parse_attribute_with_schema(
-                                conversion_config.target_schema,
-                                first_value,
-                                parse_error_message="Failed to parse converted attribute",
-                            ).flat_map(
-                                lambda parsed: r[t.Ldif.ConvertedModel].ok(parsed),
-                            )
-                        else:
-                            result = self._parse_objectclass_with_schema(
-                                conversion_config.target_schema,
-                                first_value,
-                                parse_error_message="Failed to parse converted objectclass",
-                            ).flat_map(
-                                lambda parsed: r[t.Ldif.ConvertedModel].ok(parsed),
-                            )
-        else:
-            result = r[t.Ldif.ConvertedModel].fail(
+        if source_value_result.failure:
+            return r[t.Ldif.ConvertedModel].fail(
                 source_value_result.error
                 or "Failed to write schema item in source format",
             )
-        return result
+        bridge_entry = self._build_schema_bridge_entry(
+            source_server,
+            item_type,
+            source_value_result.value,
+        )
+        converted_entry_result = self._convert_entry(
+            source_server,
+            target_server,
+            bridge_entry,
+        )
+        if converted_entry_result.failure:
+            return r[t.Ldif.ConvertedModel].fail(
+                converted_entry_result.error
+                or f"Failed to convert {item_name} via Entry intermediary",
+            )
+        converted_entry_value = converted_entry_result.value
+        if not isinstance(converted_entry_value, m.Ldif.Entry):
+            return r[t.Ldif.ConvertedModel].fail(
+                "Entry intermediary returned unexpected type: "
+                f"{type(converted_entry_value).__name__}",
+            )
+        converted_values = self._extract_schema_values_from_entry(
+            converted_entry_value,
+            field_name,
+        )
+        if not converted_values:
+            return r[t.Ldif.ConvertedModel].fail(
+                f"Converted Entry does not contain {field_name}",
+            )
+        first_value = converted_values[0]
+        parsed_result = (
+            self._parse_attribute_with_schema(
+                target_schema,
+                first_value,
+                parse_error_message="Failed to parse converted attribute",
+            )
+            if is_attribute
+            else self._parse_objectclass_with_schema(
+                target_schema,
+                first_value,
+                parse_error_message="Failed to parse converted objectclass",
+            )
+        )
+        return parsed_result.flat_map(
+            lambda parsed: r[t.Ldif.ConvertedModel].ok(parsed),
+        )
 
     @staticmethod
     def _normalize_metadata_value(
@@ -402,12 +300,17 @@ class FlextLdifConversion(
                 key: u.normalize_to_json_value(item) for key, item in value.items()
             }
             return normalized_mapping
-        normalized: t.JsonValue = u.normalize_to_json_value(value)
+        if isinstance(value, Sequence) and not isinstance(value, str | bytes):
+            normalized_sequence: list[t.JsonValue] = [
+                u.normalize_to_json_value(item) for item in value
+            ]
+            return normalized_sequence
+        normalized: t.JsonValue = t.Cli.JSON_VALUE_ADAPTER.validate_python(value)
         return normalized
 
     @staticmethod
     def _parse_attribute_with_schema(
-        schema: p.Ldif.SchemaQuirk,
+        schema: p.Ldif.SchemaServer,
         value: str,
         *,
         parse_error_message: str,
@@ -422,7 +325,7 @@ class FlextLdifConversion(
 
     @staticmethod
     def _parse_objectclass_with_schema(
-        schema: p.Ldif.SchemaQuirk,
+        schema: p.Ldif.SchemaServer,
         value: str,
         *,
         parse_error_message: str,
@@ -451,57 +354,83 @@ class FlextLdifConversion(
         return validated
 
     @staticmethod
-    def _resolve_quirk(
-        quirk_or_type: str | FlextLdifServersBase,
-    ) -> FlextLdifServersBase:
-        """Resolve server quirk instance from string type or return instance."""
-        if isinstance(quirk_or_type, str):
+    def _resolve_server(
+        server_or_type: str | p.Ldif.ServerReference | p.Ldif.ServerServer,
+    ) -> p.Ldif.ServerServer:
+        """Resolve server server instance from string type or return instance."""
+        if isinstance(server_or_type, str):
             server = FlextLdifServer.fetch_global_instance()
-            server_type_str: str = quirk_or_type
-            resolved_result = server.quirk(server_type_str)
+            server_type_str: str = server_or_type
+            resolved_result = server.server(server_type_str)
             if resolved_result.failure:
                 error_msg = (
-                    f"Unknown server type: {quirk_or_type}: {resolved_result.error}"
+                    f"Unknown server type: {server_or_type}: {resolved_result.error}"
                 )
                 raise ValueError(error_msg)
-            resolved: FlextLdifServersBase = resolved_result.value
+            resolved: p.Ldif.ServerServer = resolved_result.value
             return resolved
-        return quirk_or_type
+        if isinstance(server_or_type, p.Ldif.ServerServer):
+            return server_or_type
+        resolved_from_ref = FlextLdifServer.fetch_global_instance().server(
+            server_or_type.server_type,
+        )
+        if resolved_from_ref.failure:
+            error_msg = (
+                f"Unknown server type: {server_or_type.server_type}: "
+                f"{resolved_from_ref.error}"
+            )
+            raise ValueError(error_msg)
+        return resolved_from_ref.value
 
-    def dsl_convert_between_quirks(
+    def dsl_convert_between_servers(
         self,
-        source_quirk: FlextLdifServersBase,
-        target_quirk: FlextLdifServersBase,
+        source_server: p.Ldif.ServerServer,
+        target_server: p.Ldif.ServerServer,
         model_instance: m.Ldif.Entry
         | m.Ldif.SchemaAttribute
         | m.Ldif.SchemaObjectClass
         | m.Ldif.Acl,
     ) -> r[t.Ldif.ConvertedModel]:
-        """DSL: orchestrate model conversion between quirks."""
+        """DSL: orchestrate model conversion between servers."""
         if isinstance(model_instance, m.Ldif.Entry):
-            return self._convert_entry(source_quirk, target_quirk, model_instance)
-        if isinstance(model_instance, m.Ldif.SchemaAttribute):
-            return self._convert_schema_attribute(
-                source_quirk,
-                target_quirk,
-                model_instance,
+            return self._convert_entry(source_server, target_server, model_instance)
+        if isinstance(
+            model_instance,
+            m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        ):
+            source_schema_result = self._resolve_schema_server(
+                source_server,
+                role="Source",
             )
-        if isinstance(model_instance, m.Ldif.SchemaObjectClass):
-            return self._convert_schema_objectclass(
-                source_quirk,
-                target_quirk,
+            if source_schema_result.failure:
+                return r[t.Ldif.ConvertedModel].fail(
+                    source_schema_result.error or "Source schema not available",
+                )
+            target_schema_result = self._resolve_schema_server(
+                target_server,
+                role="Target",
+            )
+            if target_schema_result.failure:
+                return r[t.Ldif.ConvertedModel].fail(
+                    target_schema_result.error or "Target schema not available",
+                )
+            return self._convert_schema_model_via_entry(
+                source_server,
+                target_server,
                 model_instance,
+                source_schema_result.value,
+                target_schema_result.value,
             )
         return self._convert_acl(
-            source_quirk,
-            target_quirk,
+            source_server,
+            target_server,
             model_instance,
         )
 
     def convert_model(
         self,
-        source: str | FlextLdifServersBase,
-        target: str | FlextLdifServersBase,
+        source: str | p.Ldif.ServerReference | p.Ldif.ServerServer,
+        target: str | p.Ldif.ServerReference | p.Ldif.ServerServer,
         model_instance: m.Ldif.Entry
         | m.Ldif.SchemaAttribute
         | m.Ldif.SchemaObjectClass
@@ -509,18 +438,8 @@ class FlextLdifConversion(
     ) -> r[t.Ldif.ConvertedModel]:
         """Convert a model from a source server format to a target server format."""
         start_time = time.perf_counter()
-        if isinstance(source, str):
-            source_format = source
-        else:
-            source_format = str(
-                getattr(source, "server_type", c.IDENTIFIER_UNKNOWN),
-            )
-        if isinstance(target, str):
-            target_format = target
-        else:
-            target_format = str(
-                getattr(target, "server_type", c.IDENTIFIER_UNKNOWN),
-            )
+        source_format = source if isinstance(source, str) else source.server_type
+        target_format = target if isinstance(target, str) else target.server_type
         model_type = type(model_instance).__name__
         conversion_operation = f"convert_{model_type}"
         self.logger.debug(
@@ -530,11 +449,11 @@ class FlextLdifConversion(
             model_type=model_type,
         )
         try:
-            source_quirk = self._resolve_quirk(source)
-            target_quirk = self._resolve_quirk(target)
-            result = self.dsl_convert_between_quirks(
-                source_quirk,
-                target_quirk,
+            source_server = self._resolve_server(source)
+            target_server = self._resolve_server(target)
+            result = self.dsl_convert_between_servers(
+                source_server,
+                target_server,
                 model_instance,
             )
         except (
@@ -569,34 +488,54 @@ class FlextLdifConversion(
 
     def convert_entry(
         self,
-        source: str | FlextLdifServersBase,
-        target: str | FlextLdifServersBase,
-        model_instance: m.Ldif.Entry
-        | m.Ldif.SchemaAttribute
-        | m.Ldif.SchemaObjectClass
-        | m.Ldif.Acl,
-    ) -> r[t.Ldif.ConvertedModel]:
+        source: str | p.Ldif.ServerReference,
+        target: str | p.Ldif.ServerReference,
+        entry: p.Ldif.Entry,
+    ) -> p.Result[p.Ldif.Entry]:
         """Compatibility facade for conversion matrix callers."""
-        return self.convert_model(
-            source=source,
-            target=target,
-            model_instance=model_instance,
+        source_str = source if isinstance(source, str) else source.server_type
+        target_str = target if isinstance(target, str) else target.server_type
+        concrete_entry = (
+            entry
+            if isinstance(entry, m.Ldif.Entry)
+            else m.Ldif.Entry.model_validate(entry)
         )
+        result = self.convert_model(
+            source=source_str,
+            target=target_str,
+            model_instance=concrete_entry,
+        )
+        if result.success:
+            value = result.map_or(None)
+            if isinstance(value, m.Ldif.Entry):
+                return r[p.Ldif.Entry].ok(value)
+        return r[p.Ldif.Entry].fail(result.error or "Entry conversion failed")
 
     def resolve_supported_conversions(
         self,
-        quirk: FlextLdifServersBase,
+        server: p.Ldif.ServerReference | str,
     ) -> t.MutableBoolMapping:
-        """Check which data types a quirk supports for conversion."""
+        """Check which data types a server supports for conversion."""
         support: t.MutableIntMapping = {
             "attribute": 0,
             "objectclass": 0,
             "acl": 0,
             "entry": 0,
         }
-        support = self._check_schema_support(quirk, support)
-        support = self._check_acl_support(quirk, support)
-        support = self._check_entry_support(quirk, support)
+        concrete_server = self._server.resolve_base_server(
+            server if isinstance(server, str) else server.server_type,
+        ).map_or(None)
+        if concrete_server is None:
+            return {
+                "attribute": False,
+                "objectClass": False,
+                "objectclass": False,
+                "acl": False,
+                "entry": False,
+            }
+        support = self._check_schema_support(concrete_server, support)
+        support = self._check_acl_support(concrete_server, support)
+        support = self._check_entry_support(concrete_server, support)
         return {
             "attribute": bool(support.get("attribute", 0)),
             "objectClass": bool(support.get("objectclass", 0)),
@@ -607,127 +546,88 @@ class FlextLdifConversion(
 
     def _check_acl_support(
         self,
-        quirk: FlextLdifServersBase,
+        server: p.Ldif.ServerServer,
         support: t.MutableIntMapping,
     ) -> t.MutableIntMapping:
         """Check ACL support."""
-        acl = quirk.acl_quirk
+        acl = server.acl_server
         test_acl_def = 'targetattr="*" (version 3.0; acl "test"; allow (read) userdn="ldap:///self";)'
-        if acl and callable(getattr(acl, "parse_quirk", None)):
-            acl_result = acl.parse_quirk(test_acl_def)
-            if acl_result.map_or(None) is not None:
-                support["acl"] = 1
+        acl_result = acl.parse_server(test_acl_def)
+        if acl_result.map_or(None) is not None:
+            support["acl"] = 1
         return support
 
     def _check_attribute_support(
         self,
-        quirk_schema: m.BaseModel | FlextLdifServersBase,
+        server_schema: p.Ldif.SchemaServer,
         test_attr_def: str,
         support: t.MutableIntMapping,
     ) -> t.MutableIntMapping:
-        """Check attribute support for schema quirk."""
-        return self._check_schema_component_support(
-            quirk_schema,
-            can_handle_attr="can_handle_attribute",
-            parse_attr="parse_attribute",
-            test_definition=test_attr_def,
-            support_key="attribute",
-            support=support,
-        )
+        """Check attribute support for schema server."""
+        attribute_result = server_schema.parse_attribute(test_attr_def)
+        if attribute_result.success:
+            support["attribute"] = 1
+        return support
 
     def _check_converted_has_permissions(self, converted_acl: m.Ldif.Acl) -> bool:
         """Check if converted ACL has any permissions set."""
-        permission_fields = (
-            "read",
-            "write",
-            "add",
-            "delete",
-            "search",
-            "compare",
-            "self_write",
-            "proxy",
-            "browse",
-            "auth",
-            "all",
-        )
-        return bool(
-            converted_acl.permissions
-            and any(
-                getattr(converted_acl.permissions, field, False)
-                for field in permission_fields
-            ),
+        permissions = converted_acl.permissions
+        if permissions is None:
+            return False
+        return (
+            permissions.read
+            or permissions.write
+            or permissions.add
+            or permissions.delete
+            or permissions.search
+            or permissions.compare
+            or permissions.self_write
+            or permissions.proxy
+            or permissions.browse
+            or permissions.auth
+            or permissions.all
         )
 
     def _check_entry_support(
         self,
-        quirk: FlextLdifServersBase,
+        server: p.Ldif.ServerServer,
         support: t.MutableIntMapping,
     ) -> t.MutableIntMapping:
-        """Check Entry support via the canonical entry quirk public surface."""
-        if callable(getattr(quirk.entry_quirk, "parse_entry", None)):
+        """Check Entry support via the canonical entry server public surface."""
+        if server.entry_server.parse_entry("cn=test,dc=example,dc=com", {}).success:
             support["entry"] = 1
-        return support
-
-    def _check_schema_component_support(
-        self,
-        quirk_schema: m.BaseModel | FlextLdifServersBase,
-        *,
-        can_handle_attr: str,
-        parse_attr: str,
-        test_definition: str,
-        support_key: str,
-        support: t.MutableIntMapping,
-    ) -> t.MutableIntMapping:
-        """Check schema support for one component type (attribute/objectclass)."""
-        can_handle = getattr(quirk_schema, can_handle_attr, None)
-        parse_component = getattr(quirk_schema, parse_attr, None)
-        if (
-            not callable(can_handle)
-            or not callable(parse_component)
-            or not can_handle(test_definition)
-        ):
-            return support
-        component_result = parse_component(test_definition)
-        if isinstance(component_result, r) and component_result.success:
-            support[support_key] = 1
         return support
 
     def _check_objectclass_support(
         self,
-        quirk_schema: m.BaseModel | FlextLdifServersBase,
+        server_schema: p.Ldif.SchemaServer,
         test_oc_def: str,
         support: t.MutableIntMapping,
     ) -> t.MutableIntMapping:
-        """Check objectClass support for schema quirk."""
-        return self._check_schema_component_support(
-            quirk_schema,
-            can_handle_attr="can_handle_objectclass",
-            parse_attr="parse_objectclass",
-            test_definition=test_oc_def,
-            support_key="objectclass",
-            support=support,
-        )
+        """Check objectClass support for schema server."""
+        objectclass_result = server_schema.parse_objectclass(test_oc_def)
+        if objectclass_result.success:
+            support["objectclass"] = 1
+        return support
 
     def _check_schema_support(
         self,
-        quirk: FlextLdifServersBase,
+        server: p.Ldif.ServerServer,
         support: t.MutableIntMapping,
     ) -> t.MutableIntMapping:
         """Check schema (attribute and objectClass) support."""
-        quirk_schema = self._get_schema_quirk_for_support_check(quirk)
-        if quirk_schema is None:
-            return support
+        server_schema = self._get_schema_server_for_support_check(server)
         test_attr_def = "( 2.16.840.1.113894.1.1.1 NAME 'orclTest' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
         test_oc_def = (
             "( 2.16.840.1.113894.1.2.1 NAME 'orclTest' SUP top STRUCTURAL MUST cn )"
         )
-        support = self._check_attribute_support(quirk_schema, test_attr_def, support)
-        return self._check_objectclass_support(quirk_schema, test_oc_def, support)
+        support = self._check_attribute_support(server_schema, test_attr_def, support)
+        return self._check_objectclass_support(server_schema, test_oc_def, support)
 
     def _convert_acl(
         self,
-        source_quirk: FlextLdifServersBase,
-        target_quirk: FlextLdifServersBase,
+        source_server: p.Ldif.ServerServer,
+        target_server: p.Ldif.ServerServer,
         acl: m.Ldif.Acl,
     ) -> r[t.Ldif.ConvertedModel]:
         """Convert Acl model via Entry RFC + Metadata pipeline."""
@@ -742,19 +642,14 @@ class FlextLdifConversion(
                 attribute_metadata={},
                 metadata=None,
             )
-            get_server_type = u.prop("server_type")
-            server_type_raw = get_server_type(source_quirk)
-            server_type_attr = (
-                server_type_raw if isinstance(server_type_raw, str) else None
-            )
             source_server_type: str | None = u.try_(
                 lambda: (
-                    u.Ldif.normalize_server_type(server_type_attr)
-                    if isinstance(server_type_attr, str)
+                    u.Ldif.normalize_server_type(source_server.server_type)
+                    if source_server.server_type
                     else None
                 ),
             ).map_or(None)
-            entry_metadata = m.Ldif.QuirkMetadata.create_for(
+            entry_metadata = m.Ldif.ServerMetadata.create_for(
                 source_server_type,
                 extensions=None,
             )
@@ -764,23 +659,16 @@ class FlextLdifConversion(
                 attributes=entry_attributes,
                 metadata=entry_metadata,
             ).unwrap()
-            get_server_type = u.prop("server_type")
-            target_server_raw = get_server_type(target_quirk)
-            target_server_type_raw = (
-                target_server_raw
-                if isinstance(target_server_raw, str)
-                else c.IDENTIFIER_UNKNOWN
-            )
             target_server_type: str | None = u.try_(
                 lambda: (
-                    u.Ldif.normalize_server_type(target_server_type_raw)
-                    if target_server_type_raw != c.IDENTIFIER_UNKNOWN
+                    u.Ldif.normalize_server_type(target_server.server_type)
+                    if target_server.server_type != c.IDENTIFIER_UNKNOWN
                     else None
                 ),
             ).map_or(None)
             converted_entry_result = self._convert_entry(
-                source_quirk,
-                target_quirk,
+                source_server,
+                target_server,
                 rfc_entry,
             )
             converted_acl_result: r[m.Ldif.Acl]
@@ -800,7 +688,7 @@ class FlextLdifConversion(
                     converted_acl_result = r[m.Ldif.Acl].fail(
                         "Converted entry has no ACLs in metadata.acls",
                     )
-                elif not isinstance(converted_metadata_raw, m.Ldif.QuirkMetadata):
+                elif not isinstance(converted_metadata_raw, m.Ldif.ServerMetadata):
                     converted_acl_result = r[m.Ldif.Acl].fail(
                         f"Unexpected metadata type: {type(converted_metadata_raw).__name__}",
                     )
@@ -832,7 +720,7 @@ class FlextLdifConversion(
                         update={"server_type": target_server_type},
                         deep=True,
                     ),
-                )
+                ),
             )
         except (
             ValueError,
@@ -846,8 +734,8 @@ class FlextLdifConversion(
 
     def _convert_schema_entry_value(
         self,
-        source_schema: p.Ldif.SchemaQuirk,
-        target_schema: p.Ldif.SchemaQuirk,
+        source_schema: p.Ldif.SchemaServer,
+        target_schema: p.Ldif.SchemaServer,
         value: str,
         *,
         schema_item_kind: c.Ldif.SchemaItemKind,
@@ -910,19 +798,19 @@ class FlextLdifConversion(
 
     def _convert_schema_entry_attributes(
         self,
-        source_quirk: FlextLdifServersBase,
-        target_quirk: FlextLdifServersBase,
+        source_server: p.Ldif.ServerServer,
+        target_server: p.Ldif.ServerServer,
         entry: m.Ldif.Entry,
     ) -> r[m.Ldif.Entry]:
         """Convert schema definition attributes embedded in a schema entry."""
         result = r[m.Ldif.Entry].ok(entry)
         if entry.attributes is not None and u.Ldif.is_schema_entry(entry):
-            source_schema_result = self._resolve_schema_quirk(
-                source_quirk,
+            source_schema_result = self._resolve_schema_server(
+                source_server,
                 role="Source",
             )
-            target_schema_result = self._resolve_schema_quirk(
-                target_quirk,
+            target_schema_result = self._resolve_schema_server(
+                target_server,
                 role="Target",
             )
             if source_schema_result.failure:
@@ -982,8 +870,8 @@ class FlextLdifConversion(
 
     def _convert_entry(
         self,
-        source_quirk: FlextLdifServersBase,
-        target_quirk: FlextLdifServersBase,
+        source_server: p.Ldif.ServerServer,
+        target_server: p.Ldif.ServerServer,
         entry: m.Ldif.Entry,
     ) -> r[t.Ldif.ConvertedModel]:
         """Convert Entry model directly without serialization."""
@@ -996,54 +884,43 @@ class FlextLdifConversion(
                 )
             _ = self.dn_registry.register_dn(entry_dn)
             converted_entry = entry.model_copy(deep=True)
-            get_server_type = u.prop("server_type")
-            target_server_type_obj = get_server_type(target_quirk)
-            target_server_type_raw = (
-                target_server_type_obj
-                if isinstance(target_server_type_obj, str)
-                else c.IDENTIFIER_UNKNOWN
-            )
+            target_server_type_raw = target_server.server_type
             if target_server_type_raw != c.IDENTIFIER_UNKNOWN:
                 target_server_type_str = u.Ldif.normalize_server_type(
                     target_server_type_raw,
                 )
             else:
                 target_server_type_str = c.Ldif.ServerTypes.RFC
-            validated_quirk_type = u.Ldif.normalize_server_type(
+            validated_server_type = u.Ldif.normalize_server_type(
                 str(target_server_type_str),
             )
             metadata_for_analysis: (
-                m.Ldif.QuirkMetadata | m.Ldif.DynamicMetadata | None
+                m.Ldif.ServerMetadata | m.Ldif.DynamicMetadata | None
             ) = (
                 entry.metadata
                 if isinstance(
                     entry.metadata,
-                    (m.Ldif.QuirkMetadata, m.Ldif.DynamicMetadata),
+                    (m.Ldif.ServerMetadata, m.Ldif.DynamicMetadata),
                 )
                 else None
             )
             conversion_analysis = FlextLdifConversion._analyze_metadata_for_conversion(
                 metadata_for_analysis,
-                validated_quirk_type,
+                validated_server_type,
             )
-            source_server_type_obj = get_server_type(source_quirk)
-            source_quirk_name = (
-                source_server_type_obj
-                if isinstance(source_server_type_obj, str)
-                else c.IDENTIFIER_UNKNOWN
-            )
-            source_type_norm = source_quirk_name.lower()
+            source_server_name = source_server.server_type
+            source_type_norm = source_server_name.lower()
             target_type_norm = str(target_server_type_str).lower()
             converted_entry = self._update_entry_metadata(
                 converted_entry,
-                validated_quirk_type,
+                validated_server_type,
                 str(conversion_analysis) if conversion_analysis else None,
-                source_quirk_name,
+                source_server_name,
             )
             if source_type_norm != target_type_norm:
                 schema_entry_result = self._convert_schema_entry_attributes(
-                    source_quirk,
-                    target_quirk,
+                    source_server,
+                    target_server,
                     converted_entry,
                 )
                 if schema_entry_result.failure:
@@ -1129,34 +1006,12 @@ class FlextLdifConversion(
             for key, value in extensions_raw.to_dict().items()
         }
 
-    def _get_schema_quirk_for_support_check(
+    def _get_schema_server_for_support_check(
         self,
-        quirk: FlextLdifServersBase,
-    ) -> m.BaseModel | FlextLdifServersBase | None:
-        """Get schema quirk from base quirk for support checking."""
-        if hasattr(quirk, "parse_attribute") or hasattr(quirk, "parse_objectclass"):
-            required_methods = ("parse_attribute", "write")
-            if all(
-                hasattr(quirk, method) and callable(getattr(quirk, method))
-                for method in required_methods
-            ):
-                return quirk
-            return None
-        schema_quirk_raw: m.BaseModel | None = getattr(
-            quirk,
-            "schema_quirk",
-            None,
-        )
-        if schema_quirk_raw is not None:
-            required_methods = ("parse_attribute", "write")
-            if all(
-                hasattr(schema_quirk_raw, method)
-                and callable(getattr(schema_quirk_raw, method))
-                for method in required_methods
-            ):
-                return schema_quirk_raw
-            return None
-        return None
+        server: p.Ldif.ServerServer,
+    ) -> p.Ldif.SchemaServer:
+        """Get schema server from base server for support checking."""
+        return server.schema_server
 
     def _preserve_acl_metadata(
         self,
@@ -1169,7 +1024,7 @@ class FlextLdifConversion(
         converted_has_permissions = self._check_converted_has_permissions(converted_acl)
         if original_acl.permissions:
             orig_perms_dict_raw = original_acl.permissions.model_dump(
-                exclude_unset=True
+                exclude_unset=True,
             )
             orig_perms_dict: t.MutableBoolMapping = {
                 key: value
@@ -1225,10 +1080,6 @@ class FlextLdifConversion(
                                     deep=True,
                                 )
                                 if permission_settings.original_acl.permissions
-                                and hasattr(
-                                    permission_settings.original_acl.permissions,
-                                    "model_copy",
-                                )
                                 else None,
                             },
                             deep=True,
@@ -1237,7 +1088,7 @@ class FlextLdifConversion(
                         pass
                 if permission_mapper is not None:
                     mapped_perms = permission_mapper(
-                        permission_settings.orig_perms_dict
+                        permission_settings.orig_perms_dict,
                     )
                     normalized_perms = u.Ldif.build_mapped_permissions_dict(
                         mapped_perms,
@@ -1252,7 +1103,7 @@ class FlextLdifConversion(
                         deep=True,
                     )
                 logger.debug(
-                    "ACL mapping decision",
+                    "ACL t.MappingKV decision",
                     mapping_type=mapping_type,
                     normalized_source=str(normalized_source),
                     normalized_target=str(normalized_target),
@@ -1336,33 +1187,33 @@ class FlextLdifConversion(
             )
         return acl_step1
 
-    def _resolve_schema_quirk(
+    def _resolve_schema_server(
         self,
-        quirk_or_type: str | FlextLdifServersBase,
+        server_or_type: str | p.Ldif.ServerReference | p.Ldif.ServerServer,
         *,
         role: str,
-    ) -> r[p.Ldif.SchemaQuirk]:
-        quirk = self._resolve_quirk(quirk_or_type)
+    ) -> r[p.Ldif.SchemaServer]:
+        server = self._resolve_server(server_or_type)
         try:
-            schema = FlextLdifConversion._get_schema_from_attribute(quirk)
-            return r[p.Ldif.SchemaQuirk].ok(schema)
+            schema = FlextLdifConversion._get_schema_from_attribute(server)
+            return r[p.Ldif.SchemaServer].ok(schema)
         except TypeError as e:
-            return r[p.Ldif.SchemaQuirk].fail(f"{role} quirk error: {e}")
+            return r[p.Ldif.SchemaServer].fail(f"{role} server error: {e}")
 
     def _update_entry_metadata(
         self,
         entry: m.Ldif.Entry,
-        validated_quirk_type: c.Ldif.ServerTypes,
+        validated_server_type: c.Ldif.ServerTypes,
         conversion_analysis: str | None,
-        source_quirk_name: str,
+        source_server_name: str,
     ) -> m.Ldif.Entry:
         """Update entry metadata for conversion (internal helper)."""
         get_metadata = u.prop("metadata")
         get_extensions = u.prop("extensions")
         current_entry = entry
         if not get_metadata(current_entry):
-            metadata_obj = m.Ldif.QuirkMetadata.create_for(
-                quirk_type=validated_quirk_type,
+            metadata_obj = m.Ldif.ServerMetadata.create_for(
+                server_type=validated_server_type,
                 extensions=None,
             )
             current_entry = current_entry.model_copy(
@@ -1386,12 +1237,12 @@ class FlextLdifConversion(
         entry_metadata = current_entry.metadata
         if entry_metadata and get_metadata(current_entry):
             normalized_source_server: c.Ldif.ServerTypes | None = None
-            if source_quirk_name != c.IDENTIFIER_UNKNOWN:
+            if source_server_name != c.IDENTIFIER_UNKNOWN:
                 normalized_source_server = u.try_(
-                    lambda: u.Ldif.normalize_server_type(source_quirk_name),
+                    lambda: u.Ldif.normalize_server_type(source_server_name),
                 ).map_or(None)
             extensions_update: t.Ldif.MutableMetadataInputMapping = {
-                "converted_from_server": source_quirk_name,
+                "converted_from_server": source_server_name,
             }
             if conversion_analysis:
                 extensions_update["conversion_analysis"] = conversion_analysis
@@ -1400,12 +1251,12 @@ class FlextLdifConversion(
             ).model_copy(update=extensions_update, deep=True)
             updated_metadata = entry_metadata.model_copy(
                 update={
-                    "quirk_type": validated_quirk_type,
+                    "server_type": validated_server_type,
                     "extensions": updated_extensions,
                     "original_server_type": (
                         entry_metadata.original_server_type or normalized_source_server
                     ),
-                    "target_server_type": validated_quirk_type,
+                    "target_server_type": validated_server_type,
                 },
                 deep=True,
             )

@@ -10,7 +10,7 @@ from __future__ import annotations
 from collections.abc import MutableMapping, MutableSequence
 from pathlib import Path
 
-from flext_ldif import FlextLdif, ldif, m, r, t, u
+from flext_ldif import ldif, m, p, r, t, u
 
 
 class ExampleServerMigration:
@@ -42,7 +42,7 @@ class ExampleServerMigration:
 
     @staticmethod
     def _detect_server_type(
-        api: FlextLdif,
+        api: p.Ldif.LdifClient,
         source_dir: Path,
     ) -> tuple[str, t.JsonMapping]:
         """Detect server type from source data."""

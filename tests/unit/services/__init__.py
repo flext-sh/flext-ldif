@@ -19,7 +19,7 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ),
         ".test_parser_service": ("TestsFlextLdifParserService",),
         ".test_processing_service": ("TestsFlextLdifProcessingService",),
-        ".test_quirks_standardization": ("TestsFlextLdifQuirksStandardization",),
+        ".test_servers_standardization": ("TestsFlextLdifServersStandardization",),
         ".test_statistics_service": ("TestsFlextLdifStatisticsService",),
         ".test_transformers_service": ("TestsFlextLdifTransformerService",),
         ".test_writer_service": ("TestsFlextLdifWriterService",),

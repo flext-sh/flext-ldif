@@ -1,4 +1,4 @@
-"""Oracle Internet Directory (OID) Quirks."""
+"""Oracle Internet Directory (OID) Servers."""
 
 from __future__ import annotations
 
@@ -12,16 +12,16 @@ from flext_ldif import (
 
 
 class FlextLdifServersOid(FlextLdifServersRfc):
-    """Oracle OID server quirks - implements t.JsonValue."""
+    """Oracle OID server servers - implements t.JsonValue."""
 
     class Constants(FlextLdifServersOidConstants):
         """OID server constants."""
 
     class Acl(FlextLdifServersOidAcl):
-        """OID ACL quirk."""
+        """OID ACL server."""
 
     class Schema(FlextLdifServersOidSchema):
-        """OID Schema quirk."""
+        """OID Schema server."""
 
     class Entry(FlextLdifServersOidEntry):
-        """OID Entry quirk."""
+        """OID Entry server."""

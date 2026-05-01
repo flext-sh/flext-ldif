@@ -7,12 +7,12 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 _LAZY_IMPORTS = build_lazy_import_map(
     {
-        ".test_apache_quirks": ("TestsTestFlextLdifApacheQuirks",),
-        ".test_ds389_quirks": ("TestsTestFlextLdifDs389Quirks",),
+        ".test_apache_servers": ("TestsTestFlextLdifApacheServers",),
+        ".test_ds389_servers": ("TestsTestFlextLdifDs389Servers",),
         ".test_edge_cases": ("TestsFlextLdifEdgeCases",),
-        ".test_novell_quirks": ("TestsFlextLdifNovellQuirks",),
-        ".test_oid_quirks": ("TestsTestFlextLdifOidQuirks",),
-        ".test_relaxed_quirks": ("TestsTestFlextLdifRelaxedQuirks",),
+        ".test_novell_servers": ("TestsFlextLdifNovellServers",),
+        ".test_oid_servers": ("TestsTestFlextLdifOidServers",),
+        ".test_relaxed_servers": ("TestsTestFlextLdifRelaxedServers",),
         ".test_schema_transformer": ("TestsFlextLdifSchemaTransformer",),
     },
 )

@@ -424,7 +424,7 @@ class FlextLdifUtilitiesSchema:
                         UnicodeDecodeError,
                         struct.error,
                     ) as exc:
-                        logger.debug(f"Schema line item validation failed: : {exc}")
+                        logger.debug("Schema line item validation failed: : %s", exc)
                         continue
         return items
 
@@ -524,7 +524,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def should_restore_schema_original_format(
-        metadata: m.Ldif.QuirkMetadata | None,
+        metadata: m.Ldif.ServerMetadata | None,
         target_server_type: str | None,
     ) -> bool:
         """Restore original schema text only for same-server round-trips."""
@@ -536,7 +536,7 @@ class FlextLdifUtilitiesSchema:
             if isinstance(source_server_raw, str):
                 source_server_type = source_server_raw
         if source_server_type is None:
-            source_server_type = str(metadata.quirk_type)
+            source_server_type = str(metadata.server_type)
         if not source_server_type or not target_server_type:
             return True
         try:
@@ -760,7 +760,7 @@ class FlextLdifUtilitiesSchema:
             UnicodeDecodeError,
             struct.error,
         ) as exc:
-            logger.debug(f"SchemaAttribute model validation did not match: {exc}")
+            logger.debug("SchemaAttribute model validation did not match: %s", exc)
         try:
             _ = m.Ldif.SchemaObjectClass.model_validate(definition)
             return "objectclass"
@@ -1005,7 +1005,7 @@ class FlextLdifUtilitiesSchema:
                 "usage": usage,
                 "metadata_extensions": extensions_converted,
                 "syntax_validation": syntax_validation_converted,
-            })
+            }),
         )
         return r[t.Ldif.MutableMetadataMapping].ok(parsed_dict)
 
@@ -1043,7 +1043,7 @@ class FlextLdifUtilitiesSchema:
                 "must": must,
                 "may": may,
                 "metadata_extensions": extensions_converted,
-            })
+            }),
         )
 
     @staticmethod

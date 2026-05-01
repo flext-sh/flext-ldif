@@ -31,7 +31,7 @@
 **Date**: 2025-01-24
 **Status**: Approved
 **Deciders**: FLEXT Core Team
-**Related ADRs**: ADR-001 (RFC-First Design), ADR-005 (Pluggable Quirks System)
+**Related ADRs**: ADR-001 (RFC-First Design), ADR-005 (Pluggable Servers System)
 
 ______________________________________________________________________
 
@@ -72,7 +72,7 @@ We will simplify flext-ldif through structural and architectural changes while *
 
 ### **1. Flatten Module Structure**
 
-**Action**: Move all modules to `src/flext_ldif/` root except `quirks/`
+**Action**: Move all modules to `src/flext_ldif/` root except `servers/`
 
 **Rationale**:
 
@@ -81,7 +81,7 @@ We will simplify flext-ldif through structural and architectural changes while *
 - **Industry Standard**: Libraries like `requests`, `httpx`, `pydantic` use flat structure
 - **Clear Dependencies**: Module relationships more visible
 
-**Exception**: Keep `quirks/` with `servers/` subdirectory due to:
+**Exception**: Keep `servers/` with `servers/` subdirectory due to:
 
 - Domain complexity (10+ server implementations)
 - Pluggable architecture (dynamic registration)
@@ -115,7 +115,7 @@ src/flext_ldif/
 ├── validation_service.py
 ├── acl_parser.py
 ├── acl_service.py
-└── quirks/              # Only subdirectory
+└── servers/              # Only subdirectory
     ├── base.py
     ├── registry.py
     └── servers/
@@ -347,7 +347,7 @@ tests/unit/
 
 ```
 tests/unit/
-├── quirks/              # Only subdirectory (mirrors src)
+├── servers/              # Only subdirectory (mirrors src)
 ├── test_rfc_ldif_parser.py
 ├── test_detector.py
 ├── test_acl_parser.py
@@ -483,7 +483,7 @@ ______________________________________________________________________
 ## References
 
 - **ADR-001**: RFC-First Design - Foundation pattern maintained
-- **ADR-005**: Pluggable Quirks System - Structure preserved
+- **ADR-005**: Pluggable Servers System - Structure preserved
 - **flext-core Documentation**: <https://github.com/flext-sh/flext-core>
 - **Python 3.13+ Pattern Matching**: PEP 636
 - **Flat Module Structure Examples**: requests, httpx, pydantic
@@ -492,7 +492,7 @@ ______________________________________________________________________
 
 ## Notes
 
-This ADR represents a maturity milestone for flext-ldif. After achieving production-ready quality (0 type errors, 1766 tests), we can now focus on simplification and maintainability. The refactoring removes accidental complexity while preserving essential complexity (quirks system, RFC compliance).
+This ADR represents a maturity milestone for flext-ldif. After achieving production-ready quality (0 type errors, 1766 tests), we can now focus on simplification and maintainability. The refactoring removes accidental complexity while preserving essential complexity (servers system, RFC compliance).
 
 The decision aligns with FLEXT principles:
 

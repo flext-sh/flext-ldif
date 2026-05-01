@@ -28,7 +28,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
         entry_dn: str,
         attributes: t.MutableStrSequenceMapping,
     ) -> bool:
-        """Check if this RFC quirk can handle the entry."""
+        """Check if this RFC server can handle the entry."""
         if not entry_dn or not entry_dn.strip():
             return False
         attr_lower = {k.lower(): v for k, v in attributes.items()}

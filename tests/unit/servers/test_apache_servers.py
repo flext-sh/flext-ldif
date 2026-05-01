@@ -1,4 +1,4 @@
-"""Tests for Apache Directory Server (ApacheDS) LDIF quirks handling.
+"""Tests for Apache Directory Server (ApacheDS) LDIF servers handling.
 
 This module tests the FlextLdifServersApache implementation for handling Apache
 Directory Server-specific attributes, object classes, entries, and ACLs in LDIF format.
@@ -13,8 +13,8 @@ from flext_ldif import FlextLdifServersApache
 from tests import c, m, t, u
 
 
-class TestsTestFlextLdifApacheQuirks:
-    """Test Apache Directory Server quirks implementation."""
+class TestsTestFlextLdifApacheServers:
+    """Test Apache Directory Server servers implementation."""
 
     @pytest.mark.parametrize("test_case", c.Tests.APACHE_ATTRIBUTE_TEST_CASES)
     def test_schema_attribute_can_handle(
@@ -22,17 +22,17 @@ class TestsTestFlextLdifApacheQuirks:
     ) -> None:
         """Test attribute detection for various scenarios."""
         server = FlextLdifServersApache()
-        schema_quirk = server.schema_quirk
-        tm.that(schema_quirk, is_=FlextLdifServersApache.Schema)
-        result = schema_quirk.can_handle_attribute(test_case.attr_definition)
+        schema_server = server.schema_server
+        tm.that(schema_server, is_=FlextLdifServersApache.Schema)
+        result = schema_server.can_handle_attribute(test_case.attr_definition)
         tm.that(result is test_case.expected_can_handle, eq=True)
 
     def test_schema_attribute_parse_success(self) -> None:
         """Test parsing Apache DS attribute definition."""
         server = FlextLdifServersApache()
-        schema = server.schema_quirk
+        schema = server.schema_server
         attr_def = "( 1.3.6.1.4.1.18060.0.4.1.2.100 NAME 'ads-enabled' DESC 'Enable flag' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 SINGLE-VALUE )"
-        attr_data = u.Tests.quirk_parse_and_unwrap(
+        attr_data = u.Tests.server_parse_and_unwrap(
             schema,
             attr_def,
             parse_method="parse_attribute",
@@ -49,9 +49,9 @@ class TestsTestFlextLdifApacheQuirks:
     def test_schema_attribute_parse_with_syntax_length(self) -> None:
         """Test parsing attribute with syntax length specification."""
         server = FlextLdifServersApache()
-        schema = server.schema_quirk
+        schema = server.schema_server
         attr_def = "( 1.3.6.1.4.1.18060.0.4.1.2.1 NAME 'ads-directoryServiceId' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )"
-        attr_data = u.Tests.quirk_parse_and_unwrap(
+        attr_data = u.Tests.server_parse_and_unwrap(
             schema,
             attr_def,
             parse_method="parse_attribute",
@@ -65,9 +65,9 @@ class TestsTestFlextLdifApacheQuirks:
     def test_schema_attribute_parse_missing_oid(self) -> None:
         """Test parsing attribute without OID fails."""
         server = FlextLdifServersApache()
-        schema = server.schema_quirk
+        schema = server.schema_server
         attr_def = "NAME 'ads-enabled' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7"
-        u.Tests.quirk_parse_and_unwrap(
+        u.Tests.server_parse_and_unwrap(
             schema,
             attr_def,
             parse_method="parse_attribute",
@@ -81,17 +81,17 @@ class TestsTestFlextLdifApacheQuirks:
     ) -> None:
         """Test objectClass detection for various scenarios."""
         server = FlextLdifServersApache()
-        schema_quirk = server.schema_quirk
-        tm.that(schema_quirk, is_=FlextLdifServersApache.Schema)
-        result = schema_quirk.can_handle_objectclass(test_case.oc_definition)
+        schema_server = server.schema_server
+        tm.that(schema_server, is_=FlextLdifServersApache.Schema)
+        result = schema_server.can_handle_objectclass(test_case.oc_definition)
         tm.that(result is test_case.expected_can_handle, eq=True)
 
     def test_schema_objectclass_parse_structural(self) -> None:
         """Test parsing STRUCTURAL objectClass."""
         server = FlextLdifServersApache()
-        schema = server.schema_quirk
+        schema = server.schema_server
         oc_def = "( 1.3.6.1.4.1.18060.0.4.1.3.100 NAME 'ads-directoryService' DESC 'Directory service' SUP top STRUCTURAL MUST ( cn $ ads-directoryServiceId ) MAY ( ads-enabled ) )"
-        oc_data = u.Tests.quirk_parse_and_unwrap(
+        oc_data = u.Tests.server_parse_and_unwrap(
             schema,
             oc_def,
             parse_method="parse_objectclass",
@@ -114,9 +114,9 @@ class TestsTestFlextLdifApacheQuirks:
     def test_schema_objectclass_parse_auxiliary(self) -> None:
         """Test parsing AUXILIARY objectClass."""
         server = FlextLdifServersApache()
-        schema = server.schema_quirk
+        schema = server.schema_server
         oc_def = "( 1.3.6.1.4.1.18060.0.4.1.3.200 NAME 'ads-partition' AUXILIARY MAY ( ads-partitionSuffix $ ads-contextEntry ) )"
-        oc_data = u.Tests.quirk_parse_and_unwrap(
+        oc_data = u.Tests.server_parse_and_unwrap(
             schema,
             oc_def,
             parse_method="parse_objectclass",
@@ -129,9 +129,9 @@ class TestsTestFlextLdifApacheQuirks:
     def test_schema_objectclass_parse_abstract(self) -> None:
         """Test parsing ABSTRACT objectClass."""
         server = FlextLdifServersApache()
-        schema = server.schema_quirk
+        schema = server.schema_server
         oc_def = "( 1.3.6.1.4.1.18060.0.4.1.3.1 NAME 'ads-base' ABSTRACT )"
-        oc_data = u.Tests.quirk_parse_and_unwrap(
+        oc_data = u.Tests.server_parse_and_unwrap(
             schema,
             oc_def,
             parse_method="parse_objectclass",
@@ -144,9 +144,9 @@ class TestsTestFlextLdifApacheQuirks:
     def test_schema_objectclass_parse_missing_oid(self) -> None:
         """Test parsing objectClass without OID fails."""
         server = FlextLdifServersApache()
-        schema = server.schema_quirk
+        schema = server.schema_server
         oc_def = "NAME 'ads-directoryService' SUP top STRUCTURAL"
-        u.Tests.quirk_parse_and_unwrap(
+        u.Tests.server_parse_and_unwrap(
             schema,
             oc_def,
             parse_method="parse_objectclass",
@@ -156,17 +156,17 @@ class TestsTestFlextLdifApacheQuirks:
     def test_acl_can_handle_with_ads_aci(self) -> None:
         """Test ACL detection with ads-aci attribute."""
         server = FlextLdifServersApache()
-        acl_quirk = server.acl_quirk
+        acl_server = server.acl_server
         acl_line = "ads-aci: ( version 3.0 ) ( deny grantAdd ) ( grantRemove )"
         acl_model = u.Tests.acl_parse_and_unwrap(
-            acl_quirk,
+            acl_server,
             acl_line,
             expected_type=m.Ldif.Acl,
         )
         assert acl_model is not None
         assert isinstance(acl_model, m.Ldif.Acl)
         roundtrip_result = u.Tests.acl_parse_and_unwrap(
-            acl_quirk,
+            acl_server,
             acl_model.raw_acl or str(acl_model),
         )
         assert roundtrip_result is not None
@@ -174,17 +174,17 @@ class TestsTestFlextLdifApacheQuirks:
     def test_acl_can_handle_with_aci(self) -> None:
         """Test ACL detection with aci attribute."""
         server = FlextLdifServersApache()
-        acl_quirk = server.acl_quirk
+        acl_server = server.acl_server
         acl_line = "aci: ( version 3.0 ) ( deny grantAdd ) ( grantRemove )"
         acl_model = u.Tests.acl_parse_and_unwrap(
-            acl_quirk,
+            acl_server,
             acl_line,
             expected_type=m.Ldif.Acl,
         )
         assert acl_model is not None
         assert isinstance(acl_model, m.Ldif.Acl)
         roundtrip_result = u.Tests.acl_parse_and_unwrap(
-            acl_quirk,
+            acl_server,
             acl_model.raw_acl or str(acl_model),
         )
         assert roundtrip_result is not None
@@ -192,17 +192,17 @@ class TestsTestFlextLdifApacheQuirks:
     def test_acl_can_handle_with_version_prefix(self) -> None:
         """Test ACL detection with version prefix."""
         server = FlextLdifServersApache()
-        acl_quirk = server.acl_quirk
+        acl_server = server.acl_server
         acl_line = "(version 3.0) (deny grantAdd) (grantRemove)"
         acl_model = u.Tests.acl_parse_and_unwrap(
-            acl_quirk,
+            acl_server,
             acl_line,
             expected_type=m.Ldif.Acl,
         )
         assert acl_model is not None
         assert isinstance(acl_model, m.Ldif.Acl)
         roundtrip_result = u.Tests.acl_parse_and_unwrap(
-            acl_quirk,
+            acl_server,
             acl_model.raw_acl or str(acl_model),
         )
         assert roundtrip_result is not None
@@ -210,25 +210,25 @@ class TestsTestFlextLdifApacheQuirks:
     def test_acl_can_handle_negative(self) -> None:
         """Test ACL detection rejects non-ApacheDS ACLs."""
         server = FlextLdifServersApache()
-        acl_quirk = server.acl_quirk
-        tm.that(acl_quirk, is_=FlextLdifServersApache.Acl)
+        acl_server = server.acl_server
+        tm.that(acl_server, is_=FlextLdifServersApache.Acl)
         acl_line = "access to * by * read"
-        tm.that(acl_quirk.can_handle_acl(acl_line) is False, eq=True)
+        tm.that(acl_server.can_handle_acl(acl_line) is False, eq=True)
 
     def test_acl_can_handle_empty_line(self) -> None:
         """Test ACL detection rejects empty lines."""
         server = FlextLdifServersApache()
-        acl_quirk = server.acl_quirk
-        tm.that(acl_quirk, is_=FlextLdifServersApache.Acl)
-        tm.that(acl_quirk.can_handle_acl("") is False, eq=True)
+        acl_server = server.acl_server
+        tm.that(acl_server, is_=FlextLdifServersApache.Acl)
+        tm.that(acl_server.can_handle_acl("") is False, eq=True)
 
     def test_acl_parse_success(self) -> None:
         """Test parsing Apache DS ACI definition."""
         server = FlextLdifServersApache()
-        acl_quirk = server.acl_quirk
+        acl_server = server.acl_server
         acl_line = "ads-aci: ( version 3.0 ) ( deny grantAdd ) ( grantRemove )"
         acl_data = u.Tests.acl_parse_and_unwrap(
-            acl_quirk,
+            acl_server,
             acl_line,
             expected_type=m.Ldif.Acl,
         )
@@ -240,10 +240,10 @@ class TestsTestFlextLdifApacheQuirks:
     def test_acl_parse_with_aci_attribute(self) -> None:
         """Test parsing ACI with aci attribute."""
         server = FlextLdifServersApache()
-        acl_quirk = server.acl_quirk
+        acl_server = server.acl_server
         acl_line = "aci: ( deny grantAdd )"
         acl_data = u.Tests.acl_parse_and_unwrap(
-            acl_quirk,
+            acl_server,
             acl_line,
             expected_type=m.Ldif.Acl,
         )
@@ -253,7 +253,7 @@ class TestsTestFlextLdifApacheQuirks:
     def test_acl_write_with_clauses_only(self) -> None:
         """Test writing ACL with clauses only to RFC string format."""
         server = FlextLdifServersApache()
-        acl_quirk = server.acl_quirk
+        acl_server = server.acl_server
         acl_model = m.Ldif.Acl(
             name="aci",
             target=m.Ldif.AclTarget(target_dn="", attributes=[]),
@@ -265,7 +265,7 @@ class TestsTestFlextLdifApacheQuirks:
             raw_acl="( version 3.0 ) ( deny grantAdd )",
         )
         u.Tests.acl_write_and_unwrap(
-            acl_quirk,
+            acl_server,
             acl_model,
             must_contain=["aci:"],
         )
@@ -273,7 +273,7 @@ class TestsTestFlextLdifApacheQuirks:
     def test_acl_write_empty(self) -> None:
         """Test writing empty ACL to RFC string format."""
         server = FlextLdifServersApache()
-        acl_quirk = server.acl_quirk
+        acl_server = server.acl_server
         acl_model = m.Ldif.Acl(
             name="ads-aci",
             target=m.Ldif.AclTarget(target_dn="", attributes=[]),
@@ -285,7 +285,7 @@ class TestsTestFlextLdifApacheQuirks:
             raw_acl="",
         )
         u.Tests.acl_write_and_unwrap(
-            acl_quirk,
+            acl_server,
             acl_model,
             must_contain=["ads-aci", "aci:"],
         )
@@ -294,9 +294,9 @@ class TestsTestFlextLdifApacheQuirks:
     def test_entry_can_handle(self, test_case: m.Tests.EntryTestCase) -> None:
         """Test entry detection for various scenarios."""
         server = FlextLdifServersApache()
-        entry_quirk = server.entry_quirk
-        tm.that(entry_quirk, is_=FlextLdifServersApache.Entry)
-        result = entry_quirk.can_handle(test_case.entry_dn, test_case.attributes)
+        entry_server = server.entry_server
+        tm.that(entry_server, is_=FlextLdifServersApache.Entry)
+        result = entry_server.can_handle(test_case.entry_dn, test_case.attributes)
         tm.that(result is test_case.expected_can_handle, eq=True)
 
     @staticmethod
@@ -318,7 +318,7 @@ class TestsTestFlextLdifApacheQuirks:
     def test_entry_parse_ldif(self, test_case: m.Tests.EntryTestCase) -> None:
         """Test entry parsing via LDIF for Apache-detectable entries."""
         server = FlextLdifServersApache()
-        entry_quirk = server.entry_quirk
+        entry_server = server.entry_server
         ldif = self._build_ldif(test_case.entry_dn, test_case.attributes)
-        result = entry_quirk.parse_input(ldif)
+        result = entry_server.parse_input(ldif)
         tm.that(result is not None, eq=True)
