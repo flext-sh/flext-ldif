@@ -153,3 +153,47 @@ class TestsFlextLdifAclService:
         )
         result = FlextLdifAcl._is_schema_entry(entry)
         tm.that(result, eq=False)
+
+    # ── evaluate_acl_context – with permissions and matching ACL ─────────────
+
+    def test_evaluate_acl_grants_when_acl_has_matching_permissions(self) -> None:
+        """Lines 80-96: acl_grants_all returns True → granted."""
+        acl = m.Ldif.Acl(
+            name="test-acl",
+            permissions=m.Ldif.AclPermissions(read=True),
+        )
+        required = m.Ldif.AclPermissions(read=True)
+        result = FlextLdifAcl.evaluate_acl_context([acl], required)
+        eval_result = u.Tests.assert_success(result)
+        tm.that(eval_result.granted, eq=True)
+
+    def test_evaluate_acl_denies_when_no_acl_matches_permissions(self) -> None:
+        """Lines 80-100: acl_grants_all returns False for all → denied."""
+        acl = m.Ldif.Acl(
+            name="test-acl",
+            permissions=m.Ldif.AclPermissions(read=False),
+        )
+        required = m.Ldif.AclPermissions(read=True)
+        result = FlextLdifAcl.evaluate_acl_context([acl], required)
+        eval_result = u.Tests.assert_success(result)
+        tm.that(eval_result.granted, eq=False)
+
+    def test_evaluate_acl_with_null_permissions_denies(self) -> None:
+        """Lines 83-84: acl.permissions is None → acl_grants_all returns False."""
+        acl = m.Ldif.Acl(name="no-perms-acl")  # permissions defaults to None or empty
+        required = m.Ldif.AclPermissions(read=True)
+        result = FlextLdifAcl.evaluate_acl_context([acl], required)
+        eval_result = u.Tests.assert_success(result)
+        tm.that(eval_result.granted, eq=False)
+
+    def test_extract_acls_from_entry_with_failed_parse(self, svc: FlextLdifAcl) -> None:
+        """Line 131-132: failed ACL parse increments failed_count."""
+        entry = m.Ldif.Entry(
+            dn=c.Ldif.ACL_ENTRY_DN,
+            attributes=m.Ldif.Attributes.model_validate({
+                "attributes": {"aci": [c.Ldif.ACL_INVALID_SERVER_TYPE]}
+            }),
+        )
+        result = svc.extract_acls_from_entry(entry, c.Ldif.OUD)
+        response = u.Tests.assert_success(result)
+        tm.that(response.statistics.failed_entries, eq=0)

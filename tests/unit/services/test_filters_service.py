@@ -53,7 +53,7 @@ class TestsFlextLdifFiltersService:
                 c.Ldif.NAME_OBJECTCLASS: [
                     c.Ldif.NAME_TOP,
                     c.Ldif.NAME_PERSON,
-                    c.Ldif.FILTERS_FORBIDDEN_OCS[0],
+                    c.Ldif.NAME_INET_ORG_PERSON,
                 ],
                 c.Ldif.NAME_CN: [c.Ldif.ATTR_VALUE_USER],
                 c.Ldif.NAME_SN: [c.Ldif.ATTR_VALUE_TEST],
@@ -141,7 +141,7 @@ class TestsFlextLdifFiltersService:
         entry = self._regular_entry()
         result = FlextLdifFilters.filter_entry_attributes(
             entry,
-            list(c.Ldif.FILTERS_FORBIDDEN_ATTRS),
+            list(c.Ldif.FILTERS_FORBIDDEN_ATTRS_ORDERED),
             [],
         )
         tm.that(result.attributes is not None, eq=True)
@@ -149,7 +149,7 @@ class TestsFlextLdifFiltersService:
             pytest.fail("Filtered entry attributes should be present")
         remaining = set(result.attributes.attributes.keys())
         tm.that(
-            remaining.isdisjoint(set(c.Ldif.FILTERS_FORBIDDEN_ATTRS)),
+            remaining.isdisjoint(c.Ldif.FILTERS_FORBIDDEN_ATTRS),
             eq=True,
         )
 
@@ -158,13 +158,13 @@ class TestsFlextLdifFiltersService:
         result = FlextLdifFilters.filter_entry_attributes(
             entry,
             [],
-            list(c.Ldif.FILTERS_FORBIDDEN_OCS),
+            list(c.Ldif.FILTERS_FORBIDDEN_OCS_ORDERED),
         )
         tm.that(result.attributes is not None, eq=True)
         if result.attributes is None:
             pytest.fail("Filtered entry attributes should be present")
         ocs = result.attributes.attributes.get(c.Ldif.NAME_OBJECTCLASS, [])
-        for forbidden_oc in c.Ldif.FILTERS_FORBIDDEN_OCS:
+        for forbidden_oc in c.Ldif.FILTERS_FORBIDDEN_OCS_ORDERED:
             tm.that(forbidden_oc not in ocs, eq=True)
 
     def test_filter_entry_attributes_noop_when_no_attributes_on_entry(self) -> None:
@@ -247,3 +247,127 @@ class TestsFlextLdifFiltersService:
         bare = self._entry_without_attributes()
         result = FlextLdifFilters.filter_schema_attribute_values(bare, {})
         tm.that(result, is_=m.Ldif.Entry)
+
+    def test_filter_entry_attributes_removes_all_objectclasses(self) -> None:
+        """Line 186: all OC values are forbidden → key is popped entirely."""
+        entry = u.Ldif.Tests.create_real_entry(
+            dn=c.Ldif.FILTERS_DN_USER,
+            attributes={
+                c.Ldif.NAME_OBJECTCLASS: list(c.Ldif.FILTERS_FORBIDDEN_OCS_ORDERED)
+            },
+        )
+        result = FlextLdifFilters.filter_entry_attributes(
+            entry,
+            [],
+            list(c.Ldif.FILTERS_FORBIDDEN_OCS_ORDERED),
+        )
+        tm.that(result.attributes is not None, eq=True)
+        if result.attributes is None:
+            pytest.fail("Filtered entry attributes should be present")
+        tm.that(c.Ldif.NAME_OBJECTCLASS not in result.attributes.attributes, eq=True)
+
+    def test_filter_schema_attribute_values_drops_all_values_when_none_allowed(
+        self,
+    ) -> None:
+        """Line 226: all attribute values are disallowed → key is deleted."""
+        entry = u.Ldif.Tests.create_real_entry(
+            dn=c.Ldif.FILTERS_DN_SCHEMA,
+            attributes={
+                c.Ldif.FILTERS_SCHEMA_ATTR_KEY: [c.Ldif.FILTERS_UNWANTED_ATTR_OID],
+                c.Ldif.NAME_OBJECTCLASS: [c.Ldif.NAME_TOP],
+            },
+        )
+        result = FlextLdifFilters.filter_schema_attribute_values(
+            entry,
+            {c.Ldif.FILTERS_SCHEMA_ATTR_KEY.lower(): frozenset()},
+        )
+        tm.that(result.attributes is not None, eq=True)
+        if result.attributes is None:
+            pytest.fail("Filtered entry attributes should be present")
+        tm.that(
+            c.Ldif.FILTERS_SCHEMA_ATTR_KEY not in result.attributes.attributes,
+            eq=True,
+        )
+
+    # ── _should_include_entry ────────────────────────────────────────────────
+
+    def test_should_include_entry_with_none_attributes_returns_true(self) -> None:
+        """Line 77: entry.attributes is None → returns True."""
+        entry = m.Ldif.Entry(
+            dn=c.Ldif.FILTERS_DN_SCHEMA,
+            attributes=None,
+        )
+        result = FlextLdifFilters._should_include_entry(
+            entry,
+            frozenset(),
+            frozenset(),
+            frozenset(),
+            frozenset(),
+        )
+        tm.that(result, eq=True)
+
+    def test_should_include_entry_with_non_model_attributes_returns_true(self) -> None:
+        """Line 77: attributes object without .attributes dict returns True."""
+
+        class _AttrsWithoutDict:
+            pass
+
+        entry = self._regular_entry().model_copy(
+            update={"attributes": _AttrsWithoutDict()}
+        )
+        result = FlextLdifFilters._should_include_entry(
+            entry,
+            frozenset(),
+            frozenset(),
+            frozenset(),
+            frozenset(),
+        )
+        tm.that(result, eq=True)
+
+    def test_filter_schema_by_oids_returns_failure_when_check_raises(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Lines 132-142: filter_schema_by_oids catches runtime errors and returns fail."""
+        entries: MutableSequence[m.Ldif.Entry] = [self._schema_entry()]
+
+        def _raise_should_include(
+            cls: type[FlextLdifFilters],
+            entry: m.Ldif.Entry,
+            allowed_attr: frozenset[str],
+            allowed_oc: frozenset[str],
+            allowed_mr: frozenset[str],
+            allowed_mru: frozenset[str],
+        ) -> bool:
+            _ = cls, entry, allowed_attr, allowed_oc, allowed_mr, allowed_mru
+            error_msg = "forced schema filtering failure"
+            raise ValueError(error_msg)
+
+        monkeypatch.setattr(
+            FlextLdifFilters,
+            "_should_include_entry",
+            classmethod(_raise_should_include),
+        )
+        result = FlextLdifFilters.filter_schema_by_oids(
+            entries,
+            self._mutable_allowed_oids(c.Ldif.FILTERS_ALLOWED_OIDS_FULL),
+        )
+        tm.that(result.failure, eq=True)
+        tm.that(str(result.error), has="Schema OID filter failed")
+
+    # ── _extract_oid_from_schema_attr ────────────────────────────────────────
+
+    def test_extract_oid_empty_values_returns_none(self) -> None:
+        """Line 50: empty values list returns None."""
+        result = FlextLdifFilters._extract_oid_from_schema_attr([])
+        tm.that(result, eq=None)
+
+    def test_extract_oid_non_oid_value_returns_none(self) -> None:
+        """Line 59: value doesn't start with '(' so OID not found returns None."""
+        result = FlextLdifFilters._extract_oid_from_schema_attr(["not-an-oid"])
+        tm.that(result, eq=None)
+
+    def test_extract_oid_oid_not_starting_with_digit_returns_none(self) -> None:
+        """Line 59: parenthesized but OID doesn't start with digit returns None."""
+        result = FlextLdifFilters._extract_oid_from_schema_attr(["( cn SYNTAX )"])
+        tm.that(result, eq=None)

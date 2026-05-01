@@ -24,10 +24,16 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".servers.test_oid_quirks": ("TestsTestFlextLdifOidQuirks",),
             ".servers.test_relaxed_quirks": ("TestsTestFlextLdifRelaxedQuirks",),
             ".servers.test_schema_transformer": ("TestsFlextLdifSchemaTransformer",),
+            ".services.test_acl_service": ("TestsFlextLdifAclService",),
+            ".services.test_analysis_service": ("TestsFlextLdifAnalysisService",),
             ".services.test_api_server_registry": (
                 "TestsTestFlextLdifApiServerRegistry",
             ),
+            ".services.test_detector_service": ("TestsFlextLdifDetectorService",),
+            ".services.test_entries_service": ("TestsFlextLdifEntriesService",),
+            ".services.test_filters_service": ("TestsFlextLdifFiltersService",),
             ".services.test_migration_pipeline": (
+                "TestsFlextLdifProcessingPipeline",
                 "TestsTestFlextLdifMigrationPipeline",
             ),
             ".services.test_parser_service": ("TestsFlextLdifParserService",),
@@ -36,6 +42,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ),
             ".services.test_writer_service": ("TestsFlextLdifWriterService",),
             ".test_acl_registry": ("TestsFlextLdifAclRegistry",),
+            ".test_constants_data_driven": ("TestsFlextLdifConstantsDataDriven",),
             ".test_migration_pipeline_quirks": (
                 "TestsFlextLdifMigrationPipelineQuirks",
             ),

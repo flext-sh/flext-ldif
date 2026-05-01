@@ -6,7 +6,7 @@ import re
 from collections.abc import Mapping
 from pathlib import Path
 from types import MappingProxyType
-from typing import Final
+from typing import Final, Literal
 
 from flext_ldap import c as ldap_c
 from flext_tests import FlextTestsConstants
@@ -97,6 +97,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, ldap_c, ldif_c):
         NAME_SUBSCHEMA: Final[str] = "subschema"
         NAME_MEMBER: Final[str] = "member"
         NAME_GROUP_OF_NAMES: Final[str] = "groupOfNames"
+        NAME_INET_ORG_PERSON: Final[str] = "inetOrgPerson"
         NAME_ACI: Final[str] = "aci"
         NAME_ORCLACI: Final[str] = "orclaci"
 
@@ -403,8 +404,17 @@ class TestsFlextLdifConstants(FlextTestsConstants, ldap_c, ldif_c):
         FILTERS_DN_SCHEMA: Final[str] = "cn=schema"
         FILTERS_DN_USER: Final[str] = "cn=user,dc=example,dc=com"
         FILTERS_DN_BARE: Final[str] = "cn=bare"
-        FILTERS_FORBIDDEN_ATTRS: Final[tuple[str, ...]] = ("mail", "description")
-        FILTERS_FORBIDDEN_OCS: Final[tuple[str, ...]] = ("inetOrgPerson",)
+        FILTERS_FORBIDDEN_ATTRS_ORDERED: Final[tuple[str, ...]] = (
+            NAME_MAIL,
+            NAME_DESCRIPTION,
+        )
+        FILTERS_FORBIDDEN_ATTRS: Final[frozenset[str]] = frozenset(
+            FILTERS_FORBIDDEN_ATTRS_ORDERED,
+        )
+        FILTERS_FORBIDDEN_OCS_ORDERED: Final[tuple[str, ...]] = (NAME_INET_ORG_PERSON,)
+        FILTERS_FORBIDDEN_OCS: Final[frozenset[str]] = frozenset(
+            FILTERS_FORBIDDEN_OCS_ORDERED,
+        )
         FILTERS_USER_MAIL: Final[str] = "user@example.com"
         FILTERS_USER_DESCRIPTION: Final[str] = "a test user"
         FILTERS_UNMATCHED_ATTR_OID: Final[str] = (
@@ -1092,6 +1102,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, ldap_c, ldif_c):
         MIGRATION_INPUT_FILENAME: Final[str] = "mig_input.ldif"
         MIGRATION_OUTPUT_FILENAME: Final[str] = "mig_output.ldif"
         MIGRATION_EMPTY_LDIF: Final[str] = ""
+        MIGRATION_INVALID_LDIF: Final[str] = "not valid ldif content"
         MIGRATION_SINGLE_ENTRY_LDIF: Final[str] = (
             "dn: cn=migrate-me,dc=example,dc=com\n"
             "objectClass: person\n"
@@ -1205,6 +1216,37 @@ class TestsFlextLdifConstants(FlextTestsConstants, ldap_c, ldif_c):
                 "oid_to_rfc": (OID, RFC),
             },
         )
+
+        # ── Processing service constants ───────────────────────────────
+        PROCESSING_VALID_DNS: Final[tuple[str, ...]] = (
+            "cn=processing-one,dc=example,dc=com",
+            "cn=processing-two,dc=example,dc=com",
+        )
+        PROCESSING_ATTRS: Final[Mapping[str, list[str]]] = MappingProxyType(
+            {
+                "objectClass": ["person", "top"],
+                "cn": ["processing-user"],
+                "sn": ["processing"],
+            },
+        )
+        PROCESSING_OPTIONS_CASES: Final[
+            Mapping[
+                str,
+                tuple[Literal["transform", "validate"], bool, int, int],
+            ]
+        ] = MappingProxyType(
+            {
+                "batch_transform": ("transform", False, 1, 2),
+                "parallel_validate": ("validate", True, 1, 2),
+            },
+        )
+
+        # ── Statistics service constants ───────────────────────────────
+        STATS_SERVER_TYPES: Final[tuple[str, ...]] = (
+            RFC,
+            OID,
+        )
+        STATS_EXPECTED_OBJECTCLASS: Final[str] = "person"
 
 
 c = TestsFlextLdifConstants

@@ -170,3 +170,32 @@ class TestsFlextLdifAnalysisService:
             entry, c.Ldif.ANALYSIS_DN_VALID, validation_svc
         )
         tm.that(valid, eq=True)
+
+    # ── edge-case branches ───────────────────────────────────────────────────
+
+    def test_validate_entry_dn_empty_string_returns_invalid(self) -> None:
+        entry = _make_entry("", {"objectClass": ["person"]})
+        valid, _dn_str, errors = FlextLdifAnalysis._validate_entry_dn(entry)
+        tm.that(valid, eq=False)
+        tm.that(len(errors), eq=1)
+
+    def test_validate_entry_objectclasses_invalid_oc_name(
+        self, validation_svc: FlextLdifValidation
+    ) -> None:
+        entry = _make_entry(
+            c.Ldif.ANALYSIS_DN_VALID,
+            {"objectClass": [c.Ldif.ANALYSIS_OC_INVALID]},
+        )
+        valid, errors = FlextLdifAnalysis._validate_entry_objectclasses(
+            entry, c.Ldif.ANALYSIS_DN_VALID, validation_svc
+        )
+        tm.that(valid, eq=False)
+        tm.that(len(errors), eq=1)
+
+    def test_validate_single_entry_returns_early_on_invalid_dn(
+        self, validation_svc: FlextLdifValidation
+    ) -> None:
+        entry = m.Ldif.Entry(dn=None, attributes=m.Ldif.Attributes(attributes={}))
+        valid, errors = FlextLdifAnalysis._validate_single_entry(entry, validation_svc)
+        tm.that(valid, eq=False)
+        tm.that(len(errors), eq=1)

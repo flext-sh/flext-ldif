@@ -118,3 +118,24 @@ class TestsFlextLdifWriterService:
         )
 
         tm.fail(result, has="Failed to write LDIF file")
+
+    def test_write_fails_with_unknown_server_type(
+        self,
+        writer: FlextLdifWriter,
+    ) -> None:
+        entries = self._build_entries()
+        result = writer.write(entries, server_type=c.Ldif.WRITER_UNKNOWN_SERVER_PREFIX)
+        tm.fail(result, has="Invalid server type")
+
+    def test_write_ldif_file_fails_with_unknown_server_type(
+        self,
+        writer: FlextLdifWriter,
+        tmp_path: Path,
+    ) -> None:
+        output_file = tmp_path / c.Ldif.WRITER_OUTPUT_FILENAME
+        result = writer.write_ldif_file(
+            self._build_entries(),
+            output_file,
+            server_type=c.Ldif.WRITER_UNKNOWN_SERVER_PREFIX,
+        )
+        tm.fail(result, has="Invalid server type")

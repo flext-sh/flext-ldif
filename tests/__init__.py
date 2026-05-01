@@ -78,10 +78,16 @@ if _t.TYPE_CHECKING:
     from tests.unit.servers.test_schema_transformer import (
         TestsFlextLdifSchemaTransformer,
     )
+    from tests.unit.services.test_acl_service import TestsFlextLdifAclService
+    from tests.unit.services.test_analysis_service import TestsFlextLdifAnalysisService
     from tests.unit.services.test_api_server_registry import (
         TestsTestFlextLdifApiServerRegistry,
     )
+    from tests.unit.services.test_detector_service import TestsFlextLdifDetectorService
+    from tests.unit.services.test_entries_service import TestsFlextLdifEntriesService
+    from tests.unit.services.test_filters_service import TestsFlextLdifFiltersService
     from tests.unit.services.test_migration_pipeline import (
+        TestsFlextLdifProcessingPipeline,
         TestsTestFlextLdifMigrationPipeline,
     )
     from tests.unit.services.test_parser_service import TestsFlextLdifParserService
@@ -90,6 +96,7 @@ if _t.TYPE_CHECKING:
     )
     from tests.unit.services.test_writer_service import TestsFlextLdifWriterService
     from tests.unit.test_acl_registry import TestsFlextLdifAclRegistry
+    from tests.unit.test_constants_data_driven import TestsFlextLdifConstantsDataDriven
     from tests.unit.test_migration_pipeline_quirks import (
         TestsFlextLdifMigrationPipelineQuirks,
     )
@@ -183,10 +190,16 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".unit.servers.test_schema_transformer": (
                 "TestsFlextLdifSchemaTransformer",
             ),
+            ".unit.services.test_acl_service": ("TestsFlextLdifAclService",),
+            ".unit.services.test_analysis_service": ("TestsFlextLdifAnalysisService",),
             ".unit.services.test_api_server_registry": (
                 "TestsTestFlextLdifApiServerRegistry",
             ),
+            ".unit.services.test_detector_service": ("TestsFlextLdifDetectorService",),
+            ".unit.services.test_entries_service": ("TestsFlextLdifEntriesService",),
+            ".unit.services.test_filters_service": ("TestsFlextLdifFiltersService",),
             ".unit.services.test_migration_pipeline": (
+                "TestsFlextLdifProcessingPipeline",
                 "TestsTestFlextLdifMigrationPipeline",
             ),
             ".unit.services.test_parser_service": ("TestsFlextLdifParserService",),
@@ -195,6 +208,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ),
             ".unit.services.test_writer_service": ("TestsFlextLdifWriterService",),
             ".unit.test_acl_registry": ("TestsFlextLdifAclRegistry",),
+            ".unit.test_constants_data_driven": ("TestsFlextLdifConstantsDataDriven",),
             ".unit.test_migration_pipeline_quirks": (
                 "TestsFlextLdifMigrationPipelineQuirks",
             ),
@@ -254,15 +268,21 @@ install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)
 __all__: list[str] = [
     "TestsFlextLdifAclMetadataPreservation",
     "TestsFlextLdifAclRegistry",
+    "TestsFlextLdifAclService",
+    "TestsFlextLdifAnalysisService",
     "TestsFlextLdifApiIntegration",
     "TestsFlextLdifCategorizationRealData",
     "TestsFlextLdifConfigIntegration",
     "TestsFlextLdifConstants",
+    "TestsFlextLdifConstantsDataDriven",
     "TestsFlextLdifCrossQuirkConversion",
+    "TestsFlextLdifDetectorService",
     "TestsFlextLdifDnCaseHandling",
     "TestsFlextLdifEdgeCases",
     "TestsFlextLdifEdgeCasesInt",
+    "TestsFlextLdifEntriesService",
     "TestsFlextLdifErrorRecovery",
+    "TestsFlextLdifFiltersService",
     "TestsFlextLdifLdifFixturesIntegration",
     "TestsFlextLdifMigrationPipelineQuirks",
     "TestsFlextLdifMinimalDifferencesMetadata",
@@ -275,6 +295,7 @@ __all__: list[str] = [
     "TestsFlextLdifParserService",
     "TestsFlextLdifParserUtilities",
     "TestsFlextLdifPipelineIntegration",
+    "TestsFlextLdifProcessingPipeline",
     "TestsFlextLdifProtocols",
     "TestsFlextLdifQuirksStandardization",
     "TestsFlextLdifRealLdapConfig",

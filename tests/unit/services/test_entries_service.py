@@ -219,3 +219,58 @@ class TestsFlextLdifEntriesService:
         )
         result = entries_svc.run_configured_operation()
         tm.fail(result, has="attributes_to_remove")
+
+    # ── edge-case branches ───────────────────────────────────────────────────
+
+    def test_extract_dn_from_dict_unsupported_value(self) -> None:
+        """Lines 54-55: unsupported dn type in dict."""
+        entry_dict: dict[str, str | list[str]] = {
+            "dn": "dn:invalid",
+            "other": [],
+        }
+        entry_dict["dn"] = [] if False else "dn:invalid"
+        entry_dict_unsupported: dict[str, object] = {"dn": 42}
+        _ = FlextLdifEntries._extract_dn_from_dict(entry_dict)
+        result = FlextLdifEntries._extract_dn_from_dict(
+            entry_dict_unsupported,
+        )
+        tm.fail(result, has="unsupported")
+
+    def test_extract_dn_from_object_missing_dn(self) -> None:
+        """Lines 60-61: entry with dn=None."""
+        entry = m.Ldif.Entry(dn=None, attributes=m.Ldif.Attributes(attributes={}))
+        result = FlextLdifEntries._extract_dn_from_object(entry)
+        tm.fail(result, has="DN")
+
+    def test_normalize_list_value_empty_returns_failure(self) -> None:
+        """Lines 76-77: empty list → failure."""
+        result = FlextLdifEntries._normalize_list_value([])
+        tm.fail(result, has="empty")
+
+    def test_normalize_list_value_nonempty_returns_ok(self) -> None:
+        """Line 78: list with items → success."""
+        result = FlextLdifEntries._normalize_list_value([c.Ldif.ANALYSIS_DN_VALID])
+        dn_str = u.Tests.assert_success(result)
+        tm.that(dn_str, eq=c.Ldif.ANALYSIS_DN_VALID)
+
+    def test_normalize_string_value_whitespace_returns_failure(self) -> None:
+        """Lines 83-84: whitespace-only string → failure."""
+        result = FlextLdifEntries._normalize_string_value("   ")
+        tm.fail(result, has="empty")
+
+    def test_normalize_string_value_valid_returns_ok(self) -> None:
+        """Line 85: valid string → success."""
+        result = FlextLdifEntries._normalize_string_value(c.Ldif.ANALYSIS_DN_VALID)
+        dn_str = u.Tests.assert_success(result)
+        tm.that(dn_str, eq=c.Ldif.ANALYSIS_DN_VALID)
+
+    def test_coerce_attribute_value_unsupported_type(self) -> None:
+        """Lines 117-118: unsupported attribute type via normalize_attribute_values."""
+        result = FlextLdifEntries.normalize_attribute_values(42)  # type: ignore[arg-type]
+        tm.fail(result, has="Unsupported")
+
+    def test_resolve_entry_objectclasses_fails_when_no_attrs(self) -> None:
+        """Lines 147-150: entry with no attributes → fail."""
+        entry = m.Ldif.Entry(dn=c.Ldif.ANALYSIS_DN_VALID, attributes=None)
+        result = FlextLdifEntries.resolve_entry_objectclasses(entry)
+        tm.fail(result, has="attributes")

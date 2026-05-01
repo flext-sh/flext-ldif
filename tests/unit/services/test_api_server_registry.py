@@ -58,3 +58,23 @@ class TestsTestFlextLdifApiServerRegistry:
         tm.that(getattr(constants, "CATEGORIZATION_PRIORITY", None), none=False)
         tm.that("quirks_by_server" in stats, eq=True)
         tm.that("server_priorities" in stats, eq=True)
+
+    def test_invalid_server_type_returns_public_failures(
+        self,
+        api: FlextLdif,
+    ) -> None:
+        """Invalid server identifiers should fail gracefully via public APIs."""
+        invalid_server = c.Ldif.SERVER_INVALID_QUIRK_TYPE
+
+        tm.that(api.acl(invalid_server), eq=None)
+        tm.that(api.entry(invalid_server), eq=None)
+        tm.that(api.schema_quirk(invalid_server), eq=None)
+        tm.that(api.resolve_schema_quirk(invalid_server), eq=None)
+
+        quirk_result = api.quirk(invalid_server)
+        bundle_result = api.resolve_quirk_bundle(invalid_server)
+        constants_result = api.resolve_server_constants(invalid_server)
+
+        tm.that(quirk_result.failure, eq=True)
+        tm.that(bundle_result.failure, eq=True)
+        tm.that(constants_result.failure, eq=True)
