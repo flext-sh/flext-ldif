@@ -1,0 +1,34 @@
+tests/unit/services/test_filters_service.py
+  h_9db9d35f50cf33 1-249
+tests/unit/services/test_writer_service.py
+  h_9db9d35f50cf33 69,94,111
+tests/unit/services/test_acl_service.py
+  h_9db9d35f50cf33 1-155
+tests/unit/services/test_analysis_service.py
+  h_9db9d35f50cf33 1-172
+tests/utilities.py
+  h_9db9d35f50cf33 16,27,38-39,162,185,188
+tests/unit/services/test_parser_service.py
+  h_9db9d35f50cf33 22,37,56,67-68,84,87
+tests/unit/services/test_entries_service.py
+  h_9db9d35f50cf33 1-221
+tests/unit/test_constants_data_driven.py
+  h_9db9d35f50cf33 1-84
+tests/constants.py
+  h_9db9d35f50cf33 46-75,96,286-288,300-301,307-327,329-335,337-379,381-383,386-423,425-431,434-436,438-441,444,446-456,1018-1068,1070-1076,1078-1144,1146-1207
+tests/unit/services/test_detector_service.py
+  h_9db9d35f50cf33 1-149
+tests/conftest.py
+  h_9db9d35f50cf33 89-96,100,109,118,124,159,165,171,177,212,221,227,236,271,290,296,302,308
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "a0588297b71034bc9a4101c64d48bff38c838f13",
+  "prompts": {},
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
