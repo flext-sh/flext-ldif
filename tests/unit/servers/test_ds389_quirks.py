@@ -16,7 +16,7 @@ from tests import c, m, u
 class TestsTestFlextLdifDs389Quirks:
     """Test ldif DS389 server quirks."""
 
-    @pytest.mark.parametrize("test_case", c.Ldif.Tests.DS389_ATTRIBUTE_TEST_CASES)
+    @pytest.mark.parametrize("test_case", c.Ldif.DS389_ATTRIBUTE_TEST_CASES)
     def test_schema_attribute_can_handle(
         self, test_case: m.Ldif.Tests.AttributeTestCase
     ) -> None:
@@ -68,7 +68,7 @@ class TestsTestFlextLdifDs389Quirks:
         if result.error is not None:
             tm.that(result.error, has="missing an OID")
 
-    @pytest.mark.parametrize("test_case", c.Ldif.Tests.DS389_OBJECTCLASS_TEST_CASES)
+    @pytest.mark.parametrize("test_case", c.Ldif.DS389_OBJECTCLASS_TEST_CASES)
     def test_schema_objectclass_can_handle(
         self,
         test_case: m.Ldif.Tests.ObjectClassTestCase,
@@ -153,7 +153,7 @@ class TestsTestFlextLdifDs389Quirks:
         tm.that(oc_str, has="nscontainer")
         tm.that(oc_str, has="STRUCTURAL")
 
-    @pytest.mark.parametrize("test_case", c.Ldif.Tests.DS389_ENTRY_TEST_CASES)
+    @pytest.mark.parametrize("test_case", c.Ldif.DS389_ENTRY_TEST_CASES)
     def test_entry_can_handle(self, test_case: m.Ldif.Tests.EntryTestCase) -> None:
         """Test entry detection for various scenarios."""
         server = FlextLdifServersDs389()

@@ -159,9 +159,7 @@ class TestsFlextLdifCategorizationRealData:
                 ),
             ),
         ]
-        categorization = ldif.categorization(
-            base_dn=base_dn, server_type=c.Ldif.Tests.OUD
-        )
+        categorization = ldif.categorization(base_dn=base_dn, server_type=c.Ldif.OUD)
         validate_result = categorization.validate_dns(entries)
         assert validate_result.success, f"DN validation failed: {validate_result.error}"
         categories_result = categorization.categorize_entries(validate_result.value)
@@ -268,9 +266,7 @@ class TestsFlextLdifCategorizationRealData:
                 ),
             ),
         ]
-        categorization = ldif.categorization(
-            base_dn=base_dn, server_type=c.Ldif.Tests.OUD
-        )
+        categorization = ldif.categorization(base_dn=base_dn, server_type=c.Ldif.OUD)
         validate_result = categorization.validate_dns(acl_entries)
         assert validate_result.success
         categories_result = categorization.categorize_entries(validate_result.value)
@@ -347,14 +343,12 @@ class TestsFlextLdifCategorizationRealData:
             "Input file content should match"
         )
         api = ldif()
-        parse_result = api.parse_ldif(value=ldif_content, server_type=c.Ldif.Tests.RFC)
+        parse_result = api.parse_ldif(value=ldif_content, server_type=c.Ldif.RFC)
         assert parse_result.success, f"Parsing failed: {parse_result.error}"
         entries = parse_result.value.entries
         assert len(entries) == 6, f"Should parse 6 entries, got {len(entries)}"
         base_dn = "dc=example"
-        categorization = api.categorization(
-            base_dn=base_dn, server_type=c.Ldif.Tests.OUD
-        )
+        categorization = api.categorization(base_dn=base_dn, server_type=c.Ldif.OUD)
         validate_result = categorization.validate_dns(entries)
         assert validate_result.success
         categories_result = categorization.categorize_entries(validate_result.value)

@@ -16,7 +16,7 @@ from tests import c, m, t, u
 class TestsTestFlextLdifApacheQuirks:
     """Test Apache Directory Server quirks implementation."""
 
-    @pytest.mark.parametrize("test_case", c.Ldif.Tests.APACHE_ATTRIBUTE_TEST_CASES)
+    @pytest.mark.parametrize("test_case", c.Ldif.APACHE_ATTRIBUTE_TEST_CASES)
     def test_schema_attribute_can_handle(
         self, test_case: m.Ldif.Tests.AttributeTestCase
     ) -> None:
@@ -74,7 +74,7 @@ class TestsTestFlextLdifApacheQuirks:
             should_succeed=False,
         )
 
-    @pytest.mark.parametrize("test_case", c.Ldif.Tests.APACHE_OBJECTCLASS_TEST_CASES)
+    @pytest.mark.parametrize("test_case", c.Ldif.APACHE_OBJECTCLASS_TEST_CASES)
     def test_schema_objectclass_can_handle(
         self,
         test_case: m.Ldif.Tests.ObjectClassTestCase,
@@ -290,7 +290,7 @@ class TestsTestFlextLdifApacheQuirks:
             must_contain=["ads-aci", "aci:"],
         )
 
-    @pytest.mark.parametrize("test_case", c.Ldif.Tests.APACHE_ENTRY_TEST_CASES)
+    @pytest.mark.parametrize("test_case", c.Ldif.APACHE_ENTRY_TEST_CASES)
     def test_entry_can_handle(self, test_case: m.Ldif.Tests.EntryTestCase) -> None:
         """Test entry detection for various scenarios."""
         server = FlextLdifServersApache()
@@ -313,7 +313,7 @@ class TestsTestFlextLdifApacheQuirks:
 
     @pytest.mark.parametrize(
         "test_case",
-        [tc for tc in c.Ldif.Tests.APACHE_ENTRY_TEST_CASES if tc.expected_can_handle],
+        [tc for tc in c.Ldif.APACHE_ENTRY_TEST_CASES if tc.expected_can_handle],
     )
     def test_entry_parse_ldif(self, test_case: m.Ldif.Tests.EntryTestCase) -> None:
         """Test entry parsing via LDIF for Apache-detectable entries."""

@@ -84,9 +84,11 @@ if _t.TYPE_CHECKING:
     from tests.unit.services.test_migration_pipeline import (
         TestsTestFlextLdifMigrationPipeline,
     )
+    from tests.unit.services.test_parser_service import TestsFlextLdifParserService
     from tests.unit.services.test_quirks_standardization import (
         TestsFlextLdifQuirksStandardization,
     )
+    from tests.unit.services.test_writer_service import TestsFlextLdifWriterService
     from tests.unit.test_acl_registry import TestsFlextLdifAclRegistry
     from tests.unit.test_migration_pipeline_quirks import (
         TestsFlextLdifMigrationPipelineQuirks,
@@ -187,9 +189,11 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".unit.services.test_migration_pipeline": (
                 "TestsTestFlextLdifMigrationPipeline",
             ),
+            ".unit.services.test_parser_service": ("TestsFlextLdifParserService",),
             ".unit.services.test_quirks_standardization": (
                 "TestsFlextLdifQuirksStandardization",
             ),
+            ".unit.services.test_writer_service": ("TestsFlextLdifWriterService",),
             ".unit.test_acl_registry": ("TestsFlextLdifAclRegistry",),
             ".unit.test_migration_pipeline_quirks": (
                 "TestsFlextLdifMigrationPipelineQuirks",
@@ -268,6 +272,7 @@ __all__: list[str] = [
     "TestsFlextLdifOidUtilities",
     "TestsFlextLdifOudIntegration",
     "TestsFlextLdifOudToOidMigration",
+    "TestsFlextLdifParserService",
     "TestsFlextLdifParserUtilities",
     "TestsFlextLdifPipelineIntegration",
     "TestsFlextLdifProtocols",
@@ -286,6 +291,7 @@ __all__: list[str] = [
     "TestsFlextLdifUtilitiesComprehensive",
     "TestsFlextLdifUtilitiesCore",
     "TestsFlextLdifVersion",
+    "TestsFlextLdifWriterService",
     "TestsFlextLdifZeroDataLossOidOud",
     "TestsTestFlextLdifApacheQuirks",
     "TestsTestFlextLdifApiServerRegistry",

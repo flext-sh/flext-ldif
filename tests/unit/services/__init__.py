@@ -9,7 +9,9 @@ _LAZY_IMPORTS = build_lazy_import_map(
     {
         ".test_api_server_registry": ("TestsTestFlextLdifApiServerRegistry",),
         ".test_migration_pipeline": ("TestsTestFlextLdifMigrationPipeline",),
+        ".test_parser_service": ("TestsFlextLdifParserService",),
         ".test_quirks_standardization": ("TestsFlextLdifQuirksStandardization",),
+        ".test_writer_service": ("TestsFlextLdifWriterService",),
     },
 )
 

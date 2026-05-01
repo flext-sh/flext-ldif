@@ -42,7 +42,7 @@ class TestsFlextLdifNovellQuirks:
 
     """Test schema attribute detection."""
 
-    @pytest.mark.parametrize("test_case", c.Ldif.Tests.NOVELL_ATTRIBUTE_TEST_CASES)
+    @pytest.mark.parametrize("test_case", c.Ldif.NOVELL_ATTRIBUTE_TEST_CASES)
     def test_can_handle_attribute(
         self,
         test_case: m.Ldif.Tests.AttributeTestCase,
@@ -97,7 +97,7 @@ class TestsFlextLdifNovellQuirks:
 
     """Test schema objectClass detection."""
 
-    @pytest.mark.parametrize("test_case", c.Ldif.Tests.NOVELL_OBJECTCLASS_TEST_CASES)
+    @pytest.mark.parametrize("test_case", c.Ldif.NOVELL_OBJECTCLASS_TEST_CASES)
     def test_can_handle_objectclass(
         self,
         test_case: m.Ldif.Tests.ObjectClassTestCase,
@@ -165,7 +165,7 @@ class TestsFlextLdifNovellQuirks:
 
     """Test entry detection."""
 
-    @pytest.mark.parametrize("test_case", c.Ldif.Tests.NOVELL_ENTRY_TEST_CASES)
+    @pytest.mark.parametrize("test_case", c.Ldif.NOVELL_ENTRY_TEST_CASES)
     def test_can_handle_entry(
         self,
         test_case: m.Ldif.Tests.EntryTestCase,

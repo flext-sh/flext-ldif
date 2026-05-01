@@ -36,7 +36,7 @@ class TestsFlextLdifConfigIntegration:
     def test_default_config_initialization(self) -> None:
         """Test facade initializes with default settings."""
         api = ldif
-        result = api.parse_ldif(c.Ldif.Tests.CONFIG_BASIC_ENTRY)
+        result = api.parse_ldif(c.Ldif.CONFIG_BASIC_ENTRY)
         assert result.success
 
     def test_custom_config_with_server_type(self) -> None:
@@ -44,8 +44,8 @@ class TestsFlextLdifConfigIntegration:
         settings = FlextLdifSettings()
         api = FlextLdif(settings=settings)
         result = api.parse_ldif(
-            c.Ldif.Tests.CONFIG_BASIC_ENTRY,
-            server_type=c.Ldif.Tests.OPENLDAP,
+            c.Ldif.CONFIG_BASIC_ENTRY,
+            server_type=c.Ldif.OPENLDAP,
         )
         assert result.success
         entries = result.value.entries
@@ -58,17 +58,17 @@ class TestsFlextLdifConfigIntegration:
         ldif1 = FlextLdif(settings=config1)
         ldif2 = FlextLdif(settings=config2)
         result1 = ldif1.parse_ldif(
-            c.Ldif.Tests.CONFIG_BASIC_ENTRY,
-            server_type=c.Ldif.Tests.OID,
+            c.Ldif.CONFIG_BASIC_ENTRY,
+            server_type=c.Ldif.OID,
         )
         result2 = ldif2.parse_ldif(
-            c.Ldif.Tests.CONFIG_BASIC_ENTRY,
-            server_type=c.Ldif.Tests.OPENLDAP,
+            c.Ldif.CONFIG_BASIC_ENTRY,
+            server_type=c.Ldif.OPENLDAP,
         )
         assert result1.success
         assert result2.success
 
-    @pytest.mark.parametrize("server_type", c.Ldif.Tests.CONFIG_SERVER_TYPES[:3])
+    @pytest.mark.parametrize("server_type", c.Ldif.CONFIG_SERVER_TYPES[:3])
     def test_config_affects_parsing_behavior(
         self,
         server_type: str,
@@ -76,18 +76,16 @@ class TestsFlextLdifConfigIntegration:
         """Test that settings settings affect parsing behavior."""
         settings = FlextLdifSettings()
         api = FlextLdif(settings=settings)
-        result = api.parse_ldif(
-            c.Ldif.Tests.CONFIG_BASIC_ENTRY, server_type=server_type
-        )
+        result = api.parse_ldif(c.Ldif.CONFIG_BASIC_ENTRY, server_type=server_type)
         assert result.success
 
     @pytest.mark.parametrize(
         ("server_type", "expected_content_key"),
         [
-            (c.Ldif.Tests.RFC, c.Ldif.Tests.RFC),
-            (c.Ldif.Tests.OID, c.Ldif.Tests.OID),
-            (c.Ldif.Tests.OUD, c.Ldif.Tests.OUD),
-            (c.Ldif.Tests.OPENLDAP, c.Ldif.Tests.OPENLDAP),
+            (c.Ldif.RFC, c.Ldif.RFC),
+            (c.Ldif.OID, c.Ldif.OID),
+            (c.Ldif.OUD, c.Ldif.OUD),
+            (c.Ldif.OPENLDAP, c.Ldif.OPENLDAP),
         ],
     )
     def test_config_with_server_type(
@@ -98,7 +96,7 @@ class TestsFlextLdifConfigIntegration:
         """Test settings with specific server type using parametrization."""
         settings = FlextLdifSettings()
         api = FlextLdif(settings=settings)
-        content = c.Ldif.Tests.CONFIG_SERVER_CONTENT[expected_content_key]
+        content = c.Ldif.CONFIG_SERVER_CONTENT[expected_content_key]
         result = api.parse_ldif(content, server_type=server_type)
         assert result.success
         entries = result.value.entries
@@ -119,7 +117,7 @@ class TestsFlextLdifConfigIntegration:
         """Test settings handling with multiple entries."""
         settings = FlextLdifSettings()
         api = FlextLdif(settings=settings)
-        result = api.parse_ldif(c.Ldif.Tests.CONFIG_MULTIPLE_ENTRIES)
+        result = api.parse_ldif(c.Ldif.CONFIG_MULTIPLE_ENTRIES)
         assert result.success
         entries = result.value.entries
         assert len(entries) == 3

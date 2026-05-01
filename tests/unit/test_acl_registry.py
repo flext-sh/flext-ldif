@@ -26,7 +26,7 @@ class TestsFlextLdifAclRegistry:
         ),
         [
             (name, data[0], data[1], data[2], data[3])
-            for name, data in c.Ldif.Tests.ACL_REGISTRY_GET_ACL_ATTRIBUTES_DATA.items()
+            for name, data in c.Ldif.ACL_REGISTRY_GET_ACL_ATTRIBUTES_DATA.items()
         ],
     )
     def test_get_acl_attributes(
@@ -48,7 +48,7 @@ class TestsFlextLdifAclRegistry:
         ("scenario", "test_type", "attr_name", "server_type", "expected_result"),
         [
             (name, data[0], data[1], data[2], data[3])
-            for name, data in c.Ldif.Tests.ACL_REGISTRY_IS_ACL_ATTRIBUTE_DATA.items()
+            for name, data in c.Ldif.ACL_REGISTRY_IS_ACL_ATTRIBUTE_DATA.items()
         ],
     )
     def test_is_acl_attribute(

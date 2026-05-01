@@ -86,36 +86,44 @@ def writer() -> FlextLdifWriter:
     return FlextLdifWriter()
 
 
+def _fixtures_for_kind(kind: str) -> t.StrMapping:
+    """Build fixture map for one kind using constants-driven server matrix."""
+    return {
+        server: u.Ldif.Tests.load(server, kind)
+        for server in c.Ldif.FIXTURE_KIND_SERVERS[kind]
+    }
+
+
 @pytest.fixture
 def oid_schema_fixture() -> str:
     """Load OID schema fixture data."""
-    return u.Ldif.Tests.load_fixture(
-        c.Ldif.Tests.OID,
-        c.Ldif.Tests.SCHEMA,
+    return u.Ldif.Tests.load(
+        c.Ldif.OID,
+        c.Ldif.SCHEMA,
     )
 
 
 @pytest.fixture
 def oid_acl_fixture() -> str:
     """Load OID ACL fixture data."""
-    return u.Ldif.Tests.load_fixture(
-        c.Ldif.Tests.OID,
-        c.Ldif.Tests.ACL,
+    return u.Ldif.Tests.load(
+        c.Ldif.OID,
+        c.Ldif.ACL,
     )
 
 
 @pytest.fixture
 def oid_entries_fixture() -> str:
     """Load OID entries fixture data."""
-    return u.Ldif.Tests.load_fixture(c.Ldif.Tests.OID, c.Ldif.Tests.ENTRIES)
+    return u.Ldif.Tests.load(c.Ldif.OID, c.Ldif.ENTRIES)
 
 
 @pytest.fixture
 def oid_integration_fixture() -> str:
     """Load OID integration fixture data."""
-    return u.Ldif.Tests.load_fixture(
-        c.Ldif.Tests.OID,
-        c.Ldif.Tests.INTEGRATION,
+    return u.Ldif.Tests.load(
+        c.Ldif.OID,
+        c.Ldif.INTEGRATION,
     )
 
 
@@ -148,27 +156,27 @@ def oid_entries(
 @pytest.fixture
 def oud_schema_fixture() -> str:
     """Load OUD schema fixture data."""
-    return u.Ldif.Tests.load_fixture(c.Ldif.Tests.OUD, c.Ldif.Tests.SCHEMA)
+    return u.Ldif.Tests.load(c.Ldif.OUD, c.Ldif.SCHEMA)
 
 
 @pytest.fixture
 def oud_acl_fixture() -> str:
     """Load OUD ACL fixture data."""
-    return u.Ldif.Tests.load_fixture(c.Ldif.Tests.OUD, c.Ldif.Tests.ACL)
+    return u.Ldif.Tests.load(c.Ldif.OUD, c.Ldif.ACL)
 
 
 @pytest.fixture
 def oud_entries_fixture() -> str:
     """Load OUD entries fixture data."""
-    return u.Ldif.Tests.load_fixture(c.Ldif.Tests.OUD, c.Ldif.Tests.ENTRIES)
+    return u.Ldif.Tests.load(c.Ldif.OUD, c.Ldif.ENTRIES)
 
 
 @pytest.fixture
 def oud_integration_fixture() -> str:
     """Load OUD integration fixture data."""
-    return u.Ldif.Tests.load_fixture(
-        c.Ldif.Tests.OUD,
-        c.Ldif.Tests.INTEGRATION,
+    return u.Ldif.Tests.load(
+        c.Ldif.OUD,
+        c.Ldif.INTEGRATION,
     )
 
 
@@ -201,33 +209,33 @@ def oud_entries(
 @pytest.fixture
 def openldap_schema_fixture() -> str:
     """Load OpenLDAP schema fixture data."""
-    return u.Ldif.Tests.load_fixture(
-        c.Ldif.Tests.OPENLDAP,
-        c.Ldif.Tests.SCHEMA,
+    return u.Ldif.Tests.load(
+        c.Ldif.OPENLDAP,
+        c.Ldif.SCHEMA,
     )
 
 
 @pytest.fixture
 def openldap_acl_fixture() -> str:
     """Load OpenLDAP ACL fixture data."""
-    return u.Ldif.Tests.load_fixture(c.Ldif.Tests.OPENLDAP, c.Ldif.Tests.ACL)
+    return u.Ldif.Tests.load(c.Ldif.OPENLDAP, c.Ldif.ACL)
 
 
 @pytest.fixture
 def openldap_entries_fixture() -> str:
     """Load OpenLDAP entries fixture data."""
-    return u.Ldif.Tests.load_fixture(
-        c.Ldif.Tests.OPENLDAP,
-        c.Ldif.Tests.ENTRIES,
+    return u.Ldif.Tests.load(
+        c.Ldif.OPENLDAP,
+        c.Ldif.ENTRIES,
     )
 
 
 @pytest.fixture
 def openldap_integration_fixture() -> str:
     """Load OpenLDAP integration fixture data."""
-    return u.Ldif.Tests.load_fixture(
-        c.Ldif.Tests.OPENLDAP,
-        c.Ldif.Tests.INTEGRATION,
+    return u.Ldif.Tests.load(
+        c.Ldif.OPENLDAP,
+        c.Ldif.INTEGRATION,
     )
 
 
@@ -260,7 +268,7 @@ def openldap_entries(
 @pytest.fixture
 def rfc_schema_fixture() -> str:
     """Load RFC reference schema fixture data."""
-    return u.Ldif.Tests.load_fixture(c.Ldif.Tests.RFC, c.Ldif.Tests.SCHEMA)
+    return u.Ldif.Tests.load(c.Ldif.RFC, c.Ldif.SCHEMA)
 
 
 @pytest.fixture
@@ -279,81 +287,25 @@ def rfc_schema_entries(
 @pytest.fixture
 def all_schema_fixtures() -> t.StrMapping:
     """Provide all schema fixtures by server type."""
-    return {
-        c.Ldif.Tests.OID: u.Ldif.Tests.load_fixture(
-            c.Ldif.Tests.OID,
-            c.Ldif.Tests.SCHEMA,
-        ),
-        c.Ldif.Tests.OUD: u.Ldif.Tests.load_fixture(
-            c.Ldif.Tests.OUD,
-            c.Ldif.Tests.SCHEMA,
-        ),
-        c.Ldif.Tests.OPENLDAP: u.Ldif.Tests.load_fixture(
-            c.Ldif.Tests.OPENLDAP,
-            c.Ldif.Tests.SCHEMA,
-        ),
-        c.Ldif.Tests.RFC: u.Ldif.Tests.load_fixture(
-            c.Ldif.Tests.RFC,
-            c.Ldif.Tests.SCHEMA,
-        ),
-    }
+    return _fixtures_for_kind(c.Ldif.SCHEMA)
 
 
 @pytest.fixture
 def all_entries_fixtures() -> t.StrMapping:
     """Provide all entries fixtures by server type."""
-    return {
-        c.Ldif.Tests.OID: u.Ldif.Tests.load_fixture(
-            c.Ldif.Tests.OID,
-            c.Ldif.Tests.ENTRIES,
-        ),
-        c.Ldif.Tests.OUD: u.Ldif.Tests.load_fixture(
-            c.Ldif.Tests.OUD,
-            c.Ldif.Tests.ENTRIES,
-        ),
-        c.Ldif.Tests.OPENLDAP: u.Ldif.Tests.load_fixture(
-            c.Ldif.Tests.OPENLDAP,
-            c.Ldif.Tests.ENTRIES,
-        ),
-    }
+    return _fixtures_for_kind(c.Ldif.ENTRIES)
 
 
 @pytest.fixture
 def all_acl_fixtures() -> t.StrMapping:
     """Provide all ACL fixtures by server type."""
-    return {
-        c.Ldif.Tests.OID: u.Ldif.Tests.load_fixture(
-            c.Ldif.Tests.OID,
-            c.Ldif.Tests.ACL,
-        ),
-        c.Ldif.Tests.OUD: u.Ldif.Tests.load_fixture(
-            c.Ldif.Tests.OUD,
-            c.Ldif.Tests.ACL,
-        ),
-        c.Ldif.Tests.OPENLDAP: u.Ldif.Tests.load_fixture(
-            c.Ldif.Tests.OPENLDAP,
-            c.Ldif.Tests.ACL,
-        ),
-    }
+    return _fixtures_for_kind(c.Ldif.ACL)
 
 
 @pytest.fixture
 def all_integration_fixtures() -> t.StrMapping:
     """Provide all integration fixtures by server type."""
-    return {
-        c.Ldif.Tests.OID: u.Ldif.Tests.load_fixture(
-            c.Ldif.Tests.OID,
-            c.Ldif.Tests.INTEGRATION,
-        ),
-        c.Ldif.Tests.OUD: u.Ldif.Tests.load_fixture(
-            c.Ldif.Tests.OUD,
-            c.Ldif.Tests.INTEGRATION,
-        ),
-        c.Ldif.Tests.OPENLDAP: u.Ldif.Tests.load_fixture(
-            c.Ldif.Tests.OPENLDAP,
-            c.Ldif.Tests.INTEGRATION,
-        ),
-    }
+    return _fixtures_for_kind(c.Ldif.INTEGRATION)
 
 
 @pytest.fixture
@@ -365,7 +317,7 @@ def tmp_ldif_path(tmp_path: Path) -> Path:
 @pytest.fixture
 def fixtures_dir() -> Path:
     """Get path to fixtures directory."""
-    return c.Ldif.Tests.FIXTURES_DIR
+    return c.Ldif.FIXTURES_DIR
 
 
 @pytest.fixture
@@ -439,9 +391,9 @@ def ldap_container(worker_id: str) -> t.JsonMapping:
     for credential resolution.
     """
     docker_control = u.Ldif.Tests.get_docker_control(worker_id)
-    server_url = f"ldap://localhost:{c.Ldif.Tests.DOCKER_PORT}"
+    server_url = f"ldap://localhost:{c.Ldif.DOCKER_PORT}"
     lock = u.Ldif.Tests.FileLock(
-        Path.home() / ".flext" / f"{c.Ldif.Tests.DOCKER_CONTAINER_NAME}.lock",
+        Path.home() / ".flext" / f"{c.Ldif.DOCKER_CONTAINER_NAME}.lock",
     )
     with lock:
         execute_result = docker_control.execute()
@@ -489,8 +441,8 @@ def ldap_container(worker_id: str) -> t.JsonMapping:
         "host": "localhost",
         "bind_dn": admin_dn,
         "password": admin_password,
-        "base_dn": c.Ldif.Tests.DOCKER_BASE_DN,
-        "port": c.Ldif.Tests.DOCKER_PORT,
+        "base_dn": c.Ldif.DOCKER_BASE_DN,
+        "port": c.Ldif.DOCKER_PORT,
         "use_ssl": False,
         "worker_id": worker_id,
     }
@@ -528,7 +480,7 @@ def make_test_base_dn(unique_dn_suffix: str) -> Callable[[str], str]:
     """Return a factory that creates unique test base DNs."""
 
     def _make(ou: str) -> str:
-        return f"ou={ou}-{unique_dn_suffix},{c.Ldif.Tests.DOCKER_BASE_DN}"
+        return f"ou={ou}-{unique_dn_suffix},{c.Ldif.DOCKER_BASE_DN}"
 
     return _make
 

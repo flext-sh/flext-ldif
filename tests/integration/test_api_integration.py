@@ -32,13 +32,13 @@ class TestsFlextLdifApiIntegration:
         ("scenario", "ldif_content", "expected_entries"),
         [
             (
-                c.Ldif.Tests.API_SCENARIO_SIMPLE_LDIF,
-                c.Ldif.Tests.RFC_SAMPLE_LDIF_BASIC,
+                c.Ldif.API_SCENARIO_SIMPLE_LDIF,
+                c.Ldif.RFC_SAMPLE_LDIF_BASIC,
                 1,
             ),
             (
-                c.Ldif.Tests.API_SCENARIO_MULTIPLE_INSTANCES,
-                c.Ldif.Tests.RFC_SAMPLE_LDIF_MULTIPLE,
+                c.Ldif.API_SCENARIO_MULTIPLE_INSTANCES,
+                c.Ldif.RFC_SAMPLE_LDIF_MULTIPLE,
                 2,
             ),
         ],
@@ -64,14 +64,14 @@ class TestsFlextLdifApiIntegration:
 
     def test_build_entry_programmatic(self) -> None:
         """Test building entries programmatically using models."""
-        test_dn = c.Ldif.Tests.RFC_TEST_DN
+        test_dn = c.Ldif.RFC_TEST_DN
         entry = m.Ldif.Entry(
             dn=m.Ldif.DN(value=test_dn),
             attributes=m.Ldif.Attributes(
                 attributes={
-                    c.Ldif.Tests.NAME_CN: [c.Ldif.Tests.ATTR_VALUE_TEST],
-                    c.Ldif.Tests.NAME_SN: [c.Ldif.Tests.ATTR_VALUE_USER],
-                    c.Ldif.Tests.NAME_OBJECTCLASS: [c.Ldif.Tests.NAME_PERSON],
+                    c.Ldif.NAME_CN: [c.Ldif.ATTR_VALUE_TEST],
+                    c.Ldif.NAME_SN: [c.Ldif.ATTR_VALUE_USER],
+                    c.Ldif.NAME_OBJECTCLASS: [c.Ldif.NAME_PERSON],
                 },
                 attribute_metadata={},
             ),
@@ -79,15 +79,13 @@ class TestsFlextLdifApiIntegration:
         assert entry.dn is not None
         assert entry.attributes is not None
         assert entry.dn.value == test_dn
-        assert c.Ldif.Tests.NAME_CN in entry.attributes.attributes
-        assert entry.attributes.attributes[c.Ldif.Tests.NAME_CN] == [
-            c.Ldif.Tests.ATTR_VALUE_TEST
-        ]
+        assert c.Ldif.NAME_CN in entry.attributes.attributes
+        assert entry.attributes.attributes[c.Ldif.NAME_CN] == [c.Ldif.ATTR_VALUE_TEST]
 
     def test_validate_entries_workflow(self) -> None:
         """Test complete validation workflow."""
         api = ldif
-        parse_result = api.parse_ldif(c.Ldif.Tests.RFC_SAMPLE_LDIF_BASIC)
+        parse_result = api.parse_ldif(c.Ldif.RFC_SAMPLE_LDIF_BASIC)
         assert parse_result.success
         entries = parse_result.value.entries
         validate_result = api.validate_entries(entries)
@@ -98,8 +96,8 @@ class TestsFlextLdifApiIntegration:
         ldif1 = ldif()
         ldif2 = ldif()
         assert ldif1 is not ldif2
-        result1 = ldif1.parse_ldif(c.Ldif.Tests.RFC_SAMPLE_LDIF_BASIC)
-        result2 = ldif2.parse_ldif(c.Ldif.Tests.RFC_SAMPLE_LDIF_BASIC)
+        result1 = ldif1.parse_ldif(c.Ldif.RFC_SAMPLE_LDIF_BASIC)
+        result2 = ldif2.parse_ldif(c.Ldif.RFC_SAMPLE_LDIF_BASIC)
         assert result1.success
         assert result2.success
         entries1 = result1.value.entries
@@ -129,7 +127,7 @@ class TestsFlextLdifApiIntegration:
     def test_end_to_end_workflow_complete(self) -> None:
         """Test complete end-to-end workflow from parse to filter."""
         api = ldif
-        parse_result = api.parse_ldif(c.Ldif.Tests.RFC_SAMPLE_LDIF_BASIC)
+        parse_result = api.parse_ldif(c.Ldif.RFC_SAMPLE_LDIF_BASIC)
         assert parse_result.success
         entries = parse_result.value.entries
         analyze_result = FlextLdifStatistics().calculate_for_entries(entries)
@@ -141,7 +139,7 @@ class TestsFlextLdifApiIntegration:
 
     def test_runtime_alias_exposes_direct_dsl(self) -> None:
         """Test the runtime alias as the primary no-ceremony facade."""
-        result = ldif.parse_ldif(c.Ldif.Tests.RFC_SAMPLE_LDIF_BASIC)
+        result = ldif.parse_ldif(c.Ldif.RFC_SAMPLE_LDIF_BASIC)
         assert result.success
         assert len(result.value.entries) == 1
 

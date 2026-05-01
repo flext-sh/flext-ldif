@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import ClassVar
 
 from flext_ldap import u
-from flext_tests import FlextTestsUtilities, td, tk
+from flext_tests import FlextTestsFixturesDSLMixin, FlextTestsUtilities, tk
 
 from tests import c, m, p, t
 
@@ -24,7 +24,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
     class Ldif(u.Ldif):
         """LDIF test utility namespace."""
 
-        class Tests:
+        class Tests(FlextTestsFixturesDSLMixin):
             """Flat test utility namespace for flext-ldif."""
 
             Docker = tk
@@ -35,19 +35,11 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             _resolved_admin_credentials: ClassVar[list[tuple[str, str] | None]] = [
                 None,
             ]
-            _fixture_cache: ClassVar[
-                MutableMapping[
-                    tuple[t.Ldif.Tests.FixtureServer, t.Ldif.Tests.FixtureKind],
-                    str,
-                ]
-            ] = {}
+            _FIXTURES_ROOT: ClassVar[Path] = c.Ldif.FIXTURES_DIR
+            _FILE_EXTENSION: ClassVar[str] = ".ldif"
             _fixture_metadata_cache: ClassVar[
                 MutableMapping[Path, m.Ldif.Tests.FixtureMetadata]
             ] = {}
-            fixtures: ClassVar[td.BoundFixtures] = td.bind(
-                c.Ldif.Tests.FIXTURES_DIR,
-                file_extension=".ldif",
-            )
 
             @staticmethod
             def create_server_from_url(
@@ -62,7 +54,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             def create_bare_server(
                 host: str,
                 *,
-                port: int = c.Ldif.Tests.DOCKER_PORT,
+                port: int = c.Ldif.DOCKER_PORT,
                 get_info: t.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.NO_INFO,
             ) -> p.Ldap.Ldap3Server:
                 """Create a minimal LDAP server for connectivity checks."""
@@ -167,13 +159,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             @staticmethod
             def parametrize_real_data() -> Sequence[m.Ldif.Tests.LdifTestData]:
                 """Generate parametrized test data for comprehensive coverage."""
-                server_types = (
-                    "generic",
-                    c.Ldif.Tests.OPENLDAP,
-                    c.Ldif.Tests.AD,
-                    c.Ldif.Tests.OID,
-                    c.Ldif.Tests.OUD,
-                )
+                server_types = ("generic", *c.Ldif.PARAMETRIZED_REAL_SERVERS)
                 return [
                     m.Ldif.Tests.LdifTestData(
                         id=f"entry_{server_type}",
@@ -189,78 +175,6 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
 
             FileLock = FlextTestsUtilities.Tests.FileLock
 
-            @staticmethod
-            def fixture_path(
-                server_type: t.Ldif.Tests.FixtureServer,
-                fixture_type: t.Ldif.Tests.FixtureKind,
-            ) -> Path:
-                """Return the canonical path for a fixture file."""
-                return td.fixture_path(
-                    server_type,
-                    fixture_type,
-                    fixtures_root=c.Ldif.Tests.FIXTURES_DIR,
-                    file_extension=".ldif",
-                )
-
-            @classmethod
-            def load_fixture(
-                cls,
-                server_type: t.Ldif.Tests.FixtureServer,
-                fixture_type: t.Ldif.Tests.FixtureKind,
-            ) -> str:
-                """Load one fixture file."""
-                return td.load_fixture(
-                    server_type,
-                    fixture_type,
-                    fixtures_root=c.Ldif.Tests.FIXTURES_DIR,
-                    file_extension=".ldif",
-                )
-
-            @classmethod
-            def load_server_fixtures(
-                cls,
-                server_type: t.Ldif.Tests.FixtureServer,
-            ) -> Mapping[t.Ldif.Tests.FixtureKind, str]:
-                """Load all available fixtures for a server type."""
-                return td.load_server_fixtures(
-                    server_type,
-                    fixtures_root=c.Ldif.Tests.FIXTURES_DIR,
-                    file_extension=".ldif",
-                )
-
-            @classmethod
-            def available_fixture_servers(cls) -> Sequence[t.Ldif.Tests.FixtureServer]:
-                """Return the server types that currently have fixture directories."""
-                return td.available_fixture_servers(
-                    fixtures_root=c.Ldif.Tests.FIXTURES_DIR,
-                )
-
-            @classmethod
-            def available_fixture_types(
-                cls,
-                server_type: t.Ldif.Tests.FixtureServer,
-            ) -> Sequence[t.Ldif.Tests.FixtureKind]:
-                """Return the fixture kinds available for one server type."""
-                return td.available_fixture_types(
-                    server_type,
-                    fixtures_root=c.Ldif.Tests.FIXTURES_DIR,
-                    file_extension=".ldif",
-                )
-
-            @classmethod
-            def fixture_exists(
-                cls,
-                server_type: t.Ldif.Tests.FixtureServer,
-                fixture_type: t.Ldif.Tests.FixtureKind,
-            ) -> bool:
-                """Return whether a fixture exists."""
-                return td.fixture_exists(
-                    server_type,
-                    fixture_type,
-                    fixtures_root=c.Ldif.Tests.FIXTURES_DIR,
-                    file_extension=".ldif",
-                )
-
             @classmethod
             def fixture_metadata(
                 cls,
@@ -268,10 +182,10 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                 fixture_type: t.Ldif.Tests.FixtureKind,
             ) -> m.Ldif.Tests.FixtureMetadata:
                 """Return metadata for one fixture file."""
-                file_path = cls.fixture_path(server_type, fixture_type)
+                file_path = cls.path(server_type, fixture_type)
                 if file_path in cls._fixture_metadata_cache:
                     return cls._fixture_metadata_cache[file_path]
-                content = cls.load_fixture(server_type, fixture_type)
+                content = cls.load(server_type, fixture_type)
                 lines = content.splitlines()
                 metadata = m.Ldif.Tests.FixtureMetadata(
                     server_type=server_type,
@@ -290,13 +204,13 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             def get_docker_control(worker_id: str = "master") -> tk:
                 """Create Docker test infrastructure controller."""
                 return tk.compose(
-                    compose_file=c.Ldif.Tests.DOCKER_COMPOSE_FILE_REL,
-                    container_name=c.Ldif.Tests.DOCKER_CONTAINER_NAME,
-                    service=c.Ldif.Tests.DOCKER_SERVICE_NAME,
+                    compose_file=c.Ldif.DOCKER_COMPOSE_FILE_REL,
+                    container_name=c.Ldif.DOCKER_CONTAINER_NAME,
+                    service=c.Ldif.DOCKER_SERVICE_NAME,
                     host=c.LOCALHOST,
-                    port=c.Ldif.Tests.DOCKER_PORT,
+                    port=c.Ldif.DOCKER_PORT,
                     startup_timeout=15,
-                    workspace_root=c.Ldif.Tests.PROJECT_ROOT,
+                    workspace_root=c.Ldif.PROJECT_ROOT,
                     worker_id=worker_id,
                 )
 
@@ -314,12 +228,12 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                 candidates.extend(
                     [
                         (
-                            c.Ldif.Tests.DOCKER_ADMIN_DN,
-                            c.Ldif.Tests.DOCKER_ADMIN_PASSWORD,
+                            c.Ldif.DOCKER_ADMIN_DN,
+                            c.Ldif.DOCKER_ADMIN_PASSWORD,
                         ),
                         (
-                            c.Ldif.Tests.DOCKER_LEGACY_ADMIN_DN,
-                            c.Ldif.Tests.DOCKER_LEGACY_ADMIN_PASSWORD,
+                            c.Ldif.DOCKER_LEGACY_ADMIN_DN,
+                            c.Ldif.DOCKER_LEGACY_ADMIN_PASSWORD,
                         ),
                     ],
                 )
@@ -327,7 +241,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                     try:
                         server = cls.create_bare_server(
                             "localhost",
-                            port=c.Ldif.Tests.DOCKER_PORT,
+                            port=c.Ldif.DOCKER_PORT,
                             get_info=c.Ldap.Ldap3GetInfo.NO_INFO,
                         )
                         connection = cls.create_connection(
@@ -350,8 +264,8 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                     ):
                         continue
                 fallback = (
-                    c.Ldif.Tests.DOCKER_ADMIN_DN,
-                    c.Ldif.Tests.DOCKER_ADMIN_PASSWORD,
+                    c.Ldif.DOCKER_ADMIN_DN,
+                    c.Ldif.DOCKER_ADMIN_PASSWORD,
                 )
                 cache[0] = fallback
                 return fallback
@@ -376,9 +290,9 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                 is_objectclass = any(
                     kind in schema_def
                     for kind in (
-                        c.Ldif.Tests.SCHEMA_STRUCTURAL,
-                        c.Ldif.Tests.SCHEMA_AUXILIARY,
-                        c.Ldif.Tests.SCHEMA_ABSTRACT,
+                        c.Ldif.SCHEMA_STRUCTURAL,
+                        c.Ldif.SCHEMA_AUXILIARY,
+                        c.Ldif.SCHEMA_ABSTRACT,
                     )
                 )
                 result = (

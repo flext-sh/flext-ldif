@@ -32,7 +32,7 @@ class TestsFlextLdifVersion:
 
     def test_all_public_symbols_are_exported(self) -> None:
         """All documented symbols are exported through __all__."""
-        for export in c.Ldif.Tests.VERSION_EXPECTED_EXPORTS:
+        for export in c.Ldif.VERSION_EXPECTED_EXPORTS:
             tm.that(version_module.__all__, has=export)
             tm.that(hasattr(version_module, export), eq=True)
 

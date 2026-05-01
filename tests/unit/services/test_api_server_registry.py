@@ -18,9 +18,9 @@ class TestsTestFlextLdifApiServerRegistry:
         """The facade should expose the real registered server catalog."""
         registered_servers = api.list_registered_servers()
 
-        tm.that(c.Ldif.Tests.RFC in registered_servers, eq=True)
-        tm.that(c.Ldif.Tests.OID in registered_servers, eq=True)
-        tm.that(c.Ldif.Tests.OUD in registered_servers, eq=True)
+        tm.that(c.Ldif.RFC in registered_servers, eq=True)
+        tm.that(c.Ldif.OID in registered_servers, eq=True)
+        tm.that(c.Ldif.OUD in registered_servers, eq=True)
 
     def test_quirk_resolution_returns_real_registered_server(
         self,
@@ -28,14 +28,14 @@ class TestsTestFlextLdifApiServerRegistry:
     ) -> None:
         """The facade should resolve the real quirk registry entry by type."""
         quirk = u.Tests.assert_success(
-            api.quirk(c.Ldif.Tests.OID),
+            api.quirk(c.Ldif.OID),
             error_msg="OID quirk must resolve from the facade",
         )
 
-        tm.that(quirk.server_type, eq=c.Ldif.Tests.OID)
-        tm.that(api.schema_quirk(c.Ldif.Tests.OID), none=False)
-        tm.that(api.acl(c.Ldif.Tests.OID), none=False)
-        tm.that(api.entry(c.Ldif.Tests.OID), none=False)
+        tm.that(quirk.server_type, eq=c.Ldif.OID)
+        tm.that(api.schema_quirk(c.Ldif.OID), none=False)
+        tm.that(api.acl(c.Ldif.OID), none=False)
+        tm.that(api.entry(c.Ldif.OID), none=False)
 
     def test_registry_resolution_exposes_public_registry_contract(
         self,
@@ -43,11 +43,11 @@ class TestsTestFlextLdifApiServerRegistry:
     ) -> None:
         """The facade should expose the same registry metadata as the server API."""
         quirk_bundle = u.Tests.assert_success(
-            api.resolve_quirk_bundle(c.Ldif.Tests.OUD),
+            api.resolve_quirk_bundle(c.Ldif.OUD),
             error_msg="OUD quirk bundle must resolve from the facade",
         )
         constants = u.Tests.assert_success(
-            api.resolve_server_constants(c.Ldif.Tests.OUD),
+            api.resolve_server_constants(c.Ldif.OUD),
             error_msg="OUD constants must resolve from the facade",
         )
         stats = api.summarize_registry()

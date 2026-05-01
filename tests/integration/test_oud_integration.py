@@ -115,7 +115,7 @@ class TestsFlextLdifOudIntegration:
     @pytest.fixture
     def acl_fixture(self) -> str:
         """Load OUD ACL fixture data."""
-        return u.Ldif.Tests.load_fixture(c.Ldif.Tests.OUD, c.Ldif.Tests.ACL)
+        return u.Ldif.Tests.load(c.Ldif.OUD, c.Ldif.ACL)
 
     def test_parse_fixture(self, api: FlextLdif, acl_fixture: str) -> None:
         """Test parsing complete OUD ACL fixture."""
@@ -160,7 +160,7 @@ class TestsFlextLdifOudIntegration:
     @pytest.fixture
     def entry_fixture(self) -> str:
         """Load OUD entry fixture data."""
-        return u.Ldif.Tests.load_fixture(c.Ldif.Tests.OUD, c.Ldif.Tests.ENTRIES)
+        return u.Ldif.Tests.load(c.Ldif.OUD, c.Ldif.ENTRIES)
 
     def test_parse_entry_fixture(self, api: FlextLdif, entry_fixture: str) -> None:
         """Test parsing complete OUD entry fixture."""
@@ -217,7 +217,7 @@ class TestsFlextLdifOudIntegration:
     @pytest.fixture
     def integration_fixture(self) -> str:
         """Load OUD integration fixture data."""
-        return u.Ldif.Tests.load_fixture(c.Ldif.Tests.OUD, c.Ldif.Tests.INTEGRATION)
+        return u.Ldif.Tests.load(c.Ldif.OUD, c.Ldif.INTEGRATION)
 
     def test_roundtrip_parse_write_parse(
         self,

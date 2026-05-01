@@ -30,9 +30,11 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".services.test_migration_pipeline": (
                 "TestsTestFlextLdifMigrationPipeline",
             ),
+            ".services.test_parser_service": ("TestsFlextLdifParserService",),
             ".services.test_quirks_standardization": (
                 "TestsFlextLdifQuirksStandardization",
             ),
+            ".services.test_writer_service": ("TestsFlextLdifWriterService",),
             ".test_acl_registry": ("TestsFlextLdifAclRegistry",),
             ".test_migration_pipeline_quirks": (
                 "TestsFlextLdifMigrationPipelineQuirks",
