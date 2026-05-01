@@ -42,6 +42,9 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestsFlextLdifQuirksStandardization",
             ),
             ".services.test_statistics_service": ("TestsFlextLdifStatisticsService",),
+            ".services.test_transformers_service": (
+                "TestsFlextLdifTransformerService",
+            ),
             ".services.test_writer_service": ("TestsFlextLdifWriterService",),
             ".test_acl_registry": ("TestsFlextLdifAclRegistry",),
             ".test_constants_data_driven": ("TestsFlextLdifConstantsDataDriven",),

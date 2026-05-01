@@ -8,33 +8,33 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Final, Literal
 
-from flext_ldap import c as ldap_c
+from flext_ldap import c
 from flext_tests import FlextTestsConstants
 from frozenlist import FrozenList
 
-from flext_ldif import c as ldif_c
-from tests.models import m
+from tests import m
 
 
-class TestsFlextLdifConstants(FlextTestsConstants, ldap_c, ldif_c):
+class TestsFlextLdifConstants(FlextTestsConstants, c):
     """Flat test constants for flext-ldif."""
 
-    class Ldif(ldif_c.Ldif):
+    class Tests(FlextTestsConstants.Tests):
         """LDIF test constants namespace."""
 
         FIXTURES_DIR: Final[Path] = Path(__file__).parent / "fixtures"
         PROJECT_ROOT: Final[Path] = Path(__file__).resolve().parents[1]
 
-        RFC: Final[str] = ldif_c.Ldif.ServerTypes.RFC.value
-        OID: Final[str] = ldif_c.Ldif.ServerTypes.OID.value
-        OUD: Final[str] = ldif_c.Ldif.ServerTypes.OUD.value
-        OPENLDAP: Final[str] = ldif_c.Ldif.ServerTypes.OPENLDAP.value
-        OPENLDAP1: Final[str] = ldif_c.Ldif.ServerTypes.OPENLDAP1.value
-        DS389: Final[str] = ldif_c.Ldif.ServerTypes.DS389.value
-        APACHE: Final[str] = ldif_c.Ldif.ServerTypes.APACHE.value
-        NOVELL: Final[str] = ldif_c.Ldif.ServerTypes.NOVELL.value
-        TIVOLI: Final[str] = ldif_c.Ldif.ServerTypes.IBM_TIVOLI.value
-        AD: Final[str] = ldif_c.Ldif.ServerTypes.AD.value
+        RFC: Final[str] = c.Ldif.ServerTypes.RFC.value
+        OID: Final[str] = c.Ldif.ServerTypes.OID.value
+        OUD: Final[str] = c.Ldif.ServerTypes.OUD.value
+        OPENLDAP: Final[str] = c.Ldif.ServerTypes.OPENLDAP.value
+        OPENLDAP1: Final[str] = c.Ldif.ServerTypes.OPENLDAP1.value
+        GENERIC: Final[str] = c.Ldif.ServerTypes.GENERIC.value
+        DS389: Final[str] = c.Ldif.ServerTypes.DS389.value
+        APACHE: Final[str] = c.Ldif.ServerTypes.APACHE.value
+        NOVELL: Final[str] = c.Ldif.ServerTypes.NOVELL.value
+        TIVOLI: Final[str] = c.Ldif.ServerTypes.IBM_TIVOLI.value
+        AD: Final[str] = c.Ldif.ServerTypes.AD.value
 
         SCHEMA: Final[str] = "schema"
         ACL: Final[str] = "acl"
@@ -81,16 +81,16 @@ class TestsFlextLdifConstants(FlextTestsConstants, ldap_c, ldif_c):
         )
         DOCKER_LEGACY_ADMIN_PASSWORD: Final[str] = "REDACTED_LDAP_BIND_PASSWORD123"
 
-        SCHEMA_STRUCTURAL: Final[str] = ldif_c.Ldif.SchemaKind.STRUCTURAL.value
-        SCHEMA_AUXILIARY: Final[str] = ldif_c.Ldif.SchemaKind.AUXILIARY.value
-        SCHEMA_ABSTRACT: Final[str] = ldif_c.Ldif.SchemaKind.ABSTRACT.value
+        SCHEMA_STRUCTURAL: Final[str] = c.Ldif.SchemaKind.STRUCTURAL.value
+        SCHEMA_AUXILIARY: Final[str] = c.Ldif.SchemaKind.AUXILIARY.value
+        SCHEMA_ABSTRACT: Final[str] = c.Ldif.SchemaKind.ABSTRACT.value
 
         NAME_CN: Final[str] = "cn"
         NAME_SN: Final[str] = "sn"
         NAME_MAIL: Final[str] = "mail"
         NAME_DESCRIPTION: Final[str] = "description"
         NAME_UID: Final[str] = "uid"
-        NAME_OBJECTCLASS: Final[str] = ldif_c.Ldif.DictKeys.OBJECTCLASS.value
+        NAME_OBJECTCLASS: Final[str] = c.Ldif.DictKeys.OBJECTCLASS.value
         NAME_PERSON: Final[str] = "person"
         NAME_TOP: Final[str] = "top"
         NAME_ORCLUSER: Final[str] = "orcluser"
@@ -675,25 +675,25 @@ class TestsFlextLdifConstants(FlextTestsConstants, ldap_c, ldif_c):
 
         APACHE_ATTRIBUTE_TEST_CASES = FrozenList(
             [
-                m.Ldif.Tests.AttributeTestCase(
+                m.Tests.AttributeTestCase(
                     scenario="apache_oid",
                     attr_definition="( 1.3.6.1.4.1.18060.0.4.1.2.100 NAME 'ads-enabled' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 )",
                     expected_can_handle=True,
                     expected_name="ads-enabled",
                 ),
-                m.Ldif.Tests.AttributeTestCase(
+                m.Tests.AttributeTestCase(
                     scenario="ads_prefix",
                     attr_definition="( 2.16.840.1.113730.3.1.1 NAME 'ads-searchBaseDN' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )",
                     expected_can_handle=True,
                     expected_name="ads-searchBaseDN",
                 ),
-                m.Ldif.Tests.AttributeTestCase(
+                m.Tests.AttributeTestCase(
                     scenario="apacheds_name",
                     attr_definition="( 1.2.3.4 NAME 'apachedsSystemId' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
                     expected_can_handle=True,
                     expected_name="apachedsSystemId",
                 ),
-                m.Ldif.Tests.AttributeTestCase(
+                m.Tests.AttributeTestCase(
                     scenario="standard_rfc",
                     attr_definition="( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
                     expected_can_handle=False,
@@ -704,19 +704,19 @@ class TestsFlextLdifConstants(FlextTestsConstants, ldap_c, ldif_c):
         APACHE_ATTRIBUTE_TEST_CASES.freeze()
         APACHE_OBJECTCLASS_TEST_CASES = FrozenList(
             [
-                m.Ldif.Tests.ObjectClassTestCase(
+                m.Tests.ObjectClassTestCase(
                     scenario="apache_oid",
                     oc_definition="( 1.3.6.1.4.1.18060.0.4.1.3.100 NAME 'ads-directoryService' SUP top STRUCTURAL )",
                     expected_can_handle=True,
                     expected_name="ads-directoryService",
                 ),
-                m.Ldif.Tests.ObjectClassTestCase(
+                m.Tests.ObjectClassTestCase(
                     scenario="ads_name",
                     oc_definition="( 2.5.6.0 NAME 'ads-base' SUP top ABSTRACT )",
                     expected_can_handle=True,
                     expected_name="ads-base",
                 ),
-                m.Ldif.Tests.ObjectClassTestCase(
+                m.Tests.ObjectClassTestCase(
                     scenario="standard_rfc",
                     oc_definition="( 2.5.6.6 NAME 'posixAccount' SUP top STRUCTURAL )",
                     expected_can_handle=False,
@@ -727,37 +727,37 @@ class TestsFlextLdifConstants(FlextTestsConstants, ldap_c, ldif_c):
         APACHE_OBJECTCLASS_TEST_CASES.freeze()
         APACHE_ENTRY_TEST_CASES = FrozenList(
             [
-                m.Ldif.Tests.EntryTestCase(
+                m.Tests.EntryTestCase(
                     scenario="ou_config",
                     entry_dn="ou=settings,dc=example,dc=com",
                     attributes={"objectClass": ["organizationalUnit"]},
                     expected_can_handle=True,
                 ),
-                m.Ldif.Tests.EntryTestCase(
+                m.Tests.EntryTestCase(
                     scenario="ou_services",
                     entry_dn="ou=services,dc=example,dc=com",
                     attributes={"objectClass": ["organizationalUnit"]},
                     expected_can_handle=True,
                 ),
-                m.Ldif.Tests.EntryTestCase(
+                m.Tests.EntryTestCase(
                     scenario="ou_system",
                     entry_dn="ou=system,dc=example,dc=com",
                     attributes={"objectClass": ["organizationalUnit"]},
                     expected_can_handle=True,
                 ),
-                m.Ldif.Tests.EntryTestCase(
+                m.Tests.EntryTestCase(
                     scenario="ou_partitions",
                     entry_dn="ou=partitions,dc=example,dc=com",
                     attributes={"objectClass": ["organizationalUnit"]},
                     expected_can_handle=True,
                 ),
-                m.Ldif.Tests.EntryTestCase(
+                m.Tests.EntryTestCase(
                     scenario="ads_attribute",
                     entry_dn=DN_TEST,
                     attributes={"ads-enabled": ["TRUE"], "objectClass": ["top"]},
                     expected_can_handle=True,
                 ),
-                m.Ldif.Tests.EntryTestCase(
+                m.Tests.EntryTestCase(
                     scenario="apacheds_attribute",
                     entry_dn=DN_TEST,
                     attributes={
@@ -766,13 +766,13 @@ class TestsFlextLdifConstants(FlextTestsConstants, ldap_c, ldif_c):
                     },
                     expected_can_handle=True,
                 ),
-                m.Ldif.Tests.EntryTestCase(
+                m.Tests.EntryTestCase(
                     scenario="ads_objectclass",
                     entry_dn=DN_TEST,
                     attributes={"objectClass": ["top", "ads-directory"]},
                     expected_can_handle=True,
                 ),
-                m.Ldif.Tests.EntryTestCase(
+                m.Tests.EntryTestCase(
                     scenario="standard_rfc",
                     entry_dn="cn=user,dc=example,dc=com",
                     attributes={"objectClass": ["person"], "cn": ["user"]},
@@ -784,32 +784,32 @@ class TestsFlextLdifConstants(FlextTestsConstants, ldap_c, ldif_c):
 
         DS389_ATTRIBUTE_TEST_CASES = FrozenList(
             [
-                m.Ldif.Tests.AttributeTestCase(
+                m.Tests.AttributeTestCase(
                     scenario="ds389_oid",
                     attr_definition="( 2.16.840.1.113730.3.1.1 NAME 'nsslapd-suffix' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )",
                     expected_can_handle=True,
                     expected_oid="2.16.840.1.113730.3.1.1",
                     expected_name="nsslapd-suffix",
                 ),
-                m.Ldif.Tests.AttributeTestCase(
+                m.Tests.AttributeTestCase(
                     scenario="nsslapd_prefix",
                     attr_definition="( 1.2.3.4 NAME 'nsslapd-port' SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 )",
                     expected_can_handle=True,
                     expected_name="nsslapd-port",
                 ),
-                m.Ldif.Tests.AttributeTestCase(
+                m.Tests.AttributeTestCase(
                     scenario="nsds_prefix",
                     attr_definition="( 1.2.3.4 NAME 'nsds5ReplicaId' SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 )",
                     expected_can_handle=True,
                     expected_name="nsds5ReplicaId",
                 ),
-                m.Ldif.Tests.AttributeTestCase(
+                m.Tests.AttributeTestCase(
                     scenario="nsuniqueid_prefix",
                     attr_definition="( 1.2.3.4 NAME 'nsuniqueid' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
                     expected_can_handle=True,
                     expected_name="nsuniqueid",
                 ),
-                m.Ldif.Tests.AttributeTestCase(
+                m.Tests.AttributeTestCase(
                     scenario="standard_rfc",
                     attr_definition="( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
                     expected_can_handle=False,
@@ -819,7 +819,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, ldap_c, ldif_c):
         DS389_ATTRIBUTE_TEST_CASES.freeze()
         DS389_OBJECTCLASS_TEST_CASES = FrozenList(
             [
-                m.Ldif.Tests.ObjectClassTestCase(
+                m.Tests.ObjectClassTestCase(
                     scenario="ds389_oid",
                     oc_definition="( 2.16.840.1.113730.3.2.1 NAME 'nscontainer' SUP top STRUCTURAL )",
                     expected_can_handle=True,
@@ -827,13 +827,13 @@ class TestsFlextLdifConstants(FlextTestsConstants, ldap_c, ldif_c):
                     expected_name="nscontainer",
                     expected_kind="STRUCTURAL",
                 ),
-                m.Ldif.Tests.ObjectClassTestCase(
+                m.Tests.ObjectClassTestCase(
                     scenario="ns_name",
                     oc_definition="( 2.5.6.0 NAME 'nsperson' SUP top STRUCTURAL )",
                     expected_can_handle=True,
                     expected_name="nsperson",
                 ),
-                m.Ldif.Tests.ObjectClassTestCase(
+                m.Tests.ObjectClassTestCase(
                     scenario="standard_rfc",
                     oc_definition="( 2.5.6.6 NAME 'posixAccount' SUP top STRUCTURAL )",
                     expected_can_handle=False,
@@ -843,60 +843,58 @@ class TestsFlextLdifConstants(FlextTestsConstants, ldap_c, ldif_c):
         DS389_OBJECTCLASS_TEST_CASES.freeze()
         DS389_ENTRY_TEST_CASES = FrozenList(
             [
-                m.Ldif.Tests.EntryTestCase(
+                m.Tests.EntryTestCase(
                     scenario="cn_config",
                     entry_dn="cn=settings",
-                    attributes={
-                        ldif_c.Ldif.DictKeys.OBJECTCLASS.value: ["nscontainer"]
-                    },
+                    attributes={c.Ldif.DictKeys.OBJECTCLASS.value: ["nscontainer"]},
                     expected_can_handle=True,
                 ),
-                m.Ldif.Tests.EntryTestCase(
+                m.Tests.EntryTestCase(
                     scenario="cn_monitor",
                     entry_dn="cn=monitor",
-                    attributes={ldif_c.Ldif.DictKeys.OBJECTCLASS.value: ["top"]},
+                    attributes={c.Ldif.DictKeys.OBJECTCLASS.value: ["top"]},
                     expected_can_handle=True,
                 ),
-                m.Ldif.Tests.EntryTestCase(
+                m.Tests.EntryTestCase(
                     scenario="cn_changelog",
                     entry_dn="cn=changelog",
-                    attributes={ldif_c.Ldif.DictKeys.OBJECTCLASS.value: ["top"]},
+                    attributes={c.Ldif.DictKeys.OBJECTCLASS.value: ["top"]},
                     expected_can_handle=True,
                 ),
-                m.Ldif.Tests.EntryTestCase(
+                m.Tests.EntryTestCase(
                     scenario="nsslapd_attribute",
                     entry_dn=DN_TEST,
                     attributes={"nsslapd-port": ["389"], "objectclass": ["top"]},
                     expected_can_handle=True,
                 ),
-                m.Ldif.Tests.EntryTestCase(
+                m.Tests.EntryTestCase(
                     scenario="nsds_attribute",
                     entry_dn=DN_TEST,
                     attributes={"nsds5ReplicaId": ["1"], "objectclass": ["top"]},
                     expected_can_handle=True,
                 ),
-                m.Ldif.Tests.EntryTestCase(
+                m.Tests.EntryTestCase(
                     scenario="nsuniqueid_attribute",
                     entry_dn=DN_TEST,
                     attributes={"nsuniqueid": ["12345"], "objectclass": ["top"]},
                     expected_can_handle=True,
                 ),
-                m.Ldif.Tests.EntryTestCase(
+                m.Tests.EntryTestCase(
                     scenario="ns_objectclass",
                     entry_dn=DN_TEST,
                     attributes={
-                        ldif_c.Ldif.DictKeys.OBJECTCLASS.value: [
+                        c.Ldif.DictKeys.OBJECTCLASS.value: [
                             "top",
                             "nscontainer",
                         ]
                     },
                     expected_can_handle=True,
                 ),
-                m.Ldif.Tests.EntryTestCase(
+                m.Tests.EntryTestCase(
                     scenario="standard_rfc",
                     entry_dn="cn=user,dc=example,dc=com",
                     attributes={
-                        ldif_c.Ldif.DictKeys.OBJECTCLASS.value: ["person"],
+                        c.Ldif.DictKeys.OBJECTCLASS.value: ["person"],
                         "cn": ["user"],
                     },
                     expected_can_handle=False,
@@ -907,32 +905,32 @@ class TestsFlextLdifConstants(FlextTestsConstants, ldap_c, ldif_c):
 
         NOVELL_ATTRIBUTE_TEST_CASES = FrozenList(
             [
-                m.Ldif.Tests.AttributeTestCase(
+                m.Tests.AttributeTestCase(
                     scenario="novell_oid",
                     attr_definition="( 2.16.840.1.113719.1.1.4.1.501 NAME 'nspmPasswordPolicyDN' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )",
                     expected_can_handle=True,
                     expected_oid="2.16.840.1.113719.1.1.4.1.501",
                     expected_name="nspmPasswordPolicyDN",
                 ),
-                m.Ldif.Tests.AttributeTestCase(
+                m.Tests.AttributeTestCase(
                     scenario="nspm_prefix",
                     attr_definition="( 1.2.3.4 NAME 'nspmPasswordPolicy' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
                     expected_can_handle=True,
                     expected_name="nspmPasswordPolicy",
                 ),
-                m.Ldif.Tests.AttributeTestCase(
+                m.Tests.AttributeTestCase(
                     scenario="login_prefix",
                     attr_definition="( 1.2.3.4 NAME 'loginDisabled' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 )",
                     expected_can_handle=True,
                     expected_name="loginDisabled",
                 ),
-                m.Ldif.Tests.AttributeTestCase(
+                m.Tests.AttributeTestCase(
                     scenario="dirxml_prefix",
                     attr_definition="( 1.2.3.4 NAME 'dirxml-associations' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
                     expected_can_handle=True,
                     expected_name="dirxml-associations",
                 ),
-                m.Ldif.Tests.AttributeTestCase(
+                m.Tests.AttributeTestCase(
                     scenario="standard_rfc",
                     attr_definition="( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
                     expected_can_handle=False,
@@ -942,20 +940,20 @@ class TestsFlextLdifConstants(FlextTestsConstants, ldap_c, ldif_c):
         NOVELL_ATTRIBUTE_TEST_CASES.freeze()
         NOVELL_OBJECTCLASS_TEST_CASES = FrozenList(
             [
-                m.Ldif.Tests.ObjectClassTestCase(
+                m.Tests.ObjectClassTestCase(
                     scenario="novell_oid",
                     oc_definition="( 2.16.840.1.113719.2.2.6.1 NAME 'ndsPerson' SUP top STRUCTURAL )",
                     expected_can_handle=True,
                     expected_oid="2.16.840.1.113719.2.2.6.1",
                     expected_name="ndsPerson",
                 ),
-                m.Ldif.Tests.ObjectClassTestCase(
+                m.Tests.ObjectClassTestCase(
                     scenario="nds_name",
                     oc_definition="( 2.5.6.0 NAME 'ndsserver' SUP top STRUCTURAL )",
                     expected_can_handle=True,
                     expected_name="ndsserver",
                 ),
-                m.Ldif.Tests.ObjectClassTestCase(
+                m.Tests.ObjectClassTestCase(
                     scenario="standard_rfc",
                     oc_definition="( 2.5.6.6 NAME 'posixAccount' SUP top STRUCTURAL )",
                     expected_can_handle=False,
@@ -965,25 +963,25 @@ class TestsFlextLdifConstants(FlextTestsConstants, ldap_c, ldif_c):
         NOVELL_OBJECTCLASS_TEST_CASES.freeze()
         NOVELL_ENTRY_TEST_CASES = FrozenList(
             [
-                m.Ldif.Tests.EntryTestCase(
+                m.Tests.EntryTestCase(
                     scenario="ou_services",
                     entry_dn="ou=services,o=Example",
                     attributes={"objectClass": ["organizationalUnit"]},
                     expected_can_handle=True,
                 ),
-                m.Ldif.Tests.EntryTestCase(
+                m.Tests.EntryTestCase(
                     scenario="ou_apps",
                     entry_dn="ou=apps,o=Example",
                     attributes={"objectClass": ["organizationalUnit"]},
                     expected_can_handle=True,
                 ),
-                m.Ldif.Tests.EntryTestCase(
+                m.Tests.EntryTestCase(
                     scenario="ou_system",
                     entry_dn="ou=system,o=Example",
                     attributes={"objectClass": ["organizationalUnit"]},
                     expected_can_handle=True,
                 ),
-                m.Ldif.Tests.EntryTestCase(
+                m.Tests.EntryTestCase(
                     scenario="nspm_attribute",
                     entry_dn="cn=user,o=Example",
                     attributes={
@@ -992,19 +990,19 @@ class TestsFlextLdifConstants(FlextTestsConstants, ldap_c, ldif_c):
                     },
                     expected_can_handle=True,
                 ),
-                m.Ldif.Tests.EntryTestCase(
+                m.Tests.EntryTestCase(
                     scenario="login_attribute",
                     entry_dn="cn=user,o=Example",
                     attributes={"logindisabled": ["TRUE"], "objectClass": ["top"]},
                     expected_can_handle=True,
                 ),
-                m.Ldif.Tests.EntryTestCase(
+                m.Tests.EntryTestCase(
                     scenario="nds_objectclass",
                     entry_dn="cn=user,o=Example",
                     attributes={"objectClass": ["top", "ndsperson"]},
                     expected_can_handle=True,
                 ),
-                m.Ldif.Tests.EntryTestCase(
+                m.Tests.EntryTestCase(
                     scenario="standard_rfc",
                     entry_dn="cn=user,dc=example,dc=com",
                     attributes={"objectClass": ["person"], "cn": ["user"]},
@@ -1054,6 +1052,15 @@ class TestsFlextLdifConstants(FlextTestsConstants, ldap_c, ldif_c):
             '(targetattr="*")(version 3.0; acl "Entry ACL"; allow (read,search) userdn="ldap:///anyone";)'
         )
         ACL_INVALID_SERVER_TYPE: Final[str] = "NOT_A_VALID_SERVER_XYZ"
+        ACL_PARSE_FAILURE_CASES: Final[Mapping[str, tuple[str, str]]] = (
+            MappingProxyType(
+                {
+                    "invalid_server": (ACL_OUD_STRING, ACL_INVALID_SERVER_TYPE),
+                    "generic_server_without_acl_quirk": (ACL_OUD_STRING, GENERIC),
+                    "openldap_invalid_acl_format": (ACL_INVALID_SERVER_TYPE, OPENLDAP),
+                },
+            )
+        )
         ACL_SERVICE_CHECK_EMPTY_ACLS: Final[int] = 0
 
         # ── Analysis service constants ───────────────────────────────────

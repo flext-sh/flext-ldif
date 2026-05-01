@@ -46,8 +46,8 @@ class TestsTestFlextLdifRelaxedQuirks:
 
     @pytest.mark.parametrize(
         ("scenario", "definition_data"),
-        list(c.Ldif.RELAXED_ATTRIBUTE_DEFINITIONS.items()),
-        ids=list(c.Ldif.RELAXED_ATTRIBUTE_DEFINITIONS.keys()),
+        list(c.Tests.RELAXED_ATTRIBUTE_DEFINITIONS.items()),
+        ids=list(c.Tests.RELAXED_ATTRIBUTE_DEFINITIONS.keys()),
     )
     def test_parse_attribute_scenarios(
         self,
@@ -62,8 +62,8 @@ class TestsTestFlextLdifRelaxedQuirks:
             _ = tm.that(result.success, eq=True)
             parsed = result.value
             if scenario in {
-                c.Ldif.RELAXED_PARSE_VALID,
-                c.Ldif.RELAXED_PARSE_MALFORMED,
+                c.Tests.RELAXED_PARSE_VALID,
+                c.Tests.RELAXED_PARSE_MALFORMED,
             }:
                 tm.that(parsed.oid, none=False)
                 tm.that(parsed.metadata is not None, eq=True)
@@ -80,8 +80,8 @@ class TestsTestFlextLdifRelaxedQuirks:
 
     @pytest.mark.parametrize(
         ("scenario", "definition_data"),
-        list(c.Ldif.RELAXED_OBJECTCLASS_DEFINITIONS.items()),
-        ids=list(c.Ldif.RELAXED_OBJECTCLASS_DEFINITIONS.keys()),
+        list(c.Tests.RELAXED_OBJECTCLASS_DEFINITIONS.items()),
+        ids=list(c.Tests.RELAXED_OBJECTCLASS_DEFINITIONS.keys()),
     )
     def test_parse_objectclass_scenarios(
         self,
@@ -140,8 +140,8 @@ class TestsTestFlextLdifRelaxedQuirks:
 
     @pytest.mark.parametrize(
         ("name", "acl_data"),
-        list(c.Ldif.RELAXED_ACL_DEFINITIONS.items()),
-        ids=list(c.Ldif.RELAXED_ACL_DEFINITIONS.keys()),
+        list(c.Tests.RELAXED_ACL_DEFINITIONS.items()),
+        ids=list(c.Tests.RELAXED_ACL_DEFINITIONS.keys()),
     )
     def test_parse_acl_scenarios(
         self,

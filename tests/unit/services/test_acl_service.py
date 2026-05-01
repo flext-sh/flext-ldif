@@ -22,7 +22,7 @@ class TestsFlextLdifAclService:
         result = svc.service_check()
         resp = u.Tests.assert_success(result)
         tm.that(resp, is_=m.Ldif.AclResponse)
-        tm.that(len(resp.acls), eq=c.Ldif.ACL_SERVICE_CHECK_EMPTY_ACLS)
+        tm.that(len(resp.acls), eq=c.Tests.ACL_SERVICE_CHECK_EMPTY_ACLS)
 
     # ── evaluate_acl_context – empty ACL list ────────────────────────────────
 
@@ -35,7 +35,7 @@ class TestsFlextLdifAclService:
 
     def test_evaluate_no_permissions_required_grants_access(self) -> None:
         acl = m.Ldif.Acl(name="test-acl")
-        permissions_dict = dict(c.Ldif.ACL_PERMISSIONS_EMPTY)
+        permissions_dict = dict(c.Tests.ACL_PERMISSIONS_EMPTY)
         result = FlextLdifAcl.evaluate_acl_context(
             [acl],
             permissions_dict,
@@ -46,7 +46,7 @@ class TestsFlextLdifAclService:
     # ── evaluate_acl_context – permissions dict (Mapping branch) ─────────────
 
     def test_evaluate_with_dict_permissions_read_only(self) -> None:
-        permissions_dict = dict(c.Ldif.ACL_PERMISSIONS_READ_ONLY)
+        permissions_dict = dict(c.Tests.ACL_PERMISSIONS_READ_ONLY)
         result = FlextLdifAcl.evaluate_acl_context(
             [],
             permissions_dict,
@@ -64,26 +64,35 @@ class TestsFlextLdifAclService:
 
     # ── parse_acl_string ─────────────────────────────────────────────────────
 
-    def test_parse_acl_string_invalid_server_type_fails(
-        self, svc: FlextLdifAcl
+    @pytest.mark.parametrize(
+        ("scenario", "acl_string", "server_type"),
+        tuple(
+            (scenario, case[0], case[1])
+            for scenario, case in c.Tests.ACL_PARSE_FAILURE_CASES.items()
+        ),
+    )
+    def test_parse_acl_string_failure_cases(
+        self,
+        scenario: str,
+        acl_string: str,
+        server_type: str,
+        svc: FlextLdifAcl,
     ) -> None:
-        result = svc.parse_acl_string(
-            c.Ldif.ACL_OUD_STRING,
-            c.Ldif.ACL_INVALID_SERVER_TYPE,
-        )
+        result = svc.parse_acl_string(acl_string, server_type)
+        tm.that(bool(scenario), eq=True)
         tm.fail(result)
 
     def test_parse_acl_string_oud_succeeds(self, svc: FlextLdifAcl) -> None:
-        result = svc.parse_acl_string(c.Ldif.ACL_OUD_STRING, c.Ldif.OUD)
+        result = svc.parse_acl_string(c.Tests.ACL_OUD_STRING, c.Tests.OUD)
         u.Tests.assert_success(result)
 
     def test_parse_acl_string_oid_succeeds(self, svc: FlextLdifAcl) -> None:
-        result = svc.parse_acl_string(c.Ldif.ACL_OID_STRING, c.Ldif.OID)
+        result = svc.parse_acl_string(c.Tests.ACL_OID_STRING, c.Tests.OID)
         u.Tests.assert_success(result)
 
     @pytest.mark.parametrize(
         ("scenario", "acl_string", "server_type"),
-        tuple((sc, data[0], data[1]) for sc, data in c.Ldif.ACL_SERVER_CASES.items()),
+        tuple((sc, data[0], data[1]) for sc, data in c.Tests.ACL_SERVER_CASES.items()),
     )
     def test_parse_acl_string_parametrized(
         self,
@@ -102,22 +111,22 @@ class TestsFlextLdifAclService:
         self, svc: FlextLdifAcl
     ) -> None:
         entry = m.Ldif.Entry(
-            dn=c.Ldif.ACL_ENTRY_DN,
+            dn=c.Tests.ACL_ENTRY_DN,
             attributes=m.Ldif.Attributes.model_validate({
-                "attributes": {"orclaci": [c.Ldif.ACL_ENTRY_ORCLACI_VALUE]}
+                "attributes": {"orclaci": [c.Tests.ACL_ENTRY_ORCLACI_VALUE]}
             }),
         )
-        result = svc.extract_acls_from_entry(entry, c.Ldif.OID)
+        result = svc.extract_acls_from_entry(entry, c.Tests.OID)
         u.Tests.assert_success(result)
 
     def test_extract_acls_from_entry_with_no_acl_attrs(self, svc: FlextLdifAcl) -> None:
         entry = m.Ldif.Entry(
-            dn=c.Ldif.ACL_ENTRY_DN,
+            dn=c.Tests.ACL_ENTRY_DN,
             attributes=m.Ldif.Attributes.model_validate({
                 "attributes": {"cn": ["test"]}
             }),
         )
-        result = svc.extract_acls_from_entry(entry, c.Ldif.OID)
+        result = svc.extract_acls_from_entry(entry, c.Tests.OID)
         resp = u.Tests.assert_success(result)
         tm.that(len(resp.acls), eq=0)
 
@@ -125,12 +134,12 @@ class TestsFlextLdifAclService:
         self, svc: FlextLdifAcl
     ) -> None:
         entry = m.Ldif.Entry(
-            dn=c.Ldif.ACL_ENTRY_DN,
+            dn=c.Tests.ACL_ENTRY_DN,
             attributes=m.Ldif.Attributes.model_validate({
-                "attributes": {"aci": [c.Ldif.ACL_ENTRY_ACI_VALUE]}
+                "attributes": {"aci": [c.Tests.ACL_ENTRY_ACI_VALUE]}
             }),
         )
-        result = svc.extract_acls_from_entry(entry, c.Ldif.OUD)
+        result = svc.extract_acls_from_entry(entry, c.Tests.OUD)
         u.Tests.assert_success(result)
 
     # ── _build_acl_response ──────────────────────────────────────────────────
@@ -147,7 +156,7 @@ class TestsFlextLdifAclService:
 
     def test_is_schema_entry_returns_false_for_regular_entry(self) -> None:
         entry = m.Ldif.Entry(
-            dn=c.Ldif.ACL_ENTRY_DN,
+            dn=c.Tests.ACL_ENTRY_DN,
             attributes=m.Ldif.Attributes.model_validate({
                 "attributes": {"objectClass": ["person"]}
             }),
@@ -190,11 +199,11 @@ class TestsFlextLdifAclService:
     def test_extract_acls_from_entry_with_failed_parse(self, svc: FlextLdifAcl) -> None:
         """Line 131-132: failed ACL parse increments failed_count."""
         entry = m.Ldif.Entry(
-            dn=c.Ldif.ACL_ENTRY_DN,
+            dn=c.Tests.ACL_ENTRY_DN,
             attributes=m.Ldif.Attributes.model_validate({
-                "attributes": {"aci": [c.Ldif.ACL_INVALID_SERVER_TYPE]}
+                "attributes": {"aci": [c.Tests.ACL_INVALID_SERVER_TYPE]}
             }),
         )
-        result = svc.extract_acls_from_entry(entry, c.Ldif.OPENLDAP)
+        result = svc.extract_acls_from_entry(entry, c.Tests.OPENLDAP)
         response = u.Tests.assert_success(result)
         tm.that(response.statistics.failed_entries, eq=1)

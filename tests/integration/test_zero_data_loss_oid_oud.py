@@ -50,12 +50,12 @@ class TestsFlextLdifZeroDataLossOidOud:
     @pytest.fixture
     def oid_fixture(self) -> str:
         """Load OID entries fixture."""
-        return u.Ldif.Tests.load(c.Ldif.OID, c.Ldif.ENTRIES)
+        return u.Tests.load(c.Tests.OID, c.Tests.ENTRIES)
 
     @pytest.fixture
     def oud_fixture(self) -> str:
         """Load OUD entries fixture."""
-        return u.Ldif.Tests.load(c.Ldif.OUD, c.Ldif.ENTRIES)
+        return u.Tests.load(c.Tests.OUD, c.Tests.ENTRIES)
 
     def test_oid_parse_preserves_original_ldif(
         self,
@@ -63,7 +63,7 @@ class TestsFlextLdifZeroDataLossOidOud:
         oid_fixture: str,
     ) -> None:
         """Test that OID parsing preserves original LDIF in metadata."""
-        result = api.parse_ldif(oid_fixture, server_type=c.Ldif.OID)
+        result = api.parse_ldif(oid_fixture, server_type=c.Tests.OID)
         assert result.success, f"Parse failed: {result.error}"
         entries = result.value.entries
         assert entries, "No entries parsed"
@@ -89,7 +89,7 @@ class TestsFlextLdifZeroDataLossOidOud:
         oud_fixture: str,
     ) -> None:
         """Test that OUD parsing preserves original LDIF in metadata."""
-        result = api.parse_ldif(oud_fixture, server_type=c.Ldif.OUD)
+        result = api.parse_ldif(oud_fixture, server_type=c.Tests.OUD)
         assert result.success, f"Parse failed: {result.error}"
         entries = result.value.entries
         assert entries, "No entries parsed"
@@ -108,7 +108,7 @@ class TestsFlextLdifZeroDataLossOidOud:
         oid_fixture: str,
     ) -> None:
         """Test that boolean conversions are tracked in metadata."""
-        result = api.parse_ldif(oid_fixture, server_type=c.Ldif.OID)
+        result = api.parse_ldif(oid_fixture, server_type=c.Tests.OID)
         assert result.success
         entries = result.value.entries
         boolean_entries = [
@@ -149,14 +149,14 @@ class TestsFlextLdifZeroDataLossOidOud:
         oid_fixture: str,
     ) -> None:
         """Test OID→OUD conversion preserves ALL data in metadata."""
-        parse_result = api.parse_ldif(oid_fixture, server_type=c.Ldif.OID)
+        parse_result = api.parse_ldif(oid_fixture, server_type=c.Tests.OID)
         assert parse_result.success
         oid_entries = parse_result.value.entries
-        write_result = api.write(oid_entries, server_type=c.Ldif.RFC)
+        write_result = api.write(oid_entries, server_type=c.Tests.RFC)
         assert write_result.success
         rfc_ldif = write_result.value.content
         assert rfc_ldif is not None
-        parse_oud_result = api.parse_ldif(rfc_ldif, server_type=c.Ldif.OUD)
+        parse_oud_result = api.parse_ldif(rfc_ldif, server_type=c.Tests.OUD)
         assert parse_oud_result.success
         oud_entries = parse_oud_result.value.entries
         assert len(oid_entries) == len(oud_entries), "Entry count mismatch"
@@ -205,25 +205,25 @@ class TestsFlextLdifZeroDataLossOidOud:
         oid_fixture: str,
     ) -> None:
         """Test OID→OUD→OID round-trip preserves ALL formatting."""
-        parse_oid = api.parse_ldif(oid_fixture, server_type=c.Ldif.OID)
+        parse_oid = api.parse_ldif(oid_fixture, server_type=c.Tests.OID)
         assert parse_oid.success
         original_entries = parse_oid.value.entries
-        write_oud = api.write(original_entries, server_type=c.Ldif.OUD)
+        write_oud = api.write(original_entries, server_type=c.Tests.OUD)
         assert write_oud.success
         oud_ldif = write_oud.value.content
         assert oud_ldif is not None
-        parse_oud = api.parse_ldif(oud_ldif, server_type=c.Ldif.OUD)
+        parse_oud = api.parse_ldif(oud_ldif, server_type=c.Tests.OUD)
         assert parse_oud.success
         oud_entries = parse_oud.value.entries
         write_oid = api.write(
             oud_entries,
-            server_type=c.Ldif.OID,
+            server_type=c.Tests.OID,
             format_options=m.Ldif.WriteFormatOptions(restore_original_format=True),
         )
         assert write_oid.success
         roundtrip_ldif = write_oid.value.content
         assert roundtrip_ldif is not None
-        parse_roundtrip = api.parse_ldif(roundtrip_ldif, server_type=c.Ldif.OID)
+        parse_roundtrip = api.parse_ldif(roundtrip_ldif, server_type=c.Tests.OID)
         assert parse_roundtrip.success
         roundtrip_entries = parse_roundtrip.value.entries
         assert len(original_entries) == len(roundtrip_entries)
@@ -261,7 +261,7 @@ class TestsFlextLdifZeroDataLossOidOud:
         oid_fixture: str,
     ) -> None:
         """Test that minimal differences are tracked for all conversions."""
-        result = api.parse_ldif(oid_fixture, server_type=c.Ldif.OID)
+        result = api.parse_ldif(oid_fixture, server_type=c.Tests.OID)
         assert result.success
         entries = result.value.entries
         for entry in entries:
@@ -292,7 +292,7 @@ class TestsFlextLdifZeroDataLossOidOud:
 
     def test_soft_delete_tracking(self, api: FlextLdif, oid_fixture: str) -> None:
         """Test that soft-deleted attributes are tracked in metadata."""
-        result = api.parse_ldif(oid_fixture, server_type=c.Ldif.OID)
+        result = api.parse_ldif(oid_fixture, server_type=c.Tests.OID)
         assert result.success
         entries = result.value.entries
         for entry in entries:
@@ -304,7 +304,7 @@ class TestsFlextLdifZeroDataLossOidOud:
         oid_fixture: str,
     ) -> None:
         """Test that conversion history is tracked in metadata."""
-        result = api.parse_ldif(oid_fixture, server_type=c.Ldif.OID)
+        result = api.parse_ldif(oid_fixture, server_type=c.Tests.OID)
         assert result.success
         entries = result.value.entries
         for entry in entries:
@@ -319,7 +319,7 @@ class TestsFlextLdifZeroDataLossOidOud:
         oid_fixture: str,
     ) -> None:
         """Test that ALL original strings are preserved in metadata."""
-        result = api.parse_ldif(oid_fixture, server_type=c.Ldif.OID)
+        result = api.parse_ldif(oid_fixture, server_type=c.Tests.OID)
         assert result.success
         entries = result.value.entries
         for entry in entries:
@@ -352,12 +352,12 @@ class TestsFlextLdifZeroDataLossOidOud:
         oid_fixture: str,
     ) -> None:
         """Test that restore_original_format option restores exact original."""
-        parse_result = api.parse_ldif(oid_fixture, server_type=c.Ldif.OID)
+        parse_result = api.parse_ldif(oid_fixture, server_type=c.Tests.OID)
         assert parse_result.success
         entries = parse_result.value.entries
         write_result = api.write(
             entries,
-            server_type=c.Ldif.OID,
+            server_type=c.Tests.OID,
             format_options=m.Ldif.WriteFormatOptions(restore_original_format=True),
         )
         assert write_result.success

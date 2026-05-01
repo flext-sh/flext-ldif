@@ -29,8 +29,8 @@ class TestsFlextLdifAnalysisService:
         self, validation_svc: FlextLdifValidation
     ) -> None:
         entry = _make_entry(
-            c.Ldif.ANALYSIS_DN_VALID,
-            dict(c.Ldif.ANALYSIS_VALID_ENTRY_ATTRS),
+            c.Tests.ANALYSIS_DN_VALID,
+            dict(c.Tests.ANALYSIS_VALID_ENTRY_ATTRS),
         )
         result = FlextLdifAnalysis.validate_entries([entry], validation_svc)
         val_result = u.Tests.assert_success(result)
@@ -50,7 +50,7 @@ class TestsFlextLdifAnalysisService:
         self, validation_svc: FlextLdifValidation
     ) -> None:
         parser = FlextLdifParser()
-        parse_result = parser.parse_ldif(c.Ldif.ANALYSIS_PARSE_RESPONSE_LDIF)
+        parse_result = parser.parse_ldif(c.Tests.ANALYSIS_PARSE_RESPONSE_LDIF)
         parse_resp = u.Tests.assert_success(parse_result)
         result = FlextLdifAnalysis.validate_entries(parse_resp, validation_svc)
         val_result = u.Tests.assert_success(result)
@@ -60,8 +60,8 @@ class TestsFlextLdifAnalysisService:
         self, validation_svc: FlextLdifValidation
     ) -> None:
         entry = _make_entry(
-            c.Ldif.ANALYSIS_DN_VALID,
-            dict(c.Ldif.ANALYSIS_INVALID_ATTR_ENTRY_ATTRS),
+            c.Tests.ANALYSIS_DN_VALID,
+            dict(c.Tests.ANALYSIS_INVALID_ATTR_ENTRY_ATTRS),
         )
         result = FlextLdifAnalysis.validate_entries([entry], validation_svc)
         val_result = u.Tests.assert_success(result)
@@ -78,7 +78,7 @@ class TestsFlextLdifAnalysisService:
 
     def test_validate_entry_dn_valid(self) -> None:
         entry = _make_entry(
-            c.Ldif.ANALYSIS_DN_VALID,
+            c.Tests.ANALYSIS_DN_VALID,
             {"objectClass": ["person"]},
         )
         valid, dn_str, errors = FlextLdifAnalysis._validate_entry_dn(entry)
@@ -91,9 +91,9 @@ class TestsFlextLdifAnalysisService:
     def test_validate_entry_attributes_none_attrs_returns_invalid(
         self, validation_svc: FlextLdifValidation
     ) -> None:
-        entry = m.Ldif.Entry(dn=c.Ldif.ANALYSIS_DN_VALID, attributes=None)
+        entry = m.Ldif.Entry(dn=c.Tests.ANALYSIS_DN_VALID, attributes=None)
         valid, errors = FlextLdifAnalysis._validate_entry_attributes(
-            entry, c.Ldif.ANALYSIS_DN_VALID, validation_svc
+            entry, c.Tests.ANALYSIS_DN_VALID, validation_svc
         )
         tm.that(valid, eq=False)
         tm.that(len(errors), eq=1)
@@ -102,11 +102,11 @@ class TestsFlextLdifAnalysisService:
         self, validation_svc: FlextLdifValidation
     ) -> None:
         entry = _make_entry(
-            c.Ldif.ANALYSIS_DN_VALID,
-            {"cn": [c.Ldif.ANALYSIS_ATTR_CN_VALUE]},
+            c.Tests.ANALYSIS_DN_VALID,
+            {"cn": [c.Tests.ANALYSIS_ATTR_CN_VALUE]},
         )
         valid, errors = FlextLdifAnalysis._validate_entry_attributes(
-            entry, c.Ldif.ANALYSIS_DN_VALID, validation_svc
+            entry, c.Tests.ANALYSIS_DN_VALID, validation_svc
         )
         tm.that(valid, eq=True)
         tm.that(len(errors), eq=0)
@@ -117,20 +117,20 @@ class TestsFlextLdifAnalysisService:
         self, validation_svc: FlextLdifValidation
     ) -> None:
         entry = _make_entry(
-            c.Ldif.ANALYSIS_DN_VALID,
-            {"objectClass": [c.Ldif.ANALYSIS_OC_PERSON, "top"]},
+            c.Tests.ANALYSIS_DN_VALID,
+            {"objectClass": [c.Tests.ANALYSIS_OC_PERSON, "top"]},
         )
         valid, _err = FlextLdifAnalysis._validate_entry_objectclasses(
-            entry, c.Ldif.ANALYSIS_DN_VALID, validation_svc
+            entry, c.Tests.ANALYSIS_DN_VALID, validation_svc
         )
         tm.that(valid, eq=True)
 
     def test_validate_entry_objectclasses_none_attrs(
         self, validation_svc: FlextLdifValidation
     ) -> None:
-        entry = m.Ldif.Entry(dn=c.Ldif.ANALYSIS_DN_VALID, attributes=None)
+        entry = m.Ldif.Entry(dn=c.Tests.ANALYSIS_DN_VALID, attributes=None)
         valid, _errors = FlextLdifAnalysis._validate_entry_objectclasses(
-            entry, c.Ldif.ANALYSIS_DN_VALID, validation_svc
+            entry, c.Tests.ANALYSIS_DN_VALID, validation_svc
         )
         tm.that(valid, eq=True)
 
@@ -140,12 +140,12 @@ class TestsFlextLdifAnalysisService:
         self, validation_svc: FlextLdifValidation
     ) -> None:
         valid_entry = _make_entry(
-            c.Ldif.ANALYSIS_DN_VALID,
-            dict(c.Ldif.ANALYSIS_VALID_ENTRY_ATTRS),
+            c.Tests.ANALYSIS_DN_VALID,
+            dict(c.Tests.ANALYSIS_VALID_ENTRY_ATTRS),
         )
         invalid_entry = _make_entry(
-            c.Ldif.ANALYSIS_DN_VALID,
-            dict(c.Ldif.ANALYSIS_INVALID_ATTR_ENTRY_ATTRS),
+            c.Tests.ANALYSIS_DN_VALID,
+            dict(c.Tests.ANALYSIS_INVALID_ATTR_ENTRY_ATTRS),
         )
         result = FlextLdifAnalysis.validate_entries(
             [valid_entry, invalid_entry], validation_svc
@@ -156,18 +156,18 @@ class TestsFlextLdifAnalysisService:
 
     # ── parametrized valid OC names ──────────────────────────────────────────
 
-    @pytest.mark.parametrize("oc_name", c.Ldif.VALIDATION_VALID_OC_NAMES)
+    @pytest.mark.parametrize("oc_name", c.Tests.VALIDATION_VALID_OC_NAMES)
     def test_valid_objectclass_names_pass_validation(
         self,
         oc_name: str,
         validation_svc: FlextLdifValidation,
     ) -> None:
         entry = _make_entry(
-            c.Ldif.ANALYSIS_DN_VALID,
+            c.Tests.ANALYSIS_DN_VALID,
             {"objectClass": [oc_name]},
         )
         valid, _errs = FlextLdifAnalysis._validate_entry_objectclasses(
-            entry, c.Ldif.ANALYSIS_DN_VALID, validation_svc
+            entry, c.Tests.ANALYSIS_DN_VALID, validation_svc
         )
         tm.that(valid, eq=True)
 
@@ -183,11 +183,11 @@ class TestsFlextLdifAnalysisService:
         self, validation_svc: FlextLdifValidation
     ) -> None:
         entry = _make_entry(
-            c.Ldif.ANALYSIS_DN_VALID,
-            {"objectClass": [c.Ldif.ANALYSIS_OC_INVALID]},
+            c.Tests.ANALYSIS_DN_VALID,
+            {"objectClass": [c.Tests.ANALYSIS_OC_INVALID]},
         )
         valid, errors = FlextLdifAnalysis._validate_entry_objectclasses(
-            entry, c.Ldif.ANALYSIS_DN_VALID, validation_svc
+            entry, c.Tests.ANALYSIS_DN_VALID, validation_svc
         )
         tm.that(valid, eq=False)
         tm.that(len(errors), eq=1)

@@ -16,16 +16,16 @@ class TestsFlextLdifProcessingService:
 
     @staticmethod
     def _entry(dn: str) -> m.Ldif.Entry:
-        return u.Ldif.Tests.create_real_entry(
+        return u.Tests.create_real_entry(
             dn=dn,
-            attributes=c.Ldif.PROCESSING_ATTRS,
-            server_type=c.Ldif.RFC,
+            attributes=c.Tests.PROCESSING_ATTRS,
+            server_type=c.Tests.RFC,
         )
 
     @pytest.mark.parametrize(
         ("processor_name", "parallel", "batch_size", "max_workers"),
-        list(c.Ldif.PROCESSING_OPTIONS_CASES.values()),
-        ids=list(c.Ldif.PROCESSING_OPTIONS_CASES.keys()),
+        list(c.Tests.PROCESSING_OPTIONS_CASES.values()),
+        ids=list(c.Tests.PROCESSING_OPTIONS_CASES.keys()),
     )
     def test_process_entries_returns_results_for_configured_modes(
         self,
@@ -35,7 +35,7 @@ class TestsFlextLdifProcessingService:
         batch_size: int,
         max_workers: int,
     ) -> None:
-        entries = [self._entry(dn) for dn in c.Ldif.PROCESSING_VALID_DNS]
+        entries = [self._entry(dn) for dn in c.Tests.PROCESSING_VALID_DNS]
         options = m.Ldif.ProcessEntriesOptions(
             processor_name=processor_name,
             parallel=parallel,
@@ -47,12 +47,12 @@ class TestsFlextLdifProcessingService:
         processed = u.Tests.assert_success(result)
         tm.that(len(processed), eq=len(entries))
         processed_dns = {item.dn for item in processed}
-        tm.that(processed_dns == set(c.Ldif.PROCESSING_VALID_DNS), eq=True)
+        tm.that(processed_dns == set(c.Tests.PROCESSING_VALID_DNS), eq=True)
 
     def test_process_entries_supports_kwargs_option_payload(
         self, api: FlextLdif
     ) -> None:
-        entries = [self._entry(c.Ldif.PROCESSING_VALID_DNS[0])]
+        entries = [self._entry(c.Tests.PROCESSING_VALID_DNS[0])]
 
         result = api.process_entries(
             entries,
@@ -63,14 +63,14 @@ class TestsFlextLdifProcessingService:
         )
         processed = u.Tests.assert_success(result)
         tm.that(len(processed), eq=1)
-        tm.that(processed[0].dn, eq=c.Ldif.PROCESSING_VALID_DNS[0])
+        tm.that(processed[0].dn, eq=c.Tests.PROCESSING_VALID_DNS[0])
 
     def test_process_entries_batch_returns_failure_for_none_attributes(
         self,
         api: FlextLdif,
     ) -> None:
         invalid_entry = m.Ldif.Entry(
-            dn=c.Ldif.PROCESSING_VALID_DNS[0],
+            dn=c.Tests.PROCESSING_VALID_DNS[0],
             attributes=None,
         )
 

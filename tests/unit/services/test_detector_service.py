@@ -30,7 +30,7 @@ class TestsFlextLdifDetectorService:
         detector: FlextLdifDetector,
         tmp_path: Path,
     ) -> None:
-        missing = tmp_path / c.Ldif.DETECTOR_MISSING_PATH_NAME
+        missing = tmp_path / c.Tests.DETECTOR_MISSING_PATH_NAME
         result = detector.detect_server_type(ldif_path=missing)
         tm.fail(result, has="not found")
 
@@ -39,8 +39,8 @@ class TestsFlextLdifDetectorService:
         detector: FlextLdifDetector,
         tmp_path: Path,
     ) -> None:
-        bad_file = tmp_path / c.Ldif.DETECTOR_BAD_ENCODING_FILENAME
-        bad_file.write_bytes(c.Ldif.DETECTOR_INVALID_UTF8_BYTES)
+        bad_file = tmp_path / c.Tests.DETECTOR_BAD_ENCODING_FILENAME
+        bad_file.write_bytes(c.Tests.DETECTOR_INVALID_UTF8_BYTES)
         result = detector.detect_server_type(ldif_path=bad_file)
         tm.fail(result)
 
@@ -49,22 +49,22 @@ class TestsFlextLdifDetectorService:
         detector: FlextLdifDetector,
         tmp_path: Path,
     ) -> None:
-        ldif_file = tmp_path / c.Ldif.DETECTOR_RFC_FILENAME
-        ldif_file.write_text(c.Ldif.DETECTOR_RFC_SNIPPET, encoding="utf-8")
+        ldif_file = tmp_path / c.Tests.DETECTOR_RFC_FILENAME
+        ldif_file.write_text(c.Tests.DETECTOR_RFC_SNIPPET, encoding="utf-8")
 
         result = detector.detect_server_type(ldif_path=ldif_file)
         detection = u.Tests.assert_success(result)
 
         tm.that(detection, is_=m.Ldif.ServerDetectionResult)
         tm.that(detection.detected_server_type, none=False)
-        tm.that(detection.confidence >= c.Ldif.DETECTOR_CONFIDENCE_THRESHOLD, eq=True)
+        tm.that(detection.confidence >= c.Tests.DETECTOR_CONFIDENCE_THRESHOLD, eq=True)
 
     def test_detect_from_string_returns_detection_result(
         self,
         detector: FlextLdifDetector,
     ) -> None:
         result = detector.detect_server_type(
-            ldif_content=c.Ldif.DETECTOR_RFC_SNIPPET,
+            ldif_content=c.Tests.DETECTOR_RFC_SNIPPET,
         )
         detection = u.Tests.assert_success(result)
 
@@ -75,7 +75,7 @@ class TestsFlextLdifDetectorService:
         ("scenario", "snippet", "expected_type"),
         tuple(
             (scenario, data[0], data[1])
-            for scenario, data in c.Ldif.DETECTOR_SERVER_SNIPPETS.items()
+            for scenario, data in c.Tests.DETECTOR_SERVER_SNIPPETS.items()
         ),
     )
     def test_detect_recognises_server_types_from_snippets(
@@ -95,18 +95,18 @@ class TestsFlextLdifDetectorService:
         self,
         detector: FlextLdifDetector,
     ) -> None:
-        long_content = (c.Ldif.DETECTOR_OID_SNIPPET + "\n") * 50
+        long_content = (c.Tests.DETECTOR_OID_SNIPPET + "\n") * 50
         result = detector.detect_server_type(
             ldif_content=long_content,
-            max_lines=c.Ldif.DETECTOR_MAX_LINES_SMALL,
+            max_lines=c.Tests.DETECTOR_MAX_LINES_SMALL,
         )
         u.Tests.assert_success(result)
 
     @pytest.mark.parametrize(
         ("scenario", "snippet"),
         [
-            ("oud", c.Ldif.DETECTOR_OUD_SNIPPET),
-            ("openldap", c.Ldif.DETECTOR_OPENLDAP_SNIPPET),
+            ("oud", c.Tests.DETECTOR_OUD_SNIPPET),
+            ("openldap", c.Tests.DETECTOR_OPENLDAP_SNIPPET),
         ],
     )
     def test_detect_additional_snippets_return_detection(
@@ -125,7 +125,7 @@ class TestsFlextLdifDetectorService:
         detector: FlextLdifDetector,
     ) -> None:
         result = detector.resolve_effective_server_type(
-            ldif_content=c.Ldif.DETECTOR_RFC_SNIPPET,
+            ldif_content=c.Tests.DETECTOR_RFC_SNIPPET,
         )
         server_type = u.Tests.assert_success(result)
 
@@ -138,7 +138,7 @@ class TestsFlextLdifDetectorService:
         result = detector.resolve_effective_server_type()
         server_type = u.Tests.assert_success(result)
 
-        tm.that(server_type, eq=c.Ldif.RFC)
+        tm.that(server_type, eq=c.Tests.RFC)
 
     def test_get_effective_server_type_value_returns_string(
         self,

@@ -100,6 +100,9 @@ if _t.TYPE_CHECKING:
     from tests.unit.services.test_statistics_service import (
         TestsFlextLdifStatisticsService,
     )
+    from tests.unit.services.test_transformers_service import (
+        TestsFlextLdifTransformerService,
+    )
     from tests.unit.services.test_writer_service import TestsFlextLdifWriterService
     from tests.unit.test_acl_registry import TestsFlextLdifAclRegistry
     from tests.unit.test_constants_data_driven import TestsFlextLdifConstantsDataDriven
@@ -218,6 +221,9 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".unit.services.test_statistics_service": (
                 "TestsFlextLdifStatisticsService",
             ),
+            ".unit.services.test_transformers_service": (
+                "TestsFlextLdifTransformerService",
+            ),
             ".unit.services.test_writer_service": ("TestsFlextLdifWriterService",),
             ".unit.test_acl_registry": ("TestsFlextLdifAclRegistry",),
             ".unit.test_constants_data_driven": ("TestsFlextLdifConstantsDataDriven",),
@@ -321,6 +327,7 @@ __all__: list[str] = [
     "TestsFlextLdifSimpleLdap",
     "TestsFlextLdifStatisticsService",
     "TestsFlextLdifSystematicFixtureCoverage",
+    "TestsFlextLdifTransformerService",
     "TestsFlextLdifTypes",
     "TestsFlextLdifUtilities",
     "TestsFlextLdifUtilitiesComprehensive",

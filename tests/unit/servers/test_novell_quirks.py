@@ -42,10 +42,10 @@ class TestsFlextLdifNovellQuirks:
 
     """Test schema attribute detection."""
 
-    @pytest.mark.parametrize("test_case", c.Ldif.NOVELL_ATTRIBUTE_TEST_CASES)
+    @pytest.mark.parametrize("test_case", c.Tests.NOVELL_ATTRIBUTE_TEST_CASES)
     def test_can_handle_attribute(
         self,
-        test_case: m.Ldif.Tests.AttributeTestCase,
+        test_case: m.Tests.AttributeTestCase,
         schema_quirk: FlextLdifServersNovell.Schema,
     ) -> None:
         """Test attribute detection for various scenarios."""
@@ -60,7 +60,7 @@ class TestsFlextLdifNovellQuirks:
     ) -> None:
         """Test parsing Novell eDirectory attribute definition."""
         attr_def = "( 2.16.840.1.113719.1.1.4.1.501 NAME 'nspmPasswordPolicyDN' DESC 'Password Policy DN' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 SINGLE-VALUE )"
-        u.Ldif.Tests.assert_quirk_schema_parse_and_properties(
+        u.Tests.assert_quirk_schema_parse_and_properties(
             schema_quirk,
             attr_def,
             expected_oid="2.16.840.1.113719.1.1.4.1.501",
@@ -76,7 +76,7 @@ class TestsFlextLdifNovellQuirks:
     ) -> None:
         """Test parsing attribute with syntax length specification."""
         attr_def = "( 2.16.840.1.113719.1.1.4.1.1 NAME 'nspmAdminGroup' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )"
-        u.Ldif.Tests.assert_quirk_schema_parse_and_properties(
+        u.Tests.assert_quirk_schema_parse_and_properties(
             schema_quirk,
             attr_def,
             expected_syntax="1.3.6.1.4.1.1466.115.121.1.15",
@@ -97,10 +97,10 @@ class TestsFlextLdifNovellQuirks:
 
     """Test schema objectClass detection."""
 
-    @pytest.mark.parametrize("test_case", c.Ldif.NOVELL_OBJECTCLASS_TEST_CASES)
+    @pytest.mark.parametrize("test_case", c.Tests.NOVELL_OBJECTCLASS_TEST_CASES)
     def test_can_handle_objectclass(
         self,
-        test_case: m.Ldif.Tests.ObjectClassTestCase,
+        test_case: m.Tests.ObjectClassTestCase,
         schema_quirk: FlextLdifServersNovell.Schema,
     ) -> None:
         """Test objectClass detection for various scenarios."""
@@ -115,7 +115,7 @@ class TestsFlextLdifNovellQuirks:
     ) -> None:
         """Test parsing STRUCTURAL objectClass."""
         oc_def = "( 2.16.840.1.113719.2.2.6.1 NAME 'ndsPerson' DESC 'NDS Person' SUP top STRUCTURAL MUST ( cn ) MAY ( loginDisabled ) )"
-        u.Ldif.Tests.assert_quirk_schema_parse_and_properties(
+        u.Tests.assert_quirk_schema_parse_and_properties(
             schema_quirk,
             oc_def,
             expected_oid="2.16.840.1.113719.2.2.6.1",
@@ -132,7 +132,7 @@ class TestsFlextLdifNovellQuirks:
     ) -> None:
         """Test parsing AUXILIARY objectClass."""
         oc_def = "( 2.16.840.1.113719.2.2.6.2 NAME 'nspmPasswordPolicy' AUXILIARY MAY ( nspmPasswordPolicyDN ) )"
-        u.Ldif.Tests.assert_quirk_schema_parse_and_properties(
+        u.Tests.assert_quirk_schema_parse_and_properties(
             schema_quirk,
             oc_def,
             expected_kind="AUXILIARY",
@@ -144,7 +144,7 @@ class TestsFlextLdifNovellQuirks:
     ) -> None:
         """Test parsing ABSTRACT objectClass."""
         oc_def = "( 2.16.840.1.113719.2.2.6.3 NAME 'ndsbase' ABSTRACT )"
-        u.Ldif.Tests.assert_quirk_schema_parse_and_properties(
+        u.Tests.assert_quirk_schema_parse_and_properties(
             schema_quirk,
             oc_def,
             expected_kind="ABSTRACT",
@@ -165,10 +165,10 @@ class TestsFlextLdifNovellQuirks:
 
     """Test entry detection."""
 
-    @pytest.mark.parametrize("test_case", c.Ldif.NOVELL_ENTRY_TEST_CASES)
+    @pytest.mark.parametrize("test_case", c.Tests.NOVELL_ENTRY_TEST_CASES)
     def test_can_handle_entry(
         self,
-        test_case: m.Ldif.Tests.EntryTestCase,
+        test_case: m.Tests.EntryTestCase,
         entry_quirk: FlextLdifServersNovell.Entry,
     ) -> None:
         """Test entry detection for various scenarios."""

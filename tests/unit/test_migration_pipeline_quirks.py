@@ -25,8 +25,8 @@ class TestsFlextLdifMigrationPipelineQuirks:
 
     @pytest.mark.parametrize(
         ("source_server", "target_server", "input_true", "input_false"),
-        list(c.Ldif.MIGRATION_BOOLEAN_CASES.values()),
-        ids=list(c.Ldif.MIGRATION_BOOLEAN_CASES.keys()),
+        list(c.Tests.MIGRATION_BOOLEAN_CASES.values()),
+        ids=list(c.Tests.MIGRATION_BOOLEAN_CASES.keys()),
     )
     def test_oid_boolean_conversion_between_servers(
         self,
@@ -41,18 +41,18 @@ class TestsFlextLdifMigrationPipelineQuirks:
         output_dir = tmp_path / "output"
         input_dir.mkdir()
         output_dir.mkdir()
-        ldif_content = c.Ldif.MIGRATION_BOOLEAN_ENTRY_TEMPLATE.format(
-            dn=c.Ldif.DN_TEST_USER,
-            objectclass=c.Ldif.NAME_OBJECTCLASS,
-            top=c.Ldif.NAME_TOP,
-            person=c.Ldif.NAME_PERSON,
-            orcluser=c.Ldif.NAME_ORCLUSER,
-            cn=c.Ldif.NAME_CN,
-            cn_value=c.Ldif.ATTR_VALUE_TEST,
-            sn=c.Ldif.NAME_SN,
-            sn_value=c.Ldif.ATTR_VALUE_TEST,
-            attr_enabled=c.Ldif.ATTR_ORCL_IS_ENABLED,
-            attr_locked=c.Ldif.ATTR_ORCL_ACCOUNT_LOCKED,
+        ldif_content = c.Tests.MIGRATION_BOOLEAN_ENTRY_TEMPLATE.format(
+            dn=c.Tests.DN_TEST_USER,
+            objectclass=c.Tests.NAME_OBJECTCLASS,
+            top=c.Tests.NAME_TOP,
+            person=c.Tests.NAME_PERSON,
+            orcluser=c.Tests.NAME_ORCLUSER,
+            cn=c.Tests.NAME_CN,
+            cn_value=c.Tests.ATTR_VALUE_TEST,
+            sn=c.Tests.NAME_SN,
+            sn_value=c.Tests.ATTR_VALUE_TEST,
+            attr_enabled=c.Tests.ATTR_ORCL_IS_ENABLED,
+            attr_locked=c.Tests.ATTR_ORCL_ACCOUNT_LOCKED,
             val_true=input_true,
             val_false=input_false,
         )
@@ -69,33 +69,33 @@ class TestsFlextLdifMigrationPipelineQuirks:
         output_file = output_dir / "migrated.ldif"
         _ = tm.that(output_file.exists(), eq=True)
         content = output_file.read_text(encoding="utf-8")
-        if target_server == c.Ldif.RFC:
-            expected_true = c.Ldif.BOOLEAN_OID_TO_RFC[input_true]
-            expected_false = c.Ldif.BOOLEAN_OID_TO_RFC[input_false]
+        if target_server == c.Tests.RFC:
+            expected_true = c.Tests.BOOLEAN_OID_TO_RFC[input_true]
+            expected_false = c.Tests.BOOLEAN_OID_TO_RFC[input_false]
         else:
-            expected_true = c.Ldif.BOOLEAN_RFC_TO_OID[input_true]
-            expected_false = c.Ldif.BOOLEAN_RFC_TO_OID[input_false]
+            expected_true = c.Tests.BOOLEAN_RFC_TO_OID[input_true]
+            expected_false = c.Tests.BOOLEAN_RFC_TO_OID[input_false]
         tm.that(
             content,
-            has=f"{c.Ldif.ATTR_ORCL_IS_ENABLED.lower()}: {expected_true}",
+            has=f"{c.Tests.ATTR_ORCL_IS_ENABLED.lower()}: {expected_true}",
         )
         tm.that(
             content,
-            has=f"{c.Ldif.ATTR_ORCL_ACCOUNT_LOCKED.lower()}: {expected_false}",
+            has=f"{c.Tests.ATTR_ORCL_ACCOUNT_LOCKED.lower()}: {expected_false}",
         )
         tm.that(
-            f"{c.Ldif.ATTR_ORCL_IS_ENABLED.lower()}: {input_true}" not in content,
+            f"{c.Tests.ATTR_ORCL_IS_ENABLED.lower()}: {input_true}" not in content,
             eq=True,
         )
         tm.that(
-            f"{c.Ldif.ATTR_ORCL_ACCOUNT_LOCKED.lower()}: {input_false}" not in content,
+            f"{c.Tests.ATTR_ORCL_ACCOUNT_LOCKED.lower()}: {input_false}" not in content,
             eq=True,
         )
 
     @pytest.mark.parametrize(
         ("source_server", "target_server", "input_attribute", "expected_attribute"),
-        list(c.Ldif.MIGRATION_ACL_CASES.values()),
-        ids=list(c.Ldif.MIGRATION_ACL_CASES.keys()),
+        list(c.Tests.MIGRATION_ACL_CASES.values()),
+        ids=list(c.Tests.MIGRATION_ACL_CASES.keys()),
     )
     def test_oid_acl_conversion_between_servers(
         self,
@@ -110,17 +110,17 @@ class TestsFlextLdifMigrationPipelineQuirks:
         output_dir = tmp_path / "output"
         input_dir.mkdir()
         output_dir.mkdir()
-        ldif_content = c.Ldif.MIGRATION_ACL_ENTRY_TEMPLATE.format(
-            dn=c.Ldif.DN_TEST_USER,
-            objectclass=c.Ldif.NAME_OBJECTCLASS,
-            top=c.Ldif.NAME_TOP,
-            person=c.Ldif.NAME_PERSON,
-            cn=c.Ldif.NAME_CN,
-            cn_value=c.Ldif.ATTR_VALUE_TEST,
-            sn=c.Ldif.NAME_SN,
-            sn_value=c.Ldif.ATTR_VALUE_TEST,
+        ldif_content = c.Tests.MIGRATION_ACL_ENTRY_TEMPLATE.format(
+            dn=c.Tests.DN_TEST_USER,
+            objectclass=c.Tests.NAME_OBJECTCLASS,
+            top=c.Tests.NAME_TOP,
+            person=c.Tests.NAME_PERSON,
+            cn=c.Tests.NAME_CN,
+            cn_value=c.Tests.ATTR_VALUE_TEST,
+            sn=c.Tests.NAME_SN,
+            sn_value=c.Tests.ATTR_VALUE_TEST,
             acl_attribute=input_attribute,
-            acl_value=c.Ldif.ACL_READ_VALUE,
+            acl_value=c.Tests.ACL_READ_VALUE,
         )
         (input_dir / "test.ldif").write_text(ldif_content, encoding="utf-8")
         pipeline = FlextLdifMigrationPipeline(
@@ -137,11 +137,11 @@ class TestsFlextLdifMigrationPipelineQuirks:
         content = output_file.read_text(encoding="utf-8")
         tm.that(
             content,
-            has=f"{expected_attribute}: {c.Ldif.ACL_READ_VALUE}",
+            has=f"{expected_attribute}: {c.Tests.ACL_READ_VALUE}",
         )
         if expected_attribute == FlextLdifServersOidConstants.ORCLACI:
             _ = tm.that(
-                not c.Ldif.MIGRATION_ACI_LINE_REGEX.search(content),
+                not c.Tests.MIGRATION_ACI_LINE_REGEX.search(content),
                 eq=True,
             )
         else:
@@ -153,12 +153,12 @@ class TestsFlextLdifMigrationPipelineQuirks:
         output_dir = tmp_path / "output"
         input_dir.mkdir()
         output_dir.mkdir()
-        ldif_content = c.Ldif.MIGRATION_SCHEMA_ENTRY_TEMPLATE.format(
+        ldif_content = c.Tests.MIGRATION_SCHEMA_ENTRY_TEMPLATE.format(
             dn=FlextLdifServersOidConstants.SCHEMA_DN_QUIRK,
-            objectclass=c.Ldif.NAME_OBJECTCLASS,
-            top=c.Ldif.NAME_TOP,
-            subschema=c.Ldif.NAME_SUBSCHEMA,
-            cn=c.Ldif.NAME_CN,
+            objectclass=c.Tests.NAME_OBJECTCLASS,
+            top=c.Tests.NAME_TOP,
+            subschema=c.Tests.NAME_SUBSCHEMA,
+            cn=c.Tests.NAME_CN,
         )
         (input_dir / "test.ldif").write_text(ldif_content, encoding="utf-8")
         pipeline = FlextLdifMigrationPipeline(
@@ -180,17 +180,17 @@ class TestsFlextLdifMigrationPipelineQuirks:
         )
 
     def test_pipeline_enforces_quirks(self, tmp_path: Path) -> None:
-        """Test that pipeline enforces quirks even if input looks like c.Ldif.RFC."""
+        """Test that pipeline enforces quirks even if input looks like c.Tests.RFC."""
         input_dir = tmp_path / "input"
         output_dir = tmp_path / "output"
         input_dir.mkdir()
         output_dir.mkdir()
         ldif_content = (
-            f"dn: {c.Ldif.DN_TEST_USER}\n"
-            f"{c.Ldif.NAME_OBJECTCLASS}: {c.Ldif.NAME_TOP}\n"
-            f"{c.Ldif.NAME_OBJECTCLASS}: {c.Ldif.NAME_PERSON}\n"
-            f"{c.Ldif.NAME_CN}: {c.Ldif.ATTR_VALUE_TEST}\n"
-            f"{c.Ldif.ATTR_ORCL_IS_ENABLED}: {c.Ldif.BOOLEAN_TRUE}\n"
+            f"dn: {c.Tests.DN_TEST_USER}\n"
+            f"{c.Tests.NAME_OBJECTCLASS}: {c.Tests.NAME_TOP}\n"
+            f"{c.Tests.NAME_OBJECTCLASS}: {c.Tests.NAME_PERSON}\n"
+            f"{c.Tests.NAME_CN}: {c.Tests.ATTR_VALUE_TEST}\n"
+            f"{c.Tests.ATTR_ORCL_IS_ENABLED}: {c.Tests.BOOLEAN_TRUE}\n"
         )
         (input_dir / "test.ldif").write_text(ldif_content, encoding="utf-8")
         pipeline = FlextLdifMigrationPipeline(
@@ -204,8 +204,8 @@ class TestsFlextLdifMigrationPipelineQuirks:
         tm.ok(result)
         output_file = output_dir / "migrated.ldif"
         content = output_file.read_text(encoding="utf-8")
-        val_true_oid = c.Ldif.BOOLEAN_RFC_TO_OID[c.Ldif.BOOLEAN_TRUE]
+        val_true_oid = c.Tests.BOOLEAN_RFC_TO_OID[c.Tests.BOOLEAN_TRUE]
         tm.that(
             content,
-            has=f"{c.Ldif.ATTR_ORCL_IS_ENABLED.lower()}: {val_true_oid}",
+            has=f"{c.Tests.ATTR_ORCL_IS_ENABLED.lower()}: {val_true_oid}",
         )

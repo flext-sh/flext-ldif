@@ -45,19 +45,19 @@ def ldif_settings(
 @pytest.fixture
 def real_entry() -> m.Ldif.Entry:
     """Provide a real Entry model for testing."""
-    return u.Ldif.Tests.create_real_entry()
+    return u.Tests.create_real_entry()
 
 
 @pytest.fixture
 def real_ldif_content() -> str:
     """Provide real LDIF content for testing."""
-    return u.Ldif.Tests.create_real_ldif_content()
+    return u.Tests.create_real_ldif_content()
 
 
-@pytest.fixture(params=u.Ldif.Tests.parametrize_real_data())
+@pytest.fixture(params=u.Tests.parametrize_real_data())
 def parametrized_real_data(
     request: pytest.FixtureRequest,
-) -> m.Ldif.Tests.LdifTestData:
+) -> m.Tests.LdifTestData:
     """Provide parametrized real test data."""
     return request.param
 
@@ -65,7 +65,7 @@ def parametrized_real_data(
 @pytest.fixture
 def large_test_dataset() -> str:
     """Provide large dataset for performance testing."""
-    return u.Ldif.Tests.create_real_ldif_content(entries_count=100)
+    return u.Tests.create_real_ldif_content(entries_count=100)
 
 
 @pytest.fixture
@@ -89,41 +89,41 @@ def writer() -> FlextLdifWriter:
 def _fixtures_for_kind(kind: str) -> t.StrMapping:
     """Build fixture map for one kind using constants-driven server matrix."""
     return {
-        server: u.Ldif.Tests.load(server, kind)
-        for server in c.Ldif.FIXTURE_KIND_SERVERS[kind]
+        server: u.Tests.load(server, kind)
+        for server in c.Tests.FIXTURE_KIND_SERVERS[kind]
     }
 
 
 @pytest.fixture
 def oid_schema_fixture() -> str:
     """Load OID schema fixture data."""
-    return u.Ldif.Tests.load(
-        c.Ldif.OID,
-        c.Ldif.SCHEMA,
+    return u.Tests.load(
+        c.Tests.OID,
+        c.Tests.SCHEMA,
     )
 
 
 @pytest.fixture
 def oid_acl_fixture() -> str:
     """Load OID ACL fixture data."""
-    return u.Ldif.Tests.load(
-        c.Ldif.OID,
-        c.Ldif.ACL,
+    return u.Tests.load(
+        c.Tests.OID,
+        c.Tests.ACL,
     )
 
 
 @pytest.fixture
 def oid_entries_fixture() -> str:
     """Load OID entries fixture data."""
-    return u.Ldif.Tests.load(c.Ldif.OID, c.Ldif.ENTRIES)
+    return u.Tests.load(c.Tests.OID, c.Tests.ENTRIES)
 
 
 @pytest.fixture
 def oid_integration_fixture() -> str:
     """Load OID integration fixture data."""
-    return u.Ldif.Tests.load(
-        c.Ldif.OID,
-        c.Ldif.INTEGRATION,
+    return u.Tests.load(
+        c.Tests.OID,
+        c.Tests.INTEGRATION,
     )
 
 
@@ -156,27 +156,27 @@ def oid_entries(
 @pytest.fixture
 def oud_schema_fixture() -> str:
     """Load OUD schema fixture data."""
-    return u.Ldif.Tests.load(c.Ldif.OUD, c.Ldif.SCHEMA)
+    return u.Tests.load(c.Tests.OUD, c.Tests.SCHEMA)
 
 
 @pytest.fixture
 def oud_acl_fixture() -> str:
     """Load OUD ACL fixture data."""
-    return u.Ldif.Tests.load(c.Ldif.OUD, c.Ldif.ACL)
+    return u.Tests.load(c.Tests.OUD, c.Tests.ACL)
 
 
 @pytest.fixture
 def oud_entries_fixture() -> str:
     """Load OUD entries fixture data."""
-    return u.Ldif.Tests.load(c.Ldif.OUD, c.Ldif.ENTRIES)
+    return u.Tests.load(c.Tests.OUD, c.Tests.ENTRIES)
 
 
 @pytest.fixture
 def oud_integration_fixture() -> str:
     """Load OUD integration fixture data."""
-    return u.Ldif.Tests.load(
-        c.Ldif.OUD,
-        c.Ldif.INTEGRATION,
+    return u.Tests.load(
+        c.Tests.OUD,
+        c.Tests.INTEGRATION,
     )
 
 
@@ -209,33 +209,33 @@ def oud_entries(
 @pytest.fixture
 def openldap_schema_fixture() -> str:
     """Load OpenLDAP schema fixture data."""
-    return u.Ldif.Tests.load(
-        c.Ldif.OPENLDAP,
-        c.Ldif.SCHEMA,
+    return u.Tests.load(
+        c.Tests.OPENLDAP,
+        c.Tests.SCHEMA,
     )
 
 
 @pytest.fixture
 def openldap_acl_fixture() -> str:
     """Load OpenLDAP ACL fixture data."""
-    return u.Ldif.Tests.load(c.Ldif.OPENLDAP, c.Ldif.ACL)
+    return u.Tests.load(c.Tests.OPENLDAP, c.Tests.ACL)
 
 
 @pytest.fixture
 def openldap_entries_fixture() -> str:
     """Load OpenLDAP entries fixture data."""
-    return u.Ldif.Tests.load(
-        c.Ldif.OPENLDAP,
-        c.Ldif.ENTRIES,
+    return u.Tests.load(
+        c.Tests.OPENLDAP,
+        c.Tests.ENTRIES,
     )
 
 
 @pytest.fixture
 def openldap_integration_fixture() -> str:
     """Load OpenLDAP integration fixture data."""
-    return u.Ldif.Tests.load(
-        c.Ldif.OPENLDAP,
-        c.Ldif.INTEGRATION,
+    return u.Tests.load(
+        c.Tests.OPENLDAP,
+        c.Tests.INTEGRATION,
     )
 
 
@@ -268,7 +268,7 @@ def openldap_entries(
 @pytest.fixture
 def rfc_schema_fixture() -> str:
     """Load RFC reference schema fixture data."""
-    return u.Ldif.Tests.load(c.Ldif.RFC, c.Ldif.SCHEMA)
+    return u.Tests.load(c.Tests.RFC, c.Tests.SCHEMA)
 
 
 @pytest.fixture
@@ -287,25 +287,25 @@ def rfc_schema_entries(
 @pytest.fixture
 def all_schema_fixtures() -> t.StrMapping:
     """Provide all schema fixtures by server type."""
-    return _fixtures_for_kind(c.Ldif.SCHEMA)
+    return _fixtures_for_kind(c.Tests.SCHEMA)
 
 
 @pytest.fixture
 def all_entries_fixtures() -> t.StrMapping:
     """Provide all entries fixtures by server type."""
-    return _fixtures_for_kind(c.Ldif.ENTRIES)
+    return _fixtures_for_kind(c.Tests.ENTRIES)
 
 
 @pytest.fixture
 def all_acl_fixtures() -> t.StrMapping:
     """Provide all ACL fixtures by server type."""
-    return _fixtures_for_kind(c.Ldif.ACL)
+    return _fixtures_for_kind(c.Tests.ACL)
 
 
 @pytest.fixture
 def all_integration_fixtures() -> t.StrMapping:
     """Provide all integration fixtures by server type."""
-    return _fixtures_for_kind(c.Ldif.INTEGRATION)
+    return _fixtures_for_kind(c.Tests.INTEGRATION)
 
 
 @pytest.fixture
@@ -317,7 +317,7 @@ def tmp_ldif_path(tmp_path: Path) -> Path:
 @pytest.fixture
 def fixtures_dir() -> Path:
     """Get path to fixtures directory."""
-    return c.Ldif.FIXTURES_DIR
+    return c.Tests.FIXTURES_DIR
 
 
 @pytest.fixture
@@ -386,14 +386,14 @@ def oud_acl_quirk(
 def ldap_container(worker_id: str) -> t.JsonMapping:
     """Ensure shared OpenLDAP container is available for integration tests.
 
-    Uses centralized infrastructure: c.Ldif.Tests for constants,
-    u.Ldif.Tests.FileLock for locking, u.Ldif.Tests.get_admin_credentials
+    Uses centralized infrastructure: c.Tests.Tests for constants,
+    u.Tests.FileLock for locking, u.Tests.get_admin_credentials
     for credential resolution.
     """
-    docker_control = u.Ldif.Tests.get_docker_control(worker_id)
-    server_url = f"ldap://localhost:{c.Ldif.DOCKER_PORT}"
-    lock = u.Ldif.Tests.FileLock(
-        Path.home() / ".flext" / f"{c.Ldif.DOCKER_CONTAINER_NAME}.lock",
+    docker_control = u.Tests.get_docker_control(worker_id)
+    server_url = f"ldap://localhost:{c.Tests.DOCKER_PORT}"
+    lock = u.Tests.FileLock(
+        Path.home() / ".flext" / f"{c.Tests.DOCKER_CONTAINER_NAME}.lock",
     )
     with lock:
         execute_result = docker_control.execute()
@@ -401,15 +401,15 @@ def ldap_container(worker_id: str) -> t.JsonMapping:
             pytest.fail(
                 f"Could not start shared OpenLDAP container: {execute_result.error}",
             )
-        admin_dn, admin_password = u.Ldif.Tests.get_admin_credentials()
+        admin_dn, admin_password = u.Tests.get_admin_credentials()
         # Verify LDAP bind readiness
         waited = 0.0
         max_wait = 10.0
         last_error: str | None = None
         while waited < max_wait:
             try:
-                srv = u.Ldif.Tests.create_server_from_url(server_url)
-                conn = u.Ldif.Tests.create_connection(
+                srv = u.Tests.create_server_from_url(server_url)
+                conn = u.Tests.create_connection(
                     srv,
                     user=admin_dn,
                     password=admin_password,
@@ -441,8 +441,8 @@ def ldap_container(worker_id: str) -> t.JsonMapping:
         "host": "localhost",
         "bind_dn": admin_dn,
         "password": admin_password,
-        "base_dn": c.Ldif.DOCKER_BASE_DN,
-        "port": c.Ldif.DOCKER_PORT,
+        "base_dn": c.Tests.DOCKER_BASE_DN,
+        "port": c.Tests.DOCKER_PORT,
         "use_ssl": False,
         "worker_id": worker_id,
     }
@@ -480,7 +480,7 @@ def make_test_base_dn(unique_dn_suffix: str) -> Callable[[str], str]:
     """Return a factory that creates unique test base DNs."""
 
     def _make(ou: str) -> str:
-        return f"ou={ou}-{unique_dn_suffix},{c.Ldif.DOCKER_BASE_DN}"
+        return f"ou={ou}-{unique_dn_suffix},{c.Tests.DOCKER_BASE_DN}"
 
     return _make
 
@@ -493,8 +493,8 @@ def ldap_connection(
     server_url = str(ldap_container["server_url"])
     bind_dn = str(ldap_container["bind_dn"])
     password = str(ldap_container["password"])
-    srv = u.Ldif.Tests.create_server_from_url(server_url)
-    conn = u.Ldif.Tests.create_connection(
+    srv = u.Tests.create_server_from_url(server_url)
+    conn = u.Tests.create_connection(
         srv,
         user=bind_dn,
         password=password,

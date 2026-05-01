@@ -37,7 +37,7 @@ class TestsFlextLdifOudToOidMigration:
     @pytest.fixture
     def oud_schema_fixture(self) -> str:
         """Load OUD schema fixture data."""
-        return u.Ldif.Tests.load(c.Ldif.OUD, c.Ldif.SCHEMA)
+        return u.Tests.load(c.Tests.OUD, c.Tests.SCHEMA)
 
     """Test OUD to OID ACL migration."""
 
@@ -63,7 +63,7 @@ class TestsFlextLdifOudToOidMigration:
     @pytest.fixture
     def oud_fixtures(self) -> str:
         """Create OUD entries fixture data."""
-        return u.Ldif.Tests.load(c.Ldif.OUD, c.Ldif.ENTRIES)
+        return u.Tests.load(c.Tests.OUD, c.Tests.ENTRIES)
 
     @pytest.fixture
     def oid_entry(self) -> FlextLdifServersOid.Entry:

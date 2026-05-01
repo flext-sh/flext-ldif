@@ -16,9 +16,9 @@ from tests import c, m, t, u
 class TestsTestFlextLdifApacheQuirks:
     """Test Apache Directory Server quirks implementation."""
 
-    @pytest.mark.parametrize("test_case", c.Ldif.APACHE_ATTRIBUTE_TEST_CASES)
+    @pytest.mark.parametrize("test_case", c.Tests.APACHE_ATTRIBUTE_TEST_CASES)
     def test_schema_attribute_can_handle(
-        self, test_case: m.Ldif.Tests.AttributeTestCase
+        self, test_case: m.Tests.AttributeTestCase
     ) -> None:
         """Test attribute detection for various scenarios."""
         server = FlextLdifServersApache()
@@ -32,7 +32,7 @@ class TestsTestFlextLdifApacheQuirks:
         server = FlextLdifServersApache()
         schema = server.schema_quirk
         attr_def = "( 1.3.6.1.4.1.18060.0.4.1.2.100 NAME 'ads-enabled' DESC 'Enable flag' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 SINGLE-VALUE )"
-        attr_data = u.Ldif.Tests.quirk_parse_and_unwrap(
+        attr_data = u.Tests.quirk_parse_and_unwrap(
             schema,
             attr_def,
             parse_method="parse_attribute",
@@ -51,7 +51,7 @@ class TestsTestFlextLdifApacheQuirks:
         server = FlextLdifServersApache()
         schema = server.schema_quirk
         attr_def = "( 1.3.6.1.4.1.18060.0.4.1.2.1 NAME 'ads-directoryServiceId' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )"
-        attr_data = u.Ldif.Tests.quirk_parse_and_unwrap(
+        attr_data = u.Tests.quirk_parse_and_unwrap(
             schema,
             attr_def,
             parse_method="parse_attribute",
@@ -67,17 +67,17 @@ class TestsTestFlextLdifApacheQuirks:
         server = FlextLdifServersApache()
         schema = server.schema_quirk
         attr_def = "NAME 'ads-enabled' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7"
-        u.Ldif.Tests.quirk_parse_and_unwrap(
+        u.Tests.quirk_parse_and_unwrap(
             schema,
             attr_def,
             parse_method="parse_attribute",
             should_succeed=False,
         )
 
-    @pytest.mark.parametrize("test_case", c.Ldif.APACHE_OBJECTCLASS_TEST_CASES)
+    @pytest.mark.parametrize("test_case", c.Tests.APACHE_OBJECTCLASS_TEST_CASES)
     def test_schema_objectclass_can_handle(
         self,
-        test_case: m.Ldif.Tests.ObjectClassTestCase,
+        test_case: m.Tests.ObjectClassTestCase,
     ) -> None:
         """Test objectClass detection for various scenarios."""
         server = FlextLdifServersApache()
@@ -91,7 +91,7 @@ class TestsTestFlextLdifApacheQuirks:
         server = FlextLdifServersApache()
         schema = server.schema_quirk
         oc_def = "( 1.3.6.1.4.1.18060.0.4.1.3.100 NAME 'ads-directoryService' DESC 'Directory service' SUP top STRUCTURAL MUST ( cn $ ads-directoryServiceId ) MAY ( ads-enabled ) )"
-        oc_data = u.Ldif.Tests.quirk_parse_and_unwrap(
+        oc_data = u.Tests.quirk_parse_and_unwrap(
             schema,
             oc_def,
             parse_method="parse_objectclass",
@@ -116,7 +116,7 @@ class TestsTestFlextLdifApacheQuirks:
         server = FlextLdifServersApache()
         schema = server.schema_quirk
         oc_def = "( 1.3.6.1.4.1.18060.0.4.1.3.200 NAME 'ads-partition' AUXILIARY MAY ( ads-partitionSuffix $ ads-contextEntry ) )"
-        oc_data = u.Ldif.Tests.quirk_parse_and_unwrap(
+        oc_data = u.Tests.quirk_parse_and_unwrap(
             schema,
             oc_def,
             parse_method="parse_objectclass",
@@ -131,7 +131,7 @@ class TestsTestFlextLdifApacheQuirks:
         server = FlextLdifServersApache()
         schema = server.schema_quirk
         oc_def = "( 1.3.6.1.4.1.18060.0.4.1.3.1 NAME 'ads-base' ABSTRACT )"
-        oc_data = u.Ldif.Tests.quirk_parse_and_unwrap(
+        oc_data = u.Tests.quirk_parse_and_unwrap(
             schema,
             oc_def,
             parse_method="parse_objectclass",
@@ -146,7 +146,7 @@ class TestsTestFlextLdifApacheQuirks:
         server = FlextLdifServersApache()
         schema = server.schema_quirk
         oc_def = "NAME 'ads-directoryService' SUP top STRUCTURAL"
-        u.Ldif.Tests.quirk_parse_and_unwrap(
+        u.Tests.quirk_parse_and_unwrap(
             schema,
             oc_def,
             parse_method="parse_objectclass",
@@ -158,14 +158,14 @@ class TestsTestFlextLdifApacheQuirks:
         server = FlextLdifServersApache()
         acl_quirk = server.acl_quirk
         acl_line = "ads-aci: ( version 3.0 ) ( deny grantAdd ) ( grantRemove )"
-        acl_model = u.Ldif.Tests.acl_parse_and_unwrap(
+        acl_model = u.Tests.acl_parse_and_unwrap(
             acl_quirk,
             acl_line,
             expected_type=m.Ldif.Acl,
         )
         assert acl_model is not None
         assert isinstance(acl_model, m.Ldif.Acl)
-        roundtrip_result = u.Ldif.Tests.acl_parse_and_unwrap(
+        roundtrip_result = u.Tests.acl_parse_and_unwrap(
             acl_quirk,
             acl_model.raw_acl or str(acl_model),
         )
@@ -176,14 +176,14 @@ class TestsTestFlextLdifApacheQuirks:
         server = FlextLdifServersApache()
         acl_quirk = server.acl_quirk
         acl_line = "aci: ( version 3.0 ) ( deny grantAdd ) ( grantRemove )"
-        acl_model = u.Ldif.Tests.acl_parse_and_unwrap(
+        acl_model = u.Tests.acl_parse_and_unwrap(
             acl_quirk,
             acl_line,
             expected_type=m.Ldif.Acl,
         )
         assert acl_model is not None
         assert isinstance(acl_model, m.Ldif.Acl)
-        roundtrip_result = u.Ldif.Tests.acl_parse_and_unwrap(
+        roundtrip_result = u.Tests.acl_parse_and_unwrap(
             acl_quirk,
             acl_model.raw_acl or str(acl_model),
         )
@@ -194,14 +194,14 @@ class TestsTestFlextLdifApacheQuirks:
         server = FlextLdifServersApache()
         acl_quirk = server.acl_quirk
         acl_line = "(version 3.0) (deny grantAdd) (grantRemove)"
-        acl_model = u.Ldif.Tests.acl_parse_and_unwrap(
+        acl_model = u.Tests.acl_parse_and_unwrap(
             acl_quirk,
             acl_line,
             expected_type=m.Ldif.Acl,
         )
         assert acl_model is not None
         assert isinstance(acl_model, m.Ldif.Acl)
-        roundtrip_result = u.Ldif.Tests.acl_parse_and_unwrap(
+        roundtrip_result = u.Tests.acl_parse_and_unwrap(
             acl_quirk,
             acl_model.raw_acl or str(acl_model),
         )
@@ -227,7 +227,7 @@ class TestsTestFlextLdifApacheQuirks:
         server = FlextLdifServersApache()
         acl_quirk = server.acl_quirk
         acl_line = "ads-aci: ( version 3.0 ) ( deny grantAdd ) ( grantRemove )"
-        acl_data = u.Ldif.Tests.acl_parse_and_unwrap(
+        acl_data = u.Tests.acl_parse_and_unwrap(
             acl_quirk,
             acl_line,
             expected_type=m.Ldif.Acl,
@@ -242,7 +242,7 @@ class TestsTestFlextLdifApacheQuirks:
         server = FlextLdifServersApache()
         acl_quirk = server.acl_quirk
         acl_line = "aci: ( deny grantAdd )"
-        acl_data = u.Ldif.Tests.acl_parse_and_unwrap(
+        acl_data = u.Tests.acl_parse_and_unwrap(
             acl_quirk,
             acl_line,
             expected_type=m.Ldif.Acl,
@@ -264,7 +264,7 @@ class TestsTestFlextLdifApacheQuirks:
             server_type=c.Ldif.ServerTypes.APACHE,
             raw_acl="( version 3.0 ) ( deny grantAdd )",
         )
-        u.Ldif.Tests.acl_write_and_unwrap(
+        u.Tests.acl_write_and_unwrap(
             acl_quirk,
             acl_model,
             must_contain=["aci:"],
@@ -284,14 +284,14 @@ class TestsTestFlextLdifApacheQuirks:
             server_type=c.Ldif.ServerTypes.APACHE,
             raw_acl="",
         )
-        u.Ldif.Tests.acl_write_and_unwrap(
+        u.Tests.acl_write_and_unwrap(
             acl_quirk,
             acl_model,
             must_contain=["ads-aci", "aci:"],
         )
 
-    @pytest.mark.parametrize("test_case", c.Ldif.APACHE_ENTRY_TEST_CASES)
-    def test_entry_can_handle(self, test_case: m.Ldif.Tests.EntryTestCase) -> None:
+    @pytest.mark.parametrize("test_case", c.Tests.APACHE_ENTRY_TEST_CASES)
+    def test_entry_can_handle(self, test_case: m.Tests.EntryTestCase) -> None:
         """Test entry detection for various scenarios."""
         server = FlextLdifServersApache()
         entry_quirk = server.entry_quirk
@@ -313,9 +313,9 @@ class TestsTestFlextLdifApacheQuirks:
 
     @pytest.mark.parametrize(
         "test_case",
-        [tc for tc in c.Ldif.APACHE_ENTRY_TEST_CASES if tc.expected_can_handle],
+        [tc for tc in c.Tests.APACHE_ENTRY_TEST_CASES if tc.expected_can_handle],
     )
-    def test_entry_parse_ldif(self, test_case: m.Ldif.Tests.EntryTestCase) -> None:
+    def test_entry_parse_ldif(self, test_case: m.Tests.EntryTestCase) -> None:
         """Test entry parsing via LDIF for Apache-detectable entries."""
         server = FlextLdifServersApache()
         entry_quirk = server.entry_quirk

@@ -16,9 +16,9 @@ from tests import c, m, u
 class TestsTestFlextLdifDs389Quirks:
     """Test ldif DS389 server quirks."""
 
-    @pytest.mark.parametrize("test_case", c.Ldif.DS389_ATTRIBUTE_TEST_CASES)
+    @pytest.mark.parametrize("test_case", c.Tests.DS389_ATTRIBUTE_TEST_CASES)
     def test_schema_attribute_can_handle(
-        self, test_case: m.Ldif.Tests.AttributeTestCase
+        self, test_case: m.Tests.AttributeTestCase
     ) -> None:
         """Test attribute detection for various scenarios."""
         server = FlextLdifServersDs389()
@@ -33,7 +33,7 @@ class TestsTestFlextLdifDs389Quirks:
         schema_quirk = server.schema_quirk
         tm.that(schema_quirk, is_=FlextLdifServersDs389.Schema)
         attr_def = "( 2.16.840.1.113730.3.1.1 NAME 'nsslapd-suffix' DESC 'Directory suffix' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 SINGLE-VALUE )"
-        u.Ldif.Tests.assert_quirk_schema_parse_and_properties(
+        u.Tests.assert_quirk_schema_parse_and_properties(
             schema_quirk,
             attr_def,
             expected_oid="2.16.840.1.113730.3.1.1",
@@ -49,7 +49,7 @@ class TestsTestFlextLdifDs389Quirks:
         schema_quirk = server.schema_quirk
         tm.that(schema_quirk, is_=FlextLdifServersDs389.Schema)
         attr_def = "( 2.16.840.1.113730.3.1.2 NAME 'nsslapd-database' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )"
-        u.Ldif.Tests.assert_quirk_schema_parse_and_properties(
+        u.Tests.assert_quirk_schema_parse_and_properties(
             schema_quirk,
             attr_def,
             expected_syntax="1.3.6.1.4.1.1466.115.121.1.15",
@@ -68,10 +68,10 @@ class TestsTestFlextLdifDs389Quirks:
         if result.error is not None:
             tm.that(result.error, has="missing an OID")
 
-    @pytest.mark.parametrize("test_case", c.Ldif.DS389_OBJECTCLASS_TEST_CASES)
+    @pytest.mark.parametrize("test_case", c.Tests.DS389_OBJECTCLASS_TEST_CASES)
     def test_schema_objectclass_can_handle(
         self,
-        test_case: m.Ldif.Tests.ObjectClassTestCase,
+        test_case: m.Tests.ObjectClassTestCase,
     ) -> None:
         """Test objectClass detection for various scenarios."""
         server = FlextLdifServersDs389()
@@ -86,7 +86,7 @@ class TestsTestFlextLdifDs389Quirks:
         schema_quirk = server.schema_quirk
         tm.that(schema_quirk, is_=FlextLdifServersDs389.Schema)
         oc_def = "( 2.16.840.1.113730.3.2.1 NAME 'nscontainer' DESC 'Container class' SUP top STRUCTURAL MUST ( cn ) MAY ( nsslapd-port ) )"
-        u.Ldif.Tests.assert_quirk_schema_parse_and_properties(
+        u.Tests.assert_quirk_schema_parse_and_properties(
             schema_quirk,
             oc_def,
             expected_oid="2.16.840.1.113730.3.2.1",
@@ -103,7 +103,7 @@ class TestsTestFlextLdifDs389Quirks:
         schema_quirk = server.schema_quirk
         tm.that(schema_quirk, is_=FlextLdifServersDs389.Schema)
         oc_def = "( 2.16.840.1.113730.3.2.2 NAME 'nsds5replica' AUXILIARY MAY ( nsds5ReplicaId $ nsds5ReplicaRoot ) )"
-        u.Ldif.Tests.assert_quirk_schema_parse_and_properties(
+        u.Tests.assert_quirk_schema_parse_and_properties(
             schema_quirk,
             oc_def,
             expected_kind="AUXILIARY",
@@ -153,8 +153,8 @@ class TestsTestFlextLdifDs389Quirks:
         tm.that(oc_str, has="nscontainer")
         tm.that(oc_str, has="STRUCTURAL")
 
-    @pytest.mark.parametrize("test_case", c.Ldif.DS389_ENTRY_TEST_CASES)
-    def test_entry_can_handle(self, test_case: m.Ldif.Tests.EntryTestCase) -> None:
+    @pytest.mark.parametrize("test_case", c.Tests.DS389_ENTRY_TEST_CASES)
+    def test_entry_can_handle(self, test_case: m.Tests.EntryTestCase) -> None:
         """Test entry detection for various scenarios."""
         server = FlextLdifServersDs389()
         entry_quirk = server.entry_quirk

@@ -31,14 +31,14 @@ class TestsTestFlextLdifMigrationPipeline:
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            source_server_type=c.Ldif.OID,
-            target_server_type=c.Ldif.OUD,
+            source_server_type=c.Tests.OID,
+            target_server_type=c.Tests.OUD,
         )
         tm.that(pipeline, none=False)
         tm.that(pipeline.input_dir, eq=input_dir)
         tm.that(pipeline.output_dir, eq=output_dir)
-        tm.that(pipeline.source_server_type, eq=c.Ldif.OID)
-        tm.that(pipeline.target_server_type, eq=c.Ldif.OUD)
+        tm.that(pipeline.source_server_type, eq=c.Tests.OID)
+        tm.that(pipeline.target_server_type, eq=c.Tests.OUD)
 
     def test_initialization_with_defaults(self, tmp_path: Path) -> None:
         """Test pipeline initialization with default server types."""
@@ -51,18 +51,18 @@ class TestsTestFlextLdifMigrationPipeline:
             output_dir=output_dir,
         )
         tm.that(pipeline, none=False)
-        tm.that(pipeline.source_server_type, eq=c.Ldif.RFC)
-        tm.that(pipeline.target_server_type, eq=c.Ldif.RFC)
+        tm.that(pipeline.source_server_type, eq=c.Tests.RFC)
+        tm.that(pipeline.target_server_type, eq=c.Tests.RFC)
 
     @pytest.mark.parametrize(
         ("source", "target"),
         [
-            (c.Ldif.OID, c.Ldif.OUD),
-            (c.Ldif.OID, c.Ldif.OPENLDAP),
-            (c.Ldif.OUD, c.Ldif.OPENLDAP),
-            (c.Ldif.OPENLDAP, c.Ldif.OID),
-            (c.Ldif.OPENLDAP, c.Ldif.OUD),
-            (c.Ldif.RFC, c.Ldif.RFC),
+            (c.Tests.OID, c.Tests.OUD),
+            (c.Tests.OID, c.Tests.OPENLDAP),
+            (c.Tests.OUD, c.Tests.OPENLDAP),
+            (c.Tests.OPENLDAP, c.Tests.OID),
+            (c.Tests.OPENLDAP, c.Tests.OUD),
+            (c.Tests.RFC, c.Tests.RFC),
         ],
     )
     def test_initialization_with_different_server_types(
@@ -89,8 +89,8 @@ class TestsTestFlextLdifMigrationPipeline:
     def test_execute_fails_with_no_input_dir(self) -> None:
         """Test pipeline fails when input directory is not specified."""
         pipeline = FlextLdifMigrationPipeline(
-            source_server_type=c.Ldif.OID,
-            target_server_type=c.Ldif.OUD,
+            source_server_type=c.Tests.OID,
+            target_server_type=c.Tests.OUD,
         )
         result = pipeline.execute()
         tm.that(result.failure, eq=True)
@@ -102,8 +102,8 @@ class TestsTestFlextLdifMigrationPipeline:
         input_dir.mkdir()
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
-            source_server_type=c.Ldif.OID,
-            target_server_type=c.Ldif.OUD,
+            source_server_type=c.Tests.OID,
+            target_server_type=c.Tests.OUD,
         )
         result = pipeline.execute()
         tm.that(result.failure, eq=True)
@@ -117,8 +117,8 @@ class TestsTestFlextLdifMigrationPipeline:
         pipeline = FlextLdifMigrationPipeline(
             input_dir=nonexistent_input,
             output_dir=output_dir,
-            source_server_type=c.Ldif.OID,
-            target_server_type=c.Ldif.OUD,
+            source_server_type=c.Tests.OID,
+            target_server_type=c.Tests.OUD,
         )
         result = pipeline.execute()
         tm.that(result.failure, eq=True)
@@ -135,8 +135,8 @@ class TestsTestFlextLdifMigrationPipeline:
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=nonexistent_output,
-            source_server_type=c.Ldif.RFC,
-            target_server_type=c.Ldif.RFC,
+            source_server_type=c.Tests.RFC,
+            target_server_type=c.Tests.RFC,
         )
         result = pipeline.execute()
         tm.that(result.success, eq=True)
@@ -163,13 +163,13 @@ class TestsTestFlextLdifMigrationPipeline:
         output_dir = tmp_path / "output"
         input_dir.mkdir()
         output_dir.mkdir()
-        ldif_content = c.Ldif.RFC_SAMPLE_LDIF_BASIC
+        ldif_content = c.Tests.RFC_SAMPLE_LDIF_BASIC
         (input_dir / "test.ldif").write_text(ldif_content)
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            source_server_type=c.Ldif.RFC,
-            target_server_type=c.Ldif.RFC,
+            source_server_type=c.Tests.RFC,
+            target_server_type=c.Tests.RFC,
         )
         result = pipeline.execute()
         tm.that(result.success, eq=True)
@@ -185,12 +185,12 @@ class TestsTestFlextLdifMigrationPipeline:
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            source_server_type=c.Ldif.RFC,
-            target_server_type=c.Ldif.RFC,
+            source_server_type=c.Tests.RFC,
+            target_server_type=c.Tests.RFC,
         )
         entries = [
             m.Ldif.Entry(
-                dn=m.Ldif.DN(value=c.Ldif.DN_TEST),
+                dn=m.Ldif.DN(value=c.Tests.DN_TEST),
                 attributes=m.Ldif.Attributes(
                     attributes={"cn": ["test"], "objectClass": ["person"]},
                     attribute_metadata={},
@@ -208,14 +208,14 @@ class TestsTestFlextLdifMigrationPipeline:
         output_dir = tmp_path / "output"
         input_dir.mkdir()
         output_dir.mkdir()
-        ldif_content = c.Ldif.CONFIG_BASIC_ENTRY
+        ldif_content = c.Tests.CONFIG_BASIC_ENTRY
         input_file = input_dir / "test.ldif"
         input_file.write_text(ldif_content)
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            source_server_type=c.Ldif.RFC,
-            target_server_type=c.Ldif.RFC,
+            source_server_type=c.Tests.RFC,
+            target_server_type=c.Tests.RFC,
         )
         result = pipeline.migrate_file(input_file)
         tm.that(result.success, eq=True)
@@ -237,8 +237,8 @@ class TestsTestFlextLdifMigrationPipeline:
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            source_server_type=c.Ldif.RFC,
-            target_server_type=c.Ldif.RFC,
+            source_server_type=c.Tests.RFC,
+            target_server_type=c.Tests.RFC,
         )
         result = pipeline.execute()
         tm.that(result.success, eq=True)
@@ -254,8 +254,8 @@ class TestsTestFlextLdifMigrationPipeline:
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            source_server_type=c.Ldif.RFC,
-            target_server_type=c.Ldif.RFC,
+            source_server_type=c.Tests.RFC,
+            target_server_type=c.Tests.RFC,
         )
         nonexistent_file = input_dir / "nonexistent.ldif"
         result = pipeline.migrate_file(nonexistent_file)
@@ -271,8 +271,8 @@ class TestsTestFlextLdifMigrationPipeline:
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            source_server_type=c.Ldif.RFC,
-            target_server_type=c.Ldif.RFC,
+            source_server_type=c.Tests.RFC,
+            target_server_type=c.Tests.RFC,
         )
         result = pipeline.migrate_entries([])
         tm.that(result.success, eq=True)
@@ -281,8 +281,8 @@ class TestsTestFlextLdifMigrationPipeline:
 
     @pytest.mark.parametrize(
         ("raw_server", "expected_server"),
-        list(c.Ldif.MIGRATION_COERCE_CASES.values()),
-        ids=list(c.Ldif.MIGRATION_COERCE_CASES.keys()),
+        list(c.Tests.MIGRATION_COERCE_CASES.values()),
+        ids=list(c.Tests.MIGRATION_COERCE_CASES.keys()),
     )
     def test_coerce_server_type_cases(
         self,
@@ -291,7 +291,7 @@ class TestsTestFlextLdifMigrationPipeline:
     ) -> None:
         """Lines 117-121: coercion keeps known values and falls back on unknown input."""
         result = FlextLdifMigrationPipeline._coerce_server_type(raw_server)
-        if raw_server == c.Ldif.MIGRATION_UNKNOWN_SERVER:
+        if raw_server == c.Tests.MIGRATION_UNKNOWN_SERVER:
             tm.that(result, eq=FlextLdifMigrationPipeline._DEFAULT_SERVER)
             return
         tm.that(result, eq=c.Ldif.ServerTypes(expected_server))
@@ -302,12 +302,12 @@ class TestsTestFlextLdifMigrationPipeline:
         output_dir = tmp_path / "output"
         input_dir.mkdir()
         output_dir.mkdir()
-        (input_dir / "bad.ldif").write_bytes(c.Ldif.WRITER_INVALID_UTF8_BYTES)
+        (input_dir / "bad.ldif").write_bytes(c.Tests.WRITER_INVALID_UTF8_BYTES)
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            source_server_type=c.Ldif.RFC,
-            target_server_type=c.Ldif.RFC,
+            source_server_type=c.Tests.RFC,
+            target_server_type=c.Tests.RFC,
         )
 
         result = pipeline.execute()
@@ -321,13 +321,13 @@ class TestsTestFlextLdifMigrationPipeline:
         output_dir = tmp_path / "output"
         input_dir.mkdir()
         output_dir.mkdir()
-        input_file = input_dir / c.Ldif.MIGRATION_INPUT_FILENAME
-        input_file.write_text(c.Ldif.MIGRATION_SINGLE_ENTRY_LDIF)
+        input_file = input_dir / c.Tests.MIGRATION_INPUT_FILENAME
+        input_file.write_text(c.Tests.MIGRATION_SINGLE_ENTRY_LDIF)
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            source_server_type=c.Ldif.RFC,
-            target_server_type=c.Ldif.RFC,
+            source_server_type=c.Tests.RFC,
+            target_server_type=c.Tests.RFC,
         )
 
         output_as_directory = output_dir / "existing_dir"
@@ -343,13 +343,13 @@ class TestsTestFlextLdifMigrationPipeline:
         output_dir = tmp_path / "output"
         input_dir.mkdir()
         output_dir.mkdir()
-        input_file = input_dir / c.Ldif.MIGRATION_INPUT_FILENAME
-        input_file.write_bytes(c.Ldif.WRITER_INVALID_UTF8_BYTES)
+        input_file = input_dir / c.Tests.MIGRATION_INPUT_FILENAME
+        input_file.write_bytes(c.Tests.WRITER_INVALID_UTF8_BYTES)
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            source_server_type=c.Ldif.RFC,
-            target_server_type=c.Ldif.RFC,
+            source_server_type=c.Tests.RFC,
+            target_server_type=c.Tests.RFC,
         )
 
         result = pipeline.migrate_file(input_file)
@@ -362,13 +362,13 @@ class TestsTestFlextLdifMigrationPipeline:
         """Line 269: migrate_file with no output_dir and no output_file fails."""
         input_dir = tmp_path / "input"
         input_dir.mkdir()
-        ldif_content = c.Ldif.RFC_SAMPLE_LDIF_BASIC
+        ldif_content = c.Tests.RFC_SAMPLE_LDIF_BASIC
         input_file = input_dir / "test.ldif"
         input_file.write_text(ldif_content)
         # Pipeline with no output_dir and no output_file
         pipeline = FlextLdifMigrationPipeline(
-            source_server_type=c.Ldif.RFC,
-            target_server_type=c.Ldif.RFC,
+            source_server_type=c.Tests.RFC,
+            target_server_type=c.Tests.RFC,
         )
         result = pipeline.migrate_file(input_file, output_file=None)
         tm.that(result.failure, eq=True)
@@ -387,7 +387,7 @@ class TestsFlextLdifProcessingPipeline:
     def test_execute_with_entries_succeeds(self) -> None:
         """Line 94-95: execute with entries returns success."""
         entry = m.Ldif.Entry(
-            dn=c.Ldif.ANALYSIS_DN_VALID,
+            dn=c.Tests.ANALYSIS_DN_VALID,
             attributes=m.Ldif.Attributes(attributes={}),
         )
         pipeline = FlextLdifProcessingPipeline(transform_config=None)
@@ -399,8 +399,8 @@ class TestsFlextLdifProcessingPipeline:
         transform_config = m.Ldif.TransformConfig(
             normalize_dns=True,
             process_config=m.Ldif.ProcessConfig(
-                source_server=c.Ldif.RFC,
-                target_server=c.Ldif.RFC,
+                source_server=c.Tests.RFC,
+                target_server=c.Tests.RFC,
             ),
         )
         pipeline = FlextLdifProcessingPipeline(transform_config=transform_config)
@@ -412,8 +412,8 @@ class TestsFlextLdifProcessingPipeline:
         transform_config = m.Ldif.TransformConfig(
             normalize_attrs=True,
             process_config=m.Ldif.ProcessConfig(
-                source_server=c.Ldif.RFC,
-                target_server=c.Ldif.RFC,
+                source_server=c.Tests.RFC,
+                target_server=c.Tests.RFC,
             ),
         )
         pipeline = FlextLdifProcessingPipeline(transform_config=transform_config)

@@ -14,12 +14,12 @@ class TestsFlextLdifConstantsDataDriven:
     @pytest.mark.parametrize(
         "server_value",
         [
-            c.Ldif.AD,
-            c.Ldif.APACHE,
-            c.Ldif.DS389,
-            c.Ldif.NOVELL,
-            c.Ldif.OPENLDAP1,
-            c.Ldif.TIVOLI,
+            c.Tests.AD,
+            c.Tests.APACHE,
+            c.Tests.DS389,
+            c.Tests.NOVELL,
+            c.Tests.OPENLDAP1,
+            c.Tests.TIVOLI,
         ],
     )
     def test_extended_server_type_constants_are_non_empty(
@@ -29,21 +29,21 @@ class TestsFlextLdifConstantsDataDriven:
         tm.that(bool(server_value), eq=True)
 
     def test_fixture_server_groups_are_consistent(self) -> None:
-        tm.that(c.Ldif.SCHEMA in c.Ldif.FIXTURE_KINDS, eq=True)
-        tm.that(c.Ldif.ACL in c.Ldif.FIXTURE_KINDS, eq=True)
-        tm.that(c.Ldif.ENTRIES in c.Ldif.FIXTURE_KINDS, eq=True)
-        tm.that(c.Ldif.INTEGRATION in c.Ldif.FIXTURE_KINDS, eq=True)
-        tm.that(c.Ldif.RFC in c.Ldif.FIXTURE_SERVERS_SCHEMA, eq=True)
-        tm.that(c.Ldif.RFC in c.Ldif.FIXTURE_SERVERS_COMMON, eq=False)
+        tm.that(c.Tests.SCHEMA in c.Tests.FIXTURE_KINDS, eq=True)
+        tm.that(c.Tests.ACL in c.Tests.FIXTURE_KINDS, eq=True)
+        tm.that(c.Tests.ENTRIES in c.Tests.FIXTURE_KINDS, eq=True)
+        tm.that(c.Tests.INTEGRATION in c.Tests.FIXTURE_KINDS, eq=True)
+        tm.that(c.Tests.RFC in c.Tests.FIXTURE_SERVERS_SCHEMA, eq=True)
+        tm.that(c.Tests.RFC in c.Tests.FIXTURE_SERVERS_COMMON, eq=False)
 
     @pytest.mark.parametrize(
         "name_constant",
         [
-            c.Ldif.NAME_UID,
-            c.Ldif.NAME_MEMBER,
-            c.Ldif.NAME_GROUP_OF_NAMES,
-            c.Ldif.NAME_ACI,
-            c.Ldif.NAME_ORCLACI,
+            c.Tests.NAME_UID,
+            c.Tests.NAME_MEMBER,
+            c.Tests.NAME_GROUP_OF_NAMES,
+            c.Tests.NAME_ACI,
+            c.Tests.NAME_ORCLACI,
         ],
     )
     def test_group_acl_uid_name_constants_are_non_empty(
@@ -54,15 +54,15 @@ class TestsFlextLdifConstantsDataDriven:
         tm.that(bool(name_constant), eq=True)
 
     def test_boolean_false_constant_maps_to_oid_zero(self) -> None:
-        mapped = c.Ldif.BOOLEAN_RFC_TO_OID[c.Ldif.BOOLEAN_FALSE]
+        mapped = c.Tests.BOOLEAN_RFC_TO_OID[c.Tests.BOOLEAN_FALSE]
         tm.that(mapped, eq="0")
 
     @pytest.mark.parametrize(
         ("scenario", "content"),
         [
-            ("unicode", c.Ldif.EDGE_CASE_UNICODE_LDIF),
-            ("deep_dn", c.Ldif.EDGE_CASE_DEEP_DN_LDIF),
-            ("large_multivalue", c.Ldif.EDGE_CASE_LARGE_MULTIVALUE_LDIF),
+            ("unicode", c.Tests.EDGE_CASE_UNICODE_LDIF),
+            ("deep_dn", c.Tests.EDGE_CASE_DEEP_DN_LDIF),
+            ("large_multivalue", c.Tests.EDGE_CASE_LARGE_MULTIVALUE_LDIF),
         ],
     )
     def test_edge_case_ldif_constants_are_structurally_valid(
@@ -75,12 +75,12 @@ class TestsFlextLdifConstantsDataDriven:
         tm.that("\n" in content, eq=True)
 
     def test_edge_case_unicode_regex_matches_unicode_fixture(self) -> None:
-        has_non_ascii = c.Ldif.EDGE_CASE_NON_ASCII_REGEX.search(
-            c.Ldif.EDGE_CASE_UNICODE_LDIF,
+        has_non_ascii = c.Tests.EDGE_CASE_NON_ASCII_REGEX.search(
+            c.Tests.EDGE_CASE_UNICODE_LDIF,
         )
         tm.that(has_non_ascii is not None, eq=True)
 
     def test_edge_case_large_multivalue_contains_min_member_count(self) -> None:
-        member_count = c.Ldif.EDGE_CASE_LARGE_MULTIVALUE_LDIF.count("member:")
-        tm.that(member_count < c.Ldif.EDGE_CASE_MIN_MULTIVALUE_COUNT, eq=True)
+        member_count = c.Tests.EDGE_CASE_LARGE_MULTIVALUE_LDIF.count("member:")
+        tm.that(member_count < c.Tests.EDGE_CASE_MIN_MULTIVALUE_COUNT, eq=True)
         tm.that(member_count > 0, eq=True)

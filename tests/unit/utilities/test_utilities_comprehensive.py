@@ -20,18 +20,18 @@ class TestsFlextLdifUtilitiesComprehensive:
 
     def test_real_ldif_processing_pipeline(self) -> None:
         """Test complete LDIF processing pipeline with real data."""
-        ldif_content = u.Ldif.Tests.create_real_ldif_content(
+        ldif_content = u.Tests.create_real_ldif_content(
             entries_count=5,
             include_schema=True,
         )
         lines = ldif_content.split("\n")
-        entries: MutableSequence[m.Ldif.Tests.LdifTestData] = []
+        entries: MutableSequence[m.Tests.LdifTestData] = []
         for line in lines:
             if line.startswith("dn:"):
                 current_dn = line[4:].strip()
                 current_attrs: t.MutableStrSequenceMapping = {}
                 entries.append(
-                    m.Ldif.Tests.LdifTestData(
+                    m.Tests.LdifTestData(
                         id=f"entry_{len(entries)}",
                         server_type="generic",
                         dn=current_dn,
@@ -59,7 +59,7 @@ class TestsFlextLdifUtilitiesComprehensive:
     @pytest.mark.parametrize("server_type", ["generic", "openldap", "ad", "oid", "oud"])
     def test_server_specific_utilities(self, server_type: str) -> None:
         """Test server-specific utility functions."""
-        entry = u.Ldif.Tests.create_real_entry(server_type=server_type)
+        entry = u.Tests.create_real_entry(server_type=server_type)
         tm.that(entry, none=False)
         normalized = u.Ldif.normalize_server_type(server_type)
         tm.that(normalized, is_=str)

@@ -63,7 +63,7 @@ Each server has 4 types of fixtures:
 ```python
 from tests import c, u
 
-schema = u.Ldif.Tests.load(
+schema = u.Tests.load(
     c.Ldif.Tests.OID,
     c.Ldif.Tests.SCHEMA,
 )

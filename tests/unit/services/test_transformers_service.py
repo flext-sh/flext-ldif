@@ -17,11 +17,11 @@ class TestsFlextLdifTransformerService:
 
     def test_apply_with_entry_returns_success(self) -> None:
         transformer = FlextLdifTransformer(
-            source_server=c.Ldif.RFC,
-            target_server=c.Ldif.RFC,
+            source_server=c.Tests.RFC,
+            target_server=c.Tests.RFC,
         )
-        entry = u.Ldif.Tests.create_real_entry(
-            dn=c.Ldif.ANALYSIS_DN_VALID,
+        entry = u.Tests.create_real_entry(
+            dn=c.Tests.ANALYSIS_DN_VALID,
             attributes={"cn": ["valid"]},
         )
 
@@ -31,5 +31,5 @@ class TestsFlextLdifTransformerService:
         tm.that(converted.dn, is_=m.Ldif.DN)
         tm.that(
             (converted.dn.value if converted.dn is not None else ""),
-            eq=c.Ldif.ANALYSIS_DN_VALID,
+            eq=c.Tests.ANALYSIS_DN_VALID,
         )
