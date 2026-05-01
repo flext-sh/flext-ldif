@@ -35,9 +35,10 @@ class TestsFlextLdifAclService:
 
     def test_evaluate_no_permissions_required_grants_access(self) -> None:
         acl = m.Ldif.Acl(name="test-acl")
+        permissions_dict = dict(c.Ldif.ACL_PERMISSIONS_EMPTY)
         result = FlextLdifAcl.evaluate_acl_context(
             [acl],
-            c.Ldif.ACL_PERMISSIONS_EMPTY,
+            permissions_dict,
         )
         eval_result = u.Tests.assert_success(result)
         tm.that(eval_result.granted, eq=True)
@@ -194,6 +195,6 @@ class TestsFlextLdifAclService:
                 "attributes": {"aci": [c.Ldif.ACL_INVALID_SERVER_TYPE]}
             }),
         )
-        result = svc.extract_acls_from_entry(entry, c.Ldif.OUD)
+        result = svc.extract_acls_from_entry(entry, c.Ldif.OPENLDAP)
         response = u.Tests.assert_success(result)
-        tm.that(response.statistics.failed_entries, eq=0)
+        tm.that(response.statistics.failed_entries, eq=1)

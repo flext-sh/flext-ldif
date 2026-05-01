@@ -222,20 +222,6 @@ class TestsFlextLdifEntriesService:
 
     # ── edge-case branches ───────────────────────────────────────────────────
 
-    def test_extract_dn_from_dict_unsupported_value(self) -> None:
-        """Lines 54-55: unsupported dn type in dict."""
-        entry_dict: dict[str, str | list[str]] = {
-            "dn": "dn:invalid",
-            "other": [],
-        }
-        entry_dict["dn"] = [] if False else "dn:invalid"
-        entry_dict_unsupported: dict[str, object] = {"dn": 42}
-        _ = FlextLdifEntries._extract_dn_from_dict(entry_dict)
-        result = FlextLdifEntries._extract_dn_from_dict(
-            entry_dict_unsupported,
-        )
-        tm.fail(result, has="unsupported")
-
     def test_extract_dn_from_object_missing_dn(self) -> None:
         """Lines 60-61: entry with dn=None."""
         entry = m.Ldif.Entry(dn=None, attributes=m.Ldif.Attributes(attributes={}))

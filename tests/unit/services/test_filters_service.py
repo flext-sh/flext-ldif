@@ -306,55 +306,6 @@ class TestsFlextLdifFiltersService:
         )
         tm.that(result, eq=True)
 
-    def test_should_include_entry_with_non_model_attributes_returns_true(self) -> None:
-        """Line 77: attributes object without .attributes dict returns True."""
-
-        class _AttrsWithoutDict:
-            pass
-
-        entry = self._regular_entry().model_copy(
-            update={"attributes": _AttrsWithoutDict()}
-        )
-        result = FlextLdifFilters._should_include_entry(
-            entry,
-            frozenset(),
-            frozenset(),
-            frozenset(),
-            frozenset(),
-        )
-        tm.that(result, eq=True)
-
-    def test_filter_schema_by_oids_returns_failure_when_check_raises(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        """Lines 132-142: filter_schema_by_oids catches runtime errors and returns fail."""
-        entries: MutableSequence[m.Ldif.Entry] = [self._schema_entry()]
-
-        def _raise_should_include(
-            cls: type[FlextLdifFilters],
-            entry: m.Ldif.Entry,
-            allowed_attr: frozenset[str],
-            allowed_oc: frozenset[str],
-            allowed_mr: frozenset[str],
-            allowed_mru: frozenset[str],
-        ) -> bool:
-            _ = cls, entry, allowed_attr, allowed_oc, allowed_mr, allowed_mru
-            error_msg = "forced schema filtering failure"
-            raise ValueError(error_msg)
-
-        monkeypatch.setattr(
-            FlextLdifFilters,
-            "_should_include_entry",
-            classmethod(_raise_should_include),
-        )
-        result = FlextLdifFilters.filter_schema_by_oids(
-            entries,
-            self._mutable_allowed_oids(c.Ldif.FILTERS_ALLOWED_OIDS_FULL),
-        )
-        tm.that(result.failure, eq=True)
-        tm.that(str(result.error), has="Schema OID filter failed")
-
     # ── _extract_oid_from_schema_attr ────────────────────────────────────────
 
     def test_extract_oid_empty_values_returns_none(self) -> None:

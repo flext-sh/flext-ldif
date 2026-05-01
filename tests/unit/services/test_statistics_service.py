@@ -13,7 +13,7 @@ class TestsFlextLdifStatisticsService:
 
     @staticmethod
     def _entry(dn: str, server_type: str) -> m.Ldif.Entry:
-        return u.Ldif.Tests.create_real_entry(
+        entry = u.Ldif.Tests.create_real_entry(
             dn=dn,
             attributes={
                 "objectClass": [c.Ldif.STATS_EXPECTED_OBJECTCLASS, "top"],
@@ -21,6 +21,16 @@ class TestsFlextLdifStatisticsService:
             },
             server_type=server_type,
         )
+        if entry.metadata is None or entry.metadata.extensions is None:
+            return entry
+        metadata_with_server = entry.metadata.model_copy(
+            update={
+                "extensions": entry.metadata.extensions.model_copy(
+                    update={"server_type": server_type},
+                )
+            },
+        )
+        return entry.model_copy(update={"metadata": metadata_with_server})
 
     def test_calculate_for_entries_from_entry_list(self, api: FlextLdif) -> None:
         entries = [

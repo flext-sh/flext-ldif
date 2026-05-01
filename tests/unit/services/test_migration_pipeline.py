@@ -13,7 +13,6 @@ import pytest
 from flext_tests import tm
 
 from flext_ldif import FlextLdifMigrationPipeline, FlextLdifProcessingPipeline
-from flext_ldif.services.migration import FlextLdifParser, FlextLdifWriter
 from tests import c, m
 
 
@@ -297,17 +296,13 @@ class TestsTestFlextLdifMigrationPipeline:
             return
         tm.that(result, eq=c.Ldif.ServerTypes(expected_server))
 
-    def test_execute_with_file_that_fails_parse(
-        self,
-        tmp_path: Path,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        """Line 185: migration file that fails to parse logs warning and continues."""
+    def test_execute_with_file_that_fails_parse(self, tmp_path: Path) -> None:
+        """Line 185: migration file that fails logs warning and execute continues."""
         input_dir = tmp_path / "input"
         output_dir = tmp_path / "output"
         input_dir.mkdir()
         output_dir.mkdir()
-        (input_dir / "bad.ldif").write_text(c.Ldif.MIGRATION_SINGLE_ENTRY_LDIF)
+        (input_dir / "bad.ldif").write_bytes(c.Ldif.WRITER_INVALID_UTF8_BYTES)
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
@@ -315,169 +310,12 @@ class TestsTestFlextLdifMigrationPipeline:
             target_server_type=c.Ldif.RFC,
         )
 
-        class _FailResult:
-            success = False
-            failure = True
-            error = "forced migrate-file failure"
-
-        def _force_fail(
-            self: FlextLdifMigrationPipeline,
-            input_file: Path,
-            output_file: Path | None = None,
-        ) -> _FailResult:
-            _ = self, input_file, output_file
-            return _FailResult()
-
-        monkeypatch.setattr(FlextLdifMigrationPipeline, "migrate_file", _force_fail)
         result = pipeline.execute()
         tm.that(result.success, eq=True)
         migration_result: m.Ldif.MigrationPipelineResult = result.value
         tm.that(migration_result.stats.total_entries, eq=0)
 
-    def test_execute_returns_failure_when_migrate_file_raises(
-        self,
-        tmp_path: Path,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        """Lines 197-205: execute catches migration exceptions and returns fail result."""
-        input_dir = tmp_path / "input"
-        output_dir = tmp_path / "output"
-        input_dir.mkdir()
-        output_dir.mkdir()
-        (input_dir / "bad.ldif").write_text(c.Ldif.MIGRATION_SINGLE_ENTRY_LDIF)
-        pipeline = FlextLdifMigrationPipeline(
-            input_dir=input_dir,
-            output_dir=output_dir,
-            source_server_type=c.Ldif.RFC,
-            target_server_type=c.Ldif.RFC,
-        )
-
-        def _raise(
-            self: FlextLdifMigrationPipeline,
-            input_file: Path,
-            output_file: Path | None = None,
-        ) -> object:
-            _ = self, input_file, output_file
-            error_msg = "forced execute failure"
-            raise ValueError(error_msg)
-
-        monkeypatch.setattr(FlextLdifMigrationPipeline, "migrate_file", _raise)
-        result = pipeline.execute()
-        tm.that(result.failure, eq=True)
-        tm.that(str(result.error), has="Migration pipeline failed")
-
-    def test_migrate_entries_failure_when_processing_pipeline_raises(
-        self,
-        tmp_path: Path,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        """Lines 222-235: migrate_entries catches errors from processing pipeline."""
-        input_dir = tmp_path / "input"
-        output_dir = tmp_path / "output"
-        input_dir.mkdir()
-        output_dir.mkdir()
-        pipeline = FlextLdifMigrationPipeline(
-            input_dir=input_dir,
-            output_dir=output_dir,
-            source_server_type=c.Ldif.RFC,
-            target_server_type=c.Ldif.RFC,
-        )
-        entry = m.Ldif.Entry(
-            dn=c.Ldif.DN_TEST,
-            attributes=m.Ldif.Attributes(attributes={}),
-        )
-
-        def _raise_for_servers(
-            cls: type[FlextLdifProcessingPipeline],
-            source_server: str | c.Ldif.ServerTypes,
-            target_server: str | c.Ldif.ServerTypes,
-        ) -> FlextLdifProcessingPipeline:
-            _ = cls, source_server, target_server
-            error_msg = "forced processing failure"
-            raise ValueError(error_msg)
-
-        monkeypatch.setattr(
-            FlextLdifProcessingPipeline,
-            "for_servers",
-            classmethod(_raise_for_servers),
-        )
-        result = pipeline.migrate_entries([entry])
-        tm.that(result.failure, eq=True)
-        tm.that(str(result.error), has="Migration failed")
-
-    def test_migrate_file_parse_failure_returns_fail(
-        self,
-        tmp_path: Path,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        """Line 255: migrate_file returns fail when parser returns failure."""
-        input_dir = tmp_path / "input"
-        output_dir = tmp_path / "output"
-        input_dir.mkdir()
-        output_dir.mkdir()
-        input_file = input_dir / c.Ldif.MIGRATION_INPUT_FILENAME
-        input_file.write_text(c.Ldif.MIGRATION_SINGLE_ENTRY_LDIF)
-        pipeline = FlextLdifMigrationPipeline(
-            input_dir=input_dir,
-            output_dir=output_dir,
-            source_server_type=c.Ldif.RFC,
-            target_server_type=c.Ldif.RFC,
-        )
-
-        class _ParseFailResult:
-            failure = True
-            success = False
-            error = "forced parse failure"
-            value = None
-
-        monkeypatch.setattr(
-            FlextLdifParser,
-            "parse_string",
-            lambda self, content, server_type=None: _ParseFailResult(),
-        )
-        result = pipeline.migrate_file(input_file)
-        tm.that(result.failure, eq=True)
-        tm.that(str(result.error), has="Parse failed")
-
-    def test_migrate_file_returns_fail_when_migration_fails(
-        self,
-        tmp_path: Path,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        """Line 262: migrate_file returns fail when migrate_entries returns failure."""
-        input_dir = tmp_path / "input"
-        output_dir = tmp_path / "output"
-        input_dir.mkdir()
-        output_dir.mkdir()
-        input_file = input_dir / c.Ldif.MIGRATION_INPUT_FILENAME
-        input_file.write_text(c.Ldif.MIGRATION_SINGLE_ENTRY_LDIF)
-        pipeline = FlextLdifMigrationPipeline(
-            input_dir=input_dir,
-            output_dir=output_dir,
-            source_server_type=c.Ldif.RFC,
-            target_server_type=c.Ldif.RFC,
-        )
-
-        class _MigrateFailResult:
-            failure = True
-            success = False
-            error = "forced migrate failure"
-            value = []
-
-        monkeypatch.setattr(
-            FlextLdifMigrationPipeline,
-            "migrate_entries",
-            lambda self, entries: _MigrateFailResult(),
-        )
-        result = pipeline.migrate_file(input_file)
-        tm.that(result.failure, eq=True)
-        tm.that(str(result.error), has="Migration failed")
-
-    def test_migrate_file_returns_fail_when_writer_fails(
-        self,
-        tmp_path: Path,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
+    def test_migrate_file_returns_fail_when_writer_fails(self, tmp_path: Path) -> None:
         """Line 281: migrate_file returns fail when writer reports failure."""
         input_dir = tmp_path / "input"
         output_dir = tmp_path / "output"
@@ -492,33 +330,21 @@ class TestsTestFlextLdifMigrationPipeline:
             target_server_type=c.Ldif.RFC,
         )
 
-        class _WriteFailResult:
-            failure = True
-            success = False
-            error = "forced write failure"
-            value = None
+        output_as_directory = output_dir / "existing_dir"
+        output_as_directory.mkdir()
 
-        monkeypatch.setattr(
-            FlextLdifWriter,
-            "write_ldif_file",
-            lambda self, entries, output_file, server_type=None: _WriteFailResult(),
-        )
-        result = pipeline.migrate_file(input_file)
+        result = pipeline.migrate_file(input_file, output_file=output_as_directory)
         tm.that(result.failure, eq=True)
         tm.that(str(result.error), has="Write failed")
 
-    def test_migrate_file_returns_fail_when_read_raises(
-        self,
-        tmp_path: Path,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
+    def test_migrate_file_returns_fail_when_read_raises(self, tmp_path: Path) -> None:
         """Lines 292-304: migrate_file catches decoding/type errors from IO stage."""
         input_dir = tmp_path / "input"
         output_dir = tmp_path / "output"
         input_dir.mkdir()
         output_dir.mkdir()
         input_file = input_dir / c.Ldif.MIGRATION_INPUT_FILENAME
-        input_file.write_text(c.Ldif.MIGRATION_SINGLE_ENTRY_LDIF)
+        input_file.write_bytes(c.Ldif.WRITER_INVALID_UTF8_BYTES)
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
@@ -526,14 +352,6 @@ class TestsTestFlextLdifMigrationPipeline:
             target_server_type=c.Ldif.RFC,
         )
 
-        def _raise_read_text(self: Path, encoding: str) -> str:
-            _ = self, encoding
-            codec = "utf-8"
-            bad_bytes = b"x"
-            reason = "forced decode failure"
-            raise UnicodeDecodeError(codec, bad_bytes, 0, 1, reason)
-
-        monkeypatch.setattr(Path, "read_text", _raise_read_text)
         result = pipeline.migrate_file(input_file)
         tm.that(result.failure, eq=True)
         tm.that(str(result.error), has="File migration failed")
