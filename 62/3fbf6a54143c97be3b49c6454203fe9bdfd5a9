@@ -1,0 +1,51 @@
+src/flext_ldif/services/conversion.py
+  473c59be621cc5d5 233
+src/flext_ldif/servers/_oud/acl.py
+  473c59be621cc5d5 469
+src/flext_ldif/servers/_oid/acl.py
+  473c59be621cc5d5 328,659
+src/flext_ldif/_utilities/acl.py
+  473c59be621cc5d5 486
+src/flext_ldif/servers/_base/schema.py
+  473c59be621cc5d5 380
+src/flext_ldif/servers/_oid/schema.py
+  473c59be621cc5d5 196
+src/flext_ldif/servers/openldap.py
+  473c59be621cc5d5 418
+src/flext_ldif/services/migration.py
+  473c59be621cc5d5 211
+src/flext_ldif/_utilities/schema.py
+  473c59be621cc5d5 754
+src/flext_ldif/servers/openldap1.py
+  473c59be621cc5d5 230
+src/flext_ldif/_utilities/dn.py
+  473c59be621cc5d5 731
+src/flext_ldif/servers/relaxed.py
+  473c59be621cc5d5 501
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "623fbf6a54143c97be3b49c6454203fe9bdfd5a9",
+  "prompts": {
+    "473c59be621cc5d5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f6001f8b-afdd-4757-8812-9bff0bfd46d9",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 13,
+      "total_deletions": 92,
+      "accepted_lines": 47,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/60139a4bc0f6dbc3460f24130ca775591ab7205f026d0a926b577c587aff1b9e"
+    }
+  },
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
