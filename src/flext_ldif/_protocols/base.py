@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from flext_ldif import FlextLdifProtocolsDomain as lpd, FlextLdifSettings, c, m, t
 
 
+@runtime_checkable
 class FlextLdifProtocolsBase(Protocol):
     """Base LDIF protocols shared across utilities, services, and servers."""
 
