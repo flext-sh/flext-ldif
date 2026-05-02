@@ -1,0 +1,29 @@
+src/flext_ldif/servers/_oud/aci.py
+  473c59be621cc5d5 52-88,90-92
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "1300b930e7baee0e43e8a69b394c8ee4c60d4275",
+  "prompts": {
+    "473c59be621cc5d5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f6001f8b-afdd-4757-8812-9bff0bfd46d9",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 40,
+      "total_deletions": 57,
+      "accepted_lines": 40,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/cb53ab7a870358519c1b020128da8f2b5853c9c6b5a276e9692c86ced5496ce2"
+    }
+  },
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
