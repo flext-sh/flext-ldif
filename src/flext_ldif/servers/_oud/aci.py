@@ -49,64 +49,47 @@ class FlextLdifServersOudAciMixin:
         entry: m.Ldif.Entry,
         original_attrs: t.AttributeMapping,
     ) -> t.MutableSequenceOf[str] | str | None:
-        """Find ACI values from entry or original_attrs."""
-        aci_values: t.MutableSequenceOf[str] | str | None = None
-        if original_attrs:
-            original_aci = original_attrs.get("aci")
-            if isinstance(original_aci, list):
-                aci_input: t.MutableSequenceOf[str] = [
-                    u.to_str(item) for item in original_aci
-                ]
-                aci_values = FlextLdifServersOudAciMixin._normalize_aci_value_simple(
-                    aci_input
+        """Find ACI values from entry attributes, original_attrs, or commented metadata."""
+        normalize = FlextLdifServersOudAciMixin._normalize_aci_value_simple
+        find_in_dict = FlextLdifServersOudAciMixin._find_aci_in_dict
+        entry_attrs = (
+            entry.attributes.attributes
+            if entry.attributes and entry.attributes.attributes
+            else None
+        )
+        # Try direct "aci" key (list/str), normalised through the simple helper
+        for source in (original_attrs, entry_attrs):
+            if source:
+                raw = source.get("aci")
+                if isinstance(raw, list):
+                    raw = [u.to_str(item) for item in raw]
+                if raw and (values := normalize(raw)):
+                    return values
+        # Fallback: case-insensitive search in either dict
+        for source in (original_attrs, entry_attrs):
+            if source and (values := find_in_dict(source)):
+                return values
+        # Last resort: commented values stored in entry metadata extensions
+        extensions = (
+            entry.metadata.extensions if entry.metadata is not None else None
+        )
+        if extensions is None:
+            return None
+        commented = FlextLdifServersOudAclExtractMixin._parse_commented_values(
+            extensions.to_dict().get(c.Ldif.COMMENTED_ATTRIBUTE_VALUES),
+        )
+        if not commented:
+            return None
+        for key, value in commented.items():
+            if key.lower() == "aci":
+                normalized_value = (
+                    [u.to_str(item) for item in value]
+                    if isinstance(value, list)
+                    else value
                 )
-            elif isinstance(original_aci, str):
-                aci_values = FlextLdifServersOudAciMixin._normalize_aci_value_simple(
-                    original_aci
-                )
-        if not aci_values and entry.attributes and entry.attributes.attributes:
-            entry_aci = entry.attributes.attributes.get("aci")
-            if isinstance(entry_aci, list):
-                entry_aci_input: t.MutableSequenceOf[str] = [
-                    u.to_str(item) for item in entry_aci
-                ]
-                aci_values = FlextLdifServersOudAciMixin._normalize_aci_value_simple(
-                    entry_aci_input
-                )
-        if not aci_values:
-            aci_values = FlextLdifServersOudAciMixin._find_aci_in_dict(original_attrs)
-            if not aci_values and entry.attributes and entry.attributes.attributes:
-                aci_values = FlextLdifServersOudAciMixin._find_aci_in_dict(
-                    entry.attributes.attributes
-                )
-        metadata = entry.metadata
-        extensions = metadata.extensions if metadata is not None else None
-        if not aci_values and extensions is not None:
-            commented_raw = extensions.to_dict().get(
-                c.Ldif.COMMENTED_ATTRIBUTE_VALUES,
-            )
-            commented_values = (
-                FlextLdifServersOudAclExtractMixin._parse_commented_values(
-                    commented_raw
-                )
-            )
-            if commented_values:
-                for key, value in commented_values.items():
-                    if key.lower() == "aci":
-                        if isinstance(value, list):
-                            normalized_value: (
-                                t.Ldif.ValueType | t.Ldif.MetadataInputMapping | None
-                            ) = [u.to_str(item) for item in value]
-                        else:
-                            normalized_value = value
-                        aci_values = (
-                            FlextLdifServersOudAciMixin._normalize_aci_value_simple(
-                                normalized_value,
-                            )
-                        )
-                        if aci_values:
-                            break
-        return aci_values
+                if values := normalize(normalized_value):
+                    return values
+        return None
 
     @staticmethod
     def _normalize_aci_value(
