@@ -80,6 +80,7 @@ if _t.TYPE_CHECKING:
     from flext_ldif.servers._oud.acl import FlextLdifServersOudAcl
     from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
     from flext_ldif.servers._oud.entry import FlextLdifServersOudEntry
+    from flext_ldif.servers._oud.helpers import FlextLdifServersOudHelpersMixin
     from flext_ldif.servers._oud.schema import FlextLdifServersOudSchema
     from flext_ldif.servers._oud.utilities import FlextLdifServersOudUtilities
     from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
@@ -216,6 +217,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".servers._oud.acl": ("FlextLdifServersOudAcl",),
             ".servers._oud.constants": ("FlextLdifServersOudConstants",),
             ".servers._oud.entry": ("FlextLdifServersOudEntry",),
+            ".servers._oud.helpers": ("FlextLdifServersOudHelpersMixin",),
             ".servers._oud.schema": ("FlextLdifServersOudSchema",),
             ".servers._oud.utilities": ("FlextLdifServersOudUtilities",),
             ".servers._rfc.acl": ("FlextLdifServersRfcAcl",),
@@ -358,6 +360,7 @@ __all__: list[str] = [
     "FlextLdifServersOudAcl",
     "FlextLdifServersOudConstants",
     "FlextLdifServersOudEntry",
+    "FlextLdifServersOudHelpersMixin",
     "FlextLdifServersOudSchema",
     "FlextLdifServersOudUtilities",
     "FlextLdifServersRelaxed",

@@ -30,6 +30,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._oud.acl": ("FlextLdifServersOudAcl",),
             "._oud.constants": ("FlextLdifServersOudConstants",),
             "._oud.entry": ("FlextLdifServersOudEntry",),
+            "._oud.helpers": ("FlextLdifServersOudHelpersMixin",),
             "._oud.schema": ("FlextLdifServersOudSchema",),
             "._oud.utilities": ("FlextLdifServersOudUtilities",),
             "._rfc.acl": ("FlextLdifServersRfcAcl",),
