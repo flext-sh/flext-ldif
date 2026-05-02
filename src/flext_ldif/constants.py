@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import struct
 from enum import StrEnum, unique
 from types import MappingProxyType
 from typing import ClassVar, Final
@@ -15,6 +16,16 @@ class FlextLdifConstants(FlextCliConstants):
 
     class Ldif(FlextLdifConstantsBase, FlextLdifConstantsEnums):
         """LDIF domain constants namespace."""
+
+        EXC_LDIF_PARSE: Final[tuple[type[Exception], ...]] = (
+            AttributeError,
+            KeyError,
+            UnicodeDecodeError,
+            ValueError,
+            struct.error,
+        )
+        """LDIF parsing boundary catch: attribute access, dict, unicode,
+        type, and struct unpacking errors raised during entry parsing."""
 
         BINARY_ATTRIBUTE_NAMES: Final[frozenset[str]] = frozenset({
             "usercertificate",
