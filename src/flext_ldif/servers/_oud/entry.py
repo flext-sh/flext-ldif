@@ -34,115 +34,13 @@ class FlextLdifServersOudEntry(
     FlextLdifServersOudHelpersMixin,
     FlextLdifServersRfc.Entry,
 ):
-    """Oracle OUD Entry Implementation (RFC 2849 + OUD Extensions).
+    """Oracle OUD Entry implementation extending RFC 2849.
 
-    Extends RFC 2849 LDIF entry processing with Oracle OUD-specific features.
-
-    RFC vs OUD Entry Differences
-    ============================
-
-    **RFC 2849 Baseline**:
-
-    - Entry format: ``dn: <distinguished-name>`` followed by attributes
-    - Attributes: ``<attribute-name>: <value>`` (colon-space-value)
-    - Base64 encoding: ``<attribute-name>:: <base64-value>`` (double colon)
-    - Multi-valued: Multiple lines with same attribute name
-    - Continuation: Long lines wrapped with leading space
-    - Changetype: add, delete, modify, modrdn
-
-    **OUD Extensions** (Oracle-specific):
-
-    1. **Operational Attributes** (OUD-specific prefixes):
-
-       - ``ds-cfg-*``: Server configuration attributes
-       - ``ds-sync-*``: Replication and synchronization state
-       - ``ds-pwp-*``: Password policy attributes
-       - ``ds-privilege-name``: Privilege assignments (root-dse-read, modify-acl, etc.)
-       - ``createTimestamp``, ``modifyTimestamp``: Creation/modification time
-       - ``creatorsName``, ``modifiersName``: Creator/modifier DN
-
-    2. **DN Handling** (OUD-specific):
-
-       - Case-insensitive comparison but case-preserving storage
-       - Spaces after commas in DN allowed: ``cn=User, dc=example, dc=com``
-       - Escaped characters: backslash-comma, backslash-plus, backslash-quote
-       - DN normalization for comparison
-
-    3. **Multi-line ACIs** (OUD-specific):
-
-       - ACIs can span multiple lines with continuation (leading whitespace)
-       - Multiple ACIs per entry (multi-valued ``aci`` attribute)
-       - Complex ACIs with multiple bind rules
-
-    4. **ObjectClass Handling** (OUD-specific):
-
-       - Mixed case objectClass names accepted: ``groupOfUniqueNames`` = ``GROUPOFUNIQUENAMES``
-       - Oracle-specific objectClasses: ``orclContext``, ``orclContainer``, ``orclGroup``
-       - OUD supports both STRUCTURAL and AUXILIARY classes
-
-    5. **Attribute Value Handling**:
-
-       - Binary attributes auto-detected and base64 encoded
-       - Multi-byte UTF-8 properly handled
-       - Sensitive attributes (``userPassword``) handled specially
-
-    Real Examples (from fixtures)
-    -----------------------------
-
-    **Basic Entry**::
-
-        dn: cn=OracleContext,dc=example,dc=com
-        cn: OracleContext
-        objectclass: top
-        objectclass: orclContext
-        objectclass: orclContextAux82
-        orclVersion: 90600
-
-    **Entry with Multi-valued Attributes**::
-
-        dn: cn=OracleDASGroupPriv, cn=Groups,cn=OracleContext
-        objectclass: groupOfUniqueNames
-        uniquemember: cn=orclREDACTED_LDAP_BIND_PASSWORD
-        uniqueMember: cn=OracleDASAdminGroup, cn=Groups,cn=OracleContext
-        displayname: DAS Group Privilege
-
-    **Entry with Complex ACI** (multi-line)::
-
-        dn: cn=Groups,cn=OracleContext
-        aci: (targetattr="*")(version 3.0; acl "Multi-group access";
-             allow (read,search,write,selfwrite,compare)
-             groupdn="ldap:///cn=OracleDASUserPriv,cn=Groups,cn=OracleContext";
-             allow (read,search,compare) userdn="ldap:///anyone";)
-
-    Conversion Pipeline
-    -------------------
-
-    OUD has ZERO knowledge of OID (or other server) formats. All conversions
-    go through RFC Entry Model as intermediate format::
-
-        OID Entry → RFC Entry Model → OUD Entry
-        OUD Entry → RFC Entry Model → OpenLDAP Entry
-
-    This decoupling ensures servers don't need to know about each other.
-
-    Official Documentation
-    ----------------------
-
-    - LDIF Format: https://docs.oracle.com/cd/E22289_01/html/821-1273/understanding-ldif-files.html
-    - RFC 2849 (base): https://tools.ietf.org/html/rfc2849
-
-    Example Usage
-    -------------
-
-    ::
-
-        server = FlextLdifServersOudEntry()
-        if server.can_handle_entry(entry):
-            result = server.parse_entry(entry.dn.value, entry.attributes.attributes)
-            if result.success:
-                parsed_entry = result.value
-                # Access OUD-specific operational attributes
-
+    OUD-specific overrides: ``can_handle`` (DN/attribute pattern detection),
+    ``parse_server`` / ``parse_entry`` / ``_hook_post_parse_entry``
+    (OUD post-processing), ``_hook_pre_write_entry`` / ``_write_entry``
+    (ACI normalization + comment generation). Stateless helpers come from
+    ``FlextLdifServersOudHelpersMixin`` (composed Mixin facade).
     """
 
     def __init__(
@@ -165,68 +63,7 @@ class FlextLdifServersOudEntry(
         entry_dn: str,
         attributes: t.MutableStrSequenceMapping,
     ) -> bool:
-        """Check if OUD should handle this entry using pattern matching.
-
-        RFC vs OUD Behavior Differences
-        ================================
-
-        **RFC Baseline** (in rfc.py):
-        - Returns ``True`` for ALL entries (catch-all fallback)
-        - Does not inspect DN patterns or attribute names
-        - RFC is the universal fallback when no server-specific handler matches
-
-        **OUD Override** (this method):
-        - Returns ``True`` ONLY for OUD-specific entries
-        - Detects entries by DN patterns, attribute prefixes, and keywords
-        - Allows RFC fallback for non-OUD entries
-
-        OUD Detection Patterns
-        ----------------------
-
-        **DN Patterns** (from ``Constants.DN_DETECTION_PATTERNS``):
-        - ``cn=OracleContext`` - Oracle context entries
-        - ``dc=oracleContext`` - Oracle domain context
-        - ``ou=OracleContext`` - Oracle org unit context
-
-        **Attribute Prefixes** (from ``Constants.DETECTION_ATTRIBUTE_PREFIXES``):
-        - ``ds-cfg-`` - OUD server configuration attributes
-        - ``ds-sync-`` - OUD replication attributes
-        - ``ds-pwp-`` - OUD password policy attributes
-        - ``orcl`` - Oracle-specific attributes (orclVersion, orclContext, etc.)
-
-        **Attribute Names** (from ``Constants.BOOLEAN_ATTRIBUTES``):
-        - OUD-specific boolean operational attributes
-
-        **Keyword Patterns** (from ``Constants.KEYWORD_PATTERNS``):
-        - Oracle-specific values within attributes
-
-        Implementation Pattern
-        ----------------------
-
-        **Constants Used** (from ``FlextLdifConstantsServersOud``):
-
-        - ``DN_DETECTION_PATTERNS`` - DN patterns for OUD detection
-        - ``DETECTION_ATTRIBUTE_PREFIXES`` - Attribute prefixes (ds-cfg-, orcl, etc.)
-        - ``BOOLEAN_ATTRIBUTES`` - OUD-specific boolean attrs
-        - ``KEYWORD_PATTERNS`` - Keyword detection patterns
-
-        **Utilities Used**:
-
-        - ``u.Ldif.matches_server_patterns()`` - Pattern matching
-
-        **RFC Override**: Extends RFC (RFC returns True for all entries as fallback).
-
-        Args:
-            entry_dn: Entry DN string
-            attributes: Entry attributes dictionary
-
-        Returns:
-            True if this server should handle the entry
-
-        References:
-            - Oracle OUD LDIF Format: https://docs.oracle.com/cd/E22289_01/html/821-1273/understanding-ldif-files.html
-
-        """
+        """Match OUD-specific DN/attribute patterns or fall back on objectclass."""
         oud_constants = FlextLdifServersOudConstants
         patterns_config = m.Ldif.ServerPatternsConfig(
             dn_patterns=oud_constants.DN_DETECTION_PATTERNS,
@@ -278,52 +115,7 @@ class FlextLdifServersOudEntry(
         entry_dn: str,
         entry_attrs: t.MutableStrSequenceMapping | m.Ldif.Entry,
     ) -> r[m.Ldif.Entry]:
-        """Parse entry with OUD-specific metadata population.
-
-        RFC vs OUD Behavior Differences
-        ================================
-
-        **RFC Baseline** (in rfc.py ``parse_entry``):
-        - Creates Entry model with RFC defaults
-        - Metadata has server_type='rfc'
-        - No server-specific format tracking
-
-        **OUD Override** (this method):
-        - Calls RFC base parse_entry for Entry creation
-        - Populates OUD-specific metadata for round-trip support
-        - Tracks original DN, transform source, and attribute case
-
-        Metadata Populated
-        ------------------
-
-        **original_format_details** (from ``c.Ldif.Rfc``):
-        - ``_transform_source``: "oud" (server type identifier)
-        - ``_dn_original``: Original DN before any normalization
-        - ``_dn_was_base64``: Whether DN was base64 encoded
-
-        **original_attribute_case** (for round-trip):
-        - Maps normalized attribute names to original case
-        - Example: {"objectclass": "objectClass"}
-
-        Implementation Pattern
-        ----------------------
-
-        **Utilities Used**:
-        - ``u.Ldif.build_entry_parse_metadata()`` - Metadata creation
-
-        **RFC Override**: Extends RFC (RFC creates Entry, OUD adds metadata).
-
-        Args:
-            entry_dn: Entry distinguished name
-            entry_attrs: Entry attributes mapping
-
-        Returns:
-            r[Entry] with OUD-specific metadata populated
-
-        References:
-            - Oracle OUD LDIF Format: https://docs.oracle.com/cd/E22289_01/html/821-1273/understanding-ldif-files.html
-
-        """
+        """Delegate RFC parse, then enrich entry metadata with OUD round-trip context."""
         entry_attrs_dict: t.MutableStrSequenceMapping = {}
         if isinstance(entry_attrs, Mapping):
             for key, values in entry_attrs.items():
@@ -416,72 +208,7 @@ class FlextLdifServersOudEntry(
 
     @override
     def _hook_post_parse_entry(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
-        """Hook: Validate OUD ACI macros after parsing Entry.
-
-        RFC vs OUD Behavior Differences
-        ================================
-
-        **RFC Baseline** (in rfc.py ``_hook_post_parse_entry``):
-        - Default implementation returns entry unchanged
-        - No macro validation or processing
-        - No entry post-processing hooks
-
-        **OUD Override** (this method):
-        - Validates OUD ACI macro syntax when present
-        - Detects and validates macro patterns in ACIs
-        - Preserves macros for OUD directory server expansion
-        - Adds metadata notes when macros detected
-
-        OUD ACI Macro Types
-        -------------------
-
-        **1. DN Substring Macro** ``($dn)``:
-           - Used for substring matching/substitution
-           - Example: ``userdn="ldap:///$($dn)"``
-
-        **2. Hierarchical DN Macro** ``[$dn]``:
-           - Used for hierarchical substitution
-           - Example: ``userdn="ldap:///[$dn]"``
-
-        **3. Attribute Value Macro** ``($attr.attrName)``:
-           - Substitutes attribute value at runtime
-           - Example: ``userdn="ldap:///($attr.manager)"``
-
-        Validation Rules
-        ----------------
-
-        - Macros must be well-formed (balanced parentheses/brackets)
-        - Attribute macros must reference valid attribute names
-        - Macros are NOT expanded here (OUD server does that at runtime)
-
-        Implementation Pattern
-        ----------------------
-
-        **Constants Used** (from ``FlextLdifConstantsServersOud``):
-
-        - ``MAX_LOG_LINE_LENGTH`` - Truncation limit for log messages
-
-        **MetadataKeys** (from ``c``):
-
-        - ``ACI_LIST_PREVIEW_LIMIT`` - Max ACIs to log in preview
-
-        **Hooks**:
-
-        - This IS a hook method (``_hook_post_parse_entry``)
-        - Calls ``_validate_aci_macros()`` for syntax validation
-
-        **RFC Override**: Extends RFC (RFC returns entry unchanged).
-
-        Args:
-            entry: Entry parsed from OUD LDIF (in RFC canonical format)
-
-        Returns:
-            r[Entry] - validated entry, unchanged if valid
-
-        References:
-            - Oracle OUD ACI Macros: https://docs.oracle.com/cd/E22289_01/html/821-1277/aci-syntax.html
-
-        """
+        """Validate OUD ACI macros and merge ACL metadata into the parsed entry."""
         attrs_dict: t.MutableStrSequenceMapping = (
             entry.attributes.attributes if entry.attributes is not None else {}
         )
@@ -532,76 +259,7 @@ class FlextLdifServersOudEntry(
 
     @override
     def _write_entry(self, entry_data: m.Ldif.Entry) -> r[str]:
-        """Write Entry to LDIF with OUD-specific formatting + phase-aware ACL handling.
-
-        RFC vs OUD Behavior Differences
-        ================================
-
-        **RFC Baseline** (in rfc.py ``_write_entry``):
-        - Basic RFC 2849 compliant LDIF output
-        - Writes ``dn: <value>`` line followed by attributes
-        - Uses ``:`` for normal values, ``::`` for base64
-        - Optional ``changetype: modify`` format for schema updates
-        - Basic metadata restoration (DN, attributes)
-
-        **OUD Override** (this method):
-        - Full OUD-specific formatting with roundtrip preservation
-        - Pre-write hook application for OUD-specific normalization
-        - Phase-aware ACL handling (comment ACLs in non-ACL phases)
-        - Original entry commenting (write source as commented LDIF)
-        - DN normalization in ACL values (userdn, groupdn patterns)
-        - Restores original OUD formatting from metadata
-
-        OUD-Specific Features
-        ---------------------
-
-        **1. Pre-Write Normalization** (OUD requirement):
-           - Applies _hook_pre_write_entry() for attribute normalization
-           - Converts to OUD-expected camelCase (objectclass → objectClass)
-           - Converts boolean values to TRUE/FALSE format
-
-        **2. Roundtrip Preservation** (OUD requirement):
-           - Restores original DN (spaces after commas)
-           - Restores original attribute case (``objectClass`` vs ``objectclass``)
-           - Preserves original attribute order
-           - Uses metadata.extensions for stored original values
-
-        **3. Phase-Aware ACL Handling** (OUD migration):
-           - In phases 01/02/03: Comments out ACL attributes
-           - In phase 04 (ACL): Writes ACL attributes normally
-           - Prevents ACL application before entries exist
-
-        **4. Original Entry Commenting** (OUD migration):
-           - When ``write_original_entry_as_comment=True``
-           - Writes source entry as commented LDIF block
-           - Helps with migration debugging and auditing
-
-        **5. ACL DN Normalization** (OUD ACI requirement):
-           - Normalizes DNs in ACI values (userdn, groupdn)
-           - Removes spaces after commas in DN references
-           - Preserves case but normalizes whitespace
-
-        Migration Phase Flow
-        --------------------
-
-        ::
-
-            Phase 01 (Groups):    [ACL commented] → ``# aci: (target...)``
-            Phase 02 (Users):     [ACL commented] → ``# aci: (target...)``
-            Phase 03 (Contexts):  [ACL commented] → ``# aci: (target...)``
-            Phase 04 (ACL):       [ACL active]    → ``aci: (target...)``
-
-        Args:
-            entry_data: Entry model to write (with complete metadata)
-
-        Returns:
-            r with LDIF string (with original formatting restored when possible)
-
-        References:
-            - Oracle OUD LDIF Format: https://docs.oracle.com/cd/E22289_01/html/821-1273/understanding-ldif-files.html
-            - RFC 2849: LDIF Specification
-
-        """
+        """Write entry with OUD pre-write hook + phase-aware ACL handling + DN normalization."""
         hook_result = self._hook_pre_write_entry(entry_data)
         if hook_result.failure:
             return r[str].fail_op("Pre-write hook", hook_result.error)
