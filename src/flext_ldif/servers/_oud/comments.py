@@ -196,19 +196,15 @@ class FlextLdifServersOudCommentsMixin:
             for attr_name in ordered_removed_attrs:
                 if attr_name.lower() in processed_attrs:
                     continue
-                removed_values_raw = removed_attrs_dict[attr_name]
-                normalized_removed_values = u.normalize_to_metadata(
-                    removed_values_raw,
-                )
-                if u.matches_type(normalized_removed_values, list):
-                    removed_values = [
-                        u.to_str(value)
-                        for value in t.json_list_adapter().validate_python(
-                            normalized_removed_values,
-                        )
+                normalized = u.normalize_to_metadata(removed_attrs_dict[attr_name])
+                removed_values = (
+                    [
+                        u.to_str(v)
+                        for v in t.json_list_adapter().validate_python(normalized)
                     ]
-                else:
-                    removed_values = [u.to_str(normalized_removed_values)]
+                    if u.matches_type(normalized, list)
+                    else [u.to_str(normalized)]
+                )
                 comment_lines.extend(
                     f"# [REMOVED] {attr_name}: {value}" for value in removed_values
                 )
