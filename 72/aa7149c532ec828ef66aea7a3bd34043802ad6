@@ -1,0 +1,30 @@
+examples/01_basic_usage.py
+  h_9db9d35f50cf33 74,86,89,107,115,140,155,164
+  473c59be621cc5d5 109-111
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "72aa7149c532ec828ef66aea7a3bd34043802ad6",
+  "prompts": {
+    "473c59be621cc5d5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f6001f8b-afdd-4757-8812-9bff0bfd46d9",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 8,
+      "total_deletions": 6,
+      "accepted_lines": 8,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/050f201c24f4a15abefac6a1896047a2e2c508e53c9cda2a71d8e20bc8709084"
+    }
+  },
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
