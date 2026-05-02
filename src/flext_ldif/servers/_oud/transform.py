@@ -71,11 +71,9 @@ class FlextLdifServersOudTransformMixin:
         attrs_dict: t.Ldif.AttributeDict = {
             k: list(v) for k, v in attrs_dict_raw.items()
         }
-        aci_validation_error = (
-            FlextLdifServersOudAciMixin.validate_aci_macros_in_entry(
-                attrs_dict,
-                validate_aci_macros,
-            )
+        aci_validation_error = FlextLdifServersOudAciMixin.validate_aci_macros_in_entry(
+            attrs_dict,
+            validate_aci_macros,
         )
         if aci_validation_error:
             return r[m.Ldif.Entry].fail(aci_validation_error)
@@ -96,8 +94,8 @@ class FlextLdifServersOudTransformMixin:
         """Normalize and filter DNs in ACL attribute values (userdn/groupdn inside ACL strings)."""
         if not entry_data.attributes or not entry_data.attributes.attributes:
             return entry_data
-        base_dn, dn_registry = FlextLdifServersOudAclMetadataMixin._extract_acl_metadata(
-            entry_data
+        base_dn, dn_registry = (
+            FlextLdifServersOudAclMetadataMixin._extract_acl_metadata(entry_data)
         )
         attrs = entry_data.attributes.attributes
         if "aci" not in attrs:

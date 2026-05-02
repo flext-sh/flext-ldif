@@ -77,11 +77,16 @@ if _t.TYPE_CHECKING:
     from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
     from flext_ldif.servers._oid.entry import FlextLdifServersOidEntry
     from flext_ldif.servers._oid.schema import FlextLdifServersOidSchema
+    from flext_ldif.servers._oud.aci import FlextLdifServersOudAciMixin
     from flext_ldif.servers._oud.acl import FlextLdifServersOudAcl
+    from flext_ldif.servers._oud.acl_extract import FlextLdifServersOudAclExtractMixin
+    from flext_ldif.servers._oud.acl_metadata import FlextLdifServersOudAclMetadataMixin
+    from flext_ldif.servers._oud.comments import FlextLdifServersOudCommentsMixin
     from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
     from flext_ldif.servers._oud.entry import FlextLdifServersOudEntry
     from flext_ldif.servers._oud.helpers import FlextLdifServersOudHelpersMixin
     from flext_ldif.servers._oud.schema import FlextLdifServersOudSchema
+    from flext_ldif.servers._oud.transform import FlextLdifServersOudTransformMixin
     from flext_ldif.servers._oud.utilities import FlextLdifServersOudUtilities
     from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
     from flext_ldif.servers._rfc.constants import FlextLdifServersRfcConstants
@@ -214,11 +219,16 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".servers._oid.constants": ("FlextLdifServersOidConstants",),
             ".servers._oid.entry": ("FlextLdifServersOidEntry",),
             ".servers._oid.schema": ("FlextLdifServersOidSchema",),
+            ".servers._oud.aci": ("FlextLdifServersOudAciMixin",),
             ".servers._oud.acl": ("FlextLdifServersOudAcl",),
+            ".servers._oud.acl_extract": ("FlextLdifServersOudAclExtractMixin",),
+            ".servers._oud.acl_metadata": ("FlextLdifServersOudAclMetadataMixin",),
+            ".servers._oud.comments": ("FlextLdifServersOudCommentsMixin",),
             ".servers._oud.constants": ("FlextLdifServersOudConstants",),
             ".servers._oud.entry": ("FlextLdifServersOudEntry",),
             ".servers._oud.helpers": ("FlextLdifServersOudHelpersMixin",),
             ".servers._oud.schema": ("FlextLdifServersOudSchema",),
+            ".servers._oud.transform": ("FlextLdifServersOudTransformMixin",),
             ".servers._oud.utilities": ("FlextLdifServersOudUtilities",),
             ".servers._rfc.acl": ("FlextLdifServersRfcAcl",),
             ".servers._rfc.constants": ("FlextLdifServersRfcConstants",),
@@ -357,11 +367,16 @@ __all__: list[str] = [
     "FlextLdifServersOpenldap",
     "FlextLdifServersOpenldap1",
     "FlextLdifServersOud",
+    "FlextLdifServersOudAciMixin",
     "FlextLdifServersOudAcl",
+    "FlextLdifServersOudAclExtractMixin",
+    "FlextLdifServersOudAclMetadataMixin",
+    "FlextLdifServersOudCommentsMixin",
     "FlextLdifServersOudConstants",
     "FlextLdifServersOudEntry",
     "FlextLdifServersOudHelpersMixin",
     "FlextLdifServersOudSchema",
+    "FlextLdifServersOudTransformMixin",
     "FlextLdifServersOudUtilities",
     "FlextLdifServersRelaxed",
     "FlextLdifServersRfc",

@@ -168,7 +168,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
         """
         _ = original_dn
-        aci_values = FlextLdifServersOudHelpersMixin._find_aci_values(entry, original_attrs)
+        aci_values = FlextLdifServersOudHelpersMixin._find_aci_values(
+            entry, original_attrs
+        )
         if not aci_values:
             return r[m.Ldif.Entry].ok(entry)
         if not entry.metadata:
@@ -185,7 +187,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         acl_server = parent.acl_server if parent is not None else None
         if acl_server is None:
             return r[m.Ldif.Entry].ok(entry)
-        FlextLdifServersOudHelpersMixin._process_aci_list_for_finalize(aci_values, acl_server, current_extensions)
+        FlextLdifServersOudHelpersMixin._process_aci_list_for_finalize(
+            aci_values, acl_server, current_extensions
+        )
         if current_extensions:
             existing_extensions = (
                 dict(entry.metadata.extensions.to_dict())
@@ -215,9 +219,11 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             acl_metadata_extensions: t.Ldif.MutableMetadataInputMapping = {}
             for aci_value in aci_attrs:
                 if u.matches_type(aci_value, str):
-                    process_result = FlextLdifServersOudHelpersMixin._process_single_aci_value(
-                        aci_value,
-                        acl_metadata_extensions,
+                    process_result = (
+                        FlextLdifServersOudHelpersMixin._process_single_aci_value(
+                            aci_value,
+                            acl_metadata_extensions,
+                        )
                     )
                     if process_result.failure:
                         return r[m.Ldif.Entry].fail(
@@ -236,7 +242,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     entry_dn=entry.dn.value if entry.dn else "",
                     aci_count=len(aci_list),
                 )
-            entry = FlextLdifServersOudHelpersMixin._merge_acl_metadata_to_entry(entry, acl_metadata_extensions)
+            entry = FlextLdifServersOudHelpersMixin._merge_acl_metadata_to_entry(
+                entry, acl_metadata_extensions
+            )
         return r[m.Ldif.Entry].ok(entry)
 
     @override
@@ -261,11 +269,19 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         if hook_result.failure:
             return r[str].fail_op("Pre-write hook", hook_result.error)
         normalized_entry = hook_result.value
-        entry_to_write = FlextLdifServersOudHelpersMixin._restore_entry_from_metadata(normalized_entry)
+        entry_to_write = FlextLdifServersOudHelpersMixin._restore_entry_from_metadata(
+            normalized_entry
+        )
         write_options = self._extract_write_format_options(entry_to_write.metadata)
         ldif_parts: t.MutableSequenceOf[str] = []
-        ldif_parts.extend(FlextLdifServersOudHelpersMixin._add_original_entry_comments(entry_data, write_options))
-        entry_data = FlextLdifServersOudHelpersMixin._apply_phase_aware_acl_handling(entry_data, write_options)
+        ldif_parts.extend(
+            FlextLdifServersOudHelpersMixin._add_original_entry_comments(
+                entry_data, write_options
+            )
+        )
+        entry_data = FlextLdifServersOudHelpersMixin._apply_phase_aware_acl_handling(
+            entry_data, write_options
+        )
         if FlextLdifServersOudConstants.ACL_NORMALIZE_DNS_IN_VALUES:
             entry_data = FlextLdifServersOudHelpersMixin._normalize_acl_dns(entry_data)
         return (

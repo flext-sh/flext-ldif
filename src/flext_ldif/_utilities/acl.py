@@ -37,13 +37,8 @@ class FlextLdifUtilitiesACL:
         "aclEntry",
     )
     _GENERIC_ACL_ATTRIBUTES: tuple[str, ...] = ("aci", "acl")
-    _OID_ACL_ATTRIBUTES: tuple[str, ...] = (
-        "orclaci",
-        "orclentrylevelaci",
-        "aci",
-        "acl",
-    )
-    _OUD_ACL_ATTRIBUTES: tuple[str, ...] = ("orclaci", "orclentrylevelaci", "aci")
+    _OID_ACL_ATTRIBUTES: tuple[str, ...] = (*c.Ldif.ACL_ATTR_NAMES, "acl")
+    _OUD_ACL_ATTRIBUTES: tuple[str, ...] = tuple(c.Ldif.ACL_ATTR_NAMES)
     _AD_ACL_ATTRIBUTES: tuple[str, ...] = ("nTSecurityDescriptor", "aci")
 
     @staticmethod

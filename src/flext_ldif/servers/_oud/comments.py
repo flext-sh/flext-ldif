@@ -233,8 +233,10 @@ class FlextLdifServersOudCommentsMixin:
         commented_acl_values_raw = entry.metadata.extensions.to_dict().get(
             c.Ldif.COMMENTED_ATTRIBUTE_VALUES,
         )
-        commented_acl_values = FlextLdifServersOudAclExtractMixin._parse_commented_values(
-            commented_acl_values_raw
+        commented_acl_values = (
+            FlextLdifServersOudAclExtractMixin._parse_commented_values(
+                commented_acl_values_raw
+            )
         )
         if not commented_acl_values:
             return
@@ -279,7 +281,6 @@ class FlextLdifServersOudCommentsMixin:
         """Collect ACL comments from attribute_transformations with SKIP_TO_04."""
         if not entry.metadata or not entry.metadata.attribute_transformations:
             return
-        acl_attr_set = {"aci", "orclaci", "orclentrylevelaci"}
         for (
             attr_name,
             transformation,
@@ -287,7 +288,7 @@ class FlextLdifServersOudCommentsMixin:
             is_skip_to_04 = (
                 transformation.reason and "SKIP_TO_04" in transformation.reason.upper()
             )
-            if is_skip_to_04 and attr_name.lower() in acl_attr_set:
+            if is_skip_to_04 and attr_name.lower() in c.Ldif.ACL_ATTR_NAMES:
                 acl_attr_names_to_skip.add(attr_name.lower())
                 if attr_name not in acl_comments_dict:
                     acl_comments_dict[attr_name] = []

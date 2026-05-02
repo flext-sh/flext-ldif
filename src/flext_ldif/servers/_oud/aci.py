@@ -57,16 +57,12 @@ class FlextLdifServersOudAciMixin:
                 aci_input: t.MutableSequenceOf[str] = [
                     u.to_str(item) for item in original_aci
                 ]
-                aci_values = (
-                    FlextLdifServersOudAciMixin._normalize_aci_value_simple(
-                        aci_input
-                    )
+                aci_values = FlextLdifServersOudAciMixin._normalize_aci_value_simple(
+                    aci_input
                 )
             elif isinstance(original_aci, str):
-                aci_values = (
-                    FlextLdifServersOudAciMixin._normalize_aci_value_simple(
-                        original_aci
-                    )
+                aci_values = FlextLdifServersOudAciMixin._normalize_aci_value_simple(
+                    original_aci
                 )
         if not aci_values and entry.attributes and entry.attributes.attributes:
             entry_aci = entry.attributes.attributes.get("aci")
@@ -74,15 +70,11 @@ class FlextLdifServersOudAciMixin:
                 entry_aci_input: t.MutableSequenceOf[str] = [
                     u.to_str(item) for item in entry_aci
                 ]
-                aci_values = (
-                    FlextLdifServersOudAciMixin._normalize_aci_value_simple(
-                        entry_aci_input
-                    )
+                aci_values = FlextLdifServersOudAciMixin._normalize_aci_value_simple(
+                    entry_aci_input
                 )
         if not aci_values:
-            aci_values = FlextLdifServersOudAciMixin._find_aci_in_dict(
-                original_attrs
-            )
+            aci_values = FlextLdifServersOudAciMixin._find_aci_in_dict(original_attrs)
             if not aci_values and entry.attributes and entry.attributes.attributes:
                 aci_values = FlextLdifServersOudAciMixin._find_aci_in_dict(
                     entry.attributes.attributes
@@ -93,8 +85,10 @@ class FlextLdifServersOudAciMixin:
             commented_raw = extensions.to_dict().get(
                 c.Ldif.COMMENTED_ATTRIBUTE_VALUES,
             )
-            commented_values = FlextLdifServersOudAclExtractMixin._parse_commented_values(
-                commented_raw
+            commented_values = (
+                FlextLdifServersOudAclExtractMixin._parse_commented_values(
+                    commented_raw
+                )
             )
             if commented_values:
                 for key, value in commented_values.items():
@@ -177,9 +171,7 @@ class FlextLdifServersOudAciMixin:
     ) -> r[bool]:
         """Process single ACI value, extract metadata, return has_macros flag."""
         has_macros = bool(re.search(r"\(\$dn\)|\[\$dn\]|\(\$attr\.", aci_value))
-        validation_result = FlextLdifServersOudAciMixin._validate_aci_macros(
-            aci_value
-        )
+        validation_result = FlextLdifServersOudAciMixin._validate_aci_macros(aci_value)
         if validation_result.failure:
             return r[bool].fail_op("ACI macro validation", validation_result.error)
         normalized_aci = aci_value.strip()

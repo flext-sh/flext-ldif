@@ -160,6 +160,14 @@ class FlextLdifConstantsBase:
     HAS_DIFFERENCES: Final[str] = "has_differences"
     MINIMAL_DIFFERENCES_DN: Final[str] = "minimal_differences_dn"
 
+    # ACL attribute names — canonical set of LDAP ACI/ACL attribute names
+    # across all server types (RFC ``aci``, OID ``orclaci``/``orclentrylevelaci``).
+    ACL_ATTR_NAMES: Final[frozenset[str]] = frozenset({
+        "aci",
+        "orclaci",
+        "orclentrylevelaci",
+    })
+
     # ACL metadata keys
     ACL_ORIGINAL_FORMAT: Final[str] = "original_format"
     ACL_SOURCE_SUBJECT_TYPE: Final[str] = "source_subject_type"
