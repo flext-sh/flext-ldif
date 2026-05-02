@@ -367,13 +367,7 @@ class FlextLdifServersBaseSchema(
         """Coerce raw value to a schema attribute model when possible."""
         try:
             return m.Ldif.SchemaAttribute.model_validate(value)
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ):
+        except c.Ldif.EXC_LDIF_PARSE:
             return None
 
     def _coerce_objectclass_model(

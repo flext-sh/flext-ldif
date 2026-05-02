@@ -379,13 +379,7 @@ class FlextLdifUtilitiesACL:
                         )
                     case _:
                         result.append(format_template.format(value=str(value_raw)))
-            except (
-                ValueError,
-                KeyError,
-                AttributeError,
-                UnicodeDecodeError,
-                struct.error,
-            ) as e:
+            except c.Ldif.EXC_LDIF_PARSE as e:
                 logger.debug("Skipping ACL rule processing due to error", error=str(e))
                 continue
         return result

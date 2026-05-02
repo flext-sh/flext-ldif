@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import re
-import struct
 from collections.abc import (
     Mapping,
     MutableMapping,
@@ -395,13 +394,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                     | t.MutableSequenceOf[m.Ldif.SchemaObjectClass],
                 ]
             ].ok(schema_dict)
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
+        except c.Ldif.EXC_LDIF_PARSE as e:
             logger.exception("Schema extraction failed")
             return r[
                 MutableMapping[

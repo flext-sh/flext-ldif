@@ -11,7 +11,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-import struct
 from typing import Annotated, Self
 
 from flext_cli import u
@@ -279,13 +278,7 @@ class FlextLdifModelsDomainSchema:
                     validation_metadata=None,
                     metadata=metadata,
                 )
-            except (
-                ValueError,
-                KeyError,
-                AttributeError,
-                UnicodeDecodeError,
-                struct.error,
-            ):
+            except c.Ldif.EXC_LDIF_PARSE:
                 return None
 
         @u.field_validator("oid")

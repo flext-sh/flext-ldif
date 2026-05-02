@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import struct
-
-from flext_ldif import m, p, r, s, t
+from flext_ldif import c, m, p, r, s, t
 
 
 class FlextLdifFilters(s):
@@ -128,13 +126,7 @@ class FlextLdifFilters(s):
                 filtered_count=len(filtered),
             )
             return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(filtered)
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
+        except c.Ldif.EXC_LDIF_PARSE as e:
             cls._get_or_create_logger().exception(
                 "Failed to filter schema entries by OIDs",
             )

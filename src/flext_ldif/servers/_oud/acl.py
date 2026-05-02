@@ -104,13 +104,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         if not isinstance(acl_line, str):
             try:
                 acl_model = m.Ldif.Acl.model_validate(acl_line)
-            except (
-                ValueError,
-                KeyError,
-                AttributeError,
-                UnicodeDecodeError,
-                struct.error,
-            ):
+            except c.Ldif.EXC_LDIF_PARSE:
                 return False
             if acl_model.metadata and acl_model.metadata.server_type:
                 return str(acl_model.metadata.server_type) == self._get_server_type()
@@ -417,13 +411,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                 ),
             )
             return r[m.Ldif.Acl].ok(acl_model)
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
+        except c.Ldif.EXC_LDIF_PARSE as e:
             logger.exception("Failed to parse OUD ds-privilege-name")
             return r[m.Ldif.Acl].fail(f"Failed to parse OUD ds-privilege-name: {e}")
 

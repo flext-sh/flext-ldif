@@ -151,13 +151,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
                 )
             attr = self._transform_case_ignore_substrings(attr)
             return r[m.Ldif.SchemaAttribute].ok(attr)
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
+        except c.Ldif.EXC_LDIF_PARSE as e:
             logger.exception("OID post-parse attribute hook failed")
             return r[m.Ldif.SchemaAttribute].fail_op("OID post-parse attribute hook", e)
 

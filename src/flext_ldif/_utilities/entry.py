@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import re
-import struct
 from collections.abc import (
     Callable,
     Mapping,
@@ -193,13 +192,7 @@ class FlextLdifUtilitiesEntry:
             return True
         try:
             return filter_func(entry)
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ):
+        except c.Ldif.EXC_LDIF_PARSE:
             return False
 
     # --- Validation helpers (called by u.model_validators) ---

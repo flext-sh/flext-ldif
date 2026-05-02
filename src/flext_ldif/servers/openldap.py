@@ -317,13 +317,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                     acl_line,
                 )
                 return r[m.Ldif.Acl].ok(acl)
-            except (
-                ValueError,
-                KeyError,
-                AttributeError,
-                UnicodeDecodeError,
-                struct.error,
-            ) as e:
+            except c.Ldif.EXC_LDIF_PARSE as e:
                 return r[m.Ldif.Acl].fail_op("OpenLDAP 2.x ACL parsing", e)
 
         def _parse_by_clauses(self, acl_content: str) -> tuple[str, str]:

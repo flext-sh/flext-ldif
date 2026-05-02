@@ -378,7 +378,7 @@ class FlextLdifUtilitiesDN:
             for pattern, replacement in patterns:
                 result = re.sub(pattern, replacement, result)
             return result
-        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
+        except c.Ldif.EXC_LDIF_PARSE:
             return dn_str
 
     @staticmethod
@@ -464,13 +464,7 @@ class FlextLdifUtilitiesDN:
             norm2_lower = normalized_pair[1]
             comparison = (norm1_lower > norm2_lower) - (norm1_lower < norm2_lower)
             return r[int].ok(comparison)
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
+        except c.Ldif.EXC_LDIF_PARSE as e:
             return r[int].fail(f"DN comparison error: {e}")
 
     @staticmethod
@@ -640,13 +634,7 @@ class FlextLdifUtilitiesDN:
                             f"Failed to normalize DN: no valid components in '{dn_str}'",
                         )
                     )
-                except (
-                    ValueError,
-                    KeyError,
-                    AttributeError,
-                    UnicodeDecodeError,
-                    struct.error,
-                ) as e:
+                except c.Ldif.EXC_LDIF_PARSE as e:
                     result = r[str].fail(f"DN normalization error: {e}")
         return result
 
@@ -804,13 +792,7 @@ class FlextLdifUtilitiesDN:
                     result = r[t.MutableSequenceOf[tuple[str, str]]].ok(pairs)
                 else:
                     result = r[t.MutableSequenceOf[tuple[str, str]]].fail(error_message)
-            except (
-                ValueError,
-                KeyError,
-                AttributeError,
-                UnicodeDecodeError,
-                struct.error,
-            ) as e:
+            except c.Ldif.EXC_LDIF_PARSE as e:
                 result = r[t.MutableSequenceOf[tuple[str, str]]].fail(
                     f"RDN parsing error: {e}",
                 )

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import re
-import struct
 from collections.abc import (
     Mapping,
     MutableMapping,
@@ -497,13 +496,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                         rename_metadata
                     )
             return r[m.Ldif.Entry].ok(entry)
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
+        except c.Ldif.EXC_LDIF_PARSE as e:
             logger.exception("OID post-parse entry hook failed")
             return r[m.Ldif.Entry].fail_op("OID post-parse entry hook", e)
 
@@ -554,7 +547,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 mapped_key = key_mapping.get(key)
                 if mapped_key and (not current_extensions.get(mapped_key)):
                     current_extensions[mapped_key] = value
-        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
+        except c.Ldif.EXC_LDIF_PARSE:
             logger.debug("Failed to parse ACL extension metadata", exc_info=True)
 
     @staticmethod

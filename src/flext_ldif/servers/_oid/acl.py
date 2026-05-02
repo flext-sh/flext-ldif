@@ -141,7 +141,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             return {}
         try:
             permissions_model = m.Ldif.AclPermissions.model_validate(permissions)
-        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
+        except c.Ldif.EXC_LDIF_PARSE:
             return {}
         raw_perms = permissions_model.model_dump()
         return {
@@ -233,13 +233,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         if not isinstance(acl_line, str):
             try:
                 acl_model = m.Ldif.Acl.model_validate(acl_line)
-            except (
-                ValueError,
-                KeyError,
-                AttributeError,
-                UnicodeDecodeError,
-                struct.error,
-            ):
+            except c.Ldif.EXC_LDIF_PARSE:
                 acl_model = None
             if acl_model and acl_model.metadata and acl_model.metadata.server_type:
                 can_handle = acl_model.metadata.server_type == self._get_server_type()
@@ -633,13 +627,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 "validation_violations": [],
             })
             return r[m.Ldif.Acl].ok(acl_model)
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
+        except c.Ldif.EXC_LDIF_PARSE as e:
             max_len = FlextLdifServersOidConstants.MAX_LOG_LINE_LENGTH
             acl_preview = acl_line[:max_len] if len(acl_line) > max_len else acl_line
             logger.debug(

@@ -267,13 +267,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     x_oid=None,
                 )
                 return r[m.Ldif.SchemaAttribute].ok(attr_domain)
-            except (
-                ValueError,
-                KeyError,
-                AttributeError,
-                UnicodeDecodeError,
-                struct.error,
-            ) as e:
+            except c.Ldif.EXC_LDIF_PARSE as e:
                 self.logger.debug(
                     "Relaxed attribute parse exception: %s",
                     e,

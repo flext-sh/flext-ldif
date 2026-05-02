@@ -113,13 +113,7 @@ class FlextLdifConversion(
                 target_server,
                 model_instance,
             )
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
+        except c.Ldif.EXC_LDIF_PARSE as e:
             result = r[t.Ldif.ConvertedModel].fail_op("Model conversion", e)
         duration_ms = (time.perf_counter() - start_time) * 1000.0
         items_converted = 1 if result.success else 0

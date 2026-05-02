@@ -191,13 +191,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
                 processed_entries=total_migrated,
             )
             return r[m.Ldif.MigrationPipelineResult].ok(pipeline_result)
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
+        except c.Ldif.EXC_LDIF_PARSE as e:
             self.logger.exception("Migration pipeline failed", error=str(e))
             return r[m.Ldif.MigrationPipelineResult].fail_op("Migration pipeline", e)
 

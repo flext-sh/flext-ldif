@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import struct
 from abc import ABC, abstractmethod
 
 from flext_ldif import c, m, p, r, t, u
@@ -122,13 +121,7 @@ class FlextLdifConversionAclMixin(ABC):
                     ),
                 ),
             )
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
+        except c.Ldif.EXC_LDIF_PARSE as e:
             logger.exception("Failed to convert ACL model", error=str(e))
             return r[t.Ldif.ConvertedModel].fail_op("Acl conversion", e)
 

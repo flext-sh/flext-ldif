@@ -417,13 +417,7 @@ class FlextLdifUtilitiesSchema:
                 if result.success:
                     try:
                         items.append(model_type.model_validate(result.value))
-                    except (
-                        ValueError,
-                        KeyError,
-                        AttributeError,
-                        UnicodeDecodeError,
-                        struct.error,
-                    ) as exc:
+                    except c.Ldif.EXC_LDIF_PARSE as exc:
                         logger.debug("Schema line item validation failed: : %s", exc)
                         continue
         return items
@@ -753,13 +747,7 @@ class FlextLdifUtilitiesSchema:
         try:
             _ = m.Ldif.SchemaAttribute.model_validate(definition)
             return "attribute"
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as exc:
+        except c.Ldif.EXC_LDIF_PARSE as exc:
             logger.debug("SchemaAttribute model validation did not match: %s", exc)
         try:
             _ = m.Ldif.SchemaObjectClass.model_validate(definition)

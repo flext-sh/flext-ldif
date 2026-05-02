@@ -192,13 +192,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                     attr_str += " SINGLE-VALUE"
                 attr_str += " )"
                 return r[str].ok(attr_str)
-            except (
-                ValueError,
-                KeyError,
-                AttributeError,
-                UnicodeDecodeError,
-                struct.error,
-            ) as e:
+            except c.Ldif.EXC_LDIF_PARSE as e:
                 return r[str].fail_op("OpenLDAP 1.x attribute write", e)
 
         @override
