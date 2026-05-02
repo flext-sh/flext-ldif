@@ -57,15 +57,7 @@ class FlextLdifServersOudAclMetadataMixin:
     def _extract_acl_metadata(
         entry_data: m.Ldif.Entry,
     ) -> tuple[str | None, m.Ldif.DnRegistry | None]:
-        """Extract base_dn and dn_registry from entry metadata for ACL processing.
-
-        Args:
-            entry_data: Entry with potential metadata
-
-        Returns:
-            Tuple of (base_dn, dn_registry)
-
-        """
+        """Extract base_dn and dn_registry from entry metadata for ACL processing."""
         base_dn: str | None = None
         dn_registry: m.Ldif.DnRegistry | None = None
         metadata = entry_data.metadata

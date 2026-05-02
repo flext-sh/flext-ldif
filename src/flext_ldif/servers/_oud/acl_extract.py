@@ -29,20 +29,7 @@ class FlextLdifServersOudAclExtractMixin:
         entry_data: m.Ldif.Entry,
         acl_attribute_names: t.MutableSequenceOf[str],
     ) -> m.Ldif.Entry:
-        """Comment out ACL attributes by removing them from attributes dict and storing in metadata.
-
-        CRITICAL for flext-oud-mig phase-aware ACL handling.
-        Removes ACL attributes from active attributes dict and stores values in metadata
-        for later comment generation with [TRANSFORMED] and [SKIP TO 04] tags.
-
-        Args:
-            entry_data: Entry with ACL attributes
-            acl_attribute_names: List of ACL attribute names to comment
-
-        Returns:
-            Entry with ACL attributes removed from attributes dict and stored in metadata
-
-        """
+        """Comment out ACL attributes by removing them from attributes dict and storing in metadata."""
         if not entry_data.attributes or not acl_attribute_names:
             return entry_data
         existing_metadata = entry_data.metadata
@@ -83,15 +70,7 @@ class FlextLdifServersOudAclExtractMixin:
     def _normalize_acl_values(
         acl_values_raw: t.Ldif.ValueType | t.Ldif.MetadataInputMapping,
     ) -> t.MutableSequenceOf[str] | str:
-        """Normalize ACL values to expected type for comment generation.
-
-        Args:
-            acl_values_raw: Raw ACL values (JsonPayload)
-
-        Returns:
-            Normalized values as list[str], str, or Acl model
-
-        """
+        """Normalize ACL values to expected type for comment generation."""
         if isinstance(acl_values_raw, list):
             return [u.to_str(item) for item in acl_values_raw]
         return u.to_str(acl_values_raw)
@@ -100,15 +79,7 @@ class FlextLdifServersOudAclExtractMixin:
     def _parse_commented_values(
         commented_raw: t.JsonValue | None,
     ) -> t.Ldif.MutableMetadataMapping | None:
-        """Parse commented ACL values from raw storage format.
-
-        Args:
-            commented_raw: Raw value from extensions (JSON string or dict)
-
-        Returns:
-            Parsed dict or None if unparseable
-
-        """
+        """Parse commented ACL values from raw storage format."""
         if isinstance(commented_raw, str):
             parsed_items = m.Ldif.DynamicMetadata.model_validate_json(
                 commented_raw,
@@ -131,16 +102,7 @@ class FlextLdifServersOudAclExtractMixin:
         t.MutableStrSequenceMapping,
         set[str],
     ]:
-        """Extract ACL attributes and remove from active dict.
-
-        Args:
-            attributes_dict: Current attributes dictionary
-            acl_attribute_names: Names of ACL attributes to process
-
-        Returns:
-            Tuple of (new_attributes_dict, commented_acl_values, hidden_attrs)
-
-        """
+        """Extract ACL attributes and remove from active dict."""
         new_attrs: t.MutableStrSequenceMapping = dict(attributes_dict)
         commented_vals: t.MutableStrSequenceMapping = {}
         hidden_attrs: set[str] = set()
@@ -163,19 +125,7 @@ class FlextLdifServersOudAclExtractMixin:
         hidden_attrs: set[str],
         entry_attributes_dict: t.MutableStrSequenceMapping,
     ) -> m.Ldif.ServerMetadata:
-        """Update metadata with commented ACL information.
-
-        Args:
-            metadata: Existing metadata (must be m.Ldif.ServerMetadata, not internal model)
-            acl_attribute_names: List of ACL attribute names
-            commented_acl_values: Dictionary of commented ACL values
-            hidden_attrs: Set of hidden attribute names
-            entry_attributes_dict: Original attributes dict for checking
-
-        Returns:
-            Updated metadata with ACL information
-
-        """
+        """Update metadata with commented ACL information."""
         metadata_typed: m.Ldif.ServerMetadata = metadata
         current_extensions: t.Ldif.MutableMetadataInputMapping = (
             metadata_typed.extensions.to_dict() if metadata_typed.extensions else {}

@@ -53,15 +53,7 @@ class FlextLdifServersOudCommentsMixin:
         _transformation: m.Ldif.AttributeTransformation,
         comment_type: str,
     ) -> None:
-        """Add comment for attribute transformation.
-
-        Args:
-            comment_lines: List to append comments to
-            attr_name: Name of transformed attribute
-            _transformation: Transformation metadata (reserved for future use)
-            comment_type: Type of transformation (MODIFIED, TRANSFORMED, etc.)
-
-        """
+        """Add comment for attribute transformation."""
         comment_lines.append(f"# [{comment_type}] {attr_name}: transformation applied")
 
     @staticmethod
@@ -69,54 +61,7 @@ class FlextLdifServersOudCommentsMixin:
         entry_data: m.Ldif.Entry,
         write_options: m.Ldif.WriteFormatOptions | None,
     ) -> t.MutableSequenceOf[str]:
-        """Add original entry as commented LDIF block.
-
-        RFC vs OUD Behavior Differences
-        ================================
-
-        **RFC Baseline**:
-        - No original entry commenting support
-        - Writes only the current entry format
-
-        **OUD Override** (this method):
-        - Writes original source entry as commented LDIF block
-        - Helps debug migration issues by showing source format
-        - Enables auditing of OID → OUD conversions
-
-        Output Format
-        -------------
-
-        When enabled, output includes both original and converted entry::
-
-            # ======================================================================
-            # ORIGINAL Entry (alternative format) (commented)
-            # ======================================================================
-            # dn: cn=user, dc=example, dc=com
-            # objectclass: person
-            # cn: user
-            #
-            # ======================================================================
-            # CONVERTED OUD Entry (active)
-            # ======================================================================
-            dn: cn=user,dc=example,dc=com
-            objectClass: person
-            cn: user
-
-        Configuration
-        -------------
-
-        Controlled via ``WriteFormatOptions``:
-        - ``write_original_entry_as_comment: True`` - Enable original entry comments
-        - Original LDIF stored in ``metadata.original_strings["entry_original_ldif"]``
-
-        Args:
-            entry_data: Entry with metadata containing original entry
-            write_options: Write options with write_original_entry_as_comment flag
-
-        Returns:
-            List of LDIF comment lines (empty if feature disabled)
-
-        """
+        """Add original entry as commented LDIF block."""
         if not (write_options and write_options.write_original_entry_as_comment):
             return []
         if not entry_data.metadata:
@@ -149,12 +94,7 @@ class FlextLdifServersOudCommentsMixin:
         entry: m.Ldif.Entry,
         format_options: m.Ldif.WriteFormatOptions | None = None,
     ) -> set[str]:
-        """Add OUD-specific ACL comments for phases 01-03.
-
-        Checks both attribute_transformations and extensions.commented_attribute_values.
-        Returns set of ACL attribute names to skip in regular processing.
-
-        """
+        """Add OUD-specific ACL comments for phases 01-03."""
         acl_attr_names_to_skip: set[str] = set()
         if not entry.metadata:
             return acl_attr_names_to_skip
@@ -187,13 +127,7 @@ class FlextLdifServersOudCommentsMixin:
         comment_lines: t.MutableSequenceOf[str],
         entry: m.Ldif.Entry,
     ) -> None:
-        """Add comments with rejection reason if entry was rejected.
-
-        Args:
-            comment_lines: List to append comments to
-            entry: Entry model with potential rejection metadata
-
-        """
+        """Add comments with rejection reason if entry was rejected."""
         if (
             entry.metadata
             and entry.metadata.extensions
@@ -211,21 +145,7 @@ class FlextLdifServersOudCommentsMixin:
         entry: m.Ldif.Entry,
         format_options: m.Ldif.WriteFormatOptions | None = None,
     ) -> None:
-        """Add transformation comments for attribute changes, including OUD-specific ACL handling.
-
-        OUD Override of RFC's _add_transformation_comments to handle OID→OUD transformations:
-        - [TRANSFORMED] for original ACL values (orclaci)
-        - [SKIP TO 04] for new ACL values (aci) in phases 01-03
-
-        Uses generic utilities with hooks/parameters for extensibility.
-        Attributes are sorted using the same ordering logic as normal attributes.
-
-        Args:
-            comment_lines: List to append comments to
-            entry: Entry with transformation metadata
-            format_options: Write format options for attribute ordering
-
-        """
+        """Add transformation comments for attribute changes, including OUD-specific ACL handling."""
         if not entry.metadata:
             return
         acl_attr_names_to_skip = FlextLdifServersOudCommentsMixin._add_oud_acl_comments(

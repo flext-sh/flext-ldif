@@ -33,53 +33,7 @@ class FlextLdifServersOudTransformMixin:
         entry_data: m.Ldif.Entry,
         write_options: m.Ldif.WriteFormatOptions | None,
     ) -> m.Ldif.Entry:
-        """Apply phase-aware ACL attribute commenting.
-
-        RFC vs OUD Behavior Differences
-        ================================
-
-        **RFC Baseline**:
-        - No phase-aware ACL handling
-        - ACL attributes written directly without modification
-
-        **OUD Override** (this method):
-        - Comments out ACL attributes during non-ACL migration phases
-        - Enables phased migration: entries first, ACLs later
-        - Prevents ACL application before referenced entries exist
-
-        OUD Migration Phases
-        --------------------
-
-        **Phase-Aware ACL Strategy**:
-
-        ::
-
-            Phase 01 (Groups):    ACL attributes → commented (# aci: ...)
-            Phase 02 (Users):     ACL attributes → commented (# aci: ...)
-            Phase 03 (Contexts):  ACL attributes → commented (# aci: ...)
-            Phase 04 (ACL):       ACL attributes → written normally (aci: ...)
-
-        **Why Phase-Aware ACLs?**:
-        - ACIs reference entries by DN (userdn, groupdn)
-        - Referenced entries must exist before ACI can be applied
-        - Applying ACIs too early causes errors
-
-        Configuration
-        -------------
-
-        Controlled via ``WriteFormatOptions``:
-        - ``comment_acl_in_non_acl_phases: True`` - Enable phase awareness
-        - ``entry_category``: Current phase (``"group"``, ``"user"``, ``"acl"``)
-        - ``acl_attribute_names``: List of ACL attribute names to comment
-
-        Args:
-            entry_data: Entry to process
-            write_options: Write options with ACL phase settings
-
-        Returns:
-            Entry with ACL attributes commented if applicable
-
-        """
+        """Apply phase-aware ACL attribute commenting."""
         if not (write_options and write_options.comment_acl_in_non_acl_phases):
             return entry_data
         category = write_options.entry_category
@@ -96,16 +50,7 @@ class FlextLdifServersOudTransformMixin:
         attr_names: t.MutableSequenceOf[str],
         format_options: m.Ldif.WriteFormatOptions | None,
     ) -> t.MutableSequenceOf[str]:
-        """Determine attribute order based on format options.
-
-        Args:
-            attr_names: List of attribute names to order
-            format_options: Write format options with sort_attributes flag (may be None)
-
-        Returns:
-            Ordered list of attribute names (sorted or original order)
-
-        """
+        """Determine attribute order based on format options."""
         if format_options and format_options.sort_attributes:
             return sorted(attr_names, key=str.lower)
         return attr_names
@@ -119,21 +64,7 @@ class FlextLdifServersOudTransformMixin:
             r[t.Ldif.AttributeDict],
         ],
     ) -> r[m.Ldif.Entry]:
-        """Hook: Validate and CORRECT RFC syntax issues before writing Entry - static helper.
-
-        This hook ensures that Entry data with RFC-valid syntax is properly
-        formatted for OUD LDIF output. It does NOT alter data structure
-        (attributes, objectClasses, etc.) - only corrects syntax/formatting.
-
-        Args:
-            entry: RFC Entry (already canonical, with aci: attributes)
-            validate_aci_macros: Function to validate ACI macros
-            correct_rfc_syntax_in_attributes: Function to correct RFC syntax
-
-        Returns:
-            r[Entry] - entry with corrected syntax, fail() if syntax errors
-
-        """
+        """Hook: Validate and CORRECT RFC syntax issues before writing Entry - static helper."""
         attrs_dict_raw: t.MutableStrSequenceMapping = (
             entry.attributes.attributes if entry.attributes else {}
         )
@@ -162,45 +93,7 @@ class FlextLdifServersOudTransformMixin:
 
     @staticmethod
     def _normalize_acl_dns(entry_data: m.Ldif.Entry) -> m.Ldif.Entry:
-        r"""Normalize and filter DNs in ACL attribute values (userdn/groupdn inside ACL strings).
-
-        RFC vs OUD Behavior Differences
-        ================================
-
-        **RFC Baseline**:
-        - No ACL DN normalization in RFC base
-        - ACLs stored as raw strings without processing
-
-        **OUD Override** (this method):
-        - Normalizes DNs within ACI values (userdn, groupdn patterns)
-        - Removes spaces after commas in embedded DNs
-        - Optionally filters DNs by base_dn scope
-        - Preserves DN case while normalizing whitespace
-
-        ACI DN Normalization
-        --------------------
-
-        **Patterns Processed**:
-        - ``userdn="ldap:///cn=user, dc=example, dc=com"`` → normalized DN
-        - ``groupdn="ldap:///cn=group, dc=example, dc=com"`` → normalized DN
-        - ``roledn="ldap:///cn=role, dc=example, dc=com"`` → normalized DN
-
-        **Normalization Rules**:
-        - Remove spaces after commas: ``cn=user, dc=example`` → ``cn=user,dc=example``
-        - Preserve attribute case: ``CN=User`` stays as ``CN=User``
-        - Handle escaped characters: ``cn=user\\, name`` preserved
-
-        **Base DN Filtering** (when configured):
-        - Filter out ACIs referencing DNs outside base_dn scope
-        - Helps migration by excluding irrelevant ACIs
-
-        Args:
-            entry_data: Entry with potential ACL attributes
-
-        Returns:
-            Entry with normalized/filtered ACL values
-
-        """
+        """Normalize and filter DNs in ACL attribute values (userdn/groupdn inside ACL strings)."""
         if not entry_data.attributes or not entry_data.attributes.attributes:
             return entry_data
         base_dn, dn_registry = FlextLdifServersOudAclMetadataMixin._extract_acl_metadata(
@@ -232,53 +125,7 @@ class FlextLdifServersOudTransformMixin:
 
     @staticmethod
     def _restore_entry_from_metadata(entry_data: m.Ldif.Entry) -> m.Ldif.Entry:
-        """Restore original DN and attributes using generic utilities.
-
-        RFC vs OUD Behavior Differences
-        ================================
-
-        **RFC Baseline** (in rfc.py ``_restore_entry_from_metadata``):
-        - Basic restoration of DN and attributes
-        - Uses metadata.extensions for stored values
-        - Simple case mapping restoration
-
-        **OUD Override** (this method):
-        - Full roundtrip restoration using OUD-specific metadata
-        - Restores DN with original spacing (spaces after commas)
-        - Restores attribute names with original case
-        - Restores attribute values to original format
-
-        Restoration Process
-        -------------------
-
-        **1. DN Restoration** (if differences detected):
-           - Checks ``minimal_differences_dn.has_differences``
-           - Uses ``original_dn_complete`` from extensions
-           - Restores DN with original spacing servers
-
-        **2. Attribute Restoration** (if case mapping available):
-           - Uses ``original_attribute_case`` mapping
-           - Uses ``original_attributes_complete`` dictionary
-           - Restores each attribute with original case
-
-        Example Restoration
-        -------------------
-
-        ::
-
-            # Original OID entry:
-            objectclass: groupOfUniqueNames
-            uniquemember: cn = user1
-
-            # Normalized for OUD:
-            objectClass: groupOfUniqueNames
-            uniqueMember: cn = user1
-
-            # Restored for roundtrip (with preserve_original=True):
-            objectclass: groupOfUniqueNames
-            uniquemember: cn = user1
-
-        """
+        """Restore original DN and attributes using generic utilities."""
         metadata = entry_data.metadata
         if metadata is None or not metadata.extensions:
             return entry_data
