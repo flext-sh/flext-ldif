@@ -233,7 +233,9 @@ class FlextLdifUtilitiesEntry:
         return violations
 
     @staticmethod
-    def validate_attributes_required(entry: p.Ldif.Entry) -> t.MutableSequenceOf[str]:
+    def validate_attributes_required(
+        entry: p.Ldif.EntryValidationSubject,
+    ) -> t.MutableSequenceOf[str]:
         """Validate that entry has at least one attribute per RFC 2849 section 2.
 
         Note: entry.attributes may be None when using model_construct (bypasses validation).
@@ -257,7 +259,7 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def validate_attribute_descriptions(
-        entry: p.Ldif.Entry,
+        entry: p.Ldif.EntryValidationSubject,
     ) -> t.MutableSequenceOf[str]:
         """Validate attribute descriptions per RFC 4512 section 2.5.
 
@@ -288,7 +290,9 @@ class FlextLdifUtilitiesEntry:
         return violations
 
     @staticmethod
-    def validate_attribute_syntax(entry: p.Ldif.Entry) -> t.MutableSequenceOf[str]:
+    def validate_attribute_syntax(
+        entry: p.Ldif.EntryValidationSubject,
+    ) -> t.MutableSequenceOf[str]:
         """Validate attribute name/option syntax per RFC 4512 section 2.5.1-2.5.2.
 
         Note: entry.attributes may be None when using model_construct (bypasses validation).
@@ -312,7 +316,9 @@ class FlextLdifUtilitiesEntry:
         return violations
 
     @staticmethod
-    def validate_binary_options(entry: p.Ldif.Entry) -> t.MutableSequenceOf[str]:
+    def validate_binary_options(
+        entry: p.Ldif.EntryValidationSubject,
+    ) -> t.MutableSequenceOf[str]:
         """Validate binary attribute options per RFC 2849 section 5.2.
 
         Uses compiled regex for O(1)-per-match detection instead of
@@ -335,7 +341,9 @@ class FlextLdifUtilitiesEntry:
         return violations
 
     @staticmethod
-    def validate_changetype(entry: p.Ldif.Entry) -> t.MutableSequenceOf[str]:
+    def validate_changetype(
+        entry: p.Ldif.EntryValidationSubject,
+    ) -> t.MutableSequenceOf[str]:
         """Validate changetype field per RFC 2849 section 5.7."""
         violations: t.MutableSequenceOf[str] = []
         if not entry.changetype:
@@ -349,7 +357,7 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def validate_naming_attribute(
-        entry: p.Ldif.Entry,
+        entry: p.Ldif.EntryValidationSubject,
         dn_value: str,
     ) -> t.MutableSequenceOf[str]:
         """Validate naming attribute presence per RFC 4512 section 2.3.
@@ -381,7 +389,7 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def validate_objectclass(
-        entry: p.Ldif.Entry,
+        entry: p.Ldif.EntryValidationSubject,
         dn_value: str,
     ) -> t.MutableSequenceOf[str]:
         """Validate objectClass presence per RFC 4512 section 2.4.1.
@@ -410,7 +418,7 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def check_binary_option_rule(
-        entry: p.Ldif.Entry,
+        entry: p.Ldif.EntryValidationSubject,
         rules: FlextLdifModelsSettings.ServerValidationRules,
     ) -> t.MutableSequenceOf[str]:
         """Check binary attribute option requirement from server rules."""
@@ -434,7 +442,7 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def check_naming_attr_rule(
-        entry: p.Ldif.Entry,
+        entry: p.Ldif.EntryValidationSubject,
         rules: FlextLdifModelsSettings.ServerValidationRules,
         dn_value: str,
     ) -> t.MutableSequenceOf[str]:
@@ -456,7 +464,7 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def check_objectclass_rule(
-        entry: p.Ldif.Entry,
+        entry: p.Ldif.EntryValidationSubject,
         rules: FlextLdifModelsSettings.ServerValidationRules,
         dn_value: str,
     ) -> t.MutableSequenceOf[str]:

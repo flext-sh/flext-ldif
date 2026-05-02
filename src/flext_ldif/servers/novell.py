@@ -328,9 +328,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 )
                 return r[m.Ldif.Acl].ok(acl)
             except (ValueError, TypeError, AttributeError) as exc:
-                return r[m.Ldif.Acl].fail(
-                    f"Novell eDirectory ACL parsing failed: {exc}",
-                )
+                return r[m.Ldif.Acl].fail_op("Novell eDirectory ACL parsing", exc)
 
         @override
         def _write_acl(self, acl_data: m.Ldif.Acl) -> r[str]:
@@ -372,7 +370,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 )
                 return r[str].ok(acl_str)
             except (ValueError, TypeError, AttributeError) as exc:
-                return r[str].fail(f"Novell eDirectory ACL write failed: {exc}")
+                return r[str].fail_op("Novell eDirectory ACL write", exc)
 
     class Entry(FlextLdifServersRfc.Entry):
         """Novell eDirectory entry server."""
@@ -438,6 +436,4 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 new_entry = entry.model_copy(update={"attributes": new_attrs})
                 return r[m.Ldif.Entry].ok(new_entry)
             except (ValueError, TypeError, AttributeError) as exc:
-                return r[m.Ldif.Entry].fail(
-                    f"Novell eDirectory entry processing failed: {exc}",
-                )
+                return r[m.Ldif.Entry].fail_op("Novell eDirectory entry processing", exc)

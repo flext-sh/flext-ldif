@@ -580,7 +580,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     "DN normalization exception: %s",
                     e,
                 )
-                return r[str].fail(f"DN normalization failed: {e}")
+                return r[str].fail_op("DN normalization", e)
 
         def process_entry(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
             """Process entry for relaxed mode."""

@@ -190,9 +190,8 @@ class FlextLdifServersBaseSchemaAcl(
         """Coerce generic value to ACL payload union."""
         if value is None:
             return None
-        raw_value: object = value
-        if isinstance(raw_value, str):
-            return raw_value
+        if isinstance(value, str):
+            return value
         try:
             return m.Ldif.Acl.model_validate(value)
         except c.ValidationError as exc:
@@ -256,7 +255,7 @@ class FlextLdifServersBaseSchemaAcl(
         """Extract and validate ACL operation parameters from kwargs."""
         data_raw = kwargs.get("data")
         data: str | m.Ldif.Acl | None = self._coerce_acl_data(data_raw)
-        operation_raw: object = kwargs.get("operation")
+        operation_raw = kwargs.get("operation")
         operation = (
             self._coerce_operation(operation_raw)
             if isinstance(operation_raw, str)
@@ -305,7 +304,7 @@ class FlextLdifServersBaseSchemaAcl(
         """Resolve operation from parameter or kwargs."""
         if operation is not None:
             return operation
-        operation_raw: object = kwargs.get("operation")
+        operation_raw = kwargs.get("operation")
         if not isinstance(operation_raw, str):
             return None
         return self._coerce_operation(operation_raw)

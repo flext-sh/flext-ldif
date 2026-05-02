@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, ClassVar, Protocol, runtime_checkable
 from flext_core import p
 
 if TYPE_CHECKING:
-    from flext_ldif import FlextLdifProtocolsDomain as lpd, m, t
+    from flext_ldif import FlextLdifProtocolsDomain as lpd, FlextLdifSettings, c, m, t
 
 
 class FlextLdifProtocolsBase(Protocol):
@@ -35,6 +35,11 @@ class FlextLdifProtocolsBase(Protocol):
     @runtime_checkable
     class LdifClient(ValidationService, Protocol):
         """Protocol for LDIF clients that support CRUD operations."""
+
+        @property
+        def settings(self) -> FlextLdifSettings:
+            """Expose the typed LDIF settings carried by the public facade."""
+            ...
 
         def migrate(
             self,
@@ -63,6 +68,14 @@ class FlextLdifProtocolsBase(Protocol):
             encoding: str = "utf-8",
         ) -> p.Result[m.Ldif.ParseResponse]:
             """Parse LDIF content from a file path."""
+            ...
+
+        def parse_string(
+            self,
+            content: str,
+            server_type: str | None = None,
+        ) -> p.Result[m.Ldif.ParseResponse]:
+            """Parse LDIF content from a raw string."""
             ...
 
         def write(
@@ -94,11 +107,23 @@ class FlextLdifProtocolsBase(Protocol):
             """Write LDIF entries to a string."""
             ...
 
+        def acl(self, server_type: str) -> lpd.AclServer | None:
+            """Resolve ACL server by server type via the facade DSL."""
+            ...
+
+        def entry(self, server_type: str) -> lpd.EntryServer | None:
+            """Resolve entry server by server type via the facade DSL."""
+            ...
+
         def resolve_base_server(
             self,
             server_type: str,
         ) -> p.Result[lpd.ServerServer]:
             """Resolve base server by server type via the facade DSL."""
+            ...
+
+        def schema_server(self, server_type: str) -> lpd.SchemaServer | None:
+            """Resolve schema server by server type via the facade DSL."""
             ...
 
         def resolve_schema_server(
@@ -128,6 +153,10 @@ class FlextLdifProtocolsBase(Protocol):
             """List registered server types via the facade DSL."""
             ...
 
+        def summarize_registry(self) -> t.Ldif.MutableMetadataInputMapping:
+            """Return registry summary metadata via the facade DSL."""
+            ...
+
         def resolve_supported_conversions(
             self,
             server: FlextLdifProtocolsBase.ServerReference | str,
@@ -135,13 +164,16 @@ class FlextLdifProtocolsBase(Protocol):
             """Return supported conversion categories for a server server."""
             ...
 
-        def convert_entry(
+        def convert_model(
             self,
-            source: str | FlextLdifProtocolsBase.ServerReference,
-            target: str | FlextLdifProtocolsBase.ServerReference,
-            entry: FlextLdifProtocolsBase.Entry,
-        ) -> p.Result[FlextLdifProtocolsBase.Entry]:
-            """Convert a single entry between server servers."""
+            source: str | FlextLdifProtocolsBase.ServerReference | lpd.ServerServer,
+            target: str | FlextLdifProtocolsBase.ServerReference | lpd.ServerServer,
+            model_instance: m.Ldif.Entry
+            | m.Ldif.SchemaAttribute
+            | m.Ldif.SchemaObjectClass
+            | m.Ldif.Acl,
+        ) -> p.Result[t.Ldif.ConvertedModel]:
+            """Convert one LDIF model between server servers."""
             ...
 
         def detect_server_type(
@@ -153,12 +185,64 @@ class FlextLdifProtocolsBase(Protocol):
             """Detect LDAP server type from LDIF file or content."""
             ...
 
+        def resolve_effective_server_type(
+            self,
+            ldif_path: Path | None = None,
+            ldif_content: str | None = None,
+        ) -> p.Result[str]:
+            """Resolve the effective LDAP server type for public processing flows."""
+            ...
+
         def validate_entries(
             self,
             entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
             validation_service: FlextLdifProtocolsBase.ValidationService | None = None,
         ) -> p.Result[m.Ldif.ValidationResult]:
             """Validate list of entries."""
+            ...
+
+        def service_check(self) -> p.Result[m.Ldif.AclResponse]:
+            """Run the public ACL service wiring check."""
+            ...
+
+        def parse_acl_string(
+            self,
+            acl_string: str,
+            server_type: str,
+        ) -> p.Result[m.Ldif.Acl]:
+            """Parse one ACL string through the public facade DSL."""
+            ...
+
+        def extract_acls_from_entry(
+            self,
+            entry: m.Ldif.Entry,
+            server_type: str,
+        ) -> p.Result[m.Ldif.AclResponse]:
+            """Extract ACLs from an entry through the public facade DSL."""
+            ...
+
+        def evaluate_acl_context(
+            self,
+            acls: t.SequenceOf[t.Ldif.AclLike],
+            required_permissions: m.Ldif.AclPermissions | t.MutableBoolMapping,
+        ) -> p.Result[m.Ldif.AclEvaluationResult]:
+            """Evaluate ACLs through the public facade DSL."""
+            ...
+
+        def process_entries(
+            self,
+            entries: t.MutableSequenceOf[m.Ldif.Entry],
+            options: m.Ldif.ProcessEntriesOptions | None = None,
+            **kwargs: t.JsonValue,
+        ) -> p.Result[t.MutableSequenceOf[m.Ldif.ProcessingResult]]:
+            """Process entries through the public facade DSL."""
+            ...
+
+        def calculate_for_entries(
+            self,
+            entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
+        ) -> p.Result[m.Ldif.EntriesStatistics]:
+            """Calculate entry statistics through the public facade DSL."""
             ...
 
     @runtime_checkable
@@ -265,7 +349,7 @@ class FlextLdifProtocolsBase(Protocol):
         control_type: str
         criticality: bool | None
         value: str | None
-        value_origin: str | None
+        value_origin: c.Ldif.ValueOrigin | None
         raw_value: str | None
 
     @runtime_checkable
@@ -273,16 +357,16 @@ class FlextLdifProtocolsBase(Protocol):
         """Single decoded value in a modify block."""
 
         value: str
-        value_origin: str
+        value_origin: c.Ldif.ValueOrigin
         raw_value: str | None
 
     @runtime_checkable
     class ChangeOperation(Protocol):
         """Structured modify block."""
 
-        operation: str
+        operation: c.Ldif.ChangeOperation
         attribute: str
-        values: t.SequenceOf[FlextLdifProtocolsBase.ChangeOperationValue]
+        values: t.SequenceOf[m.Ldif.ChangeOperationValue]
 
     @runtime_checkable
     class AclPermissions(Protocol):
@@ -537,6 +621,8 @@ class FlextLdifProtocolsBase(Protocol):
     class Entry(Protocol):
         """Entry model contract used across LDIF services."""
 
+        change_operations: t.MutableSequenceOf[m.Ldif.ChangeOperation]
+
         @property
         def dn(self) -> FlextLdifProtocolsBase.DN | None:
             """Return entry DN."""
@@ -548,25 +634,18 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
         @property
-        def changetype(self) -> str | None:
+        def changetype(self) -> c.Ldif.LdifChangeType | None:
             """Return changetype when present."""
             ...
 
         @property
-        def record_kind(self) -> str:
+        def record_kind(self) -> c.Ldif.RecordKind:
             """Return whether the record is content or change."""
             ...
 
         @property
-        def controls(self) -> t.SequenceOf[object]:
+        def controls(self) -> t.SequenceOf[FlextLdifProtocolsBase.Control]:
             """Return parsed LDIF controls."""
-            ...
-
-        @property
-        def change_operations(
-            self,
-        ) -> t.SequenceOf[object]:
-            """Return parsed modify blocks."""
             ...
 
         @property
@@ -582,6 +661,20 @@ class FlextLdifProtocolsBase(Protocol):
         @property
         def newsuperior(self) -> str | None:
             """Return newsuperior for moddn records."""
+            ...
+
+    @runtime_checkable
+    class EntryValidationSubject(Protocol):
+        """Minimal entry contract used by RFC/server validation helpers."""
+
+        @property
+        def attributes(self) -> FlextLdifProtocolsBase.Attributes | None:
+            """Return entry attributes for validation helpers."""
+            ...
+
+        @property
+        def changetype(self) -> c.Ldif.LdifChangeType | None:
+            """Return entry changetype for validation helpers."""
             ...
 
     @runtime_checkable

@@ -609,7 +609,7 @@ class FlextLdifCategorization(s):
                     "Entry DN failed RFC 4514 validation",
                     entry_dn=dn_str,
                 )
-                return r[m.Ldif.Entry].fail(f"DN validation failed: {dn_str[:80]}")
+                return r[m.Ldif.Entry].fail_op("DN validation", dn_str[:80])
             norm_result = u.Ldif.norm(dn_str)
             normalized_dn = norm_result.map_or(None)
             if normalized_dn is None:
@@ -621,9 +621,7 @@ class FlextLdifCategorization(s):
                     ),
                 )
                 self.rejection_tracker["invalid_dn_rfc4514"].append(rejected_entry)
-                return r[m.Ldif.Entry].fail(
-                    f"DN normalization failed: {norm_result.error or 'Unknown error'}",
-                )
+                return r[m.Ldif.Entry].fail_op("DN normalization", norm_result.error or 'Unknown error')
             dn_obj = m.Ldif.DN(value=normalized_dn)
             return r[m.Ldif.Entry].ok(entry.model_copy(update={"dn": dn_obj}))
 

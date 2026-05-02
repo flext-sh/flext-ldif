@@ -1804,9 +1804,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         has_macros = bool(re.search(r"\(\$dn\)|\[\$dn\]|\(\$attr\.", aci_value))
         validation_result = self._validate_aci_macros(aci_value)
         if validation_result.failure:
-            return r[bool].fail(
-                f"ACI macro validation failed: {validation_result.error}",
-            )
+            return r[bool].fail_op("ACI macro validation", validation_result.error)
         normalized_aci = aci_value.strip()
         if not normalized_aci.startswith("aci:"):
             normalized_aci = f"aci: {normalized_aci}"
@@ -2018,7 +2016,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         """
         hook_result = self._hook_pre_write_entry(entry_data)
         if hook_result.failure:
-            return r[str].fail(f"Pre-write hook failed: {hook_result.error}")
+            return r[str].fail_op("Pre-write hook", hook_result.error)
         normalized_entry = hook_result.value
         entry_to_write = self._restore_entry_from_metadata(normalized_entry)
         write_options = self._extract_write_format_options(entry_to_write.metadata)

@@ -324,7 +324,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 UnicodeDecodeError,
                 struct.error,
             ) as e:
-                return r[m.Ldif.Acl].fail(f"OpenLDAP 2.x ACL parsing failed: {e}")
+                return r[m.Ldif.Acl].fail_op("OpenLDAP 2.x ACL parsing", e)
 
         def _parse_by_clauses(self, acl_content: str) -> tuple[str, str]:
             """Parse "by <who> <access>" clauses."""
@@ -429,7 +429,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 UnicodeDecodeError,
                 struct.error,
             ) as e:
-                return r[str].fail(f"OpenLDAP 2.x ACL write failed: {e}")
+                return r[str].fail_op("OpenLDAP 2.x ACL write", e)
 
     class Entry(FlextLdifServersRfc.Entry):
         """OpenLDAP 2.x entry server (nested)."""

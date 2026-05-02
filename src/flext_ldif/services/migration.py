@@ -199,9 +199,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
             struct.error,
         ) as e:
             self.logger.exception("Migration pipeline failed", error=str(e))
-            return r[m.Ldif.MigrationPipelineResult].fail(
-                f"Migration pipeline failed: {e}",
-            )
+            return r[m.Ldif.MigrationPipelineResult].fail_op("Migration pipeline", e)
 
     def migrate_entries(
         self,
@@ -249,16 +247,12 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
                 server_type=self.source_server_type,
             )
             if parse_result.failure:
-                return r[m.Ldif.MigrationPipelineResult].fail(
-                    f"Parse failed: {parse_result.error}",
-                )
+                return r[m.Ldif.MigrationPipelineResult].fail_op("Parse", parse_result.error)
             response = parse_result.value
             entries_list: t.MutableSequenceOf[m.Ldif.Entry] = list(response.entries)
             migrate_result = self.migrate_entries(entries_list)
             if migrate_result.failure:
-                return r[m.Ldif.MigrationPipelineResult].fail(
-                    f"Migration failed: {migrate_result.error}",
-                )
+                return r[m.Ldif.MigrationPipelineResult].fail_op("Migration", migrate_result.error)
             migrated = migrate_result.value
             if output_file is None:
                 out_dir = self.output_dir
@@ -275,9 +269,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
                 server_type=self.target_server_type,
             )
             if write_result.failure:
-                return r[m.Ldif.MigrationPipelineResult].fail(
-                    f"Write failed: {write_result.error}",
-                )
+                return r[m.Ldif.MigrationPipelineResult].fail_op("Write", write_result.error)
             self.logger.debug("Wrote migrated file", output_file=str(output_file))
             result = self._build_pipeline_result(
                 entries=migrated,

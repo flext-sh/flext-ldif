@@ -54,7 +54,7 @@ class FlextLdifModelsMetadata:
         ] = None
 
         @override
-        def __eq__(self, other: object) -> bool:
+        def __eq__(self, other: Self | t.JsonMapping) -> bool:
             if isinstance(other, dict):
                 return dict(self.items()) == other
             if isinstance(other, type(self)):

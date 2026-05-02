@@ -53,9 +53,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
             return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(entries)
         except ValueError as exc:
             logger.exception("Failed to parse LDIF content")
-            return r[t.MutableSequenceOf[m.Ldif.Entry]].fail(
-                f"Processing failed: {exc}",
-            )
+            return r[t.MutableSequenceOf[m.Ldif.Entry]].fail_op("Processing", exc)
 
 
 __all__: list[str] = ["FlextLdifServersRfcEntry"]

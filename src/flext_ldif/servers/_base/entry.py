@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import json
 import re
 from collections.abc import (
     Mapping,
@@ -77,9 +78,12 @@ class FlextLdifServersBaseEntry(
         )
         if isinstance(format_options_raw, Mapping):
             try:
+                normalized_payload = t.Cli.JSON_MAPPING_ADAPTER.validate_python(
+                    format_options_raw,
+                )
                 validated: m.Ldif.WriteFormatOptions = (
-                    m.Ldif.WriteFormatOptions.model_validate(
-                        t.Cli.JSON_MAPPING_ADAPTER.validate_python(format_options_raw),
+                    m.Ldif.WriteFormatOptions.model_validate_json(
+                        json.dumps(normalized_payload),
                     )
                 )
                 return validated
@@ -243,7 +247,10 @@ class FlextLdifServersBaseEntry(
         write_options: m.Ldif.WriteFormatOptions,
     ) -> m.Ldif.Entry:
         """Inject write format options into entry metadata extensions."""
-        format_options_payload = write_options.model_dump(exclude_none=True)
+        format_options_payload = write_options.model_dump(
+            mode="json",
+            exclude_none=True,
+        )
         existing_extensions = (
             entry.metadata.extensions.model_copy(deep=True)
             if entry.metadata
@@ -429,7 +436,7 @@ class FlextLdifServersBaseEntry(
             output_lines.extend(u.Ldif.fold_line(line, width=effective_line_width))
 
         if should_restore_original() and entry_data.metadata is not None:
-            original_ldif_raw: object = entry_data.metadata.original_strings.get(
+            original_ldif_raw = entry_data.metadata.original_strings.get(
                 "entry_original_ldif",
             )
             if not original_ldif_raw:

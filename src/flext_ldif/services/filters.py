@@ -138,9 +138,7 @@ class FlextLdifFilters(s):
             cls._get_or_create_logger().exception(
                 "Failed to filter schema entries by OIDs",
             )
-            return r[t.MutableSequenceOf[m.Ldif.Entry]].fail(
-                f"Schema OID filter failed: {e}",
-            )
+            return r[t.MutableSequenceOf[m.Ldif.Entry]].fail_op("Schema OID filter", e)
 
     @classmethod
     def filter_entry_attributes(

@@ -99,8 +99,7 @@ class FlextLdifEntries(s):
 
     @staticmethod
     def normalize_attribute_values(
-        attribute: str
-        | t.MutableSequenceOf[str]
+        attribute: t.Ldif.UnconvertedAttributeValue
         | tuple[str, ...]
         | set[str]
         | frozenset[str],

@@ -322,12 +322,11 @@ class FlextLdifServersBaseSchema(
         """Coerce raw execute payload to the concrete schema payload union."""
         if value is None:
             return None
-        raw_value: object = value
         if isinstance(
-            raw_value,
+            value,
             (str, m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass),
         ):
-            return raw_value
+            return value
         for model in (m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass):
             try:
                 return model.model_validate(value)
@@ -411,7 +410,7 @@ class FlextLdifServersBaseSchema(
         """Resolve schema operation from parameter or kwargs."""
         if operation is not None:
             return self._coerce_operation(operation)
-        raw_operation: object = kwargs.get("operation")
+        raw_operation = kwargs.get("operation")
         if not isinstance(raw_operation, str):
             return None
         return self._coerce_operation(raw_operation)

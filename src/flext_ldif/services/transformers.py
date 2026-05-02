@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_ldif import FlextLdifConversion, c, m, p, r, s, u
+from flext_ldif import FlextLdifConversion, c, m, p, r, s, t, u
 
 
 class FlextLdifTransformer(s):
@@ -45,7 +45,7 @@ class FlextLdifTransformer(s):
             self.target_server or c.Ldif.ServerTypes.RFC,
         )
 
-        def ensure_entry(converted: object) -> r[m.Ldif.Entry]:
+        def ensure_entry(converted: t.Ldif.ConvertedModel) -> r[m.Ldif.Entry]:
             if isinstance(converted, m.Ldif.Entry):
                 return r[m.Ldif.Entry].ok(converted)
             return r[m.Ldif.Entry].fail(
@@ -54,10 +54,10 @@ class FlextLdifTransformer(s):
 
         return (
             FlextLdifConversion()
-            .convert_entry(
+            .convert_model(
                 source=source_server.value,
                 target=target_server.value,
-                entry=item,
+                model_instance=item,
             )
             .flat_map(ensure_entry)
         )

@@ -568,6 +568,7 @@ class FlextLdifModelsDomainEntry:
             extra = self.metadata.extensions.__pydantic_extra__
             if extra is None:
                 return empty_attrs
+
             result = extra.get("unconverted_attributes")
             return FlextLdifUtilitiesEntry.normalize_unconverted_attributes(result)
 

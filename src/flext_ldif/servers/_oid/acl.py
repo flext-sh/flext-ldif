@@ -649,7 +649,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 acl_line=acl_preview,
                 acl_line_length=len(acl_line),
             )
-            return r[m.Ldif.Acl].fail(f"OID ACL parsing failed: {e}")
+            return r[m.Ldif.Acl].fail_op("OID ACL parsing", e)
 
     def _authorize_write_permissions(
         self,

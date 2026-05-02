@@ -442,6 +442,4 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 UnicodeDecodeError,
                 struct.error,
             ) as e:
-                return r[m.Ldif.Entry].fail(
-                    f"OpenLDAP 1.x entry processing failed: {e}",
-                )
+                return r[m.Ldif.Entry].fail_op("OpenLDAP 1.x entry processing", e)

@@ -159,9 +159,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             struct.error,
         ) as e:
             logger.exception("OID post-parse attribute hook failed")
-            return r[m.Ldif.SchemaAttribute].fail(
-                f"OID post-parse attribute hook failed: {e}",
-            )
+            return r[m.Ldif.SchemaAttribute].fail_op("OID post-parse attribute hook", e)
 
     @override
     def _hook_post_parse_objectclass(
@@ -209,9 +207,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             struct.error,
         ) as e:
             logger.exception("OID post-parse objectclass hook failed")
-            return r[m.Ldif.SchemaObjectClass].fail(
-                f"OID post-parse objectclass hook failed: {e}",
-            )
+            return r[m.Ldif.SchemaObjectClass].fail_op("OID post-parse objectclass hook", e)
 
     def _normalize_attribute_names(
         self,
@@ -330,7 +326,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             struct.error,
         ) as e:
             logger.exception("OID attribute parsing failed")
-            return r[m.Ldif.SchemaAttribute].fail(f"OID attribute parsing failed: {e}")
+            return r[m.Ldif.SchemaAttribute].fail_op("OID attribute parsing", e)
 
     @override
     def _parse_objectclass(self, oc_definition: str) -> r[m.Ldif.SchemaObjectClass]:
@@ -358,9 +354,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             struct.error,
         ) as e:
             logger.exception("OID objectClass parsing failed")
-            return r[m.Ldif.SchemaObjectClass].fail(
-                f"OID objectClass parsing failed: {e}",
-            )
+            return r[m.Ldif.SchemaObjectClass].fail_op("OID objectClass parsing", e)
 
     @override
     def _transform_attribute_for_write(

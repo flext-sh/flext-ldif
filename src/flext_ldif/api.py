@@ -72,20 +72,30 @@ class FlextLdif(
     def categorization(
         self,
         *,
-        categorization_rules: m.Ldif.CategoryRules | None = None,
-        schema_whitelist_rules: m.Ldif.WhitelistRules | None = None,
-        forbidden_attributes: t.MutableSequenceOf[str] | None = None,
-        forbidden_objectclasses: t.MutableSequenceOf[str] | None = None,
+        options: m.Ldif.MigrateOptions | None = None,
         base_dn: str | None = None,
         server_type: str = c.Ldif.ServerTypes.RFC.value,
     ) -> p.Ldif.CategorizationService:
         """Create a categorization service bound to the facade registry."""
+        resolved_base_dn = (
+            base_dn
+            if base_dn is not None
+            else (options.base_dn if options is not None else None)
+        )
         return FlextLdifCategorization(
-            categorization_rules=categorization_rules,
-            schema_whitelist_rules=schema_whitelist_rules,
-            forbidden_attributes=forbidden_attributes,
-            forbidden_objectclasses=forbidden_objectclasses,
-            base_dn=base_dn,
+            categorization_rules=(
+                options.categorization_rules if options is not None else None
+            ),
+            schema_whitelist_rules=(
+                options.schema_whitelist_rules if options is not None else None
+            ),
+            forbidden_attributes=(
+                options.forbidden_attributes if options is not None else None
+            ),
+            forbidden_objectclasses=(
+                options.forbidden_objectclasses if options is not None else None
+            ),
+            base_dn=resolved_base_dn,
             server_type=server_type,
             server=self._server,
             runtime_settings=self.runtime_settings,
@@ -202,17 +212,21 @@ class FlextLdif(
         *,
         input_dir: Path | None = None,
         output_dir: Path | None = None,
-        source_server: str | c.Ldif.ServerTypes = c.Ldif.ServerTypes.RFC.value,
-        target_server: str | c.Ldif.ServerTypes = c.Ldif.ServerTypes.RFC.value,
-        output_filename: str | None = None,
+        settings: m.Ldif.TransformConfig | None = None,
+        options: m.Ldif.MigrateOptions | None = None,
     ) -> p.Ldif.MigrationPipeline:
         """Create a configured migration pipeline bound to the facade runtime."""
+        process_config = settings.process_config if settings is not None else None
         return FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            source_server=source_server,
-            target_server=target_server,
-            output_filename=output_filename,
+            source_server_type=(
+                process_config.source_server if process_config is not None else None
+            ),
+            target_server_type=(
+                process_config.target_server if process_config is not None else None
+            ),
+            output_filename=(options.output_filename if options is not None else None),
             server=self._server,
             runtime_settings=self.runtime_settings,
         )
@@ -226,13 +240,15 @@ class FlextLdif(
         options: m.Ldif.MigrateOptions | None = None,
     ) -> p.Result[m.Ldif.MigrationPipelineResult]:
         """Migrate LDIF data between servers."""
-        output_filename = options.output_filename if options else None
+        transform_config = m.Ldif.TransformConfig.servers(
+            source_server=source_server,
+            target_server=target_server,
+        )
         pipeline = self.migration_pipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            source_server=source_server,
-            target_server=target_server,
-            output_filename=output_filename,
+            settings=transform_config,
+            options=options,
         )
         return pipeline.execute()
 

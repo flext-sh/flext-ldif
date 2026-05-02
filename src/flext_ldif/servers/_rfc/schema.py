@@ -355,13 +355,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                     available_attrs,
                 )
                 if not validation_result.success:
-                    return r[
-                        MutableMapping[
-                            str,
-                            t.MutableSequenceOf[m.Ldif.SchemaAttribute]
-                            | t.MutableSequenceOf[m.Ldif.SchemaObjectClass],
-                        ]
-                    ].fail(f"Attribute validation failed: {validation_result.error}")
+                    return r[MutableMapping[str, t.MutableSequenceOf[m.Ldif.SchemaAttribute] | t.MutableSequenceOf[m.Ldif.SchemaObjectClass]]].fail_op("Attribute validation", validation_result.error)
 
             def parse_objectclass_domain(
                 oc_definition: str,
@@ -403,13 +397,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             struct.error,
         ) as e:
             logger.exception("Schema extraction failed")
-            return r[
-                MutableMapping[
-                    str,
-                    t.MutableSequenceOf[m.Ldif.SchemaAttribute]
-                    | t.MutableSequenceOf[m.Ldif.SchemaObjectClass],
-                ]
-            ].fail(f"Schema extraction failed: {e}")
+            return r[MutableMapping[str, t.MutableSequenceOf[m.Ldif.SchemaAttribute] | t.MutableSequenceOf[m.Ldif.SchemaObjectClass]]].fail_op("Schema extraction", e)
 
     def should_filter_out_attribute(self, _attribute: m.Ldif.SchemaAttribute) -> bool:
         """RFC server does not filter attributes."""
@@ -643,9 +631,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             return r[m.Ldif.SchemaObjectClass].ok(objectclass)
         except (ValueError, TypeError, AttributeError) as e:
             logger.exception("RFC objectClass parsing exception")
-            return r[m.Ldif.SchemaObjectClass].fail(
-                f"RFC objectClass parsing failed: {e}",
-            )
+            return r[m.Ldif.SchemaObjectClass].fail_op("RFC objectClass parsing", e)
 
     def _post_write_attribute(self, written_str: str) -> str:
         """Hook for subclasses to transform written attribute string."""

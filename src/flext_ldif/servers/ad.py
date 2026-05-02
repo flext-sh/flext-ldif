@@ -313,7 +313,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                     acl_model.metadata.extensions["original_format"] = acl_line
                 return r[m.Ldif.Acl].ok(acl_model)
             except (ValueError, TypeError, AttributeError) as exc:
-                return r[m.Ldif.Acl].fail(f"Active Directory ACL parsing failed: {exc}")
+                return r[m.Ldif.Acl].fail_op("Active Directory ACL parsing", exc)
 
         @override
         def _write_acl(self, acl_data: m.Ldif.Acl) -> r[str]:
@@ -332,7 +332,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                     acl_str = f"{acl_attribute}:"
                 return r[str].ok(acl_str)
             except (ValueError, TypeError, AttributeError) as exc:
-                return r[str].fail(f"Active Directory ACL write failed: {exc}")
+                return r[str].fail_op("Active Directory ACL write", exc)
 
     class Entry(FlextLdifServersRfc.Entry):
         """Active Directory entry processing server."""

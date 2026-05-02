@@ -10,7 +10,7 @@ from collections.abc import (
     Iterator,
     MutableMapping,
 )
-from typing import Annotated, ClassVar, override
+from typing import Annotated, ClassVar, Self, override
 
 from flext_cli import m, u
 from flext_ldif import (
@@ -28,7 +28,7 @@ class FlextLdifModelsCollections:
         )
 
         @override
-        def __eq__(self, other: object) -> bool:
+        def __eq__(self, other: Self | t.JsonMapping) -> bool:
             if isinstance(other, dict):
                 self_dict = {
                     key: value
@@ -109,7 +109,7 @@ class FlextLdifModelsCollections:
 
     class BooleanFlags(m.FrozenDynamicModel):
         @override
-        def __eq__(self, other: object) -> bool:
+        def __eq__(self, other: Self | t.JsonMapping) -> bool:
             if isinstance(other, dict):
                 extra = self.model_extra
                 dict_eq: bool = (extra or {}) == other
@@ -139,7 +139,10 @@ class FlextLdifModelsCollections:
         ] = u.Field(default_factory=dict)
 
         @override
-        def __eq__(self, other: object) -> bool:
+        def __eq__(
+            self,
+            other: Self | MutableMapping[str, t.MutableSequenceOf[mde.Entry]],
+        ) -> bool:
             if isinstance(other, self.__class__):
                 return self.categories == other.categories
             if isinstance(other, dict):

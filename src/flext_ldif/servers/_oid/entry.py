@@ -508,7 +508,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             struct.error,
         ) as e:
             logger.exception("OID post-parse entry hook failed")
-            return r[m.Ldif.Entry].fail(f"OID post-parse entry hook failed: {e}")
+            return r[m.Ldif.Entry].fail_op("OID post-parse entry hook", e)
 
     def _hook_transform_entry_raw(
         self,
