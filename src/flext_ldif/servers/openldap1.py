@@ -199,7 +199,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 UnicodeDecodeError,
                 struct.error,
             ) as e:
-                return r[str].fail(f"OpenLDAP 1.x attribute write failed: {e}")
+                return r[str].fail_op("OpenLDAP 1.x attribute write", e)
 
         @override
         def _write_objectclass(self, oc_data: m.Ldif.SchemaObjectClass) -> r[str]:
@@ -240,7 +240,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 UnicodeDecodeError,
                 struct.error,
             ) as e:
-                return r[str].fail(f"OpenLDAP 1.x objectClass write failed: {e}")
+                return r[str].fail_op("OpenLDAP 1.x objectClass write", e)
 
     class Acl(FlextLdifServersRfc.Acl):
         """OpenLDAP 1.x ACL server (nested)."""
@@ -370,7 +370,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 UnicodeDecodeError,
                 struct.error,
             ) as e:
-                return r[m.Ldif.Acl].fail(f"OpenLDAP 1.x ACL parsing failed: {e}")
+                return r[m.Ldif.Acl].fail_op("OpenLDAP 1.x ACL parsing", e)
 
         @override
         def _write_acl(self, acl_data: m.Ldif.Acl) -> r[str]:
@@ -401,7 +401,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 UnicodeDecodeError,
                 struct.error,
             ) as e:
-                return r[str].fail(f"OpenLDAP 1.x ACL write failed: {e}")
+                return r[str].fail_op("OpenLDAP 1.x ACL write", e)
 
     class Entry(FlextLdifServersRfc.Entry):
         """OpenLDAP 1.x entry server (nested)."""
