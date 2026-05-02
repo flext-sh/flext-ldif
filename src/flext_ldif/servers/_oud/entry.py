@@ -151,28 +151,11 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         self,
         entry_service: p.Ldif.EntryServer | None = None,
         _parent_server: FlextLdifServersBase | None = None,
-        **kwargs: str | float | bool | None,
     ) -> None:
-        """Initialize OUD entry server.
-
-        Args:
-            entry_service: Injected entry service (optional, must satisfy HasParseMethod)
-            _parent_server: Reference to parent FlextLdifServersBase (optional)
-            **kwargs: Additional arguments passed to parent
-
-        """
-        {
-            k: v
-            for k, v in kwargs.items()
-            if k != "_parent_server"
-            and u.matches_type(v, (str, float, bool, type(None)))
-        }
-        entry_service_typed: p.Ldif.EntryServer | None = (
-            entry_service if entry_service is not None else None
-        )
+        """Initialize OUD entry server."""
         FlextLdifServersBaseEntry.__init__(
             self,
-            entry_service_typed,
+            entry_service,
             _parent_server=None,
         )
         if _parent_server is not None:
