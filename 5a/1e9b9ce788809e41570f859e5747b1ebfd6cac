@@ -1,0 +1,140 @@
+src/flext_ldif/shared.py
+  h_9db9d35f50cf33 52
+examples/07_advanced_processing.py
+  473c59be621cc5d5 24
+  h_9db9d35f50cf33 23
+tests/unit/services/test_acl_service.py
+  h_9db9d35f50cf33 1,8,12,15-16,20,28-29,31,36-37,41,46-47,50,55-56,59,75,81,85,98,106,119,133,145-146,153,158-159,166,171-172,176,182
+tests/unit/services/test_entries_service.py
+  h_9db9d35f50cf33 8-9,253-254
+tests/integration/test_ldif_fixtures_integration.py
+  h_9db9d35f50cf33 17,25
+tests/conftest.py
+  h_9db9d35f50cf33 67,127,140,180,193,239,252,271,561
+tests/unit/servers/test_edge_cases.py
+  h_9db9d35f50cf33 14-15,29,49,73,97
+tests/integration/test_real_ldap_roundtrip.py
+  h_9db9d35f50cf33 27,32,47
+tests/unit/services/test_processing_service.py
+  h_9db9d35f50cf33 10,31,52,69,87
+src/flext_ldif/api.py
+  h_9db9d35f50cf33 51-56,147-148,152-153,163-164,171-172,197-198,202-203,275
+tests/integration/test_minimal_differences_metadata.py
+  h_9db9d35f50cf33 16,29
+src/flext_ldif/servers/_rfc/schema.py
+  473c59be621cc5d5 358-364,406-412
+src/flext_ldif/servers/novell.py
+  473c59be621cc5d5 439-441
+tests/unit/services/test_detector_service.py
+  h_9db9d35f50cf33 10,18,20,25,29,34,39,44,50,59,61,81,83,91,94,111,113,120,122,131,133
+examples/05_schema_operations.py
+  h_9db9d35f50cf33 15
+  473c59be621cc5d5 16
+tests/unit/services/test_api_server_registry.py
+  h_9db9d35f50cf33 7,15,26,46,68,88
+tests/unit/servers/test_novell_servers.py
+  h_9db9d35f50cf33 19-26,33-38
+tests/integration/test_real_ldap_import.py
+  h_9db9d35f50cf33 30,35,50,91,130
+src/flext_ldif/services/migration.py
+  473c59be621cc5d5 250-252,257-259,276-278
+examples/04_server_migration.py
+  h_9db9d35f50cf33 13-14
+examples/06_acl_processing.py
+  h_9db9d35f50cf33 17,33,53,74,98,116
+examples/demo_structured_migration.py
+  473c59be621cc5d5 20
+  h_9db9d35f50cf33 19
+tests/integration/test_acl_metadata_preservation.py
+  h_9db9d35f50cf33 21-22,38,59,70,80,94,107,125,139,151,161,171,181,191,202,212,223,247,251,270
+examples/03_validation_analysis.py
+  h_9db9d35f50cf33 22
+src/flext_ldif/servers/_oid/schema.py
+  473c59be621cc5d5 210-212
+src/flext_ldif/servers/apache.py
+  473c59be621cc5d5 241-243
+tests/integration/test_oid_integration.py
+  h_9db9d35f50cf33 17,31,50,92,141,160,190,221,249,274
+tests/unit/services/test_analysis_service.py
+  h_9db9d35f50cf33 1,8,11-15,17,21,23,28,34-35,42,44,46,52,58,63,65,67-71,73,82,91,97-99,101-103,106-109,111,113,119-122,124,126,128-132
+src/flext_ldif/services/conversion_support.py
+  h_9db9d35f50cf33 1-154
+tests/integration/test_zero_data_loss_oid_oud.py
+  h_9db9d35f50cf33 18-19,46,62,88,107,148,204,260,295-296,307,322,355
+tests/integration/test_config_integration.py
+  h_9db9d35f50cf33 23,45,58-59,78,98,108,119
+examples/08_complete_workflow.py
+  h_9db9d35f50cf33 14
+  473c59be621cc5d5 15
+tests/integration/test_cross_server_conversion.py
+  h_9db9d35f50cf33 133-138,142-155,335
+  473c59be621cc5d5 139-141
+src/flext_ldif/services/analysis.py
+  h_9db9d35f50cf33 114
+tests/integration/test_real_ldap_config.py
+  h_9db9d35f50cf33 19-20,24,33,50,61
+tests/unit/services/test_statistics_service.py
+  h_9db9d35f50cf33 7,36,59
+src/flext_ldif/servers/_oud/schema.py
+  473c59be621cc5d5 300-302,328-330
+src/flext_ldif/services/categorization.py
+  473c59be621cc5d5 624-626
+tests/integration/test_api_integration.py
+  h_9db9d35f50cf33 14-15,18-20,22-23,153-199
+  473c59be621cc5d5 200
+tests/integration/test_real_ldap_export.py
+  h_9db9d35f50cf33 28,33,48,87,122,169
+tests/unit/services/test_parser_service.py
+  h_9db9d35f50cf33 10,18,24,32,41,53,57,63,69,79,81
+tests/integration/test_edge_cases.py
+  h_9db9d35f50cf33 23-24,30,44,58,72,87,103,122,138,153,171,185,199,218,232,244,256,268,283,287,306,328
+tests/integration/test_real_ldap_crud.py
+  h_9db9d35f50cf33 30,35,105,151
+src/flext_ldif/services/conversion_schema.py
+  h_9db9d35f50cf33 1-194,196-220,222-226,228-272,297-317
+  473c59be621cc5d5 195,221,227,273-296
+src/flext_ldif/services/conversion_metadata.py
+  473c59be621cc5d5 156
+  h_9db9d35f50cf33 1-155
+tests/integration/test_oud_integration.py
+  h_9db9d35f50cf33 22,29,35,51,79,122-123,133-134,175-176,189,236,261,294
+tests/unit/services/test_transformers_service.py
+  h_9db9d35f50cf33 7,11,13-15,22,25-29
+tests/integration/test_systematic_fixture_coverage.py
+  h_9db9d35f50cf33 24-25,36,86,129,165,210,267
+tests/integration/test_cross_direction_conversion.py
+  h_9db9d35f50cf33 234,273
+tests/integration/test_error_recovery.py
+  h_9db9d35f50cf33 21-22,28,40,54,66,78,91,103,117,129,142,154,166,178,192,204,216,230,242,254,269,273,287,299
+src/flext_ldif/services/conversion_acl.py
+  473c59be621cc5d5 86-89,94-110,210,215
+  h_9db9d35f50cf33 1-85,90-93,111-209,211-214,216-307
+examples/02_entry_operations.py
+  h_9db9d35f50cf33 22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "5a1e9b9ce788809e41570f859e5747b1ebfd6cac",
+  "prompts": {
+    "473c59be621cc5d5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f6001f8b-afdd-4757-8812-9bff0bfd46d9",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 41,
+      "total_deletions": 11,
+      "accepted_lines": 190,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/1eada3f5271914b0c7c485167f82daf774ad0242099a2272b71263442f26f158"
+    }
+  },
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
