@@ -11,8 +11,9 @@ from flext_ldif import (
     FlextLdifWriter,
     c,
     m,
+    p,
     r,
-    s,p,
+    s,
     t,
     u,
 )

@@ -7,7 +7,7 @@ from collections.abc import (
 )
 from typing import ClassVar, override
 
-from flext_ldif import FlextLdifUtilitiesDN as udn, c, m, r, t, p
+from flext_ldif import FlextLdifUtilitiesDN as udn, c, m, p, r, t
 
 
 class FlextLdifUtilitiesTransformer[T]:

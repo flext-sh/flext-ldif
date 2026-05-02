@@ -10,7 +10,7 @@ import pytest
 from flext_tests import tm
 
 from flext_ldif import FlextLdifServersRelaxed
-from tests import c, m, p, r
+from tests import c, m, p
 
 
 @pytest.mark.unit
@@ -197,7 +197,10 @@ class TestsTestFlextLdifRelaxedServers:
         bad_input: str,
     ) -> None:
         """Test relaxed mode recovers from binary content if OID present."""
-        result: p.Result[m.Ldif.SchemaAttribute] | r[m.Ldif.SchemaObjectClass]
+        result: (
+            p.Result[m.Ldif.SchemaAttribute]
+            | p.Result[m.Ldif.SchemaObjectClass]
+        )
         if parse_type == "attribute":
             result = schema_server.parse_attribute(bad_input)
         else:
@@ -237,7 +240,10 @@ class TestsTestFlextLdifRelaxedServers:
         expected_success: bool,
     ) -> None:
         """Test relaxed fallback requires an OID to recover binary definitions."""
-        result: p.Result[m.Ldif.SchemaAttribute] | r[m.Ldif.SchemaObjectClass]
+        result: (
+            p.Result[m.Ldif.SchemaAttribute]
+            | p.Result[m.Ldif.SchemaObjectClass]
+        )
         if parse_type == "attribute":
             result = schema_server.parse_attribute(definition)
         else:

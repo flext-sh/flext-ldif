@@ -10,9 +10,10 @@ from flext_ldif import (
     FlextLdifServersRfc,
     c,
     m,
+    p,
     r,
     t,
-    u,p,
+    u,
 )
 
 logger = u.fetch_logger(__name__)

@@ -7,8 +7,6 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from flext_ldap import p
 from flext_tests import FlextTestsProtocols
 
-from tests import r
-
 if TYPE_CHECKING:
     from tests import m
 
@@ -26,7 +24,9 @@ class TestsFlextLdifProtocols(FlextTestsProtocols, p):
             def parse_input(
                 self,
                 value: str,
-            ) -> r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl]:
+            ) -> p.Result[
+                m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
+            ]:
                 """Parse server-specific raw input."""
                 ...
 
@@ -37,7 +37,7 @@ class TestsFlextLdifProtocols(FlextTestsProtocols, p):
             def _write_attribute(
                 self,
                 attr_data: m.Ldif.SchemaAttribute,
-            ) -> r[str]:
+            ) -> p.Result[str]:
                 """Serialize an attribute definition."""
                 ...
 
@@ -48,7 +48,7 @@ class TestsFlextLdifProtocols(FlextTestsProtocols, p):
             def _write_objectclass(
                 self,
                 oc_data: m.Ldif.SchemaObjectClass,
-            ) -> r[str]:
+            ) -> p.Result[str]:
                 """Serialize an objectClass definition."""
                 ...
 
@@ -59,7 +59,7 @@ class TestsFlextLdifProtocols(FlextTestsProtocols, p):
             def _write_acl(
                 self,
                 acl_data: m.Ldif.Acl,
-            ) -> r[str]:
+            ) -> p.Result[str]:
                 """Serialize an ACL definition."""
                 ...
 
@@ -70,7 +70,7 @@ class TestsFlextLdifProtocols(FlextTestsProtocols, p):
             def parse_server(
                 self,
                 value: str,
-            ) -> r[m.Ldif.Acl]:
+            ) -> p.Result[m.Ldif.Acl]:
                 """Parse ACL content into the test model."""
                 ...
 
@@ -81,7 +81,7 @@ class TestsFlextLdifProtocols(FlextTestsProtocols, p):
             def write(
                 self,
                 acl_data: m.Ldif.Acl,
-            ) -> r[str]:
+            ) -> p.Result[str]:
                 """Write ACL content from the test model."""
                 ...
 

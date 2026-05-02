@@ -68,9 +68,7 @@ class FlextLdifServersOudAciMixin:
             if source and (values := find_in_dict(source)):
                 return values
         # Last resort: commented values stored in entry metadata extensions
-        extensions = (
-            entry.metadata.extensions if entry.metadata is not None else None
-        )
+        extensions = entry.metadata.extensions if entry.metadata is not None else None
         if extensions is None:
             return None
         commented = FlextLdifServersOudAclExtractMixin._parse_commented_values(

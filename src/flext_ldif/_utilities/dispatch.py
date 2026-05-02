@@ -81,7 +81,7 @@ class FlextLdifUtilitiesDispatch:
         definition: str | m.Ldif.DN | None,
         server_type: str | None,
         parse_parts_hook: Callable[[str], t.Ldif.MutableMetadataMapping]
-        | Callable[[str], r[t.Ldif.MutableMetadataMapping]],
+        | Callable[[str], p.Result[t.Ldif.MutableMetadataMapping]],
     ) -> p.Result[t.Ldif.MutableMetadataMapping]: ...
 
     @staticmethod
@@ -89,9 +89,12 @@ class FlextLdifUtilitiesDispatch:
         definition: str | m.Ldif.DN | None,
         server_type: str | None = None,
         parse_parts_hook: Callable[[str], t.Ldif.MutableMetadataMapping]
-        | Callable[[str], r[t.Ldif.MutableMetadataMapping]]
+        | Callable[[str], p.Result[t.Ldif.MutableMetadataMapping]]
         | None = None,
-    ) -> p.Result[t.MutableSequenceOf[tuple[str, str]]] | r[t.Ldif.MutableMetadataMapping]:
+    ) -> (
+        p.Result[t.MutableSequenceOf[tuple[str, str]]]
+        | p.Result[t.Ldif.MutableMetadataMapping]
+    ):
         if definition is None:
             return r[t.Ldif.MutableMetadataMapping].fail("DN cannot be None")
         if isinstance(definition, m.Ldif.DN):
@@ -103,7 +106,7 @@ class FlextLdifUtilitiesDispatch:
 
         def attr_hook(value: str) -> p.Result[t.Ldif.MutableMetadataMapping]:
             parsed_value = parse_parts_hook(value)
-            if isinstance(parsed_value, r):
+            if isinstance(parsed_value, p.Result):
                 return parsed_value
             return r[t.Ldif.MutableMetadataMapping].ok(dict(parsed_value))
 
@@ -171,8 +174,8 @@ class FlextLdifUtilitiesDispatch:
         collect_all: bool = True,
         max_errors: int = 0,
     ) -> (
-        r[t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]]
-        | r[t.JsonValue]
+        p.Result[t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]]
+        | p.Result[t.JsonValue]
         | bool
     ):
         """Validate entries against rules."""
@@ -185,8 +188,8 @@ class FlextLdifUtilitiesDispatch:
                 (str, m.Ldif.DN),
             ):
                 result: (
-                    r[t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]]
-                    | r[t.JsonValue]
+                    p.Result[t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]]
+                    | p.Result[t.JsonValue]
                     | bool
                 ) = FlextLdifUtilitiesDN.validate_dn(value_or_entries)
             case _ if (

@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import overload
 
 from flext_core import u
-from flext_ldif import c, m, r, t, p
+from flext_ldif import c, m, p, r, t
 
 
 class FlextLdifUtilitiesDN:

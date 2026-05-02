@@ -580,12 +580,16 @@ class FlextLdifServersBaseSchema(
         _ = available_attrs
         return r[bool].ok(value=True)
 
-    def _parse_attribute(self, attr_definition: str) -> p.Result[m.Ldif.SchemaAttribute]:
+    def _parse_attribute(
+        self, attr_definition: str
+    ) -> p.Result[m.Ldif.SchemaAttribute]:
         """Parse server-specific attribute definition (internal)."""
         del attr_definition
         return r[m.Ldif.SchemaAttribute].fail("Must be implemented by subclass")
 
-    def _parse_objectclass(self, oc_definition: str) -> p.Result[m.Ldif.SchemaObjectClass]:
+    def _parse_objectclass(
+        self, oc_definition: str
+    ) -> p.Result[m.Ldif.SchemaObjectClass]:
         """Parse server-specific objectClass definition (internal)."""
         _ = oc_definition
         return r[m.Ldif.SchemaObjectClass].fail("Must be implemented by subclass")

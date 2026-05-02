@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from typing import ClassVar, override
 
-from flext_ldif import FlextLdifServersRfc, c, m, r, t, u, p
+from flext_ldif import FlextLdifServersRfc, c, m, p, r, t, u
 
 
 class FlextLdifServersNovell(FlextLdifServersRfc):
@@ -154,7 +154,9 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             )
 
         @override
-        def _parse_attribute(self, attr_definition: str) -> p.Result[m.Ldif.SchemaAttribute]:
+        def _parse_attribute(
+            self, attr_definition: str
+        ) -> p.Result[m.Ldif.SchemaAttribute]:
             """Parse attribute definition and add Novell metadata."""
             result = super()._parse_attribute(attr_definition)
             if result.success:
@@ -166,7 +168,9 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             return result
 
         @override
-        def _parse_objectclass(self, oc_definition: str) -> p.Result[m.Ldif.SchemaObjectClass]:
+        def _parse_objectclass(
+            self, oc_definition: str
+        ) -> p.Result[m.Ldif.SchemaObjectClass]:
             """Parse objectClass definition and add Novell metadata."""
             result = super()._parse_objectclass(oc_definition)
             if result.success:

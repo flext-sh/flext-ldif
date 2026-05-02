@@ -125,7 +125,7 @@ class FlextLdifConversionSchemaMixin(ABC):
                 parse_error_message="Failed to parse converted objectclass",
             )
         return parsed_result.flat_map(
-            lambda  parsed:  r[t.Ldif.ConvertedModel].ok(parsed),
+            lambda parsed: r[t.Ldif.ConvertedModel].ok(parsed),
         )
 
     @staticmethod

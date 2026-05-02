@@ -6,9 +6,10 @@ import struct
 from typing import Annotated
 
 from flext_ldif import (
+    p,
     r,
     s,
-    t,p,
+    t,
     u,
 )
 

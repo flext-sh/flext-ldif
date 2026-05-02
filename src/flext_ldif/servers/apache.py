@@ -8,7 +8,16 @@ from collections.abc import (
 )
 from typing import ClassVar, override
 
-from flext_ldif import FlextLdifModelsDomainsEntries, FlextLdifServersRfc, c, m, r, t, u, p
+from flext_ldif import (
+    FlextLdifModelsDomainsEntries,
+    FlextLdifServersRfc,
+    c,
+    m,
+    p,
+    r,
+    t,
+    u,
+)
 
 
 class FlextLdifServersApache(FlextLdifServersRfc):
@@ -119,7 +128,9 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             )
 
         @override
-        def _parse_attribute(self, attr_definition: str) -> p.Result[m.Ldif.SchemaAttribute]:
+        def _parse_attribute(
+            self, attr_definition: str
+        ) -> p.Result[m.Ldif.SchemaAttribute]:
             """Parse attribute definition and add Apache metadata."""
             result = super()._parse_attribute(attr_definition)
             if result.success:
@@ -131,7 +142,9 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             return r[m.Ldif.SchemaAttribute].from_result(result)
 
         @override
-        def _parse_objectclass(self, oc_definition: str) -> p.Result[m.Ldif.SchemaObjectClass]:
+        def _parse_objectclass(
+            self, oc_definition: str
+        ) -> p.Result[m.Ldif.SchemaObjectClass]:
             """Parse objectClass definition and add Apache metadata."""
             result = super()._parse_objectclass(oc_definition)
             if result.success:
@@ -185,7 +198,9 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             )
 
         @override
-        def _write_acl(self, acl_data: FlextLdifModelsDomainsEntries.Acl) -> p.Result[str]:
+        def _write_acl(
+            self, acl_data: FlextLdifModelsDomainsEntries.Acl
+        ) -> p.Result[str]:
             """Write ACL data to Apache Directory Server ACI format."""
             parent_result = super()._write_acl(acl_data)
             if parent_result.success:

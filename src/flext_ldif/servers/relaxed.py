@@ -12,7 +12,8 @@ from flext_ldif import (
     FlextLdifServersRfc,
     c,
     m,
-    r,p,
+    p,
+    r,
     t,
     u,
 )
@@ -205,7 +206,9 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             return sup_value
 
         @override
-        def _parse_attribute(self, attr_definition: str) -> p.Result[m.Ldif.SchemaAttribute]:
+        def _parse_attribute(
+            self, attr_definition: str
+        ) -> p.Result[m.Ldif.SchemaAttribute]:
             """Parse attribute with best-effort approach using RFC baseline."""
             if not attr_definition or not attr_definition.strip():
                 return r[m.Ldif.SchemaAttribute].fail(
@@ -276,7 +279,9 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 )
 
         @override
-        def _parse_objectclass(self, oc_definition: str) -> p.Result[m.Ldif.SchemaObjectClass]:
+        def _parse_objectclass(
+            self, oc_definition: str
+        ) -> p.Result[m.Ldif.SchemaObjectClass]:
             """Parse objectClass with best-effort approach using RFC baseline."""
             if not oc_definition or not oc_definition.strip():
                 return r[m.Ldif.SchemaObjectClass].fail(
@@ -377,7 +382,9 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             return r[str].ok(f"( {attr_data.oid} NAME '{attr_name}' )")
 
         @override
-        def _write_objectclass(self, oc_data: m.Ldif.SchemaObjectClass) -> p.Result[str]:
+        def _write_objectclass(
+            self, oc_data: m.Ldif.SchemaObjectClass
+        ) -> p.Result[str]:
             """Write objectClass to RFC format - stringify in relaxed mode."""
             parent_result = super()._write_objectclass(oc_data)
             if parent_result.success:
@@ -567,7 +574,9 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             """Process entry for relaxed mode."""
             return r[m.Ldif.Entry].ok(entry)
 
-        def _adapted_parse_entry_relaxed(self, entry_content: str) -> p.Result[m.Ldif.Entry]:
+        def _adapted_parse_entry_relaxed(
+            self, entry_content: str
+        ) -> p.Result[m.Ldif.Entry]:
             """Parse entry content in relaxed mode (extracted from _parse_content)."""
             dn: str = ""
             attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]] = {}

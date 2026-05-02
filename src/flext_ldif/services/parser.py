@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_ldif import c, m, r, s, p
+from flext_ldif import c, m, p, r, s
 
 
 class FlextLdifParser(s):

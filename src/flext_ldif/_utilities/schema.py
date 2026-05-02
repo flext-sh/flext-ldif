@@ -402,7 +402,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _extract_schema_items_from_lines[SchemaModelT: m.Ldif.SchemaElement](
         ldif_content: str,
-        parse_callback: Callable[[str], r[SchemaModelT]],
+        parse_callback: Callable[[str], p.Result[SchemaModelT]],
         line_prefix: str,
         model_type: type[SchemaModelT],
     ) -> t.MutableSequenceOf[SchemaModelT]:
@@ -784,7 +784,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def extract_attributes_from_lines(
         ldif_content: str,
-        parse_callback: Callable[[str], r[m.Ldif.SchemaAttribute]],
+        parse_callback: Callable[[str], p.Result[m.Ldif.SchemaAttribute]],
     ) -> t.MutableSequenceOf[m.Ldif.SchemaAttribute]:
         """Extract and parse all attributeTypes from LDIF content lines."""
         return FlextLdifUtilitiesSchema._extract_schema_items_from_lines(
@@ -797,7 +797,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def extract_objectclasses_from_lines(
         ldif_content: str,
-        parse_callback: Callable[[str], r[m.Ldif.SchemaObjectClass]],
+        parse_callback: Callable[[str], p.Result[m.Ldif.SchemaObjectClass]],
     ) -> t.MutableSequenceOf[m.Ldif.SchemaObjectClass]:
         """Extract and parse all objectClasses from LDIF content lines."""
         return FlextLdifUtilitiesSchema._extract_schema_items_from_lines(

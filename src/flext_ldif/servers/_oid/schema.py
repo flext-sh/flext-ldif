@@ -286,7 +286,9 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
                 return None
 
     @override
-    def _parse_attribute(self, attr_definition: str) -> p.Result[m.Ldif.SchemaAttribute]:
+    def _parse_attribute(
+        self, attr_definition: str
+    ) -> p.Result[m.Ldif.SchemaAttribute]:
         """Parse Oracle OID attribute definition (Phase 1: Normalization)."""
         try:
             result = super()._parse_attribute(attr_definition)
@@ -312,7 +314,9 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             return r[m.Ldif.SchemaAttribute].fail_op("OID attribute parsing", e)
 
     @override
-    def _parse_objectclass(self, oc_definition: str) -> p.Result[m.Ldif.SchemaObjectClass]:
+    def _parse_objectclass(
+        self, oc_definition: str
+    ) -> p.Result[m.Ldif.SchemaObjectClass]:
         """Parse Oracle OID objectClass definition."""
         try:
             result = super()._parse_objectclass(oc_definition)

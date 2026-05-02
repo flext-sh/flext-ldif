@@ -9,6 +9,7 @@ from flext_ldif import (
     FlextLdifServersRfc,
     c,
     m,
+    p,
     r,
     t,
     u,
@@ -189,7 +190,9 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             return False
 
         @override
-        def _parse_attribute(self, attr_definition: str) -> p.Result[m.Ldif.SchemaAttribute]:
+        def _parse_attribute(
+            self, attr_definition: str
+        ) -> p.Result[m.Ldif.SchemaAttribute]:
             """Parse attribute definition and add 389 DS metadata."""
             result = super()._parse_attribute(attr_definition)
             if result.success:
@@ -201,7 +204,9 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             return r[m.Ldif.SchemaAttribute].from_result(result)
 
         @override
-        def _parse_objectclass(self, oc_definition: str) -> p.Result[m.Ldif.SchemaObjectClass]:
+        def _parse_objectclass(
+            self, oc_definition: str
+        ) -> p.Result[m.Ldif.SchemaObjectClass]:
             """Parse objectClass definition and add 389 DS metadata."""
             result = super()._parse_objectclass(oc_definition)
             if result.success:

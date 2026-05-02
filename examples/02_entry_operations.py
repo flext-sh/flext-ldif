@@ -19,8 +19,7 @@ from collections.abc import (
     MutableSequence,
 )
 
-from examples import m
-from flext_core import r
+from examples import m, p, r
 from flext_ldif import ldif
 
 
@@ -28,7 +27,7 @@ class DRYEntryOperations:
     """DRY entry operations: intelligent builders + railway composition."""
 
     @staticmethod
-    def advanced_filtering() -> r[MutableSequence[m.Ldif.Entry]]:
+    def advanced_filtering() -> p.Result[MutableSequence[m.Ldif.Entry]]:
         """DRY advanced filtering: type-safe predicates + composition."""
         return DRYEntryOperations.intelligent_builders().map(
             lambda entries: [
@@ -42,7 +41,7 @@ class DRYEntryOperations:
         )
 
     @staticmethod
-    def batch_processing() -> r[MutableSequence[m.Ldif.Entry]]:
+    def batch_processing() -> p.Result[MutableSequence[m.Ldif.Entry]]:
         """DRY batch processing: validate entries pipeline."""
         api = ldif()
         return DRYEntryOperations.advanced_filtering().flat_map(
@@ -50,7 +49,7 @@ class DRYEntryOperations:
         )
 
     @staticmethod
-    def intelligent_builders() -> r[MutableSequence[m.Ldif.Entry]]:
+    def intelligent_builders() -> p.Result[MutableSequence[m.Ldif.Entry]]:
         """DRY intelligent builders: auto-detect types from attributes."""
         created_entries: list[m.Ldif.Entry] = []
         people_data: list[tuple[str, str, str, str]] = [

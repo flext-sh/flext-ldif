@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from flext_ldif import m, r, s, t, u, p
+from flext_ldif import m, p, r, s, t, u
 
 
 class FlextLdifProcessing(s):

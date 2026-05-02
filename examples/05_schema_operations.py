@@ -12,7 +12,7 @@ from collections.abc import (
 )
 from pathlib import Path
 
-from examples import m, r, t
+from examples import m, p, r, t
 from flext_ldif import ldif
 
 
@@ -25,7 +25,7 @@ def _create_entry_or_none(
     return result.unwrap() if result.success else None
 
 
-def intelligent_schema_building() -> r[MutableSequence[m.Ldif.Entry]]:
+def intelligent_schema_building() -> p.Result[MutableSequence[m.Ldif.Entry]]:
     """Intelligent schema building with automatic type detection and validation."""
     schema_entries: list[m.Ldif.Entry] = []
     schema_root = _create_entry_or_none(
@@ -92,7 +92,7 @@ def intelligent_schema_building() -> r[MutableSequence[m.Ldif.Entry]]:
     return r[MutableSequence[m.Ldif.Entry]].ok(schema_entries)
 
 
-def parallel_schema_validation() -> r[t.JsonMapping]:
+def parallel_schema_validation() -> p.Result[t.JsonMapping]:
     """Schema validation with comprehensive error analysis."""
     api = ldif()
     test_entries: list[m.Ldif.Entry] = []
@@ -180,7 +180,7 @@ def parallel_schema_validation() -> r[t.JsonMapping]:
     return r[t.JsonMapping].ok(t.json_mapping_adapter().validate_python(analysis))
 
 
-def schema_migration_pipeline() -> r[t.JsonMapping]:
+def schema_migration_pipeline() -> p.Result[t.JsonMapping]:
     """Schema-aware migration pipeline with validation."""
     api = ldif()
     migration_dir = Path("examples/schema_migration")
@@ -249,7 +249,7 @@ def schema_migration_pipeline() -> r[t.JsonMapping]:
     )
 
 
-def batch_schema_operations() -> r[t.JsonMapping]:
+def batch_schema_operations() -> p.Result[t.JsonMapping]:
     """Batch schema operations with validation."""
     api = ldif()
     schema_batches: list[tuple[str, list[m.Ldif.Entry]]] = []
@@ -335,7 +335,7 @@ def batch_schema_operations() -> r[t.JsonMapping]:
     return r[t.JsonMapping].ok(t.json_mapping_adapter().validate_python(batch_results))
 
 
-def railway_schema_pipeline() -> r[t.JsonMapping]:
+def railway_schema_pipeline() -> p.Result[t.JsonMapping]:
     """Railway-oriented schema pipeline with integrated validation."""
     api = ldif()
     test_entries = [

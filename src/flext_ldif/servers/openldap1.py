@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from typing import ClassVar, override
 
-from flext_ldif import FlextLdifServersRfc, c, m, r, t, p
+from flext_ldif import FlextLdifServersRfc, c, m, p, r, t
 
 
 class FlextLdifServersOpenldap1(FlextLdifServersRfc):
@@ -130,7 +130,9 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             return not has_olc
 
         @override
-        def _parse_attribute(self, attr_definition: str) -> p.Result[m.Ldif.SchemaAttribute]:
+        def _parse_attribute(
+            self, attr_definition: str
+        ) -> p.Result[m.Ldif.SchemaAttribute]:
             """Parse attribute definition, strip OpenLDAP1 prefix, and add metadata."""
             stripped = re.sub(
                 FlextLdifServersOpenldap1.Constants.SCHEMA_OPENLDAP1_ATTRIBUTE_PATTERN,
@@ -150,7 +152,9 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             return result
 
         @override
-        def _parse_objectclass(self, oc_definition: str) -> p.Result[m.Ldif.SchemaObjectClass]:
+        def _parse_objectclass(
+            self, oc_definition: str
+        ) -> p.Result[m.Ldif.SchemaObjectClass]:
             """Parse objectClass definition and add OpenLDAP1 metadata."""
             stripped = re.sub(
                 FlextLdifServersOpenldap1.Constants.SCHEMA_OPENLDAP1_OBJECTCLASS_PATTERN,
@@ -195,7 +199,9 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 return r[str].fail_op("OpenLDAP 1.x attribute write", e)
 
         @override
-        def _write_objectclass(self, oc_data: m.Ldif.SchemaObjectClass) -> p.Result[str]:
+        def _write_objectclass(
+            self, oc_data: m.Ldif.SchemaObjectClass
+        ) -> p.Result[str]:
             """Write objectClass data to RFC-compliant string format."""
             try:
                 oid = oc_data.oid

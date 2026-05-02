@@ -19,8 +19,7 @@ from collections.abc import (
     MutableSequence,
 )
 
-from examples import m, t
-from flext_core import r
+from examples import m, p, r, t
 from flext_ldif import ldif
 
 
@@ -30,7 +29,7 @@ class DRYValidationAnalysis:
     @staticmethod
     def _analyze_validation_results(
         validation_result: m.Ldif.ValidationResult,
-    ) -> r[m.Ldif.ValidationResult]:
+    ) -> p.Result[m.Ldif.ValidationResult]:
         """DRY validation analysis: categorize errors and detect patterns."""
         if not validation_result.valid:
             error_groups: dict[str, list[str]] = {}
@@ -68,7 +67,7 @@ class DRYValidationAnalysis:
         return entries
 
     @staticmethod
-    def parallel_validation() -> r[m.Ldif.ValidationResult]:
+    def parallel_validation() -> p.Result[m.Ldif.ValidationResult]:
         """DRY parallel validation: generate dataset → validate → analyze."""
         api = ldif()
         entries = DRYValidationAnalysis._generate_test_dataset(100, error_rate=0.1)
@@ -94,7 +93,7 @@ class DRYValidationAnalysis:
         return DRYValidationAnalysis._analyze_validation_results(validation_result)
 
     @staticmethod
-    def statistical_analysis() -> r[t.MappingKV[str, t.Numeric]]:
+    def statistical_analysis() -> p.Result[t.MappingKV[str, t.Numeric]]:
         """DRY statistical analysis: comprehensive metrics in one pipeline."""
         api = ldif()
         entries = DRYValidationAnalysis._generate_test_dataset(500, error_rate=0.05)

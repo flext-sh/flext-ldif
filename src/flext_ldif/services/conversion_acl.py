@@ -109,7 +109,7 @@ class FlextLdifConversionAclMixin(ABC):
                         )
                     )
             return converted_acl_result.flat_map(
-                lambda  converted_acl:  r[t.Ldif.ConvertedModel].ok(
+                lambda converted_acl: r[t.Ldif.ConvertedModel].ok(
                     self._preserve_acl_metadata(
                         acl,
                         converted_acl,

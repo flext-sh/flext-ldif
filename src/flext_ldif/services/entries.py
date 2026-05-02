@@ -7,7 +7,7 @@ from collections.abc import (
 )
 from typing import Annotated
 
-from flext_ldif import m, r, s, t, u, p
+from flext_ldif import m, p, r, s, t, u
 
 
 class FlextLdifEntries(s):
@@ -141,7 +141,9 @@ class FlextLdifEntries(s):
         return FlextLdifEntries._extract_dn_from_object(entry)
 
     @staticmethod
-    def resolve_entry_objectclasses(entry: m.Ldif.Entry) -> p.Result[t.MutableSequenceOf[str]]:
+    def resolve_entry_objectclasses(
+        entry: m.Ldif.Entry,
+    ) -> p.Result[t.MutableSequenceOf[str]]:
         """Get objectClass values from entry attributes."""
         attributes_result = FlextLdifEntries.resolve_entry_attributes(entry)
         if attributes_result.failure:

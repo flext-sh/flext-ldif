@@ -283,7 +283,9 @@ class FlextLdifServersBaseEntry(
         """Normalize entry to RFC format with metadata tracking."""
         return entry
 
-    def _parse_content(self, ldif_content: str) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
+    def _parse_content(
+        self, ldif_content: str
+    ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
         """Parse raw LDIF content string into Entry models (internal)."""
         _ = ldif_content
         return r[t.MutableSequenceOf[m.Ldif.Entry]].fail(

@@ -24,7 +24,9 @@ from flext_ldif import (
     FlextLdifModelsMetadata as mm,
     FlextLdifUtilitiesEntry,
     c,
-    p, t, r,
+    p,
+    r,
+    t,
 )
 
 
@@ -1041,7 +1043,9 @@ class FlextLdifModelsDomainEntry:
                 ok_result: p.Result[Self] = r[Self].ok(entry_instance)
                 return ok_result
             except c.EXC_BASIC_TYPE as e:
-                fail_result: p.Result[Self] = r[Self].fail(f"Failed to create Entry: {e}")
+                fail_result: p.Result[Self] = r[Self].fail(
+                    f"Failed to create Entry: {e}"
+                )
                 return fail_result
 
 

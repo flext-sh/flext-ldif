@@ -6,7 +6,8 @@ from collections import Counter
 
 from flext_ldif import (
     m,
-    r,p,
+    p,
+    r,
     s,
     t,
     u,

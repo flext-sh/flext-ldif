@@ -9,7 +9,7 @@ from collections.abc import (
 from typing import TypeIs
 
 from flext_core import u
-from flext_ldif import c, m, r, t, p
+from flext_ldif import c, m, p, r, t
 
 logger = u.fetch_logger(__name__)
 

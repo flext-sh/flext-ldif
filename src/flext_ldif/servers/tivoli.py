@@ -9,8 +9,9 @@ from flext_ldif import (
     FlextLdifServersRfc,
     c,
     m,
+    p,
     r,
-    t,p,
+    t,
     u,
 )
 
@@ -152,7 +153,9 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             )
 
         @override
-        def _parse_attribute(self, attr_definition: str) -> p.Result[m.Ldif.SchemaAttribute]:
+        def _parse_attribute(
+            self, attr_definition: str
+        ) -> p.Result[m.Ldif.SchemaAttribute]:
             """Parse attribute definition and add Tivoli metadata."""
             result = super()._parse_attribute(attr_definition)
             if result.success:
@@ -164,7 +167,9 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             return r[m.Ldif.SchemaAttribute].from_result(result)
 
         @override
-        def _parse_objectclass(self, oc_definition: str) -> p.Result[m.Ldif.SchemaObjectClass]:
+        def _parse_objectclass(
+            self, oc_definition: str
+        ) -> p.Result[m.Ldif.SchemaObjectClass]:
             """Parse objectClass definition and add Tivoli metadata."""
             result = super()._parse_objectclass(oc_definition)
             if result.success:

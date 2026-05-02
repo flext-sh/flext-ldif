@@ -329,28 +329,16 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
     ]:
         """Extract schema definitions from LDIF using u."""
         try:
-
-            def parse_attribute_domain(
-                attr_definition: str,
-            ) -> p.Result[m.Ldif.SchemaAttribute]:
-                return self.parse_attribute(attr_definition).map(
-                    lambda attr: m.Ldif.SchemaAttribute.model_validate(attr),
-                )
-
             attributes_parsed = u.Ldif.extract_attributes_from_lines(
                 ldif_content,
-                parse_attribute_domain,
+                self.parse_attribute,
             )
-            attributes_parsed_model: t.MutableSequenceOf[m.Ldif.SchemaAttribute] = [
-                m.Ldif.SchemaAttribute.model_validate(attr)
-                for attr in attributes_parsed
-            ]
             if validate_dependencies:
                 available_attrs = u.Ldif.build_available_attributes_set(
                     attributes_parsed,
                 )
                 validation_result = self._hook_validate_attributes(
-                    attributes_parsed_model,
+                    attributes_parsed,
                     available_attrs,
                 )
                 if not validation_result.success:
@@ -362,30 +350,17 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                         ]
                     ].fail_op("Attribute validation", validation_result.error)
 
-            def parse_objectclass_domain(
-                oc_definition: str,
-            ) -> p.Result[m.Ldif.SchemaObjectClass]:
-                return self.parse_objectclass(oc_definition).map(
-                    lambda oc: m.Ldif.SchemaObjectClass.model_validate(oc),
-                )
-
             objectclasses_parsed = u.Ldif.extract_objectclasses_from_lines(
                 ldif_content,
-                parse_objectclass_domain,
+                self.parse_objectclass,
             )
-            objectclasses_parsed_model: t.MutableSequenceOf[
-                m.Ldif.SchemaObjectClass
-            ] = [
-                m.Ldif.SchemaObjectClass.model_validate(oc)
-                for oc in objectclasses_parsed
-            ]
             schema_dict: MutableMapping[
                 str,
                 t.MutableSequenceOf[m.Ldif.SchemaAttribute]
                 | t.MutableSequenceOf[m.Ldif.SchemaObjectClass],
             ] = {
-                str(c.Ldif.DictKeys.ATTRIBUTES): attributes_parsed_model,
-                str(c.Ldif.DictKeys.OBJECTCLASS): objectclasses_parsed_model,
+                str(c.Ldif.DictKeys.ATTRIBUTES): attributes_parsed,
+                str(c.Ldif.DictKeys.OBJECTCLASS): objectclasses_parsed,
             }
             return r[
                 MutableMapping[
@@ -489,7 +464,9 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         return output_str.rstrip(")") + x_origin_str + ")"
 
     @override
-    def _parse_attribute(self, attr_definition: str) -> p.Result[m.Ldif.SchemaAttribute]:
+    def _parse_attribute(
+        self, attr_definition: str
+    ) -> p.Result[m.Ldif.SchemaAttribute]:
         """Parse RFC 4512 attribute definition using generalized parser."""
         server_type = self._get_server_type()
 
@@ -554,7 +531,9 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         return self._hook_post_parse_attribute(attr_model)
 
     @override
-    def _parse_objectclass(self, oc_definition: str) -> p.Result[m.Ldif.SchemaObjectClass]:
+    def _parse_objectclass(
+        self, oc_definition: str
+    ) -> p.Result[m.Ldif.SchemaObjectClass]:
         """Parse RFC 4512 objectClass definition using core parser."""
         parse_result = self._parse_objectclass_core(oc_definition)
         if parse_result.failure:
