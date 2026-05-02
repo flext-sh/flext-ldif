@@ -480,13 +480,10 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                         mk.CONVERSION_CONVERTED_ATTRIBUTE_NAMES: converted_attrs_json,
                         mk.CONVERSION_BOOLEAN_CONVERSIONS: boolean_conversions_json,
                     })
-                    conv_data_str: str = u.Ldif.dump_dynamic_metadata(
-                        conv_data if isinstance(conv_data, Mapping) else None,
-                    )
                     setattr(
                         entry.metadata.extensions,
                         mk.CONVERTED_ATTRIBUTES,
-                        conv_data_str,
+                        conv_data,
                     )
                 else:
                     setattr(

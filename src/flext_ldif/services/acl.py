@@ -7,6 +7,7 @@ from collections.abc import (
 )
 
 from flext_ldif import (
+    c,
     m,
     r,
     s,
@@ -141,7 +142,7 @@ class FlextLdifAcl(s):
         """Parse ACL string using server-specific servers."""
         try:
             normalized_server_type = u.Ldif.normalize_server_type(server_type)
-        except (ValueError, TypeError) as error:
+        except c.EXC_TYPE_VALIDATION as error:
             return r[m.Ldif.Acl].fail(
                 f"Invalid server type: {server_type} - {error}",
             )

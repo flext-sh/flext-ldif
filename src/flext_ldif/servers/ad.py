@@ -331,7 +331,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 else:
                     acl_str = f"{acl_attribute}:"
                 return r[str].ok(acl_str)
-            except (ValueError, TypeError, AttributeError) as exc:
+            except c.EXC_BASIC_TYPE as exc:
                 return r[str].fail_op("Active Directory ACL write", exc)
 
     class Entry(FlextLdifServersRfc.Entry):

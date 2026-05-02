@@ -25,6 +25,7 @@ class FlextLdifServer(s):
     SERVERS: ClassVar[str] = "ldif_servers"
     _discovery_initialized: ClassVar[bool] = False
     _global_instance: ClassVar[FlextLdifServer | None] = None
+    _registered_servers: ClassVar[dict[str, p.Ldif.ServerServer]] = {}
 
     dispatcher: Annotated[
         p.Dispatcher | None,
@@ -137,11 +138,6 @@ class FlextLdifServer(s):
         """Get schema server for a server type."""
         return self.resolve_schema_server(server_type)
 
-    @override
-    def schema(self, server_type: str) -> p.Ldif.SchemaServer | None:
-        """Alias for schema lookup required by the registry protocol."""
-        return self.schema_server(server_type)
-
     def resolve_schema_server(
         self,
         server_type: str,
@@ -161,13 +157,7 @@ class FlextLdifServer(s):
 
     def list_registered_servers(self) -> t.MutableSequenceOf[str]:
         """List all registered server types."""
-        return sorted(
-            self._registry.list_plugins(
-                self.SERVERS,
-                scope=c.RegistrationScope.CLASS,
-            ).value
-            or [],
-        )
+        return sorted(type(self)._registered_servers)
 
     @override
     def server(self, server_type: str) -> r[p.Ldif.ServerServer]:
@@ -176,18 +166,10 @@ class FlextLdifServer(s):
             normalized = u.Ldif.normalize_server_type(server_type)
         except ValueError as e:
             return r[p.Ldif.ServerServer].fail(str(e))
-        plugin_result = self._registry.fetch_plugin(
-            self.SERVERS,
-            normalized,
-            scope=c.RegistrationScope.CLASS,
-        )
-        if plugin_result.failure:
-            return r[p.Ldif.ServerServer].fail(plugin_result.error or normalized)
-        plugin = plugin_result.unwrap()
-        if isinstance(plugin, p.Ldif.ServerServer):
-            return r[p.Ldif.ServerServer].ok(plugin)
-        plugin_type = type(plugin).__name__
-        return r[p.Ldif.ServerServer].fail(f"Invalid server type: {plugin_type}")
+        plugin = type(self)._registered_servers.get(normalized)
+        if plugin is None:
+            return r[p.Ldif.ServerServer].fail(normalized)
+        return r[p.Ldif.ServerServer].ok(plugin)
 
     def _auto_discover(self) -> None:
         """Discover and register concrete server classes from servers package."""
@@ -202,7 +184,7 @@ class FlextLdifServer(s):
             try:
                 instance = obj()
                 server_type = getattr(instance, "server_type", None)
-                if not issubclass(server_type.__class__, str):
+                if not isinstance(server_type, str):
                     continue
                 server_class = type(instance)
                 if not all(
@@ -210,7 +192,8 @@ class FlextLdifServer(s):
                     for c in ("Schema", "Acl", "Entry")
                 ):
                     continue
-                if server_type and isinstance(server_type, str):
+                if server_type:
+                    type(self)._registered_servers[server_type] = instance
                     self._registry.register_plugin(
                         self.SERVERS,
                         server_type,

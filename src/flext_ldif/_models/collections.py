@@ -10,7 +10,7 @@ from collections.abc import (
     Iterator,
     MutableMapping,
 )
-from typing import Annotated, ClassVar, Self, override
+from typing import Annotated, ClassVar
 
 from flext_cli import m, u
 from flext_ldif import (
@@ -26,23 +26,6 @@ class FlextLdifModelsCollections:
             extra="allow",
             validate_assignment=True,
         )
-
-        @override
-        def __eq__(self, other: Self | t.JsonMapping) -> bool:
-            if isinstance(other, dict):
-                self_dict = {
-                    key: value
-                    for key, value in self.__dict__.items()
-                    if not key.startswith("_")
-                }
-                extra = self.__pydantic_extra__
-                if extra is not None:
-                    self_dict.update(extra)
-                return self_dict == other
-            if isinstance(other, self.__class__):
-                eq_result: bool = super().__eq__(other)
-                return eq_result
-            return False
 
         def __hash__(self) -> int:
             return hash(id(self))
@@ -61,15 +44,10 @@ class FlextLdifModelsCollections:
             return key in self._extra()
 
         @staticmethod
-        def _to_count(value: t.JsonValue) -> int:
-            if isinstance(value, t.NUMERIC_TYPES) and not isinstance(value, bool):
-                return int(value)
-            if isinstance(value, str):
-                try:
-                    return int(float(value))
-                except (ValueError, TypeError):
-                    return 0
-            return 0
+        def _to_count(value: t.JsonPayload | None) -> int:
+            if isinstance(value, bool):
+                return 0
+            return u.to_int(value, default=0)
 
         def get(self, key: str, default: int | None = None) -> int | None:
             extra = self._extra()
@@ -108,17 +86,6 @@ class FlextLdifModelsCollections:
             self[key] = value
 
     class BooleanFlags(m.FrozenDynamicModel):
-        @override
-        def __eq__(self, other: Self | t.JsonMapping) -> bool:
-            if isinstance(other, dict):
-                extra = self.model_extra
-                dict_eq: bool = (extra or {}) == other
-                return dict_eq
-            if isinstance(other, self.__class__):
-                cls_eq: bool = self.model_extra == other.model_extra
-                return cls_eq
-            return False
-
         def __hash__(self) -> int:
             extra = self.__pydantic_extra__
             if extra is None:
@@ -137,17 +104,6 @@ class FlextLdifModelsCollections:
             MutableMapping[str, t.MutableSequenceOf[mde.Entry]],
             u.Field(description="Category name to grouped LDIF entries mapping."),
         ] = u.Field(default_factory=dict)
-
-        @override
-        def __eq__(
-            self,
-            other: Self | MutableMapping[str, t.MutableSequenceOf[mde.Entry]],
-        ) -> bool:
-            if isinstance(other, self.__class__):
-                return self.categories == other.categories
-            if isinstance(other, dict):
-                return self.categories == other
-            return False
 
         def __hash__(self) -> int:
             msg = f"{self.__class__.__name__} is unhashable"

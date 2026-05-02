@@ -149,12 +149,9 @@ class FlextLdifConversionAclMixin(ABC):
         metadata = acl.metadata
         if metadata is None or not metadata:
             return {}
-        extensions_raw = metadata.extensions
-        if extensions_raw is None:
-            return {}
         return {
             key: to_general_value(value)
-            for key, value in extensions_raw.to_dict().items()
+            for key, value in metadata.extensions.to_dict().items()
         }
 
     def _preserve_acl_metadata(

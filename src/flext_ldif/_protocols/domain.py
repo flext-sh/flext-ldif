@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, ClassVar, Protocol, runtime_checkable
 
 from flext_cli import p
 
@@ -25,15 +25,8 @@ class FlextLdifProtocolsDomain(Protocol):
     class ServerServer(Protocol):
         """Structured server server contract used by services and tests."""
 
-        @property
-        def server_type(self) -> str:
-            """Return normalized server type."""
-            ...
-
-        @property
-        def priority(self) -> int:
-            """Return server priority."""
-            ...
+        server_type: ClassVar[str]
+        priority: ClassVar[int]
 
         @property
         def schema_server(self) -> FlextLdifProtocolsDomain.SchemaServer:
@@ -115,11 +108,11 @@ class FlextLdifProtocolsDomain(Protocol):
     class AclServer(Protocol):
         """ACL server contract."""
 
-        def parse_server(self, value: str) -> p.Result[t.Ldif.AclLike]:
+        def parse_server(self, value: str) -> p.Result[m.Ldif.Acl]:
             """Parse an ACL line into an ACL model."""
             ...
 
-        def write(self, acl_data: t.Ldif.AclLike) -> p.Result[str]:
+        def write(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
             """Serialize an ACL model."""
             ...
 
@@ -127,7 +120,7 @@ class FlextLdifProtocolsDomain(Protocol):
     class EntryServer(Protocol):
         """Entry server contract."""
 
-        def parse_server(self, value: str) -> p.Result[t.Ldif.EntrySequence]:
+        def parse_server(self, value: str) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
             """Parse LDIF text into entry models."""
             ...
 
@@ -135,13 +128,13 @@ class FlextLdifProtocolsDomain(Protocol):
             self,
             entry_dn: str,
             entry_attrs: t.Ldif.MutableEntryAttributesDict,
-        ) -> p.Result[t.Ldif.EntryLike]:
+        ) -> p.Result[m.Ldif.Entry]:
             """Parse a single entry from DN and attribute mapping."""
             ...
 
         def write(
             self,
-            entry_data: t.Ldif.EntryOrEntries,
+            entry_data: m.Ldif.Entry | t.MutableSequenceOf[m.Ldif.Entry],
             write_options: m.Ldif.WriteFormatOptions | None = None,
         ) -> p.Result[str]:
             """Serialize one or more entries."""
@@ -163,13 +156,6 @@ class FlextLdifProtocolsDomain(Protocol):
             server_type: str,
         ) -> p.Result[FlextLdifProtocolsDomain.ServerServer]:
             """Resolve base server for a server type."""
-            ...
-
-        def schema(
-            self,
-            server_type: str,
-        ) -> FlextLdifProtocolsDomain.SchemaServer | None:
-            """Return schema server for a server type."""
             ...
 
         def schema_server(

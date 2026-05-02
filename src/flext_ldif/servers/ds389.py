@@ -446,7 +446,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 subject_raw = acl_data.subject
                 userdn = self._resolve_acl_userdn(subject_raw)
                 return self._build_acl_string(acl_name, permissions, targetattr, userdn)
-            except (ValueError, TypeError, AttributeError) as exc:
+            except c.EXC_BASIC_TYPE as exc:
                 return r[str].fail(
                     FlextLdifServersDs389.Constants.ERROR_ACL_WRITE_FAILED.format(
                         exc=exc,
@@ -515,7 +515,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                     metadata=metadata,
                 )
                 return r[m.Ldif.Entry].ok(processed_entry)
-            except (ValueError, TypeError, AttributeError) as exc:
+            except c.EXC_BASIC_TYPE as exc:
                 return r[m.Ldif.Entry].fail(
                     FlextLdifServersDs389.Constants.ERROR_ENTRY_PROCESSING_FAILED.format(
                         exc=exc,

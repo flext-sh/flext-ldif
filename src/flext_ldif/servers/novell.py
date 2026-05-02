@@ -369,7 +369,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                     else f"{acl_attribute}:"
                 )
                 return r[str].ok(acl_str)
-            except (ValueError, TypeError, AttributeError) as exc:
+            except c.EXC_BASIC_TYPE as exc:
                 return r[str].fail_op("Novell eDirectory ACL write", exc)
 
     class Entry(FlextLdifServersRfc.Entry):
@@ -435,7 +435,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 })
                 new_entry = entry.model_copy(update={"attributes": new_attrs})
                 return r[m.Ldif.Entry].ok(new_entry)
-            except (ValueError, TypeError, AttributeError) as exc:
+            except c.EXC_BASIC_TYPE as exc:
                 return r[m.Ldif.Entry].fail_op(
                     "Novell eDirectory entry processing", exc
                 )

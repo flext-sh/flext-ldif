@@ -122,20 +122,23 @@ class FlextLdifCategorization(s):
 
     @staticmethod
     def _ensure_entry_model(
-        value: t.JsonValue | m.Ldif.Entry,
+        value: t.JsonValue | m.BaseModel | m.Ldif.Entry,
     ) -> m.Ldif.Entry | None:
         if isinstance(value, m.Ldif.Entry):
             return value
         if isinstance(value, m.BaseModel):
-            try:
-                validated: m.Ldif.Entry = m.Ldif.Entry.model_validate(value)
-                return validated
-            except c.ValidationError as exc:
+            validation_result = u.try_(
+                lambda: m.Ldif.Entry.model_validate(value.model_dump()),
+            )
+            if validation_result.failure:
                 FlextLdifCategorization._get_or_create_logger().warning(
                     "Failed to coerce BaseModel to Entry",
-                    error=str(exc),
-                    error_type=type(exc).__name__,
+                    error=validation_result.error,
+                    error_type="ValidationError",
                 )
+                return None
+            validated: m.Ldif.Entry = validation_result.value
+            return validated
         return None
 
     @staticmethod

@@ -39,11 +39,17 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
                 init_kwargs[key] = value
         super().__init__()
         parent_ref: FlextLdifServersBase = self
-        self._schema_server = self.Schema()
+        self._schema_server = self.Schema().model_copy(
+            update={"server_type": self.server_type},
+        )
         object.__setattr__(self._schema_server, "_parent_server", parent_ref)
-        self._acl_server = self.Acl()
+        self._acl_server = self.Acl().model_copy(
+            update={"server_type": self.server_type},
+        )
         object.__setattr__(self._acl_server, "_parent_server", parent_ref)
-        self._entry_server = self.Entry()
+        self._entry_server = self.Entry().model_copy(
+            update={"server_type": self.server_type},
+        )
         object.__setattr__(self._entry_server, "_parent_server", parent_ref)
 
     def __init_subclass__(cls, **kwargs: str | float | bool | None) -> None:
@@ -72,7 +78,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         return self._acl_server
 
     @property
-    def acl_server(self) -> FlextLdifServersBaseSchemaAcl:
+    def acl_server(self) -> p.Ldif.AclServer:
         """Access to nested acl server instance (alias for acl)."""
         return self._acl_server
 
@@ -82,16 +88,16 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         return self._entry_server
 
     @property
-    def entry_server(self) -> FlextLdifServersBaseEntry:
+    def entry_server(self) -> p.Ldif.EntryServer:
         """Access to nested entry server instance (alias for entry)."""
         return self._entry_server
 
     @property
-    def schema_server(self) -> FlextLdifServersBaseSchema:
+    def schema_server(self) -> p.Ldif.SchemaServer:
         """Access to nested schema server instance (alias for schema)."""
         return self._schema_server
 
-    def resolve_schema_server(self) -> FlextLdifServersBaseSchema:
+    def resolve_schema_server(self) -> p.Ldif.SchemaServer:
         """Get schema server instance."""
         return self.schema_server
 
@@ -101,7 +107,10 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         """Override __new__ to support auto-execute and processor instantiation."""
         instance: Self = object.__new__(cls)
         filtered_kwargs: t.MutableConfigValueMapping = {}
-        execute_kwargs: t.MutableJsonMapping = {}
+        execute_kwargs: t.MutableMappingKV[
+            str,
+            str | int | bool | t.MutableSequenceOf[m.Ldif.Entry],
+        ] = {}
         for k, v in kwargs.items():
             value = v
             if isinstance(value, (str, float, bool)):
@@ -168,7 +177,10 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
     @classmethod
     def _extract_execute_params(
         cls,
-        kwargs: t.MutableJsonMapping,
+        kwargs: t.MutableMappingKV[
+            str,
+            str | int | bool | t.MutableSequenceOf[m.Ldif.Entry],
+        ],
     ) -> tuple[str | None, t.MutableSequenceOf[m.Ldif.Entry] | None, str | None]:
         """Extract type-safe execution parameters from kwargs."""
         return (
@@ -307,14 +319,15 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
 
     @staticmethod
     def _extract_entries(
-        kwargs: t.MutableJsonMapping,
+        kwargs: t.MutableMappingKV[
+            str,
+            str | int | bool | t.MutableSequenceOf[m.Ldif.Entry],
+        ],
     ) -> t.MutableSequenceOf[m.Ldif.Entry] | None:
         """Extract and validate entries parameter."""
         if "entries" not in kwargs:
             return None
         raw = kwargs["entries"]
-        if raw is None:
-            return None
         if not isinstance(raw, list):
             msg = f"Expected t.MutableSequenceOf[Entry | None] for entries, got {type(raw)}"
             raise TypeError(msg)
@@ -331,33 +344,48 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
 
     @staticmethod
     def _extract_ldif_text(
-        kwargs: t.MutableJsonMapping,
+        kwargs: t.MutableMappingKV[
+            str,
+            str | int | bool | t.MutableSequenceOf[m.Ldif.Entry],
+        ],
     ) -> str | None:
         """Extract and validate ldif_text parameter."""
         if "ldif_text" not in kwargs:
             return None
-        raw = kwargs["ldif_text"]
-        if raw is None or isinstance(raw, str):
-            return raw
-        msg = f"Expected str | None for ldif_text, got {type(raw)}"
-        raise TypeError(msg)
+        match kwargs.get("ldif_text"):
+            case None:
+                return None
+            case str() as raw_text:
+                return raw_text
+            case raw:
+                msg = f"Expected str | None for ldif_text, got {type(raw)}"
+                raise TypeError(msg)
 
     @staticmethod
     def _extract_operation(
-        kwargs: t.MutableJsonMapping,
+        kwargs: t.MutableMappingKV[
+            str,
+            str | int | bool | t.MutableSequenceOf[m.Ldif.Entry],
+        ],
     ) -> str | None:
         """Extract and validate operation parameter."""
         if "operation" not in kwargs:
             return None
-        raw = kwargs["operation"]
-        if raw is None:
-            return None
-        if raw == "parse":
-            return "parse"
-        if raw == "write":
-            return "write"
-        msg = f"Expected 'parse' | 'write' | None for operation, got {raw}"
-        raise ValueError(msg)
+        match kwargs.get("operation"):
+            case None:
+                return None
+            case "parse":
+                return "parse"
+            case "write":
+                return "write"
+            case str() as raw_operation:
+                msg = f"Expected 'parse' | 'write' | None for operation, got {raw_operation}"
+                raise ValueError(msg)
+            case raw:
+                msg = (
+                    f"Expected 'parse' | 'write' | None for operation, got {type(raw)}"
+                )
+                raise TypeError(msg)
 
     @override
     def execute(
@@ -409,6 +437,9 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
             parsed_entries: t.Ldif.EntrySequence,
         ) -> m.Ldif.ParseResponse:
             domain_entries = u.Ldif.as_entries(parsed_entries)
+            for entry in domain_entries:
+                if entry.metadata and detected_server_type is not None:
+                    entry.metadata.original_server_type = detected_server_type
             statistics = m.Ldif.Statistics(
                 total_entries=len(domain_entries),
                 processed_entries=len(domain_entries),

@@ -741,7 +741,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             return r[str].ok(
                 self._ensure_x_origin(transformed_str, oc_transformed.metadata),
             )
-        except (ValueError, TypeError, AttributeError) as e:
+        except c.EXC_BASIC_TYPE as e:
             item_type = (
                 "attribute"
                 if isinstance(data, m.Ldif.SchemaAttribute)

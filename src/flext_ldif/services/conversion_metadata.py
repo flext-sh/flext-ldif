@@ -55,24 +55,25 @@ class FlextLdifConversionMetadataMixin:
 
     @staticmethod
     def _analyze_dn_format(
-        original_format_details: t.JsonMapping,
+        original_format_details: t.MappingKV[str, t.JsonPayload | None],
         target_server_type: str,
     ) -> t.MutableMappingKV[str, t.Ldif.MutableMetadataInputMapping]:
         """Analyze DN spacing for target compatibility."""
-        spacing = original_format_details.get("dn_spacing")
-        if spacing:
-            return {
-                "dn_format": {
-                    "source_dn": (
-                        FlextLdifConversionMetadataMixin._normalize_metadata_value(
-                            spacing,
-                        )
-                    ),
-                    "target_server": target_server_type,
-                    "action": "normalize_for_target",
-                },
-            }
-        return {}
+        if "dn_spacing" not in original_format_details:
+            return {}
+        spacing = original_format_details["dn_spacing"]
+        if spacing is None:
+            return {}
+        normalized_spacing = FlextLdifConversionMetadataMixin._normalize_metadata_value(
+            spacing,
+        )
+        return {
+            "dn_format": {
+                "source_dn": normalized_spacing,
+                "target_server": target_server_type,
+                "action": "normalize_for_target",
+            },
+        }
 
     @staticmethod
     def _analyze_metadata_for_conversion(

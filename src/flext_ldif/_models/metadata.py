@@ -8,7 +8,7 @@ from collections.abc import (
     MutableMapping,
     ValuesView,
 )
-from typing import Annotated, ClassVar, Self, override
+from typing import Annotated, ClassVar, Self
 
 from flext_cli import m, u
 from flext_ldif import t
@@ -52,14 +52,6 @@ class FlextLdifModelsMetadata:
                 description="Schema transformations applied during processing",
             ),
         ] = None
-
-        @override
-        def __eq__(self, other: Self | t.JsonMapping) -> bool:
-            if isinstance(other, dict):
-                return dict(self.items()) == other
-            if isinstance(other, type(self)):
-                return dict(self.items()) == dict(other.items())
-            return NotImplemented
 
         def __hash__(self) -> int:
             msg = "unhashable type: 'DynamicMetadata'"

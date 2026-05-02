@@ -301,7 +301,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                     else f"{acl_attribute}:"
                 )
                 return r[str].ok(acl_str)
-            except (ValueError, TypeError, AttributeError) as exc:
+            except c.EXC_BASIC_TYPE as exc:
                 return r[str].fail_op("IBM Tivoli DS ACL write", exc)
 
     class Entry(FlextLdifServersRfc.Entry):
@@ -389,7 +389,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 })
                 processed_entry = entry.model_copy(update={"attributes": new_attrs})
                 return r[m.Ldif.Entry].ok(processed_entry)
-            except (ValueError, TypeError, AttributeError) as exc:
+            except c.EXC_BASIC_TYPE as exc:
                 return r[m.Ldif.Entry].fail_op("IBM Tivoli DS entry processing", exc)
 
 

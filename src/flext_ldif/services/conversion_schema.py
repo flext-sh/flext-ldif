@@ -37,14 +37,14 @@ class FlextLdifConversionSchemaMixin(ABC):
         target_schema: p.Ldif.SchemaServer,
     ) -> r[t.Ldif.ConvertedModel]:
         """Orchestrate schema conversion through m.Ldif.Entry intermediary."""
-        is_attribute = isinstance(item, m.Ldif.SchemaAttribute)
-        item_name = "attribute" if is_attribute else "objectclass"
-        write_result = (
-            source_schema.write_attribute(item)
-            if is_attribute
-            else source_schema.write_objectclass(item)
-        )
-        field_name = c.Ldif.ATTRIBUTE_TYPES if is_attribute else c.Ldif.OBJECT_CLASSES
+        if isinstance(item, m.Ldif.SchemaAttribute):
+            item_name = "attribute"
+            write_result = source_schema.write_attribute(item)
+            field_name = c.Ldif.ATTRIBUTE_TYPES
+        else:
+            item_name = "objectclass"
+            write_result = source_schema.write_objectclass(item)
+            field_name = c.Ldif.OBJECT_CLASSES
         source_server_type = u.try_(
             lambda: u.Ldif.normalize_server_type(
                 source_server.server_type,
@@ -112,19 +112,18 @@ class FlextLdifConversionSchemaMixin(ABC):
                 f"Converted Entry does not contain {field_name}",
             )
         first_value = converted_values[0]
-        parsed_result = (
-            self._parse_attribute_with_schema(
+        if field_name == c.Ldif.ATTRIBUTE_TYPES:
+            parsed_result = self._parse_attribute_with_schema(
                 target_schema,
                 first_value,
                 parse_error_message="Failed to parse converted attribute",
             )
-            if is_attribute
-            else self._parse_objectclass_with_schema(
+        else:
+            parsed_result = self._parse_objectclass_with_schema(
                 target_schema,
                 first_value,
                 parse_error_message="Failed to parse converted objectclass",
             )
-        )
         return parsed_result.flat_map(
             lambda parsed: r[t.Ldif.ConvertedModel].ok(parsed),
         )
