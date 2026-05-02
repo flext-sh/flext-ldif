@@ -132,11 +132,6 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
     ATTRIBUTE_UNDERSCORE_TO_DASH: ClassVar[str] = "_"
     ATTRIBUTE_DASH_REPLACEMENT: ClassVar[str] = "-"
     DEFAULT_ENCODING: ClassVar[str] = c.Ldif.DEFAULT_ENCODING
-    ALLOWED_ENCODINGS: ClassVar[tuple[str, ...]] = (
-        c.Ldif.DEFAULT_ENCODING,
-        "utf-16",
-        "ascii",
-    )
     DN_PRESERVE_CASE: ClassVar[bool] = False
     DN_NORMALIZE_TO: ClassVar[str] = "lowercase"
     ACL_REQUIRES_TARGET: ClassVar[bool] = True
