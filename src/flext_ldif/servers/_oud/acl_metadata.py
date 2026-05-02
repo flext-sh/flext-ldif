@@ -153,37 +153,33 @@ class FlextLdifServersOudAclMetadataMixin:
         """Merge ACL metadata extensions into entry metadata."""
         if not acl_metadata_extensions:
             return entry
-        if entry.metadata:
-            current_extensions: t.Ldif.MutableMetadataInputMapping = (
-                dict(entry.metadata.extensions.to_dict())
-                if entry.metadata.extensions
-                else {}
-            )
-            current_extensions.update(acl_metadata_extensions)
-            merged_extensions = m.Ldif.DynamicMetadata.from_dict(
-                current_extensions,
-            )
-            merged_entry: m.Ldif.Entry = entry.model_copy(
+        if entry.metadata is None:
+            return entry.model_copy(
                 update={
-                    "metadata": entry.metadata.model_copy(
-                        update={"extensions": merged_extensions},
-                        deep=True,
+                    "metadata": m.Ldif.ServerMetadata.create_for(
+                        "oud",
+                        extensions=m.Ldif.DynamicMetadata.from_dict(
+                            acl_metadata_extensions,
+                        ),
                     ),
                 },
                 deep=True,
             )
-            return merged_entry
-        entry_metadata = m.Ldif.ServerMetadata.create_for(
-            "oud",
-            extensions=m.Ldif.DynamicMetadata.from_dict(
-                acl_metadata_extensions,
-            ),
+        current = (
+            dict(entry.metadata.extensions.to_dict())
+            if entry.metadata.extensions
+            else {}
         )
-        copy_entry: m.Ldif.Entry = entry.model_copy(
-            update={"metadata": entry_metadata},
+        current.update(acl_metadata_extensions)
+        return entry.model_copy(
+            update={
+                "metadata": entry.metadata.model_copy(
+                    update={"extensions": m.Ldif.DynamicMetadata.from_dict(current)},
+                    deep=True,
+                ),
+            },
             deep=True,
         )
-        return copy_entry
 
     @staticmethod
     def _process_parsed_acl_extensions(
