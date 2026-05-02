@@ -1,0 +1,65 @@
+tests/utilities.py
+  473c59be621cc5d5 507-509
+  h_9db9d35f50cf33 16-19,108,120-123,446-448,506,510,533-535
+tests/unit/services/test_statistics_service.py
+  h_9db9d35f50cf33 8,33-34,36
+pyproject.toml
+  473c59be621cc5d5 395-396
+tests/integration/test_minimal_differences_metadata.py
+  h_9db9d35f50cf33 116-117,119,138,151-152,154,169-170,172,176,179,182-183
+tests/integration/test_acl_metadata_preservation.py
+  h_9db9d35f50cf33 194,215
+src/flext_ldif/_protocols/domain.py
+  473c59be621cc5d5 123-125
+base.mk
+  473c59be621cc5d5 623
+tests/integration/test_rfc_docker_real.py
+  h_9db9d35f50cf33 20,29-31,36-38,43-44
+tests/integration/test_oud_integration.py
+  h_9db9d35f50cf33 22-24
+tests/unit/services/test_processing_service.py
+  h_9db9d35f50cf33 11
+src/flext_ldif/servers/openldap1.py
+  473c59be621cc5d5 379
+tests/integration/test_zero_data_loss_oid_oud.py
+  h_9db9d35f50cf33 20-21,80-82,126,136-137,162-164,226-227,233,235,314-315,317-321,348-352
+  473c59be621cc5d5 234
+src/flext_ldif/servers/relaxed.py
+  473c59be621cc5d5 644
+tests/integration/test_oud_to_oid_migration.py
+  h_9db9d35f50cf33 21-22
+tests/conftest.py
+  h_9db9d35f50cf33 29-31,317
+tests/unit/services/test_entries_service.py
+  h_9db9d35f50cf33 10,39-40
+src/flext_ldif/servers/_oid/schema.py
+  473c59be621cc5d5 332
+tests/unit/services/test_filters_service.py
+  h_9db9d35f50cf33 10,28-29
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "cc58f4f4734a4a1ce6a62d814f7d8006511ffef4",
+  "prompts": {
+    "473c59be621cc5d5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f6001f8b-afdd-4757-8812-9bff0bfd46d9",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 21,
+      "total_deletions": 30,
+      "accepted_lines": 55,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/3ec51cfacde3d139d77e1f00c68511276e7196bb28c9aec37feceaab990e741a"
+    }
+  },
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
