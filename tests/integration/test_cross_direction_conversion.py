@@ -231,7 +231,7 @@ class TestsTestFlextLdifCrossDirectionConversion:
                 "server_type": "oid",
             },
         })
-        result = conversion.convert_entry("oid", "oud", entry)
+        result = conversion.convert_model("oid", "oud", entry)
         assert result.success, f"Entry conversion failed: {result.error}"
         assert isinstance(result.value, m.Ldif.Entry)
         converted_entry = result.value
@@ -270,7 +270,7 @@ class TestsTestFlextLdifCrossDirectionConversion:
                 "server_type": "oud",
             },
         })
-        result = conversion.convert_entry("oud", "oid", entry)
+        result = conversion.convert_model("oud", "oid", entry)
         assert result.success, f"Entry conversion failed: {result.error}"
         assert isinstance(result.value, m.Ldif.Entry)
         converted_entry = result.value

@@ -19,7 +19,6 @@ from pathlib import Path
 import pytest
 
 from flext_ldif import (
-    FlextLdif,
     FlextLdifConversion,
     FlextLdifParser,
     FlextLdifServer,
@@ -65,7 +64,7 @@ def large_test_dataset() -> str:
 
 
 @pytest.fixture
-def api() -> FlextLdif:
+def api() -> p.Ldif.LdifClient:
     """Create ldif API instance for testing."""
     return ldif()
 
@@ -125,7 +124,7 @@ def oid_integration_fixture() -> str:
 
 @pytest.fixture
 def oid_schema_entries(
-    api: FlextLdif,
+    api: p.Ldif.LdifClient,
     oid_schema_fixture: str,
 ) -> t.SequenceOf[m.Ldif.Entry]:
     """Parse OID schema fixture into Entry models."""
@@ -138,7 +137,7 @@ def oid_schema_entries(
 
 @pytest.fixture
 def oid_entries(
-    api: FlextLdif,
+    api: p.Ldif.LdifClient,
     oid_entries_fixture: str,
 ) -> t.SequenceOf[m.Ldif.Entry]:
     """Parse OID entries fixture into Entry models."""
@@ -178,7 +177,7 @@ def oud_integration_fixture() -> str:
 
 @pytest.fixture
 def oud_schema_entries(
-    api: FlextLdif,
+    api: p.Ldif.LdifClient,
     oud_schema_fixture: str,
 ) -> t.SequenceOf[m.Ldif.Entry]:
     """Parse OUD schema fixture into Entry models."""
@@ -191,7 +190,7 @@ def oud_schema_entries(
 
 @pytest.fixture
 def oud_entries(
-    api: FlextLdif,
+    api: p.Ldif.LdifClient,
     oud_entries_fixture: str,
 ) -> t.SequenceOf[m.Ldif.Entry]:
     """Parse OUD entries fixture into Entry models."""
@@ -237,7 +236,7 @@ def openldap_integration_fixture() -> str:
 
 @pytest.fixture
 def openldap_schema_entries(
-    api: FlextLdif,
+    api: p.Ldif.LdifClient,
     openldap_schema_fixture: str,
 ) -> t.SequenceOf[m.Ldif.Entry]:
     """Parse OpenLDAP schema fixture into Entry models."""
@@ -250,7 +249,7 @@ def openldap_schema_entries(
 
 @pytest.fixture
 def openldap_entries(
-    api: FlextLdif,
+    api: p.Ldif.LdifClient,
     openldap_entries_fixture: str,
 ) -> t.SequenceOf[m.Ldif.Entry]:
     """Parse OpenLDAP entries fixture into Entry models."""
@@ -269,7 +268,7 @@ def rfc_schema_fixture() -> str:
 
 @pytest.fixture
 def rfc_schema_entries(
-    api: FlextLdif,
+    api: p.Ldif.LdifClient,
     rfc_schema_fixture: str,
 ) -> t.SequenceOf[m.Ldif.Entry]:
     """Parse RFC schema fixture into Entry models."""
@@ -559,6 +558,6 @@ def pytest_configure(config: pytest.Config) -> None:
 
 
 @pytest.fixture(scope="session")
-def flext_ldif() -> FlextLdif:
+def flext_ldif() -> p.Ldif.LdifClient:
     """Provide ldif instance for tests."""
     return ldif()

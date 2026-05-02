@@ -13,32 +13,33 @@ from flext_ldif import FlextLdifServersNovell
 from tests import c, m, u
 
 
-@pytest.fixture
-def novell_server() -> FlextLdifServersNovell:
-    """Create Novell server instance."""
-    return FlextLdifServersNovell()
-
-
-@pytest.fixture
-def schema_server(
-    novell_server: FlextLdifServersNovell,
-) -> FlextLdifServersNovell.Schema:
-    """Get schema server from Novell server."""
-    server = novell_server.schema_server
-    assert isinstance(server, FlextLdifServersNovell.Schema)
-    return server
-
-
-@pytest.fixture
-def entry_server(novell_server: FlextLdifServersNovell) -> FlextLdifServersNovell.Entry:
-    """Get entry server from Novell server."""
-    server = novell_server.entry_server
-    assert isinstance(server, FlextLdifServersNovell.Entry)
-    return server
-
-
 class TestsFlextLdifNovellServers:
     """Test initialization of Novell servers."""
+
+    @pytest.fixture
+    def novell_server(self) -> FlextLdifServersNovell:
+        """Create Novell server instance."""
+        return FlextLdifServersNovell()
+
+    @pytest.fixture
+    def schema_server(
+        self,
+        novell_server: FlextLdifServersNovell,
+    ) -> FlextLdifServersNovell.Schema:
+        """Get schema server from Novell server."""
+        server = novell_server.schema_server
+        assert isinstance(server, FlextLdifServersNovell.Schema)
+        return server
+
+    @pytest.fixture
+    def entry_server(
+        self,
+        novell_server: FlextLdifServersNovell,
+    ) -> FlextLdifServersNovell.Entry:
+        """Get entry server from Novell server."""
+        server = novell_server.entry_server
+        assert isinstance(server, FlextLdifServersNovell.Entry)
+        return server
 
     """Test schema attribute detection."""
 

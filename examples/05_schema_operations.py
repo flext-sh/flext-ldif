@@ -12,7 +12,8 @@ from collections.abc import (
 )
 from pathlib import Path
 
-from flext_ldif import ldif, m, r, t
+from examples import m, r, t
+from flext_ldif import ldif
 
 
 def _create_entry_or_none(

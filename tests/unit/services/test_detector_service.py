@@ -7,52 +7,47 @@ from pathlib import Path
 import pytest
 from flext_tests import tm
 
-from flext_ldif import FlextLdifDetector, m
-from tests import c, u
+from tests import c, m, p, u
 
 
 class TestsFlextLdifDetectorService:
     """Cover detector service branches using flat constants."""
 
-    @pytest.fixture
-    def detector(self) -> FlextLdifDetector:
-        return FlextLdifDetector()
-
     def test_detect_fails_when_no_inputs_given(
         self,
-        detector: FlextLdifDetector,
+        api: p.Ldif.LdifClient,
     ) -> None:
-        result = detector.detect_server_type()
+        result = api.detect_server_type()
         tm.fail(result, has="must be provided")
 
     def test_detect_fails_when_file_is_missing(
         self,
-        detector: FlextLdifDetector,
+        api: p.Ldif.LdifClient,
         tmp_path: Path,
     ) -> None:
         missing = tmp_path / c.Tests.DETECTOR_MISSING_PATH_NAME
-        result = detector.detect_server_type(ldif_path=missing)
+        result = api.detect_server_type(ldif_path=missing)
         tm.fail(result, has="not found")
 
     def test_detect_fails_when_file_has_invalid_utf8(
         self,
-        detector: FlextLdifDetector,
+        api: p.Ldif.LdifClient,
         tmp_path: Path,
     ) -> None:
         bad_file = tmp_path / c.Tests.DETECTOR_BAD_ENCODING_FILENAME
         bad_file.write_bytes(c.Tests.DETECTOR_INVALID_UTF8_BYTES)
-        result = detector.detect_server_type(ldif_path=bad_file)
+        result = api.detect_server_type(ldif_path=bad_file)
         tm.fail(result)
 
     def test_detect_from_file_succeeds(
         self,
-        detector: FlextLdifDetector,
+        api: p.Ldif.LdifClient,
         tmp_path: Path,
     ) -> None:
         ldif_file = tmp_path / c.Tests.DETECTOR_RFC_FILENAME
         ldif_file.write_text(c.Tests.DETECTOR_RFC_SNIPPET, encoding="utf-8")
 
-        result = detector.detect_server_type(ldif_path=ldif_file)
+        result = api.detect_server_type(ldif_path=ldif_file)
         detection = u.Tests.assert_success(result)
 
         tm.that(detection, is_=m.Ldif.ServerDetectionResult)
@@ -61,9 +56,9 @@ class TestsFlextLdifDetectorService:
 
     def test_detect_from_string_returns_detection_result(
         self,
-        detector: FlextLdifDetector,
+        api: p.Ldif.LdifClient,
     ) -> None:
-        result = detector.detect_server_type(
+        result = api.detect_server_type(
             ldif_content=c.Tests.DETECTOR_RFC_SNIPPET,
         )
         detection = u.Tests.assert_success(result)
@@ -83,9 +78,9 @@ class TestsFlextLdifDetectorService:
         scenario: str,
         snippet: str,
         expected_type: str,
-        detector: FlextLdifDetector,
+        api: p.Ldif.LdifClient,
     ) -> None:
-        result = detector.detect_server_type(ldif_content=snippet)
+        result = api.detect_server_type(ldif_content=snippet)
         detection = u.Tests.assert_success(result)
 
         tm.that(bool(scenario), eq=True)
@@ -93,10 +88,10 @@ class TestsFlextLdifDetectorService:
 
     def test_detect_respects_max_lines_limit(
         self,
-        detector: FlextLdifDetector,
+        api: p.Ldif.LdifClient,
     ) -> None:
         long_content = (c.Tests.DETECTOR_OID_SNIPPET + "\n") * 50
-        result = detector.detect_server_type(
+        result = api.detect_server_type(
             ldif_content=long_content,
             max_lines=c.Tests.DETECTOR_MAX_LINES_SMALL,
         )
@@ -113,18 +108,18 @@ class TestsFlextLdifDetectorService:
         self,
         scenario: str,
         snippet: str,
-        detector: FlextLdifDetector,
+        api: p.Ldif.LdifClient,
     ) -> None:
-        result = detector.detect_server_type(ldif_content=snippet)
+        result = api.detect_server_type(ldif_content=snippet)
         detection = u.Tests.assert_success(result)
         tm.that(bool(scenario), eq=True)
         tm.that(bool(detection.detected_server_type), eq=True)
 
     def test_resolve_effective_server_type_from_content(
         self,
-        detector: FlextLdifDetector,
+        api: p.Ldif.LdifClient,
     ) -> None:
-        result = detector.resolve_effective_server_type(
+        result = api.resolve_effective_server_type(
             ldif_content=c.Tests.DETECTOR_RFC_SNIPPET,
         )
         server_type = u.Tests.assert_success(result)
@@ -133,17 +128,9 @@ class TestsFlextLdifDetectorService:
 
     def test_resolve_effective_server_type_without_input_falls_back_to_rfc(
         self,
-        detector: FlextLdifDetector,
+        api: p.Ldif.LdifClient,
     ) -> None:
-        result = detector.resolve_effective_server_type()
+        result = api.resolve_effective_server_type()
         server_type = u.Tests.assert_success(result)
 
         tm.that(server_type, eq=c.Tests.RFC)
-
-    def test_get_effective_server_type_value_returns_string(
-        self,
-        detector: FlextLdifDetector,
-    ) -> None:
-        value = detector._get_effective_server_type_value()
-        tm.that(isinstance(value, str), eq=True)
-        tm.that(bool(value), eq=True)

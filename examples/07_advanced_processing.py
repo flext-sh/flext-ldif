@@ -20,7 +20,8 @@ from collections.abc import (
 from datetime import UTC, datetime
 from pathlib import Path
 
-from flext_ldif import ldif, m, p, u
+from examples import m, p, u
+from flext_ldif import ldif
 
 
 def basic_batch_processing() -> None:

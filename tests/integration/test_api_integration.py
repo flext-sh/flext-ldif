@@ -11,9 +11,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
-from flext_ldif import FlextLdifStatistics, ldif
+from flext_ldif import (
+    FlextLdifCategorization,
+    FlextLdifMigrationPipeline,
+    FlextLdifStatistics,
+    ldif,
+)
 from tests import c, m
 
 
@@ -142,6 +149,54 @@ class TestsFlextLdifApiIntegration:
         result = ldif.parse_ldif(c.Tests.RFC_SAMPLE_LDIF_BASIC)
         assert result.success
         assert len(result.value.entries) == 1
+
+    def test_categorization_reads_migrate_options(self) -> None:
+        """Categorization should reuse migrate options while honoring explicit base DN."""
+        api = ldif
+        options = m.Ldif.MigrateOptions(
+            base_dn="dc=options,dc=example",
+            forbidden_attributes=["userPassword"],
+            forbidden_objectclasses=["groupOfNames"],
+        )
+
+        categorization = api.categorization(
+            options=options,
+            base_dn="dc=override,dc=example",
+            server_type=c.Tests.OUD,
+        )
+
+        assert isinstance(categorization, FlextLdifCategorization)
+        assert categorization.base_dn == "dc=override,dc=example"
+        assert categorization.forbidden_attributes == ["userPassword"]
+        assert categorization.forbidden_objectclasses == ["groupOfNames"]
+
+    def test_migration_pipeline_reads_transform_and_migrate_options(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """Migration pipeline should use canonical transform and migrate option models."""
+        api = ldif
+        input_dir = tmp_path / "input"
+        output_dir = tmp_path / "output"
+        input_dir.mkdir()
+        output_dir.mkdir()
+
+        pipeline = api.migration_pipeline(
+            input_dir=input_dir,
+            output_dir=output_dir,
+            settings=m.Ldif.TransformConfig.servers(
+                source_server=c.Tests.OID,
+                target_server=c.Tests.OUD,
+            ),
+            options=m.Ldif.MigrateOptions(output_filename="custom.ldif"),
+        )
+
+        assert isinstance(pipeline, FlextLdifMigrationPipeline)
+        assert pipeline.input_dir == input_dir
+        assert pipeline.output_dir == output_dir
+        assert pipeline.source_server_type == c.Tests.OID
+        assert pipeline.target_server_type == c.Tests.OUD
+        assert pipeline.output_filename == "custom.ldif"
 
 
 if __name__ == "__main__":

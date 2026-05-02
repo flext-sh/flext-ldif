@@ -27,12 +27,12 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldif import FlextLdif, ldif
+from flext_ldif import ldif
 from tests import c, m, p, t, u
 
 
 @pytest.fixture
-def flext_api() -> FlextLdif:
+def flext_api() -> p.Ldif.LdifClient:
     """Ldif API instance."""
     return ldif()
 
@@ -102,7 +102,7 @@ class TestsFlextLdifRealLdapCrud:
         self,
         ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
-        flext_api: FlextLdif,
+        flext_api: p.Ldif.LdifClient,
         make_test_username: Callable[[str], str],
     ) -> None:
         """Create batch of entries using ldif API and write to LDAP."""
@@ -148,7 +148,7 @@ class TestsFlextLdifRealLdapCrud:
         self,
         ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
-        flext_api: FlextLdif,
+        flext_api: p.Ldif.LdifClient,
         tmp_path: Path,
         make_test_username: Callable[[str], str],
     ) -> None:

@@ -621,7 +621,9 @@ class FlextLdifCategorization(s):
                     ),
                 )
                 self.rejection_tracker["invalid_dn_rfc4514"].append(rejected_entry)
-                return r[m.Ldif.Entry].fail_op("DN normalization", norm_result.error or 'Unknown error')
+                return r[m.Ldif.Entry].fail_op(
+                    "DN normalization", norm_result.error or "Unknown error"
+                )
             dn_obj = m.Ldif.DN(value=normalized_dn)
             return r[m.Ldif.Entry].ok(entry.model_copy(update={"dn": dn_obj}))
 

@@ -48,6 +48,12 @@ class FlextLdif(
     helpers are defined locally.
     """
 
+    @property
+    @override
+    def settings(self) -> FlextLdifSettings:
+        """Expose the concrete LDIF settings type on the public facade."""
+        return super().settings
+
     def __init__(
         self,
         *,
@@ -138,11 +144,13 @@ class FlextLdif(
 
     def acl(self, server_type: str) -> p.Ldif.AclServer | None:
         """Expose ACL server lookup through the public facade."""
-        return self._server.acl(server_type)
+        server_registry: p.Ldif.ServerRegistry = self._server
+        return server_registry.acl(server_type)
 
     def entry(self, server_type: str) -> p.Ldif.EntryServer | None:
         """Expose entry server lookup through the public facade."""
-        return self._server.entry(server_type)
+        server_registry: p.Ldif.ServerRegistry = self._server
+        return server_registry.entry(server_type)
 
     def resolve_base_server(self, server_type: str) -> r[p.Ldif.ServerServer]:
         """Expose base server resolution through the public facade."""
@@ -152,14 +160,16 @@ class FlextLdif(
 
     def schema_server(self, server_type: str) -> p.Ldif.SchemaServer | None:
         """Expose schema server lookup through the public facade."""
-        return self._server.schema_server(server_type)
+        server_registry: p.Ldif.ServerRegistry = self._server
+        return server_registry.schema_server(server_type)
 
     def resolve_schema_server(
         self,
         server_type: str,
     ) -> p.Ldif.SchemaServer | None:
         """Expose canonical schema server resolution through the public facade."""
-        return self._server.resolve_schema_server(server_type)
+        server_registry: p.Ldif.ServerRegistry = self._server
+        return server_registry.resolve_schema_server(server_type)
 
     def resolve_server_bundle(
         self,
@@ -184,11 +194,13 @@ class FlextLdif(
 
     def list_registered_servers(self) -> t.MutableSequenceOf[str]:
         """Expose the normalized registered server list through the facade."""
-        return self._server.list_registered_servers()
+        server_registry: p.Ldif.ServerRegistry = self._server
+        return server_registry.list_registered_servers()
 
     def summarize_registry(self) -> t.Ldif.MutableMetadataInputMapping:
         """Expose registry statistics through the public facade."""
-        return self._server.summarize_registry()
+        server_registry: p.Ldif.ServerRegistry = self._server
+        return server_registry.summarize_registry()
 
     def processing_pipeline(
         self,
@@ -260,7 +272,7 @@ class FlextLdif(
     ) -> r[m.Ldif.ValidationResult]:
         """Validate list of entries."""
         resolved_validation_service = validation_service or self
-        return FlextLdifAnalysis().validate_entries(
+        return super().validate_entries(
             entries,
             resolved_validation_service,
         )

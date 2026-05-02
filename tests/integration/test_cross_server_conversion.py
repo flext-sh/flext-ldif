@@ -130,6 +130,29 @@ class TestsFlextLdifCrossServerConversion:
         written_format = write_result.value
         assert isinstance(written_format, str)
 
+    def test_convert_oid_acl_to_rfc(
+        self,
+        conversion_matrix: FlextLdifConversion,
+        oid_acl_server: p.Ldif.AclServer,
+    ) -> None:
+        """Direct ACL conversion should parse the converted RFC ACL through the target server."""
+        parse_result = oid_acl_server.parse_server(
+            c.Tests.CROSS_SERVER_OID_ACL_ANONYMOUS
+        )
+        assert parse_result.success, f"OID ACL parse failed: {parse_result.error}"
+        assert isinstance(parse_result.value, m.Ldif.Acl)
+
+        result = conversion_matrix.convert_model(
+            c.Tests.OID,
+            c.Tests.RFC,
+            parse_result.value,
+        )
+
+        assert result.success, f"OID to RFC ACL conversion failed: {result.error}"
+        assert isinstance(result.value, m.Ldif.Acl)
+        assert result.value.server_type == c.Tests.RFC
+        assert result.value.raw_acl is not None
+
     """Test complete OID fixture → OUD conversion workflow.
 
     Uses centralized fixtures from tests/integration/conftest.py:
@@ -309,7 +332,7 @@ class TestsFlextLdifCrossServerConversion:
     ) -> None:
         """Test error handling for invalid model type."""
         invalid_model = m.Ldif.Entry(dn=None, attributes=None)
-        result = conversion_matrix.convert_entry(oud_server, oid_server, invalid_model)
+        result = conversion_matrix.convert_model(oud_server, oid_server, invalid_model)
         assert result.failure
         assert result.error is not None
 

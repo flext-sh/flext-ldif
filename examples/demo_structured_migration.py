@@ -16,7 +16,8 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-from flext_ldif import ldif, p
+from examples import p
+from flext_ldif import ldif
 
 
 def main() -> None:

@@ -5,8 +5,8 @@ from __future__ import annotations
 import pytest
 from flext_tests import tm
 
-from flext_ldif import FlextLdifEntries, m, t
-from tests import c, u
+from flext_ldif import FlextLdifEntries
+from tests import c, m, t, u
 
 
 class TestsFlextLdifEntriesService:
@@ -250,7 +250,8 @@ class TestsFlextLdifEntriesService:
 
     def test_coerce_attribute_value_unsupported_type(self) -> None:
         """Lines 117-118: unsupported attribute type via normalize_attribute_values."""
-        result = FlextLdifEntries.normalize_attribute_values(42)  # type: ignore[arg-type]
+        unsupported_value = b"binary-value"
+        result = FlextLdifEntries.normalize_attribute_values(unsupported_value)
         tm.fail(result, has="Unsupported")
 
     def test_resolve_entry_objectclasses_fails_when_no_attrs(self) -> None:

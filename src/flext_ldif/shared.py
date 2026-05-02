@@ -49,7 +49,7 @@ class FlextLdifShared:
         """
         server_type_lower = server_type.lower().strip()
         alias_value = c.Ldif.SERVER_TYPE_ALIASES.get(server_type_lower)
-        if alias_value is not None:
+        if isinstance(alias_value, c.Ldif.ServerTypes):
             return alias_value
         try:
             return c.Ldif.ServerTypes(server_type_lower)

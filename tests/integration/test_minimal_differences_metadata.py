@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldif import FlextLdif, FlextLdifParser, ldif
+from flext_ldif import FlextLdifParser, ldif
 from tests import c, m, p, t, u
 
 
@@ -26,7 +26,7 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         return FlextLdifParser()
 
     @pytest.fixture
-    def writer(self) -> FlextLdif:
+    def writer(self) -> p.Ldif.LdifClient:
         """Create writer instance via ldif."""
         return ldif()
 

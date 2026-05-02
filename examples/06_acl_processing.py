@@ -14,12 +14,8 @@ All functionality accessed through ldif facade and FlextLdifAcl service.
 
 from __future__ import annotations
 
-from flext_ldif import FlextLdifAcl, ldif, m, t
-
-
-def _get_acl_service() -> FlextLdifAcl:
-    """Create an ACL service instance."""
-    return FlextLdifAcl()
+from examples import m, t
+from flext_ldif import ldif
 
 
 def extract_acls_from_entry() -> None:
@@ -34,7 +30,7 @@ def extract_acls_from_entry() -> None:
     if not entries:
         return
     entry = entries[0]
-    acl_service = _get_acl_service()
+    acl_service = ldif()
     acl_result = acl_service.extract_acls_from_entry(entry, server_type="openldap")
     if acl_result.success:
         acl_response = acl_result.unwrap()
@@ -54,7 +50,7 @@ def parse_and_evaluate_acls() -> None:
     if not entries:
         return
     entry = entries[0]
-    acl_service = _get_acl_service()
+    acl_service = ldif()
     acl_result = acl_service.extract_acls_from_entry(entry, server_type="openldap")
     if acl_result.failure:
         return
@@ -75,7 +71,7 @@ def process_entries_with_acls() -> None:
         return
     parse_response = parse_result.unwrap()
     entries = parse_response.entries
-    acl_service = _get_acl_service()
+    acl_service = ldif()
     for entry in entries:
         acl_result = acl_service.extract_acls_from_entry(entry, server_type="openldap")
         if acl_result.success:
@@ -99,7 +95,7 @@ def execute_acl_service() -> None:
     )
     if entry_result.failure:
         return
-    acl_service = _get_acl_service()
+    acl_service = ldif()
     exec_result = acl_service.service_check()
     if exec_result.success:
         _ = exec_result.unwrap()
@@ -117,7 +113,7 @@ def acl_pipeline() -> None:
     if not entries:
         return
     entry = entries[0]
-    acl_service = _get_acl_service()
+    acl_service = ldif()
     acl_result = acl_service.extract_acls_from_entry(entry, server_type="openldap")
     if acl_result.failure:
         return

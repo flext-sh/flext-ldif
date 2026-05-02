@@ -24,12 +24,12 @@ from collections.abc import (
 
 import pytest
 
-from flext_ldif import FlextLdif, ldif
+from flext_ldif import ldif
 from tests import m, p, t, u
 
 
 @pytest.fixture
-def flext_api() -> FlextLdif:
+def flext_api() -> p.Ldif.LdifClient:
     """Ldif API instance."""
     return ldif()
 
@@ -44,7 +44,7 @@ class TestsFlextLdifRealLdapRoundtrip:
         self,
         ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
-        flext_api: FlextLdif,
+        flext_api: p.Ldif.LdifClient,
         make_test_username: Callable[[str], str],
     ) -> None:
         """Verify LDAP → LDIF → LDAP preserves data integrity."""

@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from flext_tests import tm
 
-from flext_ldif import FlextLdif
-from tests import c, u
+from tests import c, p, u
 
 
 class TestsTestFlextLdifApiServerRegistry:
@@ -13,7 +12,7 @@ class TestsTestFlextLdifApiServerRegistry:
 
     def test_list_registered_servers_includes_core_server_types(
         self,
-        api: FlextLdif,
+        api: p.Ldif.LdifClient,
     ) -> None:
         """The facade should expose the real registered server catalog."""
         registered_servers = api.list_registered_servers()
@@ -24,7 +23,7 @@ class TestsTestFlextLdifApiServerRegistry:
 
     def test_server_resolution_returns_real_registered_server(
         self,
-        api: FlextLdif,
+        api: p.Ldif.LdifClient,
     ) -> None:
         """The facade should resolve the real server registry entry by type."""
         server = u.Tests.assert_success(
@@ -44,7 +43,7 @@ class TestsTestFlextLdifApiServerRegistry:
 
     def test_registry_resolution_exposes_public_registry_contract(
         self,
-        api: FlextLdif,
+        api: p.Ldif.LdifClient,
     ) -> None:
         """The facade should expose the same registry metadata as the server API."""
         server_bundle = u.Tests.assert_success(
@@ -66,7 +65,7 @@ class TestsTestFlextLdifApiServerRegistry:
 
     def test_invalid_server_type_returns_public_failures(
         self,
-        api: FlextLdif,
+        api: p.Ldif.LdifClient,
     ) -> None:
         """Invalid server identifiers should fail gracefully via public APIs."""
         invalid_server = c.Tests.SERVER_INVALID_SERVER_TYPE
@@ -86,7 +85,7 @@ class TestsTestFlextLdifApiServerRegistry:
 
     def test_valid_but_unregistered_server_type_fails_lookup(
         self,
-        api: FlextLdif,
+        api: p.Ldif.LdifClient,
     ) -> None:
         """A valid normalized type without registered server should fail gracefully."""
         valid_unregistered_server = c.Tests.GENERIC

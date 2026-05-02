@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif import FlextLdif, ldif
+from flext_ldif import ldif
 from tests import c, p
 
 
@@ -22,7 +22,7 @@ class TestsFlextLdifLdifFixturesIntegration:
     """Test LDIF fixture parsing and structure validation across all servers."""
 
     @pytest.fixture
-    def ldif_client(self) -> FlextLdif:
+    def ldif_client(self) -> p.Ldif.LdifClient:
         """Initialize LDIF processor."""
         return ldif
 

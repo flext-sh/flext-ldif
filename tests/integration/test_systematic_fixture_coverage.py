@@ -21,7 +21,8 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif import FlextLdif, ldif
+from flext_ldif import ldif
+from tests import p
 
 
 class TestsFlextLdifSystematicFixtureCoverage:
@@ -32,7 +33,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
     """
 
     @pytest.fixture(scope="class")
-    def api(self) -> FlextLdif:
+    def api(self) -> p.Ldif.LdifClient:
         """Ldif API instance."""
         return ldif()
 
@@ -82,7 +83,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
     )
     def test_schema_fixture_coverage(
         self,
-        api: FlextLdif,
+        api: p.Ldif.LdifClient,
         server_fixture: str,
         request: pytest.FixtureRequest,
     ) -> None:
@@ -125,7 +126,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
     )
     def test_acl_fixture_coverage(
         self,
-        api: FlextLdif,
+        api: p.Ldif.LdifClient,
         server_fixture: str,
         request: pytest.FixtureRequest,
     ) -> None:
@@ -161,7 +162,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
     )
     def test_entries_fixture_coverage(
         self,
-        api: FlextLdif,
+        api: p.Ldif.LdifClient,
         server_fixture: str,
         request: pytest.FixtureRequest,
     ) -> None:
@@ -206,7 +207,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
     )
     def test_integration_fixture_coverage(
         self,
-        api: FlextLdif,
+        api: p.Ldif.LdifClient,
         server_fixture: str,
         request: pytest.FixtureRequest,
     ) -> None:
@@ -261,7 +262,10 @@ class TestsFlextLdifSystematicFixtureCoverage:
             f"DNs not preserved in roundtrip. Missing: {original_dns - roundtrip_dns}. Extra: {roundtrip_dns - original_dns}"
         )
 
-    def test_all_servers_support_basic_ldif_operations(self, api: FlextLdif) -> None:
+    def test_all_servers_support_basic_ldif_operations(
+        self,
+        api: p.Ldif.LdifClient,
+    ) -> None:
         """Baseline test that all server types support basic LDIF operations.
 
         Creates simple LDIF content and validates it can be parsed and written

@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from flext_tests import tm
 
-from flext_ldif import FlextLdif, m
-from tests import c, u
+from tests import c, m, p, u
 
 
 class TestsFlextLdifStatisticsService:
@@ -32,7 +31,10 @@ class TestsFlextLdifStatisticsService:
         )
         return entry.model_copy(update={"metadata": metadata_with_server})
 
-    def test_calculate_for_entries_from_entry_list(self, api: FlextLdif) -> None:
+    def test_calculate_for_entries_from_entry_list(
+        self,
+        api: p.Ldif.LdifClient,
+    ) -> None:
         entries = [
             self._entry(
                 "cn=stats-rfc,dc=example,dc=com", c.Tests.STATS_SERVER_TYPES[0]
@@ -52,7 +54,10 @@ class TestsFlextLdifStatisticsService:
         tm.that(stats.server_type_distribution.get(c.Tests.RFC, 0), eq=1)
         tm.that(stats.server_type_distribution.get(c.Tests.OID, 0), eq=1)
 
-    def test_calculate_for_entries_from_parse_response(self, api: FlextLdif) -> None:
+    def test_calculate_for_entries_from_parse_response(
+        self,
+        api: p.Ldif.LdifClient,
+    ) -> None:
         entries = [
             self._entry("cn=stats-parse,dc=example,dc=com", c.Tests.RFC),
         ]

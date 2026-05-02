@@ -238,7 +238,9 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 processed_entry = entry.model_copy(update={"metadata": metadata})
                 return r[m.Ldif.Entry].ok(processed_entry)
             except (ValueError, TypeError, AttributeError) as exc:
-                return r[m.Ldif.Entry].fail_op("Apache Directory Server entry parsing", exc)
+                return r[m.Ldif.Entry].fail_op(
+                    "Apache Directory Server entry parsing", exc
+                )
 
 
 __all__: list[str] = ["FlextLdifServersApache"]

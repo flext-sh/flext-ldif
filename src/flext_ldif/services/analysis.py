@@ -110,8 +110,8 @@ class FlextLdifAnalysis(s):
         is_entry_valid = is_entry_valid and oc_valid
         return (is_entry_valid, errors)
 
-    @staticmethod
     def validate_entries(
+        self,
         entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
         validation_service: p.Ldif.ValidationService | None = None,
     ) -> r[m.Ldif.ValidationResult]:

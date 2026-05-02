@@ -207,7 +207,9 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             struct.error,
         ) as e:
             logger.exception("OID post-parse objectclass hook failed")
-            return r[m.Ldif.SchemaObjectClass].fail_op("OID post-parse objectclass hook", e)
+            return r[m.Ldif.SchemaObjectClass].fail_op(
+                "OID post-parse objectclass hook", e
+            )
 
     def _normalize_attribute_names(
         self,

@@ -436,4 +436,6 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 new_entry = entry.model_copy(update={"attributes": new_attrs})
                 return r[m.Ldif.Entry].ok(new_entry)
             except (ValueError, TypeError, AttributeError) as exc:
-                return r[m.Ldif.Entry].fail_op("Novell eDirectory entry processing", exc)
+                return r[m.Ldif.Entry].fail_op(
+                    "Novell eDirectory entry processing", exc
+                )

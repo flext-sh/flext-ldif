@@ -7,8 +7,7 @@ from typing import Literal
 import pytest
 from flext_tests import tm
 
-from flext_ldif import FlextLdif, m
-from tests import c, u
+from tests import c, m, p, u
 
 
 class TestsFlextLdifProcessingService:
@@ -29,7 +28,7 @@ class TestsFlextLdifProcessingService:
     )
     def test_process_entries_returns_results_for_configured_modes(
         self,
-        api: FlextLdif,
+        api: p.Ldif.LdifClient,
         processor_name: Literal["transform", "validate"],
         parallel: bool,
         batch_size: int,
@@ -50,7 +49,7 @@ class TestsFlextLdifProcessingService:
         tm.that(processed_dns == set(c.Tests.PROCESSING_VALID_DNS), eq=True)
 
     def test_process_entries_supports_kwargs_option_payload(
-        self, api: FlextLdif
+        self, api: p.Ldif.LdifClient
     ) -> None:
         entries = [self._entry(c.Tests.PROCESSING_VALID_DNS[0])]
 
@@ -67,7 +66,7 @@ class TestsFlextLdifProcessingService:
 
     def test_process_entries_batch_returns_failure_for_none_attributes(
         self,
-        api: FlextLdif,
+        api: p.Ldif.LdifClient,
     ) -> None:
         invalid_entry = m.Ldif.Entry(
             dn=c.Tests.PROCESSING_VALID_DNS[0],
@@ -83,7 +82,10 @@ class TestsFlextLdifProcessingService:
         )
         tm.that(result.failure, eq=True)
 
-    def test_process_entries_parallel_raises_for_none_dn(self, api: FlextLdif) -> None:
+    def test_process_entries_parallel_raises_for_none_dn(
+        self,
+        api: p.Ldif.LdifClient,
+    ) -> None:
         invalid_entry = m.Ldif.Entry(
             dn=None,
             attributes=m.Ldif.Attributes(attributes={"cn": ["x"]}),

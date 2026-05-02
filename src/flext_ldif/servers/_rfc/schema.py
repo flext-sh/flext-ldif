@@ -355,7 +355,13 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                     available_attrs,
                 )
                 if not validation_result.success:
-                    return r[MutableMapping[str, t.MutableSequenceOf[m.Ldif.SchemaAttribute] | t.MutableSequenceOf[m.Ldif.SchemaObjectClass]]].fail_op("Attribute validation", validation_result.error)
+                    return r[
+                        MutableMapping[
+                            str,
+                            t.MutableSequenceOf[m.Ldif.SchemaAttribute]
+                            | t.MutableSequenceOf[m.Ldif.SchemaObjectClass],
+                        ]
+                    ].fail_op("Attribute validation", validation_result.error)
 
             def parse_objectclass_domain(
                 oc_definition: str,
@@ -397,7 +403,13 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             struct.error,
         ) as e:
             logger.exception("Schema extraction failed")
-            return r[MutableMapping[str, t.MutableSequenceOf[m.Ldif.SchemaAttribute] | t.MutableSequenceOf[m.Ldif.SchemaObjectClass]]].fail_op("Schema extraction", e)
+            return r[
+                MutableMapping[
+                    str,
+                    t.MutableSequenceOf[m.Ldif.SchemaAttribute]
+                    | t.MutableSequenceOf[m.Ldif.SchemaObjectClass],
+                ]
+            ].fail_op("Schema extraction", e)
 
     def should_filter_out_attribute(self, _attribute: m.Ldif.SchemaAttribute) -> bool:
         """RFC server does not filter attributes."""
