@@ -255,7 +255,7 @@ class FlextLdifUtilitiesDispatch:
         try:
             FlextLdifUtilitiesDispatch._ENTRY_LIST_ADAPTER.validate_python(obj)
             return True
-        except (c.ValidationError, TypeError):
+        except c.EXC_VALIDATION_TYPE:
             return False
 
     # --- MRO conflict resolution: Collection methods (CollectionLdif vs FlextUtilities) ---

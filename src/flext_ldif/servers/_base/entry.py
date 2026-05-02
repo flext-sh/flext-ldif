@@ -87,7 +87,7 @@ class FlextLdifServersBaseEntry(
                     )
                 )
                 return validated
-            except (c.ValidationError, TypeError) as exc:
+            except c.EXC_VALIDATION_TYPE as exc:
                 logger.warning(
                     "Failed to validate extension write format options",
                     error=str(exc),

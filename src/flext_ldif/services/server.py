@@ -200,7 +200,7 @@ class FlextLdifServer(s):
                         instance,
                         scope=c.RegistrationScope.CLASS,
                     )
-            except (TypeError, AttributeError):
+            except c.EXC_ATTR_TYPE:
                 continue
 
     @classmethod
