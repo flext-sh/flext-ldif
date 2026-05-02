@@ -1,0 +1,63 @@
+src/flext_ldif/_utilities/schema.py
+  473c59be621cc5d5 420,750
+src/flext_ldif/servers/_oid/schema.py
+  473c59be621cc5d5 154
+src/flext_ldif/servers/_oud/acl.py
+  473c59be621cc5d5 107,414
+src/flext_ldif/_utilities/dn.py
+  473c59be621cc5d5 381,467,637,795
+src/flext_ldif/servers/openldap.py
+  473c59be621cc5d5 320
+src/flext_ldif/servers/_rfc/schema.py
+  473c59be621cc5d5 397
+src/flext_ldif/servers/_base/schema.py
+  473c59be621cc5d5 370
+src/flext_ldif/servers/openldap1.py
+  473c59be621cc5d5 195
+src/flext_ldif/_models/domain_schema.py
+  473c59be621cc5d5 281
+src/flext_ldif/services/migration.py
+  473c59be621cc5d5 194
+src/flext_ldif/_utilities/entry.py
+  473c59be621cc5d5 195
+src/flext_ldif/services/conversion.py
+  473c59be621cc5d5 116
+src/flext_ldif/servers/relaxed.py
+  473c59be621cc5d5 270
+src/flext_ldif/servers/_oid/entry.py
+  473c59be621cc5d5 499,550
+src/flext_ldif/services/filters.py
+  473c59be621cc5d5 5,129
+src/flext_ldif/_utilities/acl.py
+  473c59be621cc5d5 382
+src/flext_ldif/servers/_oid/acl.py
+  473c59be621cc5d5 144,236,630
+src/flext_ldif/services/conversion_acl.py
+  473c59be621cc5d5 124
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "3452af843d50c74525c556b9f99ed0652eb4b2b7",
+  "prompts": {
+    "473c59be621cc5d5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f6001f8b-afdd-4757-8812-9bff0bfd46d9",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 27,
+      "total_deletions": 172,
+      "accepted_lines": 61,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/66edd08c01f453c3b18d97089ccc73278c258c9aa885e5198178d434eb962330"
+    }
+  },
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
