@@ -240,21 +240,21 @@ class FlextLdifServersOudCommentsMixin:
             sort_key = original_acl_attr or acl_attr_name
             if sort_key not in acl_comments_dict:
                 acl_comments_dict[sort_key] = []
-            acl_values: t.MutableSequenceOf[str]
             if isinstance(acl_values_raw, list):
-                acl_values = [u.to_str(item) for item in acl_values_raw]
+                acl_values: t.MutableSequenceOf[str] = [
+                    u.to_str(item) for item in acl_values_raw
+                ]
             elif isinstance(acl_values_raw, dict):
                 acl_values = [u.to_str(acl_values_raw)]
             else:
-                normalized_acl_values = (
-                    FlextLdifServersOudAclExtractMixin._normalize_acl_values(
-                        acl_values_raw
-                    )
+                normalized = FlextLdifServersOudAclExtractMixin._normalize_acl_values(
+                    acl_values_raw,
                 )
-                if isinstance(normalized_acl_values, list):
-                    acl_values = list(normalized_acl_values)
-                else:
-                    acl_values = [u.to_str(normalized_acl_values)]
+                acl_values = (
+                    list(normalized)
+                    if isinstance(normalized, list)
+                    else [u.to_str(normalized)]
+                )
             FlextLdifServersOudCommentsMixin._add_acl_value_comments(
                 acl_comments_dict[sort_key],
                 original_acl_attr,

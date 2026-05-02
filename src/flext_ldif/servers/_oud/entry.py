@@ -152,21 +152,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         original_dn: str,
         original_attrs: t.AttributeMapping,
     ) -> r[m.Ldif.Entry]:
-        """Hook: Process ACLs and propagate their extensions to entry metadata.
-
-        This hook processes ACL attributes (aci) in the entry and extracts
-        their metadata extensions (like targattrfilters, targetcontrol, etc.)
-        and propagates them to the entry's metadata.extensions.
-
-        Args:
-            entry: Parsed entry from RFC with all hooks applied
-            original_dn: Original DN before transformation
-            original_attrs: Original attributes for ACL processing
-
-        Returns:
-            r with entry containing ACL metadata extensions
-
-        """
+        """Process ACL attributes (aci) into entry.metadata.extensions."""
         _ = original_dn
         aci_values = FlextLdifServersOudHelpersMixin._find_aci_values(
             entry, original_attrs
@@ -249,17 +235,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     @override
     def _hook_pre_write_entry(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
-        """Hook: Pre-write entry validation (simplified).
-
-        Entry is returned unchanged (RFC-valid format preserved).
-
-        Args:
-            entry: RFC Entry (already canonical)
-
-        Returns:
-            r[Entry] - entry unchanged
-
-        """
+        """Pre-write hook — entry is already RFC-canonical, no transformation needed."""
         return r[m.Ldif.Entry].ok(entry)
 
     @override
