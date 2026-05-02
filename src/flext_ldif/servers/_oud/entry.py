@@ -698,8 +698,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         entry.metadata = metadata
         return r[m.Ldif.Entry].ok(entry)
 
+    @staticmethod
     def _add_acl_value_comments(
-        self,
         comments: t.MutableSequenceOf[str],
         original_attr: str,
         attr_name: str,
@@ -719,8 +719,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 f"# [SKIP_TO_04] {attr_name}: {acl_val_str}",
             ])
 
+    @staticmethod
     def _add_attribute_transformation_comments(
-        self,
         comment_lines: t.MutableSequenceOf[str],
         attr_name: str,
         _transformation: m.Ldif.AttributeTransformation,
@@ -737,8 +737,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         """
         comment_lines.append(f"# [{comment_type}] {attr_name}: transformation applied")
 
+    @staticmethod
     def _add_original_entry_comments(
-        self,
         entry_data: m.Ldif.Entry,
         write_options: m.Ldif.WriteFormatOptions | None,
     ) -> t.MutableSequenceOf[str]:
@@ -816,8 +816,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         ])
         return ldif_parts
 
+    @staticmethod
     def _add_oud_acl_comments(
-        self,
         comment_lines: t.MutableSequenceOf[str],
         entry: m.Ldif.Entry,
         format_options: m.Ldif.WriteFormatOptions | None = None,
@@ -832,19 +832,19 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         if not entry.metadata:
             return acl_attr_names_to_skip
         acl_comments_dict: t.MutableStrSequenceMapping = {}
-        self._collect_acl_from_transformations(
+        FlextLdifServersOudEntry._collect_acl_from_transformations(
             entry,
             acl_comments_dict,
             acl_attr_names_to_skip,
         )
-        self._collect_acl_from_extensions(
+        FlextLdifServersOudEntry._collect_acl_from_extensions(
             entry,
             acl_comments_dict,
             acl_attr_names_to_skip,
         )
         if acl_comments_dict:
             acl_attr_names = list(acl_comments_dict.keys())
-            ordered_acl_attrs = self._determine_attribute_order(
+            ordered_acl_attrs = FlextLdifServersOudEntry._determine_attribute_order(
                 acl_attr_names,
                 format_options,
             )
@@ -853,8 +853,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     comment_lines.extend(acl_comments_dict[attr_name])
         return acl_attr_names_to_skip
 
+    @staticmethod
     def _add_rejection_reason_comments(
-        self,
         comment_lines: t.MutableSequenceOf[str],
         entry: m.Ldif.Entry,
     ) -> None:
@@ -876,8 +876,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             if rejection_reason_raw:
                 comment_lines.append(f"# [REJECTION] {rejection_reason_raw}")
 
+    @staticmethod
     def _add_transformation_comments(
-        self,
         comment_lines: t.MutableSequenceOf[str],
         entry: m.Ldif.Entry,
         format_options: m.Ldif.WriteFormatOptions | None = None,
@@ -899,7 +899,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         """
         if not entry.metadata:
             return
-        acl_attr_names_to_skip = self._add_oud_acl_comments(
+        acl_attr_names_to_skip = FlextLdifServersOudEntry._add_oud_acl_comments(
             comment_lines,
             entry,
             format_options,
@@ -911,7 +911,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 for attr_name in entry.metadata.attribute_transformations
                 if attr_name.lower() not in acl_attr_names_to_skip
             ]
-            ordered_attr_names = self._determine_attribute_order(
+            ordered_attr_names = FlextLdifServersOudEntry._determine_attribute_order(
                 attr_names,
                 format_options,
             )
@@ -923,7 +923,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     if transformation_type in {"MODIFIED", "TRANSFORMED"}
                     else transformation_type
                 )
-                self._add_attribute_transformation_comments(
+                FlextLdifServersOudEntry._add_attribute_transformation_comments(
                     comment_lines,
                     attr_name,
                     transformation,
@@ -942,7 +942,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 if u.matches_type(attr_name, str)
                 and attr_name.lower() not in acl_attr_names_to_skip
             ]
-            ordered_removed_attrs = self._determine_attribute_order(
+            ordered_removed_attrs = FlextLdifServersOudEntry._determine_attribute_order(
                 removed_attr_names,
                 format_options,
             )
@@ -968,8 +968,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         if comment_lines:
             comment_lines.append("")
 
+    @staticmethod
     def _apply_phase_aware_acl_handling(
-        self,
         entry_data: m.Ldif.Entry,
         write_options: m.Ldif.WriteFormatOptions | None,
     ) -> m.Ldif.Entry:
@@ -1027,10 +1027,10 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         if not (category and category != "acl" and acl_attrs):
             return entry_data
         acl_attrs_list = list(acl_attrs)
-        return self._comment_acl_attributes(entry_data, acl_attrs_list)
+        return FlextLdifServersOudEntry._comment_acl_attributes(entry_data, acl_attrs_list)
 
+    @staticmethod
     def _collect_acl_from_extensions(
-        self,
         entry: m.Ldif.Entry,
         acl_comments_dict: t.MutableStrSequenceMapping,
         acl_attr_names_to_skip: set[str],
@@ -1041,10 +1041,10 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         commented_acl_values_raw = entry.metadata.extensions.to_dict().get(
             c.Ldif.COMMENTED_ATTRIBUTE_VALUES,
         )
-        commented_acl_values = self._parse_commented_values(commented_acl_values_raw)
+        commented_acl_values = FlextLdifServersOudEntry._parse_commented_values(commented_acl_values_raw)
         if not commented_acl_values:
             return
-        original_acl_attr = self._get_original_acl_attr(entry)
+        original_acl_attr = FlextLdifServersOudEntry._get_original_acl_attr(entry)
         for acl_attr_name, acl_values_raw in commented_acl_values.items():
             if acl_attr_name.lower() in acl_attr_names_to_skip:
                 continue
@@ -1058,20 +1058,20 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             elif isinstance(acl_values_raw, dict):
                 acl_values = [u.to_str(acl_values_raw)]
             else:
-                normalized_acl_values = self._normalize_acl_values(acl_values_raw)
+                normalized_acl_values = FlextLdifServersOudEntry._normalize_acl_values(acl_values_raw)
                 if isinstance(normalized_acl_values, list):
                     acl_values = list(normalized_acl_values)
                 else:
                     acl_values = [u.to_str(normalized_acl_values)]
-            self._add_acl_value_comments(
+            FlextLdifServersOudEntry._add_acl_value_comments(
                 acl_comments_dict[sort_key],
                 original_acl_attr,
                 acl_attr_name,
                 acl_values,
             )
 
+    @staticmethod
     def _collect_acl_from_transformations(
-        self,
         entry: m.Ldif.Entry,
         acl_comments_dict: t.MutableStrSequenceMapping,
         acl_attr_names_to_skip: set[str],
@@ -1097,8 +1097,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                         f"# [SKIP_TO_04] {attr_name}: {acl_value}",
                     ])
 
+    @staticmethod
     def _determine_attribute_order(
-        self,
         attr_names: t.MutableSequenceOf[str],
         format_options: m.Ldif.WriteFormatOptions | None,
     ) -> t.MutableSequenceOf[str]:
@@ -1116,8 +1116,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             return sorted(attr_names, key=str.lower)
         return attr_names
 
+    @staticmethod
     def _extract_acl_metadata(
-        self,
         entry_data: m.Ldif.Entry,
     ) -> tuple[str | None, m.Ldif.DnRegistry | None]:
         """Extract base_dn and dn_registry from entry metadata for ACL processing.
@@ -1188,102 +1188,32 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     _ACL_METADATA_KEY_MAPPING_CACHE: ClassVar[t.MappingKV[str, str] | None] = None
 
+    @staticmethod
     def _extract_acl_metadata_from_dict(
-        self,
         acl_extensions: t.Ldif.MetadataInputMapping,
         acl_metadata_extensions: t.Ldif.MutableMetadataInputMapping,
     ) -> None:
         """Extract ACL metadata from dict extensions."""
-        for src_key, dest_key in self._acl_metadata_key_mapping().items():
+        for src_key, dest_key in FlextLdifServersOudEntry._acl_metadata_key_mapping().items():
             value_raw = acl_extensions.get(src_key)
             if value_raw is not None:
                 acl_metadata_extensions[dest_key] = u.normalize_to_metadata(value_raw)
 
+    @staticmethod
     def _extract_acl_metadata_from_dynamic(
-        self,
         acl_extensions: m.Ldif.DynamicMetadata,
         acl_metadata_extensions: t.Ldif.MutableMetadataInputMapping,
     ) -> None:
         """Extract ACL metadata from DynamicMetadata extensions."""
         extensions_dict = acl_extensions.to_dict()
-        for src_key, dest_key in self._acl_metadata_key_mapping().items():
+        for src_key, dest_key in FlextLdifServersOudEntry._acl_metadata_key_mapping().items():
             if src_key not in extensions_dict:
                 continue
             value_raw = extensions_dict[src_key]
             acl_metadata_extensions[dest_key] = u.normalize_to_metadata(value_raw)
 
-    def _finalize_and_parse_entry(
-        self,
-        entry_dict: t.MutableJsonMapping,
-        entries_list: t.MutableSequenceOf[m.Ldif.Entry],
-    ) -> None:
-        """Finalize entry dict and parse into entries list.
-
-        Args:
-            entry_dict: Entry dictionary with DN and attributes
-            entries_list: Target list to append parsed Entry models
-
-        """
-        if "dn" not in entry_dict:
-            return
-        dn = str(entry_dict.pop("dn"))
-        original_entry_dict = dict(entry_dict)
-        entry_attrs: t.MutableStrSequenceMapping = {}
-        for k, raw_value in entry_dict.items():
-            raw_values = raw_value if isinstance(raw_value, list) else [raw_value]
-            entry_attrs[k] = [u.to_str(item) for item in raw_values]
-        result = self.parse_entry(dn, entry_attrs)
-        if result.success:
-            entry = result.value
-            original_dn = dn
-            parsed_dn = entry.dn.value if entry.dn else None
-            parsed_attrs: t.MutableStrSequenceMapping = (
-                {**entry.attributes.attributes} if entry.attributes else {}
-            )
-            converted_attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]] = {
-                k: list(v) for k, v in parsed_attrs.items()
-            }
-            entry_attrs_for_diff: t.Ldif.MutableMetadataMapping = {}
-            for raw_key, raw_value in original_entry_dict.items():
-                entry_attrs_for_diff[raw_key] = u.normalize_to_metadata(raw_value)
-            dn_differences, attribute_differences, original_attrs_complete, _ = (
-                u.Ldif.analyze_differences(
-                    entry_attrs=entry_attrs_for_diff,
-                    converted_attrs=converted_attrs,
-                    original_dn=original_dn,
-                    cleaned_dn=parsed_dn or original_dn,
-                )
-            )
-            if not entry.metadata:
-                entry.metadata = m.Ldif.ServerMetadata.create_for(
-                    "oud",
-                    extensions=m.Ldif.DynamicMetadata(),
-                )
-            u.Ldif.store_minimal_differences(
-                metadata=entry.metadata,
-                dn_differences=m.Ldif.DynamicMetadata.from_dict(
-                    dn_differences,
-                ).model_dump_json(),
-                attribute_differences=m.Ldif.DynamicMetadata.from_dict(
-                    {
-                        key: t.Cli.JSON_VALUE_ADAPTER.validate_python(value)
-                        for key, value in attribute_differences.items()
-                    },
-                ).model_dump_json(),
-                original_dn=original_dn or "",
-                parsed_dn=parsed_dn or "",
-                original_attributes_complete=m.Ldif.DynamicMetadata.from_dict(
-                    original_attrs_complete,
-                ).model_dump_json(),
-            )
-            logger.debug(
-                "OUD entry parsed with minimal differences",
-                entry_dn=original_dn[:50] if original_dn else "",
-            )
-            entries_list.append(entry)
-
+    @staticmethod
     def _find_aci_in_dict(
-        self,
         attrs: t.AttributeMapping | None,
     ) -> t.MutableSequenceOf[str] | str | None:
         """Find ACI value in dictionary (case-insensitive)."""
@@ -1296,8 +1226,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 return value
         return None
 
+    @staticmethod
     def _find_aci_values(
-        self,
         entry: m.Ldif.Entry,
         original_attrs: t.AttributeMapping,
     ) -> t.MutableSequenceOf[str] | str | None:
@@ -1309,27 +1239,27 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 aci_input: t.MutableSequenceOf[str] = [
                     u.to_str(item) for item in original_aci
                 ]
-                aci_values = self._normalize_aci_value_simple(aci_input)
+                aci_values = FlextLdifServersOudEntry._normalize_aci_value_simple(aci_input)
             elif isinstance(original_aci, str):
-                aci_values = self._normalize_aci_value_simple(original_aci)
+                aci_values = FlextLdifServersOudEntry._normalize_aci_value_simple(original_aci)
         if not aci_values and entry.attributes and entry.attributes.attributes:
             entry_aci = entry.attributes.attributes.get("aci")
             if isinstance(entry_aci, list):
                 entry_aci_input: t.MutableSequenceOf[str] = [
                     u.to_str(item) for item in entry_aci
                 ]
-                aci_values = self._normalize_aci_value_simple(entry_aci_input)
+                aci_values = FlextLdifServersOudEntry._normalize_aci_value_simple(entry_aci_input)
         if not aci_values:
-            aci_values = self._find_aci_in_dict(original_attrs)
+            aci_values = FlextLdifServersOudEntry._find_aci_in_dict(original_attrs)
             if not aci_values and entry.attributes and entry.attributes.attributes:
-                aci_values = self._find_aci_in_dict(entry.attributes.attributes)
+                aci_values = FlextLdifServersOudEntry._find_aci_in_dict(entry.attributes.attributes)
         metadata = entry.metadata
         extensions = metadata.extensions if metadata is not None else None
         if not aci_values and extensions is not None:
             commented_raw = extensions.to_dict().get(
                 c.Ldif.COMMENTED_ATTRIBUTE_VALUES,
             )
-            commented_values = self._parse_commented_values(commented_raw)
+            commented_values = FlextLdifServersOudEntry._parse_commented_values(commented_raw)
             if commented_values:
                 for key, value in commented_values.items():
                     if key.lower() == "aci":
@@ -1339,14 +1269,15 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                             ) = [u.to_str(item) for item in value]
                         else:
                             normalized_value = value
-                        aci_values = self._normalize_aci_value_simple(
+                        aci_values = FlextLdifServersOudEntry._normalize_aci_value_simple(
                             normalized_value,
                         )
                         if aci_values:
                             break
         return aci_values
 
-    def _get_original_acl_attr(self, entry: m.Ldif.Entry) -> str:
+    @staticmethod
+    def _get_original_acl_attr(entry: m.Ldif.Entry) -> str:
         """Get original ACL attribute name (orclaci) from transformations or metadata."""
         if entry.metadata and entry.metadata.attribute_transformations:
             for (
@@ -1389,7 +1320,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
         """
         _ = original_dn
-        aci_values = self._find_aci_values(entry, original_attrs)
+        aci_values = FlextLdifServersOudEntry._find_aci_values(entry, original_attrs)
         if not aci_values:
             return r[m.Ldif.Entry].ok(entry)
         if not entry.metadata:
@@ -1406,7 +1337,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         acl_server = parent.acl_server if parent is not None else None
         if acl_server is None:
             return r[m.Ldif.Entry].ok(entry)
-        self._process_aci_list_for_finalize(aci_values, acl_server, current_extensions)
+        FlextLdifServersOudEntry._process_aci_list_for_finalize(aci_values, acl_server, current_extensions)
         if current_extensions:
             existing_extensions = (
                 dict(entry.metadata.extensions.to_dict())
@@ -1501,7 +1432,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             acl_metadata_extensions: t.Ldif.MutableMetadataInputMapping = {}
             for aci_value in aci_attrs:
                 if u.matches_type(aci_value, str):
-                    process_result = self._process_single_aci_value(
+                    process_result = FlextLdifServersOudEntry._process_single_aci_value(
                         aci_value,
                         acl_metadata_extensions,
                     )
@@ -1522,7 +1453,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     entry_dn=entry.dn.value if entry.dn else "",
                     aci_count=len(aci_list),
                 )
-            entry = self._merge_acl_metadata_to_entry(entry, acl_metadata_extensions)
+            entry = FlextLdifServersOudEntry._merge_acl_metadata_to_entry(entry, acl_metadata_extensions)
         return r[m.Ldif.Entry].ok(entry)
 
     @override
@@ -1540,13 +1471,14 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         """
         return r[m.Ldif.Entry].ok(entry)
 
-    def _is_schema_entry(self, entry: m.Ldif.Entry) -> bool:
+    @staticmethod
+    def _is_schema_entry(entry: m.Ldif.Entry) -> bool:
         """Check if entry is a schema entry - delegate to utility."""
         is_schema_entry: bool = u.Ldif.is_schema_entry(entry, strict=False)
         return is_schema_entry
 
+    @staticmethod
     def _merge_acl_metadata_to_entry(
-        self,
         entry: m.Ldif.Entry,
         acl_metadata_extensions: t.Ldif.MutableMetadataInputMapping,
     ) -> m.Ldif.Entry:
@@ -1585,8 +1517,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         )
         return copy_entry
 
+    @staticmethod
     def _normalize_aci_value(
-        self,
         aci_value: str,
         _base_dn: str | None,
         _dn_registry: m.Ldif.DnRegistry | None,
@@ -1594,8 +1526,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         """Normalize ACI value DNs (already RFC canonical, no changes needed)."""
         return (aci_value, False)
 
+    @staticmethod
     def _normalize_aci_value_simple(
-        self,
         value: t.Ldif.ValueType | t.Ldif.MetadataInputMapping | None,
     ) -> t.MutableSequenceOf[str] | str | None:
         """Normalize ACI value to t.MutableSequenceOf[str] | str | None."""
@@ -1605,7 +1537,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             return [u.to_str(item) for item in value]
         return u.to_str(value)
 
-    def _normalize_acl_dns(self, entry_data: m.Ldif.Entry) -> m.Ldif.Entry:
+    @staticmethod
+    def _normalize_acl_dns(entry_data: m.Ldif.Entry) -> m.Ldif.Entry:
         r"""Normalize and filter DNs in ACL attribute values (userdn/groupdn inside ACL strings).
 
         RFC vs OUD Behavior Differences
@@ -1647,7 +1580,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         """
         if not entry_data.attributes or not entry_data.attributes.attributes:
             return entry_data
-        base_dn, dn_registry = self._extract_acl_metadata(entry_data)
+        base_dn, dn_registry = FlextLdifServersOudEntry._extract_acl_metadata(entry_data)
         attrs = entry_data.attributes.attributes
         if "aci" not in attrs:
             return entry_data
@@ -1657,7 +1590,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         normalized_aci_values: t.MutableSequenceOf[str] = []
         for aci in aci_values:
             aci_str: str = aci
-            normalized_aci, was_filtered = self._normalize_aci_value(
+            normalized_aci, was_filtered = FlextLdifServersOudEntry._normalize_aci_value(
                 aci_str,
                 base_dn,
                 dn_registry,
@@ -1670,8 +1603,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             entry_data.attributes.attributes = new_attrs
         return entry_data
 
+    @staticmethod
     def _process_aci_list_for_finalize(
-        self,
         aci_values: t.MutableSequenceOf[str] | str,
         acl_server: p.Ldif.AclServer,
         current_extensions: t.Ldif.MutableMetadataInputMapping,
@@ -1701,13 +1634,13 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                                 raw_value,
                             )
                         )
-                    self._process_parsed_acl_extensions(
+                    FlextLdifServersOudEntry._process_parsed_acl_extensions(
                         acl_extensions,
                         current_extensions,
                     )
 
+    @staticmethod
     def _process_parsed_acl_extensions(
-        self,
         acl_extensions: t.Ldif.MetadataInputMapping,
         current_extensions: t.Ldif.MutableMetadataInputMapping,
     ) -> None:
@@ -1778,14 +1711,14 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             else:
                 current_extensions[final_key] = str(value)
 
+    @staticmethod
     def _process_single_aci_value(
-        self,
         aci_value: str,
         acl_metadata_extensions: t.Ldif.MutableMetadataInputMapping,
     ) -> r[bool]:
         """Process single ACI value, extract metadata, return has_macros flag."""
         has_macros = bool(re.search(r"\(\$dn\)|\[\$dn\]|\(\$attr\.", aci_value))
-        validation_result = self._validate_aci_macros(aci_value)
+        validation_result = FlextLdifServersOudEntry._validate_aci_macros(aci_value)
         if validation_result.failure:
             return r[bool].fail_op("ACI macro validation", validation_result.error)
         normalized_aci = aci_value.strip()
@@ -1798,7 +1731,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             if parsed_acl.metadata and parsed_acl.metadata.extensions:
                 acl_extensions = parsed_acl.metadata.extensions
                 if u.matches_type(acl_extensions, m.Ldif.DynamicMetadata):
-                    self._extract_acl_metadata_from_dynamic(
+                    FlextLdifServersOudEntry._extract_acl_metadata_from_dynamic(
                         acl_extensions,
                         acl_metadata_extensions,
                     )
@@ -1811,13 +1744,14 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                         )
                         for k, v in acl_extensions.items()
                     }
-                    self._extract_acl_metadata_from_dict(
+                    FlextLdifServersOudEntry._extract_acl_metadata_from_dict(
                         acl_extensions_dict,
                         acl_metadata_extensions,
                     )
         return r[bool].ok(has_macros)
 
-    def _restore_entry_from_metadata(self, entry_data: m.Ldif.Entry) -> m.Ldif.Entry:
+    @staticmethod
+    def _restore_entry_from_metadata(entry_data: m.Ldif.Entry) -> m.Ldif.Entry:
         """Restore original DN and attributes using generic utilities.
 
         RFC vs OUD Behavior Differences
@@ -1921,7 +1855,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         )
         return restored_copy
 
-    def _validate_aci_macros(self, _aci_value: str) -> r[bool]:
+    @staticmethod
+    def _validate_aci_macros(_aci_value: str) -> r[bool]:
         """Validate OUD ACI macro consistency rules (no-op)."""
         return r[bool].ok(True)
 
@@ -2001,35 +1936,15 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         if hook_result.failure:
             return r[str].fail_op("Pre-write hook", hook_result.error)
         normalized_entry = hook_result.value
-        entry_to_write = self._restore_entry_from_metadata(normalized_entry)
+        entry_to_write = FlextLdifServersOudEntry._restore_entry_from_metadata(normalized_entry)
         write_options = self._extract_write_format_options(entry_to_write.metadata)
         ldif_parts: t.MutableSequenceOf[str] = []
-        ldif_parts.extend(self._add_original_entry_comments(entry_data, write_options))
-        entry_data = self._apply_phase_aware_acl_handling(entry_data, write_options)
+        ldif_parts.extend(FlextLdifServersOudEntry._add_original_entry_comments(entry_data, write_options))
+        entry_data = FlextLdifServersOudEntry._apply_phase_aware_acl_handling(entry_data, write_options)
         if FlextLdifServersOudConstants.ACL_NORMALIZE_DNS_IN_VALUES:
-            entry_data = self._normalize_acl_dns(entry_data)
+            entry_data = FlextLdifServersOudEntry._normalize_acl_dns(entry_data)
         return (
             super()
             ._write_entry(entry_data)
             .map(lambda ldif_text: u.Ldif.finalize_ldif_text([*ldif_parts, ldif_text]))
-        )
-
-    def _write_entry_as_comment(self, entry_data: m.Ldif.Entry) -> r[str]:
-        """Write entry as commented LDIF (each line prefixed with '# ').
-
-        Args:
-            entry_data: Entry to write as comment
-
-        Returns:
-            r with commented LDIF string
-
-        """
-        return (
-            super()
-            ._write_entry(entry_data)
-            .map(
-                lambda ldif_text: "\n".join(
-                    f"# {line}" for line in ldif_text.split("\n")
-                ),
-            )
         )
