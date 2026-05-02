@@ -473,7 +473,7 @@ class FlextLdifServersBaseSchema(
         """Write schema model to string format."""
         try:
             attribute_model = m.Ldif.SchemaAttribute.model_validate(model)
-        except (ValueError, TypeError, AttributeError):
+        except c.EXC_BASIC_TYPE:
             objectclass_model = m.Ldif.SchemaObjectClass.model_validate(model)
             return self.write_objectclass(objectclass_model)
         return self.write_attribute(attribute_model)

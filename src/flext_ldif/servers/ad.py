@@ -312,7 +312,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 if acl_model.metadata:
                     acl_model.metadata.extensions["original_format"] = acl_line
                 return r[m.Ldif.Acl].ok(acl_model)
-            except (ValueError, TypeError, AttributeError) as exc:
+            except c.EXC_BASIC_TYPE as exc:
                 return r[m.Ldif.Acl].fail_op("Active Directory ACL parsing", exc)
 
         @override

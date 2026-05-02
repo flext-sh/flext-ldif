@@ -1057,7 +1057,7 @@ class FlextLdifUtilitiesDN:
             return bool(
                 components and FlextLdifUtilitiesDN._validate_components(components),
             )
-        except (ValueError, TypeError):
+        except c.EXC_TYPE_VALIDATION:
             return False
 
 

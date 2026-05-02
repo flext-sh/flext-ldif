@@ -417,7 +417,7 @@ class FlextLdifCategorization(s):
             effective_server_type = u.Ldif.normalize_server_type(
                 effective_server_type_raw,
             )
-        except (ValueError, TypeError) as e:
+        except c.EXC_TYPE_VALIDATION as e:
             return (
                 c.Ldif.Category.REJECTED,
                 f"Unknown server type: {effective_server_type_raw} - {e}",

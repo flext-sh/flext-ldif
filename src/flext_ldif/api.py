@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Self, override
 
+from flext_core.settings import FlextSettings
 from flext_ldif import (
     FlextLdifAcl,
     FlextLdifAnalysis,
@@ -52,7 +53,10 @@ class FlextLdif(
     @override
     def settings(self) -> FlextLdifSettings:
         """Expose the concrete LDIF settings type on the public facade."""
-        return super().settings
+        return FlextSettings.fetch_global().fetch_namespace(
+            "ldif",
+            FlextLdifSettings,
+        )
 
     def __init__(
         self,

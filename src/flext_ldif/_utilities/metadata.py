@@ -618,7 +618,7 @@ class FlextLdifUtilitiesMetadata:
                 "validation_metadata",
                 m.ConfigMap(root=config_root),
             )
-        except (AttributeError, TypeError, ValueError):
+        except c.EXC_BASIC_TYPE:
             pass
 
     @staticmethod

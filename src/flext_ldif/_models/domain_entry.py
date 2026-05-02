@@ -1040,7 +1040,7 @@ class FlextLdifModelsDomainEntry:
                 entry_instance: Self = cls.model_validate(entry_data)
                 ok_result: r[Self] = r[Self].ok(entry_instance)
                 return ok_result
-            except (ValueError, TypeError, AttributeError) as e:
+            except c.EXC_BASIC_TYPE as e:
                 fail_result: r[Self] = r[Self].fail(f"Failed to create Entry: {e}")
                 return fail_result
 

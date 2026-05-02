@@ -616,7 +616,7 @@ class FlextLdifUtilitiesEntry:
                 if result is not None:
                     key, value = result
                     original_attribute_case[key] = value
-            except (ValueError, TypeError, AttributeError):
+            except c.EXC_BASIC_TYPE:
                 continue
         attribute_differences: MutableMapping[str, t.Ldif.MutableMetadataMapping] = {}
         original_attributes_complete: t.Ldif.MutableMetadataMapping = {}

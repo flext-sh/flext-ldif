@@ -222,7 +222,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             return None
         try:
             return int(str(value))
-        except (TypeError, ValueError):
+        except c.EXC_TYPE_VALIDATION:
             return None
 
     @staticmethod
@@ -641,7 +641,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 "metadata": metadata,
             })
             return r[m.Ldif.SchemaObjectClass].ok(objectclass)
-        except (ValueError, TypeError, AttributeError) as e:
+        except c.EXC_BASIC_TYPE as e:
             logger.exception("RFC objectClass parsing exception")
             return r[m.Ldif.SchemaObjectClass].fail_op("RFC objectClass parsing", e)
 

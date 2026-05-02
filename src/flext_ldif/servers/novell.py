@@ -327,7 +327,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                     raw_acl=acl_line,
                 )
                 return r[m.Ldif.Acl].ok(acl)
-            except (ValueError, TypeError, AttributeError) as exc:
+            except c.EXC_BASIC_TYPE as exc:
                 return r[m.Ldif.Acl].fail_op("Novell eDirectory ACL parsing", exc)
 
         @override

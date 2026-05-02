@@ -546,7 +546,7 @@ class FlextLdifUtilitiesSchema:
             normalized_target = us.normalize_server_type(
                 target_server_type,
             )
-        except (TypeError, ValueError):
+        except c.EXC_TYPE_VALIDATION:
             return str(source_server_type).lower() == target_server_type.lower()
         return normalized_source == normalized_target
 
