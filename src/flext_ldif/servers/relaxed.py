@@ -715,13 +715,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     metadata=metadata,
                 )
                 return r[m.Ldif.Entry].ok(entry)
-            except (
-                ValueError,
-                KeyError,
-                AttributeError,
-                UnicodeDecodeError,
-                struct.error,
-            ) as e:
+            except c.Ldif.EXC_LDIF_PARSE as e:
                 self.logger.debug(
                     "Relaxed entry creation failed: %s",
                     e,

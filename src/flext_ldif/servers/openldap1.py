@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import re
-import struct
 from typing import ClassVar, override
 
 from flext_ldif import FlextLdifServersRfc, c, m, r, t
@@ -411,11 +410,5 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                     metadata=metadata,
                 )
                 return r[m.Ldif.Entry].ok(processed_entry)
-            except (
-                ValueError,
-                KeyError,
-                AttributeError,
-                UnicodeDecodeError,
-                struct.error,
-            ) as e:
+            except c.Ldif.EXC_LDIF_PARSE as e:
                 return r[m.Ldif.Entry].fail_op("OpenLDAP 1.x entry processing", e)

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_ldif import m, r, s
+from flext_ldif import c, m, r, s
 
 
 class FlextLdifParser(s):
@@ -42,7 +42,7 @@ class FlextLdifParser(s):
             )
         try:
             content = resolved_path.read_text(encoding=encoding)
-        except (OSError, UnicodeDecodeError) as error:
+        except c.EXC_OS_DECODING as error:
             return r[m.Ldif.ParseResponse].fail_op("read ldif file", error)
         return self.parse_string(content, server_type=server_type)
 
