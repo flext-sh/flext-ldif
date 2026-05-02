@@ -390,7 +390,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                     )
                 result = server.parse_objectclass(content)
             elif parse_method == "parse_input":
-                if not isinstance(server, p.Tests.ParseInputServer):
+                if not isinstance(server, p.Ldif.SchemaServer):
                     msg = "parse_input is not supported by this server"
                     raise AssertionError(msg)
                 result = server.parse_input(content)

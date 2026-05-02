@@ -77,7 +77,7 @@ class FlextLdifProtocolsDomain(Protocol):
             self,
             schema_text: str,
         ) -> r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
-            """Compatibility parser entrypoint for direct schema server consumers."""
+            """Parse a schema definition (compatibility entrypoint)."""
             ...
 
         def parse_attribute(self, definition: str) -> r[m.Ldif.SchemaAttribute]:
@@ -146,9 +146,7 @@ class FlextLdifProtocolsDomain(Protocol):
     class EntryServer(Protocol):
         """Entry server contract."""
 
-        def parse_server(
-            self, value: str
-        ) -> r[t.MutableSequenceOf[m.Ldif.Entry]]:
+        def parse_server(self, value: str) -> r[t.MutableSequenceOf[m.Ldif.Entry]]:
             """Parse LDIF text into entry models."""
             ...
 
