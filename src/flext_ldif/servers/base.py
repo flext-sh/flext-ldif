@@ -439,7 +439,9 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
             domain_entries = u.Ldif.as_entries(parsed_entries)
             for entry in domain_entries:
                 if entry.metadata and detected_server_type is not None:
-                    entry.metadata.original_server_type = detected_server_type
+                    entry.metadata = entry.metadata.model_copy(
+                        update={"original_server_type": detected_server_type},
+                    )
             statistics = m.Ldif.Statistics(
                 total_entries=len(domain_entries),
                 processed_entries=len(domain_entries),

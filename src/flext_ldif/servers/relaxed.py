@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import re
-import struct
 from collections.abc import (
     MutableMapping,
 )
@@ -757,13 +756,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 ):
                     ldif_text += FlextLdifServersRelaxed.Constants.LDIF_NEWLINE
                 return r[str].ok(ldif_text)
-            except (
-                ValueError,
-                KeyError,
-                AttributeError,
-                UnicodeDecodeError,
-                struct.error,
-            ) as e:
+            except c.Ldif.EXC_LDIF_PARSE as e:
                 self.logger.debug("Write entry failed: %s", e)
                 return r[str].fail(f"Failed to write entry: {e}")
 
