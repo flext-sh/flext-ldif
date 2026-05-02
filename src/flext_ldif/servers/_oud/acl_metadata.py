@@ -44,6 +44,19 @@ class FlextLdifServersOudAclMetadataMixin:
     })
     "Mapping: OUD extension key → canonical c.Ldif.ACL_* metadata key."
 
+    PARSED_ACL_KEY_MAP: ClassVar[t.MappingKV[str, str]] = MappingProxyType({
+        "targattrfilters": c.Ldif.ACL_TARGETATTR_FILTERS,
+        "targetcontrol": c.Ldif.ACL_TARGET_CONTROL,
+        "extop": c.Ldif.ACL_EXTOP,
+        "ip": c.Ldif.ACL_BIND_IP_FILTER,
+        "dns": c.Ldif.ACL_TARGETSCOPE,
+        "dayofweek": c.Ldif.ACL_NUMBERING,
+        "timeofday": c.Ldif.ACL_BINDMODE,
+        "authmethod": c.Ldif.ACL_SOURCE_PERMISSIONS,
+        "ssf": c.Ldif.ACL_SSFS,
+    })
+    "Mapping for parsed-ACL extensions: short alias → canonical c.Ldif.ACL_* key."
+
     @staticmethod
     def _extract_acl_metadata(
         entry_data: m.Ldif.Entry,
@@ -178,44 +191,12 @@ class FlextLdifServersOudAclMetadataMixin:
         current_extensions: t.Ldif.MutableMetadataInputMapping,
     ) -> None:
         """Process parsed ACL extensions and add to current extensions."""
-        mk = c.Ldif
-        key_mapping: t.MutableStrMapping = {
-            "targattrfilters": mk.ACL_TARGETATTR_FILTERS,
-            "targetcontrol": mk.ACL_TARGET_CONTROL,
-            "extop": mk.ACL_EXTOP,
-            "ip": mk.ACL_BIND_IP_FILTER,
-            "dns": mk.ACL_TARGETSCOPE,
-            "dayofweek": mk.ACL_NUMBERING,
-            "timeofday": mk.ACL_BINDMODE,
-            "authmethod": mk.ACL_SOURCE_PERMISSIONS,
-            "ssf": mk.ACL_SSFS,
-            mk.ACL_TARGETATTR_FILTERS: mk.ACL_TARGETATTR_FILTERS,
-            mk.ACL_TARGET_CONTROL: mk.ACL_TARGET_CONTROL,
-            mk.ACL_EXTOP: mk.ACL_EXTOP,
-            mk.ACL_BIND_IP_FILTER: mk.ACL_BIND_IP_FILTER,
-            mk.ACL_TARGETSCOPE: mk.ACL_TARGETSCOPE,
-            mk.ACL_NUMBERING: mk.ACL_NUMBERING,
-            mk.ACL_BINDMODE: mk.ACL_BINDMODE,
-            mk.ACL_SOURCE_PERMISSIONS: mk.ACL_SOURCE_PERMISSIONS,
-            mk.ACL_SSFS: mk.ACL_SSFS,
-        }
-        known_keys = {
-            mk.ACL_TARGETATTR_FILTERS,
-            mk.ACL_TARGET_CONTROL,
-            mk.ACL_EXTOP,
-            mk.ACL_BIND_IP_FILTER,
-            mk.ACL_TARGETSCOPE,
-            mk.ACL_NUMBERING,
-            mk.ACL_BINDMODE,
-            mk.ACL_SOURCE_PERMISSIONS,
-            mk.ACL_SSFS,
-        }
+        key_map = FlextLdifServersOudAclMetadataMixin.PARSED_ACL_KEY_MAP
+        canonical_keys = frozenset(key_map.values())
         for key, value in acl_extensions.items():
-            key_lower = key.lower()
-            mapped_key = key_mapping.get(key) or key_mapping.get(key_lower)
-            if mapped_key is None and key in known_keys:
-                mapped_key = key
-            final_key = mapped_key or key
+            final_key = key_map.get(key) or key_map.get(key.lower()) or key
+            if final_key not in canonical_keys and key not in canonical_keys:
+                final_key = key
             if value is None or u.primitive(value):
                 current_extensions[final_key] = value
             elif isinstance(value, (list, tuple)):
