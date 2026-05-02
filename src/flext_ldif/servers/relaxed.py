@@ -557,13 +557,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 return r[str].fail(
                     f"DN normalization failed for DN: {dn}: {norm_result.error}",
                 )
-            except (
-                ValueError,
-                KeyError,
-                AttributeError,
-                UnicodeDecodeError,
-                struct.error,
-            ) as e:
+            except c.Ldif.EXC_LDIF_PARSE as e:
                 self.logger.debug(
                     "DN normalization exception: %s",
                     e,

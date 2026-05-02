@@ -351,13 +351,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                     raw_acl=acl_line,
                 )
                 return r[m.Ldif.Acl].ok(acl)
-            except (
-                ValueError,
-                KeyError,
-                AttributeError,
-                UnicodeDecodeError,
-                struct.error,
-            ) as e:
+            except c.Ldif.EXC_LDIF_PARSE as e:
                 return r[m.Ldif.Acl].fail_op("OpenLDAP 1.x ACL parsing", e)
 
         @override

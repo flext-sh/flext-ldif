@@ -308,13 +308,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
                 u.Ldif.preserve_schema_formatting(attr_data.metadata, attr_definition)
                 self._add_target_metadata(attr_data, target_values)
             return r[m.Ldif.SchemaAttribute].ok(attr_data)
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
+        except c.Ldif.EXC_LDIF_PARSE as e:
             logger.exception("OID attribute parsing failed")
             return r[m.Ldif.SchemaAttribute].fail_op("OID attribute parsing", e)
 

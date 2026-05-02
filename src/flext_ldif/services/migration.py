@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import struct
 from pathlib import Path
 from typing import Annotated, Final, override
 
@@ -272,13 +271,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
                 processed_entries=len(migrated),
             )
             return r[m.Ldif.MigrationPipelineResult].ok(result)
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
+        except c.Ldif.EXC_LDIF_PARSE as e:
             self.logger.exception(
                 "File migration failed",
                 input_file=str(input_file),
