@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from flext_tests import tm
 
-from tests import c, m, p, u
+from tests import c, m, p
+from tests.utilities import TestsFlextLdifUtilities as u
 
 
 class TestsFlextLdifStatisticsService:
@@ -29,7 +30,10 @@ class TestsFlextLdifStatisticsService:
                 )
             },
         )
-        return entry.model_copy(update={"metadata": metadata_with_server})
+        updated_entry: m.Ldif.Entry = entry.model_copy(
+            update={"metadata": metadata_with_server},
+        )
+        return updated_entry
 
     def test_calculate_for_entries_from_entry_list(
         self,

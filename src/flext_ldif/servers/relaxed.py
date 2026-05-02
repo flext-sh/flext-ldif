@@ -641,13 +641,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     failed=failed,
                 )
                 return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(entries)
-            except (
-                ValueError,
-                KeyError,
-                AttributeError,
-                UnicodeDecodeError,
-                struct.error,
-            ) as error:
+            except c.Ldif.EXC_LDIF_PARSE as error:
                 self.logger.exception(
                     "Failed to parse content",
                     server_type=self._get_server_type(),

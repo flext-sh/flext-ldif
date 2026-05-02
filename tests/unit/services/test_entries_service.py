@@ -6,7 +6,8 @@ import pytest
 from flext_tests import tm
 
 from flext_ldif import FlextLdifEntries
-from tests import c, m, t, u
+from tests import c, m, t
+from tests.utilities import TestsFlextLdifUtilities as u
 
 
 class TestsFlextLdifEntriesService:
@@ -35,7 +36,8 @@ class TestsFlextLdifEntriesService:
             dn=c.Tests.ENTRIES_DN_VALID,
             attributes={c.Tests.NAME_CN: [c.Tests.ATTR_VALUE_TEST]},
         )
-        return entry.model_copy(update={"attributes": None})
+        updated_entry: m.Ldif.Entry = entry.model_copy(update={"attributes": None})
+        return updated_entry
 
     @staticmethod
     def _to_attribute_mapping(

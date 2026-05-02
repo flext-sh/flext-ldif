@@ -120,7 +120,9 @@ class FlextLdifProtocolsDomain(Protocol):
     class EntryServer(Protocol):
         """Entry server contract."""
 
-        def parse_server(self, value: str) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
+        def parse_server(
+            self, value: str
+        ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
             """Parse LDIF text into entry models."""
             ...
 

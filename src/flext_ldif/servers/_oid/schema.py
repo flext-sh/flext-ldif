@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import struct
 from collections.abc import (
     Mapping,
     MutableMapping,
@@ -330,13 +329,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
                     u.generate_iso_timestamp()
                 )
             return r[m.Ldif.SchemaObjectClass].ok(oc_data)
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
+        except c.Ldif.EXC_LDIF_PARSE as e:
             logger.exception("OID objectClass parsing failed")
             return r[m.Ldif.SchemaObjectClass].fail_op("OID objectClass parsing", e)
 

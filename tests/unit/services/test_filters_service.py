@@ -6,7 +6,8 @@ import pytest
 from flext_tests import tm
 
 from flext_ldif import ldif
-from tests import c, m, t, u
+from tests import c, m, t
+from tests.utilities import TestsFlextLdifUtilities as u
 
 
 class TestsFlextLdifFiltersService:
@@ -24,7 +25,8 @@ class TestsFlextLdifFiltersService:
             dn=c.Tests.FILTERS_DN_BARE,
             attributes={c.Tests.NAME_CN: [c.Tests.ATTR_VALUE_TEST]},
         )
-        return entry.model_copy(update={"attributes": None})
+        updated_entry: m.Ldif.Entry = entry.model_copy(update={"attributes": None})
+        return updated_entry
 
     @staticmethod
     def _schema_entry(

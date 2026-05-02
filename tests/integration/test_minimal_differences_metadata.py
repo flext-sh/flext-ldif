@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 
 from flext_ldif import FlextLdifParser, ldif
-from tests import c, m, p, t, u
+from tests import c, m, p, u
 
 
 class TestsFlextLdifMinimalDifferencesMetadata:
@@ -113,8 +113,10 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         assert len(entries) == 1
         entry = entries[0]
         assert entry.metadata is not None
-        dn_differences = entry.metadata.extensions.get("minimal_differences_dn", {})
-        if isinstance(dn_differences, dict) and dn_differences.get("has_differences"):
+        dn_differences = m.Ldif.DynamicMetadata.model_validate(
+            entry.metadata.extensions.get("minimal_differences_dn", {}),
+        )
+        if bool(dn_differences.get("has_differences")):
             spacing_changes = dn_differences.get("spacing_changes", {})
             assert spacing_changes is not None, "Spacing changes should be tracked"
 
@@ -133,7 +135,7 @@ class TestsFlextLdifMinimalDifferencesMetadata:
             "original_attributes_complete",
             {},
         )
-        assert isinstance(original_attrs, dict)
+        assert original_attrs is not None
         if entry.metadata.original_attribute_case:
             assert entry.metadata.original_attribute_case
 
@@ -146,8 +148,10 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         assert len(entries) == 1
         entry = entries[0]
         assert entry.metadata is not None
-        dn_differences = entry.metadata.extensions.get("minimal_differences_dn", {})
-        if isinstance(dn_differences, dict) and dn_differences.get("has_differences"):
+        dn_differences = m.Ldif.DynamicMetadata.model_validate(
+            entry.metadata.extensions.get("minimal_differences_dn", {}),
+        )
+        if bool(dn_differences.get("has_differences")):
             assert (
                 "spacing_changes" in dn_differences or "case_changes" in dn_differences
             )
@@ -162,25 +166,22 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         assert len(entries) == 1
         entry = entries[0]
         assert entry.metadata is not None
-        converted_attrs = entry.metadata.extensions.get(c.Ldif.CONVERTED_ATTRIBUTES, {})
-        if isinstance(converted_attrs, dict):
-            raw_boolean_conversions = converted_attrs.get(
+        converted_attrs = m.Ldif.DynamicMetadata.model_validate(
+            entry.metadata.extensions.get(c.Ldif.CONVERTED_ATTRIBUTES, {}),
+        )
+        boolean_conversions = m.Ldif.DynamicMetadata.model_validate(
+            converted_attrs.get(
                 c.Ldif.CONVERSION_BOOLEAN_CONVERSIONS,
                 {},
-            )
-            boolean_conversions = (
-                dict(raw_boolean_conversions)
-                if isinstance(raw_boolean_conversions, dict)
-                else dict[str, t.JsonValue]()
-            )
-        else:
-            boolean_conversions = dict[str, t.JsonValue]()
+            ),
+        )
         if (
-            u.dict_non_empty(boolean_conversions)
+            u.dict_non_empty(dict(boolean_conversions.items()))
             and "orcldasisenabled" in boolean_conversions
         ):
-            conv = boolean_conversions["orcldasisenabled"]
-            assert isinstance(conv, dict)
+            conv = m.Ldif.DynamicMetadata.model_validate(
+                boolean_conversions["orcldasisenabled"],
+            )
             original_key = c.Ldif.CONVERSION_ORIGINAL_VALUE
             converted_key = c.Ldif.CONVERSION_CONVERTED_VALUE
             assert original_key in conv

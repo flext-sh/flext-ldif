@@ -376,13 +376,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                     if perms:
                         acl_str += f" {','.join(perms)}"
                 return r[str].ok(acl_str)
-            except (
-                ValueError,
-                KeyError,
-                AttributeError,
-                UnicodeDecodeError,
-                struct.error,
-            ) as e:
+            except c.Ldif.EXC_LDIF_PARSE as e:
                 return r[str].fail_op("OpenLDAP 1.x ACL write", e)
 
     class Entry(FlextLdifServersRfc.Entry):

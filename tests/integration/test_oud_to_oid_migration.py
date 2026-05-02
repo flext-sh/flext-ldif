@@ -18,7 +18,8 @@ from __future__ import annotations
 import pytest
 
 from flext_ldif import FlextLdifServersOid, FlextLdifServersOud
-from tests import c, u
+from tests.constants import c
+from tests.utilities import TestsFlextLdifUtilities as u
 
 
 class TestsFlextLdifOudToOidMigration:

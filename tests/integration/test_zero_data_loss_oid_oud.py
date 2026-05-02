@@ -16,7 +16,9 @@ from __future__ import annotations
 import pytest
 
 from flext_ldif import ldif
-from tests import c, m, p, t, u
+from tests import m, p, t
+from tests.constants import c
+from tests.utilities import TestsFlextLdifUtilities as u
 
 
 def _verify_soft_deleted_attributes(entry: m.Ldif.Entry) -> None:
@@ -75,11 +77,9 @@ class TestsFlextLdifZeroDataLossOidOud:
             assert "entry_original_ldif" in entry.metadata.original_strings, (
                 f"Entry {entry.dn} missing original LDIF preservation"
             )
-            original_ldif_raw = entry.metadata.original_strings["entry_original_ldif"]
-            if not isinstance(original_ldif_raw, str):
-                msg = f"Expected str for entry_original_ldif, got {type(original_ldif_raw)}"
-                raise TypeError(msg)
-            original_ldif = original_ldif_raw
+            original_ldif = u.to_str(
+                entry.metadata.original_strings["entry_original_ldif"],
+            )
             assert original_ldif, "Original LDIF is empty"
             assert "dn:" in original_ldif.lower(), "Original LDIF missing DN"
 
@@ -122,12 +122,8 @@ class TestsFlextLdifZeroDataLossOidOud:
             entry = boolean_entries[0]
             if entry.metadata is None:
                 pytest.fail("Entry metadata is None")
-            if not isinstance(entry.metadata.boolean_conversions, dict):
-                pytest.fail("boolean_conversions is not a dict")
             for attr_name, conversion_raw in entry.metadata.boolean_conversions.items():
-                if not isinstance(conversion_raw, dict):
-                    continue
-                conversion = conversion_raw
+                conversion = m.Ldif.DynamicMetadata.model_validate(conversion_raw)
                 assert "original" in conversion, (
                     f"Missing original value for {attr_name}"
                 )
@@ -137,8 +133,8 @@ class TestsFlextLdifZeroDataLossOidOud:
                 assert "format" in conversion, (
                     f"Missing format direction for {attr_name}"
                 )
-                format_value = conversion.get("format")
-                if isinstance(format_value, str):
+                format_value = u.to_str(conversion.get("format"))
+                if format_value:
                     assert format_value in {"OID->RFC", "RFC->OID"}, (
                         f"Invalid format direction: {format_value}"
                     )
@@ -163,16 +159,11 @@ class TestsFlextLdifZeroDataLossOidOud:
         for oid_entry, oud_entry in zip(oid_entries, oud_entries, strict=False):
             assert oid_entry.metadata is not None
             assert oud_entry.metadata is not None
-            if (
-                isinstance(oid_entry.metadata.original_strings, dict)
-                and "entry_original_ldif" in oid_entry.metadata.original_strings
-            ):
-                original_oid_ldif_raw = oid_entry.metadata.original_strings.get(
-                    "entry_original_ldif",
+            if "entry_original_ldif" in oid_entry.metadata.original_strings:
+                original_oid_ldif = u.to_str(
+                    oid_entry.metadata.original_strings["entry_original_ldif"],
                 )
-                if isinstance(original_oid_ldif_raw, str):
-                    original_oid_ldif = original_oid_ldif_raw
-                    assert original_oid_ldif, "Original OID LDIF lost"
+                assert original_oid_ldif, "Original OID LDIF lost"
 
             def check_no_data_loss(
                 original: m.Ldif.Entry,
@@ -231,29 +222,19 @@ class TestsFlextLdifZeroDataLossOidOud:
             if (
                 orig.metadata
                 and "entry_original_ldif" in orig.metadata.original_strings
-                and isinstance(orig.metadata.original_strings, dict)
             ):
-                original_ldif_raw = orig.metadata.original_strings.get(
-                    "entry_original_ldif",
+                original_ldif = u.to_str(
+                    orig.metadata.original_strings["entry_original_ldif"],
                 )
-                if isinstance(original_ldif_raw, str):
-                    original_ldif = original_ldif_raw
-                    if (
-                        roundtrip.metadata
-                        and isinstance(roundtrip.metadata.original_strings, dict)
-                        and (
-                            "entry_original_ldif" in roundtrip.metadata.original_strings
-                        )
-                    ):
-                        roundtrip_original_raw = (
-                            roundtrip.metadata.original_strings.get(
-                                "entry_original_ldif",
-                            )
-                        )
-                        if isinstance(roundtrip_original_raw, str):
-                            roundtrip_original = roundtrip_original_raw
-                            assert original_ldif
-                            assert roundtrip_original
+                if (
+                    roundtrip.metadata
+                    and "entry_original_ldif" in roundtrip.metadata.original_strings
+                ):
+                    roundtrip_original = u.to_str(
+                        roundtrip.metadata.original_strings["entry_original_ldif"],
+                    )
+                    assert original_ldif
+                    assert roundtrip_original
 
     def test_minimal_differences_tracking(
         self,
@@ -266,8 +247,6 @@ class TestsFlextLdifZeroDataLossOidOud:
         entries = result.value.entries
         for entry in entries:
             if entry.metadata:
-                if not isinstance(entry.metadata.minimal_differences, dict):
-                    continue
                 minimal_diffs = entry.metadata.minimal_differences
                 if "dn" in minimal_diffs:
                     dn_diff_raw = minimal_diffs["dn"]
@@ -332,23 +311,17 @@ class TestsFlextLdifZeroDataLossOidOud:
             assert "entry_original_ldif" in entry.metadata.original_strings, (
                 f"Entry {entry.dn} missing entry_original_ldif"
             )
-            if isinstance(entry.metadata.original_strings, dict):
-                original_ldif_raw = entry.metadata.original_strings.get(
-                    "entry_original_ldif",
+            original_ldif = u.to_str(
+                entry.metadata.original_strings["entry_original_ldif"],
+            )
+            assert original_ldif, "Original LDIF is empty"
+            dn_diff = m.Ldif.DynamicMetadata.model_validate(
+                entry.metadata.minimal_differences.get("dn", {}),
+            )
+            if bool(dn_diff.get("has_differences", False)):
+                assert "dn_original" in entry.metadata.original_strings, (
+                    "DN differences detected but dn_original not preserved"
                 )
-                if isinstance(original_ldif_raw, str):
-                    original_ldif = original_ldif_raw
-                    assert original_ldif, "Original LDIF is empty"
-            if isinstance(entry.metadata.minimal_differences, dict):
-                dn_diff_raw = entry.metadata.minimal_differences.get("dn")
-                if (
-                    isinstance(dn_diff_raw, dict)
-                    and dn_diff_raw.get("has_differences", False)
-                    and isinstance(entry.metadata.original_strings, dict)
-                ):
-                    assert "dn_original" in entry.metadata.original_strings, (
-                        "DN differences detected but dn_original not preserved"
-                    )
 
     def test_restore_original_format_option(
         self,
@@ -371,13 +344,10 @@ class TestsFlextLdifZeroDataLossOidOud:
             if (
                 entry.metadata
                 and "entry_original_ldif" in entry.metadata.original_strings
-                and isinstance(entry.metadata.original_strings, dict)
             ):
-                original_ldif_raw = entry.metadata.original_strings.get(
-                    "entry_original_ldif",
+                original_ldif = u.to_str(
+                    entry.metadata.original_strings["entry_original_ldif"],
                 )
-                if isinstance(original_ldif_raw, str):
-                    original_ldif = original_ldif_raw
-                    assert original_ldif.strip() in restored_ldif, (
-                        f"Original LDIF not found in restored output for entry {entry.dn}"
-                    )
+                assert original_ldif.strip() in restored_ldif, (
+                    f"Original LDIF not found in restored output for entry {entry.dn}"
+                )

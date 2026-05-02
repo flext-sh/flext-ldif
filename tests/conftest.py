@@ -26,7 +26,9 @@ from flext_ldif import (
     FlextLdifWriter,
     ldif,
 )
-from tests import c, m, p, t, u
+from tests import m, p, t
+from tests.constants import TestsFlextLdifConstants, c
+from tests.utilities import TestsFlextLdifUtilities as u
 
 
 @pytest.fixture
@@ -312,7 +314,7 @@ def tmp_ldif_path(tmp_path: Path) -> Path:
 @pytest.fixture
 def fixtures_dir() -> Path:
     """Get path to fixtures directory."""
-    return c.Tests.FIXTURES_DIR
+    return TestsFlextLdifConstants.Tests.FIXTURES_DIR
 
 
 @pytest.fixture

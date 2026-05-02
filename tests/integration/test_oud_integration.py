@@ -19,7 +19,9 @@ import re
 import pytest
 
 from flext_ldif import ldif
-from tests import c, p, t, u
+from tests import p, t
+from tests.constants import c
+from tests.utilities import TestsFlextLdifUtilities as u
 
 
 class TestsFlextLdifOudIntegration:

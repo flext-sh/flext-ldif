@@ -13,7 +13,10 @@ from typing import ClassVar
 from flext_ldap import u
 from flext_tests import FlextTestsFixturesDSLMixin, FlextTestsUtilities, tk
 
-from tests import c, m, p, t
+from tests.constants import c
+from tests.models import m
+from tests.protocols import p
+from tests.typings import t
 
 
 class TestsFlextLdifUtilities(FlextTestsUtilities, u):
@@ -102,7 +105,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                     "inetOrgPerson",
                 ],
             }
-            return m.Ldif.Entry.model_validate(
+            entry = m.Ldif.Entry.model_validate(
                 {
                     "dn": {"value": actual_dn},
                     "attributes": {
@@ -114,6 +117,10 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                     "server_type": server_type,
                 },
             )
+            if not isinstance(entry, m.Ldif.Entry):
+                msg = "Expected create_real_entry() to build an Entry model"
+                raise AssertionError(msg)
+            return entry
 
         @staticmethod
         def create_real_ldif_content(
@@ -436,6 +443,9 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                 msg = message or f"Expected success but parse failed: {result.error}"
                 raise AssertionError(msg)
             value = result.value
+            if not isinstance(value, m.Ldif.Acl):
+                msg = f"Expected ACL parse result, got {type(value).__name__}"
+                raise AssertionError(msg)
             if expected_type is not None and not isinstance(value, expected_type):
                 raise AssertionError(
                     f"Expected {expected_type.__name__}, got {type(value).__name__}",
@@ -493,6 +503,11 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                 msg = message or f"Write failed: {result.error}"
                 raise AssertionError(msg)
             serialized = result.value
+            if not isinstance(serialized, str):
+                msg = (
+                    f"Expected serialized LDIF output, got {type(serialized).__name__}"
+                )
+                raise AssertionError(msg)
             if must_contain is not None:
                 for fragment in must_contain:
                     if fragment not in serialized:
@@ -515,6 +530,9 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                 msg = message or f"Write failed: {result.error}"
                 raise AssertionError(msg)
             serialized = result.value
+            if not isinstance(serialized, str):
+                msg = f"Expected serialized ACL output, got {type(serialized).__name__}"
+                raise AssertionError(msg)
             if must_contain is not None:
                 for fragment in must_contain:
                     if fragment not in serialized:

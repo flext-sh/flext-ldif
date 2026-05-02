@@ -46,13 +46,7 @@ class TestsFlextLdifAclMetadataPreservation:
         extensions = _entry_extensions(entry)
         bindmode_key = c.Ldif.ACL_BINDMODE
         bindmode = extensions.get(bindmode_key)
-        if bindmode is None:
-            assert extensions is not None, "Extensions should exist"
-            assert True, (
-                "ACL parsing succeeded (BINDMODE preservation may need implementation)"
-            )
-        else:
-            assert bindmode == "Simple", f"BINDMODE not preserved: got {bindmode}"
+        assert bindmode == "Simple", f"BINDMODE not preserved: got {bindmode}"
 
     def test_oid_deny_group_override_preservation(
         self,
@@ -197,7 +191,7 @@ class TestsFlextLdifAclMetadataPreservation:
         entry = entries[0]
         bind_timeofday = _entry_extensions(entry).get(c.Ldif.ACL_BIND_TIMEOFDAY)
         assert bind_timeofday is not None, "bind_timeofday not preserved"
-        assert isinstance(bind_timeofday, (tuple, str))
+        assert isinstance(bind_timeofday, str)
 
     def test_oud_bind_authmethod_preservation(self, api: p.Ldif.LdifClient) -> None:
         """Test that OUD authmethod bind rule is preserved in metadata."""
@@ -218,7 +212,7 @@ class TestsFlextLdifAclMetadataPreservation:
         entry = entries[0]
         ssf = _entry_extensions(entry).get(c.Ldif.ACL_SSF)
         assert ssf is not None, "ssf not preserved"
-        assert isinstance(ssf, (tuple, str))
+        assert isinstance(ssf, str)
 
     def test_oud_all_features_combined(self, api: p.Ldif.LdifClient) -> None:
         """Test that all OUD features can be preserved together."""

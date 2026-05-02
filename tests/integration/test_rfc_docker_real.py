@@ -16,7 +16,8 @@ from pathlib import Path
 import pytest
 
 from flext_ldif import FlextLdifParser, FlextLdifServer, FlextLdifWriter
-from tests import c, m
+from tests import m
+from tests.constants import TestsFlextLdifConstants, c
 
 
 class TestsFlextLdifRfcDockerReal:
@@ -25,17 +26,22 @@ class TestsFlextLdifRfcDockerReal:
     @pytest.fixture
     def oid_fixtures_dir(self) -> Path:
         """Path to OID fixtures."""
-        return c.Tests.FIXTURES_DIR / c.Tests.OID
+        fixtures_dir = Path(TestsFlextLdifConstants.Tests.FIXTURES_DIR)
+        server_dir: str = c.Tests.OID
+        return fixtures_dir / server_dir
 
     @pytest.fixture
     def oud_fixtures_dir(self) -> Path:
         """Path to OUD fixtures."""
-        return c.Tests.FIXTURES_DIR / c.Tests.OUD
+        fixtures_dir = Path(TestsFlextLdifConstants.Tests.FIXTURES_DIR)
+        server_dir: str = c.Tests.OUD
+        return fixtures_dir / server_dir
 
     @pytest.fixture
     def openldap_fixtures_dir(self) -> Path:
         """Path to OpenLDAP fixtures."""
-        return c.Tests.FIXTURES_DIR / "openldap2"
+        fixtures_dir = Path(TestsFlextLdifConstants.Tests.FIXTURES_DIR)
+        return fixtures_dir / "openldap2"
 
     def test_parse_real_oid_schema(
         self,

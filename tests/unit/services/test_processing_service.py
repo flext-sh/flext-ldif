@@ -7,7 +7,8 @@ from typing import Literal
 import pytest
 from flext_tests import tm
 
-from tests import c, m, p, u
+from tests import c, m, p
+from tests.utilities import TestsFlextLdifUtilities as u
 
 
 class TestsFlextLdifProcessingService:
