@@ -1,0 +1,31 @@
+src/flext_ldif/servers/_oud/helpers.py
+  473c59be621cc5d5 1-1417
+src/flext_ldif/servers/_oud/entry.py
+  473c59be621cc5d5 28,33-36,382,399,494,515,609,612-613,615
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "84451864d21a9c735f8e98c862aca47d72b704fa",
+  "prompts": {
+    "473c59be621cc5d5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f6001f8b-afdd-4757-8812-9bff0bfd46d9",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 1885,
+      "total_deletions": 1590,
+      "accepted_lines": 1435,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/b483d5f59b6dc0f1eb06e9b4be3bf67811bb17195ca6dfb30e08908a9caa7a74"
+    }
+  },
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
