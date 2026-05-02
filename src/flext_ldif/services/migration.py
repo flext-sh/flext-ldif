@@ -229,7 +229,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
                 target=str(target_server),
                 error=str(e),
             )
-            return r[t.MutableSequenceOf[m.Ldif.Entry]].fail(f"Migration failed: {e}")
+            return r[t.MutableSequenceOf[m.Ldif.Entry]].fail_op("Migration", e)
 
     def migrate_file(
         self,
@@ -298,7 +298,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
                 input_file=str(input_file),
                 error=str(e),
             )
-            return r[m.Ldif.MigrationPipelineResult].fail(f"File migration failed: {e}")
+            return r[m.Ldif.MigrationPipelineResult].fail_op("File migration", e)
 
 
 __all__: list[str] = ["FlextLdifMigrationPipeline"]
