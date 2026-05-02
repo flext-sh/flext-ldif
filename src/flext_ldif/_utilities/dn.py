@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import re
 import string
-import struct
 from collections.abc import (
     Callable,
     Generator,
@@ -729,13 +728,7 @@ class FlextLdifUtilitiesDN:
                             failure_message
                             or f"Failed to parse DN components from '{dn_str}'",
                         )
-                except (
-                    ValueError,
-                    KeyError,
-                    AttributeError,
-                    UnicodeDecodeError,
-                    struct.error,
-                ) as e:
+                except c.Ldif.EXC_LDIF_PARSE as e:
                     result = r[t.MutableSequenceOf[tuple[str, str]]].fail(
                         f"DN parsing error: {e}",
                     )

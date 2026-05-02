@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import re
-import struct
 from collections.abc import (
     MutableMapping,
 )
@@ -484,13 +483,7 @@ class FlextLdifUtilitiesACL:
                     processed = process_target_config(item)
                     if processed is not None:
                         result.append(processed)
-            except (
-                ValueError,
-                KeyError,
-                AttributeError,
-                UnicodeDecodeError,
-                struct.error,
-            ) as e:
+            except c.Ldif.EXC_LDIF_PARSE as e:
                 logger.debug("Skipping ACL rule processing due to error", error=str(e))
                 continue
         return result

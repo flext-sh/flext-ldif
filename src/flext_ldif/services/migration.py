@@ -208,13 +208,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
                 target_server=target_server,
             )
             return pipeline.model_copy(update={"entries_input": entries}).execute()
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
+        except c.Ldif.EXC_LDIF_PARSE as e:
             self.logger.exception(
                 "Migration failed",
                 source=str(source_server),

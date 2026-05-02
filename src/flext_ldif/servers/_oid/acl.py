@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import re
-import struct
 from collections.abc import (
     Mapping,
     MutableMapping,
@@ -326,7 +325,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         """Extract extensions dict from metadata, converting types if needed."""
         try:
             metadata = m.Ldif.ServerMetadata.model_validate(metadata)
-        except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
+        except c.Ldif.EXC_LDIF_PARSE:
             return {}
         extensions = getattr(metadata, "extensions", None)
         return extensions.to_dict() if extensions is not None else {}
@@ -657,13 +656,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         if metadata:
             try:
                 metadata_public = m.Ldif.ServerMetadata.model_validate(metadata)
-            except (
-                ValueError,
-                KeyError,
-                AttributeError,
-                UnicodeDecodeError,
-                struct.error,
-            ):
+            except c.Ldif.EXC_LDIF_PARSE:
                 metadata_dict = self._normalize_to_dict(metadata)
                 metadata_public = m.Ldif.ServerMetadata.model_validate(metadata_dict)
         oid_subject_type = self._map_rfc_subject_to_oid(subject_public, metadata_public)

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import struct
 import time
 from typing import override
 
@@ -231,13 +230,7 @@ class FlextLdifConversion(
                     },
                 )
             return r[t.Ldif.ConvertedModel].ok(converted_entry)
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
+        except c.Ldif.EXC_LDIF_PARSE as e:
             logger.exception("Failed to convert Entry model", error=str(e))
             return r[t.Ldif.ConvertedModel].fail_op("Entry conversion", e)
 

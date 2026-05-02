@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import re
-import struct
 from collections.abc import (
     Mapping,
     MutableMapping,
@@ -467,12 +466,6 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             aci_string = f"{sc.ACL_ACI_PREFIX} {' '.join(aci_parts)}"
             aci_output_lines.append(aci_string)
             return r[str].ok("\n".join(aci_output_lines))
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
+        except c.Ldif.EXC_LDIF_PARSE as e:
             logger.exception("Failed to write ACL to OUD ACI format")
             return r[str].fail(f"Failed to write ACL to OUD ACI format: {e}")

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import re
-import struct
 from collections.abc import (
     Callable,
     Mapping,
@@ -752,13 +751,7 @@ class FlextLdifUtilitiesSchema:
         try:
             _ = m.Ldif.SchemaObjectClass.model_validate(definition)
             return "objectclass"
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ):
+        except c.Ldif.EXC_LDIF_PARSE:
             logger.debug("SchemaObjectClass model validation did not match: {exc}")
         definition_str = str(definition)
         definition_lower = definition_str.lower()

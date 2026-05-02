@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import re
-import struct
 from types import MappingProxyType
 from typing import ClassVar, override
 
@@ -416,13 +415,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                         acl_parts.append(",".join(perms))
                 acl_str = " ".join(acl_parts)
                 return r[str].ok(acl_str)
-            except (
-                ValueError,
-                KeyError,
-                AttributeError,
-                UnicodeDecodeError,
-                struct.error,
-            ) as e:
+            except c.Ldif.EXC_LDIF_PARSE as e:
                 return r[str].fail_op("OpenLDAP 2.x ACL write", e)
 
     class Entry(FlextLdifServersRfc.Entry):

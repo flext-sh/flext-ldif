@@ -227,13 +227,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                     oc_str += f" MAY ( {may_attrs} )"
                 oc_str += " )"
                 return r[str].ok(oc_str)
-            except (
-                ValueError,
-                KeyError,
-                AttributeError,
-                UnicodeDecodeError,
-                struct.error,
-            ) as e:
+            except c.Ldif.EXC_LDIF_PARSE as e:
                 return r[str].fail_op("OpenLDAP 1.x objectClass write", e)
 
     class Acl(FlextLdifServersRfc.Acl):
