@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, MutableMapping
 from types import MappingProxyType
+from typing import ClassVar
 
 from flext_ldif import (
     c,
@@ -25,33 +26,23 @@ logger = u.fetch_logger(__name__)
 class FlextLdifServersOudAclMetadataMixin:
     """OUD AclMetadata helpers."""
 
-    _ACL_METADATA_KEY_MAPPING_CACHE: t.MappingKV[str, str] | None = None
-
-    @classmethod
-    def _acl_metadata_key_mapping(cls) -> t.MappingKV[str, str]:
-        """Lazy frozen mapping: ACL extension key → canonical metadata key."""
-        cached_raw = cls.__dict__.get("_ACL_METADATA_KEY_MAPPING_CACHE")
-        if isinstance(cached_raw, Mapping):
-            return cached_raw
-        mk = c.Ldif
-        cached: t.MappingKV[str, str] = MappingProxyType({
-            "extop": mk.ACL_EXTOP,
-            "ip": mk.ACL_BIND_IP_FILTER,
-            "bind_ip": mk.ACL_BIND_IP_FILTER,
-            "dns": mk.ACL_BIND_DNS,
-            "bind_dns": mk.ACL_BIND_DNS,
-            "dayofweek": mk.ACL_BIND_DAYOFWEEK,
-            "bind_dayofweek": mk.ACL_BIND_DAYOFWEEK,
-            "timeofday": mk.ACL_BIND_TIMEOFDAY,
-            "bind_timeofday": mk.ACL_BIND_TIMEOFDAY,
-            "authmethod": mk.ACL_AUTHMETHOD,
-            "ssf": mk.ACL_SSF,
-            "targetcontrol": "targetcontrol",
-            "targetscope": "targetscope",
-            "targattrfilters": mk.ACL_TARGETATTR_FILTERS,
-        })
-        cls._ACL_METADATA_KEY_MAPPING_CACHE = cached
-        return cached
+    ACL_KEY_MAP: ClassVar[t.MappingKV[str, str]] = MappingProxyType({
+        "extop": c.Ldif.ACL_EXTOP,
+        "ip": c.Ldif.ACL_BIND_IP_FILTER,
+        "bind_ip": c.Ldif.ACL_BIND_IP_FILTER,
+        "dns": c.Ldif.ACL_BIND_DNS,
+        "bind_dns": c.Ldif.ACL_BIND_DNS,
+        "dayofweek": c.Ldif.ACL_BIND_DAYOFWEEK,
+        "bind_dayofweek": c.Ldif.ACL_BIND_DAYOFWEEK,
+        "timeofday": c.Ldif.ACL_BIND_TIMEOFDAY,
+        "bind_timeofday": c.Ldif.ACL_BIND_TIMEOFDAY,
+        "authmethod": c.Ldif.ACL_AUTHMETHOD,
+        "ssf": c.Ldif.ACL_SSF,
+        "targetcontrol": "targetcontrol",
+        "targetscope": "targetscope",
+        "targattrfilters": c.Ldif.ACL_TARGETATTR_FILTERS,
+    })
+    "Mapping: OUD extension key → canonical c.Ldif.ACL_* metadata key."
 
     @staticmethod
     def _extract_acl_metadata(
@@ -98,7 +89,7 @@ class FlextLdifServersOudAclMetadataMixin:
         for (
             src_key,
             dest_key,
-        ) in FlextLdifServersOudAclMetadataMixin._acl_metadata_key_mapping().items():
+        ) in FlextLdifServersOudAclMetadataMixin.ACL_KEY_MAP.items():
             value_raw = acl_extensions.get(src_key)
             if value_raw is not None:
                 acl_metadata_extensions[dest_key] = u.normalize_to_metadata(value_raw)
@@ -113,7 +104,7 @@ class FlextLdifServersOudAclMetadataMixin:
         for (
             src_key,
             dest_key,
-        ) in FlextLdifServersOudAclMetadataMixin._acl_metadata_key_mapping().items():
+        ) in FlextLdifServersOudAclMetadataMixin.ACL_KEY_MAP.items():
             if src_key not in extensions_dict:
                 continue
             value_raw = extensions_dict[src_key]

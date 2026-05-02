@@ -33,17 +33,11 @@ class FlextLdifServersOudCommentsMixin:
         acl_values: t.MutableSequenceOf[str] | str | m.Ldif.Acl,
     ) -> None:
         """Add TRANSFORMED and SKIP_TO_04 comments for ACL values."""
-        if isinstance(acl_values, list):
-            for acl_value in acl_values:
-                comments.extend([
-                    f"# [TRANSFORMED] {original_attr}: {acl_value}",
-                    f"# [SKIP_TO_04] {attr_name}: {acl_value}",
-                ])
-        else:
-            acl_val_str = str(acl_values)
+        values = acl_values if isinstance(acl_values, list) else [str(acl_values)]
+        for v in values:
             comments.extend([
-                f"# [TRANSFORMED] {original_attr}: {acl_val_str}",
-                f"# [SKIP_TO_04] {attr_name}: {acl_val_str}",
+                f"# [TRANSFORMED] {original_attr}: {v}",
+                f"# [SKIP_TO_04] {attr_name}: {v}",
             ])
 
     @staticmethod
