@@ -227,6 +227,11 @@ class FlextLdifModelsDomainDN:
             })
             return validated
 
+        @classmethod
+        def empty(cls) -> Self:
+            """Return canonical empty DN (value="", default metadata)."""
+            return cls.from_value("")
+
     class DnRegistry(m.StrictModel):
         """Registry for tracking canonical DN case during conversions."""
 
