@@ -24,14 +24,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Final
 
-from examples import c, m, r
+from examples import c, m, p, r
 from flext_core import FlextContext
 from flext_ldif import ldif
-
-type LdifSource = str | Path
-type Entries = list[m.Ldif.Entry]
-type EntriesResult = r[Entries]
-type MessageResult = r[str]
 
 
 class BasicUsageDry:
@@ -76,7 +71,7 @@ class BasicUsageDry:
         )
 
     @classmethod
-    def _resolve_server_type(cls, source: LdifSource) -> r[str]:
+    def _resolve_server_type(cls, source: str | Path) -> p.Result[str]:
         """Resolve the server type from canonical LDIF input sources."""
         match source:
             case Path() as path:
@@ -88,10 +83,10 @@ class BasicUsageDry:
     @classmethod
     def _parse_validated_entries(
         cls,
-        source: LdifSource,
+        source: str | Path,
         *,
         server_type: str | None = None,
-    ) -> EntriesResult:
+    ) -> p.Result[list[m.Ldif.Entry]]:
         """Parse and validate LDIF input through the public facade only."""
         match source:
             case Path() as path:
@@ -109,13 +104,15 @@ class BasicUsageDry:
         )
 
     @classmethod
-    def batch_transform(cls) -> EntriesResult:
+    def batch_transform(cls) -> p.Result[list[m.Ldif.Entry]]:
         """DRY batch transformation - returns created entries."""
-        entries = [cls._build_entry(index) for index in range(10)]
+        entries: list[m.Ldif.Entry] = [
+            cls._build_entry(index) for index in range(10)
+        ]
         return ldif.validate_entries(entries).map(lambda _: entries)
 
     @classmethod
-    def file_pipeline(cls) -> MessageResult:
+    def file_pipeline(cls) -> p.Result[str]:
         """DRY file processing: detect -> parse -> validate -> write.
 
         Returns:
@@ -140,7 +137,7 @@ class BasicUsageDry:
             ),
         )
 
-    def context_pipeline(self) -> EntriesResult:
+    def context_pipeline(self) -> p.Result[list[m.Ldif.Entry]]:
         """Context-aware processing with correlation tracking.
 
         Returns:
@@ -155,7 +152,7 @@ class BasicUsageDry:
                 ),
             )
 
-    def process_pipeline(self) -> EntriesResult:
+    def process_pipeline(self) -> p.Result[list[m.Ldif.Entry]]:
         """DRY railway: detect -> parse -> validate.
 
         Python 3.13+ Features:
@@ -164,7 +161,7 @@ class BasicUsageDry:
         - PEP 695 type aliases for better readability
 
         Returns:
-            r with parsed and validated entries or error.
+            r with parsed and validated list[m.Ldif.Entry] or error.
 
         """
         return self._resolve_server_type(self.SAMPLE_LDIF).flat_map(
