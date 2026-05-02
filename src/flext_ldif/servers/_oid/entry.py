@@ -363,7 +363,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         entry: m.Ldif.Entry,
         original_dn: str,
         original_attrs: t.MutableStrSequenceMapping,
-    ) -> r[m.Ldif.Entry]:
+    ) -> p.Result[m.Ldif.Entry]:
         """Finalize OID entry with ACL and RFC violation metadata."""
         _ = original_dn
         if not entry.attributes:
@@ -427,7 +427,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         return r[m.Ldif.Entry].ok(entry)
 
     @override
-    def _hook_post_parse_entry(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
+    def _hook_post_parse_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
         """Hook: Transform parsed entry using OID-specific enhancements."""
         try:
             if not entry.attributes or not entry.dn:
@@ -504,7 +504,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         self,
         dn: str,
         attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]],
-    ) -> r[tuple[str, MutableMapping[str, t.MutableSequenceOf[str | bytes]]]]:
+    ) -> p.Result[tuple[str, MutableMapping[str, t.MutableSequenceOf[str | bytes]]]]:
         """Transform OID-specific DN and attributes before RFC parsing."""
         cleaned_dn, _ = u.Ldif.clean_dn_with_statistics(dn)
         normalized_dn = cleaned_dn
@@ -627,7 +627,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
     def _parse_entry_from_lines(
         self,
         lines: t.MutableSequenceOf[str],
-    ) -> r[m.Ldif.Entry]:
+    ) -> p.Result[m.Ldif.Entry]:
         """Parse entry from LDIF lines, apply OID→RFC normalization, finalize metadata."""
         result = super()._parse_entry_from_lines(lines)
         if result.failure:
@@ -781,7 +781,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         return restored_copy
 
     @override
-    def _write_entry(self, entry_data: m.Ldif.Entry) -> r[str]:
+    def _write_entry(self, entry_data: m.Ldif.Entry) -> p.Result[str]:
         """Write OID entry preserving OID-specific denormalized attribute names."""
         entry_to_write = self._restore_entry_from_metadata(entry_data)
         return super()._write_entry(entry_to_write)

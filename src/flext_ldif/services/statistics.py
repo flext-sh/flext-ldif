@@ -6,7 +6,7 @@ from collections import Counter
 
 from flext_ldif import (
     m,
-    r,
+    r,p,
     s,
     t,
     u,
@@ -19,7 +19,7 @@ class FlextLdifStatistics(s):
     def calculate_for_entries(
         self,
         entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
-    ) -> r[m.Ldif.EntriesStatistics]:
+    ) -> p.Result[m.Ldif.EntriesStatistics]:
         """Calculate general-purpose statistics for a list of Entry models."""
         normalized_entries = (
             entries.entries if isinstance(entries, m.Ldif.ParseResponse) else entries

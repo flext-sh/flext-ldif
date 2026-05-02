@@ -101,7 +101,7 @@ class FlextLdifFilters(s):
         cls,
         entries: t.MutableSequenceOf[m.Ldif.Entry],
         allowed_oids: t.MutableFrozensetMapping,
-    ) -> r[t.MutableSequenceOf[m.Ldif.Entry]]:
+    ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
         """Filter schema entries by allowed OIDs."""
         try:
             allowed_attr, allowed_oc, allowed_mr, allowed_mru = (

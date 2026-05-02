@@ -8,7 +8,7 @@ from collections.abc import (
 )
 from typing import ClassVar, override
 
-from flext_ldif import FlextLdifModelsDomainsEntries, FlextLdifServersRfc, c, m, r, t, u
+from flext_ldif import FlextLdifModelsDomainsEntries, FlextLdifServersRfc, c, m, r, t, u, p
 
 
 class FlextLdifServersApache(FlextLdifServersRfc):
@@ -119,7 +119,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             )
 
         @override
-        def _parse_attribute(self, attr_definition: str) -> r[m.Ldif.SchemaAttribute]:
+        def _parse_attribute(self, attr_definition: str) -> p.Result[m.Ldif.SchemaAttribute]:
             """Parse attribute definition and add Apache metadata."""
             result = super()._parse_attribute(attr_definition)
             if result.success:
@@ -131,7 +131,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             return r[m.Ldif.SchemaAttribute].from_result(result)
 
         @override
-        def _parse_objectclass(self, oc_definition: str) -> r[m.Ldif.SchemaObjectClass]:
+        def _parse_objectclass(self, oc_definition: str) -> p.Result[m.Ldif.SchemaObjectClass]:
             """Parse objectClass definition and add Apache metadata."""
             result = super()._parse_objectclass(oc_definition)
             if result.success:
@@ -185,7 +185,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             )
 
         @override
-        def _write_acl(self, acl_data: FlextLdifModelsDomainsEntries.Acl) -> r[str]:
+        def _write_acl(self, acl_data: FlextLdifModelsDomainsEntries.Acl) -> p.Result[str]:
             """Write ACL data to Apache Directory Server ACI format."""
             parent_result = super()._write_acl(acl_data)
             if parent_result.success:
@@ -213,7 +213,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             self,
             entry_dn: str,
             entry_attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]],
-        ) -> r[m.Ldif.Entry]:
+        ) -> p.Result[m.Ldif.Entry]:
             """Parse raw LDIF entry data into Entry model."""
             str_attrs: t.MutableStrSequenceMapping = {
                 k: [v.decode() if isinstance(v, bytes) else v for v in vals]

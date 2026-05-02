@@ -95,7 +95,7 @@ class FlextLdifServersBaseSchemaAcl(
         self,
         rfc_acl_attrs: t.MutableStrSequenceMapping,
         target_server: str,
-    ) -> r[t.MutableStrSequenceMapping]:
+    ) -> p.Result[t.MutableStrSequenceMapping]:
         """Convert RFC ACL format to server-specific ACI format."""
         _ = target_server
         return r[t.MutableStrSequenceMapping].ok(rfc_acl_attrs)
@@ -126,7 +126,7 @@ class FlextLdifServersBaseSchemaAcl(
         data: str | m.Ldif.Acl | None = None,
         operation: str | None = None,
         **kwargs: t.Ldif.Scalar,
-    ) -> r[t.Ldif.AclPayload]:
+    ) -> p.Result[t.Ldif.AclPayload]:
         """Execute ACL operation with auto-detection: str→parse, Acl→write."""
         json_value_adapter = t.json_value_adapter()
         kwargs_dict: t.MutableJsonMapping = {
@@ -146,7 +146,7 @@ class FlextLdifServersBaseSchemaAcl(
         acl_metadata: m.Ldif.AclWriteMetadata,
         *,
         use_original_format_as_name: bool = False,
-    ) -> r[str]:
+    ) -> p.Result[str]:
         """Format ACL value for writing, optionally using original format as name."""
         if not use_original_format_as_name:
             return r[str].ok(acl_value)
@@ -171,15 +171,15 @@ class FlextLdifServersBaseSchemaAcl(
         )
         return r[str].ok(formatted_value)
 
-    def parse_server(self, value: str) -> r[m.Ldif.Acl]:
+    def parse_server(self, value: str) -> p.Result[m.Ldif.Acl]:
         """Parse ACL line to Acl model."""
         return self._parse_acl(value)
 
-    def parse_input(self, acl_text: str) -> r[m.Ldif.Acl]:
+    def parse_input(self, acl_text: str) -> p.Result[m.Ldif.Acl]:
         """Compatibility parser entrypoint for direct ACL server consumers."""
         return self.parse_server(acl_text)
 
-    def write(self, acl_data: m.Ldif.Acl) -> r[str]:
+    def write(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
         """Write Acl model to string format."""
         return self._write_acl(acl_data)
 
@@ -214,14 +214,14 @@ class FlextLdifServersBaseSchemaAcl(
             return "parse" if operation == "parse" else "write"
         return "parse" if isinstance(data, str) else "write"
 
-    def _execute_acl_parse(self, data: str) -> r[t.Ldif.AclPayload]:
+    def _execute_acl_parse(self, data: str) -> p.Result[t.Ldif.AclPayload]:
         """Execute ACL parse operation."""
         parse_result = self.parse_server(data)
         if parse_result.success:
             return r[t.Ldif.AclPayload].ok(parse_result.value)
         return r[t.Ldif.AclPayload].fail(parse_result.error or "Parse failed")
 
-    def _execute_acl_write(self, data: m.Ldif.Acl) -> r[t.Ldif.AclPayload]:
+    def _execute_acl_write(self, data: m.Ldif.Acl) -> p.Result[t.Ldif.AclPayload]:
         """Execute ACL write operation."""
         write_result = self.write(data)
         if write_result.success:
@@ -233,7 +233,7 @@ class FlextLdifServersBaseSchemaAcl(
         *,
         detected_op: str,
         data: str | m.Ldif.Acl,
-    ) -> r[t.Ldif.AclPayload]:
+    ) -> p.Result[t.Ldif.AclPayload]:
         """Execute parse/write with strongly typed dispatch."""
         if detected_op == "parse":
             if not isinstance(data, str):
@@ -267,7 +267,7 @@ class FlextLdifServersBaseSchemaAcl(
         """Get RFC fallback value for unsupported vendor feature."""
         return None
 
-    def _hook_format_acl_name_pattern(self) -> r[tuple[re.Pattern[str], str]]:
+    def _hook_format_acl_name_pattern(self) -> p.Result[tuple[re.Pattern[str], str]]:
         """Hook for server-specific ACL name pattern matching."""
         pattern = re.compile(r'acl\\s+"[^"]*"')
         replacement_template = 'acl "{0}"'
@@ -276,11 +276,11 @@ class FlextLdifServersBaseSchemaAcl(
             replacement_template,
         ))
 
-    def _hook_post_parse_acl(self, acl: m.Ldif.Acl) -> r[m.Ldif.Acl]:
+    def _hook_post_parse_acl(self, acl: m.Ldif.Acl) -> p.Result[m.Ldif.Acl]:
         """Hook called after parsing an ACL line."""
         return r[m.Ldif.Acl].ok(acl)
 
-    def _parse_acl(self, acl_line: str) -> r[m.Ldif.Acl]:
+    def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
         """REQUIRED: Parse server-specific ACL definition (internal)."""
         _ = acl_line
         return r[m.Ldif.Acl].fail("Must be implemented by subclass")
@@ -313,7 +313,7 @@ class FlextLdifServersBaseSchemaAcl(
         """Check if this server supports a specific feature."""
         return False
 
-    def _write_acl(self, acl_data: m.Ldif.Acl) -> r[str]:
+    def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
         """Write ACL data to RFC-compliant string format (internal)."""
         _ = acl_data
         return r[str].fail("Must be implemented by subclass")

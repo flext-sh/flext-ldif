@@ -320,7 +320,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         ldif_content: str,
         *,
         validate_dependencies: bool = False,
-    ) -> r[
+    ) -> p.Result[
         MutableMapping[
             str,
             t.MutableSequenceOf[m.Ldif.SchemaAttribute]
@@ -332,7 +332,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
             def parse_attribute_domain(
                 attr_definition: str,
-            ) -> r[m.Ldif.SchemaAttribute]:
+            ) -> p.Result[m.Ldif.SchemaAttribute]:
                 return self.parse_attribute(attr_definition).map(
                     lambda attr: m.Ldif.SchemaAttribute.model_validate(attr),
                 )
@@ -364,7 +364,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
             def parse_objectclass_domain(
                 oc_definition: str,
-            ) -> r[m.Ldif.SchemaObjectClass]:
+            ) -> p.Result[m.Ldif.SchemaObjectClass]:
                 return self.parse_objectclass(oc_definition).map(
                     lambda oc: m.Ldif.SchemaObjectClass.model_validate(oc),
                 )
@@ -489,14 +489,14 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         return output_str.rstrip(")") + x_origin_str + ")"
 
     @override
-    def _parse_attribute(self, attr_definition: str) -> r[m.Ldif.SchemaAttribute]:
+    def _parse_attribute(self, attr_definition: str) -> p.Result[m.Ldif.SchemaAttribute]:
         """Parse RFC 4512 attribute definition using generalized parser."""
         server_type = self._get_server_type()
 
         def parse_parts_hook(
             definition: str,
-        ) -> r[t.Ldif.MutableMetadataMapping]:
-            parsed: r[t.Ldif.MutableMetadataMapping] = u.Ldif.parse_attribute(
+        ) -> p.Result[t.Ldif.MutableMetadataMapping]:
+            parsed: p.Result[t.Ldif.MutableMetadataMapping] = u.Ldif.parse_attribute(
                 definition,
             )
             return parsed
@@ -554,7 +554,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         return self._hook_post_parse_attribute(attr_model)
 
     @override
-    def _parse_objectclass(self, oc_definition: str) -> r[m.Ldif.SchemaObjectClass]:
+    def _parse_objectclass(self, oc_definition: str) -> p.Result[m.Ldif.SchemaObjectClass]:
         """Parse RFC 4512 objectClass definition using core parser."""
         parse_result = self._parse_objectclass_core(oc_definition)
         if parse_result.failure:
@@ -564,7 +564,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
     def _parse_objectclass_core(
         self,
         oc_definition: str,
-    ) -> r[m.Ldif.SchemaObjectClass]:
+    ) -> p.Result[m.Ldif.SchemaObjectClass]:
         """Core RFC 4512 objectClass parsing per Section 4.1.1."""
         try:
             parsed = u.Ldif.parse_objectclass(oc_definition)
@@ -684,19 +684,19 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                     pass
 
     @override
-    def _write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> r[str]:
+    def _write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> p.Result[str]:
         """Write attribute to RFC-compliant string format (internal)."""
         return self._write_schema_item(attr_data)
 
     @override
-    def _write_objectclass(self, oc_data: m.Ldif.SchemaObjectClass) -> r[str]:
+    def _write_objectclass(self, oc_data: m.Ldif.SchemaObjectClass) -> p.Result[str]:
         """Write objectClass to RFC-compliant string format (internal)."""
         return self._write_schema_item(oc_data)
 
     def _write_schema_item(
         self,
         data: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
-    ) -> r[str]:
+    ) -> p.Result[str]:
         """Write schema item (attribute or objectClass) to RFC-compliant format."""
         try:
             if isinstance(data, m.Ldif.SchemaAttribute):

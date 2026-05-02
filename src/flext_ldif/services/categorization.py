@@ -288,7 +288,7 @@ class FlextLdifCategorization(s):
     def categorize_entries(
         self,
         entries: t.MutableSequenceOf[m.Ldif.Entry],
-    ) -> r[m.Ldif.FlexibleCategories]:
+    ) -> p.Result[m.Ldif.FlexibleCategories]:
         """Categorize entries into 6 categories."""
         category_lists: MutableMapping[str, list[m.Ldif.Entry]] = {
             cat_: []
@@ -527,7 +527,7 @@ class FlextLdifCategorization(s):
     def filter_schema_by_oids(
         self,
         schema_entries: t.MutableSequenceOf[m.Ldif.Entry],
-    ) -> r[t.MutableSequenceOf[m.Ldif.Entry]]:
+    ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
         """Filter schema entries by OID whitelist."""
         if not self.schema_whitelist_rules:
             return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(schema_entries)
@@ -590,13 +590,13 @@ class FlextLdifCategorization(s):
     def validate_dns(
         self,
         entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
-    ) -> r[t.MutableSequenceOf[m.Ldif.Entry]]:
+    ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
         """Validate and normalize all DNs to RFC 4514."""
         normalized_entries = (
             entries.entries if isinstance(entries, m.Ldif.ParseResponse) else entries
         )
 
-        def validate_entry(entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
+        def validate_entry(entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
             """Validate and normalize entry DN."""
             dn_str = entry.dn.value if entry.dn else ""
             if not u.Ldif.validate_dn(dn_str):
@@ -740,7 +740,7 @@ class FlextLdifCategorization(s):
     def _get_categorization_server_constants(
         self,
         server_type: str,
-    ) -> r[type[c.Ldif]]:
+    ) -> p.Result[type[c.Ldif]]:
         """Get and validate server constants via FlextLdifServer registry."""
         registry = self.server_registry or self.server
         if registry is None:
@@ -825,7 +825,7 @@ class FlextLdifCategorization(s):
     def _normalize_rules(
         self,
         rules: m.Ldif.CategoryRules | MutableMapping[str, t.JsonValue] | None,
-    ) -> r[m.Ldif.CategoryRules]:
+    ) -> p.Result[m.Ldif.CategoryRules]:
         """Normalize rules to CategoryRules model."""
         if isinstance(rules, m.Ldif.CategoryRules):
             return r[m.Ldif.CategoryRules].ok(rules)

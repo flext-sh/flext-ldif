@@ -394,7 +394,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         ldif_text: str | None = None,
         entries: t.MutableSequenceOf[m.Ldif.Entry] | None = None,
         operation: str | None = None,
-    ) -> r[m.Ldif.Entry]:
+    ) -> p.Result[m.Ldif.Entry]:
         """Execute server operation with auto-detection."""
         if operation == "parse":
             if ldif_text is None:
@@ -411,7 +411,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
             return r[m.Ldif.Entry].ok(first_entry)
         return r[m.Ldif.Entry].fail("No valid parameters")
 
-    def parse_ldif(self, value: str) -> r[m.Ldif.ParseResponse]:
+    def parse_ldif(self, value: str) -> p.Result[m.Ldif.ParseResponse]:
         """Parse LDIF text to Entry models."""
         entry_server = getattr(self, "entry_server", None)
         if entry_server is None:
@@ -453,7 +453,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
                 detected_server_type=detected_server_type,
             )
 
-        parse_response_result: r[m.Ldif.ParseResponse] = (
+        parse_response_result: p.Result[m.Ldif.ParseResponse] = (
             entry_server
             .parse_server(value)
             .map_error(
@@ -469,17 +469,17 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         self,
         entries: t.MutableSequenceOf[m.Ldif.Entry],
         write_options: m.Ldif.WriteFormatOptions | None = None,
-    ) -> r[str]:
+    ) -> p.Result[str]:
         """Write Entry models to LDIF text."""
         entry_server = getattr(self, "entry_server", None)
         if not entry_server:
             return r[str].fail("Entry server not available")
-        write_result: r[str] = entry_server.write(entries, write_options).map(
+        write_result: p.Result[str] = entry_server.write(entries, write_options).map(
             lambda ldif: ldif if not ldif or ldif.endswith("\n") else f"{ldif}\n",
         )
         return write_result
 
-    def _execute_parse(self, ldif_text: str) -> r[m.Ldif.Entry]:
+    def _execute_parse(self, ldif_text: str) -> p.Result[m.Ldif.Entry]:
         """Execute parse operation."""
         parse_result = self.parse_ldif(ldif_text)
         if not parse_result.success:

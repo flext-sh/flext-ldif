@@ -14,6 +14,7 @@ from collections.abc import Callable, Mapping, MutableMapping
 from flext_ldif import (
     c,
     m,
+    p,
     r,
     t,
     u,
@@ -63,7 +64,7 @@ class FlextLdifServersOudTransformMixin:
             [t.Ldif.AttributeDict],
             r[t.Ldif.AttributeDict],
         ],
-    ) -> r[m.Ldif.Entry]:
+    ) -> p.Result[m.Ldif.Entry]:
         """Hook: Validate and CORRECT RFC syntax issues before writing Entry - static helper."""
         attrs_dict_raw: t.MutableStrSequenceMapping = (
             entry.attributes.attributes if entry.attributes else {}
@@ -188,7 +189,7 @@ class FlextLdifServersOudTransformMixin:
             t.Ldif.Scalar | t.MutableSequenceOf[str] | t.MutableAttributeMapping | None,
         ],
         syntax_corrections: t.MutableSequenceOf[str] | t.MutableStrMapping | None,
-    ) -> r[m.Ldif.Entry]:
+    ) -> p.Result[m.Ldif.Entry]:
         """Apply syntax corrections to entry."""
         corrected_attrs_raw = corrected_data.get("corrected_attributes")
         if not isinstance(corrected_attrs_raw, Mapping):
@@ -218,7 +219,7 @@ class FlextLdifServersOudTransformMixin:
             [t.Ldif.AttributeDict],
             r[t.Ldif.AttributeDict],
         ],
-    ) -> r[m.Ldif.Entry]:
+    ) -> p.Result[m.Ldif.Entry]:
         """Correct RFC syntax issues and return entry."""
         corrected_result = correct_rfc_syntax_in_attributes(attrs_dict)
         if corrected_result.failure:

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_ldif import c, m, r, s
+from flext_ldif import c, m, r, s, p
 
 
 class FlextLdifParser(s):
@@ -15,7 +15,7 @@ class FlextLdifParser(s):
         value: str | Path,
         *,
         server_type: str | None = None,
-    ) -> r[m.Ldif.ParseResponse]:
+    ) -> p.Result[m.Ldif.ParseResponse]:
         """Parse LDIF content from string or file."""
         effective_type = server_type or self._get_effective_server_type_value()
         if isinstance(value, Path):
@@ -27,7 +27,7 @@ class FlextLdifParser(s):
         path: Path,
         server_type: str | None = None,
         encoding: str = "utf-8",
-    ) -> r[m.Ldif.ParseResponse]:
+    ) -> p.Result[m.Ldif.ParseResponse]:
         """Parse LDIF content from a file path with optional encoding override."""
         resolved_path = path
         if not resolved_path.exists() and not resolved_path.is_absolute():
@@ -50,7 +50,7 @@ class FlextLdifParser(s):
         self,
         content: str,
         server_type: str | None = None,
-    ) -> r[m.Ldif.ParseResponse]:
+    ) -> p.Result[m.Ldif.ParseResponse]:
         """Parse LDIF content from a string through the selected base server."""
         effective_server_type = server_type or self._get_effective_server_type_value()
         return r[m.Ldif.ParseResponse].from_result(

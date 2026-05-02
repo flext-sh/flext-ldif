@@ -84,7 +84,7 @@ class FlextLdifProcessingPipeline(
     @override
     def execute(
         self,
-    ) -> r[t.MutableSequenceOf[m.Ldif.Entry]]:
+    ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
         """Execute the processing pipeline."""
         batch = self.entries_input
         if batch is None:

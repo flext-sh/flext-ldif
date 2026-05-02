@@ -53,7 +53,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         ldif_content: str,
         *,
         validate_dependencies: bool = True,
-    ) -> r[
+    ) -> p.Result[
         MutableMapping[
             str,
             t.MutableSequenceOf[m.Ldif.SchemaAttribute]
@@ -161,7 +161,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
     def _hook_post_parse_attribute(
         self,
         attr: m.Ldif.SchemaAttribute,
-    ) -> r[m.Ldif.SchemaAttribute]:
+    ) -> p.Result[m.Ldif.SchemaAttribute]:
         """Hook: Validate OUD-specific attribute features after RFC parsing."""
         if not attr or not attr.oid:
             return r[m.Ldif.SchemaAttribute].ok(attr)
@@ -222,7 +222,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
     def _hook_post_parse_objectclass(
         self,
         oc: m.Ldif.SchemaObjectClass,
-    ) -> r[m.Ldif.SchemaObjectClass]:
+    ) -> p.Result[m.Ldif.SchemaObjectClass]:
         """Hook: Validate OUD-specific objectClass features after RFC parsing."""
         if not oc:
             return r[m.Ldif.SchemaObjectClass].fail("ObjectClass is None or empty")
@@ -270,7 +270,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         )
         return self._apply_attribute_oid_metadata(updated_attr)
 
-    def _validate_attribute_oid(self, oid: str) -> r[bool]:
+    def _validate_attribute_oid(self, oid: str) -> p.Result[bool]:
         """Validate attribute OID format for OUD."""
         oid_validation_result = u.Ldif.validate_format(oid)
         if oid_validation_result.failure:
@@ -291,7 +291,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
     def _validate_objectclass_oid_and_sup(
         self,
         oc: m.Ldif.SchemaObjectClass,
-    ) -> r[m.Ldif.SchemaObjectClass]:
+    ) -> p.Result[m.Ldif.SchemaObjectClass]:
         """Validate ObjectClass OID and SUP OID formats."""
         if oc and oc.oid:
             oid_str = oc.oid
@@ -330,7 +330,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
                     )
         return r[m.Ldif.SchemaObjectClass].ok(oc)
 
-    def _validate_objectclass_sup(self, oc: m.Ldif.SchemaObjectClass) -> r[bool]:
+    def _validate_objectclass_sup(self, oc: m.Ldif.SchemaObjectClass) -> p.Result[bool]:
         """Validate objectClass SUP constraint for OUD."""
         sup = oc.sup
         if sup:

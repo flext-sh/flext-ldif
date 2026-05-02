@@ -138,7 +138,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         """Get RFC + OUD extensions."""
         return [*self.RFC_ACL_ATTRIBUTES, *self.OUD_ACL_ATTRIBUTES]
 
-    def _build_aci_permissions(self, acl_data: m.Ldif.Acl) -> r[str]:
+    def _build_aci_permissions(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
         """Build ACI permissions clause from ACL model."""
         perms = acl_data.permissions
         target_perms_dict: t.Ldif.MutableMetadataInputMapping | None = None
@@ -341,10 +341,10 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             if result.success:
                 acls.append(result.value)
 
-    def _parse_aci_format(self, acl_line: str) -> r[m.Ldif.Acl]:
+    def _parse_aci_format(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
         """Parse RFC 4876 ACI format using utility with OUD-specific settings."""
         settings = FlextLdifServersOudUtilities.get_parser_config()
-        result: r[m.Ldif.Acl] = u.Ldif.parse_aci(acl_line, settings)
+        result: p.Result[m.Ldif.Acl] = u.Ldif.parse_aci(acl_line, settings)
         if not result.success:
             return result
         acl = result.value
@@ -376,7 +376,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         return r[m.Ldif.Acl].ok(acl_result)
 
     @override
-    def _parse_acl(self, acl_line: str) -> r[m.Ldif.Acl]:
+    def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
         """Parse Oracle OUD ACL string to RFC-compliant internal model."""
         normalized = acl_line.strip()
         if normalized.startswith(FlextLdifServersOudConstants.ACL_ACI_PREFIX):
@@ -388,7 +388,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                 return rfc_result
         return self._parse_ds_privilege_name(normalized)
 
-    def _parse_ds_privilege_name(self, privilege_name: str) -> r[m.Ldif.Acl]:
+    def _parse_ds_privilege_name(self, privilege_name: str) -> p.Result[m.Ldif.Acl]:
         """Parse OUD ds-privilege-name format (simple privilege names)."""
         try:
             server_type_oud: c.Ldif.ServerTypes = c.Ldif.ServerTypes.OUD
@@ -422,7 +422,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         return raw_acl_str.startswith(FlextLdifServersOudConstants.ACL_ACI_PREFIX)
 
     @override
-    def _write_acl(self, acl_data: m.Ldif.Acl) -> r[str]:
+    def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
         """Write RFC-compliant ACL model to OUD ACI string format (protected internal method)."""
         try:
             sc = FlextLdifServersOudConstants

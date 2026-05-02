@@ -33,7 +33,7 @@ class FlextLdifWriter(s):
         *,
         server_type: str | None = None,
         format_options: p.Ldif.WriteFormatOptions | None = None,
-    ) -> r[m.Ldif.WriteResponse]:
+    ) -> p.Result[m.Ldif.WriteResponse]:
         """Write entries to LDIF text and return canonical write metadata."""
         normalized_entries = self._coerce_entries(entries)
         string_result = self.write_to_string(
@@ -63,7 +63,7 @@ class FlextLdifWriter(s):
         *,
         server_type: str | None = None,
         format_options: p.Ldif.WriteFormatOptions | None = None,
-    ) -> r[m.Ldif.WriteResponse]:
+    ) -> p.Result[m.Ldif.WriteResponse]:
         """Write entries to an LDIF file and return canonical write metadata."""
         normalized_entries = self._coerce_entries(entries)
         string_result = self.write_to_string(
@@ -107,7 +107,7 @@ class FlextLdifWriter(s):
         entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
         server_type: str | None = None,
         format_options: p.Ldif.WriteFormatOptions | None = None,
-    ) -> r[str]:
+    ) -> p.Result[str]:
         """Write entries to LDIF text through the selected base server."""
         normalized_entries = self._coerce_entries(entries)
         effective_server_type = server_type or self._get_effective_server_type_value()

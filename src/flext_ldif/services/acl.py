@@ -10,7 +10,7 @@ from flext_ldif import (
     c,
     m,
     r,
-    s,
+    s,p,
     t,
     u,
 )
@@ -45,7 +45,7 @@ class FlextLdifAcl(s):
     def evaluate_acl_context(
         acls: t.SequenceOf[t.Ldif.AclLike],
         required_permissions: m.Ldif.AclPermissions | t.MutableBoolMapping,
-    ) -> r[m.Ldif.AclEvaluationResult]:
+    ) -> p.Result[m.Ldif.AclEvaluationResult]:
         """Evaluate if ACLs grant required permissions."""
         if isinstance(required_permissions, Mapping):
             required = m.Ldif.AclPermissions(
@@ -102,7 +102,7 @@ class FlextLdifAcl(s):
             ),
         )
 
-    def service_check(self) -> r[m.Ldif.AclResponse]:
+    def service_check(self) -> p.Result[m.Ldif.AclResponse]:
         """Return a minimal ACL response for service wiring checks."""
         return r[m.Ldif.AclResponse].ok(
             m.Ldif.AclResponse(acls=[], statistics=m.Ldif.Statistics()),
@@ -112,7 +112,7 @@ class FlextLdifAcl(s):
         self,
         entry: m.Ldif.Entry,
         server_type: str,
-    ) -> r[m.Ldif.AclResponse]:
+    ) -> p.Result[m.Ldif.AclResponse]:
         """Extract ACLs from entry using server-specific attribute names."""
         acl_attr_name = u.Ldif.get_acl_attributes()
         if not acl_attr_name:
@@ -138,7 +138,7 @@ class FlextLdifAcl(s):
             self._build_acl_response(acls, failed_entries=failed_count),
         )
 
-    def parse_acl_string(self, acl_string: str, server_type: str) -> r[m.Ldif.Acl]:
+    def parse_acl_string(self, acl_string: str, server_type: str) -> p.Result[m.Ldif.Acl]:
         """Parse ACL string using server-specific servers."""
         try:
             normalized_server_type = u.Ldif.normalize_server_type(server_type)

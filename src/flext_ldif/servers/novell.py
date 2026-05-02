@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from typing import ClassVar, override
 
-from flext_ldif import FlextLdifServersRfc, c, m, r, t, u
+from flext_ldif import FlextLdifServersRfc, c, m, r, t, u, p
 
 
 class FlextLdifServersNovell(FlextLdifServersRfc):
@@ -154,7 +154,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             )
 
         @override
-        def _parse_attribute(self, attr_definition: str) -> r[m.Ldif.SchemaAttribute]:
+        def _parse_attribute(self, attr_definition: str) -> p.Result[m.Ldif.SchemaAttribute]:
             """Parse attribute definition and add Novell metadata."""
             result = super()._parse_attribute(attr_definition)
             if result.success:
@@ -166,7 +166,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             return result
 
         @override
-        def _parse_objectclass(self, oc_definition: str) -> r[m.Ldif.SchemaObjectClass]:
+        def _parse_objectclass(self, oc_definition: str) -> p.Result[m.Ldif.SchemaObjectClass]:
             """Parse objectClass definition and add Novell metadata."""
             result = super()._parse_objectclass(oc_definition)
             if result.success:
@@ -240,7 +240,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             return perms_dict
 
         @override
-        def _parse_acl(self, acl_line: str) -> r[m.Ldif.Acl]:
+        def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
             """Parse eDirectory ACL definition."""
             try:
                 attr_name, content = self.__class__.splitacl_line(acl_line)
@@ -331,7 +331,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 return r[m.Ldif.Acl].fail_op("Novell eDirectory ACL parsing", exc)
 
         @override
-        def _write_acl(self, acl_data: m.Ldif.Acl) -> r[str]:
+        def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
             """Write ACL data to RFC-compliant string format."""
             try:
                 acl_attribute = (
@@ -413,7 +413,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         ) -> None:
             """Initialize eDirectory entry server."""
 
-        def process_entry(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
+        def process_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
             """Normalise eDirectory entries and expose metadata."""
             if not entry.attributes:
                 return r[m.Ldif.Entry].ok(entry)

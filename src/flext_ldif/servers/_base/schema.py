@@ -297,7 +297,7 @@ class FlextLdifServersBaseSchema(
         data: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None = None,
         operation: str | None = None,
         **kwargs: t.Ldif.Scalar,
-    ) -> r[t.Ldif.SchemaConversionValue]:
+    ) -> p.Result[t.Ldif.SchemaConversionValue]:
         """Execute schema operation with auto-detection: str→parse, Model→write."""
         json_value_adapter = t.json_value_adapter()
         kwargs_dict: t.MutableJsonMapping = {
@@ -406,29 +406,29 @@ class FlextLdifServersBaseSchema(
     def parse_server(
         self,
         value: str,
-    ) -> r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
+    ) -> p.Result[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
         """Parse schema definition (attribute or objectClass)."""
         return self.route_parse(value)
 
     def parse_input(
         self,
         schema_text: str,
-    ) -> r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
+    ) -> p.Result[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
         """Compatibility parser entrypoint for direct schema server consumers."""
         return self.parse_server(schema_text)
 
-    def parse_attribute(self, definition: str) -> r[m.Ldif.SchemaAttribute]:
+    def parse_attribute(self, definition: str) -> p.Result[m.Ldif.SchemaAttribute]:
         """Parse attribute definition (public API)."""
         return self._parse_attribute(definition)
 
-    def parse_objectclass(self, definition: str) -> r[m.Ldif.SchemaObjectClass]:
+    def parse_objectclass(self, definition: str) -> p.Result[m.Ldif.SchemaObjectClass]:
         """Parse objectClass definition (public API)."""
         return self._parse_objectclass(definition)
 
     def route_parse(
         self,
         definition: str,
-    ) -> r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
+    ) -> p.Result[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
         """Route schema definition to appropriate parse method."""
         if self._is_objectclass_schema_type(definition):
             oc_result = self._parse_objectclass(definition)
@@ -457,7 +457,7 @@ class FlextLdifServersBaseSchema(
     def write(
         self,
         model: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
-    ) -> r[str]:
+    ) -> p.Result[str]:
         """Write schema model to string format."""
         try:
             attribute_model = m.Ldif.SchemaAttribute.model_validate(model)
@@ -466,12 +466,12 @@ class FlextLdifServersBaseSchema(
             return self.write_objectclass(objectclass_model)
         return self.write_attribute(attribute_model)
 
-    def write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> r[str]:
+    def write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> p.Result[str]:
         """Write attribute to RFC-compliant string format (public API)."""
         validated_attr = m.Ldif.SchemaAttribute.model_validate(attr_data)
         return self._write_attribute(validated_attr)
 
-    def write_objectclass(self, oc_data: m.Ldif.SchemaObjectClass) -> r[str]:
+    def write_objectclass(self, oc_data: m.Ldif.SchemaObjectClass) -> p.Result[str]:
         """Write objectClass to RFC-compliant string format (public API)."""
         validated_oc = m.Ldif.SchemaObjectClass.model_validate(oc_data)
         return self._write_objectclass(validated_oc)
@@ -492,7 +492,7 @@ class FlextLdifServersBaseSchema(
         self,
         attr_definition: str | None,
         oc_definition: str | None,
-    ) -> r[t.Ldif.SchemaConversionValue]:
+    ) -> p.Result[t.Ldif.SchemaConversionValue]:
         """Handle parse operation for schema server."""
         if attr_definition:
             attr_result = self.parse_attribute(attr_definition)
@@ -528,7 +528,7 @@ class FlextLdifServersBaseSchema(
         self,
         attr_model: m.Ldif.SchemaAttribute | None,
         oc_model: m.Ldif.SchemaObjectClass | None,
-    ) -> r[t.Ldif.SchemaConversionValue]:
+    ) -> p.Result[t.Ldif.SchemaConversionValue]:
         """Handle write operation for schema server."""
         if attr_model:
             write_result = self.write_attribute(attr_model)
@@ -559,14 +559,14 @@ class FlextLdifServersBaseSchema(
     def _hook_post_parse_attribute(
         self,
         attr: m.Ldif.SchemaAttribute,
-    ) -> r[m.Ldif.SchemaAttribute]:
+    ) -> p.Result[m.Ldif.SchemaAttribute]:
         """Hook called after parsing an attribute definition."""
         return r[m.Ldif.SchemaAttribute].ok(attr)
 
     def _hook_post_parse_objectclass(
         self,
         oc: m.Ldif.SchemaObjectClass,
-    ) -> r[m.Ldif.SchemaObjectClass]:
+    ) -> p.Result[m.Ldif.SchemaObjectClass]:
         """Hook called after parsing an objectClass definition."""
         return r[m.Ldif.SchemaObjectClass].ok(oc)
 
@@ -574,18 +574,18 @@ class FlextLdifServersBaseSchema(
         self,
         attributes: t.MutableSequenceOf[m.Ldif.SchemaAttribute],
         available_attrs: set[str],
-    ) -> r[bool]:
+    ) -> p.Result[bool]:
         """Hook for server-specific attribute validation during schema extraction."""
         _ = attributes
         _ = available_attrs
         return r[bool].ok(value=True)
 
-    def _parse_attribute(self, attr_definition: str) -> r[m.Ldif.SchemaAttribute]:
+    def _parse_attribute(self, attr_definition: str) -> p.Result[m.Ldif.SchemaAttribute]:
         """Parse server-specific attribute definition (internal)."""
         del attr_definition
         return r[m.Ldif.SchemaAttribute].fail("Must be implemented by subclass")
 
-    def _parse_objectclass(self, oc_definition: str) -> r[m.Ldif.SchemaObjectClass]:
+    def _parse_objectclass(self, oc_definition: str) -> p.Result[m.Ldif.SchemaObjectClass]:
         """Parse server-specific objectClass definition (internal)."""
         _ = oc_definition
         return r[m.Ldif.SchemaObjectClass].fail("Must be implemented by subclass")
@@ -594,7 +594,7 @@ class FlextLdifServersBaseSchema(
         self,
         data: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
         operation: str,
-    ) -> r[t.Ldif.SchemaConversionValue]:
+    ) -> p.Result[t.Ldif.SchemaConversionValue]:
         """Route data to appropriate parse or write handler."""
         if operation == "parse":
             if not isinstance(data, str):
@@ -626,12 +626,12 @@ class FlextLdifServersBaseSchema(
         msg = f"Unknown operation: {operation}"
         raise AssertionError(msg)
 
-    def _write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> r[str]:
+    def _write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> p.Result[str]:
         """Write attribute data to RFC-compliant string format (internal)."""
         _ = attr_data
         return r[str].fail("Must be implemented by subclass")
 
-    def _write_objectclass(self, oc_data: m.Ldif.SchemaObjectClass) -> r[str]:
+    def _write_objectclass(self, oc_data: m.Ldif.SchemaObjectClass) -> p.Result[str]:
         """Write objectClass data to RFC-compliant string format (internal)."""
         _ = oc_data
         return r[str].fail("Must be implemented by subclass")

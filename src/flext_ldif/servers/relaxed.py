@@ -12,7 +12,7 @@ from flext_ldif import (
     FlextLdifServersRfc,
     c,
     m,
-    r,
+    r,p,
     t,
     u,
 )
@@ -205,7 +205,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             return sup_value
 
         @override
-        def _parse_attribute(self, attr_definition: str) -> r[m.Ldif.SchemaAttribute]:
+        def _parse_attribute(self, attr_definition: str) -> p.Result[m.Ldif.SchemaAttribute]:
             """Parse attribute with best-effort approach using RFC baseline."""
             if not attr_definition or not attr_definition.strip():
                 return r[m.Ldif.SchemaAttribute].fail(
@@ -276,7 +276,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 )
 
         @override
-        def _parse_objectclass(self, oc_definition: str) -> r[m.Ldif.SchemaObjectClass]:
+        def _parse_objectclass(self, oc_definition: str) -> p.Result[m.Ldif.SchemaObjectClass]:
             """Parse objectClass with best-effort approach using RFC baseline."""
             if not oc_definition or not oc_definition.strip():
                 return r[m.Ldif.SchemaObjectClass].fail(
@@ -296,7 +296,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         def _parse_objectclass_relaxed(
             self,
             oc_definition: str,
-        ) -> r[m.Ldif.SchemaObjectClass]:
+        ) -> p.Result[m.Ldif.SchemaObjectClass]:
             """Parse objectClass with relaxed/best-effort parsing using utilities."""
             oid = self._extract_oid_with_fallback_patterns(oc_definition)
             if not oid:
@@ -346,7 +346,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             )
 
         @override
-        def _write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> r[str]:
+        def _write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> p.Result[str]:
             """Write attribute to RFC format - stringify in relaxed mode."""
             parent_result = super()._write_attribute(attr_data)
             if parent_result.success:
@@ -377,7 +377,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             return r[str].ok(f"( {attr_data.oid} NAME '{attr_name}' )")
 
         @override
-        def _write_objectclass(self, oc_data: m.Ldif.SchemaObjectClass) -> r[str]:
+        def _write_objectclass(self, oc_data: m.Ldif.SchemaObjectClass) -> p.Result[str]:
             """Write objectClass to RFC format - stringify in relaxed mode."""
             parent_result = super()._write_objectclass(oc_data)
             if parent_result.success:
@@ -441,7 +441,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             return True
 
         @override
-        def _parse_acl(self, acl_line: str) -> r[m.Ldif.Acl]:
+        def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
             """Parse ACL with best-effort approach."""
             if not acl_line or not acl_line.strip():
                 return r[m.Ldif.Acl].fail("ACL line cannot be empty")
@@ -505,7 +505,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 return r[m.Ldif.Acl].fail(f"Failed to parse ACL: {e}")
 
         @override
-        def _write_acl(self, acl_data: m.Ldif.Acl) -> r[str]:
+        def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
             """Write ACL to RFC format - stringify in relaxed mode."""
             parent_result = super()._write_acl(acl_data)
             if parent_result.success:
@@ -545,7 +545,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             _ = objectclass
             return True
 
-        def normalize_dn(self, dn: str) -> r[str]:
+        def normalize_dn(self, dn: str) -> p.Result[str]:
             """Normalize DN using RFC 4514 compliant utility."""
             if not dn or not dn.strip():
                 return r[str].fail("DN cannot be empty")
@@ -563,11 +563,11 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 )
                 return r[str].fail_op("DN normalization", e)
 
-        def process_entry(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
+        def process_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
             """Process entry for relaxed mode."""
             return r[m.Ldif.Entry].ok(entry)
 
-        def _adapted_parse_entry_relaxed(self, entry_content: str) -> r[m.Ldif.Entry]:
+        def _adapted_parse_entry_relaxed(self, entry_content: str) -> p.Result[m.Ldif.Entry]:
             """Parse entry content in relaxed mode (extracted from _parse_content)."""
             dn: str = ""
             attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]] = {}
@@ -599,7 +599,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         def _parse_content(
             self,
             ldif_content: str,
-        ) -> r[t.MutableSequenceOf[m.Ldif.Entry]]:
+        ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
             """Parse raw LDIF content string into Entry models (internal)."""
             parent_result = super()._parse_content(ldif_content)
             if parent_result.success:
@@ -653,7 +653,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             self,
             entry_dn: str,
             entry_attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]],
-        ) -> r[m.Ldif.Entry]:
+        ) -> p.Result[m.Ldif.Entry]:
             """Parse entry with best-effort approach."""
             try:
                 if not entry_dn or not entry_dn.strip():
@@ -722,7 +722,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 return r[m.Ldif.Entry].fail(f"Failed to parse entry: {e}")
 
         @override
-        def _write_entry(self, entry_data: m.Ldif.Entry) -> r[str]:
+        def _write_entry(self, entry_data: m.Ldif.Entry) -> p.Result[str]:
             """Write Entry model to RFC-compliant LDIF string format (internal)."""
             parent_result = super()._write_entry(entry_data)
             if parent_result.success:

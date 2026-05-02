@@ -46,7 +46,7 @@ class FlextLdifConversion(
         | m.Ldif.SchemaAttribute
         | m.Ldif.SchemaObjectClass
         | m.Ldif.Acl,
-    ) -> r[t.Ldif.ConvertedModel]:
+    ) -> p.Result[t.Ldif.ConvertedModel]:
         """DSL: orchestrate model conversion between servers."""
         if isinstance(model_instance, m.Ldif.Entry):
             return self._convert_entry(source_server, target_server, model_instance)
@@ -91,7 +91,7 @@ class FlextLdifConversion(
         | m.Ldif.SchemaAttribute
         | m.Ldif.SchemaObjectClass
         | m.Ldif.Acl,
-    ) -> r[t.Ldif.ConvertedModel]:
+    ) -> p.Result[t.Ldif.ConvertedModel]:
         """Convert a model from a source server format to a target server format."""
         start_time = time.perf_counter()
         source_format = source if isinstance(source, str) else source.server_type
@@ -142,7 +142,7 @@ class FlextLdifConversion(
         source_server: p.Ldif.ServerServer,
         target_server: p.Ldif.ServerServer,
         entry: m.Ldif.Entry,
-    ) -> r[t.Ldif.ConvertedModel]:
+    ) -> p.Result[t.Ldif.ConvertedModel]:
         """Convert Entry model directly without serialization."""
         try:
             entry_dn = entry.dn.value if entry.dn else ""

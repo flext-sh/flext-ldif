@@ -12,7 +12,7 @@ from flext_ldif import (
     m,
     r,
     t,
-    u,
+    u,p,
 )
 
 logger = u.fetch_logger(__name__)
@@ -286,7 +286,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             )
 
         @override
-        def _parse_acl(self, acl_line: str) -> r[m.Ldif.Acl]:
+        def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
             """Parse OpenLDAP 2.x ACL definition (internal)."""
             try:
                 acl_content = self._strip_acl_prefix_and_index(acl_line)
@@ -387,7 +387,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             return acl_content
 
         @override
-        def _write_acl(self, acl_data: m.Ldif.Acl) -> r[str]:
+        def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
             """Write ACL data to RFC-compliant string format (internal)."""
             try:
                 if acl_data.raw_acl:

@@ -8,7 +8,7 @@ from typing import Annotated
 from flext_ldif import (
     r,
     s,
-    t,
+    t,p,
     u,
 )
 
@@ -37,7 +37,7 @@ class FlextLdifValidation(
         u.Field(description="Maximum allowed attribute value length for validation"),
     ] = None
 
-    def validate_attribute_name(self, name: str) -> r[bool]:
+    def validate_attribute_name(self, name: str) -> p.Result[bool]:
         """Validate_attribute_name method."""
         return r[bool].from_result(
             u.try_(
@@ -52,7 +52,7 @@ class FlextLdifValidation(
             ).map_error(lambda e: f"Failed to validate attribute name: {e}"),
         )
 
-    def validate_objectclass_name(self, name: str) -> r[bool]:
+    def validate_objectclass_name(self, name: str) -> p.Result[bool]:
         """Validate_objectclass_name method."""
         return self.validate_attribute_name(name)
 

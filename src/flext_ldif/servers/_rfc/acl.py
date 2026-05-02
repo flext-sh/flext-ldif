@@ -140,7 +140,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         return (permission, None)
 
     @override
-    def _parse_acl(self, acl_line: str) -> r[m.Ldif.Acl]:
+    def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
         """Parse RFC-compliant ACL line (implements abstract method)."""
         if not acl_line or not acl_line.strip():
             return r[m.Ldif.Acl].fail("ACL line must be a non-empty string.")
@@ -176,7 +176,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         return super()._supports_feature(_feature_id)
 
     @override
-    def _write_acl(self, acl_data: m.Ldif.Acl) -> r[str]:
+    def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
         """Write ACL to RFC-compliant string format (internal)."""
         if acl_data.raw_acl and acl_data.raw_acl.strip():
             return r[str].ok(acl_data.raw_acl)

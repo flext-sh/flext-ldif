@@ -7,7 +7,7 @@ from collections.abc import (
 )
 from typing import ClassVar, override
 
-from flext_ldif import FlextLdifUtilitiesDN as udn, c, m, r, t
+from flext_ldif import FlextLdifUtilitiesDN as udn, c, m, r, t, p
 
 
 class FlextLdifUtilitiesTransformer[T]:
@@ -15,11 +15,11 @@ class FlextLdifUtilitiesTransformer[T]:
 
     __slots__: ClassVar[tuple[str, ...]] = ()
 
-    def apply(self, item: T) -> r[T]:
+    def apply(self, item: T) -> p.Result[T]:
         """Apply the transformation to an item."""
         raise NotImplementedError
 
-    def apply_batch(self, items: t.MutableSequenceOf[T]) -> r[t.SequenceOf[T]]:
+    def apply_batch(self, items: t.MutableSequenceOf[T]) -> p.Result[t.SequenceOf[T]]:
         """Apply transformation to a batch of items."""
         return r.traverse(items, self.apply)
 
@@ -46,7 +46,7 @@ class FlextLdifUtilitiesTransformers:
             self._validate = validate
 
         @staticmethod
-        def validate_dn_components(dn_str: str) -> r[bool]:
+        def validate_dn_components(dn_str: str) -> p.Result[bool]:
             """Helper: Validate DN components."""
             components = udn.split(dn_str)
             all_errors: t.MutableSequenceOf[str] = []
@@ -65,7 +65,7 @@ class FlextLdifUtilitiesTransformers:
             return r[bool].ok(value=True)
 
         @override
-        def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
+        def apply(self, item: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
             """Apply DN normalization to an entry."""
             if item.dn is None:
                 return r[m.Ldif.Entry].fail("Entry has no DN")
@@ -75,7 +75,7 @@ class FlextLdifUtilitiesTransformers:
                 else str(item.dn)
             )
 
-            def validate_dn(_: str) -> r[str]:
+            def validate_dn(_: str) -> p.Result[str]:
                 if not self._validate:
                     return r[str].ok(dn_str)
                 return (
@@ -143,7 +143,7 @@ class FlextLdifUtilitiesTransformers:
             self._remove_empty = remove_empty
 
         @override
-        def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
+        def apply(self, item: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
             """Apply attribute normalization to an entry."""
             if item.attributes is None:
                 return r[m.Ldif.Entry].fail("Entry has no attributes")

@@ -39,8 +39,6 @@ class FlextLdifServersOudAciMixin:
             return None
         for key, value in attrs.items():
             if key.lower() == "aci":
-                if isinstance(value, str):
-                    return value
                 return value
         return None
 
@@ -151,7 +149,7 @@ class FlextLdifServersOudAciMixin:
     def _process_single_aci_value(
         aci_value: str,
         acl_metadata_extensions: t.Ldif.MutableMetadataInputMapping,
-    ) -> r[bool]:
+    ) -> p.Result[bool]:
         """Process single ACI value, extract metadata, return has_macros flag."""
         has_macros = bool(re.search(r"\(\$dn\)|\[\$dn\]|\(\$attr\.", aci_value))
         validation_result = FlextLdifServersOudAciMixin._validate_aci_macros(aci_value)
@@ -187,7 +185,7 @@ class FlextLdifServersOudAciMixin:
         return r[bool].ok(has_macros)
 
     @staticmethod
-    def _validate_aci_macros(_aci_value: str) -> r[bool]:
+    def _validate_aci_macros(_aci_value: str) -> p.Result[bool]:
         """Validate OUD ACI macro consistency rules (no-op)."""
         return r[bool].ok(True)
 

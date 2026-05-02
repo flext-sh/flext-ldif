@@ -18,7 +18,7 @@ class FlextLdifConversionAclMixin(ABC):
         source_server: p.Ldif.ServerServer,
         target_server: p.Ldif.ServerServer,
         entry: m.Ldif.Entry,
-    ) -> r[t.Ldif.ConvertedModel]:
+    ) -> p.Result[t.Ldif.ConvertedModel]:
         """Convert an entry through the concrete conversion facade."""
 
     def _convert_acl(
@@ -26,7 +26,7 @@ class FlextLdifConversionAclMixin(ABC):
         source_server: p.Ldif.ServerServer,
         target_server: p.Ldif.ServerServer,
         acl: m.Ldif.Acl,
-    ) -> r[t.Ldif.ConvertedModel]:
+    ) -> p.Result[t.Ldif.ConvertedModel]:
         """Convert Acl model via Entry RFC + Metadata pipeline."""
         try:
             acl = acl.model_copy(deep=True)
@@ -109,7 +109,7 @@ class FlextLdifConversionAclMixin(ABC):
                         )
                     )
             return converted_acl_result.flat_map(
-                lambda converted_acl: r[t.Ldif.ConvertedModel].ok(
+                lambda  converted_acl:  r[t.Ldif.ConvertedModel].ok(
                     self._preserve_acl_metadata(
                         acl,
                         converted_acl,

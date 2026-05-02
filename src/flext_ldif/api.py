@@ -156,7 +156,7 @@ class FlextLdif(
         server_registry: p.Ldif.ServerRegistry = self._server
         return server_registry.entry(server_type)
 
-    def resolve_base_server(self, server_type: str) -> r[p.Ldif.ServerServer]:
+    def resolve_base_server(self, server_type: str) -> p.Result[p.Ldif.ServerServer]:
         """Expose base server resolution through the public facade."""
         return r[p.Ldif.ServerServer].from_result(
             self._server.resolve_base_server(server_type),
@@ -178,7 +178,7 @@ class FlextLdif(
     def resolve_server_bundle(
         self,
         server_type: str,
-    ) -> r[
+    ) -> p.Result[
         t.MappingKV[
             str,
             p.Ldif.SchemaServer | p.Ldif.AclServer | p.Ldif.EntryServer,
@@ -192,7 +192,7 @@ class FlextLdif(
             ]
         ].from_result(self._server.resolve_server_bundle(server_type))
 
-    def resolve_server_constants(self, server_type: str) -> r[type]:
+    def resolve_server_constants(self, server_type: str) -> p.Result[type]:
         """Expose server constants lookup through the public facade."""
         return r[type].from_result(self._server.resolve_server_constants(server_type))
 
@@ -273,7 +273,7 @@ class FlextLdif(
         self,
         entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
         validation_service: p.Ldif.ValidationService | None = None,
-    ) -> r[m.Ldif.ValidationResult]:
+    ) -> p.Result[m.Ldif.ValidationResult]:
         """Validate list of entries."""
         resolved_validation_service = validation_service or self
         return super().validate_entries(

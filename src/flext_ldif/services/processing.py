@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from flext_ldif import m, r, s, t, u
+from flext_ldif import m, r, s, t, u, p
 
 
 class FlextLdifProcessing(s):
@@ -35,7 +35,7 @@ class FlextLdifProcessing(s):
         entries: t.MutableSequenceOf[m.Ldif.Entry],
         options: m.Ldif.ProcessEntriesOptions | None = None,
         **kwargs: t.JsonValue,
-    ) -> r[t.MutableSequenceOf[m.Ldif.ProcessingResult]]:
+    ) -> p.Result[t.MutableSequenceOf[m.Ldif.ProcessingResult]]:
         """Unified processing method supporting batch and parallel modes."""
         payload: t.MutableJsonMapping = (
             options.model_dump(mode="python") if options is not None else {}

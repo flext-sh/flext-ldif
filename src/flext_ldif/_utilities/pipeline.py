@@ -50,7 +50,7 @@ class FlextLdifUtilitiesPipeline:
 
             def wrapped_transformer(
                 entry: m.Ldif.Entry,
-            ) -> r[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered]:
+            ) -> p.Result[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered]:
                 """Wrap transformer to match pipeline filter signature."""
                 transformed_result = transformer.apply(entry).map_error(
                     lambda error: error or "Transformer failed",
@@ -69,7 +69,7 @@ class FlextLdifUtilitiesPipeline:
         def execute(
             self,
             entries: t.SequenceOf[m.Ldif.Entry],
-        ) -> r[t.MutableSequenceOf[m.Ldif.Entry]]:
+        ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
             """Execute pipeline on a sequence of entries."""
             results: t.MutableSequenceOf[m.Ldif.Entry] = []
             for entry in entries:
@@ -91,7 +91,7 @@ class FlextLdifUtilitiesPipeline:
         def execute_one(
             self,
             entry: m.Ldif.Entry,
-        ) -> r[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered]:
+        ) -> p.Result[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered]:
             """Execute pipeline on a single entry."""
             current: m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered = entry
             for step_name, step_func in self._steps:
@@ -170,7 +170,7 @@ class FlextLdifUtilitiesPipeline:
         def validate(
             self,
             entries: t.SequenceOf[m.Ldif.Entry],
-        ) -> r[t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]]:
+        ) -> p.Result[t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]]:
             """Validate a sequence of entries."""
             results: t.MutableSequenceOf[
                 FlextLdifUtilitiesPipeline.ValidationResult
@@ -198,7 +198,7 @@ class FlextLdifUtilitiesPipeline:
         def validate_one(
             self,
             entry: m.Ldif.Entry,
-        ) -> r[FlextLdifUtilitiesPipeline.ValidationResult]:
+        ) -> p.Result[FlextLdifUtilitiesPipeline.ValidationResult]:
             """Validate a single entry."""
             errors: t.MutableSequenceOf[str] = []
             warnings: t.MutableSequenceOf[str] = []

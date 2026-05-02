@@ -10,7 +10,7 @@ from flext_ldif import (
     c,
     m,
     r,
-    t,
+    t,p,
     u,
 )
 
@@ -152,7 +152,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             )
 
         @override
-        def _parse_attribute(self, attr_definition: str) -> r[m.Ldif.SchemaAttribute]:
+        def _parse_attribute(self, attr_definition: str) -> p.Result[m.Ldif.SchemaAttribute]:
             """Parse attribute definition and add Tivoli metadata."""
             result = super()._parse_attribute(attr_definition)
             if result.success:
@@ -164,7 +164,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             return r[m.Ldif.SchemaAttribute].from_result(result)
 
         @override
-        def _parse_objectclass(self, oc_definition: str) -> r[m.Ldif.SchemaObjectClass]:
+        def _parse_objectclass(self, oc_definition: str) -> p.Result[m.Ldif.SchemaObjectClass]:
             """Parse objectClass definition and add Tivoli metadata."""
             result = super()._parse_objectclass(oc_definition)
             if result.success:
@@ -220,7 +220,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             )
 
         @override
-        def _parse_acl(self, acl_line: str) -> r[m.Ldif.Acl]:
+        def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
             """Parse Tivoli DS ACL definition."""
             try:
                 attr_name, content = u.Ldif.split_acl_line(acl_line)
@@ -259,7 +259,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 return r[m.Ldif.Acl].fail_op("IBM Tivoli DS ACL parsing", exc)
 
         @override
-        def _write_acl(self, acl_data: m.Ldif.Acl) -> r[str]:
+        def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
             """Write ACL data to RFC-compliant string format."""
             try:
                 acl_attribute = (
@@ -350,7 +350,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 return normalized
             return entry_dn.lower()
 
-        def process_entry(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
+        def process_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
             """Normalise IBM Tivoli DS entries and attach metadata."""
             try:
                 if not entry.dn:

@@ -73,7 +73,7 @@ class FlextLdifUtilitiesDispatch:
         definition: str | m.Ldif.DN | None,
         server_type: str | None = None,
         parse_parts_hook: None = None,
-    ) -> r[t.MutableSequenceOf[tuple[str, str]]]: ...
+    ) -> p.Result[t.MutableSequenceOf[tuple[str, str]]]: ...
 
     @staticmethod
     @overload
@@ -82,7 +82,7 @@ class FlextLdifUtilitiesDispatch:
         server_type: str | None,
         parse_parts_hook: Callable[[str], t.Ldif.MutableMetadataMapping]
         | Callable[[str], r[t.Ldif.MutableMetadataMapping]],
-    ) -> r[t.Ldif.MutableMetadataMapping]: ...
+    ) -> p.Result[t.Ldif.MutableMetadataMapping]: ...
 
     @staticmethod
     def parse(
@@ -91,7 +91,7 @@ class FlextLdifUtilitiesDispatch:
         parse_parts_hook: Callable[[str], t.Ldif.MutableMetadataMapping]
         | Callable[[str], r[t.Ldif.MutableMetadataMapping]]
         | None = None,
-    ) -> r[t.MutableSequenceOf[tuple[str, str]]] | r[t.Ldif.MutableMetadataMapping]:
+    ) -> p.Result[t.MutableSequenceOf[tuple[str, str]]] | r[t.Ldif.MutableMetadataMapping]:
         if definition is None:
             return r[t.Ldif.MutableMetadataMapping].fail("DN cannot be None")
         if isinstance(definition, m.Ldif.DN):
@@ -101,7 +101,7 @@ class FlextLdifUtilitiesDispatch:
         if parse_parts_hook is None:
             return FlextLdifUtilitiesSchema.parse_attribute(definition)
 
-        def attr_hook(value: str) -> r[t.Ldif.MutableMetadataMapping]:
+        def attr_hook(value: str) -> p.Result[t.Ldif.MutableMetadataMapping]:
             parsed_value = parse_parts_hook(value)
             if isinstance(parsed_value, r):
                 return parsed_value
@@ -234,7 +234,7 @@ class FlextLdifUtilitiesDispatch:
         strict: bool,
         collect_all: bool,
         max_errors: int,
-    ) -> r[t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]]:
+    ) -> p.Result[t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]]:
         """Internal: Validate LDIF entries."""
         pipeline = FlextLdifUtilitiesPipeline.ValidationPipeline(
             strict=strict,

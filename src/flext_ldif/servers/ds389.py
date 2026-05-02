@@ -189,7 +189,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             return False
 
         @override
-        def _parse_attribute(self, attr_definition: str) -> r[m.Ldif.SchemaAttribute]:
+        def _parse_attribute(self, attr_definition: str) -> p.Result[m.Ldif.SchemaAttribute]:
             """Parse attribute definition and add 389 DS metadata."""
             result = super()._parse_attribute(attr_definition)
             if result.success:
@@ -201,7 +201,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             return r[m.Ldif.SchemaAttribute].from_result(result)
 
         @override
-        def _parse_objectclass(self, oc_definition: str) -> r[m.Ldif.SchemaObjectClass]:
+        def _parse_objectclass(self, oc_definition: str) -> p.Result[m.Ldif.SchemaObjectClass]:
             """Parse objectClass definition and add 389 DS metadata."""
             result = super()._parse_objectclass(oc_definition)
             if result.success:
@@ -277,7 +277,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             permissions: t.MutableSequenceOf[str],
             targetattr: str,
             userdn: str,
-        ) -> r[str]:
+        ) -> p.Result[str]:
             """Build ACI string from components."""
             version_prefix = FlextLdifServersDs389.Constants.ACL_VERSION_PREFIX
             parts = [version_prefix, f'acl "{acl_name}"']
@@ -327,7 +327,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             return permissions
 
         @override
-        def _parse_acl(self, acl_line: str) -> r[m.Ldif.Acl]:
+        def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
             """Parse 389 DS ACI definition."""
             try:
                 attr_name, content = u.Ldif.split_acl_line(acl_line)
@@ -430,7 +430,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 )
 
         @override
-        def _write_acl(self, acl_data: m.Ldif.Acl) -> r[str]:
+        def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
             """Write ACL data to RFC-compliant string format."""
             try:
                 if acl_data.raw_acl:
@@ -490,7 +490,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 for oc in object_classes
             )
 
-        def process_entry(self, entry: m.Ldif.Entry) -> r[m.Ldif.Entry]:
+        def process_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
             """Normalise 389 DS entries and attach metadata."""
             try:
                 if not entry.attributes or not entry.dn:

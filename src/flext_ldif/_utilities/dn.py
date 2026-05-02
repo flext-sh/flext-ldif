@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import overload
 
 from flext_core import u
-from flext_ldif import c, m, r, t
+from flext_ldif import c, m, r, t, p
 
 
 class FlextLdifUtilitiesDN:
@@ -201,7 +201,7 @@ class FlextLdifUtilitiesDN:
         return False
 
     @staticmethod
-    def _normalize_dns_for_comparison(dn1: str, dn2: str) -> r[tuple[str, str]]:
+    def _normalize_dns_for_comparison(dn1: str, dn2: str) -> p.Result[tuple[str, str]]:
         """Normalize both DNs for comparison."""
         norm1_result = FlextLdifUtilitiesDN.norm(dn1)
         if not norm1_result.success:
@@ -448,7 +448,7 @@ class FlextLdifUtilitiesDN:
         return (result, stats_domain)
 
     @staticmethod
-    def compare_dns(dn1: str | None, dn2: str | None) -> r[int]:
+    def compare_dns(dn1: str | None, dn2: str | None) -> p.Result[int]:
         """Compare two DNs per RFC 4514 (case-insensitive)."""
         try:
             if not dn1 or not dn2:
@@ -599,14 +599,14 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def norm(dn: str) -> r[str]: ...
+    def norm(dn: str) -> p.Result[str]: ...
 
     @overload
     @staticmethod
-    def norm(dn: m.Ldif.DN) -> r[str]: ...
+    def norm(dn: m.Ldif.DN) -> p.Result[str]: ...
 
     @staticmethod
-    def norm(dn: str | m.Ldif.DN | None) -> r[str]:
+    def norm(dn: str | m.Ldif.DN | None) -> p.Result[str]:
         """Normalize DN per RFC 4514 (lowercase attrs, preserve values)."""
         result = r[str].fail("DN cannot be None")
         if dn is not None:
@@ -686,18 +686,18 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def parse_dn(dn: str) -> r[t.MutableSequenceOf[tuple[str, str]]]: ...
+    def parse_dn(dn: str) -> p.Result[t.MutableSequenceOf[tuple[str, str]]]: ...
 
     @overload
     @staticmethod
     def parse_dn(
         dn: m.Ldif.DN,
-    ) -> r[t.MutableSequenceOf[tuple[str, str]]]: ...
+    ) -> p.Result[t.MutableSequenceOf[tuple[str, str]]]: ...
 
     @staticmethod
     def parse_dn(
         dn: str | m.Ldif.DN | None,
-    ) -> r[t.MutableSequenceOf[tuple[str, str]]]:
+    ) -> p.Result[t.MutableSequenceOf[tuple[str, str]]]:
         """Parse DN into RFC 4514 components (attr, value pairs)."""
         result = r[t.MutableSequenceOf[tuple[str, str]]].fail("DN cannot be None")
         if dn is not None:
@@ -735,7 +735,7 @@ class FlextLdifUtilitiesDN:
         return result
 
     @staticmethod
-    def parse_rdn(rdn: str) -> r[t.MutableSequenceOf[tuple[str, str]]]:
+    def parse_rdn(rdn: str) -> p.Result[t.MutableSequenceOf[tuple[str, str]]]:
         """Parse a single RDN component per RFC 4514."""
         result = r[t.MutableSequenceOf[tuple[str, str]]].fail(
             "RDN must be a non-empty string",

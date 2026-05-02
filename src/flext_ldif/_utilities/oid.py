@@ -11,7 +11,7 @@ class FlextLdifUtilitiesOID:
     """OID extraction and validation utilities."""
 
     @staticmethod
-    def extract_from_definition(definition: str) -> r[str]:
+    def extract_from_definition(definition: str) -> p.Result[str]:
         """Extract OID from schema definition string."""
         match = re.search(r"\(\s*([\d.]+)", definition)
         if match:
@@ -49,7 +49,7 @@ class FlextLdifUtilitiesOID:
         )
 
     @staticmethod
-    def validate_format(oid: str) -> r[bool]:
+    def validate_format(oid: str) -> p.Result[bool]:
         """Validate OID format compliance with LDAP OID syntax."""
         if not oid:
             return r[bool].ok(False)

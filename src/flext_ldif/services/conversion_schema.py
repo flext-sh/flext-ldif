@@ -15,7 +15,7 @@ class FlextLdifConversionSchemaMixin(ABC):
         server_or_type: p.Ldif.ServerReference | p.Ldif.ServerServer | str,
         *,
         role: str,
-    ) -> r[p.Ldif.SchemaServer]:
+    ) -> p.Result[p.Ldif.SchemaServer]:
         """Resolve the schema server for a concrete server endpoint."""
         raise NotImplementedError
 
@@ -25,7 +25,7 @@ class FlextLdifConversionSchemaMixin(ABC):
         source_server: p.Ldif.ServerServer,
         target_server: p.Ldif.ServerServer,
         entry: m.Ldif.Entry,
-    ) -> r[t.Ldif.ConvertedModel]:
+    ) -> p.Result[t.Ldif.ConvertedModel]:
         """Convert an entry through the concrete conversion facade."""
 
     def _convert_schema_model_via_entry(
@@ -35,7 +35,7 @@ class FlextLdifConversionSchemaMixin(ABC):
         item: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
         source_schema: p.Ldif.SchemaServer,
         target_schema: p.Ldif.SchemaServer,
-    ) -> r[t.Ldif.ConvertedModel]:
+    ) -> p.Result[t.Ldif.ConvertedModel]:
         """Orchestrate schema conversion through m.Ldif.Entry intermediary."""
         if isinstance(item, m.Ldif.SchemaAttribute):
             item_name = "attribute"
@@ -125,7 +125,7 @@ class FlextLdifConversionSchemaMixin(ABC):
                 parse_error_message="Failed to parse converted objectclass",
             )
         return parsed_result.flat_map(
-            lambda parsed: r[t.Ldif.ConvertedModel].ok(parsed),
+            lambda  parsed:  r[t.Ldif.ConvertedModel].ok(parsed),
         )
 
     @staticmethod
@@ -134,7 +134,7 @@ class FlextLdifConversionSchemaMixin(ABC):
         value: str,
         *,
         parse_error_message: str,
-    ) -> r[m.Ldif.SchemaAttribute]:
+    ) -> p.Result[m.Ldif.SchemaAttribute]:
         parse_result = schema.parse_attribute(value)
         if parse_result.failure:
             return r[m.Ldif.SchemaAttribute].fail(
@@ -149,7 +149,7 @@ class FlextLdifConversionSchemaMixin(ABC):
         value: str,
         *,
         parse_error_message: str,
-    ) -> r[m.Ldif.SchemaObjectClass]:
+    ) -> p.Result[m.Ldif.SchemaObjectClass]:
         parse_result = schema.parse_objectclass(value)
         if parse_result.failure:
             return r[m.Ldif.SchemaObjectClass].fail(
@@ -167,7 +167,7 @@ class FlextLdifConversionSchemaMixin(ABC):
         value: str,
         *,
         schema_item_kind: c.Ldif.SchemaItemKind,
-    ) -> r[str]:
+    ) -> p.Result[str]:
         """Convert a schema definition string embedded inside an LDIF entry."""
         schema_field_name = (
             c.Ldif.ATTRIBUTE_TYPES
@@ -177,7 +177,7 @@ class FlextLdifConversionSchemaMixin(ABC):
 
         def write_schema_item(
             parsed_item: t.Ldif.SchemaConversionValue,
-        ) -> r[str]:
+        ) -> p.Result[str]:
             if schema_item_kind == c.Ldif.SchemaItemKind.ATTRIBUTE:
                 if not isinstance(parsed_item, m.Ldif.SchemaAttribute):
                     return r[str].fail(
@@ -212,7 +212,7 @@ class FlextLdifConversionSchemaMixin(ABC):
                 )
             )
 
-        parse_result: r[t.Ldif.SchemaConversionValue]
+        parse_result: p.Result[t.Ldif.SchemaConversionValue]
         if schema_item_kind == c.Ldif.SchemaItemKind.ATTRIBUTE:
             parse_result = self._parse_attribute_with_schema(
                 source_schema,
@@ -235,7 +235,7 @@ class FlextLdifConversionSchemaMixin(ABC):
         source_server: p.Ldif.ServerServer,
         target_server: p.Ldif.ServerServer,
         entry: m.Ldif.Entry,
-    ) -> r[m.Ldif.Entry]:
+    ) -> p.Result[m.Ldif.Entry]:
         """Convert schema definition attributes embedded in a schema entry."""
         if entry.attributes is None or not u.Ldif.is_schema_entry(entry):
             return r[m.Ldif.Entry].ok(entry)

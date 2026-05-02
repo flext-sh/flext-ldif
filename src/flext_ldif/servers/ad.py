@@ -12,7 +12,7 @@ from flext_ldif import (
     c,
     m,
     r,
-    t,
+    t,p,
     u,
 )
 
@@ -174,7 +174,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             return matches
 
         @override
-        def _parse_attribute(self, attr_definition: str) -> r[m.Ldif.SchemaAttribute]:
+        def _parse_attribute(self, attr_definition: str) -> p.Result[m.Ldif.SchemaAttribute]:
             """Parse attribute definition and add AD metadata."""
             result = super()._parse_attribute(attr_definition)
             if result.success:
@@ -185,7 +185,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             return r[m.Ldif.SchemaAttribute].from_result(result)
 
         @override
-        def _parse_objectclass(self, oc_definition: str) -> r[m.Ldif.SchemaObjectClass]:
+        def _parse_objectclass(self, oc_definition: str) -> p.Result[m.Ldif.SchemaObjectClass]:
             """Parse objectClass definition and add AD metadata."""
             result = super()._parse_objectclass(oc_definition)
             if result.success:
@@ -253,7 +253,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             )
 
         @override
-        def _parse_acl(self, acl_line: str) -> r[m.Ldif.Acl]:
+        def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
             """Parse nTSecurityDescriptor values and expose best-effort SDDL."""
             try:
                 line = acl_line.strip()
@@ -316,7 +316,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 return r[m.Ldif.Acl].fail_op("Active Directory ACL parsing", exc)
 
         @override
-        def _write_acl(self, acl_data: m.Ldif.Acl) -> r[str]:
+        def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
             """Write ACL data to RFC-compliant string format."""
             try:
                 if not acl_data.raw_acl:

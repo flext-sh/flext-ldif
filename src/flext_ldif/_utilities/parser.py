@@ -15,7 +15,7 @@ from flext_ldif import (
     c,
     m,
     r,
-    t,
+    t,p, 
 )
 
 logger = u.fetch_logger(__name__)
@@ -149,7 +149,7 @@ class FlextLdifUtilitiesParser:
     @staticmethod
     def parse_ldif_record(
         lines: t.MutableSequenceOf[str],
-    ) -> r[m.Ldif.Entry]:
+    ) -> p.Result[m.Ldif.Entry]:
         """Parse a single unfolded LDIF record into Entry."""
         dn = ""
         attrs: t.MutableStrSequenceMapping = {}
@@ -382,7 +382,7 @@ class FlextLdifUtilitiesParser:
         return extensions
 
     @staticmethod
-    def extract_oid(definition: str) -> r[str]:
+    def extract_oid(definition: str) -> p.Result[str]:
         """Extract OID from schema definition string."""
         if not definition:
             return r[str].fail("Empty definition: cannot extract OID")
@@ -407,7 +407,7 @@ class FlextLdifUtilitiesParser:
         return match.group(1) if match else default
 
     @staticmethod
-    def parse_attribute_line(line: str) -> r[tuple[str, str, bool]]:
+    def parse_attribute_line(line: str) -> p.Result[tuple[str, str, bool]]:
         """Parse LDIF attribute line into name, value, and base64 flag."""
         if ":" not in line:
             return r[tuple[str, str, bool]].fail(

@@ -114,7 +114,7 @@ class FlextLdifAnalysis(s):
         self,
         entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
         validation_service: p.Ldif.ValidationService | None = None,
-    ) -> r[m.Ldif.ValidationResult]:
+    ) -> p.Result[m.Ldif.ValidationResult]:
         """Validate LDIF entries against RFC 2849/4512 standards."""
         normalized_entries = (
             entries.entries if isinstance(entries, m.Ldif.ParseResponse) else entries

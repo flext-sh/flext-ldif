@@ -8,7 +8,7 @@ class FlextLdifUtilitiesValidation:
     def validate_value(
         value: t.JsonValue,
         *validators: p.ValidatorSpec,
-    ) -> r[t.JsonValue]:
+    ) -> p.Result[t.JsonValue]:
         del validators
         return r[t.JsonValue].ok(value)
 

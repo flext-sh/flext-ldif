@@ -9,7 +9,7 @@ from collections.abc import (
 from typing import TypeIs
 
 from flext_core import u
-from flext_ldif import c, m, r, t
+from flext_ldif import c, m, r, t, p
 
 logger = u.fetch_logger(__name__)
 
@@ -660,7 +660,7 @@ class FlextLdifUtilitiesACL:
     def parse_aci(
         acl_line: str,
         settings: m.Ldif.AciParserConfig,
-    ) -> r[m.Ldif.Acl]:
+    ) -> p.Result[m.Ldif.Acl]:
         """Parse ACI line using server-specific settings Model."""
         valid, aci_content = FlextLdifUtilitiesACL.validate_aci_format(
             acl_line,

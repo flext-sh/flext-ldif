@@ -7,7 +7,7 @@ from collections.abc import (
 )
 from typing import Annotated
 
-from flext_ldif import m, r, s, t, u
+from flext_ldif import m, r, s, t, u, p
 
 
 class FlextLdifEntries(s):
@@ -41,7 +41,7 @@ class FlextLdifEntries(s):
     @staticmethod
     def _extract_dn_from_dict(
         entry: t.MutableAttributeMapping,
-    ) -> r[str]:
+    ) -> p.Result[str]:
         dn_value = entry.get("dn")
         if dn_value is None:
             return r[str].fail("Dict entry missing 'dn' key")
@@ -54,7 +54,7 @@ class FlextLdifEntries(s):
                 return r[str].fail("Dict entry has unsupported 'dn' value type")
 
     @staticmethod
-    def _extract_dn_from_object(entry: t.JsonValue | m.Ldif.Entry) -> r[str]:
+    def _extract_dn_from_object(entry: t.JsonValue | m.Ldif.Entry) -> p.Result[str]:
         dn_value = getattr(entry, "dn", None)
         if dn_value is None:
             return r[str].fail("Entry missing DN (dn is None)")
@@ -71,13 +71,13 @@ class FlextLdifEntries(s):
         return r[str].fail("Invalid DN value type")
 
     @staticmethod
-    def _normalize_list_value(value: t.MutableSequenceOf[str]) -> r[str]:
+    def _normalize_list_value(value: t.MutableSequenceOf[str]) -> p.Result[str]:
         if not value:
             return r[str].fail("Cannot normalize empty list")
         return FlextLdifEntries._normalize_string_value(value[0])
 
     @staticmethod
-    def _normalize_string_value(value: str) -> r[str]:
+    def _normalize_string_value(value: str) -> p.Result[str]:
         stripped = value.strip()
         if not stripped:
             return r[str].fail("Cannot normalize empty string")
@@ -88,7 +88,7 @@ class FlextLdifEntries(s):
         dn: str,
         attributes: t.MutableAttributeMapping,
         objectclasses: t.MutableSequenceOf[str] | None = None,
-    ) -> r[m.Ldif.Entry]:
+    ) -> p.Result[m.Ldif.Entry]:
         """Create a validated entry from DN and attributes."""
         if not u.Ldif.validate_dn(dn):
             return r[m.Ldif.Entry].fail(f"Invalid DN: {dn}")
@@ -103,7 +103,7 @@ class FlextLdifEntries(s):
         | tuple[str, ...]
         | set[str]
         | frozenset[str],
-    ) -> r[t.MutableSequenceOf[str]]:
+    ) -> p.Result[t.MutableSequenceOf[str]]:
         """Normalize attribute input into a list of strings."""
         match attribute:
             case str() as value:
@@ -120,7 +120,7 @@ class FlextLdifEntries(s):
     @staticmethod
     def resolve_entry_attributes(
         entry: m.Ldif.Entry,
-    ) -> r[t.MutableStrSequenceMapping]:
+    ) -> p.Result[t.MutableStrSequenceMapping]:
         """Get entry attributes mapping."""
         if entry.attributes is None:
             return r[t.MutableStrSequenceMapping].fail(
@@ -134,14 +134,14 @@ class FlextLdifEntries(s):
     @staticmethod
     def resolve_entry_dn(
         entry: m.Ldif.Entry | t.MutableAttributeMapping,
-    ) -> r[str]:
+    ) -> p.Result[str]:
         """Read DN from model or dictionary entry."""
         if isinstance(entry, MutableMapping):
             return FlextLdifEntries._extract_dn_from_dict(entry)
         return FlextLdifEntries._extract_dn_from_object(entry)
 
     @staticmethod
-    def resolve_entry_objectclasses(entry: m.Ldif.Entry) -> r[t.MutableSequenceOf[str]]:
+    def resolve_entry_objectclasses(entry: m.Ldif.Entry) -> p.Result[t.MutableSequenceOf[str]]:
         """Get objectClass values from entry attributes."""
         attributes_result = FlextLdifEntries.resolve_entry_attributes(entry)
         if attributes_result.failure:
@@ -163,7 +163,7 @@ class FlextLdifEntries(s):
     def remove_attributes(
         entry: m.Ldif.Entry,
         attributes_to_remove: t.MutableSequenceOf[str],
-    ) -> r[m.Ldif.Entry]:
+    ) -> p.Result[m.Ldif.Entry]:
         """Remove selected attributes from a single entry."""
         if entry.attributes is None:
             return r[m.Ldif.Entry].ok(entry)
@@ -180,7 +180,7 @@ class FlextLdifEntries(s):
             metadata=entry.metadata,
         )
 
-    def run_configured_operation(self) -> r[t.MutableSequenceOf[m.Ldif.Entry]]:
+    def run_configured_operation(self) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
         """Run the configured entry operation against the bound entries."""
         if not self.operation:
             return r[t.MutableSequenceOf[m.Ldif.Entry]].fail("No operation specified")

@@ -76,7 +76,7 @@ class FlextLdifDetector(s):
         ldif_path: Path | None = None,
         ldif_content: str | None = None,
         max_lines: int | None = None,
-    ) -> r[m.Ldif.ServerDetectionResult]:
+    ) -> p.Result[m.Ldif.ServerDetectionResult]:
         """Detect LDAP server type from LDIF file or content."""
         max_lines = max_lines or u.Ldif.get_server_detection_default_max_lines()
         if ldif_path is None and ldif_content is None:
@@ -122,7 +122,7 @@ class FlextLdifDetector(s):
         self,
         ldif_path: Path | None = None,
         ldif_content: str | None = None,
-    ) -> r[str]:
+    ) -> p.Result[str]:
         """Resolve the effective LDAP server type to use for processing."""
         if ldif_path is not None or ldif_content is not None:
             detection_result = self.detect_server_type(

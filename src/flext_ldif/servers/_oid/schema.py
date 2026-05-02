@@ -57,7 +57,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
         ldif_content: str,
         *,
         validate_dependencies: bool = False,
-    ) -> r[
+    ) -> p.Result[
         MutableMapping[
             str,
             t.MutableSequenceOf[m.Ldif.SchemaAttribute]
@@ -120,7 +120,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
     def _hook_post_parse_attribute(
         self,
         attr: m.Ldif.SchemaAttribute,
-    ) -> r[m.Ldif.SchemaAttribute]:
+    ) -> p.Result[m.Ldif.SchemaAttribute]:
         """Hook: Transform parsed attribute using OID-specific normalizations."""
         try:
             if attr.syntax:
@@ -158,7 +158,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
     def _hook_post_parse_objectclass(
         self,
         oc: m.Ldif.SchemaObjectClass,
-    ) -> r[m.Ldif.SchemaObjectClass]:
+    ) -> p.Result[m.Ldif.SchemaObjectClass]:
         """Hook: Transform parsed objectClass using OID-specific normalizations."""
         try:
             original_format_str = (
@@ -286,7 +286,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
                 return None
 
     @override
-    def _parse_attribute(self, attr_definition: str) -> r[m.Ldif.SchemaAttribute]:
+    def _parse_attribute(self, attr_definition: str) -> p.Result[m.Ldif.SchemaAttribute]:
         """Parse Oracle OID attribute definition (Phase 1: Normalization)."""
         try:
             result = super()._parse_attribute(attr_definition)
@@ -312,7 +312,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             return r[m.Ldif.SchemaAttribute].fail_op("OID attribute parsing", e)
 
     @override
-    def _parse_objectclass(self, oc_definition: str) -> r[m.Ldif.SchemaObjectClass]:
+    def _parse_objectclass(self, oc_definition: str) -> p.Result[m.Ldif.SchemaObjectClass]:
         """Parse Oracle OID objectClass definition."""
         try:
             result = super()._parse_objectclass(oc_definition)
@@ -448,7 +448,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
         return attr_data
 
     @override
-    def _write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> r[str]:
+    def _write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> p.Result[str]:
         """Write Oracle OID attribute definition (Phase 2: Denormalization)."""
         attr_copy = attr_data.model_copy(deep=True)
         source_rules = None

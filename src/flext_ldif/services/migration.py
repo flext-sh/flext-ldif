@@ -12,7 +12,7 @@ from flext_ldif import (
     c,
     m,
     r,
-    s,
+    s,p,
     t,
     u,
 )
@@ -151,7 +151,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
         return constructed
 
     @override
-    def execute(self) -> r[m.Ldif.MigrationPipelineResult]:
+    def execute(self) -> p.Result[m.Ldif.MigrationPipelineResult]:
         """Execute migration pipeline for all files in input_dir."""
         in_dir = self.input_dir
         out_dir = self.output_dir
@@ -197,7 +197,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
     def migrate_entries(
         self,
         entries: t.MutableSequenceOf[m.Ldif.Entry],
-    ) -> r[t.MutableSequenceOf[m.Ldif.Entry]]:
+    ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
         """Migrate entries from source to target server format."""
         source_server = self.source_server_type or self._DEFAULT_SERVER
         target_server = self.target_server_type or self._DEFAULT_SERVER
@@ -220,7 +220,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
         self,
         input_file: Path,
         output_file: Path | None = None,
-    ) -> r[m.Ldif.MigrationPipelineResult]:
+    ) -> p.Result[m.Ldif.MigrationPipelineResult]:
         """Migrate a single LDIF file."""
         try:
             if not input_file.exists():

@@ -270,7 +270,7 @@ class FlextLdifModelsDomainDN:
             value = self._registry[normalized]
             return str(value)
 
-        def validate_oud_consistency(self) -> r[bool]:
+        def validate_oud_consistency(self) -> p.Result[bool]:
             """Validate DN case consistency for server conversion."""
             inconsistencies: t.MutableSequenceOf[
                 MutableMapping[str, str | int | t.MutableSequenceOf[str]]

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_ldif import FlextLdifServersBase, m, r, t, u
+from flext_ldif import FlextLdifServersBase, p, m, r, t, u
 
 logger = u.fetch_logger(__name__)
 
@@ -17,9 +17,9 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
     def _parse_entry_from_lines(
         self,
         lines: t.MutableSequenceOf[str],
-    ) -> r[m.Ldif.Entry]:
+    ) -> p.Result[m.Ldif.Entry]:
         """Parse one unfolded LDIF record using the shared RFC utility."""
-        parsed: r[m.Ldif.Entry] = u.Ldif.parse_ldif_record(lines)
+        parsed: p.Result[m.Ldif.Entry] = u.Ldif.parse_ldif_record(lines)
         return parsed
 
     @override
@@ -35,7 +35,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
         return "objectclass" in attr_lower or "changetype" in attr_lower
 
     @override
-    def _parse_content(self, ldif_content: str) -> r[t.MutableSequenceOf[m.Ldif.Entry]]:
+    def _parse_content(self, ldif_content: str) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
         """Parse raw LDIF content string into Entry models."""
         if not ldif_content or not ldif_content.strip():
             return r[t.MutableSequenceOf[m.Ldif.Entry]].ok([])

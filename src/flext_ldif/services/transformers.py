@@ -45,7 +45,7 @@ class FlextLdifTransformer(s):
             self.target_server or c.Ldif.ServerTypes.RFC,
         )
 
-        def ensure_entry(converted: t.Ldif.ConvertedModel) -> r[m.Ldif.Entry]:
+        def ensure_entry(converted: t.Ldif.ConvertedModel) -> p.Result[m.Ldif.Entry]:
             if isinstance(converted, m.Ldif.Entry):
                 return r[m.Ldif.Entry].ok(converted)
             return r[m.Ldif.Entry].fail(

@@ -247,7 +247,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _extract_attribute_basic_fields(
         attr_definition: str,
-    ) -> r[tuple[str, str, str | None]]:
+    ) -> p.Result[tuple[str, str, str | None]]:
         """Extract OID, NAME, and DESC from attribute definition."""
         return FlextLdifUtilitiesSchema._extract_schema_basic_fields(
             definition=attr_definition,
@@ -321,7 +321,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _extract_objectclass_basic_fields(
         oc_definition: str,
-    ) -> r[tuple[str, str, str | None]]:
+    ) -> p.Result[tuple[str, str, str | None]]:
         """Extract OID, NAME, and DESC from objectClass definition."""
         return FlextLdifUtilitiesSchema._extract_schema_basic_fields(
             definition=oc_definition,
@@ -332,7 +332,7 @@ class FlextLdifUtilitiesSchema:
     def _extract_schema_basic_fields(
         definition: str,
         definition_label: str,
-    ) -> r[tuple[str, str, str | None]]:
+    ) -> p.Result[tuple[str, str, str | None]]:
         oid_result = up.extract_oid(definition)
         if oid_result.failure:
             error = oid_result.error or "unknown OID extraction error"
@@ -925,7 +925,7 @@ class FlextLdifUtilitiesSchema:
         attr_definition: str,
         *,
         validate_syntax: bool = True,
-    ) -> r[t.Ldif.MutableMetadataMapping]:
+    ) -> p.Result[t.Ldif.MutableMetadataMapping]:
         """Parse RFC 4512 attribute definition into structured data."""
         basic_fields_result = FlextLdifUtilitiesSchema._extract_attribute_basic_fields(
             attr_definition,

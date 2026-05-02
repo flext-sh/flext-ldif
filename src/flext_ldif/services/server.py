@@ -63,7 +63,7 @@ class FlextLdifServer(s):
     def resolve_server_bundle(
         self,
         server_type: str,
-    ) -> r[
+    ) -> p.Result[
         t.MappingKV[
             str,
             p.Ldif.SchemaServer | p.Ldif.AclServer | p.Ldif.EntryServer,
@@ -89,11 +89,11 @@ class FlextLdifServer(s):
             "entry": base.entry_server,
         })
 
-    def resolve_base_server(self, server_type: str) -> r[p.Ldif.ServerServer]:
+    def resolve_base_server(self, server_type: str) -> p.Result[p.Ldif.ServerServer]:
         """Get base server for a given server type."""
         return self.server(server_type)
 
-    def resolve_server_constants(self, server_type: str) -> r[type]:
+    def resolve_server_constants(self, server_type: str) -> p.Result[type]:
         """Get Constants class from server server."""
         server_result = self.server(server_type)
         if server_result.failure:
@@ -160,7 +160,7 @@ class FlextLdifServer(s):
         return sorted(type(self)._registered_servers)
 
     @override
-    def server(self, server_type: str) -> r[p.Ldif.ServerServer]:
+    def server(self, server_type: str) -> p.Result[p.Ldif.ServerServer]:
         """Get base server for a server type."""
         try:
             normalized = u.Ldif.normalize_server_type(server_type)

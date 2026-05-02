@@ -14,7 +14,7 @@ from datetime import datetime
 from types import MappingProxyType
 from typing import Annotated, ClassVar, Self, override
 
-from flext_cli import m, r, u
+from flext_cli import m, u
 from flext_ldif import (
     FlextLdifModelsDomainAcl as mdac,
     FlextLdifModelsDomainAttributes as mda,
@@ -24,7 +24,7 @@ from flext_ldif import (
     FlextLdifModelsMetadata as mm,
     FlextLdifUtilitiesEntry,
     c,
-    t,
+    p, t, r,
 )
 
 
@@ -994,7 +994,7 @@ class FlextLdifModelsDomainEntry:
             source_entry: str | None = None,
             unconverted_attributes: mm.DynamicMetadata | None = None,
             statistics: FlextLdifModelsDomainEntry.EntryStatistics | None = None,
-        ) -> r[Self]:
+        ) -> p.Result[Self]:
             try:
                 dn_obj = mdn.DN.from_value(dn)
                 attrs_obj = cls._normalize_attributes(attributes)
@@ -1038,10 +1038,10 @@ class FlextLdifModelsDomainEntry:
                 if statistics is not None:
                     entry_data["statistics"] = statistics
                 entry_instance: Self = cls.model_validate(entry_data)
-                ok_result: r[Self] = r[Self].ok(entry_instance)
+                ok_result: p.Result[Self] = r[Self].ok(entry_instance)
                 return ok_result
             except c.EXC_BASIC_TYPE as e:
-                fail_result: r[Self] = r[Self].fail(f"Failed to create Entry: {e}")
+                fail_result: p.Result[Self] = r[Self].fail(f"Failed to create Entry: {e}")
                 return fail_result
 
 

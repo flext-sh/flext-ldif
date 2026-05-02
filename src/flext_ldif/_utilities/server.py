@@ -39,7 +39,7 @@ class FlextLdifUtilitiesServer:
         return any(marker in name_lower for marker in detection_names)
 
     @staticmethod
-    def _extract_server_name(name_without_prefix: str) -> r[str]:
+    def _extract_server_name(name_without_prefix: str) -> p.Result[str]:
         """Extract server name from class name suffix."""
         for suffix in FlextLdifUtilitiesServer.CLASS_SUFFIXES:
             if name_without_prefix.endswith(suffix):

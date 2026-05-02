@@ -48,7 +48,7 @@ class FlextLdifConversionSupportMixin(s):
         server_or_type: str | p.Ldif.ServerReference | p.Ldif.ServerServer,
         *,
         role: str,
-    ) -> r[p.Ldif.SchemaServer]:
+    ) -> p.Result[p.Ldif.SchemaServer]:
         server = self._resolve_server(server_or_type)
         try:
             schema = type(self)._get_schema_from_attribute(server)
