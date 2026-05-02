@@ -1,0 +1,141 @@
+src/flext_ldif/servers/_oud/entry.py
+  473c59be621cc5d5 14,160-164,169,171,175,177-181
+  h_9db9d35f50cf33 77,114,152,186,226,231
+src/flext_ldif/services/transformers.py
+  h_9db9d35f50cf33 48
+src/flext_ldif/_protocols/domain.py
+  h_9db9d35f50cf33 72,79,83,90,111,118,125,133,141,149,171,179
+src/flext_ldif/services/conversion.py
+  h_9db9d35f50cf33 49,94,145
+src/flext_ldif/servers/_oud/transform.py
+  h_9db9d35f50cf33 67,192,222
+  473c59be621cc5d5 17
+src/flext_ldif/servers/relaxed.py
+  h_9db9d35f50cf33 15,208,279,299,349,380,444,508,548,566,570,602,656,725
+src/flext_ldif/services/statistics.py
+  h_9db9d35f50cf33 22
+src/flext_ldif/servers/base.py
+  h_9db9d35f50cf33 397,414,456,472,477,482
+src/flext_ldif/api.py
+  h_9db9d35f50cf33 159,181,195,276
+src/flext_ldif/services/analysis.py
+  h_9db9d35f50cf33 117
+src/flext_ldif/servers/novell.py
+  h_9db9d35f50cf33 8,157,169,243,334,416
+src/flext_ldif/services/entries.py
+  h_9db9d35f50cf33 10,44,57,74,80,91,106,123,137,144,166,183
+src/flext_ldif/servers/_oud/acl.py
+  h_9db9d35f50cf33 141,344,347,379,391,425
+src/flext_ldif/servers/_base/entry.py
+  h_9db9d35f50cf33 122,137,152,171,225,229,237,286,293,569,589
+src/flext_ldif/services/writer.py
+  h_9db9d35f50cf33 36,66,110
+src/flext_ldif/services/server.py
+  h_9db9d35f50cf33 66,92,96,163
+src/flext_ldif/_utilities/validation.py
+  h_9db9d35f50cf33 11
+src/flext_ldif/servers/_oud/schema.py
+  h_9db9d35f50cf33 56,164,225,273,294,333
+src/flext_ldif/servers/_base/schema.py
+  h_9db9d35f50cf33 300,409,416,420,424,431,460,469,474,495,531,562,569,577,583,588,597,629,634
+src/flext_ldif/services/parser.py
+  h_9db9d35f50cf33 7,18,30,53
+src/flext_ldif/servers/ds389.py
+  h_9db9d35f50cf33 192,204,280,330,433,493
+src/flext_ldif/servers/tivoli.py
+  h_9db9d35f50cf33 13,155,167,223,262,353
+src/flext_ldif/services/filters.py
+  h_9db9d35f50cf33 104
+src/flext_ldif/services/acl.py
+  h_9db9d35f50cf33 13,48,105,115,141
+src/flext_ldif/services/pipeline.py
+  h_9db9d35f50cf33 87
+src/flext_ldif/_utilities/schema.py
+  h_9db9d35f50cf33 250,324,335,928
+src/flext_ldif/services/conversion_schema.py
+  h_9db9d35f50cf33 18,28,38,128,137,152,170,180,215,238
+src/flext_ldif/services/conversion_acl.py
+  h_9db9d35f50cf33 21,29,112
+src/flext_ldif/servers/openldap.py
+  h_9db9d35f50cf33 15,289,390
+src/flext_ldif/_models/domain_entry.py
+  h_9db9d35f50cf33 27,997,1041,1044
+src/flext_ldif/servers/_oid/schema.py
+  h_9db9d35f50cf33 60,123,161,289,315,451
+src/flext_ldif/servers/_base/acl.py
+  h_9db9d35f50cf33 98,129,149,174,178,182,217,224,236,270,279,283,316
+src/flext_ldif/_utilities/acl.py
+  h_9db9d35f50cf33 12,663
+src/flext_ldif/_utilities/pipeline.py
+  h_9db9d35f50cf33 53,72,94,173,201
+src/flext_ldif/servers/ad.py
+  h_9db9d35f50cf33 15,177,188,256,319
+src/flext_ldif/servers/_rfc/schema.py
+  h_9db9d35f50cf33 323,335,367,492,498-499,557,567,687,692,699
+src/flext_ldif/services/detector.py
+  h_9db9d35f50cf33 79,125
+src/flext_ldif/_utilities/oid.py
+  h_9db9d35f50cf33 14,52
+src/flext_ldif/servers/_oid/entry.py
+  h_9db9d35f50cf33 366,430,507,630,784
+src/flext_ldif/services/migration.py
+  h_9db9d35f50cf33 15,154,200,223
+src/flext_ldif/services/processing.py
+  h_9db9d35f50cf33 7,38
+src/flext_ldif/servers/_oud/aci.py
+  h_9db9d35f50cf33 152,188
+src/flext_ldif/_utilities/transformers.py
+  h_9db9d35f50cf33 10,18,22,49,68,78,146
+src/flext_ldif/_utilities/server.py
+  h_9db9d35f50cf33 42
+src/flext_ldif/_utilities/parser.py
+  h_9db9d35f50cf33 18,152,385,410
+src/flext_ldif/_utilities/dispatch.py
+  h_9db9d35f50cf33 76,85,94,104,237
+src/flext_ldif/services/validation.py
+  h_9db9d35f50cf33 11,40,55
+src/flext_ldif/_utilities/dn.py
+  h_9db9d35f50cf33 204,451,602,606,609,689,695,700,738
+src/flext_ldif/_models/domain_dn.py
+  h_9db9d35f50cf33 273
+src/flext_ldif/services/categorization.py
+  h_9db9d35f50cf33 291,530,593,599,743,828
+src/flext_ldif/services/conversion_support.py
+  h_9db9d35f50cf33 51
+src/flext_ldif/servers/_rfc/acl.py
+  h_9db9d35f50cf33 143,179
+src/flext_ldif/servers/apache.py
+  h_9db9d35f50cf33 11,122,134,188,216
+src/flext_ldif/servers/openldap1.py
+  h_9db9d35f50cf33 133,153,172,198,263,357,400
+src/flext_ldif/servers/_oid/acl.py
+  h_9db9d35f50cf33 253,485,509,724
+src/flext_ldif/servers/_rfc/entry.py
+  h_9db9d35f50cf33 7,20,22,38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "32d7ba56b958ce724d2b40944c391cd1d1d51d62",
+  "prompts": {
+    "473c59be621cc5d5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f6001f8b-afdd-4757-8812-9bff0bfd46d9",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 16,
+      "total_deletions": 28,
+      "accepted_lines": 15,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/1585e3978f98ff07c51c6cdc1f0217cf1b65f15b64bab6444a6ad6bf360886de"
+    }
+  },
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
