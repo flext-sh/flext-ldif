@@ -188,7 +188,9 @@ class FlextLdifUtilitiesDispatch:
                 (str, m.Ldif.DN),
             ):
                 result: (
-                    p.Result[t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]]
+                    p.Result[
+                        t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]
+                    ]
                     | p.Result[t.JsonValue]
                     | bool
                 ) = FlextLdifUtilitiesDN.validate_dn(value_or_entries)

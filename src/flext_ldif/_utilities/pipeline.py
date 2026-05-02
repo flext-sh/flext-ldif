@@ -33,9 +33,7 @@ class FlextLdifUtilitiesPipeline:
                     str,
                     Callable[
                         [m.Ldif.Entry],
-                        p.Result[
-                            m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered
-                        ],
+                        p.Result[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered],
                     ],
                 ]
             ] = []
