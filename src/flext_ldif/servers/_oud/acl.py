@@ -205,11 +205,13 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             FlextLdifServersOudConstants.SUPPORTED_PERMISSIONS,
         )
         meta_extensions = acl_data.metadata.extensions if acl_data.metadata else None
-        self_write_to_write = (
-            meta_extensions.get("self_write_to_write") if meta_extensions else None
+        self_write_to_write_enabled = (
+            bool(meta_extensions.get("self_write_to_write"))
+            if meta_extensions
+            else False
         )
         if (
-            self_write_to_write
+            self_write_to_write_enabled
             and (FlextLdifServersOudConstants.PERMISSION_SELF_WRITE in ops)
             and ("write" not in filtered_ops)
         ):
