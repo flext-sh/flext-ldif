@@ -159,19 +159,6 @@ class FlextLdifCategorization(s):
         return (included, excluded)
 
     @staticmethod
-    def _mark_entry_rejected(
-        entry: m.Ldif.Entry,
-        category: str,
-        reason: str,
-    ) -> m.Ldif.Entry:
-        """Mark entry as rejected in metadata using u."""
-        updated: m.Ldif.Entry = u.Ldif.update_entry_statistics(
-            entry,
-            mark_rejected=(category, reason),
-        )
-        return updated
-
-    @staticmethod
     def _append_rejected_entries(
         filtered: m.Ldif.FlexibleCategories,
         rejected_entries: t.MutableSequenceOf[m.Ldif.Entry],
@@ -686,14 +673,16 @@ class FlextLdifCategorization(s):
         constants: type[c.Ldif],
     ) -> bool:
         """Check if entry matches HIERARCHY_PRIORITY_OBJECTCLASSES."""
-        priority_classes_raw: frozenset[str] = getattr(
-            constants,
-            "HIERARCHY_PRIORITY_OBJECTCLASSES",
-            frozenset(),
+        priority_classes = frozenset(
+            oc.lower()
+            for oc in getattr(
+                constants,
+                "HIERARCHY_PRIORITY_OBJECTCLASSES",
+                frozenset(),
+            )
         )
-        priority_classes = frozenset(map(str, priority_classes_raw))
         entry_ocs = {oc.lower() for oc in u.Ldif.get_objectclass_names(entry)}
-        return any(oc.lower() in entry_ocs for oc in priority_classes)
+        return bool(priority_classes & entry_ocs)
 
     def _get_default_priority_order(self) -> t.MutableSequenceOf[str]:
         """Get default category priority order."""
@@ -709,33 +698,14 @@ class FlextLdifCategorization(s):
         constants: type[c.Ldif] | None,
     ) -> t.MutableSequenceOf[str]:
         """Get priority order from constants or use default."""
-        if constants is not None and hasattr(constants, "CATEGORIZATION_PRIORITY"):
-
-            def is_valid_category(value: str) -> bool:
-                """Wrapper for TypeIs function to use as filter predicate."""
-                return value in {
-                    c.Ldif.Category.ACL,
-                    c.Ldif.Category.GROUPS,
-                    c.Ldif.Category.HIERARCHY,
-                    c.Ldif.Category.REJECTED,
-                    c.Ldif.Category.SCHEMA,
-                    c.Ldif.Category.USERS,
-                }
-
-            priority_list: t.MutableSequenceOf[str] = getattr(
-                constants,
-                "CATEGORIZATION_PRIORITY",
-                [],
-            )
-            filtered: t.MutableSequenceOf[str] = [
-                item for item in priority_list if is_valid_category(item)
-            ]
-            valid_categories: frozenset[str] = frozenset(c.Ldif.Category)
-            result: t.MutableSequenceOf[str] = [
-                item for item in filtered if item in valid_categories
-            ]
-            return result
-        return self._get_default_priority_order()
+        if constants is None or not hasattr(constants, "CATEGORIZATION_PRIORITY"):
+            return self._get_default_priority_order()
+        valid_categories = frozenset(c.Ldif.Category)
+        return [
+            item
+            for item in getattr(constants, "CATEGORIZATION_PRIORITY", [])
+            if item in valid_categories
+        ]
 
     def _get_categorization_server_constants(
         self,
