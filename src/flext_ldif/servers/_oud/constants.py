@@ -49,7 +49,6 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
         ])
     )
     ACL_DEFAULT_NAME: ClassVar[str] = "OUD ACL"
-    ACL_DEFAULT_TARGETATTR: ClassVar[str] = "*"
     ACL_DEFAULT_VERSION: ClassVar[str] = "version 3.0"
     ACL_VERSION_PREFIX: ClassVar[str] = "(version 3.0"
     ACL_ALLOW_PREFIX: ClassVar[str] = "allow ("
@@ -57,16 +56,9 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
     ACL_DS_CFG_PREFIX: ClassVar[str] = "ds-cfg-"
     ACL_TARGETATTR_PREFIX: ClassVar[str] = "targetattr="
     ACL_TARGETSCOPE_PREFIX: ClassVar[str] = "targetscope="
-    ACL_LDAP_URL_PREFIX: ClassVar[str] = "ldap:///"
     ACL_SELF_SUBJECT: ClassVar[str] = "ldap:///self"
     ACL_ANONYMOUS_SUBJECT: ClassVar[str] = "ldap:///anyone"
-    ACL_ANONYMOUS_SUBJECT_ALT: ClassVar[str] = "ldap:///*"
-    ACL_NEWLINE_SEPARATOR: ClassVar[str] = "\n"
     ACL_OPS_SEPARATOR: ClassVar[str] = ","
-    ACL_ACTION_ALLOW: ClassVar[str] = "allow"
-    ACL_ACTION_DENY: ClassVar[str] = "deny"
-    ACL_BIND_RULE_KEY_TYPE: ClassVar[str] = "type"
-    ACL_BIND_RULE_KEY_VALUE: ClassVar[str] = "value"
     ACL_SUBJECT_TYPE_BIND_RULES: ClassVar[str] = "bind_rules"
     ACL_BIND_RULE_TYPE_USERDN: ClassVar[str] = "userdn"
     ACL_BIND_RULE_TYPE_GROUPDN: ClassVar[str] = "groupdn"
@@ -76,8 +68,6 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
     ACL_TARGETSCOPE_PATTERN: ClassVar[str] = '\\(targetscope\\s*=\\s*"([^"]+)"\\)'
     ACL_VERSION_ACL_PATTERN: ClassVar[str] = 'version\\s+([\\d.]+);\\s*acl\\s+"([^"]+)"'
     ACL_ALLOW_DENY_PATTERN: ClassVar[str] = "(allow|deny)\\s+\\(([^)]+)\\)"
-    ACL_BY_GROUP_PATTERN: ClassVar[str] = 'by\\s+group=\\"[^\\"]+\\"'
-    ACL_BY_STAR_PATTERN: ClassVar[str] = "by\\s+\\*"
     ACL_TARGATTRFILTERS_PATTERN: ClassVar[str] = (
         '\\(targattrfilters\\s*=\\s*"([^"]+)"\\)'
     )
@@ -129,16 +119,7 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
         "allows_multiple_sup": False,
         "requires_explicit_structural": True,
     })
-    ATTRIBUTE_UNDERSCORE_TO_DASH: ClassVar[str] = "_"
-    ATTRIBUTE_DASH_REPLACEMENT: ClassVar[str] = "-"
     DEFAULT_ENCODING: ClassVar[str] = c.Ldif.DEFAULT_ENCODING
-    DN_PRESERVE_CASE: ClassVar[bool] = False
-    DN_NORMALIZE_TO: ClassVar[str] = "lowercase"
-    ACL_REQUIRES_TARGET: ClassVar[bool] = True
-    ACL_REQUIRES_SUBJECT: ClassVar[bool] = True
-    TRACK_DELETIONS: ClassVar[bool] = True
-    TRACK_MODIFICATIONS: ClassVar[bool] = True
-    TRACK_CONVERSIONS: ClassVar[bool] = True
     OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
         "createTimestamp",
         "modifyTimestamp",
@@ -155,13 +136,6 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
         "ds-sync-state",
         "ds-pwp-account-disabled",
         "ds-cfg-backend-id",
-    ])
-    OUD_SPECIFIC: ClassVar[frozenset[str]] = frozenset([
-        "ds-sync-hist",
-        "ds-sync-state",
-        "ds-pwp-account-disabled",
-        "ds-cfg-backend-id",
-        "entryUUID",
     ])
     PRESERVE_ON_MIGRATION: ClassVar[frozenset[str]] = (
         FlextLdifServersRfc.Constants.PRESERVE_ON_MIGRATION
@@ -189,16 +163,6 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
         "seealsodescription": "seeAlsoDescription",
         "acl": "aci",
     })
-    ATTRIBUTE_TRANSFORMATION_OUD_TO_RFC: ClassVar[t.StrMapping] = MappingProxyType({
-        "ds-sync-hist": "dsyncHist",
-        "ds-pwp-account-disabled": "accountDisabled",
-        "entryUUID": "entryUUID",
-    })
-    ATTRIBUTE_TRANSFORMATION_RFC_TO_OUD: ClassVar[t.StrMapping] = MappingProxyType({
-        "dsyncHist": "ds-sync-hist",
-        "accountDisabled": "ds-pwp-account-disabled",
-        "entryUUID": "entryUUID",
-    })
     ATTRIBUTE_ALIASES: ClassVar[t.StrSequenceMapping] = MappingProxyType({
         "cn": ("commonName",),
         "sn": ("surname",),
@@ -207,18 +171,6 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
         "telephoneNumber": ("phone",),
         "uid": ("userid", "username"),
     })
-    RFC_TO_OUD_SUBJECTS: ClassVar[t.MappingKV[str, tuple[str, str]]] = (
-        MappingProxyType({
-            "group_membership": ("bind_rules", 'userattr="{value}#LDAPURL"'),
-            "user_attribute": ("bind_rules", 'userattr="{value}#USERDN"'),
-            "group_attribute": ("bind_rules", 'userattr="{value}#GROUPDN"'),
-        })
-    )
-    OUD_TO_RFC_SUBJECTS: ClassVar[t.MappingKV[str, tuple[str, str]]] = (
-        MappingProxyType({
-            "bind_rules": ("group_membership", "{value}"),
-        })
-    )
     INVALID_SUBSTR_RULES: ClassVar[t.OptionalStrMapping] = MappingProxyType({
         "caseIgnoreMatch": "caseIgnoreSubstringsMatch",
         "distinguishedNameMatch": None,
@@ -231,11 +183,6 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
         "caseIgnoreSubstringMatch": "caseIgnoreSubstringsMatch",
         "CaseIgnoreMatch": "caseIgnoreMatch",
         "CaseExactMatch": "caseExactMatch",
-    })
-    MATCHING_RULE_REPLACEMENTS: ClassVar[t.StrMapping] = MappingProxyType({
-        **MATCHING_RULE_TO_RFC,
-        "caseIgnoreMatch": "caseIgnoreMatch",
-        "caseIgnoreSubstringsMatch": "caseIgnoreSubstringsMatch",
     })
     CATEGORY_OBJECTCLASSES: ClassVar[t.FrozensetMapping] = MappingProxyType({
         "users": frozenset(["person", "inetOrgPerson", "organizationalPerson"]),
@@ -262,10 +209,6 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
         "groups",
         "rejected",
     )
-    DN_PREFIX_CN_CONFIG: ClassVar[str] = "cn=settings"
-    DN_PREFIX_CN_SCHEMA: ClassVar[str] = "cn=schema"
-    DN_PREFIX_CN_DIRECTORY: ClassVar[str] = "cn=directory"
-    DN_PREFIX_CN_DS: ClassVar[str] = "cn=ds"
     DN_DETECTION_PATTERNS: ClassVar[tuple[tuple[str, ...], ...]] = (
         ("cn=settings", "cn=schema"),
         ("cn=settings", "cn=directory"),
@@ -275,7 +218,6 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
     DETECTION_PATTERN: ClassVar[str] = "(?i)(ds-sync-|ds-pwp-|ds-cfg-|root dns)"
     DETECTION_OID_PATTERN: ClassVar[str] = DETECTION_PATTERN
     DETECTION_WEIGHT: ClassVar[int] = 14
-    DETECTION_ACL_PREFIX: ClassVar[str] = "ds-cfg-"
     DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
         "ds-",
         "ds-sync",

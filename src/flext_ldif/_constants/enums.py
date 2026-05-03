@@ -28,13 +28,9 @@ class FlextLdifConstantsEnums:
         """Standard character encodings used in LDIF processing."""
 
         UTF8 = "utf-8"
-        UTF16LE = "utf-16-le"
         UTF16 = "utf-16"
-        UTF32 = "utf-32"
         ASCII = "ascii"
         LATIN1 = "latin-1"
-        CP1252 = "cp1252"
-        ISO8859_1 = "iso-8859-1"
 
     @unique
     class AclSubjectType(StrEnum):
@@ -76,23 +72,11 @@ class FlextLdifConstantsEnums:
     class TransformationType(StrEnum):
         """Types of transformations applied to entries."""
 
-        DN_CLEANED = "dn_cleaned"
-        DN_NORMALIZED = "dn_normalized"
         TAB_NORMALIZED = "tab_normalized"
         SPACE_CLEANED = "space_cleaned"
-        UTF8_DECODED = "utf8_decoded"
-        BASE64_DECODED = "base64_decoded"
-        TRAILING_SPACE_REMOVED = "trailing_space_removed"
         ESCAPE_NORMALIZED = "escape_normalized"
-        BOOLEAN_CONVERTED = "boolean_converted"
-        ACL_CONVERTED = "acl_converted"
-        ATTRIBUTE_REMOVED = "attribute_removed"
-        ATTRIBUTE_ADDED = "attribute_added"
         ATTRIBUTE_RENAMED = "attribute_renamed"
         MODIFIED = "modified"
-        MATCHING_RULE_REPLACED = "matching_rule_replaced"
-        SYNTAX_OID_REPLACED = "syntax_oid_replaced"
-        OBJECTCLASS_FILTERED = "objectclass_filtered"
 
     @unique
     class RejectionCategory(StrEnum):
@@ -100,13 +84,7 @@ class FlextLdifConstantsEnums:
 
         INVALID_DN = "invalid_dn"
         BASE_DN_FILTER = "base_dn_filter"
-        SCHEMA_VIOLATION = "schema_violation"
-        FORBIDDEN_ATTRIBUTE = "forbidden_attribute"
-        FORBIDDEN_OBJECTCLASS = "forbidden_objectclass"
-        CATEGORIZATION_FAILED = "categorization_failed"
         NO_CATEGORY_MATCH = "no_category_match"
-        PARSING_ERROR = "parsing_error"
-        CONVERSION_ERROR = "conversion_error"
 
     @unique
     class ServerTypes(StrEnum):
@@ -175,7 +153,6 @@ class FlextLdifConstantsEnums:
 
         PRESERVE = "preserve"
         TRIM = "trim"
-        NORMALIZE = "normalize"
 
     @unique
     class ObsoleteField(StrEnum):

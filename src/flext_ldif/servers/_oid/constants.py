@@ -40,9 +40,6 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
     SYNTAX_OID_TO_RFC: ClassVar[t.StrMapping] = MappingProxyType({
         "1.3.6.1.4.1.1466.115.121.1.1": "1.3.6.1.4.1.1466.115.121.1.15",
     })
-    SYNTAX_RFC_TO_OID: ClassVar[t.StrMapping] = MappingProxyType({
-        "1.3.6.1.4.1.1466.115.121.1.15": "1.3.6.1.4.1.1466.115.121.1.1",
-    })
     ATTR_NAME_CASE_MAP: ClassVar[t.StrMapping] = MappingProxyType({
         "middlename": "middleName",
     })
@@ -87,17 +84,6 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
         "allows_multiple_sup": True,
         "requires_explicit_structural": False,
     })
-    OID_SPECIFIC_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
-        "orclaci",
-        "orclentrylevelaci",
-        "orclguid",
-        "orcloid",
-        "orclpassword",
-        "orcldaslov",
-        "orclmailaddr",
-        "orcluseractivefrom",
-        "orcluserinactivefrom",
-    ])
     CANONICAL_NAME: ClassVar[str] = c.Ldif.ServerTypes.OID
     ALIASES: ClassVar[frozenset[str]] = frozenset({
         c.Ldif.ServerTypes.OID,
@@ -127,12 +113,6 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
     RFC_NORMALIZED: ClassVar[str] = "rfc_normalized"
     ORIGINAL_OID_PERMS: ClassVar[str] = "original_oid_perms"
     OID_ACL_SOURCE_TARGET: ClassVar[str] = "acl_source_target"
-    ALL_OID_KEYS: ClassVar[frozenset[str]] = frozenset([
-        OID_SPECIFIC_RIGHTS,
-        RFC_NORMALIZED,
-        ORIGINAL_OID_PERMS,
-        OID_ACL_SOURCE_TARGET,
-    ])
     CATEGORIZATION_PRIORITY: ClassVar[tuple[str, ...]] = (
         c.Ldif.Category.ACL,
         c.Ldif.Category.USERS,
@@ -182,14 +162,8 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
     CN_ORCL: ClassVar[str] = "cn=orcl"
     OU_ORACLE: ClassVar[str] = "ou=oracle"
     DC_ORACLE: ClassVar[str] = "dc=oracle"
-    ORACLE_DN_PATTERNS: ClassVar[frozenset[str]] = frozenset([
-        CN_ORCL,
-        OU_ORACLE,
-        DC_ORACLE,
-    ])
     ACL_SUBJECT_TYPE_USER: ClassVar[str] = c.Ldif.AclSubjectType.USER
     ACL_SUBJECT_TYPE_GROUP: ClassVar[str] = c.Ldif.AclSubjectType.GROUP
-    ACL_SUBJECT_TYPE_ROLE: ClassVar[str] = c.Ldif.AclSubjectType.ROLE
     ACL_SUBJECT_TYPE_SELF: ClassVar[str] = c.Ldif.AclSubjectType.SELF
     ACL_SUBJECT_TYPE_ANONYMOUS: ClassVar[str] = c.Ldif.AclSubjectType.ANONYMOUS
 
@@ -213,12 +187,7 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
         USERDN = "USERDN"
         GROUPDN = "GROUPDN"
 
-    ACL_TYPE_PATTERN: ClassVar[str] = "^(orclaci | orclentrylevelaci):"
     ACL_TARGET_PATTERN: ClassVar[str] = "access to (entry | attr=\\(([^)]+)\\))"
-    ACL_SUBJECT_PATTERN: ClassVar[str] = (
-        'by\\s+(group=\\"[^\\"]+\\"|dnattr=\\([^)]+\\)|guidattr=\\([^)]+\\"|groupattr=\\([^)]+\\"|\\"[^\\"]+\\"|self|\\*)'
-    )
-    ACL_PERMISSIONS_PATTERN: ClassVar[str] = "\\(([^)]+)\\)(?:\\s*$)"
     ACL_FILTER_PATTERN: ClassVar[str] = "filter=(\\([^)]*(?:\\([^)]*\\)[^)]*)*\\))"
     ACL_CONSTRAINT_PATTERN: ClassVar[str] = "added_object_constraint=\\(([^)]+)\\)"
     ACL_BINDMODE_PATTERN: ClassVar[str] = "(?i)bindmode\\s*=\\s*\\(([^)]+)\\)"
@@ -229,38 +198,13 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
         "(?i)constraintonaddedobject\\s*=\\s*\\(([^)]+)\\)"
     )
     ACL_TARGET_DN_EXTRACT: ClassVar[str] = 'target\\s*=\\s*"([^"]*)"'
-    ACL_TARGET_ATTR_EXTRACT: ClassVar[str] = 'targetattr\\s*=\\s*"([^"]*)"'
     ACL_TARGET_ATTR_OID_EXTRACT: ClassVar[str] = "attr\\s*=\\s*\\(([^)]+)\\)"
-    ACL_SUBJECT_USER_DETECT: ClassVar[str] = 'subject\\s*=\\s*"[^"]*userdn'
-    ACL_SUBJECT_GROUP_DETECT: ClassVar[str] = 'subject\\s*=\\s*"[^"]*groupdn'
-    ACL_SUBJECT_ROLE_DETECT: ClassVar[str] = 'subject\\s*=\\s*"[^"]*roledn'
-    ACL_ALLOW_PERMS_EXTRACT: ClassVar[str] = "\\(allow\\s+\\(([^)]*)\\)"
-    ACL_DENY_PERMS_EXTRACT: ClassVar[str] = "\\(deny\\s+\\(([^)]*)\\)"
     ACL_PERMS_EXTRACT_OID: ClassVar[str] = (
         "\\s\\(([^()]+)\\)(?:\\s*(?:filter=|added_object | bindmode|Deny | Append|bindip | constrain|$))"
     )
-    ACL_PATTERN_KEY_TYPE: ClassVar[str] = "acl_type"
-    ACL_PATTERN_KEY_TARGET: ClassVar[str] = "target"
-    ACL_PATTERN_KEY_SUBJECT: ClassVar[str] = "subject"
-    ACL_PATTERN_KEY_PERMISSIONS: ClassVar[str] = "permissions"
-    ACL_PATTERN_KEY_FILTER: ClassVar[str] = "filter"
-    ACL_PATTERN_KEY_CONSTRAINT: ClassVar[str] = "constraint"
     ONE_OID: ClassVar[str] = c.Ldif.OID_TRUE
     ZERO_OID: ClassVar[str] = c.Ldif.OID_FALSE
-    OID_TO_RFC: ClassVar[t.StrMapping] = c.Ldif.OID_TO_RFC_BOOL
     RFC_TO_OID: ClassVar[t.StrMapping] = c.Ldif.RFC_TO_OID_BOOL
-    OID_TRUE_VALUES: ClassVar[frozenset[str]] = frozenset([
-        ONE_OID,
-        "true",
-        "True",
-        "TRUE",
-    ])
-    OID_FALSE_VALUES: ClassVar[frozenset[str]] = frozenset([
-        ZERO_OID,
-        "false",
-        "False",
-        "FALSE",
-    ])
     INVALID_SUBSTR_RULES: ClassVar[t.OptionalStrMapping] = MappingProxyType({
         "caseIgnoreMatch": "caseIgnoreSubstringsMatch",
         "caseExactMatch": "caseExactSubstringsMatch",
@@ -270,9 +214,6 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
     })
     ACL_ACCESS_TO: ClassVar[str] = "access to"
     ACL_BY: ClassVar[str] = "by"
-    ACL_FORMAT_DEFAULT: ClassVar[str] = "default"
-    ACL_FORMAT_ONELINE: ClassVar[str] = "oneline"
-    ACL_NAME: ClassVar[str] = "OID ACL"
     ACL_SUBJECT_PATTERNS: ClassVar[t.MappingKV[str, tuple[str | None, str, str]]] = (
         MappingProxyType({
             " by self ": (None, OidAclSubjectType.SELF, "ldap:///self"),
@@ -300,17 +241,6 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
                 OidAclSubjectType.GROUP_ATTR,
                 "{0}#" + OidAclSubjectSuffix.GROUPDN,
             ),
-        })
-    )
-    ACL_SUBJECT_FORMATTERS: ClassVar[t.MappingKV[str, tuple[str, bool]]] = (
-        MappingProxyType({
-            OidAclSubjectType.SELF: (OidAclSubjectType.SELF, False),
-            OidAclSubjectType.USER_DN: ('"{0}"', True),
-            OidAclSubjectType.GROUP_DN: ('group="{0}"', True),
-            "group": ('group="{0}"', True),
-            OidAclSubjectType.DN_ATTR: ("dnattr=({0})", False),
-            OidAclSubjectType.GUID_ATTR: ("guidattr=({0})", False),
-            OidAclSubjectType.GROUP_ATTR: ("groupattr=({0})", False),
         })
     )
     ACL_PERMISSION_MAPPING: ClassVar[t.StrSequenceMapping] = MappingProxyType({

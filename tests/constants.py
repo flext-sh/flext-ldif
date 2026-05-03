@@ -411,14 +411,8 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             FILTERS_FORBIDDEN_ATTRS_ORDERED,
         )
         FILTERS_FORBIDDEN_OCS_ORDERED: Final[tuple[str, ...]] = (NAME_INET_ORG_PERSON,)
-        FILTERS_FORBIDDEN_OCS: Final[frozenset[str]] = frozenset(
-            FILTERS_FORBIDDEN_OCS_ORDERED,
-        )
         FILTERS_USER_MAIL: Final[str] = "user@example.com"
         FILTERS_USER_DESCRIPTION: Final[str] = "a test user"
-        FILTERS_UNMATCHED_ATTR_OID: Final[str] = (
-            "( 1.9.9.9 NAME 'notAllowed' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
-        )
         FILTERS_UNWANTED_ATTR_OID: Final[str] = (
             "( 9.9.9.9 NAME 'unwanted' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
         )
@@ -1016,7 +1010,6 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             '(targetattr="*")(version 3.0; acl "Test ACL"; allow (read,search) userdn="ldap:///anyone";)'
         )
         ACL_OID_STRING: Final[str] = "access to entry by * (browse)"
-        ACL_OPENLDAP_STRING: Final[str] = "to * by * read"
         ACL_RFC_STRING: Final[str] = "access to entry by * (read)"
         ACL_SERVER_CASES: Final[t.MappingKV[str, tuple[str, str]]] = MappingProxyType(
             {
@@ -1064,7 +1057,6 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
 
         # ── Analysis service constants ───────────────────────────────────
         ANALYSIS_DN_VALID: Final[str] = "cn=analysis-user,dc=example,dc=com"
-        ANALYSIS_DN_EMPTY_DN: Final[str] = ""
         ANALYSIS_ATTR_CN_VALUE: Final[str] = "analysis-user"
         ANALYSIS_ATTR_INVALID_NAME: Final[str] = "invalid_attr"
         ANALYSIS_OC_PERSON: Final[str] = "person"
@@ -1086,14 +1078,6 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                 },
             )
         )
-        ANALYSIS_INVALID_OC_ENTRY_ATTRS: Final[t.MappingKV[str, list[str]]] = (
-            MappingProxyType(
-                {
-                    "objectClass": [ANALYSIS_OC_INVALID],
-                    "cn": ["user"],
-                },
-            )
-        )
         ANALYSIS_PARSE_RESPONSE_LDIF: Final[str] = (
             "dn: cn=user1,dc=example,dc=com\n"
             "objectClass: person\n"
@@ -1102,34 +1086,14 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             "objectClass: person\n"
             "cn: user2\n"
         )
-        ANALYSIS_MULTIENTRY_PARSE_LDIF: Final[str] = (
-            "dn: cn=valid,dc=example,dc=com\nobjectClass: person\ncn: valid\n"
-        )
 
         # ── Migration pipeline constants ─────────────────────────────────
         MIGRATION_INPUT_FILENAME: Final[str] = "mig_input.ldif"
-        MIGRATION_OUTPUT_FILENAME: Final[str] = "mig_output.ldif"
-        MIGRATION_EMPTY_LDIF: Final[str] = ""
-        MIGRATION_INVALID_LDIF: Final[str] = "not valid ldif content"
         MIGRATION_SINGLE_ENTRY_LDIF: Final[str] = (
             "dn: cn=migrate-me,dc=example,dc=com\n"
             "objectClass: person\n"
             "cn: migrate-me\n"
             "sn: user\n"
-        )
-        MIGRATION_MULTI_ENTRY_LDIF: Final[str] = (
-            "dn: cn=user1,dc=example,dc=com\nobjectClass: person\ncn: user1\n\n"
-            "dn: cn=user2,dc=example,dc=com\nobjectClass: person\ncn: user2\n"
-        )
-        MIGRATION_SERVER_PAIRS: Final[t.MappingKV[str, tuple[str, str]]] = (
-            MappingProxyType(
-                {
-                    "oid_to_rfc": (OID, RFC),
-                    "oud_to_rfc": (OUD, RFC),
-                    "rfc_to_oid": (RFC, OID),
-                    "rfc_to_oud": (RFC, OUD),
-                },
-            )
         )
         MIGRATION_UNKNOWN_SERVER: Final[str] = "TOTALLY_UNKNOWN_SERVER_XYZ"
         MIGRATION_COERCE_CASES: Final[t.MappingKV[str, tuple[str, str]]] = (
@@ -1143,68 +1107,11 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
         )
 
         # ── Writer advanced constants ────────────────────────────────────
-        WRITER_MULTI_ENTRY_LDIF: Final[str] = (
-            "dn: cn=writer-alpha,dc=example,dc=com\n"
-            "objectClass: person\n"
-            "cn: writer-alpha\n\n"
-            "dn: cn=writer-beta,dc=example,dc=com\n"
-            "objectClass: person\n"
-            "cn: writer-beta\n"
-        )
-        WRITER_FORMAT_OPTIONS_LINE_LENGTH: Final[int] = 76
-        WRITER_PARSE_RESPONSE_LDIF: Final[str] = (
-            "dn: cn=wr-user,dc=example,dc=com\nobjectClass: person\ncn: wr-user\n"
-        )
-        WRITER_EMPTY_ENTRY_LIST_COUNT: Final[int] = 0
-        WRITER_KNOWN_SERVER_TYPES: Final[frozenset[str]] = frozenset(
-            {RFC, OID, OUD, OPENLDAP},
-        )
-        WRITER_FILE_WRITE_CASES: Final[t.MappingKV[str, tuple[str, str]]] = (
-            MappingProxyType(
-                {
-                    "rfc_file": (RFC, "out_rfc.ldif"),
-                    "oid_file": (OID, "out_oid.ldif"),
-                },
-            )
-        )
 
         # ── Server service constants ─────────────────────────────────────
-        SERVER_VALID_TYPES: Final[frozenset[str]] = frozenset(
-            {RFC, OID, OUD, OPENLDAP},
-        )
-        SERVER_SERVER_ENTRY_DN: Final[str] = "cn=server-entry,dc=example,dc=com"
-        SERVER_SERVER_ATTRS: Final[t.MappingKV[str, list[str]]] = MappingProxyType(
-            {"objectClass": ["person"], "cn": ["server-entry"]},
-        )
         SERVER_INVALID_SERVER_TYPE: Final[str] = "invalid_server_xyz"
-        SERVER_SCHEMA_ENTRY_DN: Final[str] = "cn=schema"
-        SERVER_SCHEMA_ATTRS: Final[t.MappingKV[str, list[str]]] = MappingProxyType(
-            {"objectClass": ["subschema", "top"]},
-        )
 
         # ── Validation service constants ─────────────────────────────────
-        VALIDATION_VALID_ATTR_NAMES: Final[tuple[str, ...]] = (
-            "cn",
-            "sn",
-            "mail",
-            "objectClass",
-            "description",
-            "telephoneNumber",
-        )
-        VALIDATION_INVALID_ATTR_NAMES: Final[tuple[str, ...]] = (
-            "invalid_attr",
-            "attr with space",
-            "cn_test",
-        )
-        VALIDATION_VALID_DN_STRINGS: Final[tuple[str, ...]] = (
-            "cn=user,dc=example,dc=com",
-            "dc=example,dc=com",
-            "cn=test",
-        )
-        VALIDATION_INVALID_DN_STRINGS: Final[tuple[str, ...]] = (
-            "not a dn at all",
-            "",
-        )
         VALIDATION_VALID_OC_NAMES: Final[tuple[str, ...]] = (
             "person",
             "top",
@@ -1213,23 +1120,6 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
         )
 
         # ── Pipeline constants ───────────────────────────────────────────
-        PIPELINE_ENTRY_DN: Final[str] = "cn=pipeline-entry,dc=example,dc=com"
-        PIPELINE_ENTRY_ATTRS: Final[t.MappingKV[str, list[str]]] = MappingProxyType(
-            {"objectClass": ["person"], "cn": ["pipeline-entry"]},
-        )
-        PIPELINE_LDIF_CONTENT: Final[str] = (
-            "dn: cn=pipeline-entry,dc=example,dc=com\n"
-            "objectClass: person\n"
-            "cn: pipeline-entry\n"
-        )
-        PIPELINE_SERVER_PAIRS: Final[t.MappingKV[str, tuple[str, str]]] = (
-            MappingProxyType(
-                {
-                    "rfc_to_oid": (RFC, OID),
-                    "oid_to_rfc": (OID, RFC),
-                },
-            )
-        )
 
         # ── Processing service constants ───────────────────────────────
         PROCESSING_VALID_DNS: Final[tuple[str, ...]] = (
