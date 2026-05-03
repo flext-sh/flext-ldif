@@ -195,23 +195,24 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
 
         def is_valid_server_class(mro_cls: type[t.JsonValue]) -> bool:
             """Check if MRO class is a valid server class with PRIORITY."""
-            if not mro_cls.__name__.startswith("FlextLdifServers"):
-                return False
-            if mro_cls.__name__.endswith(("Schema", "Acl", "Entry")):
-                return False
-            constants = getattr(mro_cls, "Constants", None)
-            priority = getattr(constants, "PRIORITY", None)
-            return isinstance(priority, int)
+            result: bool
+            if not mro_cls.__name__.startswith("FlextLdifServers") or mro_cls.__name__.endswith(("Schema", "Acl", "Entry")):
+                result = False
+            else:
+                constants = getattr(mro_cls, "Constants", None)
+                priority = getattr(constants, "PRIORITY", None)
+                result = isinstance(priority, int)
+            return result
 
         def extract_priority(mro_cls: type[t.JsonValue]) -> int | None:
             """Extract priority if it's a valid integer."""
+            result: int | None = None
             constants = getattr(mro_cls, "Constants", None)
-            if constants is None:
-                return None
-            priority = getattr(constants, "PRIORITY", None)
-            if isinstance(priority, int):
-                return priority
-            return None
+            if constants is not None:
+                priority = getattr(constants, "PRIORITY", None)
+                if isinstance(priority, int):
+                    result = priority
+            return result
 
         priority = next(
             (
