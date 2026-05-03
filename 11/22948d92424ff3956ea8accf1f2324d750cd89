@@ -1,0 +1,16 @@
+tests/utilities.py
+  h_9db9d35f50cf33 206-223
+tests/fixtures/README.md
+  h_9db9d35f50cf33 67-68
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "1122948d92424ff3956ea8accf1f2324d750cd89",
+  "prompts": {},
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
