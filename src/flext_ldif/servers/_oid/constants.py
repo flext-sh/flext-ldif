@@ -288,17 +288,17 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
             " by dnattr=": (
                 "by\\s+dnattr\\s*=\\s*\\(([^)]+)\\)",
                 OidAclSubjectType.DN_ATTR,
-                f"{{0}}#{OidAclSubjectSuffix.LDAPURL}",
+                "{0}#" + OidAclSubjectSuffix.LDAPURL,
             ),
             " by guidattr=": (
                 "by\\s+guidattr\\s*=\\s*\\(([^)]+)\\)",
                 OidAclSubjectType.GUID_ATTR,
-                f"{{0}}#{OidAclSubjectSuffix.USERDN}",
+                "{0}#" + OidAclSubjectSuffix.USERDN,
             ),
             " by groupattr=": (
                 "by\\s+groupattr\\s*=\\s*\\(([^)]+)\\)",
                 OidAclSubjectType.GROUP_ATTR,
-                f"{{0}}#{OidAclSubjectSuffix.GROUPDN}",
+                "{0}#" + OidAclSubjectSuffix.GROUPDN,
             ),
         })
     )
