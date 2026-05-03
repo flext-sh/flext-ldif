@@ -90,9 +90,7 @@ class FlextLdifUtilitiesSchema:
             parts.append(f"NAME '{attr_data.name}'")
         if attr_data.desc:
             parts.append(f"DESC '{attr_data.desc}'")
-        if attr_data.metadata and attr_data.metadata.extensions.get(
-            c.Ldif.ObsoleteField.OBSOLETE,
-        ):
+        if attr_data.obsolete:
             parts.append("OBSOLETE")
         if attr_data.sup:
             parts.append(f"SUP {attr_data.sup}")
@@ -101,8 +99,8 @@ class FlextLdifUtilitiesSchema:
         uw.add_attribute_flags(attr_data, parts)
         if attr_data.usage:
             parts.append(f"USAGE {attr_data.usage}")
-        if attr_data.metadata and attr_data.metadata.extensions.get("x_origin"):
-            parts.append(f"X-ORIGIN '{attr_data.metadata.extensions.get('x_origin')}'")
+        if attr_data.x_origin:
+            parts.append(f"X-ORIGIN '{attr_data.x_origin}'")
         parts.append(")")
         return parts
 
@@ -140,16 +138,14 @@ class FlextLdifUtilitiesSchema:
             parts.append(f"NAME '{oc_data.name}'")
         if oc_data.desc:
             parts.append(f"DESC '{oc_data.desc}'")
-        if oc_data.metadata and oc_data.metadata.extensions.get(
-            c.Ldif.ObsoleteField.OBSOLETE,
-        ):
-            parts.append("OBSOLETE")
+        FlextLdifUtilitiesSchema._build_obsolete_part(oc_data, parts, None)
         FlextLdifUtilitiesSchema._add_objectclass_sup(oc_data, parts)
         kind = oc_data.kind or c.Ldif.SchemaKind.STRUCTURAL.value
         parts.append(kind)
         FlextLdifUtilitiesSchema._add_objectclass_must_may(oc_data, parts)
-        if oc_data.metadata and oc_data.metadata.extensions.get("x_origin"):
-            parts.append(f"X-ORIGIN '{oc_data.metadata.extensions.get('x_origin')}'")
+        x_origin_part = FlextLdifUtilitiesSchema._build_x_origin_part(oc_data)
+        if x_origin_part:
+            parts.append(x_origin_part)
         parts.append(")")
         return parts
 
@@ -529,9 +525,7 @@ class FlextLdifUtilitiesSchema:
             return False
         source_server_type = metadata.original_server_type
         if source_server_type is None and metadata.extensions:
-            source_server_raw = metadata.extensions.get(c.Ldif.SCHEMA_SOURCE_SERVER)
-            if isinstance(source_server_raw, str):
-                source_server_type = source_server_raw
+            source_server_type = metadata.extensions.schema_source_server
         if source_server_type is None:
             source_server_type = str(metadata.server_type)
         if not source_server_type or not target_server_type:
