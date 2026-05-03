@@ -55,6 +55,7 @@ class FlextLdifServersOudAciMixin:
             if entry.attributes and entry.attributes.attributes
             else None
         )
+        result: t.MutableSequenceOf[str] | str | None = None
         # Try direct "aci" key (list/str), normalised through the simple helper
         for source in (original_attrs, entry_attrs):
             if source:
@@ -62,30 +63,35 @@ class FlextLdifServersOudAciMixin:
                 if isinstance(raw, list):
                     raw = [u.to_str(item) for item in raw]
                 if raw and (values := normalize(raw)):
-                    return values
-        # Fallback: case-insensitive search in either dict
-        for source in (original_attrs, entry_attrs):
-            if source and (values := find_in_dict(source)):
-                return values
-        # Last resort: commented values stored in entry metadata extensions
-        extensions = entry.metadata.extensions if entry.metadata is not None else None
-        if extensions is None:
-            return None
-        commented = FlextLdifServersOudAclExtractMixin.parse_commented_values(
-            extensions.to_dict().get(c.Ldif.COMMENTED_ATTRIBUTE_VALUES),
-        )
-        if not commented:
-            return None
-        for key, value in commented.items():
-            if key.lower() == "aci":
-                normalized_value = (
-                    [u.to_str(item) for item in value]
-                    if isinstance(value, list)
-                    else value
+                    result = values
+                    break
+        if result is None:
+            # Fallback: case-insensitive search in either dict
+            for source in (original_attrs, entry_attrs):
+                if source and (values := find_in_dict(source)):
+                    result = values
+                    break
+        if result is None:
+            # Last resort: commented values stored in entry metadata extensions
+            extensions = (
+                entry.metadata.extensions if entry.metadata is not None else None
+            )
+            if extensions is not None:
+                commented = FlextLdifServersOudAclExtractMixin.parse_commented_values(
+                    extensions.to_dict().get(c.Ldif.COMMENTED_ATTRIBUTE_VALUES),
                 )
-                if values := normalize(normalized_value):
-                    return values
-        return None
+                if commented:
+                    for key, value in commented.items():
+                        if key.lower() == "aci":
+                            normalized_value = (
+                                [u.to_str(item) for item in value]
+                                if isinstance(value, list)
+                                else value
+                            )
+                            if values := normalize(normalized_value):
+                                result = values
+                                break
+        return result
 
     @staticmethod
     def normalize_aci_value(
