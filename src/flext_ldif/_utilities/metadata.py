@@ -77,15 +77,16 @@ class FlextLdifUtilitiesMetadata:
         item_data: t.JsonValue,
     ) -> None:
         """Add item to list metadata."""
-        value = metadata.get(metadata_key)
+        value: t.JsonPayload | None = metadata.get(metadata_key)
         normalized_item = FlextLdifUtilitiesMetadata._normalize_metadata_list_item(
             item_data,
         )
         if normalized_item is None:
             return
         if isinstance(value, list):
-            value.append(normalized_item)
-            metadata[metadata_key] = value
+            normalized_values = [u.normalize_to_metadata(item) for item in value]
+            normalized_values.append(normalized_item)
+            metadata[metadata_key] = normalized_values
             return
         metadata[metadata_key] = [normalized_item]
 
@@ -577,8 +578,8 @@ class FlextLdifUtilitiesMetadata:
         return {}
 
     @staticmethod
-    def _is_metadata_scalar(value: t.JsonValue) -> bool:
-        return value is None or u.scalar(value)
+    def _is_metadata_scalar(value: t.JsonPayload | None) -> bool:
+        return value is None or isinstance(value, (str, int, float, bool))
 
     @staticmethod
     def _is_metadata_scalar_typed(
