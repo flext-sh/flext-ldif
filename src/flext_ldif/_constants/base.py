@@ -9,8 +9,6 @@ class FlextLdifConstantsBase:
     """Base and foundational LDIF constants."""
 
     # Format and encoding indicators
-    LDIF_BASE64_INDICATOR: Final[str] = "::"
-    LDIF_REGULAR_INDICATOR: Final[str] = ":"
 
     # Character ranges
     ASCII_PRINTABLE_MIN: Final[int] = 32
@@ -75,8 +73,6 @@ class FlextLdifConstantsBase:
 
     # Metadata keys
     META_TRANSFORMATION_TIMESTAMP: Final[str] = "_transform_ts"
-    META_TRANSFORMATION_SOURCE: Final[str] = "_transform_source"
-    META_TRANSFORMATION_TARGET: Final[str] = "_transform_target"
     META_DN_ORIGINAL: Final[str] = "_dn_original"
     META_DN_WAS_BASE64: Final[str] = "_dn_was_base64"
     META_DN_ESCAPES_APPLIED: Final[str] = "_dn_escapes_applied"
@@ -96,7 +92,6 @@ class FlextLdifConstantsBase:
     CONFIDENCE_THRESHOLD: Final[float] = 0.6
     ATTRIBUTE_MATCH_SCORE: Final[int] = 2
     DEFAULT_MAX_LINES: Final[int] = 1000
-    DEFAULT_MAX_ATTR_VALUE_LENGTH: Final[int] = 1048576
     TUPLE_LENGTH_PAIR: Final[int] = 2
 
     # Regex patterns - DN and schema
@@ -128,7 +123,6 @@ class FlextLdifConstantsBase:
     SCHEMA_ORDERING_TOKEN: Final[str] = r"ORDERING\s+([A-Za-z0-9_-]+)"
     SCHEMA_SUBSTR_TOKEN: Final[str] = r"SUBSTR\s+([A-Za-z0-9_-]+)"
     SCHEMA_OID_CAPTURE: Final[str] = r"\(\s*([0-9.]+)"
-    SYNTAX_TIME_PATTERN: Final[str] = "^\\d{14}(\\.\\d+)?Z$"
 
     # Schema metadata keys
     SCHEMA_ORIGINAL_FORMAT: Final[str] = "schema_original_format"
@@ -146,14 +140,9 @@ class FlextLdifConstantsBase:
     COLLECTIVE: Final[str] = "collective"
 
     # Entry metadata keys
-    ENTRY_ORIGINAL_FORMAT: Final[str] = "entry_original_format"
-    ENTRY_SOURCE_DN_CASE: Final[str] = "entry_source_dn_case"
-    ENTRY_TARGET_DN_CASE: Final[str] = "entry_target_dn_case"
     ORIGINAL_DN_COMPLETE: Final[str] = "original_dn_complete"
     ORIGINAL_ATTRIBUTES_COMPLETE: Final[str] = "original_attributes_complete"
-    ORIGINAL_DN_LINE_COMPLETE: Final[str] = "original_dn_line_complete"
     ENTRY_ORIGINAL_LDIF: Final[str] = "entry_original_ldif"
-    WRITE_OPTIONS: Final[str] = "_write_options"
     WRITE_FORMAT_OPTIONS: Final[str] = "write_format_options"
     BASE_DN: Final[str] = "base_dn"
     DN_REGISTRY: Final[str] = "dn_registry"
@@ -179,7 +168,6 @@ class FlextLdifConstantsBase:
     ACL_BINDMODE: Final[str] = "bindmode"
     ACL_DENY_GROUP_OVERRIDE: Final[str] = "deny_group_override"
     ACL_APPEND_TO_ALL: Final[str] = "append_to_all"
-    ACL_BIND_IP: Final[str] = "bind_ip"
     ACL_BIND_IP_FILTER: Final[str] = "bind_ip_filter"
     ACL_CONSTRAIN_TO_ADDED_OBJECT: Final[str] = "constrain_to_added_object"
     ACL_BIND_TIMEOFDAY: Final[str] = "bind_timeofday"
@@ -198,22 +186,12 @@ class FlextLdifConstantsBase:
     # Sorting metadata
     ORIGINAL_FORMAT: Final[str] = "original_format"
     VERSION: Final[str] = "version"
-    ATTRIBUTE_ORDER: Final[str] = "attribute_order"
-    SORTING_NEW_ATTRIBUTE_ORDER: Final[str] = "sorting_new_attribute_order"
-    SORTING_STRATEGY: Final[str] = "sorting_strategy"
-    SORTING_CUSTOM_ORDER: Final[str] = "sorting_custom_order"
-    SORTING_ORDERED_ATTRIBUTES: Final[str] = "sorting_ordered_attributes"
-    SORTING_REMAINING_ATTRIBUTES: Final[str] = "sorting_remaining_attributes"
-    SORTING_ACL_ATTRIBUTES: Final[str] = "sorting_acl_attributes"
-    SORTING_ACL_SORTED: Final[str] = "sorting_acl_sorted"
 
     # Source file and conversion
-    SOURCE_FILE: Final[str] = "source_file"
     HIDDEN_ATTRIBUTES: Final[str] = "hidden_attributes"
     COMMENTED_ATTRIBUTE_VALUES: Final[str] = "commented_attribute_values"
     ACL_COMMENTED_ATTRIBUTES: Final[str] = "acl_commented_attributes"
     CONVERSION_BOOLEAN_CONVERSIONS: Final[str] = "boolean_conversions"
-    CONVERSION_ATTRIBUTE_NAME_CONVERSIONS: Final[str] = "attribute_name_conversions"
     CONVERSION_ORIGINAL_VALUE: Final[str] = "original"
     CONVERSION_CONVERTED_VALUE: Final[str] = "converted"
     CONVERSION_CONVERTED_ATTRIBUTE_NAMES: Final[str] = (
