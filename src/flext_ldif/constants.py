@@ -78,22 +78,6 @@ class FlextLdifConstants(FlextCliConstants):
             }),
         })
 
-        OBJECTCLASS_REQUIRED_SERVERS: Final[frozenset[str]] = frozenset(
-            server_type.value
-            for server_type, capabilities in SERVER_VALIDATION_CAPABILITIES.items()
-            if "requires_objectclass" in capabilities
-        )
-        NAMING_ATTR_REQUIRED_SERVERS: Final[frozenset[str]] = frozenset(
-            server_type.value
-            for server_type, capabilities in SERVER_VALIDATION_CAPABILITIES.items()
-            if "requires_naming_attr" in capabilities
-        )
-        BINARY_OPTION_REQUIRED_SERVERS: Final[frozenset[str]] = frozenset(
-            server_type.value
-            for server_type, capabilities in SERVER_VALIDATION_CAPABILITIES.items()
-            if "requires_binary_option" in capabilities
-        )
-
         DEFAULT_ACL_ATTRIBUTES: Final[t.StrSequence] = (
             "acl",
             "aci",
@@ -250,9 +234,6 @@ class FlextLdifConstants(FlextCliConstants):
             "1.3.6.1.4.1.1466.115.121.1.57": "uui",
             "1.3.6.1.4.1.1466.115.121.1.58": "substring_assertion",
         })
-        NAME_TO_OID: Final[t.StrMapping] = MappingProxyType({
-            v: k for k, v in OID_TO_NAME.items()
-        })
         NAME_TO_TYPE_CATEGORY: Final[t.StrMapping] = MappingProxyType({
             "integer": "integer",
             "boolean": "boolean",
@@ -318,23 +299,6 @@ class FlextLdifConstants(FlextCliConstants):
             "utf8_string": "string",
             "unicode_string": "string",
             "uui": "string",
-        })
-        COMMON_SYNTAXES: Final[frozenset[str]] = frozenset({
-            "1.3.6.1.4.1.1466.115.121.1.7",
-            "1.3.6.1.4.1.1466.115.121.1.12",
-            "1.3.6.1.4.1.1466.115.121.1.15",
-            "1.3.6.1.4.1.1466.115.121.1.24",
-            "1.3.6.1.4.1.1466.115.121.1.26",
-            "1.3.6.1.4.1.1466.115.121.1.27",
-            "1.3.6.1.4.1.1466.115.121.1.36",
-            "1.3.6.1.4.1.1466.115.121.1.38",
-            "1.3.6.1.4.1.1466.115.121.1.40",
-            "1.3.6.1.4.1.1466.115.121.1.44",
-            "1.3.6.1.4.1.1466.115.121.1.50",
-        })
-        SYNTAX_VALID_BOOLEAN_VALUES: Final[frozenset[str]] = frozenset({
-            "TRUE",
-            "FALSE",
         })
 
         @unique
