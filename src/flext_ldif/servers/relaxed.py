@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from collections.abc import (
     MutableMapping,
 )
@@ -33,13 +32,27 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["relaxed", "rfc"])
         ACL_FORMAT: ClassVar[str] = "rfc_generic"
         ACL_ATTRIBUTE_NAME: ClassVar[str] = "aci"
-        OID_PATTERN: ClassVar[re.Pattern[str]] = re.compile(r"\(\s*([0-9a-zA-Z._\-]+)")
+        OID_PATTERN: ClassVar[t.Ldif.RegexPattern] = c.Ldif.compile_pattern(
+            r"\(\s*([0-9a-zA-Z._\-]+)"
+        )
         OID_NUMERIC_WITH_PAREN: ClassVar[str] = "\\(\\s*([0-9]+(?:\\.[0-9]+)+)"
+        OID_NUMERIC_WITH_PAREN_RE: ClassVar[t.Ldif.RegexPattern] = (
+            c.Ldif.compile_pattern("\\(\\s*([0-9]+(?:\\.[0-9]+)+)")
+        )
         OID_NUMERIC_ANYWHERE: ClassVar[str] = "([0-9]+\\.[0-9]+(?:\\.[0-9]+)*)"
+        OID_NUMERIC_ANYWHERE_RE: ClassVar[t.Ldif.RegexPattern] = (
+            c.Ldif.compile_pattern("([0-9]+\\.[0-9]+(?:\\.[0-9]+)*)")
+        )
         OID_ALPHANUMERIC_RELAXED: ClassVar[str] = "\\(\\s*([a-zA-Z0-9._-]+)"
+        OID_ALPHANUMERIC_RELAXED_RE: ClassVar[t.Ldif.RegexPattern] = (
+            c.Ldif.compile_pattern("\\(\\s*([a-zA-Z0-9._-]+)")
+        )
         SCHEMA_MUST_SEPARATOR: ClassVar[str] = "$"
         SCHEMA_MAY_SEPARATOR: ClassVar[str] = "$"
         SCHEMA_NAME_PATTERN: ClassVar[str] = "NAME\\s+['\\\"]?([^'\\\" ]+)['\\\"]?"
+        SCHEMA_NAME_RE: ClassVar[t.Ldif.RegexPattern] = c.Ldif.compile_pattern(
+            "NAME\\s+['\\\"]?([^'\\\" ]+)['\\\"]?", ignorecase=True
+        )
         ACL_DEFAULT_NAME: ClassVar[str] = "relaxed_acl"
         ACL_DEFAULT_TARGET_DN: ClassVar[str] = "*"
         ACL_DEFAULT_SUBJECT_TYPE: ClassVar[str] = "all"
@@ -119,10 +132,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         ) -> tuple[t.MutableSequenceOf[str] | None, t.MutableSequenceOf[str] | None]:
             """Extract MUST and MAY fields from objectClass definition."""
             must = None
-            must_match = re.search(
-                r"\\bMUST\\s+(?:\\(\\s*([^)]+)\\s*\\)|(\\w+))\\b",
-                oc_definition,
-            )
+            must_match = c.Ldif.SCHEMA_OBJECTCLASS_MUST_RE.search(oc_definition)
             if must_match:
                 if must_match.group(1):
                     must_value = must_match.group(1).strip()
@@ -137,10 +147,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     )
                 ]
             may = None
-            may_match = re.search(
-                r"\\bMAY\\s+(?:\\(\\s*([^)]+)\\s*\\)|(\\w+))\\b",
-                oc_definition,
-            )
+            may_match = c.Ldif.SCHEMA_OBJECTCLASS_MAY_RE.search(oc_definition)
             if may_match:
                 if may_match.group(1):
                     may_value = may_match.group(1).strip()
@@ -162,21 +169,24 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             if oid_result.success:
                 oid_val: str = oid_result.value
                 return oid_val
-            oid_match = re.search(
-                FlextLdifServersRelaxed.Constants.OID_NUMERIC_WITH_PAREN,
-                definition,
+            oid_match = (
+                FlextLdifServersRelaxed.Constants.OID_NUMERIC_WITH_PAREN_RE.search(
+                    definition
+                )
             )
             if oid_match:
                 return oid_match.group(1)
-            oid_match = re.search(
-                FlextLdifServersRelaxed.Constants.OID_NUMERIC_ANYWHERE,
-                definition,
+            oid_match = (
+                FlextLdifServersRelaxed.Constants.OID_NUMERIC_ANYWHERE_RE.search(
+                    definition
+                )
             )
             if oid_match:
                 return oid_match.group(1)
-            oid_match = re.search(
-                FlextLdifServersRelaxed.Constants.OID_ALPHANUMERIC_RELAXED,
-                definition,
+            oid_match = (
+                FlextLdifServersRelaxed.Constants.OID_ALPHANUMERIC_RELAXED_RE.search(
+                    definition
+                )
             )
             if oid_match:
                 return oid_match.group(1)
@@ -184,10 +194,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         def _extract_sup_from_objectclass(self, oc_definition: str) -> str | None:
             """Extract SUP (superior) field from objectClass definition."""
-            sup_match = re.search(
-                r"\\bSUP\\s+(?:\\(\\s*([^)]+)\\s*\\)|(\\w+))\\b",
-                oc_definition,
-            )
+            sup_match = c.Ldif.SCHEMA_OBJECTCLASS_SUP_RE.search(oc_definition)
             if not sup_match:
                 return None
             if sup_match.group(1):
@@ -231,10 +238,10 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     return r[m.Ldif.SchemaAttribute].fail(
                         "Cannot extract OID from attribute definition",
                     )
-                name_match = re.search(
-                    FlextLdifServersRelaxed.Constants.SCHEMA_NAME_PATTERN,
-                    attr_definition,
-                    re.IGNORECASE,
+                name_match = (
+                    FlextLdifServersRelaxed.Constants.SCHEMA_NAME_RE.search(
+                        attr_definition
+                    )
                 )
                 name = name_match.group(1) if name_match else oid
                 metadata = m.Ldif.ServerMetadata.model_validate({
@@ -318,11 +325,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 "\\bDESC\\s+'([^']+)'\\b",
             )
             sup = self._extract_sup_from_objectclass(oc_definition)
-            kind_match = re.search(
-                r"\\b(ABSTRACT|STRUCTURAL|AUXILIARY)\\b",
-                oc_definition,
-                re.IGNORECASE,
-            )
+            kind_match = c.Ldif.SCHEMA_OBJECTCLASS_KIND_RE.search(oc_definition)
             kind = (
                 kind_match.group(1).upper()
                 if kind_match

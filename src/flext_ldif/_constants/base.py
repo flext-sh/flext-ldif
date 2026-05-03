@@ -1,8 +1,14 @@
-"""FlextLdifConstantsBase - Base constants for LDIF domain."""
+"""FlextLdifConstantsBase - Base constants for LDIF domain.
+
+Owns every compiled ``re.Pattern`` for the LDIF domain. Consumer modules
+import the pre-compiled ``*_RE`` constants directly; ``import re`` outside
+this module is forbidden by AGENTS.md §3.1 ``regex-from-constants`` rule.
+"""
 
 from __future__ import annotations
 
-from typing import Final
+import re
+from typing import ClassVar, Final
 
 
 class FlextLdifConstantsBase:
@@ -123,6 +129,51 @@ class FlextLdifConstantsBase:
     SCHEMA_ORDERING_TOKEN: Final[str] = r"ORDERING\s+([A-Za-z0-9_-]+)"
     SCHEMA_SUBSTR_TOKEN: Final[str] = r"SUBSTR\s+([A-Za-z0-9_-]+)"
     SCHEMA_OID_CAPTURE: Final[str] = r"\(\s*([0-9.]+)"
+
+    # === Pre-compiled regex authorities (consumers MUST use these — never re.compile externally). ===
+    ATTRIBUTE_NAME_RE: ClassVar[re.Pattern[str]] = re.compile(ATTRIBUTE_NAME)
+    ATTRIBUTE_OPTION_RE: ClassVar[re.Pattern[str]] = re.compile(ATTRIBUTE_OPTION)
+    BINARY_CHAR_RE: ClassVar[re.Pattern[str]] = re.compile(BINARY_CHAR_PATTERN)
+    DN_COMPONENT_RE: ClassVar[re.Pattern[str]] = re.compile(
+        r"^[a-zA-Z][a-zA-Z0-9-]*=(?:[^\\,]|\\.)*$",
+        re.IGNORECASE,
+    )
+    NUMERIC_OID_RE: ClassVar[re.Pattern[str]] = re.compile(NUMERIC_OID_PATTERN)
+    SCHEMA_X_EXTENSION_RE: ClassVar[re.Pattern[str]] = re.compile(
+        SCHEMA_X_EXTENSION, re.IGNORECASE
+    )
+    SCHEMA_DESC_FLEX_RE: ClassVar[re.Pattern[str]] = re.compile(SCHEMA_DESC_FLEX)
+    SCHEMA_ORDERING_TOKEN_RE: ClassVar[re.Pattern[str]] = re.compile(
+        SCHEMA_ORDERING_TOKEN
+    )
+    SCHEMA_SUBSTR_TOKEN_RE: ClassVar[re.Pattern[str]] = re.compile(SCHEMA_SUBSTR_TOKEN)
+    SCHEMA_OID_CAPTURE_RE: ClassVar[re.Pattern[str]] = re.compile(SCHEMA_OID_CAPTURE)
+    SCHEMA_OBJECTCLASS_KIND_RE: ClassVar[re.Pattern[str]] = re.compile(
+        SCHEMA_OBJECTCLASS_KIND, re.IGNORECASE
+    )
+    SCHEMA_OBJECTCLASS_SUP_RE: ClassVar[re.Pattern[str]] = re.compile(
+        SCHEMA_OBJECTCLASS_SUP
+    )
+    SCHEMA_OBJECTCLASS_MUST_RE: ClassVar[re.Pattern[str]] = re.compile(
+        SCHEMA_OBJECTCLASS_MUST
+    )
+    SCHEMA_OBJECTCLASS_MAY_RE: ClassVar[re.Pattern[str]] = re.compile(
+        SCHEMA_OBJECTCLASS_MAY
+    )
+    SCHEMA_NO_USER_MODIFICATION_RE: ClassVar[re.Pattern[str]] = re.compile(
+        SCHEMA_NO_USER_MODIFICATION
+    )
+
+    @staticmethod
+    def compile_pattern(pattern: str, *, ignorecase: bool = False) -> re.Pattern[str]:
+        """Compile a runtime-supplied regex pattern.
+
+        Sole sanctioned ``re.compile`` entry-point for non-constant patterns
+        (e.g. user-supplied DN filters). Consumer modules MUST call this
+        instead of importing ``re`` directly.
+        """
+        flags = re.IGNORECASE if ignorecase else 0
+        return re.compile(pattern, flags=flags)
 
     # Schema metadata keys
     SCHEMA_ORIGINAL_FORMAT: Final[str] = "schema_original_format"

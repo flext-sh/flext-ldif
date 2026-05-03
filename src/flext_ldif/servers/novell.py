@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from typing import ClassVar, override
 
 from flext_ldif import FlextLdifServersRfc, c, m, p, r, t, u
@@ -31,6 +30,9 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             "modifyTimestamp",
         ])
         DETECTION_OID_PATTERN: ClassVar[str] = "2\\.16\\.840\\.1\\.113719\\."
+        DETECTION_OID_PATTERN_RE: ClassVar[t.Ldif.RegexPattern] = (
+            c.Ldif.compile_pattern("2\\.16\\.840\\.1\\.113719\\.")
+        )
         DETECTION_PATTERN: ClassVar[str] = "2\\.16\\.840\\.1\\.113719\\."
         DETECTION_WEIGHT: ClassVar[int] = 6
         DETECTION_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
@@ -75,6 +77,9 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             "ndsloginproperties",
         ])
         SCHEMA_ATTRIBUTE_NAME_REGEX: ClassVar[str] = "NAME\\s+\\(?\\s*'([^']+)'"
+        SCHEMA_ATTRIBUTE_NAME_RE: ClassVar[t.Ldif.RegexPattern] = (
+            c.Ldif.compile_pattern("NAME\\s+\\(?\\s*'([^']+)'", ignorecase=True)
+        )
         ACL_DEFAULT_SUBJECT_TYPE: ClassVar[str] = "trustee"
         ACL_DEFAULT_SUBJECT_VALUE_UNKNOWN: ClassVar[str] = c.Ldif.UNKNOWN_VALUE
         ACL_ATTRIBUTE_NAME_WRITE: ClassVar[str] = "acl"
@@ -115,15 +120,14 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 )
                 return matches
             attr_lower = attr_definition.lower()
-            if re.search(
-                FlextLdifServersNovell.Constants.DETECTION_OID_PATTERN,
-                attr_definition,
+            if FlextLdifServersNovell.Constants.DETECTION_OID_PATTERN_RE.search(
+                attr_definition
             ):
                 return True
-            name_matches = re.findall(
-                FlextLdifServersNovell.Constants.SCHEMA_ATTRIBUTE_NAME_REGEX,
-                attr_definition,
-                re.IGNORECASE,
+            name_matches = (
+                FlextLdifServersNovell.Constants.SCHEMA_ATTRIBUTE_NAME_RE.findall(
+                    attr_definition
+                )
             )
             if any(
                 name.lower().startswith(

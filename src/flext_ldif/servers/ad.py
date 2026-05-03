@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import base64
 import binascii
-import re
 from typing import ClassVar, override
 
 from flext_ldif import (
@@ -58,6 +57,9 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         ])
         DETECTION_WEIGHT: ClassVar[int] = 8
         ACL_SDDL_PREFIX_PATTERN: ClassVar[str] = "^(O:|G:|D:|S:)"
+        ACL_SDDL_PREFIX_PATTERN_RE: ClassVar[t.Ldif.RegexPattern] = (
+            c.Ldif.compile_pattern("^(O:|G:|D:|S:)", ignorecase=True)
+        )
         ENCODING_UTF16LE: ClassVar[str] = "utf-16-le"
         ENCODING_ERROR_IGNORE: ClassVar[str] = "ignore"
         AD_REQUIRED_CLASSES: ClassVar[frozenset[str]] = frozenset([
@@ -234,10 +236,8 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             ):
                 return True
             return (
-                re.match(
-                    FlextLdifServersAd.Constants.ACL_SDDL_PREFIX_PATTERN,
-                    normalized,
-                    re.IGNORECASE,
+                FlextLdifServersAd.Constants.ACL_SDDL_PREFIX_PATTERN_RE.match(
+                    normalized
                 )
                 is not None
             )
@@ -278,10 +278,8 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 if (
                     not decoded_sddl
                     and raw_value
-                    and re.match(
-                        FlextLdifServersAd.Constants.ACL_SDDL_PREFIX_PATTERN,
-                        raw_value,
-                        re.IGNORECASE,
+                    and FlextLdifServersAd.Constants.ACL_SDDL_PREFIX_PATTERN_RE.match(
+                        raw_value
                     )
                 ):
                     decoded_sddl = raw_value

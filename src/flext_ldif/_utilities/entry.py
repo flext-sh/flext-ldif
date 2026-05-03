@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from collections.abc import (
     Callable,
     Mapping,
@@ -18,10 +17,6 @@ class FlextLdifUtilitiesEntry:
     """Entry transformation utilities - pure helper functions."""
 
     logger = u.fetch_logger(__name__)
-    _ATTR_NAME_PATTERN = re.compile(c.Ldif.ATTRIBUTE_NAME)
-    _ATTR_OPTION_PATTERN = re.compile(c.Ldif.ATTRIBUTE_OPTION)
-    _BINARY_CHAR_PATTERN = re.compile(c.Ldif.BINARY_CHAR_PATTERN)
-    _DN_COMPONENT_PATTERN = re.compile(c.Ldif.DN_COMPONENT, re.IGNORECASE)
 
     # --- Entry getters/checkers (take entry as first param) ---
 
@@ -219,7 +214,7 @@ class FlextLdifUtilitiesEntry:
             violations.append("RFC 4514 § 2.4: DN is empty (no RDN components)")
             return violations
         for idx, comp in enumerate(components):
-            if not FlextLdifUtilitiesEntry._DN_COMPONENT_PATTERN.match(comp):
+            if not c.Ldif.DN_COMPONENT_RE.match(comp):
                 violations.append(
                     f"RFC 4514 § 2.3: Component {idx} '{comp}' invalid format",
                 )
@@ -264,7 +259,7 @@ class FlextLdifUtilitiesEntry:
         for attr_desc in entry.attributes.attributes:
             parts = attr_desc.split(";")
             base_attr = parts[0]
-            if not FlextLdifUtilitiesEntry._ATTR_NAME_PATTERN.match(base_attr):
+            if not c.Ldif.ATTRIBUTE_NAME_RE.match(base_attr):
                 violations.append(
                     f"RFC 4512 § 2.5: '{base_attr}' must start with letter"
                     if not base_attr or not base_attr[0].isalpha()
@@ -274,7 +269,7 @@ class FlextLdifUtilitiesEntry:
                 option = option.strip()
                 if not option:
                     continue
-                if not FlextLdifUtilitiesEntry._ATTR_OPTION_PATTERN.match(option):
+                if not c.Ldif.ATTRIBUTE_OPTION_RE.match(option):
                     violations.append(
                         f"RFC 4512 § 2.5: option '{option}' must start with letter"
                         if not option or not option[0].isalpha()
@@ -296,14 +291,14 @@ class FlextLdifUtilitiesEntry:
         for attr_desc in entry.attributes.attributes:
             parts = attr_desc.split(";")
             base_name = parts[0]
-            if not FlextLdifUtilitiesEntry._ATTR_NAME_PATTERN.match(base_name):
+            if not c.Ldif.ATTRIBUTE_NAME_RE.match(base_name):
                 violations.append(f"RFC 4512 § 2.5.1: '{base_name}' invalid syntax")
             if len(parts) > 1:
                 invalid_options = [
                     f"RFC 4512 § 2.5.2: option '{option}' invalid syntax"
                     for option in parts[1:]
                     if option
-                    and (not FlextLdifUtilitiesEntry._ATTR_NAME_PATTERN.match(option))
+                    and (not c.Ldif.ATTRIBUTE_NAME_RE.match(option))
                 ]
                 violations.extend(invalid_options)
         return violations
@@ -326,7 +321,7 @@ class FlextLdifUtilitiesEntry:
             if ";binary" in attr_name.lower():
                 continue
             for value in attr_values:
-                if FlextLdifUtilitiesEntry._BINARY_CHAR_PATTERN.search(value):
+                if c.Ldif.BINARY_CHAR_RE.search(value):
                     violations.append(
                         f"RFC 2849 § 5.2: '{attr_name}' may need ';binary' option",
                     )
@@ -778,11 +773,9 @@ class FlextLdifUtilitiesEntry:
             )
             checks.append(
                 bool(
-                    re.search(
-                        resolved_config.dn_pattern,
-                        dn_value,
-                        re.IGNORECASE,
-                    ),
+                    c.Ldif.compile_pattern(
+                        resolved_config.dn_pattern, ignorecase=True
+                    ).search(dn_value),
                 ),
             )
         return all(checks)

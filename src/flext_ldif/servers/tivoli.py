@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from typing import ClassVar, override
 
 from flext_ldif import (
@@ -39,18 +38,16 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             "ibm-entryChecksum",
         ])
         DETECTION_OID_PATTERN: ClassVar[str] = "\\b1\\.3\\.18\\."
-        DETECTION_OID_PATTERN_COMPILED: ClassVar[re.Pattern[str]] = re.compile(
-            r"\\b1\\.3\\.18\\.",
-            re.IGNORECASE,
+        DETECTION_OID_PATTERN_COMPILED: ClassVar[t.Ldif.RegexPattern] = (
+            c.Ldif.compile_pattern(r"\\b1\\.3\\.18\\.", ignorecase=True)
         )
         DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
             "ibm-",
             "ids-",
         ])
         DETECTION_PATTERN_STR: ClassVar[str] = "\\b(ibm|tivoli|ldapdb)\\b"
-        DETECTION_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
-            DETECTION_PATTERN_STR,
-            re.IGNORECASE,
+        DETECTION_PATTERN: ClassVar[t.Ldif.RegexPattern] = c.Ldif.compile_pattern(
+            "\\b(ibm|tivoli|ldapdb)\\b", ignorecase=True
         )
         DETECTION_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
             "ibm-entryuuid",
@@ -94,6 +91,9 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         ])
         ACL_DEFAULT_NAME: ClassVar[str] = "Tivoli ACL"
         ACL_ACCESS_PATTERN: ClassVar[str] = 'access\\s+"(\\w+)"'
+        ACL_ACCESS_PATTERN_RE: ClassVar[t.Ldif.RegexPattern] = (
+            c.Ldif.compile_pattern('access\\s+"(\\w+)"', ignorecase=True)
+        )
         ACL_DEFAULT_TARGET_DN: ClassVar[str] = ""
         ACL_DEFAULT_SUBJECT_TYPE: ClassVar[c.Ldif.AclSubjectType] = (
             c.Ldif.AclSubjectType.ALL
@@ -230,10 +230,10 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             try:
                 attr_name, content = u.Ldif.split_acl_line(acl_line)
                 _ = attr_name
-                access_match = re.search(
-                    FlextLdifServersTivoli.Constants.ACL_ACCESS_PATTERN,
-                    content,
-                    re.IGNORECASE,
+                access_match = (
+                    FlextLdifServersTivoli.Constants.ACL_ACCESS_PATTERN_RE.search(
+                        content
+                    )
                 )
                 access_type = (
                     access_match.group(1)

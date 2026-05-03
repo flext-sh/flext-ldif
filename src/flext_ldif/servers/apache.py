@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from collections.abc import (
     MutableMapping,
 )
@@ -35,6 +34,9 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         ACL_FORMAT: ClassVar[str] = "aci"
         ACL_ATTRIBUTE_NAME: ClassVar[str] = "aci"
         DETECTION_OID_PATTERN: ClassVar[str] = "1\\.3\\.6\\.1\\.4\\.1\\.18060\\."
+        DETECTION_OID_PATTERN_RE: ClassVar[t.Ldif.RegexPattern] = (
+            c.Ldif.compile_pattern("1\\.3\\.6\\.1\\.4\\.1\\.18060\\.")
+        )
         DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
             "ads-",
             "apacheds",
@@ -62,6 +64,9 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         ])
         DETECTION_WEIGHT: ClassVar[int] = 6
         SCHEMA_ATTRIBUTE_NAME_REGEX: ClassVar[str] = "NAME\\s+\\(?\\s*'([^']+)'"
+        SCHEMA_ATTRIBUTE_NAME_RE: ClassVar[t.Ldif.RegexPattern] = (
+            c.Ldif.compile_pattern("NAME\\s+\\(?\\s*'([^']+)'", ignorecase=True)
+        )
         ACL_ACI_ATTRIBUTE_NAMES: ClassVar[frozenset[str]] = frozenset([
             "ads-aci",
             "aci",
@@ -91,15 +96,14 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 )
                 return matches
             attr_lower = attr_definition.lower()
-            if re.search(
-                FlextLdifServersApache.Constants.DETECTION_OID_PATTERN,
-                attr_definition,
+            if FlextLdifServersApache.Constants.DETECTION_OID_PATTERN_RE.search(
+                attr_definition
             ):
                 return True
-            name_matches = re.findall(
-                FlextLdifServersApache.Constants.SCHEMA_ATTRIBUTE_NAME_REGEX,
-                attr_definition,
-                re.IGNORECASE,
+            name_matches = (
+                FlextLdifServersApache.Constants.SCHEMA_ATTRIBUTE_NAME_RE.findall(
+                    attr_definition
+                )
             )
             if any(
                 name.lower().startswith(
