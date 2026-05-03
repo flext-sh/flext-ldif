@@ -24,34 +24,6 @@ class FlextLdifConstantsEnums:
         REJECTED = "rejected"
 
     @unique
-    class SortStrategy(StrEnum):
-        """Valid sorting strategies for LDIF entries."""
-
-        HIERARCHY = "hierarchy"
-        DN = "dn"
-        ALPHABETICAL = "alphabetical"
-        SCHEMA = "schema"
-        CUSTOM = "custom"
-
-    @unique
-    class SortingStrategyType(StrEnum):
-        """Sorting strategy types for metadata tracking."""
-
-        ALPHABETICAL_CASE_SENSITIVE = "alphabetical_case_sensitive"
-        ALPHABETICAL_CASE_INSENSITIVE = "alphabetical_case_insensitive"
-        CUSTOM_ORDER = "custom_order"
-
-    @unique
-    class SortTarget(StrEnum):
-        """What to sort in LDIF data."""
-
-        ENTRIES = "entries"
-        ATTRIBUTES = "attributes"
-        ACL = "acl"
-        SCHEMA = "schema"
-        COMBINED = "combined"
-
-    @unique
     class Encoding(StrEnum):
         """Standard character encodings used in LDIF processing."""
 
@@ -63,14 +35,6 @@ class FlextLdifConstantsEnums:
         LATIN1 = "latin-1"
         CP1252 = "cp1252"
         ISO8859_1 = "iso-8859-1"
-
-    @unique
-    class LdifFormat(StrEnum):
-        """RFC 2849 LDIF format indicators for attribute value encoding."""
-
-        REGULAR = ":"
-        BASE64 = "::"
-        URL = ":<"
 
     @unique
     class AclSubjectType(StrEnum):
@@ -109,26 +73,6 @@ class FlextLdifConstantsEnums:
         UPPER = "upper"
 
     @unique
-    class Base64StartChar(StrEnum):
-        """RFC 2849 §2 - Characters requiring base64 encoding at value start."""
-
-        SPACE = " "
-        LANGLE = "<"
-        COLON = ":"
-
-    @unique
-    class DnEscapeChar(StrEnum):
-        """RFC 4514 §2.4 - Characters always requiring escape in DN values."""
-
-        DQUOTE = '"'
-        PLUS = "+"
-        COMMA = ","
-        SEMICOLON = ";"
-        LANGLE = "<"
-        RANGLE = ">"
-        BACKSLASH = "\\"
-
-    @unique
     class TransformationType(StrEnum):
         """Types of transformations applied to entries."""
 
@@ -165,17 +109,6 @@ class FlextLdifConstantsEnums:
         CONVERSION_ERROR = "conversion_error"
 
     @unique
-    class AttributeMarkerStatus(StrEnum):
-        """Marker status for attribute processing in metadata."""
-
-        NORMAL = "normal"
-        MARKED_FOR_REMOVAL = "marked_for_removal"
-        FILTERED = "filtered"
-        OPERATIONAL = "operational"
-        HIDDEN = "hidden"
-        RENAMED = "renamed"
-
-    @unique
     class ServerTypes(StrEnum):
         """Server type identifiers - Single source of truth for all server types."""
 
@@ -192,15 +125,6 @@ class FlextLdifConstantsEnums:
         NOVELL = "novell"
         IBM_TIVOLI = "ibm_tivoli"
         GENERIC = "generic"
-
-    @unique
-    class ChangeType(StrEnum):
-        """LDIF change types — single source of truth."""
-
-        ADDED = "added"
-        REMOVED = "removed"
-        MODIFIED = "modified"
-        FILTERED = "filtered"
 
     @unique
     class ChangeOperation(StrEnum):
