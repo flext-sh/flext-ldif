@@ -154,7 +154,8 @@ class FlextLdifServer(s):
         server_result: p.Result[p.Ldif.ServerServer] = self.server(server_type)
         if server_result.failure:
             return None
-        return server_result.unwrap()
+        server_value: p.Ldif.ServerServer = server_result.unwrap()
+        return server_value
 
     def list_registered_servers(self) -> t.MutableSequenceOf[str]:
         """List all registered server types."""

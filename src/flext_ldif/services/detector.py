@@ -138,7 +138,8 @@ class FlextLdifDetector(s):
         """Resolve effective server type via detector (overrides ParserMixin default)."""
         result: p.Result[str] = self.resolve_effective_server_type()
         if result.success:
-            return result.unwrap()
+            effective_server_type: str = result.unwrap()
+            return effective_server_type
         return c.Ldif.ServerTypes.RFC.value
 
     def _calculate_scores(self, content: str) -> dict[str, int]:

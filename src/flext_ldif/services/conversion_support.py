@@ -45,7 +45,8 @@ class FlextLdifConversionSupportMixin(s):
                 f"{resolved_from_ref.error}"
             )
             raise ValueError(error_msg)
-        return resolved_from_ref.value
+        resolved_server: p.Ldif.ServerServer = resolved_from_ref.unwrap()
+        return resolved_server
 
     def _resolve_schema_server(
         self,
