@@ -106,9 +106,7 @@ class BasicUsageDry:
     @classmethod
     def batch_transform(cls) -> p.Result[list[m.Ldif.Entry]]:
         """DRY batch transformation - returns created entries."""
-        entries: list[m.Ldif.Entry] = [
-            cls._build_entry(index) for index in range(10)
-        ]
+        entries: list[m.Ldif.Entry] = [cls._build_entry(index) for index in range(10)]
         return ldif.validate_entries(entries).map(lambda _: entries)
 
     @classmethod

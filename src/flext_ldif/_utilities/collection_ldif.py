@@ -44,11 +44,14 @@ class FlextLdifUtilitiesCollectionLdif:
         """Normalize for LDIF comparison (mnemonic: nz)."""
 
         def normalize_single(v: str) -> str:
-            if case == "lower":
-                return v.lower()
-            if case == "upper":
-                return v.upper()
-            return v
+            match case:
+                case "lower":
+                    result = v.lower()
+                case "upper":
+                    result = v.upper()
+                case _:
+                    result = v
+            return result
 
         if other is not None:
             match (value, other):
@@ -60,13 +63,14 @@ class FlextLdifUtilitiesCollectionLdif:
                     pass
         match value:
             case str() as value_str:
-                return normalize_single(value_str)
+                result = normalize_single(value_str)
             case list() | tuple() as seq_value:
-                return [normalize_single(v) for v in seq_value]
+                result = [normalize_single(v) for v in seq_value]
             case set() | frozenset() as set_value:
-                return {normalize_single(v) for v in set_value}
+                result = {normalize_single(v) for v in set_value}
             case _:
-                return [normalize_single(v) for v in value]
+                result = [normalize_single(v) for v in value]
+        return result
 
     nz = normalize_ldif
 

@@ -203,14 +203,27 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
         @staticmethod
         def get_docker_control(worker_id: str = "master") -> tk:
             """Create Docker test infrastructure controller."""
-            return tk.compose(
-                compose_file=c.Tests.DOCKER_COMPOSE_FILE_REL,
-                container_name=c.Tests.DOCKER_CONTAINER_NAME,
-                service=c.Tests.DOCKER_SERVICE_NAME,
-                host=c.LOCALHOST,
-                port=c.Tests.DOCKER_PORT,
-                startup_timeout=15,
-                workspace_root=c.Tests.PROJECT_ROOT,
+            compose_file = Path(
+                str(
+                    c.Tests.SHARED_CONTAINERS[c.Tests.DOCKER_CONTAINER_NAME][
+                        "compose_file"
+                    ],
+                ),
+            )
+            workspace_root = next(
+                (
+                    candidate
+                    for candidate in (
+                        c.Tests.PROJECT_ROOT,
+                        *c.Tests.PROJECT_ROOT.parents,
+                    )
+                    if (candidate / compose_file).is_file()
+                ),
+                c.Tests.PROJECT_ROOT,
+            )
+            return tk.shared(
+                c.Tests.DOCKER_CONTAINER_NAME,
+                workspace_root=workspace_root,
                 worker_id=worker_id,
             )
 

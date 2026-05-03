@@ -102,25 +102,26 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         sc = FlextLdifServersOidConstants
         match subject_type.lower():
             case sc.OidAclSubjectType.SELF:
-                return sc.OidAclSubjectType.SELF
+                result = sc.OidAclSubjectType.SELF
             case "anonymous" | sc.OidAclSubjectType.ANONYMOUS:
-                return sc.OidAclSubjectType.ANONYMOUS
+                result = sc.OidAclSubjectType.ANONYMOUS
             case sc.OidAclSubjectType.GROUP_DN | "group":
-                return f'group="{clean_value}"'
+                result = f'group="{clean_value}"'
             case sc.OidAclSubjectType.USER_DN | "user":
-                return f'"{clean_value}"'
+                result = f'"{clean_value}"'
             case sc.OidAclSubjectType.DN_ATTR:
-                return f"dnattr=({clean_value})"
+                result = f"dnattr=({clean_value})"
             case sc.OidAclSubjectType.GUID_ATTR:
-                return f"guidattr=({clean_value})"
+                result = f"guidattr=({clean_value})"
             case sc.OidAclSubjectType.GROUP_ATTR:
-                return f"groupattr=({clean_value})"
+                result = f"groupattr=({clean_value})"
             case _:
-                return (
+                result = (
                     f'"{clean_value}"'
                     if clean_value
                     else sc.OidAclSubjectType.ANONYMOUS
                 )
+        return result
 
     @staticmethod
     def _format_oid_target(target_dn: str, attributes: t.MutableSequenceOf[str]) -> str:
@@ -388,27 +389,35 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     ) -> str:
         """Map bind_rules/group to OID subject type."""
         sc = FlextLdifServersOidConstants
-        if isinstance(source_subject_type, str) and source_subject_type in {
-            sc.OidAclSubjectType.DN_ATTR,
-            sc.OidAclSubjectType.GUID_ATTR,
-            sc.OidAclSubjectType.GROUP_ATTR,
-        }:
-            return source_subject_type
-        if isinstance(source_subject_type, str) and source_subject_type in {
-            sc.OidAclSubjectType.GROUP_DN,
-            sc.OidAclSubjectType.USER_DN,
-        }:
-            return source_subject_type
-        if source_subject_type == "group":
-            return sc.OidAclSubjectType.GROUP_DN
         if (
-            "group=" in rfc_subject_value.lower()
-            or "groupdn" in rfc_subject_value.lower()
+            isinstance(source_subject_type, str)
+            and source_subject_type
+            in {
+                sc.OidAclSubjectType.DN_ATTR,
+                sc.OidAclSubjectType.GUID_ATTR,
+                sc.OidAclSubjectType.GROUP_ATTR,
+            }
+        ) or (
+            isinstance(source_subject_type, str)
+            and source_subject_type
+            in {
+                sc.OidAclSubjectType.GROUP_DN,
+                sc.OidAclSubjectType.USER_DN,
+            }
         ):
-            return sc.OidAclSubjectType.GROUP_DN
-        if "cn=groups" in rfc_subject_value.lower():
-            return sc.OidAclSubjectType.GROUP_DN
-        return sc.OidAclSubjectType.USER_DN
+            result = source_subject_type
+        elif (
+            source_subject_type == "group"
+            or (
+                "group=" in rfc_subject_value.lower()
+                or "groupdn" in rfc_subject_value.lower()
+            )
+            or "cn=groups" in rfc_subject_value.lower()
+        ):
+            result = sc.OidAclSubjectType.GROUP_DN
+        else:
+            result = sc.OidAclSubjectType.USER_DN
+        return result
 
     def _map_oid_subject_to_rfc(
         self,
@@ -418,23 +427,23 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         """Map OID subject types to RFC subject types."""
         sc = FlextLdifServersOidConstants
         if oid_subject_type == sc.OidAclSubjectType.SELF:
-            return (c.Ldif.AclSubjectType.SELF, "ldap:///self")
-        if oid_subject_type == sc.OidAclSubjectType.GROUP_DN:
-            return (c.Ldif.AclSubjectType.GROUP, oid_subject_value)
-        if oid_subject_type == sc.OidAclSubjectType.USER_DN:
-            return (c.Ldif.AclSubjectType.DN, oid_subject_value)
-        if oid_subject_type in {
+            result = (c.Ldif.AclSubjectType.SELF, "ldap:///self")
+        elif oid_subject_type == sc.OidAclSubjectType.GROUP_DN:
+            result = (c.Ldif.AclSubjectType.GROUP, oid_subject_value)
+        elif oid_subject_type == sc.OidAclSubjectType.USER_DN or oid_subject_type in {
             sc.OidAclSubjectType.DN_ATTR,
             sc.OidAclSubjectType.GUID_ATTR,
             sc.OidAclSubjectType.GROUP_ATTR,
         }:
-            return (c.Ldif.AclSubjectType.DN, oid_subject_value)
-        if sc.OidAclSubjectType.ANONYMOUS in {
+            result = (c.Ldif.AclSubjectType.DN, oid_subject_value)
+        elif sc.OidAclSubjectType.ANONYMOUS in {
             oid_subject_type,
             oid_subject_value,
         }:
-            return (c.Ldif.AclSubjectType.ANONYMOUS, sc.OidAclSubjectType.ANONYMOUS)
-        return (c.Ldif.AclSubjectType.DN, oid_subject_value)
+            result = (c.Ldif.AclSubjectType.ANONYMOUS, sc.OidAclSubjectType.ANONYMOUS)
+        else:
+            result = (c.Ldif.AclSubjectType.DN, oid_subject_value)
+        return result
 
     def _map_rfc_subject_to_oid(
         self,
@@ -451,36 +460,39 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             sc.OidAclSubjectType.GUID_ATTR,
             sc.OidAclSubjectType.GROUP_ATTR,
         }:
-            return source_subject_type
-        match rfc_subject_type:
-            case "self":
-                return sc.OidAclSubjectType.SELF
-            case "anonymous":
-                return sc.OidAclSubjectType.ANONYMOUS
-            case _ if rfc_subject_value == sc.OidAclSubjectType.ANONYMOUS:
-                return sc.OidAclSubjectType.ANONYMOUS
-            case rfc_type if rfc_type in {
-                sc.OidAclSubjectType.DN_ATTR.value,
-                sc.OidAclSubjectType.GUID_ATTR.value,
-                sc.OidAclSubjectType.GROUP_ATTR.value,
-                sc.OidAclSubjectType.GROUP_DN.value,
-                sc.OidAclSubjectType.USER_DN.value,
-            }:
-                return rfc_type
-            case "dn":
-                if isinstance(source_subject_type, str) and source_subject_type in {
-                    sc.OidAclSubjectType.DN_ATTR,
-                    sc.OidAclSubjectType.GUID_ATTR,
-                    sc.OidAclSubjectType.GROUP_ATTR,
+            result = source_subject_type
+        else:
+            match rfc_subject_type:
+                case "self":
+                    result = sc.OidAclSubjectType.SELF
+                case "anonymous":
+                    result = sc.OidAclSubjectType.ANONYMOUS
+                case _ if rfc_subject_value == sc.OidAclSubjectType.ANONYMOUS:
+                    result = sc.OidAclSubjectType.ANONYMOUS
+                case rfc_type if rfc_type in {
+                    sc.OidAclSubjectType.DN_ATTR.value,
+                    sc.OidAclSubjectType.GUID_ATTR.value,
+                    sc.OidAclSubjectType.GROUP_ATTR.value,
+                    sc.OidAclSubjectType.GROUP_DN.value,
+                    sc.OidAclSubjectType.USER_DN.value,
                 }:
-                    return source_subject_type
-                return sc.OidAclSubjectType.USER_DN
-            case _:
-                return (
-                    source_subject_type
-                    if isinstance(source_subject_type, str)
-                    else sc.OidAclSubjectType.USER_DN
-                )
+                    result = rfc_type
+                case "dn":
+                    if isinstance(source_subject_type, str) and source_subject_type in {
+                        sc.OidAclSubjectType.DN_ATTR,
+                        sc.OidAclSubjectType.GUID_ATTR,
+                        sc.OidAclSubjectType.GROUP_ATTR,
+                    }:
+                        result = source_subject_type
+                    else:
+                        result = sc.OidAclSubjectType.USER_DN
+                case _:
+                    result = (
+                        source_subject_type
+                        if isinstance(source_subject_type, str)
+                        else sc.OidAclSubjectType.USER_DN
+                    )
+        return result
 
     @override
     def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:

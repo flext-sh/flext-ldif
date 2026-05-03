@@ -71,8 +71,6 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
         )
 
         DOCKER_CONTAINER_NAME: Final[str] = "flext-openldap-test"
-        DOCKER_COMPOSE_FILE_REL: Final[str] = "docker/docker-compose.openldap.yml"
-        DOCKER_SERVICE_NAME: Final[str] = "openldap"
         DOCKER_PORT: Final[int] = 3390
         DOCKER_BASE_DN: Final[str] = "dc=flext,dc=local"
         DOCKER_ADMIN_DN: Final[str] = "cn=admin,dc=flext,dc=local"

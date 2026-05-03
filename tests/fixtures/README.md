@@ -64,8 +64,8 @@ Each server has 4 types of fixtures:
 from tests import c, u
 
 schema = u.Tests.load(
-    c.Ldif.Tests.OID,
-    c.Ldif.Tests.SCHEMA,
+  c.Tests.OID,
+  c.Tests.SCHEMA,
 )
 ```
 
