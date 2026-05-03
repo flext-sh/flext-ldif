@@ -256,3 +256,22 @@ class FlextLdifUtilitiesServer:
     def normalize_server_type(server_type: str) -> c.Ldif.ServerTypes:
         """Normalize server type string to canonical ServerTypes enum member."""
         return FlextLdifShared.normalize_server_type(server_type)
+
+    @staticmethod
+    def validation_rule_flags(
+        server_type: str | c.Ldif.ServerTypes,
+    ) -> dict[str, bool]:
+        """Resolve validation-rule booleans from the canonical server capability map."""
+        normalized_server_type = FlextLdifUtilitiesServer.normalize_server_type(
+            str(server_type),
+        )
+        validation_capabilities = c.Ldif.SERVER_VALIDATION_CAPABILITIES.get(
+            normalized_server_type,
+            frozenset(),
+        )
+        return {
+            "requires_objectclass": "requires_objectclass" in validation_capabilities,
+            "requires_naming_attr": "requires_naming_attr" in validation_capabilities,
+            "requires_binary_option": "requires_binary_option"
+            in validation_capabilities,
+        }

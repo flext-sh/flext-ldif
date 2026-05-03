@@ -356,24 +356,12 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             parent_result = super()._write_attribute(attr_data)
             if parent_result.success:
                 return parent_result
-            source_server = None
-            if attr_data.metadata and attr_data.metadata.extensions:
-                source_server = attr_data.metadata.extensions.get(
-                    c.Ldif.SCHEMA_SOURCE_SERVER,
-                )
-            if (
-                source_server == "relaxed"
-                and attr_data.metadata
-                and attr_data.metadata.extensions.get("original_format")
-            ):
-                original_format_raw = attr_data.metadata.extensions.get(
-                    "original_format",
-                    "",
-                )
-                if not isinstance(original_format_raw, str):
-                    msg = f"Expected str, got {type(original_format_raw)}"
-                    raise TypeError(msg)
-                original_format = original_format_raw
+            extensions = attr_data.metadata.extensions if attr_data.metadata else None
+            source_server = (
+                extensions.schema_source_server if extensions is not None else None
+            )
+            original_format = extensions.original_format if extensions is not None else None
+            if source_server == "relaxed" and original_format:
                 return r[str].ok(original_format)
             if not attr_data.oid:
                 return r[str].fail("Attribute OID is required for writing")
@@ -389,24 +377,12 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             parent_result = super()._write_objectclass(oc_data)
             if parent_result.success:
                 return parent_result
-            source_server = None
-            if oc_data.metadata and oc_data.metadata.extensions:
-                source_server = oc_data.metadata.extensions.get(
-                    c.Ldif.SCHEMA_SOURCE_SERVER,
-                )
-            if (
-                source_server == "relaxed"
-                and oc_data.metadata
-                and oc_data.metadata.extensions.get("original_format")
-            ):
-                original_format_raw = oc_data.metadata.extensions.get(
-                    "original_format",
-                    "",
-                )
-                if not isinstance(original_format_raw, str):
-                    msg = f"Expected str, got {type(original_format_raw)}"
-                    raise TypeError(msg)
-                original_format = original_format_raw
+            extensions = oc_data.metadata.extensions if oc_data.metadata else None
+            source_server = (
+                extensions.schema_source_server if extensions is not None else None
+            )
+            original_format = extensions.original_format if extensions is not None else None
+            if source_server == "relaxed" and original_format:
                 return r[str].ok(original_format)
             if not oc_data.oid:
                 return r[str].fail("ObjectClass OID is required for writing")

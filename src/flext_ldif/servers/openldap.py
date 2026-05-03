@@ -452,14 +452,9 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
 
         def _inject_validation_rules(self, entry: m.Ldif.Entry) -> m.Ldif.Entry:
             """Inject OpenLDAP-specific validation rules into Entry metadata via DI."""
-            server_type = c.Ldif.ServerTypes.OPENLDAP.value
+            server_type = FlextLdifServersOpenldap.Constants.CANONICAL_NAME
             validation_rules: dict[str, t.JsonValue] = {
-                "requires_objectclass": server_type
-                in c.Ldif.OBJECTCLASS_REQUIRED_SERVERS,
-                "requires_naming_attr": server_type
-                in c.Ldif.NAMING_ATTR_REQUIRED_SERVERS,
-                "requires_binary_option": server_type
-                in c.Ldif.BINARY_OPTION_REQUIRED_SERVERS,
+                **u.Ldif.validation_rule_flags(server_type),
                 "encoding_rules": {
                     "default_encoding": "utf-8",
                     "allowed_encodings": ["utf-8", "latin-1", "iso-8859-1", "ascii"],
@@ -508,7 +503,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 "Injected OpenLDAP validation rules into Entry metadata",
                 entry_dn=entry.dn.value if entry.dn else "",
                 requires_objectclass=bool(validation_rules["requires_objectclass"]),
-                server_type=c.Ldif.ServerTypes.OPENLDAP.value,
+                server_type=server_type,
                 requires_naming_attr=bool(validation_rules["requires_naming_attr"]),
                 requires_binary_option=bool(validation_rules["requires_binary_option"]),
                 acl_format=acl_format_str,

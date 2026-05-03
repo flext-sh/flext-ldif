@@ -44,24 +44,55 @@ class FlextLdifConstants(FlextCliConstants):
             "objectsid",
         })
 
-        OBJECTCLASS_REQUIRED_SERVERS: Final[frozenset[str]] = frozenset({
-            FlextLdifConstantsEnums.ServerTypes.OID.value,
-            FlextLdifConstantsEnums.ServerTypes.OUD.value,
-            FlextLdifConstantsEnums.ServerTypes.AD.value,
-            FlextLdifConstantsEnums.ServerTypes.DS389.value,
-            "novell_edirectory",
-            FlextLdifConstantsEnums.ServerTypes.IBM_TIVOLI.value,
+        SERVER_VALIDATION_CAPABILITIES: Final[
+            t.MappingKV[FlextLdifConstantsEnums.ServerTypes, frozenset[str]]
+        ] = MappingProxyType({
+            FlextLdifConstantsEnums.ServerTypes.OID: frozenset({
+                "requires_objectclass",
+                "requires_naming_attr",
+                "requires_binary_option",
+            }),
+            FlextLdifConstantsEnums.ServerTypes.OUD: frozenset({
+                "requires_objectclass",
+                "requires_naming_attr",
+                "requires_binary_option",
+            }),
+            FlextLdifConstantsEnums.ServerTypes.OPENLDAP: frozenset({
+                "requires_binary_option",
+            }),
+            FlextLdifConstantsEnums.ServerTypes.OPENLDAP2: frozenset({
+                "requires_binary_option",
+            }),
+            FlextLdifConstantsEnums.ServerTypes.AD: frozenset({
+                "requires_objectclass",
+                "requires_naming_attr",
+            }),
+            FlextLdifConstantsEnums.ServerTypes.DS389: frozenset({
+                "requires_objectclass",
+            }),
+            FlextLdifConstantsEnums.ServerTypes.NOVELL: frozenset({
+                "requires_objectclass",
+            }),
+            FlextLdifConstantsEnums.ServerTypes.IBM_TIVOLI: frozenset({
+                "requires_objectclass",
+            }),
         })
-        NAMING_ATTR_REQUIRED_SERVERS: Final[frozenset[str]] = frozenset({
-            FlextLdifConstantsEnums.ServerTypes.OID.value,
-            FlextLdifConstantsEnums.ServerTypes.OUD.value,
-            FlextLdifConstantsEnums.ServerTypes.AD.value,
-        })
-        BINARY_OPTION_REQUIRED_SERVERS: Final[frozenset[str]] = frozenset({
-            FlextLdifConstantsEnums.ServerTypes.OPENLDAP.value,
-            FlextLdifConstantsEnums.ServerTypes.OID.value,
-            FlextLdifConstantsEnums.ServerTypes.OUD.value,
-        })
+
+        OBJECTCLASS_REQUIRED_SERVERS: Final[frozenset[str]] = frozenset(
+            server_type.value
+            for server_type, capabilities in SERVER_VALIDATION_CAPABILITIES.items()
+            if "requires_objectclass" in capabilities
+        )
+        NAMING_ATTR_REQUIRED_SERVERS: Final[frozenset[str]] = frozenset(
+            server_type.value
+            for server_type, capabilities in SERVER_VALIDATION_CAPABILITIES.items()
+            if "requires_naming_attr" in capabilities
+        )
+        BINARY_OPTION_REQUIRED_SERVERS: Final[frozenset[str]] = frozenset(
+            server_type.value
+            for server_type, capabilities in SERVER_VALIDATION_CAPABILITIES.items()
+            if "requires_binary_option" in capabilities
+        )
 
         DEFAULT_ACL_ATTRIBUTES: Final[t.StrSequence] = (
             "acl",

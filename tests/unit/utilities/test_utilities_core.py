@@ -201,6 +201,21 @@ class TestsFlextLdifUtilitiesCore:
         tm.that(u.Ldif.normalize_server_type("oracle_oid"), eq="oid")
         tm.that(u.Ldif.normalize_server_type("rfc"), eq="rfc")
 
+    def test_validation_rule_flags_resolve_from_canonical_server_capabilities(
+        self,
+    ) -> None:
+        """Validation flags should be derived from canonical server-type capabilities."""
+        openldap_flags = u.Ldif.validation_rule_flags("openldap")
+        novell_flags = u.Ldif.validation_rule_flags("novell_edirectory")
+        ds389_flags = u.Ldif.validation_rule_flags(c.Ldif.ServerTypes.DS389)
+
+        tm.that(openldap_flags["requires_binary_option"], eq=True)
+        tm.that(openldap_flags["requires_objectclass"], eq=False)
+        tm.that(novell_flags["requires_objectclass"], eq=True)
+        tm.that(novell_flags["requires_naming_attr"], eq=False)
+        tm.that(ds389_flags["requires_objectclass"], eq=True)
+        tm.that(ds389_flags["requires_binary_option"], eq=False)
+
     def test_matches_server_type(self) -> None:
         """Test server type matching."""
         tm.that(u.Ldif.matches("oid", "oid", "oud"), eq=True)
