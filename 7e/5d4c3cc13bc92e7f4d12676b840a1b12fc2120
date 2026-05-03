@@ -1,0 +1,18 @@
+src/flext_ldif/services/conversion_support.py
+  h_9db9d35f50cf33 25-26,33,37,40
+src/flext_ldif/services/server.py
+  h_9db9d35f50cf33 149-150,154,157
+src/flext_ldif/services/detector.py
+  h_9db9d35f50cf33 139,141
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "7e5d4c3cc13bc92e7f4d12676b840a1b12fc2120",
+  "prompts": {},
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
