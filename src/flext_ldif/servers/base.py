@@ -237,7 +237,9 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         def is_valid_server_class(mro_cls: type[t.JsonValue]) -> bool:
             """Check if MRO class is a valid server class with SERVER_TYPE."""
             result: bool
-            if not mro_cls.__name__.startswith("FlextLdifServers") or mro_cls.__name__.endswith(("Schema", "Acl", "Entry")):
+            if not mro_cls.__name__.startswith(
+                "FlextLdifServers"
+            ) or mro_cls.__name__.endswith(("Schema", "Acl", "Entry")):
                 result = False
             else:
                 constants = getattr(mro_cls, "Constants", None)
@@ -400,20 +402,25 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         operation: str | None = None,
     ) -> p.Result[m.Ldif.Entry]:
         """Execute server operation with auto-detection."""
+        result: p.Result[m.Ldif.Entry]
         if operation == "parse":
             if ldif_text is None:
-                return r[m.Ldif.Entry].fail("Parse operation requires ldif_text")
-            return self._execute_parse(ldif_text)
-        if operation == "write":
+                result = r[m.Ldif.Entry].fail("Parse operation requires ldif_text")
+            else:
+                result = self._execute_parse(ldif_text)
+        elif operation == "write":
             if not entries:
-                return r[m.Ldif.Entry].fail("Write operation requires entries")
-            return r[m.Ldif.Entry].ok(entries[0])
-        if ldif_text is not None:
-            return self._execute_parse(ldif_text)
-        if entries:
+                result = r[m.Ldif.Entry].fail("Write operation requires entries")
+            else:
+                result = r[m.Ldif.Entry].ok(entries[0])
+        elif ldif_text is not None:
+            result = self._execute_parse(ldif_text)
+        elif entries:
             first_entry = entries[0]
-            return r[m.Ldif.Entry].ok(first_entry)
-        return r[m.Ldif.Entry].fail("No valid parameters")
+            result = r[m.Ldif.Entry].ok(first_entry)
+        else:
+            result = r[m.Ldif.Entry].fail("No valid parameters")
+        return result
 
     def parse_ldif(self, value: str) -> p.Result[m.Ldif.ParseResponse]:
         """Parse LDIF text to Entry models."""
