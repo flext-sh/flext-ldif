@@ -677,7 +677,8 @@ class FlextLdifUtilitiesDN:
             return ""
         result = FlextLdifUtilitiesDN.norm(dn)
         if result.success:
-            return result.value
+            normalized_dn: str = result.value
+            return normalized_dn
         if fallback == c.Ldif.NormalizeFallback.LOWER:
             return dn.lower()
         if fallback == c.Ldif.NormalizeFallback.UPPER:

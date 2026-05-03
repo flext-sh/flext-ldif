@@ -22,7 +22,7 @@ from tests.typings import t
 class TestsFlextLdifUtilities(FlextTestsUtilities, u):
     """Project test utility namespace extension."""
 
-    class Tests(FlextTestsUtilities.Tests, FlextTestsFixturesDSLMixin):
+    class Tests(FlextTestsFixturesDSLMixin, FlextTestsUtilities.Tests):
         """Flat test utility namespace for flext-ldif."""
 
         Docker = tk

@@ -94,34 +94,38 @@ def _fixtures_for_kind(kind: str) -> t.StrMapping:
 @pytest.fixture
 def oid_schema_fixture() -> str:
     """Load OID schema fixture data."""
-    return u.Tests.load(
+    fixture_content: str = u.Tests.load(
         c.Tests.OID,
         c.Tests.SCHEMA,
     )
+    return fixture_content
 
 
 @pytest.fixture
 def oid_acl_fixture() -> str:
     """Load OID ACL fixture data."""
-    return u.Tests.load(
+    fixture_content: str = u.Tests.load(
         c.Tests.OID,
         c.Tests.ACL,
     )
+    return fixture_content
 
 
 @pytest.fixture
 def oid_entries_fixture() -> str:
     """Load OID entries fixture data."""
-    return u.Tests.load(c.Tests.OID, c.Tests.ENTRIES)
+    fixture_content: str = u.Tests.load(c.Tests.OID, c.Tests.ENTRIES)
+    return fixture_content
 
 
 @pytest.fixture
 def oid_integration_fixture() -> str:
     """Load OID integration fixture data."""
-    return u.Tests.load(
+    fixture_content: str = u.Tests.load(
         c.Tests.OID,
         c.Tests.INTEGRATION,
     )
+    return fixture_content
 
 
 @pytest.fixture
@@ -153,28 +157,32 @@ def oid_entries(
 @pytest.fixture
 def oud_schema_fixture() -> str:
     """Load OUD schema fixture data."""
-    return u.Tests.load(c.Tests.OUD, c.Tests.SCHEMA)
+    fixture_content: str = u.Tests.load(c.Tests.OUD, c.Tests.SCHEMA)
+    return fixture_content
 
 
 @pytest.fixture
 def oud_acl_fixture() -> str:
     """Load OUD ACL fixture data."""
-    return u.Tests.load(c.Tests.OUD, c.Tests.ACL)
+    fixture_content: str = u.Tests.load(c.Tests.OUD, c.Tests.ACL)
+    return fixture_content
 
 
 @pytest.fixture
 def oud_entries_fixture() -> str:
     """Load OUD entries fixture data."""
-    return u.Tests.load(c.Tests.OUD, c.Tests.ENTRIES)
+    fixture_content: str = u.Tests.load(c.Tests.OUD, c.Tests.ENTRIES)
+    return fixture_content
 
 
 @pytest.fixture
 def oud_integration_fixture() -> str:
     """Load OUD integration fixture data."""
-    return u.Tests.load(
+    fixture_content: str = u.Tests.load(
         c.Tests.OUD,
         c.Tests.INTEGRATION,
     )
+    return fixture_content
 
 
 @pytest.fixture
@@ -206,34 +214,38 @@ def oud_entries(
 @pytest.fixture
 def openldap_schema_fixture() -> str:
     """Load OpenLDAP schema fixture data."""
-    return u.Tests.load(
+    fixture_content: str = u.Tests.load(
         c.Tests.OPENLDAP,
         c.Tests.SCHEMA,
     )
+    return fixture_content
 
 
 @pytest.fixture
 def openldap_acl_fixture() -> str:
     """Load OpenLDAP ACL fixture data."""
-    return u.Tests.load(c.Tests.OPENLDAP, c.Tests.ACL)
+    fixture_content: str = u.Tests.load(c.Tests.OPENLDAP, c.Tests.ACL)
+    return fixture_content
 
 
 @pytest.fixture
 def openldap_entries_fixture() -> str:
     """Load OpenLDAP entries fixture data."""
-    return u.Tests.load(
+    fixture_content: str = u.Tests.load(
         c.Tests.OPENLDAP,
         c.Tests.ENTRIES,
     )
+    return fixture_content
 
 
 @pytest.fixture
 def openldap_integration_fixture() -> str:
     """Load OpenLDAP integration fixture data."""
-    return u.Tests.load(
+    fixture_content: str = u.Tests.load(
         c.Tests.OPENLDAP,
         c.Tests.INTEGRATION,
     )
+    return fixture_content
 
 
 @pytest.fixture
@@ -265,7 +277,8 @@ def openldap_entries(
 @pytest.fixture
 def rfc_schema_fixture() -> str:
     """Load RFC reference schema fixture data."""
-    return u.Tests.load(c.Tests.RFC, c.Tests.SCHEMA)
+    fixture_content: str = u.Tests.load(c.Tests.RFC, c.Tests.SCHEMA)
+    return fixture_content
 
 
 @pytest.fixture

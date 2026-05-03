@@ -30,11 +30,12 @@ class FlextLdifUtilitiesMetadata:
         """Serialize any CLI JSON-compatible payload through the canonical DSL."""
         if value is None:
             return ""
-        return m.Cli.CliNormalizedJson(
+        payload_json: str = m.Cli.CliNormalizedJson(
             t.Cli.JSON_VALUE_ADAPTER.validate_python(
                 u.to_jsonable_python(value),
             ),
         ).model_dump_json()
+        return payload_json
 
     @staticmethod
     def dump_dynamic_metadata(

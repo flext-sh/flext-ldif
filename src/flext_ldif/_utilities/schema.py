@@ -397,7 +397,11 @@ class FlextLdifUtilitiesSchema:
         if not sup_match:
             return None
         sup_value = sup_match.group(1) or sup_match.group(2) or sup_match.group(3)
-        return FlextLdifUtilitiesSchema._split_schema_values(sup_value)[0]
+        parent_values: t.MutableSequenceOf[str] = (
+            FlextLdifUtilitiesSchema._split_schema_values(sup_value)
+        )
+        parent_value: str = parent_values[0]
+        return parent_value
 
     @staticmethod
     def _extract_schema_items_from_lines[SchemaModelT: m.Ldif.SchemaElement](
@@ -1036,7 +1040,8 @@ class FlextLdifUtilitiesSchema:
         if not substr or not invalid_rules:
             return substr
         if substr in invalid_rules:
-            return invalid_rules[substr]
+            replacement: str | None = invalid_rules[substr]
+            return replacement
         return substr
 
     @staticmethod

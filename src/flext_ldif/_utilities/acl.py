@@ -187,7 +187,8 @@ class FlextLdifUtilitiesACL:
         """Normalize permission name using map if available."""
         if not permission_map:
             return perm
-        return permission_map.get(perm, perm)
+        normalized_permission: str = permission_map.get(perm, perm)
+        return normalized_permission
 
     @staticmethod
     def _process_permission_list(

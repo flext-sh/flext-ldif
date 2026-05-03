@@ -54,7 +54,8 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         const = FlextLdifServersOidConstants
         for pattern_key, (_, subject_type, _) in const.ACL_SUBJECT_PATTERNS.items():
             if pattern_key.lower() in content.lower():
-                return subject_type
+                detected_subject: str = subject_type
+                return detected_subject
         return None
 
     @staticmethod

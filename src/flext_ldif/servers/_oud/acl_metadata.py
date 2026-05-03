@@ -154,7 +154,7 @@ class FlextLdifServersOudAclMetadataMixin:
         if not acl_metadata_extensions:
             return entry
         if entry.metadata is None:
-            return entry.model_copy(
+            new_metadata_entry: m.Ldif.Entry = entry.model_copy(
                 update={
                     "metadata": m.Ldif.ServerMetadata.create_for(
                         "oud",
@@ -165,13 +165,14 @@ class FlextLdifServersOudAclMetadataMixin:
                 },
                 deep=True,
             )
+            return new_metadata_entry
         current = (
             dict(entry.metadata.extensions.to_dict())
             if entry.metadata.extensions
             else {}
         )
         current.update(acl_metadata_extensions)
-        return entry.model_copy(
+        updated_entry: m.Ldif.Entry = entry.model_copy(
             update={
                 "metadata": entry.metadata.model_copy(
                     update={"extensions": m.Ldif.DynamicMetadata.from_dict(current)},
@@ -180,6 +181,7 @@ class FlextLdifServersOudAclMetadataMixin:
             },
             deep=True,
         )
+        return updated_entry
 
     @staticmethod
     def process_parsed_acl_extensions(

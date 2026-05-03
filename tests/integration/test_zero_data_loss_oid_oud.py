@@ -52,12 +52,14 @@ class TestsFlextLdifZeroDataLossOidOud:
     @pytest.fixture
     def oid_fixture(self) -> str:
         """Load OID entries fixture."""
-        return u.Tests.load(c.Tests.OID, c.Tests.ENTRIES)
+        fixture_content: str = u.Tests.load(c.Tests.OID, c.Tests.ENTRIES)
+        return fixture_content
 
     @pytest.fixture
     def oud_fixture(self) -> str:
         """Load OUD entries fixture."""
-        return u.Tests.load(c.Tests.OUD, c.Tests.ENTRIES)
+        fixture_content: str = u.Tests.load(c.Tests.OUD, c.Tests.ENTRIES)
+        return fixture_content
 
     def test_oid_parse_preserves_original_ldif(
         self,

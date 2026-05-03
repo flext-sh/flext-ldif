@@ -399,7 +399,8 @@ class FlextLdifModelsResults:
         def success_rate(self) -> float:
             if self.total_entries == 0:
                 return 100.0
-            return self.valid_entries / self.total_entries * 100.0
+            success_rate: float = self.valid_entries / self.total_entries * 100.0
+            return success_rate
 
     class EntryAnalysisResult(m.FrozenModel):
         total_entries: t.NonNegativeInt = u.Field(description="Total entries analyzed")

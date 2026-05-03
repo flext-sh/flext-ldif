@@ -47,13 +47,15 @@ class FlextLdifModelsCollections:
         def _to_count(value: t.JsonPayload | None) -> int:
             if isinstance(value, bool):
                 return 0
-            return u.to_int(value, default=0)
+            count_value: int = u.to_int(value, default=0)
+            return count_value
 
         def get(self, key: str, default: int | None = None) -> int | None:
             extra = self._extra()
             if key in extra:
                 return self._to_count(extra[key])
-            return default
+            fallback_count: int | None = default
+            return fallback_count
 
         def items(self) -> t.MutableSequenceOf[tuple[str, int]]:
             extra = self._extra()

@@ -147,7 +147,8 @@ class FlextLdifModelsDomainAttributes:
 
         def keys(self) -> KeysView[str]:
             """Get attribute names."""
-            return self.attributes.keys()
+            attribute_keys: KeysView[str] = self.attributes.keys()
+            return attribute_keys
 
         def remove_attribute(self, key: str) -> Self:
             """Remove an attribute if it exists.
@@ -164,7 +165,10 @@ class FlextLdifModelsDomainAttributes:
 
         def values(self) -> ValuesView[t.MutableSequenceOf[str]]:
             """Get attribute values lists."""
-            return self.attributes.values()
+            attribute_values: ValuesView[t.MutableSequenceOf[str]] = (
+                self.attributes.values()
+            )
+            return attribute_values
 
     class AttributeTransformation(m.FrozenModel):
         """Detailed tracking of attribute transformation operations.
