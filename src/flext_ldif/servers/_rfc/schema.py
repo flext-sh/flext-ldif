@@ -456,20 +456,19 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         metadata: m.Ldif.ServerMetadata | None,
     ) -> str:
         """Ensure X-ORIGIN extension is present if in metadata."""
-        if metadata is None:
-            return output_str
-        extensions = metadata.extensions
-        if not extensions:
-            return output_str
-        x_origin_raw: t.JsonPayload | None = extensions.get(c.Ldif.X_ORIGIN)
-        if not isinstance(x_origin_raw, str):
-            return output_str
-        if "X-ORIGIN" in output_str:
-            return output_str
-        if not output_str.endswith(")"):
-            return output_str
-        x_origin_str = f" X-ORIGIN '{x_origin_raw}'"
-        return output_str.rstrip(")") + x_origin_str + ")"
+        result = output_str
+        if metadata is not None:
+            extensions = metadata.extensions
+            if extensions:
+                x_origin_raw: t.JsonPayload | None = extensions.get(c.Ldif.X_ORIGIN)
+                if (
+                    isinstance(x_origin_raw, str)
+                    and "X-ORIGIN" not in output_str
+                    and output_str.endswith(")")
+                ):
+                    x_origin_str = f" X-ORIGIN '{x_origin_raw}'"
+                    result = output_str.rstrip(")") + x_origin_str + ")"
+        return result
 
     @override
     def _parse_attribute(
