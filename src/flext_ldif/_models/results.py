@@ -366,17 +366,6 @@ class FlextLdifModelsResults:
         def output_file_count(self) -> int:
             return len(self.output_files)
 
-    class ClientStatus(m.Value):
-        status: Annotated[str, u.Field(description="Current client operational status")]
-        services: Annotated[
-            t.MutableSequenceOf[str],
-            u.Field(description="Available service names"),
-        ]
-        settings: Annotated[
-            mc.ConfigSettings,
-            u.Field(description="Active client configuration settings"),
-        ]
-
     class ValidationResult(m.FrozenModel):
         valid: Annotated[
             bool,
@@ -401,22 +390,6 @@ class FlextLdifModelsResults:
                 return 100.0
             success_rate: float = self.valid_entries / self.total_entries * 100.0
             return success_rate
-
-    class EntryAnalysisResult(m.FrozenModel):
-        total_entries: t.NonNegativeInt = u.Field(description="Total entries analyzed")
-        objectclass_distribution: Annotated[
-            mc.DynamicCounts,
-            u.Field(description="Distribution of objectClass values across entries"),
-        ]
-        patterns_detected: Annotated[
-            t.MutableSequenceOf[str],
-            u.Field(description="Entry patterns identified during analysis"),
-        ]
-
-        @u.computed_field()
-        @property
-        def unique_objectclasses(self) -> int:
-            return len(self.objectclass_distribution)
 
     class ServerDetectionResult(m.FrozenModel):
         detected_server_type: Annotated[
@@ -448,32 +421,6 @@ class FlextLdifModelsResults:
             str | None,
             u.Field(description="Reason for using fallback server type"),
         ] = None
-
-    class StatisticsResult(m.StrictModel):
-        total_entries: Annotated[
-            int,
-            u.Field(description="Total entries in result set"),
-        ]
-        categorized: Annotated[
-            mc.DynamicCounts,
-            u.Field(description="Entry counts per category"),
-        ]
-        rejection_rate: Annotated[
-            float,
-            u.Field(description="Percentage of entries rejected"),
-        ]
-        rejection_count: Annotated[
-            int,
-            u.Field(description="Total entries rejected"),
-        ]
-        written_counts: Annotated[
-            mc.DynamicCounts,
-            u.Field(description="Entry counts written per category"),
-        ]
-        output_files: Annotated[
-            mc.CategoryPaths,
-            u.Field(description="Category to output file path mapping"),
-        ]
 
     class EntriesStatistics(m.Value):
         total_entries: Annotated[
@@ -536,77 +483,6 @@ class FlextLdifModelsResults:
                 extra_val: t.JsonValue = extra[key]
                 return extra_val
             raise KeyError(key)
-
-    class SchemaServiceStatus(DictAccessibleValue):
-        service: Annotated[str, u.Field(description="Schema service name")]
-        server_type: Annotated[
-            c.Ldif.ServerTypes,
-            u.Field(description="LDAP server type for schema operations"),
-        ]
-        status: Annotated[
-            str,
-            u.Field(description="Current service operational status"),
-        ]
-        rfc_compliance: Annotated[
-            str,
-            u.Field(description="RFC compliance level of the schema service"),
-        ]
-        operations: Annotated[
-            t.MutableSequenceOf[str],
-            u.Field(description="Supported schema operations"),
-        ]
-
-    class SyntaxServiceStatus(DictAccessibleValue):
-        service: Annotated[str, u.Field(description="Syntax service name")]
-        status: Annotated[
-            str,
-            u.Field(description="Current service operational status"),
-        ]
-        rfc_compliance: Annotated[
-            str,
-            u.Field(description="RFC compliance level of the syntax service"),
-        ]
-        total_syntaxes: Annotated[
-            int,
-            u.Field(description="Total number of registered syntaxes"),
-        ]
-        common_syntaxes: Annotated[
-            int,
-            u.Field(description="Number of commonly used syntaxes"),
-        ]
-
-    class StatisticsServiceStatus(DictAccessibleValue):
-        service: Annotated[str, u.Field(description="Statistics service name")]
-        status: Annotated[
-            str,
-            u.Field(description="Current service operational status"),
-        ]
-        capabilities: Annotated[
-            t.MutableSequenceOf[str],
-            u.Field(description="Supported statistics capabilities"),
-        ]
-        version: Annotated[str, u.Field(description="Service version identifier")]
-
-    class ValidationServiceStatus(DictAccessibleValue):
-        service: Annotated[str, u.Field(description="Validation service name")]
-        status: Annotated[
-            str,
-            u.Field(description="Current service operational status"),
-        ]
-        rfc_compliance: Annotated[
-            str,
-            u.Field(description="RFC compliance level of the validation service"),
-        ]
-        validation_types: Annotated[
-            t.MutableSequenceOf[str],
-            u.Field(description="Supported validation types"),
-        ]
-
-    class ValidationBatchResult(m.StrictModel):
-        results: Annotated[
-            mc.BooleanFlags,
-            u.Field(description="Per-entry validation results as boolean flags"),
-        ]
 
     class Response(m.Value):
         statistics: Annotated[

@@ -10,18 +10,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import (
-    Callable,
     MutableMapping,
 )
-from typing import Annotated, ClassVar, Self
+from typing import Annotated, Self
 
 from flext_cli import m, u
 from flext_ldif import (
     FlextLdifModelsDomainAcl as mdac,
-    FlextLdifModelsDomainSchema as mds,
     c,
-    p,
-    r,
     t,
 )
 
@@ -401,36 +397,6 @@ class FlextLdifModelsSettings:
                 description="Mapping of attribute names to original case",
             ),
         ] = None
-
-    class EntryTransformConfig(m.Value):
-        """Configuration for batch entry transformation operations."""
-
-        normalize_dns: Annotated[
-            bool,
-            u.Field(description="Normalize DNs per RFC 4514"),
-        ] = False
-        normalize_attrs: Annotated[
-            bool,
-            u.Field(description="Normalize attribute names"),
-        ] = False
-        attr_case: Annotated[
-            str,
-            u.Field(description="Attribute name case: 'lower', 'upper', or 'original'"),
-        ] = "lower"
-        convert_booleans: Annotated[
-            tuple[str, str] | None,
-            u.Field(
-                description="Boolean conversion as (source_format, target_format), e.g. ('0/1', 'TRUE/FALSE')",
-            ),
-        ] = None
-        remove_attrs: Annotated[
-            t.MutableSequenceOf[str] | None,
-            u.Field(description="Attributes to remove from entries"),
-        ] = None
-        fail_fast: Annotated[
-            bool,
-            u.Field(description="Stop on first transform error"),
-        ] = False
 
     class CategoryRules(m.Value):
         """Rules for entry categorization.
@@ -890,187 +856,6 @@ class FlextLdifModelsSettings:
             ),
         ] = u.Field(default_factory=dict)
 
-    class WriteOutputOptions(m.ArbitraryTypesModel):
-        """Output visibility options for attributes based on their marker status.
-
-        This class controls how attributes are rendered in LDIF output based on
-        their status in entry metadata. It works in conjunction with
-        AttributeMarkerStatus to implement proper SRP architecture:
-
-        **SRP Architecture**:
-            - filters.py: MARKS attributes with AttributeMarkerStatus (never removes)
-            - entry.py: REMOVES attributes based on markers
-            - writer.py: Uses FlextLdifModelsSettings.WriteOutputOptions to determine output visibility
-
-        **Output Modes**:
-            - "show": Write attribute normally
-            - "hide": Don't write attribute at all
-            - "comment": Write attribute as a comment (# attr: value)
-
-        Example:
-            .. code-block:: python
-
-                options = FlextLdifModelsSettings.WriteOutputOptions(
-                    show_operational_attributes="hide",
-                    show_removed_attributes="comment",
-                    show_filtered_attributes="hide",
-                )
-                result = ldif.write(entries, output_options=options)
-
-        """
-
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
-        show_operational_attributes: Annotated[
-            str,
-            u.Field(
-                description="How to handle operational attributes in output. Options: 'show' (write normally), 'hide' (don't write), 'comment' (write as LDIF comment).",
-            ),
-        ] = "hide"
-        show_removed_attributes: Annotated[
-            str,
-            u.Field(
-                description="How to handle removed attributes in output. Default 'comment' writes removed attrs as '# [REMOVED] attr: value'.",
-            ),
-        ] = "comment"
-        show_filtered_attributes: Annotated[
-            str,
-            u.Field(
-                description="How to handle filtered attributes in output. Default 'hide' completely omits filtered attributes.",
-            ),
-        ] = "hide"
-        show_hidden_attributes: Annotated[
-            str,
-            u.Field(
-                description="How to handle explicitly hidden attributes in output. Default 'hide' completely omits hidden attributes.",
-            ),
-        ] = "hide"
-        show_renamed_original: Annotated[
-            str,
-            u.Field(
-                description="How to handle original names of renamed attributes. Default 'comment' writes '# [RENAMED] old -> new: value'.",
-            ),
-        ] = "comment"
-
-    class EntryWriteConfig(m.Value):
-        """Configuration for entry writing.
-
-        Consolidates parameters for Entry.write method.
-        Reduces function signature from 7 parameters to 1 model.
-
-        """
-
-        entry: Annotated[p.Ldif.Entry, u.Field(description="Entry model to write")]
-        server_type: Annotated[str, u.Field(..., description="Server type identifier")]
-        write_attributes_hook: Annotated[
-            Callable[
-                [p.Ldif.Entry, t.MutableSequenceOf[str]],
-                None,
-            ],
-            u.Field(
-                description="Core attributes writing",
-            ),
-        ]
-        write_comments_hook: Annotated[
-            (Callable[[p.Ldif.Entry, t.MutableSequenceOf[str]], None] | None),
-            u.Field(
-                description="Optional comments writing",
-            ),
-        ] = None
-        transform_entry_hook: Annotated[
-            Callable[[p.Ldif.Entry], p.Ldif.Entry] | None,
-            u.Field(
-                description="Optional entry transformation",
-            ),
-        ] = None
-        write_dn_hook: Annotated[
-            Callable[[str, t.MutableSequenceOf[str]], None] | None,
-            u.Field(
-                description="Optional DN writing",
-            ),
-        ] = None
-        include_comments: Annotated[
-            bool,
-            u.Field(
-                description="Include metadata comments",
-            ),
-        ] = True
-
-    class BatchWriteConfig(m.Value):
-        """Configuration for batch entry writing.
-
-        Consolidates parameters for Batch.write method.
-        Reduces function signature from 6 parameters to 1 model.
-
-        """
-
-        entries: Annotated[
-            t.MutableSequenceOf[p.Ldif.Entry],
-            u.Field(
-                description="List of entries to write",
-            ),
-        ]
-        server_type: Annotated[str, u.Field(..., description="Server type identifier")]
-        write_entry_hook: Annotated[
-            Callable[[p.Ldif.Entry], r[str]],
-            u.Field(
-                description="Entry writing logic",
-            ),
-        ]
-        write_header_hook: Annotated[
-            Callable[[], str] | None,
-            u.Field(description="Optional header writing"),
-        ] = None
-        include_header: Annotated[
-            bool,
-            u.Field(description="Include LDIF header"),
-        ] = True
-        entry_separator: Annotated[
-            str,
-            u.Field(description="Separator between entries"),
-        ] = "\n"
-
-    class SortConfig(m.Value):
-        """Configuration for entry sorting.
-
-        Consolidates parameters for FlextLdifSorting.sort method.
-        Reduces function signature from 9 parameters to 1 model.
-
-        """
-
-        entries: Annotated[
-            t.MutableSequenceOf[p.Ldif.Entry],
-            u.Field(
-                description="List of entries to sort",
-            ),
-        ]
-        target: Annotated[
-            str,
-            u.Field(description="Sort target (entries, attributes, acl)"),
-        ] = "entries"
-        by: Annotated[str, u.Field(description="Sort strategy")] = "hierarchy"
-        traversal: Annotated[str, u.Field(description="Traversal order")] = (
-            "depth-first"
-        )
-        predicate: Annotated[
-            Callable[[p.Ldif.Entry], str | t.Numeric] | None,
-            u.Field(
-                description="Custom predicate function",
-            ),
-        ] = None
-        sort_attributes: Annotated[
-            bool,
-            u.Field(description="Sort attributes within entries"),
-        ] = False
-        attribute_order: Annotated[
-            t.MutableSequenceOf[str] | None,
-            u.Field(description="Custom attribute order"),
-        ] = None
-        sort_acl: Annotated[bool, u.Field(description="Sort ACL attributes")] = False
-        acl_attributes: Annotated[
-            t.MutableSequenceOf[str] | None,
-            u.Field(description="ACL attributes to sort"),
-        ] = None
-
     class RdnProcessingConfig(m.ArbitraryTypesModel):
         """Mutable state for RDN character-by-character parsing."""
 
@@ -1084,58 +869,6 @@ class FlextLdifModelsSettings:
             t.MutableSequenceOf[tuple[str, str]],
             u.Field(description="Accumulated (attr, value) pairs"),
         ] = u.Field(default_factory=lambda: list[tuple[str, str]]())
-
-    class SchemaAttributeConversionPipelineConfig(m.Value):
-        """Config for schema attribute conversion pipeline (discriminated union)."""
-
-        source_schema: Annotated[
-            p.Ldif.SchemaServer,
-            u.Field(..., description="Source schema server"),
-        ]
-        target_schema: Annotated[
-            p.Ldif.SchemaServer,
-            u.Field(..., description="Target schema server"),
-        ]
-        item_type: Annotated[
-            c.Ldif.SchemaItemKind,
-            u.Field(description="Discriminator"),
-        ] = c.Ldif.SchemaItemKind.ATTRIBUTE
-        item: Annotated[
-            mds.SchemaAttribute,
-            u.Field(
-                description="Schema attribute to convert",
-            ),
-        ]
-        item_name: Annotated[
-            str,
-            u.Field(description="Item name for errors"),
-        ] = "attribute"
-
-    class SchemaObjectClassConversionPipelineConfig(m.Value):
-        """Config for schema objectclass conversion pipeline (discriminated union)."""
-
-        source_schema: Annotated[
-            p.Ldif.SchemaServer,
-            u.Field(..., description="Source schema server"),
-        ]
-        target_schema: Annotated[
-            p.Ldif.SchemaServer,
-            u.Field(..., description="Target schema server"),
-        ]
-        item_type: Annotated[
-            c.Ldif.SchemaItemKind,
-            u.Field(description="Discriminator"),
-        ] = c.Ldif.SchemaItemKind.OBJECTCLASS
-        item: Annotated[
-            mds.SchemaObjectClass,
-            u.Field(
-                description="Schema objectclass to convert",
-            ),
-        ]
-        item_name: Annotated[
-            str,
-            u.Field(description="Item name for errors"),
-        ] = "objectclass"
 
     class PermissionMappingConfig(m.Value):
         """Configuration for permission mapping during ACL conversion.

@@ -132,53 +132,6 @@ class FlextLdifModelsDomainDN:
                     result.append(item)
             return result
 
-    class DNStatisticsFlags(m.FrozenModel):
-        """Flags capturing DN transformation servers and validation state."""
-
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
-        had_tab_chars: Annotated[
-            bool,
-            u.Field(description="DN contained TAB characters"),
-        ] = False
-        had_trailing_spaces: Annotated[
-            bool,
-            u.Field(description="DN had trailing spaces"),
-        ] = False
-        had_leading_spaces: Annotated[
-            bool,
-            u.Field(description="DN had leading spaces"),
-        ] = False
-        had_extra_spaces: Annotated[
-            bool,
-            u.Field(description="DN had multiple consecutive spaces"),
-        ] = False
-        was_base64_encoded: Annotated[
-            bool,
-            u.Field(description="DN was base64 encoded in LDIF (dn::)"),
-        ] = False
-        had_utf8_chars: Annotated[
-            bool,
-            u.Field(description="DN contained UTF-8 multi-byte characters"),
-        ] = False
-        had_escape_sequences: Annotated[
-            bool,
-            u.Field(description="DN contained LDAP escape sequences"),
-        ] = False
-        validation_status: Annotated[
-            str,
-            u.Field(
-                description="Validation status (use ValidationStatus constants)",
-            ),
-        ] = "valid"
-        validation_warnings: Annotated[
-            t.MutableSequenceOf[str],
-            u.Field(description="Non-fatal validation warnings"),
-        ] = u.Field(default_factory=list)
-        validation_errors: Annotated[
-            t.MutableSequenceOf[str],
-            u.Field(description="Fatal validation errors"),
-        ] = u.Field(default_factory=list)
-
     class DN(m.Value):
         """Distinguished Name value."""
 
