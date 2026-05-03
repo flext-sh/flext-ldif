@@ -136,8 +136,6 @@ class TestsFlextLdifMinimalDifferencesMetadata:
             {},
         )
         assert original_attrs is not None
-        if entry.metadata.original_attribute_case:
-            assert entry.metadata.original_attribute_case
 
     def test_punctuation_differences_captured(self, parser: FlextLdifParser) -> None:
         """Test that punctuation differences (e.g., trailing semicolons) are captured."""

@@ -71,26 +71,6 @@ class FlextLdifUtilitiesMetadata:
         metadata[metadata_key] = u.normalize_to_metadata(item_data)
 
     @staticmethod
-    def _add_to_list_metadata(
-        metadata: t.Ldif.MutableMetadataMapping,
-        metadata_key: str,
-        item_data: t.JsonValue,
-    ) -> None:
-        """Add item to list metadata."""
-        value: t.JsonPayload | None = metadata.get(metadata_key)
-        normalized_item = FlextLdifUtilitiesMetadata._normalize_metadata_list_item(
-            item_data,
-        )
-        if normalized_item is None:
-            return
-        if isinstance(value, list):
-            normalized_values = [u.normalize_to_metadata(item) for item in value]
-            normalized_values.append(normalized_item)
-            metadata[metadata_key] = normalized_values
-            return
-        metadata[metadata_key] = [normalized_item]
-
-    @staticmethod
     def _apply_category_update(
         stats: m.Ldif.EntryStatistics,
         category: str,

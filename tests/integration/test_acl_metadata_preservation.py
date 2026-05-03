@@ -190,8 +190,7 @@ class TestsFlextLdifAclMetadataPreservation:
         entries = result.value.entries
         entry = entries[0]
         bind_timeofday = _entry_extensions(entry).get(c.Ldif.ACL_BIND_TIMEOFDAY)
-        assert bind_timeofday is not None, "bind_timeofday not preserved"
-        assert isinstance(bind_timeofday, str)
+        assert bind_timeofday == ">=0800", "bind_timeofday not preserved"
 
     def test_oud_bind_authmethod_preservation(self, api: p.Ldif.LdifClient) -> None:
         """Test that OUD authmethod bind rule is preserved in metadata."""
@@ -211,8 +210,7 @@ class TestsFlextLdifAclMetadataPreservation:
         entries = result.value.entries
         entry = entries[0]
         ssf = _entry_extensions(entry).get(c.Ldif.ACL_SSF)
-        assert ssf is not None, "ssf not preserved"
-        assert isinstance(ssf, str)
+        assert ssf == ">=128", "ssf not preserved"
 
     def test_oud_all_features_combined(self, api: p.Ldif.LdifClient) -> None:
         """Test that all OUD features can be preserved together."""
