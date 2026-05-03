@@ -22,18 +22,22 @@ class FlextLdifConversionSupportMixin(s):
         if isinstance(server_or_type, str):
             server = FlextLdifServer.fetch_global_instance()
             server_type_str: str = server_or_type
-            resolved_result = server.server(server_type_str)
+            resolved_result: p.Result[p.Ldif.ServerServer] = server.server(
+                server_type_str,
+            )
             if resolved_result.failure:
                 error_msg = (
                     f"Unknown server type: {server_or_type}: {resolved_result.error}"
                 )
                 raise ValueError(error_msg)
-            resolved: p.Ldif.ServerServer = resolved_result.value
+            resolved: p.Ldif.ServerServer = resolved_result.unwrap()
             return resolved
         if isinstance(server_or_type, p.Ldif.ServerServer):
             return server_or_type
-        resolved_from_ref = FlextLdifServer.fetch_global_instance().server(
-            server_or_type.server_type,
+        resolved_from_ref: p.Result[p.Ldif.ServerServer] = (
+            FlextLdifServer.fetch_global_instance().server(
+                server_or_type.server_type,
+            )
         )
         if resolved_from_ref.failure:
             error_msg = (

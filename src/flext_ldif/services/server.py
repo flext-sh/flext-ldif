@@ -146,14 +146,15 @@ class FlextLdifServer(s):
         base = self._lookup_base_server(server_type)
         if base is None:
             return None
-        return base.schema_server
+        schema_server: p.Ldif.SchemaServer = base.schema_server
+        return schema_server
 
     def _lookup_base_server(self, server_type: str) -> p.Ldif.ServerServer | None:
         """Resolve a concrete base server or return None on lookup failure."""
-        server_result = self.server(server_type)
+        server_result: p.Result[p.Ldif.ServerServer] = self.server(server_type)
         if server_result.failure:
             return None
-        return server_result.value
+        return server_result.unwrap()
 
     def list_registered_servers(self) -> t.MutableSequenceOf[str]:
         """List all registered server types."""
