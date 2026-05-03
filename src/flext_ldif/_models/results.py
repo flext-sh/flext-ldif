@@ -436,54 +436,6 @@ class FlextLdifModelsResults:
             u.Field(description="Distribution of detected server types across entries"),
         ]
 
-    class DictAccessibleValue(m.Value):
-        """Temporary wrapper for values accessed like dicts."""
-
-        def __getitem__(self, key: str) -> t.Ldif.Scalar | None:
-            value = self._resolve_key(key)
-            return str(value) if value is not None else None
-
-        def __contains__(self, key: str) -> bool:
-            if key in type(self).model_fields:
-                return True
-            extra = self.__pydantic_extra__
-            return extra is not None and key in extra
-
-        def get(
-            self,
-            key: str,
-            default: str | float | bool | None = None,
-        ) -> t.Ldif.Scalar | None:
-            try:
-                return self[key]
-            except KeyError:
-                return default
-
-        def items(self) -> t.MutableSequenceOf[tuple[str, t.Ldif.Scalar]]:
-            results: t.MutableSequenceOf[tuple[str, t.Ldif.Scalar]] = []
-            for key in self.model_fields_set:
-                val = getattr(self, key)
-                if isinstance(val, t.PRIMITIVES_TYPES):
-                    results.append((key, val))
-                elif val is None:
-                    continue
-                else:
-                    results.append((key, str(val)))
-            return results
-
-        def keys(self) -> t.MutableSequenceOf[str]:
-            return list(self.model_fields_set)
-
-        def _resolve_key(self, key: str) -> t.JsonValue:
-            if key in type(self).model_fields:
-                attr_val: t.JsonValue = getattr(self, key)
-                return attr_val
-            extra = self.__pydantic_extra__
-            if extra is not None and key in extra:
-                extra_val: t.JsonValue = extra[key]
-                return extra_val
-            raise KeyError(key)
-
     class Response(m.Value):
         statistics: Annotated[
             FlextLdifModelsResults.Statistics,

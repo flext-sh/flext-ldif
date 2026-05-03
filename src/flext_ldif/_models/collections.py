@@ -15,7 +15,6 @@ from typing import Annotated, ClassVar
 from flext_cli import m, u
 from flext_ldif import (
     FlextLdifModelsDomainsEntries as mde,
-    FlextLdifModelsMetadata as mdm,
     t,
 )
 
@@ -79,27 +78,6 @@ class FlextLdifModelsCollections:
             t.MutableSequenceOf[mde.SchemaObjectClass],
             u.Field(description="Schema object class definitions extracted from LDIF"),
         ]
-
-    class CategoryPaths(mdm.DynamicMetadata):
-        """Category to file path mapping model."""
-
-    class ConfigSettings(mdm.DynamicMetadata):
-        def update_setting(self, key: str, value: t.Ldif.MetadataCarrierValue) -> None:
-            self[key] = value
-
-    class BooleanFlags(m.FrozenDynamicModel):
-        def __hash__(self) -> int:
-            extra = self.__pydantic_extra__
-            if extra is None:
-                return hash(())
-            return hash(tuple(sorted(extra.items())))
-
-        def __getitem__(self, key: str) -> bool:
-            extra = self.__pydantic_extra__
-            if extra is None or key not in extra:
-                msg = f"Key '{key}' not found in flags"
-                raise KeyError(msg)
-            return bool(extra[key])
 
     class FlexibleCategories(m.DynamicModel):
         categories: Annotated[
