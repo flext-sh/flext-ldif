@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 import sys
 from typing import TypeIs
 
@@ -219,7 +218,10 @@ class FlextLdifUtilitiesServer:
 
         def check_oid_pattern(check_value: str | None) -> bool:
             """Check OID pattern match."""
-            return bool(check_value and re.search(oid_pattern, check_value))
+            return bool(
+                check_value
+                and c.Ldif.compile_pattern(oid_pattern).search(check_value)
+            )
 
         def check_name_in_set(name: str | None) -> bool:
             """Check if name is in detection set."""

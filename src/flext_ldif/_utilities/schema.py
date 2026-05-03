@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from collections.abc import (
     Callable,
     Mapping,
@@ -302,10 +301,7 @@ class FlextLdifUtilitiesSchema:
         attr_definition: str,
     ) -> tuple[str | None, int | None]:
         """Extract SYNTAX and length from attribute definition."""
-        syntax_match = re.search(
-            c.Ldif.SCHEMA_SYNTAX_LENGTH,
-            attr_definition,
-        )
+        syntax_match = c.Ldif.SCHEMA_SYNTAX_LENGTH_RE.search(attr_definition)
         syntax = syntax_match.group(1) if syntax_match else None
         length = (
             int(syntax_match.group(2))
@@ -355,11 +351,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _extract_objectclass_kind(oc_definition: str) -> str:
         """Extract KIND from objectClass definition."""
-        kind_match = re.search(
-            c.Ldif.SCHEMA_OBJECTCLASS_KIND,
-            oc_definition,
-            re.IGNORECASE,
-        )
+        kind_match = c.Ldif.SCHEMA_OBJECTCLASS_KIND_RE.search(oc_definition)
         return (
             kind_match.group(1).upper()
             if kind_match
@@ -372,15 +364,12 @@ class FlextLdifUtilitiesSchema:
     ) -> tuple[t.MutableSequenceOf[str] | None, t.MutableSequenceOf[str] | None]:
         """Extract MUST and MAY attributes from objectClass definition."""
         must = None
-        must_match = re.search(
-            c.Ldif.SCHEMA_OBJECTCLASS_MUST,
-            oc_definition,
-        )
+        must_match = c.Ldif.SCHEMA_OBJECTCLASS_MUST_RE.search(oc_definition)
         if must_match:
             must_value = (must_match.group(1) or must_match.group(2)).strip()
             must = FlextLdifUtilitiesSchema._split_schema_values(must_value)
         may = None
-        may_match = re.search(c.Ldif.SCHEMA_OBJECTCLASS_MAY, oc_definition)
+        may_match = c.Ldif.SCHEMA_OBJECTCLASS_MAY_RE.search(oc_definition)
         if may_match:
             may_value = (may_match.group(1) or may_match.group(2)).strip()
             may = FlextLdifUtilitiesSchema._split_schema_values(may_value)
@@ -389,7 +378,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def _extract_objectclass_sup(oc_definition: str) -> str | None:
         """Extract SUP from objectClass definition."""
-        sup_match = re.search(c.Ldif.SCHEMA_OBJECTCLASS_SUP, oc_definition)
+        sup_match = c.Ldif.SCHEMA_OBJECTCLASS_SUP_RE.search(oc_definition)
         if not sup_match:
             return None
         sup_value = sup_match.group(1) or sup_match.group(2) or sup_match.group(3)
@@ -483,7 +472,7 @@ class FlextLdifUtilitiesSchema:
         original = str(getattr(schema_details, "original_string_complete", ""))
         if not original:
             return None
-        definition_match = re.search(r"\(.*\)", original, re.DOTALL)
+        definition_match = c.Ldif.SCHEMA_DEFINITION_PARENS_RE.search(original)
         if definition_match:
             return [definition_match.group(0)]
         return None
@@ -512,7 +501,7 @@ class FlextLdifUtilitiesSchema:
         )
         if not original:
             return None
-        definition_match = re.search(r"\(.*\)", original, re.DOTALL)
+        definition_match = c.Ldif.SCHEMA_DEFINITION_PARENS_RE.search(original)
         return [definition_match.group(0)] if definition_match else None
 
     @staticmethod

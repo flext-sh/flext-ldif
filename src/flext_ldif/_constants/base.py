@@ -163,6 +163,62 @@ class FlextLdifConstantsBase:
     SCHEMA_NO_USER_MODIFICATION_RE: ClassVar[re.Pattern[str]] = re.compile(
         SCHEMA_NO_USER_MODIFICATION
     )
+    SCHEMA_SYNTAX_LENGTH_RE: ClassVar[re.Pattern[str]] = re.compile(
+        SCHEMA_SYNTAX_LENGTH
+    )
+    SCHEMA_DEFINITION_PARENS_RE: ClassVar[re.Pattern[str]] = re.compile(
+        r"\(.*\)", re.DOTALL
+    )
+    SCHEMA_EQUALITY_TOKEN_RE: ClassVar[re.Pattern[str]] = re.compile(
+        r"\bEQUALITY\b", re.IGNORECASE
+    )
+    SCHEMA_SUBSTR_TOKEN_BARE_RE: ClassVar[re.Pattern[str]] = re.compile(
+        r"\bSUBSTR\b", re.IGNORECASE
+    )
+    SCHEMA_ORDERING_TOKEN_BARE_RE: ClassVar[re.Pattern[str]] = re.compile(
+        r"\bORDERING\b", re.IGNORECASE
+    )
+    SCHEMA_OBSOLETE_RE: ClassVar[re.Pattern[str]] = re.compile(
+        r"\bOBSOLETE\b", re.IGNORECASE
+    )
+    SCHEMA_TRAILING_PAREN_RE: ClassVar[re.Pattern[str]] = re.compile(r"\)\s*$")
+    SCHEMA_LEADING_PAREN_RE: ClassVar[re.Pattern[str]] = re.compile(r"^\s*\(")
+    WHITESPACE_TRAILING_RE: ClassVar[re.Pattern[str]] = re.compile(r"(\s+)$")
+    WHITESPACE_LEADING_RE: ClassVar[re.Pattern[str]] = re.compile(r"(\s*)")
+    OID_CAPTURE_NUMERIC_RE: ClassVar[re.Pattern[str]] = re.compile(
+        r"\(\s*([0-9.]+)(\s*)"
+    )
+    QUOTED_NAME_TRIPLE_RE: ClassVar[re.Pattern[str]] = re.compile(
+        r"([\"'])([^\"']+)([\"'])"
+    )
+    SCHEMA_DESC_LOOSE_RE: ClassVar[re.Pattern[str]] = re.compile(
+        r"DESC\s+([\"']?)([^\"']+)([\"']?)", re.IGNORECASE
+    )
+    SCHEMA_SINGLE_VALUE_RE: ClassVar[re.Pattern[str]] = re.compile(
+        r"SINGLE-VALUE", re.IGNORECASE
+    )
+    SCHEMA_SUP_LOOSE_RE: ClassVar[re.Pattern[str]] = re.compile(
+        r"SUP\s+([^\s]+)", re.IGNORECASE
+    )
+    SCHEMA_SYNTAX_LOOSE_RE: ClassVar[re.Pattern[str]] = re.compile(
+        r"SYNTAX\s*([\"']?)([0-9.]+)([\"']?)(\{[0-9]+\})?", re.IGNORECASE
+    )
+    SCHEMA_X_ORIGIN_RE: ClassVar[re.Pattern[str]] = re.compile(
+        r"X-ORIGIN\s+([\"']?)([^\"']+)([\"']?)", re.IGNORECASE
+    )
+    SCHEMA_NAME_LOOSE_RE: ClassVar[re.Pattern[str]] = re.compile(
+        r"NAME\s+(\()?\s*([\"']?)([^\"'()]+)([\"']?)(\s*\))?"
+    )
+    SCHEMA_NAME_MULTIPLE_RE: ClassVar[re.Pattern[str]] = re.compile(
+        r"NAME\s+\(\s*([\"'])([^\"']+)([\"'])\s+([\"'])([^\"']+)([\"'])"
+    )
+    QUOTED_SPACE_QUOTE_RE: ClassVar[re.Pattern[str]] = re.compile(r"[\"']\s+([\"'])")
+    LDIF_ATTR_TYPES_PREFIX_RE: ClassVar[re.Pattern[str]] = re.compile(
+        r"(attributetypes|attributeTypes):", re.IGNORECASE
+    )
+    LDIF_OBJECTCLASSES_PREFIX_RE: ClassVar[re.Pattern[str]] = re.compile(
+        r"(objectclasses|objectClasses):", re.IGNORECASE
+    )
 
     @staticmethod
     def compile_pattern(pattern: str, *, ignorecase: bool = False) -> re.Pattern[str]:

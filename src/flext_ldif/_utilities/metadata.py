@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from collections.abc import (
     Callable,
     Mapping,
@@ -195,19 +194,14 @@ class FlextLdifUtilitiesMetadata:
     def _extract_desc_details(definition: str) -> t.MutableFeatureFlagMapping:
         """Extract DESC details."""
         details: t.MutableFeatureFlagMapping = {}
-        desc_match = re.search(
-            r"DESC\s+([\"']?)([^\"']+)([\"']?)",
-            definition,
-            re.IGNORECASE,
-        )
+        desc_match = c.Ldif.SCHEMA_DESC_LOOSE_RE.search(definition)
         if desc_match:
             details["desc_presence"] = True
             details["desc_quotes"] = desc_match.group(1) or desc_match.group(3) or ""
             details["desc_value"] = desc_match.group(2)
             desc_pos = definition.find("DESC")
             if desc_pos >= 0:
-                before_desc = definition[:desc_pos]
-                before_match = re.search(r"(\s+)$", before_desc)
+                before_match = c.Ldif.WHITESPACE_TRAILING_RE.search(definition[:desc_pos])
                 details["desc_spacing_before"] = (
                     before_match.group(1) if before_match else ""
                 )
@@ -236,7 +230,7 @@ class FlextLdifUtilitiesMetadata:
         field_order: t.MutableSequenceOf[str] = []
         field_positions: t.MutableIntMapping = {}
         for field_name, pattern in field_patterns.items():
-            match = re.search(pattern, definition, re.IGNORECASE)
+            match = c.Ldif.compile_pattern(pattern, ignorecase=True).search(definition)
             if match:
                 field_order.append(field_name)
                 field_positions[field_name] = match.start()
@@ -246,11 +240,11 @@ class FlextLdifUtilitiesMetadata:
     def _extract_leading_trailing_spaces(definition: str) -> t.MutableStrMapping:
         """Extract leading and trailing spaces."""
         details: t.MutableStrMapping = {}
-        trailing_match = re.search(r"\)\s*$", definition)
+        trailing_match = c.Ldif.SCHEMA_TRAILING_PAREN_RE.search(definition)
         details["trailing_spaces"] = (
             definition[trailing_match.end() :] if trailing_match else ""
         )
-        leading_match = re.search(r"^\s*\(", definition)
+        leading_match = c.Ldif.SCHEMA_LEADING_PAREN_RE.search(definition)
         details["leading_spaces"] = leading_match.group(0)[:-1] if leading_match else ""
         return details
 
@@ -260,31 +254,34 @@ class FlextLdifUtilitiesMetadata:
     ) -> t.MutableFeatureFlagMapping:
         """Extract EQUALITY/SUBSTR/ORDERING details."""
         details: t.MutableFeatureFlagMapping = {}
-        equality_match = re.search(r"\bEQUALITY\b", definition, re.IGNORECASE)
+        equality_match = c.Ldif.SCHEMA_EQUALITY_TOKEN_RE.search(definition)
         if equality_match:
             details["equality_presence"] = True
-            before_rule = definition[: equality_match.start()]
-            before_match = re.search(r"(\s+)$", before_rule)
+            before_match = c.Ldif.WHITESPACE_TRAILING_RE.search(
+                definition[: equality_match.start()]
+            )
             details["equality_spacing_before"] = (
                 before_match.group(1) if before_match else ""
             )
         else:
             details["equality_presence"] = False
-        substr_match = re.search(r"\bSUBSTR\b", definition, re.IGNORECASE)
+        substr_match = c.Ldif.SCHEMA_SUBSTR_TOKEN_BARE_RE.search(definition)
         if substr_match:
             details["substr_presence"] = True
-            before_rule = definition[: substr_match.start()]
-            before_match = re.search(r"(\s+)$", before_rule)
+            before_match = c.Ldif.WHITESPACE_TRAILING_RE.search(
+                definition[: substr_match.start()]
+            )
             details["substr_spacing_before"] = (
                 before_match.group(1) if before_match else ""
             )
         else:
             details["substr_presence"] = False
-        ordering_match = re.search(r"\bORDERING\b", definition, re.IGNORECASE)
+        ordering_match = c.Ldif.SCHEMA_ORDERING_TOKEN_BARE_RE.search(definition)
         if ordering_match:
             details["ordering_presence"] = True
-            before_rule = definition[: ordering_match.start()]
-            before_match = re.search(r"(\s+)$", before_rule)
+            before_match = c.Ldif.WHITESPACE_TRAILING_RE.search(
+                definition[: ordering_match.start()]
+            )
             details["ordering_spacing_before"] = (
                 before_match.group(1) if before_match else ""
             )
@@ -303,31 +300,24 @@ class FlextLdifUtilitiesMetadata:
             "name_quotes": [],
             "name_spacing_before": "",
         }
-        name_match = re.search(
-            r"NAME\s+(\()?\s*([\"']?)([^\"'()]+)([\"']?)(\s*\))?",
-            definition,
-        )
+        name_match = c.Ldif.SCHEMA_NAME_LOOSE_RE.search(definition)
         if name_match is None:
             return details
         has_parens = bool(name_match.group(1))
         name_quote_start = name_match.group(2) or ""
         name_value = name_match.group(3)
         name_quote_end = name_match.group(4) or ""
-        multiple_match = re.search(
-            r"NAME\s+\(\s*([\"'])([^\"']+)([\"'])\s+([\"'])([^\"']+)([\"'])",
-            definition,
-        )
+        multiple_match = c.Ldif.SCHEMA_NAME_MULTIPLE_RE.search(definition)
         name_section = definition[name_match.start() : name_match.end() + 50]
         if multiple_match or (has_parens and " " in name_value):
-            all_name_matches = re.findall(r"([\"'])([^\"']+)([\"'])", name_section)
+            all_name_matches = c.Ldif.QUOTED_NAME_TRIPLE_RE.findall(name_section)
             details.update(
                 {
                     "name_format": "multiple",
                     "name_values": [match[1] for match in all_name_matches],
                     "name_quotes": [match[0] for match in all_name_matches],
-                    "name_spacing_between": re.findall(
-                        r"[\"']\s+([\"'])",
-                        name_section,
+                    "name_spacing_between": c.Ldif.QUOTED_SPACE_QUOTE_RE.findall(
+                        name_section
                     ),
                 },
             )
@@ -341,7 +331,7 @@ class FlextLdifUtilitiesMetadata:
             )
         name_pos = definition.find("NAME")
         if name_pos >= 0:
-            before_match = re.search(r"(\s+)$", definition[:name_pos])
+            before_match = c.Ldif.WHITESPACE_TRAILING_RE.search(definition[:name_pos])
             details["name_spacing_before"] = (
                 before_match.group(1) if before_match else ""
             )
@@ -353,12 +343,13 @@ class FlextLdifUtilitiesMetadata:
     ) -> MutableMapping[str, bool | int | str | None]:
         """Extract OBSOLETE details."""
         details: MutableMapping[str, bool | int | str | None] = {}
-        obsolete_match = re.search(r"\bOBSOLETE\b", definition, re.IGNORECASE)
+        obsolete_match = c.Ldif.SCHEMA_OBSOLETE_RE.search(definition)
         if obsolete_match:
             details["obsolete_presence"] = True
             details["obsolete_position"] = obsolete_match.start()
-            before_obsolete = definition[: obsolete_match.start()]
-            before_match = re.search(r"(\s+)$", before_obsolete)
+            before_match = c.Ldif.WHITESPACE_TRAILING_RE.search(
+                definition[: obsolete_match.start()]
+            )
             details["obsolete_spacing_before"] = (
                 before_match.group(1) if before_match else ""
             )
@@ -371,7 +362,7 @@ class FlextLdifUtilitiesMetadata:
     def _extract_oid_details(definition: str) -> t.MutableStrMapping:
         """Extract OID and spacing details."""
         details: t.MutableStrMapping = {}
-        oid_match = re.search(r"\(\s*([0-9.]+)(\s*)", definition)
+        oid_match = c.Ldif.OID_CAPTURE_NUMERIC_RE.search(definition)
         if oid_match:
             details["oid_value"] = oid_match.group(1)
             details["oid_spacing_after"] = oid_match.group(2)
@@ -382,31 +373,25 @@ class FlextLdifUtilitiesMetadata:
         """Extract attribute/ObjectClass prefix details."""
         details: t.MutableStrMapping = {}
         if "attributetypes:" in definition.lower():
-            attr_match = re.search(
-                r"(attributetypes|attributeTypes):",
-                definition,
-                re.IGNORECASE,
-            )
+            attr_match = c.Ldif.LDIF_ATTR_TYPES_PREFIX_RE.search(definition)
             if attr_match:
                 details["attribute_case"] = attr_match.group(1)
                 colon_pos = definition.find(":")
                 if colon_pos >= 0 and colon_pos + 1 < len(definition):
-                    after_colon = definition[colon_pos + 1 :]
-                    spacing_match = re.match(r"(\s*)", after_colon)
+                    spacing_match = c.Ldif.WHITESPACE_LEADING_RE.match(
+                        definition[colon_pos + 1 :]
+                    )
                     if spacing_match:
                         details["attribute_prefix_spacing"] = spacing_match.group(1)
         if "objectclasses:" in definition.lower() or "objectClasses:" in definition:
-            oc_match = re.search(
-                r"(objectclasses|objectClasses):",
-                definition,
-                re.IGNORECASE,
-            )
+            oc_match = c.Ldif.LDIF_OBJECTCLASSES_PREFIX_RE.search(definition)
             if oc_match:
                 details["objectclass_case"] = oc_match.group(1)
                 colon_pos = definition.find(":")
                 if colon_pos >= 0 and colon_pos + 1 < len(definition):
-                    after_colon = definition[colon_pos + 1 :]
-                    spacing_match = re.match(r"(\s*)", after_colon)
+                    spacing_match = c.Ldif.WHITESPACE_LEADING_RE.match(
+                        definition[colon_pos + 1 :]
+                    )
                     if spacing_match:
                         details["objectclass_prefix_spacing"] = spacing_match.group(1)
         return details
@@ -417,11 +402,12 @@ class FlextLdifUtilitiesMetadata:
     ) -> t.MutableFeatureFlagMapping:
         """Extract SINGLE-VALUE details."""
         details: t.MutableFeatureFlagMapping = {}
-        single_value_match = re.search(r"SINGLE-VALUE", definition, re.IGNORECASE)
+        single_value_match = c.Ldif.SCHEMA_SINGLE_VALUE_RE.search(definition)
         if single_value_match:
             details["single_value_presence"] = True
-            before_sv = definition[: single_value_match.start()]
-            before_match = re.search(r"(\s+)$", before_sv)
+            before_match = c.Ldif.WHITESPACE_TRAILING_RE.search(
+                definition[: single_value_match.start()]
+            )
             details["single_value_spacing_before"] = (
                 before_match.group(1) if before_match else ""
             )
@@ -444,11 +430,9 @@ class FlextLdifUtilitiesMetadata:
             pos1 = field_positions.get(field1)
             pos2 = field_positions.get(field2)
             if pos1 is not None and pos2 is not None:
-                field1_end_match = re.search(
-                    field_patterns[field1],
-                    definition[pos1:],
-                    re.IGNORECASE,
-                )
+                field1_end_match = c.Ldif.compile_pattern(
+                    field_patterns[field1], ignorecase=True
+                ).search(definition[pos1:])
                 if field1_end_match:
                     field1_end = pos1 + field1_end_match.end()
                     spacing = definition[field1_end:pos2]
@@ -459,14 +443,13 @@ class FlextLdifUtilitiesMetadata:
     def _extract_sup_details(definition: str) -> t.MutableFeatureFlagMapping:
         """Extract SUP details."""
         details: t.MutableFeatureFlagMapping = {}
-        sup_match = re.search(r"SUP\s+([^\s]+)", definition, re.IGNORECASE)
+        sup_match = c.Ldif.SCHEMA_SUP_LOOSE_RE.search(definition)
         if sup_match:
             details["sup_presence"] = True
             details["sup_value"] = sup_match.group(1)
             sup_pos = definition.find("SUP")
             if sup_pos >= 0:
-                before_sup = definition[:sup_pos]
-                before_match = re.search(r"(\s+)$", before_sup)
+                before_match = c.Ldif.WHITESPACE_TRAILING_RE.search(definition[:sup_pos])
                 details["sup_spacing_before"] = (
                     before_match.group(1) if before_match else ""
                 )
@@ -485,11 +468,7 @@ class FlextLdifUtilitiesMetadata:
             "syntax_oid": None,
             "syntax_length": None,
         }
-        syntax_match = re.search(
-            r"SYNTAX\s*([\"']?)([0-9.]+)([\"']?)(\{[0-9]+\})?",
-            definition,
-            re.IGNORECASE,
-        )
+        syntax_match = c.Ldif.SCHEMA_SYNTAX_LOOSE_RE.search(definition)
         if syntax_match:
             details["syntax_quotes"] = bool(
                 syntax_match.group(1) or syntax_match.group(3),
@@ -502,11 +481,12 @@ class FlextLdifUtilitiesMetadata:
             syntax_pos = definition.find("SYNTAX")
             if syntax_pos >= 0:
                 after_syntax = definition[syntax_pos + 6 :]
-                spacing_match = re.match(r"(\s*)", after_syntax)
+                spacing_match = c.Ldif.WHITESPACE_LEADING_RE.match(after_syntax)
                 if spacing_match:
                     details["syntax_spacing"] = spacing_match.group(1)
-                before_syntax = definition[:syntax_pos]
-                before_match = re.search(r"(\s+)$", before_syntax)
+                before_match = c.Ldif.WHITESPACE_TRAILING_RE.search(
+                    definition[:syntax_pos]
+                )
                 details["syntax_spacing_before"] = (
                     before_match.group(1) if before_match else ""
                 )
@@ -518,11 +498,7 @@ class FlextLdifUtilitiesMetadata:
     ) -> t.MutableOptionalFeatureFlagMapping:
         """Extract X-ORIGIN details."""
         details: t.MutableOptionalFeatureFlagMapping = {}
-        x_origin_match = re.search(
-            r"X-ORIGIN\s+([\"']?)([^\"']+)([\"']?)",
-            definition,
-            re.IGNORECASE,
-        )
+        x_origin_match = c.Ldif.SCHEMA_X_ORIGIN_RE.search(definition)
         if x_origin_match:
             details["x_origin_presence"] = True
             details["x_origin_quotes"] = (
@@ -531,8 +507,9 @@ class FlextLdifUtilitiesMetadata:
             details["x_origin_value"] = x_origin_match.group(2)
             x_origin_pos = definition.find("X-ORIGIN")
             if x_origin_pos >= 0:
-                before_x_origin = definition[:x_origin_pos]
-                before_match = re.search(r"(\s+)$", before_x_origin)
+                before_match = c.Ldif.WHITESPACE_TRAILING_RE.search(
+                    definition[:x_origin_pos]
+                )
                 details["x_origin_spacing_before"] = (
                     before_match.group(1) if before_match else ""
                 )

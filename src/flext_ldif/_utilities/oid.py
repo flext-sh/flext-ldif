@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import re
-
-from flext_ldif import p, r
+from flext_ldif import c, p, r, t
 
 
 class FlextLdifUtilitiesOID:
@@ -13,55 +11,43 @@ class FlextLdifUtilitiesOID:
     @staticmethod
     def extract_from_definition(definition: str) -> p.Result[str]:
         """Extract OID from schema definition string."""
-        match = re.search(r"\(\s*([\d.]+)", definition)
+        match = c.Ldif.SCHEMA_OID_CAPTURE_RE.search(definition)
         if match:
             return r[str].ok(match.group(1))
         return r[str].fail(f"missing an OID in definition: {definition!r}")
 
     @staticmethod
-    def matches_pattern(definition: str, oid_pattern: re.Pattern[str]) -> bool:
+    def matches_pattern(definition: str, oid_pattern: t.Ldif.RegexPattern) -> bool:
         r"""Check if schema definition string matches server's OID pattern.
 
         Generic method for checking if a schema definition matches an OID pattern.
         Works with raw definition strings BEFORE parsing.
 
-        This is a pure utility function with no dependencies on servers or services.
-
-        Example:
-            # Check if attribute matches Oracle OID pattern
-            if FlextLdifUtilitiesOID.matches_pattern(
-                attr_definition,  # Raw string: "( 2.16.840.1.113894.1.1.1 ...)"
-                re.compile(r'2\\.16\\.840\\.1\\.113894\\..*')  # Oracle OID pattern
-            ):
-                # Handle Oracle-specific attribute
-
         Args:
             definition: Raw attribute or objectClass definition string
-            oid_pattern: Compiled regex pattern to match OID (e.g., re.compile(r'2\\\\.16\\\\.840\\\\..*'))
+            oid_pattern: Compiled ``t.Ldif.RegexPattern`` (build via
+                ``c.Ldif.compile_pattern(...)`` — never call ``re.compile``
+                directly).
 
         Returns:
-            True if OID matches pattern, False otherwise
+            True if OID matches pattern, False otherwise.
 
         """
-        matches_pattern: bool = FlextLdifUtilitiesOID.extract_from_definition(
-            definition,
-        ).map_or(
+        return FlextLdifUtilitiesOID.extract_from_definition(definition).map_or(
             False,
             lambda oid: bool(oid_pattern.match(oid)),
         )
-        return matches_pattern
 
     @staticmethod
     def validate_format(oid: str) -> p.Result[bool]:
         """Validate OID format compliance with LDAP OID syntax."""
         if not oid:
             return r[bool].ok(False)
-        oid_pattern = "^[0-2](\\.[0-9]+)*$"
         try:
-            valid = bool(re.match(oid_pattern, oid))
-            return r[bool].ok(valid)
-        except (TypeError, re.error) as e:
+            valid = bool(c.Ldif.NUMERIC_OID_RE.match(oid))
+        except c.Ldif.EXC_LDIF_PARSE as e:
             return r[bool].fail(f"Failed to validate OID format: {e}")
+        return r[bool].ok(valid)
 
 
 __all__: list[str] = ["FlextLdifUtilitiesOID"]

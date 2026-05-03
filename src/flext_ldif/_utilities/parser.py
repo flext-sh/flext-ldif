@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import base64
-import re
 from collections.abc import (
     Mapping,
     MutableMapping,
@@ -347,13 +346,16 @@ class FlextLdifUtilitiesParser:
         return strict_result
 
     @staticmethod
-    def extract_boolean_flag(definition: str, pattern: re.Pattern[str] | str) -> bool:
+    def extract_boolean_flag(
+        definition: str, pattern: t.Ldif.RegexPattern | str
+    ) -> bool:
         """Check if boolean flag exists in definition."""
         if not definition:
             return False
-        if isinstance(pattern, str):
-            pattern = re.compile(pattern)
-        return re.search(pattern, definition) is not None
+        compiled = (
+            pattern if not isinstance(pattern, str) else c.Ldif.compile_pattern(pattern)
+        )
+        return compiled.search(definition) is not None
 
     @staticmethod
     def extract_extensions(
@@ -363,21 +365,17 @@ class FlextLdifUtilitiesParser:
         if not definition:
             return {}
         extensions: t.MutableStrSequenceMapping = {}
-        x_pattern = re.compile(c.Ldif.SCHEMA_X_EXTENSION, re.IGNORECASE)
-        for match in x_pattern.finditer(definition):
+        for match in c.Ldif.SCHEMA_X_EXTENSION_RE.finditer(definition):
             key = f"X-{match.group(1)}"
             value = match.group(2).strip()
             extensions[key] = [value]
-        desc_pattern = re.compile(c.Ldif.SCHEMA_DESC_FLEX)
-        desc_match = desc_pattern.search(definition)
+        desc_match = c.Ldif.SCHEMA_DESC_FLEX_RE.search(definition)
         if desc_match:
             extensions["DESC"] = [desc_match.group(1)]
-        ordering_pattern = re.compile(c.Ldif.SCHEMA_ORDERING_TOKEN)
-        ordering_match = ordering_pattern.search(definition)
+        ordering_match = c.Ldif.SCHEMA_ORDERING_TOKEN_RE.search(definition)
         if ordering_match:
             extensions["ORDERING"] = [ordering_match.group(1)]
-        substr_pattern = re.compile(c.Ldif.SCHEMA_SUBSTR_TOKEN)
-        substr_match = substr_pattern.search(definition)
+        substr_match = c.Ldif.SCHEMA_SUBSTR_TOKEN_RE.search(definition)
         if substr_match:
             extensions["SUBSTR"] = [substr_match.group(1)]
         return extensions
@@ -387,8 +385,7 @@ class FlextLdifUtilitiesParser:
         """Extract OID from schema definition string."""
         if not definition:
             return r[str].fail("Empty definition: cannot extract OID")
-        oid_pattern = re.compile(c.Ldif.SCHEMA_OID_CAPTURE)
-        match = re.match(oid_pattern, definition.strip())
+        match = c.Ldif.SCHEMA_OID_CAPTURE_RE.match(definition.strip())
         if match:
             return r[str].ok(match.group(1))
         return r[str].fail(f"missing an OID in definition: {definition!r}")
@@ -396,15 +393,16 @@ class FlextLdifUtilitiesParser:
     @staticmethod
     def extract_optional_field(
         definition: str,
-        pattern: re.Pattern[str] | str,
+        pattern: t.Ldif.RegexPattern | str,
         default: str | None = None,
     ) -> str | None:
         """Extract optional field via regex pattern."""
         if not definition:
             return default
-        if isinstance(pattern, str):
-            pattern = re.compile(pattern)
-        match = re.search(pattern, definition)
+        compiled = (
+            pattern if not isinstance(pattern, str) else c.Ldif.compile_pattern(pattern)
+        )
+        match = compiled.search(definition)
         return match.group(1) if match else default
 
     @staticmethod
