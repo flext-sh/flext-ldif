@@ -467,7 +467,11 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
                 )
                 if mapped:
                     oid_ordering = mapped
-        oid_syntax = source_syntax if isinstance(source_syntax, str) else (attr_copy.syntax or None)
+        oid_syntax = (
+            source_syntax
+            if isinstance(source_syntax, str)
+            else (attr_copy.syntax or None)
+        )
         oid_metadata = attr_copy.metadata
         if attr_copy.metadata and attr_copy.metadata.extensions:
             keys_to_remove = {c.Ldif.SCHEMA_ORIGINAL_FORMAT}

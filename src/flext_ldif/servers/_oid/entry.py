@@ -147,10 +147,11 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             if metadata and metadata.extensions
             else None
         )
+        original_attrs_value: t.JsonPayload | None = original_attrs_raw
         original_attrs: t.MutableStrSequenceMapping | None = None
-        if isinstance(original_attrs_raw, Mapping):
+        if isinstance(original_attrs_value, Mapping):
             result_attrs: t.MutableStrSequenceMapping = {}
-            for k, v in original_attrs_raw.items():
+            for k, v in original_attrs_value.items():
                 if isinstance(v, list):
                     result_attrs[k] = [str(item) for item in v]
                 else:
@@ -302,8 +303,9 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             if entry_data.metadata and entry_data.metadata.extensions
             else None
         )
-        if isinstance(converted_attrs_data, Mapping):
-            boolean_conversions_obj: t.JsonValue = converted_attrs_data.get(
+        converted_attrs_value: t.JsonPayload | None = converted_attrs_data
+        if isinstance(converted_attrs_value, Mapping):
+            boolean_conversions_obj: t.JsonPayload | None = converted_attrs_value.get(
                 mk.CONVERSION_BOOLEAN_CONVERSIONS,
                 {},
             )
@@ -333,13 +335,14 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             return original_extensions
         ext = original_entry.metadata.extensions
         for k, v in ext.items():
-            if isinstance(v, (str, int, bool)):
-                original_extensions[k] = v
-            elif isinstance(v, list) and (
-                all(isinstance(item, str) for item in v)
-                or all(u.primitive(item) for item in v)
+            extension_value: t.JsonPayload | None = v
+            if isinstance(extension_value, (str, int, bool)):
+                original_extensions[k] = extension_value
+            elif isinstance(extension_value, list) and (
+                all(isinstance(item, str) for item in extension_value)
+                or all(u.primitive(item) for item in extension_value)
             ):
-                original_extensions[k] = [str(item) for item in v]
+                original_extensions[k] = [str(item) for item in extension_value]
         return original_extensions
 
     def _get_current_attrs_with_acl_equivalence(
@@ -754,7 +757,8 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         attributes = restored_entry.attributes
         if metadata is None or attributes is None:
             return restored_entry
-        rename_map = metadata.extensions.get("attribute_name_renames")
+        rename_map_raw = metadata.extensions.get("attribute_name_renames")
+        rename_map: t.JsonPayload | None = rename_map_raw
         if not isinstance(rename_map, Mapping) or not rename_map:
             return restored_entry
         restored_attrs = dict(attributes.attributes)
