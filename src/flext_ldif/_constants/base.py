@@ -241,7 +241,12 @@ class FlextLdifConstantsBase:
 
     @staticmethod
     def sub_pattern(
-        pattern: str, replacement: str, value: str, *, ignorecase: bool = False
+        pattern: str,
+        replacement: str,
+        value: str,
+        *,
+        ignorecase: bool = False,
+        count: int = 0,
     ) -> str:
         """Substitute matches of a runtime-supplied regex pattern in ``value``.
 
@@ -250,7 +255,7 @@ class FlextLdifConstantsBase:
         """
         return FlextLdifConstantsBase.compile_pattern(
             pattern, ignorecase=ignorecase
-        ).sub(replacement, value)
+        ).sub(replacement, value, count=count)
 
     # Schema metadata keys
     SCHEMA_ORIGINAL_FORMAT: Final[str] = "schema_original_format"

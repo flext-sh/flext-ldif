@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from typing import Annotated, ClassVar, Self, override
 
 from flext_ldif import (
@@ -271,11 +270,13 @@ class FlextLdifServersBaseSchemaAcl(
         """Get RFC fallback value for unsupported vendor feature."""
         return None
 
-    def _hook_format_acl_name_pattern(self) -> p.Result[tuple[re.Pattern[str], str]]:
+    def _hook_format_acl_name_pattern(
+        self,
+    ) -> p.Result[tuple[t.Ldif.RegexPattern, str]]:
         """Hook for server-specific ACL name pattern matching."""
-        pattern = re.compile(r'acl\\s+"[^"]*"')
+        pattern = c.Ldif.compile_pattern(r'acl\\s+"[^"]*"')
         replacement_template = 'acl "{0}"'
-        return r[tuple[re.Pattern[str], str]].ok((
+        return r[tuple[t.Ldif.RegexPattern, str]].ok((
             pattern,
             replacement_template,
         ))

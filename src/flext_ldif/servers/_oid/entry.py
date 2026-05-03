@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from collections.abc import (
     Mapping,
     MutableMapping,
@@ -606,7 +605,9 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                         )
                         changed = True
                 if attr_name.lower() in {"objectclasses", "attributetypes"}:
-                    sup_quoted = re.sub(r"SUP\s+'([^']+)'", r"SUP \1", new_value)
+                    sup_quoted = c.Ldif.sub_pattern(
+                        r"SUP\s+'([^']+)'", r"SUP \1", new_value
+                    )
                     if sup_quoted != new_value:
                         new_value = sup_quoted
                         changed = True
