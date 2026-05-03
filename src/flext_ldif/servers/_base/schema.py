@@ -600,35 +600,43 @@ class FlextLdifServersBaseSchema(
         operation: str,
     ) -> p.Result[t.Ldif.SchemaConversionValue]:
         """Route data to appropriate parse or write handler."""
+        result: p.Result[t.Ldif.SchemaConversionValue]
         if operation == "parse":
             if not isinstance(data, str):
-                return r[t.Ldif.SchemaConversionValue].fail(
+                result = r[t.Ldif.SchemaConversionValue].fail(
                     f"parse operation requires str, got {type(data).__name__}",
                 )
-            if self._is_objectclass_schema_type(data):
-                return self._handle_parse_operation(
+            elif self._is_objectclass_schema_type(data):
+                result = self._handle_parse_operation(
                     attr_definition=None,
                     oc_definition=data,
                 )
-            return self._handle_parse_operation(
-                attr_definition=data,
-                oc_definition=None,
-            )
-        if operation == "write":
+            else:
+                result = self._handle_parse_operation(
+                    attr_definition=data,
+                    oc_definition=None,
+                )
+        elif operation == "write":
             attr_model = self._coerce_attribute_model(data)
             if attr_model is not None:
-                return self._handle_write_operation(
+                result = self._handle_write_operation(
                     attr_model=attr_model,
                     oc_model=None,
                 )
-            oc_model = self._coerce_objectclass_model(data)
-            if oc_model is not None:
-                return self._handle_write_operation(attr_model=None, oc_model=oc_model)
-            return r[t.Ldif.SchemaConversionValue].fail(
-                f"write operation requires SchemaAttribute or SchemaObjectClass, got {type(data).__name__}",
-            )
-        msg = f"Unknown operation: {operation}"
-        raise AssertionError(msg)
+            else:
+                oc_model = self._coerce_objectclass_model(data)
+                if oc_model is not None:
+                    result = self._handle_write_operation(
+                        attr_model=None, oc_model=oc_model
+                    )
+                else:
+                    result = r[t.Ldif.SchemaConversionValue].fail(
+                        f"write operation requires SchemaAttribute or SchemaObjectClass, got {type(data).__name__}",
+                    )
+        else:
+            msg = f"Unknown operation: {operation}"
+            raise AssertionError(msg)
+        return result
 
     def _write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> p.Result[str]:
         """Write attribute data to RFC-compliant string format (internal)."""
