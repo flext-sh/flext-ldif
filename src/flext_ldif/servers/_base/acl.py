@@ -148,28 +148,32 @@ class FlextLdifServersBaseSchemaAcl(
         use_original_format_as_name: bool = False,
     ) -> p.Result[str]:
         """Format ACL value for writing, optionally using original format as name."""
-        if not use_original_format_as_name:
-            return r[str].ok(acl_value)
-        if not acl_metadata.has_original_format():
-            return r[str].ok(acl_value)
-        original_format = acl_metadata.original_format
-        if not original_format:
-            return r[str].ok(acl_value)
-        sanitize_result_raw: tuple[str, bool] = u.Ldif.sanitize_acl_name(
-            original_format,
-        )
-        sanitized_name, _was_sanitized = sanitize_result_raw
-        if not sanitized_name:
-            return r[str].ok(acl_value)
-        pattern_result = self._hook_format_acl_name_pattern()
-        if pattern_result.failure:
-            return r[str].ok(acl_value)
-        pattern, replacement_template = pattern_result.value
-        formatted_value = pattern.sub(
-            replacement_template.format(sanitized_name),
-            acl_value,
-        )
-        return r[str].ok(formatted_value)
+        result: p.Result[str]
+        if not use_original_format_as_name or not acl_metadata.has_original_format():
+            result = r[str].ok(acl_value)
+        else:
+            original_format = acl_metadata.original_format
+            if not original_format:
+                result = r[str].ok(acl_value)
+            else:
+                sanitize_result_raw: tuple[str, bool] = u.Ldif.sanitize_acl_name(
+                    original_format,
+                )
+                sanitized_name, _was_sanitized = sanitize_result_raw
+                if not sanitized_name:
+                    result = r[str].ok(acl_value)
+                else:
+                    pattern_result = self._hook_format_acl_name_pattern()
+                    if pattern_result.failure:
+                        result = r[str].ok(acl_value)
+                    else:
+                        pattern, replacement_template = pattern_result.value
+                        formatted_value = pattern.sub(
+                            replacement_template.format(sanitized_name),
+                            acl_value,
+                        )
+                        result = r[str].ok(formatted_value)
+        return result
 
     def parse_server(self, value: str) -> p.Result[m.Ldif.Acl]:
         """Parse ACL line to Acl model."""
