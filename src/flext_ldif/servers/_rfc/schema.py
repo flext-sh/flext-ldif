@@ -182,13 +182,14 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
     def _coerce_dynamic_metadata(
         value: t.JsonValue | None,
     ) -> m.Ldif.DynamicMetadata:
-        if isinstance(value, m.Ldif.DynamicMetadata):
-            return value
-        if value is None:
+        json_value: t.JsonPayload | m.Ldif.DynamicMetadata | None = value
+        if isinstance(json_value, m.Ldif.DynamicMetadata):
+            return json_value
+        if json_value is None:
             return m.Ldif.DynamicMetadata()
         try:
             validated: m.Ldif.DynamicMetadata = m.Ldif.DynamicMetadata.model_validate(
-                value,
+                json_value,
             )
             return validated
         except c.ValidationError:
@@ -200,63 +201,70 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
     ) -> t.Ldif.SchemaExtensionsMapping:
         extensions: t.Ldif.SchemaExtensionsMapping = {}
         for key, value in metadata.items():
-            if isinstance(value, list):
-                list_value: t.MutableSequenceOf[str] = [str(item) for item in value]
+            json_value: t.JsonPayload | None = value
+            if isinstance(json_value, list):
+                list_value: t.MutableSequenceOf[str] = [
+                    str(item) for item in json_value
+                ]
                 extensions[key] = list_value
-            elif isinstance(value, (bool, str)):
-                extensions[key] = value
+            elif isinstance(json_value, (bool, str)):
+                extensions[key] = json_value
             else:
-                extensions[key] = str(u.normalize_to_json_value(value))
+                extensions[key] = str(u.normalize_to_json_value(json_value))
         return extensions
 
     @staticmethod
     def _to_optional_int(value: t.JsonValue | None) -> int | None:
-        if isinstance(value, int):
-            return value
-        if value is None or not value:
+        json_value: t.JsonPayload | None = value
+        if isinstance(json_value, int):
+            return json_value
+        if json_value is None or not json_value:
             return None
-        if isinstance(value, Mapping) or (
-            isinstance(value, Sequence) and not isinstance(value, str | bytes)
+        if isinstance(json_value, Mapping) or (
+            isinstance(json_value, Sequence) and not isinstance(json_value, str | bytes)
         ):
             return None
         try:
-            return int(str(value))
+            return int(str(json_value))
         except c.EXC_TYPE_VALIDATION:
             return None
 
     @staticmethod
     def _to_optional_str(value: t.JsonValue | None) -> str | None:
-        if value is None:
+        json_value: t.JsonPayload | None = value
+        if json_value is None:
             return None
-        if isinstance(value, Mapping) or (
-            isinstance(value, Sequence) and not isinstance(value, str | bytes)
+        if isinstance(json_value, Mapping) or (
+            isinstance(json_value, Sequence) and not isinstance(json_value, str | bytes)
         ):
             return None
-        if isinstance(value, str):
-            return value
-        return str(value)
+        if isinstance(json_value, str):
+            return json_value
+        return str(json_value)
 
     @staticmethod
     def _to_required_value(
         value: t.JsonValue | None,
         default: str = "",
     ) -> str:
-        if value is None:
+        json_value: t.JsonPayload | None = value
+        if json_value is None:
             return default
-        if isinstance(value, Mapping) or (
-            isinstance(value, Sequence) and not isinstance(value, str | bytes)
+        if isinstance(json_value, Mapping) or (
+            isinstance(json_value, Sequence) and not isinstance(json_value, str | bytes)
         ):
             return default
-        if isinstance(value, str):
-            return value
-        return str(value)
+        if isinstance(json_value, str):
+            return json_value
+        return str(json_value)
 
     @staticmethod
     def _to_string_list(
         value: t.JsonValue | None,
     ) -> t.MutableSequenceOf[str] | None:
-        if isinstance(value, Sequence) and not isinstance(value, str | bytes):
-            list_value: t.MutableSequenceOf[str] = [str(item) for item in value]
+        json_value: t.JsonPayload | None = value
+        if isinstance(json_value, Sequence) and not isinstance(json_value, str | bytes):
+            list_value: t.MutableSequenceOf[str] = [str(item) for item in json_value]
             return list_value
         return None
 
@@ -453,7 +461,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         extensions = metadata.extensions
         if not extensions:
             return output_str
-        x_origin_raw = extensions.get(c.Ldif.X_ORIGIN)
+        x_origin_raw: t.JsonPayload | None = extensions.get(c.Ldif.X_ORIGIN)
         if not isinstance(x_origin_raw, str):
             return output_str
         if "X-ORIGIN" in output_str:

@@ -88,9 +88,9 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         )
 
     @staticmethod
-    def _scalar_or_list_value(value: t.JsonValue) -> bool:
+    def _scalar_or_list_value(value: t.JsonPayload | None) -> bool:
         """Check if value is scalar metadata value or list."""
-        return u.primitive(value) or isinstance(value, list)
+        return isinstance(value, (str, int, float, bool, list))
 
     @override
     def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
@@ -141,7 +141,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
     def _build_aci_permissions(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
         """Build ACI permissions clause from ACL model."""
         perms = acl_data.permissions
-        target_perms_dict: t.Ldif.MutableMetadataInputMapping | None = None
+        target_perms_dict: t.MappingKV[str, t.JsonPayload] | None = None
         if not perms and acl_data.metadata:
             extensions = acl_data.metadata.extensions
             target_perms_dict_raw = (
@@ -151,8 +151,9 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                 target_perms_dict_raw = (
                     extensions.get("target_permissions") if extensions else None
                 )
-            if isinstance(target_perms_dict_raw, Mapping):
-                target_perms_dict = dict(target_perms_dict_raw.items())
+            permissions_value: t.JsonPayload | None = target_perms_dict_raw
+            if isinstance(permissions_value, Mapping):
+                target_perms_dict = dict(permissions_value.items())
         if target_perms_dict:
             perms_data: t.Ldif.MutableMetadataInputMapping = {}
             for key, val in target_perms_dict.items():
@@ -204,9 +205,11 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             FlextLdifServersOudConstants.SUPPORTED_PERMISSIONS,
         )
         meta_extensions = acl_data.metadata.extensions if acl_data.metadata else None
+        self_write_to_write = (
+            meta_extensions.get("self_write_to_write") if meta_extensions else None
+        )
         if (
-            meta_extensions
-            and meta_extensions.get("self_write_to_write")
+            self_write_to_write
             and (FlextLdifServersOudConstants.PERMISSION_SELF_WRITE in ops)
             and ("write" not in filtered_ops)
         ):
@@ -256,12 +259,14 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             extensions = acl_data.metadata.extensions
             target_dict = extensions.get("acl_target_target") if extensions else None
             target_data: t.Ldif.MutableMetadataMapping = {}
-            if isinstance(target_dict, Mapping):
-                for raw_key, raw_value in target_dict.items():
-                    if isinstance(raw_value, Mapping):
+            target_value: t.JsonPayload | None = target_dict
+            if isinstance(target_value, Mapping):
+                for raw_key, raw_value in target_value.items():
+                    json_value: t.JsonPayload | None = raw_value
+                    if isinstance(json_value, Mapping):
                         continue
-                    if FlextLdifServersOudAcl._scalar_or_list_value(raw_value):
-                        target_data[raw_key] = u.normalize_to_metadata(raw_value)
+                    if FlextLdifServersOudAcl._scalar_or_list_value(json_value):
+                        target_data[raw_key] = u.normalize_to_metadata(json_value)
             if target_data:
                 attrs_raw = target_data.get("attributes")
                 dn_raw = target_data.get("target_dn")

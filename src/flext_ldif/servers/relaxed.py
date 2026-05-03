@@ -360,7 +360,9 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             source_server = (
                 extensions.schema_source_server if extensions is not None else None
             )
-            original_format = extensions.original_format if extensions is not None else None
+            original_format = (
+                extensions.original_format if extensions is not None else None
+            )
             if source_server == "relaxed" and original_format:
                 return r[str].ok(original_format)
             if not attr_data.oid:
@@ -381,7 +383,9 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             source_server = (
                 extensions.schema_source_server if extensions is not None else None
             )
-            original_format = extensions.original_format if extensions is not None else None
+            original_format = (
+                extensions.original_format if extensions is not None else None
+            )
             if source_server == "relaxed" and original_format:
                 return r[str].ok(original_format)
             if not oc_data.oid:
