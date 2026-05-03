@@ -67,6 +67,21 @@ class TestsFlextLdifWriterService:
 
         tm.fail(result, has="Invalid server type")
 
+    def test_write_to_string_keeps_dn_prefix_before_folding(
+        self,
+        writer: p.Ldif.LdifClient,
+    ) -> None:
+        long_dn = "cn=writer-fold-target,ou=department-with-an-exceptionally-long-name-for-folding-checks,ou=subdivision-with-another-exceptionally-long-name,dc=example,dc=com"
+        result = writer.write_to_string(
+            [u.Tests.create_real_entry(dn=long_dn)],
+            server_type=c.Tests.RFC,
+        )
+
+        content = u.Tests.assert_success(result)
+
+        tm.that(content.startswith("dn: cn=writer-fold-target"), eq=True)
+        tm.that("\n " in content, eq=True)
+
     def test_write_ldif_file_success_persists_output(
         self,
         writer: p.Ldif.LdifClient,

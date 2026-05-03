@@ -58,7 +58,7 @@ class FlextLdifServersOudAclMetadataMixin:
     "Mapping for parsed-ACL extensions: short alias → canonical c.Ldif.ACL_* key."
 
     @staticmethod
-    def _extract_acl_metadata(
+    def extract_acl_metadata(
         entry_data: m.Ldif.Entry,
     ) -> tuple[str | None, m.Ldif.DnRegistry | None]:
         """Extract base_dn and dn_registry from entry metadata for ACL processing."""
@@ -94,7 +94,7 @@ class FlextLdifServersOudAclMetadataMixin:
         return (base_dn, dn_registry)
 
     @staticmethod
-    def _extract_acl_metadata_from_dict(
+    def extract_acl_metadata_from_dict(
         acl_extensions: t.Ldif.MetadataInputMapping,
         acl_metadata_extensions: t.Ldif.MutableMetadataInputMapping,
     ) -> None:
@@ -108,7 +108,7 @@ class FlextLdifServersOudAclMetadataMixin:
                 acl_metadata_extensions[dest_key] = u.normalize_to_metadata(value_raw)
 
     @staticmethod
-    def _extract_acl_metadata_from_dynamic(
+    def extract_acl_metadata_from_dynamic(
         acl_extensions: m.Ldif.DynamicMetadata,
         acl_metadata_extensions: t.Ldif.MutableMetadataInputMapping,
     ) -> None:
@@ -124,7 +124,7 @@ class FlextLdifServersOudAclMetadataMixin:
             acl_metadata_extensions[dest_key] = u.normalize_to_metadata(value_raw)
 
     @staticmethod
-    def _get_original_acl_attr(entry: m.Ldif.Entry) -> str:
+    def get_original_acl_attr(entry: m.Ldif.Entry) -> str:
         """Get original ACL attribute name (orclaci) from transformations or metadata."""
         if entry.metadata and entry.metadata.attribute_transformations:
             for (
@@ -146,7 +146,7 @@ class FlextLdifServersOudAclMetadataMixin:
         return "orclaci"
 
     @staticmethod
-    def _merge_acl_metadata_to_entry(
+    def merge_acl_metadata_to_entry(
         entry: m.Ldif.Entry,
         acl_metadata_extensions: t.Ldif.MutableMetadataInputMapping,
     ) -> m.Ldif.Entry:
@@ -182,7 +182,7 @@ class FlextLdifServersOudAclMetadataMixin:
         )
 
     @staticmethod
-    def _process_parsed_acl_extensions(
+    def process_parsed_acl_extensions(
         acl_extensions: t.Ldif.MetadataInputMapping,
         current_extensions: t.Ldif.MutableMetadataInputMapping,
     ) -> None:

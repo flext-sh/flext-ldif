@@ -94,6 +94,23 @@ class FlextLdifUtilitiesWriter:
                     chunk.rfind(c.Ldif.LINE_CONTINUATION_SPACE),
                     chunk.rfind("\t"),
                 )
+                prefix_end = 0
+                if not folded:
+                    separator_index = chunk.find(":")
+                    if separator_index >= 0:
+                        prefix_end = separator_index + 1
+                        while prefix_end < len(chunk) and chunk[prefix_end] in {
+                            ":",
+                            "<",
+                        }:
+                            prefix_end += 1
+                        while (
+                            prefix_end < len(chunk)
+                            and chunk[prefix_end] == c.Ldif.LINE_CONTINUATION_SPACE
+                        ):
+                            prefix_end += 1
+                        if split_index < prefix_end:
+                            split_index = -1
                 if split_index > 0:
                     left_text = chunk[:split_index].rstrip()
                     right_text = chunk[split_index + 1 :].lstrip()

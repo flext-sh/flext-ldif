@@ -43,12 +43,12 @@ class FlextLdifServersOudAciMixin:
         return None
 
     @staticmethod
-    def _find_aci_values(
+    def find_aci_values(
         entry: m.Ldif.Entry,
         original_attrs: t.AttributeMapping,
     ) -> t.MutableSequenceOf[str] | str | None:
         """Find ACI values from entry attributes, original_attrs, or commented metadata."""
-        normalize = FlextLdifServersOudAciMixin._normalize_aci_value_simple
+        normalize = FlextLdifServersOudAciMixin.normalize_aci_value_simple
         find_in_dict = FlextLdifServersOudAciMixin._find_aci_in_dict
         entry_attrs = (
             entry.attributes.attributes
@@ -71,7 +71,7 @@ class FlextLdifServersOudAciMixin:
         extensions = entry.metadata.extensions if entry.metadata is not None else None
         if extensions is None:
             return None
-        commented = FlextLdifServersOudAclExtractMixin._parse_commented_values(
+        commented = FlextLdifServersOudAclExtractMixin.parse_commented_values(
             extensions.to_dict().get(c.Ldif.COMMENTED_ATTRIBUTE_VALUES),
         )
         if not commented:
@@ -88,7 +88,7 @@ class FlextLdifServersOudAciMixin:
         return None
 
     @staticmethod
-    def _normalize_aci_value(
+    def normalize_aci_value(
         aci_value: str,
         _base_dn: str | None,
         _dn_registry: m.Ldif.DnRegistry | None,
@@ -97,7 +97,7 @@ class FlextLdifServersOudAciMixin:
         return (aci_value, False)
 
     @staticmethod
-    def _normalize_aci_value_simple(
+    def normalize_aci_value_simple(
         value: t.Ldif.ValueType | t.Ldif.MetadataInputMapping | None,
     ) -> t.MutableSequenceOf[str] | str | None:
         """Normalize ACI value to t.MutableSequenceOf[str] | str | None."""
@@ -108,7 +108,7 @@ class FlextLdifServersOudAciMixin:
         return u.to_str(value)
 
     @staticmethod
-    def _process_aci_list_for_finalize(
+    def process_aci_list_for_finalize(
         aci_values: t.MutableSequenceOf[str] | str,
         acl_server: p.Ldif.AclServer,
         current_extensions: t.Ldif.MutableMetadataInputMapping,
@@ -138,13 +138,13 @@ class FlextLdifServersOudAciMixin:
                                 raw_value,
                             )
                         )
-                    FlextLdifServersOudAclMetadataMixin._process_parsed_acl_extensions(
+                    FlextLdifServersOudAclMetadataMixin.process_parsed_acl_extensions(
                         acl_extensions,
                         current_extensions,
                     )
 
     @staticmethod
-    def _process_single_aci_value(
+    def process_single_aci_value(
         aci_value: str,
         acl_metadata_extensions: t.Ldif.MutableMetadataInputMapping,
     ) -> p.Result[bool]:
@@ -163,7 +163,7 @@ class FlextLdifServersOudAciMixin:
             if parsed_acl.metadata and parsed_acl.metadata.extensions:
                 acl_extensions = parsed_acl.metadata.extensions
                 if u.matches_type(acl_extensions, m.Ldif.DynamicMetadata):
-                    FlextLdifServersOudAclMetadataMixin._extract_acl_metadata_from_dynamic(
+                    FlextLdifServersOudAclMetadataMixin.extract_acl_metadata_from_dynamic(
                         acl_extensions,
                         acl_metadata_extensions,
                     )
@@ -176,7 +176,7 @@ class FlextLdifServersOudAciMixin:
                         )
                         for k, v in acl_extensions.items()
                     }
-                    FlextLdifServersOudAclMetadataMixin._extract_acl_metadata_from_dict(
+                    FlextLdifServersOudAclMetadataMixin.extract_acl_metadata_from_dict(
                         acl_extensions_dict,
                         acl_metadata_extensions,
                     )

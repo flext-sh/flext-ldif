@@ -51,7 +51,7 @@ class FlextLdifServersOudCommentsMixin:
         comment_lines.append(f"# [{comment_type}] {attr_name}: transformation applied")
 
     @staticmethod
-    def _add_original_entry_comments(
+    def add_original_entry_comments(
         entry_data: m.Ldif.Entry,
         write_options: m.Ldif.WriteFormatOptions | None,
     ) -> t.MutableSequenceOf[str]:
@@ -106,7 +106,7 @@ class FlextLdifServersOudCommentsMixin:
         if acl_comments_dict:
             acl_attr_names = list(acl_comments_dict.keys())
             ordered_acl_attrs = (
-                FlextLdifServersOudTransformMixin._determine_attribute_order(
+                FlextLdifServersOudTransformMixin.determine_attribute_order(
                     acl_attr_names,
                     format_options,
                 )
@@ -155,7 +155,7 @@ class FlextLdifServersOudCommentsMixin:
                 if attr_name.lower() not in acl_attr_names_to_skip
             ]
             ordered_attr_names = (
-                FlextLdifServersOudTransformMixin._determine_attribute_order(
+                FlextLdifServersOudTransformMixin.determine_attribute_order(
                     attr_names,
                     format_options,
                 )
@@ -188,7 +188,7 @@ class FlextLdifServersOudCommentsMixin:
                 and attr_name.lower() not in acl_attr_names_to_skip
             ]
             ordered_removed_attrs = (
-                FlextLdifServersOudTransformMixin._determine_attribute_order(
+                FlextLdifServersOudTransformMixin.determine_attribute_order(
                     removed_attr_names,
                     format_options,
                 )
@@ -224,13 +224,13 @@ class FlextLdifServersOudCommentsMixin:
             c.Ldif.COMMENTED_ATTRIBUTE_VALUES,
         )
         commented_acl_values = (
-            FlextLdifServersOudAclExtractMixin._parse_commented_values(
+            FlextLdifServersOudAclExtractMixin.parse_commented_values(
                 commented_acl_values_raw
             )
         )
         if not commented_acl_values:
             return
-        original_acl_attr = FlextLdifServersOudAclMetadataMixin._get_original_acl_attr(
+        original_acl_attr = FlextLdifServersOudAclMetadataMixin.get_original_acl_attr(
             entry
         )
         for acl_attr_name, acl_values_raw in commented_acl_values.items():
@@ -247,7 +247,7 @@ class FlextLdifServersOudCommentsMixin:
             elif isinstance(acl_values_raw, dict):
                 acl_values = [u.to_str(acl_values_raw)]
             else:
-                normalized = FlextLdifServersOudAclExtractMixin._normalize_acl_values(
+                normalized = FlextLdifServersOudAclExtractMixin.normalize_acl_values(
                     acl_values_raw,
                 )
                 acl_values = (

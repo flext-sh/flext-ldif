@@ -30,7 +30,7 @@ class FlextLdifServersOudTransformMixin:
     """OUD Transform helpers."""
 
     @staticmethod
-    def _apply_phase_aware_acl_handling(
+    def apply_phase_aware_acl_handling(
         entry_data: m.Ldif.Entry,
         write_options: m.Ldif.WriteFormatOptions | None,
     ) -> m.Ldif.Entry:
@@ -42,12 +42,12 @@ class FlextLdifServersOudTransformMixin:
         if not (category and category != "acl" and acl_attrs):
             return entry_data
         acl_attrs_list = list(acl_attrs)
-        return FlextLdifServersOudAclExtractMixin._comment_acl_attributes(
+        return FlextLdifServersOudAclExtractMixin.comment_acl_attributes(
             entry_data, acl_attrs_list
         )
 
     @staticmethod
-    def _determine_attribute_order(
+    def determine_attribute_order(
         attr_names: t.MutableSequenceOf[str],
         format_options: m.Ldif.WriteFormatOptions | None,
     ) -> t.MutableSequenceOf[str]:
@@ -91,12 +91,12 @@ class FlextLdifServersOudTransformMixin:
         return is_schema_entry
 
     @staticmethod
-    def _normalize_acl_dns(entry_data: m.Ldif.Entry) -> m.Ldif.Entry:
+    def normalize_acl_dns(entry_data: m.Ldif.Entry) -> m.Ldif.Entry:
         """Normalize and filter DNs in ACL attribute values (userdn/groupdn inside ACL strings)."""
         if not entry_data.attributes or not entry_data.attributes.attributes:
             return entry_data
-        base_dn, dn_registry = (
-            FlextLdifServersOudAclMetadataMixin._extract_acl_metadata(entry_data)
+        base_dn, dn_registry = FlextLdifServersOudAclMetadataMixin.extract_acl_metadata(
+            entry_data
         )
         attrs = entry_data.attributes.attributes
         if "aci" not in attrs:
@@ -108,7 +108,7 @@ class FlextLdifServersOudTransformMixin:
         for aci in aci_values:
             aci_str: str = aci
             normalized_aci, was_filtered = (
-                FlextLdifServersOudAciMixin._normalize_aci_value(
+                FlextLdifServersOudAciMixin.normalize_aci_value(
                     aci_str,
                     base_dn,
                     dn_registry,
@@ -123,7 +123,7 @@ class FlextLdifServersOudTransformMixin:
         return entry_data
 
     @staticmethod
-    def _restore_entry_from_metadata(entry_data: m.Ldif.Entry) -> m.Ldif.Entry:
+    def restore_entry_from_metadata(entry_data: m.Ldif.Entry) -> m.Ldif.Entry:
         """Restore original DN and attributes using generic utilities."""
         metadata = entry_data.metadata
         if metadata is None or not metadata.extensions:

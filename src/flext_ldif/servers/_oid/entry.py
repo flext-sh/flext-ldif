@@ -245,7 +245,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         ]
         return (rfc_violations, attribute_conflicts)
 
-    def _extract_acl_metadata_from_string(
+    def extract_acl_metadata_from_string(
         self,
         acl_value: str,
         current_extensions: t.Ldif.MutableMetadataMapping,
@@ -666,7 +666,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         for acl_value in acl_list:
             if not u.matches_type(acl_value, str):
                 continue
-            self._extract_acl_metadata_from_string(acl_value, current_extensions)
+            self.extract_acl_metadata_from_string(acl_value, current_extensions)
             if acl_server is not None:
                 self._merge_parsed_acl_extensions(
                     acl_server,
@@ -747,7 +747,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         )
         return copied
 
-    def _restore_entry_from_metadata(self, entry_data: m.Ldif.Entry) -> m.Ldif.Entry:
+    def restore_entry_from_metadata(self, entry_data: m.Ldif.Entry) -> m.Ldif.Entry:
         """Restore OID-specific formats from metadata (RFC → OID denormalization)."""
         restored_entry = self._restore_boolean_values_to_oid(entry_data)
         metadata = restored_entry.metadata
@@ -783,7 +783,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
     @override
     def _write_entry(self, entry_data: m.Ldif.Entry) -> p.Result[str]:
         """Write OID entry preserving OID-specific denormalized attribute names."""
-        entry_to_write = self._restore_entry_from_metadata(entry_data)
+        entry_to_write = self.restore_entry_from_metadata(entry_data)
         return super()._write_entry(entry_to_write)
 
     def _restore_single_attribute(

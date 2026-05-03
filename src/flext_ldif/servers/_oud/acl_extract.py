@@ -25,7 +25,7 @@ class FlextLdifServersOudAclExtractMixin:
     """OUD AclExtract helpers."""
 
     @staticmethod
-    def _comment_acl_attributes(
+    def comment_acl_attributes(
         entry_data: m.Ldif.Entry,
         acl_attribute_names: t.MutableSequenceOf[str],
     ) -> m.Ldif.Entry:
@@ -67,7 +67,7 @@ class FlextLdifServersOudAclExtractMixin:
         return copy_result
 
     @staticmethod
-    def _normalize_acl_values(
+    def normalize_acl_values(
         acl_values_raw: t.Ldif.ValueType | t.Ldif.MetadataInputMapping,
     ) -> t.MutableSequenceOf[str] | str:
         """Normalize ACL values to expected type for comment generation."""
@@ -76,7 +76,7 @@ class FlextLdifServersOudAclExtractMixin:
         return u.to_str(acl_values_raw)
 
     @staticmethod
-    def _parse_commented_values(
+    def parse_commented_values(
         commented_raw: t.JsonValue | None,
     ) -> t.Ldif.MutableMetadataMapping | None:
         """Parse commented ACL values from raw storage format."""
