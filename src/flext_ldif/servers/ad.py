@@ -220,26 +220,11 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             """Check whether the ACL line belongs to an AD security descriptor."""
             if isinstance(acl_line, str):
                 normalized = acl_line.strip()
-                if not normalized:
+            else:
+                raw_acl = getattr(acl_line, "raw_acl", None)
+                if not isinstance(raw_acl, str):
                     return False
-                attr_name, _, _ = normalized.partition(":")
-                if (
-                    attr_name.strip().lower()
-                    == FlextLdifServersAd.Constants.ACL_ATTRIBUTE_NAME.lower()
-                ):
-                    return True
-                return (
-                    re.match(
-                        FlextLdifServersAd.Constants.ACL_SDDL_PREFIX_PATTERN,
-                        normalized,
-                        re.IGNORECASE,
-                    )
-                    is not None
-                )
-            raw_acl = getattr(acl_line, "raw_acl", None)
-            if not isinstance(raw_acl, str) or not raw_acl:
-                return False
-            normalized = raw_acl.strip()
+                normalized = raw_acl.strip()
             if not normalized:
                 return False
             attr_name, _, _ = normalized.partition(":")

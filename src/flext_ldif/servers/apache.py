@@ -169,22 +169,12 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Detect ApacheDS ACI lines."""
             if isinstance(acl_line, str):
-                if not acl_line or not acl_line.strip():
-                    return False
                 normalized = acl_line.strip()
-                attr_name, _, _ = normalized.partition(":")
-                if (
-                    attr_name.strip().lower()
-                    in FlextLdifServersApache.Constants.ACL_ACI_ATTRIBUTE_NAMES
-                ):
-                    return True
-                return normalized.lower().startswith(
-                    FlextLdifServersApache.Constants.ACL_VERSION_PATTERN,
-                )
-            raw_acl = getattr(acl_line, "raw_acl", None)
-            if not isinstance(raw_acl, str) or not raw_acl:
-                return False
-            normalized = raw_acl.strip()
+            else:
+                raw_acl = getattr(acl_line, "raw_acl", None)
+                if not isinstance(raw_acl, str):
+                    return False
+                normalized = raw_acl.strip()
             if not normalized:
                 return False
             attr_name, _, _ = normalized.partition(":")

@@ -252,20 +252,12 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Detect 389 DS ACI lines."""
             if isinstance(acl_line, str):
-                normalized = acl_line.strip() if acl_line else ""
-                if not normalized:
+                normalized = acl_line.strip()
+            else:
+                raw_acl = getattr(acl_line, "raw_acl", None)
+                if not isinstance(raw_acl, str):
                     return False
-                attr_name, _, _ = normalized.partition(":")
-                if (
-                    attr_name.strip().lower()
-                    == FlextLdifServersDs389.Constants.ACL_ATTRIBUTE_NAME
-                ):
-                    return True
-                return normalized.lower().startswith("(version")
-            raw_acl = getattr(acl_line, "raw_acl", None)
-            if not isinstance(raw_acl, str) or not raw_acl:
-                return False
-            normalized = raw_acl.strip()
+                normalized = raw_acl.strip()
             if not normalized:
                 return False
             attr_name, _, _ = normalized.partition(":")
