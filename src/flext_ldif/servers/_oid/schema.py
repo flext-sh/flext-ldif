@@ -369,19 +369,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
                 attribute_name=fixed_name,
                 attribute_oid=attr_data.oid,
             )
-        x_origin_value: str | None = None
-        if attr_data.metadata and attr_data.metadata.extensions:
-            x_origin_raw = attr_data.metadata.extensions.get("x_origin")
-            if isinstance(x_origin_raw, str):
-                x_origin_value = x_origin_raw
-            else:
-                logger.warning(
-                    "x_origin extension is not a string, ignoring",
-                    x_origin_type=type(x_origin_raw).__name__,
-                    x_origin_value=str(x_origin_raw)[:100],
-                    attribute_name=attr_data.name,
-                    attribute_oid=attr_data.oid,
-                )
+        x_origin_value = attr_data.x_origin
         return m.Ldif.SchemaAttribute(
             oid=attr_data.oid,
             name=fixed_name,
@@ -426,21 +414,11 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
                 original_equality=attr_data.equality or "",
                 normalized_substr=normalized_substr or "",
             )
-            original_format: str | None = None
-            key = c.Ldif.SCHEMA_ORIGINAL_FORMAT
-            if (
-                attr_data.metadata
-                and attr_data.metadata.extensions
-                and (key in attr_data.metadata.extensions)
-            ):
-                original_format_raw = attr_data.metadata.extensions.get(
-                    c.Ldif.SCHEMA_ORIGINAL_FORMAT,
-                )
-                if isinstance(original_format_raw, str):
-                    original_format = original_format_raw
-                else:
-                    msg = f"Expected str, got {type(original_format_raw)}"
-                    raise TypeError(msg)
+            original_format = (
+                attr_data.metadata.extensions.original_format
+                if attr_data.metadata and attr_data.metadata.extensions
+                else None
+            )
             transformed = attr_data.model_copy(
                 update={"equality": normalized_equality, "substr": normalized_substr},
             )
@@ -455,8 +433,8 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
     def _write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> p.Result[str]:
         """Write Oracle OID attribute definition (Phase 2: Denormalization)."""
         attr_copy = attr_data.model_copy(deep=True)
-        source_rules = None
-        source_syntax = None
+        source_rules: t.JsonPayload | None = None
+        source_syntax: t.JsonPayload | None = None
         if attr_copy.metadata and attr_copy.metadata.extensions:
             source_rules = attr_copy.metadata.extensions.get(
                 c.Ldif.SCHEMA_SOURCE_MATCHING_RULES,
@@ -489,11 +467,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
                 )
                 if mapped:
                     oid_ordering = mapped
-        oid_syntax: str | None = None
-        if source_syntax:
-            oid_syntax = str(source_syntax) if source_syntax else None
-        else:
-            oid_syntax = attr_copy.syntax or None
+        oid_syntax = source_syntax if isinstance(source_syntax, str) else (attr_copy.syntax or None)
         oid_metadata = attr_copy.metadata
         if attr_copy.metadata and attr_copy.metadata.extensions:
             keys_to_remove = {c.Ldif.SCHEMA_ORIGINAL_FORMAT}
