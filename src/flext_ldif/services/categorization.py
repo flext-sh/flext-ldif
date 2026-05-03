@@ -250,10 +250,12 @@ class FlextLdifCategorization(s):
                 )
                 filtered[category] = included
                 excluded_updated = [
-                    FlextLdifCategorization._mark_entry_rejected(
+                    u.Ldif.update_entry_statistics(
                         entry,
-                        category="BASE_DN_FILTER",
-                        reason=f"DN not under base DN: {base_dn}",
+                        mark_rejected=(
+                            "BASE_DN_FILTER",
+                            f"DN not under base DN: {base_dn}",
+                        ),
                     )
                     for entry in excluded
                 ]
