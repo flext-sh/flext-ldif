@@ -1,8 +1,5 @@
 """Test configuration and fixtures for flext-ldif tests.
 
-Tests LDIF processing operations: parsing, writing, migration, validation.
-Uses factories for data generation, helpers for assertions, and constants for configuration.
-
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -22,47 +19,12 @@ from flext_ldif import (
     FlextLdifConversion,
     FlextLdifParser,
     FlextLdifServer,
-    FlextLdifSettings,
     FlextLdifWriter,
     ldif,
 )
 from tests import m, p, t
 from tests.constants import TestsFlextLdifConstants, c
 from tests.utilities import TestsFlextLdifUtilities as u
-
-
-@pytest.fixture
-def ldif_settings(
-    settings_factory: Callable[..., FlextLdifSettings],
-) -> FlextLdifSettings:
-    """Provide clean FlextLdifSettings for tests."""
-    return settings_factory(FlextLdifSettings)
-
-
-@pytest.fixture
-def real_entry() -> m.Ldif.Entry:
-    """Provide a real Entry model for testing."""
-    return u.Tests.create_real_entry()
-
-
-@pytest.fixture
-def real_ldif_content() -> str:
-    """Provide real LDIF content for testing."""
-    return u.Tests.create_real_ldif_content()
-
-
-@pytest.fixture(params=u.Tests.parametrize_real_data())
-def parametrized_real_data(
-    request: pytest.FixtureRequest,
-) -> m.Tests.LdifTestData:
-    """Provide parametrized real test data."""
-    return request.param
-
-
-@pytest.fixture
-def large_test_dataset() -> str:
-    """Provide large dataset for performance testing."""
-    return u.Tests.create_real_ldif_content(entries_count=100)
 
 
 @pytest.fixture
@@ -83,31 +45,17 @@ def writer() -> FlextLdifWriter:
     return FlextLdifWriter()
 
 
-def _fixtures_for_kind(kind: str) -> t.StrMapping:
-    """Build fixture map for one kind using constants-driven server matrix."""
-    return {
-        server: u.Tests.load(server, kind)
-        for server in c.Tests.FIXTURE_KIND_SERVERS[kind]
-    }
-
-
 @pytest.fixture
 def oid_schema_fixture() -> str:
     """Load OID schema fixture data."""
-    fixture_content: str = u.Tests.load(
-        c.Tests.OID,
-        c.Tests.SCHEMA,
-    )
+    fixture_content: str = u.Tests.load(c.Tests.OID, c.Tests.SCHEMA)
     return fixture_content
 
 
 @pytest.fixture
 def oid_acl_fixture() -> str:
     """Load OID ACL fixture data."""
-    fixture_content: str = u.Tests.load(
-        c.Tests.OID,
-        c.Tests.ACL,
-    )
+    fixture_content: str = u.Tests.load(c.Tests.OID, c.Tests.ACL)
     return fixture_content
 
 
@@ -121,24 +69,8 @@ def oid_entries_fixture() -> str:
 @pytest.fixture
 def oid_integration_fixture() -> str:
     """Load OID integration fixture data."""
-    fixture_content: str = u.Tests.load(
-        c.Tests.OID,
-        c.Tests.INTEGRATION,
-    )
+    fixture_content: str = u.Tests.load(c.Tests.OID, c.Tests.INTEGRATION)
     return fixture_content
-
-
-@pytest.fixture
-def oid_schema_entries(
-    api: p.Ldif.LdifClient,
-    oid_schema_fixture: str,
-) -> t.SequenceOf[m.Ldif.Entry]:
-    """Parse OID schema fixture into Entry models."""
-    parse_response: m.Ldif.ParseResponse = u.Tests.assert_success(
-        api.parse_ldif(oid_schema_fixture),
-        error_msg="OID schema parsing failed",
-    )
-    return parse_response.entries
 
 
 @pytest.fixture
@@ -178,24 +110,8 @@ def oud_entries_fixture() -> str:
 @pytest.fixture
 def oud_integration_fixture() -> str:
     """Load OUD integration fixture data."""
-    fixture_content: str = u.Tests.load(
-        c.Tests.OUD,
-        c.Tests.INTEGRATION,
-    )
+    fixture_content: str = u.Tests.load(c.Tests.OUD, c.Tests.INTEGRATION)
     return fixture_content
-
-
-@pytest.fixture
-def oud_schema_entries(
-    api: p.Ldif.LdifClient,
-    oud_schema_fixture: str,
-) -> t.SequenceOf[m.Ldif.Entry]:
-    """Parse OUD schema fixture into Entry models."""
-    parse_response: m.Ldif.ParseResponse = u.Tests.assert_success(
-        api.parse_ldif(oud_schema_fixture),
-        error_msg="OUD schema parsing failed",
-    )
-    return parse_response.entries
 
 
 @pytest.fixture
@@ -209,119 +125,6 @@ def oud_entries(
         error_msg="OUD entries parsing failed",
     )
     return parse_response.entries
-
-
-@pytest.fixture
-def openldap_schema_fixture() -> str:
-    """Load OpenLDAP schema fixture data."""
-    fixture_content: str = u.Tests.load(
-        c.Tests.OPENLDAP,
-        c.Tests.SCHEMA,
-    )
-    return fixture_content
-
-
-@pytest.fixture
-def openldap_acl_fixture() -> str:
-    """Load OpenLDAP ACL fixture data."""
-    fixture_content: str = u.Tests.load(c.Tests.OPENLDAP, c.Tests.ACL)
-    return fixture_content
-
-
-@pytest.fixture
-def openldap_entries_fixture() -> str:
-    """Load OpenLDAP entries fixture data."""
-    fixture_content: str = u.Tests.load(
-        c.Tests.OPENLDAP,
-        c.Tests.ENTRIES,
-    )
-    return fixture_content
-
-
-@pytest.fixture
-def openldap_integration_fixture() -> str:
-    """Load OpenLDAP integration fixture data."""
-    fixture_content: str = u.Tests.load(
-        c.Tests.OPENLDAP,
-        c.Tests.INTEGRATION,
-    )
-    return fixture_content
-
-
-@pytest.fixture
-def openldap_schema_entries(
-    api: p.Ldif.LdifClient,
-    openldap_schema_fixture: str,
-) -> t.SequenceOf[m.Ldif.Entry]:
-    """Parse OpenLDAP schema fixture into Entry models."""
-    parse_response: m.Ldif.ParseResponse = u.Tests.assert_success(
-        api.parse_ldif(openldap_schema_fixture),
-        error_msg="OpenLDAP schema parsing failed",
-    )
-    return parse_response.entries
-
-
-@pytest.fixture
-def openldap_entries(
-    api: p.Ldif.LdifClient,
-    openldap_entries_fixture: str,
-) -> t.SequenceOf[m.Ldif.Entry]:
-    """Parse OpenLDAP entries fixture into Entry models."""
-    parse_response: m.Ldif.ParseResponse = u.Tests.assert_success(
-        api.parse_ldif(openldap_entries_fixture),
-        error_msg="OpenLDAP entries parsing failed",
-    )
-    return parse_response.entries
-
-
-@pytest.fixture
-def rfc_schema_fixture() -> str:
-    """Load RFC reference schema fixture data."""
-    fixture_content: str = u.Tests.load(c.Tests.RFC, c.Tests.SCHEMA)
-    return fixture_content
-
-
-@pytest.fixture
-def rfc_schema_entries(
-    api: p.Ldif.LdifClient,
-    rfc_schema_fixture: str,
-) -> t.SequenceOf[m.Ldif.Entry]:
-    """Parse RFC schema fixture into Entry models."""
-    parse_response: m.Ldif.ParseResponse = u.Tests.assert_success(
-        api.parse_ldif(rfc_schema_fixture),
-        error_msg="RFC schema parsing failed",
-    )
-    return parse_response.entries
-
-
-@pytest.fixture
-def all_schema_fixtures() -> t.StrMapping:
-    """Provide all schema fixtures by server type."""
-    return _fixtures_for_kind(c.Tests.SCHEMA)
-
-
-@pytest.fixture
-def all_entries_fixtures() -> t.StrMapping:
-    """Provide all entries fixtures by server type."""
-    return _fixtures_for_kind(c.Tests.ENTRIES)
-
-
-@pytest.fixture
-def all_acl_fixtures() -> t.StrMapping:
-    """Provide all ACL fixtures by server type."""
-    return _fixtures_for_kind(c.Tests.ACL)
-
-
-@pytest.fixture
-def all_integration_fixtures() -> t.StrMapping:
-    """Provide all integration fixtures by server type."""
-    return _fixtures_for_kind(c.Tests.INTEGRATION)
-
-
-@pytest.fixture
-def tmp_ldif_path(tmp_path: Path) -> Path:
-    """Create temporary LDIF file path."""
-    return tmp_path / "test_output.ldif"
 
 
 @pytest.fixture
@@ -394,12 +197,7 @@ def oud_acl_server(
 
 @pytest.fixture(scope="session")
 def ldap_container(worker_id: str) -> t.JsonMapping:
-    """Ensure shared OpenLDAP container is available for integration tests.
-
-    Uses centralized infrastructure: c.Tests.Tests for constants,
-    u.Tests.FileLock for locking, u.Tests.get_admin_credentials
-    for credential resolution.
-    """
+    """Ensure shared OpenLDAP container is available for integration tests."""
     docker_control = u.Tests.get_docker_control(worker_id)
     server_url = f"ldap://localhost:{c.Tests.DOCKER_PORT}"
     lock = u.Tests.FileLock(
@@ -412,7 +210,6 @@ def ldap_container(worker_id: str) -> t.JsonMapping:
                 f"Could not start shared OpenLDAP container: {execute_result.error}",
             )
         admin_dn, admin_password = u.Tests.get_admin_credentials()
-        # Verify LDAP bind readiness
         waited = 0.0
         max_wait = 10.0
         last_error: str | None = None
@@ -456,12 +253,6 @@ def ldap_container(worker_id: str) -> t.JsonMapping:
         "use_ssl": False,
         "worker_id": worker_id,
     }
-
-
-@pytest.fixture(scope="session")
-def ldap_container_shared(ldap_container: t.JsonMapping) -> str:
-    """Provide LDAP connection URL for tests requiring Docker container."""
-    return str(ldap_container["server_url"])
 
 
 @pytest.fixture
@@ -560,19 +351,3 @@ def clean_test_ou(
         dns_to_delete2: t.StrSequence = [str(entry.entry_dn) for entry in entries2]
         for dn in reversed(dns_to_delete2):
             ldap_connection.delete(dn)
-
-
-def pytest_configure(config: pytest.Config) -> None:
-    """Configure pytest with custom markers."""
-    config.addinivalue_line("markers", "unit: marks tests as unit tests")
-    config.addinivalue_line("markers", "integration: marks tests as integration tests")
-    config.addinivalue_line("markers", "ldif: marks tests as LDIF-specific tests")
-    config.addinivalue_line("markers", "docker: marks tests that require Docker")
-    config.addinivalue_line("markers", "slow: marks tests as slow tests")
-    config.addinivalue_line("markers", "real: marks tests using real functionality")
-
-
-@pytest.fixture(scope="session")
-def flext_ldif() -> p.Ldif.LdifClient:
-    """Provide ldif instance for tests."""
-    return ldif()
