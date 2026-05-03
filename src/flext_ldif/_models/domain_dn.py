@@ -6,14 +6,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import re
 from collections.abc import (
     MutableMapping,
 )
 from typing import Annotated, ClassVar, Self, override
 
 from flext_cli import m, u
-from flext_ldif import FlextLdifModelsMetadata as mdm, c, p, r, t
+from flext_ldif import FlextLdifModelsMetadata as mdm, p, r, t
 
 
 class FlextLdifModelsDomainDN:
@@ -156,10 +155,6 @@ class FlextLdifModelsDomainDN:
                 description="Server-specific metadata for preserving original format",
             ),
         ] = u.Field(default_factory=mdm.EntryMetadata)
-        _DN_COMPONENT_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
-            c.Ldif.DN_COMPONENT,
-            re.IGNORECASE,
-        )
 
         @override
         def __str__(self) -> str:

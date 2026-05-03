@@ -231,6 +231,27 @@ class FlextLdifConstantsBase:
         flags = re.IGNORECASE if ignorecase else 0
         return re.compile(pattern, flags=flags)
 
+    @staticmethod
+    def escape_pattern(value: str) -> str:
+        """Escape special regex metacharacters in ``value``.
+
+        Sole sanctioned ``re.escape`` entry-point for non-constant strings.
+        """
+        return re.escape(value)
+
+    @staticmethod
+    def sub_pattern(
+        pattern: str, replacement: str, value: str, *, ignorecase: bool = False
+    ) -> str:
+        """Substitute matches of a runtime-supplied regex pattern in ``value``.
+
+        Sole sanctioned ``re.sub`` entry-point for runtime patterns; the
+        compiled pattern is built via ``compile_pattern`` and re-used.
+        """
+        return FlextLdifConstantsBase.compile_pattern(
+            pattern, ignorecase=ignorecase
+        ).sub(replacement, value)
+
     # Schema metadata keys
     SCHEMA_ORIGINAL_FORMAT: Final[str] = "schema_original_format"
     SCHEMA_ORIGINAL_STRING_COMPLETE: Final[str] = "schema_original_string_complete"

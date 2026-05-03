@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from collections.abc import (
     MutableMapping,
 )
@@ -122,7 +121,7 @@ class FlextLdifUtilitiesACL:
         return None
 
     @staticmethod
-    def _extract_from_match(match: re.Match[str], group: int) -> str | None:
+    def _extract_from_match(match: t.Ldif.RegexMatch, group: int) -> str | None:
         """Extract group from regex match."""
         if match.lastindex is None:
             return match.group(0)
@@ -157,7 +156,7 @@ class FlextLdifUtilitiesACL:
         default_name: str,
     ) -> tuple[str, str]:
         """Extract version and ACL name from content."""
-        version_match = re.search(version_pattern, aci_content)
+        version_match = c.Ldif.compile_pattern(version_pattern).search(aci_content)
         version: str = (
             version_match.group(1)
             if version_match
@@ -324,7 +323,7 @@ class FlextLdifUtilitiesACL:
         patterns = bind_patterns or default_patterns
         all_bind_rules: t.MutableSequenceOf[t.MutableStrMapping] = []
         for bind_type, pattern in dict(patterns).items():
-            matches = re.findall(pattern, content, re.IGNORECASE)
+            matches = c.Ldif.compile_pattern(pattern, ignorecase=True).findall(content)
             all_bind_rules.extend([
                 {"type": bind_type, "value": match} for match in matches
             ])
@@ -399,7 +398,7 @@ class FlextLdifUtilitiesACL:
         """
         if not content or not pattern:
             return None
-        match = re.search(pattern, content)
+        match = c.Ldif.compile_pattern(pattern).search(content)
         return (
             FlextLdifUtilitiesACL._extract_from_match(match, group) if match else None
         )
@@ -426,7 +425,9 @@ class FlextLdifUtilitiesACL:
         if not content or not allow_deny_pattern:
             return []
         permissions: t.MutableSequenceOf[str] = []
-        matches = re.finditer(allow_deny_pattern, content, re.IGNORECASE)
+        matches = c.Ldif.compile_pattern(allow_deny_pattern, ignorecase=True).finditer(
+            content
+        )
         min_groups_for_action = 1
         min_groups_for_ops = 2
         for match in matches:

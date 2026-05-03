@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 import string
 from collections.abc import (
     Callable,
@@ -179,8 +178,8 @@ class FlextLdifUtilitiesDN:
             transform_type,
             flag_name,
         ) in transform_rules:
-            if re.search(detect_pattern, result):
-                result = re.sub(replace_pattern, replacement, result)
+            if c.Ldif.compile_pattern(detect_pattern).search(result):
+                result = c.Ldif.sub_pattern(replace_pattern, replacement, result)
                 transformations.append(transform_type)
                 if flag_name:
                     flags[flag_name] = True
@@ -375,7 +374,7 @@ class FlextLdifUtilitiesDN:
         try:
             result = dn_str
             for pattern, replacement in patterns:
-                result = re.sub(pattern, replacement, result)
+                result = c.Ldif.sub_pattern(pattern, replacement, result)
             return result
         except c.Ldif.EXC_LDIF_PARSE:
             return dn_str
@@ -863,19 +862,13 @@ class FlextLdifUtilitiesDN:
             return dn_str
         norm_result = FlextLdifUtilitiesDN.norm(dn_str)
         normalized_dn = norm_result.map_or(dn_str)
-        source_escaped = re.escape(source_dn)
-        result = re.sub(
-            f",{source_escaped}$",
-            f",{target_dn}",
-            normalized_dn,
-            flags=re.IGNORECASE,
+        source_escaped = c.Ldif.escape_pattern(source_dn)
+        result = c.Ldif.sub_pattern(
+            f",{source_escaped}$", f",{target_dn}", normalized_dn, ignorecase=True
         )
         if result == normalized_dn:
-            result = re.sub(
-                f"^{source_escaped}$",
-                target_dn,
-                normalized_dn,
-                flags=re.IGNORECASE,
+            result = c.Ldif.sub_pattern(
+                f"^{source_escaped}$", target_dn, normalized_dn, ignorecase=True
             )
         return result
 
@@ -1006,11 +999,11 @@ class FlextLdifUtilitiesDN:
     @staticmethod
     def _transform_ldif_content(content: str, source_dn: str, target_dn: str) -> str:
         """Transform all DN references in raw LDIF content string."""
-        return re.sub(
-            re.escape(source_dn),
+        return c.Ldif.sub_pattern(
+            c.Ldif.escape_pattern(source_dn),
             target_dn,
             content,
-            flags=re.IGNORECASE,
+            ignorecase=True,
         )
 
     @staticmethod

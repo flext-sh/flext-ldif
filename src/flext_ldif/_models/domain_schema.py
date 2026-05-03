@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import re
 from typing import Annotated, Self
 
 from flext_cli import u
@@ -247,8 +246,7 @@ class FlextLdifModelsDomainSchema:
             if not oid or not oid.strip():
                 return None
             try:
-                oid_pattern = re.compile(c.Ldif.NUMERIC_OID_PATTERN)
-                if not oid_pattern.match(oid):
+                if not c.Ldif.NUMERIC_OID_RE.match(oid):
                     return None
                 oid_to_name = dict(c.Ldif.OID_TO_NAME)
                 name = oid_to_name.get(oid)
