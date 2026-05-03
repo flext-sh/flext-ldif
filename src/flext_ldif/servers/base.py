@@ -196,7 +196,9 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         def is_valid_server_class(mro_cls: type[t.JsonValue]) -> bool:
             """Check if MRO class is a valid server class with PRIORITY."""
             result: bool
-            if not mro_cls.__name__.startswith("FlextLdifServers") or mro_cls.__name__.endswith(("Schema", "Acl", "Entry")):
+            if not mro_cls.__name__.startswith(
+                "FlextLdifServers"
+            ) or mro_cls.__name__.endswith(("Schema", "Acl", "Entry")):
                 result = False
             else:
                 constants = getattr(mro_cls, "Constants", None)
@@ -234,23 +236,24 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
 
         def is_valid_server_class(mro_cls: type[t.JsonValue]) -> bool:
             """Check if MRO class is a valid server class with SERVER_TYPE."""
-            if not mro_cls.__name__.startswith("FlextLdifServers"):
-                return False
-            if mro_cls.__name__.endswith(("Schema", "Acl", "Entry")):
-                return False
-            constants = getattr(mro_cls, "Constants", None)
-            server_type = getattr(constants, "SERVER_TYPE", None)
-            return isinstance(server_type, str)
+            result: bool
+            if not mro_cls.__name__.startswith("FlextLdifServers") or mro_cls.__name__.endswith(("Schema", "Acl", "Entry")):
+                result = False
+            else:
+                constants = getattr(mro_cls, "Constants", None)
+                server_type = getattr(constants, "SERVER_TYPE", None)
+                result = isinstance(server_type, str)
+            return result
 
         def extract_server_type(mro_cls: type[t.JsonValue]) -> str | None:
             """Extract server type if it's a valid string."""
+            result: str | None = None
             constants = getattr(mro_cls, "Constants", None)
-            if constants is None:
-                return None
-            server_type = getattr(constants, "SERVER_TYPE", None)
-            if isinstance(server_type, str):
-                return server_type
-            return None
+            if constants is not None:
+                server_type = getattr(constants, "SERVER_TYPE", None)
+                if isinstance(server_type, str):
+                    result = server_type
+            return result
 
         server_type = next(
             (
