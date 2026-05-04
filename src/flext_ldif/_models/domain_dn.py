@@ -12,7 +12,7 @@ from collections.abc import (
 from typing import Annotated, ClassVar, Self, override
 
 from flext_cli import m, u
-from flext_ldif import FlextLdifModelsMetadata as mdm, p, r, t
+from flext_ldif import FlextLdifModelsMetadata as mdm, c, p, r, t
 
 
 class FlextLdifModelsDomainDN:
@@ -155,6 +155,28 @@ class FlextLdifModelsDomainDN:
                 description="Server-specific metadata for preserving original format",
             ),
         ] = u.Field(default_factory=mdm.EntryMetadata)
+
+        @u.field_validator("value", mode="after")
+        @classmethod
+        def _validate_dn_components(cls, value: str) -> str:
+            """Validate every RDN component against RFC 4514 § 2.3 syntax.
+
+            An empty value is accepted (canonical empty DN). For non-empty
+            values, every comma-separated component must satisfy
+            ``c.Ldif.DN_COMPONENT_RE`` (``attr=value`` shape with optional
+            backslash-escapes). Invalid components raise ``ValueError`` so
+            Pydantic surfaces a structured ``ValidationError``.
+            """
+            if not value:
+                return value
+            for component in (comp.strip() for comp in value.split(",") if comp.strip()):
+                if not c.Ldif.DN_COMPONENT_RE.match(component):
+                    msg = (
+                        f"RFC 4514 § 2.3: invalid DN component {component!r} "
+                        f"in DN {value!r}"
+                    )
+                    raise ValueError(msg)
+            return value
 
         @override
         def __str__(self) -> str:
