@@ -219,6 +219,9 @@ class FlextLdifConstantsBase:
     LDIF_OBJECTCLASSES_PREFIX_RE: ClassVar[re.Pattern[str]] = re.compile(
         r"(objectclasses|objectClasses):", re.IGNORECASE
     )
+    ACI_MACRO_RE: ClassVar[re.Pattern[str]] = re.compile(
+        r"\(\$dn\)|\[\$dn\]|\(\$attr\."
+    )
 
     @staticmethod
     def compile_pattern(pattern: str, *, ignorecase: bool = False) -> re.Pattern[str]:

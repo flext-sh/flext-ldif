@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import re
 from collections.abc import Callable, Mapping, MutableSequence
 
 from flext_ldif import (
@@ -155,7 +154,7 @@ class FlextLdifServersOudAciMixin:
         acl_metadata_extensions: t.Ldif.MutableMetadataInputMapping,
     ) -> p.Result[bool]:
         """Process single ACI value, extract metadata, return has_macros flag."""
-        has_macros = bool(re.search(r"\(\$dn\)|\[\$dn\]|\(\$attr\.", aci_value))
+        has_macros = bool(c.Ldif.ACI_MACRO_RE.search(aci_value))
         validation_result = FlextLdifServersOudAciMixin._validate_aci_macros(aci_value)
         if validation_result.failure:
             return r[bool].fail_op("ACI macro validation", validation_result.error)

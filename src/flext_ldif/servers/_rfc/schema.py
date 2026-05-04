@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from collections.abc import (
     Mapping,
     MutableMapping,
@@ -302,9 +301,11 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 detection_names=oc_names,
             )
             return matches_server_patterns
-        if re.search(oid_pattern, oc_definition):
+        if c.Ldif.compile_pattern(oid_pattern).search(oc_definition):
             return True
-        name_matches = re.findall(name_regex, oc_definition, re.IGNORECASE)
+        name_matches = c.Ldif.compile_pattern(name_regex, ignorecase=True).findall(
+            oc_definition
+        )
         return any(name.lower() in oc_names for name in name_matches)
 
     def create_metadata(
@@ -702,11 +703,11 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                         )
                         attr_types_lower = c.Ldif.ATTRIBUTE_TYPES.lower()
                         if attr_types_lower in transformed_str.lower():
-                            transformed_str = re.sub(
+                            transformed_str = c.Ldif.sub_pattern(
                                 f"{attr_types_lower}:",
                                 f"{attr_case}:",
                                 transformed_str,
-                                flags=re.IGNORECASE,
+                                ignorecase=True,
                             )
                 return r[str].ok(
                     self._ensure_x_origin(transformed_str, attr_transformed.metadata),
