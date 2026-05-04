@@ -1,0 +1,28 @@
+src/flext_ldif/_constants/base.py
+  26f224f147ec0d09 222-224
+src/flext_ldif/servers/_rfc/schema.py
+  26f224f147ec0d09 304,306-308,706,710
+src/flext_ldif/servers/_oud/aci.py
+  26f224f147ec0d09 157
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "2b92b50ade35822af6d98e931c2f7c99b306c1a2",
+  "prompts": {
+    "26f224f147ec0d09": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "af795733-b18d-4c66-a653-6ff9466111c6",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 24,
+      "total_deletions": 30,
+      "accepted_lines": 24,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/e55e787c904df2fa65f62cedf3d6971c02271920118854bc5d9d58dd4e34fdcc"
+    }
+  }
+}
