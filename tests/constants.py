@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
 from types import MappingProxyType
 from typing import Final, Literal
@@ -232,9 +231,8 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             "{objectclass}: {subschema}\n"
             "{cn}: subschemasubentry\n"
         )
-        MIGRATION_ACI_LINE_REGEX: Final[re.Pattern[str]] = re.compile(
-            r"(^|\\n)aci:",
-            re.MULTILINE,
+        MIGRATION_ACI_LINE_REGEX: Final[t.Ldif.RegexPattern] = c.Ldif.compile_pattern(
+            r"(^|\\n)aci:", multiline=True
         )
         MIGRATION_BOOLEAN_CASES: Final[t.MappingKV[str, tuple[str, str, str, str]]] = (
             MappingProxyType(
@@ -291,7 +289,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
         WRITER_OUTPUT_FILENAME: Final[str] = "writer_output.ldif"
         WRITER_BLOCKING_PARENT_NAME: Final[str] = "blocking_parent"
         WRITER_DIRECTORY_TARGET_NAME: Final[str] = "dir_target"
-        WRITER_OUTPUT_REGEX: Final[re.Pattern[str]] = re.compile(
+        WRITER_OUTPUT_REGEX: Final[t.Ldif.RegexPattern] = c.Ldif.compile_pattern(
             r"(?m)^dn:\s+cn=writer-[a-z]+,dc=example,dc=com$",
         )
         WRITER_INVALID_UTF8_BYTES: Final[bytes] = b"\xff\xfe\xfd"
@@ -471,7 +469,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             "member: cn=user5,dc=example,dc=com\n"
             "objectClass: groupOfNames\n\n"
         )
-        EDGE_CASE_NON_ASCII_REGEX: Final[re.Pattern[str]] = re.compile(
+        EDGE_CASE_NON_ASCII_REGEX: Final[t.Ldif.RegexPattern] = c.Ldif.compile_pattern(
             r"[^\x00-\x7F]",
         )
         EDGE_CASE_LARGE_MULTIVALUE_FIXTURE_RELATIVE: Final[Path] = (

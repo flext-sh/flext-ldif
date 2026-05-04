@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-import re
-
 from flext_tests import tm
 
-from tests import u
+from tests import c, u
 
 
 class TestsFlextLdifOidUtilities:
@@ -22,7 +20,7 @@ class TestsFlextLdifOidUtilities:
     def test_matches_pattern_returns_false_for_missing_oid(self) -> None:
         result = u.Ldif.matches_pattern(
             "( NAME 'cn' DESC 'no oid' )",
-            re.compile(r"^1\.2\.3$"),
+            c.Ldif.compile_pattern(r"^1\.2\.3$"),
         )
 
         tm.that(result, eq=False)

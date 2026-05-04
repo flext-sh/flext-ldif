@@ -224,14 +224,26 @@ class FlextLdifConstantsBase:
     )
 
     @staticmethod
-    def compile_pattern(pattern: str, *, ignorecase: bool = False) -> re.Pattern[str]:
+    def compile_pattern(
+        pattern: str,
+        *,
+        ignorecase: bool = False,
+        multiline: bool = False,
+        dotall: bool = False,
+    ) -> re.Pattern[str]:
         """Compile a runtime-supplied regex pattern.
 
         Sole sanctioned ``re.compile`` entry-point for non-constant patterns
         (e.g. user-supplied DN filters). Consumer modules MUST call this
         instead of importing ``re`` directly.
         """
-        flags = re.IGNORECASE if ignorecase else 0
+        flags = 0
+        if ignorecase:
+            flags |= re.IGNORECASE
+        if multiline:
+            flags |= re.MULTILINE
+        if dotall:
+            flags |= re.DOTALL
         return re.compile(pattern, flags=flags)
 
     @staticmethod

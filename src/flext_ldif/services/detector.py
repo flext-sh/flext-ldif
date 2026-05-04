@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
 from typing import override
 
@@ -277,7 +276,7 @@ class FlextLdifDetector(s):
             return
         search_content = content if case_sensitive else content_lower
         self._add_pattern_if_match(
-            condition=bool(re.search(pattern, search_content)),
+            condition=bool(c.Ldif.compile_pattern(pattern).search(search_content)),
             description=description,
             patterns=patterns,
         )
@@ -315,7 +314,7 @@ class FlextLdifDetector(s):
         pattern = getattr(constants, pattern_attr, None) if constants else None
         if pattern and isinstance(pattern, str):
             self._add_pattern_if_match(
-                condition=bool(re.search(pattern, content_lower)),
+                condition=bool(c.Ldif.compile_pattern(pattern).search(content_lower)),
                 description=description,
                 patterns=patterns,
             )
@@ -421,10 +420,9 @@ class FlextLdifDetector(s):
         tivoli_constants = self._get_server_constants(tivoli_server_type)
         if tivoli_constants:
             tivoli_pattern = getattr(tivoli_constants, "DETECTION_PATTERN", None)
-            if tivoli_pattern is not None and re.search(
-                str(tivoli_pattern),
-                content_lower,
-            ):
+            if tivoli_pattern is not None and c.Ldif.compile_pattern(
+                str(tivoli_pattern)
+            ).search(content_lower):
                 patterns.append("IBM Tivoli attributes (ibm-*, tivoli, ldapdb)")
         return patterns
 
@@ -470,7 +468,7 @@ class FlextLdifDetector(s):
         if not pattern:
             return
         weight = getattr(constants, "DETECTION_WEIGHT", 6) if constants else 6
-        if re.search(str(pattern), content_lower):
+        if c.Ldif.compile_pattern(str(pattern)).search(content_lower):
             scores[server_type] += weight
 
     def _update_server_scores(
@@ -488,7 +486,7 @@ class FlextLdifDetector(s):
     ) -> None:
         """Update scores for a server type based on pattern, attribute, and objectClass matches."""
         search_content = content if case_sensitive else content_lower
-        if re.search(pattern, search_content) and server_type:
+        if c.Ldif.compile_pattern(pattern).search(search_content) and server_type:
             scores[server_type] += weight
         score_attr_match = u.Ldif.get_attribute_match_score()
         for item in (*attributes, *(objectclasses or [])):

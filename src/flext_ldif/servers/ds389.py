@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from typing import ClassVar, override
 
 from flext_ldif import (
@@ -49,6 +48,9 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             | frozenset(["proxy", "all"])
         )
         DETECTION_OID_PATTERN: ClassVar[str] = "2\\.16\\.840\\.1\\.113730\\."
+        DETECTION_OID_PATTERN_RE: ClassVar[t.Ldif.RegexPattern] = (
+            c.Ldif.compile_pattern(DETECTION_OID_PATTERN)
+        )
         DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
             "nsslapd-",
             "nsds",
@@ -94,13 +96,34 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             "nsds7DirectoryReplicaSubentry",
         ])
         SCHEMA_ATTRIBUTE_NAME_REGEX: ClassVar[str] = "NAME\\s+['\\\"]([\\w-]+)['\\\"]"
+        SCHEMA_ATTRIBUTE_NAME_RE: ClassVar[t.Ldif.RegexPattern] = (
+            c.Ldif.compile_pattern(SCHEMA_ATTRIBUTE_NAME_REGEX, ignorecase=True)
+        )
         SCHEMA_OBJECTCLASS_NAME_REGEX: ClassVar[str] = "NAME\\s+['\\\"](\\w+)['\\\"]"
+        SCHEMA_OBJECTCLASS_NAME_RE: ClassVar[t.Ldif.RegexPattern] = (
+            c.Ldif.compile_pattern(SCHEMA_OBJECTCLASS_NAME_REGEX, ignorecase=True)
+        )
         ACL_CLAUSE_PATTERN: ClassVar[str] = "\\([^()]+\\)"
         ACL_NAME_PATTERN: ClassVar[str] = 'acl\\s+\\"([^\\"]+)\\"'
+        ACL_NAME_RE: ClassVar[t.Ldif.RegexPattern] = c.Ldif.compile_pattern(
+            ACL_NAME_PATTERN, ignorecase=True
+        )
         ACL_ALLOW_PATTERN: ClassVar[str] = "allow\\s*\\(([^)]+)\\)"
+        ACL_ALLOW_RE: ClassVar[t.Ldif.RegexPattern] = c.Ldif.compile_pattern(
+            ACL_ALLOW_PATTERN, ignorecase=True
+        )
         ACL_TARGETATTR_PATTERN: ClassVar[str] = 'targetattr\\s*=\\s*\\"([^\\"]+)\\"'
+        ACL_TARGETATTR_RE: ClassVar[t.Ldif.RegexPattern] = c.Ldif.compile_pattern(
+            ACL_TARGETATTR_PATTERN, ignorecase=True
+        )
         ACL_USERDN_PATTERN: ClassVar[str] = 'userdn\\s*=\\s*\\"([^\\"]+)\\"'
+        ACL_USERDN_RE: ClassVar[t.Ldif.RegexPattern] = c.Ldif.compile_pattern(
+            ACL_USERDN_PATTERN, ignorecase=True
+        )
         ACL_TARGET_PATTERN: ClassVar[str] = 'target\\s*=\\s*\\"([^\\"]+)\\"'
+        ACL_TARGET_RE: ClassVar[t.Ldif.RegexPattern] = c.Ldif.compile_pattern(
+            ACL_TARGET_PATTERN, ignorecase=True
+        )
         ACL_DEFAULT_NAME: ClassVar[str] = "389 DS ACL"
         ACL_TARGET_DN_PREFIX: ClassVar[str] = "dn:"
         ACL_ANONYMOUS_SUBJECT: ClassVar[str] = "ldap:///anyone"
@@ -140,15 +163,14 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                     use_prefix_match=True,
                 )
                 return matches
-            if re.search(
-                FlextLdifServersDs389.Constants.DETECTION_OID_PATTERN,
-                attr_definition,
+            if FlextLdifServersDs389.Constants.DETECTION_OID_PATTERN_RE.search(
+                attr_definition
             ):
                 return True
-            name_match = re.search(
-                FlextLdifServersDs389.Constants.SCHEMA_ATTRIBUTE_NAME_REGEX,
-                attr_definition,
-                re.IGNORECASE,
+            name_match = (
+                FlextLdifServersDs389.Constants.SCHEMA_ATTRIBUTE_NAME_RE.search(
+                    attr_definition
+                )
             )
             if name_match:
                 attr_name = name_match.group(1).lower()
@@ -171,15 +193,14 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                     detection_names=FlextLdifServersDs389.Constants.DETECTION_OBJECTCLASS_NAMES,
                 )
                 return matches
-            if re.search(
-                FlextLdifServersDs389.Constants.DETECTION_OID_PATTERN,
-                oc_definition,
+            if FlextLdifServersDs389.Constants.DETECTION_OID_PATTERN_RE.search(
+                oc_definition
             ):
                 return True
-            name_match = re.search(
-                FlextLdifServersDs389.Constants.SCHEMA_OBJECTCLASS_NAME_REGEX,
-                oc_definition,
-                re.IGNORECASE,
+            name_match = (
+                FlextLdifServersDs389.Constants.SCHEMA_OBJECTCLASS_NAME_RE.search(
+                    oc_definition
+                )
             )
             if name_match:
                 oc_name = name_match.group(1).lower()
@@ -329,15 +350,11 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             try:
                 attr_name, content = u.Ldif.split_acl_line(acl_line)
                 _ = attr_name
-                acl_name_match = re.search(
-                    FlextLdifServersDs389.Constants.ACL_NAME_PATTERN,
-                    content,
-                    re.IGNORECASE,
+                acl_name_match = FlextLdifServersDs389.Constants.ACL_NAME_RE.search(
+                    content
                 )
-                permissions_match = re.search(
-                    FlextLdifServersDs389.Constants.ACL_ALLOW_PATTERN,
-                    content,
-                    re.IGNORECASE,
+                permissions_match = FlextLdifServersDs389.Constants.ACL_ALLOW_RE.search(
+                    content
                 )
                 permissions: t.MutableSequenceOf[str] = (
                     [
@@ -349,15 +366,11 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                     if permissions_match
                     else []
                 )
-                target_attr_match = re.search(
-                    FlextLdifServersDs389.Constants.ACL_TARGETATTR_PATTERN,
-                    content,
-                    re.IGNORECASE,
+                target_attr_match = (
+                    FlextLdifServersDs389.Constants.ACL_TARGETATTR_RE.search(content)
                 )
-                userdn_matches = re.findall(
-                    FlextLdifServersDs389.Constants.ACL_USERDN_PATTERN,
-                    content,
-                    re.IGNORECASE,
+                userdn_matches = FlextLdifServersDs389.Constants.ACL_USERDN_RE.findall(
+                    content
                 )
                 target_attributes: t.MutableSequenceOf[str] = []
                 if target_attr_match:
@@ -369,10 +382,8 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                         attr.strip() for attr in attr_string.split() if attr.strip()
                     ]
                 target_dn = "*"
-                target_match = re.search(
-                    FlextLdifServersDs389.Constants.ACL_TARGET_PATTERN,
+                target_match = FlextLdifServersDs389.Constants.ACL_TARGET_RE.search(
                     content,
-                    re.IGNORECASE,
                 )
                 if target_match:
                     target_clause = target_match.group(1)
