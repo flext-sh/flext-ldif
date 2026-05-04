@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from enum import StrEnum, unique
 from types import MappingProxyType
 from typing import ClassVar
@@ -201,6 +202,18 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
     ACL_TARGET_ATTR_OID_EXTRACT: ClassVar[str] = "attr\\s*=\\s*\\(([^)]+)\\)"
     ACL_PERMS_EXTRACT_OID: ClassVar[str] = (
         "\\s\\(([^()]+)\\)(?:\\s*(?:filter=|added_object | bindmode|Deny | Append|bindip | constrain|$))"
+    )
+    ACL_TARGET_DN_EXTRACT_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
+        ACL_TARGET_DN_EXTRACT,
+        re.IGNORECASE,
+    )
+    ACL_TARGET_ATTR_OID_EXTRACT_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
+        ACL_TARGET_ATTR_OID_EXTRACT,
+        re.IGNORECASE,
+    )
+    ACL_PERMS_EXTRACT_OID_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
+        ACL_PERMS_EXTRACT_OID,
+        re.IGNORECASE,
     )
     ONE_OID: ClassVar[str] = c.Ldif.OID_TRUE
     ZERO_OID: ClassVar[str] = c.Ldif.OID_FALSE

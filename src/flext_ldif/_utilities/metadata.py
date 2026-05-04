@@ -201,7 +201,9 @@ class FlextLdifUtilitiesMetadata:
             details["desc_value"] = desc_match.group(2)
             desc_pos = definition.find("DESC")
             if desc_pos >= 0:
-                before_match = c.Ldif.WHITESPACE_TRAILING_RE.search(definition[:desc_pos])
+                before_match = c.Ldif.WHITESPACE_TRAILING_RE.search(
+                    definition[:desc_pos]
+                )
                 details["desc_spacing_before"] = (
                     before_match.group(1) if before_match else ""
                 )
@@ -449,7 +451,9 @@ class FlextLdifUtilitiesMetadata:
             details["sup_value"] = sup_match.group(1)
             sup_pos = definition.find("SUP")
             if sup_pos >= 0:
-                before_match = c.Ldif.WHITESPACE_TRAILING_RE.search(definition[:sup_pos])
+                before_match = c.Ldif.WHITESPACE_TRAILING_RE.search(
+                    definition[:sup_pos]
+                )
                 details["sup_spacing_before"] = (
                     before_match.group(1) if before_match else ""
                 )

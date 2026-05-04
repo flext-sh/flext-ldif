@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from types import MappingProxyType
 from typing import ClassVar, override
 
@@ -120,34 +121,37 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             "inetOrgPerson",
         ])
         SCHEMA_OPENLDAP_OLC_PATTERN: ClassVar[str] = "\\bolc[A-Z][a-zA-Z]*\\b"
-        SCHEMA_OPENLDAP_OLC_RE: ClassVar[t.Ldif.RegexPattern] = (
-            c.Ldif.compile_pattern(SCHEMA_OPENLDAP_OLC_PATTERN, ignorecase=True)
+        SCHEMA_OPENLDAP_OLC_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
+            SCHEMA_OPENLDAP_OLC_PATTERN,
+            re.IGNORECASE,
         )
         ACL_BY_PATTERN: ClassVar[str] = "by\\s+([^\\s]+)\\s+([^\\s]+)"
-        ACL_BY_RE: ClassVar[t.Ldif.RegexPattern] = c.Ldif.compile_pattern(
-            ACL_BY_PATTERN, ignorecase=True
+        ACL_BY_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
+            ACL_BY_PATTERN,
+            re.IGNORECASE,
         )
         ACL_DEFAULT_NAME: ClassVar[str] = "access"
         ACL_INDEX_PATTERN: ClassVar[str] = "^\\{(\\d+)\\}\\s*(.+)"
-        ACL_INDEX_RE: ClassVar[t.Ldif.RegexPattern] = c.Ldif.compile_pattern(
-            ACL_INDEX_PATTERN
-        )
+        ACL_INDEX_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(ACL_INDEX_PATTERN)
         ACL_TO_BY_PATTERN: ClassVar[str] = "^to\\s+(.+?)\\s+by\\s+"
-        ACL_TO_BY_RE: ClassVar[t.Ldif.RegexPattern] = c.Ldif.compile_pattern(
-            ACL_TO_BY_PATTERN, ignorecase=True
+        ACL_TO_BY_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
+            ACL_TO_BY_PATTERN,
+            re.IGNORECASE,
         )
         ACL_ATTRS_PATTERN: ClassVar[str] = (
             "attrs?\\s*=\\s*([^,\\s]+(?:\\s*,\\s*[^,\\s]+)*)"
         )
-        ACL_ATTRS_RE: ClassVar[t.Ldif.RegexPattern] = c.Ldif.compile_pattern(
-            ACL_ATTRS_PATTERN, ignorecase=True
+        ACL_ATTRS_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
+            ACL_ATTRS_PATTERN,
+            re.IGNORECASE,
         )
         ACL_SUBJECT_TYPE_WHO: ClassVar[c.Ldif.AclSubjectType] = (
             c.Ldif.AclSubjectType.ALL
         )
         ACL_INDEX_PREFIX_PATTERN: ClassVar[str] = "^(\\{\\d+\\})?\\s*to\\s+"
-        ACL_INDEX_PREFIX_RE: ClassVar[t.Ldif.RegexPattern] = c.Ldif.compile_pattern(
-            ACL_INDEX_PREFIX_PATTERN, ignorecase=True
+        ACL_INDEX_PREFIX_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
+            ACL_INDEX_PREFIX_PATTERN,
+            re.IGNORECASE,
         )
         ACL_START_PREFIX: ClassVar[str] = "to"
         ACL_ATTRS_SEPARATOR: ClassVar[str] = ","
@@ -179,11 +183,10 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                     return True
                 return super().can_handle_attribute(attr_definition_str)
             oid_raw = getattr(attr_definition, "oid", None)
-            if (
-                isinstance(oid_raw, str)
-                and FlextLdifServersOpenldap.Constants.SCHEMA_OPENLDAP_OLC_RE.search(
-                    oid_raw
-                )
+            if isinstance(
+                oid_raw, str
+            ) and FlextLdifServersOpenldap.Constants.SCHEMA_OPENLDAP_OLC_RE.search(
+                oid_raw
             ):
                 return True
             return super().can_handle_attribute(attr_definition)
@@ -202,11 +205,10 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                     return True
                 return super().can_handle_objectclass(oc_definition_str)
             oid_raw = getattr(oc_definition, "oid", None)
-            if (
-                isinstance(oid_raw, str)
-                and FlextLdifServersOpenldap.Constants.SCHEMA_OPENLDAP_OLC_RE.search(
-                    oid_raw
-                )
+            if isinstance(
+                oid_raw, str
+            ) and FlextLdifServersOpenldap.Constants.SCHEMA_OPENLDAP_OLC_RE.search(
+                oid_raw
             ):
                 return True
             return super().can_handle_objectclass(oc_definition)

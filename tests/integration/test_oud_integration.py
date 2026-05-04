@@ -287,7 +287,7 @@ class TestsFlextLdifOudIntegration:
             assert len(entries2) == 1
             assert entries2[0].dn is not None
             parsed_dn = entries2[0].dn.value
-            split_re = c.Ldif.compile_pattern(r"\\s*,\\s*")
+            split_re = c.Ldif.DN_SPLIT_OPTIONAL_SPACE_RE
             original_rdns = split_re.split(original_dn)
             parsed_rdns = split_re.split(parsed_dn)
             assert len(original_rdns) == len(parsed_rdns), "RDN count mismatch"

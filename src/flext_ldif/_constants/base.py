@@ -222,6 +222,8 @@ class FlextLdifConstantsBase:
     ACI_MACRO_RE: ClassVar[re.Pattern[str]] = re.compile(
         r"\(\$dn\)|\[\$dn\]|\(\$attr\."
     )
+    ACL_NAME_QUOTED_RE: ClassVar[re.Pattern[str]] = re.compile(r'acl\s+"[^"]*"')
+    DN_SPLIT_OPTIONAL_SPACE_RE: ClassVar[re.Pattern[str]] = re.compile(r"\s*,\s*")
 
     @staticmethod
     def compile_pattern(

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import ClassVar, override
 
 from flext_ldif import FlextLdifServersRfc, c, m, p, r, t, u
@@ -30,8 +31,8 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             "modifyTimestamp",
         ])
         DETECTION_OID_PATTERN: ClassVar[str] = "2\\.16\\.840\\.1\\.113719\\."
-        DETECTION_OID_PATTERN_RE: ClassVar[t.Ldif.RegexPattern] = (
-            c.Ldif.compile_pattern("2\\.16\\.840\\.1\\.113719\\.")
+        DETECTION_OID_PATTERN_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
+            "2\\.16\\.840\\.1\\.113719\\."
         )
         DETECTION_PATTERN: ClassVar[str] = "2\\.16\\.840\\.1\\.113719\\."
         DETECTION_WEIGHT: ClassVar[int] = 6
@@ -77,8 +78,8 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             "ndsloginproperties",
         ])
         SCHEMA_ATTRIBUTE_NAME_REGEX: ClassVar[str] = "NAME\\s+\\(?\\s*'([^']+)'"
-        SCHEMA_ATTRIBUTE_NAME_RE: ClassVar[t.Ldif.RegexPattern] = (
-            c.Ldif.compile_pattern("NAME\\s+\\(?\\s*'([^']+)'", ignorecase=True)
+        SCHEMA_ATTRIBUTE_NAME_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
+            "NAME\\s+\\(?\\s*'([^']+)'", re.IGNORECASE
         )
         ACL_DEFAULT_SUBJECT_TYPE: ClassVar[str] = "trustee"
         ACL_DEFAULT_SUBJECT_VALUE_UNKNOWN: ClassVar[str] = c.Ldif.UNKNOWN_VALUE

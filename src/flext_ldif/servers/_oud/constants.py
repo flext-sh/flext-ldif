@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from types import MappingProxyType
 from typing import ClassVar
 
@@ -79,6 +80,12 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
     ACL_TIMEOFDAY_PATTERN: ClassVar[str] = 'timeofday\\s*([<>=!]+)\\s*"?(\\d+)"?'
     ACL_AUTHMETHOD_PATTERN: ClassVar[str] = 'authmethod\\s*=\\s*"?(\\w+)"?'
     ACL_SSF_PATTERN: ClassVar[str] = 'ssf\\s*([<>=!]+)\\s*"?(\\d+)"?'
+    ACL_TIMEOFDAY_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
+        ACL_TIMEOFDAY_PATTERN,
+    )
+    ACL_SSF_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
+        ACL_SSF_PATTERN,
+    )
     ACL_BIND_RULE_TUPLE_LENGTH: ClassVar[int] = 2
     ACL_BIND_RULES_CONFIG: ClassVar[tuple[tuple[str, str, str | None], ...]] = (
         ("bind_ip", 'ip="{value}"', None),

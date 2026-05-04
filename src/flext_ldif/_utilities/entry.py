@@ -297,8 +297,7 @@ class FlextLdifUtilitiesEntry:
                 invalid_options = [
                     f"RFC 4512 § 2.5.2: option '{option}' invalid syntax"
                     for option in parts[1:]
-                    if option
-                    and (not c.Ldif.ATTRIBUTE_NAME_RE.match(option))
+                    if option and (not c.Ldif.ATTRIBUTE_NAME_RE.match(option))
                 ]
                 violations.extend(invalid_options)
         return violations

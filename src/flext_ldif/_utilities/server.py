@@ -219,8 +219,7 @@ class FlextLdifUtilitiesServer:
         def check_oid_pattern(check_value: str | None) -> bool:
             """Check OID pattern match."""
             return bool(
-                check_value
-                and c.Ldif.compile_pattern(oid_pattern).search(check_value)
+                check_value and c.Ldif.compile_pattern(oid_pattern).search(check_value)
             )
 
         def check_name_in_set(name: str | None) -> bool:

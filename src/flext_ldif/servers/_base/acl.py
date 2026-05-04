@@ -274,7 +274,7 @@ class FlextLdifServersBaseSchemaAcl(
         self,
     ) -> p.Result[tuple[t.Ldif.RegexPattern, str]]:
         """Hook for server-specific ACL name pattern matching."""
-        pattern = c.Ldif.compile_pattern(r'acl\\s+"[^"]*"')
+        pattern = c.Ldif.ACL_NAME_QUOTED_RE
         replacement_template = 'acl "{0}"'
         return r[tuple[t.Ldif.RegexPattern, str]].ok((
             pattern,

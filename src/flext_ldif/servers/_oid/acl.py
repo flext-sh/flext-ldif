@@ -65,14 +65,10 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         target_dn: str | None = None
         attributes: t.MutableSequenceOf[str] = []
         patterns = FlextLdifServersOidConstants
-        target_match = c.Ldif.compile_pattern(
-            patterns.ACL_TARGET_DN_EXTRACT, ignorecase=True
-        ).search(content)
+        target_match = patterns.ACL_TARGET_DN_EXTRACT_RE.search(content)
         if target_match:
             target_dn = target_match.group(1)
-        attr_match = c.Ldif.compile_pattern(
-            patterns.ACL_TARGET_ATTR_OID_EXTRACT, ignorecase=True
-        ).search(content)
+        attr_match = patterns.ACL_TARGET_ATTR_OID_EXTRACT_RE.search(content)
         if attr_match:
             attr_str = attr_match.group(1)
             attributes = [a.strip() for a in attr_str.split(",")]
@@ -194,9 +190,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         """Parse OID ACL permissions clause."""
         permissions: t.MutableBoolMapping = {}
         const = FlextLdifServersOidConstants
-        perm_match = c.Ldif.compile_pattern(
-            const.ACL_PERMS_EXTRACT_OID, ignorecase=True
-        ).search(content)
+        perm_match = const.ACL_PERMS_EXTRACT_OID_RE.search(content)
         if perm_match:
             perms_str = perm_match.group(1)
             raw_perms = [p.strip() for p in perms_str.split(",")]

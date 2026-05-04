@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import (
     MutableMapping,
 )
@@ -32,26 +33,27 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["relaxed", "rfc"])
         ACL_FORMAT: ClassVar[str] = "rfc_generic"
         ACL_ATTRIBUTE_NAME: ClassVar[str] = "aci"
-        OID_PATTERN: ClassVar[t.Ldif.RegexPattern] = c.Ldif.compile_pattern(
+        OID_PATTERN: ClassVar[t.Ldif.RegexPattern] = re.compile(
             r"\(\s*([0-9a-zA-Z._\-]+)"
         )
         OID_NUMERIC_WITH_PAREN: ClassVar[str] = "\\(\\s*([0-9]+(?:\\.[0-9]+)+)"
-        OID_NUMERIC_WITH_PAREN_RE: ClassVar[t.Ldif.RegexPattern] = (
-            c.Ldif.compile_pattern("\\(\\s*([0-9]+(?:\\.[0-9]+)+)")
+        OID_NUMERIC_WITH_PAREN_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
+            OID_NUMERIC_WITH_PAREN
         )
         OID_NUMERIC_ANYWHERE: ClassVar[str] = "([0-9]+\\.[0-9]+(?:\\.[0-9]+)*)"
-        OID_NUMERIC_ANYWHERE_RE: ClassVar[t.Ldif.RegexPattern] = (
-            c.Ldif.compile_pattern("([0-9]+\\.[0-9]+(?:\\.[0-9]+)*)")
+        OID_NUMERIC_ANYWHERE_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
+            OID_NUMERIC_ANYWHERE
         )
         OID_ALPHANUMERIC_RELAXED: ClassVar[str] = "\\(\\s*([a-zA-Z0-9._-]+)"
-        OID_ALPHANUMERIC_RELAXED_RE: ClassVar[t.Ldif.RegexPattern] = (
-            c.Ldif.compile_pattern("\\(\\s*([a-zA-Z0-9._-]+)")
+        OID_ALPHANUMERIC_RELAXED_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
+            OID_ALPHANUMERIC_RELAXED
         )
         SCHEMA_MUST_SEPARATOR: ClassVar[str] = "$"
         SCHEMA_MAY_SEPARATOR: ClassVar[str] = "$"
         SCHEMA_NAME_PATTERN: ClassVar[str] = "NAME\\s+['\\\"]?([^'\\\" ]+)['\\\"]?"
-        SCHEMA_NAME_RE: ClassVar[t.Ldif.RegexPattern] = c.Ldif.compile_pattern(
-            "NAME\\s+['\\\"]?([^'\\\" ]+)['\\\"]?", ignorecase=True
+        SCHEMA_NAME_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
+            SCHEMA_NAME_PATTERN,
+            re.IGNORECASE,
         )
         ACL_DEFAULT_NAME: ClassVar[str] = "relaxed_acl"
         ACL_DEFAULT_TARGET_DN: ClassVar[str] = "*"
@@ -238,10 +240,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     return r[m.Ldif.SchemaAttribute].fail(
                         "Cannot extract OID from attribute definition",
                     )
-                name_match = (
-                    FlextLdifServersRelaxed.Constants.SCHEMA_NAME_RE.search(
-                        attr_definition
-                    )
+                name_match = FlextLdifServersRelaxed.Constants.SCHEMA_NAME_RE.search(
+                    attr_definition
                 )
                 name = name_match.group(1) if name_match else oid
                 metadata = m.Ldif.ServerMetadata.model_validate({

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import ClassVar, override
 
 from flext_ldif import FlextLdifServersRfc, c, m, p, r, t
@@ -78,24 +79,27 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         ACL_TARGET_DN_PREFIX: ClassVar[str] = "dn="
         ACL_TARGET_ATTRS_PREFIX: ClassVar[str] = "attrs="
         SCHEMA_OPENLDAP1_ATTRIBUTE_PATTERN: ClassVar[str] = "^\\s*attributetype\\s+"
-        SCHEMA_OPENLDAP1_ATTRIBUTE_RE: ClassVar[t.Ldif.RegexPattern] = (
-            c.Ldif.compile_pattern(SCHEMA_OPENLDAP1_ATTRIBUTE_PATTERN, ignorecase=True)
+        SCHEMA_OPENLDAP1_ATTRIBUTE_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
+            SCHEMA_OPENLDAP1_ATTRIBUTE_PATTERN, re.IGNORECASE
         )
         SCHEMA_OPENLDAP1_OBJECTCLASS_PATTERN: ClassVar[str] = "^\\s*objectclass\\s+"
-        SCHEMA_OPENLDAP1_OBJECTCLASS_RE: ClassVar[t.Ldif.RegexPattern] = (
-            c.Ldif.compile_pattern(SCHEMA_OPENLDAP1_OBJECTCLASS_PATTERN, ignorecase=True)
+        SCHEMA_OPENLDAP1_OBJECTCLASS_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
+            SCHEMA_OPENLDAP1_OBJECTCLASS_PATTERN, re.IGNORECASE
         )
         ACL_BY_PATTERN: ClassVar[str] = "by\\s+([^\\s]+)\\s+([^\\s]+)"
-        ACL_BY_RE: ClassVar[t.Ldif.RegexPattern] = c.Ldif.compile_pattern(
-            ACL_BY_PATTERN, ignorecase=True
+        ACL_BY_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
+            ACL_BY_PATTERN,
+            re.IGNORECASE,
         )
         ACL_ACCESS_TO_PATTERN: ClassVar[str] = "^\\s*access\\s+to\\s+"
-        ACL_ACCESS_TO_RE: ClassVar[t.Ldif.RegexPattern] = c.Ldif.compile_pattern(
-            ACL_ACCESS_TO_PATTERN, ignorecase=True
+        ACL_ACCESS_TO_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
+            ACL_ACCESS_TO_PATTERN,
+            re.IGNORECASE,
         )
         ACL_TO_BY_PATTERN: ClassVar[str] = "^to\\s+(.+?)\\s+by\\s+"
-        ACL_TO_BY_RE: ClassVar[t.Ldif.RegexPattern] = c.Ldif.compile_pattern(
-            ACL_TO_BY_PATTERN, ignorecase=True
+        ACL_TO_BY_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
+            ACL_TO_BY_PATTERN,
+            re.IGNORECASE,
         )
         ACL_SUBJECT_TYPE_USERDN: ClassVar[str] = "userdn"
         ACL_OPS_SEPARATOR: ClassVar[str] = ","
@@ -144,9 +148,11 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             self, attr_definition: str
         ) -> p.Result[m.Ldif.SchemaAttribute]:
             """Parse attribute definition, strip OpenLDAP1 prefix, and add metadata."""
-            stripped = FlextLdifServersOpenldap1.Constants.SCHEMA_OPENLDAP1_ATTRIBUTE_RE.sub(
-                "", attr_definition
-            ).strip()
+            stripped = (
+                FlextLdifServersOpenldap1.Constants.SCHEMA_OPENLDAP1_ATTRIBUTE_RE.sub(
+                    "", attr_definition
+                ).strip()
+            )
             result = super()._parse_attribute(stripped)
             if result.success:
                 attr_data = result.value
@@ -163,9 +169,11 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             self, oc_definition: str
         ) -> p.Result[m.Ldif.SchemaObjectClass]:
             """Parse objectClass definition and add OpenLDAP1 metadata."""
-            stripped = FlextLdifServersOpenldap1.Constants.SCHEMA_OPENLDAP1_OBJECTCLASS_RE.sub(
-                "", oc_definition
-            ).strip()
+            stripped = (
+                FlextLdifServersOpenldap1.Constants.SCHEMA_OPENLDAP1_OBJECTCLASS_RE.sub(
+                    "", oc_definition
+                ).strip()
+            )
             result = super()._parse_objectclass(stripped)
             if result.success:
                 oc_data = result.value
@@ -253,9 +261,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             """Check if this is an OpenLDAP 1.x ACL."""
             if isinstance(acl_line, str):
                 return bool(
-                    FlextLdifServersOpenldap1.Constants.ACL_ACCESS_TO_RE.match(
-                        acl_line
-                    )
+                    FlextLdifServersOpenldap1.Constants.ACL_ACCESS_TO_RE.match(acl_line)
                 )
             raw_acl = getattr(acl_line, "raw_acl", None)
             if not isinstance(raw_acl, str) or not raw_acl:

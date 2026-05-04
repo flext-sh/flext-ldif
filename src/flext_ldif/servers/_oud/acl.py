@@ -358,16 +358,14 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         extensions = m.Ldif.DynamicMetadata()
         if acl.metadata and acl.metadata.extensions:
             extensions.update(acl.metadata.extensions.to_dict())
-        timeofday_match = c.Ldif.compile_pattern(
-            FlextLdifServersOudConstants.ACL_TIMEOFDAY_PATTERN
-        ).search(aci_content)
+        timeofday_match = FlextLdifServersOudConstants.ACL_TIMEOFDAY_RE.search(
+            aci_content
+        )
         if timeofday_match:
             extensions[c.Ldif.ACL_BIND_TIMEOFDAY] = (
                 f"{timeofday_match.group(1)}{timeofday_match.group(2)}"
             )
-        ssf_match = c.Ldif.compile_pattern(
-            FlextLdifServersOudConstants.ACL_SSF_PATTERN
-        ).search(aci_content)
+        ssf_match = FlextLdifServersOudConstants.ACL_SSF_RE.search(aci_content)
         if ssf_match:
             extensions[c.Ldif.ACL_SSF] = f"{ssf_match.group(1)}{ssf_match.group(2)}"
         server_type_value = settings.server_type if settings else "oud"

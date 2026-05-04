@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import ClassVar, override
 
 from flext_ldif import (
@@ -48,8 +49,8 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             | frozenset(["proxy", "all"])
         )
         DETECTION_OID_PATTERN: ClassVar[str] = "2\\.16\\.840\\.1\\.113730\\."
-        DETECTION_OID_PATTERN_RE: ClassVar[t.Ldif.RegexPattern] = (
-            c.Ldif.compile_pattern(DETECTION_OID_PATTERN)
+        DETECTION_OID_PATTERN_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
+            DETECTION_OID_PATTERN
         )
         DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
             "nsslapd-",
@@ -96,33 +97,38 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             "nsds7DirectoryReplicaSubentry",
         ])
         SCHEMA_ATTRIBUTE_NAME_REGEX: ClassVar[str] = "NAME\\s+['\\\"]([\\w-]+)['\\\"]"
-        SCHEMA_ATTRIBUTE_NAME_RE: ClassVar[t.Ldif.RegexPattern] = (
-            c.Ldif.compile_pattern(SCHEMA_ATTRIBUTE_NAME_REGEX, ignorecase=True)
+        SCHEMA_ATTRIBUTE_NAME_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
+            SCHEMA_ATTRIBUTE_NAME_REGEX, re.IGNORECASE
         )
         SCHEMA_OBJECTCLASS_NAME_REGEX: ClassVar[str] = "NAME\\s+['\\\"](\\w+)['\\\"]"
-        SCHEMA_OBJECTCLASS_NAME_RE: ClassVar[t.Ldif.RegexPattern] = (
-            c.Ldif.compile_pattern(SCHEMA_OBJECTCLASS_NAME_REGEX, ignorecase=True)
+        SCHEMA_OBJECTCLASS_NAME_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
+            SCHEMA_OBJECTCLASS_NAME_REGEX, re.IGNORECASE
         )
         ACL_CLAUSE_PATTERN: ClassVar[str] = "\\([^()]+\\)"
         ACL_NAME_PATTERN: ClassVar[str] = 'acl\\s+\\"([^\\"]+)\\"'
-        ACL_NAME_RE: ClassVar[t.Ldif.RegexPattern] = c.Ldif.compile_pattern(
-            ACL_NAME_PATTERN, ignorecase=True
+        ACL_NAME_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
+            ACL_NAME_PATTERN,
+            re.IGNORECASE,
         )
         ACL_ALLOW_PATTERN: ClassVar[str] = "allow\\s*\\(([^)]+)\\)"
-        ACL_ALLOW_RE: ClassVar[t.Ldif.RegexPattern] = c.Ldif.compile_pattern(
-            ACL_ALLOW_PATTERN, ignorecase=True
+        ACL_ALLOW_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
+            ACL_ALLOW_PATTERN,
+            re.IGNORECASE,
         )
         ACL_TARGETATTR_PATTERN: ClassVar[str] = 'targetattr\\s*=\\s*\\"([^\\"]+)\\"'
-        ACL_TARGETATTR_RE: ClassVar[t.Ldif.RegexPattern] = c.Ldif.compile_pattern(
-            ACL_TARGETATTR_PATTERN, ignorecase=True
+        ACL_TARGETATTR_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
+            ACL_TARGETATTR_PATTERN,
+            re.IGNORECASE,
         )
         ACL_USERDN_PATTERN: ClassVar[str] = 'userdn\\s*=\\s*\\"([^\\"]+)\\"'
-        ACL_USERDN_RE: ClassVar[t.Ldif.RegexPattern] = c.Ldif.compile_pattern(
-            ACL_USERDN_PATTERN, ignorecase=True
+        ACL_USERDN_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
+            ACL_USERDN_PATTERN,
+            re.IGNORECASE,
         )
         ACL_TARGET_PATTERN: ClassVar[str] = 'target\\s*=\\s*\\"([^\\"]+)\\"'
-        ACL_TARGET_RE: ClassVar[t.Ldif.RegexPattern] = c.Ldif.compile_pattern(
-            ACL_TARGET_PATTERN, ignorecase=True
+        ACL_TARGET_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
+            ACL_TARGET_PATTERN,
+            re.IGNORECASE,
         )
         ACL_DEFAULT_NAME: ClassVar[str] = "389 DS ACL"
         ACL_TARGET_DN_PREFIX: ClassVar[str] = "dn:"

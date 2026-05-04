@@ -169,7 +169,9 @@ class FlextLdifModelsDomainDN:
             """
             if not value:
                 return value
-            for component in (comp.strip() for comp in value.split(",") if comp.strip()):
+            for component in (
+                comp.strip() for comp in value.split(",") if comp.strip()
+            ):
                 if not c.Ldif.DN_COMPONENT_RE.match(component):
                     msg = (
                         f"RFC 4514 § 2.3: invalid DN component {component!r} "

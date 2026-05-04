@@ -16,8 +16,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TextIO
 
-from flext_ldif import FlextLdifUtilities, ldif
-from tests import c, m, t
+from flext_ldif import ldif
+from tests import c, m, t, u
 
 
 def _write_entry_to_file(
@@ -274,7 +274,7 @@ class TestsFlextLdifCategorizationRealData:
         acls_without_basedn: t.MutableSequenceOf[m.Ldif.Entry] = []
         for entry in acl_category:
             dn_str = entry.dn.value if entry.dn is not None else None
-            if dn_str and FlextLdifUtilities.Ldif.is_under_base(dn_str, base_dn):
+            if dn_str and u.Ldif.is_under_base(dn_str, base_dn):
                 acls_with_basedn.append(entry)
             else:
                 acls_without_basedn.append(entry)
