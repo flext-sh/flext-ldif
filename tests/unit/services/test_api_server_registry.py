@@ -15,7 +15,10 @@ class TestsTestFlextLdifApiServerRegistry:
         api: p.Ldif.LdifClient,
     ) -> None:
         """The facade should expose the real registered server catalog."""
-        registered_servers = api.list_registered_servers()
+        registered_servers = u.Tests.assert_success(
+            api.list_registered_servers(),
+            error_msg="registered servers must resolve from the facade",
+        )
 
         tm.that(c.Tests.RFC in registered_servers, eq=True)
         tm.that(c.Tests.OID in registered_servers, eq=True)
@@ -37,9 +40,9 @@ class TestsTestFlextLdifApiServerRegistry:
             error_msg="OID base server must resolve from the facade",
         )
         tm.that(base_server.server_type, eq=c.Tests.OID)
-        tm.that(api.schema_server(c.Tests.OID), none=False)
-        tm.that(api.acl(c.Tests.OID), none=False)
-        tm.that(api.entry(c.Tests.OID), none=False)
+        tm.that(api.schema_server(c.Tests.OID).success, eq=True)
+        tm.that(api.acl(c.Tests.OID).success, eq=True)
+        tm.that(api.entry(c.Tests.OID).success, eq=True)
 
     def test_registry_resolution_exposes_public_registry_contract(
         self,
@@ -54,7 +57,10 @@ class TestsTestFlextLdifApiServerRegistry:
             api.resolve_server_constants(c.Tests.OUD),
             error_msg="OUD constants must resolve from the facade",
         )
-        stats = api.summarize_registry()
+        stats = u.Tests.assert_success(
+            api.summarize_registry(),
+            error_msg="registry summary must resolve from the facade",
+        )
 
         tm.that("schema" in server_bundle, eq=True)
         tm.that("acl" in server_bundle, eq=True)
@@ -70,10 +76,10 @@ class TestsTestFlextLdifApiServerRegistry:
         """Invalid server identifiers should fail gracefully via public APIs."""
         invalid_server = c.Tests.SERVER_INVALID_SERVER_TYPE
 
-        tm.that(api.acl(invalid_server), eq=None)
-        tm.that(api.entry(invalid_server), eq=None)
-        tm.that(api.schema_server(invalid_server), eq=None)
-        tm.that(api.resolve_schema_server(invalid_server), eq=None)
+        tm.that(api.acl(invalid_server).failure, eq=True)
+        tm.that(api.entry(invalid_server).failure, eq=True)
+        tm.that(api.schema_server(invalid_server).failure, eq=True)
+        tm.that(api.resolve_schema_server(invalid_server).failure, eq=True)
 
         server_result = api.resolve_base_server(invalid_server)
         bundle_result = api.resolve_server_bundle(invalid_server)

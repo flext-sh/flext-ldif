@@ -108,11 +108,11 @@ class FlextLdifProtocolsBase(Protocol):
             """Write LDIF entries to a string."""
             ...
 
-        def acl(self, server_type: str) -> lpd.AclServer | None:
+        def acl(self, server_type: str) -> p.Result[lpd.AclServer]:
             """Resolve ACL server by server type via the facade DSL."""
             ...
 
-        def entry(self, server_type: str) -> lpd.EntryServer | None:
+        def entry(self, server_type: str) -> p.Result[lpd.EntryServer]:
             """Resolve entry server by server type via the facade DSL."""
             ...
 
@@ -123,14 +123,14 @@ class FlextLdifProtocolsBase(Protocol):
             """Resolve base server by server type via the facade DSL."""
             ...
 
-        def schema_server(self, server_type: str) -> lpd.SchemaServer | None:
+        def schema_server(self, server_type: str) -> p.Result[lpd.SchemaServer]:
             """Resolve schema server by server type via the facade DSL."""
             ...
 
         def resolve_schema_server(
             self,
             server_type: str,
-        ) -> lpd.SchemaServer | None:
+        ) -> p.Result[lpd.SchemaServer]:
             """Resolve schema server by server type via the facade DSL."""
             ...
 
@@ -150,11 +150,11 @@ class FlextLdifProtocolsBase(Protocol):
             """Resolve server constants by server type via the facade DSL."""
             ...
 
-        def list_registered_servers(self) -> t.MutableSequenceOf[str]:
+        def list_registered_servers(self) -> p.Result[t.MutableSequenceOf[str]]:
             """List registered server types via the facade DSL."""
             ...
 
-        def summarize_registry(self) -> t.Ldif.MutableMetadataInputMapping:
+        def summarize_registry(self) -> p.Result[t.Ldif.MutableMetadataInputMapping]:
             """Return registry summary metadata via the facade DSL."""
             ...
 
