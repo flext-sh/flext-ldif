@@ -124,11 +124,13 @@ class FlextLdifUtilitiesACL:
     def _extract_from_match(match: t.Ldif.RegexMatch, group: int) -> str | None:
         """Extract group from regex match."""
         if match.lastindex is None:
-            return match.group(0)
+            full_match: str = match.group(0)
+            return full_match
         if group > match.lastindex:
             return None
         try:
-            return match.group(group)
+            extracted: str = match.group(group)
+            return extracted
         except IndexError:
             return None
 

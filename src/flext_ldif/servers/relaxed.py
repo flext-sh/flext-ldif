@@ -177,21 +177,24 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 )
             )
             if oid_match:
-                return oid_match.group(1)
+                paren_oid: str = oid_match.group(1)
+                return paren_oid
             oid_match = (
                 FlextLdifServersRelaxed.Constants.OID_NUMERIC_ANYWHERE_RE.search(
                     definition
                 )
             )
             if oid_match:
-                return oid_match.group(1)
+                anywhere_oid: str = oid_match.group(1)
+                return anywhere_oid
             oid_match = (
                 FlextLdifServersRelaxed.Constants.OID_ALPHANUMERIC_RELAXED_RE.search(
                     definition
                 )
             )
             if oid_match:
-                return oid_match.group(1)
+                relaxed_oid: str = oid_match.group(1)
+                return relaxed_oid
             return None
 
         def _extract_sup_from_objectclass(self, oc_definition: str) -> str | None:
@@ -206,13 +209,15 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             else:
                 sup_value = ""
             if FlextLdifServersRelaxed.Constants.SCHEMA_MUST_SEPARATOR in sup_value:
-                return next(
+                first_part: str = next(
                     s.strip()
                     for s in sup_value.split(
                         FlextLdifServersRelaxed.Constants.SCHEMA_MUST_SEPARATOR,
                     )
                 )
-            return sup_value
+                return first_part
+            sup_value_str: str = sup_value
+            return sup_value_str
 
         @override
         def _parse_attribute(

@@ -268,9 +268,10 @@ class FlextLdifConstantsBase:
         Sole sanctioned ``re.sub`` entry-point for runtime patterns; the
         compiled pattern is built via ``compile_pattern`` and re-used.
         """
-        return FlextLdifConstantsBase.compile_pattern(
+        substituted: str = FlextLdifConstantsBase.compile_pattern(
             pattern, ignorecase=ignorecase
         ).sub(replacement, value, count=count)
+        return substituted
 
     # Schema metadata keys
     SCHEMA_ORIGINAL_FORMAT: Final[str] = "schema_original_format"
