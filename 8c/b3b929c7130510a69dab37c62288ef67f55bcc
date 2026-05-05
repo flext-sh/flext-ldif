@@ -1,0 +1,24 @@
+src/flext_ldif/api.py
+  548c78fa8c16a5fc 285
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "8cb3b929c7130510a69dab37c62288ef67f55bcc",
+  "prompts": {
+    "548c78fa8c16a5fc": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c3025bc4-c75c-4b6b-ba16-201893f0161d",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 5,
+      "accepted_lines": 3,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/0affd472c189fdd184d4c0dbb94b0165a68622e3c7f72e412475e0d7c307465e"
+    }
+  }
+}
