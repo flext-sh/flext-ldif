@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from collections.abc import (
     MutableMapping,
 )
@@ -14,8 +13,8 @@ from flext_cli import m, r, t
 class FlextLdifTypesBase:
     """Base LDIF aliases for recursive containers and raw LDIF payloads."""
 
-    type RegexPattern = re.Pattern[str]
-    type RegexMatch = re.Match[str]
+    type RegexPattern = t.RegexPattern
+    type RegexMatch = t.RegexMatch
     type Scalar = t.Primitives | None
     type MetadataInputValue = t.JsonValue
     type MetadataInputMapping = t.MappingKV[str, MetadataInputValue]

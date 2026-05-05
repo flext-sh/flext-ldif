@@ -40,7 +40,8 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         ])
         DETECTION_OID_PATTERN: ClassVar[str] = "\\b1\\.3\\.18\\."
         DETECTION_OID_PATTERN_COMPILED: ClassVar[t.Ldif.RegexPattern] = re.compile(
-            r"\\b1\\.3\\.18\\.", re.IGNORECASE
+            DETECTION_OID_PATTERN,
+            re.IGNORECASE,
         )
         DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
             "ibm-",
@@ -48,7 +49,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         ])
         DETECTION_PATTERN_STR: ClassVar[str] = "\\b(ibm|tivoli|ldapdb)\\b"
         DETECTION_PATTERN: ClassVar[t.Ldif.RegexPattern] = re.compile(
-            "\\b(ibm|tivoli|ldapdb)\\b",
+            DETECTION_PATTERN_STR,
             re.IGNORECASE,
         )
         DETECTION_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
@@ -94,7 +95,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         ACL_DEFAULT_NAME: ClassVar[str] = "Tivoli ACL"
         ACL_ACCESS_PATTERN: ClassVar[str] = 'access\\s+"(\\w+)"'
         ACL_ACCESS_PATTERN_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-            'access\\s+"(\\w+)"',
+            ACL_ACCESS_PATTERN,
             re.IGNORECASE,
         )
         ACL_DEFAULT_TARGET_DN: ClassVar[str] = ""

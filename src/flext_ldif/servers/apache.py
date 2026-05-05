@@ -36,7 +36,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         ACL_ATTRIBUTE_NAME: ClassVar[str] = "aci"
         DETECTION_OID_PATTERN: ClassVar[str] = "1\\.3\\.6\\.1\\.4\\.1\\.18060\\."
         DETECTION_OID_PATTERN_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-            "1\\.3\\.6\\.1\\.4\\.1\\.18060\\."
+            DETECTION_OID_PATTERN
         )
         DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
             "ads-",
@@ -66,7 +66,8 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         DETECTION_WEIGHT: ClassVar[int] = 6
         SCHEMA_ATTRIBUTE_NAME_REGEX: ClassVar[str] = "NAME\\s+\\(?\\s*'([^']+)'"
         SCHEMA_ATTRIBUTE_NAME_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-            "NAME\\s+\\(?\\s*'([^']+)'", re.IGNORECASE
+            SCHEMA_ATTRIBUTE_NAME_REGEX,
+            re.IGNORECASE,
         )
         ACL_ACI_ATTRIBUTE_NAMES: ClassVar[frozenset[str]] = frozenset([
             "ads-aci",

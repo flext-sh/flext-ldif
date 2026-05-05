@@ -32,7 +32,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         ])
         DETECTION_OID_PATTERN: ClassVar[str] = "2\\.16\\.840\\.1\\.113719\\."
         DETECTION_OID_PATTERN_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-            "2\\.16\\.840\\.1\\.113719\\."
+            DETECTION_OID_PATTERN
         )
         DETECTION_PATTERN: ClassVar[str] = "2\\.16\\.840\\.1\\.113719\\."
         DETECTION_WEIGHT: ClassVar[int] = 6
@@ -79,7 +79,8 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         ])
         SCHEMA_ATTRIBUTE_NAME_REGEX: ClassVar[str] = "NAME\\s+\\(?\\s*'([^']+)'"
         SCHEMA_ATTRIBUTE_NAME_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-            "NAME\\s+\\(?\\s*'([^']+)'", re.IGNORECASE
+            SCHEMA_ATTRIBUTE_NAME_REGEX,
+            re.IGNORECASE,
         )
         ACL_DEFAULT_SUBJECT_TYPE: ClassVar[str] = "trustee"
         ACL_DEFAULT_SUBJECT_VALUE_UNKNOWN: ClassVar[str] = c.Ldif.UNKNOWN_VALUE
