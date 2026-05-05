@@ -282,6 +282,6 @@ class FlextLdif(
         )
 
 
-ldif = FlextLdif()
+ldif = FlextLdif.fetch_global()
 
 __all__: list[str] = ["FlextLdif", "ldif"]
