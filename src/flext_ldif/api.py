@@ -5,7 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Self, override
 
-from flext_core import e
 from flext_core.settings import FlextSettings
 from flext_ldif import (
     FlextLdifAcl,
@@ -24,6 +23,7 @@ from flext_ldif import (
     FlextLdifValidation,
     FlextLdifWriter,
     c,
+    e,
     m,
     p,
     r,
