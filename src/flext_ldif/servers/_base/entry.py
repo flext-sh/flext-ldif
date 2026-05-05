@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import base64
-import json
 from collections.abc import (
     Mapping,
     MutableMapping,
@@ -80,10 +79,9 @@ class FlextLdifServersBaseEntry(
                 normalized_payload = t.Cli.JSON_MAPPING_ADAPTER.validate_python(
                     format_options_raw,
                 )
+                serialized = u.Cli.json_dumps(dict(normalized_payload)).unwrap()
                 validated: m.Ldif.WriteFormatOptions = (
-                    m.Ldif.WriteFormatOptions.model_validate_json(
-                        json.dumps(normalized_payload),
-                    )
+                    m.Ldif.WriteFormatOptions.model_validate_json(serialized)
                 )
                 return validated
             except c.EXC_VALIDATION_TYPE as exc:

@@ -14,12 +14,11 @@ from __future__ import annotations
 
 from typing import Annotated, ClassVar
 
-from flext_core import FlextSettings
+from flext_core import FlextSettingsBase
 from flext_ldif import c, m, u
 
 
-@FlextSettings.auto_register("ldif")
-class FlextLdifSettings(FlextSettings):
+class FlextLdifSettings(FlextSettingsBase):
     """LDIF processing settings inheriting base FLEXT configuration."""
 
     model_config: ClassVar[m.SettingsConfigDict] = m.SettingsConfigDict(
