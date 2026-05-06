@@ -19,7 +19,7 @@ class FlextLdifTypesBase:
     type MetadataInputValue = t.JsonValue
     type MetadataInputMapping = t.MappingKV[str, MetadataInputValue]
     type MutableMetadataInputMapping = MutableMapping[str, MetadataInputValue]
-    type MutableMetadataMapping = MutableMapping[str, t.JsonValue]
+    type MutableMetadataMapping = t.MutableJsonMapping
     type MetadataCarrierValue = MetadataInputValue
     type ValueType = Scalar | t.StrSequence
     type AttributeValue = str | bytes

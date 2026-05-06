@@ -5,7 +5,6 @@ from __future__ import annotations
 from collections.abc import (
     ItemsView,
     KeysView,
-    MutableMapping,
     ValuesView,
 )
 from typing import Annotated, ClassVar, Self
@@ -127,17 +126,17 @@ class FlextLdifModelsMetadata:
                 return popped
             return default
 
-        def to_dict(self) -> MutableMapping[str, t.JsonValue]:
+        def to_dict(self) -> t.MutableJsonMapping:
             return dict(self.items())
 
-        def update(self, other: MutableMapping[str, t.JsonValue]) -> None:
+        def update(self, other: t.MutableJsonMapping) -> None:
             for key, value in other.items():
                 setattr(self, key, value)
 
         def values(self) -> ValuesView[t.JsonValue]:
             return self._extra().values()
 
-        def _extra(self) -> MutableMapping[str, t.JsonValue]:
+        def _extra(self) -> t.MutableJsonMapping:
             return self.__pydantic_extra__ or {}
 
     class EntryMetadata(m.FrozenDynamicModel):
@@ -158,7 +157,7 @@ class FlextLdifModelsMetadata:
         ) -> t.JsonValue | None:
             return self._extra().get(key, default)
 
-        def _extra(self) -> MutableMapping[str, t.JsonValue]:
+        def _extra(self) -> t.MutableJsonMapping:
             return self.__pydantic_extra__ or {}
 
 

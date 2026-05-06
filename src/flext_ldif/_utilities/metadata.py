@@ -165,7 +165,7 @@ class FlextLdifUtilitiesMetadata:
             definition,
         )
         field_order_payload: list[t.JsonValue] = list(field_order)
-        field_positions_payload: dict[str, t.JsonValue] = dict(field_positions)
+        field_positions_payload: t.JsonDict = dict(field_positions)
         combined["field_order"] = field_order_payload
         combined["field_positions"] = field_positions_payload
         spacing_result = FlextLdifUtilitiesMetadata._extract_spacing_between_fields(
@@ -186,7 +186,7 @@ class FlextLdifUtilitiesMetadata:
                 "X-ORIGIN": "X-ORIGIN",
             },
         )
-        spacing_payload: dict[str, t.JsonValue] = dict(spacing_result)
+        spacing_payload: t.JsonDict = dict(spacing_result)
         combined["spacing_between_fields"] = spacing_payload
         return combined
 
@@ -705,7 +705,7 @@ class FlextLdifUtilitiesMetadata:
             attr_lines_payload: list[t.JsonValue] = list(settings.original_attr_lines)
             server_data_dict["original_attribute_lines"] = attr_lines_payload
         if settings.original_attribute_case:
-            attr_case_payload: dict[str, t.JsonValue] = dict(
+            attr_case_payload: t.JsonDict = dict(
                 settings.original_attribute_case,
             )
             server_data_dict["original_attribute_case"] = attr_case_payload

@@ -12,6 +12,7 @@ from typing import Self, overload, override
 from flext_ldif import (
     FlextLdifServersBase,
     FlextLdifServersBaseSchema,
+    FlextLdifSettings,
     c,
     m,
     p,
@@ -116,6 +117,15 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
     @overload
     def __call__(
         self,
+        *,
+        server: p.Ldif.ServerRegistry | None = None,
+        settings: FlextLdifSettings | None = None,
+        **fields: t.JsonValue,
+    ) -> Self: ...
+
+    @overload
+    def __call__(
+        self,
         data: str,
         *,
         operation: str | None = None,
@@ -145,10 +155,64 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
     def __call__(
         self,
-        data: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None = None,
-        operation: str | None = None,
-    ) -> str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass:
+        *args: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None,
+        server: p.Ldif.ServerRegistry | None = None,
+        settings: FlextLdifSettings | None = None,
+        **fields: t.JsonValue | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+    ) -> Self | str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass:
         """Callable interface - automatic polymorphic processor."""
+        processor_keys = frozenset({"data", "operation"})
+        if (
+            server is not None
+            or settings is not None
+            or any(key not in processor_keys for key in fields)
+        ):
+            json_value_adapter = t.json_value_adapter()
+            builder_fields: t.JsonDict = {
+                key: json_value_adapter.validate_python(value)
+                for key, value in fields.items()
+                if key not in processor_keys
+            }
+            return super().__call__(
+                server=server,
+                settings=settings,
+                **builder_fields,
+            )
+        data_raw = fields.get("data")
+        data = (
+            data_raw
+            if isinstance(
+                data_raw,
+                (str, m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass),
+            )
+            or data_raw is None
+            else None
+        )
+        operation_raw = fields.get("operation")
+        operation = operation_raw if isinstance(operation_raw, str) else None
+        match args:
+            case [first, second, *_]:
+                if data is None and (
+                    isinstance(
+                        first,
+                        (str, m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass),
+                    )
+                    or first is None
+                ):
+                    data = first
+                if operation is None and isinstance(second, str):
+                    operation = second
+            case [first]:
+                if data is None and (
+                    isinstance(
+                        first,
+                        (str, m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass),
+                    )
+                    or first is None
+                ):
+                    data = first
+            case [] | _:
+                pass
         result = self.execute(data=data, operation=operation)
         if result.failure:
             msg = result.error or "RFC schema operation failed"

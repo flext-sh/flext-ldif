@@ -325,7 +325,7 @@ class FlextLdifUtilitiesParser:
                 return normalized
             return None
 
-        result: t.MappingKV[str, t.JsonValue] | t.JsonValue | None = metadata.get(
+        result: t.JsonMapping | t.JsonValue | None = metadata.get(
             "extensions",
         )
         if not isinstance(result, Mapping):

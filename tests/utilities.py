@@ -105,7 +105,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                     "inetOrgPerson",
                 ],
             }
-            entry = m.Ldif.Entry.model_validate(
+            return m.Ldif.Entry.model_validate(
                 {
                     "dn": {"value": actual_dn},
                     "attributes": {
@@ -117,10 +117,6 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                     "server_type": server_type,
                 },
             )
-            if not isinstance(entry, m.Ldif.Entry):
-                msg = "Expected create_real_entry() to build an Entry model"
-                raise AssertionError(msg)
-            return entry
 
         @staticmethod
         def create_real_ldif_content(

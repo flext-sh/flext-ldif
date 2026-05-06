@@ -5,7 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Self, override
 
-from flext_core.settings import FlextSettings
 from flext_ldif import (
     FlextLdifAcl,
     FlextLdifAnalysis,
@@ -54,10 +53,7 @@ class FlextLdif(
     @override
     def settings(self) -> FlextLdifSettings:
         """Expose the concrete LDIF settings type on the public facade."""
-        return FlextSettings.fetch_global().fetch_namespace(
-            "ldif",
-            FlextLdifSettings,
-        )
+        return FlextLdifSettings.fetch_global()
 
     def __init__(
         self,
@@ -73,12 +69,10 @@ class FlextLdif(
         *,
         server: p.Ldif.ServerRegistry | None = None,
         settings: FlextLdifSettings | None = None,
+        **fields: t.JsonValue,
     ) -> Self:
         """Return a configured facade instance while keeping the DSL alias callable."""
-        return type(self)(
-            server=self._server if server is None else server,
-            settings=settings,
-        )
+        return super().__call__(server=server, settings=settings, **fields)
 
     def categorization(
         self,

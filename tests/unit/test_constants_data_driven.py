@@ -25,7 +25,6 @@ class TestsFlextLdifConstantsDataDriven:
     def test_extended_server_type_constants_are_non_empty(
         self, server_value: str
     ) -> None:
-        tm.that(isinstance(server_value, str), eq=True)
         tm.that(bool(server_value), eq=True)
 
     def test_fixture_server_groups_are_consistent(self) -> None:
@@ -50,7 +49,6 @@ class TestsFlextLdifConstantsDataDriven:
         self,
         name_constant: str,
     ) -> None:
-        tm.that(isinstance(name_constant, str), eq=True)
         tm.that(bool(name_constant), eq=True)
 
     def test_boolean_false_constant_maps_to_oid_zero(self) -> None:

@@ -7,6 +7,7 @@ from typing import Self, overload, override
 from flext_ldif import (
     FlextLdifServersBase,
     FlextLdifServersBaseSchemaAcl,
+    FlextLdifSettings,
     m,
     p,
     r,
@@ -74,6 +75,15 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
             object.__setattr__(self, "_parent_server", parent_server)
 
     @overload
+    def __call__(
+        self,
+        *,
+        server: p.Ldif.ServerRegistry | None = None,
+        settings: FlextLdifSettings | None = None,
+        **fields: t.JsonValue,
+    ) -> Self: ...
+
+    @overload
     def __call__(self, data: str, *, operation: str | None = None) -> m.Ldif.Acl: ...
 
     @overload
@@ -89,11 +99,41 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
 
     def __call__(
         self,
-        data: str | m.Ldif.Acl | None = None,
-        *,
-        operation: str | None = None,
-    ) -> m.Ldif.Acl | str:
+        *args: str | m.Ldif.Acl | None,
+        server: p.Ldif.ServerRegistry | None = None,
+        settings: FlextLdifSettings | None = None,
+        **fields: t.JsonValue | m.Ldif.Acl,
+    ) -> Self | m.Ldif.Acl | str:
         """Callable interface - automatic polymorphic processor."""
+        processor_keys = frozenset({"data", "operation"})
+        if (
+            server is not None
+            or settings is not None
+            or any(key not in processor_keys for key in fields)
+        ):
+            json_value_adapter = t.json_value_adapter()
+            builder_fields: t.JsonDict = {
+                key: json_value_adapter.validate_python(value)
+                for key, value in fields.items()
+                if key not in processor_keys
+            }
+            return super().__call__(
+                server=server,
+                settings=settings,
+                **builder_fields,
+            )
+        data_raw = fields.get("data")
+        data = (
+            data_raw
+            if isinstance(data_raw, (str, m.Ldif.Acl)) or data_raw is None
+            else None
+        )
+        operation_raw = fields.get("operation")
+        operation = operation_raw if isinstance(operation_raw, str) else None
+        if args and data is None:
+            first = args[0]
+            if isinstance(first, (str, m.Ldif.Acl)) or first is None:
+                data = first
         result = self.execute(data=data, operation=operation)
         if isinstance(result.value, str):
             return result.value

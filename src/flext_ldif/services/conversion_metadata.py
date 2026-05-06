@@ -141,7 +141,7 @@ class FlextLdifConversionMetadataMixin:
             empty_val: t.JsonValue = u.normalize_to_json_value("")
             return empty_val
         if isinstance(value, Mapping):
-            normalized_mapping: dict[str, t.JsonValue] = {
+            normalized_mapping: t.JsonDict = {
                 key: u.normalize_to_json_value(item) for key, item in value.items()
             }
             return normalized_mapping

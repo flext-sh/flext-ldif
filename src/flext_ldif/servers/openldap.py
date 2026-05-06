@@ -449,7 +449,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             return is_config_dn or has_olc_attrs or has_olc_classes
 
         @staticmethod
-        def _dn_case_rules() -> dict[str, t.JsonValue]:
+        def _dn_case_rules() -> t.JsonDict:
             """Return DN case rules for OpenLDAP."""
             normalize_to: str | None = None
             return {"preserve_case": True, "normalize_to": normalize_to}
@@ -457,7 +457,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         def _inject_validation_rules(self, entry: m.Ldif.Entry) -> m.Ldif.Entry:
             """Inject OpenLDAP-specific validation rules into Entry metadata via DI."""
             server_type = FlextLdifServersOpenldap.Constants.CANONICAL_NAME
-            validation_rules: dict[str, t.JsonValue] = {
+            validation_rules: t.JsonDict = {
                 **u.Ldif.validation_rule_flags(server_type),
                 "encoding_rules": {
                     "default_encoding": "utf-8",
@@ -490,7 +490,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             ).model_dump_json()
             entry.metadata.extensions["validation_rules"] = validation_rules_str
             acl_format_rules = validation_rules["acl_format_rules"]
-            acl_format_payload: dict[str, t.JsonValue] | None = (
+            acl_format_payload: t.JsonDict | None = (
                 {
                     key: u.normalize_to_metadata(value)
                     for key, value in acl_format_rules.items()

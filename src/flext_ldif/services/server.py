@@ -111,8 +111,8 @@ class FlextLdifServer(s):
     def summarize_registry(self) -> t.Ldif.MutableMetadataInputMapping:
         """Get comprehensive registry statistics."""
         server_types = self.list_registered_servers()
-        servers_by_server: dict[str, t.JsonValue] = {}
-        priorities: dict[str, t.JsonValue] = {}
+        servers_by_server: t.JsonDict = {}
+        priorities: t.JsonDict = {}
         for st in server_types:
             base = self._lookup_base_server(st)
             if base is None:
@@ -127,7 +127,7 @@ class FlextLdifServer(s):
                 else None,
             }
             priorities[st] = base.priority
-        stats: dict[str, t.JsonValue] = {
+        stats: t.JsonDict = {
             "total_servers": len(server_types),
             "servers_by_server": servers_by_server,
             "server_priorities": priorities,

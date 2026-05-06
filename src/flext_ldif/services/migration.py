@@ -207,7 +207,10 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
                 source_server=source_server,
                 target_server=target_server,
             )
-            return pipeline.model_copy(update={"entries_input": entries}).execute()
+            return FlextLdifProcessingPipeline(
+                transform_config=pipeline.transform_config,
+                entries_input=entries,
+            ).execute()
         except c.Ldif.EXC_LDIF_PARSE as e:
             self.logger.exception(
                 "Migration failed",

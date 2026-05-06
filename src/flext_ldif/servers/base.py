@@ -11,6 +11,7 @@ from flext_ldif import (
     FlextLdifServersBaseEntry,
     FlextLdifServersBaseSchema,
     FlextLdifServersBaseSchemaAcl,
+    FlextLdifSettings,
     c,
     m,
     p,
@@ -133,6 +134,15 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
     @overload
     def __call__(
         self,
+        *,
+        server: p.Ldif.ServerRegistry | None = None,
+        settings: FlextLdifSettings | None = None,
+        **fields: t.JsonValue,
+    ) -> Self: ...
+
+    @overload
+    def __call__(
+        self,
         ldif_text: str,
         *,
         entries: None = None,
@@ -158,11 +168,73 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
 
     def __call__(
         self,
-        ldif_text: str | None = None,
-        entries: t.MutableSequenceOf[m.Ldif.Entry] | None = None,
-        operation: str | None = None,
-    ) -> m.Ldif.Entry | str:
+        *args: str | t.MutableSequenceOf[m.Ldif.Entry] | None,
+        server: p.Ldif.ServerRegistry | None = None,
+        settings: FlextLdifSettings | None = None,
+        **fields: t.JsonValue | t.MutableSequenceOf[m.Ldif.Entry],
+    ) -> Self | m.Ldif.Entry | str:
         """Callable interface - use as processor."""
+
+        def resolve_entries(
+            value: t.JsonValue | t.MutableSequenceOf[m.Ldif.Entry] | None,
+        ) -> t.MutableSequenceOf[m.Ldif.Entry] | None:
+            if isinstance(value, list) and all(
+                isinstance(item, m.Ldif.Entry) for item in value
+            ):
+                return [item for item in value if isinstance(item, m.Ldif.Entry)]
+            return None
+
+        processor_keys = frozenset({"ldif_text", "entries", "operation"})
+        if (
+            server is not None
+            or settings is not None
+            or any(key not in processor_keys for key in fields)
+        ):
+            json_value_adapter = t.json_value_adapter()
+            builder_fields: t.JsonDict = {
+                key: json_value_adapter.validate_python(value)
+                for key, value in fields.items()
+                if key not in processor_keys
+            }
+            return super().__call__(
+                server=server,
+                settings=settings,
+                **builder_fields,
+            )
+        ldif_text_raw = fields.get("ldif_text")
+        ldif_text = (
+            ldif_text_raw
+            if isinstance(ldif_text_raw, str) or ldif_text_raw is None
+            else None
+        )
+        entries_raw = fields.get("entries")
+        entries = resolve_entries(entries_raw)
+        operation_raw = fields.get("operation")
+        operation = operation_raw if isinstance(operation_raw, str) else None
+        match args:
+            case [first, second, third, *_]:
+                if (isinstance(first, str) or first is None) and ldif_text is None:
+                    ldif_text = first
+                second_entries = resolve_entries(second)
+                if second_entries is not None and entries is None:
+                    entries = second_entries
+                if isinstance(third, str) and operation is None:
+                    operation = third
+            case [first, second]:
+                if (isinstance(first, str) or first is None) and ldif_text is None:
+                    ldif_text = first
+                second_entries = resolve_entries(second)
+                if second_entries is not None and entries is None:
+                    entries = second_entries
+            case [first]:
+                if (isinstance(first, str) or first is None) and ldif_text is None:
+                    ldif_text = first
+                else:
+                    first_entries = resolve_entries(first)
+                    if first_entries is not None and entries is None:
+                        entries = first_entries
+            case [] | _:
+                pass
         result = self.execute(
             ldif_text=ldif_text,
             entries=entries,
@@ -339,14 +411,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
             raise TypeError(msg)
         if not raw:
             return []
-        entries: t.MutableSequenceOf[m.Ldif.Entry] = []
-        for item in raw:
-            if isinstance(item, m.Ldif.Entry):
-                entries.append(item)
-            else:
-                msg = f"Expected t.MutableSequenceOf[Entry] for entries, got item of type {type(item)}"
-                raise TypeError(msg)
-        return entries
+        return list(raw)
 
     @staticmethod
     def _extract_ldif_text(

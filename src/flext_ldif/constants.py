@@ -178,6 +178,10 @@ class FlextLdifConstants(FlextCliConstants):
 
         CLASS_SUFFIXES: Final[tuple[str, ...]] = ("Acl", "Schema", "Entry", "Constants")
 
+        PROCESSING_STAGE_NORMALIZE_DN: Final[str] = "normalize_dn"
+        PROCESSING_STAGE_NORMALIZE_ATTRS: Final[str] = "normalize_attrs"
+        PROCESSING_STAGE_SERVER_TRANSFORM: Final[str] = "server_transform"
+
         OID_TO_NAME: ClassVar[t.StrMapping] = MappingProxyType({
             "2.5.5.5": "integer",
             "1.3.6.1.4.1.1466.115.121.1.1": "aci",

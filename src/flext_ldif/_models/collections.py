@@ -63,7 +63,7 @@ class FlextLdifModelsCollections:
         def update_count(self, key: str, value: int) -> None:
             setattr(self, key, value)
 
-        def _extra(self) -> MutableMapping[str, t.JsonValue]:
+        def _extra(self) -> t.MutableJsonMapping:
             extra = self.__pydantic_extra__
             if extra is None:
                 return {}

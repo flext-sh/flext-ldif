@@ -1,114 +1,14 @@
-"""Power Method Pipeline - Pipeline orchestration for entry processing."""
+"""Validation pipeline utilities for LDIF entries."""
 
 from __future__ import annotations
 
-from collections.abc import (
-    Callable,
-)
-from typing import ClassVar, Self, override
+from typing import override
 
 from flext_ldif import m, p, r, t
 
 
 class FlextLdifUtilitiesPipeline:
-    """Pipeline orchestration utilities for LDIF entry processing."""
-
-    class _Filtered:
-        """Sentinel class to signal that an entry was filtered out."""
-
-        __slots__: ClassVar[tuple[str, ...]] = ()
-
-    FILTERED = _Filtered()
-
-    class Pipeline:
-        """Pipeline for executing a sequence of transformations."""
-
-        __slots__ = ("_fail_fast", "_steps")
-
-        def __init__(self, *, fail_fast: bool = True) -> None:
-            """Initialize pipeline."""
-            super().__init__()
-            self._steps: t.MutableSequenceOf[
-                tuple[
-                    str,
-                    Callable[
-                        [m.Ldif.Entry],
-                        p.Result[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered],
-                    ],
-                ]
-            ] = []
-            self._fail_fast = fail_fast
-
-        def add(
-            self,
-            transformer: p.Ldif.EntryTransformer,
-            *,
-            name: str | None = None,
-        ) -> Self:
-            """Add a transformer to the pipeline."""
-            step_name = name or transformer.__class__.__name__
-
-            def wrapped_transformer(
-                entry: m.Ldif.Entry,
-            ) -> p.Result[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered]:
-                """Wrap transformer to match pipeline filter signature."""
-                transformed_result = transformer.apply(entry).map_error(
-                    lambda error: error or "Transformer failed",
-                )
-                if transformed_result.failure:
-                    return r[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered].fail(
-                        transformed_result.error,
-                    )
-                return r[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered].ok(
-                    transformed_result.value,
-                )
-
-            self._steps.append((step_name, wrapped_transformer))
-            return self
-
-        def execute(
-            self,
-            entries: t.SequenceOf[m.Ldif.Entry],
-        ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
-            """Execute pipeline on a sequence of entries."""
-            results: t.MutableSequenceOf[m.Ldif.Entry] = []
-            for entry in entries:
-                result = self.execute_one(entry).map_error(
-                    lambda error: error or "Processing failed",
-                )
-                if result.failure:
-                    if self._fail_fast:
-                        return r[t.MutableSequenceOf[m.Ldif.Entry]].fail(
-                            result.error or "Pipeline execution failed",
-                        )
-                    continue
-                processed = result.value
-                if isinstance(processed, FlextLdifUtilitiesPipeline._Filtered):
-                    continue
-                results.append(processed)
-            return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(results)
-
-        def execute_one(
-            self,
-            entry: m.Ldif.Entry,
-        ) -> p.Result[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered]:
-            """Execute pipeline on a single entry."""
-            current: m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered = entry
-            for step_name, step_func in self._steps:
-                if isinstance(current, FlextLdifUtilitiesPipeline._Filtered):
-                    return r[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered].ok(
-                        FlextLdifUtilitiesPipeline.FILTERED,
-                    )
-                failure_prefix = f"Step '{step_name}' failed: "
-                result = step_func(current).map_error(
-                    lambda error, prefix=failure_prefix: (
-                        f"{prefix}{error or 'Transformer failed'}"
-                    ),
-                )
-                if result.failure:
-                    return result
-                current = result.value
-            return r[m.Ldif.Entry | FlextLdifUtilitiesPipeline._Filtered].ok(current)
+    """Validation pipeline utilities for LDIF entries."""
 
     class ValidationResult:
         """Result of entry validation."""

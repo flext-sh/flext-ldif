@@ -93,8 +93,14 @@ class FlextLdifUtilitiesTransformers:
 
             def update_entry(normalized_dn: str) -> m.Ldif.Entry:
                 normalized_text = self._normalize_dn_case_and_spaces(normalized_dn)
-                update_dict: t.MutableJsonMapping = {"dn": normalized_text}
-                copied: m.Ldif.Entry = item.model_copy(update=update_dict)
+                normalized_dn_value = (
+                    item.dn.model_copy(update={"value": normalized_text})
+                    if isinstance(item.dn, m.Ldif.DN)
+                    else m.Ldif.DN.model_validate({"value": normalized_text})
+                )
+                copied: m.Ldif.Entry = item.model_copy(
+                    update={"dn": normalized_dn_value},
+                )
                 return copied
 
             return (
@@ -119,9 +125,6 @@ class FlextLdifUtilitiesTransformers:
                 normalized_dn = normalized_dn.upper()
             if self._spaces == "trim":
                 normalized_dn = normalized_dn.strip()
-            elif self._spaces == "normalize":
-                parts = normalized_dn.split(",")
-                normalized_dn = ",".join(p.strip() for p in parts)
             return normalized_dn
 
     class NormalizeAttrsTransformer(FlextLdifUtilitiesTransformer[m.Ldif.Entry]):

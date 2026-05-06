@@ -493,7 +493,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                         converted_attrs_json,
                     )
                 if name_renames:
-                    rename_metadata: dict[str, t.JsonValue] = dict(name_renames)
+                    rename_metadata: t.JsonDict = dict(name_renames)
                     entry.metadata.extensions["attribute_name_renames"] = (
                         rename_metadata
                     )

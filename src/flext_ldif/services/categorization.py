@@ -393,7 +393,7 @@ class FlextLdifCategorization(s):
     def categorize_entry(
         self,
         entry: m.Ldif.Entry,
-        rules: m.Ldif.CategoryRules | MutableMapping[str, t.JsonValue] | None = None,
+        rules: m.Ldif.CategoryRules | t.MutableJsonMapping | None = None,
         server_type: str | None = None,
     ) -> tuple[str, str | None]:
         """Categorize single entry using provided or instance categorization rules."""
@@ -796,7 +796,7 @@ class FlextLdifCategorization(s):
 
     def _normalize_rules(
         self,
-        rules: m.Ldif.CategoryRules | MutableMapping[str, t.JsonValue] | None,
+        rules: m.Ldif.CategoryRules | t.MutableJsonMapping | None,
     ) -> p.Result[m.Ldif.CategoryRules]:
         """Normalize rules to CategoryRules model."""
         if isinstance(rules, m.Ldif.CategoryRules):

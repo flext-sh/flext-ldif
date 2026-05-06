@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping
+from collections.abc import Mapping
 from types import MappingProxyType
 from typing import ClassVar
 
@@ -207,7 +207,7 @@ class FlextLdifServersOudAclMetadataMixin:
                     )
                 )
             elif isinstance(value, Mapping):
-                value_dict_inner: MutableMapping[str, t.JsonValue] = {}
+                value_dict_inner: t.MutableJsonMapping = {}
                 for k, v in value.items():
                     key = k
                     value_dict_inner[key] = (

@@ -274,11 +274,11 @@ class FlextLdifProtocolsBase(Protocol):
             """Return metadata values view."""
             ...
 
-        def to_dict(self) -> MutableMapping[str, t.JsonValue]:
+        def to_dict(self) -> t.MutableJsonMapping:
             """Convert metadata to a mutable dictionary."""
             ...
 
-        def model_dump(self) -> t.MappingKV[str, t.JsonValue]:
+        def model_dump(self) -> t.JsonMapping:
             """Serialize metadata to a mapping."""
             ...
 

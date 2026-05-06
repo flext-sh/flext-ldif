@@ -273,6 +273,8 @@ class FlextLdifModelsSettings:
         ) -> Self:
             """Build transform config for server-to-server conversion only."""
             return cls(
+                normalize_dns=True,
+                normalize_attrs=True,
                 process_config=FlextLdifModelsSettings.ProcessConfig.servers(
                     source_server=source_server,
                     target_server=target_server,
