@@ -1,0 +1,81 @@
+src/flext_ldif/servers/_base/acl.py
+  h_5cf852cc46bf92 131
+  s_552d8e4891a938::t_92befde30fcbfb 60
+src/flext_ldif/_models/settings.py
+  h_5cf852cc46bf92 288,294,304
+src/flext_ldif/servers/_oud/utilities.py
+  h_5cf852cc46bf92 9
+  s_552d8e4891a938::t_c6ce23ff36aa5c 26-28
+src/flext_ldif/_utilities/server.py
+  s_552d8e4891a938::t_92befde30fcbfb 22
+src/flext_ldif/_utilities/transformers.py
+  s_552d8e4891a938::t_92befde30fcbfb 16,203
+src/flext_ldif/_models/collections.py
+  h_5cf852cc46bf92 70
+src/flext_ldif/services/conversion_schema.py
+  h_5cf852cc46bf92 104,108
+src/flext_ldif/_models/metadata.py
+  h_5cf852cc46bf92 130-131
+tests/conftest.py
+  h_5cf852cc46bf92 262
+src/flext_ldif/servers/_base/constants.py
+  s_552d8e4891a938::t_92befde30fcbfb 24,36
+tests/unit/services/test_entries_service.py
+  h_5cf852cc46bf92 92
+src/flext_ldif/servers/_oid/constants.py
+  s_552d8e4891a938::t_92befde30fcbfb 22,117
+src/flext_ldif/constants.py
+  h_5cf852cc46bf92 87,161,179
+src/flext_ldif/services/entries.py
+  h_5cf852cc46bf92 103
+src/flext_ldif/_models/domain_entry.py
+  s_552d8e4891a938::t_c6ce23ff36aa5c 716
+  h_5cf852cc46bf92 717
+src/flext_ldif/servers/_rfc/acl.py
+  h_5cf852cc46bf92 115
+src/flext_ldif/servers/base.py
+  h_5cf852cc46bf92 194
+tests/constants.py
+  h_5cf852cc46bf92 42,48,53
+src/flext_ldif/servers/_rfc/schema.py
+  h_5cf852cc46bf92 171
+src/flext_ldif/servers/_oid/acl.py
+  s_552d8e4891a938::t_92befde30fcbfb 36,39
+src/flext_ldif/_utilities/collection_ldif.py
+  h_5cf852cc46bf92 32,37
+src/flext_ldif/_utilities/acl.py
+  s_552d8e4891a938::t_92befde30fcbfb 31,38-41
+src/flext_ldif/_models/results.py
+  s_552d8e4891a938::t_c6ce23ff36aa5c 260-262
+src/flext_ldif/servers/_rfc/constants.py
+  s_552d8e4891a938::t_92befde30fcbfb 60
+src/flext_ldif/base.py
+  h_5cf852cc46bf92 7,40
+src/flext_ldif/servers/_oud/constants.py
+  h_5cf852cc46bf92 219
+  s_552d8e4891a938::t_92befde30fcbfb 111,211,224
+src/flext_ldif/servers/_oud/acl.py
+  s_552d8e4891a938::t_92befde30fcbfb 30,33
+  s_552d8e4891a938::t_74549e55c9db5b 155-157
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "344cd51963e79fa7be00bb8840cad2c0b7d7f209",
+  "prompts": {},
+  "humans": {
+    "h_5cf852cc46bf92": {
+      "author": "FLEXT Bot <team@flext.sh>"
+    }
+  },
+  "sessions": {
+    "s_552d8e4891a938": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "35c0040b-2ae9-466e-90aa-7721509e1e19",
+        "model": "unknown"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>"
+    }
+  }
+}
