@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Annotated, Self, override
 
-from flext_core import FlextSettings, s
+from flext_core import s
 from flext_ldif import FlextLdifServer, FlextLdifSettings, c, m, p, t, u
 
 
@@ -37,10 +37,7 @@ class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](s[TDomainResult]):
     def settings(self) -> FlextLdifSettings:
         """Return the typed LDIF configuration namespace."""
         if self._cached_settings is None:
-            self._cached_settings = FlextSettings.fetch_global().fetch_namespace(
-                "ldif",
-                FlextLdifSettings,
-            )
+            self._cached_settings = FlextLdifSettings.fetch_global()
         return self._cached_settings
 
     def __call__(

@@ -257,7 +257,9 @@ class FlextLdifModelsResults:
             )
 
         def merge(self, other: Self) -> Self:
-            merged_reasons: t.MutableIntMapping = dict(self.rejection_reasons.items())
+            merged_reasons = t.int_dict_adapter().validate_python(
+                self.rejection_reasons,
+            )
             for reason, count in other.rejection_reasons.items():
                 merged_reasons[reason] = merged_reasons.get(reason, 0) + count
             sum_fields = {

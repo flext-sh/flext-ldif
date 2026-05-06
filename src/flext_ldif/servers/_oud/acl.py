@@ -27,10 +27,10 @@ logger = u.fetch_logger(__name__)
 class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
     """Oracle OUD ACL Implementation (RFC 4876 ACI Format)."""
 
-    RFC_ACL_ATTRIBUTES: ClassVar[tuple[str, ...]] = (
+    RFC_ACL_ATTRIBUTES: ClassVar[t.StrSequence] = (
         FlextLdifServersOudConstants.RFC_ACL_ATTRIBUTES
     )
-    OUD_ACL_ATTRIBUTES: ClassVar[tuple[str, ...]] = (
+    OUD_ACL_ATTRIBUTES: ClassVar[t.StrSequence] = (
         FlextLdifServersOudConstants.OUD_ACL_ATTRIBUTES
     )
 
@@ -152,7 +152,9 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                 )
             permissions_value: t.JsonPayload | None = target_perms_dict_raw
             if isinstance(permissions_value, Mapping):
-                target_perms_dict = dict(permissions_value.items())
+                target_perms_dict = t.json_mapping_adapter().validate_python(
+                    permissions_value,
+                )
         if target_perms_dict:
             perms_data: t.Ldif.MutableMetadataInputMapping = {}
             for key, val in target_perms_dict.items():

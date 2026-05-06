@@ -285,13 +285,13 @@ class FlextLdifModelsSettings:
         """Configuration for server pattern matching."""
 
         dn_patterns: Annotated[
-            tuple[tuple[str, ...], ...],
+            tuple[t.StrSequence, ...],
             u.Field(
                 description="Tuple of DN pattern tuples - entry matches if ALL patterns in ANY tuple match",
             ),
         ] = ()
         attr_prefixes: Annotated[
-            tuple[str, ...] | frozenset[str],
+            t.StrSequence | frozenset[str],
             u.Field(description="Attribute name prefixes to check"),
         ] = ()
         attr_names: Annotated[
@@ -301,7 +301,7 @@ class FlextLdifModelsSettings:
             ),
         ]
         keyword_patterns: Annotated[
-            tuple[str, ...],
+            t.StrSequence,
             u.Field(description="Keywords to search in attribute names"),
         ] = ()
 

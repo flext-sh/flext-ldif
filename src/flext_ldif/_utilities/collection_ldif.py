@@ -29,12 +29,12 @@ class FlextLdifUtilitiesCollectionLdif:
         cls,
         value: str
         | t.MutableSequenceOf[str]
-        | tuple[str, ...]
+        | t.StrSequence
         | set[str]
         | frozenset[str],
         other: str
         | t.MutableSequenceOf[str]
-        | tuple[str, ...]
+        | t.StrSequence
         | set[str]
         | frozenset[str]
         | None = None,

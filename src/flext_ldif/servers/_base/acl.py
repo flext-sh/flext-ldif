@@ -57,7 +57,7 @@ class FlextLdifServersBaseSchemaAcl(
         if _parent_server is not None:
             object.__setattr__(self, "_parent_server", _parent_server)
 
-    RFC_ACL_ATTRIBUTES: ClassVar[tuple[str, ...]] = c.Ldif.RFC_ACL_ATTRIBUTES
+    RFC_ACL_ATTRIBUTES: ClassVar[t.StrSequence] = c.Ldif.RFC_ACL_ATTRIBUTES
 
     def resolve_acl_attributes(self) -> t.MutableSequenceOf[str]:
         """Get ACL attributes for this server."""
@@ -127,9 +127,8 @@ class FlextLdifServersBaseSchemaAcl(
         **kwargs: t.Ldif.Scalar,
     ) -> p.Result[t.Ldif.AclPayload]:
         """Execute ACL operation with auto-detection: str→parse, Acl→write."""
-        json_value_adapter = t.json_value_adapter()
         kwargs_dict: t.MutableJsonMapping = {
-            key: json_value_adapter.validate_python(u.to_jsonable_python(value))
+            key: t.json_value_adapter().validate_python(u.to_jsonable_python(value))
             for key, value in kwargs.items()
         }
         data = self._resolve_data(data, kwargs_dict)

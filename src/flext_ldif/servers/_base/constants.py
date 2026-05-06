@@ -21,7 +21,7 @@ class FlextLdifServersBaseConstants:
     ACL_ATTRIBUTE_NAME: ClassVar[str] = ""
     SCHEMA_DN: ClassVar[str] = ""
     SCHEMA_SUP_SEPARATOR: ClassVar[str] = "$"
-    RFC_ACL_ATTRIBUTES: ClassVar[tuple[str, ...]] = (
+    RFC_ACL_ATTRIBUTES: ClassVar[t.StrSequence] = (
         "aci",
         "acl",
         "olcAccess",
@@ -33,7 +33,7 @@ class FlextLdifServersBaseConstants:
     OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset()
     PRESERVE_ON_MIGRATION: ClassVar[frozenset[str]] = frozenset()
     OBJECTCLASS_REQUIREMENTS: ClassVar[t.BoolMapping] = MappingProxyType({})
-    CATEGORIZATION_PRIORITY: ClassVar[tuple[str, ...]] = ()
+    CATEGORIZATION_PRIORITY: ClassVar[t.StrSequence] = ()
     CATEGORY_OBJECTCLASSES: ClassVar[t.FrozensetMapping] = MappingProxyType({})
     CATEGORIZATION_ACL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset()
     DETECTION_OID_PATTERN: ClassVar[str] = ""

@@ -127,7 +127,9 @@ class FlextLdifModelsMetadata:
             return default
 
         def to_dict(self) -> t.MutableJsonMapping:
-            return dict(self.items())
+            return t.json_dict_adapter().validate_python(
+                self.model_dump(mode="json", exclude_none=True),
+            )
 
         def update(self, other: t.MutableJsonMapping) -> None:
             for key, value in other.items():

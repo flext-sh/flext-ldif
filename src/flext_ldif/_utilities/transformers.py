@@ -13,7 +13,7 @@ from flext_ldif import FlextLdifUtilitiesDN as udn, c, m, p, r, t
 class FlextLdifUtilitiesTransformer[T]:
     """Base class for entry transformers."""
 
-    __slots__: ClassVar[tuple[str, ...]] = ()
+    __slots__: ClassVar[t.StrSequence] = ()
 
     def apply(self, item: T) -> p.Result[T]:
         """Apply the transformation to an item."""
@@ -200,7 +200,7 @@ class FlextLdifUtilitiesTransformers:
     class Normalize:
         """Factory class for normalization transformers."""
 
-        __slots__: ClassVar[tuple[str, ...]] = ()
+        __slots__: ClassVar[t.StrSequence] = ()
 
         @staticmethod
         def attrs(

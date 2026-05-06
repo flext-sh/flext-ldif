@@ -259,7 +259,7 @@ def ldap_container(worker_id: str) -> t.JsonMapping:
 def unique_dn_suffix(worker_id: str, request: pytest.FixtureRequest) -> str:
     """Build a unique suffix for LDAP DNs per test execution."""
     getattr(request, "node", None)
-    test_name: tuple[str, ...] = ()
+    test_name: t.StrSequence = ()
     test_name_clean: str = "".join(
         ch if ch.isalnum() or ch in {"-", "_"} else "-" for ch in test_name
     )[:20]

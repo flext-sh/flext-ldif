@@ -108,7 +108,7 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
     DS_PRIVILEGE_NAME_KEY: ClassVar[str] = "ds_privilege_name"
     FORMAT_TYPE_KEY: ClassVar[str] = "format_type"
     FORMAT_TYPE_DS_PRIVILEGE: ClassVar[str] = "ds-privilege-name"
-    OUD_ACL_ATTRIBUTES: ClassVar[tuple[str, ...]] = (FORMAT_TYPE_DS_PRIVILEGE,)
+    OUD_ACL_ATTRIBUTES: ClassVar[t.StrSequence] = (FORMAT_TYPE_DS_PRIVILEGE,)
     SCHEMA_DN: ClassVar[str] = "cn=schema"
     SCHEMA_FIELD_ATTRIBUTE_TYPES: ClassVar[str] = "attributetypes"
     SCHEMA_FIELD_OBJECT_CLASSES: ClassVar[str] = "objectclasses"
@@ -208,7 +208,7 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
         "domain",
     ])
     CATEGORIZATION_ACL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset(["aci"])
-    CATEGORIZATION_PRIORITY: ClassVar[tuple[str, ...]] = (
+    CATEGORIZATION_PRIORITY: ClassVar[t.StrSequence] = (
         "schema",
         "acl",
         "users",
@@ -216,12 +216,12 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
         "groups",
         "rejected",
     )
-    DN_DETECTION_PATTERNS: ClassVar[tuple[tuple[str, ...], ...]] = (
+    DN_DETECTION_PATTERNS: ClassVar[tuple[t.StrSequence, ...]] = (
         ("cn=settings", "cn=schema"),
         ("cn=settings", "cn=directory"),
         ("cn=settings", "cn=ds"),
     )
-    KEYWORD_PATTERNS: ClassVar[tuple[str, ...]] = ("pwd", "password")
+    KEYWORD_PATTERNS: ClassVar[t.StrSequence] = ("pwd", "password")
     DETECTION_PATTERN: ClassVar[str] = "(?i)(ds-sync-|ds-pwp-|ds-cfg-|root dns)"
     DETECTION_OID_PATTERN: ClassVar[str] = DETECTION_PATTERN
     DETECTION_WEIGHT: ClassVar[int] = 14

@@ -101,11 +101,11 @@ class FlextLdifConversionSchemaMixin(ABC):
                 f"{type(converted_entry_value).__name__}",
             )
         attributes_model = converted_entry_value.attributes
-        converted_values: t.StrSequence = tuple[str, ...]()
+        converted_values: tuple[str, ...] = ()
         if attributes_model is not None:
             for attr_name, values in attributes_model.attributes.items():
                 if attr_name.lower() == field_name.lower():
-                    converted_values = list(values)
+                    converted_values = tuple(values)
                     break
         if not converted_values:
             return r[t.Ldif.ConvertedModel].fail(

@@ -167,9 +167,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             or settings is not None
             or any(key not in processor_keys for key in fields)
         ):
-            json_value_adapter = t.json_value_adapter()
             builder_fields: t.JsonDict = {
-                key: json_value_adapter.validate_python(value)
+                key: t.json_value_adapter().validate_python(value)
                 for key, value in fields.items()
                 if key not in processor_keys
             }

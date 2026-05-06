@@ -84,7 +84,7 @@ class FlextLdifConstants(FlextCliConstants):
             "olcAccess",
         )
 
-        RFC_ACL_ATTRIBUTES: Final[tuple[str, ...]] = (
+        RFC_ACL_ATTRIBUTES: Final[t.StrSequence] = (
             "aci",
             "acl",
             "olcAccess",
@@ -158,7 +158,7 @@ class FlextLdifConstants(FlextCliConstants):
             "entryUUID": "orclguid",
             "aci": "orclaci",
         })
-        ACL_PERMISSION_KEYS: Final[tuple[str, ...]] = (
+        ACL_PERMISSION_KEYS: Final[t.StrSequence] = (
             "read",
             "write",
             "add",
@@ -176,7 +176,7 @@ class FlextLdifConstants(FlextCliConstants):
             server_type.value for server_type in FlextLdifConstantsEnums.ServerTypes
         )
 
-        CLASS_SUFFIXES: Final[tuple[str, ...]] = ("Acl", "Schema", "Entry", "Constants")
+        CLASS_SUFFIXES: Final[t.StrSequence] = ("Acl", "Schema", "Entry", "Constants")
 
         PROCESSING_STAGE_NORMALIZE_DN: Final[str] = "normalize_dn"
         PROCESSING_STAGE_NORMALIZE_ATTRS: Final[str] = "normalize_attrs"

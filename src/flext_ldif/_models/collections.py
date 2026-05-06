@@ -67,7 +67,7 @@ class FlextLdifModelsCollections:
             extra = self.__pydantic_extra__
             if extra is None:
                 return {}
-            return dict(extra.items())
+            return t.json_dict_adapter().validate_python(extra)
 
     class SchemaContent(m.FrozenModel):
         attributes: Annotated[

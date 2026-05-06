@@ -6,6 +6,7 @@ from flext_ldif import (
     FlextLdifServersOudConstants,
     c,
     m,
+    t,
 )
 
 
@@ -22,7 +23,9 @@ class FlextLdifServersOudUtilities:
             "version_acl_pattern": constants.ACL_VERSION_ACL_PATTERN,
             "targetattr_pattern": constants.ACL_TARGETATTR_PATTERN,
             "allow_deny_pattern": constants.ACL_ALLOW_DENY_PATTERN,
-            "bind_patterns": dict(constants.ACL_BIND_PATTERNS.items()),
+            "bind_patterns": t.str_dict_adapter().validate_python(
+                constants.ACL_BIND_PATTERNS,
+            ),
             "permission_map": {},
             "special_subjects": {},
             "extra_patterns": {

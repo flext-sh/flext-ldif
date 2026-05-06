@@ -19,7 +19,7 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
     ORCLACI: ClassVar[str] = "orclaci"
     ORCLENTRYLEVELACI: ClassVar[str] = "orclentrylevelaci"
     ORCL_CONTAINER_LEVEL_ACL: ClassVar[str] = "orclContainerLevelACL"
-    OID_ACL_ATTRIBUTES: ClassVar[tuple[str, ...]] = (
+    OID_ACL_ATTRIBUTES: ClassVar[t.StrSequence] = (
         ORCLACI,
         ORCLENTRYLEVELACI,
         ORCL_CONTAINER_LEVEL_ACL,
@@ -114,7 +114,7 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
     RFC_NORMALIZED: ClassVar[str] = "rfc_normalized"
     ORIGINAL_OID_PERMS: ClassVar[str] = "original_oid_perms"
     OID_ACL_SOURCE_TARGET: ClassVar[str] = "acl_source_target"
-    CATEGORIZATION_PRIORITY: ClassVar[tuple[str, ...]] = (
+    CATEGORIZATION_PRIORITY: ClassVar[t.StrSequence] = (
         c.Ldif.Category.ACL,
         c.Ldif.Category.USERS,
         c.Ldif.Category.HIERARCHY,

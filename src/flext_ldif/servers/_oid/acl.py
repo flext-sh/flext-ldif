@@ -33,10 +33,10 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         m.Ldif.OidAclMetadataConfig
     )
 
-    RFC_ACL_ATTRIBUTES: ClassVar[tuple[str, ...]] = (
+    RFC_ACL_ATTRIBUTES: ClassVar[t.StrSequence] = (
         FlextLdifServersOidConstants.RFC_ACL_ATTRIBUTES
     )
-    OID_ACL_ATTRIBUTES: ClassVar[tuple[str, ...]] = (
+    OID_ACL_ATTRIBUTES: ClassVar[t.StrSequence] = (
         FlextLdifServersOidConstants.OID_ACL_ATTRIBUTES
     )
 

@@ -388,11 +388,11 @@ class FlextLdifModelsDomainEntry:
         _EMPTY_VALIDATION_RESULT_PAYLOAD: ClassVar[t.MappingKV[str, object]] = (
             MappingProxyType(
                 {
-                    "rfc_violations": tuple[str, ...](),
-                    "errors": tuple[str, ...](),
-                    "warnings": tuple[str, ...](),
+                    "rfc_violations": (),
+                    "errors": (),
+                    "warnings": (),
                     "context": {},
-                    "server_specific_violations": tuple[str, ...](),
+                    "server_specific_violations": (),
                     "validation_server_type": None,
                 },
             )
@@ -713,7 +713,9 @@ class FlextLdifModelsDomainEntry:
                 attribute_count = len(self.attributes) if self.attributes else 0
                 old_context: t.MutableStrMapping = {}
                 if self.metadata.validation_results is not None:
-                    old_context = dict(self.metadata.validation_results.context.items())
+                    old_context = t.str_dict_adapter().validate_python(
+                        self.metadata.validation_results.context,
+                    )
                 context_payload = self._build_rfc_validation_context(
                     old_context=old_context,
                     dn_value=dn_value,

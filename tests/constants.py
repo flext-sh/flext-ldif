@@ -39,31 +39,29 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
         ACL: Final[str] = "acl"
         ENTRIES: Final[str] = "entries"
         INTEGRATION: Final[str] = "integration"
-        FIXTURE_SERVERS_SCHEMA: Final[tuple[str, ...]] = (
+        FIXTURE_SERVERS_SCHEMA: Final[t.StrSequence] = (
             OID,
             OUD,
             OPENLDAP,
             RFC,
         )
-        FIXTURE_SERVERS_COMMON: Final[tuple[str, ...]] = (
+        FIXTURE_SERVERS_COMMON: Final[t.StrSequence] = (
             OID,
             OUD,
             OPENLDAP,
         )
-        FIXTURE_KIND_SERVERS: Final[t.MappingKV[str, tuple[str, ...]]] = (
-            MappingProxyType(
-                {
-                    SCHEMA: FIXTURE_SERVERS_SCHEMA,
-                    ACL: FIXTURE_SERVERS_COMMON,
-                    ENTRIES: FIXTURE_SERVERS_COMMON,
-                    INTEGRATION: FIXTURE_SERVERS_COMMON,
-                },
-            )
+        FIXTURE_KIND_SERVERS: Final[t.MappingKV[str, t.StrSequence]] = MappingProxyType(
+            {
+                SCHEMA: FIXTURE_SERVERS_SCHEMA,
+                ACL: FIXTURE_SERVERS_COMMON,
+                ENTRIES: FIXTURE_SERVERS_COMMON,
+                INTEGRATION: FIXTURE_SERVERS_COMMON,
+            },
         )
         FIXTURE_KINDS: Final[frozenset[str]] = frozenset(
             FIXTURE_KIND_SERVERS.keys(),
         )
-        PARAMETRIZED_REAL_SERVERS: Final[tuple[str, ...]] = (
+        PARAMETRIZED_REAL_SERVERS: Final[t.StrSequence] = (
             OPENLDAP,
             AD,
             OID,
@@ -124,7 +122,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
 
         ATTR_VALUE_TEST: Final[str] = "test"
         ATTR_VALUE_USER: Final[str] = "user"
-        VERSION_EXPECTED_EXPORTS: Final[tuple[str, ...]] = (
+        VERSION_EXPECTED_EXPORTS: Final[t.StrSequence] = (
             "FlextLdifVersion",
             "__author__",
             "__author_email__",
@@ -150,7 +148,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             "cn: User3\n"
             "objectClass: person\n"
         )
-        CONFIG_SERVER_TYPES: Final[tuple[str, ...]] = (
+        CONFIG_SERVER_TYPES: Final[t.StrSequence] = (
             OID,
             OUD,
             OPENLDAP,
@@ -338,7 +336,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
         # ── Entries service constants ────────────────────────────────────
         ENTRIES_DN_VALID: Final[str] = "cn=entries-test,dc=example,dc=com"
         ENTRIES_DN_INVALID: Final[str] = "not-a-dn"
-        ENTRIES_OBJECTCLASS_PERSON: Final[tuple[str, ...]] = (
+        ENTRIES_OBJECTCLASS_PERSON: Final[t.StrSequence] = (
             "top",
             "person",
             "organizationalPerson",
@@ -350,7 +348,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             t.MappingKV[
                 str,
                 tuple[
-                    str | list[str] | tuple[str, ...] | set[str] | frozenset[str],
+                    str | list[str] | t.StrSequence | set[str] | frozenset[str],
                     bool,
                 ],
             ]
@@ -404,14 +402,14 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
         FILTERS_DN_SCHEMA: Final[str] = "cn=schema"
         FILTERS_DN_USER: Final[str] = "cn=user,dc=example,dc=com"
         FILTERS_DN_BARE: Final[str] = "cn=bare"
-        FILTERS_FORBIDDEN_ATTRS_ORDERED: Final[tuple[str, ...]] = (
+        FILTERS_FORBIDDEN_ATTRS_ORDERED: Final[t.StrSequence] = (
             NAME_MAIL,
             NAME_DESCRIPTION,
         )
         FILTERS_FORBIDDEN_ATTRS: Final[frozenset[str]] = frozenset(
             FILTERS_FORBIDDEN_ATTRS_ORDERED,
         )
-        FILTERS_FORBIDDEN_OCS_ORDERED: Final[tuple[str, ...]] = (NAME_INET_ORG_PERSON,)
+        FILTERS_FORBIDDEN_OCS_ORDERED: Final[t.StrSequence] = (NAME_INET_ORG_PERSON,)
         FILTERS_USER_MAIL: Final[str] = "user@example.com"
         FILTERS_USER_DESCRIPTION: Final[str] = "a test user"
         FILTERS_UNWANTED_ATTR_OID: Final[str] = (
@@ -508,7 +506,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
         )
 
         ACL_REGISTRY_GET_ACL_ATTRIBUTES_DATA: Final[
-            t.MappingKV[str, tuple[str, str | None, tuple[str, ...], tuple[str, ...]]]
+            t.MappingKV[str, tuple[str, str | None, t.StrSequence, t.StrSequence]]
         ] = MappingProxyType(
             {
                 "get_acl_attributes_rfc_foundation": (
@@ -1114,7 +1112,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
         SERVER_INVALID_SERVER_TYPE: Final[str] = "invalid_server_xyz"
 
         # ── Validation service constants ─────────────────────────────────
-        VALIDATION_VALID_OC_NAMES: Final[tuple[str, ...]] = (
+        VALIDATION_VALID_OC_NAMES: Final[t.StrSequence] = (
             "person",
             "top",
             "organizationalUnit",
@@ -1124,7 +1122,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
         # ── Pipeline constants ───────────────────────────────────────────
 
         # ── Processing service constants ───────────────────────────────
-        PROCESSING_VALID_DNS: Final[tuple[str, ...]] = (
+        PROCESSING_VALID_DNS: Final[t.StrSequence] = (
             "cn=processing-one,dc=example,dc=com",
             "cn=processing-two,dc=example,dc=com",
         )
@@ -1148,7 +1146,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
         )
 
         # ── Statistics service constants ───────────────────────────────
-        STATS_SERVER_TYPES: Final[tuple[str, ...]] = (
+        STATS_SERVER_TYPES: Final[t.StrSequence] = (
             RFC,
             OID,
         )

@@ -28,17 +28,17 @@ class FlextLdifUtilitiesACL:
         """Type guard to check if a string is a valid ACL subject enum value."""
         return value in FlextLdifUtilitiesACL._ACL_SUBJECT_TYPE_VALUES
 
-    _RFC_ACL_ATTRIBUTES: tuple[str, ...] = (
+    _RFC_ACL_ATTRIBUTES: t.StrSequence = (
         "aci",
         "acl",
         "olcAccess",
         "aclRights",
         "aclEntry",
     )
-    _GENERIC_ACL_ATTRIBUTES: tuple[str, ...] = ("aci", "acl")
-    _OID_ACL_ATTRIBUTES: tuple[str, ...] = (*c.Ldif.ACL_ATTR_NAMES, "acl")
-    _OUD_ACL_ATTRIBUTES: tuple[str, ...] = tuple(c.Ldif.ACL_ATTR_NAMES)
-    _AD_ACL_ATTRIBUTES: tuple[str, ...] = ("nTSecurityDescriptor", "aci")
+    _GENERIC_ACL_ATTRIBUTES: t.StrSequence = ("aci", "acl")
+    _OID_ACL_ATTRIBUTES: t.StrSequence = (*c.Ldif.ACL_ATTR_NAMES, "acl")
+    _OUD_ACL_ATTRIBUTES: t.StrSequence = tuple(c.Ldif.ACL_ATTR_NAMES)
+    _AD_ACL_ATTRIBUTES: t.StrSequence = ("nTSecurityDescriptor", "aci")
 
     @staticmethod
     def _build_extensions(

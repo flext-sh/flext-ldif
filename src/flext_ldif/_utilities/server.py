@@ -19,7 +19,7 @@ class FlextLdifUtilitiesServer:
     """Server utilities for LDIF server type resolution."""
 
     VALID_SERVER_TYPES: frozenset[str] = c.Ldif.VALID_SERVER_TYPES
-    CLASS_SUFFIXES: tuple[str, ...] = c.Ldif.CLASS_SUFFIXES
+    CLASS_SUFFIXES: t.StrSequence = c.Ldif.CLASS_SUFFIXES
 
     @staticmethod
     def _check_name_patterns(

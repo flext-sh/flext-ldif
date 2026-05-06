@@ -89,7 +89,7 @@ class TestsFlextLdifEntriesService:
     def test_normalize_attribute_values(
         self,
         scenario: str,
-        value: str | list[str] | tuple[str, ...] | set[str] | frozenset[str],
+        value: str | list[str] | t.StrSequence | set[str] | frozenset[str],
         should_succeed: bool,
     ) -> None:
         tm.that(bool(scenario), eq=True)

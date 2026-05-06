@@ -57,7 +57,7 @@ class FlextLdifServersRfcConstants(FlextLdifServersBaseConstants):
         "createTimestamp",
         "modifyTimestamp",
     ])
-    CATEGORIZATION_PRIORITY: ClassVar[tuple[str, ...]] = (
+    CATEGORIZATION_PRIORITY: ClassVar[t.StrSequence] = (
         "users",
         "hierarchy",
         "groups",
