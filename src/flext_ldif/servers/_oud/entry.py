@@ -132,7 +132,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         metadata_config = m.Ldif.EntryParseMetadataConfig.model_validate({
             "server_type": c.Ldif.ServerTypes.OUD,
             "original_entry_dn": entry_dn,
-            "cleaned_dn": entry.dn.value if entry.dn else entry_dn,
+            "cleaned_dn": str(entry.dn) if entry.dn else entry_dn,
             "original_dn_line": f"dn: {entry_dn}",
             "original_attr_lines": [],
             "dn_was_base64": False,
@@ -214,7 +214,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 )
                 logger.debug(
                     "Entry contains OUD ACI macros - preserved for runtime expansion",
-                    entry_dn=entry.dn.value if entry.dn else "",
+                    entry_dn=str(entry.dn) if entry.dn else "",
                     aci_count=len(aci_list),
                 )
             entry = FlextLdifServersOudHelpersMixin.merge_acl_metadata_to_entry(

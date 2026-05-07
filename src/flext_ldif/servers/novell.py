@@ -191,7 +191,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         """Novell eDirectory ACL server."""
 
         @staticmethod
-        def splitacl_line(acl_line: str) -> tuple[str, str]:
+        def splitacl_line(acl_line: str) -> t.StrPair:
             """Split an ACL line into attribute name and payload."""
             attr_name, _, remainder = acl_line.partition(":")
             return (attr_name.strip(), remainder.strip())

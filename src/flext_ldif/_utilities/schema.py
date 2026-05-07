@@ -643,7 +643,7 @@ class FlextLdifUtilitiesSchema:
         extensions_raw = up.extract_extensions(definition)
         extensions: t.Ldif.MutableMetadataMapping = {}
         for key, val in extensions_raw.items():
-            val_payload: list[t.JsonValue] = list(val)
+            val_payload: t.JsonValueList = list(val)
             extensions[key] = val_payload
         extensions[c.Ldif.ORIGINAL_FORMAT] = definition.strip()
         if additional_extensions:

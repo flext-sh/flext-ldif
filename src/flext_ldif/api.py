@@ -27,6 +27,7 @@ from flext_ldif import (
     p,
     r,
     t,
+    u,
 )
 
 
@@ -72,7 +73,8 @@ class FlextLdif(
         **fields: t.JsonValue,
     ) -> Self:
         """Return a configured facade instance while keeping the DSL alias callable."""
-        return super().__call__(server=server, settings=settings, **fields)
+        configured: Self = super().__call__(server=server, settings=settings, **fields)
+        return configured
 
     def categorization(
         self,
@@ -114,11 +116,7 @@ class FlextLdif(
         forbidden_ocs: t.StrSequence,
     ) -> p.Ldif.Entry:
         """Expose the stateless filter helper through the facade DSL."""
-        concrete = (
-            entry
-            if isinstance(entry, m.Ldif.Entry)
-            else m.Ldif.Entry.model_validate(entry)
-        )
+        concrete = u.Ldif.as_entry(entry)
         return FlextLdifFilters.filter_entry_attributes(
             entry=concrete,
             forbidden_attrs=forbidden_attrs,
@@ -131,11 +129,7 @@ class FlextLdif(
         allowed_oids: t.MappingKV[str, frozenset[str]],
     ) -> p.Ldif.Entry:
         """Expose schema-attribute OID filtering through the facade DSL."""
-        concrete = (
-            entry
-            if isinstance(entry, m.Ldif.Entry)
-            else m.Ldif.Entry.model_validate(entry)
-        )
+        concrete = u.Ldif.as_entry(entry)
         return FlextLdifFilters.filter_schema_attribute_values(
             entry=concrete,
             allowed_oids=allowed_oids,

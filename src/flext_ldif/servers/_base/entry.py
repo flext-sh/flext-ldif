@@ -437,12 +437,19 @@ class FlextLdifServersBaseEntry(
             output_lines.extend(u.Ldif.fold_line(line, width=effective_line_width))
 
         if should_restore_original() and entry_data.metadata is not None:
-            original_ldif_raw = entry_data.metadata.original_strings.get(
+            original_strings = entry_data.metadata.original_strings.to_dict()
+            original_ldif_raw = original_strings.get(
                 "entry_original_ldif",
+                "",
             )
-            if not original_ldif_raw:
+            try:
+                restored_output: str = t.str_adapter().validate_python(
+                    original_ldif_raw,
+                )
+            except c.ValidationError as exc:
+                return r[str].fail_op("restore original LDIF text", exc)
+            if not restored_output:
                 return r[str].ok("")
-            restored_output = str(original_ldif_raw)
             if restored_output and not restored_output.endswith("\n"):
                 restored_output += "\n"
             return r[str].ok(restored_output)

@@ -164,7 +164,7 @@ class FlextLdifServersOudTransformMixin:
                 original_value = original_attributes[orig_case]
                 restored_values = (
                     [str(item) for item in original_value]
-                    if isinstance(original_value, (list, tuple))
+                    if isinstance(original_value, t.SEQUENCE_PAIR_TYPES)
                     else [str(original_value)]
                 )
             else:
@@ -206,7 +206,7 @@ class FlextLdifServersOudTransformMixin:
         corrected_entry = entry.model_copy(update={"attributes": corrected_ldif_attrs})
         logger.debug(
             "OUD servers: Applied syntax corrections before writing (structure preserved)",
-            entry_dn=entry.dn.value if entry.dn else "",
+            entry_dn=str(entry.dn) if entry.dn else "",
             corrections_count=len(syntax_corrections) if syntax_corrections else 0,
         )
         return r[m.Ldif.Entry].ok(corrected_entry)

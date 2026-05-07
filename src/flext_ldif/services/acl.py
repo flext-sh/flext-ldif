@@ -2,10 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import (
-    Mapping,
-)
-
 from flext_ldif import (
     c,
     m,
@@ -48,60 +44,63 @@ class FlextLdifAcl(s):
         required_permissions: m.Ldif.AclPermissions | t.MutableBoolMapping,
     ) -> p.Result[m.Ldif.AclEvaluationResult]:
         """Evaluate if ACLs grant required permissions."""
-        if isinstance(required_permissions, Mapping):
-            required = m.Ldif.AclPermissions(
-                read=required_permissions.get("read", False),
-                write=required_permissions.get("write", False),
-                delete=required_permissions.get("delete", False),
-                add=required_permissions.get("add", False),
-                search=required_permissions.get("search", False),
-                compare=required_permissions.get("compare", False),
+        required = (
+            required_permissions
+            if isinstance(required_permissions, m.Ldif.AclPermissions)
+            else m.Ldif.AclPermissions.model_validate(
+                m.Ldif.AclPermissions.filter_rfc_compliant_permissions(
+                    dict(required_permissions),
+                ),
+            )
+        )
+        permission_keys = (
+            c.Ldif.RfcAclPermission.READ.value,
+            c.Ldif.RfcAclPermission.WRITE.value,
+            c.Ldif.RfcAclPermission.DELETE.value,
+            c.Ldif.RfcAclPermission.ADD.value,
+            c.Ldif.RfcAclPermission.SEARCH.value,
+            c.Ldif.RfcAclPermission.COMPARE.value,
+        )
+        required_perms = [
+            permission
+            for permission in permission_keys
+            if getattr(required, permission)
+        ]
+        evaluation = m.Ldif.AclEvaluationResult(
+            granted=False,
+            matched_acl=None,
+            message="No ACLs to evaluate - access denied by default",
+        )
+        if not acls:
+            pass
+        elif not required_perms:
+            evaluation = m.Ldif.AclEvaluationResult(
+                granted=True,
+                matched_acl=u.Ldif.as_acl(acls[0]),
+                message="No permissions required - access granted trivially",
             )
         else:
-            required = required_permissions
-        if not acls:
-            return r[m.Ldif.AclEvaluationResult].ok(
-                m.Ldif.AclEvaluationResult(
-                    granted=False,
-                    matched_acl=None,
-                    message="No ACLs to evaluate - access denied by default",
+            found_result = u.find(
+                acls,
+                predicate=lambda acl: (
+                    (permissions := acl.permissions) is not None
+                    and all(getattr(permissions, perm) for perm in required_perms)
                 ),
             )
-        perm_names = ["read", "write", "delete", "add", "search", "compare"]
-        required_perms = [p for p in perm_names if getattr(required, p, False)]
-        if not required_perms:
-            return r[m.Ldif.AclEvaluationResult].ok(
-                m.Ldif.AclEvaluationResult(
-                    granted=True,
-                    matched_acl=u.Ldif.as_acl(acls[0]) if acls else None,
-                    message="No permissions required - access granted trivially",
-                ),
-            )
-
-        def acl_grants_all(acl: t.Ldif.AclLike) -> bool:
-            """Check if ACL grants all required permissions."""
-            permissions = acl.permissions
-            if permissions is None:
-                return False
-            return all(getattr(permissions, perm, False) for perm in required_perms)
-
-        found_result = u.find(acls, predicate=acl_grants_all)
-        if found_result.success:
-            found_acl = found_result.value
-            return r[m.Ldif.AclEvaluationResult].ok(
-                m.Ldif.AclEvaluationResult(
+            if found_result.success:
+                found_acl = found_result.value
+                evaluation = m.Ldif.AclEvaluationResult(
                     granted=True,
                     matched_acl=u.Ldif.as_acl(found_acl),
                     message=f"ACL '{found_acl.name}' grants required permissions: {required_perms}",
-                ),
-            )
-        return r[m.Ldif.AclEvaluationResult].ok(
-            m.Ldif.AclEvaluationResult(
-                granted=False,
-                matched_acl=None,
-                message=f"No ACL grants required permissions: {required_perms}",
-            ),
-        )
+                )
+            else:
+                evaluation = m.Ldif.AclEvaluationResult(
+                    granted=False,
+                    matched_acl=None,
+                    message=f"No ACL grants required permissions: {required_perms}",
+                )
+        return r[m.Ldif.AclEvaluationResult].ok(evaluation)
 
     def service_check(self) -> p.Result[m.Ldif.AclResponse]:
         """Return a minimal ACL response for service wiring checks."""

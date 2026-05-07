@@ -317,15 +317,16 @@ class FlextLdifServersBaseSchema(
 
     def _coerce_schema_data(
         self,
-        value: t.JsonValue | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None,
+        value: str
+        | t.JsonValue
+        | m.Ldif.SchemaAttribute
+        | m.Ldif.SchemaObjectClass
+        | None,
     ) -> str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None:
         """Coerce raw execute payload to the concrete schema payload union."""
         if value is None:
             return None
-        if isinstance(
-            value,
-            (str, m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass),
-        ):
+        if isinstance(value, str):
             return value
         for model in (m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass):
             try:
@@ -398,8 +399,9 @@ class FlextLdifServersBaseSchema(
         """Resolve schema operation from parameter or kwargs."""
         if operation is not None:
             return self._coerce_operation(operation)
-        raw_operation = kwargs.get("operation")
-        if not isinstance(raw_operation, str):
+        try:
+            raw_operation = t.str_adapter().validate_python(kwargs.get("operation"))
+        except c.ValidationError:
             return None
         return self._coerce_operation(raw_operation)
 

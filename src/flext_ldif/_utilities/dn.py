@@ -200,19 +200,19 @@ class FlextLdifUtilitiesDN:
         return False
 
     @staticmethod
-    def _normalize_dns_for_comparison(dn1: str, dn2: str) -> p.Result[tuple[str, str]]:
+    def _normalize_dns_for_comparison(dn1: str, dn2: str) -> p.Result[t.StrPair]:
         """Normalize both DNs for comparison."""
         norm1_result = FlextLdifUtilitiesDN.norm(dn1)
         if not norm1_result.success:
-            return r[tuple[str, str]].fail(
+            return r[t.StrPair].fail(
                 f"Comparison failed (RFC 4514): Failed to normalize first DN: {norm1_result.error}",
             )
         norm2_result = FlextLdifUtilitiesDN.norm(dn2)
         if not norm2_result.success:
-            return r[tuple[str, str]].fail(
+            return r[t.StrPair].fail(
                 f"Comparison failed (RFC 4514): Failed to normalize second DN: {norm2_result.error}",
             )
-        return r[tuple[str, str]].ok((
+        return r[t.StrPair].ok((
             norm1_result.value.lower(),
             norm2_result.value.lower(),
         ))
@@ -686,20 +686,20 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def parse_dn(dn: str) -> p.Result[t.MutableSequenceOf[tuple[str, str]]]: ...
+    def parse_dn(dn: str) -> p.Result[t.MutableStrPairSequence]: ...
 
     @overload
     @staticmethod
     def parse_dn(
         dn: m.Ldif.DN,
-    ) -> p.Result[t.MutableSequenceOf[tuple[str, str]]]: ...
+    ) -> p.Result[t.MutableStrPairSequence]: ...
 
     @staticmethod
     def parse_dn(
         dn: str | m.Ldif.DN | None,
-    ) -> p.Result[t.MutableSequenceOf[tuple[str, str]]]:
+    ) -> p.Result[t.MutableStrPairSequence]:
         """Parse DN into RFC 4514 components (attr, value pairs)."""
-        result = r[t.MutableSequenceOf[tuple[str, str]]].fail("DN cannot be None")
+        result = r[t.MutableStrPairSequence].fail("DN cannot be None")
         if dn is not None:
             dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
             if not dn_str or "=" not in dn_str:
@@ -708,10 +708,10 @@ class FlextLdifUtilitiesDN:
                     if not dn_str
                     else f"Invalid DN format: missing '=' separator in '{dn_str}'"
                 )
-                result = r[t.MutableSequenceOf[tuple[str, str]]].fail(error_msg)
+                result = r[t.MutableStrPairSequence].fail(error_msg)
             else:
                 try:
-                    parsed_pairs: t.MutableSequenceOf[tuple[str, str]] = []
+                    parsed_pairs: t.MutableStrPairSequence = []
                     failure_message: str | None = None
                     for component in FlextLdifUtilitiesDN.split(dn_str):
                         parsed_component = FlextLdifUtilitiesDN.parse_rdn(component)
@@ -720,29 +720,29 @@ class FlextLdifUtilitiesDN:
                             break
                         parsed_pairs.extend(parsed_component.value)
                     if failure_message is None and parsed_pairs:
-                        result = r[t.MutableSequenceOf[tuple[str, str]]].ok(
+                        result = r[t.MutableStrPairSequence].ok(
                             parsed_pairs,
                         )
                     else:
-                        result = r[t.MutableSequenceOf[tuple[str, str]]].fail(
+                        result = r[t.MutableStrPairSequence].fail(
                             failure_message
                             or f"Failed to parse DN components from '{dn_str}'",
                         )
                 except c.Ldif.EXC_LDIF_PARSE as e:
-                    result = r[t.MutableSequenceOf[tuple[str, str]]].fail(
+                    result = r[t.MutableStrPairSequence].fail(
                         f"DN parsing error: {e}",
                     )
         return result
 
     @staticmethod
-    def parse_rdn(rdn: str) -> p.Result[t.MutableSequenceOf[tuple[str, str]]]:
+    def parse_rdn(rdn: str) -> p.Result[t.MutableStrPairSequence]:
         """Parse a single RDN component per RFC 4514."""
-        result = r[t.MutableSequenceOf[tuple[str, str]]].fail(
+        result = r[t.MutableStrPairSequence].fail(
             "RDN must be a non-empty string",
         )
         if rdn:
             try:
-                pairs: t.MutableSequenceOf[tuple[str, str]] = []
+                pairs: t.MutableStrPairSequence = []
                 current_attr = ""
                 current_val = ""
                 in_value = False
@@ -782,11 +782,11 @@ class FlextLdifUtilitiesDN:
                     error_message = f"Invalid RDN format: empty value in '{rdn}'"
                 if error_message is None:
                     pairs.append((current_attr, current_val))
-                    result = r[t.MutableSequenceOf[tuple[str, str]]].ok(pairs)
+                    result = r[t.MutableStrPairSequence].ok(pairs)
                 else:
-                    result = r[t.MutableSequenceOf[tuple[str, str]]].fail(error_message)
+                    result = r[t.MutableStrPairSequence].fail(error_message)
             except c.Ldif.EXC_LDIF_PARSE as e:
-                result = r[t.MutableSequenceOf[tuple[str, str]]].fail(
+                result = r[t.MutableStrPairSequence].fail(
                     f"RDN parsing error: {e}",
                 )
         return result

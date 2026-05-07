@@ -95,7 +95,7 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
         ("authmethod", 'authmethod = "{value}"', None),
         ("ssf", 'ssf {operator} "{value}"', ">="),
     )
-    ACL_TARGET_EXTENSIONS_CONFIG: ClassVar[tuple[tuple[str, str], ...]] = (
+    ACL_TARGET_EXTENSIONS_CONFIG: ClassVar[t.StrPairTuple] = (
         ("targattrfilters", '(targattrfilters="{value}")'),
         ("targetcontrol", '(targetcontrol="{value}")'),
         ("extop", '(extop="{value}")'),

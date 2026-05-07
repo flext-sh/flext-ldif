@@ -164,7 +164,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                 if isinstance(val, (str, bool, int, float)):
                     perms_data[k] = val
                 elif isinstance(val, list):
-                    str_list: list[t.JsonValue] = [
+                    str_list: t.JsonValueList = [
                         item for item in val if isinstance(item, str)
                     ]
                     perms_data[k] = u.normalize_to_metadata(str_list)

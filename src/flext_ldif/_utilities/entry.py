@@ -479,7 +479,10 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def parse_validation_rules(
-        validation_rules: FlextLdifModelsSettings.ServerValidationRules | t.JsonValue,
+        validation_rules: FlextLdifModelsSettings.ServerValidationRules
+        | str
+        | t.JsonMapping
+        | None,
     ) -> FlextLdifModelsSettings.ServerValidationRules | None:
         """Normalize dynamic validation_rules payload to ServerValidationRules."""
         if isinstance(
@@ -500,7 +503,7 @@ class FlextLdifUtilitiesEntry:
                     f"Failed to validate server rules from JSON string: {exc}",
                 )
                 return None
-        if isinstance(validation_rules, Mapping):
+        if validation_rules is not None:
             try:
                 validated: FlextLdifModelsSettings.ServerValidationRules = (
                     FlextLdifModelsSettings.ServerValidationRules.model_validate(
@@ -590,7 +593,7 @@ class FlextLdifUtilitiesEntry:
             context="dn",
         )
 
-        def extract_case_mapping(attr_name: str) -> tuple[str, str] | None:
+        def extract_case_mapping(attr_name: str) -> t.StrPair | None:
             """Extract case mapping if different."""
             attr_str = attr_name
             canonical = normalize(attr_str)
@@ -763,13 +766,7 @@ class FlextLdifUtilitiesEntry:
                     ),
                 )
         if resolved_config.dn_pattern:
-            dn_value = (
-                entry.dn.value
-                if entry.dn and getattr(entry.dn, "value", None) is not None
-                else str(entry.dn)
-                if entry.dn
-                else ""
-            )
+            dn_value = str(entry.dn) if entry.dn else ""
             checks.append(
                 bool(
                     c.Ldif.compile_pattern(

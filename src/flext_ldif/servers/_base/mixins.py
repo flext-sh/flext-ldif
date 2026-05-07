@@ -2,11 +2,34 @@
 
 from __future__ import annotations
 
-from flext_ldif import c, p, u
+from flext_ldif import c, p, t, u
 
 
 class FlextLdifServerMethodsMixin:
     """Common server methods shared by schema, ACL, and entry servers."""
+
+    @staticmethod
+    def project_processor_fields[T](
+        fields: t.MappingKV[str, T],
+        processor_keys: frozenset[str],
+        *,
+        force_dispatch: bool = False,
+    ) -> t.JsonDict | None:
+        """Validate fields outside the processor key set for super().__call__ dispatch.
+
+        Returns ``None`` when every field is a processor key and no forced
+        dispatch was requested — signalling the caller to skip ``super().__call__``
+        and run the local processor branch instead. Non-processor field values
+        are coerced through ``t.json_value_adapter()`` (caller is responsible
+        for ensuring those values are JsonValue-compatible).
+        """
+        if not (force_dispatch or any(key not in processor_keys for key in fields)):
+            return None
+        return {
+            key: t.json_value_adapter().validate_python(value)
+            for key, value in fields.items()
+            if key not in processor_keys
+        }
 
     @staticmethod
     def get_parent_server_from_instance(

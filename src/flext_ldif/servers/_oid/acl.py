@@ -373,10 +373,13 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         source_subject_type_raw = metadata.extensions.get(
             c.Ldif.ACL_SOURCE_SUBJECT_TYPE,
         )
-        if isinstance(source_subject_type_raw, str):
-            return source_subject_type_raw
-        msg = f"Expected str | None, got {type(source_subject_type_raw)}"
-        raise TypeError(msg)
+        try:
+            source_subject_type: str = t.str_adapter().validate_python(
+                source_subject_type_raw,
+            )
+            return source_subject_type
+        except c.ValidationError:
+            return None
 
     def _map_bind_rules_to_oid(
         self,
@@ -657,7 +660,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             t.Ldif.Scalar | t.MutableSequenceOf[str] | t.MutableAttributeMapping | None,
         ]
         | None,
-    ) -> tuple[str, str]:
+    ) -> t.StrPair:
         """Prepare OID subject and permissions clauses for ACL write."""
         subject_dict = self._normalize_to_dict(acl_subject)
         subject_public = m.Ldif.AclSubject.model_validate(subject_dict)

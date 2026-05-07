@@ -17,16 +17,6 @@ from flext_ldif import (
 class FlextLdifWriter(s):
     """LDIF writer orchestrator over the server server registry."""
 
-    @staticmethod
-    def _coerce_entries(
-        entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
-    ) -> t.MutableSequenceOf[m.Ldif.Entry]:
-        """Keep write inputs on canonical Entry models."""
-        if isinstance(entries, m.Ldif.ParseResponse):
-            return entries.entries
-        as_entries: t.MutableSequenceOf[m.Ldif.Entry] = u.Ldif.as_entries(entries)
-        return as_entries
-
     def write(
         self,
         entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
@@ -35,7 +25,7 @@ class FlextLdifWriter(s):
         format_options: p.Ldif.WriteFormatOptions | None = None,
     ) -> p.Result[m.Ldif.WriteResponse]:
         """Write entries to LDIF text and return canonical write metadata."""
-        normalized_entries = self._coerce_entries(entries)
+        normalized_entries = u.Ldif.as_entries(entries)
         string_result = self.write_to_string(
             normalized_entries,
             server_type=server_type,
@@ -65,7 +55,7 @@ class FlextLdifWriter(s):
         format_options: p.Ldif.WriteFormatOptions | None = None,
     ) -> p.Result[m.Ldif.WriteResponse]:
         """Write entries to an LDIF file and return canonical write metadata."""
-        normalized_entries = self._coerce_entries(entries)
+        normalized_entries = u.Ldif.as_entries(entries)
         string_result = self.write_to_string(
             normalized_entries,
             server_type=server_type,
@@ -109,7 +99,7 @@ class FlextLdifWriter(s):
         format_options: p.Ldif.WriteFormatOptions | None = None,
     ) -> p.Result[str]:
         """Write entries to LDIF text through the selected base server."""
-        normalized_entries = self._coerce_entries(entries)
+        normalized_entries = u.Ldif.as_entries(entries)
         effective_server_type = server_type or self._get_effective_server_type_value()
         concrete_options = (
             format_options

@@ -136,10 +136,11 @@ class FlextLdifProcessingPipeline(
         output_payload: t.JsonMapping = t.Cli.JSON_MAPPING_ADAPTER.validate_python({
             "processed_entries": len(transformed_entries)
         })
-        return cli.ok_stage(
+        stage_result: p.Result[m.Cli.PipelineStageResult] = cli.ok_stage(
             stage_id,
             output=output_payload,
         )
+        return stage_result
 
     def _build_pipeline(self) -> t.SequenceOf[m.Cli.PipelineStageSpec]:
         """Build the canonical cli-backed processing stages."""

@@ -43,9 +43,11 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def as_entries(
-        values: t.SequenceOf[t.Ldif.EntryLike] | t.ModelInput,
+        values: t.SequenceOf[t.Ldif.EntryLike] | m.Ldif.ParseResponse | t.ModelInput,
     ) -> t.MutableSequenceOf[m.Ldif.Entry]:
         """Coerce an entry sequence into canonical LDIF entry models."""
+        if isinstance(values, m.Ldif.ParseResponse):
+            return values.entries
         validated: t.MutableSequenceOf[m.Ldif.Entry] = (
             FlextLdifUtilitiesDispatch._ENTRY_LIST_ADAPTER.validate_python(values)
         )
@@ -73,7 +75,7 @@ class FlextLdifUtilitiesDispatch:
         definition: str | m.Ldif.DN | None,
         server_type: str | None = None,
         parse_parts_hook: None = None,
-    ) -> p.Result[t.MutableSequenceOf[tuple[str, str]]]: ...
+    ) -> p.Result[t.MutableStrPairSequence]: ...
 
     @staticmethod
     @overload
@@ -91,10 +93,7 @@ class FlextLdifUtilitiesDispatch:
         parse_parts_hook: Callable[[str], t.Ldif.MutableMetadataMapping]
         | Callable[[str], p.Result[t.Ldif.MutableMetadataMapping]]
         | None = None,
-    ) -> (
-        p.Result[t.MutableSequenceOf[tuple[str, str]]]
-        | p.Result[t.Ldif.MutableMetadataMapping]
-    ):
+    ) -> p.Result[t.MutableStrPairSequence] | p.Result[t.Ldif.MutableMetadataMapping]:
         if definition is None:
             return r[t.Ldif.MutableMetadataMapping].fail("DN cannot be None")
         if isinstance(definition, m.Ldif.DN):
@@ -207,8 +206,7 @@ class FlextLdifUtilitiesDispatch:
                     max_errors=max_errors,
                 )
             case _ if isinstance(value_or_entries, Sequence) and not isinstance(
-                value_or_entries,
-                (str, bytes),
+                value_or_entries, t.STR_BYTES_TYPES
             ):
                 result = r[t.JsonValue].fail(
                     "validator call requires scalar, not entry sequence",

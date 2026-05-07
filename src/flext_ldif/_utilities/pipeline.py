@@ -105,11 +105,7 @@ class FlextLdifUtilitiesPipeline:
             if entry.dn is None:
                 errors.append("Entry has no DN (RFC 2849 violation)")
             else:
-                dn_str = (
-                    entry.dn.value
-                    if getattr(entry.dn, "value", None) is not None
-                    else str(entry.dn)
-                )
+                dn_str = str(entry.dn)
                 components = dn_str.split(",")
                 for comp in components:
                     comp_stripped = comp.strip()

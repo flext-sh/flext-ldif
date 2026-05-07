@@ -128,7 +128,7 @@ class FlextLdifCategorization(s):
             return value
         if isinstance(value, m.BaseModel):
             validation_result = u.try_(
-                lambda: m.Ldif.Entry.model_validate(value.model_dump()),
+                lambda: u.Ldif.as_entry(value),
             )
             if validation_result.failure:
                 FlextLdifCategorization._get_or_create_logger().warning(
@@ -151,7 +151,7 @@ class FlextLdifCategorization(s):
         included: t.MutableSequenceOf[m.Ldif.Entry] = []
         excluded: t.MutableSequenceOf[m.Ldif.Entry] = []
         for entry in model_entries:
-            dn_str = entry.dn.value if entry.dn else None
+            dn_str = str(entry.dn) if entry.dn else None
             if dn_str and u.Ldif.is_under_base(dn_str, base_dn):
                 included.append(entry)
             else:
@@ -332,7 +332,8 @@ class FlextLdifCategorization(s):
         during ``__init__``.
         """
         has_forbidden = bool(self.forbidden_attributes or self.forbidden_objectclasses)
-        has_schema_rules = self.schema_whitelist_rules is not None
+        whitelist_rules = self._normalize_initial_whitelist_rules()
+        has_schema_rules = whitelist_rules is not None
 
         if not has_forbidden and not has_schema_rules:
             return
@@ -342,25 +343,23 @@ class FlextLdifCategorization(s):
                 continue
             if cat == c.Ldif.Category.SCHEMA:
                 filtered = list(entries)
-                if has_schema_rules:
-                    sw_rules = (
-                        self.schema_whitelist_rules
-                        if isinstance(
-                            self.schema_whitelist_rules,
-                            m.Ldif.WhitelistRules,
-                        )
-                        else m.Ldif.WhitelistRules.model_validate(
-                            dict(self.schema_whitelist_rules or {}),
-                        )
-                    )
+                if whitelist_rules is not None:
                     allowed_oids: MutableMapping[str, frozenset[str]] = {
-                        "attributetypes": frozenset(sw_rules.allowed_attribute_oids),
-                        "objectclasses": frozenset(sw_rules.allowed_objectclass_oids),
-                        "matchingrules": frozenset(sw_rules.allowed_matchingrule_oids),
-                        "matchingruleuse": frozenset(
-                            sw_rules.allowed_matchingruleuse_oids,
+                        "attributetypes": frozenset(
+                            whitelist_rules.allowed_attribute_oids,
                         ),
-                        "ldapsyntaxes": frozenset(sw_rules.allowed_ldapsyntax_oids),
+                        "objectclasses": frozenset(
+                            whitelist_rules.allowed_objectclass_oids,
+                        ),
+                        "matchingrules": frozenset(
+                            whitelist_rules.allowed_matchingrule_oids,
+                        ),
+                        "matchingruleuse": frozenset(
+                            whitelist_rules.allowed_matchingruleuse_oids,
+                        ),
+                        "ldapsyntaxes": frozenset(
+                            whitelist_rules.allowed_ldapsyntax_oids,
+                        ),
                     }
                     if any(allowed_oids.values()):
                         filtered = [
@@ -518,32 +517,12 @@ class FlextLdifCategorization(s):
         schema_entries: t.MutableSequenceOf[m.Ldif.Entry],
     ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
         """Filter schema entries by OID whitelist."""
-        if not self.schema_whitelist_rules:
+        sw_rules = self._normalize_initial_whitelist_rules()
+        if sw_rules is None:
             return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(schema_entries)
-        sw_rules = (
-            self.schema_whitelist_rules
-            if isinstance(self.schema_whitelist_rules, m.Ldif.WhitelistRules)
-            else m.Ldif.WhitelistRules.model_validate(
-                dict(self.schema_whitelist_rules or {}),
-            )
-        )
-        allowed_oids: t.MutableFrozensetMapping = {
-            "allowed_attribute_oids": frozenset(
-                sw_rules.allowed_attribute_oids,
-            ),
-            "allowed_objectclass_oids": frozenset(
-                sw_rules.allowed_objectclass_oids,
-            ),
-            "allowed_matchingrule_oids": frozenset(
-                sw_rules.allowed_matchingrule_oids,
-            ),
-            "allowed_matchingruleuse_oids": frozenset(
-                sw_rules.allowed_matchingruleuse_oids,
-            ),
-        }
         result = FlextLdifFilters.filter_schema_by_oids(
             entries=schema_entries,
-            allowed_oids=allowed_oids,
+            allowed_oids=sw_rules,
         )
         if result.success:
             filtered = result.map_or(None)
@@ -581,13 +560,11 @@ class FlextLdifCategorization(s):
         entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
     ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
         """Validate and normalize all DNs to RFC 4514."""
-        normalized_entries = (
-            entries.entries if isinstance(entries, m.Ldif.ParseResponse) else entries
-        )
+        normalized_entries = u.Ldif.as_entries(entries)
 
         def validate_entry(entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
             """Validate and normalize entry DN."""
-            dn_str = entry.dn.value if entry.dn else ""
+            dn_str = str(entry.dn) if entry.dn else ""
             if not u.Ldif.validate_dn(dn_str):
                 rejected_entry = u.Ldif.update_entry_statistics(
                     entry,
@@ -734,22 +711,25 @@ class FlextLdifCategorization(s):
         category_map: t.MutableFrozensetMapping,
     ) -> tuple[str, str | None]:
         """Match entry to category using priority order and category map."""
-        objectclass_names: t.MutableSequenceOf[str] = u.Ldif.get_objectclass_names(
-            entry,
-        )
-        entry_ocs: set[str] = {oc.lower() for oc in objectclass_names}
         for category in priority_order:
-            if category not in category_map:
+            category_markers = category_map.get(category)
+            if not category_markers:
                 continue
-            category_ocs = category_map[category]
-            category_ocs_lower = {oc.lower() for oc in category_ocs}
-            if category == c.Ldif.Category.ACL:
-                for attr_marker in category_ocs:
-                    if attr_marker.startswith("attr:"):
-                        attr_name = attr_marker[5:]
-                        if u.Ldif.has_attribute(entry, attr_name):
-                            return (c.Ldif.Category.ACL, None)
-            elif any(oc in category_ocs_lower for oc in entry_ocs):
+            attribute_markers = [
+                marker[5:] for marker in category_markers if marker.startswith("attr:")
+            ]
+            objectclass_markers = [
+                marker for marker in category_markers if not marker.startswith("attr:")
+            ]
+            if not attribute_markers and not objectclass_markers:
+                continue
+            criteria = m.Ldif.EntryCriteriaConfig.model_validate(
+                {
+                    "objectclasses": objectclass_markers or None,
+                    "any_attrs": attribute_markers or None,
+                },
+            )
+            if u.Ldif.matches_criteria(entry, settings=criteria):
                 return (category, None)
         return (c.Ldif.Category.REJECTED, "No category match")
 
@@ -805,7 +785,7 @@ class FlextLdifCategorization(s):
             return r[m.Ldif.CategoryRules].ok(self._normalize_initial_category_rules())
         return r[m.Ldif.CategoryRules].from_result(
             u.try_(
-                lambda: m.Ldif.CategoryRules.model_validate(dict(rules)),
+                lambda: m.Ldif.CategoryRules.model_validate(rules),
                 catch=(
                     ValueError,
                     KeyError,

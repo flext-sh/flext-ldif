@@ -16,9 +16,12 @@ class FlextLdifUtilitiesWriter:
         """Add flags to attribute parts list."""
         if attr_data.single_value:
             parts.append("SINGLE-VALUE")
-        if attr_data.metadata and attr_data.metadata.extensions.get(
-            c.Ldif.COLLECTIVE,
-        ):
+        collective = (
+            attr_data.metadata.extensions.get(c.Ldif.COLLECTIVE)
+            if attr_data.metadata is not None
+            else False
+        )
+        if collective is True:
             parts.append("COLLECTIVE")
         if attr_data.no_user_modification:
             parts.append("NO-USER-MODIFICATION")

@@ -87,7 +87,7 @@ class FlextLdifModelsSettings:
             u.Field(description="Permission name normalization map"),
         ] = u.Field(default_factory=dict)
         special_subjects: Annotated[
-            MutableMapping[str, tuple[str, str]],
+            t.MutableStrPairMapping,
             u.Field(description="Special subject value mappings"),
         ] = u.Field(default_factory=dict)
         extra_patterns: Annotated[
@@ -103,7 +103,7 @@ class FlextLdifModelsSettings:
         """Configuration for building ACL metadata extensions."""
 
         line_breaks: Annotated[
-            list[t.JsonValue] | None,
+            t.JsonValueList | None,
             u.Field(description="Line break positions"),
         ] = None
         dn_spaces: Annotated[
@@ -111,7 +111,7 @@ class FlextLdifModelsSettings:
             u.Field(description="DN spacing information"),
         ] = None
         targetscope: Annotated[
-            list[t.JsonValue] | None,
+            t.JsonValueList | None,
             u.Field(description="Target scope values"),
         ] = None
         version: Annotated[
@@ -868,9 +868,9 @@ class FlextLdifModelsSettings:
             u.Field(description="Whether parser is inside the value portion"),
         ] = False
         pairs: Annotated[
-            t.MutableSequenceOf[tuple[str, str]],
+            t.MutableStrPairSequence,
             u.Field(description="Accumulated (attr, value) pairs"),
-        ] = u.Field(default_factory=lambda: list[tuple[str, str]]())
+        ] = u.Field(default_factory=list)
 
     class PermissionMappingConfig(m.Value):
         """Configuration for permission mapping during ACL conversion.

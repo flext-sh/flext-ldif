@@ -26,7 +26,7 @@ class FlextLdifModelsEvents:
             u.Field(description="Whether the DN passed validation"),
         ] = None
         parse_components: Annotated[
-            t.MutableSequenceOf[tuple[str, str]] | None,
+            t.MutableStrPairSequence | None,
             u.Field(
                 description="Parsed RDN components as (attribute, value) pairs",
             ),

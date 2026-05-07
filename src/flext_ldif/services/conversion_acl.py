@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 
-from flext_ldif import c, m, p, r, t, u
+from flext_ldif import c, m, p, r, s, t, u
 
 logger = u.fetch_logger(__name__)
 
 
-class FlextLdifConversionAclMixin(ABC):
+class FlextLdifConversionAclMixin(s):
     """ACL-specific conversion helpers shared by the conversion facade."""
 
     @abstractmethod

@@ -367,7 +367,7 @@ class FlextLdifModelsDomainEntry:
             validate_assignment=True,
             extra="allow",
         )
-        _DATETIME_FIELDS: ClassVar[tuple[str, str]] = ("created_at", "updated_at")
+        _DATETIME_FIELDS: ClassVar[t.StrPair] = ("created_at", "updated_at")
         _ATTRIBUTES_VALIDATE_DEFAULTS: ClassVar[t.MappingKV[str, object]] = (
             MappingProxyType(
                 {
@@ -745,10 +745,7 @@ class FlextLdifModelsDomainEntry:
             if self._VALIDATION_RULES_KEY not in self.metadata.extensions:
                 return self
             validation_rules = self.metadata.extensions.get(self._VALIDATION_RULES_KEY)
-
-            if not validation_rules:
-                return self
-            normalized_validation_rules = u.normalize_to_json_value(validation_rules)
+            normalized_validation_rules = u.Cli.json_as_mapping(validation_rules)
             rules = FlextLdifUtilitiesEntry.parse_validation_rules(
                 normalized_validation_rules,
             )

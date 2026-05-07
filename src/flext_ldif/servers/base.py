@@ -8,6 +8,7 @@ from collections.abc import (
 from typing import ClassVar, Self, overload, override
 
 from flext_ldif import (
+    FlextLdifServerMethodsMixin,
     FlextLdifServersBaseEntry,
     FlextLdifServersBaseSchema,
     FlextLdifServersBaseSchemaAcl,
@@ -174,66 +175,49 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         **fields: t.JsonValue | t.MutableSequenceOf[m.Ldif.Entry],
     ) -> Self | m.Ldif.Entry | str:
         """Callable interface - use as processor."""
-
-        def resolve_entries(
-            value: t.JsonValue | t.MutableSequenceOf[m.Ldif.Entry] | None,
-        ) -> t.MutableSequenceOf[m.Ldif.Entry] | None:
-            if isinstance(value, list) and all(
-                isinstance(item, m.Ldif.Entry) for item in value
-            ):
-                return [item for item in value if isinstance(item, m.Ldif.Entry)]
-            return None
-
-        processor_keys = frozenset({"ldif_text", "entries", "operation"})
-        if (
-            server is not None
-            or settings is not None
-            or any(key not in processor_keys for key in fields)
-        ):
-            builder_fields: t.JsonDict = {
-                key: t.json_value_adapter().validate_python(value)
-                for key, value in fields.items()
-                if key not in processor_keys
-            }
-            return super().__call__(
+        builder_fields = FlextLdifServerMethodsMixin.project_processor_fields(
+            fields,
+            frozenset({"ldif_text", "entries", "operation"}),
+            force_dispatch=server is not None or settings is not None,
+        )
+        if builder_fields is not None:
+            configured: Self = super().__call__(
                 server=server,
                 settings=settings,
                 **builder_fields,
             )
+            return configured
+        execute_kwargs: t.MutableMappingKV[
+            str,
+            str | int | bool | t.MutableSequenceOf[m.Ldif.Entry],
+        ] = {}
         ldif_text_raw = fields.get("ldif_text")
-        ldif_text = (
-            ldif_text_raw
-            if isinstance(ldif_text_raw, str) or ldif_text_raw is None
-            else None
-        )
+        if ldif_text_raw is not None:
+            validated_ldif_text: str = t.str_adapter().validate_python(ldif_text_raw)
+            execute_kwargs["ldif_text"] = validated_ldif_text
         entries_raw = fields.get("entries")
-        entries = resolve_entries(entries_raw)
+        if entries_raw is not None:
+            validated_entries: t.MutableSequenceOf[m.Ldif.Entry] = u.Ldif.as_entries(
+                entries_raw,
+            )
+            execute_kwargs["entries"] = validated_entries
         operation_raw = fields.get("operation")
-        operation = operation_raw if isinstance(operation_raw, str) else None
-        match args:
-            case [first, second, third, *_]:
-                if (isinstance(first, str) or first is None) and ldif_text is None:
-                    ldif_text = first
-                second_entries = resolve_entries(second)
-                if second_entries is not None and entries is None:
-                    entries = second_entries
-                if isinstance(third, str) and operation is None:
-                    operation = third
-            case [first, second]:
-                if (isinstance(first, str) or first is None) and ldif_text is None:
-                    ldif_text = first
-                second_entries = resolve_entries(second)
-                if second_entries is not None and entries is None:
-                    entries = second_entries
-            case [first]:
-                if (isinstance(first, str) or first is None) and ldif_text is None:
-                    ldif_text = first
-                else:
-                    first_entries = resolve_entries(first)
-                    if first_entries is not None and entries is None:
-                        entries = first_entries
-            case [] | _:
-                pass
+        if operation_raw is not None:
+            validated_operation: str = t.str_adapter().validate_python(operation_raw)
+            execute_kwargs["operation"] = validated_operation
+        for index, value in enumerate(args[:3]):
+            match index:
+                case 0 if "ldif_text" not in execute_kwargs and isinstance(value, str):
+                    execute_kwargs["ldif_text"] = value
+                case 0 if "entries" not in execute_kwargs and value is not None:
+                    execute_kwargs["entries"] = u.Ldif.as_entries(value)
+                case 1 if "entries" not in execute_kwargs and value is not None:
+                    execute_kwargs["entries"] = u.Ldif.as_entries(value)
+                case 2 if "operation" not in execute_kwargs and isinstance(value, str):
+                    execute_kwargs["operation"] = value
+                case _:
+                    continue
+        ldif_text, entries, operation = self._extract_execute_params(execute_kwargs)
         result = self.execute(
             ldif_text=ldif_text,
             entries=entries,
@@ -263,83 +247,33 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
     @classmethod
     def _get_priority_from_mro(cls, server_class: type[t.JsonValue]) -> int:
         """Get priority from parent class Constants via MRO traversal."""
-
-        def is_valid_server_class(mro_cls: type[t.JsonValue]) -> bool:
-            """Check if MRO class is a valid server class with PRIORITY."""
-            result: bool
+        for mro_cls in server_class.__mro__:
             if not mro_cls.__name__.startswith(
-                "FlextLdifServers"
+                "FlextLdifServers",
             ) or mro_cls.__name__.endswith(("Schema", "Acl", "Entry")):
-                result = False
-            else:
-                constants = getattr(mro_cls, "Constants", None)
-                priority = getattr(constants, "PRIORITY", None)
-                result = isinstance(priority, int)
-            return result
-
-        def extract_priority(mro_cls: type[t.JsonValue]) -> int | None:
-            """Extract priority if it's a valid integer."""
-            result: int | None = None
-            constants = getattr(mro_cls, "Constants", None)
-            if constants is not None:
-                priority = getattr(constants, "PRIORITY", None)
-                if isinstance(priority, int):
-                    result = priority
-            return result
-
-        priority = next(
-            (
-                p
-                for cls in server_class.__mro__
-                if is_valid_server_class(cls)
-                and (p := extract_priority(cls)) is not None
-            ),
-            None,
-        )
-        if priority is not None:
-            return priority
+                continue
+            priority = getattr(getattr(mro_cls, "Constants", None), "PRIORITY", None)
+            if isinstance(priority, int):
+                return priority
         msg = f"Cannot find PRIORITY in Constants for server class: {server_class.__name__}"
         raise AttributeError(msg)
 
     @classmethod
     def _get_server_type_from_mro(cls, server_class: type[t.JsonValue]) -> str:
         """Get server_type from parent class Constants via MRO traversal."""
-
-        def is_valid_server_class(mro_cls: type[t.JsonValue]) -> bool:
-            """Check if MRO class is a valid server class with SERVER_TYPE."""
-            result: bool
+        for mro_cls in server_class.__mro__:
             if not mro_cls.__name__.startswith(
-                "FlextLdifServers"
+                "FlextLdifServers",
             ) or mro_cls.__name__.endswith(("Schema", "Acl", "Entry")):
-                result = False
-            else:
-                constants = getattr(mro_cls, "Constants", None)
-                server_type = getattr(constants, "SERVER_TYPE", None)
-                result = isinstance(server_type, str)
-            return result
-
-        def extract_server_type(mro_cls: type[t.JsonValue]) -> str | None:
-            """Extract server type if it's a valid string."""
-            result: str | None = None
-            constants = getattr(mro_cls, "Constants", None)
-            if constants is not None:
-                server_type = getattr(constants, "SERVER_TYPE", None)
-                if isinstance(server_type, str):
-                    result = server_type
-            return result
-
-        server_type = next(
-            (
-                st
-                for cls in server_class.__mro__
-                if is_valid_server_class(cls)
-                and (st := extract_server_type(cls)) is not None
-            ),
-            None,
-        )
-        if server_type:
-            normalized: str = u.Ldif.normalize_server_type(server_type)
-            return normalized
+                continue
+            server_type = getattr(
+                getattr(mro_cls, "Constants", None),
+                "SERVER_TYPE",
+                None,
+            )
+            if isinstance(server_type, str) and server_type:
+                normalized: str = u.Ldif.normalize_server_type(server_type)
+                return normalized
         msg = f"Cannot find SERVER_TYPE in Constants for server class: {server_class.__name__}"
         raise AttributeError(msg)
 
@@ -405,12 +339,14 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         if "entries" not in kwargs:
             return None
         raw = kwargs["entries"]
-        if not isinstance(raw, list):
-            msg = f"Expected t.MutableSequenceOf[Entry | None] for entries, got {type(raw)}"
-            raise TypeError(msg)
         if not raw:
             return []
-        return list(raw)
+        try:
+            entries: t.MutableSequenceOf[m.Ldif.Entry] = u.Ldif.as_entries(raw)
+            return entries
+        except c.EXC_VALIDATION_TYPE as exc:
+            msg = f"Expected t.MutableSequenceOf[Entry | None] for entries, got {type(raw)}"
+            raise TypeError(msg) from exc
 
     @staticmethod
     def _extract_ldif_text(
@@ -559,8 +495,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         parse_result = self.parse_ldif(ldif_text)
         if not parse_result.success:
             return r[m.Ldif.Entry].fail(parse_result.error or "Parse failed")
-        parse_response = parse_result.unwrap()
-        entries = parse_response.entries
+        entries = u.Ldif.as_entries(parse_result.unwrap())
         if not entries:
             return r[m.Ldif.Entry].fail("No entries parsed")
         first_entry = entries[0]

@@ -7,7 +7,7 @@ from typing import Literal
 import pytest
 from flext_tests import tm
 
-from tests import c, m, p
+from tests import c, m, p, t
 from tests.utilities import TestsFlextLdifUtilities as u
 
 
@@ -44,7 +44,9 @@ class TestsFlextLdifProcessingService:
         )
 
         result = api.process_entries(entries, options=options)
-        processed = u.Tests.assert_success(result)
+        processed: t.MutableSequenceOf[m.Ldif.ProcessingResult] = (
+            u.Tests.assert_success(result)
+        )
         tm.that(len(processed), eq=len(entries))
         processed_dns = {item.dn for item in processed}
         tm.that(processed_dns == set(c.Tests.PROCESSING_VALID_DNS), eq=True)
@@ -61,7 +63,9 @@ class TestsFlextLdifProcessingService:
             batch_size=1,
             max_workers=1,
         )
-        processed = u.Tests.assert_success(result)
+        processed: t.MutableSequenceOf[m.Ldif.ProcessingResult] = (
+            u.Tests.assert_success(result)
+        )
         tm.that(len(processed), eq=1)
         tm.that(processed[0].dn, eq=c.Tests.PROCESSING_VALID_DNS[0])
 

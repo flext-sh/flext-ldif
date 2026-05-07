@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import (
-    MutableMapping,
-)
 from typing import TypeIs
 
 from flext_core import u
@@ -109,8 +106,8 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def _check_special_value(
         rule_value: str,
-        special_values: MutableMapping[str, tuple[str, str]],
-    ) -> tuple[str, str] | None:
+        special_values: t.MutableStrPairMapping,
+    ) -> t.StrPair | None:
         """Check if rule value matches any special value."""
         for key, value_tuple in dict(special_values).items():
             if (
@@ -156,7 +153,7 @@ class FlextLdifUtilitiesACL:
         aci_content: str,
         version_pattern: str,
         default_name: str,
-    ) -> tuple[str, str]:
+    ) -> t.StrPair:
         """Extract version and ACL name from content."""
         version_match = c.Ldif.compile_pattern(version_pattern).search(aci_content)
         version: str = (
@@ -174,11 +171,6 @@ class FlextLdifUtilitiesACL:
             else None
         ) or default_name
         return (version, acl_name)
-
-    @staticmethod
-    def _is_metadata_scalar_or_container(value: t.JsonValue) -> bool:
-        """Check supported metadata extension value shape."""
-        return u.primitive(value) or isinstance(value, (list, dict))
 
     @staticmethod
     def _normalize_permission(
@@ -213,8 +205,8 @@ class FlextLdifUtilitiesACL:
     def build_aci_subject(
         bind_rules_data: t.MutableSequenceOf[t.MutableStrMapping],
         subject_type_map: t.MutableStrMapping,
-        special_values: MutableMapping[str, tuple[str, str]],
-    ) -> tuple[str, str]:
+        special_values: t.MutableStrPairMapping,
+    ) -> t.StrPair:
         """Build ACL subject from bind rules using configurable maps."""
         if not bind_rules_data:
             return ("self", "ldap:///self")
@@ -453,13 +445,13 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def extract_target_extensions(
         extensions: m.Ldif.DynamicMetadata | t.Ldif.MetadataInputMapping | None,
-        target_config: t.SequenceOf[tuple[str, str]],
+        target_config: t.StrPairSequence,
     ) -> t.MutableSequenceOf[str]:
         """Extract and format target extensions from metadata extensions."""
         if not extensions:
             return []
 
-        def process_target_config(target_item: tuple[str, str]) -> str | None:
+        def process_target_config(target_item: t.StrPair) -> str | None:
             """Process single target settings item."""
             ext_key, format_template = target_item
             value_raw: t.Ldif.MetadataCarrierValue | None = (
@@ -469,7 +461,7 @@ class FlextLdifUtilitiesACL:
                 return None
             return format_template.format(value=str(value_raw))
 
-        def predicate_func(item: str | tuple[str, str]) -> bool:
+        def predicate_func(item: str | t.StrPair) -> bool:
             """Predicate function for Collection.process."""
             if isinstance(item, tuple) and len(item) >= 1:
                 return bool(extensions.get(item[0]) if extensions else None)
@@ -763,7 +755,7 @@ class FlextLdifUtilitiesACL:
         return (sanitized, was_sanitized)
 
     @staticmethod
-    def split_acl_line(acl_line: str) -> tuple[str, str]:
+    def split_acl_line(acl_line: str) -> t.StrPair:
         r"""Split an ACL line into attribute name and payload.
 
         Generic utility for splitting ACL lines at the colon separator,

@@ -187,7 +187,7 @@ class FlextLdifServersBaseSchemaAcl(
 
     def _coerce_acl_data(
         self,
-        value: t.JsonValue | m.Ldif.Acl | None,
+        value: str | t.JsonValue | m.Ldif.Acl | None,
     ) -> str | m.Ldif.Acl | None:
         """Coerce generic value to ACL payload union."""
         if value is None:
@@ -308,8 +308,9 @@ class FlextLdifServersBaseSchemaAcl(
         """Resolve operation from parameter or kwargs."""
         if operation is not None:
             return operation
-        operation_raw = kwargs.get("operation")
-        if not isinstance(operation_raw, str):
+        try:
+            operation_raw = t.str_adapter().validate_python(kwargs.get("operation"))
+        except c.ValidationError:
             return None
         return self._coerce_operation(operation_raw)
 

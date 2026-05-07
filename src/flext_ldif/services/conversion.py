@@ -6,6 +6,10 @@ import time
 from typing import override
 
 from flext_ldif import (
+    FlextLdifConversionAclMixin,
+    FlextLdifConversionMetadataMixin,
+    FlextLdifConversionSchemaMixin,
+    FlextLdifConversionSupportMixin,
     c,
     m,
     p,
@@ -14,12 +18,6 @@ from flext_ldif import (
     t,
     u,
 )
-from flext_ldif.services.conversion_acl import FlextLdifConversionAclMixin
-from flext_ldif.services.conversion_metadata import (
-    FlextLdifConversionMetadataMixin,
-)
-from flext_ldif.services.conversion_schema import FlextLdifConversionSchemaMixin
-from flext_ldif.services.conversion_support import FlextLdifConversionSupportMixin
 
 logger = u.fetch_logger(__name__)
 
@@ -145,7 +143,7 @@ class FlextLdifConversion(
     ) -> p.Result[t.Ldif.ConvertedModel]:
         """Convert Entry model directly without serialization."""
         try:
-            entry_dn = entry.dn.value if entry.dn else ""
+            entry_dn = str(entry.dn) if entry.dn else ""
             valid: bool = u.Ldif.validate_dn(entry_dn)
             if not valid:
                 return r[t.Ldif.ConvertedModel].fail(

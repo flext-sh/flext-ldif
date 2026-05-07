@@ -55,7 +55,7 @@ class TestsFlextLdifEntriesService:
             c.Tests.ENTRIES_DN_VALID,
             {"cn": ["x"], "objectClass": ["top"]},
         )
-        entry = u.Tests.assert_success(result)
+        entry: m.Ldif.Entry = u.Tests.assert_success(result)
         tm.that(entry, is_=m.Ldif.Entry)
 
     def test_create_entry_with_objectclasses(self) -> None:
@@ -64,7 +64,7 @@ class TestsFlextLdifEntriesService:
             {"cn": ["x"]},
             objectclasses=list(c.Tests.ENTRIES_OBJECTCLASS_PERSON),
         )
-        entry = u.Tests.assert_success(result)
+        entry: m.Ldif.Entry = u.Tests.assert_success(result)
         tm.that(entry.attributes is not None, eq=True)
         if entry.attributes is None:
             pytest.fail("Entry attributes should be present")
@@ -95,7 +95,7 @@ class TestsFlextLdifEntriesService:
         tm.that(bool(scenario), eq=True)
         result = FlextLdifEntries.normalize_attribute_values(value)
         if should_succeed:
-            values = u.Tests.assert_success(result)
+            values: t.MutableSequenceOf[str] = u.Tests.assert_success(result)
             tm.that(isinstance(values, list), eq=True)
         else:
             tm.fail(result)
@@ -105,7 +105,7 @@ class TestsFlextLdifEntriesService:
     def test_resolve_dn_from_model_entry(self) -> None:
         entry = self._basic_entry()
         result = FlextLdifEntries.resolve_entry_dn(entry)
-        dn = u.Tests.assert_success(result)
+        dn: str = u.Tests.assert_success(result)
         tm.that(dn, eq=c.Tests.ENTRIES_DN_VALID)
 
     @pytest.mark.parametrize(
@@ -135,7 +135,7 @@ class TestsFlextLdifEntriesService:
     def test_resolve_entry_attributes_succeeds(self) -> None:
         entry = self._basic_entry()
         result = FlextLdifEntries.resolve_entry_attributes(entry)
-        attrs = u.Tests.assert_success(result)
+        attrs: t.MutableStrSequenceMapping = u.Tests.assert_success(result)
         tm.that("cn" in attrs, eq=True)
 
     def test_resolve_entry_attributes_fails_when_none(self) -> None:
@@ -148,7 +148,7 @@ class TestsFlextLdifEntriesService:
     def test_resolve_objectclasses_succeeds(self) -> None:
         entry = self._basic_entry()
         result = FlextLdifEntries.resolve_entry_objectclasses(entry)
-        ocs = u.Tests.assert_success(result)
+        ocs: t.MutableSequenceOf[str] = u.Tests.assert_success(result)
         tm.that(len(ocs) > 0, eq=True)
 
     def test_resolve_objectclasses_fails_when_missing(self) -> None:
@@ -167,7 +167,7 @@ class TestsFlextLdifEntriesService:
             entry,
             list(c.Tests.ENTRIES_ATTR_REMOVE_SET),
         )
-        cleaned = u.Tests.assert_success(result)
+        cleaned: m.Ldif.Entry = u.Tests.assert_success(result)
         tm.that(cleaned.attributes is not None, eq=True)
         if cleaned.attributes is None:
             pytest.fail("Cleaned entry attributes should be present")
@@ -180,7 +180,7 @@ class TestsFlextLdifEntriesService:
     def test_remove_attributes_noop_when_entry_has_no_attributes(self) -> None:
         entry = self._entry_without_attributes()
         result = FlextLdifEntries.remove_attributes(entry, ["cn"])
-        cleaned = u.Tests.assert_success(result)
+        cleaned: m.Ldif.Entry = u.Tests.assert_success(result)
         tm.that(cleaned, is_=m.Ldif.Entry)
 
     # ── run_configured_operation ──────────────────────────────────────────────
@@ -236,7 +236,7 @@ class TestsFlextLdifEntriesService:
     def test_normalize_list_value_nonempty_returns_ok(self) -> None:
         """Line 78: list with items → success."""
         result = FlextLdifEntries._normalize_list_value([c.Tests.ANALYSIS_DN_VALID])
-        dn_str = u.Tests.assert_success(result)
+        dn_str: str = u.Tests.assert_success(result)
         tm.that(dn_str, eq=c.Tests.ANALYSIS_DN_VALID)
 
     def test_normalize_string_value_whitespace_returns_failure(self) -> None:
@@ -247,7 +247,7 @@ class TestsFlextLdifEntriesService:
     def test_normalize_string_value_valid_returns_ok(self) -> None:
         """Line 85: valid string → success."""
         result = FlextLdifEntries._normalize_string_value(c.Tests.ANALYSIS_DN_VALID)
-        dn_str = u.Tests.assert_success(result)
+        dn_str: str = u.Tests.assert_success(result)
         tm.that(dn_str, eq=c.Tests.ANALYSIS_DN_VALID)
 
     def test_coerce_attribute_value_unsupported_type(self) -> None:

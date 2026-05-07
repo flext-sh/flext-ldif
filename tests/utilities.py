@@ -105,7 +105,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                     "inetOrgPerson",
                 ],
             }
-            return m.Ldif.Entry.model_validate(
+            entry: m.Ldif.Entry = m.Ldif.Entry.model_validate(
                 {
                     "dn": {"value": actual_dn},
                     "attributes": {
@@ -117,6 +117,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                     "server_type": server_type,
                 },
             )
+            return entry
 
         @staticmethod
         def create_real_ldif_content(

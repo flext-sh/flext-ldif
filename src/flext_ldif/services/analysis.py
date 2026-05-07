@@ -44,11 +44,7 @@ class FlextLdifAnalysis(s):
         if entry.dn is None:
             errors.append("Entry has None DN")
             return (False, "", errors)
-        dn_str = (
-            entry.dn.value
-            if getattr(entry.dn, "value", None) is not None
-            else str(entry.dn)
-        )
+        dn_str = str(entry.dn)
         if not dn_str:
             errors.append(f"Entry has invalid DN: {entry.dn}")
             return (False, dn_str, errors)
@@ -116,9 +112,7 @@ class FlextLdifAnalysis(s):
         validation_service: p.Ldif.ValidationService | None = None,
     ) -> p.Result[m.Ldif.ValidationResult]:
         """Validate LDIF entries against RFC 2849/4512 standards."""
-        normalized_entries = (
-            entries.entries if isinstance(entries, m.Ldif.ParseResponse) else entries
-        )
+        normalized_entries = u.Ldif.as_entries(entries)
         errors: t.MutableSequenceOf[str] = []
         valid_count = 0
         svc: p.Ldif.ValidationService = (

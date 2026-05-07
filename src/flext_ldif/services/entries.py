@@ -45,29 +45,33 @@ class FlextLdifEntries(s):
         dn_value = entry.get("dn")
         if dn_value is None:
             return r[str].fail("Dict entry missing 'dn' key")
+        extracted_dn: str | None = None
         match dn_value:
             case str() as dn_text:
-                return r[str].ok(dn_text)
-            case list() as dn_list:
-                return r[str].ok(dn_list[0] if dn_list else "")
-            case _:
-                return r[str].fail("Dict entry has unsupported 'dn' value type")
+                extracted_dn = dn_text
+            case list() as dn_list if dn_list and isinstance(dn_list[0], str):
+                extracted_dn = dn_list[0]
+            case list():
+                extracted_dn = ""
+        if extracted_dn is not None:
+            return r[str].ok(extracted_dn)
+        return r[str].fail("Dict entry has unsupported 'dn' value type")
 
     @staticmethod
     def _extract_dn_from_object(entry: t.JsonValue | m.Ldif.Entry) -> p.Result[str]:
         dn_value = getattr(entry, "dn", None)
         if dn_value is None:
             return r[str].fail("Entry missing DN (dn is None)")
-        if hasattr(dn_value, "value"):
-            value_attr = getattr(dn_value, "value", None)
-            if isinstance(value_attr, str):
-                return r[str].ok(value_attr)
-        if isinstance(dn_value, str):
-            return r[str].ok(dn_value)
-        if isinstance(dn_value, list):
-            if dn_value and isinstance(dn_value[0], str):
-                return r[str].ok(dn_value[0])
-            return r[str].ok("")
+        extracted_dn: str | None = None
+        match dn_value:
+            case m.Ldif.DN() | str() as dn_text:
+                extracted_dn = str(dn_text)
+            case list() as dn_list if dn_list and isinstance(dn_list[0], str):
+                extracted_dn = dn_list[0]
+            case list():
+                extracted_dn = ""
+        if extracted_dn is not None:
+            return r[str].ok(extracted_dn)
         return r[str].fail("Invalid DN value type")
 
     @staticmethod

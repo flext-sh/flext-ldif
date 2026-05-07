@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from flext_ldif import c, m, p, r, s, t
+from flext_ldif import c, m, p, r, s, t, u
 
 
 class FlextLdifFilters(s):
@@ -12,7 +12,7 @@ class FlextLdifFilters(s):
     def _check_schema_oid(
         cls,
         attrs: t.MutableStrSequenceMapping,
-        attr_keys: tuple[str, str],
+        attr_keys: t.StrPair,
         allowed_set: frozenset[str],
     ) -> tuple[bool, bool]:
         """Check if schema OID matches allowed set."""
@@ -27,9 +27,16 @@ class FlextLdifFilters(s):
     @classmethod
     def _extract_allowed_oids(
         cls,
-        allowed_oids: t.MutableFrozensetMapping,
+        allowed_oids: m.Ldif.WhitelistRules | t.MutableFrozensetMapping,
     ) -> tuple[frozenset[str], frozenset[str], frozenset[str], frozenset[str]]:
         """Extract allowed OID sets from mapping."""
+        if isinstance(allowed_oids, m.Ldif.WhitelistRules):
+            return (
+                frozenset(allowed_oids.allowed_attribute_oids),
+                frozenset(allowed_oids.allowed_objectclass_oids),
+                frozenset(allowed_oids.allowed_matchingrule_oids),
+                frozenset(allowed_oids.allowed_matchingruleuse_oids),
+            )
         return (
             allowed_oids.get("allowed_attribute_oids", frozenset()),
             allowed_oids.get("allowed_objectclass_oids", frozenset()),
@@ -59,10 +66,7 @@ class FlextLdifFilters(s):
     def _should_include_entry(
         cls,
         entry: m.Ldif.Entry,
-        allowed_attr: frozenset[str],
-        allowed_oc: frozenset[str],
-        allowed_mr: frozenset[str],
-        allowed_mru: frozenset[str],
+        allowed_oids: m.Ldif.WhitelistRules | t.MutableFrozensetMapping,
     ) -> bool:
         """Check if entry should be included based on OID filters."""
         attrs = entry.attributes
@@ -72,6 +76,9 @@ class FlextLdifFilters(s):
             attrs_dict: t.MutableStrSequenceMapping = attrs.attributes
         else:
             return True
+        allowed_attr, allowed_oc, allowed_mr, allowed_mru = cls._extract_allowed_oids(
+            allowed_oids,
+        )
         is_attr, include_attr = cls._check_schema_oid(
             attrs_dict,
             ("attributeTypes", "attributetypes"),
@@ -100,7 +107,7 @@ class FlextLdifFilters(s):
     def filter_schema_by_oids(
         cls,
         entries: t.MutableSequenceOf[m.Ldif.Entry],
-        allowed_oids: t.MutableFrozensetMapping,
+        allowed_oids: m.Ldif.WhitelistRules | t.MutableFrozensetMapping,
     ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
         """Filter schema entries by allowed OIDs."""
         try:
@@ -112,13 +119,7 @@ class FlextLdifFilters(s):
             filtered: t.MutableSequenceOf[m.Ldif.Entry] = [
                 entry
                 for entry in entries
-                if cls._should_include_entry(
-                    entry,
-                    allowed_attr,
-                    allowed_oc,
-                    allowed_mr,
-                    allowed_mru,
-                )
+                if cls._should_include_entry(entry, allowed_oids)
             ]
             cls._get_or_create_logger().debug(
                 "Filtered schema entries by OIDs",
@@ -140,12 +141,7 @@ class FlextLdifFilters(s):
         forbidden_ocs: t.StrSequence,
     ) -> m.Ldif.Entry:
         """Strip forbidden attributes and objectClasses from an entry."""
-        concrete = (
-            entry
-            if isinstance(entry, m.Ldif.Entry)
-            else m.Ldif.Entry.model_validate(entry)
-        )
-        filtered_entry = concrete
+        filtered_entry: m.Ldif.Entry = u.Ldif.as_entry(entry)
         if entry.attributes and forbidden_attrs:
             attrs_dict = entry.attributes.attributes
             forbidden_set = {attr.lower() for attr in forbidden_attrs}
@@ -195,11 +191,7 @@ class FlextLdifFilters(s):
         allowed_oids: t.MappingKV[str, frozenset[str]],
     ) -> m.Ldif.Entry:
         """Filter individual OID values within schema entry attributes."""
-        concrete = (
-            entry
-            if isinstance(entry, m.Ldif.Entry)
-            else m.Ldif.Entry.model_validate(entry)
-        )
+        concrete: m.Ldif.Entry = u.Ldif.as_entry(entry)
         if concrete.attributes is None:
             return concrete
         attrs_dict = concrete.attributes.attributes

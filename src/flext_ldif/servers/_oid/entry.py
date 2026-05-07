@@ -637,11 +637,12 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         if result.failure:
             return result
         entry = result.value
-        if entry.dn and entry.dn.value:
-            cleaned_dn, _ = u.Ldif.clean_dn_with_statistics(entry.dn.value)
-            if cleaned_dn != entry.dn.value:
+        if entry.dn and str(entry.dn):
+            original_dn = str(entry.dn)
+            cleaned_dn, _ = u.Ldif.clean_dn_with_statistics(original_dn)
+            if cleaned_dn != original_dn:
                 entry.dn = m.Ldif.DN.model_validate({"value": cleaned_dn})
-        original_dn = entry.dn.value if entry.dn else ""
+        original_dn = str(entry.dn) if entry.dn else ""
         original_attrs = entry.attributes.attributes if entry.attributes else {}
         finalize_result = self._hook_finalize_entry_parse(
             entry,

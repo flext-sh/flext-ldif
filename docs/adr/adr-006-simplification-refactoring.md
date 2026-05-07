@@ -258,7 +258,7 @@ class FlextLdifDetector:
 from flext_core import s, r
 
 
-class FlextLdifDetector(Flext):
+class FlextLdifDetector(s):
     """Server detection service with automatic logging."""
 
     def execute(self, content: str) -> p.Result[dict]:

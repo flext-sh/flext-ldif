@@ -74,7 +74,7 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def _to_error_details_list(
-        error_details: list[t.JsonValue] | tuple[t.JsonValue, ...] | None,
+        error_details: t.JsonValueList | tuple[t.JsonValue, ...] | None,
     ) -> t.MutableSequenceOf[str]:
         if error_details is None:
             return []

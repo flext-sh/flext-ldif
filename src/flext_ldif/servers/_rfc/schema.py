@@ -10,6 +10,7 @@ from collections.abc import (
 from typing import Self, overload, override
 
 from flext_ldif import (
+    FlextLdifServerMethodsMixin,
     FlextLdifServersBase,
     FlextLdifServersBaseSchema,
     FlextLdifSettings,
@@ -161,22 +162,18 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         **fields: t.JsonValue | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> Self | str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass:
         """Callable interface - automatic polymorphic processor."""
-        processor_keys = frozenset({"data", "operation"})
-        if (
-            server is not None
-            or settings is not None
-            or any(key not in processor_keys for key in fields)
-        ):
-            builder_fields: t.JsonDict = {
-                key: t.json_value_adapter().validate_python(value)
-                for key, value in fields.items()
-                if key not in processor_keys
-            }
-            return super().__call__(
+        builder_fields = FlextLdifServerMethodsMixin.project_processor_fields(
+            fields,
+            frozenset({"data", "operation"}),
+            force_dispatch=server is not None or settings is not None,
+        )
+        if builder_fields is not None:
+            configured: Self = super().__call__(
                 server=server,
                 settings=settings,
                 **builder_fields,
             )
+            return configured
         data_raw = fields.get("data")
         data = (
             data_raw

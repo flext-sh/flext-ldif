@@ -335,7 +335,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             except c.Ldif.EXC_LDIF_PARSE as e:
                 return r[m.Ldif.Acl].fail_op("OpenLDAP 2.x ACL parsing", e)
 
-        def _parse_by_clauses(self, acl_content: str) -> tuple[str, str]:
+        def _parse_by_clauses(self, acl_content: str) -> t.StrPair:
             """Parse "by <who> <access>" clauses."""
             by_matches = list(
                 FlextLdifServersOpenldap.Constants.ACL_BY_RE.finditer(acl_content),
@@ -505,7 +505,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             )
             self.logger.debug(
                 "Injected OpenLDAP validation rules into Entry metadata",
-                entry_dn=entry.dn.value if entry.dn else "",
+                entry_dn=str(entry.dn) if entry.dn else "",
                 requires_objectclass=bool(validation_rules["requires_objectclass"]),
                 server_type=server_type,
                 requires_naming_attr=bool(validation_rules["requires_naming_attr"]),

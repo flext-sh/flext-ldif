@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
-from flext_ldif import m, t, u
+from flext_ldif import m, s, t, u
 
 
-class FlextLdifConversionMetadataMixin:
+class FlextLdifConversionMetadataMixin(s):
     """Metadata-analysis helpers shared by the conversion facade."""
 
     @staticmethod
@@ -146,7 +146,7 @@ class FlextLdifConversionMetadataMixin:
             }
             return normalized_mapping
         if isinstance(value, Sequence) and not isinstance(value, str | bytes):
-            normalized_sequence: list[t.JsonValue] = [
+            normalized_sequence: t.JsonValueList = [
                 u.normalize_to_json_value(item) for item in value
             ]
             return normalized_sequence

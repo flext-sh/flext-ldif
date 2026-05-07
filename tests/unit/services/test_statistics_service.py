@@ -49,7 +49,7 @@ class TestsFlextLdifStatisticsService:
         ]
 
         result = api.calculate_for_entries(entries)
-        stats = u.Tests.assert_success(result)
+        stats: m.Ldif.EntriesStatistics = u.Tests.assert_success(result)
         tm.that(stats.total_entries, eq=2)
         tm.that(
             stats.object_class_distribution.get(c.Tests.STATS_EXPECTED_OBJECTCLASS, 0),
@@ -72,6 +72,6 @@ class TestsFlextLdifStatisticsService:
         )
 
         result = api.calculate_for_entries(parse_response)
-        stats = u.Tests.assert_success(result)
+        stats: m.Ldif.EntriesStatistics = u.Tests.assert_success(result)
         tm.that(stats.total_entries, eq=1)
         tm.that(stats.server_type_distribution.get(c.Tests.RFC, 0), eq=1)

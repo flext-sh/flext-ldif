@@ -164,7 +164,7 @@ class FlextLdifUtilitiesMetadata:
         field_order, field_positions = FlextLdifUtilitiesMetadata._extract_field_order(
             definition,
         )
-        field_order_payload: list[t.JsonValue] = list(field_order)
+        field_order_payload: t.JsonValueList = list(field_order)
         field_positions_payload: t.JsonDict = dict(field_positions)
         combined["field_order"] = field_order_payload
         combined["field_positions"] = field_positions_payload
@@ -540,7 +540,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _is_metadata_scalar(value: t.JsonPayload | None) -> bool:
-        return value is None or isinstance(value, (str, int, float, bool))
+        return value is None or isinstance(value, t.PRIMITIVES_TYPES)
 
     @staticmethod
     def _is_metadata_scalar_typed(
@@ -702,7 +702,7 @@ class FlextLdifUtilitiesMetadata:
         if settings.original_dn_line:
             server_data_dict["original_dn_line"] = settings.original_dn_line
         if settings.original_attr_lines:
-            attr_lines_payload: list[t.JsonValue] = list(settings.original_attr_lines)
+            attr_lines_payload: t.JsonValueList = list(settings.original_attr_lines)
             server_data_dict["original_attribute_lines"] = attr_lines_payload
         if settings.original_attribute_case:
             attr_case_payload: t.JsonDict = dict(
@@ -825,7 +825,7 @@ class FlextLdifUtilitiesMetadata:
         entry: m.Ldif.Entry,
         *,
         category: str | None = None,
-        mark_rejected: tuple[str, str] | None = None,
+        mark_rejected: t.StrPair | None = None,
         mark_filtered: tuple[str, bool] | None = None,
     ) -> m.Ldif.Entry:
         """Update entry processing statistics using FlextLdifUtilities."""

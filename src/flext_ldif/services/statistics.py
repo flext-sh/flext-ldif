@@ -22,9 +22,7 @@ class FlextLdifStatistics(s):
         entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
     ) -> p.Result[m.Ldif.EntriesStatistics]:
         """Calculate general-purpose statistics for a list of Entry models."""
-        normalized_entries = (
-            entries.entries if isinstance(entries, m.Ldif.ParseResponse) else entries
-        )
+        normalized_entries = u.Ldif.as_entries(entries)
         object_class_distribution: Counter[str] = Counter()
         server_type_distribution: Counter[str] = Counter()
         for entry in normalized_entries:

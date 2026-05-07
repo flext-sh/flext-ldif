@@ -53,7 +53,7 @@ class FlextLdifUtilitiesParser:
         if metadata_extensions:
             extensions_typed: t.Ldif.MutableMetadataMapping = {}
             for key, val in metadata_extensions.items():
-                val_payload: list[t.JsonValue] = list(val)
+                val_payload: t.JsonValueList = list(val)
                 extensions_typed[key] = val_payload
             return m.Ldif.ServerMetadata(
                 server_type=server_type,
@@ -107,7 +107,7 @@ class FlextLdifUtilitiesParser:
         metadata.original_strings["dn_original"] = dn
         metadata.original_strings["entry_original_ldif"] = "\n".join(raw_record_lines)
         if comments:
-            comments_payload: list[t.JsonValue] = list(comments)
+            comments_payload: t.JsonValueList = list(comments)
             metadata.extensions["entry_comments"] = comments_payload
         return metadata
 
