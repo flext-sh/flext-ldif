@@ -18,10 +18,10 @@ from typing import Annotated, Self
 from flext_cli import m, u
 from flext_ldif import (
     FlextLdifModelsDomainAcl as mdac,
+    FlextLdifShared,
     c,
     t,
 )
-from flext_ldif.shared import FlextLdifShared
 
 
 class FlextLdifModelsSettings:
@@ -291,6 +291,11 @@ class FlextLdifModelsSettings:
     class ServerPatternsConfig(m.Value):
         """Configuration for server pattern matching."""
 
+        oid_pattern: Annotated[
+            str,
+            u.Field(description="Regex pattern used for schema OID detection"),
+        ] = ""
+
         dn_patterns: Annotated[
             tuple[t.StrSequence, ...],
             u.Field(
@@ -306,11 +311,33 @@ class FlextLdifModelsSettings:
             u.Field(
                 description="Set of attribute names that indicate this server",
             ),
-        ]
+        ] = frozenset()
         keyword_patterns: Annotated[
             t.StrSequence,
             u.Field(description="Keywords to search in attribute names"),
         ] = ()
+        detection_string: Annotated[
+            str | None,
+            u.Field(description="Optional substring used for server name matching"),
+        ] = None
+        name_regex: Annotated[
+            str | None,
+            u.Field(
+                description="Optional regex used to extract schema names from raw definitions"
+            ),
+        ] = None
+        use_prefix_match: Annotated[
+            bool,
+            u.Field(
+                description="Whether detection names match by prefix instead of exact value"
+            ),
+        ] = False
+        match_definition_text: Annotated[
+            bool,
+            u.Field(
+                description="Whether raw definition text should be scanned for detection markers"
+            ),
+        ] = False
 
     class EntryCriteriaConfig(m.Value):
         """Configuration for entry criteria matching.

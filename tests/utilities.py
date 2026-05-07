@@ -10,7 +10,7 @@ from collections.abc import (
 from pathlib import Path
 from typing import ClassVar
 
-from flext_ldap import u
+from flext_ldap import FlextLdapUtilities, u
 from flext_tests import FlextTestsFixturesDSLMixin, FlextTestsUtilities, tk
 
 from tests.constants import c
@@ -29,7 +29,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
         LdapConnectionLike = p.Ldap.Ldap3Connection
         LdapEntryLike = p.Ldap.Ldap3Entry
 
-        logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
+        logger: ClassVar[p.Logger] = FlextLdapUtilities.fetch_logger(__name__)
         _resolved_admin_credentials: ClassVar[list[tuple[str, str] | None]] = [
             None,
         ]
@@ -46,7 +46,11 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             get_info: c.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.ALL,
         ) -> p.Ldap.Ldap3Server:
             """Create an LDAP server from a URL for test connectivity checks."""
-            return u.Ldap.create_server_from_url(server_url, get_info=get_info)
+            server: p.Ldap.Ldap3Server = FlextLdapUtilities.Ldap.create_server_from_url(
+                server_url,
+                get_info=get_info,
+            )
+            return server
 
         @staticmethod
         def create_bare_server(
@@ -56,10 +60,11 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             get_info: c.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.NO_INFO,
         ) -> p.Ldap.Ldap3Server:
             """Create a minimal LDAP server for connectivity checks."""
-            return u.Ldap.create_server_from_url(
+            server: p.Ldap.Ldap3Server = FlextLdapUtilities.Ldap.create_server_from_url(
                 f"ldap://{host}:{port}",
                 get_info=get_info,
             )
+            return server
 
         @staticmethod
         def create_connection(
@@ -72,13 +77,13 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
         ) -> p.Ldap.Ldap3Connection:
             """Create an LDAP connection for test workflows."""
             if receive_timeout is None:
-                return u.Ldap.create_connection(
+                return FlextLdapUtilities.Ldap.create_connection(
                     server,
                     user=user,
                     password=password,
                     auto_bind=auto_bind,
                 )
-            return u.Ldap.create_connection(
+            return FlextLdapUtilities.Ldap.create_connection(
                 server,
                 user=user,
                 password=password,
@@ -452,10 +457,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             if result.failure:
                 msg = message or f"Expected success but parse failed: {result.error}"
                 raise AssertionError(msg)
-            value = result.value
-            if not isinstance(value, m.Ldif.Acl):
-                msg = f"Expected ACL parse result, got {type(value).__name__}"
-                raise AssertionError(msg)
+            value: m.Ldif.Acl = result.unwrap()
             if expected_type is not None and not isinstance(value, expected_type):
                 raise AssertionError(
                     f"Expected {expected_type.__name__}, got {type(value).__name__}",
@@ -512,12 +514,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             if result.failure:
                 msg = message or f"Write failed: {result.error}"
                 raise AssertionError(msg)
-            serialized = result.value
-            if not isinstance(serialized, str):
-                msg = (
-                    f"Expected serialized LDIF output, got {type(serialized).__name__}"
-                )
-                raise AssertionError(msg)
+            serialized: str = result.unwrap()
             if must_contain is not None:
                 for fragment in must_contain:
                     if fragment not in serialized:
@@ -539,10 +536,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             if result.failure:
                 msg = message or f"Write failed: {result.error}"
                 raise AssertionError(msg)
-            serialized = result.value
-            if not isinstance(serialized, str):
-                msg = f"Expected serialized ACL output, got {type(serialized).__name__}"
-                raise AssertionError(msg)
+            serialized: str = result.unwrap()
             if must_contain is not None:
                 for fragment in must_contain:
                     if fragment not in serialized:

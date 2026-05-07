@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections.abc import (
     Callable,
-    Mapping,
     Sequence,
 )
 from typing import ClassVar, TypeGuard, overload
@@ -15,7 +14,6 @@ from flext_ldif import (
     FlextLdifUtilitiesDN,
     FlextLdifUtilitiesPipeline,
     FlextLdifUtilitiesSchema,
-    FlextLdifUtilitiesServer,
     FlextLdifUtilitiesValidation,
     c,
     m,
@@ -94,72 +92,27 @@ class FlextLdifUtilitiesDispatch:
         | Callable[[str], p.Result[t.Ldif.MutableMetadataMapping]]
         | None = None,
     ) -> p.Result[t.MutableStrPairSequence] | p.Result[t.Ldif.MutableMetadataMapping]:
+        result: (
+            p.Result[t.MutableStrPairSequence] | p.Result[t.Ldif.MutableMetadataMapping]
+        )
         if definition is None:
-            return r[t.Ldif.MutableMetadataMapping].fail("DN cannot be None")
-        if isinstance(definition, m.Ldif.DN):
-            return FlextLdifUtilitiesDN.parse_dn(definition)
-        if parse_parts_hook is None and server_type is None:
-            return FlextLdifUtilitiesDN.parse_dn(definition)
-        if parse_parts_hook is None:
-            return FlextLdifUtilitiesSchema.parse_attribute(definition)
-
-        def attr_hook(value: str) -> p.Result[t.Ldif.MutableMetadataMapping]:
-            parsed_value = parse_parts_hook(value)
-            if isinstance(parsed_value, p.Result):
-                return parsed_value
-            return r[t.Ldif.MutableMetadataMapping].ok(dict(parsed_value))
-
-        return attr_hook(definition)
-
-    @staticmethod
-    def matches_server_patterns(
-        value: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
-        oid_pattern: t.MutableJsonMapping | str,
-        detection_names: m.Ldif.ServerPatternsConfig | frozenset[str],
-        detection_string: str | None = None,
-        *,
-        use_prefix_match: bool = False,
-    ) -> bool:
-        if isinstance(oid_pattern, Mapping) and isinstance(
-            detection_names,
-            m.Ldif.ServerPatternsConfig,
-        ):
-            entry_dn = value if isinstance(value, str) else str(value)
-            attributes = dict(oid_pattern)
-            attr_names_lower = {k.lower() for k in attributes}
-            dn_patterns = detection_names.dn_patterns
-            attr_prefixes = detection_names.attr_prefixes
-            attr_names = detection_names.attr_names
-            keyword_patterns = detection_names.keyword_patterns
-            if dn_patterns and any(
-                all(pattern in entry_dn for pattern in pattern_set)
-                for pattern_set in dn_patterns
-            ):
-                return True
-            if attr_prefixes and any(
-                attr.startswith(prefix)
-                for attr in attributes
-                for prefix in attr_prefixes
-            ):
-                return True
-            if attr_names and attr_names_lower & set(attr_names):
-                return True
-            if keyword_patterns:
-                return any(
-                    keyword in attr
-                    for attr in attr_names_lower
-                    for keyword in keyword_patterns
-                )
-            return False
-        if isinstance(oid_pattern, str) and isinstance(detection_names, frozenset):
-            return FlextLdifUtilitiesServer.matches_server_patterns(
-                value=value,
-                oid_pattern=oid_pattern,
-                detection_names=detection_names,
-                detection_string=detection_string,
-                use_prefix_match=use_prefix_match,
+            result = r[t.Ldif.MutableMetadataMapping].fail("DN cannot be None")
+        elif isinstance(definition, m.Ldif.DN):
+            result = FlextLdifUtilitiesDN.parse_dn(definition)
+        elif parse_parts_hook is None:
+            result = (
+                FlextLdifUtilitiesDN.parse_dn(definition)
+                if server_type is None
+                else FlextLdifUtilitiesSchema.parse_attribute(definition)
             )
-        return False
+        else:
+            parsed_value = parse_parts_hook(definition)
+            result = (
+                parsed_value
+                if isinstance(parsed_value, p.Result)
+                else r[t.Ldif.MutableMetadataMapping].ok(dict(parsed_value))
+            )
+        return result
 
     @staticmethod
     def validate(
@@ -167,22 +120,16 @@ class FlextLdifUtilitiesDispatch:
         | t.JsonValue
         | str
         | m.Ldif.DN,
-        validator_first: p.ValidatorSpec | None = None,
-        *validators_rest: p.ValidatorSpec,
-        strict: bool = True,
-        collect_all: bool = True,
-        max_errors: int = 0,
+        *validators: p.ValidatorSpec,
+        pipeline: FlextLdifUtilitiesPipeline.ValidationPipeline | None = None,
     ) -> (
         p.Result[t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]]
         | p.Result[t.JsonValue]
         | bool
     ):
         """Validate entries against rules."""
-        validators: tuple[p.ValidatorSpec, ...] = (
-            (validator_first, *validators_rest) if validator_first else ()
-        )
         match True:
-            case _ if validator_first is None and isinstance(
+            case _ if not validators and isinstance(
                 value_or_entries,
                 (str, m.Ldif.DN),
             ):
@@ -193,17 +140,12 @@ class FlextLdifUtilitiesDispatch:
                     | p.Result[t.JsonValue]
                     | bool
                 ) = FlextLdifUtilitiesDN.validate_dn(value_or_entries)
-            case _ if (
-                validator_first is None
-                and FlextLdifUtilitiesDispatch._is_entry_sequence(
-                    value_or_entries,
-                )
+            case _ if not validators and FlextLdifUtilitiesDispatch._is_entry_sequence(
+                value_or_entries,
             ):
                 result = FlextLdifUtilitiesDispatch._validate_entries(
                     value_or_entries,
-                    strict=strict,
-                    collect_all=collect_all,
-                    max_errors=max_errors,
+                    pipeline=pipeline,
                 )
             case _ if isinstance(value_or_entries, Sequence) and not isinstance(
                 value_or_entries, t.STR_BYTES_TYPES
@@ -234,17 +176,13 @@ class FlextLdifUtilitiesDispatch:
     def _validate_entries(
         entries: t.MutableSequenceOf[m.Ldif.Entry],
         *,
-        strict: bool,
-        collect_all: bool,
-        max_errors: int,
+        pipeline: FlextLdifUtilitiesPipeline.ValidationPipeline | None = None,
     ) -> p.Result[t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]]:
         """Internal: Validate LDIF entries."""
-        pipeline = FlextLdifUtilitiesPipeline.ValidationPipeline(
-            strict=strict,
-            collect_all=collect_all,
-            max_errors=max_errors,
+        validation_pipeline = (
+            pipeline or FlextLdifUtilitiesPipeline.ValidationPipeline()
         )
-        return pipeline.validate(entries)
+        return validation_pipeline.validate(entries)
 
     @staticmethod
     def _is_entry_sequence(

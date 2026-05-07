@@ -16,7 +16,7 @@ from pathlib import Path
 import pytest
 
 from flext_core import FlextSettings
-from flext_ldif import FlextLdifSettings, ldif
+from flext_ldif import ldif
 from tests import m, p
 
 
@@ -32,8 +32,8 @@ class TestsFlextLdifRealLdapConfig:
 
     def test_config_loaded_from_env(self, flext_api: p.Ldif.LdifClient) -> None:
         """Verify FlextLdifSettings loads from environment variables."""
-        ldif_config: FlextLdifSettings = flext_api.settings
-        assert ldif_config.ldif_encoding in {
+        ldif_config: p.Ldif.Settings = flext_api.settings
+        assert ldif_config.Ldif.ldif_encoding in {
             "utf-8",
             "utf-16",
             "ascii",
@@ -41,7 +41,7 @@ class TestsFlextLdifRealLdapConfig:
             "iso-8859-1",
             "cp1252",
         }
-        assert isinstance(ldif_config.ldif_strict_validation, bool)
+        assert isinstance(ldif_config.Ldif.ldif_strict_validation, bool)
         root_config = FlextSettings.fetch_global()
         assert root_config.max_workers >= 1
 

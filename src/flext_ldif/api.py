@@ -83,24 +83,25 @@ class FlextLdif(
         server_type: str = c.Ldif.ServerTypes.RFC.value,
     ) -> p.Ldif.CategorizationService:
         """Create a categorization service bound to the facade registry."""
+        option_payload = (
+            {
+                field_name: option_value
+                for field_name in FlextLdifCategorization.model_fields
+                if field_name != "base_dn"
+                and (option_value := getattr(options, field_name, None)) is not None
+            }
+            if options is not None
+            else {}
+        )
         resolved_base_dn = (
             base_dn
             if base_dn is not None
-            else (options.base_dn if options is not None else None)
+            else options.base_dn
+            if options is not None
+            else None
         )
         return FlextLdifCategorization(
-            categorization_rules=(
-                options.categorization_rules if options is not None else None
-            ),
-            schema_whitelist_rules=(
-                options.schema_whitelist_rules if options is not None else None
-            ),
-            forbidden_attributes=(
-                options.forbidden_attributes if options is not None else None
-            ),
-            forbidden_objectclasses=(
-                options.forbidden_objectclasses if options is not None else None
-            ),
+            **option_payload,
             base_dn=resolved_base_dn,
             server_type=server_type,
             server=self._server,

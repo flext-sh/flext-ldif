@@ -49,9 +49,6 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             | frozenset(["proxy", "all"])
         )
         DETECTION_OID_PATTERN: ClassVar[str] = "2\\.16\\.840\\.1\\.113730\\."
-        DETECTION_OID_PATTERN_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-            DETECTION_OID_PATTERN
-        )
         DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
             "nsslapd-",
             "nsds",
@@ -73,6 +70,23 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             "nsorganizationalunit",
             "nsorganizationalperson",
         ])
+        SCHEMA_ATTRIBUTE_NAME_REGEX: ClassVar[str] = "NAME\\s+['\\\"]([\\w-]+)['\\\"]"
+        SCHEMA_OBJECTCLASS_NAME_REGEX: ClassVar[str] = "NAME\\s+['\\\"](\\w+)['\\\"]"
+        ATTRIBUTE_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig] = (
+            m.Ldif.ServerPatternsConfig(
+                oid_pattern=DETECTION_OID_PATTERN,
+                attr_prefixes=DETECTION_ATTRIBUTE_PREFIXES,
+                name_regex=SCHEMA_ATTRIBUTE_NAME_REGEX,
+                use_prefix_match=True,
+            )
+        )
+        OBJECTCLASS_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig] = (
+            m.Ldif.ServerPatternsConfig(
+                oid_pattern=DETECTION_OID_PATTERN,
+                attr_names=DETECTION_OBJECTCLASS_NAMES,
+                name_regex=SCHEMA_OBJECTCLASS_NAME_REGEX,
+            )
+        )
         DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset([
             "cn=settings",
             "cn=monitor",
@@ -96,14 +110,6 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             "nsds7windowsreplicasubentry",
             "nsds7DirectoryReplicaSubentry",
         ])
-        SCHEMA_ATTRIBUTE_NAME_REGEX: ClassVar[str] = "NAME\\s+['\\\"]([\\w-]+)['\\\"]"
-        SCHEMA_ATTRIBUTE_NAME_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-            SCHEMA_ATTRIBUTE_NAME_REGEX, re.IGNORECASE
-        )
-        SCHEMA_OBJECTCLASS_NAME_REGEX: ClassVar[str] = "NAME\\s+['\\\"](\\w+)['\\\"]"
-        SCHEMA_OBJECTCLASS_NAME_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-            SCHEMA_OBJECTCLASS_NAME_REGEX, re.IGNORECASE
-        )
         ACL_CLAUSE_PATTERN: ClassVar[str] = "\\([^()]+\\)"
         ACL_NAME_PATTERN: ClassVar[str] = 'acl\\s+\\"([^\\"]+)\\"'
         ACL_NAME_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
@@ -161,30 +167,11 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Detect 389 DS attribute definitions using centralized constants."""
-            if isinstance(attr_definition, m.Ldif.SchemaAttribute):
-                matches: bool = u.Ldif.matches_server_patterns(
-                    value=attr_definition,
-                    oid_pattern=FlextLdifServersDs389.Constants.DETECTION_OID_PATTERN,
-                    detection_names=FlextLdifServersDs389.Constants.DETECTION_ATTRIBUTE_PREFIXES,
-                    use_prefix_match=True,
-                )
-                return matches
-            if FlextLdifServersDs389.Constants.DETECTION_OID_PATTERN_RE.search(
-                attr_definition
-            ):
-                return True
-            name_match = (
-                FlextLdifServersDs389.Constants.SCHEMA_ATTRIBUTE_NAME_RE.search(
-                    attr_definition
-                )
+            matches: bool = u.Ldif.matches_server_patterns(
+                value=attr_definition,
+                settings=FlextLdifServersDs389.Constants.ATTRIBUTE_PATTERN_SETTINGS,
             )
-            if name_match:
-                attr_name = name_match.group(1).lower()
-                return any(
-                    attr_name.startswith(prefix)
-                    for prefix in FlextLdifServersDs389.Constants.DETECTION_ATTRIBUTE_PREFIXES
-                )
-            return False
+            return matches
 
         @override
         def can_handle_objectclass(
@@ -192,59 +179,21 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Detect 389 DS objectClass definitions using centralized constants."""
-            if isinstance(oc_definition, m.Ldif.SchemaObjectClass):
-                matches: bool = u.Ldif.matches_server_patterns(
-                    value=oc_definition,
-                    oid_pattern=FlextLdifServersDs389.Constants.DETECTION_OID_PATTERN,
-                    detection_names=FlextLdifServersDs389.Constants.DETECTION_OBJECTCLASS_NAMES,
-                )
-                return matches
-            if FlextLdifServersDs389.Constants.DETECTION_OID_PATTERN_RE.search(
-                oc_definition
-            ):
-                return True
-            name_match = (
-                FlextLdifServersDs389.Constants.SCHEMA_OBJECTCLASS_NAME_RE.search(
-                    oc_definition
-                )
+            matches: bool = u.Ldif.matches_server_patterns(
+                value=oc_definition,
+                settings=FlextLdifServersDs389.Constants.OBJECTCLASS_PATTERN_SETTINGS,
             )
-            if name_match:
-                oc_name = name_match.group(1).lower()
-                return (
-                    oc_name
-                    in FlextLdifServersDs389.Constants.DETECTION_OBJECTCLASS_NAMES
-                )
-            return False
+            return matches
 
         @override
-        def _parse_attribute(
-            self, attr_definition: str
-        ) -> p.Result[m.Ldif.SchemaAttribute]:
-            """Parse attribute definition and add 389 DS metadata."""
-            result = super()._parse_attribute(attr_definition)
-            if result.success:
-                attr_data = result.value
-                metadata = m.Ldif.ServerMetadata.create_for(self._get_server_type())
-                return r[m.Ldif.SchemaAttribute].ok(
-                    attr_data.model_copy(update={"metadata": metadata}),
-                )
-            return r[m.Ldif.SchemaAttribute].from_result(result)
-
-        @override
-        def _parse_objectclass(
-            self, oc_definition: str
+        def _hook_post_parse_objectclass(
+            self,
+            oc: m.Ldif.SchemaObjectClass,
         ) -> p.Result[m.Ldif.SchemaObjectClass]:
-            """Parse objectClass definition and add 389 DS metadata."""
-            result = super()._parse_objectclass(oc_definition)
-            if result.success:
-                oc_data = result.value
-                u.Ldif.fix_missing_sup(oc_data)
-                u.Ldif.fix_kind_mismatch(oc_data)
-                metadata = m.Ldif.ServerMetadata.create_for(self._get_server_type())
-                return r[m.Ldif.SchemaObjectClass].ok(
-                    oc_data.model_copy(update={"metadata": metadata}),
-                )
-            return r[m.Ldif.SchemaObjectClass].from_result(result)
+            """Normalize 389 DS objectClass data after RFC parsing."""
+            u.Ldif.fix_missing_sup(oc)
+            u.Ldif.fix_kind_mismatch(oc)
+            return super()._hook_post_parse_objectclass(oc)
 
     class Acl(FlextLdifServersRfc.Acl):
         """389 Directory Server ACI server."""

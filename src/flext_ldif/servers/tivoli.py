@@ -39,10 +39,6 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             "ibm-entryChecksum",
         ])
         DETECTION_OID_PATTERN: ClassVar[str] = "\\b1\\.3\\.18\\."
-        DETECTION_OID_PATTERN_COMPILED: ClassVar[t.Ldif.RegexPattern] = re.compile(
-            DETECTION_OID_PATTERN,
-            re.IGNORECASE,
-        )
         DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
             "ibm-",
             "ids-",
@@ -67,6 +63,21 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             "ibm-ldapserver",
             "ibm-filterentry",
         ])
+        ATTRIBUTE_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig] = (
+            m.Ldif.ServerPatternsConfig(
+                oid_pattern=DETECTION_OID_PATTERN,
+                attr_prefixes=DETECTION_ATTRIBUTE_PREFIXES,
+                use_prefix_match=True,
+                match_definition_text=True,
+            )
+        )
+        OBJECTCLASS_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig] = (
+            m.Ldif.ServerPatternsConfig(
+                oid_pattern=DETECTION_OID_PATTERN,
+                attr_names=DETECTION_OBJECTCLASS_NAMES,
+                match_definition_text=True,
+            )
+        )
         DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset([
             "o=ibm",
             "o=example",
@@ -115,23 +126,11 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Detect Tivoli-specific attributes."""
-            if isinstance(attr_definition, m.Ldif.SchemaAttribute):
-                matches: bool = u.Ldif.matches_server_patterns(
-                    value=attr_definition,
-                    oid_pattern=FlextLdifServersTivoli.Constants.DETECTION_OID_PATTERN,
-                    detection_names=FlextLdifServersTivoli.Constants.DETECTION_ATTRIBUTE_PREFIXES,
-                    use_prefix_match=True,
-                )
-                return matches
-            if FlextLdifServersTivoli.Constants.DETECTION_OID_PATTERN_COMPILED.search(
-                attr_definition,
-            ):
-                return True
-            attr_lower = attr_definition.lower()
-            return any(
-                prefix in attr_lower
-                for prefix in FlextLdifServersTivoli.Constants.DETECTION_ATTRIBUTE_PREFIXES
+            matches: bool = u.Ldif.matches_server_patterns(
+                value=attr_definition,
+                settings=FlextLdifServersTivoli.Constants.ATTRIBUTE_PATTERN_SETTINGS,
             )
+            return matches
 
         @override
         def can_handle_objectclass(
@@ -139,50 +138,11 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Detect Tivoli objectClass definitions."""
-            if isinstance(oc_definition, m.Ldif.SchemaObjectClass):
-                matches: bool = u.Ldif.matches_server_patterns(
-                    value=oc_definition,
-                    oid_pattern=FlextLdifServersTivoli.Constants.DETECTION_OID_PATTERN,
-                    detection_names=FlextLdifServersTivoli.Constants.DETECTION_OBJECTCLASS_NAMES,
-                )
-                return matches
-            if FlextLdifServersTivoli.Constants.DETECTION_OID_PATTERN_COMPILED.search(
-                oc_definition,
-            ):
-                return True
-            oc_lower = oc_definition.lower()
-            return any(
-                oc_name in oc_lower
-                for oc_name in FlextLdifServersTivoli.Constants.DETECTION_OBJECTCLASS_NAMES
+            matches: bool = u.Ldif.matches_server_patterns(
+                value=oc_definition,
+                settings=FlextLdifServersTivoli.Constants.OBJECTCLASS_PATTERN_SETTINGS,
             )
-
-        @override
-        def _parse_attribute(
-            self, attr_definition: str
-        ) -> p.Result[m.Ldif.SchemaAttribute]:
-            """Parse attribute definition and add Tivoli metadata."""
-            result = super()._parse_attribute(attr_definition)
-            if result.success:
-                attr_data = result.value
-                metadata = m.Ldif.ServerMetadata.create_for("ibm_tivoli")
-                return r[m.Ldif.SchemaAttribute].ok(
-                    attr_data.model_copy(update={"metadata": metadata}),
-                )
-            return r[m.Ldif.SchemaAttribute].from_result(result)
-
-        @override
-        def _parse_objectclass(
-            self, oc_definition: str
-        ) -> p.Result[m.Ldif.SchemaObjectClass]:
-            """Parse objectClass definition and add Tivoli metadata."""
-            result = super()._parse_objectclass(oc_definition)
-            if result.success:
-                oc_data = result.value
-                metadata = m.Ldif.ServerMetadata.create_for("ibm_tivoli")
-                return r[m.Ldif.SchemaObjectClass].ok(
-                    oc_data.model_copy(update={"metadata": metadata}),
-                )
-            return r[m.Ldif.SchemaObjectClass].from_result(result)
+            return matches
 
     class Acl(FlextLdifServersRfc.Acl):
         """IBM Tivoli Directory Server ACL servers implementation."""

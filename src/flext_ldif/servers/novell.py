@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from typing import ClassVar, override
 
 from flext_ldif import FlextLdifServersRfc, c, m, p, r, t, u
@@ -31,9 +30,6 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             "modifyTimestamp",
         ])
         DETECTION_OID_PATTERN: ClassVar[str] = "2\\.16\\.840\\.1\\.113719\\."
-        DETECTION_OID_PATTERN_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-            DETECTION_OID_PATTERN
-        )
         DETECTION_PATTERN: ClassVar[str] = "2\\.16\\.840\\.1\\.113719\\."
         DETECTION_WEIGHT: ClassVar[int] = 6
         DETECTION_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
@@ -54,6 +50,23 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             "ndstree",
             "ndsloginproperties",
         ])
+        SCHEMA_ATTRIBUTE_NAME_REGEX: ClassVar[str] = "NAME\\s+\\(?\\s*'([^']+)'"
+        ATTRIBUTE_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig] = (
+            m.Ldif.ServerPatternsConfig(
+                oid_pattern=DETECTION_OID_PATTERN,
+                attr_prefixes=DETECTION_ATTRIBUTE_PREFIXES,
+                name_regex=SCHEMA_ATTRIBUTE_NAME_REGEX,
+                use_prefix_match=True,
+                match_definition_text=True,
+            )
+        )
+        OBJECTCLASS_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig] = (
+            m.Ldif.ServerPatternsConfig(
+                oid_pattern=DETECTION_OID_PATTERN,
+                attr_names=DETECTION_OBJECTCLASS_NAMES,
+                name_regex=SCHEMA_ATTRIBUTE_NAME_REGEX,
+            )
+        )
         DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset([
             "ou=services",
             "ou=apps",
@@ -77,11 +90,6 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             "ndstree",
             "ndsloginproperties",
         ])
-        SCHEMA_ATTRIBUTE_NAME_REGEX: ClassVar[str] = "NAME\\s+\\(?\\s*'([^']+)'"
-        SCHEMA_ATTRIBUTE_NAME_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-            SCHEMA_ATTRIBUTE_NAME_REGEX,
-            re.IGNORECASE,
-        )
         ACL_DEFAULT_SUBJECT_TYPE: ClassVar[str] = "trustee"
         ACL_DEFAULT_SUBJECT_VALUE_UNKNOWN: ClassVar[str] = c.Ldif.UNKNOWN_VALUE
         ACL_ATTRIBUTE_NAME_WRITE: ClassVar[str] = "acl"
@@ -113,37 +121,11 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Detect eDirectory attribute definitions using Constants."""
-            if isinstance(attr_definition, m.Ldif.SchemaAttribute):
-                matches: bool = u.Ldif.matches_server_patterns(
-                    value=attr_definition,
-                    oid_pattern=FlextLdifServersNovell.Constants.DETECTION_OID_PATTERN,
-                    detection_names=FlextLdifServersNovell.Constants.DETECTION_ATTRIBUTE_PREFIXES,
-                    use_prefix_match=True,
-                )
-                return matches
-            attr_lower = attr_definition.lower()
-            if FlextLdifServersNovell.Constants.DETECTION_OID_PATTERN_RE.search(
-                attr_definition
-            ):
-                return True
-            name_matches = (
-                FlextLdifServersNovell.Constants.SCHEMA_ATTRIBUTE_NAME_RE.findall(
-                    attr_definition
-                )
+            matches: bool = u.Ldif.matches_server_patterns(
+                value=attr_definition,
+                settings=FlextLdifServersNovell.Constants.ATTRIBUTE_PATTERN_SETTINGS,
             )
-            if any(
-                name.lower().startswith(
-                    tuple(
-                        FlextLdifServersNovell.Constants.DETECTION_ATTRIBUTE_PREFIXES,
-                    ),
-                )
-                for name in name_matches
-            ):
-                return True
-            return any(
-                prefix in attr_lower
-                for prefix in FlextLdifServersNovell.Constants.DETECTION_ATTRIBUTE_PREFIXES
-            )
+            return matches
 
         @override
         def can_handle_objectclass(
@@ -151,41 +133,11 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Detect eDirectory objectClass definitions using Constants."""
-            consts = FlextLdifServersNovell.Constants
-            return self._detect_oc_via_constants(
-                oc_definition,
-                oid_pattern=consts.DETECTION_OID_PATTERN,
-                oc_names=consts.DETECTION_OBJECTCLASS_NAMES,
-                name_regex=consts.SCHEMA_ATTRIBUTE_NAME_REGEX,
+            matches: bool = u.Ldif.matches_server_patterns(
+                value=oc_definition,
+                settings=FlextLdifServersNovell.Constants.OBJECTCLASS_PATTERN_SETTINGS,
             )
-
-        @override
-        def _parse_attribute(
-            self, attr_definition: str
-        ) -> p.Result[m.Ldif.SchemaAttribute]:
-            """Parse attribute definition and add Novell metadata."""
-            result = super()._parse_attribute(attr_definition)
-            if result.success:
-                attr_data = result.value
-                metadata = m.Ldif.ServerMetadata.create_for(self._get_server_type())
-                return r[m.Ldif.SchemaAttribute].ok(
-                    attr_data.model_copy(update={"metadata": metadata}),
-                )
-            return result
-
-        @override
-        def _parse_objectclass(
-            self, oc_definition: str
-        ) -> p.Result[m.Ldif.SchemaObjectClass]:
-            """Parse objectClass definition and add Novell metadata."""
-            result = super()._parse_objectclass(oc_definition)
-            if result.success:
-                oc_data = result.value
-                metadata = m.Ldif.ServerMetadata.create_for(self._get_server_type())
-                return r[m.Ldif.SchemaObjectClass].ok(
-                    oc_data.model_copy(update={"metadata": metadata}),
-                )
-            return result
+            return matches
 
     class Acl(FlextLdifServersRfc.Acl):
         """Novell eDirectory ACL server."""

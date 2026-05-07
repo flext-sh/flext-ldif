@@ -170,6 +170,23 @@ class TestsFlextLdifApiIntegration:
         assert categorization.forbidden_attributes == ["userPassword"]
         assert categorization.forbidden_objectclasses == ["groupOfNames"]
 
+    def test_categorization_uses_migrate_options_base_dn_without_override(self) -> None:
+        """Categorization should preserve the model-provided base DN when no override is passed."""
+        api = ldif
+        options = m.Ldif.MigrateOptions(
+            base_dn="dc=options,dc=example",
+            forbidden_attributes=["userPassword"],
+        )
+
+        categorization = api.categorization(
+            options=options,
+            server_type=c.Tests.OUD,
+        )
+
+        assert isinstance(categorization, FlextLdifCategorization)
+        assert categorization.base_dn == "dc=options,dc=example"
+        assert categorization.forbidden_attributes == ["userPassword"]
+
     def test_migration_pipeline_reads_transform_and_migrate_options(
         self,
         tmp_path: Path,

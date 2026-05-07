@@ -4,15 +4,24 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_ldap import p
+from flext_ldap import p as ldap_p
 from flext_tests import FlextTestsProtocols
+
+from flext_ldif import FlextLdifProtocols
 
 if TYPE_CHECKING:
     from tests import m
 
 
-class TestsFlextLdifProtocols(FlextTestsProtocols, p):
+class TestsFlextLdifProtocols(
+    FlextTestsProtocols,
+    ldap_p,
+    FlextLdifProtocols,
+):
     """Protocol definitions for flext-ldif tests."""
+
+    class Ldap(ldap_p.Ldap):
+        """LDAP protocol namespace re-exposed for flext-ldif tests."""
 
     class Tests(FlextTestsProtocols.Tests):
         """LDIF helper protocols used only by tests."""

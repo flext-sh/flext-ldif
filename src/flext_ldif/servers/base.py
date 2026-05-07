@@ -12,7 +12,6 @@ from flext_ldif import (
     FlextLdifServersBaseEntry,
     FlextLdifServersBaseSchema,
     FlextLdifServersBaseSchemaAcl,
-    FlextLdifSettings,
     c,
     m,
     p,
@@ -137,7 +136,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         self,
         *,
         server: p.Ldif.ServerRegistry | None = None,
-        settings: FlextLdifSettings | None = None,
+        settings: p.Ldif.Settings | None = None,
         **fields: t.JsonValue,
     ) -> Self: ...
 
@@ -171,7 +170,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         self,
         *args: str | t.MutableSequenceOf[m.Ldif.Entry] | None,
         server: p.Ldif.ServerRegistry | None = None,
-        settings: FlextLdifSettings | None = None,
+        settings: p.Ldif.Settings | None = None,
         **fields: t.JsonValue | t.MutableSequenceOf[m.Ldif.Entry],
     ) -> Self | m.Ldif.Entry | str:
         """Callable interface - use as processor."""
@@ -244,8 +243,15 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
             cls._extract_operation(kwargs),
         )
 
+    def _get_server_type(self) -> str:
+        """Get server_type from parent class Constants via MRO traversal."""
+        return self._get_server_type_from_mro(type(self))
+
     @classmethod
-    def _get_priority_from_mro(cls, server_class: type[t.JsonValue]) -> int:
+    def _get_priority_from_mro(
+        cls,
+        server_class: type,
+    ) -> int:
         """Get priority from parent class Constants via MRO traversal."""
         for mro_cls in server_class.__mro__:
             if not mro_cls.__name__.startswith(
@@ -259,7 +265,10 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         raise AttributeError(msg)
 
     @classmethod
-    def _get_server_type_from_mro(cls, server_class: type[t.JsonValue]) -> str:
+    def _get_server_type_from_mro(
+        cls,
+        server_class: type,
+    ) -> str:
         """Get server_type from parent class Constants via MRO traversal."""
         for mro_cls in server_class.__mro__:
             if not mro_cls.__name__.startswith(

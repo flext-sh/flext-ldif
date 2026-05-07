@@ -8,7 +8,6 @@ from flext_ldif import (
     FlextLdifServerMethodsMixin,
     FlextLdifServersBase,
     FlextLdifServersBaseSchemaAcl,
-    FlextLdifSettings,
     m,
     p,
     r,
@@ -26,7 +25,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         cls,
         acl_service: p.Ldif.AclServer | None = None,
         parent_server: Self | None = None,
-        **kwargs: t.Ldif.Scalar,
+        **kwargs: t.Ldif.Scalar | m.Ldif.Acl,
     ) -> Self:
         """Override __new__ to support auto-execute and processor instantiation."""
         _ = acl_service
@@ -60,7 +59,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         self,
         acl_service: p.Ldif.AclServer | None = None,
         parent_server: Self | None = None,
-        **kwargs: t.Ldif.Scalar,
+        **kwargs: t.Ldif.Scalar | m.Ldif.Acl,
     ) -> None:
         """Initialize RFC ACL server service."""
         _ = kwargs
@@ -80,7 +79,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         self,
         *,
         server: p.Ldif.ServerRegistry | None = None,
-        settings: FlextLdifSettings | None = None,
+        settings: p.Ldif.Settings | None = None,
         **fields: t.JsonValue,
     ) -> Self: ...
 
@@ -100,14 +99,19 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
 
     def __call__(
         self,
-        *args: str | m.Ldif.Acl | None,
+        data: t.JsonValue | m.Ldif.Acl | None = None,
+        *,
+        operation: t.JsonValue | None = None,
         server: p.Ldif.ServerRegistry | None = None,
-        settings: FlextLdifSettings | None = None,
-        **fields: t.JsonValue | m.Ldif.Acl,
+        settings: p.Ldif.Settings | None = None,
+        **fields: t.JsonValue,
     ) -> Self | m.Ldif.Acl | str:
         """Callable interface - automatic polymorphic processor."""
+        processor_fields: dict[str, t.JsonValue | m.Ldif.Acl | None] = dict(fields)
+        processor_fields["data"] = data
+        processor_fields["operation"] = operation
         builder_fields = FlextLdifServerMethodsMixin.project_processor_fields(
-            fields,
+            processor_fields,
             frozenset({"data", "operation"}),
             force_dispatch=server is not None or settings is not None,
         )
@@ -118,19 +122,15 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
                 **builder_fields,
             )
             return configured
-        data_raw = fields.get("data")
-        data = (
+        data_raw = processor_fields.get("data")
+        narrowed_data = (
             data_raw
             if isinstance(data_raw, (str, m.Ldif.Acl)) or data_raw is None
             else None
         )
-        operation_raw = fields.get("operation")
-        operation = operation_raw if isinstance(operation_raw, str) else None
-        if args and data is None:
-            first = args[0]
-            if isinstance(first, (str, m.Ldif.Acl)) or first is None:
-                data = first
-        result = self.execute(data=data, operation=operation)
+        operation_raw = processor_fields.get("operation")
+        narrowed_operation = operation_raw if isinstance(operation_raw, str) else None
+        result = self.execute(data=narrowed_data, operation=narrowed_operation)
         if isinstance(result.value, str):
             return result.value
         return m.Ldif.Acl.model_validate(result.value)

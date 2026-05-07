@@ -43,28 +43,35 @@ class FlextLdifDetector(s):
     def _get_server_constants(
         self,
         server_type: str,
-    ) -> type[p.Ldif.ServerDetectionConstants] | None:
+    ) -> type[p.Ldif.ServerConstants] | None:
         """Get server Constants class dynamically via FlextLdifServer registry."""
-        constants_result = self._server.resolve_server_constants(server_type)
+        constants_result: p.Result[type[p.Ldif.ServerConstants]] = (
+            self._server.resolve_server_constants(server_type)
+        )
         if constants_result.failure:
             return None
-        constants = constants_result.map_or(None)
-        if constants is None:
-            return None
-        required_values = (
-            getattr(constants, "DETECTION_WEIGHT", None),
-            getattr(constants, "DETECTION_ATTRIBUTES", None),
-        )
+        constants: type[p.Ldif.ServerConstants] = constants_result.unwrap()
         pattern_values = (
-            getattr(constants, c.Ldif.DETECTION_PATTERN_ATTR, None),
-            getattr(constants, c.Ldif.DETECTION_OID_PATTERN_ATTR, None),
+            constants.DETECTION_PATTERN,
+            constants.DETECTION_OID_PATTERN,
         )
-        if any(value is None for value in required_values) or all(
-            value is None for value in pattern_values
+        has_detection_pattern = any(
+            bool(
+                pattern_value
+                if isinstance(pattern_value, str)
+                else ""
+                if pattern_value is None
+                else pattern_value.pattern
+            )
+            for pattern_value in pattern_values
+        )
+        if (
+            constants.DETECTION_WEIGHT <= 0
+            or not constants.DETECTION_ATTRIBUTES
+            or not has_detection_pattern
         ):
             return None
-        typed_constants: type[p.Ldif.ServerDetectionConstants] = constants
-        return typed_constants
+        return constants
 
     def detect_server_type(
         self,
@@ -104,7 +111,6 @@ class FlextLdifDetector(s):
             "confidence": confidence,
             "scores": scores_model,
             "patterns_found": patterns_found,
-            "is_confident": confidence >= u.Ldif.get_confidence_threshold(),
         })
         return r[m.Ldif.ServerDetectionResult].ok(detection_result)
 
@@ -166,7 +172,7 @@ class FlextLdifDetector(s):
 
     def _extract_oid_specific_patterns(
         self,
-        constants: type[p.Ldif.ServerDetectionConstants] | None,
+        constants: type[p.Ldif.ServerConstants] | None,
         content: str,
         patterns: t.MutableSequenceOf[str],
     ) -> None:
@@ -186,7 +192,7 @@ class FlextLdifDetector(s):
 
     def _extract_pattern_with_attr(
         self,
-        constants: type[p.Ldif.ServerDetectionConstants] | None,
+        constants: type[p.Ldif.ServerConstants] | None,
         pattern_spec: tuple[c.Ldif.ServerTypes, str, str, bool],
         content: str,
         patterns: t.MutableSequenceOf[str],
@@ -232,7 +238,7 @@ class FlextLdifDetector(s):
 
     def _update_server_scores(
         self,
-        constants: type[p.Ldif.ServerDetectionConstants] | None,
+        constants: type[p.Ldif.ServerConstants] | None,
         score_spec: tuple[c.Ldif.ServerTypes, str, bool],
         content: str,
         scores: t.MutableIntMapping,
@@ -252,18 +258,12 @@ class FlextLdifDetector(s):
         if not server_type:
             return
         search_content = content if case_sensitive else content.lower()
-        weight = getattr(
-            constants,
-            "DETECTION_WEIGHT",
-            10 if pattern_attr == c.Ldif.DETECTION_OID_PATTERN_ATTR else 6,
-        )
+        weight = constants.DETECTION_WEIGHT if constants else 0
         if c.Ldif.compile_pattern(pattern).search(search_content):
             scores[server_type] += weight
         score_attr_match = u.Ldif.get_attribute_match_score()
-        attributes = getattr(constants, "DETECTION_ATTRIBUTES", ()) if constants else ()
-        objectclasses = (
-            getattr(constants, "DETECTION_OBJECTCLASS_NAMES", ()) if constants else ()
-        )
+        attributes = constants.DETECTION_ATTRIBUTES if constants else ()
+        objectclasses = constants.DETECTION_OBJECTCLASS_NAMES or () if constants else ()
         server_type_lower = server_type.lower()
         scores[server_type] += sum(
             score_attr_match

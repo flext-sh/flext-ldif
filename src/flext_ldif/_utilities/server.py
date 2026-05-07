@@ -39,6 +39,42 @@ class FlextLdifUtilitiesServer:
         return any(marker in name_lower for marker in detection_names)
 
     @staticmethod
+    def _extract_pattern_name_candidates(
+        value: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        settings: m.Ldif.ServerPatternsConfig,
+    ) -> list[str]:
+        """Extract comparable schema names from a raw definition or parsed model."""
+        if not isinstance(value, str):
+            return [value.name] if value.name else []
+        if not settings.name_regex:
+            return []
+        name_candidates: list[str] = []
+        name_matches = c.Ldif.compile_pattern(
+            settings.name_regex,
+            ignorecase=True,
+        ).findall(value)
+        for match in name_matches:
+            if isinstance(match, tuple):
+                name_candidates.extend(part for part in match if part)
+            elif match:
+                name_candidates.append(match)
+        return name_candidates
+
+    @staticmethod
+    def _matches_definition_text(
+        definition_text: str | None,
+        detection_names: frozenset[str],
+        settings: m.Ldif.ServerPatternsConfig,
+    ) -> bool:
+        """Check raw definition text when settings require substring-based detection."""
+        if not definition_text or not settings.match_definition_text:
+            return False
+        definition_lower = definition_text.lower()
+        if settings.detection_string and settings.detection_string in definition_lower:
+            return True
+        return any(marker in definition_lower for marker in detection_names)
+
+    @staticmethod
     def _extract_server_name(name_without_prefix: str) -> p.Result[str]:
         """Extract server name from class name suffix."""
         for suffix in FlextLdifUtilitiesServer.CLASS_SUFFIXES:
@@ -183,11 +219,7 @@ class FlextLdifUtilitiesServer:
     @staticmethod
     def matches_server_patterns(
         value: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
-        oid_pattern: str,
-        detection_names: frozenset[str],
-        detection_string: str | None = None,
-        *,
-        use_prefix_match: bool = False,
+        settings: m.Ldif.ServerPatternsConfig,
     ) -> bool:
         r"""Check if value matches server-specific detection patterns.
 
@@ -197,10 +229,7 @@ class FlextLdifUtilitiesServer:
 
         Args:
             value: The definition string or parsed model to check
-            oid_pattern: Regex pattern for server-specific OIDs (e.g., r"2\\.16\\.840\\.1\\.113894")
-            detection_names: Set of attribute/objectclass names that indicate this server
-            detection_string: Optional string to check for in the definition (e.g., "microsoft")
-            use_prefix_match: If True, use startswith for prefixes; if False, use contains
+            settings: Centralized server pattern settings
 
         Returns:
             True if value matches any server detection pattern, False otherwise
@@ -209,49 +238,44 @@ class FlextLdifUtilitiesServer:
             >>> # In a server's can_handle_attribute method:
             >>> return FlextLdifUtilitiesServer.matches_server_patterns(
             ...     value=attr_definition,
-            ...     oid_pattern=MyServer.Constants.DETECTION_OID_PATTERN,
-            ...     detection_names=MyServer.Constants.DETECTION_ATTRIBUTE_NAMES,
-            ...     detection_string="myserver",
+            ...     settings=MyServer.Constants.ATTRIBUTE_PATTERN_SETTINGS,
             ... )
 
         """
+        detection_names = frozenset(
+            marker.lower() for marker in (*settings.attr_names, *settings.attr_prefixes)
+        )
 
         def check_oid_pattern(check_value: str | None) -> bool:
             """Check OID pattern match."""
             return bool(
-                check_value and c.Ldif.compile_pattern(oid_pattern).search(check_value)
+                check_value
+                and settings.oid_pattern
+                and c.Ldif.compile_pattern(settings.oid_pattern).search(check_value)
             )
 
-        def check_name_in_set(name: str | None) -> bool:
-            """Check if name is in detection set."""
-            return bool(name and name.lower() in detection_names)
-
-        def check_model_patterns(
-            model: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
-        ) -> bool:
-            """Check patterns for model types."""
-            if check_oid_pattern(model.oid) or check_name_in_set(model.name):
-                return True
-            name_lower = model.name.lower() if model.name else ""
-            return FlextLdifUtilitiesServer._check_name_patterns(
-                name_lower,
+        oid_value = value if isinstance(value, str) else value.oid
+        definition_text = value if isinstance(value, str) else None
+        name_candidates = FlextLdifUtilitiesServer._extract_pattern_name_candidates(
+            value,
+            settings,
+        )
+        result = check_oid_pattern(oid_value) or any(
+            FlextLdifUtilitiesServer._check_name_patterns(
+                name.lower(),
                 detection_names,
-                detection_string,
-                use_prefix_match=use_prefix_match,
+                settings.detection_string,
+                use_prefix_match=settings.use_prefix_match,
             )
-
-        if isinstance(value, str):
-            return check_oid_pattern(
-                value,
-            ) or FlextLdifUtilitiesServer._check_name_patterns(
-                value.lower(),
+            for name in name_candidates
+        )
+        if not result:
+            return FlextLdifUtilitiesServer._matches_definition_text(
+                definition_text,
                 detection_names,
-                detection_string,
-                use_prefix_match=use_prefix_match,
+                settings,
             )
-        if isinstance(value, m.Ldif.SchemaAttribute):
-            return check_model_patterns(value)
-        return check_model_patterns(value)
+        return result
 
     @staticmethod
     def normalize_server_type(server_type: str) -> c.Ldif.ServerTypes:

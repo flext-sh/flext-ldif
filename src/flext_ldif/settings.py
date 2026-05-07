@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 class FlextLdifSettings(FlextCliSettings):
     """LDIF processing settings inheriting base FLEXT configuration."""
 
-    class LdifSettings(m.Value):
+    class LdifSettings(m.SettingsValue):
         """Namespaced LDIF runtime settings."""
 
         ldif_encoding: Annotated[

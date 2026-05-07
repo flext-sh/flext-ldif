@@ -10,7 +10,7 @@ from __future__ import annotations
 from collections.abc import MutableMapping, MutableSequence
 from pathlib import Path
 
-from examples import m, p, r, t, u
+from examples import c, m, p, r, t, u
 from flext_ldif import ldif
 
 
@@ -43,7 +43,7 @@ class ExampleServerMigration:
 
     @staticmethod
     def _detect_server_type(
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.ServerDetectionService,
         source_dir: Path,
     ) -> tuple[str, t.JsonMapping]:
         """Detect server type from source data."""
@@ -56,8 +56,11 @@ class ExampleServerMigration:
                 "detected_server": detection.detected_server_type,
                 "detection_confidence": detection.confidence,
             })
-            return (detection.detected_server_type or "oid", detection_data)
-        return ("oid", detection_data)
+            return (
+                detection.detected_server_type or c.Ldif.ServerTypes.OID.value,
+                detection_data,
+            )
+        return (c.Ldif.ServerTypes.OID.value, detection_data)
 
     @staticmethod
     def _setup_directories(base_dir: Path) -> tuple[Path, Path, Path]:

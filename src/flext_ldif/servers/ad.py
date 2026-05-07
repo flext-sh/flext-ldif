@@ -145,6 +145,21 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         DETECTION_MICROSOFT_ACTIVE_DIRECTORY: ClassVar[str] = (
             "microsoft active directory"
         )
+        ATTRIBUTE_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig] = (
+            m.Ldif.ServerPatternsConfig(
+                oid_pattern=DETECTION_OID_PATTERN,
+                attr_names=DETECTION_ATTRIBUTE_NAMES,
+                detection_string=DETECTION_MICROSOFT_ACTIVE_DIRECTORY,
+                match_definition_text=True,
+            )
+        )
+        OBJECTCLASS_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig] = (
+            m.Ldif.ServerPatternsConfig(
+                oid_pattern=DETECTION_OID_PATTERN,
+                attr_names=DETECTION_OBJECTCLASS_NAMES,
+                match_definition_text=True,
+            )
+        )
         ACL_TARGET_WILDCARD: ClassVar[str] = "*"
 
     class Schema(FlextLdifServersRfc.Schema):
@@ -158,9 +173,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             """Detect AD attribute definitions using centralized constants."""
             matches: bool = u.Ldif.matches_server_patterns(
                 value=attr_definition,
-                oid_pattern=FlextLdifServersAd.Constants.DETECTION_OID_PATTERN,
-                detection_names=FlextLdifServersAd.Constants.DETECTION_ATTRIBUTE_NAMES,
-                detection_string=FlextLdifServersAd.Constants.DETECTION_MICROSOFT_ACTIVE_DIRECTORY,
+                settings=FlextLdifServersAd.Constants.ATTRIBUTE_PATTERN_SETTINGS,
             )
             return matches
 
@@ -172,38 +185,19 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             """Detect AD objectClass definitions using centralized constants."""
             matches: bool = u.Ldif.matches_server_patterns(
                 value=oc_definition,
-                oid_pattern=FlextLdifServersAd.Constants.DETECTION_OID_PATTERN,
-                detection_names=FlextLdifServersAd.Constants.DETECTION_OBJECTCLASS_NAMES,
+                settings=FlextLdifServersAd.Constants.OBJECTCLASS_PATTERN_SETTINGS,
             )
             return matches
 
         @override
-        def _parse_attribute(
-            self, attr_definition: str
-        ) -> p.Result[m.Ldif.SchemaAttribute]:
-            """Parse attribute definition and add AD metadata."""
-            result = super()._parse_attribute(attr_definition)
-            if result.success:
-                attr_data = result.value
-                metadata = m.Ldif.ServerMetadata.create_for(self._get_server_type())
-                attr_updated = attr_data.model_copy(update={"metadata": metadata})
-                return r[m.Ldif.SchemaAttribute].ok(attr_updated)
-            return r[m.Ldif.SchemaAttribute].from_result(result)
-
-        @override
-        def _parse_objectclass(
-            self, oc_definition: str
+        def _hook_post_parse_objectclass(
+            self,
+            oc: m.Ldif.SchemaObjectClass,
         ) -> p.Result[m.Ldif.SchemaObjectClass]:
-            """Parse objectClass definition and add AD metadata."""
-            result = super()._parse_objectclass(oc_definition)
-            if result.success:
-                oc_data = result.value
-                u.Ldif.fix_missing_sup(oc_data)
-                u.Ldif.fix_kind_mismatch(oc_data)
-                metadata = m.Ldif.ServerMetadata.create_for(self._get_server_type())
-                oc_updated = oc_data.model_copy(update={"metadata": metadata})
-                return r[m.Ldif.SchemaObjectClass].ok(oc_updated)
-            return r[m.Ldif.SchemaObjectClass].from_result(result)
+            """Normalize Active Directory objectClass data after RFC parsing."""
+            u.Ldif.fix_missing_sup(oc)
+            u.Ldif.fix_kind_mismatch(oc)
+            return super()._hook_post_parse_objectclass(oc)
 
     class Acl(FlextLdifServersRfc.Acl):
         """Active Directory ACL server handling nTSecurityDescriptor entries."""

@@ -14,7 +14,13 @@ from typing import TYPE_CHECKING, ClassVar, Protocol, runtime_checkable
 from flext_core import p
 
 if TYPE_CHECKING:
-    from flext_ldif import FlextLdifProtocolsDomain as lpd, FlextLdifSettings, c, m, t
+    from flext_ldif import (
+        FlextLdifProtocols as lp,
+        FlextLdifProtocolsDomain as lpd,
+        c,
+        m,
+        t,
+    )
 
 
 @runtime_checkable
@@ -34,11 +40,24 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
     @runtime_checkable
-    class LdifClient(ValidationService, Protocol):
+    class ServerDetectionService(Protocol):
+        """Contract for LDIF server type detection helpers."""
+
+        def detect_server_type(
+            self,
+            ldif_path: Path | None = None,
+            ldif_content: str | None = None,
+            max_lines: int | None = None,
+        ) -> p.Result[m.Ldif.ServerDetectionResult]:
+            """Detect LDAP server type from LDIF file or content."""
+            ...
+
+    @runtime_checkable
+    class LdifClient(ValidationService, ServerDetectionService, Protocol):
         """Protocol for LDIF clients that support CRUD operations."""
 
         @property
-        def settings(self) -> FlextLdifSettings:
+        def settings(self) -> lp.Ldif.Settings:
             """Expose the typed LDIF settings carried by the public facade."""
             ...
 
@@ -178,15 +197,6 @@ class FlextLdifProtocolsBase(Protocol):
             | m.Ldif.Acl,
         ) -> p.Result[t.Ldif.ConvertedModel]:
             """Convert one LDIF model between server servers."""
-            ...
-
-        def detect_server_type(
-            self,
-            ldif_path: Path | None = None,
-            ldif_content: str | None = None,
-            max_lines: int | None = None,
-        ) -> p.Result[m.Ldif.ServerDetectionResult]:
-            """Detect LDAP server type from LDIF file or content."""
             ...
 
         def resolve_effective_server_type(
@@ -942,7 +952,10 @@ class FlextLdifProtocolsBase(Protocol):
 
         SERVER_TYPE: str
         PRIORITY: int
-        DETECTION_OID_PATTERN: str | None
+        DETECTION_PATTERN: str | t.Ldif.RegexPattern | None
+        DETECTION_WEIGHT: int
+        DETECTION_ATTRIBUTES: t.IterableOf[str]
+        DETECTION_OID_PATTERN: str | t.Ldif.RegexPattern | None
         DETECTION_ATTRIBUTE_PREFIXES: t.IterableOf[str] | None
         DETECTION_OBJECTCLASS_NAMES: t.IterableOf[str] | None
         DETECTION_DN_MARKERS: t.IterableOf[str] | None
@@ -951,16 +964,6 @@ class FlextLdifProtocolsBase(Protocol):
         CATEGORY_OBJECTCLASSES: t.FrozensetMapping
         HIERARCHY_PRIORITY_OBJECTCLASSES: frozenset[str]
         CATEGORIZATION_ACL_ATTRIBUTES: frozenset[str]
-
-    @runtime_checkable
-    class ServerDetectionConstants(Protocol):
-        """Subset of constants used by detector services."""
-
-        DETECTION_PATTERN: str
-        DETECTION_WEIGHT: int
-        DETECTION_ATTRIBUTES: t.IterableOf[str]
-        DETECTION_OID_PATTERN: str | None
-        DETECTION_OBJECTCLASS_NAMES: t.IterableOf[str] | None
 
     @runtime_checkable
     class Predicate[T](Protocol):

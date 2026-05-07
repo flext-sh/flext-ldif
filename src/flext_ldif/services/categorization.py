@@ -261,39 +261,46 @@ class FlextLdifCategorization(s):
         during ``__init__``.
         """
         whitelist_rules = self._normalize_initial_whitelist_rules()
-        schema_value_filter = (
-            None
-            if whitelist_rules is None or not whitelist_rules.has_oid_filters
-            else lambda entry: FlextLdifFilters.filter_schema_attribute_values(
-                entry,
-                whitelist_rules,
-            )
+        schema_whitelist_rules = (
+            whitelist_rules
+            if whitelist_rules is not None and whitelist_rules.has_oid_filters
+            else None
         )
         forbidden_attributes = self.forbidden_attributes or []
         forbidden_objectclasses = self.forbidden_objectclasses or []
-        attribute_filter = (
-            None
-            if not forbidden_attributes and not forbidden_objectclasses
-            else lambda entry: FlextLdifFilters.filter_entry_attributes(
-                entry,
-                forbidden_attributes,
-                forbidden_objectclasses,
-            )
-        )
-
-        if schema_value_filter is None and attribute_filter is None:
+        has_attribute_filters = bool(forbidden_attributes)
+        if forbidden_objectclasses:
+            has_attribute_filters = True
+        if schema_whitelist_rules is None and not has_attribute_filters:
             return
 
         for category, entries in category_lists.items():
-            if category == c.Ldif.Category.REJECTED or not entries:
+            if category == c.Ldif.Category.REJECTED:
+                continue
+            if not entries:
                 continue
             filtered = entries
-            if category == c.Ldif.Category.SCHEMA and schema_value_filter is not None:
-                filtered = [schema_value_filter(entry) for entry in filtered]
-            if attribute_filter is not None:
-                filtered = [attribute_filter(entry) for entry in filtered]
-            if filtered is not entries:
-                category_lists[category] = filtered
+            if (
+                category == c.Ldif.Category.SCHEMA
+                and schema_whitelist_rules is not None
+            ):
+                filtered = [
+                    FlextLdifFilters.filter_schema_attribute_values(
+                        entry,
+                        schema_whitelist_rules,
+                    )
+                    for entry in filtered
+                ]
+            if has_attribute_filters:
+                filtered = [
+                    FlextLdifFilters.filter_entry_attributes(
+                        entry,
+                        forbidden_attributes,
+                        forbidden_objectclasses,
+                    )
+                    for entry in filtered
+                ]
+            category_lists[category] = filtered
 
     def categorize_entry(
         self,
@@ -574,20 +581,20 @@ class FlextLdifCategorization(s):
         category_map: t.MutableFrozensetMapping,
     ) -> tuple[str, str | None]:
         """Match entry to category using priority order and category map."""
+        attribute_marker_prefix = c.Ldif.CATEGORY_ATTRIBUTE_MARKER_PREFIX
         for category in priority_order:
             category_markers = category_map.get(category)
             if not category_markers:
                 continue
-            attribute_markers = [
-                marker.removeprefix(c.Ldif.CATEGORY_ATTRIBUTE_MARKER_PREFIX)
-                for marker in category_markers
-                if marker.startswith(c.Ldif.CATEGORY_ATTRIBUTE_MARKER_PREFIX)
-            ]
-            objectclass_markers = [
-                marker
-                for marker in category_markers
-                if not marker.startswith(c.Ldif.CATEGORY_ATTRIBUTE_MARKER_PREFIX)
-            ]
+            attribute_markers: list[str] = []
+            objectclass_markers: list[str] = []
+            for marker in category_markers:
+                if marker.startswith(attribute_marker_prefix):
+                    attribute_markers.append(
+                        marker.removeprefix(attribute_marker_prefix),
+                    )
+                    continue
+                objectclass_markers.append(marker)
             if not attribute_markers and not objectclass_markers:
                 continue
             criteria = m.Ldif.EntryCriteriaConfig.model_validate(

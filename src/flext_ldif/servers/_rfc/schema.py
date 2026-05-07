@@ -11,9 +11,7 @@ from typing import Self, overload, override
 
 from flext_ldif import (
     FlextLdifServerMethodsMixin,
-    FlextLdifServersBase,
     FlextLdifServersBaseSchema,
-    FlextLdifSettings,
     c,
     m,
     p,
@@ -25,7 +23,7 @@ from flext_ldif import (
 logger = u.fetch_logger(__name__)
 
 
-class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
+class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
     """RFC 4512 Compliant Schema Server - STRICT Implementation."""
 
     def __new__(
@@ -45,7 +43,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             else None
         )
         schema_instance: Self = instance
-        super(FlextLdifServersBase.Schema, schema_instance).__init__()
+        super(FlextLdifServersBaseSchema, schema_instance).__init__()
         if schema_service is not None:
             object.__setattr__(schema_instance, "_schema_service", schema_service)
         if parent_server_value is not None:
@@ -120,7 +118,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         self,
         *,
         server: p.Ldif.ServerRegistry | None = None,
-        settings: FlextLdifSettings | None = None,
+        settings: p.Ldif.Settings | None = None,
         **fields: t.JsonValue,
     ) -> Self: ...
 
@@ -156,10 +154,15 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
     def __call__(
         self,
-        *args: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None,
+        data: t.JsonValue
+        | m.Ldif.SchemaAttribute
+        | m.Ldif.SchemaObjectClass
+        | None = None,
+        operation: t.JsonValue | None = None,
+        *,
         server: p.Ldif.ServerRegistry | None = None,
-        settings: FlextLdifSettings | None = None,
-        **fields: t.JsonValue | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        settings: p.Ldif.Settings | None = None,
+        **fields: t.JsonValue,
     ) -> Self | str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass:
         """Callable interface - automatic polymorphic processor."""
         builder_fields = FlextLdifServerMethodsMixin.project_processor_fields(
@@ -174,42 +177,17 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                 **builder_fields,
             )
             return configured
-        data_raw = fields.get("data")
-        data = (
-            data_raw
+        narrowed_data = (
+            data
             if isinstance(
-                data_raw,
+                data,
                 (str, m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass),
             )
-            or data_raw is None
+            or data is None
             else None
         )
-        operation_raw = fields.get("operation")
-        operation = operation_raw if isinstance(operation_raw, str) else None
-        match args:
-            case [first, second, *_]:
-                if data is None and (
-                    isinstance(
-                        first,
-                        (str, m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass),
-                    )
-                    or first is None
-                ):
-                    data = first
-                if operation is None and isinstance(second, str):
-                    operation = second
-            case [first]:
-                if data is None and (
-                    isinstance(
-                        first,
-                        (str, m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass),
-                    )
-                    or first is None
-                ):
-                    data = first
-            case [] | _:
-                pass
-        result = self.execute(data=data, operation=operation)
+        narrowed_operation = operation if isinstance(operation, str) else None
+        result = self.execute(data=narrowed_data, operation=narrowed_operation)
         if result.failure:
             msg = result.error or "RFC schema operation failed"
             raise ValueError(msg)
@@ -349,24 +327,25 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         self,
         oc_definition: str | m.Ldif.SchemaObjectClass,
         *,
-        oid_pattern: str,
-        oc_names: frozenset[str],
+        settings: m.Ldif.ServerPatternsConfig,
         name_regex: str,
     ) -> bool:
-        """Shared detection: model -> matches_server_patterns; str -> OID + NAME match."""
+        """Detect objectClass definitions through centralized server pattern settings."""
         if isinstance(oc_definition, m.Ldif.SchemaObjectClass):
             matches_server_patterns: bool = u.Ldif.matches_server_patterns(
                 value=oc_definition,
-                oid_pattern=oid_pattern,
-                detection_names=oc_names,
+                settings=settings,
             )
             return matches_server_patterns
-        if c.Ldif.compile_pattern(oid_pattern).search(oc_definition):
+        if settings.oid_pattern and c.Ldif.compile_pattern(settings.oid_pattern).search(
+            oc_definition
+        ):
             return True
         name_matches = c.Ldif.compile_pattern(name_regex, ignorecase=True).findall(
             oc_definition
         )
-        return any(name.lower() in oc_names for name in name_matches)
+        attr_names = {name.lower() for name in settings.attr_names}
+        return any(name.lower() in attr_names for name in name_matches)
 
     def create_metadata(
         self,
@@ -623,13 +602,13 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             objectclass_oid = parsed.get("oid")
             match objectclass_oid:
                 case None:
-                    FlextLdifServersBase.Schema.validate_and_track_oid(
+                    FlextLdifServersBaseSchema.validate_and_track_oid(
                         metadata_extensions,
                         objectclass_oid,
                         "objectClass",
                     )
                 case str() as objectclass_oid_str:
-                    FlextLdifServersBase.Schema.validate_and_track_oid(
+                    FlextLdifServersBaseSchema.validate_and_track_oid(
                         metadata_extensions,
                         objectclass_oid_str,
                         "objectClass",
@@ -639,13 +618,13 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             objectclass_sup_oid = parsed.get("sup")
             match objectclass_sup_oid:
                 case None:
-                    FlextLdifServersBase.Schema.validate_and_track_oid(
+                    FlextLdifServersBaseSchema.validate_and_track_oid(
                         metadata_extensions,
                         objectclass_sup_oid,
                         "objectClass SUP",
                     )
                 case str() as objectclass_sup_oid_str:
-                    FlextLdifServersBase.Schema.validate_and_track_oid(
+                    FlextLdifServersBaseSchema.validate_and_track_oid(
                         metadata_extensions,
                         objectclass_sup_oid_str,
                         "objectClass SUP",
@@ -722,7 +701,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         for idx, oid in enumerate(oids):
             match oid:
                 case str() as oid_str if oid_str:
-                    FlextLdifServersBase.Schema.validate_and_track_oid(
+                    FlextLdifServersBaseSchema.validate_and_track_oid(
                         metadata_extensions,
                         oid_str,
                         f"objectClass {oid_type}[{idx}]",

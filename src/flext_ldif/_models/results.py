@@ -5,10 +5,13 @@ from __future__ import annotations
 from typing import Annotated, Self
 
 from flext_cli import m, u
-from flext_ldif import c, t
-from flext_ldif._models.collections import FlextLdifModelsCollections as mc
-from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries as mde
-from flext_ldif._models.events import FlextLdifModelsEvents as me
+from flext_ldif import (
+    FlextLdifModelsCollections as mc,
+    FlextLdifModelsDomainsEntries as mde,
+    FlextLdifModelsEvents as me,
+    c,
+    t,
+)
 
 
 class FlextLdifModelsResults:
@@ -389,12 +392,6 @@ class FlextLdifModelsResults:
             t.MutableSequenceOf[str],
             u.Field(description="Server-identifying patterns found in LDIF"),
         ]
-        is_confident: Annotated[
-            bool,
-            u.Field(
-                description="Whether confidence exceeds threshold for reliable detection",
-            ),
-        ]
         detection_error: Annotated[
             str | None,
             u.Field(description="Error message if detection failed"),
@@ -403,6 +400,11 @@ class FlextLdifModelsResults:
             str | None,
             u.Field(description="Reason for using fallback server type"),
         ] = None
+
+        @u.computed_field()
+        @property
+        def is_confident(self) -> bool:
+            return self.confidence >= c.Ldif.CONFIDENCE_THRESHOLD
 
     class EntriesStatistics(m.Value):
         total_entries: Annotated[
