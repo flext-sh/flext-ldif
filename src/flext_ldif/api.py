@@ -17,7 +17,6 @@ from flext_ldif import (
     FlextLdifParser,
     FlextLdifProcessing,
     FlextLdifProcessingPipeline,
-    FlextLdifSettings,
     FlextLdifStatistics,
     FlextLdifValidation,
     FlextLdifWriter,
@@ -50,26 +49,26 @@ class FlextLdif(
     helpers are defined locally.
     """
 
-    @property
-    @override
-    def settings(self) -> FlextLdifSettings:
-        """Expose the concrete LDIF settings type on the public facade."""
-        return FlextLdifSettings.fetch_global()
-
     def __init__(
         self,
         *,
         server: p.Ldif.ServerRegistry | None = None,
-        settings: FlextLdifSettings | None = None,
+        settings: p.Ldif.Settings | None = None,
+        runtime_settings: p.Ldif.Settings | None = None,
     ) -> None:
         """Initialize the LDIF facade with the canonical shared registry."""
-        super().__init__(server=server, runtime_settings=settings)
+        super().__init__(
+            server=server,
+            runtime_settings=runtime_settings
+            if runtime_settings is not None
+            else settings,
+        )
 
     def __call__(
         self,
         *,
         server: p.Ldif.ServerRegistry | None = None,
-        settings: FlextLdifSettings | None = None,
+        settings: p.Ldif.Settings | None = None,
         **fields: t.JsonValue,
     ) -> Self:
         """Return a configured facade instance while keeping the DSL alias callable."""
@@ -126,7 +125,7 @@ class FlextLdif(
     def filter_schema_attribute_values(
         self,
         entry: p.Ldif.Entry,
-        allowed_oids: t.MappingKV[str, frozenset[str]],
+        allowed_oids: m.Ldif.WhitelistRules | t.FrozensetMapping,
     ) -> p.Ldif.Entry:
         """Expose schema-attribute OID filtering through the facade DSL."""
         concrete = u.Ldif.as_entry(entry)
@@ -209,9 +208,14 @@ class FlextLdif(
             ]
         ].from_result(self._server.resolve_server_bundle(server_type))
 
-    def resolve_server_constants(self, server_type: str) -> p.Result[type]:
+    def resolve_server_constants(
+        self,
+        server_type: str,
+    ) -> p.Result[type[p.Ldif.ServerConstants]]:
         """Expose server constants lookup through the public facade."""
-        return r[type].from_result(self._server.resolve_server_constants(server_type))
+        return r[type[p.Ldif.ServerConstants]].from_result(
+            self._server.resolve_server_constants(server_type),
+        )
 
     def list_registered_servers(self) -> p.Result[t.MutableSequenceOf[str]]:
         """Expose the normalized registered server list (ENFORCE-056)."""

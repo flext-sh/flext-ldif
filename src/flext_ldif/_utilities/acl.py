@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from types import MappingProxyType
 from typing import TypeIs
 
 from flext_core import u
@@ -36,6 +37,16 @@ class FlextLdifUtilitiesACL:
     _OID_ACL_ATTRIBUTES: t.StrSequence = (*c.Ldif.ACL_ATTR_NAMES, "acl")
     _OUD_ACL_ATTRIBUTES: t.StrSequence = tuple(c.Ldif.ACL_ATTR_NAMES)
     _AD_ACL_ATTRIBUTES: t.StrSequence = ("nTSecurityDescriptor", "aci")
+    _ACL_ATTRIBUTES_BY_SERVER_TYPE: t.MappingKV[c.Ldif.ServerTypes, t.StrSequence] = (
+        MappingProxyType(
+            {
+                c.Ldif.ServerTypes.RFC: _RFC_ACL_ATTRIBUTES,
+                c.Ldif.ServerTypes.OID: _OID_ACL_ATTRIBUTES,
+                c.Ldif.ServerTypes.OUD: _OUD_ACL_ATTRIBUTES,
+                c.Ldif.ServerTypes.AD: _AD_ACL_ATTRIBUTES,
+            },
+        )
+    )
 
     @staticmethod
     def _build_extensions(
@@ -451,32 +462,15 @@ class FlextLdifUtilitiesACL:
         if not extensions:
             return []
 
-        def process_target_config(target_item: t.StrPair) -> str | None:
-            """Process single target settings item."""
-            ext_key, format_template = target_item
-            value_raw: t.Ldif.MetadataCarrierValue | None = (
-                extensions.get(ext_key) if extensions else None
-            )
-            if value_raw is None:
-                return None
-            return format_template.format(value=str(value_raw))
-
-        def predicate_func(item: str | t.StrPair) -> bool:
-            """Predicate function for Collection.process."""
-            if isinstance(item, tuple) and len(item) >= 1:
-                return bool(extensions.get(item[0]) if extensions else None)
-            return False
-
         result: t.MutableSequenceOf[str] = []
-        for item in target_config:
+        for ext_key, format_template in target_config:
             try:
-                if predicate_func(item):
-                    processed = process_target_config(item)
-                    if processed is not None:
-                        result.append(processed)
+                value_raw = extensions.get(ext_key)
+                if not value_raw:
+                    continue
+                result.append(format_template.format(value=str(value_raw)))
             except c.Ldif.EXC_LDIF_PARSE as e:
                 logger.debug("Skipping ACL rule processing due to error", error=str(e))
-                continue
         return result
 
     @staticmethod
@@ -557,20 +551,29 @@ class FlextLdifUtilitiesACL:
         return normalized + [""]
 
     @staticmethod
-    def get_acl_attributes(server_type: str | None = None) -> t.MutableSequenceOf[str]:
+    def get_acl_attributes(
+        server_type: c.Ldif.ServerTypes | str | None = None,
+    ) -> t.MutableSequenceOf[str]:
         """Get ACL attributes for a server type."""
         if server_type is None:
-            return list(FlextLdifUtilitiesACL._RFC_ACL_ATTRIBUTES)
-        normalized = server_type.lower().strip()
-        if normalized == "rfc":
-            return list(FlextLdifUtilitiesACL._RFC_ACL_ATTRIBUTES)
-        if normalized == "oid":
-            return list(FlextLdifUtilitiesACL._OID_ACL_ATTRIBUTES)
-        if normalized == "oud":
-            return list(FlextLdifUtilitiesACL._OUD_ACL_ATTRIBUTES)
-        if normalized == "ad":
-            return list(FlextLdifUtilitiesACL._AD_ACL_ATTRIBUTES)
-        return list(FlextLdifUtilitiesACL._GENERIC_ACL_ATTRIBUTES)
+            normalized_server_type: c.Ldif.ServerTypes | None = c.Ldif.ServerTypes.RFC
+        elif isinstance(server_type, c.Ldif.ServerTypes):
+            normalized_server_type = server_type
+        else:
+            key = server_type.lower().strip()
+            normalized_server_type = next(
+                (st for st in c.Ldif.ServerTypes if st.value == key),
+                c.Ldif.SERVER_TYPE_ALIASES.get(key),
+            )
+        attributes = (
+            FlextLdifUtilitiesACL._GENERIC_ACL_ATTRIBUTES
+            if normalized_server_type is None
+            else FlextLdifUtilitiesACL._ACL_ATTRIBUTES_BY_SERVER_TYPE.get(
+                normalized_server_type,
+                FlextLdifUtilitiesACL._GENERIC_ACL_ATTRIBUTES,
+            )
+        )
+        return list(attributes)
 
     @staticmethod
     def is_acl_attribute(attribute_name: str, server_type: str | None = None) -> bool:
@@ -695,7 +698,7 @@ class FlextLdifUtilitiesACL:
                 subject_value=subject_value,
             ),
             permissions=m.Ldif.AclPermissions(**permissions_dict),
-            server_type=c.Ldif.ServerTypes(settings.server_type),
+            server_type=settings.server_type,
             raw_acl=acl_line,
             metadata=m.Ldif.ServerMetadata.create_for(
                 settings.server_type,

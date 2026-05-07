@@ -59,15 +59,7 @@ class FlextLdifAnalysis(s):
         """Validate entry objectClass values."""
         errors: t.MutableSequenceOf[str] = []
         valid = True
-        oc_values_raw = (
-            entry.attributes.attributes.get("objectClass")
-            if entry.attributes is not None
-            else None
-        )
-        if isinstance(oc_values_raw, list):
-            oc_values: t.MutableSequenceOf[str] = list(oc_values_raw)
-        else:
-            oc_values = []
+        oc_values: t.MutableSequenceOf[str] = u.Ldif.get_objectclass_names(entry)
         for oc_item in oc_values:
             oc_result = validation_service.validate_objectclass_name(oc_item)
             if oc_result.failure or not oc_result.value:

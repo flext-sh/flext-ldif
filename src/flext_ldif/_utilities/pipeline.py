@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_ldif import m, p, r, t
+from flext_ldif import c, m, p, r, t
 
 
 class FlextLdifUtilitiesPipeline:
@@ -123,7 +123,9 @@ class FlextLdifUtilitiesPipeline:
                     if getattr(entry.attributes, "attributes", None) is not None
                     else {}
                 )
-                has_objectclass = any(k.lower() == "objectclass" for k in attrs)
+                has_objectclass = any(
+                    key.lower() == c.Ldif.DictKeys.OBJECTCLASS.lower() for key in attrs
+                )
                 if not has_objectclass:
                     if self._strict:
                         errors.append("Entry has no objectClass attribute")

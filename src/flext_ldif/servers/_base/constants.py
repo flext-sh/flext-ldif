@@ -35,6 +35,7 @@ class FlextLdifServersBaseConstants:
     OBJECTCLASS_REQUIREMENTS: ClassVar[t.BoolMapping] = MappingProxyType({})
     CATEGORIZATION_PRIORITY: ClassVar[t.StrSequence] = ()
     CATEGORY_OBJECTCLASSES: ClassVar[t.FrozensetMapping] = MappingProxyType({})
+    HIERARCHY_PRIORITY_OBJECTCLASSES: ClassVar[frozenset[str]] = frozenset()
     CATEGORIZATION_ACL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset()
     DETECTION_OID_PATTERN: ClassVar[str] = ""
     DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset()

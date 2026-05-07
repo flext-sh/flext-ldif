@@ -11,9 +11,6 @@ from flext_ldif import FlextLdifServer, FlextLdifSettings, c, m, p, t, u
 class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](s[TDomainResult]):
     """Base class for LDIF services with typed settings helper."""
 
-    _cached_settings: FlextLdifSettings | None = u.PrivateAttr(
-        default_factory=lambda: None,
-    )
     _server: p.Ldif.ServerRegistry = u.PrivateAttr(
         default_factory=FlextLdifServer.fetch_global_instance,
     )
@@ -34,25 +31,29 @@ class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](s[TDomainResult]):
 
     @property
     @override
-    def settings(self) -> FlextLdifSettings:
+    def settings(self) -> p.Ldif.Settings:
         """Return the typed LDIF configuration namespace."""
-        if self._cached_settings is None:
-            self._cached_settings = FlextLdifSettings.fetch_global()
-        return self._cached_settings
+        resolved = super().settings
+        if not isinstance(resolved, p.Ldif.Settings):
+            msg = "Runtime settings do not satisfy the LDIF settings contract"
+            raise TypeError(msg)
+        return resolved
 
     def __call__(
         self,
         *,
         server: p.Ldif.ServerRegistry | None = None,
-        settings: FlextLdifSettings | None = None,
+        settings: p.Ldif.Settings | None = None,
         **fields: t.JsonValue,
     ) -> Self:
         """Return a cloned DSL instance preserving runtime registry/settings defaults."""
-        payload: dict[str, t.JsonValue | p.Ldif.ServerRegistry | None] = dict(fields)
+        payload: dict[
+            str,
+            t.JsonValue | p.Ldif.ServerRegistry | p.Ldif.Settings | None,
+        ] = dict(fields)
         payload["server"] = self._server if server is None else server
+        payload["runtime_settings"] = self.settings if settings is None else settings
         instance: Self = type(self).model_validate(payload)
-        if settings is not None:
-            instance._cached_settings = settings
         return instance
 
     @classmethod

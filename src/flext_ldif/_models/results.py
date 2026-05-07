@@ -5,13 +5,10 @@ from __future__ import annotations
 from typing import Annotated, Self
 
 from flext_cli import m, u
-from flext_ldif import (
-    FlextLdifModelsCollections as mc,
-    FlextLdifModelsDomainsEntries as mde,
-    FlextLdifModelsEvents as me,
-    c,
-    t,
-)
+from flext_ldif import c, t
+from flext_ldif._models.collections import FlextLdifModelsCollections as mc
+from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries as mde
+from flext_ldif._models.events import FlextLdifModelsEvents as me
 
 
 class FlextLdifModelsResults:
@@ -218,42 +215,25 @@ class FlextLdifModelsResults:
         @classmethod
         def for_pipeline(
             cls,
-            total: int = 0,
-            processed: int = 0,
-            failed: int = 0,
-            rejected: int = 0,
-            schema: int = 0,
-            data: int = 0,
-            hierarchy: int = 0,
-            users: int = 0,
-            groups: int = 0,
-            acl: int = 0,
-            acls_extracted: int = 0,
-            acls_failed: int = 0,
-            acl_attribute_name: str | None = None,
-            schema_attributes: int = 0,
-            schema_objectclasses: int = 0,
-            processing_duration: float = 0.0,
-            rejection_reasons: mc.DynamicCounts | None = None,
+            *,
+            total: int,
+            processed: int,
+            rejected: int,
+            schema: int,
+            hierarchy: int,
+            users: int,
+            groups: int,
+            acl: int,
         ) -> Self:
             return cls(
                 total_entries=total,
                 processed_entries=processed,
-                failed_entries=failed,
                 rejected_entries=rejected,
                 schema_entries=schema,
-                data_entries=data,
                 hierarchy_entries=hierarchy,
                 user_entries=users,
                 group_entries=groups,
                 acl_entries=acl,
-                acls_extracted=acls_extracted,
-                acls_failed=acls_failed,
-                acl_attribute_name=acl_attribute_name,
-                schema_attributes=schema_attributes,
-                schema_objectclasses=schema_objectclasses,
-                processing_duration=processing_duration,
-                rejection_reasons=rejection_reasons or mc.DynamicCounts(),
             )
 
         def merge(self, other: Self) -> Self:

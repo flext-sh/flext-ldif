@@ -12,7 +12,7 @@ from __future__ import annotations
 from typing import Final
 
 from flext_cli import t
-from flext_ldif import c
+from flext_ldif._constants.enums import FlextLdifConstantsEnums
 
 
 class _MissingSentinel:
@@ -35,7 +35,9 @@ class FlextLdifShared:
         return getattr(obj, attr_name, _MISSING_ATTR) is not _MISSING_ATTR
 
     @staticmethod
-    def normalize_server_type(server_type: str) -> c.Ldif.ServerTypes:
+    def normalize_server_type(
+        server_type: str,
+    ) -> FlextLdifConstantsEnums.ServerTypes:
         """Normalize server type string to canonical ServerTypes enum member.
 
         Converts aliases and variations to canonical enum member:
@@ -48,13 +50,15 @@ class FlextLdifShared:
         Raises ValueError if server_type is not recognized.
         """
         server_type_lower = server_type.lower().strip()
-        alias_value = c.Ldif.SERVER_TYPE_ALIASES.get(server_type_lower)
-        if isinstance(alias_value, c.Ldif.ServerTypes):
+        alias_value = FlextLdifConstantsEnums.SERVER_TYPE_ALIASES.get(server_type_lower)
+        if isinstance(alias_value, FlextLdifConstantsEnums.ServerTypes):
             return alias_value
         try:
-            return c.Ldif.ServerTypes(server_type_lower)
+            return FlextLdifConstantsEnums.ServerTypes(server_type_lower)
         except ValueError as error:
-            valid_types = [server_type.value for server_type in c.Ldif.ServerTypes]
+            valid_types = [
+                server_type.value for server_type in FlextLdifConstantsEnums.ServerTypes
+            ]
             msg = f"Invalid server type: {server_type}. Valid types: {valid_types}"
             raise ValueError(msg) from error
 

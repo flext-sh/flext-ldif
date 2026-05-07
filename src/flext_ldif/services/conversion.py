@@ -19,8 +19,6 @@ from flext_ldif import (
     u,
 )
 
-logger = u.fetch_logger(__name__)
-
 
 class FlextLdifConversion(
     FlextLdifConversionMetadataMixin,
@@ -128,7 +126,7 @@ class FlextLdifConversion(
             else [],
         )
         _ = u.Ldif.log_and_emit_conversion_event(
-            logger=logger,
+            logger=self.logger,
             settings=conversion_config,
             log_level="info" if result.success else "error",
         )
@@ -171,7 +169,7 @@ class FlextLdifConversion(
                 )
                 else None
             )
-            conversion_analysis = FlextLdifConversion._analyze_metadata_for_conversion(
+            conversion_analysis = self._analyze_metadata_for_conversion(
                 metadata_for_analysis,
                 validated_server_type,
             )
@@ -229,7 +227,7 @@ class FlextLdifConversion(
                 )
             return r[t.Ldif.ConvertedModel].ok(converted_entry)
         except c.Ldif.EXC_LDIF_PARSE as e:
-            logger.exception("Failed to convert Entry model", error=str(e))
+            self.logger.exception("Failed to convert Entry model", error=str(e))
             return r[t.Ldif.ConvertedModel].fail_op("Entry conversion", e)
 
     def _update_entry_metadata(

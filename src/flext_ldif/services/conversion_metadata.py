@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 
 from flext_ldif import m, s, t, u
 
@@ -17,16 +17,13 @@ class FlextLdifConversionMetadataMixin(s):
     ) -> t.MutableMappingKV[str, t.Ldif.MutableMetadataInputMapping]:
         """Analyze attribute case for target compatibility."""
         if bool(original_attribute_case):
+            payload: t.JsonMapping = t.json_mapping_adapter().validate_python({
+                "source_case": original_attribute_case,
+                "target_server": target_server_type,
+                "action": "apply_target_conventions",
+            })
             return {
-                "attribute_case": {
-                    "source_case": (
-                        FlextLdifConversionMetadataMixin._normalize_metadata_value(
-                            original_attribute_case,
-                        )
-                    ),
-                    "target_server": target_server_type,
-                    "action": "apply_target_conventions",
-                },
+                "attribute_case": m.Ldif.DynamicMetadata.from_dict(payload).to_dict(),
             }
         return {}
 
@@ -42,15 +39,15 @@ class FlextLdifConversionMetadataMixin(s):
         for attr_name, conv_info in boolean_conversions.items():
             source_format = ""
             if isinstance(conv_info, Mapping):
-                conv_info_dict = u.Cli.json_as_mapping(
-                    u.normalize_to_metadata(conv_info),
+                conv_info_dict = m.Ldif.DynamicMetadata.from_dict(
+                    t.Cli.JSON_MAPPING_ADAPTER.validate_python(conv_info),
                 )
                 source_format = str(conv_info_dict.get("format", "") or "")
-            result[f"boolean_{attr_name}"] = {
+            result[f"boolean_{attr_name}"] = m.Ldif.DynamicMetadata.from_dict({
                 "source_format": source_format,
                 "target_server": target_server_type,
                 "action": "convert_to_target_format",
-            }
+            }).to_dict()
         return result
 
     @staticmethod
@@ -59,20 +56,18 @@ class FlextLdifConversionMetadataMixin(s):
         target_server_type: str,
     ) -> t.MutableMappingKV[str, t.Ldif.MutableMetadataInputMapping]:
         """Analyze DN spacing for target compatibility."""
-        if "dn_spacing" not in original_format_details:
-            return {}
-        spacing = original_format_details["dn_spacing"]
+        spacing = original_format_details.get("spacing")
+        if spacing is None:
+            spacing = original_format_details.get("dn_spacing")
         if spacing is None:
             return {}
-        normalized_spacing = FlextLdifConversionMetadataMixin._normalize_metadata_value(
-            spacing,
-        )
+        payload: t.JsonMapping = t.json_mapping_adapter().validate_python({
+            "source_dn": spacing,
+            "target_server": target_server_type,
+            "action": "normalize_for_target",
+        })
         return {
-            "dn_format": {
-                "source_dn": normalized_spacing,
-                "target_server": target_server_type,
-                "action": "normalize_for_target",
-            },
+            "dn_format": m.Ldif.DynamicMetadata.from_dict(payload).to_dict(),
         }
 
     @staticmethod
@@ -87,71 +82,50 @@ class FlextLdifConversionMetadataMixin(s):
         ] = {}
         if not source_metadata:
             return conversion_analysis
-        target_server_str = target_server_type
-        get_boolean = u.prop("boolean_conversions")
-        get_attr_case = u.prop("original_attribute_case")
-        get_format_details = u.prop("original_format_details")
-        boolean_raw = get_boolean(source_metadata)
-        boolean_conversions = u.Cli.json_as_mapping(boolean_raw)
+        if isinstance(source_metadata, m.Ldif.ServerMetadata):
+            boolean_conversions = source_metadata.boolean_conversions.to_dict()
+            attr_case_val = source_metadata.original_attribute_case.to_dict()
+            format_val: t.JsonMapping = (
+                t.json_mapping_adapter().validate_python({})
+                if source_metadata.original_format_details is None
+                else t.json_mapping_adapter().validate_python(
+                    source_metadata.original_format_details.model_dump(
+                        mode="json",
+                        exclude_none=True,
+                    )
+                )
+            )
+        else:
+            boolean_conversions = u.Cli.json_as_mapping(
+                source_metadata.get("boolean_conversions"),
+            )
+            attr_case_val = u.Cli.json_as_mapping(
+                source_metadata.get("original_attribute_case"),
+            )
+            format_val = u.Cli.json_as_mapping(
+                source_metadata.get("original_format_details"),
+            )
         boolean_analysis = (
             FlextLdifConversionMetadataMixin._analyze_boolean_conversions(
                 boolean_conversions,
-                target_server_str,
+                target_server_type,
             )
         )
-        acc_typed: t.MutableMappingKV[str, t.Ldif.MutableMetadataInputMapping] = {}
-        for key, value in boolean_analysis.items():
-            if isinstance(value, dict):
-                acc_typed[key] = {
-                    k: FlextLdifConversionMetadataMixin._normalize_metadata_value(v)
-                    for k, v in value.items()
-                }
-        attr_case_raw = get_attr_case(source_metadata)
-        attr_case_val = u.Cli.json_as_mapping(attr_case_raw)
         attr_case_analysis = FlextLdifConversionMetadataMixin._analyze_attribute_case(
             attr_case_val,
-            target_server_str,
+            target_server_type,
         )
-        for key, attr_case_value in attr_case_analysis.items():
-            if isinstance(attr_case_value, dict):
-                acc_typed[key] = {
-                    k: FlextLdifConversionMetadataMixin._normalize_metadata_value(v)
-                    for k, v in attr_case_value.items()
-                }
-        format_raw = get_format_details(source_metadata)
-        format_val = u.Cli.json_as_mapping(format_raw)
         dn_format_analysis = FlextLdifConversionMetadataMixin._analyze_dn_format(
             format_val,
-            target_server_str,
+            target_server_type,
         )
-        for key, dn_format_value in dn_format_analysis.items():
-            if isinstance(dn_format_value, dict):
-                acc_typed[key] = {
-                    k: FlextLdifConversionMetadataMixin._normalize_metadata_value(v)
-                    for k, v in dn_format_value.items()
-                }
-        return acc_typed
-
-    @staticmethod
-    def _normalize_metadata_value(
-        value: t.JsonPayload | t.MappingKV[str, t.JsonPayload] | None,
-    ) -> t.JsonValue:
-        """Normalize metadata value to proper type."""
-        if value is None:
-            empty_val: t.JsonValue = u.normalize_to_json_value("")
-            return empty_val
-        if isinstance(value, Mapping):
-            normalized_mapping: t.JsonDict = {
-                key: u.normalize_to_json_value(item) for key, item in value.items()
-            }
-            return normalized_mapping
-        if isinstance(value, Sequence) and not isinstance(value, str | bytes):
-            normalized_sequence: t.JsonValueList = [
-                u.normalize_to_json_value(item) for item in value
-            ]
-            return normalized_sequence
-        normalized: t.JsonValue = t.Cli.JSON_VALUE_ADAPTER.validate_python(value)
-        return normalized
+        for analysis in (
+            boolean_analysis,
+            attr_case_analysis,
+            dn_format_analysis,
+        ):
+            conversion_analysis.update(analysis)
+        return conversion_analysis
 
 
 __all__: list[str] = ["FlextLdifConversionMetadataMixin"]

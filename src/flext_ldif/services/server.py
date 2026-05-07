@@ -16,8 +16,6 @@ from flext_ldif import (
     u,
 )
 
-logger = u.fetch_logger(__name__)
-
 
 class FlextLdifServer(s):
     """Server server registry using the canonical registry DSL."""
@@ -93,20 +91,27 @@ class FlextLdifServer(s):
         """Get base server for a given server type."""
         return self.server(server_type)
 
-    def resolve_server_constants(self, server_type: str) -> p.Result[type]:
+    def resolve_server_constants(
+        self,
+        server_type: str,
+    ) -> p.Result[type[p.Ldif.ServerConstants]]:
         """Get Constants class from server server."""
         server_result = self.server(server_type)
         if server_result.failure:
-            return r[type].fail(server_result.error or server_type)
-        base = server_result.value
-        constants = getattr(type(base), "Constants", None)
-        if constants is None:
-            return r[type].fail(f"Server {server_type} missing Constants")
-        if getattr(constants, "CATEGORIZATION_PRIORITY", None) is None:
-            return r[type].fail(
-                f"Server {server_type} missing CATEGORIZATION_PRIORITY",
+            return r[type[p.Ldif.ServerConstants]].fail(
+                server_result.error or server_type,
             )
-        return r[type].ok(constants)
+        base = server_result.value
+        constants: type[p.Ldif.ServerConstants] | None = getattr(
+            type(base),
+            "Constants",
+            None,
+        )
+        if constants is None:
+            return r[type[p.Ldif.ServerConstants]].fail(
+                f"Server {server_type} missing Constants",
+            )
+        return r[type[p.Ldif.ServerConstants]].ok(constants)
 
     def summarize_registry(self) -> t.Ldif.MutableMetadataInputMapping:
         """Get comprehensive registry statistics."""

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_ldif import FlextLdifConversion, c, m, p, r, s, t, u
+from flext_ldif import FlextLdifConversion, FlextLdifShared, c, m, p, r, s, t, u
 
 
 class FlextLdifTransformer(s):
@@ -34,7 +34,7 @@ class FlextLdifTransformer(s):
         """Normalize public string inputs into canonical server enums."""
         if isinstance(server_type, c.Ldif.ServerTypes):
             return server_type
-        return c.Ldif.ServerTypes(u.Ldif.normalize_server_type(server_type))
+        return FlextLdifShared.normalize_server_type(server_type)
 
     def apply(self, item: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
         """Apply server-specific transformation."""

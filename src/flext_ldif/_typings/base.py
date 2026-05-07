@@ -13,6 +13,20 @@ from flext_cli import m, r, t
 class FlextLdifTypesBase:
     """Base LDIF aliases for recursive containers and raw LDIF payloads."""
 
+    @staticmethod
+    def _coerce_normalized_str_frozenset(
+        value: t.JsonValue | t.StrSequence | None,
+    ) -> frozenset[str]:
+        match value:
+            case None:
+                return frozenset()
+            case str():
+                return frozenset((value,))
+            case tuple() | list() | set() | frozenset():
+                return frozenset(str(item) for item in value)
+            case _:
+                return frozenset((str(value),))
+
     type RegexPattern = t.RegexPattern
     type RegexMatch = t.RegexMatch
     type Scalar = t.Primitives | None
@@ -54,6 +68,10 @@ class FlextLdifTypesBase:
     type Rfc2849AttributeValue = Annotated[
         str,
         t.StringConstraints(max_length=4096),
+    ]
+    type NormalizedStrFrozenset = Annotated[
+        frozenset[str],
+        m.BeforeValidator(_coerce_normalized_str_frozenset),
     ]
     RFC4512_DESCRIPTOR_ADAPTER: m.TypeAdapter[Rfc4512Descriptor] = m.TypeAdapter(
         Rfc4512Descriptor,

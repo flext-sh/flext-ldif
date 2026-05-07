@@ -38,11 +38,11 @@ class FlextLdifConversionSchemaMixin(s):
     ) -> p.Result[t.Ldif.ConvertedModel]:
         """Orchestrate schema conversion through m.Ldif.Entry intermediary."""
         if isinstance(item, m.Ldif.SchemaAttribute):
-            item_name = "attribute"
+            item_name = c.Ldif.SchemaItemKind.ATTRIBUTE.value
             write_result = source_schema.write_attribute(item)
             field_name = c.Ldif.ATTRIBUTE_TYPES
         else:
-            item_name = "objectclass"
+            item_name = c.Ldif.SchemaItemKind.OBJECTCLASS.value
             write_result = source_schema.write_objectclass(item)
             field_name = c.Ldif.OBJECT_CLASSES
         source_server_type = u.try_(

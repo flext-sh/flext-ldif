@@ -187,6 +187,31 @@ class TestsFlextLdifFiltersService:
         tm.that(len(attr_vals), eq=1)
         tm.that(c.Tests.FILTERS_ATTR_OID_VALID in attr_vals, eq=True)
 
+    def test_filter_schema_attribute_values_accepts_whitelist_rules(self) -> None:
+        entry = u.Tests.create_real_entry(
+            dn=c.Tests.FILTERS_DN_SCHEMA,
+            attributes={
+                c.Tests.FILTERS_SCHEMA_ATTR_KEY: [
+                    c.Tests.FILTERS_ATTR_OID_VALID,
+                    c.Tests.FILTERS_UNWANTED_ATTR_OID,
+                ],
+                c.Tests.NAME_OBJECTCLASS: [c.Tests.NAME_TOP],
+            },
+        )
+        whitelist_rules = m.Ldif.WhitelistRules.model_validate(
+            c.Tests.FILTERS_ALLOWED_OIDS_FULL,
+        )
+        result = ldif.filter_schema_attribute_values(entry, whitelist_rules)
+        tm.that(result.attributes is not None, eq=True)
+        if result.attributes is None:
+            pytest.fail("Filtered entry attributes should be present")
+        attr_vals = result.attributes.attributes.get(
+            c.Tests.FILTERS_SCHEMA_ATTR_KEY,
+            [],
+        )
+        tm.that(len(attr_vals), eq=1)
+        tm.that(c.Tests.FILTERS_ATTR_OID_VALID in attr_vals, eq=True)
+
     def test_filter_schema_attribute_values_noop_when_no_attributes(self) -> None:
         bare = self._entry_without_attributes()
         result = ldif.filter_schema_attribute_values(bare, {})

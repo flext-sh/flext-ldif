@@ -6,11 +6,9 @@ import struct
 from collections.abc import (
     MutableMapping,
 )
-from typing import Annotated, Final
+from typing import Annotated
 
 from flext_ldif import FlextLdifFilters, c, m, p, r, s, t, u
-
-_MAX_DN_PREVIEW_LENGTH: Final[int] = 100
 
 
 class FlextLdifCategorization(s):
@@ -23,9 +21,9 @@ class FlextLdifCategorization(s):
     ]:
         """Build the canonical rejection tracker structure for one categorization run."""
         return {
-            "invalid_dn_rfc4514": [],
-            "base_dn_filter": [],
-            "categorization_rejected": [],
+            c.Ldif.RejectionTrackerKey.INVALID_DN_RFC4514: [],
+            c.Ldif.RejectionTrackerKey.BASE_DN_FILTER: [],
+            c.Ldif.RejectionTrackerKey.CATEGORIZATION_REJECTED: [],
         }
 
     categorization_rules: Annotated[
@@ -99,26 +97,19 @@ class FlextLdifCategorization(s):
 
     def _normalize_initial_category_rules(self) -> m.Ldif.CategoryRules:
         """Normalize initial categorization rules into the canonical model."""
-        if isinstance(self.categorization_rules, m.Ldif.CategoryRules):
-            return self.categorization_rules
-        if isinstance(self.categorization_rules, MutableMapping):
-            validated_map: m.Ldif.CategoryRules = m.Ldif.CategoryRules.model_validate(
-                dict(self.categorization_rules),
-            )
-            return validated_map
-        validated_empty: m.Ldif.CategoryRules = m.Ldif.CategoryRules.model_validate({})
-        return validated_empty
+        validated_rules: m.Ldif.CategoryRules = m.Ldif.CategoryRules.model_validate(
+            self.categorization_rules or {},
+        )
+        return validated_rules
 
     def _normalize_initial_whitelist_rules(self) -> m.Ldif.WhitelistRules | None:
         """Normalize optional schema whitelist rules into the canonical model."""
-        if isinstance(self.schema_whitelist_rules, m.Ldif.WhitelistRules):
-            return self.schema_whitelist_rules
-        if isinstance(self.schema_whitelist_rules, MutableMapping):
-            validated: m.Ldif.WhitelistRules = m.Ldif.WhitelistRules.model_validate(
-                dict(self.schema_whitelist_rules or {}),
-            )
-            return validated
-        return None
+        if self.schema_whitelist_rules is None:
+            return None
+        validated_rules: m.Ldif.WhitelistRules = m.Ldif.WhitelistRules.model_validate(
+            self.schema_whitelist_rules,
+        )
+        return validated_rules
 
     @staticmethod
     def _ensure_entry_model(
@@ -205,74 +196,16 @@ class FlextLdifCategorization(s):
         *,
         override_existing: bool,
     ) -> None:
-        valid_categories = frozenset(c.Ldif.Category)
-        if key_str not in valid_categories:
+        if key_str not in c.Ldif.CATEGORY_VALUES:
             return
+        normalized_value = (
+            value if isinstance(value, frozenset) else frozenset((value.lower(),))
+        )
         if override_existing or key_str not in category_map:
-            category_map[key_str] = (
-                value if isinstance(value, frozenset) else frozenset([value])
-            )
-
-    @staticmethod
-    def filter_categories_by_base_dn(
-        categories: m.Ldif.FlexibleCategories,
-        base_dn: str,
-    ) -> m.Ldif.FlexibleCategories:
-        """Filter categorized entries by base DN."""
-        if not base_dn or not categories:
-            return categories
-        filtered = m.Ldif.FlexibleCategories()
-        excluded_entries: t.MutableSequenceOf[m.Ldif.Entry] = []
-        filterable_categories: t.MutableBoolMapping = {
-            c.Ldif.Category.HIERARCHY: True,
-            c.Ldif.Category.USERS: True,
-            c.Ldif.Category.GROUPS: True,
-            c.Ldif.Category.ACL: True,
-        }
-        for category, entries in categories.items():
-            if not entries:
-                filtered[category] = []
-                continue
-            if category in filterable_categories:
-                entries_list: t.MutableSequenceOf[m.Ldif.Entry] = [
-                    entry_model
-                    for entry_raw in entries
-                    if (
-                        entry_model := FlextLdifCategorization._ensure_entry_model(
-                            entry_raw,
-                        )
-                    )
-                    is not None
-                ]
-                included, excluded = FlextLdifCategorization._filter_entries_by_base_dn(
-                    entries_list,
-                    base_dn,
-                )
-                filtered[category] = included
-                excluded_updated = [
-                    u.Ldif.update_entry_statistics(
-                        entry,
-                        mark_rejected=(
-                            "BASE_DN_FILTER",
-                            f"DN not under base DN: {base_dn}",
-                        ),
-                    )
-                    for entry in excluded
-                ]
-                excluded_entries.extend(excluded_updated)
-            else:
-                filtered[category] = [
-                    entry_model
-                    for entry_raw in entries
-                    if (
-                        entry_model := FlextLdifCategorization._ensure_entry_model(
-                            entry_raw,
-                        )
-                    )
-                    is not None
-                ]
-        FlextLdifCategorization._append_rejected_entries(filtered, excluded_entries)
-        return filtered
+            category_map[key_str] = normalized_value
+            return
+        existing = category_map.get(key_str, c.Ldif.EMPTY_STR_FROZENSET)
+        category_map[key_str] = existing | normalized_value
 
     def categorize_entries(
         self,
@@ -280,15 +213,7 @@ class FlextLdifCategorization(s):
     ) -> p.Result[m.Ldif.FlexibleCategories]:
         """Categorize entries into 6 categories."""
         category_lists: MutableMapping[str, list[m.Ldif.Entry]] = {
-            cat_: []
-            for cat_ in (
-                c.Ldif.Category.SCHEMA,
-                c.Ldif.Category.HIERARCHY,
-                c.Ldif.Category.USERS,
-                c.Ldif.Category.GROUPS,
-                c.Ldif.Category.ACL,
-                c.Ldif.Category.REJECTED,
-            )
+            category: [] for category in c.Ldif.CATEGORY_BUCKET_ORDER
         }
 
         for entry in entries:
@@ -299,14 +224,18 @@ class FlextLdifCategorization(s):
                 category=category,
                 mark_rejected=(
                     c.Ldif.RejectionCategory.NO_CATEGORY_MATCH.value,
-                    match_reason if match_reason is not None else "No category match",
+                    match_reason
+                    if match_reason is not None
+                    else c.Ldif.REJECTION_REASON_NO_CATEGORY_MATCH,
                 )
                 if is_rejected
                 else None,
             )
             category_lists[category].append(updated_entry)
             if is_rejected:
-                self.rejection_tracker["categorization_rejected"].append(updated_entry)
+                self.rejection_tracker[
+                    c.Ldif.RejectionTrackerKey.CATEGORIZATION_REJECTED
+                ].append(updated_entry)
 
         self._apply_post_categorization_filters(category_lists)
 
@@ -331,63 +260,40 @@ class FlextLdifCategorization(s):
         ``forbidden_objectclasses``, and ``schema_whitelist_rules`` stored
         during ``__init__``.
         """
-        has_forbidden = bool(self.forbidden_attributes or self.forbidden_objectclasses)
         whitelist_rules = self._normalize_initial_whitelist_rules()
-        has_schema_rules = whitelist_rules is not None
+        schema_value_filter = (
+            None
+            if whitelist_rules is None or not whitelist_rules.has_oid_filters
+            else lambda entry: FlextLdifFilters.filter_schema_attribute_values(
+                entry,
+                whitelist_rules,
+            )
+        )
+        forbidden_attributes = self.forbidden_attributes or []
+        forbidden_objectclasses = self.forbidden_objectclasses or []
+        attribute_filter = (
+            None
+            if not forbidden_attributes and not forbidden_objectclasses
+            else lambda entry: FlextLdifFilters.filter_entry_attributes(
+                entry,
+                forbidden_attributes,
+                forbidden_objectclasses,
+            )
+        )
 
-        if not has_forbidden and not has_schema_rules:
+        if schema_value_filter is None and attribute_filter is None:
             return
 
-        for cat, entries in category_lists.items():
-            if cat == c.Ldif.Category.REJECTED or not entries:
+        for category, entries in category_lists.items():
+            if category == c.Ldif.Category.REJECTED or not entries:
                 continue
-            if cat == c.Ldif.Category.SCHEMA:
-                filtered = list(entries)
-                if whitelist_rules is not None:
-                    allowed_oids: MutableMapping[str, frozenset[str]] = {
-                        "attributetypes": frozenset(
-                            whitelist_rules.allowed_attribute_oids,
-                        ),
-                        "objectclasses": frozenset(
-                            whitelist_rules.allowed_objectclass_oids,
-                        ),
-                        "matchingrules": frozenset(
-                            whitelist_rules.allowed_matchingrule_oids,
-                        ),
-                        "matchingruleuse": frozenset(
-                            whitelist_rules.allowed_matchingruleuse_oids,
-                        ),
-                        "ldapsyntaxes": frozenset(
-                            whitelist_rules.allowed_ldapsyntax_oids,
-                        ),
-                    }
-                    if any(allowed_oids.values()):
-                        filtered = [
-                            FlextLdifFilters.filter_schema_attribute_values(
-                                entry,
-                                allowed_oids,
-                            )
-                            for entry in filtered
-                        ]
-                if has_forbidden:
-                    filtered = [
-                        FlextLdifFilters.filter_entry_attributes(
-                            entry,
-                            self.forbidden_attributes or [],
-                            self.forbidden_objectclasses or [],
-                        )
-                        for entry in filtered
-                    ]
-                category_lists[cat] = filtered
-            elif has_forbidden:
-                category_lists[cat] = [
-                    FlextLdifFilters.filter_entry_attributes(
-                        entry,
-                        self.forbidden_attributes or [],
-                        self.forbidden_objectclasses or [],
-                    )
-                    for entry in entries
-                ]
+            filtered = entries
+            if category == c.Ldif.Category.SCHEMA and schema_value_filter is not None:
+                filtered = [schema_value_filter(entry) for entry in filtered]
+            if attribute_filter is not None:
+                filtered = [attribute_filter(entry) for entry in filtered]
+            if filtered is not entries:
+                category_lists[category] = filtered
 
     def categorize_entry(
         self,
@@ -401,7 +307,7 @@ class FlextLdifCategorization(s):
         if normalized_rules is None:
             return (
                 c.Ldif.Category.REJECTED,
-                rules_result.error or "Failed to normalize rules",
+                rules_result.error or c.Ldif.ERR_FAILED_NORMALIZE_RULES,
             )
         effective_server_type_raw = server_type or self.server_type
         try:
@@ -415,7 +321,7 @@ class FlextLdifCategorization(s):
             )
         if self.matches_schema_entry(entry):
             return (c.Ldif.Category.SCHEMA, None)
-        merged_category_map = self._build_category_map_from_rules(normalized_rules)
+        merged_category_map = dict(normalized_rules.category_markers)
         constants: type | None = None
         constants_result = self._get_categorization_server_constants(
             effective_server_type,
@@ -433,9 +339,14 @@ class FlextLdifCategorization(s):
                 override_existing=not bool(rules),
             )
         priority_order = self._get_priority_order_from_constants(constants)
-        if constants is not None and self._check_hierarchy_priority(entry, constants):
-            return (c.Ldif.Category.HIERARCHY, None)
-        return self._match_entry_to_category(entry, priority_order, merged_category_map)
+        return (
+            (c.Ldif.Category.HIERARCHY, None)
+            if constants is not None
+            and self._check_hierarchy_priority(entry, constants)
+            else self._match_entry_to_category(
+                entry, priority_order, merged_category_map
+            )
+        )
 
     def filter_by_base_dn(
         self,
@@ -445,25 +356,13 @@ class FlextLdifCategorization(s):
         if not self.base_dn:
             return categories
         filtered = m.Ldif.FlexibleCategories()
-        for cat in (
-            c.Ldif.Category.SCHEMA,
-            c.Ldif.Category.HIERARCHY,
-            c.Ldif.Category.USERS,
-            c.Ldif.Category.GROUPS,
-            c.Ldif.Category.ACL,
-            c.Ldif.Category.REJECTED,
-        ):
-            filtered[cat] = []
+        for category in c.Ldif.CATEGORY_BUCKET_ORDER:
+            filtered[category] = []
         all_excluded_entries: t.MutableSequenceOf[m.Ldif.Entry] = []
         for category, entries in categories.items():
             if not entries:
                 continue
-            if category in {
-                c.Ldif.Category.HIERARCHY,
-                c.Ldif.Category.USERS,
-                c.Ldif.Category.GROUPS,
-                c.Ldif.Category.ACL,
-            }:
+            if category in c.Ldif.CATEGORY_FILTERABLE_BY_BASE_DN:
                 entries_list: t.MutableSequenceOf[m.Ldif.Entry] = [
                     entry_model
                     for entry_raw in entries
@@ -489,7 +388,9 @@ class FlextLdifCategorization(s):
                 )
                 filtered[category] = included_updated
                 all_excluded_entries.extend(excluded_updated)
-                self.rejection_tracker["base_dn_filter"].extend(excluded_updated)
+                self.rejection_tracker[
+                    c.Ldif.RejectionTrackerKey.BASE_DN_FILTER
+                ].extend(excluded_updated)
                 if excluded_updated:
                     self.logger.info(
                         "Applied base DN filter",
@@ -518,7 +419,7 @@ class FlextLdifCategorization(s):
     ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
         """Filter schema entries by OID whitelist."""
         sw_rules = self._normalize_initial_whitelist_rules()
-        if sw_rules is None:
+        if sw_rules is None or not sw_rules.has_oid_filters:
             return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(schema_entries)
         result = FlextLdifFilters.filter_schema_by_oids(
             entries=schema_entries,
@@ -534,26 +435,16 @@ class FlextLdifCategorization(s):
                     removed_entries=u.count(schema_entries) - u.count(filtered),
                 )
                 return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(filtered)
-        error_msg = result.error or "Failed to filter entries"
+        error_msg = result.error or c.Ldif.ERR_FAILED_FILTER_ENTRIES
         return r[t.MutableSequenceOf[m.Ldif.Entry]].fail(error_msg)
 
     def matches_schema_entry(self, entry: m.Ldif.Entry) -> bool:
         """Check if entry is a schema definition."""
-        schema_attrs = {
-            "attributetypes",
-            "objectclasses",
-            "ldapsyntaxes",
-            "matchingrules",
-        }
         if entry.attributes is None:
             return False
-        attrs_dict: t.MutableStrSequenceMapping = (
-            entry.attributes.attributes
-            if hasattr(entry.attributes, "attributes")
-            else {}
-        )
+        attrs_dict: t.MutableStrSequenceMapping = entry.attributes.attributes
         entry_attrs = {attr.lower() for attr in attrs_dict}
-        return bool(schema_attrs & entry_attrs)
+        return bool(c.Ldif.SCHEMA_CATEGORY_ATTRIBUTE_KEYS & entry_attrs)
 
     def validate_dns(
         self,
@@ -569,11 +460,13 @@ class FlextLdifCategorization(s):
                 rejected_entry = u.Ldif.update_entry_statistics(
                     entry,
                     mark_rejected=(
-                        "invalid_dn",
+                        c.Ldif.RejectionCategory.INVALID_DN.value,
                         f"DN validation failed (RFC 4514): {dn_str[:80]}",
                     ),
                 )
-                self.rejection_tracker["invalid_dn_rfc4514"].append(rejected_entry)
+                self.rejection_tracker[
+                    c.Ldif.RejectionTrackerKey.INVALID_DN_RFC4514
+                ].append(rejected_entry)
                 self.logger.debug(
                     "Entry DN failed RFC 4514 validation",
                     entry_dn=dn_str,
@@ -585,13 +478,15 @@ class FlextLdifCategorization(s):
                 rejected_entry = u.Ldif.update_entry_statistics(
                     entry,
                     mark_rejected=(
-                        "invalid_dn",
-                        f"DN normalization failed: {norm_result.error or 'Unknown error'}",
+                        c.Ldif.RejectionCategory.INVALID_DN.value,
+                        f"DN normalization failed: {norm_result.error or c.Ldif.ERR_UNKNOWN}",
                     ),
                 )
-                self.rejection_tracker["invalid_dn_rfc4514"].append(rejected_entry)
+                self.rejection_tracker[
+                    c.Ldif.RejectionTrackerKey.INVALID_DN_RFC4514
+                ].append(rejected_entry)
                 return r[m.Ldif.Entry].fail_op(
-                    "DN normalization", norm_result.error or "Unknown error"
+                    "DN normalization", norm_result.error or c.Ldif.ERR_UNKNOWN
                 )
             dn_obj = m.Ldif.DN(value=normalized_dn)
             return r[m.Ldif.Entry].ok(entry.model_copy(update={"dn": dn_obj}))
@@ -604,17 +499,21 @@ class FlextLdifCategorization(s):
         self.logger.info(
             "Validated entries",
             validated_count=len(validated),
-            rejected_count=len(self.rejection_tracker["invalid_dn_rfc4514"]),
-            rejection_reason="invalid_dn_rfc4514",
+            rejected_count=len(
+                self.rejection_tracker[c.Ldif.RejectionTrackerKey.INVALID_DN_RFC4514],
+            ),
+            rejection_reason=c.Ldif.RejectionTrackerKey.INVALID_DN_RFC4514,
         )
-        if self.rejection_tracker["invalid_dn_rfc4514"]:
+        if self.rejection_tracker[c.Ldif.RejectionTrackerKey.INVALID_DN_RFC4514]:
             sample_rejected_dns = [
-                entry.dn.value[:_MAX_DN_PREVIEW_LENGTH]
-                if entry.dn and len(entry.dn.value) > _MAX_DN_PREVIEW_LENGTH
+                entry.dn.value[: c.Ldif.DN_PREVIEW_LENGTH]
+                if entry.dn and len(entry.dn.value) > c.Ldif.DN_PREVIEW_LENGTH
                 else entry.dn.value
                 if entry.dn
                 else ""
-                for entry in self.rejection_tracker["invalid_dn_rfc4514"][:5]
+                for entry in self.rejection_tracker[
+                    c.Ldif.RejectionTrackerKey.INVALID_DN_RFC4514
+                ][:5]
             ]
             self.logger.debug(
                 "Sample rejected DNs",
@@ -623,79 +522,43 @@ class FlextLdifCategorization(s):
             )
         return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(validated)
 
-    def _build_category_map_from_rules(
-        self,
-        rules: m.Ldif.CategoryRules,
-    ) -> t.MutableFrozensetMapping:
-        """Build category map from rules."""
-        category_map: t.MutableFrozensetMapping = {}
-        if rules.hierarchy_objectclasses:
-            mapped = u.map(rules.hierarchy_objectclasses, mapper=lambda oc: oc.lower())
-            category_map[c.Ldif.Category.HIERARCHY] = frozenset(mapped)
-        if rules.user_objectclasses:
-            mapped = u.map(rules.user_objectclasses, mapper=lambda oc: oc.lower())
-            category_map[c.Ldif.Category.USERS] = frozenset(mapped)
-        if rules.group_objectclasses:
-            mapped = u.map(rules.group_objectclasses, mapper=lambda oc: oc.lower())
-            category_map[c.Ldif.Category.GROUPS] = frozenset(mapped)
-        if rules.acl_attributes:
-            mapped = u.map(
-                rules.acl_attributes,
-                mapper=lambda attr: f"attr:{attr.lower()}",
-            )
-            category_map[c.Ldif.Category.ACL] = frozenset(mapped)
-        return category_map
-
     def _check_hierarchy_priority(
         self,
         entry: m.Ldif.Entry,
-        constants: type[c.Ldif],
+        constants: type[p.Ldif.ServerConstants],
     ) -> bool:
         """Check if entry matches HIERARCHY_PRIORITY_OBJECTCLASSES."""
         priority_classes = frozenset(
-            oc.lower()
-            for oc in getattr(
-                constants,
-                "HIERARCHY_PRIORITY_OBJECTCLASSES",
-                frozenset(),
-            )
+            oc.lower() for oc in constants.HIERARCHY_PRIORITY_OBJECTCLASSES
         )
         entry_ocs = {oc.lower() for oc in u.Ldif.get_objectclass_names(entry)}
         return bool(priority_classes & entry_ocs)
 
-    def _get_default_priority_order(self) -> t.MutableSequenceOf[str]:
-        """Get default category priority order."""
-        return [
-            c.Ldif.Category.HIERARCHY,
-            c.Ldif.Category.USERS,
-            c.Ldif.Category.GROUPS,
-            c.Ldif.Category.ACL,
-        ]
-
     def _get_priority_order_from_constants(
         self,
-        constants: type[c.Ldif] | None,
+        constants: type[p.Ldif.ServerConstants] | None,
     ) -> t.MutableSequenceOf[str]:
         """Get priority order from constants or use default."""
-        if constants is None or not hasattr(constants, "CATEGORIZATION_PRIORITY"):
-            return self._get_default_priority_order()
-        valid_categories = frozenset(c.Ldif.Category)
+        if constants is None:
+            return list(c.Ldif.DEFAULT_CATEGORIZATION_PRIORITY)
         return [
             item
-            for item in getattr(constants, "CATEGORIZATION_PRIORITY", [])
-            if item in valid_categories
+            for item in constants.CATEGORIZATION_PRIORITY
+            if item in c.Ldif.CATEGORY_VALUES
         ]
 
     def _get_categorization_server_constants(
         self,
         server_type: str,
-    ) -> p.Result[type[c.Ldif]]:
+    ) -> p.Result[type[p.Ldif.ServerConstants]]:
         """Get and validate server constants via FlextLdifServer registry."""
         registry = self.server_registry or self.server
         if registry is None:
-            return r[type[c.Ldif]].fail("Server registry not available")
+            return r[type[p.Ldif.ServerConstants]].fail(
+                c.Ldif.ERR_SERVER_REGISTRY_UNAVAILABLE,
+            )
         return (
-            r[type[c.Ldif]]
+            r[type[p.Ldif.ServerConstants]]
             .from_result(
                 registry.resolve_server_constants(server_type),
             )
@@ -716,10 +579,14 @@ class FlextLdifCategorization(s):
             if not category_markers:
                 continue
             attribute_markers = [
-                marker[5:] for marker in category_markers if marker.startswith("attr:")
+                marker.removeprefix(c.Ldif.CATEGORY_ATTRIBUTE_MARKER_PREFIX)
+                for marker in category_markers
+                if marker.startswith(c.Ldif.CATEGORY_ATTRIBUTE_MARKER_PREFIX)
             ]
             objectclass_markers = [
-                marker for marker in category_markers if not marker.startswith("attr:")
+                marker
+                for marker in category_markers
+                if not marker.startswith(c.Ldif.CATEGORY_ATTRIBUTE_MARKER_PREFIX)
             ]
             if not attribute_markers and not objectclass_markers:
                 continue
@@ -731,47 +598,41 @@ class FlextLdifCategorization(s):
             )
             if u.Ldif.matches_criteria(entry, settings=criteria):
                 return (category, None)
-        return (c.Ldif.Category.REJECTED, "No category match")
+        return (c.Ldif.Category.REJECTED, c.Ldif.REJECTION_REASON_NO_CATEGORY_MATCH)
 
     def _merge_server_constants_to_map(
         self,
         category_map: t.MutableFrozensetMapping,
-        constants: type[c.Ldif],
+        constants: type[p.Ldif.ServerConstants],
         *,
         override_existing: bool = False,
     ) -> t.MutableFrozensetMapping:
         """Merge server constants into category map."""
-        empty_category_map: t.MutableFrozensetMapping = {}
-        category_objectclasses: t.MutableFrozensetMapping = getattr(
-            constants,
-            "CATEGORY_OBJECTCLASSES",
-            empty_category_map,
-        )
-        server_map: MutableMapping[str, frozenset[str] | str] = {}
-        for map_key, map_value in category_objectclasses.items():
-            server_map[map_key] = frozenset(map_value)
+        server_map: MutableMapping[str, frozenset[str] | str] = {
+            map_key: frozenset(map_value)
+            for map_key, map_value in constants.CATEGORY_OBJECTCLASSES.items()
+        }
         FlextLdifCategorization._merge_category_from_constants(
             category_map,
             server_map,
             override_existing=override_existing,
         )
-        acl_attrs_raw: frozenset[str] = getattr(
-            constants,
-            "CATEGORIZATION_ACL_ATTRIBUTES",
-            frozenset(),
-        )
+        acl_attrs_raw = constants.CATEGORIZATION_ACL_ATTRIBUTES
         if acl_attrs_raw:
-            acl_attrs = frozenset(map(str, acl_attrs_raw))
             acl_category = c.Ldif.Category.ACL
+            mapped_acl_attrs = frozenset(
+                f"{c.Ldif.CATEGORY_ATTRIBUTE_MARKER_PREFIX}{attr.lower()}"
+                for attr in acl_attrs_raw
+            )
 
             if override_existing or acl_category not in category_map:
-                mapped = u.map(acl_attrs, mapper=lambda attr: f"attr:{attr.lower()}")
-                category_map[acl_category] = frozenset(mapped)
-            else:
-                existing_acl = category_map.get(acl_category, frozenset())
-                mapped = u.map(acl_attrs, mapper=lambda attr: f"attr:{attr.lower()}")
-                new_acl_attrs = frozenset(mapped)
-                category_map[acl_category] = existing_acl | new_acl_attrs
+                category_map[acl_category] = mapped_acl_attrs
+                return category_map
+            existing_acl = category_map.get(
+                acl_category,
+                c.Ldif.EMPTY_STR_FROZENSET,
+            )
+            category_map[acl_category] = existing_acl | mapped_acl_attrs
         return category_map
 
     def _normalize_rules(
@@ -807,8 +668,11 @@ class FlextLdifCategorization(s):
         return [
             u.Ldif.update_entry_statistics(
                 entry,
-                mark_filtered=("base_dn_filter", passed),
-                mark_rejected=(c.Ldif.Category.REJECTED, rejection_reason)
+                mark_filtered=(c.Ldif.RejectionCategory.BASE_DN_FILTER.value, passed),
+                mark_rejected=(
+                    c.Ldif.RejectionCategory.BASE_DN_FILTER.value,
+                    rejection_reason,
+                )
                 if not passed and rejection_reason
                 else None,
             )

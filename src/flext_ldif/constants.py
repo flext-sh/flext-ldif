@@ -175,12 +175,207 @@ class FlextLdifConstants(FlextCliConstants):
         VALID_SERVER_TYPES: Final[frozenset[str]] = frozenset(
             server_type.value for server_type in FlextLdifConstantsEnums.ServerTypes
         )
+        DETECTION_PATTERN_ATTR: Final[str] = "DETECTION_PATTERN"
+        DETECTION_OID_PATTERN_ATTR: Final[str] = "DETECTION_OID_PATTERN"
+        DETECTION_ACTIVE_DIRECTORY_ATTRIBUTE: Final[str] = "samaccountname"
+        DETECTION_ACTIVE_DIRECTORY_DESCRIPTION: Final[str] = (
+            "Active Directory attributes"
+        )
+        DETECTION_OID_ACL_DESCRIPTION: Final[str] = "Oracle OID ACLs"
+        DETECTION_SCORE_SPECS: Final[
+            tuple[tuple[FlextLdifConstantsEnums.ServerTypes, str, bool], ...]
+        ] = (
+            (
+                FlextLdifConstantsEnums.ServerTypes.OID,
+                DETECTION_OID_PATTERN_ATTR,
+                True,
+            ),
+            (
+                FlextLdifConstantsEnums.ServerTypes.OUD,
+                DETECTION_OID_PATTERN_ATTR,
+                False,
+            ),
+            (
+                FlextLdifConstantsEnums.ServerTypes.OPENLDAP,
+                DETECTION_PATTERN_ATTR,
+                True,
+            ),
+            (
+                FlextLdifConstantsEnums.ServerTypes.AD,
+                DETECTION_PATTERN_ATTR,
+                True,
+            ),
+            (
+                FlextLdifConstantsEnums.ServerTypes.NOVELL,
+                DETECTION_PATTERN_ATTR,
+                False,
+            ),
+            (
+                FlextLdifConstantsEnums.ServerTypes.IBM_TIVOLI,
+                DETECTION_PATTERN_ATTR,
+                False,
+            ),
+            (
+                FlextLdifConstantsEnums.ServerTypes.DS389,
+                DETECTION_PATTERN_ATTR,
+                False,
+            ),
+            (
+                FlextLdifConstantsEnums.ServerTypes.APACHE,
+                DETECTION_PATTERN_ATTR,
+                False,
+            ),
+        )
+        DETECTION_PATTERN_SPECS: Final[
+            tuple[tuple[FlextLdifConstantsEnums.ServerTypes, str, str, bool], ...]
+        ] = (
+            (
+                FlextLdifConstantsEnums.ServerTypes.OID,
+                DETECTION_OID_PATTERN_ATTR,
+                "Oracle OID namespace (2.16.840.1.113894.*)",
+                True,
+            ),
+            (
+                FlextLdifConstantsEnums.ServerTypes.OUD,
+                DETECTION_OID_PATTERN_ATTR,
+                "Oracle OUD attributes (ds-sync-*)",
+                False,
+            ),
+            (
+                FlextLdifConstantsEnums.ServerTypes.OPENLDAP,
+                DETECTION_PATTERN_ATTR,
+                "OpenLDAP configuration (olc*)",
+                True,
+            ),
+            (
+                FlextLdifConstantsEnums.ServerTypes.AD,
+                DETECTION_OID_PATTERN_ATTR,
+                "Active Directory namespace (1.2.840.113556.*)",
+                True,
+            ),
+            (
+                FlextLdifConstantsEnums.ServerTypes.NOVELL,
+                DETECTION_PATTERN_ATTR,
+                "Novell eDirectory attributes (GUID, Modifiers, etc.)",
+                False,
+            ),
+            (
+                FlextLdifConstantsEnums.ServerTypes.DS389,
+                DETECTION_PATTERN_ATTR,
+                "389 Directory Server attributes (389ds, redhat-ds, dirsrv)",
+                False,
+            ),
+            (
+                FlextLdifConstantsEnums.ServerTypes.APACHE,
+                DETECTION_PATTERN_ATTR,
+                "Apache DS attributes (apacheDS, apache-*)",
+                False,
+            ),
+            (
+                FlextLdifConstantsEnums.ServerTypes.IBM_TIVOLI,
+                DETECTION_PATTERN_ATTR,
+                "IBM Tivoli attributes (ibm-*, tivoli, ldapdb)",
+                False,
+            ),
+        )
 
         CLASS_SUFFIXES: Final[t.StrSequence] = ("Acl", "Schema", "Entry", "Constants")
 
         PROCESSING_STAGE_NORMALIZE_DN: Final[str] = "normalize_dn"
         PROCESSING_STAGE_NORMALIZE_ATTRS: Final[str] = "normalize_attrs"
         PROCESSING_STAGE_SERVER_TRANSFORM: Final[str] = "server_transform"
+        ENTRY_OPERATION_REMOVE_ATTRIBUTES: Final[str] = "remove_attributes"
+
+        CATEGORY_BUCKET_ORDER: Final[tuple[FlextLdifConstantsEnums.Category, ...]] = (
+            FlextLdifConstantsEnums.Category.SCHEMA,
+            FlextLdifConstantsEnums.Category.HIERARCHY,
+            FlextLdifConstantsEnums.Category.USERS,
+            FlextLdifConstantsEnums.Category.GROUPS,
+            FlextLdifConstantsEnums.Category.ACL,
+            FlextLdifConstantsEnums.Category.REJECTED,
+        )
+        CATEGORY_FILTERABLE_BY_BASE_DN: Final[
+            frozenset[FlextLdifConstantsEnums.Category]
+        ] = frozenset({
+            FlextLdifConstantsEnums.Category.HIERARCHY,
+            FlextLdifConstantsEnums.Category.USERS,
+            FlextLdifConstantsEnums.Category.GROUPS,
+            FlextLdifConstantsEnums.Category.ACL,
+        })
+        CATEGORY_VALUES: Final[frozenset[str]] = frozenset(
+            category.value for category in FlextLdifConstantsEnums.Category
+        )
+        DEFAULT_CATEGORIZATION_PRIORITY: Final[
+            tuple[FlextLdifConstantsEnums.Category, ...]
+        ] = (
+            FlextLdifConstantsEnums.Category.HIERARCHY,
+            FlextLdifConstantsEnums.Category.USERS,
+            FlextLdifConstantsEnums.Category.GROUPS,
+            FlextLdifConstantsEnums.Category.ACL,
+        )
+        CATEGORY_RULE_OBJECTCLASS_FIELDS: Final[t.MappingKV[str, str]] = (
+            MappingProxyType({
+                FlextLdifConstantsEnums.Category.HIERARCHY: ("hierarchy_objectclasses"),
+                FlextLdifConstantsEnums.Category.USERS: "user_objectclasses",
+                FlextLdifConstantsEnums.Category.GROUPS: "group_objectclasses",
+            })
+        )
+        CATEGORY_RULE_ATTRIBUTE_FIELDS: Final[t.MappingKV[str, str]] = (
+            MappingProxyType({
+                FlextLdifConstantsEnums.Category.ACL: "acl_attributes",
+            })
+        )
+        CATEGORY_ATTRIBUTE_MARKER_PREFIX: Final[str] = "attr:"
+        DN_PREVIEW_LENGTH: Final[int] = 100
+        EMPTY_STR_FROZENSET: Final[frozenset[str]] = frozenset()
+
+        MATCHING_RULES: Final[str] = "matchingRules"
+        MATCHING_RULE_USE: Final[str] = "matchingRuleUse"
+        LDAP_SYNTAXES: Final[str] = "ldapSyntaxes"
+        SCHEMA_OID_ATTRIBUTE_KEYS: Final[t.StrPairTuple] = (
+            (FlextLdifConstantsBase.ATTRIBUTE_TYPES, "attributetypes"),
+            (FlextLdifConstantsBase.OBJECT_CLASSES, "objectclasses"),
+            (MATCHING_RULES, "matchingrules"),
+            (MATCHING_RULE_USE, "matchingruleuse"),
+            (LDAP_SYNTAXES, "ldapsyntaxes"),
+        )
+        SCHEMA_CATEGORY_ATTRIBUTE_KEYS: Final[frozenset[str]] = frozenset(
+            key_pair[1] for key_pair in SCHEMA_OID_ATTRIBUTE_KEYS
+        )
+        OID_SCHEMA_DN: Final[str] = "cn=subschemasubentry"
+        RFC_SCHEMA_DN: Final[str] = "cn=schema"
+        SCHEMA_DN_MARKERS: Final[frozenset[str]] = frozenset({
+            OID_SCHEMA_DN,
+            "cn=subschema",
+            RFC_SCHEMA_DN,
+        })
+        SCHEMA_OBJECTCLASS_MARKERS: Final[frozenset[str]] = frozenset({
+            "subschema",
+            "subentry",
+        })
+        WHITELIST_RULE_OID_FIELDS: Final[t.StrSequence] = (
+            "allowed_attribute_oids",
+            "allowed_objectclass_oids",
+            "allowed_matchingrule_oids",
+            "allowed_matchingruleuse_oids",
+            "allowed_ldapsyntax_oids",
+        )
+        WHITELIST_RULE_SCHEMA_ATTRIBUTE_KEYS: Final[tuple[tuple[str, str], ...]] = (
+            tuple(
+                (field_name, attr_keys[1])
+                for field_name, attr_keys in zip(
+                    WHITELIST_RULE_OID_FIELDS,
+                    SCHEMA_OID_ATTRIBUTE_KEYS,
+                    strict=True,
+                )
+            )
+        )
+
+        REJECTION_REASON_NO_CATEGORY_MATCH: Final[str] = "No category match"
+        ERR_FAILED_NORMALIZE_RULES: Final[str] = "Failed to normalize rules"
+        ERR_FAILED_FILTER_ENTRIES: Final[str] = "Failed to filter entries"
+        ERR_SERVER_REGISTRY_UNAVAILABLE: Final[str] = "Server registry not available"
+        ERR_UNKNOWN: Final[str] = "Unknown error"
 
         OID_TO_NAME: ClassVar[t.StrMapping] = MappingProxyType({
             "2.5.5.5": "integer",
@@ -329,31 +524,6 @@ class FlextLdifConstants(FlextCliConstants):
 
         DEFAULT_ENCODING: Final[str] = FlextLdifConstantsEnums.Encoding.UTF8.value
         DEFAULT_STRICT_VALIDATION: Final[bool] = True
-
-        SERVER_TYPE_ALIASES: Final[
-            t.MappingKV[str, FlextLdifConstantsEnums.ServerTypes]
-        ] = MappingProxyType({
-            "active_directory": FlextLdifConstantsEnums.ServerTypes.AD,
-            "activedirectory": FlextLdifConstantsEnums.ServerTypes.AD,
-            "oracle_oid": FlextLdifConstantsEnums.ServerTypes.OID,
-            "oracleoid": FlextLdifConstantsEnums.ServerTypes.OID,
-            "oracle_oud": FlextLdifConstantsEnums.ServerTypes.OUD,
-            "oracleoud": FlextLdifConstantsEnums.ServerTypes.OUD,
-            "openldap": FlextLdifConstantsEnums.ServerTypes.OPENLDAP2,
-            "openldap1": FlextLdifConstantsEnums.ServerTypes.OPENLDAP1,
-            "openldap2": FlextLdifConstantsEnums.ServerTypes.OPENLDAP2,
-            "ibm_tivoli": FlextLdifConstantsEnums.ServerTypes.IBM_TIVOLI,
-            "ibmtivoli": FlextLdifConstantsEnums.ServerTypes.IBM_TIVOLI,
-            "tivoli": FlextLdifConstantsEnums.ServerTypes.IBM_TIVOLI,
-            "novell_edirectory": FlextLdifConstantsEnums.ServerTypes.NOVELL,
-            "novelledirectory": FlextLdifConstantsEnums.ServerTypes.NOVELL,
-            "edirectory": FlextLdifConstantsEnums.ServerTypes.NOVELL,
-            "apache_directory": FlextLdifConstantsEnums.ServerTypes.APACHE,
-            "apachedirectory": FlextLdifConstantsEnums.ServerTypes.APACHE,
-            "apacheds": FlextLdifConstantsEnums.ServerTypes.APACHE,
-            "389ds": FlextLdifConstantsEnums.ServerTypes.DS389,
-            "389directory": FlextLdifConstantsEnums.ServerTypes.DS389,
-        })
 
         UNKNOWN_VALUE: Final[str] = "unknown"
         ASCII_THRESHOLD: Final[int] = 127

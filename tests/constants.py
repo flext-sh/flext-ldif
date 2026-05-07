@@ -1118,6 +1118,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             "organizationalUnit",
             "inetOrgPerson",
         )
+        VALIDATION_INVALID_DESCRIPTOR: Final[str] = "invalid name"
 
         # ── Pipeline constants ───────────────────────────────────────────
 

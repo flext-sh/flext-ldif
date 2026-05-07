@@ -722,7 +722,7 @@ When reporting issues, include:
 
    settings = FlextLdifSettings(ldif_strict_validation=True)
    api = ldif(settings=settings)
-```
+    ```
 
 - What you expected to happen
 - What actually happened

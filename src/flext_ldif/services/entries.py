@@ -7,7 +7,7 @@ from collections.abc import (
 )
 from typing import Annotated
 
-from flext_ldif import m, p, r, s, t, u
+from flext_ldif import c, m, p, r, s, t, u
 
 
 class FlextLdifEntries(s):
@@ -34,7 +34,10 @@ class FlextLdifEntries(s):
         u.Field(
             default_factory=list,
             exclude=True,
-            description="Attributes removed by run_configured_operation() when using remove_attributes.",
+            description=(
+                "Attributes removed by run_configured_operation() when using "
+                "the configured remove-attributes operation."
+            ),
         ),
     ]
 
@@ -45,16 +48,10 @@ class FlextLdifEntries(s):
         dn_value = entry.get("dn")
         if dn_value is None:
             return r[str].fail("Dict entry missing 'dn' key")
-        extracted_dn: str | None = None
-        match dn_value:
-            case str() as dn_text:
-                extracted_dn = dn_text
-            case list() as dn_list if dn_list and isinstance(dn_list[0], str):
-                extracted_dn = dn_list[0]
-            case list():
-                extracted_dn = ""
-        if extracted_dn is not None:
-            return r[str].ok(extracted_dn)
+        if isinstance(dn_value, str):
+            return r[str].ok(dn_value)
+        if isinstance(dn_value, list):
+            return r[str].ok(dn_value[0] if dn_value else "")
         return r[str].fail("Dict entry has unsupported 'dn' value type")
 
     @staticmethod
@@ -62,16 +59,12 @@ class FlextLdifEntries(s):
         dn_value = getattr(entry, "dn", None)
         if dn_value is None:
             return r[str].fail("Entry missing DN (dn is None)")
-        extracted_dn: str | None = None
-        match dn_value:
-            case m.Ldif.DN() | str() as dn_text:
-                extracted_dn = str(dn_text)
-            case list() as dn_list if dn_list and isinstance(dn_list[0], str):
-                extracted_dn = dn_list[0]
-            case list():
-                extracted_dn = ""
-        if extracted_dn is not None:
-            return r[str].ok(extracted_dn)
+        if isinstance(dn_value, m.Ldif.DN):
+            return r[str].ok(str(dn_value))
+        if isinstance(dn_value, str):
+            return r[str].ok(dn_value)
+        if isinstance(dn_value, list):
+            return r[str].ok(dn_value[0] if dn_value else "")
         return r[str].fail("Invalid DN value type")
 
     @staticmethod
@@ -98,7 +91,7 @@ class FlextLdifEntries(s):
             return r[m.Ldif.Entry].fail(f"Invalid DN: {dn}")
         final_attrs = dict(attributes)
         if objectclasses:
-            final_attrs["objectClass"] = objectclasses
+            final_attrs[c.Ldif.DictKeys.OBJECTCLASS] = objectclasses
         return m.Ldif.Entry.create(dn=dn, attributes=final_attrs)
 
     @staticmethod
@@ -158,9 +151,17 @@ class FlextLdifEntries(s):
             attr_name: list(attr_values)
             for attr_name, attr_values in attributes_result.value.items()
         }
-        for attr_name, attr_values in attributes.items():
-            if attr_name.lower() == "objectclass":
-                return r[t.MutableSequenceOf[str]].ok(list(attr_values))
+        objectclass_key = c.Ldif.DictKeys.OBJECTCLASS.lower()
+        objectclasses = next(
+            (
+                list(attr_values)
+                for attr_name, attr_values in attributes.items()
+                if attr_name.lower() == objectclass_key
+            ),
+            None,
+        )
+        if objectclasses is not None:
+            return r[t.MutableSequenceOf[str]].ok(objectclasses)
         return r[t.MutableSequenceOf[str]].fail(
             "Entry is missing objectClass attribute",
         )
@@ -190,10 +191,10 @@ class FlextLdifEntries(s):
         """Run the configured entry operation against the bound entries."""
         if not self.operation:
             return r[t.MutableSequenceOf[m.Ldif.Entry]].fail("No operation specified")
-        if self.operation == "remove_attributes":
+        if self.operation == c.Ldif.ENTRY_OPERATION_REMOVE_ATTRIBUTES:
             if not self.attributes_to_remove:
                 return r[t.MutableSequenceOf[m.Ldif.Entry]].fail(
-                    "No attributes_to_remove specified for remove_attributes operation",
+                    "No attributes_to_remove specified for remove-attributes operation",
                 )
             results: t.MutableSequenceOf[m.Ldif.Entry] = []
             for entry in self.entries:

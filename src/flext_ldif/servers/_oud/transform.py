@@ -162,11 +162,7 @@ class FlextLdifServersOudTransformMixin:
             fallback_values = [str(item) for item in attr_values or [attr_values]]
             if orig_case in original_attributes:
                 original_value = original_attributes[orig_case]
-                restored_values = (
-                    [str(item) for item in original_value]
-                    if isinstance(original_value, t.SEQUENCE_PAIR_TYPES)
-                    else [str(original_value)]
-                )
+                restored_values = [str(original_value)]
             else:
                 restored_values = fallback_values
             restored[orig_case] = restored_values

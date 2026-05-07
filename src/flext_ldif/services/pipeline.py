@@ -69,12 +69,12 @@ class FlextLdifProcessingPipeline(
         source_server_type = (
             source_server
             if isinstance(source_server, c.Ldif.ServerTypes)
-            else c.Ldif.ServerTypes(u.Ldif.normalize_server_type(source_server))
+            else u.Ldif.normalize_server_type(source_server)
         )
         target_server_type = (
             target_server
             if isinstance(target_server, c.Ldif.ServerTypes)
-            else c.Ldif.ServerTypes(u.Ldif.normalize_server_type(target_server))
+            else u.Ldif.normalize_server_type(target_server)
         )
         cls._get_or_create_logger().debug(
             "Creating processing pipeline",

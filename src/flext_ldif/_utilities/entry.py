@@ -10,7 +10,8 @@ from collections.abc import (
 )
 
 from flext_cli import u
-from flext_ldif import FlextLdifModelsSettings, c, p, t
+from flext_ldif import c, p, t
+from flext_ldif._models.settings import FlextLdifModelsSettings
 
 
 class FlextLdifUtilitiesEntry:
@@ -156,14 +157,20 @@ class FlextLdifUtilitiesEntry:
             return None
         dn_value = dn_model.value
         dn_lower = dn_value.lower()
-        if source_type_norm == "oid" and target_type_norm == "rfc":
-            if "cn=subschemasubentry" not in dn_lower:
+        if (
+            source_type_norm == c.Ldif.ServerTypes.OID
+            and target_type_norm == c.Ldif.ServerTypes.RFC
+        ):
+            if c.Ldif.OID_SCHEMA_DN not in dn_lower:
                 return None
-            return dn_value.replace("cn=subschemasubentry", "cn=schema")
-        if source_type_norm == "rfc" and target_type_norm == "oid":
-            if "cn=schema" not in dn_lower:
+            return dn_value.replace(c.Ldif.OID_SCHEMA_DN, c.Ldif.RFC_SCHEMA_DN)
+        if (
+            source_type_norm == c.Ldif.ServerTypes.RFC
+            and target_type_norm == c.Ldif.ServerTypes.OID
+        ):
+            if c.Ldif.RFC_SCHEMA_DN not in dn_lower:
                 return None
-            return dn_value.replace("cn=schema", "cn=subschemasubentry")
+            return dn_value.replace(c.Ldif.RFC_SCHEMA_DN, c.Ldif.OID_SCHEMA_DN)
         return None
 
     @staticmethod
@@ -386,13 +393,14 @@ class FlextLdifUtilitiesEntry:
         violations: t.MutableSequenceOf[str] = []
         if entry.changetype:
             return violations
-        is_schema_entry = dn_value.lower().startswith(
-            "cn=schema",
-        ) or dn_value.lower().startswith("cn=subschema")
+        dn_value_lower = dn_value.lower()
+        is_schema_entry = any(
+            dn_value_lower.startswith(marker) for marker in c.Ldif.SCHEMA_DN_MARKERS
+        )
         if entry.attributes is None or is_schema_entry or (not entry.attributes):
             return violations
         has_objectclass = any(
-            attr_name.lower() == "objectclass"
+            attr_name.lower() == c.Ldif.DictKeys.OBJECTCLASS.lower()
             for attr_name in entry.attributes.attributes
         )
         if not has_objectclass:
@@ -461,15 +469,15 @@ class FlextLdifUtilitiesEntry:
             return violations
         has_objectclass = (
             any(
-                attr_name.lower() == "objectclass"
+                attr_name.lower() == c.Ldif.DictKeys.OBJECTCLASS.lower()
                 for attr_name in entry.attributes.attributes
             )
             if entry.attributes
             else False
         )
-        is_schema_entry = dn_value and (
-            dn_value.lower().startswith("cn=schema")
-            or dn_value.lower().startswith("cn=subschema")
+        dn_value_lower = dn_value.lower()
+        is_schema_entry = dn_value and any(
+            dn_value_lower.startswith(marker) for marker in c.Ldif.SCHEMA_DN_MARKERS
         )
         if not has_objectclass and (not is_schema_entry):
             violations.append("Server requires objectClass attribute")
@@ -695,14 +703,12 @@ class FlextLdifUtilitiesEntry:
         if entry.attributes is None:
             return False
         attrs_lower = {k.lower() for k in entry.attributes.attributes}
-        schema_field_names = ["attributetypes", "objectclasses"]
-        has_schema_attrs = any(sf.lower() in attrs_lower for sf in schema_field_names)
+        has_schema_attrs = bool(attrs_lower & c.Ldif.SCHEMA_CATEGORY_ATTRIBUTE_KEYS)
         dn_lower = entry.dn.value.lower() if entry.dn else ""
-        schema_dn_patterns = ["cn=subschemasubentry", "cn=subschema", "cn=schema"]
-        has_schema_dn = any(pattern in dn_lower for pattern in schema_dn_patterns)
-        object_classes = entry.attributes.get("objectClass", [])
+        has_schema_dn = any(pattern in dn_lower for pattern in c.Ldif.SCHEMA_DN_MARKERS)
+        object_classes = FlextLdifUtilitiesEntry.get_objectclass_names(entry)
         has_schema_objectclass = any(
-            oc.lower() in {"subschema", "subentry"} for oc in object_classes
+            oc.lower() in c.Ldif.SCHEMA_OBJECTCLASS_MARKERS for oc in object_classes
         )
         if strict:
             if not has_schema_attrs:
@@ -729,8 +735,8 @@ class FlextLdifUtilitiesEntry:
                 == resolved_config.is_schema,
             )
         if resolved_config.objectclasses:
-            entry_ocs: t.StrSequence = (
-                entry.attributes.get("objectClass", []) if entry.attributes else []
+            entry_ocs: t.StrSequence = FlextLdifUtilitiesEntry.get_objectclass_names(
+                entry,
             )
             entry_ocs_lower = {oc.lower() for oc in entry_ocs}
             matching = [

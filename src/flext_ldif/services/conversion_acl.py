@@ -6,8 +6,6 @@ from abc import abstractmethod
 
 from flext_ldif import c, m, p, r, s, t, u
 
-logger = u.fetch_logger(__name__)
-
 
 class FlextLdifConversionAclMixin(s):
     """ACL-specific conversion helpers shared by the conversion facade."""
@@ -39,7 +37,7 @@ class FlextLdifConversionAclMixin(s):
                 attribute_metadata={},
                 metadata=None,
             )
-            source_server_type: str | None = u.try_(
+            source_server_type: c.Ldif.ServerTypes | None = u.try_(
                 lambda: (
                     u.Ldif.normalize_server_type(source_server.server_type)
                     if source_server.server_type
@@ -56,7 +54,7 @@ class FlextLdifConversionAclMixin(s):
                 attributes=entry_attributes,
                 metadata=entry_metadata,
             ).unwrap()
-            target_server_type: str | None = u.try_(
+            target_server_type: c.Ldif.ServerTypes | None = u.try_(
                 lambda: (
                     u.Ldif.normalize_server_type(target_server.server_type)
                     if target_server.server_type != c.IDENTIFIER_UNKNOWN
@@ -122,7 +120,7 @@ class FlextLdifConversionAclMixin(s):
                 ),
             )
         except c.Ldif.EXC_LDIF_PARSE as e:
-            logger.exception("Failed to convert ACL model", error=str(e))
+            self.logger.exception("Failed to convert ACL model", error=str(e))
             return r[t.Ldif.ConvertedModel].fail_op("Acl conversion", e)
 
     def _get_extensions_dict(
@@ -151,8 +149,8 @@ class FlextLdifConversionAclMixin(s):
         self,
         original_acl: m.Ldif.Acl,
         converted_acl: m.Ldif.Acl,
-        source_server_type: str | None = None,
-        target_server_type: str | None = None,
+        source_server_type: c.Ldif.ServerTypes | None = None,
+        target_server_type: c.Ldif.ServerTypes | None = None,
     ) -> m.Ldif.Acl:
         """Preserve permissions and metadata from original ACL."""
         converted_permissions = converted_acl.permissions
@@ -181,7 +179,7 @@ class FlextLdifConversionAclMixin(s):
             else {}
         )
         if orig_perms_dict:
-            logger.debug(
+            self.logger.debug(
                 "ACL permission preservation",
                 source_server_type=source_server_type or "",
                 target_server_type=target_server_type or "",
@@ -195,19 +193,13 @@ class FlextLdifConversionAclMixin(s):
                 "target_server_type": target_server_type,
                 "converted_has_permissions": converted_has_permissions,
             })
-            normalized_source = u.try_(
-                lambda: u.Ldif.normalize_server_type(
-                    permission_settings.source_server_type or c.IDENTIFIER_UNKNOWN,
-                ),
-            ).map_or(None)
-            normalized_target = u.try_(
-                lambda: u.Ldif.normalize_server_type(
-                    permission_settings.target_server_type or c.IDENTIFIER_UNKNOWN,
-                ),
-            ).map_or(None)
             server_pair = (
-                (normalized_source, normalized_target)
-                if normalized_source is not None and normalized_target is not None
+                (
+                    permission_settings.source_server_type,
+                    permission_settings.target_server_type,
+                )
+                if permission_settings.source_server_type is not None
+                and permission_settings.target_server_type is not None
                 else None
             )
             permission_mapping = {
@@ -263,11 +255,11 @@ class FlextLdifConversionAclMixin(s):
                 update={"permissions": resolved_permissions},
                 deep=True,
             )
-            logger.debug(
+            self.logger.debug(
                 "ACL t.MappingKV decision",
                 mapping_type=mapping_type,
-                normalized_source=str(normalized_source),
-                normalized_target=str(normalized_target),
+                normalized_source=str(permission_settings.source_server_type),
+                normalized_target=str(permission_settings.target_server_type),
             )
         acl_step1 = (
             converted_acl.model_copy(

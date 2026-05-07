@@ -22,12 +22,12 @@ from flext_ldif import (
     FlextLdifModelsDomainMetadata as mdm,
     FlextLdifModelsDomainSchema as mds,
     FlextLdifModelsMetadata as mm,
-    FlextLdifUtilitiesEntry,
     c,
     p,
     r,
     t,
 )
+from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 
 
 class FlextLdifModelsDomainEntry:

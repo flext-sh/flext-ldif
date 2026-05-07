@@ -66,6 +66,30 @@ class TestsFlextLdifDetectorService:
         tm.that(detection, is_=m.Ldif.ServerDetectionResult)
         tm.that(detection.is_confident, none=False)
 
+    def test_detect_rfc_snippet_keeps_generic_score_and_no_patterns(
+        self,
+        api: p.Ldif.LdifClient,
+    ) -> None:
+        result = api.detect_server_type(ldif_content=c.Tests.DETECTOR_RFC_SNIPPET)
+        detection = u.Tests.assert_success(result)
+
+        generic_server_type = u.Ldif.get_server_type_value("GENERIC")
+        tm.that(bool(detection.detected_server_type), eq=True)
+        tm.that(detection.scores[generic_server_type], eq=1)
+        tm.that(detection.patterns_found, eq=[])
+
+    def test_detect_oid_snippet_reports_acl_patterns(
+        self,
+        api: p.Ldif.LdifClient,
+    ) -> None:
+        result = api.detect_server_type(ldif_content=c.Tests.DETECTOR_OID_SNIPPET)
+        detection = u.Tests.assert_success(result)
+
+        tm.that(
+            any("ACL" in pattern for pattern in detection.patterns_found),
+            eq=True,
+        )
+
     @pytest.mark.parametrize(
         ("scenario", "snippet", "expected_type"),
         tuple(
@@ -131,6 +155,18 @@ class TestsFlextLdifDetectorService:
         api: p.Ldif.LdifClient,
     ) -> None:
         result = api.resolve_effective_server_type()
+        server_type = u.Tests.assert_success(result)
+
+        tm.that(server_type, eq=c.Tests.RFC)
+
+    def test_resolve_effective_server_type_missing_file_falls_back_to_rfc(
+        self,
+        api: p.Ldif.LdifClient,
+        tmp_path: Path,
+    ) -> None:
+        missing = tmp_path / c.Tests.DETECTOR_MISSING_PATH_NAME
+
+        result = api.resolve_effective_server_type(ldif_path=missing)
         server_type = u.Tests.assert_success(result)
 
         tm.that(server_type, eq=c.Tests.RFC)

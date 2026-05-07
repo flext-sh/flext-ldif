@@ -146,7 +146,10 @@ class FlextLdifProtocolsBase(Protocol):
             """Resolve schema/acl/entry bundle by server type via the facade DSL."""
             ...
 
-        def resolve_server_constants(self, server_type: str) -> p.Result[type]:
+        def resolve_server_constants(
+            self,
+            server_type: str,
+        ) -> p.Result[type[FlextLdifProtocolsBase.ServerConstants]]:
             """Resolve server constants by server type via the facade DSL."""
             ...
 
@@ -940,12 +943,14 @@ class FlextLdifProtocolsBase(Protocol):
         SERVER_TYPE: str
         PRIORITY: int
         DETECTION_OID_PATTERN: str | None
-        DETECTION_ATTRIBUTE_PREFIXES: frozenset[str] | None
-        DETECTION_OBJECTCLASS_NAMES: frozenset[str] | None
-        DETECTION_DN_MARKERS: frozenset[str] | None
+        DETECTION_ATTRIBUTE_PREFIXES: t.IterableOf[str] | None
+        DETECTION_OBJECTCLASS_NAMES: t.IterableOf[str] | None
+        DETECTION_DN_MARKERS: t.IterableOf[str] | None
         ACL_ATTRIBUTE_NAME: str | None
-        CATEGORIZATION_PRIORITY: t.MutableSequenceOf[str]
-        CATEGORY_OBJECTCLASSES: t.MutableFrozensetMapping
+        CATEGORIZATION_PRIORITY: t.StrSequence
+        CATEGORY_OBJECTCLASSES: t.FrozensetMapping
+        HIERARCHY_PRIORITY_OBJECTCLASSES: frozenset[str]
+        CATEGORIZATION_ACL_ATTRIBUTES: frozenset[str]
 
     @runtime_checkable
     class ServerDetectionConstants(Protocol):
@@ -953,9 +958,9 @@ class FlextLdifProtocolsBase(Protocol):
 
         DETECTION_PATTERN: str
         DETECTION_WEIGHT: int
-        DETECTION_ATTRIBUTES: frozenset[str] | t.MutableSequenceOf[str]
+        DETECTION_ATTRIBUTES: t.IterableOf[str]
         DETECTION_OID_PATTERN: str | None
-        DETECTION_OBJECTCLASS_NAMES: frozenset[str] | t.MutableSequenceOf[str] | None
+        DETECTION_OBJECTCLASS_NAMES: t.IterableOf[str] | None
 
     @runtime_checkable
     class Predicate[T](Protocol):

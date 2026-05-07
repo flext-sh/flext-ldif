@@ -355,11 +355,11 @@ class FlextLdifServersBaseSchema(
             detected_type = detect_method(definition)
             if isinstance(detected_type, str):
                 return detected_type
-        return "attribute"
+        return c.Ldif.SchemaItemKind.ATTRIBUTE.value
 
     def _is_objectclass_schema_type(self, definition: str) -> bool:
         """Return whether the schema definition is an objectClass payload."""
-        return self._detect_schema_type(definition).lower() == "objectclass"
+        return self._detect_schema_type(definition) == c.Ldif.SchemaItemKind.OBJECTCLASS
 
     def _coerce_attribute_model(
         self,

@@ -246,7 +246,7 @@ class FlextLdifUtilitiesSchema:
         """Extract OID, NAME, and DESC from attribute definition."""
         return FlextLdifUtilitiesSchema._extract_schema_basic_fields(
             definition=attr_definition,
-            definition_label="attribute",
+            definition_label=c.Ldif.SchemaItemKind.ATTRIBUTE.value,
         )
 
     @staticmethod
@@ -317,7 +317,7 @@ class FlextLdifUtilitiesSchema:
         """Extract OID, NAME, and DESC from objectClass definition."""
         return FlextLdifUtilitiesSchema._extract_schema_basic_fields(
             definition=oc_definition,
-            definition_label="objectClass",
+            definition_label=c.Ldif.SchemaItemKind.OBJECTCLASS.value,
         )
 
     @staticmethod
@@ -716,7 +716,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def detect_schema_type(
         definition: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
-    ) -> str:
+    ) -> c.Ldif.SchemaItemKind:
         """Detect schema type (attribute or objectclass) for automatic routing.
 
         Generic utility used by multiple server implementations to automatically
@@ -732,12 +732,12 @@ class FlextLdifUtilitiesSchema:
         """
         try:
             _ = m.Ldif.SchemaAttribute.model_validate(definition)
-            return "attribute"
+            return c.Ldif.SchemaItemKind.ATTRIBUTE
         except c.Ldif.EXC_LDIF_PARSE as exc:
             logger.debug("SchemaAttribute model validation did not match: %s", exc)
         try:
             _ = m.Ldif.SchemaObjectClass.model_validate(definition)
-            return "objectclass"
+            return c.Ldif.SchemaItemKind.OBJECTCLASS
         except c.Ldif.EXC_LDIF_PARSE:
             logger.debug("SchemaObjectClass model validation did not match: {exc}")
         definition_str = str(definition)
@@ -751,7 +751,7 @@ class FlextLdifUtilitiesSchema:
         ]
         for keyword in objectclass_only_keywords:
             if keyword in definition_lower:
-                return "objectclass"
+                return c.Ldif.SchemaItemKind.OBJECTCLASS
         attribute_only_keywords = [
             " equality ",
             " substr ",
@@ -763,10 +763,10 @@ class FlextLdifUtilitiesSchema:
         ]
         for keyword in attribute_only_keywords:
             if keyword in definition_lower:
-                return "attribute"
+                return c.Ldif.SchemaItemKind.ATTRIBUTE
         if "objectclass" in definition_lower or "oclass" in definition_lower:
-            return "objectclass"
-        return "attribute"
+            return c.Ldif.SchemaItemKind.OBJECTCLASS
+        return c.Ldif.SchemaItemKind.ATTRIBUTE
 
     @staticmethod
     def extract_attributes_from_lines(

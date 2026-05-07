@@ -8,6 +8,7 @@ from flext_cli import p
 
 if TYPE_CHECKING:
     from flext_ldif import m, t
+    from flext_ldif._protocols.base import FlextLdifProtocolsBase
 
 
 @runtime_checkable
@@ -245,7 +246,7 @@ class FlextLdifProtocolsDomain(Protocol):
         def resolve_server_constants(
             self,
             server_type: str,
-        ) -> p.Result[type]:
+        ) -> p.Result[type[FlextLdifProtocolsBase.ServerConstants]]:
             """Resolve constants class for a server type."""
             ...
 

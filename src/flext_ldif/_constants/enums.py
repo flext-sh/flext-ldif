@@ -6,7 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from enum import StrEnum, unique
+from types import MappingProxyType
+from typing import Final
 
 
 class FlextLdifConstantsEnums:
@@ -87,6 +90,14 @@ class FlextLdifConstantsEnums:
         NO_CATEGORY_MATCH = "no_category_match"
 
     @unique
+    class RejectionTrackerKey(StrEnum):
+        """Internal rejection tracker buckets."""
+
+        INVALID_DN_RFC4514 = "invalid_dn_rfc4514"
+        BASE_DN_FILTER = "base_dn_filter"
+        CATEGORIZATION_REJECTED = "categorization_rejected"
+
+    @unique
     class ServerTypes(StrEnum):
         """Server type identifiers - Single source of truth for all server types."""
 
@@ -103,6 +114,29 @@ class FlextLdifConstantsEnums:
         NOVELL = "novell"
         IBM_TIVOLI = "ibm_tivoli"
         GENERIC = "generic"
+
+    SERVER_TYPE_ALIASES: Final[Mapping[str, ServerTypes]] = MappingProxyType({
+        "active_directory": ServerTypes.AD,
+        "activedirectory": ServerTypes.AD,
+        "oracle_oid": ServerTypes.OID,
+        "oracleoid": ServerTypes.OID,
+        "oracle_oud": ServerTypes.OUD,
+        "oracleoud": ServerTypes.OUD,
+        "openldap": ServerTypes.OPENLDAP2,
+        "openldap1": ServerTypes.OPENLDAP1,
+        "openldap2": ServerTypes.OPENLDAP2,
+        "ibm_tivoli": ServerTypes.IBM_TIVOLI,
+        "ibmtivoli": ServerTypes.IBM_TIVOLI,
+        "tivoli": ServerTypes.IBM_TIVOLI,
+        "novell_edirectory": ServerTypes.NOVELL,
+        "novelledirectory": ServerTypes.NOVELL,
+        "edirectory": ServerTypes.NOVELL,
+        "apache_directory": ServerTypes.APACHE,
+        "apachedirectory": ServerTypes.APACHE,
+        "apacheds": ServerTypes.APACHE,
+        "389ds": ServerTypes.DS389,
+        "389directory": ServerTypes.DS389,
+    })
 
     @unique
     class ChangeOperation(StrEnum):

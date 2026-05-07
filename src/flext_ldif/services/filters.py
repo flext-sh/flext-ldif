@@ -27,22 +27,15 @@ class FlextLdifFilters(s):
     @classmethod
     def _extract_allowed_oids(
         cls,
-        allowed_oids: m.Ldif.WhitelistRules | t.MutableFrozensetMapping,
-    ) -> tuple[frozenset[str], frozenset[str], frozenset[str], frozenset[str]]:
-        """Extract allowed OID sets from mapping."""
+        allowed_oids: m.Ldif.WhitelistRules | t.FrozensetMapping,
+    ) -> t.FrozensetMapping:
+        """Extract allowed OID sets keyed by canonical schema attribute names."""
         if isinstance(allowed_oids, m.Ldif.WhitelistRules):
-            return (
-                frozenset(allowed_oids.allowed_attribute_oids),
-                frozenset(allowed_oids.allowed_objectclass_oids),
-                frozenset(allowed_oids.allowed_matchingrule_oids),
-                frozenset(allowed_oids.allowed_matchingruleuse_oids),
-            )
-        return (
-            allowed_oids.get("allowed_attribute_oids", frozenset()),
-            allowed_oids.get("allowed_objectclass_oids", frozenset()),
-            allowed_oids.get("allowed_matchingrule_oids", frozenset()),
-            allowed_oids.get("allowed_matchingruleuse_oids", frozenset()),
-        )
+            return allowed_oids.schema_oid_filters
+        return {
+            attr_name: allowed_oids.get(attr_name, c.Ldif.EMPTY_STR_FROZENSET)
+            for _, attr_name in c.Ldif.WHITELIST_RULE_SCHEMA_ATTRIBUTE_KEYS
+        }
 
     @classmethod
     def _extract_oid_from_schema_attr(
@@ -66,7 +59,7 @@ class FlextLdifFilters(s):
     def _should_include_entry(
         cls,
         entry: m.Ldif.Entry,
-        allowed_oids: m.Ldif.WhitelistRules | t.MutableFrozensetMapping,
+        allowed_oids: m.Ldif.WhitelistRules | t.FrozensetMapping,
     ) -> bool:
         """Check if entry should be included based on OID filters."""
         attrs = entry.attributes
@@ -76,50 +69,30 @@ class FlextLdifFilters(s):
             attrs_dict: t.MutableStrSequenceMapping = attrs.attributes
         else:
             return True
-        allowed_attr, allowed_oc, allowed_mr, allowed_mru = cls._extract_allowed_oids(
-            allowed_oids,
-        )
-        is_attr, include_attr = cls._check_schema_oid(
-            attrs_dict,
-            ("attributeTypes", "attributetypes"),
-            allowed_attr,
-        )
-        is_oc, include_oc = cls._check_schema_oid(
-            attrs_dict,
-            ("objectClasses", "objectclasses"),
-            allowed_oc,
-        )
-        is_mr, include_mr = cls._check_schema_oid(
-            attrs_dict,
-            ("matchingRules", "matchingrules"),
-            allowed_mr,
-        )
-        is_mru, include_mru = cls._check_schema_oid(
-            attrs_dict,
-            ("matchingRuleUse", "matchingruleuse"),
-            allowed_mru,
-        )
-        is_schema_entry = is_attr or is_oc or is_mr or is_mru
-        should_include = include_attr and include_oc and include_mr and include_mru
+        allowed_oid_map = cls._extract_allowed_oids(allowed_oids)
+        checks = [
+            cls._check_schema_oid(attrs_dict, attr_keys, allowed_oid_map[attr_keys[1]])
+            for attr_keys in c.Ldif.SCHEMA_OID_ATTRIBUTE_KEYS
+        ]
+        is_schema_entry = any(is_schema for is_schema, _ in checks)
+        should_include = all(include_entry for _, include_entry in checks)
         return not is_schema_entry or should_include
 
     @classmethod
     def filter_schema_by_oids(
         cls,
         entries: t.MutableSequenceOf[m.Ldif.Entry],
-        allowed_oids: m.Ldif.WhitelistRules | t.MutableFrozensetMapping,
+        allowed_oids: m.Ldif.WhitelistRules | t.FrozensetMapping,
     ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
         """Filter schema entries by allowed OIDs."""
         try:
-            allowed_attr, allowed_oc, allowed_mr, allowed_mru = (
-                cls._extract_allowed_oids(allowed_oids)
-            )
-            if not any([allowed_attr, allowed_oc, allowed_mr, allowed_mru]):
+            allowed_oid_map = cls._extract_allowed_oids(allowed_oids)
+            if not any(allowed_oid_map.values()):
                 return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(entries)
             filtered: t.MutableSequenceOf[m.Ldif.Entry] = [
                 entry
                 for entry in entries
-                if cls._should_include_entry(entry, allowed_oids)
+                if cls._should_include_entry(entry, allowed_oid_map)
             ]
             cls._get_or_create_logger().debug(
                 "Filtered schema entries by OIDs",
@@ -163,7 +136,11 @@ class FlextLdifFilters(s):
             oc_attrs = filtered_entry.attributes.attributes
             forbidden_ocs_lower = {oc.lower() for oc in forbidden_ocs}
             oc_key: str | None = next(
-                (k for k in oc_attrs if k.lower() == "objectclass"),
+                (
+                    k
+                    for k in oc_attrs
+                    if k.lower() == c.Ldif.DictKeys.OBJECTCLASS.lower()
+                ),
                 None,
             )
             if oc_key is not None:
@@ -188,19 +165,20 @@ class FlextLdifFilters(s):
     def filter_schema_attribute_values(
         cls,
         entry: m.Ldif.Entry | p.Ldif.Entry,
-        allowed_oids: t.MappingKV[str, frozenset[str]],
+        allowed_oids: m.Ldif.WhitelistRules | t.FrozensetMapping,
     ) -> m.Ldif.Entry:
         """Filter individual OID values within schema entry attributes."""
         concrete: m.Ldif.Entry = u.Ldif.as_entry(entry)
         if concrete.attributes is None:
             return concrete
+        allowed_value_oids = cls._extract_allowed_oids(allowed_oids)
         attrs_dict = concrete.attributes.attributes
         updated_attrs: dict[str, list[str]] = {
             k: list(v) for k, v in attrs_dict.items()
         }
         changed = False
         for attr_name in list(updated_attrs):
-            oid_set = allowed_oids.get(attr_name.lower())
+            oid_set = allowed_value_oids.get(attr_name.lower())
             if oid_set is None:
                 continue
             original = updated_attrs[attr_name]
