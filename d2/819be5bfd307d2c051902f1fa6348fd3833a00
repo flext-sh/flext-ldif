@@ -1,0 +1,197 @@
+src/flext_ldif/_utilities/acl.py
+  s_0290f35b98ef0c::t_32a74d056afc33 466,468-471
+  s_31d7c7c0188113::t_17e99fa6bde55a 559-567
+  h_5cf852cc46bf92 568-571,574
+  s_552d8e4891a938::t_bb7698a3997f7b 5,40-49
+  s_0290f35b98ef0c::t_83398273b95de7 554-556,572-573,575-576
+src/flext_ldif/_utilities/pipeline.py
+  h_5cf852cc46bf92 7
+  s_552d8e4891a938::t_9ada5a58de897c 126-128
+src/flext_ldif/services/conversion_support.py
+  s_1aca2b1c94e9fc::t_2f05de5a5adc65 5,18,24,36-37
+  s_552d8e4891a938::t_1aab1c5e72544d 66-67,69-70,79-81,89-91,118,140
+src/flext_ldif/_protocols/domain.py
+  s_1aca2b1c94e9fc::t_ca802240cf2a0b 11
+  h_5cf852cc46bf92 249
+src/flext_ldif/services/filters.py
+  h_5cf852cc46bf92 30-31,34,62,85,168,174,181
+  s_ec4ebdfbc2ce20::t_1ea2f86812ecae 32,35-38,72,74-75,89-90,95
+  s_1aca2b1c94e9fc::t_7894862bc40541 73,76-78
+  s_552d8e4891a938::t_9ada5a58de897c 139-143
+src/flext_ldif/services/conversion_metadata.py
+  s_552d8e4891a938::t_4fe96a338975bc 20-24,26,42-43,46,50,59-61,64-68,70,85-89
+src/flext_ldif/_typings/base.py
+  h_5cf852cc46bf92 17-29,72-73
+  s_552d8e4891a938::t_48d4cc8390cdb6 16
+  s_552d8e4891a938::t_a7fcfb1cb69fac 74
+src/flext_ldif/api.py
+  h_5cf852cc46bf92 56-57,62-64,71,128,213-214,216-217
+src/flext_ldif/_models/collections.py
+  h_5cf852cc46bf92 16-17
+src/flext_ldif/_models/results.py
+  s_31d7c7c0188113::t_27cd5c4f61a85e 218-226
+  h_5cf852cc46bf92 8-11
+src/flext_ldif/services/analysis.py
+  s_552d8e4891a938::t_9ada5a58de897c 62
+src/flext_ldif/services/detector.py
+  s_1aca2b1c94e9fc::t_2f05de5a5adc65 44,48-49,51
+  h_5cf852cc46bf92 54-56,58-60,62-63,65,77-78,95,139-141,143,157,159-160,162-163,176,179,182-183,190,195-203,215-216,218-229,233,236,240-242,244-246,254,258,263-273
+  s_552d8e4891a938::t_888994032e68f7 135,137,148,238
+  s_0290f35b98ef0c::t_0d10f9861ae514 189
+  s_0290f35b98ef0c::t_8ab5cb8ce0dedb 217,230,248-249,251-252
+  s_0290f35b98ef0c::t_3a4f8c1559669f 191,204-206
+tests/unit/services/test_detector_service.py
+  s_ec4ebdfbc2ce20::t_f4016fc884b9bf 69,77
+  s_ec4ebdfbc2ce20::t_ae9f44b20c3c31 70-76,78-92,161-169
+src/flext_ldif/base.py
+  h_5cf852cc46bf92 34,37,46,52
+  s_2914457c55fb6e::t_6245b608d0fdd2 36,38-40,50-51,53,55
+src/flext_ldif/services/categorization.py
+  s_1aca2b1c94e9fc::t_9243f7310ad0dc 264-270,274-282,284,290-295
+  h_5cf852cc46bf92 24-26,100-101,103,107-109,112,199,201-203,205-208,216,229,237,271-273,287-288,296,310,324,342-343,359-360,365,392,422,438,447,463,468,481-482,486,489,505,507,509-510,515,528,532,539,543,546-547,553,557-558,561,582,584,589,601,606,612-614,620,623-626,629-630,633,635,671,673-674
+  s_1aca2b1c94e9fc::t_315ee355c4f188 445
+  s_1aca2b1c94e9fc::t_f90d5981d4ba91 344-348,503
+src/flext_ldif/_utilities/entry.py
+  h_5cf852cc46bf92 14,160-164,166-171,173,396-398,403,472,478-480,706,708-709,711
+  s_552d8e4891a938::t_9ada5a58de897c 738-739
+src/flext_ldif/services/migration.py
+  s_ec4ebdfbc2ce20::t_327420bae46013 117
+  s_552d8e4891a938::t_78e143b20ac964 211,213,216-265
+src/flext_ldif/protocols.py
+  h_5cf852cc46bf92 25,36,39-40
+  s_2914457c55fb6e::t_c6e023e5e2f0ae 5,10-11
+  s_2914457c55fb6e::t_6245b608d0fdd2 26-35,37-38
+src/flext_ldif/_models/domain_metadata.py
+  h_5cf852cc46bf92 20-23
+src/flext_ldif/_constants/enums.py
+  s_1aca2b1c94e9fc::t_84fc02359ee6b2 93-99
+  h_5cf852cc46bf92 9,11-12,118-139
+src/flext_ldif/services/conversion_acl.py
+  s_2914457c55fb6e::t_6245b608d0fdd2 123,182,258
+  h_5cf852cc46bf92 40,57,152-153,198-199,201-202
+  s_0290f35b98ef0c::t_a8717a561f55b2 261-262
+src/flext_ldif/services/server.py
+  h_5cf852cc46bf92 96-97,101-102,105,108,111-112,114
+src/flext_ldif/services/conversion.py
+  s_2914457c55fb6e::t_6245b608d0fdd2 129,172,230
+tests/unit/services/test_validation_service.py
+  h_5cf852cc46bf92 1-59
+  s_ec4ebdfbc2ce20::t_37a3d22ae0dcc3 60
+src/flext_ldif/_utilities/schema.py
+  h_5cf852cc46bf92 249,320,719,735,740,754,766,768-769
+src/flext_ldif/_models/domain_schema.py
+  h_5cf852cc46bf92 16-18
+tests/unit/services/test_filters_service.py
+  h_5cf852cc46bf92 190-211
+src/flext_ldif/constants.py
+  s_ec4ebdfbc2ce20::t_1ea2f86812ecae 363-372
+  h_5cf852cc46bf92 178-280,287,316-317,319-327,330,345-355
+  s_1aca2b1c94e9fc::t_f90d5981d4ba91 289,318
+  s_1aca2b1c94e9fc::t_84fc02359ee6b2 290-315,328-329,331-344,356-362,373-378
+src/flext_ldif/services/transformers.py
+  h_5cf852cc46bf92 7,37
+tests/constants.py
+  h_5cf852cc46bf92 1121
+src/flext_ldif/_protocols/base.py
+  s_1aca2b1c94e9fc::t_2f05de5a5adc65 149-152
+  h_5cf852cc46bf92 952-953
+  s_552d8e4891a938::t_c101806075e7dd 961,963
+  s_552d8e4891a938::t_cd3187772d2fcc 951
+  s_552d8e4891a938::t_957bee8532406e 946-948,950
+src/flext_ldif/services/entries.py
+  s_552d8e4891a938::t_9ada5a58de897c 94,162
+  h_5cf852cc46bf92 10,37-40,51-54,62-67,154-157,159-161,163-164,194,197
+tests/unit/test_collections_models.py
+  s_ec4ebdfbc2ce20::t_107189c3df9f11 114
+  h_5cf852cc46bf92 1-26,32-62,67-113
+  s_1aca2b1c94e9fc::t_e3d0b6be78ad91 27-31,63-66
+src/flext_ldif/settings.py
+  h_5cf852cc46bf92 15,17,20-21,23-24,27-38,44-50
+src/flext_ldif/servers/_base/schema.py
+  h_5cf852cc46bf92 358,362
+src/flext_ldif/_models/settings.py
+  s_1aca2b1c94e9fc::t_15381cd62bc058 509-511,513-520,522,525
+  s_552d8e4891a938::t_062454c8367d72 201
+  s_1aca2b1c94e9fc::t_315ee355c4f188 470
+  s_ec4ebdfbc2ce20::t_4002642e164ae4 195-197
+  h_5cf852cc46bf92 15,24,53,192-194,198-200,202-203,217,221,418,422,424,426,428,432,434,436,438,442,444,448,450,454,456,460,462-469,471-478,528,532,534,538,540,542,544,548,550,554,556,560,562,566,568,572,574,578-593,953,957
+  s_552d8e4891a938::t_4d2e6b651bf08e 191
+  s_1aca2b1c94e9fc::t_44c08310dabd7b 425,435
+  s_1aca2b1c94e9fc::t_935e5ddbf44332 512,521,523-524
+src/flext_ldif/services/conversion_schema.py
+  h_5cf852cc46bf92 41,45
+src/flext_ldif/services/pipeline.py
+  h_5cf852cc46bf92 72,77
+src/flext_ldif/servers/_oud/transform.py
+  s_1aca2b1c94e9fc::t_9399cb0aff20a6 165
+docs/guides/troubleshooting.md
+  s_1aca2b1c94e9fc::t_af635b995b9a28 725
+src/flext_ldif/_models/domain_entries.py
+  s_552d8e4891a938::t_a52235f873278f 9-14
+src/flext_ldif/shared.py
+  h_5cf852cc46bf92 15,39-40,53-54,57
+  s_1aca2b1c94e9fc::t_315ee355c4f188 60
+src/flext_ldif/servers/_base/constants.py
+  h_5cf852cc46bf92 38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "d2819be5bfd307d2c051902f1fa6348fd3833a00",
+  "prompts": {},
+  "humans": {
+    "h_5cf852cc46bf92": {
+      "author": "FLEXT Bot <team@flext.sh>"
+    }
+  },
+  "sessions": {
+    "s_0290f35b98ef0c": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "0c4cc853-563f-48ad-a39a-f49b587090b8",
+        "model": "unknown"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>"
+    },
+    "s_1aca2b1c94e9fc": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "ce2bbb45-e9bf-4d0e-b1f1-79cea59375ea",
+        "model": "unknown"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>"
+    },
+    "s_2914457c55fb6e": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "028a9615-de04-439a-812a-011714b27791",
+        "model": "unknown"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>"
+    },
+    "s_31d7c7c0188113": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c577bfd3-b7be-40e8-bd0d-3b1daf0191d0",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>"
+    },
+    "s_552d8e4891a938": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "35c0040b-2ae9-466e-90aa-7721509e1e19",
+        "model": "unknown"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>"
+    },
+    "s_ec4ebdfbc2ce20": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "f049bcd6-badc-46dd-b4ad-1eeed823f908",
+        "model": "unknown"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>"
+    }
+  }
+}
