@@ -78,14 +78,15 @@ class TestsFlextLdifProcessingService:
             attributes=None,
         )
 
-        result = api.process_entries(
-            [invalid_entry],
-            processor_name="transform",
-            parallel=False,
-            batch_size=1,
-            max_workers=1,
+        tm.fail(
+            api.process_entries(
+                [invalid_entry],
+                processor_name="transform",
+                parallel=False,
+                batch_size=1,
+                max_workers=1,
+            )
         )
-        tm.that(result.failure, eq=True)
 
     def test_process_entries_parallel_raises_for_none_dn(
         self,

@@ -89,12 +89,12 @@ class TestsFlextLdifNovellServers:
         schema_server: FlextLdifServersNovell.Schema,
     ) -> None:
         """Test parsing attribute without OID fails."""
-        attr_def = "NAME 'nspmPasswordPolicy' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15"
-        result = schema_server.parse_attribute(attr_def)
-        tm.that(result.failure, eq=True)
-        tm.that(result.error, none=False)
-        if result.error is not None:
-            tm.that(result.error, has="missing an OID")
+        tm.fail(
+            schema_server.parse_attribute(
+                "NAME 'nspmPasswordPolicy' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15"
+            ),
+            has="missing an OID",
+        )
 
     """Test schema objectClass detection."""
 
@@ -156,13 +156,10 @@ class TestsFlextLdifNovellServers:
         schema_server: FlextLdifServersNovell.Schema,
     ) -> None:
         """Test parsing objectClass without OID fails."""
-        oc_def = "NAME 'ndsPerson' SUP top STRUCTURAL"
-        server_schema = schema_server
-        result = server_schema.parse_objectclass(oc_def)
-        tm.that(result.failure, eq=True)
-        tm.that(result.error, none=False)
-        if result.error is not None:
-            tm.that(result.error, has="missing an OID")
+        tm.fail(
+            schema_server.parse_objectclass("NAME 'ndsPerson' SUP top STRUCTURAL"),
+            has="missing an OID",
+        )
 
     """Test entry detection."""
 

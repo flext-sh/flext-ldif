@@ -103,10 +103,7 @@ class TestsTestFlextLdifRelaxedServers:
     ) -> None:
         """Test parse_attribute stores original definition for recovery."""
         original = "( 1.2.3.4 NAME 'test' SYNTAX 1.2.3 )"
-        result = schema_server.parse_attribute(original)
-        tm.that(result.success, eq=True)
-        parsed = result.value
-        tm.that(parsed.metadata is not None, eq=True)
+        parsed = tm.ok(schema_server.parse_attribute(original))
         assert parsed.metadata is not None
         tm.that(parsed.metadata.extensions.original_format, eq=original)
 
@@ -132,11 +129,9 @@ class TestsTestFlextLdifRelaxedServers:
             x_alias=None,
             x_oid=None,
         )
-        result = schema_server.write_attribute(attr_data)
-        tm.that(result.success, eq=True)
-        written = result.value
+        written = tm.ok(schema_server.write_attribute(attr_data))
         tm.that(written, is_=str)
-        tm.that(len(written) > 0, eq=True)
+        tm.that(len(written), gt=0)
 
     @pytest.mark.parametrize(
         ("name", "acl_data"),
@@ -171,10 +166,7 @@ class TestsTestFlextLdifRelaxedServers:
             permissions=m.Ldif.AclPermissions(),
             raw_acl=raw_acl,
         )
-        result = acl_server.write(acl_data)
-        tm.that(result.success, eq=True)
-        written = result.value
-        tm.that(written, eq=raw_acl)
+        tm.that(tm.ok(acl_server.write(acl_data)), eq=raw_acl)
 
     def test_entry_lenient_dn_parsing(
         self,
@@ -202,15 +194,11 @@ class TestsTestFlextLdifRelaxedServers:
             result = schema_server.parse_attribute(bad_input)
         else:
             result = schema_server.parse_objectclass(bad_input)
-        tm.that(result.success, eq=True)
-        parsed = result.value
-        tm.that(parsed.metadata is not None, eq=True)
+        parsed = tm.ok(result)
         assert parsed.metadata is not None
+        ext = parsed.metadata.extensions
         tm.that(
-            (
-                parsed.metadata.extensions.original_format is not None
-                or parsed.metadata.extensions.schema_source_server is not None
-            ),
+            ext.original_format is not None or ext.schema_source_server is not None,
             eq=True,
         )
 
@@ -320,11 +308,8 @@ class TestsTestFlextLdifRelaxedServers:
             x_alias=None,
             x_oid=None,
         )
-        result = schema_server.write_attribute(attr_data)
-        tm.that(result.success, eq=True)
-        written = result.value
-        tm.that(written, has="2.16.840.1.113894.1.1.1")
-        tm.that(written, has="orclGUID")
+        written = tm.ok(schema_server.write_attribute(attr_data))
+        tm.that(written, has=["2.16.840.1.113894.1.1.1", "orclGUID"])
 
     def test_conversion_objectclass_oid_to_rfc(
         self,
@@ -337,8 +322,5 @@ class TestsTestFlextLdifRelaxedServers:
             desc="Oracle Context",
             sup="top",
         )
-        result = schema_server.write_objectclass(oc_data)
-        tm.that(result.success, eq=True)
-        written = result.value
-        tm.that(written, has="2.16.840.1.113894.1.2.1")
-        tm.that(written, has="orclContext")
+        written = tm.ok(schema_server.write_objectclass(oc_data))
+        tm.that(written, has=["2.16.840.1.113894.1.2.1", "orclContext"])

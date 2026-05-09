@@ -17,6 +17,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
     ),
     build_lazy_import_map(
         {
+            ".fixtures": ("fixtures",),
             ".servers.test_apache_servers": ("TestsTestFlextLdifApacheServers",),
             ".servers.test_ds389_servers": ("TestsTestFlextLdifDs389Servers",),
             ".servers.test_edge_cases": ("TestsFlextLdifEdgeCases",),
@@ -45,8 +46,10 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".services.test_transformers_service": (
                 "TestsFlextLdifTransformerService",
             ),
+            ".services.test_validation_service": ("TestsFlextLdifValidationService",),
             ".services.test_writer_service": ("TestsFlextLdifWriterService",),
             ".test_acl_registry": ("TestsFlextLdifAclRegistry",),
+            ".test_collections_models": ("TestsFlextLdifCollectionsModels",),
             ".test_constants_data_driven": ("TestsFlextLdifConstantsDataDriven",),
             ".test_migration_pipeline_servers": (
                 "TestsFlextLdifMigrationPipelineServers",

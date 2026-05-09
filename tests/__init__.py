@@ -12,9 +12,10 @@ from flext_core.lazy import (
 )
 
 if _t.TYPE_CHECKING:
-    from flext_ldap import d, e, h, r, s, x
+    from flext_ldap import d, e, h, r, x
     from flext_tests import td, tf, tk, tm, tv
 
+    from tests.base import TestsFlextLdifServiceBase, s
     from tests.constants import TestsFlextLdifConstants, c
     from tests.integration.test_acl_metadata_preservation import (
         TestsFlextLdifAclMetadataPreservation,
@@ -68,6 +69,7 @@ if _t.TYPE_CHECKING:
     )
     from tests.models import TestsFlextLdifModels, m
     from tests.protocols import TestsFlextLdifProtocols, p
+    from tests.settings import TestsFlextLdifSettings
     from tests.typings import TestsFlextLdifTypes, t
     from tests.unit.servers.test_apache_servers import TestsTestFlextLdifApacheServers
     from tests.unit.servers.test_ds389_servers import TestsTestFlextLdifDs389Servers
@@ -103,8 +105,12 @@ if _t.TYPE_CHECKING:
     from tests.unit.services.test_transformers_service import (
         TestsFlextLdifTransformerService,
     )
+    from tests.unit.services.test_validation_service import (
+        TestsFlextLdifValidationService,
+    )
     from tests.unit.services.test_writer_service import TestsFlextLdifWriterService
     from tests.unit.test_acl_registry import TestsFlextLdifAclRegistry
+    from tests.unit.test_collections_models import TestsFlextLdifCollectionsModels
     from tests.unit.test_constants_data_driven import TestsFlextLdifConstantsDataDriven
     from tests.unit.test_migration_pipeline_servers import (
         TestsFlextLdifMigrationPipelineServers,
@@ -124,6 +130,10 @@ _LAZY_IMPORTS = merge_lazy_imports(
     ),
     build_lazy_import_map(
         {
+            ".base": (
+                "TestsFlextLdifServiceBase",
+                "s",
+            ),
             ".constants": (
                 "TestsFlextLdifConstants",
                 "c",
@@ -186,6 +196,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestsFlextLdifProtocols",
                 "p",
             ),
+            ".settings": ("TestsFlextLdifSettings",),
             ".typings": (
                 "TestsFlextLdifTypes",
                 "t",
@@ -224,8 +235,12 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".unit.services.test_transformers_service": (
                 "TestsFlextLdifTransformerService",
             ),
+            ".unit.services.test_validation_service": (
+                "TestsFlextLdifValidationService",
+            ),
             ".unit.services.test_writer_service": ("TestsFlextLdifWriterService",),
             ".unit.test_acl_registry": ("TestsFlextLdifAclRegistry",),
+            ".unit.test_collections_models": ("TestsFlextLdifCollectionsModels",),
             ".unit.test_constants_data_driven": ("TestsFlextLdifConstantsDataDriven",),
             ".unit.test_migration_pipeline_servers": (
                 "TestsFlextLdifMigrationPipelineServers",
@@ -246,7 +261,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "e",
                 "h",
                 "r",
-                "s",
                 "x",
             ),
             "flext_tests": (
@@ -290,6 +304,7 @@ __all__: list[str] = [
     "TestsFlextLdifAnalysisService",
     "TestsFlextLdifApiIntegration",
     "TestsFlextLdifCategorizationRealData",
+    "TestsFlextLdifCollectionsModels",
     "TestsFlextLdifConfigIntegration",
     "TestsFlextLdifConstants",
     "TestsFlextLdifConstantsDataDriven",
@@ -324,6 +339,8 @@ __all__: list[str] = [
     "TestsFlextLdifRfcDockerRealIntegration",
     "TestsFlextLdifSchemaTransformer",
     "TestsFlextLdifServersStandardization",
+    "TestsFlextLdifServiceBase",
+    "TestsFlextLdifSettings",
     "TestsFlextLdifSimpleLdap",
     "TestsFlextLdifStatisticsService",
     "TestsFlextLdifSystematicFixtureCoverage",
@@ -332,6 +349,7 @@ __all__: list[str] = [
     "TestsFlextLdifUtilities",
     "TestsFlextLdifUtilitiesComprehensive",
     "TestsFlextLdifUtilitiesCore",
+    "TestsFlextLdifValidationService",
     "TestsFlextLdifVersion",
     "TestsFlextLdifWriterService",
     "TestsFlextLdifZeroDataLossOidOud",

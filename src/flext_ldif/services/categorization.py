@@ -37,9 +37,7 @@ class FlextLdifCategorization(s):
         ),
     ]
     schema_whitelist_rules: Annotated[
-        m.Ldif.WhitelistRules
-        | MutableMapping[str, str | t.MutableSequenceOf[str] | bool | None]
-        | None,
+        m.Ldif.WhitelistRules | None,
         u.Field(
             default=None,
             exclude=True,
@@ -102,14 +100,12 @@ class FlextLdifCategorization(s):
         )
         return validated_rules
 
-    def _normalize_initial_whitelist_rules(self) -> m.Ldif.WhitelistRules | None:
-        """Normalize optional schema whitelist rules into the canonical model."""
-        if self.schema_whitelist_rules is None:
+    def _whitelist_rules_with_oid_filters(self) -> m.Ldif.WhitelistRules | None:
+        """Return normalized whitelist rules only when OID filters are configured."""
+        whitelist_rules = self.schema_whitelist_rules
+        if whitelist_rules is None or not whitelist_rules.has_oid_filters:
             return None
-        validated_rules: m.Ldif.WhitelistRules = m.Ldif.WhitelistRules.model_validate(
-            self.schema_whitelist_rules,
-        )
-        return validated_rules
+        return whitelist_rules
 
     @staticmethod
     def _ensure_entry_model(
@@ -260,17 +256,10 @@ class FlextLdifCategorization(s):
         ``forbidden_objectclasses``, and ``schema_whitelist_rules`` stored
         during ``__init__``.
         """
-        whitelist_rules = self._normalize_initial_whitelist_rules()
-        schema_whitelist_rules = (
-            whitelist_rules
-            if whitelist_rules is not None and whitelist_rules.has_oid_filters
-            else None
-        )
+        schema_whitelist_rules = self._whitelist_rules_with_oid_filters()
         forbidden_attributes = self.forbidden_attributes or []
         forbidden_objectclasses = self.forbidden_objectclasses or []
-        has_attribute_filters = bool(forbidden_attributes)
-        if forbidden_objectclasses:
-            has_attribute_filters = True
+        has_attribute_filters = bool(forbidden_attributes or forbidden_objectclasses)
         if schema_whitelist_rules is None and not has_attribute_filters:
             return
 
@@ -425,8 +414,8 @@ class FlextLdifCategorization(s):
         schema_entries: t.MutableSequenceOf[m.Ldif.Entry],
     ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
         """Filter schema entries by OID whitelist."""
-        sw_rules = self._normalize_initial_whitelist_rules()
-        if sw_rules is None or not sw_rules.has_oid_filters:
+        sw_rules = self._whitelist_rules_with_oid_filters()
+        if sw_rules is None:
             return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(schema_entries)
         result = FlextLdifFilters.filter_schema_by_oids(
             entries=schema_entries,

@@ -20,8 +20,10 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif import FlextLdifSettings, ldif
-from tests import c, u
+from flext_ldif import ldif
+from tests import c, m, u
+from tests.base import s
+from tests.settings import TestsFlextLdifSettings
 
 logger = u.fetch_logger(__name__)
 
@@ -33,16 +35,20 @@ class TestsFlextLdifConfigIntegration:
     Uses parametrization and mappings for maximum DRY.
     """
 
+    @staticmethod
+    def create_settings() -> TestsFlextLdifSettings:
+        return s.fetch_settings().clone()
+
     def test_default_config_initialization(self) -> None:
         """Test facade initializes with default settings."""
-        api = ldif
-        result = api.parse_ldif(c.Tests.CONFIG_BASIC_ENTRY)
+        result = ldif.parse_ldif(c.Tests.CONFIG_BASIC_ENTRY)
         assert result.success
 
     def test_custom_config_with_server_type(self) -> None:
         """Test facade with custom settings and server type."""
-        settings = FlextLdifSettings()
+        settings = self.create_settings()
         api = ldif(settings=settings)
+        assert isinstance(settings.Tests, m.SettingsValue)
         result = api.parse_ldif(
             c.Tests.CONFIG_BASIC_ENTRY,
             server_type=c.Tests.OPENLDAP,
@@ -53,8 +59,8 @@ class TestsFlextLdifConfigIntegration:
 
     def test_config_independence_between_instances(self) -> None:
         """Test that multiple ldif instances with different configs are independent."""
-        config1 = FlextLdifSettings()
-        config2 = FlextLdifSettings()
+        config1 = self.create_settings()
+        config2 = self.create_settings()
         ldif1 = ldif(settings=config1)
         ldif2 = ldif(settings=config2)
         result1 = ldif1.parse_ldif(
@@ -74,7 +80,7 @@ class TestsFlextLdifConfigIntegration:
         server_type: str,
     ) -> None:
         """Test that settings settings affect parsing behavior."""
-        settings = FlextLdifSettings()
+        settings = self.create_settings()
         api = ldif(settings=settings)
         result = api.parse_ldif(c.Tests.CONFIG_BASIC_ENTRY, server_type=server_type)
         assert result.success
@@ -94,7 +100,7 @@ class TestsFlextLdifConfigIntegration:
         expected_content_key: str,
     ) -> None:
         """Test settings with specific server type using parametrization."""
-        settings = FlextLdifSettings()
+        settings = self.create_settings()
         api = ldif(settings=settings)
         content = c.Tests.CONFIG_SERVER_CONTENT[expected_content_key]
         result = api.parse_ldif(content, server_type=server_type)
@@ -104,7 +110,7 @@ class TestsFlextLdifConfigIntegration:
 
     def test_config_consistency_across_operations(self) -> None:
         """Test that settings remains consistent across operations."""
-        settings = FlextLdifSettings()
+        settings = self.create_settings()
         api = ldif(settings=settings)
         content1 = "dn: cn=Test1,dc=example,dc=com\ncn: Test1\nobjectClass: person\n"
         content2 = "dn: cn=Test2,dc=example,dc=com\ncn: Test2\nobjectClass: person\n"
@@ -115,7 +121,7 @@ class TestsFlextLdifConfigIntegration:
 
     def test_config_with_multiple_entries(self) -> None:
         """Test settings handling with multiple entries."""
-        settings = FlextLdifSettings()
+        settings = self.create_settings()
         api = ldif(settings=settings)
         result = api.parse_ldif(c.Tests.CONFIG_MULTIPLE_ENTRIES)
         assert result.success

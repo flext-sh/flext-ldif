@@ -7,6 +7,7 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 _LAZY_IMPORTS = build_lazy_import_map(
     {
+        ".fixtures": ("fixtures",),
         ".test_acl_metadata_preservation": ("TestsFlextLdifAclMetadataPreservation",),
         ".test_api_integration": ("TestsFlextLdifApiIntegration",),
         ".test_categorization_real_data": ("TestsFlextLdifCategorizationRealData",),

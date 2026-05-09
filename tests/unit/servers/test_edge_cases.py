@@ -15,16 +15,6 @@ from flext_ldif import ldif
 from tests import c, p
 
 
-@pytest.fixture(autouse=True)
-def cleanup_state() -> None:
-    """Autouse fixture to clean shared state between tests.
-
-    Runs after each test to prevent state pollution to subsequent tests.
-    Ensures test isolation even when fixtures have shared state.
-    """
-    return
-
-
 @pytest.fixture
 def ldif_api() -> p.Ldif.LdifClient:
     """Provides a ldif API instance for the test function."""
@@ -53,9 +43,9 @@ class TestsFlextLdifEdgeCases:
         expect_non_ascii: bool,
     ) -> None:
         """Test inline edge-case parsing rules using centralized datasets."""
-        result = ldif_api.parse_ldif(ldif_content, server_type=c.Tests.RFC)
-        _ = tm.that(result.success, eq=True)
-        entries = result.value.entries
+        entries = tm.ok(
+            ldif_api.parse_ldif(ldif_content, server_type=c.Tests.RFC)
+        ).entries
         tm.that(len(entries), gte=expected_entry_count)
         max_depth = 0
         has_non_ascii = False
@@ -67,7 +57,7 @@ class TestsFlextLdifEdgeCases:
                 if c.Tests.EDGE_CASE_NON_ASCII_REGEX.search(entry.dn.value):
                     has_non_ascii = True
         if expected_min_depth > 0:
-            _ = tm.that(max_depth, gte=expected_min_depth)
+            tm.that(max_depth, gte=expected_min_depth)
         tm.that(has_non_ascii, eq=expect_non_ascii)
 
     def test_large_multivalue(self, ldif_api: p.Ldif.LdifClient) -> None:
@@ -75,17 +65,17 @@ class TestsFlextLdifEdgeCases:
         fixture_path = (
             c.Tests.FIXTURES_DIR / c.Tests.EDGE_CASE_LARGE_MULTIVALUE_FIXTURE_RELATIVE
         )
-        result = ldif_api.parse_ldif(fixture_path, server_type=c.Tests.RFC)
-        _ = tm.that(result.success, eq=True)
-        entries = result.value.entries
-        tm.that(len(entries) > 0, eq=True)
+        entries = tm.ok(
+            ldif_api.parse_ldif(fixture_path, server_type=c.Tests.RFC)
+        ).entries
+        tm.that(len(entries), gt=0)
         max_values = 0
         for entry in entries:
             if entry.attributes is None:
                 continue
             for attr_value in entry.attributes.values():
                 max_values = max(max_values, len(attr_value))
-        _ = tm.that(max_values, gte=c.Tests.EDGE_CASE_MIN_MULTIVALUE_COUNT)
+        tm.that(max_values, gte=c.Tests.EDGE_CASE_MIN_MULTIVALUE_COUNT)
 
     @pytest.mark.parametrize(
         ("ldif_content", "output_name"),
@@ -100,19 +90,13 @@ class TestsFlextLdifEdgeCases:
         output_name: str,
     ) -> None:
         """Test roundtrip of inline edge-case LDIF payloads."""
-        parse_result = ldif_api.parse_ldif(
-            ldif_content,
-            server_type=c.Tests.RFC,
-        )
-        _ = tm.that(parse_result.success, eq=True)
-        entries = parse_result.value.entries
+        entries = tm.ok(
+            ldif_api.parse_ldif(ldif_content, server_type=c.Tests.RFC)
+        ).entries
         tm.that(len(entries), eq=1)
         output_path = tmp_path / output_name
-        write_result = ldif_api.write_ldif_file(
-            entries, output_path, server_type=c.Tests.RFC
-        )
-        _ = tm.that(write_result.success, eq=True)
-        roundtrip_result = ldif_api.parse_ldif(output_path, server_type=c.Tests.RFC)
-        _ = tm.that(roundtrip_result.success, eq=True)
-        roundtrip_entries = roundtrip_result.value.entries
+        tm.ok(ldif_api.write_ldif_file(entries, output_path, server_type=c.Tests.RFC))
+        roundtrip_entries = tm.ok(
+            ldif_api.parse_ldif(output_path, server_type=c.Tests.RFC)
+        ).entries
         tm.that(len(roundtrip_entries), eq=1)

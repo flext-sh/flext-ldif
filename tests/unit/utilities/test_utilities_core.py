@@ -74,19 +74,14 @@ class TestsFlextLdifUtilitiesCore:
 
     def test_parse_components(self) -> None:
         """Test DN component parsing."""
-        dn = "cn=John,ou=Users,dc=example"
-        result = u.Ldif.parse(dn)
-        tm.that(result.success, eq=True)
-        parsed = result.value
+        parsed = tm.ok(u.Ldif.parse("cn=John,ou=Users,dc=example"))
         tm.that(len(parsed), gte=2)
 
     def test_compare_dns(self) -> None:
         """Test DN comparison."""
-        dn1 = "cn=John,dc=example,dc=com"
-        dn2 = "cn=jane,dc=example,dc=com"
-        result = u.Ldif.compare_dns(dn1, dn2)
-        tm.that(result.success, eq=True)
-        comparison = result.value
+        comparison = tm.ok(
+            u.Ldif.compare_dns("cn=John,dc=example,dc=com", "cn=jane,dc=example,dc=com")
+        )
         tm.that(comparison, is_=int)
 
     def test_escape_dn_value(self) -> None:

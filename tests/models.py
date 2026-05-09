@@ -17,6 +17,29 @@ class TestsFlextLdifModels(FlextTestsModels, m):
     class Tests(FlextTestsModels.Tests):
         """Test fixture models namespace."""
 
+        class _Frozen(m.BaseModel):
+            """Base for every frozen test model in this namespace."""
+
+            model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+
+        class _CanHandleCase(_Frozen):
+            """Shared fields for can_handle-style detection cases."""
+
+            scenario: Annotated[str, u.Field(description="Scenario identifier")]
+            expected_can_handle: Annotated[
+                bool, u.Field(description="Expected can_handle result")
+            ]
+
+        class _SchemaCase(_CanHandleCase):
+            """Shared OID/NAME parsed-value expectations."""
+
+            expected_oid: Annotated[
+                str | None, u.Field(description="Expected parsed OID")
+            ] = None
+            expected_name: Annotated[
+                str | None, u.Field(description="Expected parsed name")
+            ] = None
+
         class LdifTestData(m.Value):
             """Test data for LDIF utilities."""
 
@@ -35,10 +58,8 @@ class TestsFlextLdifModels(FlextTestsModels, m):
                 u.Field(description="LDAP attributes mapped to their values"),
             ]
 
-        class FixtureMetadata(m.BaseModel):
+        class FixtureMetadata(_Frozen):
             """Metadata about a discovered fixture file."""
-
-            model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
             server_type: Annotated[
                 t.Tests.FixtureServer,
@@ -50,85 +71,40 @@ class TestsFlextLdifModels(FlextTestsModels, m):
             ]
             file_path: Annotated[Path, u.Field(description="Fixture file path")]
             line_count: Annotated[
-                int,
-                u.Field(description="Number of lines in the fixture file"),
+                int, u.Field(description="Number of lines in the fixture file")
             ]
             entry_count: Annotated[
-                int,
-                u.Field(description="Number of LDIF entries in the fixture"),
+                int, u.Field(description="Number of LDIF entries in the fixture")
             ]
             size_bytes: Annotated[
-                int,
-                u.Field(description="Fixture file size in bytes"),
+                int, u.Field(description="Fixture file size in bytes")
             ]
 
-        class AttributeTestCase(m.BaseModel):
+        class AttributeTestCase(_SchemaCase):
             """Unified test case for attribute detection."""
 
-            model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
-
-            scenario: Annotated[str, u.Field(description="Attribute scenario")]
             attr_definition: Annotated[str, u.Field(description="Attribute definition")]
-            expected_can_handle: Annotated[
-                bool,
-                u.Field(description="Expected can_handle result"),
-            ]
-            expected_oid: Annotated[
-                str | None,
-                u.Field(description="Expected parsed OID"),
-            ] = None
-            expected_name: Annotated[
-                str | None,
-                u.Field(description="Expected parsed attribute name"),
-            ] = None
 
-        class ObjectClassTestCase(m.BaseModel):
+        class ObjectClassTestCase(_SchemaCase):
             """Unified test case for objectClass detection."""
 
-            model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
-
-            scenario: Annotated[str, u.Field(description="ObjectClass scenario")]
-            oc_definition: Annotated[
-                str,
-                u.Field(description="ObjectClass definition"),
-            ]
-            expected_can_handle: Annotated[
-                bool,
-                u.Field(description="Expected can_handle result"),
-            ]
-            expected_oid: Annotated[
-                str | None,
-                u.Field(description="Expected parsed OID"),
-            ] = None
-            expected_name: Annotated[
-                str | None,
-                u.Field(description="Expected parsed objectClass name"),
-            ] = None
+            oc_definition: Annotated[str, u.Field(description="ObjectClass definition")]
             expected_kind: Annotated[
                 str | None,
                 u.Field(description="Expected parsed objectClass kind"),
             ] = None
 
-        class EntryTestCase(m.BaseModel):
+        class EntryTestCase(_CanHandleCase):
             """Unified test case for entry detection."""
 
-            model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
-
-            scenario: Annotated[str, u.Field(description="Entry scenario")]
             entry_dn: Annotated[str, u.Field(description="Entry DN")]
             attributes: Annotated[
                 t.MutableStrSequenceMapping,
                 u.Field(description="Entry attributes"),
             ]
-            expected_can_handle: Annotated[
-                bool,
-                u.Field(description="Expected can_handle result"),
-            ]
 
-        class ProtocolServer(m.BaseModel):
+        class ProtocolServer(_Frozen):
             """Server implementation for protocol testing."""
-
-            model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
             name: Annotated[str, u.Field(description="Implementation name")]
             server_class: Annotated[type, u.Field(description="Server class")]
@@ -138,20 +114,16 @@ class TestsFlextLdifModels(FlextTestsModels, m):
                 u.Field(description="Servers covered by the implementation"),
             ] = ()
 
-        class AclTestCase(m.BaseModel):
+        class AclTestCase(_Frozen):
             """Unified test case for ACL handling."""
-
-            model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
             scenario: Annotated[str, u.Field(description="ACL scenario")]
             acl_line: Annotated[str | None, u.Field(description="ACL line")] = None
             expected_can_handle: Annotated[
-                bool,
-                u.Field(description="Expected can_handle result"),
+                bool, u.Field(description="Expected can_handle result")
             ] = False
             expected_success: Annotated[
-                bool,
-                u.Field(description="Expected parse success"),
+                bool, u.Field(description="Expected parse success")
             ] = False
 
 

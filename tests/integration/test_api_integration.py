@@ -187,6 +187,23 @@ class TestsFlextLdifApiIntegration:
         assert categorization.base_dn == "dc=options,dc=example"
         assert categorization.forbidden_attributes == ["userPassword"]
 
+    def test_categorization_normalizes_schema_whitelist_rules_mapping(self) -> None:
+        """Categorization should normalize raw schema whitelist mappings via Pydantic."""
+        categorization = ldif.categorization(
+            options=m.Ldif.MigrateOptions(
+                schema_whitelist_rules={
+                    "allowed_attribute_oids": {"1.2.3.4"},
+                    "allowed_objectclass_oids": {"2.3.4.5"},
+                },
+            ),
+            server_type=c.Tests.OUD,
+        )
+
+        assert isinstance(categorization, FlextLdifCategorization)
+        assert isinstance(categorization.schema_whitelist_rules, m.Ldif.WhitelistRules)
+        assert categorization.schema_whitelist_rules is not None
+        assert categorization.schema_whitelist_rules.has_oid_filters
+
     def test_migration_pipeline_reads_transform_and_migrate_options(
         self,
         tmp_path: Path,
