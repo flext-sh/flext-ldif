@@ -1,0 +1,130 @@
+tests/constants.py
+  s_36545bba6ab72e::t_44797ca551c67d 703-706,710,732
+  s_36545bba6ab72e::t_34b5d607eac64a 656-657,662,668,674-675,677-678,692,698-701,709,711-731,733-735
+  s_36545bba6ab72e::t_b749090b66a07c 738-744,746-750,752-756,758-762,765-768
+  s_36545bba6ab72e::t_c126a4bfdfdaa6 855,861,867,873-874,880-905,907-908,911-913,934-940
+  s_36545bba6ab72e::t_c86fbf1d9aa433 150-152,154-161
+  s_36545bba6ab72e::t_6c3bd9ffc4c9a9 745,751,757,763-764,770-806,808-809,811,814-817,819,821-846
+  s_36545bba6ab72e::t_c3ed6d53c8d795 188
+  s_36545bba6ab72e::t_7ae86e3a888310 914-933
+  s_36545bba6ab72e::t_f0d3510ed36c6b 650-655,658-661,663-667,669-673,676,679-691,693-697
+  s_36545bba6ab72e::t_39e84e22018705 948
+  s_36545bba6ab72e::t_6c460750548b6d 820
+  s_36545bba6ab72e::t_2ed4a626a189c9 848-854,856-860,862-866,868-872,875-878
+  s_36545bba6ab72e::t_28d017efd5e098 956-962,965-968
+src/flext_ldif/services/categorization.py
+  s_1aca2b1c94e9fc::t_6f9268cc77c412 40,105,262
+  h_5cf852cc46bf92 103-104,106,108,259,417
+tests/utilities.py
+  s_36545bba6ab72e::t_7ff099c6314b69 7,12,31,37,46-47,50,52,59-60,93,97,99-102,104-105,114,116-122,126-133,135,150,159,161-163,177-178,184-185,212-216,233-234,242-243,246-260,262,286,291-292,294-301,303-306,308-316,318-321,323-326,329-335,337-338,350-351,354-355,358-360,363-365,369,371-376,391-393,396-398,402,407-415,417,428-433,435-453,455,458,461,463,473,476
+  s_36545bba6ab72e::t_db12d63f9b5070 75
+tests/unit/servers/test_ds389_servers.py
+  s_36545bba6ab72e::t_993af837b10c61 16-18,20-22,31-34,40,53,61-66,70,73-76,82,96,109-112,124-125,130,132-135
+  s_36545bba6ab72e::t_7b25971d881a03 19
+  s_36545bba6ab72e::t_96c97ddc9c8116 102-103
+tests/unit/services/test_processing_service.py
+  s_36545bba6ab72e::t_ce9e468557c2cd 81-88
+tests/unit/servers/test_relaxed_servers.py
+  s_36545bba6ab72e::t_fc58567c208a30 169
+  s_36545bba6ab72e::t_b0b4d9fad9c4ea 106
+  s_36545bba6ab72e::t_32bb1facd8f3d0 311-312
+  s_36545bba6ab72e::t_e69fb231f37de5 132,134
+  s_36545bba6ab72e::t_8a82f1288b611e 197,199,201
+  s_36545bba6ab72e::t_74bebbbf455739 325-326
+tests/base.py
+  h_5cf852cc46bf92 1-29
+  s_0290f35b98ef0c::t_84e11ecd2f1c56 30
+tests/integration/test_api_integration.py
+  h_5cf852cc46bf92 193,197-198
+  s_1aca2b1c94e9fc::t_6f9268cc77c412 190-192,194-196,199-206
+tests/integration/fixtures.py
+  h_5cf852cc46bf92 1-168
+  s_1aca2b1c94e9fc::t_606dc649a79d0a 169
+tests/unit/fixtures.py
+  s_36545bba6ab72e::t_1f35a96b11731d 6,21-22,31
+  s_36545bba6ab72e::t_c7f76167e13f64 19
+  s_36545bba6ab72e::t_98725cd9851a77 23-30
+  s_0290f35b98ef0c::t_09c4ae7cffb0c6 1-5,7-9,11,13,15,32-54,57-61,64-68,71-75,78-89,92-96,99-103,106-110,113-117,120-131,134-138,141-149,151,154-156,158-165,167-194
+  s_36545bba6ab72e::t_075fcd297005e6 12,20
+  h_5cf852cc46bf92 10,14,16-18,55-56,62-63,69-70,76-77,90-91,97-98,104-105,111-112,118-119,132-133,139-140,150,152-153,157,166
+  s_1aca2b1c94e9fc::t_606dc649a79d0a 195
+  s_36545bba6ab72e::t_d6520008bc6ea4 196-218,220-223,231,236-238
+  s_36545bba6ab72e::t_1bed77c2ff523d 219,224-230,232-235
+tests/conftest.py
+  s_1aca2b1c94e9fc::t_606dc649a79d0a 8
+tests/unit/services/test_api_server_registry.py
+  s_36545bba6ab72e::t_91ec3e2bbfb08a 22,39-41,60,62,69-76,83-86
+tests/unit/servers/test_novell_servers.py
+  s_36545bba6ab72e::t_ef906631ad890b 92-97
+  s_36545bba6ab72e::t_9dcd7ae548306a 159-162
+tests/integration/test_config_integration.py
+  s_2914457c55fb6e::t_f76881e29448ad 26,38-41,44,49,51,62-63,83,103,113,124
+  h_5cf852cc46bf92 25
+tests/unit/utilities/test_utilities_core.py
+  s_36545bba6ab72e::t_b86926b6947d4b 77,82-84
+tests/unit/services/test_migration_pipeline.py
+  s_36545bba6ab72e::t_2ab4a18b46cf44 11,17-23,32-36,38-40,48-50,52,72,75-76,85,89-91,93,101-105,107-113,116-121,123,125-126,129-131,133,136-144,147-149,160,163-167,169,171-172,175-179,181,183,185-186,189-193,195-198,201-203,205-206,214,223-227,229,231,234-238,240,245-250,252-256,258,261-263,267,270,272,274,276,284-287,295-298,301-308,310,312,315-318
+  s_36545bba6ab72e::t_722af4528f0334 127
+  s_36545bba6ab72e::t_39d5c8fd3942a8 87
+  s_36545bba6ab72e::t_6662d839ccc77b 99
+tests/unit/servers/test_edge_cases.py
+  s_36545bba6ab72e::t_6abe7eccac7687 46-48,60,68-71,78,93-95,98-101
+tests/models.py
+  s_36545bba6ab72e::t_5ec0f8a8cef738 25-26,33-34,61,83,88,97,106,117
+  s_36545bba6ab72e::t_b0eda95884af08 20-24,27-32,35-42,74,77,80,91,123,126
+tests/__init__.py
+  s_a80af81a9410d1::t_46134470761950 18,72,108-110,113,133-136,199,238-240,243,307,342-343
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "57adb9eec9886b3ef8219d28a00358d11b77f8c2",
+  "prompts": {},
+  "humans": {
+    "h_5cf852cc46bf92": {
+      "author": "FLEXT Bot <team@flext.sh>"
+    }
+  },
+  "sessions": {
+    "s_0290f35b98ef0c": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "0c4cc853-563f-48ad-a39a-f49b587090b8",
+        "model": "unknown"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>"
+    },
+    "s_1aca2b1c94e9fc": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "ce2bbb45-e9bf-4d0e-b1f1-79cea59375ea",
+        "model": "unknown"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>"
+    },
+    "s_2914457c55fb6e": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "028a9615-de04-439a-812a-011714b27791",
+        "model": "unknown"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>"
+    },
+    "s_36545bba6ab72e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0a8b3dbc-0a89-4859-9d52-cbe459d2edb4",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>"
+    },
+    "s_a80af81a9410d1": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "84754499-5978-4e17-a700-27b4a6a58505",
+        "model": "unknown"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>"
+    }
+  }
+}
