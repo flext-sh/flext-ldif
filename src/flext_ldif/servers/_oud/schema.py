@@ -80,21 +80,6 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
             )
             fixed_substr = "caseIgnoreSubstringsMatch"
             fixed_equality = None
-        if (
-            fixed_substr == "caseIgnoreSubstringsMatch"
-            and fixed_equality == "caseIgnoreMatch"
-        ):
-            logger.warning(
-                "OUD SERVER: FOUND REDUNDANT EQUALITY+SUBSTR - Removing redundant EQUALITY",
-                attribute_name=attr_data.name,
-                attribute_oid=attr_data.oid,
-                original_equality=fixed_equality or "unknown",
-                original_substr=fixed_substr or "unknown",
-                new_equality="",
-                new_substr="caseIgnoreSubstringsMatch",
-                redundant_equality="caseIgnoreMatch",
-            )
-            fixed_equality = None
         original_substr = fixed_substr
         fixed_substr = u.Ldif.replace_invalid_substr_rule(
             fixed_substr,
@@ -224,8 +209,6 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         oc: m.Ldif.SchemaObjectClass,
     ) -> p.Result[m.Ldif.SchemaObjectClass]:
         """Hook: Validate OUD-specific objectClass features after RFC parsing."""
-        if not oc:
-            return r[m.Ldif.SchemaObjectClass].fail("ObjectClass is None or empty")
         sup_validation = self._validate_objectclass_sup(oc)
         if sup_validation.failure:
             return r[m.Ldif.SchemaObjectClass].fail(
