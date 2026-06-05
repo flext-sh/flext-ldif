@@ -1,0 +1,23 @@
+tests/unit/utilities/test_utilities_core.py
+  s_ec83492d4209e5::t_06c0c1a02b8718 32-36
+src/flext_ldif/_constants/base.py
+  s_ec83492d4209e5::t_3a58ce71d4d1c4 225-227
+src/flext_ldif/_models/domain_dn.py
+  s_ec83492d4209e5::t_53fd5741c1baa4 165,173-175
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "d9ae81b77aab1b95d6907f6555b10b0cdf0bc7ab",
+  "prompts": {},
+  "sessions": {
+    "s_ec83492d4209e5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e97b7-d073-7711-a0a1-e7daf811f073",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
