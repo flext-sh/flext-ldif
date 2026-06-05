@@ -162,7 +162,7 @@ class FlextLdifModelsDomainDN:
             """Validate every RDN component against RFC 4514 § 2.3 syntax.
 
             An empty value is accepted (canonical empty DN). For non-empty
-            values, every comma-separated component must satisfy
+            values, every unescaped-comma-separated component must satisfy
             ``c.Ldif.DN_COMPONENT_RE`` (``attr=value`` shape with optional
             backslash-escapes). Invalid components raise ``ValueError`` so
             Pydantic surfaces a structured ``ValidationError``.
@@ -170,7 +170,9 @@ class FlextLdifModelsDomainDN:
             if not value:
                 return value
             for component in (
-                comp.strip() for comp in value.split(",") if comp.strip()
+                comp.strip()
+                for comp in c.Ldif.DN_SPLIT_UNESCAPED_COMMA_RE.split(value)
+                if comp.strip()
             ):
                 if not c.Ldif.DN_COMPONENT_RE.match(component):
                     msg = (

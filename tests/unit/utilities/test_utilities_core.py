@@ -29,6 +29,11 @@ class TestsFlextLdifUtilitiesCore:
         result = u.Ldif.split(dn)
         tm.that(result, eq=["cn=Test\\, User", "ou=Users", "dc=example", "dc=com"])
 
+    def test_dn_model_accepts_escaped_commas(self) -> None:
+        """Test DN model validation with escaped commas."""
+        dn = m.Ldif.DN(value="cn=Test\\, User,ou=Users,dc=example,dc=com")
+        tm.that(dn.value, eq="cn=Test\\, User,ou=Users,dc=example,dc=com")
+
     def test_split_dn_edge_cases(self) -> None:
         """Test splitting DN edge cases."""
         tm.that(u.Ldif.split(""), empty=True)
