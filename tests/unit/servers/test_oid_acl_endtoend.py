@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from flext_tests import tm
 
+from flext_ldif import FlextLdifConversion
 from tests import c, m, p, t, u
 
 
@@ -117,5 +118,35 @@ class TestsFlextLdifOidAclEndToEnd:
                 ('(targetattr="*")(targetscope="base")'
                 '(version 3.0; acl "users Entry by g"; '
                 'allow (read, search) groupdn="ldap:///cn=g,dc=ctbc";)'),
+            ],
+        )
+
+    def test_base_dn_field_excludes_out_of_scope_bind_dn(self) -> None:
+        # FlextLdifConversion(base_dn=...) activates the out-of-scope filter:
+        # a bind DN outside base_dn is dropped from the emitted aci.
+        entry = u.Tests.create_real_entry(
+            dn="cn=users,dc=ctbc",
+            attributes={
+                "objectClass": ["top"],
+                "orclaci": [
+                    ('access to entry by group="cn=x,dc=other" (browse) '
+                    'by group="cn=a,dc=ctbc" (browse)'),
+                ],
+            },
+        )
+        svc = FlextLdifConversion(base_dn="dc=ctbc")
+
+        converted = u.Tests.assert_success(
+            svc.convert_model(c.Ldif.ServerTypes.OID, c.Ldif.ServerTypes.OUD, entry),
+        )
+        if not isinstance(converted, m.Ldif.Entry) or converted.attributes is None:
+            msg = "convert_model did not return an Entry with attributes"
+            raise AssertionError(msg)
+
+        tm.that(
+            converted.attributes.attributes["aci"],
+            eq=[
+                ('(targetattr="*")(version 3.0; acl "users Entry by x"; '
+                'allow (read, search) groupdn="ldap:///cn=a,dc=ctbc";)'),
             ],
         )
