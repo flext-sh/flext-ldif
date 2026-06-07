@@ -1,0 +1,22 @@
+tests/unit/test_collections_models.py
+  s_9942ef7a89ba9a::t_efd9c46892d3e1 115-157
+src/flext_ldif/_models/domain_acl.py
+  s_9942ef7a89ba9a::t_b6efe586c0c3ef 348-435,437-438
+  s_9942ef7a89ba9a::t_19dbae397b153b 436
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "ddeb76d67e946100eaf18347b4c9bffa4f2a757f",
+  "prompts": {},
+  "sessions": {
+    "s_9942ef7a89ba9a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "84fb5cb9-a1bd-4654-9339-7a49b63e96d1",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
