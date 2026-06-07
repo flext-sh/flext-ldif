@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from flext_tests import tm
+from structlog.testing import capture_logs
 
 from flext_ldif import m
 from flext_ldif.servers._oid.acl_assemble import FlextLdifServersOidAclAssemble as Asm
@@ -331,6 +332,27 @@ class TestsFlextLdifOidAclConvertValues:
         )
 
         tm.that(result.unwrap(), eq=())
+
+    def test_conversion_notes_are_surfaced_via_logging(self) -> None:
+        with capture_logs() as captured:
+            Pipe.convert_acl_values(
+                "cn=users,dc=ctbc",
+                (
+                    ('orclaci: access to entry by guidattr=(g) (browse) '
+                    'by group="cn=a,dc=ctbc" (browse)'),
+                ),
+            )
+
+        note_events = [
+            event
+            for event in captured
+            if event.get("event") == "OID ACL conversion notes"
+        ]
+        tm.that(len(note_events), eq=1)
+        tm.that(
+            any("guidattr" in note for note in note_events[0].get("notes", [])),
+            eq=True,
+        )
 
 
 class TestsFlextLdifOidAclConvertEntryAcls:

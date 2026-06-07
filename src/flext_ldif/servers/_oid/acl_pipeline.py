@@ -8,10 +8,12 @@ attributes with one ``aci`` attribute. Malformed input surfaces as ``r.fail``.
 
 from __future__ import annotations
 
-from flext_ldif import c, m, r, t
+from flext_ldif import c, m, r, t, u
 from flext_ldif.servers._oid.acl_assemble import FlextLdifServersOidAclAssemble as Build
 from flext_ldif.servers._oid.acl_convert import FlextLdifServersOidAclConvert as Parser
 from flext_ldif.servers._oid.acl_render import FlextLdifServersOidAclRender as Render
+
+logger = u.fetch_logger(__name__)
 
 
 class FlextLdifServersOidAclPipeline:
@@ -42,6 +44,12 @@ class FlextLdifServersOidAclPipeline:
             aci = Build.build_aci_rule(rule.value, base_dn=base_dn)
             if aci.failure:
                 return r[t.StrSequence].fail(aci.error or "OID ACL build failed")
+            if aci.value.notes:
+                logger.info(
+                    "OID ACL conversion notes",
+                    dn=dn,
+                    notes=list(aci.value.notes),
+                )
             if not aci.value.allows:
                 continue
             rendered = Render.render_aci_string(aci.value).removeprefix(
