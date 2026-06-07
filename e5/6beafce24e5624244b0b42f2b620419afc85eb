@@ -1,0 +1,23 @@
+tests/unit/servers/test_oid_acl_convert_oud.py
+  s_9942ef7a89ba9a::t_f1a45449abec34 81-124
+src/flext_ldif/servers/_oid/acl_convert_oud.py
+  s_9942ef7a89ba9a::t_27f2b1e4c79a09 12,24,26-32,34-39,41-61,64,66,69,71,74,76-82
+  s_9942ef7a89ba9a::t_30b48e77e2f953 62-63,65,67-68,70,72-73,75
+  s_9942ef7a89ba9a::t_96f61ec9c75fc3 25,33,40
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "e56beafce24e5624244b0b42f2b620419afc85eb",
+  "prompts": {},
+  "sessions": {
+    "s_9942ef7a89ba9a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "84fb5cb9-a1bd-4654-9339-7a49b63e96d1",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
