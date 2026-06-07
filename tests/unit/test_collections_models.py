@@ -112,3 +112,46 @@ class TestsFlextLdifCollectionsModels:
 
         with pytest.raises(TypeError, match="unhashable"):
             _ = hash(categories)
+
+    def test_oid_acl_rule_models_carry_typed_subjects(self) -> None:
+        subject = m.Ldif.OidAclSubject(
+            subject_type="group",
+            value="cn=admins,dc=ctbc",
+            permissions=("add", "delete", "browse"),
+        )
+        rule = m.Ldif.OidAclRule(
+            dn="dc=ctbc",
+            acl_type="orclaci",
+            target_type="entry",
+            subjects=(subject,),
+            raw_line="orclaci: access to entry by group=...",
+        )
+
+        tm.that(rule.acl_type, eq="orclaci")
+        tm.that(rule.target_type, eq="entry")
+        tm.that(rule.target_attrs, eq="*")
+        tm.that(rule.target_filter is None, eq=True)
+        tm.that(len(rule.subjects), eq=1)
+        tm.that(rule.subjects[0].subject_type, eq="group")
+        tm.that(rule.subjects[0].permissions, eq=("add", "delete", "browse"))
+
+    def test_aci_rule_models_carry_typed_allows(self) -> None:
+        allow = m.Ldif.AciAllow(
+            subject_type="groupdn",
+            subject_value="ldap:///cn=admins,dc=ctbc",
+            permissions=("read", "search", "add", "delete"),
+        )
+        aci = m.Ldif.AciRule(
+            dn="dc=ctbc",
+            targetattr="*",
+            targetscope="base",
+            acl_name="admins Entry by admins",
+            allows=(allow,),
+        )
+
+        tm.that(aci.targetattr, eq="*")
+        tm.that(aci.targetscope, eq="base")
+        tm.that(aci.targetfilter is None, eq=True)
+        tm.that(len(aci.allows), eq=1)
+        tm.that(aci.allows[0].subject_type, eq="groupdn")
+        tm.that(aci.allows[0].permissions, eq=("read", "search", "add", "delete"))
