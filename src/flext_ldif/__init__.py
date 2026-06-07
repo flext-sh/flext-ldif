@@ -24,6 +24,7 @@ from flext_ldif.__version__ import (
 if _t.TYPE_CHECKING:
     from flext_cli import d, e, h, r, x
     from flext_ldif._constants.acl_convert import FlextLdifConstantsAclConvert
+    from flext_ldif._constants.acl_convert_oud import FlextLdifConstantsAclConvertOud
     from flext_ldif._constants.base import FlextLdifConstantsBase
     from flext_ldif._constants.enums import FlextLdifConstantsEnums
     from flext_ldif._models.acl_convert import FlextLdifModelsAclConvert
@@ -143,6 +144,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
     build_lazy_import_map(
         {
             "._constants.acl_convert": ("FlextLdifConstantsAclConvert",),
+            "._constants.acl_convert_oud": ("FlextLdifConstantsAclConvertOud",),
             "._constants.base": ("FlextLdifConstantsBase",),
             "._constants.enums": ("FlextLdifConstantsEnums",),
             "._models.acl_convert": ("FlextLdifModelsAclConvert",),
@@ -325,6 +327,7 @@ __all__: list[str] = [
     "FlextLdifCategorization",
     "FlextLdifConstants",
     "FlextLdifConstantsAclConvert",
+    "FlextLdifConstantsAclConvertOud",
     "FlextLdifConstantsBase",
     "FlextLdifConstantsEnums",
     "FlextLdifConversion",

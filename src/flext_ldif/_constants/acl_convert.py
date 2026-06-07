@@ -1,18 +1,17 @@
-"""FlextLdifConstantsAclConvert - OID→OUD ACL conversion constants (SSOT).
+"""FlextLdifConstantsAclConvert - OID ACL parse patterns (SSOT).
 
-Faithful port of the proven oracle ``algar-oud-mig/scripts/_constants/acl_converter.py``
-into flext-ldif as the single source of truth for OID orclaci/orclentrylevelaci →
-OUD aci conversion (parse patterns, permission maps, subject/target taxonomy, scope
-rules). Owns every compiled ``re.Pattern`` it needs; consumers import the ``*_RE``
-authorities — ``import re`` outside this module is forbidden (AGENTS.md §3.1).
+The OID/parse side of the OID→OUD ACL conversion: attribute-kind / target /
+subject enums and every compiled ``re.Pattern`` used to parse an OID
+orclaci/orclentrylevelaci line. The OUD-output taxonomy (permission maps,
+bind-rule keywords, scope rules) lives in the sibling
+``_constants/acl_convert_oud.py``. Consumers import the ``*_RE`` authorities —
+``import re`` outside this module is forbidden (AGENTS.md §3.1).
 """
 
 from __future__ import annotations
 
 import re
-from collections.abc import Mapping
 from enum import StrEnum, unique
-from types import MappingProxyType
 from typing import ClassVar, Final
 
 from flext_ldif._typings.base import FlextLdifTypesBase as t
@@ -36,23 +35,21 @@ class FlextLdifConstantsAclConvert:
         ATTR = "attr"
 
     @unique
-    class OudSubjectType(StrEnum):
-        """OUD aci bind-rule keywords."""
+    class OidSubjectKind(StrEnum):
+        """OID by-clause subject kinds emitted by the parser."""
 
-        GROUPDN = "groupdn"
-        USERDN = "userdn"
-        USERATTR = "userattr"
-
-    @unique
-    class UserAttrSuffix(StrEnum):
-        """OUD ``userattr`` value suffixes."""
-
-        USERDN = "#USERDN"
-        GROUPDN = "#GROUPDN"
+        GROUP = "group"
+        USER = "user"
+        SELF = "self"
+        ANYONE = "anyone"
+        SUPERUSER = "superuser"
+        DNATTR = "dnattr"
+        GROUPATTR = "groupattr"
+        GUIDATTR = "guidattr"
+        UNKNOWN = "unknown"
 
     ACL_ACCESS_TO: Final[str] = "access to"
     ACL_WILDCARD: Final[str] = "*"
-    ACL_SCOPE_BASE: Final[str] = "base"
 
     ATTR_PATTERN_RE: ClassVar[t.RegexPattern] = re.compile(
         r"attr\s*(!?=)\s*\(([^)]*)\)",
@@ -123,77 +120,6 @@ class FlextLdifConstantsAclConvert:
         re.IGNORECASE,
     )
     "Finds each ``by <subject> (perms)`` clause in an OID ACL (optional modifiers)."
-
-    # OID permission → OUD permission(s); None = negation/deny (dropped).
-    ENTRY_PERM_MAP: ClassVar[Mapping[str, str | None]] = MappingProxyType({
-        "browse": "read, search",
-        "add": "add",
-        "delete": "delete",
-        "proxy": "proxy",
-        "noadd": None,
-        "nodelete": None,
-        "noproxy": None,
-        "nobrowse": None,
-        "none": None,
-    })
-    ATTR_PERM_MAP: ClassVar[Mapping[str, str | None]] = MappingProxyType({
-        "read": "read",
-        "search": "search",
-        "write": "write",
-        "selfwrite": "selfwrite",
-        "compare": "compare",
-        "noread": None,
-        "nosearch": None,
-        "nowrite": None,
-        "noselfwrite": None,
-        "nocompare": None,
-        "none": None,
-    })
-    # OID ``noX`` negation token → its base permission (for complement computation).
-    NEGATION_TO_BASE: ClassVar[Mapping[str, str]] = MappingProxyType({
-        "noread": "read",
-        "nosearch": "search",
-        "nowrite": "write",
-        "noselfwrite": "selfwrite",
-        "nocompare": "compare",
-        "noadd": "add",
-        "nodelete": "delete",
-        "noproxy": "proxy",
-        "nobrowse": "browse",
-    })
-    ALL_ENTRY_PERMS: Final[frozenset[str]] = frozenset({
-        "browse",
-        "add",
-        "delete",
-        "proxy",
-    })
-    ALL_ATTR_PERMS: Final[frozenset[str]] = frozenset({
-        "read",
-        "search",
-        "write",
-        "selfwrite",
-        "compare",
-    })
-    PERM_ORDERED: Final[tuple[str, ...]] = (
-        "read",
-        "search",
-        "write",
-        "selfwrite",
-        "compare",
-        "add",
-        "delete",
-        "proxy",
-    )
-    "Canonical OUD permission ordering for deterministic aci assembly."
-
-    HIGH_LEVEL_CONTAINER_SUFFIXES: Final[tuple[str, ...]] = (
-        "",
-        "dc=network,",
-        "cn=users,dc=network,",
-        "cn=groups,dc=network,",
-        "cn=perfis,dc=network,",
-    )
-    "DN suffixes (relative to base) treated as high-level containers (filter anyone)."
 
 
 __all__: list[str] = ["FlextLdifConstantsAclConvert"]

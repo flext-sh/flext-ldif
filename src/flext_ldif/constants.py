@@ -10,6 +10,7 @@ from typing import ClassVar, Final
 from flext_cli import FlextCliConstants, t
 from flext_ldif import (
     FlextLdifConstantsAclConvert,
+    FlextLdifConstantsAclConvertOud,
     FlextLdifConstantsBase,
     FlextLdifConstantsEnums,
 )
@@ -22,6 +23,7 @@ class FlextLdifConstants(FlextCliConstants):
         FlextLdifConstantsBase,
         FlextLdifConstantsEnums,
         FlextLdifConstantsAclConvert,
+        FlextLdifConstantsAclConvertOud,
     ):
         """LDIF domain constants namespace."""
 
