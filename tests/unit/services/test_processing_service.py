@@ -131,6 +131,7 @@ class TestsFlextLdifProcessingService:
             entries_input=[entry],
         ).execute()
         converted = u.Tests.assert_success(result)
+        assert converted[0].attributes is not None
         attrs = converted[0].attributes.attributes
 
         tm.that(

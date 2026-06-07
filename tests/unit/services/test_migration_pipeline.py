@@ -339,6 +339,7 @@ class TestsFlextLdifProcessingPipeline:
         )
 
         migrated = u.Tests.assert_success(pipeline.migrate_entries([entry]))
+        assert migrated[0].attributes is not None
 
         tm.that(
             migrated[0].attributes.attributes["aci"],
