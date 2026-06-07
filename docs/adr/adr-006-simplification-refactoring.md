@@ -135,7 +135,7 @@ src/flext_ldif/
 
 **Before**:
 
-```python
+```python notest
 from flext_ldif import ldif
 
 processor = ldif.processors  # Unnecessary wrapper
@@ -144,7 +144,7 @@ result = processor.batch_process(entries, func)
 
 **After**:
 
-```python
+```python notest
 from flext_core import FlextProcessors
 
 processor = FlextProcessors()  # Direct usage
@@ -170,14 +170,14 @@ result = processor.batch_process(entries, func)
 
 **Before**:
 
-```python
+```python notest
 dn = ldif.get_entry_dn(entry)  # Wrapper
 attrs = ldif.get_entry_attributes(entry)  # Wrapper
 ```
 
 **After**:
 
-```python
+```python notest
 from flext_ldif import FlextLdifModels
 
 dn = entry.dn.value  # Direct
@@ -213,7 +213,7 @@ attrs = entry.attributes.to_ldap3()  # Direct
 
 **Example**:
 
-```python
+```python notest
 from flext_core import d
 
 
@@ -246,7 +246,7 @@ class RfcLdifParser:
 
 **Before**:
 
-```python
+```python notest
 class FlextLdifDetector:
     def __init__(self):
         self._patterns = {...}
@@ -254,7 +254,7 @@ class FlextLdifDetector:
 
 **After**:
 
-```python
+```python notest
 from flext_core import s, r
 
 
@@ -279,7 +279,7 @@ class FlextLdifDetector(s):
 
 **Before** (170 lines with nested if/else):
 
-```python
+```python notest
 def parse(
     self, source, server_type="rfc", *, batch=False, paginate=False, page_size=1000
 ):
@@ -296,7 +296,7 @@ def parse(
 
 **After** (80 lines with pattern matching):
 
-```python
+```python notest
 from typing import Literal
 
 

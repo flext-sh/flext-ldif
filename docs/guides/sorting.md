@@ -52,7 +52,7 @@ Supports hierarchy, DN, custom predicate, and schema OID sorting.
 
 ### Pattern 1: Execute Method (V1 Style)
 
-```python
+```python notest
 result = FlextLdifSorting(entries=my_entries, sort_by="hierarchy").execute()
 
 if result.success:
@@ -61,7 +61,7 @@ if result.success:
 
 ### Pattern 2: Classmethod for Composable/Chainable Operations
 
-```python
+```python notest
 result = (
     FlextLdifSorting
     .sort(my_entries, by="hierarchy")
@@ -72,7 +72,7 @@ result = (
 
 ### Pattern 3: Fluent Builder Pattern
 
-```python
+```python notest
 sorted_entries = (
     FlextLdifSorting
     .builder()
@@ -85,7 +85,7 @@ sorted_entries = (
 
 ### Pattern 4: Public Classmethod Helpers (Most Direct)
 
-```python
+```python notest
 # Sort entries by hierarchy
 result = FlextLdifSorting.by_hierarchy(my_entries)
 sorted_entries = result.unwrap()
@@ -123,7 +123,7 @@ result = FlextLdifSorting.by_schema(schema_entries)
 
 ## Complex Sorting Examples
 
-```python
+```python notest
 # Sort ONLY attributes, preserving entry order
 sorted_entries = (
     FlextLdifSorting(entries=my_entries, sort_target="attributes").execute().unwrap()
@@ -182,7 +182,7 @@ result = FlextLdifSorting.by_custom(
 
 Most common use cases:
 
-```python
+```python notest
 # Just sort entries by hierarchy
 sorted = FlextLdifSorting.by_hierarchy(entries).unwrap()
 

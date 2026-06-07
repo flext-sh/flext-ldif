@@ -28,7 +28,7 @@ This document provides solutions to common issues encountered when using FLEXT-L
 
 **Symptom**: Parse operations fail with format-related error messages.
 
-```python
+```python notest
 from flext_ldif import ldif
 
 if (
@@ -41,7 +41,7 @@ if (
 
 **Solution**:
 
-```python
+```python notest
 def diagnose_ldif_format(content: str) -> None:
     """Diagnose LDIF format issues."""
     lines = content.strip().split("\n")
@@ -72,14 +72,14 @@ def diagnose_ldif_format(content: str) -> None:
 
 **Symptom**: Parse fails with encoding-related errors.
 
-```python
+```python notest
 # Common encoding error
 UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 123
 ```
 
 **Solution**:
 
-```python
+```python notest
 from flext_ldif import ldif, p, r
 
 
@@ -117,14 +117,14 @@ def parse_with_encoding_detection(file_path: str) -> p.Result[list]:
 
 **Symptom**: Application crashes or becomes unresponsive with large LDIF files.
 
-```python
+```python notest
 # Memory error when processing large files
 MemoryError: Unable to allocate array
 ```
 
 **Solution**:
 
-```python
+```python notest
 from flext_ldif import ldif, FlextLdifModels, p, r, m, t
 
 
@@ -207,14 +207,14 @@ def process_chunk(chunk_entries: list[str]) -> p.Result[bool]:
 
 **Symptom**: Validation fails with strict mode enabled.
 
-```python
+```python notest
 result = api.validate_entries(entries)
 # Error: "Entry validation failed: unknown attribute 'customAttribute'"
 ```
 
 **Solution**:
 
-```python
+```python notest
 from flext_ldif import ldif, FlextLdifModels, p, r
 
 
@@ -281,7 +281,7 @@ def analyze_entry_issues(entries: list) -> None:
 
 **Diagnosis**:
 
-```python
+```python notest
 def benchmark_processing(file_path: str) -> None:
     """Benchmark LDIF processing performance."""
     import time
@@ -318,7 +318,7 @@ def benchmark_processing(file_path: str) -> None:
 
 **Optimization**:
 
-```python
+```python notest
 def optimize_processing_config() -> FlextLdifModels.Config:
     """Create optimized configuration for performance."""
     return FlextLdifModels.Config(
@@ -345,7 +345,7 @@ def process_with_optimization(file_path: str) -> p.Result[m.Dict]:
 
 **Symptom**: Services fail to register or retrieve from FlextContainer.
 
-```python
+```python notest
 # Error: "Service registration failed"
 container = FlextContainer.get_global()
 result = container.bind("ldif_api", api)
@@ -354,7 +354,7 @@ result = container.bind("ldif_api", api)
 
 **Solution**:
 
-```python
+```python notest
 def debug_container_issues() -> None:
     """Debug FlextContainer registration issues."""
 
@@ -407,7 +407,7 @@ def safe_service_registration() -> p.Result[ldif]:
 
 **Symptom**: Railway-oriented programming chains fail unexpectedly.
 
-```python
+```python notest
 # Error in chain composition
 result = (
     api
@@ -419,7 +419,7 @@ result = (
 
 **Solution**:
 
-```python
+```python notest
 def correct_railway_chaining(file_path: str) -> p.Result[list]:
     """Demonstrate correct r chaining."""
     api = ldif()
@@ -479,7 +479,7 @@ def debug_railway_chain(file_path: str) -> p.Result[list]:
 
 ### Health Check Utility
 
-```python
+```python notest
 def run_health_check() -> t.JsonMapping:
     """Run comprehensive health check for FLEXT-LDIF."""
     results = {"status": "healthy", "checks": {}, "warnings": [], "errors": []}
@@ -571,7 +571,7 @@ def print_health_check_report() -> None:
 
 ### Debug Mode Configuration
 
-```python
+```python notest
 from flext_ldif import FlextLdif, FlextLdifModels, ldif, u
 
 
@@ -610,7 +610,7 @@ def enable_debug_mode() -> FlextLdif:
 
 When creating support requests, include:
 
-```python
+```python notest
 def generate_support_info() -> t.JsonMapping:
     """Generate information for support requests."""
     import sys

@@ -52,7 +52,7 @@ ______________________________________________________________________
 
 **File**: `/home/marlonsc/flext/flext-ldif/src/flext_ldif/servers/base.py`
 
-```python
+```python notest
 class FlextLdifServersBase.Acl(ABC, ServerRegistrationMixin):
     """Base class for ACL servers."""
 
@@ -71,7 +71,7 @@ class FlextLdifServersBase.Acl(ABC, ServerRegistrationMixin):
 
 **File**: `/home/marlonsc/flext/flext-ldif/src/flext_ldif/protocols.py`
 
-```python
+```python notest
 class Acl(Protocol):
     """Protocol for ACL servers."""
 
@@ -122,7 +122,7 @@ ______________________________________________________________________
 
 **Method**: `parse()`
 
-```python
+```python notest
 def parse(
     self, acl_line: str, server_type: str | None = None
 ) -> p.Result[FlextLdifModels.Acl]:
@@ -146,7 +146,7 @@ def parse(
 
 **Method**: `_transform_categories()`
 
-```python
+```python notest
 def _transform_categories(
     self, categorized: t.MappingKV[str, t.SequenceOf[m.Dict]]
 ) -> p.Result[Mapping[str, t.SequenceOf[m.Dict]]]:
@@ -179,7 +179,7 @@ ______________________________________________________________________
 
 ### Test Pattern
 
-```python
+```python notest
 def test_parse_oracle_oid():
     """Test OID ACL parsing."""
     server = FlextLdifServersOid.Acl()

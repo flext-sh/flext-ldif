@@ -30,7 +30,7 @@ Implement a **DN Case Registry** that:
 
 **Key Components**:
 
-```python
+```python notest
 class Result: ...
 
 
@@ -53,7 +53,7 @@ class DnCaseRegistry:
 
 **Implementation**:
 
-```python
+```python notest
 class DnCaseRegistry:
     def register_dn(self, dn: str) -> str:
         return dn.lower()

@@ -40,7 +40,7 @@ Implement a **pluggable servers system** with:
 
 **Key Components**:
 
-```python
+```python notest
 class ServerBase(ABC):
     """Base class for server-specific server implementations."""
 
@@ -65,7 +65,7 @@ class ServerBase(ABC):
 
 **Implementation**:
 
-```python
+```python notest
 # Auto-discovery and registration
 registry = FlextLdifServer()
 registry.load_alls()

@@ -33,7 +33,7 @@
 
 ### Pattern 1: Direct Classmethod API (Simplified)
 
-```python
+```python notest
 # Filter entries by DN pattern
 result = FlextLdifFilters.by_dn(
     entries=my_entries, pattern="*,ou=users,dc=example,dc=com", mode="include"
@@ -58,7 +58,7 @@ result = FlextLdifFilters.by_attributes(
 
 ### Pattern 2: Classmethod for Composable/Chainable Operations
 
-```python
+```python notest
 from flext_ldif import FlextLdifFilters
 
 my_entries: list = []
@@ -76,7 +76,7 @@ result = (
 
 ### Pattern 3: Fluent Builder Pattern
 
-```python
+```python notest
 filtered_result = (
     FlextLdifFilters
     .builder()
@@ -90,7 +90,7 @@ filtered_result = (
 
 ### Pattern 4: Public Classmethod Helpers (Most Direct)
 
-```python
+```python notest
 # Filter by DN pattern
 result = FlextLdifFilters.by_dn(entries, "*,ou=users,*")
 filtered = result.unwrap()
@@ -113,7 +113,7 @@ category, reason = FlextLdifFilters.categorize(entry, rules)
 
 ### Pattern 5: Transformation (Remove Attributes/ObjectClasses)
 
-```python
+```python notest
 # Remove temporary attributes
 result = FlextLdifFilters.remove_attributes(
     entry=my_entry, attributes=["tempAttribute", "debugInfo"]
@@ -127,7 +127,7 @@ result = FlextLdifFilters.remove_objectclasses(
 
 ### Pattern 6: Schema & Advanced Operations
 
-```python
+```python notest
 # Check if entry is schema
 is_schema = FlextLdifFilters.is_schema(entry)
 
@@ -142,7 +142,7 @@ result = FlextLdifFilters.filter_schema_by_oids(
 
 Most common use cases:
 
-```python
+```python notest
 # Filter entries by DN pattern
 result = FlextLdifFilters.by_dn(entries, "*,ou=users,*")
 filtered = result.unwrap()

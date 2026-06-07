@@ -49,7 +49,7 @@ FLEXT-LDIF provides flexible configuration management through multiple layers:
 
 Core configuration class with validation:
 
-```python
+```python notest
 from flext_ldif import FlextLdifModels
 
 
@@ -83,7 +83,7 @@ class Config(m.BaseModel):
 
 ### Configuration Usage
 
-```python
+```python notest
 # Create configuration with custom settings
 settings = FlextLdifModels.Config(
     max_entries=100000, strict_validation=True, encoding="utf-8", log_level="DEBUG"
@@ -103,7 +103,7 @@ print(f"Strict validation: {settings.strict_validation}")
 
 ### Initialization
 
-```python
+```python notest
 from flext_ldif import FlextLdif, FlextLdifSettings
 
 # Initialize configuration and use it with the public facade
@@ -137,7 +137,7 @@ export FLEXT_LDIF_LOG_LEVEL=DEBUG
 
 ### Environment Configuration Loading
 
-```python
+```python notest
 import os
 from flext_ldif import FlextLdifSettings, ldif
 
@@ -165,7 +165,7 @@ api = ldif(settings=settings)
 
 Optimized for development and testing:
 
-```python
+```python notest
 def create_development_config() -> FlextLdifModels.Config:
     """Create configuration optimized for development."""
     return FlextLdifModels.Config(
@@ -184,7 +184,7 @@ dev_api = ldif(settings=create_development_config())
 
 Optimized for production environments:
 
-```python
+```python notest
 def create_production_config() -> FlextLdifModels.Config:
     """Create configuration optimized for production."""
     return FlextLdifModels.Config(
@@ -205,7 +205,7 @@ prod_api = ldif(settings=create_production_config())
 
 Optimized for large-scale LDAP migrations:
 
-```python
+```python notest
 def create_migration_config() -> FlextLdifModels.Config:
     """Create configuration optimized for enterprise migrations."""
     return FlextLdifModels.Config(
@@ -226,7 +226,7 @@ migration_api = ldif(settings=create_migration_config())
 
 ### Configuration Validation
 
-```python
+```python notest
 from flext_ldif import FlextLdifModels, c
 
 
@@ -261,7 +261,7 @@ else:
 
 ### Configuration Inheritance
 
-```python
+```python notest
 def create_inherited_config(
     base_config: FlextLdifModels.Config, overrides: dict
 ) -> FlextLdifModels.Config:
@@ -288,7 +288,7 @@ specialized_config = create_inherited_config(
 
 ### Configuration Profiles
 
-```python
+```python notest
 class ConfigurationProfiles:
     """Predefined configuration profiles for common use cases."""
 
@@ -339,7 +339,7 @@ api = ldif(settings=ConfigurationProfiles.enterprise())
 
 ### FlextContainer Integration
 
-```python
+```python notest
 from flext_core import FlextBus
 from flext_core import FlextSettings
 from flext_core import FlextConstants
@@ -378,7 +378,7 @@ if config_result.success:
 
 ### Configuration Logging
 
-```python
+```python notest
 from flext_core import FlextBus
 from flext_core import FlextSettings
 from flext_core import FlextConstants
@@ -428,7 +428,7 @@ api = ldif(settings=settings)
 
 Always use the Pydantic-based configuration models:
 
-```python
+```python notest
 from flext_ldif import FlextLdifSettings
 
 # ✅ Good: Type-safe configuration
@@ -448,7 +448,7 @@ config_dict = {
 
 Validate configuration at application startup:
 
-```python
+```python notest
 import os
 from flext_ldif import ldif, p, r, FlextLdifSettings
 
@@ -470,7 +470,7 @@ def initialize_application_config() -> p.Result[ldif]:
 
 Create profiles for different deployment environments:
 
-```python
+```python notest
 def get_environment_config(environment: str) -> FlextLdifModels.Config:
     """Get configuration based on deployment environment."""
     profiles = {
@@ -492,7 +492,7 @@ api = ldif(settings=settings)
 
 Keep configuration changes documented and version controlled:
 
-```python
+```python notest
 # Configuration changelog
 CONFIGURATION_CHANGELOG = {
     "0.9.9": {

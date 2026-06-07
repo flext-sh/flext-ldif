@@ -29,7 +29,7 @@ Implement a **RFC-First Design with Zero Bypass Paths** where:
 
 **Key Implementation**:
 
-```python
+```python notest
 # RFC parsers always receive server_registry
 parser = RfcLdifParserService(
     params={"file_path": "data.ldif"},

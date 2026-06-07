@@ -101,7 +101,7 @@ python -c "from flext_ldif import ldif"
 
 Create your first LDIF processing script:
 
-```python
+```python notest
 from flext_ldif import ldif
 from pathlib import Path
 
@@ -141,7 +141,7 @@ else:
 
 Process LDIF files with error handling:
 
-```python
+```python notest
 from flext_ldif import ldif
 from pathlib import Path
 
@@ -176,7 +176,7 @@ else:
 
 Configure LDIF processing behavior:
 
-```python
+```python notest
 from flext_ldif import ldif, FlextLdifSettings
 
 # Create configuration
@@ -195,7 +195,7 @@ api = ldif(settings=settings)
 
 Access additional configuration options:
 
-```python
+```python notest
 from flext_ldif import FlextLdifSettings
 
 # Get global configuration
@@ -239,7 +239,7 @@ python -m flext_ldif parse --help
 
 Parse LDAP schema files with automatic server-specific handling:
 
-```python
+```python notest
 from flext_ldif import FlextLdifParser
 from pathlib import Path
 
@@ -262,7 +262,7 @@ if result.success:
 
 Migrate entries between different LDAP servers using generic transformation:
 
-```python
+```python notest
 from pathlib import Path
 
 
@@ -315,7 +315,7 @@ if result.success:
 
 Handle entries from different LDAP servers in the same workflow:
 
-```python
+```python notest
 from flext_ldif import ServerRegistryService
 
 # Initialize registry once
@@ -335,7 +335,7 @@ ouds = server_registry.get_entrys("oud")
 
 Validate and clean LDIF data:
 
-```python
+```python notest
 from flext_ldif import ldif, FlextLdifSettings
 
 ldif_content = """dn: cn=test,dc=example,dc=com

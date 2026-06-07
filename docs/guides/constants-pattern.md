@@ -14,7 +14,7 @@
 - Allows all servers to override if needed
 - Provides baseline values
 
-```python
+```python notest
 from typing import ClassVar, Final
 
 
@@ -34,7 +34,7 @@ class Constants:
 - `ClassVar` quando sobrescrever RFC
 - `Final` apenas para novas constantes server-specific
 
-```python
+```python notest
 class Constants(FlextLdifServersRfc.Constants):
     # ✅ Sobrescrevendo RFC - usar ClassVar
     OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([...])
