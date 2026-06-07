@@ -78,3 +78,47 @@ class TestsFlextLdifOidAclConvertSubject:
         result = Conv.convert_subject_to_oud(self._subject("unknown"))
 
         tm.that(result.failure, eq=True)
+
+
+class TestsFlextLdifOidAclConvertPermissions:
+    """convert_permissions parity with the algar-oud-mig oracle perm maps."""
+
+    def test_entry_browse_expands_to_read_search(self) -> None:
+        result = Conv.convert_permissions(("browse", "add", "delete"), is_entry=True)
+
+        tm.that(result.unwrap(), eq=("read", "search", "add", "delete"))
+
+    def test_attr_perms_pass_through_ordered(self) -> None:
+        result = Conv.convert_permissions(("search", "read"), is_entry=False)
+
+        tm.that(result.unwrap(), eq=("read", "search"))
+
+    def test_positive_perms_win_over_negations(self) -> None:
+        result = Conv.convert_permissions(("browse", "noadd"), is_entry=True)
+
+        tm.that(result.unwrap(), eq=("read", "search"))
+
+    def test_pure_negation_entry_yields_complement(self) -> None:
+        result = Conv.convert_permissions(("noadd",), is_entry=True)
+
+        tm.that(result.unwrap(), eq=("read", "search", "delete", "proxy"))
+
+    def test_pure_negation_attr_yields_complement(self) -> None:
+        result = Conv.convert_permissions(("noread",), is_entry=False)
+
+        tm.that(result.unwrap(), eq=("search", "write", "selfwrite", "compare"))
+
+    def test_none_yields_no_allow(self) -> None:
+        result = Conv.convert_permissions(("none",), is_entry=True)
+
+        tm.that(result.unwrap(), eq=())
+
+    def test_unknown_token_surfaces_failure(self) -> None:
+        result = Conv.convert_permissions(("bogus",), is_entry=False)
+
+        tm.that(result.failure, eq=True)
+
+    def test_unknown_negation_surfaces_failure(self) -> None:
+        result = Conv.convert_permissions(("nofoo",), is_entry=False)
+
+        tm.that(result.failure, eq=True)
