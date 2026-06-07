@@ -66,47 +66,40 @@ class FlextLdifConversionAclMixin(s):
                 target_server,
                 rfc_entry,
             )
-            converted_acl_result = r[m.Ldif.Acl].fail(
-                "Converted entry has no ACLs in metadata.acls",
-            )
-            if converted_entry_result.failure:
-                converted_acl_result = r[m.Ldif.Acl].fail(
-                    converted_entry_result.error or "Acl conversion returned no entry",
-                )
-            else:
-                converted_entry = converted_entry_result.value
+
+            def _entry_to_acl(
+                converted_entry: t.Ldif.ConvertedModel,
+            ) -> p.Result[m.Ldif.Acl]:
                 if not isinstance(converted_entry, m.Ldif.Entry):
-                    converted_acl_result = r[m.Ldif.Acl].fail(
+                    return r[m.Ldif.Acl].fail(
                         "Entry conversion returned unexpected type: "
                         f"{type(converted_entry).__name__}",
                     )
-                elif (
+                if (
                     converted_entry.metadata is None
                     or not converted_entry.metadata.acls
                 ):
-                    converted_acl_result = r[m.Ldif.Acl].fail(
+                    return r[m.Ldif.Acl].fail(
                         "Converted entry has no ACLs in metadata.acls",
                     )
-                else:
-                    converted_acl_result = (
-                        r[m.Ldif.Acl]
-                        .from_result(
-                            target_server.acl_server.parse_server(
-                                converted_entry.metadata.acls[0],
-                            ),
+                return r[m.Ldif.Acl].from_result(
+                    target_server.acl_server.parse_server(
+                        converted_entry.metadata.acls[0],
+                    ),
+                ).flat_map(
+                    lambda parsed_acl: (
+                        r[m.Ldif.Acl].ok(parsed_acl)
+                        if isinstance(parsed_acl, m.Ldif.Acl)
+                        else r[m.Ldif.Acl].fail(
+                            "ACL conversion returned unexpected parsed type: "
+                            f"{type(parsed_acl).__name__}",
                         )
-                        .flat_map(
-                            lambda parsed_acl: (
-                                r[m.Ldif.Acl].ok(parsed_acl)
-                                if isinstance(parsed_acl, m.Ldif.Acl)
-                                else r[m.Ldif.Acl].fail(
-                                    "ACL conversion returned unexpected parsed type: "
-                                    f"{type(parsed_acl).__name__}",
-                                )
-                            ),
-                        )
-                    )
-            return converted_acl_result.flat_map(
+                    ),
+                )
+
+            return converted_entry_result.map_error(
+                lambda error: error or "Acl conversion returned no entry",
+            ).flat_map(_entry_to_acl).flat_map(
                 lambda converted_acl: r[t.Ldif.ConvertedModel].ok(
                     self._preserve_acl_metadata(
                         acl,
