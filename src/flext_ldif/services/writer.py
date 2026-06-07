@@ -67,19 +67,11 @@ class FlextLdifWriter(s):
                 string_result.error or "Failed to generate LDIF content",
             )
         ldif_content = string_result.value
-        try:
-            path.parent.mkdir(parents=True, exist_ok=True)
-        except OSError as error:
-            return r[m.Ldif.WriteResponse].fail_op(
-                "prepare ldif output path",
-                f"Failed to create parent directories for {path}: {error}",
-            )
-        try:
-            _ = path.write_text(ldif_content, encoding="utf-8")
-        except (OSError, UnicodeEncodeError) as error:
+        write = u.Cli.atomic_write_text_file(path, ldif_content)
+        if write.failure:
             return r[m.Ldif.WriteResponse].fail_op(
                 "persist ldif output",
-                f"Failed to write LDIF file {path}: {error}",
+                write.error or f"Failed to write LDIF file {path}",
             )
         return r[m.Ldif.WriteResponse].ok(
             m.Ldif.WriteResponse(
