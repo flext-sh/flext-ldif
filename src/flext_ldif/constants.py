@@ -8,13 +8,21 @@ from types import MappingProxyType
 from typing import ClassVar, Final
 
 from flext_cli import FlextCliConstants, t
-from flext_ldif import FlextLdifConstantsBase, FlextLdifConstantsEnums
+from flext_ldif import (
+    FlextLdifConstantsAclConvert,
+    FlextLdifConstantsBase,
+    FlextLdifConstantsEnums,
+)
 
 
 class FlextLdifConstants(FlextCliConstants):
     """LDIF domain constants extending flext-core FlextConstants."""
 
-    class Ldif(FlextLdifConstantsBase, FlextLdifConstantsEnums):
+    class Ldif(
+        FlextLdifConstantsBase,
+        FlextLdifConstantsEnums,
+        FlextLdifConstantsAclConvert,
+    ):
         """LDIF domain constants namespace."""
 
         EXC_LDIF_PARSE: Final[tuple[type[Exception], ...]] = (
