@@ -101,7 +101,7 @@ python -c "from flext_ldif import ldif"
 
 Create your first LDIF processing script:
 
-```python notest
+```python
 from flext_ldif import ldif
 from pathlib import Path
 
@@ -125,7 +125,7 @@ member: cn=John Doe,ou=People,dc=example,dc=com
 # Parse LDIF content using r patterns
 result = api.parse_string(sample_ldif)
 if result.success:
-    entries = result.unwrap()
+    entries = result.unwrap().entries
     print(f"Successfully parsed {len(entries)} LDIF entries")
 
     # Display entry information
@@ -141,18 +141,27 @@ else:
 
 Process LDIF files with error handling:
 
-```python notest
+```python
+from __future__ import annotations
+
 from flext_ldif import ldif
 from pathlib import Path
 
 api = ldif()
 
-# Parse LDIF file
+# Prepare a sample LDIF file
 ldif_path = Path("directory.ldif")
-result = api.parse_file(ldif_path)
+ldif_path.write_text(
+    "dn: cn=John Doe,ou=People,dc=example,dc=com\n"
+    "cn: John Doe\n"
+    "objectClass: person\n"
+)
+
+# Parse LDIF file
+result = api.parse_string(ldif_path.read_text())
 
 if result.success:
-    entries = result.unwrap()
+    entries = result.unwrap().entries
 
     # Validate entries
     validation_result = api.validate_entries(entries)
@@ -161,7 +170,7 @@ if result.success:
 
         # Write to new file
         output_path = Path("processed_directory.ldif")
-        write_result = api.write_file(entries, output_path)
+        write_result = api.write_ldif_file(entries, output_path)
         if write_result.success:
             print(f"Successfully wrote {len(entries)} entries to {output_path}")
     else:
@@ -239,7 +248,7 @@ python -m flext_ldif parse --help
 
 Parse LDAP schema files with automatic server-specific handling:
 
-```python notest
+```python
 from flext_ldif import FlextLdifParser
 from pathlib import Path
 
@@ -249,10 +258,10 @@ schema_path.write_text("dn: cn=example,dc=example,dc=com\nobjectClass: top\n")
 
 # Initialize parser and parse the sample schema
 parser = FlextLdifParser()
-result = parser.parse_file(schema_path)
+result = parser.parse_ldif_file(schema_path)
 
 if result.success:
-    schema_data = result.unwrap()
+    schema_data = result.unwrap().entries
     print(f"Parsed schema entries: {len(schema_data)}")
 
 # Works with any LDAP server - OpenLDAP, OUD, AD, etc.
@@ -262,7 +271,9 @@ if result.success:
 
 Migrate entries between different LDAP servers using generic transformation:
 
-```python notest
+```python
+from __future__ import annotations
+
 from pathlib import Path
 
 
@@ -335,7 +346,7 @@ ouds = server_registry.get_entrys("oud")
 
 Validate and clean LDIF data:
 
-```python notest
+```python
 from flext_ldif import ldif, FlextLdifSettings
 
 ldif_content = """dn: cn=test,dc=example,dc=com
@@ -348,18 +359,19 @@ api = ldif(settings=settings)
 # Parse with strict validation
 result = api.parse_string(ldif_content)
 if result.success:
-    entries = result.unwrap()
+    entries = result.unwrap().entries
 
     # Validate all entries
     validation_result = api.validate_entries(entries)
     if validation_result.failure:
         print(f"Validation issues found: {validation_result.error}")
-
-    # Continue processing valid entries
-    print(
-        f"Processing {validation_result.valid_entries} valid entries "
-        f"out of {validation_result.total_entries} total entries"
-    )
+    else:
+        report = validation_result.unwrap()
+        # Continue processing valid entries
+        print(
+            f"Processing {report.valid_entries} valid entries "
+            f"out of {report.total_entries} total entries"
+        )
 ```
 
 ## Troubleshooting
