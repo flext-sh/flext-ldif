@@ -75,6 +75,19 @@ if _t.TYPE_CHECKING:
     from tests.unit.servers.test_ds389_servers import TestsTestFlextLdifDs389Servers
     from tests.unit.servers.test_edge_cases import TestsFlextLdifEdgeCases
     from tests.unit.servers.test_novell_servers import TestsFlextLdifNovellServers
+    from tests.unit.servers.test_oid_acl_assemble import (
+        TestsFlextLdifOidAclAssemble,
+        TestsFlextLdifOidAclBuild,
+        TestsFlextLdifOidAclConvertEntryAcls,
+        TestsFlextLdifOidAclConvertValues,
+    )
+    from tests.unit.servers.test_oid_acl_convert import TestsFlextLdifOidAclConvertParse
+    from tests.unit.servers.test_oid_acl_convert_oud import (
+        TestsFlextLdifOidAclConvertPermissions,
+        TestsFlextLdifOidAclConvertSubject,
+        TestsFlextLdifOidAclConvertTarget,
+    )
+    from tests.unit.servers.test_oid_acl_endtoend import TestsFlextLdifOidAclEndToEnd
     from tests.unit.servers.test_oid_servers import TestsTestFlextLdifOidServers
     from tests.unit.servers.test_relaxed_servers import TestsTestFlextLdifRelaxedServers
     from tests.unit.servers.test_schema_transformer import (
@@ -205,6 +218,19 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".unit.servers.test_ds389_servers": ("TestsTestFlextLdifDs389Servers",),
             ".unit.servers.test_edge_cases": ("TestsFlextLdifEdgeCases",),
             ".unit.servers.test_novell_servers": ("TestsFlextLdifNovellServers",),
+            ".unit.servers.test_oid_acl_assemble": (
+                "TestsFlextLdifOidAclAssemble",
+                "TestsFlextLdifOidAclBuild",
+                "TestsFlextLdifOidAclConvertEntryAcls",
+                "TestsFlextLdifOidAclConvertValues",
+            ),
+            ".unit.servers.test_oid_acl_convert": ("TestsFlextLdifOidAclConvertParse",),
+            ".unit.servers.test_oid_acl_convert_oud": (
+                "TestsFlextLdifOidAclConvertPermissions",
+                "TestsFlextLdifOidAclConvertSubject",
+                "TestsFlextLdifOidAclConvertTarget",
+            ),
+            ".unit.servers.test_oid_acl_endtoend": ("TestsFlextLdifOidAclEndToEnd",),
             ".unit.servers.test_oid_servers": ("TestsTestFlextLdifOidServers",),
             ".unit.servers.test_relaxed_servers": ("TestsTestFlextLdifRelaxedServers",),
             ".unit.servers.test_schema_transformer": (
@@ -321,6 +347,15 @@ __all__: list[str] = [
     "TestsFlextLdifMinimalDifferencesMetadata",
     "TestsFlextLdifModels",
     "TestsFlextLdifNovellServers",
+    "TestsFlextLdifOidAclAssemble",
+    "TestsFlextLdifOidAclBuild",
+    "TestsFlextLdifOidAclConvertEntryAcls",
+    "TestsFlextLdifOidAclConvertParse",
+    "TestsFlextLdifOidAclConvertPermissions",
+    "TestsFlextLdifOidAclConvertSubject",
+    "TestsFlextLdifOidAclConvertTarget",
+    "TestsFlextLdifOidAclConvertValues",
+    "TestsFlextLdifOidAclEndToEnd",
     "TestsFlextLdifOidIntegration",
     "TestsFlextLdifOidUtilities",
     "TestsFlextLdifOudIntegration",

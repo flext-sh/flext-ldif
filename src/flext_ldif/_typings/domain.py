@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from flext_core import t
-from flext_ldif import p
+from flext_ldif.protocols import p
 
 
 class FlextLdifTypesDomain:

@@ -77,6 +77,11 @@ if _t.TYPE_CHECKING:
     from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
     from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
     from flext_ldif.servers._oid.acl import FlextLdifServersOidAcl
+    from flext_ldif.servers._oid.acl_assemble import FlextLdifServersOidAclAssemble
+    from flext_ldif.servers._oid.acl_convert import FlextLdifServersOidAclConvert
+    from flext_ldif.servers._oid.acl_convert_oud import FlextLdifServersOidAclToOud
+    from flext_ldif.servers._oid.acl_pipeline import FlextLdifServersOidAclPipeline
+    from flext_ldif.servers._oid.acl_render import FlextLdifServersOidAclRender
     from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
     from flext_ldif.servers._oid.entry import FlextLdifServersOidEntry
     from flext_ldif.servers._oid.schema import FlextLdifServersOidSchema
@@ -219,6 +224,11 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".servers._base.mixins": ("FlextLdifServerMethodsMixin",),
             ".servers._base.schema": ("FlextLdifServersBaseSchema",),
             ".servers._oid.acl": ("FlextLdifServersOidAcl",),
+            ".servers._oid.acl_assemble": ("FlextLdifServersOidAclAssemble",),
+            ".servers._oid.acl_convert": ("FlextLdifServersOidAclConvert",),
+            ".servers._oid.acl_convert_oud": ("FlextLdifServersOidAclToOud",),
+            ".servers._oid.acl_pipeline": ("FlextLdifServersOidAclPipeline",),
+            ".servers._oid.acl_render": ("FlextLdifServersOidAclRender",),
             ".servers._oid.constants": ("FlextLdifServersOidConstants",),
             ".servers._oid.entry": ("FlextLdifServersOidEntry",),
             ".servers._oid.schema": ("FlextLdifServersOidSchema",),
@@ -391,6 +401,11 @@ __all__: list[str] = [
     "FlextLdifServersNovell",
     "FlextLdifServersOid",
     "FlextLdifServersOidAcl",
+    "FlextLdifServersOidAclAssemble",
+    "FlextLdifServersOidAclConvert",
+    "FlextLdifServersOidAclPipeline",
+    "FlextLdifServersOidAclRender",
+    "FlextLdifServersOidAclToOud",
     "FlextLdifServersOidConstants",
     "FlextLdifServersOidEntry",
     "FlextLdifServersOidSchema",
