@@ -7,6 +7,7 @@ from flext_tests import tm
 from flext_ldif import m
 from flext_ldif.servers._oid.acl_assemble import FlextLdifServersOidAclAssemble as Asm
 from flext_ldif.servers._oid.acl_convert import FlextLdifServersOidAclConvert as Parser
+from flext_ldif.servers._oid.acl_render import FlextLdifServersOidAclRender as Render
 
 
 class TestsFlextLdifOidAclAssemble:
@@ -33,7 +34,7 @@ class TestsFlextLdifOidAclAssemble:
         )
 
         tm.that(
-            Asm.render_aci_string(aci),
+            Render.render_aci_string(aci),
             eq=(
                 'aci: (targetattr="*")(targetscope="base")'
                 '(version 3.0; acl "ctbc Entry by admins"; '
@@ -62,7 +63,7 @@ class TestsFlextLdifOidAclAssemble:
         )
 
         tm.that(
-            Asm.render_aci_string(aci),
+            Render.render_aci_string(aci),
             eq=(
                 'aci: (targetattr="cn||sn||mail")'
                 '(version 3.0; acl "ctbc Attrs by mgr"; '
@@ -87,7 +88,7 @@ class TestsFlextLdifOidAclAssemble:
         )
 
         tm.that(
-            Asm.render_aci_string(aci),
+            Render.render_aci_string(aci),
             eq=(
                 'aci: (targetattr!="userpassword")'
                 '(targetfilter="(objectclass=person)")'
@@ -110,7 +111,7 @@ class TestsFlextLdifOidAclAssemble:
         )
 
         tm.that(
-            Asm.render_aci_string(aci),
+            Render.render_aci_string(aci),
             eq=(
                 'aci: (targetattr="*")(version 3.0; acl "x"; '
                 'allow (read) userattr="owner#GROUPDN";)'
@@ -239,3 +240,60 @@ class TestsFlextLdifOidAclBuild:
         aci = Asm.build_aci_rule(rule).unwrap()
 
         tm.that(len(aci.allows), eq=1)
+
+
+class TestsFlextLdifOidAclConvertValues:
+    """convert_acl_values: whole-entry OID ACL lines → deduped aci values."""
+
+    def test_multiple_lines_produce_aci_values_without_prefix(self) -> None:
+        result = Asm.convert_acl_values(
+            "cn=users,dc=ctbc",
+            (
+                'orclaci: access to entry by group="cn=a,dc=ctbc" (browse)',
+                "orclentrylevelaci: access to attr=(cn) by * (read)",
+            ),
+        )
+
+        values = result.unwrap()
+        tm.that(len(values), eq=2)
+        tm.that(all(not v.startswith("aci: ") for v in values), eq=True)
+        tm.that(values[0].startswith('(targetattr="*")'), eq=True)
+
+    def test_identical_aci_values_are_deduplicated(self) -> None:
+        line = 'orclaci: access to entry by group="cn=a,dc=ctbc" (browse)'
+        result = Asm.convert_acl_values("cn=users,dc=ctbc", (line, line))
+
+        tm.that(len(result.unwrap()), eq=1)
+
+    def test_deny_only_line_emits_no_value(self) -> None:
+        result = Asm.convert_acl_values(
+            "cn=users,dc=ctbc",
+            ("orclaci: access to entry by * (none)",),
+        )
+
+        tm.that(result.unwrap(), eq=())
+
+    def test_malformed_line_surfaces_failure(self) -> None:
+        result = Asm.convert_acl_values(
+            "cn=users,dc=ctbc",
+            ("orclaci: this is not a valid acl",),
+        )
+
+        tm.that(result.failure, eq=True)
+
+    def test_unknown_perm_token_surfaces_failure(self) -> None:
+        result = Asm.convert_acl_values(
+            "cn=users,dc=ctbc",
+            ('orclaci: access to entry by group="cn=a,dc=ctbc" (bogus)',),
+        )
+
+        tm.that(result.failure, eq=True)
+
+    def test_out_of_scope_dn_excluded_with_base_dn(self) -> None:
+        result = Asm.convert_acl_values(
+            "cn=users,dc=ctbc",
+            ('orclaci: access to entry by group="cn=x,dc=other" (browse)',),
+            base_dn="dc=ctbc",
+        )
+
+        tm.that(result.unwrap(), eq=())

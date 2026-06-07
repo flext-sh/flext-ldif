@@ -1,20 +1,23 @@
-"""OUD aci assembly — render an AciRule value object to its aci string.
+"""OID→OUD aci assembly + entry-level orchestration.
 
-Faithful port of the oracle ``AciRule.to_aci_string`` (non-formatted form):
-``aci: (targetattr=…)(targetfilter=…)?(targetscope=…)?(version 3.0; acl
-"name"; allow (perms) bindrule; …)``. Same-permission subjects collapse into
-one ``allow`` clause with ``or``-joined bind-rules. Pure string assembly —
-total function, no failure channel. Format literals are the ``c.Ldif`` SSOT.
+``build_aci_rule`` turns one parsed :class:`m.Ldif.OidAclRule` into an OUD
+:class:`m.Ldif.AciRule` (subject/permission conversion, deny-fallback,
+base_dn scope filtering, acl-name); ``convert_acl_values`` runs a whole
+entry's OID ACL lines through parse → build → render (delegated to
+``FlextLdifServersOidAclRender``) with deduplication, yielding ``aci``
+attribute values. Rendering itself lives in ``acl_render.py``.
 """
 
 from __future__ import annotations
 
 from flext_ldif import c, m, r, t
+from flext_ldif.servers._oid.acl_convert import FlextLdifServersOidAclConvert as Parser
 from flext_ldif.servers._oid.acl_convert_oud import FlextLdifServersOidAclToOud as Conv
+from flext_ldif.servers._oid.acl_render import FlextLdifServersOidAclRender as Render
 
 
 class FlextLdifServersOidAclAssemble:
-    """Render assembled OUD aci value objects to their canonical string form."""
+    """Build OUD aci value objects from parsed OID rules and orchestrate entries."""
 
     @staticmethod
     def _is_deny_none(permissions: t.StrSequence) -> bool:
@@ -45,16 +48,12 @@ class FlextLdifServersOidAclAssemble:
     ) -> r[m.Ldif.AciRule]:
         """Assemble a parsed OID rule into one OUD :class:`m.Ldif.AciRule`.
 
-        Subjects convert via :class:`FlextLdifServersOidAclToOud`; an ``anyone
-        (none)`` deny-fallback removes that clause and turns every subsequent
-        subject into dead code (recorded as notes). When ``base_dn`` is given, an
-        ``anyone`` rule at a high-level container is dropped (OUD inherits to the
-        subtree) and a bind DN outside ``base_dn`` is excluded — both with notes;
-        OID regex bind DNs are converted to OUD wildcards. Subjects with no OUD
-        equivalent or no resulting allow perms are dropped with a note. A
-        deny-only rule yields a valid AciRule with empty ``allows`` + notes (the
-        caller skips emitting an aci line). An unrecognized permission token
-        surfaces as ``r.fail`` (never a silent partial result).
+        ``by * (none)`` deny-fallback removes that clause + dead-codes every
+        later subject; with ``base_dn``, an ``anyone`` rule at a high-level
+        container is dropped and out-of-scope bind DNs are excluded (regex DNs →
+        wildcards) — all recorded as notes. A deny-only rule yields a valid
+        AciRule with empty ``allows`` + notes (caller skips emitting). An unknown
+        permission token surfaces as ``r.fail`` (never a silent partial result).
         """
         is_entry = rule.target_type == c.Ldif.AclTargetType.ENTRY
         containers = Conv.high_level_containers(base_dn) if base_dn else frozenset()
@@ -140,52 +139,42 @@ class FlextLdifServersOidAclAssemble:
             ),
         )
 
-    @staticmethod
-    def _render_bind(allow: m.Ldif.AciAllow) -> str:
-        if allow.subject_type == c.Ldif.OudSubjectType.USERATTR:
-            keyword = c.Ldif.OudSubjectType.USERATTR.value
-            return f'{keyword}="{allow.subject_value}"'
-        return f'{allow.subject_type}="{c.Ldif.LDAP_PREFIX}{allow.subject_value}"'
-
-    @staticmethod
-    def _target_parts(aci: m.Ldif.AciRule) -> t.StrSequence:
-        if aci.targetattr.startswith(c.Ldif.OUD_ATTR_NEGATION):
-            body = aci.targetattr[len(c.Ldif.OUD_ATTR_NEGATION) :]
-            parts = [f'(targetattr{c.Ldif.OUD_ATTR_NEGATION}"{body}")']
-        else:
-            parts = [f'(targetattr="{aci.targetattr}")']
-        if aci.targetfilter:
-            value = (
-                aci.targetfilter
-                if aci.targetfilter.startswith("(")
-                else f"({aci.targetfilter})"
-            )
-            parts.append(f'(targetfilter="{value}")')
-        if aci.targetscope:
-            parts.append(f'(targetscope="{aci.targetscope}")')
-        return tuple(parts)
-
     @classmethod
-    def render_aci_string(cls, aci: m.Ldif.AciRule) -> str:
-        """Render an :class:`m.Ldif.AciRule` to its OUD ``aci:`` line.
+    def convert_acl_values(
+        cls,
+        dn: str,
+        oid_acl_lines: t.StrSequence,
+        *,
+        base_dn: str = "",
+    ) -> r[t.StrSequence]:
+        """Convert an entry's OID ACL lines to deduplicated OUD ``aci`` values.
 
-        Allows are grouped by identical permission set (first-seen order); each
-        group becomes one ``allow (perms) bind1 or bind2;`` clause.
+        Each ``orclaci:``/``orclentrylevelaci:`` line is parsed → built →
+        rendered; deny-only rules emit nothing; duplicate aci values (whitespace-
+        and case-normalized) are merged keeping first order. A malformed line or
+        unknown perm token surfaces as ``r.fail``. Returned values exclude the
+        ``aci: `` prefix (they are raw ``aci`` attribute values).
         """
-        grouped: dict[t.StrSequence, list[str]] = {}
-        for allow in aci.allows:
-            grouped.setdefault(tuple(allow.permissions), []).append(
-                cls._render_bind(allow),
+        values: list[str] = []
+        seen: set[str] = set()
+        for line in oid_acl_lines:
+            rule = Parser.parse_oid_acl_line(dn, line)
+            if rule.failure:
+                return r[t.StrSequence].fail(rule.error or "OID ACL parse failed")
+            aci = cls.build_aci_rule(rule.value, base_dn=base_dn)
+            if aci.failure:
+                return r[t.StrSequence].fail(aci.error or "OID ACL build failed")
+            if not aci.value.allows:
+                continue
+            rendered = Render.render_aci_string(aci.value).removeprefix(
+                c.Ldif.ACI_PREFIX,
             )
-        clauses = [
-            f"{c.Ldif.ACI_ALLOW} ({', '.join(perms)}) {c.Ldif.BIND_OR.join(binds)};"
-            for perms, binds in grouped.items()
-        ]
-        version_part = f'({c.Ldif.ACI_VERSION}; acl "{aci.acl_name}";'
-        return (
-            f"{c.Ldif.ACI_PREFIX}{''.join(cls._target_parts(aci))}"
-            f"{version_part} {' '.join(clauses)})"
-        )
+            normalized = c.Ldif.WHITESPACE_RE.sub(" ", rendered.strip().lower())
+            if normalized in seen:
+                continue
+            seen.add(normalized)
+            values.append(rendered)
+        return r[t.StrSequence].ok(tuple(values))
 
 
 __all__: list[str] = ["FlextLdifServersOidAclAssemble"]
