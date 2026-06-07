@@ -1,0 +1,33 @@
+src/flext_ldif/constants.py
+  s_9942ef7a89ba9a::t_fc70f45766c8c0 13
+  s_9942ef7a89ba9a::t_400b5244dd524e 26
+src/flext_ldif/__init__.py
+  s_9942ef7a89ba9a::t_480ea146d15cf1 330
+  s_9942ef7a89ba9a::t_b7c3f992b9ed1f 27
+  s_9942ef7a89ba9a::t_9ce98876d1a9cf 147
+src/flext_ldif/_constants/acl_convert_oud.py
+  s_9942ef7a89ba9a::t_70968459ad62d2 1-116
+src/flext_ldif/servers/_oid/acl_convert_oud.py
+  s_9942ef7a89ba9a::t_bfed96c35bc19f 1-67
+tests/unit/servers/test_oid_acl_convert_oud.py
+  s_9942ef7a89ba9a::t_9e5b428aee7e2d 1-80
+src/flext_ldif/_constants/acl_convert.py
+  s_9942ef7a89ba9a::t_b986f650cd62b8 38-49
+  s_9942ef7a89ba9a::t_d0de877c523fd4 1-8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "842c8803f7f65def91340fc29721e1f2d9ba30a1",
+  "prompts": {},
+  "sessions": {
+    "s_9942ef7a89ba9a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "84fb5cb9-a1bd-4654-9339-7a49b63e96d1",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
