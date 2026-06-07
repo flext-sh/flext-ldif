@@ -1,0 +1,19 @@
+src/flext_ldif/servers/_base/entry.py
+  s_9942ef7a89ba9a::t_1c5a2ef941afaa 185
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "00ad771ecc0f7f4f9dc324b81d7aa7b60f56a2ae",
+  "prompts": {},
+  "sessions": {
+    "s_9942ef7a89ba9a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "84fb5cb9-a1bd-4654-9339-7a49b63e96d1",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
