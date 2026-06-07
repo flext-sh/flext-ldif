@@ -1,0 +1,19 @@
+src/flext_ldif/services/conversion_schema.py
+  s_9942ef7a89ba9a::t_da3f75fb355f17 200,206
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "c56a6e8ab345186252d54871112000c162ead47d",
+  "prompts": {},
+  "sessions": {
+    "s_9942ef7a89ba9a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "84fb5cb9-a1bd-4654-9339-7a49b63e96d1",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
