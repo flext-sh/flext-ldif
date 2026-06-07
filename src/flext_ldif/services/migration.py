@@ -202,7 +202,12 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
                 return r[m.Ldif.MigrationPipelineResult].fail(
                     f"Input file not found: {input_file}",
                 )
-            content = input_file.read_text(encoding=c.Ldif.DEFAULT_ENCODING)
+            read = u.Cli.files_read_text(input_file)
+            if read.failure:
+                return r[m.Ldif.MigrationPipelineResult].fail(
+                    read.error or f"Failed to read {input_file}",
+                )
+            content = read.value
             parser = FlextLdifParser()
             parse_result = parser.parse_string(
                 content,
