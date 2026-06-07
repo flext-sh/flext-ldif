@@ -1,0 +1,24 @@
+docs/getting-started.md
+  s_73cbfc60e45e37::t_29e46ec95a46d4 145-146,152,154-161,164,173
+  s_73cbfc60e45e37::t_00a7313aa0e5ef 128
+  s_73cbfc60e45e37::t_4b53cb0acd03ed 104,144,251,274,349
+  s_73cbfc60e45e37::t_6b8c4f7d4db5c9 261,264
+  s_73cbfc60e45e37::t_218199464d5845 275-276
+  s_73cbfc60e45e37::t_638f6969a4e51a 362,368-374
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "a5de57fe3d2db32a4167417923e68dba4527db5a",
+  "prompts": {},
+  "sessions": {
+    "s_73cbfc60e45e37": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "80f2c44c-f1f2-49a0-8035-ccac60ac602b",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
