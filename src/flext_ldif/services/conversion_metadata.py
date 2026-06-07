@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from flext_ldif import m, s, t, u
+from flext_ldif import c, m, s, t, u
 
 
 class FlextLdifConversionMetadataMixin(s):
@@ -126,6 +126,72 @@ class FlextLdifConversionMetadataMixin(s):
         ):
             conversion_analysis.update(analysis)
         return conversion_analysis
+
+    def _update_entry_metadata(
+        self,
+        entry: m.Ldif.Entry,
+        validated_server_type: c.Ldif.ServerTypes,
+        conversion_analysis: str | None,
+        source_server_name: str,
+    ) -> m.Ldif.Entry:
+        """Update entry metadata for conversion (internal helper)."""
+        get_metadata = u.prop("metadata")
+        get_extensions = u.prop("extensions")
+        current_entry = entry
+        if not get_metadata(current_entry):
+            metadata_obj = m.Ldif.ServerMetadata.create_for(
+                server_type=validated_server_type,
+                extensions=None,
+            )
+            current_entry = current_entry.model_copy(
+                update={"metadata": metadata_obj},
+                deep=True,
+            )
+        entry_metadata = current_entry.metadata
+        if (
+            entry_metadata
+            and get_metadata(current_entry)
+            and (not get_extensions(entry_metadata))
+        ):
+            updated_metadata = entry_metadata.model_copy(
+                update={"extensions": m.Ldif.DynamicMetadata()},
+                deep=True,
+            )
+            current_entry = current_entry.model_copy(
+                update={"metadata": updated_metadata},
+                deep=True,
+            )
+        entry_metadata = current_entry.metadata
+        if entry_metadata and get_metadata(current_entry):
+            normalized_source_server: c.Ldif.ServerTypes | None = None
+            if source_server_name != c.IDENTIFIER_UNKNOWN:
+                normalized_source_server = u.try_(
+                    lambda: u.Ldif.normalize_server_type(source_server_name),
+                ).map_or(None)
+            extensions_update: t.Ldif.MutableMetadataInputMapping = {
+                "converted_from_server": source_server_name,
+            }
+            if conversion_analysis:
+                extensions_update["conversion_analysis"] = conversion_analysis
+            updated_extensions = (
+                entry_metadata.extensions or m.Ldif.DynamicMetadata()
+            ).model_copy(update=extensions_update, deep=True)
+            updated_metadata = entry_metadata.model_copy(
+                update={
+                    "server_type": validated_server_type,
+                    "extensions": updated_extensions,
+                    "original_server_type": (
+                        entry_metadata.original_server_type or normalized_source_server
+                    ),
+                    "target_server_type": validated_server_type,
+                },
+                deep=True,
+            )
+            current_entry = current_entry.model_copy(
+                update={"metadata": updated_metadata},
+                deep=True,
+            )
+        return current_entry
 
 
 __all__: list[str] = ["FlextLdifConversionMetadataMixin"]
