@@ -205,7 +205,8 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
             read = u.Cli.files_read_text(input_file)
             if read.failure:
                 return r[m.Ldif.MigrationPipelineResult].fail(
-                    read.error or f"Failed to read {input_file}",
+                    f"File migration failed: "
+                    f"{read.error or f'unable to read {input_file}'}",
                 )
             content = read.value
             parser = FlextLdifParser()
