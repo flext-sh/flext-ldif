@@ -1,0 +1,22 @@
+tests/unit/services/test_transformers_service.py
+  s_9942ef7a89ba9a::t_af9c0175e67f53 68-97
+src/flext_ldif/services/transformers.py
+  s_9942ef7a89ba9a::t_4bf7865f8437e2 64
+  s_9942ef7a89ba9a::t_94910273f4e02d 29-36
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "58837a9911b8bc6cf2bf3cdcd9b16682d0fb300c",
+  "prompts": {},
+  "sessions": {
+    "s_9942ef7a89ba9a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "84fb5cb9-a1bd-4654-9339-7a49b63e96d1",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
