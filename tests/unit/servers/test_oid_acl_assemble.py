@@ -6,6 +6,7 @@ from flext_tests import tm
 
 from flext_ldif import m
 from flext_ldif.servers._oid.acl_assemble import FlextLdifServersOidAclAssemble as Asm
+from flext_ldif.servers._oid.acl_convert import FlextLdifServersOidAclConvert as Parser
 
 
 class TestsFlextLdifOidAclAssemble:
@@ -115,3 +116,75 @@ class TestsFlextLdifOidAclAssemble:
                 'allow (read) userattr="owner#GROUPDN";)'
             ),
         )
+
+
+class TestsFlextLdifOidAclBuild:
+    """build_aci_rule end-to-end parity with the oracle (parse → build → render)."""
+
+    @staticmethod
+    def _build(dn: str, line: str) -> m.Ldif.AciRule:
+        rule = Parser.parse_oid_acl_line(dn, line).unwrap()
+        return Asm.build_aci_rule(rule).unwrap()
+
+    def test_group_with_deny_fallback_keeps_group_drops_anyone(self) -> None:
+        aci = self._build(
+            "cn=users,dc=ctbc",
+            'orclaci: access to entry by group="cn=admins,dc=ctbc" '
+            "(browse,add) by * (none)",
+        )
+
+        tm.that(len(aci.allows), eq=1)
+        tm.that(aci.allows[0].subject_type, eq="groupdn")
+        tm.that(aci.allows[0].permissions, eq=("read", "search", "add"))
+        tm.that(aci.targetscope is None, eq=True)
+        tm.that(aci.acl_name, eq="users Entry by admins")
+        tm.that(any("default-deny" in note for note in aci.notes), eq=True)
+
+    def test_anyone_attr_rule_pins_targetscope_base(self) -> None:
+        aci = self._build(
+            "cn=users,dc=ctbc",
+            "orclaci: access to attr=(cn,sn,mail) by * (read,search)",
+        )
+
+        tm.that(aci.targetattr, eq="cn||sn||mail")
+        tm.that(aci.targetscope, eq="base")
+        tm.that(aci.allows[0].subject_type, eq="userdn")
+        tm.that(aci.allows[0].subject_value, eq="anyone")
+
+    def test_deny_only_rule_yields_empty_allows_with_notes(self) -> None:
+        aci = self._build(
+            "cn=users,dc=ctbc",
+            'orclaci: access to entry by * (none) by group="cn=x,dc=ctbc" (browse)',
+        )
+
+        tm.that(aci.allows, eq=())
+        tm.that(any("dead code" in note for note in aci.notes), eq=True)
+
+    def test_guidattr_dropped_with_note_other_subject_survives(self) -> None:
+        aci = self._build(
+            "cn=users,dc=ctbc",
+            "orclaci: access to entry by guidattr=(orclguid) (browse) "
+            'by group="cn=a,dc=ctbc" (browse)',
+        )
+
+        tm.that(len(aci.allows), eq=1)
+        tm.that(aci.allows[0].subject_type, eq="groupdn")
+        tm.that(any("guidattr" in note for note in aci.notes), eq=True)
+
+    def test_two_perm_groups_append_plus_count_to_acl_name(self) -> None:
+        aci = self._build(
+            "cn=users,dc=ctbc",
+            'orclaci: access to entry by group="cn=a,dc=ctbc" (browse,add) '
+            'by group="cn=b,dc=ctbc" (browse)',
+        )
+
+        tm.that(len(aci.allows), eq=2)
+        tm.that(aci.acl_name.endswith("(+1)"), eq=True)
+
+    def test_unknown_permission_token_surfaces_failure(self) -> None:
+        rule = Parser.parse_oid_acl_line(
+            "cn=users,dc=ctbc",
+            'orclaci: access to entry by group="cn=a,dc=ctbc" (bogus)',
+        ).unwrap()
+
+        tm.that(Asm.build_aci_rule(rule).failure, eq=True)

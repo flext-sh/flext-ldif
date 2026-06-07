@@ -100,6 +100,12 @@ class FlextLdifModelsAclConvert:
             tuple[FlextLdifModelsAclConvert.AciAllow, ...],
             u.Field(description="allow() clauses"),
         ] = ()
+        notes: Annotated[
+            t.StrSequence,
+            u.Field(
+                description="Conversion notes: subjects dropped/removed and why",
+            ),
+        ] = ()
 
     class AclSubjectMatcher(m.ArbitraryTypesModel):
         """Parse descriptor: a compiled by-clause regex + group extraction map.

@@ -52,6 +52,10 @@ class FlextLdifConstantsAclConvertOud:
     "Separator joining same-permission bind-rules inside one ``allow`` clause."
     UNKNOWN_CONTAINER: Final[str] = "Unknown"
     "acl-name container fallback when the DN has no ``cn=`` RDN."
+    ACL_NAME_ENTRY: Final[str] = "Entry"
+    ACL_NAME_ATTRS: Final[str] = "Attrs"
+    PERM_NONE: Final[str] = "none"
+    "OID permission token denying all access (``by X (none)``)."
 
     # OID permission → OUD permission(s); None = negation/deny (dropped).
     ENTRY_PERM_MAP: ClassVar[Mapping[str, str | None]] = MappingProxyType({
