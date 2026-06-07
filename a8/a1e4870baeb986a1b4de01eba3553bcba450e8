@@ -1,0 +1,25 @@
+tests/unit/servers/test_oid_acl_assemble.py
+  s_73cbfc60e45e37::t_f899660ae05297 406
+  s_73cbfc60e45e37::t_e31aa84c67df8b 392
+  s_73cbfc60e45e37::t_e644119d14ac18 414
+tests/unit/services/test_migration_pipeline.py
+  s_73cbfc60e45e37::t_ae3230d5d772a1 342
+tests/unit/services/test_processing_service.py
+  s_73cbfc60e45e37::t_a18d2cb04d1154 134
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "a8a1e4870baeb986a1b4de01eba3553bcba450e8",
+  "prompts": {},
+  "sessions": {
+    "s_73cbfc60e45e37": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "80f2c44c-f1f2-49a0-8035-ccac60ac602b",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
