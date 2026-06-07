@@ -8,7 +8,6 @@ from collections.abc import (
     MutableMapping,
     MutableSequence,
 )
-from datetime import UTC, datetime
 from typing import Annotated, ClassVar, Self, override
 
 from flext_ldif import (
@@ -183,7 +182,7 @@ class FlextLdifServersBaseEntry(
         if write_options.include_version_header:
             lines.append("version: 1")
         if write_options.include_timestamps:
-            timestamp = datetime.now(UTC).isoformat()
+            timestamp = u.now().isoformat()
             lines.extend((
                 f"# Generated on: {timestamp}",
                 f"# Total entries: {entry_count}",
