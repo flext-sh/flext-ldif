@@ -204,6 +204,26 @@ class TestsFlextLdifOidAclBuild:
         tm.that(result.success, eq=True)
         tm.that(result.unwrap().allows, eq=())
 
+    def test_anyone_with_sensitive_perms_emits_review_note(self) -> None:
+        # 'by * (noread)' on attr complements to write/selfwrite/... for anyone.
+        rule = Parser.parse_oid_acl_line(
+            "cn=users,dc=ctbc",
+            "orclaci: access to attr=(cn) by * (noread)",
+        ).unwrap()
+        aci = Asm.build_aci_rule(rule).unwrap()
+
+        tm.that("write" in aci.allows[0].permissions, eq=True)
+        tm.that(any("sensitive perms" in note for note in aci.notes), eq=True)
+
+    def test_anyone_with_only_read_search_emits_no_sensitive_note(self) -> None:
+        rule = Parser.parse_oid_acl_line(
+            "cn=users,dc=ctbc",
+            "orclaci: access to attr=(cn) by * (read,search)",
+        ).unwrap()
+        aci = Asm.build_aci_rule(rule).unwrap()
+
+        tm.that(any("sensitive perms" in note for note in aci.notes), eq=False)
+
     def test_bindmode_and_bindipfilter_become_authmethod_and_ip(self) -> None:
         rule = Parser.parse_oid_acl_line(
             "cn=users,dc=ctbc",

@@ -120,6 +120,13 @@ class FlextLdifServersOidAclAssemble:
                     f"added_object_constraint=({subject.added_object_constraint}) "
                     "on this subject needs manual OUD targetfilter review",
                 )
+            if is_anyone and (
+                sensitive := c.Ldif.SENSITIVE_PERMS & set(perms.value)
+            ):
+                notes.append(
+                    f"anyone granted sensitive perms {sorted(sensitive)} — "
+                    "verify this is intended",
+                )
             has_anyone = has_anyone or is_anyone
         first_value = rule.subjects[0].value if rule.subjects else ""
         acl_name = cls.generate_acl_name(rule.dn, rule.target_type, first_value)
