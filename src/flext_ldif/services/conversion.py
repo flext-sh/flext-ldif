@@ -18,6 +18,7 @@ from flext_ldif import (
     t,
     u,
 )
+from flext_ldif.servers._oid.acl_pipeline import FlextLdifServersOidAclPipeline
 
 
 class FlextLdifConversion(
@@ -211,6 +212,16 @@ class FlextLdifConversion(
                         ),
                     },
                 )
+            acl_conversion = FlextLdifServersOidAclPipeline.convert_entry_acls(
+                converted_entry,
+                source_type_norm,
+                target_type_norm,
+            )
+            if acl_conversion.failure:
+                return r[t.Ldif.ConvertedModel].fail(
+                    acl_conversion.error or "Failed to convert OID ACLs to OUD aci",
+                )
+            converted_entry = acl_conversion.value
             transformed_dn = u.Ldif.transform_schema_dn_between_oid_rfc(
                 converted_entry,
                 source_type_norm,
