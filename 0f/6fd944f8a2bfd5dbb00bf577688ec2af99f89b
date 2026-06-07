@@ -1,0 +1,28 @@
+src/flext_ldif/services/conversion.py
+  s_9942ef7a89ba9a::t_cd5c91dec2b997 37-38
+  s_9942ef7a89ba9a::t_50d9dce335f12e 226
+src/flext_ldif/services/pipeline.py
+  s_9942ef7a89ba9a::t_481cebda7fb053 210
+src/flext_ldif/_models/settings.py
+  s_9942ef7a89ba9a::t_793f785e13848b 224-227,243,249
+  s_9942ef7a89ba9a::t_763396425ae784 286,295
+tests/unit/services/test_processing_service.py
+  s_9942ef7a89ba9a::t_be4fd08421b7d1 109-142
+  s_9942ef7a89ba9a::t_a55ea1317ed4fa 10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "0f6fd944f8a2bfd5dbb00bf577688ec2af99f89b",
+  "prompts": {},
+  "sessions": {
+    "s_9942ef7a89ba9a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "84fb5cb9-a1bd-4654-9339-7a49b63e96d1",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
