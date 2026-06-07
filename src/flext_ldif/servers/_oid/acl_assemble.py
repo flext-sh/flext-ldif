@@ -111,8 +111,15 @@ class FlextLdifServersOidAclAssemble:
                     subject_type=bind_type,
                     subject_value=bind_value,
                     permissions=perms.value,
+                    authmethod=subject.bindmode,
+                    ip=subject.bindipfilter,
                 ),
             )
+            if subject.added_object_constraint:
+                notes.append(
+                    f"added_object_constraint=({subject.added_object_constraint}) "
+                    "on this subject needs manual OUD targetfilter review",
+                )
             has_anyone = has_anyone or is_anyone
         first_value = rule.subjects[0].value if rule.subjects else ""
         acl_name = cls.generate_acl_name(rule.dn, rule.target_type, first_value)

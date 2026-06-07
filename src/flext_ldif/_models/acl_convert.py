@@ -39,6 +39,18 @@ class FlextLdifModelsAclConvert:
             t.StrSequence,
             u.Field(description="Raw OID permission tokens for this by-clause"),
         ] = ()
+        bindmode: Annotated[
+            str,
+            u.Field(description="OID bindmode modifier → OUD authmethod"),
+        ] = ""
+        bindipfilter: Annotated[
+            str,
+            u.Field(description="OID bindipfilter modifier → OUD ip"),
+        ] = ""
+        added_object_constraint: Annotated[
+            str,
+            u.Field(description="OID added_object_constraint modifier (note only)"),
+        ] = ""
 
     class OidAclRule(m.FrozenModel):
         """A parsed OID ``orclaci``/``orclentrylevelaci`` rule (pre-conversion)."""
@@ -78,6 +90,14 @@ class FlextLdifModelsAclConvert:
             t.StrSequence,
             u.Field(description="OUD permission tokens in canonical order"),
         ] = ()
+        authmethod: Annotated[
+            str,
+            u.Field(description="OUD authmethod bind-rule constraint (from bindmode)"),
+        ] = ""
+        ip: Annotated[
+            str,
+            u.Field(description="OUD ip bind-rule constraint (from bindipfilter)"),
+        ] = ""
 
     class AciRule(m.FrozenModel):
         """An OUD ``aci`` rule assembled from one OID rule (one rule → one aci)."""

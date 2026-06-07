@@ -120,6 +120,12 @@ class FlextLdifConstantsAclConvert:
         re.IGNORECASE,
     )
     "Finds each ``by <subject> (perms)`` clause in an OID ACL (optional modifiers)."
+    SUBJ_MODIFIER_RE: ClassVar[t.RegexPattern] = re.compile(
+        r"(bindmode|bindipfilter|added_object_constraint)\s*=\s*"
+        r'(?:\(([^)]+)\)|"([^"]+)")',
+        re.IGNORECASE,
+    )
+    "by-clause modifier: g1=kind, g2=paren-value, g3=quoted-value."
 
     # Ordered OID-regex → OUD-wildcard replacements (applied to bind DNs).
     OID_REGEX_REPLACEMENTS: Final[tuple[tuple[str, str], ...]] = (

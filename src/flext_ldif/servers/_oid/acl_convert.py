@@ -79,6 +79,10 @@ class FlextLdifServersOidAclConvert:
         drops unknown subjects), mirroring the oracle's default contract.
         """
         text = subject_str.strip()
+        mods = {
+            mm.group(1).lower(): (mm.group(2) or mm.group(3) or "")
+            for mm in c.Ldif.SUBJ_MODIFIER_RE.finditer(text)
+        }
         for matcher in cls.SUBJECT_MATCHERS:
             match = matcher.pattern.match(text)
             if match is None:
@@ -92,6 +96,9 @@ class FlextLdifServersOidAclConvert:
                 subject_type=matcher.subj_type,
                 value=str(value) if value else "",
                 permissions=cls._split_perms(match.group(matcher.perms_group) or ""),
+                bindmode=mods.get("bindmode", ""),
+                bindipfilter=mods.get("bindipfilter", ""),
+                added_object_constraint=mods.get("added_object_constraint", ""),
             )
         return m.Ldif.OidAclSubject(subject_type="unknown")
 

@@ -19,8 +19,14 @@ class FlextLdifServersOidAclRender:
     def _render_bind(allow: m.Ldif.AciAllow) -> str:
         if allow.subject_type == c.Ldif.OudSubjectType.USERATTR:
             keyword = c.Ldif.OudSubjectType.USERATTR.value
-            return f'{keyword}="{allow.subject_value}"'
-        return f'{allow.subject_type}="{c.Ldif.LDAP_PREFIX}{allow.subject_value}"'
+            bind = f'{keyword}="{allow.subject_value}"'
+        else:
+            bind = f'{allow.subject_type}="{c.Ldif.LDAP_PREFIX}{allow.subject_value}"'
+        if allow.authmethod:
+            bind += f' and authmethod="{allow.authmethod}"'
+        if allow.ip:
+            bind += f' and ip="{allow.ip}"'
+        return bind
 
     @staticmethod
     def _target_parts(aci: m.Ldif.AciRule) -> t.StrSequence:

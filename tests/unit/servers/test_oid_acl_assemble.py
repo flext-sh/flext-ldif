@@ -203,6 +203,38 @@ class TestsFlextLdifOidAclBuild:
         tm.that(result.success, eq=True)
         tm.that(result.unwrap().allows, eq=())
 
+    def test_bindmode_and_bindipfilter_become_authmethod_and_ip(self) -> None:
+        rule = Parser.parse_oid_acl_line(
+            "cn=users,dc=ctbc",
+            'orclaci: access to entry by group="cn=a,dc=ctbc" '
+            "bindmode=(SSL) bindipfilter=(10.0.0.0) (browse,add)",
+        ).unwrap()
+
+        tm.that(rule.subjects[0].bindmode, eq="SSL")
+        tm.that(rule.subjects[0].bindipfilter, eq="10.0.0.0")
+        aci = Asm.build_aci_rule(rule).unwrap()
+        tm.that(aci.allows[0].authmethod, eq="SSL")
+        tm.that(aci.allows[0].ip, eq="10.0.0.0")
+        tm.that(
+            Render.render_aci_string(aci),
+            eq=(
+                'aci: (targetattr="*")(version 3.0; acl "users Entry by a"; '
+                'allow (read, search, add) groupdn="ldap:///cn=a,dc=ctbc" '
+                'and authmethod="SSL" and ip="10.0.0.0";)'
+            ),
+        )
+
+    def test_added_object_constraint_emits_review_note(self) -> None:
+        rule = Parser.parse_oid_acl_line(
+            "cn=users,dc=ctbc",
+            'orclaci: access to entry by group="cn=a,dc=ctbc" '
+            "added_object_constraint=(objectclass=person) (browse)",
+        ).unwrap()
+        aci = Asm.build_aci_rule(rule).unwrap()
+
+        tm.that(rule.subjects[0].added_object_constraint, eq="objectclass=person")
+        tm.that(any("added_object_constraint" in n for n in aci.notes), eq=True)
+
     def test_anyone_at_high_level_container_is_skipped(self) -> None:
         rule = Parser.parse_oid_acl_line(
             "dc=ctbc",
