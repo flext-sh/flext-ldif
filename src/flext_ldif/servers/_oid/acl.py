@@ -136,10 +136,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         """Normalize permissions to dict for formatting."""
         if not permissions:
             return {}
-        try:
-            permissions_model = m.Ldif.AclPermissions.model_validate(permissions)
-        except c.Ldif.EXC_LDIF_PARSE:
-            return {}
+        permissions_model = m.Ldif.AclPermissions.model_validate(permissions)
         raw_perms = permissions_model.model_dump()
         return {
             "read": bool(raw_perms.get("read", False)),
@@ -321,10 +318,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         ],
     ) -> t.Ldif.MutableMetadataMapping:
         """Extract extensions dict from metadata, converting types if needed."""
-        try:
-            metadata = m.Ldif.ServerMetadata.model_validate(metadata)
-        except c.Ldif.EXC_LDIF_PARSE:
-            return {}
+        metadata = m.Ldif.ServerMetadata.model_validate(metadata)
         extensions = getattr(metadata, "extensions", None)
         return extensions.to_dict() if extensions is not None else {}
 
