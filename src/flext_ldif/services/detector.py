@@ -92,13 +92,13 @@ class FlextLdifDetector(s):
                     "read detection source",
                     f"LDIF file not found: {ldif_path}",
                 )
-            try:
-                ldif_content = ldif_path.read_text(encoding="utf-8")
-            except UnicodeDecodeError as e:
+            read = u.Cli.files_read_text(ldif_path)
+            if read.failure:
                 return r[m.Ldif.ServerDetectionResult].fail_op(
                     "read detection source",
-                    e,
+                    read.error,
                 )
+            ldif_content = read.value
         lines = ldif_content.splitlines()
         content_sample = "\n".join(lines[:max_lines])
         scores_dict = self._calculate_scores(content_sample)
