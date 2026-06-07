@@ -90,15 +90,6 @@ class FlextLdifServersBaseSchemaAcl(
         _ = objectclass
         return False
 
-    def convert_rfc_acl_to_aci(
-        self,
-        rfc_acl_attrs: t.MutableStrSequenceMapping,
-        target_server: str,
-    ) -> p.Result[t.MutableStrSequenceMapping]:
-        """Convert RFC ACL format to server-specific ACI format."""
-        _ = target_server
-        return r[t.MutableStrSequenceMapping].ok(rfc_acl_attrs)
-
     def create_metadata(
         self,
         original_format: str,

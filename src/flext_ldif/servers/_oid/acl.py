@@ -240,16 +240,6 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             ))
         return can_handle
 
-    @override
-    def convert_rfc_acl_to_aci(
-        self,
-        rfc_acl_attrs: t.MutableStrSequenceMapping,
-        target_server: str = "oid",
-    ) -> p.Result[t.MutableStrSequenceMapping]:
-        """Convert RFC ACL format to Oracle OID orclaci format."""
-        _ = target_server
-        return r[t.MutableStrSequenceMapping].ok(rfc_acl_attrs)
-
     def _build_metadata_extensions(
         self,
         metadata: m.Ldif.ServerMetadata
