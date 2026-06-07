@@ -64,6 +64,7 @@ class FlextLdifProcessingPipeline(
         *,
         source_server: str | c.Ldif.ServerTypes,
         target_server: str | c.Ldif.ServerTypes,
+        base_dn: str = "",
     ) -> Self:
         """Create a configured pipeline for source and target LDIF servers."""
         source_server_type = (
@@ -84,6 +85,7 @@ class FlextLdifProcessingPipeline(
         transform_config = m.Ldif.TransformConfig.servers(
             source_server=source_server_type,
             target_server=target_server_type,
+            base_dn=base_dn,
         )
         return cls(transform_config=transform_config)
 

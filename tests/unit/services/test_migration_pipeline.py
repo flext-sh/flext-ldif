@@ -15,6 +15,7 @@ from flext_tests import tm
 
 from flext_ldif import FlextLdifMigrationPipeline, FlextLdifProcessingPipeline
 from tests import c, m, t
+from tests.utilities import TestsFlextLdifUtilities as u
 
 if TYPE_CHECKING:
     from tests.unit.fixtures import _MigrationPipelineFactory
@@ -316,4 +317,33 @@ class TestsFlextLdifProcessingPipeline:
             FlextLdifProcessingPipeline(
                 transform_config=transform_config, entries_input=[]
             ).execute()
+        )
+
+    def test_migrate_entries_base_dn_filters_out_of_scope_acl_bind_dn(self) -> None:
+        # FlextLdifMigrationPipeline.base_dn threads through to the OID→OUD ACL
+        # scope filter via for_servers → TransformConfig → transformer.
+        entry = u.Tests.create_real_entry(
+            dn="cn=users,dc=ctbc",
+            attributes={
+                "objectClass": ["top"],
+                "orclaci": [
+                    ('access to entry by group="cn=x,dc=other" (browse) '
+                    'by group="cn=a,dc=ctbc" (browse)'),
+                ],
+            },
+        )
+        pipeline = FlextLdifMigrationPipeline(
+            source_server_type="oid",
+            target_server_type="oud",
+            base_dn="dc=ctbc",
+        )
+
+        migrated = u.Tests.assert_success(pipeline.migrate_entries([entry]))
+
+        tm.that(
+            migrated[0].attributes.attributes["aci"],
+            eq=[
+                ('(targetattr="*")(version 3.0; acl "users Entry by x"; '
+                'allow (read, search) groupdn="ldap:///cn=a,dc=ctbc";)'),
+            ],
         )

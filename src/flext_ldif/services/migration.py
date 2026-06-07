@@ -89,6 +89,14 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
             description="Canonical target server type used by the migration pipeline.",
         ),
     ]
+    base_dn: Annotated[
+        str | None,
+        u.Field(
+            default=None,
+            exclude=True,
+            description="Migration base DN forwarded to OID→OUD ACL scope filtering.",
+        ),
+    ]
 
     @override
     def model_post_init(self, __context: t.JsonMapping | None, /) -> None:
@@ -177,6 +185,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
             pipeline = FlextLdifProcessingPipeline.for_servers(
                 source_server=source_server,
                 target_server=target_server,
+                base_dn=self.base_dn or "",
             )
             return FlextLdifProcessingPipeline(
                 transform_config=pipeline.transform_config,

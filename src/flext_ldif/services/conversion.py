@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import time
-from typing import override
+from typing import Annotated, override
 
 from flext_ldif import (
     FlextLdifConversionAclMixin,
@@ -34,13 +34,16 @@ class FlextLdifConversion(
         default_factory=m.Ldif.DnRegistry,
         description="DN registry for tracking distinguished names during conversion",
     )
-    base_dn: str | None = u.Field(
-        default=None,
-        description=(
-            "Migration base DN; when set, OID→OUD ACL conversion filters "
-            "out-of-scope bind DNs and high-level-container anyone rules"
+    base_dn: Annotated[
+        str | None,
+        u.Field(
+            default=None,
+            description=(
+                "Migration base DN; when set, OID→OUD ACL conversion filters "
+                "out-of-scope bind DNs and high-level-container anyone rules"
+            ),
         ),
-    )
+    ] = None
 
     def dsl_convert_between_servers(
         self,
