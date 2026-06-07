@@ -1,0 +1,73 @@
+docs/development.md
+  s_73cbfc60e45e37::t_054d4a61fec593 78,107,133,176,204,236,288
+docs/adr/adr-003-dn-case-registry.md
+  s_73cbfc60e45e37::t_054d4a61fec593 33,56
+docs/diagrams/README.md
+  s_73cbfc60e45e37::t_054d4a61fec593 181
+docs/guides/testing.md
+  s_73cbfc60e45e37::t_054d4a61fec593 76,133,181,224,297,338,362,401,444,476,522,593,616,643,663,705
+docs/guides/integration.md
+  s_73cbfc60e45e37::t_054d4a61fec593 31,62,88,227,306,398,477,500,520,554
+docs/guides/getting-started.md
+  s_73cbfc60e45e37::t_054d4a61fec593 101,112,133,186,257
+docs/guides/server-api-usage-pattern.md
+  s_73cbfc60e45e37::t_054d4a61fec593 26,48,75,113,130,142,157,190
+docs/adr/adr-006-simplification-refactoring.md
+  s_73cbfc60e45e37::t_054d4a61fec593 138,147,173,180,216,249,257,282,299
+docs/adr/adr-002-universal-conversion-matrix.md
+  s_73cbfc60e45e37::t_054d4a61fec593 41
+tests/README.md
+  s_73cbfc60e45e37::t_054d4a61fec593 99,126,149,186,319,417
+docs/guides/flext_ldif_parse_acl_usages.md
+  s_73cbfc60e45e37::t_054d4a61fec593 55,74,125,149,182
+src/README.md
+  s_73cbfc60e45e37::t_054d4a61fec593 129,145
+docs/api-reference.md
+  s_73cbfc60e45e37::t_054d4a61fec593 525,565,582,616,642,658,677,722,745,874,916,965,1018,1069,1109,1127,1168,1191,1224,1242,1270,1317,1333,1352
+docs/refactoring/phase-2-service-layer.md
+  s_73cbfc60e45e37::t_054d4a61fec593 218,242
+docs/guides/development.md
+  s_73cbfc60e45e37::t_054d4a61fec593 152,169,212,251,336,428,456
+docs/guides/filters.md
+  s_73cbfc60e45e37::t_054d4a61fec593 36,61,79,93,116,130,145
+docs/troubleshooting.md
+  s_73cbfc60e45e37::t_054d4a61fec593 31,44,75,82,120,127,210,217,284,321,348,357,410,422,482,574,613
+docs/getting-started.md
+  s_73cbfc60e45e37::t_054d4a61fec593 104,144,179,198,242,265,318,338
+docs/guides/sorting.md
+  s_73cbfc60e45e37::t_054d4a61fec593 55,64,75,88,126,185
+tests/fixtures/README.md
+  s_73cbfc60e45e37::t_054d4a61fec593 63
+docs/guides/configuration.md
+  s_73cbfc60e45e37::t_054d4a61fec593 106,144,164,178,231,264,308,344,362,399,437
+examples/README.md
+  s_73cbfc60e45e37::t_054d4a61fec593 197
+docs/adr/adr-004-memory-bound-architecture.md
+  s_73cbfc60e45e37::t_054d4a61fec593 40
+docs/adr/adr-001-rfc-first-design.md
+  s_73cbfc60e45e37::t_054d4a61fec593 32
+docs/guides/constants-pattern.md
+  s_73cbfc60e45e37::t_054d4a61fec593 17,37
+docs/configuration.md
+  s_73cbfc60e45e37::t_054d4a61fec593 52,86,106,140,168,187,208,229,264,291,342,381,431,451,473,495
+docs/adr/adr-005-pluggable-quirks-system.md
+  s_73cbfc60e45e37::t_054d4a61fec593 43,68
+docs/guides/troubleshooting.md
+  s_73cbfc60e45e37::t_054d4a61fec593 118,139,148,196,210,225,237,273,282,297,307,330,339,354,362,381,392,414,426,437,474,511,542,603,626,707,719,737,750,764,777
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "ba36515c8a6ca63a61ded503c33fd634d1d60c41",
+  "prompts": {},
+  "sessions": {
+    "s_73cbfc60e45e37": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "80f2c44c-f1f2-49a0-8035-ccac60ac602b",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
