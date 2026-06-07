@@ -41,6 +41,10 @@ class FlextLdifConstantsAclConvertOud:
     "URL prefix wrapping a DN inside a ``groupdn``/``userdn`` bind-rule."
     SUBJECT_SELF: Final[str] = "self"
     SUBJECT_ANYONE: Final[str] = "anyone"
+    OUD_ATTR_OR: Final[str] = "||"
+    "OUD ``targetattr`` multi-attribute OR separator (``cn||sn||mail``)."
+    OUD_ATTR_NEGATION: Final[str] = "!="
+    "OUD ``targetattr`` negation operator (``targetattr!=...``)."
 
     # OID permission → OUD permission(s); None = negation/deny (dropped).
     ENTRY_PERM_MAP: ClassVar[Mapping[str, str | None]] = MappingProxyType({

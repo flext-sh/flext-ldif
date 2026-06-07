@@ -122,3 +122,56 @@ class TestsFlextLdifOidAclConvertPermissions:
         result = Conv.convert_permissions(("nofoo",), is_entry=False)
 
         tm.that(result.failure, eq=True)
+
+
+class TestsFlextLdifOidAclConvertTarget:
+    """get_targetattr + calculate_targetscope parity with the oracle."""
+
+    @staticmethod
+    def _rule(
+        target_type: str,
+        target_attrs: str = "*",
+        acl_type: str = "orclaci",
+    ) -> m.Ldif.OidAclRule:
+        return m.Ldif.OidAclRule(
+            dn="dc=ctbc",
+            acl_type=acl_type,
+            target_type=target_type,
+            target_attrs=target_attrs,
+        )
+
+    def test_entry_target_is_wildcard(self) -> None:
+        tm.that(Conv.get_targetattr(self._rule("entry")), eq="*")
+
+    def test_attr_list_joins_with_or(self) -> None:
+        tm.that(
+            Conv.get_targetattr(self._rule("attr", "cn,sn,mail")),
+            eq="cn||sn||mail",
+        )
+
+    def test_attr_wildcard_stays_wildcard(self) -> None:
+        tm.that(Conv.get_targetattr(self._rule("attr", "*")), eq="*")
+
+    def test_attr_negation_keeps_operator(self) -> None:
+        tm.that(
+            Conv.get_targetattr(self._rule("attr", "!=userpassword")),
+            eq="!=userpassword",
+        )
+
+    def test_attr_negation_list_joins_and_strips_spaces(self) -> None:
+        tm.that(Conv.get_targetattr(self._rule("attr", "!=a, b")), eq="!=a||b")
+
+    def test_scope_orclaci_without_anyone_is_default(self) -> None:
+        scope = Conv.calculate_targetscope(self._rule("entry"), has_anyone_subject=False)
+        tm.that(scope is None, eq=True)
+
+    def test_scope_orclaci_with_anyone_is_base(self) -> None:
+        scope = Conv.calculate_targetscope(self._rule("entry"), has_anyone_subject=True)
+        tm.that(scope, eq="base")
+
+    def test_scope_orclentrylevelaci_is_always_base(self) -> None:
+        scope = Conv.calculate_targetscope(
+            self._rule("entry", acl_type="orclentrylevelaci"),
+            has_anyone_subject=False,
+        )
+        tm.that(scope, eq="base")

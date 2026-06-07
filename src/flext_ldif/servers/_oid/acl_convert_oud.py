@@ -81,6 +81,44 @@ class FlextLdifServersOidAclToOud:
             return r[t.StrSequence].ok(cls._order_perms(complement))
         return r[t.StrSequence].ok(())
 
+    @staticmethod
+    def get_targetattr(rule: m.Ldif.OidAclRule) -> str:
+        """Compute the OUD ``targetattr`` value for a rule.
+
+        Entry-level ACLs have no OUD ``targetattr="entry"`` syntax — operations
+        apply to the whole entry, so OUD uses ``*``. Attribute lists join with
+        ``||``; an OID ``attr!=`` negation becomes ``!=a||b``.
+        """
+        if rule.target_type == c.Ldif.AclTargetType.ENTRY:
+            return c.Ldif.ACL_WILDCARD
+        attrs = rule.target_attrs
+        if attrs.startswith(c.Ldif.OUD_ATTR_NEGATION):
+            body = attrs[len(c.Ldif.OUD_ATTR_NEGATION) :]
+            joined = body.replace(",", c.Ldif.OUD_ATTR_OR).replace(" ", "")
+            return f"{c.Ldif.OUD_ATTR_NEGATION}{joined}"
+        if attrs in {c.Ldif.ACL_WILDCARD, ""}:
+            return c.Ldif.ACL_WILDCARD
+        return attrs.replace(",", c.Ldif.OUD_ATTR_OR).replace(" ", "")
+
+    @staticmethod
+    def calculate_targetscope(
+        rule: m.Ldif.OidAclRule,
+        *,
+        has_anyone_subject: bool,
+    ) -> str | None:
+        """Compute the OUD ``targetscope`` (``base`` or default subtree).
+
+        ``orclentrylevelaci`` is non-inheritable → always ``base``. An ``orclaci``
+        with a surviving ``anyone`` subject is pinned to ``base`` to prevent
+        inheritance to the subtree; otherwise the OUD default (subtree) applies
+        and ``targetscope`` is omitted (``None``).
+        """
+        if rule.acl_type == c.Ldif.AclConvertType.ORCLENTRYLEVELACI:
+            return c.Ldif.ACL_SCOPE_BASE
+        if has_anyone_subject:
+            return c.Ldif.ACL_SCOPE_BASE
+        return None
+
     @classmethod
     def convert_subject_to_oud(
         cls,
