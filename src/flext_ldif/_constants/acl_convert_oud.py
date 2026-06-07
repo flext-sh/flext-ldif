@@ -45,6 +45,13 @@ class FlextLdifConstantsAclConvertOud:
     "OUD ``targetattr`` multi-attribute OR separator (``cn||sn||mail``)."
     OUD_ATTR_NEGATION: Final[str] = "!="
     "OUD ``targetattr`` negation operator (``targetattr!=...``)."
+    ACI_PREFIX: Final[str] = "aci: "
+    ACI_VERSION: Final[str] = "version 3.0"
+    ACI_ALLOW: Final[str] = "allow"
+    BIND_OR: Final[str] = " or "
+    "Separator joining same-permission bind-rules inside one ``allow`` clause."
+    UNKNOWN_CONTAINER: Final[str] = "Unknown"
+    "acl-name container fallback when the DN has no ``cn=`` RDN."
 
     # OID permission → OUD permission(s); None = negation/deny (dropped).
     ENTRY_PERM_MAP: ClassVar[Mapping[str, str | None]] = MappingProxyType({
