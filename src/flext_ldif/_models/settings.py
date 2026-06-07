@@ -221,6 +221,10 @@ class FlextLdifModelsSettings:
             NormalizedServerTypeValue,
             u.Field(description="Target LDAP server type identifier"),
         ] = None
+        base_dn: Annotated[
+            str,
+            u.Field(description="Migration base DN for OID→OUD ACL scope filtering"),
+        ] = ""
         dn_config: Annotated[
             FlextLdifModelsSettings.DnNormalizationConfig | None,
             u.Field(description="DN normalization configuration"),
@@ -236,11 +240,13 @@ class FlextLdifModelsSettings:
             *,
             source_server: str | c.Ldif.ServerTypes | None,
             target_server: str | c.Ldif.ServerTypes | None,
+            base_dn: str = "",
         ) -> Self:
             """Build processing config keeping model defaults untouched."""
             return cls(
                 source_server=source_server,
                 target_server=target_server,
+                base_dn=base_dn,
             )
 
     class TransformConfig(m.Value):
@@ -277,6 +283,7 @@ class FlextLdifModelsSettings:
             *,
             source_server: str | c.Ldif.ServerTypes | None,
             target_server: str | c.Ldif.ServerTypes | None,
+            base_dn: str = "",
         ) -> Self:
             """Build transform config for server-to-server conversion only."""
             return cls(
@@ -285,6 +292,7 @@ class FlextLdifModelsSettings:
                 process_config=FlextLdifModelsSettings.ProcessConfig.servers(
                     source_server=source_server,
                     target_server=target_server,
+                    base_dn=base_dn,
                 ),
             )
 

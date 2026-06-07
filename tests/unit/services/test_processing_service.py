@@ -7,6 +7,7 @@ from typing import Literal
 import pytest
 from flext_tests import tm
 
+from flext_ldif import FlextLdifProcessingPipeline
 from tests import c, m, p, t
 from tests.utilities import TestsFlextLdifUtilities as u
 
@@ -105,3 +106,37 @@ class TestsFlextLdifProcessingService:
                 batch_size=1,
                 max_workers=1,
             )
+
+    def test_pipeline_base_dn_filters_out_of_scope_acl_bind_dn(self) -> None:
+        # TransformConfig.servers(base_dn=...) flows through the processing
+        # pipeline → FlextLdifTransformer → ACL scope filter.
+        entry = u.Tests.create_real_entry(
+            dn="cn=users,dc=ctbc",
+            attributes={
+                "objectClass": ["top"],
+                "orclaci": [
+                    ('access to entry by group="cn=x,dc=other" (browse) '
+                    'by group="cn=a,dc=ctbc" (browse)'),
+                ],
+            },
+        )
+        config = m.Ldif.TransformConfig.servers(
+            source_server="oid",
+            target_server="oud",
+            base_dn="dc=ctbc",
+        )
+
+        result = FlextLdifProcessingPipeline(
+            transform_config=config,
+            entries_input=[entry],
+        ).execute()
+        converted = u.Tests.assert_success(result)
+        attrs = converted[0].attributes.attributes
+
+        tm.that(
+            attrs["aci"],
+            eq=[
+                ('(targetattr="*")(version 3.0; acl "users Entry by x"; '
+                'allow (read, search) groupdn="ldap:///cn=a,dc=ctbc";)'),
+            ],
+        )

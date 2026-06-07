@@ -207,6 +207,7 @@ class FlextLdifProcessingPipeline(
             server_transform = FlextLdifTransformer(
                 source_server=source_server,
                 target_server=target_server,
+                base_dn=self._config.process_config.base_dn,
             )
             handlers[c.Ldif.PROCESSING_STAGE_SERVER_TRANSFORM] = (
                 lambda _ctx, transformer=server_transform: self._apply_transformer(

@@ -34,8 +34,8 @@ class FlextLdifConversion(
         default_factory=m.Ldif.DnRegistry,
         description="DN registry for tracking distinguished names during conversion",
     )
-    base_dn: str = u.Field(
-        default="",
+    base_dn: str | None = u.Field(
+        default=None,
         description=(
             "Migration base DN; when set, OID→OUD ACL conversion filters "
             "out-of-scope bind DNs and high-level-container anyone rules"
@@ -223,7 +223,7 @@ class FlextLdifConversion(
                 converted_entry,
                 source_type_norm,
                 target_type_norm,
-                base_dn=self.base_dn,
+                base_dn=self.base_dn or "",
             )
             if acl_conversion.failure:
                 return r[t.Ldif.ConvertedModel].fail(
