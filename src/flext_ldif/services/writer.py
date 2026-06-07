@@ -69,9 +69,9 @@ class FlextLdifWriter(s):
         ldif_content = string_result.value
         write = u.Cli.atomic_write_text_file(path, ldif_content)
         if write.failure:
-            return r[m.Ldif.WriteResponse].fail_op(
-                "persist ldif output",
-                write.error or f"Failed to write LDIF file {path}",
+            return r[m.Ldif.WriteResponse].fail(
+                f"Failed to write LDIF file {path}: "
+                f"{write.error or 'unknown write error'}",
             )
         return r[m.Ldif.WriteResponse].ok(
             m.Ldif.WriteResponse(

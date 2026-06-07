@@ -115,7 +115,10 @@ class TestsFlextLdifWriterService:
             server_type=c.Tests.RFC,
         )
 
-        tm.fail(result, has="Failed to create parent directories")
+        # atomic_write_text_file creates parents + writes as one operation; the
+        # blocked-parent failure surfaces under the unified write error with the
+        # parent cause (ensure_dir) preserved.
+        tm.fail(result, has="Failed to write LDIF file")
 
     def test_write_ldif_file_fails_when_target_is_directory(
         self,
