@@ -1,0 +1,41 @@
+tests/unit/__init__.py
+  s_fec2050ea607c1::t_fe6600af88eabe 25-37
+tests/unit/servers/__init__.py
+  s_73cbfc60e45e37::t_c15d360f2b876b 14-26
+src/flext_ldif/_typings/domain.py
+  s_73cbfc60e45e37::t_b0f9283a942850 6
+src/flext_ldif/__init__.py
+  s_fec2050ea607c1::t_fe6600af88eabe 80-84,227-231,404-408
+src/flext_ldif/servers/_oid/__init__.py
+  s_73cbfc60e45e37::t_c15d360f2b876b 11-15
+src/flext_ldif/_constants/__init__.py
+  s_73cbfc60e45e37::t_c15d360f2b876b 10-11
+src/flext_ldif/servers/__init__.py
+  s_73cbfc60e45e37::t_c15d360f2b876b 27-31
+tests/__init__.py
+  s_73cbfc60e45e37::t_c15d360f2b876b 78-90,221-233,350-358
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "b56c11046c25d3e0e99e03d2b68c3c8cee8d4f91",
+  "prompts": {},
+  "sessions": {
+    "s_73cbfc60e45e37": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "80f2c44c-f1f2-49a0-8035-ccac60ac602b",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    },
+    "s_fec2050ea607c1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ea2cd-580d-7e50-9f28-e9adbe7acc8a",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
