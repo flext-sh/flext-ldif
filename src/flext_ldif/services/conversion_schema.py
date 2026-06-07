@@ -191,20 +191,19 @@ class FlextLdifConversionSchemaMixin(s):
                 )
             )
 
-        parse_result: p.Result[t.Ldif.SchemaConversionValue]
         definition_error = f"Failed to parse {schema_field_name} definition"
         if schema_item_kind == c.Ldif.SchemaItemKind.ATTRIBUTE:
             parse_result = self._validate_parsed_schema(
                 source_schema.parse_attribute(value),
                 m.Ldif.SchemaAttribute,
                 definition_error,
-            ).map(lambda parsed: parsed)
+            )
         else:
             parse_result = self._validate_parsed_schema(
                 source_schema.parse_objectclass(value),
                 m.Ldif.SchemaObjectClass,
                 definition_error,
-            ).map(lambda parsed: parsed)
+            )
 
         return parse_result.map_error(
             lambda error: error or f"Failed to parse {schema_field_name}",
