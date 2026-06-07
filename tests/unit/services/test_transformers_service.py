@@ -65,3 +65,33 @@ class TestsFlextLdifTransformerService:
                 'allow (read, search, add) groupdn="ldap:///cn=admins,dc=ctbc";)'),
             ],
         )
+
+    def test_transformer_base_dn_excludes_out_of_scope_bind_dn(self) -> None:
+        entry = u.Tests.create_real_entry(
+            dn="cn=users,dc=ctbc",
+            attributes={
+                "objectClass": ["top"],
+                "orclaci": [
+                    ('access to entry by group="cn=x,dc=other" (browse) '
+                    'by group="cn=a,dc=ctbc" (browse)'),
+                ],
+            },
+        )
+        transformer = FlextLdifTransformer(
+            source_server=c.Ldif.ServerTypes.OID,
+            target_server=c.Ldif.ServerTypes.OUD,
+            base_dn="dc=ctbc",
+        )
+
+        converted = u.Tests.assert_success(transformer.apply(entry))
+        if not isinstance(converted, m.Ldif.Entry) or converted.attributes is None:
+            msg = "Expected transformer to return an Entry with attributes"
+            raise AssertionError(msg)
+
+        tm.that(
+            converted.attributes.attributes["aci"],
+            eq=[
+                ('(targetattr="*")(version 3.0; acl "users Entry by x"; '
+                'allow (read, search) groupdn="ldap:///cn=a,dc=ctbc";)'),
+            ],
+        )

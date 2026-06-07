@@ -26,6 +26,14 @@ class FlextLdifTransformer(s):
             description="Target server type used for the conversion.",
         ),
     ]
+    base_dn: Annotated[
+        str,
+        u.Field(
+            default="",
+            exclude=True,
+            description="Migration base DN forwarded to ACL scope filtering.",
+        ),
+    ]
 
     @staticmethod
     def _normalize_server_type(
@@ -53,7 +61,7 @@ class FlextLdifTransformer(s):
             )
 
         return (
-            FlextLdifConversion()
+            FlextLdifConversion(base_dn=self.base_dn)
             .convert_model(
                 source=source_server.value,
                 target=target_server.value,
