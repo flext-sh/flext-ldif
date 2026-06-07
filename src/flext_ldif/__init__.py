@@ -26,6 +26,7 @@ if _t.TYPE_CHECKING:
     from flext_ldif._constants.acl_convert import FlextLdifConstantsAclConvert
     from flext_ldif._constants.base import FlextLdifConstantsBase
     from flext_ldif._constants.enums import FlextLdifConstantsEnums
+    from flext_ldif._models.acl_convert import FlextLdifModelsAclConvert
     from flext_ldif._models.base import FlextLdifModelsBases
     from flext_ldif._models.collections import FlextLdifModelsCollections
     from flext_ldif._models.domain_acl import FlextLdifModelsDomainAcl
@@ -144,6 +145,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._constants.acl_convert": ("FlextLdifConstantsAclConvert",),
             "._constants.base": ("FlextLdifConstantsBase",),
             "._constants.enums": ("FlextLdifConstantsEnums",),
+            "._models.acl_convert": ("FlextLdifModelsAclConvert",),
             "._models.base": ("FlextLdifModelsBases",),
             "._models.collections": ("FlextLdifModelsCollections",),
             "._models.domain_acl": ("FlextLdifModelsDomainAcl",),
@@ -335,6 +337,7 @@ __all__: list[str] = [
     "FlextLdifFilters",
     "FlextLdifMigrationPipeline",
     "FlextLdifModels",
+    "FlextLdifModelsAclConvert",
     "FlextLdifModelsBases",
     "FlextLdifModelsCollections",
     "FlextLdifModelsDomainAcl",

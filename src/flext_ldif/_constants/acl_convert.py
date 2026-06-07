@@ -51,11 +51,8 @@ class FlextLdifConstantsAclConvert:
         GROUPDN = "#GROUPDN"
 
     ACL_ACCESS_TO: Final[str] = "access to"
-    "Literal prefix after the ACL attribute name in an OID rule."
     ACL_WILDCARD: Final[str] = "*"
-    "OID wildcard for 'all attributes' / 'anyone' targets."
     ACL_SCOPE_BASE: Final[str] = "base"
-    "OUD targetscope value for entry-level / anyone-scoped rules."
 
     ATTR_PATTERN_RE: ClassVar[t.RegexPattern] = re.compile(
         r"attr\s*(!?=)\s*\(([^)]*)\)",
@@ -73,6 +70,61 @@ class FlextLdifConstantsAclConvert:
     DN_NORMALIZE_COMMA_RE: ClassVar[t.RegexPattern] = re.compile(r"\s*,\s*")
     DN_NORMALIZE_EQUALS_RE: ClassVar[t.RegexPattern] = re.compile(r"\s*=\s*")
 
+    # by-clause subject matchers; group→subject mapping is the SUBJECT_MATCHERS SSOT.
+    SUBJ_SUPERUSER_RE: ClassVar[t.RegexPattern] = re.compile(
+        r"by\s+SuperUser\s*\(([^)]+)\)",
+        re.IGNORECASE,
+    )
+    SUBJ_GROUP_RE: ClassVar[t.RegexPattern] = re.compile(
+        r'by\s+group\s*=\s*"([^"]+)".*?\(([^)]+)\)\s*$',
+        re.IGNORECASE,
+    )
+    SUBJ_DN_RE: ClassVar[t.RegexPattern] = re.compile(
+        r'by\s+dn\s*=\s*"([^"]+)".*?\(([^)]+)\)\s*$',
+        re.IGNORECASE,
+    )
+    SUBJ_SELF_RE: ClassVar[t.RegexPattern] = re.compile(
+        r"by\s+self.*?\(([^)]+)\)\s*$",
+        re.IGNORECASE,
+    )
+    SUBJ_ANYONE_RE: ClassVar[t.RegexPattern] = re.compile(
+        r"by\s+\*.*?\(([^)]+)\)\s*$",
+        re.IGNORECASE,
+    )
+    SUBJ_DNATTR_RE: ClassVar[t.RegexPattern] = re.compile(
+        r"by\s+dnattr\s*=\s*\(([^)]+)\)\s*\(([^)]+)\)",
+        re.IGNORECASE,
+    )
+    SUBJ_GROUPATTR_RE: ClassVar[t.RegexPattern] = re.compile(
+        r"by\s+groupattr\s*=\s*\(([^)]+)\)\s*\(([^)]+)\)",
+        re.IGNORECASE,
+    )
+    SUBJ_GUIDATTR_RE: ClassVar[t.RegexPattern] = re.compile(
+        r"by\s+guidattr\s*=\s*\(([^)]+)\)\s*\(([^)]+)\)",
+        re.IGNORECASE,
+    )
+
+    _BY_MODS = (
+        r"(?:\s+added_object_constraint\s*=\s*\([^)]+\))?"
+        r"(?:\s+bindmode\s*=\s*\([^)]+\))?"
+        r"(?:\s+bindipfilter\s*=\s*\([^)]+\))?"
+    )
+    BY_CLAUSE_RE: ClassVar[t.RegexPattern] = re.compile(
+        r"by\s+(?:"
+        rf'group\s*=\s*"[^"]+"{_BY_MODS}\s*\([^)]+\)'
+        rf'|dn\s*=\s*"[^"]+"{_BY_MODS}\s*\([^)]+\)'
+        r"|SuperUser\s*\([^)]+\)"
+        rf"|self{_BY_MODS}\s*\([^)]+\)"
+        rf"|\*{_BY_MODS}\s*\([^)]+\)"
+        r"|dnattr\s*=\s*\([^)]+\)\s*\([^)]+\)"
+        r"|groupattr\s*=\s*\([^)]+\)\s*\([^)]+\)"
+        r"|guidattr\s*=\s*\([^)]+\)\s*\([^)]+\)"
+        r")",
+        re.IGNORECASE,
+    )
+    "Finds each ``by <subject> (perms)`` clause in an OID ACL (optional modifiers)."
+
+    # OID permission → OUD permission(s); None = negation/deny (dropped).
     ENTRY_PERM_MAP: ClassVar[Mapping[str, str | None]] = MappingProxyType({
         "browse": "read, search",
         "add": "add",
@@ -84,7 +136,6 @@ class FlextLdifConstantsAclConvert:
         "nobrowse": None,
         "none": None,
     })
-    "OID entry-level permission → OUD permission(s); None = negation/deny (dropped)."
     ATTR_PERM_MAP: ClassVar[Mapping[str, str | None]] = MappingProxyType({
         "read": "read",
         "search": "search",
@@ -98,7 +149,7 @@ class FlextLdifConstantsAclConvert:
         "nocompare": None,
         "none": None,
     })
-    "OID attribute-level permission → OUD permission; None = negation/deny (dropped)."
+    # OID ``noX`` negation token → its base permission (for complement computation).
     NEGATION_TO_BASE: ClassVar[Mapping[str, str]] = MappingProxyType({
         "noread": "read",
         "nosearch": "search",
@@ -110,7 +161,6 @@ class FlextLdifConstantsAclConvert:
         "noproxy": "proxy",
         "nobrowse": "browse",
     })
-    "OID ``noX`` negation token → its base permission (for complement computation)."
     ALL_ENTRY_PERMS: Final[frozenset[str]] = frozenset({
         "browse",
         "add",

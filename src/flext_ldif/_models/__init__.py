@@ -7,6 +7,7 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 _LAZY_IMPORTS = build_lazy_import_map(
     {
+        ".acl_convert": ("FlextLdifModelsAclConvert",),
         ".base": ("FlextLdifModelsBases",),
         ".collections": ("FlextLdifModelsCollections",),
         ".domain_acl": ("FlextLdifModelsDomainAcl",),
