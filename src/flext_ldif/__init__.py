@@ -112,6 +112,9 @@ if _t.TYPE_CHECKING:
     from flext_ldif.services.categorization import FlextLdifCategorization
     from flext_ldif.services.conversion import FlextLdifConversion
     from flext_ldif.services.conversion_acl import FlextLdifConversionAclMixin
+    from flext_ldif.services.conversion_acl_preserve import (
+        FlextLdifConversionAclPreserveMixin,
+    )
     from flext_ldif.services.conversion_entry import FlextLdifConversionEntryMixin
     from flext_ldif.services.conversion_metadata import FlextLdifConversionMetadataMixin
     from flext_ldif.services.conversion_schema import FlextLdifConversionSchemaMixin
@@ -248,6 +251,9 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".services.categorization": ("FlextLdifCategorization",),
             ".services.conversion": ("FlextLdifConversion",),
             ".services.conversion_acl": ("FlextLdifConversionAclMixin",),
+            ".services.conversion_acl_preserve": (
+                "FlextLdifConversionAclPreserveMixin",
+            ),
             ".services.conversion_entry": ("FlextLdifConversionEntryMixin",),
             ".services.conversion_metadata": ("FlextLdifConversionMetadataMixin",),
             ".services.conversion_schema": ("FlextLdifConversionSchemaMixin",),
@@ -334,6 +340,7 @@ __all__: list[str] = [
     "FlextLdifConstantsEnums",
     "FlextLdifConversion",
     "FlextLdifConversionAclMixin",
+    "FlextLdifConversionAclPreserveMixin",
     "FlextLdifConversionEntryMixin",
     "FlextLdifConversionMetadataMixin",
     "FlextLdifConversionSchemaMixin",
