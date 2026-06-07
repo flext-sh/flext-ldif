@@ -16,6 +16,7 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ".conversion_entry": ("FlextLdifConversionEntryMixin",),
         ".conversion_metadata": ("FlextLdifConversionMetadataMixin",),
         ".conversion_schema": ("FlextLdifConversionSchemaMixin",),
+        ".conversion_schema_entry": ("FlextLdifConversionSchemaEntryMixin",),
         ".conversion_support": ("FlextLdifConversionSupportMixin",),
         ".detector": ("FlextLdifDetector",),
         ".entries": ("FlextLdifEntries",),

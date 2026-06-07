@@ -13,7 +13,7 @@ from typing import Annotated, override
 
 from flext_ldif import (
     FlextLdifConversionMetadataMixin,
-    FlextLdifConversionSchemaMixin,
+    FlextLdifConversionSchemaEntryMixin,
     FlextLdifConversionSupportMixin,
     c,
     m,
@@ -29,7 +29,7 @@ from flext_ldif.servers._oid.acl_pipeline import FlextLdifServersOidAclPipeline
 class FlextLdifConversionEntryMixin(
     FlextLdifConversionMetadataMixin,
     FlextLdifConversionSupportMixin,
-    FlextLdifConversionSchemaMixin,
+    FlextLdifConversionSchemaEntryMixin,
     s,
 ):
     """Concrete Entry-model conversion + the conversion state it owns."""

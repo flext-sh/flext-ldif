@@ -118,6 +118,9 @@ if _t.TYPE_CHECKING:
     from flext_ldif.services.conversion_entry import FlextLdifConversionEntryMixin
     from flext_ldif.services.conversion_metadata import FlextLdifConversionMetadataMixin
     from flext_ldif.services.conversion_schema import FlextLdifConversionSchemaMixin
+    from flext_ldif.services.conversion_schema_entry import (
+        FlextLdifConversionSchemaEntryMixin,
+    )
     from flext_ldif.services.conversion_support import FlextLdifConversionSupportMixin
     from flext_ldif.services.detector import FlextLdifDetector
     from flext_ldif.services.entries import FlextLdifEntries
@@ -257,6 +260,9 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".services.conversion_entry": ("FlextLdifConversionEntryMixin",),
             ".services.conversion_metadata": ("FlextLdifConversionMetadataMixin",),
             ".services.conversion_schema": ("FlextLdifConversionSchemaMixin",),
+            ".services.conversion_schema_entry": (
+                "FlextLdifConversionSchemaEntryMixin",
+            ),
             ".services.conversion_support": ("FlextLdifConversionSupportMixin",),
             ".services.detector": ("FlextLdifDetector",),
             ".services.entries": ("FlextLdifEntries",),
@@ -343,6 +349,7 @@ __all__: list[str] = [
     "FlextLdifConversionAclPreserveMixin",
     "FlextLdifConversionEntryMixin",
     "FlextLdifConversionMetadataMixin",
+    "FlextLdifConversionSchemaEntryMixin",
     "FlextLdifConversionSchemaMixin",
     "FlextLdifConversionSupportMixin",
     "FlextLdifDetector",
