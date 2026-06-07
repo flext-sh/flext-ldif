@@ -37,18 +37,34 @@ class FlextLdifServersOidAclAssemble:
         return f"{container} {perm_type} by {subject_name}"
 
     @classmethod
-    def build_aci_rule(cls, rule: m.Ldif.OidAclRule) -> r[m.Ldif.AciRule]:
+    def build_aci_rule(
+        cls,
+        rule: m.Ldif.OidAclRule,
+        *,
+        base_dn: str = "",
+    ) -> r[m.Ldif.AciRule]:
         """Assemble a parsed OID rule into one OUD :class:`m.Ldif.AciRule`.
 
         Subjects convert via :class:`FlextLdifServersOidAclToOud`; an ``anyone
         (none)`` deny-fallback removes that clause and turns every subsequent
-        subject into dead code (recorded as notes). Subjects with no OUD
+        subject into dead code (recorded as notes). When ``base_dn`` is given, an
+        ``anyone`` rule at a high-level container is dropped (OUD inherits to the
+        subtree) and a bind DN outside ``base_dn`` is excluded — both with notes;
+        OID regex bind DNs are converted to OUD wildcards. Subjects with no OUD
         equivalent or no resulting allow perms are dropped with a note. A
         deny-only rule yields a valid AciRule with empty ``allows`` + notes (the
         caller skips emitting an aci line). An unrecognized permission token
         surfaces as ``r.fail`` (never a silent partial result).
         """
         is_entry = rule.target_type == c.Ldif.AclTargetType.ENTRY
+        containers = Conv.high_level_containers(base_dn) if base_dn else frozenset()
+        dn_normalized = rule.dn.lower().replace(", ", ",").replace(" ,", ",")
+        dn_binds = {c.Ldif.OudSubjectType.GROUPDN, c.Ldif.OudSubjectType.USERDN}
+        literal_binds = {
+            c.Ldif.SUBJECT_SELF,
+            c.Ldif.SUBJECT_ANYONE,
+            c.Ldif.DIRECTORY_MANAGER_DN,
+        }
         allows: list[m.Ldif.AciAllow] = []
         notes: list[str] = []
         has_anyone = False
@@ -65,10 +81,26 @@ class FlextLdifServersOidAclAssemble:
                 found_deny_all = True
                 notes.append("'by * (none)' removed (OUD default-deny)")
                 continue
+            if is_anyone and dn_normalized in containers:
+                notes.append(
+                    "anyone skipped at high-level container "
+                    "(OUD inherits to subtree)",
+                )
+                continue
             bind = Conv.convert_subject_to_oud(subject)
             if bind.failure:
                 notes.append(bind.error or "subject has no OUD equivalent")
                 continue
+            bind_type = bind.value.subject_type
+            bind_value = bind.value.subject_value
+            if bind_type in dn_binds and bind_value not in literal_binds:
+                bind_value = Conv.regex_to_wildcard(bind_value)
+                if not Conv.is_in_scope(bind_value, base_dn):
+                    notes.append(
+                        f"{subject.subject_type} {bind_value!r} removed "
+                        f"(DN out of scope {base_dn})",
+                    )
+                    continue
             perms = Conv.convert_permissions(subject.permissions, is_entry=is_entry)
             if perms.failure:
                 return r[m.Ldif.AciRule].fail(
@@ -82,8 +114,8 @@ class FlextLdifServersOidAclAssemble:
                 continue
             allows.append(
                 m.Ldif.AciAllow(
-                    subject_type=bind.value.subject_type,
-                    subject_value=bind.value.subject_value,
+                    subject_type=bind_type,
+                    subject_value=bind_value,
                     permissions=perms.value,
                 ),
             )

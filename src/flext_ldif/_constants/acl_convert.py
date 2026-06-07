@@ -121,5 +121,15 @@ class FlextLdifConstantsAclConvert:
     )
     "Finds each ``by <subject> (perms)`` clause in an OID ACL (optional modifiers)."
 
+    # Ordered OID-regex → OUD-wildcard replacements (applied to bind DNs).
+    OID_REGEX_REPLACEMENTS: Final[tuple[tuple[str, str], ...]] = (
+        (".*", "*"),
+        (".+", "*"),
+        (r"\.", "."),
+        (r"\,", ","),
+    )
+    OID_REGEX_RESIDUAL_RE: ClassVar[t.RegexPattern] = re.compile(r"[\[\]{}|^$+?()]")
+    "Residual regex metacharacters → DN too complex to wildcard (keep original)."
+
 
 __all__: list[str] = ["FlextLdifConstantsAclConvert"]

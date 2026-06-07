@@ -22,6 +22,40 @@ class FlextLdifServersOidAclToOud:
         return normalized.strip()
 
     @staticmethod
+    def high_level_containers(base_dn: str) -> frozenset[str]:
+        """Base + high-level-suffix DNs where ``anyone`` inherits to the subtree."""
+        base = base_dn.lower().strip()
+        return frozenset(
+            f"{suffix}{base}" if suffix else base
+            for suffix in c.Ldif.HIGH_LEVEL_CONTAINER_SUFFIXES
+        )
+
+    @staticmethod
+    def is_in_scope(dn: str, base_dn: str) -> bool:
+        """True if ``dn`` is the base or a descendant of it (empty base = all)."""
+        if not base_dn:
+            return True
+        dn_lower = dn.lower().strip()
+        base = base_dn.lower()
+        return dn_lower == base or dn_lower.endswith(f",{base}")
+
+    @staticmethod
+    def regex_to_wildcard(value: str) -> str:
+        r"""Convert an OID regex DN to an OUD wildcard (``.*``/``.+`` → ``*``).
+
+        Unescapes ``\.``/``\,``; a residual regex metacharacter means the DN
+        cannot be safely wildcarded — return it unchanged.
+        """
+        if not value:
+            return value
+        converted = value
+        for pattern, replacement in c.Ldif.OID_REGEX_REPLACEMENTS:
+            converted = converted.replace(pattern, replacement)
+        if c.Ldif.OID_REGEX_RESIDUAL_RE.search(converted):
+            return value
+        return converted
+
+    @staticmethod
     def _order_perms(perms: set[str]) -> t.StrSequence:
         ordered = tuple(p for p in c.Ldif.PERM_ORDERED if p in perms)
         extra = tuple(sorted(perms - set(c.Ldif.PERM_ORDERED)))
@@ -49,15 +83,16 @@ class FlextLdifServersOidAclToOud:
     ) -> r[t.StrSequence]:
         """Convert OID permission tokens to the ordered OUD allow set.
 
-        Mirrors the oracle: ``none`` and pure negations yield no allow perms
-        (``()``); a pure-negation set (``noX``) expands to the COMPLEMENT of the
-        full permission set; positive tokens map through the entry/attr perm map.
-        An unrecognized token surfaces as ``r.fail`` (never a silent drop).
+        ``none``/pure negations → no allow (``()``); a pure-negation set expands
+        to the COMPLEMENT; positive tokens map via the entry/attr perm map. A
+        perm valid only at the other scope (``read`` on an entry rule) grants
+        nothing here and is skipped; a token in neither scope → ``r.fail``.
         """
         perm_map = c.Ldif.ENTRY_PERM_MAP if is_entry else c.Ldif.ATTR_PERM_MAP
         allow: set[str] = set()
         negated_bases: set[str] = set()
         deny_all = False
+        known_positive = c.Ldif.ALL_ENTRY_PERMS | c.Ldif.ALL_ATTR_PERMS
         for raw in permissions:
             perm = raw.strip().lower()
             if not perm:
@@ -71,7 +106,7 @@ class FlextLdifServersOidAclToOud:
                 negated_bases.add(base)
             elif perm in perm_map:
                 allow.update(cls._map_tokens({perm}, perm_map))
-            else:
+            elif perm not in known_positive:
                 return r[t.StrSequence].fail(f"Unknown permission token: {perm!r}")
         if allow:
             return r[t.StrSequence].ok(cls._order_perms(allow))
@@ -83,12 +118,7 @@ class FlextLdifServersOidAclToOud:
 
     @staticmethod
     def get_targetattr(rule: m.Ldif.OidAclRule) -> str:
-        """Compute the OUD ``targetattr`` value for a rule.
-
-        Entry-level ACLs have no OUD ``targetattr="entry"`` syntax — operations
-        apply to the whole entry, so OUD uses ``*``. Attribute lists join with
-        ``||``; an OID ``attr!=`` negation becomes ``!=a||b``.
-        """
+        """Compute the OUD ``targetattr`` (entry→``*``, list→``a||b``, ``attr!=``→``!=a||b``)."""
         if rule.target_type == c.Ldif.AclTargetType.ENTRY:
             return c.Ldif.ACL_WILDCARD
         attrs = rule.target_attrs

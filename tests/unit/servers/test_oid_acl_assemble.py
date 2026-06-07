@@ -188,3 +188,54 @@ class TestsFlextLdifOidAclBuild:
         ).unwrap()
 
         tm.that(Asm.build_aci_rule(rule).failure, eq=True)
+
+    def test_cross_level_perm_grants_nothing_not_failure(self) -> None:
+        # 'read' is an attribute perm; on an entry rule it grants nothing.
+        rule = Parser.parse_oid_acl_line(
+            "cn=users,dc=ctbc",
+            'orclaci: access to entry by group="cn=a,dc=ctbc" (read)',
+        ).unwrap()
+        result = Asm.build_aci_rule(rule)
+
+        tm.that(result.success, eq=True)
+        tm.that(result.unwrap().allows, eq=())
+
+    def test_anyone_at_high_level_container_is_skipped(self) -> None:
+        rule = Parser.parse_oid_acl_line(
+            "dc=ctbc",
+            'orclaci: access to entry by * (browse) by group="cn=a,dc=ctbc" (browse)',
+        ).unwrap()
+        aci = Asm.build_aci_rule(rule, base_dn="dc=ctbc").unwrap()
+
+        tm.that(len(aci.allows), eq=1)
+        tm.that(aci.allows[0].subject_type, eq="groupdn")
+        tm.that(any("high-level container" in note for note in aci.notes), eq=True)
+
+    def test_out_of_scope_dn_is_excluded(self) -> None:
+        rule = Parser.parse_oid_acl_line(
+            "cn=users,dc=ctbc",
+            'orclaci: access to entry by group="cn=x,dc=other" (browse)',
+        ).unwrap()
+        aci = Asm.build_aci_rule(rule, base_dn="dc=ctbc").unwrap()
+
+        tm.that(aci.allows, eq=())
+        tm.that(any("out of scope" in note for note in aci.notes), eq=True)
+
+    def test_regex_dn_converts_to_wildcard_in_scope(self) -> None:
+        rule = Parser.parse_oid_acl_line(
+            "cn=users,dc=ctbc",
+            'orclaci: access to entry by group="cn=.*,dc=ctbc" (browse)',
+        ).unwrap()
+        aci = Asm.build_aci_rule(rule, base_dn="dc=ctbc").unwrap()
+
+        tm.that(len(aci.allows), eq=1)
+        tm.that(aci.allows[0].subject_value, eq="cn=*,dc=ctbc")
+
+    def test_no_base_dn_skips_scope_filtering(self) -> None:
+        rule = Parser.parse_oid_acl_line(
+            "cn=users,dc=ctbc",
+            'orclaci: access to entry by group="cn=x,dc=other" (browse)',
+        ).unwrap()
+        aci = Asm.build_aci_rule(rule).unwrap()
+
+        tm.that(len(aci.allows), eq=1)
