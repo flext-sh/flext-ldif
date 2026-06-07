@@ -7,7 +7,9 @@ from flext_tests import tm
 from flext_ldif import m
 from flext_ldif.servers._oid.acl_assemble import FlextLdifServersOidAclAssemble as Asm
 from flext_ldif.servers._oid.acl_convert import FlextLdifServersOidAclConvert as Parser
+from flext_ldif.servers._oid.acl_pipeline import FlextLdifServersOidAclPipeline as Pipe
 from flext_ldif.servers._oid.acl_render import FlextLdifServersOidAclRender as Render
+from tests.utilities import TestsFlextLdifUtilities as u
 
 
 class TestsFlextLdifOidAclAssemble:
@@ -246,7 +248,7 @@ class TestsFlextLdifOidAclConvertValues:
     """convert_acl_values: whole-entry OID ACL lines → deduped aci values."""
 
     def test_multiple_lines_produce_aci_values_without_prefix(self) -> None:
-        result = Asm.convert_acl_values(
+        result = Pipe.convert_acl_values(
             "cn=users,dc=ctbc",
             (
                 'orclaci: access to entry by group="cn=a,dc=ctbc" (browse)',
@@ -261,12 +263,12 @@ class TestsFlextLdifOidAclConvertValues:
 
     def test_identical_aci_values_are_deduplicated(self) -> None:
         line = 'orclaci: access to entry by group="cn=a,dc=ctbc" (browse)'
-        result = Asm.convert_acl_values("cn=users,dc=ctbc", (line, line))
+        result = Pipe.convert_acl_values("cn=users,dc=ctbc", (line, line))
 
         tm.that(len(result.unwrap()), eq=1)
 
     def test_deny_only_line_emits_no_value(self) -> None:
-        result = Asm.convert_acl_values(
+        result = Pipe.convert_acl_values(
             "cn=users,dc=ctbc",
             ("orclaci: access to entry by * (none)",),
         )
@@ -274,7 +276,7 @@ class TestsFlextLdifOidAclConvertValues:
         tm.that(result.unwrap(), eq=())
 
     def test_malformed_line_surfaces_failure(self) -> None:
-        result = Asm.convert_acl_values(
+        result = Pipe.convert_acl_values(
             "cn=users,dc=ctbc",
             ("orclaci: this is not a valid acl",),
         )
@@ -282,7 +284,7 @@ class TestsFlextLdifOidAclConvertValues:
         tm.that(result.failure, eq=True)
 
     def test_unknown_perm_token_surfaces_failure(self) -> None:
-        result = Asm.convert_acl_values(
+        result = Pipe.convert_acl_values(
             "cn=users,dc=ctbc",
             ('orclaci: access to entry by group="cn=a,dc=ctbc" (bogus)',),
         )
@@ -290,10 +292,54 @@ class TestsFlextLdifOidAclConvertValues:
         tm.that(result.failure, eq=True)
 
     def test_out_of_scope_dn_excluded_with_base_dn(self) -> None:
-        result = Asm.convert_acl_values(
+        result = Pipe.convert_acl_values(
             "cn=users,dc=ctbc",
             ('orclaci: access to entry by group="cn=x,dc=other" (browse)',),
             base_dn="dc=ctbc",
         )
 
         tm.that(result.unwrap(), eq=())
+
+
+class TestsFlextLdifOidAclConvertEntryAcls:
+    """convert_entry_acls: OID entry orclaci/orclentrylevelaci → aci attribute."""
+
+    @staticmethod
+    def _entry(attributes: dict[str, list[str]]) -> m.Ldif.Entry:
+        return u.Tests.create_real_entry(dn="cn=users,dc=ctbc", attributes=attributes)
+
+    def test_oid_to_oud_replaces_orclaci_with_aci(self) -> None:
+        entry = self._entry({
+            "objectClass": ["top"],
+            "orclaci": ['access to entry by group="cn=a,dc=ctbc" (browse)'],
+        })
+
+        converted = Pipe.convert_entry_acls(entry, "oid", "oud").unwrap()
+        attrs = converted.attributes.attributes
+
+        tm.that("orclaci" not in attrs, eq=True)
+        tm.that("aci" in attrs, eq=True)
+        tm.that(len(attrs["aci"]), eq=1)
+        tm.that(attrs["aci"][0].startswith('(targetattr="*")'), eq=True)
+
+    def test_non_oid_to_oud_passes_through_unchanged(self) -> None:
+        entry = self._entry({
+            "orclaci": ['access to entry by group="cn=a,dc=ctbc" (browse)'],
+        })
+
+        converted = Pipe.convert_entry_acls(entry, "oid", "rfc").unwrap()
+
+        tm.that("orclaci" in converted.attributes.attributes, eq=True)
+
+    def test_entry_without_acl_attrs_unchanged(self) -> None:
+        entry = self._entry({"cn": ["x"], "objectClass": ["top"]})
+
+        converted = Pipe.convert_entry_acls(entry, "oid", "oud").unwrap()
+
+        tm.that("aci" not in converted.attributes.attributes, eq=True)
+        tm.that("cn" in converted.attributes.attributes, eq=True)
+
+    def test_malformed_acl_surfaces_failure(self) -> None:
+        entry = self._entry({"orclaci": ["not a valid acl"]})
+
+        tm.that(Pipe.convert_entry_acls(entry, "oid", "oud").failure, eq=True)

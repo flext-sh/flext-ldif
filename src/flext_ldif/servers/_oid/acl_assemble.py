@@ -1,19 +1,14 @@
-"""OID→OUD aci assembly + entry-level orchestration.
+"""OID→OUD aci building — one parsed OID rule → one OUD AciRule.
 
-``build_aci_rule`` turns one parsed :class:`m.Ldif.OidAclRule` into an OUD
-:class:`m.Ldif.AciRule` (subject/permission conversion, deny-fallback,
-base_dn scope filtering, acl-name); ``convert_acl_values`` runs a whole
-entry's OID ACL lines through parse → build → render (delegated to
-``FlextLdifServersOidAclRender``) with deduplication, yielding ``aci``
-attribute values. Rendering itself lives in ``acl_render.py``.
+``build_aci_rule`` performs subject/permission conversion, the deny-fallback,
+base_dn scope filtering and acl-name derivation. Line/entry-level
+orchestration lives in ``acl_pipeline.py``; rendering in ``acl_render.py``.
 """
 
 from __future__ import annotations
 
 from flext_ldif import c, m, r, t
-from flext_ldif.servers._oid.acl_convert import FlextLdifServersOidAclConvert as Parser
 from flext_ldif.servers._oid.acl_convert_oud import FlextLdifServersOidAclToOud as Conv
-from flext_ldif.servers._oid.acl_render import FlextLdifServersOidAclRender as Render
 
 
 class FlextLdifServersOidAclAssemble:
@@ -138,43 +133,6 @@ class FlextLdifServersOidAclAssemble:
                 notes=tuple(notes),
             ),
         )
-
-    @classmethod
-    def convert_acl_values(
-        cls,
-        dn: str,
-        oid_acl_lines: t.StrSequence,
-        *,
-        base_dn: str = "",
-    ) -> r[t.StrSequence]:
-        """Convert an entry's OID ACL lines to deduplicated OUD ``aci`` values.
-
-        Each ``orclaci:``/``orclentrylevelaci:`` line is parsed → built →
-        rendered; deny-only rules emit nothing; duplicate aci values (whitespace-
-        and case-normalized) are merged keeping first order. A malformed line or
-        unknown perm token surfaces as ``r.fail``. Returned values exclude the
-        ``aci: `` prefix (they are raw ``aci`` attribute values).
-        """
-        values: list[str] = []
-        seen: set[str] = set()
-        for line in oid_acl_lines:
-            rule = Parser.parse_oid_acl_line(dn, line)
-            if rule.failure:
-                return r[t.StrSequence].fail(rule.error or "OID ACL parse failed")
-            aci = cls.build_aci_rule(rule.value, base_dn=base_dn)
-            if aci.failure:
-                return r[t.StrSequence].fail(aci.error or "OID ACL build failed")
-            if not aci.value.allows:
-                continue
-            rendered = Render.render_aci_string(aci.value).removeprefix(
-                c.Ldif.ACI_PREFIX,
-            )
-            normalized = c.Ldif.WHITESPACE_RE.sub(" ", rendered.strip().lower())
-            if normalized in seen:
-                continue
-            seen.add(normalized)
-            values.append(rendered)
-        return r[t.StrSequence].ok(tuple(values))
 
 
 __all__: list[str] = ["FlextLdifServersOidAclAssemble"]
