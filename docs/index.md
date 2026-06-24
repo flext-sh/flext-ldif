@@ -2,7 +2,7 @@
 
 # flext-ldif Documentation
 
-- Version: `unknown`
+- Version: `0.12.0-dev`
 - Project class: `domain`
 - Package: `flext_ldif`
 - Description: FLEXT LDIF - Enterprise LDIF Processing Library
