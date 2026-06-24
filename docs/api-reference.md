@@ -1,45 +1,5 @@
 # FLEXT-LDIF API Reference
 
-<!-- TOC START -->
-- [🎯 Library Overview](#library-overview)
-  - [Generic RFC-Based Architecture with ZERO Bypass Paths](#generic-rfc-based-architecture-with-zero-bypass-paths)
-- [Core API Classes](#core-api-classes)
-  - [ldif](#ldif)
-  - [ServersConversionMatrix](#serversconversionmatrix)
-  - [DnCaseRegistry](#dncaseregistry)
-- [Domain Models](#domain-models)
-  - [FlextLdifModels.Entry](#flextldifmodelsentry)
-  - [FlextLdifModels.Config](#flextldifmodelsconfig)
-  - [FlextLdifModels.Factory](#flextldifmodelsfactory)
-- [Configuration Management](#configuration-management)
-  - [Global Configuration](#global-configuration)
-  - [Instance Configuration](#instance-configuration)
-- [Error Handling](#error-handling)
-  - [r Integration](#r-integration)
-  - [Exception Types](#exception-types)
-- [⚠️ Library-Only Usage](#library-only-usage)
-- [Advanced Usage Patterns](#advanced-usage-patterns)
-  - [Pipeline Processing](#pipeline-processing)
-  - [Batch Processing](#batch-processing)
-  - [Custom Filtering](#custom-filtering)
-- [RFC Schema Parser API](#rfc-schema-parser-api)
-  - [RfcSchemaParserService](#rfcschemaparserservice)
-- [Migration Pipeline API](#migration-pipeline-api)
-  - [FlextLdifMigration](#flextldifmigration)
-- [Servers Registry API](#servers-registry-api)
-  - [ServerRegistryService](#serverregistryservice)
-- [Integration with FLEXT Ecosystem](#integration-with-flext-ecosystem)
-  - [FlextContainer Usage](#flextcontainer-usage)
-  - [FlextLogger Integration](#flextlogger-integration)
-- [🚀 Quick Start Guide](#quick-start-guide)
-  - [Basic Usage - Parse, Validate, Write](#basic-usage-parse-validate-write)
-  - [Server-Specific Parsing with Servers](#server-specific-parsing-with-servers)
-  - [Generic Migration Pipeline](#generic-migration-pipeline)
-  - [Railway-Oriented Pipeline](#railway-oriented-pipeline)
-  - [Supported LDAP Servers](#supported-ldap-servers)
-- [Related Documentation](#related-documentation)
-<!-- TOC END -->
-
 **Version**: 0.9.9 | **Updated**: October 10, 2025
 
 Complete API documentation for FLEXT-LDIF, including all public classes, methods, and integration patterns with the FLEXT ecosystem.
@@ -522,7 +482,7 @@ class Entry(m.BaseModel):
 
 **Example Usage**:
 
-```python notest
+```python
 # Access entry data
 entry = entries[0]
 print(f"DN: {entry.dn}")
@@ -562,7 +522,7 @@ class Config(m.BaseModel):
 
 **Example Usage**:
 
-```python notest
+```python
 # Create custom configuration
 settings = FlextLdifModels.Config(
     max_entries=50000,
@@ -579,7 +539,7 @@ api = ldif(settings=settings)
 
 Factory methods for creating domain objects.
 
-```python notest
+```python
 from __future__ import annotations
 
 from collections.abc import Mapping
@@ -613,7 +573,7 @@ class Factory:
 
 **Example Usage**:
 
-```python notest
+```python
 from flext_ldif import FlextLdifModels
 
 # Create entries directly with the public Entry model
@@ -639,7 +599,7 @@ group = FlextLdifModels.Entry(
 
 ### Global Configuration
 
-```python notest
+```python
 from flext_ldif import FlextLdifSettings
 
 # Initialize configuration
@@ -655,7 +615,7 @@ print(f"Max entries: {settings.max_entries}")
 
 ### Instance Configuration
 
-```python notest
+```python
 from flext_ldif import FlextLdifModels, ldif
 
 # Create instance-specific configuration
@@ -674,7 +634,7 @@ api = ldif(settings=instance_config)
 
 All API operations return r for composable error handling:
 
-```python notest
+```python
 from flext_core import FlextBus
 from flext_core import FlextSettings
 from flext_core import FlextConstants
@@ -719,7 +679,7 @@ final_result = (
 
 ### Exception Types
 
-```python notest
+```python
 from flext_ldif import (
     FlextLdifError,  # Base LDIF error
     FlextLdifParseError,  # LDIF parsing errors
@@ -742,7 +702,7 @@ except FlextLdifValidationError as e:
 
 **Migration from CLI to API**:
 
-```python notest
+```python
 # ❌ OLD (CLI - no longer available):
 # python -m flext_ldif parse directory.ldif
 
@@ -871,7 +831,7 @@ def filter_by_custom_criteria(
 
 Parse LDAP schema definitions with RFC 4512 compliance and **MANDATORY servers support**.
 
-```python notest
+```python
 # ✅ v1.0+ Flat imports
 from flext_ldif import FlextLdifParser
 from flext_ldif import ServerRegistryService  # Unchanged - servers subdirectory
@@ -913,7 +873,7 @@ The `server_registry` parameter is **MANDATORY** (not Optional) to enforce RFC-f
 
 **Example Usage**:
 
-```python notest
+```python
 # ✅ CORRECT: v1.0+ flat imports with MANDATORY server_registry
 from flext_ldif import FlextLdifParser
 from flext_ldif import ServerRegistryService
@@ -962,7 +922,7 @@ rfc_parser = RfcSchemaParserService(
 
 Generic LDIF migration between different LDAP servers.
 
-```python notest
+```python
 from pathlib import Path
 
 
@@ -1015,7 +975,7 @@ class FlextLdifMigration:
 
 **Example Usage**:
 
-```python notest
+```python
 from pathlib import Path
 
 
@@ -1066,7 +1026,7 @@ if result.success:
 
 Central registry for managing server-specific servers.
 
-```python notest
+```python
 from flext_ldif import ServerRegistryService
 
 
@@ -1106,7 +1066,7 @@ class ServerRegistryService:
 
 **Example Usage**:
 
-```python notest
+```python
 from flext_ldif import FlextLdif
 
 # Initialize the public facade and query server servers
@@ -1124,7 +1084,7 @@ acl_server = client.acl("openldap")
 
 ### FlextContainer Usage
 
-```python notest
+```python
 class Result:
     def __init__(self, success: bool, value=None) -> None:
         self.success = success
@@ -1165,7 +1125,7 @@ if api_result.success:
 
 ### FlextLogger Integration
 
-```python notest
+```python
 from flext_ldif import u
 
 # Structured logging in LDIF operations
@@ -1188,7 +1148,7 @@ logger.info(
 
 ### Basic Usage - Parse, Validate, Write
 
-```python notest
+```python
 from flext_ldif import ldif
 from pathlib import Path
 
@@ -1221,7 +1181,7 @@ print("✅ All entries valid")
 
 ### LDIF Parsing Example
 
-```python notest
+```python
 from flext_ldif import ldif
 
 ldif_content = """dn: cn=test,dc=example,dc=com
@@ -1239,7 +1199,7 @@ else:
 
 ### Generic Migration Pipeline
 
-```python notest
+```python
 from flext_ldif import FlextLdifMigration
 from pathlib import Path
 
@@ -1267,7 +1227,7 @@ else:
 
 ### Railway-Oriented Pipeline
 
-```python notest
+```python
 from flext_ldif import ldif
 from pathlib import Path
 
@@ -1314,7 +1274,7 @@ else:
 
 **Complete Implementations** (4 servers):
 
-```python notest
+```python
 # Oracle Internet Directory
 server_type = "oid"
 
@@ -1330,7 +1290,7 @@ server_type = "openldap1"
 
 **Stub Implementations** (5 servers - ready for enhancement):
 
-```python notest
+```python
 # Active Directory (stub - not implemented)
 server_type = "ad"
 
@@ -1349,7 +1309,7 @@ server_type = "tivoli"
 
 **Generic/Unknown Servers**:
 
-```python notest
+```python
 # Works with ANY LDAP server using pure RFC baseline
 server_type = None  # Pure RFC 2849/4512 compliance
 server_type = "my_custom_ldap_v5"  # Unknown server = RFC baseline

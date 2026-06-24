@@ -1,9 +1,5 @@
 # ADR-002: Universal Conversion Matrix Architecture
 
-<!-- TOC START -->
-- No sections found
-<!-- TOC END -->
-
 **Status**: Accepted
 
 **Date**: 2026-04-14
@@ -38,7 +34,7 @@ Source Format → Source.to_rfc() → RFC Format → Target.from_rfc() → Targe
 
 **Implementation**:
 
-```python notest
+```python
 # N×N conversion with only 2×N implementations
 matrix = ServersConversionMatrix()
 

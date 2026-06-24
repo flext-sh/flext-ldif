@@ -6,41 +6,6 @@
 
 > Project profile: `flext-ldif`
 
-<!-- TOC START -->
-- [Quick Diagnosis](#quick-diagnosis)
-  - [Health Check Commands](#health-check-commands)
-  - [System Status](#system-status)
-- [Common Issues](#common-issues)
-  - [1. Import Errors](#1-import-errors)
-  - [r](#r)
-  - [2. Type Checking Errors](#2-type-checking-errors)
-  - [3. Test Failures](#3-test-failures)
-  - [4. Configuration Issues](#4-configuration-issues)
-  - [5. LDIF Processing Issues](#5-ldif-processing-issues)
-  - [6. Migration Issues](#6-migration-issues)
-  - [7. Performance Issues](#7-performance-issues)
-- [Debugging Techniques](#debugging-techniques)
-  - [1. Logging Configuration](#1-logging-configuration)
-  - [2. Exception Handling](#2-exception-handling)
-  - [3. Debug Mode](#3-debug-mode)
-  - [4. Step-by-Step Debugging](#4-step-by-step-debugging)
-- [Error Codes Reference](#error-codes-reference)
-  - [FLEXT Core Errors](#flext-core-errors)
-  - [LDIF Processing Errors](#ldif-processing-errors)
-  - [API Errors](#api-errors)
-- [Performance Troubleshooting](#performance-troubleshooting)
-  - [Memory Issues](#memory-issues)
-  - [CPU Issues](#cpu-issues)
-- [Getting Help](#getting-help)
-  - [Self-Service Resources](#self-service-resources)
-  - [Community Support](#community-support)
-  - [Reporting Issues](#reporting-issues)
-  - [Your minimal example here](#your-minimal-example-here)
-- [Prevention](#prevention)
-  - [Best Practices](#best-practices)
-- [Resources](#resources)
-<!-- TOC END -->
-
 This guide covers common issues, their solutions, and debugging techniques for FLEXT applications and libraries.
 
 ## Quick Diagnosis
@@ -115,7 +80,7 @@ poetry install
 
 ### r
 
-```python notest
+```python
 # Debug import issues
 import sys
 
@@ -136,7 +101,7 @@ except ImportError as e:
 
 #### Problem: MyPy errors
 
-```python notest
+```python
 # Error
 error: Argument 1 to "process" has incompatible type "str"; expected "t.JsonMapping"
 ```
@@ -145,7 +110,7 @@ error: Argument 1 to "process" has incompatible type "str"; expected "t.JsonMapp
 
 **Fix type annotations:**
 
-```python notest
+```python
 # ❌ WRONG
 def process(data):
     return data
@@ -193,7 +158,7 @@ pytest tests/unit/test_module.py::TestClass::test_method -v --pdb
 
 **Check test data:**
 
-```python notest
+```python
 def test_with_debug():
     result = my_function()
     print(f"Result: {result}")
@@ -207,7 +172,7 @@ def test_with_debug():
 
 #### Problem: Configuration not loading
 
-```python notest
+```python
 # Error
 ValidationError: field required
 ```
@@ -222,7 +187,7 @@ env | grep FLEXT_
 
 **Validate configuration:**
 
-```python notest
+```python
 from flext_ldif import FlextLdifSettings
 
 try:
@@ -234,7 +199,7 @@ except Exception as error:
 
 **Debug configuration loading:**
 
-```python notest
+```python
 import os
 from flext_core import FlextBus
 from flext_core import FlextSettings
@@ -270,7 +235,7 @@ print(f"Config: {settings.dict()}")
 
 #### Problem: LDIF parsing fails
 
-```python notest
+```python
 # Error
 LdifParsingException: Invalid LDIF format
 ```
@@ -279,7 +244,7 @@ LdifParsingException: Invalid LDIF format
 
 **Check LDIF content:**
 
-```python notest
+```python
 from flext_ldif import ldif
 
 content = """dn: cn=test,dc=example,dc=com
@@ -294,7 +259,7 @@ if result.failure:
 
 **Enable debug logging:**
 
-```python notest
+```python
 import logging
 
 logging.basicConfig(level=logging.DEBUG)
@@ -304,7 +269,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 **Validate LDIF format:**
 
-```python notest
+```python
 # Check for common LDIF issues
 def validate_ldif_content(content: str) -> t.StringList:
     issues = []
@@ -327,7 +292,7 @@ def validate_ldif_content(content: str) -> t.StringList:
 
 #### Problem: Migration fails
 
-```python notest
+```python
 # Error
 # LdifMigrationException: Server compatibility error
 ```
@@ -336,7 +301,7 @@ def validate_ldif_content(content: str) -> t.StringList:
 
 **Check server configuration:**
 
-```python notest
+```python
 from flext_ldif import FlextLdifSettings
 
 settings = FlextLdifSettings(
@@ -351,7 +316,7 @@ print(f"Config: {settings.dict()}")
 
 **Enable server servers:**
 
-```python notest
+```python
 settings = FlextLdifSettings(
     servers_enabled=True, source_server="oid", target_server="oud"
 )
@@ -359,7 +324,7 @@ settings = FlextLdifSettings(
 
 **Test with sample data:**
 
-```python notest
+```python
 from flext_ldif import ldif
 
 # Test migration with small sample
@@ -378,7 +343,7 @@ else:
 
 #### Problem: Slow processing
 
-```python notest
+```python
 # Symptoms
 # - High memory usage
 # - Slow response times
@@ -389,7 +354,7 @@ else:
 
 **Profile memory usage:**
 
-```python notest
+```python
 import psutil
 import os
 
@@ -411,7 +376,7 @@ profile_memory()
 
 **Optimize batch size:**
 
-```python notest
+```python
 from flext_ldif import FlextLdifSettings
 
 # Reduce batch size for memory-constrained environments
@@ -423,7 +388,7 @@ settings = FlextLdifSettings(
 
 **Enable parallel processing:**
 
-```python notest
+```python
 settings = FlextLdifSettings(
     parallel_processing=True,
     max_workers=4,  # Adjust based on CPU cores
@@ -434,7 +399,7 @@ settings = FlextLdifSettings(
 
 ### 1. Logging Configuration
 
-```python notest
+```python
 import logging
 from flext_core import FlextBus
 from flext_core import FlextSettings
@@ -471,7 +436,7 @@ logger.error("Error message")
 
 ### 2. Exception Handling
 
-```python notest
+```python
 from flext_core import FlextBus
 from flext_core import FlextSettings
 from flext_core import FlextConstants
@@ -508,7 +473,7 @@ def safe_operation(data: dict) -> p.Result[dict]:
 
 ### 3. Debug Mode
 
-```python notest
+```python
 from flext_core import FlextBus
 from flext_core import FlextSettings
 from flext_core import FlextConstants
@@ -539,7 +504,7 @@ print(f"Log level: {settings.log_level}")
 
 ### 4. Step-by-Step Debugging
 
-```python notest
+```python
 def debug_ldif_processing(content: str):
     """Debug LDIF processing step by step."""
     print(f"Input content length: {len(content)}")
@@ -600,7 +565,7 @@ def debug_ldif_processing(content: str):
 
 ### Memory Issues
 
-```python notest
+```python
 # Monitor memory usage
 import psutil
 import os
@@ -623,7 +588,7 @@ monitor_memory()
 
 ### CPU Issues
 
-```python notest
+```python
 # Monitor CPU usage
 import os
 import psutil
@@ -734,7 +699,7 @@ When reporting issues, include:
 
 1. **Always Use r**
 
-```python notest
+```python
 # ✅ GOOD
 def process(data: dict) -> p.Result[ProcessedData]:
     return r.ok(ProcessedData(**data))

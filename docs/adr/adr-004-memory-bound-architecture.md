@@ -1,9 +1,5 @@
 # ADR-004: Memory-Bound Processing Architecture
 
-<!-- TOC START -->
-- No sections found
-<!-- TOC END -->
-
 **Status**: Accepted
 
 **Date**: 2026-04-14
@@ -37,7 +33,7 @@ Implement a **memory-bound processing architecture** that loads entire LDIF file
 
 **Implementation**:
 
-```python notest
+```python
 from pathlib import Path
 from typing import Sequence
 

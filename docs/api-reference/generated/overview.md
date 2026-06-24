@@ -3,15 +3,15 @@
 # flext-ldif API Overview
 
 - Package: `flext_ldif`
-- Version: ``
+- Version: `0.12.0-dev`
 - Description: FLEXT LDIF - Enterprise LDIF Processing Library
 - Project class: `domain`
 - Keywords: `adapter`, `enterprise`, `flext`, `integration`, `typed`
-- Main facades: `FlextLdifServersOidAcl`, `FlextLdifUtilitiesAttribute`, `FlextLdifTransformer`, `FlextLdifUtilitiesSchema`, `FlextLdifServersRelaxed`, `FlextLdifUtilitiesEvents`, `FlextLdifServersOidSchema`, `FlextLdifConstantsBase` (+85 more)
+- Main facades: _none_
 - Alias exports: `c`, `d`, `e`, `h`, `m`, `p`, `r`, `s`, `t`, `u`, `x`
-- Public symbol exports: `FlextLdifServersOidAcl`, `FlextLdifUtilitiesAttribute`, `FlextLdifTransformer`, `FlextLdifUtilitiesSchema`, `FlextLdifServersRelaxed`, `FlextLdifUtilitiesEvents`, `FlextLdifServersOidSchema`, `FlextLdifConstantsBase`, `FlextLdifServersOid`, `FlextLdifUtilitiesWriter` (+84 more)
+- Public symbol exports: `FlextLdifServersOudSchema`, `FlextLdifServersRfcSchema`, `FlextLdifServersOidSchema`, `FlextLdifProcessing`, `FlextLdifUtilitiesSchema`, `FlextLdifUtilities`, `FlextLdifServersOidAclAssemble`, `FlextLdifServersOpenldap`, `FlextLdifServiceBase`, `FlextLdifServersOidConstants` (+105 more)
 - Exported module shortcuts: _none_
-- Generated module pages: `38`
+- Generated module pages: `44`
 
 ## Next Pages
 

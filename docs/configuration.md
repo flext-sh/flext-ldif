@@ -1,35 +1,5 @@
 # FLEXT-LDIF Configuration
 
-<!-- TOC START -->
-- [Configuration Overview](#configuration-overview)
-- [Configuration Models](#configuration-models)
-  - [FlextLdifModels.Config](#flextldifmodelsconfig)
-  - [Configuration Usage](#configuration-usage)
-- [Global Configuration](#global-configuration)
-  - [Initialization](#initialization)
-  - [Environment Variables](#environment-variables)
-  - [Environment Configuration Loading](#environment-configuration-loading)
-- [Configuration Scenarios](#configuration-scenarios)
-  - [Development Configuration](#development-configuration)
-  - [Production Configuration](#production-configuration)
-  - [Migration Configuration](#migration-configuration)
-- [Advanced Configuration](#advanced-configuration)
-  - [Configuration Validation](#configuration-validation)
-  - [Configuration Inheritance](#configuration-inheritance)
-  - [Configuration Profiles](#configuration-profiles)
-- [Integration with FLEXT Configuration](#integration-with-flext-configuration)
-  - [FlextContainer Integration](#flextcontainer-integration)
-  - [Configuration Logging](#configuration-logging)
-- [Configuration Best Practices](#configuration-best-practices)
-  - [1. Use Type-Safe Configuration](#1-use-type-safe-configuration)
-  - [2. Validate Configuration Early](#2-validate-configuration-early)
-  - [3. Use Environment-Specific Profiles](#3-use-environment-specific-profiles)
-  - [4. Document Configuration Changes](#4-document-configuration-changes)
-- [Configuration Reference](#configuration-reference)
-  - [Complete Configuration Options](#complete-configuration-options)
-  - [Environment Variable Mapping](#environment-variable-mapping)
-<!-- TOC END -->
-
 **Version**: 0.12.0-dev | **Updated**: April 14, 2026
 
 This document covers configuration options for FLEXT-LDIF, including settings management, environment configuration, and integration with FLEXT ecosystem configuration patterns.
@@ -49,7 +19,7 @@ FLEXT-LDIF provides flexible configuration management through multiple layers:
 
 Core configuration class with validation:
 
-```python notest
+```python
 from flext_ldif import FlextLdifModels
 
 
@@ -83,7 +53,7 @@ class Config(m.BaseModel):
 
 ### Configuration Usage
 
-```python notest
+```python
 # Create configuration with custom settings
 settings = FlextLdifModels.Config(
     max_entries=100000, strict_validation=True, encoding="utf-8", log_level="DEBUG"
@@ -103,7 +73,7 @@ print(f"Strict validation: {settings.strict_validation}")
 
 ### Initialization
 
-```python notest
+```python
 from flext_ldif import FlextLdif, FlextLdifSettings
 
 # Initialize configuration and use it with the public facade
@@ -137,7 +107,7 @@ export FLEXT_LDIF_LOG_LEVEL=DEBUG
 
 ### Environment Configuration Loading
 
-```python notest
+```python
 import os
 from flext_ldif import FlextLdifSettings, ldif
 
@@ -165,7 +135,7 @@ api = ldif(settings=settings)
 
 Optimized for development and testing:
 
-```python notest
+```python
 def create_development_config() -> FlextLdifModels.Config:
     """Create configuration optimized for development."""
     return FlextLdifModels.Config(
@@ -184,7 +154,7 @@ dev_api = ldif(settings=create_development_config())
 
 Optimized for production environments:
 
-```python notest
+```python
 def create_production_config() -> FlextLdifModels.Config:
     """Create configuration optimized for production."""
     return FlextLdifModels.Config(
@@ -205,7 +175,7 @@ prod_api = ldif(settings=create_production_config())
 
 Optimized for large-scale LDAP migrations:
 
-```python notest
+```python
 def create_migration_config() -> FlextLdifModels.Config:
     """Create configuration optimized for enterprise migrations."""
     return FlextLdifModels.Config(
@@ -226,7 +196,7 @@ migration_api = ldif(settings=create_migration_config())
 
 ### Configuration Validation
 
-```python notest
+```python
 from flext_ldif import FlextLdifModels, c
 
 
@@ -261,7 +231,7 @@ else:
 
 ### Configuration Inheritance
 
-```python notest
+```python
 def create_inherited_config(
     base_config: FlextLdifModels.Config, overrides: dict
 ) -> FlextLdifModels.Config:
@@ -288,7 +258,7 @@ specialized_config = create_inherited_config(
 
 ### Configuration Profiles
 
-```python notest
+```python
 class ConfigurationProfiles:
     """Predefined configuration profiles for common use cases."""
 
@@ -339,7 +309,7 @@ api = ldif(settings=ConfigurationProfiles.enterprise())
 
 ### FlextContainer Integration
 
-```python notest
+```python
 from flext_core import FlextBus
 from flext_core import FlextSettings
 from flext_core import FlextConstants
@@ -378,7 +348,7 @@ if config_result.success:
 
 ### Configuration Logging
 
-```python notest
+```python
 from flext_core import FlextBus
 from flext_core import FlextSettings
 from flext_core import FlextConstants
@@ -428,7 +398,7 @@ api = ldif(settings=settings)
 
 Always use the Pydantic-based configuration models:
 
-```python notest
+```python
 from flext_ldif import FlextLdifSettings
 
 # ✅ Good: Type-safe configuration
@@ -448,7 +418,7 @@ config_dict = {
 
 Validate configuration at application startup:
 
-```python notest
+```python
 import os
 from flext_ldif import ldif, p, r, FlextLdifSettings
 
@@ -470,7 +440,7 @@ def initialize_application_config() -> p.Result[ldif]:
 
 Create profiles for different deployment environments:
 
-```python notest
+```python
 def get_environment_config(environment: str) -> FlextLdifModels.Config:
     """Get configuration based on deployment environment."""
     profiles = {
@@ -492,7 +462,7 @@ api = ldif(settings=settings)
 
 Keep configuration changes documented and version controlled:
 
-```python notest
+```python
 # Configuration changelog
 CONFIGURATION_CHANGELOG = {
     "0.9.9": {

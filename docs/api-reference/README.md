@@ -19,7 +19,7 @@ This section is generated from public exports and real docstrings.
 
 ## Surface Summary
 
-- Primary facades: `FlextLdifServersOidAcl`, `FlextLdifUtilitiesAttribute`, `FlextLdifTransformer`, `FlextLdifUtilitiesSchema`, `FlextLdifServersRelaxed`, `FlextLdifUtilitiesEvents` (+87 more)
-- Generated module pages: `38`
+- Primary facades: _none_
+- Generated module pages: `44`
 
 - [Back to project docs](../index.md)

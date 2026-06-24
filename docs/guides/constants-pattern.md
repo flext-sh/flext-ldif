@@ -1,12 +1,5 @@
 # Constants Pattern Guide
 
-<!-- TOC START -->
-- [RFC.Constants (Base)](#rfcconstants-base)
-- [Server.Constants (Específicos)](#serverconstants-especficos)
-- [Quando usar o quê](#quando-usar-o-qu)
-- [Benefícios](#benefcios)
-<!-- TOC END -->
-
 ## RFC.Constants (Base)
 
 **Rule:** Use ONLY `ClassVar` - never `Final`
@@ -14,7 +7,7 @@
 - Allows all servers to override if needed
 - Provides baseline values
 
-```python notest
+```python
 from typing import ClassVar, Final
 
 
@@ -34,7 +27,7 @@ class Constants:
 - `ClassVar` quando sobrescrever RFC
 - `Final` apenas para novas constantes server-specific
 
-```python notest
+```python
 class Constants(FlextLdifServersRfc.Constants):
     # ✅ Sobrescrevendo RFC - usar ClassVar
     OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([...])

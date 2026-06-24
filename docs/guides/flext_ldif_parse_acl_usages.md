@@ -1,36 +1,5 @@
 # flext-ldif: parse() and format_acl() Usage Locations
 
-<!-- TOC START -->
-- [SUMMARY](#summary)
-- [1. METHOD DEFINITIONS](#1-method-definitions)
-  - [Base Class Definition](#base-class-definition)
-  - [Protocol Definition](#protocol-definition)
-- [2. SERVER SERVERS IMPLEMENTATIONS](#2-server-servers-implementations)
-  - [13 Server Servers Classes Implementing parse()](#13-server-servers-classes-implementing-parse)
-  - [Implementation Pattern](#implementation-pattern)
-- [3. SERVICE LAYER USAGE](#3-service-layer-usage)
-  - [ACL Service](#acl-service)
-  - [Categorized Pipeline](#categorized-pipeline)
-- [4. TEST COVERAGE](#4-test-coverage)
-  - [Unit Test Files Using parse()](#unit-test-files-using-parse)
-  - [Test Pattern](#test-pattern)
-- [5. INTEGRATION POINTS](#5-integration-points)
-  - [FlextLdifCategorizedMigrationPipeline](#flextldifcategorizedmigrationpipeline)
-  - [ldif High-Level API](#ldif-high-level-api)
-- [6. CURRENT DATA FLOW](#6-current-data-flow)
-- [7. AFFECTED CODE LOCATIONS (SUMMARY)](#7-affected-code-locations-summary)
-  - [Must Be Updated (High Impact)](#must-be-updated-high-impact)
-  - [Should Review (Medium Impact)](#should-review-medium-impact)
-- [8. MIGRATION STRATEGY](#8-migration-strategy)
-  - [Phase 1: Update Interfaces (2-3 hours)](#phase-1-update-interfaces-2-3-hours)
-  - [Phase 2: Update Implementations (4-6 hours)](#phase-2-update-implementations-4-6-hours)
-  - [Phase 3: Update Tests (2-3 hours)](#phase-3-update-tests-2-3-hours)
-  - [Phase 4: Validation (2-3 hours)](#phase-4-validation-2-3-hours)
-- [9. ECOSYSTEM IMPACT](#9-ecosystem-impact)
-  - [Projects Using flext-ldif](#projects-using-flext-ldif)
-- [CONCLUSION](#conclusion)
-<!-- TOC END -->
-
 **Analysis Date**: 2025-10-28
 **Scope**: Comprehensive mapping of ACL method usage in flext-ldif library
 
@@ -52,7 +21,7 @@ ______________________________________________________________________
 
 **File**: `/home/marlonsc/flext/flext-ldif/src/flext_ldif/servers/base.py`
 
-```python notest
+```python
 class FlextLdifServersBase.Acl(ABC, ServerRegistrationMixin):
     """Base class for ACL servers."""
 
@@ -71,7 +40,7 @@ class FlextLdifServersBase.Acl(ABC, ServerRegistrationMixin):
 
 **File**: `/home/marlonsc/flext/flext-ldif/src/flext_ldif/protocols.py`
 
-```python notest
+```python
 class Acl(Protocol):
     """Protocol for ACL servers."""
 
@@ -122,7 +91,7 @@ ______________________________________________________________________
 
 **Method**: `parse()`
 
-```python notest
+```python
 def parse(
     self, acl_line: str, server_type: str | None = None
 ) -> p.Result[FlextLdifModels.Acl]:
@@ -146,7 +115,7 @@ def parse(
 
 **Method**: `_transform_categories()`
 
-```python notest
+```python
 def _transform_categories(
     self, categorized: t.MappingKV[str, t.SequenceOf[m.Dict]]
 ) -> p.Result[Mapping[str, t.SequenceOf[m.Dict]]]:
@@ -179,7 +148,7 @@ ______________________________________________________________________
 
 ### Test Pattern
 
-```python notest
+```python
 def test_parse_oracle_oid():
     """Test OID ACL parsing."""
     server = FlextLdifServersOid.Acl()

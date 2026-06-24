@@ -4,7 +4,6 @@
 
 These pages are generated from public modules and their docstrings.
 
-- [flext_ldif](flext_ldif.md)
 - [flext_ldif.api](api.md)
 - [flext_ldif.base](base.md)
 - [flext_ldif.constants](constants.md)
@@ -26,6 +25,13 @@ These pages are generated from public modules and their docstrings.
 - [flext_ldif.services.analysis](services/analysis.md)
 - [flext_ldif.services.categorization](services/categorization.md)
 - [flext_ldif.services.conversion](services/conversion.md)
+- [flext_ldif.services.conversion_acl](services/conversion_acl.md)
+- [flext_ldif.services.conversion_acl_preserve](services/conversion_acl_preserve.md)
+- [flext_ldif.services.conversion_entry](services/conversion_entry.md)
+- [flext_ldif.services.conversion_metadata](services/conversion_metadata.md)
+- [flext_ldif.services.conversion_schema](services/conversion_schema.md)
+- [flext_ldif.services.conversion_schema_entry](services/conversion_schema_entry.md)
+- [flext_ldif.services.conversion_support](services/conversion_support.md)
 - [flext_ldif.services.detector](services/detector.md)
 - [flext_ldif.services.entries](services/entries.md)
 - [flext_ldif.services.filters](services/filters.md)

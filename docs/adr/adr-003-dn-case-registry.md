@@ -1,9 +1,5 @@
 # ADR-003: DN Case Registry for OUD Compatibility
 
-<!-- TOC START -->
-- No sections found
-<!-- TOC END -->
-
 **Status**: Accepted
 
 **Date**: 2026-04-14
@@ -30,7 +26,7 @@ Implement a **DN Case Registry** that:
 
 **Key Components**:
 
-```python notest
+```python
 class Result: ...
 
 
@@ -53,7 +49,7 @@ class DnCaseRegistry:
 
 **Implementation**:
 
-```python notest
+```python
 class DnCaseRegistry:
     def register_dn(self, dn: str) -> str:
         return dn.lower()

@@ -1,23 +1,5 @@
 # FLEXT LDIF Sorting Service - Universal Sorting Engine
 
-<!-- TOC START -->
-- [DN Handling (RFC 4514 Compliance)](#dn-handling-rfc-4514-compliance)
-- [What It Sorts (sort_target parameter)](#what-it-sorts-sorttarget-parameter)
-- [How It Sorts Entries (sort_by parameter)](#how-it-sorts-entries-sortby-parameter)
-- [Usage Examples](#usage-examples)
-  - [Pattern 1: Execute Method (V1 Style)](#pattern-1-execute-method-v1-style)
-  - [Pattern 2: Classmethod for Composable/Chainable Operations](#pattern-2-classmethod-for-composablechainable-operations)
-  - [Pattern 3: Fluent Builder Pattern](#pattern-3-fluent-builder-pattern)
-  - [Pattern 4: Public Classmethod Helpers (Most Direct)](#pattern-4-public-classmethod-helpers-most-direct)
-- [Attribute & ACL Sorting Options](#attribute-acl-sorting-options)
-  - [When sort_target="attributes"](#when-sorttargetattributes)
-  - [When sort_target="acl"](#when-sorttargetacl)
-- [Complex Sorting Examples](#complex-sorting-examples)
-- [Public Classmethod API](#public-classmethod-api)
-- [Quick Reference](#quick-reference)
-- [See Also](#see-also)
-<!-- TOC END -->
-
 Flexible sorting for LDIF entries, attributes, ACL & schemas.
 Supports hierarchy, DN, custom predicate, and schema OID sorting.
 
@@ -52,7 +34,7 @@ Supports hierarchy, DN, custom predicate, and schema OID sorting.
 
 ### Pattern 1: Execute Method (V1 Style)
 
-```python notest
+```python
 result = FlextLdifSorting(entries=my_entries, sort_by="hierarchy").execute()
 
 if result.success:
@@ -61,7 +43,7 @@ if result.success:
 
 ### Pattern 2: Classmethod for Composable/Chainable Operations
 
-```python notest
+```python
 result = (
     FlextLdifSorting
     .sort(my_entries, by="hierarchy")
@@ -72,7 +54,7 @@ result = (
 
 ### Pattern 3: Fluent Builder Pattern
 
-```python notest
+```python
 sorted_entries = (
     FlextLdifSorting
     .builder()
@@ -85,7 +67,7 @@ sorted_entries = (
 
 ### Pattern 4: Public Classmethod Helpers (Most Direct)
 
-```python notest
+```python
 # Sort entries by hierarchy
 result = FlextLdifSorting.by_hierarchy(my_entries)
 sorted_entries = result.unwrap()
@@ -123,7 +105,7 @@ result = FlextLdifSorting.by_schema(schema_entries)
 
 ## Complex Sorting Examples
 
-```python notest
+```python
 # Sort ONLY attributes, preserving entry order
 sorted_entries = (
     FlextLdifSorting(entries=my_entries, sort_target="attributes").execute().unwrap()
@@ -182,7 +164,7 @@ result = FlextLdifSorting.by_custom(
 
 Most common use cases:
 
-```python notest
+```python
 # Just sort entries by hierarchy
 sorted = FlextLdifSorting.by_hierarchy(entries).unwrap()
 

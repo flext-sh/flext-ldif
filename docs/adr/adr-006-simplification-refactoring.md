@@ -1,33 +1,5 @@
 # ADR-006: Library Simplification and Deduplication
 
-<!-- TOC START -->
-- [Context](#context)
-  - [**Structural Issues**](#structural-issues)
-  - [**Over-Engineering**](#over-engineering)
-  - [**flext-core Under-Utilization**](#flext-core-under-utilization)
-  - [**Impact**](#impact)
-- [Decision](#decision)
-  - [**1. Flatten Module Structure**](#1-flatten-module-structure)
-  - [**2. Delete Over-Engineered Processors**](#2-delete-over-engineered-processors)
-  - [**3. Remove Wrapper Methods**](#3-remove-wrapper-methods)
-  - [**4. Remove Property Accessors**](#4-remove-property-accessors)
-  - [**5. Leverage d**](#5-leverage-d)
-  - [**6. Refactor Services to s**](#6-refactor-services-to-s)
-  - [**7. Simplify with Python 3.13+ Pattern Matching**](#7-simplify-with-python-313-pattern-matching)
-  - [**8. Reorganize Tests**](#8-reorganize-tests)
-- [Consequences](#consequences)
-  - [**Positive**](#positive)
-  - [**Negative**](#negative)
-  - [**Mitigation**](#mitigation)
-- [Implementation](#implementation)
-  - [**Phase 1: Documentation (4-5 hours)**](#phase-1-documentation-4-5-hours)
-  - [**Phase 2: Code Refactoring (6-7 hours)**](#phase-2-code-refactoring-6-7-hours)
-  - [**Timeline**: 10-12 hours total](#timeline-10-12-hours-total)
-- [Validation Criteria](#validation-criteria)
-- [References](#references)
-- [Notes](#notes)
-<!-- TOC END -->
-
 **Date**: 2025-01-24
 **Status**: Approved
 **Deciders**: FLEXT Core Team
@@ -135,7 +107,7 @@ src/flext_ldif/
 
 **Before**:
 
-```python notest
+```python
 from flext_ldif import ldif
 
 processor = ldif.processors  # Unnecessary wrapper
@@ -144,7 +116,7 @@ result = processor.batch_process(entries, func)
 
 **After**:
 
-```python notest
+```python
 from flext_core import FlextProcessors
 
 processor = FlextProcessors()  # Direct usage
@@ -170,14 +142,14 @@ result = processor.batch_process(entries, func)
 
 **Before**:
 
-```python notest
+```python
 dn = ldif.get_entry_dn(entry)  # Wrapper
 attrs = ldif.get_entry_attributes(entry)  # Wrapper
 ```
 
 **After**:
 
-```python notest
+```python
 from flext_ldif import FlextLdifModels
 
 dn = entry.dn.value  # Direct
@@ -213,7 +185,7 @@ attrs = entry.attributes.to_ldap3()  # Direct
 
 **Example**:
 
-```python notest
+```python
 from flext_core import d
 
 
@@ -246,7 +218,7 @@ class RfcLdifParser:
 
 **Before**:
 
-```python notest
+```python
 class FlextLdifDetector:
     def __init__(self):
         self._patterns = {...}
@@ -254,7 +226,7 @@ class FlextLdifDetector:
 
 **After**:
 
-```python notest
+```python
 from flext_core import s, r
 
 
@@ -279,7 +251,7 @@ class FlextLdifDetector(s):
 
 **Before** (170 lines with nested if/else):
 
-```python notest
+```python
 def parse(
     self, source, server_type="rfc", *, batch=False, paginate=False, page_size=1000
 ):
@@ -296,7 +268,7 @@ def parse(
 
 **After** (80 lines with pattern matching):
 
-```python notest
+```python
 from typing import Literal
 
 

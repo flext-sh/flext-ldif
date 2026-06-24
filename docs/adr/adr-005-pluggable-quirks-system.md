@@ -1,9 +1,5 @@
 # ADR-005: Pluggable Servers System
 
-<!-- TOC START -->
-- No sections found
-<!-- TOC END -->
-
 **Status**: Accepted
 
 **Date**: 2026-04-14
@@ -40,7 +36,7 @@ Implement a **pluggable servers system** with:
 
 **Key Components**:
 
-```python notest
+```python
 class ServerBase(ABC):
     """Base class for server-specific server implementations."""
 
@@ -65,7 +61,7 @@ class ServerBase(ABC):
 
 **Implementation**:
 
-```python notest
+```python
 # Auto-discovery and registration
 registry = FlextLdifServer()
 registry.load_alls()

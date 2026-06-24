@@ -1,9 +1,5 @@
 # ADR-001: RFC-First Design with Zero Bypass Paths
 
-<!-- TOC START -->
-- No sections found
-<!-- TOC END -->
-
 **Status**: Accepted
 
 **Date**: 2026-04-14
@@ -29,7 +25,7 @@ Implement a **RFC-First Design with Zero Bypass Paths** where:
 
 **Key Implementation**:
 
-```python notest
+```python
 # RFC parsers always receive server_registry
 parser = RfcLdifParserService(
     params={"file_path": "data.ldif"},

@@ -1,42 +1,5 @@
 # FLEXT-LDIF Documentation
 
-<!-- TOC START -->
-- [🎯 Library Overview](#library-overview)
-- [Documentation Structure](#documentation-structure)
-- [📚 Documentation Categories](#documentation-categories)
-  - [🚀 Getting Started (`getting-started.md`)](#getting-started-getting-startedmd)
-  - [🏗️ Architecture Documentation (`architecture.md`)](#architecture-documentation-architecturemd)
-  - [📚 API Reference (`api-reference.md`)](#api-reference-api-referencemd)
-  - [⚙️ Configuration (`configuration.md`)](#configuration-configurationmd)
-  - [🔧 Development (`development.md`)](#development-developmentmd)
-  - [🔗 Integration (`integration.md`)](#integration-integrationmd)
-  - [💡 Examples (`examples/`)](#examples-examples)
-  - [🚨 Troubleshooting (`troubleshooting.md`)](#troubleshooting-troubleshootingmd)
-- [🌟 Key Features Documented](#key-features-documented)
-  - [Current Implementation (v0.12.0-dev)](#current-implementation-v0120-dev)
-  - [Known Limitations](#known-limitations)
-  - [Future Development Goals](#future-development-goals)
-- [📖 Documentation Principles](#documentation-principles)
-  - [Accuracy and Honesty](#accuracy-and-honesty)
-  - [FLEXT Ecosystem Integration](#flext-ecosystem-integration)
-  - [User-Focused Guidance](#user-focused-guidance)
-- [🧭 Navigation Guide](#navigation-guide)
-  - [🚀 Quick Start Path (New Users)](#quick-start-path-new-users)
-  - [🛠️ Developer Path (Contributors)](#developer-path-contributors)
-  - [🔧 Integration Path (FLEXT Ecosystem)](#integration-path-flext-ecosystem)
-- [📊 Documentation Quality Standards](#documentation-quality-standards)
-  - [Completeness Standards](#completeness-standards)
-  - [Quality Validation](#quality-validation)
-- [🔗 Related Resources](#related-resources)
-  - [Project Documentation](#project-documentation)
-  - [FLEXT Ecosystem Documentation](#flext-ecosystem-documentation)
-  - [External Standards and References](#external-standards-and-references)
-- [🎯 Documentation Success Metrics](#documentation-success-metrics)
-  - [Usability Indicators](#usability-indicators)
-  - [Technical Quality](#technical-quality)
-- [🤝 Contributing to Documentation](#contributing-to-documentation)
-<!-- TOC END -->
-
 **Version**: 0.12.0-dev RC | **Updated**: October 10, 2025 | **Status**: RFC-first LDIF Processing with Server Servers · Production-Ready
 
 This directory contains documentation for FLEXT-LDIF, a Python library for processing LDAP Data Interchange Format (LDIF) files within the FLEXT ecosystem.
