@@ -9,7 +9,7 @@
 - Keywords: `adapter`, `enterprise`, `flext`, `integration`, `typed`
 - Main facades: _none_
 - Alias exports: `c`, `d`, `e`, `h`, `m`, `p`, `r`, `s`, `t`, `u`, `x`
-- Public symbol exports: `FlextLdifProtocolsDomain`, `FlextLdifUtilitiesOID`, `FlextLdifServersBaseSchemaAcl`, `FlextLdifServersOudCommentsMixin`, `FlextLdifServersAd`, `FlextLdifServersNovell`, `FlextLdifModelsBases`, `FlextLdifServer`, `FlextLdifConversionAclPreserveMixin`, `FlextLdifModelsDomainAttributes` (+105 more)
+- Public symbol exports: `FlextLdifServersOudSchema`, `FlextLdifUtilitiesTransformers`, `FlextLdifServersOidAclAssemble`, `FlextLdifTypes`, `FlextLdifUtilitiesOID`, `FlextLdifModelsBases`, `ldif`, `FlextLdifConstantsEnums`, `FlextLdifTypesBase`, `FlextLdifWriter` (+105 more)
 - Exported module shortcuts: _none_
 - Generated module pages: `44`
 
