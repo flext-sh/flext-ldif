@@ -91,35 +91,44 @@ class FlextLdifConversionAclMixin(FlextLdifConversionAclPreserveMixin, s):
                     return r[m.Ldif.Acl].fail(
                         "Converted entry has no ACLs in metadata.acls",
                     )
-                return r[m.Ldif.Acl].from_result(
-                    target_server.acl_server.parse_server(
-                        converted_entry.metadata.acls[0],
-                    ),
-                ).flat_map(
-                    lambda parsed_acl: (
-                        r[m.Ldif.Acl].ok(parsed_acl)
-                        if isinstance(parsed_acl, m.Ldif.Acl)
-                        else r[m.Ldif.Acl].fail(
-                            "ACL conversion returned unexpected parsed type: "
-                            f"{type(parsed_acl).__name__}",
-                        )
-                    ),
+                return (
+                    r[m.Ldif.Acl]
+                    .from_result(
+                        target_server.acl_server.parse_server(
+                            converted_entry.metadata.acls[0],
+                        ),
+                    )
+                    .flat_map(
+                        lambda parsed_acl: (
+                            r[m.Ldif.Acl].ok(parsed_acl)
+                            if isinstance(parsed_acl, m.Ldif.Acl)
+                            else r[m.Ldif.Acl].fail(
+                                "ACL conversion returned unexpected parsed type: "
+                                f"{type(parsed_acl).__name__}",
+                            )
+                        ),
+                    )
                 )
 
-            return converted_entry_result.map_error(
-                lambda error: error or "Acl conversion returned no entry",
-            ).flat_map(_entry_to_acl).flat_map(
-                lambda converted_acl: r[t.Ldif.ConvertedModel].ok(
-                    self._preserve_acl_metadata(
-                        acl,
-                        converted_acl,
-                        source_server_type=source_server_type,
-                        target_server_type=target_server_type,
-                    ).model_copy(
-                        update={"server_type": target_server_type},
-                        deep=True,
+            return (
+                converted_entry_result
+                .map_error(
+                    lambda error: error or "Acl conversion returned no entry",
+                )
+                .flat_map(_entry_to_acl)
+                .flat_map(
+                    lambda converted_acl: r[t.Ldif.ConvertedModel].ok(
+                        self._preserve_acl_metadata(
+                            acl,
+                            converted_acl,
+                            source_server_type=source_server_type,
+                            target_server_type=target_server_type,
+                        ).model_copy(
+                            update={"server_type": target_server_type},
+                            deep=True,
+                        ),
                     ),
-                ),
+                )
             )
         except c.Ldif.EXC_LDIF_PARSE as e:
             self.logger.exception("Failed to convert ACL model", error=str(e))

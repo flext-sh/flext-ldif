@@ -126,11 +126,13 @@ class FlextLdifServersOidAclConvert:
                 return c.Ldif.AclTargetType.ATTR.value, c.Ldif.ACL_WILDCARD, content
             operator, attrs = match.group(1), match.group(2)
             target_attrs = (
-                f"!={attrs}"
-                if operator == "!="
-                else (attrs or c.Ldif.ACL_WILDCARD)
+                f"!={attrs}" if operator == "!=" else (attrs or c.Ldif.ACL_WILDCARD)
             )
-            return c.Ldif.AclTargetType.ATTR.value, target_attrs, content[match.end() :].strip()
+            return (
+                c.Ldif.AclTargetType.ATTR.value,
+                target_attrs,
+                content[match.end() :].strip(),
+            )
         return None
 
     @classmethod

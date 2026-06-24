@@ -115,8 +115,10 @@ class TestsFlextLdifProcessingService:
             attributes={
                 "objectClass": ["top"],
                 "orclaci": [
-                    ('access to entry by group="cn=x,dc=other" (browse) '
-                    'by group="cn=a,dc=ctbc" (browse)'),
+                    (
+                        'access to entry by group="cn=x,dc=other" (browse) '
+                        'by group="cn=a,dc=ctbc" (browse)'
+                    ),
                 ],
             },
         )
@@ -137,7 +139,9 @@ class TestsFlextLdifProcessingService:
         tm.that(
             attrs["aci"],
             eq=[
-                ('(targetattr="*")(version 3.0; acl "users Entry by x"; '
-                'allow (read, search) groupdn="ldap:///cn=a,dc=ctbc";)'),
+                (
+                    '(targetattr="*")(version 3.0; acl "users Entry by x"; '
+                    'allow (read, search) groupdn="ldap:///cn=a,dc=ctbc";)'
+                ),
             ],
         )

@@ -77,8 +77,7 @@ class FlextLdifServersOidAclAssemble:
                 continue
             if is_anyone and dn_normalized in containers:
                 notes.append(
-                    "anyone skipped at high-level container "
-                    "(OUD inherits to subtree)",
+                    "anyone skipped at high-level container (OUD inherits to subtree)",
                 )
                 continue
             bind = Conv.convert_subject_to_oud(subject)
@@ -120,9 +119,7 @@ class FlextLdifServersOidAclAssemble:
                     f"added_object_constraint=({subject.added_object_constraint}) "
                     "on this subject needs manual OUD targetfilter review",
                 )
-            if is_anyone and (
-                sensitive := c.Ldif.SENSITIVE_PERMS & set(perms.value)
-            ):
+            if is_anyone and (sensitive := c.Ldif.SENSITIVE_PERMS & set(perms.value)):
                 notes.append(
                     f"anyone granted sensitive perms {sorted(sensitive)} — "
                     "verify this is intended",

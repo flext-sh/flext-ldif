@@ -358,8 +358,10 @@ class TestsFlextLdifOidAclConvertValues:
             Pipe.convert_acl_values(
                 "cn=users,dc=ctbc",
                 (
-                    ('orclaci: access to entry by guidattr=(g) (browse) '
-                    'by group="cn=a,dc=ctbc" (browse)'),
+                    (
+                        "orclaci: access to entry by guidattr=(g) (browse) "
+                        'by group="cn=a,dc=ctbc" (browse)'
+                    ),
                 ),
             )
 

@@ -40,8 +40,10 @@ class TestsFlextLdifOidAclEndToEnd:
             {
                 "objectClass": ["top"],
                 "orclaci": [
-                    ('access to entry by group="cn=admins,dc=ctbc" '
-                    "(browse,add,delete) by * (none)"),
+                    (
+                        'access to entry by group="cn=admins,dc=ctbc" '
+                        "(browse,add,delete) by * (none)"
+                    ),
                 ],
             },
         )
@@ -50,9 +52,11 @@ class TestsFlextLdifOidAclEndToEnd:
         tm.that(
             attrs["aci"],
             eq=[
-                ('(targetattr="*")(version 3.0; acl "users Entry by admins"; '
-                'allow (read, search, add, delete) '
-                'groupdn="ldap:///cn=admins,dc=ctbc";)'),
+                (
+                    '(targetattr="*")(version 3.0; acl "users Entry by admins"; '
+                    "allow (read, search, add, delete) "
+                    'groupdn="ldap:///cn=admins,dc=ctbc";)'
+                ),
             ],
         )
 
@@ -72,9 +76,11 @@ class TestsFlextLdifOidAclEndToEnd:
         tm.that(
             attrs["aci"],
             eq=[
-                ('(targetattr="cn||sn||mail")(targetscope="base")'
-                '(version 3.0; acl "users Attrs by anyone"; '
-                'allow (read, search) userdn="ldap:///anyone";)'),
+                (
+                    '(targetattr="cn||sn||mail")(targetscope="base")'
+                    '(version 3.0; acl "users Attrs by anyone"; '
+                    'allow (read, search) userdn="ldap:///anyone";)'
+                ),
             ],
         )
 
@@ -91,8 +97,10 @@ class TestsFlextLdifOidAclEndToEnd:
         tm.that(
             attrs["aci"],
             eq=[
-                ('(targetattr="*")(version 3.0; acl "users Entry by manager"; '
-                'allow (read, search) userattr="manager#USERDN";)'),
+                (
+                    '(targetattr="*")(version 3.0; acl "users Entry by manager"; '
+                    'allow (read, search) userattr="manager#USERDN";)'
+                ),
             ],
         )
 
@@ -115,9 +123,11 @@ class TestsFlextLdifOidAclEndToEnd:
         tm.that(
             attrs["aci"],
             eq=[
-                ('(targetattr="*")(targetscope="base")'
-                '(version 3.0; acl "users Entry by g"; '
-                'allow (read, search) groupdn="ldap:///cn=g,dc=ctbc";)'),
+                (
+                    '(targetattr="*")(targetscope="base")'
+                    '(version 3.0; acl "users Entry by g"; '
+                    'allow (read, search) groupdn="ldap:///cn=g,dc=ctbc";)'
+                ),
             ],
         )
 
@@ -129,8 +139,10 @@ class TestsFlextLdifOidAclEndToEnd:
             attributes={
                 "objectClass": ["top"],
                 "orclaci": [
-                    ('access to entry by group="cn=x,dc=other" (browse) '
-                    'by group="cn=a,dc=ctbc" (browse)'),
+                    (
+                        'access to entry by group="cn=x,dc=other" (browse) '
+                        'by group="cn=a,dc=ctbc" (browse)'
+                    ),
                 ],
             },
         )
@@ -146,7 +158,9 @@ class TestsFlextLdifOidAclEndToEnd:
         tm.that(
             converted.attributes.attributes["aci"],
             eq=[
-                ('(targetattr="*")(version 3.0; acl "users Entry by x"; '
-                'allow (read, search) groupdn="ldap:///cn=a,dc=ctbc";)'),
+                (
+                    '(targetattr="*")(version 3.0; acl "users Entry by x"; '
+                    'allow (read, search) groupdn="ldap:///cn=a,dc=ctbc";)'
+                ),
             ],
         )

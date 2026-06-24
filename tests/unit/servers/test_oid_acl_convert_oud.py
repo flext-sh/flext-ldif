@@ -162,7 +162,9 @@ class TestsFlextLdifOidAclConvertTarget:
         tm.that(Conv.get_targetattr(self._rule("attr", "!=a, b")), eq="!=a||b")
 
     def test_scope_orclaci_without_anyone_is_default(self) -> None:
-        scope = Conv.calculate_targetscope(self._rule("entry"), has_anyone_subject=False)
+        scope = Conv.calculate_targetscope(
+            self._rule("entry"), has_anyone_subject=False
+        )
         tm.that(scope is None, eq=True)
 
     def test_scope_orclaci_with_anyone_is_base(self) -> None:

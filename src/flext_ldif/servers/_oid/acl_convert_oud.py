@@ -71,7 +71,9 @@ class FlextLdifServersOidAclToOud:
         for base in bases:
             mapped = perm_map.get(base)
             if mapped:
-                granted.update(part.strip() for part in mapped.split(",") if part.strip())
+                granted.update(
+                    part.strip() for part in mapped.split(",") if part.strip()
+                )
         return granted
 
     @classmethod
