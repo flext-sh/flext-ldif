@@ -450,20 +450,25 @@ class FlextLdifUtilitiesDN:
     def compare_dns(dn1: str | None, dn2: str | None) -> p.Result[int]:
         """Compare two DNs per RFC 4514 (case-insensitive)."""
         try:
-            if not dn1 or not dn2:
-                return r[int].fail("Both DNs must be provided for comparison")
-            norm_result = FlextLdifUtilitiesDN._normalize_dns_for_comparison(dn1, dn2)
-            if not norm_result.success:
-                return r[int].fail(norm_result.error or "Normalization failed")
-            normalized_pair = norm_result.value
-            if len(normalized_pair) != c.Ldif.TUPLE_LENGTH_PAIR:
-                return r[int].fail("Normalization returned unexpected DN pair")
-            norm1_lower = normalized_pair[0]
-            norm2_lower = normalized_pair[1]
-            comparison = (norm1_lower > norm2_lower) - (norm1_lower < norm2_lower)
-            return r[int].ok(comparison)
+            return FlextLdifUtilitiesDN._compare_dns_core(dn1, dn2)
         except c.Ldif.EXC_LDIF_PARSE as e:
             return r[int].fail(f"DN comparison error: {e}")
+
+    @staticmethod
+    def _compare_dns_core(dn1: str | None, dn2: str | None) -> p.Result[int]:
+        """Compare normalized DN pair."""
+        if not dn1 or not dn2:
+            return r[int].fail("Both DNs must be provided for comparison")
+        norm_result = FlextLdifUtilitiesDN._normalize_dns_for_comparison(dn1, dn2)
+        if not norm_result.success:
+            return r[int].fail(norm_result.error or "Normalization failed")
+        normalized_pair = norm_result.value
+        if len(normalized_pair) != c.Ldif.TUPLE_LENGTH_PAIR:
+            return r[int].fail("Normalization returned unexpected DN pair")
+        norm1_lower = normalized_pair[0]
+        norm2_lower = normalized_pair[1]
+        comparison = (norm1_lower > norm2_lower) - (norm1_lower < norm2_lower)
+        return r[int].ok(comparison)
 
     @staticmethod
     def esc(value: str) -> str:
@@ -711,23 +716,7 @@ class FlextLdifUtilitiesDN:
                 result = r[t.MutableStrPairSequence].fail(error_msg)
             else:
                 try:
-                    parsed_pairs: t.MutableStrPairSequence = []
-                    failure_message: str | None = None
-                    for component in FlextLdifUtilitiesDN.split(dn_str):
-                        parsed_component = FlextLdifUtilitiesDN.parse_rdn(component)
-                        if parsed_component.failure:
-                            failure_message = str(parsed_component.error)
-                            break
-                        parsed_pairs.extend(parsed_component.value)
-                    if failure_message is None and parsed_pairs:
-                        result = r[t.MutableStrPairSequence].ok(
-                            parsed_pairs,
-                        )
-                    else:
-                        result = r[t.MutableStrPairSequence].fail(
-                            failure_message
-                            or f"Failed to parse DN components from '{dn_str}'",
-                        )
+                    result = FlextLdifUtilitiesDN._parse_dn_components(dn_str)
                 except c.Ldif.EXC_LDIF_PARSE as e:
                     result = r[t.MutableStrPairSequence].fail(
                         f"DN parsing error: {e}",
@@ -742,54 +731,71 @@ class FlextLdifUtilitiesDN:
         )
         if rdn:
             try:
-                pairs: t.MutableStrPairSequence = []
-                current_attr = ""
-                current_val = ""
-                in_value = False
-                rdn_len: int = len(rdn)
-                position: int = 0
-                error_message: str | None = None
-                rdn_config = m.Ldif.RdnProcessingConfig()
-                rdn_config.current_attr = current_attr
-                rdn_config.current_val = current_val
-                rdn_config.in_value = in_value
-                rdn_config.pairs = pairs
-                while position < rdn_len and error_message is None:
-                    idx: int = position
-                    char_at_pos: str = rdn[idx]
-                    current_attr, current_val, in_value, position = (
-                        FlextLdifUtilitiesDN._advance_rdn_position(
-                            char_at_pos,
-                            rdn,
-                            idx,
-                            rdn_config,
-                        )
-                    )
-                    rdn_config.current_attr = current_attr
-                    rdn_config.current_val = current_val
-                    rdn_config.in_value = in_value
-                    pairs = rdn_config.pairs
-                    if char_at_pos == "=" and (not in_value) and (not current_attr):
-                        error_message = (
-                            f"Invalid RDN format: unexpected '=' at position {idx}"
-                        )
-                if error_message is None and (not in_value or not current_attr):
-                    error_message = (
-                        f"Invalid RDN format: missing attribute or value in '{rdn}'"
-                    )
-                current_val = current_val.strip()
-                if error_message is None and not current_val:
-                    error_message = f"Invalid RDN format: empty value in '{rdn}'"
-                if error_message is None:
-                    pairs.append((current_attr, current_val))
-                    result = r[t.MutableStrPairSequence].ok(pairs)
-                else:
-                    result = r[t.MutableStrPairSequence].fail(error_message)
+                result = FlextLdifUtilitiesDN._parse_rdn_core(rdn)
             except c.Ldif.EXC_LDIF_PARSE as e:
                 result = r[t.MutableStrPairSequence].fail(
                     f"RDN parsing error: {e}",
                 )
         return result
+
+    @staticmethod
+    def _parse_dn_components(dn_str: str) -> p.Result[t.MutableStrPairSequence]:
+        """Parse already validated DN string components."""
+        parsed_pairs: t.MutableStrPairSequence = []
+        failure_message: str | None = None
+        for component in FlextLdifUtilitiesDN.split(dn_str):
+            parsed_component = FlextLdifUtilitiesDN.parse_rdn(component)
+            if parsed_component.failure:
+                failure_message = str(parsed_component.error)
+                break
+            parsed_pairs.extend(parsed_component.value)
+        if failure_message is None and parsed_pairs:
+            return r[t.MutableStrPairSequence].ok(parsed_pairs)
+        return r[t.MutableStrPairSequence].fail(
+            failure_message or f"Failed to parse DN components from '{dn_str}'",
+        )
+
+    @staticmethod
+    def _parse_rdn_core(rdn: str) -> p.Result[t.MutableStrPairSequence]:
+        """Parse a non-empty RDN component."""
+        pairs: t.MutableStrPairSequence = []
+        current_attr = ""
+        current_val = ""
+        in_value = False
+        rdn_len: int = len(rdn)
+        position: int = 0
+        error_message: str | None = None
+        rdn_config = m.Ldif.RdnProcessingConfig()
+        rdn_config.current_attr = current_attr
+        rdn_config.current_val = current_val
+        rdn_config.in_value = in_value
+        rdn_config.pairs = pairs
+        while position < rdn_len and error_message is None:
+            idx: int = position
+            char_at_pos: str = rdn[idx]
+            current_attr, current_val, in_value, position = (
+                FlextLdifUtilitiesDN._advance_rdn_position(
+                    char_at_pos,
+                    rdn,
+                    idx,
+                    rdn_config,
+                )
+            )
+            rdn_config.current_attr = current_attr
+            rdn_config.current_val = current_val
+            rdn_config.in_value = in_value
+            pairs = rdn_config.pairs
+            if char_at_pos == "=" and (not in_value) and (not current_attr):
+                error_message = f"Invalid RDN format: unexpected '=' at position {idx}"
+        if error_message is None and (not in_value or not current_attr):
+            error_message = f"Invalid RDN format: missing attribute or value in '{rdn}'"
+        current_val = current_val.strip()
+        if error_message is None and not current_val:
+            error_message = f"Invalid RDN format: empty value in '{rdn}'"
+        if error_message is None:
+            pairs.append((current_attr, current_val))
+            return r[t.MutableStrPairSequence].ok(pairs)
+        return r[t.MutableStrPairSequence].fail(error_message)
 
     @overload
     @staticmethod

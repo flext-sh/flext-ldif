@@ -10,7 +10,6 @@ from collections.abc import (
 from typing import Annotated, ClassVar, Self, override
 
 from flext_ldif import (
-    FlextLdifServerMethodsMixin,
     c,
     m,
     p,
@@ -19,6 +18,7 @@ from flext_ldif import (
     t,
     u,
 )
+from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
 
 logger = u.fetch_logger(__name__)
 

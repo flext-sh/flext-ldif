@@ -8,7 +8,7 @@ from flext_ldif.servers._oid.acl_convert import FlextLdifServersOidAclConvert as
 
 
 class TestsFlextLdifOidAclConvertParse:
-    """parse_oid_acl_line + parse_subject parity with the algar-oud-mig oracle."""
+    """parse_oid_acl_line + parse_subject parity with the OUD migration oracle."""
 
     def test_entry_rule_with_group_and_anyone_subjects(self) -> None:
         line = (

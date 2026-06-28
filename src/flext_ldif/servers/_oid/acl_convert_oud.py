@@ -1,6 +1,6 @@
 """OID→OUD ACL conversion — typed OidAclRule → OUD aci value objects.
 
-Faithful port of the oracle ``algar-oud-mig/scripts`` converter
+Faithful port of the OUD migration oracle converter
 (``convert_subject_to_oud`` and downstream assembly). Each by-clause subject
 maps to one OUD bind-rule (``m.Ldif.AciAllow``); subjects with no OUD
 equivalent (``guidattr``/unknown) surface as ``r.fail`` carrying the manual

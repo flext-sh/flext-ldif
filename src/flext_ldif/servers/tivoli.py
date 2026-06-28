@@ -231,47 +231,56 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
             """Write ACL data to RFC-compliant string format."""
             try:
-                acl_attribute = (
-                    FlextLdifServersTivoli.Constants.ACL_PRIMARY_ATTRIBUTE_NAME
-                )
-                if acl_data.raw_acl:
-                    return r[str].ok(acl_data.raw_acl)
-                parts: t.MutableSequenceOf[str] = []
-                if acl_data.target and acl_data.target.target_dn:
-                    parts.append(acl_data.target.target_dn)
-                if acl_data.subject and acl_data.subject.subject_value:
-                    parts.append(acl_data.subject.subject_value)
-                permission_map = {
-                    "read": FlextLdifServersTivoli.Constants.PERMISSION_READ,
-                    "write": FlextLdifServersTivoli.Constants.PERMISSION_WRITE,
-                    "add": FlextLdifServersTivoli.Constants.PERMISSION_ADD,
-                    "delete": FlextLdifServersTivoli.Constants.PERMISSION_DELETE,
-                    "search": FlextLdifServersTivoli.Constants.PERMISSION_SEARCH,
-                    "compare": FlextLdifServersTivoli.Constants.PERMISSION_COMPARE,
-                }
-                active_perms: t.MutableSequenceOf[str] = []
-                if acl_data.permissions:
-                    perms_dict = {
-                        key: getattr(acl_data.permissions, key)
-                        for key in type(acl_data.permissions).model_fields
-                    }
-                    for perm_name, perm_value in perms_dict.items():
-                        if perm_value is True and perm_name in permission_map:
-                            active_perms.append(permission_map[perm_name])
-                parts.extend(active_perms)
-                acl_content = (
-                    FlextLdifServersTivoli.Constants.ACL_SEPARATOR.join(parts)
-                    if parts
-                    else ""
-                )
-                acl_str = (
-                    f"{acl_attribute}: {acl_content}"
-                    if acl_content
-                    else f"{acl_attribute}:"
-                )
-                return r[str].ok(acl_str)
+                return self._write_tivoli_acl(acl_data)
             except c.EXC_BASIC_TYPE as exc:
                 return r[str].fail_op("IBM Tivoli DS ACL write", exc)
+
+        def _write_tivoli_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
+            """Write IBM Tivoli DS ACL content."""
+            acl_attribute = FlextLdifServersTivoli.Constants.ACL_PRIMARY_ATTRIBUTE_NAME
+            if acl_data.raw_acl:
+                return r[str].ok(acl_data.raw_acl)
+            parts: t.MutableSequenceOf[str] = []
+            if acl_data.target and acl_data.target.target_dn:
+                parts.append(acl_data.target.target_dn)
+            if acl_data.subject and acl_data.subject.subject_value:
+                parts.append(acl_data.subject.subject_value)
+            parts.extend(self._active_tivoli_permissions(acl_data.permissions))
+            acl_content = (
+                FlextLdifServersTivoli.Constants.ACL_SEPARATOR.join(parts)
+                if parts
+                else ""
+            )
+            acl_str = (
+                f"{acl_attribute}: {acl_content}"
+                if acl_content
+                else f"{acl_attribute}:"
+            )
+            return r[str].ok(acl_str)
+
+        @staticmethod
+        def _active_tivoli_permissions(
+            permissions: m.Ldif.AclPermissions | None,
+        ) -> t.MutableSequenceOf[str]:
+            """Return active IBM Tivoli DS permission tokens."""
+            permission_map = {
+                "read": FlextLdifServersTivoli.Constants.PERMISSION_READ,
+                "write": FlextLdifServersTivoli.Constants.PERMISSION_WRITE,
+                "add": FlextLdifServersTivoli.Constants.PERMISSION_ADD,
+                "delete": FlextLdifServersTivoli.Constants.PERMISSION_DELETE,
+                "search": FlextLdifServersTivoli.Constants.PERMISSION_SEARCH,
+                "compare": FlextLdifServersTivoli.Constants.PERMISSION_COMPARE,
+            }
+            active_perms: t.MutableSequenceOf[str] = []
+            if not permissions:
+                return active_perms
+            perms_dict = {
+                key: getattr(permissions, key) for key in type(permissions).model_fields
+            }
+            for perm_name, perm_value in perms_dict.items():
+                if perm_value is True and perm_name in permission_map:
+                    active_perms.append(permission_map[perm_name])
+            return active_perms
 
     class Entry(FlextLdifServersRfc.Entry):
         """IBM Tivoli DS entry server."""
@@ -322,44 +331,51 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         def process_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
             """Normalise IBM Tivoli DS entries and attach metadata."""
             try:
-                if not entry.dn:
-                    return r[m.Ldif.Entry].fail(
-                        "Entry DN is required for Tivoli DS normalization",
-                    )
-                if not entry.attributes:
-                    return r[m.Ldif.Entry].fail(
-                        "Entry attributes are required for Tivoli DS normalization",
-                    )
-                entry_dn = entry.dn.value
-                attributes: t.MutableStrSequenceMapping = {
-                    **entry.attributes.attributes,
-                }
-                dn_lower = entry_dn.lower()
-                object_classes = list(attributes.get(c.Ldif.DictKeys.OBJECTCLASS, []))
-                processed_attributes: t.MutableStrSequenceMapping = {
-                    **attributes,
-                }
-                for attr_name, attr_values in processed_attributes.items():
-                    processed_values: t.MutableSequenceOf[str] = list(attr_values)
-                    processed_attributes[attr_name] = processed_values
-                processed_attributes[c.Ldif.ServerMetadataKeys.SERVER_TYPE] = [
-                    self._get_server_type(),
-                ]
-                is_config = any(
-                    marker in dn_lower
-                    for marker in FlextLdifServersTivoli.Constants.DETECTION_DN_MARKERS
-                )
-                processed_attributes[c.Ldif.ServerMetadataKeys.IS_CONFIG_ENTRY] = [
-                    str(is_config),
-                ]
-                processed_attributes[c.Ldif.DictKeys.OBJECTCLASS] = object_classes
-                new_attrs = m.Ldif.Attributes.model_validate({
-                    "attributes": processed_attributes,
-                })
-                processed_entry = entry.model_copy(update={"attributes": new_attrs})
-                return r[m.Ldif.Entry].ok(processed_entry)
+                return self._process_tivoli_entry(entry)
             except c.EXC_BASIC_TYPE as exc:
                 return r[m.Ldif.Entry].fail_op("IBM Tivoli DS entry processing", exc)
+
+        def _process_tivoli_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
+            """Normalize IBM Tivoli DS entry attributes."""
+            if not entry.dn:
+                return r[m.Ldif.Entry].fail(
+                    "Entry DN is required for Tivoli DS normalization",
+                )
+            if not entry.attributes:
+                return r[m.Ldif.Entry].fail(
+                    "Entry attributes are required for Tivoli DS normalization",
+                )
+            attributes: t.MutableStrSequenceMapping = {
+                **entry.attributes.attributes,
+            }
+            object_classes = list(attributes.get(c.Ldif.DictKeys.OBJECTCLASS, []))
+            processed_attributes: t.MutableStrSequenceMapping = {
+                **attributes,
+            }
+            for attr_name, attr_values in processed_attributes.items():
+                processed_values: t.MutableSequenceOf[str] = list(attr_values)
+                processed_attributes[attr_name] = processed_values
+            processed_attributes[c.Ldif.ServerMetadataKeys.SERVER_TYPE] = [
+                self._get_server_type(),
+            ]
+            processed_attributes[c.Ldif.ServerMetadataKeys.IS_CONFIG_ENTRY] = [
+                str(self._is_config_entry(entry.dn.value)),
+            ]
+            processed_attributes[c.Ldif.DictKeys.OBJECTCLASS] = object_classes
+            new_attrs = m.Ldif.Attributes.model_validate({
+                "attributes": processed_attributes,
+            })
+            processed_entry = entry.model_copy(update={"attributes": new_attrs})
+            return r[m.Ldif.Entry].ok(processed_entry)
+
+        @staticmethod
+        def _is_config_entry(entry_dn: str) -> bool:
+            """Return whether the DN matches Tivoli config-entry markers."""
+            dn_lower = entry_dn.lower()
+            return any(
+                marker in dn_lower
+                for marker in FlextLdifServersTivoli.Constants.DETECTION_DN_MARKERS
+            )
 
 
 __all__: list[str] = ["FlextLdifServersTivoli"]

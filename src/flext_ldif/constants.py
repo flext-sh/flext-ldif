@@ -8,12 +8,10 @@ from types import MappingProxyType
 from typing import ClassVar, Final
 
 from flext_cli import FlextCliConstants, t
-from flext_ldif import (
-    FlextLdifConstantsAclConvert,
-    FlextLdifConstantsAclConvertOud,
-    FlextLdifConstantsBase,
-    FlextLdifConstantsEnums,
-)
+from flext_ldif._constants.acl_convert import FlextLdifConstantsAclConvert
+from flext_ldif._constants.acl_convert_oud import FlextLdifConstantsAclConvertOud
+from flext_ldif._constants.base import FlextLdifConstantsBase
+from flext_ldif._constants.enums import FlextLdifConstantsEnums
 
 
 class FlextLdifConstants(FlextCliConstants):

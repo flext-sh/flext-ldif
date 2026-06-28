@@ -1,6 +1,6 @@
 """OID ACL parsing — orclaci/orclentrylevelaci line → typed OidAclRule.
 
-Faithful port of the oracle ``algar-oud-mig/scripts`` parser
+Faithful port of the OUD migration oracle parser
 (``parse_oid_acl_line`` / ``Parsing.parse_subject``) into flext-ldif. Pure,
 side-effect-free: a malformed ACL surfaces as ``r.fail`` (never a silent skip).
 Patterns/permission taxonomy are the ``c.Ldif`` SSOT; models are ``m.Ldif``.

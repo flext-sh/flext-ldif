@@ -305,35 +305,39 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
             """Parse OpenLDAP 2.x ACL definition (internal)."""
             try:
-                acl_content = self._strip_acl_prefix_and_index(acl_line)
-                what, attributes = self._parse_what_clause(acl_content)
-                if what is None:
-                    acl_minimal = m.Ldif.Acl(
-                        name=FlextLdifServersOpenldap.Constants.ACL_DEFAULT_NAME,
-                        target=m.Ldif.AclTarget(
-                            target_dn=FlextLdifServersOpenldap.Constants.ACL_WILDCARD_TARGET,
-                            attributes=[],
-                        ),
-                        subject=m.Ldif.AclSubject(
-                            subject_type=FlextLdifServersOpenldap.Constants.ACL_SUBJECT_TYPE_WHO,
-                            subject_value=FlextLdifServersOpenldap.Constants.ACL_WILDCARD_TARGET,
-                        ),
-                        permissions=m.Ldif.AclPermissions(),
-                        raw_acl=acl_line,
-                        metadata=self.create_metadata(acl_line),
-                    )
-                    return r[m.Ldif.Acl].ok(acl_minimal)
-                subject_value, access = self._parse_by_clauses(acl_content)
-                acl = self._build_openldap_acl_model(
-                    what,
-                    attributes,
-                    subject_value,
-                    access,
-                    acl_line,
-                )
-                return r[m.Ldif.Acl].ok(acl)
+                return self._parse_openldap_acl(acl_line)
             except c.Ldif.EXC_LDIF_PARSE as e:
                 return r[m.Ldif.Acl].fail_op("OpenLDAP 2.x ACL parsing", e)
+
+        def _parse_openldap_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
+            """Parse OpenLDAP 2.x ACL content."""
+            acl_content = self._strip_acl_prefix_and_index(acl_line)
+            what, attributes = self._parse_what_clause(acl_content)
+            if what is None:
+                acl_minimal = m.Ldif.Acl(
+                    name=FlextLdifServersOpenldap.Constants.ACL_DEFAULT_NAME,
+                    target=m.Ldif.AclTarget(
+                        target_dn=FlextLdifServersOpenldap.Constants.ACL_WILDCARD_TARGET,
+                        attributes=[],
+                    ),
+                    subject=m.Ldif.AclSubject(
+                        subject_type=FlextLdifServersOpenldap.Constants.ACL_SUBJECT_TYPE_WHO,
+                        subject_value=FlextLdifServersOpenldap.Constants.ACL_WILDCARD_TARGET,
+                    ),
+                    permissions=m.Ldif.AclPermissions(),
+                    raw_acl=acl_line,
+                    metadata=self.create_metadata(acl_line),
+                )
+                return r[m.Ldif.Acl].ok(acl_minimal)
+            subject_value, access = self._parse_by_clauses(acl_content)
+            acl = self._build_openldap_acl_model(
+                what,
+                attributes,
+                subject_value,
+                access,
+                acl_line,
+            )
+            return r[m.Ldif.Acl].ok(acl)
 
         def _parse_by_clauses(self, acl_content: str) -> t.StrPair:
             """Parse "by <who> <access>" clauses."""
@@ -395,33 +399,38 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
             """Write ACL data to RFC-compliant string format (internal)."""
             try:
-                if acl_data.raw_acl:
-                    return r[str].ok(acl_data.raw_acl)
-                constants = FlextLdifServersOpenldap.Constants
-                what = (
-                    acl_data.target.target_dn
-                    if acl_data.target
-                    else constants.ACL_WILDCARD_TARGET
-                )
-                who = (
-                    acl_data.subject.subject_value
-                    if acl_data.subject
-                    else constants.ACL_WILDCARD_TARGET
-                )
-                acl_parts = [f"{constants.ACL_PREFIX_TO}{what}"]
-                acl_parts.append(f"{constants.ACL_PREFIX_BY}{who}")
-                if acl_data.permissions:
-                    perms: t.MutableSequenceOf[str] = []
-                    if acl_data.permissions.read:
-                        perms.append("read")
-                    if acl_data.permissions.write:
-                        perms.append("write")
-                    if perms:
-                        acl_parts.append(",".join(perms))
-                acl_str = " ".join(acl_parts)
-                return r[str].ok(acl_str)
+                return self._write_openldap_acl(acl_data)
             except c.Ldif.EXC_LDIF_PARSE as e:
                 return r[str].fail_op("OpenLDAP 2.x ACL write", e)
+
+        @staticmethod
+        def _write_openldap_acl(acl_data: m.Ldif.Acl) -> p.Result[str]:
+            """Write OpenLDAP 2.x ACL content."""
+            if acl_data.raw_acl:
+                return r[str].ok(acl_data.raw_acl)
+            constants = FlextLdifServersOpenldap.Constants
+            what = (
+                acl_data.target.target_dn
+                if acl_data.target
+                else constants.ACL_WILDCARD_TARGET
+            )
+            who = (
+                acl_data.subject.subject_value
+                if acl_data.subject
+                else constants.ACL_WILDCARD_TARGET
+            )
+            acl_parts = [f"{constants.ACL_PREFIX_TO}{what}"]
+            acl_parts.append(f"{constants.ACL_PREFIX_BY}{who}")
+            if acl_data.permissions:
+                perms: t.MutableSequenceOf[str] = []
+                if acl_data.permissions.read:
+                    perms.append("read")
+                if acl_data.permissions.write:
+                    perms.append("write")
+                if perms:
+                    acl_parts.append(",".join(perms))
+            acl_str = " ".join(acl_parts)
+            return r[str].ok(acl_str)
 
     class Entry(FlextLdifServersRfc.Entry):
         """OpenLDAP 2.x entry server (nested)."""

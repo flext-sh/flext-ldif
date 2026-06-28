@@ -4,16 +4,9 @@ from __future__ import annotations
 
 from typing import Self, overload, override
 
-from flext_ldif import (
-    FlextLdifServerMethodsMixin,
-    FlextLdifServersBase,
-    FlextLdifServersBaseSchemaAcl,
-    m,
-    p,
-    r,
-    t,
-    u,
-)
+from flext_ldif import FlextLdifServersBase, m, p, r, t, u
+from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
+from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
 
 logger = u.fetch_logger(__name__)
 

@@ -194,23 +194,30 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 return r[m.Ldif.Entry].from_result(base_result)
             entry = base_result.value
             try:
-                if not entry.dn:
-                    return r[m.Ldif.Entry].ok(entry)
-                metadata = entry.metadata or m.Ldif.ServerMetadata(
-                    server_type=self._get_server_type(),
-                )
-                dn_lower = entry.dn.value.lower()
-                if not metadata.extensions:
-                    metadata.extensions = m.Ldif.DynamicMetadata()
-                metadata.extensions[c.Ldif.ServerMetadataKeys.IS_CONFIG_ENTRY] = (
-                    FlextLdifServersApache.Constants.DN_CONFIG_ENTRY_MARKER in dn_lower
-                )
-                processed_entry = entry.model_copy(update={"metadata": metadata})
-                return r[m.Ldif.Entry].ok(processed_entry)
+                return self._mark_apache_entry(entry)
             except c.EXC_BASIC_TYPE as exc:
                 return r[m.Ldif.Entry].fail_op(
                     "Apache Directory Server entry parsing", exc
                 )
+
+        def _mark_apache_entry(
+            self,
+            entry: m.Ldif.Entry,
+        ) -> p.Result[m.Ldif.Entry]:
+            """Attach Apache Directory Server metadata to an entry."""
+            if not entry.dn:
+                return r[m.Ldif.Entry].ok(entry)
+            metadata = entry.metadata or m.Ldif.ServerMetadata(
+                server_type=self._get_server_type(),
+            )
+            dn_lower = entry.dn.value.lower()
+            if not metadata.extensions:
+                metadata.extensions = m.Ldif.DynamicMetadata()
+            metadata.extensions[c.Ldif.ServerMetadataKeys.IS_CONFIG_ENTRY] = (
+                FlextLdifServersApache.Constants.DN_CONFIG_ENTRY_MARKER in dn_lower
+            )
+            processed_entry = entry.model_copy(update={"metadata": metadata})
+            return r[m.Ldif.Entry].ok(processed_entry)
 
 
 __all__: list[str] = ["FlextLdifServersApache"]

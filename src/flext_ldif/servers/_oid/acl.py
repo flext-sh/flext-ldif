@@ -9,7 +9,6 @@ from collections.abc import (
 from typing import ClassVar, override
 
 from flext_ldif import (
-    FlextLdifServersOidConstants,
     FlextLdifServersRfc,
     c,
     m,
@@ -18,6 +17,7 @@ from flext_ldif import (
     t,
     u,
 )
+from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
 
 logger = u.fetch_logger(__name__)
 
@@ -505,123 +505,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     def _parse_oid_specific_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
         """Parse OID-specific ACL format when RFC parser fails."""
         try:
-            target_dn, target_attrs = self._extract_oid_target(acl_line)
-            if not target_dn:
-                target_dn = "entry"
-            oid_subject_type = self._detect_oid_subject(acl_line)
-            oid_subject_value: str | None = None
-            if oid_subject_type:
-                for (
-                    regex,
-                    subj_type,
-                    _,
-                ) in FlextLdifServersOidConstants.ACL_SUBJECT_PATTERNS.values():
-                    if subj_type == oid_subject_type and regex:
-                        oid_subject_value = u.Ldif.extract_component(
-                            acl_line,
-                            regex,
-                            group=1,
-                        )
-                        if oid_subject_value:
-                            break
-                oid_subject_value = (
-                    oid_subject_value
-                    or FlextLdifServersOidConstants.OidAclSubjectType.ANONYMOUS
-                )
-            else:
-                oid_subject_type = FlextLdifServersOidConstants.OidAclSubjectType.SELF
-                oid_subject_value = FlextLdifServersOidConstants.OidAclSubjectType.SELF
-            rfc_subject_type, rfc_subject_value = self._map_oid_subject_to_rfc(
-                oid_subject_type,
-                oid_subject_value,
-            )
-            perms_dict = self._parse_oid_permissions(acl_line)
-            acl_filter = u.Ldif.extract_component(
-                acl_line,
-                FlextLdifServersOidConstants.ACL_FILTER_PATTERN,
-                group=1,
-            )
-            acl_constraint = u.Ldif.extract_component(
-                acl_line,
-                FlextLdifServersOidConstants.ACL_CONSTRAINT_PATTERN,
-                group=1,
-            )
-            bindmode = u.Ldif.extract_component(
-                acl_line,
-                FlextLdifServersOidConstants.ACL_BINDMODE_PATTERN,
-                group=1,
-            )
-            deny_group_override = (
-                u.Ldif.extract_component(
-                    acl_line,
-                    FlextLdifServersOidConstants.ACL_DENY_GROUP_OVERRIDE_PATTERN,
-                )
-                is not None
-            )
-            append_to_all = (
-                u.Ldif.extract_component(
-                    acl_line,
-                    FlextLdifServersOidConstants.ACL_APPEND_TO_ALL_PATTERN,
-                )
-                is not None
-            )
-            bind_ip_filter = u.Ldif.extract_component(
-                acl_line,
-                FlextLdifServersOidConstants.ACL_BIND_IP_FILTER_PATTERN,
-                group=1,
-            )
-            constrain_to_added_object = u.Ldif.extract_component(
-                acl_line,
-                FlextLdifServersOidConstants.ACL_CONSTRAIN_TO_ADDED_PATTERN,
-                group=1,
-            )
-            settings = self.OidAclMetadataConfig.model_validate({
-                "acl_line": acl_line,
-                "oid_subject_type": oid_subject_type,
-                "rfc_subject_type": rfc_subject_type,
-                "oid_subject_value": oid_subject_value,
-                "perms_dict": perms_dict,
-                "target_dn": target_dn,
-                "target_attrs": target_attrs,
-                "acl_filter": acl_filter or "",
-                "acl_constraint": acl_constraint or "",
-                "bindmode": bindmode or "",
-                "deny_group_override": deny_group_override,
-                "append_to_all": append_to_all,
-                "bind_ip_filter": bind_ip_filter or "",
-                "constrain_to_added_object": constrain_to_added_object or "",
-            })
-            extensions = self._build_oid_acl_metadata(settings)
-            server_type: c.Ldif.ServerTypes = c.Ldif.ServerTypes.OID
-            rfc_compliant_perms = (
-                m.Ldif.AclPermissions.filter_rfc_compliant_permissions(
-                    perms_dict,
-                )
-            )
-            extensions_metadata = m.Ldif.DynamicMetadata.from_dict(
-                extensions,
-            )
-            acl_model = m.Ldif.Acl.model_validate({
-                "name": FlextLdifServersRfc.Constants.ACL_ATTRIBUTE_NAME,
-                "target": m.Ldif.AclTarget.model_validate({
-                    "target_dn": target_dn,
-                    "attributes": target_attrs or [],
-                }),
-                "subject": m.Ldif.AclSubject.model_validate({
-                    "subject_type": str(rfc_subject_type),
-                    "subject_value": rfc_subject_value,
-                }),
-                "permissions": m.Ldif.AclPermissions(**rfc_compliant_perms),
-                "server_type": server_type,
-                "metadata": m.Ldif.ServerMetadata.model_validate({
-                    "server_type": server_type,
-                    "extensions": extensions_metadata,
-                }),
-                "raw_acl": acl_line,
-                "raw_line": acl_line,
-                "validation_violations": [],
-            })
-            return r[m.Ldif.Acl].ok(acl_model)
+            return self._parse_oid_specific_acl_core(acl_line)
         except c.Ldif.EXC_LDIF_PARSE as e:
             max_len = FlextLdifServersOidConstants.MAX_LOG_LINE_LENGTH
             acl_preview = acl_line[:max_len] if len(acl_line) > max_len else acl_line
@@ -633,6 +517,124 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 acl_line_length=len(acl_line),
             )
             return r[m.Ldif.Acl].fail_op("OID ACL parsing", e)
+
+    def _parse_oid_specific_acl_core(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
+        """Parse OID-specific ACL data into the canonical ACL model."""
+        target_dn, target_attrs = self._extract_oid_target(acl_line)
+        if not target_dn:
+            target_dn = "entry"
+        oid_subject_type = self._detect_oid_subject(acl_line)
+        oid_subject_value: str | None = None
+        if oid_subject_type:
+            for (
+                regex,
+                subj_type,
+                _,
+            ) in FlextLdifServersOidConstants.ACL_SUBJECT_PATTERNS.values():
+                if subj_type == oid_subject_type and regex:
+                    oid_subject_value = u.Ldif.extract_component(
+                        acl_line,
+                        regex,
+                        group=1,
+                    )
+                    if oid_subject_value:
+                        break
+            oid_subject_value = (
+                oid_subject_value
+                or FlextLdifServersOidConstants.OidAclSubjectType.ANONYMOUS
+            )
+        else:
+            oid_subject_type = FlextLdifServersOidConstants.OidAclSubjectType.SELF
+            oid_subject_value = FlextLdifServersOidConstants.OidAclSubjectType.SELF
+        rfc_subject_type, rfc_subject_value = self._map_oid_subject_to_rfc(
+            oid_subject_type,
+            oid_subject_value,
+        )
+        perms_dict = self._parse_oid_permissions(acl_line)
+        acl_filter = u.Ldif.extract_component(
+            acl_line,
+            FlextLdifServersOidConstants.ACL_FILTER_PATTERN,
+            group=1,
+        )
+        acl_constraint = u.Ldif.extract_component(
+            acl_line,
+            FlextLdifServersOidConstants.ACL_CONSTRAINT_PATTERN,
+            group=1,
+        )
+        bindmode = u.Ldif.extract_component(
+            acl_line,
+            FlextLdifServersOidConstants.ACL_BINDMODE_PATTERN,
+            group=1,
+        )
+        deny_group_override = (
+            u.Ldif.extract_component(
+                acl_line,
+                FlextLdifServersOidConstants.ACL_DENY_GROUP_OVERRIDE_PATTERN,
+            )
+            is not None
+        )
+        append_to_all = (
+            u.Ldif.extract_component(
+                acl_line,
+                FlextLdifServersOidConstants.ACL_APPEND_TO_ALL_PATTERN,
+            )
+            is not None
+        )
+        bind_ip_filter = u.Ldif.extract_component(
+            acl_line,
+            FlextLdifServersOidConstants.ACL_BIND_IP_FILTER_PATTERN,
+            group=1,
+        )
+        constrain_to_added_object = u.Ldif.extract_component(
+            acl_line,
+            FlextLdifServersOidConstants.ACL_CONSTRAIN_TO_ADDED_PATTERN,
+            group=1,
+        )
+        settings = self.OidAclMetadataConfig.model_validate({
+            "acl_line": acl_line,
+            "oid_subject_type": oid_subject_type,
+            "rfc_subject_type": rfc_subject_type,
+            "oid_subject_value": oid_subject_value,
+            "perms_dict": perms_dict,
+            "target_dn": target_dn,
+            "target_attrs": target_attrs,
+            "acl_filter": acl_filter or "",
+            "acl_constraint": acl_constraint or "",
+            "bindmode": bindmode or "",
+            "deny_group_override": deny_group_override,
+            "append_to_all": append_to_all,
+            "bind_ip_filter": bind_ip_filter or "",
+            "constrain_to_added_object": constrain_to_added_object or "",
+        })
+        extensions = self._build_oid_acl_metadata(settings)
+        server_type: c.Ldif.ServerTypes = c.Ldif.ServerTypes.OID
+        rfc_compliant_perms = m.Ldif.AclPermissions.filter_rfc_compliant_permissions(
+            perms_dict,
+        )
+        extensions_metadata = m.Ldif.DynamicMetadata.from_dict(
+            extensions,
+        )
+        acl_model = m.Ldif.Acl.model_validate({
+            "name": FlextLdifServersRfc.Constants.ACL_ATTRIBUTE_NAME,
+            "target": m.Ldif.AclTarget.model_validate({
+                "target_dn": target_dn,
+                "attributes": target_attrs or [],
+            }),
+            "subject": m.Ldif.AclSubject.model_validate({
+                "subject_type": str(rfc_subject_type),
+                "subject_value": rfc_subject_value,
+            }),
+            "permissions": m.Ldif.AclPermissions(**rfc_compliant_perms),
+            "server_type": server_type,
+            "metadata": m.Ldif.ServerMetadata.model_validate({
+                "server_type": server_type,
+                "extensions": extensions_metadata,
+            }),
+            "raw_acl": acl_line,
+            "raw_line": acl_line,
+            "validation_violations": [],
+        })
+        return r[m.Ldif.Acl].ok(acl_model)
 
     def _authorize_write_permissions(
         self,

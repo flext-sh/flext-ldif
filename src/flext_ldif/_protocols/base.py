@@ -16,11 +16,11 @@ from flext_core import p
 if TYPE_CHECKING:
     from flext_ldif import (
         FlextLdifProtocols as lp,
-        FlextLdifProtocolsDomain as lpd,
         c,
         m,
         t,
     )
+    from flext_ldif._protocols.domain import FlextLdifProtocolsDomain as lpd
 
 
 @runtime_checkable

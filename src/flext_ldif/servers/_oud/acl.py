@@ -8,18 +8,10 @@ from collections.abc import (
 )
 from typing import ClassVar, Self, override
 
-from flext_ldif import (
-    FlextLdifServersBaseSchemaAcl,
-    FlextLdifServersOudConstants,
-    FlextLdifServersOudUtilities,
-    FlextLdifServersRfc,
-    c,
-    m,
-    p,
-    r,
-    t,
-    u,
-)
+from flext_ldif import FlextLdifServersRfc, c, m, p, r, t, u
+from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
+from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
+from flext_ldif.servers._oud.utilities import FlextLdifServersOudUtilities
 
 logger = u.fetch_logger(__name__)
 
@@ -432,47 +424,51 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
     def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
         """Write RFC-compliant ACL model to OUD ACI string format (protected internal method)."""
         try:
-            sc = FlextLdifServersOudConstants
-            extensions: t.Ldif.MutableMetadataMapping | None = (
-                acl_data.metadata.extensions.to_dict()
-                if acl_data.metadata and acl_data.metadata.extensions
-                else None
-            )
-            aci_output_lines = u.Ldif.format_conversion_comments(
-                extensions,
-                "converted_from_server",
-                "conversion_comments",
-            )
-            if self._should_use_raw_acl(acl_data):
-                aci_output_lines.append(acl_data.raw_acl)
-                return r[str].ok("\n".join(aci_output_lines))
-            aci_parts = [self._build_aci_target(acl_data)]
-            aci_parts.extend(
-                u.Ldif.extract_target_extensions(
-                    extensions,
-                    sc.ACL_TARGET_EXTENSIONS_CONFIG,
-                ),
-            )
-            acl_name = acl_data.name or sc.ACL_DEFAULT_NAME
-            aci_parts.append(f'({sc.ACL_DEFAULT_VERSION}; acl "{acl_name}";')
-            perms_result = self._build_aci_permissions(acl_data)
-            if perms_result.failure:
-                return r[str].fail(perms_result.error or "Unknown error")
-            subject_str = self._build_aci_subject(acl_data)
-            if not subject_str:
-                return r[str].fail("ACL subject DN was filtered out")
-            bind_rules = u.Ldif.extract_bind_rules_from_extensions(
-                extensions,
-                sc.ACL_BIND_RULES_CONFIG,
-                tuple_length=sc.ACL_BIND_RULE_TUPLE_LENGTH,
-            )
-            if bind_rules:
-                subject_str = subject_str.rstrip(";)")
-                subject_str = f"{subject_str} and {' and '.join(bind_rules)};)"
-            aci_parts.extend([perms_result.value, subject_str])
-            aci_string = f"{sc.ACL_ACI_PREFIX} {' '.join(aci_parts)}"
-            aci_output_lines.append(aci_string)
-            return r[str].ok("\n".join(aci_output_lines))
+            return self._write_oud_aci(acl_data)
         except c.Ldif.EXC_LDIF_PARSE as e:
             logger.exception("Failed to write ACL to OUD ACI format")
             return r[str].fail(f"Failed to write ACL to OUD ACI format: {e}")
+
+    def _write_oud_aci(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
+        """Build an OUD ACI string from the canonical ACL model."""
+        sc = FlextLdifServersOudConstants
+        extensions: t.Ldif.MutableMetadataMapping | None = (
+            acl_data.metadata.extensions.to_dict()
+            if acl_data.metadata and acl_data.metadata.extensions
+            else None
+        )
+        aci_output_lines = u.Ldif.format_conversion_comments(
+            extensions,
+            "converted_from_server",
+            "conversion_comments",
+        )
+        if self._should_use_raw_acl(acl_data):
+            aci_output_lines.append(acl_data.raw_acl)
+            return r[str].ok("\n".join(aci_output_lines))
+        aci_parts = [self._build_aci_target(acl_data)]
+        aci_parts.extend(
+            u.Ldif.extract_target_extensions(
+                extensions,
+                sc.ACL_TARGET_EXTENSIONS_CONFIG,
+            ),
+        )
+        acl_name = acl_data.name or sc.ACL_DEFAULT_NAME
+        aci_parts.append(f'({sc.ACL_DEFAULT_VERSION}; acl "{acl_name}";')
+        perms_result = self._build_aci_permissions(acl_data)
+        if perms_result.failure:
+            return r[str].fail(perms_result.error or "Unknown error")
+        subject_str = self._build_aci_subject(acl_data)
+        if not subject_str:
+            return r[str].fail("ACL subject DN was filtered out")
+        bind_rules = u.Ldif.extract_bind_rules_from_extensions(
+            extensions,
+            sc.ACL_BIND_RULES_CONFIG,
+            tuple_length=sc.ACL_BIND_RULE_TUPLE_LENGTH,
+        )
+        if bind_rules:
+            subject_str = subject_str.rstrip(";)")
+            subject_str = f"{subject_str} and {' and '.join(bind_rules)};)"
+        aci_parts.extend([perms_result.value, subject_str])
+        aci_string = f"{sc.ACL_ACI_PREFIX} {' '.join(aci_parts)}"
+        aci_output_lines.append(aci_string)
+        return r[str].ok("\n".join(aci_output_lines))

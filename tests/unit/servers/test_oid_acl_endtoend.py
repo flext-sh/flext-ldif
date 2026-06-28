@@ -1,7 +1,7 @@
 """End-to-end OID→OUD ACL conversion via the public convert_model API.
 
 Asserts that an OID entry's orclaci/orclentrylevelaci attributes convert to
-``aci`` values byte-matching the algar-oud-mig oracle ``to_aci_string`` output.
+``aci`` values byte-matching the OUD migration oracle ``to_aci_string`` output.
 """
 
 from __future__ import annotations

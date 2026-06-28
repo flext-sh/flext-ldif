@@ -15,8 +15,6 @@ from typing import override
 
 from flext_ldif import (
     FlextLdifServersBase,
-    FlextLdifServersBaseEntry,
-    FlextLdifServersOudConstants,
     FlextLdifServersRfc,
     c,
     m,
@@ -25,6 +23,8 @@ from flext_ldif import (
     t,
     u,
 )
+from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
+from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
 from flext_ldif.servers._oud.helpers import FlextLdifServersOudHelpersMixin
 
 logger = u.fetch_logger(__name__)

@@ -15,18 +15,15 @@ from types import MappingProxyType
 from typing import Annotated, ClassVar, Self, override
 
 from flext_cli import m, u
-from flext_ldif import (
-    FlextLdifModelsDomainAcl as mdac,
+from flext_ldif import c, p, r, t
+from flext_ldif._models.domain_acl import FlextLdifModelsDomainAcl as mdac
+from flext_ldif._models.domain_attributes import (
     FlextLdifModelsDomainAttributes as mda,
-    FlextLdifModelsDomainDN as mdn,
-    FlextLdifModelsDomainMetadata as mdm,
-    FlextLdifModelsDomainSchema as mds,
-    FlextLdifModelsMetadata as mm,
-    c,
-    p,
-    r,
-    t,
 )
+from flext_ldif._models.domain_dn import FlextLdifModelsDomainDN as mdn
+from flext_ldif._models.domain_metadata import FlextLdifModelsDomainMetadata as mdm
+from flext_ldif._models.domain_schema import FlextLdifModelsDomainSchema as mds
+from flext_ldif._models.metadata import FlextLdifModelsMetadata as mm
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 
 
@@ -997,47 +994,28 @@ class FlextLdifModelsDomainEntry:
             statistics: FlextLdifModelsDomainEntry.EntryStatistics | None = None,
         ) -> p.Result[Self]:
             try:
-                dn_obj = mdn.DN.from_value(dn)
-                attrs_obj = cls._normalize_attributes(attributes)
-                resolved_metadata = cls._build_metadata(
+                entry_data = cls._build_entry_data(
+                    dn,
+                    attributes,
                     metadata,
+                    acls,
+                    objectclasses,
+                    attributes_schema,
+                    entry_metadata,
+                    validation_metadata,
                     server_type,
+                    record_kind,
+                    controls,
+                    change_operations,
+                    changetype,
+                    newrdn,
+                    deleteoldrdn,
+                    newsuperior,
+                    raw_record_lines,
                     source_entry,
                     unconverted_attributes,
+                    statistics,
                 )
-                entry_data: dict[str, object] = {
-                    c.Ldif.DictKeys.DN: dn_obj,
-                    c.Ldif.DictKeys.ATTRIBUTES: attrs_obj,
-                    "record_kind": record_kind,
-                }
-                if resolved_metadata is not None:
-                    entry_data["metadata"] = resolved_metadata
-                if acls is not None:
-                    entry_data["acls"] = acls
-                if objectclasses is not None:
-                    entry_data["objectclasses"] = objectclasses
-                if attributes_schema is not None:
-                    entry_data["attributes_schema"] = attributes_schema
-                if entry_metadata is not None:
-                    entry_data["entry_metadata"] = entry_metadata
-                if validation_metadata is not None:
-                    entry_data["validation_metadata"] = validation_metadata
-                if controls is not None:
-                    entry_data["controls"] = controls
-                if change_operations is not None:
-                    entry_data["change_operations"] = change_operations
-                if changetype is not None:
-                    entry_data["changetype"] = changetype
-                if newrdn is not None:
-                    entry_data["newrdn"] = newrdn
-                if deleteoldrdn is not None:
-                    entry_data["deleteoldrdn"] = deleteoldrdn
-                if newsuperior is not None:
-                    entry_data["newsuperior"] = newsuperior
-                if raw_record_lines is not None:
-                    entry_data["raw_record_lines"] = list(raw_record_lines)
-                if statistics is not None:
-                    entry_data["statistics"] = statistics
                 entry_instance: Self = cls.model_validate(entry_data)
                 ok_result: p.Result[Self] = r[Self].ok(entry_instance)
                 return ok_result
@@ -1046,6 +1024,77 @@ class FlextLdifModelsDomainEntry:
                     f"Failed to create Entry: {e}"
                 )
                 return fail_result
+
+        @classmethod
+        def _build_entry_data(
+            cls,
+            dn: str | mdn.DN,
+            attributes: t.MutableAttributeMapping | mda.Attributes,
+            metadata: mdm.ServerMetadata | None,
+            acls: t.MutableSequenceOf[mdac.Acl] | None,
+            objectclasses: t.MutableSequenceOf[mds.SchemaObjectClass] | None,
+            attributes_schema: t.MutableSequenceOf[mds.SchemaAttribute] | None,
+            entry_metadata: mm.EntryMetadata | None,
+            validation_metadata: mdm.ValidationMetadata | None,
+            server_type: c.Ldif.ServerTypes | None,
+            record_kind: c.Ldif.RecordKind,
+            controls: t.MutableSequenceOf[FlextLdifModelsDomainEntry.Control] | None,
+            change_operations: t.MutableSequenceOf[
+                FlextLdifModelsDomainEntry.ChangeOperation
+            ]
+            | None,
+            changetype: c.Ldif.LdifChangeType | None,
+            newrdn: str | None,
+            deleteoldrdn: bool | None,
+            newsuperior: str | None,
+            raw_record_lines: t.MutableSequenceOf[str] | None,
+            source_entry: str | None,
+            unconverted_attributes: mm.DynamicMetadata | None,
+            statistics: FlextLdifModelsDomainEntry.EntryStatistics | None,
+        ) -> dict[str, t.JsonPayload]:
+            """Build validated Entry model input."""
+            dn_obj = mdn.DN.from_value(dn)
+            attrs_obj = cls._normalize_attributes(attributes)
+            resolved_metadata = cls._build_metadata(
+                metadata,
+                server_type,
+                source_entry,
+                unconverted_attributes,
+            )
+            entry_data: dict[str, t.JsonPayload] = {
+                c.Ldif.DictKeys.DN: dn_obj,
+                c.Ldif.DictKeys.ATTRIBUTES: attrs_obj,
+                "record_kind": record_kind,
+            }
+            if resolved_metadata is not None:
+                entry_data["metadata"] = resolved_metadata
+            if acls is not None:
+                entry_data["acls"] = acls
+            if objectclasses is not None:
+                entry_data["objectclasses"] = objectclasses
+            if attributes_schema is not None:
+                entry_data["attributes_schema"] = attributes_schema
+            if entry_metadata is not None:
+                entry_data["entry_metadata"] = entry_metadata
+            if validation_metadata is not None:
+                entry_data["validation_metadata"] = validation_metadata
+            if controls is not None:
+                entry_data["controls"] = controls
+            if change_operations is not None:
+                entry_data["change_operations"] = change_operations
+            if changetype is not None:
+                entry_data["changetype"] = changetype
+            if newrdn is not None:
+                entry_data["newrdn"] = newrdn
+            if deleteoldrdn is not None:
+                entry_data["deleteoldrdn"] = deleteoldrdn
+            if newsuperior is not None:
+                entry_data["newsuperior"] = newsuperior
+            if raw_record_lines is not None:
+                entry_data["raw_record_lines"] = list(raw_record_lines)
+            if statistics is not None:
+                entry_data["statistics"] = statistics
+            return entry_data
 
 
 __all__: list[str] = ["FlextLdifModelsDomainEntry"]

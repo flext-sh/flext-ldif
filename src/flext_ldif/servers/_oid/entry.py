@@ -9,7 +9,6 @@ from collections.abc import (
 from typing import override
 
 from flext_ldif import (
-    FlextLdifServersOidConstants,
     FlextLdifServersRfc,
     c,
     m,
@@ -18,6 +17,7 @@ from flext_ldif import (
     t,
     u,
 )
+from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
 
 logger = u.fetch_logger(__name__)
 
@@ -432,75 +432,72 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
     def _hook_post_parse_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
         """Hook: Transform parsed entry using OID-specific enhancements."""
         try:
-            if not entry.attributes or not entry.dn:
-                return r[m.Ldif.Entry].ok(entry)
-            converted_attributes, converted_attrs, boolean_conversions = (
-                self._convert_boolean_attributes_to_rfc(entry.attributes.attributes)
-            )
-            normalized_attributes: t.MutableStrSequenceMapping = {}
-            name_renames: t.MutableStrMapping = {}
-            for attr_name, attr_values in converted_attributes.items():
-                normalized_name = self._normalize_attribute_name(attr_name)
-                normalized_attributes[normalized_name] = attr_values
-                if normalized_name != attr_name:
-                    name_renames[normalized_name] = attr_name
-            self._normalize_schema_values(normalized_attributes)
-            entry.attributes.attributes = normalized_attributes
-            mk = c.Ldif
-            if entry.metadata:
-                if not entry.metadata.extensions:
-                    entry.metadata.extensions = m.Ldif.DynamicMetadata()
-                converted_attrs_list: t.MutableSequenceOf[t.JsonValue] = list(
-                    converted_attrs,
-                )
-                converted_attrs_json: t.JsonList = (
-                    t.Cli.JSON_LIST_ADAPTER.validate_python(
-                        converted_attrs_list,
-                    )
-                )
-                if boolean_conversions:
-                    boolean_conversions_dict: MutableMapping[
-                        str,
-                        t.JsonValue,
-                    ] = {
-                        attr_name: {
-                            conversion_key: t.Cli.JSON_VALUE_ADAPTER.validate_python(
-                                conversion_value,
-                            )
-                            for conversion_key, conversion_value in conversion_data.items()
-                        }
-                        for attr_name, conversion_data in boolean_conversions.items()
-                    }
-                    boolean_conversions_json: t.JsonMapping = t.Cli.JSON_MAPPING_ADAPTER.validate_python(
-                        {
-                            attr_name: u.normalize_to_json_value(conversion_data)
-                            for attr_name, conversion_data in boolean_conversions_dict.items()
-                        },
-                    )
-                    conv_data = u.normalize_to_json_value({
-                        mk.CONVERSION_CONVERTED_ATTRIBUTE_NAMES: converted_attrs_json,
-                        mk.CONVERSION_BOOLEAN_CONVERSIONS: boolean_conversions_json,
-                    })
-                    setattr(
-                        entry.metadata.extensions,
-                        mk.CONVERTED_ATTRIBUTES,
-                        conv_data,
-                    )
-                else:
-                    setattr(
-                        entry.metadata.extensions,
-                        mk.CONVERTED_ATTRIBUTES,
-                        converted_attrs_json,
-                    )
-                if name_renames:
-                    rename_metadata: t.JsonDict = dict(name_renames)
-                    entry.metadata.extensions["attribute_name_renames"] = (
-                        rename_metadata
-                    )
-            return r[m.Ldif.Entry].ok(entry)
+            return self._post_parse_oid_entry(entry)
         except c.Ldif.EXC_LDIF_PARSE as e:
             logger.exception("OID post-parse entry hook failed")
             return r[m.Ldif.Entry].fail_op("OID post-parse entry hook", e)
+
+    def _post_parse_oid_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
+        """Normalize OID entry attributes after RFC parsing."""
+        if not entry.attributes or not entry.dn:
+            return r[m.Ldif.Entry].ok(entry)
+        converted_attributes, converted_attrs, boolean_conversions = (
+            self._convert_boolean_attributes_to_rfc(entry.attributes.attributes)
+        )
+        normalized_attributes: t.MutableStrSequenceMapping = {}
+        name_renames: t.MutableStrMapping = {}
+        for attr_name, attr_values in converted_attributes.items():
+            normalized_name = self._normalize_attribute_name(attr_name)
+            normalized_attributes[normalized_name] = attr_values
+            if normalized_name != attr_name:
+                name_renames[normalized_name] = attr_name
+        self._normalize_schema_values(normalized_attributes)
+        entry.attributes.attributes = normalized_attributes
+        mk = c.Ldif
+        if entry.metadata:
+            if not entry.metadata.extensions:
+                entry.metadata.extensions = m.Ldif.DynamicMetadata()
+            converted_attrs_list: t.MutableSequenceOf[t.JsonValue] = list(
+                converted_attrs,
+            )
+            converted_attrs_json: t.JsonList = t.Cli.JSON_LIST_ADAPTER.validate_python(
+                converted_attrs_list,
+            )
+            if boolean_conversions:
+                boolean_conversions_dict: MutableMapping[str, t.JsonValue] = {
+                    attr_name: {
+                        conversion_key: t.Cli.JSON_VALUE_ADAPTER.validate_python(
+                            conversion_value,
+                        )
+                        for conversion_key, conversion_value in conversion_data.items()
+                    }
+                    for attr_name, conversion_data in boolean_conversions.items()
+                }
+                boolean_conversions_json: t.JsonMapping = t.Cli.JSON_MAPPING_ADAPTER.validate_python(
+                    {
+                        attr_name: u.normalize_to_json_value(conversion_data)
+                        for attr_name, conversion_data in boolean_conversions_dict.items()
+                    },
+                )
+                conv_data = u.normalize_to_json_value({
+                    mk.CONVERSION_CONVERTED_ATTRIBUTE_NAMES: converted_attrs_json,
+                    mk.CONVERSION_BOOLEAN_CONVERSIONS: boolean_conversions_json,
+                })
+                setattr(
+                    entry.metadata.extensions,
+                    mk.CONVERTED_ATTRIBUTES,
+                    conv_data,
+                )
+            else:
+                setattr(
+                    entry.metadata.extensions,
+                    mk.CONVERTED_ATTRIBUTES,
+                    converted_attrs_json,
+                )
+            if name_renames:
+                rename_metadata: t.JsonDict = dict(name_renames)
+                entry.metadata.extensions["attribute_name_renames"] = rename_metadata
+        return r[m.Ldif.Entry].ok(entry)
 
     def _hook_transform_entry_raw(
         self,
@@ -530,27 +527,40 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
     ) -> None:
         """Parse ACL and merge additional extensions from parsed model."""
         try:
-            acl_result = acl_server.parse_server(acl_value)
-            if not acl_result.success:
-                return
-            acl_model = m.Ldif.Acl.model_validate(acl_result.value)
-            if not (acl_model.metadata and acl_model.metadata.extensions):
-                return
-            acl_extensions = (
-                acl_model.metadata.extensions.model_dump()
-                if hasattr(acl_model.metadata.extensions, "model_dump")
-                else dict(acl_model.metadata.extensions)
+            self._merge_parsed_acl_extensions_core(
+                acl_server,
+                acl_value,
+                current_extensions,
             )
-            key_mapping = {
-                "bindmode": c.Ldif.ACL_BINDMODE,
-                "deny_group_override": c.Ldif.ACL_DENY_GROUP_OVERRIDE,
-            }
-            for key, value in acl_extensions.items():
-                mapped_key = key_mapping.get(key)
-                if mapped_key and (not current_extensions.get(mapped_key)):
-                    current_extensions[mapped_key] = value
         except c.Ldif.EXC_LDIF_PARSE:
             logger.debug("Failed to parse ACL extension metadata", exc_info=True)
+
+    def _merge_parsed_acl_extensions_core(
+        self,
+        acl_server: p.Ldif.AclServer,
+        acl_value: str,
+        current_extensions: t.Ldif.MutableMetadataMapping,
+    ) -> None:
+        """Merge parsed ACL extension metadata into the current extension mapping."""
+        acl_result = acl_server.parse_server(acl_value)
+        if not acl_result.success:
+            return
+        acl_model = m.Ldif.Acl.model_validate(acl_result.value)
+        if not (acl_model.metadata and acl_model.metadata.extensions):
+            return
+        acl_extensions = (
+            acl_model.metadata.extensions.model_dump()
+            if hasattr(acl_model.metadata.extensions, "model_dump")
+            else dict(acl_model.metadata.extensions)
+        )
+        key_mapping = {
+            "bindmode": c.Ldif.ACL_BINDMODE,
+            "deny_group_override": c.Ldif.ACL_DENY_GROUP_OVERRIDE,
+        }
+        for key, value in acl_extensions.items():
+            mapped_key = key_mapping.get(key)
+            if mapped_key and (not current_extensions.get(mapped_key)):
+                current_extensions[mapped_key] = value
 
     @staticmethod
     def _normalize_schema_values(

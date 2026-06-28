@@ -11,16 +11,16 @@ from collections.abc import (
 
 from flext_core import u
 from flext_ldif import (
-    FlextLdifUtilitiesOID as uo,
-    FlextLdifUtilitiesParser as up,
-    FlextLdifUtilitiesServer as us,
-    FlextLdifUtilitiesWriter as uw,
     c,
     m,
     p,
     r,
     t,
 )
+from flext_ldif._utilities.oid import FlextLdifUtilitiesOID as uo
+from flext_ldif._utilities.parser import FlextLdifUtilitiesParser as up
+from flext_ldif._utilities.server import FlextLdifUtilitiesServer as us
+from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter as uw
 
 logger = u.fetch_logger(__name__)
 

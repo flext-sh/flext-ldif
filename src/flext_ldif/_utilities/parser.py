@@ -10,13 +10,13 @@ from collections.abc import (
 
 from flext_core import u
 from flext_ldif import (
-    FlextLdifUtilitiesServer as us,
     c,
     m,
     p,
     r,
     t,
 )
+from flext_ldif._utilities.server import FlextLdifUtilitiesServer as us
 
 logger = u.fetch_logger(__name__)
 

@@ -351,37 +351,49 @@ class FlextLdifUtilitiesACL:
                 value_raw = extensions.get(ext_key)
                 if value_raw is None:
                     continue
-                has_operator_placeholder = (
-                    FlextLdifUtilitiesACL._OPERATOR_PLACEHOLDER in format_template
+                formatted_rule = FlextLdifUtilitiesACL._format_bind_rule_from_extension(
+                    value_raw,
+                    format_template,
+                    operator_default,
+                    tuple_length,
                 )
-                match value_raw:
-                    case tuple() as tuple_items if (
-                        len(tuple_items) == tuple_length
-                        and len(tuple_items) >= c.Ldif.TUPLE_LENGTH_PAIR
-                    ):
-                        operator_val = str(tuple_items[0])
-                        value_val = str(tuple_items[1])
-                        result.append(
-                            format_template.format(
-                                operator=operator_val,
-                                value=value_val,
-                            )
-                            if has_operator_placeholder
-                            else format_template.format(value=value_val),
-                        )
-                    case _ if has_operator_placeholder and operator_default is not None:
-                        result.append(
-                            format_template.format(
-                                operator=operator_default,
-                                value=str(value_raw),
-                            ),
-                        )
-                    case _:
-                        result.append(format_template.format(value=str(value_raw)))
+                result.append(formatted_rule)
             except c.Ldif.EXC_LDIF_PARSE as e:
                 logger.debug("Skipping ACL rule processing due to error", error=str(e))
                 continue
         return result
+
+    @staticmethod
+    def _format_bind_rule_from_extension(
+        value_raw: t.JsonValue,
+        format_template: str,
+        operator_default: str | None,
+        tuple_length: int,
+    ) -> str:
+        """Format one ACL bind rule from metadata extension payload."""
+        has_operator_placeholder = (
+            FlextLdifUtilitiesACL._OPERATOR_PLACEHOLDER in format_template
+        )
+        match value_raw:
+            case tuple() as tuple_items if (
+                len(tuple_items) == tuple_length
+                and len(tuple_items) >= c.Ldif.TUPLE_LENGTH_PAIR
+            ):
+                operator_val = str(tuple_items[0])
+                value_val = str(tuple_items[1])
+                if has_operator_placeholder:
+                    return format_template.format(
+                        operator=operator_val,
+                        value=value_val,
+                    )
+                return format_template.format(value=value_val)
+            case _ if has_operator_placeholder and operator_default is not None:
+                return format_template.format(
+                    operator=operator_default,
+                    value=str(value_raw),
+                )
+            case _:
+                return format_template.format(value=str(value_raw))
 
     @staticmethod
     def extract_component(content: str, pattern: str, group: int = 1) -> str | None:

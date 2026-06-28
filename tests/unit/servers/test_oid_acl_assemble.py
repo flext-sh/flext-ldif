@@ -14,7 +14,7 @@ from tests.utilities import TestsFlextLdifUtilities as u
 
 
 class TestsFlextLdifOidAclAssemble:
-    """render_aci_string parity with the algar-oud-mig oracle to_aci_string."""
+    """render_aci_string parity with the OUD migration oracle to_aci_string."""
 
     def test_entry_two_distinct_perm_allows_with_targetscope(self) -> None:
         aci = m.Ldif.AciRule(

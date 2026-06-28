@@ -7,17 +7,9 @@ from collections.abc import (
 )
 from typing import override
 
-from flext_ldif import (
-    FlextLdifServersBaseSchema,
-    FlextLdifServersOudConstants,
-    FlextLdifServersRfc,
-    c,
-    m,
-    p,
-    r,
-    t,
-    u,
-)
+from flext_ldif import FlextLdifServersRfc, c, m, p, r, t, u
+from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
+from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
 
 logger = u.fetch_logger(__name__)
 

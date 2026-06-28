@@ -9,7 +9,7 @@ from flext_ldif.servers._oid.acl_convert_oud import FlextLdifServersOidAclToOud 
 
 
 class TestsFlextLdifOidAclConvertSubject:
-    """convert_subject_to_oud parity with the algar-oud-mig oracle."""
+    """convert_subject_to_oud parity with the OUD migration oracle."""
 
     @staticmethod
     def _subject(kind: str, value: str = "") -> m.Ldif.OidAclSubject:
@@ -81,7 +81,7 @@ class TestsFlextLdifOidAclConvertSubject:
 
 
 class TestsFlextLdifOidAclConvertPermissions:
-    """convert_permissions parity with the algar-oud-mig oracle perm maps."""
+    """convert_permissions parity with the OUD migration oracle perm maps."""
 
     def test_entry_browse_expands_to_read_search(self) -> None:
         result = Conv.convert_permissions(("browse", "add", "delete"), is_entry=True)

@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-from flext_ldif import (
-    FlextLdifServersOidAcl,
-    FlextLdifServersOidConstants,
-    FlextLdifServersOidEntry,
-    FlextLdifServersOidSchema,
-    FlextLdifServersRfc,
-)
+from flext_ldif import FlextLdifServersRfc
+from flext_ldif.servers._oid.acl import FlextLdifServersOidAcl
+from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
+from flext_ldif.servers._oid.entry import FlextLdifServersOidEntry
+from flext_ldif.servers._oid.schema import FlextLdifServersOidSchema
 
 
 class FlextLdifServersOid(FlextLdifServersRfc):

@@ -11,6 +11,30 @@ import pytest
 from tests import c, p, t, u
 
 
+def _probe_ldap_bind(server_url: str, admin_dn: str, admin_password: str) -> str | None:
+    """Return bind error text, or None when LDAP bind is ready."""
+    try:
+        srv = u.Tests.create_server_from_url(server_url)
+        conn = u.Tests.create_connection(
+            srv,
+            user=admin_dn,
+            password=admin_password,
+            auto_bind=False,
+        )
+        bound: bool = conn.bind()
+        conn.unbind()
+        if bound:
+            return None
+        return "LDAP bind returned False"
+    except (
+        t.Ldap.LDAPException,
+        ConnectionError,
+        TimeoutError,
+        OSError,
+    ) as exc:
+        return str(exc)
+
+
 @pytest.fixture(scope="session")
 def ldap_container(worker_id: str) -> t.JsonMapping:
     """Ensure shared OpenLDAP container is available for integration tests."""
@@ -30,27 +54,9 @@ def ldap_container(worker_id: str) -> t.JsonMapping:
         max_wait = 10.0
         last_error: str | None = None
         while waited < max_wait:
-            try:
-                srv = u.Tests.create_server_from_url(server_url)
-                conn = u.Tests.create_connection(
-                    srv,
-                    user=admin_dn,
-                    password=admin_password,
-                    auto_bind=False,
-                )
-                bound: bool = conn.bind()
-                if bound:
-                    conn.unbind()
-                    break
-                conn.unbind()
-                last_error = "LDAP bind returned False"
-            except (
-                t.Ldap.LDAPException,
-                ConnectionError,
-                TimeoutError,
-                OSError,
-            ) as exc:
-                last_error = str(exc)
+            last_error = _probe_ldap_bind(server_url, admin_dn, admin_password)
+            if last_error is None:
+                break
             time.sleep(1.0)
             waited += 1.0
         else:

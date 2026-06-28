@@ -241,60 +241,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
             """Parse nTSecurityDescriptor values and expose best-effort SDDL."""
             try:
-                line = acl_line.strip()
-                if not line:
-                    return r[m.Ldif.Acl].fail("Empty ACL line cannot be parsed")
-                attr_name, _, remainder = line.partition(":")
-                attr_name = (
-                    attr_name.strip() or FlextLdifServersAd.Constants.ACL_ATTRIBUTE_NAME
-                )
-                remainder = remainder.lstrip()
-                is_base64 = False
-                if remainder.startswith(":"):
-                    remainder = remainder[1:].strip()
-                    is_base64 = True
-                raw_value = remainder
-                decoded_sddl: str | None = None
-                if is_base64 and raw_value:
-                    try:
-                        decoded_bytes = base64.b64decode(raw_value, validate=True)
-                        decoded_sddl = (
-                            decoded_bytes.decode(
-                                FlextLdifServersAd.Constants.ENCODING_UTF16LE,
-                                errors=FlextLdifServersAd.Constants.ENCODING_ERROR_IGNORE,
-                            ).strip()
-                            or decoded_bytes.decode(
-                                FlextLdifServersAd.Constants.ENCODING_UTF8,
-                                errors=FlextLdifServersAd.Constants.ENCODING_ERROR_IGNORE,
-                            ).strip()
-                        )
-                    except (binascii.Error, UnicodeDecodeError):
-                        decoded_sddl = None
-                if (
-                    not decoded_sddl
-                    and raw_value
-                    and FlextLdifServersAd.Constants.ACL_SDDL_PREFIX_PATTERN_RE.match(
-                        raw_value
-                    )
-                ):
-                    decoded_sddl = raw_value
-                acl_model = m.Ldif.Acl(
-                    name=attr_name,
-                    target=m.Ldif.AclTarget(
-                        target_dn=FlextLdifServersAd.Constants.ACL_TARGET_WILDCARD,
-                        attributes=[],
-                    ),
-                    subject=m.Ldif.AclSubject(
-                        subject_type=c.Ldif.AclSubjectType.SDDL,
-                        subject_value=decoded_sddl or (raw_value or ""),
-                    ),
-                    permissions=m.Ldif.AclPermissions(),
-                    metadata=m.Ldif.ServerMetadata.create_for(self._get_server_type()),
-                    raw_acl=acl_line,
-                )
-                if acl_model.metadata:
-                    acl_model.metadata.extensions["original_format"] = acl_line
-                return r[m.Ldif.Acl].ok(acl_model)
+                return self._parse_ad_acl(acl_line)
             except c.EXC_BASIC_TYPE as exc:
                 return r[m.Ldif.Acl].fail_op("Active Directory ACL parsing", exc)
 
@@ -302,20 +249,81 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
             """Write ACL data to RFC-compliant string format."""
             try:
-                if not acl_data.raw_acl:
-                    return r[str].fail(
-                        "Active Directory ACL write requires raw_acl value",
-                    )
-                raw_value = acl_data.raw_acl
-                acl_attribute = FlextLdifServersAd.Constants.ACL_ATTRIBUTE_NAME
-                sddl_value = raw_value
-                if sddl_value:
-                    acl_str = f"{acl_attribute}: {sddl_value}"
-                else:
-                    acl_str = f"{acl_attribute}:"
-                return r[str].ok(acl_str)
+                return self._write_ad_acl(acl_data)
             except c.EXC_BASIC_TYPE as exc:
                 return r[str].fail_op("Active Directory ACL write", exc)
+
+        def _parse_ad_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
+            """Parse Active Directory ACL content."""
+            line = acl_line.strip()
+            if not line:
+                return r[m.Ldif.Acl].fail("Empty ACL line cannot be parsed")
+            attr_name, _, remainder = line.partition(":")
+            attr_name = (
+                attr_name.strip() or FlextLdifServersAd.Constants.ACL_ATTRIBUTE_NAME
+            )
+            remainder = remainder.lstrip()
+            is_base64 = remainder.startswith(":")
+            if is_base64:
+                remainder = remainder[1:].strip()
+            raw_value = remainder
+            decoded_sddl = self._decode_sddl(raw_value, is_base64=is_base64)
+            acl_model = m.Ldif.Acl(
+                name=attr_name,
+                target=m.Ldif.AclTarget(
+                    target_dn=FlextLdifServersAd.Constants.ACL_TARGET_WILDCARD,
+                    attributes=[],
+                ),
+                subject=m.Ldif.AclSubject(
+                    subject_type=c.Ldif.AclSubjectType.SDDL,
+                    subject_value=decoded_sddl or (raw_value or ""),
+                ),
+                permissions=m.Ldif.AclPermissions(),
+                metadata=m.Ldif.ServerMetadata.create_for(self._get_server_type()),
+                raw_acl=acl_line,
+            )
+            if acl_model.metadata:
+                acl_model.metadata.extensions["original_format"] = acl_line
+            return r[m.Ldif.Acl].ok(acl_model)
+
+        @staticmethod
+        def _decode_sddl(raw_value: str, *, is_base64: bool) -> str | None:
+            """Decode SDDL from raw or base64 nTSecurityDescriptor value."""
+            if is_base64 and raw_value:
+                try:
+                    decoded_bytes = base64.b64decode(raw_value, validate=True)
+                    return (
+                        decoded_bytes.decode(
+                            FlextLdifServersAd.Constants.ENCODING_UTF16LE,
+                            errors=FlextLdifServersAd.Constants.ENCODING_ERROR_IGNORE,
+                        ).strip()
+                        or decoded_bytes.decode(
+                            FlextLdifServersAd.Constants.ENCODING_UTF8,
+                            errors=FlextLdifServersAd.Constants.ENCODING_ERROR_IGNORE,
+                        ).strip()
+                    )
+                except (binascii.Error, UnicodeDecodeError):
+                    return None
+            if (
+                raw_value
+                and FlextLdifServersAd.Constants.ACL_SDDL_PREFIX_PATTERN_RE.match(
+                    raw_value
+                )
+            ):
+                return raw_value
+            return None
+
+        @staticmethod
+        def _write_ad_acl(acl_data: m.Ldif.Acl) -> p.Result[str]:
+            """Write Active Directory ACL content."""
+            if not acl_data.raw_acl:
+                return r[str].fail(
+                    "Active Directory ACL write requires raw_acl value",
+                )
+            acl_attribute = FlextLdifServersAd.Constants.ACL_ATTRIBUTE_NAME
+            if acl_data.raw_acl:
+                return r[str].ok(f"{acl_attribute}: {acl_data.raw_acl}")
+            return r[str].ok(f"{acl_attribute}:")
 
     class Entry(FlextLdifServersRfc.Entry):
         """Active Directory entry processing server."""

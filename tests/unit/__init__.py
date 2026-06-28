@@ -62,6 +62,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".services.test_validation_service": ("TestsFlextLdifValidationService",),
             ".services.test_writer_service": ("TestsFlextLdifWriterService",),
             ".test_acl_registry": ("TestsFlextLdifAclRegistry",),
+            ".test_api_freeze": ("TestsFlextLdifApiFreeze",),
             ".test_collections_models": ("TestsFlextLdifCollectionsModels",),
             ".test_constants_data_driven": ("TestsFlextLdifConstantsDataDriven",),
             ".test_migration_pipeline_servers": (

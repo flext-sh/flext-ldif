@@ -9,18 +9,12 @@ from collections.abc import (
 from typing import ClassVar, TypeGuard, overload
 
 from flext_cli import u
-from flext_ldif import (
-    FlextLdifUtilitiesCollectionLdif,
-    FlextLdifUtilitiesDN,
-    FlextLdifUtilitiesPipeline,
-    FlextLdifUtilitiesSchema,
-    FlextLdifUtilitiesValidation,
-    c,
-    m,
-    p,
-    r,
-    t,
-)
+from flext_ldif import c, m, p, r, t
+from flext_ldif._utilities.collection_ldif import FlextLdifUtilitiesCollectionLdif
+from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
+from flext_ldif._utilities.pipeline import FlextLdifUtilitiesPipeline
+from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
+from flext_ldif._utilities.validation import FlextLdifUtilitiesValidation
 
 
 class FlextLdifUtilitiesDispatch:

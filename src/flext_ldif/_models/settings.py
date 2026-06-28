@@ -17,11 +17,11 @@ from typing import Annotated, Self
 
 from flext_cli import m, u
 from flext_ldif import (
-    FlextLdifModelsDomainAcl as mdac,
     FlextLdifShared,
     c,
     t,
 )
+from flext_ldif._models.domain_acl import FlextLdifModelsDomainAcl as mdac
 
 
 class FlextLdifModelsSettings:

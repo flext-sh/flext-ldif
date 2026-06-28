@@ -3,15 +3,15 @@
 from __future__ import annotations
 
 import inspect
-from typing import Annotated, ClassVar, override
+from typing import Annotated, ClassVar, TypeGuard, override
 
+import flext_ldif.servers as ldif_servers
 from flext_ldif import (
     FlextLdifServersBase,
     c,
     p,
     r,
     s,
-    servers,
     t,
     u,
 )
@@ -180,35 +180,49 @@ class FlextLdifServer(s):
 
     def _auto_discover(self) -> None:
         """Discover and register concrete server classes from servers package."""
-        for name, obj in inspect.getmembers(servers):
-            if (
-                name.startswith("_")
-                or not inspect.isclass(obj)
-                or obj is FlextLdifServersBase
-                or (not issubclass(obj, FlextLdifServersBase))
-            ):
+        for name, obj in inspect.getmembers(ldif_servers):
+            if not self._is_discoverable_server(name, obj):
                 continue
             try:
-                instance = obj()
-                server_type = getattr(instance, "server_type", None)
-                if not isinstance(server_type, str):
-                    continue
-                server_class = type(instance)
-                if not all(
-                    getattr(server_class, c, None) is not None
-                    for c in ("Schema", "Acl", "Entry")
-                ):
-                    continue
-                if server_type:
-                    type(self)._registered_servers[server_type] = instance
-                    self._registry.register_plugin(
-                        self.SERVERS,
-                        server_type,
-                        instance,
-                        scope=c.RegistrationScope.CLASS,
-                    )
+                self._register_discovered_server(obj)
             except c.EXC_ATTR_TYPE:
                 continue
+
+    @staticmethod
+    def _is_discoverable_server(
+        name: str,
+        candidate: type,
+    ) -> TypeGuard[type[FlextLdifServersBase]]:
+        """Return whether a module member is a concrete server class."""
+        return (
+            not name.startswith("_")
+            and inspect.isclass(candidate)
+            and candidate is not FlextLdifServersBase
+            and issubclass(candidate, FlextLdifServersBase)
+        )
+
+    def _register_discovered_server(
+        self,
+        server_class: type[FlextLdifServersBase],
+    ) -> None:
+        """Instantiate and register one discovered concrete server class."""
+        instance = server_class()
+        server_type = getattr(instance, "server_type", None)
+        if not isinstance(server_type, str):
+            return
+        if not all(
+            getattr(server_class, attr_name, None) is not None
+            for attr_name in ("Schema", "Acl", "Entry")
+        ):
+            return
+        if server_type:
+            type(self)._registered_servers[server_type] = instance
+            self._registry.register_plugin(
+                self.SERVERS,
+                server_type,
+                instance,
+                scope=c.RegistrationScope.CLASS,
+            )
 
     @classmethod
     def fetch_global_instance(cls) -> FlextLdifServer:

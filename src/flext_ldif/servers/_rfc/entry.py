@@ -42,20 +42,27 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
         if not ldif_content or not ldif_content.strip():
             return r[t.MutableSequenceOf[m.Ldif.Entry]].ok([])
         try:
-            entries: t.MutableSequenceOf[m.Ldif.Entry] = []
-            for record_lines in u.Ldif.split_ldif_records(ldif_content):
-                result = self._parse_entry_from_lines(record_lines)
-                if result.success:
-                    entries.append(result.value)
-                    continue
-                logger.debug(
-                    "Skipping invalid entry block",
-                    error=result.error or "",
-                )
-            return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(entries)
+            return self._parse_ldif_records(ldif_content)
         except ValueError as exc:
             logger.exception("Failed to parse LDIF content")
             return r[t.MutableSequenceOf[m.Ldif.Entry]].fail_op("Processing", exc)
+
+    def _parse_ldif_records(
+        self,
+        ldif_content: str,
+    ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
+        """Parse all LDIF records from non-empty content."""
+        entries: t.MutableSequenceOf[m.Ldif.Entry] = []
+        for record_lines in u.Ldif.split_ldif_records(ldif_content):
+            result = self._parse_entry_from_lines(record_lines)
+            if result.success:
+                entries.append(result.value)
+                continue
+            logger.debug(
+                "Skipping invalid entry block",
+                error=result.error or "",
+            )
+        return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(entries)
 
 
 __all__: list[str] = ["FlextLdifServersRfcEntry"]

@@ -7,19 +7,11 @@ from collections.abc import (
 )
 from typing import ClassVar, Self, overload, override
 
-from flext_ldif import (
-    FlextLdifServerMethodsMixin,
-    FlextLdifServersBaseEntry,
-    FlextLdifServersBaseSchema,
-    FlextLdifServersBaseSchemaAcl,
-    c,
-    m,
-    p,
-    r,
-    s,
-    t,
-    u,
-)
+from flext_ldif import c, m, p, r, s, t, u
+from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
+from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
+from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
+from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
 
 
 class FlextLdifServersBase(s[m.Ldif.Entry]):
