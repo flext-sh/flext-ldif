@@ -365,7 +365,7 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def _format_bind_rule_from_extension(
-        value_raw: t.JsonValue,
+        value_raw: t.JsonValue | t.StrPair,
         format_template: str,
         operator_default: str | None,
         tuple_length: int,
@@ -379,8 +379,8 @@ class FlextLdifUtilitiesACL:
                 len(tuple_items) == tuple_length
                 and len(tuple_items) >= c.Ldif.TUPLE_LENGTH_PAIR
             ):
-                operator_val = str(tuple_items[0])
-                value_val = str(tuple_items[1])
+                operator_val = tuple_items[0]
+                value_val = tuple_items[1]
                 if has_operator_placeholder:
                     return format_template.format(
                         operator=operator_val,

@@ -763,7 +763,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             case_metadata = m.Ldif.DynamicMetadata.model_validate(
                 original_attribute_case,
             )
-            return m.Ldif.ServerMetadata.model_validate({
+            metadata: m.Ldif.ServerMetadata = m.Ldif.ServerMetadata.model_validate({
                 "server_type": "relaxed",
                 "original_format_details": format_details,
                 "original_attribute_case": case_metadata,
@@ -772,6 +772,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     "relaxed_mode": True,
                 }),
             })
+            return metadata
 
         @override
         def _write_entry(self, entry_data: m.Ldif.Entry) -> p.Result[str]:

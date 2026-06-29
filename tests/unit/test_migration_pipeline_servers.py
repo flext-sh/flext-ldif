@@ -14,9 +14,9 @@ from flext_tests import tm
 
 from flext_ldif import (
     FlextLdifMigrationPipeline,
-    FlextLdifServersOidConstants,
     FlextLdifServersRfc,
 )
+from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
 from tests import c
 
 

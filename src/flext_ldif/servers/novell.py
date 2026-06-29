@@ -180,7 +180,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         def _build_novell_permissions_from_rights(
             self,
             rights: t.MutableSequenceOf[str],
-            permission_name_map: t.MutableStrMapping,
+            permission_name_map: t.StrMapping,
         ) -> t.MutableBoolMapping:
             """Build AclPermissions dict from parsed rights list."""
             reverse_map: t.MutableStrMapping = {

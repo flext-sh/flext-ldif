@@ -9,6 +9,24 @@ _LAZY_IMPORTS = build_lazy_import_map(
     {
         ".test_utilities_comprehensive": ("TestsFlextLdifUtilitiesComprehensive",),
         ".test_utilities_core": ("TestsFlextLdifUtilitiesCore",),
+        "flext_tests": (
+            "c",
+            "d",
+            "e",
+            "h",
+            "m",
+            "p",
+            "r",
+            "s",
+            "t",
+            "td",
+            "tf",
+            "tk",
+            "tm",
+            "tv",
+            "u",
+            "x",
+        ),
     },
 )
 

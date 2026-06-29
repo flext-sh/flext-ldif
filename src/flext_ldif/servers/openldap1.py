@@ -228,8 +228,12 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         ) -> p.Result[str]:
             """Write OpenLDAP 1.x objectClass definition."""
             kind = oc_data.kind or "STRUCTURAL"
-            must = oc_data.must if oc_data.must is not None else []
-            may = oc_data.may if oc_data.may is not None else []
+            must: t.MutableSequenceOf[str] = (
+                list(oc_data.must) if oc_data.must is not None else []
+            )
+            may: t.MutableSequenceOf[str] = (
+                list(oc_data.may) if oc_data.may is not None else []
+            )
             oc_str = f"objectclass ( {oc_data.oid}"
             if oc_data.name:
                 oc_str += f" NAME '{oc_data.name}'"

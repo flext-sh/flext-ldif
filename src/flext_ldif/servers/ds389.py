@@ -396,7 +396,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             )
             if not target_match:
                 return "*"
-            target_clause = target_match.group(1)
+            target_clause = str(target_match.group(1))
             dn_prefix = FlextLdifServersDs389.Constants.ACL_TARGET_DN_PREFIX
             if target_clause.lower().startswith(dn_prefix):
                 return target_clause[len(dn_prefix) :]
@@ -409,8 +409,11 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 content
             )
             if userdn_matches:
-                return userdn_matches[0]
-            return FlextLdifServersDs389.Constants.ACL_ANONYMOUS_SUBJECT
+                return str(userdn_matches[0])
+            anonymous_subject: str = (
+                FlextLdifServersDs389.Constants.ACL_ANONYMOUS_SUBJECT
+            )
+            return anonymous_subject
 
         def _write_ds389_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
             """Write 389 DS ACL content."""

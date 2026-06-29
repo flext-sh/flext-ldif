@@ -99,6 +99,11 @@ class FlextLdifDetector(s):
                     read.error,
                 )
             ldif_content = read.value
+        if ldif_content is None:
+            return r[m.Ldif.ServerDetectionResult].fail_op(
+                "read detection source",
+                "LDIF content is empty",
+            )
         lines = ldif_content.splitlines()
         content_sample = "\n".join(lines[:max_lines])
         scores_dict = self._calculate_scores(content_sample)
@@ -136,7 +141,8 @@ class FlextLdifDetector(s):
         if result.success:
             effective_server_type: str = result.unwrap()
             return effective_server_type
-        return c.Ldif.ServerTypes.RFC.value
+        rfc_server_type: str = str(c.Ldif.ServerTypes.RFC.value)
+        return rfc_server_type
 
     def _calculate_scores(self, content: str) -> t.MutableIntMapping:
         """Calculate detection scores for each server type."""

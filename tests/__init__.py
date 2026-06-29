@@ -12,17 +12,21 @@ from flext_core.lazy import (
 )
 
 if _t.TYPE_CHECKING:
-    from flext_ldap import d as d, e as e, h as h, r as r, x as x
-    from flext_tests import td as td, tf as tf, tk as tk, tv as tv
+    from flext_tests import (
+        d,
+        e,
+        h,
+        r,
+        td as td,
+        tf as tf,
+        tk as tk,
+        tm as tm,
+        tv as tv,
+        x,
+    )
 
-    from tests.base import (
-        TestsFlextLdifServiceBase as TestsFlextLdifServiceBase,
-        s as s,
-    )
-    from tests.constants import (
-        TestsFlextLdifConstants as TestsFlextLdifConstants,
-        c as c,
-    )
+    from tests.base import TestsFlextLdifServiceBase as TestsFlextLdifServiceBase, s
+    from tests.constants import TestsFlextLdifConstants as TestsFlextLdifConstants, c
     from tests.integration.test_acl_metadata_preservation import (
         TestsFlextLdifAclMetadataPreservation as TestsFlextLdifAclMetadataPreservation,
     )
@@ -95,13 +99,10 @@ if _t.TYPE_CHECKING:
     from tests.integration.test_zero_data_loss_oid_oud import (
         TestsFlextLdifZeroDataLossOidOud as TestsFlextLdifZeroDataLossOidOud,
     )
-    from tests.models import TestsFlextLdifModels as TestsFlextLdifModels, m as m
-    from tests.protocols import (
-        TestsFlextLdifProtocols as TestsFlextLdifProtocols,
-        p as p,
-    )
+    from tests.models import TestsFlextLdifModels as TestsFlextLdifModels, m
+    from tests.protocols import TestsFlextLdifProtocols as TestsFlextLdifProtocols, p
     from tests.settings import TestsFlextLdifSettings as TestsFlextLdifSettings
-    from tests.typings import TestsFlextLdifTypes as TestsFlextLdifTypes, t as t
+    from tests.typings import TestsFlextLdifTypes as TestsFlextLdifTypes, t
     from tests.unit.servers.test_apache_servers import (
         TestsTestFlextLdifApacheServers as TestsTestFlextLdifApacheServers,
     )
@@ -211,10 +212,7 @@ if _t.TYPE_CHECKING:
     from tests.unit.utilities.test_utilities_core import (
         TestsFlextLdifUtilitiesCore as TestsFlextLdifUtilitiesCore,
     )
-    from tests.utilities import (
-        TestsFlextLdifUtilities as TestsFlextLdifUtilities,
-        u as u,
-    )
+    from tests.utilities import TestsFlextLdifUtilities as TestsFlextLdifUtilities, u
 _LAZY_IMPORTS = merge_lazy_imports(
     (
         ".integration",
@@ -362,18 +360,17 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestsFlextLdifUtilities",
                 "u",
             ),
-            "flext_ldap": (
+            "flext_tests": (
                 "d",
                 "e",
                 "h",
                 "r",
-                "x",
-            ),
-            "flext_tests": (
                 "td",
                 "tf",
                 "tk",
+                "tm",
                 "tv",
+                "x",
             ),
         },
     ),
@@ -487,6 +484,7 @@ __all__: list[str] = [
     "td",
     "tf",
     "tk",
+    "tm",
     "tv",
     "u",
     "x",

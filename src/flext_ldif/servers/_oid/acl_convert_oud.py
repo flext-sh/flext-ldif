@@ -17,7 +17,7 @@ class FlextLdifServersOidAclToOud:
 
     @staticmethod
     def _normalize_dn(dn: str) -> str:
-        normalized = c.Ldif.DN_NORMALIZE_COMMA_RE.sub(",", dn)
+        normalized: str = c.Ldif.DN_NORMALIZE_COMMA_RE.sub(",", dn)
         normalized = c.Ldif.DN_NORMALIZE_EQUALS_RE.sub("=", normalized)
         return normalized.strip()
 

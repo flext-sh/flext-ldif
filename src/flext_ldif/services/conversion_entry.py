@@ -111,7 +111,9 @@ class FlextLdifConversionEntryMixin(
     ) -> c.Ldif.ServerTypes:
         """Resolve the target server type for entry conversion."""
         if target_server.server_type != c.IDENTIFIER_UNKNOWN:
-            return u.Ldif.normalize_server_type(target_server.server_type)
+            return c.Ldif.ServerTypes(
+                u.Ldif.normalize_server_type(target_server.server_type),
+            )
         return c.Ldif.ServerTypes.RFC
 
     def _prepare_converted_entry(
@@ -133,12 +135,13 @@ class FlextLdifConversionEntryMixin(
             metadata_for_analysis,
             validated_server_type,
         )
-        return self._update_entry_metadata(
+        updated_entry: m.Ldif.Entry = self._update_entry_metadata(
             entry.model_copy(deep=True),
             validated_server_type,
             str(conversion_analysis) if conversion_analysis else None,
             source_server_name,
         )
+        return updated_entry
 
     def _convert_entry_payload(
         self,
@@ -195,7 +198,7 @@ class FlextLdifConversionEntryMixin(
         )
         if transformed_dn is None:
             return converted_entry
-        return converted_entry.model_copy(
+        updated_entry: m.Ldif.Entry = converted_entry.model_copy(
             update={
                 "dn": m.Ldif.DN(
                     value=transformed_dn,
@@ -203,6 +206,7 @@ class FlextLdifConversionEntryMixin(
                 ),
             },
         )
+        return updated_entry
 
 
 __all__: list[str] = ["FlextLdifConversionEntryMixin"]

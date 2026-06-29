@@ -96,13 +96,14 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                 "mail": [f"test-{entry_id}@example.com"],
                 "objectClass": ["person", "organizationalPerson", "inetOrgPerson"],
             }
-            return m.Ldif.Entry.model_validate({
+            entry: m.Ldif.Entry = m.Ldif.Entry.model_validate({
                 "dn": {"value": dn or f"cn=test-{entry_id},ou=users,dc=example,dc=com"},
                 "attributes": {
                     "attributes": {k: list(v) for k, v in payload_attrs.items()},
                 },
                 "server_type": server_type,
             })
+            return entry
 
         @staticmethod
         def create_real_ldif_content(
@@ -205,8 +206,9 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
         def get_admin_credentials(cls) -> tuple[str, str]:
             """Resolve LDAP admin credentials, preferring a working pair."""
             cache = cls._resolved_admin_credentials
-            if cache[0] is not None:
-                return cache[0]
+            cached = cache[0]
+            if cached is not None:
+                return cached
             env_dn = os.getenv("FLEXT_LDAP_BIND_DN")
             env_password = os.getenv("FLEXT_LDAP_BIND_PASSWORD")
             candidates: list[tuple[str, str]] = [
@@ -215,32 +217,52 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                 (c.Tests.DOCKER_LEGACY_ADMIN_DN, c.Tests.DOCKER_LEGACY_ADMIN_PASSWORD),
             ]
             for candidate_dn, candidate_password in candidates:
-                try:
-                    server = cls.create_bare_server(
-                        "localhost",
-                        port=c.Tests.DOCKER_PORT,
-                        get_info=c.Ldap.Ldap3GetInfo.NO_INFO,
-                    )
-                    connection = cls.create_connection(
-                        server,
-                        user=candidate_dn,
-                        password=candidate_password,
-                        auto_bind=True,
-                        receive_timeout=1,
-                    )
-                    if connection.bound:
-                        connection.unbind()
-                        cache[0] = (candidate_dn, candidate_password)
-                        return cache[0]
-                except (
-                    ConnectionError,
-                    OSError,
-                    ValueError,
-                    t.Ldap.LDAPException,
-                ):
+                credentials = cls._probe_admin_credentials(
+                    candidate_dn,
+                    candidate_password,
+                )
+                if credentials is None:
                     continue
-            cache[0] = (c.Tests.DOCKER_ADMIN_DN, c.Tests.DOCKER_ADMIN_PASSWORD)
-            return cache[0]
+                cache[0] = credentials
+                return credentials
+            default_credentials = (
+                c.Tests.DOCKER_ADMIN_DN,
+                c.Tests.DOCKER_ADMIN_PASSWORD,
+            )
+            cache[0] = default_credentials
+            return default_credentials
+
+        @classmethod
+        def _probe_admin_credentials(
+            cls,
+            candidate_dn: str,
+            candidate_password: str,
+        ) -> tuple[str, str] | None:
+            """Return candidate credentials when LDAP bind succeeds."""
+            try:
+                server = cls.create_bare_server(
+                    "localhost",
+                    port=c.Tests.DOCKER_PORT,
+                    get_info=c.Ldap.Ldap3GetInfo.NO_INFO,
+                )
+                connection = cls.create_connection(
+                    server,
+                    user=candidate_dn,
+                    password=candidate_password,
+                    auto_bind=True,
+                    receive_timeout=1,
+                )
+                if connection.bound:
+                    connection.unbind()
+                    return (candidate_dn, candidate_password)
+                return None
+            except (
+                ConnectionError,
+                OSError,
+                ValueError,
+                t.Ldap.LDAPException,
+            ):
+                return None
 
         @staticmethod
         def _assert_field_eq(
