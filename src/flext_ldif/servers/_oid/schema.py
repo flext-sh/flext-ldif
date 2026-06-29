@@ -202,7 +202,8 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             if v
         }
         if update_dict:
-            return oc.model_copy(update=update_dict)
+            updated_oc: m.Ldif.SchemaObjectClass = oc.model_copy(update=update_dict)
+            return updated_oc
         return oc
 
     def _normalize_attribute_names(
@@ -447,7 +448,8 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
                 transformed.metadata.extensions[c.Ldif.SCHEMA_ORIGINAL_FORMAT] = (
                     original_format
                 )
-            return transformed
+            transformed_attr: m.Ldif.SchemaAttribute = transformed
+            return transformed_attr
         return attr_data
 
     @override

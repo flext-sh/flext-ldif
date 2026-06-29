@@ -8,7 +8,7 @@ Patterns/permission taxonomy are the ``c.Ldif`` SSOT; models are ``m.Ldif``.
 
 from __future__ import annotations
 
-from flext_ldif import c, m, r, t
+from flext_ldif import c, m, p, r, t
 
 
 class FlextLdifServersOidAclConvert:
@@ -166,7 +166,7 @@ class FlextLdifServersOidAclConvert:
         return None
 
     @classmethod
-    def _extract_filter(cls, content: str) -> r[tuple[str | None, str]]:
+    def _extract_filter(cls, content: str) -> p.Result[tuple[str | None, str]]:
         """Balanced-paren scan of a ``filter=(...)`` clause → ``(filter, rest)``."""
         prefix = c.Ldif.FILTER_PREFIX_RE.match(content)
         if prefix is None:
@@ -191,7 +191,7 @@ class FlextLdifServersOidAclConvert:
         )
 
     @classmethod
-    def parse_oid_acl_line(cls, dn: str, line: str) -> r[m.Ldif.OidAclRule]:
+    def parse_oid_acl_line(cls, dn: str, line: str) -> p.Result[m.Ldif.OidAclRule]:
         """Parse one full ``orclaci:``/``orclentrylevelaci:`` line into a rule.
 
         Malformation (wrong prefix, missing ``access to``, unknown target, or no

@@ -9,7 +9,7 @@ review note — never a silent drop. Taxonomy is the ``c.Ldif`` SSOT.
 
 from __future__ import annotations
 
-from flext_ldif import c, m, r, t
+from flext_ldif import c, m, p, r, t
 
 
 class FlextLdifServersOidAclToOud:
@@ -82,7 +82,7 @@ class FlextLdifServersOidAclToOud:
         permissions: t.StrSequence,
         *,
         is_entry: bool,
-    ) -> r[t.StrSequence]:
+    ) -> p.Result[t.StrSequence]:
         """Convert OID permission tokens to the ordered OUD allow set.
 
         ``none``/pure negations → no allow (``()``); a pure-negation set expands
@@ -166,7 +166,7 @@ class FlextLdifServersOidAclToOud:
     def convert_subject_to_oud(
         cls,
         subject: m.Ldif.OidAclSubject,
-    ) -> r[m.Ldif.AciAllow]:
+    ) -> p.Result[m.Ldif.AciAllow]:
         """Map one OID by-clause subject to an OUD bind-rule.
 
         Returns an :class:`m.Ldif.AciAllow` whose ``subject_value`` is the

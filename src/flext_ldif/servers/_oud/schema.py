@@ -108,13 +108,14 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         current_extensions[c.Ldif.SYNTAX_OID_VALID] = is_valid_oud_oid
         if oid_str.endswith("-oid"):
             current_extensions["oid_format_extension"] = True
-        return attr.model_copy(
+        updated_attr: m.Ldif.SchemaAttribute = attr.model_copy(
             update={
                 "metadata": existing_metadata.model_copy(
                     update={"extensions": current_extensions},
                 ),
             },
         )
+        return updated_attr
 
     def _collect_attribute_extensions(
         self,

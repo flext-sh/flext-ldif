@@ -475,7 +475,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         ) -> m.Ldif.Acl:
             """Attach relaxed metadata to an ACL."""
             if not acl.metadata:
-                return acl.model_copy(
+                acl_with_metadata: m.Ldif.Acl = acl.model_copy(
                     update={
                         "metadata": m.Ldif.ServerMetadata.model_validate({
                             "server_type": self._get_server_type(),
@@ -485,6 +485,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                         }),
                     },
                 )
+                return acl_with_metadata
             updated_extensions = acl.metadata.extensions or m.Ldif.DynamicMetadata()
             updated_metadata = acl.metadata.model_copy(
                 update={
@@ -492,11 +493,14 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     "extensions": updated_extensions,
                 },
             )
-            return acl.model_copy(update={"metadata": updated_metadata})
+            updated_acl: m.Ldif.Acl = acl.model_copy(
+                update={"metadata": updated_metadata},
+            )
+            return updated_acl
 
         def _build_relaxed_acl(self, acl_line: str) -> m.Ldif.Acl:
             """Build relaxed ACL fallback model."""
-            return m.Ldif.Acl.model_validate({
+            relaxed_acl: m.Ldif.Acl = m.Ldif.Acl.model_validate({
                 "name": FlextLdifServersRelaxed.Constants.ACL_DEFAULT_NAME,
                 "target": m.Ldif.AclTarget.model_validate({
                     "target_dn": FlextLdifServersRelaxed.Constants.ACL_DEFAULT_TARGET_DN,
@@ -518,6 +522,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     }),
                 }),
             })
+            return relaxed_acl
 
         @override
         def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:

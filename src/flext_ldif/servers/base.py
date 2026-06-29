@@ -32,17 +32,20 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
                 init_kwargs[key] = value
         super().__init__()
         parent_ref: FlextLdifServersBase = self
-        self._schema_server = self.Schema().model_copy(
+        schema_server: FlextLdifServersBaseSchema = self.Schema().model_copy(
             update={"server_type": self.server_type},
         )
+        self._schema_server = schema_server
         object.__setattr__(self._schema_server, "_parent_server", parent_ref)
-        self._acl_server = self.Acl().model_copy(
+        acl_server: FlextLdifServersBaseSchemaAcl = self.Acl().model_copy(
             update={"server_type": self.server_type},
         )
+        self._acl_server = acl_server
         object.__setattr__(self._acl_server, "_parent_server", parent_ref)
-        self._entry_server = self.Entry().model_copy(
+        entry_server: FlextLdifServersBaseEntry = self.Entry().model_copy(
             update={"server_type": self.server_type},
         )
+        self._entry_server = entry_server
         object.__setattr__(self._entry_server, "_parent_server", parent_ref)
 
     def __init_subclass__(cls, **kwargs: str | float | bool | None) -> None:
@@ -68,27 +71,32 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
     @property
     def acl(self) -> FlextLdifServersBaseSchemaAcl:
         """Access to nested acl server instance."""
-        return self._acl_server
+        acl_server: FlextLdifServersBaseSchemaAcl = self._acl_server
+        return acl_server
 
     @property
     def acl_server(self) -> p.Ldif.AclServer:
         """Access to nested acl server instance (alias for acl)."""
-        return self._acl_server
+        acl_server: FlextLdifServersBaseSchemaAcl = self._acl_server
+        return acl_server
 
     @property
     def entry(self) -> FlextLdifServersBaseEntry:
         """Access to nested entry server instance."""
-        return self._entry_server
+        entry_server: FlextLdifServersBaseEntry = self._entry_server
+        return entry_server
 
     @property
     def entry_server(self) -> p.Ldif.EntryServer:
         """Access to nested entry server instance (alias for entry)."""
-        return self._entry_server
+        entry_server: FlextLdifServersBaseEntry = self._entry_server
+        return entry_server
 
     @property
     def schema_server(self) -> p.Ldif.SchemaServer:
         """Access to nested schema server instance (alias for schema)."""
-        return self._schema_server
+        schema_server: FlextLdifServersBaseSchema = self._schema_server
+        return schema_server
 
     def resolve_schema_server(self) -> p.Ldif.SchemaServer:
         """Get schema server instance."""

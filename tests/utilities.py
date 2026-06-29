@@ -9,7 +9,8 @@ from pathlib import Path
 from typing import ClassVar
 
 from flext_ldap import FlextLdapUtilities, u
-from flext_tests import FlextTestsFixturesDSLMixin, FlextTestsUtilities, tk, tm
+from flext_tests import FlextTestsUtilities, tk, tm
+from flext_tests._utilities.fixtures_dsl import FlextTestsFixturesDSLMixin
 
 from tests.constants import c
 from tests.models import m
@@ -310,10 +311,11 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                 if is_objectclass
                 else server.parse_attribute(schema_def)
             )
-            target_cls = (
-                m.Ldif.SchemaObjectClass if is_objectclass else m.Ldif.SchemaAttribute
-            )
-            value = target_cls.model_validate(value_raw)
+            value: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass
+            if is_objectclass:
+                value = m.Ldif.SchemaObjectClass.model_validate(value_raw)
+            else:
+                value = m.Ldif.SchemaAttribute.model_validate(value_raw)
             common_checks: tuple[tuple[str, object, str], ...] = (
                 ("oid", expected_oid, "OID"),
                 ("name", expected_name, "NAME"),

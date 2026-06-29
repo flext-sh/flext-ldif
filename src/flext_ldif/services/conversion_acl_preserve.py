@@ -170,10 +170,11 @@ class FlextLdifConversionAclPreserveMixin(s):
             update={"extensions": m.Ldif.DynamicMetadata.from_dict(merged_ext_raw)},
             deep=True,
         )
-        return acl_step1.model_copy(
+        preserved_acl: m.Ldif.Acl = acl_step1.model_copy(
             update={"metadata": updated_metadata},
             deep=True,
         )
+        return preserved_acl
 
 
 __all__: list[str] = ["FlextLdifConversionAclPreserveMixin"]

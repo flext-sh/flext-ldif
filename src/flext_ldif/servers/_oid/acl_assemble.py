@@ -7,7 +7,7 @@ orchestration lives in ``acl_pipeline.py``; rendering in ``acl_render.py``.
 
 from __future__ import annotations
 
-from flext_ldif import c, m, r, t
+from flext_ldif import c, m, p, r, t
 from flext_ldif.servers._oid.acl_convert_oud import FlextLdifServersOidAclToOud as Conv
 
 
@@ -40,7 +40,7 @@ class FlextLdifServersOidAclAssemble:
         rule: m.Ldif.OidAclRule,
         *,
         base_dn: str = "",
-    ) -> r[m.Ldif.AciRule]:
+    ) -> p.Result[m.Ldif.AciRule]:
         """Assemble a parsed OID rule into one OUD :class:`m.Ldif.AciRule`.
 
         ``by * (none)`` deny-fallback removes that clause + dead-codes every

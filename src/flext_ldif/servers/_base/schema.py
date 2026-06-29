@@ -98,7 +98,7 @@ class FlextLdifServersBaseSchema(
     ) -> Self:
         """Override __new__ to filter _parent_server before passing to s."""
         filtered_kwargs = {k: v for k, v in kwargs.items() if k != "_parent_server"}
-        instance = super().__new__(cls, **filtered_kwargs)
+        instance: Self = super().__new__(cls, **filtered_kwargs)
         if _parent_server is not None:
             object.__setattr__(instance, "_parent_server", _parent_server)
         return instance
@@ -328,18 +328,34 @@ class FlextLdifServersBaseSchema(
             return None
         if isinstance(value, str):
             return value
-        for model in (m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass):
-            try:
-                return model.model_validate(value)
-            except (
-                c.ValidationError,
-                ValueError,
-                KeyError,
-                AttributeError,
-                UnicodeDecodeError,
-                struct.error,
-            ):
-                continue
+        try:
+            attribute: m.Ldif.SchemaAttribute = m.Ldif.SchemaAttribute.model_validate(
+                value,
+            )
+            return attribute
+        except (
+            c.ValidationError,
+            ValueError,
+            KeyError,
+            AttributeError,
+            UnicodeDecodeError,
+            struct.error,
+        ):
+            pass
+        try:
+            objectclass: m.Ldif.SchemaObjectClass = (
+                m.Ldif.SchemaObjectClass.model_validate(value)
+            )
+            return objectclass
+        except (
+            c.ValidationError,
+            ValueError,
+            KeyError,
+            AttributeError,
+            UnicodeDecodeError,
+            struct.error,
+        ):
+            pass
         return None
 
     def _coerce_operation(self, value: t.Ldif.Scalar | None) -> str | None:
@@ -367,7 +383,10 @@ class FlextLdifServersBaseSchema(
     ) -> m.Ldif.SchemaAttribute | None:
         """Coerce raw value to a schema attribute model when possible."""
         try:
-            return m.Ldif.SchemaAttribute.model_validate(value)
+            attribute: m.Ldif.SchemaAttribute = m.Ldif.SchemaAttribute.model_validate(
+                value,
+            )
+            return attribute
         except c.Ldif.EXC_LDIF_PARSE:
             return None
 
@@ -377,7 +396,10 @@ class FlextLdifServersBaseSchema(
     ) -> m.Ldif.SchemaObjectClass | None:
         """Coerce raw value to a schema objectClass model when possible."""
         try:
-            return m.Ldif.SchemaObjectClass.model_validate(value)
+            objectclass: m.Ldif.SchemaObjectClass = (
+                m.Ldif.SchemaObjectClass.model_validate(value)
+            )
+            return objectclass
         except c.Ldif.EXC_LDIF_PARSE:
             return None
 

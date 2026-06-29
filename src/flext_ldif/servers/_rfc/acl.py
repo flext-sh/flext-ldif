@@ -22,7 +22,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
     ) -> Self:
         """Override __new__ to support auto-execute and processor instantiation."""
         _ = acl_service
-        instance = super().__new__(cls)
+        instance: Self = super().__new__(cls)
         auto_execute_kwargs = {"data", "operation", "parent_server", "_parent_server"}
         _ = {k: v for k, v in kwargs.items() if k not in auto_execute_kwargs}
         parent_server_raw = (
@@ -126,7 +126,8 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         result = self.execute(data=narrowed_data, operation=narrowed_operation)
         if isinstance(result.value, str):
             return result.value
-        return m.Ldif.Acl.model_validate(result.value)
+        acl: m.Ldif.Acl = m.Ldif.Acl.model_validate(result.value)
+        return acl
 
     @override
     def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:

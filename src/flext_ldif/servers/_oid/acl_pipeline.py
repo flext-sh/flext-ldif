@@ -8,7 +8,7 @@ attributes with one ``aci`` attribute. Malformed input surfaces as ``r.fail``.
 
 from __future__ import annotations
 
-from flext_ldif import c, m, r, t, u
+from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._oid.acl_assemble import FlextLdifServersOidAclAssemble as Build
 from flext_ldif.servers._oid.acl_convert import FlextLdifServersOidAclConvert as Parser
 from flext_ldif.servers._oid.acl_render import FlextLdifServersOidAclRender as Render
@@ -26,7 +26,7 @@ class FlextLdifServersOidAclPipeline:
         oid_acl_lines: t.StrSequence,
         *,
         base_dn: str = "",
-    ) -> r[t.StrSequence]:
+    ) -> p.Result[t.StrSequence]:
         """Convert an entry's OID ACL lines to deduplicated OUD ``aci`` values.
 
         Each ``orclaci:``/``orclentrylevelaci:`` line is parsed → built →
@@ -70,7 +70,7 @@ class FlextLdifServersOidAclPipeline:
         target_type_norm: str,
         *,
         base_dn: str = "",
-    ) -> r[m.Ldif.Entry]:
+    ) -> p.Result[m.Ldif.Entry]:
         """Rewrite an OID entry's ACL attributes to a single OUD ``aci`` attribute.
 
         Fires only for oid→oud entries carrying ``orclaci``/``orclentrylevelaci``;

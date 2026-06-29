@@ -186,7 +186,8 @@ class FlextLdifServersBaseSchemaAcl(
         if isinstance(value, str):
             return value
         try:
-            return m.Ldif.Acl.model_validate(value)
+            acl: m.Ldif.Acl = m.Ldif.Acl.model_validate(value)
+            return acl
         except c.ValidationError as exc:
             logger.warning(
                 "Failed to coerce value to ACL model",
