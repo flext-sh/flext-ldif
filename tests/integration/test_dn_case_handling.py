@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import pytest
 
-from tests import m
+from tests.models import m
 
 
 class TestsFlextLdifDnCaseHandling:

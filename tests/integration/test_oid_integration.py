@@ -14,7 +14,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from tests import m, p
+from tests.models import m
+from tests.protocols import p
 
 
 class TestsFlextLdifOidIntegration:

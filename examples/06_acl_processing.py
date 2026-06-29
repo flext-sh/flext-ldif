@@ -14,8 +14,7 @@ All functionality accessed through ldif facade and FlextLdifAcl service.
 
 from __future__ import annotations
 
-from examples import m, t
-from flext_ldif import ldif
+from flext_ldif import ldif, m, t
 
 
 def extract_acls_from_entry() -> None:

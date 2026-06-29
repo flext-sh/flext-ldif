@@ -23,10 +23,12 @@ from collections.abc import (
 from pathlib import Path
 
 import pytest
-from flext_ldap import FlextLdapEntryAdapter
+from flext_ldap.adapters.entry import FlextLdapEntryAdapter
 
 from flext_ldif import ldif
-from tests import c, m, p
+from tests.constants import c
+from tests.models import m
+from tests.protocols import p
 
 
 @pytest.fixture

@@ -6,16 +6,8 @@ from pathlib import Path
 from typing import Annotated, Self, override
 
 from flext_cli import cli
-from flext_ldif import (
-    FlextLdifTransformer,
-    c,
-    m,
-    p,
-    r,
-    s,
-    t,
-    u,
-)
+from flext_ldif import c, m, p, r, s, t, u
+from flext_ldif.services.transformers import FlextLdifTransformer
 
 
 class FlextLdifProcessingPipeline(

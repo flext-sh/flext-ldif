@@ -8,7 +8,8 @@ from collections.abc import (
 )
 from typing import Annotated
 
-from flext_ldif import FlextLdifFilters, c, m, p, r, s, t, u
+from flext_ldif import c, m, p, r, s, t, u
+from flext_ldif.services.filters import FlextLdifFilters
 
 
 class FlextLdifCategorization(s):

@@ -8,10 +8,11 @@ from collections.abc import (
 )
 from typing import ClassVar, Self, override
 
-from flext_ldif import FlextLdifServersRfc, c, m, p, r, t, u
+from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
 from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
 from flext_ldif.servers._oud.utilities import FlextLdifServersOudUtilities
+from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 logger = u.fetch_logger(__name__)
 

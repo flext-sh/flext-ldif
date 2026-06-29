@@ -5,19 +5,10 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Annotated, Final, override
 
-from flext_ldif import (
-    FlextLdifParser,
-    FlextLdifProcessingPipeline,
-    FlextLdifShared,
-    FlextLdifWriter,
-    c,
-    m,
-    p,
-    r,
-    s,
-    t,
-    u,
-)
+from flext_ldif import FlextLdifShared, c, m, p, r, s, t, u
+from flext_ldif.services.parser import FlextLdifParser
+from flext_ldif.services.pipeline import FlextLdifProcessingPipeline
+from flext_ldif.services.writer import FlextLdifWriter
 
 
 class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):

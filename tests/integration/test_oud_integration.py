@@ -17,8 +17,9 @@ from __future__ import annotations
 import pytest
 
 from flext_ldif import ldif
-from tests import p, t
 from tests.constants import c
+from tests.protocols import p
+from tests.typings import t
 from tests.utilities import TestsFlextLdifUtilities as u
 
 

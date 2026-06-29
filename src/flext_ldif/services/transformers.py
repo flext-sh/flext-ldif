@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_ldif import FlextLdifConversion, FlextLdifShared, c, m, p, r, s, t, u
+from flext_ldif import FlextLdifShared, c, m, p, r, s, t, u
+from flext_ldif.services.conversion import FlextLdifConversion
 
 
 class FlextLdifTransformer(s):

@@ -13,8 +13,12 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldif import FlextLdifParser, ldif
-from tests import c, m, p, u
+from flext_ldif import ldif
+from flext_ldif.services.parser import FlextLdifParser
+from tests.constants import c
+from tests.models import m
+from tests.protocols import p
+from tests.utilities import u
 
 
 class TestsFlextLdifMinimalDifferencesMetadata:

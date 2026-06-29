@@ -5,29 +5,21 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Self, override
 
-from flext_ldif import (
-    FlextLdifAcl,
-    FlextLdifAnalysis,
-    FlextLdifCategorization,
-    FlextLdifConversion,
-    FlextLdifDetector,
-    FlextLdifEntries,
-    FlextLdifFilters,
-    FlextLdifMigrationPipeline,
-    FlextLdifParser,
-    FlextLdifProcessing,
-    FlextLdifProcessingPipeline,
-    FlextLdifStatistics,
-    FlextLdifValidation,
-    FlextLdifWriter,
-    c,
-    e,
-    m,
-    p,
-    r,
-    t,
-    u,
-)
+from flext_ldif import c, e, m, p, r, t, u
+from flext_ldif.services.acl import FlextLdifAcl
+from flext_ldif.services.analysis import FlextLdifAnalysis
+from flext_ldif.services.categorization import FlextLdifCategorization
+from flext_ldif.services.conversion import FlextLdifConversion
+from flext_ldif.services.detector import FlextLdifDetector
+from flext_ldif.services.entries import FlextLdifEntries
+from flext_ldif.services.filters import FlextLdifFilters
+from flext_ldif.services.migration import FlextLdifMigrationPipeline
+from flext_ldif.services.parser import FlextLdifParser
+from flext_ldif.services.pipeline import FlextLdifProcessingPipeline
+from flext_ldif.services.processing import FlextLdifProcessing
+from flext_ldif.services.statistics import FlextLdifStatistics
+from flext_ldif.services.validation import FlextLdifValidation
+from flext_ldif.services.writer import FlextLdifWriter
 
 
 class FlextLdif(
@@ -83,16 +75,6 @@ class FlextLdif(
         server_type: str = c.Ldif.ServerTypes.RFC.value,
     ) -> p.Ldif.CategorizationService:
         """Create a categorization service bound to the facade registry."""
-        option_payload = (
-            {
-                field_name: option_value
-                for field_name in FlextLdifCategorization.model_fields
-                if field_name != "base_dn"
-                and (option_value := getattr(options, field_name, None)) is not None
-            }
-            if options is not None
-            else {}
-        )
         resolved_base_dn = (
             base_dn
             if base_dn is not None
@@ -101,7 +83,18 @@ class FlextLdif(
             else None
         )
         return FlextLdifCategorization(
-            **option_payload,
+            categorization_rules=options.categorization_rules
+            if options is not None
+            else None,
+            schema_whitelist_rules=options.schema_whitelist_rules
+            if options is not None
+            else None,
+            forbidden_attributes=options.forbidden_attributes
+            if options is not None
+            else None,
+            forbidden_objectclasses=options.forbidden_objectclasses
+            if options is not None
+            else None,
             base_dn=resolved_base_dn,
             server_type=server_type,
             server=self._server,

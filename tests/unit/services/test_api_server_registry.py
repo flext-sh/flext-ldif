@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from flext_tests import tm
 
-from tests import c, p, u
+from tests.constants import c
+from tests.protocols import p
+from tests.utilities import u
 
 
 class TestsTestFlextLdifApiServerRegistry:

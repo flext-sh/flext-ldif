@@ -9,8 +9,10 @@ from __future__ import annotations
 import pytest
 from flext_tests import tm
 
-from flext_ldif import FlextLdifServersDs389
-from tests import c, m, u
+from flext_ldif.servers.ds389 import FlextLdifServersDs389
+from tests.constants import c
+from tests.models import m
+from tests.utilities import u
 
 
 def _schema_server() -> FlextLdifServersDs389.Schema:

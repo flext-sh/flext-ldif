@@ -7,15 +7,17 @@ from typing import Protocol
 
 import pytest
 
-from flext_ldif import (
-    FlextLdifConversion,
-    FlextLdifMigrationPipeline,
-    FlextLdifParser,
-    FlextLdifServer,
-    FlextLdifWriter,
-    ldif,
-)
-from tests import c, m, p, t, u
+from flext_ldif import ldif
+from flext_ldif.services.conversion import FlextLdifConversion
+from flext_ldif.services.migration import FlextLdifMigrationPipeline
+from flext_ldif.services.parser import FlextLdifParser
+from flext_ldif.services.server import FlextLdifServer
+from flext_ldif.services.writer import FlextLdifWriter
+from tests.constants import c
+from tests.models import m
+from tests.protocols import p
+from tests.typings import t
+from tests.utilities import u
 
 
 class _MigrationPipelineFactory(Protocol):

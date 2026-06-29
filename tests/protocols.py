@@ -10,7 +10,7 @@ from flext_tests import FlextTestsProtocols
 from flext_ldif import FlextLdifProtocols
 
 if TYPE_CHECKING:
-    from tests import m
+    from tests.models import m
 
 
 class TestsFlextLdifProtocols(

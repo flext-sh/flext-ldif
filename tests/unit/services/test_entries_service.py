@@ -5,8 +5,10 @@ from __future__ import annotations
 import pytest
 from flext_tests import tm
 
-from flext_ldif import FlextLdifEntries
-from tests import c, m, t
+from flext_ldif.services.entries import FlextLdifEntries
+from tests.constants import c
+from tests.models import m
+from tests.typings import t
 from tests.utilities import TestsFlextLdifUtilities as u
 
 

@@ -6,7 +6,8 @@ import re
 from types import MappingProxyType
 from typing import ClassVar
 
-from flext_ldif import FlextLdifServersRfc, c, t
+from flext_ldif import c, t
+from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 
 class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):

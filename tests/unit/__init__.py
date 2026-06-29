@@ -18,6 +18,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
     build_lazy_import_map(
         {
             ".fixtures": ("fixtures",),
+            ".servers": ("servers",),
             ".servers.test_apache_servers": ("TestsTestFlextLdifApacheServers",),
             ".servers.test_ds389_servers": ("TestsTestFlextLdifDs389Servers",),
             ".servers.test_edge_cases": ("TestsFlextLdifEdgeCases",),
@@ -38,6 +39,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".servers.test_oid_servers": ("TestsTestFlextLdifOidServers",),
             ".servers.test_relaxed_servers": ("TestsTestFlextLdifRelaxedServers",),
             ".servers.test_schema_transformer": ("TestsFlextLdifSchemaTransformer",),
+            ".services": ("services",),
             ".services.test_acl_service": ("TestsFlextLdifAclService",),
             ".services.test_analysis_service": ("TestsFlextLdifAnalysisService",),
             ".services.test_api_server_registry": (
@@ -71,6 +73,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".test_oid_utilities": ("TestsFlextLdifOidUtilities",),
             ".test_parser_utilities": ("TestsFlextLdifParserUtilities",),
             ".test_version": ("TestsFlextLdifVersion",),
+            ".utilities": ("utilities",),
             ".utilities.test_utilities_comprehensive": (
                 "TestsFlextLdifUtilitiesComprehensive",
             ),
@@ -118,4 +121,9 @@ _LAZY_IMPORTS = merge_lazy_imports(
 )
 
 
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)
+install_lazy_exports(
+    __name__,
+    globals(),
+    _LAZY_IMPORTS,
+    publish_all=False,
+)

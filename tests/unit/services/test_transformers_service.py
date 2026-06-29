@@ -4,8 +4,11 @@ from __future__ import annotations
 
 from flext_tests import tm
 
-from flext_ldif import FlextLdifTransformer
-from tests import c, m, p, u
+from flext_ldif.services.transformers import FlextLdifTransformer
+from tests.constants import c
+from tests.models import m
+from tests.protocols import p
+from tests.utilities import u
 
 
 class TestsFlextLdifTransformerService:

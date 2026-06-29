@@ -7,8 +7,11 @@ from typing import Literal
 import pytest
 from flext_tests import tm
 
-from flext_ldif import FlextLdifProcessingPipeline
-from tests import c, m, p, t
+from flext_ldif.services.pipeline import FlextLdifProcessingPipeline
+from tests.constants import c
+from tests.models import m
+from tests.protocols import p
+from tests.typings import t
 from tests.utilities import TestsFlextLdifUtilities as u
 
 

@@ -17,7 +17,8 @@ import pytest
 
 from flext_core import FlextSettings
 from flext_ldif import ldif
-from tests import m, p
+from tests.models import m
+from tests.protocols import p
 
 
 @pytest.fixture

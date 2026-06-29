@@ -13,8 +13,11 @@ from typing import TYPE_CHECKING
 import pytest
 from flext_tests import tm
 
-from flext_ldif import FlextLdifMigrationPipeline, FlextLdifProcessingPipeline
-from tests import c, m, t
+from flext_ldif.services.migration import FlextLdifMigrationPipeline
+from flext_ldif.services.pipeline import FlextLdifProcessingPipeline
+from tests.constants import c
+from tests.models import m
+from tests.typings import t
 from tests.utilities import TestsFlextLdifUtilities as u
 
 if TYPE_CHECKING:

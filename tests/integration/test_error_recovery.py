@@ -19,7 +19,7 @@ from __future__ import annotations
 import pytest
 
 from flext_ldif import ldif
-from tests import p
+from tests.protocols import p
 
 
 class TestsFlextLdifErrorRecovery:

@@ -7,7 +7,10 @@ from collections.abc import (
 )
 
 from flext_ldif import ldif
-from tests import c, m, p, t
+from tests.constants import c
+from tests.models import m
+from tests.protocols import p
+from tests.typings import t
 
 
 class TestsFlextLdifSimpleLdap:

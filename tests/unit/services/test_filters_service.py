@@ -6,7 +6,9 @@ import pytest
 from flext_tests import tm
 
 from flext_ldif import ldif
-from tests import c, m, t
+from tests.constants import c
+from tests.models import m
+from tests.typings import t
 from tests.utilities import TestsFlextLdifUtilities as u
 
 

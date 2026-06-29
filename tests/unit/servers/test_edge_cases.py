@@ -12,7 +12,8 @@ import pytest
 from flext_tests import tm
 
 from flext_ldif import ldif
-from tests import c, p
+from tests.constants import c
+from tests.protocols import p
 
 
 @pytest.fixture

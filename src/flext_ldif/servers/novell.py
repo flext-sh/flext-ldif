@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import ClassVar, override
 
-from flext_ldif import FlextLdifServersRfc, c, m, p, r, t, u
+from flext_ldif import c, m, p, r, t, u
+from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 
 class FlextLdifServersNovell(FlextLdifServersRfc):

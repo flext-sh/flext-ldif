@@ -11,8 +11,7 @@ from collections.abc import (
 from datetime import UTC, datetime
 from pathlib import Path
 
-from examples import c, m, p
-from flext_ldif import ldif
+from flext_ldif import c, ldif, m, p
 
 
 def complete_ldif_processing_workflow() -> None:

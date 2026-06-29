@@ -15,7 +15,8 @@ from __future__ import annotations
 import pytest
 
 from flext_ldif import ldif
-from tests import c, p
+from tests.constants import c
+from tests.protocols import p
 
 
 class TestsFlextLdifLdifFixturesIntegration:

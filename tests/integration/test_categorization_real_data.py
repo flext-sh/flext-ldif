@@ -17,7 +17,10 @@ from pathlib import Path
 from typing import TextIO
 
 from flext_ldif import ldif
-from tests import c, m, t, u
+from tests.constants import c
+from tests.models import m
+from tests.typings import t
+from tests.utilities import u
 
 
 def _write_entry_to_file(

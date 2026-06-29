@@ -15,13 +15,12 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldif import (
-    FlextLdifCategorization,
-    FlextLdifMigrationPipeline,
-    FlextLdifStatistics,
-    ldif,
-)
-from tests import c, m
+from flext_ldif import ldif
+from flext_ldif.services.categorization import FlextLdifCategorization
+from flext_ldif.services.migration import FlextLdifMigrationPipeline
+from flext_ldif.services.statistics import FlextLdifStatistics
+from tests.constants import c
+from tests.models import m
 
 
 class TestsFlextLdifApiIntegration:

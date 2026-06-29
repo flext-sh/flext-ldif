@@ -12,12 +12,10 @@ from pathlib import Path
 import pytest
 from flext_tests import tm
 
-from flext_ldif import (
-    FlextLdifMigrationPipeline,
-    FlextLdifServersRfc,
-)
 from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
-from tests import c
+from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.services.migration import FlextLdifMigrationPipeline
+from tests.constants import c
 
 
 class TestsFlextLdifMigrationPipelineServers:

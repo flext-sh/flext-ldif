@@ -10,7 +10,8 @@ from typing import Final, Literal
 from flext_ldap import c
 from flext_tests import FlextTestsConstants
 
-from tests import m, t
+from tests.models import m
+from tests.typings import t
 
 
 class TestsFlextLdifConstants(FlextTestsConstants, c):

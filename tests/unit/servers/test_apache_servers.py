@@ -9,8 +9,11 @@ from __future__ import annotations
 import pytest
 from flext_tests import tm
 
-from flext_ldif import FlextLdifServersApache
-from tests import c, m, t, u
+from flext_ldif.servers.apache import FlextLdifServersApache
+from tests.constants import c
+from tests.models import m
+from tests.typings import t
+from tests.utilities import u
 
 
 class TestsTestFlextLdifApacheServers:

@@ -13,19 +13,12 @@ from collections.abc import (
 )
 from typing import override
 
-from flext_ldif import (
-    FlextLdifServersBase,
-    FlextLdifServersRfc,
-    c,
-    m,
-    p,
-    r,
-    t,
-    u,
-)
+from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
 from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
 from flext_ldif.servers._oud.helpers import FlextLdifServersOudHelpersMixin
+from flext_ldif.servers.base import FlextLdifServersBase
+from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 logger = u.fetch_logger(__name__)
 

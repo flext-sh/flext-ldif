@@ -19,8 +19,7 @@ from collections.abc import (
     MutableSequence,
 )
 
-from examples import m, p, r, t
-from flext_ldif import ldif
+from flext_ldif import ldif, m, p, r, t
 
 
 class DRYValidationAnalysis:

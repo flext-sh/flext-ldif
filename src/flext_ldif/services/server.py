@@ -6,15 +6,8 @@ import inspect
 from typing import Annotated, ClassVar, TypeGuard, override
 
 import flext_ldif.servers as ldif_servers
-from flext_ldif import (
-    FlextLdifServersBase,
-    c,
-    p,
-    r,
-    s,
-    t,
-    u,
-)
+from flext_ldif import c, p, r, s, t, u
+from flext_ldif.servers.base import FlextLdifServersBase
 
 
 class FlextLdifServer(s):

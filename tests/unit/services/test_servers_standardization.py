@@ -12,12 +12,10 @@ from pathlib import Path
 import pytest
 from flext_tests import tm
 
-from flext_ldif import (
-    FlextLdifServersOid,
-    FlextLdifServersOud,
-    FlextLdifServersRfc,
-)
-from tests import c
+from flext_ldif.servers.oid import FlextLdifServersOid
+from flext_ldif.servers.oud import FlextLdifServersOud
+from flext_ldif.servers.rfc import FlextLdifServersRfc
+from tests.constants import c
 
 
 @pytest.mark.unit

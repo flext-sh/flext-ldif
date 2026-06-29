@@ -15,9 +15,11 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldif import FlextLdifParser, FlextLdifServer, FlextLdifWriter
-from tests import m
+from flext_ldif.services.parser import FlextLdifParser
+from flext_ldif.services.server import FlextLdifServer
+from flext_ldif.services.writer import FlextLdifWriter
 from tests.constants import TestsFlextLdifConstants, c
+from tests.models import m
 
 
 class TestsFlextLdifRfcDockerReal:

@@ -9,8 +9,10 @@ from __future__ import annotations
 import pytest
 from flext_tests import tm
 
-from flext_ldif import FlextLdifServersRelaxed
-from tests import c, m, p
+from flext_ldif.servers.relaxed import FlextLdifServersRelaxed
+from tests.constants import c
+from tests.models import m
+from tests.protocols import p
 
 
 @pytest.mark.unit

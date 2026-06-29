@@ -10,8 +10,7 @@ from __future__ import annotations
 from collections.abc import MutableMapping, MutableSequence
 from pathlib import Path
 
-from examples import c, m, p, r, t, u
-from flext_ldif import ldif
+from flext_ldif import c, ldif, m, p, r, t, u
 
 
 class ExampleServerMigration:

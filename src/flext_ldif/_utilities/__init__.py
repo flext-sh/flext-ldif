@@ -7,6 +7,9 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 _LAZY_IMPORTS = build_lazy_import_map(
     {
+        "._transformer_attrs": ("FlextLdifUtilitiesNormalizeAttrsTransformer",),
+        "._transformer_base": ("FlextLdifUtilitiesTransformer",),
+        "._transformer_dn": ("FlextLdifUtilitiesNormalizeDnTransformer",),
         ".acl": ("FlextLdifUtilitiesACL",),
         ".attribute": ("FlextLdifUtilitiesAttribute",),
         ".collection_ldif": ("FlextLdifUtilitiesCollectionLdif",),
@@ -20,15 +23,22 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ".parser": ("FlextLdifUtilitiesParser",),
         ".pipeline": ("FlextLdifUtilitiesPipeline",),
         ".schema": ("FlextLdifUtilitiesSchema",),
+        ".schema_build": ("FlextLdifUtilitiesSchemaBuild",),
+        ".schema_extract": ("FlextLdifUtilitiesSchemaExtract",),
+        ".schema_format": ("FlextLdifUtilitiesSchemaFormat",),
+        ".schema_normalize": ("FlextLdifUtilitiesSchemaNormalize",),
+        ".schema_parse": ("FlextLdifUtilitiesSchemaParse",),
         ".server": ("FlextLdifUtilitiesServer",),
-        ".transformers": (
-            "FlextLdifUtilitiesTransformer",
-            "FlextLdifUtilitiesTransformers",
-        ),
+        ".transformers": ("FlextLdifUtilitiesTransformers",),
         ".validation": ("FlextLdifUtilitiesValidation",),
         ".writer": ("FlextLdifUtilitiesWriter",),
     },
 )
 
 
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)
+install_lazy_exports(
+    __name__,
+    globals(),
+    _LAZY_IMPORTS,
+    publish_all=False,
+)

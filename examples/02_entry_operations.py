@@ -19,8 +19,7 @@ from collections.abc import (
     MutableSequence,
 )
 
-from examples import m, p, r
-from flext_ldif import ldif
+from flext_ldif import ldif, m, p, r
 
 
 class DRYEntryOperations:

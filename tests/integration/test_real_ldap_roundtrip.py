@@ -25,7 +25,10 @@ from collections.abc import (
 import pytest
 
 from flext_ldif import ldif
-from tests import m, p, t, u
+from tests.models import m
+from tests.protocols import p
+from tests.typings import t
+from tests.utilities import u
 
 
 @pytest.fixture

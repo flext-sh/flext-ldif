@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif import FlextLdifServer
+from flext_ldif.services.server import FlextLdifServer
 
 
 class TestsTestFlextLdifOidServers:

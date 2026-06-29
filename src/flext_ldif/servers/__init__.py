@@ -18,11 +18,13 @@ _LAZY_IMPORTS = merge_lazy_imports(
     ),
     build_lazy_import_map(
         {
+            "._base": ("_base",),
             "._base.acl": ("FlextLdifServersBaseSchemaAcl",),
             "._base.constants": ("FlextLdifServersBaseConstants",),
             "._base.entry": ("FlextLdifServersBaseEntry",),
             "._base.mixins": ("FlextLdifServerMethodsMixin",),
             "._base.schema": ("FlextLdifServersBaseSchema",),
+            "._oid": ("_oid",),
             "._oid.acl": ("FlextLdifServersOidAcl",),
             "._oid.acl_assemble": ("FlextLdifServersOidAclAssemble",),
             "._oid.acl_convert": ("FlextLdifServersOidAclConvert",),
@@ -32,6 +34,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._oid.constants": ("FlextLdifServersOidConstants",),
             "._oid.entry": ("FlextLdifServersOidEntry",),
             "._oid.schema": ("FlextLdifServersOidSchema",),
+            "._oud": ("_oud",),
             "._oud.aci": ("FlextLdifServersOudAciMixin",),
             "._oud.acl": ("FlextLdifServersOudAcl",),
             "._oud.acl_extract": ("FlextLdifServersOudAclExtractMixin",),
@@ -43,6 +46,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._oud.schema": ("FlextLdifServersOudSchema",),
             "._oud.transform": ("FlextLdifServersOudTransformMixin",),
             "._oud.utilities": ("FlextLdifServersOudUtilities",),
+            "._rfc": ("_rfc",),
             "._rfc.acl": ("FlextLdifServersRfcAcl",),
             "._rfc.constants": ("FlextLdifServersRfcConstants",),
             "._rfc.entry": ("FlextLdifServersRfcEntry",),
@@ -84,4 +88,9 @@ _LAZY_IMPORTS = merge_lazy_imports(
 )
 
 
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)
+install_lazy_exports(
+    __name__,
+    globals(),
+    _LAZY_IMPORTS,
+    publish_all=False,
+)

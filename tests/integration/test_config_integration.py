@@ -21,9 +21,11 @@ from __future__ import annotations
 import pytest
 
 from flext_ldif import ldif
-from tests import c, m, u
 from tests.base import s
+from tests.constants import c
+from tests.models import m
 from tests.settings import TestsFlextLdifSettings
+from tests.utilities import u
 
 logger = u.fetch_logger(__name__)
 
