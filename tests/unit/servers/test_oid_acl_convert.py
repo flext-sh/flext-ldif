@@ -125,8 +125,7 @@ class TestsFlextLdifOidAclConvertParse:
     def test_unbalanced_filter_surfaces_failure(self) -> None:
         result = Parser.parse_oid_acl_line(
             "dc=ctbc",
-            "orclaci: access to attr=(cn) filter=(objectclass=person "
-            "by self (read)",
+            "orclaci: access to attr=(cn) filter=(objectclass=person by self (read)",
         )
 
         tm.that(result.failure, eq=True)
