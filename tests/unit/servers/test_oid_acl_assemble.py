@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from flext_tests import tm
 from structlog.testing import capture_logs
 
@@ -72,6 +74,38 @@ class TestsFlextLdifOidAclAssemble:
                 '(version 3.0; acl "ctbc Attrs by mgr"; '
                 'allow (read, search) userattr="manager#USERDN" '
                 'or groupdn="ldap:///cn=g,dc=ctbc";)'
+            ),
+        )
+
+    def test_same_perms_with_different_modifiers_render_separate_allows(self) -> None:
+        aci = m.Ldif.AciRule(
+            dn="dc=ctbc",
+            targetattr="*",
+            acl_name="ctbc Entry by admins",
+            allows=(
+                m.Ldif.AciAllow(
+                    subject_type="groupdn",
+                    subject_value="cn=ssl,dc=ctbc",
+                    permissions=("read", "search"),
+                    authmethod="SSL",
+                ),
+                m.Ldif.AciAllow(
+                    subject_type="groupdn",
+                    subject_value="cn=simple,dc=ctbc",
+                    permissions=("read", "search"),
+                    authmethod="Simple",
+                ),
+            ),
+        )
+
+        tm.that(
+            Render.render_aci_string(aci),
+            eq=(
+                'aci: (targetattr="*")(version 3.0; acl "ctbc Entry by admins"; '
+                'allow (read, search) groupdn="ldap:///cn=ssl,dc=ctbc" '
+                'and authmethod="SSL"; '
+                'allow (read, search) groupdn="ldap:///cn=simple,dc=ctbc" '
+                'and authmethod="Simple";)'
             ),
         )
 
@@ -343,6 +377,31 @@ class TestsFlextLdifOidAclConvertValues:
         )
 
         tm.that(result.failure, eq=True)
+
+    def test_oid_acl_fixture_lines_convert_without_partial_failures(self) -> None:
+        fixture_path = (
+            Path(__file__).parents[2] / "fixtures" / "oid" / "oid_acl_fixtures.ldif"
+        )
+        dn = ""
+        rules_seen = 0
+        values_emitted = 0
+        for line in fixture_path.read_text(encoding="utf-8").splitlines():
+            if line.startswith("dn:"):
+                dn = line.removeprefix("dn:").strip()
+                continue
+            if not line.startswith(("orclaci:", "orclentrylevelaci:")):
+                continue
+            result = Pipe.convert_acl_values(
+                dn,
+                (line,),
+                base_dn="dc=example,dc=com",
+            )
+            tm.that(result.success, eq=True)
+            rules_seen += 1
+            values_emitted += len(result.unwrap())
+
+        tm.that(rules_seen, eq=16)
+        tm.that(values_emitted, eq=11)
 
     def test_out_of_scope_dn_excluded_with_base_dn(self) -> None:
         result = Pipe.convert_acl_values(

@@ -86,14 +86,17 @@ class FlextLdifServersOidAclToOud:
         """Convert OID permission tokens to the ordered OUD allow set.
 
         ``none``/pure negations → no allow (``()``); a pure-negation set expands
-        to the COMPLEMENT; positive tokens map via the entry/attr perm map. A
-        perm valid only at the other scope (``read`` on an entry rule) grants
-        nothing here and is skipped; a token in neither scope → ``r.fail``.
+        to the COMPLEMENT. ``all`` expands to the scoped permission universe
+        before applying any ``no*`` negation, avoiding OUD overgrant. A perm
+        valid only at the other scope (``read`` on an entry rule) grants nothing
+        here and is skipped; a token in neither scope → ``r.fail``.
         """
         perm_map = c.Ldif.ENTRY_PERM_MAP if is_entry else c.Ldif.ATTR_PERM_MAP
-        allow: set[str] = set()
+        all_perms = c.Ldif.ALL_ENTRY_PERMS if is_entry else c.Ldif.ALL_ATTR_PERMS
+        positive_bases: set[str] = set()
         negated_bases: set[str] = set()
         deny_all = False
+        explicit_all = False
         known_positive = c.Ldif.ALL_ENTRY_PERMS | c.Ldif.ALL_ATTR_PERMS
         for raw in permissions:
             perm = raw.strip().lower()
@@ -106,14 +109,22 @@ class FlextLdifServersOidAclToOud:
                 if base is None:
                     return r[t.StrSequence].fail(f"Unknown negation perm: {perm!r}")
                 negated_bases.add(base)
+            elif perm == c.Ldif.PERM_ALL:
+                explicit_all = True
+                positive_bases.update(all_perms)
             elif perm in perm_map:
-                allow.update(cls._map_tokens({perm}, perm_map))
+                positive_bases.add(perm)
             elif perm not in known_positive:
                 return r[t.StrSequence].fail(f"Unknown permission token: {perm!r}")
-        if allow:
+        if positive_bases:
+            effective_bases = (
+                positive_bases - negated_bases if explicit_all else positive_bases
+            )
+            if explicit_all and not negated_bases:
+                return r[t.StrSequence].ok((c.Ldif.PERM_ALL,))
+            allow = cls._map_tokens(effective_bases, perm_map)
             return r[t.StrSequence].ok(cls._order_perms(allow))
         if negated_bases and not deny_all:
-            all_perms = c.Ldif.ALL_ENTRY_PERMS if is_entry else c.Ldif.ALL_ATTR_PERMS
             complement = cls._map_tokens(set(all_perms) - negated_bases, perm_map)
             return r[t.StrSequence].ok(cls._order_perms(complement))
         return r[t.StrSequence].ok(())

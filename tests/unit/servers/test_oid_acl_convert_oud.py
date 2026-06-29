@@ -88,6 +88,21 @@ class TestsFlextLdifOidAclConvertPermissions:
 
         tm.that(result.unwrap(), eq=("read", "search", "add", "delete"))
 
+    def test_all_collapses_to_oud_all(self) -> None:
+        result = Conv.convert_permissions(("all", "browse", "add"), is_entry=True)
+
+        tm.that(result.unwrap(), eq=("all",))
+
+    def test_entry_all_with_negation_expands_without_overgrant(self) -> None:
+        result = Conv.convert_permissions(("all", "noadd"), is_entry=True)
+
+        tm.that(result.unwrap(), eq=("read", "search", "delete", "proxy"))
+
+    def test_attr_all_with_negation_expands_without_overgrant(self) -> None:
+        result = Conv.convert_permissions(("all", "noread"), is_entry=False)
+
+        tm.that(result.unwrap(), eq=("search", "write", "selfwrite", "compare"))
+
     def test_attr_perms_pass_through_ordered(self) -> None:
         result = Conv.convert_permissions(("search", "read"), is_entry=False)
 

@@ -58,9 +58,12 @@ class FlextLdifConstantsAclConvertOud:
     ACL_NAME_ATTRS: Final[str] = "Attrs"
     PERM_NONE: Final[str] = "none"
     "OID permission token denying all access (``by X (none)``)."
+    PERM_ALL: Final[str] = "all"
+    "OID/OUD permission token granting all rights."
 
     # OID permission → OUD permission(s); None = negation/deny (dropped).
     ENTRY_PERM_MAP: ClassVar[Mapping[str, str | None]] = MappingProxyType({
+        "all": "all",
         "browse": "read, search",
         "add": "add",
         "delete": "delete",
@@ -72,6 +75,7 @@ class FlextLdifConstantsAclConvertOud:
         "none": None,
     })
     ATTR_PERM_MAP: ClassVar[Mapping[str, str | None]] = MappingProxyType({
+        "all": "all",
         "read": "read",
         "search": "search",
         "write": "write",
@@ -115,6 +119,7 @@ class FlextLdifConstantsAclConvertOud:
     )
     # Canonical OUD permission ordering for deterministic aci assembly.
     PERM_ORDERED: Final[tuple[str, ...]] = (
+        "all",
         "read",
         "search",
         "write",

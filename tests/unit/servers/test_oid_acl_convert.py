@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from flext_tests import tm
 
+from flext_ldif import m
 from flext_ldif.servers._oid.acl_convert import FlextLdifServersOidAclConvert as Parser
 
 
@@ -84,10 +85,32 @@ class TestsFlextLdifOidAclConvertParse:
         tm.that(subject.value, eq="cn=Directory Manager")
         tm.that(subject.permissions, eq=("browse", "add"))
 
+    def test_bare_quoted_dn_subject_maps_to_user(self) -> None:
+        subject = Parser.parse_subject('by "cn=admin,dc=example,dc=com" (proxy,add)')
+
+        tm.that(subject.subject_type, eq="user")
+        tm.that(subject.value, eq="cn=admin,dc=example,dc=com")
+        tm.that(subject.permissions, eq=("proxy", "add"))
+
+    def test_constraintonaddedobject_modifier_is_canonical_constraint(self) -> None:
+        subject = Parser.parse_subject(
+            "by * (browse) constraintonaddedobject=(objectClass=person)",
+        )
+
+        tm.that(subject.subject_type, eq="anyone")
+        tm.that(subject.permissions, eq=("browse",))
+        tm.that(subject.added_object_constraint, eq="objectClass=person")
+
     def test_unknown_subject_returns_unknown_type(self) -> None:
         subject = Parser.parse_subject("by nonsense clause")
 
         tm.that(subject.subject_type, eq="unknown")
+
+    def test_subject_matchers_use_typed_catalog(self) -> None:
+        catalog = Parser.subject_matcher_catalog()
+
+        tm.that(isinstance(catalog, m.Ldif.AclSubjectMatcherCatalog), eq=True)
+        tm.that(len(catalog.matchers), eq=9)
 
     def test_non_acl_line_surfaces_failure(self) -> None:
         result = Parser.parse_oid_acl_line("dc=ctbc", "cn: not an acl")
@@ -96,6 +119,15 @@ class TestsFlextLdifOidAclConvertParse:
 
     def test_missing_access_to_surfaces_failure(self) -> None:
         result = Parser.parse_oid_acl_line("dc=ctbc", "orclaci: entry by * (read)")
+
+        tm.that(result.failure, eq=True)
+
+    def test_unbalanced_filter_surfaces_failure(self) -> None:
+        result = Parser.parse_oid_acl_line(
+            "dc=ctbc",
+            "orclaci: access to attr=(cn) filter=(objectclass=person "
+            "by self (read)",
+        )
 
         tm.that(result.failure, eq=True)
 

@@ -127,6 +127,77 @@ class FlextLdifModelsAclConvert:
             ),
         ] = ()
 
+    class AciAllowGroup(m.FrozenModel):
+        """One render-time allow group keyed by identical OUD permission tokens."""
+
+        permissions: Annotated[
+            t.StrSequence,
+            u.Field(description="Canonical permission tuple shared by this group"),
+        ] = ()
+        binds: Annotated[
+            t.StrSequence,
+            u.Field(description="Rendered bind rules joined with OUD 'or'"),
+        ] = ()
+        authmethod: Annotated[
+            str,
+            u.Field(description="Shared authmethod modifier for this group"),
+        ] = ""
+        ip: Annotated[
+            str,
+            u.Field(description="Shared ip modifier for this group"),
+        ] = ""
+
+        def with_bind(
+            self,
+            bind: str,
+        ) -> FlextLdifModelsAclConvert.AciAllowGroup:
+            """Return a copy with ``bind`` appended, preserving immutable flow."""
+            return FlextLdifModelsAclConvert.AciAllowGroup(
+                permissions=self.permissions,
+                binds=(*self.binds, bind),
+                authmethod=self.authmethod,
+                ip=self.ip,
+            )
+
+    class AciAllowGroups(m.FrozenModel):
+        """Pydantic render grouping model replacing ad-hoc dict/list state."""
+
+        groups: Annotated[
+            tuple[FlextLdifModelsAclConvert.AciAllowGroup, ...],
+            u.Field(description="Allow groups in first-seen render order"),
+        ] = ()
+
+        def with_allow(
+            self,
+            allow: FlextLdifModelsAclConvert.AciAllow,
+            bind: str,
+        ) -> FlextLdifModelsAclConvert.AciAllowGroups:
+            """Return grouped allow state with one rendered bind rule appended."""
+            permissions = tuple(allow.permissions)
+            updated: tuple[FlextLdifModelsAclConvert.AciAllowGroup, ...] = ()
+            matched = False
+            for group in self.groups:
+                same_permissions = tuple(group.permissions) == permissions
+                same_modifiers = (
+                    group.authmethod == allow.authmethod and group.ip == allow.ip
+                )
+                if same_permissions and same_modifiers:
+                    updated = (*updated, group.with_bind(bind))
+                    matched = True
+                    continue
+                updated = (*updated, group)
+            if not matched:
+                updated = (
+                    *updated,
+                    FlextLdifModelsAclConvert.AciAllowGroup(
+                        permissions=permissions,
+                        binds=(bind,),
+                        authmethod=allow.authmethod,
+                        ip=allow.ip,
+                    ),
+                )
+            return FlextLdifModelsAclConvert.AciAllowGroups(groups=updated)
+
     class AclSubjectMatcher(m.ArbitraryTypesModel):
         """Parse descriptor: a compiled by-clause regex + group extraction map.
 
@@ -151,6 +222,30 @@ class FlextLdifModelsAclConvert:
             int,
             u.Field(description="Capture-group index of the permission tokens"),
         ]
+
+    class AclSubjectMatcherCatalog(m.FrozenModel):
+        """Typed matcher catalog used by the OID ACL parser."""
+
+        matchers: Annotated[
+            tuple[FlextLdifModelsAclConvert.AclSubjectMatcher, ...],
+            u.Field(description="OID by-clause subject matchers in priority order"),
+        ] = ()
+
+    class OidAclSubjectModifiers(m.FrozenModel):
+        """Parsed optional OID by-clause modifiers."""
+
+        bindmode: Annotated[
+            str,
+            u.Field(description="OID bindmode modifier value"),
+        ] = ""
+        bindipfilter: Annotated[
+            str,
+            u.Field(description="OID bindipfilter modifier value"),
+        ] = ""
+        added_object_constraint: Annotated[
+            str,
+            u.Field(description="OID added_object_constraint modifier value"),
+        ] = ""
 
 
 __all__: list[str] = ["FlextLdifModelsAclConvert"]

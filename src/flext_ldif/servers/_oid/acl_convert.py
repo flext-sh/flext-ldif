@@ -8,68 +8,101 @@ Patterns/permission taxonomy are the ``c.Ldif`` SSOT; models are ``m.Ldif``.
 
 from __future__ import annotations
 
-from typing import ClassVar
-
 from flext_ldif import c, m, r, t
 
 
 class FlextLdifServersOidAclConvert:
     """Parse OID ACL lines into typed :class:`m.Ldif.OidAclRule` value objects."""
 
-    SUBJECT_MATCHERS: ClassVar[tuple[m.Ldif.AclSubjectMatcher, ...]] = (
-        m.Ldif.AclSubjectMatcher(
-            pattern=c.Ldif.SUBJ_SUPERUSER_RE,
-            subj_type="superuser",
-            value_group="cn=Directory Manager",
-            perms_group=1,
-        ),
-        m.Ldif.AclSubjectMatcher(
-            pattern=c.Ldif.SUBJ_GROUP_RE,
-            subj_type="group",
-            value_group=1,
-            perms_group=2,
-        ),
-        m.Ldif.AclSubjectMatcher(
-            pattern=c.Ldif.SUBJ_DN_RE,
-            subj_type="user",
-            value_group=1,
-            perms_group=2,
-        ),
-        m.Ldif.AclSubjectMatcher(
-            pattern=c.Ldif.SUBJ_SELF_RE,
-            subj_type="self",
-            value_group="self",
-            perms_group=1,
-        ),
-        m.Ldif.AclSubjectMatcher(
-            pattern=c.Ldif.SUBJ_ANYONE_RE,
-            subj_type="anyone",
-            value_group="anyone",
-            perms_group=1,
-        ),
-        m.Ldif.AclSubjectMatcher(
-            pattern=c.Ldif.SUBJ_DNATTR_RE,
-            subj_type="dnattr",
-            value_group=1,
-            perms_group=2,
-        ),
-        m.Ldif.AclSubjectMatcher(
-            pattern=c.Ldif.SUBJ_GROUPATTR_RE,
-            subj_type="groupattr",
-            value_group=1,
-            perms_group=2,
-        ),
-        m.Ldif.AclSubjectMatcher(
-            pattern=c.Ldif.SUBJ_GUIDATTR_RE,
-            subj_type="guidattr",
-            value_group=1,
-            perms_group=2,
-        ),
-    )
+    @staticmethod
+    def subject_matcher_catalog() -> m.Ldif.AclSubjectMatcherCatalog:
+        """Return the typed subject matcher catalog for OID by-clause parsing."""
+        return m.Ldif.AclSubjectMatcherCatalog(
+            matchers=(
+                m.Ldif.AclSubjectMatcher(
+                    pattern=c.Ldif.SUBJ_SUPERUSER_RE,
+                    subj_type="superuser",
+                    value_group="cn=Directory Manager",
+                    perms_group=1,
+                ),
+                m.Ldif.AclSubjectMatcher(
+                    pattern=c.Ldif.SUBJ_GROUP_RE,
+                    subj_type="group",
+                    value_group=1,
+                    perms_group=2,
+                ),
+                m.Ldif.AclSubjectMatcher(
+                    pattern=c.Ldif.SUBJ_DN_RE,
+                    subj_type="user",
+                    value_group=1,
+                    perms_group=2,
+                ),
+                m.Ldif.AclSubjectMatcher(
+                    pattern=c.Ldif.SUBJ_QUOTED_DN_RE,
+                    subj_type="user",
+                    value_group=1,
+                    perms_group=2,
+                ),
+                m.Ldif.AclSubjectMatcher(
+                    pattern=c.Ldif.SUBJ_SELF_RE,
+                    subj_type="self",
+                    value_group="self",
+                    perms_group=1,
+                ),
+                m.Ldif.AclSubjectMatcher(
+                    pattern=c.Ldif.SUBJ_ANYONE_RE,
+                    subj_type="anyone",
+                    value_group="anyone",
+                    perms_group=1,
+                ),
+                m.Ldif.AclSubjectMatcher(
+                    pattern=c.Ldif.SUBJ_DNATTR_RE,
+                    subj_type="dnattr",
+                    value_group=1,
+                    perms_group=2,
+                ),
+                m.Ldif.AclSubjectMatcher(
+                    pattern=c.Ldif.SUBJ_GROUPATTR_RE,
+                    subj_type="groupattr",
+                    value_group=1,
+                    perms_group=2,
+                ),
+                m.Ldif.AclSubjectMatcher(
+                    pattern=c.Ldif.SUBJ_GUIDATTR_RE,
+                    subj_type="guidattr",
+                    value_group=1,
+                    perms_group=2,
+                ),
+            ),
+        )
 
     @staticmethod
     def _split_perms(raw: str) -> t.StrSequence:
         return tuple(token.strip() for token in raw.split(",") if token.strip())
+
+    @staticmethod
+    def _subject_modifiers(subject_str: str) -> m.Ldif.OidAclSubjectModifiers:
+        bindmode = ""
+        bindipfilter = ""
+        added_object_constraint = ""
+        for modifier in c.Ldif.SUBJ_MODIFIER_RE.finditer(subject_str):
+            value = modifier.group(2) or modifier.group(3) or ""
+            match modifier.group(1).lower():
+                case "bindmode":
+                    bindmode = value
+                case "bindipfilter":
+                    bindipfilter = value
+                case "added_object_constraint":
+                    added_object_constraint = value
+                case "constraintonaddedobject":
+                    added_object_constraint = value
+                case _:
+                    continue
+        return m.Ldif.OidAclSubjectModifiers(
+            bindmode=bindmode,
+            bindipfilter=bindipfilter,
+            added_object_constraint=added_object_constraint,
+        )
 
     @classmethod
     def parse_subject(cls, subject_str: str) -> m.Ldif.OidAclSubject:
@@ -79,11 +112,8 @@ class FlextLdifServersOidAclConvert:
         drops unknown subjects), mirroring the oracle's default contract.
         """
         text = subject_str.strip()
-        mods = {
-            mm.group(1).lower(): (mm.group(2) or mm.group(3) or "")
-            for mm in c.Ldif.SUBJ_MODIFIER_RE.finditer(text)
-        }
-        for matcher in cls.SUBJECT_MATCHERS:
+        modifiers = cls._subject_modifiers(text)
+        for matcher in cls.subject_matcher_catalog().matchers:
             match = matcher.pattern.match(text)
             if match is None:
                 continue
@@ -96,9 +126,9 @@ class FlextLdifServersOidAclConvert:
                 subject_type=matcher.subj_type,
                 value=str(value) if value else "",
                 permissions=cls._split_perms(match.group(matcher.perms_group) or ""),
-                bindmode=mods.get("bindmode", ""),
-                bindipfilter=mods.get("bindipfilter", ""),
-                added_object_constraint=mods.get("added_object_constraint", ""),
+                bindmode=modifiers.bindmode,
+                bindipfilter=modifiers.bindipfilter,
+                added_object_constraint=modifiers.added_object_constraint,
             )
         return m.Ldif.OidAclSubject(subject_type="unknown")
 
@@ -136,14 +166,14 @@ class FlextLdifServersOidAclConvert:
         return None
 
     @classmethod
-    def _extract_filter(cls, content: str) -> tuple[str | None, str]:
+    def _extract_filter(cls, content: str) -> r[tuple[str | None, str]]:
         """Balanced-paren scan of a ``filter=(...)`` clause → ``(filter, rest)``."""
         prefix = c.Ldif.FILTER_PREFIX_RE.match(content)
         if prefix is None:
-            return None, content
+            return r[tuple[str | None, str]].ok((None, content))
         start = prefix.end() - 1
         depth = 0
-        end = start
+        end: int | None = None
         for index, char in enumerate(content[start:], start):
             if char == "(":
                 depth += 1
@@ -152,7 +182,13 @@ class FlextLdifServersOidAclConvert:
                 if depth == 0:
                     end = index + 1
                     break
-        return content[start + 1 : end - 1], content[end:].strip()
+        if end is None:
+            return r[tuple[str | None, str]].fail(
+                f"Unbalanced ACL filter clause: {content[:40]!r}",
+            )
+        return r[tuple[str | None, str]].ok(
+            (content[start + 1 : end - 1], content[end:].strip()),
+        )
 
     @classmethod
     def parse_oid_acl_line(cls, dn: str, line: str) -> r[m.Ldif.OidAclRule]:
@@ -175,7 +211,12 @@ class FlextLdifServersOidAclConvert:
         if target is None:
             return r[m.Ldif.OidAclRule].fail(f"Unknown ACL target: {content[:40]!r}")
         target_type, target_attrs, content = target
-        target_filter, content = cls._extract_filter(content)
+        filter_result = cls._extract_filter(content)
+        if filter_result.failure:
+            return r[m.Ldif.OidAclRule].fail(
+                filter_result.error or "Invalid ACL filter clause",
+            )
+        target_filter, content = filter_result.value
         subjects = tuple(
             subject
             for raw in c.Ldif.BY_CLAUSE_RE.finditer(content)

@@ -53,15 +53,14 @@ class FlextLdifServersOidAclRender:
         Allows are grouped by identical permission set (first-seen order); each
         group becomes one ``allow (perms) bind1 or bind2;`` clause.
         """
-        grouped: dict[t.StrSequence, list[str]] = {}
+        grouped = m.Ldif.AciAllowGroups()
         for allow in aci.allows:
-            grouped.setdefault(tuple(allow.permissions), []).append(
-                cls._render_bind(allow),
-            )
-        clauses = [
-            f"{c.Ldif.ACI_ALLOW} ({', '.join(perms)}) {c.Ldif.BIND_OR.join(binds)};"
-            for perms, binds in grouped.items()
-        ]
+            grouped = grouped.with_allow(allow, cls._render_bind(allow))
+        clauses = tuple(
+            f"{c.Ldif.ACI_ALLOW} ({', '.join(group.permissions)}) "
+            f"{c.Ldif.BIND_OR.join(group.binds)};"
+            for group in grouped.groups
+        )
         version_part = f'({c.Ldif.ACI_VERSION}; acl "{aci.acl_name}";'
         return (
             f"{c.Ldif.ACI_PREFIX}{''.join(cls._target_parts(aci))}"

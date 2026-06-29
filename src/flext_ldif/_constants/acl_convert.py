@@ -67,25 +67,38 @@ class FlextLdifConstantsAclConvert:
     DN_NORMALIZE_COMMA_RE: ClassVar[t.RegexPattern] = re.compile(r"\s*,\s*")
     DN_NORMALIZE_EQUALS_RE: ClassVar[t.RegexPattern] = re.compile(r"\s*=\s*")
 
+    _SUBJ_MODIFIER_TOKEN = (
+        r"(?:\s+(?:added_object_constraint|constraintonaddedobject|bindmode|bindipfilter)"
+        r'\s*=\s*(?:\([^)]+\)|"[^"]+"))'
+    )
+    _SUBJ_MODIFIERS = rf"(?:{_SUBJ_MODIFIER_TOKEN})*"
+
     # by-clause subject matchers; group→subject mapping is the SUBJECT_MATCHERS SSOT.
     SUBJ_SUPERUSER_RE: ClassVar[t.RegexPattern] = re.compile(
         r"by\s+SuperUser\s*\(([^)]+)\)",
         re.IGNORECASE,
     )
     SUBJ_GROUP_RE: ClassVar[t.RegexPattern] = re.compile(
-        r'by\s+group\s*=\s*"([^"]+)".*?\(([^)]+)\)\s*$',
+        rf'by\s+group\s*=\s*"([^"]+)"{_SUBJ_MODIFIERS}\s*\(([^)]+)\)'
+        rf"{_SUBJ_MODIFIERS}\s*$",
         re.IGNORECASE,
     )
     SUBJ_DN_RE: ClassVar[t.RegexPattern] = re.compile(
-        r'by\s+dn\s*=\s*"([^"]+)".*?\(([^)]+)\)\s*$',
+        rf'by\s+dn\s*=\s*"([^"]+)"{_SUBJ_MODIFIERS}\s*\(([^)]+)\)'
+        rf"{_SUBJ_MODIFIERS}\s*$",
+        re.IGNORECASE,
+    )
+    SUBJ_QUOTED_DN_RE: ClassVar[t.RegexPattern] = re.compile(
+        rf'by\s+"([^"]+)"{_SUBJ_MODIFIERS}\s*\(([^)]+)\)'
+        rf"{_SUBJ_MODIFIERS}\s*$",
         re.IGNORECASE,
     )
     SUBJ_SELF_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"by\s+self.*?\(([^)]+)\)\s*$",
+        rf"by\s+self{_SUBJ_MODIFIERS}\s*\(([^)]+)\){_SUBJ_MODIFIERS}\s*$",
         re.IGNORECASE,
     )
     SUBJ_ANYONE_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"by\s+\*.*?\(([^)]+)\)\s*$",
+        rf"by\s+\*{_SUBJ_MODIFIERS}\s*\(([^)]+)\){_SUBJ_MODIFIERS}\s*$",
         re.IGNORECASE,
     )
     SUBJ_DNATTR_RE: ClassVar[t.RegexPattern] = re.compile(
@@ -101,18 +114,14 @@ class FlextLdifConstantsAclConvert:
         re.IGNORECASE,
     )
 
-    _BY_MODS = (
-        r"(?:\s+added_object_constraint\s*=\s*\([^)]+\))?"
-        r"(?:\s+bindmode\s*=\s*\([^)]+\))?"
-        r"(?:\s+bindipfilter\s*=\s*\([^)]+\))?"
-    )
     BY_CLAUSE_RE: ClassVar[t.RegexPattern] = re.compile(
         r"by\s+(?:"
-        rf'group\s*=\s*"[^"]+"{_BY_MODS}\s*\([^)]+\)'
-        rf'|dn\s*=\s*"[^"]+"{_BY_MODS}\s*\([^)]+\)'
+        rf'group\s*=\s*"[^"]+"{_SUBJ_MODIFIERS}\s*\([^)]+\){_SUBJ_MODIFIERS}'
+        rf'|dn\s*=\s*"[^"]+"{_SUBJ_MODIFIERS}\s*\([^)]+\){_SUBJ_MODIFIERS}'
+        rf'|"[^"]+"{_SUBJ_MODIFIERS}\s*\([^)]+\){_SUBJ_MODIFIERS}'
         r"|SuperUser\s*\([^)]+\)"
-        rf"|self{_BY_MODS}\s*\([^)]+\)"
-        rf"|\*{_BY_MODS}\s*\([^)]+\)"
+        rf"|self{_SUBJ_MODIFIERS}\s*\([^)]+\){_SUBJ_MODIFIERS}"
+        rf"|\*{_SUBJ_MODIFIERS}\s*\([^)]+\){_SUBJ_MODIFIERS}"
         r"|dnattr\s*=\s*\([^)]+\)\s*\([^)]+\)"
         r"|groupattr\s*=\s*\([^)]+\)\s*\([^)]+\)"
         r"|guidattr\s*=\s*\([^)]+\)\s*\([^)]+\)"
@@ -121,7 +130,7 @@ class FlextLdifConstantsAclConvert:
     )
     "Finds each ``by <subject> (perms)`` clause in an OID ACL (optional modifiers)."
     SUBJ_MODIFIER_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"(bindmode|bindipfilter|added_object_constraint)\s*=\s*"
+        r"(bindmode|bindipfilter|added_object_constraint|constraintonaddedobject)\s*=\s*"
         r'(?:\(([^)]+)\)|"([^"]+)")',
         re.IGNORECASE,
     )
