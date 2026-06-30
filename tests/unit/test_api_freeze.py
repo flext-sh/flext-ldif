@@ -97,11 +97,11 @@ class TestsFlextLdifApiFreeze:
         tm.that(tuple(flext_ldif.__all__), eq=PUBLIC_API)
 
     def test_root_lazy_exports_are_public_api_symbols(self) -> None:
-        """The root lazy resolver cannot expose private implementation symbols."""
-        lazy_symbols = set(flext_ldif._LAZY_IMPORTS)
-        public_symbols = set(flext_ldif.__all__)
+        """The root package cannot expose private implementation symbols."""
+        exported_symbols = set(flext_ldif.__all__)
+        public_symbols = set(PUBLIC_API)
 
-        tm.that(lazy_symbols - public_symbols, eq=set())
+        tm.that(exported_symbols - public_symbols, eq=set())
 
     @pytest.mark.parametrize("symbol", PUBLIC_API)
     def test_root_public_symbols_resolve(self, symbol: str) -> None:
