@@ -39,14 +39,14 @@ class FlextLdifServer(s):
 
     def acl(self, server_type: str) -> p.Ldif.AclServer | None:
         """Get ACL server for a server type."""
-        base = self._lookup_base_server(server_type)
+        base = self.server(server_type).unwrap_or(None)
         if base is None:
             return None
         return base.acl_server
 
     def entry(self, server_type: str) -> p.Ldif.EntryServer | None:
         """Get entry server for a server type."""
-        base = self._lookup_base_server(server_type)
+        base = self.server(server_type).unwrap_or(None)
         if base is None:
             return None
         return base.entry_server
@@ -61,14 +61,18 @@ class FlextLdifServer(s):
         ]
     ]:
         """Get all server types for a server."""
-        base = self._lookup_base_server(server_type)
-        if base is None:
+        server_result = self.server(server_type)
+        if server_result.failure:
             return r[
                 t.MappingKV[
                     str,
                     p.Ldif.SchemaServer | p.Ldif.AclServer | p.Ldif.EntryServer,
                 ]
-            ].fail_op("resolve_server_bundle", ValueError(server_type))
+            ].fail_op(
+                "resolve_server_bundle",
+                ValueError(server_result.error or server_type),
+            )
+        base = server_result.value
         return r[
             t.MappingKV[
                 str,
@@ -112,7 +116,7 @@ class FlextLdifServer(s):
         servers_by_server: t.JsonDict = {}
         priorities: t.JsonDict = {}
         for st in server_types:
-            base = self._lookup_base_server(st)
+            base = self.server(st).unwrap_or(None)
             if base is None:
                 continue
             servers_by_server[st] = {
@@ -141,19 +145,11 @@ class FlextLdifServer(s):
         server_type: str,
     ) -> p.Ldif.SchemaServer | None:
         """Get schema server for a server type."""
-        base = self._lookup_base_server(server_type)
+        base = self.server(server_type).unwrap_or(None)
         if base is None:
             return None
         schema_server: p.Ldif.SchemaServer = base.schema_server
         return schema_server
-
-    def _lookup_base_server(self, server_type: str) -> p.Ldif.ServerServer | None:
-        """Resolve a concrete base server or return None on lookup failure."""
-        server_result: p.Result[p.Ldif.ServerServer] = self.server(server_type)
-        if server_result.failure:
-            return None
-        server_value: p.Ldif.ServerServer = server_result.unwrap()
-        return server_value
 
     def list_registered_servers(self) -> t.MutableSequenceOf[str]:
         """List all registered server types."""

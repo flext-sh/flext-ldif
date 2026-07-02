@@ -14,7 +14,7 @@ from datetime import datetime
 from types import MappingProxyType
 from typing import Annotated, ClassVar, Self, override
 
-from flext_cli import m, u
+from flext_core import m, u
 from flext_ldif import c, p, r, t
 from flext_ldif._models.domain_acl import FlextLdifModelsDomainAcl as mdac
 from flext_ldif._models.domain_attributes import (
@@ -742,10 +742,9 @@ class FlextLdifModelsDomainEntry:
             if self._VALIDATION_RULES_KEY not in self.metadata.extensions:
                 return self
             validation_rules = self.metadata.extensions.get(self._VALIDATION_RULES_KEY)
-            normalized_validation_rules = u.Cli.json_as_mapping(validation_rules)
-            rules = FlextLdifUtilitiesEntry.parse_validation_rules(
-                normalized_validation_rules,
-            )
+            if not isinstance(validation_rules, (str, Mapping)):
+                return self
+            rules = FlextLdifUtilitiesEntry.parse_validation_rules(validation_rules)
             if rules is None:
                 return self
             dn_value = self.dn.value if self.dn else ""

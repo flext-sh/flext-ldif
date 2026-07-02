@@ -10,9 +10,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated, Self
+from typing import Annotated
 
-from flext_cli import u
+from flext_core import u
 from flext_ldif import c, t
 from flext_ldif._models.base import FlextLdifModelsBases as mb
 from flext_ldif._models.domain_metadata import FlextLdifModelsDomainMetadata as mdm
@@ -217,64 +217,6 @@ class FlextLdifModelsDomainSchema:
             mdm.ServerMetadata | None,
             u.Field(description="Server-specific server metadata"),
         ] = None
-
-        @classmethod
-        def resolve_syntax_oid(
-            cls,
-            oid: str,
-            server_type: c.Ldif.ServerTypes = c.Ldif.ServerTypes.RFC,
-        ) -> Self | None:
-            """Resolve a syntax OID to a Syntax model using RFC 4517 validation.
-
-            This method is used by both models and the syntax service to avoid
-            circular dependencies.
-
-            Args:
-                oid: Syntax OID to resolve
-                server_type: LDAP server type for server metadata
-
-            Returns:
-                Resolved Syntax model with RFC 4517 compliance details, or None if:
-                - oid is None or empty
-                - syntax OID validation fails
-                - syntax resolution fails
-
-            """
-            if not oid or not oid.strip():
-                return None
-            try:
-                if not c.Ldif.NUMERIC_OID_RE.match(oid):
-                    return None
-                oid_to_name = dict(c.Ldif.OID_TO_NAME)
-                name = oid_to_name.get(oid)
-                type_category = (
-                    c.Ldif.NAME_TO_TYPE_CATEGORY.get(name, "string")
-                    if name
-                    else "string"
-                )
-                metadata = (
-                    mdm.ServerMetadata.model_validate({
-                        "server_type": server_type,
-                    })
-                    if server_type != c.Ldif.ServerTypes.RFC.value
-                    else None
-                )
-                return cls(
-                    oid=oid,
-                    name=name,
-                    desc=None,
-                    type_category=type_category,
-                    max_length=None,
-                    is_binary=False,
-                    case_insensitive=False,
-                    allows_multivalued=True,
-                    encoding=c.Ldif.Encoding.UTF8,
-                    validation_pattern=None,
-                    validation_metadata=None,
-                    metadata=metadata,
-                )
-            except c.Ldif.EXC_LDIF_PARSE:
-                return None
 
         @u.field_validator("oid")
         @classmethod

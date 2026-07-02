@@ -8,7 +8,6 @@ validation, and execution with various server type combinations.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import tm
@@ -17,12 +16,9 @@ from flext_ldif.services.migration import FlextLdifMigrationPipeline
 from flext_ldif.services.pipeline import FlextLdifProcessingPipeline
 from tests.constants import c
 from tests.models import m
+from tests.protocols import p
 from tests.typings import t
 from tests.utilities import TestsFlextLdifUtilities as u
-
-if TYPE_CHECKING:
-    from tests.unit.fixtures import _MigrationPipelineFactory
-
 
 _BASIC_RFC_ENTRY_LDIF = "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n"
 
@@ -35,7 +31,7 @@ class TestsTestFlextLdifMigrationPipeline:
 
     def test_initialization_with_required_params(
         self,
-        migration_pipeline_factory: _MigrationPipelineFactory,
+        migration_pipeline_factory: p.Tests.MigrationPipelineFactory,
         migration_dirs: t.Pair[Path, Path],
     ) -> None:
         """Test pipeline initializes with required parameters."""
@@ -50,7 +46,7 @@ class TestsTestFlextLdifMigrationPipeline:
         tm.that(pipeline.target_server_type, eq=c.Tests.OUD)
 
     def test_initialization_with_defaults(
-        self, migration_pipeline_factory: _MigrationPipelineFactory
+        self, migration_pipeline_factory: p.Tests.MigrationPipelineFactory
     ) -> None:
         """Test pipeline initialization with default server types."""
         pipeline = migration_pipeline_factory()
@@ -73,7 +69,7 @@ class TestsTestFlextLdifMigrationPipeline:
         self,
         source: str,
         target: str,
-        migration_pipeline_factory: _MigrationPipelineFactory,
+        migration_pipeline_factory: p.Tests.MigrationPipelineFactory,
     ) -> None:
         """Test pipeline initialization with various server type combinations."""
         pipeline = migration_pipeline_factory(
@@ -104,7 +100,7 @@ class TestsTestFlextLdifMigrationPipeline:
 
     def test_execute_fails_with_nonexistent_input_dir(
         self,
-        migration_pipeline_factory: _MigrationPipelineFactory,
+        migration_pipeline_factory: p.Tests.MigrationPipelineFactory,
         tmp_path: Path,
     ) -> None:
         """Test pipeline fails when input directory doesn't exist."""
@@ -120,7 +116,7 @@ class TestsTestFlextLdifMigrationPipeline:
     def test_execute_creates_output_dir_if_missing(
         self,
         migration_dirs: t.Pair[Path, Path],
-        migration_pipeline_factory: _MigrationPipelineFactory,
+        migration_pipeline_factory: p.Tests.MigrationPipelineFactory,
         tmp_path: Path,
     ) -> None:
         """Test pipeline creates output directory if it doesn't exist."""
@@ -131,7 +127,7 @@ class TestsTestFlextLdifMigrationPipeline:
         tm.that(nonexistent_output.exists(), eq=True)
 
     def test_execute_with_empty_input(
-        self, migration_pipeline_factory: _MigrationPipelineFactory
+        self, migration_pipeline_factory: p.Tests.MigrationPipelineFactory
     ) -> None:
         """Test pipeline handles empty input directory gracefully."""
         migration_result = tm.ok(migration_pipeline_factory().execute())
@@ -140,7 +136,7 @@ class TestsTestFlextLdifMigrationPipeline:
     def test_basic_execution_rfc_to_rfc(
         self,
         migration_dirs: t.Pair[Path, Path],
-        migration_pipeline_factory: _MigrationPipelineFactory,
+        migration_pipeline_factory: p.Tests.MigrationPipelineFactory,
     ) -> None:
         """Test basic migration from RFC to RFC."""
         input_dir, _ = migration_dirs
@@ -149,7 +145,7 @@ class TestsTestFlextLdifMigrationPipeline:
         tm.that(migration_result.stats.processed_entries, gte=1)
 
     def test_migrate_entries_method(
-        self, migration_pipeline_factory: _MigrationPipelineFactory
+        self, migration_pipeline_factory: p.Tests.MigrationPipelineFactory
     ) -> None:
         """Test migrate_entries method directly."""
         entries = [
@@ -167,7 +163,7 @@ class TestsTestFlextLdifMigrationPipeline:
     def test_migrate_file_method(
         self,
         migration_dirs: t.Pair[Path, Path],
-        migration_pipeline_factory: _MigrationPipelineFactory,
+        migration_pipeline_factory: p.Tests.MigrationPipelineFactory,
     ) -> None:
         """Test migrate_file method directly."""
         input_dir, _ = migration_dirs
@@ -179,7 +175,7 @@ class TestsTestFlextLdifMigrationPipeline:
     def test_execute_with_multiple_files(
         self,
         migration_dirs: t.Pair[Path, Path],
-        migration_pipeline_factory: _MigrationPipelineFactory,
+        migration_pipeline_factory: p.Tests.MigrationPipelineFactory,
     ) -> None:
         """Test pipeline processes multiple input files."""
         input_dir, _ = migration_dirs
@@ -193,7 +189,7 @@ class TestsTestFlextLdifMigrationPipeline:
     def test_migrate_file_not_found(
         self,
         migration_dirs: t.Pair[Path, Path],
-        migration_pipeline_factory: _MigrationPipelineFactory,
+        migration_pipeline_factory: p.Tests.MigrationPipelineFactory,
     ) -> None:
         """Test migrate_file handles non-existent file gracefully."""
         input_dir, _ = migration_dirs
@@ -203,7 +199,7 @@ class TestsTestFlextLdifMigrationPipeline:
         )
 
     def test_migrate_entries_empty_list(
-        self, migration_pipeline_factory: _MigrationPipelineFactory
+        self, migration_pipeline_factory: p.Tests.MigrationPipelineFactory
     ) -> None:
         """Test migrate_entries handles empty list gracefully."""
         migrated = tm.ok(migration_pipeline_factory().migrate_entries([]))
@@ -227,7 +223,7 @@ class TestsTestFlextLdifMigrationPipeline:
     def test_execute_with_file_that_fails_parse(
         self,
         migration_dirs: t.Pair[Path, Path],
-        migration_pipeline_factory: _MigrationPipelineFactory,
+        migration_pipeline_factory: p.Tests.MigrationPipelineFactory,
     ) -> None:
         """Line 185: migration file that fails logs warning and execute continues."""
         input_dir, _ = migration_dirs
@@ -238,7 +234,7 @@ class TestsTestFlextLdifMigrationPipeline:
     def test_migrate_file_returns_fail_when_writer_fails(
         self,
         migration_dirs: t.Pair[Path, Path],
-        migration_pipeline_factory: _MigrationPipelineFactory,
+        migration_pipeline_factory: p.Tests.MigrationPipelineFactory,
     ) -> None:
         """Line 281: migrate_file returns fail when writer reports failure."""
         input_dir, output_dir = migration_dirs
@@ -256,7 +252,7 @@ class TestsTestFlextLdifMigrationPipeline:
     def test_migrate_file_returns_fail_when_read_raises(
         self,
         migration_dirs: t.Pair[Path, Path],
-        migration_pipeline_factory: _MigrationPipelineFactory,
+        migration_pipeline_factory: p.Tests.MigrationPipelineFactory,
     ) -> None:
         """Lines 292-304: migrate_file catches decoding/type errors from IO stage."""
         input_dir, _ = migration_dirs

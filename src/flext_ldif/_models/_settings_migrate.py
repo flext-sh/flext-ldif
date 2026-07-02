@@ -10,7 +10,7 @@ from __future__ import annotations
 from collections.abc import MutableMapping
 from typing import Annotated
 
-from flext_cli import m, u
+from flext_core import m, u
 from flext_ldif import c, t
 from flext_ldif._models._settings_rules import FlextLdifModelsSettingsRules as msr
 

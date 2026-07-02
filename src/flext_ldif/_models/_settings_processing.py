@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Annotated, Self
 
-from flext_cli import m, u
+from flext_core import m, u
 from flext_ldif import FlextLdifShared, c
 from flext_ldif._models._settings_normalization import (
     FlextLdifModelsSettingsNormalization as msn,

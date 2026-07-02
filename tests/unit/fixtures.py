@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Protocol
 
 import pytest
 
@@ -18,19 +17,6 @@ from tests.models import m
 from tests.protocols import p
 from tests.typings import t
 from tests.utilities import u
-
-
-class _MigrationPipelineFactory(Protocol):
-    """Callable contract for the migration pipeline factory fixture."""
-
-    def __call__(
-        self,
-        *,
-        input_dir: Path | None = None,
-        output_dir: Path | None = None,
-        source_server_type: c.Ldif.ServerTypes | str | None = None,
-        target_server_type: c.Ldif.ServerTypes | str | None = None,
-    ) -> FlextLdifMigrationPipeline: ...
 
 
 @pytest.fixture
@@ -214,7 +200,7 @@ def migration_dirs(tmp_path: Path) -> t.Pair[Path, Path]:
 @pytest.fixture
 def migration_pipeline_factory(
     migration_dirs: t.Pair[Path, Path],
-) -> _MigrationPipelineFactory:
+) -> p.Tests.MigrationPipelineFactory:
     """Return a factory that builds ``FlextLdifMigrationPipeline`` instances.
 
     Defaults to the canonical ``RFC -> RFC`` flow with the migration_dirs

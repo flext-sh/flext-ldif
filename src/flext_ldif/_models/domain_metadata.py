@@ -16,7 +16,7 @@ from collections.abc import (
 )
 from typing import Annotated, Self
 
-from flext_cli import m, u
+from flext_core import m, u
 from flext_ldif import c, t
 from flext_ldif._models.domain_attributes import FlextLdifModelsDomainAttributes
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
