@@ -18,8 +18,6 @@ from flext_ldif import (
     u,
 )
 
-logger = u.fetch_logger(__name__)
-
 
 class FlextLdifServersOudAclExtractMixin:
     """OUD AclExtract helpers."""

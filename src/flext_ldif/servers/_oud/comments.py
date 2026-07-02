@@ -19,8 +19,6 @@ from flext_ldif.servers._oud.acl_extract import FlextLdifServersOudAclExtractMix
 from flext_ldif.servers._oud.acl_metadata import FlextLdifServersOudAclMetadataMixin
 from flext_ldif.servers._oud.transform import FlextLdifServersOudTransformMixin
 
-logger = u.fetch_logger(__name__)
-
 
 class FlextLdifServersOudCommentsMixin:
     """OUD Comments helpers."""

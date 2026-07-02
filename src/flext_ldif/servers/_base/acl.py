@@ -15,14 +15,14 @@ from flext_ldif import (
 )
 from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
 
-logger = u.fetch_logger(__name__)
-
 
 class FlextLdifServersBaseSchemaAcl(
     s[t.Ldif.AclPayload],
     FlextLdifServerMethodsMixin,
 ):
     """Base class for ACL servers - satisfies Acl (structural typing)."""
+
+    _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 
     acl_attribute_name: ClassVar[str] = "acl"
     server_type: Annotated[
@@ -189,7 +189,7 @@ class FlextLdifServersBaseSchemaAcl(
             acl: m.Ldif.Acl = m.Ldif.Acl.model_validate(value)
             return acl
         except c.ValidationError as exc:
-            logger.warning(
+            FlextLdifServersBaseSchemaAcl._module_logger.warning(
                 "Failed to coerce value to ACL model",
                 error=str(exc),
                 error_type=type(exc).__name__,
@@ -300,11 +300,19 @@ class FlextLdifServersBaseSchemaAcl(
         """Resolve operation from parameter or kwargs."""
         if operation is not None:
             return operation
-        try:
-            operation_raw = t.str_adapter().validate_python(kwargs.get("operation"))
-        except c.ValidationError:
+        operation_raw = self._parse_operation_kwarg(kwargs).unwrap_or(None)
+        if operation_raw is None:
             return None
         return self._coerce_operation(operation_raw)
+
+    @staticmethod
+    def _parse_operation_kwarg(kwargs: t.JsonMapping) -> p.Result[str]:
+        """Validate the raw 'operation' kwarg as a string, propagating failures."""
+        try:
+            operation_raw = t.str_adapter().validate_python(kwargs.get("operation"))
+        except c.ValidationError as exc:
+            return r[str].fail(str(exc), exception=exc)
+        return r[str].ok(operation_raw)
 
     def _supports_feature(self, _feature_id: str) -> bool:
         """Check if this server supports a specific feature."""

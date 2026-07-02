@@ -230,11 +230,7 @@ class FlextLdifModelsDomainDN:
             """Get canonical case for a DN (case-insensitive lookup)."""
             normalized = self._normalize_dn(dn)
             value = self._registry.get(normalized)
-            try:
-                canonical_dn: str = t.str_adapter().validate_python(value)
-                return canonical_dn
-            except c.ValidationError:
-                return None
+            return value if isinstance(value, str) else None
 
         def register_dn(self, dn: str, *, force: bool = False) -> str:
             """Register DN and return its canonical case."""

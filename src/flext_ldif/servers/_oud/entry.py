@@ -11,7 +11,7 @@ from __future__ import annotations
 from collections.abc import (
     Mapping,
 )
-from typing import override
+from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
@@ -19,8 +19,6 @@ from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
 from flext_ldif.servers._oud.helpers import FlextLdifServersOudHelpersMixin
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-
-logger = u.fetch_logger(__name__)
 
 
 class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
@@ -32,6 +30,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     (ACI normalization + comment generation). Stateless helpers come from
     ``FlextLdifServersOudHelpersMixin`` (composed Mixin facade).
     """
+
+    _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 
     def __init__(
         self,
@@ -205,7 +205,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     if u.matches_type(aci_attrs, (list, tuple))
                     else [str(aci_attrs)]
                 )
-                logger.debug(
+                FlextLdifServersOudEntry._module_logger.debug(
                     "Entry contains OUD ACI macros - preserved for runtime expansion",
                     entry_dn=str(entry.dn) if entry.dn else "",
                     aci_count=len(aci_list),

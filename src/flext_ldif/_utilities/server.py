@@ -94,12 +94,12 @@ class FlextLdifUtilitiesServer:
         if not class_name.startswith("FlextLdifServers"):
             return None
         name_without_prefix = class_name[len("FlextLdifServers") :]
-        server_name_result = FlextLdifUtilitiesServer._extract_server_name(
+        server_name = FlextLdifUtilitiesServer._extract_server_name(
             name_without_prefix,
-        )
-        if server_name_result.failure:
+        ).unwrap_or(None)
+        if server_name is None:
             return None
-        server_type_lower = server_name_result.value.lower()
+        server_type_lower = server_name.lower()
         if FlextLdifUtilitiesServer._is_valid_server_type(server_type_lower):
             return c.Ldif.ServerTypes(server_type_lower)
         return None

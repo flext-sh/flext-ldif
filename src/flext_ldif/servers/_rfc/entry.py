@@ -2,18 +2,18 @@
 
 from __future__ import annotations
 
-from typing import override
+from typing import ClassVar, override
 
 from flext_ldif import m, p, r, t, u
 from flext_ldif.servers.base import FlextLdifServersBase
-
-logger = u.fetch_logger(__name__)
 
 
 class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
     """RFC 2849 compliant LDIF entry processing."""
 
     __doc_inline__ = True
+
+    _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 
     def _parse_entry_from_lines(
         self,
@@ -45,7 +45,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
         try:
             return self._parse_ldif_records(ldif_content)
         except ValueError as exc:
-            logger.exception("Failed to parse LDIF content")
+            FlextLdifServersRfcEntry._module_logger.exception("Failed to parse LDIF content")
             return r[t.MutableSequenceOf[m.Ldif.Entry]].fail_op("Processing", exc)
 
     def _parse_ldif_records(
@@ -59,7 +59,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
             if result.success:
                 entries.append(result.value)
                 continue
-            logger.debug(
+            FlextLdifServersRfcEntry._module_logger.debug(
                 "Skipping invalid entry block",
                 error=result.error or "",
             )

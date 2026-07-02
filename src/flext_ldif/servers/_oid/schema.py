@@ -6,18 +6,18 @@ from collections.abc import (
     Mapping,
     MutableMapping,
 )
-from typing import override
+from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
 from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
-logger = u.fetch_logger(__name__)
-
 
 class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
     """Oracle Internet Directory (OID) schema servers implementation."""
+
+    _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 
     def __init__(
         self,
@@ -120,7 +120,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
                 self._normalize_oid_attribute(attr),
             )
         except c.Ldif.EXC_LDIF_PARSE as e:
-            logger.exception("OID post-parse attribute hook failed")
+            FlextLdifServersOidSchema._module_logger.exception("OID post-parse attribute hook failed")
             return r[m.Ldif.SchemaAttribute].fail_op("OID post-parse attribute hook", e)
 
     def _normalize_oid_attribute(
@@ -164,7 +164,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
                 self._normalize_oid_objectclass(oc),
             )
         except c.Ldif.EXC_LDIF_PARSE as e:
-            logger.exception("OID post-parse objectclass hook failed")
+            FlextLdifServersOidSchema._module_logger.exception("OID post-parse objectclass hook failed")
             return r[m.Ldif.SchemaObjectClass].fail_op(
                 "OID post-parse objectclass hook", e
             )
@@ -226,7 +226,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
         kind = getattr(oc_data, "kind", None)
         match (kind, original_format_str):
             case [k, _] if k and k.upper() == "AUXILLARY":
-                logger.debug(
+                FlextLdifServersOidSchema._module_logger.debug(
                     "OID→RFC transform: AUXILLARY → AUXILIARY",
                     objectclass_name=oc_data.name,
                     objectclass_oid=oc_data.oid,
@@ -235,7 +235,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
                 )
                 return "AUXILIARY"
             case [_, fmt] if fmt and "AUXILLARY" in fmt:
-                logger.debug(
+                FlextLdifServersOidSchema._module_logger.debug(
                     "OID→RFC: AUXILLARY → AUXILIARY (original_format)",
                     objectclass_name=oc_data.name,
                     objectclass_oid=oc_data.oid,
@@ -256,7 +256,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
         sup_normalize_set = {"( top )", "(top)", "'top'", '"top"'}
         match oc_data.sup:
             case sup_str if (sup_clean := str(sup_str).strip()) in sup_normalize_set:
-                logger.debug(
+                FlextLdifServersOidSchema._module_logger.debug(
                     "OID→RFC transform: SUP normalization",
                     objectclass_name=oc_data.name,
                     objectclass_oid=oc_data.oid,
@@ -265,7 +265,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
                 )
                 return "top"
             case [sup_item] if (sup_clean := sup_item.strip()) in sup_normalize_set:
-                logger.debug(
+                FlextLdifServersOidSchema._module_logger.debug(
                     "OID→RFC transform: SUP normalization (list)",
                     objectclass_name=oc_data.name,
                     objectclass_oid=oc_data.oid,
@@ -284,7 +284,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
         sup_patterns = ("SUP 'top'", "SUP ( top )", "SUP (top)")
         match original_format_str:
             case s if any(pattern in s for pattern in sup_patterns):
-                logger.debug(
+                FlextLdifServersOidSchema._module_logger.debug(
                     "OID→RFC transform: SUP normalization (from original_format)",
                     original_format_preview=s[
                         : FlextLdifServersOidConstants.MAX_LOG_LINE_LENGTH
@@ -302,7 +302,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
         try:
             return self._parse_oid_attribute(attr_definition)
         except c.Ldif.EXC_LDIF_PARSE as e:
-            logger.exception("OID attribute parsing failed")
+            FlextLdifServersOidSchema._module_logger.exception("OID attribute parsing failed")
             return r[m.Ldif.SchemaAttribute].fail_op("OID attribute parsing", e)
 
     def _parse_oid_attribute(
@@ -337,7 +337,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
         try:
             return self._parse_oid_objectclass(oc_definition)
         except c.Ldif.EXC_LDIF_PARSE as e:
-            logger.exception("OID objectClass parsing failed")
+            FlextLdifServersOidSchema._module_logger.exception("OID objectClass parsing failed")
             return r[m.Ldif.SchemaObjectClass].fail_op("OID objectClass parsing", e)
 
     def _parse_oid_objectclass(
@@ -375,7 +375,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             FlextLdifServersOidConstants.INVALID_SUBSTR_RULES,
         )
         if fixed_substr != original_substr:
-            logger.debug(
+            FlextLdifServersOidSchema._module_logger.debug(
                 "Replaced invalid SUBSTR rule",
                 attribute_name=attr_data.name,
                 attribute_oid=attr_data.oid,
@@ -387,7 +387,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             set(FlextLdifServersOidConstants.BOOLEAN_ATTRIBUTES),
         )
         if is_boolean:
-            logger.debug(
+            FlextLdifServersOidSchema._module_logger.debug(
                 "Identified boolean attribute",
                 attribute_name=fixed_name,
                 attribute_oid=attr_data.oid,
@@ -431,7 +431,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             normalized_equality != attr_data.equality
             or normalized_substr != attr_data.substr
         ):
-            logger.debug(
+            FlextLdifServersOidSchema._module_logger.debug(
                 "Moved caseIgnoreSubstringsMatch from EQUALITY to SUBSTR",
                 attribute_name=attr_data.name,
                 original_equality=attr_data.equality or "",

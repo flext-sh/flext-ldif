@@ -9,8 +9,6 @@ from typing import ClassVar, override
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
-logger = u.fetch_logger(__name__)
-
 
 class FlextLdifServersOpenldap(FlextLdifServersRfc):
     """OpenLDAP 2.x Servers - Complete Implementation."""

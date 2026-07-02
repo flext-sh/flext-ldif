@@ -5,7 +5,7 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import ClassVar
 
-from flext_cli import t
+from flext_ldif import t
 
 
 class FlextLdifServersBaseConstants:

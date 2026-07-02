@@ -9,8 +9,6 @@ from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
 from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
 from flext_ldif.servers.base import FlextLdifServersBase
 
-logger = u.fetch_logger(__name__)
-
 
 class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
     """LDAP ACL Server - Base Implementation."""

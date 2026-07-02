@@ -282,10 +282,15 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         @staticmethod
         def _decode_sddl(raw_value: str, *, is_base64: bool) -> str | None:
             """Decode SDDL from raw or base64 nTSecurityDescriptor value."""
-            if is_base64 and raw_value:
+
+            def _decode_base64() -> p.Result[str]:
+                """Decode base64 SDDL bytes, propagating the decode failure."""
                 try:
                     decoded_bytes = base64.b64decode(raw_value, validate=True)
-                    return (
+                except binascii.Error as exc:
+                    return r[str].fail(str(exc), exception=exc)
+                try:
+                    decoded = (
                         decoded_bytes.decode(
                             FlextLdifServersAd.Constants.ENCODING_UTF16LE,
                             errors=FlextLdifServersAd.Constants.ENCODING_ERROR_IGNORE,
@@ -295,8 +300,15 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                             errors=FlextLdifServersAd.Constants.ENCODING_ERROR_IGNORE,
                         ).strip()
                     )
-                except (binascii.Error, UnicodeDecodeError):
-                    return None
+                except UnicodeDecodeError as exc:
+                    return r[str].fail(str(exc), exception=exc)
+                return r[str].ok(decoded)
+
+            if is_base64 and raw_value:
+                decode_result = _decode_base64()
+                if decode_result.success:
+                    return decode_result.value
+                return None
             if (
                 raw_value
                 and FlextLdifServersAd.Constants.ACL_SDDL_PREFIX_PATTERN_RE.match(

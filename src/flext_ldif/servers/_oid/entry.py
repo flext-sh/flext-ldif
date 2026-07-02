@@ -6,17 +6,17 @@ from collections.abc import (
     Mapping,
     MutableMapping,
 )
-from typing import override
+from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
-logger = u.fetch_logger(__name__)
-
 
 class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
     """Oracle Internet Directory (OID) Entry implementation."""
+
+    _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 
     def _convert_boolean_attributes_to_rfc(
         self,
@@ -69,7 +69,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                     conversion_dict[format_key] = original_format_str
                     conversion_dict["converted_format"] = converted_format_str
                     boolean_conversions[attr_name] = conversion_dict
-                    logger.debug(
+                    FlextLdifServersOidEntry._module_logger.debug(
                         "Converted boolean attribute OID→RFC",
                         attribute_name=attr_name,
                     )
@@ -99,7 +99,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         parts = original_line.split(":", 1)
         attr_lower = parts[0].strip().lower()
         if attr_lower == "aci":
-            logger.debug("Converting aci to orclaci", line=original_line)
+            FlextLdifServersOidEntry._module_logger.debug("Converting aci to orclaci", line=original_line)
             value_part = parts[1]
             return f"orclaci:{value_part}"
         return original_line
@@ -427,7 +427,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         try:
             return self._post_parse_oid_entry(entry)
         except c.Ldif.EXC_LDIF_PARSE as e:
-            logger.exception("OID post-parse entry hook failed")
+            FlextLdifServersOidEntry._module_logger.exception("OID post-parse entry hook failed")
             return r[m.Ldif.Entry].fail_op("OID post-parse entry hook", e)
 
     def _post_parse_oid_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
@@ -502,7 +502,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         normalized_dn = cleaned_dn
         if cleaned_dn.lower() == FlextLdifServersOidConstants.SCHEMA_DN_SERVER.lower():
             normalized_dn = FlextLdifServersRfc.Constants.SCHEMA_DN
-            logger.debug(
+            FlextLdifServersOidEntry._module_logger.debug(
                 "OID→RFC transform: Normalizing schema DN",
                 original_dn=cleaned_dn,
                 normalized_dn=normalized_dn,
@@ -526,7 +526,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 current_extensions,
             )
         except c.Ldif.EXC_LDIF_PARSE:
-            logger.debug("Failed to parse ACL extension metadata", exc_info=True)
+            FlextLdifServersOidEntry._module_logger.debug("Failed to parse ACL extension metadata", exc_info=True)
 
     def _merge_parsed_acl_extensions_core(
         self,
@@ -701,7 +701,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         rfc_value = converted_val_list[0]
         oid_value = FlextLdifServersOidConstants.RFC_TO_OID.get(rfc_value, rfc_value)
         restored_attrs[attr_name] = [oid_value]
-        logger.debug(
+        FlextLdifServersOidEntry._module_logger.debug(
             "Restored OID boolean format from metadata",
             attribute_name=attr_name,
             rfc_value=rfc_value,
@@ -870,7 +870,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             line_to_write = self._convert_line_boolean_to_oid(original_line)
             line_to_write = self._convert_line_acl_to_oid(line_to_write)
             ldif_lines.append(line_to_write)
-        logger.debug(
+        FlextLdifServersOidEntry._module_logger.debug(
             "Restored original attribute lines from metadata",
             entry_dn=entry_data.dn.value[:50] if entry_data.dn else "",
             original_lines_count=len(original_attr_lines_complete),

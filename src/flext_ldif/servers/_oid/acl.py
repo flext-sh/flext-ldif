@@ -12,8 +12,6 @@ from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
-logger = u.fetch_logger(__name__)
-
 
 class _OidAclTargetAttributesJson(m.RootModel[t.MutableSequenceOf[str]]):
     pass
@@ -22,6 +20,7 @@ class _OidAclTargetAttributesJson(m.RootModel[t.MutableSequenceOf[str]]):
 class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     """Oracle Internet Directory (OID) ACL implementation."""
 
+    _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
     OidAclMetadataConfig: ClassVar[type[m.Ldif.OidAclMetadataConfig]] = (
         m.Ldif.OidAclMetadataConfig
     )
@@ -350,13 +349,19 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         source_subject_type_raw = metadata.extensions.get(
             c.Ldif.ACL_SOURCE_SUBJECT_TYPE,
         )
+        validated = self._validate_subject_type(source_subject_type_raw)
+        if validated.success:
+            return validated.value
+        return None
+
+    @staticmethod
+    def _validate_subject_type(value: t.JsonValue | None) -> p.Result[str]:
+        """Validate a raw metadata value as a subject-type string."""
         try:
-            source_subject_type: str = t.str_adapter().validate_python(
-                source_subject_type_raw,
-            )
-            return source_subject_type
-        except c.ValidationError:
-            return None
+            source_subject_type: str = t.str_adapter().validate_python(value)
+        except c.ValidationError as exc:
+            return r[str].fail(str(exc), exception=exc)
+        return r[str].ok(source_subject_type)
 
     def _map_bind_rules_to_oid(
         self,
@@ -502,7 +507,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         except c.Ldif.EXC_LDIF_PARSE as e:
             max_len = FlextLdifServersOidConstants.MAX_LOG_LINE_LENGTH
             acl_preview = acl_line[:max_len] if len(acl_line) > max_len else acl_line
-            logger.debug(
+            FlextLdifServersOidAcl._module_logger.debug(
                 "OID ACL parse failed",
                 error=e,
                 error_type=type(e).__name__,

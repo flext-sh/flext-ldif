@@ -20,14 +20,14 @@ from flext_ldif import (
 )
 from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
 
-logger = u.fetch_logger(__name__)
-
 
 class FlextLdifServersBaseSchema(
     s[t.Ldif.SchemaConversionValue],
     FlextLdifServerMethodsMixin,
 ):
     """Base class for schema servers using `s` with enhanced usability."""
+
+    _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 
     server_type: Annotated[
         str,
@@ -230,7 +230,7 @@ class FlextLdifServersBaseSchema(
         )
         FlextLdifServersBaseSchema._preserve_formatting(metadata, attr_definition)
         preview_len = 100
-        logger.debug(
+        FlextLdifServersBaseSchema._module_logger.debug(
             "Preserved schema formatting details",
             attr_definition_preview=attr_definition[:preview_len]
             if len(attr_definition) > preview_len
@@ -380,28 +380,28 @@ class FlextLdifServersBaseSchema(
     def _coerce_attribute_model(
         self,
         value: t.JsonValue | t.Ldif.SchemaConversionValue,
-    ) -> m.Ldif.SchemaAttribute | None:
-        """Coerce raw value to a schema attribute model when possible."""
+    ) -> p.Result[m.Ldif.SchemaAttribute]:
+        """Coerce raw value to a schema attribute model, propagating failures."""
         try:
             attribute: m.Ldif.SchemaAttribute = m.Ldif.SchemaAttribute.model_validate(
                 value,
             )
-            return attribute
-        except c.Ldif.EXC_LDIF_PARSE:
-            return None
+        except c.Ldif.EXC_LDIF_PARSE as exc:
+            return r[m.Ldif.SchemaAttribute].fail(str(exc), exception=exc)
+        return r[m.Ldif.SchemaAttribute].ok(attribute)
 
     def _coerce_objectclass_model(
         self,
         value: t.JsonValue | t.Ldif.SchemaConversionValue,
-    ) -> m.Ldif.SchemaObjectClass | None:
-        """Coerce raw value to a schema objectClass model when possible."""
+    ) -> p.Result[m.Ldif.SchemaObjectClass]:
+        """Coerce raw value to a schema objectClass model, propagating failures."""
         try:
             objectclass: m.Ldif.SchemaObjectClass = (
                 m.Ldif.SchemaObjectClass.model_validate(value)
             )
-            return objectclass
-        except c.Ldif.EXC_LDIF_PARSE:
-            return None
+        except c.Ldif.EXC_LDIF_PARSE as exc:
+            return r[m.Ldif.SchemaObjectClass].fail(str(exc), exception=exc)
+        return r[m.Ldif.SchemaObjectClass].ok(objectclass)
 
     def _resolve_data(
         self,
@@ -421,11 +421,19 @@ class FlextLdifServersBaseSchema(
         """Resolve schema operation from parameter or kwargs."""
         if operation is not None:
             return self._coerce_operation(operation)
-        try:
-            raw_operation = t.str_adapter().validate_python(kwargs.get("operation"))
-        except c.ValidationError:
+        raw_operation = self._parse_operation_kwarg(kwargs).unwrap_or(None)
+        if raw_operation is None:
             return None
         return self._coerce_operation(raw_operation)
+
+    @staticmethod
+    def _parse_operation_kwarg(kwargs: t.JsonMapping) -> p.Result[str]:
+        """Validate the raw 'operation' kwarg as a string, propagating failures."""
+        try:
+            raw_operation = t.str_adapter().validate_python(kwargs.get("operation"))
+        except c.ValidationError as exc:
+            return r[str].fail(str(exc), exception=exc)
+        return r[str].ok(raw_operation)
 
     def parse_server(
         self,
@@ -641,14 +649,14 @@ class FlextLdifServersBaseSchema(
                     oc_definition=None,
                 )
         elif operation == "write":
-            attr_model = self._coerce_attribute_model(data)
+            attr_model = self._coerce_attribute_model(data).unwrap_or(None)
             if attr_model is not None:
                 result = self._handle_write_operation(
                     attr_model=attr_model,
                     oc_model=None,
                 )
             else:
-                oc_model = self._coerce_objectclass_model(data)
+                oc_model = self._coerce_objectclass_model(data).unwrap_or(None)
                 if oc_model is not None:
                     result = self._handle_write_operation(
                         attr_model=None, oc_model=oc_model

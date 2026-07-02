@@ -48,9 +48,11 @@ class FlextLdifDetector(s):
         constants_result: p.Result[type[p.Ldif.ServerConstants]] = (
             self._server.resolve_server_constants(server_type)
         )
-        if constants_result.failure:
+        constants: type[p.Ldif.ServerConstants] | None = constants_result.unwrap_or(
+            None,
+        )
+        if constants is None:
             return None
-        constants: type[p.Ldif.ServerConstants] = constants_result.unwrap()
         pattern_values = (
             constants.DETECTION_PATTERN,
             constants.DETECTION_OID_PATTERN,

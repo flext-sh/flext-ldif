@@ -21,8 +21,6 @@ from flext_ldif import (
 )
 from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
 
-logger = u.fetch_logger(__name__)
-
 
 class FlextLdifServersBaseEntry(
     s[t.Ldif.EntryPayload],
@@ -30,6 +28,7 @@ class FlextLdifServersBaseEntry(
 ):
     """Base class for entry processing servers - satisfies Entry (structural typing)."""
 
+    _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
     server_type: Annotated[
         str,
         u.Field(
@@ -84,7 +83,7 @@ class FlextLdifServersBaseEntry(
                 )
                 return validated
             except c.EXC_VALIDATION_TYPE as exc:
-                logger.warning(
+                FlextLdifServersBaseEntry._module_logger.warning(
                     "Failed to validate extension write format options",
                     error=str(exc),
                     error_type=type(exc).__name__,

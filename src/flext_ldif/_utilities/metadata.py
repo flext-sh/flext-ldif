@@ -7,17 +7,17 @@ from collections.abc import (
     Mapping,
     MutableMapping,
 )
-from typing import TypeIs
+from typing import ClassVar, TypeIs
 
 from flext_core import u
 from flext_ldif import c, m, p, t
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer as us
 
-logger = u.fetch_logger(__name__)
-
 
 class FlextLdifUtilitiesMetadata:
     """Metadata utilities for LDIF validation metadata management."""
+
+    _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 
     @staticmethod
     def dump_json_payload(value: t.JsonPayload | None) -> str:
@@ -648,7 +648,7 @@ class FlextLdifUtilitiesMetadata:
     def analyze_schema_formatting(definition: str) -> m.Ldif.SchemaFormatDetails:
         """Analyze schema definition to extract ALL formatting details."""
         combined = FlextLdifUtilitiesMetadata._extract_all_schema_details(definition)
-        logger.debug(
+        FlextLdifUtilitiesMetadata._module_logger.debug(
             "Schema formatting analyzed",
             definition_preview=definition[: c.Ldif.DEFAULT_LINE_WIDTH] + "..."
             if len(definition) > c.Ldif.DEFAULT_LINE_WIDTH
@@ -777,7 +777,7 @@ class FlextLdifUtilitiesMetadata:
             definition,
         )
         object.__setattr__(metadata, "schema_format_details", formatting_details)
-        logger.debug(
+        FlextLdifUtilitiesMetadata._module_logger.debug(
             "Schema formatting preserved in metadata",
             server_type=metadata.server_type,
             fields_preserved=len(formatting_details.model_fields_set),
@@ -809,7 +809,7 @@ class FlextLdifUtilitiesMetadata:
             target_key = f"{attr_name}:oid_value"
         metadata.boolean_conversions[source_key] = original_value
         metadata.boolean_conversions[target_key] = converted_value
-        logger.debug(
+        FlextLdifUtilitiesMetadata._module_logger.debug(
             "Boolean conversion tracked",
             attr_name=attr_name,
             format_direction=format_direction,

@@ -16,8 +16,6 @@ from flext_ldif.servers._oud.acl import FlextLdifServersOudAcl
 from flext_ldif.servers._oud.acl_extract import FlextLdifServersOudAclExtractMixin
 from flext_ldif.servers._oud.acl_metadata import FlextLdifServersOudAclMetadataMixin
 
-logger = u.fetch_logger(__name__)
-
 
 class FlextLdifServersOudAciMixin:
     """OUD Aci helpers."""

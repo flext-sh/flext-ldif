@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import Final
 
-from flext_cli import t
+from flext_ldif import t
 from flext_ldif._constants.enums import FlextLdifConstantsEnums
 
 

@@ -18,8 +18,6 @@ from flext_ldif import (
 )
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer as us
 
-logger = u.fetch_logger(__name__)
-
 
 class FlextLdifUtilitiesParser:
     """Generic LDIF parsing utilities - simple helper functions."""

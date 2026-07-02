@@ -3,17 +3,16 @@
 from __future__ import annotations
 
 from types import MappingProxyType
-from typing import TypeIs
+from typing import ClassVar, TypeIs
 
 from flext_core import u
 from flext_ldif import c, m, p, r, t
-
-logger = u.fetch_logger(__name__)
 
 
 class FlextLdifUtilitiesACL:
     """Generic ACL parsing and writing utilities."""
 
+    _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
     _OPERATOR_PLACEHOLDER: str = "{operator}"
     _ACL_SUBJECT_TYPE_VALUES: frozenset[str] = frozenset(
         subject_type.value for subject_type in c.Ldif.AclSubjectType
@@ -129,18 +128,18 @@ class FlextLdifUtilitiesACL:
         return None
 
     @staticmethod
-    def _extract_from_match(match: t.Ldif.RegexMatch, group: int) -> str | None:
-        """Extract group from regex match."""
+    def _extract_from_match(match: t.Ldif.RegexMatch, group: int) -> p.Result[str]:
+        """Extract group from regex match, propagating the group-index failure."""
         if match.lastindex is None:
             full_match: str = match.group(0)
-            return full_match
+            return r[str].ok(full_match)
         if group > match.lastindex:
-            return None
+            return r[str].fail(f"Regex group {group} exceeds last index")
         try:
             extracted: str = match.group(group)
-            return extracted
-        except IndexError:
-            return None
+        except IndexError as exc:
+            return r[str].fail(str(exc), exception=exc)
+        return r[str].ok(extracted)
 
     @staticmethod
     def _extract_target_info(
@@ -359,7 +358,9 @@ class FlextLdifUtilitiesACL:
                 )
                 result.append(formatted_rule)
             except c.Ldif.EXC_LDIF_PARSE as e:
-                logger.debug("Skipping ACL rule processing due to error", error=str(e))
+                FlextLdifUtilitiesACL._module_logger.debug(
+                    "Skipping ACL rule processing due to error", error=str(e)
+                )
                 continue
         return result
 
@@ -416,9 +417,12 @@ class FlextLdifUtilitiesACL:
         if not content or not pattern:
             return None
         match = c.Ldif.compile_pattern(pattern).search(content)
-        return (
-            FlextLdifUtilitiesACL._extract_from_match(match, group) if match else None
-        )
+        if not match:
+            return None
+        extraction = FlextLdifUtilitiesACL._extract_from_match(match, group)
+        if extraction.success:
+            return extraction.value
+        return None
 
     @staticmethod
     def extract_permissions(
@@ -482,7 +486,9 @@ class FlextLdifUtilitiesACL:
                     continue
                 result.append(format_template.format(value=str(value_raw)))
             except c.Ldif.EXC_LDIF_PARSE as e:
-                logger.debug("Skipping ACL rule processing due to error", error=str(e))
+                FlextLdifUtilitiesACL._module_logger.debug(
+                    "Skipping ACL rule processing due to error", error=str(e)
+                )
         return result
 
     @staticmethod

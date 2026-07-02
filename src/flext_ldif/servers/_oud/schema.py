@@ -5,18 +5,18 @@ from __future__ import annotations
 from collections.abc import (
     MutableMapping,
 )
-from typing import override
+from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
 from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
-logger = u.fetch_logger(__name__)
-
 
 class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
     """Oracle OUD Schema Implementation (RFC 4512 + OUD Extensions)."""
+
+    _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 
     def __init__(
         self,
@@ -67,7 +67,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         fixed_equality = attr_data.equality
         fixed_substr = attr_data.substr
         if fixed_equality == "caseIgnoreSubstringsMatch":
-            logger.warning(
+            FlextLdifServersOudSchema._module_logger.warning(
                 "Moved caseIgnoreSubstringsMatch from EQUALITY to SUBSTR",
                 attribute_name=attr_data.name,
             )
@@ -79,7 +79,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
             FlextLdifServersOudConstants.INVALID_SUBSTR_RULES,
         )
         if fixed_substr != original_substr:
-            logger.warning(
+            FlextLdifServersOudSchema._module_logger.warning(
                 "Replaced invalid SUBSTR rule",
                 attribute_name=attr_data.name,
                 attribute_oid=attr_data.oid,
@@ -188,7 +188,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         )
         oud_extensions = self._collect_attribute_extensions(attr)
         if oud_extensions:
-            logger.debug(
+            FlextLdifServersOudSchema._module_logger.debug(
                 "Attribute has OUD X-* extensions",
                 attribute_name=attr.name,
                 attribute_oid=attr.oid,
@@ -215,7 +215,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
             )
         oc = oid_and_sup_validation.value
         sup_str = str(oc.sup) if oc.sup else "none"
-        logger.debug(
+        FlextLdifServersOudSchema._module_logger.debug(
             "ObjectClass validated: SingleSUP constraint OK",
             objectclass_name=oc.name,
             objectclass_oid=oc.oid,
@@ -237,7 +237,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
             set(FlextLdifServersOudConstants.BOOLEAN_ATTRIBUTES),
         )
         if is_boolean:
-            logger.debug(
+            FlextLdifServersOudSchema._module_logger.debug(
                 "Identified boolean attribute",
                 attribute_name=attr_data.name,
                 attribute_oid=attr_data.oid,

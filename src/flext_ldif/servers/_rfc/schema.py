@@ -7,17 +7,17 @@ from collections.abc import (
     MutableMapping,
     Sequence,
 )
-from typing import Self, overload, override
+from typing import ClassVar, Self, overload, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
 from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
 
-logger = u.fetch_logger(__name__)
-
 
 class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
     """RFC 4512 Compliant Schema Server - STRICT Implementation."""
+
+    _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 
     def __new__(
         cls,
@@ -254,10 +254,19 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
             isinstance(json_value, Sequence) and not isinstance(json_value, str | bytes)
         ):
             return None
+        parsed = FlextLdifServersRfcSchema._parse_int(json_value)
+        if parsed.success:
+            return parsed.value
+        return None
+
+    @staticmethod
+    def _parse_int(json_value: t.JsonPayload) -> p.Result[int]:
+        """Parse a JSON scalar into an int, propagating the conversion failure."""
         try:
-            return int(str(json_value))
-        except c.EXC_TYPE_VALIDATION:
-            return None
+            parsed_int = int(str(json_value))
+        except c.EXC_TYPE_VALIDATION as exc:
+            return r[int].fail(str(exc), exception=exc)
+        return r[int].ok(parsed_int)
 
     @staticmethod
     def _to_optional_str(value: t.JsonValue | None) -> str | None:
@@ -375,7 +384,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
                 validate_dependencies=validate_dependencies,
             )
         except c.Ldif.EXC_LDIF_PARSE as e:
-            logger.exception("Schema extraction failed")
+            FlextLdifServersRfcSchema._module_logger.exception("Schema extraction failed")
             return r[
                 MutableMapping[
                     str,
@@ -606,7 +615,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
         try:
             return self._parse_rfc_objectclass_core(oc_definition)
         except c.EXC_BASIC_TYPE as e:
-            logger.exception("RFC objectClass parsing exception")
+            FlextLdifServersRfcSchema._module_logger.exception("RFC objectClass parsing exception")
             return r[m.Ldif.SchemaObjectClass].fail_op("RFC objectClass parsing", e)
 
     def _parse_rfc_objectclass_core(
@@ -740,7 +749,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
                 if isinstance(data, m.Ldif.SchemaAttribute)
                 else "objectclass"
             )
-            logger.exception("RFC %s writing exception", item_type)
+            FlextLdifServersRfcSchema._module_logger.exception("RFC %s writing exception", item_type)
             return r[str].fail(f"RFC {item_type} writing failed: {e}")
 
     def _write_schema_item_core(
