@@ -1,5 +1,7 @@
 """DN domain models — Distinguished Name, statistics, and registry.
 
+from flext_ldif.models import m
+from flext_ldif.utilities import u
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -11,7 +13,8 @@ from collections.abc import (
 )
 from typing import Annotated, ClassVar, Self, override
 
-from flext_core import m, u
+from flext_core import m
+from flext_core.utilities import FlextUtilities as u
 from flext_ldif import c, p, r, t
 from flext_ldif._models.metadata import FlextLdifModelsMetadata as mdm
 

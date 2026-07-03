@@ -1,5 +1,7 @@
 """Domain Entry model — LDIF entry and entry statistics.
 
+from flext_ldif.models import m
+from flext_ldif.utilities import u
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -14,7 +16,8 @@ from datetime import datetime
 from types import MappingProxyType
 from typing import Annotated, ClassVar, Self, override
 
-from flext_core import m, u
+from flext_core import m
+from flext_core.utilities import FlextUtilities as u
 from flext_ldif import c, p, r, t
 from flext_ldif._models.domain_acl import FlextLdifModelsDomainAcl as mdac
 from flext_ldif._models.domain_attributes import (

@@ -5,8 +5,9 @@ from __future__ import annotations
 from collections.abc import MutableMapping
 from typing import override
 
-from flext_ldif import m, p, r, t
+from flext_ldif import p, r, t
 from flext_ldif._utilities._transformer_base import FlextLdifUtilitiesTransformer
+from flext_ldif.models import FlextLdifModels as m
 
 
 class FlextLdifUtilitiesNormalizeAttrsTransformer(

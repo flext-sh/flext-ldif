@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from flext_ldif import m, t
+from flext_ldif import t
+from flext_ldif.models import FlextLdifModels as m
 
 
 class FlextLdifUtilitiesSchemaNormalize:

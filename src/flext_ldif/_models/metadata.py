@@ -9,7 +9,8 @@ from collections.abc import (
 )
 from typing import Annotated, ClassVar, Self
 
-from flext_core import m, u
+from flext_core import m
+from flext_core.utilities import FlextUtilities as u
 from flext_ldif import t
 
 

@@ -5,8 +5,9 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import ClassVar, TypeIs
 
-from flext_core import u
-from flext_ldif import c, m, p, r, t
+from flext_cli import u
+from flext_ldif import c, p, r, t
+from flext_ldif.models import FlextLdifModels as m
 
 
 class FlextLdifUtilitiesACL:

@@ -1,5 +1,7 @@
 """Domain models for LDIF attributes.
 
+from flext_ldif.models import m
+from flext_ldif.utilities import u
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -13,7 +15,8 @@ from collections.abc import (
 )
 from typing import Annotated, ClassVar, Self
 
-from flext_core import m, u
+from flext_core import m
+from flext_core.utilities import FlextUtilities as u
 from flext_ldif import c, t
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 

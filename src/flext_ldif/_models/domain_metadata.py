@@ -1,5 +1,7 @@
 """Domain models for LDIF metadata.
 
+from flext_ldif.models import m
+from flext_ldif.utilities import u
 Namespace mixin extracted from domain_entries.py containing
 ValidationMetadata, WriteOptions, FormatDetails, SchemaFormatDetails,
 and ServerMetadata inner classes.
@@ -16,7 +18,8 @@ from collections.abc import (
 )
 from typing import Annotated, Self
 
-from flext_core import m, u
+from flext_core import m
+from flext_core.utilities import FlextUtilities as u
 from flext_ldif import c, t
 from flext_ldif._models.domain_attributes import FlextLdifModelsDomainAttributes
 from flext_ldif._models.metadata import FlextLdifModelsMetadata

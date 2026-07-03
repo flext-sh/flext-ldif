@@ -11,13 +11,12 @@ from collections.abc import (
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, Protocol, runtime_checkable
 
-from flext_core import p
-
 if TYPE_CHECKING:
     from flext_ldif import (
         FlextLdifProtocols as lp,
         c,
         m,
+        p,
         t,
     )
     from flext_ldif._protocols.domain import FlextLdifProtocolsDomain as lpd

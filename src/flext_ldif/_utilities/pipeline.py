@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_ldif import c, m, p, r, t
+from flext_ldif import c, p, r, t
+from flext_ldif.models import FlextLdifModels as m
 
 
 class FlextLdifUtilitiesPipeline:

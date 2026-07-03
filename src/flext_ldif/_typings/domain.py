@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from flext_core import t
+from flext_core.typings import FlextTypes as t
 from flext_ldif.protocols import p
 
 

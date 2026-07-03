@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from flext_ldif import c, m, t
+from flext_ldif import c, t
+from flext_ldif.models import FlextLdifModels as m
 
 
 class FlextLdifUtilitiesWriter:

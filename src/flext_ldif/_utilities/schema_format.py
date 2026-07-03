@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from flext_core import u as core_u
-from flext_ldif import c, m, t
+from flext_cli import u as core_u
+from flext_ldif import c, t
+from flext_ldif.models import FlextLdifModels as m
 
 
 class FlextLdifUtilitiesSchemaFormat:

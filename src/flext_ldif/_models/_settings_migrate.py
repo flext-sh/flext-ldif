@@ -1,5 +1,7 @@
 """LDIF settings mix-in: migrate.
 
+from flext_ldif.models import m
+from flext_ldif.utilities import u
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
@@ -10,7 +12,8 @@ from __future__ import annotations
 from collections.abc import MutableMapping
 from typing import Annotated
 
-from flext_core import m, u
+from flext_core import m
+from flext_core.utilities import FlextUtilities as u
 from flext_ldif import c, t
 from flext_ldif._models._settings_rules import FlextLdifModelsSettingsRules as msr
 

@@ -8,11 +8,11 @@ from typing import TypeIs
 from flext_ldif import (
     FlextLdifShared,
     c,
-    m,
     p,
     r,
     t,
 )
+from flext_ldif.models import FlextLdifModels as m
 
 
 class FlextLdifUtilitiesServer:

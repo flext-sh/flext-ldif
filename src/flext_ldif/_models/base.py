@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_core import m, u
+from flext_core import m
+from flext_core.utilities import FlextUtilities as u
 from flext_ldif import FlextLdifShared, c, t
 
 

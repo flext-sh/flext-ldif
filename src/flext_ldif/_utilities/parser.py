@@ -8,15 +8,15 @@ from collections.abc import (
     MutableMapping,
 )
 
-from flext_core import u
+from flext_cli import u
 from flext_ldif import (
     c,
-    m,
     p,
     r,
     t,
 )
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer as us
+from flext_ldif.models import FlextLdifModels as m
 
 
 class FlextLdifUtilitiesParser:
