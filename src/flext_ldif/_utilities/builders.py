@@ -38,11 +38,11 @@ class ProcessConfigBuilder:
         super().__init__()
         self._source_server: c.Ldif.ServerTypes = c.Ldif.ServerTypes.RFC
         self._target_server: c.Ldif.ServerTypes | None = None
-        self._dn_config: DnNormalizationConfig | None = None
-        self._attr_config: AttrNormalizationConfig | None = None
-        self._acl_config: AclConversionConfig | None = None
-        self._validation_config: ValidationConfig | None = None
-        self._metadata_config: MetadataConfig | None = None
+        self._dn_config: FlextLdifModels.Ldif.DnNormalizationConfig | None = None
+        self._attr_config: FlextLdifModels.Ldif.AttrNormalizationConfig | None = None
+        self._acl_config: FlextLdifModels.Ldif.AclConversionConfig | None = None
+        self._validation_config: FlextLdifModels.Ldif.ValidationConfig | None = None
+        self._metadata_config: FlextLdifModels.Ldif.MetadataConfig | None = None
 
     def acl_conversion(
         self,
@@ -52,23 +52,26 @@ class ProcessConfigBuilder:
         map_server_specific: bool = True,
     ) -> Self:
         """Configure ACL conversion."""
-        self._acl_config = AclConversionConfig(
+        self._acl_config = FlextLdifModels.Ldif.AclConversionConfig(
             convert_aci=convert_aci,
             preserve_original_aci=preserve_original_aci,
             map_server_specific=map_server_specific,
         )
         return self
 
-    def build(self) -> ProcessConfig:
+    def build(self) -> FlextLdifModels.Ldif.ProcessConfig:
         """Build the ProcessConfig."""
-        return ProcessConfig(
+        return FlextLdifModels.Ldif.ProcessConfig(
             source_server=self._source_server,
             target_server=self._target_server or c.Ldif.ServerTypes.RFC,
-            dn_config=self._dn_config or DnNormalizationConfig(),
-            attr_config=self._attr_config or AttrNormalizationConfig(),
-            acl_config=self._acl_config or AclConversionConfig(),
-            validation_config=self._validation_config or ValidationConfig(),
-            metadata_config=self._metadata_config or MetadataConfig(),
+            dn_config=self._dn_config or FlextLdifModels.Ldif.DnNormalizationConfig(),
+            attr_config=self._attr_config
+            or FlextLdifModels.Ldif.AttrNormalizationConfig(),
+            acl_config=self._acl_config or FlextLdifModels.Ldif.AclConversionConfig(),
+            validation_config=self._validation_config
+            or FlextLdifModels.Ldif.ValidationConfig(),
+            metadata_config=self._metadata_config
+            or FlextLdifModels.Ldif.MetadataConfig(),
         )
 
     def normalize_attrs(
@@ -86,7 +89,9 @@ class ProcessConfigBuilder:
             "lowercase_keys": lowercase_keys,
             "sort_attributes": sort_attributes,
         }
-        self._attr_config = AttrNormalizationConfig.model_validate(config_kwargs)
+        self._attr_config = FlextLdifModels.Ldif.AttrNormalizationConfig.model_validate(
+            config_kwargs
+        )
         return self
 
     def normalize_dn(
@@ -104,7 +109,9 @@ class ProcessConfigBuilder:
             config_kwargs["space_handling"] = spaces
         if escapes is not None:
             config_kwargs["escape_handling"] = escapes
-        self._dn_config = DnNormalizationConfig.model_validate(config_kwargs)
+        self._dn_config = FlextLdifModels.Ldif.DnNormalizationConfig.model_validate(
+            config_kwargs
+        )
         return self
 
     def preserve_metadata(
@@ -115,7 +122,7 @@ class ProcessConfigBuilder:
         preserve_validation: bool = False,
     ) -> Self:
         """Configure metadata handling."""
-        self._metadata_config = MetadataConfig(
+        self._metadata_config = FlextLdifModels.Ldif.MetadataConfig(
             include_timestamps=preserve_original,
             include_processing_stats=preserve_tracking,
             preserve_validation=preserve_validation,
@@ -140,7 +147,7 @@ class ProcessConfigBuilder:
         validate_dn_format: bool = True,
     ) -> Self:
         """Configure validation behavior."""
-        self._validation_config = ValidationConfig(
+        self._validation_config = FlextLdifModels.Ldif.ValidationConfig(
             strict_mode=strict_rfc,
             validate_schema=allow_server_quirks,
             validate_acl=validate_dn_format,
@@ -160,9 +167,9 @@ class TransformConfigBuilder:
         self._preserve_order: bool = True
         self._track_changes: bool = True
 
-    def build(self) -> TransformConfig:
+    def build(self) -> FlextLdifModels.Ldif.TransformConfig:
         """Build the TransformConfig."""
-        return TransformConfig(
+        return FlextLdifModels.Ldif.TransformConfig(
             fail_fast=self._fail_fast,
             preserve_order=self._preserve_order,
             track_changes=self._track_changes,
@@ -196,9 +203,9 @@ class FilterConfigBuilder:
         self._case_sensitive: bool = False
         self._include_metadata_matches: bool = False
 
-    def build(self) -> FilterConfig:
+    def build(self) -> FlextLdifModels.Ldif.FilterConfig:
         """Build the FilterConfig."""
-        return FilterConfig(
+        return FlextLdifModels.Ldif.FilterConfig(
             mode=self._mode,
             case_sensitive=self._case_sensitive,
             include_metadata_matches=self._include_metadata_matches,
@@ -256,7 +263,7 @@ class WriteConfigBuilder:
         self._base64_attrs = attrs
         return self
 
-    def build(self) -> WriteConfig:
+    def build(self) -> FlextLdifModels.Ldif.WriteConfig:
         """Build the WriteConfig."""
         base64_attrs_value = (
             [str(item) for item in self._base64_attrs]
@@ -266,7 +273,7 @@ class WriteConfigBuilder:
         attr_order_value = (
             list(self._attr_order) if self._attr_order is not None else None
         )
-        return WriteConfig(
+        return FlextLdifModels.Ldif.WriteConfig(
             format=self._format.value,
             line_width=self._line_width,
             fold_lines=self._fold_lines,

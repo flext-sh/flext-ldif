@@ -25,10 +25,6 @@ SchemaModelT = TypeVar(
     FlextLdifModelsDomains.SchemaObjectClass,
 )
 
-type _SchemaElementUnion = (
-    FlextLdifModelsDomains.SchemaAttribute | FlextLdifModelsDomains.SchemaObjectClass
-)
-
 
 class FlextLdifUtilitiesSchema:
     """Generic attribute definition normalization utilities."""
@@ -81,8 +77,8 @@ class FlextLdifUtilitiesSchema:
         | FlextLdifModelsDomains.SchemaObjectClass,
         field_name: str,
         transform_fn: Callable[
-            [object],
-            builtins.object | r[builtins.object],
+            ...,
+            t.Container | r[t.Container],
         ],
     ) -> r[
         FlextLdifModelsDomains.SchemaAttribute
@@ -100,11 +96,14 @@ class FlextLdifUtilitiesSchema:
                     ].fail(
                         f"Transformation of '{field_name}' failed: {new_value.error}"
                     )
-                resolved_value: builtins.object = new_value.value
+                resolved_value: t.Container = new_value.value
                 setattr(transformed, field_name, resolved_value)
             else:
                 setattr(transformed, field_name, new_value)
-            return r[_SchemaElementUnion].ok(transformed)
+            return r[
+                FlextLdifModelsDomains.SchemaAttribute
+                | FlextLdifModelsDomains.SchemaObjectClass
+            ].ok(transformed)
         except (
             ValueError,
             KeyError,
@@ -127,8 +126,8 @@ class FlextLdifUtilitiesSchema:
         field_transforms: Mapping[
             str,
             Callable[
-                [object],
-                builtins.object | r[builtins.object],
+                ...,
+                t.Container | r[t.Container],
             ]
             | str
             | list[str]
@@ -631,9 +630,10 @@ class FlextLdifUtilitiesSchema:
     ]:
         """Wrap transformation result with proper type."""
         try:
-            return r[_SchemaElementUnion].ok(
-                FlextLdifModelsDomains.SchemaAttribute.model_validate(transformed)
-            )
+            return r[
+                FlextLdifModelsDomains.SchemaAttribute
+                | FlextLdifModelsDomains.SchemaObjectClass
+            ].ok(FlextLdifModelsDomains.SchemaAttribute.model_validate(transformed))
         except (
             ValueError,
             KeyError,
@@ -646,9 +646,10 @@ class FlextLdifUtilitiesSchema:
                 error=str(exc),
             )
         try:
-            return r[_SchemaElementUnion].ok(
-                FlextLdifModelsDomains.SchemaObjectClass.model_validate(transformed)
-            )
+            return r[
+                FlextLdifModelsDomains.SchemaAttribute
+                | FlextLdifModelsDomains.SchemaObjectClass
+            ].ok(FlextLdifModelsDomains.SchemaObjectClass.model_validate(transformed))
         except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
             return r[
                 FlextLdifModelsDomains.SchemaAttribute
@@ -749,7 +750,10 @@ class FlextLdifUtilitiesSchema:
             validated_attr = FlextLdifModelsDomains.SchemaAttribute.model_validate(
                 unwrapped
             )
-            return r[_SchemaElementUnion].ok(validated_attr)
+            return r[
+                FlextLdifModelsDomains.SchemaAttribute
+                | FlextLdifModelsDomains.SchemaObjectClass
+            ].ok(validated_attr)
         except (
             ValueError,
             KeyError,
@@ -765,7 +769,10 @@ class FlextLdifUtilitiesSchema:
             validated_oc = FlextLdifModelsDomains.SchemaObjectClass.model_validate(
                 unwrapped
             )
-            return r[_SchemaElementUnion].ok(validated_oc)
+            return r[
+                FlextLdifModelsDomains.SchemaAttribute
+                | FlextLdifModelsDomains.SchemaObjectClass
+            ].ok(validated_oc)
         except (ValueError, KeyError, AttributeError, UnicodeDecodeError, struct.error):
             return r[
                 FlextLdifModelsDomains.SchemaAttribute
@@ -803,8 +810,8 @@ class FlextLdifUtilitiesSchema:
         field_transforms: Mapping[
             str,
             Callable[
-                [object],
-                builtins.object | r[builtins.object],
+                ...,
+                t.Container | r[t.Container],
             ]
             | str
             | list[str]

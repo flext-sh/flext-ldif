@@ -1,23 +1,26 @@
+# AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
+# Regenerate with: make codegen
+#
 """Base server classes for LDIF/LDAP processing."""
 
 from __future__ import annotations
 
-from importlib import import_module
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import cleanup_submodule_namespace
+from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
+    from flext_core.typings import FlextTypes
+
     from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
     from flext_ldif.servers._base.constants import (
         FlextLdifServersBaseConstants,
         FlextLdifServersBaseQuirkHelpers,
-        logger,
+        QuirkMethodsMixin,
     )
     from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
-    from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
+    from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema, logger
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextLdifServersBaseConstants": (
         "flext_ldif.servers._base.constants",
@@ -39,7 +42,8 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_ldif.servers._base.acl",
         "FlextLdifServersBaseSchemaAcl",
     ),
-    "logger": ("flext_ldif.servers._base.constants", "logger"),
+    "QuirkMethodsMixin": ("flext_ldif.servers._base.constants", "QuirkMethodsMixin"),
+    "logger": ("flext_ldif.servers._base.schema", "logger"),
 }
 
 __all__ = [
@@ -48,21 +52,14 @@ __all__ = [
     "FlextLdifServersBaseQuirkHelpers",
     "FlextLdifServersBaseSchema",
     "FlextLdifServersBaseSchemaAcl",
+    "QuirkMethodsMixin",
     "logger",
 ]
 
 
-def __getattr__(name: str) -> type[object]:
+def __getattr__(name: str) -> FlextTypes.ModuleExport:
     """Lazy-load module attributes on first access (PEP 562)."""
-    lazy_import = _LAZY_IMPORTS.get(name)
-    if lazy_import is None:
-        msg = f"module {__name__!r} has no attribute {name!r}"
-        raise AttributeError(msg)
-    module_path, attr_name = lazy_import
-    module = import_module(module_path)
-    value = getattr(module, attr_name)
-    globals()[name] = value
-    return value
+    return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
 
 
 def __dir__() -> list[str]:

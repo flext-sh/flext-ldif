@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from typing import Protocol, Self, override
+from typing import Self, override
 
 from flext_core import r
 
@@ -21,18 +21,12 @@ class _Filtered:
 FILTERED = _Filtered()
 
 
-class _StepFunction[TIn, TOut](Protocol):
-    """Protocol for pipeline step functions with type safety."""
-
-    def __call__(self, input_data: TIn) -> r[TOut]: ...
-
-
 class PipelineStep[TIn, TOut]:
     """A single step in a pipeline."""
 
     __slots__ = ("_func", "_name")
 
-    def __init__(self, name: str, func: _StepFunction[TIn, TOut]) -> None:
+    def __init__(self, name: str, func: Callable[[TIn], r[TOut]]) -> None:
         """Initialize pipeline step."""
         super().__init__()
         self._name = name

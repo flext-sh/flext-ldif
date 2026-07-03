@@ -7,8 +7,8 @@ from typing import Annotated
 from flext_core import FlextModels
 from pydantic import ConfigDict, Field, computed_field
 
-from flext_ldif._shared import FlextLdifShared
 from flext_ldif.constants import FlextLdifConstants as c
+from flext_ldif.shared import FlextLdifShared
 
 
 class FlextLdifModelsBase(FlextModels.ArbitraryTypesModel):

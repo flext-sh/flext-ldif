@@ -59,7 +59,7 @@ def get_entry_quirk(self, server_type: str) -> FlextLdifServersBase.Entry | None
 **After**: Single generic method + thin wrappers
 
 ```python
-def _get_attr(self, server_type: str, attr_name: str) -> object | None:
+def _get_attr(self, server_type: str, attr_name: str) | None:
     """Generic method to get quirk attribute (schema, acl, entry).
     Eliminates ~100 lines of DRY violations from separate get_* methods."""
     base = self._bases.get(self._normalize_server_type(server_type))
@@ -160,7 +160,7 @@ def _get_attr(
     self,
     server_type: str,
     attr_name: str,
-) -> object | None:
+) | None:
     """Generic method to get quirk attribute (schema, acl, entry).
 
     Eliminates ~100 lines of DRY violations from separate get_* methods.

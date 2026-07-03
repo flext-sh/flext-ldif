@@ -8,7 +8,7 @@ import struct
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
-from flext_core import FlextLogger, r, u
+from flext_core import FlextLogger, r, t, u
 
 from flext_ldif import c, m
 from flext_ldif._models.settings import FlextLdifModelsSettings
@@ -296,7 +296,7 @@ class FlextLdifUtilitiesWriter:
         attr_order_raw: list[str] | None = None
         metadata_extensions = getattr(metadata, "extensions", None)
         if isinstance(metadata_extensions, Mapping):
-            typed_extensions = m.ConfigMap(metadata_extensions).root
+            typed_extensions = t.ConfigMap(metadata_extensions).root
             raw_attr_order: builtins.object | None = typed_extensions.get(
                 "attribute_order"
             )
@@ -307,7 +307,7 @@ class FlextLdifUtilitiesWriter:
         elif isinstance(metadata, Mapping):
             raw_extensions = metadata.get("extensions")
             if isinstance(raw_extensions, Mapping):
-                typed_extensions = m.ConfigMap(raw_extensions).root
+                typed_extensions = t.ConfigMap(raw_extensions).root
                 raw_attr_order = typed_extensions.get("attribute_order")
                 if isinstance(raw_attr_order, Sequence) and not isinstance(
                     raw_attr_order, (str, bytes)

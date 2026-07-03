@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from enum import StrEnum
+from enum import StrEnum, unique
 from typing import Final
 
 import pytest
@@ -22,6 +22,7 @@ from flext_ldif import FlextLdif, FlextLdifStatistics, m
 from tests import c
 
 
+@unique
 class APIScenarios(StrEnum):
     """Test scenarios for API integration testing."""
 

@@ -6,7 +6,7 @@ import builtins
 import re
 from collections.abc import Mapping, Sequence
 from datetime import datetime
-from typing import TypeGuard
+from typing import TypeIs
 
 from flext_core import FlextLogger, u
 
@@ -576,7 +576,7 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def _is_metadata_scalar_typed(
         value: builtins.object,
-    ) -> TypeGuard[t.Scalar | None]:
+    ) -> TypeIs[t.Scalar | None]:
         return FlextLdifUtilitiesMetadata._is_metadata_scalar(value)
 
     @staticmethod
@@ -627,7 +627,7 @@ class FlextLdifUtilitiesMetadata:
                     }
                 else:
                     normalized_metadata[key] = str(value)
-            setattr(model, "validation_metadata", m.ConfigMap(root=normalized_metadata))
+            setattr(model, "validation_metadata", t.ConfigMap(root=normalized_metadata))
         except (AttributeError, TypeError, ValueError):
             pass
 
@@ -854,7 +854,7 @@ class FlextLdifUtilitiesMetadata:
         if isinstance(raw_extras, Mapping):
             extras = {
                 extra_key: u.normalize_to_metadata_value(extra_value)
-                for extra_key, extra_value in m.ConfigMap(raw_extras).root.items()
+                for extra_key, extra_value in t.ConfigMap(raw_extras).root.items()
             }
         opt = extras.get(key)
         if isinstance(opt, Mapping):

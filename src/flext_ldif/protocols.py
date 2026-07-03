@@ -7,7 +7,7 @@ from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core import FlextProtocols, r
+from flext_core import FlextProtocols, r, t
 
 from flext_ldif import c
 
@@ -28,7 +28,7 @@ class FlextLdifProtocols(FlextProtocols):
 
             dn: str | None
             attributes: Mapping[str, Sequence[str]] | None
-            metadata: m.ConfigMap | None
+            metadata: t.ConfigMap | None
 
             def get_objectclass_names(self) -> Sequence[str]:
                 """Get list of objectClass values from entry."""
@@ -388,7 +388,7 @@ class FlextLdifProtocols(FlextProtocols):
         class ModelWithValidationMetadata(Protocol):
             """Protocol for models with validation_metadata attribute."""
 
-            validation_metadata: m.ConfigMap | None
+            validation_metadata: t.ConfigMap | None
 
         @runtime_checkable
         class Transformer[T](Protocol):

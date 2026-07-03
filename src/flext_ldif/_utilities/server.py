@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 import sys
-from typing import Literal, TypeGuard
+from typing import Literal, TypeIs
 
 from flext_core import r
 
@@ -109,7 +109,7 @@ class FlextLdifUtilitiesServer:
     @staticmethod
     def _is_valid_server_type_literal(
         value: str,
-    ) -> TypeGuard[c.Ldif.LiteralTypes.ServerTypeLiteral]:
+    ) -> TypeIs[c.Ldif.LiteralTypes.ServerTypeLiteral]:
         return value in _VALID_SERVER_TYPES
 
     @staticmethod

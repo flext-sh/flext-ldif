@@ -6,7 +6,7 @@ Directory Server-specific attributes, object classes, and entries in LDIF format
 
 from __future__ import annotations
 
-from enum import StrEnum
+from enum import StrEnum, unique
 from typing import ClassVar
 
 import pytest
@@ -17,6 +17,7 @@ from flext_ldif import m
 from flext_ldif.servers.ds389 import FlextLdifServersDs389
 
 
+@unique
 class AttributeScenario(StrEnum):
     """DS389 attribute detection scenarios."""
 
@@ -27,6 +28,7 @@ class AttributeScenario(StrEnum):
     STANDARD_RFC = "standard_rfc"
 
 
+@unique
 class ObjectClassScenario(StrEnum):
     """DS389 objectClass detection scenarios."""
 
@@ -35,6 +37,7 @@ class ObjectClassScenario(StrEnum):
     STANDARD_RFC = "standard_rfc"
 
 
+@unique
 class AclScenario(StrEnum):
     """DS389 ACL handling scenarios."""
 
@@ -44,6 +47,7 @@ class AclScenario(StrEnum):
     EMPTY_LINE = "empty_line"
 
 
+@unique
 class EntryScenario(StrEnum):
     """DS389 entry detection scenarios."""
 

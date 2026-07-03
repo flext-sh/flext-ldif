@@ -8,12 +8,13 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableMapping
 from datetime import datetime
-from typing import Annotated, Literal, TypeAlias, TypeVar
+from typing import Annotated, TypeVar
 
 from flext_core import FlextTypes, r
 from pydantic import BaseModel, StringConstraints
 
 from flext_ldif import c
+from flext_ldif.constants import FlextLdifConstants
 
 # =========================================================================
 # RECURSIVE TYPES - Defined at module level for reliable scope resolution
@@ -40,22 +41,22 @@ class FlextLdifTypes(FlextTypes):
     class Ldif:
         """LDIF domain type namespace."""
 
-        Scalar: TypeAlias = _Scalar
-        MetadataValue: TypeAlias = _RecursiveMetadata
-        MetadataDict: TypeAlias = Mapping[str, MetadataValue]
-        object: TypeAlias = _RecursiveContainer
+        type Scalar = _Scalar
+        type MetadataValue = _RecursiveMetadata
+        type MetadataDict = Mapping[str, MetadataValue]
+        type object = _RecursiveContainer
 
-        ValueType: TypeAlias = Scalar | list[str]
-        ValueList: TypeAlias = list[ValueType]
-        AttributeValue: TypeAlias = str | bytes
-        DnString: TypeAlias = str
-        RdnString: TypeAlias = str
-        ServerType: TypeAlias = str
-        MetadataKey: TypeAlias = str
-        ProcessingMode: TypeAlias = Literal["strict", "relaxed", "auto"]
-        ValidationLevel: TypeAlias = Literal["none", "basic", "full"]
-        EntryAttributesDict: TypeAlias = dict[str, list[str]]
-        RawEntryDict: TypeAlias = dict[str, str | list[str] | set[str]]
+        type ValueType = Scalar | list[str]
+        type ValueList = list[ValueType]
+        type AttributeValue = str | bytes
+        type DnString = str
+        type RdnString = str
+        type ServerType = str
+        type MetadataKey = str
+        type ProcessingMode = FlextLdifConstants.ProcessingMode
+        type ValidationLevel = FlextLdifConstants.ValidationLevel
+        type EntryAttributesDict = dict[str, list[str]]
+        type RawEntryDict = dict[str, str | list[str] | set[str]]
 
         class Rfc:
             """RFC-compliant annotated types (moved from _models/rfc_validation_types.py)."""
@@ -87,8 +88,8 @@ class FlextLdifTypes(FlextTypes):
         class Extensions:
             """Extension-related type aliases for schema parsing."""
 
-            ExtensionValue: TypeAlias = str | list[str]
-            ExtensionKey: TypeAlias = str
+            type ExtensionValue = str | list[str]
+            type ExtensionKey = str
 
         class Decorators:
             """Decorator-related type aliases for quirk server decorators.
@@ -99,43 +100,39 @@ class FlextLdifTypes(FlextTypes):
             Runtime isinstance checks narrow types inside the decorator bodies.
             """
 
-            ParseMethodArg: TypeAlias = str
-            ParseMethodReturn: TypeAlias = r[FlextTypes.Scalar | list[str] | None]
-            ParseMethod: TypeAlias = Callable[[object, str], ParseMethodReturn]
-            ParseMethodDecorator: TypeAlias = Callable[[ParseMethod], ParseMethod]
-            WriteMethodArg: TypeAlias = FlextTypes.Scalar | list[str] | None
-            WriteMethodReturn: TypeAlias = (
+            type ParseMethodArg = str
+            type ParseMethodReturn = r[FlextTypes.Scalar | list[str] | None]
+            type ParseMethod = Callable[[object, str], ParseMethodReturn]
+            type ParseMethodDecorator = Callable[[ParseMethod], ParseMethod]
+            type WriteMethodArg = FlextTypes.Scalar | list[str] | None
+            type WriteMethodReturn = (
                 FlextTypes.Scalar
                 | list[str]
                 | None
                 | r[FlextTypes.Scalar | list[str] | None]
             )
-            WriteMethod: TypeAlias = Callable[
-                [object, WriteMethodArg], WriteMethodReturn
-            ]
-            WriteMethodDecorator: TypeAlias = Callable[[WriteMethod], WriteMethod]
-            SafeMethod: TypeAlias = Callable[
+            type WriteMethod = Callable[[object, WriteMethodArg], WriteMethodReturn]
+            type WriteMethodDecorator = Callable[[WriteMethod], WriteMethod]
+            type SafeMethod = Callable[
                 [object, ParseMethodArg], FlextTypes.Scalar | list[str] | None
             ]
-            SafeMethodDecorator: TypeAlias = Callable[[SafeMethod], SafeMethod]
+            type SafeMethodDecorator = Callable[[SafeMethod], SafeMethod]
 
         class CommonDict:
             """Common dictionary type aliases used across modules."""
 
-            DistributionDict: TypeAlias = MutableMapping[str, int]
-            AttributeDict: TypeAlias = Mapping[str, list[str]]
-            AttributeDictGeneric: TypeAlias = Mapping[str, list[str] | str]
+            type DistributionDict = MutableMapping[str, int]
+            type AttributeDict = Mapping[str, list[str]]
+            type AttributeDictGeneric = Mapping[str, list[str] | str]
 
-        TemplateValue: TypeAlias = FlextTypes.Scalar | None
+        type TemplateValue = FlextTypes.Scalar | None
         T = TypeVar("T")
         TEntry = TypeVar("TEntry")
         TAttribute = TypeVar("TAttribute")
         TSchema = TypeVar("TSchema")
 
     class _Core:
-        type ConversionTargetType = Literal[
-            "str", "int", "float", "bool", "list", "tuple", "dict"
-        ]
+        type ConversionTargetType = FlextLdifConstants.ConversionTargetType
         type ResultValue[T] = T
         type DN = str
 
@@ -145,3 +142,9 @@ class FlextLdifTypes(FlextTypes):
 t = FlextLdifTypes
 
 __all__ = ["FlextLdifTypes", "t"]
+
+
+type FilterFactoryType = Callable[[], object]
+
+
+type CategorizationFactoryType = Callable[[str], object]

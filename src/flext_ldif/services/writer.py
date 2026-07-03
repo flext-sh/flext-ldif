@@ -77,7 +77,7 @@ class FlextLdifWriter(s[m.Ldif.WriteResponse]):
         entries: list[m.Ldif.Entry] = []
         entry_candidates: tuple[builtins.object, ...] = ()
         with suppress(Exception):
-            entry_candidates = tuple(m.ObjectList(entries_raw).root)
+            entry_candidates = tuple(t.ObjectList(entries_raw).root)
         for entry_candidate in entry_candidates:
             validated_entry: m.Ldif.Entry | None = None
             with suppress(Exception):

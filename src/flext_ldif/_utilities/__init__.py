@@ -1,13 +1,17 @@
+# AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
+# Regenerate with: make codegen
+#
 """FLEXT LDIF Utilities - Internal package exports."""
 
 from __future__ import annotations
 
-from importlib import import_module
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import cleanup_submodule_namespace
+from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
+    from flext_core.typings import FlextTypes
+
     from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
     from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
     from flext_ldif._utilities.builders import (
@@ -37,6 +41,7 @@ if TYPE_CHECKING:
         OrFilter,
     )
     from flext_ldif._utilities.fluent import DnOps, EntryOps
+    from flext_ldif._utilities.functional import FlextFunctional, f
     from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
     from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
     from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
@@ -63,13 +68,12 @@ if TYPE_CHECKING:
         ReplaceBaseDnTransformer,
         Transform,
     )
+    from flext_ldif._utilities.type_guards import FlextLdifUtilitiesTypeGuards
+    from flext_ldif._utilities.type_helpers import FlextLdifTypeHelpers
     from flext_ldif._utilities.validation import FlextLdifUtilitiesValidation
     from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
-    from flext_ldif._utilities.writers import FlextLdifUtilitiesWriters
-    from flext_ldif.constants import c
-    from flext_ldif.typings import t
+    from flext_ldif._utilities.writers import FlextLdifUtilitiesWriters, logger
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "AndFilter": ("flext_ldif._utilities.filters", "AndFilter"),
     "ByAttrValueFilter": ("flext_ldif._utilities.filters", "ByAttrValueFilter"),
@@ -94,7 +98,12 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "FilterAttrsTransformer",
     ),
     "FilterConfigBuilder": ("flext_ldif._utilities.builders", "FilterConfigBuilder"),
+    "FlextFunctional": ("flext_ldif._utilities.functional", "FlextFunctional"),
     "FlextLdifResult": ("flext_ldif._utilities.result", "FlextLdifResult"),
+    "FlextLdifTypeHelpers": (
+        "flext_ldif._utilities.type_helpers",
+        "FlextLdifTypeHelpers",
+    ),
     "FlextLdifUtilitiesACL": ("flext_ldif._utilities.acl", "FlextLdifUtilitiesACL"),
     "FlextLdifUtilitiesAttribute": (
         "flext_ldif._utilities.attribute",
@@ -142,6 +151,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_ldif._utilities.server",
         "FlextLdifUtilitiesServer",
     ),
+    "FlextLdifUtilitiesTypeGuards": (
+        "flext_ldif._utilities.type_guards",
+        "FlextLdifUtilitiesTypeGuards",
+    ),
     "FlextLdifUtilitiesValidation": (
         "flext_ldif._utilities.validation",
         "FlextLdifUtilitiesValidation",
@@ -185,8 +198,8 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "ValidationPipeline": ("flext_ldif._utilities.pipeline", "ValidationPipeline"),
     "ValidationResult": ("flext_ldif._utilities.pipeline", "ValidationResult"),
     "WriteConfigBuilder": ("flext_ldif._utilities.builders", "WriteConfigBuilder"),
-    "c": ("flext_ldif.constants", "c"),
-    "t": ("flext_ldif.typings", "t"),
+    "f": ("flext_ldif._utilities.functional", "f"),
+    "logger": ("flext_ldif._utilities.writers", "logger"),
 }
 
 __all__ = [
@@ -207,7 +220,9 @@ __all__ = [
     "Filter",
     "FilterAttrsTransformer",
     "FilterConfigBuilder",
+    "FlextFunctional",
     "FlextLdifResult",
+    "FlextLdifTypeHelpers",
     "FlextLdifUtilitiesACL",
     "FlextLdifUtilitiesAttribute",
     "FlextLdifUtilitiesDN",
@@ -222,6 +237,7 @@ __all__ = [
     "FlextLdifUtilitiesParsers",
     "FlextLdifUtilitiesSchema",
     "FlextLdifUtilitiesServer",
+    "FlextLdifUtilitiesTypeGuards",
     "FlextLdifUtilitiesValidation",
     "FlextLdifUtilitiesWriter",
     "FlextLdifUtilitiesWriters",
@@ -241,22 +257,14 @@ __all__ = [
     "ValidationPipeline",
     "ValidationResult",
     "WriteConfigBuilder",
-    "c",
-    "t",
+    "f",
+    "logger",
 ]
 
 
-def __getattr__(name: str) -> type:
+def __getattr__(name: str) -> FlextTypes.ModuleExport:
     """Lazy-load module attributes on first access (PEP 562)."""
-    lazy_import = _LAZY_IMPORTS.get(name)
-    if lazy_import is None:
-        msg = f"module {__name__!r} has no attribute {name!r}"
-        raise AttributeError(msg)
-    module_path, attr_name = lazy_import
-    module = import_module(module_path)
-    value = getattr(module, attr_name)
-    globals()[name] = value
-    return value
+    return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
 
 
 def __dir__() -> list[str]:

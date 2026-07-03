@@ -6,19 +6,19 @@ server implementations, ACL handling, and service contracts.
 
 from __future__ import annotations
 
-from enum import StrEnum
+from enum import StrEnum, unique
 from typing import ClassVar
 
 import pytest
 from flext_core import r
 from pydantic import BaseModel, ConfigDict, Field
-from tests import s
 
 from flext_ldif import FlextLdifProtocols, FlextLdifServer, p
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.openldap import FlextLdifServersOpenldap
 from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.servers.relaxed import FlextLdifServersRelaxed
+from tests import s
 
 
 def _create_server_implementations() -> list[tuple[str, type, type]]:
@@ -38,6 +38,7 @@ class TestsTestFlextLdifProtocols(s):
     Constants, Helpers, and test method groups.
     """
 
+    @unique
     class ProtocolNames(StrEnum):
         """Protocol names in FlextLdifProtocols.Ldif namespace organized as nested enum."""
 
@@ -52,6 +53,7 @@ class TestsTestFlextLdifProtocols(s):
         ProtocolNames.ENTRY.value,
     ]
 
+    @unique
     class ServerTypes(StrEnum):
         """Server types implementing schema protocol organized as nested enum."""
 
@@ -272,7 +274,7 @@ class TestsTestFlextLdifProtocols(s):
 
     def test_protocol_filtering(self) -> None:
         """Test filtering implementations by protocol."""
-        schemas_list: list[object] = [
+        schemas_list: list = [
             FlextLdifServersOid.Schema(),
             FlextLdifServersOud.Schema(),
             FlextLdifServersOpenldap.Schema(),

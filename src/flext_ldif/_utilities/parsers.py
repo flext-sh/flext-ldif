@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import struct
-from collections.abc import Mapping
-from typing import Protocol
+from collections.abc import Callable, Mapping
 
 from flext_core import FlextLogger, r
 
@@ -19,40 +18,16 @@ class FlextLdifUtilitiesParsers:
     class Entry:
         """Generalized entry parser with hook-based customization."""
 
-        class ParseCommentsHook(Protocol):
-            """Protocol for parsing comments and metadata."""
-
-            def __call__(self, lines: list[str]) -> Mapping[str, list[str]]: ...
-
-        class ParseAttributesHook(Protocol):
-            """Protocol for parsing attributes."""
-
-            def __call__(self, lines: list[str]) -> Mapping[str, list[str]]: ...
-
-        class ParseValueHook(Protocol):
-            """Protocol for parsing attribute values."""
-
-            def __call__(self, attr_name: str, value: str) -> str: ...
-
-        class TransformEntryHook(Protocol):
-            """Protocol for entry transformation after parse."""
-
-            def __call__(self, entry: m.Ldif.Entry) -> m.Ldif.Entry: ...
-
-        class ParseDnHook(Protocol):
-            """Protocol for parsing DN line."""
-
-            def __call__(self, line: str) -> str | None: ...
-
         @staticmethod
         def parse(
             ldif_content: str,
             server_type: str,
-            parse_attributes_hook: ParseAttributesHook,
+            parse_attributes_hook: Callable[[list[str]], Mapping[str, list[str]]],
             *,
-            parse_dn_hook: ParseDnHook | None = None,
-            transform_entry_hook: TransformEntryHook | None = None,
-            parse_comments_hook: ParseCommentsHook | None = None,
+            parse_dn_hook: Callable[[str], str | None] | None = None,
+            transform_entry_hook: Callable[[m.Ldif.Entry], m.Ldif.Entry] | None = None,
+            parse_comments_hook: Callable[[list[str]], Mapping[str, list[str]]]
+            | None = None,
         ) -> r[m.Ldif.Entry]:
             """Parse LDIF entry from content using hooks."""
             try:
@@ -91,31 +66,15 @@ class FlextLdifUtilitiesParsers:
     class Attribute:
         """Generalized attribute definition parser."""
 
-        class ParsePartsHook(Protocol):
-            """Protocol for parsing attribute definition parts."""
-
-            def __call__(self, definition: str) -> Mapping[str, str | bool | None]: ...
-
-        class TransformHook(Protocol):
-            """Protocol for attribute transformation."""
-
-            def __call__(
-                self, attribute: m.Ldif.SchemaAttribute
-            ) -> m.Ldif.SchemaAttribute: ...
-
-        class ParseOidHook(Protocol):
-            """Protocol for OID parsing."""
-
-            def __call__(self, definition: str) -> str | None: ...
-
         @staticmethod
         def parse(
             definition: str,
             server_type: str,
-            parse_parts_hook: ParsePartsHook,
+            parse_parts_hook: Callable[[str], Mapping[str, str | bool | None]],
             *,
-            transform_hook: TransformHook | None = None,
-            parse_oid_hook: ParseOidHook | None = None,
+            transform_hook: Callable[[m.Ldif.SchemaAttribute], m.Ldif.SchemaAttribute]
+            | None = None,
+            parse_oid_hook: Callable[[str], str | None] | None = None,
         ) -> r[m.Ldif.SchemaAttribute]:
             """Parse attribute definition using hooks."""
             try:
@@ -158,27 +117,16 @@ class FlextLdifUtilitiesParsers:
     class ObjectClass:
         """Generalized objectClass definition parser."""
 
-        class ParsePartsHook(Protocol):
-            """Protocol for parsing objectClass definition parts."""
-
-            def __call__(
-                self, definition: str
-            ) -> Mapping[str, str | list[str] | None]: ...
-
-        class TransformHook(Protocol):
-            """Protocol for objectClass transformation."""
-
-            def __call__(
-                self, objectclass: m.Ldif.SchemaObjectClass
-            ) -> m.Ldif.SchemaObjectClass: ...
-
         @staticmethod
         def parse(
             definition: str,
             server_type: str,
-            parse_parts_hook: ParsePartsHook,
+            parse_parts_hook: Callable[[str], Mapping[str, str | list[str] | None]],
             *,
-            transform_hook: TransformHook | None = None,
+            transform_hook: Callable[
+                [m.Ldif.SchemaObjectClass], m.Ldif.SchemaObjectClass
+            ]
+            | None = None,
         ) -> r[m.Ldif.SchemaObjectClass]:
             """Parse objectClass definition using hooks."""
             try:
@@ -226,23 +174,13 @@ class FlextLdifUtilitiesParsers:
     class Content:
         """Generalized content parser for multiple entries."""
 
-        class ParseEntryHook(Protocol):
-            """Protocol for parsing individual entries."""
-
-            def __call__(self, entry_content: str) -> r[m.Ldif.Entry]: ...
-
-        class ParseHeaderHook(Protocol):
-            """Protocol for parsing LDIF header."""
-
-            def __call__(self, header: str) -> Mapping[str, str]: ...
-
         @staticmethod
         def parse(
             ldif_content: str,
             server_type: str,
-            parse_entry_hook: ParseEntryHook,
+            parse_entry_hook: Callable[[str], r[m.Ldif.Entry]],
             *,
-            _parse_header_hook: ParseHeaderHook | None = None,
+            _parse_header_hook: Callable[[str], Mapping[str, str]] | None = None,
         ) -> r[list[m.Ldif.Entry]]:
             """Parse multiple entries from LDIF content."""
             try:

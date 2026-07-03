@@ -7,7 +7,7 @@ import re
 import struct
 from collections.abc import Mapping, Sequence
 from datetime import datetime
-from typing import TypeGuard
+from typing import TypeIs
 
 from flext_core import FlextLogger, r, u
 
@@ -23,7 +23,7 @@ TUPLE_LENGTH_PAIR = 2
 
 def _is_acl_subject_type(
     value: str,
-) -> TypeGuard[c.Ldif.LiteralTypes.AclSubjectTypeLiteral]:
+) -> TypeIs[c.Ldif.LiteralTypes.AclSubjectTypeLiteral]:
     """Type guard to check if string is a valid AclSubjectTypeLiteral."""
     return value in {
         "user",

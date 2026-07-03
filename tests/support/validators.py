@@ -11,25 +11,25 @@ from flext_ldif import m, p
 from flext_ldif.typings import t
 
 
-class MockResultHelpers:
+class MockFlextUtilitiesResultHelpers:
     """Mock result helpers for testing."""
 
     @staticmethod
-    def validate_composition(*args: object, **kwargs: t.Scalar) -> bool:
+    def validate_composition(*args, **kwargs: t.Scalar) -> bool:
         """Validate composition."""
         return True
 
     @staticmethod
-    def validate_chain(*args: object, **kwargs: t.Scalar) -> bool:
+    def validate_chain(*args, **kwargs: t.Scalar) -> bool:
         """Validate chain."""
         return True
 
     @staticmethod
-    def assert_composition(*args: object, **kwargs: t.Scalar) -> None:
+    def assert_composition(*args, **kwargs: t.Scalar) -> None:
         """Assert composition."""
 
     @staticmethod
-    def assert_chain_success(*args: object, **kwargs: t.Scalar) -> None:
+    def assert_chain_success(*args, **kwargs: t.Scalar) -> None:
         """Assert chain success."""
 
 
@@ -37,7 +37,7 @@ class MockMatchers:
     """Mock matchers for testing."""
 
     @staticmethod
-    def assert_success(*args: object, **kwargs: t.Scalar) -> None:
+    def assert_success(*args, **kwargs: t.Scalar) -> None:
         """Assert success."""
 
 
@@ -81,7 +81,7 @@ class TestValidators:
         }
 
     @staticmethod
-    def validate_result_success(result: r[object]) -> dict[str, bool]:
+    def validate_result_success(result: r) -> dict[str, bool]:
         """Validate r success characteristics."""
         return {
             "is_success": result.is_success,

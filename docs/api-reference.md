@@ -350,8 +350,8 @@ class QuirksConversionMatrix:
 
     def convert(
         self,
-        source: object,
-        target: object,
+        source,
+        target,
         data_type: Literal["attribute", "objectclass", "acl", "entry"],
         data: str | dict[str, object],
     ) -> r[str | dict[str, object]]:
@@ -370,8 +370,8 @@ class QuirksConversionMatrix:
 
     def batch_convert(
         self,
-        source: object,
-        target: object,
+        source,
+        target,
         data_type: Literal["attribute", "objectclass", "acl", "entry"],
         data_batch: Sequence[str | dict[str, object]],
     ) -> r[Sequence[str | dict[str, object]]]:

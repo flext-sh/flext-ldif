@@ -2,15 +2,11 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from typing import ClassVar
 
 from flext_core import FlextRegistry, p
 
 from flext_ldif.typings import t
-
-type FilterFactoryType = Callable[[], object]
-type CategorizationFactoryType = Callable[[str], object]
 
 
 class FlextLdifServiceRegistry(FlextRegistry):
@@ -20,7 +16,7 @@ class FlextLdifServiceRegistry(FlextRegistry):
     _global_instance: ClassVar[FlextLdifServiceRegistry | None] = None
 
     def __init__(
-        self, dispatcher: p.CommandBus | None = None, **data: t.Scalar
+        self, dispatcher: p.Dispatcher | None = None, **data: t.Scalar
     ) -> None:
         """Initialize with FlextRegistry infrastructure."""
         _ = data

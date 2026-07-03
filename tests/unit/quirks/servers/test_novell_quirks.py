@@ -6,7 +6,7 @@ eDirectory-specific attributes, object classes, and entries in LDIF format.
 
 from __future__ import annotations
 
-from enum import StrEnum
+from enum import StrEnum, unique
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
@@ -16,6 +16,7 @@ from flext_ldif import m
 from flext_ldif.servers.novell import FlextLdifServersNovell
 
 
+@unique
 class AttributeScenario(StrEnum):
     """Novell attribute detection scenarios."""
 
@@ -26,6 +27,7 @@ class AttributeScenario(StrEnum):
     STANDARD_RFC = "standard_rfc"
 
 
+@unique
 class ObjectClassScenario(StrEnum):
     """Novell objectClass detection scenarios."""
 
@@ -34,6 +36,7 @@ class ObjectClassScenario(StrEnum):
     STANDARD_RFC = "standard_rfc"
 
 
+@unique
 class EntryScenario(StrEnum):
     """Novell entry detection scenarios."""
 

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import builtins
 from collections.abc import Mapping as ABCMapping, Sequence as ABCSequence
-from typing import TypeGuard
+from typing import TypeIs
 
 from flext_core import FlextUtilities
 
@@ -20,7 +20,7 @@ class FlextLdifTypeHelpers:
     @staticmethod
     def is_entry_sequence(
         obj: builtins.object,
-    ) -> TypeGuard[ABCSequence[m.Ldif.Entry]]:
+    ) -> TypeIs[ABCSequence[m.Ldif.Entry]]:
         """Check if object is a Sequence but not a string, bytes, or dict (for Entry sequences)."""
         return isinstance(obj, ABCSequence) and (
             not isinstance(obj, str | bytes) and not FlextUtilities.is_dict_like(obj)
@@ -29,7 +29,7 @@ class FlextLdifTypeHelpers:
     @staticmethod
     def is_mapping_of_scalars(
         obj: builtins.object,
-    ) -> TypeGuard[ABCMapping[str, t.Scalar | None]]:
+    ) -> TypeIs[ABCMapping[str, t.Scalar | None]]:
         """Check if object is a Mapping of scalar values (for simple dicts)."""
         if not isinstance(obj, ABCMapping):
             return False
@@ -38,14 +38,14 @@ class FlextLdifTypeHelpers:
     @staticmethod
     def is_mapping_type(
         obj: builtins.object,
-    ) -> TypeGuard[ABCMapping[str, builtins.object]]:
+    ) -> TypeIs[ABCMapping[str, builtins.object]]:
         """Check if object is a Mapping but not a string (for dict-like objects)."""
         return isinstance(obj, ABCMapping) and (not isinstance(obj, str | bytes))
 
     @staticmethod
     def is_sequence_of_scalars(
         obj: builtins.object,
-    ) -> TypeGuard[ABCSequence[t.Scalar | None]]:
+    ) -> TypeIs[ABCSequence[t.Scalar | None]]:
         """Check if object is a Sequence of scalar values (for simple sequences)."""
         if (
             not isinstance(obj, ABCSequence)

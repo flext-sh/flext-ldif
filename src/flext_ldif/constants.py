@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from enum import StrEnum
+from enum import StrEnum, unique
 from types import MappingProxyType
 from typing import ClassVar, Final, Literal
 
@@ -18,6 +18,7 @@ class FlextLdifConstants(FlextConstants):
     class Ldif:
         """LDIF domain constants namespace."""
 
+        @unique
         class Category(StrEnum):
             """LDIF entry categories — single source of truth."""
 
@@ -28,6 +29,7 @@ class FlextLdifConstants(FlextConstants):
             ACL = "acl"
             REJECTED = "rejected"
 
+        @unique
         class SortStrategy(StrEnum):
             """Valid sorting strategies for LDIF entries (V2 type-safe enum)."""
 
@@ -37,6 +39,7 @@ class FlextLdifConstants(FlextConstants):
             SCHEMA = "schema"
             CUSTOM = "custom"
 
+        @unique
         class SortingStrategyType(StrEnum):
             """Sorting strategy types for metadata tracking."""
 
@@ -44,6 +47,7 @@ class FlextLdifConstants(FlextConstants):
             ALPHABETICAL_CASE_INSENSITIVE = "alphabetical_case_insensitive"
             CUSTOM_ORDER = "custom_order"
 
+        @unique
         class SortTarget(StrEnum):
             """What to sort in LDIF data (V2 type-safe enum)."""
 
@@ -53,6 +57,7 @@ class FlextLdifConstants(FlextConstants):
             SCHEMA = "schema"
             COMBINED = "combined"
 
+        @unique
         class RfcAclPermission(StrEnum):
             """RFC 4876 standard ACL permissions (type-safe enum)."""
 
@@ -65,6 +70,7 @@ class FlextLdifConstants(FlextConstants):
             ALL = "all"
             NONE = "none"
 
+        @unique
         class AclPermission(StrEnum):
             """Comprehensive ACL permissions covering all server types (type-safe enum)."""
 
@@ -80,12 +86,14 @@ class FlextLdifConstants(FlextConstants):
             CREATE = "create"
             CONTROL_ACCESS = "control_access"
 
+        @unique
         class AclAction(StrEnum):
             """ACL action types for all server implementations (type-safe enum)."""
 
             ALLOW = "allow"
             DENY = "deny"
 
+        @unique
         class Encoding(StrEnum):
             """Standard character encodings used in LDIF processing."""
 
@@ -100,6 +108,7 @@ class FlextLdifConstants(FlextConstants):
 
         DEFAULT_ENCODING: Final[str] = FlextConstants.Utilities.DEFAULT_ENCODING
 
+        @unique
         class LdifFormat(StrEnum):
             """RFC 2849 LDIF format indicators for attribute value encoding."""
 
@@ -112,6 +121,7 @@ class FlextLdifConstants(FlextConstants):
         LDIF_URL_INDICATOR: Final[str] = LdifFormat.URL.value
         LDIF_DEFAULT_ENCODING: Final[str] = FlextConstants.Utilities.DEFAULT_ENCODING
 
+        @unique
         class AclSubjectType(StrEnum):
             """ACL subject/who types for permission subjects."""
 
@@ -126,6 +136,7 @@ class FlextLdifConstants(FlextConstants):
             SDDL = "sddl"
             DN = "dn"
 
+        @unique
         class DictKeys(StrEnum):
             """Dictionary keys for LDIF entry data access - CORE KEYS ONLY per SRP."""
 
@@ -138,6 +149,7 @@ class FlextLdifConstants(FlextConstants):
         class Domain(FlextConstants.Domain):
             """Domain constants extending FlextConstants.Domain."""
 
+            @unique
             class ServerType(StrEnum):
                 """Server type values for LDIF processing."""
 
@@ -154,6 +166,7 @@ class FlextLdifConstants(FlextConstants):
                 IBM_TIVOLI = "tivoli"
                 RELAXED = "relaxed"
 
+            @unique
             class OutputFormat(StrEnum):
                 """Output format options."""
 
@@ -162,6 +175,7 @@ class FlextLdifConstants(FlextConstants):
                 CSV = "csv"
                 YAML = "yaml"
 
+            @unique
             class ValidationStatus(StrEnum):
                 """Validation status values for LDIF entries."""
 
@@ -169,6 +183,7 @@ class FlextLdifConstants(FlextConstants):
                 INVALID = "invalid"
                 WARNING = "warning"
 
+            @unique
             class CaseFoldOption(StrEnum):
                 """Case folding options for DN normalization."""
 
@@ -176,6 +191,7 @@ class FlextLdifConstants(FlextConstants):
                 LOWER = "lower"
                 UPPER = "upper"
 
+            @unique
             class QuirkMetadataKeys(StrEnum):
                 """Dictionary keys for quirk metadata and server-specific entry properties."""
 
@@ -183,6 +199,7 @@ class FlextLdifConstants(FlextConstants):
                 IS_CONFIG_ENTRY = "is_config_entry"
                 IS_TRADITIONAL_DIT = "is_traditional_dit"
 
+            @unique
             class AclKeys(StrEnum):
                 """Dictionary keys for ACL-related attributes and operations."""
 
@@ -233,6 +250,7 @@ class FlextLdifConstants(FlextConstants):
                 "+/0123456789=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
             )
 
+            @unique
             class Base64StartChar(StrEnum):
                 """RFC 2849 §2 - Characters requiring base64 encoding at value start."""
 
@@ -294,6 +312,7 @@ class FlextLdifConstants(FlextConstants):
             ATTR_SUBSCHEMA_SUBENTRY: Final[str] = "subschemaSubentry"
             ATTR_ENTRY_DN: Final[str] = "entryDN"
 
+            @unique
             class OperationalAttribute(StrEnum):
                 """RFC 4512 §4.2.1 - Standard operational attributes."""
 
@@ -358,6 +377,7 @@ class FlextLdifConstants(FlextConstants):
                 92,
             })
 
+            @unique
             class DnEscapeChar(StrEnum):
                 """RFC 4514 §2.4 - Characters always requiring escape in DN values."""
 
@@ -379,12 +399,14 @@ class FlextLdifConstants(FlextConstants):
                 DnEscapeChar.BACKSLASH,
             })
 
+            @unique
             class DnEscapeAtStart(StrEnum):
                 """RFC 4514 §2.4 - Characters requiring escape at DN value start."""
 
                 SPACE = " "
                 SHARP = "#"
 
+            @unique
             class DnEscapeAtEnd(StrEnum):
                 """RFC 4514 §2.4 - Characters requiring escape at DN value end."""
 
@@ -655,6 +677,7 @@ class FlextLdifConstants(FlextConstants):
             OBJECT_GUID: Final[str] = "objectguid"
             OBJECT_SID: Final[str] = "objectsid"
 
+            @unique
             class BinaryAttribute(StrEnum):
                 """RFC 4517/4523/4524 - Binary attributes requiring ;binary option."""
 
@@ -774,6 +797,7 @@ class FlextLdifConstants(FlextConstants):
                 })
             )
 
+        @unique
         class ProcessingStage(StrEnum):
             """Processing stages for LDIF operations."""
 
@@ -782,6 +806,7 @@ class FlextLdifConstants(FlextConstants):
             ANALYTICS = "analytics"
             WRITING = "writing"
 
+        @unique
         class LdifHealthStatus(StrEnum):
             """Health status for LDIF services."""
 
@@ -789,6 +814,7 @@ class FlextLdifConstants(FlextConstants):
             DEGRADED = "degraded"
             UNHEALTHY = "unhealthy"
 
+        @unique
         class EntryType(StrEnum):
             """Types of LDIF entries."""
 
@@ -798,6 +824,7 @@ class FlextLdifConstants(FlextConstants):
             DOMAIN = "domain"
             OTHER = "other"
 
+        @unique
         class EntryModification(StrEnum):
             """LDIF entry modification types."""
 
@@ -806,6 +833,7 @@ class FlextLdifConstants(FlextConstants):
             DELETE = "delete"
             MODRDN = "modrdn"
 
+        @unique
         class TransformationType(StrEnum):
             """Types of transformations applied to entries."""
 
@@ -827,6 +855,7 @@ class FlextLdifConstants(FlextConstants):
             SYNTAX_OID_REPLACED = "syntax_oid_replaced"
             OBJECTCLASS_FILTERED = "objectclass_filtered"
 
+        @unique
         class FilterType(StrEnum):
             """Types of filters applied to entries."""
 
@@ -838,6 +867,7 @@ class FlextLdifConstants(FlextConstants):
             ACL_EXTRACTION = "acl_extraction"
             SCHEMA_ENTRY = "schema_entry"
 
+        @unique
         class ValidationStatus(StrEnum):
             """Entry validation status levels."""
 
@@ -846,6 +876,7 @@ class FlextLdifConstants(FlextConstants):
             ERROR = "error"
             REJECTED = "rejected"
 
+        @unique
         class RejectionCategory(StrEnum):
             """Categories for entry rejection."""
 
@@ -859,6 +890,7 @@ class FlextLdifConstants(FlextConstants):
             PARSING_ERROR = "parsing_error"
             CONVERSION_ERROR = "conversion_error"
 
+        @unique
         class ErrorCategory(StrEnum):
             """Categories of errors that can occur during processing."""
 
@@ -870,6 +902,7 @@ class FlextLdifConstants(FlextConstants):
             ACL = "acl"
             MODRDN = "modrdn"
 
+        @unique
         class AttributeMarkerStatus(StrEnum):
             """Marker status for attribute processing in metadata."""
 
@@ -880,6 +913,7 @@ class FlextLdifConstants(FlextConstants):
             HIDDEN = "hidden"
             RENAMED = "renamed"
 
+        @unique
         class ServerTypes(StrEnum):
             """Server type identifiers - Single source of truth for all server types."""
 
@@ -1175,6 +1209,7 @@ class FlextLdifConstants(FlextConstants):
             HAS_SUBORDINATES: Final[str] = "hasSubordinates"
             SUBORDINATE_DN: Final[str] = "subordinateDn"
 
+            @unique
             class DnValuedAttribute(StrEnum):
                 """Attributes that contain Distinguished Names as values."""
 
@@ -1474,6 +1509,7 @@ class FlextLdifConstants(FlextConstants):
                 "ibm_tivoli": "ibm_tivoli",
             })
 
+        @unique
         class FilterTypes(StrEnum):
             """Filter type identifier constants."""
 
@@ -1484,6 +1520,7 @@ class FlextLdifConstants(FlextConstants):
             OID_PATTERN = "oid_pattern"
             ATTRIBUTE = "attribute"
 
+        @unique
         class Modes(StrEnum):
             """Operation mode constants."""
 
@@ -1493,6 +1530,7 @@ class FlextLdifConstants(FlextConstants):
             MANUAL = "manual"
             DISABLED = "disabled"
 
+        @unique
         class DataTypes(StrEnum):
             """Data type identifier constants."""
 
@@ -1644,6 +1682,7 @@ class FlextLdifConstants(FlextConstants):
             DEFAULT_SINGLE_VALUE: Final[bool] = False
             CHANGETYPE: Final[str] = "^changetype:\\s*(add|delete|modify|modrdn|moddn)$"
 
+        @unique
         class ChangeType(StrEnum):
             """LDIF change types — single source of truth."""
 
@@ -1652,6 +1691,7 @@ class FlextLdifConstants(FlextConstants):
             MODIFIED = "modified"
             FILTERED = "filtered"
 
+        @unique
         class ModifyOperation(StrEnum):
             """LDIF modify operation types."""
 
@@ -1659,6 +1699,7 @@ class FlextLdifConstants(FlextConstants):
             DELETE = "delete"
             REPLACE = "replace"
 
+        @unique
         class SchemaUsage(StrEnum):
             """RFC 4512 attribute usage types."""
 
@@ -1667,6 +1708,7 @@ class FlextLdifConstants(FlextConstants):
             DISTRIBUTED_OPERATION = "distributedOperation"
             DSA_OPERATION = "dSAOperation"
 
+        @unique
         class SchemaKind(StrEnum):
             """RFC 4512 objectClass kind types."""
 
@@ -1957,6 +1999,7 @@ class FlextLdifConstants(FlextConstants):
                 "all": ("all", "*"),
             }
 
+        @unique
         class ServiceType(StrEnum):
             """Service types for internal management."""
 
@@ -1973,6 +2016,7 @@ class FlextLdifConstants(FlextConstants):
             VALIDATION = "validation"
             SYNTAX = "syntax"
 
+        @unique
         class CaseFoldOption(StrEnum):
             """Case folding options for DN normalization."""
 
@@ -1980,6 +2024,7 @@ class FlextLdifConstants(FlextConstants):
             LOWER = "lower"
             UPPER = "upper"
 
+        @unique
         class SpaceHandlingOption(StrEnum):
             """Space handling options for DN normalization."""
 
@@ -1987,6 +2032,7 @@ class FlextLdifConstants(FlextConstants):
             TRIM = "trim"
             NORMALIZE = "normalize"
 
+        @unique
         class EscapeHandlingOption(StrEnum):
             """Escape sequence handling options."""
 
@@ -1994,6 +2040,7 @@ class FlextLdifConstants(FlextConstants):
             UNESCAPE = "unescape"
             NORMALIZE = "normalize"
 
+        @unique
         class SortOption(StrEnum):
             """Sorting options for attribute ordering."""
 
@@ -2001,11 +2048,13 @@ class FlextLdifConstants(FlextConstants):
             ALPHABETICAL = "alphabetical"
             HIERARCHICAL = "hierarchical"
 
+        @unique
         class ObsoleteField(StrEnum):
             """Obsolete field constants."""
 
             OBSOLETE = "obsolete"
 
+        @unique
         class Categories(StrEnum):
             """Entry category constants."""
 
@@ -2017,93 +2066,131 @@ class FlextLdifConstants(FlextConstants):
             ACL = "acl"
             REJECTED = "rejected"
 
+    @unique
     class DnPrefixField(StrEnum):
         """Dn_Prefix field constants."""
 
         PREFIX = "dn:"
         PREFIX_SHORT = "dn"
 
+    @unique
     class SchemaKwField(StrEnum):
         """Schema_Kw field constants."""
 
         NAME = "NAME"
         DESC = "DESC"
 
+    @unique
     class AclBindIpField(StrEnum):
         """Acl_Bind_Ip field constants."""
 
         IP_FULL = "acl:vendor:bind_ip"
         IP = "bind_ip"
 
+    @unique
     class PersonField(StrEnum):
         """Person field constants."""
 
         PERSON = "person"
 
+    @unique
     class OrganizationalUnitField(StrEnum):
         """Organizational_Unit field constants."""
 
         UNIT = "organizationalUnit"
         UNIT_LOWER = "organizationalunit"
 
+    @unique
     class UserField(StrEnum):
         """User field constants."""
 
         USER = "user"
 
+    @unique
     class GroupField(StrEnum):
         """Group field constants."""
 
         GROUP = "group"
 
+    @unique
     class AudioField(StrEnum):
         """Audio field constants."""
 
         AUDIO = "audio"
         AUDIO_OID = "1.3.6.1.4.1.1466.115.121.1.4"
 
+    @unique
     class StrictField(StrEnum):
         """Strict field constants."""
 
         STRICT = "strict"
 
+    @unique
     class LenientField(StrEnum):
         """Lenient field constants."""
 
         LENIENT = "lenient"
 
+    @unique
     class SubtreeField(StrEnum):
         """Subtree field constants."""
 
         SUBTREE = "subtree"
 
+    @unique
     class OnelevelField(StrEnum):
         """Onelevel field constants."""
 
         ONELEVEL = "onelevel"
 
+    @unique
     class BaseField(StrEnum):
         """Base field constants."""
 
         BASE = "base"
         BASE_OID = "1.3.6.1.4.1.1466.115.121.1"
 
+    @unique
     class AllField(StrEnum):
         """All field constants."""
 
         ALL = "all"
 
+    @unique
     class AciField(StrEnum):
         """Aci field constants."""
 
         ACI = "aci"
         ACI_OID = "1.3.6.1.4.1.1466.115.121.1.1"
 
+    @unique
     class AclWildcardField(StrEnum):
         """Acl_Wildcard field constants."""
 
         TYPE = "all"
         VALUE = "*"
+
+    @unique
+    class ProcessingMode(StrEnum):
+        STRICT = "strict"
+        RELAXED = "relaxed"
+        AUTO = "auto"
+
+    @unique
+    class ValidationLevel(StrEnum):
+        NONE = "none"
+        BASIC = "basic"
+        FULL = "full"
+
+    @unique
+    class ConversionTargetType(StrEnum):
+        STR = "str"
+        INT = "int"
+        FLOAT = "float"
+        BOOL = "bool"
+        LIST = "list"
+        TUPLE = "tuple"
+        DICT = "dict"
 
 
 c = FlextLdifConstants

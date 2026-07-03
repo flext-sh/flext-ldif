@@ -578,7 +578,6 @@ preserve_quotes = true
 section_whitelines = 1
 whitelines = 1
 
-
 [tool.pytest.ini_options]
 addopts = [ "--strict-markers" ]
 markers = [
@@ -601,7 +600,6 @@ python_files = [ "*_test.py", "*_tests.py", "test_*.py" ]
 # [CUSTOM] poetry dev extensions
 # [MANAGED] pyrefly
 enable_assertion_pass_hook = true
-
 
 [tool.coverage.report]
 fail_under = 15

@@ -6,7 +6,7 @@ import builtins
 import struct
 from datetime import UTC, datetime
 from functools import wraps
-from typing import TypeGuard
+from typing import TypeIs
 
 from flext_core import FlextLogger, r
 
@@ -19,7 +19,7 @@ logger = FlextLogger(__name__)
 
 def _is_metadata_attachable(
     obj: builtins.object,
-) -> TypeGuard[
+) -> TypeIs[
     m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
 ]:
     """Type guard to check if object supports metadata attachment."""

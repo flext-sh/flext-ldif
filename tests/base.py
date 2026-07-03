@@ -24,7 +24,7 @@ from flext_ldif import FlextLdifEntries, FlextLdifModels
 from tests.constants import TestsFlextLdifConstants
 
 
-class FlextLdifTestsServiceBase(flext_tests_s[object]):
+class FlextLdifTestsServiceBase(flext_tests_s):
     """Base class for all test services in flext-ldif.
 
     Extends FlextTestsServiceBase from flext_tests with LDIF-specific utilities:
