@@ -1,4 +1,4 @@
-# Integration Test Suite for FlextLdif
+# Integration Test Suite for ldif
 
 <!-- TOC START -->
 
@@ -63,7 +63,7 @@ tests/integration/
 │
 ├── test_oid_integration.py                       # OID server-specific tests
 ├── test_oud_integration.py                       # OUD server-specific tests
-├── test_cross_quirk_conversion.py                # Server-to-server conversion tests
+├── test_cross_server_conversion.py                # Server-to-server conversion tests
 │
 ├── test_real_ldap_export.py                      # Real LDAP container export tests
 ├── test_real_ldap_import.py                      # Real LDAP container import tests
@@ -130,14 +130,14 @@ These tests validate core LDIF functionality across all server types using centr
 **test_oid_integration.py**
 
 - Tests: Oracle Internet Directory specific features
-- Uses: OID-specific fixtures and OID quirks
+- Uses: OID-specific fixtures and OID servers
 
 **test_oud_integration.py**
 
 - Tests: Oracle Unified Directory specific features
-- Uses: OUD-specific fixtures and OUD quirks
+- Uses: OUD-specific fixtures and OUD servers
 
-**test_cross_quirk_conversion.py**
+**test_cross_server_conversion.py**
 
 - Tests: Server-to-server conversion (OID ↔ OUD)
 - Validates: Data integrity during server-specific transformations
@@ -198,7 +198,7 @@ PYTHONPATH=src poetry run pytest tests/integration/test_roundtrip_deep_validatio
 PYTHONPATH=src poetry run pytest tests/integration/test_roundtrip_deep_validation.py tests/integration/test_rfc_compliance_validation.py tests/integration/test_systematic_fixture_coverage.py tests/integration/test_error_recovery.py tests/integration/test_edge_cases.py -v
 
 # Run server-specific tests (no Docker required)
-PYTHONPATH=src poetry run pytest tests/integration/test_oid_integration.py tests/integration/test_oud_integration.py tests/integration/test_cross_quirk_conversion.py -v
+PYTHONPATH=src poetry run pytest tests/integration/test_oid_integration.py tests/integration/test_oud_integration.py tests/integration/test_cross_server_conversion.py -v
 
 # Run real LDAP tests (requires Docker)
 PYTHONPATH=src poetry run pytest tests/integration/test_real_ldap_*.py -v
@@ -255,16 +255,16 @@ Fixtures are organized by **server type** and **fixture type**:
 
 #### API Fixture
 
-```python
+```text
 @pytest.fixture
-def api() -> FlextLdif:
-    """FlextLdif API instance."""
-    return FlextLdif.get_instance()
+def api() -> ldif:
+    """ldif API instance."""
+    return ldif.get_instance()
 ```
 
 #### Parser/Writer Fixtures
 
-```python
+```text
 @pytest.fixture
 def parser():
     """LDIF parser service."""
@@ -277,7 +277,7 @@ def writer():
 
 #### Server-Specific Schema Fixtures
 
-```python
+```text
 @pytest.fixture
 def oid_schema_fixture() -> str:
     """OID server schema LDIF fixture."""
@@ -290,7 +290,7 @@ def oud_schema_fixture() -> str:
 
 #### Server-Specific Entry Fixtures
 
-```python
+```text
 @pytest.fixture
 def oid_entries_fixture() -> str:
     """OID server entries LDIF fixture."""
@@ -303,7 +303,7 @@ def oud_entries_fixture() -> str:
 
 #### Server-Specific ACL Fixtures
 
-```python
+```text
 @pytest.fixture
 def oid_acl_fixture() -> str:
     """OID server ACL LDIF fixture."""
@@ -316,7 +316,7 @@ def oud_acl_fixture() -> str:
 
 #### Server-Specific Integration Fixtures
 
-```python
+```text
 @pytest.fixture
 def oid_integration_fixture() -> str:
     """OID server complete integration fixture (schema + ACL + entries)."""
@@ -329,18 +329,18 @@ def oud_integration_fixture() -> str:
 
 ### Using Fixtures in Tests
 
-```python
+```text
 import pytest
-from flext_ldif import FlextLdif
+from flext_ldif import ldif
 
 
 class TestMyFeature:
     @pytest.fixture
-    def api(self) -> FlextLdif:
-        """FlextLdif API instance."""
-        return FlextLdif.get_instance()
+    def api(self) -> ldif:
+        """ldif API instance."""
+        return ldif.get_instance()
 
-    def test_with_fixture(self, api: FlextLdif, oid_schema_fixture: str) -> None:
+    def test_with_fixture(self, api: ldif, oid_schema_fixture: str) -> None:
         """Test using centralized fixture."""
         # Use the fixture directly
         result = api.parse(oid_schema_fixture)
@@ -351,16 +351,16 @@ class TestMyFeature:
 
 ### Parametrized Testing with Fixtures
 
-```python
+```text
 import pytest
-from flext_ldif import FlextLdif
+from flext_ldif import ldif
 
 
 class TestAllServers:
     @pytest.fixture
-    def api(self) -> FlextLdif:
-        """FlextLdif API instance."""
-        return FlextLdif.get_instance()
+    def api(self) -> ldif:
+        """ldif API instance."""
+        return ldif.get_instance()
 
     @pytest.mark.parametrize(
         "server_fixture",
@@ -369,7 +369,7 @@ class TestAllServers:
     )
     def test_all_servers(
         self,
-        api: FlextLdif,
+        api: ldif,
         server_fixture: str,
         request: pytest.FixtureRequest,
     ) -> None:
@@ -387,15 +387,15 @@ class TestAllServers:
 
 ✅ **DO**: Use fixtures from conftest.py
 
-```python
-def test_example(self, api: FlextLdif, oid_schema_fixture: str) -> None:
+```text
+def test_example(self, api: ldif, oid_schema_fixture: str) -> None:
     result = api.parse(oid_schema_fixture)
     assert result.is_success
 ```
 
 ❌ **DON'T**: Create hardcoded LDIF content
 
-```python
+```text
 def test_example(self) -> None:
     ldif_content = "dn: cn=test,dc=example,dc=com\ncn: test\n"
     # Duplicates fixture data across multiple tests
@@ -405,8 +405,8 @@ def test_example(self) -> None:
 
 ✅ **DO**: Validate parse → write → parse cycles
 
-```python
-def test_roundtrip(self, api: FlextLdif) -> None:
+```text
+def test_roundtrip(self, api: ldif) -> None:
     # Parse
     parse1 = api.parse(ldif_content)
     entries1 = parse1.unwrap()
@@ -424,7 +424,7 @@ def test_roundtrip(self, api: FlextLdif) -> None:
 
 ❌ **DON'T**: Only test individual operations
 
-```python
+```text
 def test_parse(self) -> None:
     # Only tests parse, doesn't validate roundtrip
     result = api.parse(ldif_content)
@@ -435,8 +435,8 @@ def test_parse(self) -> None:
 
 ✅ **DO**: Validate attribute values and structure
 
-```python
-def test_attributes(self, api: FlextLdif) -> None:
+```text
+def test_attributes(self, api: ldif) -> None:
     result = api.parse(ldif_content)
     entries = result.unwrap()
 
@@ -448,8 +448,8 @@ def test_attributes(self, api: FlextLdif) -> None:
 
 ❌ **DON'T**: Only count entries
 
-```python
-def test_entries(self, api: FlextLdif) -> None:
+```text
+def test_entries(self, api: ldif) -> None:
     result = api.parse(ldif_content)
     entries = result.unwrap()
     assert len(entries) == 5  # Doesn't validate content
@@ -459,13 +459,13 @@ def test_entries(self, api: FlextLdif) -> None:
 
 ✅ **DO**: Parametrize across server types
 
-```python
+```text
 @pytest.mark.parametrize(
     "server_fixture",
     ["oid_entries_fixture", "oud_entries_fixture"],
     ids=["OID", "OUD"],
 )
-def test_all_servers(self, api: FlextLdif, server_fixture: str, request) -> None:
+def test_all_servers(self, api: ldif, server_fixture: str, request) -> None:
     fixture_data = request.getfixturevalue(server_fixture)
     result = api.parse(fixture_data)
     # Tests both OID and OUD with same test logic
@@ -473,7 +473,7 @@ def test_all_servers(self, api: FlextLdif, server_fixture: str, request) -> None
 
 ❌ **DON'T**: Write separate tests for each server
 
-```python
+```text
 def test_oid_entries(self) -> None:
     result = api.parse(oid_fixture)
     # Duplicates logic
@@ -488,8 +488,8 @@ def test_oud_entries(self) -> None:
 
 ✅ **DO**: Check both success and error cases
 
-```python
-def test_parse(self, api: FlextLdif) -> None:
+```text
+def test_parse(self, api: ldif) -> None:
     result = api.parse(ldif_content)
 
     if result.is_success:
@@ -503,8 +503,8 @@ def test_parse(self, api: FlextLdif) -> None:
 
 ❌ **DON'T**: Assume success without checking
 
-```python
-def test_parse(self, api: FlextLdif) -> None:
+```text
+def test_parse(self, api: ldif) -> None:
     result = api.parse(ldif_content)
     entries = result.unwrap()  # Crashes if result is error
 ```
@@ -513,9 +513,9 @@ def test_parse(self, api: FlextLdif) -> None:
 
 ✅ **DO**: Include tests for error handling
 
-```python
+```text
 class TestErrorRecovery:
-    def test_malformed_dn(self, api: FlextLdif) -> None:
+    def test_malformed_dn(self, api: ldif) -> None:
         malformed = "dn: invalid-dn-format\ncn: test\n"
         result = api.parse(malformed)
         # Verify graceful handling
@@ -524,8 +524,8 @@ class TestErrorRecovery:
 
 ❌ **DON'T**: Only test happy path
 
-```python
-def test_valid_entry(self, api: FlextLdif) -> None:
+```text
+def test_valid_entry(self, api: ldif) -> None:
     result = api.parse(valid_ldif)
     # Doesn't test error cases
     assert result.is_success
@@ -572,18 +572,18 @@ PYTHONPATH=src poetry run pytest tests/integration/ --cov=src/flext_ldif --cov-r
 
 Always use fixtures from `conftest.py`:
 
-```python
+```text
 import pytest
-from flext_ldif import FlextLdif
+from flext_ldif import ldif
 
 
 class TestMyNewFeature:
     @pytest.fixture
-    def api(self) -> FlextLdif:
-        """FlextLdif API instance."""
-        return FlextLdif.get_instance()
+    def api(self) -> ldif:
+        """ldif API instance."""
+        return ldif.get_instance()
 
-    def test_feature(self, api: FlextLdif, oid_entries_fixture: str) -> None:
+    def test_feature(self, api: ldif, oid_entries_fixture: str) -> None:
         """Test using centralized fixture."""
         result = api.parse(oid_entries_fixture)
         assert result.is_success
@@ -599,15 +599,13 @@ class TestMyNewFeature:
 
 ### Step 4: Add Parametrization for Multi-Server Testing
 
-```python
+```text
 @pytest.mark.parametrize(
     "server_fixture",
     ["oid_entries_fixture", "oud_entries_fixture"],
     ids=["OID", "OUD"],
 )
-def test_feature_all_servers(
-    self, api: FlextLdif, server_fixture: str, request
-) -> None:
+def test_feature_all_servers(self, api: ldif, server_fixture: str, request) -> None:
     fixture_data = request.getfixturevalue(server_fixture)
     # Test implementation
 ```
@@ -620,8 +618,8 @@ Always include docstrings explaining:
 - Which scenarios it covers
 - Any special requirements
 
-```python
-def test_roundtrip_preserves_attributes(self, api: FlextLdif) -> None:
+```text
+def test_roundtrip_preserves_attributes(self, api: ldif) -> None:
     """Test roundtrip preserves all attribute values.
 
     Validates:
@@ -686,7 +684,7 @@ All integration tests are run in CI/CD pipelines:
 
 ```bash
 # Complete validation pipeline
-make validate
+make val
 
 # Just tests
 make test
@@ -707,8 +705,8 @@ Tests run with:
 
 ## 📚 References
 
-- **[FlextLdif API Documentation](../README.md)**: Main project documentation
-- **[HOOK_PATTERNS.md](../HOOK_PATTERNS.md)**: Server quirk hook patterns
+- **[ldif API Documentation](../README.md)**: Main project documentation
+- **[HOOK_PATTERNS.md](../HOOK_PATTERNS.md)**: Server server hook patterns
 - **[RFC 2849](https://tools.ietf.org/html/rfc2849)**: LDIF specification
 - **[RFC 4512](https://tools.ietf.org/html/rfc4512)**: LDAP schema specification
 - **[RFC 4514](https://tools.ietf.org/html/rfc4514)**: DN syntax specification
@@ -728,7 +726,7 @@ Tests run with:
 
 ______________________________________________________________________
 
-**Integration Test Suite** for FlextLdif LDIF processing library.
+**Integration Test Suite** for ldif LDIF processing library.
 
 **Purpose**: Comprehensive testing of LDIF parsing, writing, and roundtrip validation across all LDAP server types with centralized fixture management.
 

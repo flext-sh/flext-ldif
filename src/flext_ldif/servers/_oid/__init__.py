@@ -1,56 +1,58 @@
-# AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
-# Regenerate with: make codegen
-#
-"""OID (Oracle Internet Directory) Server Classes."""
+# AUTO-GENERATED FILE — Regenerate with: make gen
+"""Oid package."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
+from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core.typings import FlextTypes
+    from flext_ldif.servers._oid.acl import (
+        FlextLdifServersOidAcl as FlextLdifServersOidAcl,
+    )
+    from flext_ldif.servers._oid.acl_assemble import (
+        FlextLdifServersOidAclAssemble as FlextLdifServersOidAclAssemble,
+    )
+    from flext_ldif.servers._oid.acl_convert import (
+        FlextLdifServersOidAclConvert as FlextLdifServersOidAclConvert,
+    )
+    from flext_ldif.servers._oid.acl_convert_oud import (
+        FlextLdifServersOidAclToOud as FlextLdifServersOidAclToOud,
+    )
+    from flext_ldif.servers._oid.acl_pipeline import (
+        FlextLdifServersOidAclPipeline as FlextLdifServersOidAclPipeline,
+    )
+    from flext_ldif.servers._oid.acl_render import (
+        FlextLdifServersOidAclRender as FlextLdifServersOidAclRender,
+    )
+    from flext_ldif.servers._oid.constants import (
+        FlextLdifServersOidConstants as FlextLdifServersOidConstants,
+    )
+    from flext_ldif.servers._oid.entry import (
+        FlextLdifServersOidEntry as FlextLdifServersOidEntry,
+    )
+    from flext_ldif.servers._oid.schema import (
+        FlextLdifServersOidSchema as FlextLdifServersOidSchema,
+    )
+_LAZY_IMPORTS = build_lazy_import_map(
+    {
+        ".acl": ("FlextLdifServersOidAcl",),
+        ".acl_assemble": ("FlextLdifServersOidAclAssemble",),
+        ".acl_convert": ("FlextLdifServersOidAclConvert",),
+        ".acl_convert_oud": ("FlextLdifServersOidAclToOud",),
+        ".acl_pipeline": ("FlextLdifServersOidAclPipeline",),
+        ".acl_render": ("FlextLdifServersOidAclRender",),
+        ".constants": ("FlextLdifServersOidConstants",),
+        ".entry": ("FlextLdifServersOidEntry",),
+        ".schema": ("FlextLdifServersOidSchema",),
+    },
+)
 
-    from flext_ldif.servers._oid.acl import FlextLdifServersOidAcl
-    from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
-    from flext_ldif.servers._oid.entry import FlextLdifServersOidEntry
-    from flext_ldif.servers._oid.schema import FlextLdifServersOidSchema, logger
 
-_LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "FlextLdifServersOidAcl": ("flext_ldif.servers._oid.acl", "FlextLdifServersOidAcl"),
-    "FlextLdifServersOidConstants": (
-        "flext_ldif.servers._oid.constants",
-        "FlextLdifServersOidConstants",
-    ),
-    "FlextLdifServersOidEntry": (
-        "flext_ldif.servers._oid.entry",
-        "FlextLdifServersOidEntry",
-    ),
-    "FlextLdifServersOidSchema": (
-        "flext_ldif.servers._oid.schema",
-        "FlextLdifServersOidSchema",
-    ),
-    "logger": ("flext_ldif.servers._oid.schema", "logger"),
-}
-
-__all__ = [
-    "FlextLdifServersOidAcl",
-    "FlextLdifServersOidConstants",
-    "FlextLdifServersOidEntry",
-    "FlextLdifServersOidSchema",
-    "logger",
-]
-
-
-def __getattr__(name: str) -> FlextTypes.ModuleExport:
-    """Lazy-load module attributes on first access (PEP 562)."""
-    return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
-
-
-def __dir__() -> list[str]:
-    """Return list of available attributes for dir() and autocomplete."""
-    return sorted(__all__)
-
-
-cleanup_submodule_namespace(__name__, _LAZY_IMPORTS)
+install_lazy_exports(
+    __name__,
+    globals(),
+    _LAZY_IMPORTS,
+    publish_all=False,
+)

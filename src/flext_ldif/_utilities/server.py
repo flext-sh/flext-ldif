@@ -2,35 +2,24 @@
 
 from __future__ import annotations
 
-import re
 import sys
-from typing import Literal, TypeIs
+from typing import TypeIs
 
-from flext_core import r
-
-from flext_ldif import FlextLdifShared, c, t
-from flext_ldif._models.domain import FlextLdifModelsDomains
-
-_VALID_SERVER_TYPES: frozenset[str] = frozenset({
-    "oid",
-    "oud",
-    "rfc",
-    "openldap",
-    "openldap1",
-    "openldap2",
-    "ad",
-    "apache",
-    "ds389",
-    "novell",
-    "ibm_tivoli",
-    "relaxed",
-    "generic",
-})
-_CLASS_SUFFIXES: tuple[str, ...] = ("Acl", "Schema", "Entry", "Constants")
+from flext_ldif import (
+    FlextLdifShared,
+    c,
+    p,
+    r,
+    t,
+)
+from flext_ldif.models import FlextLdifModels as m
 
 
 class FlextLdifUtilitiesServer:
     """Server utilities for LDIF server type resolution."""
+
+    VALID_SERVER_TYPES: frozenset[str] = c.Ldif.VALID_SERVER_TYPES
+    CLASS_SUFFIXES: t.StrSequence = c.Ldif.CLASS_SUFFIXES
 
     @staticmethod
     def _check_name_patterns(
@@ -50,9 +39,45 @@ class FlextLdifUtilitiesServer:
         return any(marker in name_lower for marker in detection_names)
 
     @staticmethod
-    def _extract_server_name(name_without_prefix: str) -> r[str]:
+    def _extract_pattern_name_candidates(
+        value: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        settings: m.Ldif.ServerPatternsConfig,
+    ) -> list[str]:
+        """Extract comparable schema names from a raw definition or parsed model."""
+        if not isinstance(value, str):
+            return [value.name] if value.name else []
+        if not settings.name_regex:
+            return []
+        name_candidates: list[str] = []
+        name_matches = c.Ldif.compile_pattern(
+            settings.name_regex,
+            ignorecase=True,
+        ).findall(value)
+        for match in name_matches:
+            if isinstance(match, tuple):
+                name_candidates.extend(part for part in match if part)
+            elif match:
+                name_candidates.append(match)
+        return name_candidates
+
+    @staticmethod
+    def _matches_definition_text(
+        definition_text: str | None,
+        detection_names: frozenset[str],
+        settings: m.Ldif.ServerPatternsConfig,
+    ) -> bool:
+        """Check raw definition text when settings require substring-based detection."""
+        if not definition_text or not settings.match_definition_text:
+            return False
+        definition_lower = definition_text.lower()
+        if settings.detection_string and settings.detection_string in definition_lower:
+            return True
+        return any(marker in definition_lower for marker in detection_names)
+
+    @staticmethod
+    def _extract_server_name(name_without_prefix: str) -> p.Result[str]:
         """Extract server name from class name suffix."""
-        for suffix in _CLASS_SUFFIXES:
+        for suffix in FlextLdifUtilitiesServer.CLASS_SUFFIXES:
             if name_without_prefix.endswith(suffix):
                 server_name = name_without_prefix[: -len(suffix)]
                 if server_name:
@@ -63,59 +88,62 @@ class FlextLdifUtilitiesServer:
     @staticmethod
     def _get_type_from_independent_class(
         target_cls: type,
-    ) -> c.Ldif.LiteralTypes.ServerTypeLiteral | None:
+    ) -> c.Ldif.ServerTypes | None:
         """Extract server type from independent class naming pattern."""
         class_name = target_cls.__name__
         if not class_name.startswith("FlextLdifServers"):
             return None
         name_without_prefix = class_name[len("FlextLdifServers") :]
-        server_name_result = FlextLdifUtilitiesServer._extract_server_name(
-            name_without_prefix
-        )
-        if server_name_result.is_failure:
+        server_name = FlextLdifUtilitiesServer._extract_server_name(
+            name_without_prefix,
+        ).unwrap_or(None)
+        if server_name is None:
             return None
-        server_type_lower = server_name_result.value.lower()
-        if FlextLdifUtilitiesServer._is_valid_server_type_literal(server_type_lower):
-            return server_type_lower
+        server_type_lower = server_name.lower()
+        if FlextLdifUtilitiesServer._is_valid_server_type(server_type_lower):
+            return c.Ldif.ServerTypes(server_type_lower)
         return None
 
     @staticmethod
     def _get_type_from_nested_class(
         target_cls: type,
-    ) -> c.Ldif.LiteralTypes.ServerTypeLiteral | None:
+    ) -> c.Ldif.ServerTypes | None:
         """Extract server type from nested class via parent's Constants."""
-        if "." in target_cls.__qualname__:
-            parent_class_name = target_cls.__qualname__.split(".")[0]
+        qualname_parts = target_cls.__qualname__.split(".")
+        if len(qualname_parts) > 1:
             parent_module = sys.modules.get(target_cls.__module__)
             if parent_module:
-                parent_server_cls_obj: type | None = vars(parent_module).get(
-                    parent_class_name
+                parent_obj: type | None = vars(parent_module).get(
+                    qualname_parts[0],
                 )
-                if isinstance(parent_server_cls_obj, type):
+                for part in qualname_parts[1:-1]:
+                    if isinstance(parent_obj, type):
+                        parent_obj = vars(parent_obj).get(part)
+                if isinstance(parent_obj, type):
                     srv = FlextLdifUtilitiesServer
                     result = srv.extract_server_type_from_constants(
-                        parent_server_cls_obj
+                        parent_obj,
                     )
                     if result is not None:
                         return result
         for mro_cls in target_cls.__mro__:
             result = FlextLdifUtilitiesServer.extract_server_type_from_constants(
-                mro_cls
+                mro_cls,
             )
             if result is not None:
                 return result
         return None
 
     @staticmethod
-    def _is_valid_server_type_literal(
+    def _is_valid_server_type(
         value: str,
-    ) -> TypeIs[c.Ldif.LiteralTypes.ServerTypeLiteral]:
-        return value in _VALID_SERVER_TYPES
+    ) -> TypeIs[c.Ldif.ServerTypes]:
+        return value in FlextLdifUtilitiesServer.VALID_SERVER_TYPES
 
     @staticmethod
     def extract_server_type_from_constants(
         cls_with_constants: type | None,
-    ) -> c.Ldif.LiteralTypes.ServerTypeLiteral | None:
+    ) -> c.Ldif.ServerTypes | None:
         """Extract server type from a class's Constants.SERVER_TYPE."""
         if cls_with_constants is None:
             return None
@@ -125,20 +153,33 @@ class FlextLdifUtilitiesServer:
         server_type_raw = getattr(constants_obj, "SERVER_TYPE", None)
         if (
             server_type_raw is not None
-            and FlextLdifUtilitiesServer._is_valid_server_type_literal(server_type_raw)
+            and FlextLdifUtilitiesServer._is_valid_server_type(server_type_raw)
         ):
-            return server_type_raw
+            return c.Ldif.ServerTypes(server_type_raw)
         return None
 
     @staticmethod
-    def get_all_server_types() -> list[str]:
+    def get_all_server_types() -> t.MutableSequenceOf[str]:
         """Get all supported server type values."""
         return [s.value for s in c.Ldif.ServerTypes.__members__.values()]
 
     @staticmethod
+    def get_server_type_value(name: str) -> str:
+        """Get the enum value for a server type by its member name.
+
+        Args:
+            name: The ServerTypes enum member name (e.g., "RFC", "OID", "AD").
+
+        Returns:
+            The string value of the corresponding ServerTypes enum member.
+
+        """
+        return c.Ldif.ServerTypes[name].value
+
+    @staticmethod
     def get_parent_server_type(
-        nested_class_instance_or_type: type | t.Container,
-    ) -> c.Ldif.LiteralTypes.ServerTypeLiteral:
+        nested_class_instance_or_type: type | t.JsonValue,
+    ) -> c.Ldif.ServerTypes:
         """Get server_type from parent server class via __qualname__."""
         cls = (
             nested_class_instance_or_type
@@ -155,46 +196,19 @@ class FlextLdifUtilitiesServer:
         raise AttributeError(msg)
 
     @staticmethod
-    def get_server_detection_attribute_match_score() -> int:
+    def get_attribute_match_score() -> int:
         """Get attribute match score for server detection."""
-        return c.Ldif.ServerDetection.ATTRIBUTE_MATCH_SCORE
+        return c.Ldif.ATTRIBUTE_MATCH_SCORE
 
     @staticmethod
-    def get_server_detection_confidence_threshold() -> float:
+    def get_confidence_threshold() -> float:
         """Get confidence threshold for server detection."""
-        return c.Ldif.ServerDetection.CONFIDENCE_THRESHOLD
+        return c.Ldif.CONFIDENCE_THRESHOLD
 
     @staticmethod
     def get_server_detection_default_max_lines() -> int:
         """Get default max lines for server detection."""
-        return c.Ldif.ServerDetection.DEFAULT_MAX_LINES
-
-    @staticmethod
-    def get_server_type_value(server_type: str) -> str:
-        """Get server type enum value by name."""
-        server_enum = c.Ldif.ServerTypes.__members__.get(server_type.upper())
-        if server_enum is None:
-            error_msg = f"Server type {server_type} not found"
-            raise AttributeError(error_msg)
-        return server_enum.value
-
-    @staticmethod
-    def get_sort_strategy_value(name: str) -> str:
-        """Get sort strategy enum value by name."""
-        sort_strategy_enum = c.Ldif.SortStrategy.__members__.get(name.upper())
-        if sort_strategy_enum is None:
-            error_msg = f"Sort strategy {name} not found"
-            raise AttributeError(error_msg)
-        return sort_strategy_enum.value
-
-    @staticmethod
-    def get_sort_target_value(name: str) -> str:
-        """Get sort target enum value by name."""
-        sort_target_enum = c.Ldif.SortTarget.__members__.get(name.upper())
-        if sort_target_enum is None:
-            error_msg = f"Sort target {name} not found"
-            raise AttributeError(error_msg)
-        return sort_target_enum.value
+        return c.Ldif.DEFAULT_MAX_LINES
 
     @staticmethod
     def matches(server_type: str, *allowed_types: str) -> bool:
@@ -204,27 +218,18 @@ class FlextLdifUtilitiesServer:
 
     @staticmethod
     def matches_server_patterns(
-        value: str
-        | FlextLdifModelsDomains.SchemaAttribute
-        | FlextLdifModelsDomains.SchemaObjectClass,
-        oid_pattern: str,
-        detection_names: frozenset[str],
-        detection_string: str | None = None,
-        *,
-        use_prefix_match: bool = False,
+        value: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        settings: m.Ldif.ServerPatternsConfig,
     ) -> bool:
         r"""Check if value matches server-specific detection patterns.
 
         Universal detection logic for can_handle_attribute and can_handle_objectclass
-        methods across all server quirks. Reduces code duplication by centralizing
+        methods across all server servers. Reduces code duplication by centralizing
         the OID pattern, detection string, and attribute name checking.
 
         Args:
             value: The definition string or parsed model to check
-            oid_pattern: Regex pattern for server-specific OIDs (e.g., r"2\\.16\\.840\\.1\\.113894")
-            detection_names: Set of attribute/objectclass names that indicate this server
-            detection_string: Optional string to check for in the definition (e.g., "microsoft")
-            use_prefix_match: If True, use startswith for prefixes; if False, use contains
+            settings: Centralized server pattern settings
 
         Returns:
             True if value matches any server detection pattern, False otherwise
@@ -233,71 +238,65 @@ class FlextLdifUtilitiesServer:
             >>> # In a server's can_handle_attribute method:
             >>> return FlextLdifUtilitiesServer.matches_server_patterns(
             ...     value=attr_definition,
-            ...     oid_pattern=MyServer.Constants.DETECTION_OID_PATTERN,
-            ...     detection_names=MyServer.Constants.DETECTION_ATTRIBUTE_NAMES,
-            ...     detection_string="myserver",
+            ...     settings=MyServer.Constants.ATTRIBUTE_PATTERN_SETTINGS,
             ... )
 
         """
+        detection_names = frozenset(
+            marker.lower() for marker in (*settings.attr_names, *settings.attr_prefixes)
+        )
 
         def check_oid_pattern(check_value: str | None) -> bool:
             """Check OID pattern match."""
-            return bool(check_value and re.search(oid_pattern, check_value))
-
-        def check_name_in_set(name: str | None) -> bool:
-            """Check if name is in detection set."""
-            return bool(name and name.lower() in detection_names)
-
-        def check_model_patterns(
-            model: FlextLdifModelsDomains.SchemaAttribute
-            | FlextLdifModelsDomains.SchemaObjectClass,
-        ) -> bool:
-            """Check patterns for model types."""
-            if check_oid_pattern(model.oid) or check_name_in_set(model.name):
-                return True
-            name_lower = model.name.lower() if model.name else ""
-            return FlextLdifUtilitiesServer._check_name_patterns(
-                name_lower,
-                detection_names,
-                detection_string,
-                use_prefix_match=use_prefix_match,
+            return bool(
+                check_value
+                and settings.oid_pattern
+                and c.Ldif.compile_pattern(settings.oid_pattern).search(check_value)
             )
 
-        if isinstance(value, str):
-            return check_oid_pattern(
-                value
-            ) or FlextLdifUtilitiesServer._check_name_patterns(
-                value.lower(),
+        oid_value = value if isinstance(value, str) else value.oid
+        definition_text = value if isinstance(value, str) else None
+        name_candidates = FlextLdifUtilitiesServer._extract_pattern_name_candidates(
+            value,
+            settings,
+        )
+        result = check_oid_pattern(oid_value) or any(
+            FlextLdifUtilitiesServer._check_name_patterns(
+                name.lower(),
                 detection_names,
-                detection_string,
-                use_prefix_match=use_prefix_match,
+                settings.detection_string,
+                use_prefix_match=settings.use_prefix_match,
             )
-        if isinstance(value, FlextLdifModelsDomains.SchemaAttribute):
-            return check_model_patterns(value)
-        return check_model_patterns(value)
+            for name in name_candidates
+        )
+        if not result:
+            return FlextLdifUtilitiesServer._matches_definition_text(
+                definition_text,
+                detection_names,
+                settings,
+            )
+        return result
 
     @staticmethod
-    def normalize_server_type(
-        server_type: str,
-    ) -> Literal[
-        "oid",
-        "oud",
-        "openldap",
-        "openldap1",
-        "openldap2",
-        "ad",
-        "apache",
-        "ds389",
-        "rfc",
-        "relaxed",
-        "novell",
-        "ibm_tivoli",
-        "generic",
-    ]:
-        """Normalize server type string to canonical ServerTypes enum value."""
-        normalized = FlextLdifShared.normalize_server_type(server_type).value
-        if FlextLdifUtilitiesServer._is_valid_server_type_literal(normalized):
-            return normalized
-        valid_types = [s.value for s in c.Ldif.ServerTypes.__members__.values()]
-        msg = f"Invalid server type: {server_type}. Valid types: {valid_types}"
-        raise ValueError(msg)
+    def normalize_server_type(server_type: str) -> c.Ldif.ServerTypes:
+        """Normalize server type string to canonical ServerTypes enum member."""
+        return FlextLdifShared.normalize_server_type(server_type)
+
+    @staticmethod
+    def validation_rule_flags(
+        server_type: str | c.Ldif.ServerTypes,
+    ) -> dict[str, bool]:
+        """Resolve validation-rule booleans from the canonical server capability map."""
+        normalized_server_type = FlextLdifUtilitiesServer.normalize_server_type(
+            str(server_type),
+        )
+        validation_capabilities = c.Ldif.SERVER_VALIDATION_CAPABILITIES.get(
+            normalized_server_type,
+            frozenset(),
+        )
+        return {
+            "requires_objectclass": "requires_objectclass" in validation_capabilities,
+            "requires_naming_attr": "requires_naming_attr" in validation_capabilities,
+            "requires_binary_option": "requires_binary_option"
+            in validation_capabilities,
+        }

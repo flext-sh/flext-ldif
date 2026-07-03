@@ -9,7 +9,7 @@ Test suite verifying LDIF operations against an actual LDAP server:
     - Process batches of entries
 
 Uses Docker fixture infrastructure from conftest.py for automatic
-container management via FlextTestsDocker.ldap_container fixture.
+container management via tk.ldap_container fixture.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -19,49 +19,53 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import base64
-from collections.abc import Callable
+from collections.abc import (
+    Callable,
+    MutableMapping,
+)
 from pathlib import Path
 
 import pytest
-from ldap3 import Connection
 
-from flext_ldif import FlextLdif
+from flext_ldif import ldif
+from tests.constants import c
+from tests.protocols import p
+from tests.typings import t
+from tests.utilities import u
 
 
 @pytest.fixture
-def flext_api() -> FlextLdif:
-    """FlextLdif API instance."""
-    return FlextLdif.get_instance()
+def flext_api() -> p.Ldif.LdifClient:
+    """Ldif API instance."""
+    return ldif()
 
 
 @pytest.mark.docker
 @pytest.mark.integration
 @pytest.mark.real_ldap
-class TestRealLdapImport:
+class TestsFlextLdifRealLdapImport:
     """Test LDIF import to real LDAP server."""
 
     def test_import_single_entry(
         self,
-        ldap_connection: Connection,
+        ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
-        flext_api: FlextLdif,
+        flext_api: p.Ldif.LdifClient,
         make_test_username: Callable[[str], str],
     ) -> None:
         """Import LDIF entry to real LDAP server."""
         unique_username = make_test_username("ImportTest")
         ldif_content = f"dn: cn={unique_username},{clean_test_ou}\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: {unique_username}\nsn: Test\nmail: import@example.com\n"
-        parse_result = flext_api.parse(ldif_content)
-        assert parse_result.is_success
-        entries = parse_result.value
+        parse_result = flext_api.parse_ldif(ldif_content)
+        assert parse_result.success
+        entries = parse_result.value.entries
         assert len(entries) == 1
         entry = entries[0]
-        object_classes = entry.get_attribute_values("objectclass")
-        if not isinstance(object_classes, list):
-            object_classes_typed: list[str] = (
-                list(object_classes) if object_classes else []
-            )
-            object_classes = object_classes_typed
-        attrs_dict: dict[str, list[str]] = {}
+        object_classes_raw = u.Ldif.get_attribute_values(entry, "objectclass")
+        object_classes: list[str] = (
+            list(object_classes_raw) if object_classes_raw else []
+        )
+        attrs_dict: MutableMapping[str, t.StrSequence] = {}
         assert entry.attributes is not None
         for attr_name, attr_values in entry.attributes.attributes.items():
             if attr_name.lower() == "objectclass":
@@ -70,13 +74,14 @@ class TestRealLdapImport:
                 continue
             if isinstance(attr_values, list):
                 attrs_dict[attr_name] = attr_values
-            elif hasattr(attr_values, "values"):
-                attrs_dict[attr_name] = list(attr_values.values)
             else:
                 attrs_dict[attr_name] = [str(attr_values)]
         ldap_connection.add(str(entry.dn), object_classes, attributes=attrs_dict)
         assert ldap_connection.search(
-            str(entry.dn), "(objectClass=*)", search_scope="BASE", attributes=["*"]
+            str(entry.dn),
+            "(objectClass=*)",
+            search_scope=c.Ldap.Ldap3SearchScope.BASE.value,
+            attributes=["*"],
         )
         imported_entry = ldap_connection.entries[0]
         assert imported_entry["cn"].value == unique_username
@@ -84,9 +89,9 @@ class TestRealLdapImport:
 
     def test_import_with_binary_attributes(
         self,
-        ldap_connection: Connection,
+        ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
-        flext_api: FlextLdif,
+        flext_api: p.Ldif.LdifClient,
         make_test_username: Callable[[str], str],
     ) -> None:
         """Import LDIF with binary attributes (base64-encoded)."""
@@ -94,35 +99,38 @@ class TestRealLdapImport:
         binary_data = b"fake_jpeg_data_here"
         encoded_photo = base64.b64encode(binary_data).decode("ascii")
         ldif_content = f"dn: cn={unique_username},{clean_test_ou}\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: {unique_username}\nsn: Test\njpegPhoto:: {encoded_photo}\n"
-        parse_result = flext_api.parse(ldif_content)
-        assert parse_result.is_success
-        entries = parse_result.value
+        parse_result = flext_api.parse_ldif(ldif_content)
+        assert parse_result.success
+        entries = parse_result.value.entries
         entry = entries[0]
         assert entry.attributes is not None
-        attrs_dict: dict[str, list[str] | bytes] = {
+        attrs_dict: MutableMapping[str, t.StrSequence | bytes] = {
             attr_name: attr_values
             for attr_name, attr_values in entry.attributes.attributes.items()
             if attr_name.lower() != "objectclass"
         }
         if "jpegPhoto" in attrs_dict:
             attrs_dict["jpegPhoto"] = binary_data
-        attrs_dict["objectClass"] = entry.get_attribute_values("objectclass")
+        attrs_dict["objectClass"] = u.Ldif.get_attribute_values(entry, "objectclass")
         ldap_connection.add(
             str(entry.dn),
-            entry.get_attribute_values("objectclass"),
+            u.Ldif.get_attribute_values(entry, "objectclass"),
             attributes=attrs_dict,
         )
         assert ldap_connection.search(
-            str(entry.dn), "(objectClass=*)", search_scope="BASE", attributes=["*"]
+            str(entry.dn),
+            "(objectClass=*)",
+            search_scope=c.Ldap.Ldap3SearchScope.BASE.value,
+            attributes=["*"],
         )
         imported_entry = ldap_connection.entries[0]
         assert imported_entry["jpegPhoto"].value == binary_data
 
     def test_import_from_file(
         self,
-        ldap_connection: Connection,
+        ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
-        flext_api: FlextLdif,
+        flext_api: p.Ldif.LdifClient,
         tmp_path: Path,
         make_test_username: Callable[[str], str],
     ) -> None:
@@ -131,18 +139,16 @@ class TestRealLdapImport:
         ldif_file = tmp_path / "import.ldif"
         ldif_content = f"dn: cn={unique_username},{clean_test_ou}\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: {unique_username}\nsn: Test\nmail: import@example.com\n"
         ldif_file.write_text(ldif_content)
-        parse_result = flext_api.parse(ldif_file)
-        assert parse_result.is_success
-        entries = parse_result.value
+        parse_result = flext_api.parse_ldif(ldif_file)
+        assert parse_result.success
+        entries = parse_result.value.entries
         assert len(entries) == 1
         entry = entries[0]
-        object_classes = entry.get_attribute_values("objectclass")
-        if not isinstance(object_classes, list):
-            object_classes_typed: list[str] = (
-                list(object_classes) if object_classes else []
-            )
-            object_classes = object_classes_typed
-        attrs_dict: dict[str, list[str]] = {}
+        object_classes_raw = u.Ldif.get_attribute_values(entry, "objectclass")
+        object_classes: list[str] = (
+            list(object_classes_raw) if object_classes_raw else []
+        )
+        attrs_dict: MutableMapping[str, t.StrSequence] = {}
         assert entry.attributes is not None
         for attr_name, attr_values in entry.attributes.attributes.items():
             if attr_name.lower() == "objectclass":
@@ -151,16 +157,17 @@ class TestRealLdapImport:
                 continue
             if isinstance(attr_values, list):
                 attrs_dict[attr_name] = attr_values
-            elif hasattr(attr_values, "values"):
-                attrs_dict[attr_name] = list(attr_values.values)
             else:
                 attrs_dict[attr_name] = [str(attr_values)]
         ldap_connection.add(str(entry.dn), object_classes, attributes=attrs_dict)
         assert ldap_connection.search(
-            str(entry.dn), "(objectClass=*)", search_scope="BASE", attributes=["*"]
+            str(entry.dn),
+            "(objectClass=*)",
+            search_scope=c.Ldap.Ldap3SearchScope.BASE.value,
+            attributes=["*"],
         )
         imported = ldap_connection.entries[0]
         assert imported["cn"].value == unique_username
 
 
-__all__ = ["TestRealLdapImport"]
+__all__: list[str] = ["TestsFlextLdifRealLdapImport"]

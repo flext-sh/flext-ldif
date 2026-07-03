@@ -1,2070 +1,1089 @@
-"""Test constant definitions extending src constants for centralized test constants.
-
-This module provides test-specific constants that complement but do not duplicate
-src/flext_ldif/constants.py. These constants are used exclusively in tests for:
-- Test data generation
-- Test fixtures
-- Test assertions
-- Mock data
-
-Important: This module should NOT duplicate constants from src/constants.py.
-Instead, it should import and reuse them when possible, or define test-specific
-constants that are not part of the production codebase.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Centralized flat test constants for flext-ldif."""
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence, Sized
+import re
 from pathlib import Path
-from typing import Final, cast
+from types import MappingProxyType
+from typing import Final, Literal
 
-from flext_core import r
+from flext_ldap import c
 from flext_tests import FlextTestsConstants
 
-from flext_ldif import (
-    FlextLdif,
-    FlextLdifConstants,
-    FlextLdifConversion,
-    FlextLdifEntries,
-    FlextLdifParser,
-    FlextLdifSchema,
-    FlextLdifWriter,
-    m,
-    p,
-)
+from tests.models import m
+from tests.typings import t
 
 
-class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
-    """Constants for flext-ldif tests using COMPOSITION INHERITANCE."""
+class TestsFlextLdifConstants(FlextTestsConstants, c):
+    """Flat test constants for flext-ldif."""
 
-    class Schema:
-        """Schema constants wrapper for test convenience."""
+    class Tests(FlextTestsConstants.Tests):
+        """LDIF test constants namespace."""
 
-        STRUCTURAL: str = FlextLdifConstants.Ldif.AclSubjectTypes.STRUCTURAL
-        AUXILIARY: str = FlextLdifConstants.Ldif.AclSubjectTypes.AUXILIARY
-        ABSTRACT: str = FlextLdifConstants.Ldif.AclSubjectTypes.ABSTRACT
-        ACTIVE: str = FlextLdifConstants.Ldif.AclSubjectTypes.ACTIVE
-        DEPRECATED: str = FlextLdifConstants.Ldif.AclSubjectTypes.DEPRECATED
+        FIXTURES_DIR: Final[Path] = Path(__file__).parent / "fixtures"
+        PROJECT_ROOT: Final[Path] = Path(__file__).resolve().parents[1]
 
-    class Names:
-        """Standard LDAP attribute names for test fixtures."""
+        RFC: Final[str] = c.Ldif.ServerTypes.RFC.value
+        OID: Final[str] = c.Ldif.ServerTypes.OID.value
+        OUD: Final[str] = c.Ldif.ServerTypes.OUD.value
+        OPENLDAP: Final[str] = c.Ldif.ServerTypes.OPENLDAP.value
+        OPENLDAP1: Final[str] = c.Ldif.ServerTypes.OPENLDAP1.value
+        GENERIC: Final[str] = c.Ldif.ServerTypes.GENERIC.value
+        DS389: Final[str] = c.Ldif.ServerTypes.DS389.value
+        APACHE: Final[str] = c.Ldif.ServerTypes.APACHE.value
+        NOVELL: Final[str] = c.Ldif.ServerTypes.NOVELL.value
+        TIVOLI: Final[str] = c.Ldif.ServerTypes.IBM_TIVOLI.value
+        AD: Final[str] = c.Ldif.ServerTypes.AD.value
 
-        CN: Final[str] = "cn"
-        SN: Final[str] = "sn"
-        GIVEN_NAME: Final[str] = "givenName"
-        MAIL: Final[str] = "mail"
-        OBJECT_CLASS: Final[str] = "objectClass"
-        OBJECTCLASS: Final[str] = "objectClass"
-        DESCRIPTION: Final[str] = "description"
-        TELEPHONE_NUMBER: Final[str] = "telephoneNumber"
-        STREET: Final[str] = "street"
-        LOCALITY: Final[str] = "l"
-        STATE_OR_PROVINCE: Final[str] = "st"
-        POSTAL_CODE: Final[str] = "postalCode"
-        ORGANIZATION: Final[str] = "o"
-        ORGANIZATIONAL_UNIT: Final[str] = "ou"
-        ORGANIZATIONAL_PERSON: Final[str] = "organizationalPerson"
-        USER_PASSWORD: Final[str] = "userPassword"
-        JPEG_PHOTO: Final[str] = "jpegPhoto"
-        EMPLOYEE_ID: Final[str] = "employeeID"
-        DN: Final[str] = "dn"
-        UID: Final[str] = "uid"
-        PERSON: Final[str] = "person"
-        TOP: Final[str] = "top"
-        INETORGPERSON: Final[str] = "inetOrgPerson"
-        INET_ORG_PERSON: Final[str] = "inetOrgPerson"
+        SCHEMA: Final[str] = "schema"
+        ACL: Final[str] = "acl"
+        ENTRIES: Final[str] = "entries"
+        INTEGRATION: Final[str] = "integration"
+        FIXTURE_SERVERS_SCHEMA: Final[t.StrSequence] = (
+            OID,
+            OUD,
+            OPENLDAP,
+            RFC,
+        )
+        FIXTURE_SERVERS_COMMON: Final[t.StrSequence] = (
+            OID,
+            OUD,
+            OPENLDAP,
+        )
+        FIXTURE_KIND_SERVERS: Final[t.MappingKV[str, t.StrSequence]] = MappingProxyType(
+            {
+                SCHEMA: FIXTURE_SERVERS_SCHEMA,
+                ACL: FIXTURE_SERVERS_COMMON,
+                ENTRIES: FIXTURE_SERVERS_COMMON,
+                INTEGRATION: FIXTURE_SERVERS_COMMON,
+            },
+        )
+        FIXTURE_KINDS: Final[frozenset[str]] = frozenset(
+            FIXTURE_KIND_SERVERS.keys(),
+        )
+        PARAMETRIZED_REAL_SERVERS: Final[t.StrSequence] = (
+            OPENLDAP,
+            AD,
+            OID,
+            OUD,
+        )
 
-    class Fixtures:
-        """Test fixture directory names used in tests/fixtures/."""
+        DOCKER_CONTAINER_NAME: Final[str] = "flext-openldap-test"
+        DOCKER_PORT: Final[int] = 3390
+        DOCKER_BASE_DN: Final[str] = "dc=flext,dc=local"
+        DOCKER_ADMIN_DN: Final[str] = "cn=admin,dc=flext,dc=local"
+        DOCKER_ADMIN_PASSWORD: Final[str] = "admin123"
+        DOCKER_LEGACY_ADMIN_DN: Final[str] = (
+            "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
+        )
+        DOCKER_LEGACY_ADMIN_PASSWORD: Final[str] = "REDACTED_LDAP_BIND_PASSWORD123"
 
-        OID: Final[str] = "oid"
-        OUD: Final[str] = "oud"
-        OPENLDAP: Final[str] = "openldap"
-        OPENLDAP2: Final[str] = "openldap2"
-        RFC: Final[str] = "rfc"
+        SCHEMA_STRUCTURAL: Final[str] = c.Ldif.SchemaKind.STRUCTURAL.value
+        SCHEMA_AUXILIARY: Final[str] = c.Ldif.SchemaKind.AUXILIARY.value
+        SCHEMA_ABSTRACT: Final[str] = c.Ldif.SchemaKind.ABSTRACT.value
 
-    class Rfc:
-        """RFC test constants for schema and entry testing."""
+        NAME_CN: Final[str] = "cn"
+        NAME_SN: Final[str] = "sn"
+        NAME_MAIL: Final[str] = "mail"
+        NAME_DESCRIPTION: Final[str] = "description"
+        NAME_UID: Final[str] = "uid"
+        NAME_OBJECTCLASS: Final[str] = c.Ldif.DictKeys.OBJECTCLASS.value
+        NAME_PERSON: Final[str] = "person"
+        NAME_TOP: Final[str] = "top"
+        NAME_ORCLUSER: Final[str] = "orcluser"
+        NAME_SUBSCHEMA: Final[str] = "subschema"
+        NAME_MEMBER: Final[str] = "member"
+        NAME_GROUP_OF_NAMES: Final[str] = "groupOfNames"
+        NAME_INET_ORG_PERSON: Final[str] = "inetOrgPerson"
+        NAME_ACI: Final[str] = "aci"
+        NAME_ORCLACI: Final[str] = "orclaci"
 
-        ATTR_DEF_CN: Final[str] = (
-            "( 2.5.4.3 NAME 'cn' DESC 'Common Name' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )"
-        )
-        ATTR_DEF_CN_COMPLETE: Final[str] = (
-            "( 2.5.4.3 NAME 'cn' DESC 'Common Name' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )"
-        )
-        ATTR_DEF_CN_MINIMAL: Final[str] = "( 2.5.4.3 )"
-        ATTR_DEF_SN: Final[str] = (
-            "( 2.5.4.4 NAME 'sn' DESC 'Surname' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{255} )"
-        )
-        ATTR_DEF_ST: Final[str] = (
-            "( 2.5.4.8 NAME 'st' DESC 'State or Province Name' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 EQUALITY caseIgnoreMatch ORDERING caseIgnoreOrderingMatch SUBSTR caseIgnoreSubstringsMatch )"
-        )
-        ATTR_DEF_MAIL: Final[str] = (
-            "( 0.9.2342.19200300.100.1.3 NAME 'mail' SUP name DESC 'Email address' )"
-        )
-        ATTR_DEF_MODIFY_TIMESTAMP: Final[str] = (
-            "( 2.5.18.2 NAME 'modifyTimestamp' SYNTAX 1.3.6.1.4.1.1466.115.121.1.24 SINGLE-VALUE NO-USER-MODIFICATION USAGE directoryOperation )"
-        )
-        ATTR_DEF_OBSOLETE: Final[str] = (
-            "( 2.5.4.10 NAME 'o' DESC 'Organization Name' OBSOLETE SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
-        )
-        ATTR_DEF_OBJECTCLASS: Final[str] = (
-            "( 2.5.4.0 NAME 'objectClass' DESC 'Object Class' SYNTAX '1.3.6.1.4.1.1466.115.121.1.38' )"
-        )
-        ATTR_OID_CN: Final[str] = "2.5.4.3"
-        ATTR_OID_SN: Final[str] = "2.5.4.4"
-        ATTR_OID_ST: Final[str] = "2.5.4.8"
-        ATTR_OID_MAIL: Final[str] = "0.9.2342.19200300.100.1.3"
-        ATTR_OID_MODIFY_TIMESTAMP: Final[str] = "2.5.18.2"
-        ATTR_OID_O: Final[str] = "2.5.4.10"
-        ATTR_OID_OBJECTCLASS: Final[str] = "2.5.4.0"
-        ATTR_NAME_CN: Final[str] = "cn"
-        ATTR_NAME_SN: Final[str] = "sn"
-        ATTR_NAME_ST: Final[str] = "st"
-        ATTR_NAME_MAIL: Final[str] = "mail"
-        ATTR_NAME_MODIFY_TIMESTAMP: Final[str] = "modifyTimestamp"
-        ATTR_NAME_O: Final[str] = "o"
-        ATTR_NAME_OBJECTCLASS: Final[str] = "objectClass"
-        SYNTAX_OID_DIRECTORY_STRING: Final[str] = "1.3.6.1.4.1.1466.115.121.1.15"
-        SYNTAX_OID_BOOLEAN: Final[str] = "1.3.6.1.4.1.1466.115.121.1.7"
-        SYNTAX_OID_INTEGER: Final[str] = "1.3.6.1.4.1.1466.115.121.1.27"
-        SYNTAX_OID_IA5_STRING: Final[str] = "1.3.6.1.4.1.1466.115.121.1.26"
-        SYNTAX_OID_GENERALIZED_TIME: Final[str] = "1.3.6.1.4.1.1466.115.121.1.24"
-        SYNTAX_OID_OID: Final[str] = "1.3.6.1.4.1.1466.115.121.1.38"
-        OC_DEF_PERSON: Final[str] = (
-            "( 2.5.6.6 NAME 'person' DESC 'RFC2256: a person' SUP top STRUCTURAL MUST ( sn $ cn ) )"
-        )
-        OC_DEF_PERSON_FULL: Final[str] = OC_DEF_PERSON
-        OC_DEF_PERSON_BASIC: Final[str] = (
-            "( 2.5.6.6 NAME 'person' DESC 'RFC2256: a person' SUP top STRUCTURAL )"
-        )
-        OC_DEF_PERSON_MINIMAL: Final[str] = "( 2.5.6.6 NAME 'person' STRUCTURAL )"
-        OC_OID_PERSON: Final[str] = "2.5.6.6"
-        OC_NAME_PERSON: Final[str] = "person"
-        SCHEMA_DN_SUBSCHEMA: Final[str] = "cn=subschema"
-        SCHEMA_DN_SCHEMA: Final[str] = "cn=schema"
-        SCHEMA_DN_SCHEMA_SYSTEM: Final[str] = "cn=schema,o=system"
-        TEST_DN: Final[str] = "cn=test,dc=example,dc=com"
-        TEST_DN_USER1: Final[str] = "cn=user1,dc=example,dc=com"
-        TEST_DN_USER2: Final[str] = "cn=user2,dc=example,dc=com"
-        TEST_DN_TEST_USER: Final[str] = "cn=Test User,dc=example,dc=com"
-        INVALID_DN: Final[str] = "invalid-dn-format"
-        SAMPLE_DN: Final[str] = TEST_DN
-        SAMPLE_DN_USER1: Final[str] = TEST_DN_USER1
-        SAMPLE_DN_USER2: Final[str] = TEST_DN_USER2
-        SAMPLE_ATTRIBUTE_CN: Final[str] = "cn"
-        SAMPLE_ATTRIBUTE_SN: Final[str] = "sn"
-        SAMPLE_LDIF_BASIC: Final[str] = (
+        DN_TEST: Final[str] = "cn=test,dc=example,dc=com"
+        DN_TEST_USER: Final[str] = "cn=testuser,dc=example,dc=com"
+
+        BOOLEAN_TRUE: Final[str] = "TRUE"
+        BOOLEAN_FALSE: Final[str] = "FALSE"
+        ATTR_ORCL_IS_ENABLED: Final[str] = "orclIsEnabled"
+        ATTR_ORCL_ACCOUNT_LOCKED: Final[str] = "orclAccountLocked"
+        ACL_READ_VALUE: Final[str] = "access to entry by * (read)"
+
+        RFC_SAMPLE_LDIF_BASIC: Final[str] = (
             "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\nsn: user\n"
         )
-        SAMPLE_LDIF_MULTIPLE: Final[str] = (
-            "dn: cn=user1,dc=example,dc=com\nobjectClass: person\ncn: user1\n\ndn: cn=user2,dc=example,dc=com\nobjectClass: person\ncn: user2\n"
+        RFC_SAMPLE_LDIF_MULTIPLE: Final[str] = (
+            "dn: cn=user1,dc=example,dc=com\n"
+            "objectClass: person\n"
+            "cn: user1\n\n"
+            "dn: cn=user2,dc=example,dc=com\n"
+            "objectClass: person\n"
+            "cn: user2\n"
         )
-        SAMPLE_LDIF_BINARY: Final[str] = (
-            "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\nphoto:: UGhvdG8gZGF0YQ==\n"
-        )
-        SAMPLE_SCHEMA_CONTENT: Final[str] = (
-            "dn: cn=subschema\nobjectClass: top\nobjectClass: subentry\nobjectClass: subschema\ncn: subschema\nattributeTypes: ( 2.5.4.4 NAME 'sn' DESC 'Surname' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )\nobjectClasses: ( 2.5.6.6 NAME 'person' DESC 'RFC2256: a person' SUP top STRUCTURAL MUST ( sn $ cn ) )\n"
-        )
-        INVALID_ATTR_DEF: Final[str] = "NAME 'cn' DESC 'Common Name'"
-        INVALID_OC_DEF: Final[str] = "invalid objectclass definition"
-        ACL_SAMPLE_BROWSE: Final[str] = "access to entry by * (browse)"
-        ACL_SAMPLE_READ: Final[str] = "access to entry by * (read)"
+        RFC_TEST_DN: Final[str] = DN_TEST
 
-    class TestData:
-        """Test data generation constants."""
-
-        SAMPLE_BASE_DN: Final[str] = "dc=test,dc=local"
-        SAMPLE_USER_DN: Final[str] = "cn=testuser,dc=test,dc=local"
-        SAMPLE_GROUP_DN: Final[str] = "cn=testgroup,dc=test,dc=local"
-        SAMPLE_OU_DN: Final[str] = "ou=testou,dc=test,dc=local"
-        SAMPLE_ATTRIBUTES: Final[dict[str, list[str]]] = {
-            "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
-            "cn": ["Test User"],
-            "sn": ["User"],
-            "mail": ["test@example.com"],
-            "uid": ["testuser"],
-        }
-        SAMPLE_LDIF_ENTRY: Final[str] = (
-            "dn: cn=Test User,dc=test,dc=local\nobjectClass: inetOrgPerson\nobjectClass: organizationalPerson\nobjectClass: person\nobjectClass: top\ncn: Test User\nsn: User\nmail: test@example.com\nuid: testuser\n"
-        )
-
-    class General:
-        """General test constants (from fixtures/general_constants.py)."""
-
-        SAMPLE_DN: Final[str] = "cn=test,dc=example,dc=com"
-        SAMPLE_DN_1: Final[str] = "cn=test1,dc=example,dc=com"
-        SAMPLE_DN_2: Final[str] = "cn=test2,dc=example,dc=com"
-        SAMPLE_SCHEMA_DN: Final[str] = "cn=schema"
-        SAMPLE_USER_DN: Final[str] = "uid=testuser,ou=people,dc=example,dc=com"
-        SAMPLE_SUBSCHEMA_DN: Final[str] = "cn=subschema"
-        SAMPLE_LDIF_ENTRY: Final[str] = (
-            "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\nsn: user\n"
-        )
-        SAMPLE_LDIF_TWO_ENTRIES: Final[str] = (
-            "dn: cn=test1,dc=example,dc=com\ncn: test1\n\ndn: cn=test2,dc=example,dc=com\ncn: test2\n"
-        )
-        WRITER_FAILED_MSG: Final[str] = "Writer failed"
-        PARSER_ERROR_MSG: Final[str] = "Parser error"
-        DN_ERROR_MSG: Final[str] = "DN error"
-        INVALID_ENTRY_MSG: Final[str] = "Invalid entry"
-        PARSE_FAILED_MSG: Final[str] = "Parse failed"
-        WRITE_FAILED_MSG: Final[str] = "Write failed"
-        INVALID_ATTRIBUTE: Final[str] = "this is not a valid attribute definition"
-        INVALID_DN: Final[str] = "invalid-dn-format"
-        INVALID_DATA_TYPE: Final[str] = "invalid_type"
-        ATTR_NAME_CN: Final[str] = "cn"
-        ATTR_NAME_SN: Final[str] = "sn"
-        ATTR_NAME_OBJECTCLASS: Final[str] = "objectClass"
         ATTR_VALUE_TEST: Final[str] = "test"
-        ATTR_VALUE_TEST1: Final[str] = "test1"
-        ATTR_VALUE_TEST2: Final[str] = "test2"
         ATTR_VALUE_USER: Final[str] = "user"
-        OC_NAME_PERSON: Final[str] = "person"
-        OC_NAME_TOP: Final[str] = "top"
+        VERSION_EXPECTED_EXPORTS: Final[t.StrSequence] = (
+            "FlextLdifVersion",
+            "__author__",
+            "__author_email__",
+            "__description__",
+            "__license__",
+            "__title__",
+            "__url__",
+            "__version__",
+            "__version_info__",
+        )
 
-    class RFC:
-        """RFC server test constants (from fixtures/rfc_constants.py)."""
+        CONFIG_BASIC_ENTRY: Final[str] = (
+            "dn: cn=Test,dc=example,dc=com\ncn: Test\nobjectClass: person\n"
+        )
+        CONFIG_MULTIPLE_ENTRIES: Final[str] = (
+            "dn: cn=User1,dc=example,dc=com\n"
+            "cn: User1\n"
+            "objectClass: person\n\n"
+            "dn: cn=User2,dc=example,dc=com\n"
+            "cn: User2\n"
+            "objectClass: person\n\n"
+            "dn: cn=User3,dc=example,dc=com\n"
+            "cn: User3\n"
+            "objectClass: person\n"
+        )
+        CONFIG_SERVER_TYPES: Final[t.StrSequence] = (OID, OUD, OPENLDAP, RFC)
+        _CONFIG_SERVER_LABELS: Final[t.MappingKV[str, str]] = MappingProxyType(
+            {OID: "OID", OUD: "OUD", OPENLDAP: "OpenLDAP", RFC: "RFC"},
+        )
+        CONFIG_SERVER_CONTENT: Final[t.MappingKV[str, str]] = MappingProxyType({
+            server: (
+                f"dn: cn={label} Test,dc=example,dc=com\n"
+                f"cn: {label} Test\n"
+                "objectClass: person\n"
+            )
+            for server, label in _CONFIG_SERVER_LABELS.items()
+        })
 
-        ATTR_DEF_CN: Final[str] = "( 2.5.4.3 NAME 'cn' )"
-        ATTR_DEF_CN_FULL: Final[str] = "( 2.5.4.3 NAME 'cn' EQUALITY caseIgnoreMatch )"
-        ATTR_DEF_CN_COMPLETE: Final[str] = (
-            "( 2.5.4.3 NAME 'cn' DESC 'Common Name' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )"
+        CROSS_SERVER_OID_ATTRIBUTE_ORCLGUID: Final[str] = (
+            "( 2.16.840.1.113894.1.1.1 NAME 'orclguid' DESC 'Oracle GUID' "
+            "EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )"
         )
-        ATTR_DEF_SN: Final[str] = (
-            "( 2.5.4.4 NAME 'sn' DESC 'Surname' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )"
+        CROSS_SERVER_OID_OBJECTCLASS_ORCLCONTAINER: Final[str] = (
+            "( 2.16.840.1.113894.2.1.1 NAME 'orclContainer' DESC 'Oracle Container' "
+            "SUP top STRUCTURAL MUST cn MAY description )"
         )
-        ATTR_DEF_OBJECTCLASS: Final[str] = (
-            "( 2.5.4.0 NAME 'objectClass' DESC 'Object Class' SYNTAX '1.3.6.1.4.1.1466.115.121.1.38' )"
-        )
-        ATTR_OID_CN: Final[str] = "2.5.4.3"
-        ATTR_OID_OBJECTCLASS: Final[str] = "2.5.4.0"
-        ATTR_NAME_CN: Final[str] = "cn"
-        ATTR_OID_SN: Final[str] = "2.5.4.4"
-        ATTR_NAME_SN: Final[str] = "sn"
-        OC_DEF_PERSON: Final[str] = "( 2.5.6.6 NAME 'person' STRUCTURAL )"
-        OC_DEF_PERSON_FULL: Final[str] = (
-            "( 2.5.6.6 NAME 'person' DESC 'RFC2256: a person' SUP top STRUCTURAL MUST ( sn $ cn ) )"
-        )
-        OC_DEF_PERSON_BASIC: Final[str] = (
-            "( 2.5.6.6 NAME 'person' DESC 'RFC2256: a person' SUP top STRUCTURAL )"
-        )
-        OC_OID_PERSON: Final[str] = "2.5.6.6"
-        OC_NAME_PERSON: Final[str] = "person"
-        TEST_DN: Final[str] = "cn=test,dc=example,dc=com"
-        TEST_ORIGIN: Final[str] = "test.ldif"
-        SCHEMA_DN_SUBSCHEMA: Final[str] = "cn=subschema"
-        SCHEMA_DN_SCHEMA: Final[str] = "cn=schema"
-        SCHEMA_DN_SCHEMA_SYSTEM: Final[str] = "cn=schema,o=system"
-        ATTR_DEF_CN_MINIMAL: Final[str] = "( 2.5.4.3 )"
-        ATTR_DEF_ST: Final[str] = (
-            "( 2.5.4.8 NAME 'st' DESC 'State or Province Name' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 EQUALITY caseIgnoreMatch ORDERING caseIgnoreOrderingMatch SUBSTR caseIgnoreSubstringsMatch )"
-        )
-        ATTR_DEF_MAIL: Final[str] = (
-            "( 0.9.2342.19200300.100.1.3 NAME 'mail' SUP name DESC 'Email address' )"
-        )
-        ATTR_OID_MAIL: Final[str] = "0.9.2342.19200300.100.1.3"
-        ATTR_NAME_MAIL: Final[str] = "mail"
-        ATTR_DEF_MODIFY_TIMESTAMP: Final[str] = (
-            "( 2.5.18.2 NAME 'modifyTimestamp' SYNTAX 1.3.6.1.4.1.1466.115.121.1.24 SINGLE-VALUE NO-USER-MODIFICATION USAGE directoryOperation )"
-        )
-        ATTR_DEF_OBSOLETE: Final[str] = (
-            "( 2.5.4.10 NAME 'o' DESC 'Organization Name' OBSOLETE SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
-        )
-        ATTR_OID_O: Final[str] = "2.5.4.10"
-        ATTR_NAME_O: Final[str] = "o"
-        SYNTAX_OID_DIRECTORY_STRING: Final[str] = "1.3.6.1.4.1.1466.115.121.1.15"
-        SYNTAX_OID_BOOLEAN: Final[str] = "1.3.6.1.4.1.1466.115.121.1.7"
-        SYNTAX_OID_INTEGER: Final[str] = "1.3.6.1.4.1.1466.115.121.1.27"
-        INVALID_ATTR_DEF: Final[str] = "NAME 'cn' DESC 'Common Name'"
-        INVALID_OC_DEF: Final[str] = "invalid objectclass definition"
-        SAMPLE_LDIF_CONTENT: Final[str] = (
-            "dn: cn=schema\nattributeTypes: ( 2.5.4.3 NAME 'cn' )\nobjectClasses: ( 2.5.6.6 NAME 'person' STRUCTURAL )\n"
-        )
-        SAMPLE_SCHEMA_CONTENT: Final[str] = (
-            "dn: cn=subschema\nobjectClass: top\nobjectClass: subentry\nobjectClass: subschema\ncn: subschema\nattributeTypes: ( 2.5.4.4 NAME 'sn' DESC 'Surname' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )\nobjectClasses: ( 2.5.6.6 NAME 'person' DESC 'RFC2256: a person' SUP top STRUCTURAL MUST ( sn $ cn ) )\n"
-        )
-        SAMPLE_DN: Final[str] = "cn=test,dc=example,dc=com"
-        SAMPLE_DN_USER1: Final[str] = "cn=user1,dc=example,dc=com"
-        SAMPLE_DN_USER2: Final[str] = "cn=user2,dc=example,dc=com"
-        SAMPLE_DN_TEST_USER: Final[str] = "cn=Test User,dc=example,dc=com"
-        INVALID_DN: Final[str] = "invalid-dn-format"
-        SAMPLE_LDIF_BASIC: Final[str] = (
-            "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\nsn: user\n"
-        )
-        SAMPLE_LDIF_MULTIPLE: Final[str] = (
-            "dn: cn=user1,dc=example,dc=com\nobjectClass: person\ncn: user1\n\ndn: cn=user2,dc=example,dc=com\nobjectClass: person\ncn: user2\n"
-        )
-        SAMPLE_LDIF_BINARY: Final[str] = (
-            "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\nphoto:: UGhvdG8gZGF0YQ==\n"
-        )
-        SAMPLE_ATTRIBUTE_CN: Final[str] = "cn"
-        SAMPLE_ATTRIBUTE_SN: Final[str] = "sn"
-        SAMPLE_ATTRIBUTE_PHOTO: Final[str] = "photo"
-        SAMPLE_VALUE_TEST: Final[str] = "test"
-        SAMPLE_VALUE_USER: Final[str] = "user"
-        SAMPLE_VALUE_USER1: Final[str] = "user1"
-        SAMPLE_VALUE_USER2: Final[str] = "user2"
-        SAMPLE_OBJECTCLASS_PERSON: Final[str] = "person"
-        BASE64_PHOTO_DATA: Final[str] = "UGhvdG8gZGF0YQ=="
-        ACL_LINE_SAMPLE: Final[str] = (
-            '(targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///self";)'
-        )
-        ACL_LINE_EMPTY_OID: Final[str] = ""
-        ACL_LINE_INVALID_OID: Final[str] = "invalid.oid.format"
-
-    class OID:
-        """OID server test constants (from fixtures/oid_constants.py)."""
-
-        ORACLE_OID_NAMESPACE: Final[str] = "2.16.840.1.113894"
-        ATTRIBUTE_ORCLGUID: Final[str] = (
-            "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )"
-        )
-        ATTRIBUTE_ORCLDBNAME: Final[str] = (
-            "( 2.16.840.1.113894.1.1.2 NAME 'orclDBName' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
-        )
-        ATTRIBUTE_ORCLGUID_COMPLEX: Final[str] = (
-            "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' DESC 'Oracle Global Unique Identifier' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 SINGLE-VALUE )"
-        )
-        OBJECTCLASS_ORCLCONTEXT: Final[str] = (
+        CROSS_SERVER_OID_OBJECTCLASS_ORCLCONTEXT: Final[str] = (
             "( 2.16.840.1.113894.1.2.1 NAME 'orclContext' SUP top STRUCTURAL MUST cn )"
         )
-        OBJECTCLASS_ORCLCONTAINER: Final[str] = (
-            "( 2.16.840.1.113894.1.2.2 NAME 'orclContainer' SUP top STRUCTURAL MUST cn )"
+        CROSS_SERVER_OID_ACL_ANONYMOUS: Final[str] = (
+            "orclaci: access to entry by * (browse)"
         )
-        OBJECTCLASS_ORCLCONTEXT_WITH_MAY: Final[str] = (
-            "( 2.16.840.1.113894.1.2.1 NAME 'orclContext' SUP top STRUCTURAL MUST cn MAY ( description $ orclVersion ) )"
+        CROSS_SERVER_OUD_ACI_ANONYMOUS: Final[str] = (
+            'aci: (targetattr="*")(version 3.0; acl "Test ACL"; allow (read,search) userdn="ldap:///anyone";)'
         )
-        ATTRIBUTE_NAME_ORCLGUID: Final[str] = "orclGUID"
-        ATTRIBUTE_NAME_ORCLDBNAME: Final[str] = "orclDBName"
-        OBJECTCLASS_NAME_ORCLCONTEXT: Final[str] = "orclContext"
-        OBJECTCLASS_NAME_ORCLCONTAINER: Final[str] = "orclContainer"
-
-    class OUD:
-        """OUD server test constants (from fixtures/oud_constants.py)."""
-
-        SCHEMA_DN: Final[str] = "cn=schema"
-        SCHEMA_DN_SUBSCHEMA: Final[str] = "cn=subschemasubentry"
-
-    class DNs:
-        """DN constants for testing."""
-
-        EXAMPLE: Final[str] = "dc=example,dc=com"
-        TEST_USER: Final[str] = "cn=testuser,dc=example,dc=com"
-        TEST_GROUP: Final[str] = "cn=testgroup,dc=example,dc=com"
-        SCHEMA: Final[str] = "cn=schema"
-        BASE: Final[str] = "dc=example,dc=com"
-
-    class Values:
-        """Value constants for testing."""
-
-        TEST: Final[str] = "test"
-        USER: Final[str] = "user"
-        USER1: Final[str] = "user1"
-        USER2: Final[str] = "user2"
-        ADMIN: Final[str] = "REDACTED_LDAP_BIND_PASSWORD"
-        EXAMPLE: Final[str] = "example"
-        USER1_EMAIL: Final[str] = "user1@example.com"
-        USER2_EMAIL: Final[str] = "user2@example.com"
-        ATTRIBUTE_ORCLGUID: Final[str] = (
+        CROSS_SERVER_OUD_ATTRIBUTE_ORCLGUID: Final[str] = (
             "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )"
         )
-        ATTRIBUTE_ORCLGUID_WITH_X_ORIGIN: Final[str] = (
-            "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 X-ORIGIN 'Oracle' )"
-        )
-        ATTRIBUTE_ORCLGUID_WITH_X_EXTENSIONS: Final[str] = (
-            "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 X-ORIGIN 'Oracle' X-FILE-REF '99-user.ldif' X-NAME 'TestName' X-ALIAS 'testAlias' X-OID '1.2.3.5' )"
-        )
-        ATTRIBUTE_SYNTAX_WITH_QUOTES: Final[str] = (
-            "( 1.2.3.4 NAME 'testAttr' SYNTAX '1.3.6.1.4.1.1466.115.121.1.7' )"
-        )
-        ATTRIBUTE_SYNTAX_WITHOUT_QUOTES: Final[str] = (
-            "( 1.2.3.4 NAME 'testAttr' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 )"
-        )
-        ATTRIBUTE_INVALID_OID: Final[str] = "( invalid@oid!format NAME 'testAttr' )"
-        OBJECTCLASS_ORCLCONTEXT: Final[str] = (
-            "( 2.16.840.1.113894.1.2.1 NAME 'orclContext' SUP top STRUCTURAL MUST cn )"
-        )
-        OBJECTCLASS_MULTIPLE_SUP: Final[str] = (
-            "( 1.2.3.4 NAME 'testOC' SUP ( top $ person ) STRUCTURAL )"
-        )
-        OBJECTCLASS_SINGLE_SUP: Final[str] = (
-            "( 1.2.3.4 NAME 'testOC' SUP top STRUCTURAL )"
-        )
-        SAMPLE_ATTRIBUTE_OID: Final[str] = "1.2.3.4"
-        SAMPLE_ATTRIBUTE_OID_2: Final[str] = "1.2.3.5"
-        SAMPLE_OBJECTCLASS_OID: Final[str] = "1.2.3.6"
-        SAMPLE_SYNTAX_OID: Final[str] = "1.3.6.1.4.1.1466.115.121.1.15"
-        SAMPLE_SYNTAX_OID_QUOTED: Final[str] = "1.3.6.1.4.1.1466.115.121.1.7"
-        SAMPLE_ATTRIBUTE_NAME: Final[str] = "testAttr"
-        SAMPLE_ATTRIBUTE_NAME_2: Final[str] = "testAttr2"
-        SAMPLE_OBJECTCLASS_NAME: Final[str] = "testOC"
-        SAMPLE_ATTRIBUTE_DEF: Final[str] = (
-            "( 1.2.3.4 NAME 'testAttr' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
-        )
-        SAMPLE_ATTRIBUTE_DEF_2: Final[str] = (
-            "( 1.2.3.5 NAME 'testAttr2' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
-        )
-        SAMPLE_OBJECTCLASS_DEF: Final[str] = (
-            "( 1.2.3.6 NAME 'testOC' SUP top STRUCTURAL )"
-        )
-        SAMPLE_DN: Final[str] = "cn=test,dc=example,dc=com"
-        SAMPLE_SCHEMA_DN: Final[str] = "cn=schema"
-        SAMPLE_ACI: Final[str] = (
-            '(targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///self";)'
-        )
-        SAMPLE_ACI_WITH_MACRO_SUBJECT: Final[str] = (
-            '(targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///($dn)";)'
-        )
-        SAMPLE_ACI_WITH_MACRO_TARGET: Final[str] = (
-            '(target="($dn)")(version 3.0; acl "test"; allow (read) userdn="ldap:///($dn)";)'
-        )
-        SAMPLE_ACI_WITH_MACRO_SUBJECT_NO_TARGET: Final[str] = (
-            '(targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///[$dn]";)'
-        )
-        ACL_ATTRIBUTE_ACI: Final[str] = "aci"
-        ACL_ATTRIBUTE_ORCLACI: Final[str] = "orclaci"
-        MATCHING_RULE_DEF: Final[str] = (
-            "( 1.2.3.7 NAME 'testMR' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
-        )
-        MATCHING_RULE_USE_DEF: Final[str] = (
-            "( 1.2.3.8 NAME 'testMRU' APPLIES testAttr )"
-        )
 
-    class Conversion:
-        """Conversion test constants (from conftest ConversionTestConstants)."""
-
-        OID_ATTRIBUTE_ORCLGUID: Final[str] = (
-            "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )"
+        BOOLEAN_RFC_TO_OID: Final[t.MappingKV[str, str]] = MappingProxyType(
+            {"TRUE": "1", "FALSE": "0"},
         )
-        OID_ATTRIBUTE_ORCLDBNAME: Final[str] = (
-            "( 2.16.840.1.113894.1.1.2 NAME 'orclDBName' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+        BOOLEAN_OID_TO_RFC: Final[t.MappingKV[str, str]] = MappingProxyType(
+            {v: k for k, v in BOOLEAN_RFC_TO_OID.items()},
         )
-        OID_ATTRIBUTE_ORCLGUID_COMPLEX: Final[str] = (
-            "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' DESC 'Oracle Global Unique Identifier' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 SINGLE-VALUE )"
+        MIGRATION_BOOLEAN_ENTRY_TEMPLATE: Final[str] = (
+            "dn: {dn}\n"
+            "{objectclass}: {top}\n"
+            "{objectclass}: {person}\n"
+            "{objectclass}: {orcluser}\n"
+            "{cn}: {cn_value}\n"
+            "{sn}: {sn_value}\n"
+            "{attr_enabled}: {val_true}\n"
+            "{attr_locked}: {val_false}\n"
         )
-        OUD_ATTRIBUTE_ORCLGUID: Final[str] = (
-            "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )"
+        MIGRATION_ACL_ENTRY_TEMPLATE: Final[str] = (
+            "dn: {dn}\n"
+            "{objectclass}: {top}\n"
+            "{objectclass}: {person}\n"
+            "{cn}: {cn_value}\n"
+            "{sn}: {sn_value}\n"
+            "{acl_attribute}: {acl_value}\n"
         )
-        OID_OBJECTCLASS_ORCLCONTEXT: Final[str] = (
-            "( 2.16.840.1.113894.1.2.1 NAME 'orclContext' SUP top STRUCTURAL MUST cn )"
+        MIGRATION_SCHEMA_ENTRY_TEMPLATE: Final[str] = (
+            "dn: {dn}\n"
+            "{objectclass}: {top}\n"
+            "{objectclass}: {subschema}\n"
+            "{cn}: subschemasubentry\n"
         )
-        OID_OBJECTCLASS_ORCLCONTAINER: Final[str] = (
-            "( 2.16.840.1.113894.1.2.2 NAME 'orclContainer' SUP top STRUCTURAL MUST cn )"
+        MIGRATION_ACI_LINE_REGEX: Final[t.Ldif.RegexPattern] = re.compile(
+            r"(^|\\n)aci:",
+            re.MULTILINE,
         )
-        OID_OBJECTCLASS_ORCLCONTEXT_WITH_MAY: Final[str] = (
-            "( 2.16.840.1.113894.1.2.1 NAME 'orclContext' SUP top STRUCTURAL MUST cn MAY ( description $ orclVersion ) )"
-        )
-        OUD_OBJECTCLASS_ORCLCONTEXT: Final[str] = (
-            "( 2.16.840.1.113894.1.2.1 NAME 'orclContext' SUP top STRUCTURAL MUST cn )"
-        )
-
-
-class Filters:
-    """Test filter constants and server types for categorization tests."""
-
-    SERVER_RFC: Final[str] = FlextLdifConstants.Ldif.ServerTypes.RFC.value
-    SERVER_OID: Final[str] = FlextLdifConstants.Ldif.ServerTypes.OID.value
-    SERVER_OUD: Final[str] = FlextLdifConstants.Ldif.ServerTypes.OUD.value
-    DN_USER_JOHN: Final[str] = "cn=john.doe,ou=users,dc=example,dc=com"
-    DN_USER_JANE: Final[str] = "cn=jane.doe,ou=users,dc=example,dc=com"
-    DN_USER_ADMIN: Final[str] = (
-        "cn=REDACTED_LDAP_BIND_PASSWORD,ou=users,dc=example,dc=com"
-    )
-    DN_OU_USERS: Final[str] = "ou=users,dc=example,dc=com"
-    DN_OU_GROUPS: Final[str] = "ou=groups,dc=example,dc=com"
-    DN_ACL_POLICY: Final[str] = "cn=acl-policy,dc=example,dc=com"
-    DN_REJECTED: Final[str] = "cn=rejected,dc=example,dc=com"
-    DN_PATTERN_USERS: Final[str] = "ou=users,*"
-    DN_PATTERN_GROUPS: Final[str] = "ou=groups,*"
-    DN_PATTERN_OU: Final[str] = "ou=*,*"
-    OC_GROUP_OF_NAMES: Final[str] = "groupOfNames"
-    OC_ORGANIZATIONAL_UNIT: Final[str] = "organizationalUnit"
-    OC_INET_ORG_PERSON: Final[str] = "inetOrgPerson"
-    OC_PERSON: Final[str] = "person"
-    OC_DOMAIN: Final[str] = "domain"
-    ATTR_MAIL: Final[str] = "mail"
-    ATTR_SN: Final[str] = "sn"
-    ATTR_CN: Final[str] = "cn"
-    ATTR_OBJECTCLASS: Final[str] = "objectClass"
-
-    class DNs:
-        """DN constants for testing."""
-
-        EXAMPLE: Final[str] = "dc=example,dc=com"
-        TEST_USER: Final[str] = "cn=testuser,dc=example,dc=com"
-        TEST_GROUP: Final[str] = "cn=testgroup,dc=example,dc=com"
-        SCHEMA: Final[str] = "cn=schema"
-        BASE: Final[str] = "dc=example,dc=com"
-
-    class Values:
-        """Value constants for testing."""
-
-        TEST: Final[str] = "test"
-        USER: Final[str] = "user"
-        USER1: Final[str] = "user1"
-        USER2: Final[str] = "user2"
-        ADMIN: Final[str] = "REDACTED_LDAP_BIND_PASSWORD"
-        EXAMPLE: Final[str] = "example"
-
-
-class OIDs:
-    """OID constant namespace for cleaner test access.
-
-    Aliases constants from TestsFlextLdifConstants.Rfc for convenient access.
-    Used by test files to reference OID constants with short names.
-    """
-
-    CN: Final[str] = TestsFlextLdifConstants.Rfc.ATTR_OID_CN
-    SN: Final[str] = TestsFlextLdifConstants.Rfc.ATTR_OID_SN
-    ST: Final[str] = TestsFlextLdifConstants.Rfc.ATTR_OID_ST
-    MAIL: Final[str] = TestsFlextLdifConstants.Rfc.ATTR_OID_MAIL
-    MODIFY_TIMESTAMP: Final[str] = TestsFlextLdifConstants.Rfc.ATTR_OID_MODIFY_TIMESTAMP
-    OID_O: Final[str] = TestsFlextLdifConstants.Rfc.ATTR_OID_O
-    OBJECTCLASS: Final[str] = TestsFlextLdifConstants.Rfc.ATTR_OID_OBJECTCLASS
-    PERSON: Final[str] = TestsFlextLdifConstants.Rfc.OC_OID_PERSON
-    DIRECTORY_STRING: Final[str] = (
-        TestsFlextLdifConstants.Rfc.SYNTAX_OID_DIRECTORY_STRING
-    )
-    BOOLEAN: Final[str] = TestsFlextLdifConstants.Rfc.SYNTAX_OID_BOOLEAN
-    INTEGER: Final[str] = TestsFlextLdifConstants.Rfc.SYNTAX_OID_INTEGER
-    IA5_STRING: Final[str] = TestsFlextLdifConstants.Rfc.SYNTAX_OID_IA5_STRING
-    GENERALIZED_TIME: Final[str] = (
-        TestsFlextLdifConstants.Rfc.SYNTAX_OID_GENERALIZED_TIME
-    )
-    OID: Final[str] = TestsFlextLdifConstants.Rfc.SYNTAX_OID_OID
-
-
-class Syntax:
-    """Syntax OID constant namespace for cleaner test access.
-
-    Aliases syntax constants from TestsFlextLdifConstants.Rfc for convenient access.
-    Used by test files to reference syntax OIDs with short names.
-    """
-
-    DIRECTORY_STRING: Final[str] = (
-        TestsFlextLdifConstants.Rfc.SYNTAX_OID_DIRECTORY_STRING
-    )
-    BOOLEAN: Final[str] = TestsFlextLdifConstants.Rfc.SYNTAX_OID_BOOLEAN
-    INTEGER: Final[str] = TestsFlextLdifConstants.Rfc.SYNTAX_OID_INTEGER
-    IA5_STRING: Final[str] = TestsFlextLdifConstants.Rfc.SYNTAX_OID_IA5_STRING
-    GENERALIZED_TIME: Final[str] = (
-        TestsFlextLdifConstants.Rfc.SYNTAX_OID_GENERALIZED_TIME
-    )
-    OID: Final[str] = TestsFlextLdifConstants.Rfc.SYNTAX_OID_OID
-
-
-class RfcTestHelpers:
-    """RFC test helper utilities for LDIF testing."""
-
-    @staticmethod
-    def test_parse_ldif_content(
-        parser_service: FlextLdifParser,
-        content: str,
-        expected_count: int,
-        server_type: str = "rfc",
-    ) -> list[m.Ldif.Entry]:
-        """Parse LDIF content and return entries.
-
-        Args:
-            parser_service: The parser service instance
-            content: LDIF content to parse
-            expected_count: Expected number of entries (for validation)
-            server_type: Server type for parsing
-
-        Returns:
-            List of parsed entries
-
-        """
-        if not isinstance(parser_service, FlextLdifParser):
-            raise TypeError(f"Expected FlextLdifParser, got {type(parser_service)}")
-        result = parser_service.parse_string(content=content, server_type=server_type)
-        if result.is_failure:
-            raise AssertionError(f"Parsing failed: {result.error}")
-        entries = result.value.entries
-        if len(entries) != expected_count:
-            raise AssertionError(
-                f"Expected {expected_count} entries, got {len(entries)}"
+        MIGRATION_BOOLEAN_CASES: Final[t.MappingKV[str, tuple[str, str, str, str]]] = (
+            MappingProxyType(
+                {
+                    "oid_to_rfc": (
+                        OID,
+                        RFC,
+                        BOOLEAN_RFC_TO_OID[BOOLEAN_TRUE],
+                        BOOLEAN_RFC_TO_OID[BOOLEAN_FALSE],
+                    ),
+                    "rfc_to_oid": (
+                        RFC,
+                        OID,
+                        BOOLEAN_TRUE,
+                        BOOLEAN_FALSE,
+                    ),
+                },
             )
-        return [m.Ldif.Entry.model_validate(entry) for entry in entries]
-
-    @staticmethod
-    def test_entry_create_and_unwrap(
-        dn: str, attributes: dict[str, str | list[str]]
-    ) -> m.Ldif.Entry:
-        """Create an entry and unwrap the result.
-
-        Args:
-            dn: Distinguished Name for the entry
-            attributes: Dictionary of attributes for the entry
-
-        Returns:
-            The unwrapped Entry instance
-
-        Raises:
-            AssertionError: If entry creation fails
-
-        """
-        result = m.Ldif.Entry.create(dn=dn, attributes=attributes)
-        if result.is_failure:
-            raise AssertionError(f"Entry creation failed: {result.error}")
-        return result.value
-
-    @staticmethod
-    def test_quirk_schema_parse_and_assert_properties(
-        quirk: p.Ldif.SchemaQuirk,
-        schema_def: str,
-        *,
-        expected_oid: str | None = None,
-        expected_name: str | None = None,
-        expected_desc: str | None = None,
-        expected_syntax: str | None = None,
-        expected_single_value: bool | None = None,
-        expected_length: int | None = None,
-        expected_kind: str | None = None,
-        expected_sup: str | None = None,
-        expected_must: list[str] | None = None,
-        expected_may: list[str] | None = None,
-    ) -> p.Ldif.SchemaAttribute | None:
-        """Parse schema definition and assert properties.
-
-        Args:
-            quirk: Schema quirk instance
-            schema_def: Schema definition string (attribute or objectClass)
-            expected_oid: Expected OID
-            expected_name: Expected NAME
-            expected_desc: Expected DESC
-            expected_syntax: Expected SYNTAX (without length)
-            expected_single_value: Expected SINGLE-VALUE flag
-            expected_length: Expected syntax length (e.g., 256 from {256})
-            expected_kind: Expected KIND (STRUCTURAL, AUXILIARY, ABSTRACT)
-            expected_sup: Expected SUP (superior class)
-            expected_must: Expected MUST attributes
-            expected_may: Expected MAY attributes
-
-        Returns:
-            The parsed schema object
-
-        Raises:
-            AssertionError: If parsing fails or properties don't match
-
-        """
-        if (
-            "STRUCTURAL" in schema_def
-            or "AUXILIARY" in schema_def
-            or "ABSTRACT" in schema_def
-        ):
-            parse_method = getattr(quirk, "parse_objectclass", None)
-        else:
-            parse_method = getattr(quirk, "parse_attribute", None)
-        if parse_method is None:
-            parse_method = getattr(quirk, "parse", None)
-        if parse_method is None:
-            msg = "Quirk has no suitable parse method"
-            raise AssertionError(msg)
-        result = parse_method(schema_def)
-        if hasattr(result, "is_failure") and result.is_failure:
-            raise AssertionError(f"Parsing failed: {result.error}")
-        value = result.value if hasattr(result, "value") else result
-        if expected_oid is not None:
-            actual_oid = getattr(value, "oid", None)
-            if actual_oid != expected_oid:
-                raise AssertionError(
-                    f"Expected OID '{expected_oid}', got '{actual_oid}'"
-                )
-        if expected_name is not None:
-            actual_name = getattr(value, "name", None)
-            if actual_name != expected_name:
-                raise AssertionError(
-                    f"Expected NAME '{expected_name}', got '{actual_name}'"
-                )
-        if expected_desc is not None:
-            actual_desc = getattr(value, "desc", None)
-            if actual_desc != expected_desc:
-                raise AssertionError(
-                    f"Expected DESC '{expected_desc}', got '{actual_desc}'"
-                )
-        if expected_syntax is not None:
-            actual_syntax = getattr(value, "syntax", None)
-            if actual_syntax != expected_syntax:
-                raise AssertionError(
-                    f"Expected SYNTAX '{expected_syntax}', got '{actual_syntax}'"
-                )
-        if expected_single_value is not None:
-            actual_sv = getattr(value, "single_value", None)
-            if actual_sv != expected_single_value:
-                raise AssertionError(
-                    f"Expected SINGLE-VALUE {expected_single_value}, got {actual_sv}"
-                )
-        if expected_length is not None:
-            actual_length = getattr(value, "length", None)
-            if actual_length != expected_length:
-                raise AssertionError(
-                    f"Expected length {expected_length}, got {actual_length}"
-                )
-        if expected_kind is not None:
-            actual_kind = getattr(value, "kind", None)
-            if actual_kind != expected_kind:
-                raise AssertionError(
-                    f"Expected KIND '{expected_kind}', got '{actual_kind}'"
-                )
-        if expected_sup is not None:
-            actual_sup = getattr(value, "sup", None)
-            if actual_sup != expected_sup:
-                raise AssertionError(
-                    f"Expected SUP '{expected_sup}', got '{actual_sup}'"
-                )
-        if expected_must is not None:
-            actual_must = getattr(value, "must", None) or []
-            if list(actual_must) != expected_must:
-                raise AssertionError(
-                    f"Expected MUST {expected_must}, got {list(actual_must)}"
-                )
-        if expected_may is not None:
-            actual_may = getattr(value, "may", None) or []
-            if list(actual_may) != expected_may:
-                raise AssertionError(
-                    f"Expected MAY {expected_may}, got {list(actual_may)}"
-                )
-        return value
-
-    @staticmethod
-    def test_result_success_and_unwrap(
-        result: r,
-        expected_type: type | None = None,
-        expected_count: int | None = None,
-    ) -> str | int | float | bool | Sized | None:
-        """Assert result is successful and unwrap its value.
-
-        Args:
-            result: r instance to check
-            expected_type: Optional expected type for the unwrapped value
-            expected_count: Optional expected count if value is a sequence
-
-        Returns:
-            The unwrapped value from the result
-
-        Raises:
-            AssertionError: If result is failure or type mismatch
-
-        """
-        is_failure = getattr(result, "is_failure", None)
-        if not isinstance(is_failure, bool):
-            raise TypeError(f"Expected r-like object, got {type(result)}")
-        if is_failure:
-            error = getattr(result, "error", "Unknown error")
-            raise AssertionError(f"Result is failure: {error}")
-        value = getattr(result, "value", None)
-        if expected_type is not None and (not isinstance(value, expected_type)):
-            raise AssertionError(
-                f"Expected {expected_type.__name__}, got {type(value).__name__}"
+        )
+        MIGRATION_ACL_CASES: Final[t.MappingKV[str, tuple[str, str, str, str]]] = (
+            MappingProxyType(
+                {
+                    "oid_to_rfc": (
+                        OID,
+                        RFC,
+                        NAME_ORCLACI,
+                        NAME_ACI,
+                    ),
+                    "rfc_to_oid": (
+                        RFC,
+                        OID,
+                        NAME_ACI,
+                        NAME_ORCLACI,
+                    ),
+                },
             )
-        if expected_count is not None:
-            if not isinstance(value, Sized):
-                raise AssertionError(
-                    f"Cannot check count on {type(value).__name__} - not a sequence"
-                )
-            sized_value: Sized = value
-            if len(sized_value) != expected_count:
-                raise AssertionError(
-                    f"Expected count {expected_count}, got {len(sized_value)}"
-                )
-        return value
-
-    @staticmethod
-    def test_create_entry_and_unwrap(
-        dn: str, attributes: dict[str, str | list[str]] | None = None
-    ) -> m.Ldif.Entry:
-        """Create an entry and unwrap the result.
-
-        Alias for test_entry_create_and_unwrap for naming consistency.
-
-        Args:
-            dn: Distinguished Name for the entry
-            attributes: Dictionary of attributes for the entry
-
-        Returns:
-            The unwrapped Entry instance
-
-        Raises:
-            AssertionError: If entry creation fails
-
-        """
-        if attributes is None:
-            attributes = {}
-        result = m.Ldif.Entry.create(dn=dn, attributes=attributes)
-        if result.is_failure:
-            raise AssertionError(f"Entry creation failed: {result.error}")
-        return result.value
-
-    @staticmethod
-    def test_create_schema_attribute_and_unwrap(
-        oid: str,
-        name: str,
-        desc: str | None = None,
-        syntax: str | None = None,
-        *,
-        single_value: bool = False,
-    ) -> m.Ldif.SchemaAttribute:
-        """Create a schema attribute and unwrap the result.
-
-        Args:
-            oid: Object Identifier
-            name: Attribute name
-            desc: Description
-            syntax: Syntax OID
-            single_value: Single value flag
-
-        Returns:
-            The unwrapped SchemaAttribute instance
-
-        Raises:
-            AssertionError: If creation fails
-
-        """
-        return m.Ldif.SchemaAttribute(
-            oid=oid, name=name, desc=desc, syntax=syntax, single_value=single_value
         )
 
-    @staticmethod
-    def test_create_schema_objectclass_and_unwrap(
-        oid: str,
-        name: str,
-        desc: str | None = None,
-        kind: str = "STRUCTURAL",
-        sup: str | None = None,
-        must: list[str] | None = None,
-        may: list[str] | None = None,
-    ) -> m.Ldif.SchemaObjectClass:
-        """Create a schema objectClass and unwrap the result.
-
-        Args:
-            oid: Object Identifier
-            name: ObjectClass name
-            desc: Description
-            kind: Kind (STRUCTURAL, AUXILIARY, ABSTRACT)
-            sup: Superior class
-            must: Required attributes
-            may: Optional attributes
-
-        Returns:
-            The unwrapped SchemaObjectClass instance
-
-        Raises:
-            AssertionError: If creation fails
-
-        """
-        return m.Ldif.SchemaObjectClass(
-            oid=oid,
-            name=name,
-            desc=desc,
-            kind=kind,
-            sup=sup,
-            must=must or [],
-            may=may or [],
+        WRITER_ENTRY_DNS: Final[frozenset[str]] = frozenset(
+            {
+                "cn=writer-alpha,dc=example,dc=com",
+                "cn=writer-beta,dc=example,dc=com",
+                "cn=writer-gamma,dc=example,dc=com",
+            },
         )
-
-    @staticmethod
-    def test_quirk_parse_success_and_unwrap(
-        quirk: (p.Ldif.SchemaQuirk | p.Ldif.AclQuirk | p.Ldif.EntryQuirk),
-        content: str,
-        parse_method: str | None = None,
-    ) -> (
-        p.Ldif.SchemaAttribute
-        | p.Ldif.SchemaObjectClass
-        | p.Ldif.Acl
-        | p.Ldif.Entry
-        | None
-    ):
-        """Parse using quirk and assert success.
-
-        Args:
-            quirk: Schema quirk instance
-            content: Content to parse
-            parse_method: Optional specific parse method name
-
-        Returns:
-            The parsed value
-
-        Raises:
-            AssertionError: If parsing fails
-
-        """
-        method_name = parse_method or "parse"
-        method = getattr(quirk, method_name, None)
-        if not callable(method):
-            raise AssertionError(f"Quirk has no method '{method_name}'")
-        result = method(content)
-        is_failure = getattr(result, "is_failure", None)
-        if isinstance(is_failure, bool) and is_failure:
-            error = getattr(result, "error", "Unknown error")
-            raise AssertionError(f"Parsing failed: {error}")
-        return cast(
-            "p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | p.Ldif.Acl | p.Ldif.Entry | None",
-            getattr(result, "value", result),
+        WRITER_SERVER_CASES: Final[t.MappingKV[str, str]] = MappingProxyType(
+            {
+                "writer_rfc": RFC,
+                "writer_oid": OID,
+                "writer_oud": OUD,
+            },
         )
-
-    @staticmethod
-    def test_schema_quirk_parse_and_assert(
-        quirk: p.Ldif.SchemaQuirk,
-        content: str,
-        expected_oid: str | None = None,
-        expected_name: str | None = None,
-        expected_desc: str | None = None,
-        expected_sup: str | None = None,
-        expected_kind: str | None = None,
-        expected_must: list[str] | None = None,
-        expected_may: list[str] | None = None,
-        expected_syntax: str | None = None,
-        expected_equality: str | None = None,
-        expected_single_value: bool | None = None,
-    ) -> p.Ldif.SchemaAttribute | None:
-        """Parse schema content and assert properties.
-
-        Args:
-            quirk: Schema quirk instance
-            content: Schema definition content
-            expected_oid: Expected OID
-            expected_name: Expected name
-
-        Returns:
-            The parsed schema object
-
-        Raises:
-            AssertionError: If parsing fails or properties don't match
-
-        """
-        if "STRUCTURAL" in content or "AUXILIARY" in content or "ABSTRACT" in content:
-            parse_method = getattr(quirk, "parse_objectclass", None)
-        else:
-            parse_method = getattr(quirk, "parse_attribute", None)
-        if parse_method is None:
-            parse_method = getattr(quirk, "parse", None)
-        if parse_method is None:
-            msg = "Quirk has no suitable parse method"
-            raise AssertionError(msg)
-        result = parse_method(content)
-        if hasattr(result, "is_failure") and result.is_failure:
-            raise AssertionError(f"Parsing failed: {result.error}")
-        value = result.value if hasattr(result, "value") else result
-        if expected_oid is not None:
-            actual_oid = getattr(value, "oid", None)
-            if actual_oid != expected_oid:
-                raise AssertionError(
-                    f"Expected OID '{expected_oid}', got '{actual_oid}'"
-                )
-        if expected_name is not None:
-            actual_name = getattr(value, "name", None)
-            if actual_name != expected_name:
-                raise AssertionError(
-                    f"Expected name '{expected_name}', got '{actual_name}'"
-                )
-        if expected_desc is not None:
-            actual_desc = getattr(value, "desc", None)
-            if actual_desc != expected_desc:
-                raise AssertionError(
-                    f"Expected desc '{expected_desc}', got '{actual_desc}'"
-                )
-        if expected_sup is not None:
-            actual_sup = getattr(value, "sup", None)
-            if actual_sup != expected_sup:
-                raise AssertionError(
-                    f"Expected sup '{expected_sup}', got '{actual_sup}'"
-                )
-        if expected_kind is not None:
-            actual_kind = getattr(value, "kind", None)
-            if actual_kind != expected_kind:
-                raise AssertionError(
-                    f"Expected kind '{expected_kind}', got '{actual_kind}'"
-                )
-        if expected_must is not None:
-            actual_must = getattr(value, "must", None)
-            if actual_must != expected_must:
-                raise AssertionError(
-                    f"Expected must '{expected_must}', got '{actual_must}'"
-                )
-        if expected_may is not None:
-            actual_may = getattr(value, "may", None)
-            if actual_may != expected_may:
-                raise AssertionError(
-                    f"Expected may '{expected_may}', got '{actual_may}'"
-                )
-        if expected_syntax is not None:
-            actual_syntax = getattr(value, "syntax", None)
-            if actual_syntax != expected_syntax:
-                raise AssertionError(
-                    f"Expected syntax '{expected_syntax}', got '{actual_syntax}'"
-                )
-        if expected_equality is not None:
-            actual_equality = getattr(value, "equality", None)
-            if actual_equality != expected_equality:
-                raise AssertionError(
-                    f"Expected equality '{expected_equality}', got '{actual_equality}'"
-                )
-        if expected_single_value is not None:
-            actual_single_value = getattr(value, "single_value", None)
-            if actual_single_value != expected_single_value:
-                raise AssertionError(
-                    f"Expected single_value '{expected_single_value}', got '{actual_single_value}'"
-                )
-        return value
-
-    @staticmethod
-    def test_create_schema_attribute_from_dict(
-        data: dict[str, object],
-    ) -> m.Ldif.SchemaAttribute:
-        """Create a schema attribute from dictionary.
-
-        Args:
-            data: Dictionary with attribute properties
-
-        Returns:
-            The SchemaAttribute instance
-
-        """
-        desc_value = data.get("desc")
-        syntax_value = data.get("syntax")
-        return m.Ldif.SchemaAttribute(
-            oid=str(data.get("oid", "")),
-            name=str(data.get("name", "")),
-            desc=desc_value if isinstance(desc_value, str) else None,
-            syntax=syntax_value if isinstance(syntax_value, str) else None,
-            single_value=bool(data.get("single_value")),
+        WRITER_UNKNOWN_SERVER_PREFIX: Final[str] = "writer_unknown"
+        WRITER_OUTPUT_FILENAME: Final[str] = "writer_output.ldif"
+        WRITER_BLOCKING_PARENT_NAME: Final[str] = "blocking_parent"
+        WRITER_DIRECTORY_TARGET_NAME: Final[str] = "dir_target"
+        WRITER_OUTPUT_REGEX: Final[t.Ldif.RegexPattern] = re.compile(
+            r"^dn:\s+cn=writer-[a-z]+,dc=example,dc=com$",
+            re.MULTILINE,
         )
+        WRITER_INVALID_UTF8_BYTES: Final[bytes] = b"\xff\xfe\xfd"
 
-    @staticmethod
-    def test_create_schema_objectclass_from_dict(
-        data: dict[str, object],
-    ) -> m.Ldif.SchemaObjectClass:
-        """Create a schema objectClass from dictionary.
-
-        Args:
-            data: Dictionary with objectClass properties
-
-        Returns:
-            The SchemaObjectClass instance
-
-        """
-        must = data.get("must", [])
-        may = data.get("may", [])
-        desc_value = data.get("desc")
-        sup_value = data.get("sup")
-        must_list = (
-            [item for item in must if isinstance(item, str)]
-            if isinstance(must, list)
-            else []
+        # ── Detector service constants ───────────────────────────────────
+        DETECTOR_OID_SNIPPET: Final[str] = (
+            "dn: cn=schema\n"
+            "objectClass: top\n"
+            "objectClass: subschema\n"
+            "orclaci: access to entry by * (browse)\n"
+            "orclentrylevelaci: access to attr=(*) by * (read,search,compare)\n"
         )
-        may_list = (
-            [item for item in may if isinstance(item, str)]
-            if isinstance(may, list)
-            else []
+        DETECTOR_OUD_SNIPPET: Final[str] = (
+            "dn: cn=schema\n"
+            "objectClass: top\n"
+            'aci: (targetattr="*")(version 3.0; acl "Test"; allow(read) userdn="ldap:///anyone";)\n'
+            "ds-cfg-base-dn: dc=example,dc=com\n"
         )
-        return m.Ldif.SchemaObjectClass(
-            oid=str(data.get("oid", "")),
-            name=str(data.get("name", "")),
-            desc=desc_value if isinstance(desc_value, str) else None,
-            kind=str(data.get("kind", "STRUCTURAL")),
-            sup=sup_value if isinstance(sup_value, (str, list)) else None,
-            must=must_list,
-            may=may_list,
+        DETECTOR_OPENLDAP_SNIPPET: Final[str] = (
+            "dn: cn=config\n"
+            "objectClass: olcGlobal\n"
+            "olcAccess: to * by * read\n"
+            "olcLogLevel: stats\n"
         )
-
-    @staticmethod
-    def test_schema_parse_attribute(
-        schema_quirk: p.Ldif.SchemaQuirk,
-        attr_def: str,
-        expected_oid: str,
-        expected_name: str,
-    ) -> m.Ldif.SchemaAttribute:
-        """Parse attribute definition and validate expected properties.
-
-        Args:
-            schema_quirk: Schema quirk instance
-            attr_def: Attribute definition string
-            expected_oid: Expected OID
-            expected_name: Expected name
-
-        Returns:
-            The parsed SchemaAttribute instance
-
-        Raises:
-            AssertionError: If parsing fails or properties don't match
-
-        """
-        parse_method = getattr(schema_quirk, "_parse_attribute", None)
-        if parse_method is None:
-            parse_method = getattr(schema_quirk, "parse_attribute", None)
-        if parse_method is None:
-            msg = "Schema quirk has no attribute parse method"
-            raise AssertionError(msg)
-        result = parse_method(attr_def)
-        if hasattr(result, "is_failure") and result.is_failure:
-            raise AssertionError(f"Attribute parsing failed: {result.error}")
-        value = result.value if hasattr(result, "value") else result
-        actual_oid = getattr(value, "oid", None)
-        if actual_oid != expected_oid:
-            raise AssertionError(f"Expected OID '{expected_oid}', got '{actual_oid}'")
-        actual_name = getattr(value, "name", None)
-        if actual_name != expected_name:
-            raise AssertionError(
-                f"Expected name '{expected_name}', got '{actual_name}'"
+        DETECTOR_RFC_SNIPPET: Final[str] = (
+            "dn: cn=basic,dc=example,dc=com\nobjectClass: person\ncn: basic\nsn: user\n"
+        )
+        DETECTOR_SERVER_SNIPPETS: Final[t.MappingKV[str, tuple[str, str]]] = (
+            MappingProxyType(
+                {
+                    "oid": (DETECTOR_OID_SNIPPET, OID),
+                    "oud": (DETECTOR_OUD_SNIPPET, OUD),
+                },
             )
-        return value
-
-    @staticmethod
-    def test_schema_parse_objectclass(
-        schema_quirk: p.Ldif.SchemaQuirk,
-        oc_def: str,
-        expected_oid: str,
-        expected_name: str,
-    ) -> m.Ldif.SchemaObjectClass:
-        """Parse objectClass definition and validate expected properties.
-
-        Args:
-            schema_quirk: Schema quirk instance
-            oc_def: ObjectClass definition string
-            expected_oid: Expected OID
-            expected_name: Expected name
-
-        Returns:
-            The parsed SchemaObjectClass instance
-
-        Raises:
-            AssertionError: If parsing fails or properties don't match
-
-        """
-        parse_method = getattr(schema_quirk, "_parse_objectclass", None)
-        if parse_method is None:
-            parse_method = getattr(schema_quirk, "parse_objectclass", None)
-        if parse_method is None:
-            msg = "Schema quirk has no objectClass parse method"
-            raise AssertionError(msg)
-        result = parse_method(oc_def)
-        if hasattr(result, "is_failure") and result.is_failure:
-            raise AssertionError(f"ObjectClass parsing failed: {result.error}")
-        value = result.value if hasattr(result, "value") else result
-        actual_oid = getattr(value, "oid", None)
-        if actual_oid != expected_oid:
-            raise AssertionError(f"Expected OID '{expected_oid}', got '{actual_oid}'")
-        actual_name = getattr(value, "name", None)
-        if actual_name != expected_name:
-            raise AssertionError(
-                f"Expected name '{expected_name}', got '{actual_name}'"
-            )
-        return value
-
-    @staticmethod
-    def test_schema_write_attribute_with_metadata(
-        schema_quirk: p.Ldif.SchemaQuirk,
-        attr_def: str,
-        expected_oid: str,
-        expected_name: str,
-        must_contain: list[str] | None = None,
-    ) -> tuple[object, str]:
-        """Parse attribute definition, write it back, and validate output.
-
-        Args:
-            schema_quirk: Schema quirk instance
-            attr_def: Attribute definition string to parse
-            expected_oid: Expected OID in the parsed attribute
-            expected_name: Expected name in the parsed attribute
-            must_contain: List of strings that must appear in written output
-
-        Returns:
-            Tuple of (parsed attribute, written string)
-
-        Raises:
-            AssertionError: If parsing/writing fails or validations don't pass
-
-        """
-        attr = RfcTestHelpers.test_schema_parse_attribute(
-            schema_quirk, attr_def, expected_oid, expected_name
         )
-        write_method = getattr(schema_quirk, "write_attribute", None)
-        if write_method is None:
-            msg = "Schema quirk has no write_attribute method"
-            raise AssertionError(msg)
-        result = write_method(attr)
-        if hasattr(result, "is_failure") and result.is_failure:
-            raise AssertionError(f"Attribute writing failed: {result.error}")
-        written = result.value if hasattr(result, "value") else result
-        if must_contain:
-            for element in must_contain:
-                if element not in written:
-                    raise AssertionError(
-                        f"Expected '{element}' in written output: {written}"
-                    )
-        return (attr, written)
+        DETECTOR_INVALID_UTF8_BYTES: Final[bytes] = b"\x80\x81\x82"
+        DETECTOR_MISSING_PATH_NAME: Final[str] = "missing_detector.ldif"
+        DETECTOR_BAD_ENCODING_FILENAME: Final[str] = "bad_encoding.ldif"
+        DETECTOR_RFC_FILENAME: Final[str] = "rfc.ldif"
+        DETECTOR_MAX_LINES_SMALL: Final[int] = 5
+        DETECTOR_CONFIDENCE_THRESHOLD: Final[float] = 0.0
 
-    @staticmethod
-    def test_parse_and_assert_entry_structure(
-        parser_service: FlextLdifParser,
-        content: str,
-        expected_dn: str,
-        expected_attributes: list[str],
-        expected_count: int = 1,
-    ) -> list[m.Ldif.Entry]:
-        """Parse LDIF content and assert entry structure.
-
-        Args:
-            parser_service: The parser service instance
-            content: LDIF content to parse
-            expected_dn: Expected DN of first entry
-            expected_attributes: Expected attribute names
-            expected_count: Expected number of entries
-
-        Returns:
-            List of parsed entries
-
-        Raises:
-            AssertionError: If parsing fails or structure doesn't match
-
-        """
-        if not isinstance(parser_service, FlextLdifParser):
-            raise TypeError(f"Expected FlextLdifParser, got {type(parser_service)}")
-        result = parser_service.parse_string(content=content, server_type="rfc")
-        if result.is_failure:
-            raise AssertionError(f"Parsing failed: {result.error}")
-        entries = [m.Ldif.Entry.model_validate(entry) for entry in result.value.entries]
-        if len(entries) != expected_count:
-            raise AssertionError(
-                f"Expected {expected_count} entries, got {len(entries)}"
+        # ── Entries service constants ────────────────────────────────────
+        ENTRIES_DN_VALID: Final[str] = "cn=entries-test,dc=example,dc=com"
+        ENTRIES_DN_INVALID: Final[str] = "not-a-dn"
+        ENTRIES_OBJECTCLASS_PERSON: Final[t.StrSequence] = (
+            "top",
+            "person",
+            "organizationalPerson",
+        )
+        ENTRIES_ATTR_REMOVE_SET: Final[frozenset[str]] = frozenset(
+            {"mail", "telephoneNumber", "description"},
+        )
+        ENTRIES_NORMALIZE_CASES: Final[
+            t.MappingKV[
+                str,
+                tuple[
+                    str | list[str] | t.StrSequence | set[str] | frozenset[str],
+                    bool,
+                ],
+            ]
+        ] = MappingProxyType(
+            {
+                "string": ("hello", True),
+                "list_one": (["world"], True),
+                "tuple_one": (("x",), True),
+                "frozenset_one": (frozenset({"y"}), True),
+                "empty_list": ([], True),
+                "empty_string": ("", True),
+                "empty_stripped": ("  ", True),
+            },
+        )
+        ENTRIES_DN_DICT_CASES: Final[
+            t.MappingKV[str, tuple[dict[str, str | list[str]], bool]]
+        ] = MappingProxyType(
+            {
+                "str_dn": ({"dn": "cn=x,dc=example,dc=com"}, True),
+                "list_dn": ({"dn": ["cn=y,dc=example,dc=com"]}, True),
+                "empty_list_dn": ({"dn": []}, True),
+                "missing_dn": ({}, False),
+            },
+        )
+        ENTRIES_REMOVE_OPERATION: Final[str] = "remove_attributes"
+        ENTRIES_OP_CASES: Final[t.MappingKV[str, tuple[str | None, bool]]] = (
+            MappingProxyType(
+                {
+                    "no_op": (None, False),
+                    "remove_attrs": (ENTRIES_REMOVE_OPERATION, True),
+                    "unknown_op": ("unknown_xyz", False),
+                },
             )
-        if entries and expected_dn:
-            actual_dn = getattr(entries[0], "dn", None)
-            if str(actual_dn) != expected_dn:
-                raise AssertionError(f"Expected DN '{expected_dn}', got '{actual_dn}'")
-        if entries and expected_attributes:
-            entry = entries[0]
-            attrs = getattr(entry, "attributes", {})
-            for attr_name in expected_attributes:
-                if attr_name not in attrs:
-                    raise AssertionError(
-                        f"Expected attribute '{attr_name}' not found in entry"
-                    )
-        return entries
+        )
 
-    @staticmethod
-    def test_parse_and_assert_multiple_entries(
-        parser_service: FlextLdifParser,
-        content: str,
-        expected_dns: list[str],
-        expected_count: int,
-    ) -> list[m.Ldif.Entry]:
-        """Parse LDIF content with multiple entries and assert structure.
+        # ── Filters service constants ────────────────────────────────────
+        FILTERS_ATTR_OID_VALID: Final[str] = (
+            "( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+        )
+        FILTERS_ATTR_OID_ALLOWED: Final[str] = "2.5.4.3"
+        FILTERS_OC_OID_VALID: Final[str] = (
+            "( 2.5.6.6 NAME 'person' SUP top STRUCTURAL )"
+        )
+        FILTERS_OC_OID_ALLOWED: Final[str] = "2.5.6.6"
+        FILTERS_SCHEMA_ATTR_KEY: Final[str] = "attributeTypes"
+        FILTERS_SCHEMA_OC_KEY: Final[str] = "objectClasses"
+        FILTERS_ALLOWED_ATTR_KEY: Final[str] = "allowed_attribute_oids"
+        FILTERS_ALLOWED_OC_KEY: Final[str] = "allowed_objectclass_oids"
+        FILTERS_ALLOWED_MR_KEY: Final[str] = "allowed_matchingrule_oids"
+        FILTERS_ALLOWED_MRU_KEY: Final[str] = "allowed_matchingruleuse_oids"
+        FILTERS_DN_SCHEMA: Final[str] = "cn=schema"
+        FILTERS_DN_USER: Final[str] = "cn=user,dc=example,dc=com"
+        FILTERS_DN_BARE: Final[str] = "cn=bare"
+        FILTERS_FORBIDDEN_ATTRS_ORDERED: Final[t.StrSequence] = (
+            NAME_MAIL,
+            NAME_DESCRIPTION,
+        )
+        FILTERS_FORBIDDEN_ATTRS: Final[frozenset[str]] = frozenset(
+            FILTERS_FORBIDDEN_ATTRS_ORDERED,
+        )
+        FILTERS_FORBIDDEN_OCS_ORDERED: Final[t.StrSequence] = (NAME_INET_ORG_PERSON,)
+        FILTERS_USER_MAIL: Final[str] = "user@example.com"
+        FILTERS_USER_DESCRIPTION: Final[str] = "a test user"
+        FILTERS_UNWANTED_ATTR_OID: Final[str] = (
+            "( 9.9.9.9 NAME 'unwanted' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+        )
 
-        Args:
-            parser_service: The parser service instance
-            content: LDIF content to parse
-            expected_dns: Expected DNs of entries (in order)
-            expected_count: Expected number of entries
-
-        Returns:
-            List of parsed entries
-
-        Raises:
-            AssertionError: If parsing fails or structure doesn't match
-
-        """
-        if not isinstance(parser_service, FlextLdifParser):
-            raise TypeError(f"Expected FlextLdifParser, got {type(parser_service)}")
-        result = parser_service.parse_string(content=content, server_type="rfc")
-        if result.is_failure:
-            raise AssertionError(f"Parsing failed: {result.error}")
-        entries = [m.Ldif.Entry.model_validate(entry) for entry in result.value.entries]
-        if len(entries) != expected_count:
-            raise AssertionError(
-                f"Expected {expected_count} entries, got {len(entries)}"
+        PARSER_PATH_FLOW_FILENAME: Final[str] = "path_flow.ldif"
+        PARSER_INVALID_UTF8_FILENAME: Final[str] = "invalid_utf8.ldif"
+        PARSER_RELATIVE_PREFIX: Final[str] = "tmp_parser_relative"
+        PARSER_MISSING_PREFIX: Final[str] = "missing"
+        PARSER_UNKNOWN_PREFIX: Final[str] = "unknown"
+        FILTERS_ALLOWED_OIDS_FULL: Final[t.MappingKV[str, frozenset[str]]] = (
+            MappingProxyType(
+                {
+                    FILTERS_ALLOWED_ATTR_KEY: frozenset({
+                        FILTERS_ATTR_OID_ALLOWED,
+                        "2.5.4.4",
+                    }),
+                    FILTERS_ALLOWED_OC_KEY: frozenset({FILTERS_OC_OID_ALLOWED}),
+                    FILTERS_ALLOWED_MR_KEY: frozenset(),
+                    FILTERS_ALLOWED_MRU_KEY: frozenset(),
+                },
             )
-        for i, expected_dn in enumerate(expected_dns):
-            if i < len(entries):
-                actual_dn = getattr(entries[i], "dn", None)
-                if str(actual_dn) != expected_dn:
-                    raise AssertionError(
-                        f"Entry {i}: Expected DN '{expected_dn}', got '{actual_dn}'"
-                    )
-        return entries
+        )
+        FILTERS_ALLOWED_OIDS_EMPTY: Final[t.MappingKV[str, frozenset[str]]] = (
+            MappingProxyType(
+                {
+                    FILTERS_ALLOWED_ATTR_KEY: frozenset(),
+                    FILTERS_ALLOWED_OC_KEY: frozenset(),
+                    FILTERS_ALLOWED_MR_KEY: frozenset(),
+                    FILTERS_ALLOWED_MRU_KEY: frozenset(),
+                },
+            )
+        )
 
-    @staticmethod
-    def test_create_entry(
-        dn: str, attributes: dict[str, str | list[str]]
-    ) -> m.Ldif.Entry:
-        """Create an entry for testing.
+        RELAXED_PARSE_VALID: Final[str] = "valid"
+        RELAXED_PARSE_MALFORMED: Final[str] = "malformed"
+        API_SCENARIO_SIMPLE_LDIF: Final[str] = "simple_ldif"
+        API_SCENARIO_MULTIPLE_INSTANCES: Final[str] = "multiple_instances"
+        EDGE_CASE_UNICODE_LDIF: Final[str] = (
+            "dn: cn=José,ou=Users,dc=example,dc=com\n"
+            "cn: José\n"
+            "sn: García\n"
+            "objectClass: person\n\n"
+        )
+        EDGE_CASE_DEEP_DN_LDIF: Final[str] = (
+            "dn: cn=level1,ou=level2,ou=level3,ou=level4,ou=level5,ou=level6,dc=example,dc=com\n"
+            "cn: level1\n"
+            "objectClass: person\n\n"
+        )
+        EDGE_CASE_LARGE_MULTIVALUE_LDIF: Final[str] = (
+            "dn: cn=test,dc=example,dc=com\n"
+            "cn: test\n"
+            "member: cn=user1,dc=example,dc=com\n"
+            "member: cn=user2,dc=example,dc=com\n"
+            "member: cn=user3,dc=example,dc=com\n"
+            "member: cn=user4,dc=example,dc=com\n"
+            "member: cn=user5,dc=example,dc=com\n"
+            "objectClass: groupOfNames\n\n"
+        )
+        EDGE_CASE_NON_ASCII_REGEX: Final[t.Ldif.RegexPattern] = re.compile(
+            r"[^\x00-\x7F]",
+        )
+        EXACT_OID_1_2_3_RE: Final[t.Ldif.RegexPattern] = re.compile(r"^1\.2\.3$")
+        EDGE_CASE_LARGE_MULTIVALUE_FIXTURE_RELATIVE: Final[Path] = (
+            Path("edge_cases") / "size" / "large_multivalue.ldif"
+        )
+        EDGE_CASE_MIN_MULTIVALUE_COUNT: Final[int] = 10
+        EDGE_CASE_INLINE_PARSE_RULES: Final[
+            t.MappingKV[str, tuple[str, int, int, bool]]
+        ] = MappingProxyType(
+            {
+                "unicode": (EDGE_CASE_UNICODE_LDIF, 1, 0, True),
+                "deep_dn": (EDGE_CASE_DEEP_DN_LDIF, 1, 7, False),
+            },
+        )
+        EDGE_CASE_ROUNDTRIP_CASES: Final[t.MappingKV[str, tuple[str, str]]] = (
+            MappingProxyType(
+                {
+                    "unicode": (
+                        EDGE_CASE_UNICODE_LDIF,
+                        "unicode_roundtrip.ldif",
+                    ),
+                    "deep_dn": (
+                        EDGE_CASE_DEEP_DN_LDIF,
+                        "deep_dn_roundtrip.ldif",
+                    ),
+                    "large_multivalue": (
+                        EDGE_CASE_LARGE_MULTIVALUE_LDIF,
+                        "large_multivalue_roundtrip.ldif",
+                    ),
+                },
+            )
+        )
 
-        Args:
-            dn: Distinguished Name for the entry
-            attributes: Dictionary of attributes for the entry
+        ACL_REGISTRY_GET_ACL_ATTRIBUTES_DATA: Final[
+            t.MappingKV[str, tuple[str, str | None, t.StrSequence, t.StrSequence]]
+        ] = MappingProxyType(
+            {
+                "get_acl_attributes_rfc_foundation": (
+                    RFC,
+                    None,
+                    ("aci", "acl", "olcAccess", "aclRights", "aclEntry"),
+                    (),
+                ),
+                "get_acl_attributes_oid_servers": (
+                    OID,
+                    OID,
+                    ("orclaci", "orclentrylevelaci", "aci", "acl"),
+                    (),
+                ),
+                "get_acl_attributes_oud_servers": (
+                    OUD,
+                    OUD,
+                    ("orclaci", "orclentrylevelaci", "aci"),
+                    (),
+                ),
+                "get_acl_attributes_ad_servers": (
+                    AD,
+                    AD,
+                    ("nTSecurityDescriptor", "aci"),
+                    (),
+                ),
+                "get_acl_attributes_generic": (
+                    "generic",
+                    "generic",
+                    ("aci", "acl"),
+                    ("orclaci", "nTSecurityDescriptor"),
+                ),
+                "get_acl_attributes_unknown": (
+                    "unknown_server",
+                    "unknown_server",
+                    ("aci", "acl"),
+                    ("orclaci", "nTSecurityDescriptor"),
+                ),
+                "get_acl_attributes_none": (
+                    "none",
+                    None,
+                    ("aci", "acl"),
+                    ("orclaci",),
+                ),
+            },
+        )
+        ACL_REGISTRY_IS_ACL_ATTRIBUTE_DATA: Final[
+            t.MappingKV[str, tuple[str, str, str | None, bool]]
+        ] = MappingProxyType(
+            {
+                "is_acl_attribute_rfc_aci": ("valid_rfc", "aci", None, True),
+                "is_acl_attribute_rfc_acl": ("valid_rfc", "acl", None, True),
+                "is_acl_attribute_rfc_olcAccess": (
+                    "valid_rfc",
+                    "olcAccess",
+                    None,
+                    True,
+                ),
+                "is_acl_attribute_oid_orclaci": (
+                    "valid_server_specific",
+                    "orclaci",
+                    OID,
+                    True,
+                ),
+                "is_acl_attribute_oud_orclaci": (
+                    "valid_server_specific",
+                    "orclaci",
+                    OUD,
+                    True,
+                ),
+                "is_acl_attribute_invalid_cn": ("invalid", "cn", None, False),
+                "is_acl_attribute_invalid_uid": (
+                    "invalid",
+                    "uid",
+                    None,
+                    False,
+                ),
+                "is_acl_attribute_case_insensitive_aci": (
+                    "case_insensitive",
+                    "ACI",
+                    None,
+                    True,
+                ),
+                "is_acl_attribute_case_insensitive_acl": (
+                    "case_insensitive",
+                    "Acl",
+                    None,
+                    True,
+                ),
+                "is_acl_attribute_case_insensitive_olcAccess": (
+                    "case_insensitive",
+                    "OLCACCESS",
+                    None,
+                    True,
+                ),
+                "is_acl_attribute_case_insensitive_orclaci": (
+                    "case_insensitive",
+                    "OrclAci",
+                    OID,
+                    True,
+                ),
+            },
+        )
 
-        Returns:
-            Entry instance
+        RELAXED_ATTRIBUTE_DEFINITIONS: Final[t.MappingKV[str, tuple[str, bool]]] = (
+            MappingProxyType(
+                {
+                    RELAXED_PARSE_VALID: (
+                        "( 1.2.3.4 NAME 'testAttr' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+                        True,
+                    ),
+                    RELAXED_PARSE_MALFORMED: ("( 2.5.4.3 NAME 'broken'", True),
+                    "missing_name": ("( 1.2.3.4 )", True),
+                    "no_oid": ("NAME 'onlyName'", False),
+                    "empty": ("", False),
+                    "whitespace": ("   ", False),
+                    "binary_data": (
+                        "( 1.2.3.4 NAME 'test' \x00\x01 )".encode("latin1").decode(
+                            "latin1"
+                        ),
+                        True,
+                    ),
+                    "unicode": ("( 1.2.3.4 NAME 'тест' 😀 )", True),
+                    "long_definition": (
+                        "( 1.2.3.4 " + "NAME 'test' " * 100 + ")",
+                        True,
+                    ),
+                },
+            )
+        )
+        RELAXED_OBJECTCLASS_DEFINITIONS: Final[t.MappingKV[str, tuple[str, bool]]] = (
+            MappingProxyType(
+                {
+                    RELAXED_PARSE_VALID: (
+                        "( 1.2.3 NAME 'testOc' STRUCTURAL )",
+                        True,
+                    ),
+                    RELAXED_PARSE_MALFORMED: ("( 2.5.6.0 NAME 'broken'", True),
+                    "missing_name": ("( 1.2.3.4 STRUCTURAL )", True),
+                    "no_oid": ("BROKEN CLASS", False),
+                    "empty": ("", False),
+                    "whitespace": ("   ", False),
+                    "unicode": ("( 1.2.3.4 NAME 'тест' 😀 )", True),
+                },
+            )
+        )
+        RELAXED_ACL_DEFINITIONS: Final[t.MappingKV[str, tuple[str, bool]]] = (
+            MappingProxyType(
+                {
+                    RELAXED_PARSE_VALID: (
+                        '(targetentry="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com")(version 3.0;acl "REDACTED_LDAP_BIND_PASSWORD";allow(all)',
+                        True,
+                    ),
+                    RELAXED_PARSE_MALFORMED: ("(targetentry incomplete", True),
+                    "broken": ("(targetentry invalid) broken", True),
+                },
+            )
+        )
 
-        Raises:
-            AssertionError: If entry creation fails
+        APACHE_ATTRIBUTE_TEST_CASES: Final[t.SequenceOf[m.Tests.AttributeTestCase]] = (
+            m.Tests.AttributeTestCase(
+                scenario="apache_oid",
+                attr_definition="( 1.3.6.1.4.1.18060.0.4.1.2.100 NAME 'ads-enabled' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 )",
+                expected_can_handle=True,
+                expected_name="ads-enabled",
+            ),
+            m.Tests.AttributeTestCase(
+                scenario="ads_prefix",
+                attr_definition="( 2.16.840.1.113730.3.1.1 NAME 'ads-searchBaseDN' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )",
+                expected_can_handle=True,
+                expected_name="ads-searchBaseDN",
+            ),
+            m.Tests.AttributeTestCase(
+                scenario="apacheds_name",
+                attr_definition="( 1.2.3.4 NAME 'apachedsSystemId' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+                expected_can_handle=True,
+                expected_name="apachedsSystemId",
+            ),
+            m.Tests.AttributeTestCase(
+                scenario="standard_rfc",
+                attr_definition="( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+                expected_can_handle=False,
+                expected_name="cn",
+            ),
+        )
 
-        """
-        result = m.Ldif.Entry.create(dn=dn, attributes=attributes)
-        if result.is_failure:
-            raise AssertionError(f"Entry creation failed: {result.error}")
-        return result.value
+        APACHE_OBJECTCLASS_TEST_CASES: Final[
+            t.SequenceOf[m.Tests.ObjectClassTestCase]
+        ] = (
+            m.Tests.ObjectClassTestCase(
+                scenario="apache_oid",
+                oc_definition="( 1.3.6.1.4.1.18060.0.4.1.3.100 NAME 'ads-directoryService' SUP top STRUCTURAL )",
+                expected_can_handle=True,
+                expected_name="ads-directoryService",
+            ),
+            m.Tests.ObjectClassTestCase(
+                scenario="ads_name",
+                oc_definition="( 2.5.6.0 NAME 'ads-base' SUP top ABSTRACT )",
+                expected_can_handle=True,
+                expected_name="ads-base",
+            ),
+            m.Tests.ObjectClassTestCase(
+                scenario="standard_rfc",
+                oc_definition="( 2.5.6.6 NAME 'posixAccount' SUP top STRUCTURAL )",
+                expected_can_handle=False,
+                expected_name="posixAccount",
+            ),
+        )
 
-    @staticmethod
-    def test_write_entries_to_string(
-        writer_service: FlextLdifWriter,
-        entries: list[m.Ldif.Entry],
-        expected_content: list[str] | None = None,
-    ) -> str:
-        """Write entries to LDIF string.
-
-        Args:
-            writer_service: The writer service instance
-            entries: List of entries to write
-            expected_content: Optional list of strings that must appear in output
-
-        Returns:
-            LDIF string
-
-        Raises:
-            AssertionError: If writing fails or expected content not found
-
-        """
-        if not isinstance(writer_service, FlextLdifWriter):
-            raise TypeError(f"Expected FlextLdifWriter, got {type(writer_service)}")
-        result = writer_service.write_to_string(entries=entries)
-        if result.is_failure:
-            raise AssertionError(f"Writing failed: {result.error}")
-        ldif_string = result.value
-        if not isinstance(ldif_string, str):
-            raise AssertionError(f"Expected string, got {type(ldif_string)}")
-        if expected_content:
-            for substring in expected_content:
-                if substring not in ldif_string:
-                    raise AssertionError(f"'{substring}' not found in LDIF output")
-        return ldif_string
-
-    @staticmethod
-    def test_write_entries_to_file(
-        writer_service: FlextLdifWriter,
-        entries: list[m.Ldif.Entry],
-        file_path: str | Path,
-        expected_content: list[str] | None = None,
-    ) -> None:
-        """Write entries to LDIF file.
-
-        Args:
-            writer_service: The writer service instance
-            entries: List of entries to write
-            file_path: Path to write to
-            expected_content: Optional list of strings that must appear in output
-
-        Raises:
-            AssertionError: If writing fails or expected content not found
-
-        """
-        if not isinstance(writer_service, FlextLdifWriter):
-            raise TypeError(f"Expected FlextLdifWriter, got {type(writer_service)}")
-        if not isinstance(file_path, Path):
-            raise TypeError(f"Expected Path, got {type(file_path)}")
-        result = writer_service.write_to_file(entries=entries, path=file_path)
-        if result.is_failure:
-            raise AssertionError(f"Writing to file failed: {result.error}")
-        if not file_path.exists():
-            raise AssertionError(f"Output file {file_path} was not created")
-        if expected_content:
-            content = file_path.read_text()
-            for substring in expected_content:
-                if substring not in content:
-                    raise AssertionError(f"'{substring}' not found in file content")
-
-    @staticmethod
-    def test_parse_edge_case(
-        parser_service: FlextLdifParser,
-        content: str,
-        should_succeed: bool | None = None,
-    ) -> list[m.Ldif.Entry] | None:
-        """Parse edge case LDIF content.
-
-        Args:
-            parser_service: The parser service instance
-            content: LDIF content to parse
-            should_succeed: Expected success state (None = either outcome acceptable)
-
-        Returns:
-            Parse result value if successful, None otherwise
-
-        Raises:
-            AssertionError: If should_succeed specified and result doesn't match
-
-        """
-        if not isinstance(parser_service, FlextLdifParser):
-            raise TypeError(f"Expected FlextLdifParser, got {type(parser_service)}")
-        result = parser_service.parse_string(content=content, server_type="rfc")
-        if should_succeed is True and result.is_failure:
-            raise AssertionError(f"Expected success but got failure: {result.error}")
-        if should_succeed is False and result.is_success:
-            msg = "Expected failure but got success"
-            raise AssertionError(msg)
-        return result.map(lambda r: list(r.entries)).map_or(None)
-
-    @staticmethod
-    def test_write_entry_variations(
-        writer_service: FlextLdifWriter,
-        entry_data: dict[str, dict[str, str | dict[str, list[str]]]],
-    ) -> None:
-        """Test writing entries with various data types.
-
-        Args:
-            writer_service: The writer service instance
-            entry_data: Dict mapping test case names to entry data
-
-        Raises:
-            AssertionError: If any write operation fails
-
-        """
-        if not isinstance(writer_service, FlextLdifWriter):
-            raise TypeError(f"Expected FlextLdifWriter, got {type(writer_service)}")
-        for test_name, data in entry_data.items():
-            dn = str(data.get("dn", ""))
-            raw_attributes = data.get("attributes", {})
-            if not isinstance(raw_attributes, dict):
-                attributes: dict[str, list[str]] = {}
-            else:
-                attributes = {
-                    str(k): [str(i) for i in v] if isinstance(v, list) else [str(v)]
-                    for k, v in raw_attributes.items()
-                }
-            entry_result = m.Ldif.Entry.create(dn=dn, attributes=attributes)
-            if entry_result.is_failure:
-                raise AssertionError(
-                    f"Entry creation failed for {test_name}: {entry_result.error}"
+        APACHE_ENTRY_TEST_CASES: Final[t.SequenceOf[m.Tests.EntryTestCase]] = (
+            *(
+                m.Tests.EntryTestCase(
+                    scenario=(
+                        "ou_config" if ou_name == "settings" else f"ou_{ou_name}"
+                    ),
+                    entry_dn=f"ou={ou_name},dc=example,dc=com",
+                    attributes={"objectClass": ["organizationalUnit"]},
+                    expected_can_handle=True,
                 )
-            write_result = writer_service.write_to_string(entries=[entry_result.value])
-            if write_result.is_failure:
-                raise AssertionError(
-                    f"Write failed for {test_name}: {write_result.error}"
+                for ou_name in ("settings", "services", "system", "partitions")
+            ),
+            m.Tests.EntryTestCase(
+                scenario="ads_attribute",
+                entry_dn=DN_TEST,
+                attributes={"ads-enabled": ["TRUE"], "objectClass": ["top"]},
+                expected_can_handle=True,
+            ),
+            m.Tests.EntryTestCase(
+                scenario="apacheds_attribute",
+                entry_dn=DN_TEST,
+                attributes={"apachedsSystemId": ["test"], "objectClass": ["top"]},
+                expected_can_handle=True,
+            ),
+            m.Tests.EntryTestCase(
+                scenario="ads_objectclass",
+                entry_dn=DN_TEST,
+                attributes={"objectClass": ["top", "ads-directory"]},
+                expected_can_handle=True,
+            ),
+            m.Tests.EntryTestCase(
+                scenario="standard_rfc",
+                entry_dn="cn=user,dc=example,dc=com",
+                attributes={"objectClass": ["person"], "cn": ["user"]},
+                expected_can_handle=True,
+            ),
+        )
+
+        DS389_ATTRIBUTE_TEST_CASES: Final[t.SequenceOf[m.Tests.AttributeTestCase]] = (
+            m.Tests.AttributeTestCase(
+                scenario="ds389_oid",
+                attr_definition="( 2.16.840.1.113730.3.1.1 NAME 'nsslapd-suffix' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )",
+                expected_can_handle=True,
+                expected_oid="2.16.840.1.113730.3.1.1",
+                expected_name="nsslapd-suffix",
+            ),
+            m.Tests.AttributeTestCase(
+                scenario="nsslapd_prefix",
+                attr_definition="( 1.2.3.4 NAME 'nsslapd-port' SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 )",
+                expected_can_handle=True,
+                expected_name="nsslapd-port",
+            ),
+            m.Tests.AttributeTestCase(
+                scenario="nsds_prefix",
+                attr_definition="( 1.2.3.4 NAME 'nsds5ReplicaId' SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 )",
+                expected_can_handle=True,
+                expected_name="nsds5ReplicaId",
+            ),
+            m.Tests.AttributeTestCase(
+                scenario="nsuniqueid_prefix",
+                attr_definition="( 1.2.3.4 NAME 'nsuniqueid' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+                expected_can_handle=True,
+                expected_name="nsuniqueid",
+            ),
+            m.Tests.AttributeTestCase(
+                scenario="standard_rfc",
+                attr_definition="( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+                expected_can_handle=False,
+            ),
+        )
+
+        DS389_OBJECTCLASS_TEST_CASES: Final[
+            t.SequenceOf[m.Tests.ObjectClassTestCase]
+        ] = (
+            m.Tests.ObjectClassTestCase(
+                scenario="ds389_oid",
+                oc_definition="( 2.16.840.1.113730.3.2.1 NAME 'nscontainer' SUP top STRUCTURAL )",
+                expected_can_handle=True,
+                expected_oid="2.16.840.1.113730.3.2.1",
+                expected_name="nscontainer",
+                expected_kind="STRUCTURAL",
+            ),
+            m.Tests.ObjectClassTestCase(
+                scenario="ns_name",
+                oc_definition="( 2.5.6.0 NAME 'nsperson' SUP top STRUCTURAL )",
+                expected_can_handle=True,
+                expected_name="nsperson",
+            ),
+            m.Tests.ObjectClassTestCase(
+                scenario="standard_rfc",
+                oc_definition="( 2.5.6.6 NAME 'posixAccount' SUP top STRUCTURAL )",
+                expected_can_handle=False,
+            ),
+        )
+
+        _DS389_CN_KIND_CASES: Final[t.SequenceOf[tuple[str, t.StrSequence]]] = (
+            ("settings", ("nscontainer",)),
+            ("monitor", ("top",)),
+            ("changelog", ("top",)),
+        )
+        _DS389_ATTR_PROBE_CASES: Final[t.SequenceOf[tuple[str, str, str]]] = (
+            ("nsslapd_attribute", "nsslapd-port", "389"),
+            ("nsds_attribute", "nsds5ReplicaId", "1"),
+            ("nsuniqueid_attribute", "nsuniqueid", "12345"),
+        )
+        DS389_ENTRY_TEST_CASES: Final[t.SequenceOf[m.Tests.EntryTestCase]] = (
+            *(
+                m.Tests.EntryTestCase(
+                    scenario=f"cn_{cn}",
+                    entry_dn=f"cn={cn}",
+                    attributes={
+                        c.Ldif.DictKeys.OBJECTCLASS.value: list(object_classes)
+                    },
+                    expected_can_handle=True,
                 )
-            if dn and dn not in write_result.value:
-                raise AssertionError(f"DN '{dn}' not found in output for {test_name}")
-
-    @staticmethod
-    def test_entry_quirk_can_handle(
-        entry_quirk: p.Ldif.EntryQuirk, entry: m.Ldif.Entry, expected: bool
-    ) -> None:
-        """Test Entry quirk can_handle method.
-
-        Args:
-            entry_quirk: Entry quirk instance
-            entry: Entry to test
-            expected: Expected result from can_handle
-
-        Raises:
-            AssertionError: If can_handle returns unexpected result
-
-        """
-        can_handle_method = getattr(entry_quirk, "can_handle", None)
-        if can_handle_method is None:
-            msg = "Entry quirk has no can_handle method"
-            raise AssertionError(msg)
-        dn = str(getattr(entry, "dn", ""))
-        attributes = getattr(entry, "attributes", {})
-        result = can_handle_method(dn, attributes)
-        if result != expected:
-            raise AssertionError(
-                f"Expected can_handle to return {expected}, got {result}"
-            )
-
-    @staticmethod
-    def test_acl_quirk_parse_and_verify(
-        acl_quirk: p.Ldif.AclQuirk, acl_line: str, expected_raw_acl: str | None = None
-    ) -> m.Ldif.Acl | None:
-        """Parse ACL and verify result.
-
-        Args:
-            acl_quirk: ACL quirk instance
-            acl_line: ACL line to parse
-            expected_raw_acl: Expected raw ACL value
-
-        Returns:
-            Parsed ACL object
-
-        Raises:
-            AssertionError: If parsing fails or verification fails
-
-        """
-        parse_method = getattr(acl_quirk, "parse", None)
-        if parse_method is None:
-            msg = "ACL quirk has no parse method"
-            raise AssertionError(msg)
-        result = parse_method(acl_line)
-        if hasattr(result, "is_failure") and result.is_failure:
-            raise AssertionError(f"ACL parsing failed: {result.error}")
-        value = result.value if hasattr(result, "value") else result
-        if expected_raw_acl is not None:
-            raw_acl = getattr(value, "raw_acl", None)
-            if raw_acl != expected_raw_acl:
-                raise AssertionError(
-                    f"Expected raw_acl '{expected_raw_acl}', got '{raw_acl}'"
+                for cn, object_classes in _DS389_CN_KIND_CASES
+            ),
+            *(
+                m.Tests.EntryTestCase(
+                    scenario=scenario,
+                    entry_dn="cn=test,dc=example,dc=com",
+                    attributes={attr: [value], "objectclass": ["top"]},
+                    expected_can_handle=True,
                 )
-        return value
+                for scenario, attr, value in _DS389_ATTR_PROBE_CASES
+            ),
+            m.Tests.EntryTestCase(
+                scenario="ns_objectclass",
+                entry_dn=DN_TEST,
+                attributes={
+                    c.Ldif.DictKeys.OBJECTCLASS.value: ["top", "nscontainer"],
+                },
+                expected_can_handle=True,
+            ),
+            m.Tests.EntryTestCase(
+                scenario="standard_rfc",
+                entry_dn="cn=user,dc=example,dc=com",
+                attributes={
+                    c.Ldif.DictKeys.OBJECTCLASS.value: ["person"],
+                    "cn": ["user"],
+                },
+                expected_can_handle=False,
+            ),
+        )
 
-    @staticmethod
-    def test_acl_quirk_write_and_verify(
-        acl_quirk: p.Ldif.AclQuirk, acl: m.Ldif.Acl, expected_content: str | None = None
-    ) -> str:
-        """Write ACL and verify result.
+        # NB: cn_config / cn_settings naming preserved → first case key
+        # historically was "cn_config" (not "cn_settings"); align to that.
 
-        Args:
-            acl_quirk: ACL quirk instance
-            acl: ACL object to write
-            expected_content: Expected content in output
+        NOVELL_ATTRIBUTE_TEST_CASES: Final[t.SequenceOf[m.Tests.AttributeTestCase]] = (
+            m.Tests.AttributeTestCase(
+                scenario="novell_oid",
+                attr_definition="( 2.16.840.1.113719.1.1.4.1.501 NAME 'nspmPasswordPolicyDN' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )",
+                expected_can_handle=True,
+                expected_oid="2.16.840.1.113719.1.1.4.1.501",
+                expected_name="nspmPasswordPolicyDN",
+            ),
+            m.Tests.AttributeTestCase(
+                scenario="nspm_prefix",
+                attr_definition="( 1.2.3.4 NAME 'nspmPasswordPolicy' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+                expected_can_handle=True,
+                expected_name="nspmPasswordPolicy",
+            ),
+            m.Tests.AttributeTestCase(
+                scenario="login_prefix",
+                attr_definition="( 1.2.3.4 NAME 'loginDisabled' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 )",
+                expected_can_handle=True,
+                expected_name="loginDisabled",
+            ),
+            m.Tests.AttributeTestCase(
+                scenario="dirxml_prefix",
+                attr_definition="( 1.2.3.4 NAME 'dirxml-associations' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+                expected_can_handle=True,
+                expected_name="dirxml-associations",
+            ),
+            m.Tests.AttributeTestCase(
+                scenario="standard_rfc",
+                attr_definition="( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+                expected_can_handle=False,
+            ),
+        )
 
-        Returns:
-            Written ACL string
+        NOVELL_OBJECTCLASS_TEST_CASES: Final[
+            t.SequenceOf[m.Tests.ObjectClassTestCase]
+        ] = (
+            m.Tests.ObjectClassTestCase(
+                scenario="novell_oid",
+                oc_definition="( 2.16.840.1.113719.2.2.6.1 NAME 'ndsPerson' SUP top STRUCTURAL )",
+                expected_can_handle=True,
+                expected_oid="2.16.840.1.113719.2.2.6.1",
+                expected_name="ndsPerson",
+            ),
+            m.Tests.ObjectClassTestCase(
+                scenario="nds_name",
+                oc_definition="( 2.5.6.0 NAME 'ndsserver' SUP top STRUCTURAL )",
+                expected_can_handle=True,
+                expected_name="ndsserver",
+            ),
+            m.Tests.ObjectClassTestCase(
+                scenario="standard_rfc",
+                oc_definition="( 2.5.6.6 NAME 'posixAccount' SUP top STRUCTURAL )",
+                expected_can_handle=False,
+            ),
+        )
 
-        Raises:
-            AssertionError: If writing fails or verification fails
-
-        """
-        write_method = getattr(acl_quirk, "write", None)
-        if write_method is None:
-            msg = "ACL quirk has no write method"
-            raise AssertionError(msg)
-        result = write_method(acl)
-        if hasattr(result, "is_failure") and result.is_failure:
-            raise AssertionError(f"ACL writing failed: {result.error}")
-        output = result.value if hasattr(result, "value") else result
-        if not isinstance(output, str):
-            raise AssertionError(f"Expected string output, got {type(output)}")
-        if expected_content is not None and expected_content not in output:
-            raise AssertionError(f"Expected '{expected_content}' not found in output")
-        return output
-
-    @staticmethod
-    def test_parse_error_handling(
-        schema_quirk: p.Ldif.SchemaQuirk, invalid_def: str, *, should_fail: bool = True
-    ) -> m.Ldif.SchemaAttribute | None:
-        """Test parsing error handling for invalid definitions.
-
-        Args:
-            schema_quirk: Schema quirk instance
-            invalid_def: Invalid attribute/objectClass definition string
-            should_fail: Whether parsing should fail (default True)
-
-        Returns:
-            Parse result value if successful, None otherwise
-
-        Raises:
-            AssertionError: If should_fail and parsing succeeds,
-                           or if not should_fail and parsing fails
-
-        """
-        parse_method = getattr(schema_quirk, "_parse_attribute", None)
-        if parse_method is None:
-            parse_method = getattr(schema_quirk, "parse_attribute", None)
-        if parse_method is None:
-            msg = "Schema quirk has no attribute parse method"
-            raise AssertionError(msg)
-        result = parse_method(invalid_def)
-        if hasattr(result, "is_failure"):
-            is_failure = result.is_failure
-        else:
-            is_failure = result is None
-        if should_fail and (not is_failure):
-            msg = "Expected parsing to fail but it succeeded"
-            raise AssertionError(msg)
-        if not should_fail and is_failure:
-            error_msg = result.error if hasattr(result, "error") else "Unknown error"
-            raise AssertionError(f"Expected parsing to succeed but got: {error_msg}")
-        if is_failure:
-            return None
-        return result.value if hasattr(result, "value") else result
-
-
-class TestDeduplicationHelpers:
-    """Test helpers for deduplication functionality."""
-
-    @staticmethod
-    def create_entries_batch(
-        entries_data: list[dict[str, object]], *, validate_all: bool = True
-    ) -> list[m.Ldif.Entry]:
-        """Create multiple entries from data dictionaries.
-
-        Args:
-            entries_data: List of dicts with 'dn' and 'attributes' keys
-            validate_all: Whether to validate all entries (currently unused)
-
-        Returns:
-            List of created Entry instances
-
-        """
-        service = FlextLdifEntries()
-        entries: list[m.Ldif.Entry] = []
-        for entry_data in entries_data:
-            dn_raw = entry_data.get("dn")
-            attrs_raw = entry_data.get("attributes")
-            if not isinstance(dn_raw, str):
-                msg = "Entry data must include string 'dn'"
-                raise AssertionError(msg)
-            if not isinstance(attrs_raw, dict):
-                msg = "Entry data must include dict 'attributes'"
-                raise AssertionError(msg)
-            normalized_attrs: dict[str, str | list[str]] = {}
-            for attr_name_raw, attr_value_raw in attrs_raw.items():
-                if not isinstance(attr_name_raw, str):
-                    continue
-                if isinstance(attr_value_raw, str):
-                    normalized_attrs[attr_name_raw] = attr_value_raw
-                    continue
-                if isinstance(attr_value_raw, list):
-                    string_values = [
-                        item for item in attr_value_raw if isinstance(item, str)
-                    ]
-                    if len(string_values) == len(attr_value_raw):
-                        normalized_attrs[attr_name_raw] = string_values
-            result = service.create_entry(dn=dn_raw, attributes=normalized_attrs)
-            if result.is_success:
-                entries.append(result.value)
-        return entries
-
-    @staticmethod
-    def batch_parse_and_assert(
-        parser_service: FlextLdifParser,
-        test_cases: list[dict[str, object]],
-        *,
-        validate_all: bool = True,
-    ) -> list[r[m.Ldif.LdifResults.ParseResponse]]:
-        """Batch parse LDIF content and assert results.
-
-        Args:
-            parser_service: The parser service instance
-            test_cases: List of dicts with 'ldif_content', 'should_succeed',
-                       and optionally 'server_type' keys
-            validate_all: Whether to validate all results strictly
-
-        Returns:
-            List of parse results
-
-        Raises:
-            AssertionError: If validation fails when validate_all is True
-
-        """
-        if not isinstance(parser_service, FlextLdifParser):
-            raise TypeError(f"Expected FlextLdifParser, got {type(parser_service)}")
-        results: list[r[m.Ldif.ParseResponse]] = []
-        for test_case in test_cases:
-            ldif_content = str(test_case.get("ldif_content", ""))
-            should_succeed = test_case.get("should_succeed")
-            server_type = str(test_case.get("server_type", "rfc"))
-            result = parser_service.parse_string(
-                content=ldif_content, server_type=server_type
-            )
-            if validate_all and should_succeed is True and result.is_failure:
-                raise AssertionError(
-                    f"Expected success but got failure: {result.error}"
+        NOVELL_ENTRY_TEST_CASES: Final[t.SequenceOf[m.Tests.EntryTestCase]] = (
+            *(
+                m.Tests.EntryTestCase(
+                    scenario=f"ou_{ou_name}",
+                    entry_dn=f"ou={ou_name},o=Example",
+                    attributes={"objectClass": ["organizationalUnit"]},
+                    expected_can_handle=True,
                 )
-            if validate_all and should_succeed is False and result.is_success:
-                msg = "Expected failure but got success"
-                raise AssertionError(msg)
-            results.append(result)
-        return results
-
-    @staticmethod
-    def helper_api_write_and_unwrap(
-        api: FlextLdif,
-        entries: list[m.Ldif.Entry],
-        must_contain: list[str] | None = None,
-    ) -> str:
-        """Write entries to string and unwrap result.
-
-        Args:
-            api: FlextLdif instance
-            entries: List of entries to write
-            must_contain: List of strings that must appear in output
-
-        Returns:
-            LDIF string
-
-        """
-        assert isinstance(api, FlextLdif)
-        result = api.write(entries)
-        assert result.is_success, f"write() failed: {result.error}"
-        ldif_string = result.value
-        assert isinstance(ldif_string, str)
-        if must_contain:
-            for substring in must_contain:
-                assert substring in ldif_string, (
-                    f"'{substring}' not found in LDIF output"
-                )
-        return ldif_string
-
-    @staticmethod
-    def api_parse_write_file_and_assert(
-        api: FlextLdif,
-        entries: list[m.Ldif.Entry],
-        output_file: str | Path,
-        must_contain: list[str] | None = None,
-    ) -> None:
-        """Write entries to file and assert content.
-
-        Args:
-            api: FlextLdif instance
-            entries: List of entries to write
-            output_file: Path to output file
-            must_contain: List of strings that must appear in output
-
-        """
-        assert isinstance(api, FlextLdif)
-        assert isinstance(output_file, Path)
-        ldif_string = TestDeduplicationHelpers.helper_api_write_and_unwrap(
-            api, entries, must_contain=must_contain
-        )
-        output_file.write_text(ldif_string)
-        assert output_file.exists(), f"Output file {output_file} was not created"
-
-    @staticmethod
-    def api_parse_write_string_and_assert(
-        api: FlextLdif,
-        entries: list[m.Ldif.Entry],
-        must_contain: list[str] | None = None,
-    ) -> None:
-        """Write entries to string and assert content.
-
-        Args:
-            api: FlextLdif instance
-            entries: List of entries to write
-            must_contain: List of strings that must appear in output
-
-        """
-        TestDeduplicationHelpers.helper_api_write_and_unwrap(
-            api, entries, must_contain=must_contain
+                for ou_name in ("services", "apps", "system")
+            ),
+            m.Tests.EntryTestCase(
+                scenario="nspm_attribute",
+                entry_dn="cn=user,o=Example",
+                attributes={
+                    "nspmpasswordpolicy": ["policy1"],
+                    "objectClass": ["top"],
+                },
+                expected_can_handle=True,
+            ),
+            m.Tests.EntryTestCase(
+                scenario="login_attribute",
+                entry_dn="cn=user,o=Example",
+                attributes={"logindisabled": ["TRUE"], "objectClass": ["top"]},
+                expected_can_handle=True,
+            ),
+            m.Tests.EntryTestCase(
+                scenario="nds_objectclass",
+                entry_dn="cn=user,o=Example",
+                attributes={"objectClass": ["top", "ndsperson"]},
+                expected_can_handle=True,
+            ),
+            m.Tests.EntryTestCase(
+                scenario="standard_rfc",
+                entry_dn="cn=user,dc=example,dc=com",
+                attributes={"objectClass": ["person"], "cn": ["user"]},
+                expected_can_handle=False,
+            ),
         )
 
-    @staticmethod
-    def quirk_parse_and_unwrap(
-        quirk: (p.Ldif.SchemaQuirk | p.Ldif.AclQuirk | p.Ldif.EntryQuirk),
-        content: str,
-        msg: str | None = None,
-        parse_method: str | None = None,
-        expected_type: type | None = None,
-        should_succeed: bool | None = None,
-    ) -> (
-        p.Ldif.SchemaAttribute
-        | p.Ldif.SchemaObjectClass
-        | p.Ldif.Entry
-        | p.Ldif.Acl
-        | Sequence[p.Ldif.Entry]
-        | None
-    ):
-        """Parse using quirk and unwrap result.
-
-        Args:
-            quirk: Schema quirk instance with parse method
-            content: Content to parse
-            msg: Optional message for assertion
-            parse_method: Optional specific parse method name (e.g., 'parse_attribute')
-            expected_type: Optional expected type for validation
-            should_succeed: Expected outcome (True=must succeed, False=must fail,
-                None=any outcome acceptable)
-
-        Returns:
-            Parsed result value if successful, None if expected failure
-
-        Raises:
-            AssertionError: If should_succeed specified and result doesn't match,
-                or if type doesn't match
-
-        """
-        if parse_method:
-            method = getattr(quirk, parse_method, None)
-            if method is None or not callable(method):
-                raise AssertionError(f"Quirk has no method '{parse_method}'")
-            result = method(content)
-        else:
-            parse_callable = getattr(quirk, "parse", None)
-            if parse_callable is None or not isinstance(parse_callable, Callable):
-                msg = "Quirk has no callable parse method"
-                raise AssertionError(msg)
-            result = parse_callable(content)
-        is_success = getattr(result, "is_success", None)
-        is_failure = getattr(result, "is_failure", None)
-        if not isinstance(is_success, bool) or not isinstance(is_failure, bool):
-            msg = "Parse method must return r-like object"
-            raise AssertionError(msg)
-        error = getattr(result, "error", None)
-        error_message = str(error) if error is not None else "Unknown parse error"
-        if should_succeed is False:
-            if is_success:
-                raise AssertionError(msg or "Expected failure but parse succeeded")
-            return None
-        if should_succeed is True and is_failure:
-            raise AssertionError(
-                msg or f"Expected success but parse failed: {error_message}"
+        # ── ACL service constants ────────────────────────────────────────
+        ACL_OUD_STRING: Final[str] = (
+            '(targetattr="*")(version 3.0; acl "Test ACL"; allow (read,search) userdn="ldap:///anyone";)'
+        )
+        ACL_OID_STRING: Final[str] = "access to entry by * (browse)"
+        ACL_RFC_STRING: Final[str] = ACL_READ_VALUE
+        ACL_SERVER_CASES: Final[t.MappingKV[str, tuple[str, str]]] = MappingProxyType(
+            {
+                "oud": (ACL_OUD_STRING, OUD),
+                "oid": (ACL_OID_STRING, OID),
+                "rfc": (ACL_RFC_STRING, RFC),
+            },
+        )
+        _ACL_PERMISSION_KEYS: Final[t.StrSequence] = (
+            "read",
+            "write",
+            "delete",
+            "add",
+            "search",
+            "compare",
+        )
+        ACL_PERMISSIONS_EMPTY: Final[t.MappingKV[str, bool]] = MappingProxyType(
+            dict.fromkeys(_ACL_PERMISSION_KEYS, False),
+        )
+        ACL_PERMISSIONS_READ_ONLY: Final[t.MappingKV[str, bool]] = MappingProxyType(
+            {**ACL_PERMISSIONS_EMPTY, "read": True},
+        )
+        ACL_ENTRY_DN: Final[str] = "cn=acltest,dc=example,dc=com"
+        ACL_ENTRY_ORCLACI_VALUE: Final[str] = "access to entry by * (browse)"
+        ACL_ENTRY_ACI_VALUE: Final[str] = (
+            '(targetattr="*")(version 3.0; acl "Entry ACL"; allow (read,search) userdn="ldap:///anyone";)'
+        )
+        ACL_INVALID_SERVER_TYPE: Final[str] = "NOT_A_VALID_SERVER_XYZ"
+        ACL_PARSE_FAILURE_CASES: Final[t.MappingKV[str, tuple[str, str]]] = (
+            MappingProxyType(
+                {
+                    "invalid_server": (ACL_OUD_STRING, ACL_INVALID_SERVER_TYPE),
+                    "generic_server_without_acl_server": (ACL_OUD_STRING, GENERIC),
+                    "openldap_invalid_acl_format": (ACL_INVALID_SERVER_TYPE, OPENLDAP),
+                },
             )
-        if should_succeed is None:
-            assert is_success, msg or f"quirk.parse() failed: {error_message}"
-        if is_failure:
-            return None
-        value = getattr(result, "value", None)
-        if expected_type is not None:
-            if hasattr(expected_type, "__protocol_attrs__"):
-                pass
-            elif not isinstance(value, expected_type):
-                raise AssertionError(
-                    f"Expected {expected_type.__name__}, got {type(value).__name__}"
-                )
-        return value
-
-    @staticmethod
-    def quirk_write_and_unwrap(
-        quirk: p.Ldif.SchemaQuirk | p.Ldif.AclQuirk,
-        data: m.Ldif.Entry
-        | m.Ldif.SchemaAttribute
-        | m.Ldif.SchemaObjectClass
-        | m.Ldif.Acl,
-        msg: str | None = None,
-        write_method: str | None = None,
-        must_contain: list[str] | None = None,
-    ) -> str:
-        """Write using quirk and unwrap result.
-
-        Args:
-            quirk: Schema quirk instance with write method
-            data: Data to write (Entry, SchemaAttribute, SchemaObjectClass, etc.)
-            msg: Optional message for assertion
-            write_method: Optional specific write method name (e.g., '_write_attribute')
-            must_contain: Optional list of strings that must appear in output
-
-        Returns:
-            Written string result
-
-        Raises:
-            AssertionError: If writing fails or must_contain strings not found
-
-        """
-        if write_method:
-            method = getattr(quirk, write_method, None)
-            if method is None:
-                raise AssertionError(f"Quirk has no method '{write_method}'")
-            result = method(data)
-        else:
-            method = getattr(quirk, "write", None)
-            if method is None:
-                msg = "Quirk has no write method"
-                raise AssertionError(msg)
-            result = method(data)
-        if hasattr(result, "is_success"):
-            assert result.is_success, msg or f"quirk.write() failed: {result.error}"
-            output = result.value
-        else:
-            output = result
-        assert isinstance(output, str), f"Expected str, got {type(output).__name__}"
-        if must_contain:
-            for substring in must_contain:
-                if substring not in output:
-                    raise AssertionError(
-                        f"'{substring}' not found in output: {output[:200]}..."
-                    )
-        return output
-
-    @staticmethod
-    def helper_convert_and_assert_strings(
-        conversion_matrix: FlextLdifConversion,
-        source_quirk: p.Ldif.SchemaQuirk,
-        target_quirk: p.Ldif.SchemaQuirk,
-        conversion_type: str,
-        data: str,
-        must_contain: list[str] | None = None,
-        expected_type: type | None = None,
-    ) -> str:
-        """Convert data between quirks and assert result.
-
-        Args:
-            conversion_matrix: FlextLdifConversion instance
-            source_quirk: Source server quirk
-            target_quirk: Target server quirk
-            conversion_type: Type of conversion ('attribute', 'objectClass', etc.)
-            data: Data to convert (string)
-            must_contain: List of strings that must appear in output
-            expected_type: Expected type for validation (default: str)
-
-        Returns:
-            Converted string result
-
-        Raises:
-            AssertionError: If conversion fails or validation fails
-
-        """
-        convert_method = getattr(conversion_matrix, "convert", None)
-        if convert_method is None:
-            msg = "conversion_matrix has no convert method"
-            raise AssertionError(msg)
-        conversion_type_lower = conversion_type.lower()
-        if conversion_type_lower == "attribute":
-            schema_service = FlextLdifSchema()
-            parse_result = schema_service.parse_attribute(data)
-            if not parse_result.is_success:
-                raise AssertionError(f"Failed to parse attribute: {parse_result.error}")
-            model_instance = parse_result.value
-        elif conversion_type_lower in {"objectclass", "objectclasses"}:
-            schema_service = FlextLdifSchema()
-            parse_result = schema_service.parse_objectclass(data)
-            if not parse_result.is_success:
-                raise AssertionError(
-                    f"Failed to parse objectclass: {parse_result.error}"
-                )
-            model_instance = parse_result.value
-        else:
-            raise AssertionError(f"Unknown conversion_type: {conversion_type}")
-        result = convert_method(
-            source=source_quirk, target=target_quirk, model_instance=model_instance
         )
-        if hasattr(result, "is_success"):
-            assert result.is_success, f"convert() failed: {result.error}"
-            output = result.value
-        else:
-            output = result
-        if expected_type is str and (not isinstance(output, str)):
-            output = str(output)
-        if expected_type is not None and (not isinstance(output, expected_type)):
-            raise AssertionError(
-                f"Expected {expected_type.__name__}, got {type(output).__name__}"
+        ACL_SERVICE_CHECK_EMPTY_ACLS: Final[int] = 0
+
+        # ── Analysis service constants ───────────────────────────────────
+        ANALYSIS_DN_VALID: Final[str] = "cn=analysis-user,dc=example,dc=com"
+        ANALYSIS_ATTR_CN_VALUE: Final[str] = "analysis-user"
+        ANALYSIS_ATTR_INVALID_NAME: Final[str] = "invalid_attr"
+        ANALYSIS_OC_PERSON: Final[str] = "person"
+        ANALYSIS_OC_INVALID: Final[str] = "invalid_oc"
+        ANALYSIS_VALID_ENTRY_ATTRS: Final[t.MappingKV[str, list[str]]] = (
+            MappingProxyType(
+                {
+                    "objectClass": [ANALYSIS_OC_PERSON, "top"],
+                    "cn": [ANALYSIS_ATTR_CN_VALUE],
+                    "sn": ["user"],
+                },
             )
-        if must_contain and isinstance(output, str):
-            for substring in must_contain:
-                if substring not in output:
-                    raise AssertionError(
-                        f"'{substring}' not found in output: {output[:200]}..."
-                    )
-        return output
-
-    @staticmethod
-    def helper_get_supported_conversions_and_assert(
-        conversion_matrix: FlextLdifConversion,
-        quirk: p.Ldif.SchemaQuirk,
-        must_have_keys: list[str] | None = None,
-        expected_support: dict[str, bool] | None = None,
-    ) -> dict[str, bool]:
-        """Get supported conversions and assert result.
-
-        Args:
-            conversion_matrix: FlextLdifConversion instance
-            quirk: Server quirk to check support for
-            must_have_keys: List of keys that must appear in result
-            expected_support: Dict of expected key:bool values
-
-        Returns:
-            Dict of supported conversion types
-
-        Raises:
-            AssertionError: If result doesn't have expected keys or values
-
-        """
-        get_support_method = getattr(
-            conversion_matrix, "get_supported_conversions", None
         )
-        if get_support_method is None:
-            msg = "conversion_matrix has no get_supported_conversions"
-            raise AssertionError(msg)
-        result = get_support_method(quirk)
-        if hasattr(result, "is_success"):
-            assert result.is_success, (
-                f"get_supported_conversions failed: {result.error}"
+        ANALYSIS_INVALID_ATTR_ENTRY_ATTRS: Final[t.MappingKV[str, list[str]]] = (
+            MappingProxyType(
+                {
+                    "objectClass": [ANALYSIS_OC_PERSON],
+                    ANALYSIS_ATTR_INVALID_NAME: ["value"],
+                },
             )
-            support_dict = result.value
-        else:
-            support_dict = result
-        assert isinstance(support_dict, dict), (
-            f"Expected dict, got {type(support_dict).__name__}"
         )
-        if must_have_keys:
-            for key in must_have_keys:
-                assert key in support_dict, f"Missing key '{key}' in support dict"
-        if expected_support:
-            for key, expected_value in expected_support.items():
-                if key in support_dict:
-                    assert support_dict[key] == expected_value, (
-                        f"Expected {key}={expected_value}, got {support_dict[key]}"
-                    )
-        return support_dict
-
-    @staticmethod
-    def helper_batch_convert_and_assert(
-        conversion_matrix: FlextLdifConversion,
-        source_quirk: p.Ldif.SchemaQuirk,
-        target_quirk: p.Ldif.SchemaQuirk,
-        conversion_type: str,
-        items: list[str],
-        expected_count: int | None = None,
-    ) -> list[
-        m.Ldif.Entry | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
-    ]:
-        """Batch convert items and assert result.
-
-        Args:
-            conversion_matrix: FlextLdifConversion instance
-            source_quirk: Source server quirk
-            target_quirk: Target server quirk
-            conversion_type: Type of conversion ('attribute', 'objectClass', etc.)
-            items: List of items to convert
-            expected_count: Expected number of results (default: len(items))
-
-        Returns:
-            List of converted items
-
-        Raises:
-            AssertionError: If conversion fails or count doesn't match
-
-        """
-        batch_convert_method = getattr(conversion_matrix, "batch_convert", None)
-        if batch_convert_method is None:
-            msg = "conversion_matrix has no batch_convert method"
-            raise AssertionError(msg)
-        model_list: list[
-            m.Ldif.Entry
-            | m.Ldif.SchemaAttribute
-            | m.Ldif.SchemaObjectClass
-            | m.Ldif.Acl
-        ] = []
-        conversion_type_lower = conversion_type.lower()
-        if conversion_type_lower == "attribute":
-            schema_service = FlextLdifSchema()
-            for item in items:
-                parse_result = schema_service.parse_attribute(str(item))
-                if not parse_result.is_success:
-                    raise AssertionError(
-                        f"Failed to parse attribute: {parse_result.error}"
-                    )
-                model_list.append(parse_result.value)
-        elif conversion_type_lower in {"objectclass", "objectclasses"}:
-            schema_service = FlextLdifSchema()
-            for item in items:
-                parse_result = schema_service.parse_objectclass(str(item))
-                if not parse_result.is_success:
-                    raise AssertionError(
-                        f"Failed to parse objectclass: {parse_result.error}"
-                    )
-                model_list.append(parse_result.value)
-        else:
-            raise AssertionError(f"Unknown conversion_type: {conversion_type}")
-        result = batch_convert_method(
-            source=source_quirk, target=target_quirk, model_list=model_list
+        ANALYSIS_PARSE_RESPONSE_LDIF: Final[str] = (
+            "dn: cn=user1,dc=example,dc=com\n"
+            "objectClass: person\n"
+            "cn: user1\n\n"
+            "dn: cn=user2,dc=example,dc=com\n"
+            "objectClass: person\n"
+            "cn: user2\n"
         )
-        if hasattr(result, "is_success"):
-            assert result.is_success, f"batch_convert() failed: {result.error}"
-            converted_items = result.value
-        else:
-            converted_items = result
-        assert isinstance(converted_items, list), (
-            f"Expected list, got {type(converted_items).__name__}"
+
+        # ── Migration pipeline constants ─────────────────────────────────
+        MIGRATION_INPUT_FILENAME: Final[str] = "mig_input.ldif"
+        MIGRATION_SINGLE_ENTRY_LDIF: Final[str] = (
+            "dn: cn=migrate-me,dc=example,dc=com\n"
+            "objectClass: person\n"
+            "cn: migrate-me\n"
+            "sn: user\n"
         )
-        if expected_count is not None:
-            assert len(converted_items) == expected_count, (
-                f"Expected {expected_count} items, got {len(converted_items)}"
+        MIGRATION_UNKNOWN_SERVER: Final[str] = "TOTALLY_UNKNOWN_SERVER_XYZ"
+        MIGRATION_COERCE_CASES: Final[t.MappingKV[str, tuple[str, str]]] = (
+            MappingProxyType(
+                {
+                    "rfc_lower": ("rfc", RFC),
+                    "oid_upper": ("OID", OID),
+                    "unknown_falls_back": (MIGRATION_UNKNOWN_SERVER, RFC),
+                },
             )
-        return converted_items
+        )
+
+        # ── Writer advanced constants ────────────────────────────────────
+
+        # ── Server service constants ─────────────────────────────────────
+        SERVER_INVALID_SERVER_TYPE: Final[str] = "invalid_server_xyz"
+
+        # ── Validation service constants ─────────────────────────────────
+        VALIDATION_VALID_OC_NAMES: Final[t.StrSequence] = (
+            "person",
+            "top",
+            "organizationalUnit",
+            "inetOrgPerson",
+        )
+        VALIDATION_INVALID_DESCRIPTOR: Final[str] = "invalid name"
+
+        # ── Pipeline constants ───────────────────────────────────────────
+
+        # ── Processing service constants ───────────────────────────────
+        PROCESSING_VALID_DNS: Final[t.StrSequence] = (
+            "cn=processing-one,dc=example,dc=com",
+            "cn=processing-two,dc=example,dc=com",
+        )
+        PROCESSING_ATTRS: Final[t.MappingKV[str, list[str]]] = MappingProxyType(
+            {
+                "objectClass": ["person", "top"],
+                "cn": ["processing-user"],
+                "sn": ["processing"],
+            },
+        )
+        PROCESSING_OPTIONS_CASES: Final[
+            t.MappingKV[
+                str,
+                tuple[Literal["transform", "validate"], bool, int, int],
+            ]
+        ] = MappingProxyType(
+            {
+                "batch_transform": ("transform", False, 1, 2),
+                "parallel_validate": ("validate", True, 1, 2),
+            },
+        )
+
+        # ── Statistics service constants ───────────────────────────────
+        STATS_SERVER_TYPES: Final[t.StrSequence] = (
+            RFC,
+            OID,
+        )
+        STATS_EXPECTED_OBJECTCLASS: Final[str] = "person"
 
 
 c = TestsFlextLdifConstants
-__all__ = ["RfcTestHelpers", "TestDeduplicationHelpers", "TestsFlextLdifConstants", "c"]
+
+__all__: list[str] = ["TestsFlextLdifConstants", "c"]

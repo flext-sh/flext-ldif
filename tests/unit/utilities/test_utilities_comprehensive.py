@@ -5,44 +5,40 @@ Tests all 830 uncovered lines in utilities.py with real data and automation.
 
 from __future__ import annotations
 
+from collections.abc import (
+    MutableSequence,
+)
+
 import pytest
+from flext_tests import tm
 
-from tests import m, u
-from tests.test_factory import FlextLdifTestFactory
+from tests.models import m
+from tests.typings import t
+from tests.utilities import u
 
 
-class TestFlextLdifUtilitiesComprehensive:
+class TestsFlextLdifUtilitiesComprehensive:
     """Comprehensive automated tests for all utilities functionality."""
-
-    @pytest.mark.parametrize("test_data", FlextLdifTestFactory.parametrize_real_data())
-    def test_all_utility_functions_with_real_data(
-        self, test_data: m.Tests.LdifTestData
-    ) -> None:
-        """Test all utility functions with real generated data."""
-        if test_data.dn:
-            dn = test_data.dn
-            result = u.Ldif.DN.norm_string(dn)
-            assert isinstance(result, str)
-            assert len(result) > 0
 
     def test_real_ldif_processing_pipeline(self) -> None:
         """Test complete LDIF processing pipeline with real data."""
-        ldif_content = FlextLdifTestFactory.create_real_ldif_content(
-            entries_count=5, include_schema=True
+        ldif_content = u.Tests.create_real_ldif_content(
+            entries_count=5,
+            include_schema=True,
         )
         lines = ldif_content.split("\n")
-        entries: list[m.Tests.LdifTestData] = []
+        entries: MutableSequence[m.Tests.LdifTestData] = []
         for line in lines:
             if line.startswith("dn:"):
                 current_dn = line[4:].strip()
-                current_attrs: dict[str, list[str]] = {}
+                current_attrs: t.MutableStrSequenceMapping = {}
                 entries.append(
                     m.Tests.LdifTestData(
                         id=f"entry_{len(entries)}",
                         server_type="generic",
                         dn=current_dn,
                         attributes=current_attrs,
-                    )
+                    ),
                 )
             elif line.startswith(" ") and entries:
                 continue
@@ -50,22 +46,23 @@ class TestFlextLdifUtilitiesComprehensive:
                 key, value = line.split(":", 1)
                 key = key.strip()
                 value = value.strip()
-                if key not in entries[-1].attributes:
-                    entries[-1].attributes[key] = []
-                entries[-1].attributes[key].append(value)
-        assert len(entries) >= 5
+                attrs: t.MutableStrSequenceMapping = {
+                    k: list(v) for k, v in entries[-1].attributes.items()
+                }
+                if key not in attrs:
+                    attrs[key] = []
+                attrs[key].append(value)
+        tm.that(len(entries), gte=5)
         for entry in entries:
-            assert entry.dn
-            assert entry.attributes
-            assert isinstance(entry.attributes, dict)
+            tm.that(entry.dn, none=False)
+            tm.that(entry.attributes, none=False)
+            tm.that(entry.attributes, is_=dict)
 
     @pytest.mark.parametrize("server_type", ["generic", "openldap", "ad", "oid", "oud"])
     def test_server_specific_utilities(self, server_type: str) -> None:
         """Test server-specific utility functions."""
-        entry = FlextLdifTestFactory.create_real_entry(server_type=server_type)
-        assert entry is not None
-        assert hasattr(entry, "dn")
-        assert hasattr(entry, "attributes")
-        normalized = u.Ldif.Server.normalize_server_type(server_type)
-        assert isinstance(normalized, str)
-        assert len(normalized) > 0
+        entry = u.Tests.create_real_entry(server_type=server_type)
+        tm.that(entry, none=False)
+        normalized = u.Ldif.normalize_server_type(server_type)
+        tm.that(normalized, is_=str)
+        tm.that(normalized, empty=False)

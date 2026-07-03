@@ -2,24 +2,44 @@
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, Literal
 
-from pydantic import ConfigDict, Field
-
-from flext_ldif._models.base import FlextLdifModelsBase
+from flext_core import m
+from flext_core.utilities import FlextUtilities as u
+from flext_ldif import t
 
 
 class FlextLdifModelsProcessing:
     """Processing model namespace."""
 
-    class ProcessingResult(FlextLdifModelsBase):
+    class ProcessingResult(m.StrictModel):
         """Result of entry processing (transform or validate operation)."""
 
-        model_config = ConfigDict(frozen=False, validate_assignment=True)
         dn: Annotated[
-            str, Field(..., description="Distinguished name of the processed entry")
+            str,
+            u.Field(..., description="Distinguished name of the processed entry"),
         ]
         attributes: Annotated[
-            dict[str, list[str]],
-            Field(..., description="LDAP attributes as name -> list of values"),
+            t.MutableStrSequenceMapping,
+            u.Field(..., description="LDAP attributes as name -> list of values"),
         ]
+
+    class ProcessEntriesOptions(m.StrictModel):
+        """Validated options for batch/parallel entry processing."""
+
+        processor_name: Annotated[
+            Literal["transform", "validate"],
+            u.Field(description="Canonical processor name for entry handling."),
+        ]
+        parallel: Annotated[
+            bool,
+            u.Field(description="Enable thread-pool execution mode."),
+        ] = False
+        batch_size: Annotated[
+            int,
+            u.Field(ge=1, description="Batch size for sequential processing."),
+        ] = 100
+        max_workers: Annotated[
+            int,
+            u.Field(ge=1, description="Maximum thread workers for parallel mode."),
+        ] = 4

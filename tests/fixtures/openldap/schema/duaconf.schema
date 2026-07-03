@@ -12,7 +12,7 @@
 ## top-level directory of the distribution or, alternatively, at
 ## <http://www.OpenLDAP.org/license.html>.
 
-# DUA schema from draft-joslin-config-schema (a work in progress)
+# DUA schema from draft-joslin-settings-schema (a work in progress)
 
 # Contents of this file are subject to change (including deletion)
 # without notice.
@@ -35,7 +35,7 @@
 # of the Internet-Draft.
 #
 # For an explanation of this schema, see
-# draft-joslin-config-schema-07.txt.
+# draft-joslin-settings-schema-07.txt.
 
 objectidentifier DUAConfSchemaOID 1.3.6.1.4.1.11.1.3.1
 

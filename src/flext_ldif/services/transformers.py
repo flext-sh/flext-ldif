@@ -2,45 +2,71 @@
 
 from __future__ import annotations
 
-from typing import override
+from typing import Annotated
 
-from flext_core import r
-
-from flext_ldif._utilities.transformers import EntryTransformer
-from flext_ldif.constants import FlextLdifConstants as c
-from flext_ldif.models import FlextLdifModels as m
+from flext_ldif import FlextLdifShared, c, m, p, r, s, t, u
 from flext_ldif.services.conversion import FlextLdifConversion
 
 
-class ServerTransformer(EntryTransformer[m.Ldif.Entry]):
+class FlextLdifTransformer(s):
     """Transformer for server-specific conversions."""
 
-    __slots__ = ("_source_server", "_target_server")
+    source_server: Annotated[
+        str | c.Ldif.ServerTypes | None,
+        u.Field(
+            default=None,
+            exclude=True,
+            description="Source server type used for the conversion.",
+        ),
+    ]
+    target_server: Annotated[
+        str | c.Ldif.ServerTypes | None,
+        u.Field(
+            default=None,
+            exclude=True,
+            description="Target server type used for the conversion.",
+        ),
+    ]
+    base_dn: Annotated[
+        str,
+        u.Field(
+            default="",
+            exclude=True,
+            description="Migration base DN forwarded to ACL scope filtering.",
+        ),
+    ]
 
-    def __init__(
-        self, source_server: c.Ldif.ServerTypes, target_server: c.Ldif.ServerTypes
-    ) -> None:
-        """Initialize server transformer."""
-        super().__init__()
-        self._source_server = source_server
-        self._target_server = target_server
+    @staticmethod
+    def _normalize_server_type(
+        server_type: str | c.Ldif.ServerTypes,
+    ) -> c.Ldif.ServerTypes:
+        """Normalize public string inputs into canonical server enums."""
+        if isinstance(server_type, c.Ldif.ServerTypes):
+            return server_type
+        return FlextLdifShared.normalize_server_type(server_type)
 
-    @override
-    def apply(self, item: m.Ldif.Entry) -> r[m.Ldif.Entry]:
+    def apply(self, item: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
         """Apply server-specific transformation."""
-        service = FlextLdifConversion()
-        result = service.convert(
-            source=self._source_server.value,
-            target=self._target_server.value,
-            model_instance=item,
+        source_server = self._normalize_server_type(
+            self.source_server or c.Ldif.ServerTypes.RFC,
         )
-        if result.is_failure:
-            return r[m.Ldif.Entry].fail(result.error)
-        converted = result.value
-        match converted:
-            case m.Ldif.Entry() as converted_entry:
-                return r[m.Ldif.Entry].ok(converted_entry)
-            case _:
-                return r[m.Ldif.Entry].fail(
-                    f"Conversion returned unexpected type: {type(converted).__name__}"
-                )
+        target_server = self._normalize_server_type(
+            self.target_server or c.Ldif.ServerTypes.RFC,
+        )
+
+        def ensure_entry(converted: t.Ldif.ConvertedModel) -> p.Result[m.Ldif.Entry]:
+            if isinstance(converted, m.Ldif.Entry):
+                return r[m.Ldif.Entry].ok(converted)
+            return r[m.Ldif.Entry].fail(
+                f"Conversion returned unexpected type: {type(converted).__name__}",
+            )
+
+        return (
+            FlextLdifConversion(base_dn=self.base_dn)
+            .convert_model(
+                source=source_server.value,
+                target=target_server.value,
+                model_instance=item,
+            )
+            .flat_map(ensure_entry)
+        )

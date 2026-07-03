@@ -96,7 +96,7 @@ tests/
 
 **Example**:
 
-```python
+```python notest
 def test_flext_ldif_entry_validation(sample_entry):
     """Test domain entity validation rules."""
     entry = sample_entry
@@ -123,7 +123,7 @@ def test_flext_ldif_entry_validation(sample_entry):
 
 **Example**:
 
-```python
+```python notest
 def test_api_service_integration(flext_ldif_api, sample_ldif_content):
     """Test API service with real dependencies."""
     result = flext_ldif_api.parse(sample_ldif_content)
@@ -146,7 +146,7 @@ def test_api_service_integration(flext_ldif_api, sample_ldif_content):
 
 **Example**:
 
-```python
+```python notest
 def test_e2e_ldif_processing_workflow(tmp_path):
     """Test complete LDIF processing workflow."""
     input_file = tmp_path / "input.ldif"
@@ -183,7 +183,7 @@ def test_e2e_ldif_processing_workflow(tmp_path):
 
 **Example**:
 
-```python
+```python notest
 def test_ldif_rfc_compliance(rfc_compliant_ldif):
     """Test RFC 2849 LDIF specification compliance."""
     result = flext_ldif_parse(rfc_compliant_ldif)
@@ -208,7 +208,7 @@ def test_ldif_rfc_compliance(rfc_compliant_ldif):
 
 **Example**:
 
-```python
+```text
 @pytest.mark.performance
 def test_large_file_processing_performance():
     """Test processing performance with large LDIF files."""
@@ -227,16 +227,16 @@ def test_large_file_processing_performance():
 
 ### Core Fixtures (`conftest.py`)
 
-```python
+```text
 @pytest.fixture
 def flext_ldif_api():
-    """Configured FlextLdif instance for testing."""
-    config = FlextLdifSettings(
+    """Configured ldif instance for testing."""
+    settings = FlextLdifSettings(
         max_entries=1000,
         strict_validation=True,
         enable_observability=False,  # Disable for testing
     )
-    return FlextLdif(config)
+    return ldif(settings)
 
 
 @pytest.fixture
@@ -276,7 +276,7 @@ mail: jane.smith@example.com
 
 ### Docker Integration Fixtures (`docker_fixtures.py`)
 
-```python
+```text
 @pytest.fixture(scope="session")
 def ldap_server():
     """Docker-based LDAP server for integration testing."""
@@ -316,7 +316,7 @@ tests/data/
 
 ### Test Data Generation
 
-```python
+```python notest
 def generate_ldif_with_entries(count: int) -> str:
     """Generate LDIF content with specified number of entries."""
     entries = []
@@ -404,7 +404,7 @@ pytest -m "not slow" --ff        # Fast tests first, skip slow tests
 
 # Comprehensive validation
 pytest --strict-markers           # Enforce marker usage
-pytest --strict-config            # Enforce configuration compliance
+pytest --strict-settings            # Enforce configuration compliance
 
 # Debug test failures
 pytest --pdb                      # Drop into debugger on failure
@@ -414,11 +414,11 @@ pytest --tb=long                  # Detailed traceback
 
 ### Test-Driven Development
 
-```python
+```python notest
 def test_new_feature_specification():
     """Test specification for new feature (TDD)."""
     # Arrange - Set up test conditions
-    api = FlextLdif()
+    api = ldif()
     test_data = create_test_ldif()
 
     # Act - Execute the feature

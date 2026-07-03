@@ -1,46 +1,40 @@
-"""Test type definitions extending src typings for centralized test types.
-
-This module provides test-specific type extensions that inherit from
-src/flext_ldif/typings.py classes. This centralizes test types without
-duplicating parent class functionality.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Test type definitions extending src typings for centralized test types."""
 
 from __future__ import annotations
 
+from typing import Literal
+
+from flext_ldap import t
 from flext_tests import FlextTestsTypes
 
-from flext_ldif import FlextLdifTypes
 
-
-class TestsFlextLdifTypes(FlextTestsTypes, FlextLdifTypes):
-    """Test types extending FlextTestsTypes and FlextLdifTypes.
-
-    Provides test-specific type extensions without duplicating parent functionality.
-    All parent types are accessible via inheritance hierarchy.
-
-    Hierarchy:
-    - FlextTestsTypes.Tests.* (generic test types from flext_tests)
-    - FlextLdifTypes.Ldif.* (source types from flext_ldif)
-    - TestsFlextLdifTypes.Tests.* (flext-ldif-specific test types)
-
-    Naming convention: Tests[FlextLdif] where FlextLdif is the project name.
-    Short name 't' for convenient access in tests, 'tt' as test-specific alias.
-    """
+class TestsFlextLdifTypes(FlextTestsTypes, t):
+    """Test types extending TestsFlextTypes and t."""
 
     class Tests(FlextTestsTypes.Tests):
-        """flext-ldif-specific test type definitions namespace.
+        """flext-ldif-specific test type definitions namespace."""
 
-        Use tt.LdifTests.* for flext-ldif-specific test types.
-        Use t.Tests.* for generic test types from FlextTestsTypes.
-        """
-
-        class Fixtures:
-            """TypedDict definitions for LDIF test fixtures."""
+        type GenericFieldsDict = t.StrMapping
+        type DnRefData = t.MappingKV[
+            str,
+            t.StrMapping | t.StrSequence | str,
+        ]
+        type FixtureServer = str
+        type FixtureKind = str
+        type ParseMethod = Literal[
+            "parse_server",
+            "parse_attribute",
+            "parse_objectclass",
+            "parse_input",
+        ]
+        type WriteMethod = Literal[
+            "write",
+            "_write_attribute",
+            "_write_objectclass",
+            "_write_acl",
+        ]
 
 
 t = TestsFlextLdifTypes
-type GenericFieldsDict = dict[str, str]
-__all__ = ["GenericFieldsDict", "TestsFlextLdifTypes", "t"]
+
+__all__: list[str] = ["TestsFlextLdifTypes", "t"]

@@ -1,23 +1,21 @@
-"""Apache Directory Server quirks implementation."""
+"""Apache Directory Server servers implementation."""
 
 from __future__ import annotations
 
-import re
-from collections.abc import Mapping
+from collections.abc import (
+    MutableMapping,
+)
 from typing import ClassVar, override
 
-from flext_core import r
-
-from flext_ldif import c, m, u
-from flext_ldif._models.domain import FlextLdifModelsDomains
+from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 
 class FlextLdifServersApache(FlextLdifServersRfc):
-    """Apache Directory Server quirks implementation."""
+    """Apache Directory Server servers implementation."""
 
     class Constants(FlextLdifServersRfc.Constants):
-        """Standardized constants for Apache Directory Server quirk."""
+        """Standardized constants for Apache Directory Server server."""
 
         SERVER_TYPE: ClassVar[str] = "apache"
         PRIORITY: ClassVar[int] = 15
@@ -32,6 +30,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             "ads-",
             "apacheds",
         ])
+        SCHEMA_ATTRIBUTE_NAME_REGEX: ClassVar[str] = "NAME\\s+\\(?\\s*'([^']+)'"
         DETECTION_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset([
             "ads-directoryservice",
             "ads-base",
@@ -39,8 +38,24 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             "ads-partition",
             "ads-interceptor",
         ])
+        ATTRIBUTE_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig] = (
+            m.Ldif.ServerPatternsConfig(
+                oid_pattern=DETECTION_OID_PATTERN,
+                attr_prefixes=DETECTION_ATTRIBUTE_PREFIXES,
+                name_regex=SCHEMA_ATTRIBUTE_NAME_REGEX,
+                use_prefix_match=True,
+                match_definition_text=True,
+            )
+        )
+        OBJECTCLASS_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig] = (
+            m.Ldif.ServerPatternsConfig(
+                oid_pattern=DETECTION_OID_PATTERN,
+                attr_names=DETECTION_OBJECTCLASS_NAMES,
+                name_regex=SCHEMA_ATTRIBUTE_NAME_REGEX,
+            )
+        )
         DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset([
-            "ou=config",
+            "ou=settings",
             "ou=services",
             "ou=system",
             "ou=partitions",
@@ -54,7 +69,6 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             "ads-interceptor",
         ])
         DETECTION_WEIGHT: ClassVar[int] = 6
-        SCHEMA_ATTRIBUTE_NAME_REGEX: ClassVar[str] = "NAME\\s+\\(?\\s*'([^']+)'"
         ACL_ACI_ATTRIBUTE_NAMES: ClassVar[frozenset[str]] = frozenset([
             "ads-aci",
             "aci",
@@ -64,97 +78,47 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         ACL_NAME_PREFIX: ClassVar[str] = "apache-"
         ACL_SUBJECT_TYPE_ANONYMOUS: ClassVar[str] = "anonymous"
         ACL_SUBJECT_VALUE_WILDCARD: ClassVar[str] = "*"
-        DN_CONFIG_ENTRY_MARKER: ClassVar[str] = "ou=config"
+        DN_CONFIG_ENTRY_MARKER: ClassVar[str] = "ou=settings"
 
     class Schema(FlextLdifServersRfc.Schema):
-        """Schema quirks for Apache Directory Server (ApacheDS)."""
+        """Schema servers for Apache Directory Server (ApacheDS)."""
 
         @override
         def can_handle_attribute(
-            self, attr_definition: str | m.Ldif.SchemaAttribute
+            self,
+            attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Detect ApacheDS attribute definitions using centralized constants."""
-            if isinstance(attr_definition, m.Ldif.SchemaAttribute):
-                return u.Ldif.Server.matches_server_patterns(
-                    value=attr_definition,
-                    oid_pattern=FlextLdifServersApache.Constants.DETECTION_OID_PATTERN,
-                    detection_names=FlextLdifServersApache.Constants.DETECTION_ATTRIBUTE_PREFIXES,
-                    use_prefix_match=True,
-                )
-            attr_lower = attr_definition.lower()
-            if re.search(
-                FlextLdifServersApache.Constants.DETECTION_OID_PATTERN, attr_definition
-            ):
-                return True
-            name_matches = re.findall(
-                FlextLdifServersApache.Constants.SCHEMA_ATTRIBUTE_NAME_REGEX,
-                attr_definition,
-                re.IGNORECASE,
+            matches: bool = u.Ldif.matches_server_patterns(
+                value=attr_definition,
+                settings=FlextLdifServersApache.Constants.ATTRIBUTE_PATTERN_SETTINGS,
             )
-            if any(
-                name.lower().startswith(
-                    tuple(FlextLdifServersApache.Constants.DETECTION_ATTRIBUTE_PREFIXES)
-                )
-                for name in name_matches
-            ):
-                return True
-            prefixes = FlextLdifServersApache.Constants.DETECTION_ATTRIBUTE_PREFIXES
-            return any(prefix in attr_lower for prefix in prefixes)
+            return matches
 
         @override
         def can_handle_objectclass(
-            self, oc_definition: str | m.Ldif.SchemaObjectClass
+            self,
+            oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Detect ApacheDS objectClass definitions using centralized constants."""
-            if isinstance(oc_definition, m.Ldif.SchemaObjectClass):
-                return u.Ldif.Server.matches_server_patterns(
-                    value=oc_definition,
-                    oid_pattern=FlextLdifServersApache.Constants.DETECTION_OID_PATTERN,
-                    detection_names=FlextLdifServersApache.Constants.DETECTION_OBJECTCLASS_NAMES,
-                )
-            if re.search(
-                FlextLdifServersApache.Constants.DETECTION_OID_PATTERN, oc_definition
-            ):
-                return True
-            name_matches = re.findall(
-                FlextLdifServersApache.Constants.SCHEMA_ATTRIBUTE_NAME_REGEX,
-                oc_definition,
-                re.IGNORECASE,
+            matches: bool = u.Ldif.matches_server_patterns(
+                value=oc_definition,
+                settings=FlextLdifServersApache.Constants.OBJECTCLASS_PATTERN_SETTINGS,
             )
-            return any(
-                name.lower()
-                in FlextLdifServersApache.Constants.DETECTION_OBJECTCLASS_NAMES
-                for name in name_matches
-            )
+            return matches
 
         @override
-        def _parse_attribute(self, attr_definition: str) -> r[m.Ldif.SchemaAttribute]:
-            """Parse attribute definition and add Apache metadata."""
-            result = super()._parse_attribute(attr_definition)
-            if result.is_success:
-                attr_data = result.value
-                metadata = m.Ldif.QuirkMetadata.create_for("apache")
-                return r[m.Ldif.SchemaAttribute].ok(
-                    attr_data.model_copy(update={"metadata": metadata})
-                )
-            return result
-
-        @override
-        def _parse_objectclass(self, oc_definition: str) -> r[m.Ldif.SchemaObjectClass]:
-            """Parse objectClass definition and add Apache metadata."""
-            result = super()._parse_objectclass(oc_definition)
-            if result.is_success:
-                oc_data = result.value
-                u.Ldif.ObjectClass.fix_missing_sup(oc_data)
-                u.Ldif.ObjectClass.fix_kind_mismatch(oc_data)
-                metadata = m.Ldif.QuirkMetadata.create_for(self._get_server_type())
-                return r[m.Ldif.SchemaObjectClass].ok(
-                    oc_data.model_copy(update={"metadata": metadata})
-                )
-            return result
+        def _hook_post_parse_objectclass(
+            self,
+            oc: m.Ldif.SchemaObjectClass,
+        ) -> p.Result[m.Ldif.SchemaObjectClass]:
+            """Normalize Apache objectClass data after RFC parsing."""
+            u.Ldif.fix_missing_sup(oc)
+            u.Ldif.fix_kind_mismatch(oc)
+            return super()._hook_post_parse_objectclass(oc)
 
     class Acl(FlextLdifServersRfc.Acl):
-        """Apache Directory Server ACI quirk."""
+        """Apache Directory Server ACI server."""
 
         @override
         def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
@@ -165,22 +129,12 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Detect ApacheDS ACI lines."""
             if isinstance(acl_line, str):
-                if not acl_line or not acl_line.strip():
-                    return False
                 normalized = acl_line.strip()
-                attr_name, _, _ = normalized.partition(":")
-                if (
-                    attr_name.strip().lower()
-                    in FlextLdifServersApache.Constants.ACL_ACI_ATTRIBUTE_NAMES
-                ):
-                    return True
-                return normalized.lower().startswith(
-                    FlextLdifServersApache.Constants.ACL_VERSION_PATTERN
-                )
-            raw_acl = getattr(acl_line, "raw_acl", None)
-            if not isinstance(raw_acl, str) or not raw_acl:
-                return False
-            normalized = raw_acl.strip()
+            else:
+                raw_acl = getattr(acl_line, "raw_acl", None)
+                if not isinstance(raw_acl, str):
+                    return False
+                normalized = raw_acl.strip()
             if not normalized:
                 return False
             attr_name, _, _ = normalized.partition(":")
@@ -190,62 +144,73 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             ):
                 return True
             return normalized.lower().startswith(
-                FlextLdifServersApache.Constants.ACL_VERSION_PATTERN
+                FlextLdifServersApache.Constants.ACL_VERSION_PATTERN,
             )
 
         @override
-        def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> r[str]:
+        def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
             """Write ACL data to Apache Directory Server ACI format."""
             parent_result = super()._write_acl(acl_data)
-            if parent_result.is_success:
+            if parent_result.success:
                 acl_str = parent_result.value
                 if acl_str and (not acl_str.strip().startswith(("aci:", "ads-aci:"))):
                     return r[str].ok(f"aci: {acl_str}")
-                return parent_result
-            return parent_result
+                return r[str].from_result(parent_result)
+            return r[str].from_result(parent_result)
 
     class Entry(FlextLdifServersRfc.Entry):
-        """Entry quirks for Apache Directory Server."""
+        """Entry servers for Apache Directory Server."""
 
         @override
         def can_handle(
-            self, entry_dn: str, attributes: Mapping[str, list[str]]
+            self,
+            entry_dn: str,
+            attributes: t.MutableStrSequenceMapping,
         ) -> bool:
-            """Check if this quirk can handle the entry."""
+            """Check if this server can handle the entry."""
             _ = entry_dn
             _ = attributes
             return True
 
         def _parse_entry(
-            self, entry_dn: str, entry_attrs: Mapping[str, list[str | bytes]]
-        ) -> r[m.Ldif.Entry]:
+            self,
+            entry_dn: str,
+            entry_attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]],
+        ) -> p.Result[m.Ldif.Entry]:
             """Parse raw LDIF entry data into Entry model."""
-            str_attrs: dict[str, list[str]] = {
+            str_attrs: t.MutableStrSequenceMapping = {
                 k: [v.decode() if isinstance(v, bytes) else v for v in vals]
                 for k, vals in entry_attrs.items()
             }
             base_result = super().parse_entry(entry_dn, str_attrs)
-            if base_result.is_failure:
-                return base_result
+            if base_result.failure:
+                return r[m.Ldif.Entry].from_result(base_result)
             entry = base_result.value
             try:
-                if not entry.dn:
-                    return r[m.Ldif.Entry].ok(entry)
-                metadata = entry.metadata or m.Ldif.QuirkMetadata(
-                    quirk_type=self._get_server_type()
-                )
-                dn_lower = entry.dn.value.lower()
-                if not metadata.extensions:
-                    metadata.extensions = m.Ldif.DynamicMetadata()
-                metadata.extensions[c.Ldif.Domain.QuirkMetadataKeys.IS_CONFIG_ENTRY] = (
-                    FlextLdifServersApache.Constants.DN_CONFIG_ENTRY_MARKER in dn_lower
-                )
-                processed_entry = entry.model_copy(update={"metadata": metadata})
-                return r[m.Ldif.Entry].ok(processed_entry)
-            except (ValueError, TypeError, AttributeError) as exc:
-                return r[m.Ldif.Entry].fail(
-                    f"Apache Directory Server entry parsing failed: {exc}"
+                return self._mark_apache_entry(entry)
+            except c.EXC_BASIC_TYPE as exc:
+                return r[m.Ldif.Entry].fail_op(
+                    "Apache Directory Server entry parsing", exc
                 )
 
+        def _mark_apache_entry(
+            self,
+            entry: m.Ldif.Entry,
+        ) -> p.Result[m.Ldif.Entry]:
+            """Attach Apache Directory Server metadata to an entry."""
+            if not entry.dn:
+                return r[m.Ldif.Entry].ok(entry)
+            metadata = entry.metadata or m.Ldif.ServerMetadata(
+                server_type=self._get_server_type(),
+            )
+            dn_lower = entry.dn.value.lower()
+            if not metadata.extensions:
+                metadata.extensions = m.Ldif.DynamicMetadata()
+            metadata.extensions[c.Ldif.ServerMetadataKeys.IS_CONFIG_ENTRY] = (
+                FlextLdifServersApache.Constants.DN_CONFIG_ENTRY_MARKER in dn_lower
+            )
+            processed_entry = entry.model_copy(update={"metadata": metadata})
+            return r[m.Ldif.Entry].ok(processed_entry)
 
-__all__ = ["FlextLdifServersApache"]
+
+__all__: list[str] = ["FlextLdifServersApache"]

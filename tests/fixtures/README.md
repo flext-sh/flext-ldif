@@ -21,7 +21,7 @@
 
 <!-- TOC END -->
 
-Comprehensive fixture collection for LDAP server testing and quirks validation.
+Comprehensive fixture collection for LDAP server testing and servers validation.
 
 ## Overview
 
@@ -60,12 +60,12 @@ Each server has 4 types of fixtures:
 
 ### Loading Fixtures
 
-```python
-from tests.fixtures.loader import FlextLdifFixtures
+```python notest
+from tests import c, u
 
-loader = FlextLdifFixtures.Loader()
-schema = loader.load(
-    FlextLdifFixtures.ServerType.OID, FlextLdifFixtures.FixtureType.SCHEMA
+schema = u.Tests.load(
+  c.Tests.OID,
+  c.Tests.SCHEMA,
 )
 ```
 
@@ -73,13 +73,13 @@ schema = loader.load(
 
 ```bash
 # Run all fixture-based tests
-pytest -m fixtures tests/unit/quirks/
+pytest -m fixtures tests/unit/servers/
 
 # Run operational tests
-pytest -m operational tests/unit/quirks/
+pytest -m operational tests/unit/servers/
 
 # Run with specific markers
-pytest -m "operational and real_data" tests/unit/quirks/
+pytest -m "operational and real_data" tests/unit/servers/
 ```
 
 ### Pytest Markers
@@ -91,14 +91,14 @@ Available markers:
 - `real_data` - Tests using real fixture data
 - `conversion` - Conversion operation tests
 - `roundtrip` - Bidirectional conversion tests
-- `quirks` - LDAP server quirks tests
+- `servers` - LDAP server servers tests
 
 ## Helper Utilities
 
 ### Extract Schema Elements
 
-```python
-from tests.fixtures import helpers
+```text
+from tests import helpers
 
 attributes = helpers.extract_attributes(schema_content)
 objectclasses = helpers.extract_objectclasses(schema_content)
@@ -108,8 +108,8 @@ name = helpers.extract_name(attr_definition)
 
 ### Validate Fixtures
 
-```python
-from tests.fixtures.validator import FixtureValidator
+```text
+from tests import FixtureValidator
 
 validator = FixtureValidator()
 result = validator.validate_schema_fixture(content)
@@ -120,7 +120,7 @@ if result.is_success:
 
 ## Example Test Pattern
 
-```python
+```text
 @pytest.mark.parametrize("attr_index", range(10))
 def test_parse_real_attributes(oid_schema_attributes, attr_index):
     """Test parsing multiple real attributes from fixtures."""
@@ -128,7 +128,7 @@ def test_parse_real_attributes(oid_schema_attributes, attr_index):
         pytest.skip("Not enough attributes")
 
     attr = oid_schema_attributes[attr_index]
-    result = quirk.parse_attribute(attr)
+    result = server.parse_attribute(attr)
     assert result.is_success
 ```
 
@@ -153,8 +153,8 @@ Each includes realistic entry structures and ACL configurations.
 
 Run fixture coverage report:
 
-```python
-from tests.fixtures.validator import FixtureCoverageReport
+```text
+from tests import FixtureCoverageReport
 
 coverage = FixtureCoverageReport.generate_summary(all_fixtures)
 FixtureCoverageReport.print_coverage_report(coverage)

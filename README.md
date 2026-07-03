@@ -1,27 +1,45 @@
-# FLEXT LDIF
+<!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
 
-Biblioteca para parsing, validacao e transformacao de arquivos LDIF em fluxos de migracao de diretorio.
+# flext-ldif
 
-Descricao oficial atual: "FLEXT LDIF - Enterprise LDIF Processing Library".
+**Version**: `0.12.0-dev` | **Python**: 3.13+ | **Project class**: `domain`
 
-## O que este projeto entrega
+## Purpose
 
-- Processa arquivos LDIF para uso em pipelines.
-- Valida consistencia de formato e conteudo.
-- Converte registros para etapas de migracao e carga.
+FLEXT LDIF - Enterprise LDIF Processing Library
 
-## Contexto operacional
+## Module Map
 
-- Entrada: arquivos LDIF de origem.
-- Saida: estrutura de dados validada para pipeline.
-- Dependencias: componentes consumidores como migracao, taps e dbt.
+::: flext_ldif
+    options:
+      members: false
+      show_root_heading: false
+      show_root_toc_entry: false
+      show_source: false
 
-## Estado atual e risco de adocao
+## Collection Rules
 
-- Qualidade: **Alpha**
-- Uso recomendado: **Nao produtivo**
-- Nivel de estabilidade: em maturacao funcional e tecnica, sujeito a mudancas de contrato sem garantia de retrocompatibilidade.
+Read [`/flext/AGENTS.md`](../AGENTS.md) §9 — Agent Execution Pre-requisites — for the canonical pre-change checklist (parent MRO chain, Scope bootstrap, skill loading, zero-debt baseline, slot registry verification).
 
-## Diretriz para uso nesta fase
+## Operation Flow
 
-Aplicar este projeto somente em desenvolvimento, prova de conceito e homologacao controlada, com expectativa de ajustes frequentes ate maturidade de release.
+- Public surface: see [`docs/index.md`](docs/index.md) and [`docs/api-reference/README.md`](docs/api-reference/README.md).
+- Generated module overview: [`docs/api-reference/generated/overview.md`](docs/api-reference/generated/overview.md).
+- Settings env prefix: see project `pyproject.toml` `[tool.flext]` and `FlextSettings` ConfigDict.
+
+## Integration Points
+
+- Parent MRO chain: read this project's `pyproject.toml` `dependencies` array filtered by `flext-*`. The MRO cascade is encoded in the inheritance lists of the facade classes listed under Module Map above.
+- Public extensions exposed by this project: _none_.
+- Library abstraction boundaries: see AGENTS.md §2.7.
+
+## Quality Gates
+
+Canonical `make` verbs (`check`, `test`, `val`, `docs`) — see `AGENTS.md` §5 (Make Contract) and the [`flext-quality-gates`](../.agents/skills/flext-quality-gates/SKILL.md) skill for selectors and thresholds.
+
+## Governance Pointer
+
+- Engineering law: [`/flext/AGENTS.md`](../AGENTS.md)
+- Skills index: [`/flext/.agents/skills/`](../.agents/skills/)
+- Onboarding: [`/flext/docs/guides/onboarding.md`](../docs/guides/onboarding.md)
+- Full project portal: [`docs/index.md`](docs/index.md).

@@ -1,21 +1,18 @@
-"""RFC 4512 Compliant Server Quirks - Base LDAP Schema/ACL/Entry Implementation."""
+"""RFC 4512 Compliant Server Servers - Base LDAP Schema/ACL/Entry Implementation."""
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from types import MappingProxyType
 from typing import ClassVar
 
-from flext_core import FlextLogger
-
-from flext_ldif.servers._base import FlextLdifServersBaseConstants
-
-logger = FlextLogger(__name__)
+from flext_ldif import c, t
+from flext_ldif.servers._base.constants import FlextLdifServersBaseConstants
 
 
 class FlextLdifServersRfcConstants(FlextLdifServersBaseConstants):
     """RFC baseline constants (RFC 4512 compliant)."""
 
-    SERVER_TYPE: ClassVar[str] = "rfc"
+    SERVER_TYPE: ClassVar[str] = c.Ldif.ServerTypes.RFC.value
     PRIORITY: ClassVar[int] = 100
     DEFAULT_PORT: ClassVar[int] = 389
     DEFAULT_SSL_PORT: ClassVar[int] = 636
@@ -26,9 +23,6 @@ class FlextLdifServersRfcConstants(FlextLdifServersBaseConstants):
     CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["rfc"])
     ACL_FORMAT: ClassVar[str] = "rfc_generic"
     ACL_ATTRIBUTE_NAME: ClassVar[str] = "aci"
-    ACL_METADATA_KEY_FILTER: ClassVar[str] = "filter"
-    ACL_METADATA_KEY_CONSTRAINT: ClassVar[str] = "added_object_constraint"
-    ACL_METADATA_KEY_ORIGINAL_FORMAT: ClassVar[str] = "original_format"
     PERMISSION_READ: ClassVar[str] = "read"
     PERMISSION_WRITE: ClassVar[str] = "write"
     PERMISSION_ADD: ClassVar[str] = "add"
@@ -46,12 +40,12 @@ class FlextLdifServersRfcConstants(FlextLdifServersBaseConstants):
     SCHEMA_DN: ClassVar[str] = "cn=schema"
     SCHEMA_SUP_SEPARATOR: ClassVar[str] = "$"
     ATTRIBUTE_FIELDS: ClassVar[frozenset[str]] = frozenset([])
-    OBJECTCLASS_REQUIREMENTS: ClassVar[Mapping[str, bool]] = {
+    OBJECTCLASS_REQUIREMENTS: ClassVar[t.BoolMapping] = MappingProxyType({
         "requires_sup_for_auxiliary": True,
         "allows_multiple_sup": False,
         "requires_explicit_structural": False,
-    }
-    ATTRIBUTE_ALIASES: ClassVar[Mapping[str, list[str]]] = {}
+    })
+    ATTRIBUTE_ALIASES: ClassVar[t.StrSequenceMapping] = MappingProxyType({})
     OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
         "createTimestamp",
         "modifyTimestamp",
@@ -64,13 +58,13 @@ class FlextLdifServersRfcConstants(FlextLdifServersBaseConstants):
         "createTimestamp",
         "modifyTimestamp",
     ])
-    CATEGORIZATION_PRIORITY: ClassVar[list[str]] = [
+    CATEGORIZATION_PRIORITY: ClassVar[t.StrSequence] = (
         "users",
         "hierarchy",
         "groups",
         "acl",
-    ]
-    CATEGORY_OBJECTCLASSES: ClassVar[Mapping[str, frozenset[str]]] = {
+    )
+    CATEGORY_OBJECTCLASSES: ClassVar[t.FrozensetMapping] = MappingProxyType({
         "users": frozenset([
             "person",
             "inetOrgPerson",
@@ -84,43 +78,25 @@ class FlextLdifServersRfcConstants(FlextLdifServersBaseConstants):
             "country",
         ]),
         "groups": frozenset(["groupOfNames", "groupOfUniqueNames", "posixGroup"]),
-    }
+    })
     CATEGORIZATION_ACL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset(["aci", "acl"])
     DETECTION_OID_PATTERN: ClassVar[str] = ".*"
     DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([])
     DETECTION_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset([])
     DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset([])
-    ENCODING_UTF8: ClassVar[str] = "utf-8"
+    ENCODING_UTF8: ClassVar[str] = c.Ldif.DEFAULT_ENCODING
     ENCODING_UTF16LE: ClassVar[str] = "utf-16-le"
-    ENCODING_ASCII: ClassVar[str] = "ascii"
-    ENCODING_LATIN1: ClassVar[str] = "latin-1"
-    ENCODING_ERROR_REPLACE: ClassVar[str] = "replace"
     ENCODING_ERROR_IGNORE: ClassVar[str] = "ignore"
-    ENCODING_ERROR_STRICT: ClassVar[str] = "strict"
     LDIF_DN_PREFIX: ClassVar[str] = "dn: "
     LDIF_ATTR_SEPARATOR: ClassVar[str] = ": "
     LDIF_NEWLINE: ClassVar[str] = "\n"
-    LDIF_ENTRY_SEPARATOR: ClassVar[str] = "\n\n"
-    LDIF_COMMENT_PREFIX: ClassVar[str] = "# "
-    LDIF_VERSION_PREFIX: ClassVar[str] = "version: "
-    LDIF_CHANGETYPE_PREFIX: ClassVar[str] = "changetype: "
-    LDIF_BASE64_PREFIX: ClassVar[str] = ": "
-    LDIF_LINE_LENGTH_LIMIT: ClassVar[int] = 76
-    LDIF_LINE_LENGTH_WITH_NEWLINE: ClassVar[int] = 77
-    CONTROL_CHAR_THRESHOLD: ClassVar[int] = 32
-    ASCII_MAX_CHAR: ClassVar[int] = 127
-    ALLOWED_CONTROL_CHARS: ClassVar[str] = "\t\n\r"
-    MATCHING_RULE_TO_RFC: ClassVar[Mapping[str, str]] = {}
-    SYNTAX_OID_TO_RFC: ClassVar[Mapping[str, str]] = {}
-    BOOLEAN_CONVERSION: ClassVar[Mapping[str, str]] = {}
-    BOOLEAN_DENORMALIZATION: ClassVar[Mapping[str, str]] = {}
-    ATTRIBUTE_CASE_MAP: ClassVar[Mapping[str, str]] = {}
-    ATTRIBUTE_NAME_TO_RFC: ClassVar[Mapping[str, str]] = {}
-    ATTRIBUTE_NAME_FROM_RFC: ClassVar[Mapping[str, str]] = {}
+    MATCHING_RULE_TO_RFC: ClassVar[t.StrMapping] = MappingProxyType({})
+    SYNTAX_OID_TO_RFC: ClassVar[t.StrMapping] = MappingProxyType({})
+    ATTRIBUTE_CASE_MAP: ClassVar[t.StrMapping] = MappingProxyType({})
     BOOLEAN_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset()
-    ACL_PREFIX_DN: ClassVar[str] = "dn:"
-    ACL_PREFIX_VERSION: ClassVar[str] = "version 3.0"
-    ACL_PREFIX_LDAP_URL: ClassVar[str] = "ldap:///"
     ACL_DEFAULT_VERSION: ClassVar[str] = "version 3.0"
     ACL_SELF_SUBJECT: ClassVar[str] = "ldap:///self"
     ACL_ANONYMOUS_SUBJECT: ClassVar[str] = "ldap:///anyone"
+
+
+c = FlextLdifServersRfcConstants

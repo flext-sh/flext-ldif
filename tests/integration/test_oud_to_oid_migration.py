@@ -1,10 +1,10 @@
 """Integration tests for OUD to OID migration.
 
 Tests complete migration workflow from Oracle Unified Directory (OUD) to
-Oracle Internet Directory (OID) using quirks system:
-- Read OUD LDIF fixtures with OUD quirks
+Oracle Internet Directory (OID) using servers system:
+- Read OUD LDIF fixtures with OUD servers
 - Convert to RFC intermediate format
-- Convert from RFC to OID format with OID quirks
+- Convert from RFC to OID format with OID servers
 - Write OID LDIF
 - Validate migration integrity and data preservation
 
@@ -19,84 +19,62 @@ import pytest
 
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
-from tests.conftest import FlextLdifFixtures
+from tests.constants import c
+from tests.utilities import TestsFlextLdifUtilities as u
 
 
-class TestOudToOidSchemaMigration:
+class TestsFlextLdifOudToOidMigration:
     """Test OUD to OID schema migration."""
 
     @pytest.fixture
     def oud(self) -> FlextLdifServersOud:
-        """Create OUD schema quirk instance."""
+        """Create OUD schema server instance."""
         return FlextLdifServersOud()
 
     @pytest.fixture
     def oid(self) -> FlextLdifServersOid:
-        """Create OID schema quirk instance."""
+        """Create OID schema server instance."""
         return FlextLdifServersOid()
 
     @pytest.fixture
     def oud_schema_fixture(self) -> str:
         """Load OUD schema fixture data."""
-        loader = FlextLdifFixtures.OUD()
-        return loader.schema()
+        fixture_content: str = u.Tests.load(c.Tests.OUD, c.Tests.SCHEMA)
+        return fixture_content
 
-
-class TestOudToOidAclMigration:
     """Test OUD to OID ACL migration."""
 
     @pytest.fixture
     def oud_acl(self) -> FlextLdifServersOud.Acl:
-        """Create OUD ACL quirk instance."""
+        """Create OUD ACL server instance."""
         return FlextLdifServersOud.Acl()
 
     @pytest.fixture
     def oid_acl(self) -> FlextLdifServersOid.Acl:
-        """Create OID ACL quirk instance."""
+        """Create OID ACL server instance."""
         return FlextLdifServersOid.Acl()
 
-
-class TestOudToOidEntryMigration:
     """Test OUD to OID entry migration."""
 
     @pytest.fixture
     def oud_entry(self) -> FlextLdifServersOud.Entry:
-        """Create OUD entry quirk instance."""
+        """Create OUD entry server instance."""
         return FlextLdifServersOud.Entry()
 
-
-class TestOudToOidFullMigration:
     """Test complete OUD to OID migration workflow."""
 
     @pytest.fixture
-    def oud_fixtures(self) -> FlextLdifFixtures.OUD:
-        """Create OUD fixture loader."""
-        return FlextLdifFixtures.OUD()
-
-    @pytest.fixture
-    def oud(self) -> FlextLdifServersOud:
-        """Create OUD schema quirk."""
-        return FlextLdifServersOud()
-
-    @pytest.fixture
-    def oid(self) -> FlextLdifServersOid:
-        """Create OID schema quirk."""
-        return FlextLdifServersOid()
-
-    @pytest.fixture
-    def oud_entry(self) -> FlextLdifServersOud.Entry:
-        """Create OUD entry quirk."""
-        return FlextLdifServersOud.Entry()
+    def oud_fixtures(self) -> str:
+        """Create OUD entries fixture data."""
+        fixture_content: str = u.Tests.load(c.Tests.OUD, c.Tests.ENTRIES)
+        return fixture_content
 
     @pytest.fixture
     def oid_entry(self) -> FlextLdifServersOid.Entry:
-        """Create OID entry quirk."""
+        """Create OID entry server."""
         return FlextLdifServersOid.Entry()
 
 
-__all__ = [
-    "TestOudToOidAclMigration",
-    "TestOudToOidEntryMigration",
-    "TestOudToOidFullMigration",
-    "TestOudToOidSchemaMigration",
+__all__: list[str] = [
+    "TestsFlextLdifOudToOidMigration",
 ]

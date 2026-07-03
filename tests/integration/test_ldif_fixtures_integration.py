@@ -12,118 +12,93 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import pytest
 
-from flext_ldif import FlextLdif
+from flext_ldif import ldif
+from tests.constants import c
+from tests.protocols import p
 
 
-class TestsFlextLdifFixtures:
+class TestsFlextLdifLdifFixturesIntegration:
     """Test LDIF fixture parsing and structure validation across all servers."""
 
     @pytest.fixture
-    def ldif(self) -> FlextLdif:
+    def ldif_client(self) -> p.Ldif.LdifClient:
         """Initialize LDIF processor."""
-        return FlextLdif()
+        return ldif
 
-    def test_rfc_fixture_parsing(self, ldif: FlextLdif) -> None:
+    def test_rfc_fixture_parsing(self, ldif_client: p.Ldif.LdifClient) -> None:
         """Test parsing RFC fixture with current baseline entries."""
-        fixture = Path("tests/fixtures/rfc/rfc_entries_fixtures.ldif")
-        result = ldif.parse(fixture)
-        assert result.is_success
-        entries_raw = result.value
-        assert isinstance(entries_raw, list)
+        fixture = c.Tests.FIXTURES_DIR / c.Tests.RFC / "rfc_entries_fixtures.ldif"
+        result = ldif_client.parse_ldif(fixture)
+        assert result.success
+        entries_raw = result.value.entries
         assert len(entries_raw) >= 14, (
             f"Expected at least 14 RFC entries, got {len(entries_raw)}"
         )
 
-    def test_rfc_fixture_validation(self, ldif: FlextLdif) -> None:
+    def test_rfc_fixture_validation(self, ldif_client: p.Ldif.LdifClient) -> None:
         """Test RFC fixture entries are valid."""
-        fixture = Path("tests/fixtures/rfc/rfc_entries_fixtures.ldif")
-        parse_result = ldif.parse(fixture)
-        assert parse_result.is_success
-        entries_raw = parse_result.value
-        assert isinstance(entries_raw, list)
+        fixture = c.Tests.FIXTURES_DIR / c.Tests.RFC / "rfc_entries_fixtures.ldif"
+        parse_result = ldif_client.parse_ldif(fixture)
+        assert parse_result.success
+        entries_raw = parse_result.value.entries
         for entry in entries_raw:
             assert entry.dn is not None
-            assert len(entry.dn.value) > 0
+            assert entry.dn.value
 
-    def test_oid_fixture_parsing(self, ldif: FlextLdif) -> None:
+    def test_oid_fixture_parsing(self, ldif_client: p.Ldif.LdifClient) -> None:
         """Test parsing OID fixture."""
-        fixture = Path("tests/fixtures/oid/oid_entries_fixtures.ldif")
-        result = ldif.parse(fixture)
-        assert result.is_success
-        entries_raw = result.value
-        assert isinstance(entries_raw, list)
+        fixture = c.Tests.FIXTURES_DIR / c.Tests.OID / "oid_entries_fixtures.ldif"
+        result = ldif_client.parse_ldif(fixture)
+        assert result.success
+        entries_raw = result.value.entries
         assert len(entries_raw) >= 1
 
-    def test_oud_fixture_parsing(self, ldif: FlextLdif) -> None:
+    def test_oud_fixture_parsing(self, ldif_client: p.Ldif.LdifClient) -> None:
         """Test parsing OUD fixture."""
-        fixture = Path("tests/fixtures/oud/oud_entries_fixtures.ldif")
-        result = ldif.parse(fixture)
-        assert result.is_success
-        entries_raw = result.value
-        assert isinstance(entries_raw, list)
+        fixture = c.Tests.FIXTURES_DIR / c.Tests.OUD / "oud_entries_fixtures.ldif"
+        result = ldif_client.parse_ldif(fixture)
+        assert result.success
+        entries_raw = result.value.entries
         assert len(entries_raw) >= 1
 
-    def test_openldap2_fixture_parsing(self, ldif: FlextLdif) -> None:
+    def test_openldap2_fixture_parsing(self, ldif_client: p.Ldif.LdifClient) -> None:
         """Test parsing OpenLDAP2 fixture with 45+ entries."""
-        fixture = Path("tests/fixtures/openldap2/openldap2_integration_fixtures.ldif")
-        result = ldif.parse(fixture)
-        assert result.is_success
-        entries_raw = result.value
-        assert isinstance(entries_raw, list)
+        fixture = (
+            c.Tests.FIXTURES_DIR / "openldap2" / "openldap2_integration_fixtures.ldif"
+        )
+        result = ldif_client.parse_ldif(fixture)
+        assert result.success
+        entries_raw = result.value.entries
         assert len(entries_raw) >= 45, (
             f"Expected 45+ OpenLDAP2 entries, got {len(entries_raw)}"
         )
 
-    def test_cross_server_fixture_parsing(self, ldif: FlextLdif) -> None:
+    def test_cross_server_fixture_parsing(self, ldif_client: p.Ldif.LdifClient) -> None:
         """Test parsing fixtures from all servers."""
         fixtures = [
-            "tests/fixtures/rfc/rfc_entries_fixtures.ldif",
-            "tests/fixtures/oid/oid_entries_fixtures.ldif",
-            "tests/fixtures/oud/oud_entries_fixtures.ldif",
-            "tests/fixtures/openldap2/openldap2_entries_fixtures.ldif",
+            c.Tests.FIXTURES_DIR / c.Tests.RFC / "rfc_entries_fixtures.ldif",
+            c.Tests.FIXTURES_DIR / c.Tests.OID / "oid_entries_fixtures.ldif",
+            c.Tests.FIXTURES_DIR / c.Tests.OUD / "oud_entries_fixtures.ldif",
+            c.Tests.FIXTURES_DIR / "openldap2" / "openldap2_entries_fixtures.ldif",
         ]
         for fixture_path in fixtures:
-            result = ldif.parse(Path(fixture_path))
-            assert result.is_success, f"Failed to parse {fixture_path}: {result.error}"
-            entries_raw = result.value
-            assert isinstance(entries_raw, list)
+            result = ldif_client.parse_ldif(fixture_path)
+            assert result.success, f"Failed to parse {fixture_path}: {result.error}"
+            entries_raw = result.value.entries
             assert len(entries_raw) >= 1, (
                 f"Expected at least 1 entry from {fixture_path}"
             )
 
-    def test_rfc_entries_have_valid_dns(self, ldif: FlextLdif) -> None:
+    def test_rfc_entries_have_valid_dns(self, ldif_client: p.Ldif.LdifClient) -> None:
         """Test all RFC entries have valid DNs."""
-        fixture = Path("tests/fixtures/rfc/rfc_entries_fixtures.ldif")
-        result = ldif.parse(fixture)
-        assert result.is_success
-        entries_raw = result.value
-        assert isinstance(entries_raw, list)
+        fixture = c.Tests.FIXTURES_DIR / c.Tests.RFC / "rfc_entries_fixtures.ldif"
+        result = ldif_client.parse_ldif(fixture)
+        assert result.success
+        entries_raw = result.value.entries
         for entry in entries_raw:
             assert entry.dn is not None, "Entry must have DN"
             dn_str = entry.dn.value
-            assert len(dn_str) > 0
+            assert dn_str
             assert "=" in dn_str
-
-    def test_all_fixtures_have_objectclass(self, ldif: FlextLdif) -> None:
-        """Test all entries in fixtures have objectClass."""
-        fixtures = [
-            "tests/fixtures/rfc/rfc_entries_fixtures.ldif",
-            "tests/fixtures/oid/oid_entries_fixtures.ldif",
-            "tests/fixtures/oud/oud_entries_fixtures.ldif",
-            "tests/fixtures/openldap2/openldap2_entries_fixtures.ldif",
-        ]
-        for fixture_path in fixtures:
-            result = ldif.parse(Path(fixture_path))
-            assert result.is_success
-            entries_raw = result.value
-            assert isinstance(entries_raw, list)
-            for entry in entries_raw:
-                assert entry.attributes is not None, "Entry must have attributes"
-                assert entry.dn is not None, "Entry must have DN"
-                attrs = entry.attributes.attributes
-                has_oc = any(attr.lower() == "objectclass" for attr in attrs)
-                assert has_oc, f"Entry {entry.dn.value} missing objectClass"

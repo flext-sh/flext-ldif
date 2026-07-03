@@ -40,7 +40,7 @@ src/flext_ldif/
 ├── api.py                      # Application Layer - Main API service
 ├── models.py                   # Domain Layer - Entities and value objects
 ├── core.py                     # Infrastructure Layer - Core LDIF processing
-├── config.py                   # Infrastructure Layer - Configuration management
+├── settings.py                   # Infrastructure Layer - Configuration management
 ├── services.py                 # Infrastructure Layer - Domain services
 ├── cli.py                      # Interface Layer - Command-line interface
 ├── exceptions.py               # Domain Layer - Domain-specific exceptions
@@ -60,7 +60,7 @@ src/flext_ldif/
 
 - **Domain Layer**: Pure business logic in `models.py` and `exceptions.py`
 - **Application Layer**: Use case orchestration in `api.py`
-- **Infrastructure Layer**: Technical concerns in `core.py`, `config.py`, `services.py`
+- **Infrastructure Layer**: Technical concerns in `core.py`, `settings.py`, `services.py`
 - **Interface Layer**: User interfaces in `cli.py`
 
 ### Domain-Driven Design
@@ -87,7 +87,7 @@ src/flext_ldif/
 ### Infrastructure Implementation
 
 - **`core.py`**: Low-level LDIF parsing and writing
-- **`config.py`**: Configuration management with environment variables
+- **`settings.py`**: Configuration management with environment variables
 - **`services.py`**: Domain service implementations and dependency injection
 - **`modernized_ldif.py`**: Extended LDIF format support
 
@@ -126,7 +126,7 @@ src/flext_ldif/
 
 ### Direct Module Usage
 
-```python
+```python notest
 # Domain model usage
 from flext_ldif import FlextLdifModels
 
@@ -137,12 +137,12 @@ from flext_ldif import FlextLdif
 from flext_ldif import FlextLdifSettings
 
 # Core processing (advanced usage)
-from flext_ldif import TLdif
+from flext_ldif import ldif
 ```
 
 ### Recommended Public API
 
-```python
+```python notest
 # Simplified public interface
 from flext_ldif import (
     FlextLdif,  # Main application service
@@ -165,7 +165,7 @@ src/flext_ldif/
 │   ├── api.py
 │   └── handlers.py
 ├── infrastructure/             # External concerns
-│   ├── config.py
+│   ├── settings.py
 │   ├── persistence.py
 │   └── adapters.py
 └── interfaces/                 # User interfaces

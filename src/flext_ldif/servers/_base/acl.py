@@ -1,70 +1,71 @@
-"""Base Quirk Classes for LDIF/LDAP Server Extensions."""
+"""Base Server Classes for LDIF/LDAP Server Extensions."""
 
 from __future__ import annotations
 
-import builtins
-import re
-from collections.abc import Mapping
 from typing import Annotated, ClassVar, Self, override
 
-from flext_core import FlextLogger, FlextService, r
-from pydantic import Field, ValidationError
+from flext_ldif import (
+    c,
+    m,
+    p,
+    r,
+    s,
+    t,
+    u,
+)
+from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
 
-from flext_ldif import m, p
-from flext_ldif._models.domain import FlextLdifModelsDomains
-from flext_ldif._models.metadata import FlextLdifModelsMetadata
-from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
-from flext_ldif.servers._base.constants import QuirkMethodsMixin
-from flext_ldif.typings import t
 
-logger = FlextLogger(__name__)
+class FlextLdifServersBaseSchemaAcl(
+    s[t.Ldif.AclPayload],
+    FlextLdifServerMethodsMixin,
+):
+    """Base class for ACL servers - satisfies Acl (structural typing)."""
 
-
-class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl | str]):
-    """Base class for ACL quirks - satisfies Acl (structural typing)."""
+    _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 
     acl_attribute_name: ClassVar[str] = "acl"
-    server_type: str = "rfc"
-    "Server type identifier (e.g., 'oid', 'oud', 'openldap', 'rfc')."
-    priority: int = 0
-    "Quirk priority (lower number = higher priority)."
-    parent_quirk: Annotated[
+    server_type: Annotated[
+        str,
+        u.Field(
+            description="Server type identifier (e.g., 'oid', 'oud', 'openldap', 'rfc')",
+        ),
+    ] = "rfc"
+    priority: Annotated[
+        int,
+        u.Field(
+            description="Server priority (lower number = higher priority)",
+        ),
+    ] = 0
+    parent_server: Annotated[
         Self | None,
-        Field(
-            default=None,
+        u.Field(
             exclude=True,
             repr=False,
-            description="Reference to parent quirk instance for server-level access",
+            description="Reference to parent server instance for server-level access",
         ),
-    ]
+    ] = None
 
     def __init__(
         self,
-        acl_service: p.Ldif.AclQuirk | None = None,
-        _parent_quirk: Self | None = None,
-        **_kwargs: t.Scalar,
+        acl_service: p.Ldif.AclServer | None = None,
+        _parent_server: Self | None = None,
     ) -> None:
-        """Initialize ACL quirk service with optional DI service injection."""
+        """Initialize ACL server service with optional DI service injection."""
         super().__init__()
         self._acl_service = acl_service
-        if _parent_quirk is not None:
-            object.__setattr__(self, "_parent_quirk", _parent_quirk)
+        if _parent_server is not None:
+            object.__setattr__(self, "_parent_server", _parent_server)
 
-    RFC_ACL_ATTRIBUTES: ClassVar[list[str]] = [
-        "aci",
-        "acl",
-        "olcAccess",
-        "aclRights",
-        "aclEntry",
-    ]
+    RFC_ACL_ATTRIBUTES: ClassVar[t.StrSequence] = c.Ldif.RFC_ACL_ATTRIBUTES
 
-    def get_acl_attributes(self) -> list[str]:
+    def resolve_acl_attributes(self) -> t.MutableSequenceOf[str]:
         """Get ACL attributes for this server."""
-        return self.RFC_ACL_ATTRIBUTES
+        return list(self.RFC_ACL_ATTRIBUTES)
 
-    def is_acl_attribute(self, attribute_name: str) -> bool:
+    def matches_acl_attribute(self, attribute_name: str) -> bool:
         """Check if attribute is ACL attribute (case-insensitive)."""
-        all_attrs_lower = {a.lower() for a in self.get_acl_attributes()}
+        all_attrs_lower = {a.lower() for a in self.resolve_acl_attributes()}
         return attribute_name.lower() in all_attrs_lower
 
     auto_execute: ClassVar[bool] = False
@@ -75,43 +76,37 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
         return True
 
     def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
-        """Check if this quirk can handle the ACL definition."""
+        """Check if this server can handle the ACL definition."""
         _ = acl_line
         return False
 
     def can_handle_attribute(self, attribute: m.Ldif.SchemaAttribute) -> bool:
-        """Check if this ACL quirk should be aware of a specific attribute definition."""
+        """Check if this ACL server should be aware of a specific attribute definition."""
         _ = attribute
         return False
 
     def can_handle_objectclass(self, objectclass: m.Ldif.SchemaObjectClass) -> bool:
-        """Check if this ACL quirk should be aware of a specific objectClass definition."""
+        """Check if this ACL server should be aware of a specific objectClass definition."""
         _ = objectclass
         return False
-
-    def convert_rfc_acl_to_aci(
-        self, rfc_acl_attrs: Mapping[str, list[str]], target_server: str
-    ) -> r[Mapping[str, list[str]]]:
-        """Convert RFC ACL format to server-specific ACI format."""
-        _ = target_server
-        return r[dict[str, list[str]]].ok(rfc_acl_attrs)
 
     def create_metadata(
         self,
         original_format: str,
-        extensions: Mapping[str, builtins.object] | None = None,
-    ) -> m.Ldif.QuirkMetadata:
-        """Create ACL quirk metadata."""
-        all_extensions: dict[str, builtins.object] = {
-            "original_format": original_format
+        extensions: t.Ldif.MetadataInputMapping | None = None,
+    ) -> m.Ldif.ServerMetadata:
+        """Create ACL server metadata."""
+        all_extensions: t.Ldif.MutableMetadataInputMapping = {
+            "original_format": original_format,
         }
         if extensions:
             all_extensions.update(extensions)
-        extensions_model = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
-            all_extensions
+        extensions_model = m.Ldif.DynamicMetadata.from_dict(
+            all_extensions,
         )
-        return m.Ldif.QuirkMetadata(
-            quirk_type=self._get_server_type(), extensions=extensions_model
+        return m.Ldif.ServerMetadata(
+            server_type=self._get_server_type(),
+            extensions=extensions_model,
         )
 
     @override
@@ -120,14 +115,17 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
         *,
         data: str | m.Ldif.Acl | None = None,
         operation: str | None = None,
-        **kwargs: t.Scalar,
-    ) -> r[m.Ldif.Acl | str]:
+        **kwargs: t.Ldif.Scalar,
+    ) -> p.Result[t.Ldif.AclPayload]:
         """Execute ACL operation with auto-detection: str→parse, Acl→write."""
-        kwargs_dict = dict(kwargs)
+        kwargs_dict: t.MutableJsonMapping = {
+            key: t.json_value_adapter().validate_python(u.to_jsonable_python(value))
+            for key, value in kwargs.items()
+        }
         data = self._resolve_data(data, kwargs_dict)
         operation = self._resolve_operation(operation, kwargs_dict)
         if data is None:
-            return r[m.Ldif.Acl | str].ok(m.Ldif.Acl())
+            return r[t.Ldif.AclPayload].ok(m.Ldif.Acl())
         detected_op = self._detect_operation(operation, data)
         return self._execute_detected_operation(detected_op=detected_op, data=data)
 
@@ -137,40 +135,50 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
         acl_metadata: m.Ldif.AclWriteMetadata,
         *,
         use_original_format_as_name: bool = False,
-    ) -> r[str]:
+    ) -> p.Result[str]:
         """Format ACL value for writing, optionally using original format as name."""
-        if not use_original_format_as_name:
-            return r[str].ok(acl_value)
-        if not acl_metadata.has_original_format():
-            return r[str].ok(acl_value)
-        original_format = acl_metadata.original_format
-        if not original_format:
-            return r[str].ok(acl_value)
-        sanitize_result_raw: tuple[str, bool] = FlextLdifUtilitiesACL.sanitize_acl_name(
-            original_format
-        )
-        sanitized_name, _was_sanitized = sanitize_result_raw
-        if not sanitized_name:
-            return r[str].ok(acl_value)
-        pattern_result = self._hook_format_acl_name_pattern()
-        if pattern_result.is_failure:
-            return r[str].ok(acl_value)
-        pattern, replacement_template = pattern_result.value
-        formatted_value = pattern.sub(
-            replacement_template.format(sanitized_name), acl_value
-        )
-        return r[str].ok(formatted_value)
+        result: p.Result[str]
+        if not use_original_format_as_name or not acl_metadata.has_original_format():
+            result = r[str].ok(acl_value)
+        else:
+            original_format = acl_metadata.original_format
+            if not original_format:
+                result = r[str].ok(acl_value)
+            else:
+                sanitize_result_raw: tuple[str, bool] = u.Ldif.sanitize_acl_name(
+                    original_format,
+                )
+                sanitized_name, _was_sanitized = sanitize_result_raw
+                if not sanitized_name:
+                    result = r[str].ok(acl_value)
+                else:
+                    pattern_result = self._hook_format_acl_name_pattern()
+                    if pattern_result.failure:
+                        result = r[str].ok(acl_value)
+                    else:
+                        pattern, replacement_template = pattern_result.value
+                        formatted_value = pattern.sub(
+                            replacement_template.format(sanitized_name),
+                            acl_value,
+                        )
+                        result = r[str].ok(formatted_value)
+        return result
 
-    def parse(self, acl_line: str) -> r[m.Ldif.Acl]:
+    def parse_server(self, value: str) -> p.Result[m.Ldif.Acl]:
         """Parse ACL line to Acl model."""
-        return self._parse_acl(acl_line)
+        return self._parse_acl(value)
 
-    def write(self, acl_data: FlextLdifModelsDomains.Acl) -> r[str]:
+    def parse_input(self, acl_text: str) -> p.Result[m.Ldif.Acl]:
+        """Compatibility parser entrypoint for direct ACL server consumers."""
+        return self.parse_server(acl_text)
+
+    def write(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
         """Write Acl model to string format."""
         return self._write_acl(acl_data)
 
     def _coerce_acl_data(
-        self, value: str | m.Ldif.Acl | object
+        self,
+        value: str | t.JsonValue | m.Ldif.Acl | None,
     ) -> str | m.Ldif.Acl | None:
         """Coerce generic value to ACL payload union."""
         if value is None:
@@ -178,19 +186,18 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
         if isinstance(value, str):
             return value
         try:
-            return m.Ldif.Acl.model_validate(value)
-        except ValidationError as exc:
-            logger.warning(
+            acl: m.Ldif.Acl = m.Ldif.Acl.model_validate(value)
+            return acl
+        except c.ValidationError as exc:
+            FlextLdifServersBaseSchemaAcl._module_logger.warning(
                 "Failed to coerce value to ACL model",
                 error=str(exc),
                 error_type=type(exc).__name__,
             )
             return None
 
-    def _coerce_operation(self, value: builtins.object) -> str | None:
+    def _coerce_operation(self, value: str) -> str | None:
         """Coerce operation token to supported ACL operation."""
-        if not isinstance(value, str):
-            return None
         if value in {"parse", "write"}:
             return value
         return None
@@ -201,47 +208,52 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
             return "parse" if operation == "parse" else "write"
         return "parse" if isinstance(data, str) else "write"
 
-    def _execute_acl_parse(self, data: str) -> r[m.Ldif.Acl | str]:
+    def _execute_acl_parse(self, data: str) -> p.Result[t.Ldif.AclPayload]:
         """Execute ACL parse operation."""
-        parse_result = self.parse(data)
-        if parse_result.is_success:
-            return r[m.Ldif.Acl | str].ok(parse_result.value)
-        return r[m.Ldif.Acl | str].fail(parse_result.error or "Parse failed")
+        parse_result = self.parse_server(data)
+        if parse_result.success:
+            return r[t.Ldif.AclPayload].ok(parse_result.value)
+        return r[t.Ldif.AclPayload].fail(parse_result.error or "Parse failed")
 
-    def _execute_acl_write(self, data: m.Ldif.Acl) -> r[m.Ldif.Acl | str]:
+    def _execute_acl_write(self, data: m.Ldif.Acl) -> p.Result[t.Ldif.AclPayload]:
         """Execute ACL write operation."""
         write_result = self.write(data)
-        if write_result.is_success:
-            return r[m.Ldif.Acl | str].ok(write_result.value)
-        return r[m.Ldif.Acl | str].fail(write_result.error or "Write failed")
+        if write_result.success:
+            return r[t.Ldif.AclPayload].ok(write_result.value)
+        return r[t.Ldif.AclPayload].fail(write_result.error or "Write failed")
 
     def _execute_detected_operation(
-        self, *, detected_op: str, data: str | m.Ldif.Acl
-    ) -> r[m.Ldif.Acl | str]:
+        self,
+        *,
+        detected_op: str,
+        data: str | m.Ldif.Acl,
+    ) -> p.Result[t.Ldif.AclPayload]:
         """Execute parse/write with strongly typed dispatch."""
         if detected_op == "parse":
             if not isinstance(data, str):
-                return r[m.Ldif.Acl | str].fail(
-                    f"parse requires str, got {type(data).__name__}"
+                return r[t.Ldif.AclPayload].fail(
+                    f"parse requires str, got {type(data).__name__}",
                 )
             return self._execute_acl_parse(data)
         parsed_acl = self._coerce_acl_data(data)
         if parsed_acl is None or isinstance(parsed_acl, str):
-            return r[m.Ldif.Acl | str].fail(
-                f"write requires Acl, got {type(data).__name__}"
+            return r[t.Ldif.AclPayload].fail(
+                f"write requires Acl, got {type(data).__name__}",
             )
         return self._execute_acl_write(parsed_acl)
 
     def _extract_acl_parameters(
         self,
-        kwargs: Mapping[str, builtins.object],
+        kwargs: t.MutableJsonMapping,
     ) -> tuple[str | m.Ldif.Acl | None, str | None]:
         """Extract and validate ACL operation parameters from kwargs."""
         data_raw = kwargs.get("data")
         data: str | m.Ldif.Acl | None = self._coerce_acl_data(data_raw)
         operation_raw = kwargs.get("operation")
         operation = (
-            self._coerce_operation(operation_raw) if operation_raw is not None else None
+            self._coerce_operation(operation_raw)
+            if isinstance(operation_raw, str)
+            else None
         )
         return (data, operation)
 
@@ -249,26 +261,30 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
         """Get RFC fallback value for unsupported vendor feature."""
         return None
 
-    def _hook_format_acl_name_pattern(self) -> r[tuple[re.Pattern[str], str]]:
+    def _hook_format_acl_name_pattern(
+        self,
+    ) -> p.Result[tuple[t.Ldif.RegexPattern, str]]:
         """Hook for server-specific ACL name pattern matching."""
-        pattern = re.compile(r'acl\\s+"[^"]*"')
+        pattern = c.Ldif.ACL_NAME_QUOTED_RE
         replacement_template = 'acl "{0}"'
-        return r[tuple[re.Pattern[str], str]].ok((
+        return r[tuple[t.Ldif.RegexPattern, str]].ok((
             pattern,
             replacement_template,
         ))
 
-    def _hook_post_parse_acl(self, acl: m.Ldif.Acl) -> r[m.Ldif.Acl]:
+    def _hook_post_parse_acl(self, acl: m.Ldif.Acl) -> p.Result[m.Ldif.Acl]:
         """Hook called after parsing an ACL line."""
         return r[m.Ldif.Acl].ok(acl)
 
-    def _parse_acl(self, acl_line: str) -> r[m.Ldif.Acl]:
+    def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
         """REQUIRED: Parse server-specific ACL definition (internal)."""
         _ = acl_line
         return r[m.Ldif.Acl].fail("Must be implemented by subclass")
 
     def _resolve_data(
-        self, data: str | m.Ldif.Acl | None, kwargs: Mapping[str, builtins.object]
+        self,
+        data: str | m.Ldif.Acl | None,
+        kwargs: t.JsonMapping,
     ) -> str | m.Ldif.Acl | None:
         """Resolve data from parameter or kwargs."""
         if data is not None:
@@ -277,21 +293,32 @@ class FlextLdifServersBaseSchemaAcl(QuirkMethodsMixin, FlextService[m.Ldif.Acl |
         return self._coerce_acl_data(data_raw)
 
     def _resolve_operation(
-        self, operation: str | None, kwargs: Mapping[str, builtins.object]
+        self,
+        operation: str | None,
+        kwargs: t.JsonMapping,
     ) -> str | None:
         """Resolve operation from parameter or kwargs."""
         if operation is not None:
             return operation
-        operation_raw = kwargs.get("operation")
+        operation_raw = self._parse_operation_kwarg(kwargs).unwrap_or(None)
         if operation_raw is None:
             return None
         return self._coerce_operation(operation_raw)
+
+    @staticmethod
+    def _parse_operation_kwarg(kwargs: t.JsonMapping) -> p.Result[str]:
+        """Validate the raw 'operation' kwarg as a string, propagating failures."""
+        try:
+            operation_raw = t.str_adapter().validate_python(kwargs.get("operation"))
+        except c.ValidationError as exc:
+            return r[str].fail(str(exc), exception=exc)
+        return r[str].ok(operation_raw)
 
     def _supports_feature(self, _feature_id: str) -> bool:
         """Check if this server supports a specific feature."""
         return False
 
-    def _write_acl(self, acl_data: FlextLdifModelsDomains.Acl) -> r[str]:
+    def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
         """Write ACL data to RFC-compliant string format (internal)."""
         _ = acl_data
         return r[str].fail("Must be implemented by subclass")

@@ -99,11 +99,11 @@ Ensure data quality:
 
 ### 04_server_migration.py - Server-Specific Operations
 
-**Demonstrates**: `migrate()`, server_type parameter, quirks handling
+**Demonstrates**: `migrate()`, server_type parameter, servers handling
 
 Handle server differences:
 
-- Parse with server-specific quirks (OID, OUD, OpenLDAP, RFC)
+- Parse with server-specific servers (OID, OUD, OpenLDAP, RFC)
 - Migrate between different LDAP servers
 - Server-agnostic migration pipeline
 - Compare server parsing behavior
@@ -194,14 +194,14 @@ Production-ready workflows:
 
 All examples follow library-only patterns:
 
-```python
-from flext_ldif import FlextLdif
+```python notest
+from flext_ldif import ldif
 
 # Initialize API
-api = FlextLdif()
+api = ldif()
 
 # Use functionality
-result = api.parse("dn: cn=test,dc=example,dc=com\ncn: test\n")
+result = api.parse_string("dn: cn=test,dc=example,dc=com\ncn: test\n")
 
 if result.is_success:
     entries = result.unwrap()
@@ -231,7 +231,7 @@ else:
 
 - **Library demonstrations** - Pure library API usage
 - **Reusable patterns** - Copy-paste friendly code
-- **API coverage** - FlextLdif functionality
+- **API coverage** - ldif functionality
 - **Error handling** - r pattern
 
 ### ❌ What These Examples Are NOT
@@ -304,7 +304,7 @@ Looking for specific features? Use this quick reference:
 ### Namespace Access (Example 08)
 
 - `api.models` - Domain models
-- `api.config` - Configuration
+- `api.settings` - Configuration
 - `api.constants` - Constants
 - `api.types` - Type definitions
 - `api.protocols` - Protocol definitions
@@ -323,7 +323,7 @@ Looking for specific features? Use this quick reference:
 
 When adding examples:
 
-- Use FlextLdif (api.py) exclusively
+- Use ldif (api.py) exclusively
 - No CLI patterns (main, print, argparse)
 - Include r error handling
 - Demonstrate specific functionality

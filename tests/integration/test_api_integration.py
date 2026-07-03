@@ -1,10 +1,9 @@
 """Comprehensive API integration tests for flext-ldif.
 
-Tests the complete FlextLdif facade with all major operations:
+Tests the complete ldif facade with all major operations:
 - Parsing LDIF files with different servers
-- Filtering entries across multiple criteria
 - Building entries with unified API
-- Configuration and quirks integration
+- Configuration and servers integration
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -12,56 +11,20 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from enum import StrEnum, unique
-from typing import Final
+from pathlib import Path
 
 import pytest
 
-from flext_ldif import FlextLdif, FlextLdifStatistics, m
-from tests import c
+from flext_ldif import ldif
+from flext_ldif.services.categorization import FlextLdifCategorization
+from flext_ldif.services.migration import FlextLdifMigrationPipeline
+from flext_ldif.services.statistics import FlextLdifStatistics
+from tests.constants import c
+from tests.models import m
 
 
-@unique
-class APIScenarios(StrEnum):
-    """Test scenarios for API integration testing."""
-
-    SIMPLE_LDIF = "simple_ldif"
-    FILTER_BY_OBJECTCLASS = "filter_by_objectclass"
-    FILTER_BY_DN_PATTERN = "filter_by_dn_pattern"
-    BUILD_ENTRY = "build_entry"
-    VALIDATE_ENTRIES = "validate_entries"
-    MULTIPLE_INSTANCES = "multiple_instances"
-    FILTER_MULTIPLE_CRITERIA = "filter_multiple_criteria"
-    API_FACADE_PROPERTIES = "api_facade_properties"
-    END_TO_END_WORKFLOW = "end_to_end_workflow"
-
-
-class TestData:
-    """Test data constants for API integration tests."""
-
-    SIMPLE_LDIF: Final[str] = c.RFC.SAMPLE_LDIF_BASIC
-    MULTI_ENTRY_LDIF: Final[str] = c.RFC.SAMPLE_LDIF_MULTIPLE
-    COMPLEX_LDIF: Final[str] = (
-        f"{c.RFC.SAMPLE_LDIF_MULTIPLE}\ndn: cn=Admin1,ou=Admins,dc=example,dc=com\ncn: Admin1\nmail: REDACTED_LDAP_BIND_PASSWORD1@example.com\nobjectClass: person\n\ndn: cn=Admin2,ou=Admins,dc=example,dc=com\ncn: Admin2\nmail: REDACTED_LDAP_BIND_PASSWORD2@example.com\nobjectClass: person\n"
-    )
-    FILTER_TEST_DATA: Final[Mapping[str, Mapping[str, str]]] = {
-        "person": {"objectclass": "person", "expected_count": "2"},
-        "organizationalPerson": {
-            "objectclass": "organizationalPerson",
-            "expected_count": "0",
-        },
-        "nonexistent": {"objectclass": "nonexistent", "expected_count": "0"},
-    }
-    DN_PATTERN_DATA: Final[Mapping[str, Mapping[str, str]]] = {
-        "dc=example": {"pattern": "dc=example", "expected_count": "4"},
-        "cn=user1": {"pattern": "cn=user1", "expected_count": "1"},
-        "nonexistent": {"pattern": "ou=NonExistent", "expected_count": "0"},
-    }
-
-
-class TestFlextLdifAPIIntegration:
-    """Comprehensive API integration tests for FlextLdif facade.
+class TestsFlextLdifApiIntegration:
+    """Comprehensive API integration tests for ldif facade.
 
     Uses advanced Python 3.13 patterns:
     - StrEnum for test scenarios
@@ -71,153 +34,202 @@ class TestFlextLdifAPIIntegration:
     - Builder pattern for complex test setup
     """
 
-    _SIMPLE_LDIF: Final[str] = c.RFC.SAMPLE_LDIF_BASIC
-    _MULTI_ENTRY_LDIF: Final[str] = c.RFC.SAMPLE_LDIF_MULTIPLE
-    _COMPLEX_LDIF: Final[str] = TestData.COMPLEX_LDIF
-
     @pytest.mark.parametrize(
         ("scenario", "ldif_content", "expected_entries"),
         [
-            (APIScenarios.SIMPLE_LDIF, TestData.SIMPLE_LDIF, 1),
-            (APIScenarios.MULTIPLE_INSTANCES, TestData.MULTI_ENTRY_LDIF, 2),
+            (
+                c.Tests.API_SCENARIO_SIMPLE_LDIF,
+                c.Tests.RFC_SAMPLE_LDIF_BASIC,
+                1,
+            ),
+            (
+                c.Tests.API_SCENARIO_MULTIPLE_INSTANCES,
+                c.Tests.RFC_SAMPLE_LDIF_MULTIPLE,
+                2,
+            ),
         ],
     )
     def test_parse_ldif_scenarios(
-        self, scenario: APIScenarios, ldif_content: str, expected_entries: int
+        self,
+        scenario: str,
+        ldif_content: str,
+        expected_entries: int,
     ) -> None:
         """Test parsing LDIF content across different scenarios."""
-        ldif = FlextLdif()
-        result = ldif.parse(ldif_content)
-        assert result.is_success
-        entries = result.value
+        _ = scenario
+        api = ldif
+        result = api.parse_ldif(ldif_content)
+        assert result.success
+        entries = result.value.entries
         assert len(entries) == expected_entries
         for entry in entries:
-            assert hasattr(entry, "dn") and hasattr(entry, "attributes")
             assert entry.dn is not None
             assert entry.attributes is not None
             assert entry.dn.value
             assert entry.attributes.attributes
 
-    @pytest.mark.parametrize(
-        ("test_name", "objectclass", "expected_count"),
-        [
-            (name, data["objectclass"], int(data["expected_count"]))
-            for name, data in TestData.FILTER_TEST_DATA.items()
-        ],
-    )
-    def test_filter_by_objectclass_dynamic(
-        self, test_name: str, objectclass: str, expected_count: int
-    ) -> None:
-        """Dynamically test filtering by different objectClass values."""
-        ldif = FlextLdif()
-        parse_result = ldif.parse(self._MULTI_ENTRY_LDIF)
-        assert parse_result.is_success
-        entries = parse_result.value
-        result = ldif.filter(entries, objectclass=objectclass)
-        assert result.is_success
-        filtered = result.value
-        assert len(filtered) == expected_count
-
-    @pytest.mark.parametrize(
-        ("test_name", "dn_pattern", "expected_count"),
-        [
-            (name, data["pattern"], int(data["expected_count"]))
-            for name, data in TestData.DN_PATTERN_DATA.items()
-        ],
-    )
-    def test_filter_by_dn_pattern_dynamic(
-        self, test_name: str, dn_pattern: str, expected_count: int
-    ) -> None:
-        """Dynamically test filtering by different DN patterns."""
-        ldif = FlextLdif()
-        parse_result = ldif.parse(self._COMPLEX_LDIF)
-        assert parse_result.is_success
-        entries = parse_result.value
-        result = ldif.filter(entries, dn_pattern=dn_pattern)
-        assert result.is_success
-        filtered = result.value
-        assert len(filtered) == expected_count
-
     def test_build_entry_programmatic(self) -> None:
         """Test building entries programmatically using models."""
-        test_dn = c.RFC.TEST_DN
+        test_dn = c.Tests.RFC_TEST_DN
         entry = m.Ldif.Entry(
             dn=m.Ldif.DN(value=test_dn),
             attributes=m.Ldif.Attributes(
                 attributes={
-                    c.Names.CN: [c.General.ATTR_VALUE_TEST],
-                    c.Names.SN: [c.General.ATTR_VALUE_USER],
-                    c.Names.OBJECTCLASS: [c.Names.PERSON],
-                }
+                    c.Tests.NAME_CN: [c.Tests.ATTR_VALUE_TEST],
+                    c.Tests.NAME_SN: [c.Tests.ATTR_VALUE_USER],
+                    c.Tests.NAME_OBJECTCLASS: [c.Tests.NAME_PERSON],
+                },
+                attribute_metadata={},
             ),
         )
         assert entry.dn is not None
         assert entry.attributes is not None
         assert entry.dn.value == test_dn
-        assert c.Names.CN in entry.attributes.attributes
-        assert entry.attributes.attributes[c.Names.CN] == [c.General.ATTR_VALUE_TEST]
+        assert c.Tests.NAME_CN in entry.attributes.attributes
+        assert entry.attributes.attributes[c.Tests.NAME_CN] == [c.Tests.ATTR_VALUE_TEST]
 
     def test_validate_entries_workflow(self) -> None:
         """Test complete validation workflow."""
-        ldif = FlextLdif()
-        parse_result = ldif.parse(self._SIMPLE_LDIF)
-        assert parse_result.is_success
-        entries = parse_result.value
-        validate_result = ldif.validate_entries(entries)
-        assert validate_result.is_success
+        api = ldif
+        parse_result = api.parse_ldif(c.Tests.RFC_SAMPLE_LDIF_BASIC)
+        assert parse_result.success
+        entries = parse_result.value.entries
+        validate_result = api.validate_entries(entries)
+        assert validate_result.success
 
     def test_multiple_instances_independence(self) -> None:
-        """Test that multiple FlextLdif instances work independently."""
-        ldif1 = FlextLdif()
-        ldif2 = FlextLdif()
-        result1 = ldif1.parse(self._SIMPLE_LDIF)
-        result2 = ldif2.parse(self._SIMPLE_LDIF)
-        assert result1.is_success
-        assert result2.is_success
-        entries1 = result1.value
-        entries2 = result2.value
+        """Test that multiple ldif instances work independently."""
+        ldif1 = ldif()
+        ldif2 = ldif()
+        assert ldif1 is not ldif2
+        result1 = ldif1.parse_ldif(c.Tests.RFC_SAMPLE_LDIF_BASIC)
+        result2 = ldif2.parse_ldif(c.Tests.RFC_SAMPLE_LDIF_BASIC)
+        assert result1.success
+        assert result2.success
+        entries1 = result1.value.entries
+        entries2 = result2.value.entries
         assert len(entries1) == len(entries2) == 1
         assert entries1[0].dn is not None
         assert entries2[0].dn is not None
         assert entries1[0].dn.value == entries2[0].dn.value
 
-    def test_filter_multiple_criteria_combined(self) -> None:
-        """Test filtering with combined DN and attribute criteria."""
-        ldif = FlextLdif()
-        parse_result = ldif.parse(self._COMPLEX_LDIF)
-        assert parse_result.is_success
-        entries = parse_result.value
-        result = ldif.filter(
-            entries, dn_pattern="ou=Admins", attributes={c.Names.MAIL: ""}
-        )
-        assert result.is_success
-        filtered = result.value
-        assert len(filtered) == 2
-
     def test_api_facade_property_access(self) -> None:
-        """Test accessing facade properties and models."""
-        ldif = FlextLdif()
-        models = ldif.models
-        assert models is not None
-        assert hasattr(models, "Ldif")
-        assert hasattr(models.Ldif, "Entry")
+        """Test facade operations with the canonical LDIF model namespace."""
+        api = ldif
+        create_result = m.Ldif.Entry.create(
+            dn="cn=namespace-check,dc=example,dc=com",
+            attributes={
+                "objectClass": ["person"],
+                "cn": ["namespace-check"],
+                "sn": ["check"],
+            },
+        )
+        assert create_result.success
+        created = create_result.value
+        assert created is not None
+        assert isinstance(created, m.Ldif.Entry)
+        assert api.validate_entries([created]).success
 
     def test_end_to_end_workflow_complete(self) -> None:
         """Test complete end-to-end workflow from parse to filter."""
-        ldif = FlextLdif()
-        parse_result = ldif.parse(self._SIMPLE_LDIF)
-        assert parse_result.is_success
-        entries = parse_result.value
+        api = ldif
+        parse_result = api.parse_ldif(c.Tests.RFC_SAMPLE_LDIF_BASIC)
+        assert parse_result.success
+        entries = parse_result.value.entries
         analyze_result = FlextLdifStatistics().calculate_for_entries(entries)
-        assert analyze_result.is_success
+        assert analyze_result.success
         stats = analyze_result.value
         assert stats.total_entries == 1
-        validate_result = ldif.validate_entries(entries)
-        assert validate_result.is_success
-        filter_result = ldif.filter(entries, objectclass=c.Names.PERSON)
-        assert filter_result.is_success
-        filtered = filter_result.value
-        assert len(filtered) == 1
+        validate_result = api.validate_entries(entries)
+        assert validate_result.success
+
+    def test_runtime_alias_exposes_direct_dsl(self) -> None:
+        """Test the runtime alias as the primary no-ceremony facade."""
+        result = ldif.parse_ldif(c.Tests.RFC_SAMPLE_LDIF_BASIC)
+        assert result.success
+        assert len(result.value.entries) == 1
+
+    def test_categorization_reads_migrate_options(self) -> None:
+        """Categorization should reuse migrate options while honoring explicit base DN."""
+        api = ldif
+        options = m.Ldif.MigrateOptions(
+            base_dn="dc=options,dc=example",
+            forbidden_attributes=["userPassword"],
+            forbidden_objectclasses=["groupOfNames"],
+        )
+
+        categorization = api.categorization(
+            options=options,
+            base_dn="dc=override,dc=example",
+            server_type=c.Tests.OUD,
+        )
+
+        assert isinstance(categorization, FlextLdifCategorization)
+        assert categorization.base_dn == "dc=override,dc=example"
+        assert categorization.forbidden_attributes == ["userPassword"]
+        assert categorization.forbidden_objectclasses == ["groupOfNames"]
+
+    def test_categorization_uses_migrate_options_base_dn_without_override(self) -> None:
+        """Categorization should preserve the model-provided base DN when no override is passed."""
+        api = ldif
+        options = m.Ldif.MigrateOptions(
+            base_dn="dc=options,dc=example",
+            forbidden_attributes=["userPassword"],
+        )
+
+        categorization = api.categorization(
+            options=options,
+            server_type=c.Tests.OUD,
+        )
+
+        assert isinstance(categorization, FlextLdifCategorization)
+        assert categorization.base_dn == "dc=options,dc=example"
+        assert categorization.forbidden_attributes == ["userPassword"]
+
+    def test_categorization_normalizes_schema_whitelist_rules_mapping(self) -> None:
+        """Categorization should normalize raw schema whitelist mappings via Pydantic."""
+        categorization = ldif.categorization(
+            options=m.Ldif.MigrateOptions(
+                schema_whitelist_rules={
+                    "allowed_attribute_oids": {"1.2.3.4"},
+                    "allowed_objectclass_oids": {"2.3.4.5"},
+                },
+            ),
+            server_type=c.Tests.OUD,
+        )
+
+        assert isinstance(categorization, FlextLdifCategorization)
+        assert isinstance(categorization.schema_whitelist_rules, m.Ldif.WhitelistRules)
+        assert categorization.schema_whitelist_rules is not None
+        assert categorization.schema_whitelist_rules.has_oid_filters
+
+    def test_migration_pipeline_reads_transform_and_migrate_options(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """Migration pipeline should use canonical transform and migrate option models."""
+        api = ldif
+        input_dir = tmp_path / "input"
+        output_dir = tmp_path / "output"
+        input_dir.mkdir()
+        output_dir.mkdir()
+
+        pipeline = api.migration_pipeline(
+            input_dir=input_dir,
+            output_dir=output_dir,
+            settings=m.Ldif.TransformConfig.servers(
+                source_server=c.Tests.OID,
+                target_server=c.Tests.OUD,
+            ),
+            options=m.Ldif.MigrateOptions(output_filename="custom.ldif"),
+        )
+
+        assert isinstance(pipeline, FlextLdifMigrationPipeline)
+        assert pipeline.input_dir == input_dir
+        assert pipeline.output_dir == output_dir
+        assert pipeline.source_server_type == c.Tests.OID
+        assert pipeline.target_server_type == c.Tests.OUD
+        assert pipeline.output_filename == "custom.ldif"
 
 
 if __name__ == "__main__":

@@ -1,70 +1,42 @@
-# AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
-# Regenerate with: make codegen
-#
-"""Base server classes for LDIF/LDAP processing."""
+# AUTO-GENERATED FILE — Regenerate with: make gen
+"""Base package."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
+from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core.typings import FlextTypes
-
-    from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
-    from flext_ldif.servers._base.constants import (
-        FlextLdifServersBaseConstants,
-        FlextLdifServersBaseQuirkHelpers,
-        QuirkMethodsMixin,
+    from flext_ldif.servers._base.acl import (
+        FlextLdifServersBaseSchemaAcl as FlextLdifServersBaseSchemaAcl,
     )
-    from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
-    from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema, logger
-
-_LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "FlextLdifServersBaseConstants": (
-        "flext_ldif.servers._base.constants",
-        "FlextLdifServersBaseConstants",
-    ),
-    "FlextLdifServersBaseEntry": (
-        "flext_ldif.servers._base.entry",
-        "FlextLdifServersBaseEntry",
-    ),
-    "FlextLdifServersBaseQuirkHelpers": (
-        "flext_ldif.servers._base.constants",
-        "FlextLdifServersBaseQuirkHelpers",
-    ),
-    "FlextLdifServersBaseSchema": (
-        "flext_ldif.servers._base.schema",
-        "FlextLdifServersBaseSchema",
-    ),
-    "FlextLdifServersBaseSchemaAcl": (
-        "flext_ldif.servers._base.acl",
-        "FlextLdifServersBaseSchemaAcl",
-    ),
-    "QuirkMethodsMixin": ("flext_ldif.servers._base.constants", "QuirkMethodsMixin"),
-    "logger": ("flext_ldif.servers._base.schema", "logger"),
-}
-
-__all__ = [
-    "FlextLdifServersBaseConstants",
-    "FlextLdifServersBaseEntry",
-    "FlextLdifServersBaseQuirkHelpers",
-    "FlextLdifServersBaseSchema",
-    "FlextLdifServersBaseSchemaAcl",
-    "QuirkMethodsMixin",
-    "logger",
-]
+    from flext_ldif.servers._base.constants import (
+        FlextLdifServersBaseConstants as FlextLdifServersBaseConstants,
+    )
+    from flext_ldif.servers._base.entry import (
+        FlextLdifServersBaseEntry as FlextLdifServersBaseEntry,
+    )
+    from flext_ldif.servers._base.mixins import (
+        FlextLdifServerMethodsMixin as FlextLdifServerMethodsMixin,
+    )
+    from flext_ldif.servers._base.schema import (
+        FlextLdifServersBaseSchema as FlextLdifServersBaseSchema,
+    )
+_LAZY_IMPORTS = build_lazy_import_map(
+    {
+        ".acl": ("FlextLdifServersBaseSchemaAcl",),
+        ".constants": ("FlextLdifServersBaseConstants",),
+        ".entry": ("FlextLdifServersBaseEntry",),
+        ".mixins": ("FlextLdifServerMethodsMixin",),
+        ".schema": ("FlextLdifServersBaseSchema",),
+    },
+)
 
 
-def __getattr__(name: str) -> FlextTypes.ModuleExport:
-    """Lazy-load module attributes on first access (PEP 562)."""
-    return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
-
-
-def __dir__() -> list[str]:
-    """Return list of available attributes for dir() and autocomplete."""
-    return sorted(__all__)
-
-
-cleanup_submodule_namespace(__name__, _LAZY_IMPORTS)
+install_lazy_exports(
+    __name__,
+    globals(),
+    _LAZY_IMPORTS,
+    publish_all=False,
+)

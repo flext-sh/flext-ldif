@@ -4,9 +4,9 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
 flext-ldif enables intelligent operations with ZERO manual work:
-- Auto-detect entry types from attributes (mail → inetOrgPerson, member → groupOfNames)
-- Railway composition: build → filter → process → validate in ONE pipeline
-- Batch operations with parallel processing and error aggregation
+- Auto-detect entry types from attributes (mail -> inetOrgPerson, member -> groupOfNames)
+- Railway composition: build -> filter -> process -> validate in ONE pipeline
+- Batch operations with validation and error aggregation
 - Advanced filtering with type-safe predicates
 
 Original: 235 lines | DRY Advanced: ~60 lines (75% reduction)
@@ -15,58 +15,41 @@ SRP: Each method does ONE thing, composition handles complexity
 
 from __future__ import annotations
 
-from flext_core import r
+from collections.abc import (
+    MutableSequence,
+)
 
-from flext_ldif import FlextLdif, m
+from flext_ldif import ldif, m, p, r
 
 
 class DRYEntryOperations:
     """DRY entry operations: intelligent builders + railway composition."""
 
     @staticmethod
-    def advanced_filtering() -> r[list[m.Ldif.Entry]]:
+    def advanced_filtering() -> p.Result[MutableSequence[m.Ldif.Entry]]:
         """DRY advanced filtering: type-safe predicates + composition."""
-        api = FlextLdif.get_instance()
-        entries_result = DRYEntryOperations.intelligent_builders()
-        if entries_result.is_failure:
-            return entries_result
-        entries = entries_result.value
-        filtered_it = api.filter_entries(
-            entries,
-            filter_func=lambda item: (
-                item.attributes is not None
-                and "IT" in item.attributes.get("departmentNumber", [])
-            ),
-        )
-        if filtered_it.is_failure:
-            return filtered_it
-        return api.filter_entries(
-            filtered_it.value,
-            filter_func=lambda item: (
-                item.attributes is not None
-                and "@example.com"
-                in (
-                    item.attributes.get("mail", [""])[0]
-                    if item.attributes.get("mail")
-                    else ""
-                )
-            ),
+        return DRYEntryOperations.intelligent_builders().map(
+            lambda entries: [
+                entry
+                for entry in entries
+                if entry.attributes is not None
+                and "IT" in entry.attributes.get("departmentNumber", [])
+                and entry.attributes.get("mail")
+                and "@example.com" in entry.attributes.get("mail", [""])[0]
+            ],
         )
 
     @staticmethod
-    def batch_processing() -> r[list[dict[str, object]]]:
-        """DRY batch processing: parallel transformation pipeline."""
-        api = FlextLdif.get_instance()
+    def batch_processing() -> p.Result[MutableSequence[m.Ldif.Entry]]:
+        """DRY batch processing: validate entries pipeline."""
+        api = ldif()
         return DRYEntryOperations.advanced_filtering().flat_map(
-            lambda e: api.process("transform", e, parallel=True, max_workers=4).map(
-                lambda res: [entry.model_dump() for entry in res]
-            )
+            lambda entries: api.validate_entries(entries).map(lambda _: entries),
         )
 
     @staticmethod
-    def intelligent_builders() -> r[list[m.Ldif.Entry]]:
+    def intelligent_builders() -> p.Result[MutableSequence[m.Ldif.Entry]]:
         """DRY intelligent builders: auto-detect types from attributes."""
-        api = FlextLdif.get_instance()
         created_entries: list[m.Ldif.Entry] = []
         people_data: list[tuple[str, str, str, str]] = [
             ("Alice Johnson", "Johnson", "alice@example.com", "+1-555-0101"),
@@ -74,19 +57,23 @@ class DRYEntryOperations:
             ("Carol Davis", "Davis", "carol@example.com", "+1-555-0103"),
         ]
         for name, surname, email, phone in people_data:
-            create_result = api.create_entry(
-                dn=f"cn={name},ou=People,dc=example,dc=com",
-                attributes={
-                    "cn": name,
-                    "sn": surname,
-                    "mail": email,
-                    "telephoneNumber": phone,
-                },
+            entry = m.Ldif.Entry(
+                dn=m.Ldif.DN(value=f"cn={name},ou=People,dc=example,dc=com"),
+                attributes=m.Ldif.Attributes(
+                    attributes={
+                        "objectClass": ["person", "inetOrgPerson"],
+                        "cn": [name],
+                        "sn": [surname],
+                        "mail": [email],
+                        "telephoneNumber": [phone],
+                        "departmentNumber": ["IT"],
+                    },
+                    attribute_metadata={},
+                ),
             )
-            if create_result.is_success:
-                created_entries.append(create_result.value)
+            created_entries.append(entry)
 
         if not created_entries:
-            return r[list[m.Ldif.Entry]].fail("No entries were created")
+            return r[MutableSequence[m.Ldif.Entry]].fail("No entries were created")
 
-        return r[list[m.Ldif.Entry]].ok(created_entries)
+        return r[MutableSequence[m.Ldif.Entry]].ok(created_entries)

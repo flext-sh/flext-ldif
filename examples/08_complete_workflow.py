@@ -5,33 +5,35 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 
 from __future__ import annotations
 
+from collections.abc import (
+    MutableSequence,
+)
 from datetime import UTC, datetime
 from pathlib import Path
 
-from flext_ldif import FlextLdif, m
+from flext_ldif import c, ldif, m, p
 
 
 def complete_ldif_processing_workflow() -> None:
     """Run a complete LDIF processing workflow."""
-    api = FlextLdif.get_instance()
+    api: p.Ldif.LdifClient = ldif
     content = "dn: cn=Workflow User,dc=example,dc=com\nobjectClass: person\ncn: Workflow User\nsn: User\n"
-    parse_result = api.parse(content, server_type="rfc")
-    if parse_result.is_failure:
+    parse_result = api.parse_ldif(content, server_type=c.Ldif.ServerTypes.RFC)
+    if parse_result.failure:
         return
-    entries = parse_result.value
+    parse_response = parse_result.unwrap()
+    entries = parse_response.entries
     validation_result = api.validate_entries(entries)
-    if validation_result.is_failure:
+    if validation_result.failure:
         return
-    stats_result = api.get_entry_statistics(entries)
-    if stats_result.is_failure:
-        return
-    _ = stats_result.value.total_entries
-    _ = api.write_file(entries, Path("examples/workflow_output.ldif"))
+    report = validation_result.unwrap()
+    _ = report.total_entries
+    _ = api.write_ldif_file(entries, Path("examples/workflow_output.ldif"))
 
 
 def server_migration_workflow() -> None:
     """Run a server migration workflow."""
-    api = FlextLdif.get_instance()
+    api: p.Ldif.LdifClient = ldif
     source_dir = Path("examples/workflow_source")
     target_dir = Path("examples/workflow_target")
     source_dir.mkdir(exist_ok=True)
@@ -39,125 +41,134 @@ def server_migration_workflow() -> None:
     source_file = source_dir / "source.ldif"
     source_file.write_text(
         "dn: cn=Migration User,dc=example,dc=com\nobjectClass: person\ncn: Migration User\nsn: User\n",
-        encoding="utf-8",
+        encoding=c.Ldif.Encoding.UTF8,
     )
     migration_result = api.migrate(
         input_dir=source_dir,
         output_dir=target_dir,
-        source_server="rfc",
-        target_server="rfc",
+        source_server=c.Ldif.ServerTypes.RFC,
+        target_server=c.Ldif.ServerTypes.RFC,
     )
-    if migration_result.is_failure:
+    if migration_result.failure:
         return
-    for path in migration_result.value.output_files:
-        _ = api.parse(Path(path), server_type="rfc")
+    for entry in migration_result.unwrap().entries:
+        _ = entry.dn
 
 
 def entry_building_and_processing_workflow() -> None:
     """Run an entry building and processing workflow."""
-    api = FlextLdif.get_instance()
+    api: p.Ldif.LdifClient = ldif
     created: list[m.Ldif.Entry] = []
     for idx in range(2):
-        create_result = api.create_entry(
-            dn=f"cn=User{idx},ou=People,dc=example,dc=com",
-            attributes={
-                "objectClass": ["person"],
-                "cn": [f"User{idx}"],
-                "sn": ["User"],
-            },
+        entry = m.Ldif.Entry(
+            dn=m.Ldif.DN(value=f"cn=User{idx},ou=People,dc=example,dc=com"),
+            attributes=m.Ldif.Attributes(
+                attributes={
+                    "objectClass": ["person"],
+                    "cn": [f"User{idx}"],
+                    "sn": ["User"],
+                },
+                attribute_metadata={},
+            ),
         )
-        if create_result.is_success:
-            created.append(create_result.value)
+        created.append(entry)
     if not created:
         return
-    if api.validate_entries(created).is_failure:
+    if api.validate_entries(created).failure:
         return
-    persons_result = api.filter_persons(created)
-    if persons_result.is_failure:
-        return
-    _ = api.write(persons_result.value)
+    persons: MutableSequence[m.Ldif.Entry] = [
+        e
+        for e in created
+        if e.attributes is not None and "person" in e.attributes["objectClass"]
+    ]
+    _ = api.write(persons)
 
 
 def schema_driven_workflow() -> None:
     """Run a schema driven workflow."""
-    api = FlextLdif.get_instance()
     entries: list[m.Ldif.Entry] = []
     for idx in range(5):
-        created = api.create_entry(
-            dn=f"cn=Schema User {idx},ou=People,dc=example,dc=com",
-            attributes={
-                "objectClass": ["person"],
-                "cn": [f"Schema User {idx}"],
-                "sn": ["User"],
-            },
+        entry = m.Ldif.Entry(
+            dn=m.Ldif.DN(value=f"cn=Schema User {idx},ou=People,dc=example,dc=com"),
+            attributes=m.Ldif.Attributes(
+                attributes={
+                    "objectClass": ["person"],
+                    "cn": [f"Schema User {idx}"],
+                    "sn": ["User"],
+                },
+                attribute_metadata={},
+            ),
         )
-        if created.is_success:
-            entries.append(created.value)
+        entries.append(entry)
     _ = entries
 
 
 def acl_processing_workflow() -> None:
     """Run an ACL processing workflow."""
-    api = FlextLdif.get_instance()
+    api: p.Ldif.LdifClient = ldif
     ldif_content = 'dn: ou=Secure,dc=example,dc=com\nobjectClass: organizationalUnit\nou: Secure\naci: (targetattr="*")(version 3.0; acl "a"; allow (read) userdn="ldap:///anyone";)\n'
-    parse_result = api.parse(ldif_content)
-    if parse_result.is_failure:
+    parse_result = api.parse_ldif(ldif_content)
+    if parse_result.failure:
         return
-    for entry in parse_result.value:
-        acl_result = api.extract_acls(entry)
-        if acl_result.is_success:
-            _ = acl_result.value.acls
+    parse_response = parse_result.unwrap()
+    for entry in parse_response.entries:
+        if entry.attributes is not None and "aci" in entry.attributes.attributes:
+            _ = entry.attributes["aci"]
 
 
 def batch_processing_workflow() -> None:
     """Run a batch processing workflow."""
-    api = FlextLdif.get_instance()
+    api: p.Ldif.LdifClient = ldif
     entries: list[m.Ldif.Entry] = []
     for idx in range(10):
-        result = api.create_entry(
-            dn=f"cn=BatchUser{idx},ou=People,dc=example,dc=com",
-            attributes={
-                "objectClass": ["person"],
-                "cn": [f"BatchUser{idx}"],
-                "sn": ["User"],
-            },
+        entry = m.Ldif.Entry(
+            dn=m.Ldif.DN(value=f"cn=BatchUser{idx},ou=People,dc=example,dc=com"),
+            attributes=m.Ldif.Attributes(
+                attributes={
+                    "objectClass": ["person"],
+                    "cn": [f"BatchUser{idx}"],
+                    "sn": ["User"],
+                },
+                attribute_metadata={},
+            ),
         )
-        if result.is_success:
-            entries.append(result.value)
-    if api.validate_entries(entries).is_success:
-        _ = api.process("validate", entries, parallel=False)
+        entries.append(entry)
+    validation_result = api.validate_entries(entries)
+    if validation_result.success:
+        report = validation_result.unwrap()
+        _ = report.total_entries
 
 
 def access_all_namespace_classes() -> None:
     """Access all namespace classes."""
-    api = FlextLdif.get_instance()
-    entry_result = api.models.Ldif.Entry.create(
-        dn="cn=test,dc=example,dc=com",
-        attributes={"objectClass": ["person"], "cn": ["test"], "sn": ["user"]},
+    entry = m.Ldif.Entry(
+        dn=m.Ldif.DN(value="cn=test,dc=example,dc=com"),
+        attributes=m.Ldif.Attributes(
+            attributes={"objectClass": ["person"], "cn": ["test"], "sn": ["user"]},
+            attribute_metadata={},
+        ),
     )
-    if entry_result.is_failure:
-        return
-    _ = entry_result.value
-    _ = api.constants.LdifFormatting.MAX_LINE_WIDTH
-    _ = api.constants.Encoding.UTF8
+    _ = entry
+    _ = c.Ldif.DEFAULT_LINE_WIDTH
+    _ = c.Ldif.Encoding.UTF8
     _ = datetime.now(UTC).timestamp()
-    _ = api.ldif_config.ldif_encoding
 
 
 def error_handling_and_recovery() -> None:
     """Run an error handling and recovery workflow."""
-    api = FlextLdif.get_instance()
-    parse_result = api.parse(
-        "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n"
+    api: p.Ldif.LdifClient = ldif
+    parse_result = api.parse_ldif(
+        "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n",
     )
-    if parse_result.is_failure:
+    if parse_result.failure:
         return
-    entries = parse_result.value
+    parse_response = parse_result.unwrap()
+    entries = parse_response.entries
     validation_result = api.validate_entries(entries)
-    if validation_result.is_failure:
+    if validation_result.failure:
         return
-    report = validation_result.value
-    if not report.is_valid:
+    report = validation_result.unwrap()
+    if not report.valid:
         _ = api.validate_entries(entries)
 
 

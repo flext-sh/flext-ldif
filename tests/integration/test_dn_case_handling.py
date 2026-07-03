@@ -1,7 +1,7 @@
-"""Integration tests for DN case handling during quirk conversions.
+"""Integration tests for DN case handling during server conversions.
 
 Tests the DN Case Registry system that ensures DN case consistency when
-converting between quirks with different case sensitivity (OID vs OUD).
+converting between servers with different case sensitivity (OID vs OUD).
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -10,21 +10,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from typing import ClassVar
-
 import pytest
 
-from flext_ldif import m
-from tests import s
-
-type DnRefData = dict[str, Mapping[str, str] | list[str] | str]
+from tests.models import m
 
 
-class TestDnCaseRegistry(s):
+class TestsFlextLdifDnCaseHandling:
     """Test DN case registry functionality."""
-
-    registry: ClassVar[m.Ldif.DnRegistry]
 
     @pytest.fixture
     def registry(self) -> m.Ldif.DnRegistry:
@@ -32,7 +24,8 @@ class TestDnCaseRegistry(s):
         return m.Ldif.DnRegistry()
 
     def test_register_dn_first_becomes_canonical(
-        self, registry: m.Ldif.DnRegistry
+        self,
+        registry: m.Ldif.DnRegistry,
     ) -> None:
         """Test that first registered DN becomes canonical case."""
         canonical = registry.register_dn("CN=Admin,DC=Example,DC=Com")
@@ -46,146 +39,74 @@ class TestDnCaseRegistry(s):
         canonical = registry.register_dn("cn=ADMIN,dc=COM", force=True)
         assert canonical == "cn=ADMIN,dc=COM"
 
-    def test_get_canonical_dn_case_insensitive(
-        self, registry: m.Ldif.DnRegistry
+    def test_resolve_canonical_dn_case_insensitive(
+        self,
+        registry: m.Ldif.DnRegistry,
     ) -> None:
         """Test case-insensitive DN lookup."""
         registry.register_dn("cn=test,dc=example,dc=com")
         assert (
-            registry.get_canonical_dn("cn=test,dc=example,dc=com")
+            registry.resolve_canonical_dn("cn=test,dc=example,dc=com")
             == "cn=test,dc=example,dc=com"
         )
         assert (
-            registry.get_canonical_dn("CN=Test,DC=Example,DC=Com")
+            registry.resolve_canonical_dn("CN=Test,DC=Example,DC=Com")
             == "cn=test,dc=example,dc=com"
         )
         assert (
-            registry.get_canonical_dn("cn=TEST,dc=EXAMPLE,dc=COM")
+            registry.resolve_canonical_dn("cn=TEST,dc=EXAMPLE,dc=COM")
             == "cn=test,dc=example,dc=com"
         )
 
-    def test_get_canonical_dn_unknown_returns_none(
-        self, registry: m.Ldif.DnRegistry
+    def test_resolve_canonical_dn_unknown_returns_none(
+        self,
+        registry: m.Ldif.DnRegistry,
     ) -> None:
         """Test unknown DN returns None."""
-        assert registry.get_canonical_dn("cn=unknown,dc=com") is None
-
-    def test_has_dn_case_insensitive(self, registry: m.Ldif.DnRegistry) -> None:
-        """Test DN existence check is case-insensitive."""
-        registry.register_dn("cn=admin,dc=com")
-        assert registry.has_dn("cn=admin,dc=com")
-        assert registry.has_dn("CN=Admin,DC=Com")
-        assert registry.has_dn("cn=ADMIN,dc=COM")
-        assert not registry.has_dn("cn=other,dc=com")
-
-    def test_get_case_variants_tracks_all_cases(
-        self, registry: m.Ldif.DnRegistry
-    ) -> None:
-        """Test that all case variants are tracked."""
-        registry.register_dn("cn=admin,dc=com")
-        registry.register_dn("CN=Admin,DC=Com")
-        registry.register_dn("cn=ADMIN,dc=COM")
-        variants = registry.get_case_variants("cn=admin,dc=com")
-        assert len(variants) == 3
-        assert "cn=admin,dc=com" in variants
-        assert "CN=Admin,DC=Com" in variants
-        assert "cn=ADMIN,dc=COM" in variants
+        assert registry.resolve_canonical_dn("cn=unknown,dc=com") is None
 
     def test_validate_oud_consistency_single_case(
-        self, registry: m.Ldif.DnRegistry
+        self,
+        registry: m.Ldif.DnRegistry,
     ) -> None:
         """Test validation passes with single case variant."""
         registry.register_dn("cn=admin,dc=com")
         result = registry.validate_oud_consistency()
-        assert result.is_success
+        assert result.success
         assert result.value is True
 
     def test_validate_oud_consistency_multiple_cases(
-        self, registry: m.Ldif.DnRegistry
+        self,
+        registry: m.Ldif.DnRegistry,
     ) -> None:
         """Test validation detects multiple case variants."""
         registry.register_dn("cn=admin,dc=com")
         registry.register_dn("CN=Admin,DC=Com")
         result = registry.validate_oud_consistency()
-        assert result.is_success
+        assert result.success
         assert result.value is False
-
-    def test_normalize_dn_references_single_dn(
-        self, registry: m.Ldif.DnRegistry
-    ) -> None:
-        """Test normalizing single DN field."""
-        registry.register_dn("cn=admin,dc=com")
-        data: DnRefData = {"dn": "CN=Admin,DC=Com", "cn": ["admin"]}
-        result = registry.normalize_dn_references(data, ["dn"])
-        assert result.is_success
-        normalized = result.value
-        assert normalized["dn"] == "cn=admin,dc=com"
-        assert normalized["cn"] == ["admin"]
-
-    def test_normalize_dn_references_list_of_dns(
-        self, registry: m.Ldif.DnRegistry
-    ) -> None:
-        """Test normalizing list of DNs (e.g., group members)."""
-        registry.register_dn("cn=user1,dc=com")
-        registry.register_dn("cn=user2,dc=com")
-        data: DnRefData = {
-            "dn": "cn=group,dc=com",
-            "member": ["CN=User1,DC=Com", "cn=USER2,dc=com"],
-        }
-        result = registry.normalize_dn_references(data, ["dn", "member"])
-        assert result.is_success
-        normalized = result.value
-        assert normalized["member"] == ["cn=user1,dc=com", "cn=user2,dc=com"]
-
-    def test_normalize_dn_references_unregistered_dn_unchanged(
-        self, registry: m.Ldif.DnRegistry
-    ) -> None:
-        """Test that unregistered DNs are left unchanged."""
-        data: DnRefData = {"dn": "cn=unknown,dc=com"}
-        result = registry.normalize_dn_references(data, ["dn"])
-        assert result.is_success
-        normalized = result.value
-        assert normalized["dn"] == "cn=unknown,dc=com"
 
     def test_clear_removes_all_registrations(self, registry: m.Ldif.DnRegistry) -> None:
         """Test clearing registry removes all DNs."""
         registry.register_dn("cn=admin,dc=com")
         registry.register_dn("cn=user,dc=com")
-        assert registry.has_dn("cn=admin,dc=com")
+        assert registry.resolve_canonical_dn("cn=admin,dc=com") is not None
         registry.clear()
-        assert not registry.has_dn("cn=admin,dc=com")
-        assert not registry.has_dn("cn=user,dc=com")
-
-    def test_get_stats(self, registry: m.Ldif.DnRegistry) -> None:
-        """Test registry statistics."""
-        registry.register_dn("cn=admin,dc=com")
-        registry.register_dn("CN=Admin,DC=Com")
-        registry.register_dn("cn=user,dc=com")
-        stats = registry.get_stats()
-        assert stats["total_dns"] == 2
-        assert stats["total_variants"] == 3
-        assert stats["dns_with_multiple_variants"] == 1
-
-
-class TestDnCaseNormalizationScenarios:
-    """Test various DN case normalization scenarios."""
-
-    @pytest.fixture
-    def registry(self) -> m.Ldif.DnRegistry:
-        """Create DN registry."""
-        return m.Ldif.DnRegistry()
+        assert registry.resolve_canonical_dn("cn=admin,dc=com") is None
+        assert registry.resolve_canonical_dn("cn=user,dc=com") is None
 
     def test_multiple_references_to_same_dn_different_cases(
-        self, registry: m.Ldif.DnRegistry
+        self,
+        registry: m.Ldif.DnRegistry,
     ) -> None:
         """Test tracking multiple case variants of same DN."""
         registry.register_dn("cn=admin,dc=com")
         registry.register_dn("CN=Admin,DC=Com")
         registry.register_dn("cn=ADMIN,dc=COM")
-        canonical = registry.get_canonical_dn("CN=ADMIN,DC=COM")
+        canonical = registry.resolve_canonical_dn("CN=ADMIN,DC=COM")
         assert canonical == "cn=admin,dc=com"
         result = registry.validate_oud_consistency()
-        assert result.is_success
+        assert result.success
         assert result.value is False
 
     def test_hierarchical_dn_references(self, registry: m.Ldif.DnRegistry) -> None:
@@ -193,11 +114,14 @@ class TestDnCaseNormalizationScenarios:
         registry.register_dn("dc=example,dc=com")
         registry.register_dn("ou=users,dc=example,dc=com")
         registry.register_dn("cn=admin,ou=users,dc=example,dc=com")
-        assert registry.has_dn("dc=example,dc=com")
-        assert registry.has_dn("ou=users,dc=example,dc=com")
-        assert registry.has_dn("cn=admin,ou=users,dc=example,dc=com")
+        assert registry.resolve_canonical_dn("dc=example,dc=com") is not None
+        assert registry.resolve_canonical_dn("ou=users,dc=example,dc=com") is not None
+        assert (
+            registry.resolve_canonical_dn("cn=admin,ou=users,dc=example,dc=com")
+            is not None
+        )
         result = registry.validate_oud_consistency()
         assert result.value is True
 
 
-__all__ = ["TestDnCaseNormalizationScenarios", "TestDnCaseRegistry"]
+__all__: list[str] = ["TestsFlextLdifDnCaseHandling"]

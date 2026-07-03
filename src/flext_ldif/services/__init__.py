@@ -1,105 +1,98 @@
-# AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
-# Regenerate with: make codegen
-#
-"""FLEXT-LDIF Services - Internal Business Logic Layer."""
+# AUTO-GENERATED FILE — Regenerate with: make gen
+"""Services package."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
+from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core.typings import FlextTypes
-
-    from flext_ldif.services.acl import FlextLdifAcl
-    from flext_ldif.services.analysis import FlextLdifAnalysis
-    from flext_ldif.services.categorization import FlextLdifCategorization
-    from flext_ldif.services.conversion import FlextLdifConversion
-    from flext_ldif.services.detector import FlextLdifDetector
-    from flext_ldif.services.dn import FlextLdifDn
-    from flext_ldif.services.entries import FlextLdifEntries
-    from flext_ldif.services.filters import FlextLdifFilters
-    from flext_ldif.services.migration import FlextLdifMigrationPipeline
-    from flext_ldif.services.parser import FlextLdifParser
-    from flext_ldif.services.pipeline import ProcessingPipeline
-    from flext_ldif.services.processing import FlextLdifProcessing
-    from flext_ldif.services.registry import FlextLdifServiceRegistry
-    from flext_ldif.services.schema import FlextLdifSchema
-    from flext_ldif.services.server import FlextLdifServer
-    from flext_ldif.services.sorting import FlextLdifSorting
-    from flext_ldif.services.statistics import FlextLdifStatistics
-    from flext_ldif.services.syntax import FlextLdifSyntax
-    from flext_ldif.services.transformers import ServerTransformer
-    from flext_ldif.services.validation import FlextLdifValidation
-    from flext_ldif.services.writer import FlextLdifWriter
-
-_LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "FlextLdifAcl": ("flext_ldif.services.acl", "FlextLdifAcl"),
-    "FlextLdifAnalysis": ("flext_ldif.services.analysis", "FlextLdifAnalysis"),
-    "FlextLdifCategorization": (
-        "flext_ldif.services.categorization",
-        "FlextLdifCategorization",
-    ),
-    "FlextLdifConversion": ("flext_ldif.services.conversion", "FlextLdifConversion"),
-    "FlextLdifDetector": ("flext_ldif.services.detector", "FlextLdifDetector"),
-    "FlextLdifDn": ("flext_ldif.services.dn", "FlextLdifDn"),
-    "FlextLdifEntries": ("flext_ldif.services.entries", "FlextLdifEntries"),
-    "FlextLdifFilters": ("flext_ldif.services.filters", "FlextLdifFilters"),
-    "FlextLdifMigrationPipeline": (
-        "flext_ldif.services.migration",
-        "FlextLdifMigrationPipeline",
-    ),
-    "FlextLdifParser": ("flext_ldif.services.parser", "FlextLdifParser"),
-    "FlextLdifProcessing": ("flext_ldif.services.processing", "FlextLdifProcessing"),
-    "FlextLdifSchema": ("flext_ldif.services.schema", "FlextLdifSchema"),
-    "FlextLdifServer": ("flext_ldif.services.server", "FlextLdifServer"),
-    "FlextLdifServiceRegistry": (
-        "flext_ldif.services.registry",
-        "FlextLdifServiceRegistry",
-    ),
-    "FlextLdifSorting": ("flext_ldif.services.sorting", "FlextLdifSorting"),
-    "FlextLdifStatistics": ("flext_ldif.services.statistics", "FlextLdifStatistics"),
-    "FlextLdifSyntax": ("flext_ldif.services.syntax", "FlextLdifSyntax"),
-    "FlextLdifValidation": ("flext_ldif.services.validation", "FlextLdifValidation"),
-    "FlextLdifWriter": ("flext_ldif.services.writer", "FlextLdifWriter"),
-    "ProcessingPipeline": ("flext_ldif.services.pipeline", "ProcessingPipeline"),
-    "ServerTransformer": ("flext_ldif.services.transformers", "ServerTransformer"),
-}
-
-__all__ = [
-    "FlextLdifAcl",
-    "FlextLdifAnalysis",
-    "FlextLdifCategorization",
-    "FlextLdifConversion",
-    "FlextLdifDetector",
-    "FlextLdifDn",
-    "FlextLdifEntries",
-    "FlextLdifFilters",
-    "FlextLdifMigrationPipeline",
-    "FlextLdifParser",
-    "FlextLdifProcessing",
-    "FlextLdifSchema",
-    "FlextLdifServer",
-    "FlextLdifServiceRegistry",
-    "FlextLdifSorting",
-    "FlextLdifStatistics",
-    "FlextLdifSyntax",
-    "FlextLdifValidation",
-    "FlextLdifWriter",
-    "ProcessingPipeline",
-    "ServerTransformer",
-]
-
-
-def __getattr__(name: str) -> FlextTypes.ModuleExport:
-    """Lazy-load module attributes on first access (PEP 562)."""
-    return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
+    from flext_ldif.services.acl import FlextLdifAcl as FlextLdifAcl
+    from flext_ldif.services.analysis import FlextLdifAnalysis as FlextLdifAnalysis
+    from flext_ldif.services.categorization import (
+        FlextLdifCategorization as FlextLdifCategorization,
+    )
+    from flext_ldif.services.conversion import (
+        FlextLdifConversion as FlextLdifConversion,
+    )
+    from flext_ldif.services.conversion_acl import (
+        FlextLdifConversionAclMixin as FlextLdifConversionAclMixin,
+    )
+    from flext_ldif.services.conversion_acl_preserve import (
+        FlextLdifConversionAclPreserveMixin as FlextLdifConversionAclPreserveMixin,
+    )
+    from flext_ldif.services.conversion_entry import (
+        FlextLdifConversionEntryMixin as FlextLdifConversionEntryMixin,
+    )
+    from flext_ldif.services.conversion_metadata import (
+        FlextLdifConversionMetadataMixin as FlextLdifConversionMetadataMixin,
+    )
+    from flext_ldif.services.conversion_schema import (
+        FlextLdifConversionSchemaMixin as FlextLdifConversionSchemaMixin,
+    )
+    from flext_ldif.services.conversion_schema_entry import (
+        FlextLdifConversionSchemaEntryMixin as FlextLdifConversionSchemaEntryMixin,
+    )
+    from flext_ldif.services.conversion_support import (
+        FlextLdifConversionSupportMixin as FlextLdifConversionSupportMixin,
+    )
+    from flext_ldif.services.detector import FlextLdifDetector as FlextLdifDetector
+    from flext_ldif.services.entries import FlextLdifEntries as FlextLdifEntries
+    from flext_ldif.services.filters import FlextLdifFilters as FlextLdifFilters
+    from flext_ldif.services.migration import (
+        FlextLdifMigrationPipeline as FlextLdifMigrationPipeline,
+    )
+    from flext_ldif.services.parser import FlextLdifParser as FlextLdifParser
+    from flext_ldif.services.pipeline import (
+        FlextLdifProcessingPipeline as FlextLdifProcessingPipeline,
+    )
+    from flext_ldif.services.processing import (
+        FlextLdifProcessing as FlextLdifProcessing,
+    )
+    from flext_ldif.services.server import FlextLdifServer as FlextLdifServer
+    from flext_ldif.services.statistics import (
+        FlextLdifStatistics as FlextLdifStatistics,
+    )
+    from flext_ldif.services.transformers import (
+        FlextLdifTransformer as FlextLdifTransformer,
+    )
+    from flext_ldif.services.validation import (
+        FlextLdifValidation as FlextLdifValidation,
+    )
+    from flext_ldif.services.writer import FlextLdifWriter as FlextLdifWriter
+_LAZY_IMPORTS = build_lazy_import_map(
+    {
+        ".acl": ("FlextLdifAcl",),
+        ".analysis": ("FlextLdifAnalysis",),
+        ".categorization": ("FlextLdifCategorization",),
+        ".conversion": ("FlextLdifConversion",),
+        ".conversion_acl": ("FlextLdifConversionAclMixin",),
+        ".conversion_acl_preserve": ("FlextLdifConversionAclPreserveMixin",),
+        ".conversion_entry": ("FlextLdifConversionEntryMixin",),
+        ".conversion_metadata": ("FlextLdifConversionMetadataMixin",),
+        ".conversion_schema": ("FlextLdifConversionSchemaMixin",),
+        ".conversion_schema_entry": ("FlextLdifConversionSchemaEntryMixin",),
+        ".conversion_support": ("FlextLdifConversionSupportMixin",),
+        ".detector": ("FlextLdifDetector",),
+        ".entries": ("FlextLdifEntries",),
+        ".filters": ("FlextLdifFilters",),
+        ".migration": ("FlextLdifMigrationPipeline",),
+        ".parser": ("FlextLdifParser",),
+        ".pipeline": ("FlextLdifProcessingPipeline",),
+        ".processing": ("FlextLdifProcessing",),
+        ".server": ("FlextLdifServer",),
+        ".statistics": ("FlextLdifStatistics",),
+        ".transformers": ("FlextLdifTransformer",),
+        ".validation": ("FlextLdifValidation",),
+        ".writer": ("FlextLdifWriter",),
+    },
+)
 
 
-def __dir__() -> list[str]:
-    """Return list of available attributes for dir() and autocomplete."""
-    return sorted(__all__)
-
-
-cleanup_submodule_namespace(__name__, _LAZY_IMPORTS)
+install_lazy_exports(
+    __name__,
+    globals(),
+    _LAZY_IMPORTS,
+    publish_all=False,
+)

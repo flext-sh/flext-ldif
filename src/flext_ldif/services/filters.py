@@ -2,25 +2,17 @@
 
 from __future__ import annotations
 
-import struct
-from collections.abc import Mapping
-from typing import Final
-
-from flext_core import FlextLogger, r
-
-from flext_ldif.models import FlextLdifModels as m
-
-logger: Final = FlextLogger(__name__)
+from flext_ldif import c, m, p, r, s, t, u
 
 
-class FlextLdifFilters:
+class FlextLdifFilters(s):
     """LDIF entry filtering service."""
 
     @classmethod
     def _check_schema_oid(
         cls,
-        attrs: Mapping[str, list[str]],
-        attr_keys: tuple[str, str],
+        attrs: t.MutableStrSequenceMapping,
+        attr_keys: t.StrPair,
         allowed_set: frozenset[str],
     ) -> tuple[bool, bool]:
         """Check if schema OID matches allowed set."""
@@ -34,18 +26,22 @@ class FlextLdifFilters:
 
     @classmethod
     def _extract_allowed_oids(
-        cls, allowed_oids: Mapping[str, frozenset[str]]
-    ) -> tuple[frozenset[str], frozenset[str], frozenset[str], frozenset[str]]:
-        """Extract allowed OID sets from mapping."""
-        return (
-            allowed_oids.get("allowed_attribute_oids", frozenset()),
-            allowed_oids.get("allowed_objectclass_oids", frozenset()),
-            allowed_oids.get("allowed_matchingrule_oids", frozenset()),
-            allowed_oids.get("allowed_matchingruleuse_oids", frozenset()),
-        )
+        cls,
+        allowed_oids: m.Ldif.WhitelistRules | t.FrozensetMapping,
+    ) -> t.FrozensetMapping:
+        """Extract allowed OID sets keyed by canonical schema attribute names."""
+        if isinstance(allowed_oids, m.Ldif.WhitelistRules):
+            return allowed_oids.schema_oid_filters
+        return {
+            attr_name: allowed_oids.get(attr_name, c.Ldif.EMPTY_STR_FROZENSET)
+            for _, attr_name in c.Ldif.WHITELIST_RULE_SCHEMA_ATTRIBUTE_KEYS
+        }
 
     @classmethod
-    def _extract_oid_from_schema_attr(cls, values: list[str]) -> str | None:
+    def _extract_oid_from_schema_attr(
+        cls,
+        values: t.MutableSequenceOf[str],
+    ) -> str | None:
         """Extract OID from schema attribute value."""
         if not values:
             return None
@@ -63,68 +59,151 @@ class FlextLdifFilters:
     def _should_include_entry(
         cls,
         entry: m.Ldif.Entry,
-        allowed_attr: frozenset[str],
-        allowed_oc: frozenset[str],
-        allowed_mr: frozenset[str],
-        allowed_mru: frozenset[str],
+        allowed_oids: m.Ldif.WhitelistRules | t.FrozensetMapping,
     ) -> bool:
         """Check if entry should be included based on OID filters."""
         attrs = entry.attributes
         if attrs is None:
             return True
         if getattr(attrs, "attributes", None) is not None:
-            attrs_dict: Mapping[str, list[str]] = attrs.attributes
+            attrs_dict: t.MutableStrSequenceMapping = attrs.attributes
         else:
             return True
-        is_attr, include_attr = cls._check_schema_oid(
-            attrs_dict, ("attributeTypes", "attributetypes"), allowed_attr
-        )
-        is_oc, include_oc = cls._check_schema_oid(
-            attrs_dict, ("objectClasses", "objectclasses"), allowed_oc
-        )
-        is_mr, include_mr = cls._check_schema_oid(
-            attrs_dict, ("matchingRules", "matchingrules"), allowed_mr
-        )
-        is_mru, include_mru = cls._check_schema_oid(
-            attrs_dict, ("matchingRuleUse", "matchingruleuse"), allowed_mru
-        )
-        is_schema_entry = is_attr or is_oc or is_mr or is_mru
-        should_include = include_attr and include_oc and include_mr and include_mru
+        allowed_oid_map = cls._extract_allowed_oids(allowed_oids)
+        checks = [
+            cls._check_schema_oid(attrs_dict, attr_keys, allowed_oid_map[attr_keys[1]])
+            for attr_keys in c.Ldif.SCHEMA_OID_ATTRIBUTE_KEYS
+        ]
+        is_schema_entry = any(is_schema for is_schema, _ in checks)
+        should_include = all(include_entry for _, include_entry in checks)
         return not is_schema_entry or should_include
 
     @classmethod
     def filter_schema_by_oids(
-        cls, entries: list[m.Ldif.Entry], allowed_oids: Mapping[str, frozenset[str]]
-    ) -> r[list[m.Ldif.Entry]]:
+        cls,
+        entries: t.MutableSequenceOf[m.Ldif.Entry],
+        allowed_oids: m.Ldif.WhitelistRules | t.FrozensetMapping,
+    ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
         """Filter schema entries by allowed OIDs."""
         try:
-            allowed_attr, allowed_oc, allowed_mr, allowed_mru = (
-                cls._extract_allowed_oids(allowed_oids)
-            )
-            if not any([allowed_attr, allowed_oc, allowed_mr, allowed_mru]):
-                return r[list[m.Ldif.Entry]].ok(entries)
-            filtered: list[m.Ldif.Entry] = [
+            allowed_oid_map = cls._extract_allowed_oids(allowed_oids)
+            if not any(allowed_oid_map.values()):
+                return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(entries)
+            filtered: t.MutableSequenceOf[m.Ldif.Entry] = [
                 entry
                 for entry in entries
-                if cls._should_include_entry(
-                    entry, allowed_attr, allowed_oc, allowed_mr, allowed_mru
-                )
+                if cls._should_include_entry(entry, allowed_oid_map)
             ]
-            logger.debug(
+            cls._get_or_create_logger().debug(
                 "Filtered schema entries by OIDs",
                 total_entries=len(entries),
                 filtered_count=len(filtered),
             )
-            return r[list[m.Ldif.Entry]].ok(filtered)
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
-            logger.exception("Failed to filter schema entries by OIDs")
-            return r[list[m.Ldif.Entry]].fail(f"Schema OID filter failed: {e}")
+            return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(filtered)
+        except c.Ldif.EXC_LDIF_PARSE as e:
+            cls._get_or_create_logger().exception(
+                "Failed to filter schema entries by OIDs",
+            )
+            return r[t.MutableSequenceOf[m.Ldif.Entry]].fail_op("Schema OID filter", e)
+
+    @classmethod
+    def filter_entry_attributes(
+        cls,
+        entry: m.Ldif.Entry | p.Ldif.Entry,
+        forbidden_attrs: t.StrSequence,
+        forbidden_ocs: t.StrSequence,
+    ) -> m.Ldif.Entry:
+        """Strip forbidden attributes and objectClasses from an entry."""
+        filtered_entry: m.Ldif.Entry = u.Ldif.as_entry(entry)
+        if entry.attributes and forbidden_attrs:
+            attrs_dict = entry.attributes.attributes
+            forbidden_set = {attr.lower() for attr in forbidden_attrs}
+            attrs_to_remove: t.StrSequence = [
+                k for k in attrs_dict if k.lower() in forbidden_set
+            ]
+            if attrs_to_remove:
+                filtered_attrs = {
+                    k: v for k, v in attrs_dict.items() if k not in attrs_to_remove
+                }
+                filtered_entry = filtered_entry.model_copy(
+                    update={
+                        "attributes": m.Ldif.Attributes.model_validate({
+                            "attributes": filtered_attrs,
+                        }),
+                    },
+                )
+        if forbidden_ocs and filtered_entry.attributes is not None:
+            oc_attrs = filtered_entry.attributes.attributes
+            forbidden_ocs_lower = {oc.lower() for oc in forbidden_ocs}
+            oc_key: str | None = next(
+                (
+                    k
+                    for k in oc_attrs
+                    if k.lower() == c.Ldif.DictKeys.OBJECTCLASS.lower()
+                ),
+                None,
+            )
+            if oc_key is not None:
+                filtered_ocs: list[str] = [
+                    v for v in oc_attrs[oc_key] if v.lower() not in forbidden_ocs_lower
+                ]
+                updated = dict(oc_attrs)
+                if filtered_ocs:
+                    updated[oc_key] = filtered_ocs
+                else:
+                    updated.pop(oc_key, None)
+                filtered_entry = filtered_entry.model_copy(
+                    update={
+                        "attributes": m.Ldif.Attributes.model_validate({
+                            "attributes": updated,
+                        }),
+                    },
+                )
+        return filtered_entry
+
+    @classmethod
+    def filter_schema_attribute_values(
+        cls,
+        entry: m.Ldif.Entry | p.Ldif.Entry,
+        allowed_oids: m.Ldif.WhitelistRules | t.FrozensetMapping,
+    ) -> m.Ldif.Entry:
+        """Filter individual OID values within schema entry attributes."""
+        concrete: m.Ldif.Entry = u.Ldif.as_entry(entry)
+        if concrete.attributes is None:
+            return concrete
+        allowed_value_oids = cls._extract_allowed_oids(allowed_oids)
+        attrs_dict = concrete.attributes.attributes
+        updated_attrs: dict[str, list[str]] = {
+            k: list(v) for k, v in attrs_dict.items()
+        }
+        changed = False
+        for attr_name in list(updated_attrs):
+            oid_set = allowed_value_oids.get(attr_name.lower())
+            if oid_set is None:
+                continue
+            original = updated_attrs[attr_name]
+            filtered: list[str] = [
+                value
+                for value in original
+                if (oid := cls._extract_oid_from_schema_attr([value])) is None
+                or oid in oid_set
+            ]
+            if filtered != original:
+                changed = True
+            if filtered:
+                updated_attrs[attr_name] = filtered
+            else:
+                del updated_attrs[attr_name]
+        if not changed:
+            return concrete
+        copied: m.Ldif.Entry = concrete.model_copy(
+            update={
+                "attributes": m.Ldif.Attributes.model_validate({
+                    "attributes": updated_attrs,
+                }),
+            },
+        )
+        return copied
 
 
-__all__ = ["FlextLdifFilters"]
+__all__: list[str] = ["FlextLdifFilters"]

@@ -1,29 +1,37 @@
-"""Version and package metadata using importlib.metadata.
+# AUTO-GENERATED FILE — Regenerate with: make gen
+"""Package version and metadata for flext-ldif.
 
-Single source of truth pattern following flext-core standards.
-All metadata comes from pyproject.toml via importlib.metadata.
+Subclass of ``FlextVersion`` — overrides only ``_metadata``.
+All derived attributes (``__version__``, ``__title__``, etc.) are
+computed automatically via ``FlextVersion.__init_subclass__``.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
 
-from importlib.metadata import metadata
+from importlib.metadata import PackageMetadata, metadata
 
-_metadata = metadata("flext-ldif")
-__version__ = _metadata.get("Version", "0.12.0-dev")
-__version_info__ = tuple(
-    int(part) if part.isdigit() else part for part in __version__.split(".")
-)
-__title__ = _metadata.get("Name", "flext-ldif")
-__description__ = _metadata.get("Summary", "FLEXT LDIF Processing Library")
-__author__ = _metadata.get("Author", "FLEXT Team")
-__author_email__ = _metadata.get("Author-Email", "")
-__license__ = _metadata.get("License", "MIT")
-__url__ = _metadata.get("Home-Page", "")
-__all__ = [
+from flext_core.__version__ import FlextVersion
+
+
+class FlextLdifVersion(FlextVersion):
+    """flext-ldif version — MRO-derived from FlextVersion."""
+
+    _metadata: PackageMetadata = metadata("flext-ldif")
+
+
+__version__ = FlextLdifVersion.__version__
+__version_info__ = FlextLdifVersion.__version_info__
+__title__ = FlextLdifVersion.__title__
+__description__ = FlextLdifVersion.__description__
+__author__ = FlextLdifVersion.__author__
+__author_email__ = FlextLdifVersion.__author_email__
+__license__ = FlextLdifVersion.__license__
+__url__ = FlextLdifVersion.__url__
+__all__: list[str] = [
+    "FlextLdifVersion",
     "__author__",
     "__author_email__",
     "__description__",

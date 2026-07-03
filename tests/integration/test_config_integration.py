@@ -1,13 +1,13 @@
 """Config Integration Tests - FlextLdifSettings Integration Verification.
 
-Tests comprehensive config integration with FlextLdif facade including:
+Tests comprehensive settings integration with ldif facade including:
 - Configuration initialization with facade
 - Server type selection and behavior
-- Quirks mode handling
+- Servers mode handling
 - Configuration impacts on parsing
 - Config consistency across operations
 
-Scope: Integration testing of FlextLdifSettings through FlextLdif facade,
+Scope: Integration testing of FlextLdifSettings through ldif facade,
 server type behavior, parsing consistency, and filtering operations.
 
 Modules tested: flext_ldif, flext_ldif.settings
@@ -18,131 +18,114 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from typing import Final
-
 import pytest
-from flext_core import FlextLogger
 
-from flext_ldif import FlextLdif, FlextLdifSettings, c
-
-logger = FlextLogger(__name__)
-
-
-class ConfigTestData:
-    """Test data constants and mappings for config integration tests."""
-
-    SERVER_TYPES: Final[list[str]] = ["oid", "oud", "openldap", "rfc"]
-    BASIC_ENTRY: Final[str] = (
-        "dn: cn=Test,dc=example,dc=com\ncn: Test\nobjectClass: person\n"
-    )
-    MULTIPLE_ENTRIES: Final[str] = (
-        "dn: cn=User1,dc=example,dc=com\ncn: User1\nobjectClass: person\n\ndn: cn=User2,dc=example,dc=com\ncn: User2\nobjectClass: person\n\ndn: cn=User3,dc=example,dc=com\ncn: User3\nobjectClass: person\n"
-    )
-    FILTER_CONTENT: Final[str] = (
-        "dn: cn=Person1,dc=example,dc=com\ncn: Person1\nobjectClass: person\n\ndn: cn=Group1,dc=example,dc=com\ncn: Group1\nobjectClass: groupOfNames\n"
-    )
-    SERVER_CONTENT: Final[Mapping[str, str]] = {
-        "oid": "dn: cn=OID Test,dc=example,dc=com\ncn: OID Test\nobjectClass: person\n",
-        "oud": "dn: cn=OUD Test,dc=example,dc=com\ncn: OUD Test\nobjectClass: person\n",
-        "openldap": "dn: cn=OpenLDAP Test,dc=example,dc=com\ncn: OpenLDAP Test\nobjectClass: person\n",
-        "rfc": "dn: cn=RFC Test,dc=example,dc=com\ncn: RFC Test\nobjectClass: person\n",
-    }
+from flext_ldif import ldif
+from tests.base import s
+from tests.constants import c
+from tests.models import m
+from tests.settings import TestsFlextLdifSettings
 
 
-class TestFlextLdifSettingsIntegration:
-    """Test FlextLdifSettings integration through FlextLdif facade.
+class TestsFlextLdifConfigIntegration:
+    """Test FlextLdifSettings integration through ldif facade.
 
     All tests use real implementations without mocks.
     Uses parametrization and mappings for maximum DRY.
     """
 
+    @staticmethod
+    def create_settings() -> TestsFlextLdifSettings:
+        return s.fetch_settings().clone()
+
     def test_default_config_initialization(self) -> None:
-        """Test facade initializes with default config."""
-        ldif = FlextLdif()
-        result = ldif.parse(ConfigTestData.BASIC_ENTRY)
-        assert result.is_success
+        """Test facade initializes with default settings."""
+        result = ldif.parse_ldif(c.Tests.CONFIG_BASIC_ENTRY)
+        assert result.success
 
     def test_custom_config_with_server_type(self) -> None:
-        """Test facade with custom config and server type."""
-        config = FlextLdifSettings(server_type="openldap")
-        ldif = FlextLdif(config=config)
-        result = ldif.parse(ConfigTestData.BASIC_ENTRY)
-        assert result.is_success
-        entries = result.value
+        """Test facade with custom settings and server type."""
+        settings = self.create_settings()
+        api = ldif(settings=settings)
+        assert isinstance(settings.Tests, m.SettingsValue)
+        result = api.parse_ldif(
+            c.Tests.CONFIG_BASIC_ENTRY,
+            server_type=c.Tests.OPENLDAP,
+        )
+        assert result.success
+        entries = result.value.entries
         assert len(entries) == 1
 
     def test_config_independence_between_instances(self) -> None:
-        """Test that multiple FlextLdif instances with different configs are independent."""
-        config1 = FlextLdifSettings(server_type="oid")
-        config2 = FlextLdifSettings(server_type="openldap")
-        ldif1 = FlextLdif(config=config1)
-        ldif2 = FlextLdif(config=config2)
-        result1 = ldif1.parse(ConfigTestData.BASIC_ENTRY)
-        result2 = ldif2.parse(ConfigTestData.BASIC_ENTRY)
-        assert result1.is_success
-        assert result2.is_success
+        """Test that multiple ldif instances with different configs are independent."""
+        config1 = self.create_settings()
+        config2 = self.create_settings()
+        ldif1 = ldif(settings=config1)
+        ldif2 = ldif(settings=config2)
+        result1 = ldif1.parse_ldif(
+            c.Tests.CONFIG_BASIC_ENTRY,
+            server_type=c.Tests.OID,
+        )
+        result2 = ldif2.parse_ldif(
+            c.Tests.CONFIG_BASIC_ENTRY,
+            server_type=c.Tests.OPENLDAP,
+        )
+        assert result1.success
+        assert result2.success
 
-    @pytest.mark.parametrize("server_type", ConfigTestData.SERVER_TYPES[:3])
+    @pytest.mark.parametrize("server_type", c.Tests.CONFIG_SERVER_TYPES[:3])
     def test_config_affects_parsing_behavior(
-        self, server_type: c.Ldif.LiteralTypes.ServerTypeLiteral
+        self,
+        server_type: str,
     ) -> None:
-        """Test that config settings affect parsing behavior."""
-        config = FlextLdifSettings(server_type=server_type)
-        ldif = FlextLdif(config=config)
-        result = ldif.parse(ConfigTestData.BASIC_ENTRY)
-        assert result.is_success
+        """Test that settings settings affect parsing behavior."""
+        settings = self.create_settings()
+        api = ldif(settings=settings)
+        result = api.parse_ldif(c.Tests.CONFIG_BASIC_ENTRY, server_type=server_type)
+        assert result.success
 
     @pytest.mark.parametrize(
         ("server_type", "expected_content_key"),
-        [("rfc", "rfc"), ("oid", "oid"), ("oud", "oud"), ("openldap", "openldap")],
+        [
+            (c.Tests.RFC, c.Tests.RFC),
+            (c.Tests.OID, c.Tests.OID),
+            (c.Tests.OUD, c.Tests.OUD),
+            (c.Tests.OPENLDAP, c.Tests.OPENLDAP),
+        ],
     )
     def test_config_with_server_type(
         self,
-        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral,
+        server_type: str,
         expected_content_key: str,
     ) -> None:
-        """Test config with specific server type using parametrization."""
-        config = FlextLdifSettings(server_type=server_type)
-        ldif = FlextLdif(config=config)
-        content = ConfigTestData.SERVER_CONTENT[expected_content_key]
-        result = ldif.parse(content)
-        assert result.is_success
-        entries = result.value
+        """Test settings with specific server type using parametrization."""
+        settings = self.create_settings()
+        api = ldif(settings=settings)
+        content = c.Tests.CONFIG_SERVER_CONTENT[expected_content_key]
+        result = api.parse_ldif(content, server_type=server_type)
+        assert result.success
+        entries = result.value.entries
         assert len(entries) == 1
 
     def test_config_consistency_across_operations(self) -> None:
-        """Test that config remains consistent across operations."""
-        config = FlextLdifSettings(server_type="rfc")
-        ldif = FlextLdif(config=config)
+        """Test that settings remains consistent across operations."""
+        settings = self.create_settings()
+        api = ldif(settings=settings)
         content1 = "dn: cn=Test1,dc=example,dc=com\ncn: Test1\nobjectClass: person\n"
         content2 = "dn: cn=Test2,dc=example,dc=com\ncn: Test2\nobjectClass: person\n"
-        result1 = ldif.parse(content1)
-        result2 = ldif.parse(content2)
-        assert result1.is_success
-        assert result2.is_success
+        result1 = api.parse_ldif(content1)
+        result2 = api.parse_ldif(content2)
+        assert result1.success
+        assert result2.success
 
     def test_config_with_multiple_entries(self) -> None:
-        """Test config handling with multiple entries."""
-        config = FlextLdifSettings(server_type="rfc")
-        ldif = FlextLdif(config=config)
-        result = ldif.parse(ConfigTestData.MULTIPLE_ENTRIES)
-        assert result.is_success
-        entries = result.value
+        """Test settings handling with multiple entries."""
+        settings = self.create_settings()
+        api = ldif(settings=settings)
+        result = api.parse_ldif(c.Tests.CONFIG_MULTIPLE_ENTRIES)
+        assert result.success
+        entries = result.value.entries
         assert len(entries) == 3
-
-    def test_config_filtering_behavior(self) -> None:
-        """Test that config doesn't interfere with filtering."""
-        config = FlextLdifSettings(server_type="rfc")
-        ldif = FlextLdif(config=config)
-        parse_result = ldif.parse(ConfigTestData.FILTER_CONTENT)
-        assert parse_result.is_success
-        entries = parse_result.value
-        assert len(entries) == 2
-        filter_result = ldif.filter(entries, objectclass="person")
-        assert filter_result.is_success
-        filtered = filter_result.value
-        assert len(filtered) == 1
 
 
 if __name__ == "__main__":

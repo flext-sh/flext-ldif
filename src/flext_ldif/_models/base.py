@@ -4,111 +4,9 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_core import FlextModels
-from pydantic import ConfigDict, Field, computed_field
-
-from flext_ldif.constants import FlextLdifConstants as c
-from flext_ldif.shared import FlextLdifShared
-
-
-class FlextLdifModelsBase(FlextModels.ArbitraryTypesModel):
-    """Base class for all FLEXT-LDIF models (events, configs, processing results)."""
-
-    model_config = ConfigDict(
-        strict=True,
-        validate_assignment=True,
-        extra="forbid",
-        validate_default=True,
-        use_enum_values=True,
-        str_strip_whitespace=True,
-    )
-
-
-class SchemaElement(FlextLdifModelsBase):
-    """Base class for all LDAP schema elements (attributes, objectClasses, syntaxes)."""
-
-    @computed_field
-    def has_metadata(self) -> bool:
-        """Check if schema element has quirk metadata."""
-        metadata = getattr(self, "metadata", None)
-        return metadata is not None
-
-    @computed_field
-    def has_server_extensions(self) -> bool:
-        """Check if element has server-specific extensions."""
-        metadata = getattr(self, "metadata", None)
-        if metadata is None:
-            return False
-        extensions = getattr(metadata, "extensions", None)
-        return bool(extensions)
-
-    @computed_field
-    def server_type(self) -> str:
-        """Get server type from metadata, default to RFC."""
-        metadata = getattr(self, "metadata", None)
-        if metadata is not None:
-            quirk_type = getattr(metadata, "quirk_type", None)
-            if quirk_type is not None:
-                try:
-                    return FlextLdifShared.normalize_server_type(str(quirk_type))
-                except ValueError:
-                    pass
-        return "rfc"
-
-
-class FrozenLdifModel(FlextLdifModelsBase):
-    """Immutable LDIF model — FlextLdifModelsBase with frozen=True."""
-
-    model_config = ConfigDict(frozen=True)
-
-
-class FrozenIgnoreLdifModel(FlextModels.ArbitraryTypesModel):
-    """Immutable LDIF model that silently ignores extra fields."""
-
-    model_config = ConfigDict(frozen=True, extra="ignore")
-
-
-class MutableIgnoreLdifModel(FlextLdifModelsBase):
-    """Mutable LDIF model that silently ignores extra fields."""
-
-    model_config = ConfigDict(frozen=False, extra="ignore")
-
-
-class AclElement(FlextModels.ArbitraryTypesModel):
-    """Base class for all ACL-related models."""
-
-    model_config = ConfigDict(
-        strict=True,
-        frozen=False,
-        extra="forbid",
-        validate_default=True,
-        use_enum_values=True,
-        str_strip_whitespace=True,
-    )
-    server_type: Annotated[
-        c.Ldif.LiteralTypes.ServerTypeLiteral,
-        Field(
-            default="rfc",
-            description="LDAP server type (oid, oud, openldap, rfc, etc.)",
-        ),
-    ]
-    validation_violations: Annotated[
-        list[str],
-        Field(
-            default_factory=list,
-            description="Validation violations captured during parsing/processing",
-        ),
-    ]
-
-    @computed_field
-    def has_server_quirks(self) -> bool:
-        """Check if element uses server-specific quirks."""
-        return self.server_type != "rfc"
-
-    @computed_field
-    def is_valid(self) -> bool:
-        """Check if ACL element passed validation."""
-        return len(self.validation_violations) == 0
+from flext_core import m
+from flext_core.utilities import FlextUtilities as u
+from flext_ldif import FlextLdifShared, c, t
 
 
 class FlextLdifModelsBases:
@@ -118,25 +16,97 @@ class FlextLdifModelsBases:
     a single nested class hierarchy using MRO inheritance.
 
     Usage::
-        from flext_ldif._models.base import FlextLdifModelsBases
+        from flext_core import m
+        from flext_ldif import FlextLdifModelsBases
 
-        FlextLdifModelsBase = FlextLdifModelsBases.FlextLdifModelsBase
+        Base = m.StrictModel
     """
 
-    FlextLdifModelsBase = FlextLdifModelsBase
-    SchemaElement = SchemaElement
-    FrozenLdifModel = FrozenLdifModel
-    FrozenIgnoreLdifModel = FrozenIgnoreLdifModel
-    MutableIgnoreLdifModel = MutableIgnoreLdifModel
-    AclElement = AclElement
+    class SchemaElement(m.StrictModel):
+        """Base class for all LDAP schema elements (attributes, objectClasses, syntaxes)."""
+
+        validation_metadata: Annotated[
+            m.ConfigMap | None,
+            u.Field(
+                description="Validation metadata captured during schema processing.",
+            ),
+        ] = None
+
+        @u.computed_field()
+        @property
+        def has_metadata(self) -> bool:
+            """Check if schema element has server metadata."""
+            metadata = getattr(self, "metadata", None)
+            return metadata is not None
+
+        @u.computed_field()
+        @property
+        def has_server_extensions(self) -> bool:
+            """Check if element has server-specific extensions."""
+            metadata = getattr(self, "metadata", None)
+            if metadata is None:
+                return False
+            extensions = getattr(metadata, "extensions", None)
+            return bool(extensions)
+
+        @u.computed_field()
+        @property
+        def server_type(self) -> str:
+            """Get server type from metadata, default to RFC."""
+            metadata = getattr(self, "metadata", None)
+            if metadata is not None:
+                server_type = getattr(metadata, "server_type", None)
+                if server_type is not None:
+                    try:
+                        return FlextLdifShared.normalize_server_type(str(server_type))
+                    except ValueError:
+                        pass
+            return "rfc"
+
+    class AclElement(m.StrictModel):
+        """Base class for all ACL-related models."""
+
+        server_type: Annotated[
+            c.Ldif.ServerTypes,
+            u.Field(
+                description="LDAP server type (oid, oud, openldap, rfc, etc.)",
+            ),
+        ] = c.Ldif.ServerTypes.RFC
+        validation_violations: Annotated[
+            t.MutableSequenceOf[str],
+            u.Field(
+                default_factory=list,
+                description="Validation violations recorded while normalizing ACL data.",
+            ),
+        ] = u.Field(default_factory=list)
+        validation_metadata: Annotated[
+            m.ConfigMap | None,
+            u.Field(
+                description="Validation metadata captured during ACL processing.",
+            ),
+        ] = None
+
+        @u.computed_field()
+        @property
+        def has_server_servers(self) -> bool:
+            """Check if element uses server-specific servers."""
+            return self.server_type != "rfc"
+
+        @u.computed_field()
+        @property
+        def valid(self) -> bool:
+            """Check if ACL element passed validation."""
+            return not self.validation_violations
+
+        @u.field_validator("server_type", mode="before")
+        @classmethod
+        def _coerce_server_type(
+            cls,
+            value: c.Ldif.ServerTypes | str,
+        ) -> c.Ldif.ServerTypes:
+            if isinstance(value, c.Ldif.ServerTypes):
+                return value
+            return FlextLdifShared.normalize_server_type(value)
 
 
-__all__ = [
-    "AclElement",
-    "FlextLdifModelsBase",
-    "FlextLdifModelsBases",
-    "FrozenIgnoreLdifModel",
-    "FrozenLdifModel",
-    "MutableIgnoreLdifModel",
-    "SchemaElement",
-]
+__all__: list[str] = ["FlextLdifModelsBases"]

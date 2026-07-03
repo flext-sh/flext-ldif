@@ -1,17 +1,11 @@
-"""Base Constants for Server Quirks."""
+"""Base Constants for Server Servers."""
 
 from __future__ import annotations
 
-import builtins
-from collections.abc import Mapping
+from types import MappingProxyType
 from typing import ClassVar
 
-from flext_core import FlextLogger
-
-from flext_ldif import c, p
-from flext_ldif._utilities.server import FlextLdifUtilitiesServer
-
-logger = FlextLogger(__name__)
+from flext_ldif import t
 
 
 class FlextLdifServersBaseConstants:
@@ -27,79 +21,29 @@ class FlextLdifServersBaseConstants:
     ACL_ATTRIBUTE_NAME: ClassVar[str] = ""
     SCHEMA_DN: ClassVar[str] = ""
     SCHEMA_SUP_SEPARATOR: ClassVar[str] = "$"
+    RFC_ACL_ATTRIBUTES: ClassVar[t.StrSequence] = (
+        "aci",
+        "acl",
+        "olcAccess",
+        "aclRights",
+        "aclEntry",
+    )
     ATTRIBUTE_FIELDS: ClassVar[frozenset[str]] = frozenset()
-    ATTRIBUTE_ALIASES: ClassVar[Mapping[str, list[str]]] = {}
+    ATTRIBUTE_ALIASES: ClassVar[t.StrSequenceMapping] = MappingProxyType({})
     OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset()
     PRESERVE_ON_MIGRATION: ClassVar[frozenset[str]] = frozenset()
-    OBJECTCLASS_REQUIREMENTS: ClassVar[Mapping[str, bool]] = {}
-    CATEGORIZATION_PRIORITY: ClassVar[list[str]] = []
-    CATEGORY_OBJECTCLASSES: ClassVar[Mapping[str, frozenset[str]]] = {}
+    OBJECTCLASS_REQUIREMENTS: ClassVar[t.BoolMapping] = MappingProxyType({})
+    CATEGORIZATION_PRIORITY: ClassVar[t.StrSequence] = ()
+    CATEGORY_OBJECTCLASSES: ClassVar[t.FrozensetMapping] = MappingProxyType({})
+    HIERARCHY_PRIORITY_OBJECTCLASSES: ClassVar[frozenset[str]] = frozenset()
     CATEGORIZATION_ACL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset()
+    DETECTION_PATTERN: ClassVar[str] = ""
+    DETECTION_WEIGHT: ClassVar[int] = 0
+    DETECTION_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset()
     DETECTION_OID_PATTERN: ClassVar[str] = ""
     DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset()
     DETECTION_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset()
     DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset()
 
 
-class FlextLdifServersBaseQuirkHelpers:
-    """Quirk helpers for server base (single class per module, no loose functions)."""
-
-    @staticmethod
-    def get_parent_quirk_safe(
-        instance: QuirkMethodsMixin,
-    ) -> p.Ldif.SchemaQuirk | None:
-        """Get _parent_quirk attribute safely with type narrowing."""
-        parent_raw: p.Ldif.SchemaQuirk | None = getattr(instance, "_parent_quirk", None)
-        if (
-            parent_raw is not None
-            and getattr(parent_raw, "_parent_quirk", None) is not None
-        ):
-            return parent_raw
-        return None
-
-    @staticmethod
-    def get_priority_from_parent(parent: p.Ldif.SchemaQuirk | None) -> int:
-        """Get priority from parent server class Constants."""
-        if parent is None:
-            return 100
-        constants_attr = getattr(parent, "Constants", None)
-        if constants_attr is None:
-            return 100
-        priority_raw: int | builtins.object = getattr(constants_attr, "PRIORITY", 100)
-        if isinstance(priority_raw, int):
-            return priority_raw
-        return 100
-
-    @staticmethod
-    def get_server_type_from_utilities(
-        quirk_class: type[QuirkMethodsMixin],
-    ) -> c.Ldif.LiteralTypes.ServerTypeLiteral:
-        """Get server type from utilities using type-safe access pattern."""
-        return FlextLdifUtilitiesServer.get_parent_server_type(quirk_class)
-
-
-class QuirkMethodsMixin:
-    """Mixin providing common quirk methods for Schema, Acl, and Entry classes."""
-
-    def _get_parent_quirk_safe(self) -> p.Ldif.SchemaQuirk | None:
-        """Get _parent_quirk attribute safely with type narrowing."""
-        return FlextLdifServersBaseQuirkHelpers.get_parent_quirk_safe(self)
-
-    def _get_priority(self) -> int:
-        """Get priority from parent server class Constants."""
-        parent = self._get_parent_quirk_safe()
-        return FlextLdifServersBaseQuirkHelpers.get_priority_from_parent(parent)
-
-    def _get_server_type(self) -> c.Ldif.LiteralTypes.ServerTypeLiteral:
-        """Get server_type from parent server class via __qualname__."""
-        return FlextLdifServersBaseQuirkHelpers.get_server_type_from_utilities(
-            type(self)
-        )
-
-
-__all__ = [
-    "FlextLdifServersBaseConstants",
-    "FlextLdifServersBaseQuirkHelpers",
-    "QuirkMethodsMixin",
-    "logger",
-]
+__all__: list[str] = ["FlextLdifServersBaseConstants"]

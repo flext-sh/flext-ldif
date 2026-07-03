@@ -2,43 +2,29 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-from typing import override
-
-from flext_core import FlextLogger, r, s
-
-from flext_ldif._models.domain import FlextLdifModelsDomains
-from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
-from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
-from flext_ldif._utilities.server import FlextLdifUtilitiesServer
-from flext_ldif.models import FlextLdifModels as m
-from flext_ldif.services.server import FlextLdifServer
-from flext_ldif.utilities import FlextLdifUtilities as u
+from flext_ldif import (
+    c,
+    m,
+    p,
+    r,
+    s,
+    t,
+    u,
+)
 
 
-class FlextLdifAcl(s[m.Ldif.AclResponse]):
+class FlextLdifAcl(s):
     """Direct ACL processing service using flext-core APIs."""
-
-    _server: FlextLdifServer
-
-    def __init__(self, server: FlextLdifServer | None = None) -> None:
-        """Initialize ACL service with optional server instance."""
-        super().__init__()
-        object.__setattr__(
-            self,
-            "_server",
-            server if server is not None else FlextLdifServer.get_global_instance(),
-        )
 
     @staticmethod
     def _build_acl_response(
-        acls: Sequence[FlextLdifModelsDomains.Acl],
+        acls: t.SequenceOf[t.Ldif.AclLike],
         *,
         processed_entries: int = 1,
         failed_entries: int = 0,
     ) -> m.Ldif.AclResponse:
         return m.Ldif.AclResponse(
-            acls=list(acls),
+            acls=u.Ldif.as_acls(acls),
             statistics=m.Ldif.Statistics(
                 processed_entries=processed_entries,
                 acls_extracted=len(acls),
@@ -49,167 +35,143 @@ class FlextLdifAcl(s[m.Ldif.AclResponse]):
     @staticmethod
     def _is_schema_entry(entry: m.Ldif.Entry) -> bool:
         """Check if entry is a schema entry."""
-        return FlextLdifUtilitiesEntry.is_schema_entry(entry, strict=False)
+        is_schema: bool = u.Ldif.is_schema_entry(entry, strict=False)
+        return is_schema
 
     @staticmethod
     def evaluate_acl_context(
-        acls: list[m.Ldif.Acl],
-        required_permissions: m.Ldif.AclPermissions | Mapping[str, bool],
-    ) -> r[m.Ldif.AclEvaluationResult]:
+        acls: t.SequenceOf[t.Ldif.AclLike],
+        required_permissions: m.Ldif.AclPermissions | t.MutableBoolMapping,
+    ) -> p.Result[m.Ldif.AclEvaluationResult]:
         """Evaluate if ACLs grant required permissions."""
-        if isinstance(required_permissions, Mapping):
-            required = m.Ldif.AclPermissions(
-                read=bool(required_permissions.get("read", False)),
-                write=bool(required_permissions.get("write", False)),
-                delete=bool(required_permissions.get("delete", False)),
-                add=bool(required_permissions.get("add", False)),
-                search=bool(required_permissions.get("search", False)),
-                compare=bool(required_permissions.get("compare", False)),
-            )
-        else:
-            required = required_permissions
-        if not acls:
-            return r[m.Ldif.AclEvaluationResult].ok(
-                m.Ldif.AclEvaluationResult(
-                    granted=False,
-                    matched_acl=None,
-                    message="No ACLs to evaluate - access denied by default",
-                )
-            )
-        perm_names = ["read", "write", "delete", "add", "search", "compare"]
-        required_perms = [p for p in perm_names if getattr(required, p, False)]
-        if not required_perms:
-            return r[m.Ldif.AclEvaluationResult].ok(
-                m.Ldif.AclEvaluationResult(
-                    granted=True,
-                    matched_acl=acls[0] if acls else None,
-                    message="No permissions required - access granted trivially",
-                )
-            )
-
-        def acl_grants_all(acl: m.Ldif.Acl) -> bool:
-            """Check if ACL grants all required permissions."""
-            return all(getattr(acl.permissions, perm, False) for perm in required_perms)
-
-        def predicate(value: m.Ldif.Acl) -> bool:
-            """Check if ACL grants all permissions."""
-            return acl_grants_all(value)
-
-        found_result = u.find(acls, predicate=predicate)
-        if found_result.is_success:
-            found_acl = found_result.value
-            return r[m.Ldif.AclEvaluationResult].ok(
-                m.Ldif.AclEvaluationResult(
-                    granted=True,
-                    matched_acl=found_acl,
-                    message=f"ACL '{found_acl.name}' grants required permissions: {required_perms}",
-                )
-            )
-        return r[m.Ldif.AclEvaluationResult].ok(
-            m.Ldif.AclEvaluationResult(
-                granted=False,
-                matched_acl=None,
-                message=f"No ACL grants required permissions: {required_perms}",
+        required = (
+            required_permissions
+            if isinstance(required_permissions, m.Ldif.AclPermissions)
+            else m.Ldif.AclPermissions.model_validate(
+                m.Ldif.AclPermissions.filter_rfc_compliant_permissions(
+                    dict(required_permissions),
+                ),
             )
         )
-
-    @staticmethod
-    def extract_acl_entries(
-        entries: list[m.Ldif.Entry], acl_attributes: list[str] | None = None
-    ) -> r[list[m.Ldif.Entry]]:
-        """Extract entries that contain ACL attributes."""
-        if not entries:
-            return r[list[m.Ldif.Entry]].ok([])
-        if acl_attributes is None:
-            acl_attributes = list(FlextLdifUtilitiesACL.get_acl_attributes())
-
-        def has_acl_attribute(entry: m.Ldif.Entry) -> bool:
-            """Check if entry has at least one ACL attribute."""
-            if FlextLdifAcl._is_schema_entry(entry):
-                return False
-            for attr_name in acl_attributes:
-                attr_values = entry.get_attribute_values(attr_name)
-                if u.is_list_non_empty(attr_values):
-                    return True
-            return False
-
-        acl_entries: list[m.Ldif.Entry] = [
-            entry for entry in entries if has_acl_attribute(entry)
+        permission_keys = (
+            c.Ldif.RfcAclPermission.READ.value,
+            c.Ldif.RfcAclPermission.WRITE.value,
+            c.Ldif.RfcAclPermission.DELETE.value,
+            c.Ldif.RfcAclPermission.ADD.value,
+            c.Ldif.RfcAclPermission.SEARCH.value,
+            c.Ldif.RfcAclPermission.COMPARE.value,
+        )
+        required_perms = [
+            permission
+            for permission in permission_keys
+            if getattr(required, permission)
         ]
-        return r[list[m.Ldif.Entry]].ok(acl_entries)
+        evaluation = m.Ldif.AclEvaluationResult(
+            granted=False,
+            matched_acl=None,
+            message="No ACLs to evaluate - access denied by default",
+        )
+        if not acls:
+            pass
+        elif not required_perms:
+            evaluation = m.Ldif.AclEvaluationResult(
+                granted=True,
+                matched_acl=u.Ldif.as_acl(acls[0]),
+                message="No permissions required - access granted trivially",
+            )
+        else:
+            found_result = u.find(
+                acls,
+                predicate=lambda acl: (
+                    (permissions := acl.permissions) is not None
+                    and all(getattr(permissions, perm) for perm in required_perms)
+                ),
+            )
+            if found_result.success:
+                found_acl = found_result.value
+                evaluation = m.Ldif.AclEvaluationResult(
+                    granted=True,
+                    matched_acl=u.Ldif.as_acl(found_acl),
+                    message=f"ACL '{found_acl.name}' grants required permissions: {required_perms}",
+                )
+            else:
+                evaluation = m.Ldif.AclEvaluationResult(
+                    granted=False,
+                    matched_acl=None,
+                    message=f"No ACL grants required permissions: {required_perms}",
+                )
+        return r[m.Ldif.AclEvaluationResult].ok(evaluation)
 
-    @override
-    def execute(self) -> r[m.Ldif.AclResponse]:
-        """Execute ACL service health check."""
+    def service_check(self) -> p.Result[m.Ldif.AclResponse]:
+        """Return a minimal ACL response for service wiring checks."""
         return r[m.Ldif.AclResponse].ok(
-            m.Ldif.AclResponse(acls=[], statistics=m.Ldif.Statistics())
+            m.Ldif.AclResponse(acls=[], statistics=m.Ldif.Statistics()),
         )
 
     def extract_acls_from_entry(
-        self, entry: m.Ldif.Entry, server_type: str
-    ) -> r[m.Ldif.AclResponse]:
+        self,
+        entry: m.Ldif.Entry,
+        server_type: str,
+    ) -> p.Result[m.Ldif.AclResponse]:
         """Extract ACLs from entry using server-specific attribute names."""
-        acl_attr_name = FlextLdifUtilitiesACL.get_acl_attributes()
+        acl_attr_name = u.Ldif.get_acl_attributes()
         if not acl_attr_name:
             return r[m.Ldif.AclResponse].ok(self._build_acl_response([]))
-        acl_values = entry.get_attribute_values(next(iter(acl_attr_name)))
+        acl_values = u.Ldif.get_attribute_values(entry, next(iter(acl_attr_name)))
         if not acl_values:
             return r[m.Ldif.AclResponse].ok(self._build_acl_response([]))
-        acls: list[FlextLdifModelsDomains.Acl] = []
+        acls: t.Ldif.AclSequence = []
         failed_count = 0
 
         for acl_value in acl_values:
             parse_result = self.parse_acl_string(acl_value, server_type)
-            if parse_result.is_success:
+            if parse_result.success:
                 acls.append(parse_result.value)
                 continue
             failed_count += 1
-            logger = FlextLogger(__name__)
-            logger.warning(
+            self.logger.warning(
                 "Failed to parse ACL value",
-                error=str(parse_result.error) if parse_result.error else "",
+                error=parse_result.error or "",
                 server_type=server_type,
             )
         return r[m.Ldif.AclResponse].ok(
-            self._build_acl_response(acls, failed_entries=failed_count)
+            self._build_acl_response(acls, failed_entries=failed_count),
         )
 
-    def parse_acl_string(self, acl_string: str, server_type: str) -> r[m.Ldif.Acl]:
-        """Parse ACL string using server-specific quirks."""
-        original_server_type = str(server_type)
+    def parse_acl_string(
+        self, acl_string: str, server_type: str
+    ) -> p.Result[m.Ldif.Acl]:
+        """Parse ACL string using server-specific servers."""
         try:
-            normalized_server_type = FlextLdifUtilitiesServer.normalize_server_type(
-                original_server_type
-            )
-        except (ValueError, TypeError) as e:
-            return r[m.Ldif.Acl].fail(f"Invalid server type: {server_type} - {e}")
-        try:
-            if original_server_type == "openldap":
-                acl_quirk = self._server.acl("openldap1")
-                if acl_quirk is None:
-                    acl_quirk = self._server.acl("openldap2")
-            else:
-                acl_quirk = self._server.acl(normalized_server_type)
-        except ValueError as e:
-            return r[m.Ldif.Acl].fail(str(e))
-        if acl_quirk is None:
+            normalized_server_type = u.Ldif.normalize_server_type(server_type)
+        except c.EXC_TYPE_VALIDATION as error:
             return r[m.Ldif.Acl].fail(
-                f"No ACL quirk found for server type: {normalized_server_type}"
+                f"Invalid server type: {server_type} - {error}",
             )
-        return acl_quirk.parse(acl_string).fold(
-            on_failure=lambda e: r[m.Ldif.Acl].fail(e or "ACL parsing failed"),
-            on_success=lambda v: r[m.Ldif.Acl].ok(v),
+        try:
+            acl_server = self._server.acl(
+                "openldap1" if server_type == "openldap" else normalized_server_type,
+            )
+            if acl_server is None and server_type == "openldap":
+                acl_server = self._server.acl("openldap2")
+        except ValueError as error:
+            return r[m.Ldif.Acl].fail(str(error))
+        if acl_server is None:
+            return r[m.Ldif.Acl].fail(
+                f"No ACL server found for server type: {normalized_server_type}",
+            )
+        return (
+            r[m.Ldif.Acl]
+            .from_result(
+                acl_server.parse_server(acl_string),
+            )
+            .map(
+                m.Ldif.Acl.model_validate,
+            )
+            .map_error(
+                lambda error: error or "ACL parsing failed",
+            )
         )
 
-    def write_acl(self, acl: m.Ldif.Acl, server_type: str) -> r[str]:
-        """Write ACL model to string format."""
-        acl_quirk = self._server.acl(server_type)
-        if acl_quirk is None:
-            return r[str].fail(f"No ACL quirk found for server type: {server_type}")
-        return acl_quirk.write(acl).fold(
-            on_failure=lambda e: r[str].fail(e or "ACL writing failed"),
-            on_success=lambda v: r[str].ok(v),
-        )
 
-
-__all__ = ["FlextLdifAcl"]
+__all__: list[str] = ["FlextLdifAcl"]

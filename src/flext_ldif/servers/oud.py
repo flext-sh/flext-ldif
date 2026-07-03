@@ -1,18 +1,12 @@
-"""Oracle Unified Directory (OUD) Quirks."""
+"""Oracle Unified Directory (OUD) Servers."""
 
 from __future__ import annotations
 
-from flext_core import FlextLogger
-
-from flext_ldif.servers._oud import (
-    FlextLdifServersOudAcl,
-    FlextLdifServersOudConstants,
-    FlextLdifServersOudEntry,
-    FlextLdifServersOudSchema,
-)
+from flext_ldif.servers._oud.acl import FlextLdifServersOudAcl
+from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
+from flext_ldif.servers._oud.entry import FlextLdifServersOudEntry
+from flext_ldif.servers._oud.schema import FlextLdifServersOudSchema
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-
-logger = FlextLogger(__name__)
 
 
 class FlextLdifServersOud(FlextLdifServersRfc):
@@ -22,13 +16,13 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         """OUD server constants."""
 
     class Acl(FlextLdifServersOudAcl):
-        """OUD ACL quirk."""
+        """OUD ACL server."""
 
     class Schema(FlextLdifServersOudSchema):
-        """OUD Schema quirk."""
+        """OUD Schema server."""
 
     class Entry(FlextLdifServersOudEntry):
-        """OUD Entry quirk."""
+        """OUD Entry server."""
 
 
-__all__ = ["FlextLdifServersOud"]
+__all__: list[str] = ["FlextLdifServersOud"]

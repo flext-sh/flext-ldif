@@ -18,18 +18,14 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif import FlextLdif
+from flext_ldif import ldif
+from tests.protocols import p
 
 
-class TestMalformedLdifHandling:
+class TestsFlextLdifErrorRecovery:
     """Test error handling for malformed LDIF content."""
 
-    @pytest.fixture
-    def api(self) -> FlextLdif:
-        """FlextLdif API instance."""
-        return FlextLdif.get_instance()
-
-    def test_missing_dn_line(self, api: FlextLdif) -> None:
+    def test_missing_dn_line(self, api: p.Ldif.LdifClient) -> None:
         """Test handling of entry without DN line.
 
         Validates:
@@ -38,10 +34,10 @@ class TestMalformedLdifHandling:
         - Processing continues gracefully
         """
         ldif_content = "objectClass: person\ncn: NoDN\nsn: User\n"
-        result = api.parse(ldif_content)
+        result = api.parse_ldif(ldif_content)
         assert result is not None
 
-    def test_incomplete_attribute_syntax(self, api: FlextLdif) -> None:
+    def test_incomplete_attribute_syntax(self, api: p.Ldif.LdifClient) -> None:
         """Test handling of malformed attribute lines.
 
         Validates:
@@ -52,10 +48,10 @@ class TestMalformedLdifHandling:
         ldif_content = (
             "dn: cn=Test,dc=example,dc=com\nobjectClass person\ncn: Test\nsn: User\n"
         )
-        result = api.parse(ldif_content)
+        result = api.parse_ldif(ldif_content)
         assert result is not None
 
-    def test_invalid_dn_format(self, api: FlextLdif) -> None:
+    def test_invalid_dn_format(self, api: p.Ldif.LdifClient) -> None:
         """Test handling of invalid DN format.
 
         Validates:
@@ -64,10 +60,10 @@ class TestMalformedLdifHandling:
         - Processing continues
         """
         ldif_content = "dn: invalid-dn-no-equals\nobjectClass: person\ncn: Test\n"
-        result = api.parse(ldif_content)
+        result = api.parse_ldif(ldif_content)
         assert result is not None
 
-    def test_orphaned_continuation_lines(self, api: FlextLdif) -> None:
+    def test_orphaned_continuation_lines(self, api: p.Ldif.LdifClient) -> None:
         """Test handling of orphaned line continuation characters.
 
         Validates:
@@ -76,10 +72,10 @@ class TestMalformedLdifHandling:
         - Following entries still parse
         """
         ldif_content = "dn: cn=Test1,dc=example,dc=com\nobjectClass: person\ncn: Test1\n\n orphaned-continuation\ndn: cn=Test2,dc=example,dc=com\nobjectClass: person\ncn: Test2\n"
-        result = api.parse(ldif_content)
+        result = api.parse_ldif(ldif_content)
         assert result is not None
 
-    def test_missing_required_attributes(self, api: FlextLdif) -> None:
+    def test_missing_required_attributes(self, api: p.Ldif.LdifClient) -> None:
         """Test handling of entries missing required attributes.
 
         Validates:
@@ -88,12 +84,11 @@ class TestMalformedLdifHandling:
         - DN alone is valid entry
         """
         ldif_content = "dn: cn=Minimal,dc=example,dc=com\n"
-        result = api.parse(ldif_content)
-        if result.is_success:
-            entries = result.value
-            assert len(entries) > 0 or len(entries) == 0
+        result = api.parse_ldif(ldif_content)
+        if result.success:
+            assert True
 
-    def test_empty_attribute_values(self, api: FlextLdif) -> None:
+    def test_empty_attribute_values(self, api: p.Ldif.LdifClient) -> None:
         """Test handling of attributes with empty values.
 
         Validates:
@@ -102,10 +97,10 @@ class TestMalformedLdifHandling:
         - Parser doesn't crash on empty values
         """
         ldif_content = "dn: cn=Empty,dc=example,dc=com\nobjectClass: person\ncn: Empty\ndescription:\nmail: test@example.com\n"
-        result = api.parse(ldif_content)
+        result = api.parse_ldif(ldif_content)
         assert result is not None
 
-    def test_duplicate_attributes(self, api: FlextLdif) -> None:
+    def test_duplicate_attributes(self, api: p.Ldif.LdifClient) -> None:
         """Test handling of duplicate attribute names.
 
         Validates:
@@ -114,12 +109,12 @@ class TestMalformedLdifHandling:
         - All values are preserved
         """
         ldif_content = "dn: cn=Duplicate,dc=example,dc=com\nobjectClass: person\ncn: Duplicate\nmail: test1@example.com\nmail: test2@example.com\nmail: test3@example.com\n"
-        result = api.parse(ldif_content)
-        if result.is_success:
-            entries = result.value
-            assert len(entries) > 0
+        result = api.parse_ldif(ldif_content)
+        if result.success:
+            entries = result.value.entries
+            assert entries
 
-    def test_special_characters_in_values(self, api: FlextLdif) -> None:
+    def test_special_characters_in_values(self, api: p.Ldif.LdifClient) -> None:
         """Test handling of special characters in attribute values.
 
         Validates:
@@ -128,10 +123,10 @@ class TestMalformedLdifHandling:
         - Unicode and UTF-8 characters supported
         """
         ldif_content = "dn: cn=José,dc=example,dc=com\nobjectClass: person\ncn: José\ndescription: Contains , comma and = equals signs\nmail: user+tag@example.com\n"
-        result = api.parse(ldif_content)
+        result = api.parse_ldif(ldif_content)
         assert result is not None
 
-    def test_very_long_attribute_values(self, api: FlextLdif) -> None:
+    def test_very_long_attribute_values(self, api: p.Ldif.LdifClient) -> None:
         """Test handling of extremely long attribute values.
 
         Validates:
@@ -141,10 +136,10 @@ class TestMalformedLdifHandling:
         """
         long_value = "x" * 2000
         ldif_content = f"dn: cn=LongValue,dc=example,dc=com\nobjectClass: person\ncn: LongValue\ndescription: {long_value}\n"
-        result = api.parse(ldif_content)
+        result = api.parse_ldif(ldif_content)
         assert result is not None
 
-    def test_binary_attribute_encoding(self, api: FlextLdif) -> None:
+    def test_binary_attribute_encoding(self, api: p.Ldif.LdifClient) -> None:
         """Test handling of binary attributes.
 
         Validates:
@@ -153,10 +148,10 @@ class TestMalformedLdifHandling:
         - Non-UTF8 binary data supported
         """
         ldif_content = "dn: cn=Binary,dc=example,dc=com\nobjectClass: person\ncn: Binary\njpegPhoto:: /9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAA==\n"
-        result = api.parse(ldif_content)
+        result = api.parse_ldif(ldif_content)
         assert result is not None
 
-    def test_version_line_handling(self, api: FlextLdif) -> None:
+    def test_version_line_handling(self, api: p.Ldif.LdifClient) -> None:
         """Test handling of LDIF version line.
 
         Validates:
@@ -165,10 +160,10 @@ class TestMalformedLdifHandling:
         - Standard LDIF format supported
         """
         ldif_content = "version: 1\ndn: cn=WithVersion,dc=example,dc=com\nobjectClass: person\ncn: WithVersion\n"
-        result = api.parse(ldif_content)
+        result = api.parse_ldif(ldif_content)
         assert result is not None
 
-    def test_comments_in_ldif(self, api: FlextLdif) -> None:
+    def test_comments_in_ldif(self, api: p.Ldif.LdifClient) -> None:
         """Test handling of comment lines in LDIF.
 
         Validates:
@@ -177,10 +172,10 @@ class TestMalformedLdifHandling:
         - Entries after comments parse correctly
         """
         ldif_content = "# This is a comment\ndn: cn=WithComments,dc=example,dc=com\n# Another comment\nobjectClass: person\ncn: WithComments\n# Final comment\n"
-        result = api.parse(ldif_content)
+        result = api.parse_ldif(ldif_content)
         assert result is not None
 
-    def test_mixed_case_attribute_names(self, api: FlextLdif) -> None:
+    def test_mixed_case_attribute_names(self, api: p.Ldif.LdifClient) -> None:
         """Test handling of mixed-case attribute names.
 
         Validates:
@@ -189,19 +184,12 @@ class TestMalformedLdifHandling:
         - DN, dn, Dn handled correctly
         """
         ldif_content = "Dn: cn=MixedCase,dc=example,dc=com\nObjectClass: person\nCN: MixedCase\nSN: User\nMail: test@example.com\n"
-        result = api.parse(ldif_content)
+        result = api.parse_ldif(ldif_content)
         assert result is not None
 
-
-class TestIncompleteEntries:
     """Test handling of incomplete or partial entries."""
 
-    @pytest.fixture
-    def api(self) -> FlextLdif:
-        """FlextLdif API instance."""
-        return FlextLdif.get_instance()
-
-    def test_truncated_ldif(self, api: FlextLdif) -> None:
+    def test_truncated_ldif(self, api: p.Ldif.LdifClient) -> None:
         """Test handling of truncated LDIF file.
 
         Validates:
@@ -210,10 +198,10 @@ class TestIncompleteEntries:
         - No crash on unexpected EOF
         """
         ldif_content = "dn: cn=Complete,dc=example,dc=com\nobjectClass: person\ncn: Complete\n\ndn: cn=Incomplete,dc=example,dc\n"
-        result = api.parse(ldif_content)
+        result = api.parse_ldif(ldif_content)
         assert result is not None
 
-    def test_unclosed_multiline_value(self, api: FlextLdif) -> None:
+    def test_unclosed_multiline_value(self, api: p.Ldif.LdifClient) -> None:
         """Test handling of unclosed multi-line attribute values.
 
         Validates:
@@ -222,10 +210,10 @@ class TestIncompleteEntries:
         - No parser state corruption
         """
         ldif_content = "dn: cn=Test1,dc=example,dc=com\nobjectClass: person\ncn: Test1\ndescription: This is a multi-line\n value that continues\n but next entry starts\n\ndn: cn=Test2,dc=example,dc=com\nobjectClass: person\ncn: Test2\n"
-        result = api.parse(ldif_content)
+        result = api.parse_ldif(ldif_content)
         assert result is not None
 
-    def test_entry_without_closing_blank_line(self, api: FlextLdif) -> None:
+    def test_entry_without_closing_blank_line(self, api: p.Ldif.LdifClient) -> None:
         """Test handling of entry without trailing blank line.
 
         Validates:
@@ -234,19 +222,12 @@ class TestIncompleteEntries:
         - No data loss
         """
         ldif_content = "dn: cn=NoBlankLine,dc=example,dc=com\nobjectClass: person\ncn: NoBlankLine\nsn: Test"
-        result = api.parse(ldif_content)
+        result = api.parse_ldif(ldif_content)
         assert result is not None
 
-
-class TestInvalidSchemaDefinitions:
     """Test handling of invalid schema definitions."""
 
-    @pytest.fixture
-    def api(self) -> FlextLdif:
-        """FlextLdif API instance."""
-        return FlextLdif.get_instance()
-
-    def test_malformed_oid(self, api: FlextLdif) -> None:
+    def test_malformed_oid(self, api: p.Ldif.LdifClient) -> None:
         """Test handling of malformed OID in schema.
 
         Validates:
@@ -254,11 +235,11 @@ class TestInvalidSchemaDefinitions:
         - Parsing continues gracefully
         - Other schema entries still processed
         """
-        ldif_content = "dn: cn=Schema,cn=config\nobjectClass: schema\nattributeTypes: ( invalid-oid NAME 'test' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )\n"
-        result = api.parse(ldif_content)
+        ldif_content = "dn: cn=Schema,cn=settings\nobjectClass: schema\nattributeTypes: ( invalid-oid NAME 'test' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )\n"
+        result = api.parse_ldif(ldif_content)
         assert result is not None
 
-    def test_missing_required_schema_fields(self, api: FlextLdif) -> None:
+    def test_missing_required_schema_fields(self, api: p.Ldif.LdifClient) -> None:
         """Test handling of schema definitions missing required fields.
 
         Validates:
@@ -266,11 +247,11 @@ class TestInvalidSchemaDefinitions:
         - Missing NAME detected
         - Graceful error handling
         """
-        ldif_content = "dn: cn=Schema,cn=config\nobjectClass: schema\nattributeTypes: ( NAME 'incomplete' )\n"
-        result = api.parse(ldif_content)
+        ldif_content = "dn: cn=Schema,cn=settings\nobjectClass: schema\nattributeTypes: ( NAME 'incomplete' )\n"
+        result = api.parse_ldif(ldif_content)
         assert result is not None
 
-    def test_unclosed_schema_definition(self, api: FlextLdif) -> None:
+    def test_unclosed_schema_definition(self, api: p.Ldif.LdifClient) -> None:
         """Test handling of unclosed schema definition parentheses.
 
         Validates:
@@ -278,20 +259,18 @@ class TestInvalidSchemaDefinitions:
         - Following definitions still parsed
         - No parser crash
         """
-        ldif_content = "dn: cn=Schema,cn=config\nobjectClass: schema\nattributeTypes: ( 1.2.3 NAME 'incomplete'\n"
-        result = api.parse(ldif_content)
+        ldif_content = "dn: cn=Schema,cn=settings\nobjectClass: schema\nattributeTypes: ( 1.2.3 NAME 'incomplete'\n"
+        result = api.parse_ldif(ldif_content)
         assert result is not None
 
-
-class TestEncodingErrors:
     """Test handling of encoding-related errors."""
 
     @pytest.fixture
-    def api(self) -> FlextLdif:
-        """FlextLdif API instance."""
-        return FlextLdif.get_instance()
+    def api(self) -> p.Ldif.LdifClient:
+        """Ldif API instance."""
+        return ldif()
 
-    def test_utf8_handling(self, api: FlextLdif) -> None:
+    def test_utf8_handling(self, api: p.Ldif.LdifClient) -> None:
         """Test proper UTF-8 encoding handling.
 
         Validates:
@@ -300,12 +279,12 @@ class TestEncodingErrors:
         - Multi-byte characters handled
         """
         ldif_content = "dn: cn=UTF8Test,dc=example,dc=com\nobjectClass: person\ncn: UTF8Test\ndescription: Contains UTF-8: café, naïve, résumé\n"
-        result = api.parse(ldif_content)
-        if result.is_success:
-            entries = result.value
+        result = api.parse_ldif(ldif_content)
+        if result.success:
+            entries = result.value.entries
             assert len(entries) >= 0
 
-    def test_invalid_base64_binary(self, api: FlextLdif) -> None:
+    def test_invalid_base64_binary(self, api: p.Ldif.LdifClient) -> None:
         """Test handling of invalid Base64 in binary attributes.
 
         Validates:
@@ -314,10 +293,10 @@ class TestEncodingErrors:
         - Error reported appropriately
         """
         ldif_content = "dn: cn=InvalidBase64,dc=example,dc=com\nobjectClass: person\njpegPhoto:: !!!invalid-base64!!!\n"
-        result = api.parse(ldif_content)
+        result = api.parse_ldif(ldif_content)
         assert result is not None
 
-    def test_mixed_encoding_in_entry(self, api: FlextLdif) -> None:
+    def test_mixed_encoding_in_entry(self, api: p.Ldif.LdifClient) -> None:
         """Test handling of mixed character encodings in single entry.
 
         Validates:
@@ -326,13 +305,8 @@ class TestEncodingErrors:
         - Values properly separated
         """
         ldif_content = "dn: cn=Mixed,dc=example,dc=com\nobjectClass: person\ncn: Mixed\ndescription: UTF-8 text: café\njpegPhoto:: /9j/4AAQSkZJRgABAQEAYABg\n"
-        result = api.parse(ldif_content)
+        result = api.parse_ldif(ldif_content)
         assert result is not None
 
 
-__all__ = [
-    "TestEncodingErrors",
-    "TestIncompleteEntries",
-    "TestInvalidSchemaDefinitions",
-    "TestMalformedLdifHandling",
-]
+__all__: list[str] = ["TestsFlextLdifErrorRecovery"]

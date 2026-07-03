@@ -1,7 +1,7 @@
 """Systematic fixture coverage for all server×fixture type combinations.
 
 Test suite ensuring every LDAP server type can process every fixture type:
-- Tests all server quirks (OID, OUD, OpenLDAP, RFC) across all fixture types
+- Tests all server servers (OID, OUD, OpenLDAP, RFC) across all fixture types
 - Validates parse→write→parse cycles for each combination
 - Ensures complete coverage matrix (servers × fixture types)
 - Provides baseline validation that fixtures load and can be processed
@@ -21,31 +21,34 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif import FlextLdif, u
+from flext_ldif import ldif
+from tests.protocols import p
 
 
-class TestSystematicFixtureCoverage:
+class TestsFlextLdifSystematicFixtureCoverage:
     """Systematic validation of server×fixture type combinations.
 
-    Tests that each LDAP server quirk can process every fixture type,
+    Tests that each LDAP server server can process every fixture type,
     providing complete baseline coverage of the fixture matrix.
     """
 
     @pytest.fixture(scope="class")
-    def api(self) -> FlextLdif:
-        """FlextLdif API instance."""
-        return FlextLdif.get_instance()
+    def api(self) -> p.Ldif.LdifClient:
+        """Ldif API instance."""
+        return ldif()
 
     @staticmethod
     def _limit_schema_fixture_content(
-        fixture_data: str, max_definitions: int = 50
+        fixture_data: str,
+        max_definitions: int = 50,
     ) -> str:
         """Build a minimal schema LDIF sample with bounded definitions."""
         lines = fixture_data.splitlines()
         first_dn = next(
-            (line for line in lines if line.startswith("dn:")), "dn: cn=schema"
+            (line for line in lines if line.startswith("dn:")),
+            "dn: cn=schema",
         )
-        selected_lines = [first_dn]
+        selected_lines: list[str] = [first_dn]
         current_chunk: list[str] = []
         definitions_count = 0
 
@@ -79,7 +82,10 @@ class TestSystematicFixtureCoverage:
         ids=["OID Schema", "OUD Schema"],
     )
     def test_schema_fixture_coverage(
-        self, api: FlextLdif, server_fixture: str, request: pytest.FixtureRequest
+        self,
+        api: p.Ldif.LdifClient,
+        server_fixture: str,
+        request: pytest.FixtureRequest,
     ) -> None:
         """Test schema fixtures can be parsed and written.
 
@@ -95,19 +101,20 @@ class TestSystematicFixtureCoverage:
         assert fixture_data, f"Fixture {server_fixture} is empty"
         schema_sample = self._limit_schema_fixture_content(fixture_data)
         assert schema_sample, "Schema sample extraction produced empty content"
-        parse_result = api.parse(schema_sample)
-        assert parse_result.is_success, f"Parse failed: {parse_result.error}"
-        entries = parse_result.value
-        assert len(entries) > 0, "No entries parsed from schema fixture"
+        parse_result = api.parse_ldif(schema_sample)
+        assert parse_result.success, f"Parse failed: {parse_result.error}"
+        entries = parse_result.value.entries
+        assert entries, "No entries parsed from schema fixture"
         write_result = api.write(entries)
-        assert write_result.is_success, f"Write failed: {write_result.error}"
-        written_content = write_result.value
-        assert len(written_content) > 0, "Write produced empty content"
-        roundtrip_result = api.parse(written_content)
-        assert roundtrip_result.is_success, (
+        assert write_result.success, f"Write failed: {write_result.error}"
+        written_content = write_result.value.content
+        assert written_content is not None
+        assert written_content, "Write produced empty content"
+        roundtrip_result = api.parse_ldif(written_content)
+        assert roundtrip_result.success, (
             f"Roundtrip parse failed: {roundtrip_result.error}"
         )
-        roundtrip_entries = roundtrip_result.value
+        roundtrip_entries = roundtrip_result.value.entries
         assert len(roundtrip_entries) == len(entries), (
             f"Entry count mismatch: {len(roundtrip_entries)} != {len(entries)}"
         )
@@ -118,7 +125,10 @@ class TestSystematicFixtureCoverage:
         ids=["OID ACL", "OUD ACL"],
     )
     def test_acl_fixture_coverage(
-        self, api: FlextLdif, server_fixture: str, request: pytest.FixtureRequest
+        self,
+        api: p.Ldif.LdifClient,
+        server_fixture: str,
+        request: pytest.FixtureRequest,
     ) -> None:
         """Test ACL fixtures can be parsed and written.
 
@@ -135,14 +145,15 @@ class TestSystematicFixtureCoverage:
         """
         fixture_data = request.getfixturevalue(server_fixture)
         assert fixture_data, f"Fixture {server_fixture} is empty"
-        parse_result = api.parse(fixture_data)
-        assert parse_result.is_success, f"Parse failed: {parse_result.error}"
-        entries = parse_result.value
+        parse_result = api.parse_ldif(fixture_data)
+        assert parse_result.success, f"Parse failed: {parse_result.error}"
+        entries = parse_result.value.entries
         write_result = api.write(entries)
-        assert write_result.is_success, f"Write failed: {write_result.error}"
-        written_content = write_result.value
-        if u.is_list_non_empty(entries):
-            assert len(written_content) >= 0, "Write result should be string"
+        assert write_result.success, f"Write failed: {write_result.error}"
+        written_content = write_result.value.content
+        assert written_content is not None
+        if entries:
+            assert written_content, "Write produced empty ACL content"
 
     @pytest.mark.parametrize(
         "server_fixture",
@@ -150,7 +161,10 @@ class TestSystematicFixtureCoverage:
         ids=["OID Entries", "OUD Entries"],
     )
     def test_entries_fixture_coverage(
-        self, api: FlextLdif, server_fixture: str, request: pytest.FixtureRequest
+        self,
+        api: p.Ldif.LdifClient,
+        server_fixture: str,
+        request: pytest.FixtureRequest,
     ) -> None:
         """Test entry fixtures can be parsed and written.
 
@@ -165,22 +179,23 @@ class TestSystematicFixtureCoverage:
         """
         fixture_data = request.getfixturevalue(server_fixture)
         assert fixture_data, f"Fixture {server_fixture} is empty"
-        parse_result = api.parse(fixture_data)
-        assert parse_result.is_success, f"Parse failed: {parse_result.error}"
-        entries = parse_result.value
-        assert len(entries) > 0, "Entry fixture should parse to at least one entry"
+        parse_result = api.parse_ldif(fixture_data)
+        assert parse_result.success, f"Parse failed: {parse_result.error}"
+        entries = parse_result.value.entries
+        assert entries, "Entry fixture should parse to at least one entry"
         for entry in entries:
             assert entry.dn, f"Entry missing DN: {entry}"
             assert entry.attributes, f"Entry {entry.dn} has no attributes"
         write_result = api.write(entries)
-        assert write_result.is_success, f"Write failed: {write_result.error}"
-        written_content = write_result.value
-        assert len(written_content) > 0, "Write produced empty content"
-        roundtrip_result = api.parse(written_content)
-        assert roundtrip_result.is_success, (
+        assert write_result.success, f"Write failed: {write_result.error}"
+        written_content = write_result.value.content
+        assert written_content is not None
+        assert written_content, "Write produced empty content"
+        roundtrip_result = api.parse_ldif(written_content)
+        assert roundtrip_result.success, (
             f"Roundtrip parse failed: {roundtrip_result.error}"
         )
-        roundtrip_entries = roundtrip_result.value
+        roundtrip_entries = roundtrip_result.value.entries
         assert len(roundtrip_entries) == len(entries), (
             f"Entry count mismatch in roundtrip: {len(roundtrip_entries)} != {len(entries)}"
         )
@@ -191,7 +206,10 @@ class TestSystematicFixtureCoverage:
         ids=["OID Integration", "OUD Integration"],
     )
     def test_integration_fixture_coverage(
-        self, api: FlextLdif, server_fixture: str, request: pytest.FixtureRequest
+        self,
+        api: p.Ldif.LdifClient,
+        server_fixture: str,
+        request: pytest.FixtureRequest,
     ) -> None:
         """Test large integration fixtures for complete server×fixture coverage.
 
@@ -212,10 +230,10 @@ class TestSystematicFixtureCoverage:
         """
         fixture_data = request.getfixturevalue(server_fixture)
         assert fixture_data, f"Fixture {server_fixture} is empty"
-        parse_result = api.parse(fixture_data)
-        assert parse_result.is_success, f"Parse failed: {parse_result.error}"
-        entries = parse_result.value
-        assert len(entries) > 0, "Integration fixture should parse to multiple entries"
+        parse_result = api.parse_ldif(fixture_data)
+        assert parse_result.success, f"Parse failed: {parse_result.error}"
+        entries = parse_result.value.entries
+        assert entries, "Integration fixture should parse to multiple entries"
         entry_count = len(entries)
         assert entry_count >= 5, (
             f"Integration fixture should have multiple entries, got {entry_count}"
@@ -224,16 +242,17 @@ class TestSystematicFixtureCoverage:
         unique_dns = set(dn_list)
         assert len(unique_dns) == len(dn_list), "Integration fixture has duplicate DNs"
         write_result = api.write(entries)
-        assert write_result.is_success, f"Write failed: {write_result.error}"
-        written_content = write_result.value
+        assert write_result.success, f"Write failed: {write_result.error}"
+        written_content = write_result.value.content
+        assert written_content is not None
         assert len(written_content) > len(fixture_data) * 0.5, (
             "Written content significantly smaller than fixture (possible data loss)"
         )
-        roundtrip_result = api.parse(written_content)
-        assert roundtrip_result.is_success, (
+        roundtrip_result = api.parse_ldif(written_content)
+        assert roundtrip_result.success, (
             f"Roundtrip parse failed: {roundtrip_result.error}"
         )
-        roundtrip_entries = roundtrip_result.value
+        roundtrip_entries = roundtrip_result.value.entries
         assert len(roundtrip_entries) == len(entries), (
             f"Entry count mismatch: {len(roundtrip_entries)} != {len(entries)}"
         )
@@ -243,58 +262,33 @@ class TestSystematicFixtureCoverage:
             f"DNs not preserved in roundtrip. Missing: {original_dns - roundtrip_dns}. Extra: {roundtrip_dns - original_dns}"
         )
 
-    def test_fixture_availability_matrix(self, request: pytest.FixtureRequest) -> None:
-        """Verify all expected fixtures are available (meta-test).
-
-        Validates that the fixture matrix is complete and fixtures
-        can be loaded by the test infrastructure.
-
-        This test documents the expected fixture coverage matrix
-        and ensures no fixtures are missing.
-        """
-        fixture_matrix = {
-            "schema": ["oid_schema_fixture", "oud_schema_fixture"],
-            "acl": ["oid_acl_fixture", "oud_acl_fixture"],
-            "entries": ["oid_entries_fixture", "oud_entries_fixture"],
-            "integration": ["oid_integration_fixture", "oud_integration_fixture"],
-        }
-        for fixture_type, fixtures in fixture_matrix.items():
-            for fixture_name in fixtures:
-                try:
-                    fixture_data = request.getfixturevalue(fixture_name)
-                    assert fixture_data is not None, f"{fixture_name} returned None"
-                    assert isinstance(fixture_data, str), (
-                        f"{fixture_name} not a string: {type(fixture_data)}"
-                    )
-                    assert len(fixture_data) > 0, f"{fixture_name} is empty"
-                except Exception as e:
-                    pytest.fail(
-                        f"Fixture {fixture_name} ({fixture_type}) not available: {e}"
-                    )
-
-    def test_all_servers_support_basic_ldif_operations(self, api: FlextLdif) -> None:
+    def test_all_servers_support_basic_ldif_operations(
+        self,
+        api: p.Ldif.LdifClient,
+    ) -> None:
         """Baseline test that all server types support basic LDIF operations.
 
         Creates simple LDIF content and validates it can be parsed and written
-        regardless of server quirk detection.
+        regardless of server server detection.
 
         This validates that the baseline RFC functionality is always available
         as a fallback for all server types.
         """
         ldif_content = "dn: cn=Test,dc=example,dc=com\nobjectClass: person\ncn: Test\nsn: User\nmail: test@example.com\n"
-        parse_result = api.parse(ldif_content)
-        assert parse_result.is_success
-        entries = parse_result.value
+        parse_result = api.parse_ldif(ldif_content)
+        assert parse_result.success
+        entries = parse_result.value.entries
         assert len(entries) == 1
         write_result = api.write(entries)
-        assert write_result.is_success
-        written_content = write_result.value
+        assert write_result.success
+        written_content = write_result.value.content
+        assert written_content is not None
         assert "cn=test,dc=example,dc=com" in written_content.lower()
-        roundtrip_result = api.parse(written_content)
-        assert roundtrip_result.is_success
-        roundtrip_entries = roundtrip_result.value
+        roundtrip_result = api.parse_ldif(written_content)
+        assert roundtrip_result.success
+        roundtrip_entries = roundtrip_result.value.entries
         assert len(roundtrip_entries) == 1
         assert str(roundtrip_entries[0].dn) == str(entries[0].dn)
 
 
-__all__ = ["TestSystematicFixtureCoverage"]
+__all__: list[str] = ["TestsFlextLdifSystematicFixtureCoverage"]

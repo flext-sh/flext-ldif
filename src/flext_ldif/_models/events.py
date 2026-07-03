@@ -2,210 +2,118 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-from pathlib import Path
-from typing import Annotated, Self
+from typing import Annotated
 
 from flext_core import m
-from pydantic import ConfigDict, Field
-
-from flext_ldif._models.base import FlextLdifModelsBase
-from flext_ldif._models.settings import FlextLdifModelsSettings
-from flext_ldif.constants import FlextLdifConstants as c
-
-
-def _filter_criteria_factory() -> list[FlextLdifModelsSettings.FilterCriteria]:
-    return []
+from flext_core.utilities import FlextUtilities as u
+from flext_ldif import t
 
 
 class FlextLdifModelsEvents:
     """LDIF event and configuration models container class."""
 
-    class DnEventConfig(FlextLdifModelsBase):
-        dn_operation: str
-        input_dn: str
-        output_dn: str | None = None
-        operation_duration_ms: float = 0.0
-        validation_result: bool | None = None
-        parse_components: list[tuple[str, str]] | None = None
+    class DnEventConfig(m.StrictModel):
+        dn_operation: str = u.Field(description="DN operation type performed")
+        input_dn: str = u.Field(description="Original DN before operation")
+        output_dn: Annotated[
+            str | None,
+            u.Field(description="Resulting DN after operation"),
+        ] = None
+        operation_duration_ms: Annotated[
+            float,
+            u.Field(description="Operation duration in milliseconds"),
+        ] = 0.0
+        validation_result: Annotated[
+            bool | None,
+            u.Field(description="Whether the DN passed validation"),
+        ] = None
+        parse_components: Annotated[
+            t.MutableStrPairSequence | None,
+            u.Field(
+                description="Parsed RDN components as (attribute, value) pairs",
+            ),
+        ] = None
 
-    class MigrationEventConfig(FlextLdifModelsBase):
-        model_config = ConfigDict(extra="forbid", validate_assignment=True)
-        migration_operation: str
-        source_server: str
-        target_server: str
-        entries_processed: int
-        entries_migrated: int = 0
-        entries_failed: int = 0
-        migration_duration_ms: float = 0.0
-        error_details: Sequence[str] | None = None
-
-    class ConversionEventConfig(FlextLdifModelsBase):
-        model_config = ConfigDict(extra="forbid", validate_assignment=True)
-        conversion_operation: str
-        source_format: str
-        target_format: str
-        items_processed: int
-        items_converted: int = 0
-        items_failed: int = 0
-        conversion_duration_ms: float = 0.0
-        error_details: Sequence[str] | None = None
-
-    class FilterEvent(m.DomainEvent):
-        model_config = ConfigDict(extra="forbid", validate_assignment=True)
-        filter_operation: str
-        entries_before: int
-        entries_after: int
-        filter_criteria: Annotated[
-            list[FlextLdifModelsSettings.FilterCriteria],
-            Field(default_factory=_filter_criteria_factory),
-        ]
-        filter_duration_ms: float = 0.0
-
-    class ParseEvent(m.DomainEvent):
-        model_config = ConfigDict(extra="forbid", validate_assignment=True)
-        parse_operation: str
-        source_type: str
-        entries_parsed: int = 0
-        entries_failed: int = 0
-        parse_duration_ms: float = 0.0
-        error_details: Sequence[str] | None = None
-
-        @classmethod
-        def for_file(
-            cls,
-            file_path: str | Path,
-            entries_parsed: int = 0,
-            entries_failed: int = 0,
-            parse_duration_ms: float = 0.0,
-            error_details: Sequence[str] | None = None,
-        ) -> Self:
-            return cls(
-                event_type="ldif.parse",
-                aggregate_id=str(file_path),
-                parse_operation="parse_file",
-                source_type="file",
-                entries_parsed=entries_parsed,
-                entries_failed=entries_failed,
-                parse_duration_ms=parse_duration_ms,
-                error_details=error_details,
-            )
-
-        @classmethod
-        def for_ldap3(
-            cls,
-            connection_info: str,
-            entries_parsed: int = 0,
-            entries_failed: int = 0,
-            parse_duration_ms: float = 0.0,
-            error_details: Sequence[str] | None = None,
-        ) -> Self:
-            return cls(
-                event_type="ldif.parse",
-                aggregate_id=connection_info,
-                parse_operation="parse_ldap3",
-                source_type="ldap3",
-                entries_parsed=entries_parsed,
-                entries_failed=entries_failed,
-                parse_duration_ms=parse_duration_ms,
-                error_details=error_details,
-            )
-
-        @classmethod
-        def for_string(
-            cls,
-            content_length: int,
-            entries_parsed: int = 0,
-            entries_failed: int = 0,
-            parse_duration_ms: float = 0.0,
-            error_details: Sequence[str] | None = None,
-        ) -> Self:
-            return cls(
-                event_type="ldif.parse",
-                aggregate_id=f"content_{content_length}chars",
-                parse_operation="parse_string",
-                source_type="string",
-                entries_parsed=entries_parsed,
-                entries_failed=entries_failed,
-                parse_duration_ms=parse_duration_ms,
-                error_details=error_details,
-            )
-
-    class WriteEvent(m.DomainEvent):
-        model_config = ConfigDict(extra="forbid", validate_assignment=True)
-        write_operation: str = "write_file"
-        target_type: str = "file"
-        entries_written: int = 0
-        entries_failed: int = 0
-        write_duration_ms: float = 0.0
-        error_details: Sequence[str] | None = None
-
-    class CategoryEvent(m.DomainEvent):
-        model_config = ConfigDict(extra="forbid", validate_assignment=True)
-        category_operation: str
-        entries_categorized: int = 0
-        categories_created: Annotated[list[str], Field(default_factory=list)]
-        categorization_duration_ms: float = 0.0
-
-    class AclEvent(m.DomainEvent):
-        model_config = ConfigDict(extra="forbid", validate_assignment=True)
-        acl_operation: str
-        acls_processed: int = 0
-        acls_succeeded: int = 0
-        acls_failed: int = 0
-        acl_duration_ms: float = 0.0
-        error_details: Sequence[str] | None = None
+    class ConversionEventConfig(m.StrictModel):
+        conversion_operation: str = u.Field(
+            description="Conversion operation type performed",
+        )
+        source_format: str = u.Field(description="Source LDAP server format")
+        target_format: str = u.Field(description="Target LDAP server format")
+        items_processed: int = u.Field(
+            description="Total items processed in conversion",
+        )
+        items_converted: Annotated[
+            int,
+            u.Field(description="Items successfully converted"),
+        ] = 0
+        items_failed: Annotated[
+            int,
+            u.Field(description="Items that failed conversion"),
+        ] = 0
+        conversion_duration_ms: Annotated[
+            float,
+            u.Field(description="Conversion duration in milliseconds"),
+        ] = 0.0
+        error_details: Annotated[
+            t.MutableSequenceOf[str] | None,
+            u.Field(description="Error messages for failed items"),
+        ] = None
 
     class DnEvent(m.DomainEvent):
-        model_config = ConfigDict(extra="forbid", validate_assignment=True)
-        dn_operation: str
-        input_dn: str
-        output_dn: str | None = None
-        dn_duration_ms: float = 0.0
-        validation_result: bool | None = None
-        has_output: bool = False
-        component_count: int = 0
-
-    class MigrationEvent(m.DomainEvent):
-        model_config = ConfigDict(extra="forbid", validate_assignment=True)
-        migration_operation: str
-        source_server: str
-        target_server: str
-        entries_migrated: int = 0
-        entries_failed: int = 0
-        migration_duration_ms: float = 0.0
-        error_details: Sequence[str] | None = None
-        migration_success_rate: float = 0.0
-        throughput_entries_per_sec: float = 0.0
+        dn_operation: str = u.Field(description="DN operation type performed")
+        input_dn: str = u.Field(description="Original DN before operation")
+        output_dn: Annotated[
+            str | None,
+            u.Field(description="Resulting DN after operation"),
+        ] = None
+        dn_duration_ms: Annotated[
+            float,
+            u.Field(description="DN operation duration in milliseconds"),
+        ] = 0.0
+        validation_result: Annotated[
+            bool | None,
+            u.Field(description="Whether the DN passed validation"),
+        ] = None
+        has_output: Annotated[
+            bool,
+            u.Field(description="Whether the operation produced output"),
+        ] = False
+        component_count: Annotated[
+            int,
+            u.Field(description="Number of RDN components in the DN"),
+        ] = 0
 
     class ConversionEvent(m.DomainEvent):
-        model_config = ConfigDict(extra="forbid", validate_assignment=True)
-        conversion_operation: str
-        source_format: str
-        target_format: str
-        items_converted: int = 0
-        items_failed: int = 0
-        conversion_duration_ms: float = 0.0
-        error_details: Sequence[str] | None = None
-        conversion_success_rate: float = 0.0
-        throughput_items_per_sec: float = 0.0
+        conversion_operation: str = u.Field(
+            description="Conversion operation type performed",
+        )
+        source_format: str = u.Field(description="Source LDAP server format")
+        target_format: str = u.Field(description="Target LDAP server format")
+        items_converted: Annotated[
+            int,
+            u.Field(description="Items successfully converted"),
+        ] = 0
+        items_failed: Annotated[
+            int,
+            u.Field(description="Items that failed conversion"),
+        ] = 0
+        conversion_duration_ms: Annotated[
+            float,
+            u.Field(description="Conversion duration in milliseconds"),
+        ] = 0.0
+        error_details: Annotated[
+            t.MutableSequenceOf[str] | None,
+            u.Field(description="Error messages for failed items"),
+        ] = None
+        conversion_success_rate: Annotated[
+            float,
+            u.Field(description="Percentage of items successfully converted"),
+        ] = 0.0
+        throughput_items_per_sec: Annotated[
+            float,
+            u.Field(description="Conversion throughput in items per second"),
+        ] = 0.0
 
-    class SchemaEvent(m.DomainEvent):
-        model_config = ConfigDict(extra="forbid", validate_assignment=True)
-        schema_operation: str
-        items_processed: int = 0
-        items_succeeded: int = 0
-        items_failed: int = 0
-        schema_duration_ms: float = 0.0
-        error_details: Sequence[str] | None = None
-        schema_success_rate: float = 0.0
-        throughput_items_per_sec: float = 0.0
 
-    class SchemaEventConfig(FlextLdifModelsBase):
-        schema_operation: str
-        items_processed: int = 0
-        items_succeeded: int = 0
-        items_failed: int = 0
-        operation_duration_ms: float = 0.0
-        server_type: c.Ldif.LiteralTypes.ServerTypeLiteral
-        schema_type: str = c.Ldif.ServerTypes.RFC.value
+__all__: list[str] = ["FlextLdifModelsEvents"]

@@ -3,35 +3,18 @@
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
-Demonstrates flext-ldif advanced server migration capabilities with minimal code bloat:
-- Parallel migration processing with ThreadPoolExecutor
-- Automatic server type detection from LDIF content
-- Batch migration pipelines with comprehensive error handling
-- Server-agnostic migration with intelligent quirk handling
-- Railway-oriented migration pipelines with rollback capabilities
-
-This example shows how flext-ldif enables ADVANCED migration through parallel processing.
-Original: 252 lines | Advanced: ~200 lines with parallel migration + auto-detection + batch processing
 """
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping, MutableSequence
 from pathlib import Path
 
-from flext_core import r
-
-from flext_ldif import FlextLdif, m, u
+from flext_ldif import c, ldif, m, p, r, t, u
 
 
 class ExampleServerMigration:
-    """Demonstrates advanced server migration capabilities with parallel processing.
-
-    This class provides examples of flext-ldif migration features including:
-    - Parallel migration between different LDAP servers
-    - Automatic server type detection
-    - Batch comparison across multiple servers
-    - Comprehensive migration workflows with validation
-    """
+    """Demonstrates advanced server migration capabilities with parallel processing."""
 
     @staticmethod
     def _create_test_data(source_dir: Path) -> None:
@@ -46,9 +29,9 @@ class ExampleServerMigration:
             return f'dn: cn=User{i},ou=People,dc=example,dc=com\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: User{i}\nsn: TestUser{i}\nmail: user{i}@example.com\norclguid: user{i}guid456\naci: (target="ldap:///cn=User{i}")(version 3.0; acl "self"; allow (all) userdn="ldap:///self";)\n'
 
         batch_result = u.process(list(range(20)), create_entry_data, on_error="skip")
-        source_data: list[str] = []
-        if batch_result.is_success:
-            source_data = batch_result.value
+        source_data: MutableSequence[str] = []
+        if batch_result.success:
+            source_data = list(batch_result.value)
 
         def write_file(item: tuple[int, str]) -> None:
             """Write entry to file."""
@@ -59,20 +42,24 @@ class ExampleServerMigration:
 
     @staticmethod
     def _detect_server_type(
-        api: FlextLdif, source_dir: Path
-    ) -> tuple[str, dict[str, object]]:
+        api: p.Ldif.ServerDetectionService,
+        source_dir: Path,
+    ) -> tuple[str, t.JsonMapping]:
         """Detect server type from source data."""
         sample_file = source_dir / "data_00.ldif"
-        detect_result = api.detect_server_type(ldif_content=sample_file)
-        detection_data: dict[str, object] = {}
-        if detect_result.is_success:
-            detection = detect_result.value
-            detection_data = {
+        detect_result = api.detect_server_type(ldif_content=sample_file.read_text())
+        detection_data: t.JsonMapping = t.json_mapping_adapter().validate_python({})
+        if detect_result.success:
+            detection = detect_result.unwrap()
+            detection_data = t.json_mapping_adapter().validate_python({
                 "detected_server": detection.detected_server_type,
                 "detection_confidence": detection.confidence,
-            }
-            return (detection.detected_server_type or "oid", detection_data)
-        return ("oid", detection_data)
+            })
+            return (
+                detection.detected_server_type or c.Ldif.ServerTypes.OID.value,
+                detection_data,
+            )
+        return (c.Ldif.ServerTypes.OID.value, detection_data)
 
     @staticmethod
     def _setup_directories(base_dir: Path) -> tuple[Path, Path, Path]:
@@ -86,26 +73,29 @@ class ExampleServerMigration:
             dir_path.mkdir(exist_ok=True, parents=True)
 
         _ = u.process(
-            [source_dir, intermediate_dir, final_dir], setup_dir, on_error="skip"
+            [source_dir, intermediate_dir, final_dir],
+            setup_dir,
+            on_error="skip",
         )
         return (source_dir, intermediate_dir, final_dir)
 
     @staticmethod
-    def auto_detection_migration_pipeline() -> r[dict[str, object]]:
+    def auto_detection_migration_pipeline() -> p.Result[t.JsonMapping]:
         """Migration pipeline with automatic server detection."""
-        api = FlextLdif.get_instance()
+        api = ldif()
         mixed_ldif = 'dn: cn=Auto Detect Test,ou=People,dc=example,dc=com\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: Auto Detect Test\nsn: Test\nmail: auto@example.com\n# This could be from OID (has orclaci) or OUD (has aci)\norclaci: access to * by * read\naci: (target="ldap:///cn=Auto Detect Test")(version 3.0; acl "test"; allow (read) userdn="ldap:///anyone";)\n\ndn: cn=Auto Group,ou=Groups,dc=example,dc=com\nobjectClass: groupOfUniqueNames\nobjectClass: groupOfNames\ncn: Auto Group\nuniquemember: cn=Auto Detect Test,ou=People,dc=example,dc=com\nmember: cn=Auto Detect Test,ou=People,dc=example,dc=com\n'
         detect_result = api.detect_server_type(ldif_content=mixed_ldif)
-        if detect_result.is_failure:
-            return r[dict[str, object]].fail(
-                f"Server detection failed: {detect_result.error}"
+        if detect_result.failure:
+            return r[t.JsonMapping].fail(
+                f"Server detection failed: {detect_result.error}",
             )
-        detection = detect_result.value
+        detection = detect_result.unwrap()
         detected_server = detection.detected_server_type or "rfc"
-        parse_result = api.parse(mixed_ldif, server_type=detected_server)
-        if parse_result.is_failure:
-            return r[dict[str, object]].fail(f"Parse failed: {parse_result.error}")
-        entries = parse_result.value
+        parse_result = api.parse_ldif(mixed_ldif, server_type=detected_server)
+        if parse_result.failure:
+            return r[t.JsonMapping].fail(f"Parse failed: {parse_result.error}")
+        parse_response = parse_result.unwrap()
+        entries = parse_response.entries
         migration_dir = Path("examples/auto_migration")
         migration_dir.mkdir(exist_ok=True, parents=True)
         (migration_dir / "source.ldif").write_text(mixed_ldif)
@@ -115,81 +105,85 @@ class ExampleServerMigration:
             source_server=detected_server,
             target_server="rfc",
         )
-        if migration_result.is_failure:
-            return r[dict[str, object]].fail(
-                f"Migration to RFC failed: {migration_result.error}"
+        if migration_result.failure:
+            return r[t.JsonMapping].fail(
+                f"Migration to RFC failed: {migration_result.error}",
             )
-        return r[dict[str, object]].ok({
-            "detected_server": detected_server,
-            "confidence": detection.confidence,
-            "patterns_found": detection.patterns_found,
-            "total_entries": len(entries),
-            "migration_success": True,
-        })
+        return r[t.JsonMapping].ok(
+            t.json_mapping_adapter().validate_python({
+                "detected_server": detected_server,
+                "confidence": detection.confidence,
+                "patterns_found": detection.patterns_found,
+                "total_entries": len(entries),
+                "migration_success": True,
+            })
+        )
 
     @staticmethod
-    def batch_server_comparison() -> r[dict[str, object]]:
+    def batch_server_comparison() -> p.Result[t.JsonMapping]:
         """Batch comparison of parsing across multiple LDAP servers."""
-        api = FlextLdif.get_instance()
+        api = ldif()
         test_ldif = 'dn: cn=Server Comparison,ou=People,dc=example,dc=com\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: Server Comparison\nsn: Test\nmail: comparison@example.com\n# OID-specific attributes\norclguid: abc123def456\norclaci: access to attr=mail by * read\n# OUD-specific attributes\naci: (targetattr="mail")(version 3.0; acl "mail access"; allow (read,search) userdn="ldap:///anyone";)\n# OpenLDAP-specific attributes\nentryUUID: 12345678-1234-1234-1234-123456789012\nentryCSN: 20240101000000.000000Z#000000#000#000000\n'
-        servers: list[str] = ["rfc", "oid", "oud", "openldap"]
-        comparison_results: dict[
-            str,
-            dict[str, bool | int | str | None],
-        ] = {}
+        servers: t.SequenceOf[str] = ("rfc", "oid", "oud", "openldap")
+        comparison_results: MutableMapping[str, t.JsonMapping] = {}
         for server in servers:
             server_type = server
-            parse_result = api.parse(test_ldif, server_type=server_type)
-            if parse_result.is_success:
-                entries = parse_result.value
-                comparison_results[server] = {
+            parse_result = api.parse_ldif(test_ldif, server_type=server_type)
+            if parse_result.success:
+                parse_response = parse_result.unwrap()
+                entries = parse_response.entries
+                server_result = t.json_mapping_adapter().validate_python({
                     "parsed_successfully": True,
                     "entry_count": len(entries),
                     "server_type": server,
-                }
+                })
                 if entries:
                     validate_result = api.validate_entries(entries)
-                    if validate_result.is_success:
-                        report = validate_result.value
-                        server_result = comparison_results[server]
-                        server_result["validation_is_valid"] = report.is_valid
-                        server_result["validation_valid_entries"] = report.valid_entries
-                        server_result["validation_invalid_entries"] = (
-                            report.invalid_entries
-                        )
-                        server_result["validation_error_count"] = len(report.errors)
+                    if validate_result.success:
+                        report = validate_result.unwrap()
+                        server_result = t.json_mapping_adapter().validate_python({
+                            **server_result,
+                            "validation_is_valid": report.valid,
+                            "validation_valid_entries": report.valid_entries,
+                            "validation_invalid_entries": report.invalid_entries,
+                            "validation_error_count": len(report.errors),
+                        })
+                comparison_results[server] = server_result
             else:
-                comparison_results[server] = {
+                comparison_results[server] = t.json_mapping_adapter().validate_python({
                     "parsed_successfully": False,
                     "error": parse_result.error,
                     "server_type": server,
-                }
+                })
         successful_parses = sum(
             1
             for res in comparison_results.values()
             if res.get("parsed_successfully", False)
         )
         total_servers = len(servers)
-        return r.ok({
-            "servers_tested": total_servers,
-            "successful_parses": successful_parses,
-            "success_rate": successful_parses / total_servers
-            if total_servers > 0
-            else 0,
-            "server_results": comparison_results,
-        })
+        return r[t.JsonMapping].ok(
+            t.json_mapping_adapter().validate_python({
+                "servers_tested": total_servers,
+                "successful_parses": successful_parses,
+                "success_rate": successful_parses / total_servers
+                if total_servers > 0
+                else 0,
+                "server_results": comparison_results,
+            })
+        )
 
     @staticmethod
-    def comprehensive_migration_workflow() -> r[dict[str, object]]:
+    def comprehensive_migration_workflow() -> p.Result[t.JsonMapping]:
         """Comprehensive migration workflow with parallel processing and validation."""
-        api = FlextLdif.get_instance()
+        api = ldif()
         workflow_dir = Path("examples/comprehensive_migration")
         source_dir, intermediate_dir, final_dir = (
             ExampleServerMigration._setup_directories(workflow_dir)
         )
         ExampleServerMigration._create_test_data(source_dir)
         source_server, detection_data = ExampleServerMigration._detect_server_type(
-            api, source_dir
+            api,
+            source_dir,
         )
         source_server_typed = source_server
         intermediate_migration = api.migrate(
@@ -197,15 +191,10 @@ class ExampleServerMigration:
             output_dir=intermediate_dir,
             source_server=source_server_typed,
             target_server="oud",
-            options=m.Ldif.MigrateOptions(
-                write_options=m.Ldif.WriteConfig(
-                    fold_lines=False,
-                )
-            ),
         )
-        if intermediate_migration.is_failure:
-            return r[dict[str, object]].fail(
-                f"Intermediate migration failed: {intermediate_migration.error}"
+        if intermediate_migration.failure:
+            return r[t.JsonMapping].fail(
+                f"Intermediate migration failed: {intermediate_migration.error}",
             )
         final_migration = api.migrate(
             input_dir=intermediate_dir,
@@ -213,28 +202,30 @@ class ExampleServerMigration:
             source_server="oud",
             target_server="rfc",
         )
-        if final_migration.is_failure:
-            return r[dict[str, object]].fail(
-                f"Final migration failed: {final_migration.error}"
+        if final_migration.failure:
+            return r[t.JsonMapping].fail(
+                f"Final migration failed: {final_migration.error}",
             )
-        final_result = final_migration.value
-        final_count = final_result.stats.processed_entries if final_result.stats else 0
-        workflow_results = {
-            **detection_data,
-            "intermediate_migration": "success",
-            "final_migration": "success",
-            "final_entry_count": final_count,
-            "source_server_detected": source_server,
-            "migration_pipeline": "oid → oud → rfc",
-            "parallel_processing": True,
-            "validation_performed": True,
-        }
-        return r[dict[str, object]].ok(workflow_results)
+        final_result = final_migration.unwrap()
+        final_stats = final_result.stats
+        final_count = final_stats.processed_entries
+        return r[t.JsonMapping].ok(
+            t.json_mapping_adapter().validate_python({
+                **detection_data,
+                "intermediate_migration": "success",
+                "final_migration": "success",
+                "final_entry_count": final_count,
+                "source_server_detected": source_server,
+                "migration_pipeline": "oid → oud → rfc",
+                "parallel_processing": True,
+                "validation_performed": True,
+            })
+        )
 
     @staticmethod
-    def parallel_server_migration() -> r[m.Ldif.LdifResults.MigrationPipelineResult]:
+    def parallel_server_migration() -> p.Result[m.Ldif.MigrationPipelineResult]:
         """Parallel migration between servers with comprehensive error handling."""
-        api = FlextLdif.get_instance()
+        api = ldif()
         input_dir = Path("examples/migration_input")
         output_dir = Path("examples/migration_output")
         input_dir.mkdir(exist_ok=True, parents=True)
@@ -248,17 +239,13 @@ class ExampleServerMigration:
             output_dir=output_dir,
             source_server="oid",
             target_server="oud",
-            options=m.Ldif.MigrateOptions(
-                write_options=m.Ldif.WriteConfig(
-                    fold_lines=False,
-                )
-            ),
         )
-        if migration_result.is_failure:
-            return r[m.Ldif.LdifResults.MigrationPipelineResult].fail(
-                f"Migration failed: {migration_result.error}"
+        if migration_result.failure:
+            return r[m.Ldif.MigrationPipelineResult].fail(
+                f"Migration failed: {migration_result.error}",
             )
-        result = migration_result.value
-        _ = len(result.entries)
-        _ = result.stats.processed_entries if result.stats else 0
-        return r[m.Ldif.LdifResults.MigrationPipelineResult].ok(result)
+        pipeline_result = migration_result.unwrap()
+        _ = len(pipeline_result.entries)
+        stats = pipeline_result.stats
+        _ = stats.processed_entries
+        return r[m.Ldif.MigrationPipelineResult].ok(pipeline_result)

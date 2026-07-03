@@ -9,7 +9,7 @@ Test suite verifying LDIF operations against an actual LDAP server:
     - Process batches of entries
 
 Uses Docker fixture infrastructure from conftest.py for automatic
-container management via FlextTestsDocker.ldap_container fixture.
+container management via tk.ldap_container fixture.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -18,37 +18,42 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import (
+    Callable,
+)
 
 import pytest
-from ldap3 import Connection
 
-from flext_ldif import FlextLdif
+from flext_ldif import ldif
+from tests.models import m
+from tests.protocols import p
+from tests.typings import t
+from tests.utilities import u
 
 
 @pytest.fixture
-def flext_api() -> FlextLdif:
-    """FlextLdif API instance."""
-    return FlextLdif.get_instance()
+def flext_api() -> p.Ldif.LdifClient:
+    """Ldif API instance."""
+    return ldif()
 
 
 @pytest.mark.docker
 @pytest.mark.integration
 @pytest.mark.real_ldap
-class TestRealLdapRoundtrip:
+class TestsFlextLdifRealLdapRoundtrip:
     """Test LDAP → LDIF → LDAP data roundtrip."""
 
     def test_roundtrip_preserves_data(
         self,
-        ldap_connection: Connection,
+        ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
-        flext_api: FlextLdif,
+        flext_api: p.Ldif.LdifClient,
         make_test_username: Callable[[str], str],
     ) -> None:
         """Verify LDAP → LDIF → LDAP preserves data integrity."""
         unique_username = make_test_username("RoundtripTest")
         original_dn = f"cn={unique_username},{clean_test_ou}"
-        original_attrs: dict[str, str | list[str]] = {
+        original_attrs: t.MutableAttributeMapping = {
             "cn": unique_username,
             "sn": "Test",
             "mail": "roundtrip@example.com",
@@ -58,29 +63,33 @@ class TestRealLdapRoundtrip:
         ldap_connection.add(original_dn, ["person", "inetOrgPerson"], original_attrs)
         ldap_connection.search(original_dn, "(objectClass=*)", attributes=["*"])
         ldap_entry = ldap_connection.entries[0]
-        attrs_dict = {}
+        attrs_dict: t.MutableAttributeMapping = {}
         for attr_name in ldap_entry.entry_attributes:
             attr_obj = ldap_entry[attr_name]
             if hasattr(attr_obj, "values"):
-                values = [str(v) if not isinstance(v, str) else v for v in attr_obj]
-            elif isinstance(attr_obj, list):
-                values = [str(v) for v in attr_obj]
+                values = [
+                    str(v) if not isinstance(v, str) else v for v in attr_obj.values
+                ]
             else:
                 values = [str(attr_obj)]
             attrs_dict[attr_name] = values
-        entry_result = flext_api.models.Ldif.Entry.create(
-            dn=ldap_entry.entry_dn, attributes=attrs_dict, metadata=None
+        assert ldap_entry.entry_dn is not None
+        entry_result = m.Ldif.Entry.create(
+            dn=ldap_entry.entry_dn,
+            attributes=attrs_dict,
+            metadata=None,
         )
-        assert entry_result.is_success
+        assert entry_result.success
         flext_entry = entry_result.value
         write_result = flext_api.write([flext_entry])
-        assert write_result.is_success
-        ldif_output = write_result.value
+        assert write_result.success
+        ldif_output = write_result.value.content
+        assert ldif_output is not None
         unique_username_copy = make_test_username("RoundtripTestCopy")
         reimport_dn = f"cn={unique_username_copy},{clean_test_ou}"
-        parse_result = flext_api.parse(ldif_output)
-        assert parse_result.is_success
-        parsed_entries = parse_result.value
+        parse_result = flext_api.parse_ldif(ldif_output)
+        assert parse_result.success
+        parsed_entries = parse_result.value.entries
         assert len(parsed_entries) == 1
         reimport_entry = parsed_entries[0]
         ldif_special_attrs = {
@@ -91,14 +100,7 @@ class TestRealLdapRoundtrip:
         }
         attrs = reimport_entry.attributes
         assert attrs is not None
-        reimport_attrs: dict[str, list[str]] = {
-            attr_name: attr_values
-            for attr_name, attr_values in attrs.attributes.items()
-            if attr_name.lower() not in ldif_special_attrs
-            and attr_name.lower() != "objectclass"
-        }
-        reimport_attrs["cn"] = [unique_username_copy]
-        obj_class_values = reimport_entry.get_attribute_values("objectclass")
+        obj_class_values = u.Ldif.get_attribute_values(reimport_entry, "objectclass")
         assert isinstance(obj_class_values, list)
         ldap_connection.add(
             reimport_dn,
@@ -118,8 +120,8 @@ class TestRealLdapRoundtrip:
         assert reimported["sn"].value == original_attrs["sn"]
         assert reimported["mail"].value == original_attrs["mail"]
         assert set(reimported["telephoneNumber"].values) == set(
-            original_attrs["telephoneNumber"]
+            original_attrs["telephoneNumber"],
         )
 
 
-__all__ = ["TestRealLdapRoundtrip"]
+__all__: list[str] = ["TestsFlextLdifRealLdapRoundtrip"]

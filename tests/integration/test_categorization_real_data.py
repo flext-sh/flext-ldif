@@ -16,13 +16,17 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TextIO
 
-from flext_ldif import FlextLdif, FlextLdifUtilities, c, m
+from flext_ldif import ldif
+from tests.constants import c
+from tests.models import m
+from tests.typings import t
+from tests.utilities import u
 
 
 def _write_entry_to_file(
     entry: m.Ldif.Entry,
     f: TextIO,
-    output_content_lines: list[str],
+    output_content_lines: t.MutableSequenceOf[str],
     *,
     include_attributes: bool = False,
 ) -> None:
@@ -57,7 +61,7 @@ def _write_entry_to_file(
 def _write_categories_to_file(
     filtered: m.Ldif.FlexibleCategories,
     f: TextIO,
-    output_content_lines: list[str],
+    output_content_lines: t.MutableSequenceOf[str],
     *,
     include_attributes: bool = False,
 ) -> None:
@@ -71,20 +75,23 @@ def _write_categories_to_file(
         c.Ldif.Categories.REJECTED,
     ]
     for category in categories:
-        cat_entries = filtered.get_entries(category)
+        cat_entries = filtered.get(category)
         if not cat_entries:
             continue
         _write_category_header(
-            category, len(cat_entries), include_attributes, f, output_content_lines
+            category,
+            len(cat_entries),
+            include_attributes,
+            f,
+            output_content_lines,
         )
         for entry in cat_entries:
-            if isinstance(entry, m.Ldif.Entry):
-                _write_entry_to_file(
-                    entry,
-                    f,
-                    output_content_lines,
-                    include_attributes=include_attributes,
-                )
+            _write_entry_to_file(
+                entry,
+                f,
+                output_content_lines,
+                include_attributes=include_attributes,
+            )
 
 
 def _write_category_header(
@@ -92,7 +99,7 @@ def _write_category_header(
     entry_count: int,
     include_attributes: bool,
     f: TextIO,
-    output_content_lines: list[str],
+    output_content_lines: t.MutableSequenceOf[str],
 ) -> None:
     """Write category header to file."""
     category_header = (
@@ -104,7 +111,7 @@ def _write_category_header(
     output_content_lines.append(category_header)
 
 
-class TestCategorizationRealData:
+class TestsFlextLdifCategorizationRealData:
     """Test categorization with real-world data scenarios."""
 
     def test_base_dn_substring_matching_edge_cases(self, tmp_path: Path) -> None:
@@ -121,70 +128,75 @@ class TestCategorizationRealData:
         entries = [
             m.Ldif.Entry(
                 dn=m.Ldif.DN(value="dc=example"),
-                attributes=m.Ldif.Attributes(attributes={"objectClass": ["domain"]}),
+                attributes=m.Ldif.Attributes(
+                    attributes={"objectClass": ["domain"]}, attribute_metadata={}
+                ),
             ),
             m.Ldif.Entry(
                 dn=m.Ldif.DN(value="ou=users,dc=example"),
                 attributes=m.Ldif.Attributes(
-                    attributes={"objectClass": ["organizationalUnit"]}
+                    attributes={"objectClass": ["organizationalUnit"]},
+                    attribute_metadata={},
                 ),
             ),
             m.Ldif.Entry(
                 dn=m.Ldif.DN(value="cn=user1,ou=users,dc=example"),
-                attributes=m.Ldif.Attributes(attributes={"objectClass": ["person"]}),
+                attributes=m.Ldif.Attributes(
+                    attributes={"objectClass": ["person"]}, attribute_metadata={}
+                ),
             ),
             m.Ldif.Entry(
                 dn=m.Ldif.DN(value="dc=example2"),
-                attributes=m.Ldif.Attributes(attributes={"objectClass": ["domain"]}),
+                attributes=m.Ldif.Attributes(
+                    attributes={"objectClass": ["domain"]}, attribute_metadata={}
+                ),
             ),
             m.Ldif.Entry(
                 dn=m.Ldif.DN(value="ou=test,dc=example2"),
                 attributes=m.Ldif.Attributes(
-                    attributes={"objectClass": ["organizationalUnit"]}
+                    attributes={"objectClass": ["organizationalUnit"]},
+                    attribute_metadata={},
                 ),
             ),
         ]
-        categorization = FlextLdif.categorization(base_dn=base_dn, server_type="oud")
+        categorization = ldif.categorization(base_dn=base_dn, server_type=c.Tests.OUD)
         validate_result = categorization.validate_dns(entries)
-        assert validate_result.is_success, (
-            f"DN validation failed: {validate_result.error}"
-        )
+        assert validate_result.success, f"DN validation failed: {validate_result.error}"
         categories_result = categorization.categorize_entries(validate_result.value)
-        assert categories_result.is_success, (
+        assert categories_result.success, (
             f"Categorization failed: {categories_result.error}"
         )
         categories = categories_result.value
         filtered = categorization.filter_by_base_dn(categories)
         output_file = tmp_path / "test_base_dn_substring_edge_cases.ldif"
-        output_content_lines: list[str] = []
+        output_content_lines: t.MutableSequenceOf[str] = []
         with output_file.open("w", encoding="utf-8") as f:
             header = f"# Base DN Substring Matching Edge Cases Test\n# Base DN: {base_dn}\n# Tests: dc=example vs dc=example2 (should not match)\n\n"
             f.write(header)
             output_content_lines.append(header)
             _write_categories_to_file(
-                filtered, f, output_content_lines, include_attributes=False
+                filtered,
+                f,
+                output_content_lines,
+                include_attributes=False,
             )
         assert output_file.exists(), "Output file should be created"
         output_content = output_file.read_text(encoding="utf-8")
-        assert len(output_content) > 0, "Output file should not be empty"
+        assert output_content, "Output file should not be empty"
         assert base_dn in output_content, f"Output should contain base DN: {base_dn}"
-        hierarchy = filtered.get_entries(c.Ldif.Categories.HIERARCHY)
-        users = filtered.get_entries(c.Ldif.Categories.USERS)
-        rejected = filtered.get_entries(c.Ldif.Categories.REJECTED)
+        hierarchy = filtered.get(c.Ldif.Categories.HIERARCHY)
+        users = filtered.get(c.Ldif.Categories.USERS)
+        rejected = filtered.get(c.Ldif.Categories.REJECTED)
         example_dns = [
             e.dn.value
             for e in hierarchy
-            if isinstance(e, m.Ldif.Entry)
-            and e.dn is not None
-            and (e.dn.value == "dc=example")
+            if e.dn is not None and (e.dn.value == "dc=example")
         ]
         assert len(example_dns) == 1, "dc=example should be in hierarchy category"
         users_ou_dns = [
             e.dn.value
             for e in hierarchy
-            if isinstance(e, m.Ldif.Entry)
-            and e.dn is not None
-            and (e.dn.value == "ou=users,dc=example")
+            if e.dn is not None and (e.dn.value == "ou=users,dc=example")
         ]
         assert len(users_ou_dns) == 1, (
             "ou=users,dc=example should be in hierarchy category"
@@ -192,9 +204,7 @@ class TestCategorizationRealData:
         user1_dns = [
             e.dn.value
             for e in users
-            if isinstance(e, m.Ldif.Entry)
-            and e.dn is not None
-            and (e.dn.value == "cn=user1,ou=users,dc=example")
+            if e.dn is not None and (e.dn.value == "cn=user1,ou=users,dc=example")
         ]
         assert len(user1_dns) == 1, (
             "cn=user1,ou=users,dc=example should be in users category"
@@ -202,9 +212,7 @@ class TestCategorizationRealData:
         example2_rejected = [
             e.dn.value
             for e in rejected
-            if isinstance(e, m.Ldif.Entry)
-            and e.dn is not None
-            and (e.dn.value == "dc=example2")
+            if e.dn is not None and (e.dn.value == "dc=example2")
         ]
         assert len(example2_rejected) == 1, (
             "dc=example2 should be rejected (not under base DN, prevents substring false positive)"
@@ -212,9 +220,7 @@ class TestCategorizationRealData:
         test_ou_rejected = [
             e.dn.value
             for e in rejected
-            if isinstance(e, m.Ldif.Entry)
-            and e.dn is not None
-            and (e.dn.value == "ou=test,dc=example2")
+            if e.dn is not None and (e.dn.value == "ou=test,dc=example2")
         ]
         assert len(test_ou_rejected) == 1, (
             "ou=test,dc=example2 should be rejected (not under base DN)"
@@ -234,47 +240,49 @@ class TestCategorizationRealData:
             m.Ldif.Entry(
                 dn=m.Ldif.DN(value="dc=example"),
                 attributes=m.Ldif.Attributes(
-                    attributes={"aci": ['(targetattr="*")(version 3.0;acl "test";)']}
+                    attributes={"aci": ['(targetattr="*")(version 3.0;acl "test";)']},
+                    attribute_metadata={},
                 ),
             ),
             m.Ldif.Entry(
                 dn=m.Ldif.DN(value="ou=users,dc=example"),
                 attributes=m.Ldif.Attributes(
-                    attributes={"aci": ['(targetattr="*")(version 3.0;acl "test";)']}
+                    attributes={"aci": ['(targetattr="*")(version 3.0;acl "test";)']},
+                    attribute_metadata={},
                 ),
             ),
             m.Ldif.Entry(
                 dn=m.Ldif.DN(value="dc=example2"),
                 attributes=m.Ldif.Attributes(
-                    attributes={"aci": ['(targetattr="*")(version 3.0;acl "test";)']}
+                    attributes={"aci": ['(targetattr="*")(version 3.0;acl "test";)']},
+                    attribute_metadata={},
                 ),
             ),
             m.Ldif.Entry(
-                dn=m.Ldif.DN(value="cn=config"),
+                dn=m.Ldif.DN(value="cn=settings"),
                 attributes=m.Ldif.Attributes(
-                    attributes={"aci": ['(targetattr="*")(version 3.0;acl "test";)']}
+                    attributes={"aci": ['(targetattr="*")(version 3.0;acl "test";)']},
+                    attribute_metadata={},
                 ),
             ),
         ]
-        categorization = FlextLdif.categorization(base_dn=base_dn, server_type="oud")
+        categorization = ldif.categorization(base_dn=base_dn, server_type=c.Tests.OUD)
         validate_result = categorization.validate_dns(acl_entries)
-        assert validate_result.is_success
+        assert validate_result.success
         categories_result = categorization.categorize_entries(validate_result.value)
-        assert categories_result.is_success
+        assert categories_result.success
         categories = categories_result.value
-        acl_category = categories.get_entries(c.Ldif.Categories.ACL)
-        acls_with_basedn: list[m.Ldif.Entry] = []
-        acls_without_basedn: list[m.Ldif.Entry] = []
+        acl_category = categories.get(c.Ldif.Categories.ACL)
+        acls_with_basedn: t.MutableSequenceOf[m.Ldif.Entry] = []
+        acls_without_basedn: t.MutableSequenceOf[m.Ldif.Entry] = []
         for entry in acl_category:
-            if not isinstance(entry, m.Ldif.Entry):
-                continue
             dn_str = entry.dn.value if entry.dn is not None else None
-            if dn_str and FlextLdifUtilities.Ldif.DN.is_under_base(dn_str, base_dn):
+            if dn_str and u.Ldif.is_under_base(dn_str, base_dn):
                 acls_with_basedn.append(entry)
             else:
                 acls_without_basedn.append(entry)
         output_file = tmp_path / "test_acl_substring_edge_cases.ldif"
-        output_content_lines: list[str] = []
+        output_content_lines: t.MutableSequenceOf[str] = []
         with output_file.open("w", encoding="utf-8") as f:
             header = f"# ACL Substring Matching Edge Cases Test\n# Base DN: {base_dn}\n# Tests: dc=example vs dc=example2 (should not match)\n\n"
             f.write(header)
@@ -288,7 +296,7 @@ class TestCategorizationRealData:
                 output_content_lines.append(entry_line)
             f.write("\n# ACLs WITHOUT BaseDN (system ACLs, kept):\n")
             output_content_lines.append(
-                "\n# ACLs WITHOUT BaseDN (system ACLs, kept):\n"
+                "\n# ACLs WITHOUT BaseDN (system ACLs, kept):\n",
             )
             for entry in acls_without_basedn:
                 dn = entry.dn.value if entry.dn is not None else "N/A"
@@ -297,7 +305,7 @@ class TestCategorizationRealData:
                 output_content_lines.append(entry_line)
         assert output_file.exists(), "Output file should be created"
         output_content = output_file.read_text(encoding="utf-8")
-        assert len(output_content) > 0, "Output file should not be empty"
+        assert output_content, "Output file should not be empty"
         assert base_dn in output_content, f"Output should contain base DN: {base_dn}"
         assert "dc=example" in output_content, "Output should contain matching entries"
         assert "dc=example2" in output_content, (
@@ -314,8 +322,8 @@ class TestCategorizationRealData:
         without_basedn_dns = [
             e.dn.value for e in acls_without_basedn if e.dn is not None
         ]
-        assert "cn=config" in without_basedn_dns, (
-            "cn=config should be in acls_without_basedn"
+        assert "cn=settings" in without_basedn_dns, (
+            "cn=settings should be in acls_without_basedn"
         )
         assert "dc=example2" in without_basedn_dns, (
             "dc=example2 should be in acls_without_basedn (not matching base DN)"
@@ -334,39 +342,42 @@ class TestCategorizationRealData:
         assert input_file.read_text(encoding="utf-8") == ldif_content, (
             "Input file content should match"
         )
-        ldif = FlextLdif()
-        parse_result = ldif.parse(source=ldif_content, server_type="rfc")
-        assert parse_result.is_success, f"Parsing failed: {parse_result.error}"
-        entries = parse_result.value
+        api = ldif()
+        parse_result = api.parse_ldif(value=ldif_content, server_type=c.Tests.RFC)
+        assert parse_result.success, f"Parsing failed: {parse_result.error}"
+        entries = parse_result.value.entries
         assert len(entries) == 6, f"Should parse 6 entries, got {len(entries)}"
         base_dn = "dc=example"
-        categorization = FlextLdif.categorization(base_dn=base_dn, server_type="oud")
+        categorization = api.categorization(base_dn=base_dn, server_type=c.Tests.OUD)
         validate_result = categorization.validate_dns(entries)
-        assert validate_result.is_success
+        assert validate_result.success
         categories_result = categorization.categorize_entries(validate_result.value)
-        assert categories_result.is_success
+        assert categories_result.success
         categories = categories_result.value
         filtered = categorization.filter_by_base_dn(categories)
         output_file = tmp_path / "output_real_migration_categorized.ldif"
-        output_content_lines: list[str] = []
+        output_content_lines: t.MutableSequenceOf[str] = []
         with output_file.open("w", encoding="utf-8") as f:
             header = f"# Complete Migration Test Output\n# Base DN: {base_dn}\n# Total entries processed: {len(entries)}\n\n"
             f.write(header)
             output_content_lines.append(header)
             _write_categories_to_file(
-                filtered, f, output_content_lines, include_attributes=True
+                filtered,
+                f,
+                output_content_lines,
+                include_attributes=True,
             )
         assert output_file.exists(), "Output file should be created"
         output_content = output_file.read_text(encoding="utf-8")
-        assert len(output_content) > 0, "Output file should not be empty"
+        assert output_content, "Output file should not be empty"
         assert base_dn in output_content, f"Output should contain base DN: {base_dn}"
         assert str(len(entries)) in output_content, "Output should contain entry count"
         assert "dc=example" in output_content, (
             "Output should contain entries under base DN"
         )
-        hierarchy = filtered.get_entries(c.Ldif.Categories.HIERARCHY)
-        users = filtered.get_entries(c.Ldif.Categories.USERS)
-        rejected = filtered.get_entries(c.Ldif.Categories.REJECTED)
+        hierarchy = filtered.get(c.Ldif.Categories.HIERARCHY)
+        users = filtered.get(c.Ldif.Categories.USERS)
+        rejected = filtered.get(c.Ldif.Categories.REJECTED)
         assert len(hierarchy) >= 2, "Should have hierarchy entries under base DN"
         assert len(users) >= 2, "Should have user entries under base DN"
         assert len(rejected) >= 2, "Should have rejected entries outside base DN"

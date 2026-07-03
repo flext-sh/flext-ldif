@@ -1,36 +1,49 @@
-# AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
-# Regenerate with: make codegen
-#
-"""FlextLdif Examples - Demonstrating LDIF processing capabilities."""
+# AUTO-GENERATED FILE — Regenerate with: make gen
+"""Examples package."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
+from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core.typings import FlextTypes
+    from flext_core import (
+        c as c,
+        d as d,
+        e as e,
+        h as h,
+        m as m,
+        p as p,
+        r as r,
+        s as s,
+        t as t,
+        u as u,
+        x as x,
+    )
+_LAZY_IMPORTS = build_lazy_import_map(
+    {
+        ".demo_structured_migration": ("demo_structured_migration",),
+        "flext_core": (
+            "c",
+            "d",
+            "e",
+            "h",
+            "m",
+            "p",
+            "r",
+            "s",
+            "t",
+            "u",
+            "x",
+        ),
+    },
+)
 
-    from examples.demo_structured_migration import main
 
-_LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "main": ("examples.demo_structured_migration", "main"),
-}
-
-__all__ = [
-    "main",
-]
-
-
-def __getattr__(name: str) -> FlextTypes.ModuleExport:
-    """Lazy-load module attributes on first access (PEP 562)."""
-    return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
-
-
-def __dir__() -> list[str]:
-    """Return list of available attributes for dir() and autocomplete."""
-    return sorted(__all__)
-
-
-cleanup_submodule_namespace(__name__, _LAZY_IMPORTS)
+install_lazy_exports(
+    __name__,
+    globals(),
+    _LAZY_IMPORTS,
+    publish_all=False,
+)

@@ -1,62 +1,46 @@
-"""RFC 4512 Compliant Server Quirks - Base LDAP Schema/ACL/Entry Implementation."""
+"""RFC 4512 Compliant Server Servers - Base LDAP Schema/ACL/Entry Implementation."""
 
 from __future__ import annotations
 
-import builtins
-import re
-import struct
-from collections.abc import Mapping, Sequence
-from datetime import datetime
-from typing import Literal, Self, overload, override
+from collections.abc import (
+    Mapping,
+    MutableMapping,
+    Sequence,
+)
+from typing import ClassVar, Self, overload, override
 
-from flext_core import FlextLogger, r
-
-from flext_ldif import c, m, p, t
-from flext_ldif._models.domain import FlextLdifModelsDomains
-from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
-from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
-from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
+from flext_ldif import c, m, p, r, t, u
+from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
 from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
-from flext_ldif.servers.base import FlextLdifServersBase
-
-logger = FlextLogger(__name__)
 
 
-class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
-    """RFC 4512 Compliant Schema Quirk - STRICT Implementation."""
+class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
+    """RFC 4512 Compliant Schema Server - STRICT Implementation."""
+
+    _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 
     def __new__(
         cls,
-        schema_service: p.Ldif.SchemaQuirk | None = None,
-        parent_quirk: p.Ldif.SchemaQuirk | None = None,
-        **kwargs: t.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        schema_service: p.Ldif.SchemaServer | None = None,
+        parent_server: p.Ldif.SchemaServer | None = None,
+        **kwargs: t.Ldif.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> Self:
         """Override __new__ to support auto-execute and processor instantiation."""
         instance = object.__new__(cls)
-        filtered_kwargs = {
-            "attr_definition",
-            "oc_definition",
-            "attr_model",
-            "oc_model",
-            "operation",
-            "_parent_quirk",
-            "parent_quirk",
-        }
-        _ = {k: v for k, v in kwargs.items() if k not in filtered_kwargs}
-        parent_quirk_raw = (
-            parent_quirk if parent_quirk is not None else kwargs.get("_parent_quirk")
+        parent_server_raw = (
+            parent_server if parent_server is not None else kwargs.get("_parent_server")
         )
-        parent_quirk_value: p.Ldif.SchemaQuirk | None = (
-            parent_quirk_raw
-            if isinstance(parent_quirk_raw, p.Ldif.SchemaQuirk)
+        parent_server_value: p.Ldif.SchemaServer | None = (
+            parent_server_raw
+            if isinstance(parent_server_raw, p.Ldif.SchemaServer)
             else None
         )
         schema_instance: Self = instance
-        super(FlextLdifServersBase.Schema, schema_instance).__init__()
+        super(FlextLdifServersBaseSchema, schema_instance).__init__()
         if schema_service is not None:
             object.__setattr__(schema_instance, "_schema_service", schema_service)
-        if parent_quirk_value is not None:
-            object.__setattr__(schema_instance, "_parent_quirk", parent_quirk_value)
+        if parent_server_value is not None:
+            object.__setattr__(schema_instance, "_parent_server", parent_server_value)
         if cls.auto_execute:
             attr_def_raw = kwargs.get("attr_definition")
             attr_def: str | None = (
@@ -78,33 +62,28 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             op: str | None = (
                 "parse" if isinstance(op_raw, str) and op_raw == "parse" else None
             )
-            data: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None = None
-            if attr_def is not None:
-                data = attr_def
-            elif oc_def is not None:
-                data = oc_def
-            elif attr_mod is not None:
-                data = attr_mod
-            elif oc_mod is not None:
-                data = oc_mod
-            result = schema_instance.execute(data=data, operation=op)
-            unwrapped = result.value
-            if isinstance(unwrapped, cls):
-                return unwrapped
-            return instance
+            data: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None = next(
+                (
+                    candidate
+                    for candidate in (attr_def, oc_def, attr_mod, oc_mod)
+                    if candidate is not None
+                ),
+                None,
+            )
+            schema_instance.execute(data=data, operation=op)
         return instance
 
     def __init__(
         self,
-        schema_service: p.Ldif.SchemaQuirk | None = None,
-        parent_quirk: p.Ldif.SchemaQuirk | None = None,
-        **kwargs: t.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        schema_service: p.Ldif.SchemaServer | None = None,
+        parent_server: p.Ldif.SchemaServer | None = None,
+        **kwargs: t.Ldif.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> None:
-        """Initialize RFC schema quirk service."""
-        filtered_kwargs: dict[str, t.Scalar] = {}
+        """Initialize RFC schema server service."""
+        filtered_kwargs: dict[str, t.Primitives | None] = {}
         excluded_keys = {
-            "_parent_quirk",
-            "parent_quirk",
+            "_parent_server",
+            "parent_server",
             "_schema_service",
             "attr_definition",
             "oc_definition",
@@ -115,406 +94,477 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         for key, value in kwargs.items():
             if key in excluded_keys:
                 continue
-            if isinstance(value, (str, int, float, bool, datetime)):
+            if isinstance(value, t.PRIMITIVES_TYPES):
                 filtered_kwargs[key] = value
-        schema_service_typed: p.Ldif.SchemaQuirk | None = schema_service
+        schema_service_typed: p.Ldif.SchemaServer | None = schema_service
         FlextLdifServersBaseSchema.__init__(
             self,
             _schema_service=schema_service_typed,
-            _parent_quirk=None,
+            _parent_server=None,
             **filtered_kwargs,
         )
-        if parent_quirk is not None:
-            object.__setattr__(self, "_parent_quirk", parent_quirk)
+        if parent_server is not None:
+            object.__setattr__(self, "_parent_server", parent_server)
 
     @overload
     def __call__(
         self,
-        attr_definition: str,
         *,
-        oc_definition: None = None,
-        attr_model: None = None,
-        oc_model: None = None,
+        server: p.Ldif.ServerRegistry | None = None,
+        settings: p.Ldif.Settings | None = None,
+        **fields: t.JsonValue,
+    ) -> Self: ...
+
+    @overload
+    def __call__(
+        self,
+        data: str,
+        *,
         operation: str | None = None,
     ) -> str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass: ...
 
     @overload
     def __call__(
         self,
-        *,
-        attr_definition: None = None,
-        oc_definition: str,
-        attr_model: None = None,
-        oc_model: None = None,
-        operation: str | None = None,
-    ) -> str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass: ...
-
-    @overload
-    def __call__(
-        self,
-        *,
-        attr_definition: None = None,
-        oc_definition: None = None,
-        attr_model: m.Ldif.SchemaAttribute,
-        oc_model: None = None,
+        data: m.Ldif.SchemaAttribute,
         operation: str | None = None,
     ) -> str: ...
 
     @overload
     def __call__(
         self,
-        *,
-        attr_definition: None = None,
-        oc_definition: None = None,
-        attr_model: None = None,
-        oc_model: m.Ldif.SchemaObjectClass,
+        data: m.Ldif.SchemaObjectClass,
         operation: str | None = None,
     ) -> str: ...
 
     @overload
     def __call__(
         self,
-        attr_definition: str | None = None,
-        oc_definition: str | None = None,
-        attr_model: m.Ldif.SchemaAttribute | None = None,
-        oc_model: m.Ldif.SchemaObjectClass | None = None,
+        data: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None = None,
+        *,
         operation: str | None = None,
     ) -> str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass: ...
 
     def __call__(
         self,
-        attr_definition: str | None = None,
-        oc_definition: str | None = None,
-        attr_model: m.Ldif.SchemaAttribute | None = None,
-        oc_model: m.Ldif.SchemaObjectClass | None = None,
-        operation: str | None = None,
-    ) -> str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass:
+        data: t.JsonValue
+        | m.Ldif.SchemaAttribute
+        | m.Ldif.SchemaObjectClass
+        | None = None,
+        operation: t.JsonValue | None = None,
+        *,
+        server: p.Ldif.ServerRegistry | None = None,
+        settings: p.Ldif.Settings | None = None,
+        **fields: t.JsonValue,
+    ) -> Self | str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass:
         """Callable interface - automatic polymorphic processor."""
-        data: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None = None
-        if attr_definition is not None:
-            data = attr_definition
-        elif oc_definition is not None:
-            data = oc_definition
-        elif attr_model is not None:
-            data = attr_model
-        elif oc_model is not None:
-            data = oc_model
-        result = self.execute(data=data, operation=operation)
-        return result.value
+        builder_fields = FlextLdifServerMethodsMixin.project_processor_fields(
+            fields,
+            frozenset({"data", "operation"}),
+            force_dispatch=server is not None or settings is not None,
+        )
+        if builder_fields is not None:
+            configured: Self = super().__call__(
+                server=server,
+                settings=settings,
+                **builder_fields,
+            )
+            return configured
+        narrowed_data = (
+            data
+            if isinstance(
+                data,
+                (str, m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass),
+            )
+            or data is None
+            else None
+        )
+        narrowed_operation = operation if isinstance(operation, str) else None
+        result = self.execute(data=narrowed_data, operation=narrowed_operation)
+        if result.failure:
+            msg = result.error or "RFC schema operation failed"
+            raise ValueError(msg)
+        value = result.value
+        if isinstance(value, (str, m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass)):
+            return value
+        msg = "RFC schema operation returned unsupported value"
+        raise TypeError(msg)
 
     @classmethod
     def _extract_syntax_validation_error(
-        cls, value: builtins.object | None
+        cls,
+        value: t.JsonValue | None,
     ) -> str | None:
         syntax_validation = cls._coerce_dynamic_metadata(value)
         syntax_error = syntax_validation.get("syntax_validation_error")
-        if isinstance(syntax_error, str):
-            return syntax_error
-        return None
+        return syntax_error if isinstance(syntax_error, str) else None
 
     @classmethod
     def _to_optional_str_or_list(
-        cls, value: builtins.object | None
-    ) -> str | list[str] | None:
+        cls,
+        value: t.JsonValue | None,
+    ) -> str | t.MutableSequenceOf[str] | None:
         if isinstance(value, str):
             return value
         return cls._to_string_list(value)
 
     @staticmethod
-    def _build_attribute_metadata(
-        attr_definition: str,
-        syntax: str | None,
-        syntax_validation_error: str | None,
-        attribute_oid: str | None = None,
-        equality_oid: str | None = None,
-        ordering_oid: str | None = None,
-        substr_oid: str | None = None,
-        sup_oid: str | None = None,
-        _server_type: str | None = None,
-    ) -> m.Ldif.QuirkMetadata | None:
-        """Build metadata for attribute including extensions and OID validation."""
-        server_type_to_use = _server_type or "rfc"
-        return FlextLdifServersBase.Schema.build_attribute_metadata(
-            attr_definition,
-            syntax,
-            syntax_validation_error,
-            attribute_oid=attribute_oid,
-            equality_oid=equality_oid,
-            ordering_oid=ordering_oid,
-            substr_oid=substr_oid,
-            sup_oid=sup_oid,
-            server_type=server_type_to_use,
-        )
-
-    @staticmethod
     def _coerce_dynamic_metadata(
-        value: builtins.object | None,
+        value: t.JsonValue | None,
     ) -> m.Ldif.DynamicMetadata:
-        if isinstance(value, m.Ldif.DynamicMetadata):
-            return value
-        if isinstance(value, Mapping):
-            return m.Ldif.DynamicMetadata.model_validate(value)
-        return m.Ldif.DynamicMetadata()
+        json_value: t.JsonPayload | m.Ldif.DynamicMetadata | None = value
+        if isinstance(json_value, m.Ldif.DynamicMetadata):
+            return json_value
+        if json_value is None:
+            return m.Ldif.DynamicMetadata()
+        try:
+            validated: m.Ldif.DynamicMetadata = m.Ldif.DynamicMetadata.model_validate(
+                json_value,
+            )
+            return validated
+        except c.ValidationError:
+            return m.Ldif.DynamicMetadata()
 
     @staticmethod
-    def _convert_extensions_for_quirk(
+    def _convert_extensions_for_server(
         metadata: m.Ldif.DynamicMetadata,
-    ) -> dict[str, list[str] | str | bool | None]:
-        extensions: dict[str, list[str] | str | bool | None] = {}
+    ) -> t.Ldif.SchemaExtensionsMapping:
+        extensions: t.Ldif.SchemaExtensionsMapping = {}
         for key, value in metadata.items():
-            if isinstance(value, bool):
-                extensions[key] = value
-                continue
-            if isinstance(value, str):
-                extensions[key] = value
-                continue
-            if isinstance(value, list):
-                extensions[key] = [str(item) for item in value]
-                continue
-            if isinstance(value, datetime):
-                extensions[key] = value.isoformat()
-                continue
-            if isinstance(value, (int, float)):
-                extensions[key] = str(value)
-                continue
-            extensions[key] = str(value)
+            json_value: t.JsonPayload | None = value
+            if isinstance(json_value, list):
+                list_value: t.MutableSequenceOf[str] = [
+                    str(item) for item in json_value
+                ]
+                extensions[key] = list_value
+            elif isinstance(json_value, (bool, str)):
+                extensions[key] = json_value
+            else:
+                extensions[key] = str(u.normalize_to_json_value(json_value))
         return extensions
 
     @staticmethod
-    def _to_optional_int(value: builtins.object) -> int | None:
-        match value:
-            case int() as int_value:
-                return int_value
-            case str() as str_value if str_value:
-                return int(str_value)
-            case _:
-                return None
-
-    @staticmethod
-    def _to_optional_str(value: builtins.object) -> str | None:
-        match value:
-            case str() as str_value:
-                return str_value
-            case _ if value and value is not True:
-                return str(value)
-            case _:
-                return None
-
-    @staticmethod
-    def _to_required_str(value: builtins.object, default: str = "") -> str:
-        match value:
-            case str() as str_value:
-                return str_value
-            case _ if value:
-                return str(value)
-            case _:
-                return default
-
-    @staticmethod
-    def _to_string_list(value: builtins.object | None) -> list[str] | None:
-        if isinstance(value, Sequence) and (
-            not isinstance(value, str | bytes | bytearray)
+    def _to_optional_int(value: t.JsonValue | None) -> int | None:
+        json_value: t.JsonPayload | None = value
+        if isinstance(json_value, int):
+            return json_value
+        if json_value is None or not json_value:
+            return None
+        if isinstance(json_value, Mapping) or (
+            isinstance(json_value, Sequence) and not isinstance(json_value, str | bytes)
         ):
-            return [str(item) for item in value]
+            return None
+        parsed = FlextLdifServersRfcSchema._parse_int(json_value)
+        if parsed.success:
+            return parsed.value
+        return None
+
+    @staticmethod
+    def _parse_int(json_value: t.JsonPayload) -> p.Result[int]:
+        """Parse a JSON scalar into an int, propagating the conversion failure."""
+        try:
+            parsed_int = int(str(json_value))
+        except c.EXC_TYPE_VALIDATION as exc:
+            return r[int].fail(str(exc), exception=exc)
+        return r[int].ok(parsed_int)
+
+    @staticmethod
+    def _to_optional_str(value: t.JsonValue | None) -> str | None:
+        json_value: t.JsonPayload | None = value
+        if json_value is None:
+            return None
+        if isinstance(json_value, Mapping) or (
+            isinstance(json_value, Sequence) and not isinstance(json_value, str | bytes)
+        ):
+            return None
+        if isinstance(json_value, str):
+            return json_value
+        return str(json_value)
+
+    @staticmethod
+    def _to_required_value(
+        value: t.JsonValue | None,
+        default: str = "",
+    ) -> str:
+        json_value: t.JsonPayload | None = value
+        if json_value is None:
+            return default
+        if isinstance(json_value, Mapping) or (
+            isinstance(json_value, Sequence) and not isinstance(json_value, str | bytes)
+        ):
+            return default
+        if isinstance(json_value, str):
+            return json_value
+        return str(json_value)
+
+    @staticmethod
+    def _to_string_list(
+        value: t.JsonValue | None,
+    ) -> t.MutableSequenceOf[str] | None:
+        json_value: t.JsonPayload | None = value
+        if isinstance(json_value, Sequence) and not isinstance(json_value, str | bytes):
+            list_value: t.MutableSequenceOf[str] = [str(item) for item in json_value]
+            return list_value
         return None
 
     @override
     def can_handle_attribute(
-        self, attr_definition: str | m.Ldif.SchemaAttribute
+        self,
+        attr_definition: str | m.Ldif.SchemaAttribute,
     ) -> bool:
-        """Check if RFC quirk can handle attribute definitions (abstract impl)."""
+        """Check if RFC server can handle attribute definitions (abstract impl)."""
         _ = (self, attr_definition)
         return True
 
     @override
     def can_handle_objectclass(
-        self, oc_definition: str | m.Ldif.SchemaObjectClass
+        self,
+        oc_definition: str | m.Ldif.SchemaObjectClass,
     ) -> bool:
-        """Check if RFC quirk can handle objectClass definitions (abstract impl)."""
+        """Check if RFC server can handle objectClass definitions (abstract impl)."""
         _ = (self, oc_definition)
         return True
 
+    def _detect_oc_via_constants(
+        self,
+        oc_definition: str | m.Ldif.SchemaObjectClass,
+        *,
+        settings: m.Ldif.ServerPatternsConfig,
+        name_regex: str,
+    ) -> bool:
+        """Detect objectClass definitions through centralized server pattern settings."""
+        if isinstance(oc_definition, m.Ldif.SchemaObjectClass):
+            matches_server_patterns: bool = u.Ldif.matches_server_patterns(
+                value=oc_definition,
+                settings=settings,
+            )
+            return matches_server_patterns
+        if settings.oid_pattern and c.Ldif.compile_pattern(settings.oid_pattern).search(
+            oc_definition
+        ):
+            return True
+        name_matches = c.Ldif.compile_pattern(name_regex, ignorecase=True).findall(
+            oc_definition
+        )
+        attr_names = {name.lower() for name in settings.attr_names}
+        return any(name.lower() in attr_names for name in name_matches)
+
     def create_metadata(
-        self, original_format: str, extensions: m.Ldif.DynamicMetadata | None = None
-    ) -> m.Ldif.QuirkMetadata:
-        """Create quirk metadata with consistent server-specific extensions."""
+        self,
+        original_format: str,
+        extensions: m.Ldif.DynamicMetadata | None = None,
+    ) -> m.Ldif.ServerMetadata:
+        """Create server metadata with consistent server-specific extensions."""
         server_type_value = self._get_server_type()
         all_extensions = m.Ldif.DynamicMetadata()
-        all_extensions[c.Ldif.MetadataKeys.ACL_ORIGINAL_FORMAT] = original_format
+        all_extensions[c.Ldif.ACL_ORIGINAL_FORMAT] = original_format
         if extensions:
             all_extensions.update(extensions.to_dict())
-        return m.Ldif.QuirkMetadata(
-            quirk_type=server_type_value, extensions=all_extensions
+        return m.Ldif.ServerMetadata(
+            server_type=server_type_value,
+            extensions=all_extensions,
         )
 
     def extract_schemas_from_ldif(
-        self, ldif_content: str, *, validate_dependencies: bool = False
-    ) -> r[Mapping[str, list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass]]]:
+        self,
+        ldif_content: str,
+        *,
+        validate_dependencies: bool = False,
+    ) -> p.Result[
+        MutableMapping[
+            str,
+            t.MutableSequenceOf[m.Ldif.SchemaAttribute]
+            | t.MutableSequenceOf[m.Ldif.SchemaObjectClass],
+        ]
+    ]:
         """Extract schema definitions from LDIF using u."""
         try:
-
-            def parse_attribute_domain(
-                attr_definition: str,
-            ) -> r[FlextLdifModelsDomains.SchemaAttribute]:
-                return self.parse_attribute(attr_definition).map(
-                    lambda attr: FlextLdifModelsDomains.SchemaAttribute.model_validate(
-                        attr.model_dump()
-                    )
-                )
-
-            attributes_parsed = FlextLdifUtilitiesSchema.extract_attributes_from_lines(
-                ldif_content, parse_attribute_domain
+            return self._extract_schemas_from_ldif(
+                ldif_content,
+                validate_dependencies=validate_dependencies,
             )
-            attributes_parsed_model: list[m.Ldif.SchemaAttribute] = [
-                m.Ldif.SchemaAttribute.model_validate(attr.model_dump())
-                for attr in attributes_parsed
-            ]
-            if validate_dependencies:
-                available_attrs = (
-                    FlextLdifUtilitiesSchema.build_available_attributes_set(
-                        attributes_parsed
-                    )
-                )
-                validation_result = self._hook_validate_attributes(
-                    attributes_parsed_model, available_attrs
-                )
-                if not validation_result.is_success:
-                    return r[
-                        Mapping[
-                            str,
-                            list[m.Ldif.SchemaAttribute]
-                            | list[m.Ldif.SchemaObjectClass],
-                        ]
-                    ].fail(f"Attribute validation failed: {validation_result.error}")
-
-            def parse_objectclass_domain(
-                oc_definition: str,
-            ) -> r[FlextLdifModelsDomains.SchemaObjectClass]:
-                return self.parse_objectclass(oc_definition).map(
-                    lambda oc: FlextLdifModelsDomains.SchemaObjectClass.model_validate(
-                        oc.model_dump()
-                    )
-                )
-
-            objectclasses_parsed = (
-                FlextLdifUtilitiesSchema.extract_objectclasses_from_lines(
-                    ldif_content, parse_objectclass_domain
-                )
+        except c.Ldif.EXC_LDIF_PARSE as e:
+            FlextLdifServersRfcSchema._module_logger.exception(
+                "Schema extraction failed"
             )
-            objectclasses_parsed_model: list[m.Ldif.SchemaObjectClass] = [
-                m.Ldif.SchemaObjectClass.model_validate(oc.model_dump())
-                for oc in objectclasses_parsed
+            return r[
+                MutableMapping[
+                    str,
+                    t.MutableSequenceOf[m.Ldif.SchemaAttribute]
+                    | t.MutableSequenceOf[m.Ldif.SchemaObjectClass],
+                ]
+            ].fail_op("Schema extraction", e)
+
+    def _extract_schemas_from_ldif(
+        self,
+        ldif_content: str,
+        *,
+        validate_dependencies: bool,
+    ) -> p.Result[
+        MutableMapping[
+            str,
+            t.MutableSequenceOf[m.Ldif.SchemaAttribute]
+            | t.MutableSequenceOf[m.Ldif.SchemaObjectClass],
+        ]
+    ]:
+        """Extract schema definitions and optionally validate dependencies."""
+        attributes_parsed = u.Ldif.extract_attributes_from_lines(
+            ldif_content,
+            self.parse_attribute,
+        )
+        if validate_dependencies:
+            available_attrs = u.Ldif.build_available_attributes_set(
+                attributes_parsed,
+            )
+            validation_result = self._hook_validate_attributes(
+                attributes_parsed,
+                available_attrs,
+            )
+            if not validation_result.success:
+                return r[
+                    MutableMapping[
+                        str,
+                        t.MutableSequenceOf[m.Ldif.SchemaAttribute]
+                        | t.MutableSequenceOf[m.Ldif.SchemaObjectClass],
+                    ]
+                ].fail_op("Attribute validation", validation_result.error)
+
+        objectclasses_parsed = u.Ldif.extract_objectclasses_from_lines(
+            ldif_content,
+            self.parse_objectclass,
+        )
+        schema_dict: MutableMapping[
+            str,
+            t.MutableSequenceOf[m.Ldif.SchemaAttribute]
+            | t.MutableSequenceOf[m.Ldif.SchemaObjectClass],
+        ] = {
+            str(c.Ldif.DictKeys.ATTRIBUTES): attributes_parsed,
+            str(c.Ldif.DictKeys.OBJECTCLASS): objectclasses_parsed,
+        }
+        return r[
+            MutableMapping[
+                str,
+                t.MutableSequenceOf[m.Ldif.SchemaAttribute]
+                | t.MutableSequenceOf[m.Ldif.SchemaObjectClass],
             ]
-            schema_dict: dict[
-                str, list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass]
-            ] = {
-                str(c.Ldif.DictKeys.ATTRIBUTES): attributes_parsed_model,
-                str(c.Ldif.DictKeys.OBJECTCLASS): objectclasses_parsed_model,
-            }
-            return r[
-                Mapping[
-                    str,
-                    list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass],
-                ]
-            ].ok(schema_dict)
-        except (
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ) as e:
-            logger.exception("Schema extraction failed")
-            return r[
-                Mapping[
-                    str,
-                    list[m.Ldif.SchemaAttribute] | list[m.Ldif.SchemaObjectClass],
-                ]
-            ].fail(f"Schema extraction failed: {e}")
+        ].ok(schema_dict)
 
     def should_filter_out_attribute(self, _attribute: m.Ldif.SchemaAttribute) -> bool:
-        """RFC quirk does not filter attributes."""
+        """RFC server does not filter attributes."""
         _ = self
         return False
 
     def should_filter_out_objectclass(
-        self, _objectclass: m.Ldif.SchemaObjectClass
+        self,
+        _objectclass: m.Ldif.SchemaObjectClass,
     ) -> bool:
-        """RFC quirk does not filter objectClasses."""
+        """RFC server does not filter objectClasses."""
         _ = (self, _objectclass)
         return False
 
-    def _build_attribute_parts(self, attr_data: m.Ldif.SchemaAttribute) -> list[str]:
+    def _build_attribute_parts(
+        self,
+        attr_data: m.Ldif.SchemaAttribute,
+    ) -> t.MutableSequenceOf[str]:
         """Build RFC attribute definition parts."""
-        return FlextLdifUtilitiesSchema.build_attribute_parts_with_metadata(
-            attr_data, restore_original=True
+        parts: t.MutableSequenceOf[str] = u.Ldif.build_attribute_parts_with_metadata(
+            attr_data,
+            restore_original=u.Ldif.should_restore_schema_original_format(
+                attr_data.metadata,
+                self._get_server_type(),
+            ),
         )
+        return parts
 
     def _build_objectclass_metadata(
         self,
         oc_definition: str,
-        metadata_extensions: dict[str, list[str] | str | bool | None],
-    ) -> m.Ldif.QuirkMetadata:
+        metadata_extensions: MutableMapping[
+            str,
+            t.MutableSequenceOf[str] | str | bool | None,
+        ],
+    ) -> m.Ldif.ServerMetadata:
         """Build objectClass metadata with extensions."""
-        server_type: Literal["rfc"] = "rfc"
-        metadata = m.Ldif.QuirkMetadata(
-            quirk_type=server_type,
+        server_type = self._get_server_type()
+        metadata_extensions[c.Ldif.SCHEMA_SOURCE_SERVER] = server_type
+        metadata = m.Ldif.ServerMetadata(
+            server_type=server_type,
             extensions=m.Ldif.DynamicMetadata.model_validate(metadata_extensions)
             if metadata_extensions
             else m.Ldif.DynamicMetadata(),
+            original_server_type=server_type,
+            target_server_type=server_type,
         )
-        FlextLdifUtilitiesMetadata.preserve_schema_formatting(metadata, oc_definition)
+        u.Ldif.preserve_schema_formatting(metadata, oc_definition)
         return metadata
 
-    def _build_objectclass_parts(self, oc_data: m.Ldif.SchemaObjectClass) -> list[str]:
+    def _build_objectclass_parts(
+        self,
+        oc_data: m.Ldif.SchemaObjectClass,
+    ) -> t.MutableSequenceOf[str]:
         """Build RFC objectClass definition parts."""
-        return FlextLdifUtilitiesSchema.build_objectclass_parts_with_metadata(
-            oc_data, restore_original=True
+        parts: t.MutableSequenceOf[str] = u.Ldif.build_objectclass_parts_with_metadata(
+            oc_data,
+            restore_original=u.Ldif.should_restore_schema_original_format(
+                oc_data.metadata,
+                self._get_server_type(),
+            ),
         )
+        return parts
 
     def _ensure_x_origin(
         self,
         output_str: str,
-        metadata: m.Ldif.QuirkMetadata | None,
+        metadata: m.Ldif.ServerMetadata | None,
     ) -> str:
         """Ensure X-ORIGIN extension is present if in metadata."""
-        if not metadata or not metadata.extensions:
-            return output_str
-        x_origin_raw = metadata.extensions.get(c.Ldif.MetadataKeys.X_ORIGIN)
-        if not isinstance(x_origin_raw, str):
-            return output_str
-        if ")" not in output_str or "X-ORIGIN" in output_str:
-            return output_str
-        x_origin_str = f" X-ORIGIN '{x_origin_raw}'"
-        return output_str.rstrip(")") + x_origin_str + ")"
+        result = output_str
+        if metadata is not None:
+            extensions = metadata.extensions
+            if extensions:
+                x_origin_raw: t.JsonPayload | None = extensions.get(c.Ldif.X_ORIGIN)
+                if (
+                    isinstance(x_origin_raw, str)
+                    and "X-ORIGIN" not in output_str
+                    and output_str.endswith(")")
+                ):
+                    x_origin_str = f" X-ORIGIN '{x_origin_raw}'"
+                    result = output_str.rstrip(")") + x_origin_str + ")"
+        return result
 
     @override
-    def _parse_attribute(self, attr_definition: str) -> r[m.Ldif.SchemaAttribute]:
+    def _parse_attribute(
+        self, attr_definition: str
+    ) -> p.Result[m.Ldif.SchemaAttribute]:
         """Parse RFC 4512 attribute definition using generalized parser."""
         server_type = self._get_server_type()
 
         def parse_parts_hook(
             definition: str,
-        ) -> r[dict[str, builtins.object]]:
-            return FlextLdifUtilitiesSchema.parse_attribute(definition)
+        ) -> p.Result[t.Ldif.MutableMetadataMapping]:
+            parsed: p.Result[t.Ldif.MutableMetadataMapping] = u.Ldif.parse_attribute(
+                definition,
+            )
+            return parsed
 
-        parse_result_raw = FlextLdifUtilitiesAttribute.parse(
+        parse_result_raw = u.Ldif.parse(
             definition=attr_definition,
             server_type=server_type,
             parse_parts_hook=parse_parts_hook,
         )
-        if parse_result_raw.is_failure:
+        if parse_result_raw.failure:
             return r[m.Ldif.SchemaAttribute].fail(
-                parse_result_raw.error or "Attribute parsing failed"
+                parse_result_raw.error or "Attribute parsing failed",
             )
-        parsed = parse_result_raw.value
+        parsed_raw = parse_result_raw.value
+        parsed: t.Ldif.MutableMetadataMapping = dict(parsed_raw)
         syntax = parsed.get("syntax")
         syntax_str = str(syntax) if syntax is not None else None
         syntax_validation_error = self._extract_syntax_validation_error(
-            parsed.get("syntax_validation")
+            parsed.get("syntax_validation"),
         )
         attribute_oid = str(parsed.get("oid")) if parsed.get("oid") else None
-        metadata = self._build_attribute_metadata(
+        metadata = FlextLdifServersBaseSchema.build_attribute_metadata(
             attr_definition,
             syntax_str,
             syntax_validation_error,
@@ -527,13 +577,13 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             else None,
             substr_oid=str(parsed.get("substr")) if parsed.get("substr") else None,
             sup_oid=str(parsed.get("sup")) if parsed.get("sup") else None,
-            _server_type=server_type,
+            server_type=server_type,
         )
         attr_name = self._to_optional_str(parsed.get("name"))
         if attr_name is None:
-            attr_name = self._to_required_str(parsed.get("oid"))
+            attr_name = self._to_required_value(parsed.get("oid"))
         attr_model = m.Ldif.SchemaAttribute(
-            oid=self._to_required_str(parsed.get("oid")),
+            oid=self._to_required_value(parsed.get("oid")),
             name=attr_name,
             desc=self._to_optional_str(parsed.get("desc")),
             equality=self._to_optional_str(parsed.get("equality")),
@@ -550,84 +600,90 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         return self._hook_post_parse_attribute(attr_model)
 
     @override
-    def _parse_objectclass(self, oc_definition: str) -> r[m.Ldif.SchemaObjectClass]:
+    def _parse_objectclass(
+        self, oc_definition: str
+    ) -> p.Result[m.Ldif.SchemaObjectClass]:
         """Parse RFC 4512 objectClass definition using core parser."""
         parse_result = self._parse_objectclass_core(oc_definition)
-        if parse_result.is_failure:
+        if parse_result.failure:
             return parse_result
         return self._hook_post_parse_objectclass(parse_result.value)
 
     def _parse_objectclass_core(
-        self, oc_definition: str
-    ) -> r[m.Ldif.SchemaObjectClass]:
+        self,
+        oc_definition: str,
+    ) -> p.Result[m.Ldif.SchemaObjectClass]:
         """Core RFC 4512 objectClass parsing per Section 4.1.1."""
         try:
-            parsed = FlextLdifUtilitiesSchema.parse_objectclass(oc_definition)
-            metadata_extensions = self._convert_extensions_for_quirk(
-                self._coerce_dynamic_metadata(parsed.get("metadata_extensions"))
+            return self._parse_rfc_objectclass_core(oc_definition)
+        except c.EXC_BASIC_TYPE as e:
+            FlextLdifServersRfcSchema._module_logger.exception(
+                "RFC objectClass parsing exception"
             )
-            metadata_extensions[c.Ldif.MetadataKeys.ORIGINAL_FORMAT] = (
-                oc_definition.strip()
-            )
-            metadata_extensions[c.Ldif.MetadataKeys.SCHEMA_ORIGINAL_STRING_COMPLETE] = (
-                oc_definition
-            )
-            objectclass_oid = parsed.get("oid")
-            match objectclass_oid:
-                case None:
-                    FlextLdifServersBase.Schema.validate_and_track_oid(
-                        metadata_extensions, objectclass_oid, "objectClass"
-                    )
-                case str() as objectclass_oid_str:
-                    FlextLdifServersBase.Schema.validate_and_track_oid(
-                        metadata_extensions, objectclass_oid_str, "objectClass"
-                    )
-                case _:
-                    pass
-            objectclass_sup_oid = parsed.get("sup")
-            match objectclass_sup_oid:
-                case None:
-                    FlextLdifServersBase.Schema.validate_and_track_oid(
-                        metadata_extensions, objectclass_sup_oid, "objectClass SUP"
-                    )
-                case str() as objectclass_sup_oid_str:
-                    FlextLdifServersBase.Schema.validate_and_track_oid(
-                        metadata_extensions, objectclass_sup_oid_str, "objectClass SUP"
-                    )
-                case _:
-                    pass
-            must_list = self._to_string_list(parsed.get("must"))
-            self._validate_oid_list(must_list, "MUST", metadata_extensions)
-            may_list = self._to_string_list(parsed.get("may"))
-            self._validate_oid_list(may_list, "MAY", metadata_extensions)
-            metadata = self._build_objectclass_metadata(
-                oc_definition, metadata_extensions
-            )
-            oc_oid: str = self._to_required_str(parsed.get("oid"))
-            oc_name: str = self._to_required_str(parsed.get("name"))
-            oc_desc: str | None = self._to_optional_str(parsed.get("desc"))
-            oc_sup = self._to_optional_str_or_list(parsed.get("sup"))
-            oc_kind: str = self._to_required_str(
-                parsed.get("kind"), default="STRUCTURAL"
-            )
-            oc_must = self._to_string_list(parsed.get("must"))
-            oc_may = self._to_string_list(parsed.get("may"))
-            objectclass = m.Ldif.SchemaObjectClass(
-                oid=oc_oid,
-                name=oc_name,
-                desc=oc_desc,
-                sup=oc_sup,
-                kind=oc_kind,
-                must=oc_must,
-                may=oc_may,
-                metadata=metadata,
-            )
-            return r[m.Ldif.SchemaObjectClass].ok(objectclass)
-        except (ValueError, TypeError, AttributeError) as e:
-            logger.exception("RFC objectClass parsing exception")
-            return r[m.Ldif.SchemaObjectClass].fail(
-                f"RFC objectClass parsing failed: {e}"
-            )
+            return r[m.Ldif.SchemaObjectClass].fail_op("RFC objectClass parsing", e)
+
+    def _parse_rfc_objectclass_core(
+        self,
+        oc_definition: str,
+    ) -> p.Result[m.Ldif.SchemaObjectClass]:
+        """Parse RFC objectClass definition into the canonical model."""
+        parsed = u.Ldif.parse_objectclass(oc_definition)
+        metadata_extensions = self._convert_extensions_for_server(
+            self._coerce_dynamic_metadata(parsed.get("metadata_extensions")),
+        )
+        metadata_extensions[c.Ldif.ORIGINAL_FORMAT] = oc_definition.strip()
+        metadata_extensions[c.Ldif.SCHEMA_ORIGINAL_STRING_COMPLETE] = oc_definition
+        objectclass_oid = parsed.get("oid")
+        match objectclass_oid:
+            case None:
+                FlextLdifServersBaseSchema.validate_and_track_oid(
+                    metadata_extensions,
+                    objectclass_oid,
+                    "objectClass",
+                )
+            case str() as objectclass_oid_str:
+                FlextLdifServersBaseSchema.validate_and_track_oid(
+                    metadata_extensions,
+                    objectclass_oid_str,
+                    "objectClass",
+                )
+            case _:
+                pass
+        objectclass_sup_oid = parsed.get("sup")
+        match objectclass_sup_oid:
+            case None:
+                FlextLdifServersBaseSchema.validate_and_track_oid(
+                    metadata_extensions,
+                    objectclass_sup_oid,
+                    "objectClass SUP",
+                )
+            case str() as objectclass_sup_oid_str:
+                FlextLdifServersBaseSchema.validate_and_track_oid(
+                    metadata_extensions,
+                    objectclass_sup_oid_str,
+                    "objectClass SUP",
+                )
+            case _:
+                pass
+        must_list = self._to_string_list(parsed.get("must"))
+        self._validate_oid_list(must_list, "MUST", metadata_extensions)
+        may_list = self._to_string_list(parsed.get("may"))
+        self._validate_oid_list(may_list, "MAY", metadata_extensions)
+        metadata = self._build_objectclass_metadata(
+            oc_definition,
+            metadata_extensions,
+        )
+        objectclass = m.Ldif.SchemaObjectClass.model_validate({
+            "oid": self._to_required_value(parsed.get("oid")),
+            "name": self._to_required_value(parsed.get("name")),
+            "desc": self._to_optional_str(parsed.get("desc")),
+            "sup": self._to_optional_str_or_list(parsed.get("sup")),
+            "kind": self._to_required_value(parsed.get("kind"), default="STRUCTURAL"),
+            "must": self._to_string_list(parsed.get("must")),
+            "may": self._to_string_list(parsed.get("may")),
+            "metadata": metadata,
+        })
+        return r[m.Ldif.SchemaObjectClass].ok(objectclass)
 
     def _post_write_attribute(self, written_str: str) -> str:
         """Hook for subclasses to transform written attribute string."""
@@ -638,22 +694,27 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         return written_str
 
     def _transform_attribute_for_write(
-        self, attr_data: m.Ldif.SchemaAttribute
+        self,
+        attr_data: m.Ldif.SchemaAttribute,
     ) -> m.Ldif.SchemaAttribute:
         """Hook for subclasses to transform attribute before writing."""
         return attr_data
 
     def _transform_objectclass_for_write(
-        self, oc_data: m.Ldif.SchemaObjectClass
+        self,
+        oc_data: m.Ldif.SchemaObjectClass,
     ) -> m.Ldif.SchemaObjectClass:
         """Hook for subclasses to transform objectClass before writing."""
         return oc_data
 
     def _validate_oid_list(
         self,
-        oids: list[str] | None,
+        oids: t.MutableSequenceOf[str] | None,
         oid_type: str,
-        metadata_extensions: dict[str, list[str] | str | bool | None],
+        metadata_extensions: MutableMapping[
+            str,
+            t.MutableSequenceOf[str] | str | bool | None,
+        ],
     ) -> None:
         """Validate OID list and track in metadata."""
         if not oids:
@@ -661,65 +722,79 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         for idx, oid in enumerate(oids):
             match oid:
                 case str() as oid_str if oid_str:
-                    FlextLdifServersBase.Schema.validate_and_track_oid(
-                        metadata_extensions, oid_str, f"objectClass {oid_type}[{idx}]"
+                    FlextLdifServersBaseSchema.validate_and_track_oid(
+                        metadata_extensions,
+                        oid_str,
+                        f"objectClass {oid_type}[{idx}]",
                     )
                 case _:
                     pass
 
     @override
-    def _write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> r[str]:
+    def _write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> p.Result[str]:
         """Write attribute to RFC-compliant string format (internal)."""
         return self._write_schema_item(attr_data)
 
     @override
-    def _write_objectclass(self, oc_data: m.Ldif.SchemaObjectClass) -> r[str]:
+    def _write_objectclass(self, oc_data: m.Ldif.SchemaObjectClass) -> p.Result[str]:
         """Write objectClass to RFC-compliant string format (internal)."""
         return self._write_schema_item(oc_data)
 
     def _write_schema_item(
-        self, data: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass
-    ) -> r[str]:
+        self,
+        data: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+    ) -> p.Result[str]:
         """Write schema item (attribute or objectClass) to RFC-compliant format."""
         try:
-            if isinstance(data, m.Ldif.SchemaAttribute):
-                attr_transformed = self._transform_attribute_for_write(data)
-                if not attr_transformed.oid:
-                    return r[str].fail("RFC attribute writing failed: missing OID")
-                parts = self._build_attribute_parts(attr_transformed)
-                written_str = " ".join(parts)
-                transformed_str = self._post_write_attribute(written_str)
-                if attr_transformed.metadata:
-                    fmt = attr_transformed.metadata.schema_format_details
-                    if fmt:
-                        attr_case = getattr(
-                            fmt, "attribute_case", c.Ldif.SchemaFields.ATTRIBUTE_TYPES
-                        )
-                        attr_types_lower = c.Ldif.SchemaFields.ATTRIBUTE_TYPES.lower()
-                        if attr_types_lower in transformed_str.lower():
-                            transformed_str = re.sub(
-                                f"{attr_types_lower}:",
-                                f"{attr_case}:",
-                                transformed_str,
-                                flags=re.IGNORECASE,
-                            )
-                return r[str].ok(
-                    self._ensure_x_origin(transformed_str, attr_transformed.metadata)
-                )
-            oc_transformed = self._transform_objectclass_for_write(data)
-            if not oc_transformed.oid:
-                return r[str].fail("RFC objectclass writing failed: missing OID")
-            parts = self._build_objectclass_parts(oc_transformed)
-            written_str = " ".join(parts)
-            transformed_str = self._post_write_objectclass(written_str)
-            return r[str].ok(
-                self._ensure_x_origin(transformed_str, oc_transformed.metadata)
-            )
-        except (ValueError, TypeError, AttributeError) as e:
+            return self._write_schema_item_core(data)
+        except c.EXC_BASIC_TYPE as e:
             item_type = (
                 "attribute"
                 if isinstance(data, m.Ldif.SchemaAttribute)
                 else "objectclass"
             )
-            logger.exception("RFC %s writing exception", item_type)
+            FlextLdifServersRfcSchema._module_logger.exception(
+                "RFC %s writing exception", item_type
+            )
             return r[str].fail(f"RFC {item_type} writing failed: {e}")
+
+    def _write_schema_item_core(
+        self,
+        data: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+    ) -> p.Result[str]:
+        """Write schema item after server-specific transforms."""
+        if isinstance(data, m.Ldif.SchemaAttribute):
+            attr_transformed = self._transform_attribute_for_write(data)
+            if not attr_transformed.oid:
+                return r[str].fail("RFC attribute writing failed: missing OID")
+            parts = self._build_attribute_parts(attr_transformed)
+            written_str = " ".join(parts)
+            transformed_str = self._post_write_attribute(written_str)
+            if attr_transformed.metadata:
+                fmt = attr_transformed.metadata.schema_format_details
+                if fmt:
+                    attr_case = getattr(
+                        fmt,
+                        "attribute_case",
+                        c.Ldif.ATTRIBUTE_TYPES,
+                    )
+                    attr_types_lower = c.Ldif.ATTRIBUTE_TYPES.lower()
+                    if attr_types_lower in transformed_str.lower():
+                        transformed_str = c.Ldif.sub_pattern(
+                            f"{attr_types_lower}:",
+                            f"{attr_case}:",
+                            transformed_str,
+                            ignorecase=True,
+                        )
+            return r[str].ok(
+                self._ensure_x_origin(transformed_str, attr_transformed.metadata),
+            )
+        oc_transformed = self._transform_objectclass_for_write(data)
+        if not oc_transformed.oid:
+            return r[str].fail("RFC objectclass writing failed: missing OID")
+        parts = self._build_objectclass_parts(oc_transformed)
+        written_str = " ".join(parts)
+        transformed_str = self._post_write_objectclass(written_str)
+        return r[str].ok(
+            self._ensure_x_origin(transformed_str, oc_transformed.metadata),
+        )

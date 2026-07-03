@@ -2,14 +2,8 @@
 
 from __future__ import annotations
 
-import builtins
-from collections.abc import Mapping
-
-from flext_core import p
-
-from flext_ldif._models.events import FlextLdifModelsEvents
-from flext_ldif._models.settings import FlextLdifModelsSettings
-from flext_ldif.typings import t
+from flext_ldif import c, p, t
+from flext_ldif.models import FlextLdifModels as m
 
 
 class FlextLdifUtilitiesEvents:
@@ -17,73 +11,52 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def _build_conversion_event_logging(
-        event: FlextLdifModelsEvents.ConversionEvent,
-        config: FlextLdifModelsEvents.ConversionEventConfig,
-    ) -> tuple[Mapping[str, t.Scalar], str]:
+        event: m.Ldif.ConversionEvent,
+        settings: m.Ldif.ConversionEventConfig,
+    ) -> tuple[t.MutableJsonMapping, str]:
         return (
             {
                 "aggregate_id": event.aggregate_id,
-                "conversion_operation": config.conversion_operation,
-                "source_format": config.source_format,
-                "target_format": config.target_format,
-                "items_processed": config.items_processed,
-                "items_converted": config.items_converted,
-                "items_failed": config.items_failed,
-                "conversion_duration_ms": config.conversion_duration_ms,
+                "conversion_operation": settings.conversion_operation,
+                "source_format": settings.source_format,
+                "target_format": settings.target_format,
+                "items_processed": settings.items_processed,
+                "items_converted": settings.items_converted,
+                "items_failed": settings.items_failed,
+                "conversion_duration_ms": settings.conversion_duration_ms,
                 "success_rate_pct": event.conversion_success_rate,
                 "throughput_items_per_sec": event.throughput_items_per_sec,
             },
-            f"Conversion '{config.conversion_operation}' from {config.source_format} to {config.target_format} completed",
-        )
-
-    @staticmethod
-    def _build_operation_event_logging(
-        event: FlextLdifModelsEvents.MigrationEvent,
-        config: FlextLdifModelsEvents.MigrationEventConfig,
-    ) -> tuple[Mapping[str, t.Scalar], str]:
-        return (
-            {
-                "aggregate_id": event.aggregate_id,
-                "migration_operation": config.migration_operation,
-                "source_server": config.source_server,
-                "target_server": config.target_server,
-                "entries_processed": config.entries_processed,
-                "entries_migrated": config.entries_migrated,
-                "entries_failed": config.entries_failed,
-                "migration_duration_ms": config.migration_duration_ms,
-                "success_rate_pct": event.migration_success_rate,
-                "throughput_entries_per_sec": event.throughput_entries_per_sec,
-            },
-            f"Migration '{config.migration_operation}' from {config.source_server} to {config.target_server} completed",
+            f"Conversion '{settings.conversion_operation}' from {settings.source_format} to {settings.target_format} completed",
         )
 
     @staticmethod
     def _log_and_emit_generic_event(
         logger: p.Logger,
-        log_context: Mapping[str, t.Scalar],
+        log_context: t.MutableJsonMapping,
         log_message: str,
-        log_level: str = "info",
-        extras: FlextLdifModelsSettings.LogContextExtras | None = None,
+        log_level: str = c.Ldif.LogLevelLower.INFO.value,
+        extras: m.Ldif.LogContextExtras | None = None,
     ) -> None:
         """Generic helper for logging events with context and extras."""
         filtered_extras = FlextLdifUtilitiesEvents._process_extras(extras)
         merged_context = dict(log_context)
         merged_context.update(filtered_extras)
-        if log_level == "debug":
+        if log_level == c.Ldif.LogLevelLower.DEBUG.value:
             logger.debug(log_message, return_result=False, **merged_context)
-        elif log_level == "warning":
+        elif log_level == c.Ldif.LogLevelLower.WARNING.value:
             logger.warning(log_message, return_result=False, **merged_context)
-        elif log_level == "error":
+        elif log_level == c.Ldif.LogLevelLower.ERROR.value:
             logger.error(log_message, return_result=False, **merged_context)
         else:
             logger.info(log_message, return_result=False, **merged_context)
 
     @staticmethod
     def _process_extras(
-        extras: FlextLdifModelsSettings.LogContextExtras | None = None,
-    ) -> Mapping[str, t.Scalar]:
+        extras: m.Ldif.LogContextExtras | None = None,
+    ) -> t.MutableJsonMapping:
         """Extract and filter extras into a dict of loggable context."""
-        filtered_extras: dict[str, t.Scalar] = {}
+        filtered_extras: t.MutableJsonMapping = {}
         if not extras:
             return filtered_extras
         if extras.user_id is not None:
@@ -102,123 +75,94 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def _to_error_details_list(
-        error_details: list[builtins.object] | tuple[builtins.object, ...] | None,
-    ) -> list[str]:
+        error_details: t.JsonValueList | tuple[t.JsonValue, ...] | None,
+    ) -> t.MutableSequenceOf[str]:
         if error_details is None:
             return []
         return [str(detail) for detail in error_details]
 
     @staticmethod
     def create_conversion_event(
-        config: FlextLdifModelsEvents.ConversionEventConfig,
-    ) -> FlextLdifModelsEvents.ConversionEvent:
-        """Create ConversionEvent with standardized fields from config Model."""
-        aggregate_id = f"{config.source_format}_to_{config.target_format}_{config.conversion_operation}"
+        settings: m.Ldif.ConversionEventConfig,
+    ) -> m.Ldif.ConversionEvent:
+        """Create ConversionEvent with standardized fields from settings Model."""
+        aggregate_id = f"{settings.source_format}_to_{settings.target_format}_{settings.conversion_operation}"
         error_details_list = FlextLdifUtilitiesEvents._to_error_details_list(
-            list(config.error_details) if config.error_details is not None else None
+            list(settings.error_details)
+            if settings.error_details is not None
+            else None,
         )
-        return FlextLdifModelsEvents.ConversionEvent(
-            event_type="ldif.conversion",
-            aggregate_id=aggregate_id,
-            conversion_operation=config.conversion_operation,
-            source_format=config.source_format,
-            target_format=config.target_format,
-            items_converted=config.items_converted,
-            items_failed=config.items_failed,
-            conversion_duration_ms=config.conversion_duration_ms,
-            error_details=error_details_list,
-        )
+        event: m.Ldif.ConversionEvent = m.Ldif.ConversionEvent.model_validate({
+            "event_type": "ldif.conversion",
+            "aggregate_id": aggregate_id,
+            "conversion_operation": settings.conversion_operation,
+            "source_format": settings.source_format,
+            "target_format": settings.target_format,
+            "items_converted": settings.items_converted,
+            "items_failed": settings.items_failed,
+            "conversion_duration_ms": settings.conversion_duration_ms,
+            "error_details": error_details_list,
+        })
+        return event
 
     @staticmethod
     def create_dn_event(
-        config: FlextLdifModelsEvents.DnEventConfig,
-    ) -> FlextLdifModelsEvents.DnEvent:
-        """Create DnEvent with standardized fields from config Model."""
-        return FlextLdifModelsEvents.DnEvent(
-            event_type="ldif.dn",
-            aggregate_id=config.input_dn,
-            dn_operation=config.dn_operation,
-            input_dn=config.input_dn,
-            output_dn=config.output_dn,
-            dn_duration_ms=config.operation_duration_ms,
-            validation_result=config.validation_result,
-        )
-
-    @staticmethod
-    def create_migration_event(
-        config: FlextLdifModelsEvents.MigrationEventConfig,
-    ) -> FlextLdifModelsEvents.MigrationEvent:
-        """Create MigrationEvent with standardized fields from config Model."""
-        aggregate_id = f"{config.source_server}_to_{config.target_server}_{config.migration_operation}"
-        error_details_list = FlextLdifUtilitiesEvents._to_error_details_list(
-            list(config.error_details) if config.error_details is not None else None
-        )
-        return FlextLdifModelsEvents.MigrationEvent(
-            event_type="ldif.migration",
-            aggregate_id=aggregate_id,
-            migration_operation=config.migration_operation,
-            source_server=config.source_server,
-            target_server=config.target_server,
-            entries_migrated=config.entries_migrated,
-            entries_failed=config.entries_failed,
-            migration_duration_ms=config.migration_duration_ms,
-            error_details=error_details_list,
-        )
-
-    @staticmethod
-    def create_schema_event(
-        config: FlextLdifModelsEvents.SchemaEventConfig,
-    ) -> FlextLdifModelsEvents.SchemaEvent:
-        """Create SchemaEvent with standardized fields from config Model."""
-        aggregate_id = f"{config.server_type}_schema_{config.schema_operation}"
-        return FlextLdifModelsEvents.SchemaEvent(
-            event_type="ldif.schema",
-            aggregate_id=aggregate_id,
-            schema_operation=config.schema_operation,
-            items_processed=config.items_processed,
-            items_succeeded=config.items_succeeded,
-            items_failed=config.items_failed,
-            schema_duration_ms=config.operation_duration_ms,
-        )
+        settings: m.Ldif.DnEventConfig,
+    ) -> m.Ldif.DnEvent:
+        """Create DnEvent with standardized fields from settings Model."""
+        event: m.Ldif.DnEvent = m.Ldif.DnEvent.model_validate({
+            "event_type": "ldif.dn",
+            "aggregate_id": settings.input_dn,
+            "dn_operation": settings.dn_operation,
+            "input_dn": settings.input_dn,
+            "output_dn": settings.output_dn,
+            "dn_duration_ms": settings.operation_duration_ms,
+            "validation_result": settings.validation_result,
+        })
+        return event
 
     @staticmethod
     def log_and_emit_conversion_event(
         logger: p.Logger,
-        config: FlextLdifModelsEvents.ConversionEventConfig,
+        settings: m.Ldif.ConversionEventConfig,
         log_level: str = "info",
-        extras: FlextLdifModelsSettings.LogContextExtras | None = None,
-    ) -> FlextLdifModelsEvents.ConversionEvent:
+        extras: m.Ldif.LogContextExtras | None = None,
+    ) -> m.Ldif.ConversionEvent:
         """Create ConversionEvent, log with context, and attach to logger context."""
-        event = FlextLdifUtilitiesEvents.create_conversion_event(config)
+        event = FlextLdifUtilitiesEvents.create_conversion_event(settings)
         log_context, log_message = (
-            FlextLdifUtilitiesEvents._build_conversion_event_logging(event, config)
+            FlextLdifUtilitiesEvents._build_conversion_event_logging(event, settings)
         )
         FlextLdifUtilitiesEvents._log_and_emit_generic_event(
-            logger, log_context, log_message, log_level, extras
+            logger,
+            log_context,
+            log_message,
+            log_level,
+            extras,
         )
         return event
 
     @staticmethod
     def log_and_emit_dn_event(
         logger: p.Logger,
-        config: FlextLdifModelsEvents.DnEventConfig,
+        settings: m.Ldif.DnEventConfig,
         log_level: str = "info",
-        extras: FlextLdifModelsSettings.LogContextExtras | None = None,
-    ) -> FlextLdifModelsEvents.DnEvent:
+        extras: m.Ldif.LogContextExtras | None = None,
+    ) -> m.Ldif.DnEvent:
         """Create DnEvent, log with context, and attach to logger context."""
-        event = FlextLdifUtilitiesEvents.create_dn_event(config)
+        event = FlextLdifUtilitiesEvents.create_dn_event(settings)
         aggregate_id = event.aggregate_id or ""
-        log_context: dict[str, t.Scalar] = {
+        log_context: t.MutableJsonMapping = {
             "aggregate_id": aggregate_id,
-            "dn_operation": config.dn_operation,
-            "input_dn": config.input_dn,
-            "operation_duration_ms": config.operation_duration_ms,
+            "dn_operation": settings.dn_operation,
+            "input_dn": settings.input_dn,
+            "operation_duration_ms": settings.operation_duration_ms,
             "has_output": event.has_output,
             "component_count": event.component_count,
         }
-        if config.output_dn is not None:
-            log_context["output_dn"] = config.output_dn
-        log_message = f"DN operation '{config.dn_operation}' completed"
+        if settings.output_dn is not None:
+            log_context["output_dn"] = settings.output_dn
+        log_message = f"DN operation '{settings.dn_operation}' completed"
         FlextLdifUtilitiesEvents._log_and_emit_generic_event(
             logger=logger,
             log_context=log_context,
@@ -229,4 +173,4 @@ class FlextLdifUtilitiesEvents:
         return event
 
 
-__all__ = ["FlextLdifUtilitiesEvents"]
+__all__: list[str] = ["FlextLdifUtilitiesEvents"]

@@ -1,47 +1,52 @@
-"""Base Quirk Classes for LDIF/LDAP Server Extensions."""
+"""Base Server Classes for LDIF/LDAP Server Extensions."""
 
 from __future__ import annotations
 
-import builtins
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import (
+    Callable,
+)
 from typing import ClassVar, Self, overload, override
 
-from flext_core import FlextLogger, r, s
-from pydantic import ConfigDict
-
-from flext_ldif import FlextLdifModelsResults, m, p, t, u
-from flext_ldif.servers._base import (
-    FlextLdifServersBaseEntry,
-    FlextLdifServersBaseSchema,
-    FlextLdifServersBaseSchemaAcl,
-)
-
-logger = FlextLogger(__name__)
+from flext_ldif import c, m, p, r, s, t, u
+from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
+from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
+from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
+from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
 
 
 class FlextLdifServersBase(s[m.Ldif.Entry]):
-    """Base class for LDIF/LDAP server quirks as FlextService V2."""
+    """Base class for LDIF/LDAP server servers built on `s`."""
 
-    model_config = ConfigDict(arbitrary_types_allowed=True, extra="allow")
-    server_type: ClassVar[str]
-    priority: ClassVar[int]
+    model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+        arbitrary_types_allowed=True,
+        extra="forbid",
+    )
+    server_type: ClassVar[str] = c.Ldif.UNKNOWN_VALUE
+    priority: ClassVar[int] = 0
 
-    def __init__(self, **kwargs: t.Scalar) -> None:
-        """Initialize base quirk and its nested quirks."""
-        init_kwargs: dict[str, t.Scalar | None] = {}
+    def __init__(self, **kwargs: t.Ldif.Scalar) -> None:
+        """Initialize base server and its nested servers."""
+        init_kwargs: t.MutableScalarMapping = {}
         for key, value in kwargs.items():
-            if value is None:
-                init_kwargs[key] = None
-            elif isinstance(value, (str, int, float, bool)):
+            if isinstance(value, t.PRIMITIVES_TYPES):
                 init_kwargs[key] = value
         super().__init__()
         parent_ref: FlextLdifServersBase = self
-        self._schema_quirk = self.Schema()
-        object.__setattr__(self._schema_quirk, "_parent_quirk", parent_ref)
-        self._acl_quirk = self.Acl()
-        object.__setattr__(self._acl_quirk, "_parent_quirk", parent_ref)
-        self._entry_quirk = self.Entry()
-        object.__setattr__(self._entry_quirk, "_parent_quirk", parent_ref)
+        schema_server: FlextLdifServersBaseSchema = self.Schema().model_copy(
+            update={"server_type": self.server_type},
+        )
+        self._schema_server = schema_server
+        object.__setattr__(self._schema_server, "_parent_server", parent_ref)
+        acl_server: FlextLdifServersBaseSchemaAcl = self.Acl().model_copy(
+            update={"server_type": self.server_type},
+        )
+        self._acl_server = acl_server
+        object.__setattr__(self._acl_server, "_parent_server", parent_ref)
+        entry_server: FlextLdifServersBaseEntry = self.Entry().model_copy(
+            update={"server_type": self.server_type},
+        )
+        self._entry_server = entry_server
+        object.__setattr__(self._entry_server, "_parent_server", parent_ref)
 
     def __init_subclass__(cls, **kwargs: str | float | bool | None) -> None:
         """Initialize subclass with server_type and priority from Constants."""
@@ -60,56 +65,66 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
             msg = f"{cls.__name__}.Constants must define PRIORITY"
             raise AttributeError(msg)
         priority_number = int(priority_value)
-        type.__setattr__(cls, "server_type", _ServerTypeDescriptor(server_type_text))
-        type.__setattr__(cls, "priority", _PriorityDescriptor(priority_number))
+        type.__setattr__(cls, "server_type", server_type_text)
+        type.__setattr__(cls, "priority", priority_number)
 
     @property
     def acl(self) -> FlextLdifServersBaseSchemaAcl:
-        """Access to nested acl quirk instance."""
-        return self._acl_quirk
+        """Access to nested acl server instance."""
+        acl_server: FlextLdifServersBaseSchemaAcl = self._acl_server
+        return acl_server
 
     @property
-    def acl_quirk(self) -> FlextLdifServersBaseSchemaAcl:
-        """Access to nested acl quirk instance (alias for acl)."""
-        return self._acl_quirk
+    def acl_server(self) -> p.Ldif.AclServer:
+        """Access to nested acl server instance (alias for acl)."""
+        acl_server: FlextLdifServersBaseSchemaAcl = self._acl_server
+        return acl_server
 
     @property
     def entry(self) -> FlextLdifServersBaseEntry:
-        """Access to nested entry quirk instance."""
-        return self._entry_quirk
+        """Access to nested entry server instance."""
+        entry_server: FlextLdifServersBaseEntry = self._entry_server
+        return entry_server
 
     @property
-    def entry_quirk(self) -> FlextLdifServersBaseEntry:
-        """Access to nested entry quirk instance (alias for entry)."""
-        return self._entry_quirk
+    def entry_server(self) -> p.Ldif.EntryServer:
+        """Access to nested entry server instance (alias for entry)."""
+        entry_server: FlextLdifServersBaseEntry = self._entry_server
+        return entry_server
 
     @property
-    def schema_quirk(self) -> FlextLdifServersBaseSchema:
-        """Access to nested schema quirk instance (alias for schema)."""
-        return self._schema_quirk
+    def schema_server(self) -> p.Ldif.SchemaServer:
+        """Access to nested schema server instance (alias for schema)."""
+        schema_server: FlextLdifServersBaseSchema = self._schema_server
+        return schema_server
 
-    def get_schema_quirk(self) -> FlextLdifServersBaseSchema:
-        """Get schema quirk instance."""
-        return self.schema_quirk
+    def resolve_schema_server(self) -> p.Ldif.SchemaServer:
+        """Get schema server instance."""
+        return self.schema_server
 
     auto_execute: ClassVar[bool] = False
 
-    def __new__(cls, **kwargs: t.Scalar) -> Self:
+    def __new__(cls, **kwargs: t.Ldif.Scalar) -> Self:
         """Override __new__ to support auto-execute and processor instantiation."""
         instance: Self = object.__new__(cls)
-        filtered_kwargs: dict[str, str | float | bool] = {}
-        execute_kwargs: dict[str, builtins.object] = {}
+        filtered_kwargs: t.MutableConfigValueMapping = {}
+        execute_kwargs: t.MutableMappingKV[
+            str,
+            str | int | bool | t.MutableSequenceOf[m.Ldif.Entry],
+        ] = {}
         for k, v in kwargs.items():
             value = v
             if isinstance(value, (str, float, bool)):
                 filtered_kwargs[k] = value
-            if isinstance(value, (str, int, bool, list)) or value is None:
+            if isinstance(value, (str, int, bool, list)):
                 execute_kwargs[k] = value
         type(instance).__init__(instance, **filtered_kwargs)
         if cls.auto_execute:
             ldif_text, entries, operation = cls._extract_execute_params(execute_kwargs)
             result = instance.execute(
-                ldif_text=ldif_text, entries=entries, _operation=operation
+                ldif_text=ldif_text,
+                entries=entries,
+                operation=operation,
             )
             unwrapped = result.value
             if isinstance(unwrapped, cls):
@@ -118,7 +133,20 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
 
     @overload
     def __call__(
-        self, ldif_text: str, *, entries: None = None, operation: str | None = None
+        self,
+        *,
+        server: p.Ldif.ServerRegistry | None = None,
+        settings: p.Ldif.Settings | None = None,
+        **fields: t.JsonValue,
+    ) -> Self: ...
+
+    @overload
+    def __call__(
+        self,
+        ldif_text: str,
+        *,
+        entries: None = None,
+        operation: str | None = None,
     ) -> m.Ldif.Entry | str: ...
 
     @overload
@@ -126,7 +154,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         self,
         *,
         ldif_text: None = None,
-        entries: list[m.Ldif.Entry],
+        entries: t.MutableSequenceOf[m.Ldif.Entry],
         operation: str | None = None,
     ) -> str: ...
 
@@ -134,26 +162,80 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
     def __call__(
         self,
         ldif_text: str | None = None,
-        entries: list[m.Ldif.Entry] | None = None,
+        entries: t.MutableSequenceOf[m.Ldif.Entry] | None = None,
         operation: str | None = None,
     ) -> m.Ldif.Entry | str: ...
 
     def __call__(
         self,
-        ldif_text: str | None = None,
-        entries: list[m.Ldif.Entry] | None = None,
-        operation: str | None = None,
-    ) -> m.Ldif.Entry | str:
+        *args: str | t.MutableSequenceOf[m.Ldif.Entry] | None,
+        server: p.Ldif.ServerRegistry | None = None,
+        settings: p.Ldif.Settings | None = None,
+        **fields: t.JsonValue | t.MutableSequenceOf[m.Ldif.Entry],
+    ) -> Self | m.Ldif.Entry | str:
         """Callable interface - use as processor."""
-        result = self.execute(
-            ldif_text=ldif_text, entries=entries, _operation=operation
+        builder_fields = FlextLdifServerMethodsMixin.project_processor_fields(
+            fields,
+            frozenset({"ldif_text", "entries", "operation"}),
+            force_dispatch=server is not None or settings is not None,
         )
-        return result.value
+        if builder_fields is not None:
+            configured: Self = super().__call__(
+                server=server,
+                settings=settings,
+                **builder_fields,
+            )
+            return configured
+        execute_kwargs: t.MutableMappingKV[
+            str,
+            str | int | bool | t.MutableSequenceOf[m.Ldif.Entry],
+        ] = {}
+        ldif_text_raw = fields.get("ldif_text")
+        if ldif_text_raw is not None:
+            validated_ldif_text: str = t.str_adapter().validate_python(ldif_text_raw)
+            execute_kwargs["ldif_text"] = validated_ldif_text
+        entries_raw = fields.get("entries")
+        if entries_raw is not None:
+            validated_entries: t.MutableSequenceOf[m.Ldif.Entry] = u.Ldif.as_entries(
+                entries_raw,
+            )
+            execute_kwargs["entries"] = validated_entries
+        operation_raw = fields.get("operation")
+        if operation_raw is not None:
+            validated_operation: str = t.str_adapter().validate_python(operation_raw)
+            execute_kwargs["operation"] = validated_operation
+        for index, value in enumerate(args[:3]):
+            match index:
+                case 0 if "ldif_text" not in execute_kwargs and isinstance(value, str):
+                    execute_kwargs["ldif_text"] = value
+                case 0 if "entries" not in execute_kwargs and value is not None:
+                    execute_kwargs["entries"] = u.Ldif.as_entries(value)
+                case 1 if "entries" not in execute_kwargs and value is not None:
+                    execute_kwargs["entries"] = u.Ldif.as_entries(value)
+                case 2 if "operation" not in execute_kwargs and isinstance(value, str):
+                    execute_kwargs["operation"] = value
+                case _:
+                    continue
+        ldif_text, entries, operation = self._extract_execute_params(execute_kwargs)
+        result = self.execute(
+            ldif_text=ldif_text,
+            entries=entries,
+            operation=operation,
+        )
+        value = result.unwrap()
+        if isinstance(value, str):
+            return value
+        as_entry: m.Ldif.Entry = u.Ldif.as_entry(value)
+        return as_entry
 
     @classmethod
     def _extract_execute_params(
-        cls, kwargs: Mapping[str, builtins.object]
-    ) -> tuple[str | None, list[m.Ldif.Entry] | None, str | None]:
+        cls,
+        kwargs: t.MutableMappingKV[
+            str,
+            str | int | bool | t.MutableSequenceOf[m.Ldif.Entry],
+        ],
+    ) -> tuple[str | None, t.MutableSequenceOf[m.Ldif.Entry] | None, str | None]:
         """Extract type-safe execution parameters from kwargs."""
         return (
             cls._extract_ldif_text(kwargs),
@@ -161,117 +243,87 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
             cls._extract_operation(kwargs),
         )
 
+    def _get_server_type(self) -> str:
+        """Get server_type from parent class Constants via MRO traversal."""
+        return self._get_server_type_from_mro(type(self))
+
     @classmethod
-    def _get_priority_from_mro(cls, quirk_class: type[builtins.object]) -> int:
+    def _get_priority_from_mro(
+        cls,
+        server_class: type,
+    ) -> int:
         """Get priority from parent class Constants via MRO traversal."""
-
-        def is_valid_server_class(mro_cls: type[builtins.object]) -> bool:
-            """Check if MRO class is a valid server class with PRIORITY."""
-            if not mro_cls.__name__.startswith("FlextLdifServers"):
-                return False
-            if mro_cls.__name__.endswith(("Schema", "Acl", "Entry")):
-                return False
-            constants = getattr(mro_cls, "Constants", None)
-            priority = getattr(constants, "PRIORITY", None)
-            return isinstance(priority, int)
-
-        def extract_priority(mro_cls: type[builtins.object]) -> int | None:
-            """Extract priority if it's a valid integer."""
-            constants = getattr(mro_cls, "Constants", None)
-            if constants is None:
-                return None
-            priority = getattr(constants, "PRIORITY", None)
+        for mro_cls in server_class.__mro__:
+            if not mro_cls.__name__.startswith(
+                "FlextLdifServers",
+            ) or mro_cls.__name__.endswith(("Schema", "Acl", "Entry")):
+                continue
+            priority = getattr(getattr(mro_cls, "Constants", None), "PRIORITY", None)
             if isinstance(priority, int):
                 return priority
-            return None
-
-        try:
-            priority = next(
-                (
-                    p
-                    for cls in quirk_class.__mro__
-                    if is_valid_server_class(cls)
-                    and (p := extract_priority(cls)) is not None
-                ),
-                None,
-            )
-            if priority is not None:
-                return priority
-        except StopIteration:
-            pass
-        msg = (
-            f"Cannot find PRIORITY in Constants for quirk class: {quirk_class.__name__}"
-        )
+        msg = f"Cannot find PRIORITY in Constants for server class: {server_class.__name__}"
         raise AttributeError(msg)
 
     @classmethod
-    def _get_server_type_from_mro(cls, quirk_class: type[builtins.object]) -> str:
+    def _get_server_type_from_mro(
+        cls,
+        server_class: type,
+    ) -> str:
         """Get server_type from parent class Constants via MRO traversal."""
-
-        def is_valid_server_class(mro_cls: type[builtins.object]) -> bool:
-            """Check if MRO class is a valid server class with SERVER_TYPE."""
-            if not mro_cls.__name__.startswith("FlextLdifServers"):
-                return False
-            if mro_cls.__name__.endswith(("Schema", "Acl", "Entry")):
-                return False
-            constants = getattr(mro_cls, "Constants", None)
-            server_type = getattr(constants, "SERVER_TYPE", None)
-            return isinstance(server_type, str)
-
-        def extract_server_type(mro_cls: type[builtins.object]) -> str | None:
-            """Extract server type if it's a valid string."""
-            constants = getattr(mro_cls, "Constants", None)
-            if constants is None:
-                return None
-            server_type = getattr(constants, "SERVER_TYPE", None)
-            if isinstance(server_type, str):
-                return server_type
-            return None
-
-        try:
-            server_type = next(
-                (
-                    st
-                    for cls in quirk_class.__mro__
-                    if is_valid_server_class(cls)
-                    and (st := extract_server_type(cls)) is not None
-                ),
+        for mro_cls in server_class.__mro__:
+            if not mro_cls.__name__.startswith(
+                "FlextLdifServers",
+            ) or mro_cls.__name__.endswith(("Schema", "Acl", "Entry")):
+                continue
+            server_type = getattr(
+                getattr(mro_cls, "Constants", None),
+                "SERVER_TYPE",
                 None,
             )
-            if server_type:
-                return u.Ldif.Server.normalize_server_type(server_type)
-        except StopIteration:
-            pass
-        msg = f"Cannot find SERVER_TYPE in Constants for quirk class: {quirk_class.__name__}"
+            if isinstance(server_type, str) and server_type:
+                normalized: str = u.Ldif.normalize_server_type(server_type)
+                return normalized
+        msg = f"Cannot find SERVER_TYPE in Constants for server class: {server_class.__name__}"
         raise AttributeError(msg)
 
     @classmethod
     def _register_in_registry(
         cls,
-        quirk_instance: p.Ldif.SchemaQuirk | FlextLdifServersBase,
-        registry: p.Ldif.QuirkRegistry | object,
+        server_instance: p.Ldif.SchemaServer | FlextLdifServersBase,
+        registry: p.Ldif.ServerRegistry | t.JsonValue,
     ) -> None:
-        """Helper method to register a quirk instance in the registry."""
+        """Helper method to register a server instance in the registry."""
 
         def validate_registry(
-            registry_obj: p.Ldif.QuirkRegistry | object,
-        ) -> Callable[[str, p.Ldif.SchemaQuirk | object], None] | None:
+            registry_obj: p.Ldif.ServerRegistry | t.JsonValue,
+        ) -> (
+            Callable[
+                [str, p.Ldif.SchemaServer | t.JsonValue | FlextLdifServersBase],
+                None,
+            ]
+            | None
+        ):
             """Validate registry has register method."""
-            method = getattr(registry_obj, "register_quirk", None)
+            method = getattr(registry_obj, "register_server", None)
             if method is not None and callable(method):
                 captured = method
 
                 def typed_register(
-                    server_type: str, quirk: p.Ldif.SchemaQuirk | object
+                    server_type: str,
+                    server: p.Ldif.SchemaServer | t.JsonValue | FlextLdifServersBase,
                 ) -> None:
-                    _ = captured(server_type, quirk)
+                    _ = captured(server_type, server)
 
                 return typed_register
             return None
 
         def perform_registration(
-            register_func: Callable[[str, object], None] | None,
-            instance: builtins.object | FlextLdifServersBase,
+            register_func: Callable[
+                [str, p.Ldif.SchemaServer | t.JsonValue | FlextLdifServersBase],
+                None,
+            ]
+            | None,
+            instance: p.Ldif.SchemaServer | FlextLdifServersBase,
         ) -> None:
             """Execute registration if method is available."""
             if register_func is not None:
@@ -280,193 +332,192 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
                     callable(getattr(instance, method, None))
                     for method in required_methods
                 ):
-                    schema_quirk = instance
-                    register_func("auto", schema_quirk)
+                    register_func("auto", instance)
 
-        register_method = validate_registry(registry)
-        perform_registration(register_method, quirk_instance)
+        register_method_typed = validate_registry(registry)
+        perform_registration(register_method_typed, server_instance)
 
     @staticmethod
     def _extract_entries(
-        kwargs: Mapping[str, builtins.object],
-    ) -> list[m.Ldif.Entry] | None:
+        kwargs: t.MutableMappingKV[
+            str,
+            str | int | bool | t.MutableSequenceOf[m.Ldif.Entry],
+        ],
+    ) -> t.MutableSequenceOf[m.Ldif.Entry] | None:
         """Extract and validate entries parameter."""
         if "entries" not in kwargs:
             return None
         raw = kwargs["entries"]
-        if raw is None:
-            return None
-        if not isinstance(raw, list):
-            msg = f"Expected list[Entry | None] for entries, got {type(raw)}"
-            raise TypeError(msg)
         if not raw:
             return []
-        entries: list[m.Ldif.Entry] = []
-        for item in raw:
-            if isinstance(item, m.Ldif.Entry):
-                entries.append(item)
-            else:
-                msg = f"Expected list[Entry] for entries, got item of type {type(item)}"
-                raise TypeError(msg)
-        return entries
+        try:
+            entries: t.MutableSequenceOf[m.Ldif.Entry] = u.Ldif.as_entries(raw)
+            return entries
+        except c.EXC_VALIDATION_TYPE as exc:
+            msg = f"Expected t.MutableSequenceOf[Entry | None] for entries, got {type(raw)}"
+            raise TypeError(msg) from exc
 
     @staticmethod
-    def _extract_ldif_text(kwargs: Mapping[str, builtins.object]) -> str | None:
+    def _extract_ldif_text(
+        kwargs: t.MutableMappingKV[
+            str,
+            str | int | bool | t.MutableSequenceOf[m.Ldif.Entry],
+        ],
+    ) -> str | None:
         """Extract and validate ldif_text parameter."""
         if "ldif_text" not in kwargs:
             return None
-        raw = kwargs["ldif_text"]
-        if raw is None or isinstance(raw, str):
-            return raw
-        msg = f"Expected str | None for ldif_text, got {type(raw)}"
-        raise TypeError(msg)
+        match kwargs.get("ldif_text"):
+            case None:
+                return None
+            case str() as raw_text:
+                return raw_text
+            case raw:
+                msg = f"Expected str | None for ldif_text, got {type(raw)}"
+                raise TypeError(msg)
 
     @staticmethod
-    def _extract_operation(kwargs: Mapping[str, builtins.object]) -> str | None:
+    def _extract_operation(
+        kwargs: t.MutableMappingKV[
+            str,
+            str | int | bool | t.MutableSequenceOf[m.Ldif.Entry],
+        ],
+    ) -> str | None:
         """Extract and validate operation parameter."""
         if "operation" not in kwargs:
             return None
-        raw = kwargs["operation"]
-        if raw is None:
-            return None
-        if raw == "parse":
-            return "parse"
-        if raw == "write":
-            return "write"
-        msg = f"Expected 'parse' | 'write' | None for operation, got {raw}"
-        raise ValueError(msg)
+        match kwargs.get("operation"):
+            case None:
+                return None
+            case "parse":
+                return "parse"
+            case "write":
+                return "write"
+            case str() as raw_operation:
+                msg = f"Expected 'parse' | 'write' | None for operation, got {raw_operation}"
+                raise ValueError(msg)
+            case raw:
+                msg = (
+                    f"Expected 'parse' | 'write' | None for operation, got {type(raw)}"
+                )
+                raise TypeError(msg)
 
     @override
     def execute(
         self,
         *,
         ldif_text: str | None = None,
-        entries: Sequence[m.Ldif.Entry] | None = None,
-        _operation: str | None = None,
-    ) -> r[m.Ldif.Entry]:
-        """Execute quirk operation with auto-detection."""
-        if ldif_text is not None:
-            return self._execute_parse(ldif_text)
-        if entries:
+        entries: t.MutableSequenceOf[m.Ldif.Entry] | None = None,
+        operation: str | None = None,
+    ) -> p.Result[m.Ldif.Entry]:
+        """Execute server operation with auto-detection."""
+        result: p.Result[m.Ldif.Entry]
+        if operation == "parse":
+            if ldif_text is None:
+                result = r[m.Ldif.Entry].fail("Parse operation requires ldif_text")
+            else:
+                result = self._execute_parse(ldif_text)
+        elif operation == "write":
+            if not entries:
+                result = r[m.Ldif.Entry].fail("Write operation requires entries")
+            else:
+                result = r[m.Ldif.Entry].ok(entries[0])
+        elif ldif_text is not None:
+            result = self._execute_parse(ldif_text)
+        elif entries:
             first_entry = entries[0]
-            return r[m.Ldif.Entry].ok(first_entry)
-        return r[m.Ldif.Entry].fail("No valid parameters")
+            result = r[m.Ldif.Entry].ok(first_entry)
+        else:
+            result = r[m.Ldif.Entry].fail("No valid parameters")
+        return result
 
-    def parse(self, ldif_text: str) -> r[FlextLdifModelsResults.ParseResponse]:
+    def parse_ldif(self, value: str) -> p.Result[m.Ldif.ParseResponse]:
         """Parse LDIF text to Entry models."""
-        entry_quirk = getattr(self, "entry_quirk", None)
-        if entry_quirk is None:
-            return r[FlextLdifModelsResults.ParseResponse].fail(
-                "Entry quirk not available"
+        entry_server = getattr(self, "entry_server", None)
+        if entry_server is None:
+            return r[m.Ldif.ParseResponse].fail(
+                "Entry server not available",
             )
-        entries_result: r[list[m.Ldif.Entry]] = entry_quirk.parse(ldif_text)
-        if entries_result.is_failure:
-            error_msg = entries_result.error or "Entry parsing failed"
-            return r[FlextLdifModelsResults.ParseResponse].fail(error_msg)
-        entries = entries_result.value
         detected_server = getattr(self, "server_type", None)
-        statistics = FlextLdifModelsResults.Statistics(
-            total_entries=len(entries),
-            processed_entries=len(entries),
-            detected_server_type=detected_server,
-        )
-        domain_entries: Sequence[m.Ldif.Entry] = [
-            entry.model_copy(deep=True) for entry in entries
-        ]
-        parse_response = FlextLdifModelsResults.ParseResponse(
-            entries=list(domain_entries),
-            statistics=statistics,
-            detected_server_type=detected_server,
-        )
-        return r[FlextLdifModelsResults.ParseResponse].ok(parse_response)
+        detected_server_type: c.Ldif.ServerTypes | None = None
+        if isinstance(detected_server, c.Ldif.ServerTypes):
+            detected_server_type = detected_server
+        elif isinstance(detected_server, str):
+            try:
+                detected_server_type = c.Ldif.ServerTypes(
+                    u.Ldif.normalize_server_type(detected_server),
+                )
+            except ValueError:
+                detected_server_type = None
 
-    def write(self, entries: list[m.Ldif.Entry]) -> r[str]:
+        def normalize_parse_error(error: str) -> str:
+            return error or "Entry parsing failed"
+
+        def build_parse_response(
+            parsed_entries: t.Ldif.EntrySequence,
+        ) -> m.Ldif.ParseResponse:
+            domain_entries = u.Ldif.as_entries(parsed_entries)
+            for entry in domain_entries:
+                if entry.metadata and detected_server_type is not None:
+                    entry.metadata = entry.metadata.model_copy(
+                        update={"original_server_type": detected_server_type},
+                    )
+            statistics = m.Ldif.Statistics(
+                total_entries=len(domain_entries),
+                processed_entries=len(domain_entries),
+                detected_server_type=detected_server_type,
+            )
+            return m.Ldif.ParseResponse(
+                entries=[entry.model_copy(deep=True) for entry in domain_entries],
+                statistics=statistics,
+                detected_server_type=detected_server_type,
+            )
+
+        parse_response_result: p.Result[m.Ldif.ParseResponse] = (
+            entry_server
+            .parse_server(value)
+            .map_error(
+                normalize_parse_error,
+            )
+            .map(
+                build_parse_response,
+            )
+        )
+        return parse_response_result
+
+    def write(
+        self,
+        entries: t.MutableSequenceOf[m.Ldif.Entry],
+        write_options: m.Ldif.WriteFormatOptions | None = None,
+    ) -> p.Result[str]:
         """Write Entry models to LDIF text."""
-        entry_quirk = getattr(self, "entry_quirk", None)
-        if not entry_quirk:
-            return r[str].fail("Entry quirk not available")
+        entry_server = getattr(self, "entry_server", None)
+        if not entry_server:
+            return r[str].fail("Entry server not available")
+        write_result: p.Result[str] = entry_server.write(entries, write_options).map(
+            lambda ldif: ldif if not ldif or ldif.endswith("\n") else f"{ldif}\n",
+        )
+        return write_result
 
-        def write_single_entry(entry_model: m.Ldif.Entry) -> r[str]:
-            """Write single entry using entry quirk."""
-            if entry_quirk is not None:
-                result: r[str] = entry_quirk.write(entry_model)
-                return result
-            return r[str].fail("No entry quirk found")
-
-        def format_ldif_output(ldif_lines: list[str]) -> str:
-            """Format LDIF output with proper newline handling."""
-            ldif = "\n".join(ldif_lines)
-            if ldif and (not ldif.endswith("\n")):
-                ldif += "\n"
-            return ldif
-
-        return r.traverse(entries, write_single_entry).map(format_ldif_output)
-
-    def _execute_parse(self, ldif_text: str) -> r[m.Ldif.Entry]:
+    def _execute_parse(self, ldif_text: str) -> p.Result[m.Ldif.Entry]:
         """Execute parse operation."""
-        parse_result = self.parse(ldif_text)
-        if not parse_result.is_success:
+        parse_result = self.parse_ldif(ldif_text)
+        if not parse_result.success:
             return r[m.Ldif.Entry].fail(parse_result.error or "Parse failed")
-        parse_response = parse_result.value
-        entries = getattr(parse_response, "entries", [])
+        entries = u.Ldif.as_entries(parse_result.unwrap())
         if not entries:
             return r[m.Ldif.Entry].fail("No entries parsed")
         first_entry = entries[0]
         return r[m.Ldif.Entry].ok(first_entry)
 
-    def _handle_parse_operation(self, ldif_text: str) -> r[m.Ldif.Entry | str]:
-        """Handle parse operation for main quirk."""
-        parse_result = self.parse(ldif_text)
-        if parse_result.is_success:
-            parse_response = parse_result.value
-            entries = getattr(parse_response, "entries", [])
-            if u.is_list_non_empty(entries):
-                domain_entry = entries[0]
-                if isinstance(domain_entry, m.Ldif.Entry):
-                    return r[m.Ldif.Entry | str].ok(domain_entry)
-                public_entry = m.Ldif.Entry.model_validate(
-                    domain_entry.model_dump(mode="python")
-                )
-                return r[m.Ldif.Entry | str].ok(public_entry)
-            return r[m.Ldif.Entry | str].ok("")
-        error_msg: str = parse_result.error or "Parse failed"
-        return r[m.Ldif.Entry | str].fail(error_msg)
-
-    def _handle_write_operation(
-        self, entries: list[m.Ldif.Entry]
-    ) -> r[m.Ldif.Entry | str]:
-        """Handle write operation for main quirk."""
-        write_result = self.write(entries)
-        if write_result.is_success:
-            written_text: str = write_result.value
-            return r[m.Ldif.Entry | str].ok(written_text)
-        error_msg: str = write_result.error or "Write failed"
-        return r[m.Ldif.Entry | str].fail(error_msg)
-
-    def _route_model_to_write(
-        self,
-        model: m.Ldif.Entry
-        | m.Ldif.SchemaAttribute
-        | m.Ldif.SchemaObjectClass
-        | m.Ldif.Acl,
-    ) -> r[str]:
-        """Route a single model to appropriate write method."""
-        if isinstance(model, m.Ldif.Entry):
-            return self.entry.write(model)
-        if isinstance(model, m.Ldif.SchemaAttribute):
-            return self._schema_quirk.write_attribute(model)
-        if isinstance(model, m.Ldif.SchemaObjectClass):
-            return self._schema_quirk.write_objectclass(model)
-        return self.acl.write(model)
-
     class Acl(FlextLdifServersBaseSchemaAcl):
-        """Nested Acl quirk base class."""
+        """Nested Acl server base class."""
 
     class Entry(FlextLdifServersBaseEntry):
-        """Nested Entry quirk base class."""
+        """Nested Entry server base class."""
 
     class Schema(FlextLdifServersBaseSchema):
-        """Nested Schema quirk base class."""
+        """Nested Schema server base class."""
 
     def _normalize_attribute_name(self, attr_name: str) -> str:
         """Normalize attribute name to RFC 2849 canonical form."""
@@ -477,34 +528,4 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         return attr_name
 
 
-class _ServerTypeDescriptor:
-    """Descriptor that returns SERVER_TYPE from Constants (single source of truth)."""
-
-    def __init__(self, value: str) -> None:
-        super().__init__()
-        self.value = value
-
-    def __get__(
-        self, obj: FlextLdifServersBase | None, _objtype: type | None = None
-    ) -> str:
-        """Return the stored SERVER_TYPE value."""
-        return self.value
-
-
-class _PriorityDescriptor:
-    """Descriptor that returns PRIORITY from Constants (single source of truth)."""
-
-    def __init__(self, value: int) -> None:
-        super().__init__()
-        self.value = value
-
-    def __get__(
-        self, obj: FlextLdifServersBase | None, _objtype: type | None = None
-    ) -> int:
-        """Return the stored PRIORITY value."""
-        return self.value
-
-
-setattr(FlextLdifServersBase, "server_type", _ServerTypeDescriptor("unknown"))
-setattr(FlextLdifServersBase, "priority", _PriorityDescriptor(0))
-__all__ = ["FlextLdifServersBase"]
+__all__: list[str] = ["FlextLdifServersBase"]

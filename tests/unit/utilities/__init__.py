@@ -1,120 +1,39 @@
-# AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
-# Regenerate with: make codegen
-#
+# AUTO-GENERATED FILE — Regenerate with: make gen
 """Utilities package."""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
-from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
-
-if TYPE_CHECKING:
-    from flext_core.typings import FlextTypes
-
-    from tests.unit.utilities.test_utilities import TestsTestFlextLdifServiceAPIs
-    from tests.unit.utilities.test_utilities_comprehensive import (
-        TestFlextLdifUtilitiesComprehensive,
-    )
-    from tests.unit.utilities.test_utilities_constants import (
-        GetValidValuesType,
-        IsValidTestType,
-        TestsTestFlextLdifConstants,
-        TestsTestFlextLdifConstants as c,
-        ValidateManyType,
-    )
-    from tests.unit.utilities.test_utilities_core import (
-        TestAclParser,
-        TestAttributeFixer,
-        TestDnObjectClassMethods,
-        TestLdifParser,
-        TestObjectClassUtilities,
-        TestObjectClassUtilities as u,
-        TestServerTypes,
-        TestServerTypes as t,
-        TestsFlextLdifDnOperationsPure,
-    )
-
-_LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "GetValidValuesType": (
-        "tests.unit.utilities.test_utilities_constants",
-        "GetValidValuesType",
-    ),
-    "IsValidTestType": (
-        "tests.unit.utilities.test_utilities_constants",
-        "IsValidTestType",
-    ),
-    "TestAclParser": ("tests.unit.utilities.test_utilities_core", "TestAclParser"),
-    "TestAttributeFixer": (
-        "tests.unit.utilities.test_utilities_core",
-        "TestAttributeFixer",
-    ),
-    "TestDnObjectClassMethods": (
-        "tests.unit.utilities.test_utilities_core",
-        "TestDnObjectClassMethods",
-    ),
-    "TestFlextLdifUtilitiesComprehensive": (
-        "tests.unit.utilities.test_utilities_comprehensive",
-        "TestFlextLdifUtilitiesComprehensive",
-    ),
-    "TestLdifParser": ("tests.unit.utilities.test_utilities_core", "TestLdifParser"),
-    "TestObjectClassUtilities": (
-        "tests.unit.utilities.test_utilities_core",
-        "TestObjectClassUtilities",
-    ),
-    "TestServerTypes": ("tests.unit.utilities.test_utilities_core", "TestServerTypes"),
-    "TestsFlextLdifDnOperationsPure": (
-        "tests.unit.utilities.test_utilities_core",
-        "TestsFlextLdifDnOperationsPure",
-    ),
-    "TestsTestFlextLdifConstants": (
-        "tests.unit.utilities.test_utilities_constants",
-        "TestsTestFlextLdifConstants",
-    ),
-    "TestsTestFlextLdifServiceAPIs": (
-        "tests.unit.utilities.test_utilities",
-        "TestsTestFlextLdifServiceAPIs",
-    ),
-    "ValidateManyType": (
-        "tests.unit.utilities.test_utilities_constants",
-        "ValidateManyType",
-    ),
-    "c": (
-        "tests.unit.utilities.test_utilities_constants",
-        "TestsTestFlextLdifConstants",
-    ),
-    "t": ("tests.unit.utilities.test_utilities_core", "TestServerTypes"),
-    "u": ("tests.unit.utilities.test_utilities_core", "TestObjectClassUtilities"),
-}
-
-__all__ = [
-    "GetValidValuesType",
-    "IsValidTestType",
-    "TestAclParser",
-    "TestAttributeFixer",
-    "TestDnObjectClassMethods",
-    "TestFlextLdifUtilitiesComprehensive",
-    "TestLdifParser",
-    "TestObjectClassUtilities",
-    "TestServerTypes",
-    "TestsFlextLdifDnOperationsPure",
-    "TestsTestFlextLdifConstants",
-    "TestsTestFlextLdifServiceAPIs",
-    "ValidateManyType",
-    "c",
-    "t",
-    "u",
-]
+_LAZY_IMPORTS = build_lazy_import_map(
+    {
+        ".test_utilities_comprehensive": ("TestsFlextLdifUtilitiesComprehensive",),
+        ".test_utilities_core": ("TestsFlextLdifUtilitiesCore",),
+        "flext_tests": (
+            "c",
+            "d",
+            "e",
+            "h",
+            "m",
+            "p",
+            "r",
+            "s",
+            "t",
+            "td",
+            "tf",
+            "tk",
+            "tm",
+            "tv",
+            "u",
+            "x",
+        ),
+    },
+)
 
 
-def __getattr__(name: str) -> FlextTypes.ModuleExport:
-    """Lazy-load module attributes on first access (PEP 562)."""
-    return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
-
-
-def __dir__() -> list[str]:
-    """Return list of available attributes for dir() and autocomplete."""
-    return sorted(__all__)
-
-
-cleanup_submodule_namespace(__name__, _LAZY_IMPORTS)
+install_lazy_exports(
+    __name__,
+    globals(),
+    _LAZY_IMPORTS,
+    publish_all=False,
+)
