@@ -50,6 +50,7 @@ FLEXT_LDIF_LAZY_IMPORTS = build_lazy_import_map(
         ".shared": ("FlextLdifShared",),
         ".typings": ("FlextLdifTypes", "t"),
         ".utilities": ("FlextLdifUtilities", "u"),
+        "flext_core": ("d", "e", "h", "r", "x"),
     },
 )
 
