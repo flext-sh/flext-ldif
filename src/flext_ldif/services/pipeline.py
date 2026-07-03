@@ -94,7 +94,7 @@ class FlextLdifProcessingPipeline(
             return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(self._entries)
         pipeline_result = cli.pipeline(
             self._stages,
-            workspace_root=Path.cwd(),
+            context=cli.stage_context(workspace_root=Path.cwd()),
             fail_fast=True,
             logger=self.logger,
         )

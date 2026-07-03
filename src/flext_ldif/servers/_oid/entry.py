@@ -99,7 +99,9 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         parts = original_line.split(":", 1)
         attr_lower = parts[0].strip().lower()
         if attr_lower == "aci":
-            FlextLdifServersOidEntry._module_logger.debug("Converting aci to orclaci", line=original_line)
+            FlextLdifServersOidEntry._module_logger.debug(
+                "Converting aci to orclaci", line=original_line
+            )
             value_part = parts[1]
             return f"orclaci:{value_part}"
         return original_line
@@ -427,7 +429,9 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         try:
             return self._post_parse_oid_entry(entry)
         except c.Ldif.EXC_LDIF_PARSE as e:
-            FlextLdifServersOidEntry._module_logger.exception("OID post-parse entry hook failed")
+            FlextLdifServersOidEntry._module_logger.exception(
+                "OID post-parse entry hook failed"
+            )
             return r[m.Ldif.Entry].fail_op("OID post-parse entry hook", e)
 
     def _post_parse_oid_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
@@ -526,7 +530,9 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 current_extensions,
             )
         except c.Ldif.EXC_LDIF_PARSE:
-            FlextLdifServersOidEntry._module_logger.debug("Failed to parse ACL extension metadata", exc_info=True)
+            FlextLdifServersOidEntry._module_logger.debug(
+                "Failed to parse ACL extension metadata", exc_info=True
+            )
 
     def _merge_parsed_acl_extensions_core(
         self,

@@ -45,7 +45,9 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
         try:
             return self._parse_ldif_records(ldif_content)
         except ValueError as exc:
-            FlextLdifServersRfcEntry._module_logger.exception("Failed to parse LDIF content")
+            FlextLdifServersRfcEntry._module_logger.exception(
+                "Failed to parse LDIF content"
+            )
             return r[t.MutableSequenceOf[m.Ldif.Entry]].fail_op("Processing", exc)
 
     def _parse_ldif_records(

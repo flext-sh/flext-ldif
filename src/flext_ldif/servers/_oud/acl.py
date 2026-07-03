@@ -410,7 +410,9 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             )
             return r[m.Ldif.Acl].ok(acl_model)
         except c.Ldif.EXC_LDIF_PARSE as e:
-            FlextLdifServersOudAcl._module_logger.exception("Failed to parse OUD ds-privilege-name")
+            FlextLdifServersOudAcl._module_logger.exception(
+                "Failed to parse OUD ds-privilege-name"
+            )
             return r[m.Ldif.Acl].fail(f"Failed to parse OUD ds-privilege-name: {e}")
 
     def _should_use_raw_acl(self, acl_data: m.Ldif.Acl) -> bool:
@@ -426,7 +428,9 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         try:
             return self._write_oud_aci(acl_data)
         except c.Ldif.EXC_LDIF_PARSE as e:
-            FlextLdifServersOudAcl._module_logger.exception("Failed to write ACL to OUD ACI format")
+            FlextLdifServersOudAcl._module_logger.exception(
+                "Failed to write ACL to OUD ACI format"
+            )
             return r[str].fail(f"Failed to write ACL to OUD ACI format: {e}")
 
     def _write_oud_aci(self, acl_data: m.Ldif.Acl) -> p.Result[str]:

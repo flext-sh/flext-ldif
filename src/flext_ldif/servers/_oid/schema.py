@@ -120,7 +120,9 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
                 self._normalize_oid_attribute(attr),
             )
         except c.Ldif.EXC_LDIF_PARSE as e:
-            FlextLdifServersOidSchema._module_logger.exception("OID post-parse attribute hook failed")
+            FlextLdifServersOidSchema._module_logger.exception(
+                "OID post-parse attribute hook failed"
+            )
             return r[m.Ldif.SchemaAttribute].fail_op("OID post-parse attribute hook", e)
 
     def _normalize_oid_attribute(
@@ -164,7 +166,9 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
                 self._normalize_oid_objectclass(oc),
             )
         except c.Ldif.EXC_LDIF_PARSE as e:
-            FlextLdifServersOidSchema._module_logger.exception("OID post-parse objectclass hook failed")
+            FlextLdifServersOidSchema._module_logger.exception(
+                "OID post-parse objectclass hook failed"
+            )
             return r[m.Ldif.SchemaObjectClass].fail_op(
                 "OID post-parse objectclass hook", e
             )
@@ -302,7 +306,9 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
         try:
             return self._parse_oid_attribute(attr_definition)
         except c.Ldif.EXC_LDIF_PARSE as e:
-            FlextLdifServersOidSchema._module_logger.exception("OID attribute parsing failed")
+            FlextLdifServersOidSchema._module_logger.exception(
+                "OID attribute parsing failed"
+            )
             return r[m.Ldif.SchemaAttribute].fail_op("OID attribute parsing", e)
 
     def _parse_oid_attribute(
@@ -337,7 +343,9 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
         try:
             return self._parse_oid_objectclass(oc_definition)
         except c.Ldif.EXC_LDIF_PARSE as e:
-            FlextLdifServersOidSchema._module_logger.exception("OID objectClass parsing failed")
+            FlextLdifServersOidSchema._module_logger.exception(
+                "OID objectClass parsing failed"
+            )
             return r[m.Ldif.SchemaObjectClass].fail_op("OID objectClass parsing", e)
 
     def _parse_oid_objectclass(

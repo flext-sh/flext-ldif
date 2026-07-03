@@ -4,20 +4,23 @@
 from __future__ import annotations
 
 from flext_core.lazy import merge_lazy_imports
-from flext_ldif.tests._exports_lazy_part_01 import TESTS_FLEXT_LDIF_LAZY_IMPORTS_PART_01
-from flext_ldif.tests._exports_lazy_part_02 import TESTS_FLEXT_LDIF_LAZY_IMPORTS_PART_02
-from flext_ldif.tests._exports_lazy_part_03 import TESTS_FLEXT_LDIF_LAZY_IMPORTS_PART_03
+from flext_ldif.tests.unit._exports_lazy_part_01 import (
+    FLEXT_LDIF_TESTS_UNIT_LAZY_IMPORTS_PART_01,
+)
+from flext_ldif.tests.unit._exports_lazy_part_02 import (
+    FLEXT_LDIF_TESTS_UNIT_LAZY_IMPORTS_PART_02,
+)
 
 _LOCAL_LAZY_IMPORTS = {
-    **TESTS_FLEXT_LDIF_LAZY_IMPORTS_PART_01,
-    **TESTS_FLEXT_LDIF_LAZY_IMPORTS_PART_02,
-    **TESTS_FLEXT_LDIF_LAZY_IMPORTS_PART_03,
+    **FLEXT_LDIF_TESTS_UNIT_LAZY_IMPORTS_PART_01,
+    **FLEXT_LDIF_TESTS_UNIT_LAZY_IMPORTS_PART_02,
 }
 
-TESTS_FLEXT_LDIF_LAZY_IMPORTS = merge_lazy_imports(
+FLEXT_LDIF_TESTS_UNIT_LAZY_IMPORTS = merge_lazy_imports(
     (
-        ".integration",
-        ".unit",
+        ".servers",
+        ".services",
+        ".utilities",
     ),
     _LOCAL_LAZY_IMPORTS,
     exclude_names=(
@@ -39,7 +42,7 @@ TESTS_FLEXT_LDIF_LAZY_IMPORTS = merge_lazy_imports(
         "pytest_terminal_summary",
         "pytest_warning_recorded",
     ),
-    module_name="flext_ldif.tests",
+    module_name="flext_ldif.tests.unit",
 )
 
-__all__: list[str] = ["TESTS_FLEXT_LDIF_LAZY_IMPORTS"]
+__all__: list[str] = ["FLEXT_LDIF_TESTS_UNIT_LAZY_IMPORTS"]

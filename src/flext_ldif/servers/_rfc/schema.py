@@ -384,7 +384,9 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
                 validate_dependencies=validate_dependencies,
             )
         except c.Ldif.EXC_LDIF_PARSE as e:
-            FlextLdifServersRfcSchema._module_logger.exception("Schema extraction failed")
+            FlextLdifServersRfcSchema._module_logger.exception(
+                "Schema extraction failed"
+            )
             return r[
                 MutableMapping[
                     str,
@@ -615,7 +617,9 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
         try:
             return self._parse_rfc_objectclass_core(oc_definition)
         except c.EXC_BASIC_TYPE as e:
-            FlextLdifServersRfcSchema._module_logger.exception("RFC objectClass parsing exception")
+            FlextLdifServersRfcSchema._module_logger.exception(
+                "RFC objectClass parsing exception"
+            )
             return r[m.Ldif.SchemaObjectClass].fail_op("RFC objectClass parsing", e)
 
     def _parse_rfc_objectclass_core(
@@ -749,7 +753,9 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
                 if isinstance(data, m.Ldif.SchemaAttribute)
                 else "objectclass"
             )
-            FlextLdifServersRfcSchema._module_logger.exception("RFC %s writing exception", item_type)
+            FlextLdifServersRfcSchema._module_logger.exception(
+                "RFC %s writing exception", item_type
+            )
             return r[str].fail(f"RFC {item_type} writing failed: {e}")
 
     def _write_schema_item_core(

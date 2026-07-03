@@ -278,7 +278,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                     raise AssertionError(f"Expected {label} {expected}, got {actual}")
                 return
             if actual != expected:
-                raise AssertionError(f"Expected {label} '{expected}', got '{actual}'")
+                raise AssertionError(f"Expected {label} '{expected}', got {actual}")
 
         @classmethod
         def assert_server_schema_parse_and_properties(

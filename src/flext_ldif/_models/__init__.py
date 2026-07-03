@@ -8,6 +8,30 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
+    from flext_ldif._models._settings_acl import (
+        FlextLdifModelsSettingsAcl as FlextLdifModelsSettingsAcl,
+    )
+    from flext_ldif._models._settings_criteria import (
+        FlextLdifModelsSettingsCriteria as FlextLdifModelsSettingsCriteria,
+    )
+    from flext_ldif._models._settings_migrate import (
+        FlextLdifModelsSettingsMigrate as FlextLdifModelsSettingsMigrate,
+    )
+    from flext_ldif._models._settings_misc import (
+        FlextLdifModelsSettingsMisc as FlextLdifModelsSettingsMisc,
+    )
+    from flext_ldif._models._settings_normalization import (
+        FlextLdifModelsSettingsNormalization as FlextLdifModelsSettingsNormalization,
+    )
+    from flext_ldif._models._settings_processing import (
+        FlextLdifModelsSettingsProcessing as FlextLdifModelsSettingsProcessing,
+    )
+    from flext_ldif._models._settings_rules import (
+        FlextLdifModelsSettingsRules as FlextLdifModelsSettingsRules,
+    )
+    from flext_ldif._models._settings_validation import (
+        FlextLdifModelsSettingsValidation as FlextLdifModelsSettingsValidation,
+    )
     from flext_ldif._models.acl_convert import (
         FlextLdifModelsAclConvert as FlextLdifModelsAclConvert,
     )
@@ -51,6 +75,14 @@ if TYPE_CHECKING:
     )
 _LAZY_IMPORTS = build_lazy_import_map(
     {
+        "._settings_acl": ("FlextLdifModelsSettingsAcl",),
+        "._settings_criteria": ("FlextLdifModelsSettingsCriteria",),
+        "._settings_migrate": ("FlextLdifModelsSettingsMigrate",),
+        "._settings_misc": ("FlextLdifModelsSettingsMisc",),
+        "._settings_normalization": ("FlextLdifModelsSettingsNormalization",),
+        "._settings_processing": ("FlextLdifModelsSettingsProcessing",),
+        "._settings_rules": ("FlextLdifModelsSettingsRules",),
+        "._settings_validation": ("FlextLdifModelsSettingsValidation",),
         ".acl_convert": ("FlextLdifModelsAclConvert",),
         ".base": ("FlextLdifModelsBases",),
         ".collections": ("FlextLdifModelsCollections",),
