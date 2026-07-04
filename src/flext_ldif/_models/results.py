@@ -311,7 +311,7 @@ class FlextLdifModelsResults:
             description="Migrated LDIF entries",
         )
         stats: FlextLdifModelsResults.Statistics = u.Field(
-            default_factory=FlextLdifModelsResults.Statistics,
+            default_factory=lambda: FlextLdifModelsResults.Statistics(),
             description="Migration processing statistics",
         )
         output_files: t.MutableSequenceOf[str] = u.Field(
