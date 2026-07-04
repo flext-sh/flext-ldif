@@ -3,15 +3,11 @@
 from __future__ import annotations
 
 import struct
-from typing import TYPE_CHECKING, Annotated
+from collections.abc import MutableMapping
+from typing import Annotated
 
 from flext_ldif import c, m, p, r, s, t, u
 from flext_ldif.services.filters import FlextLdifFilters
-
-if TYPE_CHECKING:
-    from collections.abc import (
-        MutableMapping,
-    )
 
 
 class FlextLdifCategorization(s):
@@ -88,7 +84,7 @@ class FlextLdifCategorization(s):
         ),
     ] = None
     rejection_tracker: Annotated[
-        MutableMapping[str, t.MutableSequenceOf[m.Ldif.Entry]],
+        t.MutableMappingKV[str, t.MutableSequenceOf[m.Ldif.Entry]],
         u.Field(
             default_factory=_build_rejection_tracker,
             exclude=True,
