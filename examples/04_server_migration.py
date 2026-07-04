@@ -7,10 +7,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping, MutableSequence
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from flext_ldif import c, ldif, m, p, r, t, u
+
+if TYPE_CHECKING:
+    from collections.abc import MutableMapping, MutableSequence
 
 
 class ExampleServerMigration:
@@ -116,7 +119,7 @@ class ExampleServerMigration:
                 "patterns_found": detection.patterns_found,
                 "total_entries": len(entries),
                 "migration_success": True,
-            })
+            }),
         )
 
     @staticmethod
@@ -169,7 +172,7 @@ class ExampleServerMigration:
                 if total_servers > 0
                 else 0,
                 "server_results": comparison_results,
-            })
+            }),
         )
 
     @staticmethod
@@ -219,7 +222,7 @@ class ExampleServerMigration:
                 "migration_pipeline": "oid → oud → rfc",
                 "parallel_processing": True,
                 "validation_performed": True,
-            })
+            }),
         )
 
     @staticmethod

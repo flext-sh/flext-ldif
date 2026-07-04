@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Self, override
+from typing import TYPE_CHECKING, Self, override
 
 from flext_ldif import c, e, m, p, r, t, u
 from flext_ldif.services.acl import FlextLdifAcl
@@ -20,6 +19,9 @@ from flext_ldif.services.processing import FlextLdifProcessing
 from flext_ldif.services.statistics import FlextLdifStatistics
 from flext_ldif.services.validation import FlextLdifValidation
 from flext_ldif.services.writer import FlextLdifWriter
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class FlextLdif(

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 from uuid import uuid4
 
 import pytest
@@ -10,9 +10,13 @@ from flext_tests import tm
 
 from tests.constants import c
 from tests.models import m
-from tests.protocols import p
-from tests.typings import t
 from tests.utilities import u
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from tests.protocols import p
+    from tests.typings import t
 
 
 class TestsFlextLdifWriterService:
@@ -43,7 +47,8 @@ class TestsFlextLdifWriterService:
         tm.that(c.Tests.WRITER_OUTPUT_REGEX.search(content) is not None, eq=True)
 
     def test_write_accepts_parse_response_input(
-        self, writer: p.Ldif.LdifClient
+        self,
+        writer: p.Ldif.LdifClient,
     ) -> None:
         entries = self._build_entries()
         parse_response = m.Ldif.ParseResponse(

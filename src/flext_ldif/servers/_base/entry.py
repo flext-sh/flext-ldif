@@ -279,7 +279,8 @@ class FlextLdifServersBaseEntry(
         return entry
 
     def _parse_content(
-        self, ldif_content: str
+        self,
+        ldif_content: str,
     ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
         """Parse raw LDIF content string into Entry models (internal)."""
         _ = ldif_content
@@ -353,7 +354,10 @@ class FlextLdifServersBaseEntry(
                 return value
             safe_acl_name = acl_original_format.replace('"', "'")
             return c.Ldif.sub_pattern(
-                r'acl\\s+"[^"]*"', f'acl "{safe_acl_name}"', value, count=1
+                r'acl\\s+"[^"]*"',
+                f'acl "{safe_acl_name}"',
+                value,
+                count=1,
             )
 
         def emit_attribute_line(

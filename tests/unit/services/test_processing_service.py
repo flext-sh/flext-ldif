@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import pytest
 from flext_tests import tm
@@ -10,9 +10,11 @@ from flext_tests import tm
 from flext_ldif.services.pipeline import FlextLdifProcessingPipeline
 from tests.constants import c
 from tests.models import m
-from tests.protocols import p
-from tests.typings import t
 from tests.utilities import TestsFlextLdifUtilities as u
+
+if TYPE_CHECKING:
+    from tests.protocols import p
+    from tests.typings import t
 
 
 class TestsFlextLdifProcessingService:
@@ -56,7 +58,8 @@ class TestsFlextLdifProcessingService:
         tm.that(processed_dns == set(c.Tests.PROCESSING_VALID_DNS), eq=True)
 
     def test_process_entries_supports_kwargs_option_payload(
-        self, api: p.Ldif.LdifClient
+        self,
+        api: p.Ldif.LdifClient,
     ) -> None:
         entries = [self._entry(c.Tests.PROCESSING_VALID_DNS[0])]
 
@@ -89,7 +92,7 @@ class TestsFlextLdifProcessingService:
                 parallel=False,
                 batch_size=1,
                 max_workers=1,
-            )
+            ),
         )
 
     def test_process_entries_parallel_raises_for_none_dn(

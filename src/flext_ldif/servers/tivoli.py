@@ -189,7 +189,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 _ = attr_name
                 access_match = (
                     FlextLdifServersTivoli.Constants.ACL_ACCESS_PATTERN_RE.search(
-                        content
+                        content,
                     )
                 )
                 access_type = (

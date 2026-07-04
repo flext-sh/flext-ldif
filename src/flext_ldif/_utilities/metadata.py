@@ -198,7 +198,7 @@ class FlextLdifUtilitiesMetadata:
             desc_pos = definition.find("DESC")
             if desc_pos >= 0:
                 before_match = c.Ldif.WHITESPACE_TRAILING_RE.search(
-                    definition[:desc_pos]
+                    definition[:desc_pos],
                 )
                 details["desc_spacing_before"] = (
                     before_match.group(1) if before_match else ""
@@ -256,7 +256,7 @@ class FlextLdifUtilitiesMetadata:
         if equality_match:
             details["equality_presence"] = True
             before_match = c.Ldif.WHITESPACE_TRAILING_RE.search(
-                definition[: equality_match.start()]
+                definition[: equality_match.start()],
             )
             details["equality_spacing_before"] = (
                 before_match.group(1) if before_match else ""
@@ -267,7 +267,7 @@ class FlextLdifUtilitiesMetadata:
         if substr_match:
             details["substr_presence"] = True
             before_match = c.Ldif.WHITESPACE_TRAILING_RE.search(
-                definition[: substr_match.start()]
+                definition[: substr_match.start()],
             )
             details["substr_spacing_before"] = (
                 before_match.group(1) if before_match else ""
@@ -278,7 +278,7 @@ class FlextLdifUtilitiesMetadata:
         if ordering_match:
             details["ordering_presence"] = True
             before_match = c.Ldif.WHITESPACE_TRAILING_RE.search(
-                definition[: ordering_match.start()]
+                definition[: ordering_match.start()],
             )
             details["ordering_spacing_before"] = (
                 before_match.group(1) if before_match else ""
@@ -315,7 +315,7 @@ class FlextLdifUtilitiesMetadata:
                     "name_values": [match[1] for match in all_name_matches],
                     "name_quotes": [match[0] for match in all_name_matches],
                     "name_spacing_between": c.Ldif.QUOTED_SPACE_QUOTE_RE.findall(
-                        name_section
+                        name_section,
                     ),
                 },
             )
@@ -346,7 +346,7 @@ class FlextLdifUtilitiesMetadata:
             details["obsolete_presence"] = True
             details["obsolete_position"] = obsolete_match.start()
             before_match = c.Ldif.WHITESPACE_TRAILING_RE.search(
-                definition[: obsolete_match.start()]
+                definition[: obsolete_match.start()],
             )
             details["obsolete_spacing_before"] = (
                 before_match.group(1) if before_match else ""
@@ -377,7 +377,7 @@ class FlextLdifUtilitiesMetadata:
                 colon_pos = definition.find(":")
                 if colon_pos >= 0 and colon_pos + 1 < len(definition):
                     spacing_match = c.Ldif.WHITESPACE_LEADING_RE.match(
-                        definition[colon_pos + 1 :]
+                        definition[colon_pos + 1 :],
                     )
                     if spacing_match:
                         details["attribute_prefix_spacing"] = spacing_match.group(1)
@@ -388,7 +388,7 @@ class FlextLdifUtilitiesMetadata:
                 colon_pos = definition.find(":")
                 if colon_pos >= 0 and colon_pos + 1 < len(definition):
                     spacing_match = c.Ldif.WHITESPACE_LEADING_RE.match(
-                        definition[colon_pos + 1 :]
+                        definition[colon_pos + 1 :],
                     )
                     if spacing_match:
                         details["objectclass_prefix_spacing"] = spacing_match.group(1)
@@ -404,7 +404,7 @@ class FlextLdifUtilitiesMetadata:
         if single_value_match:
             details["single_value_presence"] = True
             before_match = c.Ldif.WHITESPACE_TRAILING_RE.search(
-                definition[: single_value_match.start()]
+                definition[: single_value_match.start()],
             )
             details["single_value_spacing_before"] = (
                 before_match.group(1) if before_match else ""
@@ -429,7 +429,8 @@ class FlextLdifUtilitiesMetadata:
             pos2 = field_positions.get(field2)
             if pos1 is not None and pos2 is not None:
                 field1_end_match = c.Ldif.compile_pattern(
-                    field_patterns[field1], ignorecase=True
+                    field_patterns[field1],
+                    ignorecase=True,
                 ).search(definition[pos1:])
                 if field1_end_match:
                     field1_end = pos1 + field1_end_match.end()
@@ -448,7 +449,7 @@ class FlextLdifUtilitiesMetadata:
             sup_pos = definition.find("SUP")
             if sup_pos >= 0:
                 before_match = c.Ldif.WHITESPACE_TRAILING_RE.search(
-                    definition[:sup_pos]
+                    definition[:sup_pos],
                 )
                 details["sup_spacing_before"] = (
                     before_match.group(1) if before_match else ""
@@ -485,7 +486,7 @@ class FlextLdifUtilitiesMetadata:
                 if spacing_match:
                     details["syntax_spacing"] = spacing_match.group(1)
                 before_match = c.Ldif.WHITESPACE_TRAILING_RE.search(
-                    definition[:syntax_pos]
+                    definition[:syntax_pos],
                 )
                 details["syntax_spacing_before"] = (
                     before_match.group(1) if before_match else ""
@@ -508,7 +509,7 @@ class FlextLdifUtilitiesMetadata:
             x_origin_pos = definition.find("X-ORIGIN")
             if x_origin_pos >= 0:
                 before_match = c.Ldif.WHITESPACE_TRAILING_RE.search(
-                    definition[:x_origin_pos]
+                    definition[:x_origin_pos],
                 )
                 details["x_origin_spacing_before"] = (
                     before_match.group(1) if before_match else ""

@@ -6,13 +6,17 @@ accepting entries that don't conform strictly to RFC standards while preserving 
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 from flext_tests import tm
 
 from flext_ldif.servers.relaxed import FlextLdifServersRelaxed
 from tests.constants import c
 from tests.models import m
-from tests.protocols import p
+
+if TYPE_CHECKING:
+    from tests.protocols import p
 
 
 @pytest.mark.unit
@@ -163,7 +167,8 @@ class TestsTestFlextLdifRelaxedServers:
             name="test_acl",
             target=m.Ldif.AclTarget(target_dn="*", attributes=[]),
             subject=m.Ldif.AclSubject(
-                subject_type=c.Ldif.AclSubjectType.ALL, subject_value="*"
+                subject_type=c.Ldif.AclSubjectType.ALL,
+                subject_value="*",
             ),
             permissions=m.Ldif.AclPermissions(),
             raw_acl=raw_acl,

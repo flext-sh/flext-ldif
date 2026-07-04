@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from flext_ldif import c, p, r, t
 from flext_ldif._utilities.parser import FlextLdifUtilitiesParser as up
 from flext_ldif.models import FlextLdifModels as m
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class FlextLdifUtilitiesSchemaExtract:

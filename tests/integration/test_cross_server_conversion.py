@@ -15,14 +15,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif.servers.base import FlextLdifServersBase
-from flext_ldif.servers.oid import FlextLdifServersOid
-from flext_ldif.servers.oud import FlextLdifServersOud
-from flext_ldif.services.conversion import FlextLdifConversion
+from typing import TYPE_CHECKING
+
 from tests.constants import c
 from tests.models import m
-from tests.protocols import p
-from tests.typings import t
+
+if TYPE_CHECKING:
+    from flext_ldif.servers.base import FlextLdifServersBase
+    from flext_ldif.servers.oid import FlextLdifServersOid
+    from flext_ldif.servers.oud import FlextLdifServersOud
+    from flext_ldif.services.conversion import FlextLdifConversion
+    from tests.protocols import p
+    from tests.typings import t
 
 
 class TestsFlextLdifCrossServerConversion:
@@ -138,7 +142,7 @@ class TestsFlextLdifCrossServerConversion:
     ) -> None:
         """Direct ACL conversion should parse the converted RFC ACL through the target server."""
         parse_result = oid_acl_server.parse_server(
-            c.Tests.CROSS_SERVER_OID_ACL_ANONYMOUS
+            c.Tests.CROSS_SERVER_OID_ACL_ANONYMOUS,
         )
         assert parse_result.success, f"OID ACL parse failed: {parse_result.error}"
         assert isinstance(parse_result.value, m.Ldif.Acl)

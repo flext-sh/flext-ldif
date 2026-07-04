@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 import struct
-from collections.abc import (
-    MutableMapping,
-)
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
 from flext_ldif import c, m, p, r, s, t, u
 from flext_ldif.services.filters import FlextLdifFilters
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        MutableMapping,
+    )
 
 
 class FlextLdifCategorization(s):
@@ -341,7 +343,9 @@ class FlextLdifCategorization(s):
             if constants is not None
             and self._check_hierarchy_priority(entry, constants)
             else self._match_entry_to_category(
-                entry, priority_order, merged_category_map
+                entry,
+                priority_order,
+                merged_category_map,
             )
         )
 
@@ -483,7 +487,8 @@ class FlextLdifCategorization(s):
                     c.Ldif.RejectionTrackerKey.INVALID_DN_RFC4514
                 ].append(rejected_entry)
                 return r[m.Ldif.Entry].fail_op(
-                    "DN normalization", norm_result.error or c.Ldif.ERR_UNKNOWN
+                    "DN normalization",
+                    norm_result.error or c.Ldif.ERR_UNKNOWN,
                 )
             dn_obj = m.Ldif.DN(value=normalized_dn)
             return r[m.Ldif.Entry].ok(entry.model_copy(update={"dn": dn_obj}))

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from flext_ldif import c, p, t
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID as uo
@@ -10,6 +10,9 @@ from flext_ldif._utilities.schema_format import FlextLdifUtilitiesSchemaFormat a
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer as us
 from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter as uw
 from flext_ldif.models import FlextLdifModels as m
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class FlextLdifUtilitiesSchemaBuild:

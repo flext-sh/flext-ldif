@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Annotated, Final, override
+from typing import TYPE_CHECKING, Annotated, Final, override
 
 from flext_ldif import FlextLdifShared, c, m, p, r, s, t, u
 from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.pipeline import FlextLdifProcessingPipeline
 from flext_ldif.services.writer import FlextLdifWriter
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
@@ -236,7 +238,8 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
         )
         if parse_result.failure:
             return r[m.Ldif.MigrationPipelineResult].fail_op(
-                "Parse", parse_result.error
+                "Parse",
+                parse_result.error,
             )
         entries_list: t.MutableSequenceOf[m.Ldif.Entry] = list(
             parse_result.value.entries,
@@ -244,7 +247,8 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
         migrate_result = self.migrate_entries(entries_list)
         if migrate_result.failure:
             return r[m.Ldif.MigrationPipelineResult].fail_op(
-                "Migration", migrate_result.error
+                "Migration",
+                migrate_result.error,
             )
         return self._write_migrated_file(
             input_file,
@@ -276,7 +280,8 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
         )
         if write_result.failure:
             return r[m.Ldif.MigrationPipelineResult].fail_op(
-                "Write", write_result.error
+                "Write",
+                write_result.error,
             )
         self.logger.debug(
             "Wrote migrated file",

@@ -18,17 +18,21 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Callable,
-)
+from typing import TYPE_CHECKING
 
 import pytest
 
 from flext_ldif import ldif
 from tests.models import m
-from tests.protocols import p
-from tests.typings import t
 from tests.utilities import u
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        Callable,
+    )
+
+    from tests.protocols import p
+    from tests.typings import t
 
 
 @pytest.fixture

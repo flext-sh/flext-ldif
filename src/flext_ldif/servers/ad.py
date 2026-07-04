@@ -52,7 +52,8 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         DETECTION_WEIGHT: ClassVar[int] = 8
         ACL_SDDL_PREFIX_PATTERN: ClassVar[str] = "^(O:|G:|D:|S:)"
         ACL_SDDL_PREFIX_PATTERN_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-            r"^(O:|G:|D:|S:)", re.IGNORECASE
+            r"^(O:|G:|D:|S:)",
+            re.IGNORECASE,
         )
         ENCODING_UTF16LE: ClassVar[str] = "utf-16-le"
         ENCODING_ERROR_IGNORE: ClassVar[str] = "ignore"
@@ -225,7 +226,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 return True
             return (
                 FlextLdifServersAd.Constants.ACL_SDDL_PREFIX_PATTERN_RE.match(
-                    normalized
+                    normalized,
                 )
                 is not None
             )
@@ -312,7 +313,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             if (
                 raw_value
                 and FlextLdifServersAd.Constants.ACL_SDDL_PREFIX_PATTERN_RE.match(
-                    raw_value
+                    raw_value,
                 )
             ):
                 return raw_value

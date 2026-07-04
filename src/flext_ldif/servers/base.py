@@ -2,16 +2,18 @@
 
 from __future__ import annotations
 
-from collections.abc import (
-    Callable,
-)
-from typing import ClassVar, Self, overload, override
+from typing import TYPE_CHECKING, ClassVar, Self, overload, override
 
 from flext_ldif import c, m, p, r, s, t, u
 from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
 from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
 from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
 from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        Callable,
+    )
 
 
 class FlextLdifServersBase(s[m.Ldif.Entry]):

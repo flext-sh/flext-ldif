@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from flext_tests import tm
 
 from tests.constants import c
 from tests.models import m
-from tests.protocols import p
 from tests.utilities import TestsFlextLdifUtilities as u
+
+if TYPE_CHECKING:
+    from tests.protocols import p
 
 
 class TestsFlextLdifStatisticsService:
@@ -29,7 +33,7 @@ class TestsFlextLdifStatisticsService:
             update={
                 "extensions": entry.metadata.extensions.model_copy(
                     update={"server_type": server_type},
-                )
+                ),
             },
         )
         updated_entry: m.Ldif.Entry = entry.model_copy(
@@ -43,10 +47,12 @@ class TestsFlextLdifStatisticsService:
     ) -> None:
         entries = [
             self._entry(
-                "cn=stats-rfc,dc=example,dc=com", c.Tests.STATS_SERVER_TYPES[0]
+                "cn=stats-rfc,dc=example,dc=com",
+                c.Tests.STATS_SERVER_TYPES[0],
             ),
             self._entry(
-                "cn=stats-oid,dc=example,dc=com", c.Tests.STATS_SERVER_TYPES[1]
+                "cn=stats-oid,dc=example,dc=com",
+                c.Tests.STATS_SERVER_TYPES[1],
             ),
         ]
 

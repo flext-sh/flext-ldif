@@ -16,19 +16,23 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Callable,
-    MutableSequence,
-)
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
 
 from flext_ldif import ldif
 from tests.constants import c
-from tests.models import m
-from tests.protocols import p
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        Callable,
+        MutableSequence,
+    )
+    from pathlib import Path
+
+    from tests.models import m
+    from tests.protocols import p
 
 
 @pytest.fixture

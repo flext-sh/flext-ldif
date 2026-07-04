@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 import re
-from collections.abc import (
-    MutableMapping,
-)
-from typing import ClassVar, override
+from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers.rfc import FlextLdifServersRfc
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        MutableMapping,
+    )
 
 
 class FlextLdifServersRelaxed(FlextLdifServersRfc):
@@ -27,19 +29,19 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         ACL_FORMAT: ClassVar[str] = "rfc_generic"
         ACL_ATTRIBUTE_NAME: ClassVar[str] = "aci"
         OID_PATTERN: ClassVar[t.Ldif.RegexPattern] = re.compile(
-            r"\(\s*([0-9a-zA-Z._\-]+)"
+            r"\(\s*([0-9a-zA-Z._\-]+)",
         )
         OID_NUMERIC_WITH_PAREN: ClassVar[str] = "\\(\\s*([0-9]+(?:\\.[0-9]+)+)"
         OID_NUMERIC_WITH_PAREN_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-            OID_NUMERIC_WITH_PAREN
+            OID_NUMERIC_WITH_PAREN,
         )
         OID_NUMERIC_ANYWHERE: ClassVar[str] = "([0-9]+\\.[0-9]+(?:\\.[0-9]+)*)"
         OID_NUMERIC_ANYWHERE_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-            OID_NUMERIC_ANYWHERE
+            OID_NUMERIC_ANYWHERE,
         )
         OID_ALPHANUMERIC_RELAXED: ClassVar[str] = "\\(\\s*([a-zA-Z0-9._-]+)"
         OID_ALPHANUMERIC_RELAXED_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-            OID_ALPHANUMERIC_RELAXED
+            OID_ALPHANUMERIC_RELAXED,
         )
         SCHEMA_MUST_SEPARATOR: ClassVar[str] = "$"
         SCHEMA_MAY_SEPARATOR: ClassVar[str] = "$"
@@ -166,7 +168,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 return oid_val
             oid_match = (
                 FlextLdifServersRelaxed.Constants.OID_NUMERIC_WITH_PAREN_RE.search(
-                    definition
+                    definition,
                 )
             )
             if oid_match:
@@ -174,7 +176,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 return paren_oid
             oid_match = (
                 FlextLdifServersRelaxed.Constants.OID_NUMERIC_ANYWHERE_RE.search(
-                    definition
+                    definition,
                 )
             )
             if oid_match:
@@ -182,7 +184,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 return anywhere_oid
             oid_match = (
                 FlextLdifServersRelaxed.Constants.OID_ALPHANUMERIC_RELAXED_RE.search(
-                    definition
+                    definition,
                 )
             )
             if oid_match:
@@ -214,7 +216,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         @override
         def _parse_attribute(
-            self, attr_definition: str
+            self,
+            attr_definition: str,
         ) -> p.Result[m.Ldif.SchemaAttribute]:
             """Parse attribute with best-effort approach using RFC baseline."""
             if not attr_definition or not attr_definition.strip():
@@ -254,7 +257,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     "Cannot extract OID from attribute definition",
                 )
             name_match = FlextLdifServersRelaxed.Constants.SCHEMA_NAME_RE.search(
-                attr_definition
+                attr_definition,
             )
             name = name_match.group(1) if name_match else oid
             metadata = m.Ldif.ServerMetadata.model_validate({
@@ -292,7 +295,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         @override
         def _parse_objectclass(
-            self, oc_definition: str
+            self,
+            oc_definition: str,
         ) -> p.Result[m.Ldif.SchemaObjectClass]:
             """Parse objectClass with best-effort approach using RFC baseline."""
             if not oc_definition or not oc_definition.strip():
@@ -381,7 +385,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         @override
         def _write_objectclass(
-            self, oc_data: m.Ldif.SchemaObjectClass
+            self,
+            oc_data: m.Ldif.SchemaObjectClass,
         ) -> p.Result[str]:
             """Write objectClass to RFC format - stringify in relaxed mode."""
             parent_result = super()._write_objectclass(oc_data)
@@ -581,7 +586,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             return r[m.Ldif.Entry].ok(entry)
 
         def _adapted_parse_entry_relaxed(
-            self, entry_content: str
+            self,
+            entry_content: str,
         ) -> p.Result[m.Ldif.Entry]:
             """Parse entry content in relaxed mode (extracted from _parse_content)."""
             dn: str = ""

@@ -54,19 +54,19 @@ class FlextLdifModelsSettingsCriteria:
         name_regex: Annotated[
             str | None,
             u.Field(
-                description="Optional regex used to extract schema names from raw definitions"
+                description="Optional regex used to extract schema names from raw definitions",
             ),
         ] = None
         use_prefix_match: Annotated[
             bool,
             u.Field(
-                description="Whether detection names match by prefix instead of exact value"
+                description="Whether detection names match by prefix instead of exact value",
             ),
         ] = False
         match_definition_text: Annotated[
             bool,
             u.Field(
-                description="Whether raw definition text should be scanned for detection markers"
+                description="Whether raw definition text should be scanned for detection markers",
             ),
         ] = False
 

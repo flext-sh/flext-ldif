@@ -19,19 +19,23 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import base64
-from collections.abc import (
-    Callable,
-    MutableMapping,
-)
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
 from flext_ldif import ldif
 from tests.constants import c
-from tests.protocols import p
-from tests.typings import t
 from tests.utilities import u
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        Callable,
+        MutableMapping,
+    )
+    from pathlib import Path
+
+    from tests.protocols import p
+    from tests.typings import t
 
 
 @pytest.fixture

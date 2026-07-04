@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import sys
-from typing import TypeIs
+from typing import TYPE_CHECKING, TypeIs
 
 from flext_ldif import (
     FlextLdifShared,
@@ -12,7 +12,9 @@ from flext_ldif import (
     r,
     t,
 )
-from flext_ldif.models import FlextLdifModels as m
+
+if TYPE_CHECKING:
+    from flext_ldif.models import FlextLdifModels as m
 
 
 class FlextLdifUtilitiesServer:
@@ -251,7 +253,7 @@ class FlextLdifUtilitiesServer:
             return bool(
                 check_value
                 and settings.oid_pattern
-                and c.Ldif.compile_pattern(settings.oid_pattern).search(check_value)
+                and c.Ldif.compile_pattern(settings.oid_pattern).search(check_value),
             )
 
         oid_value = value if isinstance(value, str) else value.oid

@@ -143,7 +143,8 @@ class FlextLdifUtilitiesDispatch:
                     pipeline=pipeline,
                 )
             case _ if isinstance(value_or_entries, Sequence) and not isinstance(
-                value_or_entries, t.STR_BYTES_TYPES
+                value_or_entries,
+                t.STR_BYTES_TYPES,
             ):
                 result = r[t.JsonValue].fail(
                     "validator call requires scalar, not entry sequence",

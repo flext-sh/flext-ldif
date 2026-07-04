@@ -6,14 +6,18 @@ content patterns across different LDAP server implementations.
 
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import tm
 
 from flext_ldif import ldif
 from tests.constants import c
-from tests.protocols import p
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from tests.protocols import p
 
 
 @pytest.fixture
@@ -45,7 +49,7 @@ class TestsFlextLdifEdgeCases:
     ) -> None:
         """Test inline edge-case parsing rules using centralized datasets."""
         entries = tm.ok(
-            ldif_api.parse_ldif(ldif_content, server_type=c.Tests.RFC)
+            ldif_api.parse_ldif(ldif_content, server_type=c.Tests.RFC),
         ).entries
         tm.that(len(entries), gte=expected_entry_count)
         max_depth = 0
@@ -67,7 +71,7 @@ class TestsFlextLdifEdgeCases:
             c.Tests.FIXTURES_DIR / c.Tests.EDGE_CASE_LARGE_MULTIVALUE_FIXTURE_RELATIVE
         )
         entries = tm.ok(
-            ldif_api.parse_ldif(fixture_path, server_type=c.Tests.RFC)
+            ldif_api.parse_ldif(fixture_path, server_type=c.Tests.RFC),
         ).entries
         tm.that(len(entries), gt=0)
         max_values = 0
@@ -92,12 +96,12 @@ class TestsFlextLdifEdgeCases:
     ) -> None:
         """Test roundtrip of inline edge-case LDIF payloads."""
         entries = tm.ok(
-            ldif_api.parse_ldif(ldif_content, server_type=c.Tests.RFC)
+            ldif_api.parse_ldif(ldif_content, server_type=c.Tests.RFC),
         ).entries
         tm.that(len(entries), eq=1)
         output_path = tmp_path / output_name
         tm.ok(ldif_api.write_ldif_file(entries, output_path, server_type=c.Tests.RFC))
         roundtrip_entries = tm.ok(
-            ldif_api.parse_ldif(output_path, server_type=c.Tests.RFC)
+            ldif_api.parse_ldif(output_path, server_type=c.Tests.RFC),
         ).entries
         tm.that(len(roundtrip_entries), eq=1)

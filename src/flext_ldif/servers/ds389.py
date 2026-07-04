@@ -322,7 +322,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             _ = attr_name
             acl_name_match = FlextLdifServersDs389.Constants.ACL_NAME_RE.search(content)
             permissions_match = FlextLdifServersDs389.Constants.ACL_ALLOW_RE.search(
-                content
+                content,
             )
             permissions: t.MutableSequenceOf[str] = (
                 [
@@ -399,7 +399,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         def _parse_userdn_subject(content: str) -> str:
             """Parse userdn subject from 389 DS ACI content."""
             userdn_matches = FlextLdifServersDs389.Constants.ACL_USERDN_RE.findall(
-                content
+                content,
             )
             if userdn_matches:
                 return str(userdn_matches[0])

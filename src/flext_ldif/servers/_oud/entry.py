@@ -11,14 +11,16 @@ from __future__ import annotations
 from collections.abc import (
     Mapping,
 )
-from typing import ClassVar, override
+from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
 from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
 from flext_ldif.servers._oud.helpers import FlextLdifServersOudHelpersMixin
-from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.servers.rfc import FlextLdifServersRfc
+
+if TYPE_CHECKING:
+    from flext_ldif.servers.base import FlextLdifServersBase
 
 
 class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
@@ -146,7 +148,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         """Process ACL attributes (aci) into entry.metadata.extensions."""
         _ = original_dn
         aci_values = FlextLdifServersOudHelpersMixin.find_aci_values(
-            entry, original_attrs
+            entry,
+            original_attrs,
         )
         if not aci_values:
             return r[m.Ldif.Entry].ok(entry)
@@ -165,7 +168,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             else {}
         )
         FlextLdifServersOudHelpersMixin.process_aci_list_for_finalize(
-            aci_values, acl_server, existing
+            aci_values,
+            acl_server,
+            existing,
         )
         if existing:
             entry.metadata = entry.metadata.model_copy(
@@ -211,7 +216,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     aci_count=len(aci_list),
                 )
             entry = FlextLdifServersOudHelpersMixin.merge_acl_metadata_to_entry(
-                entry, acl_metadata_extensions
+                entry,
+                acl_metadata_extensions,
             )
         return r[m.Ldif.Entry].ok(entry)
 
@@ -228,17 +234,19 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             return r[str].fail_op("Pre-write hook", hook_result.error)
         normalized_entry = hook_result.value
         entry_to_write = FlextLdifServersOudHelpersMixin.restore_entry_from_metadata(
-            normalized_entry
+            normalized_entry,
         )
         write_options = self._extract_write_format_options(entry_to_write.metadata)
         ldif_parts: t.MutableSequenceOf[str] = []
         ldif_parts.extend(
             FlextLdifServersOudHelpersMixin.add_original_entry_comments(
-                entry_data, write_options
-            )
+                entry_data,
+                write_options,
+            ),
         )
         entry_data = FlextLdifServersOudHelpersMixin.apply_phase_aware_acl_handling(
-            entry_data, write_options
+            entry_data,
+            write_options,
         )
         if FlextLdifServersOudConstants.ACL_NORMALIZE_DNS_IN_VALUES:
             entry_data = FlextLdifServersOudHelpersMixin.normalize_acl_dns(entry_data)

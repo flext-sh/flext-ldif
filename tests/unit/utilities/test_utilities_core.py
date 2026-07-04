@@ -87,7 +87,9 @@ class TestsFlextLdifUtilitiesCore:
     def test_compare_dns(self) -> None:
         """Test DN comparison."""
         comparison = tm.ok(
-            u.Ldif.compare_dns("cn=John,dc=example,dc=com", "cn=jane,dc=example,dc=com")
+            u.Ldif.compare_dns(
+                "cn=John,dc=example,dc=com", "cn=jane,dc=example,dc=com"
+            ),
         )
         tm.that(comparison, is_=int)
 

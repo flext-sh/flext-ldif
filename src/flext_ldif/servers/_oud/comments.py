@@ -223,13 +223,13 @@ class FlextLdifServersOudCommentsMixin:
         )
         commented_acl_values = (
             FlextLdifServersOudAclExtractMixin.parse_commented_values(
-                commented_acl_values_raw
+                commented_acl_values_raw,
             )
         )
         if not commented_acl_values:
             return
         original_acl_attr = FlextLdifServersOudAclMetadataMixin.get_original_acl_attr(
-            entry
+            entry,
         )
         for acl_attr_name, acl_values_raw in commented_acl_values.items():
             if acl_attr_name.lower() in acl_attr_names_to_skip:

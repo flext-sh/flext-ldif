@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 from flext_tests import tm
 
 from tests.constants import c
-from tests.protocols import p
 from tests.utilities import u
+
+if TYPE_CHECKING:
+    from tests.protocols import p
 
 
 class TestsFlextLdifValidationService:

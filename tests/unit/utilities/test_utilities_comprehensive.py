@@ -5,16 +5,20 @@ Tests all 830 uncovered lines in utilities.py with real data and automation.
 
 from __future__ import annotations
 
-from collections.abc import (
-    MutableSequence,
-)
+from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import tm
 
 from tests.models import m
-from tests.typings import t
 from tests.utilities import u
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        MutableSequence,
+    )
+
+    from tests.typings import t
 
 
 class TestsFlextLdifUtilitiesComprehensive:

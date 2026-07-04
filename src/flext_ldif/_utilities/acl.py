@@ -360,7 +360,8 @@ class FlextLdifUtilitiesACL:
                 result.append(formatted_rule)
             except c.Ldif.EXC_LDIF_PARSE as e:
                 FlextLdifUtilitiesACL._module_logger.debug(
-                    "Skipping ACL rule processing due to error", error=str(e)
+                    "Skipping ACL rule processing due to error",
+                    error=str(e),
                 )
                 continue
         return result
@@ -448,7 +449,7 @@ class FlextLdifUtilitiesACL:
             return []
         permissions: t.MutableSequenceOf[str] = []
         matches = c.Ldif.compile_pattern(allow_deny_pattern, ignorecase=True).finditer(
-            content
+            content,
         )
         min_groups_for_action = 1
         min_groups_for_ops = 2
@@ -488,7 +489,8 @@ class FlextLdifUtilitiesACL:
                 result.append(format_template.format(value=str(value_raw)))
             except c.Ldif.EXC_LDIF_PARSE as e:
                 FlextLdifUtilitiesACL._module_logger.debug(
-                    "Skipping ACL rule processing due to error", error=str(e)
+                    "Skipping ACL rule processing due to error",
+                    error=str(e),
                 )
         return result
 
@@ -567,7 +569,7 @@ class FlextLdifUtilitiesACL:
             normalized = [str(item) for item in comments_value]
         else:
             normalized = [str(comments_value)]
-        return normalized + [""]
+        return [*normalized, ""]
 
     @staticmethod
     def get_acl_attributes(

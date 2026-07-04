@@ -389,7 +389,7 @@ def railway_schema_pipeline() -> p.Result[t.JsonMapping]:
                         else r[tuple[list[m.Ldif.Entry], int]].ok(
                             (list(schema_entries), schema_report.valid_entries),
                         )
-                    )
+                    ),
                 )
             ),
         )
@@ -411,7 +411,7 @@ def railway_schema_pipeline() -> p.Result[t.JsonMapping]:
                                 entry_report.valid_entries,
                             ),
                         )
-                    )
+                    ),
                 )
             ),
         )

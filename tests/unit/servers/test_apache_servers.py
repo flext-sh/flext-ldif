@@ -6,14 +6,18 @@ Directory Server-specific attributes, object classes, entries, and ACLs in LDIF 
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 from flext_tests import tm
 
 from flext_ldif.servers.apache import FlextLdifServersApache
 from tests.constants import c
 from tests.models import m
-from tests.typings import t
 from tests.utilities import u
+
+if TYPE_CHECKING:
+    from tests.typings import t
 
 
 class TestsTestFlextLdifApacheServers:
@@ -21,7 +25,8 @@ class TestsTestFlextLdifApacheServers:
 
     @pytest.mark.parametrize("test_case", c.Tests.APACHE_ATTRIBUTE_TEST_CASES)
     def test_schema_attribute_can_handle(
-        self, test_case: m.Tests.AttributeTestCase
+        self,
+        test_case: m.Tests.AttributeTestCase,
     ) -> None:
         """Test attribute detection for various scenarios."""
         server = FlextLdifServersApache()
@@ -261,7 +266,8 @@ class TestsTestFlextLdifApacheServers:
             name="aci",
             target=m.Ldif.AclTarget(target_dn="", attributes=[]),
             subject=m.Ldif.AclSubject(
-                subject_type=c.Ldif.AclSubjectType.ALL, subject_value=""
+                subject_type=c.Ldif.AclSubjectType.ALL,
+                subject_value="",
             ),
             permissions=m.Ldif.AclPermissions(),
             server_type=c.Ldif.ServerTypes.APACHE,
@@ -281,7 +287,8 @@ class TestsTestFlextLdifApacheServers:
             name="ads-aci",
             target=m.Ldif.AclTarget(target_dn="", attributes=[]),
             subject=m.Ldif.AclSubject(
-                subject_type=c.Ldif.AclSubjectType.ALL, subject_value=""
+                subject_type=c.Ldif.AclSubjectType.ALL,
+                subject_value="",
             ),
             permissions=m.Ldif.AclPermissions(),
             server_type=c.Ldif.ServerTypes.APACHE,

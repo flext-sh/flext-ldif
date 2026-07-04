@@ -415,7 +415,8 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 return self._process_novell_entry(entry, attributes)
             except c.EXC_BASIC_TYPE as exc:
                 return r[m.Ldif.Entry].fail_op(
-                    "Novell eDirectory entry processing", exc
+                    "Novell eDirectory entry processing",
+                    exc,
                 )
 
         def _process_novell_entry(

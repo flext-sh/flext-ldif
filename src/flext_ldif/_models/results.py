@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
-from typing import Annotated, Self
+from typing import TYPE_CHECKING, Annotated, Self
 
 from flext_core import m
 from flext_core.utilities import FlextUtilities as u
 from flext_ldif import c, t
 from flext_ldif._models.collections import FlextLdifModelsCollections as mc
-from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries as mde
 from flext_ldif._models.events import FlextLdifModelsEvents as me
+
+if TYPE_CHECKING:
+    from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries as mde
 
 
 class FlextLdifModelsResults:
@@ -189,7 +191,7 @@ class FlextLdifModelsResults:
             description="Counts of entries rejected by reason category",
         )
         events: t.MutableSequenceOf[me.ConversionEvent | me.DnEvent] = u.Field(
-            default_factory=lambda: list[me.ConversionEvent | me.DnEvent](),
+            default_factory=list[me.ConversionEvent | me.DnEvent],
             description="Domain events emitted during processing",
         )
 
@@ -309,7 +311,7 @@ class FlextLdifModelsResults:
             description="Migrated LDIF entries",
         )
         stats: FlextLdifModelsResults.Statistics = u.Field(
-            default_factory=lambda: FlextLdifModelsResults.Statistics(),
+            default_factory=FlextLdifModelsResults.Statistics,
             description="Migration processing statistics",
         )
         output_files: t.MutableSequenceOf[str] = u.Field(

@@ -3,15 +3,19 @@
 from __future__ import annotations
 
 import time
-from collections.abc import Callable, Generator
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
 from tests.constants import c
-from tests.protocols import p
 from tests.typings import t
 from tests.utilities import u
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Generator
+
+    from tests.protocols import p
 
 
 def _probe_ldap_bind(server_url: str, admin_dn: str, admin_password: str) -> str | None:

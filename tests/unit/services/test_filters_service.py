@@ -2,14 +2,18 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 from flext_tests import tm
 
 from flext_ldif import ldif
 from tests.constants import c
 from tests.models import m
-from tests.typings import t
 from tests.utilities import TestsFlextLdifUtilities as u
+
+if TYPE_CHECKING:
+    from tests.typings import t
 
 
 class TestsFlextLdifFiltersService:
@@ -176,15 +180,16 @@ class TestsFlextLdifFiltersService:
             entry,
             {
                 c.Tests.FILTERS_SCHEMA_ATTR_KEY.lower(): frozenset({
-                    c.Tests.FILTERS_ATTR_OID_ALLOWED
-                })
+                    c.Tests.FILTERS_ATTR_OID_ALLOWED,
+                }),
             },
         )
         tm.that(result.attributes is not None, eq=True)
         if result.attributes is None:
             pytest.fail("Filtered entry attributes should be present")
         attr_vals = result.attributes.attributes.get(
-            c.Tests.FILTERS_SCHEMA_ATTR_KEY, []
+            c.Tests.FILTERS_SCHEMA_ATTR_KEY,
+            [],
         )
         tm.that(len(attr_vals), eq=1)
         tm.that(c.Tests.FILTERS_ATTR_OID_VALID in attr_vals, eq=True)
@@ -224,7 +229,7 @@ class TestsFlextLdifFiltersService:
         entry = u.Tests.create_real_entry(
             dn=c.Tests.FILTERS_DN_USER,
             attributes={
-                c.Tests.NAME_OBJECTCLASS: list(c.Tests.FILTERS_FORBIDDEN_OCS_ORDERED)
+                c.Tests.NAME_OBJECTCLASS: list(c.Tests.FILTERS_FORBIDDEN_OCS_ORDERED),
             },
         )
         result = ldif.filter_entry_attributes(

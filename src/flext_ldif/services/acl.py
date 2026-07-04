@@ -139,7 +139,9 @@ class FlextLdifAcl(s):
         )
 
     def parse_acl_string(
-        self, acl_string: str, server_type: str
+        self,
+        acl_string: str,
+        server_type: str,
     ) -> p.Result[m.Ldif.Acl]:
         """Parse ACL string using server-specific servers."""
         try:

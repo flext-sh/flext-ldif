@@ -39,7 +39,8 @@ class TestsFlextLdifVersion:
     def test_exports_reference_flextldifversion_class(self) -> None:
         """Module-level exports are derived from FlextLdifVersion fields."""
         tm.that(
-            version_module.__version__, eq=version_module.FlextLdifVersion.__version__
+            version_module.__version__,
+            eq=version_module.FlextLdifVersion.__version__,
         )
         tm.that(
             version_module.__version_info__,
@@ -51,13 +52,15 @@ class TestsFlextLdifVersion:
             eq=version_module.FlextLdifVersion.__description__,
         )
         tm.that(
-            version_module.__author__, eq=version_module.FlextLdifVersion.__author__
+            version_module.__author__,
+            eq=version_module.FlextLdifVersion.__author__,
         )
         tm.that(
             version_module.__author_email__,
             eq=version_module.FlextLdifVersion.__author_email__,
         )
         tm.that(
-            version_module.__license__, eq=version_module.FlextLdifVersion.__license__
+            version_module.__license__,
+            eq=version_module.FlextLdifVersion.__license__,
         )
         tm.that(version_module.__url__, eq=version_module.FlextLdifVersion.__url__)

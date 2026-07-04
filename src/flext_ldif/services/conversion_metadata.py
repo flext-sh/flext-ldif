@@ -92,7 +92,7 @@ class FlextLdifConversionMetadataMixin(s):
                     source_metadata.original_format_details.model_dump(
                         mode="json",
                         exclude_none=True,
-                    )
+                    ),
                 )
             )
         else:

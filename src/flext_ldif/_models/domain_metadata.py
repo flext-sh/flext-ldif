@@ -13,17 +13,20 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    MutableMapping,
-)
-from typing import Annotated, Self
+from typing import TYPE_CHECKING, Annotated, Self
 
 from flext_core import m
 from flext_core.utilities import FlextUtilities as u
 from flext_ldif import c, t
-from flext_ldif._models.domain_attributes import FlextLdifModelsDomainAttributes
 from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif.shared import FlextLdifShared
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        MutableMapping,
+    )
+
+    from flext_ldif._models.domain_attributes import FlextLdifModelsDomainAttributes
 
 
 class FlextLdifModelsDomainMetadata:
@@ -346,7 +349,7 @@ class FlextLdifModelsDomainMetadata:
             u.Field(
                 description="Complete conversion history for audit trail: [{'step': 'parse_oid_entry', 'timestamp': '2025-01-01T00:00:00Z', 'original': {...}, 'converted': {...}, 'differences': {...}, 'server_type': 'oid', 'operation': 'parse'}, {'step': 'normalize_to_rfc', 'timestamp': '2025-01-01T00:00:01Z', 'original': {...}, 'converted': {...}, 'differences': {...}, 'server_type': 'rfc', 'operation': 'normalize'}, ...]",
             ),
-        ] = u.Field(default_factory=lambda: list[t.MutableStrMapping]())
+        ] = u.Field(default_factory=list[t.MutableStrMapping])
 
         @u.field_validator("server_type", mode="before")
         @classmethod

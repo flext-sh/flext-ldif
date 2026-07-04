@@ -613,14 +613,16 @@ class FlextLdifServersBaseSchema(
         return r[bool].ok(value=True)
 
     def _parse_attribute(
-        self, attr_definition: str
+        self,
+        attr_definition: str,
     ) -> p.Result[m.Ldif.SchemaAttribute]:
         """Parse server-specific attribute definition (internal)."""
         del attr_definition
         return r[m.Ldif.SchemaAttribute].fail("Must be implemented by subclass")
 
     def _parse_objectclass(
-        self, oc_definition: str
+        self,
+        oc_definition: str,
     ) -> p.Result[m.Ldif.SchemaObjectClass]:
         """Parse server-specific objectClass definition (internal)."""
         _ = oc_definition
@@ -659,7 +661,8 @@ class FlextLdifServersBaseSchema(
                 oc_model = self._coerce_objectclass_model(data).unwrap_or(None)
                 if oc_model is not None:
                     result = self._handle_write_operation(
-                        attr_model=None, oc_model=oc_model
+                        attr_model=None,
+                        oc_model=oc_model,
                     )
                 else:
                     result = r[t.Ldif.SchemaConversionValue].fail(

@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, Protocol, runtime_checkable
 
-from flext_cli import p
-
 if TYPE_CHECKING:
+    from flext_cli import p
     from flext_ldif import m, t
     from flext_ldif._protocols.base import FlextLdifProtocolsBase
 
@@ -148,13 +147,15 @@ class FlextLdifProtocolsDomain(Protocol):
         """Entry server contract."""
 
         def parse_server(
-            self, value: str
+            self,
+            value: str,
         ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
             """Parse LDIF text into entry models."""
             ...
 
         def parse_input(
-            self, ldif_text: str
+            self,
+            ldif_text: str,
         ) -> t.MutableSequenceOf[m.Ldif.Entry] | None:
             """Compatibility parser entrypoint for direct entry server consumers."""
             ...

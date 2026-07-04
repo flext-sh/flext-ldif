@@ -2,15 +2,19 @@
 
 from __future__ import annotations
 
-from collections.abc import (
-    Callable,
-)
+from typing import TYPE_CHECKING
 
 from flext_ldif import ldif
 from tests.constants import c
 from tests.models import m
-from tests.protocols import p
-from tests.typings import t
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        Callable,
+    )
+
+    from tests.protocols import p
+    from tests.typings import t
 
 
 class TestsFlextLdifSimpleLdap:
@@ -24,7 +28,8 @@ class TestsFlextLdifSimpleLdap:
         naming_contexts = getattr(server_info, "naming_contexts", None)
         if naming_contexts is None:
             naming_contexts = getattr(server_info, "other", {}).get(
-                "namingContexts", []
+                "namingContexts",
+                [],
             )
         assert "dc=flext,dc=local" in naming_contexts
 

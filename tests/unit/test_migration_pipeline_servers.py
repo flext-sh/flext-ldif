@@ -7,7 +7,7 @@ conversions and other server-specific attribute transformations during migration
 
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import tm
@@ -16,6 +16,9 @@ from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.services.migration import FlextLdifMigrationPipeline
 from tests.constants import c
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class TestsFlextLdifMigrationPipelineServers:

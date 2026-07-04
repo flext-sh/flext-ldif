@@ -4,9 +4,8 @@ from __future__ import annotations
 
 import os
 import uuid
-from collections.abc import Callable, MutableMapping
 from pathlib import Path
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from flext_ldap import FlextLdapUtilities, u
 from flext_tests import FlextTestsUtilities, tk, tm
@@ -16,6 +15,9 @@ from tests.constants import c
 from tests.models import m
 from tests.protocols import p
 from tests.typings import t
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, MutableMapping
 
 
 class TestsFlextLdifUtilities(FlextTestsUtilities, u):
@@ -45,7 +47,8 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
         ) -> p.Ldap.Ldap3Server:
             """Create an LDAP server from a URL for test connectivity checks."""
             return FlextLdapUtilities.Ldap.create_server_from_url(
-                server_url, get_info=get_info
+                server_url,
+                get_info=get_info,
             )
 
         @classmethod
@@ -58,7 +61,8 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
         ) -> p.Ldap.Ldap3Server:
             """Create a minimal LDAP server for connectivity checks."""
             return cls.create_server_from_url(
-                f"ldap://{host}:{port}", get_info=get_info
+                f"ldap://{host}:{port}",
+                get_info=get_info,
             )
 
         @staticmethod
@@ -73,7 +77,10 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             """Create an LDAP connection for test workflows."""
             if receive_timeout is None:
                 return FlextLdapUtilities.Ldap.create_connection(
-                    server, user=user, password=password, auto_bind=auto_bind
+                    server,
+                    user=user,
+                    password=password,
+                    auto_bind=auto_bind,
                 )
             return FlextLdapUtilities.Ldap.create_connection(
                 server,
@@ -121,7 +128,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                     "objectClass: ldapSubentry\n"
                     "objectClass: subschema\n"
                     "\n"
-                    "attributeTypes: ( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )\n"
+                    "attributeTypes: ( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )\n",
                 )
             for index in range(entries_count):
                 entry_id = uuid.uuid4().hex[:8]
@@ -132,7 +139,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                     "objectClass: inetOrgPerson\n"
                     f"cn: User {entry_id}\n"
                     f"sn: Test{index}\n"
-                    f"mail: user{entry_id}@example.com\n"
+                    f"mail: user{entry_id}@example.com\n",
                 )
             return "\n".join(blocks)
 
@@ -183,8 +190,8 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                 str(
                     c.Tests.SHARED_CONTAINERS[c.Tests.DOCKER_CONTAINER_NAME][
                         "compose_file"
-                    ]
-                )
+                    ],
+                ),
             )
             workspace_root = next(
                 (
@@ -267,7 +274,10 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
 
         @staticmethod
         def _assert_field_eq(
-            value: object, field: str, expected: object, label: str
+            value: object,
+            field: str,
+            expected: object,
+            label: str,
         ) -> None:
             """Assert ``getattr(value, field) == expected`` with consistent diagnostic."""
             if expected is None:
@@ -309,7 +319,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             value_raw = tm.ok(
                 server.parse_objectclass(schema_def)
                 if is_objectclass
-                else server.parse_attribute(schema_def)
+                else server.parse_attribute(schema_def),
             )
             value: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass
             if is_objectclass:
@@ -380,17 +390,17 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             if should_succeed is False:
                 if result.success:
                     raise AssertionError(
-                        message or "Expected failure but parse succeeded"
+                        message or "Expected failure but parse succeeded",
                     )
                 return None
             if result.failure:
                 raise AssertionError(
-                    message or f"Expected success but parse failed: {result.error}"
+                    message or f"Expected success but parse failed: {result.error}",
                 )
             value = result.value
             if expected_type is not None and not isinstance(value, expected_type):
                 raise AssertionError(
-                    f"Expected {expected_type.__name__}, got {type(value).__name__}"
+                    f"Expected {expected_type.__name__}, got {type(value).__name__}",
                 )
             if isinstance(
                 value,
@@ -413,17 +423,17 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             if should_succeed is False:
                 if result.success:
                     raise AssertionError(
-                        message or "Expected failure but parse succeeded"
+                        message or "Expected failure but parse succeeded",
                     )
                 return None
             if result.failure:
                 raise AssertionError(
-                    message or f"Expected success but parse failed: {result.error}"
+                    message or f"Expected success but parse failed: {result.error}",
                 )
             value: m.Ldif.Acl = result.unwrap()
             if expected_type is not None and not isinstance(value, expected_type):
                 raise AssertionError(
-                    f"Expected {expected_type.__name__}, got {type(value).__name__}"
+                    f"Expected {expected_type.__name__}, got {type(value).__name__}",
                 )
             return value
 
@@ -433,7 +443,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             for fragment in must_contain:
                 if fragment not in serialized:
                     raise AssertionError(
-                        f"'{fragment}' not found in output: {serialized[:200]}..."
+                        f"'{fragment}' not found in output: {serialized[:200]}...",
                     )
 
         @classmethod
@@ -472,7 +482,8 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             if not isinstance(data, data_cls):
                 raise AssertionError(f"{write_method} requires a {data_cls.__name__}")
             method: Callable[[m.BaseModel], p.Result[str]] = getattr(
-                server, write_method
+                server,
+                write_method,
             )
             result = method(data)
             if result.failure:

@@ -14,8 +14,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from tests.models import m
-from tests.protocols import p
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from tests.models import m
+    from tests.protocols import p
 
 
 class TestsFlextLdifOidIntegration:

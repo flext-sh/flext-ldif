@@ -776,7 +776,8 @@ class FlextLdifUtilitiesEntry:
             checks.append(
                 bool(
                     c.Ldif.compile_pattern(
-                        resolved_config.dn_pattern, ignorecase=True
+                        resolved_config.dn_pattern,
+                        ignorecase=True,
                     ).search(dn_value),
                 ),
             )

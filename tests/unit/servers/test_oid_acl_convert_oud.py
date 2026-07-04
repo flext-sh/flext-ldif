@@ -178,7 +178,8 @@ class TestsFlextLdifOidAclConvertTarget:
 
     def test_scope_orclaci_without_anyone_is_default(self) -> None:
         scope = Conv.calculate_targetscope(
-            self._rule("entry"), has_anyone_subject=False
+            self._rule("entry"),
+            has_anyone_subject=False,
         )
         tm.that(scope is None, eq=True)
 

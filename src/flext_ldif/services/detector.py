@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import override
+from typing import TYPE_CHECKING, override
 
 from flext_ldif import (
     c,
@@ -14,6 +13,9 @@ from flext_ldif import (
     t,
     u,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class FlextLdifDetector(s):
@@ -63,7 +65,7 @@ class FlextLdifDetector(s):
                 if isinstance(pattern_value, str)
                 else ""
                 if pattern_value is None
-                else pattern_value.pattern
+                else pattern_value.pattern,
             )
             for pattern_value in pattern_values
         )
@@ -209,7 +211,7 @@ class FlextLdifDetector(s):
         _, pattern_attr, description, case_sensitive = pattern_spec
         pattern_value = getattr(constants, pattern_attr, None) if constants else None
         pattern = (
-            getattr(pattern_value, "pattern")
+            pattern_value.pattern
             if getattr(pattern_value, "pattern", None) is not None
             else pattern_value
         )
@@ -255,7 +257,7 @@ class FlextLdifDetector(s):
         _, pattern_attr, case_sensitive = score_spec
         pattern_value = getattr(constants, pattern_attr, None) if constants else None
         pattern = (
-            getattr(pattern_value, "pattern")
+            pattern_value.pattern
             if getattr(pattern_value, "pattern", None) is not None
             else pattern_value
         )

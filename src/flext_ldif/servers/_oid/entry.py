@@ -100,7 +100,8 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         attr_lower = parts[0].strip().lower()
         if attr_lower == "aci":
             FlextLdifServersOidEntry._module_logger.debug(
-                "Converting aci to orclaci", line=original_line
+                "Converting aci to orclaci",
+                line=original_line,
             )
             value_part = parts[1]
             return f"orclaci:{value_part}"
@@ -430,7 +431,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             return self._post_parse_oid_entry(entry)
         except c.Ldif.EXC_LDIF_PARSE as e:
             FlextLdifServersOidEntry._module_logger.exception(
-                "OID post-parse entry hook failed"
+                "OID post-parse entry hook failed",
             )
             return r[m.Ldif.Entry].fail_op("OID post-parse entry hook", e)
 
@@ -531,7 +532,8 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             )
         except c.Ldif.EXC_LDIF_PARSE:
             FlextLdifServersOidEntry._module_logger.debug(
-                "Failed to parse ACL extension metadata", exc_info=True
+                "Failed to parse ACL extension metadata",
+                exc_info=True,
             )
 
     def _merge_parsed_acl_extensions_core(
@@ -615,7 +617,9 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                         changed = True
                 if attr_name.lower() in {"objectclasses", "attributetypes"}:
                     sup_quoted = c.Ldif.sub_pattern(
-                        r"SUP\s+'([^']+)'", r"SUP \1", new_value
+                        r"SUP\s+'([^']+)'",
+                        r"SUP \1",
+                        new_value,
                     )
                     if sup_quoted != new_value:
                         new_value = sup_quoted

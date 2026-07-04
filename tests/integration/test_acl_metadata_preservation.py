@@ -15,14 +15,17 @@ from __future__ import annotations
 from collections.abc import (
     Mapping,
 )
+from typing import TYPE_CHECKING
 
 import pytest
 
 from flext_ldif import ldif
 from tests.constants import c
-from tests.models import m
-from tests.protocols import p
-from tests.typings import t
+
+if TYPE_CHECKING:
+    from tests.models import m
+    from tests.protocols import p
+    from tests.typings import t
 
 
 def _entry_extensions(entry: m.Ldif.Entry) -> t.JsonMapping:

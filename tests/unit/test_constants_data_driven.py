@@ -23,7 +23,8 @@ class TestsFlextLdifConstantsDataDriven:
         ],
     )
     def test_extended_server_type_constants_are_non_empty(
-        self, server_value: str
+        self,
+        server_value: str,
     ) -> None:
         tm.that(bool(server_value), eq=True)
 

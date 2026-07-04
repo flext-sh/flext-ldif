@@ -340,11 +340,11 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
             )
             return matches_server_patterns
         if settings.oid_pattern and c.Ldif.compile_pattern(settings.oid_pattern).search(
-            oc_definition
+            oc_definition,
         ):
             return True
         name_matches = c.Ldif.compile_pattern(name_regex, ignorecase=True).findall(
-            oc_definition
+            oc_definition,
         )
         attr_names = {name.lower() for name in settings.attr_names}
         return any(name.lower() in attr_names for name in name_matches)
@@ -385,7 +385,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
             )
         except c.Ldif.EXC_LDIF_PARSE as e:
             FlextLdifServersRfcSchema._module_logger.exception(
-                "Schema extraction failed"
+                "Schema extraction failed",
             )
             return r[
                 MutableMapping[
@@ -534,7 +534,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
 
     @override
     def _parse_attribute(
-        self, attr_definition: str
+        self,
+        attr_definition: str,
     ) -> p.Result[m.Ldif.SchemaAttribute]:
         """Parse RFC 4512 attribute definition using generalized parser."""
         server_type = self._get_server_type()
@@ -601,7 +602,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
 
     @override
     def _parse_objectclass(
-        self, oc_definition: str
+        self,
+        oc_definition: str,
     ) -> p.Result[m.Ldif.SchemaObjectClass]:
         """Parse RFC 4512 objectClass definition using core parser."""
         parse_result = self._parse_objectclass_core(oc_definition)
@@ -618,7 +620,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
             return self._parse_rfc_objectclass_core(oc_definition)
         except c.EXC_BASIC_TYPE as e:
             FlextLdifServersRfcSchema._module_logger.exception(
-                "RFC objectClass parsing exception"
+                "RFC objectClass parsing exception",
             )
             return r[m.Ldif.SchemaObjectClass].fail_op("RFC objectClass parsing", e)
 
@@ -754,7 +756,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
                 else "objectclass"
             )
             FlextLdifServersRfcSchema._module_logger.exception(
-                "RFC %s writing exception", item_type
+                "RFC %s writing exception",
+                item_type,
             )
             return r[str].fail(f"RFC {item_type} writing failed: {e}")
 

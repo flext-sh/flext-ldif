@@ -27,7 +27,8 @@ class TestsTestFlextLdifDs389Servers:
 
     @pytest.mark.parametrize("test_case", c.Tests.DS389_ATTRIBUTE_TEST_CASES)
     def test_schema_attribute_can_handle(
-        self, test_case: m.Tests.AttributeTestCase
+        self,
+        test_case: m.Tests.AttributeTestCase,
     ) -> None:
         """Test attribute detection for various scenarios."""
         tm.that(
@@ -62,14 +63,15 @@ class TestsTestFlextLdifDs389Servers:
         """Test parsing attribute without OID fails."""
         tm.fail(
             _schema_server().parse_input(
-                "NAME 'nsslapd-port' SYNTAX 1.3.6.1.4.1.1466.115.121.1.27"
+                "NAME 'nsslapd-port' SYNTAX 1.3.6.1.4.1.1466.115.121.1.27",
             ),
             has="missing an OID",
         )
 
     @pytest.mark.parametrize("test_case", c.Tests.DS389_OBJECTCLASS_TEST_CASES)
     def test_schema_objectclass_can_handle(
-        self, test_case: m.Tests.ObjectClassTestCase
+        self,
+        test_case: m.Tests.ObjectClassTestCase,
     ) -> None:
         """Test objectClass detection for various scenarios."""
         tm.that(
@@ -95,7 +97,9 @@ class TestsTestFlextLdifDs389Servers:
         """Test parsing AUXILIARY objectClass."""
         oc_def = "( 2.16.840.1.113730.3.2.2 NAME 'nsds5replica' AUXILIARY MAY ( nsds5ReplicaId $ nsds5ReplicaRoot ) )"
         u.Tests.assert_server_schema_parse_and_properties(
-            _schema_server(), oc_def, expected_kind="AUXILIARY"
+            _schema_server(),
+            oc_def,
+            expected_kind="AUXILIARY",
         )
 
     def test_parse_objectclass_abstract(self) -> None:

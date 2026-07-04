@@ -44,7 +44,8 @@ class FlextLdifServersOudTransformMixin:
             return entry_data
         acl_attrs_list = list(acl_attrs)
         return FlextLdifServersOudAclExtractMixin.comment_acl_attributes(
-            entry_data, acl_attrs_list
+            entry_data,
+            acl_attrs_list,
         )
 
     @staticmethod
@@ -97,7 +98,7 @@ class FlextLdifServersOudTransformMixin:
         if not entry_data.attributes or not entry_data.attributes.attributes:
             return entry_data
         base_dn, dn_registry = FlextLdifServersOudAclMetadataMixin.extract_acl_metadata(
-            entry_data
+            entry_data,
         )
         attrs = entry_data.attributes.attributes
         if "aci" not in attrs:

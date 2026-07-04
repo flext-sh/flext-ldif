@@ -169,15 +169,16 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 if not attr_definition or not attr_definition.strip():
                     return False
                 if FlextLdifServersOpenldap.Constants.SCHEMA_OPENLDAP_OLC_RE.search(
-                    attr_definition_str
+                    attr_definition_str,
                 ):
                     return True
                 return super().can_handle_attribute(attr_definition_str)
             oid_raw = getattr(attr_definition, "oid", None)
             if isinstance(
-                oid_raw, str
+                oid_raw,
+                str,
             ) and FlextLdifServersOpenldap.Constants.SCHEMA_OPENLDAP_OLC_RE.search(
-                oid_raw
+                oid_raw,
             ):
                 return True
             return super().can_handle_attribute(attr_definition)
@@ -191,15 +192,16 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             if isinstance(oc_definition, str):
                 oc_definition_str = oc_definition
                 if FlextLdifServersOpenldap.Constants.SCHEMA_OPENLDAP_OLC_RE.search(
-                    oc_definition_str
+                    oc_definition_str,
                 ):
                     return True
                 return super().can_handle_objectclass(oc_definition_str)
             oid_raw = getattr(oc_definition, "oid", None)
             if isinstance(
-                oid_raw, str
+                oid_raw,
+                str,
             ) and FlextLdifServersOpenldap.Constants.SCHEMA_OPENLDAP_OLC_RE.search(
-                oid_raw
+                oid_raw,
             ):
                 return True
             return super().can_handle_objectclass(oc_definition)
@@ -249,8 +251,8 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 acl_content = acl_line[len(olc_prefix) :].strip()
             return bool(
                 FlextLdifServersOpenldap.Constants.ACL_INDEX_PREFIX_RE.match(
-                    acl_content
-                )
+                    acl_content,
+                ),
             ) or acl_content.startswith(
                 FlextLdifServersOpenldap.Constants.ACL_START_PREFIX
                 + f"{FlextLdifServersOpenldap.Constants.ACL_ATTRIBUTE_NAME}:",
@@ -353,7 +355,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         ) -> tuple[str | None, t.MutableSequenceOf[str]]:
             """Parse "to <what>" clause and extract attributes."""
             to_match = FlextLdifServersOpenldap.Constants.ACL_TO_BY_RE.match(
-                acl_content
+                acl_content,
             )
             if not to_match:
                 return (None, [])
@@ -380,7 +382,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                     len(FlextLdifServersOpenldap.Constants.ACL_ATTRIBUTE_NAME + ":") :
                 ].strip()
             index_match = FlextLdifServersOpenldap.Constants.ACL_INDEX_RE.match(
-                acl_content
+                acl_content,
             )
             if index_match:
                 acl_content = index_match.group(2)

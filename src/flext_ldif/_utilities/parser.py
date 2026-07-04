@@ -345,7 +345,8 @@ class FlextLdifUtilitiesParser:
 
     @staticmethod
     def extract_boolean_flag(
-        definition: str, pattern: t.Ldif.RegexPattern | str
+        definition: str,
+        pattern: t.Ldif.RegexPattern | str,
     ) -> bool:
         """Check if boolean flag exists in definition."""
         if not definition:

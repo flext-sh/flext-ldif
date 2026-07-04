@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from flext_cli import u as core_u
 from flext_ldif import c, t
-from flext_ldif.models import FlextLdifModels as m
+
+if TYPE_CHECKING:
+    from flext_ldif.models import FlextLdifModels as m
 
 
 class FlextLdifUtilitiesSchemaFormat:

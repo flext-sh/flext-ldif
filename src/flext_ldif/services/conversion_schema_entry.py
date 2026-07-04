@@ -144,7 +144,7 @@ class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s, ABC
                     lambda converted_values, attr_name=field[0]: (
                         attr_name,
                         list(converted_values),
-                    )
+                    ),
                 )
                 .map_error(
                     lambda error, attr_name=field[0]: (

@@ -353,7 +353,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         if acl.metadata and acl.metadata.extensions:
             extensions.update(acl.metadata.extensions.to_dict())
         timeofday_match = FlextLdifServersOudConstants.ACL_TIMEOFDAY_RE.search(
-            aci_content
+            aci_content,
         )
         if timeofday_match:
             extensions[c.Ldif.ACL_BIND_TIMEOFDAY] = (
@@ -411,7 +411,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             return r[m.Ldif.Acl].ok(acl_model)
         except c.Ldif.EXC_LDIF_PARSE as e:
             FlextLdifServersOudAcl._module_logger.exception(
-                "Failed to parse OUD ds-privilege-name"
+                "Failed to parse OUD ds-privilege-name",
             )
             return r[m.Ldif.Acl].fail(f"Failed to parse OUD ds-privilege-name: {e}")
 
@@ -429,7 +429,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             return self._write_oud_aci(acl_data)
         except c.Ldif.EXC_LDIF_PARSE as e:
             FlextLdifServersOudAcl._module_logger.exception(
-                "Failed to write ACL to OUD ACI format"
+                "Failed to write ACL to OUD ACI format",
             )
             return r[str].fail(f"Failed to write ACL to OUD ACI format: {e}")
 

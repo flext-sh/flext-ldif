@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -17,8 +18,10 @@ from flext_ldif import ldif
 from flext_ldif.services.parser import FlextLdifParser
 from tests.constants import c
 from tests.models import m
-from tests.protocols import p
 from tests.utilities import u
+
+if TYPE_CHECKING:
+    from tests.protocols import p
 
 
 class TestsFlextLdifMinimalDifferencesMetadata:
@@ -49,7 +52,8 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         if not fixture_path.exists():
             pytest.skip(f"OID fixture not found: {fixture_path}")
         parse_result = parser.parse_ldif_file(
-            path=fixture_path, server_type=c.Tests.OID
+            path=fixture_path,
+            server_type=c.Tests.OID,
         )
         assert parse_result.success, f"Parsing failed: {parse_result.error}"
         parse_response = parse_result.value
@@ -76,7 +80,8 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         if not fixture_path.exists():
             pytest.skip(f"OUD fixture not found: {fixture_path}")
         parse_result = parser.parse_ldif_file(
-            path=fixture_path, server_type=c.Tests.OUD
+            path=fixture_path,
+            server_type=c.Tests.OUD,
         )
         assert parse_result.success, f"Parsing failed: {parse_result.error}"
         parse_response = parse_result.value
@@ -110,7 +115,8 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         """Test that spacing differences (e.g., 'dc=example, dc=com' vs 'dc=example,dc=com') are captured."""
         ldif_with_spaces = "dn: cn=test, dc=example, dc=com\nobjectClass: top\nobjectClass: person\ncn: test\n"
         parse_result = parser.parse_string(
-            content=ldif_with_spaces, server_type=c.Tests.RFC
+            content=ldif_with_spaces,
+            server_type=c.Tests.RFC,
         )
         assert parse_result.success
         entries = parse_result.value.entries
@@ -128,7 +134,8 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         """Test that case differences (e.g., 'objectClass' vs 'objectclass') are captured."""
         ldif_mixed_case = "dn: cn=test,dc=example,dc=com\nobjectClass: top\nobjectClass: person\ncn: test\n"
         parse_result = parser.parse_string(
-            content=ldif_mixed_case, server_type=c.Tests.RFC
+            content=ldif_mixed_case,
+            server_type=c.Tests.RFC,
         )
         assert parse_result.success
         entries = parse_result.value.entries

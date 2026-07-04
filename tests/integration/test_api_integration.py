@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -21,6 +21,9 @@ from flext_ldif.services.migration import FlextLdifMigrationPipeline
 from flext_ldif.services.statistics import FlextLdifStatistics
 from tests.constants import c
 from tests.models import m
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class TestsFlextLdifApiIntegration:

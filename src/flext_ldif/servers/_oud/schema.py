@@ -2,15 +2,17 @@
 
 from __future__ import annotations
 
-from collections.abc import (
-    MutableMapping,
-)
-from typing import ClassVar, override
+from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
 from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        MutableMapping,
+    )
 
 
 class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
@@ -275,7 +277,8 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
             oid_validation = self._validate_attribute_oid(oid_str)
             if oid_validation.failure:
                 return r[m.Ldif.SchemaObjectClass].fail_op(
-                    "ObjectClass OID validation", oid_validation.error
+                    "ObjectClass OID validation",
+                    oid_validation.error,
                 )
             is_valid_oud_oid = oid_validation.value
             existing_oc_metadata = oc.metadata
@@ -303,7 +306,8 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
                 sup_validation = self._validate_attribute_oid(sup_str)
                 if sup_validation.failure:
                     return r[m.Ldif.SchemaObjectClass].fail_op(
-                        "ObjectClass SUP OID validation", sup_validation.error
+                        "ObjectClass SUP OID validation",
+                        sup_validation.error,
                     )
         return r[m.Ldif.SchemaObjectClass].ok(oc)
 

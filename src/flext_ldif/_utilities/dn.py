@@ -3,17 +3,19 @@
 from __future__ import annotations
 
 import string
-from collections.abc import (
-    Callable,
-    Generator,
-    MutableMapping,
-)
 from pathlib import Path
-from typing import overload
+from typing import TYPE_CHECKING, overload
 
 from flext_cli import u
 from flext_ldif import c, p, r, t
 from flext_ldif.models import FlextLdifModels as m
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        Callable,
+        Generator,
+        MutableMapping,
+    )
 
 
 class FlextLdifUtilitiesDN:
@@ -871,11 +873,17 @@ class FlextLdifUtilitiesDN:
         normalized_dn = norm_result.map_or(dn_str)
         source_escaped = c.Ldif.escape_pattern(source_dn)
         result = c.Ldif.sub_pattern(
-            f",{source_escaped}$", f",{target_dn}", normalized_dn, ignorecase=True
+            f",{source_escaped}$",
+            f",{target_dn}",
+            normalized_dn,
+            ignorecase=True,
         )
         if result == normalized_dn:
             result = c.Ldif.sub_pattern(
-                f"^{source_escaped}$", target_dn, normalized_dn, ignorecase=True
+                f"^{source_escaped}$",
+                target_dn,
+                normalized_dn,
+                ignorecase=True,
             )
         return result
 

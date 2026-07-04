@@ -37,7 +37,8 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
 
     @override
     def _parse_content(
-        self, ldif_content: str
+        self,
+        ldif_content: str,
     ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
         """Parse raw LDIF content string into Entry models."""
         if not ldif_content or not ldif_content.strip():
@@ -46,7 +47,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
             return self._parse_ldif_records(ldif_content)
         except ValueError as exc:
             FlextLdifServersRfcEntry._module_logger.exception(
-                "Failed to parse LDIF content"
+                "Failed to parse LDIF content",
             )
             return r[t.MutableSequenceOf[m.Ldif.Entry]].fail_op("Processing", exc)
 

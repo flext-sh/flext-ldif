@@ -6,13 +6,17 @@ eDirectory-specific attributes, object classes, and entries in LDIF format.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 from flext_tests import tm
 
 from flext_ldif.servers.novell import FlextLdifServersNovell
 from tests.constants import c
-from tests.models import m
 from tests.utilities import u
+
+if TYPE_CHECKING:
+    from tests.models import m
 
 
 class TestsFlextLdifNovellServers:
@@ -93,7 +97,7 @@ class TestsFlextLdifNovellServers:
         """Test parsing attribute without OID fails."""
         tm.fail(
             schema_server.parse_attribute(
-                "NAME 'nspmPasswordPolicy' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15"
+                "NAME 'nspmPasswordPolicy' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15",
             ),
             has="missing an OID",
         )

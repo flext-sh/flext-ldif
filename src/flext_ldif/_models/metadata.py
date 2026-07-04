@@ -2,16 +2,18 @@
 
 from __future__ import annotations
 
-from collections.abc import (
-    ItemsView,
-    KeysView,
-    ValuesView,
-)
-from typing import Annotated, ClassVar, Self
+from typing import TYPE_CHECKING, Annotated, ClassVar, Self
 
 from flext_core import m
 from flext_core.utilities import FlextUtilities as u
 from flext_ldif import t
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        ItemsView,
+        KeysView,
+        ValuesView,
+    )
 
 
 class FlextLdifModelsMetadata:

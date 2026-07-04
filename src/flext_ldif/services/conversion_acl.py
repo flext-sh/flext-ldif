@@ -64,8 +64,9 @@ class FlextLdifConversionAclMixin(FlextLdifConversionAclPreserveMixin, s, ABC):
             .map_error(lambda error: error or "Acl conversion returned no entry")
             .flat_map(
                 lambda converted_entry: self._entry_to_acl(
-                    target_server, converted_entry
-                )
+                    target_server,
+                    converted_entry,
+                ),
             )
             .flat_map(
                 lambda converted_acl: r[t.Ldif.ConvertedModel].ok(

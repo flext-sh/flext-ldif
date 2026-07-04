@@ -2,14 +2,18 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 from flext_tests import tm
 
 from flext_ldif.services.entries import FlextLdifEntries
 from tests.constants import c
 from tests.models import m
-from tests.typings import t
 from tests.utilities import TestsFlextLdifUtilities as u
+
+if TYPE_CHECKING:
+    from tests.typings import t
 
 
 class TestsFlextLdifEntriesService:
@@ -125,7 +129,7 @@ class TestsFlextLdifEntriesService:
     ) -> None:
         tm.that(bool(scenario), eq=True)
         result = FlextLdifEntries.resolve_entry_dn(
-            self._to_attribute_mapping(entry_dict)
+            self._to_attribute_mapping(entry_dict),
         )
         if should_succeed:
             u.Tests.assert_success(result)

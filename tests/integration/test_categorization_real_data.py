@@ -13,14 +13,17 @@ All test outputs use pytest tmp_path fixture for proper cleanup.
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import TextIO
+from typing import TYPE_CHECKING, TextIO
 
 from flext_ldif import ldif
 from tests.constants import c
 from tests.models import m
-from tests.typings import t
 from tests.utilities import u
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from tests.typings import t
 
 
 def _write_entry_to_file(
@@ -129,7 +132,8 @@ class TestsFlextLdifCategorizationRealData:
             m.Ldif.Entry(
                 dn=m.Ldif.DN(value="dc=example"),
                 attributes=m.Ldif.Attributes(
-                    attributes={"objectClass": ["domain"]}, attribute_metadata={}
+                    attributes={"objectClass": ["domain"]},
+                    attribute_metadata={},
                 ),
             ),
             m.Ldif.Entry(
@@ -142,13 +146,15 @@ class TestsFlextLdifCategorizationRealData:
             m.Ldif.Entry(
                 dn=m.Ldif.DN(value="cn=user1,ou=users,dc=example"),
                 attributes=m.Ldif.Attributes(
-                    attributes={"objectClass": ["person"]}, attribute_metadata={}
+                    attributes={"objectClass": ["person"]},
+                    attribute_metadata={},
                 ),
             ),
             m.Ldif.Entry(
                 dn=m.Ldif.DN(value="dc=example2"),
                 attributes=m.Ldif.Attributes(
-                    attributes={"objectClass": ["domain"]}, attribute_metadata={}
+                    attributes={"objectClass": ["domain"]},
+                    attribute_metadata={},
                 ),
             ),
             m.Ldif.Entry(
