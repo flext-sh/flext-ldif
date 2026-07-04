@@ -11,14 +11,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Annotated
+from typing import Annotated
 
 from flext_core.utilities import FlextUtilities as u
 from flext_ldif import c, t
 from flext_ldif._models.base import FlextLdifModelsBases as mb
-
-if TYPE_CHECKING:
-    from flext_ldif._models.domain_metadata import FlextLdifModelsDomainMetadata as mdm
+from flext_ldif._models.domain_metadata import FlextLdifModelsDomainMetadata as mdm
 
 
 class FlextLdifModelsDomainSchema:
