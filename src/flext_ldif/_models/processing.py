@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Annotated, Literal
+from typing import Annotated, Literal
 
 from flext_core import m
 from flext_core.utilities import FlextUtilities as u
-
-if TYPE_CHECKING:
-    from flext_ldif import t
+from flext_ldif import t
 
 
 class FlextLdifModelsProcessing:

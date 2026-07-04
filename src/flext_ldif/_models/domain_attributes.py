@@ -8,20 +8,19 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping
 from typing import TYPE_CHECKING, Annotated, ClassVar, Self
 
 from flext_core import m
 from flext_core.utilities import FlextUtilities as u
+from flext_ldif import c, t
+from flext_ldif._models.metadata import FlextLdifModelsMetadata
 
 if TYPE_CHECKING:
     from collections.abc import (
         KeysView,
-        MutableMapping,
         ValuesView,
     )
-
-    from flext_ldif import c, t
-    from flext_ldif._models.metadata import FlextLdifModelsMetadata
 
 
 class FlextLdifModelsDomainAttributes:
