@@ -25,7 +25,7 @@ class FlextLdifServer(s):
             exclude=True,
             description="Optional dispatcher used to build the registry backend.",
         ),
-    ]
+    ] = None
     _registry: p.Registry = u.PrivateAttr()
 
     @override

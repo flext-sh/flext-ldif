@@ -9,11 +9,13 @@ the facade MRO (Support precedes this mixin).
 
 from __future__ import annotations
 
+from abc import ABC
+
 from flext_ldif import c, m, p, r, s, t, u
 from flext_ldif.services.conversion_schema import FlextLdifConversionSchemaMixin
 
 
-class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s):
+class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s, ABC):
     """Conversion of schema definitions embedded inside a schema entry."""
 
     def _convert_schema_entry_value(

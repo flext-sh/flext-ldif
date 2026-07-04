@@ -26,7 +26,7 @@ class FlextLdifProcessingPipeline(
             exclude=True,
             description="Optional transformation configuration for the processing pipeline.",
         ),
-    ]
+    ] = None
     entries_input: Annotated[
         t.MutableSequenceOf[m.Ldif.Entry] | None,
         u.Field(
@@ -34,7 +34,7 @@ class FlextLdifProcessingPipeline(
             exclude=True,
             description="Optional entry batch used when the service executes without explicit input.",
         ),
-    ]
+    ] = None
     _config: m.Ldif.TransformConfig = u.PrivateAttr(
         default_factory=m.Ldif.TransformConfig,
     )

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 
 from flext_ldif import c, m, p, r, s, t, u
 from flext_ldif.services.conversion_acl_preserve import (
@@ -10,7 +10,7 @@ from flext_ldif.services.conversion_acl_preserve import (
 )
 
 
-class FlextLdifConversionAclMixin(FlextLdifConversionAclPreserveMixin, s):
+class FlextLdifConversionAclMixin(FlextLdifConversionAclPreserveMixin, s, ABC):
     """ACL-model conversion orchestration (preservation via the parent mixin)."""
 
     @abstractmethod

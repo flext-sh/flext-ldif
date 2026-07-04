@@ -18,7 +18,7 @@ class FlextLdifTransformer(s):
             exclude=True,
             description="Source server type used for the conversion.",
         ),
-    ]
+    ] = None
     target_server: Annotated[
         str | c.Ldif.ServerTypes | None,
         u.Field(
@@ -26,7 +26,7 @@ class FlextLdifTransformer(s):
             exclude=True,
             description="Target server type used for the conversion.",
         ),
-    ]
+    ] = None
     base_dn: Annotated[
         str,
         u.Field(
@@ -34,7 +34,7 @@ class FlextLdifTransformer(s):
             exclude=True,
             description="Migration base DN forwarded to ACL scope filtering.",
         ),
-    ]
+    ] = ""
 
     @staticmethod
     def _normalize_server_type(

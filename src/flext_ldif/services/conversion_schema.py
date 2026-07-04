@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 
 from flext_ldif import c, m, p, r, s, t, u
 
 
-class FlextLdifConversionSchemaMixin(s):
+class FlextLdifConversionSchemaMixin(s, ABC):
     """Schema-conversion helpers shared by the conversion facade."""
 
     def _resolve_schema_server(
