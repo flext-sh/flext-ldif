@@ -2,16 +2,14 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Annotated, Self
+from typing import Annotated, Self
 
 from flext_core import m
 from flext_core.utilities import FlextUtilities as u
 from flext_ldif import c, t
 from flext_ldif._models.collections import FlextLdifModelsCollections as mc
+from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries as mde
 from flext_ldif._models.events import FlextLdifModelsEvents as me
-
-if TYPE_CHECKING:
-    from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries as mde
 
 
 class FlextLdifModelsResults:
