@@ -57,6 +57,12 @@ class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](s[TDomainResult]):
         instance: Self = type(self).model_validate(payload)
         return instance
 
+    def bind_runtime_settings(self, runtime_settings: p.Ldif.Settings | None) -> Self:
+        """Bind typed LDIF settings through the inherited runtime bootstrap state."""
+        if runtime_settings is not None:
+            self._apply_runtime_bootstrap_state({"runtime_settings": runtime_settings})
+        return self
+
     @classmethod
     def _runtime_bootstrap_options(cls) -> m.RuntimeBootstrapOptions:
         """Return runtime bootstrap options for LDIF services."""

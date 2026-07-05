@@ -402,7 +402,9 @@ class FlextLdifModelsResults:
         @u.computed_field()
         @property
         def is_confident(self) -> bool:
-            return self.confidence >= c.Ldif.CONFIDENCE_THRESHOLD
+            confidence: float = self.confidence
+            threshold: float = c.Ldif.CONFIDENCE_THRESHOLD
+            return confidence >= threshold
 
     class EntriesStatistics(m.Value):
         total_entries: Annotated[

@@ -113,10 +113,14 @@ class FlextLdifModelsMetadata:
             return extra_val
 
         def items(self) -> ItemsView[str, t.JsonValue]:
-            return self._extra().items()
+            extra = self._extra()
+            items: ItemsView[str, t.JsonValue] = extra.items()
+            return items
 
         def keys(self) -> KeysView[str]:
-            return self._extra().keys()
+            extra = self._extra()
+            keys: KeysView[str] = extra.keys()
+            return keys
 
         def pop(
             self,
@@ -140,10 +144,18 @@ class FlextLdifModelsMetadata:
                 setattr(self, key, value)
 
         def values(self) -> ValuesView[t.JsonValue]:
-            return self._extra().values()
+            extra = self._extra()
+            values: ValuesView[t.JsonValue] = extra.values()
+            return values
 
         def _extra(self) -> t.MutableJsonMapping:
-            return self.__pydantic_extra__ or {}
+            extra = self.__pydantic_extra__
+            if extra is None:
+                return {}
+            validated: t.MutableJsonMapping = t.json_dict_adapter().validate_python(
+                extra,
+            )
+            return validated
 
     class EntryMetadata(m.FrozenDynamicModel):
         """Entry metadata for tracking processing details."""

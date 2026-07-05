@@ -5,9 +5,16 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 
 from flext_ldif import c, m, p, r, s, t, u
+from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.conversion_acl_preserve import (
     FlextLdifConversionAclPreserveMixin,
 )
+
+_LdifEntry = FlextLdifModels.Ldif.Entry
+_LdifDN = FlextLdifModels.Ldif.DN
+_LdifAttributes = FlextLdifModels.Ldif.Attributes
+_LdifEntryMetadata = FlextLdifModels.Ldif.EntryMetadata
+_LdifServerMetadata = FlextLdifModels.Ldif.ServerMetadata
 
 
 class FlextLdifConversionAclMixin(FlextLdifConversionAclPreserveMixin, s, ABC):
@@ -89,23 +96,25 @@ class FlextLdifConversionAclMixin(FlextLdifConversionAclPreserveMixin, s, ABC):
         source_server_type: c.Ldif.ServerTypes | None,
     ) -> m.Ldif.Entry:
         """Build the RFC entry carrier used for ACL conversion."""
-        entry_metadata = m.Ldif.ServerMetadata.create_for(
+        entry_metadata = _LdifServerMetadata.create_for(
             source_server_type,
             extensions=None,
         )
         entry_metadata.acls = [acl.raw_acl] if acl.raw_acl else list[str]()
-        return m.Ldif.Entry.create(
-            dn=m.Ldif.DN(
+        entry_result = _LdifEntry.create(
+            dn=_LdifDN(
                 value="cn=acl-conversion,dc=example,dc=com",
-                metadata=m.Ldif.EntryMetadata(),
+                metadata=_LdifEntryMetadata(),
             ),
-            attributes=m.Ldif.Attributes(
+            attributes=_LdifAttributes(
                 attributes={},
                 attribute_metadata={},
                 metadata=None,
             ),
             metadata=entry_metadata,
-        ).unwrap()
+        )
+        entry: m.Ldif.Entry = entry_result.unwrap()
+        return entry
 
     @staticmethod
     def _entry_to_acl(

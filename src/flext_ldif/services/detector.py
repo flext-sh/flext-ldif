@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import TYPE_CHECKING, override
 
 from flext_ldif import (
@@ -212,7 +213,7 @@ class FlextLdifDetector(s):
         pattern_value = getattr(constants, pattern_attr, None) if constants else None
         pattern = (
             pattern_value.pattern
-            if getattr(pattern_value, "pattern", None) is not None
+            if isinstance(pattern_value, re.Pattern)
             else pattern_value
         )
         if not isinstance(pattern, str):
@@ -258,7 +259,7 @@ class FlextLdifDetector(s):
         pattern_value = getattr(constants, pattern_attr, None) if constants else None
         pattern = (
             pattern_value.pattern
-            if getattr(pattern_value, "pattern", None) is not None
+            if isinstance(pattern_value, re.Pattern)
             else pattern_value
         )
         server_type_raw = getattr(constants, "SERVER_TYPE", "") if constants else ""

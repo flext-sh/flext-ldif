@@ -148,19 +148,21 @@ def server() -> p.Ldif.ServerRegistry:
 @pytest.fixture
 def oid_server(server: p.Ldif.ServerRegistry) -> p.Ldif.ServerServer:
     """Get OID server via FlextLdifServer API."""
-    return u.Tests.assert_success(
+    server_instance: p.Ldif.ServerServer = u.Tests.assert_success(
         server.server("oid"),
         error_msg="OID server must be registered",
     )
+    return server_instance
 
 
 @pytest.fixture
 def oud_server(server: p.Ldif.ServerRegistry) -> p.Ldif.ServerServer:
     """Get OUD server via FlextLdifServer API."""
-    return u.Tests.assert_success(
+    server_instance: p.Ldif.ServerServer = u.Tests.assert_success(
         server.resolve_base_server("oud"),
         error_msg="OUD server must be registered",
     )
+    return server_instance
 
 
 @pytest.fixture

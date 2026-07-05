@@ -658,7 +658,7 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
         @property
-        def controls(self) -> t.SequenceOf[FlextLdifProtocolsBase.Control]:
+        def controls(self) -> t.SequenceOf[m.Ldif.Control]:
             """Return parsed LDIF controls."""
             ...
 

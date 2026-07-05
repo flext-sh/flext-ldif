@@ -296,7 +296,8 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         ) -> str | None:
             """Return segment at index when present."""
             if len(segments) > index:
-                return segments[index]
+                segment: str = segments[index]
+                return segment
             return None
 
         @classmethod

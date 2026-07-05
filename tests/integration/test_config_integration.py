@@ -54,7 +54,8 @@ class TestsFlextLdifConfigIntegration:
     @staticmethod
     def create_settings() -> TestsFlextLdifSettings:
         """Return an independent clone of the shared test settings singleton."""
-        return s.fetch_settings().clone()
+        settings: TestsFlextLdifSettings = s.fetch_settings().clone()
+        return settings
 
     @staticmethod
     def dn_values(entries: Sequence[m.Ldif.Entry]) -> list[str]:

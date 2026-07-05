@@ -423,7 +423,8 @@ class FlextLdifUtilitiesACL:
             return None
         extraction = FlextLdifUtilitiesACL._extract_from_match(match, group)
         if extraction.success:
-            return extraction.value
+            extracted_value: str = extraction.value
+            return extracted_value
         return None
 
     @staticmethod

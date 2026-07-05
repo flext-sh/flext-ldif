@@ -113,20 +113,30 @@ class FlextLdifConversionSchemaMixin(s, ABC):
             )
         first_value = converted_values[0]
         if field_name == c.Ldif.ATTRIBUTE_TYPES:
-            parsed_result = self._validate_parsed_schema(
+            parsed_attribute_result = self._validate_parsed_schema(
                 target_schema.parse_attribute(first_value),
                 m.Ldif.SchemaAttribute,
                 "Failed to parse converted attribute",
             )
+            if parsed_attribute_result.failure:
+                return r[t.Ldif.ConvertedModel].fail(
+                    parsed_attribute_result.error
+                    or "Failed to parse converted attribute",
+                )
+            converted_model: t.Ldif.ConvertedModel = parsed_attribute_result.value
         else:
-            parsed_result = self._validate_parsed_schema(
+            parsed_objectclass_result = self._validate_parsed_schema(
                 target_schema.parse_objectclass(first_value),
                 m.Ldif.SchemaObjectClass,
                 "Failed to parse converted objectclass",
             )
-        return parsed_result.flat_map(
-            r[t.Ldif.ConvertedModel].ok,
-        )
+            if parsed_objectclass_result.failure:
+                return r[t.Ldif.ConvertedModel].fail(
+                    parsed_objectclass_result.error
+                    or "Failed to parse converted objectclass",
+                )
+            converted_model = parsed_objectclass_result.value
+        return r[t.Ldif.ConvertedModel].ok(converted_model)
 
     @staticmethod
     def _validate_parsed_schema[T: m.Ldif.SchemaElement](

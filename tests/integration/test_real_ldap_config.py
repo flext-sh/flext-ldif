@@ -52,7 +52,8 @@ class TestsFlextLdifRealLdapConfig:
             metadata=None,
         )
         assert result.success, result.error
-        return result.value
+        entry: m.Ldif.Entry = result.value
+        return entry
 
     # -- settings contract ------------------------------------------------
 

@@ -72,7 +72,8 @@ class TestsFlextLdifPipelineIntegration:
     def _attributes(entry: _Entry) -> _Attributes:
         """Return the public attribute mapping, asserting it was populated."""
         assert entry.attributes is not None
-        return entry.attributes.attributes
+        attributes: _Attributes = entry.attributes.attributes
+        return attributes
 
     @pytest.mark.parametrize(
         ("content", "expected_count"),

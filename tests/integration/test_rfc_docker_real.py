@@ -41,7 +41,8 @@ class TestsFlextLdifRfcDockerReal:
     @pytest.fixture
     def fixtures_dir(self) -> Path:
         """Root fixtures directory."""
-        return c.Tests.FIXTURES_DIR
+        fixtures_dir: Path = c.Tests.FIXTURES_DIR
+        return fixtures_dir
 
     # ------------------------------------------------------------------ #
     # Parsing real fixtures: success outcome + public model invariants   #

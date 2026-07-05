@@ -190,7 +190,7 @@ class TestsFlextLdifApiFreeze:
 
     def test_ldif_singleton_is_a_flext_ldif_instance(self) -> None:
         """The ``ldif`` convenience handle is an instance of ``FlextLdif``."""
-        tm.that(isinstance(flext_ldif.ldif, flext_ldif.FlextLdif), eq=True)
+        tm.that(type(flext_ldif.ldif), eq=flext_ldif.FlextLdif)
 
     @pytest.mark.parametrize("symbol", METADATA_STRING_SYMBOLS)
     def test_metadata_strings_are_non_empty_strings(
@@ -204,7 +204,7 @@ class TestsFlextLdifApiFreeze:
 
     def test_version_info_is_a_tuple(self) -> None:
         """``__version_info__`` is exposed as a tuple for structured checks."""
-        tm.that(isinstance(flext_ldif.__version_info__, tuple), eq=True)
+        tm.that(type(flext_ldif.__version_info__), eq=tuple)
 
     @pytest.mark.parametrize("symbol", PRIVATE_ROOT_SYMBOLS)
     def test_private_symbol_is_not_advertised(

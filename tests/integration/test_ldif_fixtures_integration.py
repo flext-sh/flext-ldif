@@ -44,7 +44,8 @@ class TestsFlextLdifLdifFixturesIntegration:
 
     def _fixture_path(self, subdir: str, filename: str) -> Path:
         """Resolve a fixture path from its server subdirectory and filename."""
-        return c.Tests.FIXTURES_DIR / subdir / filename
+        fixture_path: Path = c.Tests.FIXTURES_DIR / subdir / filename
+        return fixture_path
 
     @pytest.mark.parametrize(("subdir", "filename", "min_entries"), _FIXTURE_CASES)
     def test_parse_succeeds_and_yields_expected_minimum_entries(

@@ -29,7 +29,8 @@ class TestsFlextLdifAnalysisService:
             if attrs is None
             else m.Ldif.Attributes.model_validate({"attributes": attrs})
         )
-        return m.Ldif.Entry(dn=dn, attributes=attributes)
+        dn_model = m.Ldif.DN(value=dn) if dn is not None else None
+        return m.Ldif.Entry(dn=dn_model, attributes=attributes)
 
     def test_validate_entries_valid_entry_reports_all_valid(
         self,

@@ -256,7 +256,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
             return None
         parsed = FlextLdifServersRfcSchema._parse_int(json_value)
         if parsed.success:
-            return parsed.value
+            parsed_value: int = parsed.value
+            return parsed_value
         return None
 
     @staticmethod

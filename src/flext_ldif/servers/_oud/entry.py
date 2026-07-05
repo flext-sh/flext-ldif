@@ -121,9 +121,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             return result
         entry = result.value
         original_attribute_case: t.MutableStrMapping = {}
-        if isinstance(entry_attrs, Mapping):
-            for attr_name in entry_attrs:
-                original_attribute_case[attr_name.lower()] = attr_name
+        for attr_name in entry_attrs_dict:
+            original_attribute_case[attr_name.lower()] = attr_name
         metadata_config = m.Ldif.EntryParseMetadataConfig.model_validate({
             "server_type": c.Ldif.ServerTypes.OUD,
             "original_entry_dn": entry_dn,

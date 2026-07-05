@@ -269,10 +269,12 @@ class TestsFlextLdifApiIntegration:
         # Act
         categorization = ldif.categorization(
             options=m.Ldif.MigrateOptions(
-                schema_whitelist_rules={
-                    "allowed_attribute_oids": {"1.2.3.4"},
-                    "allowed_objectclass_oids": {"2.3.4.5"},
-                },
+                schema_whitelist_rules=m.Ldif.WhitelistRules.model_validate(
+                    {
+                        "allowed_attribute_oids": {"1.2.3.4"},
+                        "allowed_objectclass_oids": {"2.3.4.5"},
+                    },
+                ),
             ),
             server_type=c.Tests.OUD,
         )

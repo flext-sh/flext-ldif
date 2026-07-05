@@ -351,7 +351,8 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         )
         validated = self._validate_subject_type(source_subject_type_raw)
         if validated.success:
-            return validated.value
+            source_subject_type: str = validated.value
+            return source_subject_type
         return None
 
     @staticmethod

@@ -33,10 +33,11 @@ class FlextLdifUtilitiesOID:
             True if OID matches pattern, False otherwise.
 
         """
-        return FlextLdifUtilitiesOID.extract_from_definition(definition).map_or(
-            False,
-            lambda oid: bool(oid_pattern.match(oid)),
-        )
+        oid_result = FlextLdifUtilitiesOID.extract_from_definition(definition)
+        if oid_result.failure:
+            return False
+        oid_value: str = oid_result.value
+        return bool(oid_pattern.match(oid_value))
 
     @staticmethod
     def validate_format(oid: str) -> p.Result[bool]:

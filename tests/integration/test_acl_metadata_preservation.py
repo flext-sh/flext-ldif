@@ -12,18 +12,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
 import pytest
 
 from flext_ldif import ldif
 from tests.constants import c
+from tests.typings import t
 
 if TYPE_CHECKING:
     from tests.models import m
     from tests.protocols import p
-    from tests.typings import t
 
 
 class TestsFlextLdifAclMetadataPreservation:
@@ -41,9 +40,10 @@ class TestsFlextLdifAclMetadataPreservation:
         assert metadata is not None, "parsed entry must expose metadata"
         extensions = metadata.extensions
         assert extensions is not None, "parsed entry must expose metadata.extensions"
-        if isinstance(extensions, Mapping):
-            return {str(k): v for k, v in extensions.items()}
-        return dict(extensions.model_dump())
+        extensions_dump: t.JsonMapping = t.json_mapping_adapter().validate_python(
+            extensions.model_dump(mode="json"),
+        )
+        return extensions_dump
 
     def _parse_single(
         self,
@@ -54,9 +54,11 @@ class TestsFlextLdifAclMetadataPreservation:
         """Parse LDIF that must yield exactly one entry; assert the r[T] success."""
         result = api.parse_ldif(ldif_text, server_type=server_type)
         assert result.success, f"parse failed: {result.error}"
-        entries = result.unwrap().entries
+        response: m.Ldif.ParseResponse = result.unwrap()
+        entries = response.entries
         assert len(entries) == 1, f"expected 1 entry, got {len(entries)}"
-        return entries[0]
+        entry: m.Ldif.Entry = entries[0]
+        return entry
 
     # -- OID ACL feature preservation ------------------------------------
 

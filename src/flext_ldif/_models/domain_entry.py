@@ -418,9 +418,9 @@ class FlextLdifModelsDomainEntry:
             ),
         ] = c.Ldif.RecordKind.CONTENT
         controls: Annotated[
-            t.MutableSequenceOf[FlextLdifModelsDomainEntry.Control],
+            t.SequenceOf[FlextLdifModelsDomainEntry.Control],
             u.Field(description="RFC 2849 control lines associated with the record"),
-        ] = u.Field(default_factory=list)
+        ] = u.Field(default_factory=tuple)
         change_operations: Annotated[
             t.MutableSequenceOf[FlextLdifModelsDomainEntry.ChangeOperation],
             u.Field(
@@ -982,8 +982,7 @@ class FlextLdifModelsDomainEntry:
             validation_metadata: mdm.ValidationMetadata | None = None,
             server_type: c.Ldif.ServerTypes | None = None,
             record_kind: c.Ldif.RecordKind = c.Ldif.RecordKind.CONTENT,
-            controls: t.MutableSequenceOf[FlextLdifModelsDomainEntry.Control]
-            | None = None,
+            controls: t.SequenceOf[FlextLdifModelsDomainEntry.Control] | None = None,
             change_operations: t.MutableSequenceOf[
                 FlextLdifModelsDomainEntry.ChangeOperation
             ]
@@ -1042,7 +1041,7 @@ class FlextLdifModelsDomainEntry:
             validation_metadata: mdm.ValidationMetadata | None,
             server_type: c.Ldif.ServerTypes | None,
             record_kind: c.Ldif.RecordKind,
-            controls: t.MutableSequenceOf[FlextLdifModelsDomainEntry.Control] | None,
+            controls: t.SequenceOf[FlextLdifModelsDomainEntry.Control] | None,
             change_operations: t.MutableSequenceOf[
                 FlextLdifModelsDomainEntry.ChangeOperation
             ]

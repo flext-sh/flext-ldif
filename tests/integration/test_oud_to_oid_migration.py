@@ -56,17 +56,20 @@ class TestsFlextLdifOudToOidMigration:
     @pytest.fixture
     def oud_entries(self) -> str:
         """Load the OUD entries LDIF fixture."""
-        return u.Tests.load(c.Tests.OUD, c.Tests.ENTRIES)
+        fixture: str = u.Tests.load(c.Tests.OUD, c.Tests.ENTRIES)
+        return fixture
 
     @pytest.fixture
     def oud_integration(self) -> str:
         """Load the OUD integration LDIF fixture (real entries with DNs)."""
-        return u.Tests.load(c.Tests.OUD, c.Tests.INTEGRATION)
+        fixture: str = u.Tests.load(c.Tests.OUD, c.Tests.INTEGRATION)
+        return fixture
 
     @pytest.fixture
     def oud_schema(self) -> str:
         """Load the OUD schema LDIF fixture."""
-        return u.Tests.load(c.Tests.OUD, c.Tests.SCHEMA)
+        fixture: str = u.Tests.load(c.Tests.OUD, c.Tests.SCHEMA)
+        return fixture
 
     @staticmethod
     def _dn_set(entries: object) -> set[str]:

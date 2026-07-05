@@ -62,7 +62,8 @@ class TestsFlextLdifSimpleLdap:
         }
         entry_result = m.Ldif.Entry.create(dn=ldap_entry.entry_dn, attributes=attrs)
         assert entry_result.success, entry_result.error
-        return entry_result.unwrap()
+        entry: m.Ldif.Entry = entry_result.unwrap()
+        return entry
 
     def test_bound_connection_reaches_configured_base_dn(
         self,

@@ -308,7 +308,8 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             if is_base64 and raw_value:
                 decode_result = _decode_base64()
                 if decode_result.success:
-                    return decode_result.value
+                    decoded_value: str = decode_result.value
+                    return decoded_value
                 return None
             if (
                 raw_value

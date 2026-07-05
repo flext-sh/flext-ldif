@@ -7,7 +7,10 @@ from typing import Annotated, ClassVar, TypeGuard, override
 
 import flext_ldif.servers as ldif_servers
 from flext_ldif import c, p, r, s, t, u
+from flext_ldif._protocols.domain import FlextLdifProtocolsDomain
 from flext_ldif.servers.base import FlextLdifServersBase
+
+ServerServer = FlextLdifProtocolsDomain.ServerServer
 
 
 class FlextLdifServer(s):
@@ -39,16 +42,18 @@ class FlextLdifServer(s):
 
     def acl(self, server_type: str) -> p.Ldif.AclServer | None:
         """Get ACL server for a server type."""
-        base = self.server(server_type).unwrap_or(None)
-        if base is None:
+        server_result = self.server(server_type)
+        if server_result.failure:
             return None
+        base: ServerServer = server_result.value
         return base.acl_server
 
     def entry(self, server_type: str) -> p.Ldif.EntryServer | None:
         """Get entry server for a server type."""
-        base = self.server(server_type).unwrap_or(None)
-        if base is None:
+        server_result = self.server(server_type)
+        if server_result.failure:
             return None
+        base: ServerServer = server_result.value
         return base.entry_server
 
     def resolve_server_bundle(
@@ -72,7 +77,7 @@ class FlextLdifServer(s):
                 "resolve_server_bundle",
                 ValueError(server_result.error or server_type),
             )
-        base = server_result.value
+        base: ServerServer = server_result.value
         return r[
             t.MappingKV[
                 str,
@@ -129,7 +134,7 @@ class FlextLdifServer(s):
                 else None,
             }
             priorities[st] = base.priority
-        stats: t.JsonDict = {
+        stats: t.Ldif.MutableMetadataInputMapping = {
             "total_servers": len(server_types),
             "servers_by_server": servers_by_server,
             "server_priorities": priorities,
@@ -145,11 +150,11 @@ class FlextLdifServer(s):
         server_type: str,
     ) -> p.Ldif.SchemaServer | None:
         """Get schema server for a server type."""
-        base = self.server(server_type).unwrap_or(None)
-        if base is None:
+        server_result = self.server(server_type)
+        if server_result.failure:
             return None
-        schema_server: p.Ldif.SchemaServer = base.schema_server
-        return schema_server
+        base: ServerServer = server_result.value
+        return base.schema_server
 
     def list_registered_servers(self) -> t.MutableSequenceOf[str]:
         """List all registered server types."""

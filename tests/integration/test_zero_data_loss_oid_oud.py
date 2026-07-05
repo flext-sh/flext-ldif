@@ -51,12 +51,14 @@ class TestsFlextLdifZeroDataLossOidOud:
     @pytest.fixture
     def oid_fixture(self) -> str:
         """Load OID entries fixture."""
-        return u.Tests.load(c.Tests.OID, c.Tests.ENTRIES)
+        fixture: str = u.Tests.load(c.Tests.OID, c.Tests.ENTRIES)
+        return fixture
 
     @pytest.fixture
     def oud_fixture(self) -> str:
         """Load OUD entries fixture."""
-        return u.Tests.load(c.Tests.OUD, c.Tests.ENTRIES)
+        fixture: str = u.Tests.load(c.Tests.OUD, c.Tests.ENTRIES)
+        return fixture
 
     # -- edge cases / invariants ------------------------------------------
 
@@ -136,32 +138,45 @@ class TestsFlextLdifZeroDataLossOidOud:
     def test_boolean_conversions_record_original_converted_and_format(
         self,
         api: p.Ldif.LdifClient,
-        oid_fixture: str,
     ) -> None:
         """Tracked boolean conversions expose original, converted and format."""
-        result = api.parse_ldif(oid_fixture, server_type=c.Tests.OID)
+        oid_boolean_entry = """
+version: 1
+
+dn: cn=boolean,dc=example,dc=com
+objectClass: top
+objectClass: person
+cn: boolean
+sn: Boolean
+orclIsEnabled: 1
+"""
+        result = api.parse_ldif(oid_boolean_entry, server_type=c.Tests.OID)
         assert result.success
 
-        tracked = [
-            entry
-            for entry in result.value.entries
-            if entry.metadata and entry.metadata.boolean_conversions
-        ]
-        if not tracked:
-            pytest.skip("Fixture contains no boolean conversions to assert on")
+        tracked_conversions: list[m.Ldif.DynamicMetadata] = []
+        for entry in result.value.entries:
+            metadata = entry.metadata
+            if metadata is None:
+                continue
+            converted = m.Ldif.DynamicMetadata.model_validate(
+                metadata.extensions[c.Ldif.CONVERTED_ATTRIBUTES],
+            )
+            boolean_conversions = m.Ldif.DynamicMetadata.model_validate(
+                converted[c.Ldif.CONVERSION_BOOLEAN_CONVERSIONS],
+            )
+            tracked_conversions.append(boolean_conversions)
 
-        for entry in tracked:
-            assert entry.metadata is not None
-            for attr_name, raw in entry.metadata.boolean_conversions.items():
+        assert tracked_conversions, (
+            "OID boolean fixture must produce boolean conversion metadata"
+        )
+
+        for boolean_conversions in tracked_conversions:
+            for attr_name, raw in boolean_conversions.items():
                 conversion = m.Ldif.DynamicMetadata.model_validate(raw)
                 assert "original" in conversion, f"Missing original for {attr_name}"
                 assert "converted" in conversion, f"Missing converted for {attr_name}"
-                assert "format" in conversion, f"Missing format for {attr_name}"
-                fmt = u.to_str(conversion.get("format"))
-                if fmt:
-                    assert fmt in {"OID->RFC", "RFC->OID"}, (
-                        f"Invalid format direction: {fmt}"
-                    )
+                assert conversion.get(c.Ldif.ORIGINAL_FORMAT) == "1/0"
+                assert conversion.get("converted_format") == "TRUE/FALSE"
 
     def test_minimal_differences_carry_original_and_differences(
         self,
