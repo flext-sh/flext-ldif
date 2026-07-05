@@ -172,7 +172,9 @@ class TestsFlextLdifCrossServerConversion:
             assert target.oid == source.oid
             assert target.name == source.name
             converted_any = True
-        assert converted_any, "No Oracle attribute survived the OID->RFC->OUD round-trip"
+        assert converted_any, (
+            "No Oracle attribute survived the OID->RFC->OUD round-trip"
+        )
 
     def test_conversion_matrix_is_available(
         self,

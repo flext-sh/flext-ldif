@@ -103,7 +103,9 @@ class TestsFlextLdifConfigIntegration:
         """A configured facade parses the basic entry identically per server."""
         api = ldif(settings=self.create_settings())
 
-        parsed = tm.ok(api.parse_ldif(c.Tests.CONFIG_BASIC_ENTRY, server_type=server_type))
+        parsed = tm.ok(
+            api.parse_ldif(c.Tests.CONFIG_BASIC_ENTRY, server_type=server_type)
+        )
 
         tm.that(len(parsed.entries), eq=1)
         tm.that(self.dn_values(parsed.entries)[0], eq=_BASIC_DN)

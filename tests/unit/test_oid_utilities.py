@@ -17,7 +17,10 @@ class TestsFlextLdifOidUtilities:
             ("( 1.2.840.113556.1.4.221 NAME 'x' )", "1.2.840.113556.1.4.221"),
             ("(  2.5.4.3 NAME 'cn' )", "2.5.4.3"),
             ("(1.2.3 NAME 'nospace')", "1.2.3"),
-            ("attributetypes: ( 0.9.2342.19200300.100.1.1 NAME 'uid' )", "0.9.2342.19200300.100.1.1"),
+            (
+                "attributetypes: ( 0.9.2342.19200300.100.1.1 NAME 'uid' )",
+                "0.9.2342.19200300.100.1.1",
+            ),
         ],
     )
     def test_extract_from_definition_returns_leading_oid(

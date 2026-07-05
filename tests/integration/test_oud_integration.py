@@ -253,9 +253,7 @@ class TestsFlextLdifOudIntegration:
         dn_with_spaces: str,
     ) -> None:
         """DNs whose RDNs are separated by ', ' keep their component count."""
-        source_ldif = (
-            f"dn: {dn_with_spaces}\ncn: Oracle Context\nobjectClass: top\n"
-        )
+        source_ldif = f"dn: {dn_with_spaces}\ncn: Oracle Context\nobjectClass: top\n"
         parsed = u.Tests.assert_success(api.parse_ldif(source_ldif))
         assert len(parsed.entries) == 1
         original_dn = self._dn_value(parsed.entries[0])

@@ -116,29 +116,23 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         parser: FlextLdifParser,
     ) -> None:
         """OID parsing records the complete original DN under extensions."""
-        content = (
-            "dn: cn=test,dc=example,dc=com\n"
-            "objectClass: top\n"
-            "cn: test\n"
-        )
+        content = "dn: cn=test,dc=example,dc=com\nobjectClass: top\ncn: test\n"
 
         result = parser.parse_string(content=content, server_type=c.Tests.OID)
 
         assert result.success, result.error
         metadata = result.value.entries[0].metadata
         assert metadata is not None
-        assert metadata.extensions["original_dn_complete"] == "cn=test,dc=example,dc=com"
+        assert (
+            metadata.extensions["original_dn_complete"] == "cn=test,dc=example,dc=com"
+        )
 
     def test_dn_whitespace_preserved_verbatim_on_parse(
         self,
         parser: FlextLdifParser,
     ) -> None:
         """DN spacing is preserved exactly as written through the parse."""
-        content = (
-            "dn: cn=test, dc=example, dc=com\n"
-            "objectClass: top\n"
-            "cn: test\n"
-        )
+        content = "dn: cn=test, dc=example, dc=com\nobjectClass: top\ncn: test\n"
 
         result = parser.parse_string(content=content, server_type=c.Tests.RFC)
 

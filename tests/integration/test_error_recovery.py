@@ -38,7 +38,9 @@ class TestsFlextLdifErrorRecovery:
         self, api: p.Ldif.LdifClient
     ) -> None:
         """A well-formed entry parses to exactly one entry with its DN/attrs intact."""
-        content = "dn: cn=Test,dc=example,dc=com\nobjectClass: person\ncn: Test\nsn: User\n"
+        content = (
+            "dn: cn=Test,dc=example,dc=com\nobjectClass: person\ncn: Test\nsn: User\n"
+        )
 
         result = api.parse_ldif(content)
 
@@ -107,9 +109,7 @@ class TestsFlextLdifErrorRecovery:
             "c@example.com",
         ]
 
-    def test_empty_attribute_value_is_preserved(
-        self, api: p.Ldif.LdifClient
-    ) -> None:
+    def test_empty_attribute_value_is_preserved(self, api: p.Ldif.LdifClient) -> None:
         """An attribute with no value keeps an explicit empty-string value."""
         content = (
             "dn: cn=E,dc=example,dc=com\nobjectClass: person\ncn: E\ndescription:\n"
@@ -138,9 +138,7 @@ class TestsFlextLdifErrorRecovery:
         assert entry.attributes is not None
         assert entry.attributes.attributes["description"] == ["abcd"]
 
-    def test_very_long_value_is_not_truncated(
-        self, api: p.Ldif.LdifClient
-    ) -> None:
+    def test_very_long_value_is_not_truncated(self, api: p.Ldif.LdifClient) -> None:
         """A value far exceeding a line width is preserved without truncation."""
         long_value = "x" * 2000
         content = (
@@ -171,9 +169,7 @@ class TestsFlextLdifErrorRecovery:
         assert entry.attributes is not None
         assert "jpegPhoto" in entry.attributes.attributes
 
-    def test_unicode_attribute_value_is_preserved(
-        self, api: p.Ldif.LdifClient
-    ) -> None:
+    def test_unicode_attribute_value_is_preserved(self, api: p.Ldif.LdifClient) -> None:
         """Multi-byte UTF-8 characters survive parsing unchanged."""
         content = (
             "dn: cn=U,dc=example,dc=com\nobjectClass: person\ncn: U\n"
@@ -192,9 +188,7 @@ class TestsFlextLdifErrorRecovery:
     # structured result and drops only the offending fragment.
     # ------------------------------------------------------------------
 
-    def test_entry_without_dn_yields_no_entries(
-        self, api: p.Ldif.LdifClient
-    ) -> None:
+    def test_entry_without_dn_yields_no_entries(self, api: p.Ldif.LdifClient) -> None:
         """A block with no DN line produces zero entries, not a crash."""
         content = "objectClass: person\ncn: NoDN\nsn: User\n"
 
@@ -203,9 +197,7 @@ class TestsFlextLdifErrorRecovery:
         assert result.success
         assert result.unwrap().entries == []
 
-    def test_invalid_dn_without_rdn_is_rejected(
-        self, api: p.Ldif.LdifClient
-    ) -> None:
+    def test_invalid_dn_without_rdn_is_rejected(self, api: p.Ldif.LdifClient) -> None:
         """A DN lacking any ``=`` RDN component yields no accepted entry."""
         content = "dn: invalid-dn-no-equals\nobjectClass: person\ncn: Test\n"
 
@@ -317,8 +309,7 @@ class TestsFlextLdifErrorRecovery:
     ) -> None:
         """Parse, write, then re-parse preserves DN and attribute names/values."""
         content = (
-            "dn: cn=Round,dc=example,dc=com\nobjectClass: person\n"
-            "cn: Round\nsn: Trip\n"
+            "dn: cn=Round,dc=example,dc=com\nobjectClass: person\ncn: Round\nsn: Trip\n"
         )
 
         first = api.parse_ldif(content)
@@ -340,9 +331,7 @@ class TestsFlextLdifErrorRecovery:
         assert reparsed[0].dn.value == original[0].dn.value
         assert original[0].attributes is not None
         assert reparsed[0].attributes is not None
-        assert (
-            reparsed[0].attributes.attributes == original[0].attributes.attributes
-        )
+        assert reparsed[0].attributes.attributes == original[0].attributes.attributes
 
 
 __all__: list[str] = ["TestsFlextLdifErrorRecovery"]

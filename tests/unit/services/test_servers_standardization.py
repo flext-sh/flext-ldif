@@ -19,9 +19,7 @@ from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from tests.typings import t
 
-type ServerClass = type[
-    FlextLdifServersRfc | FlextLdifServersOid | FlextLdifServersOud
-]
+type ServerClass = type[FlextLdifServersRfc | FlextLdifServersOid | FlextLdifServersOud]
 
 # (server class, canonical identity, priority) — the standardized identity table.
 _STANDARDIZED_SERVERS: tuple[tuple[ServerClass, str, int], ...] = (
@@ -40,12 +38,7 @@ class TestsFlextLdifServersStandardization:
     @pytest.fixture
     def valid_ldif(self) -> str:
         """A single well-formed RFC 2849 entry every server must accept."""
-        return (
-            f"dn: {_EXPECTED_DN}\n"
-            "objectClass: person\n"
-            "cn: test\n"
-            "sn: user\n"
-        )
+        return f"dn: {_EXPECTED_DN}\nobjectClass: person\ncn: test\nsn: user\n"
 
     @pytest.fixture
     def multi_ldif(self) -> str:

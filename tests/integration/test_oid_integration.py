@@ -116,9 +116,7 @@ class TestsFlextLdifOidIntegration:
 
         definitions = self._schema_definitions(schema_entry, definition_attr)
         oracle_definitions = [
-            definition
-            for definition in definitions
-            if ORACLE_OID_PREFIX in definition
+            definition for definition in definitions if ORACLE_OID_PREFIX in definition
         ]
 
         assert oracle_definitions, (
@@ -176,8 +174,7 @@ class TestsFlextLdifOidIntegration:
         roundtrip = self._roundtrip(api, original)
 
         assert len(roundtrip) == len(original), (
-            f"entry count changed: original={len(original)}, "
-            f"roundtrip={len(roundtrip)}"
+            f"entry count changed: original={len(original)}, roundtrip={len(roundtrip)}"
         )
 
     def test_roundtrip_preserves_dns_exactly(
@@ -189,9 +186,7 @@ class TestsFlextLdifOidIntegration:
         original = self._entries(api, oid_integration_fixture)
         original_dns = sorted(entry.dn_str for entry in original)
 
-        roundtrip_dns = sorted(
-            entry.dn_str for entry in self._roundtrip(api, original)
-        )
+        roundtrip_dns = sorted(entry.dn_str for entry in self._roundtrip(api, original))
 
         assert roundtrip_dns == original_dns, "DN set changed after round-trip"
 

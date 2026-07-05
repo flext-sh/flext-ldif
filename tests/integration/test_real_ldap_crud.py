@@ -59,9 +59,7 @@ class TestsFlextLdifRealLdapCrud:
             for oc in values
         ]
         payload = {
-            key: values
-            for key, values in attrs.items()
-            if key.lower() != "objectclass"
+            key: values for key, values in attrs.items() if key.lower() != "objectclass"
         }
         ldap_connection.add(entry.dn_str, object_classes, payload)
 

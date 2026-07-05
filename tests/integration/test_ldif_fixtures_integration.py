@@ -128,11 +128,15 @@ class TestsFlextLdifLdifFixturesIntegration:
         min_entries: int,
     ) -> None:
         """Validating well-formed fixture entries yields a passing validation result."""
-        entries = ldif_client.parse_ldif(self._fixture_path(subdir, filename)).value.entries
+        entries = ldif_client.parse_ldif(
+            self._fixture_path(subdir, filename)
+        ).value.entries
 
         validation = ldif_client.validate_entries(entries)
 
-        assert validation.success, f"validation errored for {filename}: {validation.error}"
+        assert validation.success, (
+            f"validation errored for {filename}: {validation.error}"
+        )
         report = validation.value
         assert report.valid, f"fixture {filename} unexpectedly invalid: {report.errors}"
         assert report.total_entries == len(entries)

@@ -113,10 +113,9 @@ class TestsFlextLdifRfcDockerRealIntegration:
         assert write_response.output_path == str(output_file)
         assert output_file.exists()
         assert write_response.content
-        assert (
-            output_file.read_text(encoding="utf-8").rstrip("\n")
-            == write_response.content.rstrip("\n")
-        )
+        assert output_file.read_text(encoding="utf-8").rstrip(
+            "\n"
+        ) == write_response.content.rstrip("\n")
 
     def test_write_oud_acl_entries_produces_nonempty_file(
         self,

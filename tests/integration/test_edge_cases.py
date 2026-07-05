@@ -191,8 +191,7 @@ class TestsFlextLdifEdgeCases:
     ) -> None:
         """Special single-character values are preserved exactly."""
         content = (
-            "dn: cn=Special,dc=example,dc=com\n"
-            f"cn: Special\n{attribute}: {value}\n"
+            f"dn: cn=Special,dc=example,dc=com\ncn: Special\n{attribute}: {value}\n"
         )
 
         result = api.parse_ldif(content)
@@ -245,8 +244,7 @@ class TestsFlextLdifEdgeCases:
     ) -> None:
         """Unicode across all ranges is preserved exactly in parsed values."""
         content = (
-            "dn: cn=Unicode,dc=example,dc=com\n"
-            f"cn: Unicode\ndescription: {text}\n"
+            f"dn: cn=Unicode,dc=example,dc=com\ncn: Unicode\ndescription: {text}\n"
         )
 
         result = api.parse_ldif(content)
@@ -259,9 +257,7 @@ class TestsFlextLdifEdgeCases:
         api: p.Ldif.LdifClient,
     ) -> None:
         """A ``::`` base64 attribute value is decoded to its plain text."""
-        content = (
-            "dn: cn=B64,dc=example,dc=com\ncn: B64\ndescription:: aGVsbG8=\n"
-        )
+        content = "dn: cn=B64,dc=example,dc=com\ncn: B64\ndescription:: aGVsbG8=\n"
 
         result = api.parse_ldif(content)
 

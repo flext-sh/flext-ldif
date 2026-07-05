@@ -90,7 +90,8 @@ class TestsFlextLdifRealLdapConfig:
         output_file = tmp_path / "railway.ldif"
 
         result = (
-            flext_api.write_ldif_file([sample_entry], output_file)
+            flext_api
+            .write_ldif_file([sample_entry], output_file)
             .flat_map(lambda _: flext_api.parse_ldif(output_file))
             .flat_map(
                 lambda parsed: flext_api.validate_entries(parsed.entries).map(

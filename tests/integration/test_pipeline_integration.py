@@ -185,9 +185,7 @@ class TestsFlextLdifPipelineIntegration:
         assert "dn: cn=test,dc=example,dc=com" in written.content
         assert written.statistics.total_entries == 1
 
-    @pytest.mark.parametrize(
-        "content", [SINGLE_ENTRY, THREE_ENTRIES, GROUP_ENTRY]
-    )
+    @pytest.mark.parametrize("content", [SINGLE_ENTRY, THREE_ENTRIES, GROUP_ENTRY])
     def test_parse_write_parse_roundtrip_is_idempotent(self, content: str) -> None:
         """Re-parsing serialized output reproduces DNs and attributes exactly."""
         api = ldif()

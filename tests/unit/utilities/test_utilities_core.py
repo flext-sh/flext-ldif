@@ -283,7 +283,9 @@ class TestsFlextLdifUtilitiesCore:
 
     def test_extract_extensions_captures_desc(self) -> None:
         """A DESC clause is exposed as its own extension key."""
-        result = u.Ldif.extract_extensions("( 1.2.3 NAME 'test' DESC 'Test attribute' )")
+        result = u.Ldif.extract_extensions(
+            "( 1.2.3 NAME 'test' DESC 'Test attribute' )"
+        )
         tm.that(result.get("DESC"), eq=["Test attribute"])
 
     def test_unfold_lines_joins_rfc2849_continuations(self) -> None:

@@ -189,9 +189,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
 
         for entry in entries:
             assert entry.dn_str, "Parsed entry exposes an empty DN"
-            assert entry.attributes_dict, (
-                f"Entry {entry.dn_str} exposes no attributes"
-            )
+            assert entry.attributes_dict, f"Entry {entry.dn_str} exposes no attributes"
 
         self._assert_roundtrip_preserves_dns(api, fixture_data)
 

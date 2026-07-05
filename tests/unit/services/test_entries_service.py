@@ -165,9 +165,7 @@ class TestsFlextLdifEntries:
             return
         dn_value = entry_dict["dn"]
         expected = (
-            dn_value
-            if isinstance(dn_value, str)
-            else (dn_value[0] if dn_value else "")
+            dn_value if isinstance(dn_value, str) else (dn_value[0] if dn_value else "")
         )
         tm.ok(result, eq=expected)
 

@@ -51,8 +51,12 @@ class FlextLdif(
         runtime_settings: p.Ldif.Settings | None = None,
     ) -> None:
         """Initialize the LDIF facade with the canonical shared registry."""
-        super().__init__(server=server)
-        resolved_settings = runtime_settings if runtime_settings is not None else settings
+        super().__init__()
+        if server is not None:
+            self.server = server
+        resolved_settings = (
+            runtime_settings if runtime_settings is not None else settings
+        )
         self.bind_runtime_settings(resolved_settings)
 
     def __call__(

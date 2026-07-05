@@ -90,7 +90,12 @@ class TestsFlextLdifParserUtilities:
         [
             (" plain text", "plain text", c.Ldif.ValueOrigin.PLAIN, "plain text"),
             (": aGVsbG8=", "hello", c.Ldif.ValueOrigin.BASE64, "aGVsbG8="),
-            ("< http://host/x", "http://host/x", c.Ldif.ValueOrigin.URL, "http://host/x"),
+            (
+                "< http://host/x",
+                "http://host/x",
+                c.Ldif.ValueOrigin.URL,
+                "http://host/x",
+            ),
             (
                 "< file:///tmp/data",
                 "file:///tmp/data",

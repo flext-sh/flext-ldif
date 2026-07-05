@@ -84,8 +84,7 @@ class TestsFlextLdifUtilitiesComprehensive:
     ) -> None:
         """Disabling the trailing-space check clears an otherwise-flagged value."""
         assert (
-            u.Ldif.needs_base64_encoding("safe ", check_trailing_space=False)
-            is False
+            u.Ldif.needs_base64_encoding("safe ", check_trailing_space=False) is False
         )
 
     # --- attribute name normalization ----------------------------------
@@ -96,9 +95,7 @@ class TestsFlextLdifUtilitiesComprehensive:
 
     def test_normalize_attribute_name_preserves_case_when_requested(self) -> None:
         """case_sensitive=True keeps the original casing."""
-        assert (
-            u.Ldif.normalize_attribute_name("CN", case_sensitive=True) == "CN"
-        )
+        assert u.Ldif.normalize_attribute_name("CN", case_sensitive=True) == "CN"
 
     def test_normalize_attribute_name_passes_none_through(self) -> None:
         """A None attribute name normalizes to None (no fabricated value)."""

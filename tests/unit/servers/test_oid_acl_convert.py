@@ -63,7 +63,11 @@ class TestsFlextLdifOidAclConvert:
         ("content", "expected_type", "expected_attrs"),
         [
             ("attr=(cn,sn,mail) by * (read,search)", "attr", "cn,sn,mail"),
-            ('attr!=(userpassword) by group="cn=g,dc=ctbc" (read)', "attr", "!=userpassword"),
+            (
+                'attr!=(userpassword) by group="cn=g,dc=ctbc" (read)',
+                "attr",
+                "!=userpassword",
+            ),
             ("entry by * (browse)", "entry", "*"),
         ],
     )
@@ -134,10 +138,20 @@ class TestsFlextLdifOidAclConvert:
     @pytest.mark.parametrize(
         ("clause", "subject_type", "value", "permissions"),
         [
-            ("by SuperUser (browse,add)", "superuser", "cn=Directory Manager", ("browse", "add")),
+            (
+                "by SuperUser (browse,add)",
+                "superuser",
+                "cn=Directory Manager",
+                ("browse", "add"),
+            ),
             ('by group="cn=g,dc=x" (read)', "group", "cn=g,dc=x", ("read",)),
             ('by dn="cn=u,dc=x" (read)', "user", "cn=u,dc=x", ("read",)),
-            ('by "cn=admin,dc=example,dc=com" (proxy,add)', "user", "cn=admin,dc=example,dc=com", ("proxy", "add")),
+            (
+                'by "cn=admin,dc=example,dc=com" (proxy,add)',
+                "user",
+                "cn=admin,dc=example,dc=com",
+                ("proxy", "add"),
+            ),
             ("by self (read,write)", "self", "self", ("read", "write")),
             ("by * (read)", "anyone", "anyone", ("read",)),
             ("by dnattr=(manager) (browse)", "dnattr", "manager", ("browse",)),
