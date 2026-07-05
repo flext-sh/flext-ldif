@@ -22,7 +22,7 @@ from flext_ldif._exports import (
 )
 
 if TYPE_CHECKING:
-    from flext_core import d as d, e as e, h as h, r as r, x as x
+    from flext_cli import d as d, e as e, h as h, r as r, x as x
     from flext_ldif.api import FlextLdif as FlextLdif, ldif as ldif
     from flext_ldif.base import FlextLdifServiceBase as FlextLdifServiceBase, s as s
     from flext_ldif.constants import FlextLdifConstants as FlextLdifConstants, c as c
@@ -131,6 +131,73 @@ _EAGER_EXPORTS = (
 
 
 _PUBLIC_EXPORTS: tuple[str, ...] = FLEXT_LDIF_PUBLIC_EXPORTS
+
+__all__: tuple[str, ...] = (
+    "FlextLdif",
+    "FlextLdifAcl",
+    "FlextLdifAnalysis",
+    "FlextLdifCategorization",
+    "FlextLdifConstants",
+    "FlextLdifConversion",
+    "FlextLdifConversionAclMixin",
+    "FlextLdifConversionAclPreserveMixin",
+    "FlextLdifConversionEntryMixin",
+    "FlextLdifConversionMetadataMixin",
+    "FlextLdifConversionSchemaEntryMixin",
+    "FlextLdifConversionSchemaMixin",
+    "FlextLdifConversionSupportMixin",
+    "FlextLdifDetector",
+    "FlextLdifEntries",
+    "FlextLdifFilters",
+    "FlextLdifMigrationPipeline",
+    "FlextLdifModels",
+    "FlextLdifParser",
+    "FlextLdifProcessing",
+    "FlextLdifProcessingPipeline",
+    "FlextLdifProtocols",
+    "FlextLdifServer",
+    "FlextLdifServersAd",
+    "FlextLdifServersApache",
+    "FlextLdifServersBase",
+    "FlextLdifServersDs389",
+    "FlextLdifServersNovell",
+    "FlextLdifServersOid",
+    "FlextLdifServersOpenldap",
+    "FlextLdifServersOpenldap1",
+    "FlextLdifServersOud",
+    "FlextLdifServersRelaxed",
+    "FlextLdifServersRfc",
+    "FlextLdifServersTivoli",
+    "FlextLdifServiceBase",
+    "FlextLdifSettings",
+    "FlextLdifShared",
+    "FlextLdifStatistics",
+    "FlextLdifTransformer",
+    "FlextLdifTypes",
+    "FlextLdifUtilities",
+    "FlextLdifValidation",
+    "FlextLdifWriter",
+    "__author__",
+    "__author_email__",
+    "__description__",
+    "__license__",
+    "__title__",
+    "__url__",
+    "__version__",
+    "__version_info__",
+    "c",
+    "d",
+    "e",
+    "h",
+    "ldif",
+    "m",
+    "p",
+    "r",
+    "s",
+    "t",
+    "u",
+    "x",
+)
 
 
 install_lazy_exports(
