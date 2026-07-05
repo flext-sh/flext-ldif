@@ -161,7 +161,9 @@ class FlextLdifServersOudTransformMixin:
         for attr_name, attr_values in attributes.attributes.items():
             orig_case_raw = original_case_map.get(attr_name.lower(), attr_name)
             orig_case = orig_case_raw if isinstance(orig_case_raw, str) else attr_name
-            fallback_values = [str(item) for item in attr_values or [attr_values]]
+            fallback_values: list[str] = (
+                list(attr_values) if attr_values else [str(attr_values)]
+            )
             if orig_case in original_attributes:
                 original_value = original_attributes[orig_case]
                 restored_values = [str(original_value)]

@@ -149,10 +149,6 @@ class FlextLdifUtilitiesDispatch:
                 result = r[t.JsonValue].fail(
                     "validator call requires scalar, not entry sequence",
                 )
-            case _ if isinstance(value_or_entries, bytes):
-                result = r[t.JsonValue].fail(
-                    "bytes value not supported for validation",
-                )
             case _ if isinstance(value_or_entries, m.Ldif.DN):
                 result = FlextLdifUtilitiesValidation.validate_value(
                     value_or_entries.value,

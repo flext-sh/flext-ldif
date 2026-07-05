@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, MutableSequence
+from collections.abc import Callable, MutableSequence
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._oud.acl import FlextLdifServersOudAcl
@@ -161,19 +161,6 @@ class FlextLdifServersOudAciMixin:
                 if u.matches_type(acl_extensions, m.Ldif.DynamicMetadata):
                     FlextLdifServersOudAclMetadataMixin.extract_acl_metadata_from_dynamic(
                         acl_extensions,
-                        acl_metadata_extensions,
-                    )
-                elif isinstance(acl_extensions, Mapping):
-                    acl_extensions_dict: t.Ldif.MutableMetadataInputMapping = {
-                        str(
-                            k,
-                        ): m.Ldif.DynamicMetadata.coerce_metadata_value(
-                            v,
-                        )
-                        for k, v in acl_extensions.items()
-                    }
-                    FlextLdifServersOudAclMetadataMixin.extract_acl_metadata_from_dict(
-                        acl_extensions_dict,
                         acl_metadata_extensions,
                     )
         return r[bool].ok(has_macros)

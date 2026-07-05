@@ -111,15 +111,9 @@ class FlextLdifServersBaseSchema(
     ) -> None:
         """Initialize schema server service with optional DI service injection."""
         filtered_kwargs = {k: v for k, v in kwargs.items() if k != "_parent_server"}
-        service_kwargs: MutableMapping[
-            str,
-            t.Ldif.Scalar | m.ConfigMap | t.MutableSequenceOf[t.Ldif.Scalar],
-        ] = {}
+        service_kwargs: MutableMapping[str, t.Ldif.Scalar] = {}
         for key, value in filtered_kwargs.items():
             if isinstance(value, t.SCALAR_TYPES):
-                service_kwargs[key] = value
-                continue
-            if isinstance(value, m.ConfigMap):
                 service_kwargs[key] = value
         super().__init__()
         self._schema_service = _schema_service

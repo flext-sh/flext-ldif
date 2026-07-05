@@ -119,7 +119,9 @@ class TestsFlextLdifRealLdapCrud:
             {"mail": [("MODIFY_REPLACE", ["updated_crud@example.com"])]},
         )
         ldap_connection.search(entry.dn_str, "(objectClass=*)", attributes=["*"])
-        assert ldap_connection.entries[0]["mail"].value == "updated_crud@example.com"
+        assert (
+            str(ldap_connection.entries[0]["mail"].value) == "updated_crud@example.com"
+        )
 
         # Delete: entry is no longer resolvable.
         ldap_connection.delete(entry.dn_str)

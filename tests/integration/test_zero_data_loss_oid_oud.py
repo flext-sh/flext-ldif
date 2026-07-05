@@ -223,8 +223,6 @@ orclIsEnabled: 1
             if metadata is None or not metadata.soft_delete_markers:
                 continue
             removed = metadata.removed_attributes
-            if not isinstance(removed, dict):
-                continue
             for attr_name in metadata.soft_delete_markers:
                 assert attr_name in removed, (
                     f"Soft-deleted attribute {attr_name} not in removed_attributes"
