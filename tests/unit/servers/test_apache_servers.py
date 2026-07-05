@@ -20,8 +20,13 @@ if TYPE_CHECKING:
     from tests.typings import t
 
 
-class TestsTestFlextLdifApacheServers:
-    """Test Apache Directory Server servers implementation."""
+class TestsFlextLdifApacheServers:
+    """Behavioral contract tests for FlextLdifServersApache.
+
+    Every test asserts observable public behavior: parse/write ``r[T]`` outcomes,
+    detection predicates, and public model state — never private members or
+    internal-collaborator interactions.
+    """
 
     @pytest.mark.parametrize("test_case", c.Tests.APACHE_ATTRIBUTE_TEST_CASES)
     def test_schema_attribute_can_handle(
@@ -325,10 +330,18 @@ class TestsTestFlextLdifApacheServers:
         "test_case",
         [tc for tc in c.Tests.APACHE_ENTRY_TEST_CASES if tc.expected_can_handle],
     )
-    def test_entry_parse_ldif(self, test_case: m.Tests.EntryTestCase) -> None:
-        """Test entry parsing via LDIF for Apache-detectable entries."""
+    def test_entry_parse_ldif_yields_entry_with_source_dn(
+        self,
+        test_case: m.Tests.EntryTestCase,
+    ) -> None:
+        """parse_server succeeds and returns one Entry carrying the source DN."""
         server = FlextLdifServersApache()
         entry_server = server.entry_server
         ldif = self._build_ldif(test_case.entry_dn, test_case.attributes)
-        result = entry_server.parse_input(ldif)
-        tm.that(result is not None, eq=True)
+        result = entry_server.parse_server(ldif)
+        tm.that(result.success, eq=True)
+        entries = result.unwrap()
+        tm.that(len(entries), eq=1)
+        entry_dn = entries[0].dn
+        assert entry_dn is not None
+        tm.that(entry_dn.value, eq=test_case.entry_dn)

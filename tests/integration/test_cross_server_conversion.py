@@ -1,12 +1,10 @@
 """Cross-server conversion integration tests.
 
-Tests conversion between different LDAP server server types:
-- Parse with source server (e.g., OID)
-- Convert to RFC representation
-- Write with target server (e.g., OUD)
-- Validate conversion accuracy
-
-Also tests the ServersConversionMatrix facade for universal translation.
+Behavioral contract for translating LDAP schema and ACL models between server
+dialects (OID <-> RFC <-> OUD). Every assertion targets observable public
+behavior: the ``r[T]`` outcome of a fallible operation, the public field state
+of the returned Pydantic models, and the rendered LDIF text — never private
+attributes, internal collaborators, or line-coverage pokes.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -22,125 +20,113 @@ from tests.models import m
 
 if TYPE_CHECKING:
     from flext_ldif.servers.base import FlextLdifServersBase
-    from flext_ldif.servers.oid import FlextLdifServersOid
-    from flext_ldif.servers.oud import FlextLdifServersOud
     from flext_ldif.services.conversion import FlextLdifConversion
     from tests.protocols import p
     from tests.typings import t
 
 
 class TestsFlextLdifCrossServerConversion:
-    """Test OID schema → OUD schema conversion.
+    """Behavioral tests for cross-server schema/ACL conversion.
 
-    Uses centralized fixtures from tests/integration/conftest.py:
-    - oid_schema_fixture: OID schema LDIF content
-    - oud_schema_fixture: OUD schema LDIF content
+    Fixtures (from tests/unit/fixtures.py):
+    - oid_server / oud_server: full server facades
+    - oid_schema_server / oud_schema_server: schema sub-servers
+    - oid_acl_server / oud_acl_server: ACL sub-servers
+    - conversion_matrix: FlextLdifConversion facade
+    - oid_schema_fixture: raw OID schema LDIF text
     """
 
-    def test_convert_oid_attribute_to_oud(
+    def test_oid_attribute_roundtrips_through_rfc_to_oud_preserving_identity(
         self,
         oid_schema_server: p.Ldif.SchemaServer,
         oud_schema_server: p.Ldif.SchemaServer,
     ) -> None:
-        """Test converting OID attribute definition to OUD format."""
-        oid_attribute = c.Tests.CROSS_SERVER_OID_ATTRIBUTE_ORCLGUID
-        parse_result = oid_schema_server.parse_server(oid_attribute)
+        """Parsing an OID attribute, rendering it, then parsing with OUD keeps oid/name/syntax."""
+        parse_result = oid_schema_server.parse_server(
+            c.Tests.CROSS_SERVER_OID_ATTRIBUTE_ORCLGUID,
+        )
         assert parse_result.success, f"OID parse failed: {parse_result.error}"
-        unwrapped = parse_result.value
-        assert isinstance(unwrapped, m.Ldif.SchemaAttribute), (
-            f"Expected SchemaAttribute, got {type(unwrapped).__name__}"
-        )
-        parsed_data: m.Ldif.SchemaAttribute = unwrapped
-        assert parsed_data.oid == "2.16.840.1.113894.1.1.1"
-        assert parsed_data.name == "orclguid"
-        rfc_result = oid_schema_server.write(parsed_data)
-        assert rfc_result.success, f"OID write failed: {rfc_result.error}"
-        rfc_format: str = rfc_result.value
-        oud_parse_result = oud_schema_server.parse_server(rfc_format)
-        assert oud_parse_result.success, f"OUD parse failed: {oud_parse_result.error}"
-        oud_unwrapped = oud_parse_result.value
-        assert isinstance(oud_unwrapped, m.Ldif.SchemaAttribute), (
-            f"Expected SchemaAttribute, got {type(oud_unwrapped).__name__}"
-        )
-        oud_data: m.Ldif.SchemaAttribute = oud_unwrapped
-        assert oud_data.oid == parsed_data.oid
-        assert oud_data.name == parsed_data.name
-        assert oud_data.syntax == parsed_data.syntax
+        source = parse_result.value
+        assert isinstance(source, m.Ldif.SchemaAttribute)
+        assert source.oid == "2.16.840.1.113894.1.1.1"
+        assert source.name == "orclguid"
 
-    def test_convert_oid_objectclass_to_oud(
+        rfc_result = oid_schema_server.write(source)
+        assert rfc_result.success, f"OID write failed: {rfc_result.error}"
+
+        oud_parse_result = oud_schema_server.parse_server(rfc_result.value)
+        assert oud_parse_result.success, f"OUD parse failed: {oud_parse_result.error}"
+        target = oud_parse_result.value
+        assert isinstance(target, m.Ldif.SchemaAttribute)
+        assert target.oid == source.oid
+        assert target.name == source.name
+        assert target.syntax == source.syntax
+
+    def test_oid_objectclass_roundtrips_through_rfc_to_oud_preserving_identity(
         self,
         oid_schema_server: p.Ldif.SchemaServer,
         oud_schema_server: p.Ldif.SchemaServer,
     ) -> None:
-        """Test converting OID objectClass definition to OUD format."""
-        oid_objectclass = c.Tests.CROSS_SERVER_OID_OBJECTCLASS_ORCLCONTAINER
-        parse_result = oid_schema_server.parse_server(oid_objectclass)
+        """Parsing an OID objectClass, rendering it, then parsing with OUD keeps oid/name/kind/sup."""
+        parse_result = oid_schema_server.parse_server(
+            c.Tests.CROSS_SERVER_OID_OBJECTCLASS_ORCLCONTAINER,
+        )
         assert parse_result.success, f"OID parse failed: {parse_result.error}"
-        unwrapped = parse_result.value
-        assert isinstance(unwrapped, m.Ldif.SchemaObjectClass), (
-            f"Expected SchemaObjectClass, got {type(unwrapped).__name__}"
-        )
-        parsed_data: m.Ldif.SchemaObjectClass = unwrapped
-        assert parsed_data.oid == "2.16.840.1.113894.2.1.1"
-        assert parsed_data.name == "orclContainer"
-        assert parsed_data.kind == "STRUCTURAL"
-        rfc_result = oid_schema_server.write(parsed_data)
+        source = parse_result.value
+        assert isinstance(source, m.Ldif.SchemaObjectClass)
+        assert source.oid == "2.16.840.1.113894.2.1.1"
+        assert source.name == "orclContainer"
+        assert source.kind == "STRUCTURAL"
+
+        rfc_result = oid_schema_server.write(source)
         assert rfc_result.success, f"OID write failed: {rfc_result.error}"
-        rfc_format: str = rfc_result.value
-        oud_parse_result = oud_schema_server.parse_server(rfc_format)
+
+        oud_parse_result = oud_schema_server.parse_server(rfc_result.value)
         assert oud_parse_result.success, f"OUD parse failed: {oud_parse_result.error}"
-        oud_unwrapped = oud_parse_result.value
-        assert isinstance(oud_unwrapped, m.Ldif.SchemaObjectClass), (
-            f"Expected SchemaObjectClass, got {type(oud_unwrapped).__name__}"
-        )
-        oud_data: m.Ldif.SchemaObjectClass = oud_unwrapped
-        assert oud_data.oid == parsed_data.oid
-        assert oud_data.name == parsed_data.name
-        assert oud_data.kind == parsed_data.kind
-        assert oud_data.sup == parsed_data.sup
+        target = oud_parse_result.value
+        assert isinstance(target, m.Ldif.SchemaObjectClass)
+        assert target.oid == source.oid
+        assert target.name == source.name
+        assert target.kind == source.kind
+        assert target.sup == source.sup
 
-    """Test OID ACL parsing and OUD ACL parsing independently.
-
-    Note: Direct ACL conversion between OID and OUD formats is not supported
-    because they use fundamentally different ACL models:
-    - OID: orclaci format (access to entry/attr by subject (permissions))
-    - OUD: ACI format (targetattr)(version; acl "name"; allow/deny)
-
-    For ACL comparison across servers, use the FlextLdifDiff utility instead.
-    """
-
-    def test_oid_acl_parsing_and_roundtrip(
+    def test_oid_acl_parses_into_acl_model_with_oid_server_type(
         self,
         oid_acl_server: p.Ldif.AclServer,
     ) -> None:
-        """Test OID ACL parsing and round-trip within OID format."""
-        oid_acl_str = c.Tests.CROSS_SERVER_OID_ACL_ANONYMOUS
-        parse_result = oid_acl_server.parse_server(oid_acl_str)
+        """An OID orclaci string parses into an Acl model tagged as an OID dialect."""
+        parse_result = oid_acl_server.parse_server(
+            c.Tests.CROSS_SERVER_OID_ACL_ANONYMOUS,
+        )
         assert parse_result.success, f"OID ACL parse failed: {parse_result.error}"
-        parsed_data = parse_result.value
-        assert parsed_data.server_type in {"oid", "oracle_oid"}
+        parsed = parse_result.value
+        assert isinstance(parsed, m.Ldif.Acl)
+        assert parsed.server_type in {"oid", "oracle_oid"}
 
-    def test_oud_acl_parsing_and_roundtrip(
+    def test_oud_acl_parses_and_rewrites_to_text(
         self,
         oud_acl_server: p.Ldif.AclServer,
     ) -> None:
-        """Test OUD ACL parsing and round-trip within OUD format."""
-        oud_aci = c.Tests.CROSS_SERVER_OUD_ACI_ANONYMOUS
-        parse_result = oud_acl_server.parse_server(oud_aci)
+        """An OUD aci string parses into an Acl model and re-renders to LDIF text."""
+        parse_result = oud_acl_server.parse_server(
+            c.Tests.CROSS_SERVER_OUD_ACI_ANONYMOUS,
+        )
         assert parse_result.success, f"OUD ACL parse failed: {parse_result.error}"
-        parsed_data = parse_result.value
-        assert parsed_data.server_type in {"oud", "rfc", "generic"}
-        write_result = oud_acl_server.write(parsed_data)
-        assert write_result.success, f"OUD ACL write failed: {write_result.error}"
-        written_format = write_result.value
-        assert isinstance(written_format, str)
+        parsed = parse_result.value
+        assert isinstance(parsed, m.Ldif.Acl)
+        assert parsed.server_type in {"oud", "rfc", "generic"}
 
-    def test_convert_oid_acl_to_rfc(
+        write_result = oud_acl_server.write(parsed)
+        assert write_result.success, f"OUD ACL write failed: {write_result.error}"
+        assert isinstance(write_result.value, str)
+        assert write_result.value
+
+    def test_convert_model_translates_oid_acl_to_rfc_dialect(
         self,
         conversion_matrix: FlextLdifConversion,
         oid_acl_server: p.Ldif.AclServer,
     ) -> None:
-        """Direct ACL conversion should parse the converted RFC ACL through the target server."""
+        """convert_model(OID->RFC) yields an Acl retagged to RFC with a rendered raw_acl."""
         parse_result = oid_acl_server.parse_server(
             c.Tests.CROSS_SERVER_OID_ACL_ANONYMOUS,
         )
@@ -152,194 +138,164 @@ class TestsFlextLdifCrossServerConversion:
             c.Tests.RFC,
             parse_result.value,
         )
+        assert result.success, f"OID->RFC ACL conversion failed: {result.error}"
+        converted = result.value
+        assert isinstance(converted, m.Ldif.Acl)
+        assert converted.server_type == c.Tests.RFC
+        assert converted.raw_acl is not None
 
-        assert result.success, f"OID to RFC ACL conversion failed: {result.error}"
-        assert isinstance(result.value, m.Ldif.Acl)
-        assert result.value.server_type == c.Tests.RFC
-        assert result.value.raw_acl is not None
-
-    """Test complete OID fixture → OUD conversion workflow.
-
-    Uses centralized fixtures from tests/integration/conftest.py:
-    - oid_schema_fixture: OID schema LDIF content
-    """
-
-    def test_convert_oid_schema_fixture_to_oud(
+    def test_oid_schema_fixture_oracle_attributes_convert_to_oud_preserving_identity(
         self,
         oid_schema_server: p.Ldif.SchemaServer,
         oud_schema_server: p.Ldif.SchemaServer,
         oid_schema_fixture: str,
     ) -> None:
-        """Test converting OID schema fixture to OUD format.
-
-        Uses fixtures:
-        - oid: OID schema server instance (internal)
-        - oud: OUD schema server instance (internal)
-        - oid_schema_fixture: OID schema LDIF content (conftest)
-
-        Validates:
-        - OID schema parsing succeeds
-        - Attributes with Oracle OIDs (2.16.840.1.113894.*) are extracted
-        - Conversion to OUD format preserves key fields (OID, name)
-        """
-        oid_oracle_attrs = sum(
-            1
+        """Every parseable Oracle attribute in the OID fixture round-trips to OUD with oid/name intact."""
+        oracle_attr_defs = [
+            line.split(":", 1)[1].strip()
             for line in oid_schema_fixture.split("\n")
             if "attributetypes:" in line.lower() and "2.16.840.1.113894" in line
-        )
-        assert oid_oracle_attrs > 0, "No Oracle attributes found in OID fixture"
-        for line in oid_schema_fixture.split("\n"):
-            if "attributetypes:" in line.lower() and "2.16.840.1.113894" in line:
-                attr_def = line.split(":", 1)[1].strip()
-                parse_result = oid_schema_server.parse_server(attr_def)
-                if not parse_result.success:
-                    continue
-                parsed_data = parse_result.value
-                rfc_result = oid_schema_server.write(parsed_data)
-                assert rfc_result.success
-                oud_result = oud_schema_server.parse_server(rfc_result.value)
-                assert oud_result.success, "OUD server should parse converted attribute"
-                oud_data = oud_result.value
-                assert oud_data.oid == parsed_data.oid
-                assert oud_data.name == parsed_data.name
-                break
+        ]
+        assert oracle_attr_defs, "No Oracle attributes found in OID fixture"
 
-    """Test ServersConversionMatrix facade for universal translation."""
+        converted_any = False
+        for attr_def in oracle_attr_defs:
+            parse_result = oid_schema_server.parse_server(attr_def)
+            if parse_result.failure:
+                continue
+            source = parse_result.value
+            rfc_result = oid_schema_server.write(source)
+            assert rfc_result.success, f"OID write failed: {rfc_result.error}"
+            oud_result = oud_schema_server.parse_server(rfc_result.value)
+            assert oud_result.success, f"OUD parse failed: {oud_result.error}"
+            target = oud_result.value
+            assert target.oid == source.oid
+            assert target.name == source.name
+            converted_any = True
+        assert converted_any, "No Oracle attribute survived the OID->RFC->OUD round-trip"
 
-    def test_matrix_instantiation(self, conversion_matrix: p.Ldif.LdifClient) -> None:
-        """Test that conversion matrix can be instantiated."""
+    def test_conversion_matrix_is_available(
+        self,
+        conversion_matrix: FlextLdifConversion,
+    ) -> None:
+        """The conversion facade fixture resolves to a usable instance."""
         assert conversion_matrix is not None
 
-    def test_resolve_supported_conversions(
+    def test_resolve_supported_conversions_reports_all_model_kinds(
         self,
-        conversion_matrix: p.Ldif.LdifClient,
+        conversion_matrix: FlextLdifConversion,
         oud_server: FlextLdifServersBase,
     ) -> None:
-        """Test checking supported conversions."""
+        """A full-featured server advertises support for every convertible model kind."""
         supported = conversion_matrix.resolve_supported_conversions(oud_server)
         assert supported["attribute"] is True
         assert supported["objectClass"] is True
         assert supported["acl"] is True
         assert supported["entry"] is True
 
-    def test_convert_attribute_oud_to_oid(
+    def test_attribute_converts_oud_to_oid_rendering_oracle_identity(
         self,
-        conversion_matrix: p.Ldif.LdifClient,
         oud_server: FlextLdifServersBase,
         oid_server: FlextLdifServersBase,
     ) -> None:
-        """Test schema attribute conversion via direct server API (not matrix)."""
-        oud_attr_string = c.Tests.CROSS_SERVER_OUD_ATTRIBUTE_ORCLGUID
-        parse_result = oud_server.schema_server.parse_attribute(oud_attr_string)
-        assert parse_result.success, f"Parse failed: {parse_result.error}"
-        oud_attr_model = parse_result.value
-        write_to_rfc = oud_server.schema_server.write(oud_attr_model)
-        assert write_to_rfc.success, f"Write failed: {write_to_rfc.error}"
-        rfc_attr_string = write_to_rfc.value
-        parse_from_rfc = oid_server.schema_server.parse_attribute(rfc_attr_string)
-        assert parse_from_rfc.success, f"Parse failed: {parse_from_rfc.error}"
-        oid_attr_model = parse_from_rfc.value
-        write_result = oid_server.schema_server.write(oid_attr_model)
-        assert write_result.success, f"Write failed: {write_result.error}"
-        oid_attr_string = write_result.value
-        assert "2.16.840.1.113894.1.1.1" in oid_attr_string
-        assert "orclGUID" in oid_attr_string
-
-    def test_convert_objectclass_oid_to_oud(
-        self,
-        conversion_matrix: p.Ldif.LdifClient,
-        oud_server: FlextLdifServersOud,
-        oid_server: FlextLdifServersOid,
-    ) -> None:
-        """Test schema objectClass conversion via direct server API (not matrix)."""
-        oid_oc_string = c.Tests.CROSS_SERVER_OID_OBJECTCLASS_ORCLCONTEXT
-        parse_result = oid_server.schema_server.parse_objectclass(oid_oc_string)
-        assert parse_result.success, f"Parse failed: {parse_result.error}"
-        oid_oc_model = parse_result.value
-        write_to_rfc = oid_server.schema_server.write(oid_oc_model)
-        assert write_to_rfc.success, f"Write failed: {write_to_rfc.error}"
-        rfc_oc_string = write_to_rfc.value
-        parse_from_rfc = oud_server.schema_server.parse_objectclass(rfc_oc_string)
-        assert parse_from_rfc.success, f"Parse failed: {parse_from_rfc.error}"
-        oud_oc_model = parse_from_rfc.value
-        write_result = oud_server.schema_server.write(oud_oc_model)
-        assert write_result.success, f"Write failed: {write_result.error}"
-        oud_oc_string = write_result.value
-        assert "2.16.840.1.113894.1.2.1" in oud_oc_string
-        assert "orclContext" in oud_oc_string
-
-    def test_batch_convert_attributes(
-        self,
-        conversion_matrix: p.Ldif.LdifClient,
-        oud_server: FlextLdifServersOud,
-        oid_server: FlextLdifServersOid,
-    ) -> None:
-        """Test batch attribute conversion via direct server API (not matrix)."""
-        oud_attr_strings = [
+        """OUD attribute -> RFC -> OID renders back to OID text carrying the Oracle oid and name."""
+        parsed = oud_server.schema_server.parse_attribute(
             c.Tests.CROSS_SERVER_OUD_ATTRIBUTE_ORCLGUID,
-            "( 2.16.840.1.113894.1.1.2 NAME 'orclDBName' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
-        ]
-        oud_attr_models: t.MutableSequenceOf[m.Ldif.SchemaAttribute] = []
-        for attr_string in oud_attr_strings:
-            parse_result = oud_server.schema_server.parse_attribute(attr_string)
-            assert parse_result.success, f"Parse failed: {parse_result.error}"
-            oud_attr_models.append(parse_result.value)
-        assert len(oud_attr_models) == 2
-        oid_attr_strings: t.MutableSequenceOf[str] = []
-        for oud_model in oud_attr_models:
-            write_result = oud_server.schema_server.write(oud_model)
-            assert write_result.success, f"Write failed: {write_result.error}"
-            rfc_string = write_result.value
-            parse_result = oid_server.schema_server.parse_attribute(rfc_string)
-            assert parse_result.success, f"Parse failed: {parse_result.error}"
-            oid_model = parse_result.value
-            write_oid = oid_server.schema_server.write(oid_model)
-            assert write_oid.success, f"Write failed: {write_oid.error}"
-            oid_attr_strings.append(write_oid.value)
-        assert len(oid_attr_strings) == 2
-        assert "orclGUID" in oid_attr_strings[0]
-        assert "orclDBName" in oid_attr_strings[1]
+        )
+        assert parsed.success, f"Parse failed: {parsed.error}"
+        rfc_text = oud_server.schema_server.write(parsed.value)
+        assert rfc_text.success, f"Write failed: {rfc_text.error}"
 
-    def test_bidirectional_conversion(
+        oid_parsed = oid_server.schema_server.parse_attribute(rfc_text.value)
+        assert oid_parsed.success, f"Parse failed: {oid_parsed.error}"
+        oid_text = oid_server.schema_server.write(oid_parsed.value)
+        assert oid_text.success, f"Write failed: {oid_text.error}"
+        assert "2.16.840.1.113894.1.1.1" in oid_text.value
+        assert "orclGUID" in oid_text.value
+
+    def test_objectclass_converts_oid_to_oud_rendering_oracle_identity(
         self,
-        conversion_matrix: p.Ldif.LdifClient,
-        oud_server: FlextLdifServersOud,
-        oid_server: FlextLdifServersOid,
+        oud_server: FlextLdifServersBase,
+        oid_server: FlextLdifServersBase,
     ) -> None:
-        """Test bidirectional attribute conversion OUD ↔ OID via direct server API."""
-        original_string = c.Tests.CROSS_SERVER_OUD_ATTRIBUTE_ORCLGUID
-        parse_result = oud_server.schema_server.parse_attribute(original_string)
-        assert parse_result.success
-        oud_model = parse_result.value
-        write_rfc = oud_server.schema_server.write(oud_model)
-        assert write_rfc.success
-        rfc_string = write_rfc.value
-        parse_oid = oid_server.schema_server.parse_attribute(rfc_string)
-        assert parse_oid.success
-        oid_model = parse_oid.value
-        write_rfc2 = oid_server.schema_server.write(oid_model)
-        assert write_rfc2.success
-        rfc_string2 = write_rfc2.value
-        parse_oud2 = oud_server.schema_server.parse_attribute(rfc_string2)
-        assert parse_oud2.success
-        oud_model2 = parse_oud2.value
-        write_final = oud_server.schema_server.write(oud_model2)
-        assert write_final.success
-        roundtrip_string = write_final.value
-        assert "2.16.840.1.113894.1.1.1" in roundtrip_string
-        assert "orclGUID" in roundtrip_string
+        """OID objectClass -> RFC -> OUD renders back to OUD text carrying the Oracle oid and name."""
+        parsed = oid_server.schema_server.parse_objectclass(
+            c.Tests.CROSS_SERVER_OID_OBJECTCLASS_ORCLCONTEXT,
+        )
+        assert parsed.success, f"Parse failed: {parsed.error}"
+        rfc_text = oid_server.schema_server.write(parsed.value)
+        assert rfc_text.success, f"Write failed: {rfc_text.error}"
 
-    def test_invalid_data_type(
+        oud_parsed = oud_server.schema_server.parse_objectclass(rfc_text.value)
+        assert oud_parsed.success, f"Parse failed: {oud_parsed.error}"
+        oud_text = oud_server.schema_server.write(oud_parsed.value)
+        assert oud_text.success, f"Write failed: {oud_text.error}"
+        assert "2.16.840.1.113894.1.2.1" in oud_text.value
+        assert "orclContext" in oud_text.value
+
+    def test_batch_attribute_conversion_preserves_each_attribute_name(
+        self,
+        oud_server: FlextLdifServersBase,
+        oid_server: FlextLdifServersBase,
+    ) -> None:
+        """Converting a batch of OUD attributes to OID preserves each distinct attribute name."""
+        oud_attr_strings: t.SequenceOf[str] = [
+            c.Tests.CROSS_SERVER_OUD_ATTRIBUTE_ORCLGUID,
+            (
+                "( 2.16.840.1.113894.1.1.2 NAME 'orclDBName' "
+                "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+            ),
+        ]
+        oid_rendered: t.MutableSequenceOf[str] = []
+        for attr_string in oud_attr_strings:
+            oud_parsed = oud_server.schema_server.parse_attribute(attr_string)
+            assert oud_parsed.success, f"Parse failed: {oud_parsed.error}"
+            rfc_text = oud_server.schema_server.write(oud_parsed.value)
+            assert rfc_text.success, f"Write failed: {rfc_text.error}"
+            oid_parsed = oid_server.schema_server.parse_attribute(rfc_text.value)
+            assert oid_parsed.success, f"Parse failed: {oid_parsed.error}"
+            oid_text = oid_server.schema_server.write(oid_parsed.value)
+            assert oid_text.success, f"Write failed: {oid_text.error}"
+            oid_rendered.append(oid_text.value)
+
+        assert len(oid_rendered) == 2
+        assert "orclGUID" in oid_rendered[0]
+        assert "orclDBName" in oid_rendered[1]
+
+    def test_attribute_survives_full_bidirectional_roundtrip(
+        self,
+        oud_server: FlextLdifServersBase,
+        oid_server: FlextLdifServersBase,
+    ) -> None:
+        """OUD->RFC->OID->RFC->OUD keeps the Oracle oid and name in the final rendered text."""
+        rendered = c.Tests.CROSS_SERVER_OUD_ATTRIBUTE_ORCLGUID
+        servers = (
+            oud_server.schema_server,
+            oid_server.schema_server,
+            oud_server.schema_server,
+        )
+        for schema_server in servers:
+            parsed = schema_server.parse_attribute(rendered)
+            assert parsed.success, f"Parse failed: {parsed.error}"
+            written = schema_server.write(parsed.value)
+            assert written.success, f"Write failed: {written.error}"
+            rendered = written.value
+
+        assert "2.16.840.1.113894.1.1.1" in rendered
+        assert "orclGUID" in rendered
+
+    def test_convert_model_fails_for_structurally_invalid_entry(
         self,
         conversion_matrix: FlextLdifConversion,
-        oud_server: FlextLdifServersOud,
-        oid_server: FlextLdifServersOid,
+        oud_server: FlextLdifServersBase,
+        oid_server: FlextLdifServersBase,
     ) -> None:
-        """Test error handling for invalid model type."""
+        """Converting an entry with null dn/attributes yields a failure result with an error message."""
         invalid_model = m.Ldif.Entry(dn=None, attributes=None)
         result = conversion_matrix.convert_model(oud_server, oid_server, invalid_model)
         assert result.failure
         assert result.error is not None
+        assert result.error != ""
 
 
 __all__: list[str] = ["TestsFlextLdifCrossServerConversion"]

@@ -1,11 +1,12 @@
-"""Integration tests for OID (Oracle Internet Directory) servers.
+"""Behavioral integration tests for OID (Oracle Internet Directory) LDIF.
 
-Tests complete workflow with real fixture data:
-- Parse OID LDIF fixtures via ldif API
-- Process entries with OID servers automatically
-- Convert to RFC format
-- Write back to LDIF
-- Validate round-trip integrity
+Exercises the public LDIF client contract against real OID fixtures:
+- Parsing OID schema/entry fixtures returns a successful ``r[ParseResponse]``.
+- Oracle-specific schema definitions and operational attributes survive parsing.
+- A parse -> write -> parse round-trip preserves entry count, DNs and ACL values.
+
+All assertions target observable public behaviour (returned models, their
+public fields and computed accessors) — never private state or collaborators.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -16,312 +17,212 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import pytest
+
+from tests.utilities import u
+
 if TYPE_CHECKING:
     from tests.models import m
     from tests.protocols import p
+    from tests.typings import t
+
+ORACLE_OID_PREFIX = "2.16.840.1.113894"
 
 
 class TestsFlextLdifOidIntegration:
-    """Integration tests for OID schema processing.
+    """Behavioral contract tests for OID LDIF parsing and round-trip.
 
-    Uses centralized fixtures from tests/integration/conftest.py:
-    - api: ldif API instance
-    - oid_schema_fixture: OID schema LDIF content
-    - oid_entries_fixture: OID entries LDIF content
+    Uses shared fixtures (``api``, ``oid_schema_fixture``,
+    ``oid_integration_fixture``) declared in ``tests/unit/fixtures.py``.
     """
 
-    def test_parse_schema_fixture(
+    @staticmethod
+    def _entries(
+        api: p.Ldif.LdifClient,
+        content: str,
+    ) -> t.SequenceOf[m.Ldif.Entry]:
+        """Parse ``content`` through the public client and return its entries."""
+        response: m.Ldif.ParseResponse = u.Tests.assert_success(
+            api.parse_ldif(content),
+            error_msg="OID fixture parsing failed",
+        )
+        return response.entries
+
+    @staticmethod
+    def _schema_definitions(
+        entry: m.Ldif.Entry,
+        attribute_name: str,
+    ) -> t.SequenceOf[str]:
+        """Return the raw schema definition strings for ``attribute_name``.
+
+        Reads through the public ``attributes_dict`` protocol accessor, which
+        is case-preserving; the RFC schema keys are camelCase.
+        """
+        attrs: t.MutableStrSequenceMapping = entry.attributes_dict
+        return attrs.get(attribute_name, [])
+
+    @staticmethod
+    def _attribute_value_count(entry: m.Ldif.Entry, attribute_name: str) -> int:
+        """Count values held under ``attribute_name`` via the public contract."""
+        return len(entry.attributes_dict.get(attribute_name, []))
+
+    @classmethod
+    def _roundtrip(
+        cls,
+        api: p.Ldif.LdifClient,
+        entries: t.SequenceOf[m.Ldif.Entry],
+    ) -> t.SequenceOf[m.Ldif.Entry]:
+        """Write ``entries`` and re-parse the produced LDIF text."""
+        written: m.Ldif.WriteResponse = u.Tests.assert_success(
+            api.write(list(entries)),
+            error_msg="writing OID entries failed",
+        )
+        assert written.content is not None, "writer produced no LDIF content"
+        return cls._entries(api, written.content)
+
+    # ----------------------------------------------------------------- schema
+
+    def test_parse_schema_fixture_yields_entries_with_dns(
         self,
         api: p.Ldif.LdifClient,
         oid_schema_fixture: str,
     ) -> None:
-        """Test parsing complete OID schema fixture.
+        """Parsing the OID schema returns entries, each exposing a DN."""
+        entries = self._entries(api, oid_schema_fixture)
 
-        Validates:
-        - Schema parsing succeeds
-        - At least one schema entry is parsed
-        - Entry has valid DN
-        """
-        result = api.parse_ldif(oid_schema_fixture)
-        assert result.success, f"Schema parsing failed: {result.error}"
-        entries = result.value.entries
-        assert entries, "No schema entries parsed"
-        schema_entry = entries[0]
-        assert schema_entry.dn is not None
+        assert entries, "OID schema produced no entries"
+        assert all(entry.dn_str for entry in entries), (
+            "every parsed schema entry must expose a non-empty DN"
+        )
 
-    def test_oracle_attributes_in_parsed_schema(
+    @pytest.mark.parametrize(
+        "definition_attr",
+        ["attributeTypes", "objectClasses"],
+        ids=["attribute-types", "object-classes"],
+    )
+    def test_oracle_definitions_detected_in_parsed_schema(
         self,
         api: p.Ldif.LdifClient,
         oid_schema_fixture: str,
+        definition_attr: str,
     ) -> None:
-        """Test that Oracle attributes are detected in parsed schema.
+        """Oracle-namespaced schema definitions are present after parsing.
 
-        Validates:
-        - Oracle-specific OID patterns (2.16.840.1.113894.*) are detected
-        - Schema parsing completes successfully
+        Stronger than a mere ``>= 0`` smoke check: the OID schema fixture is
+        Oracle's own, so at least one definition must carry the Oracle OID arc.
         """
-        result = api.parse_ldif(oid_schema_fixture)
-        assert result.success
-        entries = result.value.entries
+        entries = self._entries(api, oid_schema_fixture)
         schema_entry = entries[0]
-        assert schema_entry.attributes is not None
-        attrs_dict = (
-            schema_entry.attributes.attributes
-            if hasattr(schema_entry.attributes, "attributes")
-            else schema_entry.attributes
+
+        definitions = self._schema_definitions(schema_entry, definition_attr)
+        oracle_definitions = [
+            definition
+            for definition in definitions
+            if ORACLE_OID_PREFIX in definition
+        ]
+
+        assert oracle_definitions, (
+            f"no Oracle {definition_attr} (OID {ORACLE_OID_PREFIX}.*) parsed"
         )
-        if isinstance(attrs_dict, dict):
-            attrs = attrs_dict.get(
-                "attributetypes",
-                attrs_dict.get("attributeTypes", []),
-            )
-        else:
-            attrs = (
-                getattr(
-                    attrs_dict,
-                    "attributetypes",
-                    getattr(attrs_dict, "attributeTypes", []),
-                )
-                or []
-            )
-        oracle_attr_count = sum(
-            1
-            for attr in attrs or []
-            if isinstance(attr, str) and "2.16.840.1.113894" in attr
-        )
-        assert oracle_attr_count >= 0, "Schema parsing should complete successfully"
 
-    def test_oracle_objectclasses_in_parsed_schema(
-        self,
-        api: p.Ldif.LdifClient,
-        oid_schema_fixture: str,
-    ) -> None:
-        """Test that Oracle objectClasses are detected in parsed schema.
+    # ------------------------------------------------------------- entry data
 
-        Validates:
-        - Oracle-specific objectClass OIDs are detected
-        - ObjectClass parsing completes successfully
-        """
-        result = api.parse_ldif(oid_schema_fixture)
-        assert result.success
-        entries = result.value.entries
-        schema_entry = entries[0]
-        assert schema_entry.attributes is not None
-        attrs_dict = (
-            schema_entry.attributes.attributes
-            if hasattr(schema_entry.attributes, "attributes")
-            else schema_entry.attributes
-        )
-        if isinstance(attrs_dict, dict):
-            object_classes = attrs_dict.get(
-                "objectclasses",
-                attrs_dict.get("objectClasses", []),
-            )
-        else:
-            object_classes = (
-                getattr(
-                    attrs_dict,
-                    "objectclasses",
-                    getattr(attrs_dict, "objectClasses", []),
-                )
-                or []
-            )
-        oracle_oc_count = sum(
-            1
-            for oc in object_classes or []
-            if isinstance(oc, str) and "2.16.840.1.113894" in oc
-        )
-        assert oracle_oc_count >= 0, "Schema parsing should complete successfully"
-
-    """Integration tests for OID entry processing.
-
-    Uses centralized fixtures from tests/integration/conftest.py:
-    - api: ldif API instance
-    - oid_integration_fixture: OID integration LDIF content
-    """
-
-    def test_parse_integration_fixture(
+    def test_parse_integration_fixture_yields_full_dataset(
         self,
         api: p.Ldif.LdifClient,
         oid_integration_fixture: str,
     ) -> None:
-        """Test parsing complete OID integration fixture.
+        """The integration fixture parses into a large, real dataset."""
+        entries = self._entries(api, oid_integration_fixture)
 
-        Validates:
-        - Integration fixture parsing succeeds
-        - All entries parse with valid structure
-        """
-        result = api.parse_ldif(oid_integration_fixture)
-        assert result.success, f"Integration fixture parsing failed: {result.error}"
-        entries = result.value.entries
         min_expected_entries = 100
         assert len(entries) > min_expected_entries, (
-            f"Expected > {min_expected_entries} entries, got {len(entries)}"
+            f"expected > {min_expected_entries} entries, got {len(entries)}"
         )
 
-    def test_oracle_acls_preserved_in_parsing(
+    @pytest.mark.parametrize(
+        "attribute_name",
+        ["orclaci", "orclentrylevelaci", "orclisenabled", "orclpassword"],
+        ids=["acl", "entry-level-acl", "is-enabled", "password"],
+    )
+    def test_oracle_attribute_preserved_in_parsing(
+        self,
+        api: p.Ldif.LdifClient,
+        oid_integration_fixture: str,
+        attribute_name: str,
+    ) -> None:
+        """Oracle-specific attributes survive parsing on at least one entry."""
+        entries = self._entries(api, oid_integration_fixture)
+
+        entries_with_attribute = sum(
+            1 for entry in entries if attribute_name in entry.attributes_dict
+        )
+
+        assert entries_with_attribute > 0, (
+            f"no parsed entry carries the {attribute_name} attribute"
+        )
+
+    # --------------------------------------------------------------- roundtrip
+
+    def test_roundtrip_preserves_entry_count(
         self,
         api: p.Ldif.LdifClient,
         oid_integration_fixture: str,
     ) -> None:
-        """Test that Oracle ACLs are preserved during parsing.
+        """Parse -> write -> parse keeps the entry count identical."""
+        original = self._entries(api, oid_integration_fixture)
+        assert original, "no entries in original parse"
 
-        Validates:
-        - orclaci attributes are detected
-        - orclentrylevelaci attributes are detected
-        """
-        result = api.parse_ldif(oid_integration_fixture)
-        assert result.success
-        entries = result.value.entries
-        entries_with_orclaci = sum(
-            1
-            for entry in entries
-            if entry.attributes is not None and "orclaci" in entry.attributes.attributes
-        )
-        entries_with_orclentrylevelaci = sum(
-            1
-            for entry in entries
-            if entry.attributes is not None
-            and "orclentrylevelaci" in entry.attributes.attributes
-        )
-        assert entries_with_orclaci > 0, "No entries with orclaci found"
-        assert entries_with_orclentrylevelaci > 0, (
-            "No entries with orclentrylevelaci found"
+        roundtrip = self._roundtrip(api, original)
+
+        assert len(roundtrip) == len(original), (
+            f"entry count changed: original={len(original)}, "
+            f"roundtrip={len(roundtrip)}"
         )
 
-    def test_oracle_attributes_preserved_in_parsing(
+    def test_roundtrip_preserves_dns_exactly(
         self,
         api: p.Ldif.LdifClient,
         oid_integration_fixture: str,
     ) -> None:
-        """Test that Oracle-specific attributes are preserved during parsing.
+        """Every DN is preserved byte-for-byte across a round-trip."""
+        original = self._entries(api, oid_integration_fixture)
+        original_dns = sorted(entry.dn_str for entry in original)
 
-        Validates:
-        - orclisenabled attributes are found
-        - orclpassword attributes are found
-        """
-        result = api.parse_ldif(oid_integration_fixture)
-        assert result.success
-        entries = result.value.entries
-        oracle_attr_patterns = ["orclisenabled", "orclpassword"]
-        for attr_name in oracle_attr_patterns:
-            entries_with_attr = sum(
-                1
-                for entry in entries
-                if entry.attributes is not None
-                and attr_name in entry.attributes.attributes
-            )
-            assert entries_with_attr > 0, f"No entries with {attr_name} found"
+        roundtrip_dns = sorted(
+            entry.dn_str for entry in self._roundtrip(api, original)
+        )
 
-    """Integration tests for OID round-trip: parse → write → parse.
+        assert roundtrip_dns == original_dns, "DN set changed after round-trip"
 
-    Uses centralized fixtures from tests/integration/conftest.py:
-    - api: ldif API instance
-    - oid_integration_fixture: OID integration LDIF content
-    """
-
-    def test_roundtrip_parse_write_parse(
+    @pytest.mark.parametrize(
+        "acl_attribute",
+        ["orclaci", "orclentrylevelaci"],
+        ids=["acl", "entry-level-acl"],
+    )
+    def test_roundtrip_preserves_oracle_acl_value_counts(
         self,
         api: p.Ldif.LdifClient,
         oid_integration_fixture: str,
+        acl_attribute: str,
     ) -> None:
-        """Test round-trip: parse OID fixture → write to LDIF → parse again.
-
-        Validates:
-        - Original parsing succeeds
-        - Write output is valid LDIF
-        - Re-parsing maintains entry count
-        """
-        parse_result_1 = api.parse_ldif(oid_integration_fixture)
-        assert parse_result_1.success, f"First parse failed: {parse_result_1.error}"
-        entries_1 = parse_result_1.value.entries
-        original_entry_count = len(entries_1)
-        assert original_entry_count > 0, "No entries in original parse"
-        write_result = api.write(entries_1)
-        assert write_result.success, f"Write failed: {write_result.error}"
-        ldif_output = write_result.value.content
-        assert ldif_output is not None
-        parse_result_2 = api.parse_ldif(ldif_output)
-        assert parse_result_2.success, f"Second parse failed: {parse_result_2.error}"
-        entries_2 = parse_result_2.value.entries
-        assert len(entries_2) == original_entry_count, (
-            f"Entry count mismatch: original={original_entry_count}, after round-trip={len(entries_2)}"
+        """Total Oracle ACL value counts are invariant across a round-trip."""
+        original = self._entries(api, oid_integration_fixture)
+        original_count = sum(
+            self._attribute_value_count(entry, acl_attribute) for entry in original
+        )
+        assert original_count > 0, (
+            f"fixture must contain {acl_attribute} values to be meaningful"
         )
 
-    def test_roundtrip_dn_preservation(
-        self,
-        api: p.Ldif.LdifClient,
-        oid_integration_fixture: str,
-    ) -> None:
-        """Test that DNs are preserved in round-trip.
-
-        Validates:
-        - All entry DNs preserved exactly
-        - DN count matches after round-trip
-        """
-        parse_result_1 = api.parse_ldif(oid_integration_fixture)
-        assert parse_result_1.success
-        entries_1 = parse_result_1.value.entries
-        original_dns = sorted([str(entry.dn) for entry in entries_1])
-        write_result = api.write(entries_1)
-        assert write_result.success
-        written_content = write_result.value.content
-        assert written_content is not None
-        parse_result_2 = api.parse_ldif(written_content)
-        assert parse_result_2.success
-        entries_2 = parse_result_2.value.entries
-        roundtrip_dns = sorted([str(entry.dn) for entry in entries_2])
-        assert original_dns == roundtrip_dns, "DN mismatch after round-trip"
-
-    def test_roundtrip_oracle_acl_preservation(
-        self,
-        api: p.Ldif.LdifClient,
-        oid_integration_fixture: str,
-    ) -> None:
-        """Test that Oracle ACLs are preserved in round-trip.
-
-        Validates:
-        - ACL attribute counts preserved
-        - orclaci and orclentrylevelaci survive round-trip
-        """
-        parse_result_1 = api.parse_ldif(oid_integration_fixture)
-        assert parse_result_1.success
-        entries_1 = parse_result_1.value.entries
-
-        def get_attribute_values_count(entry: m.Ldif.Entry, attr_name: str) -> int:
-            if entry.attributes is None:
-                return 0
-            attr_values = entry.attributes.attributes.get(attr_name)
-            if attr_values is None:
-                return 0
-            return len(attr_values)
-
-        original_orclaci_count = sum(
-            get_attribute_values_count(entry, "orclaci") for entry in entries_1
+        roundtrip_count = sum(
+            self._attribute_value_count(entry, acl_attribute)
+            for entry in self._roundtrip(api, original)
         )
-        original_entrylevel_count = sum(
-            get_attribute_values_count(entry, "orclentrylevelaci")
-            for entry in entries_1
-        )
-        write_result = api.write(entries_1)
-        assert write_result.success
-        written_content = write_result.value.content
-        assert written_content is not None
-        parse_result_2 = api.parse_ldif(written_content)
-        assert parse_result_2.success
-        entries_2 = parse_result_2.value.entries
-        roundtrip_orclaci_count = sum(
-            get_attribute_values_count(entry, "orclaci") for entry in entries_2
-        )
-        roundtrip_entrylevel_count = sum(
-            get_attribute_values_count(entry, "orclentrylevelaci")
-            for entry in entries_2
-        )
-        assert original_orclaci_count == roundtrip_orclaci_count, (
-            f"orclaci count mismatch: original={original_orclaci_count}, roundtrip={roundtrip_orclaci_count}"
-        )
-        assert original_entrylevel_count == roundtrip_entrylevel_count, (
-            f"orclentrylevelaci count mismatch: original={original_entrylevel_count}, roundtrip={roundtrip_entrylevel_count}"
+
+        assert roundtrip_count == original_count, (
+            f"{acl_attribute} value count changed: "
+            f"original={original_count}, roundtrip={roundtrip_count}"
         )
 
 

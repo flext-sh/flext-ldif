@@ -14,20 +14,21 @@ from flext_tests import tm
 from flext_ldif.servers.relaxed import FlextLdifServersRelaxed
 from tests.constants import c
 from tests.models import m
+from tests.typings import t
 
 if TYPE_CHECKING:
     from tests.protocols import p
 
 
 @pytest.mark.unit
-class TestsTestFlextLdifRelaxedServers:
-    """Consolidated test suite for Relaxed server functionality.
+class TestsFlextLdifRelaxed:
+    """Behavioral test suite for the Relaxed server public contract.
 
-    Merges 16 original test classes into one parametrized test class for:
-    - Schema servers (attribute/objectclass parsing/writing)
-    - ACL servers (parse/write)
-    - Entry servers (lenient DN/attribute handling)
-    - Error recovery and edge cases
+    Covers observable behavior only:
+    - Schema servers (attribute/objectclass parse/write results as ``r[T]``)
+    - ACL servers (parse/write raw-content preservation)
+    - Entry servers (lenient DN normalization contract)
+    - Error recovery and edge cases via public model state
     """
 
     @pytest.fixture
@@ -44,11 +45,6 @@ class TestsTestFlextLdifRelaxedServers:
     def entry_server(self) -> FlextLdifServersRelaxed.Entry:
         """Create relaxed entry server instance."""
         return FlextLdifServersRelaxed.Entry()
-
-    @pytest.fixture
-    def relaxed_instance(self) -> FlextLdifServersRelaxed:
-        """Create main relaxed server instance."""
-        return FlextLdifServersRelaxed()
 
     @pytest.mark.parametrize(
         ("scenario", "definition_data"),
@@ -175,11 +171,44 @@ class TestsTestFlextLdifRelaxedServers:
         )
         tm.that(tm.ok(acl_server.write(acl_data)), eq=raw_acl)
 
-    def test_entry_lenient_dn_parsing(
+    @pytest.mark.parametrize(
+        ("raw_dn", "normalized"),
+        [
+            ("cn=Test, dc=Example", "cn=Test,dc=Example"),
+            ("cn=Test,dc=Example", "cn=Test,dc=Example"),
+            ("  cn=x , dc=y  ", "cn=x,dc=y"),
+        ],
+        ids=["spaces_after_comma", "already_tight", "leading_trailing_space"],
+    )
+    def test_entry_normalize_dn_strips_incidental_whitespace(
         self,
-        relaxed_instance: FlextLdifServersRelaxed,
+        entry_server: FlextLdifServersRelaxed.Entry,
+        raw_dn: str,
+        normalized: str,
     ) -> None:
-        """Test entry server accepts malformed c.DNs."""
+        """normalize_dn returns the whitespace-normalized DN on success."""
+        result = entry_server.normalize_dn(raw_dn)
+        tm.that(result.success, eq=True)
+        tm.that(tm.ok(result), eq=normalized)
+
+    @pytest.mark.parametrize(
+        ("bad_dn", "error_fragment"),
+        [
+            ("", "empty"),
+            ("not a dn at all", "missing '=' separator"),
+        ],
+        ids=["empty_dn", "no_separator"],
+    )
+    def test_entry_normalize_dn_fails_on_unrecoverable_input(
+        self,
+        entry_server: FlextLdifServersRelaxed.Entry,
+        bad_dn: str,
+        error_fragment: str,
+    ) -> None:
+        """normalize_dn surfaces a failure r[T] for unrecoverable DNs."""
+        result = entry_server.normalize_dn(bad_dn)
+        tm.that(result.failure, eq=True)
+        tm.that(result.error, has=[error_fragment])
 
     @pytest.mark.parametrize(
         ("parse_type", "bad_input"),
@@ -239,19 +268,57 @@ class TestsTestFlextLdifRelaxedServers:
             result = schema_server.parse_objectclass(definition)
         tm.that(result.success, eq=expected_success)
 
-    def test_relaxed_mode_integration(
-        self,
-        relaxed_instance: FlextLdifServersRelaxed,
-    ) -> None:
-        """Test relaxed mode full integration."""
-        tm.that(relaxed_instance, none=False)
-
-    def test_relaxed_mode_priority(
+    @pytest.mark.parametrize(
+        "definition",
+        [
+            "( 1.2.3 NAME 'valid' )",
+            "MALFORMED",
+            "( 1.2.3 \x00 garbage )",
+        ],
+        ids=["valid", "malformed", "binary_noise"],
+    )
+    def test_schema_can_handle_attribute_accepts_anything(
         self,
         schema_server: FlextLdifServersRelaxed.Schema,
+        definition: str,
     ) -> None:
-        """Test relaxed mode has appropriate priority (low = last resort)."""
-        tm.that(schema_server, none=False)
+        """Relaxed is the last-resort handler: can_handle_attribute is always True."""
+        tm.that(schema_server.can_handle_attribute(definition), eq=True)
+
+    @pytest.mark.parametrize(
+        "definition",
+        [
+            "( 1.2.3 NAME 'valid' STRUCTURAL )",
+            "BROKEN CLASS",
+            "( 1.2.3 \x00 garbage )",
+        ],
+        ids=["valid", "malformed", "binary_noise"],
+    )
+    def test_schema_can_handle_objectclass_accepts_anything(
+        self,
+        schema_server: FlextLdifServersRelaxed.Schema,
+        definition: str,
+    ) -> None:
+        """Relaxed is the last-resort handler: can_handle_objectclass is always True."""
+        tm.that(schema_server.can_handle_objectclass(definition), eq=True)
+
+    @pytest.mark.parametrize(
+        ("entry_dn", "attributes"),
+        [
+            ("cn=x,dc=y", {"cn": ["x"]}),
+            ("", {}),
+            ("garbled dn", {"weird": ["v"]}),
+        ],
+        ids=["well_formed", "empty", "malformed"],
+    )
+    def test_entry_can_handle_accepts_any_entry(
+        self,
+        entry_server: FlextLdifServersRelaxed.Entry,
+        entry_dn: str,
+        attributes: t.MutableStrSequenceMapping,
+    ) -> None:
+        """Relaxed entry server claims every entry, well-formed or not."""
+        tm.that(entry_server.can_handle(entry_dn, attributes), eq=True)
 
     @pytest.mark.parametrize(
         ("definition", "expected_success"),

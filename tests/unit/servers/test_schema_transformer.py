@@ -1,103 +1,181 @@
-"""Tests for schema transformation utilities across LDAP servers.
+"""Behavioral tests for LDIF schema normalization helpers.
 
-This module tests the schema transformation and attribute name normalization
-utilities that enhance RFC schema parsing with server-specific transformations.
+Exercises the public normalization contract exposed through ``u.Ldif``:
+``normalize_name``, ``normalize_matching_rules`` and ``normalize_syntax_oid``.
+Every assertion targets an observable return value of a pure function -- no
+private state, no collaborator spying, no patching of the unit under test.
 """
 
 from __future__ import annotations
 
+import pytest
 from flext_tests import tm
 
 from tests.utilities import u
 
 
 class TestsFlextLdifSchemaTransformer:
-    """Test normalize_attribute_name transformation."""
+    """Contract of the schema normalization helpers via public API."""
 
-    def test_normalize_removes_binary_suffix(self) -> None:
-        """Test that ;binary suffix is removed from attribute names."""
+    # ------------------------------------------------------------------
+    # normalize_name
+    # ------------------------------------------------------------------
+
+    @pytest.mark.parametrize(
+        ("name_value", "suffixes", "replacements", "expected"),
+        [
+            ("userCertificate;binary", [";binary"], None, "userCertificate"),
+            ("oracle_oid_attribute", None, {"_": "-"}, "oracle-oid-attribute"),
+            (
+                "oracle_certificate;binary",
+                [";binary"],
+                {"_": "-"},
+                "oracle-certificate",
+            ),
+            ("cn", [";binary"], {"_": "-"}, "cn"),
+            ("a_b_c", None, {"_": "."}, "a.b.c"),
+            ("keep;binary;binary", [";binary"], None, "keep"),
+        ],
+    )
+    def test_normalize_name_applies_suffix_and_char_rules(
+        self,
+        name_value: str,
+        suffixes: list[str] | None,
+        replacements: dict[str, str] | None,
+        expected: str,
+    ) -> None:
+        """Configured suffixes and char replacements produce the RFC name."""
         result = u.Ldif.normalize_name(
-            "userCertificate;binary",
-            suffixes_to_remove=[";binary"],
+            name_value,
+            suffixes_to_remove=suffixes,
+            char_replacements=replacements,
         )
-        tm.that(result, eq="userCertificate")
+        tm.that(result, eq=expected)
 
-    def test_normalize_replaces_underscores(self) -> None:
-        """Test that underscores are replaced with hyphens."""
+    @pytest.mark.parametrize(
+        ("name_value", "expected"),
+        [
+            ("userCertificate;binary", "userCertificate"),
+            ("oracle_oid", "oracle-oid"),
+            ("oracle_cert;binary", "oracle-cert"),
+            ("cn", "cn"),
+        ],
+    )
+    def test_normalize_name_defaults_strip_binary_and_underscore(
+        self,
+        name_value: str,
+        expected: str,
+    ) -> None:
+        """With no config, defaults strip ``;binary`` and map ``_`` to ``-``."""
+        result = u.Ldif.normalize_name(name_value)
+        tm.that(result, eq=expected)
+
+    @pytest.mark.parametrize("empty", ["", None])
+    def test_normalize_name_returns_falsy_input_unchanged(
+        self,
+        empty: str | None,
+    ) -> None:
+        """Empty string and None are returned as-is (no transformation)."""
+        result = u.Ldif.normalize_name(empty)
+        tm.that(result, eq=empty)
+
+    def test_normalize_name_is_idempotent(self) -> None:
+        """Re-normalizing an already-normalized name is a fixed point."""
+        once = u.Ldif.normalize_name("oracle_cert;binary")
+        twice = u.Ldif.normalize_name(once)
+        tm.that(once, eq="oracle-cert")
+        tm.that(twice, eq="oracle-cert")
+
+    def test_normalize_name_without_matches_preserves_identity(self) -> None:
+        """A name with no suffix/char hits comes back byte-identical."""
         result = u.Ldif.normalize_name(
-            "oracle_oid_attribute",
+            "plainName",
+            suffixes_to_remove=[";binary"],
             char_replacements={"_": "-"},
         )
-        tm.that(result, eq="oracle-oid-attribute")
+        tm.that(result, eq="plainName")
 
-    def test_normalize_removes_binary_and_underscores(self) -> None:
-        """Test that both ;binary and underscores are normalized."""
-        result = u.Ldif.normalize_name(
-            "oracle_certificate;binary",
-            suffixes_to_remove=[";binary"],
-            char_replacements={"_": "-"},
-        )
-        tm.that(result, eq="oracle-certificate")
+    # ------------------------------------------------------------------
+    # normalize_matching_rules
+    # ------------------------------------------------------------------
 
-    def test_normalize_rfc_compliant_name_unchanged(self) -> None:
-        """Test that RFC-compliant names are unchanged."""
-        result = u.Ldif.normalize_name("cn")
-        tm.that(result, eq="cn")
-
-    def test_normalize_handles_empty_string(self) -> None:
-        """Test that empty string is handled gracefully."""
-        result = u.Ldif.normalize_name("")
-        tm.that(not result, eq=True)
-
-    def test_normalize_handles_none(self) -> None:
-        """Test that None is handled gracefully."""
-        result = u.Ldif.normalize_name(None)
-        tm.that(result, none=True)
-
-    """Test normalize_matching_rule transformation."""
-
-    def test_fix_substr_rule_in_equality_field(self) -> None:
-        """Test that SUBSTR rules incorrectly in EQUALITY are fixed."""
+    def test_matching_rules_moves_substr_rule_out_of_equality(self) -> None:
+        """A SUBSTR rule mistakenly in EQUALITY is relocated to SUBSTR."""
         equality, substr = u.Ldif.normalize_matching_rules(
             "caseIgnoreSubstringsMatch",
             None,
-            substr_rules_in_equality={"caseIgnoreSubstringsMatch": "caseIgnoreMatch"},
+            substr_rules_in_equality={
+                "caseIgnoreSubstringsMatch": "caseIgnoreMatch",
+            },
         )
         tm.that(equality, eq="caseIgnoreMatch")
         tm.that(substr, eq="caseIgnoreSubstringsMatch")
 
-    def test_fix_substr_rule_capital_s(self) -> None:
-        """Test that caseIgnoreSubStringsMatch (capital S) is handled."""
+    def test_matching_rules_normalizes_relocated_substr_value(self) -> None:
+        """Relocated SUBSTR value is canonicalized via normalized_substr_values."""
         equality, substr = u.Ldif.normalize_matching_rules(
             "caseIgnoreSubStringsMatch",
             None,
             normalized_substr_values={
                 "caseIgnoreSubStringsMatch": "caseIgnoreSubstringsMatch",
             },
-            substr_rules_in_equality={"caseIgnoreSubStringsMatch": "caseIgnoreMatch"},
+            substr_rules_in_equality={
+                "caseIgnoreSubStringsMatch": "caseIgnoreMatch",
+            },
         )
         tm.that(equality, eq="caseIgnoreMatch")
         tm.that(substr, eq="caseIgnoreSubstringsMatch")
 
-    def test_apply_matching_rule_replacements(self) -> None:
-        """Test that server-specific matching rule replacements are applied."""
-        replacements = {"accessDirectiveMatch": "caseIgnoreMatch"}
+    def test_matching_rules_applies_equality_replacement(self) -> None:
+        """Server-specific EQUALITY replacements map to the RFC rule."""
         equality, substr = u.Ldif.normalize_matching_rules(
             "accessDirectiveMatch",
             None,
-            replacements=replacements,
+            replacements={"accessDirectiveMatch": "caseIgnoreMatch"},
         )
         tm.that(equality, eq="caseIgnoreMatch")
         tm.that(substr, none=True)
 
-    def test_rfc_compliant_rule_unchanged(self) -> None:
-        """Test that RFC-compliant rules are unchanged."""
-        equality, substr = u.Ldif.normalize_matching_rules("caseIgnoreMatch", None)
-        tm.that(equality, eq="caseIgnoreMatch")
+    @pytest.mark.parametrize(
+        ("equality", "substr", "exp_equality", "exp_substr"),
+        [
+            ("caseIgnoreMatch", None, "caseIgnoreMatch", None),
+            (
+                "caseIgnoreMatch",
+                "caseIgnoreSubstringsMatch",
+                "caseIgnoreMatch",
+                "caseIgnoreSubstringsMatch",
+            ),
+            (None, None, None, None),
+        ],
+    )
+    def test_matching_rules_passthrough_without_config(
+        self,
+        equality: str | None,
+        substr: str | None,
+        exp_equality: str | None,
+        exp_substr: str | None,
+    ) -> None:
+        """Without config maps, EQUALITY/SUBSTR pass through untouched."""
+        result_equality, result_substr = u.Ldif.normalize_matching_rules(
+            equality,
+            substr,
+        )
+        tm.that(result_equality, eq=exp_equality)
+        tm.that(result_substr, eq=exp_substr)
+
+    def test_matching_rules_replacement_ignores_unlisted_rule(self) -> None:
+        """A replacement map that lacks the rule leaves EQUALITY unchanged."""
+        equality, substr = u.Ldif.normalize_matching_rules(
+            "distinguishedNameMatch",
+            None,
+            replacements={"accessDirectiveMatch": "caseIgnoreMatch"},
+        )
+        tm.that(equality, eq="distinguishedNameMatch")
         tm.that(substr, none=True)
 
-    def test_preserve_existing_substr(self) -> None:
-        """Test that existing SUBSTR rules are preserved."""
+    def test_matching_rules_preserves_existing_substr(self) -> None:
+        """An already-present SUBSTR rule is never dropped."""
         equality, substr = u.Ldif.normalize_matching_rules(
             "caseIgnoreMatch",
             "caseIgnoreSubstringsMatch",
@@ -105,23 +183,54 @@ class TestsFlextLdifSchemaTransformer:
         tm.that(equality, eq="caseIgnoreMatch")
         tm.that(substr, eq="caseIgnoreSubstringsMatch")
 
-    """Test normalize_syntax_oid transformation."""
+    # ------------------------------------------------------------------
+    # normalize_syntax_oid
+    # ------------------------------------------------------------------
 
-    def test_remove_quotes_from_syntax(self) -> None:
-        """Test that quotes are removed from syntax OIDs."""
-        result = u.Ldif.normalize_syntax_oid("'1.3.6.1.4.1.1466.115.121.1.15'")
-        tm.that(result, eq="1.3.6.1.4.1.1466.115.121.1.15")
+    @pytest.mark.parametrize(
+        ("syntax", "replacements", "expected"),
+        [
+            ("'1.3.6.1.4.1.1466.115.121.1.15'", None, "1.3.6.1.4.1.1466.115.121.1.15"),
+            (
+                "1.3.6.1.4.1.1466.115.121.1.1",
+                {"1.3.6.1.4.1.1466.115.121.1.1": "1.3.6.1.4.1.1466.115.121.1.15"},
+                "1.3.6.1.4.1.1466.115.121.1.15",
+            ),
+            ("1.3.6.1.4.1.1466.115.121.1.15", None, "1.3.6.1.4.1.1466.115.121.1.15"),
+            (
+                "'1.3.6.1.4.1.1466.115.121.1.1'",
+                {"1.3.6.1.4.1.1466.115.121.1.1": "1.3.6.1.4.1.1466.115.121.1.15"},
+                "1.3.6.1.4.1.1466.115.121.1.15",
+            ),
+        ],
+    )
+    def test_syntax_oid_strips_quotes_then_applies_replacements(
+        self,
+        syntax: str,
+        replacements: dict[str, str] | None,
+        expected: str,
+    ) -> None:
+        """Surrounding quotes are removed, then replacement mapping is applied."""
+        result = u.Ldif.normalize_syntax_oid(syntax, replacements=replacements)
+        tm.that(result, eq=expected)
 
-    def test_apply_syntax_replacements(self) -> None:
-        """Test that server-specific syntax replacements are applied."""
-        replacements = {"1.3.6.1.4.1.1466.115.121.1.1": "1.3.6.1.4.1.1466.115.121.1.15"}
-        result = u.Ldif.normalize_syntax_oid(
-            "1.3.6.1.4.1.1466.115.121.1.1",
-            replacements=replacements,
-        )
-        tm.that(result, eq="1.3.6.1.4.1.1466.115.121.1.15")
+    @pytest.mark.parametrize("empty", ["", None])
+    def test_syntax_oid_returns_falsy_input_unchanged(
+        self,
+        empty: str | None,
+    ) -> None:
+        """Empty string and None are returned unchanged."""
+        result = u.Ldif.normalize_syntax_oid(empty)
+        tm.that(result, eq=empty)
 
-    def test_rfc_compliant_syntax_unchanged(self) -> None:
-        """Test that RFC-compliant syntax OIDs are unchanged."""
-        result = u.Ldif.normalize_syntax_oid("1.3.6.1.4.1.1466.115.121.1.15")
-        tm.that(result, eq="1.3.6.1.4.1.1466.115.121.1.15")
+    def test_syntax_oid_leaves_one_sided_quote_intact(self) -> None:
+        """Only a fully quote-wrapped OID is unquoted; a lone quote stays."""
+        result = u.Ldif.normalize_syntax_oid("'1.3.6.1.4.1.1466.115.121.1.15")
+        tm.that(result, eq="'1.3.6.1.4.1.1466.115.121.1.15")
+
+    def test_syntax_oid_is_idempotent(self) -> None:
+        """Normalizing an already-clean OID is a fixed point."""
+        once = u.Ldif.normalize_syntax_oid("'1.3.6.1.4.1.1466.115.121.1.15'")
+        twice = u.Ldif.normalize_syntax_oid(once)
+        tm.that(once, eq="1.3.6.1.4.1.1466.115.121.1.15")
+        tm.that(twice, eq="1.3.6.1.4.1.1466.115.121.1.15")

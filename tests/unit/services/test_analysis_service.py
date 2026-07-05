@@ -1,4 +1,4 @@
-"""Behavior tests for public LDIF analysis via the facade."""
+"""Behavior tests for public LDIF entry validation via the facade."""
 
 from __future__ import annotations
 
@@ -15,20 +15,27 @@ if TYPE_CHECKING:
     from tests.protocols import p
 
 
-def _make_entry(dn: str | None, attrs: dict[str, list[str]] | None) -> m.Ldif.Entry:
-    attributes = (
-        None
-        if attrs is None
-        else m.Ldif.Attributes.model_validate({"attributes": attrs})
-    )
-    return m.Ldif.Entry(dn=dn, attributes=attributes)
-
-
 class TestsFlextLdifAnalysisService:
-    """Cover entry validation through the public ldif facade."""
+    """Cover the observable contract of ``validate_entries`` via the ldif facade."""
 
-    def test_validate_entries_valid_entry_list(self, api: p.Ldif.LdifClient) -> None:
-        entry = _make_entry(
+    @staticmethod
+    def _make_entry(
+        dn: str | None,
+        attrs: dict[str, list[str]] | None,
+    ) -> m.Ldif.Entry:
+        """Build a public ``m.Ldif.Entry`` for a validation case."""
+        attributes = (
+            None
+            if attrs is None
+            else m.Ldif.Attributes.model_validate({"attributes": attrs})
+        )
+        return m.Ldif.Entry(dn=dn, attributes=attributes)
+
+    def test_validate_entries_valid_entry_reports_all_valid(
+        self,
+        api: p.Ldif.LdifClient,
+    ) -> None:
+        entry = self._make_entry(
             c.Tests.ANALYSIS_DN_VALID,
             dict(c.Tests.ANALYSIS_VALID_ENTRY_ATTRS),
         )
@@ -37,14 +44,21 @@ class TestsFlextLdifAnalysisService:
         tm.that(val_result.valid, eq=True)
         tm.that(val_result.total_entries, eq=1)
         tm.that(val_result.valid_entries, eq=1)
+        tm.that(val_result.invalid_entries, eq=0)
+        tm.that(len(val_result.errors), eq=0)
 
-    def test_validate_entries_empty_list(self, api: p.Ldif.LdifClient) -> None:
+    def test_validate_entries_empty_list_is_vacuously_valid(
+        self,
+        api: p.Ldif.LdifClient,
+    ) -> None:
         result = api.validate_entries([])
         val_result = u.Tests.assert_success(result)
         tm.that(val_result.total_entries, eq=0)
+        tm.that(val_result.valid_entries, eq=0)
+        tm.that(val_result.invalid_entries, eq=0)
         tm.that(val_result.valid, eq=True)
 
-    def test_validate_entries_parse_response_input(
+    def test_validate_entries_accepts_parse_response_input(
         self,
         api: p.Ldif.LdifClient,
     ) -> None:
@@ -53,12 +67,14 @@ class TestsFlextLdifAnalysisService:
         result = api.validate_entries(parse_resp)
         val_result = u.Tests.assert_success(result)
         tm.that(val_result.total_entries, eq=2)
+        tm.that(val_result.valid_entries, eq=2)
+        tm.that(val_result.valid, eq=True)
 
-    def test_validate_entries_invalid_attr_names(
+    def test_validate_entries_invalid_attr_name_reports_error(
         self,
         api: p.Ldif.LdifClient,
     ) -> None:
-        entry = _make_entry(
+        entry = self._make_entry(
             c.Tests.ANALYSIS_DN_VALID,
             dict(c.Tests.ANALYSIS_INVALID_ATTR_ENTRY_ATTRS),
         )
@@ -66,30 +82,61 @@ class TestsFlextLdifAnalysisService:
         val_result = u.Tests.assert_success(result)
         tm.that(val_result.valid, eq=False)
         tm.that(val_result.invalid_entries, eq=1)
+        tm.that(val_result.valid_entries, eq=0)
+        tm.that(len(val_result.errors) > 0, eq=True)
 
-    def test_validate_entries_none_attributes_returns_invalid(
+    def test_validate_entries_none_attributes_reports_invalid(
         self,
         api: p.Ldif.LdifClient,
     ) -> None:
-        entry = _make_entry(c.Tests.ANALYSIS_DN_VALID, None)
+        entry = self._make_entry(c.Tests.ANALYSIS_DN_VALID, None)
         result = api.validate_entries([entry])
         val_result = u.Tests.assert_success(result)
         tm.that(val_result.valid, eq=False)
         tm.that(val_result.invalid_entries, eq=1)
+        tm.that(len(val_result.errors) > 0, eq=True)
 
-    def test_validate_multiple_entries_mixed(self, api: p.Ldif.LdifClient) -> None:
-        valid_entry = _make_entry(
+    def test_validate_entries_mixed_batch_counts_each_side(
+        self,
+        api: p.Ldif.LdifClient,
+    ) -> None:
+        valid_entry = self._make_entry(
             c.Tests.ANALYSIS_DN_VALID,
             dict(c.Tests.ANALYSIS_VALID_ENTRY_ATTRS),
         )
-        invalid_entry = _make_entry(
+        invalid_entry = self._make_entry(
             c.Tests.ANALYSIS_DN_VALID,
             dict(c.Tests.ANALYSIS_INVALID_ATTR_ENTRY_ATTRS),
         )
         result = api.validate_entries([valid_entry, invalid_entry])
         val_result = u.Tests.assert_success(result)
         tm.that(val_result.total_entries, eq=2)
+        tm.that(val_result.valid_entries, eq=1)
+        tm.that(val_result.invalid_entries, eq=1)
         tm.that(val_result.valid, eq=False)
+
+    def test_validate_entries_order_independent_for_mixed_batch(
+        self,
+        api: p.Ldif.LdifClient,
+    ) -> None:
+        valid_entry = self._make_entry(
+            c.Tests.ANALYSIS_DN_VALID,
+            dict(c.Tests.ANALYSIS_VALID_ENTRY_ATTRS),
+        )
+        invalid_entry = self._make_entry(
+            c.Tests.ANALYSIS_DN_VALID,
+            dict(c.Tests.ANALYSIS_INVALID_ATTR_ENTRY_ATTRS),
+        )
+        forward = u.Tests.assert_success(
+            api.validate_entries([valid_entry, invalid_entry]),
+        )
+        reverse = u.Tests.assert_success(
+            api.validate_entries([invalid_entry, valid_entry]),
+        )
+        tm.that(forward.valid, eq=reverse.valid)
+        tm.that(forward.total_entries, eq=reverse.total_entries)
+        tm.that(forward.valid_entries, eq=reverse.valid_entries)
+        tm.that(forward.invalid_entries, eq=reverse.invalid_entries)
 
     @pytest.mark.parametrize("oc_name", c.Tests.VALIDATION_VALID_OC_NAMES)
     def test_valid_objectclass_names_pass_validation(
@@ -97,29 +144,31 @@ class TestsFlextLdifAnalysisService:
         oc_name: str,
         api: p.Ldif.LdifClient,
     ) -> None:
-        entry = _make_entry(
+        entry = self._make_entry(
             c.Tests.ANALYSIS_DN_VALID,
             {"objectClass": [oc_name]},
         )
         result = api.validate_entries([entry])
         val_result = u.Tests.assert_success(result)
         tm.that(val_result.valid, eq=True)
+        tm.that(val_result.valid_entries, eq=1)
 
-    def test_validate_entries_empty_dn_returns_invalid(
+    def test_validate_entries_empty_dn_reports_invalid(
         self,
         api: p.Ldif.LdifClient,
     ) -> None:
-        entry = _make_entry("", {"objectClass": ["person"]})
+        entry = self._make_entry("", {"objectClass": ["person"]})
         result = api.validate_entries([entry])
         val_result = u.Tests.assert_success(result)
         tm.that(val_result.valid, eq=False)
         tm.that(val_result.invalid_entries, eq=1)
+        tm.that(len(val_result.errors) > 0, eq=True)
 
-    def test_validate_entries_invalid_oc_name_returns_invalid(
+    def test_validate_entries_invalid_objectclass_name_reports_invalid(
         self,
         api: p.Ldif.LdifClient,
     ) -> None:
-        entry = _make_entry(
+        entry = self._make_entry(
             c.Tests.ANALYSIS_DN_VALID,
             {"objectClass": [c.Tests.ANALYSIS_OC_INVALID]},
         )
@@ -127,13 +176,15 @@ class TestsFlextLdifAnalysisService:
         val_result = u.Tests.assert_success(result)
         tm.that(val_result.valid, eq=False)
         tm.that(val_result.invalid_entries, eq=1)
+        tm.that(len(val_result.errors) > 0, eq=True)
 
-    def test_validate_entries_none_dn_returns_invalid(
+    def test_validate_entries_none_dn_reports_invalid(
         self,
         api: p.Ldif.LdifClient,
     ) -> None:
-        entry = _make_entry(None, {})
+        entry = self._make_entry(None, {})
         result = api.validate_entries([entry])
         val_result = u.Tests.assert_success(result)
         tm.that(val_result.valid, eq=False)
         tm.that(val_result.invalid_entries, eq=1)
+        tm.that(len(val_result.errors) > 0, eq=True)

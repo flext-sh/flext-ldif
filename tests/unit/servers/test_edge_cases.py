@@ -94,14 +94,39 @@ class TestsFlextLdifEdgeCases:
         ldif_content: str,
         output_name: str,
     ) -> None:
-        """Test roundtrip of inline edge-case LDIF payloads."""
+        """Roundtrip must preserve DN and attribute values (idempotence).
+
+        Parsing, writing, and re-parsing an edge-case payload (unicode DNs,
+        deep DNs, large multi-value attributes) yields an entry whose public
+        contract -- distinguished name and every attribute value list -- is
+        identical to the original parse. This is the observable roundtrip
+        guarantee, stronger than merely counting entries.
+        """
         entries = tm.ok(
             ldif_api.parse_ldif(ldif_content, server_type=c.Tests.RFC),
         ).entries
         tm.that(len(entries), eq=1)
+        original = entries[0]
+        tm.that(original.dn, none=False)
+        tm.that(original.attributes, none=False)
+
         output_path = tmp_path / output_name
         tm.ok(ldif_api.write_ldif_file(entries, output_path, server_type=c.Tests.RFC))
         roundtrip_entries = tm.ok(
             ldif_api.parse_ldif(output_path, server_type=c.Tests.RFC),
         ).entries
         tm.that(len(roundtrip_entries), eq=1)
+        roundtrip = roundtrip_entries[0]
+        tm.that(roundtrip.dn, none=False)
+        tm.that(roundtrip.attributes, none=False)
+
+        if (
+            original.dn is not None
+            and roundtrip.dn is not None
+            and original.attributes is not None
+            and roundtrip.attributes is not None
+        ):
+            tm.that(roundtrip.dn.value, eq=original.dn.value)
+            original_attrs = dict(original.attributes.items())
+            roundtrip_attrs = dict(roundtrip.attributes.items())
+            tm.that(roundtrip_attrs, eq=original_attrs)

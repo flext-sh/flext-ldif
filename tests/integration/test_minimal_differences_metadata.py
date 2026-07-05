@@ -1,7 +1,10 @@
-"""Integration tests for minimal differences metadata tracking.
+"""Behavioral tests for minimal-differences metadata tracking.
 
-Tests the complete pipeline: ldif -> parser -> Entry Model (RFC + Metadata) -> writer -> ldif
-Validates that ALL minimal differences are captured and preserved for perfect round-trip.
+Exercises the public contract of the LDIF parse -> Entry(metadata) -> write
+pipeline: fallible ``r[T]`` outcomes, ``Entry.metadata`` public fields, the
+boolean-conversion metadata payload, verbatim DN preservation, and round-trip
+``write()`` output. No private attributes, collaborators, or internal call
+spying are touched -- only observable public behavior.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -14,200 +17,272 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_ldif import ldif
+from flext_ldif import ldif, m
 from flext_ldif.services.parser import FlextLdifParser
 from tests.constants import c
-from tests.models import m
-from tests.utilities import u
 
 if TYPE_CHECKING:
     from tests.protocols import p
 
 
 class TestsFlextLdifMinimalDifferencesMetadata:
-    """Test suite for minimal differences tracking between OID and OUD fixtures."""
+    """Public-contract tests for minimal-differences metadata capture."""
 
     @pytest.fixture
     def parser(self) -> FlextLdifParser:
-        """Create parser instance."""
+        """Provide a parser instance."""
         return FlextLdifParser()
 
     @pytest.fixture
     def writer(self) -> p.Ldif.LdifClient:
-        """Create writer instance via ldif."""
+        """Provide a writer client via the public ``ldif()`` entry point."""
         return ldif()
 
-    def test_oid_fixture_all_differences_captured(
+    @pytest.fixture
+    def fixtures_dir(self) -> Path:
+        """Locate the shared LDIF fixtures directory."""
+        return Path(__file__).parent.parent / "fixtures"
+
+    # -- server_type propagation ------------------------------------------
+
+    @pytest.mark.parametrize(
+        ("server_type", "effective_server_type"),
+        [
+            (c.Tests.OID, c.Tests.OID),
+            (c.Tests.OUD, c.Tests.RFC),
+            (c.Tests.RFC, c.Tests.RFC),
+        ],
+    )
+    def test_parsed_entry_metadata_reports_effective_server_type(
         self,
         parser: FlextLdifParser,
-        writer: p.Ldif.LdifClient,
+        server_type: str,
+        effective_server_type: str,
     ) -> None:
-        """Test that ALL minimal differences in OID fixtures are captured in metadata."""
-        fixture_path = (
-            Path(__file__).parent.parent
-            / "fixtures"
-            / c.Tests.OID
-            / "oid_entries_fixtures.ldif"
+        """Entry metadata records the effective (normalized) server family.
+
+        OUD is RFC-compliant, so its metadata normalizes to ``rfc``; OID keeps
+        its own identity.
+        """
+        content = (
+            "dn: cn=test,dc=example,dc=com\n"
+            "objectClass: top\n"
+            "objectClass: person\n"
+            "cn: test\n"
         )
-        if not fixture_path.exists():
-            pytest.skip(f"OID fixture not found: {fixture_path}")
-        parse_result = parser.parse_ldif_file(
-            path=fixture_path,
-            server_type=c.Tests.OID,
-        )
-        assert parse_result.success, f"Parsing failed: {parse_result.error}"
-        parse_response = parse_result.value
-        entries = parse_response.entries
-        assert entries, "No entries parsed from OID fixture"
+
+        result = parser.parse_string(content=content, server_type=server_type)
+
+        assert result.success, result.error
+        entries = result.value.entries
+        assert len(entries) == 1
+        metadata = entries[0].metadata
+        assert metadata is not None
+        assert str(metadata.server_type) == effective_server_type
+
+    # -- fixture-driven capture -------------------------------------------
+
+    @pytest.mark.parametrize(
+        ("server_type", "effective_server_type", "fixture_name"),
+        [
+            (c.Tests.OID, c.Tests.OID, "oid_entries_fixtures.ldif"),
+            (c.Tests.OUD, c.Tests.RFC, "oud_entries_fixtures.ldif"),
+        ],
+    )
+    def test_fixture_entries_all_carry_matching_server_metadata(
+        self,
+        parser: FlextLdifParser,
+        fixtures_dir: Path,
+        server_type: str,
+        effective_server_type: str,
+        fixture_name: str,
+    ) -> None:
+        """Every entry parsed from a server fixture carries its effective type."""
+        fixture_path = fixtures_dir / server_type / fixture_name
+
+        result = parser.parse_ldif_file(path=fixture_path, server_type=server_type)
+
+        assert result.success, result.error
+        entries = result.value.entries
+        assert entries, f"No entries parsed from {fixture_path}"
         for entry in entries:
             assert entry.metadata is not None, f"Entry {entry.dn} missing metadata"
-            assert entry.metadata.server_type == c.Tests.OID, (
-                f"Entry {entry.dn} should have server_type='{c.Tests.OID}', got {entry.metadata.server_type}"
-            )
+            assert str(entry.metadata.server_type) == effective_server_type
 
-    def test_oud_fixture_all_differences_captured(
+    # -- original DN capture ----------------------------------------------
+
+    def test_oid_parse_captures_complete_original_dn(
         self,
         parser: FlextLdifParser,
-        writer: p.Ldif.LdifClient,
     ) -> None:
-        """Test that ALL minimal differences in OUD fixtures are captured in metadata."""
-        fixture_path = (
-            Path(__file__).parent.parent
-            / "fixtures"
-            / c.Tests.OUD
-            / "oud_entries_fixtures.ldif"
+        """OID parsing records the complete original DN under extensions."""
+        content = (
+            "dn: cn=test,dc=example,dc=com\n"
+            "objectClass: top\n"
+            "cn: test\n"
         )
-        if not fixture_path.exists():
-            pytest.skip(f"OUD fixture not found: {fixture_path}")
-        parse_result = parser.parse_ldif_file(
-            path=fixture_path,
-            server_type=c.Tests.OUD,
-        )
-        assert parse_result.success, f"Parsing failed: {parse_result.error}"
-        parse_response = parse_result.value
-        entries = parse_response.entries
-        assert entries, "No entries parsed from OUD fixture"
 
-    def test_round_trip_oid_preserves_all_differences(
+        result = parser.parse_string(content=content, server_type=c.Tests.OID)
+
+        assert result.success, result.error
+        metadata = result.value.entries[0].metadata
+        assert metadata is not None
+        assert metadata.extensions["original_dn_complete"] == "cn=test,dc=example,dc=com"
+
+    def test_dn_whitespace_preserved_verbatim_on_parse(
         self,
         parser: FlextLdifParser,
-        writer: p.Ldif.LdifClient,
     ) -> None:
-        """Test round-trip: OID -> RFC -> OID preserves ALL differences."""
-        oid_ldif = "dn: cn=test, dc=example, dc=com\nobjectClass: top\nobjectClass: person\ncn: test\nsn: User\norcldasisenabled: 1\n"
-        parse_result = parser.parse_string(content=oid_ldif, server_type=c.Tests.OID)
-        assert parse_result.success
-        entries = parse_result.value.entries
-        assert len(entries) == 1
-        original_entry = entries[0]
-        assert original_entry.metadata is not None
-        assert "original_dn_complete" in original_entry.metadata.extensions
-        write_result = writer.write(
-            entries=[m.Ldif.Entry.model_validate(original_entry)],
+        """DN spacing is preserved exactly as written through the parse."""
+        content = (
+            "dn: cn=test, dc=example, dc=com\n"
+            "objectClass: top\n"
+            "cn: test\n"
         )
-        assert write_result.success
-        written_ldif = write_result.value.content
-        assert written_ldif is not None
-        assert written_ldif
-        assert "original_dn_complete" in original_entry.metadata.extensions
 
-    def test_spacing_differences_captured(self, parser: FlextLdifParser) -> None:
-        """Test that spacing differences (e.g., 'dc=example, dc=com' vs 'dc=example,dc=com') are captured."""
-        ldif_with_spaces = "dn: cn=test, dc=example, dc=com\nobjectClass: top\nobjectClass: person\ncn: test\n"
-        parse_result = parser.parse_string(
-            content=ldif_with_spaces,
-            server_type=c.Tests.RFC,
-        )
-        assert parse_result.success
-        entries = parse_result.value.entries
-        assert len(entries) == 1
-        entry = entries[0]
-        assert entry.metadata is not None
-        dn_differences = m.Ldif.DynamicMetadata.model_validate(
-            entry.metadata.extensions.get("minimal_differences_dn", {}),
-        )
-        if bool(dn_differences.get("has_differences")):
-            spacing_changes = dn_differences.get("spacing_changes", {})
-            assert spacing_changes is not None, "Spacing changes should be tracked"
+        result = parser.parse_string(content=content, server_type=c.Tests.RFC)
 
-    def test_case_differences_captured(self, parser: FlextLdifParser) -> None:
-        """Test that case differences (e.g., 'objectClass' vs 'objectclass') are captured."""
-        ldif_mixed_case = "dn: cn=test,dc=example,dc=com\nobjectClass: top\nobjectClass: person\ncn: test\n"
-        parse_result = parser.parse_string(
-            content=ldif_mixed_case,
-            server_type=c.Tests.RFC,
-        )
-        assert parse_result.success
-        entries = parse_result.value.entries
-        assert len(entries) == 1
-        entry = entries[0]
-        assert entry.metadata is not None
-        original_attrs = entry.metadata.extensions.get(
-            "original_attributes_complete",
-            {},
-        )
-        assert original_attrs is not None
+        assert result.success, result.error
+        entry = result.value.entries[0]
+        assert str(entry.dn) == "cn=test, dc=example, dc=com"
 
-    def test_punctuation_differences_captured(self, parser: FlextLdifParser) -> None:
-        """Test that punctuation differences (e.g., trailing semicolons) are captured."""
-        ldif = "dn: cn=test,dc=example,dc=com\nobjectClass: top\nobjectClass: person\ncn: test\n"
-        parse_result = parser.parse_string(content=ldif, server_type=c.Tests.RFC)
-        assert parse_result.success
-        entries = parse_result.value.entries
-        assert len(entries) == 1
-        entry = entries[0]
-        assert entry.metadata is not None
-        dn_differences = m.Ldif.DynamicMetadata.model_validate(
-            entry.metadata.extensions.get("minimal_differences_dn", {}),
-        )
-        if bool(dn_differences.get("has_differences")):
-            assert (
-                "spacing_changes" in dn_differences or "case_changes" in dn_differences
-            )
-        entry.metadata.extensions.get("original_dn_complete")
+    # -- boolean conversion metadata --------------------------------------
 
-    def test_boolean_conversion_tracked(self, parser: FlextLdifParser) -> None:
-        """Test that boolean conversions (0/1 -> TRUE/FALSE) are tracked in metadata."""
-        oid_ldif = "dn: cn=test,dc=example,dc=com\nobjectClass: top\nobjectClass: person\ncn: test\norcldasisenabled: 1\npwdlockout: 0\n"
-        parse_result = parser.parse_string(content=oid_ldif, server_type=c.Tests.OID)
-        assert parse_result.success
-        entries = parse_result.value.entries
-        assert len(entries) == 1
-        entry = entries[0]
-        assert entry.metadata is not None
-        converted_attrs = m.Ldif.DynamicMetadata.model_validate(
-            entry.metadata.extensions.get(c.Ldif.CONVERTED_ATTRIBUTES, {}),
+    @pytest.mark.parametrize(
+        ("attribute", "raw_value", "converted_value"),
+        [
+            ("orcldasisenabled", "1", "TRUE"),
+            ("pwdlockout", "0", "FALSE"),
+        ],
+    )
+    def test_oid_boolean_conversion_recorded_in_metadata(
+        self,
+        parser: FlextLdifParser,
+        attribute: str,
+        raw_value: str,
+        converted_value: str,
+    ) -> None:
+        """OID 0/1 booleans are recorded with original and converted values."""
+        content = (
+            "dn: cn=test,dc=example,dc=com\n"
+            "objectClass: top\n"
+            "cn: test\n"
+            f"{attribute}: {raw_value}\n"
+        )
+
+        result = parser.parse_string(content=content, server_type=c.Tests.OID)
+
+        assert result.success, result.error
+        metadata = result.value.entries[0].metadata
+        assert metadata is not None
+        converted = m.Ldif.DynamicMetadata.model_validate(
+            metadata.extensions[c.Ldif.CONVERTED_ATTRIBUTES],
         )
         boolean_conversions = m.Ldif.DynamicMetadata.model_validate(
-            converted_attrs.get(
-                c.Ldif.CONVERSION_BOOLEAN_CONVERSIONS,
-                {},
-            ),
+            converted[c.Ldif.CONVERSION_BOOLEAN_CONVERSIONS],
         )
-        if (
-            u.dict_non_empty(dict(boolean_conversions.items()))
-            and "orcldasisenabled" in boolean_conversions
-        ):
-            conv = m.Ldif.DynamicMetadata.model_validate(
-                boolean_conversions["orcldasisenabled"],
-            )
-            original_key = c.Ldif.CONVERSION_ORIGINAL_VALUE
-            converted_key = c.Ldif.CONVERSION_CONVERTED_VALUE
-            assert original_key in conv
-            assert converted_key in conv
-            assert conv[original_key] == ["1"]
-            assert conv[converted_key] == ["TRUE"]
+        assert attribute in boolean_conversions
+        entry_conversion = m.Ldif.DynamicMetadata.model_validate(
+            boolean_conversions[attribute],
+        )
+        assert entry_conversion[c.Ldif.CONVERSION_ORIGINAL_VALUE] == [raw_value]
+        assert entry_conversion[c.Ldif.CONVERSION_CONVERTED_VALUE] == [converted_value]
 
-    def test_soft_deleted_attributes_preserved(self, parser: FlextLdifParser) -> None:
-        """Test that soft-deleted attributes are preserved in metadata."""
-        ldif = "dn: cn=test,dc=example,dc=com\nobjectClass: top\nobjectClass: person\ncn: test\ncreatorsName: cn=Directory Manager\ncreateTimestamp: 20250101000000Z\n"
-        parse_result = parser.parse_string(content=ldif, server_type=c.Tests.RFC)
-        assert parse_result.success
-        entries = parse_result.value.entries
-        assert len(entries) == 1
-        entry = entries[0]
+    # -- round-trip write --------------------------------------------------
+
+    def test_round_trip_write_emits_converted_boolean_value(
+        self,
+        parser: FlextLdifParser,
+        writer: p.Ldif.LdifClient,
+    ) -> None:
+        """OID -> write converts the boolean and preserves the DN in output."""
+        content = (
+            "dn: cn=test,dc=example,dc=com\n"
+            "objectClass: top\n"
+            "cn: test\n"
+            "orcldasisenabled: 1\n"
+        )
+        parse_result = parser.parse_string(content=content, server_type=c.Tests.OID)
+        assert parse_result.success, parse_result.error
+        entry = m.Ldif.Entry.model_validate(parse_result.value.entries[0])
+
+        write_result = writer.write(entries=[entry])
+
+        assert write_result.success, write_result.error
+        written = write_result.value.content
+        assert written is not None
+        assert "dn: cn=test,dc=example,dc=com" in written
+        assert "orcldasisenabled: TRUE" in written
+
+    # -- operational attribute preservation -------------------------------
+
+    @pytest.mark.parametrize(
+        ("attribute", "value"),
+        [
+            ("creatorsName", "cn=Directory Manager"),
+            ("createTimestamp", "20250101000000Z"),
+        ],
+    )
+    def test_operational_attributes_preserved_through_parse(
+        self,
+        parser: FlextLdifParser,
+        attribute: str,
+        value: str,
+    ) -> None:
+        """Operational attributes survive parsing and stay publicly readable."""
+        content = (
+            "dn: cn=test,dc=example,dc=com\n"
+            "objectClass: top\n"
+            "cn: test\n"
+            "creatorsName: cn=Directory Manager\n"
+            "createTimestamp: 20250101000000Z\n"
+        )
+
+        result = parser.parse_string(content=content, server_type=c.Tests.RFC)
+
+        assert result.success, result.error
+        entry = result.value.entries[0]
         assert entry.metadata is not None
-        assert entry.metadata is not None
+        assert entry.attributes is not None
+        assert entry.attributes.get(attribute) == [value]
+
+    # -- invariants and error paths ---------------------------------------
+
+    def test_metadata_capture_is_idempotent_across_repeated_parses(
+        self,
+        parser: FlextLdifParser,
+    ) -> None:
+        """Parsing identical content twice yields identical metadata."""
+        content = (
+            "dn: cn=test,dc=example,dc=com\n"
+            "objectClass: top\n"
+            "cn: test\n"
+            "orcldasisenabled: 1\n"
+        )
+
+        first = parser.parse_string(content=content, server_type=c.Tests.OID)
+        second = parser.parse_string(content=content, server_type=c.Tests.OID)
+
+        assert first.success and second.success
+        first_meta = first.value.entries[0].metadata
+        second_meta = second.value.entries[0].metadata
+        assert first_meta is not None
+        assert second_meta is not None
+        assert str(first_meta.server_type) == str(second_meta.server_type)
+        assert first_meta.extensions == second_meta.extensions
+
+    def test_unknown_server_type_returns_failure_with_reason(
+        self,
+        parser: FlextLdifParser,
+    ) -> None:
+        """An unknown server_type fails with a descriptive error, not a crash."""
+        content = "dn: cn=test,dc=example,dc=com\ncn: test\n"
+
+        result = parser.parse_string(content=content, server_type="nonexistent_server")
+
+        assert not result.success
+        assert result.error is not None
+        assert "nonexistent_server" in result.error
 
 
 __all__: list[str] = ["TestsFlextLdifMinimalDifferencesMetadata"]

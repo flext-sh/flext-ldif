@@ -1,16 +1,14 @@
 """Edge case and boundary condition tests.
 
-Test suite for validating edge cases and boundary conditions:
-- Empty LDIF files
-- Single entry LDIF
-- Very large entries
-- Maximum nesting depth
-- Minimum required entries
-- Boundary values for attribute counts
-- Zero-length components
-- Unicode boundary cases
+Behavioral test suite for the public ``ldif()`` client contract under edge and
+boundary inputs. Every assertion targets observable public behavior only:
 
-Uses centralized fixtures from tests/integration/conftest.py.
+- The ``r[T]`` outcome of ``parse_ldif`` / ``write`` (``.success`` / ``.value``).
+- Public model state via the public API (``ParseResponse.entries``,
+  ``Entry.dn_str``, ``Entry.attributes_dict``, ``WriteResponse.content``).
+
+No private attributes, internal collaborators, or implementation data
+structures are inspected.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -27,332 +25,312 @@ from flext_ldif import ldif
 if TYPE_CHECKING:
     from tests.protocols import p
 
+_ZERO_WIDTH = "zero" + "\u200b" + "width" + "\u200b" + "spaces"
 
-class TestsFlextLdifEdgeCasesInt:
-    """Test edge cases for empty and minimal LDIF content."""
 
-    def test_completely_empty_ldif(self, api: p.Ldif.LdifClient) -> None:
-        """Test parsing of completely empty LDIF.
-
-        Validates:
-        - Empty string handled gracefully
-        - Returns empty entry list
-        - No errors on empty input
-        """
-        ldif_content = ""
-        result = api.parse_ldif(ldif_content)
-        assert result.success
-        entries = result.value.entries
-        assert not entries
-
-    def test_only_whitespace(self, api: p.Ldif.LdifClient) -> None:
-        """Test LDIF with only whitespace.
-
-        Validates:
-        - Whitespace-only content treated as empty
-        - No spurious entries created
-        - Graceful handling of blank input
-        """
-        ldif_content = "   \n\n  \t\n  "
-        result = api.parse_ldif(ldif_content)
-        assert result.success
-        entries = result.value.entries
-        assert not entries
-
-    def test_only_comments(self, api: p.Ldif.LdifClient) -> None:
-        """Test LDIF with only comment lines.
-
-        Validates:
-        - Comments-only content treated as empty
-        - All comment lines ignored
-        - No entry creation from comments
-        """
-        ldif_content = "# Comment line 1\n# Comment line 2\n# Comment line 3\n"
-        result = api.parse_ldif(ldif_content)
-        assert result.success
-        entries = result.value.entries
-        assert not entries
-
-    def test_single_entry_minimal(self, api: p.Ldif.LdifClient) -> None:
-        """Test minimal single entry.
-
-        Validates:
-        - Single entry with only DN parsed
-        - No attributes required
-        - Returns exactly one entry
-        """
-        ldif_content = "dn: cn=Single,dc=example,dc=com\n"
-        result = api.parse_ldif(ldif_content)
-        assert result.success
-        entries = result.value.entries
-        assert len(entries) == 1
-        assert str(entries[0].dn).lower() == "cn=single,dc=example,dc=com"
-
-    def test_minimal_with_one_attribute(self, api: p.Ldif.LdifClient) -> None:
-        """Test minimal entry with one attribute.
-
-        Validates:
-        - DN plus single attribute sufficient
-        - Minimal objectClass optional
-        - Entry parses successfully
-        """
-        ldif_content = "dn: cn=OneAttr,dc=example,dc=com\ncn: OneAttr\n"
-        result = api.parse_ldif(ldif_content)
-        assert result.success
-        entries = result.value.entries
-        assert len(entries) == 1
-
-    """Test edge cases for large and complex LDIF content."""
-
-    def test_entry_with_many_attributes(self, api: p.Ldif.LdifClient) -> None:
-        """Test entry with many attributes (100+).
-
-        Validates:
-        - Large number of attributes handled
-        - All attributes preserved
-        - No truncation or loss
-        """
-        attributes = "".join(f"mail: user{i}@example.com\n" for i in range(100))
-        ldif_content = f"dn: cn=ManyAttrs,dc=example,dc=com\nobjectClass: person\ncn: ManyAttrs\n{attributes}"
-        result = api.parse_ldif(ldif_content)
-        assert result.success
-        entries = result.value.entries
-        assert len(entries) == 1
-        assert entries[0].attributes is not None
-        assert entries[0].attributes.attributes
-
-    def test_entry_with_many_values_per_attribute(
-        self,
-        api: p.Ldif.LdifClient,
-    ) -> None:
-        """Test single attribute with many values (100+).
-
-        Validates:
-        - Multi-valued attributes with many values
-        - All values preserved
-        - No value loss
-        """
-        values = "".join(f"mail: user{i}@example.com\n" for i in range(100))
-        ldif_content = f"dn: cn=ManyValues,dc=example,dc=com\nobjectClass: person\ncn: ManyValues\n{values}"
-        result = api.parse_ldif(ldif_content)
-        assert result.success
-        entries = result.value.entries
-        assert len(entries) == 1
-
-    def test_very_long_single_value(self, api: p.Ldif.LdifClient) -> None:
-        """Test attribute with very long single value (10KB+).
-
-        Validates:
-        - Large attribute values handled
-        - No buffer overflow
-        - Value completely preserved
-        """
-        long_value = "x" * 10000
-        ldif_content = f"dn: cn=LongValue,dc=example,dc=com\nobjectClass: person\ncn: LongValue\ndescription: {long_value}\n"
-        result = api.parse_ldif(ldif_content)
-        assert result.success
-        entries = result.value.entries
-        assert len(entries) == 1
-
-    def test_deeply_nested_dn_hierarchy(self, api: p.Ldif.LdifClient) -> None:
-        """Test DN with deep nesting (10+ levels).
-
-        Validates:
-        - Deep DN hierarchy supported
-        - All components preserved
-        - DN parsing handles depth
-        """
-        deep_dn = ",".join(f"ou=level{i}" for i in range(10))
-        deep_dn += ",dc=example,dc=com"
-        ldif_content = f"dn: cn=DeepNest,{deep_dn}\nobjectClass: person\ncn: DeepNest\n"
-        result = api.parse_ldif(ldif_content)
-        assert result.success
-        entries = result.value.entries
-        assert len(entries) == 1
-
-    """Test boundary value conditions."""
-
-    def test_single_character_values(self, api: p.Ldif.LdifClient) -> None:
-        """Test attributes with single character values.
-
-        Validates:
-        - Single character DN components
-        - Single character attribute values
-        - Minimal but valid content
-        """
-        ldif_content = "dn: cn=A,dc=B\nobjectClass: X\ncn: A\nsn: B\n"
-        result = api.parse_ldif(ldif_content)
-        assert result.success
-        entries = result.value.entries
-        assert len(entries) == 1
-
-    def test_special_single_characters(self, api: p.Ldif.LdifClient) -> None:
-        """Test special single characters in values.
-
-        Validates:
-        - Special chars as single values work
-        - No parsing errors
-        - Values preserved exactly
-        """
-        ldif_content = "dn: cn=Special,dc=example,dc=com\ncn: Special\nsn: *\nmail: +\ndescription: -\n"
-        result = api.parse_ldif(ldif_content)
-        assert result.success
-        entries = result.value.entries
-        assert len(entries) == 1
-
-    def test_maximum_rdn_components(self, api: p.Ldif.LdifClient) -> None:
-        """Test DN with maximum RDN components.
-
-        Validates:
-        - Many RDN components in DN
-        - All preserved correctly
-        - DN remains valid
-        """
-        rdn_count = 20
-        dn_components = ",".join(f"ou=ou{i}" for i in range(rdn_count))
-        dn_components += ",dc=example,dc=com"
-        ldif_content = (
-            f"dn: cn=MaxRDN,{dn_components}\nobjectClass: person\ncn: MaxRDN\n"
-        )
-        result = api.parse_ldif(ldif_content)
-        assert result.success
-        entries = result.value.entries
-        assert len(entries) == 1
-
-    def test_minimum_valid_dn(self, api: p.Ldif.LdifClient) -> None:
-        """Test absolute minimum valid DN.
-
-        Validates:
-        - Single RDN component DN valid
-        - Shortest DN format works
-        - Still properly parsed
-        """
-        ldif_content = "dn: cn=MinDN\nobjectClass: top\ncn: MinDN\n"
-        result = api.parse_ldif(ldif_content)
-        assert result is not None
-
-    """Test Unicode and character encoding boundaries."""
-
-    def test_bmp_characters(self, api: p.Ldif.LdifClient) -> None:
-        """Test Basic Multilingual Plane characters (U+0000 to U+FFFF).
-
-        Validates:
-        - BMP Unicode characters supported
-        - Common international characters work
-        - Proper encoding handling
-        """
-        ldif_content = "dn: cn=BMP,dc=example,dc=com\ncn: BMP\ndescription: Contains BMP: café, naïve, résumé, 中文, 日本語, العربية\n"
-        result = api.parse_ldif(ldif_content)
-        assert result.success
-
-    def test_supplementary_plane_characters(self, api: p.Ldif.LdifClient) -> None:
-        """Test Supplementary Plane characters (U+10000+).
-
-        Validates:
-        - Emoji and rare Unicode supported
-        - Proper multi-byte handling
-        - No truncation of supplementary chars
-        """
-        ldif_content = "dn: cn=Supplementary,dc=example,dc=com\ncn: Supplementary\ndescription: Contains emoji: 😀 🎉 🚀\n"
-        result = api.parse_ldif(ldif_content)
-        assert result.success
-
-    def test_zero_width_characters(self, api: p.Ldif.LdifClient) -> None:
-        """Test zero-width and invisible characters.
-
-        Validates:
-        - Zero-width spaces handled
-        - Invisible formatting chars supported
-        - Preserved in roundtrip
-        """
-        ldif_content = "dn: cn=ZeroWidth,dc=example,dc=com\ncn: ZeroWidth\ndescription: Contains\u200bzero\u200bwidth\u200bspaces\n"
-        result = api.parse_ldif(ldif_content)
-        assert result.success
-
-    def test_combining_characters(self, api: p.Ldif.LdifClient) -> None:
-        """Test combining diacritical marks.
-
-        Validates:
-        - Combining marks work correctly
-        - Decomposed vs. composed handled
-        - Text normalization working
-        """
-        ldif_content = "dn: cn=Combining,dc=example,dc=com\ncn: Combining\ndescription: Contains combining: é (e + ́)\n"
-        result = api.parse_ldif(ldif_content)
-        assert result.success
-
-    """Test roundtrip parsing with edge cases."""
+class TestsFlextLdifEdgeCases:
+    """Behavioral edge-case coverage for the public LDIF client contract."""
 
     @pytest.fixture
     def api(self) -> p.Ldif.LdifClient:
-        """Ldif API instance."""
+        """Public LDIF client instance."""
         return ldif()
 
-    def test_roundtrip_empty(self, api: p.Ldif.LdifClient) -> None:
-        """Test roundtrip of empty LDIF.
+    # -- Empty / minimal content -------------------------------------------
 
-        Validates:
-        - Empty → write → empty produces empty or version line only
-        - No spurious entries created
-        - Consistent round-trip
-        """
-        ldif_content = ""
-        result = api.parse_ldif(ldif_content)
-        assert result.success
-        entries = result.value.entries
-        assert not entries
-        write_result = api.write(entries)
-        assert write_result.success
-        written = write_result.value.content
-        assert written is not None
-        assert not written or written.isspace() or written.strip() == "version: 1"
+    @pytest.mark.parametrize(
+        ("label", "content"),
+        [
+            ("empty", ""),
+            ("whitespace", "   \n\n  \t\n  "),
+            ("comments", "# Comment 1\n# Comment 2\n# Comment 3\n"),
+        ],
+    )
+    def test_content_without_entries_parses_to_empty_list(
+        self,
+        api: p.Ldif.LdifClient,
+        label: str,
+        content: str,
+    ) -> None:
+        """Empty, whitespace-only, and comment-only input yield zero entries."""
+        result = api.parse_ldif(content)
 
-    def test_roundtrip_single_minimal_entry(self, api: p.Ldif.LdifClient) -> None:
-        """Test roundtrip of single minimal entry.
+        assert result.success, f"{label}: {result.error}"
+        assert result.value.entries == []
 
-        Validates:
-        - Single entry roundtrips correctly
-        - DN preserved
-        - No attribute loss
-        """
-        ldif_content = "dn: cn=Test,dc=example,dc=com\ncn: Test\n"
-        result = api.parse_ldif(ldif_content)
+    def test_single_entry_with_only_dn_preserves_dn(
+        self,
+        api: p.Ldif.LdifClient,
+    ) -> None:
+        """A minimal DN-only entry yields exactly one entry with that DN."""
+        result = api.parse_ldif("dn: cn=Single,dc=example,dc=com\n")
+
         assert result.success
         entries = result.value.entries
         assert len(entries) == 1
-        write_result = api.write(entries)
-        assert write_result.success
-        written_content = write_result.value.content
-        assert written_content is not None
-        roundtrip_result = api.parse_ldif(written_content)
-        assert roundtrip_result.success
-        roundtrip_entries = roundtrip_result.value.entries
-        assert len(roundtrip_entries) == 1
+        assert entries[0].dn_str.lower() == "cn=single,dc=example,dc=com"
 
-    def test_roundtrip_with_many_entries(self, api: p.Ldif.LdifClient) -> None:
-        """Test roundtrip with many entries (100+).
-
-        Validates:
-        - Large entry count handled
-        - All entries preserved
-        - Correct count on roundtrip
-        """
-        entries_ldif = "\n".join(
-            f"dn: cn=Entry{i},dc=example,dc=com\nobjectClass: person\ncn: Entry{i}\nsn: Test{i}"
-            for i in range(100)
+    def test_single_entry_with_one_attribute_preserves_value(
+        self,
+        api: p.Ldif.LdifClient,
+    ) -> None:
+        """DN plus a single attribute round-trips the attribute value."""
+        result = api.parse_ldif(
+            "dn: cn=OneAttr,dc=example,dc=com\ncn: OneAttr\n",
         )
-        result = api.parse_ldif(entries_ldif)
+
         assert result.success
         entries = result.value.entries
-        initial_count = len(entries)
-        write_result = api.write(entries)
+        assert len(entries) == 1
+        assert entries[0].attributes_dict["cn"] == ["OneAttr"]
+
+    # -- Large / complex content -------------------------------------------
+
+    def test_entry_with_many_attribute_values_preserves_all(
+        self,
+        api: p.Ldif.LdifClient,
+    ) -> None:
+        """A multi-valued attribute with 100 values preserves every value."""
+        expected = [f"user{i}@example.com" for i in range(100)]
+        values = "".join(f"mail: {v}\n" for v in expected)
+        content = (
+            "dn: cn=ManyValues,dc=example,dc=com\n"
+            "objectClass: person\ncn: ManyValues\n" + values
+        )
+
+        result = api.parse_ldif(content)
+
+        assert result.success
+        entries = result.value.entries
+        assert len(entries) == 1
+        assert entries[0].attributes_dict["mail"] == expected
+
+    def test_entry_preserves_all_distinct_attribute_names(
+        self,
+        api: p.Ldif.LdifClient,
+    ) -> None:
+        """Every distinct attribute in the input is present after parsing."""
+        content = (
+            "dn: cn=Multi,dc=example,dc=com\n"
+            "objectClass: person\ncn: Multi\nsn: Surname\n"
+            "mail: multi@example.com\ntelephoneNumber: 12345\n"
+            "description: an entry\n"
+        )
+
+        result = api.parse_ldif(content)
+
+        assert result.success
+        attrs = result.value.entries[0].attributes_dict
+        assert set(attrs) >= {
+            "objectClass",
+            "cn",
+            "sn",
+            "mail",
+            "telephoneNumber",
+            "description",
+        }
+
+    def test_very_long_single_value_preserved_intact(
+        self,
+        api: p.Ldif.LdifClient,
+    ) -> None:
+        """A 10KB attribute value is preserved without truncation."""
+        long_value = "x" * 10_000
+        content = (
+            "dn: cn=LongValue,dc=example,dc=com\n"
+            "objectClass: person\ncn: LongValue\n"
+            f"description: {long_value}\n"
+        )
+
+        result = api.parse_ldif(content)
+
+        assert result.success
+        assert result.value.entries[0].attributes_dict["description"] == [
+            long_value,
+        ]
+
+    def test_deeply_nested_dn_hierarchy_preserved(
+        self,
+        api: p.Ldif.LdifClient,
+    ) -> None:
+        """A DN with 10+ nesting levels is preserved verbatim."""
+        deep_dn = ",".join(f"ou=level{i}" for i in range(10))
+        full_dn = f"cn=DeepNest,{deep_dn},dc=example,dc=com"
+        content = f"dn: {full_dn}\nobjectClass: person\ncn: DeepNest\n"
+
+        result = api.parse_ldif(content)
+
+        assert result.success
+        entries = result.value.entries
+        assert len(entries) == 1
+        assert entries[0].dn_str.lower() == full_dn.lower()
+
+    # -- Boundary values ----------------------------------------------------
+
+    def test_single_character_components_parse(
+        self,
+        api: p.Ldif.LdifClient,
+    ) -> None:
+        """Single-character DN and attribute values are accepted and kept."""
+        result = api.parse_ldif("dn: cn=A,dc=B\nobjectClass: X\ncn: A\nsn: B\n")
+
+        assert result.success
+        entry = result.value.entries[0]
+        assert entry.attributes_dict["cn"] == ["A"]
+        assert entry.attributes_dict["sn"] == ["B"]
+
+    @pytest.mark.parametrize(
+        ("attribute", "value"),
+        [("sn", "*"), ("mail", "+"), ("description", "-")],
+    )
+    def test_special_single_character_values_preserved(
+        self,
+        api: p.Ldif.LdifClient,
+        attribute: str,
+        value: str,
+    ) -> None:
+        """Special single-character values are preserved exactly."""
+        content = (
+            "dn: cn=Special,dc=example,dc=com\n"
+            f"cn: Special\n{attribute}: {value}\n"
+        )
+
+        result = api.parse_ldif(content)
+
+        assert result.success
+        assert result.value.entries[0].attributes_dict[attribute] == [value]
+
+    def test_many_rdn_components_preserved(
+        self,
+        api: p.Ldif.LdifClient,
+    ) -> None:
+        """A DN with many RDN components is preserved verbatim."""
+        components = ",".join(f"ou=ou{i}" for i in range(20))
+        full_dn = f"cn=MaxRDN,{components},dc=example,dc=com"
+        content = f"dn: {full_dn}\nobjectClass: person\ncn: MaxRDN\n"
+
+        result = api.parse_ldif(content)
+
+        assert result.success
+        assert result.value.entries[0].dn_str.lower() == full_dn.lower()
+
+    def test_minimum_single_rdn_dn_parses(
+        self,
+        api: p.Ldif.LdifClient,
+    ) -> None:
+        """The shortest valid single-RDN DN parses to one preserved entry."""
+        result = api.parse_ldif("dn: cn=MinDN\nobjectClass: top\ncn: MinDN\n")
+
+        assert result.success
+        entries = result.value.entries
+        assert len(entries) == 1
+        assert entries[0].dn_str.lower() == "cn=mindn"
+
+    # -- Unicode / encoding boundaries -------------------------------------
+
+    @pytest.mark.parametrize(
+        ("label", "text"),
+        [
+            ("bmp", "café, naïve, résumé, 中文, 日本語, العربية"),
+            ("supplementary", "emoji: 😀 🎉 🚀"),
+            ("zero_width", _ZERO_WIDTH),
+            ("combining", "combining: é (e + ́)"),
+        ],
+    )
+    def test_unicode_description_preserved_exactly(
+        self,
+        api: p.Ldif.LdifClient,
+        label: str,
+        text: str,
+    ) -> None:
+        """Unicode across all ranges is preserved exactly in parsed values."""
+        content = (
+            "dn: cn=Unicode,dc=example,dc=com\n"
+            f"cn: Unicode\ndescription: {text}\n"
+        )
+
+        result = api.parse_ldif(content)
+
+        assert result.success, f"{label}: {result.error}"
+        assert result.value.entries[0].attributes_dict["description"] == [text]
+
+    def test_base64_encoded_value_is_decoded(
+        self,
+        api: p.Ldif.LdifClient,
+    ) -> None:
+        """A ``::`` base64 attribute value is decoded to its plain text."""
+        content = (
+            "dn: cn=B64,dc=example,dc=com\ncn: B64\ndescription:: aGVsbG8=\n"
+        )
+
+        result = api.parse_ldif(content)
+
+        assert result.success
+        assert result.value.entries[0].attributes_dict["description"] == [
+            "hello",
+        ]
+
+    # -- Roundtrip invariants ----------------------------------------------
+
+    def test_empty_roundtrip_produces_no_entries(
+        self,
+        api: p.Ldif.LdifClient,
+    ) -> None:
+        """Parsing empty input then writing yields empty/version-only output."""
+        result = api.parse_ldif("")
+        assert result.success
+        assert result.value.entries == []
+
+        write_result = api.write(result.value.entries)
         assert write_result.success
-        written_content = write_result.value.content
-        assert written_content is not None
-        roundtrip_result = api.parse_ldif(written_content)
-        assert roundtrip_result.success
-        roundtrip_entries = roundtrip_result.value.entries
-        assert len(roundtrip_entries) == initial_count
+        written = write_result.value.content
+        assert written is not None
+        assert not written.strip() or written.strip() == "version: 1"
+
+    def test_single_entry_roundtrip_preserves_dn_and_value(
+        self,
+        api: p.Ldif.LdifClient,
+    ) -> None:
+        """Parse -> write -> parse preserves the entry DN and attribute."""
+        result = api.parse_ldif("dn: cn=Test,dc=example,dc=com\ncn: Test\n")
+        assert result.success
+
+        write_result = api.write(result.value.entries)
+        assert write_result.success
+        content = write_result.value.content
+        assert content is not None
+
+        roundtrip = api.parse_ldif(content)
+        assert roundtrip.success
+        entries = roundtrip.value.entries
+        assert len(entries) == 1
+        assert entries[0].dn_str.lower() == "cn=test,dc=example,dc=com"
+        assert entries[0].attributes_dict["cn"] == ["Test"]
+
+    def test_many_entries_roundtrip_preserves_count_and_dns(
+        self,
+        api: p.Ldif.LdifClient,
+    ) -> None:
+        """A 100-entry roundtrip preserves both the count and every DN."""
+        source = "\n\n".join(
+            f"dn: cn=Entry{i},dc=example,dc=com\n"
+            f"objectClass: person\ncn: Entry{i}\nsn: Test{i}"
+            for i in range(100)
+        )
+        result = api.parse_ldif(source)
+        assert result.success
+        original_dns = [e.dn_str.lower() for e in result.value.entries]
+        assert len(original_dns) == 100
+
+        write_result = api.write(result.value.entries)
+        assert write_result.success
+        content = write_result.value.content
+        assert content is not None
+
+        roundtrip = api.parse_ldif(content)
+        assert roundtrip.success
+        roundtrip_dns = [e.dn_str.lower() for e in roundtrip.value.entries]
+        assert roundtrip_dns == original_dns
 
 
-__all__: list[str] = ["TestsFlextLdifEdgeCasesInt"]
+__all__: list[str] = ["TestsFlextLdifEdgeCases"]

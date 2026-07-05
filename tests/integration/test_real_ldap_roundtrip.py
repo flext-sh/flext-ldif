@@ -1,15 +1,13 @@
-"""LDIF roundtrip operations with live LDAP server.
+"""Behavioral roundtrip test for LDIF operations against a live LDAP server.
 
-Test suite verifying LDIF operations against an actual LDAP server:
-    - Parse and write LDIF from/to LDAP server
-    - Validate roundtrip data integrity (LDAP → LDIF → LDAP)
-    - Extract and process schema information
-    - Handle ACL entries
-    - Perform CRUD operations
-    - Process batches of entries
-
-Uses Docker fixture infrastructure from conftest.py for automatic
-container management via tk.ldap_container fixture.
+Verifies the observable public contract of the ``ldif()`` API end to end:
+an entry read from a real LDAP server, serialized to LDIF and parsed back,
+must re-materialize into an entry whose public state (DN, objectClass set,
+scalar and multi-valued attributes) is identical to the original. Only the
+public surface is exercised -- ``write``/``parse_ldif`` returning ``r[T]``,
+``m.Ldif.Entry.create``, the ``attributes_dict`` computed field and the
+``u.Ldif.get_attribute_values`` utility. The LDAP server is a genuine
+external boundary reached through the ``ldap_connection`` fixture.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -27,17 +25,24 @@ from tests.models import m
 from tests.utilities import u
 
 if TYPE_CHECKING:
-    from collections.abc import (
-        Callable,
-    )
+    from collections.abc import Callable
 
     from tests.protocols import p
     from tests.typings import t
 
+# Attributes that LDIF/LDAP layers may inject and that are not part of the
+# user-supplied contract under test.
+_LDIF_OPERATIONAL_ATTRS: frozenset[str] = frozenset({
+    "changetype",
+    "control",
+    "modifytimestamp",
+    "modifiersname",
+})
+
 
 @pytest.fixture
 def flext_api() -> p.Ldif.LdifClient:
-    """Ldif API instance."""
+    """Live ``ldif()`` API instance."""
     return ldif()
 
 
@@ -45,87 +50,92 @@ def flext_api() -> p.Ldif.LdifClient:
 @pytest.mark.integration
 @pytest.mark.real_ldap
 class TestsFlextLdifRealLdapRoundtrip:
-    """Test LDAP → LDIF → LDAP data roundtrip."""
+    """Behavioral contract: LDAP -> LDIF -> LDAP preserves entry state."""
 
-    def test_roundtrip_preserves_data(
+    @staticmethod
+    def _read_ldap_attrs(
+        ldap_connection: p.Ldap.Ldap3Connection,
+        dn: str,
+    ) -> t.MutableAttributeMapping:
+        """Read one LDAP entry back as a plain attribute mapping (boundary)."""
+        assert ldap_connection.search(dn, "(objectClass=*)", attributes=["*"])
+        entry = ldap_connection.entries[0]
+        attrs: t.MutableAttributeMapping = {}
+        for name in entry.entry_attributes:
+            value = entry[name]
+            if hasattr(value, "values"):
+                attrs[name] = [
+                    v if isinstance(v, str) else str(v) for v in value.values
+                ]
+            else:
+                attrs[name] = [str(value)]
+        return attrs
+
+    def test_roundtrip_through_ldif_preserves_entry_state(
         self,
         ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
         flext_api: p.Ldif.LdifClient,
         make_test_username: Callable[[str], str],
     ) -> None:
-        """Verify LDAP → LDIF → LDAP preserves data integrity."""
-        unique_username = make_test_username("RoundtripTest")
-        original_dn = f"cn={unique_username},{clean_test_ou}"
-        original_attrs: t.MutableAttributeMapping = {
-            "cn": unique_username,
+        """LDAP -> LDIF -> LDAP yields an entry with identical public state."""
+        # Arrange: create a source entry directly in LDAP.
+        username = make_test_username("RoundtripTest")
+        source_dn = f"cn={username},{clean_test_ou}"
+        source_attrs: t.MutableAttributeMapping = {
+            "cn": username,
             "sn": "Test",
             "mail": "roundtrip@example.com",
             "telephoneNumber": ["+1-555-1111", "+1-555-2222"],
             "description": "Multi-line\ndescription\ntest",
         }
-        ldap_connection.add(original_dn, ["person", "inetOrgPerson"], original_attrs)
-        ldap_connection.search(original_dn, "(objectClass=*)", attributes=["*"])
-        ldap_entry = ldap_connection.entries[0]
-        attrs_dict: t.MutableAttributeMapping = {}
-        for attr_name in ldap_entry.entry_attributes:
-            attr_obj = ldap_entry[attr_name]
-            if hasattr(attr_obj, "values"):
-                values = [
-                    str(v) if not isinstance(v, str) else v for v in attr_obj.values
-                ]
-            else:
-                values = [str(attr_obj)]
-            attrs_dict[attr_name] = values
-        assert ldap_entry.entry_dn is not None
+        ldap_connection.add(source_dn, ["person", "inetOrgPerson"], source_attrs)
+        read_back = self._read_ldap_attrs(ldap_connection, source_dn)
+
         entry_result = m.Ldif.Entry.create(
-            dn=ldap_entry.entry_dn,
-            attributes=attrs_dict,
+            dn=source_dn,
+            attributes=read_back,
             metadata=None,
         )
-        assert entry_result.success
-        flext_entry = entry_result.value
-        write_result = flext_api.write([flext_entry])
-        assert write_result.success
-        ldif_output = write_result.value.content
-        assert ldif_output is not None
-        unique_username_copy = make_test_username("RoundtripTestCopy")
-        reimport_dn = f"cn={unique_username_copy},{clean_test_ou}"
-        parse_result = flext_api.parse_ldif(ldif_output)
-        assert parse_result.success
-        parsed_entries = parse_result.value.entries
+        assert entry_result.success, entry_result.error
+        source_entry = entry_result.unwrap()
+
+        # Act: serialize to LDIF, then parse the LDIF back.
+        write_result = flext_api.write([source_entry])
+        assert write_result.success, write_result.error
+        ldif_text = write_result.unwrap().content
+        assert ldif_text
+
+        parse_result = flext_api.parse_ldif(ldif_text)
+        assert parse_result.success, parse_result.error
+        parsed_entries = parse_result.unwrap().entries
+
+        # Assert: exactly one entry survives, with the same DN.
         assert len(parsed_entries) == 1
-        reimport_entry = parsed_entries[0]
-        ldif_special_attrs = {
-            "changetype",
-            "control",
-            "modifyTimestamp",
-            "modifiersName",
+        parsed_entry = parsed_entries[0]
+        assert parsed_entry.dn_str == source_dn
+
+        # Assert: objectClass set is preserved through the roundtrip.
+        object_classes = u.Ldif.get_attribute_values(parsed_entry, "objectclass")
+        assert {oc.lower() for oc in object_classes} == {"person", "inetorgperson"}
+
+        # Re-import the parsed entry into LDAP via its PUBLIC attribute view.
+        copy_dn = f"cn={make_test_username('RoundtripTestCopy')},{clean_test_ou}"
+        parsed_attrs = parsed_entry.attributes_dict
+        add_attrs: t.MutableAttributeMapping = {
+            name: values
+            for name, values in parsed_attrs.items()
+            if name.lower() not in _LDIF_OPERATIONAL_ATTRS
+            and name.lower() != "objectclass"
         }
-        attrs = reimport_entry.attributes
-        assert attrs is not None
-        obj_class_values = u.Ldif.get_attribute_values(reimport_entry, "objectclass")
-        assert isinstance(obj_class_values, list)
-        ldap_connection.add(
-            reimport_dn,
-            obj_class_values,
-            attributes={
-                attr: attrs.attributes[attr]
-                for attr in attrs.attributes
-                if attr.lower() not in ldif_special_attrs
-                and attr.lower() != "objectclass"
-            },
-        )
-        assert ldap_connection.search(reimport_dn, "(objectClass=*)", attributes=["*"])
-        reimported = ldap_connection.entries[0]
-        assert isinstance(original_attrs["sn"], str)
-        assert isinstance(original_attrs["mail"], str)
-        assert isinstance(original_attrs["telephoneNumber"], list)
-        assert reimported["sn"].value == original_attrs["sn"]
-        assert reimported["mail"].value == original_attrs["mail"]
-        assert set(reimported["telephoneNumber"].values) == set(
-            original_attrs["telephoneNumber"],
-        )
+        ldap_connection.add(copy_dn, object_classes, attributes=add_attrs)
+
+        # Assert: the re-imported LDAP entry matches the original observable values.
+        reimported = self._read_ldap_attrs(ldap_connection, copy_dn)
+        assert reimported["sn"] == ["Test"]
+        assert reimported["mail"] == ["roundtrip@example.com"]
+        assert set(reimported["telephoneNumber"]) == {"+1-555-1111", "+1-555-2222"}
+        assert reimported["description"] == ["Multi-line\ndescription\ntest"]
 
 
 __all__: list[str] = ["TestsFlextLdifRealLdapRoundtrip"]
