@@ -8,10 +8,18 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
-    from flext_ldif.servers._rfc.constants import FlextLdifServersRfcConstants
-    from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
-    from flext_ldif.servers._rfc.schema import FlextLdifServersRfcSchema
+    from flext_ldif.servers._rfc.acl import (
+        FlextLdifServersRfcAcl as FlextLdifServersRfcAcl,
+    )
+    from flext_ldif.servers._rfc.constants import (
+        FlextLdifServersRfcConstants as FlextLdifServersRfcConstants,
+    )
+    from flext_ldif.servers._rfc.entry import (
+        FlextLdifServersRfcEntry as FlextLdifServersRfcEntry,
+    )
+    from flext_ldif.servers._rfc.schema import (
+        FlextLdifServersRfcSchema as FlextLdifServersRfcSchema,
+    )
 _LAZY_IMPORTS = build_lazy_import_map(
     {
         ".acl": ("FlextLdifServersRfcAcl",),
