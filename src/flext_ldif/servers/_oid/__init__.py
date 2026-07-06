@@ -8,33 +8,15 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_ldif.servers._oid.acl import (
-        FlextLdifServersOidAcl as FlextLdifServersOidAcl,
-    )
-    from flext_ldif.servers._oid.acl_assemble import (
-        FlextLdifServersOidAclAssemble as FlextLdifServersOidAclAssemble,
-    )
-    from flext_ldif.servers._oid.acl_convert import (
-        FlextLdifServersOidAclConvert as FlextLdifServersOidAclConvert,
-    )
-    from flext_ldif.servers._oid.acl_convert_oud import (
-        FlextLdifServersOidAclToOud as FlextLdifServersOidAclToOud,
-    )
-    from flext_ldif.servers._oid.acl_pipeline import (
-        FlextLdifServersOidAclPipeline as FlextLdifServersOidAclPipeline,
-    )
-    from flext_ldif.servers._oid.acl_render import (
-        FlextLdifServersOidAclRender as FlextLdifServersOidAclRender,
-    )
-    from flext_ldif.servers._oid.constants import (
-        FlextLdifServersOidConstants as FlextLdifServersOidConstants,
-    )
-    from flext_ldif.servers._oid.entry import (
-        FlextLdifServersOidEntry as FlextLdifServersOidEntry,
-    )
-    from flext_ldif.servers._oid.schema import (
-        FlextLdifServersOidSchema as FlextLdifServersOidSchema,
-    )
+    from flext_ldif.servers._oid.acl import FlextLdifServersOidAcl
+    from flext_ldif.servers._oid.acl_assemble import FlextLdifServersOidAclAssemble
+    from flext_ldif.servers._oid.acl_convert import FlextLdifServersOidAclConvert
+    from flext_ldif.servers._oid.acl_convert_oud import FlextLdifServersOidAclToOud
+    from flext_ldif.servers._oid.acl_pipeline import FlextLdifServersOidAclPipeline
+    from flext_ldif.servers._oid.acl_render import FlextLdifServersOidAclRender
+    from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
+    from flext_ldif.servers._oid.entry import FlextLdifServersOidEntry
+    from flext_ldif.servers._oid.schema import FlextLdifServersOidSchema
 _LAZY_IMPORTS = build_lazy_import_map(
     {
         ".acl": ("FlextLdifServersOidAcl",),
