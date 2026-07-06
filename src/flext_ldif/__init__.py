@@ -23,11 +23,23 @@ from flext_ldif.__version__ import (
 
 if TYPE_CHECKING:
     from flext_cli import d, e, h, r, x
-    from flext_ldif.api import FlextLdif
+    from flext_ldif.api import FlextLdif, ldif
     from flext_ldif.base import FlextLdifServiceBase, s
     from flext_ldif.constants import FlextLdifConstants, c
     from flext_ldif.models import FlextLdifModels, m
     from flext_ldif.protocols import FlextLdifProtocols, p
+    from flext_ldif.servers.ad import FlextLdifServersAd
+    from flext_ldif.servers.apache import FlextLdifServersApache
+    from flext_ldif.servers.base import FlextLdifServersBase
+    from flext_ldif.servers.ds389 import FlextLdifServersDs389
+    from flext_ldif.servers.novell import FlextLdifServersNovell
+    from flext_ldif.servers.oid import FlextLdifServersOid
+    from flext_ldif.servers.openldap import FlextLdifServersOpenldap
+    from flext_ldif.servers.openldap1 import FlextLdifServersOpenldap1
+    from flext_ldif.servers.oud import FlextLdifServersOud
+    from flext_ldif.servers.relaxed import FlextLdifServersRelaxed
+    from flext_ldif.servers.rfc import FlextLdifServersRfc
+    from flext_ldif.servers.tivoli import FlextLdifServersTivoli
     from flext_ldif.services.acl import FlextLdifAcl
     from flext_ldif.services.analysis import FlextLdifAnalysis
     from flext_ldif.services.categorization import FlextLdifCategorization
@@ -60,7 +72,10 @@ if TYPE_CHECKING:
     from flext_ldif.typings import FlextLdifTypes, t
     from flext_ldif.utilities import FlextLdifUtilities, u
 _LAZY_IMPORTS = merge_lazy_imports(
-    (".services",),
+    (
+        ".servers",
+        ".services",
+    ),
     build_lazy_import_map(
         {
             ".api": (
@@ -83,6 +98,47 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "FlextLdifProtocols",
                 "p",
             ),
+            ".servers._base.acl": ("FlextLdifServersBaseSchemaAcl",),
+            ".servers._base.constants": ("FlextLdifServersBaseConstants",),
+            ".servers._base.entry": ("FlextLdifServersBaseEntry",),
+            ".servers._base.mixins": ("FlextLdifServerMethodsMixin",),
+            ".servers._base.schema": ("FlextLdifServersBaseSchema",),
+            ".servers._oid.acl": ("FlextLdifServersOidAcl",),
+            ".servers._oid.acl_assemble": ("FlextLdifServersOidAclAssemble",),
+            ".servers._oid.acl_convert": ("FlextLdifServersOidAclConvert",),
+            ".servers._oid.acl_convert_oud": ("FlextLdifServersOidAclToOud",),
+            ".servers._oid.acl_pipeline": ("FlextLdifServersOidAclPipeline",),
+            ".servers._oid.acl_render": ("FlextLdifServersOidAclRender",),
+            ".servers._oid.constants": ("FlextLdifServersOidConstants",),
+            ".servers._oid.entry": ("FlextLdifServersOidEntry",),
+            ".servers._oid.schema": ("FlextLdifServersOidSchema",),
+            ".servers._oud.aci": ("FlextLdifServersOudAciMixin",),
+            ".servers._oud.acl": ("FlextLdifServersOudAcl",),
+            ".servers._oud.acl_extract": ("FlextLdifServersOudAclExtractMixin",),
+            ".servers._oud.acl_metadata": ("FlextLdifServersOudAclMetadataMixin",),
+            ".servers._oud.comments": ("FlextLdifServersOudCommentsMixin",),
+            ".servers._oud.constants": ("FlextLdifServersOudConstants",),
+            ".servers._oud.entry": ("FlextLdifServersOudEntry",),
+            ".servers._oud.helpers": ("FlextLdifServersOudHelpersMixin",),
+            ".servers._oud.schema": ("FlextLdifServersOudSchema",),
+            ".servers._oud.transform": ("FlextLdifServersOudTransformMixin",),
+            ".servers._oud.utilities": ("FlextLdifServersOudUtilities",),
+            ".servers._rfc.acl": ("FlextLdifServersRfcAcl",),
+            ".servers._rfc.constants": ("FlextLdifServersRfcConstants",),
+            ".servers._rfc.entry": ("FlextLdifServersRfcEntry",),
+            ".servers._rfc.schema": ("FlextLdifServersRfcSchema",),
+            ".servers.ad": ("FlextLdifServersAd",),
+            ".servers.apache": ("FlextLdifServersApache",),
+            ".servers.base": ("FlextLdifServersBase",),
+            ".servers.ds389": ("FlextLdifServersDs389",),
+            ".servers.novell": ("FlextLdifServersNovell",),
+            ".servers.oid": ("FlextLdifServersOid",),
+            ".servers.openldap": ("FlextLdifServersOpenldap",),
+            ".servers.openldap1": ("FlextLdifServersOpenldap1",),
+            ".servers.oud": ("FlextLdifServersOud",),
+            ".servers.relaxed": ("FlextLdifServersRelaxed",),
+            ".servers.rfc": ("FlextLdifServersRfc",),
+            ".servers.tivoli": ("FlextLdifServersTivoli",),
             ".services.acl": ("FlextLdifAcl",),
             ".services.analysis": ("FlextLdifAnalysis",),
             ".services.categorization": ("FlextLdifCategorization",),
@@ -130,6 +186,10 @@ _LAZY_IMPORTS = merge_lazy_imports(
         },
     ),
     exclude_names=(
+        "_base",
+        "_oid",
+        "_oud",
+        "_rfc",
         "cleanup_submodule_namespace",
         "install_lazy_exports",
         "lazy_getattr",
@@ -176,6 +236,18 @@ __all__: tuple[str, ...] = (
     "FlextLdifProcessingPipeline",
     "FlextLdifProtocols",
     "FlextLdifServer",
+    "FlextLdifServersAd",
+    "FlextLdifServersApache",
+    "FlextLdifServersBase",
+    "FlextLdifServersDs389",
+    "FlextLdifServersNovell",
+    "FlextLdifServersOid",
+    "FlextLdifServersOpenldap",
+    "FlextLdifServersOpenldap1",
+    "FlextLdifServersOud",
+    "FlextLdifServersRelaxed",
+    "FlextLdifServersRfc",
+    "FlextLdifServersTivoli",
     "FlextLdifServiceBase",
     "FlextLdifSettings",
     "FlextLdifShared",
