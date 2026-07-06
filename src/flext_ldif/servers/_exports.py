@@ -3,18 +3,57 @@
 
 from __future__ import annotations
 
-from flext_core.lazy import merge_lazy_imports
-from flext_ldif.servers._exports_lazy_part_01 import (
-    FLEXT_LDIF_SERVERS_LAZY_IMPORTS_PART_01,
-)
-from flext_ldif.servers._exports_lazy_part_02 import (
-    FLEXT_LDIF_SERVERS_LAZY_IMPORTS_PART_02,
-)
+from flext_core.lazy import build_lazy_import_map, merge_lazy_imports
 
-_LOCAL_LAZY_IMPORTS = {
-    **FLEXT_LDIF_SERVERS_LAZY_IMPORTS_PART_01,
-    **FLEXT_LDIF_SERVERS_LAZY_IMPORTS_PART_02,
-}
+_LOCAL_LAZY_IMPORTS = build_lazy_import_map(
+    {
+        "._base": ("_base",),
+        "._base.acl": ("FlextLdifServersBaseSchemaAcl",),
+        "._base.constants": ("FlextLdifServersBaseConstants",),
+        "._base.entry": ("FlextLdifServersBaseEntry",),
+        "._base.mixins": ("FlextLdifServerMethodsMixin",),
+        "._base.schema": ("FlextLdifServersBaseSchema",),
+        "._oid": ("_oid",),
+        "._oid.acl": ("FlextLdifServersOidAcl",),
+        "._oid.acl_assemble": ("FlextLdifServersOidAclAssemble",),
+        "._oid.acl_convert": ("FlextLdifServersOidAclConvert",),
+        "._oid.acl_convert_oud": ("FlextLdifServersOidAclToOud",),
+        "._oid.acl_pipeline": ("FlextLdifServersOidAclPipeline",),
+        "._oid.acl_render": ("FlextLdifServersOidAclRender",),
+        "._oid.constants": ("FlextLdifServersOidConstants",),
+        "._oid.entry": ("FlextLdifServersOidEntry",),
+        "._oid.schema": ("FlextLdifServersOidSchema",),
+        "._oud": ("_oud",),
+        "._oud.aci": ("FlextLdifServersOudAciMixin",),
+        "._oud.acl": ("FlextLdifServersOudAcl",),
+        "._oud.acl_extract": ("FlextLdifServersOudAclExtractMixin",),
+        "._oud.acl_metadata": ("FlextLdifServersOudAclMetadataMixin",),
+        "._oud.comments": ("FlextLdifServersOudCommentsMixin",),
+        "._oud.constants": ("FlextLdifServersOudConstants",),
+        "._oud.entry": ("FlextLdifServersOudEntry",),
+        "._oud.helpers": ("FlextLdifServersOudHelpersMixin",),
+        "._oud.schema": ("FlextLdifServersOudSchema",),
+        "._oud.transform": ("FlextLdifServersOudTransformMixin",),
+        "._oud.utilities": ("FlextLdifServersOudUtilities",),
+        "._rfc": ("_rfc",),
+        "._rfc.acl": ("FlextLdifServersRfcAcl",),
+        "._rfc.constants": ("FlextLdifServersRfcConstants",),
+        "._rfc.entry": ("FlextLdifServersRfcEntry",),
+        "._rfc.schema": ("FlextLdifServersRfcSchema",),
+        ".ad": ("FlextLdifServersAd",),
+        ".apache": ("FlextLdifServersApache",),
+        ".base": ("FlextLdifServersBase",),
+        ".ds389": ("FlextLdifServersDs389",),
+        ".novell": ("FlextLdifServersNovell",),
+        ".oid": ("FlextLdifServersOid",),
+        ".openldap": ("FlextLdifServersOpenldap",),
+        ".openldap1": ("FlextLdifServersOpenldap1",),
+        ".oud": ("FlextLdifServersOud",),
+        ".relaxed": ("FlextLdifServersRelaxed",),
+        ".rfc": ("FlextLdifServersRfc",),
+        ".tivoli": ("FlextLdifServersTivoli",),
+    },
+)
 
 FLEXT_LDIF_SERVERS_LAZY_IMPORTS = merge_lazy_imports(
     (

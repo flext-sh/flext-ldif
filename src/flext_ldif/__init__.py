@@ -22,7 +22,13 @@ from flext_ldif._exports import (
 )
 
 if TYPE_CHECKING:
-    from flext_core._root_typing_parts import d as d, e as e, h as h, r as r, x as x
+    from flext_core._root_typing_parts.facades import (
+        d as d,
+        e as e,
+        h as h,
+        r as r,
+        x as x,
+    )
     from flext_ldif.api import FlextLdif as FlextLdif, ldif as ldif
     from flext_ldif.base import FlextLdifServiceBase as FlextLdifServiceBase, s as s
     from flext_ldif.constants import FlextLdifConstants as FlextLdifConstants, c as c
