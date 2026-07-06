@@ -29,9 +29,9 @@ TESTS_FLEXT_LDIF_LAZY_IMPORTS_PART_02 = build_lazy_import_map(
         ".protocols": ("TestsFlextLdifProtocols",),
         ".settings": ("TestsFlextLdifSettings",),
         ".typings": ("TestsFlextLdifTypes",),
-        ".unit.servers.test_oid_acl_endtoend": ("TestsFlextLdifOidAclEndToEnd",),
+        ".unit.servers.test_oid_servers": ("TestsFlextLdifOidServers",),
+        ".unit.servers.test_relaxed_servers": ("TestsFlextLdifRelaxed",),
         ".unit.servers.test_schema_transformer": ("TestsFlextLdifSchemaTransformer",),
-        ".unit.services.test_migration_pipeline": ("TestsFlextLdifProcessingPipeline",),
         ".unit.services.test_parser_service": ("TestsFlextLdifParserService",),
         ".unit.services.test_processing_service": ("TestsFlextLdifProcessingService",),
         ".unit.services.test_servers_standardization": (
@@ -39,7 +39,7 @@ TESTS_FLEXT_LDIF_LAZY_IMPORTS_PART_02 = build_lazy_import_map(
         ),
         ".unit.services.test_statistics_service": ("TestsFlextLdifStatisticsService",),
         ".unit.services.test_transformers_service": (
-            "TestsFlextLdifTransformerService",
+            "TestsFlextLdifTransformersService",
         ),
         ".unit.services.test_validation_service": ("TestsFlextLdifValidationService",),
         ".unit.services.test_writer_service": ("TestsFlextLdifWriterService",),

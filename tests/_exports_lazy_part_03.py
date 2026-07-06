@@ -11,9 +11,6 @@ TESTS_FLEXT_LDIF_LAZY_IMPORTS_PART_03 = build_lazy_import_map(
         ".conftest": ("conftest",),
         ".constants": ("c",),
         ".integration": ("integration",),
-        ".integration.test_cross_direction_conversion": (
-            "TestsTestFlextLdifCrossDirectionConversion",
-        ),
         ".integration.test_zero_data_loss_oid_oud": (
             "TestsFlextLdifZeroDataLossOidOud",
         ),
@@ -21,16 +18,6 @@ TESTS_FLEXT_LDIF_LAZY_IMPORTS_PART_03 = build_lazy_import_map(
         ".protocols": ("p",),
         ".typings": ("t",),
         ".unit": ("unit",),
-        ".unit.servers.test_apache_servers": ("TestsTestFlextLdifApacheServers",),
-        ".unit.servers.test_ds389_servers": ("TestsTestFlextLdifDs389Servers",),
-        ".unit.servers.test_oid_servers": ("TestsTestFlextLdifOidServers",),
-        ".unit.servers.test_relaxed_servers": ("TestsTestFlextLdifRelaxedServers",),
-        ".unit.services.test_api_server_registry": (
-            "TestsTestFlextLdifApiServerRegistry",
-        ),
-        ".unit.services.test_migration_pipeline": (
-            "TestsTestFlextLdifMigrationPipeline",
-        ),
         ".utilities": ("u",),
         "flext_tests": (
             "d",
