@@ -191,7 +191,8 @@ class FlextLdifModelsDomainAcl:
                 Default ACL format string from constants.
 
             """
-            return c.Ldif.DEFAULT_ACL_FORMAT
+            default_acl_format: str = c.Ldif.DEFAULT_ACL_FORMAT
+            return default_acl_format
 
         def resolve_acl_type(self) -> str:
             """Get ACL type identifier for this server using canonical enum normalization."""

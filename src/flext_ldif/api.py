@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Self, override
+from typing import TYPE_CHECKING, Self, cast, override
 
 from flext_ldif import c, e, m, p, r, t, u
 from flext_ldif.services.acl import FlextLdifAcl
@@ -67,8 +67,12 @@ class FlextLdif(
         **fields: t.JsonValue,
     ) -> Self:
         """Return a configured facade instance while keeping the DSL alias callable."""
-        configured: Self = super().__call__(server=server, settings=settings, **fields)
-        return configured
+        configured = super().__call__(
+            server=server,
+            settings=settings,
+            **fields,
+        )
+        return cast("Self", configured)
 
     def categorization(
         self,

@@ -182,7 +182,9 @@ class FlextLdifUtilitiesSchemaBuild:
             )
         except c.EXC_TYPE_VALIDATION:
             return str(source_server_type).lower() == target_server_type.lower()
-        return normalized_source == normalized_target
+        normalized_source_value: str = normalized_source.value
+        normalized_target_value: str = normalized_target.value
+        return normalized_source_value == normalized_target_value
 
     @staticmethod
     def validate_syntax_oid(syntax: str | None) -> str | None:

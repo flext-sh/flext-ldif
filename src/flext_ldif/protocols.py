@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_cli import FlextCliProtocols
+from flext_cli import p
 from flext_ldif._protocols.base import FlextLdifProtocolsBase
 from flext_ldif._protocols.domain import FlextLdifProtocolsDomain
 
@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from flext_ldif import c
 
 
-class FlextLdifProtocols(FlextCliProtocols):
+class FlextLdifProtocols(p):
     """Unified LDIF protocol facade."""
 
     @runtime_checkable
@@ -24,7 +24,7 @@ class FlextLdifProtocols(FlextCliProtocols):
         """LDIF-specific structural protocol namespace."""
 
         @runtime_checkable
-        class LdifSettings(FlextCliProtocols.Model, Protocol):
+        class LdifSettings(p.Model, Protocol):
             """Namespaced LDIF runtime settings branch."""
 
             ldif_encoding: c.Ldif.Encoding | str
@@ -34,7 +34,7 @@ class FlextLdifProtocols(FlextCliProtocols):
             """Enable strict LDIF validation rules."""
 
         @runtime_checkable
-        class Settings(FlextCliProtocols.Cli.Settings, Protocol):
+        class Settings(p.Cli.Settings, Protocol):
             """MRO-composed settings contract with the LDIF namespace."""
 
             Ldif: FlextLdifProtocols.Ldif.LdifSettings

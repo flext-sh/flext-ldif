@@ -46,7 +46,7 @@ class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](s[TDomainResult]):
         server: p.Ldif.ServerRegistry | None = None,
         settings: p.Ldif.Settings | None = None,
         **fields: t.JsonValue,
-    ) -> Self:
+    ) -> Self | m.Ldif.Entry | str:
         """Return a cloned DSL instance preserving runtime registry/settings defaults."""
         payload: dict[
             str,
@@ -70,7 +70,8 @@ class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](s[TDomainResult]):
 
     def _get_effective_server_type_value(self) -> str:
         """Return the default server type used by parser and writer services."""
-        return c.Ldif.ServerTypes.RFC.value
+        default_server_type: str = c.Ldif.ServerTypes.RFC.value
+        return default_server_type
 
 
 s = FlextLdifServiceBase

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar, Self, overload, override
+from typing import TYPE_CHECKING, ClassVar, Self, cast, overload, override
 
 from flext_ldif import c, m, p, r, s, t, u
 from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
@@ -139,26 +139,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         *,
         server: p.Ldif.ServerRegistry | None = None,
         settings: p.Ldif.Settings | None = None,
-        **fields: t.JsonValue,
     ) -> Self: ...
-
-    @overload
-    def __call__(
-        self,
-        ldif_text: str,
-        *,
-        entries: None = None,
-        operation: str | None = None,
-    ) -> m.Ldif.Entry | str: ...
-
-    @overload
-    def __call__(
-        self,
-        *,
-        ldif_text: None = None,
-        entries: t.MutableSequenceOf[m.Ldif.Entry],
-        operation: str | None = None,
-    ) -> str: ...
 
     @overload
     def __call__(
@@ -182,12 +163,12 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
             force_dispatch=server is not None or settings is not None,
         )
         if builder_fields is not None:
-            configured: Self = super().__call__(
+            configured = super().__call__(
                 server=server,
                 settings=settings,
                 **builder_fields,
             )
-            return configured
+            return cast("Self", configured)
         execute_kwargs: t.MutableMappingKV[
             str,
             str | int | bool | t.MutableSequenceOf[m.Ldif.Entry],

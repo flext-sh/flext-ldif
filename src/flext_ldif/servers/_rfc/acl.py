@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Self, overload, override
+from typing import Self, cast, overload, override
 
 from flext_ldif import m, p, r, t, u
 from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
@@ -108,12 +108,12 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
             force_dispatch=server is not None or settings is not None,
         )
         if builder_fields is not None:
-            configured: Self = super().__call__(
+            configured = super().__call__(
                 server=server,
                 settings=settings,
                 **builder_fields,
             )
-            return configured
+            return cast("Self", configured)
         data_raw = processor_fields.get("data")
         narrowed_data = (
             data_raw

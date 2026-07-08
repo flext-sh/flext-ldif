@@ -132,16 +132,19 @@ class FlextLdifServersOidAclToOud:
     @staticmethod
     def get_targetattr(rule: m.Ldif.OidAclRule) -> str:
         """Compute the OUD ``targetattr`` (entry→``*``, list→``a||b``, ``attr!=``→``!=a||b``)."""
+        attr_negation: str = c.Ldif.OUD_ATTR_NEGATION
+        attr_or: str = c.Ldif.OUD_ATTR_OR
+        wildcard: str = c.Ldif.ACL_WILDCARD
         if rule.target_type == c.Ldif.AclTargetType.ENTRY:
-            return c.Ldif.ACL_WILDCARD
-        attrs = rule.target_attrs
-        if attrs.startswith(c.Ldif.OUD_ATTR_NEGATION):
-            body = attrs[len(c.Ldif.OUD_ATTR_NEGATION) :]
-            joined = body.replace(",", c.Ldif.OUD_ATTR_OR).replace(" ", "")
-            return f"{c.Ldif.OUD_ATTR_NEGATION}{joined}"
-        if attrs in {c.Ldif.ACL_WILDCARD, ""}:
-            return c.Ldif.ACL_WILDCARD
-        return attrs.replace(",", c.Ldif.OUD_ATTR_OR).replace(" ", "")
+            return wildcard
+        attrs: str = rule.target_attrs
+        if attrs.startswith(attr_negation):
+            body = attrs[len(attr_negation) :]
+            joined = body.replace(",", attr_or).replace(" ", "")
+            return f"{attr_negation}{joined}"
+        if attrs in {wildcard, ""}:
+            return wildcard
+        return attrs.replace(",", attr_or).replace(" ", "")
 
     @staticmethod
     def calculate_targetscope(
@@ -156,10 +159,11 @@ class FlextLdifServersOidAclToOud:
         inheritance to the subtree; otherwise the OUD default (subtree) applies
         and ``targetscope`` is omitted (``None``).
         """
+        acl_scope_base: str = c.Ldif.ACL_SCOPE_BASE
         if rule.acl_type == c.Ldif.AclConvertType.ORCLENTRYLEVELACI:
-            return c.Ldif.ACL_SCOPE_BASE
+            return acl_scope_base
         if has_anyone_subject:
-            return c.Ldif.ACL_SCOPE_BASE
+            return acl_scope_base
         return None
 
     @classmethod

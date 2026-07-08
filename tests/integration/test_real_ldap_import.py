@@ -86,7 +86,8 @@ class TestsFlextLdifRealLdapImport:
             attributes=["*"],
         )
         assert found, f"expected imported entry to be searchable at {dn}"
-        return ldap_connection.entries[0]
+        ldap_entry: p.Ldap.Ldap3Entry = ldap_connection.entries[0]
+        return ldap_entry
 
     @pytest.mark.parametrize(
         ("attribute", "expected"),

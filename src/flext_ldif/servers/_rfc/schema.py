@@ -7,7 +7,7 @@ from collections.abc import (
     MutableMapping,
     Sequence,
 )
-from typing import ClassVar, Self, overload, override
+from typing import ClassVar, Self, cast, overload, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
@@ -126,21 +126,14 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
     @overload
     def __call__(
         self,
-        data: m.Ldif.SchemaAttribute,
+        data: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
         operation: str | None = None,
     ) -> str: ...
 
     @overload
     def __call__(
         self,
-        data: m.Ldif.SchemaObjectClass,
-        operation: str | None = None,
-    ) -> str: ...
-
-    @overload
-    def __call__(
-        self,
-        data: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None = None,
+        data: None = None,
         *,
         operation: str | None = None,
     ) -> str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass: ...
@@ -156,7 +149,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
         server: p.Ldif.ServerRegistry | None = None,
         settings: p.Ldif.Settings | None = None,
         **fields: t.JsonValue,
-    ) -> Self | str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass:
+    ) -> Self | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str:
         """Callable interface - automatic polymorphic processor."""
         builder_fields = FlextLdifServerMethodsMixin.project_processor_fields(
             fields,
@@ -164,12 +157,12 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
             force_dispatch=server is not None or settings is not None,
         )
         if builder_fields is not None:
-            configured: Self = super().__call__(
+            configured = super().__call__(
                 server=server,
                 settings=settings,
                 **builder_fields,
             )
-            return configured
+            return cast("Self", configured)
         narrowed_data = (
             data
             if isinstance(

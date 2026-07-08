@@ -80,11 +80,12 @@ class FlextLdifUtilitiesSchemaExtract:
     def extract_objectclass_kind(oc_definition: str) -> str:
         """Extract KIND from objectClass definition."""
         kind_match = c.Ldif.SCHEMA_OBJECTCLASS_KIND_RE.search(oc_definition)
-        return (
-            kind_match.group(1).upper()
-            if kind_match
-            else c.Ldif.SchemaKind.STRUCTURAL.value
-        )
+        if kind_match is None:
+            return str(c.Ldif.SchemaKind.STRUCTURAL.value)
+        kind = kind_match.group(1)
+        if kind is None:
+            return str(c.Ldif.SchemaKind.STRUCTURAL.value)
+        return str(kind).upper()
 
     @staticmethod
     def extract_objectclass_must_may(

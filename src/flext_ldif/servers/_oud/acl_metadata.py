@@ -134,7 +134,8 @@ class FlextLdifServersOudAclMetadataMixin:
                     and transformation.target_name
                     and (transformation.target_name.lower() == "aci")
                 ):
-                    return attr_name
+                    original_attr_name: str = attr_name
+                    return original_attr_name
         if entry.metadata and entry.metadata.extensions:
             acl_original_format = u.to_str(
                 entry.metadata.extensions.get("original_format"),

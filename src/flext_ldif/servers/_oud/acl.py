@@ -97,7 +97,9 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             except c.Ldif.EXC_LDIF_PARSE:
                 return False
             if acl_model.metadata and acl_model.metadata.server_type:
-                return str(acl_model.metadata.server_type) == self._get_server_type()
+                metadata_server_type = str(acl_model.metadata.server_type)
+                current_server_type: str = self._get_server_type()
+                return metadata_server_type == current_server_type
             return bool(
                 acl_model.name
                 and u.Ldif.normalize_attribute_name(acl_model.name)
@@ -419,8 +421,9 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         """Check if raw_acl should be used as-is."""
         if not acl_data.raw_acl:
             return False
-        raw_acl_str = acl_data.raw_acl
-        return raw_acl_str.startswith(FlextLdifServersOudConstants.ACL_ACI_PREFIX)
+        raw_acl_str: str = acl_data.raw_acl
+        acl_aci_prefix: str = FlextLdifServersOudConstants.ACL_ACI_PREFIX
+        return raw_acl_str.startswith(acl_aci_prefix)
 
     @override
     def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:

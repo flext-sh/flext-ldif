@@ -209,8 +209,12 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         ) -> str:
             """Resolve subject to userdn string."""
             if subject and subject.subject_value:
-                return subject.subject_value
-            return FlextLdifServersDs389.Constants.ACL_ANONYMOUS_SUBJECT
+                subject_value: str = subject.subject_value
+                return subject_value
+            anonymous_subject: str = (
+                FlextLdifServersDs389.Constants.ACL_ANONYMOUS_SUBJECT
+            )
+            return anonymous_subject
 
         @override
         def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:

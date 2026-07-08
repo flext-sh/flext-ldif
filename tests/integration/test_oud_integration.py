@@ -56,14 +56,16 @@ class TestsFlextLdifOudIntegration:
         """Return an entry's DN string via the public DN model."""
         dn = entry.dn
         assert dn is not None, "Parsed entry must expose a DN"
-        return dn.value
+        return u.to_str(dn.value)
 
     @classmethod
     def _object_classes(cls, entry: m.Ldif.Entry) -> list[str]:
         """Return an entry's objectClass values via the public accessor."""
         attributes = cls._attrs(entry)
         values = attributes.get("objectClass") or attributes.get("objectclass")
-        return list(values) if values else []
+        if values is None:
+            return []
+        return [u.to_str(value) for value in values]
 
     # --- Schema fixture ---------------------------------------------------
 

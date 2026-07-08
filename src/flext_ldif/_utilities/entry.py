@@ -155,22 +155,24 @@ class FlextLdifUtilitiesEntry:
         dn_model = entry.dn
         if dn_model is None:
             return None
-        dn_value = dn_model.value
+        dn_value: str = dn_model.value
         dn_lower = dn_value.lower()
+        oid_schema_dn: str = c.Ldif.OID_SCHEMA_DN
+        rfc_schema_dn: str = c.Ldif.RFC_SCHEMA_DN
         if (
             source_type_norm == c.Ldif.ServerTypes.OID
             and target_type_norm == c.Ldif.ServerTypes.RFC
         ):
-            if c.Ldif.OID_SCHEMA_DN not in dn_lower:
+            if oid_schema_dn not in dn_lower:
                 return None
-            return dn_value.replace(c.Ldif.OID_SCHEMA_DN, c.Ldif.RFC_SCHEMA_DN)
+            return dn_value.replace(oid_schema_dn, rfc_schema_dn)
         if (
             source_type_norm == c.Ldif.ServerTypes.RFC
             and target_type_norm == c.Ldif.ServerTypes.OID
         ):
-            if c.Ldif.RFC_SCHEMA_DN not in dn_lower:
+            if rfc_schema_dn not in dn_lower:
                 return None
-            return dn_value.replace(c.Ldif.RFC_SCHEMA_DN, c.Ldif.OID_SCHEMA_DN)
+            return dn_value.replace(rfc_schema_dn, oid_schema_dn)
         return None
 
     @staticmethod

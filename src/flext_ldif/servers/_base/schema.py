@@ -206,21 +206,24 @@ class FlextLdifServersBaseSchema(
         )
         metadata_extensions["original_format"] = attr_definition.strip()
         metadata_extensions["schema_original_string_complete"] = attr_definition
-        server_type = FlextLdifServersBaseSchema._resolve_server_type(server_type)
-        metadata_extensions[c.Ldif.SCHEMA_SOURCE_SERVER] = server_type.value
+        resolved_server_type: c.Ldif.ServerTypes = (
+            FlextLdifServersBaseSchema._resolve_server_type(server_type)
+        )
+        schema_source_server: str = resolved_server_type.value
+        metadata_extensions[c.Ldif.SCHEMA_SOURCE_SERVER] = schema_source_server
         extensions_typed: t.Ldif.MutableMetadataMapping = {}
         for key, val in metadata_extensions.items():
             if val is not None:
                 extensions_typed[key] = u.normalize_to_metadata(val)
         metadata = m.Ldif.ServerMetadata(
-            server_type=server_type,
+            server_type=resolved_server_type,
             extensions=m.Ldif.DynamicMetadata.from_dict(
                 extensions_typed,
             )
             if extensions_typed
             else m.Ldif.DynamicMetadata(),
-            original_server_type=server_type,
-            target_server_type=server_type,
+            original_server_type=resolved_server_type,
+            target_server_type=resolved_server_type,
         )
         FlextLdifServersBaseSchema._preserve_formatting(metadata, attr_definition)
         preview_len = 100
@@ -365,11 +368,13 @@ class FlextLdifServersBaseSchema(
             detected_type = detect_method(definition)
             if isinstance(detected_type, str):
                 return detected_type
-        return c.Ldif.SchemaItemKind.ATTRIBUTE.value
+        default_schema_type: str = c.Ldif.SchemaItemKind.ATTRIBUTE.value
+        return default_schema_type
 
     def _is_objectclass_schema_type(self, definition: str) -> bool:
         """Return whether the schema definition is an objectClass payload."""
-        return self._detect_schema_type(definition) == c.Ldif.SchemaItemKind.OBJECTCLASS
+        objectclass_schema_type: str = c.Ldif.SchemaItemKind.OBJECTCLASS.value
+        return self._detect_schema_type(definition) == objectclass_schema_type
 
     def _coerce_attribute_model(
         self,

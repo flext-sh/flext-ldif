@@ -353,12 +353,13 @@ class FlextLdifServersBaseEntry(
             if attr_name.lower() != "aci" or not acl_original_format:
                 return value
             safe_acl_name = acl_original_format.replace('"', "'")
-            return c.Ldif.sub_pattern(
+            replaced_acl_name: str = c.Ldif.sub_pattern(
                 r'acl\\s+"[^"]*"',
                 f'acl "{safe_acl_name}"',
                 value,
                 count=1,
             )
+            return replaced_acl_name
 
         def emit_attribute_line(
             attr_name: str,

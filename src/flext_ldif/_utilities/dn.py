@@ -872,18 +872,22 @@ class FlextLdifUtilitiesDN:
         norm_result = FlextLdifUtilitiesDN.norm(dn_str)
         normalized_dn = norm_result.map_or(dn_str)
         source_escaped = c.Ldif.escape_pattern(source_dn)
-        result = c.Ldif.sub_pattern(
-            f",{source_escaped}$",
-            f",{target_dn}",
-            normalized_dn,
-            ignorecase=True,
-        )
-        if result == normalized_dn:
-            result = c.Ldif.sub_pattern(
-                f"^{source_escaped}$",
-                target_dn,
+        result = u.to_str(
+            c.Ldif.sub_pattern(
+                f",{source_escaped}$",
+                f",{target_dn}",
                 normalized_dn,
                 ignorecase=True,
+            )
+        )
+        if result == normalized_dn:
+            result = u.to_str(
+                c.Ldif.sub_pattern(
+                    f"^{source_escaped}$",
+                    target_dn,
+                    normalized_dn,
+                    ignorecase=True,
+                )
             )
         return result
 
@@ -1014,11 +1018,13 @@ class FlextLdifUtilitiesDN:
     @staticmethod
     def _transform_ldif_content(content: str, source_dn: str, target_dn: str) -> str:
         """Transform all DN references in raw LDIF content string."""
-        return c.Ldif.sub_pattern(
-            c.Ldif.escape_pattern(source_dn),
-            target_dn,
-            content,
-            ignorecase=True,
+        return u.to_str(
+            c.Ldif.sub_pattern(
+                c.Ldif.escape_pattern(source_dn),
+                target_dn,
+                content,
+                ignorecase=True,
+            )
         )
 
     @staticmethod
