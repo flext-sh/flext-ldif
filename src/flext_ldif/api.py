@@ -108,7 +108,7 @@ class FlextLdif(
             server_registry=self._server,
         )
         bound_categorization: FlextLdifCategorization = (
-            categorization.bind_runtime_settings(self.settings)
+            categorization.bind_runtime_settings(settings)
         )
         return bound_categorization
 
@@ -275,7 +275,7 @@ class FlextLdif(
             server=self._server,
         )
         bound_pipeline: FlextLdifMigrationPipeline = pipeline.bind_runtime_settings(
-            self.settings,
+            settings,
         )
         return bound_pipeline
 

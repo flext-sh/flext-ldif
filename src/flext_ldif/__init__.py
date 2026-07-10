@@ -105,7 +105,6 @@ if TYPE_CHECKING:
         FlextLdifValidation as FlextLdifValidation,
     )
     from flext_ldif.services.writer import FlextLdifWriter as FlextLdifWriter
-    from flext_ldif.settings import FlextLdifSettings as FlextLdifSettings
     from flext_ldif.shared import FlextLdifShared as FlextLdifShared
     from flext_ldif.typings import FlextLdifTypes as FlextLdifTypes, t as t
     from flext_ldif.utilities import FlextLdifUtilities as FlextLdifUtilities, u as u
@@ -116,6 +115,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
     ),
     build_lazy_import_map(
         {
+            "._settings": ("FlextLdifSettings", "settings"),
             ".api": (
                 "FlextLdif",
                 "ldif",
@@ -204,7 +204,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".services.transformers": ("FlextLdifTransformer",),
             ".services.validation": ("FlextLdifValidation",),
             ".services.writer": ("FlextLdifWriter",),
-            ".settings": ("FlextLdifSettings",),
             ".shared": ("FlextLdifShared",),
             ".typings": (
                 "FlextLdifTypes",
@@ -251,6 +250,8 @@ _LAZY_IMPORTS = merge_lazy_imports(
 
 
 __all__: tuple[str, ...] = (
+    "FlextLdifSettings",
+    "settings",
     "FlextLdif",
     "FlextLdifAcl",
     "FlextLdifAnalysis",
@@ -287,7 +288,6 @@ __all__: tuple[str, ...] = (
     "FlextLdifServersRfc",
     "FlextLdifServersTivoli",
     "FlextLdifServiceBase",
-    "FlextLdifSettings",
     "FlextLdifShared",
     "FlextLdifStatistics",
     "FlextLdifTransformer",
