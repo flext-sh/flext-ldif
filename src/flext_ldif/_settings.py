@@ -46,7 +46,6 @@ class FlextLdifSettings(FlextCliSettings):
     )
 
 
-
 settings: FlextLdifSettings = FlextLdifSettings.fetch_global()
 """Pre-instantiated project settings singleton — ``from flext_ldif import settings``."""
 
