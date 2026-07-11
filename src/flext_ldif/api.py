@@ -108,7 +108,7 @@ class FlextLdif(
             server_registry=self._server,
         )
         bound_categorization: FlextLdifCategorization = (
-            categorization.bind_runtime_settings(settings)
+            categorization.bind_runtime_settings(self.settings)
         )
         return bound_categorization
 
@@ -275,7 +275,7 @@ class FlextLdif(
             server=self._server,
         )
         bound_pipeline: FlextLdifMigrationPipeline = pipeline.bind_runtime_settings(
-            settings,
+            self.settings,
         )
         return bound_pipeline
 
@@ -315,5 +315,6 @@ class FlextLdif(
 
 
 ldif = FlextLdif.fetch_global()
+"""Process-wide FlextLdif facade singleton resolved from the global container."""
 
 __all__: list[str] = ["FlextLdif", "ldif"]

@@ -53,7 +53,7 @@ class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](s[TDomainResult]):
             t.JsonValue | p.Ldif.ServerRegistry | p.Ldif.Settings | None,
         ] = dict(fields)
         payload["server"] = self._server if server is None else server
-        payload["runtime_settings"] = settings if settings is None else settings
+        payload["runtime_settings"] = settings
         instance: Self = type(self).model_validate(payload)
         return instance
 
