@@ -80,6 +80,7 @@ PUBLIC_API: tuple[PublicSymbol, ...] = (
     "p",
     "r",
     "s",
+    "settings",
     "t",
     "u",
     "x",
