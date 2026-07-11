@@ -2,7 +2,7 @@
 
 Test suite verifying OBSERVABLE PUBLIC BEHAVIOR:
     - FlextLdifSettings public configuration contract (encoding, strict flag)
-    - Global worker-capacity invariant exposed via FlextSettings
+    - Worker-capacity invariant on the processing options SSOT
     - Railway-oriented r composition (write -> parse -> validate) round-trip
     - Write/parse idempotence preserving DN and attribute payloads
     - Failure channel for unreadable sources and empty-input edge case
@@ -19,7 +19,6 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_core import FlextSettings
 from flext_ldif import ldif
 from tests.models import m
 
@@ -74,9 +73,10 @@ class TestsFlextLdifRealLdapConfig:
         """The strict-validation flag is exposed as a plain bool."""
         assert isinstance(flext_api.settings.Ldif.ldif_strict_validation, bool)
 
-    def test_global_settings_expose_positive_worker_capacity(self) -> None:
-        """Global settings always advertise at least one worker."""
-        assert FlextSettings.fetch_global().max_workers >= 1
+    def test_process_options_expose_positive_worker_capacity(self) -> None:
+        """Processing options always advertise at least one worker (SSOT)."""
+        options = m.Ldif.ProcessEntriesOptions(processor_name="transform")
+        assert options.max_workers >= 1
 
     # -- railway composition ----------------------------------------------
 
