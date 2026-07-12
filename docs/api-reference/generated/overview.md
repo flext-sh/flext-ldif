@@ -5,11 +5,13 @@
 - Package: `flext_ldif`
 - Version: `0.12.0-dev`
 - Description: FLEXT LDIF - Enterprise LDIF Processing Library
+- Doc summary: Flext Ldif package.
+- Classifiers: `Development Status :: 4 - Beta`, `Development Status :: 5 - Production/Stable`, `Intended Audience :: Developers`, `Operating System :: OS Independent`, `Programming Language :: Python :: 3 :: Only`, `Programming Language :: Python :: 3.13` (+2 more)
 - Project class: `domain`
 - Keywords: `adapter`, `enterprise`, `flext`, `integration`, `typed`
 - Main facades: _none_
 - Alias exports: `c`, `d`, `e`, `h`, `m`, `p`, `r`, `s`, `t`, `u`, `x`
-- Public symbol exports: `FlextLdifEntries`, `FlextLdifMigrationPipeline`, `FlextLdifWriter`, `FlextLdifTransformer`, `FlextLdifConversionSchemaMixin`, `settings`, `FlextLdifProcessing`, `FlextLdifServersOpenldap1`, `FlextLdifAnalysis`, `FlextLdifConversionSupportMixin` (+36 more)
+- Public symbol exports: `FlextLdifCategorization`, `FlextLdifServersRfc`, `FlextLdifServersTivoli`, `FlextLdifServersOpenldap`, `FlextLdifStatistics`, `FlextLdifConversionAclPreserveMixin`, `FlextLdifConversionEntryMixin`, `FlextLdifFilters`, `FlextLdifServersOpenldap1`, `FlextLdifShared` (+36 more)
 - Exported module shortcuts: _none_
 - Generated module pages: `43`
 
