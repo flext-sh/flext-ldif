@@ -44,7 +44,6 @@ These pages are generated from public modules and their docstrings.
 - [flext_ldif.services.transformers](services/transformers.md)
 - [flext_ldif.services.validation](services/validation.md)
 - [flext_ldif.services.writer](services/writer.md)
-- [flext_ldif.settings](settings.md)
 - [flext_ldif.shared](shared.md)
 - [flext_ldif.typings](typings.md)
 - [flext_ldif.utilities](utilities.md)
