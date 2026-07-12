@@ -148,7 +148,7 @@ class FlextLdifUtilitiesSchemaExtract:
         line_prefix: str,
         model_type: type[SchemaModelT],
     ) -> t.MutableSequenceOf[SchemaModelT]:
-        """Generic extraction of schema items from LDIF content lines."""
+        """Extract schema items from LDIF content lines."""
         items: t.MutableSequenceOf[SchemaModelT] = []
         for raw_line in ldif_content.split("\n"):
             line = raw_line.strip()

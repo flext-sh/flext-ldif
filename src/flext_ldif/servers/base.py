@@ -275,7 +275,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         server_instance: p.Ldif.SchemaServer | FlextLdifServersBase,
         registry: p.Ldif.ServerRegistry | t.JsonValue,
     ) -> None:
-        """Helper method to register a server instance in the registry."""
+        """Register a server instance in the registry."""
 
         def validate_registry(
             registry_obj: p.Ldif.ServerRegistry | t.JsonValue,

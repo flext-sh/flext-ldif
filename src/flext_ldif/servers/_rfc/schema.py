@@ -682,25 +682,25 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
         return r[m.Ldif.SchemaObjectClass].ok(objectclass)
 
     def _post_write_attribute(self, written_str: str) -> str:
-        """Hook for subclasses to transform written attribute string."""
+        """Transform written attribute string (subclass hook)."""
         return written_str
 
     def _post_write_objectclass(self, written_str: str) -> str:
-        """Hook for subclasses to transform written objectClass string."""
+        """Transform written objectClass string (subclass hook)."""
         return written_str
 
     def _transform_attribute_for_write(
         self,
         attr_data: m.Ldif.SchemaAttribute,
     ) -> m.Ldif.SchemaAttribute:
-        """Hook for subclasses to transform attribute before writing."""
+        """Transform attribute before writing (subclass hook)."""
         return attr_data
 
     def _transform_objectclass_for_write(
         self,
         oc_data: m.Ldif.SchemaObjectClass,
     ) -> m.Ldif.SchemaObjectClass:
-        """Hook for subclasses to transform objectClass before writing."""
+        """Transform objectClass before writing (subclass hook)."""
         return oc_data
 
     def _validate_oid_list(

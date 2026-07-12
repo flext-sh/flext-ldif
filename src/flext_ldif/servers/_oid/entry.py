@@ -426,7 +426,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
     @override
     def _hook_post_parse_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
-        """Hook: Transform parsed entry using OID-specific enhancements."""
+        """Transform parsed entry using OID-specific enhancements."""
         try:
             return self._post_parse_oid_entry(entry)
         except c.Ldif.EXC_LDIF_PARSE as e:

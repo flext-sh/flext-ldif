@@ -365,7 +365,7 @@ class FlextLdifModelsDomainMetadata:
             | t.Ldif.MetadataInputMapping
             | None = None,
         ) -> Self:
-            """Factory method to create ServerMetadata with extensions.
+            """Create ServerMetadata with extensions.
 
             Args:
                 server_type: Server type identifier. Defaults to RFC if not provided.

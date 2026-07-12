@@ -38,7 +38,7 @@ class FlextLdifUtilitiesEvents:
         log_level: str = c.Ldif.LogLevelLower.INFO.value,
         extras: m.Ldif.LogContextExtras | None = None,
     ) -> None:
-        """Generic helper for logging events with context and extras."""
+        """Log an event with context and extras."""
         filtered_extras = FlextLdifUtilitiesEvents._process_extras(extras)
         merged_context = dict(log_context)
         merged_context.update(filtered_extras)

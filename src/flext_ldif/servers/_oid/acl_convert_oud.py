@@ -23,7 +23,7 @@ class FlextLdifServersOidAclToOud:
 
     @staticmethod
     def high_level_containers(base_dn: str) -> frozenset[str]:
-        """Base + high-level-suffix DNs where ``anyone`` inherits to the subtree."""
+        """Return base + high-level-suffix DNs where ``anyone`` inherits to the subtree."""
         base = base_dn.lower().strip()
         return frozenset(
             f"{suffix}{base}" if suffix else base
@@ -32,7 +32,7 @@ class FlextLdifServersOidAclToOud:
 
     @staticmethod
     def is_in_scope(dn: str, base_dn: str) -> bool:
-        """True if ``dn`` is the base or a descendant of it (empty base = all)."""
+        """Return True if ``dn`` is the base or a descendant of it (empty base = all)."""
         if not base_dn:
             return True
         dn_lower = dn.lower().strip()

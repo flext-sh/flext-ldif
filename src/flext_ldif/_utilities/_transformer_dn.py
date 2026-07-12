@@ -32,7 +32,7 @@ class FlextLdifUtilitiesNormalizeDnTransformer(
 
     @staticmethod
     def validate_dn_components(dn_str: str) -> p.Result[bool]:
-        """Helper: Validate DN components."""
+        """Validate DN components."""
         components = udn.split(dn_str)
         all_errors: t.MutableSequenceOf[str] = []
         for comp in components:
@@ -103,7 +103,7 @@ class FlextLdifUtilitiesNormalizeDnTransformer(
         )
 
     def _normalize_dn_case_and_spaces(self, normalized_dn: str) -> str:
-        """Helper: Apply case folding and space handling."""
+        """Apply case folding and space handling."""
         if self._case == "lower":
             normalized_dn = normalized_dn.lower()
         elif self._case == "upper":

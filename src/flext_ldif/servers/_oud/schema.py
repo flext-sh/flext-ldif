@@ -143,7 +143,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         self,
         attr: m.Ldif.SchemaAttribute,
     ) -> p.Result[m.Ldif.SchemaAttribute]:
-        """Hook: Validate OUD-specific attribute features after RFC parsing."""
+        """Validate OUD-specific attribute features after RFC parsing."""
         if not attr or not attr.oid:
             return r[m.Ldif.SchemaAttribute].ok(attr)
         normalized_equality, normalized_substr = u.Ldif.normalize_matching_rules(
@@ -204,7 +204,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         self,
         oc: m.Ldif.SchemaObjectClass,
     ) -> p.Result[m.Ldif.SchemaObjectClass]:
-        """Hook: Validate OUD-specific objectClass features after RFC parsing."""
+        """Validate OUD-specific objectClass features after RFC parsing."""
         sup_validation = self._validate_objectclass_sup(oc)
         if sup_validation.failure:
             return r[m.Ldif.SchemaObjectClass].fail(

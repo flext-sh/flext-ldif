@@ -114,7 +114,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
         self,
         attr: m.Ldif.SchemaAttribute,
     ) -> p.Result[m.Ldif.SchemaAttribute]:
-        """Hook: Transform parsed attribute using OID-specific normalizations."""
+        """Transform parsed attribute using OID-specific normalizations."""
         try:
             return r[m.Ldif.SchemaAttribute].ok(
                 self._normalize_oid_attribute(attr),
@@ -160,7 +160,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
         self,
         oc: m.Ldif.SchemaObjectClass,
     ) -> p.Result[m.Ldif.SchemaObjectClass]:
-        """Hook: Transform parsed objectClass using OID-specific normalizations."""
+        """Transform parsed objectClass using OID-specific normalizations."""
         try:
             return r[m.Ldif.SchemaObjectClass].ok(
                 self._normalize_oid_objectclass(oc),

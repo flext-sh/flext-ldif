@@ -826,7 +826,7 @@ class FlextLdifUtilitiesDN:
             return []
 
         def split_components() -> Generator[str]:
-            """Generator that yields DN components respecting RFC 4514 escapes."""
+            """Yield DN components respecting RFC 4514 escapes."""
             current = ""
             chars = iter(dn_str)
             for char in chars:

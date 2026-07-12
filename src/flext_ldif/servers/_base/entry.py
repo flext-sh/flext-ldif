@@ -218,11 +218,11 @@ class FlextLdifServersBaseEntry(
         return entry
 
     def _hook_post_parse_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
-        """Hook called after parsing an entry."""
+        """Run hook after parsing an entry."""
         return r[m.Ldif.Entry].ok(entry)
 
     def _hook_pre_write_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
-        """Hook called before writing an entry."""
+        """Run hook before writing an entry."""
         return r[m.Ldif.Entry].ok(entry)
 
     def _hook_validate_entry_raw(
@@ -230,7 +230,7 @@ class FlextLdifServersBaseEntry(
         dn: str,
         attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]],
     ) -> p.Result[bool]:
-        """Hook to validate raw entry before parsing."""
+        """Validate raw entry before parsing."""
         _ = attrs
         if not dn:
             return r[bool].fail("DN cannot be empty")

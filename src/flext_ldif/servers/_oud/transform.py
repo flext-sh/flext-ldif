@@ -67,7 +67,7 @@ class FlextLdifServersOudTransformMixin:
             r[t.Ldif.AttributeDict],
         ],
     ) -> p.Result[m.Ldif.Entry]:
-        """Hook: Validate and CORRECT RFC syntax issues before writing Entry - static helper."""
+        """Validate and correct RFC syntax issues before writing entry (static helper)."""
         attrs_dict_raw: t.MutableStrSequenceMapping = (
             entry.attributes.attributes if entry.attributes else {}
         )

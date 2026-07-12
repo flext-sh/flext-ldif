@@ -75,7 +75,7 @@ class FlextLdifUtilitiesSchemaBuild:
         type_name: str,
         parts_builder: Callable[..., t.MutableSequenceOf[str]],
     ) -> str:
-        """Generic helper for writing schema elements (DRY pattern)."""
+        """Write a schema element (DRY pattern)."""
         if not isinstance(data, expected_type):
             msg = f"{type_name} must implement {expected_type.__name__}"
             raise TypeError(msg)

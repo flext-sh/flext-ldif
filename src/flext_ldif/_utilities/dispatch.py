@@ -170,7 +170,7 @@ class FlextLdifUtilitiesDispatch:
         *,
         pipeline: FlextLdifUtilitiesPipeline.ValidationPipeline | None = None,
     ) -> p.Result[t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]]:
-        """Internal: Validate LDIF entries."""
+        """Validate LDIF entries."""
         validation_pipeline = (
             pipeline or FlextLdifUtilitiesPipeline.ValidationPipeline()
         )
