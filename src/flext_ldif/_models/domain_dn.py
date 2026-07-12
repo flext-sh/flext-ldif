@@ -13,7 +13,6 @@ from typing import TYPE_CHECKING, Annotated, ClassVar, Self, override
 from flext_core import m
 from flext_core.utilities import FlextUtilities as u
 from flext_ldif import c, p, r, t
-from flext_ldif._models.metadata import FlextLdifModelsMetadata as mdm
 
 if TYPE_CHECKING:
     from collections.abc import (
@@ -216,7 +215,8 @@ class FlextLdifModelsDomainDN:
         def __init__(self) -> None:
             """Initialize empty DN case registry."""
             super().__init__()
-            self._registry: mdm.DynamicMetadata = mdm.DynamicMetadata()
+            # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: plain dict registry.
+            self._registry: dict[str, t.JsonValue] = {}
             self._case_variants: MutableMapping[str, set[str]] = {}
 
         @staticmethod

@@ -14,13 +14,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import MutableMapping
-from typing import Annotated, Self
+from typing import Annotated
 
 from flext_core import m
 from flext_core.utilities import FlextUtilities as u
 from flext_ldif import c, t
 from flext_ldif._models.domain_attributes import FlextLdifModelsDomainAttributes
-from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif.shared import FlextLdifShared
 
 
@@ -163,11 +162,11 @@ class FlextLdifModelsDomainMetadata:
             ),
         ] = u.Field(default_factory=list)
         extensions: Annotated[
-            FlextLdifModelsMetadata.DynamicMetadata,
+            t.MutableJsonMapping,
             u.Field(
                 description="Non-standard schema extensions",
             ),
-        ] = u.Field(default_factory=FlextLdifModelsMetadata.DynamicMetadata)
+        ] = u.Field(default_factory=dict)
 
     class ServerMetadata(m.DynamicModel):
         """Universal metadata container for server-specific data preservation.
@@ -205,11 +204,11 @@ class FlextLdifModelsDomainMetadata:
             ),
         ]
         extensions: Annotated[
-            FlextLdifModelsMetadata.DynamicMetadata,
+            t.MutableJsonMapping,
             u.Field(
                 description="Extensible metadata storage for server-specific data (server-injected validation rules, unconverted attributes, etc.)",
             ),
-        ] = u.Field(default_factory=FlextLdifModelsMetadata.DynamicMetadata)
+        ] = u.Field(default_factory=dict)
         rfc_violations: Annotated[
             t.MutableSequenceOf[str],
             u.Field(
@@ -225,6 +224,8 @@ class FlextLdifModelsDomainMetadata:
         # mro-wgwh.5 (agent: kimi) — U17: open-ended metadata containers are plain
         # t.MutableJsonMapping fields; the DynamicMetadata/EntryMetadata model wrappers
         # (getters/dump/helpers on declaration-only facets) are removed in this wave.
+        # mro-wgwh.5 (agent: kimi-coder) — W2b.2: extensions is t.MutableJsonMapping;
+        # create_for factory moved to u.Ldif.server_metadata_for (U17).
         conversion_notes: Annotated[
             t.MutableJsonMapping,
             u.Field(
@@ -359,44 +360,6 @@ class FlextLdifModelsDomainMetadata:
             if isinstance(value, c.Ldif.ServerTypes):
                 return value
             return FlextLdifShared.normalize_server_type(value)
-
-        @classmethod
-        def create_for(
-            cls,
-            server_type: str | c.Ldif.ServerTypes | None = None,
-            extensions: FlextLdifModelsMetadata.DynamicMetadata
-            | t.Ldif.MetadataInputMapping
-            | None = None,
-        ) -> Self:
-            """Create ServerMetadata with extensions.
-
-            Args:
-                server_type: Server type identifier. Defaults to RFC if not provided.
-                extensions: Extensions as DynamicMetadata or dict. Defaults to empty if not provided.
-
-            Returns:
-                ServerMetadata instance with defaults from Constants.
-
-            """
-            default_server_type: c.Ldif.ServerTypes = (
-                FlextLdifShared.normalize_server_type(server_type)
-                if server_type is not None
-                else c.Ldif.ServerTypes.RFC
-            )
-            extensions_model: FlextLdifModelsMetadata.DynamicMetadata
-            if extensions is None:
-                extensions_model = FlextLdifModelsMetadata.DynamicMetadata()
-            elif isinstance(extensions, FlextLdifModelsMetadata.DynamicMetadata):
-                extensions_model = extensions
-            else:
-                extensions_model = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
-                    extensions,
-                )
-            validated: Self = cls.model_validate({
-                "server_type": default_server_type,
-                "extensions": extensions_model,
-            })
-            return validated
 
 
 __all__: list[str] = ["FlextLdifModelsDomainMetadata"]

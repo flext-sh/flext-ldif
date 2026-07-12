@@ -11,7 +11,7 @@
 - Keywords: `adapter`, `enterprise`, `flext`, `integration`, `typed`
 - Main facades: _none_
 - Alias exports: `c`, `d`, `e`, `h`, `m`, `p`, `r`, `s`, `t`, `u`, `x`
-- Public symbol exports: `FlextLdifCategorization`, `FlextLdifServersRfc`, `FlextLdifServersTivoli`, `FlextLdifServersOpenldap`, `FlextLdifStatistics`, `FlextLdifConversionAclPreserveMixin`, `FlextLdifConversionEntryMixin`, `FlextLdifFilters`, `FlextLdifServersOpenldap1`, `FlextLdifShared` (+36 more)
+- Public symbol exports: `FlextLdifConversion`, `FlextLdifModels`, `FlextLdifServersRelaxed`, `FlextLdifTransformer`, `FlextLdifServersApache`, `FlextLdifServersOud`, `FlextLdifConversionSupportMixin`, `FlextLdifStatistics`, `FlextLdifAcl`, `FlextLdifMigrationPipeline` (+36 more)
 - Exported module shortcuts: _none_
 - Generated module pages: `43`
 
