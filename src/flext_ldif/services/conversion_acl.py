@@ -13,7 +13,6 @@ from flext_ldif.services.conversion_acl_preserve import (
 _LdifEntry = FlextLdifModels.Ldif.Entry
 _LdifDN = FlextLdifModels.Ldif.DN
 _LdifAttributes = FlextLdifModels.Ldif.Attributes
-_LdifEntryMetadata = FlextLdifModels.Ldif.EntryMetadata
 _LdifServerMetadata = FlextLdifModels.Ldif.ServerMetadata
 
 
@@ -104,7 +103,7 @@ class FlextLdifConversionAclMixin(FlextLdifConversionAclPreserveMixin, s, ABC):
         entry_result = _LdifEntry.create(
             dn=_LdifDN(
                 value="cn=acl-conversion,dc=example,dc=com",
-                metadata=_LdifEntryMetadata(),
+                metadata={},
             ),
             attributes=_LdifAttributes(
                 attributes={},

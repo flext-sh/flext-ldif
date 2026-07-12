@@ -156,11 +156,11 @@ class FlextLdifModelsDomainDN:
             ),
         ]
         metadata: Annotated[
-            mdm.EntryMetadata,
+            t.MutableJsonMapping,
             u.Field(
                 description="Server-specific metadata for preserving original format",
             ),
-        ] = u.Field(default_factory=mdm.EntryMetadata)
+        ] = u.Field(default_factory=dict)
 
         @u.field_validator("value", mode="after")
         @classmethod
@@ -201,9 +201,7 @@ class FlextLdifModelsDomainDN:
                 raise ValueError(msg)
             validated: Self = cls.model_validate({
                 "value": str(dn),
-                "metadata": mdm.EntryMetadata.model_validate(
-                    {},
-                ),
+                "metadata": {},
             })
             return validated
 

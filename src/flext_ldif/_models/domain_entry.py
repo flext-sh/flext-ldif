@@ -471,7 +471,7 @@ class FlextLdifModelsDomainEntry:
                 return validated
             return mdn.DN(
                 value=value,
-                metadata=mm.EntryMetadata(),
+                metadata={},
             )
 
         @u.field_validator("record_kind", mode="before")
@@ -978,7 +978,7 @@ class FlextLdifModelsDomainEntry:
             acls: t.MutableSequenceOf[mdac.Acl] | None = None,
             objectclasses: t.MutableSequenceOf[mds.SchemaObjectClass] | None = None,
             attributes_schema: t.MutableSequenceOf[mds.SchemaAttribute] | None = None,
-            entry_metadata: mm.EntryMetadata | None = None,
+            entry_metadata: t.MutableJsonMapping | None = None,
             validation_metadata: mdm.ValidationMetadata | None = None,
             server_type: c.Ldif.ServerTypes | None = None,
             record_kind: c.Ldif.RecordKind = c.Ldif.RecordKind.CONTENT,
@@ -1037,7 +1037,7 @@ class FlextLdifModelsDomainEntry:
             acls: t.MutableSequenceOf[mdac.Acl] | None,
             objectclasses: t.MutableSequenceOf[mds.SchemaObjectClass] | None,
             attributes_schema: t.MutableSequenceOf[mds.SchemaAttribute] | None,
-            entry_metadata: mm.EntryMetadata | None,
+            entry_metadata: t.MutableJsonMapping | None,
             validation_metadata: mdm.ValidationMetadata | None,
             server_type: c.Ldif.ServerTypes | None,
             record_kind: c.Ldif.RecordKind,

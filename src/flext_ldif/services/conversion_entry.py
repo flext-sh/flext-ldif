@@ -196,7 +196,7 @@ class FlextLdifConversionEntryMixin(
             update={
                 "dn": m.Ldif.DN(
                     value=transformed_dn,
-                    metadata=m.Ldif.EntryMetadata(),
+                    metadata={},
                 ),
             },
         )

@@ -157,26 +157,5 @@ class FlextLdifModelsMetadata:
             )
             return validated
 
-    class EntryMetadata(m.FrozenDynamicModel):
-        """Entry metadata for tracking processing details."""
-
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(extra="allow")
-
-        def __getitem__(self, key: str) -> t.JsonValue:
-            return self._extra()[key]
-
-        def __contains__(self, key: str) -> bool:
-            return key in self._extra()
-
-        def get(
-            self,
-            key: str,
-            default: t.JsonValue | None = None,
-        ) -> t.JsonValue | None:
-            return self._extra().get(key, default)
-
-        def _extra(self) -> t.MutableJsonMapping:
-            return self.__pydantic_extra__ or {}
-
 
 __all__: list[str] = ["FlextLdifModelsMetadata"]

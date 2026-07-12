@@ -706,9 +706,6 @@ class FlextLdifUtilitiesMetadata:
                 settings.original_attribute_case,
             )
             server_data_dict["original_attribute_case"] = attr_case_payload
-        server_data = m.Ldif.EntryMetadata.model_validate(
-            server_data_dict,
-        )
         original_ldif_parts: t.MutableSequenceOf[str] = []
         if settings.original_dn_line:
             original_ldif_parts.append(settings.original_dn_line)
@@ -723,7 +720,7 @@ class FlextLdifUtilitiesMetadata:
         )
         metadata = m.Ldif.ServerMetadata(
             server_type=settings.server_type,
-            server_specific_data=server_data,
+            server_specific_data=server_data_dict,
             extensions=dynamic_extensions,
         )
         if original_ldif:

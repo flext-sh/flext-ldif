@@ -749,7 +749,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             )
         if restored_attrs == entry_data.attributes.attributes:
             return entry_data
-        entry_metadata: m.Ldif.EntryMetadata | None = None
+        entry_metadata: t.MutableJsonMapping | None = None
         if entry_data.attributes and entry_data.attributes.metadata:
             entry_metadata = entry_data.attributes.metadata
         copied: m.Ldif.Entry = entry_data.model_copy(

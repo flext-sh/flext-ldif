@@ -178,7 +178,7 @@ class FlextLdifServersOudCommentsMixin:
             and format_options.write_removed_attributes_as_comments
             and entry.metadata.removed_attributes
         ):
-            removed_attrs_dict = entry.metadata.removed_attributes.to_dict()
+            removed_attrs_dict = entry.metadata.removed_attributes
             removed_attr_names: t.MutableSequenceOf[str] = [
                 attr_name
                 for attr_name in removed_attrs_dict

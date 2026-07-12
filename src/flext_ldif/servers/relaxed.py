@@ -710,7 +710,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 return r[m.Ldif.Entry].fail("Entry DN cannot be empty")
             effective_dn = m.Ldif.DN.model_validate({
                 "value": entry_dn.strip(),
-                "metadata": m.Ldif.EntryMetadata.model_validate({}),
+                "metadata": {},
             })
             ldif_attrs = m.Ldif.Attributes.model_validate({
                 "attributes": self._decode_relaxed_attributes(entry_attrs),

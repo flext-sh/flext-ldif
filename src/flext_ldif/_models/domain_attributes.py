@@ -14,7 +14,6 @@ from typing import TYPE_CHECKING, Annotated, ClassVar, Self
 from flext_core import m
 from flext_core.utilities import FlextUtilities as u
 from flext_ldif import c, t
-from flext_ldif._models.metadata import FlextLdifModelsMetadata
 
 if TYPE_CHECKING:
     from collections.abc import (
@@ -46,7 +45,7 @@ class FlextLdifModelsDomainAttributes:
             ),
         ] = u.Field(default_factory=dict)
         metadata: Annotated[
-            FlextLdifModelsMetadata.EntryMetadata | None,
+            t.MutableJsonMapping | None,
             u.Field(
                 description="Metadata for preserving ordering and formats",
             ),

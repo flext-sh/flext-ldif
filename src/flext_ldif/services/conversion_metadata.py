@@ -83,8 +83,8 @@ class FlextLdifConversionMetadataMixin(s):
         if not source_metadata:
             return conversion_analysis
         if isinstance(source_metadata, m.Ldif.ServerMetadata):
-            boolean_conversions = source_metadata.boolean_conversions.to_dict()
-            attr_case_val = source_metadata.original_attribute_case.to_dict()
+            boolean_conversions = source_metadata.boolean_conversions
+            attr_case_val = source_metadata.original_attribute_case
             format_val: t.JsonMapping = (
                 t.json_mapping_adapter().validate_python({})
                 if source_metadata.original_format_details is None

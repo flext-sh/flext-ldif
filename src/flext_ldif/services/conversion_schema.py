@@ -69,7 +69,7 @@ class FlextLdifConversionSchemaMixin(s, ABC):
             {
                 "dn": m.Ldif.DN(
                     value="cn=schema,dc=example,dc=com",
-                    metadata=m.Ldif.EntryMetadata(),
+                    metadata={},
                 ),
                 "attributes": m.Ldif.Attributes.model_validate(
                     {

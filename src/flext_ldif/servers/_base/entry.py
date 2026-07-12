@@ -440,7 +440,7 @@ class FlextLdifServersBaseEntry(
             output_lines.extend(u.Ldif.fold_line(line, width=effective_line_width))
 
         if should_restore_original() and entry_data.metadata is not None:
-            original_strings = entry_data.metadata.original_strings.to_dict()
+            original_strings = entry_data.metadata.original_strings
             original_ldif_raw = original_strings.get(
                 "entry_original_ldif",
                 "",
