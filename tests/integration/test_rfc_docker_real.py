@@ -21,7 +21,7 @@ from tests.constants import c
 
 
 def _has_schema_attrs(entry: ldif_m.Ldif.Entry) -> bool:
-    """True when an entry publicly exposes schema attribute/objectclass keys."""
+    """Return True when an entry publicly exposes schema attribute/objectclass keys."""
     if entry.attributes is None:
         return False
     return any(

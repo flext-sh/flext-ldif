@@ -37,7 +37,7 @@ class TestsFlextLdifServersStandardization:
 
     @pytest.fixture
     def valid_ldif(self) -> str:
-        """A single well-formed RFC 2849 entry every server must accept."""
+        """Return a single well-formed RFC 2849 entry every server must accept."""
         return f"dn: {_EXPECTED_DN}\nobjectClass: person\ncn: test\nsn: user\n"
 
     @pytest.fixture

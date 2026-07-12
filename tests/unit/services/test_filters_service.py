@@ -30,7 +30,7 @@ class TestsFlextLdifFiltersService:
 
     @pytest.fixture
     def regular_entry(self) -> m.Ldif.Entry:
-        """A person entry carrying objectClasses plus filterable attributes."""
+        """Build a person entry carrying objectClasses plus filterable attributes."""
         return u.Tests.create_real_entry(
             dn=c.Tests.FILTERS_DN_USER,
             attributes={
@@ -48,7 +48,7 @@ class TestsFlextLdifFiltersService:
 
     @pytest.fixture
     def entry_without_attributes(self) -> m.Ldif.Entry:
-        """An entry whose ``attributes`` field is ``None``."""
+        """Build an entry whose ``attributes`` field is ``None``."""
         entry = u.Tests.create_real_entry(
             dn=c.Tests.FILTERS_DN_BARE,
             attributes={c.Tests.NAME_CN: [c.Tests.ATTR_VALUE_TEST]},

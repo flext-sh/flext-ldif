@@ -39,7 +39,7 @@ class TestsFlextLdifRealLdapConfig:
 
     @pytest.fixture
     def sample_entry(self) -> m.Ldif.Entry:
-        """A valid inetOrgPerson entry built through the public model API."""
+        """Build a valid inetOrgPerson entry through the public model API."""
         result = m.Ldif.Entry.create(
             dn="cn=RailwayTest,ou=people,dc=example,dc=com",
             attributes={

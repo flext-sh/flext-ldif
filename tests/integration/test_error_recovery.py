@@ -27,7 +27,7 @@ class TestsFlextLdifErrorRecovery:
 
     @pytest.fixture
     def api(self) -> p.Ldif.LdifClient:
-        """Configured LDIF facade instance (public DSL alias)."""
+        """Return a configured LDIF facade instance (public DSL alias)."""
         return ldif()
 
     # ------------------------------------------------------------------

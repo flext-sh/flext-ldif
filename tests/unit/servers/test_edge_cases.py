@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 @pytest.fixture
 def ldif_api() -> p.Ldif.LdifClient:
-    """Provides a ldif API instance for the test function."""
+    """Provide a ldif API instance for the test function."""
     return ldif()
 
 
