@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import copy
 from collections.abc import (
     Mapping,
     MutableMapping,
@@ -246,10 +247,10 @@ class FlextLdifServersBaseEntry(
             mode="json",
             exclude_none=True,
         )
-        existing_extensions = (
-            entry.metadata.extensions.model_copy(deep=True)
-            if entry.metadata
-            else m.Ldif.DynamicMetadata()
+        existing_extensions: t.MutableJsonMapping = (
+            # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: deep-copy the
+            # plain mapping (was model_copy(deep=True)).
+            copy.deepcopy(entry.metadata.extensions) if entry.metadata else {}
         )
         existing_extensions[c.Ldif.WRITE_FORMAT_OPTIONS] = format_options_payload
         if entry.metadata:

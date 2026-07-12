@@ -61,9 +61,6 @@ if TYPE_CHECKING:
         FlextLdifModelsDomainSchema as FlextLdifModelsDomainSchema,
     )
     from flext_ldif._models.events import FlextLdifModelsEvents as FlextLdifModelsEvents
-    from flext_ldif._models.metadata import (
-        FlextLdifModelsMetadata as FlextLdifModelsMetadata,
-    )
     from flext_ldif._models.processing import (
         FlextLdifModelsProcessing as FlextLdifModelsProcessing,
     )
@@ -94,7 +91,6 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ".domain_metadata": ("FlextLdifModelsDomainMetadata",),
         ".domain_schema": ("FlextLdifModelsDomainSchema",),
         ".events": ("FlextLdifModelsEvents",),
-        ".metadata": ("FlextLdifModelsMetadata",),
         ".processing": ("FlextLdifModelsProcessing",),
         ".results": ("FlextLdifModelsResults",),
         ".settings": ("FlextLdifModelsSettings",),

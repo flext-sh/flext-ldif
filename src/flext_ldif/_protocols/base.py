@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING, ClassVar, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
     from collections.abc import (
-        ItemsView,
         KeysView,
         MutableMapping,
         ValuesView,
@@ -260,42 +259,6 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
     @runtime_checkable
-    class DynamicMetadata(Protocol):
-        """Mapping-like metadata contract for dynamic extensions."""
-
-        def __getitem__(self, key: str) -> t.JsonValue:
-            """Return metadata value by key."""
-            ...
-
-        def get(
-            self,
-            key: str,
-            default: t.JsonValue | None = None,
-        ) -> t.JsonValue | None:
-            """Return metadata value by key with optional default."""
-            ...
-
-        def items(self) -> ItemsView[str, t.JsonValue]:
-            """Return metadata items view."""
-            ...
-
-        def keys(self) -> KeysView[str]:
-            """Return metadata keys view."""
-            ...
-
-        def values(self) -> ValuesView[t.JsonValue]:
-            """Return metadata values view."""
-            ...
-
-        def to_dict(self) -> t.MutableJsonMapping:
-            """Convert metadata to a mutable dictionary."""
-            ...
-
-        def model_dump(self) -> t.JsonMapping:
-            """Serialize metadata to a mapping."""
-            ...
-
-    @runtime_checkable
     class DNStatistics(Protocol):
         """Statistics about DN normalization and validation."""
 
@@ -525,7 +488,7 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
         @property
-        def extensions(self) -> FlextLdifProtocolsBase.DynamicMetadata:
+        def extensions(self) -> t.MutableJsonMapping:
             """Return schema extensions metadata."""
             ...
 
@@ -568,7 +531,7 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
         @property
-        def extensions(self) -> FlextLdifProtocolsBase.DynamicMetadata:
+        def extensions(self) -> t.MutableJsonMapping:
             """Return dynamic extensions."""
             ...
 

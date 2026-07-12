@@ -779,9 +779,7 @@ class FlextLdifModelsDomainEntry:
                     )
                 )
                 self.metadata.validation_results = updated_validation_results
-                ext_violations: t.MutableSequenceOf[t.JsonValue] = list(
-                    server_violations,
-                )
+                ext_violations: t.JsonValueList = list(server_violations)
                 # mro-wgwh.5 (agent: kimi-coder) — extensions is a plain mapping now.
                 self.metadata.extensions["server_specific_violations"] = ext_violations
             return self

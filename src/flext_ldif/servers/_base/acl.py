@@ -101,12 +101,11 @@ class FlextLdifServersBaseSchemaAcl(
         }
         if extensions:
             all_extensions.update(extensions)
-        extensions_model = m.Ldif.DynamicMetadata.from_dict(
-            all_extensions,
-        )
+        # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: the ServerMetadata
+        # boundary validates the plain mapping.
         return m.Ldif.ServerMetadata(
             server_type=self._get_server_type(),
-            extensions=extensions_model,
+            extensions=all_extensions,
         )
 
     @override

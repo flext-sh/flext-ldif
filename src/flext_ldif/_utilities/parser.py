@@ -15,6 +15,7 @@ from flext_ldif import (
     r,
     t,
 )
+from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata as um
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer as us
 from flext_ldif.models import FlextLdifModels as m
 
@@ -55,9 +56,7 @@ class FlextLdifUtilitiesParser:
                 extensions_typed[key] = val_payload
             return m.Ldif.ServerMetadata(
                 server_type=server_type,
-                extensions=m.Ldif.DynamicMetadata.from_dict(
-                    extensions_typed,
-                ),
+                extensions=extensions_typed,
             )
         return None
 
@@ -99,7 +98,7 @@ class FlextLdifUtilitiesParser:
         comments: t.MutableSequenceOf[str],
     ) -> m.Ldif.ServerMetadata:
         """Build RFC metadata for a parsed LDIF record."""
-        metadata = m.Ldif.ServerMetadata.create_for("rfc")
+        metadata = um.server_metadata_for("rfc")
         metadata.original_server_type = c.Ldif.ServerTypes.RFC
         metadata.target_server_type = c.Ldif.ServerTypes.RFC
         metadata.original_strings["dn_original"] = dn
@@ -307,7 +306,7 @@ class FlextLdifUtilitiesParser:
 
     @staticmethod
     def ext(
-        metadata: m.Ldif.DynamicMetadata,
+        metadata: t.Ldif.MetadataInputMapping,
     ) -> t.MutableStrSequenceMapping:
         """Extract extension information from parsed metadata."""
 
@@ -333,9 +332,11 @@ class FlextLdifUtilitiesParser:
                 if str_list is not None:
                     extensions[key] = str_list
             return extensions
-        extensions_metadata = m.Ldif.DynamicMetadata.from_dict({
-            key: u.normalize_to_metadata(value) for key, value in result.items()
-        })
+        extensions_metadata: t.MutableJsonMapping = (
+            t.json_dict_adapter().validate_python({
+                key: u.normalize_to_metadata(value) for key, value in result.items()
+            })
+        )
         strict_result: t.MutableStrSequenceMapping = {}
         for key, value in extensions_metadata.items():
             str_list = _as_str_list(value)

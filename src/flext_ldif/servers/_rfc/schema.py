@@ -204,23 +204,24 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
     @staticmethod
     def _coerce_dynamic_metadata(
         value: t.JsonValue | None,
-    ) -> m.Ldif.DynamicMetadata:
-        json_value: t.JsonPayload | m.Ldif.DynamicMetadata | None = value
-        if isinstance(json_value, m.Ldif.DynamicMetadata):
-            return json_value
-        if json_value is None:
-            return m.Ldif.DynamicMetadata()
+    ) -> t.MutableJsonMapping:
+        # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: coerce to a plain
+        # JSON mapping with the same None/invalid -> {} semantics.
+        if isinstance(value, dict):
+            return value
+        if value is None:
+            return {}
         try:
-            validated: m.Ldif.DynamicMetadata = m.Ldif.DynamicMetadata.model_validate(
-                json_value,
+            validated: t.MutableJsonMapping = t.json_dict_adapter().validate_python(
+                value,
             )
             return validated
         except c.ValidationError:
-            return m.Ldif.DynamicMetadata()
+            return {}
 
     @staticmethod
     def _convert_extensions_for_server(
-        metadata: m.Ldif.DynamicMetadata,
+        metadata: t.Ldif.MetadataInputMapping,
     ) -> t.Ldif.SchemaExtensionsMapping:
         extensions: t.Ldif.SchemaExtensionsMapping = {}
         for key, value in metadata.items():
@@ -346,14 +347,14 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
     def create_metadata(
         self,
         original_format: str,
-        extensions: m.Ldif.DynamicMetadata | None = None,
+        extensions: t.Ldif.MetadataInputMapping | None = None,
     ) -> m.Ldif.ServerMetadata:
         """Create server metadata with consistent server-specific extensions."""
         server_type_value = self._get_server_type()
-        all_extensions = m.Ldif.DynamicMetadata()
+        all_extensions: t.MutableJsonMapping = {}
         all_extensions[c.Ldif.ACL_ORIGINAL_FORMAT] = original_format
         if extensions:
-            all_extensions.update(extensions.to_dict())
+            all_extensions.update(extensions)
         return m.Ldif.ServerMetadata(
             server_type=server_type_value,
             extensions=all_extensions,
@@ -483,9 +484,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
         metadata_extensions[c.Ldif.SCHEMA_SOURCE_SERVER] = server_type
         metadata = m.Ldif.ServerMetadata(
             server_type=server_type,
-            extensions=m.Ldif.DynamicMetadata.model_validate(metadata_extensions)
-            if metadata_extensions
-            else m.Ldif.DynamicMetadata(),
+            extensions=dict(metadata_extensions) if metadata_extensions else {},
             original_server_type=server_type,
             target_server_type=server_type,
         )

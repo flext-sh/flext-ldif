@@ -6,8 +6,8 @@ from types import MappingProxyType
 from typing import ClassVar, TypeIs
 
 from flext_cli import u
-from flext_ldif import c, p, r, t
-from flext_ldif.models import FlextLdifModels as m
+from flext_ldif import c, m, p, r, t
+from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata as um
 
 
 class FlextLdifUtilitiesACL:
@@ -474,7 +474,7 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def extract_target_extensions(
-        extensions: m.Ldif.DynamicMetadata | t.Ldif.MetadataInputMapping | None,
+        extensions: t.Ldif.MetadataInputMapping | None,
         target_config: t.StrPairSequence,
     ) -> t.MutableSequenceOf[str]:
         """Extract and format target extensions from metadata extensions."""
@@ -546,7 +546,7 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def format_conversion_comments(
-        extensions: m.Ldif.DynamicMetadata | t.Ldif.MetadataInputMapping | None,
+        extensions: t.Ldif.MetadataInputMapping | None,
         converted_from_key: str,
         comments_key: str,
     ) -> t.MutableSequenceOf[str]:
@@ -722,11 +722,9 @@ class FlextLdifUtilitiesACL:
             permissions=m.Ldif.AclPermissions(**permissions_dict),
             server_type=settings.server_type,
             raw_acl=acl_line,
-            metadata=m.Ldif.ServerMetadata.create_for(
+            metadata=um.server_metadata_for(
                 settings.server_type,
-                extensions=m.Ldif.DynamicMetadata.from_dict(extensions)
-                if extensions
-                else None,
+                extensions=extensions or None,
             ),
         )
         return r[m.Ldif.Acl].ok(acl_model)

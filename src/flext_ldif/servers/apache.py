@@ -208,7 +208,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             )
             dn_lower = entry.dn.value.lower()
             if not metadata.extensions:
-                metadata.extensions = m.Ldif.DynamicMetadata()
+                metadata.extensions = {}
             metadata.extensions[c.Ldif.ServerMetadataKeys.IS_CONFIG_ENTRY] = (
                 FlextLdifServersApache.Constants.DN_CONFIG_ENTRY_MARKER in dn_lower
             )

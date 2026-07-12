@@ -218,7 +218,7 @@ class FlextLdifServersOudCommentsMixin:
         """Collect ACL comments from extensions.commented_attribute_values."""
         if not entry.metadata or not entry.metadata.extensions:
             return
-        commented_acl_values_raw = entry.metadata.extensions.to_dict().get(
+        commented_acl_values_raw = entry.metadata.extensions.get(
             c.Ldif.COMMENTED_ATTRIBUTE_VALUES,
         )
         commented_acl_values = (

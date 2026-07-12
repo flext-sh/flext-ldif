@@ -157,14 +157,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         if acl_server is None:
             return r[m.Ldif.Entry].ok(entry)
         if entry.metadata is None:
-            entry.metadata = m.Ldif.ServerMetadata.create_for(
-                "oud",
-                extensions=m.Ldif.DynamicMetadata(),
-            )
+            entry.metadata = u.Ldif.server_metadata_for("oud")
         existing: t.Ldif.MutableMetadataInputMapping = (
-            dict(entry.metadata.extensions.to_dict())
-            if entry.metadata.extensions
-            else {}
+            dict(entry.metadata.extensions) if entry.metadata.extensions else {}
         )
         FlextLdifServersOudHelpersMixin.process_aci_list_for_finalize(
             aci_values,
@@ -174,7 +169,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         if existing:
             entry.metadata = entry.metadata.model_copy(
                 update={
-                    "extensions": m.Ldif.DynamicMetadata.from_dict(existing),
+                    "extensions": existing,
                 },
             )
         return r[m.Ldif.Entry].ok(entry)

@@ -262,9 +262,9 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                         self._NOVELL_PERMISSION_MAP,
                     ),
                 ),
-                metadata=m.Ldif.ServerMetadata.create_for(
+                metadata=u.Ldif.server_metadata_for(
                     self._get_server_type(),
-                    extensions=m.Ldif.DynamicMetadata(original_format=acl_line),
+                    extensions={"original_format": acl_line},
                 ),
                 raw_acl=acl_line,
             )

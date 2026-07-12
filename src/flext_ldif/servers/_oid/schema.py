@@ -87,10 +87,10 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
         if target_values["ordering"]:
             target_rules["ordering"] = target_values["ordering"]
         if target_rules:
-            setattr(
-                attr_data.metadata.extensions,
-                c.Ldif.SCHEMA_TARGET_MATCHING_RULES,
-                target_rules,
+            # mro-wgwh.5 (agent: kimi-coder) — extensions is a plain mapping now:
+            # subscript assignment instead of DynamicMetadata setattr.
+            attr_data.metadata.extensions[c.Ldif.SCHEMA_TARGET_MATCHING_RULES] = (
+                target_rules
             )
         attr_data.metadata.extensions[c.Ldif.META_TRANSFORMATION_TIMESTAMP] = (
             u.generate_iso_timestamp()
@@ -449,7 +449,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
                 normalized_substr=normalized_substr or "",
             )
             original_format = (
-                attr_data.metadata.extensions.original_format
+                attr_data.metadata.extensions.get("original_format")
                 if attr_data.metadata and attr_data.metadata.extensions
                 else None
             )
@@ -510,16 +510,14 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
         oid_metadata = attr_copy.metadata
         if attr_copy.metadata and attr_copy.metadata.extensions:
             keys_to_remove = {c.Ldif.SCHEMA_ORIGINAL_FORMAT}
-            new_extensions = {
+            new_extensions: t.MutableJsonMapping = {
                 k: v
                 for k, v in attr_copy.metadata.extensions.items()
                 if k not in keys_to_remove
             }
             oid_metadata = attr_copy.metadata.model_copy(
                 update={
-                    "extensions": m.Ldif.DynamicMetadata.from_dict(
-                        new_extensions,
-                    ),
+                    "extensions": new_extensions,
                 },
             )
         attr_copy = attr_copy.model_copy(

@@ -133,7 +133,9 @@ class FlextLdifServersBaseSchema(
         extensions_raw = extract_method(attr_definition)
         if not isinstance(extensions_raw, Mapping):
             return {}
-        extensions_map = m.Ldif.DynamicMetadata.model_validate(extensions_raw)
+        extensions_map: t.MutableJsonMapping = t.json_dict_adapter().validate_python(
+            extensions_raw,
+        )
         extracted: t.Ldif.SchemaExtensionsMapping = {}
         for raw_key, raw_value in extensions_map.items():
             if isinstance(raw_value, str | bool):
@@ -217,11 +219,7 @@ class FlextLdifServersBaseSchema(
                 extensions_typed[key] = u.normalize_to_metadata(val)
         metadata = m.Ldif.ServerMetadata(
             server_type=resolved_server_type,
-            extensions=m.Ldif.DynamicMetadata.from_dict(
-                extensions_typed,
-            )
-            if extensions_typed
-            else m.Ldif.DynamicMetadata(),
+            extensions=extensions_typed or {},
             original_server_type=resolved_server_type,
             target_server_type=resolved_server_type,
         )

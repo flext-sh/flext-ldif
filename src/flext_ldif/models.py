@@ -17,7 +17,6 @@ from flext_ldif._models.base import FlextLdifModelsBases
 from flext_ldif._models.collections import FlextLdifModelsCollections
 from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries
 from flext_ldif._models.events import FlextLdifModelsEvents
-from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif._models.processing import FlextLdifModelsProcessing
 from flext_ldif._models.results import FlextLdifModelsResults
 from flext_ldif._models.settings import FlextLdifModelsSettings
@@ -33,7 +32,6 @@ class FlextLdifModels(m):
 
     class Ldif(
         FlextLdifModelsDomainsEntries,
-        FlextLdifModelsMetadata,
         FlextLdifModelsSettings,
         FlextLdifModelsEvents,
         FlextLdifModelsResults,

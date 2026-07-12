@@ -13,7 +13,6 @@ from flext_ldif.services.conversion_acl_preserve import (
 _LdifEntry = FlextLdifModels.Ldif.Entry
 _LdifDN = FlextLdifModels.Ldif.DN
 _LdifAttributes = FlextLdifModels.Ldif.Attributes
-_LdifServerMetadata = FlextLdifModels.Ldif.ServerMetadata
 
 
 class FlextLdifConversionAclMixin(FlextLdifConversionAclPreserveMixin, s, ABC):
@@ -95,10 +94,7 @@ class FlextLdifConversionAclMixin(FlextLdifConversionAclPreserveMixin, s, ABC):
         source_server_type: c.Ldif.ServerTypes | None,
     ) -> m.Ldif.Entry:
         """Build the RFC entry carrier used for ACL conversion."""
-        entry_metadata = _LdifServerMetadata.create_for(
-            source_server_type,
-            extensions=None,
-        )
+        entry_metadata = u.Ldif.server_metadata_for(source_server_type)
         entry_metadata.acls = [acl.raw_acl] if acl.raw_acl else list[str]()
         entry_result = _LdifEntry.create(
             dn=_LdifDN(

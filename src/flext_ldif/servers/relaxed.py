@@ -72,14 +72,14 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             if not schema_item.metadata:
                 schema_item.metadata = m.Ldif.ServerMetadata.model_validate({
                     "server_type": self._get_server_type(),
-                    "extensions": m.Ldif.DynamicMetadata.model_validate({
+                    "extensions": {
                         "original_format": original_definition.strip(),
                         "schema_source_server": "relaxed",
-                    }),
+                    },
                 })
                 return schema_item
             if not schema_item.metadata.extensions:
-                schema_item.metadata.extensions = m.Ldif.DynamicMetadata()
+                schema_item.metadata.extensions = {}
             schema_item.metadata.server_type = self._get_server_type()
             if not schema_item.metadata.extensions.get("original_format"):
                 schema_item.metadata.extensions["original_format"] = (
@@ -262,10 +262,10 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             name = name_match.group(1) if name_match else oid
             metadata = m.Ldif.ServerMetadata.model_validate({
                 "server_type": self._get_server_type(),
-                "extensions": m.Ldif.DynamicMetadata.model_validate({
+                "extensions": {
                     "original_format": attr_definition.strip(),
                     "schema_source_server": "relaxed",
-                }),
+                },
             })
             attr_domain = m.Ldif.SchemaAttribute(
                 name=name,
@@ -343,10 +343,10 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             must, may = self._extract_must_may_from_objectclass(oc_definition)
             metadata = m.Ldif.ServerMetadata.model_validate({
                 "server_type": self._get_server_type(),
-                "extensions": m.Ldif.DynamicMetadata.model_validate({
+                "extensions": {
                     "original_format": oc_definition.strip(),
                     "schema_source_server": "relaxed",
-                }),
+                },
             })
             objectclass_name = name or oid
             return r[m.Ldif.SchemaObjectClass].ok(
@@ -370,10 +370,14 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 return parent_result
             extensions = attr_data.metadata.extensions if attr_data.metadata else None
             source_server = (
-                extensions.schema_source_server if extensions is not None else None
+                extensions.get("schema_source_server")
+                if extensions is not None
+                else None
             )
             original_format = (
-                extensions.original_format if extensions is not None else None
+                u.to_str(extensions.get("original_format"))
+                if extensions is not None
+                else ""
             )
             if source_server == "relaxed" and original_format:
                 return r[str].ok(original_format)
@@ -394,10 +398,14 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 return parent_result
             extensions = oc_data.metadata.extensions if oc_data.metadata else None
             source_server = (
-                extensions.schema_source_server if extensions is not None else None
+                extensions.get("schema_source_server")
+                if extensions is not None
+                else None
             )
             original_format = (
-                extensions.original_format if extensions is not None else None
+                u.to_str(extensions.get("original_format"))
+                if extensions is not None
+                else ""
             )
             if source_server == "relaxed" and original_format:
                 return r[str].ok(original_format)
@@ -477,14 +485,14 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     update={
                         "metadata": m.Ldif.ServerMetadata.model_validate({
                             "server_type": self._get_server_type(),
-                            "extensions": m.Ldif.DynamicMetadata.model_validate({
+                            "extensions": {
                                 "original_format": acl_line.strip(),
-                            }),
+                            },
                         }),
                     },
                 )
                 return acl_with_metadata
-            updated_extensions = acl.metadata.extensions or m.Ldif.DynamicMetadata()
+            updated_extensions: t.MutableJsonMapping = acl.metadata.extensions or {}
             updated_metadata = acl.metadata.model_copy(
                 update={
                     "server_type": self._get_server_type(),
@@ -515,9 +523,9 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 "raw_acl": acl_line,
                 "metadata": m.Ldif.ServerMetadata.model_validate({
                     "server_type": self._get_server_type(),
-                    "extensions": m.Ldif.DynamicMetadata.model_validate({
+                    "extensions": {
                         "original_format": acl_line.strip(),
-                    }),
+                    },
                 }),
             })
             return relaxed_acl
@@ -764,17 +772,14 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 encoding=None,
                 trailing_info=None,
             )
-            case_metadata = m.Ldif.DynamicMetadata.model_validate(
-                original_attribute_case,
-            )
             metadata: m.Ldif.ServerMetadata = m.Ldif.ServerMetadata.model_validate({
                 "server_type": "relaxed",
                 "original_format_details": format_details,
-                "original_attribute_case": case_metadata,
-                "extensions": m.Ldif.DynamicMetadata.model_validate({
+                "original_attribute_case": original_attribute_case,
+                "extensions": {
                     "server_type": "relaxed",
                     "relaxed_mode": True,
-                }),
+                },
             })
             return metadata
 

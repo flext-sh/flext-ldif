@@ -35,7 +35,7 @@ class FlextLdifServersOudAclExtractMixin:
             return entry_data
         existing_metadata = entry_data.metadata
         if not existing_metadata:
-            existing_metadata = m.Ldif.ServerMetadata.create_for("oud")
+            existing_metadata = u.Ldif.server_metadata_for("oud")
         else:
             existing_metadata = m.Ldif.ServerMetadata.model_validate(
                 existing_metadata.model_dump(),
@@ -82,11 +82,9 @@ class FlextLdifServersOudAclExtractMixin:
     ) -> t.Ldif.MutableMetadataMapping | None:
         """Parse commented ACL values from raw storage format."""
         if isinstance(commented_raw, str):
-            parsed_items = m.Ldif.DynamicMetadata.model_validate_json(
-                commented_raw,
-            ).items()
+            parsed_items = t.json_dict_adapter().validate_json(commented_raw).items()
         elif u.matches_type(commented_raw, dict):
-            parsed_items = m.Ldif.DynamicMetadata.model_validate(commented_raw).items()
+            parsed_items = t.json_dict_adapter().validate_python(commented_raw).items()
         else:
             return None
         normalized: t.Ldif.MutableMetadataMapping = {}
@@ -129,7 +127,7 @@ class FlextLdifServersOudAclExtractMixin:
         """Update metadata with commented ACL information."""
         metadata_typed: m.Ldif.ServerMetadata = metadata
         current_extensions: t.Ldif.MutableMetadataInputMapping = (
-            metadata_typed.extensions.to_dict() if metadata_typed.extensions else {}
+            dict(metadata_typed.extensions) if metadata_typed.extensions else {}
         )
         hidden_attribute_names: set[str] = set()
         hidden_attrs_raw = current_extensions.get(c.Ldif.HIDDEN_ATTRIBUTES, [])
@@ -163,12 +161,12 @@ class FlextLdifServersOudAclExtractMixin:
                 t.Cli.JSON_VALUE_ADAPTER.validate_python(converted_attrs_list)
             )
             current_extensions[c.Ldif.COMMENTED_ATTRIBUTE_VALUES] = (
-                m.Ldif.DynamicMetadata.from_dict({
+                u.Ldif.dump_json_payload({
                     comment_key: t.Cli.JSON_VALUE_ADAPTER.validate_python(
                         comment_value,
                     )
                     for comment_key, comment_value in commented_acl_values.items()
-                }).model_dump_json()
+                })
             )
         commented_attrs_raw = current_extensions.get(
             c.Ldif.ACL_COMMENTED_ATTRIBUTES,

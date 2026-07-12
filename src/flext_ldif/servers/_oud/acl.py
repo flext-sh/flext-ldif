@@ -55,7 +55,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
 
     @staticmethod
     def _extension_get_str(
-        extensions: m.Ldif.DynamicMetadata | None,
+        extensions: t.Ldif.MetadataInputMapping | None,
         key: str,
     ) -> str | None:
         """Read a metadata extension as string."""
@@ -351,9 +351,9 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             return result
         acl = result.value
         aci_content = acl_line.split(":", 1)[1].strip() if ":" in acl_line else ""
-        extensions = m.Ldif.DynamicMetadata()
+        extensions: t.MutableJsonMapping = {}
         if acl.metadata and acl.metadata.extensions:
-            extensions.update(acl.metadata.extensions.to_dict())
+            extensions.update(acl.metadata.extensions)
         timeofday_match = FlextLdifServersOudConstants.ACL_TIMEOFDAY_RE.search(
             aci_content,
         )
@@ -365,7 +365,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         if ssf_match:
             extensions[c.Ldif.ACL_SSF] = f"{ssf_match.group(1)}{ssf_match.group(2)}"
         server_type_value = settings.server_type if settings else "oud"
-        new_metadata = m.Ldif.ServerMetadata.create_for(
+        new_metadata = u.Ldif.server_metadata_for(
             server_type_value,
             extensions=extensions,
         )
@@ -404,10 +404,10 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                 validation_violations=[],
                 metadata=m.Ldif.ServerMetadata(
                     server_type=c.Ldif.ServerTypes.OUD,
-                    extensions=m.Ldif.DynamicMetadata.from_dict({
+                    extensions={
                         FlextLdifServersOudConstants.DS_PRIVILEGE_NAME_KEY: privilege_name,
                         FlextLdifServersOudConstants.FORMAT_TYPE_KEY: FlextLdifServersOudConstants.FORMAT_TYPE_DS_PRIVILEGE,
-                    }),
+                    },
                 ),
             )
             return r[m.Ldif.Acl].ok(acl_model)
@@ -440,7 +440,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         """Build an OUD ACI string from the canonical ACL model."""
         sc = FlextLdifServersOudConstants
         extensions: t.Ldif.MutableMetadataMapping | None = (
-            acl_data.metadata.extensions.to_dict()
+            acl_data.metadata.extensions
             if acl_data.metadata and acl_data.metadata.extensions
             else None
         )

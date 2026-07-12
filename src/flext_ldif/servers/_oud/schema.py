@@ -104,7 +104,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         is_valid_oud_oid = oid_validation.value
         existing_metadata = attr.metadata
         if not existing_metadata:
-            existing_metadata = m.Ldif.ServerMetadata.create_for("oud")
+            existing_metadata = u.Ldif.server_metadata_for("oud")
         current_extensions = (
             dict(existing_metadata.extensions) if existing_metadata.extensions else {}
         )
@@ -174,7 +174,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         is_valid_oud_oid = oid_validation.value
         existing_metadata = attr.metadata
         if not existing_metadata:
-            existing_metadata = m.Ldif.ServerMetadata.create_for("oud")
+            existing_metadata = u.Ldif.server_metadata_for("oud")
         current_extensions = (
             dict(existing_metadata.extensions) if existing_metadata.extensions else {}
         )
@@ -283,7 +283,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
             is_valid_oud_oid = oid_validation.value
             existing_oc_metadata = oc.metadata
             if not existing_oc_metadata:
-                existing_oc_metadata = m.Ldif.ServerMetadata.create_for("oud")
+                existing_oc_metadata = u.Ldif.server_metadata_for("oud")
             oc_extensions = (
                 dict(existing_oc_metadata.extensions)
                 if existing_oc_metadata.extensions

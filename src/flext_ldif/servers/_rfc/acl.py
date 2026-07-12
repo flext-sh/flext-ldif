@@ -175,16 +175,14 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
             return r[m.Ldif.Acl].fail("ACL line must be a non-empty string.")
         server_type_str = self._get_server_type()
         server_type_value = u.Ldif.normalize_server_type(server_type_str)
-        extensions_meta = m.Ldif.DynamicMetadata.model_construct(
-            _fields_set={"original_format"},
-            original_format=acl_line,
-        )
+        # mro-wgwh.5 (agent: kimi-coder) — model_construct bypass removed: plain
+        # mapping validated by the ServerMetadata boundary.
         acl_model = m.Ldif.Acl(
             raw_acl=acl_line,
             server_type=server_type_value,
             metadata=m.Ldif.ServerMetadata(
                 server_type=server_type_value,
-                extensions=extensions_meta,
+                extensions={"original_format": acl_line},
             ),
         )
         return r[m.Ldif.Acl].ok(acl_model)
@@ -193,7 +191,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         self,
         feature_id: str,
         original_value: str,
-        metadata: m.Ldif.DynamicMetadata,
+        metadata: t.MutableJsonMapping,
     ) -> None:
         """Preserve unsupported feature in metadata for round-trip."""
         base_key = "unsupported_feature"

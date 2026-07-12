@@ -36,10 +36,12 @@ class FlextLdifUtilitiesMetadata:
     def dump_dynamic_metadata(
         value: t.Ldif.MetadataInputMapping | None,
     ) -> str:
-        """Serialize metadata-shaped mappings through the LDIF metadata model."""
+        """Serialize metadata-shaped mappings to a canonical JSON string."""
+        # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: delegate to the
+        # canonical JSON payload dump after the empty-mapping guard.
         if not value:
             return ""
-        dumped: str = m.Ldif.DynamicMetadata.from_dict(value).model_dump_json()
+        dumped: str = FlextLdifUtilitiesMetadata.dump_json_payload(dict(value))
         return dumped
 
     @staticmethod
@@ -118,12 +120,11 @@ class FlextLdifUtilitiesMetadata:
                 known_field_values[write_option_key] = value
             else:
                 extension_kwargs[write_option_key] = value
-        extensions = m.Ldif.DynamicMetadata.model_validate(
-            extension_kwargs,
-        )
+        # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: the mapping is
+        # validated once by the SchemaFormatDetails boundary below.
         details: m.Ldif.SchemaFormatDetails = m.Ldif.SchemaFormatDetails.model_validate({
             **known_field_values,
-            "extensions": extensions,
+            "extensions": extension_kwargs,
         })
         return details
 
@@ -563,14 +564,14 @@ class FlextLdifUtilitiesMetadata:
     @staticmethod
     def _set_model_metadata(
         model: p.Ldif.ModelWithValidationMetadata,
-        metadata: m.Ldif.DynamicMetadata,
+        metadata: t.Ldif.MetadataInputMapping,
     ) -> None:
         """Set validation_metadata on model (handles both mutable and frozen models)."""
         try:
-            metadata_obj = metadata.to_dict()
+            # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: consume the plain mapping.
             normalized_metadata: t.Ldif.MutableMetadataMapping = {
                 write_option_key: u.normalize_to_metadata(value)
-                for write_option_key, value in metadata_obj.items()
+                for write_option_key, value in metadata.items()
             }
             config_root: dict[str, t.JsonPayload] = dict(normalized_metadata)
             object.__setattr__(
@@ -607,7 +608,7 @@ class FlextLdifUtilitiesMetadata:
         """Update entry with new processing stats using model_copy."""
         entry_metadata = entry.metadata
         if entry_metadata is None:
-            entry_metadata = m.Ldif.ServerMetadata.create_for(
+            entry_metadata = FlextLdifUtilitiesMetadata.server_metadata_for(
                 us.normalize_server_type(
                     c.Ldif.ServerTypes.RFC.value,
                 ),
@@ -715,13 +716,12 @@ class FlextLdifUtilitiesMetadata:
         extensions_dict: t.Ldif.MutableMetadataMapping = {}
         mk = c.Ldif
         extensions_dict[mk.ORIGINAL_DN_COMPLETE] = settings.original_entry_dn
-        dynamic_extensions = m.Ldif.DynamicMetadata.from_dict(
-            extensions_dict,
-        )
+        # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: the mapping is
+        # validated once by the ServerMetadata boundary.
         metadata = m.Ldif.ServerMetadata(
             server_type=settings.server_type,
             server_specific_data=server_data_dict,
-            extensions=dynamic_extensions,
+            extensions=extensions_dict,
         )
         if original_ldif:
             metadata.original_strings["entry_original_ldif"] = original_ldif
@@ -781,6 +781,35 @@ class FlextLdifUtilitiesMetadata:
             server_type=metadata.server_type,
             fields_preserved=len(formatting_details.model_fields_set),
         )
+
+    @staticmethod
+    def server_metadata_for(
+        server_type: str | c.Ldif.ServerTypes | None = None,
+        extensions: t.MutableJsonMapping | t.Ldif.MetadataInputMapping | None = None,
+    ) -> m.Ldif.ServerMetadata:
+        """Create ServerMetadata with extensions validated at the model boundary.
+
+        Args:
+            server_type: Server type identifier. Defaults to RFC if not provided.
+            extensions: Extensions as a plain mapping. Defaults to empty if not provided.
+
+        Returns:
+            ServerMetadata instance with defaults from Constants.
+
+        """
+        # mro-wgwh.5 (agent: kimi-coder) — W2b.2: factory with logic moved out of the
+        # declaration-only models facet (U17); DynamicMetadata -> plain mapping.
+        default_server_type: c.Ldif.ServerTypes | str = (
+            server_type if server_type is not None else c.Ldif.ServerTypes.RFC
+        )
+        extensions_map: t.MutableJsonMapping = (
+            {} if extensions is None else dict(extensions)
+        )
+        validated: m.Ldif.ServerMetadata = m.Ldif.ServerMetadata.model_validate({
+            "server_type": default_server_type,
+            "extensions": extensions_map,
+        })
+        return validated
 
     @staticmethod
     def store_minimal_differences(

@@ -273,7 +273,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                     subject_value=decoded_sddl or (raw_value or ""),
                 ),
                 permissions=m.Ldif.AclPermissions(),
-                metadata=m.Ldif.ServerMetadata.create_for(self._get_server_type()),
+                metadata=u.Ldif.server_metadata_for(self._get_server_type()),
                 raw_acl=acl_line,
             )
             if acl_model.metadata:

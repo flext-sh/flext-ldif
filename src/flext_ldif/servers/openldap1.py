@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from typing import ClassVar, override
 
-from flext_ldif import c, m, p, r, t
+from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 
@@ -161,7 +161,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             result = super()._parse_attribute(stripped)
             if result.success:
                 attr_data = result.value
-                metadata = m.Ldif.ServerMetadata.create_for(
+                metadata = u.Ldif.server_metadata_for(
                     FlextLdifServersOpenldap1.Constants.SERVER_TYPE,
                 )
                 return r[m.Ldif.SchemaAttribute].ok(
@@ -184,7 +184,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             result = super()._parse_objectclass(stripped)
             if result.success:
                 oc_data = result.value
-                metadata = m.Ldif.ServerMetadata.create_for(
+                metadata = u.Ldif.server_metadata_for(
                     FlextLdifServersOpenldap1.Constants.SERVER_TYPE,
                 )
                 return r[m.Ldif.SchemaObjectClass].ok(
@@ -316,10 +316,8 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             first_who = by_matches[0].group(1) if by_matches else "*"
             first_access = by_matches[0].group(2).lower() if by_matches else "none"
             target_dn, target_attrs = self._parse_openldap1_target(what)
-            acl_extensions = m.Ldif.DynamicMetadata.model_construct(
-                _fields_set={"original_format"},
-                original_format=acl_line,
-            )
+            # mro-wgwh.5 (agent: kimi-coder) — model_construct bypass removed: plain
+            # mapping validated by the ServerMetadata boundary.
             acl = m.Ldif.Acl(
                 name=FlextLdifServersOpenldap1.Constants.ACL_ATTRIBUTE_NAME,
                 target=m.Ldif.AclTarget.model_validate({
@@ -331,9 +329,9 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                     subject_value=first_who,
                 ),
                 permissions=self._openldap1_permissions(first_access),
-                metadata=m.Ldif.ServerMetadata.create_for(
+                metadata=u.Ldif.server_metadata_for(
                     server_type=self._get_server_type(),
-                    extensions=acl_extensions,
+                    extensions={"original_format": acl_line},
                 ),
                 raw_acl=acl_line,
             )

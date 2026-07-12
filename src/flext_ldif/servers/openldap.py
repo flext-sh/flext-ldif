@@ -285,11 +285,9 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                     search="read" in access,
                     compare="read" in access,
                 ),
-                metadata=m.Ldif.ServerMetadata.create_for(
+                metadata=u.Ldif.server_metadata_for(
                     self._get_server_type(),
-                    extensions=m.Ldif.DynamicMetadata.from_dict({
-                        "original_format": acl_line,
-                    }),
+                    extensions={"original_format": acl_line},
                 ),
                 raw_acl=acl_line,
             )
@@ -479,17 +477,13 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             if entry.metadata is None:
                 entry = entry.model_copy(
                     update={
-                        "metadata": m.Ldif.ServerMetadata.create_for(
-                            "openldap",
-                            extensions=m.Ldif.DynamicMetadata(),
-                        ),
+                        "metadata": u.Ldif.server_metadata_for("openldap"),
                     },
                 )
             if entry.metadata is None:
                 return entry
-            validation_rules_str = m.Ldif.DynamicMetadata.from_dict(
-                validation_rules,
-            ).model_dump_json()
+            # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: canonical JSON dump.
+            validation_rules_str = u.Ldif.dump_json_payload(validation_rules)
             entry.metadata.extensions["validation_rules"] = validation_rules_str
             acl_format_rules = validation_rules["acl_format_rules"]
             acl_format_payload: t.JsonDict | None = (
@@ -500,11 +494,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 if isinstance(acl_format_rules, dict)
                 else None
             )
-            acl_format_str = (
-                m.Ldif.DynamicMetadata.from_dict(acl_format_payload).model_dump_json()
-                if acl_format_payload is not None
-                else ""
-            )
+            acl_format_str = u.Ldif.dump_json_payload(acl_format_payload)
             self.logger.debug(
                 "Injected OpenLDAP validation rules into Entry metadata",
                 entry_dn=str(entry.dn) if entry.dn else "",

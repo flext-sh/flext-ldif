@@ -78,10 +78,7 @@ class FlextLdifConversionSchemaMixin(s, ABC):
                         "metadata": None,
                     },
                 ),
-                "metadata": m.Ldif.ServerMetadata.create_for(
-                    source_server_type,
-                    extensions=None,
-                ),
+                "metadata": u.Ldif.server_metadata_for(source_server_type),
             },
         )
         converted_entry_result = self._convert_entry(
