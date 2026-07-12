@@ -79,7 +79,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             attr_data.metadata.extensions[c.Ldif.SCHEMA_TARGET_ATTRIBUTE_NAME] = (
                 target_values["name"]
             )
-        target_rules: t.MutableStrMapping = {}
+        target_rules: t.JsonDict = {}
         if target_values["equality"]:
             target_rules["equality"] = target_values["equality"]
         if target_values["substr"]:

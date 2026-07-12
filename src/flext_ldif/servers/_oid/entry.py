@@ -457,8 +457,10 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             converted_attrs_list: t.MutableSequenceOf[t.JsonValue] = list(
                 converted_attrs,
             )
-            converted_attrs_json: t.JsonList = t.Cli.JSON_LIST_ADAPTER.validate_python(
-                converted_attrs_list,
+            converted_attrs_json: t.JsonValueList = list(
+                t.Cli.JSON_LIST_ADAPTER.validate_python(
+                    converted_attrs_list,
+                ),
             )
             if boolean_conversions:
                 boolean_conversions_dict: MutableMapping[str, t.JsonValue] = {
