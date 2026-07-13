@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from flext_ldif import c
 
 if TYPE_CHECKING:
-    from flext_ldif.models import FlextLdifModels as m
+    from flext_ldif import FlextLdifModels as m
 
 
 class FlextLdifUtilitiesObjectClass:

@@ -1,6 +1,6 @@
 """Domain models for LDIF schema elements.
 
-from flext_ldif.utilities import u
+from flext_ldif import u
 Extracted schema-related inner classes: SchemaAttribute, Syntax, SchemaObjectClass.
 These are composed into FlextLdifModels via MRO.
 
@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_core.utilities import FlextUtilities as u
+from flext_core import FlextUtilities as u
 from flext_ldif import c, t
 from flext_ldif._models.base import FlextLdifModelsBases as mb
 from flext_ldif._models.domain_metadata import FlextLdifModelsDomainMetadata as mdm

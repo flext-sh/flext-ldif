@@ -10,9 +10,8 @@ from collections.abc import (
 from typing import ClassVar, TypeIs
 
 from flext_cli import u
-from flext_ldif import c, p, t
+from flext_ldif import FlextLdifModels as m, c, p, t
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer as us
-from flext_ldif.models import FlextLdifModels as m
 
 
 class FlextLdifUtilitiesMetadata:

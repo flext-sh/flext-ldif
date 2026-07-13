@@ -1,7 +1,7 @@
 """LDIF settings mix-in: processing.
 
-from flext_ldif.models import m
-from flext_ldif.utilities import u
+from flext_ldif import m
+from flext_ldif import u
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
@@ -11,8 +11,7 @@ from __future__ import annotations
 
 from typing import Annotated, Self
 
-from flext_core import m
-from flext_core.utilities import FlextUtilities as u
+from flext_core import FlextUtilities as u, m
 from flext_ldif import FlextLdifShared, c
 from flext_ldif._models._settings_normalization import (
     FlextLdifModelsSettingsNormalization as msn,

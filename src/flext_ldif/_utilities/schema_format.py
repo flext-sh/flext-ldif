@@ -8,7 +8,7 @@ from flext_cli import u as core_u
 from flext_ldif import c, t
 
 if TYPE_CHECKING:
-    from flext_ldif.models import FlextLdifModels as m
+    from flext_ldif import FlextLdifModels as m
 
 
 class FlextLdifUtilitiesSchemaFormat:

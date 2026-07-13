@@ -10,6 +10,7 @@ from collections.abc import (
 
 from flext_cli import u
 from flext_ldif import (
+    FlextLdifModels as m,
     c,
     p,
     r,
@@ -17,7 +18,6 @@ from flext_ldif import (
 )
 from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata as um
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer as us
-from flext_ldif.models import FlextLdifModels as m
 
 
 class FlextLdifUtilitiesParser:
