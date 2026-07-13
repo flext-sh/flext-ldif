@@ -74,8 +74,7 @@ class TestsFlextLdifRelaxed:
                     (
                         parsed.metadata.extensions.get("schema_source_server")
                         == "relaxed"
-                        or parsed.metadata.extensions.get("original_format")
-                        is not None
+                        or parsed.metadata.extensions.get("original_format") is not None
                     ),
                     eq=True,
                 )

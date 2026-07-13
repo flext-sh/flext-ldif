@@ -176,8 +176,10 @@ orclIsEnabled: 1
 
         for boolean_conversions in tracked_conversions:
             for attr_name, raw in boolean_conversions.items():
-                conversion: t.MutableJsonMapping = t.json_dict_adapter().validate_python(
-                    raw,
+                conversion: t.MutableJsonMapping = (
+                    t.json_dict_adapter().validate_python(
+                        raw,
+                    )
                 )
                 assert "original" in conversion, f"Missing original for {attr_name}"
                 assert "converted" in conversion, f"Missing converted for {attr_name}"
