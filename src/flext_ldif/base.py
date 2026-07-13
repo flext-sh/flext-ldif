@@ -58,9 +58,11 @@ class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](s[TDomainResult]):
         return instance
 
     def bind_runtime_settings(self, runtime_settings: p.Ldif.Settings | None) -> Self:
-        """Bind typed LDIF settings through the inherited runtime bootstrap state."""
+        """Bind typed LDIF settings through the inherited runtime bootstrap field."""
+        # NOTE (multi-agent): mro-i6nq.12 — FlextMixins runtime-bootstrap is now a
+        # native Pydantic field; assign directly (validate_assignment enforces type).
         if runtime_settings is not None:
-            self._apply_runtime_bootstrap_state({"runtime_settings": runtime_settings})
+            self.runtime_settings = runtime_settings
         return self
 
     @classmethod
