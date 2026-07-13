@@ -1,0 +1,75 @@
+version: 1
+
+dn: dc=example,dc=com
+objectClass: top
+objectClass: domain
+dc: example
+orclaci: access to entry by * (browse,read,search,compare) bindmode=(Simple)
+orclentrylevelaci: access to entry by * (browse,noadd,nodelete) DenyGroupOverride
+
+dn: ou=users,dc=example,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: users
+orclaci: access to entry by group="cn=directory-REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com" (all) bindmode=(SSL) AppendToAll
+orclaci: access to attr=(cn,sn,mail,telephoneNumber) by * (read,search,compare) filter=(objectClass=inetOrgPerson)
+
+dn: ou=groups,dc=example,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: groups
+orclaci: access to entry by "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com" (proxy,read,write,add,delete)
+orclaci: access to entry by dnattr=(manager) (read,search)
+
+dn: cn=engineering,ou=groups,dc=example,dc=com
+objectClass: top
+objectClass: groupOfNames
+cn: engineering
+orclentrylevelaci: access to entry by * added_object_constraint=(objectClass=groupOfNames) (browse)
+orclaci: access to attr=(description) by self (selfwrite)
+
+dn: cn=directory-REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com
+objectClass: top
+objectClass: groupOfNames
+cn: directory-REDACTED_LDAP_BIND_PASSWORDs
+orclaci: access to entry by guidattr=(orclGUID) (browse)
+orclaci: access to entry by groupattr=(uniqueMember) (read,write)
+
+dn: cn=user01,ou=users,dc=example,dc=com
+objectClass: top
+objectClass: person
+objectClass: inetOrgPerson
+cn: user01
+sn: User01
+orclaci: access to attr=(userPassword,orclPassword) by self (selfwrite) bindipfilter=(orclipaddress=10.10.*)
+orclaci: access to entry by * (browse) constraintonaddedobject=(objectClass=person)
+
+dn: cn=user02,ou=users,dc=example,dc=com
+objectClass: top
+objectClass: person
+objectClass: inetOrgPerson
+cn: user02
+sn: User02
+orclentrylevelaci: access to entry by * (browse,noadd,nodelete)
+
+dn: cn=user03,ou=users,dc=example,dc=com
+objectClass: top
+objectClass: person
+objectClass: inetOrgPerson
+cn: user03
+sn: User03
+orclaci: access to attr=(mail) by group="cn=engineering,ou=groups,dc=example,dc=com" (read,compare)
+
+dn: cn=svc-ldap-sync,ou=ServiceAccounts,dc=example,dc=com
+objectClass: top
+objectClass: person
+objectClass: inetOrgPerson
+cn: svc-ldap-sync
+sn: Service
+orclaci: access to entry by "cn=sync-agent,dc=example,dc=com" (proxy,read,search,compare)
+
+dn: cn=acl-policy,dc=example,dc=com
+objectClass: top
+objectClass: applicationProcess
+cn: acl-policy
+orclaci: access to entry filter=(|(objectClass=person)(objectClass=groupOfNames)) by * (browse,search)

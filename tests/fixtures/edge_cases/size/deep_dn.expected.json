@@ -1,0 +1,22 @@
+{
+  "entries": [
+    {
+      "dn": "cn=deep,ou=level9,ou=level8,ou=level7,ou=level6,ou=level5,ou=level4,ou=level3,ou=level2,ou=level1,dc=example,dc=com",
+      "dn_depth": 12,
+      "attributes": {
+        "objectClass": ["person"],
+        "cn": ["deep"],
+        "sn": ["Deep"],
+        "mail": ["deep@example.com"]
+      }
+    }
+  ],
+  "count": 1,
+  "valid": true,
+  "metadata": {
+    "type": "edge_case",
+    "edge_case_type": "deep_dn",
+    "dn_depth": 12,
+    "test_aspects": ["dn_parsing", "deep_hierarchy", "dn_components"]
+  }
+}

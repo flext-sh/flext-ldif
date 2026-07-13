@@ -1,0 +1,158 @@
+version: 1
+
+dn: dc=example,dc=com
+objectClass: top
+objectClass: domain
+dc: example
+entryUUID: 11111111-2222-3333-4444-555555555555
+createTimestamp: 20250101120000Z
+modifyTimestamp: 20250102120000Z
+
+dn: ou=users,dc=example,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: users
+entryUUID: 21111111-2222-3333-4444-555555555555
+
+dn: ou=groups,dc=example,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: groups
+entryUUID: 31111111-2222-3333-4444-555555555555
+
+dn: ou=People,dc=example,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: People
+entryUUID: 41111111-2222-3333-4444-555555555555
+
+dn: cn=OracleContext,dc=example,dc=com
+objectClass: top
+objectClass: orclContext
+cn: OracleContext
+orclVersion: 120200
+orclGUID: 51111111-2222-3333-4444-555555555555
+
+dn: cn=OracleDASGroupPriv, cn=Groups,cn=OracleContext,dc=example,dc=com
+objectClass: top
+objectClass: orclPrivilegeGroup
+cn: OracleDASGroupPriv
+description: OUD DAS privileges
+orclGUID: 61111111-2222-3333-4444-555555555555
+
+dn: cn=user01,ou=users,dc=example,dc=com
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+cn: user01
+sn: User01
+givenName: User01
+uid: user01
+mail: user01@example.com
+userPassword: {SSHA512}u01aabbccddeeff
+ds-sync-hist: dc=example,dc=com:20250101120000Z:0000000001abc
+ds-sync-state: AQIDBAUG
+isMemberOf: cn=engineering,ou=groups,dc=example,dc=com
+ds-pwp-account-disabled: FALSE
+entryUUID: 71111111-2222-3333-4444-555555555555
+createTimestamp: 20250101120000Z
+modifyTimestamp: 20250102120000Z
+
+dn: cn=user02,ou=users,dc=example,dc=com
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+cn: user02
+sn: User02
+givenName: User02
+uid: user02
+mail: user02@example.com
+userPassword: {SSHA512}u02aabbccddeeff
+ds-sync-hist: dc=example,dc=com:20250101120000Z:0000000002abc
+isMemberOf: cn=engineering,ou=groups,dc=example,dc=com
+ds-pwp-account-disabled: FALSE
+entryUUID: 81111111-2222-3333-4444-555555555555
+
+dn: cn=user03,ou=users,dc=example,dc=com
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+cn: user03
+sn: User03
+givenName: User03
+uid: user03
+mail: user03@example.com
+userPassword: {SSHA512}u03aabbccddeeff
+ds-sync-hist: dc=example,dc=com:20250101120000Z:0000000003abc
+isMemberOf: cn=engineering,ou=groups,dc=example,dc=com
+ds-pwp-account-disabled: TRUE
+entryUUID: 91111111-2222-3333-4444-555555555555
+
+dn: cn=user04,ou=users,dc=example,dc=com
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+cn: user04
+sn: User04
+givenName: User04
+uid: user04
+mail: user04@example.com
+userPassword: {SSHA512}u04aabbccddeeff
+ds-sync-hist: dc=example,dc=com:20250101120000Z:0000000004abc
+isMemberOf: cn=employees,ou=groups,dc=example,dc=com
+ds-pwp-account-disabled: FALSE
+entryUUID: a1111111-2222-3333-4444-555555555555
+
+dn: cn=user05,ou=users,dc=example,dc=com
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+cn: user05
+sn: User05
+givenName: User05
+uid: user05
+mail: user05@example.com
+userPassword: {SSHA512}u05aabbccddeeff
+ds-sync-hist: dc=example,dc=com:20250101120000Z:0000000005abc
+isMemberOf: cn=employees,ou=groups,dc=example,dc=com
+ds-pwp-account-disabled: FALSE
+entryUUID: b1111111-2222-3333-4444-555555555555
+
+dn: cn=user06,ou=users,dc=example,dc=com
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+cn: user06
+sn: User06
+givenName: User06
+uid: user06
+mail: user06@example.com
+userPassword: {SSHA512}u06aabbccddeeff
+ds-sync-hist: dc=example,dc=com:20250101120000Z:0000000006abc
+isMemberOf: cn=employees,ou=groups,dc=example,dc=com
+ds-pwp-account-disabled: TRUE
+entryUUID: c1111111-2222-3333-4444-555555555555
+
+dn: cn=engineering,ou=groups,dc=example,dc=com
+objectClass: top
+objectClass: groupOfNames
+cn: engineering
+member: cn=user01,ou=users,dc=example,dc=com
+member: cn=user02,ou=users,dc=example,dc=com
+member: cn=user03,ou=users,dc=example,dc=com
+entryUUID: d1111111-2222-3333-4444-555555555555
+
+dn: cn=employees,ou=groups,dc=example,dc=com
+objectClass: top
+objectClass: groupOfNames
+cn: employees
+member: cn=user04,ou=users,dc=example,dc=com
+member: cn=user05,ou=users,dc=example,dc=com
+member: cn=user06,ou=users,dc=example,dc=com
+entryUUID: e1111111-2222-3333-4444-555555555555
