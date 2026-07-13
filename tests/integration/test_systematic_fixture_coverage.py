@@ -15,11 +15,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
+from flext_tests import tm
 
 from flext_ldif import ldif
 
 if TYPE_CHECKING:
-    from tests.protocols import p
+    from tests import p
 
 
 class TestsFlextLdifSystematicFixtureCoverage:
@@ -87,31 +88,23 @@ class TestsFlextLdifSystematicFixtureCoverage:
         callers can add fixture-specific invariants.
         """
         parse_result = api.parse_ldif(content)
-        assert parse_result.success, f"Parse failed: {parse_result.error}"
+        tm.ok(parse_result)
         entries = parse_result.unwrap().entries
         assert entries, "Expected at least one parsed entry"
 
         write_result = api.write(entries)
-        assert write_result.success, f"Write failed: {write_result.error}"
+        tm.ok(write_result)
         written = write_result.unwrap().content
         assert written, "Write produced empty content"
 
         roundtrip_result = api.parse_ldif(written)
-        assert roundtrip_result.success, (
-            f"Roundtrip parse failed: {roundtrip_result.error}"
-        )
+        tm.ok(roundtrip_result)
         roundtrip_entries = roundtrip_result.unwrap().entries
 
-        assert len(roundtrip_entries) == len(entries), (
-            f"Entry count changed: {len(roundtrip_entries)} != {len(entries)}"
-        )
+        tm.that(len(roundtrip_entries), eq=len(entries))
         original_dns = {e.dn_str for e in entries}
         roundtrip_dns = {e.dn_str for e in roundtrip_entries}
-        assert original_dns == roundtrip_dns, (
-            "DNs not preserved across roundtrip; "
-            f"missing={original_dns - roundtrip_dns} "
-            f"extra={roundtrip_dns - original_dns}"
-        )
+        tm.that(original_dns, eq=roundtrip_dns)
         return len(entries)
 
     # ------------------------------------------------------------------
@@ -155,11 +148,11 @@ class TestsFlextLdifSystematicFixtureCoverage:
         assert fixture_data, f"Fixture {server_fixture} is empty"
 
         parse_result = api.parse_ldif(fixture_data)
-        assert parse_result.success, f"Parse failed: {parse_result.error}"
+        tm.ok(parse_result)
         entries = parse_result.unwrap().entries
 
         write_result = api.write(entries)
-        assert write_result.success, f"Write failed: {write_result.error}"
+        tm.ok(write_result)
         written = write_result.unwrap().content
         if entries:
             assert written, "Write produced empty ACL content"
@@ -183,7 +176,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
         assert fixture_data, f"Fixture {server_fixture} is empty"
 
         parse_result = api.parse_ldif(fixture_data)
-        assert parse_result.success, f"Parse failed: {parse_result.error}"
+        tm.ok(parse_result)
         entries = parse_result.unwrap().entries
         assert entries, "Entry fixture should parse to at least one entry"
 
@@ -212,19 +205,17 @@ class TestsFlextLdifSystematicFixtureCoverage:
         assert fixture_data, f"Fixture {server_fixture} is empty"
 
         parse_result = api.parse_ldif(fixture_data)
-        assert parse_result.success, f"Parse failed: {parse_result.error}"
+        tm.ok(parse_result)
         entries = parse_result.unwrap().entries
         assert len(entries) >= 5, (
             f"Integration fixture should hold multiple entries, got {len(entries)}"
         )
 
         dn_list = [e.dn_str for e in entries]
-        assert len(set(dn_list)) == len(dn_list), (
-            "Integration fixture parsed with duplicate DNs"
-        )
+        tm.that(len(set(dn_list)), eq=len(dn_list))
 
         write_result = api.write(entries)
-        assert write_result.success, f"Write failed: {write_result.error}"
+        tm.ok(write_result)
         written = write_result.unwrap().content
         assert written, "Write produced empty content"
         assert len(written) > len(fixture_data) * 0.5, (
@@ -250,27 +241,25 @@ class TestsFlextLdifSystematicFixtureCoverage:
         )
 
         parse_result = api.parse_ldif(content)
-        assert parse_result.success, f"Parse failed: {parse_result.error}"
+        tm.ok(parse_result)
         entries = parse_result.unwrap().entries
-        assert len(entries) == 1
+        tm.that(len(entries), eq=1)
 
         entry = entries[0]
-        assert "cn=test,dc=example,dc=com" in entry.dn_str.lower()
+        tm.that(entry.dn_str.lower(), has="cn=test,dc=example,dc=com")
         assert entry.attributes_dict, "Baseline entry lost its attributes"
 
         write_result = api.write(entries)
-        assert write_result.success, f"Write failed: {write_result.error}"
+        tm.ok(write_result)
         written = write_result.unwrap().content
         assert written, "Write produced empty content"
-        assert "cn=test,dc=example,dc=com" in written.lower()
+        tm.that(written.lower(), has="cn=test,dc=example,dc=com")
 
         roundtrip_result = api.parse_ldif(written)
-        assert roundtrip_result.success, (
-            f"Roundtrip parse failed: {roundtrip_result.error}"
-        )
+        tm.ok(roundtrip_result)
         roundtrip_entries = roundtrip_result.unwrap().entries
-        assert len(roundtrip_entries) == 1
-        assert roundtrip_entries[0].dn_str == entry.dn_str
+        tm.that(len(roundtrip_entries), eq=1)
+        tm.that(roundtrip_entries[0].dn_str, eq=entry.dn_str)
 
     def test_parse_ldif_reports_failure_as_result_for_invalid_input(
         self,
@@ -281,7 +270,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
         result = api.parse_ldif(" orphan continuation line\n")
         if result.success:
             # If tolerated, it must not fabricate entries out of garbage.
-            assert result.unwrap().entries == []
+            tm.that(result.unwrap().entries, eq=[])
         else:
             assert result.error, "Failure result must carry an error message"
 

@@ -18,13 +18,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
+from flext_tests import tm
 
-from tests.utilities import u
+from tests import u
 
 if TYPE_CHECKING:
-    from tests.models import m
-    from tests.protocols import p
-    from tests.typings import t
+    from tests import m, p, t
 
 ORACLE_OID_PREFIX = "2.16.840.1.113894"
 
@@ -77,7 +76,7 @@ class TestsFlextLdifOidIntegration:
             api.write(list(entries)),
             error_msg="writing OID entries failed",
         )
-        assert written.content is not None, "writer produced no LDIF content"
+        tm.that(written.content, none=False)
         return cls._entries(api, written.content)
 
     # ----------------------------------------------------------------- schema
@@ -173,9 +172,7 @@ class TestsFlextLdifOidIntegration:
 
         roundtrip = self._roundtrip(api, original)
 
-        assert len(roundtrip) == len(original), (
-            f"entry count changed: original={len(original)}, roundtrip={len(roundtrip)}"
-        )
+        tm.that(len(roundtrip), eq=len(original))
 
     def test_roundtrip_preserves_dns_exactly(
         self,
@@ -188,7 +185,7 @@ class TestsFlextLdifOidIntegration:
 
         roundtrip_dns = sorted(entry.dn_str for entry in self._roundtrip(api, original))
 
-        assert roundtrip_dns == original_dns, "DN set changed after round-trip"
+        tm.that(roundtrip_dns, eq=original_dns)
 
     @pytest.mark.parametrize(
         "acl_attribute",
@@ -215,10 +212,7 @@ class TestsFlextLdifOidIntegration:
             for entry in self._roundtrip(api, original)
         )
 
-        assert roundtrip_count == original_count, (
-            f"{acl_attribute} value count changed: "
-            f"original={original_count}, roundtrip={roundtrip_count}"
-        )
+        tm.that(roundtrip_count, eq=original_count)
 
 
 __all__: list[str] = ["TestsFlextLdifOidIntegration"]

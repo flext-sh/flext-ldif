@@ -15,11 +15,10 @@ from typing import TYPE_CHECKING
 import pytest
 from flext_tests import tm
 
-from tests.constants import c
-from tests.utilities import u
+from tests import c, u
 
 if TYPE_CHECKING:
-    from tests.typings import t
+    from tests import t
 
 
 @pytest.mark.unit

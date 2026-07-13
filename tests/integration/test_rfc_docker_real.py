@@ -12,12 +12,13 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from flext_tests import tm
 
 from flext_ldif import m as ldif_m
 from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.services.writer import FlextLdifWriter
-from tests.constants import c
+from tests import c
 
 
 def _has_schema_attrs(entry: ldif_m.Ldif.Entry) -> bool:
@@ -72,11 +73,11 @@ class TestsFlextLdifRfcDockerReal:
         result = FlextLdifParser().parse_ldif_file(source)
 
         # Assert — public r[T] contract + public model state
-        assert result.success, result.error
+        tm.ok(result)
         entries = result.unwrap().entries
         assert entries, "fixture yielded no entries"
         for entry in entries:
-            assert entry.dn is not None, "RFC entry missing required DN"
+            tm.that(entry.dn, none=False)
             assert entry.dn.value, "entry exposes empty DN via public API"
 
     def test_parse_oid_schema_exposes_schema_definitions(
@@ -93,7 +94,7 @@ class TestsFlextLdifRfcDockerReal:
         result = FlextLdifParser().parse_ldif_file(source)
 
         # Assert
-        assert result.success, result.error
+        tm.ok(result)
         assert any(_has_schema_attrs(entry) for entry in result.unwrap().entries)
 
     def test_parse_oud_acl_exposes_aci_attribute(
@@ -110,7 +111,7 @@ class TestsFlextLdifRfcDockerReal:
         result = FlextLdifParser().parse_ldif_file(source)
 
         # Assert
-        assert result.success, result.error
+        tm.ok(result)
         acl_entries = [
             entry
             for entry in result.unwrap().entries
@@ -130,7 +131,7 @@ class TestsFlextLdifRfcDockerReal:
         result = FlextLdifParser().parse_ldif_file(source)
 
         # Assert
-        assert result.success, result.error
+        tm.ok(result)
         assert result.unwrap().entries
 
     @pytest.mark.parametrize(
@@ -175,9 +176,9 @@ class TestsFlextLdifRfcDockerReal:
         result = FlextLdifParser().parse_ldif_file(missing)
 
         # Assert
-        assert result.failure
-        assert result.error is not None
-        assert "File not found" in result.error
+        tm.fail(result)
+        tm.that(result.error, none=False)
+        tm.that(result.error, has="File not found")
 
     def test_write_to_directory_target_fails_with_write_error(
         self,
@@ -201,9 +202,9 @@ class TestsFlextLdifRfcDockerReal:
         )
 
         # Assert
-        assert result.failure
-        assert result.error is not None
-        assert "Failed to write LDIF file" in result.error
+        tm.fail(result)
+        tm.that(result.error, none=False)
+        tm.that(result.error, has="Failed to write LDIF file")
 
     @pytest.mark.parametrize(
         "subdir",
@@ -267,19 +268,19 @@ class TestsFlextLdifRfcDockerReal:
             output_file,
             server_type=c.Tests.OID,
         )
-        assert write_result.success, write_result.error
+        tm.ok(write_result)
         reparse_result = FlextLdifParser().parse_ldif_file(output_file)
 
         # Assert — round-trip invariant on the public DN contract
-        assert write_result.unwrap().output_path == str(output_file)
+        tm.that(write_result.unwrap().output_path, eq=str(output_file))
         assert output_file.exists()
-        assert reparse_result.success, reparse_result.error
+        tm.ok(reparse_result)
         reparsed_dns = {
             entry.dn.value
             for entry in reparse_result.unwrap().entries
             if entry.dn is not None
         }
-        assert reparsed_dns == original_dns
+        tm.that(reparsed_dns, eq=original_dns)
 
     def test_write_reports_statistics_and_persists_all_entries(
         self,
@@ -313,12 +314,12 @@ class TestsFlextLdifRfcDockerReal:
         )
 
         # Assert — public WriteResponse contract + persisted content
-        assert result.success, result.error
+        tm.ok(result)
         response = result.unwrap()
-        assert response.statistics.total_entries == entry_count
-        assert response.output_path == str(output_file)
+        tm.that(response.statistics.total_entries, eq=entry_count)
+        tm.that(response.output_path, eq=str(output_file))
         content = output_file.read_text(encoding="utf-8")
-        assert content.count("dn: cn=user") == entry_count
+        tm.that(content.count("dn: cn=user"), eq=entry_count)
 
     def test_write_to_string_is_idempotent(
         self,
@@ -342,7 +343,7 @@ class TestsFlextLdifRfcDockerReal:
         second = writer.write_to_string(entries, server_type=c.Tests.RFC)
 
         # Assert — idempotence on the public serialization contract
-        assert first.success, first.error
-        assert second.success, second.error
-        assert first.unwrap() == second.unwrap()
-        assert "cn=alice,dc=example,dc=com" in first.unwrap()
+        tm.ok(first)
+        tm.ok(second)
+        tm.that(first.unwrap(), eq=second.unwrap())
+        tm.that(first.unwrap(), has="cn=alice,dc=example,dc=com")

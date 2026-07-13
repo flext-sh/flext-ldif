@@ -18,14 +18,15 @@ import codecs
 from typing import TYPE_CHECKING
 
 import pytest
+from flext_tests import tm
 
 from flext_ldif import ldif
-from tests.models import m
+from tests import m
 
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from tests.protocols import p
+    from tests import p
 
 
 @pytest.mark.integration
@@ -50,7 +51,7 @@ class TestsFlextLdifRealLdapConfig:
             },
             metadata=None,
         )
-        assert result.success, result.error
+        tm.ok(result)
         entry: m.Ldif.Entry = result.value
         return entry
 
@@ -71,7 +72,7 @@ class TestsFlextLdifRealLdapConfig:
         flext_api: p.Ldif.LdifClient,
     ) -> None:
         """The strict-validation flag is exposed as a plain bool."""
-        assert isinstance(flext_api.settings.Ldif.ldif_strict_validation, bool)
+        tm.that(flext_api.settings.Ldif.ldif_strict_validation, is_=bool)
 
     def test_process_options_expose_positive_worker_capacity(self) -> None:
         """Processing options always advertise at least one worker (SSOT)."""
@@ -100,12 +101,12 @@ class TestsFlextLdifRealLdapConfig:
             )
         )
 
-        assert result.success, result.error
+        tm.ok(result)
         parsed_entries = result.value.entries
-        assert len(parsed_entries) == 1
+        tm.that(len(parsed_entries), eq=1)
         round_tripped = parsed_entries[0]
-        assert round_tripped.dn_str == sample_entry.dn_str
-        assert round_tripped.attributes_dict["mail"] == ["railway@example.com"]
+        tm.that(round_tripped.dn_str, eq=sample_entry.dn_str)
+        tm.that(round_tripped.attributes_dict["mail"], eq=["railway@example.com"])
 
     def test_write_to_string_then_parse_is_idempotent(
         self,
@@ -117,10 +118,10 @@ class TestsFlextLdifRealLdapConfig:
             flext_api.parse_string,
         )
 
-        assert parsed.success, parsed.error
+        tm.ok(parsed)
         entries = parsed.value.entries
-        assert len(entries) == 1
-        assert entries[0].dn_str == sample_entry.dn_str
+        tm.that(len(entries), eq=1)
+        tm.that(entries[0].dn_str, eq=sample_entry.dn_str)
         assert (
             entries[0].attributes_dict["objectClass"]
             == sample_entry.attributes_dict["objectClass"]
@@ -134,11 +135,11 @@ class TestsFlextLdifRealLdapConfig:
         """Validating a well-formed entry yields a passing ValidationResult."""
         result = flext_api.validate_entries([sample_entry])
 
-        assert result.success, result.error
+        tm.ok(result)
         validation = result.value
-        assert validation.valid is True
-        assert validation.total_entries == 1
-        assert validation.errors == []
+        tm.that(validation.valid, eq=True)
+        tm.that(validation.total_entries, eq=1)
+        tm.that(validation.errors, eq=[])
 
     # -- edge cases and failure channel -----------------------------------
 
@@ -152,9 +153,9 @@ class TestsFlextLdifRealLdapConfig:
 
         result = flext_api.parse_ldif(missing)
 
-        assert not result.success
-        assert result.error is not None
-        assert "not found" in result.error.lower()
+        tm.fail(result)
+        tm.that(result.error, none=False)
+        tm.that(result.error.lower(), has="not found")
 
     @pytest.mark.parametrize(
         "content",
@@ -172,8 +173,8 @@ class TestsFlextLdifRealLdapConfig:
         """Content carrying no records parses to a successful empty result."""
         result = flext_api.parse_string(content)
 
-        assert result.success, result.error
-        assert result.value.entries == []
+        tm.ok(result)
+        tm.that(result.value.entries, eq=[])
 
 
 __all__: list[str] = ["TestsFlextLdifRealLdapConfig"]

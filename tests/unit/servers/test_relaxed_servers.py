@@ -12,12 +12,10 @@ import pytest
 from flext_tests import tm
 
 from flext_ldif.servers.relaxed import FlextLdifServersRelaxed
-from tests.constants import c
-from tests.models import m
-from tests.typings import t
+from tests import c, m, t
 
 if TYPE_CHECKING:
-    from tests.protocols import p
+    from tests import p
 
 
 @pytest.mark.unit
@@ -69,7 +67,7 @@ class TestsFlextLdifRelaxed:
             }:
                 tm.that(parsed.oid, none=False)
                 tm.that(parsed.metadata is not None, eq=True)
-                assert parsed.metadata is not None
+                tm.that(parsed.metadata, none=False)
                 tm.that(
                     (
                         parsed.metadata.extensions.get("schema_source_server")
@@ -107,7 +105,7 @@ class TestsFlextLdifRelaxed:
         """Test parse_attribute stores original definition for recovery."""
         original = "( 1.2.3.4 NAME 'test' SYNTAX 1.2.3 )"
         parsed = tm.ok(schema_server.parse_attribute(original))
-        assert parsed.metadata is not None
+        tm.that(parsed.metadata, none=False)
         tm.that(parsed.metadata.extensions.get("original_format"), eq=original)
 
     def test_write_attribute_to_rfc(
@@ -232,7 +230,7 @@ class TestsFlextLdifRelaxed:
         else:
             result = schema_server.parse_objectclass(bad_input)
         parsed = tm.ok(result)
-        assert parsed.metadata is not None
+        tm.that(parsed.metadata, none=False)
         ext = parsed.metadata.extensions
         tm.that(
             ext.get("original_format") is not None

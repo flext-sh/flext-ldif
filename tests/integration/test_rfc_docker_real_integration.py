@@ -12,12 +12,12 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from flext_tests import tm
 
 from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.services.writer import FlextLdifWriter
-from tests.constants import c
-from tests.models import m
+from tests import c, m
 
 
 class TestsFlextLdifRfcDockerRealIntegration:
@@ -56,11 +56,11 @@ class TestsFlextLdifRfcDockerRealIntegration:
 
         result = parser.parse_ldif_file(entries_file)
 
-        assert result.success, result.error
+        tm.ok(result)
         response = result.value
         assert response.entries, "expected at least one parsed entry"
-        assert response.statistics.total_entries == len(response.entries)
-        assert isinstance(response.detected_server_type, str)
+        tm.that(response.statistics.total_entries, eq=len(response.entries))
+        tm.that(response.detected_server_type, is_=str)
         assert response.detected_server_type
 
     @pytest.mark.parametrize(
@@ -83,8 +83,8 @@ class TestsFlextLdifRfcDockerRealIntegration:
 
         result = parser.parse_ldif_file(schema_file)
 
-        assert result.success, result.error
-        assert isinstance(result.value, m.Ldif.ParseResponse)
+        tm.ok(result)
+        tm.that(result.value, is_=m.Ldif.ParseResponse)
 
     # --- write: contract of the write response -------------------------------
 
@@ -108,14 +108,15 @@ class TestsFlextLdifRfcDockerRealIntegration:
             server_type=c.Tests.RFC,
         )
 
-        assert write_result.success, write_result.error
+        tm.ok(write_result)
         write_response = write_result.value
-        assert write_response.output_path == str(output_file)
+        tm.that(write_response.output_path, eq=str(output_file))
         assert output_file.exists()
         assert write_response.content
-        assert output_file.read_text(encoding="utf-8").rstrip(
-            "\n"
-        ) == write_response.content.rstrip("\n")
+        tm.that(
+            output_file.read_text(encoding="utf-8").rstrip("\n"),
+            eq=write_response.content.rstrip("\n"),
+        )
 
     def test_write_oud_acl_entries_produces_nonempty_file(
         self,
@@ -139,7 +140,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
             server_type=c.Tests.RFC,
         )
 
-        assert result.success, result.error
+        tm.ok(result)
         assert output_file.exists()
         assert output_file.stat().st_size > 0
 
@@ -167,14 +168,15 @@ class TestsFlextLdifRfcDockerRealIntegration:
             output_file,
             server_type=c.Tests.RFC,
         )
-        assert write_result.success, write_result.error
+        tm.ok(write_result)
 
         reparsed = parser.parse_ldif_file(output_file).unwrap()
 
-        assert len(reparsed.entries) == len(original.entries)
-        assert {
-            entry.dn.value for entry in reparsed.entries if entry.dn is not None
-        } == original_dns
+        tm.that(len(reparsed.entries), eq=len(original.entries))
+        tm.that(
+            {entry.dn.value for entry in reparsed.entries if entry.dn is not None},
+            eq=original_dns,
+        )
 
     # --- error paths ---------------------------------------------------------
 
@@ -185,8 +187,8 @@ class TestsFlextLdifRfcDockerRealIntegration:
         """A missing file yields a failure result whose unwrap raises."""
         result = parser.parse_ldif_file(Path("/nonexistent/file.ldif"))
 
-        assert not result.success
-        assert result.error is not None
+        tm.fail(result)
+        tm.that(result.error, none=False)
         with pytest.raises(RuntimeError):
             result.unwrap()
 
@@ -214,7 +216,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
                 server_type=c.Tests.RFC,
             )
             if not result.success:
-                assert result.error is not None
+                tm.that(result.error, none=False)
                 assert (
                     "Permission denied" in result.error
                     or "LDIF write failed" in result.error
@@ -233,7 +235,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
 
         result = parser.parse_ldif_file(empty_file)
 
-        assert result.success, result.error
+        tm.ok(result)
         response = result.value
         assert not response.entries
-        assert response.statistics.total_entries == 0
+        tm.that(response.statistics.total_entries, eq=0)

@@ -14,15 +14,12 @@ from uuid import uuid4
 import pytest
 from flext_tests import tm
 
-from tests.constants import c
-from tests.models import m
-from tests.utilities import u
+from tests import c, m, u
 
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from tests.protocols import p
-    from tests.typings import t
+    from tests import p, t
 
 
 class TestsFlextLdifWriterService:
@@ -120,7 +117,7 @@ class TestsFlextLdifWriterService:
         )
 
         tm.that(payload.content is not None, eq=True)
-        assert payload.content is not None
+        tm.that(payload.content, none=False)
         for dn in self._dns():
             tm.that(f"dn: {dn}" in payload.content, eq=True)
         tm.that(payload.statistics.total_entries, eq=len(entries))

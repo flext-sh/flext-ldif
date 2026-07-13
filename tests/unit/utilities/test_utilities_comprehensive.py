@@ -8,6 +8,7 @@ attributes, internal collaborators, or implementation details are touched.
 from __future__ import annotations
 
 import pytest
+from flext_tests import tm
 
 from flext_ldif.utilities import u
 
@@ -35,7 +36,7 @@ class TestsFlextLdifUtilitiesComprehensive:
         """Map any casing to the canonical enum value (aliases resolved)."""
         normalized = u.Ldif.normalize_server_type(raw)
 
-        assert str(normalized) == expected
+        tm.that(str(normalized), eq=expected)
 
     def test_normalize_server_type_rejects_unknown_type(self) -> None:
         """An unknown server type raises ValueError naming the invalid input."""
@@ -46,7 +47,7 @@ class TestsFlextLdifUtilitiesComprehensive:
         """get_all_server_types enumerates exactly the VALID_SERVER_TYPES set."""
         all_types = u.Ldif.get_all_server_types()
 
-        assert set(all_types) == set(u.Ldif.VALID_SERVER_TYPES)
+        tm.that(set(all_types), eq=set(u.Ldif.VALID_SERVER_TYPES))
 
     # --- DN value escaping ---------------------------------------------
 
@@ -56,14 +57,14 @@ class TestsFlextLdifUtilitiesComprehensive:
     )
     def test_esc_unesc_roundtrip_is_lossless(self, value: str) -> None:
         """Round-trip esc then unesc restores the original DN value (invariant)."""
-        assert u.Ldif.unesc(u.Ldif.esc(value)) == value
+        tm.that(u.Ldif.unesc(u.Ldif.esc(value)), eq=value)
 
     def test_esc_encodes_reserved_characters(self) -> None:
         """A reserved character (comma) is escaped, not left literal."""
         escaped = u.Ldif.esc("a,b")
 
-        assert "," not in escaped
-        assert escaped != "a,b"
+        tm.that(escaped, lacks=",")
+        tm.that(escaped, ne="a,b")
 
     # --- base64 detection ----------------------------------------------
 
@@ -91,15 +92,15 @@ class TestsFlextLdifUtilitiesComprehensive:
 
     def test_normalize_attribute_name_lowercases_by_default(self) -> None:
         """Without case sensitivity, attribute names are lowercased."""
-        assert u.Ldif.normalize_attribute_name("CN") == "cn"
+        tm.that(u.Ldif.normalize_attribute_name("CN"), eq="cn")
 
     def test_normalize_attribute_name_preserves_case_when_requested(self) -> None:
         """case_sensitive=True keeps the original casing."""
-        assert u.Ldif.normalize_attribute_name("CN", case_sensitive=True) == "CN"
+        tm.that(u.Ldif.normalize_attribute_name("CN", case_sensitive=True), eq="CN")
 
     def test_normalize_attribute_name_passes_none_through(self) -> None:
         """A None attribute name normalizes to None (no fabricated value)."""
-        assert u.Ldif.normalize_attribute_name(None) is None
+        tm.that(u.Ldif.normalize_attribute_name(None), none=True)
 
     # --- ACL attribute classification ----------------------------------
 
@@ -117,7 +118,7 @@ class TestsFlextLdifUtilitiesComprehensive:
         """clean_dn removes incidental spacing between RDN components."""
         cleaned = u.Ldif.clean_dn("CN=Admin, DC=Example, DC=Com")
 
-        assert cleaned == "CN=Admin,DC=Example,DC=Com"
+        tm.that(cleaned, eq="CN=Admin,DC=Example,DC=Com")
 
     # --- DN normalization result (r[T]) --------------------------------
 
@@ -125,16 +126,16 @@ class TestsFlextLdifUtilitiesComprehensive:
         """Norm yields a success result carrying the normalized DN string."""
         result = u.Ldif.norm("CN=Admin,DC=Example")
 
-        assert result.success is True
-        assert result.value == "cn=Admin,dc=Example"
+        tm.that(result.success, eq=True)
+        tm.that(result.value, eq="cn=Admin,dc=Example")
 
     def test_norm_fails_on_empty_dn(self) -> None:
         """An empty DN yields a failure result with an explanatory message."""
         result = u.Ldif.norm("")
 
-        assert result.failure is True
-        assert result.error is not None
-        assert "empty" in result.error.lower()
+        tm.that(result.failure, eq=True)
+        tm.that(result.error, none=False)
+        tm.that(result.error.lower(), has="empty")
 
     # --- DN parsing (r[T]) ---------------------------------------------
 
@@ -142,26 +143,29 @@ class TestsFlextLdifUtilitiesComprehensive:
         """parse_dn yields the (attr, value) pairs in DN order on success."""
         result = u.Ldif.parse_dn("cn=admin,dc=example,dc=com")
 
-        assert result.success is True
-        assert result.value == [
-            ("cn", "admin"),
-            ("dc", "example"),
-            ("dc", "com"),
-        ]
+        tm.that(result.success, eq=True)
+        tm.that(
+            result.value,
+            eq=[
+                ("cn", "admin"),
+                ("dc", "example"),
+                ("dc", "com"),
+            ],
+        )
 
     def test_parse_dn_fails_on_malformed_dn(self) -> None:
         """A DN missing the '=' separator fails rather than silently parsing."""
         result = u.Ldif.parse_dn("no-equals")
 
-        assert result.failure is True
-        assert result.error is not None
+        tm.that(result.failure, eq=True)
+        tm.that(result.error, none=False)
 
     def test_parse_rdn_returns_single_component(self) -> None:
         """parse_rdn yields the single (attr, value) pair for a lone RDN."""
         result = u.Ldif.parse_rdn("cn=admin")
 
-        assert result.success is True
-        assert result.value == [("cn", "admin")]
+        tm.that(result.success, eq=True)
+        tm.that(result.value, eq=[("cn", "admin")])
 
     # --- line folding / unfolding --------------------------------------
 
@@ -177,4 +181,4 @@ class TestsFlextLdifUtilitiesComprehensive:
         """unfold_lines merges leading-space continuations into their logical line."""
         unfolded = u.Ldif.unfold_lines("dn: cn=a\n b\nfoo: bar")
 
-        assert unfolded == ["dn: cn=ab", "foo: bar"]
+        tm.that(unfolded, eq=["dn: cn=ab", "foo: bar"])

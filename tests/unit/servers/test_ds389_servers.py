@@ -13,10 +13,7 @@ import pytest
 from flext_tests import tm
 
 from flext_ldif.servers.ds389 import FlextLdifServersDs389
-from tests.constants import c
-from tests.models import m
-from tests.typings import t
-from tests.utilities import u
+from tests import c, m, t, u
 
 
 class TestsFlextLdifDs389Servers:
@@ -26,7 +23,7 @@ class TestsFlextLdifDs389Servers:
     def _schema_server() -> FlextLdifServersDs389.Schema:
         """Return the real DS389 schema server via the public facade."""
         server = FlextLdifServersDs389().schema_server
-        assert isinstance(server, FlextLdifServersDs389.Schema)
+        tm.that(server, is_=FlextLdifServersDs389.Schema)
         return server
 
     # ------------------------------------------------------------------
@@ -147,7 +144,7 @@ class TestsFlextLdifDs389Servers:
                 "( 2.16.840.1.113730.3.2.3 NAME 'nsds5base' ABSTRACT )",
             ),
         )
-        assert isinstance(oc_data, m.Ldif.SchemaObjectClass)
+        tm.that(oc_data, is_=m.Ldif.SchemaObjectClass)
         tm.that(oc_data.kind, eq="ABSTRACT")
 
     def test_parse_objectclass_without_oid_fails_with_message(self) -> None:
@@ -183,7 +180,7 @@ class TestsFlextLdifDs389Servers:
         )
         server = self._schema_server()
         parsed = tm.ok(server.parse_input(oc_def))
-        assert isinstance(parsed, m.Ldif.SchemaObjectClass)
+        tm.that(parsed, is_=m.Ldif.SchemaObjectClass)
         rendered = tm.ok(server.write(parsed))
         tm.that(rendered, has=["2.16.840.1.113730.3.2.1", "nscontainer"])
 
@@ -231,5 +228,5 @@ class TestsFlextLdifDs389Servers:
     ) -> None:
         """Acl.can_handle claims aci/version lines and rejects other input."""
         acl_server = FlextLdifServersDs389().acl_server
-        assert isinstance(acl_server, FlextLdifServersDs389.Acl)
+        tm.that(acl_server, is_=FlextLdifServersDs389.Acl)
         tm.that(acl_server.can_handle(acl_line), eq=expected)

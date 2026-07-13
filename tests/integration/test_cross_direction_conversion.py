@@ -12,10 +12,11 @@ monkeypatching of the units under test.
 from __future__ import annotations
 
 import pytest
+from flext_tests import tm
 
 from flext_ldif.services.conversion import FlextLdifConversion
 from flext_ldif.services.server import FlextLdifServer
-from tests.models import m
+from tests import m
 
 pytestmark = [pytest.mark.integration]
 
@@ -92,20 +93,20 @@ class TestsFlextLdifCrossDirectionConversion:
         """Parsing in the source server and writing in the target normalizes text."""
         source_schema = server_registry.resolve_schema_server(source)
         target_schema = server_registry.resolve_schema_server(target)
-        assert source_schema is not None
-        assert target_schema is not None
+        tm.that(source_schema, none=False)
+        tm.that(target_schema, none=False)
 
         parse_result = source_schema.parse_attribute(attr_def)
-        assert parse_result.success, f"{source} parse failed: {parse_result.error}"
+        tm.ok(parse_result)
 
         write_result = target_schema.write_attribute(parse_result.value)
-        assert write_result.success, f"{target} write failed: {write_result.error}"
+        tm.ok(write_result)
 
         written = write_result.value
         for token in must_contain:
-            assert token in written, f"expected {token!r} in {written!r}"
+            tm.that(written, has=token)
         for token in must_not_contain:
-            assert token not in written, f"unexpected {token!r} in {written!r}"
+            tm.that(written, lacks=token)
 
     # ------------------------------------------------------------------
     # ObjectClass definition conversion
@@ -154,20 +155,20 @@ class TestsFlextLdifCrossDirectionConversion:
         """Parsing in source and writing in target preserves/normalizes semantics."""
         source_schema = server_registry.resolve_schema_server(source)
         target_schema = server_registry.resolve_schema_server(target)
-        assert source_schema is not None
-        assert target_schema is not None
+        tm.that(source_schema, none=False)
+        tm.that(target_schema, none=False)
 
         parse_result = source_schema.parse_objectclass(oc_def)
-        assert parse_result.success, f"{source} parse failed: {parse_result.error}"
+        tm.ok(parse_result)
 
         write_result = target_schema.write_objectclass(parse_result.value)
-        assert write_result.success, f"{target} write failed: {write_result.error}"
+        tm.ok(write_result)
 
         written = write_result.value
         for token in must_contain:
-            assert token in written, f"expected {token!r} in {written!r}"
+            tm.that(written, has=token)
         for token in must_not_contain:
-            assert token not in written, f"unexpected {token!r} in {written!r}"
+            tm.that(written, lacks=token)
 
     def test_oid_attribute_roundtrip_is_text_identical(
         self,
@@ -175,17 +176,17 @@ class TestsFlextLdifCrossDirectionConversion:
     ) -> None:
         """OID->parse->OID->write is a byte-stable identity for OID-native text."""
         oid_schema = server_registry.resolve_schema_server("oid")
-        assert oid_schema is not None
+        tm.that(oid_schema, none=False)
         attr_def = (
             "( 2.16.840.1.113894.1.1.327 NAME 'orclDASUIType' "
             "EQUALITY caseIgnoreSubstringsMatch "
             "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )"
         )
         parse_result = oid_schema.parse_attribute(attr_def)
-        assert parse_result.success, f"OID parse failed: {parse_result.error}"
+        tm.ok(parse_result)
         write_result = oid_schema.write_attribute(parse_result.value)
-        assert write_result.success, f"OID write failed: {write_result.error}"
-        assert write_result.value == attr_def
+        tm.ok(write_result)
+        tm.that(write_result.value, eq=attr_def)
 
     # ------------------------------------------------------------------
     # Parsed-model field normalization (public model contract)
@@ -222,10 +223,10 @@ class TestsFlextLdifCrossDirectionConversion:
     ) -> None:
         """The parsed public model field carries the canonicalized value."""
         schema = server_registry.resolve_schema_server(server)
-        assert schema is not None
+        tm.that(schema, none=False)
         parse_result = schema.parse_attribute(attr_def)
-        assert parse_result.success, f"{server} parse failed: {parse_result.error}"
-        assert str(getattr(parse_result.value, field)) == expected
+        tm.ok(parse_result)
+        tm.that(str(getattr(parse_result.value, field)), eq=expected)
 
     def test_oid_case_variant_matching_rule_normalizes_through_pipeline(
         self,
@@ -234,19 +235,19 @@ class TestsFlextLdifCrossDirectionConversion:
         """OID case variant is canonicalized at parse and not re-emitted by OUD."""
         oid_schema = server_registry.resolve_schema_server("oid")
         oud_schema = server_registry.resolve_schema_server("oud")
-        assert oid_schema is not None
-        assert oud_schema is not None
+        tm.that(oid_schema, none=False)
+        tm.that(oud_schema, none=False)
         attr_def = (
             "( 2.16.840.1.113894.1.1.600 NAME 'orclMemberRef' "
             "EQUALITY distinguishedNAMEMatch "
             "SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )"
         )
         parse_result = oid_schema.parse_attribute(attr_def)
-        assert parse_result.success, f"OID parse failed: {parse_result.error}"
-        assert parse_result.value.equality == "distinguishedNameMatch"
+        tm.ok(parse_result)
+        tm.that(parse_result.value.equality, eq="distinguishedNameMatch")
         write_result = oud_schema.write_attribute(parse_result.value)
-        assert write_result.success, f"OUD write failed: {write_result.error}"
-        assert "distinguishedNAMEMatch" not in write_result.value
+        tm.ok(write_result)
+        tm.that(write_result.value, lacks="distinguishedNAMEMatch")
 
     # ------------------------------------------------------------------
     # Entry-level conversion (public convert_model contract)
@@ -281,17 +282,17 @@ class TestsFlextLdifCrossDirectionConversion:
         })
 
         result = conversion.convert_model("oid", "oud", entry)
-        assert result.success, f"Entry conversion failed: {result.error}"
-        assert isinstance(result.value, m.Ldif.Entry)
+        tm.ok(result)
+        tm.that(result.value, is_=m.Ldif.Entry)
 
         converted = result.value
-        assert converted.attributes is not None
+        tm.that(converted.attributes, none=False)
         attribute = converted.attributes.attributes["attributeTypes"][0]
         objectclass = converted.attributes.attributes["objectClasses"][0]
-        assert "SUBSTR caseIgnoreSubstringsMatch" in attribute
-        assert "EQUALITY caseIgnoreSubStringsMatch" not in attribute
-        assert "SUP top" in objectclass
-        assert "SUP 'top'" not in objectclass
+        tm.that(attribute, has="SUBSTR caseIgnoreSubstringsMatch")
+        tm.that(attribute, lacks="EQUALITY caseIgnoreSubStringsMatch")
+        tm.that(objectclass, has="SUP top")
+        tm.that(objectclass, lacks="SUP 'top'")
 
     def test_oud_to_oid_entry_preserves_generic_matching_rule(
         self,
@@ -317,14 +318,14 @@ class TestsFlextLdifCrossDirectionConversion:
         })
 
         result = conversion.convert_model("oud", "oid", entry)
-        assert result.success, f"Entry conversion failed: {result.error}"
-        assert isinstance(result.value, m.Ldif.Entry)
+        tm.ok(result)
+        tm.that(result.value, is_=m.Ldif.Entry)
 
         converted = result.value
-        assert converted.attributes is not None
+        tm.that(converted.attributes, none=False)
         attribute = converted.attributes.attributes["attributeTypes"][0]
-        assert "caseIgnoreMatch" in attribute
-        assert "accessDirectiveMatch" not in attribute
+        tm.that(attribute, has="caseIgnoreMatch")
+        tm.that(attribute, lacks="accessDirectiveMatch")
 
 
 __all__: list[str] = ["TestsFlextLdifCrossDirectionConversion"]

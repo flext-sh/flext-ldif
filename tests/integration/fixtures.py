@@ -8,14 +8,12 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from tests.constants import c
-from tests.typings import t
-from tests.utilities import u
+from tests import c, t, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator
 
-    from tests.protocols import p
+    from tests import p
 
 
 def _probe_ldap_bind(server_url: str, admin_dn: str, admin_password: str) -> str | None:

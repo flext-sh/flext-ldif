@@ -14,12 +14,10 @@ from typing import TYPE_CHECKING
 import pytest
 from flext_tests import tm
 
-from tests.constants import c
-from tests.models import m
-from tests.utilities import TestsFlextLdifUtilities as u
+from tests import TestsFlextLdifUtilities as u, c, m
 
 if TYPE_CHECKING:
-    from tests.protocols import p
+    from tests import p
 
 
 class TestsFlextLdifStatisticsService:
@@ -66,7 +64,7 @@ class TestsFlextLdifStatisticsService:
         result = api.calculate_for_entries(self._entries(2))
 
         stats: m.Ldif.EntriesStatistics = u.Tests.assert_success(result)
-        assert isinstance(stats, m.Ldif.EntriesStatistics)
+        tm.that(stats, is_=m.Ldif.EntriesStatistics)
 
     @pytest.mark.parametrize("count", [0, 1, 2, 5])
     def test_total_entries_equals_input_count(
@@ -155,7 +153,7 @@ class TestsFlextLdifStatisticsService:
             api.calculate_for_entries(parse_response),
         )
 
-        assert from_response.model_dump() == from_list.model_dump()
+        tm.that(from_response.model_dump(), eq=from_list.model_dump())
 
     def test_repeated_calls_are_idempotent(
         self,
@@ -170,4 +168,4 @@ class TestsFlextLdifStatisticsService:
             api.calculate_for_entries(entries),
         )
 
-        assert first.model_dump() == second.model_dump()
+        tm.that(first.model_dump(), eq=second.model_dump())

@@ -21,7 +21,7 @@ from flext_ldif.servers._oid.acl_assemble import FlextLdifServersOidAclAssemble 
 from flext_ldif.servers._oid.acl_convert import FlextLdifServersOidAclConvert as Parser
 from flext_ldif.servers._oid.acl_pipeline import FlextLdifServersOidAclPipeline as Pipe
 from flext_ldif.servers._oid.acl_render import FlextLdifServersOidAclRender as Render
-from tests.utilities import TestsFlextLdifUtilities as u
+from tests import TestsFlextLdifUtilities as u
 
 
 class TestsFlextLdifOidAclAssemble:
@@ -444,7 +444,7 @@ class TestsFlextLdifOidAclAssemble:
         })
 
         converted = Pipe.convert_entry_acls(entry, "oid", "oud").unwrap()
-        assert converted.attributes is not None
+        tm.that(converted.attributes, none=False)
         attrs = converted.attributes.attributes
 
         tm.that("orclaci" not in attrs, eq=True)
@@ -458,7 +458,7 @@ class TestsFlextLdifOidAclAssemble:
         })
 
         converted = Pipe.convert_entry_acls(entry, "oid", "rfc").unwrap()
-        assert converted.attributes is not None
+        tm.that(converted.attributes, none=False)
 
         tm.that("orclaci" in converted.attributes.attributes, eq=True)
 
@@ -466,7 +466,7 @@ class TestsFlextLdifOidAclAssemble:
         entry = self._entry({"cn": ["x"], "objectClass": ["top"]})
 
         converted = Pipe.convert_entry_acls(entry, "oid", "oud").unwrap()
-        assert converted.attributes is not None
+        tm.that(converted.attributes, none=False)
 
         tm.that("aci" not in converted.attributes.attributes, eq=True)
         tm.that("cn" in converted.attributes.attributes, eq=True)

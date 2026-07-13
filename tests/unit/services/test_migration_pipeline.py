@@ -16,15 +16,12 @@ from flext_tests import tm
 
 from flext_ldif.services.migration import FlextLdifMigrationPipeline
 from flext_ldif.services.pipeline import FlextLdifProcessingPipeline
-from tests.constants import c
-from tests.models import m
-from tests.utilities import TestsFlextLdifUtilities as u
+from tests import TestsFlextLdifUtilities as u, c, m
 
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from tests.protocols import p
-    from tests.typings import t
+    from tests import p, t
 
 _BASIC_RFC_ENTRY_LDIF = "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n"
 
@@ -286,7 +283,7 @@ class TestsFlextLdifMigrationPipeline:
         migrated: t.MutableSequenceOf[m.Ldif.Entry] = u.Tests.assert_success(
             pipeline.migrate_entries([entry]),
         )
-        assert migrated[0].attributes is not None
+        tm.that(migrated[0].attributes, none=False)
         tm.that(
             migrated[0].attributes.attributes["aci"],
             eq=[

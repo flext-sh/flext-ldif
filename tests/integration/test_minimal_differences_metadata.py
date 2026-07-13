@@ -16,14 +16,14 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
+from flext_tests import tm
 
 from flext_ldif import ldif, m
 from flext_ldif.services.parser import FlextLdifParser
-from tests.constants import c
-from tests.typings import t
+from tests import c, t
 
 if TYPE_CHECKING:
-    from tests.protocols import p
+    from tests import p
 
 
 class TestsFlextLdifMinimalDifferencesMetadata:
@@ -74,12 +74,12 @@ class TestsFlextLdifMinimalDifferencesMetadata:
 
         result = parser.parse_string(content=content, server_type=server_type)
 
-        assert result.success, result.error
+        tm.ok(result)
         entries = result.value.entries
-        assert len(entries) == 1
+        tm.that(len(entries), eq=1)
         metadata = entries[0].metadata
-        assert metadata is not None
-        assert str(metadata.server_type) == effective_server_type
+        tm.that(metadata, none=False)
+        tm.that(str(metadata.server_type), eq=effective_server_type)
 
     # -- fixture-driven capture -------------------------------------------
 
@@ -103,12 +103,12 @@ class TestsFlextLdifMinimalDifferencesMetadata:
 
         result = parser.parse_ldif_file(path=fixture_path, server_type=server_type)
 
-        assert result.success, result.error
+        tm.ok(result)
         entries = result.value.entries
         assert entries, f"No entries parsed from {fixture_path}"
         for entry in entries:
-            assert entry.metadata is not None, f"Entry {entry.dn} missing metadata"
-            assert str(entry.metadata.server_type) == effective_server_type
+            tm.that(entry.metadata, none=False)
+            tm.that(str(entry.metadata.server_type), eq=effective_server_type)
 
     # -- original DN capture ----------------------------------------------
 
@@ -121,9 +121,9 @@ class TestsFlextLdifMinimalDifferencesMetadata:
 
         result = parser.parse_string(content=content, server_type=c.Tests.OID)
 
-        assert result.success, result.error
+        tm.ok(result)
         metadata = result.value.entries[0].metadata
-        assert metadata is not None
+        tm.that(metadata, none=False)
         assert (
             metadata.extensions["original_dn_complete"] == "cn=test,dc=example,dc=com"
         )
@@ -137,9 +137,9 @@ class TestsFlextLdifMinimalDifferencesMetadata:
 
         result = parser.parse_string(content=content, server_type=c.Tests.RFC)
 
-        assert result.success, result.error
+        tm.ok(result)
         entry = result.value.entries[0]
-        assert str(entry.dn) == "cn=test, dc=example, dc=com"
+        tm.that(str(entry.dn), eq="cn=test, dc=example, dc=com")
 
     # -- boolean conversion metadata --------------------------------------
 
@@ -167,9 +167,9 @@ class TestsFlextLdifMinimalDifferencesMetadata:
 
         result = parser.parse_string(content=content, server_type=c.Tests.OID)
 
-        assert result.success, result.error
+        tm.ok(result)
         metadata = result.value.entries[0].metadata
-        assert metadata is not None
+        tm.that(metadata, none=False)
         # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: validate plain mappings.
         converted: t.MutableJsonMapping = t.json_dict_adapter().validate_python(
             metadata.extensions[c.Ldif.CONVERTED_ATTRIBUTES],
@@ -179,12 +179,14 @@ class TestsFlextLdifMinimalDifferencesMetadata:
                 converted[c.Ldif.CONVERSION_BOOLEAN_CONVERSIONS],
             )
         )
-        assert attribute in boolean_conversions
+        tm.that(boolean_conversions, has=attribute)
         entry_conversion: t.MutableJsonMapping = t.json_dict_adapter().validate_python(
             boolean_conversions[attribute],
         )
-        assert entry_conversion[c.Ldif.CONVERSION_ORIGINAL_VALUE] == [raw_value]
-        assert entry_conversion[c.Ldif.CONVERSION_CONVERTED_VALUE] == [converted_value]
+        tm.that(entry_conversion[c.Ldif.CONVERSION_ORIGINAL_VALUE], eq=[raw_value])
+        tm.that(
+            entry_conversion[c.Ldif.CONVERSION_CONVERTED_VALUE], eq=[converted_value]
+        )
 
     # -- round-trip write --------------------------------------------------
 
@@ -201,16 +203,16 @@ class TestsFlextLdifMinimalDifferencesMetadata:
             "orcldasisenabled: 1\n"
         )
         parse_result = parser.parse_string(content=content, server_type=c.Tests.OID)
-        assert parse_result.success, parse_result.error
+        tm.ok(parse_result)
         entry = m.Ldif.Entry.model_validate(parse_result.value.entries[0])
 
         write_result = writer.write(entries=[entry])
 
-        assert write_result.success, write_result.error
+        tm.ok(write_result)
         written = write_result.value.content
-        assert written is not None
-        assert "dn: cn=test,dc=example,dc=com" in written
-        assert "orcldasisenabled: TRUE" in written
+        tm.that(written, none=False)
+        tm.that(written, has="dn: cn=test,dc=example,dc=com")
+        tm.that(written, has="orcldasisenabled: TRUE")
 
     # -- operational attribute preservation -------------------------------
 
@@ -238,11 +240,11 @@ class TestsFlextLdifMinimalDifferencesMetadata:
 
         result = parser.parse_string(content=content, server_type=c.Tests.RFC)
 
-        assert result.success, result.error
+        tm.ok(result)
         entry = result.value.entries[0]
-        assert entry.metadata is not None
-        assert entry.attributes is not None
-        assert entry.attributes.get(attribute) == [value]
+        tm.that(entry.metadata, none=False)
+        tm.that(entry.attributes, none=False)
+        tm.that(entry.attributes.get(attribute), eq=[value])
 
     # -- invariants and error paths ---------------------------------------
 
@@ -264,10 +266,10 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         assert first.success and second.success
         first_meta = first.value.entries[0].metadata
         second_meta = second.value.entries[0].metadata
-        assert first_meta is not None
-        assert second_meta is not None
-        assert str(first_meta.server_type) == str(second_meta.server_type)
-        assert first_meta.extensions == second_meta.extensions
+        tm.that(first_meta, none=False)
+        tm.that(second_meta, none=False)
+        tm.that(str(first_meta.server_type), eq=str(second_meta.server_type))
+        tm.that(first_meta.extensions, eq=second_meta.extensions)
 
     def test_unknown_server_type_returns_failure_with_reason(
         self,
@@ -278,9 +280,9 @@ class TestsFlextLdifMinimalDifferencesMetadata:
 
         result = parser.parse_string(content=content, server_type="nonexistent_server")
 
-        assert not result.success
-        assert result.error is not None
-        assert "nonexistent_server" in result.error
+        tm.fail(result)
+        tm.that(result.error, none=False)
+        tm.that(result.error, has="nonexistent_server")
 
 
 __all__: list[str] = ["TestsFlextLdifMinimalDifferencesMetadata"]

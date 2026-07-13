@@ -19,11 +19,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
+from flext_tests import tm
 
 from flext_ldif import ldif
 
 if TYPE_CHECKING:
-    from tests.protocols import p
+    from tests import p
 
 _ZERO_WIDTH = "zero" + "\u200b" + "width" + "\u200b" + "spaces"
 
@@ -55,8 +56,8 @@ class TestsFlextLdifEdgeCases:
         """Empty, whitespace-only, and comment-only input yield zero entries."""
         result = api.parse_ldif(content)
 
-        assert result.success, f"{label}: {result.error}"
-        assert result.value.entries == []
+        tm.ok(result)
+        tm.that(result.value.entries, eq=[])
 
     def test_single_entry_with_only_dn_preserves_dn(
         self,
@@ -65,10 +66,10 @@ class TestsFlextLdifEdgeCases:
         """A minimal DN-only entry yields exactly one entry with that DN."""
         result = api.parse_ldif("dn: cn=Single,dc=example,dc=com\n")
 
-        assert result.success
+        tm.ok(result)
         entries = result.value.entries
-        assert len(entries) == 1
-        assert entries[0].dn_str.lower() == "cn=single,dc=example,dc=com"
+        tm.that(len(entries), eq=1)
+        tm.that(entries[0].dn_str.lower(), eq="cn=single,dc=example,dc=com")
 
     def test_single_entry_with_one_attribute_preserves_value(
         self,
@@ -79,10 +80,10 @@ class TestsFlextLdifEdgeCases:
             "dn: cn=OneAttr,dc=example,dc=com\ncn: OneAttr\n",
         )
 
-        assert result.success
+        tm.ok(result)
         entries = result.value.entries
-        assert len(entries) == 1
-        assert entries[0].attributes_dict["cn"] == ["OneAttr"]
+        tm.that(len(entries), eq=1)
+        tm.that(entries[0].attributes_dict["cn"], eq=["OneAttr"])
 
     # -- Large / complex content -------------------------------------------
 
@@ -100,10 +101,10 @@ class TestsFlextLdifEdgeCases:
 
         result = api.parse_ldif(content)
 
-        assert result.success
+        tm.ok(result)
         entries = result.value.entries
-        assert len(entries) == 1
-        assert entries[0].attributes_dict["mail"] == expected
+        tm.that(len(entries), eq=1)
+        tm.that(entries[0].attributes_dict["mail"], eq=expected)
 
     def test_entry_preserves_all_distinct_attribute_names(
         self,
@@ -119,7 +120,7 @@ class TestsFlextLdifEdgeCases:
 
         result = api.parse_ldif(content)
 
-        assert result.success
+        tm.ok(result)
         attrs = result.value.entries[0].attributes_dict
         assert set(attrs) >= {
             "objectClass",
@@ -144,10 +145,13 @@ class TestsFlextLdifEdgeCases:
 
         result = api.parse_ldif(content)
 
-        assert result.success
-        assert result.value.entries[0].attributes_dict["description"] == [
-            long_value,
-        ]
+        tm.ok(result)
+        tm.that(
+            result.value.entries[0].attributes_dict["description"],
+            eq=[
+                long_value,
+            ],
+        )
 
     def test_deeply_nested_dn_hierarchy_preserved(
         self,
@@ -160,10 +164,10 @@ class TestsFlextLdifEdgeCases:
 
         result = api.parse_ldif(content)
 
-        assert result.success
+        tm.ok(result)
         entries = result.value.entries
-        assert len(entries) == 1
-        assert entries[0].dn_str.lower() == full_dn.lower()
+        tm.that(len(entries), eq=1)
+        tm.that(entries[0].dn_str.lower(), eq=full_dn.lower())
 
     # -- Boundary values ----------------------------------------------------
 
@@ -174,10 +178,10 @@ class TestsFlextLdifEdgeCases:
         """Single-character DN and attribute values are accepted and kept."""
         result = api.parse_ldif("dn: cn=A,dc=B\nobjectClass: X\ncn: A\nsn: B\n")
 
-        assert result.success
+        tm.ok(result)
         entry = result.value.entries[0]
-        assert entry.attributes_dict["cn"] == ["A"]
-        assert entry.attributes_dict["sn"] == ["B"]
+        tm.that(entry.attributes_dict["cn"], eq=["A"])
+        tm.that(entry.attributes_dict["sn"], eq=["B"])
 
     @pytest.mark.parametrize(
         ("attribute", "value"),
@@ -196,8 +200,8 @@ class TestsFlextLdifEdgeCases:
 
         result = api.parse_ldif(content)
 
-        assert result.success
-        assert result.value.entries[0].attributes_dict[attribute] == [value]
+        tm.ok(result)
+        tm.that(result.value.entries[0].attributes_dict[attribute], eq=[value])
 
     def test_many_rdn_components_preserved(
         self,
@@ -210,8 +214,8 @@ class TestsFlextLdifEdgeCases:
 
         result = api.parse_ldif(content)
 
-        assert result.success
-        assert result.value.entries[0].dn_str.lower() == full_dn.lower()
+        tm.ok(result)
+        tm.that(result.value.entries[0].dn_str.lower(), eq=full_dn.lower())
 
     def test_minimum_single_rdn_dn_parses(
         self,
@@ -220,10 +224,10 @@ class TestsFlextLdifEdgeCases:
         """The shortest valid single-RDN DN parses to one preserved entry."""
         result = api.parse_ldif("dn: cn=MinDN\nobjectClass: top\ncn: MinDN\n")
 
-        assert result.success
+        tm.ok(result)
         entries = result.value.entries
-        assert len(entries) == 1
-        assert entries[0].dn_str.lower() == "cn=mindn"
+        tm.that(len(entries), eq=1)
+        tm.that(entries[0].dn_str.lower(), eq="cn=mindn")
 
     # -- Unicode / encoding boundaries -------------------------------------
 
@@ -249,8 +253,8 @@ class TestsFlextLdifEdgeCases:
 
         result = api.parse_ldif(content)
 
-        assert result.success, f"{label}: {result.error}"
-        assert result.value.entries[0].attributes_dict["description"] == [text]
+        tm.ok(result)
+        tm.that(result.value.entries[0].attributes_dict["description"], eq=[text])
 
     def test_base64_encoded_value_is_decoded(
         self,
@@ -261,10 +265,13 @@ class TestsFlextLdifEdgeCases:
 
         result = api.parse_ldif(content)
 
-        assert result.success
-        assert result.value.entries[0].attributes_dict["description"] == [
-            "hello",
-        ]
+        tm.ok(result)
+        tm.that(
+            result.value.entries[0].attributes_dict["description"],
+            eq=[
+                "hello",
+            ],
+        )
 
     # -- Roundtrip invariants ----------------------------------------------
 
@@ -274,13 +281,13 @@ class TestsFlextLdifEdgeCases:
     ) -> None:
         """Parsing empty input then writing yields empty/version-only output."""
         result = api.parse_ldif("")
-        assert result.success
-        assert result.value.entries == []
+        tm.ok(result)
+        tm.that(result.value.entries, eq=[])
 
         write_result = api.write(result.value.entries)
-        assert write_result.success
+        tm.ok(write_result)
         written = write_result.value.content
-        assert written is not None
+        tm.that(written, none=False)
         assert not written.strip() or written.strip() == "version: 1"
 
     def test_single_entry_roundtrip_preserves_dn_and_value(
@@ -289,19 +296,19 @@ class TestsFlextLdifEdgeCases:
     ) -> None:
         """Parse -> write -> parse preserves the entry DN and attribute."""
         result = api.parse_ldif("dn: cn=Test,dc=example,dc=com\ncn: Test\n")
-        assert result.success
+        tm.ok(result)
 
         write_result = api.write(result.value.entries)
-        assert write_result.success
+        tm.ok(write_result)
         content = write_result.value.content
-        assert content is not None
+        tm.that(content, none=False)
 
         roundtrip = api.parse_ldif(content)
-        assert roundtrip.success
+        tm.ok(roundtrip)
         entries = roundtrip.value.entries
-        assert len(entries) == 1
-        assert entries[0].dn_str.lower() == "cn=test,dc=example,dc=com"
-        assert entries[0].attributes_dict["cn"] == ["Test"]
+        tm.that(len(entries), eq=1)
+        tm.that(entries[0].dn_str.lower(), eq="cn=test,dc=example,dc=com")
+        tm.that(entries[0].attributes_dict["cn"], eq=["Test"])
 
     def test_many_entries_roundtrip_preserves_count_and_dns(
         self,
@@ -314,19 +321,19 @@ class TestsFlextLdifEdgeCases:
             for i in range(100)
         )
         result = api.parse_ldif(source)
-        assert result.success
+        tm.ok(result)
         original_dns = [e.dn_str.lower() for e in result.value.entries]
-        assert len(original_dns) == 100
+        tm.that(len(original_dns), eq=100)
 
         write_result = api.write(result.value.entries)
-        assert write_result.success
+        tm.ok(write_result)
         content = write_result.value.content
-        assert content is not None
+        tm.that(content, none=False)
 
         roundtrip = api.parse_ldif(content)
-        assert roundtrip.success
+        tm.ok(roundtrip)
         roundtrip_dns = [e.dn_str.lower() for e in roundtrip.value.entries]
-        assert roundtrip_dns == original_dns
+        tm.that(roundtrip_dns, eq=original_dns)
 
 
 __all__: list[str] = ["TestsFlextLdifEdgeCases"]

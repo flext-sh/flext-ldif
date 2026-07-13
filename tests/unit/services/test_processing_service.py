@@ -8,13 +8,10 @@ import pytest
 from flext_tests import tm
 
 from flext_ldif.services.pipeline import FlextLdifProcessingPipeline
-from tests.constants import c
-from tests.models import m
-from tests.utilities import TestsFlextLdifUtilities as u
+from tests import TestsFlextLdifUtilities as u, c, m
 
 if TYPE_CHECKING:
-    from tests.protocols import p
-    from tests.typings import t
+    from tests import p, t
 
 
 class TestsFlextLdifProcessingService:
@@ -139,7 +136,7 @@ class TestsFlextLdifProcessingService:
             entries_input=[entry],
         ).execute()
         converted: t.MutableSequenceOf[m.Ldif.Entry] = u.Tests.assert_success(result)
-        assert converted[0].attributes is not None
+        tm.that(converted[0].attributes, none=False)
         attrs = converted[0].attributes.attributes
 
         tm.that(

@@ -10,10 +10,10 @@ from typing import TYPE_CHECKING, Final, Literal
 from flext_ldap import c
 from flext_tests import FlextTestsConstants
 
-from tests.models import m
+from tests import m
 
 if TYPE_CHECKING:
-    from tests.typings import t
+    from tests import t
 
 
 class TestsFlextLdifConstants(FlextTestsConstants, c):

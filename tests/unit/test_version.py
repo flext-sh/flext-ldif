@@ -7,7 +7,7 @@ import importlib
 import pytest
 from flext_tests import tm
 
-from tests.constants import c
+from tests import c
 
 version_module = importlib.import_module("flext_ldif.__version__")
 FlextLdifVersion = version_module.FlextLdifVersion

@@ -14,13 +14,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
+from flext_tests import tm
 
 from flext_ldif import ldif
 from flext_ldif.services.categorization import FlextLdifCategorization
 from flext_ldif.services.migration import FlextLdifMigrationPipeline
 from flext_ldif.services.statistics import FlextLdifStatistics
-from tests.constants import c
-from tests.models import m
+from tests import c, m
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -50,12 +50,12 @@ class TestsFlextLdifApiIntegration:
         result = ldif.parse_ldif(ldif_content)
 
         # Assert
-        assert result.success
+        tm.ok(result)
         entries = result.value.entries
-        assert len(entries) == expected_entries
+        tm.that(len(entries), eq=expected_entries)
         for entry in entries:
-            assert entry.dn is not None
-            assert entry.attributes is not None
+            tm.that(entry.dn, none=False)
+            tm.that(entry.attributes, none=False)
             assert entry.dn.value
             assert entry.attributes.attributes
 
@@ -76,8 +76,8 @@ class TestsFlextLdifApiIntegration:
         result = ldif.parse_ldif(lenient_content)
 
         # Assert — invariant: lenient parse, success with zero entries, no crash
-        assert result.success
-        assert result.value.entries == []
+        tm.ok(result)
+        tm.that(result.value.entries, eq=[])
 
     def test_parse_ldif_merges_repeated_attribute_into_multivalue(self) -> None:
         """A repeated attribute name is preserved as an ordered multi-value list."""
@@ -88,31 +88,31 @@ class TestsFlextLdifApiIntegration:
         result = ldif.parse_ldif(content)
 
         # Assert
-        assert result.success
+        tm.ok(result)
         (entry,) = result.value.entries
-        assert entry.attributes is not None
-        assert entry.attributes.attributes[c.Tests.NAME_CN] == ["a", "b"]
+        tm.that(entry.attributes, none=False)
+        tm.that(entry.attributes.attributes[c.Tests.NAME_CN], eq=["a", "b"])
 
     def test_parse_write_parse_round_trip_is_idempotent(self) -> None:
         """Parsing serialized output reproduces the same DN and attributes."""
         # Arrange
         original = ldif.parse_ldif(c.Tests.RFC_SAMPLE_LDIF_BASIC)
-        assert original.success
+        tm.ok(original)
         entries = original.value.entries
 
         # Act
         written = ldif.write_to_string(entries)
-        assert written.success
+        tm.ok(written)
         reparsed = ldif.parse_ldif(written.value)
 
         # Assert
-        assert reparsed.success
-        assert len(reparsed.value.entries) == len(entries)
+        tm.ok(reparsed)
+        tm.that(len(reparsed.value.entries), eq=len(entries))
         reparsed_dn = reparsed.value.entries[0].dn
         original_dn = entries[0].dn
-        assert reparsed_dn is not None
-        assert original_dn is not None
-        assert reparsed_dn.value == original_dn.value
+        tm.that(reparsed_dn, none=False)
+        tm.that(original_dn, none=False)
+        tm.that(reparsed_dn.value, eq=original_dn.value)
 
     # ------------------------------------------------------------------
     # Entry model construction — public state
@@ -134,10 +134,12 @@ class TestsFlextLdifApiIntegration:
         )
 
         # Assert
-        assert entry.dn is not None
-        assert entry.attributes is not None
-        assert entry.dn.value == c.Tests.RFC_TEST_DN
-        assert entry.attributes.attributes[c.Tests.NAME_CN] == [c.Tests.ATTR_VALUE_TEST]
+        tm.that(entry.dn, none=False)
+        tm.that(entry.attributes, none=False)
+        tm.that(entry.dn.value, eq=c.Tests.RFC_TEST_DN)
+        tm.that(
+            entry.attributes.attributes[c.Tests.NAME_CN], eq=[c.Tests.ATTR_VALUE_TEST]
+        )
 
     def test_entry_create_returns_success_result_and_validates(self) -> None:
         """Entry.create yields a success FlextResult whose value validates."""
@@ -152,10 +154,10 @@ class TestsFlextLdifApiIntegration:
         )
 
         # Assert
-        assert create_result.success
+        tm.ok(create_result)
         created = create_result.value
-        assert isinstance(created, m.Ldif.Entry)
-        assert ldif.validate_entries([created]).success
+        tm.that(created, is_=m.Ldif.Entry)
+        tm.ok(ldif.validate_entries([created]))
 
     # ------------------------------------------------------------------
     # Validation and statistics — end-to-end observable behavior
@@ -165,26 +167,26 @@ class TestsFlextLdifApiIntegration:
         """Entries parsed from valid LDIF validate successfully."""
         # Arrange
         parsed = ldif.parse_ldif(c.Tests.RFC_SAMPLE_LDIF_BASIC)
-        assert parsed.success
+        tm.ok(parsed)
 
         # Act
         validated = ldif.validate_entries(parsed.value.entries)
 
         # Assert
-        assert validated.success
+        tm.ok(validated)
 
     def test_statistics_report_total_entries_from_public_result(self) -> None:
         """Statistics expose the parsed entry count via the public result model."""
         # Arrange
         parsed = ldif.parse_ldif(c.Tests.RFC_SAMPLE_LDIF_BASIC)
-        assert parsed.success
+        tm.ok(parsed)
 
         # Act
         analyzed = FlextLdifStatistics().calculate_for_entries(parsed.value.entries)
 
         # Assert
-        assert analyzed.success
-        assert analyzed.value.total_entries == 1
+        tm.ok(analyzed)
+        tm.that(analyzed.value.total_entries, eq=1)
 
     def test_statistics_over_empty_input_reports_zero_total(self) -> None:
         """Statistics over an empty entry list report zero total entries."""
@@ -192,8 +194,8 @@ class TestsFlextLdifApiIntegration:
         analyzed = FlextLdifStatistics().calculate_for_entries([])
 
         # Assert
-        assert analyzed.success
-        assert analyzed.value.total_entries == 0
+        tm.ok(analyzed)
+        tm.that(analyzed.value.total_entries, eq=0)
 
     # ------------------------------------------------------------------
     # Facade instance semantics
@@ -211,13 +213,13 @@ class TestsFlextLdifApiIntegration:
 
         # Assert
         assert ldif1 is not ldif2
-        assert result1.success
-        assert result2.success
+        tm.ok(result1)
+        tm.ok(result2)
         dn1 = result1.value.entries[0].dn
         dn2 = result2.value.entries[0].dn
-        assert dn1 is not None
-        assert dn2 is not None
-        assert dn1.value == dn2.value
+        tm.that(dn1, none=False)
+        tm.that(dn2, none=False)
+        tm.that(dn1.value, eq=dn2.value)
 
     # ------------------------------------------------------------------
     # Categorization factory — options binding contract
@@ -240,10 +242,10 @@ class TestsFlextLdifApiIntegration:
         )
 
         # Assert
-        assert isinstance(categorization, FlextLdifCategorization)
-        assert categorization.base_dn == "dc=override,dc=example"
-        assert categorization.forbidden_attributes == ["userPassword"]
-        assert categorization.forbidden_objectclasses == ["groupOfNames"]
+        tm.that(categorization, is_=FlextLdifCategorization)
+        tm.that(categorization.base_dn, eq="dc=override,dc=example")
+        tm.that(categorization.forbidden_attributes, eq=["userPassword"])
+        tm.that(categorization.forbidden_objectclasses, eq=["groupOfNames"])
 
     def test_categorization_defaults_base_dn_from_options(self) -> None:
         """Without an override, categorization keeps the options base DN."""
@@ -260,9 +262,9 @@ class TestsFlextLdifApiIntegration:
         )
 
         # Assert
-        assert isinstance(categorization, FlextLdifCategorization)
-        assert categorization.base_dn == "dc=options,dc=example"
-        assert categorization.forbidden_attributes == ["userPassword"]
+        tm.that(categorization, is_=FlextLdifCategorization)
+        tm.that(categorization.base_dn, eq="dc=options,dc=example")
+        tm.that(categorization.forbidden_attributes, eq=["userPassword"])
 
     def test_categorization_normalizes_schema_whitelist_rules(self) -> None:
         """Raw whitelist mappings are normalized into a WhitelistRules model."""
@@ -280,11 +282,8 @@ class TestsFlextLdifApiIntegration:
         )
 
         # Assert
-        assert isinstance(categorization, FlextLdifCategorization)
-        assert isinstance(
-            categorization.schema_whitelist_rules,
-            m.Ldif.WhitelistRules,
-        )
+        tm.that(categorization, is_=FlextLdifCategorization)
+        tm.that(categorization.schema_whitelist_rules, is_=m.Ldif.WhitelistRules)
         assert categorization.schema_whitelist_rules.has_oid_filters
 
     # ------------------------------------------------------------------
@@ -314,12 +313,12 @@ class TestsFlextLdifApiIntegration:
         )
 
         # Assert
-        assert isinstance(pipeline, FlextLdifMigrationPipeline)
-        assert pipeline.input_dir == input_dir
-        assert pipeline.output_dir == output_dir
-        assert pipeline.source_server_type == c.Tests.OID
-        assert pipeline.target_server_type == c.Tests.OUD
-        assert pipeline.output_filename == "custom.ldif"
+        tm.that(pipeline, is_=FlextLdifMigrationPipeline)
+        tm.that(pipeline.input_dir, eq=input_dir)
+        tm.that(pipeline.output_dir, eq=output_dir)
+        tm.that(pipeline.source_server_type, eq=c.Tests.OID)
+        tm.that(pipeline.target_server_type, eq=c.Tests.OUD)
+        tm.that(pipeline.output_filename, eq="custom.ldif")
 
 
 if __name__ == "__main__":

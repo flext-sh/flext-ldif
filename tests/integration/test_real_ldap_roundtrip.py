@@ -19,16 +19,15 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
+from flext_tests import tm
 
 from flext_ldif import ldif
-from tests.models import m
-from tests.utilities import u
+from tests import m, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from tests.protocols import p
-    from tests.typings import t
+    from tests import p, t
 
 # Attributes that LDIF/LDAP layers may inject and that are not part of the
 # user-supplied contract under test.
@@ -97,27 +96,27 @@ class TestsFlextLdifRealLdapRoundtrip:
             attributes=read_back,
             metadata=None,
         )
-        assert entry_result.success, entry_result.error
+        tm.ok(entry_result)
         source_entry = entry_result.unwrap()
 
         # Act: serialize to LDIF, then parse the LDIF back.
         write_result = flext_api.write([source_entry])
-        assert write_result.success, write_result.error
+        tm.ok(write_result)
         ldif_text = write_result.unwrap().content
         assert ldif_text
 
         parse_result = flext_api.parse_ldif(ldif_text)
-        assert parse_result.success, parse_result.error
+        tm.ok(parse_result)
         parsed_entries = parse_result.unwrap().entries
 
         # Assert: exactly one entry survives, with the same DN.
-        assert len(parsed_entries) == 1
+        tm.that(len(parsed_entries), eq=1)
         parsed_entry = parsed_entries[0]
-        assert parsed_entry.dn_str == source_dn
+        tm.that(parsed_entry.dn_str, eq=source_dn)
 
         # Assert: objectClass set is preserved through the roundtrip.
         object_classes = u.Ldif.get_attribute_values(parsed_entry, "objectclass")
-        assert {oc.lower() for oc in object_classes} == {"person", "inetorgperson"}
+        tm.that({oc.lower() for oc in object_classes}, eq={"person", "inetorgperson"})
 
         # Re-import the parsed entry into LDAP via its PUBLIC attribute view.
         copy_dn = f"cn={make_test_username('RoundtripTestCopy')},{clean_test_ou}"
@@ -132,10 +131,10 @@ class TestsFlextLdifRealLdapRoundtrip:
 
         # Assert: the re-imported LDAP entry matches the original observable values.
         reimported = self._read_ldap_attrs(ldap_connection, copy_dn)
-        assert reimported["sn"] == ["Test"]
-        assert reimported["mail"] == ["roundtrip@example.com"]
-        assert set(reimported["telephoneNumber"]) == {"+1-555-1111", "+1-555-2222"}
-        assert reimported["description"] == ["Multi-line\ndescription\ntest"]
+        tm.that(reimported["sn"], eq=["Test"])
+        tm.that(reimported["mail"], eq=["roundtrip@example.com"])
+        tm.that(set(reimported["telephoneNumber"]), eq={"+1-555-1111", "+1-555-2222"})
+        tm.that(reimported["description"], eq=["Multi-line\ndescription\ntest"])
 
 
 __all__: list[str] = ["TestsFlextLdifRealLdapRoundtrip"]

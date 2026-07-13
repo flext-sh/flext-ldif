@@ -24,13 +24,12 @@ from flext_ldif import ldif
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.services.migration import FlextLdifMigrationPipeline
-from tests.constants import c
-from tests.utilities import TestsFlextLdifUtilities as u
+from tests import TestsFlextLdifUtilities as u, c
 
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from tests.protocols import p
+    from tests import p
 
 MIN_OUD_ENTRIES = 10
 
@@ -79,7 +78,7 @@ class TestsFlextLdifOudToOidMigration:
         (``, `` -> ``,``); the observable contract is that the RDN component
         set is preserved, so DNs are compared component-wise.
         """
-        assert isinstance(entries, list)
+        tm.that(entries, is_=list)
         split_re = c.Ldif.DN_SPLIT_OPTIONAL_SPACE_RE
         return {
             ",".join(split_re.split(entry.dn.value))
@@ -118,7 +117,7 @@ class TestsFlextLdifOudToOidMigration:
         migrated_content = output_file.read_text(encoding="utf-8")
         assert migrated_content.strip(), "Migrated LDIF is empty"
         reparse = client.parse_ldif(migrated_content)
-        assert reparse.success, f"Migrated output not re-parseable: {reparse.error}"
+        tm.ok(reparse)
 
     @pytest.mark.parametrize(
         "fixture_name",
@@ -139,7 +138,7 @@ class TestsFlextLdifOudToOidMigration:
         (input_dir / "source.ldif").write_text(source_content, encoding="utf-8")
 
         source_parse = client.parse_ldif(source_content)
-        assert source_parse.success, f"Source parse failed: {source_parse.error}"
+        tm.ok(source_parse)
         source_dns = self._dn_set(source_parse.value.entries)
 
         pipeline = FlextLdifMigrationPipeline(
@@ -154,10 +153,10 @@ class TestsFlextLdifOudToOidMigration:
 
         migrated = (output_dir / "migrated.ldif").read_text(encoding="utf-8")
         migrated_parse = client.parse_ldif(migrated)
-        assert migrated_parse.success, f"Migrated parse failed: {migrated_parse.error}"
+        tm.ok(migrated_parse)
         migrated_dns = self._dn_set(migrated_parse.value.entries)
 
-        assert migrated_dns == source_dns, "DN set changed during OUD->OID migration"
+        tm.that(migrated_dns, eq=source_dns)
 
     # -- OUD server public parse contract ---------------------------------
 
@@ -169,7 +168,7 @@ class TestsFlextLdifOudToOidMigration:
         """OUD ``parse_ldif`` succeeds and yields the fixture's entries."""
         result = oud.parse_ldif(oud_entries)
 
-        assert result.success, f"OUD parse failed: {result.error}"
+        tm.ok(result)
         entries = result.value.entries
         assert len(entries) >= MIN_OUD_ENTRIES, (
             f"Expected >= {MIN_OUD_ENTRIES} entries, got {len(entries)}"
@@ -182,8 +181,8 @@ class TestsFlextLdifOudToOidMigration:
         """Parsing empty content is a success with zero entries (invariant)."""
         result = oud.parse_ldif("")
 
-        assert result.success, f"Empty parse should succeed: {result.error}"
-        assert result.value.entries == [], "Empty input must produce no entries"
+        tm.ok(result)
+        tm.that(result.value.entries, eq=[])
 
     def test_oud_parse_ldif_accepts_schema_fixture(
         self,
@@ -193,7 +192,7 @@ class TestsFlextLdifOudToOidMigration:
         """OUD ``parse_ldif`` handles the schema fixture as a subschema entry."""
         result = oud.parse_ldif(oud_schema)
 
-        assert result.success, f"OUD schema parse failed: {result.error}"
+        tm.ok(result)
         assert result.value.entries, "Schema fixture produced no entries"
 
     # -- OUD -> OID server round-trip -------------------------------------
@@ -207,23 +206,21 @@ class TestsFlextLdifOudToOidMigration:
     ) -> None:
         """OUD-parsed entries written by OID re-parse to the same DN set."""
         parsed = oud.parse_ldif(oud_integration)
-        assert parsed.success, f"OUD parse failed: {parsed.error}"
+        tm.ok(parsed)
         source_entries = parsed.value.entries
         assert source_entries, "No entries parsed from OUD integration fixture"
         source_dns = self._dn_set(source_entries)
 
         write_result = oid.write(source_entries)
-        assert write_result.success, f"OID write failed: {write_result.error}"
+        tm.ok(write_result)
         written_ldif = write_result.value
         assert isinstance(written_ldif, str) and written_ldif.strip(), (
             "OID write produced empty content"
         )
 
         reparse = client.parse_ldif(written_ldif)
-        assert reparse.success, f"Re-parse of OID output failed: {reparse.error}"
-        assert self._dn_set(reparse.value.entries) == source_dns, (
-            "OID write did not preserve the OUD DN set"
-        )
+        tm.ok(reparse)
+        tm.that(self._dn_set(reparse.value.entries), eq=source_dns)
 
     def test_oid_write_is_idempotent_on_dn_set(
         self,
@@ -233,7 +230,7 @@ class TestsFlextLdifOudToOidMigration:
     ) -> None:
         """Writing the same OUD entries twice yields the same OID DN set."""
         parsed = oud.parse_ldif(oud_integration)
-        assert parsed.success, f"OUD parse failed: {parsed.error}"
+        tm.ok(parsed)
         entries = parsed.value.entries
 
         first = oid.write(entries)
@@ -243,9 +240,12 @@ class TestsFlextLdifOudToOidMigration:
         first_parse = ldif().parse_ldif(first.value)
         second_parse = ldif().parse_ldif(second.value)
         assert first_parse.success and second_parse.success
-        assert self._dn_set(first_parse.value.entries) == self._dn_set(
-            second_parse.value.entries,
-        ), "OID write is not idempotent on the DN set"
+        tm.that(
+            self._dn_set(first_parse.value.entries),
+            eq=self._dn_set(
+                second_parse.value.entries,
+            ),
+        )
 
 
 __all__: list[str] = [

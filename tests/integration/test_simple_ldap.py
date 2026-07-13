@@ -10,15 +10,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from flext_tests import tm
+
 from flext_ldif import ldif
-from tests.constants import c
-from tests.models import m
+from tests import c, m
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from tests.protocols import p
-    from tests.typings import t
+    from tests import p, t
 
 
 class TestsFlextLdifSimpleLdap:
@@ -55,13 +55,13 @@ class TestsFlextLdifSimpleLdap:
             attributes=["*"],
         )
         ldap_entry = ldap_connection.entries[0]
-        assert ldap_entry.entry_dn is not None
+        tm.that(ldap_entry.entry_dn, none=False)
         attrs: t.MutableAttributeMapping = {
             attr: [str(value) for value in ldap_entry[attr].values]
             for attr in ldap_entry.entry_attributes
         }
         entry_result = m.Ldif.Entry.create(dn=ldap_entry.entry_dn, attributes=attrs)
-        assert entry_result.success, entry_result.error
+        tm.ok(entry_result)
         entry: m.Ldif.Entry = entry_result.unwrap()
         return entry
 
@@ -97,11 +97,11 @@ class TestsFlextLdifSimpleLdap:
 
         try:
             attributes = entry.attributes_dict
-            assert entry.dn_str == f"cn={username},{base_dn}"
-            assert "cn" in attributes
-            assert "sn" in attributes
-            assert username in attributes["cn"]
-            assert "Test" in attributes["sn"]
+            tm.that(entry.dn_str, eq=f"cn={username},{base_dn}")
+            tm.that(attributes, has="cn")
+            tm.that(attributes, has="sn")
+            tm.that(attributes["cn"], has=username)
+            tm.that(attributes["sn"], has="Test")
         finally:
             ldap_connection.delete(f"cn={username},{base_dn}")
 
@@ -119,13 +119,13 @@ class TestsFlextLdifSimpleLdap:
         try:
             write_result = ldif().write([entry])
 
-            assert write_result.success, write_result.error
+            tm.ok(write_result)
             response = write_result.unwrap()
-            assert response.content is not None
-            assert response.statistics.total_entries == 1
-            assert response.statistics.processed_entries == 1
-            assert f"cn: {username}" in response.content
-            assert "sn: Test" in response.content
+            tm.that(response.content, none=False)
+            tm.that(response.statistics.total_entries, eq=1)
+            tm.that(response.statistics.processed_entries, eq=1)
+            tm.that(response.content, has=f"cn: {username}")
+            tm.that(response.content, has="sn: Test")
         finally:
             ldap_connection.delete(f"cn={username},{base_dn}")
 
@@ -143,23 +143,23 @@ class TestsFlextLdifSimpleLdap:
 
         try:
             write_result = api.write([entry])
-            assert write_result.success, write_result.error
+            tm.ok(write_result)
             content = write_result.unwrap().content
-            assert content is not None
+            tm.that(content, none=False)
 
             parse_result = api.parse_string(content)
 
-            assert parse_result.success, parse_result.error
+            tm.ok(parse_result)
             parsed = parse_result.unwrap().entries
-            assert len(parsed) == 1
+            tm.that(len(parsed), eq=1)
             recovered = parsed[0]
-            assert recovered.dn_str == entry.dn_str
+            tm.that(recovered.dn_str, eq=entry.dn_str)
             recovered_values = [
                 value
                 for values in recovered.attributes_dict.values()
                 for value in values
             ]
-            assert username in recovered_values
-            assert "Test" in recovered_values
+            tm.that(recovered_values, has=username)
+            tm.that(recovered_values, has="Test")
         finally:
             ldap_connection.delete(f"cn={username},{base_dn}")

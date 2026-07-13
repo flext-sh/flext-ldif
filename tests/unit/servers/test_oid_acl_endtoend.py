@@ -12,13 +12,10 @@ import pytest
 from flext_tests import tm
 
 from flext_ldif.services.conversion import FlextLdifConversion
-from tests.constants import c
-from tests.models import m
-from tests.utilities import u
+from tests import c, m, u
 
 if TYPE_CHECKING:
-    from tests.protocols import p
-    from tests.typings import t
+    from tests import p, t
 
 
 class TestsFlextLdifOidAclEndToEnd:

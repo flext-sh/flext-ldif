@@ -11,10 +11,7 @@ from flext_ldap import FlextLdapUtilities, u
 from flext_tests import FlextTestsUtilities, tk, tm
 from flext_tests._utilities.fixtures_dsl import FlextTestsFixturesDSLMixin
 
-from tests.constants import c
-from tests.models import m
-from tests.protocols import p
-from tests.typings import t
+from tests import c, m, p, t
 
 if TYPE_CHECKING:
     from collections.abc import Callable, MutableMapping

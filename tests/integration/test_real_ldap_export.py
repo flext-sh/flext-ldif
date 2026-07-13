@@ -23,16 +23,16 @@ from typing import TYPE_CHECKING
 
 import pytest
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
+from flext_tests import tm
 
 from flext_ldif import ldif
-from tests.constants import c
+from tests import c
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping, Sequence
     from pathlib import Path
 
-    from tests.models import m
-    from tests.protocols import p
+    from tests import m, p
 
 
 @pytest.fixture
@@ -56,7 +56,7 @@ class TestsFlextLdifRealLdapExport:
         entries: list[m.Ldif.Entry] = []
         for ldap3_entry in ldap3_entries:
             result = adapter.ldap3_to_ldif_entry(ldap3_entry)
-            assert result.success, result.error
+            tm.ok(result)
             entries.append(result.unwrap())
         return entries
 
@@ -71,9 +71,9 @@ class TestsFlextLdifRealLdapExport:
         behavioral check: it proves the exported bytes are valid LDIF that
         faithfully round-trips every DN and attribute.
         """
-        assert content is not None
+        tm.that(content, none=False)
         parsed = flext_api.parse_string(content)
-        assert parsed.success, parsed.error
+        tm.ok(parsed)
         return {
             entry.dn_str: entry.attributes_dict for entry in parsed.unwrap().entries
         }
@@ -99,17 +99,17 @@ class TestsFlextLdifRealLdapExport:
             },
         )
         ldap_connection.search(clean_test_ou, f"(cn={username})", attributes=["*"])
-        assert len(ldap_connection.entries) == 1
+        tm.that(len(ldap_connection.entries), eq=1)
 
         write_result = flext_api.write(self._to_ldif_entries(ldap_connection.entries))
 
-        assert write_result.success, write_result.error
+        tm.ok(write_result)
         indexed = self._parse_back(flext_api, write_result.unwrap().content)
-        assert person_dn in indexed
+        tm.that(indexed, has=person_dn)
         attrs = indexed[person_dn]
-        assert username in attrs["cn"]
-        assert "User" in attrs["sn"]
-        assert "test@example.com" in attrs["mail"]
+        tm.that(attrs["cn"], has=username)
+        tm.that(attrs["sn"], has="User")
+        tm.that(attrs["mail"], has="test@example.com")
 
     def test_multiple_entries_export_round_trips_every_dn(
         self,
@@ -134,18 +134,18 @@ class TestsFlextLdifRealLdapExport:
                 },
             )
         ldap_connection.search(clean_test_ou, "(objectClass=person)", attributes=["*"])
-        assert len(ldap_connection.entries) == 5
+        tm.that(len(ldap_connection.entries), eq=5)
 
         write_result = flext_api.write(self._to_ldif_entries(ldap_connection.entries))
 
-        assert write_result.success, write_result.error
+        tm.ok(write_result)
         indexed = self._parse_back(flext_api, write_result.unwrap().content)
         for i, (username, person_dn) in enumerate(
             zip(usernames, expected_dns, strict=True),
         ):
-            assert person_dn in indexed
-            assert username in indexed[person_dn]["cn"]
-            assert f"Surname{i}" in indexed[person_dn]["sn"]
+            tm.that(indexed, has=person_dn)
+            tm.that(indexed[person_dn]["cn"], has=username)
+            tm.that(indexed[person_dn]["sn"], has=f"Surname{i}")
 
     def test_hierarchical_export_round_trips_containers_and_leaves(
         self,
@@ -182,11 +182,11 @@ class TestsFlextLdifRealLdapExport:
 
         write_result = flext_api.write(self._to_ldif_entries(ldap_connection.entries))
 
-        assert write_result.success, write_result.error
+        tm.ok(write_result)
         indexed = self._parse_back(flext_api, write_result.unwrap().content)
         for expected_dn in (groups_ou_dn, people_ou_dn, person_dn, group_dn):
-            assert expected_dn in indexed
-        assert person_dn in indexed[group_dn]["member"]
+            tm.that(indexed, has=expected_dn)
+        tm.that(indexed[group_dn]["member"], has=person_dn)
 
     def test_export_is_idempotent_for_fixed_entries(
         self,
@@ -209,9 +209,9 @@ class TestsFlextLdifRealLdapExport:
         first = flext_api.write(entries)
         second = flext_api.write(entries)
 
-        assert first.success, first.error
-        assert second.success, second.error
-        assert first.unwrap().content == second.unwrap().content
+        tm.ok(first)
+        tm.ok(second)
+        tm.that(first.unwrap().content, eq=second.unwrap().content)
 
     def test_export_to_file_writes_parseable_ldif(
         self,
@@ -235,12 +235,12 @@ class TestsFlextLdifRealLdapExport:
 
         write_result = flext_api.write_ldif_file(entries, output_file)
 
-        assert write_result.success, write_result.error
+        tm.ok(write_result)
         assert output_file.exists()
         indexed = self._parse_back(flext_api, output_file.read_text())
-        assert person_dn in indexed
-        assert username in indexed[person_dn]["cn"]
-        assert "export@example.com" in indexed[person_dn]["mail"]
+        tm.that(indexed, has=person_dn)
+        tm.that(indexed[person_dn]["cn"], has=username)
+        tm.that(indexed[person_dn]["mail"], has="export@example.com")
 
 
 __all__: list[str] = ["TestsFlextLdifRealLdapExport"]

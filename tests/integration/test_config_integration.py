@@ -25,11 +25,11 @@ import pytest
 from flext_tests import tm
 
 from flext_ldif import ldif
+from tests import c
 from tests.base import s
-from tests.constants import c
 
 if TYPE_CHECKING:
-    from tests.models import m
+    from tests import m
     from tests.settings import TestsFlextLdifSettings
 
 # Expected DN observable in CONFIG_BASIC_ENTRY.
@@ -63,7 +63,7 @@ class TestsFlextLdifConfigIntegration:
         values: list[str] = []
         for entry in entries:
             dn = entry.dn
-            assert dn is not None, "parsed entry must expose a DN"
+            tm.that(dn, none=False)
             values.append(dn.value)
         return values
 

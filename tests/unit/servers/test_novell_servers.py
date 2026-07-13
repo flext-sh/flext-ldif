@@ -13,9 +13,7 @@ import pytest
 from flext_tests import tm
 
 from flext_ldif.servers.novell import FlextLdifServersNovell
-from tests.constants import c
-from tests.models import m
-from tests.utilities import u
+from tests import c, m, u
 
 
 class TestsFlextLdifNovellServers:
@@ -33,7 +31,7 @@ class TestsFlextLdifNovellServers:
     ) -> FlextLdifServersNovell.Schema:
         """Expose the schema sub-server through the public facade property."""
         server = novell_server.schema_server
-        assert isinstance(server, FlextLdifServersNovell.Schema)
+        tm.that(server, is_=FlextLdifServersNovell.Schema)
         return server
 
     @pytest.fixture
@@ -43,7 +41,7 @@ class TestsFlextLdifNovellServers:
     ) -> FlextLdifServersNovell.Acl:
         """Expose the ACL sub-server through the public facade property."""
         server = novell_server.acl_server
-        assert isinstance(server, FlextLdifServersNovell.Acl)
+        tm.that(server, is_=FlextLdifServersNovell.Acl)
         return server
 
     @pytest.fixture
@@ -53,7 +51,7 @@ class TestsFlextLdifNovellServers:
     ) -> FlextLdifServersNovell.Entry:
         """Expose the entry sub-server through the public facade property."""
         server = novell_server.entry_server
-        assert isinstance(server, FlextLdifServersNovell.Entry)
+        tm.that(server, is_=FlextLdifServersNovell.Entry)
         return server
 
     # ── Schema: attribute detection ─────────────────────────────────────
@@ -278,8 +276,8 @@ class TestsFlextLdifNovellServers:
             "attributes": {"cn": ["user"], "objectClass": ["ndsperson"]},
         })
         processed = tm.ok(entry_server.process_entry(entry))
-        assert isinstance(processed, m.Ldif.Entry)
-        assert processed.attributes is not None
+        tm.that(processed, is_=m.Ldif.Entry)
+        tm.that(processed.attributes, none=False)
         attributes = processed.attributes.attributes
         tm.that(attributes["cn"] == ["user"], eq=True)
         tm.that(attributes["objectClass"] == ["ndsperson"], eq=True)
@@ -299,6 +297,6 @@ class TestsFlextLdifNovellServers:
             "attributes": {},
         })
         processed = tm.ok(entry_server.process_entry(entry))
-        assert isinstance(processed, m.Ldif.Entry)
-        assert processed.attributes is not None
+        tm.that(processed, is_=m.Ldif.Entry)
+        tm.that(processed.attributes, none=False)
         tm.that(dict(processed.attributes.attributes) == {}, eq=True)

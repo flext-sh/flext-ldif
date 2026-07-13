@@ -12,12 +12,12 @@ import pytest
 from flext_tests import tm
 
 from flext_ldif import ldif
-from tests.constants import c
+from tests import c
 
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from tests.protocols import p
+    from tests import p
 
 
 @pytest.fixture

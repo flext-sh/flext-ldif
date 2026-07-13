@@ -14,8 +14,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
+from flext_tests import tm
 
-from tests.models import m
+from tests import m
 
 
 class TestsFlextLdifDnCaseHandling:
@@ -35,7 +36,7 @@ class TestsFlextLdifDnCaseHandling:
         """The first registration fixes the canonical case for that DN."""
         canonical = registry.register_dn("CN=Admin,DC=Example,DC=Com")
 
-        assert canonical == "CN=Admin,DC=Example,DC=Com"
+        tm.that(canonical, eq="CN=Admin,DC=Example,DC=Com")
 
     @pytest.mark.parametrize(
         "variant",
@@ -53,7 +54,7 @@ class TestsFlextLdifDnCaseHandling:
         """Registering any case variant returns the already-canonical form."""
         registry.register_dn("CN=Admin,DC=Example,DC=Com")
 
-        assert registry.register_dn(variant) == "CN=Admin,DC=Example,DC=Com"
+        tm.that(registry.register_dn(variant), eq="CN=Admin,DC=Example,DC=Com")
 
     def test_registration_is_idempotent_for_identical_case(
         self,
@@ -63,7 +64,7 @@ class TestsFlextLdifDnCaseHandling:
         first = registry.register_dn("cn=admin,dc=com")
         second = registry.register_dn("cn=admin,dc=com")
 
-        assert first == second == "cn=admin,dc=com"
+        tm.that(first, eq=second)
 
     def test_force_overrides_the_canonical_case(
         self,
@@ -74,8 +75,8 @@ class TestsFlextLdifDnCaseHandling:
 
         forced = registry.register_dn("cn=ADMIN,dc=COM", force=True)
 
-        assert forced == "cn=ADMIN,dc=COM"
-        assert registry.resolve_canonical_dn("CN=Admin,DC=Com") == "cn=ADMIN,dc=COM"
+        tm.that(forced, eq="cn=ADMIN,dc=COM")
+        tm.that(registry.resolve_canonical_dn("CN=Admin,DC=Com"), eq="cn=ADMIN,dc=COM")
 
     def test_without_force_canonical_case_is_preserved(
         self,
@@ -86,8 +87,8 @@ class TestsFlextLdifDnCaseHandling:
 
         unchanged = registry.register_dn("cn=admin,dc=com")
 
-        assert unchanged == "CN=Admin,DC=Com"
-        assert registry.resolve_canonical_dn("cn=admin,dc=com") == "CN=Admin,DC=Com"
+        tm.that(unchanged, eq="CN=Admin,DC=Com")
+        tm.that(registry.resolve_canonical_dn("cn=admin,dc=com"), eq="CN=Admin,DC=Com")
 
     # -- resolution ----------------------------------------------------------
 
@@ -107,7 +108,7 @@ class TestsFlextLdifDnCaseHandling:
         """Any case variant resolves to the registered canonical DN."""
         registry.register_dn("cn=test,dc=example,dc=com")
 
-        assert registry.resolve_canonical_dn(lookup) == "cn=test,dc=example,dc=com"
+        tm.that(registry.resolve_canonical_dn(lookup), eq="cn=test,dc=example,dc=com")
 
     @pytest.mark.parametrize(
         "lookup",
@@ -125,14 +126,14 @@ class TestsFlextLdifDnCaseHandling:
         """Insignificant whitespace does not affect canonical resolution."""
         registry.register_dn("cn=admin,dc=com")
 
-        assert registry.resolve_canonical_dn(lookup) == "cn=admin,dc=com"
+        tm.that(registry.resolve_canonical_dn(lookup), eq="cn=admin,dc=com")
 
     def test_resolution_of_unknown_dn_returns_none(
         self,
         registry: m.Ldif.DnRegistry,
     ) -> None:
         """An unregistered DN resolves to ``None``."""
-        assert registry.resolve_canonical_dn("cn=unknown,dc=com") is None
+        tm.that(registry.resolve_canonical_dn("cn=unknown,dc=com"), none=True)
 
     # -- consistency validation ---------------------------------------------
 
@@ -143,8 +144,8 @@ class TestsFlextLdifDnCaseHandling:
         """A registry with no DNs reports consistent (vacuously true)."""
         result = registry.validate_oud_consistency()
 
-        assert result.success
-        assert result.unwrap() is True
+        tm.ok(result)
+        tm.that(result.unwrap(), eq=True)
 
     def test_single_case_per_dn_is_consistent(
         self,
@@ -156,8 +157,8 @@ class TestsFlextLdifDnCaseHandling:
 
         result = registry.validate_oud_consistency()
 
-        assert result.success
-        assert result.unwrap() is True
+        tm.ok(result)
+        tm.that(result.unwrap(), eq=True)
 
     @pytest.mark.parametrize(
         "variants",
@@ -177,8 +178,8 @@ class TestsFlextLdifDnCaseHandling:
 
         result = registry.validate_oud_consistency()
 
-        assert result.success
-        assert result.unwrap() is False
+        tm.ok(result)
+        tm.that(result.unwrap(), eq=False)
 
     def test_inconsistency_does_not_break_resolution(
         self,
@@ -189,8 +190,8 @@ class TestsFlextLdifDnCaseHandling:
         registry.register_dn("CN=Admin,DC=Com")
         registry.register_dn("cn=ADMIN,dc=COM")
 
-        assert registry.resolve_canonical_dn("CN=ADMIN,DC=COM") == "cn=admin,dc=com"
-        assert registry.validate_oud_consistency().unwrap() is False
+        tm.that(registry.resolve_canonical_dn("CN=ADMIN,DC=COM"), eq="cn=admin,dc=com")
+        tm.that(registry.validate_oud_consistency().unwrap(), eq=False)
 
     def test_hierarchical_dns_track_independently_and_stay_consistent(
         self,
@@ -206,8 +207,8 @@ class TestsFlextLdifDnCaseHandling:
             registry.register_dn(dn)
 
         for dn in hierarchy:
-            assert registry.resolve_canonical_dn(dn) == dn
-        assert registry.validate_oud_consistency().unwrap() is True
+            tm.that(registry.resolve_canonical_dn(dn), eq=dn)
+        tm.that(registry.validate_oud_consistency().unwrap(), eq=True)
 
     # -- clearing ------------------------------------------------------------
 
@@ -221,8 +222,8 @@ class TestsFlextLdifDnCaseHandling:
 
         registry.clear()
 
-        assert registry.resolve_canonical_dn("cn=admin,dc=com") is None
-        assert registry.resolve_canonical_dn("cn=user,dc=com") is None
+        tm.that(registry.resolve_canonical_dn("cn=admin,dc=com"), none=True)
+        tm.that(registry.resolve_canonical_dn("cn=user,dc=com"), none=True)
 
     def test_clear_resets_consistency_state(
         self,
@@ -231,11 +232,11 @@ class TestsFlextLdifDnCaseHandling:
         """Clearing an inconsistent registry restores a consistent result."""
         registry.register_dn("cn=admin,dc=com")
         registry.register_dn("CN=Admin,DC=Com")
-        assert registry.validate_oud_consistency().unwrap() is False
+        tm.that(registry.validate_oud_consistency().unwrap(), eq=False)
 
         registry.clear()
 
-        assert registry.validate_oud_consistency().unwrap() is True
+        tm.that(registry.validate_oud_consistency().unwrap(), eq=True)
 
     def test_registry_is_reusable_after_clear(
         self,
@@ -247,8 +248,8 @@ class TestsFlextLdifDnCaseHandling:
 
         canonical = registry.register_dn("CN=New,DC=Com")
 
-        assert canonical == "CN=New,DC=Com"
-        assert registry.resolve_canonical_dn("cn=new,dc=com") == "CN=New,DC=Com"
+        tm.that(canonical, eq="CN=New,DC=Com")
+        tm.that(registry.resolve_canonical_dn("cn=new,dc=com"), eq="CN=New,DC=Com")
 
 
 __all__: list[str] = ["TestsFlextLdifDnCaseHandling"]

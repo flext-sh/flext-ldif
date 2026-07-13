@@ -23,16 +23,16 @@ import base64
 from typing import TYPE_CHECKING
 
 import pytest
+from flext_tests import tm
 
 from flext_ldif import ldif
-from tests.constants import c
-from tests.utilities import u
+from tests import c, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
 
-    from tests.protocols import p
+    from tests import p
 
 
 @pytest.fixture
@@ -50,7 +50,7 @@ class TestsFlextLdifRealLdapImport:
     @staticmethod
     def _dn(entry: p.Ldif.Entry) -> str:
         """Distinguished name string via the public DN protocol accessor."""
-        assert entry.dn is not None
+        tm.that(entry.dn, none=False)
         return entry.dn.value
 
     @staticmethod
@@ -61,7 +61,7 @@ class TestsFlextLdifRealLdapImport:
     @staticmethod
     def _all_attrs(entry: p.Ldif.Entry) -> dict[str, list[str]]:
         """Full attribute mapping via the public ``Attributes`` protocol."""
-        assert entry.attributes is not None
+        tm.that(entry.attributes, none=False)
         return {name: list(values) for name, values in entry.attributes.items()}
 
     @classmethod
@@ -119,13 +119,13 @@ class TestsFlextLdifRealLdapImport:
         parse_result = flext_api.parse_ldif(ldif_content)
 
         response = parse_result.unwrap()
-        assert len(response.entries) == 1
+        tm.that(len(response.entries), eq=1)
         entry = response.entries[0]
-        assert self._dn(entry) == f"cn={username},{clean_test_ou}"
-        assert self._object_classes(entry) == ["person", "inetOrgPerson"]
+        tm.that(self._dn(entry), eq=f"cn={username},{clean_test_ou}")
+        tm.that(self._object_classes(entry), eq=["person", "inetOrgPerson"])
         assert u.Ldif.has_attribute(entry, attribute)
         values = u.Ldif.get_attribute_values(entry, attribute)
-        assert values == [expected if expected is not None else username]
+        tm.that(values, eq=[expected if expected is not None else username])
 
     def test_import_single_entry_roundtrips_to_ldap(
         self,
@@ -154,8 +154,8 @@ class TestsFlextLdifRealLdapImport:
         )
 
         imported = self._read_back(ldap_connection, dn)
-        assert imported["cn"].value == username
-        assert imported["mail"].value == "import@example.com"
+        tm.that(imported["cn"].value, eq=username)
+        tm.that(imported["mail"].value, eq="import@example.com")
 
     def test_import_preserves_binary_attribute(
         self,
@@ -180,9 +180,12 @@ class TestsFlextLdifRealLdapImport:
         entry = flext_api.parse_ldif(ldif_content).unwrap().entries[0]
         # Parse contract: the base64 payload is decoded and exposed as a value.
         assert u.Ldif.has_attribute(entry, "jpegPhoto")
-        assert u.Ldif.get_attribute_values(entry, "jpegPhoto") == [
-            binary_data.decode("ascii"),
-        ]
+        tm.that(
+            u.Ldif.get_attribute_values(entry, "jpegPhoto"),
+            eq=[
+                binary_data.decode("ascii"),
+            ],
+        )
 
         dn = self._dn(entry)
         attributes: dict[str, list[str] | bytes] = dict(
@@ -197,7 +200,7 @@ class TestsFlextLdifRealLdapImport:
         )
 
         imported = self._read_back(ldap_connection, dn)
-        assert imported["jpegPhoto"].value == binary_data
+        tm.that(imported["jpegPhoto"].value, eq=binary_data)
 
     def test_import_from_file_matches_string_parse(
         self,
@@ -224,8 +227,8 @@ class TestsFlextLdifRealLdapImport:
         text_entry = flext_api.parse_ldif(ldif_content).unwrap().entries[0]
         # File and string parsing expose the same public state.
         file_dn = self._dn(file_entry)
-        assert file_dn == self._dn(text_entry)
-        assert self._all_attrs(file_entry) == self._all_attrs(text_entry)
+        tm.that(file_dn, eq=self._dn(text_entry))
+        tm.that(self._all_attrs(file_entry), eq=self._all_attrs(text_entry))
 
         ldap_connection.add(
             file_dn,
@@ -234,8 +237,8 @@ class TestsFlextLdifRealLdapImport:
         )
 
         imported = self._read_back(ldap_connection, file_dn)
-        assert imported["cn"].value == username
-        assert imported["mail"].value == "import@example.com"
+        tm.that(imported["cn"].value, eq=username)
+        tm.that(imported["mail"].value, eq="import@example.com")
 
 
 __all__: list[str] = ["TestsFlextLdifRealLdapImport"]

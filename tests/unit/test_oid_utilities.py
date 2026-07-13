@@ -3,9 +3,7 @@ from __future__ import annotations
 import pytest
 from flext_tests import tm
 
-from tests.constants import c
-from tests.typings import t
-from tests.utilities import u
+from tests import c, t, u
 
 
 class TestsFlextLdifOidUtilities:

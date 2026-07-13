@@ -200,7 +200,7 @@ class TestsFlextLdifApiFreeze:
     ) -> None:
         """Package metadata is exposed as populated strings."""
         value = getattr(flext_ldif, symbol)
-        assert isinstance(value, str)
+        tm.that(value, is_=str)
         tm.that(value, ne="")
 
     def test_version_info_is_a_tuple(self) -> None:

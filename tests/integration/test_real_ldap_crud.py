@@ -20,17 +20,16 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
+from flext_tests import tm
 
 from flext_ldif import ldif
-from tests.constants import c
-from tests.models import m
+from tests import c, m
 
 if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
 
-    from tests.protocols import p
-    from tests.typings import t
+    from tests import p, t
 
 
 @pytest.fixture
@@ -74,15 +73,18 @@ class TestsFlextLdifRealLdapCrud:
             },
         )
 
-        assert result.success
+        tm.ok(result)
         entry = result.value
-        assert entry.dn_str == "cn=Alice,ou=people,dc=example,dc=com"
-        assert entry.attributes_dict["cn"] == ["Alice"]
-        assert entry.attributes_dict["objectClass"] == [
-            "inetOrgPerson",
-            "person",
-            "top",
-        ]
+        tm.that(entry.dn_str, eq="cn=Alice,ou=people,dc=example,dc=com")
+        tm.that(entry.attributes_dict["cn"], eq=["Alice"])
+        tm.that(
+            entry.attributes_dict["objectClass"],
+            eq=[
+                "inetOrgPerson",
+                "person",
+                "top",
+            ],
+        )
         assert not entry.has_validation_errors
 
     def test_complete_crud_cycle_roundtrips_through_ldap(
@@ -104,14 +106,14 @@ class TestsFlextLdifRealLdapCrud:
                 "objectClass": ["inetOrgPerson", "person", "top"],
             },
         )
-        assert result.success
+        tm.ok(result)
         entry = result.value
 
         # Create: entry becomes readable in the directory.
         self._add_entry(ldap_connection, entry)
         ldap_connection.search(entry.dn_str, "(objectClass=*)", attributes=["*"])
         assert ldap_connection.entries
-        assert ldap_connection.entries[0]["mail"].value == "crud@example.com"
+        tm.that(ldap_connection.entries[0]["mail"].value, eq="crud@example.com")
 
         # Update: replaced attribute is reflected on re-read.
         ldap_connection.modify(
@@ -152,15 +154,15 @@ class TestsFlextLdifRealLdapCrud:
                     "objectClass": ["inetOrgPerson", "person", "top"],
                 },
             )
-            assert result.success
+            tm.ok(result)
             entries.append(result.value)
 
-        assert len(entries) == 20
+        tm.that(len(entries), eq=20)
         for entry in entries:
             self._add_entry(ldap_connection, entry)
 
         validation_result = flext_api.validate_entries(entries)
-        assert validation_result.success
+        tm.ok(validation_result)
 
     def test_ldif_export_import_preserves_dns_and_attributes(
         self,
@@ -208,20 +210,20 @@ class TestsFlextLdifRealLdapCrud:
                 ]
                 for name in ldap_entry.entry_attributes
             }
-            assert ldap_entry.entry_dn is not None
+            tm.that(ldap_entry.entry_dn, none=False)
             result = m.Ldif.Entry.create(dn=ldap_entry.entry_dn, attributes=attrs)
-            assert result.success
+            tm.ok(result)
             entries.append(result.value)
 
         export_file = tmp_path / "batch_export.ldif"
         write_result = flext_api.write_ldif_file(entries, export_file)
-        assert write_result.success
+        tm.ok(write_result)
         assert export_file.exists()
 
         parse_result = flext_api.parse_ldif(export_file)
-        assert parse_result.success
+        tm.ok(parse_result)
         parsed_entries = parse_result.value.entries
-        assert len(parsed_entries) == source_count
+        tm.that(len(parsed_entries), eq=source_count)
         parsed_dns = {entry.dn_str for entry in parsed_entries}
         assert expected_dns <= parsed_dns
 

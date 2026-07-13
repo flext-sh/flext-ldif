@@ -10,6 +10,7 @@ under test.
 from __future__ import annotations
 
 import pytest
+from flext_tests import tm
 
 from flext_ldif import p
 from flext_ldif.services.server import FlextLdifServer
@@ -22,12 +23,12 @@ class TestsFlextLdifOidServers:
     def schema(self) -> p.Ldif.SchemaServer:
         """Resolve the OID schema server through the public registry."""
         resolved = FlextLdifServer().resolve_schema_server("oid")
-        assert resolved is not None, "OID schema server must be registered"
+        tm.that(resolved, none=False)
         return resolved
 
     def test_resolve_unknown_server_type_returns_none(self) -> None:
         """An unknown server type resolves to None, not a fabricated server."""
-        assert FlextLdifServer().resolve_schema_server("does-not-exist") is None
+        tm.that(FlextLdifServer().resolve_schema_server("does-not-exist"), none=True)
 
     @pytest.mark.parametrize(
         ("attr_def", "expected_syntax"),
@@ -54,8 +55,8 @@ class TestsFlextLdifOidServers:
     ) -> None:
         """OID-specific syntax OIDs normalize to their RFC equivalent."""
         result = schema.parse_attribute(attr_def)
-        assert result.success, f"Parse failed: {result.error}"
-        assert str(result.unwrap().syntax) == expected_syntax
+        tm.ok(result)
+        tm.that(str(result.unwrap().syntax), eq=expected_syntax)
 
     @pytest.mark.parametrize(
         ("equality_in", "expected_equality"),
@@ -90,8 +91,8 @@ class TestsFlextLdifOidServers:
             f"SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
         )
         result = schema.parse_attribute(attr_def)
-        assert result.success, f"Parse failed: {result.error}"
-        assert result.unwrap().equality == expected_equality
+        tm.ok(result)
+        tm.that(result.unwrap().equality, eq=expected_equality)
 
     def test_parse_attribute_derives_substr_from_substrings_rule(
         self,
@@ -105,10 +106,10 @@ class TestsFlextLdifOidServers:
             "USAGE userApplications )"
         )
         result = schema.parse_attribute(attr_def)
-        assert result.success, f"Parse failed: {result.error}"
+        tm.ok(result)
         attr = result.unwrap()
-        assert attr.equality == "caseIgnoreMatch"
-        assert attr.substr == "caseIgnoreSubstringsMatch"
+        tm.that(attr.equality, eq="caseIgnoreMatch")
+        tm.that(attr.substr, eq="caseIgnoreSubstringsMatch")
 
     def test_parse_attribute_exposes_public_identity_fields(
         self,
@@ -120,9 +121,9 @@ class TestsFlextLdifOidServers:
             "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )"
         )
         attr = schema.parse_attribute(attr_def).unwrap()
-        assert attr.name == "orclDASUIType"
-        assert attr.oid == "2.16.840.1.113894.1.1.327"
-        assert attr.single_value is True
+        tm.that(attr.name, eq="orclDASUIType")
+        tm.that(attr.oid, eq="2.16.840.1.113894.1.1.327")
+        tm.that(attr.single_value, eq=True)
 
     def test_parse_attribute_without_oid_fails_with_error_message(
         self,
@@ -130,9 +131,9 @@ class TestsFlextLdifOidServers:
     ) -> None:
         """A definition lacking an OID yields a failed result, not a success."""
         result = schema.parse_attribute("garbage not valid")
-        assert result.success is False
-        assert result.error is not None
-        assert "OID" in result.error
+        tm.that(result.success, eq=False)
+        tm.that(result.error, none=False)
+        tm.that(result.error, has="OID")
 
     @pytest.mark.parametrize(
         ("oc_def", "expected_sup"),
@@ -159,8 +160,8 @@ class TestsFlextLdifOidServers:
     ) -> None:
         """Quoted and parenthesized SUP forms both resolve to a bare superior."""
         result = schema.parse_objectclass(oc_def)
-        assert result.success, f"Parse failed: {result.error}"
-        assert result.unwrap().sup == expected_sup
+        tm.ok(result)
+        tm.that(result.unwrap().sup, eq=expected_sup)
 
     def test_parse_objectclass_normalizes_auxiliary_typo(
         self,
@@ -172,8 +173,8 @@ class TestsFlextLdifOidServers:
             "SUP top AUXILLARY MAY ( cn ) )"
         )
         result = schema.parse_objectclass(oc_def)
-        assert result.success, f"Parse failed: {result.error}"
-        assert result.unwrap().kind == "AUXILIARY"
+        tm.ok(result)
+        tm.that(result.unwrap().kind, eq="AUXILIARY")
 
     def test_write_attribute_round_trip_preserves_matching_rule_text(
         self,
@@ -186,10 +187,10 @@ class TestsFlextLdifOidServers:
             "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )"
         )
         parsed = schema.parse_attribute(attr_def)
-        assert parsed.success, f"Parse failed: {parsed.error}"
+        tm.ok(parsed)
         written = schema.write_attribute(parsed.unwrap())
-        assert written.success, f"Write failed: {written.error}"
-        assert "EQUALITY caseIgnoreSubstringsMatch" in written.unwrap()
+        tm.ok(written)
+        tm.that(written.unwrap(), has="EQUALITY caseIgnoreSubstringsMatch")
 
     def test_write_objectclass_round_trip_preserves_identity(
         self,
@@ -201,12 +202,12 @@ class TestsFlextLdifOidServers:
             "SUP top STRUCTURAL MAY ( cn ) )"
         )
         parsed = schema.parse_objectclass(oc_def)
-        assert parsed.success, f"Parse failed: {parsed.error}"
+        tm.ok(parsed)
         written = schema.write_objectclass(parsed.unwrap())
-        assert written.success, f"Write failed: {written.error}"
+        tm.ok(written)
         rendered = written.unwrap()
-        assert "NAME 'orclReferenceObject'" in rendered
-        assert "SUP top" in rendered
+        tm.that(rendered, has="NAME 'orclReferenceObject'")
+        tm.that(rendered, has="SUP top")
 
 
 __all__: list[str] = ["TestsFlextLdifOidServers"]

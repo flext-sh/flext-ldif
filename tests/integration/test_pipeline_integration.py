@@ -16,6 +16,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
+from flext_tests import tm
 
 from flext_ldif import ldif
 
@@ -65,13 +66,13 @@ class TestsFlextLdifPipelineIntegration:
     @staticmethod
     def _dn_value(entry: _Entry) -> str:
         """Return the public DN string, asserting the contract populated it."""
-        assert entry.dn is not None
+        tm.that(entry.dn, none=False)
         return entry.dn.value
 
     @staticmethod
     def _attributes(entry: _Entry) -> _Attributes:
         """Return the public attribute mapping, asserting it was populated."""
-        assert entry.attributes is not None
+        tm.that(entry.attributes, none=False)
         attributes: _Attributes = entry.attributes.attributes
         return attributes
 
@@ -91,54 +92,57 @@ class TestsFlextLdifPipelineIntegration:
         """parse_ldif succeeds and yields the expected number of entries."""
         result = ldif().parse_ldif(content)
 
-        assert result.success
-        assert len(result.unwrap().entries) == expected_count
+        tm.ok(result)
+        tm.that(len(result.unwrap().entries), eq=expected_count)
 
     def test_parse_ldif_preserves_distinguished_name(self) -> None:
         """The parsed entry exposes the source DN through its public value."""
         response = ldif().parse_ldif(SINGLE_ENTRY).unwrap()
 
-        assert self._dn_value(response.entries[0]) == "cn=test,dc=example,dc=com"
+        tm.that(self._dn_value(response.entries[0]), eq="cn=test,dc=example,dc=com")
 
     def test_parse_ldif_preserves_attribute_values(self) -> None:
         """Parsed attributes are exposed verbatim via the public mapping."""
         response = ldif().parse_ldif(SINGLE_ENTRY).unwrap()
 
         attributes = self._attributes(response.entries[0])
-        assert attributes["cn"] == ["test"]
-        assert attributes["sn"] == ["Test"]
-        assert attributes["mail"] == ["test@example.com"]
+        tm.that(attributes["cn"], eq=["test"])
+        tm.that(attributes["sn"], eq=["Test"])
+        tm.that(attributes["mail"], eq=["test@example.com"])
 
     def test_parse_ldif_preserves_multivalued_attribute_ordering(self) -> None:
         """Repeated attributes surface as an ordered list of every value."""
         response = ldif().parse_ldif(GROUP_ENTRY).unwrap()
 
         members = self._attributes(response.entries[0])["member"]
-        assert members == [
-            "cn=user1,dc=example,dc=com",
-            "cn=user2,dc=example,dc=com",
-            "cn=user3,dc=example,dc=com",
-        ]
+        tm.that(
+            members,
+            eq=[
+                "cn=user1,dc=example,dc=com",
+                "cn=user2,dc=example,dc=com",
+                "cn=user3,dc=example,dc=com",
+            ],
+        )
 
     def test_parse_ldif_ignores_version_and_comment_header(self) -> None:
         """RFC header lines are consumed without becoming entry attributes."""
         response = ldif().parse_ldif(WITH_HEADER).unwrap()
 
         attributes = self._attributes(response.entries[0])
-        assert "cn" in attributes
-        assert "version" not in attributes
+        tm.that(attributes, has="cn")
+        tm.that(attributes, lacks="version")
 
     def test_parse_ldif_reports_detected_server_type(self) -> None:
         """A generic document is detected as the RFC server type."""
         response = ldif().parse_ldif(SINGLE_ENTRY).unwrap()
 
-        assert response.detected_server_type == "rfc"
+        tm.that(response.detected_server_type, eq="rfc")
 
     def test_parse_ldif_statistics_match_entry_count(self) -> None:
         """The response statistics agree with the observable entry list."""
         response = ldif().parse_ldif(THREE_ENTRIES).unwrap()
 
-        assert response.statistics.total_entries == len(response.entries)
+        tm.that(response.statistics.total_entries, eq=len(response.entries))
 
     def test_parse_ldif_from_file_path(self, tmp_path: Path) -> None:
         """Parsing a filesystem path yields the same entries as a string."""
@@ -147,8 +151,8 @@ class TestsFlextLdifPipelineIntegration:
 
         response = ldif().parse_ldif(ldif_file).unwrap()
 
-        assert len(response.entries) == 1
-        assert self._dn_value(response.entries[0]) == "cn=test,dc=example,dc=com"
+        tm.that(len(response.entries), eq=1)
+        tm.that(self._dn_value(response.entries[0]), eq="cn=test,dc=example,dc=com")
 
     def test_parse_ldif_missing_file_fails_with_error(self, tmp_path: Path) -> None:
         """A non-existent path yields a failure carrying a descriptive error."""
@@ -156,23 +160,23 @@ class TestsFlextLdifPipelineIntegration:
 
         result = ldif().parse_ldif(missing)
 
-        assert result.success is False
-        assert result.error is not None
-        assert "not found" in result.error.lower()
+        tm.that(result.success, eq=False)
+        tm.that(result.error, none=False)
+        tm.that(result.error.lower(), has="not found")
 
     def test_parse_map_combinator_projects_entry_count(self) -> None:
         """FlextResult.map transforms the success value without unwrapping."""
         count = ldif().parse_ldif(THREE_ENTRIES).map(lambda r: len(r.entries))
 
-        assert count.success
-        assert count.unwrap() == 3
+        tm.ok(count)
+        tm.that(count.unwrap(), eq=3)
 
     def test_validate_entries_accepts_wellformed_entries(self) -> None:
         """Validation of parsed entries succeeds through the public API."""
         api = ldif()
         entries = api.parse_ldif(SINGLE_ENTRY).unwrap().entries
 
-        assert api.validate_entries(entries).success
+        tm.ok(api.validate_entries(entries))
 
     def test_write_produces_content_and_statistics(self) -> None:
         """Writing entries returns serialized content plus matching statistics."""
@@ -181,9 +185,9 @@ class TestsFlextLdifPipelineIntegration:
 
         written = api.write(entries).unwrap()
 
-        assert written.content is not None
-        assert "dn: cn=test,dc=example,dc=com" in written.content
-        assert written.statistics.total_entries == 1
+        tm.that(written.content, none=False)
+        tm.that(written.content, has="dn: cn=test,dc=example,dc=com")
+        tm.that(written.statistics.total_entries, eq=1)
 
     @pytest.mark.parametrize("content", [SINGLE_ENTRY, THREE_ENTRIES, GROUP_ENTRY])
     def test_parse_write_parse_roundtrip_is_idempotent(self, content: str) -> None:
@@ -194,9 +198,11 @@ class TestsFlextLdifPipelineIntegration:
         serialized = api.write_to_string(original).unwrap()
         reparsed = api.parse_ldif(serialized).unwrap().entries
 
-        assert [self._dn_value(e) for e in reparsed] == [
-            self._dn_value(e) for e in original
-        ]
-        assert [self._attributes(e) for e in reparsed] == [
-            self._attributes(e) for e in original
-        ]
+        tm.that(
+            [self._dn_value(e) for e in reparsed],
+            eq=[self._dn_value(e) for e in original],
+        )
+        tm.that(
+            [self._attributes(e) for e in reparsed],
+            eq=[self._attributes(e) for e in original],
+        )

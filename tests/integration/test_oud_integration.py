@@ -20,12 +20,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar
 
 import pytest
+from flext_tests import tm
 
-from tests.utilities import TestsFlextLdifUtilities as u
+from tests import TestsFlextLdifUtilities as u
 
 if TYPE_CHECKING:
-    from tests.models import m
-    from tests.protocols import p
+    from tests import m, p
 
 
 class TestsFlextLdifOudIntegration:
@@ -48,14 +48,14 @@ class TestsFlextLdifOudIntegration:
     def _attrs(entry: m.Ldif.Entry) -> m.Ldif.Attributes:
         """Return an entry's attributes, asserting the public field is present."""
         attributes = entry.attributes
-        assert attributes is not None, "Parsed entry must expose attributes"
+        tm.that(attributes, none=False)
         return attributes
 
     @staticmethod
     def _dn_value(entry: m.Ldif.Entry) -> str:
         """Return an entry's DN string via the public DN model."""
         dn = entry.dn
-        assert dn is not None, "Parsed entry must expose a DN"
+        tm.that(dn, none=False)
         return u.to_str(dn.value)
 
     @classmethod
@@ -80,7 +80,7 @@ class TestsFlextLdifOudIntegration:
             error_msg="OUD schema parsing must succeed",
         )
 
-        assert len(response.entries) == 1
+        tm.that(len(response.entries), eq=1)
 
     def test_schema_entry_exposes_oracle_attribute_definitions(
         self,
@@ -157,7 +157,7 @@ class TestsFlextLdifOudIntegration:
             error_msg="Writing ACL entries must succeed",
         )
         written_content = written.content
-        assert written_content is not None, "Write must produce LDIF content"
+        tm.that(written_content, none=False)
         reparsed: m.Ldif.ParseResponse = u.Tests.assert_success(
             api.parse_ldif(written_content),
         )
@@ -167,7 +167,7 @@ class TestsFlextLdifOudIntegration:
             for entry in reparsed.entries
         }
 
-        assert roundtrip_acis == original_acis
+        tm.that(roundtrip_acis, eq=original_acis)
 
     # --- Entry fixture ----------------------------------------------------
 
@@ -234,10 +234,11 @@ class TestsFlextLdifOudIntegration:
             error_msg="Re-parse must succeed",
         )
 
-        assert len(second.entries) == len(first.entries)
-        assert {self._dn_value(entry) for entry in second.entries} == {
-            self._dn_value(entry) for entry in first.entries
-        }
+        tm.that(len(second.entries), eq=len(first.entries))
+        tm.that(
+            {self._dn_value(entry) for entry in second.entries},
+            eq={self._dn_value(entry) for entry in first.entries},
+        )
 
     def test_roundtrip_is_idempotent_on_dn_set(
         self,
@@ -252,9 +253,10 @@ class TestsFlextLdifOudIntegration:
             api.parse_ldif(oud_integration_fixture),
         )
 
-        assert {self._dn_value(entry) for entry in first.entries} == {
-            self._dn_value(entry) for entry in second.entries
-        }
+        tm.that(
+            {self._dn_value(entry) for entry in first.entries},
+            eq={self._dn_value(entry) for entry in second.entries},
+        )
 
     @pytest.mark.parametrize(
         "dn_with_spaces",
@@ -273,22 +275,22 @@ class TestsFlextLdifOudIntegration:
         parsed: m.Ldif.ParseResponse = u.Tests.assert_success(
             api.parse_ldif(source_ldif),
         )
-        assert len(parsed.entries) == 1
+        tm.that(len(parsed.entries), eq=1)
         original_dn = self._dn_value(parsed.entries[0])
 
         written: m.Ldif.WriteResponse = u.Tests.assert_success(
             api.write(parsed.entries),
         )
         written_content = written.content
-        assert written_content is not None, "Write must produce LDIF content"
+        tm.that(written_content, none=False)
         reparsed: m.Ldif.ParseResponse = u.Tests.assert_success(
             api.parse_ldif(written_content),
         )
 
-        assert len(reparsed.entries) == 1
+        tm.that(len(reparsed.entries), eq=1)
         roundtrip_dn = self._dn_value(reparsed.entries[0])
         expected_rdn_count = original_dn.count("=")
-        assert roundtrip_dn.count("=") == expected_rdn_count
+        tm.that(roundtrip_dn.count("="), eq=expected_rdn_count)
 
     # --- Metadata contract ------------------------------------------------
 
@@ -309,13 +311,13 @@ class TestsFlextLdifOudIntegration:
             api.parse_ldif(source_ldif),
         )
 
-        assert len(response.entries) == 1
+        tm.that(len(response.entries), eq=1)
         entry = response.entries[0]
         attributes = self._attrs(entry)
-        assert self._dn_value(entry) == "cn=OracleContext,dc=example,dc=com"
-        assert attributes.get("orclVersion") == ["90600"]
-        assert attributes.get("objectClass") == ["top", "orclContext"]
-        assert entry.metadata is not None
+        tm.that(self._dn_value(entry), eq="cn=OracleContext,dc=example,dc=com")
+        tm.that(attributes.get("orclVersion"), eq=["90600"])
+        tm.that(attributes.get("objectClass"), eq=["top", "orclContext"])
+        tm.that(entry.metadata, none=False)
 
 
 __all__: list[str] = ["TestsFlextLdifOudIntegration"]

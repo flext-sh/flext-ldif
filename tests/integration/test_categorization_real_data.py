@@ -22,14 +22,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
+from flext_tests import tm
 
 from flext_ldif import ldif
-from tests.constants import c
-from tests.models import m
-from tests.utilities import u
+from tests import c, m, u
 
 if TYPE_CHECKING:
-    from tests.typings import t
+    from tests import t
 
 _BASE_DN = "dc=example"
 
@@ -89,9 +88,9 @@ class TestsFlextLdifCategorizationRealData:
 
         result = categorization.validate_dns(hierarchy_entries)
 
-        assert result.success, result.error
-        assert len(result.value) == len(hierarchy_entries)
-        assert self._dns(result.value) == self._dns(hierarchy_entries)
+        tm.ok(result)
+        tm.that(len(result.value), eq=len(hierarchy_entries))
+        tm.that(self._dns(result.value), eq=self._dns(hierarchy_entries))
 
     # -- categorize_entries ---------------------------------------------------
 
@@ -105,17 +104,17 @@ class TestsFlextLdifCategorizationRealData:
             server_type=c.Tests.OUD,
         )
         validated = categorization.validate_dns(hierarchy_entries)
-        assert validated.success, validated.error
+        tm.ok(validated)
 
         result = categorization.categorize_entries(validated.value)
 
-        assert result.success, result.error
+        tm.ok(result)
         categories = result.value
         hierarchy = self._dns(categories.get(c.Ldif.Categories.HIERARCHY))
         users = self._dns(categories.get(c.Ldif.Categories.USERS))
-        assert "dc=example" in hierarchy
-        assert "ou=users,dc=example" in hierarchy
-        assert "cn=user1,ou=users,dc=example" in users
+        tm.that(hierarchy, has="dc=example")
+        tm.that(hierarchy, has="ou=users,dc=example")
+        tm.that(users, has="cn=user1,ou=users,dc=example")
 
     def test_categorize_entry_with_no_matching_rule_is_rejected(self) -> None:
         """An entry whose objectClass matches no category lands in REJECTED."""
@@ -125,13 +124,13 @@ class TestsFlextLdifCategorizationRealData:
         )
         unknown = [self._entry("cn=mystery,dc=example", "unmodeledClass")]
         validated = categorization.validate_dns(unknown)
-        assert validated.success, validated.error
+        tm.ok(validated)
 
         result = categorization.categorize_entries(validated.value)
 
-        assert result.success, result.error
+        tm.ok(result)
         rejected = self._dns(result.value.get(c.Ldif.Categories.REJECTED))
-        assert "cn=mystery,dc=example" in rejected
+        tm.that(rejected, has="cn=mystery,dc=example")
 
     # -- filter_by_base_dn (substring safety) --------------------------------
 
@@ -145,23 +144,23 @@ class TestsFlextLdifCategorizationRealData:
             server_type=c.Tests.OUD,
         )
         validated = categorization.validate_dns(hierarchy_entries)
-        assert validated.success, validated.error
+        tm.ok(validated)
         categorized = categorization.categorize_entries(validated.value)
-        assert categorized.success, categorized.error
+        tm.ok(categorized)
 
         filtered = categorization.filter_by_base_dn(categorized.value)
 
         hierarchy = self._dns(filtered.get(c.Ldif.Categories.HIERARCHY))
         users = self._dns(filtered.get(c.Ldif.Categories.USERS))
         rejected = self._dns(filtered.get(c.Ldif.Categories.REJECTED))
-        assert "dc=example" in hierarchy
-        assert "ou=users,dc=example" in hierarchy
-        assert "cn=user1,ou=users,dc=example" in users
+        tm.that(hierarchy, has="dc=example")
+        tm.that(hierarchy, has="ou=users,dc=example")
+        tm.that(users, has="cn=user1,ou=users,dc=example")
         # Substring false-positive prevention: dc=example2 subtree is rejected.
-        assert "dc=example2" in rejected
-        assert "ou=test,dc=example2" in rejected
-        assert "dc=example2" not in hierarchy
-        assert "ou=test,dc=example2" not in hierarchy
+        tm.that(rejected, has="dc=example2")
+        tm.that(rejected, has="ou=test,dc=example2")
+        tm.that(hierarchy, lacks="dc=example2")
+        tm.that(hierarchy, lacks="ou=test,dc=example2")
 
     def test_filter_by_base_dn_partitions_acls_by_hierarchy(self) -> None:
         """ACLs under the base DN are kept in ACL; those outside are rejected."""
@@ -176,19 +175,19 @@ class TestsFlextLdifCategorizationRealData:
             server_type=c.Tests.OUD,
         )
         validated = categorization.validate_dns(acl_entries)
-        assert validated.success, validated.error
+        tm.ok(validated)
         categorized = categorization.categorize_entries(validated.value)
-        assert categorized.success, categorized.error
+        tm.ok(categorized)
 
         filtered = categorization.filter_by_base_dn(categorized.value)
 
         acls = self._dns(filtered.get(c.Ldif.Categories.ACL))
         rejected = self._dns(filtered.get(c.Ldif.Categories.REJECTED))
-        assert "dc=example" in acls
-        assert "ou=users,dc=example" in acls
-        assert "dc=example2" not in acls
-        assert "dc=example2" in rejected
-        assert "cn=settings" in rejected
+        tm.that(acls, has="dc=example")
+        tm.that(acls, has="ou=users,dc=example")
+        tm.that(acls, lacks="dc=example2")
+        tm.that(rejected, has="dc=example2")
+        tm.that(rejected, has="cn=settings")
 
     @pytest.mark.parametrize(
         ("dn", "base_dn", "expected"),
@@ -231,15 +230,15 @@ class TestsFlextLdifCategorizationRealData:
 
         parsed = api.parse_ldif(value=ldif_content, server_type=c.Tests.RFC)
 
-        assert parsed.success, parsed.error
+        tm.ok(parsed)
         entries = parsed.value.entries
-        assert len(entries) == 6
+        tm.that(len(entries), eq=6)
 
         categorization = api.categorization(base_dn=_BASE_DN, server_type=c.Tests.OUD)
         validated = categorization.validate_dns(entries)
-        assert validated.success, validated.error
+        tm.ok(validated)
         categorized = categorization.categorize_entries(validated.value)
-        assert categorized.success, categorized.error
+        tm.ok(categorized)
 
         filtered = categorization.filter_by_base_dn(categorized.value)
 

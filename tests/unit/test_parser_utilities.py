@@ -10,8 +10,7 @@ from __future__ import annotations
 import pytest
 from flext_tests import tm
 
-from tests.constants import c
-from tests.utilities import u
+from tests import c, u
 
 
 class TestsFlextLdifParserUtilities:
@@ -114,7 +113,7 @@ class TestsFlextLdifParserUtilities:
         decoded, origin, raw = u.Ldif.decode_value(remainder)
 
         tm.that(decoded, eq=expected_value)
-        assert origin == expected_origin
+        tm.that(origin, eq=expected_origin)
         tm.that(raw, eq=expected_raw)
 
     # ------------------------------------------------------------------
@@ -138,8 +137,8 @@ class TestsFlextLdifParserUtilities:
         control = u.Ldif.build_control(payload)
 
         tm.that(control.control_type, eq=expected_type)
-        assert control.criticality == expected_criticality
-        assert control.value == expected_value
+        tm.that(control.criticality, eq=expected_criticality)
+        tm.that(control.value, eq=expected_value)
 
     # ------------------------------------------------------------------
     # extract_boolean_flag / extract_optional_field
@@ -184,11 +183,11 @@ class TestsFlextLdifParserUtilities:
             "( 1.1 NAME 'x' DESC 'hi there' X-ORIGIN 'user' )",
         )
 
-        assert extensions["X-ORIGIN"] == ["user"]
-        assert extensions["DESC"] == ["hi there"]
+        tm.that(extensions["X-ORIGIN"], eq=["user"])
+        tm.that(extensions["DESC"], eq=["hi there"])
 
     def test_extract_extensions_empty_definition_returns_empty_mapping(self) -> None:
-        assert u.Ldif.extract_extensions("") == {}
+        tm.that(u.Ldif.extract_extensions(""), eq={})
 
     # ------------------------------------------------------------------
     # unfold_lines
@@ -198,12 +197,12 @@ class TestsFlextLdifParserUtilities:
 
         # RFC 2849 folding: the single leading space is stripped and the
         # remainder is concatenated verbatim onto the previous line.
-        assert unfolded == ["cn: helloworld", "sn: last"]
+        tm.that(unfolded, eq=["cn: helloworld", "sn: last"])
 
     def test_unfold_lines_preserves_record_separating_blank(self) -> None:
         unfolded = u.Ldif.unfold_lines("dn: cn=a\n\ndn: cn=b")
 
-        assert unfolded == ["dn: cn=a", "", "dn: cn=b"]
+        tm.that(unfolded, eq=["dn: cn=a", "", "dn: cn=b"])
 
     # ------------------------------------------------------------------
     # split_ldif_records
@@ -213,7 +212,7 @@ class TestsFlextLdifParserUtilities:
             "version: 1\ndn: cn=a\ncn: a\n\ndn: cn=b\ncn: b",
         )
 
-        assert records == [["dn: cn=a", "cn: a"], ["dn: cn=b", "cn: b"]]
+        tm.that(records, eq=[["dn: cn=a", "cn: a"], ["dn: cn=b", "cn: b"]])
 
     # ------------------------------------------------------------------
     # parse_ldif_record
@@ -226,14 +225,14 @@ class TestsFlextLdifParserUtilities:
         ])
 
         entry = u.Tests.assert_success(result)
-        assert entry.dn is not None
-        assert entry.attributes is not None
+        tm.that(entry.dn, none=False)
+        tm.that(entry.attributes, none=False)
         tm.that(entry.dn.value, eq="cn=alice,dc=example,dc=com")
-        assert entry.attributes.attributes["cn"] == ["alice"]
-        assert entry.attributes.attributes["objectClass"] == ["person"]
+        tm.that(entry.attributes.attributes["cn"], eq=["alice"])
+        tm.that(entry.attributes.attributes["objectClass"], eq=["person"])
 
     def test_parse_ldif_record_fails_without_dn(self) -> None:
         result = u.Ldif.parse_ldif_record(["cn: alice", "sn: smith"])
 
         error = u.Tests.assert_failure(result)
-        assert "DN" in error
+        tm.that(error, has="DN")

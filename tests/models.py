@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Annotated, ClassVar
 from flext_tests import FlextTestsModels
 
 from flext_ldif import m, u
-from tests.typings import t
+from tests import t
 
 if TYPE_CHECKING:
     from pathlib import Path

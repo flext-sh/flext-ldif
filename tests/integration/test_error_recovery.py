@@ -15,6 +15,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
+from flext_tests import tm
 
 from flext_ldif import ldif
 
@@ -44,14 +45,14 @@ class TestsFlextLdifErrorRecovery:
 
         result = api.parse_ldif(content)
 
-        assert result.success
+        tm.ok(result)
         response = result.unwrap()
-        assert len(response.entries) == 1
+        tm.that(len(response.entries), eq=1)
         entry = response.entries[0]
-        assert entry.dn is not None
-        assert entry.dn.value == "cn=Test,dc=example,dc=com"
-        assert entry.attributes is not None
-        assert set(entry.attributes.attributes) == {"objectClass", "cn", "sn"}
+        tm.that(entry.dn, none=False)
+        tm.that(entry.dn.value, eq="cn=Test,dc=example,dc=com")
+        tm.that(entry.attributes, none=False)
+        tm.that(set(entry.attributes.attributes), eq={"objectClass", "cn", "sn"})
 
     @pytest.mark.parametrize(
         ("content", "expected_dn"),
@@ -79,11 +80,11 @@ class TestsFlextLdifErrorRecovery:
         """Version lines, comments, and unicode DNs yield one entry with the exact DN."""
         result = api.parse_ldif(content)
 
-        assert result.success
+        tm.ok(result)
         entries = result.unwrap().entries
-        assert len(entries) == 1
-        assert entries[0].dn is not None
-        assert entries[0].dn.value == expected_dn
+        tm.that(len(entries), eq=1)
+        tm.that(entries[0].dn, none=False)
+        tm.that(entries[0].dn.value, eq=expected_dn)
 
     # ------------------------------------------------------------------
     # Attribute value semantics.
@@ -100,14 +101,17 @@ class TestsFlextLdifErrorRecovery:
 
         result = api.parse_ldif(content)
 
-        assert result.success
+        tm.ok(result)
         entry = result.unwrap().entries[0]
-        assert entry.attributes is not None
-        assert entry.attributes.attributes["mail"] == [
-            "a@example.com",
-            "b@example.com",
-            "c@example.com",
-        ]
+        tm.that(entry.attributes, none=False)
+        tm.that(
+            entry.attributes.attributes["mail"],
+            eq=[
+                "a@example.com",
+                "b@example.com",
+                "c@example.com",
+            ],
+        )
 
     def test_empty_attribute_value_is_preserved(self, api: p.Ldif.LdifClient) -> None:
         """An attribute with no value keeps an explicit empty-string value."""
@@ -117,10 +121,10 @@ class TestsFlextLdifErrorRecovery:
 
         result = api.parse_ldif(content)
 
-        assert result.success
+        tm.ok(result)
         entry = result.unwrap().entries[0]
-        assert entry.attributes is not None
-        assert entry.attributes.attributes["description"] == [""]
+        tm.that(entry.attributes, none=False)
+        tm.that(entry.attributes.attributes["description"], eq=[""])
 
     def test_folded_continuation_lines_concatenate_into_single_value(
         self, api: p.Ldif.LdifClient
@@ -133,10 +137,10 @@ class TestsFlextLdifErrorRecovery:
 
         result = api.parse_ldif(content)
 
-        assert result.success
+        tm.ok(result)
         entry = result.unwrap().entries[0]
-        assert entry.attributes is not None
-        assert entry.attributes.attributes["description"] == ["abcd"]
+        tm.that(entry.attributes, none=False)
+        tm.that(entry.attributes.attributes["description"], eq=["abcd"])
 
     def test_very_long_value_is_not_truncated(self, api: p.Ldif.LdifClient) -> None:
         """A value far exceeding a line width is preserved without truncation."""
@@ -148,10 +152,10 @@ class TestsFlextLdifErrorRecovery:
 
         result = api.parse_ldif(content)
 
-        assert result.success
+        tm.ok(result)
         entry = result.unwrap().entries[0]
-        assert entry.attributes is not None
-        assert entry.attributes.attributes["description"] == [long_value]
+        tm.that(entry.attributes, none=False)
+        tm.that(entry.attributes.attributes["description"], eq=[long_value])
 
     def test_base64_binary_attribute_is_parsed_as_named_attribute(
         self, api: p.Ldif.LdifClient
@@ -164,10 +168,10 @@ class TestsFlextLdifErrorRecovery:
 
         result = api.parse_ldif(content)
 
-        assert result.success
+        tm.ok(result)
         entry = result.unwrap().entries[0]
-        assert entry.attributes is not None
-        assert "jpegPhoto" in entry.attributes.attributes
+        tm.that(entry.attributes, none=False)
+        tm.that(entry.attributes.attributes, has="jpegPhoto")
 
     def test_unicode_attribute_value_is_preserved(self, api: p.Ldif.LdifClient) -> None:
         """Multi-byte UTF-8 characters survive parsing unchanged."""
@@ -178,10 +182,10 @@ class TestsFlextLdifErrorRecovery:
 
         result = api.parse_ldif(content)
 
-        assert result.success
+        tm.ok(result)
         entry = result.unwrap().entries[0]
-        assert entry.attributes is not None
-        assert entry.attributes.attributes["description"] == ["café, naïve, résumé"]
+        tm.that(entry.attributes, none=False)
+        tm.that(entry.attributes.attributes["description"], eq=["café, naïve, résumé"])
 
     # ------------------------------------------------------------------
     # Graceful degradation: malformed input never raises; it produces a
@@ -194,8 +198,8 @@ class TestsFlextLdifErrorRecovery:
 
         result = api.parse_ldif(content)
 
-        assert result.success
-        assert result.unwrap().entries == []
+        tm.ok(result)
+        tm.that(result.unwrap().entries, eq=[])
 
     def test_invalid_dn_without_rdn_is_rejected(self, api: p.Ldif.LdifClient) -> None:
         """A DN lacking any ``=`` RDN component yields no accepted entry."""
@@ -203,8 +207,8 @@ class TestsFlextLdifErrorRecovery:
 
         result = api.parse_ldif(content)
 
-        assert result.success
-        assert result.unwrap().entries == []
+        tm.ok(result)
+        tm.that(result.unwrap().entries, eq=[])
 
     def test_malformed_attribute_line_is_dropped_entry_survives(
         self, api: p.Ldif.LdifClient
@@ -216,10 +220,10 @@ class TestsFlextLdifErrorRecovery:
 
         result = api.parse_ldif(content)
 
-        assert result.success
+        tm.ok(result)
         entry = result.unwrap().entries[0]
-        assert entry.attributes is not None
-        assert set(entry.attributes.attributes) == {"cn", "sn"}
+        tm.that(entry.attributes, none=False)
+        tm.that(set(entry.attributes.attributes), eq={"cn", "sn"})
 
     def test_dn_only_entry_parses_with_empty_attributes(
         self, api: p.Ldif.LdifClient
@@ -229,12 +233,12 @@ class TestsFlextLdifErrorRecovery:
 
         result = api.parse_ldif(content)
 
-        assert result.success
+        tm.ok(result)
         entries = result.unwrap().entries
-        assert len(entries) == 1
+        tm.that(len(entries), eq=1)
         entry = entries[0]
-        assert entry.dn is not None
-        assert entry.dn.value == "cn=Minimal,dc=example,dc=com"
+        tm.that(entry.dn, none=False)
+        tm.that(entry.dn.value, eq="cn=Minimal,dc=example,dc=com")
 
     @pytest.mark.parametrize(
         ("content", "expected_count"),
@@ -265,8 +269,8 @@ class TestsFlextLdifErrorRecovery:
         """Truncated / orphaned / unterminated input recovers the valid entries."""
         result = api.parse_ldif(content)
 
-        assert result.success
-        assert len(result.unwrap().entries) == expected_count
+        tm.ok(result)
+        tm.that(len(result.unwrap().entries), eq=expected_count)
 
     @pytest.mark.parametrize(
         "content",
@@ -296,9 +300,9 @@ class TestsFlextLdifErrorRecovery:
 
         # The contract is a structured result: querying success must never raise,
         # and on success the entries collection is always a list.
-        assert isinstance(result.success, bool)
+        tm.that(result.success, is_=bool)
         if result.success:
-            assert isinstance(result.unwrap().entries, list)
+            tm.that(result.unwrap().entries, is_=list)
 
     # ------------------------------------------------------------------
     # Round-trip invariant.
@@ -313,25 +317,25 @@ class TestsFlextLdifErrorRecovery:
         )
 
         first = api.parse_ldif(content)
-        assert first.success
+        tm.ok(first)
         original = first.unwrap().entries
 
         written = api.write(original)
-        assert written.success
+        tm.ok(written)
         serialized = written.unwrap().content
-        assert serialized is not None
+        tm.that(serialized, none=False)
 
         second = api.parse_ldif(serialized)
-        assert second.success
+        tm.ok(second)
         reparsed = second.unwrap().entries
 
-        assert len(reparsed) == len(original) == 1
-        assert original[0].dn is not None
-        assert reparsed[0].dn is not None
-        assert reparsed[0].dn.value == original[0].dn.value
-        assert original[0].attributes is not None
-        assert reparsed[0].attributes is not None
-        assert reparsed[0].attributes.attributes == original[0].attributes.attributes
+        tm.that(len(reparsed), eq=len(original))
+        tm.that(original[0].dn, none=False)
+        tm.that(reparsed[0].dn, none=False)
+        tm.that(reparsed[0].dn.value, eq=original[0].dn.value)
+        tm.that(original[0].attributes, none=False)
+        tm.that(reparsed[0].attributes, none=False)
+        tm.that(reparsed[0].attributes.attributes, eq=original[0].attributes.attributes)
 
 
 __all__: list[str] = ["TestsFlextLdifErrorRecovery"]
