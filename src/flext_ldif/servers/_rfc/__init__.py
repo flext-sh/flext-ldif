@@ -3,36 +3,14 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from .acl import FlextLdifServersRfcAcl as FlextLdifServersRfcAcl
+from .constants import FlextLdifServersRfcConstants as FlextLdifServersRfcConstants
+from .entry import FlextLdifServersRfcEntry as FlextLdifServersRfcEntry
+from .schema import FlextLdifServersRfcSchema as FlextLdifServersRfcSchema
 
-from flext_core.lazy import build_lazy_import_map, install_lazy_exports
-
-if TYPE_CHECKING:
-    from flext_ldif.servers._rfc.acl import (
-        FlextLdifServersRfcAcl as FlextLdifServersRfcAcl,
-    )
-    from flext_ldif.servers._rfc.constants import (
-        FlextLdifServersRfcConstants as FlextLdifServersRfcConstants,
-    )
-    from flext_ldif.servers._rfc.entry import (
-        FlextLdifServersRfcEntry as FlextLdifServersRfcEntry,
-    )
-    from flext_ldif.servers._rfc.schema import (
-        FlextLdifServersRfcSchema as FlextLdifServersRfcSchema,
-    )
-_LAZY_IMPORTS = build_lazy_import_map(
-    {
-        ".acl": ("FlextLdifServersRfcAcl",),
-        ".constants": ("FlextLdifServersRfcConstants",),
-        ".entry": ("FlextLdifServersRfcEntry",),
-        ".schema": ("FlextLdifServersRfcSchema",),
-    },
-)
-
-
-install_lazy_exports(
-    __name__,
-    globals(),
-    _LAZY_IMPORTS,
-    publish_all=False,
+__all__: tuple[str, ...] = (
+    "FlextLdifServersRfcAcl",
+    "FlextLdifServersRfcConstants",
+    "FlextLdifServersRfcEntry",
+    "FlextLdifServersRfcSchema",
 )

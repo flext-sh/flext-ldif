@@ -3,114 +3,72 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-from flext_core.lazy import build_lazy_import_map, install_lazy_exports
-
-if TYPE_CHECKING:
-    from flext_ldif._utilities._transformer_attrs import (
-        FlextLdifUtilitiesNormalizeAttrsTransformer as FlextLdifUtilitiesNormalizeAttrsTransformer,
-    )
-    from flext_ldif._utilities._transformer_base import (
-        FlextLdifUtilitiesTransformer as FlextLdifUtilitiesTransformer,
-    )
-    from flext_ldif._utilities._transformer_dn import (
-        FlextLdifUtilitiesNormalizeDnTransformer as FlextLdifUtilitiesNormalizeDnTransformer,
-    )
-    from flext_ldif._utilities.acl import FlextLdifUtilitiesACL as FlextLdifUtilitiesACL
-    from flext_ldif._utilities.attribute import (
-        FlextLdifUtilitiesAttribute as FlextLdifUtilitiesAttribute,
-    )
-    from flext_ldif._utilities.collection_ldif import (
-        FlextLdifUtilitiesCollectionLdif as FlextLdifUtilitiesCollectionLdif,
-    )
-    from flext_ldif._utilities.dispatch import (
-        FlextLdifUtilitiesDispatch as FlextLdifUtilitiesDispatch,
-    )
-    from flext_ldif._utilities.dn import FlextLdifUtilitiesDN as FlextLdifUtilitiesDN
-    from flext_ldif._utilities.entry import (
-        FlextLdifUtilitiesEntry as FlextLdifUtilitiesEntry,
-    )
-    from flext_ldif._utilities.events import (
-        FlextLdifUtilitiesEvents as FlextLdifUtilitiesEvents,
-    )
-    from flext_ldif._utilities.metadata import (
-        FlextLdifUtilitiesMetadata as FlextLdifUtilitiesMetadata,
-    )
-    from flext_ldif._utilities.object_class import (
-        FlextLdifUtilitiesObjectClass as FlextLdifUtilitiesObjectClass,
-    )
-    from flext_ldif._utilities.oid import FlextLdifUtilitiesOID as FlextLdifUtilitiesOID
-    from flext_ldif._utilities.parser import (
-        FlextLdifUtilitiesParser as FlextLdifUtilitiesParser,
-    )
-    from flext_ldif._utilities.pipeline import (
-        FlextLdifUtilitiesPipeline as FlextLdifUtilitiesPipeline,
-    )
-    from flext_ldif._utilities.schema import (
-        FlextLdifUtilitiesSchema as FlextLdifUtilitiesSchema,
-    )
-    from flext_ldif._utilities.schema_build import (
-        FlextLdifUtilitiesSchemaBuild as FlextLdifUtilitiesSchemaBuild,
-    )
-    from flext_ldif._utilities.schema_extract import (
-        FlextLdifUtilitiesSchemaExtract as FlextLdifUtilitiesSchemaExtract,
-    )
-    from flext_ldif._utilities.schema_format import (
-        FlextLdifUtilitiesSchemaFormat as FlextLdifUtilitiesSchemaFormat,
-    )
-    from flext_ldif._utilities.schema_normalize import (
-        FlextLdifUtilitiesSchemaNormalize as FlextLdifUtilitiesSchemaNormalize,
-    )
-    from flext_ldif._utilities.schema_parse import (
-        FlextLdifUtilitiesSchemaParse as FlextLdifUtilitiesSchemaParse,
-    )
-    from flext_ldif._utilities.server import (
-        FlextLdifUtilitiesServer as FlextLdifUtilitiesServer,
-    )
-    from flext_ldif._utilities.transformers import (
-        FlextLdifUtilitiesTransformers as FlextLdifUtilitiesTransformers,
-    )
-    from flext_ldif._utilities.validation import (
-        FlextLdifUtilitiesValidation as FlextLdifUtilitiesValidation,
-    )
-    from flext_ldif._utilities.writer import (
-        FlextLdifUtilitiesWriter as FlextLdifUtilitiesWriter,
-    )
-_LAZY_IMPORTS = build_lazy_import_map(
-    {
-        "._transformer_attrs": ("FlextLdifUtilitiesNormalizeAttrsTransformer",),
-        "._transformer_base": ("FlextLdifUtilitiesTransformer",),
-        "._transformer_dn": ("FlextLdifUtilitiesNormalizeDnTransformer",),
-        ".acl": ("FlextLdifUtilitiesACL",),
-        ".attribute": ("FlextLdifUtilitiesAttribute",),
-        ".collection_ldif": ("FlextLdifUtilitiesCollectionLdif",),
-        ".dispatch": ("FlextLdifUtilitiesDispatch",),
-        ".dn": ("FlextLdifUtilitiesDN",),
-        ".entry": ("FlextLdifUtilitiesEntry",),
-        ".events": ("FlextLdifUtilitiesEvents",),
-        ".metadata": ("FlextLdifUtilitiesMetadata",),
-        ".object_class": ("FlextLdifUtilitiesObjectClass",),
-        ".oid": ("FlextLdifUtilitiesOID",),
-        ".parser": ("FlextLdifUtilitiesParser",),
-        ".pipeline": ("FlextLdifUtilitiesPipeline",),
-        ".schema": ("FlextLdifUtilitiesSchema",),
-        ".schema_build": ("FlextLdifUtilitiesSchemaBuild",),
-        ".schema_extract": ("FlextLdifUtilitiesSchemaExtract",),
-        ".schema_format": ("FlextLdifUtilitiesSchemaFormat",),
-        ".schema_normalize": ("FlextLdifUtilitiesSchemaNormalize",),
-        ".schema_parse": ("FlextLdifUtilitiesSchemaParse",),
-        ".server": ("FlextLdifUtilitiesServer",),
-        ".transformers": ("FlextLdifUtilitiesTransformers",),
-        ".validation": ("FlextLdifUtilitiesValidation",),
-        ".writer": ("FlextLdifUtilitiesWriter",),
-    },
+from ._transformer_attrs import (
+    FlextLdifUtilitiesNormalizeAttrsTransformer as FlextLdifUtilitiesNormalizeAttrsTransformer,
 )
+from ._transformer_base import (
+    FlextLdifUtilitiesTransformer as FlextLdifUtilitiesTransformer,
+)
+from ._transformer_dn import (
+    FlextLdifUtilitiesNormalizeDnTransformer as FlextLdifUtilitiesNormalizeDnTransformer,
+)
+from .acl import FlextLdifUtilitiesACL as FlextLdifUtilitiesACL
+from .attribute import FlextLdifUtilitiesAttribute as FlextLdifUtilitiesAttribute
+from .collection_ldif import (
+    FlextLdifUtilitiesCollectionLdif as FlextLdifUtilitiesCollectionLdif,
+)
+from .dispatch import FlextLdifUtilitiesDispatch as FlextLdifUtilitiesDispatch
+from .dn import FlextLdifUtilitiesDN as FlextLdifUtilitiesDN
+from .entry import FlextLdifUtilitiesEntry as FlextLdifUtilitiesEntry
+from .events import FlextLdifUtilitiesEvents as FlextLdifUtilitiesEvents
+from .metadata import FlextLdifUtilitiesMetadata as FlextLdifUtilitiesMetadata
+from .object_class import FlextLdifUtilitiesObjectClass as FlextLdifUtilitiesObjectClass
+from .oid import FlextLdifUtilitiesOID as FlextLdifUtilitiesOID
+from .parser import FlextLdifUtilitiesParser as FlextLdifUtilitiesParser
+from .pipeline import FlextLdifUtilitiesPipeline as FlextLdifUtilitiesPipeline
+from .schema import FlextLdifUtilitiesSchema as FlextLdifUtilitiesSchema
+from .schema_build import FlextLdifUtilitiesSchemaBuild as FlextLdifUtilitiesSchemaBuild
+from .schema_extract import (
+    FlextLdifUtilitiesSchemaExtract as FlextLdifUtilitiesSchemaExtract,
+)
+from .schema_format import (
+    FlextLdifUtilitiesSchemaFormat as FlextLdifUtilitiesSchemaFormat,
+)
+from .schema_normalize import (
+    FlextLdifUtilitiesSchemaNormalize as FlextLdifUtilitiesSchemaNormalize,
+)
+from .schema_parse import FlextLdifUtilitiesSchemaParse as FlextLdifUtilitiesSchemaParse
+from .server import FlextLdifUtilitiesServer as FlextLdifUtilitiesServer
+from .transformers import (
+    FlextLdifUtilitiesTransformers as FlextLdifUtilitiesTransformers,
+)
+from .validation import FlextLdifUtilitiesValidation as FlextLdifUtilitiesValidation
+from .writer import FlextLdifUtilitiesWriter as FlextLdifUtilitiesWriter
 
-
-install_lazy_exports(
-    __name__,
-    globals(),
-    _LAZY_IMPORTS,
-    publish_all=False,
+__all__: tuple[str, ...] = (
+    "FlextLdifUtilitiesACL",
+    "FlextLdifUtilitiesAttribute",
+    "FlextLdifUtilitiesCollectionLdif",
+    "FlextLdifUtilitiesDN",
+    "FlextLdifUtilitiesDispatch",
+    "FlextLdifUtilitiesEntry",
+    "FlextLdifUtilitiesEvents",
+    "FlextLdifUtilitiesMetadata",
+    "FlextLdifUtilitiesNormalizeAttrsTransformer",
+    "FlextLdifUtilitiesNormalizeDnTransformer",
+    "FlextLdifUtilitiesOID",
+    "FlextLdifUtilitiesObjectClass",
+    "FlextLdifUtilitiesParser",
+    "FlextLdifUtilitiesPipeline",
+    "FlextLdifUtilitiesSchema",
+    "FlextLdifUtilitiesSchemaBuild",
+    "FlextLdifUtilitiesSchemaExtract",
+    "FlextLdifUtilitiesSchemaFormat",
+    "FlextLdifUtilitiesSchemaNormalize",
+    "FlextLdifUtilitiesSchemaParse",
+    "FlextLdifUtilitiesServer",
+    "FlextLdifUtilitiesTransformer",
+    "FlextLdifUtilitiesTransformers",
+    "FlextLdifUtilitiesValidation",
+    "FlextLdifUtilitiesWriter",
 )
