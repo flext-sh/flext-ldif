@@ -563,7 +563,7 @@ class FlextLdifModelsDomainEntry:
         def unconverted_attributes(
             self,
         ) -> t.Ldif.UnconvertedAttributes:
-            """Get unconverted attributes from metadata extensions (read-only view, DRY pattern)."""
+            """The unconverted attributes from metadata extensions (read-only view, DRY pattern)."""
             empty_attrs: t.Ldif.UnconvertedAttributes = {}
             if self.metadata is None:
                 return empty_attrs

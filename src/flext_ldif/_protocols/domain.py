@@ -31,17 +31,17 @@ class FlextLdifProtocolsDomain(Protocol):
 
         @property
         def schema_server(self) -> FlextLdifProtocolsDomain.SchemaServer:
-            """Return schema server implementation."""
+            """The schema server implementation."""
             ...
 
         @property
         def acl_server(self) -> FlextLdifProtocolsDomain.AclServer:
-            """Return ACL server implementation."""
+            """ACL server implementation."""
             ...
 
         @property
         def entry_server(self) -> FlextLdifProtocolsDomain.EntryServer:
-            """Return entry server implementation."""
+            """The entry server implementation."""
             ...
 
         def parse_ldif(self, value: str) -> p.Result[m.Ldif.ParseResponse]:

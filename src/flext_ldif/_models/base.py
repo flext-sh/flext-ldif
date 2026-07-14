@@ -51,7 +51,7 @@ class FlextLdifModelsBases:
         @u.computed_field()
         @property
         def server_type(self) -> str:
-            """Get server type from metadata, default to RFC."""
+            """The server type from metadata, default to RFC."""
             metadata = getattr(self, "metadata", None)
             if metadata is not None:
                 server_type = getattr(metadata, "server_type", None)
