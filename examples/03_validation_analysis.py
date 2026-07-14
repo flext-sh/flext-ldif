@@ -15,14 +15,11 @@ SRP: Dataset generation, validation, analysis - each isolated, composition handl
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from collections.abc import (
+    MutableSequence,
+)
 
 from flext_ldif import ldif, m, p, r, t
-
-if TYPE_CHECKING:
-    from collections.abc import (
-        MutableSequence,
-    )
 
 
 class DRYValidationAnalysis:

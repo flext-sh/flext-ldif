@@ -3,18 +3,16 @@
 from __future__ import annotations
 
 import sys
-from typing import TYPE_CHECKING, TypeIs
+from typing import TypeIs
 
 from flext_ldif import (
+    FlextLdifModels as m,
     FlextLdifShared,
     c,
     p,
     r,
     t,
 )
-
-if TYPE_CHECKING:
-    from flext_ldif import FlextLdifModels as m
 
 
 class FlextLdifUtilitiesServer:

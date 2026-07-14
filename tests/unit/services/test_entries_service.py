@@ -17,16 +17,11 @@ here rather than reached via private access.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 from flext_tests import tm
 
 from flext_ldif.services.entries import FlextLdifEntries
-from tests import TestsFlextLdifUtilities as u, c, m
-
-if TYPE_CHECKING:
-    from tests import t
+from tests import TestsFlextLdifUtilities as u, c, m, t
 
 
 class TestsFlextLdifEntries:

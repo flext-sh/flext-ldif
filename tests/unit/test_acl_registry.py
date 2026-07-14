@@ -10,15 +10,10 @@ internal collaborators, or implementation data structures are touched.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 from flext_tests import tm
 
-from tests import c, u
-
-if TYPE_CHECKING:
-    from tests import t
+from tests import c, t, u
 
 
 @pytest.mark.unit

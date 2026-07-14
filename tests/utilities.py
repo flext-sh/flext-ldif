@@ -4,17 +4,15 @@ from __future__ import annotations
 
 import os
 import uuid
+from collections.abc import Callable, MutableMapping
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
 from flext_ldap import FlextLdapUtilities, u
 from flext_tests import FlextTestsUtilities, tk, tm
 from flext_tests._utilities.fixtures_dsl import FlextTestsFixturesDSLMixin
 
 from tests import c, m, p, t
-
-if TYPE_CHECKING:
-    from collections.abc import Callable, MutableMapping
 
 
 class TestsFlextLdifUtilities(FlextTestsUtilities, u):

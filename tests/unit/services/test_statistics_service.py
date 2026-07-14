@@ -9,15 +9,10 @@ patching of the unit under test is used.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 from flext_tests import tm
 
-from tests import TestsFlextLdifUtilities as u, c, m
-
-if TYPE_CHECKING:
-    from tests import p
+from tests import TestsFlextLdifUtilities as u, c, m, p
 
 
 class TestsFlextLdifStatisticsService:

@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Self, cast, override
+from pathlib import Path
+from typing import Self, cast, override
 
 from flext_ldif import c, e, m, p, r, t, u
 from flext_ldif.services.acl import FlextLdifAcl
@@ -19,9 +20,6 @@ from flext_ldif.services.processing import FlextLdifProcessing
 from flext_ldif.services.statistics import FlextLdifStatistics
 from flext_ldif.services.validation import FlextLdifValidation
 from flext_ldif.services.writer import FlextLdifWriter
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 
 class FlextLdif(
@@ -108,7 +106,7 @@ class FlextLdif(
             server_registry=self._server,
         )
         bound_categorization: FlextLdifCategorization = (
-            categorization.bind_runtime_settings(self.settings)
+            categorization.bind_runtime_settings()
         )
         return bound_categorization
 
@@ -275,7 +273,7 @@ class FlextLdif(
             server=self._server,
         )
         bound_pipeline: FlextLdifMigrationPipeline = pipeline.bind_runtime_settings(
-            self.settings,
+            settings,
         )
         return bound_pipeline
 

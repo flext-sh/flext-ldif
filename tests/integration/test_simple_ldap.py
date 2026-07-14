@@ -8,17 +8,12 @@ an external boundary; every flext-ldif assertion goes through the public API.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from collections.abc import Callable
 
 from flext_tests import tm
 
 from flext_ldif import ldif
-from tests import c, m
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
-    from tests import p, t
+from tests import c, m, p, t
 
 
 class TestsFlextLdifSimpleLdap:

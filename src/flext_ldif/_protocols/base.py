@@ -2,24 +2,22 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar, Protocol, runtime_checkable
+from collections.abc import (
+    KeysView,
+    MutableMapping,
+    ValuesView,
+)
+from pathlib import Path
+from typing import ClassVar, Protocol, runtime_checkable
 
-if TYPE_CHECKING:
-    from collections.abc import (
-        KeysView,
-        MutableMapping,
-        ValuesView,
-    )
-    from pathlib import Path
-
-    from flext_ldif import (
-        FlextLdifProtocols as lp,
-        c,
-        m,
-        p,
-        t,
-    )
-    from flext_ldif._protocols.domain import FlextLdifProtocolsDomain as lpd
+from flext_ldif import (
+    FlextLdifProtocols as lp,
+    c,
+    m,
+    p,
+    t,
+)
+from flext_ldif._protocols.domain import FlextLdifProtocolsDomain as lpd
 
 
 @runtime_checkable

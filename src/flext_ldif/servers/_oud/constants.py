@@ -4,13 +4,10 @@ from __future__ import annotations
 
 import re
 from types import MappingProxyType
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
-from flext_ldif import c
+from flext_ldif import c, t
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-
-if TYPE_CHECKING:
-    from flext_ldif import t
 
 
 class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):

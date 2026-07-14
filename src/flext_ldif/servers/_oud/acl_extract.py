@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from collections.abc import MutableMapping
 
 from flext_ldif import (
     c,
@@ -17,9 +17,6 @@ from flext_ldif import (
     t,
     u,
 )
-
-if TYPE_CHECKING:
-    from collections.abc import MutableMapping
 
 
 class FlextLdifServersOudAclExtractMixin:

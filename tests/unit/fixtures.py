@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from pathlib import Path
 
 import pytest
 
@@ -12,12 +12,7 @@ from flext_ldif.services.migration import FlextLdifMigrationPipeline
 from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.services.writer import FlextLdifWriter
-from tests import c, u
-
-if TYPE_CHECKING:
-    from pathlib import Path
-
-    from tests import m, p, t
+from tests import c, m, p, t, u
 
 
 @pytest.fixture

@@ -19,16 +19,11 @@ live in the consuming migration projects.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 from flext_tests import tm
 
 from flext_ldif import ldif
-from tests import c, m, u
-
-if TYPE_CHECKING:
-    from tests import t
+from tests import c, m, t, u
 
 _BASE_DN = "dc=example"
 

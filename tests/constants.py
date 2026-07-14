@@ -5,15 +5,12 @@ from __future__ import annotations
 import re
 from pathlib import Path
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Final, Literal
+from typing import Final, Literal
 
 from flext_ldap import c
 from flext_tests import FlextTestsConstants
 
-from tests import m
-
-if TYPE_CHECKING:
-    from tests import t
+from tests import m, t
 
 
 class TestsFlextLdifConstants(FlextTestsConstants, c):

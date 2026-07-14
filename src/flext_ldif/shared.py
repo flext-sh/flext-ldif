@@ -9,12 +9,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Final
+from typing import Final
 
+from flext_ldif import t
 from flext_ldif._constants.enums import FlextLdifConstantsEnums
-
-if TYPE_CHECKING:
-    from flext_ldif import t
 
 
 class _MissingSentinel:

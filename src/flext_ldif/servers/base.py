@@ -2,18 +2,16 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar, Self, override
+from collections.abc import (
+    Callable,
+)
+from typing import ClassVar, Self, override
 
 from flext_core import s
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
 from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
 from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
-
-if TYPE_CHECKING:
-    from collections.abc import (
-        Callable,
-    )
 
 
 # mro-wkii.17.26 (Codex): server primitives extend upstream s; local s owns this registry.

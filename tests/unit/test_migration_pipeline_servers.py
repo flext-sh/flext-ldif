@@ -9,7 +9,7 @@ pokes are touched.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from pathlib import Path
 
 import pytest
 from flext_tests import tm
@@ -18,9 +18,6 @@ from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.services.migration import FlextLdifMigrationPipeline
 from tests import c
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 
 class TestsFlextLdifMigrationPipelineServers:

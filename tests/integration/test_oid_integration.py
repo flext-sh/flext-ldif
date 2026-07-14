@@ -15,15 +15,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 from flext_tests import tm
 
-from tests import u
-
-if TYPE_CHECKING:
-    from tests import m, p, t
+from tests import m, p, t, u
 
 ORACLE_OID_PREFIX = "2.16.840.1.113894"
 

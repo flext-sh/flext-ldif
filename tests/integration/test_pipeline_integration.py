@@ -13,21 +13,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from collections.abc import MutableMapping, MutableSequence
+from pathlib import Path
 
 import pytest
 from flext_tests import tm
 
 from flext_ldif import ldif
+from flext_ldif._models.domain_entry import FlextLdifModelsDomainEntry
 
-if TYPE_CHECKING:
-    from collections.abc import MutableMapping, MutableSequence
-    from pathlib import Path
-
-    from flext_ldif._models.domain_entry import FlextLdifModelsDomainEntry
-
-    type _Entry = FlextLdifModelsDomainEntry.Entry
-    type _Attributes = MutableMapping[str, MutableSequence[str]]
+type _Entry = FlextLdifModelsDomainEntry.Entry
+type _Attributes = MutableMapping[str, MutableSequence[str]]
 
 
 SINGLE_ENTRY = (

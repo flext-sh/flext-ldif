@@ -2,18 +2,15 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from pathlib import Path
+from typing import Protocol, runtime_checkable
 
 from flext_ldap import p as ldap_p
 from flext_tests import FlextTestsProtocols
 
 from flext_ldif import FlextLdifProtocols
-
-if TYPE_CHECKING:
-    from pathlib import Path
-
-    from flext_ldif.services.migration import FlextLdifMigrationPipeline
-    from tests import c, m
+from flext_ldif.services.migration import FlextLdifMigrationPipeline
+from tests import c, m
 
 
 class TestsFlextLdifProtocols(

@@ -14,20 +14,18 @@ from collections.abc import (
 )
 from datetime import datetime
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Annotated, ClassVar, Self, override
+from typing import Annotated, ClassVar, Self, override
 
 from flext_core import FlextUtilities as u, m
 from flext_ldif import c, p, r, t
+from flext_ldif._models.domain_acl import FlextLdifModelsDomainAcl as mdac
 from flext_ldif._models.domain_attributes import (
     FlextLdifModelsDomainAttributes as mda,
 )
 from flext_ldif._models.domain_dn import FlextLdifModelsDomainDN as mdn
 from flext_ldif._models.domain_metadata import FlextLdifModelsDomainMetadata as mdm
+from flext_ldif._models.domain_schema import FlextLdifModelsDomainSchema as mds
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
-
-if TYPE_CHECKING:
-    from flext_ldif._models.domain_acl import FlextLdifModelsDomainAcl as mdac
-    from flext_ldif._models.domain_schema import FlextLdifModelsDomainSchema as mds
 
 
 class FlextLdifModelsDomainEntry:

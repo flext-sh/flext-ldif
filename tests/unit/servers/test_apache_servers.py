@@ -6,16 +6,11 @@ Directory Server-specific attributes, object classes, entries, and ACLs in LDIF 
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 from flext_tests import tm
 
 from flext_ldif.servers.apache import FlextLdifServersApache
-from tests import c, m, u
-
-if TYPE_CHECKING:
-    from tests import t
+from tests import c, m, t, u
 
 
 class TestsFlextLdifApacheServers:

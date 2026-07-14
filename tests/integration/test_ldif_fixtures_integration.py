@@ -12,18 +12,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from pathlib import Path
 
 import pytest
 from flext_tests import tm
 
 from flext_ldif import ldif
-from tests import c
-
-if TYPE_CHECKING:
-    from pathlib import Path
-
-    from tests import p
+from tests import c, p
 
 
 class TestsFlextLdifLdifFixturesIntegration:

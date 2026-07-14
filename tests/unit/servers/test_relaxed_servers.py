@@ -6,16 +6,11 @@ accepting entries that don't conform strictly to RFC standards while preserving 
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 from flext_tests import tm
 
 from flext_ldif.servers.relaxed import FlextLdifServersRelaxed
-from tests import c, m, t
-
-if TYPE_CHECKING:
-    from tests import p
+from tests import c, m, p, t
 
 
 @pytest.mark.unit

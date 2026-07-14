@@ -2,15 +2,13 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Annotated, ClassVar
+from pathlib import Path
+from typing import Annotated, ClassVar
 
 from flext_tests import FlextTestsModels
 
 from flext_ldif import m, u
 from tests import t
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 
 class TestsFlextLdifModels(FlextTestsModels, m):

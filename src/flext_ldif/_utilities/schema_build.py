@@ -2,16 +2,13 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from collections.abc import Callable
 
 from flext_ldif import FlextLdifModels as m, c, p, t
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID as uo
 from flext_ldif._utilities.schema_format import FlextLdifUtilitiesSchemaFormat as sf
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer as us
 from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter as uw
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
 
 
 class FlextLdifUtilitiesSchemaBuild:

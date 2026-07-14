@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from pathlib import Path
 
 from flext_ldif import (
     m,
@@ -12,9 +12,6 @@ from flext_ldif import (
     t,
     u,
 )
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 
 class FlextLdifWriter(s):

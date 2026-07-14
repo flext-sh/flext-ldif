@@ -15,7 +15,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from pathlib import Path
 
 import pytest
 from flext_tests import tm
@@ -24,12 +24,7 @@ from flext_ldif import ldif
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.services.migration import FlextLdifMigrationPipeline
-from tests import TestsFlextLdifUtilities as u, c
-
-if TYPE_CHECKING:
-    from pathlib import Path
-
-    from tests import p
+from tests import TestsFlextLdifUtilities as u, c, p
 
 MIN_OUD_ENTRIES = 10
 

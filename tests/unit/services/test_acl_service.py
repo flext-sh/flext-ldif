@@ -2,15 +2,10 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 from flext_tests import tm
 
-from tests import c, m, u
-
-if TYPE_CHECKING:
-    from tests import p
+from tests import c, m, p, u
 
 
 class TestsFlextLdifAclService:

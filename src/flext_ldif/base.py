@@ -30,16 +30,6 @@ class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](s[TDomainResult]):
         if self.server is not None:
             self._server = self.server
 
-    @property
-    @override
-    def settings(self) -> p.Ldif.Settings:
-        """The typed LDIF configuration namespace."""
-        resolved = super().settings
-        if not isinstance(resolved, p.Ldif.Settings):
-            msg = "Runtime settings do not satisfy the LDIF settings contract"
-            raise TypeError(msg)
-        return resolved
-
     def __call__(
         self,
         *,

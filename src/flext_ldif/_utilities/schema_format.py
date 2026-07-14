@@ -2,13 +2,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from flext_cli import u
-from flext_ldif import c, t
-
-if TYPE_CHECKING:
-    from flext_ldif import FlextLdifModels as m
+from flext_ldif import FlextLdifModels as m, c, t
 
 
 class FlextLdifUtilitiesSchemaFormat:

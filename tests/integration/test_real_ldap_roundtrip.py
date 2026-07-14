@@ -16,18 +16,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from collections.abc import Callable
 
 import pytest
 from flext_tests import tm
 
 from flext_ldif import ldif
-from tests import m, u
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
-    from tests import p, t
+from tests import m, p, t, u
 
 # Attributes that LDIF/LDAP layers may inject and that are not part of the
 # user-supplied contract under test.
