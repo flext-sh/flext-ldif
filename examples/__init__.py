@@ -14,11 +14,11 @@ if TYPE_CHECKING:
         e as e,
         h as h,
         m as m,
-        p as p,
+        p,
         r as r,
         s as s,
         t as t,
-        u as u,
+        u,
         x as x,
     )
 _LAZY_IMPORTS = build_lazy_import_map(

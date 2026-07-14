@@ -108,7 +108,7 @@ if TYPE_CHECKING:
     from tests.models import TestsFlextLdifModels as TestsFlextLdifModels, m as m
     from tests.protocols import (
         TestsFlextLdifProtocols as TestsFlextLdifProtocols,
-        p as p,
+        p,
     )
     from tests.settings import TestsFlextLdifSettings as TestsFlextLdifSettings
     from tests.typings import TestsFlextLdifTypes as TestsFlextLdifTypes, t as t
@@ -214,7 +214,7 @@ if TYPE_CHECKING:
     )
     from tests.utilities import (
         TestsFlextLdifUtilities as TestsFlextLdifUtilities,
-        u as u,
+        u,
     )
 _LAZY_IMPORTS = merge_lazy_imports(
     (
