@@ -86,7 +86,9 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         operation: t.JsonValue | None = None,
     ) -> m.Ldif.Acl | str:
         """Callable interface - automatic polymorphic processor."""
-        narrowed_data = data if isinstance(data, (str, m.Ldif.Acl)) or data is None else None
+        narrowed_data = (
+            data if isinstance(data, (str, m.Ldif.Acl)) or data is None else None
+        )
         narrowed_operation = operation if isinstance(operation, str) else None
         result = self.execute(data=narrowed_data, operation=narrowed_operation)
         if isinstance(result.value, str):
