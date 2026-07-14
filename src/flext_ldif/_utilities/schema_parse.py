@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_cli import u as core_u
+from flext_cli import u
 from flext_ldif import FlextLdifModels as m, c, p, r, t
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID as uo
 from flext_ldif._utilities.parser import FlextLdifUtilitiesParser as up
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 class FlextLdifUtilitiesSchemaParse:
     """Parse RFC 4512 schema definitions from strings and LDIF content."""
 
-    _module_logger: ClassVar[p.Logger] = core_u.fetch_logger(__name__)
+    _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 
     @staticmethod
     def _convert_metadata_extensions(
@@ -25,7 +25,7 @@ class FlextLdifUtilitiesSchemaParse:
     ) -> t.Ldif.MutableMetadataMapping:
         converted: t.Ldif.MutableMetadataMapping = {}
         for key, raw_value in extensions_raw.items():
-            converted[key] = core_u.normalize_to_metadata(raw_value)
+            converted[key] = u.normalize_to_metadata(raw_value)
         return converted
 
     @staticmethod

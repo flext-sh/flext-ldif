@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_cli import u as core_u
+from flext_cli import u
 from flext_ldif import c, t
 
 if TYPE_CHECKING:
@@ -47,7 +47,7 @@ class FlextLdifUtilitiesSchemaFormat:
         name_format = getattr(schema_details, "name_format", "single")
         name_values_ = getattr(schema_details, "name_values", [])
         name_values: t.MutableSequenceOf[str] = (
-            [str(v) for v in name_values_] if core_u.list_like(name_values_) else []
+            [str(v) for v in name_values_] if u.list_like(name_values_) else []
         )
         if name_format == "multiple" and name_values:
             names_str = " ".join(f"'{n}'" for n in name_values)
@@ -144,7 +144,7 @@ class FlextLdifUtilitiesSchemaFormat:
             "field_order",
             None,
         )
-        if field_order_ and core_u.list_like(field_order_):
+        if field_order_ and u.list_like(field_order_):
             return [str(item) for item in field_order_]
         return None
 
