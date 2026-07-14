@@ -133,14 +133,7 @@ class FlextLdifConversionAclMixin(FlextLdifConversionAclPreserveMixin, s, ABC):
                 ),
             )
             .flat_map(
-                lambda parsed_acl: (
-                    r[m.Ldif.Acl].ok(parsed_acl)
-                    if isinstance(parsed_acl, m.Ldif.Acl)
-                    else r[m.Ldif.Acl].fail(
-                        "ACL conversion returned unexpected parsed type: "
-                        f"{type(parsed_acl).__name__}",
-                    )
-                ),
+                lambda parsed_acl: r[m.Ldif.Acl].ok(parsed_acl),
             )
         )
 
