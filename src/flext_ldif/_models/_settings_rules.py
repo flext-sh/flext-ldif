@@ -74,7 +74,7 @@ class FlextLdifModelsSettingsRules:
         @u.computed_field()
         @property
         def category_markers(self) -> t.FrozensetMapping:
-            """Return category markers already normalized for matching."""
+            """The category markers already normalized for matching."""
             markers: t.MutableFrozensetMapping = {}
             for category, field_name in c.Ldif.CATEGORY_RULE_OBJECTCLASS_FIELDS.items():
                 raw_values = getattr(self, field_name)
@@ -170,7 +170,7 @@ class FlextLdifModelsSettingsRules:
         @u.computed_field()
         @property
         def schema_oid_filters(self) -> t.FrozensetMapping:
-            """Return whitelist OID filters keyed by canonical schema attribute names."""
+            """The whitelist OID filters keyed by canonical schema attribute names."""
             return MappingProxyType({
                 attr_name: getattr(self, field_name)
                 for field_name, attr_name in c.Ldif.WHITELIST_RULE_SCHEMA_ATTRIBUTE_KEYS

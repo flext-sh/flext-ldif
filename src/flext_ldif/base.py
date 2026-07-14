@@ -33,7 +33,7 @@ class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](s[TDomainResult]):
     @property
     @override
     def settings(self) -> p.Ldif.Settings:
-        """Return the typed LDIF configuration namespace."""
+        """The typed LDIF configuration namespace."""
         resolved = super().settings
         if not isinstance(resolved, p.Ldif.Settings):
             msg = "Runtime settings do not satisfy the LDIF settings contract"

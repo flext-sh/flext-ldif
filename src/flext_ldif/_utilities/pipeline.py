@@ -39,7 +39,7 @@ class FlextLdifUtilitiesPipeline:
 
         @property
         def errors(self) -> t.MutableSequenceOf[str]:
-            """Get list of error messages."""
+            """The list of error messages."""
             return self._errors
 
         @property
@@ -49,7 +49,7 @@ class FlextLdifUtilitiesPipeline:
 
         @property
         def warnings(self) -> t.MutableSequenceOf[str]:
-            """Get list of warning messages."""
+            """The list of warning messages."""
             return self._warnings
 
     class ValidationPipeline:
