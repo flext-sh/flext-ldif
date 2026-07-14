@@ -104,11 +104,6 @@ class FlextLdifDetector(s):
                     read.error,
                 )
             ldif_content = read.value
-        if ldif_content is None:
-            return r[m.Ldif.ServerDetectionResult].fail_op(
-                "read detection source",
-                "LDIF content is empty",
-            )
         lines = ldif_content.splitlines()
         content_sample = "\n".join(lines[:max_lines])
         scores_dict = self._calculate_scores(content_sample)
