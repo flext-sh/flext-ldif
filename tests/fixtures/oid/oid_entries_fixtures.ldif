@@ -1,0 +1,285 @@
+version: 1
+
+dn: dc=example,dc=com
+objectClass: top
+objectClass: domain
+dc: example
+orclGUID: 10101010-1010-1010-1010-101010101010
+orclIsEnabled: TRUE
+
+dn: ou=People,dc=example,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: People
+description: Human user identities
+orclGUID: 20202020-2020-2020-2020-202020202020
+
+dn: ou=Groups,dc=example,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: Groups
+description: Group objects
+orclGUID: 30303030-3030-3030-3030-303030303030
+
+dn: ou=ServiceAccounts,dc=example,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: ServiceAccounts
+description: Service principals
+orclGUID: 40404040-4040-4040-4040-404040404040
+
+dn: ou=users,dc=example,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: users
+description: Lowercase users OU for legacy tests
+orclGUID: 50505050-5050-5050-5050-505050505050
+
+dn: ou=groups,dc=example,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: groups
+description: Lowercase groups OU for legacy tests
+orclGUID: 60606060-6060-6060-6060-606060606060
+
+dn: cn=user01,ou=users,dc=example,dc=com
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+cn: user01
+sn: User01
+givenName: User01
+uid: user01
+mail: user01@example.com
+telephoneNumber: +1-555-2001
+telephoneNumber: +1-555-3001
+orclGUID: 70000000-0000-0000-0000-00000000001
+orclIsEnabled: TRUE
+orclPassword: {SSHA}User01Secret
+orclNetDescString: (DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=db01.example.com)(PORT=1521)))
+description: Application user 01
+
+
+dn: cn=user02,ou=users,dc=example,dc=com
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+cn: user02
+sn: User02
+givenName: User02
+uid: user02
+mail: user02@example.com
+telephoneNumber: +1-555-2002
+telephoneNumber: +1-555-3002
+orclGUID: 70000000-0000-0000-0000-00000000002
+orclIsEnabled: FALSE
+orclPassword: {SSHA}User02Secret
+orclNetDescString: (DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=db02.example.com)(PORT=1521)))
+description: Application user 02
+
+
+dn: cn=user03,ou=users,dc=example,dc=com
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+cn: user03
+sn: User03
+givenName: User03
+uid: user03
+mail: user03@example.com
+telephoneNumber: +1-555-2003
+telephoneNumber: +1-555-3003
+orclGUID: 70000000-0000-0000-0000-00000000003
+orclIsEnabled: TRUE
+orclPassword: {SSHA}User03Secret
+orclNetDescString: (DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=db03.example.com)(PORT=1521)))
+description: Application user 03
+
+
+dn: cn=user04,ou=users,dc=example,dc=com
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+cn: user04
+sn: User04
+givenName: User04
+uid: user04
+mail: user04@example.com
+telephoneNumber: +1-555-2004
+telephoneNumber: +1-555-3004
+orclGUID: 70000000-0000-0000-0000-00000000004
+orclIsEnabled: FALSE
+orclPassword: {SSHA}User04Secret
+orclNetDescString: (DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=db04.example.com)(PORT=1521)))
+description: Application user 04
+
+
+dn: cn=user05,ou=users,dc=example,dc=com
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+cn: user05
+sn: User05
+givenName: User05
+uid: user05
+mail: user05@example.com
+telephoneNumber: +1-555-2005
+telephoneNumber: +1-555-3005
+orclGUID: 70000000-0000-0000-0000-00000000005
+orclIsEnabled: TRUE
+orclPassword: {SSHA}User05Secret
+orclNetDescString: (DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=db05.example.com)(PORT=1521)))
+description: Application user 05
+
+
+dn: cn=user06,ou=users,dc=example,dc=com
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+cn: user06
+sn: User06
+givenName: User06
+uid: user06
+mail: user06@example.com
+telephoneNumber: +1-555-2006
+telephoneNumber: +1-555-3006
+orclGUID: 70000000-0000-0000-0000-00000000006
+orclIsEnabled: FALSE
+orclPassword: {SSHA}User06Secret
+orclNetDescString: (DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=db06.example.com)(PORT=1521)))
+description: Application user 06
+
+
+dn: cn=user07,ou=users,dc=example,dc=com
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+cn: user07
+sn: User07
+givenName: User07
+uid: user07
+mail: user07@example.com
+telephoneNumber: +1-555-2007
+telephoneNumber: +1-555-3007
+orclGUID: 70000000-0000-0000-0000-00000000007
+orclIsEnabled: TRUE
+orclPassword: {SSHA}User07Secret
+orclNetDescString: (DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=db07.example.com)(PORT=1521)))
+description: Application user 07
+
+
+dn: cn=user08,ou=users,dc=example,dc=com
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+cn: user08
+sn: User08
+givenName: User08
+uid: user08
+mail: user08@example.com
+telephoneNumber: +1-555-2008
+telephoneNumber: +1-555-3008
+orclGUID: 70000000-0000-0000-0000-00000000008
+orclIsEnabled: FALSE
+orclPassword: {SSHA}User08Secret
+orclNetDescString: (DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=db08.example.com)(PORT=1521)))
+description: Application user 08
+
+
+dn: cn=user09,ou=users,dc=example,dc=com
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+cn: user09
+sn: User09
+givenName: User09
+uid: user09
+mail: user09@example.com
+telephoneNumber: +1-555-2009
+telephoneNumber: +1-555-3009
+orclGUID: 70000000-0000-0000-0000-00000000009
+orclIsEnabled: TRUE
+orclPassword: {SSHA}User09Secret
+orclNetDescString: (DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=db09.example.com)(PORT=1521)))
+description: Application user 09
+
+
+dn: cn=user10,ou=users,dc=example,dc=com
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+cn: user10
+sn: User10
+givenName: User10
+uid: user10
+mail: user10@example.com
+telephoneNumber: +1-555-2010
+telephoneNumber: +1-555-3010
+orclGUID: 70000000-0000-0000-0000-00000000010
+orclIsEnabled: FALSE
+orclPassword: {SSHA}User10Secret
+orclNetDescString: (DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=db10.example.com)(PORT=1521)))
+description: Application user 10
+
+dn: cn=svc-ldap-sync,ou=ServiceAccounts,dc=example,dc=com
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: orclServiceAccount
+cn: svc-ldap-sync
+sn: Service
+givenName: LDAP Sync
+uid: svc-ldap-sync
+mail: svc-ldap-sync@example.com
+orclGUID: 80808080-8080-8080-8080-808080808080
+orclIsEnabled: TRUE
+orclPassword: {SSHA}SyncSecret
+orclPwdExpirationTime: 20301231235959Z
+
+dn: cn=svc-reporting,ou=ServiceAccounts,dc=example,dc=com
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: orclServiceAccount
+cn: svc-reporting
+sn: Service
+givenName: Reporting
+uid: svc-reporting
+mail: svc-reporting@example.com
+orclGUID: 90909090-9090-9090-9090-909090909090
+orclIsEnabled: FALSE
+orclPassword: {SSHA}ReportSecret
+
+dn: cn=engineering,ou=groups,dc=example,dc=com
+objectClass: top
+objectClass: groupOfNames
+objectClass: groupOfUniqueNames
+cn: engineering
+description: Engineering team
+member: cn=user01,ou=users,dc=example,dc=com
+member: cn=user02,ou=users,dc=example,dc=com
+member: cn=user03,ou=users,dc=example,dc=com
+uniqueMember: cn=user01,ou=users,dc=example,dc=com
+uniqueMember: cn=user02,ou=users,dc=example,dc=com
+orclGUID: a0a0a0a0-a0a0-a0a0-a0a0-a0a0a0a0a0a0
+
+dn: cn=directory-REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com
+objectClass: top
+objectClass: groupOfNames
+cn: directory-REDACTED_LDAP_BIND_PASSWORDs
+description: Directory REDACTED_LDAP_BIND_PASSWORDistrators
+member: cn=user01,ou=users,dc=example,dc=com
+member: cn=svc-ldap-sync,ou=ServiceAccounts,dc=example,dc=com
+orclGUID: b0b0b0b0-b0b0-b0b0-b0b0-b0b0b0b0b0b0

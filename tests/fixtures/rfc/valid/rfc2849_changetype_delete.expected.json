@@ -1,0 +1,15 @@
+{
+  "entries": [
+    {
+      "dn": "cn=Fluff Jensen,ou=People,dc=airius,dc=com",
+      "changetype": "delete"
+    }
+  ],
+  "count": 1,
+  "valid": true,
+  "metadata": {
+    "type": "rfc_operation",
+    "operation_type": "delete",
+    "test_aspects": ["changetype_directive", "delete_operation"]
+  }
+}

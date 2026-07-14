@@ -1,0 +1,79 @@
+version: 1
+
+dn: dc=example,dc=com
+objectClass: top
+objectClass: domain
+dc: example
+aci: (target="ldap:///dc=example,dc=com")(targetattr="*")(version 3.0; acl "Root browse"; allow (read,search,compare,browse) userdn="ldap:///anyone";)
+
+dn: ou=users,dc=example,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: users
+aci: (target="ldap:///ou=users,dc=example,dc=com")(targetattr="cn || sn || mail")(version 3.0; acl "Users read"; allow (read,search,compare) userdn="ldap:///anyone";)
+
+dn: ou=groups,dc=example,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: groups
+aci: (target="ldap:///ou=groups,dc=example,dc=com")(targetattr="member || cn")(version 3.0; acl "Groups read"; allow (read,search,compare) userdn="ldap:///anyone";)
+
+dn: cn=engineering,ou=groups,dc=example,dc=com
+objectClass: top
+objectClass: groupOfNames
+cn: engineering
+aci: (target="ldap:///cn=engineering,ou=groups,dc=example,dc=com")(targetattr="member || description")(targattrfilters="add=member:(objectClass=inetOrgPerson)")(version 3.0; acl "Group managers"; allow (read,write,add,delete) groupdn="ldap:///cn=directory-REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com";)
+
+dn: cn=user01,ou=users,dc=example,dc=com
+objectClass: top
+objectClass: inetOrgPerson
+cn: user01
+sn: User01
+aci: (target="ldap:///cn=user01,ou=users,dc=example,dc=com")(targetattr="userPassword")(version 3.0; acl "Self password"; allow (write,selfwrite) userdn="ldap:///self";)
+
+dn: cn=user02,ou=users,dc=example,dc=com
+objectClass: top
+objectClass: inetOrgPerson
+cn: user02
+sn: User02
+aci: (target="ldap:///cn=user02,ou=users,dc=example,dc=com")(targetattr="*")(targetcontrol="1.3.6.1.4.1.42.2.27.9.5.2")(version 3.0; acl "Control based"; allow (read,search,compare) userdn="ldap:///cn=app-reader,dc=example,dc=com";)
+
+dn: cn=user03,ou=users,dc=example,dc=com
+objectClass: top
+objectClass: inetOrgPerson
+cn: user03
+sn: User03
+aci: (target="ldap:///cn=user03,ou=users,dc=example,dc=com")(targetattr="*")(extop="1.3.6.1.4.1.26027.1.6.1")(version 3.0; acl "Extended op"; allow (proxy,read) userdn="ldap:///cn=proxy-user,dc=example,dc=com";)
+
+dn: cn=user04,ou=users,dc=example,dc=com
+objectClass: top
+objectClass: inetOrgPerson
+cn: user04
+sn: User04
+aci: (target="ldap:///cn=user04,ou=users,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Network policy"; allow (read,search) userdn="ldap:///self" and ip="192.168.1.0/24" and dns="*.example.com";)
+
+dn: cn=user05,ou=users,dc=example,dc=com
+objectClass: top
+objectClass: inetOrgPerson
+cn: user05
+sn: User05
+aci: (target="ldap:///cn=user05,ou=users,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Time policy"; allow (read,search) userdn="ldap:///self" and dayofweek="Mon,Tue,Wed" and timeofday >= "0800";)
+
+dn: cn=user06,ou=users,dc=example,dc=com
+objectClass: top
+objectClass: inetOrgPerson
+cn: user06
+sn: User06
+aci: (target="ldap:///cn=user06,ou=users,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Strong auth"; allow (read,search,compare) userdn="ldap:///self" and authmethod = "ssl" and ssf >= "128";)
+
+dn: cn=directory-REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com
+objectClass: top
+objectClass: groupOfNames
+cn: directory-REDACTED_LDAP_BIND_PASSWORDs
+aci: (target="ldap:///cn=directory-REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Admin override"; deny (write,delete) userdn="ldap:///anyone";)
+
+dn: cn=service-policy,dc=example,dc=com
+objectClass: top
+objectClass: applicationProcess
+cn: service-policy
+aci: (target="ldap:///dc=example,dc=com")(targetattr="orclPassword || userPassword")(version 3.0; acl "Service account policy"; allow (read,write,compare) userdn="ldap:///cn=svc-sync,dc=example,dc=com";)

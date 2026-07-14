@@ -1,0 +1,28 @@
+{
+  "valid": false,
+  "error": "RFC 2849 violation: Missing version header",
+  "error_type": "RFC_VIOLATION",
+  "strict_mode": {
+    "valid": false,
+    "should_fail": true
+  },
+  "relaxed_mode": {
+    "valid": true,
+    "entries": [
+      {
+        "dn": "cn=test,dc=example,dc=com",
+        "attributes": {
+          "objectClass": ["person"],
+          "cn": ["test"],
+          "sn": ["test"]
+        }
+      }
+    ],
+    "count": 1
+  },
+  "metadata": {
+    "type": "rfc_violation",
+    "violation_type": "missing_version_header",
+    "test_aspects": ["strict_vs_relaxed_parsing", "error_handling"]
+  }
+}

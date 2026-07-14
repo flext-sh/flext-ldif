@@ -1,0 +1,44 @@
+{
+  "entries": [
+    {
+      "dn": "cn=José García,ou=People,dc=example,dc=com",
+      "attributes": {
+        "objectClass": ["person"],
+        "cn": ["José García"],
+        "sn": ["García"],
+        "givenName": ["José"],
+        "mail": ["jose.garcia@example.com"],
+        "description": ["Ingeniero de sistemas con especialización en redes"]
+      }
+    },
+    {
+      "dn": "cn=李明,ou=People,dc=example,dc=com",
+      "attributes": {
+        "objectClass": ["person"],
+        "cn": ["李明"],
+        "sn": ["李"],
+        "givenName": ["明"],
+        "mail": ["liming@example.com"],
+        "description": ["高级软件工程师"]
+      }
+    },
+    {
+      "dn": "cn=Müller,ou=People,dc=example,dc=com",
+      "attributes": {
+        "objectClass": ["person"],
+        "cn": ["Müller"],
+        "sn": ["Müller"],
+        "givenName": ["Hans"],
+        "mail": ["hans.muller@example.com"]
+      }
+    }
+  ],
+  "count": 3,
+  "valid": true,
+  "metadata": {
+    "type": "edge_case",
+    "edge_case_type": "unicode_characters",
+    "character_sets": ["spanish_accents", "chinese_characters", "german_umlauts"],
+    "test_aspects": ["utf8_encoding", "international_characters", "dn_parsing"]
+  }
+}
