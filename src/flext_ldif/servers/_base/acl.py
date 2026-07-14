@@ -4,18 +4,19 @@ from __future__ import annotations
 
 from typing import Annotated, ClassVar, Self, override
 
+from flext_core import s
 from flext_ldif import (
     c,
     m,
     p,
     r,
-    s,
     t,
     u,
 )
 from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
 
 
+# mro-wkii.17.26 (Codex): avoid the local registry service cycle in server primitives.
 class FlextLdifServersBaseSchemaAcl(
     s[t.Ldif.AclPayload],
     FlextLdifServerMethodsMixin,

@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar, Self, cast, overload, override
+from typing import TYPE_CHECKING, ClassVar, Self, override
 
-from flext_ldif import c, m, p, r, s, t, u
+from flext_core import s
+from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
 from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
-from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
 from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
 
 if TYPE_CHECKING:
@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     )
 
 
+# mro-wkii.17.26 (Codex): server primitives extend upstream s; local s owns this registry.
 class FlextLdifServersBase(s[m.Ldif.Entry]):
     """Base class for LDIF/LDAP server servers built on `s`."""
 
@@ -133,42 +134,12 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
                 return unwrapped
         return instance
 
-    @overload
-    def __call__(
-        self,
-        *,
-        server: p.Ldif.ServerRegistry | None = None,
-        settings: p.Ldif.Settings | None = None,
-    ) -> Self: ...
-
-    @overload
-    def __call__(
-        self,
-        ldif_text: str | None = None,
-        entries: t.MutableSequenceOf[m.Ldif.Entry] | None = None,
-        operation: str | None = None,
-    ) -> m.Ldif.Entry | str: ...
-
     def __call__(
         self,
         *args: str | t.MutableSequenceOf[m.Ldif.Entry] | None,
-        server: p.Ldif.ServerRegistry | None = None,
-        settings: p.Ldif.Settings | None = None,
         **fields: t.JsonValue | t.MutableSequenceOf[m.Ldif.Entry],
     ) -> Self | m.Ldif.Entry | str:
         """Callable interface - use as processor."""
-        builder_fields = FlextLdifServerMethodsMixin.project_processor_fields(
-            fields,
-            frozenset({"ldif_text", "entries", "operation"}),
-            force_dispatch=server is not None or settings is not None,
-        )
-        if builder_fields is not None:
-            configured = super().__call__(
-                server=server,
-                settings=settings,
-                **builder_fields,
-            )
-            return cast("Self", configured)
         execute_kwargs: t.MutableMappingKV[
             str,
             str | int | bool | t.MutableSequenceOf[m.Ldif.Entry],

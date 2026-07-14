@@ -7,10 +7,9 @@ from collections.abc import (
     MutableMapping,
     Sequence,
 )
-from typing import ClassVar, Self, cast, overload, override
+from typing import ClassVar, Self, overload, override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
 from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
 
 
@@ -109,15 +108,6 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
     @overload
     def __call__(
         self,
-        *,
-        server: p.Ldif.ServerRegistry | None = None,
-        settings: p.Ldif.Settings | None = None,
-        **fields: t.JsonValue,
-    ) -> Self: ...
-
-    @overload
-    def __call__(
-        self,
         data: str,
         *,
         operation: str | None = None,
@@ -145,24 +135,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
         | m.Ldif.SchemaObjectClass
         | None = None,
         operation: t.JsonValue | None = None,
-        *,
-        server: p.Ldif.ServerRegistry | None = None,
-        settings: p.Ldif.Settings | None = None,
-        **fields: t.JsonValue,
-    ) -> Self | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str:
+    ) -> m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str:
         """Callable interface - automatic polymorphic processor."""
-        builder_fields = FlextLdifServerMethodsMixin.project_processor_fields(
-            fields,
-            frozenset({"data", "operation"}),
-            force_dispatch=server is not None or settings is not None,
-        )
-        if builder_fields is not None:
-            configured = super().__call__(
-                server=server,
-                settings=settings,
-                **builder_fields,
-            )
-            return cast("Self", configured)
         narrowed_data = (
             data
             if isinstance(

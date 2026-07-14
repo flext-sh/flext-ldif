@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-from typing import Self, cast, overload, override
+from typing import Self, overload, override
 
 from flext_ldif import m, p, r, t, u
 from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
-from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
 from flext_ldif.servers.base import FlextLdifServersBase
 
 
@@ -67,15 +66,6 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
             object.__setattr__(self, "_parent_server", parent_server)
 
     @overload
-    def __call__(
-        self,
-        *,
-        server: p.Ldif.ServerRegistry | None = None,
-        settings: p.Ldif.Settings | None = None,
-        **fields: t.JsonValue,
-    ) -> Self: ...
-
-    @overload
     def __call__(self, data: str, *, operation: str | None = None) -> m.Ldif.Acl: ...
 
     @overload
@@ -94,34 +84,10 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         data: t.JsonValue | m.Ldif.Acl | None = None,
         *,
         operation: t.JsonValue | None = None,
-        server: p.Ldif.ServerRegistry | None = None,
-        settings: p.Ldif.Settings | None = None,
-        **fields: t.JsonValue,
-    ) -> Self | m.Ldif.Acl | str:
+    ) -> m.Ldif.Acl | str:
         """Callable interface - automatic polymorphic processor."""
-        processor_fields: dict[str, t.JsonValue | m.Ldif.Acl | None] = dict(fields)
-        processor_fields["data"] = data
-        processor_fields["operation"] = operation
-        builder_fields = FlextLdifServerMethodsMixin.project_processor_fields(
-            processor_fields,
-            frozenset({"data", "operation"}),
-            force_dispatch=server is not None or settings is not None,
-        )
-        if builder_fields is not None:
-            configured = super().__call__(
-                server=server,
-                settings=settings,
-                **builder_fields,
-            )
-            return cast("Self", configured)
-        data_raw = processor_fields.get("data")
-        narrowed_data = (
-            data_raw
-            if isinstance(data_raw, (str, m.Ldif.Acl)) or data_raw is None
-            else None
-        )
-        operation_raw = processor_fields.get("operation")
-        narrowed_operation = operation_raw if isinstance(operation_raw, str) else None
+        narrowed_data = data if isinstance(data, (str, m.Ldif.Acl)) or data is None else None
+        narrowed_operation = operation if isinstance(operation, str) else None
         result = self.execute(data=narrowed_data, operation=narrowed_operation)
         if isinstance(result.value, str):
             return result.value

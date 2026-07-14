@@ -90,7 +90,7 @@ class TestsFlextLdifServersStandardization:
         constants = server_cls.Constants
         tm.that(constants.ALIASES, has=constants.CANONICAL_NAME)
         tm.that(constants.ALIASES, has=canonical)
-        assert all(constants.ALIASES)
+        tm.that(all(constants.ALIASES), eq=True)
 
     def test_rfc_is_the_lowest_precedence_fallback(self) -> None:
         """RFC's higher PRIORITY number ranks it last behind specific servers."""
@@ -120,7 +120,9 @@ class TestsFlextLdifServersStandardization:
         """parse_input hands back the same entry list as parse_server's value."""
         result = server_cls.Entry().parse_input(valid_ldif)
         tm.that(result, none=False)
-        tm.that([str(entry.dn) for entry in result], eq=[_EXPECTED_DN])
+        tm.that(result, len=1)
+        if result:
+            tm.that(str(result[0].dn), eq=_EXPECTED_DN)
 
     @pytest.mark.parametrize("server_cls", [s[0] for s in _STANDARDIZED_SERVERS])
     def test_empty_content_parses_to_no_entries(
@@ -166,7 +168,11 @@ class TestsFlextLdifServersStandardization:
         second = entry.parse_input(valid_ldif)
         tm.that(first, none=False)
         tm.that(second, none=False)
-        tm.that([str(e.dn) for e in first], eq=[str(e.dn) for e in second])
+        if first is not None and second is not None:
+            tm.that(
+                [str(entry.dn) for entry in first],
+                eq=[str(entry.dn) for entry in second],
+            )
 
     def test_multi_record_ldif_parses_every_entry(self, multi_ldif: str) -> None:
         """A multi-record stream produces one entry per record, in order."""
