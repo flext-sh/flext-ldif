@@ -19,8 +19,11 @@ from collections.abc import (
 )
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Final
 
 from flext_ldif import ldif, m, p, u
+
+_BYTES_PER_UNIT: Final = 1024.0
 
 
 def basic_batch_processing() -> None:
@@ -81,10 +84,10 @@ def use_text_utilities() -> None:
     """Use text formatting utilities."""
     size_bytes: float = 1024 * 1024
     for unit in ["", "K", "M", "G", "T"]:
-        if size_bytes < 1024.0:
+        if size_bytes < _BYTES_PER_UNIT:
             size_str = f"{size_bytes:.1f} {unit}B"
             break
-        size_bytes /= 1024.0
+        size_bytes /= _BYTES_PER_UNIT
     else:
         size_str = f"{size_bytes:.1f} PB"
     _ = size_str
@@ -181,10 +184,10 @@ def access_all_utilities() -> None:
     timestamp = time_utils.timestamp()
     size_bytes: float = 1024
     for unit in ["", "K", "M", "G", "T"]:
-        if size_bytes < 1024.0:
+        if size_bytes < _BYTES_PER_UNIT:
             formatted_size = f"{size_bytes:.1f} {unit}B"
             break
-        size_bytes /= 1024.0
+        size_bytes /= _BYTES_PER_UNIT
     else:
         formatted_size = f"{size_bytes:.1f} PB"
     dn_result = u.Ldif.parse_dn("cn=test,dc=example,dc=com")
