@@ -22,7 +22,7 @@ dependencies = [
   "colorlog>=6.10.1",
   "flext-cli",
   "flext-core",
-  "ldap3>=2.9.1",
+  "ldap3>=2.10.2rc4",
   "pydantic-core>=2.46.3",
   "pydantic-settings>=2.14.0",
   "pydantic>=2.13.3",
@@ -407,8 +407,6 @@ addopts = [
 ]
 filterwarnings = [
   "ignore:.*cannot collect test class.*because it has a __init__ constructor.*:pytest.PytestCollectionWarning",
-  "ignore:tagMap is deprecated\\. Please use TAG_MAP instead\\.:DeprecationWarning",
-  "ignore:typeMap is deprecated\\. Please use TYPE_MAP instead\\.:DeprecationWarning",
 ]
 markers = [
   "docker: tests requiring Docker",
