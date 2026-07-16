@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from flext_ldif import c, m, t
+from flext_ldif import c, m, p, t
 from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
 
 

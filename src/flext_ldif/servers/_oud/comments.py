@@ -12,6 +12,7 @@ from __future__ import annotations
 from flext_ldif import (
     c,
     m,
+    p,
     t,
     u,
 )

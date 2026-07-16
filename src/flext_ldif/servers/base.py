@@ -19,7 +19,7 @@ from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
 class FlextLdifServersBase(s[p.Ldif.Entry]):
     """Base class for LDIF/LDAP server servers built on `s`."""
 
-    model_config: ClassVar[p.ConfigDict] = m.ConfigDict(
+    model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
         arbitrary_types_allowed=True,
         extra="forbid",
     )

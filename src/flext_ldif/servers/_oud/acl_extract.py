@@ -14,6 +14,7 @@ from collections.abc import MutableMapping
 from flext_ldif import (
     c,
     m,
+    p,
     t,
     u,
 )

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from flext_ldif import c, m, s, t, u
+from flext_ldif import c, m, p, s, t, u
 
 
 class FlextLdifConversionMetadataMixin(s):

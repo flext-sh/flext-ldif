@@ -9,7 +9,7 @@ total function, no failure channel. Format literals are the ``c.Ldif`` SSOT.
 
 from __future__ import annotations
 
-from flext_ldif import c, m, t
+from flext_ldif import c, m, p, t
 
 
 class FlextLdifServersOidAclRender:

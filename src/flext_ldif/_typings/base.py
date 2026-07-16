@@ -7,7 +7,7 @@ from collections.abc import (
 )
 from typing import Annotated
 
-from flext_core import m, r, t
+from flext_core import m, p, r, t
 
 
 class FlextLdifTypesBase:
