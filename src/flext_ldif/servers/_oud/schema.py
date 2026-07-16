@@ -61,7 +61,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
 
     def _transform_by_matching_rules(
         self,
-        attr_data: m.Ldif.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttribute,
     ) -> tuple[str | None, str | None]:
         """Apply OUD-specific matching rule transformations."""
         fixed_equality = attr_data.equality
@@ -90,7 +90,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
 
     def _apply_attribute_oid_metadata(
         self,
-        attr: m.Ldif.SchemaAttribute,
+        attr: p.Ldif.SchemaAttribute,
     ) -> p.Ldif.SchemaAttribute:
         """Apply OID validation and tracking metadata to attribute."""
         if not attr or not attr.oid:
@@ -109,7 +109,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         current_extensions[c.Ldif.SYNTAX_OID_VALID] = is_valid_oud_oid
         if oid_str.endswith("-oid"):
             current_extensions["oid_format_extension"] = True
-        updated_attr: m.Ldif.SchemaAttribute = attr.model_copy(
+        updated_attr: p.Ldif.SchemaAttribute = attr.model_copy(
             update={
                 "metadata": existing_metadata.model_copy(
                     update={"extensions": current_extensions},
@@ -120,7 +120,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
 
     def _collect_attribute_extensions(
         self,
-        attr: m.Ldif.SchemaAttribute,
+        attr: p.Ldif.SchemaAttribute,
     ) -> t.MutableSequenceOf[str]:
         """Collect OUD X-* extensions from attribute."""
         extensions: t.MutableSequenceOf[str] = []
@@ -139,7 +139,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
     @override
     def _hook_post_parse_attribute(
         self,
-        attr: m.Ldif.SchemaAttribute,
+        attr: p.Ldif.SchemaAttribute,
     ) -> p.Result[p.Ldif.SchemaAttribute]:
         """Validate OUD-specific attribute features after RFC parsing."""
         if not attr or not attr.oid:
@@ -200,7 +200,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
     @override
     def _hook_post_parse_objectclass(
         self,
-        oc: m.Ldif.SchemaObjectClass,
+        oc: p.Ldif.SchemaObjectClass,
     ) -> p.Result[p.Ldif.SchemaObjectClass]:
         """Validate OUD-specific objectClass features after RFC parsing."""
         sup_validation = self._validate_objectclass_sup(oc)
@@ -226,7 +226,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
     @override
     def _transform_attribute_for_write(
         self,
-        attr_data: m.Ldif.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttribute,
     ) -> p.Ldif.SchemaAttribute:
         """Apply OUD-specific attribute transformations before writing."""
         fixed_equality, fixed_substr = self._transform_by_matching_rules(
@@ -267,7 +267,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
 
     def _validate_objectclass_oid_and_sup(
         self,
-        oc: m.Ldif.SchemaObjectClass,
+        oc: p.Ldif.SchemaObjectClass,
     ) -> p.Result[p.Ldif.SchemaObjectClass]:
         """Validate ObjectClass OID and SUP OID formats."""
         if oc and oc.oid:
@@ -309,7 +309,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
                     )
         return r[p.Ldif.SchemaObjectClass].ok(oc)
 
-    def _validate_objectclass_sup(self, oc: m.Ldif.SchemaObjectClass) -> p.Result[bool]:
+    def _validate_objectclass_sup(self, oc: p.Ldif.SchemaObjectClass) -> p.Result[bool]:
         """Validate objectClass SUP constraint for OUD."""
         sup = oc.sup
         if sup:

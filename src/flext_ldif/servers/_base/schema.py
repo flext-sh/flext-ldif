@@ -148,7 +148,7 @@ class FlextLdifServersBaseSchema(
 
     @staticmethod
     def _preserve_formatting(
-        metadata: m.Ldif.ServerMetadata,
+        metadata: p.Ldif.ServerMetadata,
         attr_definition: str,
     ) -> None:
         """Preserve schema formatting via FlextLdifUtilities.Metadata."""
@@ -325,7 +325,7 @@ class FlextLdifServersBaseSchema(
         if isinstance(value, str):
             return value
         try:
-            attribute: m.Ldif.SchemaAttribute = m.Ldif.SchemaAttribute.model_validate(
+            attribute: p.Ldif.SchemaAttribute = m.Ldif.SchemaAttribute.model_validate(
                 value,
             )
             return attribute
@@ -339,7 +339,7 @@ class FlextLdifServersBaseSchema(
         ):
             pass
         try:
-            objectclass: m.Ldif.SchemaObjectClass = (
+            objectclass: p.Ldif.SchemaObjectClass = (
                 m.Ldif.SchemaObjectClass.model_validate(value)
             )
             return objectclass
@@ -381,7 +381,7 @@ class FlextLdifServersBaseSchema(
     ) -> p.Result[p.Ldif.SchemaAttribute]:
         """Coerce raw value to a schema attribute model, propagating failures."""
         try:
-            attribute: m.Ldif.SchemaAttribute = m.Ldif.SchemaAttribute.model_validate(
+            attribute: p.Ldif.SchemaAttribute = m.Ldif.SchemaAttribute.model_validate(
                 value,
             )
         except c.Ldif.EXC_LDIF_PARSE as exc:
@@ -394,7 +394,7 @@ class FlextLdifServersBaseSchema(
     ) -> p.Result[p.Ldif.SchemaObjectClass]:
         """Coerce raw value to a schema objectClass model, propagating failures."""
         try:
-            objectclass: m.Ldif.SchemaObjectClass = (
+            objectclass: p.Ldif.SchemaObjectClass = (
                 m.Ldif.SchemaObjectClass.model_validate(value)
             )
         except c.Ldif.EXC_LDIF_PARSE as exc:
@@ -562,8 +562,8 @@ class FlextLdifServersBaseSchema(
 
     def _handle_write_operation(
         self,
-        attr_model: m.Ldif.SchemaAttribute | None,
-        oc_model: m.Ldif.SchemaObjectClass | None,
+        attr_model: p.Ldif.SchemaAttribute | None,
+        oc_model: p.Ldif.SchemaObjectClass | None,
     ) -> p.Result[t.Ldif.SchemaConversionValue]:
         """Handle write operation for schema server."""
         if attr_model:
@@ -594,7 +594,7 @@ class FlextLdifServersBaseSchema(
 
     def _hook_post_parse_attribute(
         self,
-        attr: m.Ldif.SchemaAttribute,
+        attr: p.Ldif.SchemaAttribute,
     ) -> p.Result[p.Ldif.SchemaAttribute]:
         """Run hook after parsing an attribute definition."""
         return r[p.Ldif.SchemaAttribute].ok(attr)
@@ -679,12 +679,12 @@ class FlextLdifServersBaseSchema(
             raise AssertionError(msg)
         return result
 
-    def _write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> p.Result[str]:
+    def _write_attribute(self, attr_data: p.Ldif.SchemaAttribute) -> p.Result[str]:
         """Write attribute data to RFC-compliant string format (internal)."""
         _ = attr_data
         return r[str].fail("Must be implemented by subclass")
 
-    def _write_objectclass(self, oc_data: m.Ldif.SchemaObjectClass) -> p.Result[str]:
+    def _write_objectclass(self, oc_data: p.Ldif.SchemaObjectClass) -> p.Result[str]:
         """Write objectClass data to RFC-compliant string format (internal)."""
         _ = oc_data
         return r[str].fail("Must be implemented by subclass")

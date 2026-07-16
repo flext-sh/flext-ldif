@@ -33,7 +33,7 @@ class FlextLdifServersOudTransformMixin:
     @staticmethod
     def apply_phase_aware_acl_handling(
         entry_data: p.Ldif.Entry,
-        write_options: m.Ldif.WriteFormatOptions | None,
+        write_options: p.Ldif.WriteFormatOptions | None,
     ) -> p.Ldif.Entry:
         """Apply phase-aware ACL attribute commenting."""
         if not (write_options and write_options.comment_acl_in_non_acl_phases):
@@ -51,7 +51,7 @@ class FlextLdifServersOudTransformMixin:
     @staticmethod
     def determine_attribute_order(
         attr_names: t.MutableSequenceOf[str],
-        format_options: m.Ldif.WriteFormatOptions | None,
+        format_options: p.Ldif.WriteFormatOptions | None,
     ) -> t.MutableSequenceOf[str]:
         """Determine attribute order based on format options."""
         if format_options and format_options.sort_attributes:
@@ -143,7 +143,7 @@ class FlextLdifServersOudTransformMixin:
         )
         restored_entry = (
             entry_data.model_copy(
-                update={"dn": m.Ldif.DN(value=original_dn_value)},
+                update={"dn": p.Ldif.DN(value=original_dn_value)},
             )
             if should_restore_dn
             else entry_data
@@ -174,7 +174,7 @@ class FlextLdifServersOudTransformMixin:
             restored[orig_case] = restored_values
         restored_copy: p.Ldif.Entry = restored_entry.model_copy(
             update={
-                "attributes": m.Ldif.Attributes.model_validate({
+                "attributes": p.Ldif.Attributes.model_validate({
                     "attributes": restored,
                     "attribute_metadata": attributes.attribute_metadata,
                     "metadata": attributes.metadata,

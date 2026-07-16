@@ -16,7 +16,7 @@ from flext_tests._utilities.fixtures_dsl import FlextTestsFixturesDSLMixin
 from tests.constants import c
 from tests.models import m
 from tests.protocols import p
-from tests.typings import t
+from tests.typings import p, t
 
 
 class TestsFlextLdifUtilities(FlextTestsUtilities, u):
@@ -360,7 +360,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                 raise AssertionError(
                     message or f"Expected success but parse failed: {result.error}",
                 )
-            value: m.Ldif.Acl = result.unwrap()
+            value: p.Ldif.Acl = result.unwrap()
             if expected_type is not None and not isinstance(value, expected_type):
                 raise AssertionError(
                     f"Expected {expected_type.__name__}, got {type(value).__name__}",
@@ -382,7 +382,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             server: p.Tests.WriteAttributeServer
             | p.Tests.WriteObjectClassServer
             | p.Tests.WriteAclServer,
-            data: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl,
+            data: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl,
             *,
             write_method: t.Tests.WriteMethod = "write",
             must_contain: t.StrSequence | None = None,
@@ -427,7 +427,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
         def acl_write_and_unwrap(
             cls,
             server: p.Tests.WriteAclContentServer,
-            data: m.Ldif.Acl,
+            data: p.Ldif.Acl,
             *,
             must_contain: t.StrSequence | None = None,
             message: str | None = None,

@@ -52,7 +52,7 @@ class FlextLdifUtilitiesNormalizeAttrsTransformer(
         )
         if needs_update:
             update_dict: MutableMapping[str, m.Ldif.Attributes] = {
-                "attributes": m.Ldif.Attributes.model_validate({
+                "attributes": p.Ldif.Attributes.model_validate({
                     "attributes": new_attrs,
                 }),
             }

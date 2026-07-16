@@ -16,7 +16,7 @@ import pytest
 from flext_tests import tm
 
 from flext_ldif import ldif
-from tests import c, m, p, t
+from tests import c, p, t
 
 
 class TestsFlextLdifAclMetadataPreservation:
@@ -48,7 +48,7 @@ class TestsFlextLdifAclMetadataPreservation:
         """Parse LDIF that must yield exactly one entry; assert the r[T] success."""
         result = api.parse_ldif(ldif_text, server_type=server_type)
         tm.ok(result)
-        response: m.Ldif.ParseResponse = result.unwrap()
+        response: p.Ldif.ParseResponse = result.unwrap()
         entries = response.entries
         tm.that(len(entries), eq=1)
         entry: p.Ldif.Entry = entries[0]

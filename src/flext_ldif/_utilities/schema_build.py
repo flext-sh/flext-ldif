@@ -16,7 +16,7 @@ class FlextLdifUtilitiesSchemaBuild:
 
     @staticmethod
     def _build_attribute_parts_from_model(
-        attr_data: m.Ldif.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttribute,
     ) -> t.MutableSequenceOf[str]:
         """Build RFC 4512 attribute definition parts (simple version)."""
         parts: t.MutableSequenceOf[str] = [f"( {attr_data.oid}"]
@@ -38,7 +38,7 @@ class FlextLdifUtilitiesSchemaBuild:
 
     @staticmethod
     def _build_objectclass_parts_from_model(
-        oc_data: m.Ldif.SchemaObjectClass,
+        oc_data: p.Ldif.SchemaObjectClass,
     ) -> t.MutableSequenceOf[str]:
         """Build RFC 4512 objectClass definition parts (extracted to reduce complexity)."""
         parts: t.MutableSequenceOf[str] = [f"( {oc_data.oid}"]
@@ -84,7 +84,7 @@ class FlextLdifUtilitiesSchemaBuild:
 
     @staticmethod
     def build_attribute_parts_with_metadata(
-        attr_data: m.Ldif.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttribute,
         *,
         restore_original: bool = True,
     ) -> t.MutableSequenceOf[str]:
@@ -117,7 +117,7 @@ class FlextLdifUtilitiesSchemaBuild:
 
     @staticmethod
     def build_objectclass_parts_with_metadata(
-        oc_data: m.Ldif.SchemaObjectClass,
+        oc_data: p.Ldif.SchemaObjectClass,
         *,
         restore_original: bool = True,
     ) -> t.MutableSequenceOf[str]:
@@ -156,7 +156,7 @@ class FlextLdifUtilitiesSchemaBuild:
 
     @staticmethod
     def should_restore_schema_original_format(
-        metadata: m.Ldif.ServerMetadata | None,
+        metadata: p.Ldif.ServerMetadata | None,
         target_server_type: str | None,
     ) -> bool:
         """Restore original schema text only for same-server round-trips."""

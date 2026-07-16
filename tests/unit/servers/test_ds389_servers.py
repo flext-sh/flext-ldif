@@ -34,7 +34,7 @@ class TestsFlextLdifDs389Servers:
     @pytest.mark.parametrize("test_case", m.Tests.DS389_ATTRIBUTE_TEST_CASES)
     def test_can_handle_attribute_matches_expected(
         self,
-        test_case: m.Tests.AttributeTestCase,
+        test_case: p.Tests.AttributeTestCase,
     ) -> None:
         """can_handle_attribute reflects DS389 ownership per case table."""
         tm.that(
@@ -100,7 +100,7 @@ class TestsFlextLdifDs389Servers:
     @pytest.mark.parametrize("test_case", m.Tests.DS389_OBJECTCLASS_TEST_CASES)
     def test_can_handle_objectclass_matches_expected(
         self,
-        test_case: m.Tests.ObjectClassTestCase,
+        test_case: p.Tests.ObjectClassTestCase,
     ) -> None:
         """can_handle_objectclass reflects DS389 ownership per case table."""
         tm.that(
@@ -200,7 +200,7 @@ class TestsFlextLdifDs389Servers:
     @pytest.mark.parametrize("test_case", m.Tests.DS389_ENTRY_TEST_CASES)
     def test_entry_can_handle_matches_expected(
         self,
-        test_case: m.Tests.EntryTestCase,
+        test_case: p.Tests.EntryTestCase,
     ) -> None:
         """Entry.can_handle reflects DS389 ownership per case table."""
         entry_server = FlextLdifServersDs389().entry_server

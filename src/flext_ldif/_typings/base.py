@@ -73,13 +73,13 @@ class FlextLdifTypesBase:
         frozenset[str],
         m.BeforeValidator(_coerce_normalized_str_frozenset),
     ]
-    RFC4512_DESCRIPTOR_ADAPTER: m.TypeAdapter[Rfc4512Descriptor] = m.TypeAdapter(
+    RFC4512_DESCRIPTOR_ADAPTER: p.TypeAdapter[Rfc4512Descriptor] = m.TypeAdapter(
         Rfc4512Descriptor,
     )
-    RFC4514_DN_COMPONENT_ADAPTER: m.TypeAdapter[Rfc4514DnComponent] = m.TypeAdapter(
+    RFC4514_DN_COMPONENT_ADAPTER: p.TypeAdapter[Rfc4514DnComponent] = m.TypeAdapter(
         Rfc4514DnComponent,
     )
-    RFC2849_ATTRIBUTE_VALUE_ADAPTER: m.TypeAdapter[Rfc2849AttributeValue] = (
+    RFC2849_ATTRIBUTE_VALUE_ADAPTER: p.TypeAdapter[Rfc2849AttributeValue] = (
         m.TypeAdapter(Rfc2849AttributeValue)
     )
 

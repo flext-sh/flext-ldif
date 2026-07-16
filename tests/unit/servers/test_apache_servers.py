@@ -10,7 +10,7 @@ import pytest
 from flext_tests import tm
 
 from flext_ldif.servers.apache import FlextLdifServersApache
-from tests import c, m, t, u
+from tests import c, m, p, t, u
 
 
 class TestsFlextLdifApacheServers:
@@ -25,7 +25,7 @@ class TestsFlextLdifApacheServers:
     @pytest.mark.parametrize("test_case", m.Tests.APACHE_ATTRIBUTE_TEST_CASES)
     def test_schema_attribute_can_handle(
         self,
-        test_case: m.Tests.AttributeTestCase,
+        test_case: p.Tests.AttributeTestCase,
     ) -> None:
         """Test attribute detection for various scenarios."""
         server = FlextLdifServersApache()
@@ -78,7 +78,7 @@ class TestsFlextLdifApacheServers:
     @pytest.mark.parametrize("test_case", m.Tests.APACHE_OBJECTCLASS_TEST_CASES)
     def test_schema_objectclass_can_handle(
         self,
-        test_case: m.Tests.ObjectClassTestCase,
+        test_case: p.Tests.ObjectClassTestCase,
     ) -> None:
         """Test objectClass detection for various scenarios."""
         server = FlextLdifServersApache()
@@ -274,7 +274,7 @@ class TestsFlextLdifApacheServers:
         )
 
     @pytest.mark.parametrize("test_case", m.Tests.APACHE_ENTRY_TEST_CASES)
-    def test_entry_can_handle(self, test_case: m.Tests.EntryTestCase) -> None:
+    def test_entry_can_handle(self, test_case: p.Tests.EntryTestCase) -> None:
         """Test entry detection for various scenarios."""
         server = FlextLdifServersApache()
         entry_server = server.entry_server
@@ -300,7 +300,7 @@ class TestsFlextLdifApacheServers:
     )
     def test_entry_parse_ldif_yields_entry_with_source_dn(
         self,
-        test_case: m.Tests.EntryTestCase,
+        test_case: p.Tests.EntryTestCase,
     ) -> None:
         """parse_server succeeds and returns one Entry carrying the source DN."""
         server = FlextLdifServersApache()

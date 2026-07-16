@@ -32,7 +32,7 @@ class FlextLdifConversionSchemaMixin(s, ABC):
         self,
         source_server: p.Ldif.ServerServer,
         target_server: p.Ldif.ServerServer,
-        item: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        item: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
         source_schema: p.Ldif.SchemaServer,
         target_schema: p.Ldif.SchemaServer,
     ) -> p.Result[t.Ldif.ConvertedModel]:
@@ -67,11 +67,11 @@ class FlextLdifConversionSchemaMixin(s, ABC):
             )
         bridge_entry = m.Ldif.Entry.model_validate(
             {
-                "dn": m.Ldif.DN(
+                "dn": p.Ldif.DN(
                     value="cn=schema,dc=example,dc=com",
                     metadata={},
                 ),
-                "attributes": m.Ldif.Attributes.model_validate(
+                "attributes": p.Ldif.Attributes.model_validate(
                     {
                         "attributes": {field_name: [source_value_result.value]},
                         "attribute_metadata": {},
@@ -136,7 +136,7 @@ class FlextLdifConversionSchemaMixin(s, ABC):
         return r[t.Ldif.ConvertedModel].ok(converted_model)
 
     @staticmethod
-    def _validate_parsed_schema[T: m.Ldif.SchemaElement](
+    def _validate_parsed_schema[T: p.Ldif.SchemaElement](
         parse_result: p.Result[T],
         model_cls: type[T],
         parse_error_message: str,

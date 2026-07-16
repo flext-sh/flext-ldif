@@ -6,7 +6,6 @@ import sys
 from typing import TypeIs
 
 from flext_ldif import (
-    FlextLdifModels as m,
     FlextLdifShared,
     c,
     p,
@@ -41,7 +40,7 @@ class FlextLdifUtilitiesServer:
     @staticmethod
     def _extract_pattern_name_candidates(
         value: str | p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
-        settings: m.Ldif.ServerPatternsConfig,
+        settings: p.Ldif.ServerPatternsConfig,
     ) -> list[str]:
         """Extract comparable schema names from a raw definition or parsed model."""
         if not isinstance(value, str):
@@ -64,7 +63,7 @@ class FlextLdifUtilitiesServer:
     def _matches_definition_text(
         definition_text: str | None,
         detection_names: frozenset[str],
-        settings: m.Ldif.ServerPatternsConfig,
+        settings: p.Ldif.ServerPatternsConfig,
     ) -> bool:
         """Check raw definition text when settings require substring-based detection."""
         if not definition_text or not settings.match_definition_text:
@@ -225,7 +224,7 @@ class FlextLdifUtilitiesServer:
         # NOTE (multi-agent, mro-0ftd.3.7.2): behavior layer accepts the protocol
         # payload (§3.2) so p.X-annotated can_handle_* overrides pass it through.
         value: str | p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
-        settings: m.Ldif.ServerPatternsConfig,
+        settings: p.Ldif.ServerPatternsConfig,
     ) -> bool:
         r"""Check if value matches server-specific detection patterns.
 

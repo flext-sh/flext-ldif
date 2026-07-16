@@ -87,7 +87,7 @@ class FlextLdifServersOudAciMixin:
     def normalize_aci_value(
         aci_value: str,
         _base_dn: str | None,
-        _dn_registry: m.Ldif.DnRegistry | None,
+        _dn_registry: p.Ldif.DnRegistry | None,
     ) -> tuple[str, bool]:
         """Normalize ACI value DNs (already RFC canonical, no changes needed)."""
         return (aci_value, False)

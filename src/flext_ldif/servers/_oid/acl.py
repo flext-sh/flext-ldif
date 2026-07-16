@@ -123,7 +123,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     @staticmethod
     def _normalize_permissions_to_dict(
-        permissions: m.Ldif.AclPermissions | t.MutableBoolMapping | None,
+        permissions: p.Ldif.AclPermissions | t.MutableBoolMapping | None,
     ) -> t.MutableBoolMapping:
         """Normalize permissions to dict for formatting."""
         if not permissions:
@@ -146,7 +146,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     @staticmethod
     def _normalize_to_dict(
-        value: m.Ldif.AclSubject
+        value: p.Ldif.AclSubject
         | m.Ldif.ServerMetadata
         | t.MutableConfigurationMapping
         | MutableMapping[
@@ -236,7 +236,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     def _build_metadata_extensions(
         self,
-        metadata: m.Ldif.ServerMetadata
+        metadata: p.Ldif.ServerMetadata
         | MutableMapping[
             str,
             t.Ldif.Scalar | t.MutableSequenceOf[str] | t.MutableAttributeMapping | None,
@@ -253,7 +253,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     def _build_oid_acl_metadata(
         self,
-        settings: m.Ldif.OidAclMetadataConfig,
+        settings: p.Ldif.OidAclMetadataConfig,
     ) -> t.Ldif.MutableMetadataMapping:
         """Build metadata extensions for OID ACL with Oracle-specific features."""
         target_attrs_str: str = (
@@ -295,7 +295,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     def _extract_extensions_dict(
         self,
-        metadata: m.Ldif.ServerMetadata
+        metadata: p.Ldif.ServerMetadata
         | MutableMapping[
             str,
             t.Ldif.Scalar | t.MutableSequenceOf[str] | t.MutableAttributeMapping | None,
@@ -344,7 +344,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     def _get_source_subject_type(
         self,
-        metadata: m.Ldif.ServerMetadata | None,
+        metadata: p.Ldif.ServerMetadata | None,
     ) -> str | None:
         """Get source subject type from metadata."""
         if not metadata or not metadata.extensions:
@@ -432,8 +432,8 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     def _map_rfc_subject_to_oid(
         self,
-        rfc_subject: m.Ldif.AclSubject,
-        metadata: m.Ldif.ServerMetadata | None,
+        rfc_subject: p.Ldif.AclSubject,
+        metadata: p.Ldif.ServerMetadata | None,
     ) -> str:
         """Map RFC subject type to OID subject type for writing."""
         rfc_subject_type = str(rfc_subject.subject_type)
@@ -615,17 +615,17 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         )
         acl_model = m.Ldif.Acl.model_validate({
             "name": FlextLdifServersRfc.Constants.ACL_ATTRIBUTE_NAME,
-            "target": m.Ldif.AclTarget.model_validate({
+            "target": p.Ldif.AclTarget.model_validate({
                 "target_dn": target_dn,
                 "attributes": target_attrs or [],
             }),
-            "subject": m.Ldif.AclSubject.model_validate({
+            "subject": p.Ldif.AclSubject.model_validate({
                 "subject_type": str(rfc_subject_type),
                 "subject_value": rfc_subject_value,
             }),
-            "permissions": m.Ldif.AclPermissions(**rfc_compliant_perms),
+            "permissions": p.Ldif.AclPermissions(**rfc_compliant_perms),
             "server_type": server_type,
-            "metadata": m.Ldif.ServerMetadata.model_validate({
+            "metadata": p.Ldif.ServerMetadata.model_validate({
                 "server_type": server_type,
                 "extensions": extensions,
             }),
@@ -637,9 +637,9 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     def _authorize_write_permissions(
         self,
-        acl_subject: m.Ldif.AclSubject | t.MutableConfigurationMapping,
-        acl_permissions: m.Ldif.AclPermissions | t.MutableBoolMapping | None,
-        metadata: m.Ldif.ServerMetadata
+        acl_subject: p.Ldif.AclSubject | t.MutableConfigurationMapping,
+        acl_permissions: p.Ldif.AclPermissions | t.MutableBoolMapping | None,
+        metadata: p.Ldif.ServerMetadata
         | MutableMapping[
             str,
             t.Ldif.Scalar | t.MutableSequenceOf[str] | t.MutableAttributeMapping | None,
@@ -649,7 +649,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         """Prepare OID subject and permissions clauses for ACL write."""
         subject_dict = self._normalize_to_dict(acl_subject)
         subject_public = m.Ldif.AclSubject.model_validate(subject_dict)
-        metadata_public: m.Ldif.ServerMetadata | None = None
+        metadata_public: p.Ldif.ServerMetadata | None = None
         if metadata:
             try:
                 metadata_public = m.Ldif.ServerMetadata.model_validate(metadata)
@@ -692,7 +692,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     def _update_acl_with_oid_metadata(
         self,
-        acl_data: m.Ldif.Acl,
+        acl_data: p.Ldif.Acl,
         _acl_line: str,
     ) -> p.Ldif.Acl:
         """Update ACL with OID server type and metadata."""
@@ -702,7 +702,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             if acl_data.metadata
             else u.Ldif.server_metadata_for(server_type)
         )
-        updated_acl: m.Ldif.Acl = acl_data.model_copy(
+        updated_acl: p.Ldif.Acl = acl_data.model_copy(
             update={
                 "server_type": server_type,
                 "metadata": updated_metadata,
@@ -713,7 +713,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     @override
     def _write_acl(
         self,
-        acl_data: m.Ldif.Acl,
+        acl_data: p.Ldif.Acl,
         _format_option: str | None = None,
     ) -> p.Result[str]:
         """Write ACL to OID orclaci format (Phase 2: Denormalization)."""

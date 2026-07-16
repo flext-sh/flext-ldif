@@ -212,7 +212,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 return r[p.Ldif.Acl].fail_op("Novell eDirectory ACL parsing", exc)
 
         @override
-        def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
+        def _write_acl(self, acl_data: p.Ldif.Acl) -> p.Result[str]:
             """Write ACL data to RFC-compliant string format."""
             try:
                 return self._write_novell_acl(acl_data)
@@ -329,7 +329,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                             attributes.append(attr_name)
             return attributes
 
-        def _write_novell_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
+        def _write_novell_acl(self, acl_data: p.Ldif.Acl) -> p.Result[str]:
             """Write Novell eDirectory ACL content."""
             acl_attribute = FlextLdifServersNovell.Constants.ACL_ATTRIBUTE_NAME_WRITE
             if acl_data.raw_acl:
@@ -351,7 +351,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         @classmethod
         def _active_novell_permissions(
             cls,
-            permissions: m.Ldif.AclPermissions | None,
+            permissions: p.Ldif.AclPermissions | None,
         ) -> t.MutableSequenceOf[str]:
             """Return active Novell permission tokens."""
             active_perms: t.MutableSequenceOf[str] = []

@@ -13,7 +13,6 @@ from flext_ldif import p as ldif_p
 if TYPE_CHECKING:
     # mro-0ftd.3.6: protocol-only reverse edges never load test facades at runtime.
     from tests.constants import c
-    from tests.models import m
 
 
 class TestsFlextLdifProtocols(
@@ -35,7 +34,7 @@ class TestsFlextLdifProtocols(
 
             def _write_attribute(
                 self,
-                attr_data: m.Ldif.SchemaAttribute,
+                attr_data: p.Ldif.SchemaAttribute,
             ) -> ldif_p.Result[str]:
                 """Serialize an attribute definition."""
                 ...
@@ -46,7 +45,7 @@ class TestsFlextLdifProtocols(
 
             def _write_objectclass(
                 self,
-                oc_data: m.Ldif.SchemaObjectClass,
+                oc_data: p.Ldif.SchemaObjectClass,
             ) -> ldif_p.Result[str]:
                 """Serialize an objectClass definition."""
                 ...
@@ -57,7 +56,7 @@ class TestsFlextLdifProtocols(
 
             def _write_acl(
                 self,
-                acl_data: m.Ldif.Acl,
+                acl_data: p.Ldif.Acl,
             ) -> ldif_p.Result[str]:
                 """Serialize an ACL definition."""
                 ...
@@ -91,7 +90,7 @@ class TestsFlextLdifProtocols(
 
             def write(
                 self,
-                acl_data: m.Ldif.Acl,
+                acl_data: p.Ldif.Acl,
             ) -> ldif_p.Result[str]:
                 """Write ACL content from the test model."""
                 ...

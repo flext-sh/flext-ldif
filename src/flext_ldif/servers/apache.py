@@ -152,7 +152,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             )
 
         @override
-        def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
+        def _write_acl(self, acl_data: p.Ldif.Acl) -> p.Result[str]:
             """Write ACL data to Apache Directory Server ACI format."""
             parent_result = super()._write_acl(acl_data)
             if parent_result.success:
@@ -211,7 +211,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             # ServerMetadata model (the runtime object IS the model); it is the
             # JsonPayload the Entry.model_copy update accepts.
             raw_metadata = entry.metadata
-            metadata: m.Ldif.ServerMetadata = (
+            metadata: p.Ldif.ServerMetadata = (
                 raw_metadata
                 if isinstance(raw_metadata, m.Ldif.ServerMetadata)
                 else m.Ldif.ServerMetadata(

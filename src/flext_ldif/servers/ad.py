@@ -242,7 +242,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 return r[p.Ldif.Acl].fail_op("Active Directory ACL parsing", exc)
 
         @override
-        def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
+        def _write_acl(self, acl_data: p.Ldif.Acl) -> p.Result[str]:
             """Write ACL data to RFC-compliant string format."""
             try:
                 return self._write_ad_acl(acl_data)
@@ -323,7 +323,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             return None
 
         @staticmethod
-        def _write_ad_acl(acl_data: m.Ldif.Acl) -> p.Result[str]:
+        def _write_ad_acl(acl_data: p.Ldif.Acl) -> p.Result[str]:
             """Write Active Directory ACL content."""
             if not acl_data.raw_acl:
                 return r[str].fail(

@@ -7,9 +7,9 @@ from typing import Annotated, ClassVar
 
 from flext_tests import FlextTestsModels
 
-from flext_ldif import m, u
+from flext_ldif import m, p, u
 from tests.constants import c
-from tests.typings import t
+from tests.typings import p, t
 
 
 class TestsFlextLdifModels(FlextTestsModels, m):

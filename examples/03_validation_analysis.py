@@ -27,7 +27,7 @@ class DRYValidationAnalysis:
 
     @staticmethod
     def _analyze_validation_results(
-        validation_result: m.Ldif.ValidationResult,
+        validation_result: p.Ldif.ValidationResult,
     ) -> p.Result[p.Ldif.ValidationResult]:
         """DRY validation analysis: categorize errors and detect patterns."""
         if not validation_result.valid:

@@ -10,8 +10,8 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def _build_conversion_event_logging(
-        event: m.Ldif.ConversionEvent,
-        settings: m.Ldif.ConversionEventConfig,
+        event: p.Ldif.ConversionEvent,
+        settings: p.Ldif.ConversionEventConfig,
     ) -> tuple[t.MutableJsonMapping, str]:
         return (
             {
@@ -35,7 +35,7 @@ class FlextLdifUtilitiesEvents:
         log_context: t.MutableJsonMapping,
         log_message: str,
         log_level: str = c.Ldif.LogLevelLower.INFO.value,
-        extras: m.Ldif.LogContextExtras | None = None,
+        extras: p.Ldif.LogContextExtras | None = None,
     ) -> None:
         """Log an event with context and extras."""
         filtered_extras = FlextLdifUtilitiesEvents._process_extras(extras)
@@ -52,7 +52,7 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def _process_extras(
-        extras: m.Ldif.LogContextExtras | None = None,
+        extras: p.Ldif.LogContextExtras | None = None,
     ) -> t.MutableJsonMapping:
         """Extract and filter extras into a dict of loggable context."""
         filtered_extras: t.MutableJsonMapping = {}
@@ -82,7 +82,7 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def create_conversion_event(
-        settings: m.Ldif.ConversionEventConfig,
+        settings: p.Ldif.ConversionEventConfig,
     ) -> p.Ldif.ConversionEvent:
         """Create ConversionEvent with standardized fields from settings Model."""
         aggregate_id = f"{settings.source_format}_to_{settings.target_format}_{settings.conversion_operation}"
@@ -91,7 +91,7 @@ class FlextLdifUtilitiesEvents:
             if settings.error_details is not None
             else None,
         )
-        event: m.Ldif.ConversionEvent = m.Ldif.ConversionEvent.model_validate({
+        event: p.Ldif.ConversionEvent = m.Ldif.ConversionEvent.model_validate({
             "event_type": "ldif.conversion",
             "aggregate_id": aggregate_id,
             "conversion_operation": settings.conversion_operation,
@@ -106,10 +106,10 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def create_dn_event(
-        settings: m.Ldif.DnEventConfig,
+        settings: p.Ldif.DnEventConfig,
     ) -> p.Ldif.DnEvent:
         """Create DnEvent with standardized fields from settings Model."""
-        event: m.Ldif.DnEvent = m.Ldif.DnEvent.model_validate({
+        event: p.Ldif.DnEvent = m.Ldif.DnEvent.model_validate({
             "event_type": "ldif.dn",
             "aggregate_id": settings.input_dn,
             "dn_operation": settings.dn_operation,
@@ -123,9 +123,9 @@ class FlextLdifUtilitiesEvents:
     @staticmethod
     def log_and_emit_conversion_event(
         logger: p.Logger,
-        settings: m.Ldif.ConversionEventConfig,
+        settings: p.Ldif.ConversionEventConfig,
         log_level: str = "info",
-        extras: m.Ldif.LogContextExtras | None = None,
+        extras: p.Ldif.LogContextExtras | None = None,
     ) -> p.Ldif.ConversionEvent:
         """Create ConversionEvent, log with context, and attach to logger context."""
         event = FlextLdifUtilitiesEvents.create_conversion_event(settings)
@@ -144,9 +144,9 @@ class FlextLdifUtilitiesEvents:
     @staticmethod
     def log_and_emit_dn_event(
         logger: p.Logger,
-        settings: m.Ldif.DnEventConfig,
+        settings: p.Ldif.DnEventConfig,
         log_level: str = "info",
-        extras: m.Ldif.LogContextExtras | None = None,
+        extras: p.Ldif.LogContextExtras | None = None,
     ) -> p.Ldif.DnEvent:
         """Create DnEvent, log with context, and attach to logger context."""
         event = FlextLdifUtilitiesEvents.create_dn_event(settings)

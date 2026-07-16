@@ -54,7 +54,7 @@ class FlextLdifServersOudAclExtractMixin:
         )
         copy_result: p.Ldif.Entry = entry_data.model_copy(
             update={
-                "attributes": m.Ldif.Attributes.model_validate({
+                "attributes": p.Ldif.Attributes.model_validate({
                     "attributes": {**new_attributes_dict},
                     "attribute_metadata": entry_data.attributes.attribute_metadata,
                     "metadata": entry_data.attributes.metadata,
@@ -115,14 +115,14 @@ class FlextLdifServersOudAclExtractMixin:
 
     @staticmethod
     def update_metadata_with_commented_acls(
-        metadata: m.Ldif.ServerMetadata,
+        metadata: p.Ldif.ServerMetadata,
         acl_attribute_names: t.MutableSequenceOf[str],
         commented_acl_values: t.MutableStrSequenceMapping,
         hidden_attrs: set[str],
         entry_attributes_dict: t.MutableStrSequenceMapping,
     ) -> p.Ldif.ServerMetadata:
         """Update metadata with commented ACL information."""
-        metadata_typed: m.Ldif.ServerMetadata = metadata
+        metadata_typed: p.Ldif.ServerMetadata = metadata
         current_extensions: t.Ldif.MutableMetadataInputMapping = (
             dict(metadata_typed.extensions) if metadata_typed.extensions else {}
         )
@@ -184,7 +184,7 @@ class FlextLdifServersOudAclExtractMixin:
         update_dict_final: MutableMapping[str, t.Ldif.MutableMetadataInputMapping] = {
             "extensions": current_extensions,
         }
-        copy_result: m.Ldif.ServerMetadata = metadata_typed.model_copy(
+        copy_result: p.Ldif.ServerMetadata = metadata_typed.model_copy(
             update=update_dict_final,
         )
         return copy_result

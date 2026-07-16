@@ -63,7 +63,7 @@ class FlextLdifServersOudAclMetadataMixin:
     ) -> tuple[str | None, m.Ldif.DnRegistry | None]:
         """Extract base_dn and dn_registry from entry metadata for ACL processing."""
         base_dn: str | None = None
-        dn_registry: m.Ldif.DnRegistry | None = None
+        dn_registry: p.Ldif.DnRegistry | None = None
         metadata = entry_data.metadata
         extensions = metadata.extensions if metadata is not None else None
         if extensions is not None:

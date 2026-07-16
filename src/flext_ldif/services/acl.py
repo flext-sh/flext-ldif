@@ -41,7 +41,7 @@ class FlextLdifAcl(s):
     @staticmethod
     def evaluate_acl_context(
         acls: t.SequenceOf[t.Ldif.AclLike],
-        required_permissions: m.Ldif.AclPermissions | t.MutableBoolMapping,
+        required_permissions: p.Ldif.AclPermissions | t.MutableBoolMapping,
     ) -> p.Result[p.Ldif.AclEvaluationResult]:
         """Evaluate if ACLs grant required permissions."""
         required = (

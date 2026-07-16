@@ -130,7 +130,7 @@ class FlextLdifServersOidAclToOud:
         return r[t.StrSequence].ok(())
 
     @staticmethod
-    def get_targetattr(rule: m.Ldif.OidAclRule) -> str:
+    def get_targetattr(rule: p.Ldif.OidAclRule) -> str:
         """Compute the OUD ``targetattr`` (entry→``*``, list→``a||b``, ``attr!=``→``!=a||b``)."""
         attr_negation: str = c.Ldif.OUD_ATTR_NEGATION
         attr_or: str = c.Ldif.OUD_ATTR_OR
@@ -148,7 +148,7 @@ class FlextLdifServersOidAclToOud:
 
     @staticmethod
     def calculate_targetscope(
-        rule: m.Ldif.OidAclRule,
+        rule: p.Ldif.OidAclRule,
         *,
         has_anyone_subject: bool,
     ) -> str | None:
@@ -169,7 +169,7 @@ class FlextLdifServersOidAclToOud:
     @classmethod
     def convert_subject_to_oud(
         cls,
-        subject: m.Ldif.OidAclSubject,
+        subject: p.Ldif.OidAclSubject,
     ) -> p.Result[p.Ldif.AciAllow]:
         """Map one OID by-clause subject to an OUD bind-rule.
 

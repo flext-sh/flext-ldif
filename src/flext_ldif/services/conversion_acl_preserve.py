@@ -15,7 +15,7 @@ class FlextLdifConversionAclPreserveMixin(s):
 
     def _get_extensions_dict(
         self,
-        acl: m.Ldif.Acl,
+        acl: p.Ldif.Acl,
     ) -> t.Ldif.MutableMetadataInputMapping:
         """Extract extensions dict from ACL metadata."""
 
@@ -37,8 +37,8 @@ class FlextLdifConversionAclPreserveMixin(s):
 
     def _preserve_acl_metadata(
         self,
-        original_acl: m.Ldif.Acl,
-        converted_acl: m.Ldif.Acl,
+        original_acl: p.Ldif.Acl,
+        converted_acl: p.Ldif.Acl,
         source_server_type: c.Ldif.ServerTypes | None = None,
         target_server_type: c.Ldif.ServerTypes | None = None,
     ) -> p.Ldif.Acl:
@@ -104,7 +104,7 @@ class FlextLdifConversionAclPreserveMixin(s):
                 ): ("oud_to_oid", u.Ldif.map_oud_to_oid_permissions),
             }.get(server_pair)
             mapping_type = "none"
-            replacement_permissions: m.Ldif.AclPermissions | None = None
+            replacement_permissions: p.Ldif.AclPermissions | None = None
             match permission_mapping:
                 case (mapping_type, permission_mapper):
                     mapped_perms = permission_mapper(
@@ -170,7 +170,7 @@ class FlextLdifConversionAclPreserveMixin(s):
             update={"extensions": merged_ext_raw},
             deep=True,
         )
-        preserved_acl: m.Ldif.Acl = acl_step1.model_copy(
+        preserved_acl: p.Ldif.Acl = acl_step1.model_copy(
             update={"metadata": updated_metadata},
             deep=True,
         )

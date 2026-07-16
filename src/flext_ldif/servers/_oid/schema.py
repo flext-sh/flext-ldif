@@ -65,7 +65,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
 
     def _add_target_metadata(
         self,
-        attr_data: m.Ldif.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttribute,
         target_values: t.MutableOptionalStrMapping,
     ) -> None:
         """Add target metadata to attribute."""
@@ -98,7 +98,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
 
     def _capture_attribute_values(
         self,
-        attr_data: m.Ldif.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttribute,
     ) -> t.MutableOptionalStrMapping:
         """Capture attribute values for metadata tracking."""
         return {
@@ -112,7 +112,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
     @override
     def _hook_post_parse_attribute(
         self,
-        attr: m.Ldif.SchemaAttribute,
+        attr: p.Ldif.SchemaAttribute,
     ) -> p.Result[p.Ldif.SchemaAttribute]:
         """Transform parsed attribute using OID-specific normalizations."""
         try:
@@ -127,7 +127,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
 
     def _normalize_oid_attribute(
         self,
-        attr: m.Ldif.SchemaAttribute,
+        attr: p.Ldif.SchemaAttribute,
     ) -> p.Ldif.SchemaAttribute:
         """Normalize OID-specific schema attribute fields."""
         if attr.syntax:
@@ -158,7 +158,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
     @override
     def _hook_post_parse_objectclass(
         self,
-        oc: m.Ldif.SchemaObjectClass,
+        oc: p.Ldif.SchemaObjectClass,
     ) -> p.Result[p.Ldif.SchemaObjectClass]:
         """Transform parsed objectClass using OID-specific normalizations."""
         try:
@@ -176,7 +176,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
 
     def _normalize_oid_objectclass(
         self,
-        oc: m.Ldif.SchemaObjectClass,
+        oc: p.Ldif.SchemaObjectClass,
     ) -> p.Ldif.SchemaObjectClass:
         """Normalize OID-specific objectClass fields."""
         original_format_str = (
@@ -208,7 +208,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             if v
         }
         if update_dict:
-            updated_oc: m.Ldif.SchemaObjectClass = oc.model_copy(update=update_dict)
+            updated_oc: p.Ldif.SchemaObjectClass = oc.model_copy(update=update_dict)
             return updated_oc
         return oc
 
@@ -224,7 +224,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
 
     def _normalize_auxiliary_typo(
         self,
-        oc_data: m.Ldif.SchemaObjectClass,
+        oc_data: p.Ldif.SchemaObjectClass,
         original_format_str: str,
     ) -> str | None:
         """Normalize AUXILLARY typo to AUXILIARY."""
@@ -252,7 +252,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             case _:
                 return None
 
-    def _normalize_sup_from_model(self, oc_data: m.Ldif.SchemaObjectClass) -> str | (
+    def _normalize_sup_from_model(self, oc_data: p.Ldif.SchemaObjectClass) -> str | (
         t.MutableSequenceOf[str] | None
     ):
         """Normalize SUP from objectClass model."""
@@ -374,7 +374,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
     @override
     def _transform_attribute_for_write(
         self,
-        attr_data: m.Ldif.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttribute,
     ) -> p.Ldif.SchemaAttribute:
         """Apply OID-specific attribute transformations before writing."""
         fixed_name = u.Ldif.normalize_name(attr_data.name) or attr_data.name
@@ -427,7 +427,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
 
     def _transform_case_ignore_substrings(
         self,
-        attr_data: m.Ldif.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttribute,
     ) -> p.Ldif.SchemaAttribute:
         """Transform caseIgnoreSubstringsMatch from EQUALITY to SUBSTR."""
         normalized_equality, normalized_substr = u.Ldif.normalize_matching_rules(
@@ -460,12 +460,12 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
                 transformed.metadata.extensions[c.Ldif.SCHEMA_ORIGINAL_FORMAT] = (
                     original_format
                 )
-            transformed_attr: m.Ldif.SchemaAttribute = transformed
+            transformed_attr: p.Ldif.SchemaAttribute = transformed
             return transformed_attr
         return attr_data
 
     @override
-    def _write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> p.Result[str]:
+    def _write_attribute(self, attr_data: p.Ldif.SchemaAttribute) -> p.Result[str]:
         """Write Oracle OID attribute definition (Phase 2: Denormalization)."""
         attr_copy = attr_data.model_copy(deep=True)
         source_rules: t.JsonPayload | None = None

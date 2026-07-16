@@ -59,7 +59,7 @@ class FlextLdifUtilitiesDispatch:
         """Coerce an ACL-like value into the canonical LDIF ACL model."""
         if isinstance(value, m.Ldif.Acl):
             return value
-        validated: m.Ldif.Acl = m.Ldif.Acl.model_validate(value)
+        validated: p.Ldif.Acl = m.Ldif.Acl.model_validate(value)
         return validated
 
     @staticmethod

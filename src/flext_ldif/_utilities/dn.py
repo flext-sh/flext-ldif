@@ -88,7 +88,7 @@ class FlextLdifUtilitiesDN:
         char: str,
         rdn: str,
         position: int,
-        settings: m.Ldif.RdnProcessingConfig,
+        settings: p.Ldif.RdnProcessingConfig,
     ) -> tuple[str, str, bool, int]:
         """Advance position during RDN parsing and return new state."""
         result = FlextLdifUtilitiesDN._process_rdn_char(char, rdn, position, settings)
@@ -222,7 +222,7 @@ class FlextLdifUtilitiesDN:
         char: str,
         rdn: str,
         i: int,
-        settings: m.Ldif.RdnProcessingConfig,
+        settings: p.Ldif.RdnProcessingConfig,
     ) -> tuple[str, str, bool, int, bool]:
         """Process single character in RDN parsing."""
         current_attr = settings.current_attr
@@ -354,7 +354,7 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def clean_dn(dn: m.Ldif.DN) -> str: ...
+    def clean_dn(dn: p.Ldif.DN) -> str: ...
 
     @staticmethod
     def clean_dn(dn: str | m.Ldif.DN) -> str:
@@ -507,7 +507,7 @@ class FlextLdifUtilitiesDN:
         return "".join(mapped_result)
 
     @staticmethod
-    def get_dn_value(dn: m.Ldif.DN | str) -> str:
+    def get_dn_value(dn: p.Ldif.DN | str) -> str:
         """Extract DN string value from DN model or string (public utility method)."""
         if isinstance(dn, str):
             return dn
@@ -607,7 +607,7 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def norm(dn: m.Ldif.DN) -> p.Result[str]: ...
+    def norm(dn: p.Ldif.DN) -> p.Result[str]: ...
 
     @staticmethod
     def norm(dn: str | m.Ldif.DN | None) -> p.Result[str]:
@@ -696,7 +696,7 @@ class FlextLdifUtilitiesDN:
     @overload
     @staticmethod
     def parse_dn(
-        dn: m.Ldif.DN,
+        dn: p.Ldif.DN,
     ) -> p.Result[t.MutableStrPairSequence]: ...
 
     @staticmethod
@@ -803,7 +803,7 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def split(dn: m.Ldif.DN) -> t.MutableSequenceOf[str]: ...
+    def split(dn: p.Ldif.DN) -> t.MutableSequenceOf[str]: ...
 
     @staticmethod
     def split(dn: str | m.Ldif.DN) -> t.MutableSequenceOf[str]:
@@ -851,7 +851,7 @@ class FlextLdifUtilitiesDN:
     @overload
     @staticmethod
     def transform_dn_attribute(
-        value: m.Ldif.DN,
+        value: p.Ldif.DN,
         source_dn: str,
         target_dn: str,
     ) -> str: ...

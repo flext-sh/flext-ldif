@@ -35,7 +35,7 @@ class FlextLdifProcessingPipeline(
             description="Optional entry batch used when the service executes without explicit input.",
         ),
     ] = None
-    _config: m.Ldif.TransformConfig = u.PrivateAttr(
+    _config: p.Ldif.TransformConfig = u.PrivateAttr(
         default_factory=m.Ldif.TransformConfig,
     )
     _entries: t.MutableSequenceOf[p.Ldif.Entry] = u.PrivateAttr(default_factory=list)

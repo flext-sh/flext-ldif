@@ -69,7 +69,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
     def __call__(self, data: str, *, operation: str | None = None) -> p.Ldif.Acl: ...
 
     @overload
-    def __call__(self, data: m.Ldif.Acl, *, operation: str | None = None) -> str: ...
+    def __call__(self, data: p.Ldif.Acl, *, operation: str | None = None) -> str: ...
 
     @overload
     def __call__(
@@ -93,7 +93,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         result = self.execute(data=narrowed_data, operation=narrowed_operation)
         if isinstance(result.value, str):
             return result.value
-        acl: m.Ldif.Acl = m.Ldif.Acl.model_validate(result.value)
+        acl: p.Ldif.Acl = m.Ldif.Acl.model_validate(result.value)
         return acl
 
     @override
@@ -174,7 +174,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         return super()._supports_feature(_feature_id)
 
     @override
-    def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
+    def _write_acl(self, acl_data: p.Ldif.Acl) -> p.Result[str]:
         """Write ACL to RFC-compliant string format (internal)."""
         if acl_data.raw_acl and acl_data.raw_acl.strip():
             return r[str].ok(acl_data.raw_acl)

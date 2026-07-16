@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import (
+    ItemsView,
     KeysView,
     MutableMapping,
     ValuesView,
@@ -21,6 +22,84 @@ from flext_ldif import c, p, t
 
 class FlextLdifModelsDomainAttributes:
     """Namespace for LDIF attributes domain models."""
+
+    # NOTE (mro-0ftd.3.7.2): typed dynamic-property container replacing the
+    # model-less dict[str, list[str]] (operator law 2026-07-15: never model-less,
+    # dynamic entry properties are a typed tuple-of-values model in an advanced
+    # Mapping container mirroring flext-core containers.py _MappingRootBase).
+    class Property(m.FrozenModel):
+        """A single LDIF attribute: its name and its ordered, immutable values."""
+
+        name: Annotated[
+            str,
+            u.Field(description="The attribute name (case preserved as parsed)."),
+        ]
+        values: Annotated[
+            tuple[str, ...],
+            u.Field(description="Ordered attribute values (immutable)."),
+        ] = ()
+
+    class Properties(
+        m.RootModel[dict[str, "FlextLdifModelsDomainAttributes.Property"]]
+    ):
+        """Advanced typed Mapping of attribute name -> Property.
+
+        Root-model container with an explicit dict-like API (mirrors flext-core
+        FlextModelsContainers._MappingRootBase) so consumers keep ``props[name]``,
+        ``props.get``, ``props.items`` ergonomics while every value is a typed
+        Property instead of a raw list. This is the SSOT for entry attribute data.
+        """
+
+        root: Annotated[
+            dict[str, FlextLdifModelsDomainAttributes.Property],
+            u.Field(
+                default_factory=dict,
+                description="Validated attribute-name to Property mapping.",
+            ),
+        ]
+
+        def __getitem__(
+            self,
+            key: str,
+        ) -> FlextLdifModelsDomainAttributes.Property:
+            return self.root[key]
+
+        def __setitem__(
+            self,
+            key: str,
+            value: FlextLdifModelsDomainAttributes.Property,
+        ) -> None:
+            self.root[key] = value
+
+        def __delitem__(self, key: str) -> None:
+            del self.root[key]
+
+        def __contains__(self, key: object) -> bool:
+            return key in self.root
+
+        def __len__(self) -> int:
+            return len(self.root)
+
+        def __bool__(self) -> bool:
+            return bool(self.root)
+
+        def keys(self) -> KeysView[str]:
+            return self.root.keys()
+
+        def values(self) -> ValuesView[FlextLdifModelsDomainAttributes.Property]:
+            return self.root.values()
+
+        def items(
+            self,
+        ) -> ItemsView[str, FlextLdifModelsDomainAttributes.Property]:
+            return self.root.items()
+
+        def get(
+            self,
+            key: str,
+            default: FlextLdifModelsDomainAttributes.Property | None = None,
+        ) -> FlextLdifModelsDomainAttributes.Property | None:
+            return self.root.get(key, default)
 
     class Attributes(m.ArbitraryTypesModel):
         """LDIF attributes container - simplified dict-like interface."""

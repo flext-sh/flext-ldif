@@ -134,7 +134,7 @@ class FlextLdifServersBaseSchemaAcl(
     def format_acl_value(
         self,
         acl_value: str,
-        acl_metadata: m.Ldif.AclWriteMetadata,
+        acl_metadata: p.Ldif.AclWriteMetadata,
         *,
         use_original_format_as_name: bool = False,
     ) -> p.Result[str]:
@@ -187,7 +187,7 @@ class FlextLdifServersBaseSchemaAcl(
         if isinstance(value, str):
             return value
         try:
-            acl: m.Ldif.Acl = m.Ldif.Acl.model_validate(value)
+            acl: p.Ldif.Acl = m.Ldif.Acl.model_validate(value)
             return acl
         except c.ValidationError as exc:
             FlextLdifServersBaseSchemaAcl._module_logger.warning(
@@ -216,7 +216,7 @@ class FlextLdifServersBaseSchemaAcl(
             return r[t.Ldif.AclPayload].ok(parse_result.value)
         return r[t.Ldif.AclPayload].fail(parse_result.error or "Parse failed")
 
-    def _execute_acl_write(self, data: m.Ldif.Acl) -> p.Result[t.Ldif.AclPayload]:
+    def _execute_acl_write(self, data: p.Ldif.Acl) -> p.Result[t.Ldif.AclPayload]:
         """Execute ACL write operation."""
         write_result = self.write(data)
         if write_result.success:
@@ -273,7 +273,7 @@ class FlextLdifServersBaseSchemaAcl(
             replacement_template,
         ))
 
-    def _hook_post_parse_acl(self, acl: m.Ldif.Acl) -> p.Result[p.Ldif.Acl]:
+    def _hook_post_parse_acl(self, acl: p.Ldif.Acl) -> p.Result[p.Ldif.Acl]:
         """Run hook after parsing an ACL line."""
         return r[p.Ldif.Acl].ok(acl)
 
@@ -319,7 +319,7 @@ class FlextLdifServersBaseSchemaAcl(
         """Check if this server supports a specific feature."""
         return False
 
-    def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
+    def _write_acl(self, acl_data: p.Ldif.Acl) -> p.Result[str]:
         """Write ACL data to RFC-compliant string format (internal)."""
         _ = acl_data
         return r[str].fail("Must be implemented by subclass")

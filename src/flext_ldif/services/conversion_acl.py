@@ -30,7 +30,7 @@ class FlextLdifConversionAclMixin(FlextLdifConversionAclPreserveMixin, s, ABC):
         self,
         source_server: p.Ldif.ServerServer,
         target_server: p.Ldif.ServerServer,
-        acl: m.Ldif.Acl,
+        acl: p.Ldif.Acl,
     ) -> p.Result[t.Ldif.ConvertedModel]:
         """Convert Acl model via Entry RFC + Metadata pipeline."""
         try:
@@ -43,7 +43,7 @@ class FlextLdifConversionAclMixin(FlextLdifConversionAclPreserveMixin, s, ABC):
         self,
         source_server: p.Ldif.ServerServer,
         target_server: p.Ldif.ServerServer,
-        acl: m.Ldif.Acl,
+        acl: p.Ldif.Acl,
     ) -> p.Result[t.Ldif.ConvertedModel]:
         """Convert ACL model through an RFC entry bridge."""
         source_acl = acl.model_copy(deep=True)
@@ -89,7 +89,7 @@ class FlextLdifConversionAclMixin(FlextLdifConversionAclPreserveMixin, s, ABC):
 
     @staticmethod
     def _build_acl_conversion_entry(
-        acl: m.Ldif.Acl,
+        acl: p.Ldif.Acl,
         source_server_type: c.Ldif.ServerTypes | None,
     ) -> p.Ldif.Entry:
         """Build the RFC entry carrier used for ACL conversion."""

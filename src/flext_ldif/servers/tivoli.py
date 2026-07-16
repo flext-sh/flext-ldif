@@ -222,14 +222,14 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 return r[p.Ldif.Acl].fail_op("IBM Tivoli DS ACL parsing", exc)
 
         @override
-        def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
+        def _write_acl(self, acl_data: p.Ldif.Acl) -> p.Result[str]:
             """Write ACL data to RFC-compliant string format."""
             try:
                 return self._write_tivoli_acl(acl_data)
             except c.EXC_BASIC_TYPE as exc:
                 return r[str].fail_op("IBM Tivoli DS ACL write", exc)
 
-        def _write_tivoli_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
+        def _write_tivoli_acl(self, acl_data: p.Ldif.Acl) -> p.Result[str]:
             """Write IBM Tivoli DS ACL content."""
             acl_attribute = FlextLdifServersTivoli.Constants.ACL_PRIMARY_ATTRIBUTE_NAME
             if acl_data.raw_acl:
@@ -254,7 +254,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
 
         @staticmethod
         def _active_tivoli_permissions(
-            permissions: m.Ldif.AclPermissions | None,
+            permissions: p.Ldif.AclPermissions | None,
         ) -> t.MutableSequenceOf[str]:
             """Return active IBM Tivoli DS permission tokens."""
             permission_map = {

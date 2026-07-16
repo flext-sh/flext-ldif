@@ -193,7 +193,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             return result
 
         @override
-        def _write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> p.Result[str]:
+        def _write_attribute(self, attr_data: p.Ldif.SchemaAttribute) -> p.Result[str]:
             """Write attribute data to RFC-compliant string format."""
             try:
                 return self._write_openldap1_attribute(attr_data)
@@ -203,7 +203,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         @override
         def _write_objectclass(
             self,
-            oc_data: m.Ldif.SchemaObjectClass,
+            oc_data: p.Ldif.SchemaObjectClass,
         ) -> p.Result[str]:
             """Write objectClass data to RFC-compliant string format."""
             try:
@@ -213,7 +213,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
 
         @staticmethod
         def _write_openldap1_attribute(
-            attr_data: m.Ldif.SchemaAttribute,
+            attr_data: p.Ldif.SchemaAttribute,
         ) -> p.Result[str]:
             """Write OpenLDAP 1.x attribute definition."""
             attr_str = f"attributetype ( {attr_data.oid}"
@@ -232,7 +232,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
 
         @staticmethod
         def _write_openldap1_objectclass(
-            oc_data: m.Ldif.SchemaObjectClass,
+            oc_data: p.Ldif.SchemaObjectClass,
         ) -> p.Result[str]:
             """Write OpenLDAP 1.x objectClass definition."""
             kind = oc_data.kind or "STRUCTURAL"
@@ -293,7 +293,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 return r[p.Ldif.Acl].fail_op("OpenLDAP 1.x ACL parsing", e)
 
         @override
-        def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
+        def _write_acl(self, acl_data: p.Ldif.Acl) -> p.Result[str]:
             """Write ACL data to RFC-compliant string format."""
             try:
                 return self._write_openldap1_acl(acl_data)
@@ -400,7 +400,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             return c.Ldif.AclSubjectType.USER
 
         @staticmethod
-        def _write_openldap1_acl(acl_data: m.Ldif.Acl) -> p.Result[str]:
+        def _write_openldap1_acl(acl_data: p.Ldif.Acl) -> p.Result[str]:
             """Write OpenLDAP 1.x ACL content."""
             if acl_data.raw_acl:
                 return r[str].ok(acl_data.raw_acl)

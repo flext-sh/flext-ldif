@@ -74,7 +74,7 @@ class FlextLdifConversionMetadataMixin(s):
 
     @staticmethod
     def _analyze_metadata_for_conversion(
-        source_metadata: m.Ldif.ServerMetadata | t.MutableJsonMapping | None,
+        source_metadata: p.Ldif.ServerMetadata | t.MutableJsonMapping | None,
         target_server_type: str,
     ) -> t.MutableMappingKV[str, t.Ldif.MutableMetadataInputMapping]:
         """Analyze source metadata for intelligent conversion to target server."""

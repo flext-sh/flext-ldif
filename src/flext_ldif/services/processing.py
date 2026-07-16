@@ -20,7 +20,7 @@ class FlextLdifProcessing(s):
             msg = "Entry attributes cannot be None"
             raise ValueError(msg)
         attrs_dict = entry.attributes.attributes
-        validated: m.Ldif.ProcessingResult = m.Ldif.ProcessingResult.model_validate({
+        validated: p.Ldif.ProcessingResult = m.Ldif.ProcessingResult.model_validate({
             "dn": dn_str,
             "attributes": attrs_dict,
         })
@@ -29,7 +29,7 @@ class FlextLdifProcessing(s):
     def process_entries(
         self,
         entries: t.MutableSequenceOf[p.Ldif.Entry],
-        options: m.Ldif.ProcessEntriesOptions | None = None,
+        options: p.Ldif.ProcessEntriesOptions | None = None,
         **kwargs: t.JsonValue,
     ) -> p.Result[t.MutableSequenceOf[p.Ldif.ProcessingResult]]:
         """Unified processing method supporting batch and parallel modes."""

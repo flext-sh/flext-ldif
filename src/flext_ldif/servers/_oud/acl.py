@@ -133,7 +133,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         """Get RFC + OUD extensions."""
         return [*self.RFC_ACL_ATTRIBUTES, *self.OUD_ACL_ATTRIBUTES]
 
-    def _build_aci_permissions(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
+    def _build_aci_permissions(self, acl_data: p.Ldif.Acl) -> p.Result[str]:
         """Build ACI permissions clause from ACL model."""
         perms = acl_data.permissions
         target_perms_dict: t.MappingKV[str, t.JsonPayload] | None = None
@@ -220,7 +220,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         ops_str = ",".join(filtered_ops)
         return r[str].ok(f"{FlextLdifServersOudConstants.ACL_ALLOW_PREFIX}{ops_str})")
 
-    def _build_aci_subject(self, acl_data: m.Ldif.Acl) -> str:
+    def _build_aci_subject(self, acl_data: p.Ldif.Acl) -> str:
         """Build ACI bind rules (subject) clause from ACL model."""
         base_dn, subject_type, subject_value = self._extract_and_resolve_acl_subject(
             acl_data,
@@ -251,7 +251,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         )
         return formatted
 
-    def _build_aci_target(self, acl_data: m.Ldif.Acl) -> str:
+    def _build_aci_target(self, acl_data: p.Ldif.Acl) -> str:
         """Build ACI target clause from ACL model."""
         target = acl_data.target
         if not target and acl_data.metadata:
@@ -288,7 +288,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
 
     def _extract_and_resolve_acl_subject(
         self,
-        acl_data: m.Ldif.Acl,
+        acl_data: p.Ldif.Acl,
     ) -> tuple[str | None, str, str]:
         """Extract metadata and resolve subject type and value in one pass."""
         ext = acl_data.metadata.extensions if acl_data.metadata else None
@@ -377,7 +377,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             "metadata": new_metadata,
         }
         acl_updated = acl.model_copy(update=update_dict)
-        acl_result: m.Ldif.Acl = acl_updated
+        acl_result: p.Ldif.Acl = acl_updated
         return r[p.Ldif.Acl].ok(acl_result)
 
     @override
@@ -421,7 +421,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             )
             return r[p.Ldif.Acl].fail(f"Failed to parse OUD ds-privilege-name: {e}")
 
-    def _should_use_raw_acl(self, acl_data: m.Ldif.Acl) -> bool:
+    def _should_use_raw_acl(self, acl_data: p.Ldif.Acl) -> bool:
         """Check if raw_acl should be used as-is."""
         if not acl_data.raw_acl:
             return False
@@ -430,7 +430,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         return raw_acl_str.startswith(acl_aci_prefix)
 
     @override
-    def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
+    def _write_acl(self, acl_data: p.Ldif.Acl) -> p.Result[str]:
         """Write RFC-compliant ACL model to OUD ACI string format (protected internal method)."""
         try:
             return self._write_oud_aci(acl_data)
@@ -440,7 +440,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             )
             return r[str].fail(f"Failed to write ACL to OUD ACI format: {e}")
 
-    def _write_oud_aci(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
+    def _write_oud_aci(self, acl_data: p.Ldif.Acl) -> p.Result[str]:
         """Build an OUD ACI string from the canonical ACL model."""
         sc = FlextLdifServersOudConstants
         extensions: t.Ldif.MutableMetadataMapping | None = (

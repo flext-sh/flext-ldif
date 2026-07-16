@@ -23,7 +23,7 @@ import pytest
 from flext_tests import tm
 
 from flext_ldif import ldif
-from tests import c, m, t, u
+from tests import c, m, p, t, u
 
 _BASE_DN = "dc=example"
 

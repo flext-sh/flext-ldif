@@ -133,7 +133,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
     def _denormalize_oid_attributes_for_output(
         self,
         attrs: t.MutableStrSequenceMapping,
-        metadata: m.Ldif.ServerMetadata | None,
+        metadata: p.Ldif.ServerMetadata | None,
     ) -> t.MutableStrSequenceMapping:
         """Denormalize RFC attributes to OID format."""
         mk = c.Ldif
@@ -175,7 +175,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             != raw_attr_name.lower()
         }
         acl_transformations: MutableMapping[str, m.Ldif.AttributeTransformation] = {
-            original_name: m.Ldif.AttributeTransformation.model_validate({
+            original_name: p.Ldif.AttributeTransformation.model_validate({
                 "original_name": original_name,
                 "target_name": attr_name,
                 "original_values": attr_values,
@@ -754,7 +754,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             entry_metadata = entry_data.attributes.metadata
         copied: p.Ldif.Entry = entry_data.model_copy(
             update={
-                "attributes": m.Ldif.Attributes.model_validate({
+                "attributes": p.Ldif.Attributes.model_validate({
                     "attributes": restored_attrs,
                     "attribute_metadata": entry_data.attributes.attribute_metadata
                     if entry_data.attributes
@@ -790,7 +790,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             return restored_entry
         restored_copy: p.Ldif.Entry = restored_entry.model_copy(
             update={
-                "attributes": m.Ldif.Attributes.model_validate({
+                "attributes": p.Ldif.Attributes.model_validate({
                     "attributes": restored_attrs,
                     "attribute_metadata": attributes.attribute_metadata,
                     "metadata": attributes.metadata,
@@ -829,7 +829,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         self,
         original_line: str,
         current_attrs: set[str],
-        write_options: m.Ldif.WriteFormatOptions | None,
+        write_options: p.Ldif.WriteFormatOptions | None,
         *,
         write_empty_values: bool,
     ) -> bool:
@@ -857,7 +857,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         ldif_lines: t.MutableSequenceOf[str],
         entry_data: p.Ldif.Entry,
         original_attr_lines_complete: t.MutableSequenceOf[str],
-        write_options: m.Ldif.WriteFormatOptions | None,
+        write_options: p.Ldif.WriteFormatOptions | None,
     ) -> set[str]:
         """Write original attribute lines preserving exact formatting."""
         written_attrs: set[str] = set()

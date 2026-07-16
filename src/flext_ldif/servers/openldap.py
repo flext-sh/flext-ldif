@@ -209,7 +209,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         @override
         def _transform_attribute_for_write(
             self,
-            attr_data: m.Ldif.SchemaAttribute,
+            attr_data: p.Ldif.SchemaAttribute,
         ) -> p.Ldif.SchemaAttribute:
             """Transform attribute before writing (hook from base.py)."""
             return super()._transform_attribute_for_write(attr_data)
@@ -217,7 +217,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         @override
         def _transform_objectclass_for_write(
             self,
-            oc_data: m.Ldif.SchemaObjectClass,
+            oc_data: p.Ldif.SchemaObjectClass,
         ) -> p.Ldif.SchemaObjectClass:
             """Transform objectClass before writing (hook from base.py)."""
             return super()._transform_objectclass_for_write(oc_data)
@@ -394,7 +394,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             return acl_content
 
         @override
-        def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
+        def _write_acl(self, acl_data: p.Ldif.Acl) -> p.Result[str]:
             """Write ACL data to RFC-compliant string format (internal)."""
             try:
                 return self._write_openldap_acl(acl_data)
@@ -402,7 +402,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 return r[str].fail_op("OpenLDAP 2.x ACL write", e)
 
         @staticmethod
-        def _write_openldap_acl(acl_data: m.Ldif.Acl) -> p.Result[str]:
+        def _write_openldap_acl(acl_data: p.Ldif.Acl) -> p.Result[str]:
             """Write OpenLDAP 2.x ACL content."""
             if acl_data.raw_acl:
                 return r[str].ok(acl_data.raw_acl)

@@ -86,7 +86,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def _build_subject_and_permissions(
         aci_content: str,
-        settings: m.Ldif.AciParserConfig,
+        settings: p.Ldif.AciParserConfig,
     ) -> tuple[str, str, t.MutableBoolMapping]:
         """Build subject and permissions from ACI content."""
         permissions_list = FlextLdifUtilitiesACL.extract_permissions(
@@ -145,7 +145,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def _extract_target_info(
         aci_content: str,
-        settings: m.Ldif.AciParserConfig,
+        settings: p.Ldif.AciParserConfig,
     ) -> tuple[t.MutableSequenceOf[str], str]:
         """Extract target attributes and DN from ACI content."""
         targetattr_extracted = FlextLdifUtilitiesACL.extract_component(
@@ -260,7 +260,7 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def build_metadata_extensions(
-        settings: m.Ldif.AclMetadataConfig,
+        settings: p.Ldif.AclMetadataConfig,
     ) -> t.Ldif.MutableMetadataMapping:
         """Build ServerMetadata extensions for ACL."""
         result: t.Ldif.MutableMetadataMapping = {}
@@ -505,7 +505,7 @@ class FlextLdifUtilitiesACL:
         return [p.lower() for p in permissions if p.lower() in supported_lower]
 
     @staticmethod
-    def format_aci_line(settings: m.Ldif.AciLineFormatConfig) -> str:
+    def format_aci_line(settings: p.Ldif.AciLineFormatConfig) -> str:
         r"""Format complete ACI line from components.
 
         Args:
@@ -680,7 +680,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def parse_aci(
         acl_line: str,
-        settings: m.Ldif.AciParserConfig,
+        settings: p.Ldif.AciParserConfig,
     ) -> p.Result[p.Ldif.Acl]:
         """Parse ACI line using server-specific settings Model."""
         valid, aci_content = FlextLdifUtilitiesACL.validate_aci_format(

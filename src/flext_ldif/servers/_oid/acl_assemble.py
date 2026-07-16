@@ -37,7 +37,7 @@ class FlextLdifServersOidAclAssemble:
     @classmethod
     def build_aci_rule(
         cls,
-        rule: m.Ldif.OidAclRule,
+        rule: p.Ldif.OidAclRule,
         *,
         base_dn: str = "",
     ) -> p.Result[p.Ldif.AciRule]:

@@ -136,7 +136,7 @@ class FlextLdifUtilitiesParser:
 
     @staticmethod
     def finalize_change_operation(
-        current_op: m.Ldif.ChangeOperation | None,
+        current_op: p.Ldif.ChangeOperation | None,
         change_operations: t.MutableSequenceOf[p.Ldif.ChangeOperation],
     ) -> None:
         """Append a pending modify block when present."""
@@ -155,7 +155,7 @@ class FlextLdifUtilitiesParser:
         raw_record_lines: t.MutableSequenceOf[str] = []
         controls: t.MutableSequenceOf[p.Ldif.Control] = []
         change_operations: t.MutableSequenceOf[p.Ldif.ChangeOperation] = []
-        current_change_operation: m.Ldif.ChangeOperation | None = None
+        current_change_operation: p.Ldif.ChangeOperation | None = None
         changetype: c.Ldif.LdifChangeType | None = None
         record_kind = c.Ldif.RecordKind.CONTENT
         newrdn: str | None = None

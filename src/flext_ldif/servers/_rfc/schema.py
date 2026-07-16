@@ -48,13 +48,13 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
             oc_def_raw = kwargs.get("oc_definition")
             oc_def: str | None = oc_def_raw if isinstance(oc_def_raw, str) else None
             attr_mod_raw = kwargs.get("attr_model")
-            attr_mod: m.Ldif.SchemaAttribute | None = (
+            attr_mod: p.Ldif.SchemaAttribute | None = (
                 attr_mod_raw
                 if isinstance(attr_mod_raw, m.Ldif.SchemaAttribute)
                 else None
             )
             oc_mod_raw = kwargs.get("oc_model")
-            oc_mod: m.Ldif.SchemaObjectClass | None = (
+            oc_mod: p.Ldif.SchemaObjectClass | None = (
                 oc_mod_raw if isinstance(oc_mod_raw, m.Ldif.SchemaObjectClass) else None
             )
             op_raw = kwargs.get("operation")
@@ -116,7 +116,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
     @overload
     def __call__(
         self,
-        data: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        data: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
         operation: str | None = None,
     ) -> str: ...
 
@@ -299,7 +299,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
         self,
         oc_definition: str | m.Ldif.SchemaObjectClass,
         *,
-        settings: m.Ldif.ServerPatternsConfig,
+        settings: p.Ldif.ServerPatternsConfig,
         name_regex: str,
     ) -> bool:
         """Detect objectClass definitions through centralized server pattern settings."""
@@ -419,14 +419,14 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
             ]
         ].ok(schema_dict)
 
-    def should_filter_out_attribute(self, _attribute: m.Ldif.SchemaAttribute) -> bool:
+    def should_filter_out_attribute(self, _attribute: p.Ldif.SchemaAttribute) -> bool:
         """RFC server does not filter attributes."""
         _ = self
         return False
 
     def should_filter_out_objectclass(
         self,
-        _objectclass: m.Ldif.SchemaObjectClass,
+        _objectclass: p.Ldif.SchemaObjectClass,
     ) -> bool:
         """RFC server does not filter objectClasses."""
         _ = (self, _objectclass)
@@ -434,7 +434,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
 
     def _build_attribute_parts(
         self,
-        attr_data: m.Ldif.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttribute,
     ) -> t.MutableSequenceOf[str]:
         """Build RFC attribute definition parts."""
         parts: t.MutableSequenceOf[str] = u.Ldif.build_attribute_parts_with_metadata(
@@ -468,7 +468,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
 
     def _build_objectclass_parts(
         self,
-        oc_data: m.Ldif.SchemaObjectClass,
+        oc_data: p.Ldif.SchemaObjectClass,
     ) -> t.MutableSequenceOf[str]:
         """Build RFC objectClass definition parts."""
         parts: t.MutableSequenceOf[str] = u.Ldif.build_objectclass_parts_with_metadata(
@@ -483,7 +483,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
     def _ensure_x_origin(
         self,
         output_str: str,
-        metadata: m.Ldif.ServerMetadata | None,
+        metadata: p.Ldif.ServerMetadata | None,
     ) -> str:
         """Ensure X-ORIGIN extension is present if in metadata."""
         result = output_str
@@ -665,14 +665,14 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
 
     def _transform_attribute_for_write(
         self,
-        attr_data: m.Ldif.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttribute,
     ) -> p.Ldif.SchemaAttribute:
         """Transform attribute before writing (subclass hook)."""
         return attr_data
 
     def _transform_objectclass_for_write(
         self,
-        oc_data: m.Ldif.SchemaObjectClass,
+        oc_data: p.Ldif.SchemaObjectClass,
     ) -> p.Ldif.SchemaObjectClass:
         """Transform objectClass before writing (subclass hook)."""
         return oc_data
@@ -701,18 +701,18 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
                     pass
 
     @override
-    def _write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> p.Result[str]:
+    def _write_attribute(self, attr_data: p.Ldif.SchemaAttribute) -> p.Result[str]:
         """Write attribute to RFC-compliant string format (internal)."""
         return self._write_schema_item(attr_data)
 
     @override
-    def _write_objectclass(self, oc_data: m.Ldif.SchemaObjectClass) -> p.Result[str]:
+    def _write_objectclass(self, oc_data: p.Ldif.SchemaObjectClass) -> p.Result[str]:
         """Write objectClass to RFC-compliant string format (internal)."""
         return self._write_schema_item(oc_data)
 
     def _write_schema_item(
         self,
-        data: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        data: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> p.Result[str]:
         """Write schema item (attribute or objectClass) to RFC-compliant format."""
         try:
@@ -731,7 +731,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
 
     def _write_schema_item_core(
         self,
-        data: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        data: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> p.Result[str]:
         """Write schema item after server-specific transforms."""
         if isinstance(data, m.Ldif.SchemaAttribute):

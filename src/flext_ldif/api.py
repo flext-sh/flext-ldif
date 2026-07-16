@@ -76,7 +76,7 @@ class FlextLdif(
     def categorization(
         self,
         *,
-        options: m.Ldif.MigrateOptions | None = None,
+        options: p.Ldif.MigrateOptions | None = None,
         base_dn: str | None = None,
         server_type: str = c.Ldif.ServerTypes.RFC.value,
     ) -> p.Ldif.CategorizationService:
@@ -128,7 +128,7 @@ class FlextLdif(
     def filter_schema_attribute_values(
         self,
         entry: p.Ldif.Entry,
-        allowed_oids: m.Ldif.WhitelistRules | t.FrozensetMapping,
+        allowed_oids: p.Ldif.WhitelistRules | t.FrozensetMapping,
     ) -> p.Ldif.Entry:
         """Expose schema-attribute OID filtering through the facade DSL."""
         concrete = u.Ldif.as_entry(entry)
@@ -237,7 +237,7 @@ class FlextLdif(
     def processing_pipeline(
         self,
         *,
-        settings: m.Ldif.TransformConfig | None = None,
+        settings: p.Ldif.TransformConfig | None = None,
         source_server: str | c.Ldif.ServerTypes | None = None,
         target_server: str | c.Ldif.ServerTypes | None = None,
     ) -> p.Ldif.ProcessingPipeline:
@@ -256,8 +256,8 @@ class FlextLdif(
         *,
         input_dir: Path | None = None,
         output_dir: Path | None = None,
-        settings: m.Ldif.TransformConfig | None = None,
-        options: m.Ldif.MigrateOptions | None = None,
+        settings: p.Ldif.TransformConfig | None = None,
+        options: p.Ldif.MigrateOptions | None = None,
     ) -> p.Ldif.MigrationPipeline:
         """Create a configured migration pipeline bound to the facade runtime."""
         process_config = settings.process_config if settings is not None else None
@@ -284,7 +284,7 @@ class FlextLdif(
         output_dir: Path | None = None,
         source_server: str = c.Ldif.ServerTypes.RFC.value,
         target_server: str = c.Ldif.ServerTypes.RFC.value,
-        options: m.Ldif.MigrateOptions | None = None,
+        options: p.Ldif.MigrateOptions | None = None,
     ) -> p.Result[p.Ldif.MigrationPipelineResult]:
         """Migrate LDIF data between servers."""
         transform_config = m.Ldif.TransformConfig.servers(

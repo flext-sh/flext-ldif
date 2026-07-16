@@ -94,7 +94,7 @@ class FlextLdifCategorization(s):
 
     def _normalize_initial_category_rules(self) -> p.Ldif.CategoryRules:
         """Normalize initial categorization rules into the canonical model."""
-        validated_rules: m.Ldif.CategoryRules = m.Ldif.CategoryRules.model_validate(
+        validated_rules: p.Ldif.CategoryRules = m.Ldif.CategoryRules.model_validate(
             self.categorization_rules or {},
         )
         return validated_rules
@@ -146,7 +146,7 @@ class FlextLdifCategorization(s):
 
     @staticmethod
     def _append_rejected_entries(
-        filtered: m.Ldif.FlexibleCategories,
+        filtered: p.Ldif.FlexibleCategories,
         rejected_entries: t.MutableSequenceOf[p.Ldif.Entry],
     ) -> None:
         """Append rejected entries into the canonical REJECTED bucket."""
@@ -293,7 +293,7 @@ class FlextLdifCategorization(s):
     def categorize_entry(
         self,
         entry: p.Ldif.Entry,
-        rules: m.Ldif.CategoryRules | t.MutableJsonMapping | None = None,
+        rules: p.Ldif.CategoryRules | t.MutableJsonMapping | None = None,
         server_type: str | None = None,
     ) -> tuple[str, str | None]:
         """Categorize single entry using provided or instance categorization rules."""
@@ -347,7 +347,7 @@ class FlextLdifCategorization(s):
 
     def filter_by_base_dn(
         self,
-        categories: m.Ldif.FlexibleCategories,
+        categories: p.Ldif.FlexibleCategories,
     ) -> p.Ldif.FlexibleCategories:
         """Filter entries by base DN (if configured)."""
         if not self.base_dn:
@@ -631,7 +631,7 @@ class FlextLdifCategorization(s):
 
     def _normalize_rules(
         self,
-        rules: m.Ldif.CategoryRules | t.MutableJsonMapping | None,
+        rules: p.Ldif.CategoryRules | t.MutableJsonMapping | None,
     ) -> p.Result[p.Ldif.CategoryRules]:
         """Normalize rules to CategoryRules model."""
         if isinstance(rules, m.Ldif.CategoryRules):
@@ -640,7 +640,7 @@ class FlextLdifCategorization(s):
             return r[p.Ldif.CategoryRules].ok(self._normalize_initial_category_rules())
         return r[p.Ldif.CategoryRules].from_result(
             u.try_(
-                lambda: m.Ldif.CategoryRules.model_validate(rules),
+                lambda: p.Ldif.CategoryRules.model_validate(rules),
                 catch=(
                     ValueError,
                     KeyError,

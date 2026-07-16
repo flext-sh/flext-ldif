@@ -12,7 +12,7 @@ from flext_ldif.services.migration import FlextLdifMigrationPipeline
 from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.services.writer import FlextLdifWriter
-from tests import c, m, p, t, u
+from tests import c, p, t, u
 
 
 @pytest.fixture
@@ -67,7 +67,7 @@ def oid_entries(
     oid_entries_fixture: str,
 ) -> t.SequenceOf[p.Ldif.Entry]:
     """Parse OID entries fixture into Entry models."""
-    parse_response: m.Ldif.ParseResponse = u.Tests.assert_success(
+    parse_response: p.Ldif.ParseResponse = u.Tests.assert_success(
         api.parse_ldif(oid_entries_fixture),
         error_msg="OID entries parsing failed",
     )
@@ -109,7 +109,7 @@ def oud_entries(
     oud_entries_fixture: str,
 ) -> t.SequenceOf[p.Ldif.Entry]:
     """Parse OUD entries fixture into Entry models."""
-    parse_response: m.Ldif.ParseResponse = u.Tests.assert_success(
+    parse_response: p.Ldif.ParseResponse = u.Tests.assert_success(
         api.parse_ldif(oud_entries_fixture),
         error_msg="OUD entries parsing failed",
     )

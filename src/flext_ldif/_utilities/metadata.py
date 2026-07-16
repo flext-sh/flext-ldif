@@ -121,7 +121,7 @@ class FlextLdifUtilitiesMetadata:
                 extension_kwargs[write_option_key] = value
         # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: the mapping is
         # validated once by the SchemaFormatDetails boundary below.
-        details: m.Ldif.SchemaFormatDetails = m.Ldif.SchemaFormatDetails.model_validate({
+        details: p.Ldif.SchemaFormatDetails = m.Ldif.SchemaFormatDetails.model_validate({
             **known_field_values,
             "extensions": extension_kwargs,
         })
@@ -767,7 +767,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def preserve_schema_formatting(
-        metadata: m.Ldif.ServerMetadata,
+        metadata: p.Ldif.ServerMetadata,
         definition: str,
     ) -> None:
         """Preserve complete schema formatting details for round-trip."""
@@ -804,7 +804,7 @@ class FlextLdifUtilitiesMetadata:
         extensions_map: t.MutableJsonMapping = (
             {} if extensions is None else dict(extensions)
         )
-        validated: m.Ldif.ServerMetadata = m.Ldif.ServerMetadata.model_validate({
+        validated: p.Ldif.ServerMetadata = m.Ldif.ServerMetadata.model_validate({
             "server_type": default_server_type,
             "extensions": extensions_map,
         })
@@ -812,7 +812,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def store_minimal_differences(
-        metadata: m.Ldif.ServerMetadata,
+        metadata: p.Ldif.ServerMetadata,
         **extra: t.Ldif.Scalar,
     ) -> None:
         """Store minimal differences in metadata for delta tracking."""
@@ -821,7 +821,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def track_boolean_conversion(
-        metadata: m.Ldif.ServerMetadata,
+        metadata: p.Ldif.ServerMetadata,
         attr_name: str,
         original_value: str,
         converted_value: str,

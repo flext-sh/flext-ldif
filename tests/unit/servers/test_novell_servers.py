@@ -64,7 +64,7 @@ class TestsFlextLdifNovellServers:
     @pytest.mark.parametrize("test_case", m.Tests.NOVELL_ATTRIBUTE_TEST_CASES)
     def test_can_handle_attribute_matches_expected_verdict(
         self,
-        test_case: m.Tests.AttributeTestCase,
+        test_case: p.Tests.AttributeTestCase,
         schema_server: p.Ldif.SchemaServer,
     ) -> None:
         """Novell attribute definitions are recognised, RFC ones are not."""
@@ -126,7 +126,7 @@ class TestsFlextLdifNovellServers:
     @pytest.mark.parametrize("test_case", m.Tests.NOVELL_OBJECTCLASS_TEST_CASES)
     def test_can_handle_objectclass_matches_expected_verdict(
         self,
-        test_case: m.Tests.ObjectClassTestCase,
+        test_case: p.Tests.ObjectClassTestCase,
         schema_server: p.Ldif.SchemaServer,
     ) -> None:
         """Novell objectClass definitions are recognised, RFC ones are not."""
@@ -249,7 +249,7 @@ class TestsFlextLdifNovellServers:
     @pytest.mark.parametrize("test_case", m.Tests.NOVELL_ENTRY_TEST_CASES)
     def test_can_handle_entry_matches_expected_verdict(
         self,
-        test_case: m.Tests.EntryTestCase,
+        test_case: p.Tests.EntryTestCase,
         entry_server: p.Tests.ProcessEntryServer,
     ) -> None:
         """Novell entries (by DN marker, attribute, or objectClass) are detected."""

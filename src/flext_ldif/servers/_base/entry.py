@@ -80,7 +80,7 @@ class FlextLdifServersBaseEntry(
                     format_options_raw,
                 )
                 serialized = u.Cli.json_dumps(dict(normalized_payload)).unwrap()
-                validated: m.Ldif.WriteFormatOptions = (
+                validated: p.Ldif.WriteFormatOptions = (
                     m.Ldif.WriteFormatOptions.model_validate_json(serialized)
                 )
                 return validated
@@ -398,7 +398,7 @@ class FlextLdifServersBaseEntry(
                 return f"{effective_name}:: {encoded}"
             return f"{effective_name}: {effective_value}"
 
-        def emit_control_line(control: m.Ldif.Control) -> str:
+        def emit_control_line(control: p.Ldif.Control) -> str:
             """Serialize RFC 2849 control line."""
             line = f"control: {control.control_type}"
             if control.criticality is not None:

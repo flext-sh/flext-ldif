@@ -196,7 +196,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
         @staticmethod
         def _resolve_acl_targetattr(
-            target: m.Ldif.AclTarget | None,
+            target: p.Ldif.AclTarget | None,
         ) -> str:
             """Resolve target attributes to formatted string."""
             if target and target.attributes:
@@ -208,7 +208,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
         @staticmethod
         def _resolve_acl_userdn(
-            subject: m.Ldif.AclSubject | None,
+            subject: p.Ldif.AclSubject | None,
         ) -> str:
             """Resolve subject to userdn string."""
             if subject and subject.subject_value:
@@ -280,7 +280,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
         def _extract_acl_permissions(
             self,
-            permissions_data: m.Ldif.AclPermissions | None,
+            permissions_data: p.Ldif.AclPermissions | None,
         ) -> t.MutableSequenceOf[str]:
             """Extract permission names from Permissions model flags."""
             permissions: t.MutableSequenceOf[str] = []
@@ -313,7 +313,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 )
 
         @override
-        def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
+        def _write_acl(self, acl_data: p.Ldif.Acl) -> p.Result[str]:
             """Write ACL data to RFC-compliant string format."""
             try:
                 return self._write_ds389_acl(acl_data)
@@ -416,7 +416,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             )
             return anonymous_subject
 
-        def _write_ds389_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
+        def _write_ds389_acl(self, acl_data: p.Ldif.Acl) -> p.Result[str]:
             """Write 389 DS ACL content."""
             if acl_data.raw_acl:
                 acl_str = (

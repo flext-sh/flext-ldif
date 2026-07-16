@@ -18,7 +18,7 @@ from __future__ import annotations
 import pytest
 from flext_tests import tm
 
-from tests import m, p, t, u
+from tests import p, t, u
 
 ORACLE_OID_PREFIX = "2.16.840.1.113894"
 
@@ -36,7 +36,7 @@ class TestsFlextLdifOidIntegration:
         content: str,
     ) -> t.SequenceOf[p.Ldif.Entry]:
         """Parse ``content`` through the public client and return its entries."""
-        response: m.Ldif.ParseResponse = u.Tests.assert_success(
+        response: p.Ldif.ParseResponse = u.Tests.assert_success(
             api.parse_ldif(content),
             error_msg="OID fixture parsing failed",
         )
@@ -67,7 +67,7 @@ class TestsFlextLdifOidIntegration:
         entries: t.SequenceOf[p.Ldif.Entry],
     ) -> t.SequenceOf[p.Ldif.Entry]:
         """Write ``entries`` and re-parse the produced LDIF text."""
-        written: m.Ldif.WriteResponse = u.Tests.assert_success(
+        written: p.Ldif.WriteResponse = u.Tests.assert_success(
             api.write(list(entries)),
             error_msg="writing OID entries failed",
         )

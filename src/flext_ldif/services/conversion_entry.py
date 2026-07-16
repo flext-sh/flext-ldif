@@ -28,7 +28,7 @@ class FlextLdifConversionEntryMixin(
 ):
     """Concrete Entry-model conversion + the conversion state it owns."""
 
-    dn_registry: m.Ldif.DnRegistry = u.Field(
+    dn_registry: p.Ldif.DnRegistry = u.Field(
         default_factory=m.Ldif.DnRegistry,
         description="DN registry for tracking distinguished names during conversion",
     )
@@ -117,7 +117,7 @@ class FlextLdifConversionEntryMixin(
         source_server_name: str,
     ) -> p.Ldif.Entry:
         """Copy entry and attach conversion metadata."""
-        metadata_for_analysis: m.Ldif.ServerMetadata | t.MutableJsonMapping | None = (
+        metadata_for_analysis: p.Ldif.ServerMetadata | t.MutableJsonMapping | None = (
             entry.metadata
             if isinstance(
                 entry.metadata,
@@ -152,7 +152,7 @@ class FlextLdifConversionEntryMixin(
         if transformed_attributes is not None:
             converted_entry = converted_entry.model_copy(
                 update={
-                    "attributes": m.Ldif.Attributes.model_validate(
+                    "attributes": p.Ldif.Attributes.model_validate(
                         {
                             "attributes": transformed_attributes,
                             "attribute_metadata": {},
@@ -194,7 +194,7 @@ class FlextLdifConversionEntryMixin(
             return converted_entry
         updated_entry: p.Ldif.Entry = converted_entry.model_copy(
             update={
-                "dn": m.Ldif.DN(
+                "dn": p.Ldif.DN(
                     value=transformed_dn,
                     metadata={},
                 ),

@@ -64,7 +64,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         def _enhance_schema_item_metadata(
             self,
-            schema_item: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+            schema_item: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
             original_definition: str,
         ) -> p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass:
             if not schema_item.metadata:
@@ -108,7 +108,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         def _enhance_objectclass_metadata(
             self,
-            objectclass: m.Ldif.SchemaObjectClass,
+            objectclass: p.Ldif.SchemaObjectClass,
             original_definition: str,
         ) -> p.Ldif.SchemaObjectClass:
             """Enhance objectClass metadata to indicate relaxed mode parsing."""
@@ -361,7 +361,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             )
 
         @override
-        def _write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> p.Result[str]:
+        def _write_attribute(self, attr_data: p.Ldif.SchemaAttribute) -> p.Result[str]:
             """Write attribute to RFC format - stringify in relaxed mode."""
             parent_result = super()._write_attribute(attr_data)
             if parent_result.success:
@@ -388,7 +388,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         @override
         def _write_objectclass(
             self,
-            oc_data: m.Ldif.SchemaObjectClass,
+            oc_data: p.Ldif.SchemaObjectClass,
         ) -> p.Result[str]:
             """Write objectClass to RFC format - stringify in relaxed mode."""
             parent_result = super()._write_objectclass(oc_data)
@@ -475,14 +475,14 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         def _with_relaxed_acl_metadata(
             self,
-            acl: m.Ldif.Acl,
+            acl: p.Ldif.Acl,
             acl_line: str,
         ) -> p.Ldif.Acl:
             """Attach relaxed metadata to an ACL."""
             if not acl.metadata:
-                acl_with_metadata: m.Ldif.Acl = acl.model_copy(
+                acl_with_metadata: p.Ldif.Acl = acl.model_copy(
                     update={
-                        "metadata": m.Ldif.ServerMetadata.model_validate({
+                        "metadata": p.Ldif.ServerMetadata.model_validate({
                             "server_type": self._get_server_type(),
                             "extensions": {
                                 "original_format": acl_line.strip(),
@@ -498,29 +498,29 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     "extensions": updated_extensions,
                 },
             )
-            updated_acl: m.Ldif.Acl = acl.model_copy(
+            updated_acl: p.Ldif.Acl = acl.model_copy(
                 update={"metadata": updated_metadata},
             )
             return updated_acl
 
         def _build_relaxed_acl(self, acl_line: str) -> p.Ldif.Acl:
             """Build relaxed ACL fallback model."""
-            relaxed_acl: m.Ldif.Acl = m.Ldif.Acl.model_validate({
+            relaxed_acl: p.Ldif.Acl = m.Ldif.Acl.model_validate({
                 "name": FlextLdifServersRelaxed.Constants.ACL_DEFAULT_NAME,
-                "target": m.Ldif.AclTarget.model_validate({
+                "target": p.Ldif.AclTarget.model_validate({
                     "target_dn": FlextLdifServersRelaxed.Constants.ACL_DEFAULT_TARGET_DN,
                     "attributes": [],
                 }),
-                "subject": m.Ldif.AclSubject.model_validate({
+                "subject": p.Ldif.AclSubject.model_validate({
                     "subject_type": "all",
                     "subject_value": FlextLdifServersRelaxed.Constants.ACL_DEFAULT_SUBJECT_VALUE,
                 }),
-                "permissions": m.Ldif.AclPermissions.model_validate({}),
+                "permissions": p.Ldif.AclPermissions.model_validate({}),
                 "server_type": self._get_server_type(),
                 "validation_violations": [],
                 "raw_line": acl_line,
                 "raw_acl": acl_line,
-                "metadata": m.Ldif.ServerMetadata.model_validate({
+                "metadata": p.Ldif.ServerMetadata.model_validate({
                     "server_type": self._get_server_type(),
                     "extensions": {
                         "original_format": acl_line.strip(),
@@ -530,7 +530,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             return relaxed_acl
 
         @override
-        def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
+        def _write_acl(self, acl_data: p.Ldif.Acl) -> p.Result[str]:
             """Write ACL to RFC format - stringify in relaxed mode."""
             parent_result = super()._write_acl(acl_data)
             if parent_result.success:
@@ -771,7 +771,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 encoding=None,
                 trailing_info=None,
             )
-            metadata: m.Ldif.ServerMetadata = m.Ldif.ServerMetadata.model_validate({
+            metadata: p.Ldif.ServerMetadata = m.Ldif.ServerMetadata.model_validate({
                 "server_type": "relaxed",
                 "original_format_details": format_details,
                 "original_attribute_case": original_attribute_case,
