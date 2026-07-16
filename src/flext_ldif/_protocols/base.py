@@ -59,7 +59,7 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
     @runtime_checkable
-    class CategoryRules(p.Model, Protocol):
+    class CategoryRules(p.BaseModel, Protocol):
         """Validated category-rule capabilities consumed by categorization."""
 
         @property
@@ -68,7 +68,7 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
     @runtime_checkable
-    class WhitelistRules(p.Model, Protocol):
+    class WhitelistRules(p.BaseModel, Protocol):
         """Validated schema-whitelist capabilities consumed by filtering."""
 
         @property
@@ -82,7 +82,7 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
     @runtime_checkable
-    class MigrateOptions(p.Model, Protocol):
+    class MigrateOptions(p.BaseModel, Protocol):
         """Public migration options without a concrete model dependency."""
 
         @property
@@ -121,7 +121,7 @@ class FlextLdifProtocolsBase(Protocol):
         def message(self) -> str: ...
 
     @runtime_checkable
-    class ProcessEntriesOptions(p.Model, Protocol):
+    class ProcessEntriesOptions(p.BaseModel, Protocol):
         """Validated controls for sequential or parallel entry processing."""
 
         @property
@@ -336,7 +336,7 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
     @runtime_checkable
-    class WriteFormatOptions(p.Model, Protocol):
+    class WriteFormatOptions(p.BaseModel, Protocol):
         """Formatting options for entry serialization."""
 
         @property
@@ -468,8 +468,8 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
         # NOTE (multi-agent, mro-0ftd.3.7.2): model_dump makes this protocol
-        # structurally a flext-core p.Model so it is assignable into the
-        # canonical model_copy update union (t.JsonPayload | p.Model).
+        # structurally a flext-core p.BaseModel so it is assignable into the
+        # canonical model_copy update union (t.JsonPayload | p.BaseModel).
         def model_dump(
             self,
             *,
@@ -501,7 +501,7 @@ class FlextLdifProtocolsBase(Protocol):
         def model_copy(
             self,
             *,
-            update: t.MappingKV[str, t.JsonPayload | p.Model | t.SequenceOf[p.Model]]
+            update: t.MappingKV[str, t.JsonPayload | p.BaseModel | t.SequenceOf[p.BaseModel]]
             | None = None,
             deep: bool = False,
         ) -> Self:
@@ -540,7 +540,7 @@ class FlextLdifProtocolsBase(Protocol):
         def model_copy(
             self,
             *,
-            update: t.MappingKV[str, t.JsonPayload | p.Model | t.SequenceOf[p.Model]]
+            update: t.MappingKV[str, t.JsonPayload | p.BaseModel | t.SequenceOf[p.BaseModel]]
             | None = None,
             deep: bool = False,
         ) -> Self:
@@ -627,7 +627,7 @@ class FlextLdifProtocolsBase(Protocol):
         def model_copy(
             self,
             *,
-            update: t.MappingKV[str, t.JsonPayload | p.Model | t.SequenceOf[p.Model]]
+            update: t.MappingKV[str, t.JsonPayload | p.BaseModel | t.SequenceOf[p.BaseModel]]
             | None = None,
             deep: bool = False,
         ) -> Self:
@@ -688,7 +688,7 @@ class FlextLdifProtocolsBase(Protocol):
         def model_copy(
             self,
             *,
-            update: t.MappingKV[str, t.JsonPayload | p.Model | t.SequenceOf[p.Model]]
+            update: t.MappingKV[str, t.JsonPayload | p.BaseModel | t.SequenceOf[p.BaseModel]]
             | None = None,
             deep: bool = False,
         ) -> Self:
@@ -921,7 +921,7 @@ class FlextLdifProtocolsBase(Protocol):
         """Model exposing validation metadata for helper updates."""
 
         @property
-        def validation_metadata(self) -> p.Model | None:
+        def validation_metadata(self) -> p.BaseModel | None:
             """The validated metadata model when one is present."""
             ...
 

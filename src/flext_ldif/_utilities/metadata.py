@@ -10,7 +10,7 @@ from collections.abc import (
 from typing import ClassVar, TypeIs
 
 from flext_cli import u
-from flext_ldif import FlextLdifModels as m, c, p, t
+from flext_ldif import c, m, p, t
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer as us
 
 
@@ -24,7 +24,7 @@ class FlextLdifUtilitiesMetadata:
         """Serialize any CLI JSON-compatible payload through the canonical DSL."""
         if value is None:
             return ""
-        payload_json: str = m.Cli.CliNormalizedJson(
+        payload_json: str = m.Cli.JsonNormalized(
             t.Cli.JSON_VALUE_ADAPTER.validate_python(
                 u.to_jsonable_python(value),
             ),
