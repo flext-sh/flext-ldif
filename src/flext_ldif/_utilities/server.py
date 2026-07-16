@@ -40,7 +40,7 @@ class FlextLdifUtilitiesServer:
 
     @staticmethod
     def _extract_pattern_name_candidates(
-        value: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        value: str | p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
         settings: m.Ldif.ServerPatternsConfig,
     ) -> list[str]:
         """Extract comparable schema names from a raw definition or parsed model."""
@@ -222,7 +222,9 @@ class FlextLdifUtilitiesServer:
 
     @staticmethod
     def matches_server_patterns(
-        value: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        # NOTE (multi-agent, mro-0ftd.3.7.2): behavior layer accepts the protocol
+        # payload (§3.2) so p.X-annotated can_handle_* overrides pass it through.
+        value: str | p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
         settings: m.Ldif.ServerPatternsConfig,
     ) -> bool:
         r"""Check if value matches server-specific detection patterns.

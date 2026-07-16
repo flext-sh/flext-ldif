@@ -97,19 +97,22 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         return acl
 
     @override
-    def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
+    # NOTE (multi-agent, mro-0ftd.3.7.2): param type = protocol to match base
+    # (contravariant override); concrete model still built via model_validate.
+    def can_handle_acl(self, acl_line: str | p.Ldif.Acl) -> bool:
         """Check if this server can handle the ACL definition."""
         _ = acl_line
         return True
 
     @override
-    def can_handle_attribute(self, attribute: m.Ldif.SchemaAttribute) -> bool:
+    # NOTE (multi-agent, mro-0ftd.3.7.2): protocol payload to match base SSOT.
+    def can_handle_attribute(self, attribute: p.Ldif.SchemaAttribute) -> bool:
         """Check if server handles schema attributes."""
         _ = attribute
         return False
 
     @override
-    def can_handle_objectclass(self, objectclass: m.Ldif.SchemaObjectClass) -> bool:
+    def can_handle_objectclass(self, objectclass: p.Ldif.SchemaObjectClass) -> bool:
         """Check if server handles objectclasses."""
         _ = objectclass
         return False

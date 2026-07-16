@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from flext_ldif import FlextLdifModels as m, c, p, r, t
+from flext_ldif import c, p, r, t
 from flext_ldif._utilities.parser import FlextLdifUtilitiesParser as up
 
 
@@ -138,11 +138,12 @@ class FlextLdifUtilitiesSchemaExtract:
         return r[tuple[str, str, str | None]].ok((oid, name, desc))
 
     @staticmethod
-    def extract_schema_items_from_lines[SchemaModelT: m.Ldif.SchemaElement](
+    # NOTE (multi-agent, mro-0ftd.3.7.2): TypeVar bound = the protocol payload
+    # (§3.2); the concrete model class still satisfies it at construction.
+    def extract_schema_items_from_lines[SchemaModelT: p.Ldif.SchemaElement](
         ldif_content: str,
         parse_callback: Callable[[str], p.Result[SchemaModelT]],
         line_prefix: str,
-        model_type: type[SchemaModelT],
     ) -> t.MutableSequenceOf[SchemaModelT]:
         """Extract schema items from LDIF content lines."""
         items: t.MutableSequenceOf[SchemaModelT] = []
@@ -151,11 +152,10 @@ class FlextLdifUtilitiesSchemaExtract:
             if line.lower().startswith(line_prefix.lower()):
                 item_def = line.split(":", 1)[1].strip()
                 result = parse_callback(item_def)
-                if result.success:
-                    try:
-                        items.append(model_type.model_validate(result.value))
-                    except c.Ldif.EXC_LDIF_PARSE:
-                        continue
+                # NOTE (multi-agent, mro-0ftd.3.7.2): the callback already returns
+                # the valid model — append it directly (U19: no internal dump/
+                # revalidate round-trip; model_type construction was redundant).
+                items.append(result.value)
         return items
 
     @staticmethod

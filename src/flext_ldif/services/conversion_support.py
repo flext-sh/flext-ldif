@@ -21,7 +21,7 @@ class FlextLdifConversionSupportMixin(s):
         """Resolve server server instance from string type or return instance."""
         if isinstance(server_or_type, str):
             server_type_str: str = server_or_type
-            resolved_result = self._server.resolve_base_server(
+            resolved_result = self.server.resolve_base_server(
                 server_type_str,
             )
             if resolved_result.failure:
@@ -33,7 +33,7 @@ class FlextLdifConversionSupportMixin(s):
             return resolved
         if isinstance(server_or_type, p.Ldif.ServerServer):
             return server_or_type
-        resolved_from_ref = self._server.resolve_base_server(
+        resolved_from_ref = self.server.resolve_base_server(
             server_or_type.server_type,
         )
         if resolved_from_ref.failure:
@@ -71,7 +71,7 @@ class FlextLdifConversionSupportMixin(s):
             "acl": 0,
             "entry": 0,
         }
-        concrete_server = self._server.resolve_base_server(
+        concrete_server = self.server.resolve_base_server(
             server if isinstance(server, str) else server.server_type,
         ).map_or(None)
         if concrete_server is None:

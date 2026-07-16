@@ -89,7 +89,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         @override
         def can_handle_attribute(
             self,
-            attr_definition: str | m.Ldif.SchemaAttribute,
+            attr_definition: str | p.Ldif.SchemaAttribute,
         ) -> bool:
             """Accept any attribute definition in relaxed mode."""
             if not isinstance(attr_definition, str):
@@ -99,7 +99,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         @override
         def can_handle_objectclass(
             self,
-            oc_definition: str | m.Ldif.SchemaObjectClass,
+            oc_definition: str | p.Ldif.SchemaObjectClass,
         ) -> bool:
             """Accept any objectClass definition in relaxed mode."""
             if not isinstance(oc_definition, str):
@@ -419,7 +419,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         """Relaxed ACL server for lenient LDIF processing."""
 
         @override
-        def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
+        # NOTE (multi-agent, mro-0ftd.3.7.2): protocol payload to match base SSOT.
+        def can_handle(self, acl_line: str | p.Ldif.Acl) -> bool:
             """Check if this is a relaxed ACL (public method)."""
             if isinstance(acl_line, str):
                 return self.can_handle_acl(acl_line)
@@ -428,20 +429,20 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         @override
         def can_handle_acl(
             self,
-            acl_line: str | m.Ldif.Acl | t.JsonValue,
+            acl_line: str | p.Ldif.Acl | t.JsonValue,
         ) -> bool:
             """Accept any ACL line in relaxed mode."""
             _ = acl_line
             return True
 
         @override
-        def can_handle_attribute(self, attribute: m.Ldif.SchemaAttribute) -> bool:
+        def can_handle_attribute(self, attribute: p.Ldif.SchemaAttribute) -> bool:
             """Check if this ACL server should be aware of a specific attribute definition."""
             _ = attribute
             return True
 
         @override
-        def can_handle_objectclass(self, objectclass: m.Ldif.SchemaObjectClass) -> bool:
+        def can_handle_objectclass(self, objectclass: p.Ldif.SchemaObjectClass) -> bool:
             """Check if this ACL server should be aware of a specific objectClass definition."""
             _ = objectclass
             return True
@@ -558,13 +559,13 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             return True
 
         @override
-        def can_handle_attribute(self, attribute: m.Ldif.SchemaAttribute) -> bool:
+        def can_handle_attribute(self, attribute: p.Ldif.SchemaAttribute) -> bool:
             """Check if this Entry server has special handling for an attribute definition."""
             _ = attribute
             return True
 
         @override
-        def can_handle_objectclass(self, objectclass: m.Ldif.SchemaObjectClass) -> bool:
+        def can_handle_objectclass(self, objectclass: p.Ldif.SchemaObjectClass) -> bool:
             """Check if this Entry server has special handling for an objectClass definition."""
             _ = objectclass
             return True

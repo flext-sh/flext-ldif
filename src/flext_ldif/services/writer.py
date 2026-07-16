@@ -100,7 +100,7 @@ class FlextLdifWriter(s):
             else m.Ldif.WriteFormatOptions.model_validate(format_options)
         )
         write_result = (
-            self._server
+            self.server
             .server(effective_server_type)
             .map_error(
                 lambda error: error or "Failed to resolve LDIF server server",

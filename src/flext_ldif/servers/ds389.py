@@ -157,7 +157,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         @override
         def can_handle_attribute(
             self,
-            attr_definition: str | m.Ldif.SchemaAttribute,
+            attr_definition: str | p.Ldif.SchemaAttribute,
         ) -> bool:
             """Detect 389 DS attribute definitions using centralized constants."""
             matches: bool = u.Ldif.matches_server_patterns(
@@ -169,7 +169,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         @override
         def can_handle_objectclass(
             self,
-            oc_definition: str | m.Ldif.SchemaObjectClass,
+            oc_definition: str | p.Ldif.SchemaObjectClass,
         ) -> bool:
             """Detect 389 DS objectClass definitions using centralized constants."""
             matches: bool = u.Ldif.matches_server_patterns(
@@ -181,11 +181,14 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         @override
         def _hook_post_parse_objectclass(
             self,
-            oc: m.Ldif.SchemaObjectClass,
-        ) -> p.Result[m.Ldif.SchemaObjectClass]:
+            # NOTE (multi-agent, mro-0ftd.3.7.2): protocol payload (§3.2).
+            oc: p.Ldif.SchemaObjectClass,
+        ) -> p.Result[p.Ldif.SchemaObjectClass]:
             """Normalize 389 DS objectClass data after RFC parsing."""
-            u.Ldif.fix_missing_sup(oc)
-            u.Ldif.fix_kind_mismatch(oc)
+            # NOTE (multi-agent, mro-0ftd.3.7.2): helpers return the immutable
+            # model_copy transition (no in-place mutation) — assign it.
+            oc = u.Ldif.fix_missing_sup(oc)
+            oc = u.Ldif.fix_kind_mismatch(oc)
             return super()._hook_post_parse_objectclass(oc)
 
     class Acl(FlextLdifServersRfc.Acl):
@@ -217,12 +220,13 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             return anonymous_subject
 
         @override
-        def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
+        # NOTE (multi-agent, mro-0ftd.3.7.2): protocol payload to match base SSOT.
+        def can_handle(self, acl_line: str | p.Ldif.Acl) -> bool:
             """Check if this is a 389 Directory Server ACL (public method)."""
             return self.can_handle_acl(acl_line)
 
         @override
-        def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
+        def can_handle_acl(self, acl_line: str | p.Ldif.Acl) -> bool:
             """Detect 389 DS ACI lines."""
             if isinstance(acl_line, str):
                 normalized = acl_line.strip()

@@ -47,7 +47,7 @@ class FlextLdifDetector(s):
     ) -> type[p.Ldif.ServerConstants] | None:
         """Get server Constants class dynamically via FlextLdifServer registry."""
         constants_result: p.Result[type[p.Ldif.ServerConstants]] = (
-            self._server.resolve_server_constants(server_type)
+            self.server.resolve_server_constants(server_type)
         )
         constants: type[p.Ldif.ServerConstants] | None = constants_result.unwrap_or(
             None,

@@ -116,7 +116,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         @override
         def can_handle_attribute(
             self,
-            attr_definition: str | m.Ldif.SchemaAttribute,
+            attr_definition: str | p.Ldif.SchemaAttribute,
         ) -> bool:
             """Detect Tivoli-specific attributes."""
             matches: bool = u.Ldif.matches_server_patterns(
@@ -128,7 +128,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         @override
         def can_handle_objectclass(
             self,
-            oc_definition: str | m.Ldif.SchemaObjectClass,
+            oc_definition: str | p.Ldif.SchemaObjectClass,
         ) -> bool:
             """Detect Tivoli objectClass definitions."""
             matches: bool = u.Ldif.matches_server_patterns(
@@ -141,7 +141,8 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         """IBM Tivoli Directory Server ACL servers implementation."""
 
         @override
-        def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
+        # NOTE (multi-agent, mro-0ftd.3.7.2): protocol payload to match base SSOT.
+        def can_handle(self, acl_line: str | p.Ldif.Acl) -> bool:
             """Check if this ACL is a Tivoli DS ACL."""
             if isinstance(acl_line, str):
                 return self.can_handle_acl(acl_line)
@@ -151,7 +152,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             return self.can_handle_acl(raw_acl)
 
         @override
-        def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
+        def can_handle_acl(self, acl_line: str | p.Ldif.Acl) -> bool:
             """Detect Tivoli DS ACL values."""
             if isinstance(acl_line, str):
                 normalized = acl_line.strip() if acl_line else ""

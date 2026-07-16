@@ -2,32 +2,37 @@
 
 from __future__ import annotations
 
-from flext_core import FlextTypes as t
-from flext_ldif import p
+from flext_cli import t
+from flext_ldif._protocols.base import FlextLdifProtocolsBase
+from flext_ldif._protocols.domain import FlextLdifProtocolsDomain
 
 
 class FlextLdifTypesDomain:
     """Composite LDIF aliases built from canonical protocols."""
 
-    type AclPayload = p.Ldif.Acl | str
-    type EntryPayload = p.Ldif.Entry | str
-    type EntryLike = p.Ldif.Entry
-    type EntrySequence = t.MutableSequenceOf[p.Ldif.Entry]
-    type EntryOrEntries = p.Ldif.Entry | EntrySequence
-    type SchemaAttributeLike = p.Ldif.SchemaAttribute
-    type SchemaObjectClassLike = p.Ldif.SchemaObjectClass
+    # NOTE (multi-agent, mro-0ftd.3.7.2): PEP 695 aliases bind directly to the
+    # acyclic private declarations and never resolve the public p facade.
+    type AclPayload = FlextLdifProtocolsBase.Acl | str
+    type EntryPayload = FlextLdifProtocolsBase.Entry | str
+    type EntryLike = FlextLdifProtocolsBase.Entry
+    type EntrySequence = t.MutableSequenceOf[FlextLdifProtocolsBase.Entry]
+    type EntryOrEntries = FlextLdifProtocolsBase.Entry | EntrySequence
+    type SchemaAttributeLike = FlextLdifProtocolsBase.SchemaAttribute
+    type SchemaObjectClassLike = FlextLdifProtocolsBase.SchemaObjectClass
     type SchemaItem = SchemaAttributeLike | SchemaObjectClassLike
-    type AclLike = p.Ldif.Acl
+    type AclLike = FlextLdifProtocolsBase.Acl
     type AclSequence = t.MutableSequenceOf[AclLike]
     type ConvertedModel = EntryLike | SchemaItem | AclLike
     type SchemaConversionValue = SchemaItem | str
-    type EventType = p.Ldif.ConversionEvent | p.Ldif.DnEvent
-    type ResponseLike = p.Ldif.Response
-    type ParseResponseLike = p.Ldif.ParseResponse
-    type ValidationResultLike = p.Ldif.ValidationResult
-    type MigrationPipelineResultLike = p.Ldif.MigrationPipelineResult
-    type WriteResponseLike = p.Ldif.WriteResponse
-    type ServerServerLike = p.Ldif.ServerServer
+    type EventType = (
+        FlextLdifProtocolsBase.ConversionEvent | FlextLdifProtocolsBase.DnEvent
+    )
+    type ResponseLike = FlextLdifProtocolsBase.Response
+    type ParseResponseLike = FlextLdifProtocolsBase.ParseResponse
+    type ValidationResultLike = FlextLdifProtocolsBase.ValidationResult
+    type MigrationPipelineResultLike = FlextLdifProtocolsBase.MigrationPipelineResult
+    type WriteResponseLike = FlextLdifProtocolsBase.WriteResponse
+    type ServerServerLike = FlextLdifProtocolsDomain.ServerServer
 
 
 __all__: list[str] = ["FlextLdifTypesDomain"]

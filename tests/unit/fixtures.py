@@ -133,7 +133,7 @@ def conversion_matrix() -> FlextLdifConversion:
 @pytest.fixture
 def server() -> p.Ldif.ServerRegistry:
     """Get FlextLdifServer instance for server management."""
-    server_registry: p.Ldif.ServerRegistry = FlextLdifServer.fetch_global_instance()
+    server_registry: p.Ldif.ServerRegistry = FlextLdifServer.fetch_global()
     return server_registry
 
 

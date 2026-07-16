@@ -151,11 +151,11 @@ class FlextLdifAcl(s):
                 f"Invalid server type: {server_type} - {error}",
             )
         try:
-            acl_server = self._server.acl(
+            acl_server = self.server.acl(
                 "openldap1" if server_type == "openldap" else normalized_server_type,
             )
             if acl_server is None and server_type == "openldap":
-                acl_server = self._server.acl("openldap2")
+                acl_server = self.server.acl("openldap2")
         except ValueError as error:
             return r[m.Ldif.Acl].fail(str(error))
         if acl_server is None:

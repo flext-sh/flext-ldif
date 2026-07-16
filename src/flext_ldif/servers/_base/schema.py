@@ -272,7 +272,7 @@ class FlextLdifServersBaseSchema(
 
     def can_handle_attribute(
         self,
-        attr_definition: str | m.Ldif.SchemaAttribute,
+        attr_definition: str | p.Ldif.SchemaAttribute,
     ) -> bool:
         """Check if this server can handle the attribute definition."""
         _ = attr_definition
@@ -280,7 +280,7 @@ class FlextLdifServersBaseSchema(
 
     def can_handle_objectclass(
         self,
-        oc_definition: str | m.Ldif.SchemaObjectClass,
+        oc_definition: str | p.Ldif.SchemaObjectClass,
     ) -> bool:
         """Check if this server can handle the objectClass definition."""
         _ = oc_definition
@@ -436,57 +436,63 @@ class FlextLdifServersBaseSchema(
     def parse_server(
         self,
         value: str,
-    ) -> p.Result[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
+    ) -> p.Result[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass]:
         """Parse schema definition (attribute or objectClass)."""
         return self.route_parse(value)
 
-    def parse_input(
-        self,
-        schema_text: str,
-    ) -> p.Result[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
-        """Compatibility parser entrypoint for direct schema server consumers."""
-        return self.parse_server(schema_text)
-
-    def parse_attribute(self, definition: str) -> p.Result[m.Ldif.SchemaAttribute]:
+    def parse_attribute(self, definition: str) -> p.Result[p.Ldif.SchemaAttribute]:
         """Parse attribute definition (public API)."""
-        return self._parse_attribute(definition)
+        parse_result = self._parse_attribute(definition)
+        if parse_result.failure:
+            return r[p.Ldif.SchemaAttribute].fail(
+                parse_result.error or "Attribute parsing failed",
+            )
+        return r[p.Ldif.SchemaAttribute].ok(parse_result.value)
 
-    def parse_objectclass(self, definition: str) -> p.Result[m.Ldif.SchemaObjectClass]:
+    def parse_objectclass(
+        self,
+        definition: str,
+    ) -> p.Result[p.Ldif.SchemaObjectClass]:
         """Parse objectClass definition (public API)."""
-        return self._parse_objectclass(definition)
+        parse_result = self._parse_objectclass(definition)
+        if parse_result.failure:
+            return r[p.Ldif.SchemaObjectClass].fail(
+                parse_result.error or "ObjectClass parsing failed",
+            )
+        return r[p.Ldif.SchemaObjectClass].ok(parse_result.value)
 
     def route_parse(
         self,
         definition: str,
-    ) -> p.Result[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
+    ) -> p.Result[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass]:
         """Route schema definition to appropriate parse method."""
         if self._is_objectclass_schema_type(definition):
             oc_result = self._parse_objectclass(definition)
             if oc_result.failure:
-                return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].fail(
+                return r[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass].fail(
                     oc_result.error or "Parse failed",
                 )
             parsed_objectclass = m.Ldif.SchemaObjectClass.model_validate(
                 oc_result.unwrap(),
             )
-            return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].ok(
+            return r[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass].ok(
                 parsed_objectclass,
             )
         attr_result = self._parse_attribute(definition)
         if attr_result.failure:
-            return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].fail(
+            return r[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass].fail(
                 attr_result.error or "Parse failed",
             )
         parsed_attribute = m.Ldif.SchemaAttribute.model_validate(
             attr_result.unwrap(),
         )
-        return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].ok(
+        return r[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass].ok(
             parsed_attribute,
         )
 
     def write(
         self,
-        model: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        model: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
     ) -> p.Result[str]:
         """Write schema model to string format."""
         try:
@@ -496,12 +502,12 @@ class FlextLdifServersBaseSchema(
             return self.write_objectclass(objectclass_model)
         return self.write_attribute(attribute_model)
 
-    def write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> p.Result[str]:
+    def write_attribute(self, attr_data: p.Ldif.SchemaAttribute) -> p.Result[str]:
         """Write attribute to RFC-compliant string format (public API)."""
         validated_attr = m.Ldif.SchemaAttribute.model_validate(attr_data)
         return self._write_attribute(validated_attr)
 
-    def write_objectclass(self, oc_data: m.Ldif.SchemaObjectClass) -> p.Result[str]:
+    def write_objectclass(self, oc_data: p.Ldif.SchemaObjectClass) -> p.Result[str]:
         """Write objectClass to RFC-compliant string format (public API)."""
         validated_oc = m.Ldif.SchemaObjectClass.model_validate(oc_data)
         return self._write_objectclass(validated_oc)
@@ -595,14 +601,16 @@ class FlextLdifServersBaseSchema(
 
     def _hook_post_parse_objectclass(
         self,
-        oc: m.Ldif.SchemaObjectClass,
-    ) -> p.Result[m.Ldif.SchemaObjectClass]:
+        # NOTE (multi-agent, mro-0ftd.3.7.2): base SSOT — protocol payload (§3.2).
+        oc: p.Ldif.SchemaObjectClass,
+    ) -> p.Result[p.Ldif.SchemaObjectClass]:
         """Run hook after parsing an objectClass definition."""
-        return r[m.Ldif.SchemaObjectClass].ok(oc)
+        return r[p.Ldif.SchemaObjectClass].ok(oc)
 
     def _hook_validate_attributes(
         self,
-        attributes: t.MutableSequenceOf[m.Ldif.SchemaAttribute],
+        # NOTE (multi-agent, mro-0ftd.3.7.2): behavior layer accepts protocol (§3.2).
+        attributes: t.MutableSequenceOf[p.Ldif.SchemaAttribute],
         available_attrs: set[str],
     ) -> p.Result[bool]:
         """Validate server-specific attributes during schema extraction."""

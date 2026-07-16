@@ -12,23 +12,23 @@ from flext_ldif.services.server import FlextLdifServer
 class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](s[TDomainResult]):
     """Base class for LDIF services with typed settings helper."""
 
-    _server: p.Ldif.ServerRegistry = u.PrivateAttr(
-        default_factory=FlextLdifServer.fetch_global_instance,
-    )
     server: Annotated[
-        p.Ldif.ServerRegistry | None,
+        p.Ldif.ServerRegistry,
         u.Field(
             exclude=True,
             description="LDIF server registry used directly by service mixins.",
         ),
-    ] = None
+    ] = u.Field(default_factory=FlextLdifServer.fetch_global)
 
+    @property
     @override
-    def model_post_init(self, __context: t.JsonMapping | None, /) -> None:
-        """Bind the shared LDIF server registry after Pydantic initialization."""
-        super().model_post_init(__context)
-        if self.server is not None:
-            self._server = self.server
+    def settings(self) -> p.Ldif.Settings:
+        """Runtime settings after enforcement of the LDIF settings contract."""
+        runtime_settings = super().settings
+        if not isinstance(runtime_settings, p.Ldif.Settings):
+            msg = "Runtime settings do not implement the LDIF settings contract"
+            raise TypeError(msg)
+        return runtime_settings
 
     def __call__(
         self,
@@ -42,7 +42,7 @@ class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](s[TDomainResult]):
             str,
             t.JsonValue | p.Ldif.ServerRegistry | p.Ldif.Settings | None,
         ] = dict(fields)
-        payload["server"] = self._server if server is None else server
+        payload["server"] = self.server if server is None else server
         payload["runtime_settings"] = settings
         instance: Self = type(self).model_validate(payload)
         return instance

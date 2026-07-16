@@ -6,20 +6,18 @@ import inspect
 from typing import Annotated, ClassVar, TypeGuard, override
 
 import flext_ldif.servers as ldif_servers
-from flext_ldif import c, p, r, s, t, u
-from flext_ldif._protocols.domain import FlextLdifProtocolsDomain
+from flext_core import s
+from flext_ldif import c, p, r, t, u
 from flext_ldif.servers.base import FlextLdifServersBase
 
-ServerServer = FlextLdifProtocolsDomain.ServerServer
+# NOTE (multi-agent, mro-0ftd.3.7.2): runtime services consume only the public
+# protocol facade; the former private Domain alias recreated the SCC edge.
 
 
 class FlextLdifServer(s):
     """Server server registry using the canonical registry DSL."""
 
     SERVERS: ClassVar[str] = "ldif_servers"
-    _discovery_initialized: ClassVar[bool] = False
-    _global_instance: ClassVar[FlextLdifServer | None] = None
-    _registered_servers: ClassVar[dict[str, p.Ldif.ServerServer]] = {}
 
     dispatcher: Annotated[
         p.Dispatcher | None,
@@ -30,22 +28,23 @@ class FlextLdifServer(s):
         ),
     ] = None
     _registry: p.Registry = u.PrivateAttr()
+    _registered_servers: dict[str, p.Ldif.ServerServer] = u.PrivateAttr(
+        default_factory=dict
+    )
 
     @override
     def model_post_init(self, __context: t.JsonMapping | None, /) -> None:
         """Initialize registry and trigger auto-discovery."""
         super().model_post_init(__context)
         self._registry = u.build_registry(dispatcher=self.dispatcher)
-        if not type(self)._discovery_initialized:
-            self._auto_discover()
-            type(self)._discovery_initialized = True
+        self._auto_discover()
 
     def acl(self, server_type: str) -> p.Ldif.AclServer | None:
         """Get ACL server for a server type."""
         server_result = self.server(server_type)
         if server_result.failure:
             return None
-        base: ServerServer = server_result.value
+        base: p.Ldif.ServerServer = server_result.value
         return base.acl_server
 
     def entry(self, server_type: str) -> p.Ldif.EntryServer | None:
@@ -53,7 +52,7 @@ class FlextLdifServer(s):
         server_result = self.server(server_type)
         if server_result.failure:
             return None
-        base: ServerServer = server_result.value
+        base: p.Ldif.ServerServer = server_result.value
         return base.entry_server
 
     def resolve_server_bundle(
@@ -77,7 +76,7 @@ class FlextLdifServer(s):
                 "resolve_server_bundle",
                 ValueError(server_result.error or server_type),
             )
-        base: ServerServer = server_result.value
+        base: p.Ldif.ServerServer = server_result.value
         return r[
             t.MappingKV[
                 str,
@@ -115,15 +114,17 @@ class FlextLdifServer(s):
             )
         return r[type[p.Ldif.ServerConstants]].ok(constants)
 
-    def summarize_registry(self) -> t.Ldif.MutableMetadataInputMapping:
+    def summarize_registry(self) -> t.MutableJsonMapping:
         """Get comprehensive registry statistics."""
         server_types = self.list_registered_servers()
         servers_by_server: t.JsonDict = {}
         priorities: t.JsonDict = {}
         for st in server_types:
-            base = self.server(st).unwrap_or(None)
-            if base is None:
-                continue
+            server_result = self.server(st)
+            if server_result.failure:
+                msg = server_result.error or st
+                raise ValueError(msg)
+            base = server_result.value
             servers_by_server[st] = {
                 "schema": type(base.schema_server).__name__
                 if base.schema_server
@@ -134,7 +135,7 @@ class FlextLdifServer(s):
                 else None,
             }
             priorities[st] = base.priority
-        stats: t.Ldif.MutableMetadataInputMapping = {
+        stats: t.MutableJsonMapping = {
             "total_servers": len(server_types),
             "servers_by_server": servers_by_server,
             "server_priorities": priorities,
@@ -153,21 +154,20 @@ class FlextLdifServer(s):
         server_result = self.server(server_type)
         if server_result.failure:
             return None
-        base: ServerServer = server_result.value
+        base: p.Ldif.ServerServer = server_result.value
         return base.schema_server
 
     def list_registered_servers(self) -> t.MutableSequenceOf[str]:
         """List all registered server types."""
-        return sorted(type(self)._registered_servers)
+        return sorted(self._registered_servers)
 
-    @override
     def server(self, server_type: str) -> p.Result[p.Ldif.ServerServer]:
         """Get base server for a server type."""
         try:
             normalized = u.Ldif.normalize_server_type(server_type)
         except ValueError as e:
             return r[p.Ldif.ServerServer].fail(str(e))
-        plugin = type(self)._registered_servers.get(normalized)
+        plugin = self._registered_servers.get(normalized)
         if plugin is None:
             return r[p.Ldif.ServerServer].fail(normalized)
         return r[p.Ldif.ServerServer].ok(plugin)
@@ -177,10 +177,7 @@ class FlextLdifServer(s):
         for name, obj in inspect.getmembers(ldif_servers):
             if not self._is_discoverable_server(name, obj):
                 continue
-            try:
-                self._register_discovered_server(obj)
-            except c.EXC_ATTR_TYPE:
-                continue
+            self._register_discovered_server(obj)
 
     @staticmethod
     def _is_discoverable_server(
@@ -202,28 +199,27 @@ class FlextLdifServer(s):
         """Instantiate and register one discovered concrete server class."""
         instance = server_class()
         server_type = getattr(instance, "server_type", None)
-        if not isinstance(server_type, str):
-            return
-        if not all(
-            getattr(server_class, attr_name, None) is not None
+        if not isinstance(server_type, str) or not server_type:
+            msg = f"{server_class.__name__} must declare a non-empty server_type"
+            raise TypeError(msg)
+        missing = tuple(
+            attr_name
             for attr_name in ("Schema", "Acl", "Entry")
-        ):
-            return
-        if server_type:
-            type(self)._registered_servers[server_type] = instance
-            self._registry.register_plugin(
-                self.SERVERS,
-                server_type,
-                instance,
-                scope=c.RegistrationScope.CLASS,
-            )
-
-    @classmethod
-    def fetch_global_instance(cls) -> FlextLdifServer:
-        """Return the shared registry instance, creating it on first call."""
-        if cls._global_instance is None:
-            cls._global_instance = cls()
-        return cls._global_instance
+            if getattr(server_class, attr_name, None) is None
+        )
+        if missing:
+            msg = f"{server_class.__name__} missing server contracts: {missing}"
+            raise TypeError(msg)
+        if server_type in self._registered_servers:
+            msg = f"duplicate LDIF server type: {server_type}"
+            raise ValueError(msg)
+        self._registered_servers[server_type] = instance
+        self._registry.register_plugin(
+            self.SERVERS,
+            server_type,
+            instance,
+            scope=c.RegistrationScope.CLASS,
+        )
 
 
 __all__: list[str] = ["FlextLdifServer"]

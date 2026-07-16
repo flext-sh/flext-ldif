@@ -29,19 +29,13 @@ class FlextLdifParser(s):
         encoding: str = "utf-8",
     ) -> p.Result[m.Ldif.ParseResponse]:
         """Parse LDIF content from a file path with optional encoding override."""
-        resolved_path = path
-        if not resolved_path.exists() and not resolved_path.is_absolute():
-            project_root = Path(__file__).resolve().parents[2]
-            candidate_path = project_root / resolved_path
-            if candidate_path.exists():
-                resolved_path = candidate_path
-        if not resolved_path.exists():
+        if not path.exists():
             return r[m.Ldif.ParseResponse].fail_op(
                 "resolve ldif path",
                 f"File not found: {path}",
             )
         try:
-            content = resolved_path.read_text(encoding=encoding)
+            content = path.read_text(encoding=encoding)
         except c.EXC_OS_DECODING as error:
             return r[m.Ldif.ParseResponse].fail_op("read ldif file", error)
         return self.parse_string(content, server_type=server_type)
@@ -54,7 +48,7 @@ class FlextLdifParser(s):
         """Parse LDIF content from a string through the selected base server."""
         effective_server_type = server_type or self._get_effective_server_type_value()
         return r[m.Ldif.ParseResponse].from_result(
-            self._server
+            self.server
             .server(effective_server_type)
             .map_error(
                 lambda error: error or "Failed to resolve LDIF server server",

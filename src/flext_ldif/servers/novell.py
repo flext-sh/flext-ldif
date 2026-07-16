@@ -119,7 +119,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         @override
         def can_handle_attribute(
             self,
-            attr_definition: str | m.Ldif.SchemaAttribute,
+            attr_definition: str | p.Ldif.SchemaAttribute,
         ) -> bool:
             """Detect eDirectory attribute definitions using Constants."""
             matches: bool = u.Ldif.matches_server_patterns(
@@ -131,7 +131,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         @override
         def can_handle_objectclass(
             self,
-            oc_definition: str | m.Ldif.SchemaObjectClass,
+            oc_definition: str | p.Ldif.SchemaObjectClass,
         ) -> bool:
             """Detect eDirectory objectClass definitions using Constants."""
             matches: bool = u.Ldif.matches_server_patterns(
@@ -150,12 +150,13 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             return (attr_name.strip(), remainder.strip())
 
         @override
-        def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
+        # NOTE (multi-agent, mro-0ftd.3.7.2): protocol payload to match base SSOT.
+        def can_handle(self, acl_line: str | p.Ldif.Acl) -> bool:
             """Check if this is a Novell eDirectory ACL."""
             return self.can_handle_acl(acl_line)
 
         @override
-        def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
+        def can_handle_acl(self, acl_line: str | p.Ldif.Acl) -> bool:
             """Detect eDirectory ACL values."""
             if isinstance(acl_line, str):
                 if not acl_line or not acl_line.strip():

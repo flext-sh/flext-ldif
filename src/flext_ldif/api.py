@@ -49,9 +49,10 @@ class FlextLdif(
         runtime_settings: p.Ldif.Settings | None = None,
     ) -> None:
         """Initialize the LDIF facade with the canonical shared registry."""
-        super().__init__()
-        if server is not None:
-            self.server = server
+        if server is None:
+            super().__init__()
+        else:
+            super().__init__(server=server)
         resolved_settings = (
             runtime_settings if runtime_settings is not None else settings
         )
@@ -102,11 +103,11 @@ class FlextLdif(
             else None,
             base_dn=resolved_base_dn,
             server_type=server_type,
-            server=self._server,
-            server_registry=self._server,
+            server=self.server,
+            server_registry=self.server,
         )
         bound_categorization: FlextLdifCategorization = (
-            categorization.bind_runtime_settings()
+            categorization.bind_runtime_settings(self.settings)
         )
         return bound_categorization
 
@@ -138,7 +139,7 @@ class FlextLdif(
 
     def acl(self, server_type: str) -> p.Result[p.Ldif.AclServer]:
         """Expose ACL server lookup through the public facade (ENFORCE-056)."""
-        server_registry: p.Ldif.ServerRegistry = self._server
+        server_registry: p.Ldif.ServerRegistry = self.server
         resolved = server_registry.acl(server_type)
         if resolved is None:
             return e.fail_not_found(
@@ -150,7 +151,7 @@ class FlextLdif(
 
     def entry(self, server_type: str) -> p.Result[p.Ldif.EntryServer]:
         """Expose entry server lookup through the public facade (ENFORCE-056)."""
-        server_registry: p.Ldif.ServerRegistry = self._server
+        server_registry: p.Ldif.ServerRegistry = self.server
         resolved = server_registry.entry(server_type)
         if resolved is None:
             return e.fail_not_found(
@@ -163,12 +164,12 @@ class FlextLdif(
     def resolve_base_server(self, server_type: str) -> p.Result[p.Ldif.ServerServer]:
         """Expose base server resolution through the public facade."""
         return r[p.Ldif.ServerServer].from_result(
-            self._server.resolve_base_server(server_type),
+            self.server.resolve_base_server(server_type),
         )
 
     def schema_server(self, server_type: str) -> p.Result[p.Ldif.SchemaServer]:
         """Expose schema server lookup through the public facade (ENFORCE-056)."""
-        server_registry: p.Ldif.ServerRegistry = self._server
+        server_registry: p.Ldif.ServerRegistry = self.server
         resolved = server_registry.schema_server(server_type)
         if resolved is None:
             return e.fail_not_found(
@@ -183,7 +184,7 @@ class FlextLdif(
         server_type: str,
     ) -> p.Result[p.Ldif.SchemaServer]:
         """Expose canonical schema server resolution (ENFORCE-056)."""
-        server_registry: p.Ldif.ServerRegistry = self._server
+        server_registry: p.Ldif.ServerRegistry = self.server
         resolved = server_registry.resolve_schema_server(server_type)
         if resolved is None:
             return e.fail_not_found(
@@ -208,7 +209,7 @@ class FlextLdif(
                 str,
                 p.Ldif.SchemaServer | p.Ldif.AclServer | p.Ldif.EntryServer,
             ]
-        ].from_result(self._server.resolve_server_bundle(server_type))
+        ].from_result(self.server.resolve_server_bundle(server_type))
 
     def resolve_server_constants(
         self,
@@ -216,19 +217,19 @@ class FlextLdif(
     ) -> p.Result[type[p.Ldif.ServerConstants]]:
         """Expose server constants lookup through the public facade."""
         return r[type[p.Ldif.ServerConstants]].from_result(
-            self._server.resolve_server_constants(server_type),
+            self.server.resolve_server_constants(server_type),
         )
 
     def list_registered_servers(self) -> p.Result[t.MutableSequenceOf[str]]:
         """Expose the normalized registered server list (ENFORCE-056)."""
-        server_registry: p.Ldif.ServerRegistry = self._server
+        server_registry: p.Ldif.ServerRegistry = self.server
         return r[t.MutableSequenceOf[str]].ok(
             server_registry.list_registered_servers(),
         )
 
     def summarize_registry(self) -> p.Result[t.Ldif.MutableMetadataInputMapping]:
         """Expose registry statistics through the public facade (ENFORCE-056)."""
-        server_registry: p.Ldif.ServerRegistry = self._server
+        server_registry: p.Ldif.ServerRegistry = self.server
         return r[t.Ldif.MutableMetadataInputMapping].ok(
             server_registry.summarize_registry(),
         )
@@ -270,10 +271,10 @@ class FlextLdif(
                 process_config.target_server if process_config is not None else None
             ),
             output_filename=(options.output_filename if options is not None else None),
-            server=self._server,
+            server=self.server,
         )
         bound_pipeline: FlextLdifMigrationPipeline = pipeline.bind_runtime_settings(
-            settings,
+            self.settings,
         )
         return bound_pipeline
 

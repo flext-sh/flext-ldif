@@ -16,6 +16,7 @@ from typing import ClassVar
 from flext_ldif import (
     c,
     m,
+    p,
     t,
     u,
 )
@@ -57,7 +58,8 @@ class FlextLdifServersOudAclMetadataMixin:
 
     @staticmethod
     def extract_acl_metadata(
-        entry_data: m.Ldif.Entry,
+        # NOTE (multi-agent, mro-0ftd.3.7.2): behavior layer accepts protocol (§3.2).
+        entry_data: p.Ldif.Entry,
     ) -> tuple[str | None, m.Ldif.DnRegistry | None]:
         """Extract base_dn and dn_registry from entry metadata for ACL processing."""
         base_dn: str | None = None
@@ -105,7 +107,7 @@ class FlextLdifServersOudAclMetadataMixin:
                 acl_metadata_extensions[dest_key] = u.normalize_to_metadata(value_raw)
 
     @staticmethod
-    def get_original_acl_attr(entry: m.Ldif.Entry) -> str:
+    def get_original_acl_attr(entry: p.Ldif.Entry) -> str:
         """Get original ACL attribute name (orclaci) from transformations or metadata."""
         if entry.metadata and entry.metadata.attribute_transformations:
             for (
@@ -129,14 +131,15 @@ class FlextLdifServersOudAclMetadataMixin:
 
     @staticmethod
     def merge_acl_metadata_to_entry(
-        entry: m.Ldif.Entry,
+        # NOTE (multi-agent, mro-0ftd.3.7.2): protocol payload (§3.2).
+        entry: p.Ldif.Entry,
         acl_metadata_extensions: t.Ldif.MutableMetadataInputMapping,
-    ) -> m.Ldif.Entry:
+    ) -> p.Ldif.Entry:
         """Merge ACL metadata extensions into entry metadata."""
         if not acl_metadata_extensions:
             return entry
         if entry.metadata is None:
-            new_metadata_entry: m.Ldif.Entry = entry.model_copy(
+            new_metadata_entry: p.Ldif.Entry = entry.model_copy(
                 update={
                     "metadata": u.Ldif.server_metadata_for(
                         "oud",
@@ -151,7 +154,7 @@ class FlextLdifServersOudAclMetadataMixin:
             dict(entry.metadata.extensions) if entry.metadata.extensions else {}
         )
         current.update(acl_metadata_extensions)
-        updated_entry: m.Ldif.Entry = entry.model_copy(
+        updated_entry: p.Ldif.Entry = entry.model_copy(
             update={
                 "metadata": entry.metadata.model_copy(
                     update={"extensions": current},

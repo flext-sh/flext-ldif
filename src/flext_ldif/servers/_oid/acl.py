@@ -213,7 +213,9 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         return clean_value
 
     @override
-    def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
+    # NOTE (multi-agent, mro-0ftd.3.7.2): param type = protocol to match base
+    # (contravariant override); concrete model still built via model_validate.
+    def can_handle_acl(self, acl_line: str | p.Ldif.Acl) -> bool:
         """Check if this is an Oracle OID ACL."""
         can_handle = False
         if not isinstance(acl_line, str):

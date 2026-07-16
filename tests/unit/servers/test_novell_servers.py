@@ -13,22 +13,22 @@ import pytest
 from flext_tests import tm
 
 from flext_ldif.servers.novell import FlextLdifServersNovell
-from tests import c, m, u
+from tests import c, m, p, u
 
 
 class TestsFlextLdifNovellServers:
     """Public-behaviour tests for the Novell eDirectory server."""
 
     @pytest.fixture
-    def novell_server(self) -> FlextLdifServersNovell:
+    def novell_server(self) -> p.Ldif.ServerServer:
         """Create a Novell eDirectory server instance."""
         return FlextLdifServersNovell()
 
     @pytest.fixture
     def schema_server(
         self,
-        novell_server: FlextLdifServersNovell,
-    ) -> FlextLdifServersNovell.Schema:
+        novell_server: p.Ldif.ServerServer,
+    ) -> p.Ldif.SchemaServer:
         """Expose the schema sub-server through the public facade property."""
         server = novell_server.schema_server
         tm.that(server, is_=FlextLdifServersNovell.Schema)
@@ -37,8 +37,8 @@ class TestsFlextLdifNovellServers:
     @pytest.fixture
     def acl_server(
         self,
-        novell_server: FlextLdifServersNovell,
-    ) -> FlextLdifServersNovell.Acl:
+        novell_server: p.Ldif.ServerServer,
+    ) -> p.Ldif.AclServer:
         """Expose the ACL sub-server through the public facade property."""
         server = novell_server.acl_server
         tm.that(server, is_=FlextLdifServersNovell.Acl)
@@ -47,20 +47,25 @@ class TestsFlextLdifNovellServers:
     @pytest.fixture
     def entry_server(
         self,
-        novell_server: FlextLdifServersNovell,
-    ) -> FlextLdifServersNovell.Entry:
+        novell_server: p.Ldif.ServerServer,
+    ) -> p.Tests.ProcessEntryServer:
         """Expose the entry sub-server through the public facade property."""
         server = novell_server.entry_server
         tm.that(server, is_=FlextLdifServersNovell.Entry)
+        # mro-0ftd.3.6.1: narrow the public extension structurally, without a cast.
+        if not isinstance(server, p.Tests.ProcessEntryServer):
+            msg = "Novell entry server lacks process_entry"
+            raise AssertionError(msg)
         return server
 
     # ── Schema: attribute detection ─────────────────────────────────────
 
-    @pytest.mark.parametrize("test_case", c.Tests.NOVELL_ATTRIBUTE_TEST_CASES)
+    # mro-0ftd.3.6: consume modeled cases from their canonical facade.
+    @pytest.mark.parametrize("test_case", m.Tests.NOVELL_ATTRIBUTE_TEST_CASES)
     def test_can_handle_attribute_matches_expected_verdict(
         self,
         test_case: m.Tests.AttributeTestCase,
-        schema_server: FlextLdifServersNovell.Schema,
+        schema_server: p.Ldif.SchemaServer,
     ) -> None:
         """Novell attribute definitions are recognised, RFC ones are not."""
         result = schema_server.can_handle_attribute(test_case.attr_definition)
@@ -70,7 +75,7 @@ class TestsFlextLdifNovellServers:
 
     def test_parse_attribute_exposes_all_declared_properties(
         self,
-        schema_server: FlextLdifServersNovell.Schema,
+        schema_server: p.Ldif.SchemaServer,
     ) -> None:
         """A full attribute definition parses into every advertised property."""
         attr_def = (
@@ -90,7 +95,7 @@ class TestsFlextLdifNovellServers:
 
     def test_parse_attribute_extracts_syntax_length(
         self,
-        schema_server: FlextLdifServersNovell.Schema,
+        schema_server: p.Ldif.SchemaServer,
     ) -> None:
         """A bounded syntax ``{256}`` yields the base syntax plus its length."""
         attr_def = (
@@ -106,7 +111,7 @@ class TestsFlextLdifNovellServers:
 
     def test_parse_attribute_without_oid_fails_with_reason(
         self,
-        schema_server: FlextLdifServersNovell.Schema,
+        schema_server: p.Ldif.SchemaServer,
     ) -> None:
         """An attribute definition missing its OID returns a descriptive failure."""
         tm.fail(
@@ -118,11 +123,11 @@ class TestsFlextLdifNovellServers:
 
     # ── Schema: objectClass detection ───────────────────────────────────
 
-    @pytest.mark.parametrize("test_case", c.Tests.NOVELL_OBJECTCLASS_TEST_CASES)
+    @pytest.mark.parametrize("test_case", m.Tests.NOVELL_OBJECTCLASS_TEST_CASES)
     def test_can_handle_objectclass_matches_expected_verdict(
         self,
         test_case: m.Tests.ObjectClassTestCase,
-        schema_server: FlextLdifServersNovell.Schema,
+        schema_server: p.Ldif.SchemaServer,
     ) -> None:
         """Novell objectClass definitions are recognised, RFC ones are not."""
         result = schema_server.can_handle_objectclass(test_case.oc_definition)
@@ -132,7 +137,7 @@ class TestsFlextLdifNovellServers:
 
     def test_parse_objectclass_structural_exposes_kind_sup_must_may(
         self,
-        schema_server: FlextLdifServersNovell.Schema,
+        schema_server: p.Ldif.SchemaServer,
     ) -> None:
         """A STRUCTURAL objectClass exposes its kind, superior, MUST and MAY."""
         oc_def = (
@@ -152,7 +157,7 @@ class TestsFlextLdifNovellServers:
 
     def test_parse_objectclass_auxiliary_reports_auxiliary_kind(
         self,
-        schema_server: FlextLdifServersNovell.Schema,
+        schema_server: p.Ldif.SchemaServer,
     ) -> None:
         """An AUXILIARY objectClass reports the AUXILIARY kind."""
         oc_def = (
@@ -167,7 +172,7 @@ class TestsFlextLdifNovellServers:
 
     def test_parse_objectclass_abstract_reports_abstract_kind(
         self,
-        schema_server: FlextLdifServersNovell.Schema,
+        schema_server: p.Ldif.SchemaServer,
     ) -> None:
         """An ABSTRACT objectClass reports the ABSTRACT kind."""
         oc_def = "( 2.16.840.1.113719.2.2.6.3 NAME 'ndsbase' ABSTRACT )"
@@ -179,7 +184,7 @@ class TestsFlextLdifNovellServers:
 
     def test_parse_objectclass_without_oid_fails_with_reason(
         self,
-        schema_server: FlextLdifServersNovell.Schema,
+        schema_server: p.Ldif.SchemaServer,
     ) -> None:
         """An objectClass definition missing its OID returns a descriptive failure."""
         tm.fail(
@@ -205,10 +210,10 @@ class TestsFlextLdifNovellServers:
         self,
         acl_line: str,
         expected: bool,
-        acl_server: FlextLdifServersNovell.Acl,
+        acl_server: p.Ldif.AclServer,
     ) -> None:
         """ACL recognition keys off the ``acl``/``inheritedacl`` attribute name."""
-        tm.that(acl_server.can_handle(acl_line) is expected, eq=True)
+        tm.that(acl_server.can_handle_acl(acl_line) is expected, eq=True)
 
     @pytest.mark.parametrize(
         ("acl_line", "expected_name", "expected_payload"),
@@ -241,11 +246,11 @@ class TestsFlextLdifNovellServers:
 
     # ── Entry detection ─────────────────────────────────────────────────
 
-    @pytest.mark.parametrize("test_case", c.Tests.NOVELL_ENTRY_TEST_CASES)
+    @pytest.mark.parametrize("test_case", m.Tests.NOVELL_ENTRY_TEST_CASES)
     def test_can_handle_entry_matches_expected_verdict(
         self,
         test_case: m.Tests.EntryTestCase,
-        entry_server: FlextLdifServersNovell.Entry,
+        entry_server: p.Tests.ProcessEntryServer,
     ) -> None:
         """Novell entries (by DN marker, attribute, or objectClass) are detected."""
         result = entry_server.can_handle(
@@ -256,7 +261,7 @@ class TestsFlextLdifNovellServers:
 
     def test_can_handle_entry_rejects_empty_dn(
         self,
-        entry_server: FlextLdifServersNovell.Entry,
+        entry_server: p.Tests.ProcessEntryServer,
     ) -> None:
         """An empty DN is never treated as an eDirectory entry."""
         tm.that(
@@ -268,17 +273,23 @@ class TestsFlextLdifNovellServers:
 
     def test_process_entry_stamps_server_type_and_preserves_attributes(
         self,
-        entry_server: FlextLdifServersNovell.Entry,
+        entry_server: p.Tests.ProcessEntryServer,
     ) -> None:
         """Processing an entry preserves attributes and stamps the server type."""
         entry = m.Ldif.Entry.model_validate({
             "dn": "cn=user,o=Example",
             "attributes": {"cn": ["user"], "objectClass": ["ndsperson"]},
         })
-        processed = tm.ok(entry_server.process_entry(entry))
+        process_result = entry_server.process_entry(entry)
+        tm.ok(process_result)
+        # mro-0ftd.3.6.1: unwrap the canonical Entry without matcher type erasure.
+        processed = process_result.unwrap()
         tm.that(processed, is_=m.Ldif.Entry)
-        tm.that(processed.attributes, none=False)
-        attributes = processed.attributes.attributes
+        processed_attributes = processed.attributes
+        if processed_attributes is None:
+            msg = "Processed Novell entry is missing attributes"
+            raise AssertionError(msg)
+        attributes = processed_attributes.attributes
         tm.that(attributes["cn"] == ["user"], eq=True)
         tm.that(attributes["objectClass"] == ["ndsperson"], eq=True)
         tm.that(
@@ -289,14 +300,19 @@ class TestsFlextLdifNovellServers:
 
     def test_process_entry_without_attributes_is_identity(
         self,
-        entry_server: FlextLdifServersNovell.Entry,
+        entry_server: p.Tests.ProcessEntryServer,
     ) -> None:
         """An entry with no attributes is returned unchanged and successfully."""
         entry = m.Ldif.Entry.model_validate({
             "dn": "cn=user,o=Example",
             "attributes": {},
         })
-        processed = tm.ok(entry_server.process_entry(entry))
+        process_result = entry_server.process_entry(entry)
+        tm.ok(process_result)
+        processed = process_result.unwrap()
         tm.that(processed, is_=m.Ldif.Entry)
-        tm.that(processed.attributes, none=False)
-        tm.that(dict(processed.attributes.attributes) == {}, eq=True)
+        processed_attributes = processed.attributes
+        if processed_attributes is None:
+            msg = "Processed Novell entry is missing attributes"
+            raise AssertionError(msg)
+        tm.that(dict(processed_attributes.attributes) == {}, eq=True)

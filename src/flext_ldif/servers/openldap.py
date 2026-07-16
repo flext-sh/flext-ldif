@@ -161,7 +161,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         @override
         def can_handle_attribute(
             self,
-            attr_definition: str | m.Ldif.SchemaAttribute,
+            attr_definition: str | p.Ldif.SchemaAttribute,
         ) -> bool:
             """Check if this is an OpenLDAP 2.x attribute (PRIVATE)."""
             if isinstance(attr_definition, str):
@@ -186,7 +186,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         @override
         def can_handle_objectclass(
             self,
-            oc_definition: str | m.Ldif.SchemaObjectClass,
+            oc_definition: str | p.Ldif.SchemaObjectClass,
         ) -> bool:
             """Check if this is an OpenLDAP 2.x objectClass (PRIVATE)."""
             if isinstance(oc_definition, str):
@@ -226,7 +226,8 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         """OpenLDAP 2.x ACL server (nested)."""
 
         @override
-        def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
+        # NOTE (multi-agent, mro-0ftd.3.7.2): protocol payload to match base SSOT.
+        def can_handle(self, acl_line: str | p.Ldif.Acl) -> bool:
             """Check if this is an OpenLDAP 2.x ACL."""
             if isinstance(acl_line, str):
                 return self.can_handle_acl(acl_line)
@@ -236,19 +237,25 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             return False
 
         @override
-        def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
+        def can_handle_acl(self, acl_line: str | p.Ldif.Acl) -> bool:
             """Check if this is an OpenLDAP 2.x ACL (internal)."""
-            if isinstance(acl_line, m.Ldif.Acl):
+            # NOTE (multi-agent, mro-0ftd.3.7.2): narrow str vs model to a single
+            # str before string ops — p.Ldif.Acl has no startswith/index.
+            if isinstance(acl_line, str):
+                text = acl_line
+            elif isinstance(acl_line, m.Ldif.Acl):
                 raw_acl = getattr(acl_line, "raw_acl", None)
                 if not isinstance(raw_acl, str) or not raw_acl:
                     return False
-                acl_line = raw_acl
-            if not acl_line:
+                text = raw_acl
+            else:
                 return False
-            acl_content = acl_line
+            if not text:
+                return False
+            acl_content = text
             olc_prefix = FlextLdifServersOpenldap.Constants.ACL_OLCACCESS_PREFIX
-            if acl_line.startswith(olc_prefix):
-                acl_content = acl_line[len(olc_prefix) :].strip()
+            if acl_content.startswith(olc_prefix):
+                acl_content = acl_content[len(olc_prefix) :].strip()
             return bool(
                 FlextLdifServersOpenldap.Constants.ACL_INDEX_PREFIX_RE.match(
                     acl_content,

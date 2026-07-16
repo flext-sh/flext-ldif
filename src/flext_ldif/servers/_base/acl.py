@@ -71,22 +71,24 @@ class FlextLdifServersBaseSchemaAcl(
 
     auto_execute: ClassVar[bool] = False
 
-    def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
+    # NOTE (multi-agent, mro-0ftd.3.7.2): base SSOT — protocol payload (§3.2);
+    # matches can_handle_acl (already p.X) and the override tree.
+    def can_handle(self, acl_line: str | p.Ldif.Acl) -> bool:
         """Check if this ACL can be handled after parsing."""
         _ = acl_line
         return True
 
-    def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
+    def can_handle_acl(self, acl_line: str | p.Ldif.Acl) -> bool:
         """Check if this server can handle the ACL definition."""
         _ = acl_line
         return False
 
-    def can_handle_attribute(self, attribute: m.Ldif.SchemaAttribute) -> bool:
+    def can_handle_attribute(self, attribute: p.Ldif.SchemaAttribute) -> bool:
         """Check if this ACL server should be aware of a specific attribute definition."""
         _ = attribute
         return False
 
-    def can_handle_objectclass(self, objectclass: m.Ldif.SchemaObjectClass) -> bool:
+    def can_handle_objectclass(self, objectclass: p.Ldif.SchemaObjectClass) -> bool:
         """Check if this ACL server should be aware of a specific objectClass definition."""
         _ = objectclass
         return False
@@ -164,17 +166,16 @@ class FlextLdifServersBaseSchemaAcl(
                         result = r[str].ok(formatted_value)
         return result
 
-    def parse_server(self, value: str) -> p.Result[m.Ldif.Acl]:
+    def parse_server(self, value: str) -> p.Result[p.Ldif.Acl]:
         """Parse ACL line to Acl model."""
-        return self._parse_acl(value)
+        parse_result = self._parse_acl(value)
+        if parse_result.failure:
+            return r[p.Ldif.Acl].fail(parse_result.error or "ACL parsing failed")
+        return r[p.Ldif.Acl].ok(parse_result.value)
 
-    def parse_input(self, acl_text: str) -> p.Result[m.Ldif.Acl]:
-        """Compatibility parser entrypoint for direct ACL server consumers."""
-        return self.parse_server(acl_text)
-
-    def write(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
+    def write(self, acl_data: p.Ldif.Acl) -> p.Result[str]:
         """Write Acl model to string format."""
-        return self._write_acl(acl_data)
+        return self._write_acl(u.Ldif.as_acl(acl_data))
 
     def _coerce_acl_data(
         self,

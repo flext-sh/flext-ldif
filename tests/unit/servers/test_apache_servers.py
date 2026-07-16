@@ -21,7 +21,8 @@ class TestsFlextLdifApacheServers:
     internal-collaborator interactions.
     """
 
-    @pytest.mark.parametrize("test_case", c.Tests.APACHE_ATTRIBUTE_TEST_CASES)
+    # mro-0ftd.3.6: consume modeled cases from their canonical facade.
+    @pytest.mark.parametrize("test_case", m.Tests.APACHE_ATTRIBUTE_TEST_CASES)
     def test_schema_attribute_can_handle(
         self,
         test_case: m.Tests.AttributeTestCase,
@@ -38,14 +39,14 @@ class TestsFlextLdifApacheServers:
         server = FlextLdifServersApache()
         schema = server.schema_server
         attr_def = "( 1.3.6.1.4.1.18060.0.4.1.2.100 NAME 'ads-enabled' DESC 'Enable flag' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 SINGLE-VALUE )"
-        attr_data = u.Tests.server_parse_and_unwrap(
-            schema,
-            attr_def,
-            parse_method="parse_attribute",
-            expected_type=m.Ldif.SchemaAttribute,
-        )
-        tm.that(attr_data, none=False)
+        parse_result = schema.parse_attribute(attr_def)
+        tm.ok(parse_result)
+        # mro-0ftd.3.6.1: unwrap the typed Result instead of erasing its model generic.
+        attr_data = parse_result.unwrap()
         tm.that(attr_data, is_=m.Ldif.SchemaAttribute)
+        if not isinstance(attr_data, m.Ldif.SchemaAttribute):
+            msg = "Apache schema parser did not return an attribute model"
+            raise AssertionError(msg)
         tm.that(attr_data.oid, eq="1.3.6.1.4.1.18060.0.4.1.2.100")
         tm.that(attr_data.name, eq="ads-enabled")
         tm.that(attr_data.desc, eq="Enable flag")
@@ -57,14 +58,13 @@ class TestsFlextLdifApacheServers:
         server = FlextLdifServersApache()
         schema = server.schema_server
         attr_def = "( 1.3.6.1.4.1.18060.0.4.1.2.1 NAME 'ads-directoryServiceId' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )"
-        attr_data = u.Tests.server_parse_and_unwrap(
-            schema,
-            attr_def,
-            parse_method="parse_attribute",
-            expected_type=m.Ldif.SchemaAttribute,
-        )
-        tm.that(attr_data, none=False)
+        parse_result = schema.parse_attribute(attr_def)
+        tm.ok(parse_result)
+        attr_data = parse_result.unwrap()
         tm.that(attr_data, is_=m.Ldif.SchemaAttribute)
+        if not isinstance(attr_data, m.Ldif.SchemaAttribute):
+            msg = "Apache schema parser did not return an attribute model"
+            raise AssertionError(msg)
         tm.that(attr_data.syntax, eq="1.3.6.1.4.1.1466.115.121.1.15")
         tm.that(attr_data.length, eq=256)
 
@@ -73,14 +73,9 @@ class TestsFlextLdifApacheServers:
         server = FlextLdifServersApache()
         schema = server.schema_server
         attr_def = "NAME 'ads-enabled' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7"
-        u.Tests.server_parse_and_unwrap(
-            schema,
-            attr_def,
-            parse_method="parse_attribute",
-            should_succeed=False,
-        )
+        tm.fail(schema.parse_attribute(attr_def))
 
-    @pytest.mark.parametrize("test_case", c.Tests.APACHE_OBJECTCLASS_TEST_CASES)
+    @pytest.mark.parametrize("test_case", m.Tests.APACHE_OBJECTCLASS_TEST_CASES)
     def test_schema_objectclass_can_handle(
         self,
         test_case: m.Tests.ObjectClassTestCase,
@@ -97,14 +92,13 @@ class TestsFlextLdifApacheServers:
         server = FlextLdifServersApache()
         schema = server.schema_server
         oc_def = "( 1.3.6.1.4.1.18060.0.4.1.3.100 NAME 'ads-directoryService' DESC 'Directory service' SUP top STRUCTURAL MUST ( cn $ ads-directoryServiceId ) MAY ( ads-enabled ) )"
-        oc_data = u.Tests.server_parse_and_unwrap(
-            schema,
-            oc_def,
-            parse_method="parse_objectclass",
-            expected_type=m.Ldif.SchemaObjectClass,
-        )
-        tm.that(oc_data, none=False)
+        parse_result = schema.parse_objectclass(oc_def)
+        tm.ok(parse_result)
+        oc_data = parse_result.unwrap()
         tm.that(oc_data, is_=m.Ldif.SchemaObjectClass)
+        if not isinstance(oc_data, m.Ldif.SchemaObjectClass):
+            msg = "Apache schema parser did not return an objectClass model"
+            raise AssertionError(msg)
         tm.that(oc_data.oid, eq="1.3.6.1.4.1.18060.0.4.1.3.100")
         tm.that(oc_data.name, eq="ads-directoryService")
         tm.that(oc_data.kind, eq="STRUCTURAL")
@@ -122,14 +116,13 @@ class TestsFlextLdifApacheServers:
         server = FlextLdifServersApache()
         schema = server.schema_server
         oc_def = "( 1.3.6.1.4.1.18060.0.4.1.3.200 NAME 'ads-partition' AUXILIARY MAY ( ads-partitionSuffix $ ads-contextEntry ) )"
-        oc_data = u.Tests.server_parse_and_unwrap(
-            schema,
-            oc_def,
-            parse_method="parse_objectclass",
-            expected_type=m.Ldif.SchemaObjectClass,
-        )
-        tm.that(oc_data, none=False)
+        parse_result = schema.parse_objectclass(oc_def)
+        tm.ok(parse_result)
+        oc_data = parse_result.unwrap()
         tm.that(oc_data, is_=m.Ldif.SchemaObjectClass)
+        if not isinstance(oc_data, m.Ldif.SchemaObjectClass):
+            msg = "Apache schema parser did not return an objectClass model"
+            raise AssertionError(msg)
         tm.that(oc_data.kind, eq="AUXILIARY")
 
     def test_schema_objectclass_parse_abstract(self) -> None:
@@ -137,14 +130,13 @@ class TestsFlextLdifApacheServers:
         server = FlextLdifServersApache()
         schema = server.schema_server
         oc_def = "( 1.3.6.1.4.1.18060.0.4.1.3.1 NAME 'ads-base' ABSTRACT )"
-        oc_data = u.Tests.server_parse_and_unwrap(
-            schema,
-            oc_def,
-            parse_method="parse_objectclass",
-            expected_type=m.Ldif.SchemaObjectClass,
-        )
-        tm.that(oc_data, none=False)
+        parse_result = schema.parse_objectclass(oc_def)
+        tm.ok(parse_result)
+        oc_data = parse_result.unwrap()
         tm.that(oc_data, is_=m.Ldif.SchemaObjectClass)
+        if not isinstance(oc_data, m.Ldif.SchemaObjectClass):
+            msg = "Apache schema parser did not return an objectClass model"
+            raise AssertionError(msg)
         tm.that(oc_data.kind, eq="ABSTRACT")
 
     def test_schema_objectclass_parse_missing_oid(self) -> None:
@@ -152,66 +144,52 @@ class TestsFlextLdifApacheServers:
         server = FlextLdifServersApache()
         schema = server.schema_server
         oc_def = "NAME 'ads-directoryService' SUP top STRUCTURAL"
-        u.Tests.server_parse_and_unwrap(
-            schema,
-            oc_def,
-            parse_method="parse_objectclass",
-            should_succeed=False,
-        )
+        tm.fail(schema.parse_objectclass(oc_def))
 
     def test_acl_can_handle_with_ads_aci(self) -> None:
         """Test ACL detection with ads-aci attribute."""
         server = FlextLdifServersApache()
         acl_server = server.acl_server
         acl_line = "ads-aci: ( version 3.0 ) ( deny grantAdd ) ( grantRemove )"
-        acl_model = u.Tests.acl_parse_and_unwrap(
-            acl_server,
-            acl_line,
-            expected_type=m.Ldif.Acl,
-        )
-        tm.that(acl_model, none=False)
+        parse_result = acl_server.parse_server(acl_line)
+        tm.ok(parse_result)
+        acl_model = parse_result.unwrap()
         tm.that(acl_model, is_=m.Ldif.Acl)
-        roundtrip_result = u.Tests.acl_parse_and_unwrap(
-            acl_server,
+        roundtrip_result = acl_server.parse_server(
             acl_model.raw_acl or str(acl_model),
         )
-        tm.that(roundtrip_result, none=False)
+        tm.ok(roundtrip_result)
+        tm.that(roundtrip_result.unwrap(), is_=m.Ldif.Acl)
 
     def test_acl_can_handle_with_aci(self) -> None:
         """Test ACL detection with aci attribute."""
         server = FlextLdifServersApache()
         acl_server = server.acl_server
         acl_line = "aci: ( version 3.0 ) ( deny grantAdd ) ( grantRemove )"
-        acl_model = u.Tests.acl_parse_and_unwrap(
-            acl_server,
-            acl_line,
-            expected_type=m.Ldif.Acl,
-        )
-        tm.that(acl_model, none=False)
+        parse_result = acl_server.parse_server(acl_line)
+        tm.ok(parse_result)
+        acl_model = parse_result.unwrap()
         tm.that(acl_model, is_=m.Ldif.Acl)
-        roundtrip_result = u.Tests.acl_parse_and_unwrap(
-            acl_server,
+        roundtrip_result = acl_server.parse_server(
             acl_model.raw_acl or str(acl_model),
         )
-        tm.that(roundtrip_result, none=False)
+        tm.ok(roundtrip_result)
+        tm.that(roundtrip_result.unwrap(), is_=m.Ldif.Acl)
 
     def test_acl_can_handle_with_version_prefix(self) -> None:
         """Test ACL detection with version prefix."""
         server = FlextLdifServersApache()
         acl_server = server.acl_server
         acl_line = "(version 3.0) (deny grantAdd) (grantRemove)"
-        acl_model = u.Tests.acl_parse_and_unwrap(
-            acl_server,
-            acl_line,
-            expected_type=m.Ldif.Acl,
-        )
-        tm.that(acl_model, none=False)
+        parse_result = acl_server.parse_server(acl_line)
+        tm.ok(parse_result)
+        acl_model = parse_result.unwrap()
         tm.that(acl_model, is_=m.Ldif.Acl)
-        roundtrip_result = u.Tests.acl_parse_and_unwrap(
-            acl_server,
+        roundtrip_result = acl_server.parse_server(
             acl_model.raw_acl or str(acl_model),
         )
-        tm.that(roundtrip_result, none=False)
+        tm.ok(roundtrip_result)
+        tm.that(roundtrip_result.unwrap(), is_=m.Ldif.Acl)
 
     def test_acl_can_handle_negative(self) -> None:
         """Test ACL detection rejects non-ApacheDS ACLs."""
@@ -233,13 +211,13 @@ class TestsFlextLdifApacheServers:
         server = FlextLdifServersApache()
         acl_server = server.acl_server
         acl_line = "ads-aci: ( version 3.0 ) ( deny grantAdd ) ( grantRemove )"
-        acl_data = u.Tests.acl_parse_and_unwrap(
-            acl_server,
-            acl_line,
-            expected_type=m.Ldif.Acl,
-        )
-        tm.that(acl_data, none=False)
+        parse_result = acl_server.parse_server(acl_line)
+        tm.ok(parse_result)
+        acl_data = parse_result.unwrap()
         tm.that(acl_data, is_=m.Ldif.Acl)
+        if not isinstance(acl_data, m.Ldif.Acl):
+            msg = "Apache ACL parser did not return an ACL model"
+            raise AssertionError(msg)
         tm.that(acl_data.resolve_acl_format(), eq=c.Ldif.DEFAULT_ACL_FORMAT)
         tm.that(acl_data.server_type, eq=c.Ldif.ServerTypes.APACHE)
 
@@ -248,12 +226,9 @@ class TestsFlextLdifApacheServers:
         server = FlextLdifServersApache()
         acl_server = server.acl_server
         acl_line = "aci: ( deny grantAdd )"
-        acl_data = u.Tests.acl_parse_and_unwrap(
-            acl_server,
-            acl_line,
-            expected_type=m.Ldif.Acl,
-        )
-        tm.that(acl_data, none=False)
+        parse_result = acl_server.parse_server(acl_line)
+        tm.ok(parse_result)
+        acl_data = parse_result.unwrap()
         tm.that(acl_data, is_=m.Ldif.Acl)
 
     def test_acl_write_with_clauses_only(self) -> None:
@@ -298,7 +273,7 @@ class TestsFlextLdifApacheServers:
             must_contain=["ads-aci", "aci:"],
         )
 
-    @pytest.mark.parametrize("test_case", c.Tests.APACHE_ENTRY_TEST_CASES)
+    @pytest.mark.parametrize("test_case", m.Tests.APACHE_ENTRY_TEST_CASES)
     def test_entry_can_handle(self, test_case: m.Tests.EntryTestCase) -> None:
         """Test entry detection for various scenarios."""
         server = FlextLdifServersApache()
@@ -321,7 +296,7 @@ class TestsFlextLdifApacheServers:
 
     @pytest.mark.parametrize(
         "test_case",
-        [tc for tc in c.Tests.APACHE_ENTRY_TEST_CASES if tc.expected_can_handle],
+        [tc for tc in m.Tests.APACHE_ENTRY_TEST_CASES if tc.expected_can_handle],
     )
     def test_entry_parse_ldif_yields_entry_with_source_dn(
         self,
@@ -336,5 +311,7 @@ class TestsFlextLdifApacheServers:
         entries = result.unwrap()
         tm.that(len(entries), eq=1)
         entry_dn = entries[0].dn
-        tm.that(entry_dn, none=False)
+        if entry_dn is None:
+            msg = "Parsed entry is missing its source DN"
+            raise AssertionError(msg)
         tm.that(entry_dn.value, eq=test_case.entry_dn)

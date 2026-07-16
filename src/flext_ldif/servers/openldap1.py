@@ -113,7 +113,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         @override
         def can_handle_attribute(
             self,
-            attr_definition: str | m.Ldif.SchemaAttribute,
+            attr_definition: str | p.Ldif.SchemaAttribute,
         ) -> bool:
             """Check if this is an OpenLDAP 1.x attribute."""
             if isinstance(attr_definition, str):
@@ -131,7 +131,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         @override
         def can_handle_objectclass(
             self,
-            oc_definition: str | m.Ldif.SchemaObjectClass,
+            oc_definition: str | p.Ldif.SchemaObjectClass,
         ) -> bool:
             """Check if this is an OpenLDAP 1.x objectClass."""
             if isinstance(oc_definition, str):
@@ -263,12 +263,13 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         """OpenLDAP 1.x ACL server (nested)."""
 
         @override
-        def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
+        # NOTE (multi-agent, mro-0ftd.3.7.2): protocol payload to match base SSOT.
+        def can_handle(self, acl_line: str | p.Ldif.Acl) -> bool:
             """Check if this is an OpenLDAP 1.x ACL (public method)."""
             return self.can_handle_acl(acl_line)
 
         @override
-        def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
+        def can_handle_acl(self, acl_line: str | p.Ldif.Acl) -> bool:
             """Check if this is an OpenLDAP 1.x ACL."""
             if isinstance(acl_line, str):
                 return bool(

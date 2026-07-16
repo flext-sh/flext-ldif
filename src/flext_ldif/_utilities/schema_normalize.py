@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from flext_ldif import FlextLdifModels as m, t
+from flext_ldif import FlextLdifModels as m, p, t
 
 
 class FlextLdifUtilitiesSchemaNormalize:
@@ -10,7 +10,8 @@ class FlextLdifUtilitiesSchemaNormalize:
 
     @staticmethod
     def build_available_attributes_set(
-        attributes: t.MutableSequenceOf[m.Ldif.SchemaAttribute],
+        # NOTE (multi-agent, mro-0ftd.3.7.2): behavior layer accepts protocol (§3.2).
+        attributes: t.MutableSequenceOf[p.Ldif.SchemaAttribute],
     ) -> set[str]:
         """Build set of available attribute names (lowercase) for dependency validation."""
         available: set[str] = set()

@@ -162,7 +162,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         @override
         def can_handle_attribute(
             self,
-            attr_definition: str | m.Ldif.SchemaAttribute,
+            attr_definition: str | p.Ldif.SchemaAttribute,
         ) -> bool:
             """Detect AD attribute definitions using centralized constants."""
             matches: bool = u.Ldif.matches_server_patterns(
@@ -174,7 +174,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         @override
         def can_handle_objectclass(
             self,
-            oc_definition: str | m.Ldif.SchemaObjectClass,
+            oc_definition: str | p.Ldif.SchemaObjectClass,
         ) -> bool:
             """Detect AD objectClass definitions using centralized constants."""
             matches: bool = u.Ldif.matches_server_patterns(
@@ -186,18 +186,20 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         @override
         def _hook_post_parse_objectclass(
             self,
-            oc: m.Ldif.SchemaObjectClass,
-        ) -> p.Result[m.Ldif.SchemaObjectClass]:
+            oc: p.Ldif.SchemaObjectClass,
+        ) -> p.Result[p.Ldif.SchemaObjectClass]:
             """Normalize Active Directory objectClass data after RFC parsing."""
-            u.Ldif.fix_missing_sup(oc)
-            u.Ldif.fix_kind_mismatch(oc)
+            # NOTE (multi-agent, mro-0ftd.3.7.2): helpers return the immutable
+            # model_copy transition (no in-place mutation) — assign it.
+            oc = u.Ldif.fix_missing_sup(oc)
+            oc = u.Ldif.fix_kind_mismatch(oc)
             return super()._hook_post_parse_objectclass(oc)
 
     class Acl(FlextLdifServersRfc.Acl):
         """Active Directory ACL server handling nTSecurityDescriptor entries."""
 
         @override
-        def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
+        def can_handle(self, acl_line: str | p.Ldif.Acl) -> bool:
             """Check if this is an Active Directory ACL (public method)."""
             if isinstance(acl_line, str):
                 return self.can_handle_acl(acl_line)
@@ -207,7 +209,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             return self.can_handle_acl(raw_acl)
 
         @override
-        def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
+        def can_handle_acl(self, acl_line: str | p.Ldif.Acl) -> bool:
             """Check whether the ACL line belongs to an AD security descriptor."""
             if isinstance(acl_line, str):
                 normalized = acl_line.strip()

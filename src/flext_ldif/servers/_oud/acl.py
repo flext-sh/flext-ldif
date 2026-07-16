@@ -84,12 +84,14 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         return isinstance(value, (str, int, float, bool, list))
 
     @override
-    def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
+    # NOTE (multi-agent, mro-0ftd.3.7.2): param type = protocol to match base
+    # (contravariant override); concrete model still built via model_validate.
+    def can_handle(self, acl_line: str | p.Ldif.Acl) -> bool:
         """Check if this is an Oracle OUD ACL (public method)."""
         return self.can_handle_acl(acl_line)
 
     @override
-    def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
+    def can_handle_acl(self, acl_line: str | p.Ldif.Acl) -> bool:
         """Check if this is an Oracle OUD ACL line (implements abstract method from base.py)."""
         if not isinstance(acl_line, str):
             try:
@@ -334,7 +336,9 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
     def _finalize_aci(
         self,
         current_aci: t.MutableSequenceOf[str],
-        acls: t.MutableSequenceOf[m.Ldif.Acl],
+        # NOTE (multi-agent, mro-0ftd.3.7.2): receiving collection carries the
+        # protocol objects parse_server yields; model is built at .ok() only.
+        acls: t.MutableSequenceOf[p.Ldif.Acl],
     ) -> None:
         """Parse and add accumulated ACI to ACL list."""
         if current_aci:

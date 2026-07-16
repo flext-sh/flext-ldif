@@ -3,20 +3,23 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_ldap import p as ldap_p
 from flext_tests import FlextTestsProtocols
 
-from flext_ldif import FlextLdifProtocols
-from flext_ldif.services.migration import FlextLdifMigrationPipeline
-from tests import c, m
+from flext_ldif import p as ldif_p
+
+if TYPE_CHECKING:
+    # mro-0ftd.3.6: protocol-only reverse edges never load test facades at runtime.
+    from tests.constants import c
+    from tests.models import m
 
 
 class TestsFlextLdifProtocols(
     FlextTestsProtocols,
     ldap_p,
-    FlextLdifProtocols,
+    ldif_p,
 ):
     """Protocol definitions for flext-ldif tests."""
 
@@ -27,26 +30,13 @@ class TestsFlextLdifProtocols(
         """LDIF helper protocols used only by tests."""
 
         @runtime_checkable
-        class ParseInputServer(Protocol):
-            """Server exposing `parse_input` for schema or ACL helpers."""
-
-            def parse_input(
-                self,
-                value: str,
-            ) -> p.Result[
-                m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
-            ]:
-                """Parse server-specific raw input."""
-                ...
-
-        @runtime_checkable
         class WriteAttributeServer(Protocol):
             """Server exposing Apache/Novell attribute writer."""
 
             def _write_attribute(
                 self,
                 attr_data: m.Ldif.SchemaAttribute,
-            ) -> p.Result[str]:
+            ) -> ldif_p.Result[str]:
                 """Serialize an attribute definition."""
                 ...
 
@@ -57,7 +47,7 @@ class TestsFlextLdifProtocols(
             def _write_objectclass(
                 self,
                 oc_data: m.Ldif.SchemaObjectClass,
-            ) -> p.Result[str]:
+            ) -> ldif_p.Result[str]:
                 """Serialize an objectClass definition."""
                 ...
 
@@ -68,7 +58,7 @@ class TestsFlextLdifProtocols(
             def _write_acl(
                 self,
                 acl_data: m.Ldif.Acl,
-            ) -> p.Result[str]:
+            ) -> ldif_p.Result[str]:
                 """Serialize an ACL definition."""
                 ...
 
@@ -79,8 +69,20 @@ class TestsFlextLdifProtocols(
             def parse_server(
                 self,
                 value: str,
-            ) -> p.Result[m.Ldif.Acl]:
+            ) -> ldif_p.Result[m.Ldif.Acl]:
                 """Parse ACL content into the test model."""
+                ...
+
+        @runtime_checkable
+        class ProcessEntryServer(ldif_p.Ldif.EntryServer, Protocol):
+            """Entry server exposing the public normalization operation."""
+
+            # mro-0ftd.3.6.1: retain the typed Result payload across test fixtures.
+            def process_entry(
+                self,
+                entry: m.Ldif.Entry,
+            ) -> ldif_p.Result[m.Ldif.Entry]:
+                """Normalize one entry through the server-specific behavior."""
                 ...
 
         @runtime_checkable
@@ -90,7 +92,7 @@ class TestsFlextLdifProtocols(
             def write(
                 self,
                 acl_data: m.Ldif.Acl,
-            ) -> p.Result[str]:
+            ) -> ldif_p.Result[str]:
                 """Write ACL content from the test model."""
                 ...
 
@@ -104,7 +106,7 @@ class TestsFlextLdifProtocols(
                 output_dir: Path | None = None,
                 source_server_type: c.Ldif.ServerTypes | str | None = None,
                 target_server_type: c.Ldif.ServerTypes | str | None = None,
-            ) -> FlextLdifMigrationPipeline: ...
+            ) -> ldif_p.Ldif.MigrationPipeline: ...
 
 
 p = TestsFlextLdifProtocols

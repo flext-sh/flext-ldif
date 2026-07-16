@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import (
     Callable,
+    Sequence,
 )
 from typing import ClassVar, Self, override
 
@@ -383,11 +384,14 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
             result = r[m.Ldif.Entry].fail("No valid parameters")
         return result
 
-    def parse_ldif(self, value: str) -> p.Result[m.Ldif.ParseResponse]:
+    def parse_ldif(self, value: str) -> p.Result[p.Ldif.ParseResponse]:
         """Parse LDIF text to Entry models."""
         entry_server = getattr(self, "entry_server", None)
         if entry_server is None:
-            return r[m.Ldif.ParseResponse].fail(
+            # NOTE (multi-agent, mro-0ftd.3.7.2): construct the protocol-typed
+            # Result to match the parse_ldif signature; the concrete
+            # m.Ldif.ParseResponse instance structurally satisfies the protocol.
+            return r[p.Ldif.ParseResponse].fail(
                 "Entry server not available",
             )
         detected_server = getattr(self, "server_type", None)
@@ -407,7 +411,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
 
         def build_parse_response(
             parsed_entries: t.Ldif.EntrySequence,
-        ) -> m.Ldif.ParseResponse:
+        ) -> p.Ldif.ParseResponse:
             domain_entries = u.Ldif.as_entries(parsed_entries)
             for entry in domain_entries:
                 if entry.metadata and detected_server_type is not None:
@@ -425,7 +429,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
                 detected_server_type=detected_server_type,
             )
 
-        parse_response_result: p.Result[m.Ldif.ParseResponse] = (
+        parse_response_result: p.Result[p.Ldif.ParseResponse] = (
             entry_server
             .parse_server(value)
             .map_error(
@@ -439,8 +443,8 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
 
     def write(
         self,
-        entries: t.MutableSequenceOf[m.Ldif.Entry],
-        write_options: m.Ldif.WriteFormatOptions | None = None,
+        entries: Sequence[p.Ldif.Entry],
+        write_options: p.Ldif.WriteFormatOptions | None = None,
     ) -> p.Result[str]:
         """Write Entry models to LDIF text."""
         entry_server = getattr(self, "entry_server", None)

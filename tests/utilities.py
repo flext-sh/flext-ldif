@@ -12,7 +12,11 @@ from flext_ldap import FlextLdapUtilities, u
 from flext_tests import FlextTestsUtilities, tk, tm
 from flext_tests._utilities.fixtures_dsl import FlextTestsFixturesDSLMixin
 
-from tests import c, m, p, t
+# mro-0ftd.3.6: the utility facade follows the finite local c/t/p/m dependency DAG.
+from tests.constants import c
+from tests.models import m
+from tests.protocols import p
+from tests.typings import t
 
 
 class TestsFlextLdifUtilities(FlextTestsUtilities, u):
@@ -268,26 +272,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                 return None
 
         @staticmethod
-        def _assert_field_eq(
-            value: object,
-            field: str,
-            expected: object,
-            label: str,
-        ) -> None:
-            """Assert ``getattr(value, field) == expected`` with consistent diagnostic."""
-            if expected is None:
-                return
-            actual = getattr(value, field, None)
-            if isinstance(expected, list) and actual is not None:
-                if list(actual) != list(expected):
-                    raise AssertionError(f"Expected {label} {expected}, got {actual}")
-                return
-            if actual != expected:
-                raise AssertionError(f"Expected {label} '{expected}', got {actual}")
-
-        @classmethod
         def assert_server_schema_parse_and_properties(
-            cls,
             server: p.Ldif.SchemaServer,
             schema_def: str,
             *,
@@ -301,7 +286,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             expected_sup: str | None = None,
             expected_must: t.StrSequence | None = None,
             expected_may: t.StrSequence | None = None,
-        ) -> m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass:
+        ) -> p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass:
             """Parse schema content and assert the expected properties."""
             is_objectclass = any(
                 kind in schema_def
@@ -311,98 +296,48 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                     c.Tests.SCHEMA_ABSTRACT,
                 )
             )
-            value_raw = tm.ok(
-                server.parse_objectclass(schema_def)
-                if is_objectclass
-                else server.parse_attribute(schema_def),
-            )
-            value: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass
             if is_objectclass:
-                value = m.Ldif.SchemaObjectClass.model_validate(value_raw)
-            else:
-                value = m.Ldif.SchemaAttribute.model_validate(value_raw)
-            common_checks: tuple[tuple[str, object, str], ...] = (
-                ("oid", expected_oid, "OID"),
-                ("name", expected_name, "NAME"),
-                ("desc", expected_desc, "DESC"),
-            )
-            for field, expected, label in common_checks:
-                cls._assert_field_eq(value, field, expected, label)
-            if isinstance(value, m.Ldif.SchemaAttribute):
-                attr_checks: tuple[tuple[str, object, str], ...] = (
-                    ("syntax", expected_syntax, "SYNTAX"),
-                    ("single_value", expected_single_value, "SINGLE-VALUE"),
-                    ("length", expected_length, "length"),
-                )
-                for field, expected, label in attr_checks:
-                    cls._assert_field_eq(value, field, expected, label)
+                result = server.parse_objectclass(schema_def)
+                tm.ok(result)
+                value = result.unwrap()
+                # mro-0ftd.3.6.1: narrow the protocol result through its source model.
+                if not isinstance(value, m.Ldif.SchemaObjectClass):
+                    msg = "Schema parser did not return an objectClass model"
+                    raise AssertionError(msg)
+                if expected_oid is not None:
+                    tm.that(value.oid, eq=expected_oid)
+                if expected_name is not None:
+                    tm.that(value.name, eq=expected_name)
+                if expected_desc is not None:
+                    tm.that(value.desc, eq=expected_desc)
+                if expected_kind is not None:
+                    tm.that(value.kind, eq=expected_kind)
+                if expected_sup is not None:
+                    tm.that(value.sup, eq=expected_sup)
+                if expected_must is not None:
+                    tm.that(value.must, eq=list(expected_must))
+                if expected_may is not None:
+                    tm.that(value.may, eq=list(expected_may))
                 return value
-            oc_checks: tuple[tuple[str, object, str], ...] = (
-                ("kind", expected_kind, "KIND"),
-                ("sup", expected_sup, "SUP"),
-                (
-                    "must",
-                    list(expected_must) if expected_must is not None else None,
-                    "MUST",
-                ),
-                (
-                    "may",
-                    list(expected_may) if expected_may is not None else None,
-                    "MAY",
-                ),
-            )
-            for field, expected, label in oc_checks:
-                cls._assert_field_eq(value, field, expected, label)
-            return value
-
-        _PARSE_DISPATCH: ClassVar[t.MappingKV[t.Tests.ParseMethod, str]] = {
-            "parse_attribute": "parse_attribute",
-            "parse_objectclass": "parse_objectclass",
-            "parse_input": "parse_input",
-        }
-
-        @classmethod
-        def server_parse_and_unwrap(
-            cls,
-            server: p.Ldif.SchemaServer | p.Tests.ParseInputServer,
-            content: str,
-            *,
-            parse_method: t.Tests.ParseMethod = "parse_server",
-            expected_type: (
-                type[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl]
-                | None
-            ) = None,
-            should_succeed: bool | None = None,
-            message: str | None = None,
-        ) -> m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl | None:
-            """Parse content with a server and unwrap the typed result."""
-            method_name = cls._PARSE_DISPATCH.get(parse_method)
-            if method_name is None or not isinstance(server, p.Ldif.SchemaServer):
-                msg = f"{parse_method} is not supported by this server"
+            result = server.parse_attribute(schema_def)
+            tm.ok(result)
+            value = result.unwrap()
+            if not isinstance(value, m.Ldif.SchemaAttribute):
+                msg = "Schema parser did not return an attribute model"
                 raise AssertionError(msg)
-            method: Callable[[str], p.Result[object]] = getattr(server, method_name)
-            result = method(content)
-            if should_succeed is False:
-                if result.success:
-                    raise AssertionError(
-                        message or "Expected failure but parse succeeded",
-                    )
-                return None
-            if result.failure:
-                raise AssertionError(
-                    message or f"Expected success but parse failed: {result.error}",
-                )
-            value = result.value
-            if expected_type is not None and not isinstance(value, expected_type):
-                raise AssertionError(
-                    f"Expected {expected_type.__name__}, got {type(value).__name__}",
-                )
-            if isinstance(
-                value,
-                (m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass, m.Ldif.Acl),
-            ):
-                return value
-            return None
+            if expected_oid is not None:
+                tm.that(value.oid, eq=expected_oid)
+            if expected_name is not None:
+                tm.that(value.name, eq=expected_name)
+            if expected_desc is not None:
+                tm.that(value.desc, eq=expected_desc)
+            if expected_syntax is not None:
+                tm.that(value.syntax, eq=expected_syntax)
+            if expected_single_value is not None:
+                tm.that(value.single_value, eq=expected_single_value)
+            if expected_length is not None:
+                tm.that(value.length, eq=expected_length)
+            return value
 
         @staticmethod
         def acl_parse_and_unwrap(

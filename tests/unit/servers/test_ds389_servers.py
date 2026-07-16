@@ -2,9 +2,9 @@
 
 Every test exercises the OBSERVABLE public contract of ``FlextLdifServersDs389``
 (the ``schema_server`` / ``entry_server`` / ``acl_server`` facades and their
-``can_handle*`` / ``parse_input`` / ``write`` methods). No private attribute or
-method is touched, and the real server implementations are used end-to-end
-without mocking the unit under test.
+``can_handle*`` / specialized ``parse_*`` / ``write`` methods). No private
+attribute or method is touched, and the real server implementations are used
+end-to-end without mocking the unit under test.
 """
 
 from __future__ import annotations
@@ -13,14 +13,14 @@ import pytest
 from flext_tests import tm
 
 from flext_ldif.servers.ds389 import FlextLdifServersDs389
-from tests import c, m, t, u
+from tests import m, p, t, u
 
 
 class TestsFlextLdifDs389Servers:
     """Public-contract behavior of the DS389 LDIF server facades."""
 
     @staticmethod
-    def _schema_server() -> FlextLdifServersDs389.Schema:
+    def _schema_server() -> p.Ldif.SchemaServer:
         """Return the real DS389 schema server via the public facade."""
         server = FlextLdifServersDs389().schema_server
         tm.that(server, is_=FlextLdifServersDs389.Schema)
@@ -30,7 +30,8 @@ class TestsFlextLdifDs389Servers:
     # Attribute detection + parsing
     # ------------------------------------------------------------------
 
-    @pytest.mark.parametrize("test_case", c.Tests.DS389_ATTRIBUTE_TEST_CASES)
+    # mro-0ftd.3.6: consume modeled cases from their canonical facade.
+    @pytest.mark.parametrize("test_case", m.Tests.DS389_ATTRIBUTE_TEST_CASES)
     def test_can_handle_attribute_matches_expected(
         self,
         test_case: m.Tests.AttributeTestCase,
@@ -86,7 +87,7 @@ class TestsFlextLdifDs389Servers:
     def test_parse_attribute_without_oid_fails_with_message(self) -> None:
         """A definition missing its OID yields a failed r[T] with a reason."""
         tm.fail(
-            self._schema_server().parse_input(
+            self._schema_server().parse_attribute(
                 "NAME 'nsslapd-port' SYNTAX 1.3.6.1.4.1.1466.115.121.1.27",
             ),
             has="missing an OID",
@@ -96,7 +97,7 @@ class TestsFlextLdifDs389Servers:
     # objectClass detection + parsing + writing
     # ------------------------------------------------------------------
 
-    @pytest.mark.parametrize("test_case", c.Tests.DS389_OBJECTCLASS_TEST_CASES)
+    @pytest.mark.parametrize("test_case", m.Tests.DS389_OBJECTCLASS_TEST_CASES)
     def test_can_handle_objectclass_matches_expected(
         self,
         test_case: m.Tests.ObjectClassTestCase,
@@ -139,18 +140,22 @@ class TestsFlextLdifDs389Servers:
 
     def test_parse_abstract_objectclass_reports_kind(self) -> None:
         """ABSTRACT objectClass parse yields a model reporting ABSTRACT kind."""
-        oc_data = tm.ok(
-            self._schema_server().parse_input(
-                "( 2.16.840.1.113730.3.2.3 NAME 'nsds5base' ABSTRACT )",
-            ),
+        parse_result = self._schema_server().parse_objectclass(
+            "( 2.16.840.1.113730.3.2.3 NAME 'nsds5base' ABSTRACT )",
         )
+        tm.ok(parse_result)
+        # mro-0ftd.3.6.1: preserve the SchemaObjectClass Result parameter.
+        oc_data = parse_result.unwrap()
         tm.that(oc_data, is_=m.Ldif.SchemaObjectClass)
+        if not isinstance(oc_data, m.Ldif.SchemaObjectClass):
+            msg = "DS389 schema parser did not return an objectClass model"
+            raise AssertionError(msg)
         tm.that(oc_data.kind, eq="ABSTRACT")
 
     def test_parse_objectclass_without_oid_fails_with_message(self) -> None:
         """A definition missing its OID yields a failed r[T] with a reason."""
         tm.fail(
-            self._schema_server().parse_input(
+            self._schema_server().parse_objectclass(
                 "NAME 'nscontainer' SUP top STRUCTURAL",
             ),
             has="missing an OID",
@@ -179,16 +184,20 @@ class TestsFlextLdifDs389Servers:
             "SUP top STRUCTURAL MUST ( cn ) )"
         )
         server = self._schema_server()
-        parsed = tm.ok(server.parse_input(oc_def))
+        parse_result = server.parse_objectclass(oc_def)
+        tm.ok(parse_result)
+        parsed = parse_result.unwrap()
         tm.that(parsed, is_=m.Ldif.SchemaObjectClass)
-        rendered = tm.ok(server.write(parsed))
+        write_result = server.write(parsed)
+        tm.ok(write_result)
+        rendered = write_result.unwrap()
         tm.that(rendered, has=["2.16.840.1.113730.3.2.1", "nscontainer"])
 
     # ------------------------------------------------------------------
     # Entry detection
     # ------------------------------------------------------------------
 
-    @pytest.mark.parametrize("test_case", c.Tests.DS389_ENTRY_TEST_CASES)
+    @pytest.mark.parametrize("test_case", m.Tests.DS389_ENTRY_TEST_CASES)
     def test_entry_can_handle_matches_expected(
         self,
         test_case: m.Tests.EntryTestCase,
@@ -229,4 +238,4 @@ class TestsFlextLdifDs389Servers:
         """Acl.can_handle claims aci/version lines and rejects other input."""
         acl_server = FlextLdifServersDs389().acl_server
         tm.that(acl_server, is_=FlextLdifServersDs389.Acl)
-        tm.that(acl_server.can_handle(acl_line), eq=expected)
+        tm.that(acl_server.can_handle_acl(acl_line), eq=expected)

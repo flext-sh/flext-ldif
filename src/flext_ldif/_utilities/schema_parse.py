@@ -135,27 +135,31 @@ class FlextLdifUtilitiesSchemaParse:
     @staticmethod
     def extract_attributes_from_lines(
         ldif_content: str,
-        parse_callback: Callable[[str], p.Result[m.Ldif.SchemaAttribute]],
-    ) -> t.MutableSequenceOf[m.Ldif.SchemaAttribute]:
+        # NOTE (multi-agent, mro-0ftd.3.7.2): callback + return carry the protocol
+        # payload (§3.2); construction stays the concrete model class.
+        parse_callback: Callable[[str], p.Result[p.Ldif.SchemaAttribute]],
+    ) -> t.MutableSequenceOf[p.Ldif.SchemaAttribute]:
         """Extract and parse all attributeTypes from LDIF content lines."""
+        # NOTE (multi-agent, mro-0ftd.3.7.2): extractor no longer revalidates via a
+        # model_type — it returns the callback's valid model directly (U19).
         return se.extract_schema_items_from_lines(
             ldif_content,
             parse_callback,
             "attributetypes:",
-            m.Ldif.SchemaAttribute,
         )
 
     @staticmethod
     def extract_objectclasses_from_lines(
         ldif_content: str,
-        parse_callback: Callable[[str], p.Result[m.Ldif.SchemaObjectClass]],
-    ) -> t.MutableSequenceOf[m.Ldif.SchemaObjectClass]:
+        parse_callback: Callable[[str], p.Result[p.Ldif.SchemaObjectClass]],
+    ) -> t.MutableSequenceOf[p.Ldif.SchemaObjectClass]:
         """Extract and parse all objectClasses from LDIF content lines."""
+        # NOTE (multi-agent, mro-0ftd.3.7.2): extractor no longer revalidates via a
+        # model_type — it returns the callback's valid model directly (U19).
         return se.extract_schema_items_from_lines(
             ldif_content,
             parse_callback,
             "objectclasses:",
-            m.Ldif.SchemaObjectClass,
         )
 
     @staticmethod

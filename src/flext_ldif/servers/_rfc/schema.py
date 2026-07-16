@@ -279,7 +279,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
     @override
     def can_handle_attribute(
         self,
-        attr_definition: str | m.Ldif.SchemaAttribute,
+        # NOTE (multi-agent, mro-0ftd.3.7.2): protocol payload to match base SSOT.
+        attr_definition: str | p.Ldif.SchemaAttribute,
     ) -> bool:
         """Check if RFC server can handle attribute definitions (abstract impl)."""
         _ = (self, attr_definition)
@@ -288,7 +289,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
     @override
     def can_handle_objectclass(
         self,
-        oc_definition: str | m.Ldif.SchemaObjectClass,
+        oc_definition: str | p.Ldif.SchemaObjectClass,
     ) -> bool:
         """Check if RFC server can handle objectClass definitions (abstract impl)."""
         _ = (self, oc_definition)

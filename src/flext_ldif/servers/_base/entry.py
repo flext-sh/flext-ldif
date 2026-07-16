@@ -7,7 +7,7 @@ import copy
 from collections.abc import (
     Mapping,
     MutableMapping,
-    MutableSequence,
+    Sequence,
 )
 from typing import Annotated, ClassVar, Self, override
 
@@ -102,12 +102,14 @@ class FlextLdifServersBaseEntry(
         _ = attributes
         return False
 
-    def can_handle_attribute(self, attribute: m.Ldif.SchemaAttribute) -> bool:
+    # NOTE (multi-agent, mro-0ftd.3.7.2): base SSOT — protocol payload (§3.2);
+    # concrete overrides mirror this p.X signature.
+    def can_handle_attribute(self, attribute: p.Ldif.SchemaAttribute) -> bool:
         """Check if this server can handle a schema attribute."""
         _ = attribute
         return False
 
-    def can_handle_objectclass(self, objectclass: m.Ldif.SchemaObjectClass) -> bool:
+    def can_handle_objectclass(self, objectclass: p.Ldif.SchemaObjectClass) -> bool:
         """Check if this server can handle a schema objectClass."""
         _ = objectclass
         return False
@@ -131,49 +133,51 @@ class FlextLdifServersBaseEntry(
             return r[t.Ldif.EntryPayload].ok(str_result.map_or(""))
         return r[t.Ldif.EntryPayload].ok("")
 
-    def parse_server(self, value: str) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
+    def parse_server(self, value: str) -> p.Result[Sequence[p.Ldif.Entry]]:
         """Parse LDIF content string into Entry models."""
-        return self._parse_content(value)
-
-    def parse_input(self, ldif_text: str) -> t.MutableSequenceOf[m.Ldif.Entry] | None:
-        """Compatibility parser entrypoint for direct server consumers."""
-        parse_result = self.parse_server(ldif_text)
+        parse_result = self._parse_content(value)
         if parse_result.failure:
-            return None
-        return parse_result.value
+            return r[Sequence[p.Ldif.Entry]].fail(
+                parse_result.error or "Entry parsing failed",
+            )
+        return r[Sequence[p.Ldif.Entry]].ok(parse_result.value)
 
     def parse_entry(
         self,
         entry_dn: str,
         entry_attrs: t.MutableStrSequenceMapping,
-    ) -> p.Result[m.Ldif.Entry]:
+    ) -> p.Result[p.Ldif.Entry]:
         """Parse a single entry from DN and attributes."""
         attrs_dict = dict(entry_attrs)
         ldif_lines = [f"dn: {entry_dn}"]
         for attr_name, attr_values in attrs_dict.items():
             ldif_lines.extend(f"{attr_name}: {value}" for value in attr_values)
         ldif_content = "\n".join(ldif_lines) + "\n"
-        return self._parse_content(ldif_content).flat_map(
-            lambda entries: (
-                r[m.Ldif.Entry].ok(entries[0])
-                if entries
-                else r[m.Ldif.Entry].fail("No entries parsed")
-            ),
-        )
+        parse_result = self._parse_content(ldif_content)
+        if parse_result.failure:
+            return r[p.Ldif.Entry].fail(
+                parse_result.error or "Entry parsing failed",
+            )
+        if not parse_result.value:
+            return r[p.Ldif.Entry].fail("No entries parsed")
+        return r[p.Ldif.Entry].ok(parse_result.value[0])
 
     def write(
         self,
-        entry_data: m.Ldif.Entry | t.MutableSequenceOf[m.Ldif.Entry],
-        write_options: m.Ldif.WriteFormatOptions | None = None,
+        entry_data: p.Ldif.Entry | Sequence[p.Ldif.Entry],
+        write_options: p.Ldif.WriteFormatOptions | None = None,
     ) -> p.Result[str]:
         """Write Entry model(s) to LDIF string format."""
-        if isinstance(entry_data, MutableSequence):
-            return self._write_entry_list(entry_data, write_options)
-        return self._write_single_entry(entry_data, write_options)
+        if isinstance(entry_data, Sequence):
+            return self._write_entry_list(
+                u.Ldif.as_entries(entry_data),
+                write_options,
+            )
+        return self._write_single_entry(u.Ldif.as_entry(entry_data), write_options)
 
     def _build_header_lines(
         self,
-        write_options: m.Ldif.WriteFormatOptions | None,
+        write_options: p.Ldif.WriteFormatOptions | None,
         entry_count: int,
     ) -> t.MutableSequenceOf[str]:
         """Build header lines based on write options."""
@@ -219,13 +223,14 @@ class FlextLdifServersBaseEntry(
         _ = target_server
         return entry
 
-    def _hook_post_parse_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
+    # NOTE (multi-agent, mro-0ftd.3.7.2): base SSOT — protocol payload (§3.2).
+    def _hook_post_parse_entry(self, entry: p.Ldif.Entry) -> p.Result[p.Ldif.Entry]:
         """Run hook after parsing an entry."""
-        return r[m.Ldif.Entry].ok(entry)
+        return r[p.Ldif.Entry].ok(entry)
 
-    def _hook_pre_write_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
+    def _hook_pre_write_entry(self, entry: p.Ldif.Entry) -> p.Result[p.Ldif.Entry]:
         """Run hook before writing an entry."""
-        return r[m.Ldif.Entry].ok(entry)
+        return r[p.Ldif.Entry].ok(entry)
 
     def _hook_validate_entry_raw(
         self,
@@ -241,7 +246,7 @@ class FlextLdifServersBaseEntry(
     def _inject_write_format_options(
         self,
         entry: m.Ldif.Entry,
-        write_options: m.Ldif.WriteFormatOptions,
+        write_options: p.Ldif.WriteFormatOptions,
     ) -> m.Ldif.Entry:
         """Inject write format options into entry metadata extensions."""
         format_options_payload = write_options.model_dump(
@@ -578,7 +583,7 @@ class FlextLdifServersBaseEntry(
     def _write_entry_list(
         self,
         entries: t.MutableSequenceOf[m.Ldif.Entry],
-        write_options: m.Ldif.WriteFormatOptions | None,
+        write_options: p.Ldif.WriteFormatOptions | None,
     ) -> p.Result[str]:
         """Write list of entries to LDIF."""
         header_lines = self._build_header_lines(write_options, len(entries))
@@ -598,7 +603,7 @@ class FlextLdifServersBaseEntry(
     def _write_single_entry(
         self,
         entry: m.Ldif.Entry,
-        write_options: m.Ldif.WriteFormatOptions | None,
+        write_options: p.Ldif.WriteFormatOptions | None,
     ) -> p.Result[str]:
         """Write single entry to LDIF."""
         if write_options is not None:

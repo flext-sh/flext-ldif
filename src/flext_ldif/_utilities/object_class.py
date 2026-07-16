@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from flext_ldif import FlextLdifModels as m, c
+from flext_ldif import c, p
 
 
 class FlextLdifUtilitiesObjectClass:
@@ -16,12 +16,15 @@ class FlextLdifUtilitiesObjectClass:
 
     @staticmethod
     def fix_kind_mismatch(
-        schema_oc: m.Ldif.SchemaObjectClass,
-        _server_type: str = "oid",
-    ) -> None:
-        """Fix objectClass kind mismatches with superior classes (server-specific)."""
+        schema_oc: p.Ldif.SchemaObjectClass,
+    ) -> p.Ldif.SchemaObjectClass:
+        """Return an ObjectClass with the kind corrected for its superior.
+
+        Pydantic-2-way immutable transition (no in-place mutation): returns the
+        corrected ``model_copy`` or the same object when no fix applies.
+        """
         if not schema_oc.sup or not schema_oc.kind:
-            return
+            return schema_oc
         structural_superiors = {
             "orclpwdverifierprofile",
             "orclapplicationentity",
@@ -39,18 +42,23 @@ class FlextLdifUtilitiesObjectClass:
             sup_lower in structural_superiors
             and schema_oc.kind == schema_constants.auxiliary
         ):
-            object.__setattr__(schema_oc, "kind", schema_constants.structural)
-        elif (
+            return schema_oc.model_copy(update={"kind": schema_constants.structural})
+        if (
             sup_lower in auxiliary_superiors
             and schema_oc.kind == schema_constants.structural
         ):
-            object.__setattr__(schema_oc, "kind", schema_constants.auxiliary)
+            return schema_oc.model_copy(update={"kind": schema_constants.auxiliary})
+        return schema_oc
 
     @staticmethod
     def fix_missing_sup(
-        schema_oc: m.Ldif.SchemaObjectClass,
-    ) -> None:
-        """Fix AUXILIARY ObjectClass missing SUP (superior) attribute."""
+        schema_oc: p.Ldif.SchemaObjectClass,
+    ) -> p.Ldif.SchemaObjectClass:
+        """Return an AUXILIARY ObjectClass with a default SUP when missing.
+
+        Pydantic-2-way immutable transition (no in-place mutation).
+        """
         schema_constants = FlextLdifUtilitiesObjectClass.SchemaConstants
         if schema_oc.kind == schema_constants.auxiliary and (not schema_oc.sup):
-            object.__setattr__(schema_oc, "sup", "top")
+            return schema_oc.model_copy(update={"sup": "top"})
+        return schema_oc

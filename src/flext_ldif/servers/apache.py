@@ -86,7 +86,8 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         @override
         def can_handle_attribute(
             self,
-            attr_definition: str | m.Ldif.SchemaAttribute,
+            # NOTE (multi-agent, mro-0ftd.3.7.2): protocol param to match base.
+            attr_definition: str | p.Ldif.SchemaAttribute,
         ) -> bool:
             """Detect ApacheDS attribute definitions using centralized constants."""
             matches: bool = u.Ldif.matches_server_patterns(
@@ -98,7 +99,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         @override
         def can_handle_objectclass(
             self,
-            oc_definition: str | m.Ldif.SchemaObjectClass,
+            oc_definition: str | p.Ldif.SchemaObjectClass,
         ) -> bool:
             """Detect ApacheDS objectClass definitions using centralized constants."""
             matches: bool = u.Ldif.matches_server_patterns(
@@ -110,11 +111,14 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         @override
         def _hook_post_parse_objectclass(
             self,
-            oc: m.Ldif.SchemaObjectClass,
-        ) -> p.Result[m.Ldif.SchemaObjectClass]:
+            # NOTE (multi-agent, mro-0ftd.3.7.2): protocol payload (§3.2).
+            oc: p.Ldif.SchemaObjectClass,
+        ) -> p.Result[p.Ldif.SchemaObjectClass]:
             """Normalize Apache objectClass data after RFC parsing."""
-            u.Ldif.fix_missing_sup(oc)
-            u.Ldif.fix_kind_mismatch(oc)
+            # NOTE (multi-agent, mro-0ftd.3.7.2): helpers return the immutable
+            # model_copy transition (no in-place mutation) — assign it.
+            oc = u.Ldif.fix_missing_sup(oc)
+            oc = u.Ldif.fix_kind_mismatch(oc)
             return super()._hook_post_parse_objectclass(oc)
 
     class Acl(FlextLdifServersRfc.Acl):
@@ -176,7 +180,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             self,
             entry_dn: str,
             entry_attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]],
-        ) -> p.Result[m.Ldif.Entry]:
+        ) -> p.Result[p.Ldif.Entry]:
             """Parse raw LDIF entry data into Entry model."""
             str_attrs: t.MutableStrSequenceMapping = {
                 k: [v.decode() if isinstance(v, bytes) else v for v in vals]
@@ -184,25 +188,35 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             }
             base_result = super().parse_entry(entry_dn, str_attrs)
             if base_result.failure:
-                return r[m.Ldif.Entry].from_result(base_result)
+                return r[p.Ldif.Entry].from_result(base_result)
             entry = base_result.value
             try:
                 return self._mark_apache_entry(entry)
             except c.EXC_BASIC_TYPE as exc:
-                return r[m.Ldif.Entry].fail_op(
+                return r[p.Ldif.Entry].fail_op(
                     "Apache Directory Server entry parsing",
                     exc,
                 )
 
         def _mark_apache_entry(
             self,
-            entry: m.Ldif.Entry,
-        ) -> p.Result[m.Ldif.Entry]:
+            # NOTE (multi-agent, mro-0ftd.3.7.2): protocol payload (§3.2); the
+            # model is constructed only at r[p.Ldif.Entry].ok(...) boundary.
+            entry: p.Ldif.Entry,
+        ) -> p.Result[p.Ldif.Entry]:
             """Attach Apache Directory Server metadata to an entry."""
             if not entry.dn:
-                return r[m.Ldif.Entry].ok(entry)
-            metadata = entry.metadata or m.Ldif.ServerMetadata(
-                server_type=self._get_server_type(),
+                return r[p.Ldif.Entry].ok(entry)
+            # NOTE (multi-agent, mro-0ftd.3.7.2): narrow to the concrete mutable
+            # ServerMetadata model (the runtime object IS the model); it is the
+            # JsonPayload the Entry.model_copy update accepts.
+            raw_metadata = entry.metadata
+            metadata: m.Ldif.ServerMetadata = (
+                raw_metadata
+                if isinstance(raw_metadata, m.Ldif.ServerMetadata)
+                else m.Ldif.ServerMetadata(
+                    server_type=self._get_server_type(),
+                )
             )
             dn_lower = entry.dn.value.lower()
             if not metadata.extensions:
@@ -211,7 +225,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 FlextLdifServersApache.Constants.DN_CONFIG_ENTRY_MARKER in dn_lower
             )
             processed_entry = entry.model_copy(update={"metadata": metadata})
-            return r[m.Ldif.Entry].ok(processed_entry)
+            return r[p.Ldif.Entry].ok(processed_entry)
 
 
 __all__: list[str] = ["FlextLdifServersApache"]

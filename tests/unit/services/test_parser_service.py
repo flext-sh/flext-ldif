@@ -27,26 +27,18 @@ class TestsFlextLdifParserService:
         tm.that(parsed, is_=m.Ldif.ParseResponse)
         tm.that(len(parsed.entries) > 0, eq=True)
 
-    def test_parse_ldif_file_resolves_relative_path_from_src_root(
+    def test_parse_ldif_file_rejects_src_root_fallback(
         self,
         api: p.Ldif.LdifClient,
     ) -> None:
-        project_root = Path(__file__).resolve().parents[3]
-        src_root = project_root / "src"
-        temp_name = f"{c.Tests.PARSER_RELATIVE_PREFIX}_{uuid4().hex}.ldif"
-        src_file = src_root / temp_name
-        src_file.write_text(c.Tests.RFC_SAMPLE_LDIF_BASIC, encoding="utf-8")
+        relative_package_path = Path("flext_ldif") / "__init__.py"
 
-        try:
-            result = api.parse_ldif_file(
-                Path(temp_name),
-                server_type=c.Tests.RFC,
-            )
-        finally:
-            src_file.unlink(missing_ok=True)
+        result = api.parse_ldif_file(
+            relative_package_path,
+            server_type=c.Tests.RFC,
+        )
 
-        parsed = u.Tests.assert_success(result)
-        tm.that(len(parsed.entries) > 0, eq=True)
+        tm.fail(result, has="File not found")
 
     def test_parse_ldif_file_returns_failure_when_path_is_missing(
         self,
