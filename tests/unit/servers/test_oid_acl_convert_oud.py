@@ -20,7 +20,7 @@ class TestsFlextLdifOidAclConvertOud:
     """Public contract of FlextLdifServersOidAclToOud."""
 
     @staticmethod
-    def _subject(kind: str, value: str = "") -> m.Ldif.OidAclSubject:
+    def _subject(kind: str, value: str = "") -> p.Ldif.OidAclSubject:
         return m.Ldif.OidAclSubject(subject_type=kind, value=value)
 
     @staticmethod
@@ -28,7 +28,7 @@ class TestsFlextLdifOidAclConvertOud:
         target_type: str,
         target_attrs: str = "*",
         acl_type: str = "orclaci",
-    ) -> m.Ldif.OidAclRule:
+    ) -> p.Ldif.OidAclRule:
         return m.Ldif.OidAclRule(
             dn="dc=ctbc",
             acl_type=acl_type,

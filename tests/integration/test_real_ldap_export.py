@@ -27,7 +27,7 @@ from flext_ldap.adapters.entry import FlextLdapEntryAdapter
 from flext_tests import tm
 
 from flext_ldif import ldif
-from tests import c, m, p
+from tests import c, p
 
 
 @pytest.fixture
@@ -45,10 +45,10 @@ class TestsFlextLdifRealLdapExport:
     @staticmethod
     def _to_ldif_entries(
         ldap3_entries: Sequence[p.Ldap.Ldap3Entry],
-    ) -> list[m.Ldif.Entry]:
+    ) -> list[p.Ldif.Entry]:
         """Convert ldap3 search results into ldif entries via the public adapter."""
         adapter = FlextLdapEntryAdapter()
-        entries: list[m.Ldif.Entry] = []
+        entries: list[p.Ldif.Entry] = []
         for ldap3_entry in ldap3_entries:
             result = adapter.ldap3_to_ldif_entry(ldap3_entry)
             tm.ok(result)

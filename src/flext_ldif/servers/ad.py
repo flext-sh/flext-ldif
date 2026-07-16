@@ -139,7 +139,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         DETECTION_MICROSOFT_ACTIVE_DIRECTORY: ClassVar[str] = (
             "microsoft active directory"
         )
-        ATTRIBUTE_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig] = (
+        ATTRIBUTE_PATTERN_SETTINGS: ClassVar[p.Ldif.ServerPatternsConfig] = (
             m.Ldif.ServerPatternsConfig(
                 oid_pattern=DETECTION_OID_PATTERN,
                 attr_names=DETECTION_ATTRIBUTE_NAMES,
@@ -147,7 +147,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 match_definition_text=True,
             )
         )
-        OBJECTCLASS_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig] = (
+        OBJECTCLASS_PATTERN_SETTINGS: ClassVar[p.Ldif.ServerPatternsConfig] = (
             m.Ldif.ServerPatternsConfig(
                 oid_pattern=DETECTION_OID_PATTERN,
                 attr_names=DETECTION_OBJECTCLASS_NAMES,
@@ -234,12 +234,12 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             )
 
         @override
-        def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
+        def _parse_acl(self, acl_line: str) -> p.Result[p.Ldif.Acl]:
             """Parse nTSecurityDescriptor values and expose best-effort SDDL."""
             try:
                 return self._parse_ad_acl(acl_line)
             except c.EXC_BASIC_TYPE as exc:
-                return r[m.Ldif.Acl].fail_op("Active Directory ACL parsing", exc)
+                return r[p.Ldif.Acl].fail_op("Active Directory ACL parsing", exc)
 
         @override
         def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
@@ -249,11 +249,11 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             except c.EXC_BASIC_TYPE as exc:
                 return r[str].fail_op("Active Directory ACL write", exc)
 
-        def _parse_ad_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
+        def _parse_ad_acl(self, acl_line: str) -> p.Result[p.Ldif.Acl]:
             """Parse Active Directory ACL content."""
             line = acl_line.strip()
             if not line:
-                return r[m.Ldif.Acl].fail("Empty ACL line cannot be parsed")
+                return r[p.Ldif.Acl].fail("Empty ACL line cannot be parsed")
             attr_name, _, remainder = line.partition(":")
             attr_name = (
                 attr_name.strip() or FlextLdifServersAd.Constants.ACL_ATTRIBUTE_NAME
@@ -280,7 +280,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             )
             if acl_model.metadata:
                 acl_model.metadata.extensions["original_format"] = acl_line
-            return r[m.Ldif.Acl].ok(acl_model)
+            return r[p.Ldif.Acl].ok(acl_model)
 
         @staticmethod
         def _decode_sddl(raw_value: str, *, is_base64: bool) -> str | None:

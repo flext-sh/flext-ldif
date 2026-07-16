@@ -34,7 +34,7 @@ class FlextLdifServersOudAciMixin:
 
     @staticmethod
     def find_aci_values(
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         original_attrs: t.AttributeMapping,
     ) -> t.MutableSequenceOf[str] | str | None:
         """Find ACI values from entry attributes, original_attrs, or commented metadata."""

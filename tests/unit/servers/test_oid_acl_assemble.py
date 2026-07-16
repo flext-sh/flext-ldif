@@ -30,14 +30,14 @@ class TestsFlextLdifOidAclAssemble:
     # ---- helpers -------------------------------------------------------
 
     @staticmethod
-    def _build(dn: str, line: str) -> m.Ldif.AciRule:
+    def _build(dn: str, line: str) -> p.Ldif.AciRule:
         """Parse an OID line then build the OUD AciRule (parse → build)."""
         rule: m.Ldif.OidAclRule = Parser.parse_oid_acl_line(dn, line).unwrap()
         aci_rule: m.Ldif.AciRule = Asm.build_aci_rule(rule).unwrap()
         return aci_rule
 
     @staticmethod
-    def _entry(attributes: dict[str, list[str]]) -> m.Ldif.Entry:
+    def _entry(attributes: dict[str, list[str]]) -> p.Ldif.Entry:
         return u.Tests.create_real_entry(dn="cn=users,dc=ctbc", attributes=attributes)
 
     # ---- render_aci_string: AciRule → aci: line ------------------------

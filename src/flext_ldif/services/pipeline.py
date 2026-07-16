@@ -11,7 +11,7 @@ from flext_ldif.services.transformers import FlextLdifTransformer
 
 
 class FlextLdifProcessingPipeline(
-    s[t.MutableSequenceOf[m.Ldif.Entry]],
+    s[t.MutableSequenceOf[p.Ldif.Entry]],
 ):
     """Full processing pipeline with configuration."""
 
@@ -28,7 +28,7 @@ class FlextLdifProcessingPipeline(
         ),
     ] = None
     entries_input: Annotated[
-        t.MutableSequenceOf[m.Ldif.Entry] | None,
+        t.MutableSequenceOf[p.Ldif.Entry] | None,
         u.Field(
             default=None,
             exclude=True,
@@ -38,8 +38,8 @@ class FlextLdifProcessingPipeline(
     _config: m.Ldif.TransformConfig = u.PrivateAttr(
         default_factory=m.Ldif.TransformConfig,
     )
-    _entries: t.MutableSequenceOf[m.Ldif.Entry] = u.PrivateAttr(default_factory=list)
-    _stages: t.SequenceOf[m.Cli.PipelineStageSpec] = u.PrivateAttr(
+    _entries: t.MutableSequenceOf[p.Ldif.Entry] = u.PrivateAttr(default_factory=list)
+    _stages: t.SequenceOf[p.Cli.PipelineStageSpec] = u.PrivateAttr(
         default_factory=tuple,
     )
 
@@ -84,14 +84,14 @@ class FlextLdifProcessingPipeline(
     @override
     def execute(
         self,
-    ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
+    ) -> p.Result[t.MutableSequenceOf[p.Ldif.Entry]]:
         """Execute the processing pipeline."""
         batch = self.entries_input
         if batch is None:
-            return r[t.MutableSequenceOf[m.Ldif.Entry]].fail("No entries provided")
+            return r[t.MutableSequenceOf[p.Ldif.Entry]].fail("No entries provided")
         self._entries = list(batch)
         if not self._stages:
-            return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(self._entries)
+            return r[t.MutableSequenceOf[p.Ldif.Entry]].ok(self._entries)
         pipeline_result = cli.pipeline(
             self._stages,
             context=cli.stage_context(workspace_root=Path.cwd()),
@@ -99,7 +99,7 @@ class FlextLdifProcessingPipeline(
             logger=self.logger,
         )
         if pipeline_result.failure:
-            return r[t.MutableSequenceOf[m.Ldif.Entry]].fail(
+            return r[t.MutableSequenceOf[p.Ldif.Entry]].fail(
                 pipeline_result.error or "processing pipeline failed",
             )
         failed_stage = next(
@@ -107,22 +107,22 @@ class FlextLdifProcessingPipeline(
             None,
         )
         if failed_stage is not None:
-            return r[t.MutableSequenceOf[m.Ldif.Entry]].fail(
+            return r[t.MutableSequenceOf[p.Ldif.Entry]].fail(
                 failed_stage.error or "processing pipeline failed",
             )
-        return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(self._entries)
+        return r[t.MutableSequenceOf[p.Ldif.Entry]].ok(self._entries)
 
     def _apply_transformer(
         self,
         stage_id: str,
         transformer: p.Ldif.EntryTransformer,
-    ) -> p.Result[m.Cli.PipelineStageResult]:
+    ) -> p.Result[p.Cli.PipelineStageResult]:
         """Apply one entry transformer across the current batch."""
-        transformed_entries: t.MutableSequenceOf[m.Ldif.Entry] = []
+        transformed_entries: t.MutableSequenceOf[p.Ldif.Entry] = []
         for entry in self._entries:
             transformed = transformer.apply(entry)
             if transformed.failure:
-                return r[m.Cli.PipelineStageResult].fail(
+                return r[p.Cli.PipelineStageResult].fail(
                     transformed.error or f"stage {stage_id} failed",
                 )
             transformed_entries.append(transformed.value)
@@ -130,13 +130,13 @@ class FlextLdifProcessingPipeline(
         output_payload: t.JsonMapping = t.Cli.JSON_MAPPING_ADAPTER.validate_python({
             "processed_entries": len(transformed_entries),
         })
-        stage_result: p.Result[m.Cli.PipelineStageResult] = cli.ok_stage(
+        stage_result: p.Result[p.Cli.PipelineStageResult] = cli.ok_stage(
             stage_id,
             output=output_payload,
         )
         return stage_result
 
-    def _build_pipeline(self) -> t.SequenceOf[m.Cli.PipelineStageSpec]:
+    def _build_pipeline(self) -> t.SequenceOf[p.Cli.PipelineStageSpec]:
         """Build the canonical cli-backed processing stages."""
         stage_order: t.MutableSequenceOf[str] = []
         handlers: t.MutableMappingKV[str, t.Cli.PipelineHandler] = {}

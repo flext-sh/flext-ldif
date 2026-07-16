@@ -32,7 +32,7 @@ class TestsFlextLdifCategorizationRealData:
     """Behavioral tests for categorization with real-world DN scenarios."""
 
     @staticmethod
-    def _entry(dn: str, objectclass: str) -> m.Ldif.Entry:
+    def _entry(dn: str, objectclass: str) -> p.Ldif.Entry:
         """Build an in-memory entry with a single objectClass."""
         return m.Ldif.Entry(
             dn=m.Ldif.DN(value=dn),
@@ -43,7 +43,7 @@ class TestsFlextLdifCategorizationRealData:
         )
 
     @staticmethod
-    def _acl_entry(dn: str) -> m.Ldif.Entry:
+    def _acl_entry(dn: str) -> p.Ldif.Entry:
         """Build an in-memory entry carrying an ACI attribute."""
         return m.Ldif.Entry(
             dn=m.Ldif.DN(value=dn),
@@ -54,7 +54,7 @@ class TestsFlextLdifCategorizationRealData:
         )
 
     @pytest.fixture
-    def hierarchy_entries(self) -> t.MutableSequenceOf[m.Ldif.Entry]:
+    def hierarchy_entries(self) -> t.MutableSequenceOf[p.Ldif.Entry]:
         """Mixed entries: three under dc=example, two under dc=example2."""
         return [
             self._entry("dc=example", "domain"),
@@ -65,7 +65,7 @@ class TestsFlextLdifCategorizationRealData:
         ]
 
     @staticmethod
-    def _dns(entries: t.MutableSequenceOf[m.Ldif.Entry]) -> set[str]:
+    def _dns(entries: t.MutableSequenceOf[p.Ldif.Entry]) -> set[str]:
         """Collect the DN string values from a category bucket."""
         return {e.dn.value for e in entries if e.dn is not None}
 
@@ -73,7 +73,7 @@ class TestsFlextLdifCategorizationRealData:
 
     def test_validate_dns_succeeds_and_returns_all_valid_entries(
         self,
-        hierarchy_entries: t.MutableSequenceOf[m.Ldif.Entry],
+        hierarchy_entries: t.MutableSequenceOf[p.Ldif.Entry],
     ) -> None:
         """validate_dns returns a success result preserving every valid entry."""
         categorization = ldif.categorization(
@@ -91,7 +91,7 @@ class TestsFlextLdifCategorizationRealData:
 
     def test_categorize_entries_places_domains_ous_and_people_by_contract(
         self,
-        hierarchy_entries: t.MutableSequenceOf[m.Ldif.Entry],
+        hierarchy_entries: t.MutableSequenceOf[p.Ldif.Entry],
     ) -> None:
         """Domains/OUs categorize as HIERARCHY, person entries as USERS."""
         categorization = ldif.categorization(
@@ -131,7 +131,7 @@ class TestsFlextLdifCategorizationRealData:
 
     def test_filter_by_base_dn_keeps_under_base_and_rejects_outside(
         self,
-        hierarchy_entries: t.MutableSequenceOf[m.Ldif.Entry],
+        hierarchy_entries: t.MutableSequenceOf[p.Ldif.Entry],
     ) -> None:
         """Base-DN filtering uses hierarchy, so dc=example2 never matches dc=example."""
         categorization = ldif.categorization(

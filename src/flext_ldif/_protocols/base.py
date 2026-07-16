@@ -206,6 +206,19 @@ class FlextLdifProtocolsBase(Protocol):
             """The underlying attribute mapping."""
             ...
 
+        # NOTE (multi-agent, mro-0ftd.3.7.2): read-only @property members the OUD
+        # round-trip restore helper reads (transform.py restore_entry_from_metadata);
+        # concrete m.Ldif.Attributes carries these fields (domain_attributes.py:38/44).
+        @property
+        def attribute_metadata(self) -> Mapping[str, t.MutableAttributeMapping]:
+            """Per-attribute metadata (category/hidden status)."""
+            ...
+
+        @property
+        def metadata(self) -> t.MutableJsonMapping | None:
+            """Ordering/format preservation metadata."""
+            ...
+
         def get(
             self,
             key: str,
@@ -432,19 +445,27 @@ class FlextLdifProtocolsBase(Protocol):
             """The server/server type identifier."""
             ...
 
-        # NOTE (multi-agent, mro-0ftd.3.7.2): mutable attribute (not read-only
-        # property) — the concrete ServerMetadata is a mutable DynamicModel
-        # (domain_metadata.py:205), so consumers set/append extensions.
+        # NOTE (multi-agent, mro-0ftd.3.7.2): read-write attribute — extensions is a
+        # mutable JSON mapping the OID/relaxed handlers reassign in place
+        # (metadata.extensions = {}); concrete field type equals this exactly so the
+        # invariant read-write contract is satisfiable.
         extensions: t.MutableJsonMapping
 
-        # NOTE (multi-agent, mro-0ftd.3.7.2): concrete ServerMetadata carries
-        # write_options (domain_metadata.py:285) and attribute_transformations
-        # (domain_metadata.py:234) — the ACL-metadata helpers read them.
-        write_options: FlextLdifProtocolsBase.WriteOptions | None
-        attribute_transformations: MutableMapping[
-            str,
-            FlextLdifProtocolsBase.AttributeTransformation,
-        ]
+        # NOTE (multi-agent, mro-0ftd.3.7.2): read-only @property (covariant) so the
+        # concrete m.Ldif.ServerMetadata field (a subtype-carrying model) satisfies the
+        # contract; a read-write attribute would be invariant and unsatisfiable. New
+        # values flow through model_copy(update=...), the Pydantic-2 transition canon.
+        @property
+        def write_options(self) -> FlextLdifProtocolsBase.WriteOptions | None:
+            """The round-trip write options persisted in metadata."""
+            ...
+
+        @property
+        def attribute_transformations(
+            self,
+        ) -> Mapping[str, FlextLdifProtocolsBase.AttributeTransformation]:
+            """The per-attribute transformation audit trail (read-only view)."""
+            ...
 
         # NOTE (multi-agent, mro-0ftd.3.7.2): model_dump makes this protocol
         # structurally a flext-core p.Model so it is assignable into the
@@ -465,6 +486,14 @@ class FlextLdifProtocolsBase(Protocol):
             self,
         ) -> FlextLdifProtocolsBase.SchemaFormatDetails | None:
             """The schema round-trip formatting details."""
+            ...
+
+        # NOTE (multi-agent, mro-0ftd.3.7.2): read-only @property the OUD round-trip
+        # restore helper reads to recover original attribute-name casing; concrete
+        # m.Ldif.ServerMetadata carries this field (domain_metadata.py:315).
+        @property
+        def original_attribute_case(self) -> t.MutableJsonMapping:
+            """Original attribute-name casing for reverse conversion."""
             ...
 
         # NOTE (multi-agent, mro-0ftd.3.7.2): frozen-transition canon for the
@@ -646,10 +675,15 @@ class FlextLdifProtocolsBase(Protocol):
 
         # NOTE (multi-agent, mro-0ftd.3.7.2): complete the behavioral contract so
         # consumers can annotate payloads as p.Ldif.Entry (§3.2) instead of the
-        # concrete m.Ldif.Entry. metadata is a MUTABLE attribute (not a read-only
-        # property) — the concrete m.Ldif.Entry is a mutable DynamicModel
-        # (domain_entry.py:518) and OUD/OID handlers assign entry.metadata.
-        metadata: FlextLdifProtocolsBase.ServerMetadata | None
+        # concrete m.Ldif.Entry. metadata is a read-only @property (covariant): the
+        # concrete m.Ldif.Entry field satisfies it, while a read-write attribute would
+        # be invariant and unsatisfiable. Handlers transition via
+        # entry.model_copy(update={"metadata": ...}) — the Pydantic-2 frozen-transition
+        # canon (works on the mutable DynamicModel too, mirroring SchemaElement/Acl).
+        @property
+        def metadata(self) -> FlextLdifProtocolsBase.ServerMetadata | None:
+            """The server-specific entry metadata."""
+            ...
 
         def model_copy(
             self,

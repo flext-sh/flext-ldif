@@ -21,7 +21,7 @@ class TestsFlextLdifWriterService:
     """Assert the observable writing behavior promised by the public API."""
 
     @staticmethod
-    def _entries() -> t.MutableSequenceOf[m.Ldif.Entry]:
+    def _entries() -> t.MutableSequenceOf[p.Ldif.Entry]:
         return [
             u.Tests.create_real_entry(dn=dn) for dn in sorted(c.Tests.WRITER_ENTRY_DNS)
         ]

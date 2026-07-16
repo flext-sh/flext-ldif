@@ -21,7 +21,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     """Oracle Internet Directory (OID) ACL implementation."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
-    OidAclMetadataConfig: ClassVar[type[m.Ldif.OidAclMetadataConfig]] = (
+    OidAclMetadataConfig: ClassVar[type[p.Ldif.OidAclMetadataConfig]] = (
         m.Ldif.OidAclMetadataConfig
     )
 
@@ -480,7 +480,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         return result
 
     @override
-    def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
+    def _parse_acl(self, acl_line: str) -> p.Result[p.Ldif.Acl]:
         """Parse Oracle OID ACL string to RFC-compliant internal model."""
         parent_result = super()._parse_acl(acl_line)
         if parent_result.failure:
@@ -495,16 +495,16 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             )
         ):
             updated_acl = self._update_acl_with_oid_metadata(acl_data, acl_line)
-            return r[m.Ldif.Acl].ok(updated_acl)
+            return r[p.Ldif.Acl].ok(updated_acl)
         if (
             parent_result.success
             and (acl_data := parent_result.value)
             and (not self.can_handle_acl(acl_line))
         ):
-            return r[m.Ldif.Acl].ok(acl_data)
+            return r[p.Ldif.Acl].ok(acl_data)
         return self._parse_oid_specific_acl(acl_line)
 
-    def _parse_oid_specific_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
+    def _parse_oid_specific_acl(self, acl_line: str) -> p.Result[p.Ldif.Acl]:
         """Parse OID-specific ACL format when RFC parser fails."""
         try:
             return self._parse_oid_specific_acl_core(acl_line)
@@ -518,9 +518,9 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
                 acl_line=acl_preview,
                 acl_line_length=len(acl_line),
             )
-            return r[m.Ldif.Acl].fail_op("OID ACL parsing", e)
+            return r[p.Ldif.Acl].fail_op("OID ACL parsing", e)
 
-    def _parse_oid_specific_acl_core(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
+    def _parse_oid_specific_acl_core(self, acl_line: str) -> p.Result[p.Ldif.Acl]:
         """Parse OID-specific ACL data into the canonical ACL model."""
         target_dn, target_attrs = self._extract_oid_target(acl_line)
         if not target_dn:
@@ -633,7 +633,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             "raw_line": acl_line,
             "validation_violations": [],
         })
-        return r[m.Ldif.Acl].ok(acl_model)
+        return r[p.Ldif.Acl].ok(acl_model)
 
     def _authorize_write_permissions(
         self,
@@ -694,7 +694,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         self,
         acl_data: m.Ldif.Acl,
         _acl_line: str,
-    ) -> m.Ldif.Acl:
+    ) -> p.Ldif.Acl:
         """Update ACL with OID server type and metadata."""
         server_type = FlextLdifServersOidConstants.SERVER_TYPE
         updated_metadata = (

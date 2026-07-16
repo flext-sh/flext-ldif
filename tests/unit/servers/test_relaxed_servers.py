@@ -219,7 +219,7 @@ class TestsFlextLdifRelaxed:
         bad_input: str,
     ) -> None:
         """Test relaxed mode recovers from binary content if OID present."""
-        result: p.Result[m.Ldif.SchemaAttribute] | p.Result[m.Ldif.SchemaObjectClass]
+        result: p.Result[p.Ldif.SchemaAttribute] | p.Result[p.Ldif.SchemaObjectClass]
         if parse_type == "attribute":
             result = schema_server.parse_attribute(bad_input)
         else:
@@ -256,7 +256,7 @@ class TestsFlextLdifRelaxed:
         expected_success: bool,
     ) -> None:
         """Test relaxed fallback requires an OID to recover binary definitions."""
-        result: p.Result[m.Ldif.SchemaAttribute] | p.Result[m.Ldif.SchemaObjectClass]
+        result: p.Result[p.Ldif.SchemaAttribute] | p.Result[p.Ldif.SchemaObjectClass]
         if parse_type == "attribute":
             result = schema_server.parse_attribute(definition)
         else:

@@ -24,9 +24,9 @@ class FlextLdifServersOudAclExtractMixin:
 
     @staticmethod
     def comment_acl_attributes(
-        entry_data: m.Ldif.Entry,
+        entry_data: p.Ldif.Entry,
         acl_attribute_names: t.MutableSequenceOf[str],
-    ) -> m.Ldif.Entry:
+    ) -> p.Ldif.Entry:
         """Comment out ACL attributes by removing them from attributes dict and storing in metadata."""
         if not entry_data.attributes or not acl_attribute_names:
             return entry_data
@@ -52,7 +52,7 @@ class FlextLdifServersOudAclExtractMixin:
                 entry_data.attributes.attributes,
             )
         )
-        copy_result: m.Ldif.Entry = entry_data.model_copy(
+        copy_result: p.Ldif.Entry = entry_data.model_copy(
             update={
                 "attributes": m.Ldif.Attributes.model_validate({
                     "attributes": {**new_attributes_dict},
@@ -120,7 +120,7 @@ class FlextLdifServersOudAclExtractMixin:
         commented_acl_values: t.MutableStrSequenceMapping,
         hidden_attrs: set[str],
         entry_attributes_dict: t.MutableStrSequenceMapping,
-    ) -> m.Ldif.ServerMetadata:
+    ) -> p.Ldif.ServerMetadata:
         """Update metadata with commented ACL information."""
         metadata_typed: m.Ldif.ServerMetadata = metadata
         current_extensions: t.Ldif.MutableMetadataInputMapping = (

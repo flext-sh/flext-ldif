@@ -68,31 +68,31 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _apply_category_update(
-        stats: m.Ldif.EntryStatistics,
+        stats: p.Ldif.EntryStatistics,
         category: str,
-    ) -> m.Ldif.EntryStatistics:
+    ) -> p.Ldif.EntryStatistics:
         """Apply category update to stats using model_copy."""
-        copied: m.Ldif.EntryStatistics = stats.model_copy(
+        copied: p.Ldif.EntryStatistics = stats.model_copy(
             update={"category_assigned": category},
         )
         return copied
 
     @staticmethod
     def _apply_filter_update(
-        stats: m.Ldif.EntryStatistics,
+        stats: p.Ldif.EntryStatistics,
         filter_type: str,
         *,
         passed: bool,
-    ) -> m.Ldif.EntryStatistics:
+    ) -> p.Ldif.EntryStatistics:
         """Apply filter marking to stats."""
         return stats.mark_filtered(filter_type, passed=passed)
 
     @staticmethod
     def _apply_rejection_update(
-        stats: m.Ldif.EntryStatistics,
+        stats: p.Ldif.EntryStatistics,
         rejection_category: str,
         reason: str,
-    ) -> m.Ldif.EntryStatistics:
+    ) -> p.Ldif.EntryStatistics:
         """Apply rejection marking to stats."""
         return stats.mark_rejected(rejection_category, reason)
 
@@ -100,7 +100,7 @@ class FlextLdifUtilitiesMetadata:
     def _build_schema_format_model(
         definition: str,
         combined: t.Ldif.MutableMetadataMapping,
-    ) -> m.Ldif.SchemaFormatDetails:
+    ) -> p.Ldif.SchemaFormatDetails:
         """Build SchemaFormatDetails model from combined details."""
         known_fields = {
             "original_string_complete",
@@ -601,9 +601,9 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _update_entry_with_stats(
-        entry: m.Ldif.Entry,
-        updated_stats: m.Ldif.EntryStatistics,
-    ) -> m.Ldif.Entry:
+        entry: p.Ldif.Entry,
+        updated_stats: p.Ldif.EntryStatistics,
+    ) -> p.Ldif.Entry:
         """Update entry with new processing stats using model_copy."""
         entry_metadata = entry.metadata
         if entry_metadata is None:
@@ -616,7 +616,7 @@ class FlextLdifUtilitiesMetadata:
             "processing_stats": updated_stats,
         }
         updated_metadata = entry_metadata.model_copy(update=update_dict)
-        updated_entry: m.Ldif.Entry = entry.model_copy(
+        updated_entry: p.Ldif.Entry = entry.model_copy(
             update={"metadata": updated_metadata},
         )
         return updated_entry
@@ -647,7 +647,7 @@ class FlextLdifUtilitiesMetadata:
         return differences
 
     @staticmethod
-    def analyze_schema_formatting(definition: str) -> m.Ldif.SchemaFormatDetails:
+    def analyze_schema_formatting(definition: str) -> p.Ldif.SchemaFormatDetails:
         """Analyze schema definition to extract ALL formatting details."""
         combined = FlextLdifUtilitiesMetadata._extract_all_schema_details(definition)
         FlextLdifUtilitiesMetadata._module_logger.debug(
@@ -689,8 +689,8 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def build_entry_parse_metadata(
-        settings: m.Ldif.EntryParseMetadataConfig,
-    ) -> m.Ldif.ServerMetadata:
+        settings: p.Ldif.EntryParseMetadataConfig,
+    ) -> p.Ldif.ServerMetadata:
         """Build ServerMetadata for entry parsing with format preservation."""
         server_data_dict: t.Ldif.MutableMetadataMapping = {}
         server_data_dict["original_entry_dn"] = settings.original_entry_dn
@@ -730,7 +730,7 @@ class FlextLdifUtilitiesMetadata:
     def build_original_format_details(
         server_type: str,
         **extra: t.Ldif.Scalar,
-    ) -> m.Ldif.FormatDetails:
+    ) -> p.Ldif.FormatDetails:
         """Build original format details for round-trip preservation."""
         original_dn_line = extra.get("original_dn_line")
         dn_line = str(original_dn_line) if original_dn_line is not None else None
@@ -785,7 +785,7 @@ class FlextLdifUtilitiesMetadata:
     def server_metadata_for(
         server_type: str | c.Ldif.ServerTypes | None = None,
         extensions: t.MutableJsonMapping | t.Ldif.MetadataInputMapping | None = None,
-    ) -> m.Ldif.ServerMetadata:
+    ) -> p.Ldif.ServerMetadata:
         """Create ServerMetadata with extensions validated at the model boundary.
 
         Args:
@@ -844,12 +844,12 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def update_entry_statistics(
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         *,
         category: str | None = None,
         mark_rejected: t.StrPair | None = None,
         mark_filtered: tuple[str, bool] | None = None,
-    ) -> m.Ldif.Entry:
+    ) -> p.Ldif.Entry:
         """Update entry processing statistics using FlextLdifUtilities."""
         if not entry.metadata:
             return entry

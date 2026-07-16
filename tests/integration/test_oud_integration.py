@@ -42,21 +42,21 @@ class TestsFlextLdifOudIntegration:
     MIN_ENTRY_FIXTURE_COUNT: ClassVar[int] = 10
 
     @staticmethod
-    def _attrs(entry: m.Ldif.Entry) -> m.Ldif.Attributes:
+    def _attrs(entry: p.Ldif.Entry) -> p.Ldif.Attributes:
         """Return an entry's attributes, asserting the public field is present."""
         attributes = entry.attributes
         tm.that(attributes, none=False)
         return attributes
 
     @staticmethod
-    def _dn_value(entry: m.Ldif.Entry) -> str:
+    def _dn_value(entry: p.Ldif.Entry) -> str:
         """Return an entry's DN string via the public DN model."""
         dn = entry.dn
         tm.that(dn, none=False)
         return u.to_str(dn.value)
 
     @classmethod
-    def _object_classes(cls, entry: m.Ldif.Entry) -> list[str]:
+    def _object_classes(cls, entry: p.Ldif.Entry) -> list[str]:
         """Return an entry's objectClass values via the public accessor."""
         attributes = cls._attrs(entry)
         values = attributes.get("objectClass") or attributes.get("objectclass")

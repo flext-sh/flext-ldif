@@ -10,7 +10,7 @@ from flext_ldif._utilities._transformer_base import FlextLdifUtilitiesTransforme
 
 
 class FlextLdifUtilitiesNormalizeAttrsTransformer(
-    FlextLdifUtilitiesTransformer[m.Ldif.Entry],
+    FlextLdifUtilitiesTransformer[p.Ldif.Entry],
 ):
     """Transformer for attribute normalization."""
 
@@ -30,10 +30,10 @@ class FlextLdifUtilitiesNormalizeAttrsTransformer(
         self._remove_empty = remove_empty
 
     @override
-    def apply(self, item: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
+    def apply(self, item: p.Ldif.Entry) -> p.Result[p.Ldif.Entry]:
         """Apply attribute normalization to an entry."""
         if item.attributes is None:
-            return r[m.Ldif.Entry].fail("Entry has no attributes")
+            return r[p.Ldif.Entry].fail("Entry has no attributes")
         attrs: t.MutableStrSequenceMapping = (
             item.attributes.attributes
             if getattr(item.attributes, "attributes", None) is not None
@@ -57,7 +57,7 @@ class FlextLdifUtilitiesNormalizeAttrsTransformer(
                 }),
             }
             item = item.model_copy(update=update_dict)
-        return r[m.Ldif.Entry].ok(item)
+        return r[p.Ldif.Entry].ok(item)
 
     def _process_value_list(
         self,

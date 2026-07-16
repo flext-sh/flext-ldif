@@ -135,7 +135,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
         | m.Ldif.SchemaObjectClass
         | None = None,
         operation: t.JsonValue | None = None,
-    ) -> m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str:
+    ) -> p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str:
         """Callable interface - automatic polymorphic processor."""
         narrowed_data = (
             data
@@ -323,7 +323,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
         self,
         original_format: str,
         extensions: t.Ldif.MetadataInputMapping | None = None,
-    ) -> m.Ldif.ServerMetadata:
+    ) -> p.Ldif.ServerMetadata:
         """Create server metadata with consistent server-specific extensions."""
         server_type_value = self._get_server_type()
         all_extensions: t.MutableJsonMapping = {}
@@ -343,8 +343,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
     ) -> p.Result[
         MutableMapping[
             str,
-            t.MutableSequenceOf[m.Ldif.SchemaAttribute]
-            | t.MutableSequenceOf[m.Ldif.SchemaObjectClass],
+            t.MutableSequenceOf[p.Ldif.SchemaAttribute]
+            | t.MutableSequenceOf[p.Ldif.SchemaObjectClass],
         ]
     ]:
         """Extract schema definitions from LDIF using u."""
@@ -360,8 +360,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
             return r[
                 MutableMapping[
                     str,
-                    t.MutableSequenceOf[m.Ldif.SchemaAttribute]
-                    | t.MutableSequenceOf[m.Ldif.SchemaObjectClass],
+                    t.MutableSequenceOf[p.Ldif.SchemaAttribute]
+                    | t.MutableSequenceOf[p.Ldif.SchemaObjectClass],
                 ]
             ].fail_op("Schema extraction", e)
 
@@ -373,8 +373,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
     ) -> p.Result[
         MutableMapping[
             str,
-            t.MutableSequenceOf[m.Ldif.SchemaAttribute]
-            | t.MutableSequenceOf[m.Ldif.SchemaObjectClass],
+            t.MutableSequenceOf[p.Ldif.SchemaAttribute]
+            | t.MutableSequenceOf[p.Ldif.SchemaObjectClass],
         ]
     ]:
         """Extract schema definitions and optionally validate dependencies."""
@@ -394,8 +394,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
                 return r[
                     MutableMapping[
                         str,
-                        t.MutableSequenceOf[m.Ldif.SchemaAttribute]
-                        | t.MutableSequenceOf[m.Ldif.SchemaObjectClass],
+                        t.MutableSequenceOf[p.Ldif.SchemaAttribute]
+                        | t.MutableSequenceOf[p.Ldif.SchemaObjectClass],
                     ]
                 ].fail_op("Attribute validation", validation_result.error)
 
@@ -405,8 +405,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
         )
         schema_dict: MutableMapping[
             str,
-            t.MutableSequenceOf[m.Ldif.SchemaAttribute]
-            | t.MutableSequenceOf[m.Ldif.SchemaObjectClass],
+            t.MutableSequenceOf[p.Ldif.SchemaAttribute]
+            | t.MutableSequenceOf[p.Ldif.SchemaObjectClass],
         ] = {
             str(c.Ldif.DictKeys.ATTRIBUTES): attributes_parsed,
             str(c.Ldif.DictKeys.OBJECTCLASS): objectclasses_parsed,
@@ -414,8 +414,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
         return r[
             MutableMapping[
                 str,
-                t.MutableSequenceOf[m.Ldif.SchemaAttribute]
-                | t.MutableSequenceOf[m.Ldif.SchemaObjectClass],
+                t.MutableSequenceOf[p.Ldif.SchemaAttribute]
+                | t.MutableSequenceOf[p.Ldif.SchemaObjectClass],
             ]
         ].ok(schema_dict)
 
@@ -453,7 +453,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
             str,
             t.MutableSequenceOf[str] | str | bool | None,
         ],
-    ) -> m.Ldif.ServerMetadata:
+    ) -> p.Ldif.ServerMetadata:
         """Build objectClass metadata with extensions."""
         server_type = self._get_server_type()
         metadata_extensions[c.Ldif.SCHEMA_SOURCE_SERVER] = server_type
@@ -504,7 +504,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
     def _parse_attribute(
         self,
         attr_definition: str,
-    ) -> p.Result[m.Ldif.SchemaAttribute]:
+    ) -> p.Result[p.Ldif.SchemaAttribute]:
         """Parse RFC 4512 attribute definition using generalized parser."""
         server_type = self._get_server_type()
 
@@ -522,7 +522,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
             parse_parts_hook=parse_parts_hook,
         )
         if parse_result_raw.failure:
-            return r[m.Ldif.SchemaAttribute].fail(
+            return r[p.Ldif.SchemaAttribute].fail(
                 parse_result_raw.error or "Attribute parsing failed",
             )
         parsed_raw = parse_result_raw.value
@@ -572,7 +572,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
     def _parse_objectclass(
         self,
         oc_definition: str,
-    ) -> p.Result[m.Ldif.SchemaObjectClass]:
+    ) -> p.Result[p.Ldif.SchemaObjectClass]:
         """Parse RFC 4512 objectClass definition using core parser."""
         parse_result = self._parse_objectclass_core(oc_definition)
         if parse_result.failure:
@@ -582,7 +582,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
     def _parse_objectclass_core(
         self,
         oc_definition: str,
-    ) -> p.Result[m.Ldif.SchemaObjectClass]:
+    ) -> p.Result[p.Ldif.SchemaObjectClass]:
         """Core RFC 4512 objectClass parsing per Section 4.1.1."""
         try:
             return self._parse_rfc_objectclass_core(oc_definition)
@@ -590,12 +590,12 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
             FlextLdifServersRfcSchema._module_logger.exception(
                 "RFC objectClass parsing exception",
             )
-            return r[m.Ldif.SchemaObjectClass].fail_op("RFC objectClass parsing", e)
+            return r[p.Ldif.SchemaObjectClass].fail_op("RFC objectClass parsing", e)
 
     def _parse_rfc_objectclass_core(
         self,
         oc_definition: str,
-    ) -> p.Result[m.Ldif.SchemaObjectClass]:
+    ) -> p.Result[p.Ldif.SchemaObjectClass]:
         """Parse RFC objectClass definition into the canonical model."""
         parsed = u.Ldif.parse_objectclass(oc_definition)
         metadata_extensions = self._convert_extensions_for_server(
@@ -653,7 +653,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
             "may": self._to_string_list(parsed.get("may")),
             "metadata": metadata,
         })
-        return r[m.Ldif.SchemaObjectClass].ok(objectclass)
+        return r[p.Ldif.SchemaObjectClass].ok(objectclass)
 
     def _post_write_attribute(self, written_str: str) -> str:
         """Transform written attribute string (subclass hook)."""
@@ -666,14 +666,14 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
     def _transform_attribute_for_write(
         self,
         attr_data: m.Ldif.SchemaAttribute,
-    ) -> m.Ldif.SchemaAttribute:
+    ) -> p.Ldif.SchemaAttribute:
         """Transform attribute before writing (subclass hook)."""
         return attr_data
 
     def _transform_objectclass_for_write(
         self,
         oc_data: m.Ldif.SchemaObjectClass,
-    ) -> m.Ldif.SchemaObjectClass:
+    ) -> p.Ldif.SchemaObjectClass:
         """Transform objectClass before writing (subclass hook)."""
         return oc_data
 

@@ -347,10 +347,10 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             if result.success:
                 acls.append(result.value)
 
-    def _parse_aci_format(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
+    def _parse_aci_format(self, acl_line: str) -> p.Result[p.Ldif.Acl]:
         """Parse RFC 4876 ACI format using utility with OUD-specific settings."""
         settings = FlextLdifServersOudUtilities.get_parser_config()
-        result: p.Result[m.Ldif.Acl] = u.Ldif.parse_aci(acl_line, settings)
+        result: p.Result[p.Ldif.Acl] = u.Ldif.parse_aci(acl_line, settings)
         if not result.success:
             return result
         acl = result.value
@@ -378,10 +378,10 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         }
         acl_updated = acl.model_copy(update=update_dict)
         acl_result: m.Ldif.Acl = acl_updated
-        return r[m.Ldif.Acl].ok(acl_result)
+        return r[p.Ldif.Acl].ok(acl_result)
 
     @override
-    def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
+    def _parse_acl(self, acl_line: str) -> p.Result[p.Ldif.Acl]:
         """Parse Oracle OUD ACL string to RFC-compliant internal model."""
         normalized = acl_line.strip()
         if normalized.startswith(FlextLdifServersOudConstants.ACL_ACI_PREFIX):
@@ -393,7 +393,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                 return rfc_result
         return self._parse_ds_privilege_name(normalized)
 
-    def _parse_ds_privilege_name(self, privilege_name: str) -> p.Result[m.Ldif.Acl]:
+    def _parse_ds_privilege_name(self, privilege_name: str) -> p.Result[p.Ldif.Acl]:
         """Parse OUD ds-privilege-name format (simple privilege names)."""
         try:
             server_type_oud: c.Ldif.ServerTypes = c.Ldif.ServerTypes.OUD
@@ -414,12 +414,12 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                     },
                 ),
             )
-            return r[m.Ldif.Acl].ok(acl_model)
+            return r[p.Ldif.Acl].ok(acl_model)
         except c.Ldif.EXC_LDIF_PARSE as e:
             FlextLdifServersOudAcl._module_logger.exception(
                 "Failed to parse OUD ds-privilege-name",
             )
-            return r[m.Ldif.Acl].fail(f"Failed to parse OUD ds-privilege-name: {e}")
+            return r[p.Ldif.Acl].fail(f"Failed to parse OUD ds-privilege-name: {e}")
 
     def _should_use_raw_acl(self, acl_data: m.Ldif.Acl) -> bool:
         """Check if raw_acl should be used as-is."""

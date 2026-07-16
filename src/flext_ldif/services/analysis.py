@@ -11,7 +11,7 @@ class FlextLdifAnalysis(s):
 
     @staticmethod
     def _validate_entry_attributes(
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         dn_str: str,
         validation_service: p.Ldif.ValidationService,
     ) -> tuple[bool, t.MutableSequenceOf[str]]:
@@ -30,7 +30,7 @@ class FlextLdifAnalysis(s):
 
     @staticmethod
     def _validate_entry_dn(
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
     ) -> tuple[bool, str, t.MutableSequenceOf[str]]:
         """Validate entry DN."""
         errors: t.MutableSequenceOf[str] = []
@@ -45,7 +45,7 @@ class FlextLdifAnalysis(s):
 
     @staticmethod
     def _validate_entry_objectclasses(
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         dn_str: str,
         validation_service: p.Ldif.ValidationService,
     ) -> tuple[bool, t.MutableSequenceOf[str]]:
@@ -62,7 +62,7 @@ class FlextLdifAnalysis(s):
 
     @staticmethod
     def _validate_single_entry(
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         validation_service: p.Ldif.ValidationService,
     ) -> tuple[bool, t.MutableSequenceOf[str]]:
         """Validate a single LDIF entry."""
@@ -93,9 +93,9 @@ class FlextLdifAnalysis(s):
 
     def validate_entries(
         self,
-        entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
+        entries: t.MutableSequenceOf[p.Ldif.Entry] | m.Ldif.ParseResponse,
         validation_service: p.Ldif.ValidationService | None = None,
-    ) -> p.Result[m.Ldif.ValidationResult]:
+    ) -> p.Result[p.Ldif.ValidationResult]:
         """Validate LDIF entries against RFC 2849/4512 standards."""
         normalized_entries = u.Ldif.as_entries(entries)
         errors: t.MutableSequenceOf[str] = []
@@ -106,7 +106,7 @@ class FlextLdifAnalysis(s):
             else FlextLdifValidation()
         )
 
-        def validate_entry(entry: m.Ldif.Entry) -> bool:
+        def validate_entry(entry: p.Ldif.Entry) -> bool:
             """Validate single entry and collect errors."""
             is_entry_valid, entry_errors = FlextLdifAnalysis._validate_single_entry(
                 entry,
@@ -120,7 +120,7 @@ class FlextLdifAnalysis(s):
         valid_count = u.count(valid_results)
         total_entries = u.count(normalized_entries)
         invalid_count = total_entries - valid_count
-        return r[m.Ldif.ValidationResult].ok(
+        return r[p.Ldif.ValidationResult].ok(
             m.Ldif.ValidationResult.model_validate({
                 "valid": invalid_count == 0,
                 "total_entries": total_entries,

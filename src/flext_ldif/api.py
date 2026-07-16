@@ -285,7 +285,7 @@ class FlextLdif(
         source_server: str = c.Ldif.ServerTypes.RFC.value,
         target_server: str = c.Ldif.ServerTypes.RFC.value,
         options: m.Ldif.MigrateOptions | None = None,
-    ) -> p.Result[m.Ldif.MigrationPipelineResult]:
+    ) -> p.Result[p.Ldif.MigrationPipelineResult]:
         """Migrate LDIF data between servers."""
         transform_config = m.Ldif.TransformConfig.servers(
             source_server=source_server,
@@ -302,9 +302,9 @@ class FlextLdif(
     @override
     def validate_entries(
         self,
-        entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
+        entries: t.MutableSequenceOf[p.Ldif.Entry] | m.Ldif.ParseResponse,
         validation_service: p.Ldif.ValidationService | None = None,
-    ) -> p.Result[m.Ldif.ValidationResult]:
+    ) -> p.Result[p.Ldif.ValidationResult]:
         """Validate list of entries."""
         resolved_validation_service = validation_service or self
         return super().validate_entries(

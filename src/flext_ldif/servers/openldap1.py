@@ -150,7 +150,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         def _parse_attribute(
             self,
             attr_definition: str,
-        ) -> p.Result[m.Ldif.SchemaAttribute]:
+        ) -> p.Result[p.Ldif.SchemaAttribute]:
             """Parse attribute definition, strip OpenLDAP1 prefix, and add metadata."""
             stripped = (
                 FlextLdifServersOpenldap1.Constants.SCHEMA_OPENLDAP1_ATTRIBUTE_RE.sub(
@@ -164,7 +164,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 metadata = u.Ldif.server_metadata_for(
                     FlextLdifServersOpenldap1.Constants.SERVER_TYPE,
                 )
-                return r[m.Ldif.SchemaAttribute].ok(
+                return r[p.Ldif.SchemaAttribute].ok(
                     attr_data.model_copy(update={"metadata": metadata}),
                 )
             return result
@@ -173,7 +173,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         def _parse_objectclass(
             self,
             oc_definition: str,
-        ) -> p.Result[m.Ldif.SchemaObjectClass]:
+        ) -> p.Result[p.Ldif.SchemaObjectClass]:
             """Parse objectClass definition and add OpenLDAP1 metadata."""
             stripped = (
                 FlextLdifServersOpenldap1.Constants.SCHEMA_OPENLDAP1_OBJECTCLASS_RE.sub(
@@ -187,7 +187,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 metadata = u.Ldif.server_metadata_for(
                     FlextLdifServersOpenldap1.Constants.SERVER_TYPE,
                 )
-                return r[m.Ldif.SchemaObjectClass].ok(
+                return r[p.Ldif.SchemaObjectClass].ok(
                     oc_data.model_copy(update={"metadata": metadata}),
                 )
             return result
@@ -285,12 +285,12 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             )
 
         @override
-        def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
+        def _parse_acl(self, acl_line: str) -> p.Result[p.Ldif.Acl]:
             """Parse OpenLDAP 1.x ACL definition."""
             try:
                 return self._parse_openldap1_acl(acl_line)
             except c.Ldif.EXC_LDIF_PARSE as e:
-                return r[m.Ldif.Acl].fail_op("OpenLDAP 1.x ACL parsing", e)
+                return r[p.Ldif.Acl].fail_op("OpenLDAP 1.x ACL parsing", e)
 
         @override
         def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
@@ -300,14 +300,14 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             except c.Ldif.EXC_LDIF_PARSE as e:
                 return r[str].fail_op("OpenLDAP 1.x ACL write", e)
 
-        def _parse_openldap1_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
+        def _parse_openldap1_acl(self, acl_line: str) -> p.Result[p.Ldif.Acl]:
             """Parse OpenLDAP 1.x ACL content."""
             acl_content = self._strip_openldap1_acl_prefix(acl_line)
             to_match = FlextLdifServersOpenldap1.Constants.ACL_TO_BY_RE.match(
                 acl_content,
             )
             if not to_match:
-                return r[m.Ldif.Acl].fail(
+                return r[p.Ldif.Acl].fail(
                     "Invalid OpenLDAP 1.x ACL format: missing 'to' clause",
                 )
             what = to_match.group(1).strip()
@@ -336,7 +336,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 ),
                 raw_acl=acl_line,
             )
-            return r[m.Ldif.Acl].ok(acl)
+            return r[p.Ldif.Acl].ok(acl)
 
         @staticmethod
         def _strip_openldap1_acl_prefix(acl_line: str) -> str:
@@ -371,7 +371,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             return (target_dn, target_attrs)
 
         @staticmethod
-        def _openldap1_permissions(first_access: str) -> m.Ldif.AclPermissions:
+        def _openldap1_permissions(first_access: str) -> p.Ldif.AclPermissions:
             """Build permissions from first OpenLDAP 1.x access token."""
             read_perm = FlextLdifServersRfc.Constants.PERMISSION_READ
             write_perm = FlextLdifServersRfc.Constants.PERMISSION_WRITE
@@ -440,7 +440,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             )
             return not is_config_dn and (not has_olc_attrs)
 
-        def process_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
+        def process_entry(self, entry: p.Ldif.Entry) -> p.Result[p.Ldif.Entry]:
             """Process entry for OpenLDAP 1.x format."""
             try:
                 metadata = entry.metadata or m.Ldif.ServerMetadata(
@@ -452,6 +452,6 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                     attributes=entry.attributes,
                     metadata=metadata,
                 )
-                return r[m.Ldif.Entry].ok(processed_entry)
+                return r[p.Ldif.Entry].ok(processed_entry)
             except c.Ldif.EXC_LDIF_PARSE as e:
-                return r[m.Ldif.Entry].fail_op("OpenLDAP 1.x entry processing", e)
+                return r[p.Ldif.Entry].fail_op("OpenLDAP 1.x entry processing", e)

@@ -136,7 +136,7 @@ class FlextLdifModelsDomainDN:
     class DN(m.Value):
         """Distinguished Name value."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(
             strict=True,
             frozen=True,
             extra="forbid",

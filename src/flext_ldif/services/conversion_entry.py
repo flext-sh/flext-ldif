@@ -48,7 +48,7 @@ class FlextLdifConversionEntryMixin(
         self,
         source_server: p.Ldif.ServerServer,
         target_server: p.Ldif.ServerServer,
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
     ) -> p.Result[t.Ldif.ConvertedModel]:
         """Convert Entry model directly without serialization."""
         try:
@@ -61,7 +61,7 @@ class FlextLdifConversionEntryMixin(
         self,
         source_server: p.Ldif.ServerServer,
         target_server: p.Ldif.ServerServer,
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
     ) -> p.Result[t.Ldif.ConvertedModel]:
         """Convert an entry model between server dialects."""
         entry_dn = str(entry.dn) if entry.dn else ""
@@ -112,10 +112,10 @@ class FlextLdifConversionEntryMixin(
 
     def _prepare_converted_entry(
         self,
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         validated_server_type: c.Ldif.ServerTypes,
         source_server_name: str,
-    ) -> m.Ldif.Entry:
+    ) -> p.Ldif.Entry:
         """Copy entry and attach conversion metadata."""
         metadata_for_analysis: m.Ldif.ServerMetadata | t.MutableJsonMapping | None = (
             entry.metadata
@@ -129,7 +129,7 @@ class FlextLdifConversionEntryMixin(
             metadata_for_analysis,
             validated_server_type,
         )
-        updated_entry: m.Ldif.Entry = self._update_entry_metadata(
+        updated_entry: p.Ldif.Entry = self._update_entry_metadata(
             entry.model_copy(deep=True),
             validated_server_type,
             str(conversion_analysis) if conversion_analysis else None,
@@ -139,7 +139,7 @@ class FlextLdifConversionEntryMixin(
 
     def _convert_entry_payload(
         self,
-        converted_entry: m.Ldif.Entry,
+        converted_entry: p.Ldif.Entry,
         source_type_norm: str,
         target_type_norm: str,
     ) -> p.Result[t.Ldif.ConvertedModel]:
@@ -180,10 +180,10 @@ class FlextLdifConversionEntryMixin(
 
     @staticmethod
     def _transform_entry_dn(
-        converted_entry: m.Ldif.Entry,
+        converted_entry: p.Ldif.Entry,
         source_type_norm: str,
         target_type_norm: str,
-    ) -> m.Ldif.Entry:
+    ) -> p.Ldif.Entry:
         """Transform schema DN when moving between OID and RFC dialects."""
         transformed_dn = u.Ldif.transform_schema_dn_between_oid_rfc(
             converted_entry,
@@ -192,7 +192,7 @@ class FlextLdifConversionEntryMixin(
         )
         if transformed_dn is None:
             return converted_entry
-        updated_entry: m.Ldif.Entry = converted_entry.model_copy(
+        updated_entry: p.Ldif.Entry = converted_entry.model_copy(
             update={
                 "dn": m.Ldif.DN(
                     value=transformed_dn,

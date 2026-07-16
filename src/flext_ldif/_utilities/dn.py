@@ -927,11 +927,11 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def transform_entry_base_dn(
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         source_dn: str,
         target_dn: str,
         dn_valued_attributes: frozenset[str] | None = None,
-    ) -> m.Ldif.Entry:
+    ) -> p.Ldif.Entry:
         """Transform an entry's DN and DN-valued attributes from source to target base DN.
 
         Rewrites:
@@ -978,7 +978,7 @@ class FlextLdifUtilitiesDN:
                 new_attrs = entry_attrs.model_copy(update={"attributes": new_attr_dict})
                 updates["attributes"] = new_attrs
         if updates:
-            copied: m.Ldif.Entry = entry.model_copy(update=updates)
+            copied: p.Ldif.Entry = entry.model_copy(update=updates)
             return copied
         return entry
 

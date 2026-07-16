@@ -65,7 +65,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         ])
         SCHEMA_ATTRIBUTE_NAME_REGEX: ClassVar[str] = "NAME\\s+['\\\"]([\\w-]+)['\\\"]"
         SCHEMA_OBJECTCLASS_NAME_REGEX: ClassVar[str] = "NAME\\s+['\\\"](\\w+)['\\\"]"
-        ATTRIBUTE_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig] = (
+        ATTRIBUTE_PATTERN_SETTINGS: ClassVar[p.Ldif.ServerPatternsConfig] = (
             m.Ldif.ServerPatternsConfig(
                 oid_pattern=DETECTION_OID_PATTERN,
                 attr_prefixes=DETECTION_ATTRIBUTE_PREFIXES,
@@ -73,7 +73,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 use_prefix_match=True,
             )
         )
-        OBJECTCLASS_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig] = (
+        OBJECTCLASS_PATTERN_SETTINGS: ClassVar[p.Ldif.ServerPatternsConfig] = (
             m.Ldif.ServerPatternsConfig(
                 oid_pattern=DETECTION_OID_PATTERN,
                 attr_names=DETECTION_OBJECTCLASS_NAMES,
@@ -301,12 +301,12 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             return permissions
 
         @override
-        def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
+        def _parse_acl(self, acl_line: str) -> p.Result[p.Ldif.Acl]:
             """Parse 389 DS ACI definition."""
             try:
                 return self._parse_ds389_acl(acl_line)
             except c.EXC_BASIC_TYPE as exc:
-                return r[m.Ldif.Acl].fail(
+                return r[p.Ldif.Acl].fail(
                     FlextLdifServersDs389.Constants.ERROR_ACL_PARSING_FAILED.format(
                         exc=exc,
                     ),
@@ -324,7 +324,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                     ),
                 )
 
-        def _parse_ds389_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
+        def _parse_ds389_acl(self, acl_line: str) -> p.Result[p.Ldif.Acl]:
             """Parse 389 DS ACI content into a canonical ACL."""
             attr_name, content = u.Ldif.split_acl_line(acl_line)
             _ = attr_name
@@ -373,7 +373,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 metadata=metadata,
                 raw_acl=acl_line,
             )
-            return r[m.Ldif.Acl].ok(acl)
+            return r[p.Ldif.Acl].ok(acl)
 
         @staticmethod
         def _parse_target_attributes(content: str) -> t.MutableSequenceOf[str]:
@@ -467,21 +467,21 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 for oc in object_classes
             )
 
-        def process_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
+        def process_entry(self, entry: p.Ldif.Entry) -> p.Result[p.Ldif.Entry]:
             """Normalise 389 DS entries and attach metadata."""
             try:
                 return self._process_ds389_entry(entry)
             except c.EXC_BASIC_TYPE as exc:
-                return r[m.Ldif.Entry].fail(
+                return r[p.Ldif.Entry].fail(
                     FlextLdifServersDs389.Constants.ERROR_ENTRY_PROCESSING_FAILED.format(
                         exc=exc,
                     ),
                 )
 
-        def _process_ds389_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
+        def _process_ds389_entry(self, entry: p.Ldif.Entry) -> p.Result[p.Ldif.Entry]:
             """Normalize a 389 DS entry and attach metadata."""
             if not entry.attributes or not entry.dn:
-                return r[m.Ldif.Entry].ok(entry)
+                return r[p.Ldif.Entry].ok(entry)
             attributes: t.MutableStrSequenceMapping = {
                 **entry.attributes.attributes,
             }
@@ -500,7 +500,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 }),
                 metadata=metadata,
             )
-            return r[m.Ldif.Entry].ok(processed_entry)
+            return r[p.Ldif.Entry].ok(processed_entry)
 
 
 __all__: list[str] = ["FlextLdifServersDs389"]

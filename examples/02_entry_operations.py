@@ -26,7 +26,7 @@ class DRYEntryOperations:
     """DRY entry operations: intelligent builders + railway composition."""
 
     @staticmethod
-    def advanced_filtering() -> p.Result[MutableSequence[m.Ldif.Entry]]:
+    def advanced_filtering() -> p.Result[MutableSequence[p.Ldif.Entry]]:
         """DRY advanced filtering: type-safe predicates + composition."""
         return DRYEntryOperations.intelligent_builders().map(
             lambda entries: [
@@ -40,7 +40,7 @@ class DRYEntryOperations:
         )
 
     @staticmethod
-    def batch_processing() -> p.Result[MutableSequence[m.Ldif.Entry]]:
+    def batch_processing() -> p.Result[MutableSequence[p.Ldif.Entry]]:
         """DRY batch processing: validate entries pipeline."""
         api = ldif()
         return DRYEntryOperations.advanced_filtering().flat_map(
@@ -48,9 +48,9 @@ class DRYEntryOperations:
         )
 
     @staticmethod
-    def intelligent_builders() -> p.Result[MutableSequence[m.Ldif.Entry]]:
+    def intelligent_builders() -> p.Result[MutableSequence[p.Ldif.Entry]]:
         """DRY intelligent builders: auto-detect types from attributes."""
-        created_entries: list[m.Ldif.Entry] = []
+        created_entries: list[p.Ldif.Entry] = []
         people_data: list[tuple[str, str, str, str]] = [
             ("Alice Johnson", "Johnson", "alice@example.com", "+1-555-0101"),
             ("Bob Smith", "Smith", "bob@example.com", "+1-555-0102"),
@@ -74,6 +74,6 @@ class DRYEntryOperations:
             created_entries.append(entry)
 
         if not created_entries:
-            return r[MutableSequence[m.Ldif.Entry]].fail("No entries were created")
+            return r[MutableSequence[p.Ldif.Entry]].fail("No entries were created")
 
-        return r[MutableSequence[m.Ldif.Entry]].ok(created_entries)
+        return r[MutableSequence[p.Ldif.Entry]].ok(created_entries)

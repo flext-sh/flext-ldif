@@ -24,7 +24,7 @@ class FlextLdifConversion(
         self,
         source_server: p.Ldif.ServerServer,
         target_server: p.Ldif.ServerServer,
-        model_instance: m.Ldif.Entry
+        model_instance: p.Ldif.Entry
         | m.Ldif.SchemaAttribute
         | m.Ldif.SchemaObjectClass
         | m.Ldif.Acl,
@@ -69,7 +69,7 @@ class FlextLdifConversion(
         self,
         source: str | p.Ldif.ServerReference | p.Ldif.ServerServer,
         target: str | p.Ldif.ServerReference | p.Ldif.ServerServer,
-        model_instance: m.Ldif.Entry
+        model_instance: p.Ldif.Entry
         | m.Ldif.SchemaAttribute
         | m.Ldif.SchemaObjectClass
         | m.Ldif.Acl,

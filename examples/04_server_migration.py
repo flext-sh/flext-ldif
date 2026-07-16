@@ -10,7 +10,7 @@ from __future__ import annotations
 from collections.abc import MutableMapping, MutableSequence
 from pathlib import Path
 
-from flext_ldif import c, ldif, m, p, r, t, u
+from flext_ldif import c, ldif, p, r, t, u
 
 
 class ExampleServerMigration:
@@ -223,7 +223,7 @@ class ExampleServerMigration:
         )
 
     @staticmethod
-    def parallel_server_migration() -> p.Result[m.Ldif.MigrationPipelineResult]:
+    def parallel_server_migration() -> p.Result[p.Ldif.MigrationPipelineResult]:
         """Parallel migration between servers with comprehensive error handling."""
         api = ldif()
         input_dir = Path("examples/migration_input")
@@ -241,11 +241,11 @@ class ExampleServerMigration:
             target_server="oud",
         )
         if migration_result.failure:
-            return r[m.Ldif.MigrationPipelineResult].fail(
+            return r[p.Ldif.MigrationPipelineResult].fail(
                 f"Migration failed: {migration_result.error}",
             )
         pipeline_result = migration_result.unwrap()
         _ = len(pipeline_result.entries)
         stats = pipeline_result.stats
         _ = stats.processed_entries
-        return r[m.Ldif.MigrationPipelineResult].ok(pipeline_result)
+        return r[p.Ldif.MigrationPipelineResult].ok(pipeline_result)

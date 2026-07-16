@@ -178,7 +178,7 @@ class FlextLdifServersBaseSchema(
         substr_oid: str | None = None,
         sup_oid: str | None = None,
         server_type: str | None = None,
-    ) -> m.Ldif.ServerMetadata | None:
+    ) -> p.Ldif.ServerMetadata | None:
         """Build metadata for attribute including extensions and OID validation."""
         metadata_extensions = FlextLdifServersBaseSchema._extract_metadata_extensions(
             attr_definition,
@@ -378,28 +378,28 @@ class FlextLdifServersBaseSchema(
     def _coerce_attribute_model(
         self,
         value: t.JsonValue | t.Ldif.SchemaConversionValue,
-    ) -> p.Result[m.Ldif.SchemaAttribute]:
+    ) -> p.Result[p.Ldif.SchemaAttribute]:
         """Coerce raw value to a schema attribute model, propagating failures."""
         try:
             attribute: m.Ldif.SchemaAttribute = m.Ldif.SchemaAttribute.model_validate(
                 value,
             )
         except c.Ldif.EXC_LDIF_PARSE as exc:
-            return r[m.Ldif.SchemaAttribute].fail(str(exc), exception=exc)
-        return r[m.Ldif.SchemaAttribute].ok(attribute)
+            return r[p.Ldif.SchemaAttribute].fail(str(exc), exception=exc)
+        return r[p.Ldif.SchemaAttribute].ok(attribute)
 
     def _coerce_objectclass_model(
         self,
         value: t.JsonValue | t.Ldif.SchemaConversionValue,
-    ) -> p.Result[m.Ldif.SchemaObjectClass]:
+    ) -> p.Result[p.Ldif.SchemaObjectClass]:
         """Coerce raw value to a schema objectClass model, propagating failures."""
         try:
             objectclass: m.Ldif.SchemaObjectClass = (
                 m.Ldif.SchemaObjectClass.model_validate(value)
             )
         except c.Ldif.EXC_LDIF_PARSE as exc:
-            return r[m.Ldif.SchemaObjectClass].fail(str(exc), exception=exc)
-        return r[m.Ldif.SchemaObjectClass].ok(objectclass)
+            return r[p.Ldif.SchemaObjectClass].fail(str(exc), exception=exc)
+        return r[p.Ldif.SchemaObjectClass].ok(objectclass)
 
     def _resolve_data(
         self,
@@ -595,9 +595,9 @@ class FlextLdifServersBaseSchema(
     def _hook_post_parse_attribute(
         self,
         attr: m.Ldif.SchemaAttribute,
-    ) -> p.Result[m.Ldif.SchemaAttribute]:
+    ) -> p.Result[p.Ldif.SchemaAttribute]:
         """Run hook after parsing an attribute definition."""
-        return r[m.Ldif.SchemaAttribute].ok(attr)
+        return r[p.Ldif.SchemaAttribute].ok(attr)
 
     def _hook_post_parse_objectclass(
         self,
@@ -621,18 +621,18 @@ class FlextLdifServersBaseSchema(
     def _parse_attribute(
         self,
         attr_definition: str,
-    ) -> p.Result[m.Ldif.SchemaAttribute]:
+    ) -> p.Result[p.Ldif.SchemaAttribute]:
         """Parse server-specific attribute definition (internal)."""
         del attr_definition
-        return r[m.Ldif.SchemaAttribute].fail("Must be implemented by subclass")
+        return r[p.Ldif.SchemaAttribute].fail("Must be implemented by subclass")
 
     def _parse_objectclass(
         self,
         oc_definition: str,
-    ) -> p.Result[m.Ldif.SchemaObjectClass]:
+    ) -> p.Result[p.Ldif.SchemaObjectClass]:
         """Parse server-specific objectClass definition (internal)."""
         _ = oc_definition
-        return r[m.Ldif.SchemaObjectClass].fail("Must be implemented by subclass")
+        return r[p.Ldif.SchemaObjectClass].fail("Must be implemented by subclass")
 
     def _route_operation(
         self,

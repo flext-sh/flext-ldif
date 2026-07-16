@@ -58,7 +58,7 @@ class FlextLdifFilters(s):
     @classmethod
     def _should_include_entry(
         cls,
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         allowed_oids: m.Ldif.WhitelistRules | t.FrozensetMapping,
     ) -> bool:
         """Check if entry should be included based on OID filters."""
@@ -81,15 +81,15 @@ class FlextLdifFilters(s):
     @classmethod
     def filter_schema_by_oids(
         cls,
-        entries: t.MutableSequenceOf[m.Ldif.Entry],
+        entries: t.MutableSequenceOf[p.Ldif.Entry],
         allowed_oids: m.Ldif.WhitelistRules | t.FrozensetMapping,
-    ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
+    ) -> p.Result[t.MutableSequenceOf[p.Ldif.Entry]]:
         """Filter schema entries by allowed OIDs."""
         try:
             allowed_oid_map = cls._extract_allowed_oids(allowed_oids)
             if not any(allowed_oid_map.values()):
-                return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(entries)
-            filtered: t.MutableSequenceOf[m.Ldif.Entry] = [
+                return r[t.MutableSequenceOf[p.Ldif.Entry]].ok(entries)
+            filtered: t.MutableSequenceOf[p.Ldif.Entry] = [
                 entry
                 for entry in entries
                 if cls._should_include_entry(entry, allowed_oid_map)
@@ -99,22 +99,22 @@ class FlextLdifFilters(s):
                 total_entries=len(entries),
                 filtered_count=len(filtered),
             )
-            return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(filtered)
+            return r[t.MutableSequenceOf[p.Ldif.Entry]].ok(filtered)
         except c.Ldif.EXC_LDIF_PARSE as e:
             cls._get_or_create_logger().exception(
                 "Failed to filter schema entries by OIDs",
             )
-            return r[t.MutableSequenceOf[m.Ldif.Entry]].fail_op("Schema OID filter", e)
+            return r[t.MutableSequenceOf[p.Ldif.Entry]].fail_op("Schema OID filter", e)
 
     @classmethod
     def filter_entry_attributes(
         cls,
-        entry: m.Ldif.Entry | p.Ldif.Entry,
+        entry: p.Ldif.Entry,
         forbidden_attrs: t.StrSequence,
         forbidden_ocs: t.StrSequence,
-    ) -> m.Ldif.Entry:
+    ) -> p.Ldif.Entry:
         """Strip forbidden attributes and objectClasses from an entry."""
-        filtered_entry: m.Ldif.Entry = u.Ldif.as_entry(entry)
+        filtered_entry: p.Ldif.Entry = u.Ldif.as_entry(entry)
         if entry.attributes and forbidden_attrs:
             attrs_dict = entry.attributes.attributes
             forbidden_set = {attr.lower() for attr in forbidden_attrs}
@@ -164,11 +164,11 @@ class FlextLdifFilters(s):
     @classmethod
     def filter_schema_attribute_values(
         cls,
-        entry: m.Ldif.Entry | p.Ldif.Entry,
+        entry: p.Ldif.Entry,
         allowed_oids: m.Ldif.WhitelistRules | t.FrozensetMapping,
-    ) -> m.Ldif.Entry:
+    ) -> p.Ldif.Entry:
         """Filter individual OID values within schema entry attributes."""
-        concrete: m.Ldif.Entry = u.Ldif.as_entry(entry)
+        concrete: p.Ldif.Entry = u.Ldif.as_entry(entry)
         if concrete.attributes is None:
             return concrete
         allowed_value_oids = cls._extract_allowed_oids(allowed_oids)
@@ -196,7 +196,7 @@ class FlextLdifFilters(s):
                 del updated_attrs[attr_name]
         if not changed:
             return concrete
-        copied: m.Ldif.Entry = concrete.model_copy(
+        copied: p.Ldif.Entry = concrete.model_copy(
             update={
                 "attributes": m.Ldif.Attributes.model_validate({
                     "attributes": updated_attrs,

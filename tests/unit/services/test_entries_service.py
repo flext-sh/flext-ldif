@@ -30,7 +30,7 @@ class TestsFlextLdifEntries:
     @staticmethod
     def _basic_entry(
         extra_attrs: dict[str, list[str]] | None = None,
-    ) -> m.Ldif.Entry:
+    ) -> p.Ldif.Entry:
         attrs: dict[str, list[str]] = {
             "objectClass": list(c.Tests.ENTRIES_OBJECTCLASS_PERSON),
             "cn": ["entries-test"],
@@ -45,7 +45,7 @@ class TestsFlextLdifEntries:
         )
 
     @staticmethod
-    def _entry_without_attributes() -> m.Ldif.Entry:
+    def _entry_without_attributes() -> p.Ldif.Entry:
         entry = u.Tests.create_real_entry(
             dn=c.Tests.ENTRIES_DN_VALID,
             attributes={c.Tests.NAME_CN: [c.Tests.ATTR_VALUE_TEST]},
@@ -68,7 +68,7 @@ class TestsFlextLdifEntries:
             c.Tests.ENTRIES_DN_VALID,
             {"cn": ["x"], "objectClass": ["top"]},
         )
-        entry: m.Ldif.Entry = u.Tests.assert_success(result)
+        entry: p.Ldif.Entry = u.Tests.assert_success(result)
         tm.that(entry.attributes, none=False)
         tm.that("cn" in entry.attributes.attributes, eq=True)
         tm.that(entry.attributes.attributes["cn"], eq=["x"])
@@ -79,7 +79,7 @@ class TestsFlextLdifEntries:
             {"cn": ["x"]},
             objectclasses=list(c.Tests.ENTRIES_OBJECTCLASS_PERSON),
         )
-        entry: m.Ldif.Entry = u.Tests.assert_success(result)
+        entry: p.Ldif.Entry = u.Tests.assert_success(result)
         tm.that(entry.attributes, none=False)
         tm.that(c.Tests.NAME_OBJECTCLASS in entry.attributes.attributes, eq=True)
         tm.that(
@@ -205,7 +205,7 @@ class TestsFlextLdifEntries:
             entry,
             list(c.Tests.ENTRIES_ATTR_REMOVE_SET),
         )
-        cleaned: m.Ldif.Entry = u.Tests.assert_success(result)
+        cleaned: p.Ldif.Entry = u.Tests.assert_success(result)
         tm.that(cleaned.attributes, none=False)
         remaining = {k.lower() for k in cleaned.attributes.attributes}
         tm.that(remaining.isdisjoint(c.Tests.ENTRIES_ATTR_REMOVE_SET), eq=True)
@@ -214,13 +214,13 @@ class TestsFlextLdifEntries:
 
     def test_remove_attributes_is_idempotent(self) -> None:
         entry = self._basic_entry()
-        once: m.Ldif.Entry = u.Tests.assert_success(
+        once: p.Ldif.Entry = u.Tests.assert_success(
             FlextLdifEntries.remove_attributes(
                 entry,
                 list(c.Tests.ENTRIES_ATTR_REMOVE_SET),
             ),
         )
-        twice: m.Ldif.Entry = u.Tests.assert_success(
+        twice: p.Ldif.Entry = u.Tests.assert_success(
             FlextLdifEntries.remove_attributes(
                 once,
                 list(c.Tests.ENTRIES_ATTR_REMOVE_SET),
@@ -235,7 +235,7 @@ class TestsFlextLdifEntries:
 
     def test_remove_attributes_noop_when_entry_has_no_attributes(self) -> None:
         entry = self._entry_without_attributes()
-        cleaned: m.Ldif.Entry = u.Tests.assert_success(
+        cleaned: p.Ldif.Entry = u.Tests.assert_success(
             FlextLdifEntries.remove_attributes(entry, ["cn"]),
         )
         tm.that(cleaned.attributes is None, eq=True)
@@ -265,7 +265,7 @@ class TestsFlextLdifEntries:
         if not should_succeed:
             tm.fail(result)
             return
-        cleaned: t.MutableSequenceOf[m.Ldif.Entry] = u.Tests.assert_success(result)
+        cleaned: t.MutableSequenceOf[p.Ldif.Entry] = u.Tests.assert_success(result)
         tm.that(len(cleaned) == 1, eq=True)
         stripped = cleaned[0]
         tm.that(stripped.attributes, none=False)

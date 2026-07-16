@@ -19,8 +19,8 @@ class FlextLdifStatistics(s):
 
     def calculate_for_entries(
         self,
-        entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
-    ) -> p.Result[m.Ldif.EntriesStatistics]:
+        entries: t.MutableSequenceOf[p.Ldif.Entry] | m.Ldif.ParseResponse,
+    ) -> p.Result[p.Ldif.EntriesStatistics]:
         """Calculate general-purpose statistics for a list of Entry models."""
         normalized_entries = u.Ldif.as_entries(entries)
         object_class_distribution: Counter[str] = Counter()
@@ -43,7 +43,7 @@ class FlextLdifStatistics(s):
             object_class_distribution=obj_class_model,
             server_type_distribution=server_type_model,
         )
-        return r[m.Ldif.EntriesStatistics].ok(entries_stats)
+        return r[p.Ldif.EntriesStatistics].ok(entries_stats)
 
 
 __all__: list[str] = ["FlextLdifStatistics"]

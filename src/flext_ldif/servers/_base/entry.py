@@ -67,8 +67,8 @@ class FlextLdifServersBaseEntry(
 
     @staticmethod
     def _extract_write_format_options(
-        metadata: m.Ldif.ServerMetadata | None,
-    ) -> m.Ldif.WriteFormatOptions | None:
+        metadata: p.Ldif.ServerMetadata | None,
+    ) -> p.Ldif.WriteFormatOptions | None:
         if metadata is None:
             return None
         format_options_raw: t.JsonValue | None = metadata.extensions.get(
@@ -216,9 +216,9 @@ class FlextLdifServersBaseEntry(
 
     def _denormalize_entry(
         self,
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         target_server: str | None = None,
-    ) -> m.Ldif.Entry:
+    ) -> p.Ldif.Entry:
         """Denormalize entry from RFC format to target server format."""
         _ = target_server
         return entry
@@ -245,9 +245,9 @@ class FlextLdifServersBaseEntry(
 
     def _inject_write_format_options(
         self,
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         write_options: p.Ldif.WriteFormatOptions,
-    ) -> m.Ldif.Entry:
+    ) -> p.Ldif.Entry:
         """Inject write format options into entry metadata extensions."""
         format_options_payload = write_options.model_dump(
             mode="json",
@@ -270,7 +270,7 @@ class FlextLdifServersBaseEntry(
                 server_type=c.Ldif.ServerTypes.RFC,
                 extensions=existing_extensions,
             )
-        copied: m.Ldif.Entry = entry.model_copy(update={"metadata": updated_metadata})
+        copied: p.Ldif.Entry = entry.model_copy(update={"metadata": updated_metadata})
         return copied
 
     def _normalize_attribute_name(self, attr_name: str) -> str:
@@ -281,21 +281,21 @@ class FlextLdifServersBaseEntry(
             return "objectClass"
         return attr_name
 
-    def _normalize_entry(self, entry: m.Ldif.Entry) -> m.Ldif.Entry:
+    def _normalize_entry(self, entry: p.Ldif.Entry) -> p.Ldif.Entry:
         """Normalize entry to RFC format with metadata tracking."""
         return entry
 
     def _parse_content(
         self,
         ldif_content: str,
-    ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
+    ) -> p.Result[t.MutableSequenceOf[p.Ldif.Entry]]:
         """Parse raw LDIF content string into Entry models (internal)."""
         _ = ldif_content
-        return r[t.MutableSequenceOf[m.Ldif.Entry]].fail(
+        return r[t.MutableSequenceOf[p.Ldif.Entry]].fail(
             "Must be implemented by subclass",
         )
 
-    def _write_entry(self, entry_data: m.Ldif.Entry) -> p.Result[str]:
+    def _write_entry(self, entry_data: p.Ldif.Entry) -> p.Result[str]:
         """Write Entry model to RFC-compliant LDIF string (internal)."""
         output_lines: t.MutableSequenceOf[str] = []
         fold_long_lines = True
@@ -582,7 +582,7 @@ class FlextLdifServersBaseEntry(
 
     def _write_entry_list(
         self,
-        entries: t.MutableSequenceOf[m.Ldif.Entry],
+        entries: t.MutableSequenceOf[p.Ldif.Entry],
         write_options: p.Ldif.WriteFormatOptions | None,
     ) -> p.Result[str]:
         """Write list of entries to LDIF."""
@@ -602,7 +602,7 @@ class FlextLdifServersBaseEntry(
 
     def _write_single_entry(
         self,
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         write_options: p.Ldif.WriteFormatOptions | None,
     ) -> p.Result[str]:
         """Write single entry to LDIF."""

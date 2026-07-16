@@ -2,7 +2,7 @@
 
 Every assertion targets observable public contract only:
 - server ``parse_*`` / ``write_*`` returning ``r[T]`` outcomes and their values,
-- ``FlextLdifConversion.convert_model`` returning ``r[m.Ldif.Entry]``,
+- ``FlextLdifConversion.convert_model`` returning ``r[p.Ldif.Entry]``,
 - public model fields (``.syntax``, ``.equality``) and written schema text.
 
 No private attribute/method access, no internal-collaborator spying, no

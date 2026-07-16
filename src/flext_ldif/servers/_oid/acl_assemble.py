@@ -40,7 +40,7 @@ class FlextLdifServersOidAclAssemble:
         rule: m.Ldif.OidAclRule,
         *,
         base_dn: str = "",
-    ) -> p.Result[m.Ldif.AciRule]:
+    ) -> p.Result[p.Ldif.AciRule]:
         """Assemble a parsed OID rule into one OUD :class:`m.Ldif.AciRule`.
 
         ``by * (none)`` deny-fallback removes that clause + dead-codes every
@@ -59,7 +59,7 @@ class FlextLdifServersOidAclAssemble:
             c.Ldif.SUBJECT_ANYONE,
             c.Ldif.DIRECTORY_MANAGER_DN,
         }
-        allows: list[m.Ldif.AciAllow] = []
+        allows: list[p.Ldif.AciAllow] = []
         notes: list[str] = []
         has_anyone = False
         found_deny_all = False
@@ -96,7 +96,7 @@ class FlextLdifServersOidAclAssemble:
                     continue
             perms = Conv.convert_permissions(subject.permissions, is_entry=is_entry)
             if perms.failure:
-                return r[m.Ldif.AciRule].fail(
+                return r[p.Ldif.AciRule].fail(
                     perms.error or "invalid OID permission token",
                 )
             if not perms.value:
@@ -130,7 +130,7 @@ class FlextLdifServersOidAclAssemble:
         group_count = len({tuple(allow.permissions) for allow in allows})
         if group_count > 1:
             acl_name += f" (+{group_count - 1})"
-        return r[m.Ldif.AciRule].ok(
+        return r[p.Ldif.AciRule].ok(
             m.Ldif.AciRule(
                 dn=rule.dn,
                 targetattr=Conv.get_targetattr(rule),

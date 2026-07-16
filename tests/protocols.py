@@ -69,7 +69,7 @@ class TestsFlextLdifProtocols(
             def parse_server(
                 self,
                 value: str,
-            ) -> ldif_p.Result[m.Ldif.Acl]:
+            ) -> ldif_p.Result[p.Ldif.Acl]:
                 """Parse ACL content into the test model."""
                 ...
 
@@ -80,8 +80,8 @@ class TestsFlextLdifProtocols(
             # mro-0ftd.3.6.1: retain the typed Result payload across test fixtures.
             def process_entry(
                 self,
-                entry: m.Ldif.Entry,
-            ) -> ldif_p.Result[m.Ldif.Entry]:
+                entry: p.Ldif.Entry,
+            ) -> ldif_p.Result[p.Ldif.Entry]:
                 """Normalize one entry through the server-specific behavior."""
                 ...
 

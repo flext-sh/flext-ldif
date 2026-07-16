@@ -28,7 +28,7 @@ class TestsFlextLdifAclMetadataPreservation:
         return ldif()
 
     @staticmethod
-    def _extensions(entry: m.Ldif.Entry) -> t.JsonMapping:
+    def _extensions(entry: p.Ldif.Entry) -> t.JsonMapping:
         """Read the entry's public metadata extensions as a plain mapping."""
         metadata = entry.metadata
         tm.that(metadata, none=False)
@@ -44,14 +44,14 @@ class TestsFlextLdifAclMetadataPreservation:
         api: p.Ldif.LdifClient,
         ldif_text: str,
         server_type: str,
-    ) -> m.Ldif.Entry:
+    ) -> p.Ldif.Entry:
         """Parse LDIF that must yield exactly one entry; assert the r[T] success."""
         result = api.parse_ldif(ldif_text, server_type=server_type)
         tm.ok(result)
         response: m.Ldif.ParseResponse = result.unwrap()
         entries = response.entries
         tm.that(len(entries), eq=1)
-        entry: m.Ldif.Entry = entries[0]
+        entry: p.Ldif.Entry = entries[0]
         return entry
 
     # -- OID ACL feature preservation ------------------------------------

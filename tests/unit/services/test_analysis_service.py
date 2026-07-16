@@ -15,7 +15,7 @@ class TestsFlextLdifAnalysisService:
     def _make_entry(
         dn: str | None,
         attrs: dict[str, list[str]] | None,
-    ) -> m.Ldif.Entry:
+    ) -> p.Ldif.Entry:
         """Build a public ``m.Ldif.Entry`` for a validation case."""
         attributes = (
             None

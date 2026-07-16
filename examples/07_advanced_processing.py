@@ -47,7 +47,7 @@ def parallel_processing() -> None:
     Demonstrates creating entries directly via models and validating in batch.
     """
     api: p.Ldif.LdifClient = ldif
-    entries: list[m.Ldif.Entry] = []
+    entries: list[p.Ldif.Entry] = []
     for i in range(10):
         entry = m.Ldif.Entry(
             dn=m.Ldif.DN(value=f"cn=User{i},ou=People,dc=example,dc=com"),
@@ -166,7 +166,7 @@ def complete_processing_pipeline() -> None:
     parse_response = parse_result.unwrap()
     entries = parse_response.entries
 
-    valid_entries: MutableSequence[m.Ldif.Entry] = []
+    valid_entries: MutableSequence[p.Ldif.Entry] = []
     for entry in entries:
         dn_result = u.Ldif.parse_dn(entry.dn.value if entry.dn else "")
         if dn_result.success:

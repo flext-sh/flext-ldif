@@ -67,7 +67,7 @@ class FlextLdifUtilitiesSchemaBuild:
     @staticmethod
     def _write_schema_element(
         data: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
-        expected_type: (type[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]),
+        expected_type: (type[p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]),
         type_name: str,
         parts_builder: Callable[..., t.MutableSequenceOf[str]],
     ) -> str:

@@ -22,7 +22,7 @@ class FlextLdifAcl(s):
         *,
         processed_entries: int = 1,
         failed_entries: int = 0,
-    ) -> m.Ldif.AclResponse:
+    ) -> p.Ldif.AclResponse:
         return m.Ldif.AclResponse(
             acls=u.Ldif.as_acls(acls),
             statistics=m.Ldif.Statistics(
@@ -33,7 +33,7 @@ class FlextLdifAcl(s):
         )
 
     @staticmethod
-    def _is_schema_entry(entry: m.Ldif.Entry) -> bool:
+    def _is_schema_entry(entry: p.Ldif.Entry) -> bool:
         """Check if entry is a schema entry."""
         is_schema: bool = u.Ldif.is_schema_entry(entry, strict=False)
         return is_schema
@@ -42,7 +42,7 @@ class FlextLdifAcl(s):
     def evaluate_acl_context(
         acls: t.SequenceOf[t.Ldif.AclLike],
         required_permissions: m.Ldif.AclPermissions | t.MutableBoolMapping,
-    ) -> p.Result[m.Ldif.AclEvaluationResult]:
+    ) -> p.Result[p.Ldif.AclEvaluationResult]:
         """Evaluate if ACLs grant required permissions."""
         required = (
             required_permissions
@@ -100,26 +100,26 @@ class FlextLdifAcl(s):
                     matched_acl=None,
                     message=f"No ACL grants required permissions: {required_perms}",
                 )
-        return r[m.Ldif.AclEvaluationResult].ok(evaluation)
+        return r[p.Ldif.AclEvaluationResult].ok(evaluation)
 
-    def service_check(self) -> p.Result[m.Ldif.AclResponse]:
+    def service_check(self) -> p.Result[p.Ldif.AclResponse]:
         """Return a minimal ACL response for service wiring checks."""
-        return r[m.Ldif.AclResponse].ok(
+        return r[p.Ldif.AclResponse].ok(
             m.Ldif.AclResponse(acls=[], statistics=m.Ldif.Statistics()),
         )
 
     def extract_acls_from_entry(
         self,
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         server_type: str,
-    ) -> p.Result[m.Ldif.AclResponse]:
+    ) -> p.Result[p.Ldif.AclResponse]:
         """Extract ACLs from entry using server-specific attribute names."""
         acl_attr_name = u.Ldif.get_acl_attributes()
         if not acl_attr_name:
-            return r[m.Ldif.AclResponse].ok(self._build_acl_response([]))
+            return r[p.Ldif.AclResponse].ok(self._build_acl_response([]))
         acl_values = u.Ldif.get_attribute_values(entry, next(iter(acl_attr_name)))
         if not acl_values:
-            return r[m.Ldif.AclResponse].ok(self._build_acl_response([]))
+            return r[p.Ldif.AclResponse].ok(self._build_acl_response([]))
         acls: t.Ldif.AclSequence = []
         failed_count = 0
 
@@ -134,7 +134,7 @@ class FlextLdifAcl(s):
                 error=parse_result.error or "",
                 server_type=server_type,
             )
-        return r[m.Ldif.AclResponse].ok(
+        return r[p.Ldif.AclResponse].ok(
             self._build_acl_response(acls, failed_entries=failed_count),
         )
 
@@ -142,12 +142,12 @@ class FlextLdifAcl(s):
         self,
         acl_string: str,
         server_type: str,
-    ) -> p.Result[m.Ldif.Acl]:
+    ) -> p.Result[p.Ldif.Acl]:
         """Parse ACL string using server-specific servers."""
         try:
             normalized_server_type = u.Ldif.normalize_server_type(server_type)
         except c.EXC_TYPE_VALIDATION as error:
-            return r[m.Ldif.Acl].fail(
+            return r[p.Ldif.Acl].fail(
                 f"Invalid server type: {server_type} - {error}",
             )
         try:
@@ -157,13 +157,13 @@ class FlextLdifAcl(s):
             if acl_server is None and server_type == "openldap":
                 acl_server = self.server.acl("openldap2")
         except ValueError as error:
-            return r[m.Ldif.Acl].fail(str(error))
+            return r[p.Ldif.Acl].fail(str(error))
         if acl_server is None:
-            return r[m.Ldif.Acl].fail(
+            return r[p.Ldif.Acl].fail(
                 f"No ACL server found for server type: {normalized_server_type}",
             )
         return (
-            r[m.Ldif.Acl]
+            r[p.Ldif.Acl]
             .from_result(
                 acl_server.parse_server(acl_string),
             )

@@ -65,13 +65,13 @@ def oid_integration_fixture() -> str:
 def oid_entries(
     api: p.Ldif.LdifClient,
     oid_entries_fixture: str,
-) -> t.SequenceOf[m.Ldif.Entry]:
+) -> t.SequenceOf[p.Ldif.Entry]:
     """Parse OID entries fixture into Entry models."""
     parse_response: m.Ldif.ParseResponse = u.Tests.assert_success(
         api.parse_ldif(oid_entries_fixture),
         error_msg="OID entries parsing failed",
     )
-    entries: t.SequenceOf[m.Ldif.Entry] = parse_response.entries
+    entries: t.SequenceOf[p.Ldif.Entry] = parse_response.entries
     return entries
 
 
@@ -107,13 +107,13 @@ def oud_integration_fixture() -> str:
 def oud_entries(
     api: p.Ldif.LdifClient,
     oud_entries_fixture: str,
-) -> t.SequenceOf[m.Ldif.Entry]:
+) -> t.SequenceOf[p.Ldif.Entry]:
     """Parse OUD entries fixture into Entry models."""
     parse_response: m.Ldif.ParseResponse = u.Tests.assert_success(
         api.parse_ldif(oud_entries_fixture),
         error_msg="OUD entries parsing failed",
     )
-    entries: t.SequenceOf[m.Ldif.Entry] = parse_response.entries
+    entries: t.SequenceOf[p.Ldif.Entry] = parse_response.entries
     return entries
 
 

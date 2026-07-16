@@ -13,7 +13,7 @@ from flext_tests import tm
 
 from flext_ldif import ldif
 from flext_ldif.services.filters import FlextLdifFilters
-from tests import TestsFlextLdifUtilities as u, c, m, t
+from tests import c, m, p, t, u
 
 
 class TestsFlextLdifFiltersService:
@@ -22,7 +22,7 @@ class TestsFlextLdifFiltersService:
     # ── fixtures ──────────────────────────────────────────────────────────────
 
     @pytest.fixture
-    def regular_entry(self) -> m.Ldif.Entry:
+    def regular_entry(self) -> p.Ldif.Entry:
         """Build a person entry carrying objectClasses plus filterable attributes."""
         return u.Tests.create_real_entry(
             dn=c.Tests.FILTERS_DN_USER,
@@ -40,7 +40,7 @@ class TestsFlextLdifFiltersService:
         )
 
     @pytest.fixture
-    def entry_without_attributes(self) -> m.Ldif.Entry:
+    def entry_without_attributes(self) -> p.Ldif.Entry:
         """Build an entry whose ``attributes`` field is ``None``."""
         entry = u.Tests.create_real_entry(
             dn=c.Tests.FILTERS_DN_BARE,
@@ -49,7 +49,7 @@ class TestsFlextLdifFiltersService:
         return entry.model_copy(update={"attributes": None})
 
     @staticmethod
-    def _schema_entry(values: t.StrSequence) -> m.Ldif.Entry:
+    def _schema_entry(values: t.StrSequence) -> p.Ldif.Entry:
         return u.Tests.create_real_entry(
             dn=c.Tests.FILTERS_DN_SCHEMA,
             attributes={
@@ -65,7 +65,7 @@ class TestsFlextLdifFiltersService:
 
     def test_removes_forbidden_attributes_keeping_the_rest(
         self,
-        regular_entry: m.Ldif.Entry,
+        regular_entry: p.Ldif.Entry,
     ) -> None:
         result = ldif.filter_entry_attributes(
             regular_entry,
@@ -82,7 +82,7 @@ class TestsFlextLdifFiltersService:
 
     def test_removes_forbidden_objectclass_values(
         self,
-        regular_entry: m.Ldif.Entry,
+        regular_entry: p.Ldif.Entry,
     ) -> None:
         result = ldif.filter_entry_attributes(
             regular_entry,
@@ -116,7 +116,7 @@ class TestsFlextLdifFiltersService:
 
     def test_empty_forbidden_lists_preserve_entry_identity(
         self,
-        regular_entry: m.Ldif.Entry,
+        regular_entry: p.Ldif.Entry,
     ) -> None:
         tm.that(regular_entry.attributes, none=False)
         result = ldif.filter_entry_attributes(regular_entry, [], [])
@@ -129,7 +129,7 @@ class TestsFlextLdifFiltersService:
 
     def test_attribute_filtering_is_idempotent(
         self,
-        regular_entry: m.Ldif.Entry,
+        regular_entry: p.Ldif.Entry,
     ) -> None:
         forbidden = list(c.Tests.FILTERS_FORBIDDEN_ATTRS_ORDERED)
         once = ldif.filter_entry_attributes(regular_entry, forbidden, [])
@@ -141,7 +141,7 @@ class TestsFlextLdifFiltersService:
 
     def test_returns_entry_unchanged_when_no_attributes_present(
         self,
-        entry_without_attributes: m.Ldif.Entry,
+        entry_without_attributes: p.Ldif.Entry,
     ) -> None:
         result = ldif.filter_entry_attributes(
             entry_without_attributes,
@@ -269,7 +269,7 @@ class TestsFlextLdifFiltersService:
 
     def test_returns_entry_unchanged_when_no_attributes_to_filter(
         self,
-        entry_without_attributes: m.Ldif.Entry,
+        entry_without_attributes: p.Ldif.Entry,
     ) -> None:
         result = ldif.filter_schema_attribute_values(entry_without_attributes, {})
 

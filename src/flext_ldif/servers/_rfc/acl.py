@@ -66,7 +66,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
             object.__setattr__(self, "_parent_server", parent_server)
 
     @overload
-    def __call__(self, data: str, *, operation: str | None = None) -> m.Ldif.Acl: ...
+    def __call__(self, data: str, *, operation: str | None = None) -> p.Ldif.Acl: ...
 
     @overload
     def __call__(self, data: m.Ldif.Acl, *, operation: str | None = None) -> str: ...
@@ -77,14 +77,14 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         data: str | m.Ldif.Acl | None = None,
         *,
         operation: str | None = None,
-    ) -> m.Ldif.Acl | str: ...
+    ) -> p.Ldif.Acl | str: ...
 
     def __call__(
         self,
         data: t.JsonValue | m.Ldif.Acl | None = None,
         *,
         operation: t.JsonValue | None = None,
-    ) -> m.Ldif.Acl | str:
+    ) -> p.Ldif.Acl | str:
         """Callable interface - automatic polymorphic processor."""
         narrowed_data = (
             data if isinstance(data, (str, m.Ldif.Acl)) or data is None else None
@@ -140,10 +140,10 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         return (permission, None)
 
     @override
-    def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
+    def _parse_acl(self, acl_line: str) -> p.Result[p.Ldif.Acl]:
         """Parse RFC-compliant ACL line (implements abstract method)."""
         if not acl_line or not acl_line.strip():
-            return r[m.Ldif.Acl].fail("ACL line must be a non-empty string.")
+            return r[p.Ldif.Acl].fail("ACL line must be a non-empty string.")
         server_type_str = self._get_server_type()
         server_type_value = u.Ldif.normalize_server_type(server_type_str)
         # mro-wgwh.5 (agent: kimi-coder) — model_construct bypass removed: plain
@@ -156,7 +156,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
                 extensions={"original_format": acl_line},
             ),
         )
-        return r[m.Ldif.Acl].ok(acl_model)
+        return r[p.Ldif.Acl].ok(acl_model)
 
     def _preserve_unsupported_feature(
         self,

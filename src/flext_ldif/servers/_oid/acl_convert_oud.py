@@ -170,7 +170,7 @@ class FlextLdifServersOidAclToOud:
     def convert_subject_to_oud(
         cls,
         subject: m.Ldif.OidAclSubject,
-    ) -> p.Result[m.Ldif.AciAllow]:
+    ) -> p.Result[p.Ldif.AciAllow]:
         """Map one OID by-clause subject to an OUD bind-rule.
 
         Returns an :class:`m.Ldif.AciAllow` whose ``subject_value`` is the
@@ -200,11 +200,11 @@ class FlextLdifServersOidAclToOud:
                 bind_type = oud.USERATTR.value
                 bind_value = f"{value}{c.Ldif.UserAttrSuffix.GROUPDN.value}"
             case _:
-                return r[m.Ldif.AciAllow].fail(
+                return r[p.Ldif.AciAllow].fail(
                     f"Subject '{kind}' has no OUD equivalent "
                     f"(manual review required): {value!r}",
                 )
-        return r[m.Ldif.AciAllow].ok(
+        return r[p.Ldif.AciAllow].ok(
             m.Ldif.AciAllow(subject_type=bind_type, subject_value=bind_value),
         )
 

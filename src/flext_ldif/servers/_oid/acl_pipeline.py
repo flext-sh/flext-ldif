@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from flext_ldif import c, m, p, r, t, u
+from flext_ldif import c, p, r, t, u
 from flext_ldif.servers._oid.acl_assemble import FlextLdifServersOidAclAssemble as Build
 from flext_ldif.servers._oid.acl_convert import FlextLdifServersOidAclConvert as Parser
 from flext_ldif.servers._oid.acl_render import FlextLdifServersOidAclRender as Render
@@ -67,12 +67,12 @@ class FlextLdifServersOidAclPipeline:
     @classmethod
     def convert_entry_acls(
         cls,
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         source_type_norm: str,
         target_type_norm: str,
         *,
         base_dn: str = "",
-    ) -> p.Result[m.Ldif.Entry]:
+    ) -> p.Result[p.Ldif.Entry]:
         """Rewrite an OID entry's ACL attributes to a single OUD ``aci`` attribute.
 
         Fires only for oid→oud entries carrying ``orclaci``/``orclentrylevelaci``;
@@ -84,10 +84,10 @@ class FlextLdifServersOidAclPipeline:
             source_type_norm == c.Ldif.ServerTypes.OID
             and target_type_norm == c.Ldif.ServerTypes.OUD
         ):
-            return r[m.Ldif.Entry].ok(entry)
+            return r[p.Ldif.Entry].ok(entry)
         attrs_model = entry.attributes
         if attrs_model is None or not attrs_model.attributes:
-            return r[m.Ldif.Entry].ok(entry)
+            return r[p.Ldif.Entry].ok(entry)
         current = dict(attrs_model.attributes)
         oid_acl_attrs = {
             c.Ldif.AclConvertType.ORCLACI.value,
@@ -95,14 +95,14 @@ class FlextLdifServersOidAclPipeline:
         }
         acl_names = [name for name in current if name.lower() in oid_acl_attrs]
         if not acl_names:
-            return r[m.Ldif.Entry].ok(entry)
+            return r[p.Ldif.Entry].ok(entry)
         dn_value = entry.dn.value if entry.dn else ""
         oid_lines = [
             f"{name}: {value}" for name in acl_names for value in current[name]
         ]
         converted = cls.convert_acl_values(dn_value, oid_lines, base_dn=base_dn)
         if converted.failure:
-            return r[m.Ldif.Entry].fail(converted.error or "OID ACL conversion failed")
+            return r[p.Ldif.Entry].fail(converted.error or "OID ACL conversion failed")
         for name in acl_names:
             del current[name]
         if converted.value:
@@ -115,7 +115,7 @@ class FlextLdifServersOidAclPipeline:
         new_attrs = attrs_model.model_copy(
             update={"attributes": current, "attribute_metadata": kept_meta},
         )
-        return r[m.Ldif.Entry].ok(entry.model_copy(update={"attributes": new_attrs}))
+        return r[p.Ldif.Entry].ok(entry.model_copy(update={"attributes": new_attrs}))
 
 
 __all__: list[str] = ["FlextLdifServersOidAclPipeline"]

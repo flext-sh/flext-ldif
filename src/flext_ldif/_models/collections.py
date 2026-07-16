@@ -12,15 +12,14 @@ from collections.abc import (
 )
 from typing import Annotated, ClassVar
 
-# mro-6int (claude-ulw): import m/t/u from upstream flext_cli, not the own
-# package facade, to break the flext_ldif package-init circular import.
-from flext_cli import m, t, u
+from flext_cli import m, u
+from flext_ldif import p, t
 from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries as mde
 
 
 class FlextLdifModelsCollections:
     class DynamicCounts(m.DynamicModel):
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(
             extra="allow",
             validate_assignment=True,
         )

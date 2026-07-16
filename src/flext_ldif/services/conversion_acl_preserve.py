@@ -41,7 +41,7 @@ class FlextLdifConversionAclPreserveMixin(s):
         converted_acl: m.Ldif.Acl,
         source_server_type: c.Ldif.ServerTypes | None = None,
         target_server_type: c.Ldif.ServerTypes | None = None,
-    ) -> m.Ldif.Acl:
+    ) -> p.Ldif.Acl:
         """Preserve permissions and metadata from original ACL."""
         converted_permissions = converted_acl.permissions
         converted_has_permissions = converted_permissions is not None and any(

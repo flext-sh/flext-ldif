@@ -170,7 +170,7 @@ class TestsFlextLdifTransformersService:
             transformer.apply(entry)
 
     @staticmethod
-    def _success_entry(result: p.Result[m.Ldif.Entry]) -> m.Ldif.Entry:
+    def _success_entry(result: p.Result[p.Ldif.Entry]) -> p.Ldif.Entry:
         """Assert the fallible conversion succeeded and yields a public Entry."""
         converted = u.Tests.assert_success(result)
         if not isinstance(converted, m.Ldif.Entry):

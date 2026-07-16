@@ -15,7 +15,7 @@ class TestsFlextLdifProcessingService:
     """Cover batch/parallel processing through the public facade only."""
 
     @staticmethod
-    def _entry(dn: str) -> m.Ldif.Entry:
+    def _entry(dn: str) -> p.Ldif.Entry:
         return u.Tests.create_real_entry(
             dn=dn,
             attributes=c.Tests.PROCESSING_ATTRS,
@@ -44,7 +44,7 @@ class TestsFlextLdifProcessingService:
         )
 
         result = api.process_entries(entries, options=options)
-        processed: t.MutableSequenceOf[m.Ldif.ProcessingResult] = (
+        processed: t.MutableSequenceOf[p.Ldif.ProcessingResult] = (
             u.Tests.assert_success(result)
         )
         tm.that(len(processed), eq=len(entries))
@@ -64,7 +64,7 @@ class TestsFlextLdifProcessingService:
             batch_size=1,
             max_workers=1,
         )
-        processed: t.MutableSequenceOf[m.Ldif.ProcessingResult] = (
+        processed: t.MutableSequenceOf[p.Ldif.ProcessingResult] = (
             u.Tests.assert_success(result)
         )
         tm.that(len(processed), eq=1)
@@ -132,7 +132,7 @@ class TestsFlextLdifProcessingService:
             transform_config=config,
             entries_input=[entry],
         ).execute()
-        converted: t.MutableSequenceOf[m.Ldif.Entry] = u.Tests.assert_success(result)
+        converted: t.MutableSequenceOf[p.Ldif.Entry] = u.Tests.assert_success(result)
         tm.that(converted[0].attributes, none=False)
         attrs = converted[0].attributes.attributes
 

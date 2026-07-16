@@ -10,7 +10,7 @@ from flext_ldif._utilities.dn import FlextLdifUtilitiesDN as udn
 
 
 class FlextLdifUtilitiesNormalizeDnTransformer(
-    FlextLdifUtilitiesTransformer[m.Ldif.Entry],
+    FlextLdifUtilitiesTransformer[p.Ldif.Entry],
 ):
     """Transformer for DN normalization."""
 
@@ -49,10 +49,10 @@ class FlextLdifUtilitiesNormalizeDnTransformer(
         return r[bool].ok(value=True)
 
     @override
-    def apply(self, item: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
+    def apply(self, item: p.Ldif.Entry) -> p.Result[p.Ldif.Entry]:
         """Apply DN normalization to an entry."""
         if item.dn is None:
-            return r[m.Ldif.Entry].fail("Entry has no DN")
+            return r[p.Ldif.Entry].fail("Entry has no DN")
         dn_str = (
             item.dn.value
             if getattr(item.dn, "value", None) is not None
@@ -75,14 +75,14 @@ class FlextLdifUtilitiesNormalizeDnTransformer(
                 )
             )
 
-        def update_entry(normalized_dn: str) -> m.Ldif.Entry:
+        def update_entry(normalized_dn: str) -> p.Ldif.Entry:
             normalized_text = self._normalize_dn_case_and_spaces(normalized_dn)
             normalized_dn_value = (
                 item.dn.model_copy(update={"value": normalized_text})
                 if isinstance(item.dn, m.Ldif.DN)
                 else m.Ldif.DN.model_validate({"value": normalized_text})
             )
-            copied: m.Ldif.Entry = item.model_copy(
+            copied: p.Ldif.Entry = item.model_copy(
                 update={"dn": normalized_dn_value},
             )
             return copied

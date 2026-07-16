@@ -24,7 +24,7 @@ import pytest
 from flext_tests import tm
 
 from flext_ldif import ldif
-from tests import c, m
+from tests import c
 from tests.base import s
 from tests.settings import TestsFlextLdifSettings
 
@@ -54,7 +54,7 @@ class TestsFlextLdifConfigIntegration:
         return settings
 
     @staticmethod
-    def dn_values(entries: Sequence[m.Ldif.Entry]) -> list[str]:
+    def dn_values(entries: Sequence[p.Ldif.Entry]) -> list[str]:
         """Return each entry's public DN string (asserting the DN is present)."""
         values: list[str] = []
         for entry in entries:

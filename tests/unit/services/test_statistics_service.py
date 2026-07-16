@@ -19,7 +19,7 @@ class TestsFlextLdifStatisticsService:
     """Validate entries statistics generation through public methods only."""
 
     @staticmethod
-    def _entry(dn: str, server_type: str) -> m.Ldif.Entry:
+    def _entry(dn: str, server_type: str) -> p.Ldif.Entry:
         """Build a real Entry carrying ``server_type`` in its public metadata."""
         entry = u.Tests.create_real_entry(
             dn=dn,
@@ -41,7 +41,7 @@ class TestsFlextLdifStatisticsService:
         )
         return entry.model_copy(update={"metadata": metadata_with_server})
 
-    def _entries(self, count: int) -> list[m.Ldif.Entry]:
+    def _entries(self, count: int) -> list[p.Ldif.Entry]:
         """Build ``count`` entries alternating across the known server types."""
         server_types = c.Tests.STATS_SERVER_TYPES
         return [

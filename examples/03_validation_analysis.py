@@ -28,7 +28,7 @@ class DRYValidationAnalysis:
     @staticmethod
     def _analyze_validation_results(
         validation_result: m.Ldif.ValidationResult,
-    ) -> p.Result[m.Ldif.ValidationResult]:
+    ) -> p.Result[p.Ldif.ValidationResult]:
         """DRY validation analysis: categorize errors and detect patterns."""
         if not validation_result.valid:
             error_groups: dict[str, list[str]] = {}
@@ -37,16 +37,16 @@ class DRYValidationAnalysis:
                 if category not in error_groups:
                     error_groups[category] = []
                 error_groups[category].append(error)
-        return r[m.Ldif.ValidationResult].ok(validation_result)
+        return r[p.Ldif.ValidationResult].ok(validation_result)
 
     @staticmethod
     def _generate_test_dataset(
         count: int,
         error_rate: float = 0.0,
-    ) -> MutableSequence[m.Ldif.Entry]:
+    ) -> MutableSequence[p.Ldif.Entry]:
         """DRY test dataset generation with configurable errors."""
         api = ldif()
-        entries: MutableSequence[m.Ldif.Entry] = []
+        entries: MutableSequence[p.Ldif.Entry] = []
         error_mod = int(1 / error_rate) if error_rate > 0 else 0
         for i in range(count):
             is_error = error_mod > 0 and i % error_mod == 0
@@ -66,7 +66,7 @@ class DRYValidationAnalysis:
         return entries
 
     @staticmethod
-    def parallel_validation() -> p.Result[m.Ldif.ValidationResult]:
+    def parallel_validation() -> p.Result[p.Ldif.ValidationResult]:
         """DRY parallel validation: generate dataset → validate → analyze."""
         api = ldif()
         entries = DRYValidationAnalysis._generate_test_dataset(100, error_rate=0.1)
@@ -80,7 +80,7 @@ class DRYValidationAnalysis:
                 invalid_entries=total_entries,
                 errors=[str(validate_result.error)],
             )
-            return r[m.Ldif.ValidationResult].ok(validation_result)
+            return r[p.Ldif.ValidationResult].ok(validation_result)
         vr = validate_result.unwrap()
         validation_result = m.Ldif.ValidationResult(
             valid=vr.valid,

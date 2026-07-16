@@ -5,14 +5,14 @@ from __future__ import annotations
 import pytest
 from flext_tests import tm
 
-from tests import TestsFlextLdifUtilities as u, c, m, t
+from tests import c, m, p, t, u
 
 
 class TestsFlextLdifCollectionsModels:
     """Cover DynamicCounts, SchemaContent, and FlexibleCategories behavior."""
 
     @staticmethod
-    def _entry(cn_value: str) -> m.Ldif.Entry:
+    def _entry(cn_value: str) -> p.Ldif.Entry:
         return u.Tests.create_real_entry(
             dn=c.Tests.ENTRIES_DN_VALID,
             attributes={
@@ -77,7 +77,7 @@ class TestsFlextLdifCollectionsModels:
 
     def test_flexible_categories_setitem_copies_entries(self) -> None:
         categories = m.Ldif.FlexibleCategories()
-        original_entries: t.MutableSequenceOf[m.Ldif.Entry] = [self._entry("alpha")]
+        original_entries: t.MutableSequenceOf[p.Ldif.Entry] = [self._entry("alpha")]
 
         categories[c.Ldif.Category.USERS.value] = original_entries
         original_entries.append(self._entry("beta"))

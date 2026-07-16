@@ -3,7 +3,7 @@
 Exercises the PUBLIC contract of
 :class:`flext_ldif.servers._oid.acl_convert.FlextLdifServersOidAclConvert`:
 
-* ``parse_oid_acl_line`` returns ``r[m.Ldif.OidAclRule]`` — success carries the
+* ``parse_oid_acl_line`` returns ``r[p.Ldif.OidAclRule]`` — success carries the
   typed rule, malformation surfaces as a failure with a descriptive error.
 * ``parse_subject`` maps one ``by <subject> (perms)`` clause to a typed
   ``m.Ldif.OidAclSubject`` value object.

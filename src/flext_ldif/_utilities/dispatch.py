@@ -20,21 +20,21 @@ from flext_ldif._utilities.validation import FlextLdifUtilitiesValidation
 class FlextLdifUtilitiesDispatch:
     """Override dispatchers that route between parent classes."""
 
-    _ENTRY_LIST_ADAPTER: ClassVar[m.TypeAdapter[list[m.Ldif.Entry]]] = m.TypeAdapter(
-        list[m.Ldif.Entry],
+    _ENTRY_LIST_ADAPTER: ClassVar[p.TypeAdapter[list[p.Ldif.Entry]]] = m.TypeAdapter(
+        list[p.Ldif.Entry],
     )
-    _ACL_LIST_ADAPTER: ClassVar[m.TypeAdapter[list[m.Ldif.Acl]]] = m.TypeAdapter(
-        list[m.Ldif.Acl],
+    _ACL_LIST_ADAPTER: ClassVar[p.TypeAdapter[list[p.Ldif.Acl]]] = m.TypeAdapter(
+        list[p.Ldif.Acl],
     )
 
     @staticmethod
     def as_entry(
         value: p.Ldif.Entry | t.Ldif.EntryLike | t.ModelInput,
-    ) -> m.Ldif.Entry:
+    ) -> p.Ldif.Entry:
         """Coerce an entry-like value into the canonical LDIF entry model."""
         if isinstance(value, m.Ldif.Entry):
             return value
-        validated: m.Ldif.Entry = m.Ldif.Entry.model_validate(value)
+        validated: p.Ldif.Entry = m.Ldif.Entry.model_validate(value)
         return validated
 
     @staticmethod
@@ -43,19 +43,19 @@ class FlextLdifUtilitiesDispatch:
         | t.SequenceOf[t.Ldif.EntryLike]
         | p.Ldif.ParseResponse
         | t.ModelInput,
-    ) -> t.MutableSequenceOf[m.Ldif.Entry]:
+    ) -> t.MutableSequenceOf[p.Ldif.Entry]:
         """Coerce an entry sequence into canonical LDIF entry models."""
         if isinstance(values, m.Ldif.ParseResponse):
             return values.entries
         if isinstance(values, p.Ldif.ParseResponse):
             values = values.entries
-        validated: t.MutableSequenceOf[m.Ldif.Entry] = (
+        validated: t.MutableSequenceOf[p.Ldif.Entry] = (
             FlextLdifUtilitiesDispatch._ENTRY_LIST_ADAPTER.validate_python(values)
         )
         return validated
 
     @staticmethod
-    def as_acl(value: p.Ldif.Acl | t.Ldif.AclLike | t.ModelInput) -> m.Ldif.Acl:
+    def as_acl(value: p.Ldif.Acl | t.Ldif.AclLike | t.ModelInput) -> p.Ldif.Acl:
         """Coerce an ACL-like value into the canonical LDIF ACL model."""
         if isinstance(value, m.Ldif.Acl):
             return value
@@ -65,9 +65,9 @@ class FlextLdifUtilitiesDispatch:
     @staticmethod
     def as_acls(
         values: t.SequenceOf[t.Ldif.AclLike] | t.ModelInput,
-    ) -> t.MutableSequenceOf[m.Ldif.Acl]:
+    ) -> t.MutableSequenceOf[p.Ldif.Acl]:
         """Coerce an ACL sequence into canonical LDIF ACL models."""
-        validated: t.MutableSequenceOf[m.Ldif.Acl] = (
+        validated: t.MutableSequenceOf[p.Ldif.Acl] = (
             FlextLdifUtilitiesDispatch._ACL_LIST_ADAPTER.validate_python(values)
         )
         return validated
@@ -121,7 +121,7 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def validate(
-        value_or_entries: t.MutableSequenceOf[m.Ldif.Entry]
+        value_or_entries: t.MutableSequenceOf[p.Ldif.Entry]
         | t.JsonValue
         | str
         | m.Ldif.DN,
@@ -176,7 +176,7 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def _validate_entries(
-        entries: t.MutableSequenceOf[m.Ldif.Entry],
+        entries: t.MutableSequenceOf[p.Ldif.Entry],
         *,
         pipeline: FlextLdifUtilitiesPipeline.ValidationPipeline | None = None,
     ) -> p.Result[t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]]:
@@ -188,8 +188,8 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def _is_entry_sequence(
-        obj: t.MutableSequenceOf[m.Ldif.Entry] | t.JsonValue | str | m.Ldif.DN,
-    ) -> TypeGuard[t.MutableSequenceOf[m.Ldif.Entry]]:
+        obj: t.MutableSequenceOf[p.Ldif.Entry] | t.JsonValue | str | m.Ldif.DN,
+    ) -> TypeGuard[t.MutableSequenceOf[p.Ldif.Entry]]:
         """Check if value is a Sequence of Entry objects (dispatch helper)."""
         if isinstance(obj, (str, bytes, m.Ldif.DN)):
             return False

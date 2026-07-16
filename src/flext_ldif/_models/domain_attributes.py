@@ -15,8 +15,8 @@ from collections.abc import (
 )
 from typing import Annotated, ClassVar, Self
 
-from flext_core import FlextUtilities as u, m
-from flext_ldif import c, t
+from flext_cli import m, u
+from flext_ldif import c, p, t
 
 
 class FlextLdifModelsDomainAttributes:
@@ -25,7 +25,7 @@ class FlextLdifModelsDomainAttributes:
     class Attributes(m.ArbitraryTypesModel):
         """LDIF attributes container - simplified dict-like interface."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(
             validate_assignment=True,
             extra="forbid",
             use_enum_values=True,

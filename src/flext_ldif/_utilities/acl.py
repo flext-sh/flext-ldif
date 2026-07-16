@@ -681,14 +681,14 @@ class FlextLdifUtilitiesACL:
     def parse_aci(
         acl_line: str,
         settings: m.Ldif.AciParserConfig,
-    ) -> p.Result[m.Ldif.Acl]:
+    ) -> p.Result[p.Ldif.Acl]:
         """Parse ACI line using server-specific settings Model."""
         valid, aci_content = FlextLdifUtilitiesACL.validate_aci_format(
             acl_line,
             settings.aci_prefix,
         )
         if not valid:
-            return r[m.Ldif.Acl].fail(f"Not a valid ACI format: {settings.aci_prefix}")
+            return r[p.Ldif.Acl].fail(f"Not a valid ACI format: {settings.aci_prefix}")
         version, acl_name = FlextLdifUtilitiesACL._extract_version_and_name(
             aci_content,
             settings.version_acl_pattern,
@@ -727,7 +727,7 @@ class FlextLdifUtilitiesACL:
                 extensions=extensions or None,
             ),
         )
-        return r[m.Ldif.Acl].ok(acl_model)
+        return r[p.Ldif.Acl].ok(acl_model)
 
     @staticmethod
     def parse_targetattr(

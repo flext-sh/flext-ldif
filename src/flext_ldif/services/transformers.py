@@ -45,7 +45,7 @@ class FlextLdifTransformer(s):
             return server_type
         return FlextLdifShared.normalize_server_type(server_type)
 
-    def apply(self, item: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
+    def apply(self, item: p.Ldif.Entry) -> p.Result[p.Ldif.Entry]:
         """Apply server-specific transformation."""
         source_server = self._normalize_server_type(
             self.source_server or c.Ldif.ServerTypes.RFC,
@@ -54,10 +54,10 @@ class FlextLdifTransformer(s):
             self.target_server or c.Ldif.ServerTypes.RFC,
         )
 
-        def ensure_entry(converted: t.Ldif.ConvertedModel) -> p.Result[m.Ldif.Entry]:
+        def ensure_entry(converted: t.Ldif.ConvertedModel) -> p.Result[p.Ldif.Entry]:
             if isinstance(converted, m.Ldif.Entry):
-                return r[m.Ldif.Entry].ok(converted)
-            return r[m.Ldif.Entry].fail(
+                return r[p.Ldif.Entry].ok(converted)
+            return r[p.Ldif.Entry].fail(
                 f"Conversion returned unexpected type: {type(converted).__name__}",
             )
 

@@ -29,7 +29,7 @@ class FlextLdifUtilitiesParser:
         syntax: str | None,
         syntax_validation_error: str | None,
         server_type: str | None = None,
-    ) -> m.Ldif.ServerMetadata | None:
+    ) -> p.Ldif.ServerMetadata | None:
         """Build metadata for attribute including extensions."""
         metadata_extensions = FlextLdifUtilitiesParser.extract_extensions(
             attr_definition,
@@ -61,7 +61,7 @@ class FlextLdifUtilitiesParser:
         return None
 
     @staticmethod
-    def build_control(payload: str) -> m.Ldif.Control:
+    def build_control(payload: str) -> p.Ldif.Control:
         """Parse RFC 2849 control payload into a structured model."""
         minimum_control_tokens = 2
         control_tokens_with_value = 3
@@ -96,7 +96,7 @@ class FlextLdifUtilitiesParser:
         dn: str,
         raw_record_lines: t.MutableSequenceOf[str],
         comments: t.MutableSequenceOf[str],
-    ) -> m.Ldif.ServerMetadata:
+    ) -> p.Ldif.ServerMetadata:
         """Build RFC metadata for a parsed LDIF record."""
         metadata = um.server_metadata_for("rfc")
         metadata.original_server_type = c.Ldif.ServerTypes.RFC
@@ -137,7 +137,7 @@ class FlextLdifUtilitiesParser:
     @staticmethod
     def finalize_change_operation(
         current_op: m.Ldif.ChangeOperation | None,
-        change_operations: t.MutableSequenceOf[m.Ldif.ChangeOperation],
+        change_operations: t.MutableSequenceOf[p.Ldif.ChangeOperation],
     ) -> None:
         """Append a pending modify block when present."""
         if current_op is not None:
@@ -146,15 +146,15 @@ class FlextLdifUtilitiesParser:
     @staticmethod
     def parse_ldif_record(
         lines: t.MutableSequenceOf[str],
-    ) -> p.Result[m.Ldif.Entry]:
+    ) -> p.Result[p.Ldif.Entry]:
         """Parse a single unfolded LDIF record into Entry."""
         dn = ""
         attrs: t.MutableStrSequenceMapping = {}
         attribute_metadata: MutableMapping[str, t.MutableAttributeMapping] = {}
         comments: t.MutableSequenceOf[str] = []
         raw_record_lines: t.MutableSequenceOf[str] = []
-        controls: t.MutableSequenceOf[m.Ldif.Control] = []
-        change_operations: t.MutableSequenceOf[m.Ldif.ChangeOperation] = []
+        controls: t.MutableSequenceOf[p.Ldif.Control] = []
+        change_operations: t.MutableSequenceOf[p.Ldif.ChangeOperation] = []
         current_change_operation: m.Ldif.ChangeOperation | None = None
         changetype: c.Ldif.LdifChangeType | None = None
         record_kind = c.Ldif.RecordKind.CONTENT
@@ -256,7 +256,7 @@ class FlextLdifUtilitiesParser:
             change_operations,
         )
         if not dn:
-            return r[m.Ldif.Entry].fail("No DN found in entry")
+            return r[p.Ldif.Entry].fail("No DN found in entry")
         try:
             entry = m.Ldif.Entry(
                 dn=m.Ldif.DN(value=dn.strip()),
@@ -278,9 +278,9 @@ class FlextLdifUtilitiesParser:
                     comments,
                 ),
             )
-            return r[m.Ldif.Entry].ok(entry)
+            return r[p.Ldif.Entry].ok(entry)
         except ValueError as exc:
-            return r[m.Ldif.Entry].fail(f"Failed to create entry {dn}: {exc}")
+            return r[p.Ldif.Entry].fail(f"Failed to create entry {dn}: {exc}")
 
     @staticmethod
     def split_ldif_records(

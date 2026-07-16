@@ -34,7 +34,7 @@ class TestsFlextLdifOidIntegration:
     def _entries(
         api: p.Ldif.LdifClient,
         content: str,
-    ) -> t.SequenceOf[m.Ldif.Entry]:
+    ) -> t.SequenceOf[p.Ldif.Entry]:
         """Parse ``content`` through the public client and return its entries."""
         response: m.Ldif.ParseResponse = u.Tests.assert_success(
             api.parse_ldif(content),
@@ -44,7 +44,7 @@ class TestsFlextLdifOidIntegration:
 
     @staticmethod
     def _schema_definitions(
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         attribute_name: str,
     ) -> t.SequenceOf[str]:
         """Return the raw schema definition strings for ``attribute_name``.
@@ -56,7 +56,7 @@ class TestsFlextLdifOidIntegration:
         return attrs.get(attribute_name, [])
 
     @staticmethod
-    def _attribute_value_count(entry: m.Ldif.Entry, attribute_name: str) -> int:
+    def _attribute_value_count(entry: p.Ldif.Entry, attribute_name: str) -> int:
         """Count values held under ``attribute_name`` via the public contract."""
         return len(entry.attributes_dict.get(attribute_name, []))
 
@@ -64,8 +64,8 @@ class TestsFlextLdifOidIntegration:
     def _roundtrip(
         cls,
         api: p.Ldif.LdifClient,
-        entries: t.SequenceOf[m.Ldif.Entry],
-    ) -> t.SequenceOf[m.Ldif.Entry]:
+        entries: t.SequenceOf[p.Ldif.Entry],
+    ) -> t.SequenceOf[p.Ldif.Entry]:
         """Write ``entries`` and re-parse the produced LDIF text."""
         written: m.Ldif.WriteResponse = u.Tests.assert_success(
             api.write(list(entries)),

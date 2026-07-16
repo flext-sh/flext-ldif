@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from collections.abc import (
     Mapping,
+    Sequence,
 )
 from typing import ClassVar, override
 
@@ -67,8 +68,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         )
 
     @override
-    # NOTE (multi-agent, mro-0ftd.3.7.2): protocol payload to match base SSOT.
-    def parse_server(self, value: str) -> p.Result[t.MutableSequenceOf[p.Ldif.Entry]]:
+    # NOTE (multi-agent, mro-0ftd.3.7.2): return Sequence to match the base SSOT
+    # (servers/_base/entry.py parse_server -> p.Result[Sequence[p.Ldif.Entry]]).
+    def parse_server(self, value: str) -> p.Result[Sequence[p.Ldif.Entry]]:
         """Parse LDIF content and apply OUD post-processing hooks."""
         parsed_result = super().parse_server(value)
         if parsed_result.failure:
@@ -77,7 +79,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         for parsed_entry in parsed_result.value:
             post_parse_result = self._hook_post_parse_entry(parsed_entry)
             if post_parse_result.failure:
-                return r[t.MutableSequenceOf[p.Ldif.Entry]].fail(
+                return r[Sequence[p.Ldif.Entry]].fail(
                     post_parse_result.error or "OUD post-parse failed",
                 )
             entry_after_post: p.Ldif.Entry = post_parse_result.value
@@ -94,11 +96,11 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 original_attrs,
             )
             if finalize_result.failure:
-                return r[t.MutableSequenceOf[p.Ldif.Entry]].fail(
+                return r[Sequence[p.Ldif.Entry]].fail(
                     finalize_result.error or "OUD finalize parse failed",
                 )
             processed_entries.append(finalize_result.value)
-        return r[t.MutableSequenceOf[p.Ldif.Entry]].ok(processed_entries)
+        return r[Sequence[p.Ldif.Entry]].ok(processed_entries)
 
     @override
     def parse_entry(
@@ -134,12 +136,14 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         metadata = u.Ldif.build_entry_parse_metadata(
             metadata_config,
         )
-        entry.metadata = metadata
+        # NOTE (multi-agent, mro-0ftd.3.7.2): metadata is a read-only protocol
+        # property; transition via model_copy (Pydantic-2 canon) instead of assigning.
+        entry = entry.model_copy(update={"metadata": metadata})
         return r[p.Ldif.Entry].ok(entry)
 
     def _hook_finalize_entry_parse(
         self,
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         original_dn: str,
         original_attrs: t.AttributeMapping,
     ) -> p.Result[p.Ldif.Entry]:
@@ -155,10 +159,12 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         acl_server = parent.acl_server if parent is not None else None
         if acl_server is None:
             return r[p.Ldif.Entry].ok(entry)
-        if entry.metadata is None:
-            entry.metadata = u.Ldif.server_metadata_for("oud")
+        # NOTE (multi-agent, mro-0ftd.3.7.2): metadata is a read-only protocol
+        # property; build the updated metadata locally and transition the entry once
+        # via model_copy (Pydantic-2 frozen-transition canon).
+        metadata = entry.metadata or u.Ldif.server_metadata_for("oud")
         existing: t.Ldif.MutableMetadataInputMapping = (
-            dict(entry.metadata.extensions) if entry.metadata.extensions else {}
+            dict(metadata.extensions) if metadata.extensions else {}
         )
         FlextLdifServersOudHelpersMixin.process_aci_list_for_finalize(
             aci_values,
@@ -166,11 +172,12 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             existing,
         )
         if existing:
-            entry.metadata = entry.metadata.model_copy(
+            metadata = metadata.model_copy(
                 update={
                     "extensions": existing,
                 },
             )
+        entry = entry.model_copy(update={"metadata": metadata})
         return r[p.Ldif.Entry].ok(entry)
 
     @override
@@ -220,7 +227,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         return r[p.Ldif.Entry].ok(entry)
 
     @override
-    def _write_entry(self, entry_data: m.Ldif.Entry) -> p.Result[str]:
+    def _write_entry(self, entry_data: p.Ldif.Entry) -> p.Result[str]:
         """Write entry with OUD pre-write hook + phase-aware ACL handling + DN normalization."""
         hook_result = self._hook_pre_write_entry(entry_data)
         if hook_result.failure:

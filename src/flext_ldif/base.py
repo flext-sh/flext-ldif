@@ -56,7 +56,7 @@ class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](s[TDomainResult]):
         return self
 
     @classmethod
-    def _runtime_bootstrap_options(cls) -> m.RuntimeBootstrapOptions:
+    def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
         """Return runtime bootstrap options for LDIF services."""
         return m.RuntimeBootstrapOptions(settings_type=FlextLdifSettings)
 

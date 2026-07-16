@@ -97,7 +97,7 @@ class FlextLdifServersBaseSchemaAcl(
         self,
         original_format: str,
         extensions: t.Ldif.MetadataInputMapping | None = None,
-    ) -> m.Ldif.ServerMetadata:
+    ) -> p.Ldif.ServerMetadata:
         """Create ACL server metadata."""
         all_extensions: t.Ldif.MutableMetadataInputMapping = {
             "original_format": original_format,
@@ -273,14 +273,14 @@ class FlextLdifServersBaseSchemaAcl(
             replacement_template,
         ))
 
-    def _hook_post_parse_acl(self, acl: m.Ldif.Acl) -> p.Result[m.Ldif.Acl]:
+    def _hook_post_parse_acl(self, acl: m.Ldif.Acl) -> p.Result[p.Ldif.Acl]:
         """Run hook after parsing an ACL line."""
-        return r[m.Ldif.Acl].ok(acl)
+        return r[p.Ldif.Acl].ok(acl)
 
-    def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
+    def _parse_acl(self, acl_line: str) -> p.Result[p.Ldif.Acl]:
         """Parse server-specific ACL definition (internal, required)."""
         _ = acl_line
-        return r[m.Ldif.Acl].fail("Must be implemented by subclass")
+        return r[p.Ldif.Acl].fail("Must be implemented by subclass")
 
     def _resolve_data(
         self,

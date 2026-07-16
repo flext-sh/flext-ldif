@@ -275,7 +275,7 @@ class TestsFlextLdifMigrationPipeline:
             base_dn="dc=ctbc",
         )
 
-        migrated: t.MutableSequenceOf[m.Ldif.Entry] = u.Tests.assert_success(
+        migrated: t.MutableSequenceOf[p.Ldif.Entry] = u.Tests.assert_success(
             pipeline.migrate_entries([entry]),
         )
         tm.that(migrated[0].attributes, none=False)

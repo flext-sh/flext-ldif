@@ -131,11 +131,11 @@ class FlextLdifConversionMetadataMixin(s):
 
     def _update_entry_metadata(
         self,
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         validated_server_type: c.Ldif.ServerTypes,
         conversion_analysis: str | None,
         source_server_name: str,
-    ) -> m.Ldif.Entry:
+    ) -> p.Ldif.Entry:
         """Update entry metadata for conversion (internal helper)."""
         get_metadata = u.prop("metadata")
         get_extensions = u.prop("extensions")

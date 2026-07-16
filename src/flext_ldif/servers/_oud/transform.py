@@ -32,9 +32,9 @@ class FlextLdifServersOudTransformMixin:
 
     @staticmethod
     def apply_phase_aware_acl_handling(
-        entry_data: m.Ldif.Entry,
+        entry_data: p.Ldif.Entry,
         write_options: m.Ldif.WriteFormatOptions | None,
-    ) -> m.Ldif.Entry:
+    ) -> p.Ldif.Entry:
         """Apply phase-aware ACL attribute commenting."""
         if not (write_options and write_options.comment_acl_in_non_acl_phases):
             return entry_data
@@ -60,13 +60,13 @@ class FlextLdifServersOudTransformMixin:
 
     @staticmethod
     def _hook_pre_write_entry_static(
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         validate_aci_macros: Callable[[str], r[bool]],
         correct_rfc_syntax_in_attributes: Callable[
             [t.Ldif.AttributeDict],
             r[t.Ldif.AttributeDict],
         ],
-    ) -> p.Result[m.Ldif.Entry]:
+    ) -> p.Result[p.Ldif.Entry]:
         """Validate and correct RFC syntax issues before writing entry (static helper)."""
         attrs_dict_raw: t.MutableStrSequenceMapping = (
             entry.attributes.attributes if entry.attributes else {}
@@ -79,7 +79,7 @@ class FlextLdifServersOudTransformMixin:
             validate_aci_macros,
         )
         if aci_validation_error:
-            return r[m.Ldif.Entry].fail(aci_validation_error)
+            return r[p.Ldif.Entry].fail(aci_validation_error)
         return FlextLdifServersOudTransformMixin.correct_syntax_and_return_entry(
             entry,
             attrs_dict,
@@ -87,13 +87,13 @@ class FlextLdifServersOudTransformMixin:
         )
 
     @staticmethod
-    def _is_schema_entry(entry: m.Ldif.Entry) -> bool:
+    def _is_schema_entry(entry: p.Ldif.Entry) -> bool:
         """Check if entry is a schema entry - delegate to utility."""
         is_schema_entry: bool = u.Ldif.is_schema_entry(entry, strict=False)
         return is_schema_entry
 
     @staticmethod
-    def normalize_acl_dns(entry_data: m.Ldif.Entry) -> m.Ldif.Entry:
+    def normalize_acl_dns(entry_data: p.Ldif.Entry) -> p.Ldif.Entry:
         """Normalize and filter DNs in ACL attribute values (userdn/groupdn inside ACL strings)."""
         if not entry_data.attributes or not entry_data.attributes.attributes:
             return entry_data
@@ -125,7 +125,7 @@ class FlextLdifServersOudTransformMixin:
         return entry_data
 
     @staticmethod
-    def restore_entry_from_metadata(entry_data: m.Ldif.Entry) -> m.Ldif.Entry:
+    def restore_entry_from_metadata(entry_data: p.Ldif.Entry) -> p.Ldif.Entry:
         """Restore original DN and attributes using generic utilities."""
         metadata = entry_data.metadata
         if metadata is None or not metadata.extensions:
@@ -172,7 +172,7 @@ class FlextLdifServersOudTransformMixin:
             else:
                 restored_values = fallback_values
             restored[orig_case] = restored_values
-        restored_copy: m.Ldif.Entry = restored_entry.model_copy(
+        restored_copy: p.Ldif.Entry = restored_entry.model_copy(
             update={
                 "attributes": m.Ldif.Attributes.model_validate({
                     "attributes": restored,
@@ -185,17 +185,17 @@ class FlextLdifServersOudTransformMixin:
 
     @staticmethod
     def apply_syntax_corrections(
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         corrected_data: MutableMapping[
             str,
             t.Ldif.Scalar | t.MutableSequenceOf[str] | t.MutableAttributeMapping | None,
         ],
         syntax_corrections: t.MutableSequenceOf[str] | t.MutableStrMapping | None,
-    ) -> p.Result[m.Ldif.Entry]:
+    ) -> p.Result[p.Ldif.Entry]:
         """Apply syntax corrections to entry."""
         corrected_attrs_raw = corrected_data.get("corrected_attributes")
         if not isinstance(corrected_attrs_raw, Mapping):
-            return r[m.Ldif.Entry].ok(entry)
+            return r[p.Ldif.Entry].ok(entry)
         attrs_for_model: t.MutableStrSequenceMapping = {}
         for raw_key, raw_value in corrected_attrs_raw.items():
             if isinstance(raw_value, list):
@@ -211,21 +211,21 @@ class FlextLdifServersOudTransformMixin:
             entry_dn=str(entry.dn) if entry.dn else "",
             corrections_count=len(syntax_corrections) if syntax_corrections else 0,
         )
-        return r[m.Ldif.Entry].ok(corrected_entry)
+        return r[p.Ldif.Entry].ok(corrected_entry)
 
     @staticmethod
     def correct_syntax_and_return_entry(
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         attrs_dict: t.Ldif.AttributeDict,
         correct_rfc_syntax_in_attributes: Callable[
             [t.Ldif.AttributeDict],
             r[t.Ldif.AttributeDict],
         ],
-    ) -> p.Result[m.Ldif.Entry]:
+    ) -> p.Result[p.Ldif.Entry]:
         """Correct RFC syntax issues and return entry."""
         corrected_result = correct_rfc_syntax_in_attributes(attrs_dict)
         if corrected_result.failure:
-            return r[m.Ldif.Entry].fail(corrected_result.error or "Unknown error")
+            return r[p.Ldif.Entry].fail(corrected_result.error or "Unknown error")
         corrected_data = corrected_result.value
         corrected_data_typed: MutableMapping[
             str,
@@ -248,7 +248,7 @@ class FlextLdifServersOudTransformMixin:
                 corrected_data_typed,
                 syntax_corrections_typed,
             )
-        return r[m.Ldif.Entry].ok(entry)
+        return r[p.Ldif.Entry].ok(entry)
 
 
 __all__: list[str] = ["FlextLdifServersOudTransformMixin"]

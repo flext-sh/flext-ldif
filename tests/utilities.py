@@ -94,7 +94,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             dn: str | None = None,
             attributes: t.MappingKV[str, t.StrSequence] | None = None,
             server_type: str = "generic",
-        ) -> m.Ldif.Entry:
+        ) -> p.Ldif.Entry:
             """Create a real Entry model with valid data."""
             entry_id = uuid.uuid4().hex[:8]
             payload_attrs = attributes or {
@@ -103,7 +103,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                 "mail": [f"test-{entry_id}@example.com"],
                 "objectClass": ["person", "organizationalPerson", "inetOrgPerson"],
             }
-            entry: m.Ldif.Entry = m.Ldif.Entry.model_validate({
+            entry: p.Ldif.Entry = m.Ldif.Entry.model_validate({
                 "dn": {"value": dn or f"cn=test-{entry_id},ou=users,dc=example,dc=com"},
                 "attributes": {
                     "attributes": {k: list(v) for k, v in payload_attrs.items()},
@@ -143,7 +143,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             return "\n".join(blocks)
 
         @staticmethod
-        def parametrize_real_data() -> t.SequenceOf[m.Tests.LdifTestData]:
+        def parametrize_real_data() -> t.SequenceOf[p.Tests.LdifTestData]:
             """Generate parametrized test data for comprehensive coverage."""
             return [
                 m.Tests.LdifTestData(
@@ -163,7 +163,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             cls,
             server_type: t.Tests.FixtureServer,
             fixture_type: t.Tests.FixtureKind,
-        ) -> m.Tests.FixtureMetadata:
+        ) -> p.Tests.FixtureMetadata:
             """Return metadata for one fixture file (cached per file path)."""
             file_path = cls.path(server_type, fixture_type)
             cached = cls._fixture_metadata_cache.get(file_path)
@@ -344,10 +344,10 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             server: p.Tests.ParseAclServer,
             content: str,
             *,
-            expected_type: type[m.Ldif.Acl] | None = None,
+            expected_type: type[p.Ldif.Acl] | None = None,
             should_succeed: bool | None = None,
             message: str | None = None,
-        ) -> m.Ldif.Acl | None:
+        ) -> p.Ldif.Acl | None:
             """Parse ACL content and unwrap the resulting model."""
             result = server.parse_server(content)
             if should_succeed is False:
@@ -391,7 +391,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             """Write content with a server and unwrap the serialized output."""
             dispatch: t.MappingKV[
                 t.Tests.WriteMethod,
-                tuple[type, type[m.BaseModel]],
+                tuple[type, type[p.BaseModel]],
             ] = {
                 "_write_attribute": (
                     p.Tests.WriteAttributeServer,
@@ -411,7 +411,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                 raise AssertionError(f"{write_method} is not supported by this server")
             if not isinstance(data, data_cls):
                 raise AssertionError(f"{write_method} requires a {data_cls.__name__}")
-            method: Callable[[m.BaseModel], p.Result[str]] = getattr(
+            method: Callable[[p.BaseModel], p.Result[str]] = getattr(
                 server,
                 write_method,
             )

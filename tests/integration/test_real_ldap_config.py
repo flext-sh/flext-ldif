@@ -34,7 +34,7 @@ class TestsFlextLdifRealLdapConfig:
         return ldif()
 
     @pytest.fixture
-    def sample_entry(self) -> m.Ldif.Entry:
+    def sample_entry(self) -> p.Ldif.Entry:
         """Build a valid inetOrgPerson entry through the public model API."""
         result = m.Ldif.Entry.create(
             dn="cn=RailwayTest,ou=people,dc=example,dc=com",
@@ -47,7 +47,7 @@ class TestsFlextLdifRealLdapConfig:
             metadata=None,
         )
         tm.ok(result)
-        entry: m.Ldif.Entry = result.value
+        entry: p.Ldif.Entry = result.value
         return entry
 
     # -- settings contract ------------------------------------------------
@@ -79,7 +79,7 @@ class TestsFlextLdifRealLdapConfig:
     def test_railway_write_parse_validate_preserves_entry(
         self,
         flext_api: p.Ldif.LdifClient,
-        sample_entry: m.Ldif.Entry,
+        sample_entry: p.Ldif.Entry,
         tmp_path: Path,
     ) -> None:
         """Write, parse, then validate yields the original entry intact."""
@@ -106,7 +106,7 @@ class TestsFlextLdifRealLdapConfig:
     def test_write_to_string_then_parse_is_idempotent(
         self,
         flext_api: p.Ldif.LdifClient,
-        sample_entry: m.Ldif.Entry,
+        sample_entry: p.Ldif.Entry,
     ) -> None:
         """Serialize-to-string then parse-back preserves DN and attributes."""
         parsed = flext_api.write_to_string([sample_entry]).flat_map(
@@ -125,7 +125,7 @@ class TestsFlextLdifRealLdapConfig:
     def test_validate_entries_reports_full_success(
         self,
         flext_api: p.Ldif.LdifClient,
-        sample_entry: m.Ldif.Entry,
+        sample_entry: p.Ldif.Entry,
     ) -> None:
         """Validating a well-formed entry yields a passing ValidationResult."""
         result = flext_api.validate_entries([sample_entry])

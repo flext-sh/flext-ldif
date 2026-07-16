@@ -19,11 +19,11 @@ class FlextLdifWriter(s):
 
     def write(
         self,
-        entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
+        entries: t.MutableSequenceOf[p.Ldif.Entry] | m.Ldif.ParseResponse,
         *,
         server_type: str | None = None,
         format_options: p.Ldif.WriteFormatOptions | None = None,
-    ) -> p.Result[m.Ldif.WriteResponse]:
+    ) -> p.Result[p.Ldif.WriteResponse]:
         """Write entries to LDIF text and return canonical write metadata."""
         normalized_entries = u.Ldif.as_entries(entries)
         string_result = self.write_to_string(
@@ -32,11 +32,11 @@ class FlextLdifWriter(s):
             format_options=format_options,
         )
         if string_result.failure:
-            return r[m.Ldif.WriteResponse].fail_op(
+            return r[p.Ldif.WriteResponse].fail_op(
                 "write ldif entries",
                 string_result.error or "LDIF writing failed",
             )
-        return r[m.Ldif.WriteResponse].ok(
+        return r[p.Ldif.WriteResponse].ok(
             m.Ldif.WriteResponse(
                 content=string_result.value,
                 statistics=m.Ldif.Statistics(
@@ -48,12 +48,12 @@ class FlextLdifWriter(s):
 
     def write_ldif_file(
         self,
-        entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
+        entries: t.MutableSequenceOf[p.Ldif.Entry] | m.Ldif.ParseResponse,
         path: Path,
         *,
         server_type: str | None = None,
         format_options: p.Ldif.WriteFormatOptions | None = None,
-    ) -> p.Result[m.Ldif.WriteResponse]:
+    ) -> p.Result[p.Ldif.WriteResponse]:
         """Write entries to an LDIF file and return canonical write metadata."""
         normalized_entries = u.Ldif.as_entries(entries)
         string_result = self.write_to_string(
@@ -62,18 +62,18 @@ class FlextLdifWriter(s):
             format_options=format_options,
         )
         if string_result.failure:
-            return r[m.Ldif.WriteResponse].fail_op(
+            return r[p.Ldif.WriteResponse].fail_op(
                 "write ldif file",
                 string_result.error or "Failed to generate LDIF content",
             )
         ldif_content = string_result.value
         write = u.Cli.atomic_write_text_file(path, ldif_content)
         if write.failure:
-            return r[m.Ldif.WriteResponse].fail(
+            return r[p.Ldif.WriteResponse].fail(
                 f"Failed to write LDIF file {path}: "
                 f"{write.error or 'unknown write error'}",
             )
-        return r[m.Ldif.WriteResponse].ok(
+        return r[p.Ldif.WriteResponse].ok(
             m.Ldif.WriteResponse(
                 content=ldif_content,
                 output_path=str(path),
@@ -86,7 +86,7 @@ class FlextLdifWriter(s):
 
     def write_to_string(
         self,
-        entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
+        entries: t.MutableSequenceOf[p.Ldif.Entry] | m.Ldif.ParseResponse,
         server_type: str | None = None,
         format_options: p.Ldif.WriteFormatOptions | None = None,
     ) -> p.Result[str]:

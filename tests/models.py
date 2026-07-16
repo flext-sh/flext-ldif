@@ -21,7 +21,7 @@ class TestsFlextLdifModels(FlextTestsModels, m):
         class _Frozen(m.BaseModel):
             """Base for every frozen test model in this namespace."""
 
-            model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+            model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
 
         class _CanHandleCase(_Frozen):
             """Shared fields for can_handle-style detection cases."""

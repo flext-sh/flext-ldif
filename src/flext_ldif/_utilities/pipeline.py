@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_ldif import FlextLdifModels as m, c, p, r, t
+from flext_ldif import c, p, r, t
 
 
 class FlextLdifUtilitiesPipeline:
@@ -69,7 +69,7 @@ class FlextLdifUtilitiesPipeline:
 
         def validate(
             self,
-            entries: t.SequenceOf[m.Ldif.Entry],
+            entries: t.SequenceOf[p.Ldif.Entry],
         ) -> p.Result[t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]]:
             """Validate a sequence of entries."""
             results: t.MutableSequenceOf[
@@ -97,7 +97,7 @@ class FlextLdifUtilitiesPipeline:
 
         def validate_one(
             self,
-            entry: m.Ldif.Entry,
+            entry: p.Ldif.Entry,
         ) -> p.Result[FlextLdifUtilitiesPipeline.ValidationResult]:
             """Validate a single entry."""
             errors: t.MutableSequenceOf[str] = []

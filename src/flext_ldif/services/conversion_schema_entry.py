@@ -92,11 +92,11 @@ class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s, ABC
         self,
         source_server: p.Ldif.ServerServer,
         target_server: p.Ldif.ServerServer,
-        entry: m.Ldif.Entry,
-    ) -> p.Result[m.Ldif.Entry]:
+        entry: p.Ldif.Entry,
+    ) -> p.Result[p.Ldif.Entry]:
         """Convert schema definition attributes embedded in a schema entry."""
         if entry.attributes is None or not u.Ldif.is_schema_entry(entry):
-            return r[m.Ldif.Entry].ok(entry)
+            return r[p.Ldif.Entry].ok(entry)
         source_schema_result = self._resolve_schema_server(
             source_server,
             role="Source",
@@ -108,7 +108,7 @@ class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s, ABC
         source_schema = source_schema_result.map_or(None)
         target_schema = target_schema_result.map_or(None)
         if source_schema is None or target_schema is None:
-            return r[m.Ldif.Entry].fail(
+            return r[p.Ldif.Entry].fail(
                 source_schema_result.error
                 or target_schema_result.error
                 or "Schema server not available",
@@ -124,7 +124,7 @@ class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s, ABC
             is not None
         ]
         if not schema_fields:
-            return r[m.Ldif.Entry].ok(entry)
+            return r[p.Ldif.Entry].ok(entry)
         converted_fields_result = r[tuple[str, list[str]]].traverse(
             schema_fields,
             lambda field: (
@@ -154,7 +154,7 @@ class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s, ABC
             ),
         )
         if converted_fields_result.failure:
-            return r[m.Ldif.Entry].fail(
+            return r[p.Ldif.Entry].fail(
                 converted_fields_result.error or "Schema field conversion failed",
             )
         updated_attributes = dict(entry.attributes.attributes)
@@ -168,7 +168,7 @@ class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s, ABC
             },
             deep=True,
         )
-        return r[m.Ldif.Entry].ok(updated_entry)
+        return r[p.Ldif.Entry].ok(updated_entry)
 
 
 __all__: list[str] = ["FlextLdifConversionSchemaEntryMixin"]

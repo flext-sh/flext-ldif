@@ -52,7 +52,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             "ndsloginproperties",
         ])
         SCHEMA_ATTRIBUTE_NAME_REGEX: ClassVar[str] = "NAME\\s+\\(?\\s*'([^']+)'"
-        ATTRIBUTE_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig] = (
+        ATTRIBUTE_PATTERN_SETTINGS: ClassVar[p.Ldif.ServerPatternsConfig] = (
             m.Ldif.ServerPatternsConfig(
                 oid_pattern=DETECTION_OID_PATTERN,
                 attr_prefixes=DETECTION_ATTRIBUTE_PREFIXES,
@@ -61,7 +61,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 match_definition_text=True,
             )
         )
-        OBJECTCLASS_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig] = (
+        OBJECTCLASS_PATTERN_SETTINGS: ClassVar[p.Ldif.ServerPatternsConfig] = (
             m.Ldif.ServerPatternsConfig(
                 oid_pattern=DETECTION_OID_PATTERN,
                 attr_names=DETECTION_OBJECTCLASS_NAMES,
@@ -204,12 +204,12 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             return perms_dict
 
         @override
-        def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
+        def _parse_acl(self, acl_line: str) -> p.Result[p.Ldif.Acl]:
             """Parse eDirectory ACL definition."""
             try:
                 return self._parse_novell_acl(acl_line)
             except c.EXC_BASIC_TYPE as exc:
-                return r[m.Ldif.Acl].fail_op("Novell eDirectory ACL parsing", exc)
+                return r[p.Ldif.Acl].fail_op("Novell eDirectory ACL parsing", exc)
 
         @override
         def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
@@ -219,12 +219,12 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             except c.EXC_BASIC_TYPE as exc:
                 return r[str].fail_op("Novell eDirectory ACL write", exc)
 
-        def _parse_novell_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
+        def _parse_novell_acl(self, acl_line: str) -> p.Result[p.Ldif.Acl]:
             """Parse Novell eDirectory ACL content."""
             attr_name, content = self.__class__.splitacl_line(acl_line)
             _ = attr_name
             if not content:
-                return r[m.Ldif.Acl].fail("Empty ACL content")
+                return r[p.Ldif.Acl].fail("Empty ACL content")
             segments = [
                 segment
                 for segment in content.split(
@@ -269,7 +269,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 ),
                 raw_acl=acl_line,
             )
-            return r[m.Ldif.Acl].ok(acl)
+            return r[p.Ldif.Acl].ok(acl)
 
         _NOVELL_RIGHT_CHAR_MAP: ClassVar[t.StrSequenceMapping] = {
             "B": (c.Ldif.RfcAclPermission.SEARCH,),
@@ -406,26 +406,26 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         ) -> None:
             """Initialize eDirectory entry server."""
 
-        def process_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
+        def process_entry(self, entry: p.Ldif.Entry) -> p.Result[p.Ldif.Entry]:
             """Normalise eDirectory entries and expose metadata."""
             if not entry.attributes:
-                return r[m.Ldif.Entry].ok(entry)
+                return r[p.Ldif.Entry].ok(entry)
             attributes: t.MutableStrSequenceMapping = {
                 **entry.attributes.attributes,
             }
             try:
                 return self._process_novell_entry(entry, attributes)
             except c.EXC_BASIC_TYPE as exc:
-                return r[m.Ldif.Entry].fail_op(
+                return r[p.Ldif.Entry].fail_op(
                     "Novell eDirectory entry processing",
                     exc,
                 )
 
         def _process_novell_entry(
             self,
-            entry: m.Ldif.Entry,
+            entry: p.Ldif.Entry,
             attributes: t.MutableStrSequenceMapping,
-        ) -> p.Result[m.Ldif.Entry]:
+        ) -> p.Result[p.Ldif.Entry]:
             """Normalize eDirectory entry attributes."""
             object_classes = attributes.get(c.Ldif.DictKeys.OBJECTCLASS, [])
             processed_attributes: t.MutableStrSequenceMapping = {}
@@ -440,4 +440,4 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 "attributes": processed_attributes,
             })
             new_entry = entry.model_copy(update={"attributes": new_attrs})
-            return r[m.Ldif.Entry].ok(new_entry)
+            return r[p.Ldif.Entry].ok(new_entry)

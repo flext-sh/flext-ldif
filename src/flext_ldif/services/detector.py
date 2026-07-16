@@ -81,23 +81,23 @@ class FlextLdifDetector(s):
         ldif_path: Path | None = None,
         ldif_content: str | None = None,
         max_lines: int | None = None,
-    ) -> p.Result[m.Ldif.ServerDetectionResult]:
+    ) -> p.Result[p.Ldif.ServerDetectionResult]:
         """Detect LDAP server type from LDIF file or content."""
         max_lines = max_lines or u.Ldif.get_server_detection_default_max_lines()
         if ldif_content is None:
             if ldif_path is None:
-                return r[m.Ldif.ServerDetectionResult].fail_op(
+                return r[p.Ldif.ServerDetectionResult].fail_op(
                     "detect server type",
                     "Either ldif_path or ldif_content must be provided",
                 )
             if not ldif_path.exists():
-                return r[m.Ldif.ServerDetectionResult].fail_op(
+                return r[p.Ldif.ServerDetectionResult].fail_op(
                     "read detection source",
                     f"LDIF file not found: {ldif_path}",
                 )
             read = u.Cli.files_read_text(ldif_path)
             if read.failure:
-                return r[m.Ldif.ServerDetectionResult].fail_op(
+                return r[p.Ldif.ServerDetectionResult].fail_op(
                     "read detection source",
                     read.error,
                 )
@@ -115,7 +115,7 @@ class FlextLdifDetector(s):
             "scores": scores_model,
             "patterns_found": patterns_found,
         })
-        return r[m.Ldif.ServerDetectionResult].ok(detection_result)
+        return r[p.Ldif.ServerDetectionResult].ok(detection_result)
 
     def resolve_effective_server_type(
         self,

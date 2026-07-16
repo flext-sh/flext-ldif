@@ -50,7 +50,7 @@ class FlextLdifServersOudCommentsMixin:
 
     @staticmethod
     def add_original_entry_comments(
-        entry_data: m.Ldif.Entry,
+        entry_data: p.Ldif.Entry,
         write_options: m.Ldif.WriteFormatOptions | None,
     ) -> t.MutableSequenceOf[str]:
         """Add original entry as commented LDIF block."""
@@ -83,7 +83,7 @@ class FlextLdifServersOudCommentsMixin:
     @staticmethod
     def _add_oud_acl_comments(
         comment_lines: t.MutableSequenceOf[str],
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         format_options: m.Ldif.WriteFormatOptions | None = None,
     ) -> set[str]:
         """Add OUD-specific ACL comments for phases 01-03."""
@@ -117,7 +117,7 @@ class FlextLdifServersOudCommentsMixin:
     @staticmethod
     def _add_rejection_reason_comments(
         comment_lines: t.MutableSequenceOf[str],
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
     ) -> None:
         """Add comments with rejection reason if entry was rejected."""
         if (
@@ -134,7 +134,7 @@ class FlextLdifServersOudCommentsMixin:
     @staticmethod
     def _add_transformation_comments(
         comment_lines: t.MutableSequenceOf[str],
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         format_options: m.Ldif.WriteFormatOptions | None = None,
     ) -> None:
         """Add transformation comments for attribute changes, including OUD-specific ACL handling."""
@@ -211,7 +211,7 @@ class FlextLdifServersOudCommentsMixin:
 
     @staticmethod
     def _collect_acl_from_extensions(
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         acl_comments_dict: t.MutableStrSequenceMapping,
         acl_attr_names_to_skip: set[str],
     ) -> None:
@@ -262,7 +262,7 @@ class FlextLdifServersOudCommentsMixin:
 
     @staticmethod
     def _collect_acl_from_transformations(
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         acl_comments_dict: t.MutableStrSequenceMapping,
         acl_attr_names_to_skip: set[str],
     ) -> None:
