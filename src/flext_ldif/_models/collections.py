@@ -13,13 +13,13 @@ from collections.abc import (
 from typing import Annotated, ClassVar
 
 from flext_cli import m, u
-from flext_ldif import p, t
+from flext_ldif import t
 from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries as mde
 
 
 class FlextLdifModelsCollections:
     class DynamicCounts(m.DynamicModel):
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
             extra="allow",
             validate_assignment=True,
         )
