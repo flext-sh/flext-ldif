@@ -34,14 +34,14 @@ class FlextLdifModelsBases:
         @u.computed_field()
         @property
         def has_metadata(self) -> bool:
-            """Check if schema element has server metadata."""
+            """If schema element has server metadata."""
             metadata = getattr(self, "metadata", None)
             return metadata is not None
 
         @u.computed_field()
         @property
         def has_server_extensions(self) -> bool:
-            """Check if element has server-specific extensions."""
+            """If element has server-specific extensions."""
             metadata = getattr(self, "metadata", None)
             if metadata is None:
                 return False
@@ -88,13 +88,13 @@ class FlextLdifModelsBases:
         @u.computed_field()
         @property
         def has_server_servers(self) -> bool:
-            """Check if element uses server-specific servers."""
+            """If element uses server-specific servers."""
             return str(self.server_type) != "rfc"
 
         @u.computed_field()
         @property
         def valid(self) -> bool:
-            """Check if ACL element passed validation."""
+            """If ACL element passed validation."""
             return not self.validation_violations
 
         @u.field_validator("server_type", mode="before")

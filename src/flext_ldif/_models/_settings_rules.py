@@ -179,5 +179,5 @@ class FlextLdifModelsSettingsRules:
         @u.computed_field()
         @property
         def has_oid_filters(self) -> bool:
-            """Check whether any schema OID whitelist is configured."""
+            """Whether any schema OID whitelist is configured."""
             return any(self.schema_oid_filters.values())
