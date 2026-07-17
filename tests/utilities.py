@@ -366,9 +366,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
         @overload
         @classmethod
         def server_parse_and_unwrap[
-            SchemaNodeT: (
-                m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass, m.Ldif.Acl
-            )
+            SchemaNodeT: (m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass, m.Ldif.Acl)
         ](
             cls,
             server: p.Ldif.SchemaServer | p.Tests.ParseInputServer,
