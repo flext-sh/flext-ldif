@@ -64,27 +64,35 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         def _enhance_schema_item_metadata(
             self,
-            schema_item: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+            schema_item: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
             original_definition: str,
-        ) -> p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass:
-            if not schema_item.metadata:
-                schema_item.metadata = m.Ldif.ServerMetadata.model_validate({
-                    "server_type": self._get_server_type(),
-                    "extensions": {
-                        "original_format": original_definition.strip(),
-                        "schema_source_server": "relaxed",
-                    },
-                })
-                return schema_item
-            if not schema_item.metadata.extensions:
-                schema_item.metadata.extensions = {}
-            schema_item.metadata.server_type = self._get_server_type()
-            if not schema_item.metadata.extensions.get("original_format"):
-                schema_item.metadata.extensions["original_format"] = (
-                    original_definition.strip()
+        ) -> p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass:
+            server_type = self._get_server_type()
+            metadata = schema_item.metadata
+            if metadata is None:
+                updated_metadata: p.Ldif.ServerMetadata = (
+                    m.Ldif.ServerMetadata.model_validate({
+                        "server_type": self._get_server_type(),
+                        "extensions": {
+                            "original_format": original_definition.strip(),
+                            "schema_source_server": "relaxed",
+                        },
+                    })
                 )
-            schema_item.metadata.extensions["schema_source_server"] = "relaxed"
-            return schema_item
+            else:
+                extensions = dict(metadata.extensions)
+                extensions.setdefault(
+                    "original_format",
+                    original_definition.strip(),
+                )
+                extensions["schema_source_server"] = "relaxed"
+                updated_metadata = metadata.model_copy(
+                    update={
+                        "server_type": server_type,
+                        "extensions": extensions,
+                    },
+                )
+            return schema_item.model_copy(update={"metadata": updated_metadata})
 
         @override
         def can_handle_attribute(
@@ -437,13 +445,13 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         @override
         def can_handle_attribute(self, attribute: p.Ldif.SchemaAttribute) -> bool:
-            """Check if this ACL server should be aware of a specific attribute definition."""
+            """Check whether this ACL server handles an attribute definition."""
             _ = attribute
             return True
 
         @override
         def can_handle_objectclass(self, objectclass: p.Ldif.SchemaObjectClass) -> bool:
-            """Check if this ACL server should be aware of a specific objectClass definition."""
+            """Check whether this ACL server handles an objectClass definition."""
             _ = objectclass
             return True
 
@@ -482,7 +490,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             if not acl.metadata:
                 acl_with_metadata: p.Ldif.Acl = acl.model_copy(
                     update={
-                        "metadata": p.Ldif.ServerMetadata.model_validate({
+                        "metadata": m.Ldif.ServerMetadata.model_validate({
                             "server_type": self._get_server_type(),
                             "extensions": {
                                 "original_format": acl_line.strip(),
@@ -507,20 +515,24 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             """Build relaxed ACL fallback model."""
             relaxed_acl: p.Ldif.Acl = m.Ldif.Acl.model_validate({
                 "name": FlextLdifServersRelaxed.Constants.ACL_DEFAULT_NAME,
-                "target": p.Ldif.AclTarget.model_validate({
-                    "target_dn": FlextLdifServersRelaxed.Constants.ACL_DEFAULT_TARGET_DN,
+                "target": m.Ldif.AclTarget.model_validate({
+                    "target_dn": (
+                        FlextLdifServersRelaxed.Constants.ACL_DEFAULT_TARGET_DN
+                    ),
                     "attributes": [],
                 }),
-                "subject": p.Ldif.AclSubject.model_validate({
+                "subject": m.Ldif.AclSubject.model_validate({
                     "subject_type": "all",
-                    "subject_value": FlextLdifServersRelaxed.Constants.ACL_DEFAULT_SUBJECT_VALUE,
+                    "subject_value": (
+                        FlextLdifServersRelaxed.Constants.ACL_DEFAULT_SUBJECT_VALUE
+                    ),
                 }),
-                "permissions": p.Ldif.AclPermissions.model_validate({}),
+                "permissions": m.Ldif.AclPermissions.model_validate({}),
                 "server_type": self._get_server_type(),
                 "validation_violations": [],
                 "raw_line": acl_line,
                 "raw_acl": acl_line,
-                "metadata": p.Ldif.ServerMetadata.model_validate({
+                "metadata": m.Ldif.ServerMetadata.model_validate({
                     "server_type": self._get_server_type(),
                     "extensions": {
                         "original_format": acl_line.strip(),
@@ -560,13 +572,13 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         @override
         def can_handle_attribute(self, attribute: p.Ldif.SchemaAttribute) -> bool:
-            """Check if this Entry server has special handling for an attribute definition."""
+            """Check whether this Entry server handles an attribute definition."""
             _ = attribute
             return True
 
         @override
         def can_handle_objectclass(self, objectclass: p.Ldif.SchemaObjectClass) -> bool:
-            """Check if this Entry server has special handling for an objectClass definition."""
+            """Check whether this Entry server handles an objectClass definition."""
             _ = objectclass
             return True
 
@@ -747,7 +759,9 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                         converted_list.append(
                             value.decode(
                                 FlextLdifServersRelaxed.Constants.ENCODING_UTF8,
-                                errors=FlextLdifServersRelaxed.Constants.ENCODING_ERROR_HANDLING,
+                                errors=(
+                                    FlextLdifServersRelaxed.Constants.ENCODING_ERROR_HANDLING
+                                ),
                             ),
                         )
                 attr_dict[attr_key] = converted_list
@@ -804,7 +818,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             if not entry_data.dn or not entry_data.dn.value:
                 return r[str].fail("Entry DN is required for LDIF output")
             ldif_lines.append(
-                f"{FlextLdifServersRelaxed.Constants.LDIF_DN_PREFIX}{entry_data.dn.value}",
+                f"{FlextLdifServersRelaxed.Constants.LDIF_DN_PREFIX}"
+                f"{entry_data.dn.value}",
             )
             if entry_data.attributes and entry_data.attributes.attributes:
                 for (
@@ -812,7 +827,9 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     attr_values,
                 ) in entry_data.attributes.attributes.items():
                     ldif_lines.extend(
-                        f"{attr_name}{FlextLdifServersRelaxed.Constants.LDIF_ATTR_SEPARATOR}{value}"
+                        f"{attr_name}"
+                        f"{FlextLdifServersRelaxed.Constants.LDIF_ATTR_SEPARATOR}"
+                        f"{value}"
                         for value in attr_values
                     )
             ldif_text = FlextLdifServersRelaxed.Constants.LDIF_JOIN_SEPARATOR.join(

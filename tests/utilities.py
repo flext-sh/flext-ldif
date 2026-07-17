@@ -16,7 +16,7 @@ from flext_tests._utilities.fixtures_dsl import FlextTestsFixturesDSLMixin
 from tests.constants import c
 from tests.models import m
 from tests.protocols import p
-from tests.typings import p, t
+from tests.typings import t
 
 
 class TestsFlextLdifUtilities(FlextTestsUtilities, u):
@@ -34,7 +34,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
         _FIXTURES_ROOT: ClassVar[Path] = c.Tests.FIXTURES_DIR
         _FILE_EXTENSION: ClassVar[str] = ".ldif"
         _fixture_metadata_cache: ClassVar[
-            MutableMapping[Path, m.Tests.FixtureMetadata]
+            MutableMapping[Path, p.Tests.FixtureMetadata]
         ] = {}
         FileLock = FlextTestsUtilities.Tests.FileLock
 
@@ -382,7 +382,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             server: p.Tests.WriteAttributeServer
             | p.Tests.WriteObjectClassServer
             | p.Tests.WriteAclServer,
-            data: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl,
+            data: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | p.Ldif.Acl,
             *,
             write_method: t.Tests.WriteMethod = "write",
             must_contain: t.StrSequence | None = None,

@@ -32,7 +32,10 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         converted_attrs_for_util: t.MutableStrSequenceMapping = dict(
             entry_attributes.items(),
         )
-        source_format = f"{FlextLdifServersOidConstants.ZERO_OID}/{FlextLdifServersOidConstants.ONE_OID}"
+        source_format = (
+            f"{FlextLdifServersOidConstants.ZERO_OID}/"
+            f"{FlextLdifServersOidConstants.ONE_OID}"
+        )
         target_format = "TRUE/FALSE"
         converted_attributes = u.Ldif.convert_boolean_attributes(
             converted_attrs_for_util,
@@ -54,7 +57,10 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 )
                 if converted_values != original_values:
                     converted_attrs.add(attr_name)
-                    original_format_str = f"{FlextLdifServersOidConstants.ONE_OID}/{FlextLdifServersOidConstants.ZERO_OID}"
+                    original_format_str = (
+                        f"{FlextLdifServersOidConstants.ONE_OID}/"
+                        f"{FlextLdifServersOidConstants.ZERO_OID}"
+                    )
                     converted_format_str = f"{c.Ldif.TRUE_RFC}/{c.Ldif.FALSE_RFC}"
                     conversion_dict: MutableMapping[
                         str,
@@ -166,7 +172,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         self,
         entry_attrs: t.MutableStrSequenceMapping,
         converted_attributes: t.MutableStrSequenceMapping,
-    ) -> MutableMapping[str, m.Ldif.AttributeTransformation]:
+    ) -> MutableMapping[str, p.Ldif.AttributeTransformation]:
         """Detect ACL attribute transformations (orclaci→aci)."""
         original_attr_names: t.MutableStrMapping = {
             normalized.lower(): raw_attr_name
@@ -174,8 +180,8 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             if (normalized := self._normalize_attribute_name(raw_attr_name)).lower()
             != raw_attr_name.lower()
         }
-        acl_transformations: MutableMapping[str, m.Ldif.AttributeTransformation] = {
-            original_name: p.Ldif.AttributeTransformation.model_validate({
+        acl_transformations: MutableMapping[str, p.Ldif.AttributeTransformation] = {
+            original_name: m.Ldif.AttributeTransformation.model_validate({
                 "original_name": original_name,
                 "target_name": attr_name,
                 "original_values": attr_values,
@@ -369,12 +375,11 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         if not entry.attributes:
             return r[p.Ldif.Entry].ok(entry)
         normalized_attrs = entry.attributes.attributes
-        if not entry.metadata:
-            entry.metadata = u.Ldif.server_metadata_for("oid")
-        elif entry.metadata.server_type != "oid":
-            entry.metadata = entry.metadata.model_copy(update={"server_type": "oid"})
+        metadata = entry.metadata or u.Ldif.server_metadata_for("oid")
+        if metadata.server_type != "oid":
+            metadata = metadata.model_copy(update={"server_type": "oid"})
         current_extensions: t.Ldif.MutableMetadataMapping = (
-            dict(entry.metadata.extensions) if entry.metadata.extensions else {}
+            dict(metadata.extensions) if metadata.extensions else {}
         )
         mk = c.Ldif
         current_extensions[mk.ORIGINAL_DN_COMPLETE] = original_dn
@@ -418,10 +423,12 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             current_extensions["attribute_conflicts"] = u.Ldif.dump_json_payload(
                 attribute_conflicts_json,
             )
-        # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: assign the plain
-        # mapping built above (already JSON-normalized).
-        entry.metadata.extensions = current_extensions
-        return r[p.Ldif.Entry].ok(entry)
+        updated_metadata = metadata.model_copy(
+            update={"extensions": current_extensions},
+        )
+        return r[p.Ldif.Entry].ok(
+            entry.model_copy(update={"metadata": updated_metadata}),
+        )
 
     @override
     def _hook_post_parse_entry(self, entry: p.Ldif.Entry) -> p.Result[p.Ldif.Entry]:
@@ -436,10 +443,11 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
     def _post_parse_oid_entry(self, entry: p.Ldif.Entry) -> p.Result[p.Ldif.Entry]:
         """Normalize OID entry attributes after RFC parsing."""
-        if not entry.attributes or not entry.dn:
+        attributes = entry.attributes
+        if attributes is None or not entry.dn:
             return r[p.Ldif.Entry].ok(entry)
         converted_attributes, converted_attrs, boolean_conversions = (
-            self._convert_boolean_attributes_to_rfc(entry.attributes.attributes)
+            self._convert_boolean_attributes_to_rfc(attributes.attributes)
         )
         normalized_attributes: t.MutableStrSequenceMapping = {}
         name_renames: t.MutableStrMapping = {}
@@ -449,11 +457,17 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             if normalized_name != attr_name:
                 name_renames[normalized_name] = attr_name
         self._normalize_schema_values(normalized_attributes)
-        entry.attributes.attributes = normalized_attributes
+        updated_entry = entry.model_copy(
+            update={
+                "attributes": attributes.model_copy(
+                    update={"attributes": normalized_attributes},
+                ),
+            },
+        )
         mk = c.Ldif
-        if entry.metadata:
-            if not entry.metadata.extensions:
-                entry.metadata.extensions = {}
+        metadata = updated_entry.metadata
+        if metadata:
+            current_extensions = dict(metadata.extensions)
             converted_attrs_list: t.MutableSequenceOf[t.JsonValue] = list(
                 converted_attrs,
             )
@@ -472,27 +486,32 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                     }
                     for attr_name, conversion_data in boolean_conversions.items()
                 }
-                boolean_conversions_json: t.JsonMapping = t.Cli.JSON_MAPPING_ADAPTER.validate_python(
-                    {
+                boolean_conversions_json: t.JsonMapping = (
+                    t.Cli.JSON_MAPPING_ADAPTER.validate_python({
                         attr_name: u.normalize_to_json_value(conversion_data)
-                        for attr_name, conversion_data in boolean_conversions_dict.items()
-                    },
+                        for attr_name, conversion_data in (
+                            boolean_conversions_dict.items()
+                        )
+                    })
                 )
                 conv_data = u.normalize_to_json_value({
                     mk.CONVERSION_CONVERTED_ATTRIBUTE_NAMES: converted_attrs_json,
                     mk.CONVERSION_BOOLEAN_CONVERSIONS: boolean_conversions_json,
                 })
-                # mro-wgwh.5 (agent: kimi-coder) — extensions is a plain mapping now:
-                # subscript assignment instead of DynamicMetadata setattr.
-                entry.metadata.extensions[mk.CONVERTED_ATTRIBUTES] = conv_data
+                current_extensions[mk.CONVERTED_ATTRIBUTES] = conv_data
             else:
-                entry.metadata.extensions[mk.CONVERTED_ATTRIBUTES] = (
-                    converted_attrs_json
-                )
+                current_extensions[mk.CONVERTED_ATTRIBUTES] = converted_attrs_json
             if name_renames:
                 rename_metadata: t.JsonDict = dict(name_renames)
-                entry.metadata.extensions["attribute_name_renames"] = rename_metadata
-        return r[p.Ldif.Entry].ok(entry)
+                current_extensions["attribute_name_renames"] = rename_metadata
+            updated_entry = updated_entry.model_copy(
+                update={
+                    "metadata": metadata.model_copy(
+                        update={"extensions": current_extensions},
+                    ),
+                },
+            )
+        return r[p.Ldif.Entry].ok(updated_entry)
 
     def _hook_transform_entry_raw(
         self,
@@ -546,8 +565,8 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         acl_model = m.Ldif.Acl.model_validate(acl_result.value)
         if not (acl_model.metadata and acl_model.metadata.extensions):
             return
-        # mro-wgwh.5 (agent: kimi-coder) — extensions is a plain mapping; isinstance(dict)
-        # replaces the hasattr(model_dump) dispatch.
+        # mro-wgwh.5 (agent: kimi-coder) — extensions is a plain mapping;
+        # isinstance(dict) replaces the hasattr(model_dump) dispatch.
         extensions_value = acl_model.metadata.extensions
         acl_extensions: t.MutableJsonMapping = (
             extensions_value
@@ -645,7 +664,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         self,
         lines: t.MutableSequenceOf[str],
     ) -> p.Result[p.Ldif.Entry]:
-        """Parse entry from LDIF lines, apply OID→RFC normalization, finalize metadata."""
+        """Parse LDIF lines, normalize OID to RFC, and finalize metadata."""
         result = super()._parse_entry_from_lines(lines)
         if result.failure:
             return result
@@ -654,7 +673,9 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             original_dn = str(entry.dn)
             cleaned_dn, _ = u.Ldif.clean_dn_with_statistics(original_dn)
             if cleaned_dn != original_dn:
-                entry.dn = m.Ldif.DN.model_validate({"value": cleaned_dn})
+                entry = entry.model_copy(
+                    update={"dn": m.Ldif.DN.model_validate({"value": cleaned_dn})},
+                )
         original_dn = str(entry.dn) if entry.dn else ""
         original_attrs = entry.attributes.attributes if entry.attributes else {}
         finalize_result = self._hook_finalize_entry_parse(
@@ -754,7 +775,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             entry_metadata = entry_data.attributes.metadata
         copied: p.Ldif.Entry = entry_data.model_copy(
             update={
-                "attributes": p.Ldif.Attributes.model_validate({
+                "attributes": m.Ldif.Attributes.model_validate({
                     "attributes": restored_attrs,
                     "attribute_metadata": entry_data.attributes.attribute_metadata
                     if entry_data.attributes
@@ -790,7 +811,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             return restored_entry
         restored_copy: p.Ldif.Entry = restored_entry.model_copy(
             update={
-                "attributes": p.Ldif.Attributes.model_validate({
+                "attributes": m.Ldif.Attributes.model_validate({
                     "attributes": restored_attrs,
                     "attribute_metadata": attributes.attribute_metadata,
                     "metadata": attributes.metadata,

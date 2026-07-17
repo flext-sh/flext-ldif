@@ -357,7 +357,7 @@ class FlextLdifUtilitiesDN:
     def clean_dn(dn: p.Ldif.DN) -> str: ...
 
     @staticmethod
-    def clean_dn(dn: str | m.Ldif.DN) -> str:
+    def clean_dn(dn: str | p.Ldif.DN) -> str:
         """Clean DN string to fix spacing and escaping issues."""
         dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
         if not dn_str:
@@ -382,7 +382,7 @@ class FlextLdifUtilitiesDN:
     @staticmethod
     def clean_dn_with_statistics(
         dn: str,
-    ) -> tuple[str, m.Ldif.DNStatistics]:
+    ) -> tuple[str, p.Ldif.DNStatistics]:
         r"""Clean DN and track all transformations with statistics.
 
         Returns both cleaned DN and complete transformation history
@@ -610,7 +610,7 @@ class FlextLdifUtilitiesDN:
     def norm(dn: p.Ldif.DN) -> p.Result[str]: ...
 
     @staticmethod
-    def norm(dn: str | m.Ldif.DN | None) -> p.Result[str]:
+    def norm(dn: str | p.Ldif.DN | None) -> p.Result[str]:
         """Normalize DN per RFC 4514 (lowercase attrs, preserve values)."""
         result = r[str].fail("DN cannot be None")
         if dn is not None:
@@ -701,7 +701,7 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def parse_dn(
-        dn: str | m.Ldif.DN | None,
+        dn: str | p.Ldif.DN | None,
     ) -> p.Result[t.MutableStrPairSequence]:
         """Parse DN into RFC 4514 components (attr, value pairs)."""
         result = r[t.MutableStrPairSequence].fail("DN cannot be None")
@@ -806,7 +806,7 @@ class FlextLdifUtilitiesDN:
     def split(dn: p.Ldif.DN) -> t.MutableSequenceOf[str]: ...
 
     @staticmethod
-    def split(dn: str | m.Ldif.DN) -> t.MutableSequenceOf[str]:
+    def split(dn: str | p.Ldif.DN) -> t.MutableSequenceOf[str]:
         r"""Split DN string into individual RDN components per RFC 4514.
 
         RFC 4514 Section 2 ABNF:
@@ -858,7 +858,7 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def transform_dn_attribute(
-        value: str | m.Ldif.DN,
+        value: str | p.Ldif.DN,
         source_dn: str,
         target_dn: str,
     ) -> str:
@@ -941,7 +941,7 @@ class FlextLdifUtilitiesDN:
         Returns a model_copy with transformed values. Original entry is not mutated.
         """
         attrs_to_transform = dn_valued_attributes or c.Ldif.ALL_DN_VALUED
-        updates: MutableMapping[str, object] = {}
+        updates: MutableMapping[str, p.BaseModel] = {}
         entry_dn = entry.dn
         if entry_dn is not None:
             dn_str = FlextLdifUtilitiesDN.get_dn_value(entry_dn)
@@ -1025,7 +1025,7 @@ class FlextLdifUtilitiesDN:
         )
 
     @staticmethod
-    def validate_dn(dn: str | m.Ldif.DN) -> bool:
+    def validate_dn(dn: str | p.Ldif.DN) -> bool:
         r"""Validate DN format according to RFC 4514.
 
         Properly handles escaped characters. Checks for:

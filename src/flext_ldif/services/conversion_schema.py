@@ -32,19 +32,19 @@ class FlextLdifConversionSchemaMixin(s, ABC):
         self,
         source_server: p.Ldif.ServerServer,
         target_server: p.Ldif.ServerServer,
-        item: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        item: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
         source_schema: p.Ldif.SchemaServer,
         target_schema: p.Ldif.SchemaServer,
     ) -> p.Result[t.Ldif.ConvertedModel]:
         """Orchestrate schema conversion through m.Ldif.Entry intermediary."""
-        if isinstance(item, m.Ldif.SchemaAttribute):
-            item_name = c.Ldif.SchemaItemKind.ATTRIBUTE.value
-            write_result = source_schema.write_attribute(item)
-            field_name = c.Ldif.ATTRIBUTE_TYPES
-        else:
+        if isinstance(item, p.Ldif.SchemaObjectClass):
             item_name = c.Ldif.SchemaItemKind.OBJECTCLASS.value
             write_result = source_schema.write_objectclass(item)
             field_name = c.Ldif.OBJECT_CLASSES
+        else:
+            item_name = c.Ldif.SchemaItemKind.ATTRIBUTE.value
+            write_result = source_schema.write_attribute(item)
+            field_name = c.Ldif.ATTRIBUTE_TYPES
         source_server_type = u.try_(
             lambda: u.Ldif.normalize_server_type(
                 source_server.server_type,
@@ -67,11 +67,11 @@ class FlextLdifConversionSchemaMixin(s, ABC):
             )
         bridge_entry = m.Ldif.Entry.model_validate(
             {
-                "dn": p.Ldif.DN(
+                "dn": m.Ldif.DN(
                     value="cn=schema,dc=example,dc=com",
                     metadata={},
                 ),
-                "attributes": p.Ldif.Attributes.model_validate(
+                "attributes": m.Ldif.Attributes.model_validate(
                     {
                         "attributes": {field_name: [source_value_result.value]},
                         "attribute_metadata": {},

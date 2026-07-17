@@ -22,7 +22,7 @@ dependencies = [
     "colorlog>=6.10.1",
     "flext-cli @ git+https://github.com/flext-sh/flext-cli.git@0.20.0-dev",
     "flext-core @ git+https://github.com/flext-sh/flext-core.git@0.20.0-dev",
-    "ldap3>=2.9.1",
+    "ldap3>=2.10.2rc4",
     "pydantic-core>=2.46.3",
     "pydantic-settings>=2.14.0",
     "pydantic>=2.13.3",
@@ -206,7 +206,6 @@ project-excludes = [
   "**/typings/**",
   "**/vendor/**",
   "**/venv/**",
-  ".flext-deps/**",
   ".venv/**",
   "typings/**",
   "vendor/**",
@@ -571,6 +570,25 @@ split-on-trailing-comma = true
 "**/*_pb2*.py" = [ "ALL" ]
 "**/*dispatcher*" = [  ]
 "**/*docs*" = [ "INP001", "S404", "S603", "T201" ]
+"**/*examples*" = [
+  "ANN401",
+  "C901",
+  "D103",
+  "EXE001",
+  "FBT001",
+  "FBT002",
+  "FIX002",
+  "INP001",
+  "N999",
+  "PLR2004",
+  "S105",
+  "S106",
+  "S112",
+  "S404",
+  "S603",
+  "T201",
+  "TID252",
+]
 "**/*exceptions*" = [ "A001", "S105", "SLF001" ]
 "**/*handlers*" = [  ]
 "**/*instrumentation*" = [ "C901", "FBT001", "SLF001" ]

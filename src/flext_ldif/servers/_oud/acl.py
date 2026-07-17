@@ -373,7 +373,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             server_type_value,
             extensions=extensions,
         )
-        update_dict: MutableMapping[str, m.Ldif.ServerMetadata] = {
+        update_dict: MutableMapping[str, p.Ldif.ServerMetadata] = {
             "metadata": new_metadata,
         }
         acl_updated = acl.model_copy(update=update_dict)

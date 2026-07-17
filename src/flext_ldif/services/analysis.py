@@ -93,7 +93,7 @@ class FlextLdifAnalysis(s):
 
     def validate_entries(
         self,
-        entries: t.MutableSequenceOf[p.Ldif.Entry] | m.Ldif.ParseResponse,
+        entries: t.MutableSequenceOf[p.Ldif.Entry] | p.Ldif.ParseResponse,
         validation_service: p.Ldif.ValidationService | None = None,
     ) -> p.Result[p.Ldif.ValidationResult]:
         """Validate LDIF entries against RFC 2849/4512 standards."""

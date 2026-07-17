@@ -22,7 +22,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
         cls,
         schema_service: p.Ldif.SchemaServer | None = None,
         parent_server: p.Ldif.SchemaServer | None = None,
-        **kwargs: t.Ldif.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        **kwargs: t.Ldif.Scalar | p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
     ) -> Self:
         """Override __new__ to support auto-execute and processor instantiation."""
         instance = object.__new__(cls)
@@ -61,7 +61,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
             op: str | None = (
                 "parse" if isinstance(op_raw, str) and op_raw == "parse" else None
             )
-            data: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None = next(
+            data: str | p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | None = next(
                 (
                     candidate
                     for candidate in (attr_def, oc_def, attr_mod, oc_mod)
@@ -76,7 +76,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
         self,
         schema_service: p.Ldif.SchemaServer | None = None,
         parent_server: p.Ldif.SchemaServer | None = None,
-        **kwargs: t.Ldif.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        **kwargs: t.Ldif.Scalar | p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
     ) -> None:
         """Initialize RFC schema server service."""
         filtered_kwargs: dict[str, t.Primitives | None] = {}
@@ -111,12 +111,12 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
         data: str,
         *,
         operation: str | None = None,
-    ) -> str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass: ...
+    ) -> str | p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass: ...
 
     @overload
     def __call__(
         self,
-        data: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        data: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
         operation: str | None = None,
     ) -> str: ...
 
@@ -126,16 +126,16 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
         data: None = None,
         *,
         operation: str | None = None,
-    ) -> str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass: ...
+    ) -> str | p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass: ...
 
     def __call__(
         self,
         data: t.JsonValue
-        | m.Ldif.SchemaAttribute
-        | m.Ldif.SchemaObjectClass
+        | p.Ldif.SchemaAttribute
+        | p.Ldif.SchemaObjectClass
         | None = None,
         operation: t.JsonValue | None = None,
-    ) -> p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str:
+    ) -> p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str:
         """Callable interface - automatic polymorphic processor."""
         narrowed_data = (
             data
@@ -297,7 +297,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
 
     def _detect_oc_via_constants(
         self,
-        oc_definition: str | m.Ldif.SchemaObjectClass,
+        oc_definition: str | p.Ldif.SchemaObjectClass,
         *,
         settings: p.Ldif.ServerPatternsConfig,
         name_regex: str,
@@ -712,7 +712,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
 
     def _write_schema_item(
         self,
-        data: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        data: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
     ) -> p.Result[str]:
         """Write schema item (attribute or objectClass) to RFC-compliant format."""
         try:
@@ -731,7 +731,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
 
     def _write_schema_item_core(
         self,
-        data: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        data: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
     ) -> p.Result[str]:
         """Write schema item after server-specific transforms."""
         if isinstance(data, m.Ldif.SchemaAttribute):

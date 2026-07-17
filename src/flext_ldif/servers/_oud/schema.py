@@ -7,7 +7,7 @@ from collections.abc import (
 )
 from typing import ClassVar, override
 
-from flext_ldif import c, m, p, r, t, u
+from flext_ldif import c, p, r, t, u
 from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
 from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
@@ -22,7 +22,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         self,
         schema_service: p.Ldif.SchemaServer | None = None,
         parent_server: p.Ldif.SchemaServer | None = None,
-        **kwargs: t.Ldif.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        **kwargs: t.Ldif.Scalar | p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
     ) -> None:
         """Initialize OUD schema server."""
         filtered_kwargs: t.MutableConfigValueMapping = {

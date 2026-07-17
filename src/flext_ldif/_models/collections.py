@@ -9,12 +9,16 @@ from __future__ import annotations
 from collections.abc import (
     Iterator,
     MutableMapping,
+    Sequence,
 )
-from typing import Annotated, ClassVar
+from typing import TYPE_CHECKING, Annotated, ClassVar
 
 from flext_cli import m, u
 from flext_ldif import t
 from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries as mde
+
+if TYPE_CHECKING:
+    from flext_ldif import p
 
 
 class FlextLdifModelsCollections:
@@ -91,7 +95,7 @@ class FlextLdifModelsCollections:
         def __getitem__(
             self,
             category: str,
-        ) -> t.MutableSequenceOf[mde.Entry]:
+        ) -> Sequence[p.Ldif.Entry]:
             key = category
             if key not in self.categories:
                 self.categories[key] = []
@@ -100,21 +104,28 @@ class FlextLdifModelsCollections:
         def __setitem__(
             self,
             category: str,
-            entries: t.MutableSequenceOf[mde.Entry],
+            entries: Sequence[p.Ldif.Entry],
         ) -> None:
-            self.categories[category] = list(entries)
+            entry_models = []
+            for entry in entries:
+                if not isinstance(entry, mde.Entry):
+                    msg = "FlexibleCategories accepts validated LDIF entries"
+                    raise TypeError(msg)
+                entry_models.append(entry)
+            self.categories[category] = entry_models
 
         def add_entries(
             self,
             category: str,
-            entries: t.MutableSequenceOf[mde.Entry],
+            entries: Sequence[p.Ldif.Entry],
         ) -> None:
             key = category
-            existing = self.categories.get(key)
-            if existing is None:
-                existing_entries: list[mde.Entry] = []
-                existing = existing_entries
-            existing.extend(entries)
+            existing = self.categories.get(key, [])
+            for entry in entries:
+                if not isinstance(entry, mde.Entry):
+                    msg = "FlexibleCategories accepts validated LDIF entries"
+                    raise TypeError(msg)
+                existing.append(entry)
             self.categories[key] = existing
 
         def __contains__(self, category: str) -> bool:
@@ -122,7 +133,7 @@ class FlextLdifModelsCollections:
 
         def items(
             self,
-        ) -> Iterator[tuple[str, t.MutableSequenceOf[mde.Entry]]]:
+        ) -> Iterator[tuple[str, Sequence[p.Ldif.Entry]]]:
             yield from self.categories.items()
 
         def keys(self) -> Iterator[str]:
@@ -131,8 +142,8 @@ class FlextLdifModelsCollections:
         def get(
             self,
             category: str,
-            default: t.MutableSequenceOf[mde.Entry] | None = None,
-        ) -> t.MutableSequenceOf[mde.Entry]:
+            default: Sequence[p.Ldif.Entry] | None = None,
+        ) -> Sequence[p.Ldif.Entry]:
             entries = self.categories.get(category)
             if entries is not None:
                 return entries
@@ -140,7 +151,7 @@ class FlextLdifModelsCollections:
 
         def values(
             self,
-        ) -> Iterator[t.MutableSequenceOf[mde.Entry]]:
+        ) -> Iterator[Sequence[p.Ldif.Entry]]:
             yield from self.categories.values()
 
 

@@ -125,12 +125,12 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         """Apache Directory Server ACI server."""
 
         @override
-        def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
+        def can_handle(self, acl_line: str | p.Ldif.Acl) -> bool:
             """Check if this is an ApacheDS ACI."""
             return self.can_handle_acl(acl_line)
 
         @override
-        def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
+        def can_handle_acl(self, acl_line: str | p.Ldif.Acl) -> bool:
             """Detect ApacheDS ACI lines."""
             if isinstance(acl_line, str):
                 normalized = acl_line.strip()

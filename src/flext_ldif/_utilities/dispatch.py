@@ -20,11 +20,13 @@ from flext_ldif._utilities.validation import FlextLdifUtilitiesValidation
 class FlextLdifUtilitiesDispatch:
     """Override dispatchers that route between parent classes."""
 
-    _ENTRY_LIST_ADAPTER: ClassVar[p.TypeAdapter[list[p.Ldif.Entry]]] = m.TypeAdapter(
-        list[p.Ldif.Entry],
+    # Pydantic boundaries require concrete model schemas; public methods below
+    # continue to expose the structural protocol contracts.
+    _ENTRY_LIST_ADAPTER: ClassVar[p.TypeAdapter[list[m.Ldif.Entry]]] = m.TypeAdapter(
+        list[m.Ldif.Entry],
     )
-    _ACL_LIST_ADAPTER: ClassVar[p.TypeAdapter[list[p.Ldif.Acl]]] = m.TypeAdapter(
-        list[p.Ldif.Acl],
+    _ACL_LIST_ADAPTER: ClassVar[p.TypeAdapter[list[m.Ldif.Acl]]] = m.TypeAdapter(
+        list[m.Ldif.Acl],
     )
 
     @staticmethod
@@ -75,7 +77,7 @@ class FlextLdifUtilitiesDispatch:
     @staticmethod
     @overload
     def parse(
-        definition: str | m.Ldif.DN | None,
+        definition: str | p.Ldif.DN | None,
         server_type: str | None = None,
         parse_parts_hook: None = None,
     ) -> p.Result[t.MutableStrPairSequence]: ...
@@ -83,7 +85,7 @@ class FlextLdifUtilitiesDispatch:
     @staticmethod
     @overload
     def parse(
-        definition: str | m.Ldif.DN | None,
+        definition: str | p.Ldif.DN | None,
         server_type: str | None,
         parse_parts_hook: Callable[[str], t.Ldif.MutableMetadataMapping]
         | Callable[[str], p.Result[t.Ldif.MutableMetadataMapping]],
@@ -91,7 +93,7 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def parse(
-        definition: str | m.Ldif.DN | None,
+        definition: str | p.Ldif.DN | None,
         server_type: str | None = None,
         parse_parts_hook: Callable[[str], t.Ldif.MutableMetadataMapping]
         | Callable[[str], p.Result[t.Ldif.MutableMetadataMapping]]
@@ -124,7 +126,7 @@ class FlextLdifUtilitiesDispatch:
         value_or_entries: t.MutableSequenceOf[p.Ldif.Entry]
         | t.JsonValue
         | str
-        | m.Ldif.DN,
+        | p.Ldif.DN,
         *validators: p.ValidatorSpec,
         pipeline: FlextLdifUtilitiesPipeline.ValidationPipeline | None = None,
     ) -> (
@@ -188,7 +190,7 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def _is_entry_sequence(
-        obj: t.MutableSequenceOf[p.Ldif.Entry] | t.JsonValue | str | m.Ldif.DN,
+        obj: t.MutableSequenceOf[p.Ldif.Entry] | t.JsonValue | str | p.Ldif.DN,
     ) -> TypeGuard[t.MutableSequenceOf[p.Ldif.Entry]]:
         """Check if value is a Sequence of Entry objects (dispatch helper)."""
         if isinstance(obj, (str, bytes, m.Ldif.DN)):

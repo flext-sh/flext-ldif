@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib
 
 from flext_tests import tm
+from packaging.version import Version
 
 from tests import c
 
@@ -32,20 +33,17 @@ class TestsFlextLdifVersion:
             tm.that(hasattr(version_module, export), eq=True)
 
     def test_version_info_shape_matches_version_string(self) -> None:
-        """__version_info__ token count equals the dotted __version__ token count."""
-        version_parts = version_module.__version__.split(".")
+        """__version_info__ is an exact three-integer release tuple."""
         tm.that(version_module.__version_info__, is_=tuple)
-        tm.that(len(version_module.__version_info__), eq=len(version_parts))
+        tm.that(len(version_module.__version_info__), eq=3)
+        assert all(
+            isinstance(component, int) for component in version_module.__version_info__
+        )
 
     def test_version_info_parses_numeric_tokens_as_int(self) -> None:
-        """Numeric version tokens are exposed as ints for comparison semantics."""
-        for token, part in zip(
-            version_module.__version_info__,
-            version_module.__version__.split("."),
-            strict=True,
-        ):
-            expected: int | str = int(part) if part.isdigit() else part
-            tm.that(token, eq=expected)
+        """Version info matches the release tuple parsed from the public version."""
+        expected = Version(version_module.__version__).release
+        tm.that(version_module.__version_info__, eq=expected)
 
     def test_version_attribute_returns_public_version(self) -> None:
         """FlextLdifVersion.__version__ equals the exported version string."""

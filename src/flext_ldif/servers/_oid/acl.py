@@ -21,10 +21,6 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     """Oracle Internet Directory (OID) ACL implementation."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
-    OidAclMetadataConfig: ClassVar[type[p.Ldif.OidAclMetadataConfig]] = (
-        m.Ldif.OidAclMetadataConfig
-    )
-
     RFC_ACL_ATTRIBUTES: ClassVar[t.StrSequence] = (
         FlextLdifServersOidConstants.RFC_ACL_ATTRIBUTES
     )
@@ -147,7 +143,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     @staticmethod
     def _normalize_to_dict(
         value: p.Ldif.AclSubject
-        | m.Ldif.ServerMetadata
+        | p.Ldif.ServerMetadata
         | t.MutableConfigurationMapping
         | MutableMapping[
             str,
@@ -304,7 +300,8 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         """Extract extensions dict from metadata, converting types if needed."""
         metadata = m.Ldif.ServerMetadata.model_validate(metadata)
         extensions = getattr(metadata, "extensions", None)
-        # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: copy the plain mapping.
+        # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: copy the
+        # plain mapping.
         return dict(extensions) if extensions is not None else {}
 
     def _format_extensions(
@@ -436,7 +433,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         metadata: p.Ldif.ServerMetadata | None,
     ) -> str:
         """Map RFC subject type to OID subject type for writing."""
-        rfc_subject_type = str(rfc_subject.subject_type)
+        rfc_subject_type = rfc_subject.subject_type
         rfc_subject_value = rfc_subject.subject_value
         source_subject_type = self._get_source_subject_type(metadata)
         sc = FlextLdifServersOidConstants
@@ -592,22 +589,24 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             FlextLdifServersOidConstants.ACL_CONSTRAIN_TO_ADDED_PATTERN,
             group=1,
         )
-        settings = self.OidAclMetadataConfig.model_validate({
-            "acl_line": acl_line,
-            "oid_subject_type": oid_subject_type,
-            "rfc_subject_type": rfc_subject_type,
-            "oid_subject_value": oid_subject_value,
-            "perms_dict": perms_dict,
-            "target_dn": target_dn,
-            "target_attrs": target_attrs,
-            "acl_filter": acl_filter or "",
-            "acl_constraint": acl_constraint or "",
-            "bindmode": bindmode or "",
-            "deny_group_override": deny_group_override,
-            "append_to_all": append_to_all,
-            "bind_ip_filter": bind_ip_filter or "",
-            "constrain_to_added_object": constrain_to_added_object or "",
-        })
+        settings: p.Ldif.OidAclMetadataConfig = (
+            m.Ldif.OidAclMetadataConfig.model_validate({
+                "acl_line": acl_line,
+                "oid_subject_type": oid_subject_type,
+                "rfc_subject_type": rfc_subject_type,
+                "oid_subject_value": oid_subject_value,
+                "perms_dict": perms_dict,
+                "target_dn": target_dn,
+                "target_attrs": target_attrs,
+                "acl_filter": acl_filter or "",
+                "acl_constraint": acl_constraint or "",
+                "bindmode": bindmode or "",
+                "deny_group_override": deny_group_override,
+                "append_to_all": append_to_all,
+                "bind_ip_filter": bind_ip_filter or "",
+                "constrain_to_added_object": constrain_to_added_object or "",
+            })
+        )
         extensions = self._build_oid_acl_metadata(settings)
         server_type: c.Ldif.ServerTypes = c.Ldif.ServerTypes.OID
         rfc_compliant_perms = m.Ldif.AclPermissions.filter_rfc_compliant_permissions(
@@ -615,17 +614,17 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         )
         acl_model = m.Ldif.Acl.model_validate({
             "name": FlextLdifServersRfc.Constants.ACL_ATTRIBUTE_NAME,
-            "target": p.Ldif.AclTarget.model_validate({
+            "target": m.Ldif.AclTarget.model_validate({
                 "target_dn": target_dn,
                 "attributes": target_attrs or [],
             }),
-            "subject": p.Ldif.AclSubject.model_validate({
+            "subject": m.Ldif.AclSubject.model_validate({
                 "subject_type": str(rfc_subject_type),
                 "subject_value": rfc_subject_value,
             }),
-            "permissions": p.Ldif.AclPermissions(**rfc_compliant_perms),
+            "permissions": m.Ldif.AclPermissions(**rfc_compliant_perms),
             "server_type": server_type,
-            "metadata": p.Ldif.ServerMetadata.model_validate({
+            "metadata": m.Ldif.ServerMetadata.model_validate({
                 "server_type": server_type,
                 "extensions": extensions,
             }),

@@ -137,7 +137,7 @@ class FlextLdifServersBase(s[p.Ldif.Entry]):
         self,
         *args: str | t.MutableSequenceOf[p.Ldif.Entry] | None,
         **fields: t.JsonValue | t.MutableSequenceOf[p.Ldif.Entry],
-    ) -> Self | m.Ldif.Entry | str:
+    ) -> Self | p.Ldif.Entry | str:
         """Callable interface - use as processor."""
         execute_kwargs: t.MutableMappingKV[
             str,

@@ -21,7 +21,7 @@ import pytest
 from flext_tests import tm
 
 from flext_ldif.services.entries import FlextLdifEntries
-from tests import TestsFlextLdifUtilities as u, c, m, t
+from tests import TestsFlextLdifUtilities as u, c, m, p, t
 
 
 class TestsFlextLdifEntries:

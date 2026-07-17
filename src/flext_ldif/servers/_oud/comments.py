@@ -11,7 +11,6 @@ from __future__ import annotations
 
 from flext_ldif import (
     c,
-    m,
     p,
     t,
     u,
@@ -29,7 +28,7 @@ class FlextLdifServersOudCommentsMixin:
         comments: t.MutableSequenceOf[str],
         original_attr: str,
         attr_name: str,
-        acl_values: t.MutableSequenceOf[str] | str | m.Ldif.Acl,
+        acl_values: t.MutableSequenceOf[str] | str | p.Ldif.Acl,
     ) -> None:
         """Add TRANSFORMED and SKIP_TO_04 comments for ACL values."""
         values = acl_values if isinstance(acl_values, list) else [str(acl_values)]

@@ -16,7 +16,7 @@ import pytest
 from flext_tests import tm
 from structlog.testing import capture_logs
 
-from flext_ldif import m
+from flext_ldif import m, p
 from flext_ldif.servers._oid.acl_assemble import FlextLdifServersOidAclAssemble as Asm
 from flext_ldif.servers._oid.acl_convert import FlextLdifServersOidAclConvert as Parser
 from flext_ldif.servers._oid.acl_pipeline import FlextLdifServersOidAclPipeline as Pipe

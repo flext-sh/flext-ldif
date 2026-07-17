@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import (
+    Iterator,
     KeysView,
     Mapping,
     MutableMapping,
@@ -10,7 +11,7 @@ from collections.abc import (
     ValuesView,
 )
 from pathlib import Path
-from typing import ClassVar, Literal, Protocol, Self, runtime_checkable
+from typing import ClassVar, Literal, Protocol, runtime_checkable
 
 from flext_cli import p, t
 from flext_ldif.constants import c
@@ -50,12 +51,42 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
     @runtime_checkable
-    class ServerDetectionResult(Protocol):
+    class ServerDetectionResult(p.BaseModel, Protocol):
         """Detected server type returned by the public detection service."""
 
         @property
         def detected_server_type(self) -> c.Ldif.ServerTypes:
             """The detected LDAP server type."""
+            ...
+
+        @property
+        def confidence(self) -> float:
+            """The normalized detection confidence."""
+            ...
+
+        @property
+        def scores(self) -> FlextLdifProtocolsBase.DynamicCounts:
+            """The per-server detection scores."""
+            ...
+
+        @property
+        def patterns_found(self) -> Sequence[str]:
+            """The server-identifying patterns found in the input."""
+            ...
+
+        @property
+        def detection_error(self) -> str | None:
+            """The detection error when detection failed."""
+            ...
+
+        @property
+        def fallback_reason(self) -> str | None:
+            """The reason a fallback server type was selected."""
+            ...
+
+        @property
+        def is_confident(self) -> bool:
+            """Whether the confidence meets the detection threshold."""
             ...
 
     @runtime_checkable
@@ -86,110 +117,227 @@ class FlextLdifProtocolsBase(Protocol):
         """Public migration options without a concrete model dependency."""
 
         @property
-        def base_dn(self) -> str | None: ...
+        def base_dn(self) -> str | None:
+            """The configured base DN."""
+            ...
 
         @property
-        def output_filename(self) -> str | None: ...
+        def output_filename(self) -> str | None:
+            """The configured output filename."""
+            ...
 
         @property
-        def forbidden_attributes(self) -> Sequence[str] | None: ...
+        def forbidden_attributes(self) -> Sequence[str] | None:
+            """Attributes excluded from migration."""
+            ...
 
         @property
-        def forbidden_objectclasses(self) -> Sequence[str] | None: ...
+        def forbidden_objectclasses(self) -> Sequence[str] | None:
+            """Object classes excluded from migration."""
+            ...
 
         @property
         def categorization_rules(
             self,
-        ) -> FlextLdifProtocolsBase.CategoryRules | None: ...
+        ) -> FlextLdifProtocolsBase.CategoryRules | None:
+            """The validated categorization rules."""
+            ...
 
         @property
         def schema_whitelist_rules(
             self,
-        ) -> FlextLdifProtocolsBase.WhitelistRules | None: ...
+        ) -> FlextLdifProtocolsBase.WhitelistRules | None:
+            """The validated schema whitelist rules."""
+            ...
 
     @runtime_checkable
     class AclEvaluationResult(Protocol):
         """Outcome of evaluating ACLs against required permissions."""
 
         @property
-        def granted(self) -> bool: ...
+        def granted(self) -> bool:
+            """Report whether access was granted."""
+            ...
 
         @property
-        def matched_acl(self) -> FlextLdifProtocolsBase.Acl | None: ...
+        def matched_acl(self) -> FlextLdifProtocolsBase.Acl | None:
+            """The ACL that matched the evaluation."""
+            ...
 
         @property
-        def message(self) -> str: ...
+        def message(self) -> str:
+            """The evaluation message."""
+            ...
 
     @runtime_checkable
     class ProcessEntriesOptions(p.BaseModel, Protocol):
         """Validated controls for sequential or parallel entry processing."""
 
         @property
-        def processor_name(self) -> Literal["transform", "validate"]: ...
+        def processor_name(self) -> Literal["transform", "validate"]:
+            """The selected processor operation."""
+            ...
 
         @property
-        def parallel(self) -> bool: ...
+        def parallel(self) -> bool:
+            """Report whether processing may run concurrently."""
+            ...
 
         @property
-        def batch_size(self) -> int: ...
+        def batch_size(self) -> int:
+            """The processing batch size."""
+            ...
 
         @property
-        def max_workers(self) -> int: ...
+        def max_workers(self) -> int:
+            """The maximum worker count."""
+            ...
 
     @runtime_checkable
     class ProcessingResult(Protocol):
         """Observable result of processing one entry."""
 
         @property
-        def dn(self) -> str: ...
+        def dn(self) -> str:
+            """The processed entry DN."""
+            ...
 
         @property
-        def attributes(self) -> t.StrSequenceMapping: ...
+        def attributes(self) -> t.StrSequenceMapping:
+            """The processed entry attributes."""
+            ...
 
     @runtime_checkable
-    class DynamicCounts(Protocol):
+    class DynamicCounts(p.BaseModel, Protocol):
         """Read-only count collection exposed by statistics results."""
 
-        def get(self, key: str, default: int | None = None) -> int | None: ...
+        def __len__(self) -> int:
+            """Return the number of count keys."""
+            ...
 
-        def items(self) -> Sequence[tuple[str, int]]: ...
+        def get(self, key: str, default: int | None = None) -> int | None:
+            """Return a count by key."""
+            ...
+
+        def items(self) -> Sequence[tuple[str, int]]:
+            """Return count items."""
+            ...
 
     @runtime_checkable
-    class EntriesStatistics(Protocol):
+    class EntriesStatistics(p.BaseModel, Protocol):
         """Aggregate distributions calculated for a batch of entries."""
 
         @property
-        def total_entries(self) -> int: ...
+        def total_entries(self) -> int:
+            """The total entry count."""
+            ...
 
         @property
-        def object_class_distribution(self) -> FlextLdifProtocolsBase.DynamicCounts: ...
+        def object_class_distribution(
+            self,
+        ) -> FlextLdifProtocolsBase.DynamicCounts:
+            """Counts grouped by object class."""
+            ...
 
         @property
-        def server_type_distribution(self) -> FlextLdifProtocolsBase.DynamicCounts: ...
+        def server_type_distribution(
+            self,
+        ) -> FlextLdifProtocolsBase.DynamicCounts:
+            """Counts grouped by server type."""
+            ...
 
     @runtime_checkable
-    class FlexibleCategories(Protocol):
-        """Read-only categorized entry groups."""
+    class FlexibleCategories(p.BaseModel, Protocol):
+        """Categorized entry groups exposed through protocol-only entry contracts."""
 
         @property
         def categories(
             self,
-        ) -> Mapping[str, Sequence[FlextLdifProtocolsBase.Entry]]: ...
+        ) -> Mapping[str, Sequence[FlextLdifProtocolsBase.Entry]]:
+            """The categorized entries by category."""
+            ...
+
+        def __getitem__(
+            self,
+            category: str,
+        ) -> Sequence[FlextLdifProtocolsBase.Entry]:
+            """Return entries in one category."""
+            ...
+
+        def __setitem__(
+            self,
+            category: str,
+            entries: Sequence[FlextLdifProtocolsBase.Entry],
+        ) -> None:
+            """Replace entries in one category."""
+            ...
+
+        def add_entries(
+            self,
+            category: str,
+            entries: Sequence[FlextLdifProtocolsBase.Entry],
+        ) -> None:
+            """Append validated entries to one category."""
+            ...
+
+        def __contains__(self, category: str) -> bool:
+            """Report whether a category exists."""
+            ...
+
+        def items(
+            self,
+        ) -> Iterator[tuple[str, Sequence[FlextLdifProtocolsBase.Entry]]]:
+            """Iterate category and entry pairs."""
+            ...
+
+        def get(
+            self,
+            category: str,
+            default: Sequence[FlextLdifProtocolsBase.Entry] | None = None,
+        ) -> Sequence[FlextLdifProtocolsBase.Entry]:
+            """Return entries for a category or a default."""
+            ...
+
+        def keys(self) -> Iterator[str]:
+            """Iterate category names."""
+            ...
+
+        def values(
+            self,
+        ) -> Iterator[Sequence[FlextLdifProtocolsBase.Entry]]:
+            """Iterate categorized entry sequences."""
+            ...
 
     @runtime_checkable
-    class DNStatistics(Protocol):
+    class DNStatistics(p.BaseModel, Protocol):
         """Statistics about DN normalization and validation."""
 
         original_dn: str
         cleaned_dn: str
         normalized_dn: str
-        transformations: t.StrSequence
-        validation_warnings: t.StrSequence
-        validation_errors: t.StrSequence
-        was_transformed: bool
+
+        @property
+        def transformations(self) -> t.StrSequence:
+            """The ordered normalization operations."""
+            ...
+
+        @property
+        def validation_warnings(self) -> t.StrSequence:
+            """The non-fatal validation findings."""
+            ...
+
+        @property
+        def validation_errors(self) -> t.StrSequence:
+            """The fatal validation findings."""
+            ...
+
+        @property
+        def was_transformed(self) -> bool:
+            """Whether normalization changed the original DN."""
+            ...
 
     @runtime_checkable
-    class DN(Protocol):
+    class DN(p.BaseModel, Protocol):
         """Distinguished Name value contract."""
 
         @property
@@ -198,7 +346,7 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
     @runtime_checkable
-    class Attributes(Protocol):
+    class Attributes(p.BaseModel, Protocol):
         """Attribute container contract used by entry utilities."""
 
         @property
@@ -227,6 +375,10 @@ class FlextLdifProtocolsBase(Protocol):
             """Return attribute values with optional default."""
             ...
 
+        def __getitem__(self, key: str) -> t.MutableSequenceOf[str]:
+            """Return attribute values by exact attribute name."""
+            ...
+
         def items(self) -> t.MutableSequenceOf[tuple[str, t.MutableSequenceOf[str]]]:
             """Return attribute items as a list of tuples."""
             ...
@@ -240,7 +392,7 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
     @runtime_checkable
-    class AttributeTransformation(Protocol):
+    class AttributeTransformation(p.BaseModel, Protocol):
         """Attribute transformation audit record."""
 
         original_name: str
@@ -251,7 +403,7 @@ class FlextLdifProtocolsBase(Protocol):
         reason: str
 
     @runtime_checkable
-    class AclPermissions(Protocol):
+    class AclPermissions(p.BaseModel, Protocol):
         """ACL permission flag set."""
 
         @property
@@ -274,8 +426,68 @@ class FlextLdifProtocolsBase(Protocol):
             """Whether compare is allowed."""
             ...
 
+        @property
+        def add(self) -> bool:
+            """Whether add is allowed."""
+            ...
+
+        @property
+        def delete(self) -> bool:
+            """Whether delete is allowed."""
+            ...
+
+        @property
+        def self_write(self) -> bool:
+            """Whether self-write is allowed."""
+            ...
+
+        @property
+        def proxy(self) -> bool:
+            """Whether proxy access is allowed."""
+            ...
+
+        @property
+        def browse(self) -> bool:
+            """Whether browse access is allowed."""
+            ...
+
+        @property
+        def auth(self) -> bool:
+            """Whether authentication access is allowed."""
+            ...
+
+        @property
+        def all(self) -> bool:
+            """Whether the compound all-permissions flag is set."""
+            ...
+
+        @property
+        def no_write(self) -> bool:
+            """Whether write access is explicitly denied."""
+            ...
+
+        @property
+        def no_add(self) -> bool:
+            """Whether add access is explicitly denied."""
+            ...
+
+        @property
+        def no_delete(self) -> bool:
+            """Whether delete access is explicitly denied."""
+            ...
+
+        @property
+        def no_browse(self) -> bool:
+            """Whether browse access is explicitly denied."""
+            ...
+
+        @property
+        def no_self_write(self) -> bool:
+            """Whether self-write access is explicitly denied."""
+            ...
+
     @runtime_checkable
-    class AclTarget(Protocol):
+    class AclTarget(p.BaseModel, Protocol):
         """ACL target descriptor."""
 
         @property
@@ -289,7 +501,7 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
     @runtime_checkable
-    class AclSubject(Protocol):
+    class AclSubject(p.BaseModel, Protocol):
         """ACL subject descriptor."""
 
         @property
@@ -327,7 +539,7 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
     @runtime_checkable
-    class WriteOptions(Protocol):
+    class WriteOptions(p.BaseModel, Protocol):
         """Round-trip write options stored inside metadata."""
 
         @property
@@ -365,6 +577,16 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
         @property
+        def acl_attribute_names(self) -> frozenset[str]:
+            """ACL attribute names recognized by phase-aware writers."""
+            ...
+
+        @property
+        def comment_acl_in_non_acl_phases(self) -> bool:
+            """Whether ACL attributes become comments outside the ACL phase."""
+            ...
+
+        @property
         def include_timestamps(self) -> bool:
             """Whether generation timestamps should be emitted."""
             ...
@@ -389,7 +611,7 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
     @runtime_checkable
-    class SchemaFormatDetails(Protocol):
+    class SchemaFormatDetails(p.BaseModel, Protocol):
         """Original schema formatting details for round-trip preservation."""
 
         @property
@@ -417,27 +639,105 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
     @runtime_checkable
-    class EntryStatistics(Protocol):
+    class EntryStatistics(p.BaseModel, Protocol):
         """Entry-level processing and validation statistics."""
 
-        was_parsed: bool
-        was_validated: bool
-        was_filtered: bool
-        was_written: bool
-        was_rejected: bool
-        rejection_category: str | None
-        rejection_reason: str | None
-        attributes_added: t.MutableSequenceOf[str]
-        attributes_removed: t.MutableSequenceOf[str]
-        attributes_modified: t.MutableSequenceOf[str]
-        attributes_filtered: t.MutableSequenceOf[str]
-        servers_applied: t.MutableSequenceOf[str]
-        dn_statistics: FlextLdifProtocolsBase.DNStatistics | None
-        errors: t.MutableSequenceOf[str]
-        warnings: t.MutableSequenceOf[str]
+        # NOTE (mro-wkii.17.26.19): read-only capabilities keep concrete Pydantic
+        # fields covariant while all updates flow through model_copy transitions.
+        @property
+        def was_parsed(self) -> bool:
+            """Whether the entry was parsed successfully."""
+            ...
+
+        @property
+        def was_validated(self) -> bool:
+            """Whether the entry passed validation."""
+            ...
+
+        @property
+        def was_filtered(self) -> bool:
+            """Whether filtering was applied."""
+            ...
+
+        @property
+        def was_written(self) -> bool:
+            """Whether the entry was written."""
+            ...
+
+        @property
+        def was_rejected(self) -> bool:
+            """Whether the entry was rejected."""
+            ...
+
+        @property
+        def rejection_category(self) -> str | None:
+            """The rejection category."""
+            ...
+
+        @property
+        def rejection_reason(self) -> str | None:
+            """The rejection reason."""
+            ...
+
+        @property
+        def attributes_added(self) -> Sequence[str]:
+            """The attribute names added during processing."""
+            ...
+
+        @property
+        def attributes_removed(self) -> Sequence[str]:
+            """The attribute names removed during processing."""
+            ...
+
+        @property
+        def attributes_modified(self) -> Sequence[str]:
+            """The attribute names modified during processing."""
+            ...
+
+        @property
+        def attributes_filtered(self) -> Sequence[str]:
+            """The attribute names removed by filters."""
+            ...
+
+        @property
+        def servers_applied(self) -> Sequence[str]:
+            """The server transformations applied to the entry."""
+            ...
+
+        @property
+        def dn_statistics(self) -> FlextLdifProtocolsBase.DNStatistics | None:
+            """The DN transformation statistics."""
+            ...
+
+        @property
+        def errors(self) -> Sequence[str]:
+            """The processing errors."""
+            ...
+
+        @property
+        def warnings(self) -> Sequence[str]:
+            """The processing warnings."""
+            ...
+
+        def mark_filtered(
+            self,
+            filter_type: str,
+            *,
+            passed: bool,
+        ) -> FlextLdifProtocolsBase.EntryStatistics:
+            """Return statistics updated with one filter result."""
+            ...
+
+        def mark_rejected(
+            self,
+            category: str,
+            reason: str,
+        ) -> FlextLdifProtocolsBase.EntryStatistics:
+            """Return statistics updated with rejection details."""
+            ...
 
     @runtime_checkable
-    class ServerMetadata(Protocol):
+    class ServerMetadata(p.BaseModel, Protocol):
         """Server-specific metadata persisted on entries, ACLs, and schema items."""
 
         @property
@@ -445,11 +745,10 @@ class FlextLdifProtocolsBase(Protocol):
             """The server/server type identifier."""
             ...
 
-        # NOTE (multi-agent, mro-0ftd.3.7.2): read-write attribute — extensions is a
-        # mutable JSON mapping the OID/relaxed handlers reassign in place
-        # (metadata.extensions = {}); concrete field type equals this exactly so the
-        # invariant read-write contract is satisfiable.
-        extensions: t.MutableJsonMapping
+        @property
+        def extensions(self) -> t.MutableJsonMapping:
+            """Server-specific JSON metadata."""
+            ...
 
         # NOTE (multi-agent, mro-0ftd.3.7.2): read-only @property (covariant) so the
         # concrete m.Ldif.ServerMetadata field (a subtype-carrying model) satisfies the
@@ -467,20 +766,6 @@ class FlextLdifProtocolsBase(Protocol):
             """The per-attribute transformation audit trail (read-only view)."""
             ...
 
-        # NOTE (multi-agent, mro-0ftd.3.7.2): model_dump makes this protocol
-        # structurally a flext-core p.BaseModel so it is assignable into the
-        # canonical model_copy update union (t.JsonPayload | p.BaseModel).
-        def model_dump(
-            self,
-            *,
-            mode: str = "python",
-            by_alias: bool | None = None,
-            exclude_defaults: bool = False,
-            exclude_none: bool = False,
-        ) -> t.JsonDict:
-            """Dump the validated model at an external serialization boundary."""
-            ...
-
         @property
         def schema_format_details(
             self,
@@ -496,22 +781,43 @@ class FlextLdifProtocolsBase(Protocol):
             """Original attribute-name casing for reverse conversion."""
             ...
 
-        # NOTE (multi-agent, mro-0ftd.3.7.2): frozen-transition canon for the
-        # metadata-merge helpers (entry.metadata.model_copy(update={"extensions"})).
-        def model_copy(
-            self,
-            *,
-            update: t.MappingKV[
-                str, t.JsonPayload | p.BaseModel | t.SequenceOf[p.BaseModel]
-            ]
-            | None = None,
-            deep: bool = False,
-        ) -> Self:
-            """Return an immutable copy with the given field updates."""
+        @property
+        def original_server_type(self) -> c.Ldif.ServerTypes | None:
+            """The source server type before conversion."""
+            ...
+
+        @property
+        def target_server_type(self) -> c.Ldif.ServerTypes | None:
+            """The target server type for conversion."""
+            ...
+
+        @property
+        def acls(self) -> Sequence[str]:
+            """The ACL strings preserved from the source entry."""
+            ...
+
+        @property
+        def processing_stats(self) -> p.BaseModel | None:
+            """The entry processing statistics model."""
+            ...
+
+        @property
+        def boolean_conversions(self) -> t.MutableJsonMapping:
+            """The preserved source and converted boolean values."""
+            ...
+
+        @property
+        def original_format_details(self) -> FlextLdifProtocolsBase.FormatDetails | None:
+            """The original entry formatting details."""
+            ...
+
+        @property
+        def original_strings(self) -> t.MutableJsonMapping:
+            """The complete strings preserved before conversion."""
             ...
 
     @runtime_checkable
-    class SchemaElement(Protocol):
+    class SchemaElement(p.BaseModel, Protocol):
         """Shared schema-element contract (attributes, objectClasses, syntaxes).
 
         NOTE (multi-agent, mro-0ftd.3.7.2): mirrors the concrete mb.SchemaElement
@@ -539,18 +845,6 @@ class FlextLdifProtocolsBase(Protocol):
             """The server type from metadata, default RFC."""
             ...
 
-        def model_copy(
-            self,
-            *,
-            update: t.MappingKV[
-                str, t.JsonPayload | p.BaseModel | t.SequenceOf[p.BaseModel]
-            ]
-            | None = None,
-            deep: bool = False,
-        ) -> Self:
-            """Return an immutable copy with the given field updates."""
-            ...
-
     class SchemaAttribute(SchemaElement, Protocol):
         """LDIF schema attribute contract."""
 
@@ -562,6 +856,101 @@ class FlextLdifProtocolsBase(Protocol):
         @property
         def name(self) -> str:
             """The attribute name."""
+            ...
+
+        @property
+        def desc(self) -> str | None:
+            """The attribute description."""
+            ...
+
+        @property
+        def sup(self) -> str | None:
+            """The superior attribute type."""
+            ...
+
+        @property
+        def equality(self) -> str | None:
+            """The equality matching rule."""
+            ...
+
+        @property
+        def ordering(self) -> str | None:
+            """The ordering matching rule."""
+            ...
+
+        @property
+        def substr(self) -> str | None:
+            """The substring matching rule."""
+            ...
+
+        @property
+        def syntax(self) -> str | None:
+            """The attribute syntax OID."""
+            ...
+
+        @property
+        def length(self) -> int | None:
+            """The maximum value length."""
+            ...
+
+        @property
+        def usage(self) -> str | None:
+            """The RFC attribute usage."""
+            ...
+
+        @property
+        def single_value(self) -> bool:
+            """Whether the attribute is single-valued."""
+            ...
+
+        @property
+        def collective(self) -> bool:
+            """Whether the attribute is collective."""
+            ...
+
+        @property
+        def no_user_modification(self) -> bool:
+            """Whether user modification is forbidden."""
+            ...
+
+        @property
+        def immutable(self) -> bool:
+            """Whether the attribute is immutable."""
+            ...
+
+        @property
+        def user_modification(self) -> bool:
+            """Whether user modification is allowed."""
+            ...
+
+        @property
+        def obsolete(self) -> bool:
+            """Whether the attribute is obsolete."""
+            ...
+
+        @property
+        def x_origin(self) -> str | None:
+            """The server-specific origin extension."""
+            ...
+
+        @property
+        def x_file_ref(self) -> str | None:
+            """The server-specific file-reference extension."""
+            ...
+
+        @property
+        def x_name(self) -> str | None:
+            """The server-specific extended name."""
+            ...
+
+        @property
+        def x_alias(self) -> str | None:
+            """The server-specific alias."""
+            ...
+
+        @property
+        def x_oid(self) -> str | None:
+            """The server-specific extended OID."""
             ...
 
         # NOTE (multi-agent, mro-0ftd.3.7.2): metadata/model_copy now inherited
@@ -593,11 +982,26 @@ class FlextLdifProtocolsBase(Protocol):
             """The objectClass kind (STRUCTURAL/AUXILIARY/ABSTRACT)."""
             ...
 
+        @property
+        def desc(self) -> str | None:
+            """The objectClass description."""
+            ...
+
+        @property
+        def must(self) -> Sequence[str] | None:
+            """The required attribute names."""
+            ...
+
+        @property
+        def may(self) -> Sequence[str] | None:
+            """The optional attribute names."""
+            ...
+
         # NOTE (multi-agent, mro-0ftd.3.7.2): metadata/model_copy inherited from
         # the SchemaElement base protocol (DRY); sup/kind stay leaf-specific.
 
     @runtime_checkable
-    class Acl(Protocol):
+    class Acl(p.BaseModel, Protocol):
         """ACL model contract."""
 
         @property
@@ -616,6 +1020,16 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
         @property
+        def target(self) -> FlextLdifProtocolsBase.AclTarget | None:
+            """ACL target specification."""
+            ...
+
+        @property
+        def subject(self) -> FlextLdifProtocolsBase.AclSubject | None:
+            """ACL subject specification."""
+            ...
+
+        @property
         def raw_acl(self) -> str:
             """The original ACL string."""
             ...
@@ -628,25 +1042,18 @@ class FlextLdifProtocolsBase(Protocol):
             """The server-specific ACL metadata."""
             ...
 
-        def model_copy(
-            self,
-            *,
-            update: t.MappingKV[
-                str, t.JsonPayload | p.BaseModel | t.SequenceOf[p.BaseModel]
-            ]
-            | None = None,
-            deep: bool = False,
-        ) -> Self:
-            """Return an immutable copy with the given field updates."""
-            ...
-
     @runtime_checkable
-    class Entry(Protocol):
+    class Entry(p.BaseModel, Protocol):
         """Entry model contract used across LDIF services."""
 
         @property
         def dn(self) -> FlextLdifProtocolsBase.DN | None:
             """The entry DN."""
+            ...
+
+        @property
+        def dn_str(self) -> str:
+            """The entry DN rendered as a string."""
             ...
 
         @property
@@ -689,18 +1096,6 @@ class FlextLdifProtocolsBase(Protocol):
         @property
         def metadata(self) -> FlextLdifProtocolsBase.ServerMetadata | None:
             """The server-specific entry metadata."""
-            ...
-
-        def model_copy(
-            self,
-            *,
-            update: t.MappingKV[
-                str, t.JsonPayload | p.BaseModel | t.SequenceOf[p.BaseModel]
-            ]
-            | None = None,
-            deep: bool = False,
-        ) -> Self:
-            """Return an immutable copy with the given field updates."""
             ...
 
     @runtime_checkable
@@ -812,7 +1207,7 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
     @runtime_checkable
-    class MigrationPipelineResult(Protocol):
+    class MigrationPipelineResult(p.BaseModel, Protocol):
         """Migration pipeline result contract."""
 
         @property
@@ -828,6 +1223,21 @@ class FlextLdifProtocolsBase(Protocol):
         @property
         def output_files(self) -> t.StrSequence:
             """The generated output files."""
+            ...
+
+        @property
+        def entry_count(self) -> int:
+            """The number of migrated entries."""
+            ...
+
+        @property
+        def is_empty(self) -> bool:
+            """Whether the migration produced no schema or entries."""
+            ...
+
+        @property
+        def output_file_count(self) -> int:
+            """The number of generated output files."""
             ...
 
     @runtime_checkable
@@ -854,7 +1264,7 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
     @runtime_checkable
-    class ConversionEvent(Protocol):
+    class ConversionEvent(p.DomainEvent, Protocol):
         """Conversion event contract."""
 
         @property
@@ -887,8 +1297,18 @@ class FlextLdifProtocolsBase(Protocol):
             """The conversion error details."""
             ...
 
+        @property
+        def conversion_success_rate(self) -> float:
+            """The percentage of converted items."""
+            ...
+
+        @property
+        def throughput_items_per_sec(self) -> float:
+            """The conversion throughput in items per second."""
+            ...
+
     @runtime_checkable
-    class DnEvent(Protocol):
+    class DnEvent(p.DomainEvent, Protocol):
         """DN event contract."""
 
         @property
@@ -907,6 +1327,16 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
         validation_result: bool | None
+
+        @property
+        def has_output(self) -> bool:
+            """Whether the operation produced a DN."""
+            ...
+
+        @property
+        def component_count(self) -> int:
+            """The number of RDN components."""
+            ...
 
     @runtime_checkable
     class DnRegistry(Protocol):
@@ -940,37 +1370,84 @@ class FlextLdifProtocolsBase(Protocol):
         def categorize_entries(
             self,
             entries: Sequence[FlextLdifProtocolsBase.Entry],
-        ) -> p.Result[FlextLdifProtocolsBase.FlexibleCategories]: ...
+        ) -> p.Result[FlextLdifProtocolsBase.FlexibleCategories]:
+            """Categorize validated entries."""
+            ...
 
         def filter_by_base_dn(
             self,
             categories: FlextLdifProtocolsBase.FlexibleCategories,
-        ) -> FlextLdifProtocolsBase.FlexibleCategories: ...
+        ) -> FlextLdifProtocolsBase.FlexibleCategories:
+            """Filter categorized entries by base DN."""
+            ...
 
         def validate_dns(
             self,
             entries: Sequence[FlextLdifProtocolsBase.Entry]
             | FlextLdifProtocolsBase.ParseResponse,
-        ) -> p.Result[Sequence[FlextLdifProtocolsBase.Entry]]: ...
+        ) -> p.Result[Sequence[FlextLdifProtocolsBase.Entry]]:
+            """Validate and normalize entry DNs."""
+            ...
 
         def filter_schema_by_oids(
             self,
             schema_entries: Sequence[FlextLdifProtocolsBase.Entry],
-        ) -> p.Result[Sequence[FlextLdifProtocolsBase.Entry]]: ...
+        ) -> p.Result[Sequence[FlextLdifProtocolsBase.Entry]]:
+            """Filter schema entries by allowed OIDs."""
+            ...
 
     @runtime_checkable
     class ProcessingPipeline(Protocol):
         """Protocol for LDIF processing pipelines."""
 
-        def execute(self) -> p.Result[Sequence[FlextLdifProtocolsBase.Entry]]: ...
+        def execute(self) -> p.Result[Sequence[FlextLdifProtocolsBase.Entry]]:
+            """Execute the processing pipeline."""
+            ...
 
     @runtime_checkable
     class MigrationPipeline(Protocol):
         """Protocol for LDIF migration pipelines."""
 
+        @property
+        def input_dir(self) -> Path | None:
+            """The directory containing source LDIF files."""
+            ...
+
+        @property
+        def output_dir(self) -> Path | None:
+            """The directory receiving migrated LDIF files."""
+            ...
+
+        @property
+        def source_server_type(self) -> str | c.Ldif.ServerTypes | None:
+            """The configured source server type."""
+            ...
+
+        @property
+        def target_server_type(self) -> str | c.Ldif.ServerTypes | None:
+            """The configured target server type."""
+            ...
+
         def execute(
             self,
-        ) -> p.Result[FlextLdifProtocolsBase.MigrationPipelineResult]: ...
+        ) -> p.Result[FlextLdifProtocolsBase.MigrationPipelineResult]:
+            """Execute the migration pipeline."""
+            ...
+
+        def migrate_entries(
+            self,
+            entries: t.MutableSequenceOf[FlextLdifProtocolsBase.Entry],
+        ) -> p.Result[t.MutableSequenceOf[FlextLdifProtocolsBase.Entry]]:
+            """Migrate validated entries between server formats."""
+            ...
+
+        def migrate_file(
+            self,
+            input_file: Path,
+            output_file: Path | None = None,
+        ) -> p.Result[FlextLdifProtocolsBase.MigrationPipelineResult]:
+            """Migrate one LDIF file."""
+            ...
 
     @runtime_checkable
     class ServerReference(Protocol):

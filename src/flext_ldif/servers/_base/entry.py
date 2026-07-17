@@ -117,7 +117,7 @@ class FlextLdifServersBaseEntry(
     @override
     def execute(
         self,
-        **kwargs: str | m.Ldif.Entry | t.MutableJsonMapping,
+        **kwargs: str | p.Ldif.Entry | t.MutableJsonMapping,
     ) -> p.Result[t.Ldif.EntryPayload]:
         """Execute entry operation (parse/write)."""
         ldif_content = kwargs.get("ldif_content")

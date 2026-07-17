@@ -73,7 +73,7 @@ class FlextLdifUtilitiesSchemaParse:
 
     @staticmethod
     def detect_schema_type(
-        definition: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        definition: str | p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
     ) -> c.Ldif.SchemaItemKind:
         """Detect schema type (attribute or objectclass) for automatic routing.
 

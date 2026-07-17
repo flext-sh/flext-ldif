@@ -18,7 +18,7 @@ class FlextLdifCategorization(s):
         str,
         t.MutableSequenceOf[p.Ldif.Entry],
     ]:
-        """Build the canonical rejection tracker structure for one categorization run."""
+        """Build the canonical rejection tracker for one categorization run."""
         return {
             c.Ldif.RejectionTrackerKey.INVALID_DN_RFC4514: [],
             c.Ldif.RejectionTrackerKey.BASE_DN_FILTER: [],
@@ -40,7 +40,9 @@ class FlextLdifCategorization(s):
         u.Field(
             default=None,
             exclude=True,
-            description="Optional schema whitelist rules used to filter schema entries.",
+            description=(
+                "Optional schema whitelist rules used to filter schema entries."
+            ),
         ),
     ] = None
     forbidden_attributes: Annotated[
@@ -48,7 +50,7 @@ class FlextLdifCategorization(s):
         u.Field(
             default=None,
             exclude=True,
-            description="Attribute names removed from categorized entries after classification.",
+            description=("Attribute names removed after entry classification."),
         ),
     ] = None
     forbidden_objectclasses: Annotated[
@@ -56,7 +58,7 @@ class FlextLdifCategorization(s):
         u.Field(
             default=None,
             exclude=True,
-            description="objectClass names removed from categorized entries after classification.",
+            description=("objectClass names removed after entry classification."),
         ),
     ] = None
     base_dn: Annotated[
@@ -72,7 +74,9 @@ class FlextLdifCategorization(s):
         u.Field(
             default=c.Ldif.ServerTypes.RFC.value,
             exclude=True,
-            description="Server type used to resolve categorization defaults from the registry.",
+            description=(
+                "Server type used to resolve categorization defaults from the registry."
+            ),
         ),
     ] = c.Ldif.ServerTypes.RFC.value
     server_registry: Annotated[
@@ -80,7 +84,9 @@ class FlextLdifCategorization(s):
         u.Field(
             default=None,
             exclude=True,
-            description="Optional server registry override for categorization constants lookup.",
+            description=(
+                "Optional server registry override for categorization constants lookup."
+            ),
         ),
     ] = None
     rejection_tracker: Annotated[
@@ -108,7 +114,7 @@ class FlextLdifCategorization(s):
 
     @staticmethod
     def _ensure_entry_model(
-        value: t.JsonValue | m.BaseModel | m.Ldif.Entry,
+        value: t.JsonValue | p.BaseModel | p.Ldif.Entry,
     ) -> p.Ldif.Entry | None:
         if isinstance(value, m.Ldif.Entry):
             return value
@@ -153,7 +159,7 @@ class FlextLdifCategorization(s):
         if not rejected_entries:
             return
         rejected_category = c.Ldif.Category.REJECTED
-        existing_rejected_raw: t.MutableSequenceOf[p.Ldif.Entry] = filtered.get(
+        existing_rejected_raw: t.SequenceOf[p.Ldif.Entry] = filtered.get(
             rejected_category,
             [],
         )
@@ -445,7 +451,7 @@ class FlextLdifCategorization(s):
 
     def validate_dns(
         self,
-        entries: t.MutableSequenceOf[p.Ldif.Entry] | m.Ldif.ParseResponse,
+        entries: t.MutableSequenceOf[p.Ldif.Entry] | p.Ldif.ParseResponse,
     ) -> p.Result[t.MutableSequenceOf[p.Ldif.Entry]]:
         """Validate and normalize all DNs to RFC 4514."""
         normalized_entries = u.Ldif.as_entries(entries)
@@ -476,7 +482,10 @@ class FlextLdifCategorization(s):
                     entry,
                     mark_rejected=(
                         c.Ldif.RejectionCategory.INVALID_DN.value,
-                        f"DN normalization failed: {norm_result.error or c.Ldif.ERR_UNKNOWN}",
+                        (
+                            "DN normalization failed: "
+                            f"{norm_result.error or c.Ldif.ERR_UNKNOWN}"
+                        ),
                     ),
                 )
                 self.rejection_tracker[
@@ -640,7 +649,7 @@ class FlextLdifCategorization(s):
             return r[p.Ldif.CategoryRules].ok(self._normalize_initial_category_rules())
         return r[p.Ldif.CategoryRules].from_result(
             u.try_(
-                lambda: p.Ldif.CategoryRules.model_validate(rules),
+                lambda: m.Ldif.CategoryRules.model_validate(rules),
                 catch=(
                     ValueError,
                     KeyError,

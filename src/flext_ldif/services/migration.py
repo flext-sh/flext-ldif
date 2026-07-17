@@ -206,7 +206,7 @@ class FlextLdifMigrationPipeline(s[p.Ldif.MigrationPipelineResult]):
             {
                 "entries": all_entries,
                 "output_files": output_files,
-                "stats": p.Ldif.Statistics(
+                "stats": m.Ldif.Statistics(
                     total_entries=total_processed,
                     processed_entries=total_migrated,
                 ),
@@ -289,7 +289,7 @@ class FlextLdifMigrationPipeline(s[p.Ldif.MigrationPipelineResult]):
             {
                 "entries": migrated,
                 "output_files": [str(resolved_output_file)],
-                "stats": p.Ldif.Statistics(
+                "stats": m.Ldif.Statistics(
                     total_entries=len(entries_list),
                     processed_entries=len(migrated),
                 ),

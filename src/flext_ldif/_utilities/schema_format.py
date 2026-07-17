@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from flext_cli import u
-from flext_ldif import FlextLdifModels as m, c, p, t
+from flext_ldif import c, p, t
 
 
 class FlextLdifUtilitiesSchemaFormat:
@@ -11,7 +11,7 @@ class FlextLdifUtilitiesSchemaFormat:
 
     @staticmethod
     def apply_trailing_spaces(
-        attr_data: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        attr_data: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
         parts: t.MutableSequenceOf[str],
     ) -> None:
         """Apply trailing spaces from metadata if available."""
@@ -27,7 +27,7 @@ class FlextLdifUtilitiesSchemaFormat:
 
     @staticmethod
     def build_name_part(
-        attr_data: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        attr_data: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
         *,
         restore_format: bool = False,
     ) -> str | None:
@@ -51,7 +51,7 @@ class FlextLdifUtilitiesSchemaFormat:
 
     @staticmethod
     def build_obsolete_part(
-        attr_data: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        attr_data: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
         parts: t.MutableSequenceOf[str],
         field_order: t.MutableSequenceOf[str] | None,
         *,
@@ -80,7 +80,7 @@ class FlextLdifUtilitiesSchemaFormat:
 
     @staticmethod
     def build_x_origin_part(
-        attr_data: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        attr_data: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
         *,
         restore_format: bool = False,
     ) -> str | None:
@@ -129,7 +129,7 @@ class FlextLdifUtilitiesSchemaFormat:
 
     @staticmethod
     def get_field_order(
-        attr_data: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        attr_data: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
     ) -> t.MutableSequenceOf[str] | None:
         """Extract field order from metadata if available."""
         if not attr_data.metadata or not attr_data.metadata.schema_format_details:

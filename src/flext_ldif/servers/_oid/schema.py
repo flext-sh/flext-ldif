@@ -23,7 +23,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
         self,
         schema_service: p.Ldif.SchemaServer | None = None,
         parent_server: p.Ldif.SchemaServer | None = None,
-        **kwargs: t.Ldif.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        **kwargs: t.Ldif.Scalar | p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
     ) -> None:
         """Initialize OID schema server."""
         filtered_kwargs: t.MutableConfigValueMapping = {

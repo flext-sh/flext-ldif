@@ -55,7 +55,7 @@ class FlextLdifServersOudAclExtractMixin:
         )
         copy_result: p.Ldif.Entry = entry_data.model_copy(
             update={
-                "attributes": p.Ldif.Attributes.model_validate({
+                "attributes": m.Ldif.Attributes.model_validate({
                     "attributes": {**new_attributes_dict},
                     "attribute_metadata": entry_data.attributes.attribute_metadata,
                     "metadata": entry_data.attributes.metadata,

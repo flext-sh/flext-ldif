@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
+import importlib
 import inspect
-from typing import Annotated, ClassVar, TypeGuard, override
+import pkgutil
+from typing import TYPE_CHECKING, Annotated, ClassVar, TypeGuard, override
 
-import flext_ldif.servers as ldif_servers
 from flext_core import s
 from flext_ldif import c, p, r, t, u
-from flext_ldif.servers.base import FlextLdifServersBase
+
+if TYPE_CHECKING:
+    from flext_ldif.servers.base import FlextLdifServersBase
 
 # NOTE (multi-agent, mro-0ftd.3.7.2): runtime services consume only the public
 # protocol facade; the former private Domain alias recreated the SCC edge.
@@ -173,23 +176,52 @@ class FlextLdifServer(s):
         return r[p.Ldif.ServerServer].ok(plugin)
 
     def _auto_discover(self) -> None:
-        """Discover and register concrete server classes from servers package."""
-        for name, obj in inspect.getmembers(ldif_servers):
-            if not self._is_discoverable_server(name, obj):
-                continue
-            self._register_discovered_server(obj)
+        """Discover and register concrete classes from installed server modules."""
+        # mro-0ftd.3.5: discovery owns module loading so package initializers
+        # remain side-effect-free and cannot recreate the service import cycle.
+        servers_package = importlib.import_module("flext_ldif.servers")
+        base_candidate = getattr(
+            importlib.import_module("flext_ldif.servers.base"),
+            "FlextLdifServersBase",
+            None,
+        )
+        if not isinstance(base_candidate, type):
+            msg = "flext_ldif.servers.base must expose FlextLdifServersBase"
+            raise TypeError(msg)
+        prefix = f"{servers_package.__name__}."
+        module_names = tuple(
+            sorted(
+                module_info.name
+                for module_info in pkgutil.iter_modules(
+                    servers_package.__path__, prefix=prefix
+                )
+                if not module_info.ispkg
+                and not module_info.name.removeprefix(prefix).startswith("_")
+            )
+        )
+        for module_name in module_names:
+            module = importlib.import_module(module_name)
+            for name, obj in inspect.getmembers(module):
+                if not self._is_discoverable_server(
+                    name, obj, module_name, base_candidate
+                ):
+                    continue
+                self._register_discovered_server(obj)
 
     @staticmethod
     def _is_discoverable_server(
         name: str,
         candidate: type,
+        module_name: str,
+        base_class: type,
     ) -> TypeGuard[type[FlextLdifServersBase]]:
         """Return whether a module member is a concrete server class."""
         return (
             not name.startswith("_")
             and inspect.isclass(candidate)
-            and candidate is not FlextLdifServersBase
-            and issubclass(candidate, FlextLdifServersBase)
+            and candidate is not base_class
+            and candidate.__module__ == module_name
+            and issubclass(candidate, base_class)
         )
 
     def _register_discovered_server(

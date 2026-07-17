@@ -14,14 +14,14 @@ from pathlib import Path
 import pytest
 from flext_tests import tm
 
-from flext_ldif import m as ldif_m
+from flext_ldif import m as ldif_m, p
 from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.services.writer import FlextLdifWriter
 from tests import c
 
 
-def _has_schema_attrs(entry: ldif_m.Ldif.Entry) -> bool:
+def _has_schema_attrs(entry: p.Ldif.Entry) -> bool:
     """Return True when an entry publicly exposes schema attribute/objectclass keys."""
     if entry.attributes is None:
         return False

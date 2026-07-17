@@ -67,7 +67,7 @@ class FlextLdifServersOudTransformMixin:
             r[t.Ldif.AttributeDict],
         ],
     ) -> p.Result[p.Ldif.Entry]:
-        """Validate and correct RFC syntax issues before writing entry (static helper)."""
+        """Validate and correct RFC syntax before writing an entry."""
         attrs_dict_raw: t.MutableStrSequenceMapping = (
             entry.attributes.attributes if entry.attributes else {}
         )
@@ -94,13 +94,14 @@ class FlextLdifServersOudTransformMixin:
 
     @staticmethod
     def normalize_acl_dns(entry_data: p.Ldif.Entry) -> p.Ldif.Entry:
-        """Normalize and filter DNs in ACL attribute values (userdn/groupdn inside ACL strings)."""
-        if not entry_data.attributes or not entry_data.attributes.attributes:
+        """Normalize and filter user and group DNs inside ACL strings."""
+        attributes = entry_data.attributes
+        if attributes is None or not attributes.attributes:
             return entry_data
         base_dn, dn_registry = FlextLdifServersOudAclMetadataMixin.extract_acl_metadata(
             entry_data,
         )
-        attrs = entry_data.attributes.attributes
+        attrs = attributes.attributes
         if "aci" not in attrs:
             return entry_data
         aci_values = attrs["aci"]
@@ -119,9 +120,15 @@ class FlextLdifServersOudTransformMixin:
             if not was_filtered and normalized_aci:
                 normalized_aci_values.append(normalized_aci)
         if normalized_aci_values != aci_values:
-            new_attrs = dict(entry_data.attributes.attributes)
+            new_attrs = dict(attributes.attributes)
             new_attrs["aci"] = normalized_aci_values
-            entry_data.attributes.attributes = new_attrs
+            return entry_data.model_copy(
+                update={
+                    "attributes": attributes.model_copy(
+                        update={"attributes": new_attrs},
+                    ),
+                },
+            )
         return entry_data
 
     @staticmethod
@@ -143,7 +150,7 @@ class FlextLdifServersOudTransformMixin:
         )
         restored_entry = (
             entry_data.model_copy(
-                update={"dn": p.Ldif.DN(value=original_dn_value)},
+                update={"dn": m.Ldif.DN(value=original_dn_value)},
             )
             if should_restore_dn
             else entry_data
@@ -174,7 +181,7 @@ class FlextLdifServersOudTransformMixin:
             restored[orig_case] = restored_values
         restored_copy: p.Ldif.Entry = restored_entry.model_copy(
             update={
-                "attributes": p.Ldif.Attributes.model_validate({
+                "attributes": m.Ldif.Attributes.model_validate({
                     "attributes": restored,
                     "attribute_metadata": attributes.attribute_metadata,
                     "metadata": attributes.metadata,
@@ -207,7 +214,8 @@ class FlextLdifServersOudTransformMixin:
         })
         corrected_entry = entry.model_copy(update={"attributes": corrected_ldif_attrs})
         FlextLdifServersOudTransformMixin._module_logger.debug(
-            "OUD servers: Applied syntax corrections before writing (structure preserved)",
+            "OUD servers: Applied syntax corrections before writing "
+            "(structure preserved)",
             entry_dn=str(entry.dn) if entry.dn else "",
             corrections_count=len(syntax_corrections) if syntax_corrections else 0,
         )

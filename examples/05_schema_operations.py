@@ -92,7 +92,7 @@ def intelligent_schema_building() -> p.Result[MutableSequence[p.Ldif.Entry]]:
 
 
 def parallel_schema_validation() -> p.Result[t.JsonMapping]:
-    """Schema validation with comprehensive error analysis."""
+    """Validate schema with comprehensive error analysis."""
     api = ldif()
     test_entries: list[p.Ldif.Entry] = []
     for i in range(30):

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 from flext_ldif import c, m, p, r, s, t, u
 
 
@@ -30,12 +32,15 @@ class FlextLdifFilters(s):
         allowed_oids: p.Ldif.WhitelistRules | t.FrozensetMapping,
     ) -> t.FrozensetMapping:
         """Extract allowed OID sets keyed by canonical schema attribute names."""
-        if isinstance(allowed_oids, m.Ldif.WhitelistRules):
-            return allowed_oids.schema_oid_filters
-        return {
-            attr_name: allowed_oids.get(attr_name, c.Ldif.EMPTY_STR_FROZENSET)
-            for _, attr_name in c.Ldif.WHITELIST_RULE_SCHEMA_ATTRIBUTE_KEYS
-        }
+        if isinstance(allowed_oids, Mapping):
+            return {
+                attr_name: allowed_oids.get(
+                    attr_name,
+                    c.Ldif.EMPTY_STR_FROZENSET,
+                )
+                for _, attr_name in c.Ldif.WHITELIST_RULE_SCHEMA_ATTRIBUTE_KEYS
+            }
+        return allowed_oids.schema_oid_filters
 
     @classmethod
     def _extract_oid_from_schema_attr(
@@ -127,7 +132,7 @@ class FlextLdifFilters(s):
                 }
                 filtered_entry = filtered_entry.model_copy(
                     update={
-                        "attributes": p.Ldif.Attributes.model_validate({
+                        "attributes": m.Ldif.Attributes.model_validate({
                             "attributes": filtered_attrs,
                         }),
                     },
@@ -154,7 +159,7 @@ class FlextLdifFilters(s):
                     updated.pop(oc_key, None)
                 filtered_entry = filtered_entry.model_copy(
                     update={
-                        "attributes": p.Ldif.Attributes.model_validate({
+                        "attributes": m.Ldif.Attributes.model_validate({
                             "attributes": updated,
                         }),
                     },
@@ -198,7 +203,7 @@ class FlextLdifFilters(s):
             return concrete
         copied: p.Ldif.Entry = concrete.model_copy(
             update={
-                "attributes": p.Ldif.Attributes.model_validate({
+                "attributes": m.Ldif.Attributes.model_validate({
                     "attributes": updated_attrs,
                 }),
             },

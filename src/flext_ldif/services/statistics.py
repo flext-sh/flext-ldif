@@ -19,7 +19,7 @@ class FlextLdifStatistics(s):
 
     def calculate_for_entries(
         self,
-        entries: t.MutableSequenceOf[p.Ldif.Entry] | m.Ldif.ParseResponse,
+        entries: t.MutableSequenceOf[p.Ldif.Entry] | p.Ldif.ParseResponse,
     ) -> p.Result[p.Ldif.EntriesStatistics]:
         """Calculate general-purpose statistics for a list of Entry models."""
         normalized_entries = u.Ldif.as_entries(entries)

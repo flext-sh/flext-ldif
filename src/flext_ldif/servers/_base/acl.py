@@ -115,7 +115,7 @@ class FlextLdifServersBaseSchemaAcl(
     def execute(
         self,
         *,
-        data: str | m.Ldif.Acl | None = None,
+        data: str | p.Ldif.Acl | None = None,
         operation: str | None = None,
         **kwargs: t.Ldif.Scalar,
     ) -> p.Result[t.Ldif.AclPayload]:
@@ -179,8 +179,8 @@ class FlextLdifServersBaseSchemaAcl(
 
     def _coerce_acl_data(
         self,
-        value: str | t.JsonValue | m.Ldif.Acl | None,
-    ) -> str | m.Ldif.Acl | None:
+        value: str | t.JsonValue | p.Ldif.Acl | None,
+    ) -> str | p.Ldif.Acl | None:
         """Coerce generic value to ACL payload union."""
         if value is None:
             return None
@@ -203,7 +203,7 @@ class FlextLdifServersBaseSchemaAcl(
             return value
         return None
 
-    def _detect_operation(self, operation: str | None, data: str | m.Ldif.Acl) -> str:
+    def _detect_operation(self, operation: str | None, data: str | p.Ldif.Acl) -> str:
         """Detect operation type from explicit param or data type."""
         if operation is not None and operation in {"parse", "write"}:
             return "parse" if operation == "parse" else "write"
@@ -227,7 +227,7 @@ class FlextLdifServersBaseSchemaAcl(
         self,
         *,
         detected_op: str,
-        data: str | m.Ldif.Acl,
+        data: str | p.Ldif.Acl,
     ) -> p.Result[t.Ldif.AclPayload]:
         """Execute parse/write with strongly typed dispatch."""
         if detected_op == "parse":
@@ -246,10 +246,10 @@ class FlextLdifServersBaseSchemaAcl(
     def _extract_acl_parameters(
         self,
         kwargs: t.MutableJsonMapping,
-    ) -> tuple[str | m.Ldif.Acl | None, str | None]:
+    ) -> tuple[str | p.Ldif.Acl | None, str | None]:
         """Extract and validate ACL operation parameters from kwargs."""
         data_raw = kwargs.get("data")
-        data: str | m.Ldif.Acl | None = self._coerce_acl_data(data_raw)
+        data: str | p.Ldif.Acl | None = self._coerce_acl_data(data_raw)
         operation_raw = kwargs.get("operation")
         operation = (
             self._coerce_operation(operation_raw)
@@ -284,9 +284,9 @@ class FlextLdifServersBaseSchemaAcl(
 
     def _resolve_data(
         self,
-        data: str | m.Ldif.Acl | None,
+        data: str | p.Ldif.Acl | None,
         kwargs: t.JsonMapping,
-    ) -> str | m.Ldif.Acl | None:
+    ) -> str | p.Ldif.Acl | None:
         """Resolve data from parameter or kwargs."""
         if data is not None:
             return data

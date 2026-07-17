@@ -36,9 +36,9 @@ class FlextLdifModelsDomainDN:
             u.Field(..., description="Final normalized DN (RFC 4514 compliant)"),
         ]
         transformations: Annotated[
-            t.StrSequence,
+            t.StrTuple,
             u.Field(description="Ordered list of transformations applied"),
-        ]
+        ] = ()
         had_tab_chars: Annotated[
             bool,
             u.Field(description="DN contained TAB characters"),
@@ -74,13 +74,13 @@ class FlextLdifModelsDomainDN:
             ),
         ] = "valid"
         validation_warnings: Annotated[
-            t.StrSequence,
+            t.StrTuple,
             u.Field(description="Non-fatal validation warnings"),
-        ]
+        ] = ()
         validation_errors: Annotated[
-            t.StrSequence,
+            t.StrTuple,
             u.Field(description="Fatal validation errors"),
-        ]
+        ] = ()
 
         @u.computed_field()
         @property
@@ -122,8 +122,8 @@ class FlextLdifModelsDomainDN:
         @classmethod
         def deduplicate_transformations(
             cls,
-            v: t.MutableSequenceOf[str],
-        ) -> t.MutableSequenceOf[str]:
+            v: t.StrTuple,
+        ) -> t.StrTuple:
             """Remove duplicate transformations while preserving order."""
             seen: set[str] = set()
             result: t.MutableSequenceOf[str] = []
@@ -131,7 +131,7 @@ class FlextLdifModelsDomainDN:
                 if item not in seen:
                     seen.add(item)
                     result.append(item)
-            return result
+            return tuple(result)
 
     class DN(m.Value):
         """Distinguished Name value."""

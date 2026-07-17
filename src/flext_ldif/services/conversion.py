@@ -25,16 +25,16 @@ class FlextLdifConversion(
         source_server: p.Ldif.ServerServer,
         target_server: p.Ldif.ServerServer,
         model_instance: p.Ldif.Entry
-        | m.Ldif.SchemaAttribute
-        | m.Ldif.SchemaObjectClass
-        | m.Ldif.Acl,
+        | p.Ldif.SchemaAttribute
+        | p.Ldif.SchemaObjectClass
+        | p.Ldif.Acl,
     ) -> p.Result[t.Ldif.ConvertedModel]:
         """DSL: orchestrate model conversion between servers."""
         if isinstance(model_instance, m.Ldif.Entry):
             return self._convert_entry(source_server, target_server, model_instance)
         if isinstance(
             model_instance,
-            m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+            m.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
         ):
             source_schema_result = self._resolve_schema_server(
                 source_server,
@@ -70,9 +70,9 @@ class FlextLdifConversion(
         source: str | p.Ldif.ServerReference | p.Ldif.ServerServer,
         target: str | p.Ldif.ServerReference | p.Ldif.ServerServer,
         model_instance: p.Ldif.Entry
-        | m.Ldif.SchemaAttribute
-        | m.Ldif.SchemaObjectClass
-        | m.Ldif.Acl,
+        | p.Ldif.SchemaAttribute
+        | p.Ldif.SchemaObjectClass
+        | p.Ldif.Acl,
     ) -> p.Result[t.Ldif.ConvertedModel]:
         """Convert a model from a source server format to a target server format."""
         start_time = time.perf_counter()

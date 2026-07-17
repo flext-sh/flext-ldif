@@ -16,7 +16,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         cls,
         acl_service: p.Ldif.AclServer | None = None,
         parent_server: Self | None = None,
-        **kwargs: t.Ldif.Scalar | m.Ldif.Acl,
+        **kwargs: t.Ldif.Scalar | p.Ldif.Acl,
     ) -> Self:
         """Override __new__ to support auto-execute and processor instantiation."""
         _ = acl_service
@@ -34,7 +34,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
             object.__setattr__(acl_instance, "_parent_server", parent_server_value)
         if cls.auto_execute:
             data_raw = kwargs.get("data")
-            data: str | m.Ldif.Acl | None = (
+            data: str | p.Ldif.Acl | None = (
                 data_raw if isinstance(data_raw, str) else None
             )
             op_raw = kwargs.get("operation")
@@ -50,7 +50,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         self,
         acl_service: p.Ldif.AclServer | None = None,
         parent_server: Self | None = None,
-        **kwargs: t.Ldif.Scalar | m.Ldif.Acl,
+        **kwargs: t.Ldif.Scalar | p.Ldif.Acl,
     ) -> None:
         """Initialize RFC ACL server service."""
         _ = kwargs
@@ -74,14 +74,14 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
     @overload
     def __call__(
         self,
-        data: str | m.Ldif.Acl | None = None,
+        data: str | p.Ldif.Acl | None = None,
         *,
         operation: str | None = None,
     ) -> p.Ldif.Acl | str: ...
 
     def __call__(
         self,
-        data: t.JsonValue | m.Ldif.Acl | None = None,
+        data: t.JsonValue | p.Ldif.Acl | None = None,
         *,
         operation: t.JsonValue | None = None,
     ) -> p.Ldif.Acl | str:

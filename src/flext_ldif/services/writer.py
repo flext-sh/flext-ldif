@@ -19,7 +19,7 @@ class FlextLdifWriter(s):
 
     def write(
         self,
-        entries: t.MutableSequenceOf[p.Ldif.Entry] | m.Ldif.ParseResponse,
+        entries: t.MutableSequenceOf[p.Ldif.Entry] | p.Ldif.ParseResponse,
         *,
         server_type: str | None = None,
         format_options: p.Ldif.WriteFormatOptions | None = None,
@@ -48,7 +48,7 @@ class FlextLdifWriter(s):
 
     def write_ldif_file(
         self,
-        entries: t.MutableSequenceOf[p.Ldif.Entry] | m.Ldif.ParseResponse,
+        entries: t.MutableSequenceOf[p.Ldif.Entry] | p.Ldif.ParseResponse,
         path: Path,
         *,
         server_type: str | None = None,
@@ -86,7 +86,7 @@ class FlextLdifWriter(s):
 
     def write_to_string(
         self,
-        entries: t.MutableSequenceOf[p.Ldif.Entry] | m.Ldif.ParseResponse,
+        entries: t.MutableSequenceOf[p.Ldif.Entry] | p.Ldif.ParseResponse,
         server_type: str | None = None,
         format_options: p.Ldif.WriteFormatOptions | None = None,
     ) -> p.Result[str]:

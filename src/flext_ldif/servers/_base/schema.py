@@ -290,7 +290,7 @@ class FlextLdifServersBaseSchema(
     def execute(
         self,
         *,
-        data: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None = None,
+        data: str | p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | None = None,
         operation: str | None = None,
         **kwargs: t.Ldif.Scalar,
     ) -> p.Result[t.Ldif.SchemaConversionValue]:
@@ -315,10 +315,10 @@ class FlextLdifServersBaseSchema(
         self,
         value: str
         | t.JsonValue
-        | m.Ldif.SchemaAttribute
-        | m.Ldif.SchemaObjectClass
+        | p.Ldif.SchemaAttribute
+        | p.Ldif.SchemaObjectClass
         | None,
-    ) -> str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None:
+    ) -> str | p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | None:
         """Coerce raw execute payload to the concrete schema payload union."""
         if value is None:
             return None
@@ -403,9 +403,9 @@ class FlextLdifServersBaseSchema(
 
     def _resolve_data(
         self,
-        data: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None,
+        data: str | p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | None,
         kwargs: t.JsonMapping,
-    ) -> str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None:
+    ) -> str | p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | None:
         """Resolve schema payload from parameter or kwargs."""
         if data is not None:
             return data
@@ -636,7 +636,7 @@ class FlextLdifServersBaseSchema(
 
     def _route_operation(
         self,
-        data: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        data: str | p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
         operation: str,
     ) -> p.Result[t.Ldif.SchemaConversionValue]:
         """Route data to appropriate parse or write handler."""

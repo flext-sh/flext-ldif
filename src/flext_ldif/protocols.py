@@ -8,6 +8,7 @@ from flext_cli import p
 from flext_ldif._protocols.base import FlextLdifProtocolsBase
 from flext_ldif._protocols.client import FlextLdifProtocolsClient
 from flext_ldif._protocols.domain import FlextLdifProtocolsDomain
+from flext_ldif._protocols.values import FlextLdifProtocolsValues
 
 
 class FlextLdifProtocols(p):
@@ -17,6 +18,7 @@ class FlextLdifProtocols(p):
     class Ldif(
         FlextLdifProtocolsClient,
         FlextLdifProtocolsDomain,
+        FlextLdifProtocolsValues,
         FlextLdifProtocolsBase,
         Protocol,
     ):

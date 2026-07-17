@@ -60,7 +60,7 @@ class FlextLdifServersOudAclMetadataMixin:
     def extract_acl_metadata(
         # NOTE (multi-agent, mro-0ftd.3.7.2): behavior layer accepts protocol (§3.2).
         entry_data: p.Ldif.Entry,
-    ) -> tuple[str | None, m.Ldif.DnRegistry | None]:
+    ) -> tuple[str | None, p.Ldif.DnRegistry | None]:
         """Extract base_dn and dn_registry from entry metadata for ACL processing."""
         base_dn: str | None = None
         dn_registry: p.Ldif.DnRegistry | None = None

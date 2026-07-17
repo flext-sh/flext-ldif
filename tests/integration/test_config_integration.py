@@ -24,7 +24,7 @@ import pytest
 from flext_tests import tm
 
 from flext_ldif import ldif
-from tests import c
+from tests import c, p
 from tests.base import s
 from tests.settings import TestsFlextLdifSettings
 
