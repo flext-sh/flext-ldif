@@ -71,7 +71,7 @@ class TestsFlextLdifRealLdapExport:
         behavioral check: it proves the exported bytes are valid LDIF that
         faithfully round-trips every DN and attribute.
         """
-        tm.that(content, none=False)
+        assert content is not None
         parsed = flext_api.parse_string(content)
         tm.ok(parsed)
         return {

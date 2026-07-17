@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 import uuid
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, overload
 
 from flext_ldap import FlextLdapUtilities, u
 from flext_tests import FlextTestsUtilities, tk, tm
@@ -363,6 +363,34 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             "parse_input": "parse_input",
         }
 
+        @overload
+        @classmethod
+        def server_parse_and_unwrap[
+            SchemaNodeT: (
+                m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass, m.Ldif.Acl
+            )
+        ](
+            cls,
+            server: p.Ldif.SchemaServer | p.Tests.ParseInputServer,
+            content: str,
+            *,
+            parse_method: t.Tests.ParseMethod = ...,
+            expected_type: type[SchemaNodeT],
+            should_succeed: bool | None = ...,
+            message: str | None = ...,
+        ) -> SchemaNodeT | None: ...
+        @overload
+        @classmethod
+        def server_parse_and_unwrap(
+            cls,
+            server: p.Ldif.SchemaServer | p.Tests.ParseInputServer,
+            content: str,
+            *,
+            parse_method: t.Tests.ParseMethod = ...,
+            expected_type: None = ...,
+            should_succeed: bool | None = ...,
+            message: str | None = ...,
+        ) -> m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl | None: ...
         @classmethod
         def server_parse_and_unwrap(
             cls,

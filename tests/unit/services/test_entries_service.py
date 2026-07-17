@@ -74,7 +74,7 @@ class TestsFlextLdifEntries:
             {"cn": ["x"], "objectClass": ["top"]},
         )
         entry: m.Ldif.Entry = u.Tests.assert_success(result)
-        tm.that(entry.attributes, none=False)
+        assert entry.attributes is not None
         tm.that("cn" in entry.attributes.attributes, eq=True)
         tm.that(entry.attributes.attributes["cn"], eq=["x"])
 
@@ -85,7 +85,7 @@ class TestsFlextLdifEntries:
             objectclasses=list(c.Tests.ENTRIES_OBJECTCLASS_PERSON),
         )
         entry: m.Ldif.Entry = u.Tests.assert_success(result)
-        tm.that(entry.attributes, none=False)
+        assert entry.attributes is not None
         tm.that(c.Tests.NAME_OBJECTCLASS in entry.attributes.attributes, eq=True)
         tm.that(
             entry.attributes.attributes[c.Tests.NAME_OBJECTCLASS],
@@ -211,7 +211,7 @@ class TestsFlextLdifEntries:
             list(c.Tests.ENTRIES_ATTR_REMOVE_SET),
         )
         cleaned: m.Ldif.Entry = u.Tests.assert_success(result)
-        tm.that(cleaned.attributes, none=False)
+        assert cleaned.attributes is not None
         remaining = {k.lower() for k in cleaned.attributes.attributes}
         tm.that(remaining.isdisjoint(c.Tests.ENTRIES_ATTR_REMOVE_SET), eq=True)
         tm.that("cn" in remaining, eq=True)
@@ -231,8 +231,8 @@ class TestsFlextLdifEntries:
                 list(c.Tests.ENTRIES_ATTR_REMOVE_SET),
             ),
         )
-        tm.that(once.attributes, none=False)
-        tm.that(twice.attributes, none=False)
+        assert once.attributes is not None
+        assert twice.attributes is not None
         tm.that(
             set(twice.attributes.attributes) == set(once.attributes.attributes),
             eq=True,
@@ -273,7 +273,7 @@ class TestsFlextLdifEntries:
         cleaned: t.MutableSequenceOf[m.Ldif.Entry] = u.Tests.assert_success(result)
         tm.that(len(cleaned) == 1, eq=True)
         stripped = cleaned[0]
-        tm.that(stripped.attributes, none=False)
+        assert stripped.attributes is not None
         remaining = {k.lower() for k in stripped.attributes.attributes}
         tm.that(remaining.isdisjoint(c.Tests.ENTRIES_ATTR_REMOVE_SET), eq=True)
 

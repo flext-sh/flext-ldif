@@ -444,7 +444,7 @@ class TestsFlextLdifOidAclAssemble:
         })
 
         converted = Pipe.convert_entry_acls(entry, "oid", "oud").unwrap()
-        tm.that(converted.attributes, none=False)
+        assert converted.attributes is not None
         attrs = converted.attributes.attributes
 
         tm.that("orclaci" not in attrs, eq=True)
@@ -458,7 +458,7 @@ class TestsFlextLdifOidAclAssemble:
         })
 
         converted = Pipe.convert_entry_acls(entry, "oid", "rfc").unwrap()
-        tm.that(converted.attributes, none=False)
+        assert converted.attributes is not None
 
         tm.that("orclaci" in converted.attributes.attributes, eq=True)
 
@@ -466,7 +466,7 @@ class TestsFlextLdifOidAclAssemble:
         entry = self._entry({"cn": ["x"], "objectClass": ["top"]})
 
         converted = Pipe.convert_entry_acls(entry, "oid", "oud").unwrap()
-        tm.that(converted.attributes, none=False)
+        assert converted.attributes is not None
 
         tm.that("aci" not in converted.attributes.attributes, eq=True)
         tm.that("cn" in converted.attributes.attributes, eq=True)

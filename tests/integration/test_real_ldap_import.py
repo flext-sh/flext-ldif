@@ -50,7 +50,7 @@ class TestsFlextLdifRealLdapImport:
     @staticmethod
     def _dn(entry: p.Ldif.Entry) -> str:
         """Distinguished name string via the public DN protocol accessor."""
-        tm.that(entry.dn, none=False)
+        assert entry.dn is not None
         return entry.dn.value
 
     @staticmethod
@@ -61,7 +61,7 @@ class TestsFlextLdifRealLdapImport:
     @staticmethod
     def _all_attrs(entry: p.Ldif.Entry) -> dict[str, list[str]]:
         """Full attribute mapping via the public ``Attributes`` protocol."""
-        tm.that(entry.attributes, none=False)
+        assert entry.attributes is not None
         return {name: list(values) for name, values in entry.attributes.items()}
 
     @classmethod

@@ -36,9 +36,9 @@ class TestsFlextLdifAclMetadataPreservation:
     def _extensions(entry: m.Ldif.Entry) -> t.JsonMapping:
         """Read the entry's public metadata extensions as a plain mapping."""
         metadata = entry.metadata
-        tm.that(metadata, none=False)
+        assert metadata is not None
         extensions = metadata.extensions
-        tm.that(extensions, none=False)
+        assert extensions is not None
         extensions_dump: t.JsonMapping = t.json_mapping_adapter().validate_python(
             dict(extensions),
         )
@@ -254,9 +254,9 @@ class TestsFlextLdifAclMetadataPreservation:
         tm.that(extensions.get(c.Ldif.ACL_BIND_IP_FILTER), eq="192.168.1.0/24")
         tm.that(extensions.get(c.Ldif.ACL_BIND_DNS), eq="*.example.com")
         tm.that(extensions.get(c.Ldif.ACL_BIND_DAYOFWEEK), eq="Mon,Tue,Wed")
-        tm.that(extensions.get(c.Ldif.ACL_BIND_TIMEOFDAY), none=False)
+        assert extensions.get(c.Ldif.ACL_BIND_TIMEOFDAY) is not None
         tm.that(extensions.get(c.Ldif.ACL_AUTHMETHOD), eq="ssl")
-        tm.that(extensions.get(c.Ldif.ACL_SSF), none=False)
+        assert extensions.get(c.Ldif.ACL_SSF) is not None
 
     # -- Round-trip preservation (parse -> write -> parse) ----------------
 
@@ -274,7 +274,7 @@ class TestsFlextLdifAclMetadataPreservation:
         write_result = api.write([entry], server_type=c.Tests.OID)
         tm.ok(write_result)
         written = write_result.unwrap().content
-        tm.that(written, none=False)
+        assert written is not None
 
         reparsed = self._parse_single(api, written, c.Tests.OID)
         extensions = self._extensions(reparsed)
@@ -296,7 +296,7 @@ class TestsFlextLdifAclMetadataPreservation:
         write_result = api.write([entry], server_type=c.Tests.OUD)
         tm.ok(write_result)
         written = write_result.unwrap().content
-        tm.that(written, none=False)
+        assert written is not None
 
         reparsed = self._parse_single(api, written, c.Tests.OUD)
         extensions = self._extensions(reparsed)

@@ -154,7 +154,7 @@ class TestsFlextLdifRealLdapConfig:
         result = flext_api.parse_ldif(missing)
 
         tm.fail(result)
-        tm.that(result.error, none=False)
+        assert result.error is not None
         tm.that(result.error.lower(), has="not found")
 
     @pytest.mark.parametrize(

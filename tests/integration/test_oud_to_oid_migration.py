@@ -78,7 +78,7 @@ class TestsFlextLdifOudToOidMigration:
         (``, `` -> ``,``); the observable contract is that the RDN component
         set is preserved, so DNs are compared component-wise.
         """
-        tm.that(entries, is_=list)
+        assert isinstance(entries, list)
         split_re = c.Ldif.DN_SPLIT_OPTIONAL_SPACE_RE
         return {
             ",".join(split_re.split(entry.dn.value))

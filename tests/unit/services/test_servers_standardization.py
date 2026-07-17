@@ -119,7 +119,7 @@ class TestsFlextLdifServersStandardization:
     ) -> None:
         """parse_input hands back the same entry list as parse_server's value."""
         result = server_cls.Entry().parse_input(valid_ldif)
-        tm.that(result, none=False)
+        assert result is not None
         tm.that([str(entry.dn) for entry in result], eq=[_EXPECTED_DN])
 
     @pytest.mark.parametrize("server_cls", [s[0] for s in _STANDARDIZED_SERVERS])
@@ -164,8 +164,8 @@ class TestsFlextLdifServersStandardization:
         entry = FlextLdifServersRfc.Entry()
         first = entry.parse_input(valid_ldif)
         second = entry.parse_input(valid_ldif)
-        tm.that(first, none=False)
-        tm.that(second, none=False)
+        assert first is not None
+        assert second is not None
         tm.that([str(e.dn) for e in first], eq=[str(e.dn) for e in second])
 
     def test_multi_record_ldif_parses_every_entry(self, multi_ldif: str) -> None:

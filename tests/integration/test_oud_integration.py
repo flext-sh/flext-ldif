@@ -48,14 +48,14 @@ class TestsFlextLdifOudIntegration:
     def _attrs(entry: m.Ldif.Entry) -> m.Ldif.Attributes:
         """Return an entry's attributes, asserting the public field is present."""
         attributes = entry.attributes
-        tm.that(attributes, none=False)
+        assert attributes is not None
         return attributes
 
     @staticmethod
     def _dn_value(entry: m.Ldif.Entry) -> str:
         """Return an entry's DN string via the public DN model."""
         dn = entry.dn
-        tm.that(dn, none=False)
+        assert dn is not None
         return u.to_str(dn.value)
 
     @classmethod
@@ -63,8 +63,6 @@ class TestsFlextLdifOudIntegration:
         """Return an entry's objectClass values via the public accessor."""
         attributes = cls._attrs(entry)
         values = attributes.get("objectClass") or attributes.get("objectclass")
-        if values is None:
-            return []
         return [u.to_str(value) for value in values]
 
     # --- Schema fixture ---------------------------------------------------
@@ -157,7 +155,7 @@ class TestsFlextLdifOudIntegration:
             error_msg="Writing ACL entries must succeed",
         )
         written_content = written.content
-        tm.that(written_content, none=False)
+        assert written_content is not None
         reparsed: m.Ldif.ParseResponse = u.Tests.assert_success(
             api.parse_ldif(written_content),
         )
@@ -282,7 +280,7 @@ class TestsFlextLdifOudIntegration:
             api.write(parsed.entries),
         )
         written_content = written.content
-        tm.that(written_content, none=False)
+        assert written_content is not None
         reparsed: m.Ldif.ParseResponse = u.Tests.assert_success(
             api.parse_ldif(written_content),
         )
@@ -317,7 +315,7 @@ class TestsFlextLdifOudIntegration:
         tm.that(self._dn_value(entry), eq="cn=OracleContext,dc=example,dc=com")
         tm.that(attributes.get("orclVersion"), eq=["90600"])
         tm.that(attributes.get("objectClass"), eq=["top", "orclContext"])
-        tm.that(entry.metadata, none=False)
+        assert entry.metadata is not None
 
 
 __all__: list[str] = ["TestsFlextLdifOudIntegration"]

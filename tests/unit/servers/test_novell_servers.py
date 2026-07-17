@@ -31,7 +31,7 @@ class TestsFlextLdifNovellServers:
     ) -> FlextLdifServersNovell.Schema:
         """Expose the schema sub-server through the public facade property."""
         server = novell_server.schema_server
-        tm.that(server, is_=FlextLdifServersNovell.Schema)
+        assert isinstance(server, FlextLdifServersNovell.Schema)
         return server
 
     @pytest.fixture
@@ -41,7 +41,7 @@ class TestsFlextLdifNovellServers:
     ) -> FlextLdifServersNovell.Acl:
         """Expose the ACL sub-server through the public facade property."""
         server = novell_server.acl_server
-        tm.that(server, is_=FlextLdifServersNovell.Acl)
+        assert isinstance(server, FlextLdifServersNovell.Acl)
         return server
 
     @pytest.fixture
@@ -51,7 +51,7 @@ class TestsFlextLdifNovellServers:
     ) -> FlextLdifServersNovell.Entry:
         """Expose the entry sub-server through the public facade property."""
         server = novell_server.entry_server
-        tm.that(server, is_=FlextLdifServersNovell.Entry)
+        assert isinstance(server, FlextLdifServersNovell.Entry)
         return server
 
     # ── Schema: attribute detection ─────────────────────────────────────
@@ -276,8 +276,8 @@ class TestsFlextLdifNovellServers:
             "attributes": {"cn": ["user"], "objectClass": ["ndsperson"]},
         })
         processed = tm.ok(entry_server.process_entry(entry))
-        tm.that(processed, is_=m.Ldif.Entry)
-        tm.that(processed.attributes, none=False)
+        assert isinstance(processed, m.Ldif.Entry)
+        assert processed.attributes is not None
         attributes = processed.attributes.attributes
         tm.that(attributes["cn"] == ["user"], eq=True)
         tm.that(attributes["objectClass"] == ["ndsperson"], eq=True)
@@ -297,6 +297,6 @@ class TestsFlextLdifNovellServers:
             "attributes": {},
         })
         processed = tm.ok(entry_server.process_entry(entry))
-        tm.that(processed, is_=m.Ldif.Entry)
-        tm.that(processed.attributes, none=False)
+        assert isinstance(processed, m.Ldif.Entry)
+        assert processed.attributes is not None
         tm.that(dict(processed.attributes.attributes) == {}, eq=True)

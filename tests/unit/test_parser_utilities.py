@@ -225,8 +225,8 @@ class TestsFlextLdifParserUtilities:
         ])
 
         entry = u.Tests.assert_success(result)
-        tm.that(entry.dn, none=False)
-        tm.that(entry.attributes, none=False)
+        assert entry.dn is not None
+        assert entry.attributes is not None
         tm.that(entry.dn.value, eq="cn=alice,dc=example,dc=com")
         tm.that(entry.attributes.attributes["cn"], eq=["alice"])
         tm.that(entry.attributes.attributes["objectClass"], eq=["person"])

@@ -78,7 +78,7 @@ class TestsFlextLdifLdifFixturesIntegration:
 
         tm.ok(result)
         for entry in result.value.entries:
-            tm.that(entry.dn, none=False)
+            assert entry.dn is not None
             dn_value = entry.dn.value
             assert dn_value, f"entry in {filename} has empty DN"
             tm.that(entry.dn_str, eq=dn_value)
@@ -151,7 +151,7 @@ class TestsFlextLdifLdifFixturesIntegration:
         tm.ok(from_file)
 
         content = ldif_client.write(from_file.value.entries).value.content
-        tm.that(content, none=False)
+        assert content is not None
         from_string = ldif_client.parse_string(content)
         tm.ok(from_string)
 
@@ -170,5 +170,5 @@ class TestsFlextLdifLdifFixturesIntegration:
         result = ldif_client.parse_ldif(missing)
 
         tm.fail(result)
-        tm.that(result.error, none=False)
+        assert result.error is not None
         tm.that(result.error, has="does_not_exist.ldif")

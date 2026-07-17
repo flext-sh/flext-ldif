@@ -117,7 +117,7 @@ class TestsFlextLdifWriterService:
         )
 
         tm.that(payload.content is not None, eq=True)
-        tm.that(payload.content, none=False)
+        assert payload.content is not None
         for dn in self._dns():
             tm.that(f"dn: {dn}" in payload.content, eq=True)
         tm.that(payload.statistics.total_entries, eq=len(entries))

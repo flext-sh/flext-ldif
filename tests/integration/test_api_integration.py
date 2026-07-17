@@ -54,8 +54,8 @@ class TestsFlextLdifApiIntegration:
         entries = result.value.entries
         tm.that(len(entries), eq=expected_entries)
         for entry in entries:
-            tm.that(entry.dn, none=False)
-            tm.that(entry.attributes, none=False)
+            assert entry.dn is not None
+            assert entry.attributes is not None
             assert entry.dn.value
             assert entry.attributes.attributes
 
@@ -90,7 +90,7 @@ class TestsFlextLdifApiIntegration:
         # Assert
         tm.ok(result)
         (entry,) = result.value.entries
-        tm.that(entry.attributes, none=False)
+        assert entry.attributes is not None
         tm.that(entry.attributes.attributes[c.Tests.NAME_CN], eq=["a", "b"])
 
     def test_parse_write_parse_round_trip_is_idempotent(self) -> None:
@@ -110,8 +110,8 @@ class TestsFlextLdifApiIntegration:
         tm.that(len(reparsed.value.entries), eq=len(entries))
         reparsed_dn = reparsed.value.entries[0].dn
         original_dn = entries[0].dn
-        tm.that(reparsed_dn, none=False)
-        tm.that(original_dn, none=False)
+        assert reparsed_dn is not None
+        assert original_dn is not None
         tm.that(reparsed_dn.value, eq=original_dn.value)
 
     # ------------------------------------------------------------------
@@ -134,8 +134,8 @@ class TestsFlextLdifApiIntegration:
         )
 
         # Assert
-        tm.that(entry.dn, none=False)
-        tm.that(entry.attributes, none=False)
+        assert entry.dn is not None
+        assert entry.attributes is not None
         tm.that(entry.dn.value, eq=c.Tests.RFC_TEST_DN)
         tm.that(
             entry.attributes.attributes[c.Tests.NAME_CN], eq=[c.Tests.ATTR_VALUE_TEST]
@@ -156,7 +156,7 @@ class TestsFlextLdifApiIntegration:
         # Assert
         tm.ok(create_result)
         created = create_result.value
-        tm.that(created, is_=m.Ldif.Entry)
+        assert isinstance(created, m.Ldif.Entry)
         tm.ok(ldif.validate_entries([created]))
 
     # ------------------------------------------------------------------
@@ -217,8 +217,8 @@ class TestsFlextLdifApiIntegration:
         tm.ok(result2)
         dn1 = result1.value.entries[0].dn
         dn2 = result2.value.entries[0].dn
-        tm.that(dn1, none=False)
-        tm.that(dn2, none=False)
+        assert dn1 is not None
+        assert dn2 is not None
         tm.that(dn1.value, eq=dn2.value)
 
     # ------------------------------------------------------------------
@@ -242,7 +242,7 @@ class TestsFlextLdifApiIntegration:
         )
 
         # Assert
-        tm.that(categorization, is_=FlextLdifCategorization)
+        assert isinstance(categorization, FlextLdifCategorization)
         tm.that(categorization.base_dn, eq="dc=override,dc=example")
         tm.that(categorization.forbidden_attributes, eq=["userPassword"])
         tm.that(categorization.forbidden_objectclasses, eq=["groupOfNames"])
@@ -262,7 +262,7 @@ class TestsFlextLdifApiIntegration:
         )
 
         # Assert
-        tm.that(categorization, is_=FlextLdifCategorization)
+        assert isinstance(categorization, FlextLdifCategorization)
         tm.that(categorization.base_dn, eq="dc=options,dc=example")
         tm.that(categorization.forbidden_attributes, eq=["userPassword"])
 
@@ -282,8 +282,8 @@ class TestsFlextLdifApiIntegration:
         )
 
         # Assert
-        tm.that(categorization, is_=FlextLdifCategorization)
-        tm.that(categorization.schema_whitelist_rules, is_=m.Ldif.WhitelistRules)
+        assert isinstance(categorization, FlextLdifCategorization)
+        assert isinstance(categorization.schema_whitelist_rules, m.Ldif.WhitelistRules)
         assert categorization.schema_whitelist_rules.has_oid_filters
 
     # ------------------------------------------------------------------
@@ -313,7 +313,7 @@ class TestsFlextLdifApiIntegration:
         )
 
         # Assert
-        tm.that(pipeline, is_=FlextLdifMigrationPipeline)
+        assert isinstance(pipeline, FlextLdifMigrationPipeline)
         tm.that(pipeline.input_dir, eq=input_dir)
         tm.that(pipeline.output_dir, eq=output_dir)
         tm.that(pipeline.source_server_type, eq=c.Tests.OID)

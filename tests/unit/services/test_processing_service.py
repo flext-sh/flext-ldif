@@ -136,7 +136,7 @@ class TestsFlextLdifProcessingService:
             entries_input=[entry],
         ).execute()
         converted: t.MutableSequenceOf[m.Ldif.Entry] = u.Tests.assert_success(result)
-        tm.that(converted[0].attributes, none=False)
+        assert converted[0].attributes is not None
         attrs = converted[0].attributes.attributes
 
         tm.that(
