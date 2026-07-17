@@ -1,7 +1,7 @@
 """Behavioral tests for public LDIF statistics service APIs.
 
 Every assertion exercises the observable contract of
-``LdifClient.calculate_for_entries`` — the ``r[T]`` success outcome and the
+``Client.calculate_for_entries`` — the ``r[T]`` success outcome and the
 public fields of :class:`m.Ldif.EntriesStatistics` (``total_entries`` and the
 ``DynamicCounts`` distributions). No private attribute, collaborator spying, or
 patching of the unit under test is used.
@@ -54,7 +54,7 @@ class TestsFlextLdifStatisticsService:
 
     def test_returns_success_result_for_entry_list(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         result = api.calculate_for_entries(self._entries(2))
 
@@ -64,7 +64,7 @@ class TestsFlextLdifStatisticsService:
     @pytest.mark.parametrize("count", [0, 1, 2, 5])
     def test_total_entries_equals_input_count(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         count: int,
     ) -> None:
         result = api.calculate_for_entries(self._entries(count))
@@ -74,7 +74,7 @@ class TestsFlextLdifStatisticsService:
 
     def test_object_class_distribution_counts_shared_objectclass(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         result = api.calculate_for_entries(self._entries(3))
 
@@ -87,7 +87,7 @@ class TestsFlextLdifStatisticsService:
 
     def test_server_type_distribution_partitions_by_server_type(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         entries = [
             self._entry("cn=stats-rfc,dc=example,dc=com", c.Tests.RFC),
@@ -103,7 +103,7 @@ class TestsFlextLdifStatisticsService:
     @pytest.mark.parametrize("server_type", [c.Tests.RFC, c.Tests.OID])
     def test_single_server_type_produces_single_count(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         server_type: str,
     ) -> None:
         entries = [
@@ -118,7 +118,7 @@ class TestsFlextLdifStatisticsService:
 
     def test_empty_entries_yields_zero_totals_and_empty_distributions(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         result = api.calculate_for_entries([])
 
@@ -129,7 +129,7 @@ class TestsFlextLdifStatisticsService:
 
     def test_parse_response_input_equals_entry_list_input(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         entries = [
             self._entry("cn=stats-parse,dc=example,dc=com", c.Tests.RFC),
@@ -152,7 +152,7 @@ class TestsFlextLdifStatisticsService:
 
     def test_repeated_calls_are_idempotent(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         entries = self._entries(4)
 

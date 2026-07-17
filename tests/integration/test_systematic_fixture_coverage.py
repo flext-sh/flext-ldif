@@ -23,7 +23,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
     """Public parse/write contract across the server×fixture-type matrix."""
 
     @pytest.fixture(scope="class")
-    def api(self) -> p.Ldif.LdifClient:
+    def api(self) -> p.Ldif.Client:
         """Public LDIF client under test."""
         return ldif()
 
@@ -75,7 +75,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
     # ------------------------------------------------------------------
     def _assert_roundtrip_preserves_dns(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         content: str,
     ) -> int:
         """Parse -> write -> parse ``content`` and assert DN-set preservation.
@@ -113,7 +113,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
     )
     def test_schema_fixture_survives_parse_write_roundtrip(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         server_fixture: str,
         request: pytest.FixtureRequest,
     ) -> None:
@@ -135,7 +135,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
     )
     def test_acl_fixture_parses_and_writes(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         server_fixture: str,
         request: pytest.FixtureRequest,
     ) -> None:
@@ -163,7 +163,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
     )
     def test_entries_fixture_yields_valid_entries_and_roundtrips(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         server_fixture: str,
         request: pytest.FixtureRequest,
     ) -> None:
@@ -192,7 +192,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
     )
     def test_integration_fixture_roundtrips_without_data_loss(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         server_fixture: str,
         request: pytest.FixtureRequest,
     ) -> None:
@@ -225,7 +225,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
     # ------------------------------------------------------------------
     def test_basic_ldif_operations_are_available_for_any_server(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         """A minimal RFC entry parses, writes, and roundtrips with DN intact."""
         content = (
@@ -259,7 +259,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
 
     def test_parse_ldif_reports_failure_as_result_for_invalid_input(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         """Malformed LDIF surfaces through the ``r[T]`` channel, not a crash."""
         # A continuation line with no preceding attribute is not valid LDIF.

@@ -16,7 +16,7 @@ from tests import c, p, t, u
 
 
 @pytest.fixture
-def api() -> p.Ldif.LdifClient:
+def api() -> p.Ldif.Client:
     """Create ldif API instance for testing."""
     return ldif()
 
@@ -63,7 +63,7 @@ def oid_integration_fixture() -> str:
 
 @pytest.fixture
 def oid_entries(
-    api: p.Ldif.LdifClient,
+    api: p.Ldif.Client,
     oid_entries_fixture: str,
 ) -> t.SequenceOf[p.Ldif.Entry]:
     """Parse OID entries fixture into Entry models."""
@@ -105,7 +105,7 @@ def oud_integration_fixture() -> str:
 
 @pytest.fixture
 def oud_entries(
-    api: p.Ldif.LdifClient,
+    api: p.Ldif.Client,
     oud_entries_fixture: str,
 ) -> t.SequenceOf[p.Ldif.Entry]:
     """Parse OUD entries fixture into Entry models."""

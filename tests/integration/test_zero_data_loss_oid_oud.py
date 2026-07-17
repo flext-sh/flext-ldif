@@ -38,7 +38,7 @@ class TestsFlextLdifZeroDataLossOidOud:
     })
 
     @pytest.fixture
-    def api(self) -> p.Ldif.LdifClient:
+    def api(self) -> p.Ldif.Client:
         """Create ldif API instance."""
         return ldif()
 
@@ -59,7 +59,7 @@ class TestsFlextLdifZeroDataLossOidOud:
     @pytest.mark.parametrize("content", ["", "not a valid ldif record"])
     def test_parse_of_non_entry_input_succeeds_with_no_entries(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         content: str,
     ) -> None:
         """Input without LDIF records yields a success result with no entries."""
@@ -70,7 +70,7 @@ class TestsFlextLdifZeroDataLossOidOud:
 
     def test_parse_is_idempotent_in_entry_count(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         oid_fixture: str,
     ) -> None:
         """Parsing the same fixture twice yields the same entry count."""
@@ -86,7 +86,7 @@ class TestsFlextLdifZeroDataLossOidOud:
     @pytest.mark.parametrize("server_type", [c.Tests.OID, c.Tests.OUD])
     def test_parse_preserves_original_ldif_per_entry(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         oid_fixture: str,
         oud_fixture: str,
         server_type: str,
@@ -109,7 +109,7 @@ class TestsFlextLdifZeroDataLossOidOud:
 
     def test_original_strings_records_dn_original_when_dn_differs(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         oid_fixture: str,
     ) -> None:
         """When a DN has minimal differences, the original DN string is kept."""
@@ -129,7 +129,7 @@ class TestsFlextLdifZeroDataLossOidOud:
 
     def test_boolean_conversions_record_original_converted_and_format(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         """Tracked boolean conversions expose original, converted and format."""
         oid_boolean_entry = """
@@ -178,7 +178,7 @@ orclIsEnabled: 1
 
     def test_minimal_differences_carry_original_and_differences(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         oid_fixture: str,
     ) -> None:
         """Any tracked difference exposes an original value and a diff list."""
@@ -196,7 +196,7 @@ orclIsEnabled: 1
 
     def test_conversion_history_is_a_list(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         oid_fixture: str,
     ) -> None:
         """Every entry exposes conversion history as a list."""
@@ -209,7 +209,7 @@ orclIsEnabled: 1
 
     def test_soft_deleted_attributes_are_preserved(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         oid_fixture: str,
     ) -> None:
         """Soft-deleted attributes keep their values in removed_attributes."""
@@ -233,7 +233,7 @@ orclIsEnabled: 1
 
     def test_oid_to_oud_conversion_loses_no_user_attribute(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         oid_fixture: str,
     ) -> None:
         """OID -> RFC -> OUD conversion preserves every non-operational attr."""
@@ -265,7 +265,7 @@ orclIsEnabled: 1
 
     def test_round_trip_oid_oud_oid_preserves_entry_count_and_original_text(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         oid_fixture: str,
     ) -> None:
         """OID -> OUD -> OID round-trip keeps entry count and original text."""
@@ -303,7 +303,7 @@ orclIsEnabled: 1
 
     def test_restore_original_format_reproduces_original_entry_text(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         oid_fixture: str,
     ) -> None:
         """restore_original_format writes back each entry's exact original text."""

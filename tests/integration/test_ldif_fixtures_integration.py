@@ -34,7 +34,7 @@ class TestsFlextLdifLdifFixturesIntegration:
     )
 
     @pytest.fixture
-    def ldif_client(self) -> p.Ldif.LdifClient:
+    def ldif_client(self) -> p.Ldif.Client:
         """Provide the public FlextLdif facade under test."""
         return ldif
 
@@ -46,7 +46,7 @@ class TestsFlextLdifLdifFixturesIntegration:
     @pytest.mark.parametrize(("subdir", "filename", "min_entries"), _FIXTURE_CASES)
     def test_parse_succeeds_and_yields_expected_minimum_entries(
         self,
-        ldif_client: p.Ldif.LdifClient,
+        ldif_client: p.Ldif.Client,
         subdir: str,
         filename: str,
         min_entries: int,
@@ -63,7 +63,7 @@ class TestsFlextLdifLdifFixturesIntegration:
     @pytest.mark.parametrize(("subdir", "filename", "min_entries"), _FIXTURE_CASES)
     def test_every_parsed_entry_exposes_a_wellformed_dn(
         self,
-        ldif_client: p.Ldif.LdifClient,
+        ldif_client: p.Ldif.Client,
         subdir: str,
         filename: str,
         min_entries: int,
@@ -82,7 +82,7 @@ class TestsFlextLdifLdifFixturesIntegration:
     @pytest.mark.parametrize(("subdir", "filename", "min_entries"), _FIXTURE_CASES)
     def test_statistics_total_matches_returned_entry_count(
         self,
-        ldif_client: p.Ldif.LdifClient,
+        ldif_client: p.Ldif.Client,
         subdir: str,
         filename: str,
         min_entries: int,
@@ -96,7 +96,7 @@ class TestsFlextLdifLdifFixturesIntegration:
     @pytest.mark.parametrize(("subdir", "filename", "min_entries"), _FIXTURE_CASES)
     def test_write_then_reparse_preserves_entry_count(
         self,
-        ldif_client: p.Ldif.LdifClient,
+        ldif_client: p.Ldif.Client,
         subdir: str,
         filename: str,
         min_entries: int,
@@ -118,7 +118,7 @@ class TestsFlextLdifLdifFixturesIntegration:
     @pytest.mark.parametrize(("subdir", "filename", "min_entries"), _FIXTURE_CASES)
     def test_validate_entries_reports_success_for_wellformed_fixtures(
         self,
-        ldif_client: p.Ldif.LdifClient,
+        ldif_client: p.Ldif.Client,
         subdir: str,
         filename: str,
         min_entries: int,
@@ -138,7 +138,7 @@ class TestsFlextLdifLdifFixturesIntegration:
 
     def test_parse_string_matches_parse_ldif_for_same_content(
         self,
-        ldif_client: p.Ldif.LdifClient,
+        ldif_client: p.Ldif.Client,
     ) -> None:
         """Parsing a file and parsing its written content produce identical DNs."""
         path = self._fixture_path(c.Tests.RFC, "rfc_entries_fixtures.ldif")
@@ -157,7 +157,7 @@ class TestsFlextLdifLdifFixturesIntegration:
 
     def test_parse_missing_file_fails_with_informative_error(
         self,
-        ldif_client: p.Ldif.LdifClient,
+        ldif_client: p.Ldif.Client,
     ) -> None:
         """Parsing a nonexistent fixture returns a failure naming the missing path."""
         missing = self._fixture_path(c.Tests.RFC, "does_not_exist.ldif")

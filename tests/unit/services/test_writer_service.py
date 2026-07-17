@@ -40,7 +40,7 @@ class TestsFlextLdifWriterService:
         self,
         scenario: str,
         server_type: str,
-        writer: p.Ldif.LdifClient,
+        writer: p.Ldif.Client,
     ) -> None:
         result = writer.write_to_string(self._entries(), server_type=server_type)
 
@@ -55,7 +55,7 @@ class TestsFlextLdifWriterService:
 
     def test_write_to_string_is_idempotent_for_identical_input(
         self,
-        writer: p.Ldif.LdifClient,
+        writer: p.Ldif.Client,
     ) -> None:
         entries = self._entries()
 
@@ -70,7 +70,7 @@ class TestsFlextLdifWriterService:
 
     def test_write_to_string_returns_empty_content_for_no_entries(
         self,
-        writer: p.Ldif.LdifClient,
+        writer: p.Ldif.Client,
     ) -> None:
         content = u.Tests.assert_success(
             writer.write_to_string([], server_type=c.Tests.RFC),
@@ -80,7 +80,7 @@ class TestsFlextLdifWriterService:
 
     def test_write_to_string_keeps_dn_prefix_before_folding(
         self,
-        writer: p.Ldif.LdifClient,
+        writer: p.Ldif.Client,
     ) -> None:
         long_dn = (
             "cn=writer-fold-target,"
@@ -103,7 +103,7 @@ class TestsFlextLdifWriterService:
 
     def test_write_returns_content_and_statistics_for_entry_sequence(
         self,
-        writer: p.Ldif.LdifClient,
+        writer: p.Ldif.Client,
     ) -> None:
         entries = self._entries()
 
@@ -121,7 +121,7 @@ class TestsFlextLdifWriterService:
 
     def test_write_accepts_parse_response_input(
         self,
-        writer: p.Ldif.LdifClient,
+        writer: p.Ldif.Client,
     ) -> None:
         entries = self._entries()
         parse_response = m.Ldif.ParseResponse(
@@ -143,7 +143,7 @@ class TestsFlextLdifWriterService:
 
     def test_write_ldif_file_persists_content_and_reports_path(
         self,
-        writer: p.Ldif.LdifClient,
+        writer: p.Ldif.Client,
         tmp_path: Path,
     ) -> None:
         entries = self._entries()
@@ -165,7 +165,7 @@ class TestsFlextLdifWriterService:
 
     def test_write_to_string_fails_for_unknown_server(
         self,
-        writer: p.Ldif.LdifClient,
+        writer: p.Ldif.Client,
     ) -> None:
         unknown_server = f"{c.Tests.WRITER_UNKNOWN_SERVER_PREFIX}_{uuid4().hex}"
 
@@ -175,7 +175,7 @@ class TestsFlextLdifWriterService:
 
     def test_write_fails_for_unknown_server(
         self,
-        writer: p.Ldif.LdifClient,
+        writer: p.Ldif.Client,
     ) -> None:
         result = writer.write(
             self._entries(),
@@ -186,7 +186,7 @@ class TestsFlextLdifWriterService:
 
     def test_write_ldif_file_fails_for_unknown_server(
         self,
-        writer: p.Ldif.LdifClient,
+        writer: p.Ldif.Client,
         tmp_path: Path,
     ) -> None:
         output_file = tmp_path / c.Tests.WRITER_OUTPUT_FILENAME
@@ -202,7 +202,7 @@ class TestsFlextLdifWriterService:
 
     def test_write_ldif_file_fails_when_parent_is_not_a_directory(
         self,
-        writer: p.Ldif.LdifClient,
+        writer: p.Ldif.Client,
         tmp_path: Path,
     ) -> None:
         blocking_file = tmp_path / c.Tests.WRITER_BLOCKING_PARENT_NAME
@@ -219,7 +219,7 @@ class TestsFlextLdifWriterService:
 
     def test_write_ldif_file_fails_when_target_is_a_directory(
         self,
-        writer: p.Ldif.LdifClient,
+        writer: p.Ldif.Client,
         tmp_path: Path,
     ) -> None:
         directory_target = tmp_path / c.Tests.WRITER_DIRECTORY_TARGET_NAME

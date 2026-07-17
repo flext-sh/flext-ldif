@@ -32,7 +32,7 @@ class TestsFlextLdifOidIntegration:
 
     @staticmethod
     def _entries(
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         content: str,
     ) -> t.SequenceOf[p.Ldif.Entry]:
         """Parse ``content`` through the public client and return its entries."""
@@ -63,7 +63,7 @@ class TestsFlextLdifOidIntegration:
     @classmethod
     def _roundtrip(
         cls,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         entries: t.SequenceOf[p.Ldif.Entry],
     ) -> t.SequenceOf[p.Ldif.Entry]:
         """Write ``entries`` and re-parse the produced LDIF text."""
@@ -78,7 +78,7 @@ class TestsFlextLdifOidIntegration:
 
     def test_parse_schema_fixture_yields_entries_with_dns(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         oid_schema_fixture: str,
     ) -> None:
         """Parsing the OID schema returns entries, each exposing a DN."""
@@ -96,7 +96,7 @@ class TestsFlextLdifOidIntegration:
     )
     def test_oracle_definitions_detected_in_parsed_schema(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         oid_schema_fixture: str,
         definition_attr: str,
     ) -> None:
@@ -121,7 +121,7 @@ class TestsFlextLdifOidIntegration:
 
     def test_parse_integration_fixture_yields_full_dataset(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         oid_integration_fixture: str,
     ) -> None:
         """The integration fixture parses into a large, real dataset."""
@@ -139,7 +139,7 @@ class TestsFlextLdifOidIntegration:
     )
     def test_oracle_attribute_preserved_in_parsing(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         oid_integration_fixture: str,
         attribute_name: str,
     ) -> None:
@@ -158,7 +158,7 @@ class TestsFlextLdifOidIntegration:
 
     def test_roundtrip_preserves_entry_count(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         oid_integration_fixture: str,
     ) -> None:
         """Parse -> write -> parse keeps the entry count identical."""
@@ -171,7 +171,7 @@ class TestsFlextLdifOidIntegration:
 
     def test_roundtrip_preserves_dns_exactly(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         oid_integration_fixture: str,
     ) -> None:
         """Every DN is preserved byte-for-byte across a round-trip."""
@@ -189,7 +189,7 @@ class TestsFlextLdifOidIntegration:
     )
     def test_roundtrip_preserves_oracle_acl_value_counts(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         oid_integration_fixture: str,
         acl_attribute: str,
     ) -> None:

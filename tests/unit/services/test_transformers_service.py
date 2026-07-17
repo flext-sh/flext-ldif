@@ -23,7 +23,7 @@ class TestsFlextLdifTransformersService:
 
     def test_convert_model_returns_entry_preserving_dn(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         entry = u.Tests.create_real_entry(
             dn=c.Tests.ANALYSIS_DN_VALID,

@@ -25,7 +25,7 @@ class TestsFlextLdifValidationService:
     )
     def test_validate_attribute_name_accepts_valid_descriptors(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         name: str,
     ) -> None:
         result = api.validate_attribute_name(name)
@@ -40,7 +40,7 @@ class TestsFlextLdifValidationService:
     )
     def test_validate_attribute_name_rejects_invalid_descriptors(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         name: str,
     ) -> None:
         result = api.validate_attribute_name(name)
@@ -55,7 +55,7 @@ class TestsFlextLdifValidationService:
     )
     def test_validate_objectclass_name_accepts_valid_descriptors(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         name: str,
     ) -> None:
         result = api.validate_objectclass_name(name)
@@ -70,7 +70,7 @@ class TestsFlextLdifValidationService:
     )
     def test_validate_objectclass_name_rejects_invalid_descriptors(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         name: str,
     ) -> None:
         result = api.validate_objectclass_name(name)
@@ -84,7 +84,7 @@ class TestsFlextLdifValidationService:
     )
     def test_objectclass_validation_agrees_with_attribute_validation(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         name: str,
     ) -> None:
         """Both public descriptor checks share one RFC 4512 verdict."""
@@ -101,7 +101,7 @@ class TestsFlextLdifValidationService:
     )
     def test_validate_attribute_name_is_idempotent(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         name: str,
     ) -> None:
         """Repeated validation of the same descriptor is stable."""

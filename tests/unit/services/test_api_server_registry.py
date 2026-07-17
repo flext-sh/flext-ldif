@@ -13,7 +13,7 @@ class TestsFlextLdifApiServerRegistry:
 
     def test_list_registered_servers_includes_core_server_types(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         """The facade exposes the real registered server catalog."""
         registered_servers = u.Tests.assert_success(
@@ -24,7 +24,7 @@ class TestsFlextLdifApiServerRegistry:
 
     def test_base_server_resolution_returns_requested_server_type(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         """Resolving a registered type yields a server whose type round-trips."""
         server = u.Tests.assert_success(
@@ -35,7 +35,7 @@ class TestsFlextLdifApiServerRegistry:
 
     def test_component_lookups_succeed_for_registered_server_type(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         """Schema, ACL, and entry component lookups succeed for a real type."""
         tm.ok(api.schema_server(c.Tests.OID))
@@ -44,7 +44,7 @@ class TestsFlextLdifApiServerRegistry:
 
     def test_server_bundle_exposes_component_contract(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         """The resolved bundle exposes schema/acl/entry component keys."""
         server_bundle = u.Tests.assert_success(
@@ -55,7 +55,7 @@ class TestsFlextLdifApiServerRegistry:
 
     def test_server_constants_expose_categorization_priority(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         """Resolved server constants publish the categorization priority contract."""
         constants = u.Tests.assert_success(
@@ -66,7 +66,7 @@ class TestsFlextLdifApiServerRegistry:
 
     def test_registry_summary_exposes_statistics_contract(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         """The registry summary publishes per-server and priority statistics."""
         stats = u.Tests.assert_success(
@@ -77,7 +77,7 @@ class TestsFlextLdifApiServerRegistry:
 
     def test_invalid_server_type_fails_every_resolution_endpoint(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         """A syntactically invalid identifier fails gracefully on all endpoints."""
         invalid = c.Tests.SERVER_INVALID_SERVER_TYPE
@@ -99,7 +99,7 @@ class TestsFlextLdifApiServerRegistry:
     )
     def test_valid_but_unregistered_server_type_fails_lookup(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         resolver_name: str,
     ) -> None:
         """A valid-but-unregistered type fails gracefully on each resolver."""

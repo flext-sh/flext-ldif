@@ -23,7 +23,7 @@ class TestsFlextLdifAclMetadataPreservation:
     """Behavioral tests for OID/OUD ACL metadata preservation and round-trips."""
 
     @pytest.fixture
-    def api(self) -> p.Ldif.LdifClient:
+    def api(self) -> p.Ldif.Client:
         """Provide a real LDIF client (public facade, no mocked internals)."""
         return ldif()
 
@@ -41,7 +41,7 @@ class TestsFlextLdifAclMetadataPreservation:
 
     def _parse_single(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         ldif_text: str,
         server_type: str,
     ) -> p.Ldif.Entry:
@@ -93,7 +93,7 @@ class TestsFlextLdifAclMetadataPreservation:
     )
     def test_oid_feature_preserved_in_extensions(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         acl_clause: str,
         extension_key: str,
         expected: str | bool,
@@ -110,7 +110,7 @@ class TestsFlextLdifAclMetadataPreservation:
 
     def test_oid_all_features_preserved_together(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         """A single OID ACL carrying every feature preserves them all at once."""
         ldif_text = (
@@ -205,7 +205,7 @@ class TestsFlextLdifAclMetadataPreservation:
     )
     def test_oud_feature_preserved_in_extensions(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         aci: str,
         extension_key: str,
         expected: str,
@@ -222,7 +222,7 @@ class TestsFlextLdifAclMetadataPreservation:
 
     def test_oud_all_features_preserved_together(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         """A single OUD ACI carrying every feature preserves them all at once."""
         ldif_text = (
@@ -255,7 +255,7 @@ class TestsFlextLdifAclMetadataPreservation:
 
     # -- Round-trip preservation (parse -> write -> parse) ----------------
 
-    def test_oid_acl_survives_round_trip(self, api: p.Ldif.LdifClient) -> None:
+    def test_oid_acl_survives_round_trip(self, api: p.Ldif.Client) -> None:
         """OID ACL metadata is identical after a write/re-parse round-trip."""
         original = (
             "dn: cn=test,dc=example,dc=com\n"
@@ -276,7 +276,7 @@ class TestsFlextLdifAclMetadataPreservation:
         tm.that(extensions.get(c.Ldif.ACL_BINDMODE), eq="Simple")
         tm.that(extensions.get(c.Ldif.ACL_DENY_GROUP_OVERRIDE), eq=True)
 
-    def test_oud_aci_survives_round_trip(self, api: p.Ldif.LdifClient) -> None:
+    def test_oud_aci_survives_round_trip(self, api: p.Ldif.Client) -> None:
         """OUD ACI metadata is identical after a write/re-parse round-trip."""
         original = (
             "dn: cn=test,dc=example,dc=com\n"

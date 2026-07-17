@@ -29,7 +29,7 @@ class TestsFlextLdifEdgeCases:
     """Behavioral edge-case coverage for the public LDIF client contract."""
 
     @pytest.fixture
-    def api(self) -> p.Ldif.LdifClient:
+    def api(self) -> p.Ldif.Client:
         """Public LDIF client instance."""
         return ldif()
 
@@ -45,7 +45,7 @@ class TestsFlextLdifEdgeCases:
     )
     def test_content_without_entries_parses_to_empty_list(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         label: str,
         content: str,
     ) -> None:
@@ -57,7 +57,7 @@ class TestsFlextLdifEdgeCases:
 
     def test_single_entry_with_only_dn_preserves_dn(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         """A minimal DN-only entry yields exactly one entry with that DN."""
         result = api.parse_ldif("dn: cn=Single,dc=example,dc=com\n")
@@ -69,7 +69,7 @@ class TestsFlextLdifEdgeCases:
 
     def test_single_entry_with_one_attribute_preserves_value(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         """DN plus a single attribute round-trips the attribute value."""
         result = api.parse_ldif(
@@ -85,7 +85,7 @@ class TestsFlextLdifEdgeCases:
 
     def test_entry_with_many_attribute_values_preserves_all(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         """A multi-valued attribute with 100 values preserves every value."""
         expected = [f"user{i}@example.com" for i in range(100)]
@@ -104,7 +104,7 @@ class TestsFlextLdifEdgeCases:
 
     def test_entry_preserves_all_distinct_attribute_names(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         """Every distinct attribute in the input is present after parsing."""
         content = (
@@ -129,7 +129,7 @@ class TestsFlextLdifEdgeCases:
 
     def test_very_long_single_value_preserved_intact(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         """A 10KB attribute value is preserved without truncation."""
         long_value = "x" * 10_000
@@ -151,7 +151,7 @@ class TestsFlextLdifEdgeCases:
 
     def test_deeply_nested_dn_hierarchy_preserved(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         """A DN with 10+ nesting levels is preserved verbatim."""
         deep_dn = ",".join(f"ou=level{i}" for i in range(10))
@@ -169,7 +169,7 @@ class TestsFlextLdifEdgeCases:
 
     def test_single_character_components_parse(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         """Single-character DN and attribute values are accepted and kept."""
         result = api.parse_ldif("dn: cn=A,dc=B\nobjectClass: X\ncn: A\nsn: B\n")
@@ -185,7 +185,7 @@ class TestsFlextLdifEdgeCases:
     )
     def test_special_single_character_values_preserved(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         attribute: str,
         value: str,
     ) -> None:
@@ -201,7 +201,7 @@ class TestsFlextLdifEdgeCases:
 
     def test_many_rdn_components_preserved(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         """A DN with many RDN components is preserved verbatim."""
         components = ",".join(f"ou=ou{i}" for i in range(20))
@@ -215,7 +215,7 @@ class TestsFlextLdifEdgeCases:
 
     def test_minimum_single_rdn_dn_parses(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         """The shortest valid single-RDN DN parses to one preserved entry."""
         result = api.parse_ldif("dn: cn=MinDN\nobjectClass: top\ncn: MinDN\n")
@@ -238,7 +238,7 @@ class TestsFlextLdifEdgeCases:
     )
     def test_unicode_description_preserved_exactly(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         label: str,
         text: str,
     ) -> None:
@@ -254,7 +254,7 @@ class TestsFlextLdifEdgeCases:
 
     def test_base64_encoded_value_is_decoded(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         """A ``::`` base64 attribute value is decoded to its plain text."""
         content = "dn: cn=B64,dc=example,dc=com\ncn: B64\ndescription:: aGVsbG8=\n"
@@ -273,7 +273,7 @@ class TestsFlextLdifEdgeCases:
 
     def test_empty_roundtrip_produces_no_entries(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         """Parsing empty input then writing yields empty/version-only output."""
         result = api.parse_ldif("")
@@ -288,7 +288,7 @@ class TestsFlextLdifEdgeCases:
 
     def test_single_entry_roundtrip_preserves_dn_and_value(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         """Parse -> write -> parse preserves the entry DN and attribute."""
         result = api.parse_ldif("dn: cn=Test,dc=example,dc=com\ncn: Test\n")
@@ -308,7 +308,7 @@ class TestsFlextLdifEdgeCases:
 
     def test_many_entries_roundtrip_preserves_count_and_dns(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         """A 100-entry roundtrip preserves both the count and every DN."""
         source = "\n\n".join(

@@ -22,7 +22,7 @@ class TestsFlextLdifErrorRecovery:
     """Observable-behavior tests for malformed and edge-case LDIF input."""
 
     @pytest.fixture
-    def api(self) -> p.Ldif.LdifClient:
+    def api(self) -> p.Ldif.Client:
         """Return a configured LDIF facade instance (public DSL alias)."""
         return ldif()
 
@@ -31,7 +31,7 @@ class TestsFlextLdifErrorRecovery:
     # ------------------------------------------------------------------
 
     def test_valid_entry_preserves_dn_and_attribute_names(
-        self, api: p.Ldif.LdifClient
+        self, api: p.Ldif.Client
     ) -> None:
         """A well-formed entry parses to exactly one entry with its DN/attrs intact."""
         content = (
@@ -70,7 +70,7 @@ class TestsFlextLdifErrorRecovery:
         ],
     )
     def test_structural_prefixes_do_not_alter_parsed_dn(
-        self, api: p.Ldif.LdifClient, content: str, expected_dn: str
+        self, api: p.Ldif.Client, content: str, expected_dn: str
     ) -> None:
         """Version lines, comments, and unicode DNs yield one entry with the exact DN."""
         result = api.parse_ldif(content)
@@ -86,7 +86,7 @@ class TestsFlextLdifErrorRecovery:
     # ------------------------------------------------------------------
 
     def test_duplicate_attribute_collects_all_values_in_order(
-        self, api: p.Ldif.LdifClient
+        self, api: p.Ldif.Client
     ) -> None:
         """Repeated attribute lines are collected as an ordered multi-value list."""
         content = (
@@ -108,7 +108,7 @@ class TestsFlextLdifErrorRecovery:
             ],
         )
 
-    def test_empty_attribute_value_is_preserved(self, api: p.Ldif.LdifClient) -> None:
+    def test_empty_attribute_value_is_preserved(self, api: p.Ldif.Client) -> None:
         """An attribute with no value keeps an explicit empty-string value."""
         content = (
             "dn: cn=E,dc=example,dc=com\nobjectClass: person\ncn: E\ndescription:\n"
@@ -122,7 +122,7 @@ class TestsFlextLdifErrorRecovery:
         tm.that(entry.attributes.attributes["description"], eq=[""])
 
     def test_folded_continuation_lines_concatenate_into_single_value(
-        self, api: p.Ldif.LdifClient
+        self, api: p.Ldif.Client
     ) -> None:
         """RFC 2849 line folding joins continuation lines into one value."""
         content = (
@@ -137,7 +137,7 @@ class TestsFlextLdifErrorRecovery:
         tm.that(entry.attributes, none=False)
         tm.that(entry.attributes.attributes["description"], eq=["abcd"])
 
-    def test_very_long_value_is_not_truncated(self, api: p.Ldif.LdifClient) -> None:
+    def test_very_long_value_is_not_truncated(self, api: p.Ldif.Client) -> None:
         """A value far exceeding a line width is preserved without truncation."""
         long_value = "x" * 2000
         content = (
@@ -153,7 +153,7 @@ class TestsFlextLdifErrorRecovery:
         tm.that(entry.attributes.attributes["description"], eq=[long_value])
 
     def test_base64_binary_attribute_is_parsed_as_named_attribute(
-        self, api: p.Ldif.LdifClient
+        self, api: p.Ldif.Client
     ) -> None:
         """A ``::`` base64 attribute appears under its attribute name."""
         content = (
@@ -168,7 +168,7 @@ class TestsFlextLdifErrorRecovery:
         tm.that(entry.attributes, none=False)
         tm.that(entry.attributes.attributes, has="jpegPhoto")
 
-    def test_unicode_attribute_value_is_preserved(self, api: p.Ldif.LdifClient) -> None:
+    def test_unicode_attribute_value_is_preserved(self, api: p.Ldif.Client) -> None:
         """Multi-byte UTF-8 characters survive parsing unchanged."""
         content = (
             "dn: cn=U,dc=example,dc=com\nobjectClass: person\ncn: U\n"
@@ -187,7 +187,7 @@ class TestsFlextLdifErrorRecovery:
     # structured result and drops only the offending fragment.
     # ------------------------------------------------------------------
 
-    def test_entry_without_dn_yields_no_entries(self, api: p.Ldif.LdifClient) -> None:
+    def test_entry_without_dn_yields_no_entries(self, api: p.Ldif.Client) -> None:
         """A block with no DN line produces zero entries, not a crash."""
         content = "objectClass: person\ncn: NoDN\nsn: User\n"
 
@@ -196,7 +196,7 @@ class TestsFlextLdifErrorRecovery:
         tm.ok(result)
         tm.that(result.unwrap().entries, eq=[])
 
-    def test_invalid_dn_without_rdn_is_rejected(self, api: p.Ldif.LdifClient) -> None:
+    def test_invalid_dn_without_rdn_is_rejected(self, api: p.Ldif.Client) -> None:
         """A DN lacking any ``=`` RDN component yields no accepted entry."""
         content = "dn: invalid-dn-no-equals\nobjectClass: person\ncn: Test\n"
 
@@ -206,7 +206,7 @@ class TestsFlextLdifErrorRecovery:
         tm.that(result.unwrap().entries, eq=[])
 
     def test_malformed_attribute_line_is_dropped_entry_survives(
-        self, api: p.Ldif.LdifClient
+        self, api: p.Ldif.Client
     ) -> None:
         """A line missing the ``:`` separator is discarded; valid attrs remain."""
         content = (
@@ -221,7 +221,7 @@ class TestsFlextLdifErrorRecovery:
         tm.that(set(entry.attributes.attributes), eq={"cn", "sn"})
 
     def test_dn_only_entry_parses_with_empty_attributes(
-        self, api: p.Ldif.LdifClient
+        self, api: p.Ldif.Client
     ) -> None:
         """An entry carrying only a DN parses as one entry with no attributes."""
         content = "dn: cn=Minimal,dc=example,dc=com\n"
@@ -259,7 +259,7 @@ class TestsFlextLdifErrorRecovery:
         ],
     )
     def test_partial_input_recovers_valid_entries(
-        self, api: p.Ldif.LdifClient, content: str, expected_count: int
+        self, api: p.Ldif.Client, content: str, expected_count: int
     ) -> None:
         """Truncated / orphaned / unterminated input recovers the valid entries."""
         result = api.parse_ldif(content)
@@ -288,7 +288,7 @@ class TestsFlextLdifErrorRecovery:
         ],
     )
     def test_malformed_content_returns_structured_result_without_raising(
-        self, api: p.Ldif.LdifClient, content: str
+        self, api: p.Ldif.Client, content: str
     ) -> None:
         """Malformed schema/base64 input returns an r[T] result rather than raising."""
         result = api.parse_ldif(content)
@@ -304,7 +304,7 @@ class TestsFlextLdifErrorRecovery:
     # ------------------------------------------------------------------
 
     def test_parse_write_parse_is_idempotent_on_dn_and_attributes(
-        self, api: p.Ldif.LdifClient
+        self, api: p.Ldif.Client
     ) -> None:
         """Parse, write, then re-parse preserves DN and attribute names/values."""
         content = (

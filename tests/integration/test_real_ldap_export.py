@@ -31,7 +31,7 @@ from tests import c, p
 
 
 @pytest.fixture
-def flext_api() -> p.Ldif.LdifClient:
+def flext_api() -> p.Ldif.Client:
     """Public Ldif API instance under test."""
     return ldif()
 
@@ -57,7 +57,7 @@ class TestsFlextLdifRealLdapExport:
 
     def _parse_back(
         self,
-        flext_api: p.Ldif.LdifClient,
+        flext_api: p.Ldif.Client,
         content: str | None,
     ) -> dict[str, Mapping[str, Sequence[str]]]:
         """Parse exported LDIF and index attribute maps by DN string.
@@ -77,7 +77,7 @@ class TestsFlextLdifRealLdapExport:
         self,
         ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
-        flext_api: p.Ldif.LdifClient,
+        flext_api: p.Ldif.Client,
         make_test_username: Callable[[str], str],
     ) -> None:
         """A single exported entry round-trips its DN and every attribute value."""
@@ -110,7 +110,7 @@ class TestsFlextLdifRealLdapExport:
         self,
         ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
-        flext_api: p.Ldif.LdifClient,
+        flext_api: p.Ldif.Client,
         make_test_username: Callable[[str], str],
     ) -> None:
         """Batch export reproduces each source DN with its distinct attributes."""
@@ -146,7 +146,7 @@ class TestsFlextLdifRealLdapExport:
         self,
         ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
-        flext_api: p.Ldif.LdifClient,
+        flext_api: p.Ldif.Client,
         make_test_username: Callable[[str], str],
     ) -> None:
         """A nested directory subtree exports so every container and leaf DN survives."""
@@ -187,7 +187,7 @@ class TestsFlextLdifRealLdapExport:
         self,
         ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
-        flext_api: p.Ldif.LdifClient,
+        flext_api: p.Ldif.Client,
         make_test_username: Callable[[str], str],
     ) -> None:
         """Exporting the same entries twice yields identical LDIF content."""
@@ -212,7 +212,7 @@ class TestsFlextLdifRealLdapExport:
         self,
         ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
-        flext_api: p.Ldif.LdifClient,
+        flext_api: p.Ldif.Client,
         tmp_path: Path,
         make_test_username: Callable[[str], str],
     ) -> None:

@@ -43,7 +43,7 @@ class TestsFlextLdifOudToOidMigration:
         return FlextLdifServersOid()
 
     @pytest.fixture
-    def client(self) -> p.Ldif.LdifClient:
+    def client(self) -> p.Ldif.Client:
         """Create the public ldif client used to re-parse migrated output."""
         return ldif()
 
@@ -87,7 +87,7 @@ class TestsFlextLdifOudToOidMigration:
         self,
         tmp_path: Path,
         oud_entries: str,
-        client: p.Ldif.LdifClient,
+        client: p.Ldif.Client,
     ) -> None:
         """Pipeline OUD->OID writes a non-empty, re-parseable OID LDIF file."""
         input_dir = tmp_path / "input"
@@ -121,7 +121,7 @@ class TestsFlextLdifOudToOidMigration:
     def test_pipeline_preserves_dn_set_across_migration(
         self,
         tmp_path: Path,
-        client: p.Ldif.LdifClient,
+        client: p.Ldif.Client,
         fixture_name: str,
     ) -> None:
         """Every source DN survives the OUD->OID migration unchanged."""
@@ -196,7 +196,7 @@ class TestsFlextLdifOudToOidMigration:
         self,
         oud: FlextLdifServersOud,
         oid: FlextLdifServersOid,
-        client: p.Ldif.LdifClient,
+        client: p.Ldif.Client,
         oud_integration: str,
     ) -> None:
         """OUD-parsed entries written by OID re-parse to the same DN set."""

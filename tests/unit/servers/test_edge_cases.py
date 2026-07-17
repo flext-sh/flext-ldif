@@ -16,7 +16,7 @@ from tests import c, p
 
 
 @pytest.fixture
-def ldif_api() -> p.Ldif.LdifClient:
+def ldif_api() -> p.Ldif.Client:
     """Provide a ldif API instance for the test function."""
     return ldif()
 
@@ -36,7 +36,7 @@ class TestsFlextLdifEdgeCases:
     )
     def test_parse_inline_edge_cases(
         self,
-        ldif_api: p.Ldif.LdifClient,
+        ldif_api: p.Ldif.Client,
         ldif_content: str,
         expected_entry_count: int,
         expected_min_depth: int,
@@ -60,7 +60,7 @@ class TestsFlextLdifEdgeCases:
             tm.that(max_depth, gte=expected_min_depth)
         tm.that(has_non_ascii, eq=expect_non_ascii)
 
-    def test_large_multivalue(self, ldif_api: p.Ldif.LdifClient) -> None:
+    def test_large_multivalue(self, ldif_api: p.Ldif.Client) -> None:
         """Test parsing of attributes with many values."""
         fixture_path = (
             c.Tests.FIXTURES_DIR / c.Tests.EDGE_CASE_LARGE_MULTIVALUE_FIXTURE_RELATIVE
@@ -84,7 +84,7 @@ class TestsFlextLdifEdgeCases:
     )
     def test_roundtrip_inline_edge_cases(
         self,
-        ldif_api: p.Ldif.LdifClient,
+        ldif_api: p.Ldif.Client,
         tmp_path: Path,
         ldif_content: str,
         output_name: str,

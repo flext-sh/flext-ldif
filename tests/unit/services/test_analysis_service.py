@@ -27,7 +27,7 @@ class TestsFlextLdifAnalysisService:
 
     def test_validate_entries_valid_entry_reports_all_valid(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         entry = self._make_entry(
             c.Tests.ANALYSIS_DN_VALID,
@@ -43,7 +43,7 @@ class TestsFlextLdifAnalysisService:
 
     def test_validate_entries_empty_list_is_vacuously_valid(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         result = api.validate_entries([])
         val_result = u.Tests.assert_success(result)
@@ -54,7 +54,7 @@ class TestsFlextLdifAnalysisService:
 
     def test_validate_entries_accepts_parse_response_input(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         parse_result = api.parse_ldif(c.Tests.ANALYSIS_PARSE_RESPONSE_LDIF)
         parse_resp = u.Tests.assert_success(parse_result)
@@ -66,7 +66,7 @@ class TestsFlextLdifAnalysisService:
 
     def test_validate_entries_invalid_attr_name_reports_error(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         entry = self._make_entry(
             c.Tests.ANALYSIS_DN_VALID,
@@ -81,7 +81,7 @@ class TestsFlextLdifAnalysisService:
 
     def test_validate_entries_none_attributes_reports_invalid(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         entry = self._make_entry(c.Tests.ANALYSIS_DN_VALID, None)
         result = api.validate_entries([entry])
@@ -92,7 +92,7 @@ class TestsFlextLdifAnalysisService:
 
     def test_validate_entries_mixed_batch_counts_each_side(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         valid_entry = self._make_entry(
             c.Tests.ANALYSIS_DN_VALID,
@@ -111,7 +111,7 @@ class TestsFlextLdifAnalysisService:
 
     def test_validate_entries_order_independent_for_mixed_batch(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         valid_entry = self._make_entry(
             c.Tests.ANALYSIS_DN_VALID,
@@ -136,7 +136,7 @@ class TestsFlextLdifAnalysisService:
     def test_valid_objectclass_names_pass_validation(
         self,
         oc_name: str,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         entry = self._make_entry(
             c.Tests.ANALYSIS_DN_VALID,
@@ -149,7 +149,7 @@ class TestsFlextLdifAnalysisService:
 
     def test_validate_entries_empty_dn_reports_invalid(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         entry = self._make_entry("", {"objectClass": ["person"]})
         result = api.validate_entries([entry])
@@ -160,7 +160,7 @@ class TestsFlextLdifAnalysisService:
 
     def test_validate_entries_invalid_objectclass_name_reports_invalid(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         entry = self._make_entry(
             c.Tests.ANALYSIS_DN_VALID,
@@ -174,7 +174,7 @@ class TestsFlextLdifAnalysisService:
 
     def test_validate_entries_none_dn_reports_invalid(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         entry = self._make_entry(None, {})
         result = api.validate_entries([entry])

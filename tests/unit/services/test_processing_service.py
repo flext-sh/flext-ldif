@@ -29,7 +29,7 @@ class TestsFlextLdifProcessingService:
     )
     def test_process_entries_returns_results_for_configured_modes(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         processor_name: Literal["transform", "validate"],
         parallel: bool,
         batch_size: int,
@@ -53,7 +53,7 @@ class TestsFlextLdifProcessingService:
 
     def test_process_entries_supports_kwargs_option_payload(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         entries = [self._entry(c.Tests.PROCESSING_VALID_DNS[0])]
 
@@ -72,7 +72,7 @@ class TestsFlextLdifProcessingService:
 
     def test_process_entries_batch_returns_failure_for_none_attributes(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         invalid_entry = m.Ldif.Entry(
             dn=c.Tests.PROCESSING_VALID_DNS[0],
@@ -91,7 +91,7 @@ class TestsFlextLdifProcessingService:
 
     def test_process_entries_parallel_raises_for_none_dn(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         invalid_entry = m.Ldif.Entry(
             dn=None,

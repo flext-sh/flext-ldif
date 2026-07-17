@@ -28,7 +28,7 @@ from tests import c, m, p, t
 
 
 @pytest.fixture
-def flext_api() -> p.Ldif.LdifClient:
+def flext_api() -> p.Ldif.Client:
     """Ldif API instance."""
     return ldif()
 
@@ -133,7 +133,7 @@ class TestsFlextLdifRealLdapCrud:
         self,
         ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
-        flext_api: p.Ldif.LdifClient,
+        flext_api: p.Ldif.Client,
         make_test_username: Callable[[str], str],
     ) -> None:
         """A batch built via the API validates and stores as valid entries."""
@@ -163,7 +163,7 @@ class TestsFlextLdifRealLdapCrud:
         self,
         ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
-        flext_api: p.Ldif.LdifClient,
+        flext_api: p.Ldif.Client,
         tmp_path: Path,
         make_test_username: Callable[[str], str],
     ) -> None:

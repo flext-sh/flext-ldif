@@ -12,12 +12,12 @@ class TestsFlextLdifAclService:
     """Cover ACL behavior through the public ldif facade."""
 
     @pytest.fixture
-    def svc(self, api: p.Ldif.LdifClient) -> p.Ldif.LdifClient:
+    def svc(self, api: p.Ldif.Client) -> p.Ldif.Client:
         return api
 
     def test_service_check_returns_empty_response(
         self,
-        svc: p.Ldif.LdifClient,
+        svc: p.Ldif.Client,
     ) -> None:
         result = svc.service_check()
         resp = u.Tests.assert_success(result)
@@ -26,7 +26,7 @@ class TestsFlextLdifAclService:
 
     def test_evaluate_empty_acls_denies_access(
         self,
-        svc: p.Ldif.LdifClient,
+        svc: p.Ldif.Client,
     ) -> None:
         result = svc.evaluate_acl_context([], {})
         eval_result = u.Tests.assert_success(result)
@@ -34,7 +34,7 @@ class TestsFlextLdifAclService:
 
     def test_evaluate_no_permissions_required_grants_access(
         self,
-        svc: p.Ldif.LdifClient,
+        svc: p.Ldif.Client,
     ) -> None:
         acl = m.Ldif.Acl(name="test-acl")
         permissions_dict = dict(c.Tests.ACL_PERMISSIONS_EMPTY)
@@ -44,7 +44,7 @@ class TestsFlextLdifAclService:
 
     def test_evaluate_with_dict_permissions_read_only(
         self,
-        svc: p.Ldif.LdifClient,
+        svc: p.Ldif.Client,
     ) -> None:
         permissions_dict = dict(c.Tests.ACL_PERMISSIONS_READ_ONLY)
         result = svc.evaluate_acl_context([], permissions_dict)
@@ -53,7 +53,7 @@ class TestsFlextLdifAclService:
 
     def test_evaluate_with_acl_permissions_model(
         self,
-        svc: p.Ldif.LdifClient,
+        svc: p.Ldif.Client,
     ) -> None:
         perms = m.Ldif.AclPermissions(read=True)
         result = svc.evaluate_acl_context([], perms)
@@ -72,17 +72,17 @@ class TestsFlextLdifAclService:
         scenario: str,
         acl_string: str,
         server_type: str,
-        svc: p.Ldif.LdifClient,
+        svc: p.Ldif.Client,
     ) -> None:
         result = svc.parse_acl_string(acl_string, server_type)
         tm.that(bool(scenario), eq=True)
         tm.fail(result)
 
-    def test_parse_acl_string_oud_succeeds(self, svc: p.Ldif.LdifClient) -> None:
+    def test_parse_acl_string_oud_succeeds(self, svc: p.Ldif.Client) -> None:
         result = svc.parse_acl_string(c.Tests.ACL_OUD_STRING, c.Tests.OUD)
         u.Tests.assert_success(result)
 
-    def test_parse_acl_string_oid_succeeds(self, svc: p.Ldif.LdifClient) -> None:
+    def test_parse_acl_string_oid_succeeds(self, svc: p.Ldif.Client) -> None:
         result = svc.parse_acl_string(c.Tests.ACL_OID_STRING, c.Tests.OID)
         u.Tests.assert_success(result)
 
@@ -95,7 +95,7 @@ class TestsFlextLdifAclService:
         scenario: str,
         acl_string: str,
         server_type: str,
-        svc: p.Ldif.LdifClient,
+        svc: p.Ldif.Client,
     ) -> None:
         result = svc.parse_acl_string(acl_string, server_type)
         tm.that(bool(scenario), eq=True)
@@ -103,7 +103,7 @@ class TestsFlextLdifAclService:
 
     def test_extract_acls_from_entry_with_aci_attribute(
         self,
-        svc: p.Ldif.LdifClient,
+        svc: p.Ldif.Client,
     ) -> None:
         entry = m.Ldif.Entry(
             dn=c.Tests.ACL_ENTRY_DN,
@@ -116,7 +116,7 @@ class TestsFlextLdifAclService:
 
     def test_extract_acls_from_entry_with_no_acl_attrs(
         self,
-        svc: p.Ldif.LdifClient,
+        svc: p.Ldif.Client,
     ) -> None:
         entry = m.Ldif.Entry(
             dn=c.Tests.ACL_ENTRY_DN,
@@ -130,7 +130,7 @@ class TestsFlextLdifAclService:
 
     def test_extract_acls_from_entry_with_oud_aci_attribute(
         self,
-        svc: p.Ldif.LdifClient,
+        svc: p.Ldif.Client,
     ) -> None:
         entry = m.Ldif.Entry(
             dn=c.Tests.ACL_ENTRY_DN,
@@ -143,7 +143,7 @@ class TestsFlextLdifAclService:
 
     def test_evaluate_acl_grants_when_acl_has_matching_permissions(
         self,
-        svc: p.Ldif.LdifClient,
+        svc: p.Ldif.Client,
     ) -> None:
         acl = m.Ldif.Acl(
             name="test-acl",
@@ -156,7 +156,7 @@ class TestsFlextLdifAclService:
 
     def test_evaluate_acl_denies_when_no_acl_matches_permissions(
         self,
-        svc: p.Ldif.LdifClient,
+        svc: p.Ldif.Client,
     ) -> None:
         acl = m.Ldif.Acl(
             name="test-acl",
@@ -169,7 +169,7 @@ class TestsFlextLdifAclService:
 
     def test_evaluate_acl_with_null_permissions_denies(
         self,
-        svc: p.Ldif.LdifClient,
+        svc: p.Ldif.Client,
     ) -> None:
         acl = m.Ldif.Acl(name="no-perms-acl")
         required = m.Ldif.AclPermissions(read=True)
@@ -179,7 +179,7 @@ class TestsFlextLdifAclService:
 
     def test_extract_acls_from_entry_with_failed_parse(
         self,
-        svc: p.Ldif.LdifClient,
+        svc: p.Ldif.Client,
     ) -> None:
         entry = m.Ldif.Entry(
             dn=c.Tests.ACL_ENTRY_DN,

@@ -29,7 +29,7 @@ class TestsFlextLdifRealLdapConfig:
     """Public-contract tests for LDIF settings and railway composition."""
 
     @pytest.fixture
-    def flext_api(self) -> p.Ldif.LdifClient:
+    def flext_api(self) -> p.Ldif.Client:
         """Ldif API instance under test."""
         return ldif()
 
@@ -54,7 +54,7 @@ class TestsFlextLdifRealLdapConfig:
 
     def test_settings_encoding_is_a_usable_codec(
         self,
-        flext_api: p.Ldif.LdifClient,
+        flext_api: p.Ldif.Client,
     ) -> None:
         """The configured LDIF encoding resolves to a real Python codec."""
         encoding: str = str(flext_api.settings.Ldif.ldif_encoding)
@@ -64,7 +64,7 @@ class TestsFlextLdifRealLdapConfig:
 
     def test_settings_strict_validation_is_boolean(
         self,
-        flext_api: p.Ldif.LdifClient,
+        flext_api: p.Ldif.Client,
     ) -> None:
         """The strict-validation flag is exposed as a plain bool."""
         tm.that(flext_api.settings.Ldif.ldif_strict_validation, is_=bool)
@@ -78,7 +78,7 @@ class TestsFlextLdifRealLdapConfig:
 
     def test_railway_write_parse_validate_preserves_entry(
         self,
-        flext_api: p.Ldif.LdifClient,
+        flext_api: p.Ldif.Client,
         sample_entry: p.Ldif.Entry,
         tmp_path: Path,
     ) -> None:
@@ -105,7 +105,7 @@ class TestsFlextLdifRealLdapConfig:
 
     def test_write_to_string_then_parse_is_idempotent(
         self,
-        flext_api: p.Ldif.LdifClient,
+        flext_api: p.Ldif.Client,
         sample_entry: p.Ldif.Entry,
     ) -> None:
         """Serialize-to-string then parse-back preserves DN and attributes."""
@@ -124,7 +124,7 @@ class TestsFlextLdifRealLdapConfig:
 
     def test_validate_entries_reports_full_success(
         self,
-        flext_api: p.Ldif.LdifClient,
+        flext_api: p.Ldif.Client,
         sample_entry: p.Ldif.Entry,
     ) -> None:
         """Validating a well-formed entry yields a passing ValidationResult."""
@@ -140,7 +140,7 @@ class TestsFlextLdifRealLdapConfig:
 
     def test_parse_missing_file_fails_with_descriptive_error(
         self,
-        flext_api: p.Ldif.LdifClient,
+        flext_api: p.Ldif.Client,
         tmp_path: Path,
     ) -> None:
         """Parsing a nonexistent path returns a failure, never a fake success."""
@@ -162,7 +162,7 @@ class TestsFlextLdifRealLdapConfig:
     )
     def test_parse_content_without_entries_succeeds_empty(
         self,
-        flext_api: p.Ldif.LdifClient,
+        flext_api: p.Ldif.Client,
         content: str,
     ) -> None:
         """Content carrying no records parses to a successful empty result."""

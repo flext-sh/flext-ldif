@@ -68,7 +68,7 @@ class TestsFlextLdifOudIntegration:
 
     def test_parse_schema_fixture_returns_success_with_single_entry(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         oud_schema_fixture: str,
     ) -> None:
         """Parsing the OUD schema fixture yields exactly one schema entry."""
@@ -81,7 +81,7 @@ class TestsFlextLdifOudIntegration:
 
     def test_schema_entry_exposes_oracle_attribute_definitions(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         oud_schema_fixture: str,
     ) -> None:
         """The schema entry carries Oracle-namespaced attributeType definitions."""
@@ -100,7 +100,7 @@ class TestsFlextLdifOudIntegration:
 
     def test_schema_entry_exposes_oracle_object_class_definitions(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         oud_schema_fixture: str,
     ) -> None:
         """The schema entry carries Oracle-namespaced objectClass definitions."""
@@ -121,7 +121,7 @@ class TestsFlextLdifOudIntegration:
 
     def test_parse_acl_fixture_yields_entries_all_carrying_aci(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         oud_acl_fixture: str,
     ) -> None:
         """Every entry in the ACL fixture exposes an ``aci`` attribute."""
@@ -137,7 +137,7 @@ class TestsFlextLdifOudIntegration:
 
     def test_aci_values_survive_write_then_reparse(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         oud_acl_fixture: str,
     ) -> None:
         """ACI values are preserved through a parse -> write -> parse round-trip."""
@@ -170,7 +170,7 @@ class TestsFlextLdifOudIntegration:
 
     def test_parse_entries_fixture_meets_minimum_count(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         oud_entries_fixture: str,
     ) -> None:
         """The entries fixture parses into at least the expected number of entries."""
@@ -183,7 +183,7 @@ class TestsFlextLdifOudIntegration:
 
     def test_oracle_object_classes_preserved_through_parsing(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         oud_entries_fixture: str,
     ) -> None:
         """Oracle objectClasses (orclContext, ...) survive parsing intact."""
@@ -209,7 +209,7 @@ class TestsFlextLdifOudIntegration:
 
     def test_roundtrip_preserves_entry_count_and_dn_set(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         oud_integration_fixture: str,
     ) -> None:
         """Parse -> write -> parse preserves entry count and the exact DN set."""
@@ -239,7 +239,7 @@ class TestsFlextLdifOudIntegration:
 
     def test_roundtrip_is_idempotent_on_dn_set(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         oud_integration_fixture: str,
     ) -> None:
         """Parsing the same fixture twice yields an identical DN set (invariant)."""
@@ -264,7 +264,7 @@ class TestsFlextLdifOudIntegration:
     )
     def test_roundtrip_preserves_dn_rdn_components_with_spaces(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         dn_with_spaces: str,
     ) -> None:
         """DNs whose RDNs are separated by ', ' keep their component count."""
@@ -293,7 +293,7 @@ class TestsFlextLdifOudIntegration:
 
     def test_parsed_entries_expose_public_dn_attributes_and_metadata(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         """A parsed entry exposes DN, attribute values, and metadata publicly."""
         source_ldif = (

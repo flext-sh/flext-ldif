@@ -35,7 +35,7 @@ _LDIF_OPERATIONAL_ATTRS: frozenset[str] = frozenset({
 
 
 @pytest.fixture
-def flext_api() -> p.Ldif.LdifClient:
+def flext_api() -> p.Ldif.Client:
     """Live ``ldif()`` API instance."""
     return ldif()
 
@@ -69,7 +69,7 @@ class TestsFlextLdifRealLdapRoundtrip:
         self,
         ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
-        flext_api: p.Ldif.LdifClient,
+        flext_api: p.Ldif.Client,
         make_test_username: Callable[[str], str],
     ) -> None:
         """LDAP -> LDIF -> LDAP yields an entry with identical public state."""

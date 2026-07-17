@@ -1,6 +1,6 @@
 """Behavioral tests for LDIF parse -> import against a live LDAP server.
 
-Exercises the PUBLIC LDIF client contract (``p.Ldif.LdifClient.parse_ldif``)
+Exercises the PUBLIC LDIF client contract (``p.Ldif.Client.parse_ldif``)
 end-to-end: parse LDIF text/file into the promised ``m.Ldif.ParseResponse``,
 then push the parsed entries to a real LDAP server through the ldap3 boundary
 and assert the observable round-tripped state.
@@ -31,7 +31,7 @@ from tests import c, p, u
 
 
 @pytest.fixture
-def flext_api() -> p.Ldif.LdifClient:
+def flext_api() -> p.Ldif.Client:
     """Public LDIF client under test."""
     return ldif()
 
@@ -95,7 +95,7 @@ class TestsFlextLdifRealLdapImport:
     def test_parse_exposes_declared_attributes_through_public_api(
         self,
         clean_test_ou: str,
-        flext_api: p.Ldif.LdifClient,
+        flext_api: p.Ldif.Client,
         make_test_username: Callable[[str], str],
         attribute: str,
         expected: str | None,
@@ -126,7 +126,7 @@ class TestsFlextLdifRealLdapImport:
         self,
         ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
-        flext_api: p.Ldif.LdifClient,
+        flext_api: p.Ldif.Client,
         make_test_username: Callable[[str], str],
     ) -> None:
         """A parsed entry, imported via public accessors, reads back intact."""
@@ -156,7 +156,7 @@ class TestsFlextLdifRealLdapImport:
         self,
         ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
-        flext_api: p.Ldif.LdifClient,
+        flext_api: p.Ldif.Client,
         make_test_username: Callable[[str], str],
     ) -> None:
         """Base64 (``::``) binary attributes survive parse and LDAP round-trip."""
@@ -201,7 +201,7 @@ class TestsFlextLdifRealLdapImport:
         self,
         ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
-        flext_api: p.Ldif.LdifClient,
+        flext_api: p.Ldif.Client,
         tmp_path: Path,
         make_test_username: Callable[[str], str],
     ) -> None:

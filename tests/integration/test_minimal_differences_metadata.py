@@ -31,7 +31,7 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         return FlextLdifParser()
 
     @pytest.fixture
-    def writer(self) -> p.Ldif.LdifClient:
+    def writer(self) -> p.Ldif.Client:
         """Provide a writer client via the public ``ldif()`` entry point."""
         return ldif()
 
@@ -189,7 +189,7 @@ class TestsFlextLdifMinimalDifferencesMetadata:
     def test_round_trip_write_emits_converted_boolean_value(
         self,
         parser: FlextLdifParser,
-        writer: p.Ldif.LdifClient,
+        writer: p.Ldif.Client,
     ) -> None:
         """OID -> write converts the boolean and preserves the DN in output."""
         content = (

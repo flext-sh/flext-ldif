@@ -18,7 +18,7 @@ class TestsFlextLdifOidAclEndToEnd:
 
     @staticmethod
     def _convert(
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         dn: str,
         attrs: dict[str, list[str]],
     ) -> t.MutableStrSequenceMapping:
@@ -75,7 +75,7 @@ class TestsFlextLdifOidAclEndToEnd:
     )
     def test_oid_acl_converts_to_expected_aci_and_drops_source_attr(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         source_attr: str,
         source_value: str,
         expected_aci: str,

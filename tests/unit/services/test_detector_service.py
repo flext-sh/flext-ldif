@@ -15,14 +15,14 @@ class TestsFlextLdifDetectorService:
 
     def test_detect_fails_when_no_inputs_given(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         result = api.detect_server_type()
         tm.fail(result, has="must be provided")
 
     def test_detect_fails_when_file_is_missing(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         tmp_path: Path,
     ) -> None:
         missing = tmp_path / c.Tests.DETECTOR_MISSING_PATH_NAME
@@ -31,7 +31,7 @@ class TestsFlextLdifDetectorService:
 
     def test_detect_fails_when_file_has_invalid_utf8(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         tmp_path: Path,
     ) -> None:
         bad_file = tmp_path / c.Tests.DETECTOR_BAD_ENCODING_FILENAME
@@ -41,7 +41,7 @@ class TestsFlextLdifDetectorService:
 
     def test_detect_from_file_succeeds(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         tmp_path: Path,
     ) -> None:
         ldif_file = tmp_path / c.Tests.DETECTOR_RFC_FILENAME
@@ -56,7 +56,7 @@ class TestsFlextLdifDetectorService:
 
     def test_detect_from_string_returns_detection_result(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         result = api.detect_server_type(
             ldif_content=c.Tests.DETECTOR_RFC_SNIPPET,
@@ -68,7 +68,7 @@ class TestsFlextLdifDetectorService:
 
     def test_detect_rfc_snippet_keeps_generic_score_and_no_patterns(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         result = api.detect_server_type(ldif_content=c.Tests.DETECTOR_RFC_SNIPPET)
         detection = u.Tests.assert_success(result)
@@ -80,7 +80,7 @@ class TestsFlextLdifDetectorService:
 
     def test_detect_oid_snippet_reports_acl_patterns(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         result = api.detect_server_type(ldif_content=c.Tests.DETECTOR_OID_SNIPPET)
         detection = u.Tests.assert_success(result)
@@ -102,7 +102,7 @@ class TestsFlextLdifDetectorService:
         scenario: str,
         snippet: str,
         expected_type: str,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         result = api.detect_server_type(ldif_content=snippet)
         detection = u.Tests.assert_success(
@@ -114,7 +114,7 @@ class TestsFlextLdifDetectorService:
 
     def test_detect_respects_max_lines_limit(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         long_content = (c.Tests.DETECTOR_OID_SNIPPET + "\n") * 50
         result = api.detect_server_type(
@@ -137,7 +137,7 @@ class TestsFlextLdifDetectorService:
         self,
         scenario: str,
         snippet: str,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         result = api.detect_server_type(ldif_content=snippet)
         detection = u.Tests.assert_success(
@@ -149,7 +149,7 @@ class TestsFlextLdifDetectorService:
 
     def test_detect_is_idempotent_for_same_content(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         first = u.Tests.assert_success(
             api.detect_server_type(ldif_content=c.Tests.DETECTOR_OID_SNIPPET),
@@ -166,7 +166,7 @@ class TestsFlextLdifDetectorService:
 
     def test_resolve_effective_server_type_from_content(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         result = api.resolve_effective_server_type(
             ldif_content=c.Tests.DETECTOR_RFC_SNIPPET,
@@ -177,7 +177,7 @@ class TestsFlextLdifDetectorService:
 
     def test_resolve_effective_server_type_without_input_falls_back_to_rfc(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         result = api.resolve_effective_server_type()
         server_type = u.Tests.assert_success(result)
@@ -186,7 +186,7 @@ class TestsFlextLdifDetectorService:
 
     def test_resolve_effective_server_type_missing_file_falls_back_to_rfc(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         tmp_path: Path,
     ) -> None:
         missing = tmp_path / c.Tests.DETECTOR_MISSING_PATH_NAME

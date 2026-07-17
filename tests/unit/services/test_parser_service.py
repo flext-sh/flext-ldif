@@ -15,7 +15,7 @@ class TestsFlextLdifParserService:
 
     def test_parse_ldif_from_path_uses_file_flow(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         tmp_path: Path,
     ) -> None:
         fixture_file = tmp_path / c.Tests.PARSER_PATH_FLOW_FILENAME
@@ -29,7 +29,7 @@ class TestsFlextLdifParserService:
 
     def test_parse_ldif_file_rejects_src_root_fallback(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         relative_package_path = Path("flext_ldif") / "__init__.py"
 
@@ -42,7 +42,7 @@ class TestsFlextLdifParserService:
 
     def test_parse_ldif_file_returns_failure_when_path_is_missing(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         missing_path = Path(f"{c.Tests.PARSER_MISSING_PREFIX}_{uuid4().hex}.ldif")
 
@@ -52,7 +52,7 @@ class TestsFlextLdifParserService:
 
     def test_parse_ldif_file_returns_failure_when_decode_fails(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
         tmp_path: Path,
     ) -> None:
         invalid_utf8_path = tmp_path / c.Tests.PARSER_INVALID_UTF8_FILENAME
@@ -68,7 +68,7 @@ class TestsFlextLdifParserService:
 
     def test_parse_string_returns_failure_for_unknown_server_type(
         self,
-        api: p.Ldif.LdifClient,
+        api: p.Ldif.Client,
     ) -> None:
         result = api.parse_string(
             c.Tests.RFC_SAMPLE_LDIF_BASIC,
