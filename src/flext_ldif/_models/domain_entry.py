@@ -166,7 +166,7 @@ class FlextLdifModelsDomainEntry:
         @u.computed_field()
         @property
         def dn_was_transformed(self) -> bool:
-            """If DN underwent transformation."""
+            """Whether DN underwent transformation."""
             if self.dn_statistics is None:
                 return False
             return self.dn_statistics.was_transformed
@@ -174,19 +174,19 @@ class FlextLdifModelsDomainEntry:
         @u.computed_field()
         @property
         def had_errors(self) -> bool:
-            """If any errors occurred."""
+            """Whether any errors occurred."""
             return bool(self.errors)
 
         @u.computed_field()
         @property
         def had_warnings(self) -> bool:
-            """If any warnings occurred."""
+            """Whether any warnings occurred."""
             return bool(self.warnings)
 
         @u.computed_field()
         @property
         def objectclasses_changed(self) -> bool:
-            """If objectClass values changed."""
+            """Whether objectClass values changed."""
             return set(self.objectclasses_original) != set(self.objectclasses_final)
 
         @u.computed_field()
@@ -818,11 +818,11 @@ class FlextLdifModelsDomainEntry:
         @u.computed_field()
         @property
         def has_validation_errors(self) -> bool:
-            """If entry has validation errors.
-            
+            """Whether entry has validation errors.
+
             Returns:
             True if entry has validation errors in validation_metadata, False otherwise
-            
+
             """
             if self.metadata is None:
                 return False
@@ -833,11 +833,11 @@ class FlextLdifModelsDomainEntry:
         @u.computed_field()
         @property
         def is_acl_entry(self) -> bool:
-            """If entry has Access Control Lists.
-            
+            """Whether entry has Access Control Lists.
+
             Returns:
             True if entry has ACLs, False otherwise
-            
+
             """
             if self.metadata is None:
                 return False
@@ -846,14 +846,14 @@ class FlextLdifModelsDomainEntry:
         @u.computed_field()
         @property
         def is_schema_entry(self) -> bool:
-            """If entry is a schema definition entry.
-            
+            """Whether entry is a schema definition entry.
+
             Schema entries contain objectClass definitions and are typically
             found in the schema naming context.
-            
+
             Returns:
             True if entry has objectClasses, False otherwise
-            
+
             """
             if self.metadata is None:
                 return False

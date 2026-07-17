@@ -41,7 +41,7 @@ class FlextLdifUtilitiesPipeline:
 
         @property
         def valid(self) -> bool:
-            """If validation passed."""
+            """Whether validation passed."""
             return self._is_valid
 
         @property
