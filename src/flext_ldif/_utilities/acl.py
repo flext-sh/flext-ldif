@@ -53,7 +53,7 @@ class FlextLdifUtilitiesACL:
         aci_content: str,
         version: str,
         acl_line: str,
-        extra_patterns: t.MutableStrMapping,
+        extra_patterns: t.MappingKV[str, str],
     ) -> t.Ldif.MutableMetadataInputMapping:
         """Build metadata extensions dict."""
         extensions: t.Ldif.MutableMetadataInputMapping = {
@@ -117,7 +117,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def _check_special_value(
         rule_value: str,
-        special_values: t.MutableStrPairMapping,
+        special_values: t.MappingKV[str, t.StrPair],
     ) -> t.StrPair | None:
         """Check if rule value matches any special value."""
         for key, value_tuple in dict(special_values).items():
@@ -186,7 +186,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def _normalize_permission(
         perm: str,
-        permission_map: t.MutableStrMapping | None,
+        permission_map: t.MappingKV[str, str] | None,
     ) -> str:
         """Normalize permission name using map if available."""
         if not permission_map:
@@ -196,8 +196,8 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def _process_permission_list(
-        perm_list: t.MutableSequenceOf[str],
-        permission_map: t.MutableStrMapping | None,
+        perm_list: t.SequenceOf[str],
+        permission_map: t.MappingKV[str, str] | None,
         *,
         is_allow: bool,
     ) -> t.MutableBoolMapping:
@@ -214,9 +214,9 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def build_aci_subject(
-        bind_rules_data: t.MutableSequenceOf[t.MutableStrMapping],
-        subject_type_map: t.MutableStrMapping,
-        special_values: t.MutableStrPairMapping,
+        bind_rules_data: t.SequenceOf[t.MutableStrMapping],
+        subject_type_map: t.MappingKV[str, str],
+        special_values: t.MappingKV[str, t.StrPair],
     ) -> t.StrPair:
         """Build ACL subject from bind rules using configurable maps."""
         if not bind_rules_data:
@@ -278,9 +278,9 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def build_permissions_dict(
-        allow_permissions: t.MutableSequenceOf[str],
-        permission_map: t.MutableStrMapping | None = None,
-        deny_permissions: t.MutableSequenceOf[str] | None = None,
+        allow_permissions: t.SequenceOf[str],
+        permission_map: t.MappingKV[str, str] | None = None,
+        deny_permissions: t.SequenceOf[str] | None = None,
     ) -> t.MutableBoolMapping:
         """Build permissions dictionary from allow/deny lists."""
         allow_dict: t.MutableBoolMapping = {}
@@ -302,7 +302,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def extract_bind_rules(
         content: str,
-        bind_patterns: t.MutableStrMapping | None = None,
+        bind_patterns: t.MappingKV[str, str] | None = None,
     ) -> t.MutableSequenceOf[t.MutableStrMapping]:
         """Extract bind rules from ACL content.
 

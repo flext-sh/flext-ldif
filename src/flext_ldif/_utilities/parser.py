@@ -99,14 +99,23 @@ class FlextLdifUtilitiesParser:
     ) -> p.Ldif.ServerMetadata:
         """Build RFC metadata for a parsed LDIF record."""
         metadata = um.server_metadata_for("rfc")
-        metadata.original_server_type = c.Ldif.ServerTypes.RFC
-        metadata.target_server_type = c.Ldif.ServerTypes.RFC
-        metadata.original_strings["dn_original"] = dn
-        metadata.original_strings["entry_original_ldif"] = "\n".join(raw_record_lines)
+        original_strings = {
+            **metadata.original_strings,
+            "dn_original": dn,
+            "entry_original_ldif": "\n".join(raw_record_lines),
+        }
+        extensions = dict(metadata.extensions)
         if comments:
             comments_payload: t.JsonValueList = list(comments)
-            metadata.extensions["entry_comments"] = comments_payload
-        return metadata
+            extensions["entry_comments"] = comments_payload
+        return metadata.model_copy(
+            update={
+                "original_server_type": c.Ldif.ServerTypes.RFC,
+                "target_server_type": c.Ldif.ServerTypes.RFC,
+                "original_strings": original_strings,
+                "extensions": extensions,
+            },
+        )
 
     @staticmethod
     def decode_value(
@@ -233,12 +242,18 @@ class FlextLdifUtilitiesParser:
                     )
                     continue
                 if current_change_operation is not None:
-                    current_change_operation.values.append(
-                        m.Ldif.ChangeOperationValue(
-                            value=value,
-                            value_origin=value_origin,
-                            raw_value=raw_value,
-                        ),
+                    operation_value = m.Ldif.ChangeOperationValue(
+                        value=value,
+                        value_origin=value_origin,
+                        raw_value=raw_value,
+                    )
+                    current_change_operation = current_change_operation.model_copy(
+                        update={
+                            "values": [
+                                *current_change_operation.values,
+                                operation_value,
+                            ],
+                        },
                     )
                     attribute_name = current_change_operation.attribute
             attrs.setdefault(attribute_name, []).append(value)

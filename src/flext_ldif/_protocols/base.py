@@ -601,6 +601,56 @@ class FlextLdifProtocolsBase(Protocol):
             """The migration entry category."""
             ...
 
+        @property
+        def fold_long_lines(self) -> bool:
+            """Whether long output lines are folded."""
+            ...
+
+        @property
+        def normalize_attribute_names(self) -> bool:
+            """Whether attribute names are normalized."""
+            ...
+
+        @property
+        def write_empty_values(self) -> bool:
+            """Whether empty attribute values are written."""
+            ...
+
+        @property
+        def write_hidden_attributes_as_comments(self) -> bool:
+            """Whether hidden attributes are emitted as comments."""
+            ...
+
+        @property
+        def write_metadata_as_comments(self) -> bool:
+            """Whether entry metadata is emitted as comments."""
+            ...
+
+        @property
+        def use_original_acl_format_as_name(self) -> bool:
+            """Whether the original ACL format supplies the ACI name."""
+            ...
+
+        @property
+        def ldif_changetype(self) -> str | None:
+            """The optional LDIF changetype output mode."""
+            ...
+
+        @property
+        def ldif_modify_operation(self) -> str:
+            """The LDIF modify operation."""
+            ...
+
+        @property
+        def write_original_entry_as_comment(self) -> bool:
+            """Whether the original source entry is emitted as comments."""
+            ...
+
+        @property
+        def write_removed_attributes_as_comments(self) -> bool:
+            """Whether removed attributes are emitted as comments."""
+            ...
+
     @runtime_checkable
     class FormatDetails(Protocol):
         """Original LDIF formatting details."""
@@ -807,13 +857,20 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
         @property
-        def original_format_details(self) -> FlextLdifProtocolsBase.FormatDetails | None:
+        def original_format_details(
+            self,
+        ) -> FlextLdifProtocolsBase.FormatDetails | None:
             """The original entry formatting details."""
             ...
 
         @property
         def original_strings(self) -> t.MutableJsonMapping:
             """The complete strings preserved before conversion."""
+            ...
+
+        @property
+        def removed_attributes(self) -> t.MutableJsonMapping:
+            """The source attributes removed during conversion."""
             ...
 
     @runtime_checkable
@@ -1043,6 +1100,73 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
     @runtime_checkable
+    class Control(p.BaseModel, Protocol):
+        """RFC 2849 control contract attached to an LDIF record."""
+
+        @property
+        def control_type(self) -> str:
+            """The LDAP control OID or descriptor."""
+            ...
+
+        @property
+        def criticality(self) -> bool | None:
+            """The optional control criticality flag."""
+            ...
+
+        @property
+        def value(self) -> str | None:
+            """The decoded control value."""
+            ...
+
+        @property
+        def value_origin(self) -> c.Ldif.ValueOrigin | None:
+            """The original control-value encoding."""
+            ...
+
+        @property
+        def raw_value(self) -> str | None:
+            """The original serialized control value."""
+            ...
+
+    @runtime_checkable
+    class ChangeOperationValue(p.BaseModel, Protocol):
+        """One decoded value inside an LDIF modify operation."""
+
+        @property
+        def value(self) -> str:
+            """The decoded operation value."""
+            ...
+
+        @property
+        def value_origin(self) -> c.Ldif.ValueOrigin:
+            """The original value encoding."""
+            ...
+
+        @property
+        def raw_value(self) -> str | None:
+            """The original serialized value."""
+            ...
+
+    @runtime_checkable
+    class ChangeOperation(p.BaseModel, Protocol):
+        """Structured RFC 2849 modify operation."""
+
+        @property
+        def operation(self) -> c.Ldif.ChangeOperation:
+            """The modify operation kind."""
+            ...
+
+        @property
+        def attribute(self) -> str:
+            """The target attribute name."""
+            ...
+
+        @property
+        def values(self) -> Sequence[FlextLdifProtocolsBase.ChangeOperationValue]:
+            """The decoded values in the modify block."""
+            ...
+
+    @runtime_checkable
     class Entry(p.BaseModel, Protocol):
         """Entry model contract used across LDIF services."""
 
@@ -1084,6 +1208,18 @@ class FlextLdifProtocolsBase(Protocol):
         @property
         def newsuperior(self) -> str | None:
             """The newsuperior for moddn records."""
+            ...
+
+        @property
+        def controls(self) -> Sequence[FlextLdifProtocolsBase.Control]:
+            """The RFC 2849 controls attached to the record."""
+            ...
+
+        @property
+        def change_operations(
+            self,
+        ) -> Sequence[FlextLdifProtocolsBase.ChangeOperation]:
+            """The structured modify operations attached to the record."""
             ...
 
         # NOTE (multi-agent, mro-0ftd.3.7.2): complete the behavioral contract so

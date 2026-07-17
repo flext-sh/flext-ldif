@@ -166,7 +166,7 @@ class FlextLdifUtilitiesSchemaBuild:
         if source_server_type is None and metadata.extensions:
             source_server_type = metadata.extensions.get("schema_source_server")
         if source_server_type is None:
-            source_server_type = str(metadata.server_type)
+            source_server_type = metadata.server_type
         if not source_server_type or not target_server_type:
             return True
         try:

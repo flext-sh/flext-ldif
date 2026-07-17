@@ -171,53 +171,6 @@ class FlextLdifProtocolsValues(Protocol):
         def has_original_format(self) -> bool: ...
 
     @runtime_checkable
-    class ChangeOperationValue(p.BaseModel, Protocol):
-        """One decoded modify-operation value."""
-
-        @property
-        def value(self) -> str: ...
-
-        @property
-        def value_origin(self) -> c.Ldif.ValueOrigin: ...
-
-        @property
-        def raw_value(self) -> str | None: ...
-
-    @runtime_checkable
-    class ChangeOperation(p.BaseModel, Protocol):
-        """LDIF modify-operation contract."""
-
-        @property
-        def operation(self) -> c.Ldif.ChangeOperation: ...
-
-        @property
-        def attribute(self) -> str: ...
-
-        @property
-        def values(
-            self,
-        ) -> t.MutableSequenceOf[FlextLdifProtocolsValues.ChangeOperationValue]: ...
-
-    @runtime_checkable
-    class Control(p.BaseModel, Protocol):
-        """RFC 2849 control contract."""
-
-        @property
-        def control_type(self) -> str: ...
-
-        @property
-        def criticality(self) -> bool | None: ...
-
-        @property
-        def value(self) -> str | None: ...
-
-        @property
-        def value_origin(self) -> c.Ldif.ValueOrigin | None: ...
-
-        @property
-        def raw_value(self) -> str | None: ...
-
-    @runtime_checkable
     class ConversionEventConfig(p.BaseModel, Protocol):
         """Conversion-event construction contract."""
 
@@ -506,10 +459,10 @@ class FlextLdifProtocolsValues(Protocol):
         """Batch-processing configuration contract."""
 
         @property
-        def source_server(self) -> str: ...
+        def source_server(self) -> str | None: ...
 
         @property
-        def target_server(self) -> str: ...
+        def target_server(self) -> str | None: ...
 
         @property
         def base_dn(self) -> str: ...
