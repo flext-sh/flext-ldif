@@ -148,7 +148,7 @@ class FlextLdifConstantsEnums:
         INCREMENT = "increment"
 
     @unique
-    class LdifChangeType(StrEnum):
+    class ChangeType(StrEnum):
         """RFC 2849 changetype names."""
 
         ADD = "add"

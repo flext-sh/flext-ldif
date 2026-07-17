@@ -41,7 +41,7 @@ class FlextLdifProtocolsClient(Protocol):
         """The validated LDIF settings branch."""
 
     @runtime_checkable
-    class LdifClient(
+    class Client(
         FlextLdifProtocolsBase.ValidationService,
         FlextLdifProtocolsBase.ServerDetectionService,
         Protocol,

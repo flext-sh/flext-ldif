@@ -480,7 +480,7 @@ class FlextLdifModelsDomainEntry:
             return c.Ldif.RecordKind(value)
 
         changetype: Annotated[
-            c.Ldif.LdifChangeType | None,
+            c.Ldif.ChangeType | None,
             u.Field(
                 description="Change operation type per RFC 2849 § 5.7 (add/delete/modify/moddn/modrdn)",
             ),
@@ -491,10 +491,10 @@ class FlextLdifModelsDomainEntry:
         def coerce_changetype(
             cls,
             value: str | None,
-        ) -> c.Ldif.LdifChangeType | None:
+        ) -> c.Ldif.ChangeType | None:
             """Accept both enum instances and serialized changetype strings."""
             if isinstance(value, str):
-                return c.Ldif.LdifChangeType(value)
+                return c.Ldif.ChangeType(value)
             return value
 
         newrdn: Annotated[
@@ -982,7 +982,7 @@ class FlextLdifModelsDomainEntry:
                 FlextLdifModelsDomainEntry.ChangeOperation
             ]
             | None = None,
-            changetype: c.Ldif.LdifChangeType | None = None,
+            changetype: c.Ldif.ChangeType | None = None,
             newrdn: str | None = None,
             deleteoldrdn: bool | None = None,
             newsuperior: str | None = None,
@@ -1041,7 +1041,7 @@ class FlextLdifModelsDomainEntry:
                 FlextLdifModelsDomainEntry.ChangeOperation
             ]
             | None,
-            changetype: c.Ldif.LdifChangeType | None,
+            changetype: c.Ldif.ChangeType | None,
             newrdn: str | None,
             deleteoldrdn: bool | None,
             newsuperior: str | None,
