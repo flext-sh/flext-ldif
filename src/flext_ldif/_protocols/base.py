@@ -501,7 +501,9 @@ class FlextLdifProtocolsBase(Protocol):
         def model_copy(
             self,
             *,
-            update: t.MappingKV[str, t.JsonPayload | p.BaseModel | t.SequenceOf[p.BaseModel]]
+            update: t.MappingKV[
+                str, t.JsonPayload | p.BaseModel | t.SequenceOf[p.BaseModel]
+            ]
             | None = None,
             deep: bool = False,
         ) -> Self:
@@ -540,7 +542,9 @@ class FlextLdifProtocolsBase(Protocol):
         def model_copy(
             self,
             *,
-            update: t.MappingKV[str, t.JsonPayload | p.BaseModel | t.SequenceOf[p.BaseModel]]
+            update: t.MappingKV[
+                str, t.JsonPayload | p.BaseModel | t.SequenceOf[p.BaseModel]
+            ]
             | None = None,
             deep: bool = False,
         ) -> Self:
@@ -627,7 +631,9 @@ class FlextLdifProtocolsBase(Protocol):
         def model_copy(
             self,
             *,
-            update: t.MappingKV[str, t.JsonPayload | p.BaseModel | t.SequenceOf[p.BaseModel]]
+            update: t.MappingKV[
+                str, t.JsonPayload | p.BaseModel | t.SequenceOf[p.BaseModel]
+            ]
             | None = None,
             deep: bool = False,
         ) -> Self:
@@ -688,7 +694,9 @@ class FlextLdifProtocolsBase(Protocol):
         def model_copy(
             self,
             *,
-            update: t.MappingKV[str, t.JsonPayload | p.BaseModel | t.SequenceOf[p.BaseModel]]
+            update: t.MappingKV[
+                str, t.JsonPayload | p.BaseModel | t.SequenceOf[p.BaseModel]
+            ]
             | None = None,
             deep: bool = False,
         ) -> Self:
