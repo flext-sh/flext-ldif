@@ -247,7 +247,7 @@ class FlextLdifProtocolsBase(Protocol):
         target_name: str | None
         original_values: t.MutableSequenceOf[str]
         target_values: t.MutableSequenceOf[str] | None
-        transformation_type: str
+        transformation_type: c.Ldif.TransformationType
         reason: str
 
     @runtime_checkable

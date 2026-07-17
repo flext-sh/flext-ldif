@@ -612,7 +612,7 @@ class FlextLdifUtilitiesMetadata:
                     c.Ldif.ServerTypes.RFC.value,
                 ),
             )
-        update_dict: MutableMapping[str, m.Ldif.EntryStatistics] = {
+        update_dict: MutableMapping[str, p.Ldif.EntryStatistics] = {
             "processing_stats": updated_stats,
         }
         updated_metadata = entry_metadata.model_copy(update=update_dict)
