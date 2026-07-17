@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import importlib
 
-import pytest
 from flext_tests import tm
 
 from tests import c
@@ -48,61 +47,25 @@ class TestsFlextLdifVersion:
             expected: int | str = int(part) if part.isdigit() else part
             tm.that(token, eq=expected)
 
-    def test_resolve_version_string_returns_public_version(self) -> None:
-        """resolve_version_string() returns the exported version string."""
+    def test_version_attribute_returns_public_version(self) -> None:
+        """FlextLdifVersion.__version__ equals the exported version string."""
         tm.that(
-            FlextLdifVersion.resolve_version_string(),
+            FlextLdifVersion.__version__,
             eq=version_module.__version__,
         )
 
-    def test_resolve_version_info_returns_public_version_info(self) -> None:
-        """resolve_version_info() returns the exported version-info tuple."""
+    def test_version_info_attribute_returns_public_version_info(self) -> None:
+        """FlextLdifVersion.__version_info__ equals the exported version-info tuple."""
         tm.that(
-            FlextLdifVersion.resolve_version_info(),
+            FlextLdifVersion.__version_info__,
             eq=version_module.__version_info__,
         )
 
-    def test_resolve_package_info_reports_public_metadata(self) -> None:
-        """resolve_package_info() mirrors the exported metadata fields."""
-        info = FlextLdifVersion.resolve_package_info()
-        tm.that(info["name"], eq=version_module.__title__)
-        tm.that(info["version"], eq=version_module.__version__)
-        tm.that(info["description"], eq=version_module.__description__)
-        tm.that(info["author"], eq=version_module.__author__)
-        tm.that(info["author_email"], eq=version_module.__author_email__)
-        tm.that(info["license"], eq=version_module.__license__)
-        tm.that(info["url"], eq=version_module.__url__)
-
-    @pytest.mark.parametrize(
-        ("major", "minor", "patch", "expected"),
-        [
-            (0, 0, 0, True),
-            (999, 0, 0, False),
-            (0, 999, 0, False),
-        ],
-    )
-    def test_version_at_least_enforces_ordering(
-        self,
-        major: int,
-        minor: int,
-        patch: int,
-        *,
-        expected: bool,
-    ) -> None:
-        """version_at_least() answers the ordering query against the real version."""
-        tm.that(
-            FlextLdifVersion.version_at_least(major, minor, patch),
-            eq=expected,
-        )
-
-    def test_version_at_least_is_satisfied_by_own_numeric_version(self) -> None:
-        """The package always satisfies a bound equal to its own numeric prefix."""
-        numeric = [
-            int(part)
-            for part in version_module.__version__.split(".")
-            if part.isdigit()
-        ]
-        major = numeric[0] if numeric else 0
-        minor = numeric[1] if len(numeric) > 1 else 0
-        patch = numeric[2] if len(numeric) > 2 else 0
-        tm.that(FlextLdifVersion.version_at_least(major, minor, patch), eq=True)
+    def test_metadata_attributes_mirror_module_exports(self) -> None:
+        """The metadata facade attributes mirror the exported module metadata."""
+        tm.that(FlextLdifVersion.__title__, eq=version_module.__title__)
+        tm.that(FlextLdifVersion.__version__, eq=version_module.__version__)
+        tm.that(FlextLdifVersion.__description__, eq=version_module.__description__)
+        tm.that(FlextLdifVersion.__author__, eq=version_module.__author__)
+        tm.that(FlextLdifVersion.__license__, eq=version_module.__license__)
+        tm.that(FlextLdifVersion.__url__, eq=version_module.__url__)

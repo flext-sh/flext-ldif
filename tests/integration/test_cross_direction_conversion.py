@@ -56,7 +56,7 @@ class TestsFlextLdifCrossDirectionConversion:
                 "( 2.16.840.1.113894.1.1.1 NAME 'orclIsEnabled' "
                 "SYNTAX 1.3.6.1.4.1.1466.115.121.1.1 SINGLE-VALUE )",
                 ("1.3.6.1.4.1.1466.115.121.1.15",),
-                ("SYNTAX 1.3.6.1.4.1.1466.115.121.1.1 ",),
+                ("SYNTAX 1.3.6.1.4.1.1466.115.121.1.1 SINGLE-VALUE",),
                 id="oid-to-oud-syntax-rfc-normalized",
             ),
             pytest.param(
