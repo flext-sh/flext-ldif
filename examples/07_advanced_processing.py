@@ -28,7 +28,7 @@ _BYTES_PER_UNIT: Final = 1024.0
 
 def basic_batch_processing() -> None:
     """Process entries in batches using direct API method."""
-    api: p.Ldif.LdifClient = ldif
+    api: p.Ldif.Client = ldif
     ldif_content = "dn: cn=User1,ou=People,dc=example,dc=com\nobjectClass: person\ncn: User1\nsn: One\n\ndn: cn=User2,ou=People,dc=example,dc=com\nobjectClass: person\ncn: User2\nsn: Two\n\ndn: cn=User3,ou=People,dc=example,dc=com\nobjectClass: person\ncn: User3\nsn: Three\n"
     parse_result = api.parse_ldif(ldif_content)
     if parse_result.failure:
@@ -46,7 +46,7 @@ def parallel_processing() -> None:
 
     Demonstrates creating entries directly via models and validating in batch.
     """
-    api: p.Ldif.LdifClient = ldif
+    api: p.Ldif.Client = ldif
     entries: list[p.Ldif.Entry] = []
     for i in range(10):
         entry = m.Ldif.Entry(
@@ -110,7 +110,7 @@ def use_validation_utilities() -> None:
 
 def use_ldif_utilities() -> None:
     """Use LDIF-specific utilities."""
-    api: p.Ldif.LdifClient = ldif
+    api: p.Ldif.Client = ldif
     ldif_content = (
         "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\nsn: user\n"
     )
@@ -158,7 +158,7 @@ def use_file_utilities() -> None:
 
 def complete_processing_pipeline() -> None:
     """Complete pipeline using utilities and direct processing methods."""
-    api: p.Ldif.LdifClient = ldif
+    api: p.Ldif.Client = ldif
     ldif_content = "dn: cn=Pipeline,ou=People,dc=example,dc=com\nobjectClass: person\ncn: Pipeline\nsn: User\n"
     parse_result = api.parse_ldif(ldif_content)
     if parse_result.failure:
