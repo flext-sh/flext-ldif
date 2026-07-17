@@ -26,8 +26,9 @@ if TYPE_CHECKING:
 class TestsFlextLdifSystematicFixtureCoverage:
     """Public parse/write contract across the server×fixture-type matrix."""
 
+    @staticmethod
     @pytest.fixture(scope="class")
-    def api(self) -> p.Ldif.LdifClient:
+    def api() -> p.Ldif.LdifClient:
         """Public LDIF client under test."""
         return ldif()
 
