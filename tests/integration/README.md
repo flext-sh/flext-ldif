@@ -674,8 +674,8 @@ docker logs ldif-test-ldap
 **Solution**: Ensure proper type annotations in test code
 
 ```bash
-# Run type checker
-PYTHONPATH=src poetry run mypy tests/integration/
+# Run the canonical bounded type checker
+MYPY_MEMORY_LIMIT_MB=6144 MYPY_TIMEOUT_SECONDS=600 make check FILES=tests/integration CHECK_GATES=mypy
 ```
 
 ## 📈 Continuous Integration

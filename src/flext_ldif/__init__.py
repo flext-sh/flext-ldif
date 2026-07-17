@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
     from ._settings import FlextLdifSettings, settings
     from .api import FlextLdif, ldif
-    from .base import FlextLdifServiceBase, s
+    from .base import FlextLdifServiceBase, FlextLdifServiceBase as s
     from .constants import FlextLdifConstants, FlextLdifConstants as c
     from .models import FlextLdifModels, FlextLdifModels as m
     from .protocols import FlextLdifProtocols, FlextLdifProtocols as p
@@ -31,28 +31,28 @@ if TYPE_CHECKING:
     from .utilities import FlextLdifUtilities, FlextLdifUtilities as u
 
     _ = (
-        c,
-        FlextLdifConstants,
-        t,
-        FlextLdifTypes,
-        p,
-        FlextLdifProtocols,
-        m,
-        FlextLdifModels,
-        u,
-        FlextLdifUtilities,
         d,
         e,
         h,
         r,
         x,
-        s,
-        FlextLdifServiceBase,
         FlextLdifSettings,
         settings,
         FlextLdif,
         ldif,
+        FlextLdifServiceBase,
+        s,
+        FlextLdifConstants,
+        c,
+        FlextLdifModels,
+        m,
+        FlextLdifProtocols,
+        p,
         FlextLdifShared,
+        FlextLdifTypes,
+        t,
+        FlextLdifUtilities,
+        u,
     )
 
 
