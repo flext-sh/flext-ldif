@@ -573,6 +573,25 @@ split-on-trailing-comma = true
 "**/*_pb2*.py" = [ "ALL" ]
 "**/*dispatcher*" = [  ]
 "**/*docs*" = [ "INP001", "S404", "S603", "T201" ]
+"**/*examples*" = [
+  "ANN401",
+  "C901",
+  "D103",
+  "EXE001",
+  "FBT001",
+  "FBT002",
+  "FIX002",
+  "INP001",
+  "N999",
+  "PLR2004",
+  "S105",
+  "S106",
+  "S112",
+  "S404",
+  "S603",
+  "T201",
+  "TID252",
+]
 "**/*exceptions*" = [ "A001", "S105", "SLF001" ]
 "**/*handlers*" = [  ]
 "**/*instrumentation*" = [ "C901", "FBT001", "SLF001" ]
