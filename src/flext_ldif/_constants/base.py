@@ -8,9 +8,10 @@ this module is forbidden by AGENTS.md §3.1 ``regex-from-constants`` rule.
 from __future__ import annotations
 
 import re
-from typing import ClassVar, Final
+from typing import TYPE_CHECKING, ClassVar, Final
 
-from flext_ldif._typings.base import FlextLdifTypesBase as t
+if TYPE_CHECKING:
+    from flext_ldif._typings.base import FlextLdifTypesBase as t
 
 
 class FlextLdifConstantsBase:

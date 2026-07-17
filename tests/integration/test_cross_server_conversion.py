@@ -13,11 +13,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from flext_tests import tm
 
-from flext_ldif.servers.base import FlextLdifServersBase
-from flext_ldif.services.conversion import FlextLdifConversion
 from tests import c, m, p, t
+
+if TYPE_CHECKING:
+    from flext_ldif.servers.base import FlextLdifServersBase
+    from flext_ldif.services.conversion import FlextLdifConversion
 
 
 class TestsFlextLdifCrossServerConversion:

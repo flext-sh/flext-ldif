@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-from typing import Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_cli import p, t
-from flext_ldif.constants import c
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping, Sequence
+
+    from flext_ldif import c
 
 
 @runtime_checkable

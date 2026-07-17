@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Annotated, Final, override
+from typing import TYPE_CHECKING, Annotated, Final, override
 
 from flext_ldif import FlextLdifShared, c, m, p, r, s, t, u
 from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.pipeline import FlextLdifProcessingPipeline
 from flext_ldif.services.writer import FlextLdifWriter
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class FlextLdifMigrationPipeline(s[p.Ldif.MigrationPipelineResult]):

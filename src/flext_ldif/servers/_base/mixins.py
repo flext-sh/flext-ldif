@@ -42,7 +42,7 @@ class FlextLdifServerMethodsMixin:
     def get_server_type_from_utilities(
         server_class: type,
     ) -> c.Ldif.ServerTypes:
-        """Infer the server type from the utilities namespace."""
+        """Infer the server type from the namespace."""
         resolved: c.Ldif.ServerTypes = u.Ldif.get_parent_server_type(server_class)
         return resolved
 

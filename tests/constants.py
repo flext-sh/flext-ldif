@@ -12,7 +12,7 @@ from flext_tests import FlextTestsConstants
 
 if TYPE_CHECKING:
     # mro-0ftd.3.6: keep the constants facet dependent on local typings only.
-    from tests.typings import t
+    from tests import t
 
 
 class TestsFlextLdifConstants(FlextTestsConstants, c):

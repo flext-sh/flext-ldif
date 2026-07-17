@@ -15,13 +15,16 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import codecs
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import tm
 
 from flext_ldif import ldif
 from tests import m, p
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 @pytest.mark.integration

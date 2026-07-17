@@ -4,19 +4,18 @@ from __future__ import annotations
 
 import os
 import uuid
-from collections.abc import Callable, MutableMapping
 from pathlib import Path
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from flext_ldap import FlextLdapUtilities, u
 from flext_tests import FlextTestsUtilities, tk, tm
 from flext_tests._utilities.fixtures_dsl import FlextTestsFixturesDSLMixin
 
 # mro-0ftd.3.6: the utility facade follows the finite local c/t/p/m dependency DAG.
-from tests.constants import c
-from tests.models import m
-from tests.protocols import p
-from tests.typings import t
+from tests import c, m, p, t
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, MutableMapping
 
 
 class TestsFlextLdifUtilities(FlextTestsUtilities, u):

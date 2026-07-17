@@ -2,19 +2,22 @@
 
 from __future__ import annotations
 
-from collections.abc import (
-    Iterator,
-    KeysView,
-    Mapping,
-    MutableMapping,
-    Sequence,
-    ValuesView,
-)
-from pathlib import Path
-from typing import ClassVar, Literal, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, ClassVar, Literal, Protocol, runtime_checkable
 
 from flext_cli import p, t
-from flext_ldif.constants import c
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        Iterator,
+        KeysView,
+        Mapping,
+        MutableMapping,
+        Sequence,
+        ValuesView,
+    )
+    from pathlib import Path
+
+    from flext_ldif import c
 
 # NOTE (multi-agent, mro-0ftd.3.7.2): this lowest protocol facet deliberately
 # depends only on upstream declarations and constants so no public facade can

@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from flext_ldif import p, t
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from flext_ldif import p, t
 
 
 class FlextLdifUtilitiesSchemaNormalize:

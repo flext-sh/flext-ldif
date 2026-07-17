@@ -6,13 +6,16 @@ content patterns across different LDAP server implementations.
 
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import tm
 
 from flext_ldif import ldif
 from tests import c, p
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 @pytest.fixture

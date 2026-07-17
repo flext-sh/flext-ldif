@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import re
-from pathlib import Path
-from typing import override
+from typing import TYPE_CHECKING, override
 
 from flext_ldif import (
     c,
@@ -15,6 +14,9 @@ from flext_ldif import (
     t,
     u,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class FlextLdifDetector(s):

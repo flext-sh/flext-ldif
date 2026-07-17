@@ -14,14 +14,16 @@ No manual processor creation or conversion loops required.
 
 from __future__ import annotations
 
-from collections.abc import (
-    MutableSequence,
-)
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
 from flext_ldif import ldif, m, p, u
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        MutableSequence,
+    )
 
 _BYTES_PER_UNIT: Final = 1024.0
 

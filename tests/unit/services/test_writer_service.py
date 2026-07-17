@@ -8,13 +8,16 @@ fields. No private attribute, collaborator spying, or internal patching.
 
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 from uuid import uuid4
 
 import pytest
 from flext_tests import tm
 
 from tests import c, m, p, t, u
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class TestsFlextLdifWriterService:

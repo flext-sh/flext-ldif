@@ -9,11 +9,15 @@ under test.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 from flext_tests import tm
 
-from flext_ldif import p
 from flext_ldif.services.server import FlextLdifServer
+
+if TYPE_CHECKING:
+    from flext_ldif import p
 
 
 class TestsFlextLdifOidServers:

@@ -9,12 +9,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
 from flext_core import FlextUtilities as u, m
 from flext_ldif import c, t
-from flext_ldif._models._settings_rules import FlextLdifModelsSettingsRules as msr
+
+if TYPE_CHECKING:
+    from collections.abc import MutableMapping
+
+    from flext_ldif._models._settings_rules import FlextLdifModelsSettingsRules as msr
 
 
 class FlextLdifModelsSettingsMigrate:

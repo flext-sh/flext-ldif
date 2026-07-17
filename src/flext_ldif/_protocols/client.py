@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-from pathlib import Path
-from typing import Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_cli import p, t
+from flext_ldif import c
 from flext_ldif._protocols.base import FlextLdifProtocolsBase
-from flext_ldif._protocols.domain import FlextLdifProtocolsDomain
-from flext_ldif.constants import c
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+    from pathlib import Path
+
+    from flext_ldif._protocols.domain import FlextLdifProtocolsDomain
 
 # NOTE (multi-agent, mro-0ftd.3.7.2): client declarations are the highest
 # private protocol facet and may depend one-way on both base and domain.

@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-from typing import ClassVar, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, ClassVar, Protocol, runtime_checkable
 
-from flext_cli import p, t
-from flext_ldif._protocols.base import FlextLdifProtocolsBase
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from flext_cli import p, t
+    from flext_ldif._protocols.base import FlextLdifProtocolsBase
 
 # NOTE (multi-agent, mro-0ftd.3.7.2): domain contracts depend one-way on the
 # declaration-only base facet; no project facade or model is resolved here.

@@ -9,7 +9,7 @@ methods, or internal collaborators are touched.
 
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import tm
@@ -17,6 +17,9 @@ from flext_tests import tm
 from flext_ldif.services.migration import FlextLdifMigrationPipeline
 from flext_ldif.services.pipeline import FlextLdifProcessingPipeline
 from tests import TestsFlextLdifUtilities as u, c, m, p, t
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 _BASIC_RFC_ENTRY_LDIF = "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n"
 

@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import struct
-from collections.abc import MutableMapping
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
 from flext_ldif import c, m, p, r, s, t, u
 from flext_ldif.services.filters import FlextLdifFilters
+
+if TYPE_CHECKING:
+    from collections.abc import MutableMapping
 
 
 class FlextLdifCategorization(s):

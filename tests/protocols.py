@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_ldap import p as ldap_p
@@ -12,7 +11,9 @@ from flext_ldif import p as ldif_p
 
 if TYPE_CHECKING:
     # mro-0ftd.3.6: protocol-only reverse edges never load test facades at runtime.
-    from tests.constants import c
+    from pathlib import Path
+
+    from tests import c
 
 
 class TestsFlextLdifProtocols(

@@ -6,11 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Iterator,
-    MutableMapping,
-    Sequence,
-)
 from typing import TYPE_CHECKING, Annotated, ClassVar
 
 from flext_cli import m, u
@@ -18,6 +13,12 @@ from flext_ldif import t
 from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries as mde
 
 if TYPE_CHECKING:
+    from collections.abc import (
+        Iterator,
+        MutableMapping,
+        Sequence,
+    )
+
     from flext_ldif import p
 
 

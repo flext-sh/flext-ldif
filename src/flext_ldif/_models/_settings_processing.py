@@ -9,13 +9,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated, Self
+from typing import TYPE_CHECKING, Annotated, Self
 
 from flext_core import FlextUtilities as u, m
 from flext_ldif import FlextLdifShared, c
-from flext_ldif._models._settings_normalization import (
-    FlextLdifModelsSettingsNormalization as msn,
-)
+
+if TYPE_CHECKING:
+    from flext_ldif._models._settings_normalization import (
+        FlextLdifModelsSettingsNormalization as msn,
+    )
 
 
 class FlextLdifModelsSettingsProcessing:
