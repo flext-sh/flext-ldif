@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import sys
-from typing import TypeIs
+from typing import TYPE_CHECKING, TypeIs
 
 from flext_ldif import (
     FlextLdifShared,
@@ -12,7 +12,9 @@ from flext_ldif import (
     r,
     t,
 )
-from flext_ldif.models import FlextLdifModels as m
+
+if TYPE_CHECKING:
+    from flext_ldif import FlextLdifModels as m
 
 
 class FlextLdifUtilitiesServer:
@@ -174,7 +176,8 @@ class FlextLdifUtilitiesServer:
             The string value of the corresponding ServerTypes enum member.
 
         """
-        return c.Ldif.ServerTypes[name].value
+        server_type_value: str = c.Ldif.ServerTypes[name].value
+        return server_type_value
 
     @staticmethod
     def get_parent_server_type(
@@ -198,17 +201,20 @@ class FlextLdifUtilitiesServer:
     @staticmethod
     def get_attribute_match_score() -> int:
         """Get attribute match score for server detection."""
-        return c.Ldif.ATTRIBUTE_MATCH_SCORE
+        score: int = c.Ldif.ATTRIBUTE_MATCH_SCORE
+        return score
 
     @staticmethod
     def get_confidence_threshold() -> float:
         """Get confidence threshold for server detection."""
-        return c.Ldif.CONFIDENCE_THRESHOLD
+        threshold: float = c.Ldif.CONFIDENCE_THRESHOLD
+        return threshold
 
     @staticmethod
     def get_server_detection_default_max_lines() -> int:
         """Get default max lines for server detection."""
-        return c.Ldif.DEFAULT_MAX_LINES
+        max_lines: int = c.Ldif.DEFAULT_MAX_LINES
+        return max_lines
 
     @staticmethod
     def matches(server_type: str, *allowed_types: str) -> bool:
@@ -251,7 +257,7 @@ class FlextLdifUtilitiesServer:
             return bool(
                 check_value
                 and settings.oid_pattern
-                and c.Ldif.compile_pattern(settings.oid_pattern).search(check_value)
+                and c.Ldif.compile_pattern(settings.oid_pattern).search(check_value),
             )
 
         oid_value = value if isinstance(value, str) else value.oid

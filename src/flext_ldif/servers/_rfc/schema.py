@@ -7,7 +7,7 @@ from collections.abc import (
     MutableMapping,
     Sequence,
 )
-from typing import ClassVar, Self, overload, override
+from typing import ClassVar, Self, cast, overload, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
@@ -126,21 +126,14 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
     @overload
     def __call__(
         self,
-        data: m.Ldif.SchemaAttribute,
+        data: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
         operation: str | None = None,
     ) -> str: ...
 
     @overload
     def __call__(
         self,
-        data: m.Ldif.SchemaObjectClass,
-        operation: str | None = None,
-    ) -> str: ...
-
-    @overload
-    def __call__(
-        self,
-        data: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None = None,
+        data: None = None,
         *,
         operation: str | None = None,
     ) -> str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass: ...
@@ -156,7 +149,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
         server: p.Ldif.ServerRegistry | None = None,
         settings: p.Ldif.Settings | None = None,
         **fields: t.JsonValue,
-    ) -> Self | str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass:
+    ) -> Self | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str:
         """Callable interface - automatic polymorphic processor."""
         builder_fields = FlextLdifServerMethodsMixin.project_processor_fields(
             fields,
@@ -164,12 +157,12 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
             force_dispatch=server is not None or settings is not None,
         )
         if builder_fields is not None:
-            configured: Self = super().__call__(
+            configured = super().__call__(
                 server=server,
                 settings=settings,
                 **builder_fields,
             )
-            return configured
+            return cast("Self", configured)
         narrowed_data = (
             data
             if isinstance(
@@ -211,23 +204,24 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
     @staticmethod
     def _coerce_dynamic_metadata(
         value: t.JsonValue | None,
-    ) -> m.Ldif.DynamicMetadata:
-        json_value: t.JsonPayload | m.Ldif.DynamicMetadata | None = value
-        if isinstance(json_value, m.Ldif.DynamicMetadata):
-            return json_value
-        if json_value is None:
-            return m.Ldif.DynamicMetadata()
+    ) -> t.MutableJsonMapping:
+        # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: coerce to a plain
+        # JSON mapping with the same None/invalid -> {} semantics.
+        if isinstance(value, dict):
+            return value
+        if value is None:
+            return {}
         try:
-            validated: m.Ldif.DynamicMetadata = m.Ldif.DynamicMetadata.model_validate(
-                json_value,
+            validated: t.MutableJsonMapping = t.json_dict_adapter().validate_python(
+                value,
             )
             return validated
         except c.ValidationError:
-            return m.Ldif.DynamicMetadata()
+            return {}
 
     @staticmethod
     def _convert_extensions_for_server(
-        metadata: m.Ldif.DynamicMetadata,
+        metadata: t.Ldif.MetadataInputMapping,
     ) -> t.Ldif.SchemaExtensionsMapping:
         extensions: t.Ldif.SchemaExtensionsMapping = {}
         for key, value in metadata.items():
@@ -256,7 +250,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
             return None
         parsed = FlextLdifServersRfcSchema._parse_int(json_value)
         if parsed.success:
-            return parsed.value
+            parsed_value: int = parsed.value
+            return parsed_value
         return None
 
     @staticmethod
@@ -340,11 +335,11 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
             )
             return matches_server_patterns
         if settings.oid_pattern and c.Ldif.compile_pattern(settings.oid_pattern).search(
-            oc_definition
+            oc_definition,
         ):
             return True
         name_matches = c.Ldif.compile_pattern(name_regex, ignorecase=True).findall(
-            oc_definition
+            oc_definition,
         )
         attr_names = {name.lower() for name in settings.attr_names}
         return any(name.lower() in attr_names for name in name_matches)
@@ -352,14 +347,14 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
     def create_metadata(
         self,
         original_format: str,
-        extensions: m.Ldif.DynamicMetadata | None = None,
+        extensions: t.Ldif.MetadataInputMapping | None = None,
     ) -> m.Ldif.ServerMetadata:
         """Create server metadata with consistent server-specific extensions."""
         server_type_value = self._get_server_type()
-        all_extensions = m.Ldif.DynamicMetadata()
+        all_extensions: t.MutableJsonMapping = {}
         all_extensions[c.Ldif.ACL_ORIGINAL_FORMAT] = original_format
         if extensions:
-            all_extensions.update(extensions.to_dict())
+            all_extensions.update(extensions)
         return m.Ldif.ServerMetadata(
             server_type=server_type_value,
             extensions=all_extensions,
@@ -385,7 +380,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
             )
         except c.Ldif.EXC_LDIF_PARSE as e:
             FlextLdifServersRfcSchema._module_logger.exception(
-                "Schema extraction failed"
+                "Schema extraction failed",
             )
             return r[
                 MutableMapping[
@@ -489,9 +484,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
         metadata_extensions[c.Ldif.SCHEMA_SOURCE_SERVER] = server_type
         metadata = m.Ldif.ServerMetadata(
             server_type=server_type,
-            extensions=m.Ldif.DynamicMetadata.model_validate(metadata_extensions)
-            if metadata_extensions
-            else m.Ldif.DynamicMetadata(),
+            extensions=dict(metadata_extensions) if metadata_extensions else {},
             original_server_type=server_type,
             target_server_type=server_type,
         )
@@ -534,7 +527,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
 
     @override
     def _parse_attribute(
-        self, attr_definition: str
+        self,
+        attr_definition: str,
     ) -> p.Result[m.Ldif.SchemaAttribute]:
         """Parse RFC 4512 attribute definition using generalized parser."""
         server_type = self._get_server_type()
@@ -601,7 +595,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
 
     @override
     def _parse_objectclass(
-        self, oc_definition: str
+        self,
+        oc_definition: str,
     ) -> p.Result[m.Ldif.SchemaObjectClass]:
         """Parse RFC 4512 objectClass definition using core parser."""
         parse_result = self._parse_objectclass_core(oc_definition)
@@ -618,7 +613,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
             return self._parse_rfc_objectclass_core(oc_definition)
         except c.EXC_BASIC_TYPE as e:
             FlextLdifServersRfcSchema._module_logger.exception(
-                "RFC objectClass parsing exception"
+                "RFC objectClass parsing exception",
             )
             return r[m.Ldif.SchemaObjectClass].fail_op("RFC objectClass parsing", e)
 
@@ -686,25 +681,25 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
         return r[m.Ldif.SchemaObjectClass].ok(objectclass)
 
     def _post_write_attribute(self, written_str: str) -> str:
-        """Hook for subclasses to transform written attribute string."""
+        """Transform written attribute string (subclass hook)."""
         return written_str
 
     def _post_write_objectclass(self, written_str: str) -> str:
-        """Hook for subclasses to transform written objectClass string."""
+        """Transform written objectClass string (subclass hook)."""
         return written_str
 
     def _transform_attribute_for_write(
         self,
         attr_data: m.Ldif.SchemaAttribute,
     ) -> m.Ldif.SchemaAttribute:
-        """Hook for subclasses to transform attribute before writing."""
+        """Transform attribute before writing (subclass hook)."""
         return attr_data
 
     def _transform_objectclass_for_write(
         self,
         oc_data: m.Ldif.SchemaObjectClass,
     ) -> m.Ldif.SchemaObjectClass:
-        """Hook for subclasses to transform objectClass before writing."""
+        """Transform objectClass before writing (subclass hook)."""
         return oc_data
 
     def _validate_oid_list(
@@ -754,7 +749,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
                 else "objectclass"
             )
             FlextLdifServersRfcSchema._module_logger.exception(
-                "RFC %s writing exception", item_type
+                "RFC %s writing exception",
+                item_type,
             )
             return r[str].fail(f"RFC {item_type} writing failed: {e}")
 

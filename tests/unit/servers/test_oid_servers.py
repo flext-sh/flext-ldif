@@ -1,43 +1,104 @@
-"""Tests for OID (Oracle Internet Directory) servers."""
+"""Behavioral tests for the OID (Oracle Internet Directory) schema server.
+
+Asserts observable public contract only: values returned by
+``resolve_schema_server`` and the ``r[T]`` outcomes of ``parse_attribute`` /
+``parse_objectclass`` / ``write_attribute`` / ``write_objectclass``. No private
+attribute access, no internal-collaborator spying, no patching of the unit
+under test.
+"""
 
 from __future__ import annotations
 
 import pytest
+from flext_tests import tm
 
+from flext_ldif import p
 from flext_ldif.services.server import FlextLdifServer
 
 
-class TestsTestFlextLdifOidServers:
-    """Test OID-specific servers and behavior."""
+class TestsFlextLdifOidServers:
+    """Public-contract behavior of the OID schema server."""
 
     @pytest.fixture
-    def server_registry(self) -> FlextLdifServer:
-        """Create server registry."""
-        return FlextLdifServer()
+    def schema(self) -> p.Ldif.SchemaServer:
+        """Resolve the OID schema server through the public registry."""
+        resolved = FlextLdifServer().resolve_schema_server("oid")
+        assert resolved is not None
+        return resolved
 
-    def test_parse_attribute_syntax_oid_normalization(
+    def test_resolve_unknown_server_type_returns_none(self) -> None:
+        """An unknown server type resolves to None, not a fabricated server."""
+        tm.that(FlextLdifServer().resolve_schema_server("does-not-exist"), none=True)
+
+    @pytest.mark.parametrize(
+        ("attr_def", "expected_syntax"),
+        [
+            pytest.param(
+                "( 2.16.840.1.113894.1.1.1 NAME 'orclIsEnabled' "
+                "SYNTAX 1.3.6.1.4.1.1466.115.121.1.1 SINGLE-VALUE )",
+                "1.3.6.1.4.1.1466.115.121.1.15",
+                id="boolean-syntax-normalized-to-directorystring",
+            ),
+            pytest.param(
+                "( 2.16.840.1.113894.1.1.2 NAME 'orclDirString' "
+                "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+                "1.3.6.1.4.1.1466.115.121.1.15",
+                id="rfc-syntax-preserved",
+            ),
+        ],
+    )
+    def test_parse_attribute_normalizes_syntax_oid(
         self,
-        server_registry: FlextLdifServer,
+        schema: p.Ldif.SchemaServer,
+        attr_def: str,
+        expected_syntax: str,
     ) -> None:
-        """OID Boolean syntax should normalize to RFC DirectoryString."""
-        schema = server_registry.resolve_schema_server("oid")
-        assert schema is not None
+        """OID-specific syntax OIDs normalize to their RFC equivalent."""
+        result = schema.parse_attribute(attr_def)
+        tm.ok(result)
+        tm.that(str(result.unwrap().syntax), eq=expected_syntax)
+
+    @pytest.mark.parametrize(
+        ("equality_in", "expected_equality"),
+        [
+            pytest.param(
+                "caseIgnoreSubstringsMatch",
+                "caseIgnoreMatch",
+                id="substrings-equality-normalized",
+            ),
+            pytest.param(
+                "accessDirectiveMatch",
+                "caseIgnoreMatch",
+                id="oid-access-directive-normalized",
+            ),
+            pytest.param(
+                "distinguishedNAMEMatch",
+                "distinguishedNameMatch",
+                id="dn-case-variant-normalized",
+            ),
+        ],
+    )
+    def test_parse_attribute_normalizes_equality_matching_rule(
+        self,
+        schema: p.Ldif.SchemaServer,
+        equality_in: str,
+        expected_equality: str,
+    ) -> None:
+        """OID equality matching-rule variants normalize to RFC rule names."""
         attr_def = (
-            "( 2.16.840.1.113894.1.1.1 NAME 'orclIsEnabled' "
-            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.1 SINGLE-VALUE )"
+            f"( 2.16.840.1.113894.1.1.327 NAME 'orclAttr' "
+            f"EQUALITY {equality_in} "
+            f"SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
         )
         result = schema.parse_attribute(attr_def)
-        assert result.success, f"Parse failed: {result.error}"
-        attr = result.value
-        assert str(attr.syntax) == "1.3.6.1.4.1.1466.115.121.1.15"
+        tm.ok(result)
+        tm.that(result.unwrap().equality, eq=expected_equality)
 
-    def test_parse_attribute_matching_rule_normalization(
+    def test_parse_attribute_derives_substr_from_substrings_rule(
         self,
-        server_registry: FlextLdifServer,
+        schema: p.Ldif.SchemaServer,
     ) -> None:
-        """OID equality substrings rule should normalize to RFC fields."""
-        schema = server_registry.resolve_schema_server("oid")
-        assert schema is not None
+        """A substrings equality rule populates the public substr field."""
         attr_def = (
             "( 2.16.840.1.113894.1.1.327 NAME 'orclDASUIType' "
             "DESC 'UI type via DAS' EQUALITY caseIgnoreSubstringsMatch "
@@ -45,106 +106,108 @@ class TestsTestFlextLdifOidServers:
             "USAGE userApplications )"
         )
         result = schema.parse_attribute(attr_def)
-        assert result.success, f"Parse failed: {result.error}"
-        attr = result.value
-        assert attr.equality == "caseIgnoreMatch"
-        assert attr.substr == "caseIgnoreSubstringsMatch"
+        tm.ok(result)
+        attr = result.unwrap()
+        tm.that(attr.equality, eq="caseIgnoreMatch")
+        tm.that(attr.substr, eq="caseIgnoreSubstringsMatch")
 
-    def test_parse_attribute_access_directive_match(
+    def test_parse_attribute_exposes_public_identity_fields(
         self,
-        server_registry: FlextLdifServer,
+        schema: p.Ldif.SchemaServer,
     ) -> None:
-        """OID-specific accessDirectiveMatch should normalize to caseIgnoreMatch."""
-        schema = server_registry.resolve_schema_server("oid")
-        assert schema is not None
+        """Parsed attribute exposes name, oid, and flags via the public model."""
         attr_def = (
-            "( 2.16.840.1.113894.1.1.500 NAME 'orclAccessDir' "
-            "EQUALITY accessDirectiveMatch "
-            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+            "( 2.16.840.1.113894.1.1.327 NAME 'orclDASUIType' "
+            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )"
         )
-        result = schema.parse_attribute(attr_def)
-        assert result.success, f"Parse failed: {result.error}"
-        assert result.value.equality == "caseIgnoreMatch"
+        attr = schema.parse_attribute(attr_def).unwrap()
+        tm.that(attr.name, eq="orclDASUIType")
+        tm.that(attr.oid, eq="2.16.840.1.113894.1.1.327")
+        tm.that(attr.single_value, eq=True)
 
-    def test_parse_attribute_distinguished_name_case_variant(
+    def test_parse_attribute_without_oid_fails_with_error_message(
         self,
-        server_registry: FlextLdifServer,
+        schema: p.Ldif.SchemaServer,
     ) -> None:
-        """OID DN case variants should normalize to distinguishedNameMatch."""
-        schema = server_registry.resolve_schema_server("oid")
-        assert schema is not None
-        attr_def = (
-            "( 2.16.840.1.113894.1.1.600 NAME 'orclMemberRef' "
-            "EQUALITY distinguishedNAMEMatch "
-            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )"
-        )
-        result = schema.parse_attribute(attr_def)
-        assert result.success, f"Parse failed: {result.error}"
-        assert result.value.equality == "distinguishedNameMatch"
+        """A definition lacking an OID yields a failed result, not a success."""
+        result = schema.parse_attribute("garbage not valid")
+        tm.that(result.success, eq=False)
+        assert result.error is not None
+        tm.that(result.error, has="OID")
 
-    def test_parse_objectclass_quoted_sup(
+    @pytest.mark.parametrize(
+        ("oc_def", "expected_sup"),
+        [
+            pytest.param(
+                "( 2.16.840.1.113894.1.2.64 NAME 'orclReferenceObject' "
+                "SUP 'top' STRUCTURAL MAY ( orclOwnerGUID $ seeAlso ) )",
+                "top",
+                id="quoted-sup-top",
+            ),
+            pytest.param(
+                "( 2.16.840.1.113894.1.2.50 NAME 'orclParenSup' "
+                "SUP ( top ) STRUCTURAL MAY ( cn ) )",
+                "top",
+                id="parenthesized-sup",
+            ),
+        ],
+    )
+    def test_parse_objectclass_normalizes_superior(
         self,
-        server_registry: FlextLdifServer,
+        schema: p.Ldif.SchemaServer,
+        oc_def: str,
+        expected_sup: str,
     ) -> None:
-        """Quoted SUP 'top' should parse as bare top."""
-        schema = server_registry.resolve_schema_server("oid")
-        assert schema is not None
-        oc_def = (
-            "( 2.16.840.1.113894.1.2.64 NAME 'orclReferenceObject' "
-            "SUP 'top' STRUCTURAL MAY ( orclOwnerGUID $ seeAlso ) )"
-        )
+        """Quoted and parenthesized SUP forms both resolve to a bare superior."""
         result = schema.parse_objectclass(oc_def)
-        assert result.success, f"Parse failed: {result.error}"
-        assert result.value.sup == "top"
+        tm.ok(result)
+        tm.that(result.unwrap().sup, eq=expected_sup)
 
-    def test_parse_objectclass_auxiliary_typo(
+    def test_parse_objectclass_normalizes_auxiliary_typo(
         self,
-        server_registry: FlextLdifServer,
+        schema: p.Ldif.SchemaServer,
     ) -> None:
-        """OID AUXILLARY typo should normalize to AUXILIARY."""
-        schema = server_registry.resolve_schema_server("oid")
-        assert schema is not None
+        """The OID 'AUXILLARY' typo normalizes to the RFC AUXILIARY kind."""
         oc_def = (
             "( 2.16.840.1.113894.1.2.99 NAME 'orclTestAux' "
             "SUP top AUXILLARY MAY ( cn ) )"
         )
         result = schema.parse_objectclass(oc_def)
-        assert result.success, f"Parse failed: {result.error}"
-        assert result.value.kind == "AUXILIARY"
+        tm.ok(result)
+        tm.that(result.unwrap().kind, eq="AUXILIARY")
 
-    def test_parse_objectclass_parenthesized_sup(
+    def test_write_attribute_round_trip_preserves_matching_rule_text(
         self,
-        server_registry: FlextLdifServer,
+        schema: p.Ldif.SchemaServer,
     ) -> None:
-        """Parenthesized SUP should parse as a single superior class."""
-        schema = server_registry.resolve_schema_server("oid")
-        assert schema is not None
-        oc_def = (
-            "( 2.16.840.1.113894.1.2.50 NAME 'orclParenSup' "
-            "SUP ( top ) STRUCTURAL MAY ( cn ) )"
-        )
-        result = schema.parse_objectclass(oc_def)
-        assert result.success, f"Parse failed: {result.error}"
-        assert result.value.sup == "top"
-
-    def test_write_attribute_preserves_matching_rules(
-        self,
-        server_registry: FlextLdifServer,
-    ) -> None:
-        """OID same-server round-trip should preserve original matching-rule text."""
-        schema = server_registry.resolve_schema_server("oid")
-        assert schema is not None
+        """Same-server round-trip preserves the original matching-rule text."""
         attr_def = (
             "( 2.16.840.1.113894.1.1.327 NAME 'orclDASUIType' "
             "EQUALITY caseIgnoreSubstringsMatch "
             "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )"
         )
-        parse_result = schema.parse_attribute(attr_def)
-        assert parse_result.success, f"Parse failed: {parse_result.error}"
-        write_result = schema.write_attribute(parse_result.value)
-        assert write_result.success, f"Write failed: {write_result.error}"
-        written = write_result.value
-        assert "EQUALITY caseIgnoreSubstringsMatch" in written
+        parsed = schema.parse_attribute(attr_def)
+        tm.ok(parsed)
+        written = schema.write_attribute(parsed.unwrap())
+        tm.ok(written)
+        tm.that(written.unwrap(), has="EQUALITY caseIgnoreSubstringsMatch")
+
+    def test_write_objectclass_round_trip_preserves_identity(
+        self,
+        schema: p.Ldif.SchemaServer,
+    ) -> None:
+        """Objectclass round-trip preserves name and superior in the output."""
+        oc_def = (
+            "( 2.16.840.1.113894.1.2.64 NAME 'orclReferenceObject' "
+            "SUP top STRUCTURAL MAY ( cn ) )"
+        )
+        parsed = schema.parse_objectclass(oc_def)
+        tm.ok(parsed)
+        written = schema.write_objectclass(parsed.unwrap())
+        tm.ok(written)
+        rendered = written.unwrap()
+        tm.that(rendered, has="NAME 'orclReferenceObject'")
+        tm.that(rendered, has="SUP top")
 
 
-__all__: list[str] = ["TestsTestFlextLdifOidServers"]
+__all__: list[str] = ["TestsFlextLdifOidServers"]

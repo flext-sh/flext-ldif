@@ -1,24 +1,24 @@
 """Domain models for LDIF attributes.
 
-from flext_ldif.models import m
-from flext_ldif.utilities import u
+from flext_ldif import m
+from flext_ldif import u
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
-from collections.abc import (
-    KeysView,
-    MutableMapping,
-    ValuesView,
-)
-from typing import Annotated, ClassVar, Self
+from collections.abc import MutableMapping
+from typing import TYPE_CHECKING, Annotated, ClassVar, Self
 
-from flext_core import m
-from flext_core.utilities import FlextUtilities as u
+from flext_core import FlextUtilities as u, m
 from flext_ldif import c, t
-from flext_ldif._models.metadata import FlextLdifModelsMetadata
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        KeysView,
+        ValuesView,
+    )
 
 
 class FlextLdifModelsDomainAttributes:
@@ -44,7 +44,7 @@ class FlextLdifModelsDomainAttributes:
             ),
         ] = u.Field(default_factory=dict)
         metadata: Annotated[
-            FlextLdifModelsMetadata.EntryMetadata | None,
+            t.MutableJsonMapping | None,
             u.Field(
                 description="Metadata for preserving ordering and formats",
             ),

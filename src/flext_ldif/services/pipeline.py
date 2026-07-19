@@ -26,7 +26,7 @@ class FlextLdifProcessingPipeline(
             exclude=True,
             description="Optional transformation configuration for the processing pipeline.",
         ),
-    ]
+    ] = None
     entries_input: Annotated[
         t.MutableSequenceOf[m.Ldif.Entry] | None,
         u.Field(
@@ -34,7 +34,7 @@ class FlextLdifProcessingPipeline(
             exclude=True,
             description="Optional entry batch used when the service executes without explicit input.",
         ),
-    ]
+    ] = None
     _config: m.Ldif.TransformConfig = u.PrivateAttr(
         default_factory=m.Ldif.TransformConfig,
     )
@@ -100,7 +100,7 @@ class FlextLdifProcessingPipeline(
         )
         if pipeline_result.failure:
             return r[t.MutableSequenceOf[m.Ldif.Entry]].fail(
-                pipeline_result.error or "processing pipeline failed"
+                pipeline_result.error or "processing pipeline failed",
             )
         failed_stage = next(
             (stage for stage in pipeline_result.value.failed_stages if stage.error),
@@ -108,7 +108,7 @@ class FlextLdifProcessingPipeline(
         )
         if failed_stage is not None:
             return r[t.MutableSequenceOf[m.Ldif.Entry]].fail(
-                failed_stage.error or "processing pipeline failed"
+                failed_stage.error or "processing pipeline failed",
             )
         return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(self._entries)
 
@@ -123,12 +123,12 @@ class FlextLdifProcessingPipeline(
             transformed = transformer.apply(entry)
             if transformed.failure:
                 return r[m.Cli.PipelineStageResult].fail(
-                    transformed.error or f"stage {stage_id} failed"
+                    transformed.error or f"stage {stage_id} failed",
                 )
             transformed_entries.append(transformed.value)
         self._entries = transformed_entries
         output_payload: t.JsonMapping = t.Cli.JSON_MAPPING_ADAPTER.validate_python({
-            "processed_entries": len(transformed_entries)
+            "processed_entries": len(transformed_entries),
         })
         stage_result: p.Result[m.Cli.PipelineStageResult] = cli.ok_stage(
             stage_id,

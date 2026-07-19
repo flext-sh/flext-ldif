@@ -30,9 +30,9 @@ class FlextLdifConversionAclPreserveMixin(s):
         metadata = acl.metadata
         if metadata is None or not metadata:
             return {}
+        # mro-wgwh.5 (agent: kimi-coder) — extensions is a plain mapping now.
         return {
-            key: to_general_value(value)
-            for key, value in metadata.extensions.to_dict().items()
+            key: to_general_value(value) for key, value in metadata.extensions.items()
         }
 
     def _preserve_acl_metadata(
@@ -167,7 +167,7 @@ class FlextLdifConversionAclPreserveMixin(s):
             **self._get_extensions_dict(acl_step1),
         }
         updated_metadata = acl_step1.metadata.model_copy(
-            update={"extensions": m.Ldif.DynamicMetadata.from_dict(merged_ext_raw)},
+            update={"extensions": merged_ext_raw},
             deep=True,
         )
         preserved_acl: m.Ldif.Acl = acl_step1.model_copy(

@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 import struct
-from collections.abc import (
-    MutableMapping,
-)
+from collections.abc import MutableMapping
 from typing import Annotated
 
 from flext_ldif import c, m, p, r, s, t, u
@@ -36,7 +34,7 @@ class FlextLdifCategorization(s):
             exclude=True,
             description="Optional categorization rules applied before server defaults.",
         ),
-    ]
+    ] = None
     schema_whitelist_rules: Annotated[
         m.Ldif.WhitelistRules | None,
         u.Field(
@@ -44,7 +42,7 @@ class FlextLdifCategorization(s):
             exclude=True,
             description="Optional schema whitelist rules used to filter schema entries.",
         ),
-    ]
+    ] = None
     forbidden_attributes: Annotated[
         t.MutableSequenceOf[str] | None,
         u.Field(
@@ -52,7 +50,7 @@ class FlextLdifCategorization(s):
             exclude=True,
             description="Attribute names removed from categorized entries after classification.",
         ),
-    ]
+    ] = None
     forbidden_objectclasses: Annotated[
         t.MutableSequenceOf[str] | None,
         u.Field(
@@ -60,7 +58,7 @@ class FlextLdifCategorization(s):
             exclude=True,
             description="objectClass names removed from categorized entries after classification.",
         ),
-    ]
+    ] = None
     base_dn: Annotated[
         str | None,
         u.Field(
@@ -68,7 +66,7 @@ class FlextLdifCategorization(s):
             exclude=True,
             description="Base DN filter applied after categorization when provided.",
         ),
-    ]
+    ] = None
     server_type: Annotated[
         str,
         u.Field(
@@ -76,7 +74,7 @@ class FlextLdifCategorization(s):
             exclude=True,
             description="Server type used to resolve categorization defaults from the registry.",
         ),
-    ]
+    ] = c.Ldif.ServerTypes.RFC.value
     server_registry: Annotated[
         p.Ldif.ServerRegistry | None,
         u.Field(
@@ -84,15 +82,15 @@ class FlextLdifCategorization(s):
             exclude=True,
             description="Optional server registry override for categorization constants lookup.",
         ),
-    ]
+    ] = None
     rejection_tracker: Annotated[
-        MutableMapping[str, t.MutableSequenceOf[m.Ldif.Entry]],
+        t.MutableMappingKV[str, t.MutableSequenceOf[m.Ldif.Entry]],
         u.Field(
             default_factory=_build_rejection_tracker,
             exclude=True,
             description="Tracks rejected entries by rejection reason.",
         ),
-    ]
+    ] = u.Field(default_factory=_build_rejection_tracker)
 
     def _normalize_initial_category_rules(self) -> m.Ldif.CategoryRules:
         """Normalize initial categorization rules into the canonical model."""
@@ -341,7 +339,9 @@ class FlextLdifCategorization(s):
             if constants is not None
             and self._check_hierarchy_priority(entry, constants)
             else self._match_entry_to_category(
-                entry, priority_order, merged_category_map
+                entry,
+                priority_order,
+                merged_category_map,
             )
         )
 
@@ -483,7 +483,8 @@ class FlextLdifCategorization(s):
                     c.Ldif.RejectionTrackerKey.INVALID_DN_RFC4514
                 ].append(rejected_entry)
                 return r[m.Ldif.Entry].fail_op(
-                    "DN normalization", norm_result.error or c.Ldif.ERR_UNKNOWN
+                    "DN normalization",
+                    norm_result.error or c.Ldif.ERR_UNKNOWN,
                 )
             dn_obj = m.Ldif.DN(value=normalized_dn)
             return r[m.Ldif.Entry].ok(entry.model_copy(update={"dn": dn_obj}))

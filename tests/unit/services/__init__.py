@@ -9,19 +9,16 @@ _LAZY_IMPORTS = build_lazy_import_map(
     {
         ".test_acl_service": ("TestsFlextLdifAclService",),
         ".test_analysis_service": ("TestsFlextLdifAnalysisService",),
-        ".test_api_server_registry": ("TestsTestFlextLdifApiServerRegistry",),
+        ".test_api_server_registry": ("TestsFlextLdifApiServerRegistry",),
         ".test_detector_service": ("TestsFlextLdifDetectorService",),
-        ".test_entries_service": ("TestsFlextLdifEntriesService",),
+        ".test_entries_service": ("TestsFlextLdifEntries",),
         ".test_filters_service": ("TestsFlextLdifFiltersService",),
-        ".test_migration_pipeline": (
-            "TestsFlextLdifProcessingPipeline",
-            "TestsTestFlextLdifMigrationPipeline",
-        ),
+        ".test_migration_pipeline": ("TestsFlextLdifMigrationPipeline",),
         ".test_parser_service": ("TestsFlextLdifParserService",),
         ".test_processing_service": ("TestsFlextLdifProcessingService",),
         ".test_servers_standardization": ("TestsFlextLdifServersStandardization",),
         ".test_statistics_service": ("TestsFlextLdifStatisticsService",),
-        ".test_transformers_service": ("TestsFlextLdifTransformerService",),
+        ".test_transformers_service": ("TestsFlextLdifTransformersService",),
         ".test_validation_service": ("TestsFlextLdifValidationService",),
         ".test_writer_service": ("TestsFlextLdifWriterService",),
         "flext_tests": (

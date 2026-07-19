@@ -1,7 +1,7 @@
 """Domain models for LDIF metadata.
 
-from flext_ldif.models import m
-from flext_ldif.utilities import u
+from flext_ldif import m
+from flext_ldif import u
 Namespace mixin extracted from domain_entries.py containing
 ValidationMetadata, WriteOptions, FormatDetails, SchemaFormatDetails,
 and ServerMetadata inner classes.
@@ -13,16 +13,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    MutableMapping,
-)
-from typing import Annotated, Self
+from collections.abc import MutableMapping
+from typing import Annotated
 
-from flext_core import m
-from flext_core.utilities import FlextUtilities as u
+from flext_core import FlextUtilities as u, m
 from flext_ldif import c, t
 from flext_ldif._models.domain_attributes import FlextLdifModelsDomainAttributes
-from flext_ldif._models.metadata import FlextLdifModelsMetadata
 from flext_ldif.shared import FlextLdifShared
 
 
@@ -165,11 +161,11 @@ class FlextLdifModelsDomainMetadata:
             ),
         ] = u.Field(default_factory=list)
         extensions: Annotated[
-            FlextLdifModelsMetadata.DynamicMetadata,
+            t.MutableJsonMapping,
             u.Field(
                 description="Non-standard schema extensions",
             ),
-        ] = u.Field(default_factory=FlextLdifModelsMetadata.DynamicMetadata)
+        ] = u.Field(default_factory=dict)
 
     class ServerMetadata(m.DynamicModel):
         """Universal metadata container for server-specific data preservation.
@@ -207,11 +203,11 @@ class FlextLdifModelsDomainMetadata:
             ),
         ]
         extensions: Annotated[
-            FlextLdifModelsMetadata.DynamicMetadata,
+            t.MutableJsonMapping,
             u.Field(
                 description="Extensible metadata storage for server-specific data (server-injected validation rules, unconverted attributes, etc.)",
             ),
-        ] = u.Field(default_factory=FlextLdifModelsMetadata.DynamicMetadata)
+        ] = u.Field(default_factory=dict)
         rfc_violations: Annotated[
             t.MutableSequenceOf[str],
             u.Field(
@@ -224,12 +220,17 @@ class FlextLdifModelsDomainMetadata:
                 description="Non-fatal RFC warnings (e.g., unusual but valid formatting)",
             ),
         ] = u.Field(default_factory=list)
+        # mro-wgwh.5 (agent: kimi) — U17: open-ended metadata containers are plain
+        # t.MutableJsonMapping fields; the DynamicMetadata/EntryMetadata model wrappers
+        # (getters/dump/helpers on declaration-only facets) are removed in this wave.
+        # mro-wgwh.5 (agent: kimi-coder) — W2b.2: extensions is t.MutableJsonMapping;
+        # create_for factory moved to u.Ldif.server_metadata_for (U17).
         conversion_notes: Annotated[
-            FlextLdifModelsMetadata.DynamicMetadata,
+            t.MutableJsonMapping,
             u.Field(
                 description="Map of conversion operation name → human-readable description",
             ),
-        ] = u.Field(default_factory=FlextLdifModelsMetadata.DynamicMetadata)
+        ] = u.Field(default_factory=dict)
         attribute_transformations: Annotated[
             MutableMapping[
                 str,
@@ -240,11 +241,11 @@ class FlextLdifModelsDomainMetadata:
             ),
         ] = u.Field(default_factory=dict)
         server_specific_data: Annotated[
-            FlextLdifModelsMetadata.EntryMetadata,
+            t.MutableJsonMapping,
             u.Field(
                 description="Preservation of server-proprietary data for round-trip conversions",
             ),
-        ] = u.Field(default_factory=FlextLdifModelsMetadata.EntryMetadata)
+        ] = u.Field(default_factory=dict)
         original_server_type: Annotated[
             c.Ldif.ServerTypes | None,
             u.Field(
@@ -288,11 +289,11 @@ class FlextLdifModelsDomainMetadata:
             ),
         ] = None
         removed_attributes: Annotated[
-            FlextLdifModelsMetadata.DynamicMetadata,
+            t.MutableJsonMapping,
             u.Field(
                 description="Attributes removed during conversion (was entry_metadata.removed_attributes_with_values)",
             ),
-        ] = u.Field(default_factory=FlextLdifModelsMetadata.DynamicMetadata)
+        ] = u.Field(default_factory=dict)
         original_format_details: Annotated[
             FlextLdifModelsDomainMetadata.FormatDetails | None,
             u.Field(
@@ -312,11 +313,11 @@ class FlextLdifModelsDomainMetadata:
             ),
         ] = u.Field(default_factory=list)
         original_attribute_case: Annotated[
-            FlextLdifModelsMetadata.DynamicMetadata,
+            t.MutableJsonMapping,
             u.Field(
                 description="Original case of attribute names: {'objectclass': 'objectClass', 'cn': 'CN'}. Used to restore original case during reverse conversion.",
             ),
-        ] = u.Field(default_factory=FlextLdifModelsMetadata.DynamicMetadata)
+        ] = u.Field(default_factory=dict)
         schema_servers_applied: Annotated[
             t.MutableSequenceOf[str],
             u.Field(
@@ -324,29 +325,29 @@ class FlextLdifModelsDomainMetadata:
             ),
         ] = u.Field(default_factory=list)
         boolean_conversions: Annotated[
-            FlextLdifModelsMetadata.DynamicMetadata,
+            t.MutableJsonMapping,
             u.Field(
                 description="Boolean conversion tracking: {'orcldasisenabled': {'original': '1', 'converted': 'TRUE', 'format': 'OID->RFC'}}",
             ),
-        ] = u.Field(default_factory=FlextLdifModelsMetadata.DynamicMetadata)
+        ] = u.Field(default_factory=dict)
         minimal_differences: Annotated[
-            FlextLdifModelsMetadata.DynamicMetadata,
+            t.MutableJsonMapping,
             u.Field(
                 description="Complete minimal differences tracking for zero data loss: {'dn': {'has_differences': True, 'original': 'cn=test, dc=example', 'converted': 'cn=test,dc=example', 'differences': [...], 'spacing_changes': {...}, 'case_changes': [...], 'punctuation_changes': [...], 'original_length': 20, 'converted_length': 19}, 'attribute_cn': {'has_differences': False, ...}, 'schema_attr_uid': {'has_differences': True, 'original': \"attributetypes: ( 0.9.2342... NAME 'uid' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )  \", 'converted': 'attributeTypes: ( 0.9.2342... NAME uid SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )', 'differences': [...], 'syntax_quotes_removed': True, 'trailing_spaces_removed': True, ...}}",
             ),
-        ] = u.Field(default_factory=FlextLdifModelsMetadata.DynamicMetadata)
+        ] = u.Field(default_factory=dict)
         original_strings: Annotated[
-            FlextLdifModelsMetadata.DynamicMetadata,
+            t.MutableJsonMapping,
             u.Field(
                 description="Complete preservation of original strings before ANY conversion: {'dn_original': 'cn=test, dc=example;', 'attribute_cn_original': 'CN', 'schema_attr_uid_original': \"attributetypes: ( 0.9.2342... NAME 'uid' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )  \", 'acl_original': 'orclaci: { ... }', 'entry_original_ldif': 'dn: cn=test\\ncn: test\\n'}",
             ),
-        ] = u.Field(default_factory=FlextLdifModelsMetadata.DynamicMetadata)
+        ] = u.Field(default_factory=dict)
         conversion_history: Annotated[
             t.MutableSequenceOf[t.MutableStrMapping],
             u.Field(
                 description="Complete conversion history for audit trail: [{'step': 'parse_oid_entry', 'timestamp': '2025-01-01T00:00:00Z', 'original': {...}, 'converted': {...}, 'differences': {...}, 'server_type': 'oid', 'operation': 'parse'}, {'step': 'normalize_to_rfc', 'timestamp': '2025-01-01T00:00:01Z', 'original': {...}, 'converted': {...}, 'differences': {...}, 'server_type': 'rfc', 'operation': 'normalize'}, ...]",
             ),
-        ] = u.Field(default_factory=lambda: list[t.MutableStrMapping]())
+        ] = u.Field(default_factory=list[t.MutableStrMapping])
 
         @u.field_validator("server_type", mode="before")
         @classmethod
@@ -358,64 +359,6 @@ class FlextLdifModelsDomainMetadata:
             if isinstance(value, c.Ldif.ServerTypes):
                 return value
             return FlextLdifShared.normalize_server_type(value)
-
-        @classmethod
-        def create_for(
-            cls,
-            server_type: str | c.Ldif.ServerTypes | None = None,
-            extensions: FlextLdifModelsMetadata.DynamicMetadata
-            | t.Ldif.MetadataInputMapping
-            | None = None,
-        ) -> Self:
-            """Factory method to create ServerMetadata with extensions.
-
-            Args:
-                server_type: Server type identifier. Defaults to RFC if not provided.
-                extensions: Extensions as DynamicMetadata or dict. Defaults to empty if not provided.
-
-            Returns:
-                ServerMetadata instance with defaults from Constants.
-
-            """
-            default_server_type: c.Ldif.ServerTypes = (
-                FlextLdifShared.normalize_server_type(server_type)
-                if server_type is not None
-                else c.Ldif.ServerTypes.RFC
-            )
-            extensions_model: FlextLdifModelsMetadata.DynamicMetadata
-            if extensions is None:
-                extensions_model = FlextLdifModelsMetadata.DynamicMetadata()
-            elif isinstance(extensions, FlextLdifModelsMetadata.DynamicMetadata):
-                extensions_model = extensions
-            else:
-                extensions_model = FlextLdifModelsMetadata.DynamicMetadata.from_dict(
-                    extensions,
-                )
-            validated: Self = cls.model_validate({
-                "server_type": default_server_type,
-                "extensions": extensions_model,
-            })
-            return validated
-
-        def add_conversion_note(self, operation: str, description: str) -> Self:
-            """Add a conversion note to the audit trail.
-
-            Args:
-                operation: Operation identifier (e.g., "oid_to_oud", "schema_normalize")
-                description: Human-readable description of the operation
-
-            Returns:
-                Self for method chaining
-
-            Example:
-                >>> metadata.add_conversion_note(
-                ...     operation="oid_to_rfc",
-                ...     description="Converted OID ACL format to RFC 4515 filter",
-                ... )
-
-            """
-            self.conversion_notes[operation] = description
-            return self
 
 
 __all__: list[str] = ["FlextLdifModelsDomainMetadata"]

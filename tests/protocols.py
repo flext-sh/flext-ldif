@@ -13,8 +13,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from flext_ldif.services.migration import FlextLdifMigrationPipeline
-    from tests.constants import c
-    from tests.models import m
+    from tests import c, m
 
 
 class TestsFlextLdifProtocols(

@@ -33,7 +33,7 @@ class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](s[TDomainResult]):
     @property
     @override
     def settings(self) -> p.Ldif.Settings:
-        """Return the typed LDIF configuration namespace."""
+        """The typed LDIF configuration namespace."""
         resolved = super().settings
         if not isinstance(resolved, p.Ldif.Settings):
             msg = "Runtime settings do not satisfy the LDIF settings contract"
@@ -46,16 +46,24 @@ class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](s[TDomainResult]):
         server: p.Ldif.ServerRegistry | None = None,
         settings: p.Ldif.Settings | None = None,
         **fields: t.JsonValue,
-    ) -> Self:
+    ) -> Self | m.Ldif.Entry | str:
         """Return a cloned DSL instance preserving runtime registry/settings defaults."""
         payload: dict[
             str,
             t.JsonValue | p.Ldif.ServerRegistry | p.Ldif.Settings | None,
         ] = dict(fields)
         payload["server"] = self._server if server is None else server
-        payload["runtime_settings"] = self.settings if settings is None else settings
+        payload["runtime_settings"] = settings
         instance: Self = type(self).model_validate(payload)
         return instance
+
+    def bind_runtime_settings(self, runtime_settings: p.Ldif.Settings | None) -> Self:
+        """Bind typed LDIF settings through the inherited runtime bootstrap field."""
+        # NOTE (multi-agent): mro-i6nq.12 — FlextMixins runtime-bootstrap is now a
+        # native Pydantic field; assign directly (validate_assignment enforces type).
+        if runtime_settings is not None:
+            self.runtime_settings = runtime_settings
+        return self
 
     @classmethod
     def _runtime_bootstrap_options(cls) -> m.RuntimeBootstrapOptions:
@@ -64,7 +72,8 @@ class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](s[TDomainResult]):
 
     def _get_effective_server_type_value(self) -> str:
         """Return the default server type used by parser and writer services."""
-        return c.Ldif.ServerTypes.RFC.value
+        default_server_type: str = c.Ldif.ServerTypes.RFC.value
+        return default_server_type
 
 
 s = FlextLdifServiceBase

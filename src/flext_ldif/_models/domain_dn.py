@@ -1,22 +1,22 @@
 """DN domain models — Distinguished Name, statistics, and registry.
 
-from flext_ldif.models import m
-from flext_ldif.utilities import u
+from flext_ldif import m
+from flext_ldif import u
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
-from collections.abc import (
-    MutableMapping,
-)
-from typing import Annotated, ClassVar, Self, override
+from typing import TYPE_CHECKING, Annotated, ClassVar, Self, override
 
-from flext_core import m
-from flext_core.utilities import FlextUtilities as u
+from flext_core import FlextUtilities as u, m
 from flext_ldif import c, p, r, t
-from flext_ldif._models.metadata import FlextLdifModelsMetadata as mdm
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        MutableMapping,
+    )
 
 
 class FlextLdifModelsDomainDN:
@@ -154,11 +154,11 @@ class FlextLdifModelsDomainDN:
             ),
         ]
         metadata: Annotated[
-            mdm.EntryMetadata,
+            t.MutableJsonMapping,
             u.Field(
                 description="Server-specific metadata for preserving original format",
             ),
-        ] = u.Field(default_factory=mdm.EntryMetadata)
+        ] = u.Field(default_factory=dict)
 
         @u.field_validator("value", mode="after")
         @classmethod
@@ -199,9 +199,7 @@ class FlextLdifModelsDomainDN:
                 raise ValueError(msg)
             validated: Self = cls.model_validate({
                 "value": str(dn),
-                "metadata": mdm.EntryMetadata.model_validate(
-                    {},
-                ),
+                "metadata": {},
             })
             return validated
 
@@ -216,7 +214,8 @@ class FlextLdifModelsDomainDN:
         def __init__(self) -> None:
             """Initialize empty DN case registry."""
             super().__init__()
-            self._registry: mdm.DynamicMetadata = mdm.DynamicMetadata()
+            # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: plain dict registry.
+            self._registry: dict[str, t.JsonValue] = {}
             self._case_variants: MutableMapping[str, set[str]] = {}
 
         @staticmethod

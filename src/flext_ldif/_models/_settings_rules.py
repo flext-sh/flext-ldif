@@ -1,7 +1,7 @@
 """LDIF settings mix-in: rules.
 
-from flext_ldif.models import m
-from flext_ldif.utilities import u
+from flext_ldif import m
+from flext_ldif import u
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
@@ -12,8 +12,7 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import Annotated, Self
 
-from flext_core import m
-from flext_core.utilities import FlextUtilities as u
+from flext_core import FlextUtilities as u, m
 from flext_ldif import c, t
 
 
@@ -75,7 +74,7 @@ class FlextLdifModelsSettingsRules:
         @u.computed_field()
         @property
         def category_markers(self) -> t.FrozensetMapping:
-            """Return category markers already normalized for matching."""
+            """The category markers already normalized for matching."""
             markers: t.MutableFrozensetMapping = {}
             for category, field_name in c.Ldif.CATEGORY_RULE_OBJECTCLASS_FIELDS.items():
                 raw_values = getattr(self, field_name)
@@ -171,7 +170,7 @@ class FlextLdifModelsSettingsRules:
         @u.computed_field()
         @property
         def schema_oid_filters(self) -> t.FrozensetMapping:
-            """Return whitelist OID filters keyed by canonical schema attribute names."""
+            """The whitelist OID filters keyed by canonical schema attribute names."""
             return MappingProxyType({
                 attr_name: getattr(self, field_name)
                 for field_name, attr_name in c.Ldif.WHITELIST_RULE_SCHEMA_ATTRIBUTE_KEYS

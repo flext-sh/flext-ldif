@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-from collections.abc import (
-    MutableMapping,
-)
-from typing import ClassVar, override
+from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers.rfc import FlextLdifServersRfc
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        MutableMapping,
+    )
 
 
 class FlextLdifServersApache(FlextLdifServersRfc):
@@ -190,7 +192,8 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 return self._mark_apache_entry(entry)
             except c.EXC_BASIC_TYPE as exc:
                 return r[m.Ldif.Entry].fail_op(
-                    "Apache Directory Server entry parsing", exc
+                    "Apache Directory Server entry parsing",
+                    exc,
                 )
 
         def _mark_apache_entry(
@@ -205,7 +208,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             )
             dn_lower = entry.dn.value.lower()
             if not metadata.extensions:
-                metadata.extensions = m.Ldif.DynamicMetadata()
+                metadata.extensions = {}
             metadata.extensions[c.Ldif.ServerMetadataKeys.IS_CONFIG_ENTRY] = (
                 FlextLdifServersApache.Constants.DN_CONFIG_ENTRY_MARKER in dn_lower
             )

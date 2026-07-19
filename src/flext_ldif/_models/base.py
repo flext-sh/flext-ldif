@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_core import m
-from flext_core.utilities import FlextUtilities as u
+from flext_cli import m, u
 from flext_ldif import FlextLdifShared, c, t
 
 
@@ -16,7 +15,7 @@ class FlextLdifModelsBases:
     a single nested class hierarchy using MRO inheritance.
 
     Usage::
-        from flext_core import m
+        from flext_cli import m
         from flext_ldif import FlextLdifModelsBases
 
         Base = m.StrictModel
@@ -52,7 +51,7 @@ class FlextLdifModelsBases:
         @u.computed_field()
         @property
         def server_type(self) -> str:
-            """Get server type from metadata, default to RFC."""
+            """The server type from metadata, default to RFC."""
             metadata = getattr(self, "metadata", None)
             if metadata is not None:
                 server_type = getattr(metadata, "server_type", None)
@@ -90,7 +89,7 @@ class FlextLdifModelsBases:
         @property
         def has_server_servers(self) -> bool:
             """Check if element uses server-specific servers."""
-            return self.server_type != "rfc"
+            return str(self.server_type) != "rfc"
 
         @u.computed_field()
         @property

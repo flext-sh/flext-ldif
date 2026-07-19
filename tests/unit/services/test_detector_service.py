@@ -2,15 +2,17 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import tm
 
-from tests.constants import c
-from tests.models import m
-from tests.protocols import p
-from tests.utilities import u
+from tests import c, m, u
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from tests import p
 
 
 class TestsFlextLdifDetectorService:
@@ -108,9 +110,11 @@ class TestsFlextLdifDetectorService:
         api: p.Ldif.LdifClient,
     ) -> None:
         result = api.detect_server_type(ldif_content=snippet)
-        detection = u.Tests.assert_success(result)
+        detection = u.Tests.assert_success(
+            result, error_msg=f"detection failed for {scenario}"
+        )
 
-        tm.that(bool(scenario), eq=True)
+        tm.that(detection, is_=m.Ldif.ServerDetectionResult)
         tm.that(detection.detected_server_type.lower(), has=expected_type.lower())
 
     def test_detect_respects_max_lines_limit(
@@ -122,7 +126,10 @@ class TestsFlextLdifDetectorService:
             ldif_content=long_content,
             max_lines=c.Tests.DETECTOR_MAX_LINES_SMALL,
         )
-        u.Tests.assert_success(result)
+        detection = u.Tests.assert_success(result)
+
+        tm.that(detection, is_=m.Ldif.ServerDetectionResult)
+        tm.that(0.0 <= detection.confidence <= 1.0, eq=True)
 
     @pytest.mark.parametrize(
         ("scenario", "snippet"),
@@ -138,9 +145,29 @@ class TestsFlextLdifDetectorService:
         api: p.Ldif.LdifClient,
     ) -> None:
         result = api.detect_server_type(ldif_content=snippet)
-        detection = u.Tests.assert_success(result)
-        tm.that(bool(scenario), eq=True)
+        detection = u.Tests.assert_success(
+            result, error_msg=f"detection failed for {scenario}"
+        )
+
+        tm.that(detection, is_=m.Ldif.ServerDetectionResult)
         tm.that(bool(detection.detected_server_type), eq=True)
+
+    def test_detect_is_idempotent_for_same_content(
+        self,
+        api: p.Ldif.LdifClient,
+    ) -> None:
+        first = u.Tests.assert_success(
+            api.detect_server_type(ldif_content=c.Tests.DETECTOR_OID_SNIPPET),
+        )
+        second = u.Tests.assert_success(
+            api.detect_server_type(ldif_content=c.Tests.DETECTOR_OID_SNIPPET),
+        )
+
+        tm.that(
+            first.detected_server_type,
+            eq=second.detected_server_type,
+        )
+        tm.that(first.patterns_found, eq=second.patterns_found)
 
     def test_resolve_effective_server_type_from_content(
         self,

@@ -12,42 +12,41 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Annotated, ClassVar
+from typing import Annotated, ClassVar
+
+from pydantic import BaseModel, Field
+from pydantic_settings import SettingsConfigDict
 
 from flext_cli import FlextCliSettings
-from flext_ldif import c, m, u
-
-if TYPE_CHECKING:
-    from flext_ldif import p
 
 
 class FlextLdifSettings(FlextCliSettings):
     """LDIF processing settings inheriting base FLEXT configuration."""
 
-    class LdifSettings(m.SettingsValue):
+    class LdifSettings(BaseModel):
         """Namespaced LDIF runtime settings."""
 
         ldif_encoding: Annotated[
-            c.Ldif.Encoding | str,
-            u.Field(description="Default encoding for LDIF read/write operations"),
-        ] = c.Ldif.Encoding.UTF8
+            str,
+            Field(description="Default encoding for LDIF read/write operations"),
+        ] = "utf-8"
         ldif_strict_validation: Annotated[
             bool,
-            u.Field(description="Enable strict LDIF validation rules"),
-        ] = c.Ldif.DEFAULT_STRICT_VALIDATION
+            Field(description="Enable strict LDIF validation rules"),
+        ] = True
 
-    model_config: ClassVar[m.SettingsConfigDict] = m.SettingsConfigDict(
+    model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
         env_prefix="FLEXT_LDIF_",
         extra="ignore",
     )
 
-    if TYPE_CHECKING:
-        Ldif: p.Ldif.LdifSettings
-    else:
-        Ldif: LdifSettings = m.Field(
-            default_factory=LdifSettings,
-            description="Namespaced LDIF settings branch.",
-        )
+    Ldif: LdifSettings = Field(
+        default_factory=LdifSettings,
+        description="Namespaced LDIF settings branch.",
+    )
 
 
-__all__: list[str] = ["FlextLdifSettings"]
+settings: FlextLdifSettings = FlextLdifSettings.fetch_global()
+"""Pre-instantiated project settings singleton — ``from flext_ldif import settings``."""
+
+__all__: list[str] = ["FlextLdifSettings", "settings"]

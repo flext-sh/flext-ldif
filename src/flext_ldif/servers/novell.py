@@ -262,9 +262,9 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                         self._NOVELL_PERMISSION_MAP,
                     ),
                 ),
-                metadata=m.Ldif.ServerMetadata.create_for(
+                metadata=u.Ldif.server_metadata_for(
                     self._get_server_type(),
-                    extensions=m.Ldif.DynamicMetadata(original_format=acl_line),
+                    extensions={"original_format": acl_line},
                 ),
                 raw_acl=acl_line,
             )
@@ -296,7 +296,8 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         ) -> str | None:
             """Return segment at index when present."""
             if len(segments) > index:
-                return segments[index]
+                segment: str = segments[index]
+                return segment
             return None
 
         @classmethod
@@ -415,7 +416,8 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 return self._process_novell_entry(entry, attributes)
             except c.EXC_BASIC_TYPE as exc:
                 return r[m.Ldif.Entry].fail_op(
-                    "Novell eDirectory entry processing", exc
+                    "Novell eDirectory entry processing",
+                    exc,
                 )
 
         def _process_novell_entry(

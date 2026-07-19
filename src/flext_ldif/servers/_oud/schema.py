@@ -2,15 +2,17 @@
 
 from __future__ import annotations
 
-from collections.abc import (
-    MutableMapping,
-)
-from typing import ClassVar, override
+from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
 from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        MutableMapping,
+    )
 
 
 class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
@@ -102,7 +104,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         is_valid_oud_oid = oid_validation.value
         existing_metadata = attr.metadata
         if not existing_metadata:
-            existing_metadata = m.Ldif.ServerMetadata.create_for("oud")
+            existing_metadata = u.Ldif.server_metadata_for("oud")
         current_extensions = (
             dict(existing_metadata.extensions) if existing_metadata.extensions else {}
         )
@@ -141,7 +143,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         self,
         attr: m.Ldif.SchemaAttribute,
     ) -> p.Result[m.Ldif.SchemaAttribute]:
-        """Hook: Validate OUD-specific attribute features after RFC parsing."""
+        """Validate OUD-specific attribute features after RFC parsing."""
         if not attr or not attr.oid:
             return r[m.Ldif.SchemaAttribute].ok(attr)
         normalized_equality, normalized_substr = u.Ldif.normalize_matching_rules(
@@ -172,7 +174,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         is_valid_oud_oid = oid_validation.value
         existing_metadata = attr.metadata
         if not existing_metadata:
-            existing_metadata = m.Ldif.ServerMetadata.create_for("oud")
+            existing_metadata = u.Ldif.server_metadata_for("oud")
         current_extensions = (
             dict(existing_metadata.extensions) if existing_metadata.extensions else {}
         )
@@ -202,7 +204,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         self,
         oc: m.Ldif.SchemaObjectClass,
     ) -> p.Result[m.Ldif.SchemaObjectClass]:
-        """Hook: Validate OUD-specific objectClass features after RFC parsing."""
+        """Validate OUD-specific objectClass features after RFC parsing."""
         sup_validation = self._validate_objectclass_sup(oc)
         if sup_validation.failure:
             return r[m.Ldif.SchemaObjectClass].fail(
@@ -275,12 +277,13 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
             oid_validation = self._validate_attribute_oid(oid_str)
             if oid_validation.failure:
                 return r[m.Ldif.SchemaObjectClass].fail_op(
-                    "ObjectClass OID validation", oid_validation.error
+                    "ObjectClass OID validation",
+                    oid_validation.error,
                 )
             is_valid_oud_oid = oid_validation.value
             existing_oc_metadata = oc.metadata
             if not existing_oc_metadata:
-                existing_oc_metadata = m.Ldif.ServerMetadata.create_for("oud")
+                existing_oc_metadata = u.Ldif.server_metadata_for("oud")
             oc_extensions = (
                 dict(existing_oc_metadata.extensions)
                 if existing_oc_metadata.extensions
@@ -303,7 +306,8 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
                 sup_validation = self._validate_attribute_oid(sup_str)
                 if sup_validation.failure:
                     return r[m.Ldif.SchemaObjectClass].fail_op(
-                        "ObjectClass SUP OID validation", sup_validation.error
+                        "ObjectClass SUP OID validation",
+                        sup_validation.error,
                     )
         return r[m.Ldif.SchemaObjectClass].ok(oc)
 

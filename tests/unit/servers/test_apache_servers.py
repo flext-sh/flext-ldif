@@ -6,27 +6,35 @@ Directory Server-specific attributes, object classes, entries, and ACLs in LDIF 
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 from flext_tests import tm
 
 from flext_ldif.servers.apache import FlextLdifServersApache
-from tests.constants import c
-from tests.models import m
-from tests.typings import t
-from tests.utilities import u
+from tests import c, m, u
+
+if TYPE_CHECKING:
+    from tests import t
 
 
-class TestsTestFlextLdifApacheServers:
-    """Test Apache Directory Server servers implementation."""
+class TestsFlextLdifApacheServers:
+    """Behavioral contract tests for FlextLdifServersApache.
+
+    Every test asserts observable public behavior: parse/write ``r[T]`` outcomes,
+    detection predicates, and public model state — never private members or
+    internal-collaborator interactions.
+    """
 
     @pytest.mark.parametrize("test_case", c.Tests.APACHE_ATTRIBUTE_TEST_CASES)
     def test_schema_attribute_can_handle(
-        self, test_case: m.Tests.AttributeTestCase
+        self,
+        test_case: m.Tests.AttributeTestCase,
     ) -> None:
         """Test attribute detection for various scenarios."""
         server = FlextLdifServersApache()
         schema_server = server.schema_server
-        tm.that(schema_server, is_=FlextLdifServersApache.Schema)
+        assert isinstance(schema_server, FlextLdifServersApache.Schema)
         result = schema_server.can_handle_attribute(test_case.attr_definition)
         tm.that(result is test_case.expected_can_handle, eq=True)
 
@@ -85,7 +93,7 @@ class TestsTestFlextLdifApacheServers:
         """Test objectClass detection for various scenarios."""
         server = FlextLdifServersApache()
         schema_server = server.schema_server
-        tm.that(schema_server, is_=FlextLdifServersApache.Schema)
+        assert isinstance(schema_server, FlextLdifServersApache.Schema)
         result = schema_server.can_handle_objectclass(test_case.oc_definition)
         tm.that(result is test_case.expected_can_handle, eq=True)
 
@@ -214,7 +222,7 @@ class TestsTestFlextLdifApacheServers:
         """Test ACL detection rejects non-ApacheDS ACLs."""
         server = FlextLdifServersApache()
         acl_server = server.acl_server
-        tm.that(acl_server, is_=FlextLdifServersApache.Acl)
+        assert isinstance(acl_server, FlextLdifServersApache.Acl)
         acl_line = "access to * by * read"
         tm.that(acl_server.can_handle_acl(acl_line) is False, eq=True)
 
@@ -222,7 +230,7 @@ class TestsTestFlextLdifApacheServers:
         """Test ACL detection rejects empty lines."""
         server = FlextLdifServersApache()
         acl_server = server.acl_server
-        tm.that(acl_server, is_=FlextLdifServersApache.Acl)
+        assert isinstance(acl_server, FlextLdifServersApache.Acl)
         tm.that(acl_server.can_handle_acl("") is False, eq=True)
 
     def test_acl_parse_success(self) -> None:
@@ -261,7 +269,8 @@ class TestsTestFlextLdifApacheServers:
             name="aci",
             target=m.Ldif.AclTarget(target_dn="", attributes=[]),
             subject=m.Ldif.AclSubject(
-                subject_type=c.Ldif.AclSubjectType.ALL, subject_value=""
+                subject_type=c.Ldif.AclSubjectType.ALL,
+                subject_value="",
             ),
             permissions=m.Ldif.AclPermissions(),
             server_type=c.Ldif.ServerTypes.APACHE,
@@ -281,7 +290,8 @@ class TestsTestFlextLdifApacheServers:
             name="ads-aci",
             target=m.Ldif.AclTarget(target_dn="", attributes=[]),
             subject=m.Ldif.AclSubject(
-                subject_type=c.Ldif.AclSubjectType.ALL, subject_value=""
+                subject_type=c.Ldif.AclSubjectType.ALL,
+                subject_value="",
             ),
             permissions=m.Ldif.AclPermissions(),
             server_type=c.Ldif.ServerTypes.APACHE,
@@ -298,7 +308,7 @@ class TestsTestFlextLdifApacheServers:
         """Test entry detection for various scenarios."""
         server = FlextLdifServersApache()
         entry_server = server.entry_server
-        tm.that(entry_server, is_=FlextLdifServersApache.Entry)
+        assert isinstance(entry_server, FlextLdifServersApache.Entry)
         result = entry_server.can_handle(test_case.entry_dn, test_case.attributes)
         tm.that(result is test_case.expected_can_handle, eq=True)
 
@@ -318,10 +328,18 @@ class TestsTestFlextLdifApacheServers:
         "test_case",
         [tc for tc in c.Tests.APACHE_ENTRY_TEST_CASES if tc.expected_can_handle],
     )
-    def test_entry_parse_ldif(self, test_case: m.Tests.EntryTestCase) -> None:
-        """Test entry parsing via LDIF for Apache-detectable entries."""
+    def test_entry_parse_ldif_yields_entry_with_source_dn(
+        self,
+        test_case: m.Tests.EntryTestCase,
+    ) -> None:
+        """parse_server succeeds and returns one Entry carrying the source DN."""
         server = FlextLdifServersApache()
         entry_server = server.entry_server
         ldif = self._build_ldif(test_case.entry_dn, test_case.attributes)
-        result = entry_server.parse_input(ldif)
-        tm.that(result is not None, eq=True)
+        result = entry_server.parse_server(ldif)
+        tm.that(result.success, eq=True)
+        entries = result.unwrap()
+        tm.that(len(entries), eq=1)
+        entry_dn = entries[0].dn
+        assert entry_dn is not None
+        tm.that(entry_dn.value, eq=test_case.entry_dn)

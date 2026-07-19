@@ -44,7 +44,8 @@ class FlextLdifServersOudTransformMixin:
             return entry_data
         acl_attrs_list = list(acl_attrs)
         return FlextLdifServersOudAclExtractMixin.comment_acl_attributes(
-            entry_data, acl_attrs_list
+            entry_data,
+            acl_attrs_list,
         )
 
     @staticmethod
@@ -66,7 +67,7 @@ class FlextLdifServersOudTransformMixin:
             r[t.Ldif.AttributeDict],
         ],
     ) -> p.Result[m.Ldif.Entry]:
-        """Hook: Validate and CORRECT RFC syntax issues before writing Entry - static helper."""
+        """Validate and correct RFC syntax issues before writing entry (static helper)."""
         attrs_dict_raw: t.MutableStrSequenceMapping = (
             entry.attributes.attributes if entry.attributes else {}
         )
@@ -97,7 +98,7 @@ class FlextLdifServersOudTransformMixin:
         if not entry_data.attributes or not entry_data.attributes.attributes:
             return entry_data
         base_dn, dn_registry = FlextLdifServersOudAclMetadataMixin.extract_acl_metadata(
-            entry_data
+            entry_data,
         )
         attrs = entry_data.attributes.attributes
         if "aci" not in attrs:
@@ -132,7 +133,7 @@ class FlextLdifServersOudTransformMixin:
         ext = metadata.extensions
         mk = c.Ldif
         original_dn_value = u.to_str(ext.get(mk.ORIGINAL_DN_COMPLETE))
-        dn_diff_raw = m.Ldif.DynamicMetadata.model_validate(
+        dn_diff_raw: t.MutableJsonMapping = t.json_dict_adapter().validate_python(
             ext.get(mk.MINIMAL_DIFFERENCES_DN, {}),
         )
         should_restore_dn = (
@@ -152,15 +153,19 @@ class FlextLdifServersOudTransformMixin:
         original_case_map = metadata.original_attribute_case
         if attributes is None:
             return restored_entry
-        original_attributes = m.Ldif.DynamicMetadata.model_validate(
-            ext.get(c.Ldif.ORIGINAL_ATTRIBUTES_COMPLETE, {}),
+        original_attributes: t.MutableJsonMapping = (
+            t.json_dict_adapter().validate_python(
+                ext.get(c.Ldif.ORIGINAL_ATTRIBUTES_COMPLETE, {}),
+            )
         )
 
         restored: t.MutableStrSequenceMapping = {}
         for attr_name, attr_values in attributes.attributes.items():
             orig_case_raw = original_case_map.get(attr_name.lower(), attr_name)
             orig_case = orig_case_raw if isinstance(orig_case_raw, str) else attr_name
-            fallback_values = [str(item) for item in attr_values or [attr_values]]
+            fallback_values: list[str] = (
+                list(attr_values) if attr_values else [str(attr_values)]
+            )
             if orig_case in original_attributes:
                 original_value = original_attributes[orig_case]
                 restored_values = [str(original_value)]

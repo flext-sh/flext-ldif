@@ -6,14 +6,16 @@ Asserts that an OID entry's orclaci/orclentrylevelaci attributes convert to
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+import pytest
 from flext_tests import tm
 
 from flext_ldif.services.conversion import FlextLdifConversion
-from tests.constants import c
-from tests.models import m
-from tests.protocols import p
-from tests.typings import t
-from tests.utilities import u
+from tests import c, m, u
+
+if TYPE_CHECKING:
+    from tests import p, t
 
 
 class TestsFlextLdifOidAclEndToEnd:
@@ -37,103 +39,62 @@ class TestsFlextLdifOidAclEndToEnd:
             raise AssertionError(msg)
         return converted.attributes.attributes
 
-    def test_group_with_deny_fallback_entry(self, api: p.Ldif.LdifClient) -> None:
-        attrs = self._convert(
-            api,
-            "cn=users,dc=ctbc",
-            {
-                "objectClass": ["top"],
-                "orclaci": [
-                    (
-                        'access to entry by group="cn=admins,dc=ctbc" '
-                        "(browse,add,delete) by * (none)"
-                    ),
-                ],
-            },
-        )
-
-        tm.that("orclaci" not in attrs, eq=True)
-        tm.that(
-            attrs["aci"],
-            eq=[
+    @pytest.mark.parametrize(
+        ("source_attr", "source_value", "expected_aci"),
+        [
+            pytest.param(
+                "orclaci",
                 (
-                    '(targetattr="*")(version 3.0; acl "users Entry by admins"; '
-                    "allow (read, search, add, delete) "
-                    'groupdn="ldap:///cn=admins,dc=ctbc";)'
+                    'access to entry by group="cn=admins,dc=ctbc" '
+                    "(browse,add,delete) by * (none)"
                 ),
-            ],
-        )
-
-    def test_attr_list_anyone_pins_targetscope_base(
+                '(targetattr="*")(version 3.0; acl "users Entry by admins"; '
+                "allow (read, search, add, delete) "
+                'groupdn="ldap:///cn=admins,dc=ctbc";)',
+                id="group-with-deny-fallback",
+            ),
+            pytest.param(
+                "orclaci",
+                "access to attr=(cn,sn,mail) by * (read,search)",
+                '(targetattr="cn||sn||mail")(targetscope="base")'
+                '(version 3.0; acl "users Attrs by anyone"; '
+                'allow (read, search) userdn="ldap:///anyone";)',
+                id="attr-list-anyone-pins-targetscope-base",
+            ),
+            pytest.param(
+                "orclaci",
+                "access to entry by dnattr=(manager) (browse)",
+                '(targetattr="*")(version 3.0; acl "users Entry by manager"; '
+                'allow (read, search) userattr="manager#USERDN";)',
+                id="dnattr-becomes-userattr",
+            ),
+            pytest.param(
+                "orclentrylevelaci",
+                'access to entry by group="cn=g,dc=ctbc" (browse)',
+                '(targetattr="*")(targetscope="base")'
+                '(version 3.0; acl "users Entry by g"; '
+                'allow (read, search) groupdn="ldap:///cn=g,dc=ctbc";)',
+                id="orclentrylevelaci-pins-targetscope-base",
+            ),
+        ],
+    )
+    def test_oid_acl_converts_to_expected_aci_and_drops_source_attr(
         self,
         api: p.Ldif.LdifClient,
+        source_attr: str,
+        source_value: str,
+        expected_aci: str,
     ) -> None:
         attrs = self._convert(
             api,
             "cn=users,dc=ctbc",
-            {
-                "objectClass": ["top"],
-                "orclaci": ["access to attr=(cn,sn,mail) by * (read,search)"],
-            },
+            {"objectClass": ["top"], source_attr: [source_value]},
         )
 
-        tm.that(
-            attrs["aci"],
-            eq=[
-                (
-                    '(targetattr="cn||sn||mail")(targetscope="base")'
-                    '(version 3.0; acl "users Attrs by anyone"; '
-                    'allow (read, search) userdn="ldap:///anyone";)'
-                ),
-            ],
-        )
-
-    def test_dnattr_becomes_userattr(self, api: p.Ldif.LdifClient) -> None:
-        attrs = self._convert(
-            api,
-            "cn=users,dc=ctbc",
-            {
-                "objectClass": ["top"],
-                "orclaci": ["access to entry by dnattr=(manager) (browse)"],
-            },
-        )
-
-        tm.that(
-            attrs["aci"],
-            eq=[
-                (
-                    '(targetattr="*")(version 3.0; acl "users Entry by manager"; '
-                    'allow (read, search) userattr="manager#USERDN";)'
-                ),
-            ],
-        )
-
-    def test_orclentrylevelaci_pins_targetscope_base(
-        self,
-        api: p.Ldif.LdifClient,
-    ) -> None:
-        attrs = self._convert(
-            api,
-            "cn=users,dc=ctbc",
-            {
-                "objectClass": ["top"],
-                "orclentrylevelaci": [
-                    'access to entry by group="cn=g,dc=ctbc" (browse)',
-                ],
-            },
-        )
-
-        tm.that("orclentrylevelaci" not in attrs, eq=True)
-        tm.that(
-            attrs["aci"],
-            eq=[
-                (
-                    '(targetattr="*")(targetscope="base")'
-                    '(version 3.0; acl "users Entry by g"; '
-                    'allow (read, search) groupdn="ldap:///cn=g,dc=ctbc";)'
-                ),
-            ],
-        )
+        # Public contract: the OID source ACL attribute is consumed, not passed
+        # through, and a single equivalent OUD ``aci`` value is emitted.
+        tm.that(source_attr not in attrs, eq=True)
+        tm.that(attrs["aci"], eq=[expected_aci])
 
     def test_base_dn_field_excludes_out_of_scope_bind_dn(self) -> None:
         # FlextLdifConversion(base_dn=...) activates the out-of-scope filter:

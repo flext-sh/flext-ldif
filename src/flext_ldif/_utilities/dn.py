@@ -3,17 +3,18 @@
 from __future__ import annotations
 
 import string
-from collections.abc import (
-    Callable,
-    Generator,
-    MutableMapping,
-)
 from pathlib import Path
-from typing import overload
+from typing import TYPE_CHECKING, overload
 
 from flext_cli import u
-from flext_ldif import c, p, r, t
-from flext_ldif.models import FlextLdifModels as m
+from flext_ldif import FlextLdifModels as m, c, p, r, t
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        Callable,
+        Generator,
+        MutableMapping,
+    )
 
 
 class FlextLdifUtilitiesDN:
@@ -434,13 +435,13 @@ class FlextLdifUtilitiesDN:
             cleaned_dn=result,
             normalized_dn=result,
             transformations=transformations,
-            had_tab_chars=flags.get("had_tab_chars", False) is True,
-            had_trailing_spaces=flags.get("had_trailing_spaces", False) is True,
-            had_leading_spaces=flags.get("had_leading_spaces", False) is True,
-            had_extra_spaces=flags.get("had_extra_spaces", False) is True,
-            was_base64_encoded=flags.get("was_base64_encoded", False) is True,
-            had_utf8_chars=flags.get("had_utf8_chars", False) is True,
-            had_escape_sequences=flags.get("had_escape_sequences", False) is True,
+            had_tab_chars=bool(flags.get("had_tab_chars", False)),
+            had_trailing_spaces=bool(flags.get("had_trailing_spaces", False)),
+            had_leading_spaces=bool(flags.get("had_leading_spaces", False)),
+            had_extra_spaces=bool(flags.get("had_extra_spaces", False)),
+            was_base64_encoded=bool(flags.get("was_base64_encoded", False)),
+            had_utf8_chars=bool(flags.get("had_utf8_chars", False)),
+            had_escape_sequences=bool(flags.get("had_escape_sequences", False)),
             validation_status=validation_status,
             validation_warnings=validation_warnings,
             validation_errors=validation_errors,
@@ -824,7 +825,7 @@ class FlextLdifUtilitiesDN:
             return []
 
         def split_components() -> Generator[str]:
-            """Generator that yields DN components respecting RFC 4514 escapes."""
+            """Yield DN components respecting RFC 4514 escapes."""
             current = ""
             chars = iter(dn_str)
             for char in chars:
@@ -870,12 +871,22 @@ class FlextLdifUtilitiesDN:
         norm_result = FlextLdifUtilitiesDN.norm(dn_str)
         normalized_dn = norm_result.map_or(dn_str)
         source_escaped = c.Ldif.escape_pattern(source_dn)
-        result = c.Ldif.sub_pattern(
-            f",{source_escaped}$", f",{target_dn}", normalized_dn, ignorecase=True
+        result = u.to_str(
+            c.Ldif.sub_pattern(
+                f",{source_escaped}$",
+                f",{target_dn}",
+                normalized_dn,
+                ignorecase=True,
+            )
         )
         if result == normalized_dn:
-            result = c.Ldif.sub_pattern(
-                f"^{source_escaped}$", target_dn, normalized_dn, ignorecase=True
+            result = u.to_str(
+                c.Ldif.sub_pattern(
+                    f"^{source_escaped}$",
+                    target_dn,
+                    normalized_dn,
+                    ignorecase=True,
+                )
             )
         return result
 
@@ -1006,11 +1017,13 @@ class FlextLdifUtilitiesDN:
     @staticmethod
     def _transform_ldif_content(content: str, source_dn: str, target_dn: str) -> str:
         """Transform all DN references in raw LDIF content string."""
-        return c.Ldif.sub_pattern(
-            c.Ldif.escape_pattern(source_dn),
-            target_dn,
-            content,
-            ignorecase=True,
+        return u.to_str(
+            c.Ldif.sub_pattern(
+                c.Ldif.escape_pattern(source_dn),
+                target_dn,
+                content,
+                ignorecase=True,
+            )
         )
 
     @staticmethod

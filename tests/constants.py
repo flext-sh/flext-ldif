@@ -5,13 +5,15 @@ from __future__ import annotations
 import re
 from pathlib import Path
 from types import MappingProxyType
-from typing import Final, Literal
+from typing import TYPE_CHECKING, Final, Literal
 
 from flext_ldap import c
 from flext_tests import FlextTestsConstants
 
-from tests.models import m
-from tests.typings import t
+from tests import m
+
+if TYPE_CHECKING:
+    from tests import t
 
 
 class TestsFlextLdifConstants(FlextTestsConstants, c):
@@ -607,7 +609,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                     "whitespace": ("   ", False),
                     "binary_data": (
                         "( 1.2.3.4 NAME 'test' \x00\x01 )".encode("latin1").decode(
-                            "latin1"
+                            "latin1",
                         ),
                         True,
                     ),
@@ -809,7 +811,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                     scenario=f"cn_{cn}",
                     entry_dn=f"cn={cn}",
                     attributes={
-                        c.Ldif.DictKeys.OBJECTCLASS.value: list(object_classes)
+                        c.Ldif.DictKeys.OBJECTCLASS.value: list(object_classes),
                     },
                     expected_can_handle=True,
                 )

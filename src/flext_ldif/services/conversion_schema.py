@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 
 from flext_ldif import c, m, p, r, s, t, u
 
 
-class FlextLdifConversionSchemaMixin(s):
+class FlextLdifConversionSchemaMixin(s, ABC):
     """Schema-conversion helpers shared by the conversion facade."""
 
     def _resolve_schema_server(
@@ -69,7 +69,7 @@ class FlextLdifConversionSchemaMixin(s):
             {
                 "dn": m.Ldif.DN(
                     value="cn=schema,dc=example,dc=com",
-                    metadata=m.Ldif.EntryMetadata(),
+                    metadata={},
                 ),
                 "attributes": m.Ldif.Attributes.model_validate(
                     {
@@ -78,10 +78,7 @@ class FlextLdifConversionSchemaMixin(s):
                         "metadata": None,
                     },
                 ),
-                "metadata": m.Ldif.ServerMetadata.create_for(
-                    source_server_type,
-                    extensions=None,
-                ),
+                "metadata": u.Ldif.server_metadata_for(source_server_type),
             },
         )
         converted_entry_result = self._convert_entry(
@@ -113,20 +110,30 @@ class FlextLdifConversionSchemaMixin(s):
             )
         first_value = converted_values[0]
         if field_name == c.Ldif.ATTRIBUTE_TYPES:
-            parsed_result = self._validate_parsed_schema(
+            parsed_attribute_result = self._validate_parsed_schema(
                 target_schema.parse_attribute(first_value),
                 m.Ldif.SchemaAttribute,
                 "Failed to parse converted attribute",
             )
+            if parsed_attribute_result.failure:
+                return r[t.Ldif.ConvertedModel].fail(
+                    parsed_attribute_result.error
+                    or "Failed to parse converted attribute",
+                )
+            converted_model: t.Ldif.ConvertedModel = parsed_attribute_result.value
         else:
-            parsed_result = self._validate_parsed_schema(
+            parsed_objectclass_result = self._validate_parsed_schema(
                 target_schema.parse_objectclass(first_value),
                 m.Ldif.SchemaObjectClass,
                 "Failed to parse converted objectclass",
             )
-        return parsed_result.flat_map(
-            lambda parsed: r[t.Ldif.ConvertedModel].ok(parsed),
-        )
+            if parsed_objectclass_result.failure:
+                return r[t.Ldif.ConvertedModel].fail(
+                    parsed_objectclass_result.error
+                    or "Failed to parse converted objectclass",
+                )
+            converted_model = parsed_objectclass_result.value
+        return r[t.Ldif.ConvertedModel].ok(converted_model)
 
     @staticmethod
     def _validate_parsed_schema[T: m.Ldif.SchemaElement](

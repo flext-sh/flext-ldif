@@ -101,12 +101,11 @@ class FlextLdifServersBaseSchemaAcl(
         }
         if extensions:
             all_extensions.update(extensions)
-        extensions_model = m.Ldif.DynamicMetadata.from_dict(
-            all_extensions,
-        )
+        # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: the ServerMetadata
+        # boundary validates the plain mapping.
         return m.Ldif.ServerMetadata(
             server_type=self._get_server_type(),
-            extensions=extensions_model,
+            extensions=all_extensions,
         )
 
     @override
@@ -264,7 +263,7 @@ class FlextLdifServersBaseSchemaAcl(
     def _hook_format_acl_name_pattern(
         self,
     ) -> p.Result[tuple[t.Ldif.RegexPattern, str]]:
-        """Hook for server-specific ACL name pattern matching."""
+        """Provide server-specific ACL name pattern matching."""
         pattern = c.Ldif.ACL_NAME_QUOTED_RE
         replacement_template = 'acl "{0}"'
         return r[tuple[t.Ldif.RegexPattern, str]].ok((
@@ -273,11 +272,11 @@ class FlextLdifServersBaseSchemaAcl(
         ))
 
     def _hook_post_parse_acl(self, acl: m.Ldif.Acl) -> p.Result[m.Ldif.Acl]:
-        """Hook called after parsing an ACL line."""
+        """Run hook after parsing an ACL line."""
         return r[m.Ldif.Acl].ok(acl)
 
     def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
-        """REQUIRED: Parse server-specific ACL definition (internal)."""
+        """Parse server-specific ACL definition (internal, required)."""
         _ = acl_line
         return r[m.Ldif.Acl].fail("Must be implemented by subclass")
 

@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
-from flext_ldif import c, p, t
+from flext_ldif import FlextLdifModels as m, c, p, t
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID as uo
 from flext_ldif._utilities.schema_format import FlextLdifUtilitiesSchemaFormat as sf
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer as us
 from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter as uw
-from flext_ldif.models import FlextLdifModels as m
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class FlextLdifUtilitiesSchemaBuild:
@@ -72,7 +74,7 @@ class FlextLdifUtilitiesSchemaBuild:
         type_name: str,
         parts_builder: Callable[..., t.MutableSequenceOf[str]],
     ) -> str:
-        """Generic helper for writing schema elements (DRY pattern)."""
+        """Write a schema element (DRY pattern)."""
         if not isinstance(data, expected_type):
             msg = f"{type_name} must implement {expected_type.__name__}"
             raise TypeError(msg)
@@ -165,7 +167,7 @@ class FlextLdifUtilitiesSchemaBuild:
             return False
         source_server_type = metadata.original_server_type
         if source_server_type is None and metadata.extensions:
-            source_server_type = metadata.extensions.schema_source_server
+            source_server_type = metadata.extensions.get("schema_source_server")
         if source_server_type is None:
             source_server_type = str(metadata.server_type)
         if not source_server_type or not target_server_type:
@@ -179,7 +181,9 @@ class FlextLdifUtilitiesSchemaBuild:
             )
         except c.EXC_TYPE_VALIDATION:
             return str(source_server_type).lower() == target_server_type.lower()
-        return normalized_source == normalized_target
+        normalized_source_value: str = normalized_source.value
+        normalized_target_value: str = normalized_target.value
+        return normalized_source_value == normalized_target_value
 
     @staticmethod
     def validate_syntax_oid(syntax: str | None) -> str | None:

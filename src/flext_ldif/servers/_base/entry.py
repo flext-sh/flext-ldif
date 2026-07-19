@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import copy
 from collections.abc import (
     Mapping,
     MutableMapping,
@@ -218,11 +219,11 @@ class FlextLdifServersBaseEntry(
         return entry
 
     def _hook_post_parse_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
-        """Hook called after parsing an entry."""
+        """Run hook after parsing an entry."""
         return r[m.Ldif.Entry].ok(entry)
 
     def _hook_pre_write_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
-        """Hook called before writing an entry."""
+        """Run hook before writing an entry."""
         return r[m.Ldif.Entry].ok(entry)
 
     def _hook_validate_entry_raw(
@@ -230,7 +231,7 @@ class FlextLdifServersBaseEntry(
         dn: str,
         attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]],
     ) -> p.Result[bool]:
-        """Hook to validate raw entry before parsing."""
+        """Validate raw entry before parsing."""
         _ = attrs
         if not dn:
             return r[bool].fail("DN cannot be empty")
@@ -246,10 +247,10 @@ class FlextLdifServersBaseEntry(
             mode="json",
             exclude_none=True,
         )
-        existing_extensions = (
-            entry.metadata.extensions.model_copy(deep=True)
-            if entry.metadata
-            else m.Ldif.DynamicMetadata()
+        existing_extensions: t.MutableJsonMapping = (
+            # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: deep-copy the
+            # plain mapping (was model_copy(deep=True)).
+            copy.deepcopy(entry.metadata.extensions) if entry.metadata else {}
         )
         existing_extensions[c.Ldif.WRITE_FORMAT_OPTIONS] = format_options_payload
         if entry.metadata:
@@ -279,7 +280,8 @@ class FlextLdifServersBaseEntry(
         return entry
 
     def _parse_content(
-        self, ldif_content: str
+        self,
+        ldif_content: str,
     ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
         """Parse raw LDIF content string into Entry models (internal)."""
         _ = ldif_content
@@ -352,9 +354,13 @@ class FlextLdifServersBaseEntry(
             if attr_name.lower() != "aci" or not acl_original_format:
                 return value
             safe_acl_name = acl_original_format.replace('"', "'")
-            return c.Ldif.sub_pattern(
-                r'acl\\s+"[^"]*"', f'acl "{safe_acl_name}"', value, count=1
+            replaced_acl_name: str = c.Ldif.sub_pattern(
+                r'acl\\s+"[^"]*"',
+                f'acl "{safe_acl_name}"',
+                value,
+                count=1,
             )
+            return replaced_acl_name
 
         def emit_attribute_line(
             attr_name: str,
@@ -435,7 +441,7 @@ class FlextLdifServersBaseEntry(
             output_lines.extend(u.Ldif.fold_line(line, width=effective_line_width))
 
         if should_restore_original() and entry_data.metadata is not None:
-            original_strings = entry_data.metadata.original_strings.to_dict()
+            original_strings = entry_data.metadata.original_strings
             original_ldif_raw = original_strings.get(
                 "entry_original_ldif",
                 "",

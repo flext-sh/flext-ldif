@@ -22,8 +22,10 @@ class FlextLdifConversionMetadataMixin(s):
                 "target_server": target_server_type,
                 "action": "apply_target_conventions",
             })
+            # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: validate the
+            # mapping directly instead of a model round-trip.
             return {
-                "attribute_case": m.Ldif.DynamicMetadata.from_dict(payload).to_dict(),
+                "attribute_case": t.json_dict_adapter().validate_python(payload),
             }
         return {}
 
@@ -39,15 +41,15 @@ class FlextLdifConversionMetadataMixin(s):
         for attr_name, conv_info in boolean_conversions.items():
             source_format = ""
             if isinstance(conv_info, Mapping):
-                conv_info_dict = m.Ldif.DynamicMetadata.from_dict(
-                    t.Cli.JSON_MAPPING_ADAPTER.validate_python(conv_info),
+                conv_info_dict: t.MutableJsonMapping = (
+                    t.json_dict_adapter().validate_python(conv_info)
                 )
                 source_format = str(conv_info_dict.get("format", "") or "")
-            result[f"boolean_{attr_name}"] = m.Ldif.DynamicMetadata.from_dict({
+            result[f"boolean_{attr_name}"] = t.json_dict_adapter().validate_python({
                 "source_format": source_format,
                 "target_server": target_server_type,
                 "action": "convert_to_target_format",
-            }).to_dict()
+            })
         return result
 
     @staticmethod
@@ -67,12 +69,12 @@ class FlextLdifConversionMetadataMixin(s):
             "action": "normalize_for_target",
         })
         return {
-            "dn_format": m.Ldif.DynamicMetadata.from_dict(payload).to_dict(),
+            "dn_format": t.json_dict_adapter().validate_python(payload),
         }
 
     @staticmethod
     def _analyze_metadata_for_conversion(
-        source_metadata: m.Ldif.ServerMetadata | m.Ldif.DynamicMetadata | None,
+        source_metadata: m.Ldif.ServerMetadata | t.MutableJsonMapping | None,
         target_server_type: str,
     ) -> t.MutableMappingKV[str, t.Ldif.MutableMetadataInputMapping]:
         """Analyze source metadata for intelligent conversion to target server."""
@@ -83,8 +85,8 @@ class FlextLdifConversionMetadataMixin(s):
         if not source_metadata:
             return conversion_analysis
         if isinstance(source_metadata, m.Ldif.ServerMetadata):
-            boolean_conversions = source_metadata.boolean_conversions.to_dict()
-            attr_case_val = source_metadata.original_attribute_case.to_dict()
+            boolean_conversions = source_metadata.boolean_conversions
+            attr_case_val = source_metadata.original_attribute_case
             format_val: t.JsonMapping = (
                 t.json_mapping_adapter().validate_python({})
                 if source_metadata.original_format_details is None
@@ -92,7 +94,7 @@ class FlextLdifConversionMetadataMixin(s):
                     source_metadata.original_format_details.model_dump(
                         mode="json",
                         exclude_none=True,
-                    )
+                    ),
                 )
             )
         else:
@@ -139,9 +141,8 @@ class FlextLdifConversionMetadataMixin(s):
         get_extensions = u.prop("extensions")
         current_entry = entry
         if not get_metadata(current_entry):
-            metadata_obj = m.Ldif.ServerMetadata.create_for(
+            metadata_obj = u.Ldif.server_metadata_for(
                 server_type=validated_server_type,
-                extensions=None,
             )
             current_entry = current_entry.model_copy(
                 update={"metadata": metadata_obj},
@@ -154,7 +155,7 @@ class FlextLdifConversionMetadataMixin(s):
             and (not get_extensions(entry_metadata))
         ):
             updated_metadata = entry_metadata.model_copy(
-                update={"extensions": m.Ldif.DynamicMetadata()},
+                update={"extensions": {}},
                 deep=True,
             )
             current_entry = current_entry.model_copy(
@@ -173,9 +174,12 @@ class FlextLdifConversionMetadataMixin(s):
             }
             if conversion_analysis:
                 extensions_update["conversion_analysis"] = conversion_analysis
-            updated_extensions = (
-                entry_metadata.extensions or m.Ldif.DynamicMetadata()
-            ).model_copy(update=extensions_update, deep=True)
+            # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: merge into a new
+            # plain mapping (was model_copy(update=..., deep=True)).
+            updated_extensions: t.MutableJsonMapping = {
+                **(entry_metadata.extensions or {}),
+                **extensions_update,
+            }
             updated_metadata = entry_metadata.model_copy(
                 update={
                     "server_type": validated_server_type,

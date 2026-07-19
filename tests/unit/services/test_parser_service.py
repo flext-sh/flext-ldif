@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 from uuid import uuid4
 
 from flext_tests import tm
 
-from tests.constants import c
-from tests.models import m
-from tests.protocols import p
-from tests.utilities import u
+from tests import c, m, u
+
+if TYPE_CHECKING:
+    from tests import p
 
 
 class TestsFlextLdifParserService:

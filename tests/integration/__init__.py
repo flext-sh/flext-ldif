@@ -12,12 +12,10 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ".test_api_integration": ("TestsFlextLdifApiIntegration",),
         ".test_categorization_real_data": ("TestsFlextLdifCategorizationRealData",),
         ".test_config_integration": ("TestsFlextLdifConfigIntegration",),
-        ".test_cross_direction_conversion": (
-            "TestsTestFlextLdifCrossDirectionConversion",
-        ),
+        ".test_cross_direction_conversion": ("TestsFlextLdifCrossDirectionConversion",),
         ".test_cross_server_conversion": ("TestsFlextLdifCrossServerConversion",),
         ".test_dn_case_handling": ("TestsFlextLdifDnCaseHandling",),
-        ".test_edge_cases": ("TestsFlextLdifEdgeCasesInt",),
+        ".test_edge_cases": ("TestsFlextLdifEdgeCases",),
         ".test_error_recovery": ("TestsFlextLdifErrorRecovery",),
         ".test_ldif_fixtures_integration": ("TestsFlextLdifLdifFixturesIntegration",),
         ".test_minimal_differences_metadata": (

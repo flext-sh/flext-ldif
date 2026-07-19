@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from typing import Annotated, Self
 
-from flext_core import m
-from flext_core.utilities import FlextUtilities as u
+from flext_core import FlextUtilities as u, m
 from flext_ldif import c, t
 from flext_ldif._models.collections import FlextLdifModelsCollections as mc
 from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries as mde
@@ -189,7 +188,7 @@ class FlextLdifModelsResults:
             description="Counts of entries rejected by reason category",
         )
         events: t.MutableSequenceOf[me.ConversionEvent | me.DnEvent] = u.Field(
-            default_factory=lambda: list[me.ConversionEvent | me.DnEvent](),
+            default_factory=list[me.ConversionEvent | me.DnEvent],
             description="Domain events emitted during processing",
         )
 
@@ -402,7 +401,9 @@ class FlextLdifModelsResults:
         @u.computed_field()
         @property
         def is_confident(self) -> bool:
-            return self.confidence >= c.Ldif.CONFIDENCE_THRESHOLD
+            confidence: float = self.confidence
+            threshold: float = c.Ldif.CONFIDENCE_THRESHOLD
+            return confidence >= threshold
 
     class EntriesStatistics(m.Value):
         total_entries: Annotated[

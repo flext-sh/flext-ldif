@@ -178,7 +178,7 @@ class FlextLdifServersOudCommentsMixin:
             and format_options.write_removed_attributes_as_comments
             and entry.metadata.removed_attributes
         ):
-            removed_attrs_dict = entry.metadata.removed_attributes.to_dict()
+            removed_attrs_dict = entry.metadata.removed_attributes
             removed_attr_names: t.MutableSequenceOf[str] = [
                 attr_name
                 for attr_name in removed_attrs_dict
@@ -218,18 +218,18 @@ class FlextLdifServersOudCommentsMixin:
         """Collect ACL comments from extensions.commented_attribute_values."""
         if not entry.metadata or not entry.metadata.extensions:
             return
-        commented_acl_values_raw = entry.metadata.extensions.to_dict().get(
+        commented_acl_values_raw = entry.metadata.extensions.get(
             c.Ldif.COMMENTED_ATTRIBUTE_VALUES,
         )
         commented_acl_values = (
             FlextLdifServersOudAclExtractMixin.parse_commented_values(
-                commented_acl_values_raw
+                commented_acl_values_raw,
             )
         )
         if not commented_acl_values:
             return
         original_acl_attr = FlextLdifServersOudAclMetadataMixin.get_original_acl_attr(
-            entry
+            entry,
         )
         for acl_attr_name, acl_values_raw in commented_acl_values.items():
             if acl_attr_name.lower() in acl_attr_names_to_skip:

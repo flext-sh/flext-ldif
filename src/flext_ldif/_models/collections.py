@@ -1,23 +1,23 @@
 """Collection and utility models for LDIF processing.
 
-from flext_ldif.models import m
-from flext_ldif.utilities import u
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
-from collections.abc import (
-    Iterator,
-    MutableMapping,
-)
-from typing import Annotated, ClassVar
+from collections.abc import MutableMapping
+from typing import TYPE_CHECKING, Annotated, ClassVar
 
-from flext_core import m
-from flext_core.utilities import FlextUtilities as u
-from flext_ldif import t
+# mro-6int (claude-ulw): import m/t/u from upstream flext_cli, not the own
+# package facade, to break the flext_ldif package-init circular import.
+from flext_cli import m, t, u
 from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries as mde
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        Iterator,
+    )
 
 
 class FlextLdifModelsCollections:

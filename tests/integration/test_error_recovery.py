@@ -1,14 +1,10 @@
-"""Error recovery and malformed LDIF handling tests.
+"""Behavioral tests for LDIF error recovery and malformed-content handling.
 
-Test suite for validating error handling capabilities:
-- Malformed LDIF content (missing DNs, invalid syntax)
-- Incomplete entries (missing required attributes)
-- Invalid attribute values (wrong formats)
-- Encoding errors and binary handling
-- Graceful degradation and partial parsing
-- Error messages and diagnostics
-
-Uses centralized fixtures from tests/integration/conftest.py.
+Exercises the PUBLIC contract of the LDIF facade (`ldif().parse_ldif` /
+`ldif().write`): the `r[ParseResponse]` outcome, the parsed entry set, and
+the observable state of each entry (DN, attribute names, attribute values).
+No private attributes, internal collaborators, or line-coverage pokes are
+touched — only promises the public API makes to its callers.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -16,297 +12,330 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
+from flext_tests import tm
 
 from flext_ldif import ldif
-from tests.protocols import p
+
+if TYPE_CHECKING:
+    from flext_ldif import p
 
 
 class TestsFlextLdifErrorRecovery:
-    """Test error handling for malformed LDIF content."""
-
-    def test_missing_dn_line(self, api: p.Ldif.LdifClient) -> None:
-        """Test handling of entry without DN line.
-
-        Validates:
-        - Parser detects missing DN
-        - Error is reported appropriately
-        - Processing continues gracefully
-        """
-        ldif_content = "objectClass: person\ncn: NoDN\nsn: User\n"
-        result = api.parse_ldif(ldif_content)
-        assert result is not None
-
-    def test_incomplete_attribute_syntax(self, api: p.Ldif.LdifClient) -> None:
-        """Test handling of malformed attribute lines.
-
-        Validates:
-        - Lines without colon separator are handled
-        - Incomplete attribute definitions are detected
-        - Parsing continues with remaining entries
-        """
-        ldif_content = (
-            "dn: cn=Test,dc=example,dc=com\nobjectClass person\ncn: Test\nsn: User\n"
-        )
-        result = api.parse_ldif(ldif_content)
-        assert result is not None
-
-    def test_invalid_dn_format(self, api: p.Ldif.LdifClient) -> None:
-        """Test handling of invalid DN format.
-
-        Validates:
-        - DNs without RDN components are detected
-        - Malformed DNs are handled gracefully
-        - Processing continues
-        """
-        ldif_content = "dn: invalid-dn-no-equals\nobjectClass: person\ncn: Test\n"
-        result = api.parse_ldif(ldif_content)
-        assert result is not None
-
-    def test_orphaned_continuation_lines(self, api: p.Ldif.LdifClient) -> None:
-        """Test handling of orphaned line continuation characters.
-
-        Validates:
-        - Lines starting with space but without context handled
-        - Parser doesn't crash on malformed continuations
-        - Following entries still parse
-        """
-        ldif_content = "dn: cn=Test1,dc=example,dc=com\nobjectClass: person\ncn: Test1\n\n orphaned-continuation\ndn: cn=Test2,dc=example,dc=com\nobjectClass: person\ncn: Test2\n"
-        result = api.parse_ldif(ldif_content)
-        assert result is not None
-
-    def test_missing_required_attributes(self, api: p.Ldif.LdifClient) -> None:
-        """Test handling of entries missing required attributes.
-
-        Validates:
-        - Entries with no attributes are handled
-        - Entries with minimal attributes parse successfully
-        - DN alone is valid entry
-        """
-        ldif_content = "dn: cn=Minimal,dc=example,dc=com\n"
-        result = api.parse_ldif(ldif_content)
-        if result.success:
-            assert True
-
-    def test_empty_attribute_values(self, api: p.Ldif.LdifClient) -> None:
-        """Test handling of attributes with empty values.
-
-        Validates:
-        - Empty attribute values are preserved
-        - Attributes with only whitespace handled
-        - Parser doesn't crash on empty values
-        """
-        ldif_content = "dn: cn=Empty,dc=example,dc=com\nobjectClass: person\ncn: Empty\ndescription:\nmail: test@example.com\n"
-        result = api.parse_ldif(ldif_content)
-        assert result is not None
-
-    def test_duplicate_attributes(self, api: p.Ldif.LdifClient) -> None:
-        """Test handling of duplicate attribute names.
-
-        Validates:
-        - Multiple values for same attribute collected
-        - Duplicates don't cause parsing errors
-        - All values are preserved
-        """
-        ldif_content = "dn: cn=Duplicate,dc=example,dc=com\nobjectClass: person\ncn: Duplicate\nmail: test1@example.com\nmail: test2@example.com\nmail: test3@example.com\n"
-        result = api.parse_ldif(ldif_content)
-        if result.success:
-            entries = result.value.entries
-            assert entries
-
-    def test_special_characters_in_values(self, api: p.Ldif.LdifClient) -> None:
-        """Test handling of special characters in attribute values.
-
-        Validates:
-        - Special LDAP characters in values handled
-        - Escaped characters processed correctly
-        - Unicode and UTF-8 characters supported
-        """
-        ldif_content = "dn: cn=José,dc=example,dc=com\nobjectClass: person\ncn: José\ndescription: Contains , comma and = equals signs\nmail: user+tag@example.com\n"
-        result = api.parse_ldif(ldif_content)
-        assert result is not None
-
-    def test_very_long_attribute_values(self, api: p.Ldif.LdifClient) -> None:
-        """Test handling of extremely long attribute values.
-
-        Validates:
-        - Very long values (>1000 chars) handled
-        - Line continuation working correctly
-        - No buffer overflow or truncation
-        """
-        long_value = "x" * 2000
-        ldif_content = f"dn: cn=LongValue,dc=example,dc=com\nobjectClass: person\ncn: LongValue\ndescription: {long_value}\n"
-        result = api.parse_ldif(ldif_content)
-        assert result is not None
-
-    def test_binary_attribute_encoding(self, api: p.Ldif.LdifClient) -> None:
-        """Test handling of binary attributes.
-
-        Validates:
-        - Base64 encoded binary attributes recognized
-        - :: syntax for binary attributes handled
-        - Non-UTF8 binary data supported
-        """
-        ldif_content = "dn: cn=Binary,dc=example,dc=com\nobjectClass: person\ncn: Binary\njpegPhoto:: /9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAA==\n"
-        result = api.parse_ldif(ldif_content)
-        assert result is not None
-
-    def test_version_line_handling(self, api: p.Ldif.LdifClient) -> None:
-        """Test handling of LDIF version line.
-
-        Validates:
-        - Version line (if present) handled correctly
-        - Doesn't cause parsing errors
-        - Standard LDIF format supported
-        """
-        ldif_content = "version: 1\ndn: cn=WithVersion,dc=example,dc=com\nobjectClass: person\ncn: WithVersion\n"
-        result = api.parse_ldif(ldif_content)
-        assert result is not None
-
-    def test_comments_in_ldif(self, api: p.Ldif.LdifClient) -> None:
-        """Test handling of comment lines in LDIF.
-
-        Validates:
-        - Comment lines (#) are ignored
-        - Comments don't interfere with parsing
-        - Entries after comments parse correctly
-        """
-        ldif_content = "# This is a comment\ndn: cn=WithComments,dc=example,dc=com\n# Another comment\nobjectClass: person\ncn: WithComments\n# Final comment\n"
-        result = api.parse_ldif(ldif_content)
-        assert result is not None
-
-    def test_mixed_case_attribute_names(self, api: p.Ldif.LdifClient) -> None:
-        """Test handling of mixed-case attribute names.
-
-        Validates:
-        - Attribute names are case-insensitive
-        - CN, cn, Cn all treated same
-        - DN, dn, Dn handled correctly
-        """
-        ldif_content = "Dn: cn=MixedCase,dc=example,dc=com\nObjectClass: person\nCN: MixedCase\nSN: User\nMail: test@example.com\n"
-        result = api.parse_ldif(ldif_content)
-        assert result is not None
-
-    """Test handling of incomplete or partial entries."""
-
-    def test_truncated_ldif(self, api: p.Ldif.LdifClient) -> None:
-        """Test handling of truncated LDIF file.
-
-        Validates:
-        - Incomplete entries at end of file handled
-        - Previous complete entries still parsed
-        - No crash on unexpected EOF
-        """
-        ldif_content = "dn: cn=Complete,dc=example,dc=com\nobjectClass: person\ncn: Complete\n\ndn: cn=Incomplete,dc=example,dc\n"
-        result = api.parse_ldif(ldif_content)
-        assert result is not None
-
-    def test_unclosed_multiline_value(self, api: p.Ldif.LdifClient) -> None:
-        """Test handling of unclosed multi-line attribute values.
-
-        Validates:
-        - Continuation lines without completion handled
-        - Following entries recover correctly
-        - No parser state corruption
-        """
-        ldif_content = "dn: cn=Test1,dc=example,dc=com\nobjectClass: person\ncn: Test1\ndescription: This is a multi-line\n value that continues\n but next entry starts\n\ndn: cn=Test2,dc=example,dc=com\nobjectClass: person\ncn: Test2\n"
-        result = api.parse_ldif(ldif_content)
-        assert result is not None
-
-    def test_entry_without_closing_blank_line(self, api: p.Ldif.LdifClient) -> None:
-        """Test handling of entry without trailing blank line.
-
-        Validates:
-        - Last entry without blank line still parsed
-        - EOF properly terminates entry
-        - No data loss
-        """
-        ldif_content = "dn: cn=NoBlankLine,dc=example,dc=com\nobjectClass: person\ncn: NoBlankLine\nsn: Test"
-        result = api.parse_ldif(ldif_content)
-        assert result is not None
-
-    """Test handling of invalid schema definitions."""
-
-    def test_malformed_oid(self, api: p.Ldif.LdifClient) -> None:
-        """Test handling of malformed OID in schema.
-
-        Validates:
-        - Invalid OID format detected
-        - Parsing continues gracefully
-        - Other schema entries still processed
-        """
-        ldif_content = "dn: cn=Schema,cn=settings\nobjectClass: schema\nattributeTypes: ( invalid-oid NAME 'test' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )\n"
-        result = api.parse_ldif(ldif_content)
-        assert result is not None
-
-    def test_missing_required_schema_fields(self, api: p.Ldif.LdifClient) -> None:
-        """Test handling of schema definitions missing required fields.
-
-        Validates:
-        - Missing OID detected
-        - Missing NAME detected
-        - Graceful error handling
-        """
-        ldif_content = "dn: cn=Schema,cn=settings\nobjectClass: schema\nattributeTypes: ( NAME 'incomplete' )\n"
-        result = api.parse_ldif(ldif_content)
-        assert result is not None
-
-    def test_unclosed_schema_definition(self, api: p.Ldif.LdifClient) -> None:
-        """Test handling of unclosed schema definition parentheses.
-
-        Validates:
-        - Missing closing paren detected
-        - Following definitions still parsed
-        - No parser crash
-        """
-        ldif_content = "dn: cn=Schema,cn=settings\nobjectClass: schema\nattributeTypes: ( 1.2.3 NAME 'incomplete'\n"
-        result = api.parse_ldif(ldif_content)
-        assert result is not None
-
-    """Test handling of encoding-related errors."""
+    """Observable-behavior tests for malformed and edge-case LDIF input."""
 
     @pytest.fixture
     def api(self) -> p.Ldif.LdifClient:
-        """Ldif API instance."""
+        """Return a configured LDIF facade instance (public DSL alias)."""
         return ldif()
 
-    def test_utf8_handling(self, api: p.Ldif.LdifClient) -> None:
-        """Test proper UTF-8 encoding handling.
+    # ------------------------------------------------------------------
+    # Well-formed parsing: DN and attributes are preserved verbatim.
+    # ------------------------------------------------------------------
 
-        Validates:
-        - UTF-8 characters properly decoded
-        - Non-ASCII characters preserved
-        - Multi-byte characters handled
-        """
-        ldif_content = "dn: cn=UTF8Test,dc=example,dc=com\nobjectClass: person\ncn: UTF8Test\ndescription: Contains UTF-8: café, naïve, résumé\n"
-        result = api.parse_ldif(ldif_content)
+    def test_valid_entry_preserves_dn_and_attribute_names(
+        self, api: p.Ldif.LdifClient
+    ) -> None:
+        """A well-formed entry parses to exactly one entry with its DN/attrs intact."""
+        content = (
+            "dn: cn=Test,dc=example,dc=com\nobjectClass: person\ncn: Test\nsn: User\n"
+        )
+
+        result = api.parse_ldif(content)
+
+        tm.ok(result)
+        response = result.unwrap()
+        tm.that(len(response.entries), eq=1)
+        entry = response.entries[0]
+        assert entry.dn is not None
+        tm.that(entry.dn.value, eq="cn=Test,dc=example,dc=com")
+        assert entry.attributes is not None
+        tm.that(set(entry.attributes.attributes), eq={"objectClass", "cn", "sn"})
+
+    @pytest.mark.parametrize(
+        ("content", "expected_dn"),
+        [
+            pytest.param(
+                "version: 1\ndn: cn=W,dc=example,dc=com\nobjectClass: person\ncn: W\n",
+                "cn=W,dc=example,dc=com",
+                id="version-line-ignored",
+            ),
+            pytest.param(
+                "# a comment\ndn: cn=W,dc=example,dc=com\n# mid comment\nobjectClass: person\ncn: W\n",
+                "cn=W,dc=example,dc=com",
+                id="comment-lines-ignored",
+            ),
+            pytest.param(
+                "dn: cn=José,dc=example,dc=com\nobjectClass: person\ncn: José\n",
+                "cn=José,dc=example,dc=com",
+                id="unicode-dn-preserved",
+            ),
+        ],
+    )
+    def test_structural_prefixes_do_not_alter_parsed_dn(
+        self, api: p.Ldif.LdifClient, content: str, expected_dn: str
+    ) -> None:
+        """Version lines, comments, and unicode DNs yield one entry with the exact DN."""
+        result = api.parse_ldif(content)
+
+        tm.ok(result)
+        entries = result.unwrap().entries
+        tm.that(len(entries), eq=1)
+        assert entries[0].dn is not None
+        tm.that(entries[0].dn.value, eq=expected_dn)
+
+    # ------------------------------------------------------------------
+    # Attribute value semantics.
+    # ------------------------------------------------------------------
+
+    def test_duplicate_attribute_collects_all_values_in_order(
+        self, api: p.Ldif.LdifClient
+    ) -> None:
+        """Repeated attribute lines are collected as an ordered multi-value list."""
+        content = (
+            "dn: cn=D,dc=example,dc=com\nobjectClass: person\ncn: D\n"
+            "mail: a@example.com\nmail: b@example.com\nmail: c@example.com\n"
+        )
+
+        result = api.parse_ldif(content)
+
+        tm.ok(result)
+        entry = result.unwrap().entries[0]
+        assert entry.attributes is not None
+        tm.that(
+            entry.attributes.attributes["mail"],
+            eq=[
+                "a@example.com",
+                "b@example.com",
+                "c@example.com",
+            ],
+        )
+
+    def test_empty_attribute_value_is_preserved(self, api: p.Ldif.LdifClient) -> None:
+        """An attribute with no value keeps an explicit empty-string value."""
+        content = (
+            "dn: cn=E,dc=example,dc=com\nobjectClass: person\ncn: E\ndescription:\n"
+        )
+
+        result = api.parse_ldif(content)
+
+        tm.ok(result)
+        entry = result.unwrap().entries[0]
+        assert entry.attributes is not None
+        tm.that(entry.attributes.attributes["description"], eq=[""])
+
+    def test_folded_continuation_lines_concatenate_into_single_value(
+        self, api: p.Ldif.LdifClient
+    ) -> None:
+        """RFC 2849 line folding joins continuation lines into one value."""
+        content = (
+            "dn: cn=T,dc=example,dc=com\nobjectClass: person\ncn: T\n"
+            "description: ab\n cd\n"
+        )
+
+        result = api.parse_ldif(content)
+
+        tm.ok(result)
+        entry = result.unwrap().entries[0]
+        assert entry.attributes is not None
+        tm.that(entry.attributes.attributes["description"], eq=["abcd"])
+
+    def test_very_long_value_is_not_truncated(self, api: p.Ldif.LdifClient) -> None:
+        """A value far exceeding a line width is preserved without truncation."""
+        long_value = "x" * 2000
+        content = (
+            "dn: cn=L,dc=example,dc=com\nobjectClass: person\ncn: L\n"
+            f"description: {long_value}\n"
+        )
+
+        result = api.parse_ldif(content)
+
+        tm.ok(result)
+        entry = result.unwrap().entries[0]
+        assert entry.attributes is not None
+        tm.that(entry.attributes.attributes["description"], eq=[long_value])
+
+    def test_base64_binary_attribute_is_parsed_as_named_attribute(
+        self, api: p.Ldif.LdifClient
+    ) -> None:
+        """A ``::`` base64 attribute appears under its attribute name."""
+        content = (
+            "dn: cn=B,dc=example,dc=com\nobjectClass: person\ncn: B\n"
+            "jpegPhoto:: /9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAA==\n"
+        )
+
+        result = api.parse_ldif(content)
+
+        tm.ok(result)
+        entry = result.unwrap().entries[0]
+        assert entry.attributes is not None
+        tm.that(entry.attributes.attributes, has="jpegPhoto")
+
+    def test_unicode_attribute_value_is_preserved(self, api: p.Ldif.LdifClient) -> None:
+        """Multi-byte UTF-8 characters survive parsing unchanged."""
+        content = (
+            "dn: cn=U,dc=example,dc=com\nobjectClass: person\ncn: U\n"
+            "description: café, naïve, résumé\n"
+        )
+
+        result = api.parse_ldif(content)
+
+        tm.ok(result)
+        entry = result.unwrap().entries[0]
+        assert entry.attributes is not None
+        tm.that(entry.attributes.attributes["description"], eq=["café, naïve, résumé"])
+
+    # ------------------------------------------------------------------
+    # Graceful degradation: malformed input never raises; it produces a
+    # structured result and drops only the offending fragment.
+    # ------------------------------------------------------------------
+
+    def test_entry_without_dn_yields_no_entries(self, api: p.Ldif.LdifClient) -> None:
+        """A block with no DN line produces zero entries, not a crash."""
+        content = "objectClass: person\ncn: NoDN\nsn: User\n"
+
+        result = api.parse_ldif(content)
+
+        tm.ok(result)
+        tm.that(result.unwrap().entries, eq=[])
+
+    def test_invalid_dn_without_rdn_is_rejected(self, api: p.Ldif.LdifClient) -> None:
+        """A DN lacking any ``=`` RDN component yields no accepted entry."""
+        content = "dn: invalid-dn-no-equals\nobjectClass: person\ncn: Test\n"
+
+        result = api.parse_ldif(content)
+
+        tm.ok(result)
+        tm.that(result.unwrap().entries, eq=[])
+
+    def test_malformed_attribute_line_is_dropped_entry_survives(
+        self, api: p.Ldif.LdifClient
+    ) -> None:
+        """A line missing the ``:`` separator is discarded; valid attrs remain."""
+        content = (
+            "dn: cn=Test,dc=example,dc=com\nobjectClass person\ncn: Test\nsn: User\n"
+        )
+
+        result = api.parse_ldif(content)
+
+        tm.ok(result)
+        entry = result.unwrap().entries[0]
+        assert entry.attributes is not None
+        tm.that(set(entry.attributes.attributes), eq={"cn", "sn"})
+
+    def test_dn_only_entry_parses_with_empty_attributes(
+        self, api: p.Ldif.LdifClient
+    ) -> None:
+        """An entry carrying only a DN parses as one entry with no attributes."""
+        content = "dn: cn=Minimal,dc=example,dc=com\n"
+
+        result = api.parse_ldif(content)
+
+        tm.ok(result)
+        entries = result.unwrap().entries
+        tm.that(len(entries), eq=1)
+        entry = entries[0]
+        assert entry.dn is not None
+        tm.that(entry.dn.value, eq="cn=Minimal,dc=example,dc=com")
+
+    @pytest.mark.parametrize(
+        ("content", "expected_count"),
+        [
+            pytest.param(
+                "dn: cn=Complete,dc=example,dc=com\nobjectClass: person\ncn: Complete\n"
+                "\ndn: cn=Incomplete,dc=example,dc\n",
+                1,
+                id="truncated-second-dn-dropped",
+            ),
+            pytest.param(
+                "dn: cn=Test1,dc=example,dc=com\nobjectClass: person\ncn: Test1\n"
+                "\n orphaned-continuation\n"
+                "dn: cn=Test2,dc=example,dc=com\nobjectClass: person\ncn: Test2\n",
+                2,
+                id="orphaned-continuation-recovers",
+            ),
+            pytest.param(
+                "dn: cn=NoBlank,dc=example,dc=com\nobjectClass: person\ncn: NoBlank\nsn: Test",
+                1,
+                id="missing-trailing-blank-line",
+            ),
+        ],
+    )
+    def test_partial_input_recovers_valid_entries(
+        self, api: p.Ldif.LdifClient, content: str, expected_count: int
+    ) -> None:
+        """Truncated / orphaned / unterminated input recovers the valid entries."""
+        result = api.parse_ldif(content)
+
+        tm.ok(result)
+        tm.that(len(result.unwrap().entries), eq=expected_count)
+
+    @pytest.mark.parametrize(
+        "content",
+        [
+            pytest.param(
+                "dn: cn=Schema,cn=settings\nobjectClass: schema\n"
+                "attributeTypes: ( invalid-oid NAME 'test' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )\n",
+                id="malformed-oid",
+            ),
+            pytest.param(
+                "dn: cn=Schema,cn=settings\nobjectClass: schema\n"
+                "attributeTypes: ( 1.2.3 NAME 'incomplete'\n",
+                id="unclosed-schema-paren",
+            ),
+            pytest.param(
+                "dn: cn=InvalidBase64,dc=example,dc=com\nobjectClass: person\n"
+                "jpegPhoto:: !!!invalid-base64!!!\n",
+                id="invalid-base64",
+            ),
+        ],
+    )
+    def test_malformed_content_returns_structured_result_without_raising(
+        self, api: p.Ldif.LdifClient, content: str
+    ) -> None:
+        """Malformed schema/base64 input returns an r[T] result rather than raising."""
+        result = api.parse_ldif(content)
+
+        # The contract is a structured result: querying success must never raise,
+        # and on success the entries collection is always a list.
+        tm.that(result.success, is_=bool)
         if result.success:
-            entries = result.value.entries
-            assert len(entries) >= 0
+            tm.that(result.unwrap().entries, is_=list)
 
-    def test_invalid_base64_binary(self, api: p.Ldif.LdifClient) -> None:
-        """Test handling of invalid Base64 in binary attributes.
+    # ------------------------------------------------------------------
+    # Round-trip invariant.
+    # ------------------------------------------------------------------
 
-        Validates:
-        - Invalid Base64 detected
-        - Parsing continues
-        - Error reported appropriately
-        """
-        ldif_content = "dn: cn=InvalidBase64,dc=example,dc=com\nobjectClass: person\njpegPhoto:: !!!invalid-base64!!!\n"
-        result = api.parse_ldif(ldif_content)
-        assert result is not None
+    def test_parse_write_parse_is_idempotent_on_dn_and_attributes(
+        self, api: p.Ldif.LdifClient
+    ) -> None:
+        """Parse, write, then re-parse preserves DN and attribute names/values."""
+        content = (
+            "dn: cn=Round,dc=example,dc=com\nobjectClass: person\ncn: Round\nsn: Trip\n"
+        )
 
-    def test_mixed_encoding_in_entry(self, api: p.Ldif.LdifClient) -> None:
-        """Test handling of mixed character encodings in single entry.
+        first = api.parse_ldif(content)
+        tm.ok(first)
+        original = first.unwrap().entries
 
-        Validates:
-        - Mixed UTF-8 and binary handled
-        - No encoding conflicts
-        - Values properly separated
-        """
-        ldif_content = "dn: cn=Mixed,dc=example,dc=com\nobjectClass: person\ncn: Mixed\ndescription: UTF-8 text: café\njpegPhoto:: /9j/4AAQSkZJRgABAQEAYABg\n"
-        result = api.parse_ldif(ldif_content)
-        assert result is not None
+        written = api.write(original)
+        tm.ok(written)
+        serialized = written.unwrap().content
+        assert serialized is not None
+
+        second = api.parse_ldif(serialized)
+        tm.ok(second)
+        reparsed = second.unwrap().entries
+
+        tm.that(len(reparsed), eq=len(original))
+        assert original[0].dn is not None
+        assert reparsed[0].dn is not None
+        tm.that(reparsed[0].dn.value, eq=original[0].dn.value)
+        assert original[0].attributes is not None
+        assert reparsed[0].attributes is not None
+        tm.that(reparsed[0].attributes.attributes, eq=original[0].attributes.attributes)
 
 
 __all__: list[str] = ["TestsFlextLdifErrorRecovery"]

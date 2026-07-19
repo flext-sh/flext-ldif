@@ -52,7 +52,8 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         DETECTION_WEIGHT: ClassVar[int] = 8
         ACL_SDDL_PREFIX_PATTERN: ClassVar[str] = "^(O:|G:|D:|S:)"
         ACL_SDDL_PREFIX_PATTERN_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-            r"^(O:|G:|D:|S:)", re.IGNORECASE
+            r"^(O:|G:|D:|S:)",
+            re.IGNORECASE,
         )
         ENCODING_UTF16LE: ClassVar[str] = "utf-16-le"
         ENCODING_ERROR_IGNORE: ClassVar[str] = "ignore"
@@ -225,7 +226,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 return True
             return (
                 FlextLdifServersAd.Constants.ACL_SDDL_PREFIX_PATTERN_RE.match(
-                    normalized
+                    normalized,
                 )
                 is not None
             )
@@ -272,7 +273,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                     subject_value=decoded_sddl or (raw_value or ""),
                 ),
                 permissions=m.Ldif.AclPermissions(),
-                metadata=m.Ldif.ServerMetadata.create_for(self._get_server_type()),
+                metadata=u.Ldif.server_metadata_for(self._get_server_type()),
                 raw_acl=acl_line,
             )
             if acl_model.metadata:
@@ -307,12 +308,13 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             if is_base64 and raw_value:
                 decode_result = _decode_base64()
                 if decode_result.success:
-                    return decode_result.value
+                    decoded_value: str = decode_result.value
+                    return decoded_value
                 return None
             if (
                 raw_value
                 and FlextLdifServersAd.Constants.ACL_SDDL_PREFIX_PATTERN_RE.match(
-                    raw_value
+                    raw_value,
                 )
             ):
                 return raw_value

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import override
+import re
+from typing import TYPE_CHECKING, override
 
 from flext_ldif import (
     c,
@@ -14,6 +14,9 @@ from flext_ldif import (
     t,
     u,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class FlextLdifDetector(s):
@@ -63,7 +66,7 @@ class FlextLdifDetector(s):
                 if isinstance(pattern_value, str)
                 else ""
                 if pattern_value is None
-                else pattern_value.pattern
+                else pattern_value.pattern,
             )
             for pattern_value in pattern_values
         )
@@ -101,11 +104,6 @@ class FlextLdifDetector(s):
                     read.error,
                 )
             ldif_content = read.value
-        if ldif_content is None:
-            return r[m.Ldif.ServerDetectionResult].fail_op(
-                "read detection source",
-                "LDIF content is empty",
-            )
         lines = ldif_content.splitlines()
         content_sample = "\n".join(lines[:max_lines])
         scores_dict = self._calculate_scores(content_sample)
@@ -209,8 +207,8 @@ class FlextLdifDetector(s):
         _, pattern_attr, description, case_sensitive = pattern_spec
         pattern_value = getattr(constants, pattern_attr, None) if constants else None
         pattern = (
-            getattr(pattern_value, "pattern")
-            if getattr(pattern_value, "pattern", None) is not None
+            pattern_value.pattern
+            if isinstance(pattern_value, re.Pattern)
             else pattern_value
         )
         if not isinstance(pattern, str):
@@ -255,8 +253,8 @@ class FlextLdifDetector(s):
         _, pattern_attr, case_sensitive = score_spec
         pattern_value = getattr(constants, pattern_attr, None) if constants else None
         pattern = (
-            getattr(pattern_value, "pattern")
-            if getattr(pattern_value, "pattern", None) is not None
+            pattern_value.pattern
+            if isinstance(pattern_value, re.Pattern)
             else pattern_value
         )
         server_type_raw = getattr(constants, "SERVER_TYPE", "") if constants else ""

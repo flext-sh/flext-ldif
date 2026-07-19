@@ -111,15 +111,9 @@ class FlextLdifServersBaseSchema(
     ) -> None:
         """Initialize schema server service with optional DI service injection."""
         filtered_kwargs = {k: v for k, v in kwargs.items() if k != "_parent_server"}
-        service_kwargs: MutableMapping[
-            str,
-            t.Ldif.Scalar | m.ConfigMap | t.MutableSequenceOf[t.Ldif.Scalar],
-        ] = {}
+        service_kwargs: MutableMapping[str, t.Ldif.Scalar] = {}
         for key, value in filtered_kwargs.items():
             if isinstance(value, t.SCALAR_TYPES):
-                service_kwargs[key] = value
-                continue
-            if isinstance(value, m.ConfigMap):
                 service_kwargs[key] = value
         super().__init__()
         self._schema_service = _schema_service
@@ -139,7 +133,9 @@ class FlextLdifServersBaseSchema(
         extensions_raw = extract_method(attr_definition)
         if not isinstance(extensions_raw, Mapping):
             return {}
-        extensions_map = m.Ldif.DynamicMetadata.model_validate(extensions_raw)
+        extensions_map: t.MutableJsonMapping = t.json_dict_adapter().validate_python(
+            extensions_raw,
+        )
         extracted: t.Ldif.SchemaExtensionsMapping = {}
         for raw_key, raw_value in extensions_map.items():
             if isinstance(raw_value, str | bool):
@@ -212,21 +208,20 @@ class FlextLdifServersBaseSchema(
         )
         metadata_extensions["original_format"] = attr_definition.strip()
         metadata_extensions["schema_original_string_complete"] = attr_definition
-        server_type = FlextLdifServersBaseSchema._resolve_server_type(server_type)
-        metadata_extensions[c.Ldif.SCHEMA_SOURCE_SERVER] = server_type.value
+        resolved_server_type: c.Ldif.ServerTypes = (
+            FlextLdifServersBaseSchema._resolve_server_type(server_type)
+        )
+        schema_source_server: str = resolved_server_type.value
+        metadata_extensions[c.Ldif.SCHEMA_SOURCE_SERVER] = schema_source_server
         extensions_typed: t.Ldif.MutableMetadataMapping = {}
         for key, val in metadata_extensions.items():
             if val is not None:
                 extensions_typed[key] = u.normalize_to_metadata(val)
         metadata = m.Ldif.ServerMetadata(
-            server_type=server_type,
-            extensions=m.Ldif.DynamicMetadata.from_dict(
-                extensions_typed,
-            )
-            if extensions_typed
-            else m.Ldif.DynamicMetadata(),
-            original_server_type=server_type,
-            target_server_type=server_type,
+            server_type=resolved_server_type,
+            extensions=extensions_typed or {},
+            original_server_type=resolved_server_type,
+            target_server_type=resolved_server_type,
         )
         FlextLdifServersBaseSchema._preserve_formatting(metadata, attr_definition)
         preview_len = 100
@@ -371,11 +366,13 @@ class FlextLdifServersBaseSchema(
             detected_type = detect_method(definition)
             if isinstance(detected_type, str):
                 return detected_type
-        return c.Ldif.SchemaItemKind.ATTRIBUTE.value
+        default_schema_type: str = c.Ldif.SchemaItemKind.ATTRIBUTE.value
+        return default_schema_type
 
     def _is_objectclass_schema_type(self, definition: str) -> bool:
         """Return whether the schema definition is an objectClass payload."""
-        return self._detect_schema_type(definition) == c.Ldif.SchemaItemKind.OBJECTCLASS
+        objectclass_schema_type: str = c.Ldif.SchemaItemKind.OBJECTCLASS.value
+        return self._detect_schema_type(definition) == objectclass_schema_type
 
     def _coerce_attribute_model(
         self,
@@ -592,14 +589,14 @@ class FlextLdifServersBaseSchema(
         self,
         attr: m.Ldif.SchemaAttribute,
     ) -> p.Result[m.Ldif.SchemaAttribute]:
-        """Hook called after parsing an attribute definition."""
+        """Run hook after parsing an attribute definition."""
         return r[m.Ldif.SchemaAttribute].ok(attr)
 
     def _hook_post_parse_objectclass(
         self,
         oc: m.Ldif.SchemaObjectClass,
     ) -> p.Result[m.Ldif.SchemaObjectClass]:
-        """Hook called after parsing an objectClass definition."""
+        """Run hook after parsing an objectClass definition."""
         return r[m.Ldif.SchemaObjectClass].ok(oc)
 
     def _hook_validate_attributes(
@@ -607,20 +604,22 @@ class FlextLdifServersBaseSchema(
         attributes: t.MutableSequenceOf[m.Ldif.SchemaAttribute],
         available_attrs: set[str],
     ) -> p.Result[bool]:
-        """Hook for server-specific attribute validation during schema extraction."""
+        """Validate server-specific attributes during schema extraction."""
         _ = attributes
         _ = available_attrs
         return r[bool].ok(value=True)
 
     def _parse_attribute(
-        self, attr_definition: str
+        self,
+        attr_definition: str,
     ) -> p.Result[m.Ldif.SchemaAttribute]:
         """Parse server-specific attribute definition (internal)."""
         del attr_definition
         return r[m.Ldif.SchemaAttribute].fail("Must be implemented by subclass")
 
     def _parse_objectclass(
-        self, oc_definition: str
+        self,
+        oc_definition: str,
     ) -> p.Result[m.Ldif.SchemaObjectClass]:
         """Parse server-specific objectClass definition (internal)."""
         _ = oc_definition
@@ -659,7 +658,8 @@ class FlextLdifServersBaseSchema(
                 oc_model = self._coerce_objectclass_model(data).unwrap_or(None)
                 if oc_model is not None:
                     result = self._handle_write_operation(
-                        attr_model=None, oc_model=oc_model
+                        attr_model=None,
+                        oc_model=oc_model,
                     )
                 else:
                     result = r[t.Ldif.SchemaConversionValue].fail(

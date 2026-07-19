@@ -209,8 +209,12 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         ) -> str:
             """Resolve subject to userdn string."""
             if subject and subject.subject_value:
-                return subject.subject_value
-            return FlextLdifServersDs389.Constants.ACL_ANONYMOUS_SUBJECT
+                subject_value: str = subject.subject_value
+                return subject_value
+            anonymous_subject: str = (
+                FlextLdifServersDs389.Constants.ACL_ANONYMOUS_SUBJECT
+            )
+            return anonymous_subject
 
         @override
         def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
@@ -322,7 +326,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             _ = attr_name
             acl_name_match = FlextLdifServersDs389.Constants.ACL_NAME_RE.search(content)
             permissions_match = FlextLdifServersDs389.Constants.ACL_ALLOW_RE.search(
-                content
+                content,
             )
             permissions: t.MutableSequenceOf[str] = (
                 [
@@ -336,7 +340,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             )
             target_attributes = self._parse_target_attributes(content)
             target_dn = self._parse_target_dn(content)
-            metadata = m.Ldif.ServerMetadata.create_for(self._get_server_type())
+            metadata = u.Ldif.server_metadata_for(self._get_server_type())
             metadata.extensions["original_format"] = acl_line.strip()
             acl_name = (
                 acl_name_match.group(1)
@@ -399,7 +403,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         def _parse_userdn_subject(content: str) -> str:
             """Parse userdn subject from 389 DS ACI content."""
             userdn_matches = FlextLdifServersDs389.Constants.ACL_USERDN_RE.findall(
-                content
+                content,
             )
             if userdn_matches:
                 return str(userdn_matches[0])

@@ -55,7 +55,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
 
     @staticmethod
     def _extension_get_str(
-        extensions: m.Ldif.DynamicMetadata | None,
+        extensions: t.Ldif.MetadataInputMapping | None,
         key: str,
     ) -> str | None:
         """Read a metadata extension as string."""
@@ -97,7 +97,9 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             except c.Ldif.EXC_LDIF_PARSE:
                 return False
             if acl_model.metadata and acl_model.metadata.server_type:
-                return str(acl_model.metadata.server_type) == self._get_server_type()
+                metadata_server_type = str(acl_model.metadata.server_type)
+                current_server_type: str = self._get_server_type()
+                return metadata_server_type == current_server_type
             return bool(
                 acl_model.name
                 and u.Ldif.normalize_attribute_name(acl_model.name)
@@ -349,11 +351,11 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             return result
         acl = result.value
         aci_content = acl_line.split(":", 1)[1].strip() if ":" in acl_line else ""
-        extensions = m.Ldif.DynamicMetadata()
+        extensions: t.MutableJsonMapping = {}
         if acl.metadata and acl.metadata.extensions:
-            extensions.update(acl.metadata.extensions.to_dict())
+            extensions.update(acl.metadata.extensions)
         timeofday_match = FlextLdifServersOudConstants.ACL_TIMEOFDAY_RE.search(
-            aci_content
+            aci_content,
         )
         if timeofday_match:
             extensions[c.Ldif.ACL_BIND_TIMEOFDAY] = (
@@ -363,7 +365,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         if ssf_match:
             extensions[c.Ldif.ACL_SSF] = f"{ssf_match.group(1)}{ssf_match.group(2)}"
         server_type_value = settings.server_type if settings else "oud"
-        new_metadata = m.Ldif.ServerMetadata.create_for(
+        new_metadata = u.Ldif.server_metadata_for(
             server_type_value,
             extensions=extensions,
         )
@@ -402,16 +404,16 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                 validation_violations=[],
                 metadata=m.Ldif.ServerMetadata(
                     server_type=c.Ldif.ServerTypes.OUD,
-                    extensions=m.Ldif.DynamicMetadata.from_dict({
+                    extensions={
                         FlextLdifServersOudConstants.DS_PRIVILEGE_NAME_KEY: privilege_name,
                         FlextLdifServersOudConstants.FORMAT_TYPE_KEY: FlextLdifServersOudConstants.FORMAT_TYPE_DS_PRIVILEGE,
-                    }),
+                    },
                 ),
             )
             return r[m.Ldif.Acl].ok(acl_model)
         except c.Ldif.EXC_LDIF_PARSE as e:
             FlextLdifServersOudAcl._module_logger.exception(
-                "Failed to parse OUD ds-privilege-name"
+                "Failed to parse OUD ds-privilege-name",
             )
             return r[m.Ldif.Acl].fail(f"Failed to parse OUD ds-privilege-name: {e}")
 
@@ -419,8 +421,9 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         """Check if raw_acl should be used as-is."""
         if not acl_data.raw_acl:
             return False
-        raw_acl_str = acl_data.raw_acl
-        return raw_acl_str.startswith(FlextLdifServersOudConstants.ACL_ACI_PREFIX)
+        raw_acl_str: str = acl_data.raw_acl
+        acl_aci_prefix: str = FlextLdifServersOudConstants.ACL_ACI_PREFIX
+        return raw_acl_str.startswith(acl_aci_prefix)
 
     @override
     def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
@@ -429,7 +432,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             return self._write_oud_aci(acl_data)
         except c.Ldif.EXC_LDIF_PARSE as e:
             FlextLdifServersOudAcl._module_logger.exception(
-                "Failed to write ACL to OUD ACI format"
+                "Failed to write ACL to OUD ACI format",
             )
             return r[str].fail(f"Failed to write ACL to OUD ACI format: {e}")
 
@@ -437,7 +440,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         """Build an OUD ACI string from the canonical ACL model."""
         sc = FlextLdifServersOudConstants
         extensions: t.Ldif.MutableMetadataMapping | None = (
-            acl_data.metadata.extensions.to_dict()
+            acl_data.metadata.extensions
             if acl_data.metadata and acl_data.metadata.extensions
             else None
         )

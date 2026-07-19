@@ -1,15 +1,14 @@
-"""CRUD and batch operations with live LDAP server.
+"""CRUD and batch behavior against a live LDAP server.
 
-Test suite verifying LDIF operations against an actual LDAP server:
-    - Parse and write LDIF from/to LDAP server
-    - Validate roundtrip data integrity (LDAP → LDIF → LDAP)
-    - Extract and process schema information
-    - Handle ACL entries
-    - Perform CRUD operations
-    - Process batches of entries
+Behavioral suite: every assertion targets an OBSERVABLE contract — the
+`r[T]` outcome of the ldif API, public model state (``dn_str``,
+``attributes_dict``), and the round-tripped data actually stored in and
+read back from the LDAP directory. The LDAP server is the only genuine
+external boundary; the unit under test (the ``ldif`` client and the
+``m.Ldif.Entry`` model) is never mocked, patched, or inspected privately.
 
 Uses Docker fixture infrastructure from conftest.py for automatic
-container management via tk.ldap_container fixture.
+container management.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -18,21 +17,19 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Callable,
-    MutableMapping,
-    MutableSequence,
-)
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
+from flext_tests import tm
 
 from flext_ldif import ldif
-from tests.constants import c
-from tests.models import m
-from tests.protocols import p
-from tests.typings import t
-from tests.utilities import u
+from tests import c, m
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from pathlib import Path
+
+    from tests import p, t
 
 
 @pytest.fixture
@@ -45,110 +42,129 @@ def flext_api() -> p.Ldif.LdifClient:
 @pytest.mark.integration
 @pytest.mark.real_ldap
 class TestsFlextLdifRealLdapCrud:
-    """Test CRUD operations with LDAP server."""
+    """Behavioral CRUD and batch contracts over a live LDAP directory."""
 
-    def test_complete_crud_cycle(
+    @staticmethod
+    def _add_entry(
+        ldap_connection: p.Ldap.Ldap3Connection,
+        entry: m.Ldif.Entry,
+    ) -> None:
+        """Store an entry in LDAP using only its public model surface."""
+        attrs = dict(entry.attributes_dict)
+        object_classes = [
+            oc
+            for key, values in list(attrs.items())
+            if key.lower() == "objectclass"
+            for oc in values
+        ]
+        payload = {
+            key: values for key, values in attrs.items() if key.lower() != "objectclass"
+        }
+        ldap_connection.add(entry.dn_str, object_classes, payload)
+
+    def test_create_returns_success_with_public_model_state(self) -> None:
+        """Entry.create yields a success result exposing dn and attributes."""
+        result = m.Ldif.Entry.create(
+            dn="cn=Alice,ou=people,dc=example,dc=com",
+            attributes={
+                "cn": "Alice",
+                "sn": "Doe",
+                "objectClass": ["inetOrgPerson", "person", "top"],
+            },
+        )
+
+        tm.ok(result)
+        entry = result.value
+        tm.that(entry.dn_str, eq="cn=Alice,ou=people,dc=example,dc=com")
+        tm.that(entry.attributes_dict["cn"], eq=["Alice"])
+        tm.that(
+            entry.attributes_dict["objectClass"],
+            eq=[
+                "inetOrgPerson",
+                "person",
+                "top",
+            ],
+        )
+        assert not entry.has_validation_errors
+
+    def test_complete_crud_cycle_roundtrips_through_ldap(
         self,
         ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
         make_test_username: Callable[[str], str],
     ) -> None:
-        """Test Create→Read→Update→Delete cycle."""
-        unique_username = make_test_username("CRUDTestUser")
-        person_dn = f"cn={unique_username},{clean_test_ou}"
-        person_result = m.Ldif.Entry.create(
+        """Create, update, and delete are each observable in the directory."""
+        username = make_test_username("CRUDTestUser")
+        person_dn = f"cn={username},{clean_test_ou}"
+        result = m.Ldif.Entry.create(
             dn=person_dn,
             attributes={
-                "cn": unique_username,
+                "cn": username,
                 "sn": "User",
                 "mail": "crud@example.com",
-                "uid": unique_username,
+                "uid": username,
                 "objectClass": ["inetOrgPerson", "person", "top"],
             },
         )
-        assert person_result.success
-        person_entry = person_result.value
-        obj_class_values = list(
-            u.Ldif.get_attribute_values(person_entry, "objectclass")
-        )
-        assert person_entry.attributes is not None
-        ldap_connection.add(
-            str(person_entry.dn),
-            obj_class_values,
-            {
-                attr: person_entry.attributes.attributes[attr]
-                for attr in person_entry.attributes.attributes
-                if attr.lower() != "objectclass"
-            },
-        )
+        tm.ok(result)
+        entry = result.value
+
+        # Create: entry becomes readable in the directory.
+        self._add_entry(ldap_connection, entry)
+        ldap_connection.search(entry.dn_str, "(objectClass=*)", attributes=["*"])
+        assert ldap_connection.entries
+        tm.that(ldap_connection.entries[0]["mail"].value, eq="crud@example.com")
+
+        # Update: replaced attribute is reflected on re-read.
         ldap_connection.modify(
-            str(person_entry.dn),
+            entry.dn_str,
             {"mail": [("MODIFY_REPLACE", ["updated_crud@example.com"])]},
         )
-        ldap_connection.search(
-            str(person_entry.dn),
-            "(objectClass=*)",
-            attributes=["*"],
+        ldap_connection.search(entry.dn_str, "(objectClass=*)", attributes=["*"])
+        assert (
+            str(ldap_connection.entries[0]["mail"].value) == "updated_crud@example.com"
         )
-        updated_entry = ldap_connection.entries[0]
-        assert updated_entry["mail"].value == "updated_crud@example.com"
-        ldap_connection.delete(str(person_entry.dn))
-        result = ldap_connection.search(
-            str(person_entry.dn),
+
+        # Delete: entry is no longer resolvable.
+        ldap_connection.delete(entry.dn_str)
+        found = ldap_connection.search(
+            entry.dn_str,
             "(objectClass=*)",
             search_scope=c.Ldap.Ldap3SearchScope.BASE.value,
         )
-        assert not result or not ldap_connection.entries
+        assert not found or not ldap_connection.entries
 
-    """Test batch processing operations with real LDAP server."""
-
-    def test_batch_entry_creation_via_api(
+    def test_batch_creation_validates_every_entry(
         self,
         ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
         flext_api: p.Ldif.LdifClient,
         make_test_username: Callable[[str], str],
     ) -> None:
-        """Create batch of entries using ldif API and write to LDAP."""
-        entries: MutableSequence[m.Ldif.Entry] = []
+        """A batch built via the API validates and stores as valid entries."""
+        entries: list[m.Ldif.Entry] = []
         for i in range(20):
-            unique_username = make_test_username(f"BatchUser{i}")
-            person_dn = f"cn={unique_username},{clean_test_ou}"
+            username = make_test_username(f"BatchUser{i}")
             result = m.Ldif.Entry.create(
-                dn=person_dn,
+                dn=f"cn={username},{clean_test_ou}",
                 attributes={
-                    "cn": unique_username,
+                    "cn": username,
                     "sn": f"User{i}",
                     "mail": f"batch{i}@example.com",
                     "objectClass": ["inetOrgPerson", "person", "top"],
                 },
             )
-            if result.success:
-                entries.append(result.value)
-        assert len(entries) == 20
-        ldap_entries: MutableSequence[m.Ldif.DN | None] = []
-        for entry in entries:
-            object_classes_raw = u.Ldif.get_attribute_values(entry, "objectclass")
-            object_classes: list[str] = (
-                list(object_classes_raw) if object_classes_raw else []
-            )
-            attrs_dict: MutableMapping[str, t.StrSequence] = {}
-            assert entry.attributes is not None
-            for attr_name, attr_values in entry.attributes.attributes.items():
-                if attr_name.lower() == "objectclass":
-                    continue
-                if isinstance(attr_values, list):
-                    attrs_dict[attr_name] = attr_values
-                elif hasattr(attr_values, "values"):
-                    attrs_dict[attr_name] = list(attr_values)
-                else:
-                    attrs_dict[attr_name] = [str(attr_values)]
-            ldap_connection.add(str(entry.dn), object_classes, attrs_dict)
-            ldap_entries.append(entry.dn)
-        validation_result = flext_api.validate_entries(entries)
-        assert validation_result.success
+            tm.ok(result)
+            entries.append(result.value)
 
-    def test_batch_ldif_export_import(
+        tm.that(len(entries), eq=20)
+        for entry in entries:
+            self._add_entry(ldap_connection, entry)
+
+        validation_result = flext_api.validate_entries(entries)
+        tm.ok(validation_result)
+
+    def test_ldif_export_import_preserves_dns_and_attributes(
         self,
         ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
@@ -156,57 +172,60 @@ class TestsFlextLdifRealLdapCrud:
         tmp_path: Path,
         make_test_username: Callable[[str], str],
     ) -> None:
-        """Export batch from LDAP to LDIF file, then reimport."""
-        unique_usernames = [make_test_username(f"ExportBatch{i}") for i in range(10)]
-        for i, unique_username in enumerate(unique_usernames):
-            person_dn = f"cn={unique_username},{clean_test_ou}"
+        """LDAP → LDIF file → parse round-trip preserves the entry set."""
+        usernames = [make_test_username(f"ExportBatch{i}") for i in range(10)]
+        expected_dns: set[str] = set()
+        for i, username in enumerate(usernames):
+            person_dn = f"cn={username},{clean_test_ou}"
             ldap_connection.add(
                 person_dn,
                 ["person", "inetOrgPerson"],
                 {
-                    "cn": unique_username,
+                    "cn": username,
                     "sn": f"Batch{i}",
                     "mail": f"export{i}@example.com",
                 },
             )
+            expected_dns.add(person_dn)
+
         ldap_connection.search(
             clean_test_ou,
             "(objectClass=person)",
             search_scope=c.Ldap.Ldap3SearchScope.SUBTREE.value,
             attributes=["*"],
         )
-        actual_count = len(ldap_connection.entries)
-        assert actual_count > 0, "No entries found in LDAP"
-        entries: MutableSequence[m.Ldif.Entry] = []
-        for entry in ldap_connection.entries:
-            attrs_dict: t.MutableAttributeMapping = {}
-            for attr_name in entry.entry_attributes:
-                raw_values: list[str] = [
+        source_count = len(ldap_connection.entries)
+        assert source_count > 0, "No entries found in LDAP"
+
+        entries: list[m.Ldif.Entry] = []
+        for ldap_entry in ldap_connection.entries:
+            attrs: t.MutableAttributeMapping = {
+                name: [
                     str(v)
                     for v in (
-                        entry[attr_name].values
-                        if hasattr(entry[attr_name], "values")
-                        else [str(entry[attr_name])]
+                        ldap_entry[name].values
+                        if hasattr(ldap_entry[name], "values")
+                        else [str(ldap_entry[name])]
                     )
                 ]
-                values: list[str] = raw_values
-                attrs_dict[attr_name] = values
-            assert entry.entry_dn is not None
-            result = m.Ldif.Entry.create(
-                dn=entry.entry_dn,
-                attributes=attrs_dict,
-                metadata=None,
-            )
-            assert result.success
+                for name in ldap_entry.entry_attributes
+            }
+            assert ldap_entry.entry_dn is not None
+            result = m.Ldif.Entry.create(dn=ldap_entry.entry_dn, attributes=attrs)
+            tm.ok(result)
             entries.append(result.value)
+
         export_file = tmp_path / "batch_export.ldif"
         write_result = flext_api.write_ldif_file(entries, export_file)
-        assert write_result.success
+        tm.ok(write_result)
         assert export_file.exists()
+
         parse_result = flext_api.parse_ldif(export_file)
-        assert parse_result.success
+        tm.ok(parse_result)
         parsed_entries = parse_result.value.entries
-        assert len(parsed_entries) == actual_count
+        tm.that(len(parsed_entries), eq=source_count)
+        parsed_dns = {entry.dn_str for entry in parsed_entries}
+        assert expected_dns <= parsed_dns
 
 
 __all__: list[str] = []

@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from flext_ldif import c, p, t
-from flext_ldif.models import FlextLdifModels as m
+from flext_ldif import FlextLdifModels as m, c, p, t
 
 
 class FlextLdifUtilitiesEvents:
@@ -38,7 +37,7 @@ class FlextLdifUtilitiesEvents:
         log_level: str = c.Ldif.LogLevelLower.INFO.value,
         extras: m.Ldif.LogContextExtras | None = None,
     ) -> None:
-        """Generic helper for logging events with context and extras."""
+        """Log an event with context and extras."""
         filtered_extras = FlextLdifUtilitiesEvents._process_extras(extras)
         merged_context = dict(log_context)
         merged_context.update(filtered_extras)

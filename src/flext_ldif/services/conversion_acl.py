@@ -2,15 +2,19 @@
 
 from __future__ import annotations
 
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 
-from flext_ldif import c, m, p, r, s, t, u
+from flext_ldif import FlextLdifModels, c, m, p, r, s, t, u
 from flext_ldif.services.conversion_acl_preserve import (
     FlextLdifConversionAclPreserveMixin,
 )
 
+_LdifEntry = FlextLdifModels.Ldif.Entry
+_LdifDN = FlextLdifModels.Ldif.DN
+_LdifAttributes = FlextLdifModels.Ldif.Attributes
 
-class FlextLdifConversionAclMixin(FlextLdifConversionAclPreserveMixin, s):
+
+class FlextLdifConversionAclMixin(FlextLdifConversionAclPreserveMixin, s, ABC):
     """ACL-model conversion orchestration (preservation via the parent mixin)."""
 
     @abstractmethod
@@ -64,8 +68,9 @@ class FlextLdifConversionAclMixin(FlextLdifConversionAclPreserveMixin, s):
             .map_error(lambda error: error or "Acl conversion returned no entry")
             .flat_map(
                 lambda converted_entry: self._entry_to_acl(
-                    target_server, converted_entry
-                )
+                    target_server,
+                    converted_entry,
+                ),
             )
             .flat_map(
                 lambda converted_acl: r[t.Ldif.ConvertedModel].ok(
@@ -88,23 +93,22 @@ class FlextLdifConversionAclMixin(FlextLdifConversionAclPreserveMixin, s):
         source_server_type: c.Ldif.ServerTypes | None,
     ) -> m.Ldif.Entry:
         """Build the RFC entry carrier used for ACL conversion."""
-        entry_metadata = m.Ldif.ServerMetadata.create_for(
-            source_server_type,
-            extensions=None,
-        )
+        entry_metadata = u.Ldif.server_metadata_for(source_server_type)
         entry_metadata.acls = [acl.raw_acl] if acl.raw_acl else list[str]()
-        return m.Ldif.Entry.create(
-            dn=m.Ldif.DN(
+        entry_result = _LdifEntry.create(
+            dn=_LdifDN(
                 value="cn=acl-conversion,dc=example,dc=com",
-                metadata=m.Ldif.EntryMetadata(),
+                metadata={},
             ),
-            attributes=m.Ldif.Attributes(
+            attributes=_LdifAttributes(
                 attributes={},
                 attribute_metadata={},
                 metadata=None,
             ),
             metadata=entry_metadata,
-        ).unwrap()
+        )
+        entry: m.Ldif.Entry = entry_result.unwrap()
+        return entry
 
     @staticmethod
     def _entry_to_acl(
@@ -129,14 +133,7 @@ class FlextLdifConversionAclMixin(FlextLdifConversionAclPreserveMixin, s):
                 ),
             )
             .flat_map(
-                lambda parsed_acl: (
-                    r[m.Ldif.Acl].ok(parsed_acl)
-                    if isinstance(parsed_acl, m.Ldif.Acl)
-                    else r[m.Ldif.Acl].fail(
-                        "ACL conversion returned unexpected parsed type: "
-                        f"{type(parsed_acl).__name__}",
-                    )
-                ),
+                lambda parsed_acl: r[m.Ldif.Acl].ok(parsed_acl),
             )
         )
 

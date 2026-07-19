@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, MutableSequence
+from collections.abc import Callable, MutableSequence
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._oud.acl import FlextLdifServersOudAcl
@@ -68,7 +68,7 @@ class FlextLdifServersOudAciMixin:
             )
             if extensions is not None:
                 commented = FlextLdifServersOudAclExtractMixin.parse_commented_values(
-                    extensions.to_dict().get(c.Ldif.COMMENTED_ATTRIBUTE_VALUES),
+                    extensions.get(c.Ldif.COMMENTED_ATTRIBUTE_VALUES),
                 )
                 if commented:
                     for key, value in commented.items():
@@ -121,19 +121,18 @@ class FlextLdifServersOudAciMixin:
             if acl_result.success:
                 acl_model = m.Ldif.Acl.model_validate(acl_result.value)
                 if acl_model.metadata and acl_model.metadata.extensions:
-                    acl_ext_raw = (
-                        acl_model.metadata.extensions.model_dump()
-                        if hasattr(acl_model.metadata.extensions, "model_dump")
-                        else dict(acl_model.metadata.extensions)
+                    # mro-wgwh.5 (agent: kimi-coder) — isinstance(dict) replaces the
+                    # hasattr(model_dump) dispatch; extensions is a plain mapping.
+                    extensions_value = acl_model.metadata.extensions
+                    acl_ext_raw: t.MutableJsonMapping = (
+                        extensions_value
+                        if isinstance(extensions_value, dict)
+                        else dict(extensions_value)
                     )
                     acl_extensions: t.Ldif.MutableMetadataInputMapping = {}
                     for raw_key, raw_value in acl_ext_raw.items():
                         key = raw_key
-                        acl_extensions[key] = (
-                            m.Ldif.DynamicMetadata.coerce_metadata_value(
-                                raw_value,
-                            )
-                        )
+                        acl_extensions[key] = u.normalize_to_metadata(raw_value)
                     FlextLdifServersOudAclMetadataMixin.process_parsed_acl_extensions(
                         acl_extensions,
                         current_extensions,
@@ -158,22 +157,9 @@ class FlextLdifServersOudAciMixin:
             parsed_acl = parse_result.value
             if parsed_acl.metadata and parsed_acl.metadata.extensions:
                 acl_extensions = parsed_acl.metadata.extensions
-                if u.matches_type(acl_extensions, m.Ldif.DynamicMetadata):
-                    FlextLdifServersOudAclMetadataMixin.extract_acl_metadata_from_dynamic(
-                        acl_extensions,
-                        acl_metadata_extensions,
-                    )
-                elif isinstance(acl_extensions, Mapping):
-                    acl_extensions_dict: t.Ldif.MutableMetadataInputMapping = {
-                        str(
-                            k,
-                        ): m.Ldif.DynamicMetadata.coerce_metadata_value(
-                            v,
-                        )
-                        for k, v in acl_extensions.items()
-                    }
+                if isinstance(acl_extensions, dict):
                     FlextLdifServersOudAclMetadataMixin.extract_acl_metadata_from_dict(
-                        acl_extensions_dict,
+                        acl_extensions,
                         acl_metadata_extensions,
                     )
         return r[bool].ok(has_macros)

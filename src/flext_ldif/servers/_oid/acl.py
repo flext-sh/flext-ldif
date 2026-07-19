@@ -68,7 +68,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     @staticmethod
     def _format_oid_permissions(
-        permissions: m.Ldif.DynamicMetadata,
+        permissions: t.Ldif.MetadataInputMapping,
     ) -> str:
         """Format OID ACL permissions clause."""
         allowed_perms: t.MutableSequenceOf[str] = []
@@ -260,7 +260,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             else ""
         )
         permissions_str: str = (
-            m.Ldif.DynamicMetadata.from_dict(settings.perms_dict).model_dump_json()
+            u.Ldif.dump_json_payload(dict(settings.perms_dict))
             if settings.perms_dict
             else ""
         )
@@ -302,7 +302,8 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         """Extract extensions dict from metadata, converting types if needed."""
         metadata = m.Ldif.ServerMetadata.model_validate(metadata)
         extensions = getattr(metadata, "extensions", None)
-        return extensions.to_dict() if extensions is not None else {}
+        # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: copy the plain mapping.
+        return dict(extensions) if extensions is not None else {}
 
     def _format_extensions(
         self,
@@ -351,7 +352,8 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         )
         validated = self._validate_subject_type(source_subject_type_raw)
         if validated.success:
-            return validated.value
+            source_subject_type: str = validated.value
+            return source_subject_type
         return None
 
     @staticmethod
@@ -609,9 +611,6 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         rfc_compliant_perms = m.Ldif.AclPermissions.filter_rfc_compliant_permissions(
             perms_dict,
         )
-        extensions_metadata = m.Ldif.DynamicMetadata.from_dict(
-            extensions,
-        )
         acl_model = m.Ldif.Acl.model_validate({
             "name": FlextLdifServersRfc.Constants.ACL_ATTRIBUTE_NAME,
             "target": m.Ldif.AclTarget.model_validate({
@@ -626,7 +625,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             "server_type": server_type,
             "metadata": m.Ldif.ServerMetadata.model_validate({
                 "server_type": server_type,
-                "extensions": extensions_metadata,
+                "extensions": extensions,
             }),
             "raw_acl": acl_line,
             "raw_line": acl_line,
@@ -662,8 +661,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         )
         subject_clause = self._format_oid_subject(oid_subject_type, subject_value)
         permissions_dict = self._normalize_permissions_to_dict(acl_permissions)
-        permissions_metadata = m.Ldif.DynamicMetadata.from_dict(permissions_dict)
-        permissions_clause = self._format_oid_permissions(permissions_metadata)
+        permissions_clause = self._format_oid_permissions(permissions_dict)
         return (subject_clause, permissions_clause)
 
     def _prepare_subject_value_with_suffix(
@@ -700,10 +698,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         updated_metadata = (
             acl_data.metadata.model_copy(update={"server_type": server_type})
             if acl_data.metadata
-            else m.Ldif.ServerMetadata.create_for(
-                server_type,
-                extensions=m.Ldif.DynamicMetadata(),
-            )
+            else u.Ldif.server_metadata_for(server_type)
         )
         updated_acl: m.Ldif.Acl = acl_data.model_copy(
             update={

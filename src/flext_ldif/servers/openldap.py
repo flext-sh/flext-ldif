@@ -169,15 +169,16 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 if not attr_definition or not attr_definition.strip():
                     return False
                 if FlextLdifServersOpenldap.Constants.SCHEMA_OPENLDAP_OLC_RE.search(
-                    attr_definition_str
+                    attr_definition_str,
                 ):
                     return True
                 return super().can_handle_attribute(attr_definition_str)
             oid_raw = getattr(attr_definition, "oid", None)
             if isinstance(
-                oid_raw, str
+                oid_raw,
+                str,
             ) and FlextLdifServersOpenldap.Constants.SCHEMA_OPENLDAP_OLC_RE.search(
-                oid_raw
+                oid_raw,
             ):
                 return True
             return super().can_handle_attribute(attr_definition)
@@ -191,15 +192,16 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             if isinstance(oc_definition, str):
                 oc_definition_str = oc_definition
                 if FlextLdifServersOpenldap.Constants.SCHEMA_OPENLDAP_OLC_RE.search(
-                    oc_definition_str
+                    oc_definition_str,
                 ):
                     return True
                 return super().can_handle_objectclass(oc_definition_str)
             oid_raw = getattr(oc_definition, "oid", None)
             if isinstance(
-                oid_raw, str
+                oid_raw,
+                str,
             ) and FlextLdifServersOpenldap.Constants.SCHEMA_OPENLDAP_OLC_RE.search(
-                oid_raw
+                oid_raw,
             ):
                 return True
             return super().can_handle_objectclass(oc_definition)
@@ -249,8 +251,8 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 acl_content = acl_line[len(olc_prefix) :].strip()
             return bool(
                 FlextLdifServersOpenldap.Constants.ACL_INDEX_PREFIX_RE.match(
-                    acl_content
-                )
+                    acl_content,
+                ),
             ) or acl_content.startswith(
                 FlextLdifServersOpenldap.Constants.ACL_START_PREFIX
                 + f"{FlextLdifServersOpenldap.Constants.ACL_ATTRIBUTE_NAME}:",
@@ -283,11 +285,9 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                     search="read" in access,
                     compare="read" in access,
                 ),
-                metadata=m.Ldif.ServerMetadata.create_for(
+                metadata=u.Ldif.server_metadata_for(
                     self._get_server_type(),
-                    extensions=m.Ldif.DynamicMetadata.from_dict({
-                        "original_format": acl_line,
-                    }),
+                    extensions={"original_format": acl_line},
                 ),
                 raw_acl=acl_line,
             )
@@ -353,7 +353,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         ) -> tuple[str | None, t.MutableSequenceOf[str]]:
             """Parse "to <what>" clause and extract attributes."""
             to_match = FlextLdifServersOpenldap.Constants.ACL_TO_BY_RE.match(
-                acl_content
+                acl_content,
             )
             if not to_match:
                 return (None, [])
@@ -380,7 +380,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                     len(FlextLdifServersOpenldap.Constants.ACL_ATTRIBUTE_NAME + ":") :
                 ].strip()
             index_match = FlextLdifServersOpenldap.Constants.ACL_INDEX_RE.match(
-                acl_content
+                acl_content,
             )
             if index_match:
                 acl_content = index_match.group(2)
@@ -477,17 +477,13 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             if entry.metadata is None:
                 entry = entry.model_copy(
                     update={
-                        "metadata": m.Ldif.ServerMetadata.create_for(
-                            "openldap",
-                            extensions=m.Ldif.DynamicMetadata(),
-                        ),
+                        "metadata": u.Ldif.server_metadata_for("openldap"),
                     },
                 )
             if entry.metadata is None:
                 return entry
-            validation_rules_str = m.Ldif.DynamicMetadata.from_dict(
-                validation_rules,
-            ).model_dump_json()
+            # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: canonical JSON dump.
+            validation_rules_str = u.Ldif.dump_json_payload(validation_rules)
             entry.metadata.extensions["validation_rules"] = validation_rules_str
             acl_format_rules = validation_rules["acl_format_rules"]
             acl_format_payload: t.JsonDict | None = (
@@ -498,11 +494,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 if isinstance(acl_format_rules, dict)
                 else None
             )
-            acl_format_str = (
-                m.Ldif.DynamicMetadata.from_dict(acl_format_payload).model_dump_json()
-                if acl_format_payload is not None
-                else ""
-            )
+            acl_format_str = u.Ldif.dump_json_payload(acl_format_payload)
             self.logger.debug(
                 "Injected OpenLDAP validation rules into Entry metadata",
                 entry_dn=str(entry.dn) if entry.dn else "",

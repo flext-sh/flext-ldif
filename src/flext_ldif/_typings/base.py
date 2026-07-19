@@ -15,7 +15,7 @@ class FlextLdifTypesBase:
 
     @staticmethod
     def _coerce_normalized_str_frozenset(
-        value: t.JsonValue | t.StrSequence | None,
+        value: t.JsonValue | t.StrSequence | set[str] | frozenset[str] | None,
     ) -> frozenset[str]:
         match value:
             case None:

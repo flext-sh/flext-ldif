@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 from flext_tests import tm
 
-from tests.constants import c
-from tests.models import m
-from tests.protocols import p
-from tests.utilities import u
+from tests import c, m, u
+
+if TYPE_CHECKING:
+    from tests import p
 
 
 class TestsFlextLdifAclService:
@@ -111,7 +113,7 @@ class TestsFlextLdifAclService:
         entry = m.Ldif.Entry(
             dn=c.Tests.ACL_ENTRY_DN,
             attributes=m.Ldif.Attributes.model_validate({
-                "attributes": {"orclaci": [c.Tests.ACL_ENTRY_ORCLACI_VALUE]}
+                "attributes": {"orclaci": [c.Tests.ACL_ENTRY_ORCLACI_VALUE]},
             }),
         )
         result = svc.extract_acls_from_entry(entry, c.Tests.OID)
@@ -124,7 +126,7 @@ class TestsFlextLdifAclService:
         entry = m.Ldif.Entry(
             dn=c.Tests.ACL_ENTRY_DN,
             attributes=m.Ldif.Attributes.model_validate({
-                "attributes": {"cn": ["test"]}
+                "attributes": {"cn": ["test"]},
             }),
         )
         result = svc.extract_acls_from_entry(entry, c.Tests.OID)
@@ -138,7 +140,7 @@ class TestsFlextLdifAclService:
         entry = m.Ldif.Entry(
             dn=c.Tests.ACL_ENTRY_DN,
             attributes=m.Ldif.Attributes.model_validate({
-                "attributes": {"aci": [c.Tests.ACL_ENTRY_ACI_VALUE]}
+                "attributes": {"aci": [c.Tests.ACL_ENTRY_ACI_VALUE]},
             }),
         )
         result = svc.extract_acls_from_entry(entry, c.Tests.OUD)
@@ -187,7 +189,7 @@ class TestsFlextLdifAclService:
         entry = m.Ldif.Entry(
             dn=c.Tests.ACL_ENTRY_DN,
             attributes=m.Ldif.Attributes.model_validate({
-                "attributes": {"aci": [c.Tests.ACL_INVALID_SERVER_TYPE]}
+                "attributes": {"aci": [c.Tests.ACL_INVALID_SERVER_TYPE]},
             }),
         )
         result = svc.extract_acls_from_entry(entry, c.Tests.OPENLDAP)

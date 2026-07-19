@@ -1,7 +1,7 @@
 """LDIF settings mix-in: criteria.
 
-from flext_ldif.models import m
-from flext_ldif.utilities import u
+from flext_ldif import m
+from flext_ldif import u
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
@@ -11,8 +11,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_core import m
-from flext_core.utilities import FlextUtilities as u
+from flext_core import FlextUtilities as u, m
 from flext_ldif import c, t
 
 
@@ -54,19 +53,19 @@ class FlextLdifModelsSettingsCriteria:
         name_regex: Annotated[
             str | None,
             u.Field(
-                description="Optional regex used to extract schema names from raw definitions"
+                description="Optional regex used to extract schema names from raw definitions",
             ),
         ] = None
         use_prefix_match: Annotated[
             bool,
             u.Field(
-                description="Whether detection names match by prefix instead of exact value"
+                description="Whether detection names match by prefix instead of exact value",
             ),
         ] = False
         match_definition_text: Annotated[
             bool,
             u.Field(
-                description="Whether raw definition text should be scanned for detection markers"
+                description="Whether raw definition text should be scanned for detection markers",
             ),
         ] = False
 

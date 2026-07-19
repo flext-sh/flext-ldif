@@ -130,7 +130,7 @@ class BasicUsageDry:
                     entries,
                     cls.SAMPLE_OUTPUT_PATH,
                     server_type=server_type,
-                ).map(lambda _: "File processing complete")
+                ).map(lambda _: "File processing complete"),
             ),
         )
 

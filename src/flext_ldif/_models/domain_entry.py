@@ -1,7 +1,7 @@
 """Domain Entry model — LDIF entry and entry statistics.
 
-from flext_ldif.models import m
-from flext_ldif.utilities import u
+from flext_ldif import m
+from flext_ldif import u
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -14,20 +14,20 @@ from collections.abc import (
 )
 from datetime import datetime
 from types import MappingProxyType
-from typing import Annotated, ClassVar, Self, override
+from typing import TYPE_CHECKING, Annotated, ClassVar, Self, override
 
-from flext_core import m
-from flext_core.utilities import FlextUtilities as u
+from flext_core import FlextUtilities as u, m
 from flext_ldif import c, p, r, t
-from flext_ldif._models.domain_acl import FlextLdifModelsDomainAcl as mdac
 from flext_ldif._models.domain_attributes import (
     FlextLdifModelsDomainAttributes as mda,
 )
 from flext_ldif._models.domain_dn import FlextLdifModelsDomainDN as mdn
 from flext_ldif._models.domain_metadata import FlextLdifModelsDomainMetadata as mdm
-from flext_ldif._models.domain_schema import FlextLdifModelsDomainSchema as mds
-from flext_ldif._models.metadata import FlextLdifModelsMetadata as mm
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
+
+if TYPE_CHECKING:
+    from flext_ldif._models.domain_acl import FlextLdifModelsDomainAcl as mdac
+    from flext_ldif._models.domain_schema import FlextLdifModelsDomainSchema as mds
 
 
 class FlextLdifModelsDomainEntry:
@@ -352,7 +352,7 @@ class FlextLdifModelsDomainEntry:
         Implements p.Models.Entry through structural typing.
         The protocol requires:
         - dn: str
-        - attributes: mm.DynamicMetadata
+        - attributes: mda.Attributes
 
         This model provides these through:
         - dn field (DN) which has .value property returning str
@@ -416,9 +416,9 @@ class FlextLdifModelsDomainEntry:
             ),
         ] = c.Ldif.RecordKind.CONTENT
         controls: Annotated[
-            t.MutableSequenceOf[FlextLdifModelsDomainEntry.Control],
+            t.SequenceOf[FlextLdifModelsDomainEntry.Control],
             u.Field(description="RFC 2849 control lines associated with the record"),
-        ] = u.Field(default_factory=list)
+        ] = u.Field(default_factory=tuple)
         change_operations: Annotated[
             t.MutableSequenceOf[FlextLdifModelsDomainEntry.ChangeOperation],
             u.Field(
@@ -469,7 +469,7 @@ class FlextLdifModelsDomainEntry:
                 return validated
             return mdn.DN(
                 value=value,
-                metadata=mm.EntryMetadata(),
+                metadata={},
             )
 
         @u.field_validator("record_kind", mode="before")
@@ -563,15 +563,12 @@ class FlextLdifModelsDomainEntry:
         def unconverted_attributes(
             self,
         ) -> t.Ldif.UnconvertedAttributes:
-            """Get unconverted attributes from metadata extensions (read-only view, DRY pattern)."""
+            """The unconverted attributes from metadata extensions (read-only view, DRY pattern)."""
             empty_attrs: t.Ldif.UnconvertedAttributes = {}
             if self.metadata is None:
                 return empty_attrs
-            extra = self.metadata.extensions.__pydantic_extra__
-            if extra is None:
-                return empty_attrs
-
-            result = extra.get("unconverted_attributes")
+            # mro-wgwh.5 (agent: kimi-coder) — extensions is a plain mapping now.
+            result = self.metadata.extensions.get("unconverted_attributes")
             return FlextLdifUtilitiesEntry.normalize_unconverted_attributes(result)
 
         @u.model_validator(mode="before")
@@ -621,9 +618,11 @@ class FlextLdifModelsDomainEntry:
                         final_server_type_val = c.Ldif.ServerTypes.RFC
                 else:
                     final_server_type_val = c.Ldif.ServerTypes.RFC
-                metadata_obj = mdm.ServerMetadata.create_for(
-                    server_type=final_server_type_val,
-                )
+                # mro-wgwh.5 (agent: kimi-coder) — create_for removed from the model
+                # (U17); models validate directly at this internal boundary.
+                metadata_obj = mdm.ServerMetadata.model_validate({
+                    "server_type": final_server_type_val,
+                })
                 data_dict["metadata"] = metadata_obj
             return data_dict
 
@@ -640,7 +639,9 @@ class FlextLdifModelsDomainEntry:
             and prevent infinite re-validation recursion (Pydantic v2 pattern).
             """
             if self.metadata is None:
-                self.metadata = mdm.ServerMetadata.create_for()
+                self.metadata = mdm.ServerMetadata.model_validate({
+                    "server_type": c.Ldif.ServerTypes.RFC,
+                })
 
         @u.model_validator(mode="after")
         def normalize_record_kind(self) -> Self:
@@ -777,10 +778,9 @@ class FlextLdifModelsDomainEntry:
                     )
                 )
                 self.metadata.validation_results = updated_validation_results
-                ext_violations: t.MutableSequenceOf[t.JsonValue] = list(
-                    server_violations,
-                )
-                self.metadata.extensions.server_specific_violations = ext_violations
+                ext_violations: t.JsonValueList = list(server_violations)
+                # mro-wgwh.5 (agent: kimi-coder) — extensions is a plain mapping now.
+                self.metadata.extensions["server_specific_violations"] = ext_violations
             return self
 
         @classmethod
@@ -866,18 +866,17 @@ class FlextLdifModelsDomainEntry:
             cls,
             server_type: c.Ldif.ServerTypes | None,
             source_entry: str | None,
-            unconverted_attributes: mm.DynamicMetadata | None,
+            unconverted_attributes: t.Ldif.MetadataInputMapping | None,
         ) -> t.Ldif.MutableMetadataMapping:
-            """Build extension kwargs for DynamicMetadata."""
+            """Build extension kwargs for metadata extensions."""
             ext_kwargs: t.Ldif.MutableMetadataMapping = {}
             if server_type:
                 ext_kwargs["server_type"] = server_type
             if source_entry:
                 ext_kwargs["source_entry"] = source_entry
             if unconverted_attributes:
-                ext_kwargs["unconverted_attributes"] = (
-                    unconverted_attributes.model_dump()
-                )
+                # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: pass the plain mapping.
+                ext_kwargs["unconverted_attributes"] = dict(unconverted_attributes)
             return ext_kwargs
 
         @classmethod
@@ -886,7 +885,7 @@ class FlextLdifModelsDomainEntry:
             metadata: mdm.ServerMetadata | None,
             server_type: c.Ldif.ServerTypes | None,
             source_entry: str | None,
-            unconverted_attributes: mm.DynamicMetadata | None,
+            unconverted_attributes: t.Ldif.MetadataInputMapping | None,
         ) -> mdm.ServerMetadata | None:
             """Build or update metadata with server-specific extensions."""
             has_new_metadata = server_type or source_entry or unconverted_attributes
@@ -896,13 +895,14 @@ class FlextLdifModelsDomainEntry:
                     source_entry,
                     unconverted_attributes,
                 )
-                extensions = mm.DynamicMetadata.from_dict(
-                    ext_kwargs,
+                # mro-wgwh.5 (agent: kimi-coder) — create_for removed; direct validated construction.
+                validated_metadata: mdm.ServerMetadata = (
+                    mdm.ServerMetadata.model_validate({
+                        "server_type": c.Ldif.ServerTypes.GENERIC,
+                        "extensions": ext_kwargs,
+                    })
                 )
-                return mdm.ServerMetadata.create_for(
-                    server_type=c.Ldif.ServerTypes.GENERIC,
-                    extensions=extensions,
-                )
+                return validated_metadata
             if metadata is not None and has_new_metadata:
                 cls._update_existing_metadata(
                     metadata,
@@ -954,7 +954,7 @@ class FlextLdifModelsDomainEntry:
             metadata: mdm.ServerMetadata,
             server_type: c.Ldif.ServerTypes | None,
             source_entry: str | None,
-            unconverted_attributes: mm.DynamicMetadata | None,
+            unconverted_attributes: t.Ldif.MetadataInputMapping | None,
         ) -> None:
             """Update existing metadata extensions in place."""
             if server_type:
@@ -962,10 +962,9 @@ class FlextLdifModelsDomainEntry:
             if source_entry:
                 metadata.extensions["source_entry"] = source_entry
             if unconverted_attributes:
-                extra = unconverted_attributes.__pydantic_extra__
-                if extra:
-                    for key, value in extra.items():
-                        metadata.extensions[f"unconverted_{key}"] = str(value)
+                # mro-wgwh.5 (agent: kimi-coder) — plain mapping items, no __pydantic_extra__.
+                for key, value in unconverted_attributes.items():
+                    metadata.extensions[f"unconverted_{key}"] = str(value)
 
         @classmethod
         def create(
@@ -976,12 +975,11 @@ class FlextLdifModelsDomainEntry:
             acls: t.MutableSequenceOf[mdac.Acl] | None = None,
             objectclasses: t.MutableSequenceOf[mds.SchemaObjectClass] | None = None,
             attributes_schema: t.MutableSequenceOf[mds.SchemaAttribute] | None = None,
-            entry_metadata: mm.EntryMetadata | None = None,
+            entry_metadata: t.MutableJsonMapping | None = None,
             validation_metadata: mdm.ValidationMetadata | None = None,
             server_type: c.Ldif.ServerTypes | None = None,
             record_kind: c.Ldif.RecordKind = c.Ldif.RecordKind.CONTENT,
-            controls: t.MutableSequenceOf[FlextLdifModelsDomainEntry.Control]
-            | None = None,
+            controls: t.SequenceOf[FlextLdifModelsDomainEntry.Control] | None = None,
             change_operations: t.MutableSequenceOf[
                 FlextLdifModelsDomainEntry.ChangeOperation
             ]
@@ -992,7 +990,7 @@ class FlextLdifModelsDomainEntry:
             newsuperior: str | None = None,
             raw_record_lines: t.MutableSequenceOf[str] | None = None,
             source_entry: str | None = None,
-            unconverted_attributes: mm.DynamicMetadata | None = None,
+            unconverted_attributes: t.Ldif.MetadataInputMapping | None = None,
             statistics: FlextLdifModelsDomainEntry.EntryStatistics | None = None,
         ) -> p.Result[Self]:
             try:
@@ -1023,7 +1021,7 @@ class FlextLdifModelsDomainEntry:
                 return ok_result
             except c.EXC_BASIC_TYPE as e:
                 fail_result: p.Result[Self] = r[Self].fail(
-                    f"Failed to create Entry: {e}"
+                    f"Failed to create Entry: {e}",
                 )
                 return fail_result
 
@@ -1036,11 +1034,11 @@ class FlextLdifModelsDomainEntry:
             acls: t.MutableSequenceOf[mdac.Acl] | None,
             objectclasses: t.MutableSequenceOf[mds.SchemaObjectClass] | None,
             attributes_schema: t.MutableSequenceOf[mds.SchemaAttribute] | None,
-            entry_metadata: mm.EntryMetadata | None,
+            entry_metadata: t.MutableJsonMapping | None,
             validation_metadata: mdm.ValidationMetadata | None,
             server_type: c.Ldif.ServerTypes | None,
             record_kind: c.Ldif.RecordKind,
-            controls: t.MutableSequenceOf[FlextLdifModelsDomainEntry.Control] | None,
+            controls: t.SequenceOf[FlextLdifModelsDomainEntry.Control] | None,
             change_operations: t.MutableSequenceOf[
                 FlextLdifModelsDomainEntry.ChangeOperation
             ]
@@ -1051,7 +1049,7 @@ class FlextLdifModelsDomainEntry:
             newsuperior: str | None,
             raw_record_lines: t.MutableSequenceOf[str] | None,
             source_entry: str | None,
-            unconverted_attributes: mm.DynamicMetadata | None,
+            unconverted_attributes: t.Ldif.MetadataInputMapping | None,
             statistics: FlextLdifModelsDomainEntry.EntryStatistics | None,
         ) -> dict[str, t.JsonPayload]:
             """Build validated Entry model input."""

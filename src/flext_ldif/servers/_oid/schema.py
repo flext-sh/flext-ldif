@@ -79,7 +79,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             attr_data.metadata.extensions[c.Ldif.SCHEMA_TARGET_ATTRIBUTE_NAME] = (
                 target_values["name"]
             )
-        target_rules: t.MutableStrMapping = {}
+        target_rules: t.JsonDict = {}
         if target_values["equality"]:
             target_rules["equality"] = target_values["equality"]
         if target_values["substr"]:
@@ -87,10 +87,10 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
         if target_values["ordering"]:
             target_rules["ordering"] = target_values["ordering"]
         if target_rules:
-            setattr(
-                attr_data.metadata.extensions,
-                c.Ldif.SCHEMA_TARGET_MATCHING_RULES,
-                target_rules,
+            # mro-wgwh.5 (agent: kimi-coder) — extensions is a plain mapping now:
+            # subscript assignment instead of DynamicMetadata setattr.
+            attr_data.metadata.extensions[c.Ldif.SCHEMA_TARGET_MATCHING_RULES] = (
+                target_rules
             )
         attr_data.metadata.extensions[c.Ldif.META_TRANSFORMATION_TIMESTAMP] = (
             u.generate_iso_timestamp()
@@ -114,14 +114,14 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
         self,
         attr: m.Ldif.SchemaAttribute,
     ) -> p.Result[m.Ldif.SchemaAttribute]:
-        """Hook: Transform parsed attribute using OID-specific normalizations."""
+        """Transform parsed attribute using OID-specific normalizations."""
         try:
             return r[m.Ldif.SchemaAttribute].ok(
                 self._normalize_oid_attribute(attr),
             )
         except c.Ldif.EXC_LDIF_PARSE as e:
             FlextLdifServersOidSchema._module_logger.exception(
-                "OID post-parse attribute hook failed"
+                "OID post-parse attribute hook failed",
             )
             return r[m.Ldif.SchemaAttribute].fail_op("OID post-parse attribute hook", e)
 
@@ -160,17 +160,18 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
         self,
         oc: m.Ldif.SchemaObjectClass,
     ) -> p.Result[m.Ldif.SchemaObjectClass]:
-        """Hook: Transform parsed objectClass using OID-specific normalizations."""
+        """Transform parsed objectClass using OID-specific normalizations."""
         try:
             return r[m.Ldif.SchemaObjectClass].ok(
                 self._normalize_oid_objectclass(oc),
             )
         except c.Ldif.EXC_LDIF_PARSE as e:
             FlextLdifServersOidSchema._module_logger.exception(
-                "OID post-parse objectclass hook failed"
+                "OID post-parse objectclass hook failed",
             )
             return r[m.Ldif.SchemaObjectClass].fail_op(
-                "OID post-parse objectclass hook", e
+                "OID post-parse objectclass hook",
+                e,
             )
 
     def _normalize_oid_objectclass(
@@ -300,14 +301,15 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
 
     @override
     def _parse_attribute(
-        self, attr_definition: str
+        self,
+        attr_definition: str,
     ) -> p.Result[m.Ldif.SchemaAttribute]:
         """Parse Oracle OID attribute definition (Phase 1: Normalization)."""
         try:
             return self._parse_oid_attribute(attr_definition)
         except c.Ldif.EXC_LDIF_PARSE as e:
             FlextLdifServersOidSchema._module_logger.exception(
-                "OID attribute parsing failed"
+                "OID attribute parsing failed",
             )
             return r[m.Ldif.SchemaAttribute].fail_op("OID attribute parsing", e)
 
@@ -337,14 +339,15 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
 
     @override
     def _parse_objectclass(
-        self, oc_definition: str
+        self,
+        oc_definition: str,
     ) -> p.Result[m.Ldif.SchemaObjectClass]:
         """Parse Oracle OID objectClass definition."""
         try:
             return self._parse_oid_objectclass(oc_definition)
         except c.Ldif.EXC_LDIF_PARSE as e:
             FlextLdifServersOidSchema._module_logger.exception(
-                "OID objectClass parsing failed"
+                "OID objectClass parsing failed",
             )
             return r[m.Ldif.SchemaObjectClass].fail_op("OID objectClass parsing", e)
 
@@ -446,7 +449,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
                 normalized_substr=normalized_substr or "",
             )
             original_format = (
-                attr_data.metadata.extensions.original_format
+                attr_data.metadata.extensions.get("original_format")
                 if attr_data.metadata and attr_data.metadata.extensions
                 else None
             )
@@ -507,16 +510,14 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
         oid_metadata = attr_copy.metadata
         if attr_copy.metadata and attr_copy.metadata.extensions:
             keys_to_remove = {c.Ldif.SCHEMA_ORIGINAL_FORMAT}
-            new_extensions = {
+            new_extensions: t.MutableJsonMapping = {
                 k: v
                 for k, v in attr_copy.metadata.extensions.items()
                 if k not in keys_to_remove
             }
             oid_metadata = attr_copy.metadata.model_copy(
                 update={
-                    "extensions": m.Ldif.DynamicMetadata.from_dict(
-                        new_extensions,
-                    ),
+                    "extensions": new_extensions,
                 },
             )
         attr_copy = attr_copy.model_copy(

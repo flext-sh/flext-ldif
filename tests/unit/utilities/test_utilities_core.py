@@ -1,8 +1,9 @@
-"""Tests for LDIF DN operations as pure functions.
+"""Behavioral tests for the public ``u.Ldif`` utilities contract.
 
-This module tests DN (Distinguished Name) utility functions as pure functions returning
-primitives, including DN component normalization, full DN normalization, DN parsing,
-splitting, component extraction, and handling of special characters and escaped values.
+Every test asserts observable public behavior only: return values, ``r[T]``
+outcomes for fallible operations, public model state after in-place fixes, and
+invariants (round-trip, idempotence, sign symmetry). No private attributes,
+internal-collaborator spying, or line-coverage pokes.
 """
 
 from __future__ import annotations
@@ -10,46 +11,53 @@ from __future__ import annotations
 import pytest
 from flext_tests import tm
 
-from tests.constants import c
-from tests.models import m
-from tests.utilities import u
+from tests import c, m, u
 
 
 @pytest.mark.unit
 class TestsFlextLdifUtilitiesCore:
-    """Test DN operations as pure functions returning primitives."""
+    """Public contract of DN, schema, and server-type LDIF utilities."""
 
-    def test_split_dn_components(self) -> None:
-        """Test splitting DN into components."""
-        dn = "cn=John,ou=Users,dc=example,dc=com"
-        result = u.Ldif.split(dn)
-        tm.that(result, eq=["cn=John", "ou=Users", "dc=example", "dc=com"])
+    # ---- DN splitting -------------------------------------------------
 
-    def test_split_dn_with_escaped_commas(self) -> None:
-        """Test splitting DN with escaped commas."""
-        dn = "cn=Test\\, User,ou=Users,dc=example,dc=com"
-        result = u.Ldif.split(dn)
-        tm.that(result, eq=["cn=Test\\, User", "ou=Users", "dc=example", "dc=com"])
+    @pytest.mark.parametrize(
+        ("dn", "expected"),
+        [
+            (
+                "cn=John,ou=Users,dc=example,dc=com",
+                ["cn=John", "ou=Users", "dc=example", "dc=com"],
+            ),
+            (
+                "cn=Test\\, User,ou=Users,dc=example,dc=com",
+                ["cn=Test\\, User", "ou=Users", "dc=example", "dc=com"],
+            ),
+            (
+                "cn=Test\\, User\\\\More,ou=Users\\, Group,dc=example",
+                ["cn=Test\\, User\\\\More", "ou=Users\\, Group", "dc=example"],
+            ),
+            ("cn=test", ["cn=test"]),
+        ],
+    )
+    def test_split_preserves_escaped_separators(
+        self, dn: str, expected: list[str]
+    ) -> None:
+        """Split keeps escaped commas/backslashes inside their component."""
+        tm.that(u.Ldif.split(dn), eq=expected)
+
+    def test_split_empty_dn_yields_no_components(self) -> None:
+        """An empty DN string splits into zero components."""
+        tm.that(u.Ldif.split(""), empty=True)
 
     def test_dn_model_accepts_escaped_commas(self) -> None:
-        """Test DN model validation with escaped commas."""
+        """The DN model preserves an escaped-comma value verbatim."""
         dn = m.Ldif.DN(value="cn=Test\\, User,ou=Users,dc=example,dc=com")
         tm.that(dn.value, eq="cn=Test\\, User,ou=Users,dc=example,dc=com")
 
-    def test_split_dn_edge_cases(self) -> None:
-        """Test splitting DN edge cases."""
-        tm.that(u.Ldif.split(""), empty=True)
-        tm.that(u.Ldif.split("cn=test"), eq=["cn=test"])
-        dn = "cn=Test\\, User\\\\More,ou=Users\\, Group,dc=example"
-        result = u.Ldif.split(dn)
-        tm.that(
-            result,
-            eq=["cn=Test\\, User\\\\More", "ou=Users\\, Group", "dc=example"],
-        )
+    # ---- DN validation ------------------------------------------------
 
-    def test_validate_dn_format_valid(self) -> None:
-        """Test valid DN validation."""
-        valid_dns = [
+    @pytest.mark.parametrize(
+        "dn",
+        [
             "cn=John,dc=example,dc=com",
             "ou=Users,dc=example,dc=com",
             "cn=REDACTED_LDAP_BIND_PASSWORD,o=example",
@@ -58,13 +66,15 @@ class TestsFlextLdifUtilitiesCore:
             "cn=Test#User,dc=example,dc=com",
             "cn=Test\\2BUser,dc=example,dc=com",
             "cn=Test\\3DUser,dc=example,dc=com",
-        ]
-        for dn in valid_dns:
-            _ = tm.that(u.Ldif.validate(dn), eq=True)
+        ],
+    )
+    def test_validate_accepts_wellformed_dns(self, dn: str) -> None:
+        """Well-formed DNs (including hex escapes) validate as True."""
+        tm.that(u.Ldif.validate(dn), eq=True)
 
-    def test_validate_dn_format_invalid(self) -> None:
-        """Test invalid DN validation."""
-        invalid_dns = [
+    @pytest.mark.parametrize(
+        "dn",
+        [
             "",
             "no_equals_sign",
             "cn=",
@@ -75,210 +85,247 @@ class TestsFlextLdifUtilitiesCore:
             "cn=test\\",
             "cn=test\\Z",
             "cn=test\\XY",
-        ]
-        for dn in invalid_dns:
-            _ = tm.that(not u.Ldif.validate(dn), eq=True)
+        ],
+    )
+    def test_validate_rejects_malformed_dns(self, dn: str) -> None:
+        """Empty attrs, empty components, and bad escapes validate as False."""
+        tm.that(u.Ldif.validate(dn), eq=False)
 
-    def test_parse_components(self) -> None:
-        """Test DN component parsing."""
+    # ---- DN parsing / comparison -------------------------------------
+
+    def test_parse_returns_attribute_value_pairs(self) -> None:
+        """Parse yields ordered (attr, value) pairs for every component."""
         parsed = tm.ok(u.Ldif.parse("cn=John,ou=Users,dc=example"))
-        tm.that(len(parsed), gte=2)
+        tm.that(list(parsed), eq=[("cn", "John"), ("ou", "Users"), ("dc", "example")])
 
-    def test_compare_dns(self) -> None:
-        """Test DN comparison."""
-        comparison = tm.ok(
-            u.Ldif.compare_dns("cn=John,dc=example,dc=com", "cn=jane,dc=example,dc=com")
-        )
-        tm.that(comparison, is_=int)
-
-    def test_escape_dn_value(self) -> None:
-        """Test escaping special DN value characters."""
-        value = "Test, Value"
-        result = u.Ldif.esc(value)
-        tm.that(result, is_=str)
-
-    def test_unescape_dn_value(self) -> None:
-        """Test unescaping DN value characters."""
-        value = "Test\\,Value"
-        result = u.Ldif.unesc(value)
-        tm.that(result, is_=str)
-
-    def test_clean_dn(self) -> None:
-        """Test DN cleaning."""
-        dn = "  cn = John  ,  ou = Users  ,  dc = example  "
-        result = u.Ldif.clean_dn(dn)
-        tm.that(result, is_=str)
-        tm.that("  " not in result or result == dn, eq=True)
-
-    """Test ObjectClass-related DN operations."""
-
-    def test_fix_missing_sup(self) -> None:
-        """Test fixing missing SUP in AUXILIARY classes."""
-        obj = m.Ldif.SchemaObjectClass(
-            oid="1.2.3.4",
-            name="orcldasattrcategory",
-            kind="AUXILIARY",
-            sup=None,
-        )
-        u.Ldif.fix_missing_sup(obj)
-        tm.that(obj.sup, eq="top")
-
-    def test_fix_kind_mismatch(self) -> None:
-        """Test fixing kind mismatches."""
-        obj = m.Ldif.SchemaObjectClass(
-            oid="1.2.3.4",
-            name="testOC",
-            sup="orclpwdverifierprofile",
-            kind="AUXILIARY",
-        )
-        u.Ldif.fix_kind_mismatch(obj)
-        tm.that(obj.kind, eq="STRUCTURAL")
-
-    """Test attribute definition normalization."""
-
-    def test_normalize_name_basic(self) -> None:
-        """Test basic attribute name normalization."""
-        result = u.Ldif.normalize_name("testAttr_name;binary")
-        tm.that(result, eq="testAttr-name")
-
-    def test_normalize_name_with_custom_replacements(self) -> None:
-        """Test name normalization with custom replacements."""
-        result = u.Ldif.normalize_name("test_attr_name", char_replacements={"_": "-"})
-        tm.that(result, eq="test-attr-name")
-
-    def test_normalize_name_none(self) -> None:
-        """Test normalizing None."""
-        result = u.Ldif.normalize_name(None)
-        tm.that(result, none=True)
-
-    def test_normalize_matching_rules_empty(self) -> None:
-        """Test normalizing empty matching rules."""
-        result = u.Ldif.normalize_matching_rules(None)
-        tm.that(result, eq=(None, None))
-
-    def test_normalize_matching_rules_equality_only(self) -> None:
-        """Test normalizing matching rules with equality rule only."""
-        result = u.Ldif.normalize_matching_rules("caseIgnoreMatch")
-        tm.that(result, eq=("caseIgnoreMatch", None))
-
-    def test_normalize_matching_rules_both(self) -> None:
-        """Test normalizing matching rules with both equality and substr."""
-        result = u.Ldif.normalize_matching_rules(
-            "caseIgnoreMatch",
-            "caseIgnoreSubstringsMatch",
-        )
-        tm.that(result, eq=("caseIgnoreMatch", "caseIgnoreSubstringsMatch"))
-
-    """Test LDIF parsing utilities - simple helper functions."""
-
-    def test_extract_extensions_empty(self) -> None:
-        """Test extracting extensions from empty schema definition."""
-        definition = ""
-        result = u.Ldif.extract_extensions(definition)
-        tm.that(result, empty=True)
-
-    def test_extract_extensions_with_x_extension(self) -> None:
-        """Test extracting X- extensions from schema definition."""
-        definition = "( 1.2.3 NAME 'test' X-CUSTOM 'value' X-OTHER 'data' )"
-        result = u.Ldif.extract_extensions(definition)
-        tm.that(result.get("X-CUSTOM"), eq=["value"])
-        tm.that(result.get("X-OTHER"), eq=["data"])
-
-    def test_extract_extensions_with_desc(self) -> None:
-        """Test extracting DESC from schema definition."""
-        definition = "( 1.2.3 NAME 'test' DESC 'Test attribute' )"
-        result = u.Ldif.extract_extensions(definition)
-        tm.that(result.get("DESC"), eq=["Test attribute"])
-
-    def test_unfold_lines_basic(self) -> None:
-        """Test unfolding RFC 2849 folded lines."""
-        content = "dn: cn=verylongname\n withfoldedcontinuation,dc=example,dc=com\n"
-        result = u.Ldif.unfold_lines(content)
-        tm.that(any("withfoldedcontinuation" in line for line in result), eq=True)
-
-    """Test server type operations (via u.Ldif MRO)."""
-
-    def test_normalize_server_type(self) -> None:
-        """Test server type normalization."""
-        tm.that(u.Ldif.normalize_server_type("oracle_oid"), eq="oid")
-        tm.that(u.Ldif.normalize_server_type("rfc"), eq="rfc")
-
-    def test_validation_rule_flags_resolve_from_canonical_server_capabilities(
-        self,
+    @pytest.mark.parametrize(
+        ("bad_dn", "error_fragment"),
+        [("", "empty"), ("no_equals", "missing '=' separator")],
+    )
+    def test_parse_reports_failure_for_malformed_dn(
+        self, bad_dn: str, error_fragment: str
     ) -> None:
-        """Validation flags should be derived from canonical server-type capabilities."""
-        openldap_flags = u.Ldif.validation_rule_flags("openldap")
-        novell_flags = u.Ldif.validation_rule_flags("novell_edirectory")
-        ds389_flags = u.Ldif.validation_rule_flags(c.Ldif.ServerTypes.DS389)
+        """Parse returns a failure result describing the malformed input."""
+        tm.fail(u.Ldif.parse(bad_dn), contains=error_fragment)
 
-        tm.that(openldap_flags["requires_binary_option"], eq=True)
-        tm.that(openldap_flags["requires_objectclass"], eq=False)
-        tm.that(novell_flags["requires_objectclass"], eq=True)
-        tm.that(novell_flags["requires_naming_attr"], eq=False)
-        tm.that(ds389_flags["requires_objectclass"], eq=True)
-        tm.that(ds389_flags["requires_binary_option"], eq=False)
+    def test_compare_dns_reports_failure_when_operand_missing(self) -> None:
+        """compare_dns fails (not silently defaults) when an operand is None."""
+        tm.fail(u.Ldif.compare_dns(None, "cn=x,dc=y"), contains="must be provided")
 
-    def test_matches_server_type(self) -> None:
-        """Test server type matching."""
-        tm.that(u.Ldif.matches("oid", "oid", "oud"), eq=True)
-        tm.that(not u.Ldif.matches("ad", "oid", "oud"), eq=True)
+    def test_compare_dns_is_reflexive(self) -> None:
+        """Comparing a DN to itself yields equality (0)."""
+        result = tm.ok(u.Ldif.compare_dns("cn=John,dc=example", "cn=John,dc=example"))
+        tm.that(result, eq=0)
 
-    """Test ObjectClass validation and correction utilities."""
+    def test_compare_dns_is_case_insensitive_on_equal_values(self) -> None:
+        """DNs differing only by case compare equal."""
+        result = tm.ok(u.Ldif.compare_dns("cn=John,dc=Example", "cn=john,dc=example"))
+        tm.that(result, eq=0)
 
-    def test_fix_missing_sup_auxiliary_without_sup(self) -> None:
-        """Test fixing missing SUP for known AUXILIARY classes."""
+    def test_compare_dns_is_antisymmetric(self) -> None:
+        """Swapping arguments flips the sign of the ordering."""
+        forward = tm.ok(u.Ldif.compare_dns("cn=alpha,dc=x", "cn=beta,dc=x"))
+        backward = tm.ok(u.Ldif.compare_dns("cn=beta,dc=x", "cn=alpha,dc=x"))
+        tm.that(forward, eq=-backward)
+        tm.that(forward < 0, eq=True)
+
+    # ---- DN value escaping -------------------------------------------
+
+    @pytest.mark.parametrize(
+        "value",
+        ["Test, Value", "plain", "a+b=c", "trailing ", " leading"],
+    )
+    def test_esc_unesc_roundtrip_is_identity(self, value: str) -> None:
+        """unesc(esc(value)) reconstructs the original value."""
+        tm.that(u.Ldif.unesc(u.Ldif.esc(value)), eq=value)
+
+    def test_esc_encodes_reserved_comma(self) -> None:
+        """A reserved comma is escaped away so it can't act as a separator."""
+        escaped = u.Ldif.esc("Test, Value")
+        tm.that("," not in escaped.replace("\\,", ""), eq=True)
+        tm.that(escaped, eq="Test\\2c Value")
+
+    def test_unesc_decodes_escaped_comma(self) -> None:
+        """Unesc turns an escaped comma back into a literal comma."""
+        tm.that(u.Ldif.unesc("Test\\,Value"), eq="Test,Value")
+
+    # ---- DN cleaning --------------------------------------------------
+
+    def test_clean_dn_removes_padding_around_equals_and_commas(self) -> None:
+        """clean_dn collapses stray whitespace around '=' and separators."""
+        cleaned = u.Ldif.clean_dn("  cn = John  ,  ou = Users  ,  dc = example  ")
+        tm.that(" = " not in cleaned, eq=True)
+        tm.that(" , " not in cleaned, eq=True)
+
+    def test_clean_dn_is_idempotent(self) -> None:
+        """Cleaning an already-clean DN returns it unchanged."""
+        once = u.Ldif.clean_dn("  cn = John  ,  ou = Users  ")
+        tm.that(u.Ldif.clean_dn(once), eq=once)
+
+    # ---- ObjectClass fixes (in-place, observed via public state) -----
+
+    @pytest.mark.parametrize("kind", ["AUXILIARY", c.Ldif.SchemaKind.AUXILIARY])
+    def test_fix_missing_sup_sets_top_for_auxiliary_without_sup(
+        self, kind: str
+    ) -> None:
+        """An AUXILIARY class lacking SUP gains the 'top' superior."""
         oc = m.Ldif.SchemaObjectClass(
-            name="orcldAsAttrCategory",
-            oid="1.2.3.4.5",
-            kind=c.Ldif.SchemaKind.AUXILIARY,
-            sup=None,
+            oid="1.2.3.4", name="orcldasattrcategory", kind=kind, sup=None
         )
-        tm.that(oc.sup, none=True)
         u.Ldif.fix_missing_sup(oc)
         tm.that(oc.sup, eq="top")
 
-    def test_fix_missing_sup_auxiliary_with_sup(self) -> None:
-        """Test that AUXILIARY with SUP is not modified."""
+    def test_fix_missing_sup_preserves_existing_sup(self) -> None:
+        """An AUXILIARY class that already has a SUP is left untouched."""
         oc = m.Ldif.SchemaObjectClass(
-            name="testAuxiliary",
             oid="1.2.3.4.5",
+            name="testAuxiliary",
             kind=c.Ldif.SchemaKind.AUXILIARY,
             sup="top",
         )
-        original_sup = oc.sup
         u.Ldif.fix_missing_sup(oc)
-        tm.that(oc.sup, eq=original_sup)
+        tm.that(oc.sup, eq="top")
 
-    def test_fix_missing_sup_structural_ignored(self) -> None:
-        """Test that STRUCTURAL classes are ignored."""
+    def test_fix_missing_sup_ignores_structural_classes(self) -> None:
+        """STRUCTURAL classes are not given a synthetic SUP."""
         oc = m.Ldif.SchemaObjectClass(
-            name="testStructural",
             oid="1.2.3.4.6",
+            name="testStructural",
             kind=c.Ldif.SchemaKind.STRUCTURAL,
             sup=None,
         )
-        original_sup = oc.sup
         u.Ldif.fix_missing_sup(oc)
-        tm.that(oc.sup, eq=original_sup)
+        tm.that(oc.sup, none=True)
 
-    def test_fix_kind_mismatch_structural_superior(self) -> None:
-        """Test fixing kind mismatch with STRUCTURAL superior."""
+    @pytest.mark.parametrize(
+        ("start_kind", "sup", "expected_kind"),
+        [
+            (
+                c.Ldif.SchemaKind.AUXILIARY,
+                "orclpwdverifierprofile",
+                c.Ldif.SchemaKind.STRUCTURAL,
+            ),
+            (
+                c.Ldif.SchemaKind.STRUCTURAL,
+                "javanamingref",
+                c.Ldif.SchemaKind.AUXILIARY,
+            ),
+        ],
+    )
+    def test_fix_kind_mismatch_aligns_kind_to_superior(
+        self,
+        start_kind: c.Ldif.SchemaKind,
+        sup: str,
+        expected_kind: c.Ldif.SchemaKind,
+    ) -> None:
+        """Kind is corrected to match the kind of its declared superior."""
         oc = m.Ldif.SchemaObjectClass(
-            name="testClass",
-            oid="1.2.3.4.9",
-            kind=c.Ldif.SchemaKind.AUXILIARY,
-            sup="orclpwdverifierprofile",
+            oid="1.2.3.4.9", name="testClass", kind=start_kind, sup=sup
         )
         u.Ldif.fix_kind_mismatch(oc)
-        tm.that(oc.kind, eq=c.Ldif.SchemaKind.STRUCTURAL)
+        tm.that(oc.kind, eq=expected_kind)
 
-    def test_fix_kind_mismatch_auxiliary_superior(self) -> None:
-        """Test fixing kind mismatch with AUXILIARY superior."""
-        oc = m.Ldif.SchemaObjectClass(
-            name="testClass",
-            oid="1.2.3.4.10",
-            kind=c.Ldif.SchemaKind.STRUCTURAL,
-            sup="javanamingref",
+    # ---- Attribute-name normalization --------------------------------
+
+    def test_normalize_name_strips_binary_suffix_and_normalizes_separators(
+        self,
+    ) -> None:
+        """normalize_name drops ';binary' and canonicalizes underscores."""
+        tm.that(u.Ldif.normalize_name("testAttr_name;binary"), eq="testAttr-name")
+
+    def test_normalize_name_applies_custom_char_replacements(self) -> None:
+        """Custom char replacements are honored."""
+        tm.that(
+            u.Ldif.normalize_name("test_attr_name", char_replacements={"_": "-"}),
+            eq="test-attr-name",
         )
-        u.Ldif.fix_kind_mismatch(oc)
-        tm.that(oc.kind, eq=c.Ldif.SchemaKind.AUXILIARY)
+
+    def test_normalize_name_passes_none_through(self) -> None:
+        """A None name normalizes to None."""
+        tm.that(u.Ldif.normalize_name(None), none=True)
+
+    @pytest.mark.parametrize(
+        ("equality", "substr", "expected"),
+        [
+            (None, None, (None, None)),
+            ("caseIgnoreMatch", None, ("caseIgnoreMatch", None)),
+            (
+                "caseIgnoreMatch",
+                "caseIgnoreSubstringsMatch",
+                ("caseIgnoreMatch", "caseIgnoreSubstringsMatch"),
+            ),
+        ],
+    )
+    def test_normalize_matching_rules_returns_equality_substr_pair(
+        self,
+        equality: str | None,
+        substr: str | None,
+        expected: tuple[str | None, str | None],
+    ) -> None:
+        """Matching-rule normalization returns an (equality, substr) pair."""
+        tm.that(u.Ldif.normalize_matching_rules(equality, substr), eq=expected)
+
+    # ---- Schema extension extraction ---------------------------------
+
+    def test_extract_extensions_empty_definition_yields_none(self) -> None:
+        """An empty schema definition exposes no extensions."""
+        tm.that(u.Ldif.extract_extensions(""), empty=True)
+
+    def test_extract_extensions_captures_x_prefixed_extensions(self) -> None:
+        """X- prefixed extension values are captured under their key."""
+        result = u.Ldif.extract_extensions(
+            "( 1.2.3 NAME 'test' X-CUSTOM 'value' X-OTHER 'data' )"
+        )
+        tm.that(result.get("X-CUSTOM"), eq=["value"])
+        tm.that(result.get("X-OTHER"), eq=["data"])
+
+    def test_extract_extensions_captures_desc(self) -> None:
+        """A DESC clause is exposed as its own extension key."""
+        result = u.Ldif.extract_extensions(
+            "( 1.2.3 NAME 'test' DESC 'Test attribute' )"
+        )
+        tm.that(result.get("DESC"), eq=["Test attribute"])
+
+    def test_unfold_lines_joins_rfc2849_continuations(self) -> None:
+        """A space-prefixed continuation line is folded back onto its base."""
+        result = u.Ldif.unfold_lines(
+            "dn: cn=verylongname\n withfoldedcontinuation,dc=example,dc=com\n"
+        )
+        tm.that(
+            any("verylongnamewithfoldedcontinuation" in line for line in result),
+            eq=True,
+        )
+
+    # ---- Server-type operations --------------------------------------
+
+    @pytest.mark.parametrize(
+        ("raw", "expected"),
+        [("oracle_oid", "oid"), ("rfc", "rfc")],
+    )
+    def test_normalize_server_type_maps_aliases_to_canonical(
+        self, raw: str, expected: str
+    ) -> None:
+        """Vendor aliases normalize to their canonical server type."""
+        tm.that(u.Ldif.normalize_server_type(raw), eq=expected)
+
+    def test_matches_recognizes_allowed_server_type(self) -> None:
+        """Matches is True only when the type is among the allowed set."""
+        tm.that(u.Ldif.matches("oid", "oid", "oud"), eq=True)
+        tm.that(u.Ldif.matches("ad", "oid", "oud"), eq=False)
+
+    @pytest.mark.parametrize(
+        ("server_type", "flag", "expected"),
+        [
+            ("openldap", "requires_binary_option", True),
+            ("openldap", "requires_objectclass", False),
+            ("novell_edirectory", "requires_objectclass", True),
+            ("novell_edirectory", "requires_naming_attr", False),
+            (c.Ldif.ServerTypes.DS389, "requires_objectclass", True),
+            (c.Ldif.ServerTypes.DS389, "requires_binary_option", False),
+        ],
+    )
+    def test_validation_rule_flags_derive_from_server_capabilities(
+        self, server_type: str | c.Ldif.ServerTypes, flag: str, expected: bool
+    ) -> None:
+        """Validation flags reflect each server type's declared capabilities."""
+        tm.that(u.Ldif.validation_rule_flags(server_type)[flag], eq=expected)

@@ -1,146 +1,27 @@
-"""Tests for OID→OUD subject conversion (OidAclSubject → OUD bind-rule)."""
+"""Behavioral tests for the OID→OUD ACL converter public contract.
+
+Exercises the observable behavior of
+:class:`flext_ldif.servers._oid.acl_convert_oud.FlextLdifServersOidAclToOud`:
+subject → OUD bind-rule mapping, permission-token conversion, targetattr /
+targetscope computation, and the DN-scoping helpers. Every assertion targets a
+public return value or the ``r[T]`` outcome — never an implementation detail.
+"""
 
 from __future__ import annotations
 
+import pytest
 from flext_tests import tm
 
 from flext_ldif import m
 from flext_ldif.servers._oid.acl_convert_oud import FlextLdifServersOidAclToOud as Conv
 
 
-class TestsFlextLdifOidAclConvertSubject:
-    """convert_subject_to_oud parity with the OUD migration oracle."""
+class TestsFlextLdifOidAclConvertOud:
+    """Public contract of FlextLdifServersOidAclToOud."""
 
     @staticmethod
     def _subject(kind: str, value: str = "") -> m.Ldif.OidAclSubject:
         return m.Ldif.OidAclSubject(subject_type=kind, value=value)
-
-    def test_group_maps_to_groupdn_with_normalized_dn(self) -> None:
-        result = Conv.convert_subject_to_oud(
-            self._subject("group", "cn=admins , dc=ctbc"),
-        )
-
-        allow = result.unwrap()
-        tm.that(allow.subject_type, eq="groupdn")
-        tm.that(allow.subject_value, eq="cn=admins,dc=ctbc")
-        tm.that(allow.permissions, eq=())
-
-    def test_user_maps_to_userdn(self) -> None:
-        result = Conv.convert_subject_to_oud(self._subject("user", "uid=joe,dc=ctbc"))
-
-        allow = result.unwrap()
-        tm.that(allow.subject_type, eq="userdn")
-        tm.that(allow.subject_value, eq="uid=joe,dc=ctbc")
-
-    def test_self_maps_to_userdn_self_literal(self) -> None:
-        result = Conv.convert_subject_to_oud(self._subject("self", "self"))
-
-        allow = result.unwrap()
-        tm.that(allow.subject_type, eq="userdn")
-        tm.that(allow.subject_value, eq="self")
-
-    def test_anyone_maps_to_userdn_anyone_literal(self) -> None:
-        result = Conv.convert_subject_to_oud(self._subject("anyone", "anyone"))
-
-        allow = result.unwrap()
-        tm.that(allow.subject_type, eq="userdn")
-        tm.that(allow.subject_value, eq="anyone")
-
-    def test_superuser_maps_to_directory_manager(self) -> None:
-        result = Conv.convert_subject_to_oud(
-            self._subject("superuser", "cn=Directory Manager"),
-        )
-
-        allow = result.unwrap()
-        tm.that(allow.subject_type, eq="userdn")
-        tm.that(allow.subject_value, eq="cn=Directory Manager")
-
-    def test_dnattr_maps_to_userattr_userdn_suffix(self) -> None:
-        result = Conv.convert_subject_to_oud(self._subject("dnattr", "manager"))
-
-        allow = result.unwrap()
-        tm.that(allow.subject_type, eq="userattr")
-        tm.that(allow.subject_value, eq="manager#USERDN")
-
-    def test_groupattr_maps_to_userattr_groupdn_suffix(self) -> None:
-        result = Conv.convert_subject_to_oud(self._subject("groupattr", "owner"))
-
-        allow = result.unwrap()
-        tm.that(allow.subject_type, eq="userattr")
-        tm.that(allow.subject_value, eq="owner#GROUPDN")
-
-    def test_guidattr_surfaces_failure_no_oud_equivalent(self) -> None:
-        result = Conv.convert_subject_to_oud(self._subject("guidattr", "orclguid"))
-
-        tm.that(result.failure, eq=True)
-
-    def test_unknown_surfaces_failure(self) -> None:
-        result = Conv.convert_subject_to_oud(self._subject("unknown"))
-
-        tm.that(result.failure, eq=True)
-
-
-class TestsFlextLdifOidAclConvertPermissions:
-    """convert_permissions parity with the OUD migration oracle perm maps."""
-
-    def test_entry_browse_expands_to_read_search(self) -> None:
-        result = Conv.convert_permissions(("browse", "add", "delete"), is_entry=True)
-
-        tm.that(result.unwrap(), eq=("read", "search", "add", "delete"))
-
-    def test_all_collapses_to_oud_all(self) -> None:
-        result = Conv.convert_permissions(("all", "browse", "add"), is_entry=True)
-
-        tm.that(result.unwrap(), eq=("all",))
-
-    def test_entry_all_with_negation_expands_without_overgrant(self) -> None:
-        result = Conv.convert_permissions(("all", "noadd"), is_entry=True)
-
-        tm.that(result.unwrap(), eq=("read", "search", "delete", "proxy"))
-
-    def test_attr_all_with_negation_expands_without_overgrant(self) -> None:
-        result = Conv.convert_permissions(("all", "noread"), is_entry=False)
-
-        tm.that(result.unwrap(), eq=("search", "write", "selfwrite", "compare"))
-
-    def test_attr_perms_pass_through_ordered(self) -> None:
-        result = Conv.convert_permissions(("search", "read"), is_entry=False)
-
-        tm.that(result.unwrap(), eq=("read", "search"))
-
-    def test_positive_perms_win_over_negations(self) -> None:
-        result = Conv.convert_permissions(("browse", "noadd"), is_entry=True)
-
-        tm.that(result.unwrap(), eq=("read", "search"))
-
-    def test_pure_negation_entry_yields_complement(self) -> None:
-        result = Conv.convert_permissions(("noadd",), is_entry=True)
-
-        tm.that(result.unwrap(), eq=("read", "search", "delete", "proxy"))
-
-    def test_pure_negation_attr_yields_complement(self) -> None:
-        result = Conv.convert_permissions(("noread",), is_entry=False)
-
-        tm.that(result.unwrap(), eq=("search", "write", "selfwrite", "compare"))
-
-    def test_none_yields_no_allow(self) -> None:
-        result = Conv.convert_permissions(("none",), is_entry=True)
-
-        tm.that(result.unwrap(), eq=())
-
-    def test_unknown_token_surfaces_failure(self) -> None:
-        result = Conv.convert_permissions(("bogus",), is_entry=False)
-
-        tm.that(result.failure, eq=True)
-
-    def test_unknown_negation_surfaces_failure(self) -> None:
-        result = Conv.convert_permissions(("nofoo",), is_entry=False)
-
-        tm.that(result.failure, eq=True)
-
-
-class TestsFlextLdifOidAclConvertTarget:
-    """get_targetattr + calculate_targetscope parity with the oracle."""
 
     @staticmethod
     def _rule(
@@ -155,35 +36,129 @@ class TestsFlextLdifOidAclConvertTarget:
             target_attrs=target_attrs,
         )
 
-    def test_entry_target_is_wildcard(self) -> None:
-        tm.that(Conv.get_targetattr(self._rule("entry")), eq="*")
+    # -- convert_subject_to_oud: bind-rule mapping -------------------------
 
-    def test_attr_list_joins_with_or(self) -> None:
+    @pytest.mark.parametrize(
+        ("kind", "value", "bind_type", "bind_value"),
+        [
+            ("group", "cn=admins , dc=ctbc", "groupdn", "cn=admins,dc=ctbc"),
+            ("user", "uid=joe,dc=ctbc", "userdn", "uid=joe,dc=ctbc"),
+            ("self", "self", "userdn", "self"),
+            ("anyone", "anyone", "userdn", "anyone"),
+            ("superuser", "cn=Directory Manager", "userdn", "cn=Directory Manager"),
+            ("dnattr", "manager", "userattr", "manager#USERDN"),
+            ("groupattr", "owner", "userattr", "owner#GROUPDN"),
+        ],
+    )
+    def test_subject_maps_to_expected_bind_rule(
+        self,
+        kind: str,
+        value: str,
+        bind_type: str,
+        bind_value: str,
+    ) -> None:
+        result = Conv.convert_subject_to_oud(self._subject(kind, value))
+
+        allow = result.unwrap()
+        tm.that(allow.subject_type, eq=bind_type)
+        tm.that(allow.subject_value, eq=bind_value)
+
+    def test_converted_subject_leaves_permissions_empty(self) -> None:
+        result = Conv.convert_subject_to_oud(self._subject("user", "uid=joe,dc=ctbc"))
+
+        tm.that(result.unwrap().permissions, eq=())
+
+    @pytest.mark.parametrize(
+        ("kind", "value"),
+        [("guidattr", "orclguid"), ("nosuchkind", "")],
+    )
+    def test_subject_without_oud_equivalent_surfaces_failure(
+        self,
+        kind: str,
+        value: str,
+    ) -> None:
+        result = Conv.convert_subject_to_oud(self._subject(kind, value))
+
+        tm.that(result.failure, eq=True)
+        tm.that(result.error, contains="manual review")
+
+    # -- convert_permissions ----------------------------------------------
+
+    @pytest.mark.parametrize(
+        ("permissions", "is_entry", "expected"),
+        [
+            (("browse", "add", "delete"), True, ("read", "search", "add", "delete")),
+            (("all", "browse", "add"), True, ("all",)),
+            (("all", "noadd"), True, ("read", "search", "delete", "proxy")),
+            (("all", "noread"), False, ("search", "write", "selfwrite", "compare")),
+            (("search", "read"), False, ("read", "search")),
+            (("browse", "noadd"), True, ("read", "search")),
+            (("noadd",), True, ("read", "search", "delete", "proxy")),
+            (("noread",), False, ("search", "write", "selfwrite", "compare")),
+            (("none",), True, ()),
+        ],
+    )
+    def test_convert_permissions_yields_ordered_allow_set(
+        self,
+        permissions: tuple[str, ...],
+        is_entry: bool,
+        expected: tuple[str, ...],
+    ) -> None:
+        result = Conv.convert_permissions(permissions, is_entry=is_entry)
+
+        tm.that(result.unwrap(), eq=expected)
+
+    @pytest.mark.parametrize(
+        "permissions",
+        [("bogus",), ("nofoo",)],
+    )
+    def test_convert_permissions_unknown_token_surfaces_failure(
+        self,
+        permissions: tuple[str, ...],
+    ) -> None:
+        result = Conv.convert_permissions(permissions, is_entry=False)
+
+        tm.that(result.failure, eq=True)
+
+    # -- get_targetattr ---------------------------------------------------
+
+    @pytest.mark.parametrize(
+        ("target_type", "target_attrs", "expected"),
+        [
+            ("entry", "*", "*"),
+            ("attr", "cn,sn,mail", "cn||sn||mail"),
+            ("attr", "*", "*"),
+            ("attr", "!=userpassword", "!=userpassword"),
+            ("attr", "!=a, b", "!=a||b"),
+        ],
+    )
+    def test_get_targetattr(
+        self,
+        target_type: str,
+        target_attrs: str,
+        expected: str,
+    ) -> None:
         tm.that(
-            Conv.get_targetattr(self._rule("attr", "cn,sn,mail")),
-            eq="cn||sn||mail",
+            Conv.get_targetattr(self._rule(target_type, target_attrs)),
+            eq=expected,
         )
 
-    def test_attr_wildcard_stays_wildcard(self) -> None:
-        tm.that(Conv.get_targetattr(self._rule("attr", "*")), eq="*")
-
-    def test_attr_negation_keeps_operator(self) -> None:
-        tm.that(
-            Conv.get_targetattr(self._rule("attr", "!=userpassword")),
-            eq="!=userpassword",
-        )
-
-    def test_attr_negation_list_joins_and_strips_spaces(self) -> None:
-        tm.that(Conv.get_targetattr(self._rule("attr", "!=a, b")), eq="!=a||b")
+    # -- calculate_targetscope --------------------------------------------
 
     def test_scope_orclaci_without_anyone_is_default(self) -> None:
         scope = Conv.calculate_targetscope(
-            self._rule("entry"), has_anyone_subject=False
+            self._rule("entry"),
+            has_anyone_subject=False,
         )
+
         tm.that(scope is None, eq=True)
 
     def test_scope_orclaci_with_anyone_is_base(self) -> None:
-        scope = Conv.calculate_targetscope(self._rule("entry"), has_anyone_subject=True)
+        scope = Conv.calculate_targetscope(
+            self._rule("entry"),
+            has_anyone_subject=True,
+        )
+
         tm.that(scope, eq="base")
 
     def test_scope_orclentrylevelaci_is_always_base(self) -> None:
@@ -191,4 +166,42 @@ class TestsFlextLdifOidAclConvertTarget:
             self._rule("entry", acl_type="orclentrylevelaci"),
             has_anyone_subject=False,
         )
+
         tm.that(scope, eq="base")
+
+    # -- regex_to_wildcard ------------------------------------------------
+
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [
+            ("cn=.*,dc=ctbc", "cn=*,dc=ctbc"),
+            ("cn=.+,dc=ctbc", "cn=*,dc=ctbc"),
+            (r"cn=a\.b,dc=ctbc", "cn=a.b,dc=ctbc"),
+            ("", ""),
+            ("cn=a[0-9]b", "cn=a[0-9]b"),
+        ],
+    )
+    def test_regex_to_wildcard(self, value: str, expected: str) -> None:
+        tm.that(Conv.regex_to_wildcard(value), eq=expected)
+
+    # -- is_in_scope ------------------------------------------------------
+
+    @pytest.mark.parametrize(
+        ("dn", "base_dn", "expected"),
+        [
+            ("dc=ctbc", "dc=ctbc", True),
+            ("uid=joe,dc=ctbc", "dc=ctbc", True),
+            ("dc=other", "dc=ctbc", False),
+            ("dc=x", "", True),
+        ],
+    )
+    def test_is_in_scope(self, dn: str, base_dn: str, expected: bool) -> None:
+        tm.that(Conv.is_in_scope(dn, base_dn), eq=expected)
+
+    # -- high_level_containers --------------------------------------------
+
+    def test_high_level_containers_are_base_relative_and_case_folded(self) -> None:
+        containers = Conv.high_level_containers("dc=CTBC")
+
+        tm.that("dc=ctbc" in containers, eq=True)
+        tm.that("dc=network,dc=ctbc" in containers, eq=True)

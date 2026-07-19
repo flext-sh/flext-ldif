@@ -6,8 +6,8 @@ from types import MappingProxyType
 from typing import ClassVar, TypeIs
 
 from flext_cli import u
-from flext_ldif import c, p, r, t
-from flext_ldif.models import FlextLdifModels as m
+from flext_ldif import c, m, p, r, t
+from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata as um
 
 
 class FlextLdifUtilitiesACL:
@@ -360,7 +360,8 @@ class FlextLdifUtilitiesACL:
                 result.append(formatted_rule)
             except c.Ldif.EXC_LDIF_PARSE as e:
                 FlextLdifUtilitiesACL._module_logger.debug(
-                    "Skipping ACL rule processing due to error", error=str(e)
+                    "Skipping ACL rule processing due to error",
+                    error=str(e),
                 )
                 continue
         return result
@@ -422,7 +423,8 @@ class FlextLdifUtilitiesACL:
             return None
         extraction = FlextLdifUtilitiesACL._extract_from_match(match, group)
         if extraction.success:
-            return extraction.value
+            extracted_value: str = extraction.value
+            return extracted_value
         return None
 
     @staticmethod
@@ -448,7 +450,7 @@ class FlextLdifUtilitiesACL:
             return []
         permissions: t.MutableSequenceOf[str] = []
         matches = c.Ldif.compile_pattern(allow_deny_pattern, ignorecase=True).finditer(
-            content
+            content,
         )
         min_groups_for_action = 1
         min_groups_for_ops = 2
@@ -472,7 +474,7 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def extract_target_extensions(
-        extensions: m.Ldif.DynamicMetadata | t.Ldif.MetadataInputMapping | None,
+        extensions: t.Ldif.MetadataInputMapping | None,
         target_config: t.StrPairSequence,
     ) -> t.MutableSequenceOf[str]:
         """Extract and format target extensions from metadata extensions."""
@@ -488,7 +490,8 @@ class FlextLdifUtilitiesACL:
                 result.append(format_template.format(value=str(value_raw)))
             except c.Ldif.EXC_LDIF_PARSE as e:
                 FlextLdifUtilitiesACL._module_logger.debug(
-                    "Skipping ACL rule processing due to error", error=str(e)
+                    "Skipping ACL rule processing due to error",
+                    error=str(e),
                 )
         return result
 
@@ -543,7 +546,7 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def format_conversion_comments(
-        extensions: m.Ldif.DynamicMetadata | t.Ldif.MetadataInputMapping | None,
+        extensions: t.Ldif.MetadataInputMapping | None,
         converted_from_key: str,
         comments_key: str,
     ) -> t.MutableSequenceOf[str]:
@@ -567,7 +570,7 @@ class FlextLdifUtilitiesACL:
             normalized = [str(item) for item in comments_value]
         else:
             normalized = [str(comments_value)]
-        return normalized + [""]
+        return [*normalized, ""]
 
     @staticmethod
     def get_acl_attributes(
@@ -719,11 +722,9 @@ class FlextLdifUtilitiesACL:
             permissions=m.Ldif.AclPermissions(**permissions_dict),
             server_type=settings.server_type,
             raw_acl=acl_line,
-            metadata=m.Ldif.ServerMetadata.create_for(
+            metadata=um.server_metadata_for(
                 settings.server_type,
-                extensions=m.Ldif.DynamicMetadata.from_dict(extensions)
-                if extensions
-                else None,
+                extensions=extensions or None,
             ),
         )
         return r[m.Ldif.Acl].ok(acl_model)

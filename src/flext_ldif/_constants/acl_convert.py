@@ -12,9 +12,10 @@ from __future__ import annotations
 
 import re
 from enum import StrEnum, unique
-from typing import ClassVar, Final
+from typing import TYPE_CHECKING, ClassVar, Final
 
-from flext_ldif._typings.base import FlextLdifTypesBase as t
+if TYPE_CHECKING:
+    from flext_ldif._typings.base import FlextLdifTypesBase as t
 
 
 class FlextLdifConstantsAclConvert:

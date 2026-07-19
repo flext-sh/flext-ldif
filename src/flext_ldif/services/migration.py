@@ -23,7 +23,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
             exclude=True,
             description="Directory containing LDIF files to migrate.",
         ),
-    ]
+    ] = None
     output_dir: Annotated[
         Path | None,
         u.Field(
@@ -31,7 +31,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
             exclude=True,
             description="Directory receiving migrated LDIF files.",
         ),
-    ]
+    ] = None
     output_filename: Annotated[
         str | None,
         u.Field(
@@ -39,7 +39,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
             exclude=True,
             description="Optional output filename override used for single-file migration.",
         ),
-    ]
+    ] = None
     mode: Annotated[
         str | None,
         u.Field(
@@ -47,7 +47,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
             exclude=True,
             description="Public migration mode input accepted by the pipeline DSL.",
         ),
-    ]
+    ] = None
     source_server: Annotated[
         str | c.Ldif.ServerTypes | None,
         u.Field(
@@ -55,7 +55,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
             exclude=True,
             description="Legacy source server input accepted for compatibility.",
         ),
-    ]
+    ] = None
     target_server: Annotated[
         str | c.Ldif.ServerTypes | None,
         u.Field(
@@ -63,7 +63,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
             exclude=True,
             description="Legacy target server input accepted for compatibility.",
         ),
-    ]
+    ] = None
     source_server_type: Annotated[
         str | c.Ldif.ServerTypes | None,
         u.Field(
@@ -71,7 +71,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
             exclude=True,
             description="Canonical source server type used by the migration pipeline.",
         ),
-    ]
+    ] = None
     target_server_type: Annotated[
         str | c.Ldif.ServerTypes | None,
         u.Field(
@@ -79,7 +79,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
             exclude=True,
             description="Canonical target server type used by the migration pipeline.",
         ),
-    ]
+    ] = None
     base_dn: Annotated[
         str | None,
         u.Field(
@@ -87,7 +87,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
             exclude=True,
             description="Migration base DN forwarded to OID→OUD ACL scope filtering.",
         ),
-    ]
+    ] = None
 
     @override
     def model_post_init(self, __context: t.JsonMapping | None, /) -> None:
@@ -236,7 +236,8 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
         )
         if parse_result.failure:
             return r[m.Ldif.MigrationPipelineResult].fail_op(
-                "Parse", parse_result.error
+                "Parse",
+                parse_result.error,
             )
         entries_list: t.MutableSequenceOf[m.Ldif.Entry] = list(
             parse_result.value.entries,
@@ -244,7 +245,8 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
         migrate_result = self.migrate_entries(entries_list)
         if migrate_result.failure:
             return r[m.Ldif.MigrationPipelineResult].fail_op(
-                "Migration", migrate_result.error
+                "Migration",
+                migrate_result.error,
             )
         return self._write_migrated_file(
             input_file,
@@ -276,7 +278,8 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
         )
         if write_result.failure:
             return r[m.Ldif.MigrationPipelineResult].fail_op(
-                "Write", write_result.error
+                "Write",
+                write_result.error,
             )
         self.logger.debug(
             "Wrote migrated file",

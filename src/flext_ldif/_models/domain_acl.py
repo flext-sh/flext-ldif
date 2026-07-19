@@ -1,7 +1,7 @@
 """ACL domain models — permissions, targets, subjects, and write metadata.
 
-from flext_ldif.models import m
-from flext_ldif.utilities import u
+from flext_ldif import m
+from flext_ldif import u
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -10,8 +10,7 @@ from __future__ import annotations
 
 from typing import Annotated, Self
 
-from flext_core import m
-from flext_core.utilities import FlextUtilities as u
+from flext_core import FlextUtilities as u, m
 from flext_ldif import c, t
 from flext_ldif._models.base import FlextLdifModelsBases as mb
 from flext_ldif._models.domain_metadata import FlextLdifModelsDomainMetadata
@@ -191,7 +190,8 @@ class FlextLdifModelsDomainAcl:
                 Default ACL format string from constants.
 
             """
-            return c.Ldif.DEFAULT_ACL_FORMAT
+            default_acl_format: str = c.Ldif.DEFAULT_ACL_FORMAT
+            return default_acl_format
 
         def resolve_acl_type(self) -> str:
             """Get ACL type identifier for this server using canonical enum normalization."""

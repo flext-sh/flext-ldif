@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
-from flext_ldif import c, p, r, t
+from flext_ldif import FlextLdifModels as m, c, p, r, t
 from flext_ldif._utilities.parser import FlextLdifUtilitiesParser as up
-from flext_ldif.models import FlextLdifModels as m
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class FlextLdifUtilitiesSchemaExtract:
@@ -77,11 +79,12 @@ class FlextLdifUtilitiesSchemaExtract:
     def extract_objectclass_kind(oc_definition: str) -> str:
         """Extract KIND from objectClass definition."""
         kind_match = c.Ldif.SCHEMA_OBJECTCLASS_KIND_RE.search(oc_definition)
-        return (
-            kind_match.group(1).upper()
-            if kind_match
-            else c.Ldif.SchemaKind.STRUCTURAL.value
-        )
+        if kind_match is None:
+            return str(c.Ldif.SchemaKind.STRUCTURAL.value)
+        kind = kind_match.group(1)
+        if kind is None:
+            return str(c.Ldif.SchemaKind.STRUCTURAL.value)
+        return str(kind).upper()
 
     @staticmethod
     def extract_objectclass_must_may(
@@ -144,7 +147,7 @@ class FlextLdifUtilitiesSchemaExtract:
         line_prefix: str,
         model_type: type[SchemaModelT],
     ) -> t.MutableSequenceOf[SchemaModelT]:
-        """Generic extraction of schema items from LDIF content lines."""
+        """Extract schema items from LDIF content lines."""
         items: t.MutableSequenceOf[SchemaModelT] = []
         for raw_line in ldif_content.split("\n"):
             line = raw_line.strip()

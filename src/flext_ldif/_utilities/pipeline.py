@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
-from typing import override
+from typing import TYPE_CHECKING, override
 
 from flext_ldif import c, p, r, t
-from flext_ldif.models import FlextLdifModels as m
+
+if TYPE_CHECKING:
+    from flext_ldif import FlextLdifModels as m
 
 
 class FlextLdifUtilitiesPipeline:
@@ -37,7 +39,7 @@ class FlextLdifUtilitiesPipeline:
 
         @property
         def errors(self) -> t.MutableSequenceOf[str]:
-            """Get list of error messages."""
+            """The list of error messages."""
             return self._errors
 
         @property
@@ -47,7 +49,7 @@ class FlextLdifUtilitiesPipeline:
 
         @property
         def warnings(self) -> t.MutableSequenceOf[str]:
-            """Get list of warning messages."""
+            """The list of warning messages."""
             return self._warnings
 
     class ValidationPipeline:

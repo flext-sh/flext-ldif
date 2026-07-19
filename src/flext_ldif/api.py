@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Self, override
+from typing import TYPE_CHECKING, Self, cast, override
 
 from flext_ldif import c, e, m, p, r, t, u
 from flext_ldif.services.acl import FlextLdifAcl
@@ -20,6 +19,9 @@ from flext_ldif.services.processing import FlextLdifProcessing
 from flext_ldif.services.statistics import FlextLdifStatistics
 from flext_ldif.services.validation import FlextLdifValidation
 from flext_ldif.services.writer import FlextLdifWriter
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class FlextLdif(
@@ -49,12 +51,13 @@ class FlextLdif(
         runtime_settings: p.Ldif.Settings | None = None,
     ) -> None:
         """Initialize the LDIF facade with the canonical shared registry."""
-        super().__init__(
-            server=server,
-            runtime_settings=runtime_settings
-            if runtime_settings is not None
-            else settings,
+        super().__init__()
+        if server is not None:
+            self.server = server
+        resolved_settings = (
+            runtime_settings if runtime_settings is not None else settings
         )
+        self.bind_runtime_settings(resolved_settings)
 
     def __call__(
         self,
@@ -64,8 +67,12 @@ class FlextLdif(
         **fields: t.JsonValue,
     ) -> Self:
         """Return a configured facade instance while keeping the DSL alias callable."""
-        configured: Self = super().__call__(server=server, settings=settings, **fields)
-        return configured
+        configured = super().__call__(
+            server=server,
+            settings=settings,
+            **fields,
+        )
+        return cast("Self", configured)
 
     def categorization(
         self,
@@ -82,7 +89,7 @@ class FlextLdif(
             if options is not None
             else None
         )
-        return FlextLdifCategorization(
+        categorization = FlextLdifCategorization(
             categorization_rules=options.categorization_rules
             if options is not None
             else None,
@@ -98,9 +105,12 @@ class FlextLdif(
             base_dn=resolved_base_dn,
             server_type=server_type,
             server=self._server,
-            runtime_settings=self.runtime_settings,
             server_registry=self._server,
         )
+        bound_categorization: FlextLdifCategorization = (
+            categorization.bind_runtime_settings(self.settings)
+        )
+        return bound_categorization
 
     def filter_entry_attributes(
         self,
@@ -252,7 +262,7 @@ class FlextLdif(
     ) -> p.Ldif.MigrationPipeline:
         """Create a configured migration pipeline bound to the facade runtime."""
         process_config = settings.process_config if settings is not None else None
-        return FlextLdifMigrationPipeline(
+        pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
             source_server_type=(
@@ -263,8 +273,11 @@ class FlextLdif(
             ),
             output_filename=(options.output_filename if options is not None else None),
             server=self._server,
-            runtime_settings=self.runtime_settings,
         )
+        bound_pipeline: FlextLdifMigrationPipeline = pipeline.bind_runtime_settings(
+            self.settings,
+        )
+        return bound_pipeline
 
     def migrate(
         self,
@@ -301,6 +314,7 @@ class FlextLdif(
         )
 
 
-ldif = FlextLdif.fetch_global()
+ldif: FlextLdif = FlextLdif.fetch_global()
+"""Process-wide FlextLdif facade singleton resolved from the global container."""
 
 __all__: list[str] = ["FlextLdif", "ldif"]

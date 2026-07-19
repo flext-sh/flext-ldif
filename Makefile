@@ -7,7 +7,7 @@
 # =============================================================================
 
 PROJECT_NAME := flext-ldif
-PYTHON_VERSION ?= 3.13
+PYTHON_VERSION ?= >=3.13,<3.14
 SRC_DIR ?= src
 TESTS_DIR ?= tests
 # Detect workspace root by walking up until we find the parent repo's .gitmodules.
@@ -70,6 +70,11 @@ base.mk: Makefile
 	@test -s $@ || { echo "ERROR: base.mk generation failed"; rm -f $@; exit 1; }
 	@echo "==> base.mk generated. Restarting make..."
 
+# Bootstrap-only recipes: defined ONLY while base.mk is absent. Once base.mk
+# exists it is -included above and the project's own custom.mk provides the
+# real setup/venv targets; keeping these here too would make GNU make warn
+# "overriding recipe for target 'setup'/'venv'/'_bootstrap-venv'".
+ifeq ("$(wildcard base.mk)", "")
 .PHONY: _bootstrap-venv venv setup
 
 _bootstrap-venv:
@@ -90,11 +95,9 @@ venv: _bootstrap-venv ## Create standalone virtual environment
 setup: venv ## Full standalone setup (venv + dependencies + base.mk)
 	@echo "==> Installing project dependencies..."
 	@$(BOOTSTRAP_PIP) install -q flext-infra
-	@$(BOOTSTRAP_PYTHON) -m flext_infra $(FLEXT_INFRA_DEPS_GROUP) path-sync \
-		--mode standalone \
+	# mro-j47u: generated bootstrap consumes the sole public extra-paths route.
+	@$(BOOTSTRAP_PYTHON) -m flext_infra $(FLEXT_INFRA_DEPS_GROUP) extra-paths \
 		--apply \
-		--workspace "$(CURDIR)"
-	@$(BOOTSTRAP_PYTHON) -m flext_infra $(FLEXT_INFRA_DEPS_GROUP) internal-sync \
 		--workspace "$(CURDIR)"
 	@$(BOOTSTRAP_VENV)/bin/poetry lock
 	@$(BOOTSTRAP_VENV)/bin/poetry install --all-extras --all-groups
@@ -104,6 +107,7 @@ setup: venv ## Full standalone setup (venv + dependencies + base.mk)
 	@$(BOOTSTRAP_PYTHON) -m flext_infra $(FLEXT_INFRA_BASEMK_GROUP) generate \
 		--project-name $(PROJECT_NAME) --output base.mk
 	@echo "==> Setup complete. All 'make' verbs now available."
+endif
 
 ifeq ("$(wildcard base.mk)", "")
 .PHONY: help

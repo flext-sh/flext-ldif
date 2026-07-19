@@ -117,11 +117,11 @@ class FlextLdifConversionEntryMixin(
         source_server_name: str,
     ) -> m.Ldif.Entry:
         """Copy entry and attach conversion metadata."""
-        metadata_for_analysis: m.Ldif.ServerMetadata | m.Ldif.DynamicMetadata | None = (
+        metadata_for_analysis: m.Ldif.ServerMetadata | t.MutableJsonMapping | None = (
             entry.metadata
             if isinstance(
                 entry.metadata,
-                (m.Ldif.ServerMetadata, m.Ldif.DynamicMetadata),
+                (m.Ldif.ServerMetadata, dict),
             )
             else None
         )
@@ -196,7 +196,7 @@ class FlextLdifConversionEntryMixin(
             update={
                 "dn": m.Ldif.DN(
                     value=transformed_dn,
-                    metadata=m.Ldif.EntryMetadata(),
+                    metadata={},
                 ),
             },
         )
