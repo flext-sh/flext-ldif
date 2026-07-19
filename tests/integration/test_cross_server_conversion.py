@@ -46,7 +46,7 @@ class TestsFlextLdifCrossServerConversion:
         )
         tm.ok(parse_result)
         source = parse_result.value
-        tm.that(source, is_=m.Ldif.SchemaAttribute)
+        assert isinstance(source, m.Ldif.SchemaAttribute)
         tm.that(source.oid, eq="2.16.840.1.113894.1.1.1")
         tm.that(source.name, eq="orclguid")
 
@@ -56,7 +56,7 @@ class TestsFlextLdifCrossServerConversion:
         oud_parse_result = oud_schema_server.parse_server(rfc_result.value)
         tm.ok(oud_parse_result)
         target = oud_parse_result.value
-        tm.that(target, is_=m.Ldif.SchemaAttribute)
+        assert isinstance(target, m.Ldif.SchemaAttribute)
         tm.that(target.oid, eq=source.oid)
         tm.that(target.name, eq=source.name)
         tm.that(target.syntax, eq=source.syntax)
@@ -72,7 +72,7 @@ class TestsFlextLdifCrossServerConversion:
         )
         tm.ok(parse_result)
         source = parse_result.value
-        tm.that(source, is_=m.Ldif.SchemaObjectClass)
+        assert isinstance(source, m.Ldif.SchemaObjectClass)
         tm.that(source.oid, eq="2.16.840.1.113894.2.1.1")
         tm.that(source.name, eq="orclContainer")
         tm.that(source.kind, eq="STRUCTURAL")
@@ -83,7 +83,7 @@ class TestsFlextLdifCrossServerConversion:
         oud_parse_result = oud_schema_server.parse_server(rfc_result.value)
         tm.ok(oud_parse_result)
         target = oud_parse_result.value
-        tm.that(target, is_=m.Ldif.SchemaObjectClass)
+        assert isinstance(target, m.Ldif.SchemaObjectClass)
         tm.that(target.oid, eq=source.oid)
         tm.that(target.name, eq=source.name)
         tm.that(target.kind, eq=source.kind)
@@ -99,7 +99,7 @@ class TestsFlextLdifCrossServerConversion:
         )
         tm.ok(parse_result)
         parsed = parse_result.value
-        tm.that(parsed, is_=m.Ldif.Acl)
+        assert isinstance(parsed, m.Ldif.Acl)
         tm.that({"oid", "oracle_oid"}, has=parsed.server_type)
 
     def test_oud_acl_parses_and_rewrites_to_text(
@@ -112,7 +112,7 @@ class TestsFlextLdifCrossServerConversion:
         )
         tm.ok(parse_result)
         parsed = parse_result.value
-        tm.that(parsed, is_=m.Ldif.Acl)
+        assert isinstance(parsed, m.Ldif.Acl)
         tm.that({"oud", "rfc", "generic"}, has=parsed.server_type)
 
         write_result = oud_acl_server.write(parsed)
@@ -130,7 +130,7 @@ class TestsFlextLdifCrossServerConversion:
             c.Tests.CROSS_SERVER_OID_ACL_ANONYMOUS,
         )
         tm.ok(parse_result)
-        tm.that(parse_result.value, is_=m.Ldif.Acl)
+        assert isinstance(parse_result.value, m.Ldif.Acl)
 
         result = conversion_matrix.convert_model(
             c.Tests.OID,
@@ -139,7 +139,7 @@ class TestsFlextLdifCrossServerConversion:
         )
         tm.ok(result)
         converted = result.value
-        tm.that(converted, is_=m.Ldif.Acl)
+        assert isinstance(converted, m.Ldif.Acl)
         tm.that(converted.server_type, eq=c.Tests.RFC)
         tm.that(converted.raw_acl, none=False)
 

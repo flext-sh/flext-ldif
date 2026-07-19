@@ -208,7 +208,7 @@ class TestsFlextLdifRealLdapCrud:
                 ]
                 for name in ldap_entry.entry_attributes
             }
-            tm.that(ldap_entry.entry_dn, none=False)
+            assert ldap_entry.entry_dn is not None
             result = m.Ldif.Entry.create(dn=ldap_entry.entry_dn, attributes=attrs)
             tm.ok(result)
             entries.append(result.value)

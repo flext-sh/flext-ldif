@@ -170,7 +170,7 @@ class TestsFlextLdifApiFreeze:
 
     def test_version_info_is_a_tuple(self) -> None:
         """``__version_info__`` is exposed as a tuple for structured checks."""
-        tm.that(type(flext_ldif.__version_info__), eq=tuple)
+        tm.that(flext_ldif.__version_info__, is_=tuple)
 
     @pytest.mark.parametrize("symbol", PRIVATE_ROOT_SYMBOLS)
     def test_private_symbol_is_not_advertised(

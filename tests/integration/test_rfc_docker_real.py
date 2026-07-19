@@ -77,7 +77,7 @@ class TestsFlextLdifRfcDockerReal:
         entries = result.unwrap().entries
         assert entries, "fixture yielded no entries"
         for entry in entries:
-            tm.that(entry.dn, none=False)
+            assert entry.dn is not None
             assert entry.dn.value, "entry exposes empty DN via public API"
 
     def test_parse_oid_schema_exposes_schema_definitions(
@@ -177,7 +177,7 @@ class TestsFlextLdifRfcDockerReal:
 
         # Assert
         tm.fail(result)
-        tm.that(result.error, none=False)
+        assert result.error is not None
         tm.that(result.error, has="File not found")
 
     def test_write_to_directory_target_fails_with_write_error(
@@ -203,7 +203,7 @@ class TestsFlextLdifRfcDockerReal:
 
         # Assert
         tm.fail(result)
-        tm.that(result.error, none=False)
+        assert result.error is not None
         tm.that(result.error, has="Failed to write LDIF file")
 
     @pytest.mark.parametrize(

@@ -51,7 +51,7 @@ class TestsFlextLdifMigrationPipeline:
             source_server_type=c.Tests.OID,
             target_server_type=c.Tests.OUD,
         )
-        tm.that(pipeline, none=False)
+        assert pipeline is not None
         tm.that(pipeline.input_dir, eq=input_dir)
         tm.that(pipeline.output_dir, eq=output_dir)
         tm.that(pipeline.source_server_type, eq=c.Ldif.ServerTypes(c.Tests.OID))
@@ -63,7 +63,7 @@ class TestsFlextLdifMigrationPipeline:
     ) -> None:
         """Omitting server types yields the RFC default on both public fields."""
         pipeline = migration_pipeline_factory()
-        tm.that(pipeline, none=False)
+        assert pipeline is not None
         tm.that(pipeline.source_server_type, eq=c.Ldif.ServerTypes(c.Tests.RFC))
         tm.that(pipeline.target_server_type, eq=c.Ldif.ServerTypes(c.Tests.RFC))
 
@@ -281,7 +281,7 @@ class TestsFlextLdifMigrationPipeline:
         migrated: t.MutableSequenceOf[p.Ldif.Entry] = u.Tests.assert_success(
             pipeline.migrate_entries([entry]),
         )
-        tm.that(migrated[0].attributes, none=False)
+        assert migrated[0].attributes is not None
         tm.that(
             migrated[0].attributes.attributes["aci"],
             eq=[

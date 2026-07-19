@@ -93,8 +93,8 @@ class TestsFlextLdifCrossDirectionConversion:
         """Parsing in the source server and writing in the target normalizes text."""
         source_schema = server_registry.resolve_schema_server(source)
         target_schema = server_registry.resolve_schema_server(target)
-        tm.that(source_schema, none=False)
-        tm.that(target_schema, none=False)
+        assert source_schema is not None
+        assert target_schema is not None
 
         parse_result = source_schema.parse_attribute(attr_def)
         tm.ok(parse_result)
@@ -155,8 +155,8 @@ class TestsFlextLdifCrossDirectionConversion:
         """Parsing in source and writing in target preserves/normalizes semantics."""
         source_schema = server_registry.resolve_schema_server(source)
         target_schema = server_registry.resolve_schema_server(target)
-        tm.that(source_schema, none=False)
-        tm.that(target_schema, none=False)
+        assert source_schema is not None
+        assert target_schema is not None
 
         parse_result = source_schema.parse_objectclass(oc_def)
         tm.ok(parse_result)
@@ -176,7 +176,7 @@ class TestsFlextLdifCrossDirectionConversion:
     ) -> None:
         """OID->parse->OID->write is a byte-stable identity for OID-native text."""
         oid_schema = server_registry.resolve_schema_server("oid")
-        tm.that(oid_schema, none=False)
+        assert oid_schema is not None
         attr_def = (
             "( 2.16.840.1.113894.1.1.327 NAME 'orclDASUIType' "
             "EQUALITY caseIgnoreSubstringsMatch "
@@ -223,7 +223,7 @@ class TestsFlextLdifCrossDirectionConversion:
     ) -> None:
         """The parsed public model field carries the canonicalized value."""
         schema = server_registry.resolve_schema_server(server)
-        tm.that(schema, none=False)
+        assert schema is not None
         parse_result = schema.parse_attribute(attr_def)
         tm.ok(parse_result)
         tm.that(str(getattr(parse_result.value, field)), eq=expected)
@@ -235,8 +235,8 @@ class TestsFlextLdifCrossDirectionConversion:
         """OID case variant is canonicalized at parse and not re-emitted by OUD."""
         oid_schema = server_registry.resolve_schema_server("oid")
         oud_schema = server_registry.resolve_schema_server("oud")
-        tm.that(oid_schema, none=False)
-        tm.that(oud_schema, none=False)
+        assert oid_schema is not None
+        assert oud_schema is not None
         attr_def = (
             "( 2.16.840.1.113894.1.1.600 NAME 'orclMemberRef' "
             "EQUALITY distinguishedNAMEMatch "
@@ -283,10 +283,10 @@ class TestsFlextLdifCrossDirectionConversion:
 
         result = conversion.convert_model("oid", "oud", entry)
         tm.ok(result)
-        tm.that(result.value, is_=m.Ldif.Entry)
+        assert isinstance(result.value, m.Ldif.Entry)
 
         converted = result.value
-        tm.that(converted.attributes, none=False)
+        assert converted.attributes is not None
         attribute = converted.attributes.attributes["attributeTypes"][0]
         objectclass = converted.attributes.attributes["objectClasses"][0]
         tm.that(attribute, has="SUBSTR caseIgnoreSubstringsMatch")
@@ -319,10 +319,10 @@ class TestsFlextLdifCrossDirectionConversion:
 
         result = conversion.convert_model("oud", "oid", entry)
         tm.ok(result)
-        tm.that(result.value, is_=m.Ldif.Entry)
+        assert isinstance(result.value, m.Ldif.Entry)
 
         converted = result.value
-        tm.that(converted.attributes, none=False)
+        assert converted.attributes is not None
         attribute = converted.attributes.attributes["attributeTypes"][0]
         tm.that(attribute, has="caseIgnoreMatch")
         tm.that(attribute, lacks="accessDirectiveMatch")

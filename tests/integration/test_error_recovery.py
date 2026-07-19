@@ -44,9 +44,9 @@ class TestsFlextLdifErrorRecovery:
         response = result.unwrap()
         tm.that(len(response.entries), eq=1)
         entry = response.entries[0]
-        tm.that(entry.dn, none=False)
+        assert entry.dn is not None
         tm.that(entry.dn.value, eq="cn=Test,dc=example,dc=com")
-        tm.that(entry.attributes, none=False)
+        assert entry.attributes is not None
         tm.that(set(entry.attributes.attributes), eq={"objectClass", "cn", "sn"})
 
     @pytest.mark.parametrize(
@@ -78,7 +78,7 @@ class TestsFlextLdifErrorRecovery:
         tm.ok(result)
         entries = result.unwrap().entries
         tm.that(len(entries), eq=1)
-        tm.that(entries[0].dn, none=False)
+        assert entries[0].dn is not None
         tm.that(entries[0].dn.value, eq=expected_dn)
 
     # ------------------------------------------------------------------
@@ -98,7 +98,7 @@ class TestsFlextLdifErrorRecovery:
 
         tm.ok(result)
         entry = result.unwrap().entries[0]
-        tm.that(entry.attributes, none=False)
+        assert entry.attributes is not None
         tm.that(
             entry.attributes.attributes["mail"],
             eq=[
@@ -118,7 +118,7 @@ class TestsFlextLdifErrorRecovery:
 
         tm.ok(result)
         entry = result.unwrap().entries[0]
-        tm.that(entry.attributes, none=False)
+        assert entry.attributes is not None
         tm.that(entry.attributes.attributes["description"], eq=[""])
 
     def test_folded_continuation_lines_concatenate_into_single_value(
@@ -134,7 +134,7 @@ class TestsFlextLdifErrorRecovery:
 
         tm.ok(result)
         entry = result.unwrap().entries[0]
-        tm.that(entry.attributes, none=False)
+        assert entry.attributes is not None
         tm.that(entry.attributes.attributes["description"], eq=["abcd"])
 
     def test_very_long_value_is_not_truncated(self, api: p.Ldif.Client) -> None:
@@ -149,7 +149,7 @@ class TestsFlextLdifErrorRecovery:
 
         tm.ok(result)
         entry = result.unwrap().entries[0]
-        tm.that(entry.attributes, none=False)
+        assert entry.attributes is not None
         tm.that(entry.attributes.attributes["description"], eq=[long_value])
 
     def test_base64_binary_attribute_is_parsed_as_named_attribute(
@@ -165,7 +165,7 @@ class TestsFlextLdifErrorRecovery:
 
         tm.ok(result)
         entry = result.unwrap().entries[0]
-        tm.that(entry.attributes, none=False)
+        assert entry.attributes is not None
         tm.that(entry.attributes.attributes, has="jpegPhoto")
 
     def test_unicode_attribute_value_is_preserved(self, api: p.Ldif.Client) -> None:
@@ -179,7 +179,7 @@ class TestsFlextLdifErrorRecovery:
 
         tm.ok(result)
         entry = result.unwrap().entries[0]
-        tm.that(entry.attributes, none=False)
+        assert entry.attributes is not None
         tm.that(entry.attributes.attributes["description"], eq=["café, naïve, résumé"])
 
     # ------------------------------------------------------------------
@@ -217,7 +217,7 @@ class TestsFlextLdifErrorRecovery:
 
         tm.ok(result)
         entry = result.unwrap().entries[0]
-        tm.that(entry.attributes, none=False)
+        assert entry.attributes is not None
         tm.that(set(entry.attributes.attributes), eq={"cn", "sn"})
 
     def test_dn_only_entry_parses_with_empty_attributes(
@@ -232,7 +232,7 @@ class TestsFlextLdifErrorRecovery:
         entries = result.unwrap().entries
         tm.that(len(entries), eq=1)
         entry = entries[0]
-        tm.that(entry.dn, none=False)
+        assert entry.dn is not None
         tm.that(entry.dn.value, eq="cn=Minimal,dc=example,dc=com")
 
     @pytest.mark.parametrize(
@@ -318,18 +318,18 @@ class TestsFlextLdifErrorRecovery:
         written = api.write(original)
         tm.ok(written)
         serialized = written.unwrap().content
-        tm.that(serialized, none=False)
+        assert serialized is not None
 
         second = api.parse_ldif(serialized)
         tm.ok(second)
         reparsed = second.unwrap().entries
 
         tm.that(len(reparsed), eq=len(original))
-        tm.that(original[0].dn, none=False)
-        tm.that(reparsed[0].dn, none=False)
+        assert original[0].dn is not None
+        assert reparsed[0].dn is not None
         tm.that(reparsed[0].dn.value, eq=original[0].dn.value)
-        tm.that(original[0].attributes, none=False)
-        tm.that(reparsed[0].attributes, none=False)
+        assert original[0].attributes is not None
+        assert reparsed[0].attributes is not None
         tm.that(reparsed[0].attributes.attributes, eq=original[0].attributes.attributes)
 
 

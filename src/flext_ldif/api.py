@@ -315,7 +315,7 @@ class FlextLdif(
         )
 
 
-ldif = FlextLdif.fetch_global()
+ldif: FlextLdif = FlextLdif.fetch_global()
 """Process-wide FlextLdif facade singleton resolved from the global container."""
 
 __all__: list[str] = ["FlextLdif", "ldif"]

@@ -27,7 +27,7 @@ class TestsFlextLdifOidServers:
     def schema(self) -> p.Ldif.SchemaServer:
         """Resolve the OID schema server through the public registry."""
         resolved = FlextLdifServer().resolve_schema_server("oid")
-        tm.that(resolved, none=False)
+        assert resolved is not None
         return resolved
 
     def test_resolve_unknown_server_type_returns_none(self) -> None:
@@ -136,7 +136,7 @@ class TestsFlextLdifOidServers:
         """A definition lacking an OID yields a failed result, not a success."""
         result = schema.parse_attribute("garbage not valid")
         tm.that(result.success, eq=False)
-        tm.that(result.error, none=False)
+        assert result.error is not None
         tm.that(result.error, has="OID")
 
     @pytest.mark.parametrize(

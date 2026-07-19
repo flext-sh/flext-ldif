@@ -84,7 +84,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
         result = parser.parse_ldif_file(schema_file)
 
         tm.ok(result)
-        tm.that(result.value, is_=m.Ldif.ParseResponse)
+        assert isinstance(result.value, m.Ldif.ParseResponse)
 
     # --- write: contract of the write response -------------------------------
 
@@ -188,7 +188,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
         result = parser.parse_ldif_file(Path("/nonexistent/file.ldif"))
 
         tm.fail(result)
-        tm.that(result.error, none=False)
+        assert result.error is not None
         with pytest.raises(RuntimeError):
             result.unwrap()
 
@@ -216,7 +216,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
                 server_type=c.Tests.RFC,
             )
             if not result.success:
-                tm.that(result.error, none=False)
+                assert result.error is not None
                 assert (
                     "Permission denied" in result.error
                     or "LDIF write failed" in result.error

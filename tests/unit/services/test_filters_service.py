@@ -73,7 +73,7 @@ class TestsFlextLdifFiltersService:
             [],
         )
 
-        tm.that(result.attributes, none=False)
+        assert result.attributes is not None
         remaining = set(result.attributes.attributes)
         tm.that(remaining.isdisjoint(c.Tests.FILTERS_FORBIDDEN_ATTRS), eq=True)
         # Non-forbidden attributes survive untouched.
@@ -90,7 +90,7 @@ class TestsFlextLdifFiltersService:
             list(c.Tests.FILTERS_FORBIDDEN_OCS_ORDERED),
         )
 
-        tm.that(result.attributes, none=False)
+        assert result.attributes is not None
         ocs = result.attributes.attributes.get(c.Tests.NAME_OBJECTCLASS, [])
         for forbidden_oc in c.Tests.FILTERS_FORBIDDEN_OCS_ORDERED:
             tm.that(forbidden_oc not in ocs, eq=True)
@@ -111,17 +111,17 @@ class TestsFlextLdifFiltersService:
             list(c.Tests.FILTERS_FORBIDDEN_OCS_ORDERED),
         )
 
-        tm.that(result.attributes, none=False)
+        assert result.attributes is not None
         tm.that(c.Tests.NAME_OBJECTCLASS not in result.attributes.attributes, eq=True)
 
     def test_empty_forbidden_lists_preserve_entry_identity(
         self,
         regular_entry: p.Ldif.Entry,
     ) -> None:
-        tm.that(regular_entry.attributes, none=False)
+        assert regular_entry.attributes is not None
         result = ldif.filter_entry_attributes(regular_entry, [], [])
 
-        tm.that(result.attributes, none=False)
+        assert result.attributes is not None
         tm.that(
             result.attributes.attributes == regular_entry.attributes.attributes,
             eq=True,
@@ -135,8 +135,8 @@ class TestsFlextLdifFiltersService:
         once = ldif.filter_entry_attributes(regular_entry, forbidden, [])
         twice = ldif.filter_entry_attributes(once, forbidden, [])
 
-        tm.that(once.attributes, none=False)
-        tm.that(twice.attributes, none=False)
+        assert once.attributes is not None
+        assert twice.attributes is not None
         tm.that(twice.attributes.attributes == once.attributes.attributes, eq=True)
 
     def test_returns_entry_unchanged_when_no_attributes_present(
@@ -149,7 +149,7 @@ class TestsFlextLdifFiltersService:
             [],
         )
 
-        tm.that(result, is_=m.Ldif.Entry)
+        assert isinstance(result, m.Ldif.Entry)
         tm.that(result.attributes is None, eq=True)
 
     # ── filter_schema_attribute_values ────────────────────────────────────────
@@ -188,7 +188,7 @@ class TestsFlextLdifFiltersService:
             {attr_key.lower(): frozenset({allowed_oid})},
         )
 
-        tm.that(result.attributes, none=False)
+        assert result.attributes is not None
         attr_vals = result.attributes.attributes.get(attr_key, [])
         tm.that(raw_oid in attr_vals, eq=True)
 
@@ -213,7 +213,7 @@ class TestsFlextLdifFiltersService:
             },
         )
 
-        tm.that(result.attributes, none=False)
+        assert result.attributes is not None
         attr_vals = result.attributes.attributes.get(
             c.Tests.FILTERS_SCHEMA_ATTR_KEY,
             [],
@@ -239,7 +239,7 @@ class TestsFlextLdifFiltersService:
 
         result = ldif.filter_schema_attribute_values(entry, whitelist_rules)
 
-        tm.that(result.attributes, none=False)
+        assert result.attributes is not None
         attr_vals = result.attributes.attributes.get(
             c.Tests.FILTERS_SCHEMA_ATTR_KEY,
             [],
@@ -261,7 +261,7 @@ class TestsFlextLdifFiltersService:
             {c.Tests.FILTERS_SCHEMA_ATTR_KEY.lower(): frozenset()},
         )
 
-        tm.that(result.attributes, none=False)
+        assert result.attributes is not None
         tm.that(
             c.Tests.FILTERS_SCHEMA_ATTR_KEY not in result.attributes.attributes,
             eq=True,
@@ -273,7 +273,7 @@ class TestsFlextLdifFiltersService:
     ) -> None:
         result = ldif.filter_schema_attribute_values(entry_without_attributes, {})
 
-        tm.that(result, is_=m.Ldif.Entry)
+        assert isinstance(result, m.Ldif.Entry)
         tm.that(result.attributes is None, eq=True)
 
     # ── filter_schema_by_oids (fallible r[T] contract) ────────────────────────

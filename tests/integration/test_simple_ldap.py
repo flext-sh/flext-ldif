@@ -53,7 +53,7 @@ class TestsFlextLdifSimpleLdap:
             attributes=["*"],
         )
         ldap_entry = ldap_connection.entries[0]
-        tm.that(ldap_entry.entry_dn, none=False)
+        assert ldap_entry.entry_dn is not None
         attrs: t.MutableAttributeMapping = {
             attr: [str(value) for value in ldap_entry[attr].values]
             for attr in ldap_entry.entry_attributes
@@ -119,7 +119,7 @@ class TestsFlextLdifSimpleLdap:
 
             tm.ok(write_result)
             response = write_result.unwrap()
-            tm.that(response.content, none=False)
+            assert response.content is not None
             tm.that(response.statistics.total_entries, eq=1)
             tm.that(response.statistics.processed_entries, eq=1)
             tm.that(response.content, has=f"cn: {username}")
@@ -143,7 +143,7 @@ class TestsFlextLdifSimpleLdap:
             write_result = api.write([entry])
             tm.ok(write_result)
             content = write_result.unwrap().content
-            tm.that(content, none=False)
+            assert content is not None
 
             parse_result = api.parse_string(content)
 

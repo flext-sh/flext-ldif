@@ -74,7 +74,7 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         entries = result.value.entries
         tm.that(len(entries), eq=1)
         metadata = entries[0].metadata
-        tm.that(metadata, none=False)
+        assert metadata is not None
         tm.that(str(metadata.server_type), eq=effective_server_type)
 
     # -- fixture-driven capture -------------------------------------------
@@ -103,7 +103,7 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         entries = result.value.entries
         assert entries, f"No entries parsed from {fixture_path}"
         for entry in entries:
-            tm.that(entry.metadata, none=False)
+            assert entry.metadata is not None
             tm.that(str(entry.metadata.server_type), eq=effective_server_type)
 
     # -- original DN capture ----------------------------------------------
@@ -119,7 +119,7 @@ class TestsFlextLdifMinimalDifferencesMetadata:
 
         tm.ok(result)
         metadata = result.value.entries[0].metadata
-        tm.that(metadata, none=False)
+        assert metadata is not None
         assert (
             metadata.extensions["original_dn_complete"] == "cn=test,dc=example,dc=com"
         )
@@ -165,7 +165,7 @@ class TestsFlextLdifMinimalDifferencesMetadata:
 
         tm.ok(result)
         metadata = result.value.entries[0].metadata
-        tm.that(metadata, none=False)
+        assert metadata is not None
         # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: validate plain mappings.
         converted: t.MutableJsonMapping = t.json_dict_adapter().validate_python(
             metadata.extensions[c.Ldif.CONVERTED_ATTRIBUTES],
@@ -206,7 +206,7 @@ class TestsFlextLdifMinimalDifferencesMetadata:
 
         tm.ok(write_result)
         written = write_result.value.content
-        tm.that(written, none=False)
+        assert written is not None
         tm.that(written, has="dn: cn=test,dc=example,dc=com")
         tm.that(written, has="orcldasisenabled: TRUE")
 
@@ -238,8 +238,8 @@ class TestsFlextLdifMinimalDifferencesMetadata:
 
         tm.ok(result)
         entry = result.value.entries[0]
-        tm.that(entry.metadata, none=False)
-        tm.that(entry.attributes, none=False)
+        assert entry.metadata is not None
+        assert entry.attributes is not None
         tm.that(entry.attributes.get(attribute), eq=[value])
 
     # -- invariants and error paths ---------------------------------------
@@ -262,8 +262,8 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         assert first.success and second.success
         first_meta = first.value.entries[0].metadata
         second_meta = second.value.entries[0].metadata
-        tm.that(first_meta, none=False)
-        tm.that(second_meta, none=False)
+        assert first_meta is not None
+        assert second_meta is not None
         tm.that(str(first_meta.server_type), eq=str(second_meta.server_type))
         tm.that(first_meta.extensions, eq=second_meta.extensions)
 
@@ -277,7 +277,7 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         result = parser.parse_string(content=content, server_type="nonexistent_server")
 
         tm.fail(result)
-        tm.that(result.error, none=False)
+        assert result.error is not None
         tm.that(result.error, has="nonexistent_server")
 
 

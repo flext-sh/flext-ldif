@@ -287,7 +287,7 @@ class TestsFlextLdifEdgeCases:
         write_result = api.write(result.value.entries)
         tm.ok(write_result)
         written = write_result.value.content
-        tm.that(written, none=False)
+        assert written is not None
         assert not written.strip() or written.strip() == "version: 1"
 
     def test_single_entry_roundtrip_preserves_dn_and_value(
@@ -301,7 +301,7 @@ class TestsFlextLdifEdgeCases:
         write_result = api.write(result.value.entries)
         tm.ok(write_result)
         content = write_result.value.content
-        tm.that(content, none=False)
+        assert content is not None
 
         roundtrip = api.parse_ldif(content)
         tm.ok(roundtrip)
@@ -328,7 +328,7 @@ class TestsFlextLdifEdgeCases:
         write_result = api.write(result.value.entries)
         tm.ok(write_result)
         content = write_result.value.content
-        tm.that(content, none=False)
+        assert content is not None
 
         roundtrip = api.parse_ldif(content)
         tm.ok(roundtrip)

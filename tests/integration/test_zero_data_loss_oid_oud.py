@@ -100,7 +100,7 @@ class TestsFlextLdifZeroDataLossOidOud:
         entries = result.value.entries
         assert entries, "No entries parsed"
         for entry in entries:
-            tm.that(entry.metadata, none=False)
+            assert entry.metadata is not None
             original = u.to_str(
                 entry.metadata.original_strings["entry_original_ldif"],
             )
@@ -117,7 +117,7 @@ class TestsFlextLdifZeroDataLossOidOud:
         tm.ok(result)
 
         for entry in result.value.entries:
-            tm.that(entry.metadata, none=False)
+            assert entry.metadata is not None
             # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: validate the plain mapping.
             dn_diff: t.MutableJsonMapping = t.json_dict_adapter().validate_python(
                 entry.metadata.minimal_differences.get("dn", {}),
@@ -204,7 +204,7 @@ orclIsEnabled: 1
         tm.ok(result)
 
         for entry in result.value.entries:
-            tm.that(entry.metadata, none=False)
+            assert entry.metadata is not None
             tm.that(entry.metadata.conversion_history, is_=list)
 
     def test_soft_deleted_attributes_are_preserved(
@@ -242,7 +242,7 @@ orclIsEnabled: 1
 
         rfc = api.write(oid.value.entries, server_type=c.Tests.RFC)
         tm.ok(rfc)
-        tm.that(rfc.value.content, none=False)
+        assert rfc.value.content is not None
 
         oud = api.parse_ldif(rfc.value.content, server_type=c.Tests.OUD)
         tm.ok(oud)
@@ -252,8 +252,8 @@ orclIsEnabled: 1
         tm.that(len(oid_entries), eq=len(oud_entries))
 
         for original, converted in zip(oid_entries, oud_entries, strict=True):
-            tm.that(original.attributes, none=False)
-            tm.that(converted.attributes, none=False)
+            assert original.attributes is not None
+            assert converted.attributes is not None
             original_attrs = set(original.attributes.attributes.keys())
             converted_attrs = set(converted.attributes.attributes.keys())
             lost = {
@@ -274,7 +274,7 @@ orclIsEnabled: 1
 
         to_oud = api.write(original.value.entries, server_type=c.Tests.OUD)
         tm.ok(to_oud)
-        tm.that(to_oud.value.content, none=False)
+        assert to_oud.value.content is not None
 
         reparsed = api.parse_ldif(to_oud.value.content, server_type=c.Tests.OUD)
         tm.ok(reparsed)
@@ -285,7 +285,7 @@ orclIsEnabled: 1
             format_options=m.Ldif.WriteFormatOptions(restore_original_format=True),
         )
         tm.ok(back_to_oid)
-        tm.that(back_to_oid.value.content, none=False)
+        assert back_to_oid.value.content is not None
 
         roundtrip = api.parse_ldif(back_to_oid.value.content, server_type=c.Tests.OID)
         tm.ok(roundtrip)
@@ -295,8 +295,8 @@ orclIsEnabled: 1
         tm.that(len(original_entries), eq=len(roundtrip_entries))
 
         for orig, final in zip(original_entries, roundtrip_entries, strict=True):
-            tm.that(orig.metadata, none=False)
-            tm.that(final.metadata, none=False)
+            assert orig.metadata is not None
+            assert final.metadata is not None
             assert u.to_str(
                 orig.metadata.original_strings["entry_original_ldif"],
             ), f"Original text lost for {orig.dn}"
@@ -317,10 +317,10 @@ orclIsEnabled: 1
         )
         tm.ok(written)
         restored = written.value.content
-        tm.that(restored, none=False)
+        assert restored is not None
 
         for entry in parsed.value.entries:
-            tm.that(entry.metadata, none=False)
+            assert entry.metadata is not None
             original = u.to_str(
                 entry.metadata.original_strings["entry_original_ldif"],
             )
