@@ -1,0 +1,11 @@
+from typing import Any, Protocol, cast
+
+class ServerServer(Protocol):
+    @property
+    def acl_server(self) -> "AclServer": ...
+
+class AclServer(Protocol): ...
+
+def f(v: Any) -> AclServer:
+    base = cast(ServerServer, v)
+    return base.acl_server

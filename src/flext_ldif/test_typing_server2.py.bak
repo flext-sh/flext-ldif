@@ -1,0 +1,8 @@
+from typing import Any
+from flext_ldif.protocols import FlextLdifProtocols
+
+ServerServer = FlextLdifProtocols.Ldif.ServerServer
+
+def f(v: Any) -> FlextLdifProtocols.Ldif.AclServer:
+    base: ServerServer = v
+    return base.acl_server

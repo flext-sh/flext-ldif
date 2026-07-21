@@ -1,0 +1,7 @@
+from flext_ldif.protocols import FlextLdifProtocols
+
+def f(x: FlextLdifProtocols.Ldif.ServerServer) -> FlextLdifProtocols.Ldif.AclServer:
+    return x.acl_server
+
+def g(x: FlextLdifProtocols.Ldif.ServerServer) -> int:
+    return x.acl_server

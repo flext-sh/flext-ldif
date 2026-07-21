@@ -1,0 +1,74 @@
+dn: cn=Schema Test User0,ou=People,dc=example,dc=com
+objectClass: person
+objectClass: inetOrgPerson
+cn: Schema Test User0
+sn: TestUser0
+mail: user0@schema.example.com
+departmentNumber: Engineering
+
+dn: cn=Schema Test Group1,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: Schema Test Group1
+member: cn=Schema Test User0,ou=People,dc=example,dc=com
+member: cn=Schema Test User1,ou=People,dc=example,dc=com
+description: Schema-compliant group 1
+
+dn: cn=Schema Test User2,ou=People,dc=example,dc=com
+objectClass: person
+objectClass: inetOrgPerson
+cn: Schema Test User2
+sn: TestUser2
+mail: user2@schema.example.com
+departmentNumber: Engineering
+
+dn: cn=Schema Test Group3,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: Schema Test Group3
+member: cn=Schema Test User0,ou=People,dc=example,dc=com
+member: cn=Schema Test User1,ou=People,dc=example,dc=com
+description: Schema-compliant group 3
+
+dn: cn=Schema Test User4,ou=People,dc=example,dc=com
+objectClass: person
+objectClass: inetOrgPerson
+cn: Schema Test User4
+sn: TestUser4
+mail: user4@schema.example.com
+departmentNumber: Engineering
+
+dn: cn=Schema Test Group5,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: Schema Test Group5
+member: cn=Schema Test User0,ou=People,dc=example,dc=com
+member: cn=Schema Test User1,ou=People,dc=example,dc=com
+description: Schema-compliant group 5
+
+dn: cn=Schema Test User6,ou=People,dc=example,dc=com
+objectClass: person
+objectClass: inetOrgPerson
+cn: Schema Test User6
+sn: TestUser6
+mail: user6@schema.example.com
+departmentNumber: Engineering
+
+dn: cn=Schema Test Group7,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: Schema Test Group7
+member: cn=Schema Test User0,ou=People,dc=example,dc=com
+member: cn=Schema Test User1,ou=People,dc=example,dc=com
+description: Schema-compliant group 7
+
+dn: cn=Schema Test User8,ou=People,dc=example,dc=com
+objectClass: person
+objectClass: inetOrgPerson
+cn: Schema Test User8
+sn: TestUser8
+mail: user8@schema.example.com
+departmentNumber: Engineering
+
+dn: cn=Schema Test Group9,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: Schema Test Group9
+member: cn=Schema Test User0,ou=People,dc=example,dc=com
+member: cn=Schema Test User1,ou=People,dc=example,dc=com
+description: Schema-compliant group 9

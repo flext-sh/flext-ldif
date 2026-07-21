@@ -1,0 +1,2 @@
+dn: cn=example,dc=example,dc=com
+objectClass: top

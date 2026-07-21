@@ -1,0 +1,79 @@
+dn: cn=schema
+objectClass: top
+objectClass: ldapSubentry
+objectClass: subschema
+cn: schema
+description: Schema container for LDAP directory
+
+dn: cn=cn,cn=schema
+objectClass: top
+objectClass: ldapSubentry
+objectClass: attributeTypeDescription
+cn: cn
+description: Common Name
+syntax: 1.3.6.1.4.1.1466.115.121.1.15
+singleValue: FALSE
+usage: userApplications
+
+dn: cn=sn,cn=schema
+objectClass: top
+objectClass: ldapSubentry
+objectClass: attributeTypeDescription
+cn: sn
+description: Surname
+syntax: 1.3.6.1.4.1.1466.115.121.1.15
+singleValue: FALSE
+usage: userApplications
+
+dn: cn=mail,cn=schema
+objectClass: top
+objectClass: ldapSubentry
+objectClass: attributeTypeDescription
+cn: mail
+description: Email Address
+syntax: 1.3.6.1.4.1.1466.115.121.1.26
+singleValue: FALSE
+usage: userApplications
+
+dn: cn=member,cn=schema
+objectClass: top
+objectClass: ldapSubentry
+objectClass: attributeTypeDescription
+cn: member
+description: Group member
+syntax: 1.3.6.1.4.1.1466.115.121.1.12
+singleValue: FALSE
+usage: userApplications
+
+dn: cn=person,cn=schema
+objectClass: top
+objectClass: ldapSubentry
+objectClass: objectClassDescription
+cn: person
+description: Person object class
+sup: top
+must: cn
+must: sn
+may: mail
+may: telephoneNumber
+
+dn: cn=inetOrgPerson,cn=schema
+objectClass: top
+objectClass: ldapSubentry
+objectClass: objectClassDescription
+cn: inetOrgPerson
+description: Internet Organization Person
+sup: person
+must: cn
+may: departmentNumber
+
+dn: cn=groupOfNames,cn=schema
+objectClass: top
+objectClass: ldapSubentry
+objectClass: objectClassDescription
+cn: groupOfNames
+description: Group of names
+sup: top
+must: cn
+must: member
+may: description

@@ -1,0 +1,346 @@
+# flext-ldif: parse() and format_acl() Usage Locations
+
+<!-- TOC START -->
+- [SUMMARY](#summary)
+- [1. METHOD DEFINITIONS](#1-method-definitions)
+  - [Base Class Definition](#base-class-definition)
+  - [Protocol Definition](#protocol-definition)
+- [2. SERVER SERVERS IMPLEMENTATIONS](#2-server-servers-implementations)
+  - [13 Server Servers Classes Implementing parse()](#13-server-servers-classes-implementing-parse)
+  - [Implementation Pattern](#implementation-pattern)
+- [3. SERVICE LAYER USAGE](#3-service-layer-usage)
+  - [ACL Service](#acl-service)
+  - [Categorized Pipeline](#categorized-pipeline)
+- [4. TEST COVERAGE](#4-test-coverage)
+  - [Unit Test Files Using parse()](#unit-test-files-using-parse)
+  - [Test Pattern](#test-pattern)
+- [5. INTEGRATION POINTS](#5-integration-points)
+  - [FlextLdifCategorizedMigrationPipeline](#flextldifcategorizedmigrationpipeline)
+  - [ldif High-Level API](#ldif-high-level-api)
+- [6. CURRENT DATA FLOW](#6-current-data-flow)
+- [7. AFFECTED CODE LOCATIONS (SUMMARY)](#7-affected-code-locations-summary)
+  - [Must Be Updated (High Impact)](#must-be-updated-high-impact)
+  - [Should Review (Medium Impact)](#should-review-medium-impact)
+- [8. MIGRATION STRATEGY](#8-migration-strategy)
+  - [Phase 1: Update Interfaces (2-3 hours)](#phase-1-update-interfaces-2-3-hours)
+  - [Phase 2: Update Implementations (4-6 hours)](#phase-2-update-implementations-4-6-hours)
+  - [Phase 3: Update Tests (2-3 hours)](#phase-3-update-tests-2-3-hours)
+  - [Phase 4: Validation (2-3 hours)](#phase-4-validation-2-3-hours)
+- [9. ECOSYSTEM IMPACT](#9-ecosystem-impact)
+  - [Projects Using flext-ldif](#projects-using-flext-ldif)
+- [CONCLUSION](#conclusion)
+<!-- TOC END -->
+
+**Analysis Date**: 2025-10-28
+**Scope**: Comprehensive mapping of ACL method usage in flext-ldif library
+
+______________________________________________________________________
+
+## SUMMARY
+
+The `parse()` and `format_acl()` methods are defined in the flext-ldif library and have **13 server servers implementations** plus extensive test coverage.
+
+**Files Affected by Return Type Change**: ~45+ files
+**Lines of Code Affected**: ~520+ lines in servers implementations + ~1000+ lines in tests
+**Risk Level**: HIGH - Extensive refactoring required
+
+______________________________________________________________________
+
+## 1. METHOD DEFINITIONS
+
+### Base Class Definition
+
+**File**: `/home/marlonsc/flext/flext-ldif/src/flext_ldif/servers/base.py`
+
+```python notest
+class FlextLdifServersBase.Acl(ABC, ServerRegistrationMixin):
+    """Base class for ACL servers."""
+
+    def parse(self, acl_line: str) -> p.Result[FlextLdifModels.Acl]:
+        """Parse server-specific ACL definition.
+
+        Args:
+            acl_line: ACL line from LDIF file
+
+        Returns:
+            r[FlextLdifModels.Acl]
+        """
+```
+
+### Protocol Definition
+
+**File**: `/home/marlonsc/flext/flext-ldif/src/flext_ldif/protocols.py`
+
+```python notest
+class Acl(Protocol):
+    """Protocol for ACL servers."""
+
+    def parse(self, acl_line: str) -> p.Result[t.JsonMapping]:
+        """Parse ACL - returns r with dict or Acl model."""
+```
+
+______________________________________________________________________
+
+## 2. SERVER SERVERS IMPLEMENTATIONS
+
+### 13 Server Servers Classes Implementing parse()
+
+| #   | File            | Location                                   | Server Type             |
+| --- | --------------- | ------------------------------------------ | ----------------------- |
+| 1   | `oid.py`        | `/flext_ldif/servers/servers/oid.py`        | Oracle OID              |
+| 2   | `ouds.py`       | `/flext_ldif/servers/servers/ouds.py`       | Oracle OUD              |
+| 3   | `openldap.py`   | `/flext_ldif/servers/servers/openldap.py`   | OpenLDAP (generic)      |
+| 4   | `openldap1.py`  | `/flext_ldif/servers/servers/openldap1.py`  | OpenLDAP 1.x            |
+| 5   | `openldap2s.py` | `/flext_ldif/servers/servers/openldap2s.py` | OpenLDAP 2.x            |
+| 6   | `tivoli.py`     | `/flext_ldif/servers/servers/tivoli.py`     | IBM Tivoli              |
+| 7   | `novell.py`     | `/flext_ldif/servers/servers/novell.py`     | Novell eDirectory       |
+| 8   | `ad.py`         | `/flext_ldif/servers/servers/ad.py`         | Active Directory        |
+| 9   | `ds389.py`      | `/flext_ldif/servers/servers/ds389.py`      | 389 Directory Server    |
+| 10  | `apache.py`     | `/flext_ldif/servers/servers/apache.py`     | Apache DS               |
+| 11  | `relaxed.py`    | `/flext_ldif/servers/servers/relaxed.py`    | RFC-compliant (relaxed) |
+| 12  | `rfcs.py`       | `/flext_ldif/servers/servers/rfcs.py`       | RFC baseline            |
+| 13  | `generics.py`   | `/flext_ldif/servers/servers/generics.py`   | Generic fallback        |
+
+### Implementation Pattern
+
+Each server servers class has:
+
+- `class XyzAcl(FlextLdifServersBase.Acl):`
+- `def parse(self, acl_line: str) -> p.Result[FlextLdifModels.Acl]:`
+- Server-specific parsing logic
+- Returns `r.ok(Acl(...))` or `r.fail(...)`
+
+**Affected Lines**: ~40-50 lines per file × 13 files = ~520-650 lines
+
+______________________________________________________________________
+
+## 3. SERVICE LAYER USAGE
+
+### ACL Service
+
+**File**: `/home/marlonsc/flext/flext-ldif/src/flext_ldif/services/acl.py`
+
+**Method**: `parse()`
+
+```python notest
+def parse(
+    self, acl_line: str, server_type: str | None = None
+) -> p.Result[FlextLdifModels.Acl]:
+    """Parse ACL line using appropriate servers.
+
+    Delegates to servers.parse() internally.
+    """
+    server_result = self._get_for_server(server_type)
+    if server_result.failure:
+        return r[FlextLdifModels.Acl].fail(...)
+
+    server = server_result.unwrap()
+    return server.parse(acl_line)  # ← Calls server.parse()
+```
+
+**Lines Affected**: 30-40 lines
+
+### Categorized Pipeline
+
+**File**: `/home/marlonsc/flext/flext-ldif/src/flext_ldif/categorized_pipeline.py`
+
+**Method**: `_transform_categories()`
+
+```python notest
+def _transform_categories(
+    self, categorized: t.MappingKV[str, t.SequenceOf[m.Dict]]
+) -> p.Result[Mapping[str, t.SequenceOf[m.Dict]]]:
+    """Transform ACL entries using OID→OUD pipeline.
+
+    Uses parse()
+    """
+    # Lines 668-771: Complete ACL transformation logic
+    for entry in categorized.get("acl", []):
+        for acl_attr in ["orclaci", "orclentrylevelaci"]:
+            parse_result = oid_acl.parse(f"{acl_attr}: {acl_value}")
+            # ↑ Uses parse() to parse OID format
+```
+
+**Lines Affected**: 100+ lines for ACL transformation logic
+
+______________________________________________________________________
+
+## 4. TEST COVERAGE
+
+### Unit Test Files Using parse()
+
+| File                                 | Location                                     | Test Count   |
+| ------------------------------------ | -------------------------------------------- | ------------ |
+| `tests_acl.py`                       | `/tests/unit/servers/tests_acl.py`            | 20+ tests    |
+| `tests_acl_conversion.py`            | `/tests/unit/servers/tests_acl_conversion.py` | 15+ tests    |
+| `test_acl_service.py`                | `/tests/unit/test_acl_service.py`            | 10+ tests    |
+| `test_acl_utils.py`                  | `/tests/unit/test_acl_utils.py`              | 5+ tests     |
+| `test_acl_service_operations.py.bak` | Backup file                                  | Legacy tests |
+
+### Test Pattern
+
+```python notest
+def test_parse_oracle_oid():
+    """Test OID ACL parsing."""
+    server = FlextLdifServersOid.Acl()
+    acl_line = "orclaci: access to entry by * (browse)"
+
+    result = server.parse(acl_line)
+
+    assert result.success
+    acl = result.unwrap()
+    assert isinstance(acl, FlextLdifModels.Acl)  # ← Tests Acl return type
+    assert acl.server_type == "oid"
+```
+
+**Total Tests**: ~50+ test methods using parse()
+
+______________________________________________________________________
+
+## 5. INTEGRATION POINTS
+
+### FlextLdifCategorizedMigrationPipeline
+
+**File**: `/home/marlonsc/flext/flext-ldif/src/flext_ldif/categorized_pipeline.py`
+
+**Usage Context**:
+
+- Initializes OID and OUD servers
+- Calls `_transform_categories()` which uses parse()
+- Returns transformed entries with OUD format ACLs
+
+**Impact**: HIGH - Core migration pipeline uses parse()
+
+### ldif High-Level API
+
+**File**: `/home/marlonsc/flext/flext-ldif/src/flext_ldif/__init__.py`
+
+**Exposure**:
+
+- `ldif.parse()` uses servers internally but doesn't expose parse()
+- Higher-level API returns Entry models (not Acl models)
+- algar-oud-mig uses this API (already compatible with Entry return)
+
+______________________________________________________________________
+
+## 6. CURRENT DATA FLOW
+
+```
+Input LDIF with OID ACL (orclaci:)
+    ↓
+ldif.parse() → FlextLdifModels.Entry[]
+    ↓ (internal servers usage)
+parse(acl_line: str) → r[FlextLdifModels.Acl]
+    ↓
+Entry model with aci attributes (after transformation)
+    ↓
+Output LDIF with OUD format (aci:)
+```
+
+______________________________________________________________________
+
+## 7. AFFECTED CODE LOCATIONS (SUMMARY)
+
+### Must Be Updated (High Impact)
+
+1. **Protocol Definition** (3-5 lines)
+
+   - `/flext_ldif/protocols.py` - Update Acl signature
+
+1. **Base Class** (10-15 lines)
+
+   - `/flext_ldif/servers/base.py` - Update FlextLdifServersBase.Acl.parse()
+
+1. **13 Server Servers** (520-650 lines)
+
+   - All 13 servers files in `/flext_ldif/servers/servers/`
+   - Each file needs parse() method signature updated
+
+1. **Service Layer** (30-50 lines)
+
+   - `/flext_ldif/services/acl.py` - Update parse() wrapper
+   - `/flext_ldif/categorized_pipeline.py` - Update transformation logic
+
+1. **Tests** (1000+ lines)
+
+   - 50+ test methods in 4+ test files
+   - Mock returns, assertions, fixture data
+
+### Should Review (Medium Impact)
+
+1. **Integration Tests** (tests/integration/)
+
+   - May have parse() calls in fixtures or helpers
+
+1. **Examples** (examples/06_acl_processing.py)
+
+   - Documentation examples using parse()
+
+1. **Type Hints**
+
+   - Any type hints expecting Acl model need updating
+
+______________________________________________________________________
+
+## 8. MIGRATION STRATEGY
+
+### Phase 1: Update Interfaces (2-3 hours)
+
+- [ ] Update protocol definition in protocols.py
+- [ ] Update base class in servers/base.py
+- [ ] Update service wrapper in services/acl.py
+
+### Phase 2: Update Implementations (4-6 hours)
+
+- [ ] Update all 13 server servers
+- [ ] Create Entry wrapper logic if needed
+- [ ] Update categorized_pipeline.py
+
+### Phase 3: Update Tests (2-3 hours)
+
+- [ ] Update test files to expect Entry return
+- [ ] Update assertions and mocks
+- [ ] Add Entry wrapping tests
+
+### Phase 4: Validation (2-3 hours)
+
+- [ ] Run full test suite
+- [ ] Test with real LDIF data
+- [ ] Verify algar-oud-mig compatibility (should be automatic)
+
+**Total Estimated Time**: 10-15 hours of development
+
+______________________________________________________________________
+
+## 9. ECOSYSTEM IMPACT
+
+### Projects Using flext-ldif
+
+**Dependent on parse()/format_acl()**:
+
+1. algar-oud-mig - Uses via ldif.parse() (COMPATIBLE)
+1. Any other projects importing from flext-ldif
+
+**Risk Assessment**:
+
+- algar-oud-mig: 🟢 **NO CHANGES NEEDED** (uses high-level API)
+- flext-ldif itself: 🔴 **EXTENSIVE CHANGES REQUIRED**
+- Other ecosytem projects: 🟡 **REVIEW REQUIRED** (depends on usage)
+
+______________________________________________________________________
+
+## CONCLUSION
+
+The parse() and format_acl() return type change requires **significant refactoring** within flext-ldif but does **NOT impact algar-oud-mig** because:
+
+1. algar-oud-mig uses `ldif.parse()` (high-level API) which returns Entry models
+1. algar-oud-mig does not directly call parse() or format_acl()
+1. The change is internal to flext-ldif's servers system
+
+**Recommendation**: Implement the change in flext-ldif, test thoroughly, then verify algar-oud-mig continues to work (should be automatic with no code changes).
+
+______________________________________________________________________
+
+**Generated By**: Claude Code
+**Tools Used**: Grep, Read, Bash
+**Scope**: Complete flext-ldif ACL method analysis

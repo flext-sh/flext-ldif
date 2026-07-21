@@ -1,0 +1,4 @@
+--- /home/marlonsc/flext/flext-ldif/custom.mk
++++ /home/marlonsc/flext/flext-ldif/custom.mk.rej
+@@ rejected custom Make surface @@
+custom.mk line 1 is not a private custom handler
