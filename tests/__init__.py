@@ -106,10 +106,7 @@ if TYPE_CHECKING:
         TestsFlextLdifZeroDataLossOidOud as TestsFlextLdifZeroDataLossOidOud,
     )
     from tests.models import TestsFlextLdifModels as TestsFlextLdifModels, m as m
-    from tests.protocols import (
-        TestsFlextLdifProtocols as TestsFlextLdifProtocols,
-        p,
-    )
+    from tests.protocols import TestsFlextLdifProtocols as TestsFlextLdifProtocols, p
     from tests.settings import TestsFlextLdifSettings as TestsFlextLdifSettings
     from tests.typings import TestsFlextLdifTypes as TestsFlextLdifTypes, t as t
     from tests.unit.servers.test_apache_servers import (
@@ -212,10 +209,7 @@ if TYPE_CHECKING:
     from tests.unit.utilities.test_utilities_core import (
         TestsFlextLdifUtilitiesCore as TestsFlextLdifUtilitiesCore,
     )
-    from tests.utilities import (
-        TestsFlextLdifUtilities as TestsFlextLdifUtilities,
-        u,
-    )
+    from tests.utilities import TestsFlextLdifUtilities as TestsFlextLdifUtilities, u
 _LAZY_IMPORTS = merge_lazy_imports(
     (
         ".integration",

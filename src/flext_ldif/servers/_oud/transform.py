@@ -12,14 +12,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, MutableMapping
 from typing import ClassVar
 
-from flext_ldif import (
-    c,
-    m,
-    p,
-    r,
-    t,
-    u,
-)
+from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._oud.aci import FlextLdifServersOudAciMixin
 from flext_ldif.servers._oud.acl_extract import FlextLdifServersOudAclExtractMixin
 from flext_ldif.servers._oud.acl_metadata import FlextLdifServersOudAclMetadataMixin

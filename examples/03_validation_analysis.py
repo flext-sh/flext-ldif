@@ -20,9 +20,7 @@ from typing import TYPE_CHECKING
 from flext_ldif import ldif, m, p, r, t
 
 if TYPE_CHECKING:
-    from collections.abc import (
-        MutableSequence,
-    )
+    from collections.abc import MutableSequence
 
 
 class DRYValidationAnalysis:

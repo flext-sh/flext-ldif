@@ -10,11 +10,7 @@ from flext_cli import u
 from flext_ldif import FlextLdifModels as m, c, p, r, t
 
 if TYPE_CHECKING:
-    from collections.abc import (
-        Callable,
-        Generator,
-        MutableMapping,
-    )
+    from collections.abc import Callable, Generator, MutableMapping
 
 
 class FlextLdifUtilitiesDN:

@@ -11,10 +11,7 @@ from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
 from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
 
 if TYPE_CHECKING:
-    from collections.abc import (
-        Callable,
-        Sequence,
-    )
+    from collections.abc import Callable, Sequence
 
 
 # mro-wkii.17.26 (Codex): server primitives extend upstream s; local s owns this registry.

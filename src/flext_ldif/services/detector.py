@@ -5,15 +5,7 @@ from __future__ import annotations
 import re
 from typing import TYPE_CHECKING, override
 
-from flext_ldif import (
-    c,
-    m,
-    p,
-    r,
-    s,
-    t,
-    u,
-)
+from flext_ldif import c, m, p, r, s, t, u
 
 if TYPE_CHECKING:
     from pathlib import Path

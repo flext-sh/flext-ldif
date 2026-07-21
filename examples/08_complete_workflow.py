@@ -12,9 +12,7 @@ from typing import TYPE_CHECKING
 from flext_ldif import c, ldif, m, p
 
 if TYPE_CHECKING:
-    from collections.abc import (
-        MutableSequence,
-    )
+    from collections.abc import MutableSequence
 
 
 def complete_ldif_processing_workflow() -> None:

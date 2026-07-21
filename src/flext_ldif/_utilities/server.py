@@ -5,13 +5,7 @@ from __future__ import annotations
 import sys
 from typing import TypeIs
 
-from flext_ldif import (
-    FlextLdifShared,
-    c,
-    p,
-    r,
-    t,
-)
+from flext_ldif import FlextLdifShared, c, p, r, t
 
 
 class FlextLdifUtilitiesServer:

@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import (
-    Callable,
-    Sequence,
-)
+from collections.abc import Callable, Sequence
 from typing import ClassVar, TypeGuard, overload
 
 from flext_cli import u

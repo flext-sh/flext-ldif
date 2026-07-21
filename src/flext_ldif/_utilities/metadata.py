@@ -2,11 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import (
-    Callable,
-    Mapping,
-    MutableMapping,
-)
+from collections.abc import Callable, Mapping, MutableMapping
 from typing import ClassVar, TypeIs
 
 from flext_cli import u

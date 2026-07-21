@@ -11,13 +11,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_ldif import (
-    c,
-    m,
-    p,
-    t,
-    u,
-)
+from flext_ldif import c, m, p, t, u
 
 if TYPE_CHECKING:
     from collections.abc import MutableMapping

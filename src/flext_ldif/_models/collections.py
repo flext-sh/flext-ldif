@@ -13,11 +13,7 @@ from flext_ldif import t
 from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries as mde
 
 if TYPE_CHECKING:
-    from collections.abc import (
-        Iterator,
-        MutableMapping,
-        Sequence,
-    )
+    from collections.abc import Iterator, MutableMapping, Sequence
 
     from flext_ldif import p
 

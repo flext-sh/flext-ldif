@@ -2,11 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import (
-    Mapping,
-    MutableMapping,
-    Sequence,
-)
+from collections.abc import Mapping, MutableMapping, Sequence
 from typing import ClassVar, Self, overload, override
 
 from flext_ldif import c, m, p, r, t, u

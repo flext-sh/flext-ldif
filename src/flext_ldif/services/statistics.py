@@ -4,14 +4,7 @@ from __future__ import annotations
 
 from collections import Counter
 
-from flext_ldif import (
-    m,
-    p,
-    r,
-    s,
-    t,
-    u,
-)
+from flext_ldif import m, p, r, s, t, u
 
 
 class FlextLdifStatistics(s):

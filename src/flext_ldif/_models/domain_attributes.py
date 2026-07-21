@@ -13,12 +13,7 @@ from typing import TYPE_CHECKING, Annotated, ClassVar, Self
 from flext_cli import m, u
 
 if TYPE_CHECKING:
-    from collections.abc import (
-        ItemsView,
-        KeysView,
-        MutableMapping,
-        ValuesView,
-    )
+    from collections.abc import ItemsView, KeysView, MutableMapping, ValuesView
 
     from flext_ldif import c, t
 

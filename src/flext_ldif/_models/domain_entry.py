@@ -8,19 +8,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Mapping,
-    MutableMapping,
-)
+from collections.abc import Mapping, MutableMapping
 from datetime import datetime
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Annotated, ClassVar, Self, override
 
 from flext_core import FlextUtilities as u, m
 from flext_ldif import c, p, r, t
-from flext_ldif._models.domain_attributes import (
-    FlextLdifModelsDomainAttributes as mda,
-)
+from flext_ldif._models.domain_attributes import FlextLdifModelsDomainAttributes as mda
 from flext_ldif._models.domain_dn import FlextLdifModelsDomainDN as mdn
 from flext_ldif._models.domain_metadata import FlextLdifModelsDomainMetadata as mdm
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry

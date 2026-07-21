@@ -4,14 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_ldif import (
-    m,
-    p,
-    r,
-    s,
-    t,
-    u,
-)
+from flext_ldif import m, p, r, s, t, u
 
 if TYPE_CHECKING:
     from pathlib import Path

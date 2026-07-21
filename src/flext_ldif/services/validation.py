@@ -5,13 +5,7 @@ from __future__ import annotations
 import struct
 from typing import Annotated
 
-from flext_ldif import (
-    p,
-    r,
-    s,
-    t,
-    u,
-)
+from flext_ldif import p, r, s, t, u
 
 
 class FlextLdifValidation(

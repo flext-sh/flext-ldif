@@ -3,21 +3,11 @@
 from __future__ import annotations
 
 import struct
-from collections.abc import (
-    Mapping,
-    MutableMapping,
-)
+from collections.abc import Mapping, MutableMapping
 from typing import Annotated, ClassVar, Self, override
 
 from flext_core import s
-from flext_ldif import (
-    c,
-    m,
-    p,
-    r,
-    t,
-    u,
-)
+from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
 
 

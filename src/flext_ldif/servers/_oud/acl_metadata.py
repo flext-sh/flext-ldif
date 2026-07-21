@@ -13,13 +13,7 @@ from collections.abc import Mapping
 from types import MappingProxyType
 from typing import ClassVar
 
-from flext_ldif import (
-    c,
-    m,
-    p,
-    t,
-    u,
-)
+from flext_ldif import c, m, p, t, u
 
 
 class FlextLdifServersOudAclMetadataMixin:
