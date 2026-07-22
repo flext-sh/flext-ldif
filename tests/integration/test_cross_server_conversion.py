@@ -15,6 +15,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import pytest
+
 from flext_tests import tm
 from tests import c, m
 
@@ -137,6 +139,11 @@ class TestsFlextLdifCrossServerConversion:
         tm.that(converted.server_type, eq=c.Tests.RFC)
         tm.that(converted.raw_acl, none=False)
 
+    # Iterates every Oracle attribute in the OID fixture through a full
+    # parse->write->parse schema round-trip: ~18s of real CPU work (profiled),
+    # exceeding the global --timeout=10 under load. Per-test ceiling, not a
+    # suppression of a hang (proven to complete in 18s with timeout raised).
+    @pytest.mark.timeout(60)
     def test_oid_schema_fixture_oracle_attributes_convert_to_oud_preserving_identity(
         self,
         oid_schema_server: p.Ldif.SchemaServer,
