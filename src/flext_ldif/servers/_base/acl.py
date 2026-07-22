@@ -4,22 +4,11 @@ from __future__ import annotations
 
 from typing import Annotated, ClassVar, Self, override
 
-from flext_ldif import (
-    c,
-    m,
-    p,
-    r,
-    s,
-    t,
-    u,
-)
+from flext_ldif import c, m, p, r, s, t, u
 from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
 
 
-class FlextLdifServersBaseSchemaAcl(
-    s[t.Ldif.AclPayload],
-    FlextLdifServerMethodsMixin,
-):
+class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethodsMixin):
     """Base class for ACL servers - satisfies Acl (structural typing)."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
@@ -28,14 +17,11 @@ class FlextLdifServersBaseSchemaAcl(
     server_type: Annotated[
         str,
         u.Field(
-            description="Server type identifier (e.g., 'oid', 'oud', 'openldap', 'rfc')",
+            description="Server type identifier (e.g., 'oid', 'oud', 'openldap', 'rfc')"
         ),
     ] = "rfc"
     priority: Annotated[
-        int,
-        u.Field(
-            description="Server priority (lower number = higher priority)",
-        ),
+        int, u.Field(description="Server priority (lower number = higher priority)")
     ] = 0
     parent_server: Annotated[
         Self | None,
@@ -97,15 +83,14 @@ class FlextLdifServersBaseSchemaAcl(
     ) -> m.Ldif.ServerMetadata:
         """Create ACL server metadata."""
         all_extensions: t.Ldif.MutableMetadataInputMapping = {
-            "original_format": original_format,
+            "original_format": original_format
         }
         if extensions:
             all_extensions.update(extensions)
         # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: the ServerMetadata
         # boundary validates the plain mapping.
         return m.Ldif.ServerMetadata(
-            server_type=self._get_server_type(),
-            extensions=all_extensions,
+            server_type=self._get_server_type(), extensions=all_extensions
         )
 
     @override
@@ -145,7 +130,7 @@ class FlextLdifServersBaseSchemaAcl(
                 result = r[str].ok(acl_value)
             else:
                 sanitize_result_raw: tuple[str, bool] = u.Ldif.sanitize_acl_name(
-                    original_format,
+                    original_format
                 )
                 sanitized_name, _was_sanitized = sanitize_result_raw
                 if not sanitized_name:
@@ -157,8 +142,7 @@ class FlextLdifServersBaseSchemaAcl(
                     else:
                         pattern, replacement_template = pattern_result.value
                         formatted_value = pattern.sub(
-                            replacement_template.format(sanitized_name),
-                            acl_value,
+                            replacement_template.format(sanitized_name), acl_value
                         )
                         result = r[str].ok(formatted_value)
         return result
@@ -176,8 +160,7 @@ class FlextLdifServersBaseSchemaAcl(
         return self._write_acl(acl_data)
 
     def _coerce_acl_data(
-        self,
-        value: str | t.JsonValue | m.Ldif.Acl | None,
+        self, value: str | t.JsonValue | m.Ldif.Acl | None
     ) -> str | m.Ldif.Acl | None:
         """Coerce generic value to ACL payload union."""
         if value is None:
@@ -222,28 +205,24 @@ class FlextLdifServersBaseSchemaAcl(
         return r[t.Ldif.AclPayload].fail(write_result.error or "Write failed")
 
     def _execute_detected_operation(
-        self,
-        *,
-        detected_op: str,
-        data: str | m.Ldif.Acl,
+        self, *, detected_op: str, data: str | m.Ldif.Acl
     ) -> p.Result[t.Ldif.AclPayload]:
         """Execute parse/write with strongly typed dispatch."""
         if detected_op == "parse":
             if not isinstance(data, str):
                 return r[t.Ldif.AclPayload].fail(
-                    f"parse requires str, got {type(data).__name__}",
+                    f"parse requires str, got {type(data).__name__}"
                 )
             return self._execute_acl_parse(data)
         parsed_acl = self._coerce_acl_data(data)
         if parsed_acl is None or isinstance(parsed_acl, str):
             return r[t.Ldif.AclPayload].fail(
-                f"write requires Acl, got {type(data).__name__}",
+                f"write requires Acl, got {type(data).__name__}"
             )
         return self._execute_acl_write(parsed_acl)
 
     def _extract_acl_parameters(
-        self,
-        kwargs: t.MutableJsonMapping,
+        self, kwargs: t.MutableJsonMapping
     ) -> tuple[str | m.Ldif.Acl | None, str | None]:
         """Extract and validate ACL operation parameters from kwargs."""
         data_raw = kwargs.get("data")
@@ -266,10 +245,7 @@ class FlextLdifServersBaseSchemaAcl(
         """Provide server-specific ACL name pattern matching."""
         pattern = c.Ldif.ACL_NAME_QUOTED_RE
         replacement_template = 'acl "{0}"'
-        return r[tuple[t.Ldif.RegexPattern, str]].ok((
-            pattern,
-            replacement_template,
-        ))
+        return r[tuple[t.Ldif.RegexPattern, str]].ok((pattern, replacement_template))
 
     def _hook_post_parse_acl(self, acl: m.Ldif.Acl) -> p.Result[m.Ldif.Acl]:
         """Run hook after parsing an ACL line."""
@@ -281,9 +257,7 @@ class FlextLdifServersBaseSchemaAcl(
         return r[m.Ldif.Acl].fail("Must be implemented by subclass")
 
     def _resolve_data(
-        self,
-        data: str | m.Ldif.Acl | None,
-        kwargs: t.JsonMapping,
+        self, data: str | m.Ldif.Acl | None, kwargs: t.JsonMapping
     ) -> str | m.Ldif.Acl | None:
         """Resolve data from parameter or kwargs."""
         if data is not None:
@@ -292,9 +266,7 @@ class FlextLdifServersBaseSchemaAcl(
         return self._coerce_acl_data(data_raw)
 
     def _resolve_operation(
-        self,
-        operation: str | None,
-        kwargs: t.JsonMapping,
+        self, operation: str | None, kwargs: t.JsonMapping
     ) -> str | None:
         """Resolve operation from parameter or kwargs."""
         if operation is not None:

@@ -9,9 +9,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
 
 from flext_ldif import ldif
+from flext_tests import tm
 from tests import c
 
 if TYPE_CHECKING:
@@ -49,7 +49,7 @@ class TestsFlextLdifEdgeCases:
     ) -> None:
         """Test inline edge-case parsing rules using centralized datasets."""
         entries = tm.ok(
-            ldif_api.parse_ldif(ldif_content, server_type=c.Tests.RFC),
+            ldif_api.parse_ldif(ldif_content, server_type=c.Tests.RFC)
         ).entries
         tm.that(len(entries), gte=expected_entry_count)
         max_depth = 0
@@ -71,7 +71,7 @@ class TestsFlextLdifEdgeCases:
             c.Tests.FIXTURES_DIR / c.Tests.EDGE_CASE_LARGE_MULTIVALUE_FIXTURE_RELATIVE
         )
         entries = tm.ok(
-            ldif_api.parse_ldif(fixture_path, server_type=c.Tests.RFC),
+            ldif_api.parse_ldif(fixture_path, server_type=c.Tests.RFC)
         ).entries
         tm.that(len(entries), gt=0)
         max_values = 0
@@ -103,7 +103,7 @@ class TestsFlextLdifEdgeCases:
         guarantee, stronger than merely counting entries.
         """
         entries = tm.ok(
-            ldif_api.parse_ldif(ldif_content, server_type=c.Tests.RFC),
+            ldif_api.parse_ldif(ldif_content, server_type=c.Tests.RFC)
         ).entries
         tm.that(len(entries), eq=1)
         original = entries[0]
@@ -113,7 +113,7 @@ class TestsFlextLdifEdgeCases:
         output_path = tmp_path / output_name
         tm.ok(ldif_api.write_ldif_file(entries, output_path, server_type=c.Tests.RFC))
         roundtrip_entries = tm.ok(
-            ldif_api.parse_ldif(output_path, server_type=c.Tests.RFC),
+            ldif_api.parse_ldif(output_path, server_type=c.Tests.RFC)
         ).entries
         tm.that(len(roundtrip_entries), eq=1)
         roundtrip = roundtrip_entries[0]

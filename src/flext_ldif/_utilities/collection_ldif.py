@@ -5,9 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from collections.abc import (
-        Callable,
-    )
+    from collections.abc import Callable
 
     from flext_ldif import t
 
@@ -17,9 +15,7 @@ class FlextLdifUtilitiesCollectionLdif:
 
     @staticmethod
     def find(
-        items: t.JsonList,
-        *,
-        predicate: Callable[..., bool],
+        items: t.JsonList, *, predicate: Callable[..., bool]
     ) -> t.JsonValue | None:
         """Find first item matching predicate."""
         for elem in items:
@@ -59,9 +55,7 @@ class FlextLdifUtilitiesCollectionLdif:
         if other is not None:
             match (value, other):
                 case [str() as value_str, str() as other_str]:
-                    return normalize_single(value_str) == normalize_single(
-                        other_str,
-                    )
+                    return normalize_single(value_str) == normalize_single(other_str)
                 case _:
                     pass
         match value:

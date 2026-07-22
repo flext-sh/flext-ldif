@@ -4,14 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_ldif import (
-    m,
-    p,
-    r,
-    s,
-    t,
-    u,
-)
+from flext_ldif import m, p, r, s, t, u
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -30,14 +23,11 @@ class FlextLdifWriter(s):
         """Write entries to LDIF text and return canonical write metadata."""
         normalized_entries = u.Ldif.as_entries(entries)
         string_result = self.write_to_string(
-            normalized_entries,
-            server_type=server_type,
-            format_options=format_options,
+            normalized_entries, server_type=server_type, format_options=format_options
         )
         if string_result.failure:
             return r[m.Ldif.WriteResponse].fail_op(
-                "write ldif entries",
-                string_result.error or "LDIF writing failed",
+                "write ldif entries", string_result.error or "LDIF writing failed"
             )
         return r[m.Ldif.WriteResponse].ok(
             m.Ldif.WriteResponse(
@@ -46,7 +36,7 @@ class FlextLdifWriter(s):
                     total_entries=u.count(normalized_entries),
                     processed_entries=u.count(normalized_entries),
                 ),
-            ),
+            )
         )
 
     def write_ldif_file(
@@ -60,9 +50,7 @@ class FlextLdifWriter(s):
         """Write entries to an LDIF file and return canonical write metadata."""
         normalized_entries = u.Ldif.as_entries(entries)
         string_result = self.write_to_string(
-            normalized_entries,
-            server_type=server_type,
-            format_options=format_options,
+            normalized_entries, server_type=server_type, format_options=format_options
         )
         if string_result.failure:
             return r[m.Ldif.WriteResponse].fail_op(
@@ -74,7 +62,7 @@ class FlextLdifWriter(s):
         if write.failure:
             return r[m.Ldif.WriteResponse].fail(
                 f"Failed to write LDIF file {path}: "
-                f"{write.error or 'unknown write error'}",
+                f"{write.error or 'unknown write error'}"
             )
         return r[m.Ldif.WriteResponse].ok(
             m.Ldif.WriteResponse(
@@ -84,7 +72,7 @@ class FlextLdifWriter(s):
                     total_entries=u.count(normalized_entries),
                     processed_entries=u.count(normalized_entries),
                 ),
-            ),
+            )
         )
 
     def write_to_string(
@@ -105,9 +93,7 @@ class FlextLdifWriter(s):
         write_result = (
             self._server
             .server(effective_server_type)
-            .map_error(
-                lambda error: error or "Failed to resolve LDIF server server",
-            )
+            .map_error(lambda error: error or "Failed to resolve LDIF server server")
             .flat_map(lambda server: server.write(normalized_entries, concrete_options))
             .map_error(lambda error: error or "LDIF writing failed")
         )

@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_tests import s as tests_s
-
 from flext_ldif import m
+from flext_tests import s as tests_s
 from tests.settings import TestsFlextLdifSettings
 
 

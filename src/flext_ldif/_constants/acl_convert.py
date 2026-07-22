@@ -53,13 +53,11 @@ class FlextLdifConstantsAclConvert:
     ACL_WILDCARD: Final[str] = "*"
 
     ATTR_PATTERN_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"attr\s*(!?=)\s*\(([^)]*)\)",
-        re.IGNORECASE,
+        r"attr\s*(!?=)\s*\(([^)]*)\)", re.IGNORECASE
     )
     "Matches ``attr=(a,b)`` / ``attr!=(a,b)`` — group(1)=operator, group(2)=attrs."
     FILTER_PREFIX_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"filter\s*=\s*\(",
-        re.IGNORECASE,
+        r"filter\s*=\s*\(", re.IGNORECASE
     )
     "Matches the start of a ``filter=(...)`` clause (balanced-paren scan follows)."
     CN_EXTRACT_RE: ClassVar[t.RegexPattern] = re.compile(r"cn=([^,]+)", re.IGNORECASE)
@@ -76,8 +74,7 @@ class FlextLdifConstantsAclConvert:
 
     # by-clause subject matchers; group→subject mapping is the SUBJECT_MATCHERS SSOT.
     SUBJ_SUPERUSER_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"by\s+SuperUser\s*\(([^)]+)\)",
-        re.IGNORECASE,
+        r"by\s+SuperUser\s*\(([^)]+)\)", re.IGNORECASE
     )
     SUBJ_GROUP_RE: ClassVar[t.RegexPattern] = re.compile(
         rf'by\s+group\s*=\s*"([^"]+)"{_SUBJ_MODIFIERS}\s*\(([^)]+)\)'
@@ -95,24 +92,19 @@ class FlextLdifConstantsAclConvert:
         re.IGNORECASE,
     )
     SUBJ_SELF_RE: ClassVar[t.RegexPattern] = re.compile(
-        rf"by\s+self{_SUBJ_MODIFIERS}\s*\(([^)]+)\){_SUBJ_MODIFIERS}\s*$",
-        re.IGNORECASE,
+        rf"by\s+self{_SUBJ_MODIFIERS}\s*\(([^)]+)\){_SUBJ_MODIFIERS}\s*$", re.IGNORECASE
     )
     SUBJ_ANYONE_RE: ClassVar[t.RegexPattern] = re.compile(
-        rf"by\s+\*{_SUBJ_MODIFIERS}\s*\(([^)]+)\){_SUBJ_MODIFIERS}\s*$",
-        re.IGNORECASE,
+        rf"by\s+\*{_SUBJ_MODIFIERS}\s*\(([^)]+)\){_SUBJ_MODIFIERS}\s*$", re.IGNORECASE
     )
     SUBJ_DNATTR_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"by\s+dnattr\s*=\s*\(([^)]+)\)\s*\(([^)]+)\)",
-        re.IGNORECASE,
+        r"by\s+dnattr\s*=\s*\(([^)]+)\)\s*\(([^)]+)\)", re.IGNORECASE
     )
     SUBJ_GROUPATTR_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"by\s+groupattr\s*=\s*\(([^)]+)\)\s*\(([^)]+)\)",
-        re.IGNORECASE,
+        r"by\s+groupattr\s*=\s*\(([^)]+)\)\s*\(([^)]+)\)", re.IGNORECASE
     )
     SUBJ_GUIDATTR_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"by\s+guidattr\s*=\s*\(([^)]+)\)\s*\(([^)]+)\)",
-        re.IGNORECASE,
+        r"by\s+guidattr\s*=\s*\(([^)]+)\)\s*\(([^)]+)\)", re.IGNORECASE
     )
 
     BY_CLAUSE_RE: ClassVar[t.RegexPattern] = re.compile(

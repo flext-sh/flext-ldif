@@ -108,10 +108,7 @@ from flext_ldif import FlextLdif, FlextLdifSettings
 
 # Initialize configuration and use it with the public facade
 settings = FlextLdifSettings(
-    max_entries=50000,
-    strict_validation=True,
-    encoding="utf-8",
-    log_level="INFO",
+    max_entries=50000, strict_validation=True, encoding="utf-8", log_level="INFO"
 )
 api = FlextLdif(settings=settings)
 
@@ -432,10 +429,7 @@ Always use the Pydantic-based configuration models:
 from flext_ldif import FlextLdifSettings
 
 # ✅ Good: Type-safe configuration
-settings = FlextLdifSettings(
-    ldif_max_entries=50000,
-    ldif_strict_validation=True,
-)
+settings = FlextLdifSettings(ldif_max_entries=50000, ldif_strict_validation=True)
 
 # ❌ Avoid: Raw dictionaries without validation
 config_dict = {

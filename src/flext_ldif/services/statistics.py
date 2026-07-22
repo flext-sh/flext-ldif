@@ -4,22 +4,14 @@ from __future__ import annotations
 
 from collections import Counter
 
-from flext_ldif import (
-    m,
-    p,
-    r,
-    s,
-    t,
-    u,
-)
+from flext_ldif import m, p, r, s, t, u
 
 
 class FlextLdifStatistics(s):
     """Statistics service for LDIF processing pipeline."""
 
     def calculate_for_entries(
-        self,
-        entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
+        self, entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse
     ) -> p.Result[m.Ldif.EntriesStatistics]:
         """Calculate general-purpose statistics for a list of Entry models."""
         normalized_entries = u.Ldif.as_entries(entries)

@@ -4,43 +4,22 @@ from __future__ import annotations
 
 import base64
 import copy
-from collections.abc import (
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-)
+from collections.abc import Mapping, MutableMapping, MutableSequence
 from typing import Annotated, ClassVar, Self, override
 
-from flext_ldif import (
-    c,
-    m,
-    p,
-    r,
-    s,
-    t,
-    u,
-)
+from flext_ldif import c, m, p, r, s, t, u
 from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
 
 
-class FlextLdifServersBaseEntry(
-    s[t.Ldif.EntryPayload],
-    FlextLdifServerMethodsMixin,
-):
+class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMixin):
     """Base class for entry processing servers - satisfies Entry (structural typing)."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
-    server_type: Annotated[
-        str,
-        u.Field(
-            description="Server type identifier",
-        ),
-    ] = "unknown"
+    server_type: Annotated[str, u.Field(description="Server type identifier")] = (
+        "unknown"
+    )
     priority: Annotated[
-        int,
-        u.Field(
-            description="Server priority (lower number = higher priority)",
-        ),
+        int, u.Field(description="Server priority (lower number = higher priority)")
     ] = 0
     parent_server: Annotated[
         Self | None,
@@ -71,12 +50,12 @@ class FlextLdifServersBaseEntry(
         if metadata is None:
             return None
         format_options_raw: t.JsonValue | None = metadata.extensions.get(
-            c.Ldif.WRITE_FORMAT_OPTIONS,
+            c.Ldif.WRITE_FORMAT_OPTIONS
         )
         if isinstance(format_options_raw, Mapping):
             try:
                 normalized_payload = t.Cli.JSON_MAPPING_ADAPTER.validate_python(
-                    format_options_raw,
+                    format_options_raw
                 )
                 serialized = u.Cli.json_dumps(dict(normalized_payload)).unwrap()
                 validated: m.Ldif.WriteFormatOptions = (
@@ -92,9 +71,7 @@ class FlextLdifServersBaseEntry(
         return None
 
     def can_handle(
-        self,
-        entry_dn: str,
-        attributes: t.MutableStrSequenceMapping,
+        self, entry_dn: str, attributes: t.MutableStrSequenceMapping
     ) -> bool:
         """Check if this server can handle the entry."""
         _ = entry_dn
@@ -113,8 +90,7 @@ class FlextLdifServersBaseEntry(
 
     @override
     def execute(
-        self,
-        **kwargs: str | m.Ldif.Entry | t.MutableJsonMapping,
+        self, **kwargs: str | m.Ldif.Entry | t.MutableJsonMapping
     ) -> p.Result[t.Ldif.EntryPayload]:
         """Execute entry operation (parse/write)."""
         ldif_content = kwargs.get("ldif_content")
@@ -142,9 +118,7 @@ class FlextLdifServersBaseEntry(
         return parse_result.value
 
     def parse_entry(
-        self,
-        entry_dn: str,
-        entry_attrs: t.MutableStrSequenceMapping,
+        self, entry_dn: str, entry_attrs: t.MutableStrSequenceMapping
     ) -> p.Result[m.Ldif.Entry]:
         """Parse a single entry from DN and attributes."""
         attrs_dict = dict(entry_attrs)
@@ -157,7 +131,7 @@ class FlextLdifServersBaseEntry(
                 r[m.Ldif.Entry].ok(entries[0])
                 if entries
                 else r[m.Ldif.Entry].fail("No entries parsed")
-            ),
+            )
         )
 
     def write(
@@ -171,9 +145,7 @@ class FlextLdifServersBaseEntry(
         return self._write_single_entry(entry_data, write_options)
 
     def _build_header_lines(
-        self,
-        write_options: m.Ldif.WriteFormatOptions | None,
-        entry_count: int,
+        self, write_options: m.Ldif.WriteFormatOptions | None, entry_count: int
     ) -> t.MutableSequenceOf[str]:
         """Build header lines based on write options."""
         lines: t.MutableSequenceOf[str] = []
@@ -190,8 +162,7 @@ class FlextLdifServersBaseEntry(
         return lines
 
     def _convert_raw_attributes(
-        self,
-        entry_attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]],
+        self, entry_attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]]
     ) -> t.MutableStrSequenceMapping:
         """Convert raw LDIF attributes to t.MutableStrSequenceMapping format."""
         converted_attrs: t.MutableStrSequenceMapping = {}
@@ -210,9 +181,7 @@ class FlextLdifServersBaseEntry(
         return converted_attrs
 
     def _denormalize_entry(
-        self,
-        entry: m.Ldif.Entry,
-        target_server: str | None = None,
+        self, entry: m.Ldif.Entry, target_server: str | None = None
     ) -> m.Ldif.Entry:
         """Denormalize entry from RFC format to target server format."""
         _ = target_server
@@ -227,9 +196,7 @@ class FlextLdifServersBaseEntry(
         return r[m.Ldif.Entry].ok(entry)
 
     def _hook_validate_entry_raw(
-        self,
-        dn: str,
-        attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]],
+        self, dn: str, attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]]
     ) -> p.Result[bool]:
         """Validate raw entry before parsing."""
         _ = attrs
@@ -238,14 +205,11 @@ class FlextLdifServersBaseEntry(
         return r[bool].ok(True)
 
     def _inject_write_format_options(
-        self,
-        entry: m.Ldif.Entry,
-        write_options: m.Ldif.WriteFormatOptions,
+        self, entry: m.Ldif.Entry, write_options: m.Ldif.WriteFormatOptions
     ) -> m.Ldif.Entry:
         """Inject write format options into entry metadata extensions."""
         format_options_payload = write_options.model_dump(
-            mode="json",
-            exclude_none=True,
+            mode="json", exclude_none=True
         )
         existing_extensions: t.MutableJsonMapping = (
             # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: deep-copy the
@@ -255,14 +219,11 @@ class FlextLdifServersBaseEntry(
         existing_extensions[c.Ldif.WRITE_FORMAT_OPTIONS] = format_options_payload
         if entry.metadata:
             updated_metadata = entry.metadata.model_copy(
-                update={
-                    "extensions": existing_extensions,
-                },
+                update={"extensions": existing_extensions}
             )
         else:
             updated_metadata = m.Ldif.ServerMetadata(
-                server_type=c.Ldif.ServerTypes.RFC,
-                extensions=existing_extensions,
+                server_type=c.Ldif.ServerTypes.RFC, extensions=existing_extensions
             )
         copied: m.Ldif.Entry = entry.model_copy(update={"metadata": updated_metadata})
         return copied
@@ -280,13 +241,12 @@ class FlextLdifServersBaseEntry(
         return entry
 
     def _parse_content(
-        self,
-        ldif_content: str,
+        self, ldif_content: str
     ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
         """Parse raw LDIF content string into Entry models (internal)."""
         _ = ldif_content
         return r[t.MutableSequenceOf[m.Ldif.Entry]].fail(
-            "Must be implemented by subclass",
+            "Must be implemented by subclass"
         )
 
     def _write_entry(self, entry_data: m.Ldif.Entry) -> p.Result[str]:
@@ -355,10 +315,7 @@ class FlextLdifServersBaseEntry(
                 return value
             safe_acl_name = acl_original_format.replace('"', "'")
             replaced_acl_name: str = c.Ldif.sub_pattern(
-                r'acl\\s+"[^"]*"',
-                f'acl "{safe_acl_name}"',
-                value,
-                count=1,
+                r'acl\\s+"[^"]*"', f'acl "{safe_acl_name}"', value, count=1
             )
             return replaced_acl_name
 
@@ -376,18 +333,14 @@ class FlextLdifServersBaseEntry(
             if value_origin == c.Ldif.ValueOrigin.BASE64 and raw_value:
                 return f"{effective_name}:: {raw_value}"
             if (
-                value_origin
-                in {
-                    c.Ldif.ValueOrigin.URL,
-                    c.Ldif.ValueOrigin.FILE,
-                }
+                value_origin in {c.Ldif.ValueOrigin.URL, c.Ldif.ValueOrigin.FILE}
                 and raw_value
             ):
                 return f"{effective_name}:< {raw_value}"
             should_encode = effective_name.lower() in c.Ldif.BINARY_ATTRIBUTE_NAMES
             if should_encode or u.Ldif.needs_base64_encoding(effective_value):
                 encoded = base64.b64encode(effective_value.encode("utf-8")).decode(
-                    "ascii",
+                    "ascii"
                 )
                 return f"{effective_name}:: {encoded}"
             return f"{effective_name}: {effective_value}"
@@ -411,8 +364,7 @@ class FlextLdifServersBaseEntry(
             return f"{line}: {control.value}"
 
         def get_attribute_value_metadata(
-            attr_name: str,
-            value_index: int,
+            attr_name: str, value_index: int
         ) -> tuple[str | None, str | None]:
             """Return preserved value origin and raw payload for an attribute value."""
             if entry_data.attributes is None:
@@ -442,13 +394,10 @@ class FlextLdifServersBaseEntry(
 
         if should_restore_original() and entry_data.metadata is not None:
             original_strings = entry_data.metadata.original_strings
-            original_ldif_raw = original_strings.get(
-                "entry_original_ldif",
-                "",
-            )
+            original_ldif_raw = original_strings.get("entry_original_ldif", "")
             try:
                 restored_output: str = t.str_adapter().validate_python(
-                    original_ldif_raw,
+                    original_ldif_raw
                 )
             except c.ValidationError as exc:
                 return r[str].fail_op("restore original LDIF text", exc)
@@ -469,10 +418,7 @@ class FlextLdifServersBaseEntry(
             return r[str].fail("Entry DN is None")
         for control in entry_data.controls:
             output_lines.extend(
-                u.Ldif.fold_line(
-                    emit_control_line(control),
-                    width=effective_line_width,
-                ),
+                u.Ldif.fold_line(emit_control_line(control), width=effective_line_width)
             )
         effective_changetype = entry_data.changetype or ldif_changetype
         if effective_changetype in {
@@ -487,7 +433,7 @@ class FlextLdifServersBaseEntry(
             if entry_data.change_operations:
                 for change_operation in entry_data.change_operations:
                     output_lines.append(
-                        f"{change_operation.operation}: {change_operation.attribute}",
+                        f"{change_operation.operation}: {change_operation.attribute}"
                     )
                     for value_data in change_operation.values:
                         attr_line = emit_attribute_line(
@@ -511,8 +457,7 @@ class FlextLdifServersBaseEntry(
                     output_lines.append(f"{ldif_modify_operation}: {attr_name}")
                     for value_index, value in enumerate(non_empty):
                         value_origin, raw_value = get_attribute_value_metadata(
-                            attr_name,
-                            value_index,
+                            attr_name, value_index
                         )
                         attr_line = emit_attribute_line(
                             attr_name,
@@ -531,9 +476,8 @@ class FlextLdifServersBaseEntry(
             if entry_data.newrdn:
                 output_lines.extend(
                     u.Ldif.fold_line(
-                        f"newrdn: {entry_data.newrdn}",
-                        width=effective_line_width,
-                    ),
+                        f"newrdn: {entry_data.newrdn}", width=effective_line_width
+                    )
                 )
             if entry_data.deleteoldrdn is not None:
                 delete_old = "1" if entry_data.deleteoldrdn else "0"
@@ -543,7 +487,7 @@ class FlextLdifServersBaseEntry(
                     u.Ldif.fold_line(
                         f"newsuperior: {entry_data.newsuperior}",
                         width=effective_line_width,
-                    ),
+                    )
                 )
             output_lines.append("")
             return r[str].ok("\n".join(output_lines))
@@ -558,8 +502,7 @@ class FlextLdifServersBaseEntry(
                     if not str_value and (not write_empty_values):
                         continue
                     value_origin, raw_value = get_attribute_value_metadata(
-                        attr_name,
-                        value_index,
+                        attr_name, value_index
                     )
                     attr_line = emit_attribute_line(
                         attr_name,
@@ -590,14 +533,11 @@ class FlextLdifServersBaseEntry(
             return ldif_output
 
         return r.traverse(
-            entries,
-            lambda e: self._write_single_entry(e, write_options),
+            entries, lambda e: self._write_single_entry(e, write_options)
         ).map(format_output)
 
     def _write_single_entry(
-        self,
-        entry: m.Ldif.Entry,
-        write_options: m.Ldif.WriteFormatOptions | None,
+        self, entry: m.Ldif.Entry, write_options: m.Ldif.WriteFormatOptions | None
     ) -> p.Result[str]:
         """Write single entry to LDIF."""
         if write_options is not None:

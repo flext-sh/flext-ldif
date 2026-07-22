@@ -66,31 +66,27 @@ class FlextLdifConstants(c):
                 "requires_binary_option",
             }),
             FlextLdifConstantsEnums.ServerTypes.OPENLDAP: frozenset({
-                "requires_binary_option",
+                "requires_binary_option"
             }),
             FlextLdifConstantsEnums.ServerTypes.OPENLDAP2: frozenset({
-                "requires_binary_option",
+                "requires_binary_option"
             }),
             FlextLdifConstantsEnums.ServerTypes.AD: frozenset({
                 "requires_objectclass",
                 "requires_naming_attr",
             }),
             FlextLdifConstantsEnums.ServerTypes.DS389: frozenset({
-                "requires_objectclass",
+                "requires_objectclass"
             }),
             FlextLdifConstantsEnums.ServerTypes.NOVELL: frozenset({
-                "requires_objectclass",
+                "requires_objectclass"
             }),
             FlextLdifConstantsEnums.ServerTypes.IBM_TIVOLI: frozenset({
-                "requires_objectclass",
+                "requires_objectclass"
             }),
         })
 
-        DEFAULT_ACL_ATTRIBUTES: Final[t.StrSequence] = (
-            "acl",
-            "aci",
-            "olcAccess",
-        )
+        DEFAULT_ACL_ATTRIBUTES: Final[t.StrSequence] = ("acl", "aci", "olcAccess")
 
         RFC_ACL_ATTRIBUTES: Final[t.StrSequence] = (
             "aci",
@@ -193,11 +189,7 @@ class FlextLdifConstants(c):
         DETECTION_SCORE_SPECS: Final[
             tuple[tuple[FlextLdifConstantsEnums.ServerTypes, str, bool], ...]
         ] = (
-            (
-                FlextLdifConstantsEnums.ServerTypes.OID,
-                DETECTION_OID_PATTERN_ATTR,
-                True,
-            ),
+            (FlextLdifConstantsEnums.ServerTypes.OID, DETECTION_OID_PATTERN_ATTR, True),
             (
                 FlextLdifConstantsEnums.ServerTypes.OUD,
                 DETECTION_OID_PATTERN_ATTR,
@@ -208,31 +200,15 @@ class FlextLdifConstants(c):
                 DETECTION_PATTERN_ATTR,
                 True,
             ),
-            (
-                FlextLdifConstantsEnums.ServerTypes.AD,
-                DETECTION_PATTERN_ATTR,
-                True,
-            ),
-            (
-                FlextLdifConstantsEnums.ServerTypes.NOVELL,
-                DETECTION_PATTERN_ATTR,
-                False,
-            ),
+            (FlextLdifConstantsEnums.ServerTypes.AD, DETECTION_PATTERN_ATTR, True),
+            (FlextLdifConstantsEnums.ServerTypes.NOVELL, DETECTION_PATTERN_ATTR, False),
             (
                 FlextLdifConstantsEnums.ServerTypes.IBM_TIVOLI,
                 DETECTION_PATTERN_ATTR,
                 False,
             ),
-            (
-                FlextLdifConstantsEnums.ServerTypes.DS389,
-                DETECTION_PATTERN_ATTR,
-                False,
-            ),
-            (
-                FlextLdifConstantsEnums.ServerTypes.APACHE,
-                DETECTION_PATTERN_ATTR,
-                False,
-            ),
+            (FlextLdifConstantsEnums.ServerTypes.DS389, DETECTION_PATTERN_ATTR, False),
+            (FlextLdifConstantsEnums.ServerTypes.APACHE, DETECTION_PATTERN_ATTR, False),
         )
         DETECTION_PATTERN_SPECS: Final[
             tuple[tuple[FlextLdifConstantsEnums.ServerTypes, str, str, bool], ...]
@@ -329,9 +305,7 @@ class FlextLdifConstants(c):
             })
         )
         CATEGORY_RULE_ATTRIBUTE_FIELDS: Final[t.MappingKV[str, str]] = (
-            MappingProxyType({
-                FlextLdifConstantsEnums.Category.ACL: "acl_attributes",
-            })
+            MappingProxyType({FlextLdifConstantsEnums.Category.ACL: "acl_attributes"})
         )
         CATEGORY_ATTRIBUTE_MARKER_PREFIX: Final[str] = "attr:"
         DN_PREVIEW_LENGTH: Final[int] = 100
@@ -372,9 +346,7 @@ class FlextLdifConstants(c):
             tuple(
                 (field_name, attr_keys[1])
                 for field_name, attr_keys in zip(
-                    WHITELIST_RULE_OID_FIELDS,
-                    SCHEMA_OID_ATTRIBUTE_KEYS,
-                    strict=True,
+                    WHITELIST_RULE_OID_FIELDS, SCHEMA_OID_ATTRIBUTE_KEYS, strict=True
                 )
             )
         )

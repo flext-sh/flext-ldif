@@ -18,12 +18,10 @@ class FlextLdifUtilitiesSchemaExtract:
     def extract_attribute_flags(attr_definition: str) -> tuple[bool, bool]:
         """Extract boolean flags (single_value, no_user_modification) from attribute definition."""
         single_value = up.extract_boolean_flag(
-            attr_definition,
-            c.Ldif.SCHEMA_SINGLE_VALUE,
+            attr_definition, c.Ldif.SCHEMA_SINGLE_VALUE
         )
         no_user_modification = up.extract_boolean_flag(
-            attr_definition,
-            c.Ldif.SCHEMA_NO_USER_MODIFICATION,
+            attr_definition, c.Ldif.SCHEMA_NO_USER_MODIFICATION
         )
         return (single_value, no_user_modification)
 
@@ -32,18 +30,9 @@ class FlextLdifUtilitiesSchemaExtract:
         attr_definition: str,
     ) -> tuple[str | None, str | None, str | None]:
         """Extract matching rules (equality, substr, ordering) from attribute definition."""
-        equality = up.extract_optional_field(
-            attr_definition,
-            c.Ldif.SCHEMA_EQUALITY,
-        )
-        substr = up.extract_optional_field(
-            attr_definition,
-            c.Ldif.SCHEMA_SUBSTR,
-        )
-        ordering = up.extract_optional_field(
-            attr_definition,
-            c.Ldif.SCHEMA_ORDERING,
-        )
+        equality = up.extract_optional_field(attr_definition, c.Ldif.SCHEMA_EQUALITY)
+        substr = up.extract_optional_field(attr_definition, c.Ldif.SCHEMA_SUBSTR)
+        ordering = up.extract_optional_field(attr_definition, c.Ldif.SCHEMA_ORDERING)
         return (equality, substr, ordering)
 
     @staticmethod
@@ -51,20 +40,12 @@ class FlextLdifUtilitiesSchemaExtract:
         attr_definition: str,
     ) -> tuple[str | None, str | None]:
         """Extract SUP and USAGE from attribute definition."""
-        sup = up.extract_optional_field(
-            attr_definition,
-            c.Ldif.SCHEMA_SUP,
-        )
-        usage = up.extract_optional_field(
-            attr_definition,
-            c.Ldif.SCHEMA_USAGE,
-        )
+        sup = up.extract_optional_field(attr_definition, c.Ldif.SCHEMA_SUP)
+        usage = up.extract_optional_field(attr_definition, c.Ldif.SCHEMA_USAGE)
         return (sup, usage)
 
     @staticmethod
-    def extract_attribute_syntax(
-        attr_definition: str,
-    ) -> tuple[str | None, int | None]:
+    def extract_attribute_syntax(attr_definition: str) -> tuple[str | None, int | None]:
         """Extract SYNTAX and length from attribute definition."""
         syntax_match = c.Ldif.SCHEMA_SYNTAX_LENGTH_RE.search(attr_definition)
         syntax = syntax_match.group(1) if syntax_match else None
@@ -114,30 +95,24 @@ class FlextLdifUtilitiesSchemaExtract:
 
     @staticmethod
     def extract_schema_basic_fields(
-        definition: str,
-        definition_label: str,
+        definition: str, definition_label: str
     ) -> p.Result[tuple[str, str, str | None]]:
         oid_result = up.extract_oid(definition)
         if oid_result.failure:
             error = oid_result.error or "unknown OID extraction error"
             return r[tuple[str, str, str | None]].fail(
-                f"RFC {definition_label} parsing failed: {error}",
+                f"RFC {definition_label} parsing failed: {error}"
             )
         if not oid_result.success:
             return r[tuple[str, str, str | None]].fail(
-                f"RFC {definition_label} parsing failed: unknown result state",
+                f"RFC {definition_label} parsing failed: unknown result state"
             )
         oid = oid_result.value
         name_raw = up.extract_optional_field(
-            definition,
-            c.Ldif.SCHEMA_NAME,
-            default=oid,
+            definition, c.Ldif.SCHEMA_NAME, default=oid
         )
         name: str = name_raw if name_raw is not None else oid
-        desc = up.extract_optional_field(
-            definition,
-            c.Ldif.SCHEMA_DESC,
-        )
+        desc = up.extract_optional_field(definition, c.Ldif.SCHEMA_DESC)
         return r[tuple[str, str, str | None]].ok((oid, name, desc))
 
     @staticmethod

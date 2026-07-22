@@ -13,12 +13,7 @@ from collections.abc import Mapping
 from types import MappingProxyType
 from typing import ClassVar
 
-from flext_ldif import (
-    c,
-    m,
-    t,
-    u,
-)
+from flext_ldif import c, m, t, u
 
 
 class FlextLdifServersOudAclMetadataMixin:
@@ -82,9 +77,7 @@ class FlextLdifServersOudAclMetadataMixin:
             if base_dn is None and isinstance(base_dn_value, str):
                 base_dn = base_dn_value
             dn_registry_value = getattr(
-                entry_data.metadata.write_options,
-                "dn_registry",
-                None,
+                entry_data.metadata.write_options, "dn_registry", None
             )
             if dn_registry is None and isinstance(dn_registry_value, m.Ldif.DnRegistry):
                 dn_registry = dn_registry_value
@@ -121,7 +114,7 @@ class FlextLdifServersOudAclMetadataMixin:
                     return original_attr_name
         if entry.metadata and entry.metadata.extensions:
             acl_original_format = u.to_str(
-                entry.metadata.extensions.get("original_format"),
+                entry.metadata.extensions.get("original_format")
             )
             if "orclaci:" in acl_original_format:
                 return "orclaci"
@@ -129,8 +122,7 @@ class FlextLdifServersOudAclMetadataMixin:
 
     @staticmethod
     def merge_acl_metadata_to_entry(
-        entry: m.Ldif.Entry,
-        acl_metadata_extensions: t.Ldif.MutableMetadataInputMapping,
+        entry: m.Ldif.Entry, acl_metadata_extensions: t.Ldif.MutableMetadataInputMapping
     ) -> m.Ldif.Entry:
         """Merge ACL metadata extensions into entry metadata."""
         if not acl_metadata_extensions:
@@ -139,9 +131,8 @@ class FlextLdifServersOudAclMetadataMixin:
             new_metadata_entry: m.Ldif.Entry = entry.model_copy(
                 update={
                     "metadata": u.Ldif.server_metadata_for(
-                        "oud",
-                        extensions=acl_metadata_extensions,
-                    ),
+                        "oud", extensions=acl_metadata_extensions
+                    )
                 },
                 deep=True,
             )
@@ -154,9 +145,8 @@ class FlextLdifServersOudAclMetadataMixin:
         updated_entry: m.Ldif.Entry = entry.model_copy(
             update={
                 "metadata": entry.metadata.model_copy(
-                    update={"extensions": current},
-                    deep=True,
-                ),
+                    update={"extensions": current}, deep=True
+                )
             },
             deep=True,
         )
@@ -178,12 +168,10 @@ class FlextLdifServersOudAclMetadataMixin:
                 current_extensions[final_key] = value
             elif isinstance(value, t.SEQUENCE_PAIR_TYPES):
                 current_extensions[final_key] = (
-                    t.Cli.JSON_VALUE_ADAPTER.validate_python(
-                        [
-                            item if item is None or u.primitive(item) else str(item)
-                            for item in value
-                        ],
-                    )
+                    t.Cli.JSON_VALUE_ADAPTER.validate_python([
+                        item if item is None or u.primitive(item) else str(item)
+                        for item in value
+                    ])
                 )
             elif isinstance(value, Mapping):
                 value_dict_inner: t.MutableJsonMapping = {}
@@ -195,9 +183,7 @@ class FlextLdifServersOudAclMetadataMixin:
                         else t.Cli.JSON_VALUE_ADAPTER.validate_python(v)
                     )
                 current_extensions[final_key] = (
-                    t.Cli.JSON_VALUE_ADAPTER.validate_python(
-                        value_dict_inner,
-                    )
+                    t.Cli.JSON_VALUE_ADAPTER.validate_python(value_dict_inner)
                 )
             else:
                 current_extensions[final_key] = str(value)

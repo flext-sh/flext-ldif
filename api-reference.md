@@ -619,11 +619,7 @@ from flext_ldif import FlextLdifModels
 # Create entries directly with the public Entry model
 person = FlextLdifModels.Entry(
     dn="cn=John Doe,ou=People,dc=example,dc=com",
-    attributes={
-        "cn": ["John Doe"],
-        "sn": ["Doe"],
-        "mail": ["john.doe@example.com"],
-    },
+    attributes={"cn": ["John Doe"], "sn": ["Doe"], "mail": ["john.doe@example.com"]},
 )
 
 group = FlextLdifModels.Entry(
@@ -644,9 +640,7 @@ from flext_ldif import FlextLdifSettings
 
 # Initialize configuration
 settings = FlextLdifSettings(
-    max_entries=100000,
-    strict_validation=True,
-    encoding="utf-8",
+    max_entries=100000, strict_validation=True, encoding="utf-8"
 )
 
 # Access global configuration

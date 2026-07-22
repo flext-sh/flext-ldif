@@ -12,9 +12,9 @@ from __future__ import annotations
 import inspect
 
 import pytest
-from flext_tests import tm
 
 import flext_ldif
+from flext_tests import tm
 
 type PublicSymbol = str
 
@@ -113,43 +113,31 @@ class TestsFlextLdifApiFreeze:
 
     @pytest.mark.parametrize("symbol", PUBLIC_API)
     def test_public_symbol_resolves_to_a_real_object(
-        self,
-        symbol: PublicSymbol,
+        self, symbol: PublicSymbol
     ) -> None:
         """Accessing any advertised name yields a bound, non-None object."""
         tm.that(getattr(flext_ldif, symbol), ne=None)
 
     @pytest.mark.parametrize("symbol", PUBLIC_API)
-    def test_lazy_resolution_is_idempotent(
-        self,
-        symbol: PublicSymbol,
-    ) -> None:
+    def test_lazy_resolution_is_idempotent(self, symbol: PublicSymbol) -> None:
         """Repeated access returns the identical object (stable identity)."""
         first = getattr(flext_ldif, symbol)
         second = getattr(flext_ldif, symbol)
         assert first is second
 
     @pytest.mark.parametrize("symbol", PUBLIC_API)
-    def test_public_symbol_is_discoverable_via_dir(
-        self,
-        symbol: PublicSymbol,
-    ) -> None:
+    def test_public_symbol_is_discoverable_via_dir(self, symbol: PublicSymbol) -> None:
         """Every public name shows up in ``dir()`` for interactive discovery."""
         tm.that(symbol in dir(flext_ldif), eq=True)
 
     @pytest.mark.parametrize("symbol", CLASS_SYMBOLS)
-    def test_flext_symbols_resolve_to_classes(
-        self,
-        symbol: PublicSymbol,
-    ) -> None:
+    def test_flext_symbols_resolve_to_classes(self, symbol: PublicSymbol) -> None:
         """Every ``FlextLdif*`` public name is a class consumers can use."""
         tm.that(inspect.isclass(getattr(flext_ldif, symbol)), eq=True)
 
     @pytest.mark.parametrize(("alias", "owner"), FACADE_ALIAS_OWNERS)
     def test_facade_alias_is_its_canonical_owner(
-        self,
-        alias: PublicSymbol,
-        owner: PublicSymbol,
+        self, alias: PublicSymbol, owner: PublicSymbol
     ) -> None:
         """Short facade aliases are the same object as their named owner."""
         assert getattr(flext_ldif, alias) is getattr(flext_ldif, owner)
@@ -159,10 +147,7 @@ class TestsFlextLdifApiFreeze:
         tm.that(type(flext_ldif.ldif), eq=flext_ldif.FlextLdif)
 
     @pytest.mark.parametrize("symbol", METADATA_STRING_SYMBOLS)
-    def test_metadata_strings_are_non_empty_strings(
-        self,
-        symbol: PublicSymbol,
-    ) -> None:
+    def test_metadata_strings_are_non_empty_strings(self, symbol: PublicSymbol) -> None:
         """Package metadata is exposed as populated strings."""
         value = getattr(flext_ldif, symbol)
         tm.that(value, is_=str)
@@ -173,17 +158,13 @@ class TestsFlextLdifApiFreeze:
         tm.that(flext_ldif.__version_info__, is_=tuple)
 
     @pytest.mark.parametrize("symbol", PRIVATE_ROOT_SYMBOLS)
-    def test_private_symbol_is_not_advertised(
-        self,
-        symbol: PublicSymbol,
-    ) -> None:
+    def test_private_symbol_is_not_advertised(self, symbol: PublicSymbol) -> None:
         """Implementation classes never appear in the advertised surface."""
         tm.that(symbol in flext_ldif.__all__, eq=False)
 
     @pytest.mark.parametrize("symbol", PRIVATE_ROOT_SYMBOLS)
     def test_private_symbol_is_not_accessible_from_root(
-        self,
-        symbol: PublicSymbol,
+        self, symbol: PublicSymbol
     ) -> None:
         """Accessing a private implementation class raises ``AttributeError``."""
         with pytest.raises(AttributeError):

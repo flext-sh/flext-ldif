@@ -73,7 +73,7 @@ class FlextLdifServersOidAclConvert:
                     value_group=1,
                     perms_group=2,
                 ),
-            ),
+            )
         )
 
     @staticmethod
@@ -184,11 +184,12 @@ class FlextLdifServersOidAclConvert:
                     break
         if end is None:
             return r[tuple[str | None, str]].fail(
-                f"Unbalanced ACL filter clause: {content[:40]!r}",
+                f"Unbalanced ACL filter clause: {content[:40]!r}"
             )
-        return r[tuple[str | None, str]].ok(
-            (content[start + 1 : end - 1], content[end:].strip()),
-        )
+        return r[tuple[str | None, str]].ok((
+            content[start + 1 : end - 1],
+            content[end:].strip(),
+        ))
 
     @classmethod
     def parse_oid_acl_line(cls, dn: str, line: str) -> p.Result[m.Ldif.OidAclRule]:
@@ -204,7 +205,7 @@ class FlextLdifServersOidAclConvert:
         acl_type, content = prefixed
         if not content.lower().startswith(c.Ldif.ACL_ACCESS_TO):
             return r[m.Ldif.OidAclRule].fail(
-                f"ACL missing '{c.Ldif.ACL_ACCESS_TO}': {content[:40]!r}",
+                f"ACL missing '{c.Ldif.ACL_ACCESS_TO}': {content[:40]!r}"
             )
         content = content[len(c.Ldif.ACL_ACCESS_TO) :].strip()
         target = cls._parse_target(content)
@@ -214,7 +215,7 @@ class FlextLdifServersOidAclConvert:
         filter_result = cls._extract_filter(content)
         if filter_result.failure:
             return r[m.Ldif.OidAclRule].fail(
-                filter_result.error or "Invalid ACL filter clause",
+                filter_result.error or "Invalid ACL filter clause"
             )
         target_filter, content = filter_result.value
         subjects = tuple(
@@ -233,7 +234,7 @@ class FlextLdifServersOidAclConvert:
                 target_filter=target_filter,
                 subjects=subjects,
                 raw_line=line,
-            ),
+            )
         )
 
 

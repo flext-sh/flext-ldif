@@ -22,9 +22,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
 
 from flext_ldif import ldif
+from flext_tests import tm
 from tests import c, m, u
 
 if TYPE_CHECKING:
@@ -42,8 +42,7 @@ class TestsFlextLdifCategorizationRealData:
         return m.Ldif.Entry(
             dn=m.Ldif.DN(value=dn),
             attributes=m.Ldif.Attributes(
-                attributes={"objectClass": [objectclass]},
-                attribute_metadata={},
+                attributes={"objectClass": [objectclass]}, attribute_metadata={}
             ),
         )
 
@@ -77,14 +76,10 @@ class TestsFlextLdifCategorizationRealData:
     # -- validate_dns ---------------------------------------------------------
 
     def test_validate_dns_succeeds_and_returns_all_valid_entries(
-        self,
-        hierarchy_entries: t.MutableSequenceOf[m.Ldif.Entry],
+        self, hierarchy_entries: t.MutableSequenceOf[m.Ldif.Entry]
     ) -> None:
         """validate_dns returns a success result preserving every valid entry."""
-        categorization = ldif.categorization(
-            base_dn=_BASE_DN,
-            server_type=c.Tests.OUD,
-        )
+        categorization = ldif.categorization(base_dn=_BASE_DN, server_type=c.Tests.OUD)
 
         result = categorization.validate_dns(hierarchy_entries)
 
@@ -95,14 +90,10 @@ class TestsFlextLdifCategorizationRealData:
     # -- categorize_entries ---------------------------------------------------
 
     def test_categorize_entries_places_domains_ous_and_people_by_contract(
-        self,
-        hierarchy_entries: t.MutableSequenceOf[m.Ldif.Entry],
+        self, hierarchy_entries: t.MutableSequenceOf[m.Ldif.Entry]
     ) -> None:
         """Domains/OUs categorize as HIERARCHY, person entries as USERS."""
-        categorization = ldif.categorization(
-            base_dn=_BASE_DN,
-            server_type=c.Tests.OUD,
-        )
+        categorization = ldif.categorization(base_dn=_BASE_DN, server_type=c.Tests.OUD)
         validated = categorization.validate_dns(hierarchy_entries)
         tm.ok(validated)
 
@@ -118,10 +109,7 @@ class TestsFlextLdifCategorizationRealData:
 
     def test_categorize_entry_with_no_matching_rule_is_rejected(self) -> None:
         """An entry whose objectClass matches no category lands in REJECTED."""
-        categorization = ldif.categorization(
-            base_dn=_BASE_DN,
-            server_type=c.Tests.OUD,
-        )
+        categorization = ldif.categorization(base_dn=_BASE_DN, server_type=c.Tests.OUD)
         unknown = [self._entry("cn=mystery,dc=example", "unmodeledClass")]
         validated = categorization.validate_dns(unknown)
         tm.ok(validated)
@@ -135,14 +123,10 @@ class TestsFlextLdifCategorizationRealData:
     # -- filter_by_base_dn (substring safety) --------------------------------
 
     def test_filter_by_base_dn_keeps_under_base_and_rejects_outside(
-        self,
-        hierarchy_entries: t.MutableSequenceOf[m.Ldif.Entry],
+        self, hierarchy_entries: t.MutableSequenceOf[m.Ldif.Entry]
     ) -> None:
         """Base-DN filtering uses hierarchy, so dc=example2 never matches dc=example."""
-        categorization = ldif.categorization(
-            base_dn=_BASE_DN,
-            server_type=c.Tests.OUD,
-        )
+        categorization = ldif.categorization(base_dn=_BASE_DN, server_type=c.Tests.OUD)
         validated = categorization.validate_dns(hierarchy_entries)
         tm.ok(validated)
         categorized = categorization.categorize_entries(validated.value)
@@ -170,10 +154,7 @@ class TestsFlextLdifCategorizationRealData:
             self._acl_entry("dc=example2"),
             self._acl_entry("cn=settings"),
         ]
-        categorization = ldif.categorization(
-            base_dn=_BASE_DN,
-            server_type=c.Tests.OUD,
-        )
+        categorization = ldif.categorization(base_dn=_BASE_DN, server_type=c.Tests.OUD)
         validated = categorization.validate_dns(acl_entries)
         tm.ok(validated)
         categorized = categorization.categorize_entries(validated.value)
@@ -204,10 +185,7 @@ class TestsFlextLdifCategorizationRealData:
         ],
     )
     def test_is_under_base_uses_hierarchy_not_substring(
-        self,
-        dn: str | None,
-        base_dn: str | None,
-        expected: bool,
+        self, dn: str | None, base_dn: str | None, expected: bool
     ) -> None:
         """The public is_under_base contract rejects substring false positives."""
         assert u.Ldif.is_under_base(dn, base_dn) is expected

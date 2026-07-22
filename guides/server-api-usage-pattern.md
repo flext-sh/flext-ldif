@@ -112,8 +112,7 @@ def rfc_server(server: FlextLdifServer) -> FlextLdifServersBase:
 
 ```python notest
 def test_conversion_oid_to_oud(
-    oid_server: FlextLdifServersBase,
-    oud_server: FlextLdifServersBase,
+    oid_server: FlextLdifServersBase, oud_server: FlextLdifServersBase
 ) -> None:
     """Test conversion from OID to OUD."""
     # Use os servers diretamente

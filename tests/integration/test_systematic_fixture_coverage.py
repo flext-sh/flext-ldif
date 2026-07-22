@@ -15,9 +15,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
 
 from flext_ldif import ldif
+from flext_tests import tm
 
 if TYPE_CHECKING:
     from tests import p
@@ -37,15 +37,11 @@ class TestsFlextLdifSystematicFixtureCoverage:
     # input preparation, NOT inspection of the unit under test).
     # ------------------------------------------------------------------
     @staticmethod
-    def _bounded_schema_sample(
-        fixture_data: str,
-        max_definitions: int = 50,
-    ) -> str:
+    def _bounded_schema_sample(fixture_data: str, max_definitions: int = 50) -> str:
         """Return a schema LDIF sample capped to ``max_definitions`` defs."""
         lines = fixture_data.splitlines()
         first_dn = next(
-            (line for line in lines if line.startswith("dn:")),
-            "dn: cn=schema",
+            (line for line in lines if line.startswith("dn:")), "dn: cn=schema"
         )
         selected_lines: list[str] = [first_dn]
         current_chunk: list[str] = []
@@ -79,9 +75,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
     # Shared behavioral assertion: the roundtrip contract.
     # ------------------------------------------------------------------
     def _assert_roundtrip_preserves_dns(
-        self,
-        api: p.Ldif.LdifClient,
-        content: str,
+        self, api: p.Ldif.LdifClient, content: str
     ) -> int:
         """Parse -> write -> parse ``content`` and assert DN-set preservation.
 
@@ -229,8 +223,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
     # Baseline RFC operations (always available).
     # ------------------------------------------------------------------
     def test_basic_ldif_operations_are_available_for_any_server(
-        self,
-        api: p.Ldif.LdifClient,
+        self, api: p.Ldif.LdifClient
     ) -> None:
         """A minimal RFC entry parses, writes, and roundtrips with DN intact."""
         content = (
@@ -263,8 +256,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
         tm.that(roundtrip_entries[0].dn_str, eq=entry.dn_str)
 
     def test_parse_ldif_reports_failure_as_result_for_invalid_input(
-        self,
-        api: p.Ldif.LdifClient,
+        self, api: p.Ldif.LdifClient
     ) -> None:
         """Malformed LDIF surfaces through the ``r[T]`` channel, not a crash."""
         # A continuation line with no preceding attribute is not valid LDIF.

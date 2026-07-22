@@ -34,24 +34,20 @@ class FlextLdifModelsAclConvert:
             u.Field(description="Parsed subject keyword (group/dn/self/anyone/...)"),
         ]
         value: Annotated[
-            str,
-            u.Field(description="Subject value: DN, group DN, or attribute name"),
+            str, u.Field(description="Subject value: DN, group DN, or attribute name")
         ] = ""
         permissions: Annotated[
             t.StrSequence,
             u.Field(description="Raw OID permission tokens for this by-clause"),
         ] = ()
         bindmode: Annotated[
-            str,
-            u.Field(description="OID bindmode modifier → OUD authmethod"),
+            str, u.Field(description="OID bindmode modifier → OUD authmethod")
         ] = ""
         bindipfilter: Annotated[
-            str,
-            u.Field(description="OID bindipfilter modifier → OUD ip"),
+            str, u.Field(description="OID bindipfilter modifier → OUD ip")
         ] = ""
         added_object_constraint: Annotated[
-            str,
-            u.Field(description="OID added_object_constraint modifier (note only)"),
+            str, u.Field(description="OID added_object_constraint modifier (note only)")
         ] = ""
 
     class OidAclRule(m.FrozenModel):
@@ -61,21 +57,16 @@ class FlextLdifModelsAclConvert:
         acl_type: Annotated[str, u.Field(description="orclaci | orclentrylevelaci")]
         target_type: Annotated[str, u.Field(description="entry | attr")]
         target_attrs: Annotated[
-            str,
-            u.Field(description="'*' | comma-list | '!=comma-list'"),
+            str, u.Field(description="'*' | comma-list | '!=comma-list'")
         ] = "*"
         target_filter: Annotated[
-            str | None,
-            u.Field(description="LDAP filter expression, if present"),
+            str | None, u.Field(description="LDAP filter expression, if present")
         ] = None
         subjects: Annotated[
             tuple[FlextLdifModelsAclConvert.OidAclSubject, ...],
             u.Field(description="Parsed by-clause subjects"),
         ] = ()
-        raw_line: Annotated[
-            str,
-            u.Field(description="Original raw OID ACL line"),
-        ] = ""
+        raw_line: Annotated[str, u.Field(description="Original raw OID ACL line")] = ""
 
     class AciAllow(m.FrozenModel):
         """One OUD ``aci`` ``allow()`` clause: bind-rule subject + permission set."""
@@ -97,8 +88,7 @@ class FlextLdifModelsAclConvert:
             u.Field(description="OUD authmethod bind-rule constraint (from bindmode)"),
         ] = ""
         ip: Annotated[
-            str,
-            u.Field(description="OUD ip bind-rule constraint (from bindipfilter)"),
+            str, u.Field(description="OUD ip bind-rule constraint (from bindipfilter)")
         ] = ""
 
     class AciRule(m.FrozenModel):
@@ -106,16 +96,13 @@ class FlextLdifModelsAclConvert:
 
         dn: Annotated[str, u.Field(description="Entry DN that owns the aci")]
         targetattr: Annotated[
-            str,
-            u.Field(description="targetattr expression, e.g. '*' or 'cn||sn'"),
+            str, u.Field(description="targetattr expression, e.g. '*' or 'cn||sn'")
         ] = "*"
         targetfilter: Annotated[
-            str | None,
-            u.Field(description="targetfilter expression, if present"),
+            str | None, u.Field(description="targetfilter expression, if present")
         ] = None
         targetscope: Annotated[
-            str | None,
-            u.Field(description="targetscope, e.g. 'base', if present"),
+            str | None, u.Field(description="targetscope, e.g. 'base', if present")
         ] = None
         acl_name: Annotated[str, u.Field(description="Human-readable acl name")] = ""
         allows: Annotated[
@@ -124,9 +111,7 @@ class FlextLdifModelsAclConvert:
         ] = ()
         notes: Annotated[
             t.StrSequence,
-            u.Field(
-                description="Conversion notes: subjects dropped/removed and why",
-            ),
+            u.Field(description="Conversion notes: subjects dropped/removed and why"),
         ] = ()
 
     class AciAllowGroup(m.FrozenModel):
@@ -141,18 +126,13 @@ class FlextLdifModelsAclConvert:
             u.Field(description="Rendered bind rules joined with OUD 'or'"),
         ] = ()
         authmethod: Annotated[
-            str,
-            u.Field(description="Shared authmethod modifier for this group"),
+            str, u.Field(description="Shared authmethod modifier for this group")
         ] = ""
-        ip: Annotated[
-            str,
-            u.Field(description="Shared ip modifier for this group"),
-        ] = ""
+        ip: Annotated[str, u.Field(description="Shared ip modifier for this group")] = (
+            ""
+        )
 
-        def with_bind(
-            self,
-            bind: str,
-        ) -> FlextLdifModelsAclConvert.AciAllowGroup:
+        def with_bind(self, bind: str) -> FlextLdifModelsAclConvert.AciAllowGroup:
             """Return a copy with ``bind`` appended, preserving immutable flow."""
             return FlextLdifModelsAclConvert.AciAllowGroup(
                 permissions=self.permissions,
@@ -170,9 +150,7 @@ class FlextLdifModelsAclConvert:
         ] = ()
 
         def with_allow(
-            self,
-            allow: FlextLdifModelsAclConvert.AciAllow,
-            bind: str,
+            self, allow: FlextLdifModelsAclConvert.AciAllow, bind: str
         ) -> FlextLdifModelsAclConvert.AciAllowGroups:
             """Return grouped allow state with one rendered bind rule appended."""
             permissions = tuple(allow.permissions)
@@ -213,16 +191,14 @@ class FlextLdifModelsAclConvert:
             u.Field(description="Compiled by-clause matcher from c.Ldif"),
         ]
         subj_type: Annotated[
-            str,
-            u.Field(description="Subject keyword this matcher yields"),
+            str, u.Field(description="Subject keyword this matcher yields")
         ]
         value_group: Annotated[
             int | str,
             u.Field(description="Capture-group index OR literal subject value"),
         ]
         perms_group: Annotated[
-            int,
-            u.Field(description="Capture-group index of the permission tokens"),
+            int, u.Field(description="Capture-group index of the permission tokens")
         ]
 
     class AclSubjectMatcherCatalog(m.FrozenModel):
@@ -236,17 +212,14 @@ class FlextLdifModelsAclConvert:
     class OidAclSubjectModifiers(m.FrozenModel):
         """Parsed optional OID by-clause modifiers."""
 
-        bindmode: Annotated[
-            str,
-            u.Field(description="OID bindmode modifier value"),
-        ] = ""
+        bindmode: Annotated[str, u.Field(description="OID bindmode modifier value")] = (
+            ""
+        )
         bindipfilter: Annotated[
-            str,
-            u.Field(description="OID bindipfilter modifier value"),
+            str, u.Field(description="OID bindipfilter modifier value")
         ] = ""
         added_object_constraint: Annotated[
-            str,
-            u.Field(description="OID added_object_constraint modifier value"),
+            str, u.Field(description="OID added_object_constraint modifier value")
         ] = ""
 
 

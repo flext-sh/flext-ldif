@@ -12,9 +12,7 @@ from typing import TYPE_CHECKING
 from flext_ldif import c, ldif, m, p
 
 if TYPE_CHECKING:
-    from collections.abc import (
-        MutableSequence,
-    )
+    from collections.abc import MutableSequence
 
 
 def complete_ldif_processing_workflow() -> None:
@@ -161,7 +159,7 @@ def error_handling_and_recovery() -> None:
     """Run an error handling and recovery workflow."""
     api: p.Ldif.LdifClient = ldif
     parse_result = api.parse_ldif(
-        "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n",
+        "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n"
     )
     if parse_result.failure:
         return

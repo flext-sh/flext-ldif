@@ -3,19 +3,10 @@
 from __future__ import annotations
 
 import base64
-from collections.abc import (
-    Mapping,
-    MutableMapping,
-)
+from collections.abc import Mapping, MutableMapping
 
 from flext_cli import u
-from flext_ldif import (
-    FlextLdifModels as m,
-    c,
-    p,
-    r,
-    t,
-)
+from flext_ldif import FlextLdifModels as m, c, p, r, t
 from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata as um
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer as us
 
@@ -32,15 +23,15 @@ class FlextLdifUtilitiesParser:
     ) -> m.Ldif.ServerMetadata | None:
         """Build metadata for attribute including extensions."""
         metadata_extensions = FlextLdifUtilitiesParser.extract_extensions(
-            attr_definition,
+            attr_definition
         )
         if syntax:
             metadata_extensions["syntax_oid_valid"] = [
-                str(syntax_validation_error is None),
+                str(syntax_validation_error is None)
             ]
             if syntax_validation_error:
                 metadata_extensions["syntax_validation_error"] = [
-                    syntax_validation_error,
+                    syntax_validation_error
                 ]
         metadata_extensions["original_format"] = [attr_definition.strip()]
         metadata_extensions["schema_original_string_complete"] = [attr_definition]
@@ -55,8 +46,7 @@ class FlextLdifUtilitiesParser:
                 val_payload: t.JsonValueList = list(val)
                 extensions_typed[key] = val_payload
             return m.Ldif.ServerMetadata(
-                server_type=server_type,
-                extensions=extensions_typed,
+                server_type=server_type, extensions=extensions_typed
             )
         return None
 
@@ -81,7 +71,7 @@ class FlextLdifUtilitiesParser:
                 value_token = " ".join(tokens[1:])
         if value_token is not None:
             value, value_origin, raw_value = FlextLdifUtilitiesParser.decode_value(
-                value_token,
+                value_token
             )
         return m.Ldif.Control(
             control_type=control_type,
@@ -109,17 +99,14 @@ class FlextLdifUtilitiesParser:
         return metadata
 
     @staticmethod
-    def decode_value(
-        remainder: str,
-    ) -> tuple[str, c.Ldif.ValueOrigin, str | None]:
+    def decode_value(remainder: str) -> tuple[str, c.Ldif.ValueOrigin, str | None]:
         """Decode an LDIF value-spec preserving origin details."""
         payload = remainder.lstrip()
         if payload.startswith(":"):
             encoded_value = payload[1:].lstrip()
             try:
                 decoded_value = base64.b64decode(encoded_value).decode(
-                    c.Ldif.DEFAULT_ENCODING,
-                    errors="replace",
+                    c.Ldif.DEFAULT_ENCODING, errors="replace"
                 )
             except ValueError:
                 decoded_value = encoded_value
@@ -144,9 +131,7 @@ class FlextLdifUtilitiesParser:
             change_operations.append(current_op)
 
     @staticmethod
-    def parse_ldif_record(
-        lines: t.MutableSequenceOf[str],
-    ) -> p.Result[m.Ldif.Entry]:
+    def parse_ldif_record(lines: t.MutableSequenceOf[str]) -> p.Result[m.Ldif.Entry]:
         """Parse a single unfolded LDIF record into Entry."""
         dn = ""
         attrs: t.MutableStrSequenceMapping = {}
@@ -177,8 +162,7 @@ class FlextLdifUtilitiesParser:
             raw_record_lines.append(line)
             if line == "-":
                 FlextLdifUtilitiesParser.finalize_change_operation(
-                    current_change_operation,
-                    change_operations,
+                    current_change_operation, change_operations
                 )
                 current_change_operation = None
                 continue
@@ -189,11 +173,11 @@ class FlextLdifUtilitiesParser:
             key_lower = key.lower()
             if key_lower == "control":
                 controls.append(
-                    FlextLdifUtilitiesParser.build_control(remainder.lstrip()),
+                    FlextLdifUtilitiesParser.build_control(remainder.lstrip())
                 )
                 continue
             value, value_origin, raw_value = FlextLdifUtilitiesParser.decode_value(
-                remainder,
+                remainder
             )
             attribute_name = key
             if key_lower == "dn":
@@ -224,21 +208,17 @@ class FlextLdifUtilitiesParser:
             if changetype == c.Ldif.LdifChangeType.MODIFY:
                 if key_lower in modify_ops:
                     FlextLdifUtilitiesParser.finalize_change_operation(
-                        current_change_operation,
-                        change_operations,
+                        current_change_operation, change_operations
                     )
                     current_change_operation = m.Ldif.ChangeOperation(
-                        operation=modify_ops[key_lower],
-                        attribute=value,
+                        operation=modify_ops[key_lower], attribute=value
                     )
                     continue
                 if current_change_operation is not None:
                     current_change_operation.values.append(
                         m.Ldif.ChangeOperationValue(
-                            value=value,
-                            value_origin=value_origin,
-                            raw_value=raw_value,
-                        ),
+                            value=value, value_origin=value_origin, raw_value=raw_value
+                        )
                     )
                     attribute_name = current_change_operation.attribute
             attrs.setdefault(attribute_name, []).append(value)
@@ -252,8 +232,7 @@ class FlextLdifUtilitiesParser:
             if isinstance(raw_values, list):
                 raw_values.append(raw_value)
         FlextLdifUtilitiesParser.finalize_change_operation(
-            current_change_operation,
-            change_operations,
+            current_change_operation, change_operations
         )
         if not dn:
             return r[m.Ldif.Entry].fail("No DN found in entry")
@@ -273,9 +252,7 @@ class FlextLdifUtilitiesParser:
                 newsuperior=newsuperior,
                 raw_record_lines=list(raw_record_lines),
                 metadata=FlextLdifUtilitiesParser.build_rfc_entry_metadata(
-                    dn.strip(),
-                    raw_record_lines,
-                    comments,
+                    dn.strip(), raw_record_lines, comments
                 ),
             )
             return r[m.Ldif.Entry].ok(entry)
@@ -305,9 +282,7 @@ class FlextLdifUtilitiesParser:
         return records
 
     @staticmethod
-    def ext(
-        metadata: t.Ldif.MetadataInputMapping,
-    ) -> t.MutableStrSequenceMapping:
+    def ext(metadata: t.Ldif.MetadataInputMapping) -> t.MutableStrSequenceMapping:
         """Extract extension information from parsed metadata."""
 
         def _as_str_list(
@@ -322,9 +297,7 @@ class FlextLdifUtilitiesParser:
                 return normalized
             return None
 
-        result: t.JsonMapping | t.JsonValue | None = metadata.get(
-            "extensions",
-        )
+        result: t.JsonMapping | t.JsonValue | None = metadata.get("extensions")
         if not isinstance(result, Mapping):
             extensions: t.MutableStrSequenceMapping = {}
             for key, value in metadata.items():
@@ -346,8 +319,7 @@ class FlextLdifUtilitiesParser:
 
     @staticmethod
     def extract_boolean_flag(
-        definition: str,
-        pattern: t.Ldif.RegexPattern | str,
+        definition: str, pattern: t.Ldif.RegexPattern | str
     ) -> bool:
         """Check if boolean flag exists in definition."""
         if not definition:
@@ -358,9 +330,7 @@ class FlextLdifUtilitiesParser:
         return compiled.search(definition) is not None
 
     @staticmethod
-    def extract_extensions(
-        definition: str,
-    ) -> t.MutableStrSequenceMapping:
+    def extract_extensions(definition: str) -> t.MutableStrSequenceMapping:
         """Extract extension information from schema definition string."""
         if not definition:
             return {}
@@ -392,9 +362,7 @@ class FlextLdifUtilitiesParser:
 
     @staticmethod
     def extract_optional_field(
-        definition: str,
-        pattern: t.Ldif.RegexPattern | str,
-        default: str | None = None,
+        definition: str, pattern: t.Ldif.RegexPattern | str, default: str | None = None
     ) -> str | None:
         """Extract optional field via regex pattern."""
         if not definition:
@@ -410,7 +378,7 @@ class FlextLdifUtilitiesParser:
         """Parse LDIF attribute line into name, value, and base64 flag."""
         if ":" not in line:
             return r[tuple[str, str, bool]].fail(
-                f"No colon separator in line: {line!r}",
+                f"No colon separator in line: {line!r}"
             )
         attr_name, attr_value = line.split(":", 1)
         attr_name = attr_name.strip()

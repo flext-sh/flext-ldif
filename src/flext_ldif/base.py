@@ -13,7 +13,7 @@ class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](s[TDomainResult]):
     """Base class for LDIF services with typed settings helper."""
 
     _server: p.Ldif.ServerRegistry = u.PrivateAttr(
-        default_factory=FlextLdifServer.fetch_global_instance,
+        default_factory=FlextLdifServer.fetch_global_instance
     )
     server: Annotated[
         p.Ldif.ServerRegistry | None,
@@ -49,8 +49,7 @@ class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](s[TDomainResult]):
     ) -> Self | m.Ldif.Entry | str:
         """Return a cloned DSL instance preserving runtime registry/settings defaults."""
         payload: dict[
-            str,
-            t.JsonValue | p.Ldif.ServerRegistry | p.Ldif.Settings | None,
+            str, t.JsonValue | p.Ldif.ServerRegistry | p.Ldif.Settings | None
         ] = dict(fields)
         payload["server"] = self._server if server is None else server
         payload["runtime_settings"] = settings

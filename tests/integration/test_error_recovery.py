@@ -15,9 +15,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
 
 from flext_ldif import ldif
+from flext_tests import tm
 
 if TYPE_CHECKING:
     from flext_ldif import p
@@ -106,11 +106,7 @@ class TestsFlextLdifErrorRecovery:
         assert entry.attributes is not None
         tm.that(
             entry.attributes.attributes["mail"],
-            eq=[
-                "a@example.com",
-                "b@example.com",
-                "c@example.com",
-            ],
+            eq=["a@example.com", "b@example.com", "c@example.com"],
         )
 
     def test_empty_attribute_value_is_preserved(self, api: p.Ldif.LdifClient) -> None:

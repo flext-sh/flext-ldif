@@ -21,9 +21,7 @@ from typing import TYPE_CHECKING
 from flext_ldif import ldif, m, p, u
 
 if TYPE_CHECKING:
-    from collections.abc import (
-        MutableSequence,
-    )
+    from collections.abc import MutableSequence
 
 
 def basic_batch_processing() -> None:

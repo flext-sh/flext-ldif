@@ -8,8 +8,8 @@ model fields. No private attribute access, no internal-collaborator spying.
 from __future__ import annotations
 
 import pytest
-from flext_tests import tm
 
+from flext_tests import tm
 from tests import c, u
 
 
@@ -20,12 +20,7 @@ class TestsFlextLdifParserUtilities:
     # extract_oid
     # ------------------------------------------------------------------
     @pytest.mark.parametrize(
-        "definition",
-        [
-            "",
-            "( NAME 'cn' DESC 'no oid' )",
-            "not-an-oid NAME 'x'",
-        ],
+        "definition", ["", "( NAME 'cn' DESC 'no oid' )", "not-an-oid NAME 'x'"]
     )
     def test_extract_oid_fails_without_leading_oid(self, definition: str) -> None:
         result = u.Ldif.extract_oid(definition)
@@ -37,16 +32,11 @@ class TestsFlextLdifParserUtilities:
         [
             ("( 1.2.840.113556.1.4.221 NAME 'x' )", "1.2.840.113556.1.4.221"),
             ("  ( 2.5.4.3 NAME 'cn' )  ", "2.5.4.3"),
-            (
-                "( 2.5.6.6 NAME 'person' STRUCTURAL MUST cn )",
-                "2.5.6.6",
-            ),
+            ("( 2.5.6.6 NAME 'person' STRUCTURAL MUST cn )", "2.5.6.6"),
         ],
     )
     def test_extract_oid_returns_leading_oid(
-        self,
-        definition: str,
-        expected_oid: str,
+        self, definition: str, expected_oid: str
     ) -> None:
         result = u.Ldif.extract_oid(definition)
 
@@ -72,9 +62,7 @@ class TestsFlextLdifParserUtilities:
         ],
     )
     def test_parse_attribute_line_splits_name_value_and_base64_flag(
-        self,
-        line: str,
-        expected: tuple[str, str, bool],
+        self, line: str, expected: tuple[str, str, bool]
     ) -> None:
         result = u.Ldif.parse_attribute_line(line)
 
@@ -152,25 +140,20 @@ class TestsFlextLdifParserUtilities:
         ],
     )
     def test_extract_boolean_flag_detects_token(
-        self,
-        definition: str,
-        expected: bool,
+        self, definition: str, expected: bool
     ) -> None:
         assert u.Ldif.extract_boolean_flag(definition, "SINGLE-VALUE") is expected
 
     def test_extract_optional_field_returns_match_when_present(self) -> None:
         value = u.Ldif.extract_optional_field(
-            "( 1.1 NAME 'x' DESC 'hello world' )",
-            c.Ldif.SCHEMA_DESC_FLEX_RE,
+            "( 1.1 NAME 'x' DESC 'hello world' )", c.Ldif.SCHEMA_DESC_FLEX_RE
         )
 
         tm.that(value, eq="hello world")
 
     def test_extract_optional_field_returns_default_on_empty(self) -> None:
         value = u.Ldif.extract_optional_field(
-            "",
-            c.Ldif.SCHEMA_DESC_FLEX_RE,
-            default="fallback",
+            "", c.Ldif.SCHEMA_DESC_FLEX_RE, default="fallback"
         )
 
         tm.that(value, eq="fallback")
@@ -180,7 +163,7 @@ class TestsFlextLdifParserUtilities:
     # ------------------------------------------------------------------
     def test_extract_extensions_captures_x_tokens_and_desc(self) -> None:
         extensions = u.Ldif.extract_extensions(
-            "( 1.1 NAME 'x' DESC 'hi there' X-ORIGIN 'user' )",
+            "( 1.1 NAME 'x' DESC 'hi there' X-ORIGIN 'user' )"
         )
 
         tm.that(extensions["X-ORIGIN"], eq=["user"])
@@ -209,7 +192,7 @@ class TestsFlextLdifParserUtilities:
     # ------------------------------------------------------------------
     def test_split_ldif_records_drops_version_and_groups_by_blank(self) -> None:
         records = u.Ldif.split_ldif_records(
-            "version: 1\ndn: cn=a\ncn: a\n\ndn: cn=b\ncn: b",
+            "version: 1\ndn: cn=a\ncn: a\n\ndn: cn=b\ncn: b"
         )
 
         tm.that(records, eq=[["dn: cn=a", "cn: a"], ["dn: cn=b", "cn: b"]])

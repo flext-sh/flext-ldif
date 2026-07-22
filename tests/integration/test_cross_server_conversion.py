@@ -16,7 +16,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from flext_tests import tm
-
 from tests import c, m
 
 if TYPE_CHECKING:
@@ -43,7 +42,7 @@ class TestsFlextLdifCrossServerConversion:
     ) -> None:
         """Parsing an OID attribute, rendering it, then parsing with OUD keeps oid/name/syntax."""
         parse_result = oid_schema_server.parse_server(
-            c.Tests.CROSS_SERVER_OID_ATTRIBUTE_ORCLGUID,
+            c.Tests.CROSS_SERVER_OID_ATTRIBUTE_ORCLGUID
         )
         tm.ok(parse_result)
         source = parse_result.value
@@ -69,7 +68,7 @@ class TestsFlextLdifCrossServerConversion:
     ) -> None:
         """Parsing an OID objectClass, rendering it, then parsing with OUD keeps oid/name/kind/sup."""
         parse_result = oid_schema_server.parse_server(
-            c.Tests.CROSS_SERVER_OID_OBJECTCLASS_ORCLCONTAINER,
+            c.Tests.CROSS_SERVER_OID_OBJECTCLASS_ORCLCONTAINER
         )
         tm.ok(parse_result)
         source = parse_result.value
@@ -91,12 +90,11 @@ class TestsFlextLdifCrossServerConversion:
         tm.that(target.sup, eq=source.sup)
 
     def test_oid_acl_parses_into_acl_model_with_oid_server_type(
-        self,
-        oid_acl_server: p.Ldif.AclServer,
+        self, oid_acl_server: p.Ldif.AclServer
     ) -> None:
         """An OID orclaci string parses into an Acl model tagged as an OID dialect."""
         parse_result = oid_acl_server.parse_server(
-            c.Tests.CROSS_SERVER_OID_ACL_ANONYMOUS,
+            c.Tests.CROSS_SERVER_OID_ACL_ANONYMOUS
         )
         tm.ok(parse_result)
         parsed = parse_result.value
@@ -104,12 +102,11 @@ class TestsFlextLdifCrossServerConversion:
         tm.that({"oid", "oracle_oid"}, has=parsed.server_type)
 
     def test_oud_acl_parses_and_rewrites_to_text(
-        self,
-        oud_acl_server: p.Ldif.AclServer,
+        self, oud_acl_server: p.Ldif.AclServer
     ) -> None:
         """An OUD aci string parses into an Acl model and re-renders to LDIF text."""
         parse_result = oud_acl_server.parse_server(
-            c.Tests.CROSS_SERVER_OUD_ACI_ANONYMOUS,
+            c.Tests.CROSS_SERVER_OUD_ACI_ANONYMOUS
         )
         tm.ok(parse_result)
         parsed = parse_result.value
@@ -122,21 +119,17 @@ class TestsFlextLdifCrossServerConversion:
         assert write_result.value
 
     def test_convert_model_translates_oid_acl_to_rfc_dialect(
-        self,
-        conversion_matrix: FlextLdifConversion,
-        oid_acl_server: p.Ldif.AclServer,
+        self, conversion_matrix: FlextLdifConversion, oid_acl_server: p.Ldif.AclServer
     ) -> None:
         """convert_model(OID->RFC) yields an Acl retagged to RFC with a rendered raw_acl."""
         parse_result = oid_acl_server.parse_server(
-            c.Tests.CROSS_SERVER_OID_ACL_ANONYMOUS,
+            c.Tests.CROSS_SERVER_OID_ACL_ANONYMOUS
         )
         tm.ok(parse_result)
         assert isinstance(parse_result.value, m.Ldif.Acl)
 
         result = conversion_matrix.convert_model(
-            c.Tests.OID,
-            c.Tests.RFC,
-            parse_result.value,
+            c.Tests.OID, c.Tests.RFC, parse_result.value
         )
         tm.ok(result)
         converted = result.value
@@ -177,16 +170,13 @@ class TestsFlextLdifCrossServerConversion:
         )
 
     def test_conversion_matrix_is_available(
-        self,
-        conversion_matrix: FlextLdifConversion,
+        self, conversion_matrix: FlextLdifConversion
     ) -> None:
         """The conversion facade fixture resolves to a usable instance."""
         tm.that(conversion_matrix, none=False)
 
     def test_resolve_supported_conversions_reports_all_model_kinds(
-        self,
-        conversion_matrix: FlextLdifConversion,
-        oud_server: FlextLdifServersBase,
+        self, conversion_matrix: FlextLdifConversion, oud_server: FlextLdifServersBase
     ) -> None:
         """A full-featured server advertises support for every convertible model kind."""
         supported = conversion_matrix.resolve_supported_conversions(oud_server)
@@ -196,13 +186,11 @@ class TestsFlextLdifCrossServerConversion:
         tm.that(supported["entry"], eq=True)
 
     def test_attribute_converts_oud_to_oid_rendering_oracle_identity(
-        self,
-        oud_server: FlextLdifServersBase,
-        oid_server: FlextLdifServersBase,
+        self, oud_server: FlextLdifServersBase, oid_server: FlextLdifServersBase
     ) -> None:
         """OUD attribute -> RFC -> OID renders back to OID text carrying the Oracle oid and name."""
         parsed = oud_server.schema_server.parse_attribute(
-            c.Tests.CROSS_SERVER_OUD_ATTRIBUTE_ORCLGUID,
+            c.Tests.CROSS_SERVER_OUD_ATTRIBUTE_ORCLGUID
         )
         tm.ok(parsed)
         rfc_text = oud_server.schema_server.write(parsed.value)
@@ -216,13 +204,11 @@ class TestsFlextLdifCrossServerConversion:
         tm.that(oid_text.value, has="orclGUID")
 
     def test_objectclass_converts_oid_to_oud_rendering_oracle_identity(
-        self,
-        oud_server: FlextLdifServersBase,
-        oid_server: FlextLdifServersBase,
+        self, oud_server: FlextLdifServersBase, oid_server: FlextLdifServersBase
     ) -> None:
         """OID objectClass -> RFC -> OUD renders back to OUD text carrying the Oracle oid and name."""
         parsed = oid_server.schema_server.parse_objectclass(
-            c.Tests.CROSS_SERVER_OID_OBJECTCLASS_ORCLCONTEXT,
+            c.Tests.CROSS_SERVER_OID_OBJECTCLASS_ORCLCONTEXT
         )
         tm.ok(parsed)
         rfc_text = oid_server.schema_server.write(parsed.value)
@@ -236,9 +222,7 @@ class TestsFlextLdifCrossServerConversion:
         tm.that(oud_text.value, has="orclContext")
 
     def test_batch_attribute_conversion_preserves_each_attribute_name(
-        self,
-        oud_server: FlextLdifServersBase,
-        oid_server: FlextLdifServersBase,
+        self, oud_server: FlextLdifServersBase, oid_server: FlextLdifServersBase
     ) -> None:
         """Converting a batch of OUD attributes to OID preserves each distinct attribute name."""
         oud_attr_strings: t.SequenceOf[str] = [
@@ -265,9 +249,7 @@ class TestsFlextLdifCrossServerConversion:
         tm.that(oid_rendered[1], has="orclDBName")
 
     def test_attribute_survives_full_bidirectional_roundtrip(
-        self,
-        oud_server: FlextLdifServersBase,
-        oid_server: FlextLdifServersBase,
+        self, oud_server: FlextLdifServersBase, oid_server: FlextLdifServersBase
     ) -> None:
         """OUD->RFC->OID->RFC->OUD keeps the Oracle oid and name in the final rendered text."""
         rendered = c.Tests.CROSS_SERVER_OUD_ATTRIBUTE_ORCLGUID

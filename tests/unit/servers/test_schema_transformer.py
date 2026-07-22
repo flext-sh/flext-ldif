@@ -9,8 +9,8 @@ private state, no collaborator spying, no patching of the unit under test.
 from __future__ import annotations
 
 import pytest
-from flext_tests import tm
 
+from flext_tests import tm
 from tests import u
 
 
@@ -46,9 +46,7 @@ class TestsFlextLdifSchemaTransformer:
     ) -> None:
         """Configured suffixes and char replacements produce the RFC name."""
         result = u.Ldif.normalize_name(
-            name_value,
-            suffixes_to_remove=suffixes,
-            char_replacements=replacements,
+            name_value, suffixes_to_remove=suffixes, char_replacements=replacements
         )
         tm.that(result, eq=expected)
 
@@ -62,9 +60,7 @@ class TestsFlextLdifSchemaTransformer:
         ],
     )
     def test_normalize_name_defaults_strip_binary_and_underscore(
-        self,
-        name_value: str,
-        expected: str,
+        self, name_value: str, expected: str
     ) -> None:
         """With no config, defaults strip ``;binary`` and map ``_`` to ``-``."""
         result = u.Ldif.normalize_name(name_value)
@@ -72,8 +68,7 @@ class TestsFlextLdifSchemaTransformer:
 
     @pytest.mark.parametrize("empty", ["", None])
     def test_normalize_name_returns_falsy_input_unchanged(
-        self,
-        empty: str | None,
+        self, empty: str | None
     ) -> None:
         """Empty string and None are returned as-is (no transformation)."""
         result = u.Ldif.normalize_name(empty)
@@ -89,9 +84,7 @@ class TestsFlextLdifSchemaTransformer:
     def test_normalize_name_without_matches_preserves_identity(self) -> None:
         """A name with no suffix/char hits comes back byte-identical."""
         result = u.Ldif.normalize_name(
-            "plainName",
-            suffixes_to_remove=[";binary"],
-            char_replacements={"_": "-"},
+            "plainName", suffixes_to_remove=[";binary"], char_replacements={"_": "-"}
         )
         tm.that(result, eq="plainName")
 
@@ -104,9 +97,7 @@ class TestsFlextLdifSchemaTransformer:
         equality, substr = u.Ldif.normalize_matching_rules(
             "caseIgnoreSubstringsMatch",
             None,
-            substr_rules_in_equality={
-                "caseIgnoreSubstringsMatch": "caseIgnoreMatch",
-            },
+            substr_rules_in_equality={"caseIgnoreSubstringsMatch": "caseIgnoreMatch"},
         )
         tm.that(equality, eq="caseIgnoreMatch")
         tm.that(substr, eq="caseIgnoreSubstringsMatch")
@@ -117,11 +108,9 @@ class TestsFlextLdifSchemaTransformer:
             "caseIgnoreSubStringsMatch",
             None,
             normalized_substr_values={
-                "caseIgnoreSubStringsMatch": "caseIgnoreSubstringsMatch",
+                "caseIgnoreSubStringsMatch": "caseIgnoreSubstringsMatch"
             },
-            substr_rules_in_equality={
-                "caseIgnoreSubStringsMatch": "caseIgnoreMatch",
-            },
+            substr_rules_in_equality={"caseIgnoreSubStringsMatch": "caseIgnoreMatch"},
         )
         tm.that(equality, eq="caseIgnoreMatch")
         tm.that(substr, eq="caseIgnoreSubstringsMatch")
@@ -158,8 +147,7 @@ class TestsFlextLdifSchemaTransformer:
     ) -> None:
         """Without config maps, EQUALITY/SUBSTR pass through untouched."""
         result_equality, result_substr = u.Ldif.normalize_matching_rules(
-            equality,
-            substr,
+            equality, substr
         )
         tm.that(result_equality, eq=exp_equality)
         tm.that(result_substr, eq=exp_substr)
@@ -177,8 +165,7 @@ class TestsFlextLdifSchemaTransformer:
     def test_matching_rules_preserves_existing_substr(self) -> None:
         """An already-present SUBSTR rule is never dropped."""
         equality, substr = u.Ldif.normalize_matching_rules(
-            "caseIgnoreMatch",
-            "caseIgnoreSubstringsMatch",
+            "caseIgnoreMatch", "caseIgnoreSubstringsMatch"
         )
         tm.that(equality, eq="caseIgnoreMatch")
         tm.that(substr, eq="caseIgnoreSubstringsMatch")
@@ -205,20 +192,14 @@ class TestsFlextLdifSchemaTransformer:
         ],
     )
     def test_syntax_oid_strips_quotes_then_applies_replacements(
-        self,
-        syntax: str,
-        replacements: dict[str, str] | None,
-        expected: str,
+        self, syntax: str, replacements: dict[str, str] | None, expected: str
     ) -> None:
         """Surrounding quotes are removed, then replacement mapping is applied."""
         result = u.Ldif.normalize_syntax_oid(syntax, replacements=replacements)
         tm.that(result, eq=expected)
 
     @pytest.mark.parametrize("empty", ["", None])
-    def test_syntax_oid_returns_falsy_input_unchanged(
-        self,
-        empty: str | None,
-    ) -> None:
+    def test_syntax_oid_returns_falsy_input_unchanged(self, empty: str | None) -> None:
         """Empty string and None are returned unchanged."""
         result = u.Ldif.normalize_syntax_oid(empty)
         tm.that(result, eq=empty)

@@ -16,10 +16,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
 
 from flext_ldif import ldif, m
 from flext_ldif.services.parser import FlextLdifParser
+from flext_tests import tm
 from tests import c, t
 
 if TYPE_CHECKING:
@@ -55,10 +55,7 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         ],
     )
     def test_parsed_entry_metadata_reports_effective_server_type(
-        self,
-        parser: FlextLdifParser,
-        server_type: str,
-        effective_server_type: str,
+        self, parser: FlextLdifParser, server_type: str, effective_server_type: str
     ) -> None:
         """Entry metadata records the effective (normalized) server family.
 
@@ -113,8 +110,7 @@ class TestsFlextLdifMinimalDifferencesMetadata:
     # -- original DN capture ----------------------------------------------
 
     def test_oid_parse_captures_complete_original_dn(
-        self,
-        parser: FlextLdifParser,
+        self, parser: FlextLdifParser
     ) -> None:
         """OID parsing records the complete original DN under extensions."""
         content = "dn: cn=test,dc=example,dc=com\nobjectClass: top\ncn: test\n"
@@ -129,8 +125,7 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         )
 
     def test_dn_whitespace_preserved_verbatim_on_parse(
-        self,
-        parser: FlextLdifParser,
+        self, parser: FlextLdifParser
     ) -> None:
         """DN spacing is preserved exactly as written through the parse."""
         content = "dn: cn=test, dc=example, dc=com\nobjectClass: top\ncn: test\n"
@@ -145,10 +140,7 @@ class TestsFlextLdifMinimalDifferencesMetadata:
 
     @pytest.mark.parametrize(
         ("attribute", "raw_value", "converted_value"),
-        [
-            ("orcldasisenabled", "1", "TRUE"),
-            ("pwdlockout", "0", "FALSE"),
-        ],
+        [("orcldasisenabled", "1", "TRUE"), ("pwdlockout", "0", "FALSE")],
     )
     def test_oid_boolean_conversion_recorded_in_metadata(
         self,
@@ -172,16 +164,16 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         assert metadata is not None
         # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: validate plain mappings.
         converted: t.MutableJsonMapping = t.json_dict_adapter().validate_python(
-            metadata.extensions[c.Ldif.CONVERTED_ATTRIBUTES],
+            metadata.extensions[c.Ldif.CONVERTED_ATTRIBUTES]
         )
         boolean_conversions: t.MutableJsonMapping = (
             t.json_dict_adapter().validate_python(
-                converted[c.Ldif.CONVERSION_BOOLEAN_CONVERSIONS],
+                converted[c.Ldif.CONVERSION_BOOLEAN_CONVERSIONS]
             )
         )
         tm.that(boolean_conversions, has=attribute)
         entry_conversion: t.MutableJsonMapping = t.json_dict_adapter().validate_python(
-            boolean_conversions[attribute],
+            boolean_conversions[attribute]
         )
         tm.that(entry_conversion[c.Ldif.CONVERSION_ORIGINAL_VALUE], eq=[raw_value])
         tm.that(
@@ -191,9 +183,7 @@ class TestsFlextLdifMinimalDifferencesMetadata:
     # -- round-trip write --------------------------------------------------
 
     def test_round_trip_write_emits_converted_boolean_value(
-        self,
-        parser: FlextLdifParser,
-        writer: p.Ldif.LdifClient,
+        self, parser: FlextLdifParser, writer: p.Ldif.LdifClient
     ) -> None:
         """OID -> write converts the boolean and preserves the DN in output."""
         content = (
@@ -224,10 +214,7 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         ],
     )
     def test_operational_attributes_preserved_through_parse(
-        self,
-        parser: FlextLdifParser,
-        attribute: str,
-        value: str,
+        self, parser: FlextLdifParser, attribute: str, value: str
     ) -> None:
         """Operational attributes survive parsing and stay publicly readable."""
         content = (
@@ -249,8 +236,7 @@ class TestsFlextLdifMinimalDifferencesMetadata:
     # -- invariants and error paths ---------------------------------------
 
     def test_metadata_capture_is_idempotent_across_repeated_parses(
-        self,
-        parser: FlextLdifParser,
+        self, parser: FlextLdifParser
     ) -> None:
         """Parsing identical content twice yields identical metadata."""
         content = (
@@ -263,7 +249,8 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         first = parser.parse_string(content=content, server_type=c.Tests.OID)
         second = parser.parse_string(content=content, server_type=c.Tests.OID)
 
-        assert first.success and second.success
+        assert first.success
+        assert second.success
         first_meta = first.value.entries[0].metadata
         second_meta = second.value.entries[0].metadata
         assert first_meta is not None
@@ -272,8 +259,7 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         tm.that(first_meta.extensions, eq=second_meta.extensions)
 
     def test_unknown_server_type_returns_failure_with_reason(
-        self,
-        parser: FlextLdifParser,
+        self, parser: FlextLdifParser
     ) -> None:
         """An unknown server_type fails with a descriptive error, not a crash."""
         content = "dn: cn=test,dc=example,dc=com\ncn: test\n"

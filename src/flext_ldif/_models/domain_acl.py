@@ -36,48 +36,34 @@ class FlextLdifModelsDomainAcl:
         search: Annotated[bool, u.Field(description="Search permission")] = False
         compare: Annotated[bool, u.Field(description="Compare permission")] = False
         self_write: Annotated[
-            bool,
-            u.Field(description="Self-write permission (OID, OUD)"),
+            bool, u.Field(description="Self-write permission (OID, OUD)")
         ] = False
         proxy: Annotated[
-            bool,
-            u.Field(description="Proxy permission (OID, OUD, 389DS)"),
+            bool, u.Field(description="Proxy permission (OID, OUD, 389DS)")
         ] = False
         browse: Annotated[
-            bool,
-            u.Field(
-                description="Browse permission (OID) - maps to read+search",
-            ),
+            bool, u.Field(description="Browse permission (OID) - maps to read+search")
         ] = False
         auth: Annotated[
-            bool,
-            u.Field(
-                description="Auth permission (OID) - authentication access",
-            ),
+            bool, u.Field(description="Auth permission (OID) - authentication access")
         ] = False
         all: Annotated[
-            bool,
-            u.Field(description="All permissions (compound permission)"),
+            bool, u.Field(description="All permissions (compound permission)")
         ] = False
         no_write: Annotated[
-            bool,
-            u.Field(description="Deny write permission (OID)"),
+            bool, u.Field(description="Deny write permission (OID)")
         ] = False
-        no_add: Annotated[
-            bool,
-            u.Field(description="Deny add permission (OID)"),
-        ] = False
+        no_add: Annotated[bool, u.Field(description="Deny add permission (OID)")] = (
+            False
+        )
         no_delete: Annotated[
-            bool,
-            u.Field(description="Deny delete permission (OID)"),
+            bool, u.Field(description="Deny delete permission (OID)")
         ] = False
         no_browse: Annotated[
-            bool,
-            u.Field(description="Deny browse permission (OID)"),
+            bool, u.Field(description="Deny browse permission (OID)")
         ] = False
         no_self_write: Annotated[
-            bool,
-            u.Field(description="Deny self-write permission (OID)"),
+            bool, u.Field(description="Deny self-write permission (OID)")
         ] = False
 
         @staticmethod
@@ -126,8 +112,7 @@ class FlextLdifModelsDomainAcl:
 
         target_dn: Annotated[str, u.Field(..., description="Target DN pattern")]
         attributes: Annotated[
-            t.MutableSequenceOf[str],
-            u.Field(description="Target attributes"),
+            t.MutableSequenceOf[str], u.Field(description="Target attributes")
         ]
 
     class AclSubject(m.ArbitraryTypesModel):
@@ -165,18 +150,14 @@ class FlextLdifModelsDomainAcl:
             u.Field(description="ACL permission flags"),
         ] = None
         raw_line: Annotated[
-            str,
-            u.Field(description="Original raw ACL line from LDIF"),
+            str, u.Field(description="Original raw ACL line from LDIF")
         ] = ""
         raw_acl: Annotated[
-            str,
-            u.Field(description="Original ACL string from LDIF"),
+            str, u.Field(description="Original ACL string from LDIF")
         ] = ""
         metadata: Annotated[
             FlextLdifModelsDomainMetadata.ServerMetadata | None,
-            u.Field(
-                description="Server-specific metadata for ACL processing",
-            ),
+            u.Field(description="Server-specific metadata for ACL processing"),
         ] = None
 
         @classmethod
@@ -240,7 +221,7 @@ class FlextLdifModelsDomainAcl:
                 violations.append(
                     "Invalid server_type "
                     f"'{self.server_type}' - expected one of: "
-                    f"{', '.join(sorted(valid_server_type_values))}",
+                    f"{', '.join(sorted(valid_server_type_values))}"
                 )
             acl_is_defined = (
                 self.target is not None
@@ -249,7 +230,7 @@ class FlextLdifModelsDomainAcl:
             )
             if acl_is_defined and not (self.raw_acl and self.raw_acl.strip()):
                 violations.append(
-                    "ACL is defined (has target/subject/permissions) but raw_acl is empty",
+                    "ACL is defined (has target/subject/permissions) but raw_acl is empty"
                 )
             if violations:
                 self.validation_violations.clear()
@@ -282,29 +263,22 @@ class FlextLdifModelsDomainAcl:
 
         original_format: Annotated[
             str | None,
-            u.Field(
-                description="Original ACL string format from source server",
-            ),
+            u.Field(description="Original ACL string format from source server"),
         ] = None
         source_server: Annotated[
-            str | None,
-            u.Field(description="Server type that parsed this ACL"),
+            str | None, u.Field(description="Server type that parsed this ACL")
         ] = None
         name_sanitized: Annotated[
             bool,
-            u.Field(
-                description="True if ACL name was sanitized during processing",
-            ),
+            u.Field(description="True if ACL name was sanitized during processing"),
         ] = False
         original_name_raw: Annotated[
-            str | None,
-            u.Field(description="Original ACL name before sanitization"),
+            str | None, u.Field(description="Original ACL name before sanitization")
         ] = None
 
         @classmethod
         def from_extensions(
-            cls,
-            extensions: t.Ldif.MetadataInputMapping | None,
+            cls, extensions: t.Ldif.MetadataInputMapping | None
         ) -> Self:
             """Extract ACL write metadata from ServerMetadata extensions.
 

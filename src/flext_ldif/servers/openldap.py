@@ -79,10 +79,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         SUPPORTED_PERMISSIONS: ClassVar[frozenset[str]] = (
             FlextLdifServersRfc.Constants.SUPPORTED_PERMISSIONS | frozenset(["auth"])
         )
-        ATTRIBUTE_FIELDS: ClassVar[frozenset[str]] = frozenset([
-            "x_origin",
-            "ordering",
-        ])
+        ATTRIBUTE_FIELDS: ClassVar[frozenset[str]] = frozenset(["x_origin", "ordering"])
         OBJECTCLASS_REQUIREMENTS: ClassVar[t.BoolMapping] = MappingProxyType({
             "requires_sup_for_auxiliary": True,
             "allows_multiple_sup": True,
@@ -113,36 +110,31 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         ])
         SCHEMA_OPENLDAP_OLC_PATTERN: ClassVar[str] = "\\bolc[A-Z][a-zA-Z]*\\b"
         SCHEMA_OPENLDAP_OLC_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-            SCHEMA_OPENLDAP_OLC_PATTERN,
-            re.IGNORECASE,
+            SCHEMA_OPENLDAP_OLC_PATTERN, re.IGNORECASE
         )
         ACL_BY_PATTERN: ClassVar[str] = "by\\s+([^\\s]+)\\s+([^\\s]+)"
         ACL_BY_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-            ACL_BY_PATTERN,
-            re.IGNORECASE,
+            ACL_BY_PATTERN, re.IGNORECASE
         )
         ACL_DEFAULT_NAME: ClassVar[str] = "access"
         ACL_INDEX_PATTERN: ClassVar[str] = "^\\{(\\d+)\\}\\s*(.+)"
         ACL_INDEX_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(ACL_INDEX_PATTERN)
         ACL_TO_BY_PATTERN: ClassVar[str] = "^to\\s+(.+?)\\s+by\\s+"
         ACL_TO_BY_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-            ACL_TO_BY_PATTERN,
-            re.IGNORECASE,
+            ACL_TO_BY_PATTERN, re.IGNORECASE
         )
         ACL_ATTRS_PATTERN: ClassVar[str] = (
             "attrs?\\s*=\\s*([^,\\s]+(?:\\s*,\\s*[^,\\s]+)*)"
         )
         ACL_ATTRS_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-            ACL_ATTRS_PATTERN,
-            re.IGNORECASE,
+            ACL_ATTRS_PATTERN, re.IGNORECASE
         )
         ACL_SUBJECT_TYPE_WHO: ClassVar[c.Ldif.AclSubjectType] = (
             c.Ldif.AclSubjectType.ALL
         )
         ACL_INDEX_PREFIX_PATTERN: ClassVar[str] = "^(\\{\\d+\\})?\\s*to\\s+"
         ACL_INDEX_PREFIX_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-            ACL_INDEX_PREFIX_PATTERN,
-            re.IGNORECASE,
+            ACL_INDEX_PREFIX_PATTERN, re.IGNORECASE
         )
         ACL_START_PREFIX: ClassVar[str] = "to"
         ACL_ATTRS_SEPARATOR: ClassVar[str] = ","
@@ -160,8 +152,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
 
         @override
         def can_handle_attribute(
-            self,
-            attr_definition: str | m.Ldif.SchemaAttribute,
+            self, attr_definition: str | m.Ldif.SchemaAttribute
         ) -> bool:
             """Check if this is an OpenLDAP 2.x attribute (PRIVATE)."""
             if isinstance(attr_definition, str):
@@ -169,55 +160,50 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 if not attr_definition or not attr_definition.strip():
                     return False
                 if FlextLdifServersOpenldap.Constants.SCHEMA_OPENLDAP_OLC_RE.search(
-                    attr_definition_str,
+                    attr_definition_str
                 ):
                     return True
                 return super().can_handle_attribute(attr_definition_str)
             oid_raw = getattr(attr_definition, "oid", None)
             if isinstance(
-                oid_raw,
-                str,
+                oid_raw, str
             ) and FlextLdifServersOpenldap.Constants.SCHEMA_OPENLDAP_OLC_RE.search(
-                oid_raw,
+                oid_raw
             ):
                 return True
             return super().can_handle_attribute(attr_definition)
 
         @override
         def can_handle_objectclass(
-            self,
-            oc_definition: str | m.Ldif.SchemaObjectClass,
+            self, oc_definition: str | m.Ldif.SchemaObjectClass
         ) -> bool:
             """Check if this is an OpenLDAP 2.x objectClass (PRIVATE)."""
             if isinstance(oc_definition, str):
                 oc_definition_str = oc_definition
                 if FlextLdifServersOpenldap.Constants.SCHEMA_OPENLDAP_OLC_RE.search(
-                    oc_definition_str,
+                    oc_definition_str
                 ):
                     return True
                 return super().can_handle_objectclass(oc_definition_str)
             oid_raw = getattr(oc_definition, "oid", None)
             if isinstance(
-                oid_raw,
-                str,
+                oid_raw, str
             ) and FlextLdifServersOpenldap.Constants.SCHEMA_OPENLDAP_OLC_RE.search(
-                oid_raw,
+                oid_raw
             ):
                 return True
             return super().can_handle_objectclass(oc_definition)
 
         @override
         def _transform_attribute_for_write(
-            self,
-            attr_data: m.Ldif.SchemaAttribute,
+            self, attr_data: m.Ldif.SchemaAttribute
         ) -> m.Ldif.SchemaAttribute:
             """Transform attribute before writing (hook from base.py)."""
             return super()._transform_attribute_for_write(attr_data)
 
         @override
         def _transform_objectclass_for_write(
-            self,
-            oc_data: m.Ldif.SchemaObjectClass,
+            self, oc_data: m.Ldif.SchemaObjectClass
         ) -> m.Ldif.SchemaObjectClass:
             """Transform objectClass before writing (hook from base.py)."""
             return super()._transform_objectclass_for_write(oc_data)
@@ -251,11 +237,11 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 acl_content = acl_line[len(olc_prefix) :].strip()
             return bool(
                 FlextLdifServersOpenldap.Constants.ACL_INDEX_PREFIX_RE.match(
-                    acl_content,
-                ),
+                    acl_content
+                )
             ) or acl_content.startswith(
                 FlextLdifServersOpenldap.Constants.ACL_START_PREFIX
-                + f"{FlextLdifServersOpenldap.Constants.ACL_ATTRIBUTE_NAME}:",
+                + f"{FlextLdifServersOpenldap.Constants.ACL_ATTRIBUTE_NAME}:"
             )
 
         def _build_openldap_acl_model(
@@ -274,8 +260,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                     "attributes": attributes,
                 }),
                 subject=m.Ldif.AclSubject(
-                    subject_type=c.Ldif.AclSubjectType.ALL,
-                    subject_value=subject_value,
+                    subject_type=c.Ldif.AclSubjectType.ALL, subject_value=subject_value
                 ),
                 permissions=m.Ldif.AclPermissions(
                     read="read" in access,
@@ -286,8 +271,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                     compare="read" in access,
                 ),
                 metadata=u.Ldif.server_metadata_for(
-                    self._get_server_type(),
-                    extensions={"original_format": acl_line},
+                    self._get_server_type(), extensions={"original_format": acl_line}
                 ),
                 raw_acl=acl_line,
             )
@@ -322,18 +306,14 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 return r[m.Ldif.Acl].ok(acl_minimal)
             subject_value, access = self._parse_by_clauses(acl_content)
             acl = self._build_openldap_acl_model(
-                what,
-                attributes,
-                subject_value,
-                access,
-                acl_line,
+                what, attributes, subject_value, access, acl_line
             )
             return r[m.Ldif.Acl].ok(acl)
 
         def _parse_by_clauses(self, acl_content: str) -> t.StrPair:
             """Parse "by <who> <access>" clauses."""
             by_matches = list(
-                FlextLdifServersOpenldap.Constants.ACL_BY_RE.finditer(acl_content),
+                FlextLdifServersOpenldap.Constants.ACL_BY_RE.finditer(acl_content)
             )
             subject_value = (
                 by_matches[0].group(1)
@@ -348,12 +328,11 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             return (subject_value, access)
 
         def _parse_what_clause(
-            self,
-            acl_content: str,
+            self, acl_content: str
         ) -> tuple[str | None, t.MutableSequenceOf[str]]:
             """Parse "to <what>" clause and extract attributes."""
             to_match = FlextLdifServersOpenldap.Constants.ACL_TO_BY_RE.match(
-                acl_content,
+                acl_content
             )
             if not to_match:
                 return (None, [])
@@ -365,7 +344,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 attributes = [
                     attr.strip()
                     for attr in attr_string.split(
-                        FlextLdifServersOpenldap.Constants.ACL_ATTRS_SEPARATOR,
+                        FlextLdifServersOpenldap.Constants.ACL_ATTRS_SEPARATOR
                     )
                 ]
             return (what, attributes)
@@ -374,13 +353,13 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             """Remove olcAccess: prefix and {n} index from ACL line."""
             acl_content = acl_line
             if acl_line.startswith(
-                f"{FlextLdifServersOpenldap.Constants.ACL_ATTRIBUTE_NAME}:",
+                f"{FlextLdifServersOpenldap.Constants.ACL_ATTRIBUTE_NAME}:"
             ):
                 acl_content = acl_line[
                     len(FlextLdifServersOpenldap.Constants.ACL_ATTRIBUTE_NAME + ":") :
                 ].strip()
             index_match = FlextLdifServersOpenldap.Constants.ACL_INDEX_RE.match(
-                acl_content,
+                acl_content
             )
             if index_match:
                 acl_content = index_match.group(2)
@@ -428,9 +407,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
 
         @override
         def can_handle(
-            self,
-            entry_dn: str,
-            attributes: t.MutableStrSequenceMapping,
+            self, entry_dn: str, attributes: t.MutableStrSequenceMapping
         ) -> bool:
             """Check if this server should handle the entry (PRIVATE)."""
             if not entry_dn:
@@ -476,9 +453,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             }
             if entry.metadata is None:
                 entry = entry.model_copy(
-                    update={
-                        "metadata": u.Ldif.server_metadata_for("openldap"),
-                    },
+                    update={"metadata": u.Ldif.server_metadata_for("openldap")}
                 )
             if entry.metadata is None:
                 return entry

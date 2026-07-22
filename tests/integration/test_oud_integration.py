@@ -20,8 +20,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar
 
 import pytest
-from flext_tests import tm
 
+from flext_tests import tm
 from tests import TestsFlextLdifUtilities as u
 
 if TYPE_CHECKING:
@@ -68,9 +68,7 @@ class TestsFlextLdifOudIntegration:
     # --- Schema fixture ---------------------------------------------------
 
     def test_parse_schema_fixture_returns_success_with_single_entry(
-        self,
-        api: p.Ldif.LdifClient,
-        oud_schema_fixture: str,
+        self, api: p.Ldif.LdifClient, oud_schema_fixture: str
     ) -> None:
         """Parsing the OUD schema fixture yields exactly one schema entry."""
         response: m.Ldif.ParseResponse = u.Tests.assert_success(
@@ -81,13 +79,11 @@ class TestsFlextLdifOudIntegration:
         tm.that(len(response.entries), eq=1)
 
     def test_schema_entry_exposes_oracle_attribute_definitions(
-        self,
-        api: p.Ldif.LdifClient,
-        oud_schema_fixture: str,
+        self, api: p.Ldif.LdifClient, oud_schema_fixture: str
     ) -> None:
         """The schema entry carries Oracle-namespaced attributeType definitions."""
         response: m.Ldif.ParseResponse = u.Tests.assert_success(
-            api.parse_ldif(oud_schema_fixture),
+            api.parse_ldif(oud_schema_fixture)
         )
         schema_entry = response.entries[0]
 
@@ -100,13 +96,11 @@ class TestsFlextLdifOudIntegration:
         ), "Expected at least one Oracle-namespaced attributeType"
 
     def test_schema_entry_exposes_oracle_object_class_definitions(
-        self,
-        api: p.Ldif.LdifClient,
-        oud_schema_fixture: str,
+        self, api: p.Ldif.LdifClient, oud_schema_fixture: str
     ) -> None:
         """The schema entry carries Oracle-namespaced objectClass definitions."""
         response: m.Ldif.ParseResponse = u.Tests.assert_success(
-            api.parse_ldif(oud_schema_fixture),
+            api.parse_ldif(oud_schema_fixture)
         )
         schema_entry = response.entries[0]
 
@@ -121,14 +115,11 @@ class TestsFlextLdifOudIntegration:
     # --- ACL fixture ------------------------------------------------------
 
     def test_parse_acl_fixture_yields_entries_all_carrying_aci(
-        self,
-        api: p.Ldif.LdifClient,
-        oud_acl_fixture: str,
+        self, api: p.Ldif.LdifClient, oud_acl_fixture: str
     ) -> None:
         """Every entry in the ACL fixture exposes an ``aci`` attribute."""
         response: m.Ldif.ParseResponse = u.Tests.assert_success(
-            api.parse_ldif(oud_acl_fixture),
-            error_msg="OUD ACL parsing must succeed",
+            api.parse_ldif(oud_acl_fixture), error_msg="OUD ACL parsing must succeed"
         )
 
         assert response.entries, "ACL fixture must produce entries"
@@ -137,13 +128,11 @@ class TestsFlextLdifOudIntegration:
         ), "Every ACL fixture entry must carry an aci attribute"
 
     def test_aci_values_survive_write_then_reparse(
-        self,
-        api: p.Ldif.LdifClient,
-        oud_acl_fixture: str,
+        self, api: p.Ldif.LdifClient, oud_acl_fixture: str
     ) -> None:
         """ACI values are preserved through a parse -> write -> parse round-trip."""
         original: m.Ldif.ParseResponse = u.Tests.assert_success(
-            api.parse_ldif(oud_acl_fixture),
+            api.parse_ldif(oud_acl_fixture)
         )
         original_acis = {
             self._dn_value(entry): sorted(self._attrs(entry).get("aci") or [])
@@ -151,13 +140,12 @@ class TestsFlextLdifOudIntegration:
         }
 
         written: m.Ldif.WriteResponse = u.Tests.assert_success(
-            api.write(original.entries),
-            error_msg="Writing ACL entries must succeed",
+            api.write(original.entries), error_msg="Writing ACL entries must succeed"
         )
         written_content = written.content
         assert written_content is not None
         reparsed: m.Ldif.ParseResponse = u.Tests.assert_success(
-            api.parse_ldif(written_content),
+            api.parse_ldif(written_content)
         )
 
         roundtrip_acis = {
@@ -170,9 +158,7 @@ class TestsFlextLdifOudIntegration:
     # --- Entry fixture ----------------------------------------------------
 
     def test_parse_entries_fixture_meets_minimum_count(
-        self,
-        api: p.Ldif.LdifClient,
-        oud_entries_fixture: str,
+        self, api: p.Ldif.LdifClient, oud_entries_fixture: str
     ) -> None:
         """The entries fixture parses into at least the expected number of entries."""
         response: m.Ldif.ParseResponse = u.Tests.assert_success(
@@ -183,13 +169,11 @@ class TestsFlextLdifOudIntegration:
         assert len(response.entries) >= self.MIN_ENTRY_FIXTURE_COUNT
 
     def test_oracle_object_classes_preserved_through_parsing(
-        self,
-        api: p.Ldif.LdifClient,
-        oud_entries_fixture: str,
+        self, api: p.Ldif.LdifClient, oud_entries_fixture: str
     ) -> None:
         """Oracle objectClasses (orclContext, ...) survive parsing intact."""
         response: m.Ldif.ParseResponse = u.Tests.assert_success(
-            api.parse_ldif(oud_entries_fixture),
+            api.parse_ldif(oud_entries_fixture)
         )
 
         entries_with_oracle_oc = sum(
@@ -209,9 +193,7 @@ class TestsFlextLdifOudIntegration:
     # --- Round-trip integrity --------------------------------------------
 
     def test_roundtrip_preserves_entry_count_and_dn_set(
-        self,
-        api: p.Ldif.LdifClient,
-        oud_integration_fixture: str,
+        self, api: p.Ldif.LdifClient, oud_integration_fixture: str
     ) -> None:
         """Parse -> write -> parse preserves entry count and the exact DN set."""
         first: m.Ldif.ParseResponse = u.Tests.assert_success(
@@ -221,15 +203,13 @@ class TestsFlextLdifOudIntegration:
         assert first.entries, "Fixture must produce entries"
 
         written: m.Ldif.WriteResponse = u.Tests.assert_success(
-            api.write(first.entries),
-            error_msg="Write must succeed",
+            api.write(first.entries), error_msg="Write must succeed"
         )
         written_content = written.content
         assert written_content, "Write must produce non-empty LDIF"
 
         second: m.Ldif.ParseResponse = u.Tests.assert_success(
-            api.parse_ldif(written_content),
-            error_msg="Re-parse must succeed",
+            api.parse_ldif(written_content), error_msg="Re-parse must succeed"
         )
 
         tm.that(len(second.entries), eq=len(first.entries))
@@ -239,16 +219,14 @@ class TestsFlextLdifOudIntegration:
         )
 
     def test_roundtrip_is_idempotent_on_dn_set(
-        self,
-        api: p.Ldif.LdifClient,
-        oud_integration_fixture: str,
+        self, api: p.Ldif.LdifClient, oud_integration_fixture: str
     ) -> None:
         """Parsing the same fixture twice yields an identical DN set (invariant)."""
         first: m.Ldif.ParseResponse = u.Tests.assert_success(
-            api.parse_ldif(oud_integration_fixture),
+            api.parse_ldif(oud_integration_fixture)
         )
         second: m.Ldif.ParseResponse = u.Tests.assert_success(
-            api.parse_ldif(oud_integration_fixture),
+            api.parse_ldif(oud_integration_fixture)
         )
 
         tm.that(
@@ -264,25 +242,23 @@ class TestsFlextLdifOudIntegration:
         ],
     )
     def test_roundtrip_preserves_dn_rdn_components_with_spaces(
-        self,
-        api: p.Ldif.LdifClient,
-        dn_with_spaces: str,
+        self, api: p.Ldif.LdifClient, dn_with_spaces: str
     ) -> None:
         """DNs whose RDNs are separated by ', ' keep their component count."""
         source_ldif = f"dn: {dn_with_spaces}\ncn: Oracle Context\nobjectClass: top\n"
         parsed: m.Ldif.ParseResponse = u.Tests.assert_success(
-            api.parse_ldif(source_ldif),
+            api.parse_ldif(source_ldif)
         )
         tm.that(len(parsed.entries), eq=1)
         original_dn = self._dn_value(parsed.entries[0])
 
         written: m.Ldif.WriteResponse = u.Tests.assert_success(
-            api.write(parsed.entries),
+            api.write(parsed.entries)
         )
         written_content = written.content
         assert written_content is not None
         reparsed: m.Ldif.ParseResponse = u.Tests.assert_success(
-            api.parse_ldif(written_content),
+            api.parse_ldif(written_content)
         )
 
         tm.that(len(reparsed.entries), eq=1)
@@ -293,8 +269,7 @@ class TestsFlextLdifOudIntegration:
     # --- Metadata contract ------------------------------------------------
 
     def test_parsed_entries_expose_public_dn_attributes_and_metadata(
-        self,
-        api: p.Ldif.LdifClient,
+        self, api: p.Ldif.LdifClient
     ) -> None:
         """A parsed entry exposes DN, attribute values, and metadata publicly."""
         source_ldif = (
@@ -306,7 +281,7 @@ class TestsFlextLdifOudIntegration:
         )
 
         response: m.Ldif.ParseResponse = u.Tests.assert_success(
-            api.parse_ldif(source_ldif),
+            api.parse_ldif(source_ldif)
         )
 
         tm.that(len(response.entries), eq=1)

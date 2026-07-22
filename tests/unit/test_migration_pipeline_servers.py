@@ -12,11 +12,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
 
 from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.services.migration import FlextLdifMigrationPipeline
+from flext_tests import tm
 from tests import c
 
 if TYPE_CHECKING:
@@ -28,11 +28,7 @@ class TestsFlextLdifMigrationPipelineServers:
 
     @staticmethod
     def _run_migration(
-        *,
-        tmp_path: Path,
-        ldif_content: str,
-        source_server: str,
-        target_server: str,
+        *, tmp_path: Path, ldif_content: str, source_server: str, target_server: str
     ) -> tuple[str, int, tuple[str, ...]]:
         """Drive ``execute`` through its public API and return observable state.
 
@@ -157,10 +153,7 @@ class TestsFlextLdifMigrationPipelineServers:
         tm.that(content, has=f"{expected_attribute}: {c.Tests.ACL_READ_VALUE}")
 
         if expected_attribute == FlextLdifServersOidConstants.ORCLACI:
-            _ = tm.that(
-                not c.Tests.MIGRATION_ACI_LINE_REGEX.search(content),
-                eq=True,
-            )
+            _ = tm.that(not c.Tests.MIGRATION_ACI_LINE_REGEX.search(content), eq=True)
         else:
             tm.that(f"{FlextLdifServersOidConstants.ORCLACI}:" not in content, eq=True)
 
@@ -187,8 +180,7 @@ class TestsFlextLdifMigrationPipelineServers:
         )
 
     def test_target_server_form_is_enforced_regardless_of_input_shape(
-        self,
-        tmp_path: Path,
+        self, tmp_path: Path
     ) -> None:
         """The pipeline converts to the target server form even for RFC-shaped input."""
         ldif_content = (
@@ -207,14 +199,10 @@ class TestsFlextLdifMigrationPipelineServers:
 
         val_true_oid = c.Tests.BOOLEAN_RFC_TO_OID[c.Tests.BOOLEAN_TRUE]
         tm.that(entry_count, eq=1)
-        tm.that(
-            content,
-            has=f"{c.Tests.ATTR_ORCL_IS_ENABLED.lower()}: {val_true_oid}",
-        )
+        tm.that(content, has=f"{c.Tests.ATTR_ORCL_IS_ENABLED.lower()}: {val_true_oid}")
 
     def test_execute_fails_when_input_directory_is_missing(
-        self,
-        tmp_path: Path,
+        self, tmp_path: Path
     ) -> None:
         """execute() surfaces a typed failure r[T] when input_dir does not exist."""
         missing_input = tmp_path / "does_not_exist"

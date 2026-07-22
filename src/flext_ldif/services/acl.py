@@ -2,15 +2,7 @@
 
 from __future__ import annotations
 
-from flext_ldif import (
-    c,
-    m,
-    p,
-    r,
-    s,
-    t,
-    u,
-)
+from flext_ldif import c, m, p, r, s, t, u
 
 
 class FlextLdifAcl(s):
@@ -49,8 +41,8 @@ class FlextLdifAcl(s):
             if isinstance(required_permissions, m.Ldif.AclPermissions)
             else m.Ldif.AclPermissions.model_validate(
                 m.Ldif.AclPermissions.filter_rfc_compliant_permissions(
-                    dict(required_permissions),
-                ),
+                    dict(required_permissions)
+                )
             )
         )
         permission_keys = (
@@ -105,13 +97,11 @@ class FlextLdifAcl(s):
     def service_check(self) -> p.Result[m.Ldif.AclResponse]:
         """Return a minimal ACL response for service wiring checks."""
         return r[m.Ldif.AclResponse].ok(
-            m.Ldif.AclResponse(acls=[], statistics=m.Ldif.Statistics()),
+            m.Ldif.AclResponse(acls=[], statistics=m.Ldif.Statistics())
         )
 
     def extract_acls_from_entry(
-        self,
-        entry: m.Ldif.Entry,
-        server_type: str,
+        self, entry: m.Ldif.Entry, server_type: str
     ) -> p.Result[m.Ldif.AclResponse]:
         """Extract ACLs from entry using server-specific attribute names."""
         acl_attr_name = u.Ldif.get_acl_attributes()
@@ -135,24 +125,20 @@ class FlextLdifAcl(s):
                 server_type=server_type,
             )
         return r[m.Ldif.AclResponse].ok(
-            self._build_acl_response(acls, failed_entries=failed_count),
+            self._build_acl_response(acls, failed_entries=failed_count)
         )
 
     def parse_acl_string(
-        self,
-        acl_string: str,
-        server_type: str,
+        self, acl_string: str, server_type: str
     ) -> p.Result[m.Ldif.Acl]:
         """Parse ACL string using server-specific servers."""
         try:
             normalized_server_type = u.Ldif.normalize_server_type(server_type)
         except c.EXC_TYPE_VALIDATION as error:
-            return r[m.Ldif.Acl].fail(
-                f"Invalid server type: {server_type} - {error}",
-            )
+            return r[m.Ldif.Acl].fail(f"Invalid server type: {server_type} - {error}")
         try:
             acl_server = self._server.acl(
-                "openldap1" if server_type == "openldap" else normalized_server_type,
+                "openldap1" if server_type == "openldap" else normalized_server_type
             )
             if acl_server is None and server_type == "openldap":
                 acl_server = self._server.acl("openldap2")
@@ -160,19 +146,13 @@ class FlextLdifAcl(s):
             return r[m.Ldif.Acl].fail(str(error))
         if acl_server is None:
             return r[m.Ldif.Acl].fail(
-                f"No ACL server found for server type: {normalized_server_type}",
+                f"No ACL server found for server type: {normalized_server_type}"
             )
         return (
             r[m.Ldif.Acl]
-            .from_result(
-                acl_server.parse_server(acl_string),
-            )
-            .map(
-                m.Ldif.Acl.model_validate,
-            )
-            .map_error(
-                lambda error: error or "ACL parsing failed",
-            )
+            .from_result(acl_server.parse_server(acl_string))
+            .map(m.Ldif.Acl.model_validate)
+            .map_error(lambda error: error or "ACL parsing failed")
         )
 
 

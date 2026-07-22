@@ -12,8 +12,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
 
+from flext_tests import tm
 from tests import TestsFlextLdifUtilities as u, c, m
 
 if TYPE_CHECKING:
@@ -38,11 +38,8 @@ class TestsFlextLdifStatisticsService:
             return entry
         metadata_with_server = entry.metadata.model_copy(
             update={
-                "extensions": {
-                    **entry.metadata.extensions,
-                    "server_type": server_type,
-                },
-            },
+                "extensions": {**entry.metadata.extensions, "server_type": server_type}
+            }
         )
         return entry.model_copy(update={"metadata": metadata_with_server})
 
@@ -58,8 +55,7 @@ class TestsFlextLdifStatisticsService:
         ]
 
     def test_returns_success_result_for_entry_list(
-        self,
-        api: p.Ldif.LdifClient,
+        self, api: p.Ldif.LdifClient
     ) -> None:
         result = api.calculate_for_entries(self._entries(2))
 
@@ -68,9 +64,7 @@ class TestsFlextLdifStatisticsService:
 
     @pytest.mark.parametrize("count", [0, 1, 2, 5])
     def test_total_entries_equals_input_count(
-        self,
-        api: p.Ldif.LdifClient,
-        count: int,
+        self, api: p.Ldif.LdifClient, count: int
     ) -> None:
         result = api.calculate_for_entries(self._entries(count))
 
@@ -78,8 +72,7 @@ class TestsFlextLdifStatisticsService:
         tm.that(stats.total_entries, eq=count)
 
     def test_object_class_distribution_counts_shared_objectclass(
-        self,
-        api: p.Ldif.LdifClient,
+        self, api: p.Ldif.LdifClient
     ) -> None:
         result = api.calculate_for_entries(self._entries(3))
 
@@ -91,8 +84,7 @@ class TestsFlextLdifStatisticsService:
         tm.that(stats.object_class_distribution.get("top", 0), eq=3)
 
     def test_server_type_distribution_partitions_by_server_type(
-        self,
-        api: p.Ldif.LdifClient,
+        self, api: p.Ldif.LdifClient
     ) -> None:
         entries = [
             self._entry("cn=stats-rfc,dc=example,dc=com", c.Tests.RFC),
@@ -107,9 +99,7 @@ class TestsFlextLdifStatisticsService:
 
     @pytest.mark.parametrize("server_type", [c.Tests.RFC, c.Tests.OID])
     def test_single_server_type_produces_single_count(
-        self,
-        api: p.Ldif.LdifClient,
-        server_type: str,
+        self, api: p.Ldif.LdifClient, server_type: str
     ) -> None:
         entries = [
             self._entry(f"cn=stats-{index},dc=example,dc=com", server_type)
@@ -122,8 +112,7 @@ class TestsFlextLdifStatisticsService:
         tm.that(stats.server_type_distribution.get(server_type, 0), eq=3)
 
     def test_empty_entries_yields_zero_totals_and_empty_distributions(
-        self,
-        api: p.Ldif.LdifClient,
+        self, api: p.Ldif.LdifClient
     ) -> None:
         result = api.calculate_for_entries([])
 
@@ -133,8 +122,7 @@ class TestsFlextLdifStatisticsService:
         tm.that(len(stats.server_type_distribution), eq=0)
 
     def test_parse_response_input_equals_entry_list_input(
-        self,
-        api: p.Ldif.LdifClient,
+        self, api: p.Ldif.LdifClient
     ) -> None:
         entries = [
             self._entry("cn=stats-parse,dc=example,dc=com", c.Tests.RFC),
@@ -147,25 +135,22 @@ class TestsFlextLdifStatisticsService:
         )
 
         from_list: m.Ldif.EntriesStatistics = u.Tests.assert_success(
-            api.calculate_for_entries(entries),
+            api.calculate_for_entries(entries)
         )
         from_response: m.Ldif.EntriesStatistics = u.Tests.assert_success(
-            api.calculate_for_entries(parse_response),
+            api.calculate_for_entries(parse_response)
         )
 
         tm.that(from_response.model_dump(), eq=from_list.model_dump())
 
-    def test_repeated_calls_are_idempotent(
-        self,
-        api: p.Ldif.LdifClient,
-    ) -> None:
+    def test_repeated_calls_are_idempotent(self, api: p.Ldif.LdifClient) -> None:
         entries = self._entries(4)
 
         first: m.Ldif.EntriesStatistics = u.Tests.assert_success(
-            api.calculate_for_entries(entries),
+            api.calculate_for_entries(entries)
         )
         second: m.Ldif.EntriesStatistics = u.Tests.assert_success(
-            api.calculate_for_entries(entries),
+            api.calculate_for_entries(entries)
         )
 
         tm.that(first.model_dump(), eq=second.model_dump())

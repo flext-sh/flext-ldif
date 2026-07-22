@@ -40,13 +40,13 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
         "CaseExactMatch": "caseExactMatch",
     })
     MATCHING_RULE_RFC_TO_OID: ClassVar[t.StrMapping] = MappingProxyType({
-        "caseIgnoreSubstringsMatch": "caseIgnoreSubStringsMatch",
+        "caseIgnoreSubstringsMatch": "caseIgnoreSubStringsMatch"
     })
     SYNTAX_OID_TO_RFC: ClassVar[t.StrMapping] = MappingProxyType({
-        "1.3.6.1.4.1.1466.115.121.1.1": "1.3.6.1.4.1.1466.115.121.1.15",
+        "1.3.6.1.4.1.1466.115.121.1.1": "1.3.6.1.4.1.1466.115.121.1.15"
     })
     ATTR_NAME_CASE_MAP: ClassVar[t.StrMapping] = MappingProxyType({
-        "middlename": "middleName",
+        "middlename": "middleName"
     })
     OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = (
         FlextLdifServersRfc.Constants.OPERATIONAL_ATTRIBUTES
@@ -208,16 +208,13 @@ class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
         "\\s\\(([^()]+)\\)(?:\\s*(?:filter=|added_object | bindmode|Deny | Append|bindip | constrain|$))"
     )
     ACL_TARGET_DN_EXTRACT_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-        ACL_TARGET_DN_EXTRACT,
-        re.IGNORECASE,
+        ACL_TARGET_DN_EXTRACT, re.IGNORECASE
     )
     ACL_TARGET_ATTR_OID_EXTRACT_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-        ACL_TARGET_ATTR_OID_EXTRACT,
-        re.IGNORECASE,
+        ACL_TARGET_ATTR_OID_EXTRACT, re.IGNORECASE
     )
     ACL_PERMS_EXTRACT_OID_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-        ACL_PERMS_EXTRACT_OID,
-        re.IGNORECASE,
+        ACL_PERMS_EXTRACT_OID, re.IGNORECASE
     )
     ONE_OID: ClassVar[str] = c.Ldif.OID_TRUE
     ZERO_OID: ClassVar[str] = c.Ldif.OID_FALSE

@@ -118,8 +118,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
 
         @override
         def can_handle_attribute(
-            self,
-            attr_definition: str | m.Ldif.SchemaAttribute,
+            self, attr_definition: str | m.Ldif.SchemaAttribute
         ) -> bool:
             """Detect eDirectory attribute definitions using Constants."""
             matches: bool = u.Ldif.matches_server_patterns(
@@ -130,8 +129,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
 
         @override
         def can_handle_objectclass(
-            self,
-            oc_definition: str | m.Ldif.SchemaObjectClass,
+            self, oc_definition: str | m.Ldif.SchemaObjectClass
         ) -> bool:
             """Detect eDirectory objectClass definitions using Constants."""
             matches: bool = u.Ldif.matches_server_patterns(
@@ -179,9 +177,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             )
 
         def _build_novell_permissions_from_rights(
-            self,
-            rights: t.MutableSequenceOf[str],
-            permission_name_map: t.StrMapping,
+            self, rights: t.MutableSequenceOf[str], permission_name_map: t.StrMapping
         ) -> t.MutableBoolMapping:
             """Build AclPermissions dict from parsed rights list."""
             reverse_map: t.MutableStrMapping = {
@@ -227,14 +223,13 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             segments = [
                 segment
                 for segment in content.split(
-                    FlextLdifServersNovell.Constants.ACL_SEGMENT_SEPARATOR,
+                    FlextLdifServersNovell.Constants.ACL_SEGMENT_SEPARATOR
                 )
                 if segment
             ]
             scope = segments[0] if segments else None
             trustee = self._segment_at(
-                segments,
-                FlextLdifServersNovell.Constants.NOVELL_SEGMENT_INDEX_TRUSTEE,
+                segments, FlextLdifServersNovell.Constants.NOVELL_SEGMENT_INDEX_TRUSTEE
             )
             rights_str = (
                 self._segment_at(
@@ -258,13 +253,11 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 ),
                 permissions=m.Ldif.AclPermissions(
                     **self._build_novell_permissions_from_rights(
-                        rights,
-                        self._NOVELL_PERMISSION_MAP,
-                    ),
+                        rights, self._NOVELL_PERMISSION_MAP
+                    )
                 ),
                 metadata=u.Ldif.server_metadata_for(
-                    self._get_server_type(),
-                    extensions={"original_format": acl_line},
+                    self._get_server_type(), extensions={"original_format": acl_line}
                 ),
                 raw_acl=acl_line,
             )
@@ -290,10 +283,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         }
 
         @staticmethod
-        def _segment_at(
-            segments: t.MutableSequenceOf[str],
-            index: int,
-        ) -> str | None:
+        def _segment_at(segments: t.MutableSequenceOf[str], index: int) -> str | None:
             """Return segment at index when present."""
             if len(segments) > index:
                 segment: str = segments[index]
@@ -323,7 +313,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                     if parts[0].strip():
                         attr_name = parts[0].strip()
                         if attr_name.lower() not in u.enum_values(
-                            c.Ldif.RfcAclPermission,
+                            c.Ldif.RfcAclPermission
                         ):
                             attributes.append(attr_name)
             return attributes
@@ -349,8 +339,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
 
         @classmethod
         def _active_novell_permissions(
-            cls,
-            permissions: m.Ldif.AclPermissions | None,
+            cls, permissions: m.Ldif.AclPermissions | None
         ) -> t.MutableSequenceOf[str]:
             """Return active Novell permission tokens."""
             active_perms: t.MutableSequenceOf[str] = []
@@ -369,9 +358,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
 
         @override
         def can_handle(
-            self,
-            entry_dn: str,
-            attributes: t.MutableStrSequenceMapping,
+            self, entry_dn: str, attributes: t.MutableStrSequenceMapping
         ) -> bool:
             """Detect eDirectory-specific entries."""
             if not entry_dn:
@@ -398,32 +385,23 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             )
 
         @override
-        def model_post_init(
-            self,
-            __context: t.JsonMapping | None,
-            /,
-        ) -> None:
+        def model_post_init(self, __context: t.JsonMapping | None, /) -> None:
             """Initialize eDirectory entry server."""
 
         def process_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
             """Normalise eDirectory entries and expose metadata."""
             if not entry.attributes:
                 return r[m.Ldif.Entry].ok(entry)
-            attributes: t.MutableStrSequenceMapping = {
-                **entry.attributes.attributes,
-            }
+            attributes: t.MutableStrSequenceMapping = {**entry.attributes.attributes}
             try:
                 return self._process_novell_entry(entry, attributes)
             except c.EXC_BASIC_TYPE as exc:
                 return r[m.Ldif.Entry].fail_op(
-                    "Novell eDirectory entry processing",
-                    exc,
+                    "Novell eDirectory entry processing", exc
                 )
 
         def _process_novell_entry(
-            self,
-            entry: m.Ldif.Entry,
-            attributes: t.MutableStrSequenceMapping,
+            self, entry: m.Ldif.Entry, attributes: t.MutableStrSequenceMapping
         ) -> p.Result[m.Ldif.Entry]:
             """Normalize eDirectory entry attributes."""
             object_classes = attributes.get(c.Ldif.DictKeys.OBJECTCLASS, [])
@@ -432,11 +410,11 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 processed_values: t.MutableSequenceOf[str] = list(attr_values)
                 processed_attributes[attr_name] = processed_values
             processed_attributes[c.Ldif.ServerMetadataKeys.SERVER_TYPE] = [
-                self._get_server_type(),
+                self._get_server_type()
             ]
             processed_attributes[c.Ldif.DictKeys.OBJECTCLASS] = object_classes
             new_attrs = m.Ldif.Attributes.model_validate({
-                "attributes": processed_attributes,
+                "attributes": processed_attributes
             })
             new_entry = entry.model_copy(update={"attributes": new_attrs})
             return r[m.Ldif.Entry].ok(new_entry)

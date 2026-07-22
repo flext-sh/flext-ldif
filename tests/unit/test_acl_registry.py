@@ -13,8 +13,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
 
+from flext_tests import tm
 from tests import c, u
 
 if TYPE_CHECKING:
@@ -26,12 +26,7 @@ class TestsFlextLdifAclRegistry:
     """Behavioral suite for the public ACL attribute registry contract."""
 
     @pytest.mark.parametrize(
-        (
-            "scenario",
-            "param_server_type",
-            "required_attrs",
-            "forbidden_attrs",
-        ),
+        ("scenario", "param_server_type", "required_attrs", "forbidden_attrs"),
         [
             (name, data[1], data[2], data[3])
             for name, data in c.Tests.ACL_REGISTRY_GET_ACL_ATTRIBUTES_DATA.items()
@@ -64,13 +59,9 @@ class TestsFlextLdifAclRegistry:
         tm.that(default_attrs, eq=rfc_attrs)
         tm.that(default_attrs, has="olcAccess")
 
-    @pytest.mark.parametrize(
-        "server_type",
-        ["oid", "oud", "ad", "rfc", "generic"],
-    )
+    @pytest.mark.parametrize("server_type", ["oid", "oud", "ad", "rfc", "generic"])
     def test_get_acl_attributes_string_and_enum_inputs_are_equivalent(
-        self,
-        server_type: str,
+        self, server_type: str
     ) -> None:
         """A string server type and its enum member resolve identically."""
         # Arrange
@@ -83,13 +74,9 @@ class TestsFlextLdifAclRegistry:
         # Assert
         tm.that(from_string, eq=from_enum)
 
-    @pytest.mark.parametrize(
-        "variant",
-        ["oid", "OID", "  oid  ", "Oid"],
-    )
+    @pytest.mark.parametrize("variant", ["oid", "OID", "  oid  ", "Oid"])
     def test_get_acl_attributes_normalizes_case_and_whitespace(
-        self,
-        variant: str,
+        self, variant: str
     ) -> None:
         """Server-type lookup is case-insensitive and whitespace-tolerant."""
         # Act / Assert: every spelling of "oid" yields the canonical result.
@@ -108,10 +95,7 @@ class TestsFlextLdifAclRegistry:
     def test_get_acl_attributes_is_idempotent(self) -> None:
         """Repeated calls for the same server type yield equal contents."""
         # Act / Assert
-        tm.that(
-            u.Ldif.get_acl_attributes("oid"),
-            eq=u.Ldif.get_acl_attributes("oid"),
-        )
+        tm.that(u.Ldif.get_acl_attributes("oid"), eq=u.Ldif.get_acl_attributes("oid"))
 
     def test_get_acl_attributes_returns_independent_mutable_copies(self) -> None:
         """Mutating a returned list must not affect later calls (no shared state)."""
@@ -137,43 +121,29 @@ class TestsFlextLdifAclRegistry:
         ],
     )
     def test_is_acl_attribute_classifies_attributes(
-        self,
-        attr_name: str,
-        server_type: str | None,
-        expected_result: bool,
+        self, attr_name: str, server_type: str | None, expected_result: bool
     ) -> None:
         """is_acl_attribute returns the documented boolean per attribute/server."""
         # Act / Assert
         tm.that(u.Ldif.is_acl_attribute(attr_name, server_type), eq=expected_result)
 
-    @pytest.mark.parametrize(
-        "spelling",
-        ["aci", "ACI", "Aci", "aCi"],
-    )
+    @pytest.mark.parametrize("spelling", ["aci", "ACI", "Aci", "aCi"])
     def test_is_acl_attribute_is_case_insensitive(self, spelling: str) -> None:
         """Recognition of an ACL attribute ignores letter casing."""
         # Act / Assert
         tm.that(u.Ldif.is_acl_attribute(spelling), eq=True)
 
-    @pytest.mark.parametrize(
-        "non_acl_attr",
-        ["cn", "uid", "mail", "objectClass"],
-    )
+    @pytest.mark.parametrize("non_acl_attr", ["cn", "uid", "mail", "objectClass"])
     def test_is_acl_attribute_rejects_non_acl_attributes(
-        self,
-        non_acl_attr: str,
+        self, non_acl_attr: str
     ) -> None:
         """Ordinary directory attributes are not classified as ACL attributes."""
         # Act / Assert
         tm.that(u.Ldif.is_acl_attribute(non_acl_attr), eq=False)
 
-    @pytest.mark.parametrize(
-        "server_type",
-        [None, "oid", "oud", "ad", "generic"],
-    )
+    @pytest.mark.parametrize("server_type", [None, "oid", "oud", "ad", "generic"])
     def test_is_acl_attribute_agrees_with_get_acl_attributes(
-        self,
-        server_type: str | None,
+        self, server_type: str | None
     ) -> None:
         """Invariant: every attribute in the set is recognized (case-insensitively)."""
         # Arrange

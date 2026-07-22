@@ -14,9 +14,7 @@ from flext_core import FlextUtilities as u, m
 from flext_ldif import c, p, r, t
 
 if TYPE_CHECKING:
-    from collections.abc import (
-        MutableMapping,
-    )
+    from collections.abc import MutableMapping
 
 
 class FlextLdifModelsDomainDN:
@@ -26,62 +24,48 @@ class FlextLdifModelsDomainDN:
         """Statistics tracking for DN transformations and validation."""
 
         original_dn: Annotated[
-            str,
-            u.Field(..., description="Original DN as received from input"),
+            str, u.Field(..., description="Original DN as received from input")
         ]
         cleaned_dn: Annotated[
-            str,
-            u.Field(..., description="DN after clean_dn() transformation"),
+            str, u.Field(..., description="DN after clean_dn() transformation")
         ]
         normalized_dn: Annotated[
-            str,
-            u.Field(..., description="Final normalized DN (RFC 4514 compliant)"),
+            str, u.Field(..., description="Final normalized DN (RFC 4514 compliant)")
         ]
         transformations: Annotated[
             t.StrSequence,
             u.Field(description="Ordered list of transformations applied"),
         ]
         had_tab_chars: Annotated[
-            bool,
-            u.Field(description="DN contained TAB characters"),
+            bool, u.Field(description="DN contained TAB characters")
         ] = False
         had_trailing_spaces: Annotated[
-            bool,
-            u.Field(description="DN had trailing spaces"),
+            bool, u.Field(description="DN had trailing spaces")
         ] = False
         had_leading_spaces: Annotated[
-            bool,
-            u.Field(description="DN had leading spaces"),
+            bool, u.Field(description="DN had leading spaces")
         ] = False
         had_extra_spaces: Annotated[
-            bool,
-            u.Field(description="DN had multiple consecutive spaces"),
+            bool, u.Field(description="DN had multiple consecutive spaces")
         ] = False
         was_base64_encoded: Annotated[
-            bool,
-            u.Field(description="DN was base64 encoded in LDIF (dn::)"),
+            bool, u.Field(description="DN was base64 encoded in LDIF (dn::)")
         ] = False
         had_utf8_chars: Annotated[
-            bool,
-            u.Field(description="DN contained UTF-8 multi-byte characters"),
+            bool, u.Field(description="DN contained UTF-8 multi-byte characters")
         ] = False
         had_escape_sequences: Annotated[
-            bool,
-            u.Field(description="DN contained LDAP escape sequences"),
+            bool, u.Field(description="DN contained LDAP escape sequences")
         ] = False
         validation_status: Annotated[
             str,
-            u.Field(
-                description="Validation status (use ValidationStatus constants)",
-            ),
+            u.Field(description="Validation status (use ValidationStatus constants)"),
         ] = "valid"
         validation_warnings: Annotated[
-            t.StrSequence,
-            u.Field(description="Non-fatal validation warnings"),
+            t.StrSequence, u.Field(description="Non-fatal validation warnings")
         ]
         validation_errors: Annotated[
-            t.StrSequence,
-            u.Field(description="Fatal validation errors"),
+            t.StrSequence, u.Field(description="Fatal validation errors")
         ]
 
         @u.computed_field()
@@ -106,9 +90,7 @@ class FlextLdifModelsDomainDN:
         @property
         def was_transformed(self) -> bool:
             """Check if any transformations were applied."""
-            return self.original_dn != self.normalized_dn or bool(
-                self.transformations,
-            )
+            return self.original_dn != self.normalized_dn or bool(self.transformations)
 
         @classmethod
         def create_minimal(cls, dn: str) -> Self:
@@ -123,8 +105,7 @@ class FlextLdifModelsDomainDN:
         @u.field_validator("transformations", mode="after")
         @classmethod
         def deduplicate_transformations(
-            cls,
-            v: t.MutableSequenceOf[str],
+            cls, v: t.MutableSequenceOf[str]
         ) -> t.MutableSequenceOf[str]:
             """Remove duplicate transformations while preserving order."""
             seen: set[str] = set()
@@ -149,14 +130,13 @@ class FlextLdifModelsDomainDN:
         value: Annotated[
             str,
             u.Field(
-                ...,
-                description="DN string value (lenient processing - no max_length)",
+                ..., description="DN string value (lenient processing - no max_length)"
             ),
         ]
         metadata: Annotated[
             t.MutableJsonMapping,
             u.Field(
-                description="Server-specific metadata for preserving original format",
+                description="Server-specific metadata for preserving original format"
             ),
         ] = u.Field(default_factory=dict)
 
@@ -197,10 +177,7 @@ class FlextLdifModelsDomainDN:
             if dn is None:
                 msg = "dn cannot be None"
                 raise ValueError(msg)
-            validated: Self = cls.model_validate({
-                "value": str(dn),
-                "metadata": {},
-            })
+            validated: Self = cls.model_validate({"value": str(dn), "metadata": {}})
             return validated
 
         @classmethod

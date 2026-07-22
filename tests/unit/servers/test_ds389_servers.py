@@ -10,9 +10,9 @@ without mocking the unit under test.
 from __future__ import annotations
 
 import pytest
-from flext_tests import tm
 
 from flext_ldif.servers.ds389 import FlextLdifServersDs389
+from flext_tests import tm
 from tests import c, m, t, u
 
 
@@ -32,8 +32,7 @@ class TestsFlextLdifDs389Servers:
 
     @pytest.mark.parametrize("test_case", c.Tests.DS389_ATTRIBUTE_TEST_CASES)
     def test_can_handle_attribute_matches_expected(
-        self,
-        test_case: m.Tests.AttributeTestCase,
+        self, test_case: m.Tests.AttributeTestCase
     ) -> None:
         """can_handle_attribute reflects DS389 ownership per case table."""
         tm.that(
@@ -87,7 +86,7 @@ class TestsFlextLdifDs389Servers:
         """A definition missing its OID yields a failed r[T] with a reason."""
         tm.fail(
             self._schema_server().parse_input(
-                "NAME 'nsslapd-port' SYNTAX 1.3.6.1.4.1.1466.115.121.1.27",
+                "NAME 'nsslapd-port' SYNTAX 1.3.6.1.4.1.1466.115.121.1.27"
             ),
             has="missing an OID",
         )
@@ -98,8 +97,7 @@ class TestsFlextLdifDs389Servers:
 
     @pytest.mark.parametrize("test_case", c.Tests.DS389_OBJECTCLASS_TEST_CASES)
     def test_can_handle_objectclass_matches_expected(
-        self,
-        test_case: m.Tests.ObjectClassTestCase,
+        self, test_case: m.Tests.ObjectClassTestCase
     ) -> None:
         """can_handle_objectclass reflects DS389 ownership per case table."""
         tm.that(
@@ -132,17 +130,15 @@ class TestsFlextLdifDs389Servers:
             "MAY ( nsds5ReplicaId $ nsds5ReplicaRoot ) )"
         )
         u.Tests.assert_server_schema_parse_and_properties(
-            self._schema_server(),
-            oc_def,
-            expected_kind="AUXILIARY",
+            self._schema_server(), oc_def, expected_kind="AUXILIARY"
         )
 
     def test_parse_abstract_objectclass_reports_kind(self) -> None:
         """ABSTRACT objectClass parse yields a model reporting ABSTRACT kind."""
         oc_data = tm.ok(
             self._schema_server().parse_input(
-                "( 2.16.840.1.113730.3.2.3 NAME 'nsds5base' ABSTRACT )",
-            ),
+                "( 2.16.840.1.113730.3.2.3 NAME 'nsds5base' ABSTRACT )"
+            )
         )
         assert isinstance(oc_data, m.Ldif.SchemaObjectClass)
         tm.that(oc_data.kind, eq="ABSTRACT")
@@ -150,9 +146,7 @@ class TestsFlextLdifDs389Servers:
     def test_parse_objectclass_without_oid_fails_with_message(self) -> None:
         """A definition missing its OID yields a failed r[T] with a reason."""
         tm.fail(
-            self._schema_server().parse_input(
-                "NAME 'nscontainer' SUP top STRUCTURAL",
-            ),
+            self._schema_server().parse_input("NAME 'nscontainer' SUP top STRUCTURAL"),
             has="missing an OID",
         )
 
@@ -167,10 +161,7 @@ class TestsFlextLdifDs389Servers:
             may=["nsslapd-port"],
         )
         oc_str = tm.ok(self._schema_server().write(oc_data))
-        tm.that(
-            oc_str,
-            has=["2.16.840.1.113730.3.2.1", "nscontainer", "STRUCTURAL"],
-        )
+        tm.that(oc_str, has=["2.16.840.1.113730.3.2.1", "nscontainer", "STRUCTURAL"])
 
     def test_parsed_objectclass_round_trips_through_write(self) -> None:
         """Parse then write preserves the identity tokens (round-trip invariant)."""
@@ -190,8 +181,7 @@ class TestsFlextLdifDs389Servers:
 
     @pytest.mark.parametrize("test_case", c.Tests.DS389_ENTRY_TEST_CASES)
     def test_entry_can_handle_matches_expected(
-        self,
-        test_case: m.Tests.EntryTestCase,
+        self, test_case: m.Tests.EntryTestCase
     ) -> None:
         """Entry.can_handle reflects DS389 ownership per case table."""
         entry_server = FlextLdifServersDs389().entry_server
@@ -221,10 +211,7 @@ class TestsFlextLdifDs389Servers:
         ],
     )
     def test_acl_can_handle_matches_expected(
-        self,
-        acl_line: str,
-        *,
-        expected: bool,
+        self, acl_line: str, *, expected: bool
     ) -> None:
         """Acl.can_handle claims aci/version lines and rejects other input."""
         acl_server = FlextLdifServersDs389().acl_server

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import pytest
-from flext_tests import tm
 
+from flext_tests import tm
 from tests import c, t, u
 
 
@@ -22,9 +22,7 @@ class TestsFlextLdifOidUtilities:
         ],
     )
     def test_extract_from_definition_returns_leading_oid(
-        self,
-        definition: str,
-        expected_oid: str,
+        self, definition: str, expected_oid: str
     ) -> None:
         result = u.Ldif.extract_from_definition(definition)
 
@@ -41,8 +39,7 @@ class TestsFlextLdifOidUtilities:
         ],
     )
     def test_extract_from_definition_fails_without_leading_oid(
-        self,
-        definition: str,
+        self, definition: str
     ) -> None:
         result = u.Ldif.extract_from_definition(definition)
 
@@ -76,10 +73,7 @@ class TestsFlextLdifOidUtilities:
         ],
     )
     def test_matches_pattern_reflects_extracted_oid(
-        self,
-        definition: str,
-        pattern: str,
-        expected: bool,
+        self, definition: str, pattern: str, expected: bool
     ) -> None:
         compiled: t.Ldif.RegexPattern = c.Ldif.compile_pattern(pattern)
 
@@ -89,16 +83,14 @@ class TestsFlextLdifOidUtilities:
 
     def test_matches_pattern_false_when_definition_has_no_oid(self) -> None:
         result = u.Ldif.matches_pattern(
-            "( NAME 'cn' DESC 'no oid' )",
-            c.Tests.EXACT_OID_1_2_3_RE,
+            "( NAME 'cn' DESC 'no oid' )", c.Tests.EXACT_OID_1_2_3_RE
         )
 
         tm.that(result, eq=False)
 
     def test_matches_pattern_true_against_exact_oid_constant(self) -> None:
         result = u.Ldif.matches_pattern(
-            "( 1.2.3 NAME 'cn' )",
-            c.Tests.EXACT_OID_1_2_3_RE,
+            "( 1.2.3 NAME 'cn' )", c.Tests.EXACT_OID_1_2_3_RE
         )
 
         tm.that(result, eq=True)

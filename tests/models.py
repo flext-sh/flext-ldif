@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Annotated, ClassVar
 
-from flext_tests import FlextTestsModels
-
 from flext_ldif import m, u
+from flext_tests import FlextTestsModels
 from tests import t
 
 if TYPE_CHECKING:
@@ -29,36 +28,30 @@ class TestsFlextLdifModels(FlextTestsModels, m):
 
             scenario: Annotated[str, u.Field(description="Scenario identifier")]
             expected_can_handle: Annotated[
-                bool,
-                u.Field(description="Expected can_handle result"),
+                bool, u.Field(description="Expected can_handle result")
             ]
 
         class _SchemaCase(_CanHandleCase):
             """Shared OID/NAME parsed-value expectations."""
 
             expected_oid: Annotated[
-                str | None,
-                u.Field(description="Expected parsed OID"),
+                str | None, u.Field(description="Expected parsed OID")
             ] = None
             expected_name: Annotated[
-                str | None,
-                u.Field(description="Expected parsed name"),
+                str | None, u.Field(description="Expected parsed name")
             ] = None
 
         class LdifTestData(m.Value):
             """Test data for LDIF utilities."""
 
             id: Annotated[
-                str,
-                u.Field(description="Unique identifier for the test data entry"),
+                str, u.Field(description="Unique identifier for the test data entry")
             ]
             server_type: Annotated[
-                str,
-                u.Field(description="Type of server associated with the entry"),
+                str, u.Field(description="Type of server associated with the entry")
             ]
             dn: Annotated[
-                str,
-                u.Field(description="Distinguished name of the LDAP entry"),
+                str, u.Field(description="Distinguished name of the LDAP entry")
             ]
             attributes: Annotated[
                 t.StrSequenceMapping,
@@ -69,25 +62,20 @@ class TestsFlextLdifModels(FlextTestsModels, m):
             """Metadata about a discovered fixture file."""
 
             server_type: Annotated[
-                t.Tests.FixtureServer,
-                u.Field(description="Fixture server identifier"),
+                t.Tests.FixtureServer, u.Field(description="Fixture server identifier")
             ]
             fixture_type: Annotated[
-                t.Tests.FixtureKind,
-                u.Field(description="Fixture category identifier"),
+                t.Tests.FixtureKind, u.Field(description="Fixture category identifier")
             ]
             file_path: Annotated[Path, u.Field(description="Fixture file path")]
             line_count: Annotated[
-                int,
-                u.Field(description="Number of lines in the fixture file"),
+                int, u.Field(description="Number of lines in the fixture file")
             ]
             entry_count: Annotated[
-                int,
-                u.Field(description="Number of LDIF entries in the fixture"),
+                int, u.Field(description="Number of LDIF entries in the fixture")
             ]
             size_bytes: Annotated[
-                int,
-                u.Field(description="Fixture file size in bytes"),
+                int, u.Field(description="Fixture file size in bytes")
             ]
 
         class AttributeTestCase(_SchemaCase):
@@ -100,8 +88,7 @@ class TestsFlextLdifModels(FlextTestsModels, m):
 
             oc_definition: Annotated[str, u.Field(description="ObjectClass definition")]
             expected_kind: Annotated[
-                str | None,
-                u.Field(description="Expected parsed objectClass kind"),
+                str | None, u.Field(description="Expected parsed objectClass kind")
             ] = None
 
         class EntryTestCase(_CanHandleCase):
@@ -109,8 +96,7 @@ class TestsFlextLdifModels(FlextTestsModels, m):
 
             entry_dn: Annotated[str, u.Field(description="Entry DN")]
             attributes: Annotated[
-                t.MutableStrSequenceMapping,
-                u.Field(description="Entry attributes"),
+                t.MutableStrSequenceMapping, u.Field(description="Entry attributes")
             ]
 
         class ProtocolServer(_Frozen):
@@ -130,12 +116,10 @@ class TestsFlextLdifModels(FlextTestsModels, m):
             scenario: Annotated[str, u.Field(description="ACL scenario")]
             acl_line: Annotated[str | None, u.Field(description="ACL line")] = None
             expected_can_handle: Annotated[
-                bool,
-                u.Field(description="Expected can_handle result"),
+                bool, u.Field(description="Expected can_handle result")
             ] = False
             expected_success: Annotated[
-                bool,
-                u.Field(description="Expected parse success"),
+                bool, u.Field(description="Expected parse success")
             ] = False
 
 

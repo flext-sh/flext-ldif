@@ -87,9 +87,7 @@ class FlextLdifUtilitiesSchemaBuild:
 
     @staticmethod
     def build_attribute_parts_with_metadata(
-        attr_data: m.Ldif.SchemaAttribute,
-        *,
-        restore_original: bool = True,
+        attr_data: m.Ldif.SchemaAttribute, *, restore_original: bool = True
     ) -> t.MutableSequenceOf[str]:
         """Build RFC 4512 attribute parts with full metadata restoration."""
         if restore_original:
@@ -120,14 +118,11 @@ class FlextLdifUtilitiesSchemaBuild:
 
     @staticmethod
     def build_objectclass_parts_with_metadata(
-        oc_data: m.Ldif.SchemaObjectClass,
-        *,
-        restore_original: bool = True,
+        oc_data: m.Ldif.SchemaObjectClass, *, restore_original: bool = True
     ) -> t.MutableSequenceOf[str]:
         """Build RFC 4512 objectClass parts with full metadata restoration."""
         original_parts = sf.try_restore_objectclass_original_format(
-            oc_data,
-            restore_original=restore_original,
+            oc_data, restore_original=restore_original
         )
         if original_parts:
             return original_parts
@@ -159,8 +154,7 @@ class FlextLdifUtilitiesSchemaBuild:
 
     @staticmethod
     def should_restore_schema_original_format(
-        metadata: m.Ldif.ServerMetadata | None,
-        target_server_type: str | None,
+        metadata: m.Ldif.ServerMetadata | None, target_server_type: str | None
     ) -> bool:
         """Restore original schema text only for same-server round-trips."""
         if metadata is None:
@@ -173,12 +167,8 @@ class FlextLdifUtilitiesSchemaBuild:
         if not source_server_type or not target_server_type:
             return True
         try:
-            normalized_source = us.normalize_server_type(
-                str(source_server_type),
-            )
-            normalized_target = us.normalize_server_type(
-                target_server_type,
-            )
+            normalized_source = us.normalize_server_type(str(source_server_type))
+            normalized_target = us.normalize_server_type(target_server_type)
         except c.EXC_TYPE_VALIDATION:
             return str(source_server_type).lower() == target_server_type.lower()
         normalized_source_value: str = normalized_source.value

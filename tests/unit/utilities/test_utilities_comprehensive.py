@@ -8,9 +8,9 @@ attributes, internal collaborators, or implementation details are touched.
 from __future__ import annotations
 
 import pytest
-from flext_tests import tm
 
 from flext_ldif.utilities import u
+from flext_tests import tm
 
 
 class TestsFlextLdifUtilitiesComprehensive:
@@ -52,8 +52,7 @@ class TestsFlextLdifUtilitiesComprehensive:
     # --- DN value escaping ---------------------------------------------
 
     @pytest.mark.parametrize(
-        "value",
-        ["a,b+c", 'quote"here', "back\\slash", "semi;colon", "plain", ""],
+        "value", ["a,b+c", 'quote"here', "back\\slash", "semi;colon", "plain", ""]
     )
     def test_esc_unesc_roundtrip_is_lossless(self, value: str) -> None:
         """Round-trip esc then unesc restores the original DN value (invariant)."""
@@ -69,20 +68,13 @@ class TestsFlextLdifUtilitiesComprehensive:
     # --- base64 detection ----------------------------------------------
 
     @pytest.mark.parametrize(
-        ("value", "expected"),
-        [
-            ("hello", False),
-            (" leading", True),
-            ("café", True),
-        ],
+        ("value", "expected"), [("hello", False), (" leading", True), ("café", True)]
     )
     def test_needs_base64_encoding(self, value: str, expected: bool) -> None:
         """needs_base64_encoding flags unsafe values, clears safe ASCII."""
         assert u.Ldif.needs_base64_encoding(value) is expected
 
-    def test_needs_base64_encoding_ignores_trailing_space_when_disabled(
-        self,
-    ) -> None:
+    def test_needs_base64_encoding_ignores_trailing_space_when_disabled(self) -> None:
         """Disabling the trailing-space check clears an otherwise-flagged value."""
         assert (
             u.Ldif.needs_base64_encoding("safe ", check_trailing_space=False) is False
@@ -105,8 +97,7 @@ class TestsFlextLdifUtilitiesComprehensive:
     # --- ACL attribute classification ----------------------------------
 
     @pytest.mark.parametrize(
-        ("attribute", "expected"),
-        [("aci", True), ("cn", False), ("mail", False)],
+        ("attribute", "expected"), [("aci", True), ("cn", False), ("mail", False)]
     )
     def test_is_acl_attribute(self, attribute: str, expected: bool) -> None:
         """is_acl_attribute recognises ACL attributes and rejects ordinary ones."""
@@ -144,14 +135,7 @@ class TestsFlextLdifUtilitiesComprehensive:
         result = u.Ldif.parse_dn("cn=admin,dc=example,dc=com")
 
         tm.that(result.success, eq=True)
-        tm.that(
-            result.value,
-            eq=[
-                ("cn", "admin"),
-                ("dc", "example"),
-                ("dc", "com"),
-            ],
-        )
+        tm.that(result.value, eq=[("cn", "admin"), ("dc", "example"), ("dc", "com")])
 
     def test_parse_dn_fails_on_malformed_dn(self) -> None:
         """A DN missing the '=' separator fails rather than silently parsing."""

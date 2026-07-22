@@ -27,7 +27,7 @@ class FlextLdifModelsBases:
         validation_metadata: Annotated[
             m.ConfigMap | None,
             u.Field(
-                description="Validation metadata captured during schema processing.",
+                description="Validation metadata captured during schema processing."
             ),
         ] = None
 
@@ -67,9 +67,7 @@ class FlextLdifModelsBases:
 
         server_type: Annotated[
             c.Ldif.ServerTypes,
-            u.Field(
-                description="LDAP server type (oid, oud, openldap, rfc, etc.)",
-            ),
+            u.Field(description="LDAP server type (oid, oud, openldap, rfc, etc.)"),
         ] = c.Ldif.ServerTypes.RFC
         validation_violations: Annotated[
             t.MutableSequenceOf[str],
@@ -80,9 +78,7 @@ class FlextLdifModelsBases:
         ] = u.Field(default_factory=list)
         validation_metadata: Annotated[
             m.ConfigMap | None,
-            u.Field(
-                description="Validation metadata captured during ACL processing.",
-            ),
+            u.Field(description="Validation metadata captured during ACL processing."),
         ] = None
 
         @u.computed_field()
@@ -100,8 +96,7 @@ class FlextLdifModelsBases:
         @u.field_validator("server_type", mode="before")
         @classmethod
         def _coerce_server_type(
-            cls,
-            value: c.Ldif.ServerTypes | str,
+            cls, value: c.Ldif.ServerTypes | str
         ) -> c.Ldif.ServerTypes:
             if isinstance(value, c.Ldif.ServerTypes):
                 return value

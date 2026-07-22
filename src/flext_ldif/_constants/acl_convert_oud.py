@@ -116,9 +116,13 @@ class FlextLdifConstantsAclConvertOud:
         "compare",
     })
     # OUD perms that are security-sensitive when granted to anyone (review flag).
-    SENSITIVE_PERMS: Final[frozenset[str]] = frozenset(
-        {"proxy", "write", "delete", "add", "selfwrite"},
-    )
+    SENSITIVE_PERMS: Final[frozenset[str]] = frozenset({
+        "proxy",
+        "write",
+        "delete",
+        "add",
+        "selfwrite",
+    })
     # Canonical OUD permission ordering for deterministic aci assembly.
     PERM_ORDERED: Final[tuple[str, ...]] = (
         "all",

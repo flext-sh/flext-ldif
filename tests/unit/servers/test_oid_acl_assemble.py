@@ -13,7 +13,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from flext_tests import tm
 from structlog.testing import capture_logs
 
 from flext_ldif import m
@@ -21,6 +20,7 @@ from flext_ldif.servers._oid.acl_assemble import FlextLdifServersOidAclAssemble 
 from flext_ldif.servers._oid.acl_convert import FlextLdifServersOidAclConvert as Parser
 from flext_ldif.servers._oid.acl_pipeline import FlextLdifServersOidAclPipeline as Pipe
 from flext_ldif.servers._oid.acl_render import FlextLdifServersOidAclRender as Render
+from flext_tests import tm
 from tests import TestsFlextLdifUtilities as u
 
 
@@ -243,8 +243,7 @@ class TestsFlextLdifOidAclAssemble:
     def test_anyone_with_sensitive_perms_emits_review_note(self) -> None:
         # 'by * (noread)' on attr complements to write/selfwrite/... for anyone.
         rule = Parser.parse_oid_acl_line(
-            "cn=users,dc=ctbc",
-            "orclaci: access to attr=(cn) by * (noread)",
+            "cn=users,dc=ctbc", "orclaci: access to attr=(cn) by * (noread)"
         ).unwrap()
         aci = Asm.build_aci_rule(rule).unwrap()
 
@@ -253,8 +252,7 @@ class TestsFlextLdifOidAclAssemble:
 
     def test_anyone_with_only_read_search_emits_no_sensitive_note(self) -> None:
         rule = Parser.parse_oid_acl_line(
-            "cn=users,dc=ctbc",
-            "orclaci: access to attr=(cn) by * (read,search)",
+            "cn=users,dc=ctbc", "orclaci: access to attr=(cn) by * (read,search)"
         ).unwrap()
         aci = Asm.build_aci_rule(rule).unwrap()
 
@@ -356,16 +354,14 @@ class TestsFlextLdifOidAclAssemble:
 
     def test_deny_only_line_emits_no_value(self) -> None:
         result = Pipe.convert_acl_values(
-            "cn=users,dc=ctbc",
-            ("orclaci: access to entry by * (none)",),
+            "cn=users,dc=ctbc", ("orclaci: access to entry by * (none)",)
         )
 
         tm.that(result.unwrap(), eq=())
 
     def test_malformed_line_surfaces_failure(self) -> None:
         result = Pipe.convert_acl_values(
-            "cn=users,dc=ctbc",
-            ("orclaci: this is not a valid acl",),
+            "cn=users,dc=ctbc", ("orclaci: this is not a valid acl",)
         )
 
         tm.that(result.failure, eq=True)
@@ -391,11 +387,7 @@ class TestsFlextLdifOidAclAssemble:
                 continue
             if not line.startswith(("orclaci:", "orclentrylevelaci:")):
                 continue
-            result = Pipe.convert_acl_values(
-                dn,
-                (line,),
-                base_dn="dc=example,dc=com",
-            )
+            result = Pipe.convert_acl_values(dn, (line,), base_dn="dc=example,dc=com")
             tm.that(result.success, eq=True)
             rules_seen += 1
             values_emitted += len(result.unwrap())
@@ -431,8 +423,7 @@ class TestsFlextLdifOidAclAssemble:
         ]
         tm.that(len(note_events), eq=1)
         tm.that(
-            any("guidattr" in note for note in note_events[0].get("notes", [])),
-            eq=True,
+            any("guidattr" in note for note in note_events[0].get("notes", [])), eq=True
         )
 
     # ---- convert_entry_acls: entry orclaci → aci attribute -------------
@@ -454,7 +445,7 @@ class TestsFlextLdifOidAclAssemble:
 
     def test_non_oid_to_oud_passes_through_unchanged(self) -> None:
         entry = self._entry({
-            "orclaci": ['access to entry by group="cn=a,dc=ctbc" (browse)'],
+            "orclaci": ['access to entry by group="cn=a,dc=ctbc" (browse)']
         })
 
         converted = Pipe.convert_entry_acls(entry, "oid", "rfc").unwrap()

@@ -8,9 +8,7 @@ from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 if TYPE_CHECKING:
-    from collections.abc import (
-        MutableMapping,
-    )
+    from collections.abc import MutableMapping
 
 
 class FlextLdifServersApache(FlextLdifServersRfc):
@@ -87,8 +85,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
 
         @override
         def can_handle_attribute(
-            self,
-            attr_definition: str | m.Ldif.SchemaAttribute,
+            self, attr_definition: str | m.Ldif.SchemaAttribute
         ) -> bool:
             """Detect ApacheDS attribute definitions using centralized constants."""
             matches: bool = u.Ldif.matches_server_patterns(
@@ -99,8 +96,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
 
         @override
         def can_handle_objectclass(
-            self,
-            oc_definition: str | m.Ldif.SchemaObjectClass,
+            self, oc_definition: str | m.Ldif.SchemaObjectClass
         ) -> bool:
             """Detect ApacheDS objectClass definitions using centralized constants."""
             matches: bool = u.Ldif.matches_server_patterns(
@@ -111,8 +107,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
 
         @override
         def _hook_post_parse_objectclass(
-            self,
-            oc: m.Ldif.SchemaObjectClass,
+            self, oc: m.Ldif.SchemaObjectClass
         ) -> p.Result[m.Ldif.SchemaObjectClass]:
             """Normalize Apache objectClass data after RFC parsing."""
             u.Ldif.fix_missing_sup(oc)
@@ -146,7 +141,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             ):
                 return True
             return normalized.lower().startswith(
-                FlextLdifServersApache.Constants.ACL_VERSION_PATTERN,
+                FlextLdifServersApache.Constants.ACL_VERSION_PATTERN
             )
 
         @override
@@ -165,9 +160,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
 
         @override
         def can_handle(
-            self,
-            entry_dn: str,
-            attributes: t.MutableStrSequenceMapping,
+            self, entry_dn: str, attributes: t.MutableStrSequenceMapping
         ) -> bool:
             """Check if this server can handle the entry."""
             _ = entry_dn
@@ -192,19 +185,15 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 return self._mark_apache_entry(entry)
             except c.EXC_BASIC_TYPE as exc:
                 return r[m.Ldif.Entry].fail_op(
-                    "Apache Directory Server entry parsing",
-                    exc,
+                    "Apache Directory Server entry parsing", exc
                 )
 
-        def _mark_apache_entry(
-            self,
-            entry: m.Ldif.Entry,
-        ) -> p.Result[m.Ldif.Entry]:
+        def _mark_apache_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
             """Attach Apache Directory Server metadata to an entry."""
             if not entry.dn:
                 return r[m.Ldif.Entry].ok(entry)
             metadata = entry.metadata or m.Ldif.ServerMetadata(
-                server_type=self._get_server_type(),
+                server_type=self._get_server_type()
             )
             dn_lower = entry.dn.value.lower()
             if not metadata.extensions:

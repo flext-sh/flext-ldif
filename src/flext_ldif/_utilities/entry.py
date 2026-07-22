@@ -2,12 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import (
-    Callable,
-    Mapping,
-    MutableMapping,
-    Sequence,
-)
+from collections.abc import Callable, Mapping, MutableMapping, Sequence
 
 from flext_cli import u
 from flext_ldif import c, p, t
@@ -23,8 +18,7 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def get_attribute_values(
-        entry: p.Ldif.Entry,
-        attribute_name: str,
+        entry: p.Ldif.Entry, attribute_name: str
     ) -> t.MutableSequenceOf[str]:
         """Get all values for a specific attribute (case-insensitive).
 
@@ -63,8 +57,7 @@ class FlextLdifUtilitiesEntry:
     def get_objectclass_names(entry: p.Ldif.Entry) -> t.MutableSequenceOf[str]:
         """Get list of objectClass attribute values from entry."""
         return FlextLdifUtilitiesEntry.get_attribute_values(
-            entry,
-            c.Ldif.DictKeys.OBJECTCLASS,
+            entry, c.Ldif.DictKeys.OBJECTCLASS
         )
 
     @staticmethod
@@ -94,8 +87,7 @@ class FlextLdifUtilitiesEntry:
 
         """
         return object_class in FlextLdifUtilitiesEntry.get_attribute_values(
-            entry,
-            c.Ldif.DictKeys.OBJECTCLASS,
+            entry, c.Ldif.DictKeys.OBJECTCLASS
         )
 
     @staticmethod
@@ -121,9 +113,7 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def transform_entry_attributes_between_oid_rfc(
-        entry: p.Ldif.Entry,
-        source_type_norm: str,
-        target_type_norm: str,
+        entry: p.Ldif.Entry, source_type_norm: str, target_type_norm: str
     ) -> t.MutableStrSequenceMapping | None:
         """Compute transformed attribute map between OID and RFC formats."""
         attributes_model = entry.attributes
@@ -147,9 +137,7 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def transform_schema_dn_between_oid_rfc(
-        entry: p.Ldif.Entry,
-        source_type_norm: str,
-        target_type_norm: str,
+        entry: p.Ldif.Entry, source_type_norm: str, target_type_norm: str
     ) -> str | None:
         """Compute transformed schema DN between OID and RFC conventions."""
         dn_model = entry.dn
@@ -177,8 +165,7 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def matches_filter(
-        entry: p.Ldif.Entry,
-        filter_func: Callable[[p.Ldif.Entry], bool] | None = None,
+        entry: p.Ldif.Entry, filter_func: Callable[[p.Ldif.Entry], bool] | None = None
     ) -> bool:
         """Check if entry matches a filter function.
 
@@ -214,9 +201,7 @@ class FlextLdifUtilitiesEntry:
         """
         violations: t.MutableSequenceOf[str] = []
         if not dn_value or not dn_value.strip():
-            violations.append(
-                "RFC 2849 § 2: DN is required (empty or whitespace DN)",
-            )
+            violations.append("RFC 2849 § 2: DN is required (empty or whitespace DN)")
             return violations
         components = [comp.strip() for comp in dn_value.split(",") if comp.strip()]
         if not components:
@@ -225,7 +210,7 @@ class FlextLdifUtilitiesEntry:
         for idx, comp in enumerate(components):
             if not c.Ldif.DN_COMPONENT_RE.match(comp):
                 violations.append(
-                    f"RFC 4514 § 2.3: Component {idx} '{comp}' invalid format",
+                    f"RFC 4514 § 2.3: Component {idx} '{comp}' invalid format"
                 )
         return violations
 
@@ -245,12 +230,12 @@ class FlextLdifUtilitiesEntry:
             return violations
         if entry.attributes is None:
             violations.append(
-                "RFC 2849 § 2: Entry must have at least one attribute (missing)",
+                "RFC 2849 § 2: Entry must have at least one attribute (missing)"
             )
             return violations
         if not entry.attributes:
             violations.append(
-                "RFC 2849 § 2: Entry must have at least one attribute (empty)",
+                "RFC 2849 § 2: Entry must have at least one attribute (empty)"
             )
         return violations
 
@@ -272,7 +257,7 @@ class FlextLdifUtilitiesEntry:
                 violations.append(
                     f"RFC 4512 § 2.5: '{base_attr}' must start with letter"
                     if not base_attr or not base_attr[0].isalpha()
-                    else f"RFC 4512 § 2.5: '{base_attr}' has invalid characters",
+                    else f"RFC 4512 § 2.5: '{base_attr}' has invalid characters"
                 )
             for option in parts[1:]:
                 option = option.strip()
@@ -282,7 +267,7 @@ class FlextLdifUtilitiesEntry:
                     violations.append(
                         f"RFC 4512 § 2.5: option '{option}' must start with letter"
                         if not option or not option[0].isalpha()
-                        else f"RFC 4512 § 2.5: option '{option}' has invalid characters",
+                        else f"RFC 4512 § 2.5: option '{option}' has invalid characters"
                     )
         return violations
 
@@ -331,7 +316,7 @@ class FlextLdifUtilitiesEntry:
             for value in attr_values:
                 if c.Ldif.BINARY_CHAR_RE.search(value):
                     violations.append(
-                        f"RFC 2849 § 5.2: '{attr_name}' may need ';binary' option",
+                        f"RFC 2849 § 5.2: '{attr_name}' may need ';binary' option"
                     )
                     break
         return violations
@@ -347,14 +332,13 @@ class FlextLdifUtilitiesEntry:
         valid_changetypes = {"add", "delete", "modify", "moddn", "modrdn"}
         if entry.changetype.lower() not in valid_changetypes:
             violations.append(
-                f"RFC 2849 § 5.7: changetype '{entry.changetype}' invalid",
+                f"RFC 2849 § 5.7: changetype '{entry.changetype}' invalid"
             )
         return violations
 
     @staticmethod
     def validate_naming_attribute(
-        entry: p.Ldif.EntryValidationSubject,
-        dn_value: str,
+        entry: p.Ldif.EntryValidationSubject, dn_value: str
     ) -> t.MutableSequenceOf[str]:
         """Validate naming attribute presence per RFC 4512 section 2.3.
 
@@ -379,14 +363,13 @@ class FlextLdifUtilitiesEntry:
         )
         if not has_naming_attr:
             violations.append(
-                f"RFC 4512 § 2.3: Entry SHOULD have Naming attribute '{naming_attr}'",
+                f"RFC 4512 § 2.3: Entry SHOULD have Naming attribute '{naming_attr}'"
             )
         return violations
 
     @staticmethod
     def validate_objectclass(
-        entry: p.Ldif.EntryValidationSubject,
-        dn_value: str,
+        entry: p.Ldif.EntryValidationSubject, dn_value: str
     ) -> t.MutableSequenceOf[str]:
         """Validate objectClass presence per RFC 4512 section 2.4.1.
 
@@ -407,7 +390,7 @@ class FlextLdifUtilitiesEntry:
         )
         if not has_objectclass:
             violations.append(
-                f"RFC 4512 § 2.4.1: Entry SHOULD have objectClass (DN: {dn_value})",
+                f"RFC 4512 § 2.4.1: Entry SHOULD have objectClass (DN: {dn_value})"
             )
         return violations
 
@@ -432,7 +415,7 @@ class FlextLdifUtilitiesEntry:
                     for char in value
                 ):
                     violations.append(
-                        f"Server requires ';binary' option for '{attr_name}'",
+                        f"Server requires ';binary' option for '{attr_name}'"
                     )
                     break
         return violations
@@ -495,35 +478,32 @@ class FlextLdifUtilitiesEntry:
         | None,
     ) -> FlextLdifModelsSettings.ServerValidationRules | None:
         """Normalize dynamic validation_rules payload to ServerValidationRules."""
-        if isinstance(
-            validation_rules,
-            FlextLdifModelsSettings.ServerValidationRules,
-        ):
+        if isinstance(validation_rules, FlextLdifModelsSettings.ServerValidationRules):
             return validation_rules
         if isinstance(validation_rules, str):
             try:
                 validated_json: FlextLdifModelsSettings.ServerValidationRules = (
                     FlextLdifModelsSettings.ServerValidationRules.model_validate_json(
-                        validation_rules,
+                        validation_rules
                     )
                 )
                 return validated_json
             except c.ValidationError as exc:
                 FlextLdifUtilitiesEntry.logger.warning(
-                    f"Failed to validate server rules from JSON string: {exc}",
+                    f"Failed to validate server rules from JSON string: {exc}"
                 )
                 return None
         if validation_rules is not None:
             try:
                 validated: FlextLdifModelsSettings.ServerValidationRules = (
                     FlextLdifModelsSettings.ServerValidationRules.model_validate(
-                        validation_rules,
+                        validation_rules
                     )
                 )
                 return validated
             except c.ValidationError as exc:
                 FlextLdifUtilitiesEntry.logger.warning(
-                    f"Failed to validate server rules from mapping: {exc}",
+                    f"Failed to validate server rules from mapping: {exc}"
                 )
         return None
 
@@ -541,8 +521,7 @@ class FlextLdifUtilitiesEntry:
                 normalized[key_str] = raw_value
                 continue
             if isinstance(raw_value, Sequence) and not isinstance(
-                raw_value,
-                str | bytes,
+                raw_value, str | bytes
             ):
                 normalized[key_str] = [
                     str(item) for item in u.Cli.json_as_sequence(raw_value)
@@ -555,9 +534,7 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def analyze_minimal_differences(
-        original: str,
-        converted: str | None,
-        context: str = "entry",
+        original: str, converted: str | None, context: str = "entry"
     ) -> t.Ldif.MutableMetadataMapping:
         """Analyze minimal differences between original and converted strings."""
         mk = c.Ldif
@@ -579,8 +556,7 @@ class FlextLdifUtilitiesEntry:
     def analyze_differences(
         entry_attrs: t.Ldif.MetadataInputMapping,
         converted_attrs: MutableMapping[
-            str,
-            t.MutableSequenceOf[t.Ldif.AttributeValue],
+            str, t.MutableSequenceOf[t.Ldif.AttributeValue]
         ],
         original_dn: str,
         cleaned_dn: str,
@@ -656,8 +632,7 @@ class FlextLdifUtilitiesEntry:
     @staticmethod
     def convert_boolean_attributes(
         attributes: t.MappingKV[
-            str,
-            t.MutableSequenceOf[str] | t.MutableSequenceOf[bytes] | str | bytes,
+            str, t.MutableSequenceOf[str] | t.MutableSequenceOf[bytes] | str | bytes
         ],
         boolean_attr_names: set[str],
         *,
@@ -734,11 +709,11 @@ class FlextLdifUtilitiesEntry:
         if resolved_config.is_schema is not None:
             checks.append(
                 FlextLdifUtilitiesEntry.is_schema_entry(entry)
-                == resolved_config.is_schema,
+                == resolved_config.is_schema
             )
         if resolved_config.objectclasses:
             entry_ocs: t.StrSequence = FlextLdifUtilitiesEntry.get_objectclass_names(
-                entry,
+                entry
             )
             entry_ocs_lower = {oc.lower() for oc in entry_ocs}
             matching = [
@@ -749,7 +724,7 @@ class FlextLdifUtilitiesEntry:
             checks.append(
                 bool(matching)
                 if resolved_config.objectclass_mode == "any"
-                else len(matching) == len(resolved_config.objectclasses),
+                else len(matching) == len(resolved_config.objectclasses)
             )
         if resolved_config.required_attrs:
             if not entry.attributes:
@@ -760,7 +735,7 @@ class FlextLdifUtilitiesEntry:
                     all(
                         a.lower() in entry_attrs_lower
                         for a in resolved_config.required_attrs
-                    ),
+                    )
                 )
         if resolved_config.any_attrs:
             if not entry.attributes:
@@ -771,17 +746,16 @@ class FlextLdifUtilitiesEntry:
                     any(
                         a.lower() in entry_attrs_lower
                         for a in resolved_config.any_attrs
-                    ),
+                    )
                 )
         if resolved_config.dn_pattern:
             dn_value = str(entry.dn) if entry.dn else ""
             checks.append(
                 bool(
                     c.Ldif.compile_pattern(
-                        resolved_config.dn_pattern,
-                        ignorecase=True,
-                    ).search(dn_value),
-                ),
+                        resolved_config.dn_pattern, ignorecase=True
+                    ).search(dn_value)
+                )
             )
         return all(checks)
 

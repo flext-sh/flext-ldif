@@ -9,10 +9,7 @@ from flext_ldif.services.conversion_acl import FlextLdifConversionAclMixin
 from flext_ldif.services.conversion_entry import FlextLdifConversionEntryMixin
 
 
-class FlextLdifConversion(
-    FlextLdifConversionEntryMixin,
-    FlextLdifConversionAclMixin,
-):
+class FlextLdifConversion(FlextLdifConversionEntryMixin, FlextLdifConversionAclMixin):
     """Facade for universal, model-driven server-to-server conversion.
 
     Composes the entry-conversion concern (which brings metadata / support /
@@ -33,24 +30,21 @@ class FlextLdifConversion(
         if isinstance(model_instance, m.Ldif.Entry):
             return self._convert_entry(source_server, target_server, model_instance)
         if isinstance(
-            model_instance,
-            m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+            model_instance, m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass
         ):
             source_schema_result = self._resolve_schema_server(
-                source_server,
-                role="Source",
+                source_server, role="Source"
             )
             if source_schema_result.failure:
                 return r[t.Ldif.ConvertedModel].fail(
-                    source_schema_result.error or "Source schema not available",
+                    source_schema_result.error or "Source schema not available"
                 )
             target_schema_result = self._resolve_schema_server(
-                target_server,
-                role="Target",
+                target_server, role="Target"
             )
             if target_schema_result.failure:
                 return r[t.Ldif.ConvertedModel].fail(
-                    target_schema_result.error or "Target schema not available",
+                    target_schema_result.error or "Target schema not available"
                 )
             return self._convert_schema_model_via_entry(
                 source_server,
@@ -59,11 +53,7 @@ class FlextLdifConversion(
                 source_schema_result.value,
                 target_schema_result.value,
             )
-        return self._convert_acl(
-            source_server,
-            target_server,
-            model_instance,
-        )
+        return self._convert_acl(source_server, target_server, model_instance)
 
     def convert_model(
         self,
@@ -90,9 +80,7 @@ class FlextLdifConversion(
             source_server = self._resolve_server(source)
             target_server = self._resolve_server(target)
             result = self.dsl_convert_between_servers(
-                source_server,
-                target_server,
-                model_instance,
+                source_server, target_server, model_instance
             )
         except c.Ldif.EXC_LDIF_PARSE as e:
             result = r[t.Ldif.ConvertedModel].fail_op("Model conversion", e)

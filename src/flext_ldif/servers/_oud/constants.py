@@ -47,11 +47,7 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
     PERMISSION_ALL: ClassVar[str] = "all"
     SUPPORTED_PERMISSIONS: ClassVar[frozenset[str]] = (
         FlextLdifServersRfc.Constants.SUPPORTED_PERMISSIONS
-        | frozenset([
-            PERMISSION_SELFWRITE,
-            PERMISSION_PROXY,
-            PERMISSION_ALL,
-        ])
+        | frozenset([PERMISSION_SELFWRITE, PERMISSION_PROXY, PERMISSION_ALL])
     )
     ACL_DEFAULT_NAME: ClassVar[str] = "OUD ACL"
     ACL_DEFAULT_VERSION: ClassVar[str] = "version 3.0"
@@ -84,12 +80,8 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
     ACL_TIMEOFDAY_PATTERN: ClassVar[str] = 'timeofday\\s*([<>=!]+)\\s*"?(\\d+)"?'
     ACL_AUTHMETHOD_PATTERN: ClassVar[str] = 'authmethod\\s*=\\s*"?(\\w+)"?'
     ACL_SSF_PATTERN: ClassVar[str] = 'ssf\\s*([<>=!]+)\\s*"?(\\d+)"?'
-    ACL_TIMEOFDAY_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-        ACL_TIMEOFDAY_PATTERN,
-    )
-    ACL_SSF_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-        ACL_SSF_PATTERN,
-    )
+    ACL_TIMEOFDAY_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(ACL_TIMEOFDAY_PATTERN)
+    ACL_SSF_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(ACL_SSF_PATTERN)
     ACL_BIND_RULE_TUPLE_LENGTH: ClassVar[int] = 2
     ACL_BIND_RULES_CONFIG: ClassVar[tuple[tuple[str, str, str | None], ...]] = (
         ("bind_ip", 'ip="{value}"', None),

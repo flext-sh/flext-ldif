@@ -16,8 +16,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 
     def _parse_entry_from_lines(
-        self,
-        lines: t.MutableSequenceOf[str],
+        self, lines: t.MutableSequenceOf[str]
     ) -> p.Result[m.Ldif.Entry]:
         """Parse one unfolded LDIF record using the shared RFC utility."""
         parsed: p.Result[m.Ldif.Entry] = u.Ldif.parse_ldif_record(lines)
@@ -25,9 +24,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
 
     @override
     def can_handle(
-        self,
-        entry_dn: str,
-        attributes: t.MutableStrSequenceMapping,
+        self, entry_dn: str, attributes: t.MutableStrSequenceMapping
     ) -> bool:
         """Check if this RFC server can handle the entry."""
         if not entry_dn or not entry_dn.strip():
@@ -37,8 +34,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
 
     @override
     def _parse_content(
-        self,
-        ldif_content: str,
+        self, ldif_content: str
     ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
         """Parse raw LDIF content string into Entry models."""
         if not ldif_content or not ldif_content.strip():
@@ -47,13 +43,12 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
             return self._parse_ldif_records(ldif_content)
         except ValueError as exc:
             FlextLdifServersRfcEntry._module_logger.exception(
-                "Failed to parse LDIF content",
+                "Failed to parse LDIF content"
             )
             return r[t.MutableSequenceOf[m.Ldif.Entry]].fail_op("Processing", exc)
 
     def _parse_ldif_records(
-        self,
-        ldif_content: str,
+        self, ldif_content: str
     ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
         """Parse all LDIF records from non-empty content."""
         entries: t.MutableSequenceOf[m.Ldif.Entry] = []
@@ -63,8 +58,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
                 entries.append(result.value)
                 continue
             FlextLdifServersRfcEntry._module_logger.debug(
-                "Skipping invalid entry block",
-                error=result.error or "",
+                "Skipping invalid entry block", error=result.error or ""
             )
         return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(entries)
 

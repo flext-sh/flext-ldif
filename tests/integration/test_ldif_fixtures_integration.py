@@ -15,9 +15,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
 
 from flext_ldif import ldif
+from flext_tests import tm
 from tests import c
 
 if TYPE_CHECKING:
@@ -142,8 +142,7 @@ class TestsFlextLdifLdifFixturesIntegration:
         assert not report.invalid_entries
 
     def test_parse_string_matches_parse_ldif_for_same_content(
-        self,
-        ldif_client: p.Ldif.LdifClient,
+        self, ldif_client: p.Ldif.LdifClient
     ) -> None:
         """Parsing a file and parsing its written content produce identical DNs."""
         path = self._fixture_path(c.Tests.RFC, "rfc_entries_fixtures.ldif")
@@ -161,8 +160,7 @@ class TestsFlextLdifLdifFixturesIntegration:
         )
 
     def test_parse_missing_file_fails_with_informative_error(
-        self,
-        ldif_client: p.Ldif.LdifClient,
+        self, ldif_client: p.Ldif.LdifClient
     ) -> None:
         """Parsing a nonexistent fixture returns a failure naming the missing path."""
         missing = self._fixture_path(c.Tests.RFC, "does_not_exist.ldif")

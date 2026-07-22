@@ -16,11 +16,7 @@ class FlextLdifProtocols(p):
     """Unified LDIF protocol facade."""
 
     @runtime_checkable
-    class Ldif(
-        FlextLdifProtocolsDomain,
-        FlextLdifProtocolsBase,
-        Protocol,
-    ):
+    class Ldif(FlextLdifProtocolsDomain, FlextLdifProtocolsBase, Protocol):
         """LDIF-specific structural protocol namespace."""
 
         @runtime_checkable

@@ -12,12 +12,12 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from flext_tests import tm
 
 from flext_ldif import m as ldif_m
 from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.services.writer import FlextLdifWriter
+from flext_tests import tm
 from tests import c
 
 
@@ -58,10 +58,7 @@ class TestsFlextLdifRfcDockerReal:
         ],
     )
     def test_parse_fixture_returns_success_with_wellformed_entries(
-        self,
-        fixtures_dir: Path,
-        server_dir: str,
-        filename: str,
+        self, fixtures_dir: Path, server_dir: str, filename: str
     ) -> None:
         """Parsing a real fixture yields success and RFC-well-formed entries."""
         # Arrange
@@ -81,8 +78,7 @@ class TestsFlextLdifRfcDockerReal:
             assert entry.dn.value, "entry exposes empty DN via public API"
 
     def test_parse_oid_schema_exposes_schema_definitions(
-        self,
-        fixtures_dir: Path,
+        self, fixtures_dir: Path
     ) -> None:
         """A parsed OID schema publicly exposes attributeTypes/objectClasses."""
         # Arrange
@@ -97,10 +93,7 @@ class TestsFlextLdifRfcDockerReal:
         tm.ok(result)
         assert any(_has_schema_attrs(entry) for entry in result.unwrap().entries)
 
-    def test_parse_oud_acl_exposes_aci_attribute(
-        self,
-        fixtures_dir: Path,
-    ) -> None:
+    def test_parse_oud_acl_exposes_aci_attribute(self, fixtures_dir: Path) -> None:
         """Parsed OUD ACL fixtures publicly expose the ``aci`` attribute."""
         # Arrange
         source = fixtures_dir / c.Tests.OUD / "oud_acl_fixtures.ldif"
@@ -142,10 +135,7 @@ class TestsFlextLdifRfcDockerReal:
         ],
     )
     def test_parse_integration_fixture_yields_resolved_result(
-        self,
-        fixtures_dir: Path,
-        server_dir: str,
-        filename: str,
+        self, fixtures_dir: Path, server_dir: str, filename: str
     ) -> None:
         """Integration fixtures resolve to a definite success-or-failure r[T]."""
         # Arrange
@@ -181,24 +171,20 @@ class TestsFlextLdifRfcDockerReal:
         tm.that(result.error, has="File not found")
 
     def test_write_to_directory_target_fails_with_write_error(
-        self,
-        tmp_path: Path,
+        self, tmp_path: Path
     ) -> None:
         """Writing to a directory path fails with a descriptive write error."""
         # Arrange — target an existing directory to force a deterministic failure
         entry = ldif_m.Ldif.Entry(
             dn=ldif_m.Ldif.DN(value="cn=test,dc=example,dc=com"),
             attributes=ldif_m.Ldif.Attributes(
-                attributes={"cn": ["test"]},
-                attribute_metadata={},
+                attributes={"cn": ["test"]}, attribute_metadata={}
             ),
         )
 
         # Act
         result = FlextLdifWriter().write_ldif_file(
-            [entry],
-            tmp_path,
-            server_type=c.Tests.RFC,
+            [entry], tmp_path, server_type=c.Tests.RFC
         )
 
         # Assert
@@ -207,16 +193,10 @@ class TestsFlextLdifRfcDockerReal:
         tm.that(result.error, has="Failed to write LDIF file")
 
     @pytest.mark.parametrize(
-        "subdir",
-        [
-            Path("edge_cases") / "unicode",
-            Path("broken") / "structure",
-        ],
+        "subdir", [Path("edge_cases") / "unicode", Path("broken") / "structure"]
     )
     def test_parse_edge_and_broken_fixtures_resolve_cleanly(
-        self,
-        fixtures_dir: Path,
-        subdir: Path,
+        self, fixtures_dir: Path, subdir: Path
     ) -> None:
         """Edge-case and malformed LDIF never crash; each resolves to r[T]."""
         # Arrange
@@ -244,9 +224,7 @@ class TestsFlextLdifRfcDockerReal:
     # ------------------------------------------------------------------ #
 
     def test_roundtrip_preserves_entry_dns(
-        self,
-        fixtures_dir: Path,
-        tmp_path: Path,
+        self, fixtures_dir: Path, tmp_path: Path
     ) -> None:
         """Parse -> write -> re-parse preserves the full set of entry DNs."""
         # Arrange
@@ -264,9 +242,7 @@ class TestsFlextLdifRfcDockerReal:
 
         # Act
         write_result = FlextLdifWriter().write_ldif_file(
-            original_entries,
-            output_file,
-            server_type=c.Tests.OID,
+            original_entries, output_file, server_type=c.Tests.OID
         )
         tm.ok(write_result)
         reparse_result = FlextLdifParser().parse_ldif_file(output_file)
@@ -283,9 +259,7 @@ class TestsFlextLdifRfcDockerReal:
         tm.that(reparsed_dns, eq=original_dns)
 
     def test_write_reports_statistics_and_persists_all_entries(
-        self,
-        server_registry: FlextLdifServer,
-        tmp_path: Path,
+        self, server_registry: FlextLdifServer, tmp_path: Path
     ) -> None:
         """Writing N entries reports N in statistics and persists N DNs."""
         # Arrange
@@ -308,9 +282,7 @@ class TestsFlextLdifRfcDockerReal:
 
         # Act
         result = FlextLdifWriter(server=server_registry).write_ldif_file(
-            entries,
-            output_file,
-            server_type=c.Tests.RFC,
+            entries, output_file, server_type=c.Tests.RFC
         )
 
         # Assert — public WriteResponse contract + persisted content
@@ -322,8 +294,7 @@ class TestsFlextLdifRfcDockerReal:
         tm.that(content.count("dn: cn=user"), eq=entry_count)
 
     def test_write_to_string_is_idempotent(
-        self,
-        server_registry: FlextLdifServer,
+        self, server_registry: FlextLdifServer
     ) -> None:
         """Serializing the same entries twice yields identical LDIF text."""
         # Arrange
@@ -334,7 +305,7 @@ class TestsFlextLdifRfcDockerReal:
                     attributes={"cn": ["alice"], "objectClass": ["person"]},
                     attribute_metadata={},
                 ),
-            ),
+            )
         ]
         writer = FlextLdifWriter(server=server_registry)
 
