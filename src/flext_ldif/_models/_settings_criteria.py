@@ -22,14 +22,13 @@ class FlextLdifModelsSettingsCriteria:
         """Configuration for server pattern matching."""
 
         oid_pattern: Annotated[
-            str,
-            u.Field(description="Regex pattern used for schema OID detection"),
+            str, u.Field(description="Regex pattern used for schema OID detection")
         ] = ""
 
         dn_patterns: Annotated[
             tuple[t.StrSequence, ...],
             u.Field(
-                description="Tuple of DN pattern tuples - entry matches if ALL patterns in ANY tuple match",
+                description="Tuple of DN pattern tuples - entry matches if ALL patterns in ANY tuple match"
             ),
         ] = ()
         attr_prefixes: Annotated[
@@ -38,13 +37,10 @@ class FlextLdifModelsSettingsCriteria:
         ] = ()
         attr_names: Annotated[
             frozenset[str] | set[str],
-            u.Field(
-                description="Set of attribute names that indicate this server",
-            ),
+            u.Field(description="Set of attribute names that indicate this server"),
         ] = frozenset()
         keyword_patterns: Annotated[
-            t.StrSequence,
-            u.Field(description="Keywords to search in attribute names"),
+            t.StrSequence, u.Field(description="Keywords to search in attribute names")
         ] = ()
         detection_string: Annotated[
             str | None,
@@ -53,19 +49,19 @@ class FlextLdifModelsSettingsCriteria:
         name_regex: Annotated[
             str | None,
             u.Field(
-                description="Optional regex used to extract schema names from raw definitions",
+                description="Optional regex used to extract schema names from raw definitions"
             ),
         ] = None
         use_prefix_match: Annotated[
             bool,
             u.Field(
-                description="Whether detection names match by prefix instead of exact value",
+                description="Whether detection names match by prefix instead of exact value"
             ),
         ] = False
         match_definition_text: Annotated[
             bool,
             u.Field(
-                description="Whether raw definition text should be scanned for detection markers",
+                description="Whether raw definition text should be scanned for detection markers"
             ),
         ] = False
 
@@ -99,18 +95,15 @@ class FlextLdifModelsSettingsCriteria:
         ] = None
         any_attrs: Annotated[
             t.MutableSequenceOf[str] | None,
-            u.Field(
-                description="At least one of these attributes must exist",
-            ),
+            u.Field(description="At least one of these attributes must exist"),
         ] = None
         dn_pattern: Annotated[
-            str | None,
-            u.Field(description="Regex pattern that DN must match"),
+            str | None, u.Field(description="Regex pattern that DN must match")
         ] = None
         is_schema: Annotated[
             bool | None,
             u.Field(
-                description="If set, entry must (True) or must not (False) be schema",
+                description="If set, entry must (True) or must not (False) be schema"
             ),
         ] = None
 
@@ -139,27 +132,21 @@ class FlextLdifModelsSettingsCriteria:
             ),
         ]
         original_entry_dn: Annotated[
-            str,
-            u.Field(..., description="Original DN as parsed from LDIF"),
+            str, u.Field(..., description="Original DN as parsed from LDIF")
         ]
         cleaned_dn: Annotated[str, u.Field(..., description="Cleaned/normalized DN")]
         original_dn_line: Annotated[
             str | None,
-            u.Field(
-                description="Original DN line from LDIF (with folding if present)",
-            ),
+            u.Field(description="Original DN line from LDIF (with folding if present)"),
         ] = None
         original_attr_lines: Annotated[
             t.MutableSequenceOf[str] | None,
             u.Field(description="Original attribute lines from LDIF"),
         ] = None
         dn_was_base64: Annotated[
-            bool,
-            u.Field(description="Whether DN was base64 encoded"),
+            bool, u.Field(description="Whether DN was base64 encoded")
         ] = False
         original_attribute_case: Annotated[
             t.MutableStrMapping | None,
-            u.Field(
-                description="Mapping of attribute names to original case",
-            ),
+            u.Field(description="Mapping of attribute names to original case"),
         ] = None

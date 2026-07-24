@@ -98,8 +98,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
 
         @override
         def can_handle_objectclass(
-            self,
-            oc_definition: str | p.Ldif.SchemaObjectClass,
+            self, oc_definition: str | p.Ldif.SchemaObjectClass
         ) -> bool:
             """Detect ApacheDS objectClass definitions using centralized constants."""
             matches: bool = u.Ldif.matches_server_patterns(
@@ -148,7 +147,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             ):
                 return True
             return normalized.lower().startswith(
-                FlextLdifServersApache.Constants.ACL_VERSION_PATTERN,
+                FlextLdifServersApache.Constants.ACL_VERSION_PATTERN
             )
 
         @override
@@ -167,9 +166,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
 
         @override
         def can_handle(
-            self,
-            entry_dn: str,
-            attributes: t.MutableStrSequenceMapping,
+            self, entry_dn: str, attributes: t.MutableStrSequenceMapping
         ) -> bool:
             """Check if this server can handle the entry."""
             _ = entry_dn
@@ -194,8 +191,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 return self._mark_apache_entry(entry)
             except c.EXC_BASIC_TYPE as exc:
                 return r[p.Ldif.Entry].fail_op(
-                    "Apache Directory Server entry parsing",
-                    exc,
+                    "Apache Directory Server entry parsing", exc
                 )
 
         def _mark_apache_entry(
@@ -214,9 +210,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             metadata: p.Ldif.ServerMetadata = (
                 raw_metadata
                 if isinstance(raw_metadata, m.Ldif.ServerMetadata)
-                else m.Ldif.ServerMetadata(
-                    server_type=self._get_server_type(),
-                )
+                else m.Ldif.ServerMetadata(server_type=self._get_server_type())
             )
             dn_lower = entry.dn.value.lower()
             if not metadata.extensions:

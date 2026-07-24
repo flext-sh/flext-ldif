@@ -17,9 +17,7 @@ class TestsFlextLdifProcessingService:
     @staticmethod
     def _entry(dn: str) -> p.Ldif.Entry:
         return u.Tests.create_real_entry(
-            dn=dn,
-            attributes=c.Tests.PROCESSING_ATTRS,
-            server_type=c.Tests.RFC,
+            dn=dn, attributes=c.Tests.PROCESSING_ATTRS, server_type=c.Tests.RFC
         )
 
     @pytest.mark.parametrize(
@@ -52,8 +50,7 @@ class TestsFlextLdifProcessingService:
         tm.that(processed_dns == set(c.Tests.PROCESSING_VALID_DNS), eq=True)
 
     def test_process_entries_supports_kwargs_option_payload(
-        self,
-        api: p.Ldif.Client,
+        self, api: p.Ldif.Client
     ) -> None:
         entries = [self._entry(c.Tests.PROCESSING_VALID_DNS[0])]
 
@@ -71,12 +68,10 @@ class TestsFlextLdifProcessingService:
         tm.that(processed[0].dn, eq=c.Tests.PROCESSING_VALID_DNS[0])
 
     def test_process_entries_batch_returns_failure_for_none_attributes(
-        self,
-        api: p.Ldif.Client,
+        self, api: p.Ldif.Client
     ) -> None:
         invalid_entry = m.Ldif.Entry(
-            dn=c.Tests.PROCESSING_VALID_DNS[0],
-            attributes=None,
+            dn=c.Tests.PROCESSING_VALID_DNS[0], attributes=None
         )
 
         tm.fail(
@@ -86,16 +81,14 @@ class TestsFlextLdifProcessingService:
                 parallel=False,
                 batch_size=1,
                 max_workers=1,
-            ),
+            )
         )
 
     def test_process_entries_parallel_raises_for_none_dn(
-        self,
-        api: p.Ldif.Client,
+        self, api: p.Ldif.Client
     ) -> None:
         invalid_entry = m.Ldif.Entry(
-            dn=None,
-            attributes=m.Ldif.Attributes(attributes={"cn": ["x"]}),
+            dn=None, attributes=m.Ldif.Attributes(attributes={"cn": ["x"]})
         )
 
         with pytest.raises(ValueError, match="Entry DN cannot be None"):
@@ -118,19 +111,16 @@ class TestsFlextLdifProcessingService:
                     (
                         'access to entry by group="cn=x,dc=other" (browse) '
                         'by group="cn=a,dc=ctbc" (browse)'
-                    ),
+                    )
                 ],
             },
         )
         config = m.Ldif.TransformConfig.servers(
-            source_server="oid",
-            target_server="oud",
-            base_dn="dc=ctbc",
+            source_server="oid", target_server="oud", base_dn="dc=ctbc"
         )
 
         result = FlextLdifProcessingPipeline(
-            transform_config=config,
-            entries_input=[entry],
+            transform_config=config, entries_input=[entry]
         ).execute()
         converted: t.MutableSequenceOf[p.Ldif.Entry] = u.Tests.assert_success(result)
         tm.that(converted[0].attributes, none=False)
@@ -142,6 +132,6 @@ class TestsFlextLdifProcessingService:
                 (
                     '(targetattr="*")(version 3.0; acl "users Entry by x"; '
                     'allow (read, search) groupdn="ldap:///cn=a,dc=ctbc";)'
-                ),
+                )
             ],
         )

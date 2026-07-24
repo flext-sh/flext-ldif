@@ -39,14 +39,11 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
 
         @staticmethod
         def create_server_from_url(
-            server_url: str,
-            *,
-            get_info: c.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.ALL,
+            server_url: str, *, get_info: c.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.ALL
         ) -> p.Ldap.Ldap3Server:
             """Create an LDAP server from a URL for test connectivity checks."""
             return FlextLdapUtilities.Ldap.create_server_from_url(
-                server_url,
-                get_info=get_info,
+                server_url, get_info=get_info
             )
 
         @classmethod
@@ -59,8 +56,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
         ) -> p.Ldap.Ldap3Server:
             """Create a minimal LDAP server for connectivity checks."""
             return cls.create_server_from_url(
-                f"ldap://{host}:{port}",
-                get_info=get_info,
+                f"ldap://{host}:{port}", get_info=get_info
             )
 
         @staticmethod
@@ -75,10 +71,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             """Create an LDAP connection for test workflows."""
             if receive_timeout is None:
                 return FlextLdapUtilities.Ldap.create_connection(
-                    server,
-                    user=user,
-                    password=password,
-                    auto_bind=auto_bind,
+                    server, user=user, password=password, auto_bind=auto_bind
                 )
             return FlextLdapUtilities.Ldap.create_connection(
                 server,
@@ -105,7 +98,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             entry: p.Ldif.Entry = m.Ldif.Entry.model_validate({
                 "dn": {"value": dn or f"cn=test-{entry_id},ou=users,dc=example,dc=com"},
                 "attributes": {
-                    "attributes": {k: list(v) for k, v in payload_attrs.items()},
+                    "attributes": {k: list(v) for k, v in payload_attrs.items()}
                 },
                 "server_type": server_type,
             })
@@ -113,9 +106,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
 
         @staticmethod
         def create_real_ldif_content(
-            entries_count: int = 3,
-            *,
-            include_schema: bool = False,
+            entries_count: int = 3, *, include_schema: bool = False
         ) -> str:
             """Create real LDIF content for testing."""
             blocks: list[str] = []
@@ -126,7 +117,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                     "objectClass: ldapSubentry\n"
                     "objectClass: subschema\n"
                     "\n"
-                    "attributeTypes: ( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )\n",
+                    "attributeTypes: ( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )\n"
                 )
             for index in range(entries_count):
                 entry_id = uuid.uuid4().hex[:8]
@@ -137,7 +128,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                     "objectClass: inetOrgPerson\n"
                     f"cn: User {entry_id}\n"
                     f"sn: Test{index}\n"
-                    f"mail: user{entry_id}@example.com\n",
+                    f"mail: user{entry_id}@example.com\n"
                 )
             return "\n".join(blocks)
 
@@ -159,9 +150,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
 
         @classmethod
         def fixture_metadata(
-            cls,
-            server_type: t.Tests.FixtureServer,
-            fixture_type: t.Tests.FixtureKind,
+            cls, server_type: t.Tests.FixtureServer, fixture_type: t.Tests.FixtureKind
         ) -> p.Tests.FixtureMetadata:
             """Return metadata for one fixture file (cached per file path)."""
             file_path = cls.path(server_type, fixture_type)
@@ -188,8 +177,8 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                 str(
                     c.Tests.SHARED_CONTAINERS[c.Tests.DOCKER_CONTAINER_NAME][
                         "compose_file"
-                    ],
-                ),
+                    ]
+                )
             )
             workspace_root = next(
                 (
@@ -224,8 +213,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             ]
             for candidate_dn, candidate_password in candidates:
                 credentials = cls._probe_admin_credentials(
-                    candidate_dn,
-                    candidate_password,
+                    candidate_dn, candidate_password
                 )
                 if credentials is None:
                     continue
@@ -240,9 +228,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
 
         @classmethod
         def _probe_admin_credentials(
-            cls,
-            candidate_dn: str,
-            candidate_password: str,
+            cls, candidate_dn: str, candidate_password: str
         ) -> tuple[str, str] | None:
             """Return candidate credentials when LDAP bind succeeds."""
             try:
@@ -262,12 +248,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                     connection.unbind()
                     return (candidate_dn, candidate_password)
                 return None
-            except (
-                ConnectionError,
-                OSError,
-                ValueError,
-                t.Ldap.LDAPException,
-            ):
+            except (ConnectionError, OSError, ValueError, t.Ldap.LDAPException):
                 return None
 
         @staticmethod
@@ -352,17 +333,17 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             if should_succeed is False:
                 if result.success:
                     raise AssertionError(
-                        message or "Expected failure but parse succeeded",
+                        message or "Expected failure but parse succeeded"
                     )
                 return None
             if result.failure:
                 raise AssertionError(
-                    message or f"Expected success but parse failed: {result.error}",
+                    message or f"Expected success but parse failed: {result.error}"
                 )
             value: p.Ldif.Acl = result.unwrap()
             if expected_type is not None and not isinstance(value, expected_type):
                 raise AssertionError(
-                    f"Expected {expected_type.__name__}, got {type(value).__name__}",
+                    f"Expected {expected_type.__name__}, got {type(value).__name__}"
                 )
             return value
 
@@ -372,7 +353,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             for fragment in must_contain:
                 if fragment not in serialized:
                     raise AssertionError(
-                        f"'{fragment}' not found in output: {serialized[:200]}...",
+                        f"'{fragment}' not found in output: {serialized[:200]}..."
                     )
 
         @classmethod
@@ -389,8 +370,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
         ) -> str:
             """Write content with a server and unwrap the serialized output."""
             dispatch: t.MappingKV[
-                t.Tests.WriteMethod,
-                tuple[type, type[p.BaseModel]],
+                t.Tests.WriteMethod, tuple[type, type[p.BaseModel]]
             ] = {
                 "_write_attribute": (
                     p.Tests.WriteAttributeServer,
@@ -411,8 +391,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             if not isinstance(data, data_cls):
                 raise AssertionError(f"{write_method} requires a {data_cls.__name__}")
             method: Callable[[p.BaseModel], p.Result[str]] = getattr(
-                server,
-                write_method,
+                server, write_method
             )
             result = method(data)
             if result.failure:

@@ -87,10 +87,7 @@ class TestsFlextLdifOudToOidMigration:
     # -- End-to-end migration pipeline ------------------------------------
 
     def test_pipeline_migrates_oud_entries_to_oid_output_file(
-        self,
-        tmp_path: Path,
-        oud_entries: str,
-        client: p.Ldif.Client,
+        self, tmp_path: Path, oud_entries: str, client: p.Ldif.Client
     ) -> None:
         """Pipeline OUD->OID writes a non-empty, re-parseable OID LDIF file."""
         input_dir = tmp_path / "input"
@@ -117,15 +114,9 @@ class TestsFlextLdifOudToOidMigration:
         reparse = client.parse_ldif(migrated_content)
         tm.ok(reparse)
 
-    @pytest.mark.parametrize(
-        "fixture_name",
-        [c.Tests.ENTRIES, c.Tests.INTEGRATION],
-    )
+    @pytest.mark.parametrize("fixture_name", [c.Tests.ENTRIES, c.Tests.INTEGRATION])
     def test_pipeline_preserves_dn_set_across_migration(
-        self,
-        tmp_path: Path,
-        client: p.Ldif.Client,
-        fixture_name: str,
+        self, tmp_path: Path, client: p.Ldif.Client, fixture_name: str
     ) -> None:
         """Every source DN survives the OUD->OID migration unchanged."""
         source_content = u.Tests.load(c.Tests.OUD, fixture_name)
@@ -159,9 +150,7 @@ class TestsFlextLdifOudToOidMigration:
     # -- OUD server public parse contract ---------------------------------
 
     def test_oud_parse_ldif_returns_expected_entry_count(
-        self,
-        oud: FlextLdifServersOud,
-        oud_entries: str,
+        self, oud: FlextLdifServersOud, oud_entries: str
     ) -> None:
         """OUD ``parse_ldif`` succeeds and yields the fixture's entries."""
         result = oud.parse_ldif(oud_entries)
@@ -173,8 +162,7 @@ class TestsFlextLdifOudToOidMigration:
         )
 
     def test_oud_parse_ldif_on_empty_input_yields_no_entries(
-        self,
-        oud: FlextLdifServersOud,
+        self, oud: FlextLdifServersOud
     ) -> None:
         """Parsing empty content is a success with zero entries (invariant)."""
         result = oud.parse_ldif("")
@@ -183,9 +171,7 @@ class TestsFlextLdifOudToOidMigration:
         tm.that(result.value.entries, eq=[])
 
     def test_oud_parse_ldif_accepts_schema_fixture(
-        self,
-        oud: FlextLdifServersOud,
-        oud_schema: str,
+        self, oud: FlextLdifServersOud, oud_schema: str
     ) -> None:
         """OUD ``parse_ldif`` handles the schema fixture as a subschema entry."""
         result = oud.parse_ldif(oud_schema)
@@ -221,10 +207,7 @@ class TestsFlextLdifOudToOidMigration:
         tm.that(self._dn_set(reparse.value.entries), eq=source_dns)
 
     def test_oid_write_is_idempotent_on_dn_set(
-        self,
-        oud: FlextLdifServersOud,
-        oid: FlextLdifServersOid,
-        oud_integration: str,
+        self, oud: FlextLdifServersOud, oid: FlextLdifServersOid, oud_integration: str
     ) -> None:
         """Writing the same OUD entries twice yields the same OID DN set."""
         parsed = oud.parse_ldif(oud_integration)
@@ -240,12 +223,8 @@ class TestsFlextLdifOudToOidMigration:
         assert first_parse.success and second_parse.success
         tm.that(
             self._dn_set(first_parse.value.entries),
-            eq=self._dn_set(
-                second_parse.value.entries,
-            ),
+            eq=self._dn_set(second_parse.value.entries),
         )
 
 
-__all__: list[str] = [
-    "TestsFlextLdifOudToOidMigration",
-]
+__all__: list[str] = ["TestsFlextLdifOudToOidMigration"]

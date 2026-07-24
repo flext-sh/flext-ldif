@@ -22,8 +22,7 @@ class FlextLdifServersOudAclExtractMixin:
 
     @staticmethod
     def comment_acl_attributes(
-        entry_data: p.Ldif.Entry,
-        acl_attribute_names: t.MutableSequenceOf[str],
+        entry_data: p.Ldif.Entry, acl_attribute_names: t.MutableSequenceOf[str]
     ) -> p.Ldif.Entry:
         """Comment out ACL attributes by removing them from attributes dict and storing in metadata."""
         if not entry_data.attributes or not acl_attribute_names:
@@ -33,12 +32,11 @@ class FlextLdifServersOudAclExtractMixin:
             existing_metadata = u.Ldif.server_metadata_for("oud")
         else:
             existing_metadata = m.Ldif.ServerMetadata.model_validate(
-                existing_metadata.model_dump(),
+                existing_metadata.model_dump()
             )
         new_attributes_dict, commented_acl_values, hidden_attrs = (
             FlextLdifServersOudAclExtractMixin.extract_and_remove_acl_attributes(
-                entry_data.attributes.attributes,
-                acl_attribute_names,
+                entry_data.attributes.attributes, acl_attribute_names
             )
         )
         updated_metadata = (
@@ -58,7 +56,7 @@ class FlextLdifServersOudAclExtractMixin:
                     "metadata": entry_data.attributes.metadata,
                 }),
                 "metadata": updated_metadata,
-            },
+            }
         )
         return copy_result
 
@@ -91,11 +89,7 @@ class FlextLdifServersOudAclExtractMixin:
     def extract_and_remove_acl_attributes(
         attributes_dict: t.MutableStrSequenceMapping,
         acl_attribute_names: t.MutableSequenceOf[str],
-    ) -> tuple[
-        t.MutableStrSequenceMapping,
-        t.MutableStrSequenceMapping,
-        set[str],
-    ]:
+    ) -> tuple[t.MutableStrSequenceMapping, t.MutableStrSequenceMapping, set[str]]:
         """Extract ACL attributes and remove from active dict."""
         new_attrs: t.MutableStrSequenceMapping = dict(attributes_dict)
         commented_vals: t.MutableStrSequenceMapping = {}
@@ -130,9 +124,7 @@ class FlextLdifServersOudAclExtractMixin:
             hidden_attribute_names = {str(item).lower() for item in hidden_attrs_raw}
         if metadata_typed.write_options is not None:
             legacy_hidden_attrs = getattr(
-                metadata_typed.write_options,
-                "hidden_attrs",
-                [],
+                metadata_typed.write_options, "hidden_attrs", []
             )
             if isinstance(legacy_hidden_attrs, (list, tuple, frozenset, set)):
                 hidden_attribute_names.update(
@@ -144,28 +136,23 @@ class FlextLdifServersOudAclExtractMixin:
         hidden_attribute_names.update(attr.lower() for attr in hidden_attrs)
         if hidden_attribute_names:
             current_extensions[c.Ldif.HIDDEN_ATTRIBUTES] = (
-                t.Cli.JSON_VALUE_ADAPTER.validate_python(
-                    sorted(hidden_attribute_names),
-                )
+                t.Cli.JSON_VALUE_ADAPTER.validate_python(sorted(hidden_attribute_names))
             )
         if commented_acl_values:
             converted_attrs_list: t.MutableSequenceOf[str] = list(
-                commented_acl_values.keys(),
+                commented_acl_values.keys()
             )
             current_extensions[c.Ldif.CONVERTED_ATTRIBUTES] = (
                 t.Cli.JSON_VALUE_ADAPTER.validate_python(converted_attrs_list)
             )
             current_extensions[c.Ldif.COMMENTED_ATTRIBUTE_VALUES] = (
                 u.Ldif.dump_json_payload({
-                    comment_key: t.Cli.JSON_VALUE_ADAPTER.validate_python(
-                        comment_value,
-                    )
+                    comment_key: t.Cli.JSON_VALUE_ADAPTER.validate_python(comment_value)
                     for comment_key, comment_value in commented_acl_values.items()
                 })
             )
         commented_attrs_raw = current_extensions.get(
-            c.Ldif.ACL_COMMENTED_ATTRIBUTES,
-            [],
+            c.Ldif.ACL_COMMENTED_ATTRIBUTES, []
         )
         commented_attrs: t.MutableSequenceOf[str] = (
             [str(x) for x in commented_attrs_raw]
@@ -180,10 +167,10 @@ class FlextLdifServersOudAclExtractMixin:
                 t.Cli.JSON_VALUE_ADAPTER.validate_python(commented_attrs)
             )
         update_dict_final: MutableMapping[str, t.Ldif.MutableMetadataInputMapping] = {
-            "extensions": current_extensions,
+            "extensions": current_extensions
         }
         copy_result: p.Ldif.ServerMetadata = metadata_typed.model_copy(
-            update=update_dict_final,
+            update=update_dict_final
         )
         return copy_result
 

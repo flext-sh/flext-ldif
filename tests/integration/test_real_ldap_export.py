@@ -59,9 +59,7 @@ class TestsFlextLdifRealLdapExport:
         return entries
 
     def _parse_back(
-        self,
-        flext_api: p.Ldif.Client,
-        content: str | None,
+        self, flext_api: p.Ldif.Client, content: str | None
     ) -> dict[str, Mapping[str, Sequence[str]]]:
         """Parse exported LDIF and index attribute maps by DN string.
 
@@ -125,11 +123,7 @@ class TestsFlextLdifRealLdapExport:
             ldap_connection.add(
                 person_dn,
                 ["person", "inetOrgPerson"],
-                {
-                    "cn": username,
-                    "sn": f"Surname{i}",
-                    "mail": f"user{i}@example.com",
-                },
+                {"cn": username, "sn": f"Surname{i}", "mail": f"user{i}@example.com"},
             )
         ldap_connection.search(clean_test_ou, "(objectClass=person)", attributes=["*"])
         tm.that(len(ldap_connection.entries), eq=5)
@@ -139,7 +133,7 @@ class TestsFlextLdifRealLdapExport:
         tm.ok(write_result)
         indexed = self._parse_back(flext_api, write_result.unwrap().content)
         for i, (username, person_dn) in enumerate(
-            zip(usernames, expected_dns, strict=True),
+            zip(usernames, expected_dns, strict=True)
         ):
             tm.that(indexed, has=person_dn)
             tm.that(indexed[person_dn]["cn"], has=username)
@@ -161,15 +155,11 @@ class TestsFlextLdifRealLdapExport:
         ldap_connection.add(people_ou_dn, ["organizationalUnit"], {"ou": "People"})
         person_dn = f"cn={person_name},{people_ou_dn}"
         ldap_connection.add(
-            person_dn,
-            ["person", "inetOrgPerson"],
-            {"cn": person_name, "sn": "Johnson"},
+            person_dn, ["person", "inetOrgPerson"], {"cn": person_name, "sn": "Johnson"}
         )
         group_dn = f"cn={group_name},{groups_ou_dn}"
         ldap_connection.add(
-            group_dn,
-            ["groupOfNames"],
-            {"cn": group_name, "member": person_dn},
+            group_dn, ["groupOfNames"], {"cn": group_name, "member": person_dn}
         )
         ldap_connection.search(
             clean_test_ou,

@@ -37,9 +37,7 @@ class FlextLdifShared:
         return getattr(obj, attr_name, _MISSING_ATTR) is not _MISSING_ATTR
 
     @staticmethod
-    def normalize_server_type(
-        server_type: str,
-    ) -> FlextLdifConstantsEnums.ServerTypes:
+    def normalize_server_type(server_type: str) -> FlextLdifConstantsEnums.ServerTypes:
         """Normalize server type string to canonical ServerTypes enum member.
 
         Converts aliases and variations to canonical enum member:

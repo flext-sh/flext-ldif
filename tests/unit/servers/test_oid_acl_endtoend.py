@@ -18,15 +18,11 @@ class TestsFlextLdifOidAclEndToEnd:
 
     @staticmethod
     def _convert(
-        api: p.Ldif.Client,
-        dn: str,
-        attrs: dict[str, list[str]],
+        api: p.Ldif.Client, dn: str, attrs: dict[str, list[str]]
     ) -> t.MutableStrSequenceMapping:
         entry = u.Tests.create_real_entry(dn=dn, attributes=attrs)
         result = api.convert_model(
-            c.Ldif.ServerTypes.OID,
-            c.Ldif.ServerTypes.OUD,
-            entry,
+            c.Ldif.ServerTypes.OID, c.Ldif.ServerTypes.OUD, entry
         )
         converted = u.Tests.assert_success(result)
         if not isinstance(converted, m.Ldif.Entry) or converted.attributes is None:
@@ -74,11 +70,7 @@ class TestsFlextLdifOidAclEndToEnd:
         ],
     )
     def test_oid_acl_converts_to_expected_aci_and_drops_source_attr(
-        self,
-        api: p.Ldif.Client,
-        source_attr: str,
-        source_value: str,
-        expected_aci: str,
+        self, api: p.Ldif.Client, source_attr: str, source_value: str, expected_aci: str
     ) -> None:
         attrs = self._convert(
             api,
@@ -102,14 +94,14 @@ class TestsFlextLdifOidAclEndToEnd:
                     (
                         'access to entry by group="cn=x,dc=other" (browse) '
                         'by group="cn=a,dc=ctbc" (browse)'
-                    ),
+                    )
                 ],
             },
         )
         svc = FlextLdifConversion(base_dn="dc=ctbc")
 
         converted = u.Tests.assert_success(
-            svc.convert_model(c.Ldif.ServerTypes.OID, c.Ldif.ServerTypes.OUD, entry),
+            svc.convert_model(c.Ldif.ServerTypes.OID, c.Ldif.ServerTypes.OUD, entry)
         )
         if not isinstance(converted, m.Ldif.Entry) or converted.attributes is None:
             msg = "convert_model did not return an Entry with attributes"
@@ -121,6 +113,6 @@ class TestsFlextLdifOidAclEndToEnd:
                 (
                     '(targetattr="*")(version 3.0; acl "users Entry by x"; '
                     'allow (read, search) groupdn="ldap:///cn=a,dc=ctbc";)'
-                ),
+                )
             ],
         )

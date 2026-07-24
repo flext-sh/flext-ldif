@@ -36,20 +36,15 @@ class TestsFlextLdifWriterService:
     # ── write_to_string: success contract ────────────────────────────────
 
     @pytest.mark.parametrize(
-        ("scenario", "server_type"),
-        tuple(c.Tests.WRITER_SERVER_CASES.items()),
+        ("scenario", "server_type"), tuple(c.Tests.WRITER_SERVER_CASES.items())
     )
     def test_write_to_string_serializes_every_entry_dn_for_each_server(
-        self,
-        scenario: str,
-        server_type: str,
-        writer: p.Ldif.Client,
+        self, scenario: str, server_type: str, writer: p.Ldif.Client
     ) -> None:
         result = writer.write_to_string(self._entries(), server_type=server_type)
 
         content = u.Tests.assert_success(
-            result,
-            error_msg=f"writing must succeed for {scenario}",
+            result, error_msg=f"writing must succeed for {scenario}"
         )
 
         tm.that(c.Tests.WRITER_OUTPUT_REGEX.search(content) is not None, eq=True)
@@ -57,33 +52,30 @@ class TestsFlextLdifWriterService:
             tm.that(f"dn: {dn}" in content, eq=True)
 
     def test_write_to_string_is_idempotent_for_identical_input(
-        self,
-        writer: p.Ldif.Client,
+        self, writer: p.Ldif.Client
     ) -> None:
         entries = self._entries()
 
         first = u.Tests.assert_success(
-            writer.write_to_string(entries, server_type=c.Tests.RFC),
+            writer.write_to_string(entries, server_type=c.Tests.RFC)
         )
         second = u.Tests.assert_success(
-            writer.write_to_string(entries, server_type=c.Tests.RFC),
+            writer.write_to_string(entries, server_type=c.Tests.RFC)
         )
 
         tm.that(first, eq=second)
 
     def test_write_to_string_returns_empty_content_for_no_entries(
-        self,
-        writer: p.Ldif.Client,
+        self, writer: p.Ldif.Client
     ) -> None:
         content = u.Tests.assert_success(
-            writer.write_to_string([], server_type=c.Tests.RFC),
+            writer.write_to_string([], server_type=c.Tests.RFC)
         )
 
         tm.that(content, eq="")
 
     def test_write_to_string_keeps_dn_prefix_before_folding(
-        self,
-        writer: p.Ldif.Client,
+        self, writer: p.Ldif.Client
     ) -> None:
         long_dn = (
             "cn=writer-fold-target,"
@@ -94,9 +86,8 @@ class TestsFlextLdifWriterService:
 
         content = u.Tests.assert_success(
             writer.write_to_string(
-                [u.Tests.create_real_entry(dn=long_dn)],
-                server_type=c.Tests.RFC,
-            ),
+                [u.Tests.create_real_entry(dn=long_dn)], server_type=c.Tests.RFC
+            )
         )
 
         tm.that(content.startswith("dn: cn=writer-fold-target"), eq=True)
@@ -105,14 +96,11 @@ class TestsFlextLdifWriterService:
     # ── write: WriteResponse contract ────────────────────────────────────
 
     def test_write_returns_content_and_statistics_for_entry_sequence(
-        self,
-        writer: p.Ldif.Client,
+        self, writer: p.Ldif.Client
     ) -> None:
         entries = self._entries()
 
-        payload = u.Tests.assert_success(
-            writer.write(entries, server_type=c.Tests.RFC),
-        )
+        payload = u.Tests.assert_success(writer.write(entries, server_type=c.Tests.RFC))
 
         tm.that(payload.content is not None, eq=True)
         assert payload.content is not None
@@ -122,21 +110,17 @@ class TestsFlextLdifWriterService:
         tm.that(payload.statistics.processed_entries, eq=len(entries))
         tm.that(payload.output_path, eq=None)
 
-    def test_write_accepts_parse_response_input(
-        self,
-        writer: p.Ldif.Client,
-    ) -> None:
+    def test_write_accepts_parse_response_input(self, writer: p.Ldif.Client) -> None:
         entries = self._entries()
         parse_response = m.Ldif.ParseResponse(
             entries=entries,
             statistics=m.Ldif.Statistics(
-                total_entries=len(entries),
-                processed_entries=len(entries),
+                total_entries=len(entries), processed_entries=len(entries)
             ),
         )
 
         payload = u.Tests.assert_success(
-            writer.write(parse_response, server_type=c.Tests.RFC),
+            writer.write(parse_response, server_type=c.Tests.RFC)
         )
 
         tm.that(payload.statistics.total_entries, eq=len(entries))
@@ -145,15 +129,13 @@ class TestsFlextLdifWriterService:
     # ── write_ldif_file: persistence contract ────────────────────────────
 
     def test_write_ldif_file_persists_content_and_reports_path(
-        self,
-        writer: p.Ldif.Client,
-        tmp_path: Path,
+        self, writer: p.Ldif.Client, tmp_path: Path
     ) -> None:
         entries = self._entries()
         output_file = tmp_path / c.Tests.WRITER_OUTPUT_FILENAME
 
         payload = u.Tests.assert_success(
-            writer.write_ldif_file(entries, output_file, server_type=c.Tests.RFC),
+            writer.write_ldif_file(entries, output_file, server_type=c.Tests.RFC)
         )
 
         tm.that(output_file.exists(), eq=True)
@@ -167,8 +149,7 @@ class TestsFlextLdifWriterService:
     # ── error paths: r[T] failure contract ───────────────────────────────
 
     def test_write_to_string_fails_for_unknown_server(
-        self,
-        writer: p.Ldif.Client,
+        self, writer: p.Ldif.Client
     ) -> None:
         unknown_server = f"{c.Tests.WRITER_UNKNOWN_SERVER_PREFIX}_{uuid4().hex}"
 
@@ -176,21 +157,15 @@ class TestsFlextLdifWriterService:
 
         tm.fail(result, has="Invalid server type")
 
-    def test_write_fails_for_unknown_server(
-        self,
-        writer: p.Ldif.Client,
-    ) -> None:
+    def test_write_fails_for_unknown_server(self, writer: p.Ldif.Client) -> None:
         result = writer.write(
-            self._entries(),
-            server_type=c.Tests.WRITER_UNKNOWN_SERVER_PREFIX,
+            self._entries(), server_type=c.Tests.WRITER_UNKNOWN_SERVER_PREFIX
         )
 
         tm.fail(result, has="Invalid server type")
 
     def test_write_ldif_file_fails_for_unknown_server(
-        self,
-        writer: p.Ldif.Client,
-        tmp_path: Path,
+        self, writer: p.Ldif.Client, tmp_path: Path
     ) -> None:
         output_file = tmp_path / c.Tests.WRITER_OUTPUT_FILENAME
 
@@ -204,34 +179,26 @@ class TestsFlextLdifWriterService:
         tm.that(output_file.exists(), eq=False)
 
     def test_write_ldif_file_fails_when_parent_is_not_a_directory(
-        self,
-        writer: p.Ldif.Client,
-        tmp_path: Path,
+        self, writer: p.Ldif.Client, tmp_path: Path
     ) -> None:
         blocking_file = tmp_path / c.Tests.WRITER_BLOCKING_PARENT_NAME
         blocking_file.write_text("x", encoding="utf-8")
         target = blocking_file / c.Tests.WRITER_OUTPUT_FILENAME
 
         result = writer.write_ldif_file(
-            self._entries(),
-            target,
-            server_type=c.Tests.RFC,
+            self._entries(), target, server_type=c.Tests.RFC
         )
 
         tm.fail(result, has="Failed to write LDIF file")
 
     def test_write_ldif_file_fails_when_target_is_a_directory(
-        self,
-        writer: p.Ldif.Client,
-        tmp_path: Path,
+        self, writer: p.Ldif.Client, tmp_path: Path
     ) -> None:
         directory_target = tmp_path / c.Tests.WRITER_DIRECTORY_TARGET_NAME
         directory_target.mkdir(parents=True, exist_ok=True)
 
         result = writer.write_ldif_file(
-            self._entries(),
-            directory_target,
-            server_type=c.Tests.RFC,
+            self._entries(), directory_target, server_type=c.Tests.RFC
         )
 
         tm.fail(result, has="Failed to write LDIF file")

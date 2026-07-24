@@ -42,8 +42,7 @@ class DRYValidationAnalysis:
 
     @staticmethod
     def _generate_test_dataset(
-        count: int,
-        error_rate: float = 0.0,
+        count: int, error_rate: float = 0.0
     ) -> MutableSequence[p.Ldif.Entry]:
         """DRY test dataset generation with configurable errors."""
         api = ldif()

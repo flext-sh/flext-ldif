@@ -39,8 +39,7 @@ class FlextLdifTypesBase:
     type UnconvertedAttributeValue = str | t.MutableSequenceOf[str] | bytes
     type UnconvertedAttributes = MutableMapping[str, UnconvertedAttributeValue]
     type SchemaExtensionsMapping = MutableMapping[
-        str,
-        t.MutableSequenceOf[str] | str | bool | None,
+        str, t.MutableSequenceOf[str] | str | bool | None
     ]
     type AttributeDict = t.StrSequenceMapping
     type DN = str
@@ -60,22 +59,17 @@ class FlextLdifTypesBase:
         ),
     ]
     type Rfc4514DnComponent = Annotated[
-        str,
-        t.StringConstraints(min_length=2, pattern=r"^[a-zA-Z0-9-]+=[^,]+$"),
+        str, t.StringConstraints(min_length=2, pattern=r"^[a-zA-Z0-9-]+=[^,]+$")
     ]
-    type Rfc2849AttributeValue = Annotated[
-        str,
-        t.StringConstraints(max_length=4096),
-    ]
+    type Rfc2849AttributeValue = Annotated[str, t.StringConstraints(max_length=4096)]
     type NormalizedStrFrozenset = Annotated[
-        frozenset[str],
-        m.BeforeValidator(_coerce_normalized_str_frozenset),
+        frozenset[str], m.BeforeValidator(_coerce_normalized_str_frozenset)
     ]
     RFC4512_DESCRIPTOR_ADAPTER: p.TypeAdapter[Rfc4512Descriptor] = m.TypeAdapter(
-        Rfc4512Descriptor,
+        Rfc4512Descriptor
     )
     RFC4514_DN_COMPONENT_ADAPTER: p.TypeAdapter[Rfc4514DnComponent] = m.TypeAdapter(
-        Rfc4514DnComponent,
+        Rfc4514DnComponent
     )
     RFC2849_ATTRIBUTE_VALUE_ADAPTER: p.TypeAdapter[Rfc2849AttributeValue] = (
         m.TypeAdapter(Rfc2849AttributeValue)

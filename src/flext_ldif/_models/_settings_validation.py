@@ -23,7 +23,7 @@ class FlextLdifModelsSettingsValidation:
         requires_binary_option: Annotated[
             bool,
             u.Field(
-                description="Whether server requires ;binary option for non-ASCII values",
+                description="Whether server requires ;binary option for non-ASCII values"
             ),
         ] = False
         requires_naming_attr: Annotated[
@@ -31,6 +31,5 @@ class FlextLdifModelsSettingsValidation:
             u.Field(description="Whether server requires naming attribute in entry"),
         ] = False
         requires_objectclass: Annotated[
-            bool,
-            u.Field(description="Whether server requires objectClass attribute"),
+            bool, u.Field(description="Whether server requires objectClass attribute")
         ] = True

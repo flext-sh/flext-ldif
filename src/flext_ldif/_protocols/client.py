@@ -68,27 +68,19 @@ class FlextLdifProtocolsClient(Protocol):
             ...
 
         def parse_ldif(
-            self,
-            value: str | Path,
-            *,
-            server_type: str | None = None,
+            self, value: str | Path, *, server_type: str | None = None
         ) -> p.Result[FlextLdifProtocolsBase.ParseResponse]:
             """Parse LDIF content from text or a file path."""
             ...
 
         def parse_ldif_file(
-            self,
-            path: Path,
-            server_type: str | None = None,
-            encoding: str = "utf-8",
+            self, path: Path, server_type: str | None = None, encoding: str = "utf-8"
         ) -> p.Result[FlextLdifProtocolsBase.ParseResponse]:
             """Parse LDIF content from a file path."""
             ...
 
         def parse_string(
-            self,
-            content: str,
-            server_type: str | None = None,
+            self, content: str, server_type: str | None = None
         ) -> p.Result[FlextLdifProtocolsBase.ParseResponse]:
             """Parse LDIF content from a raw string."""
             ...
@@ -126,44 +118,36 @@ class FlextLdifProtocolsClient(Protocol):
             """Write canonical LDIF entries to text."""
             ...
 
-        def acl(
-            self,
-            server_type: str,
-        ) -> p.Result[FlextLdifProtocolsDomain.AclServer]:
+        def acl(self, server_type: str) -> p.Result[FlextLdifProtocolsDomain.AclServer]:
             """Resolve an ACL server by server type."""
             ...
 
         def entry(
-            self,
-            server_type: str,
+            self, server_type: str
         ) -> p.Result[FlextLdifProtocolsDomain.EntryServer]:
             """Resolve an entry server by server type."""
             ...
 
         def resolve_base_server(
-            self,
-            server_type: str,
+            self, server_type: str
         ) -> p.Result[FlextLdifProtocolsDomain.ServerServer]:
             """Resolve a base server by server type."""
             ...
 
         def schema_server(
-            self,
-            server_type: str,
+            self, server_type: str
         ) -> p.Result[FlextLdifProtocolsDomain.SchemaServer]:
             """Resolve a schema server by server type."""
             ...
 
         def resolve_schema_server(
-            self,
-            server_type: str,
+            self, server_type: str
         ) -> p.Result[FlextLdifProtocolsDomain.SchemaServer]:
             """Resolve the canonical schema server by server type."""
             ...
 
         def resolve_server_bundle(
-            self,
-            server_type: str,
+            self, server_type: str
         ) -> p.Result[
             t.MappingKV[
                 str,
@@ -176,8 +160,7 @@ class FlextLdifProtocolsClient(Protocol):
             ...
 
         def resolve_server_constants(
-            self,
-            server_type: str,
+            self, server_type: str
         ) -> p.Result[type[FlextLdifProtocolsBase.ServerConstants]]:
             """Resolve server constants by server type."""
             ...
@@ -193,8 +176,7 @@ class FlextLdifProtocolsClient(Protocol):
             ...
 
         def resolve_supported_conversions(
-            self,
-            server: FlextLdifProtocolsBase.ServerReference | str,
+            self, server: FlextLdifProtocolsBase.ServerReference | str
         ) -> t.MappingKV[str, bool]:
             """Return conversion capabilities for a server."""
             ...
@@ -221,9 +203,7 @@ class FlextLdifProtocolsClient(Protocol):
             ...
 
         def resolve_effective_server_type(
-            self,
-            ldif_path: Path | None = None,
-            ldif_content: str | None = None,
+            self, ldif_path: Path | None = None, ldif_content: str | None = None
         ) -> p.Result[str]:
             """Resolve the effective LDAP server type."""
             ...
@@ -242,17 +222,13 @@ class FlextLdifProtocolsClient(Protocol):
             ...
 
         def parse_acl_string(
-            self,
-            acl_string: str,
-            server_type: str,
+            self, acl_string: str, server_type: str
         ) -> p.Result[FlextLdifProtocolsBase.Acl]:
             """Parse one ACL string."""
             ...
 
         def extract_acls_from_entry(
-            self,
-            entry: FlextLdifProtocolsBase.Entry,
-            server_type: str,
+            self, entry: FlextLdifProtocolsBase.Entry, server_type: str
         ) -> p.Result[FlextLdifProtocolsBase.AclResponse]:
             """Extract ACLs from one canonical entry."""
             ...

@@ -28,9 +28,7 @@ class TestsFlextLdifConstantsDataDriven:
         ],
     )
     def test_server_type_constants_expose_canonical_enum_values(
-        self,
-        constant_value: str,
-        expected_server_type: str,
+        self, constant_value: str, expected_server_type: str
     ) -> None:
         # Arrange / Act done in the parametrize table.
         # Assert the constant is exactly the canonical server-type token.
@@ -69,9 +67,7 @@ class TestsFlextLdifConstantsDataDriven:
         ],
     )
     def test_ldap_name_constants_expose_canonical_attribute_names(
-        self,
-        name_constant: str,
-        expected_attribute: str,
+        self, name_constant: str, expected_attribute: str
     ) -> None:
         tm.that(name_constant, eq=expected_attribute)
 
@@ -80,10 +76,7 @@ class TestsFlextLdifConstantsDataDriven:
         tm.that(c.Tests.BOOLEAN_RFC_TO_OID[c.Tests.BOOLEAN_FALSE], eq="0")
 
     @pytest.mark.parametrize("rfc_value", ["TRUE", "FALSE"])
-    def test_boolean_oid_and_rfc_maps_are_mutual_inverses(
-        self,
-        rfc_value: str,
-    ) -> None:
+    def test_boolean_oid_and_rfc_maps_are_mutual_inverses(self, rfc_value: str) -> None:
         oid_value: str = c.Tests.BOOLEAN_RFC_TO_OID[rfc_value]
         tm.that(c.Tests.BOOLEAN_OID_TO_RFC[oid_value], eq=rfc_value)
 
@@ -96,9 +89,7 @@ class TestsFlextLdifConstantsDataDriven:
         ],
     )
     def test_edge_case_ldif_constants_are_well_formed_records(
-        self,
-        content: str,
-        expected_dn_prefix: str,
+        self, content: str, expected_dn_prefix: str
     ) -> None:
         # A valid single LDIF record starts with its DN line and terminates
         # with a blank-line record separator.
@@ -107,10 +98,10 @@ class TestsFlextLdifConstantsDataDriven:
 
     def test_non_ascii_regex_flags_unicode_but_not_pure_ascii_fixture(self) -> None:
         unicode_hit = c.Tests.EDGE_CASE_NON_ASCII_REGEX.search(
-            c.Tests.EDGE_CASE_UNICODE_LDIF,
+            c.Tests.EDGE_CASE_UNICODE_LDIF
         )
         ascii_hit = c.Tests.EDGE_CASE_NON_ASCII_REGEX.search(
-            c.Tests.EDGE_CASE_DEEP_DN_LDIF,
+            c.Tests.EDGE_CASE_DEEP_DN_LDIF
         )
         tm.that(unicode_hit is not None, eq=True)
         tm.that(ascii_hit is None, eq=True)

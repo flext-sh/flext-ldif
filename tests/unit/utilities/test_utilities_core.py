@@ -132,8 +132,7 @@ class TestsFlextLdifUtilitiesCore:
     # ---- DN value escaping -------------------------------------------
 
     @pytest.mark.parametrize(
-        "value",
-        ["Test, Value", "plain", "a+b=c", "trailing ", " leading"],
+        "value", ["Test, Value", "plain", "a+b=c", "trailing ", " leading"]
     )
     def test_esc_unesc_roundtrip_is_identity(self, value: str) -> None:
         """unesc(esc(value)) reconstructs the original value."""
@@ -213,10 +212,7 @@ class TestsFlextLdifUtilitiesCore:
         ],
     )
     def test_fix_kind_mismatch_aligns_kind_to_superior(
-        self,
-        start_kind: c.Ldif.SchemaKind,
-        sup: str,
-        expected_kind: c.Ldif.SchemaKind,
+        self, start_kind: c.Ldif.SchemaKind, sup: str, expected_kind: c.Ldif.SchemaKind
     ) -> None:
         """Kind is corrected to match the kind of its declared superior."""
         oc = m.Ldif.SchemaObjectClass(
@@ -299,8 +295,7 @@ class TestsFlextLdifUtilitiesCore:
     # ---- Server-type operations --------------------------------------
 
     @pytest.mark.parametrize(
-        ("raw", "expected"),
-        [("oracle_oid", "oid"), ("rfc", "rfc")],
+        ("raw", "expected"), [("oracle_oid", "oid"), ("rfc", "rfc")]
     )
     def test_normalize_server_type_maps_aliases_to_canonical(
         self, raw: str, expected: str

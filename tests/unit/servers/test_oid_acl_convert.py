@@ -72,10 +72,7 @@ class TestsFlextLdifOidAclConvert:
         ],
     )
     def test_target_clause_shapes_map_to_public_target_fields(
-        self,
-        content: str,
-        expected_type: str,
-        expected_attrs: str,
+        self, content: str, expected_type: str, expected_attrs: str
     ) -> None:
         rule = tm.ok(Parser.parse_oid_acl_line(_DN, f"orclaci: access to {content}"))
 
@@ -122,9 +119,7 @@ class TestsFlextLdifOidAclConvert:
         ],
     )
     def test_malformed_line_fails_with_descriptive_error(
-        self,
-        line: str,
-        error_fragment: str,
+        self, line: str, error_fragment: str
     ) -> None:
         result = Parser.parse_oid_acl_line(_DN, line)
 
@@ -160,11 +155,7 @@ class TestsFlextLdifOidAclConvert:
         ],
     )
     def test_subject_clause_maps_to_typed_subject(
-        self,
-        clause: str,
-        subject_type: str,
-        value: str,
-        permissions: tuple[str, ...],
+        self, clause: str, subject_type: str, value: str, permissions: tuple[str, ...]
     ) -> None:
         subject = Parser.parse_subject(clause)
 
@@ -174,7 +165,7 @@ class TestsFlextLdifOidAclConvert:
 
     def test_constraint_modifier_populates_added_object_constraint(self) -> None:
         subject = Parser.parse_subject(
-            "by * (browse) constraintonaddedobject=(objectClass=person)",
+            "by * (browse) constraintonaddedobject=(objectClass=person)"
         )
 
         tm.that(subject.subject_type, eq="anyone")

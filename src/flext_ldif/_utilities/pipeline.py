@@ -55,11 +55,7 @@ class FlextLdifUtilitiesPipeline:
         __slots__ = ("_collect_all", "_max_errors", "_strict")
 
         def __init__(
-            self,
-            *,
-            strict: bool = True,
-            collect_all: bool = True,
-            max_errors: int = 0,
+            self, *, strict: bool = True, collect_all: bool = True, max_errors: int = 0
         ) -> None:
             """Initialize validation pipeline."""
             super().__init__()
@@ -68,8 +64,7 @@ class FlextLdifUtilitiesPipeline:
             self._max_errors = max_errors
 
         def validate(
-            self,
-            entries: t.SequenceOf[p.Ldif.Entry],
+            self, entries: t.SequenceOf[p.Ldif.Entry]
         ) -> p.Result[t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]]:
             """Validate a sequence of entries."""
             results: t.MutableSequenceOf[
@@ -91,13 +86,10 @@ class FlextLdifUtilitiesPipeline:
                     break
             return r[
                 t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]
-            ].ok(
-                results,
-            )
+            ].ok(results)
 
         def validate_one(
-            self,
-            entry: p.Ldif.Entry,
+            self, entry: p.Ldif.Entry
         ) -> p.Result[FlextLdifUtilitiesPipeline.ValidationResult]:
             """Validate a single entry."""
             errors: t.MutableSequenceOf[str] = []
@@ -133,13 +125,9 @@ class FlextLdifUtilitiesPipeline:
                         warnings.append("Entry has no objectClass attribute")
             return r[FlextLdifUtilitiesPipeline.ValidationResult].ok(
                 FlextLdifUtilitiesPipeline.ValidationResult(
-                    valid=not errors,
-                    errors=errors,
-                    warnings=warnings,
-                ),
+                    valid=not errors, errors=errors, warnings=warnings
+                )
             )
 
 
-__all__: list[str] = [
-    "FlextLdifUtilitiesPipeline",
-]
+__all__: list[str] = ["FlextLdifUtilitiesPipeline"]

@@ -19,8 +19,7 @@ class FlextLdifServersBase(s[p.Ldif.Entry]):
     """Base class for LDIF/LDAP server servers built on `s`."""
 
     model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
-        arbitrary_types_allowed=True,
-        extra="forbid",
+        arbitrary_types_allowed=True, extra="forbid"
     )
     server_type: ClassVar[str] = c.Ldif.UNKNOWN_VALUE
     priority: ClassVar[int] = 0
@@ -34,17 +33,17 @@ class FlextLdifServersBase(s[p.Ldif.Entry]):
         super().__init__()
         parent_ref: FlextLdifServersBase = self
         schema_server: FlextLdifServersBaseSchema = self.Schema().model_copy(
-            update={"server_type": self.server_type},
+            update={"server_type": self.server_type}
         )
         self._schema_server = schema_server
         object.__setattr__(self._schema_server, "_parent_server", parent_ref)
         acl_server: FlextLdifServersBaseSchemaAcl = self.Acl().model_copy(
-            update={"server_type": self.server_type},
+            update={"server_type": self.server_type}
         )
         self._acl_server = acl_server
         object.__setattr__(self._acl_server, "_parent_server", parent_ref)
         entry_server: FlextLdifServersBaseEntry = self.Entry().model_copy(
-            update={"server_type": self.server_type},
+            update={"server_type": self.server_type}
         )
         self._entry_server = entry_server
         object.__setattr__(self._entry_server, "_parent_server", parent_ref)
@@ -110,8 +109,7 @@ class FlextLdifServersBase(s[p.Ldif.Entry]):
         instance: Self = object.__new__(cls)
         filtered_kwargs: t.MutableConfigValueMapping = {}
         execute_kwargs: t.MutableMappingKV[
-            str,
-            str | int | bool | t.MutableSequenceOf[p.Ldif.Entry],
+            str, str | int | bool | t.MutableSequenceOf[p.Ldif.Entry]
         ] = {}
         for k, v in kwargs.items():
             value = v
@@ -123,9 +121,7 @@ class FlextLdifServersBase(s[p.Ldif.Entry]):
         if cls.auto_execute:
             ldif_text, entries, operation = cls._extract_execute_params(execute_kwargs)
             result = instance.execute(
-                ldif_text=ldif_text,
-                entries=entries,
-                operation=operation,
+                ldif_text=ldif_text, entries=entries, operation=operation
             )
             unwrapped = result.value
             if isinstance(unwrapped, cls):
@@ -139,8 +135,7 @@ class FlextLdifServersBase(s[p.Ldif.Entry]):
     ) -> Self | p.Ldif.Entry | str:
         """Callable interface - use as processor."""
         execute_kwargs: t.MutableMappingKV[
-            str,
-            str | int | bool | t.MutableSequenceOf[p.Ldif.Entry],
+            str, str | int | bool | t.MutableSequenceOf[p.Ldif.Entry]
         ] = {}
         ldif_text_raw = fields.get("ldif_text")
         if ldif_text_raw is not None:
@@ -149,7 +144,7 @@ class FlextLdifServersBase(s[p.Ldif.Entry]):
         entries_raw = fields.get("entries")
         if entries_raw is not None:
             validated_entries: t.MutableSequenceOf[p.Ldif.Entry] = u.Ldif.as_entries(
-                entries_raw,
+                entries_raw
             )
             execute_kwargs["entries"] = validated_entries
         operation_raw = fields.get("operation")
@@ -169,11 +164,7 @@ class FlextLdifServersBase(s[p.Ldif.Entry]):
                 case _:
                     continue
         ldif_text, entries, operation = self._extract_execute_params(execute_kwargs)
-        result = self.execute(
-            ldif_text=ldif_text,
-            entries=entries,
-            operation=operation,
-        )
+        result = self.execute(ldif_text=ldif_text, entries=entries, operation=operation)
         value = result.unwrap()
         if isinstance(value, str):
             return value
@@ -184,8 +175,7 @@ class FlextLdifServersBase(s[p.Ldif.Entry]):
     def _extract_execute_params(
         cls,
         kwargs: t.MutableMappingKV[
-            str,
-            str | int | bool | t.MutableSequenceOf[p.Ldif.Entry],
+            str, str | int | bool | t.MutableSequenceOf[p.Ldif.Entry]
         ],
     ) -> tuple[str | None, t.MutableSequenceOf[p.Ldif.Entry] | None, str | None]:
         """Extract type-safe execution parameters from kwargs."""
@@ -200,14 +190,11 @@ class FlextLdifServersBase(s[p.Ldif.Entry]):
         return self._get_server_type_from_mro(type(self))
 
     @classmethod
-    def _get_priority_from_mro(
-        cls,
-        server_class: type,
-    ) -> int:
+    def _get_priority_from_mro(cls, server_class: type) -> int:
         """Get priority from parent class Constants via MRO traversal."""
         for mro_cls in server_class.__mro__:
             if not mro_cls.__name__.startswith(
-                "FlextLdifServers",
+                "FlextLdifServers"
             ) or mro_cls.__name__.endswith(("Schema", "Acl", "Entry")):
                 continue
             priority = getattr(getattr(mro_cls, "Constants", None), "PRIORITY", None)
@@ -217,20 +204,15 @@ class FlextLdifServersBase(s[p.Ldif.Entry]):
         raise AttributeError(msg)
 
     @classmethod
-    def _get_server_type_from_mro(
-        cls,
-        server_class: type,
-    ) -> str:
+    def _get_server_type_from_mro(cls, server_class: type) -> str:
         """Get server_type from parent class Constants via MRO traversal."""
         for mro_cls in server_class.__mro__:
             if not mro_cls.__name__.startswith(
-                "FlextLdifServers",
+                "FlextLdifServers"
             ) or mro_cls.__name__.endswith(("Schema", "Acl", "Entry")):
                 continue
             server_type = getattr(
-                getattr(mro_cls, "Constants", None),
-                "SERVER_TYPE",
-                None,
+                getattr(mro_cls, "Constants", None), "SERVER_TYPE", None
             )
             if isinstance(server_type, str) and server_type:
                 normalized: str = u.Ldif.normalize_server_type(server_type)
@@ -250,8 +232,7 @@ class FlextLdifServersBase(s[p.Ldif.Entry]):
             registry_obj: p.Ldif.ServerRegistry | t.JsonValue,
         ) -> (
             Callable[
-                [str, p.Ldif.SchemaServer | t.JsonValue | FlextLdifServersBase],
-                None,
+                [str, p.Ldif.SchemaServer | t.JsonValue | FlextLdifServersBase], None
             ]
             | None
         ):
@@ -271,8 +252,7 @@ class FlextLdifServersBase(s[p.Ldif.Entry]):
 
         def perform_registration(
             register_func: Callable[
-                [str, p.Ldif.SchemaServer | t.JsonValue | FlextLdifServersBase],
-                None,
+                [str, p.Ldif.SchemaServer | t.JsonValue | FlextLdifServersBase], None
             ]
             | None,
             instance: p.Ldif.SchemaServer | FlextLdifServersBase,
@@ -292,8 +272,7 @@ class FlextLdifServersBase(s[p.Ldif.Entry]):
     @staticmethod
     def _extract_entries(
         kwargs: t.MutableMappingKV[
-            str,
-            str | int | bool | t.MutableSequenceOf[p.Ldif.Entry],
+            str, str | int | bool | t.MutableSequenceOf[p.Ldif.Entry]
         ],
     ) -> t.MutableSequenceOf[p.Ldif.Entry] | None:
         """Extract and validate entries parameter."""
@@ -312,8 +291,7 @@ class FlextLdifServersBase(s[p.Ldif.Entry]):
     @staticmethod
     def _extract_ldif_text(
         kwargs: t.MutableMappingKV[
-            str,
-            str | int | bool | t.MutableSequenceOf[p.Ldif.Entry],
+            str, str | int | bool | t.MutableSequenceOf[p.Ldif.Entry]
         ],
     ) -> str | None:
         """Extract and validate ldif_text parameter."""
@@ -331,8 +309,7 @@ class FlextLdifServersBase(s[p.Ldif.Entry]):
     @staticmethod
     def _extract_operation(
         kwargs: t.MutableMappingKV[
-            str,
-            str | int | bool | t.MutableSequenceOf[p.Ldif.Entry],
+            str, str | int | bool | t.MutableSequenceOf[p.Ldif.Entry]
         ],
     ) -> str | None:
         """Extract and validate operation parameter."""
@@ -390,9 +367,7 @@ class FlextLdifServersBase(s[p.Ldif.Entry]):
             # NOTE (multi-agent, mro-0ftd.3.7.2): construct the protocol-typed
             # Result to match the parse_ldif signature; the concrete
             # m.Ldif.ParseResponse instance structurally satisfies the protocol.
-            return r[p.Ldif.ParseResponse].fail(
-                "Entry server not available",
-            )
+            return r[p.Ldif.ParseResponse].fail("Entry server not available")
         detected_server = getattr(self, "server_type", None)
         detected_server_type: c.Ldif.ServerTypes | None = None
         if isinstance(detected_server, c.Ldif.ServerTypes):
@@ -400,7 +375,7 @@ class FlextLdifServersBase(s[p.Ldif.Entry]):
         elif isinstance(detected_server, str):
             try:
                 detected_server_type = c.Ldif.ServerTypes(
-                    u.Ldif.normalize_server_type(detected_server),
+                    u.Ldif.normalize_server_type(detected_server)
                 )
             except ValueError:
                 detected_server_type = None
@@ -415,7 +390,7 @@ class FlextLdifServersBase(s[p.Ldif.Entry]):
             for entry in domain_entries:
                 if entry.metadata and detected_server_type is not None:
                     entry.metadata = entry.metadata.model_copy(
-                        update={"original_server_type": detected_server_type},
+                        update={"original_server_type": detected_server_type}
                     )
             statistics = m.Ldif.Statistics(
                 total_entries=len(domain_entries),
@@ -431,12 +406,8 @@ class FlextLdifServersBase(s[p.Ldif.Entry]):
         parse_response_result: p.Result[p.Ldif.ParseResponse] = (
             entry_server
             .parse_server(value)
-            .map_error(
-                normalize_parse_error,
-            )
-            .map(
-                build_parse_response,
-            )
+            .map_error(normalize_parse_error)
+            .map(build_parse_response)
         )
         return parse_response_result
 
@@ -450,7 +421,7 @@ class FlextLdifServersBase(s[p.Ldif.Entry]):
         if not entry_server:
             return r[str].fail("Entry server not available")
         write_result: p.Result[str] = entry_server.write(entries, write_options).map(
-            lambda ldif: ldif if not ldif or ldif.endswith("\n") else f"{ldif}\n",
+            lambda ldif: ldif if not ldif or ldif.endswith("\n") else f"{ldif}\n"
         )
         return write_result
 

@@ -60,10 +60,9 @@ class FlextLdifModels(m):
             oid_subject_type: Annotated[str, u.Field()] = ""
             rfc_subject_type: Annotated[str, u.Field()] = ""
             oid_subject_value: Annotated[str, u.Field()] = ""
-            perms_dict: Annotated[
-                t.MutableBoolMapping,
-                u.Field(),
-            ] = u.Field(default_factory=dict)
+            perms_dict: Annotated[t.MutableBoolMapping, u.Field()] = u.Field(
+                default_factory=dict
+            )
             target_dn: Annotated[str, u.Field()] = "entry"
             target_attrs: t.MutableSequenceOf[str] = u.Field(default_factory=list)
             acl_filter: Annotated[str, u.Field()] = ""

@@ -16,11 +16,7 @@ if TYPE_CHECKING:
     from tests import c
 
 
-class TestsFlextLdifProtocols(
-    FlextTestsProtocols,
-    ldap_p,
-    ldif_p,
-):
+class TestsFlextLdifProtocols(FlextTestsProtocols, ldap_p, ldif_p):
     """Protocol definitions for flext-ldif tests."""
 
     class Ldap(ldap_p.Ldap):
@@ -34,8 +30,7 @@ class TestsFlextLdifProtocols(
             """Server exposing Apache/Novell attribute writer."""
 
             def _write_attribute(
-                self,
-                attr_data: p.Ldif.SchemaAttribute,
+                self, attr_data: p.Ldif.SchemaAttribute
             ) -> ldif_p.Result[str]:
                 """Serialize an attribute definition."""
                 ...
@@ -45,8 +40,7 @@ class TestsFlextLdifProtocols(
             """Server exposing Apache/Novell objectclass writer."""
 
             def _write_objectclass(
-                self,
-                oc_data: p.Ldif.SchemaObjectClass,
+                self, oc_data: p.Ldif.SchemaObjectClass
             ) -> ldif_p.Result[str]:
                 """Serialize an objectClass definition."""
                 ...
@@ -55,10 +49,7 @@ class TestsFlextLdifProtocols(
         class WriteAclServer(Protocol):
             """Server exposing Apache ACL writer helper."""
 
-            def _write_acl(
-                self,
-                acl_data: p.Ldif.Acl,
-            ) -> ldif_p.Result[str]:
+            def _write_acl(self, acl_data: p.Ldif.Acl) -> ldif_p.Result[str]:
                 """Serialize an ACL definition."""
                 ...
 
@@ -66,10 +57,7 @@ class TestsFlextLdifProtocols(
         class ParseAclServer(Protocol):
             """Server exposing ACL parse helper with test models."""
 
-            def parse_server(
-                self,
-                value: str,
-            ) -> ldif_p.Result[p.Ldif.Acl]:
+            def parse_server(self, value: str) -> ldif_p.Result[p.Ldif.Acl]:
                 """Parse ACL content into the test model."""
                 ...
 
@@ -78,10 +66,7 @@ class TestsFlextLdifProtocols(
             """Entry server exposing the public normalization operation."""
 
             # mro-0ftd.3.6.1: retain the typed Result payload across test fixtures.
-            def process_entry(
-                self,
-                entry: p.Ldif.Entry,
-            ) -> ldif_p.Result[p.Ldif.Entry]:
+            def process_entry(self, entry: p.Ldif.Entry) -> ldif_p.Result[p.Ldif.Entry]:
                 """Normalize one entry through the server-specific behavior."""
                 ...
 
@@ -89,10 +74,7 @@ class TestsFlextLdifProtocols(
         class WriteAclContentServer(Protocol):
             """Server exposing ACL write helper with test models."""
 
-            def write(
-                self,
-                acl_data: p.Ldif.Acl,
-            ) -> ldif_p.Result[str]:
+            def write(self, acl_data: p.Ldif.Acl) -> ldif_p.Result[str]:
                 """Write ACL content from the test model."""
                 ...
 

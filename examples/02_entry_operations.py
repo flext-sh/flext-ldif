@@ -34,7 +34,7 @@ class DRYEntryOperations:
                 and "IT" in entry.attributes.get("departmentNumber", [])
                 and entry.attributes.get("mail")
                 and "@example.com" in entry.attributes.get("mail", [""])[0]
-            ],
+            ]
         )
 
     @staticmethod
@@ -42,7 +42,7 @@ class DRYEntryOperations:
         """DRY batch processing: validate entries pipeline."""
         api = ldif()
         return DRYEntryOperations.advanced_filtering().flat_map(
-            lambda entries: api.validate_entries(entries).map(lambda _: entries),
+            lambda entries: api.validate_entries(entries).map(lambda _: entries)
         )
 
     @staticmethod

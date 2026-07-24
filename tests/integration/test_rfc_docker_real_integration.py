@@ -44,10 +44,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
         ],
     )
     def test_parsing_real_entry_fixtures_yields_consistent_statistics(
-        self,
-        parser: FlextLdifParser,
-        subdir: str,
-        filename: str,
+        self, parser: FlextLdifParser, subdir: str, filename: str
     ) -> None:
         """Parsing real entries succeeds and statistics agree with entry list."""
         entries_file = c.Tests.FIXTURES_DIR / subdir / filename
@@ -71,10 +68,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
         ],
     )
     def test_parsing_real_schema_fixtures_succeeds(
-        self,
-        parser: FlextLdifParser,
-        subdir: str,
-        filename: str,
+        self, parser: FlextLdifParser, subdir: str, filename: str
     ) -> None:
         """Parsing real schema definitions returns a successful result."""
         schema_file = c.Tests.FIXTURES_DIR / subdir / filename
@@ -89,10 +83,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
     # --- write: contract of the write response -------------------------------
 
     def test_write_response_reports_output_path_and_matching_content(
-        self,
-        parser: FlextLdifParser,
-        server: FlextLdifServer,
-        tmp_path: Path,
+        self, parser: FlextLdifParser, server: FlextLdifServer, tmp_path: Path
     ) -> None:
         """WriteResponse output_path and content mirror the file on disk."""
         source_file = c.Tests.FIXTURES_DIR / c.Tests.OID / "oid_entries_fixtures.ldif"
@@ -103,9 +94,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
         output_file = tmp_path / "written.ldif"
         writer = FlextLdifWriter(server=server)
         write_result = writer.write_ldif_file(
-            response,
-            output_file,
-            server_type=c.Tests.RFC,
+            response, output_file, server_type=c.Tests.RFC
         )
 
         tm.ok(write_result)
@@ -119,10 +108,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
         )
 
     def test_write_oud_acl_entries_produces_nonempty_file(
-        self,
-        parser: FlextLdifParser,
-        server: FlextLdifServer,
-        tmp_path: Path,
+        self, parser: FlextLdifParser, server: FlextLdifServer, tmp_path: Path
     ) -> None:
         """OUD ACL entries write to a non-empty file via the public API."""
         acl_file = c.Tests.FIXTURES_DIR / c.Tests.OUD / "oud_acl_fixtures.ldif"
@@ -135,9 +121,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
         output_file = tmp_path / "acl_output.ldif"
         writer = FlextLdifWriter(server=server)
         result = writer.write_ldif_file(
-            parse_result.value,
-            output_file,
-            server_type=c.Tests.RFC,
+            parse_result.value, output_file, server_type=c.Tests.RFC
         )
 
         tm.ok(result)
@@ -147,10 +131,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
     # --- round-trip invariants ----------------------------------------------
 
     def test_write_then_reparse_preserves_entry_set(
-        self,
-        parser: FlextLdifParser,
-        server: FlextLdifServer,
-        tmp_path: Path,
+        self, parser: FlextLdifParser, server: FlextLdifServer, tmp_path: Path
     ) -> None:
         """Parse -> write -> reparse preserves entry count and DN identities."""
         source_file = c.Tests.FIXTURES_DIR / c.Tests.OID / "oid_entries_fixtures.ldif"
@@ -164,9 +145,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
         output_file = tmp_path / "roundtrip.ldif"
         writer = FlextLdifWriter(server=server)
         write_result = writer.write_ldif_file(
-            original,
-            output_file,
-            server_type=c.Tests.RFC,
+            original, output_file, server_type=c.Tests.RFC
         )
         tm.ok(write_result)
 
@@ -181,8 +160,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
     # --- error paths ---------------------------------------------------------
 
     def test_parsing_nonexistent_file_fails_and_unwrap_raises(
-        self,
-        parser: FlextLdifParser,
+        self, parser: FlextLdifParser
     ) -> None:
         """A missing file yields a failure result whose unwrap raises."""
         result = parser.parse_ldif_file(Path("/nonexistent/file.ldif"))
@@ -193,9 +171,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
             result.unwrap()
 
     def test_writing_to_readonly_directory_fails_with_error(
-        self,
-        server: FlextLdifServer,
-        tmp_path: Path,
+        self, server: FlextLdifServer, tmp_path: Path
     ) -> None:
         """Writing into a read-only directory surfaces an explicit failure."""
         readonly_dir = tmp_path / "readonly"
@@ -204,16 +180,13 @@ class TestsFlextLdifRfcDockerRealIntegration:
         entry = m.Ldif.Entry(
             dn=m.Ldif.DN(value="cn=test,dc=example,dc=com"),
             attributes=m.Ldif.Attributes(
-                attributes={"cn": ["test"]},
-                attribute_metadata={},
+                attributes={"cn": ["test"]}, attribute_metadata={}
             ),
         )
         writer = FlextLdifWriter(server=server)
         try:
             result = writer.write_ldif_file(
-                [entry],
-                readonly_dir / "test.ldif",
-                server_type=c.Tests.RFC,
+                [entry], readonly_dir / "test.ldif", server_type=c.Tests.RFC
             )
             if not result.success:
                 assert result.error is not None
@@ -225,9 +198,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
             readonly_dir.chmod(0o755)
 
     def test_parsing_empty_file_succeeds_with_zero_entries(
-        self,
-        parser: FlextLdifParser,
-        tmp_path: Path,
+        self, parser: FlextLdifParser, tmp_path: Path
     ) -> None:
         """An empty LDIF file parses to a successful, empty response."""
         empty_file = tmp_path / "empty.ldif"

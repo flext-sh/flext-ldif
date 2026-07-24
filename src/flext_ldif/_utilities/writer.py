@@ -10,8 +10,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def add_attribute_flags(
-        attr_data: p.Ldif.SchemaAttribute,
-        parts: t.MutableSequenceOf[str],
+        attr_data: p.Ldif.SchemaAttribute, parts: t.MutableSequenceOf[str]
     ) -> None:
         """Add flags to attribute parts list."""
         if attr_data.single_value:
@@ -28,8 +27,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def add_attribute_matching_rules(
-        attr_data: p.Ldif.SchemaAttribute,
-        parts: t.MutableSequenceOf[str],
+        attr_data: p.Ldif.SchemaAttribute, parts: t.MutableSequenceOf[str]
     ) -> None:
         """Add matching rules to attribute parts list."""
         if attr_data.equality:
@@ -41,8 +39,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def add_attribute_syntax(
-        attr_data: p.Ldif.SchemaAttribute,
-        parts: t.MutableSequenceOf[str],
+        attr_data: p.Ldif.SchemaAttribute, parts: t.MutableSequenceOf[str]
     ) -> None:
         """Add syntax and length to attribute parts list."""
         if attr_data.syntax:
@@ -61,8 +58,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def fold_line(
-        line: str,
-        width: int = c.Ldif.LINE_FOLD_WIDTH,
+        line: str, width: int = c.Ldif.LINE_FOLD_WIDTH
     ) -> t.MutableSequenceOf[str]:
         """Fold long LDIF line according to RFC 2849 §3."""
         if not line:
@@ -87,15 +83,13 @@ class FlextLdifUtilitiesWriter:
             else:
                 chunk_end = pos + 1
                 chunk = line_bytes[pos:chunk_end].decode(
-                    c.Ldif.DEFAULT_ENCODING,
-                    errors="replace",
+                    c.Ldif.DEFAULT_ENCODING, errors="replace"
                 )
 
             # Prefer folding at whitespace to avoid splitting tokens across lines.
             if chunk_end < len(line_bytes):
                 split_index = max(
-                    chunk.rfind(c.Ldif.LINE_CONTINUATION_SPACE),
-                    chunk.rfind("\t"),
+                    chunk.rfind(c.Ldif.LINE_CONTINUATION_SPACE), chunk.rfind("\t")
                 )
                 prefix_end = 0
                 if not folded:
@@ -125,7 +119,7 @@ class FlextLdifUtilitiesWriter:
                             and len(left_token) <= keyword_token_max_length
                         ):
                             earlier_space = left_text.rfind(
-                                c.Ldif.LINE_CONTINUATION_SPACE,
+                                c.Ldif.LINE_CONTINUATION_SPACE
                             )
                             earlier_tab = left_text.rfind("\t")
                             earlier_split = max(earlier_space, earlier_tab)

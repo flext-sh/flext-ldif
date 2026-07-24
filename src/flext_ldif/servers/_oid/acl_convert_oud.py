@@ -63,9 +63,7 @@ class FlextLdifServersOidAclToOud:
 
     @classmethod
     def _map_tokens(
-        cls,
-        bases: set[str],
-        perm_map: t.MappingKV[str, str | None],
+        cls, bases: set[str], perm_map: t.MappingKV[str, str | None]
     ) -> set[str]:
         granted: set[str] = set()
         for base in bases:
@@ -78,10 +76,7 @@ class FlextLdifServersOidAclToOud:
 
     @classmethod
     def convert_permissions(
-        cls,
-        permissions: t.StrSequence,
-        *,
-        is_entry: bool,
+        cls, permissions: t.StrSequence, *, is_entry: bool
     ) -> p.Result[t.StrSequence]:
         """Convert OID permission tokens to the ordered OUD allow set.
 
@@ -148,9 +143,7 @@ class FlextLdifServersOidAclToOud:
 
     @staticmethod
     def calculate_targetscope(
-        rule: p.Ldif.OidAclRule,
-        *,
-        has_anyone_subject: bool,
+        rule: p.Ldif.OidAclRule, *, has_anyone_subject: bool
     ) -> str | None:
         """Compute the OUD ``targetscope`` (``base`` or default subtree).
 
@@ -168,8 +161,7 @@ class FlextLdifServersOidAclToOud:
 
     @classmethod
     def convert_subject_to_oud(
-        cls,
-        subject: p.Ldif.OidAclSubject,
+        cls, subject: p.Ldif.OidAclSubject
     ) -> p.Result[p.Ldif.AciAllow]:
         """Map one OID by-clause subject to an OUD bind-rule.
 
@@ -202,10 +194,10 @@ class FlextLdifServersOidAclToOud:
             case _:
                 return r[p.Ldif.AciAllow].fail(
                     f"Subject '{kind}' has no OUD equivalent "
-                    f"(manual review required): {value!r}",
+                    f"(manual review required): {value!r}"
                 )
         return r[p.Ldif.AciAllow].ok(
-            m.Ldif.AciAllow(subject_type=bind_type, subject_value=bind_value),
+            m.Ldif.AciAllow(subject_type=bind_type, subject_value=bind_value)
         )
 
 

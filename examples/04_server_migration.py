@@ -45,8 +45,7 @@ class ExampleServerMigration:
 
     @staticmethod
     def _detect_server_type(
-        api: p.Ldif.ServerDetectionService,
-        source_dir: Path,
+        api: p.Ldif.ServerDetectionService, source_dir: Path
     ) -> tuple[str, t.JsonMapping]:
         """Detect server type from source data."""
         sample_file = source_dir / "data_00.ldif"
@@ -76,9 +75,7 @@ class ExampleServerMigration:
             dir_path.mkdir(exist_ok=True, parents=True)
 
         _ = u.process(
-            [source_dir, intermediate_dir, final_dir],
-            setup_dir,
-            on_error="skip",
+            [source_dir, intermediate_dir, final_dir], setup_dir, on_error="skip"
         )
         return (source_dir, intermediate_dir, final_dir)
 
@@ -90,7 +87,7 @@ class ExampleServerMigration:
         detect_result = api.detect_server_type(ldif_content=mixed_ldif)
         if detect_result.failure:
             return r[t.JsonMapping].fail(
-                f"Server detection failed: {detect_result.error}",
+                f"Server detection failed: {detect_result.error}"
             )
         detection = detect_result.unwrap()
         detected_server = detection.detected_server_type or "rfc"
@@ -110,7 +107,7 @@ class ExampleServerMigration:
         )
         if migration_result.failure:
             return r[t.JsonMapping].fail(
-                f"Migration to RFC failed: {migration_result.error}",
+                f"Migration to RFC failed: {migration_result.error}"
             )
         return r[t.JsonMapping].ok(
             t.json_mapping_adapter().validate_python({
@@ -119,7 +116,7 @@ class ExampleServerMigration:
                 "patterns_found": detection.patterns_found,
                 "total_entries": len(entries),
                 "migration_success": True,
-            }),
+            })
         )
 
     @staticmethod
@@ -172,7 +169,7 @@ class ExampleServerMigration:
                 if total_servers > 0
                 else 0,
                 "server_results": comparison_results,
-            }),
+            })
         )
 
     @staticmethod
@@ -185,8 +182,7 @@ class ExampleServerMigration:
         )
         ExampleServerMigration._create_test_data(source_dir)
         source_server, detection_data = ExampleServerMigration._detect_server_type(
-            api,
-            source_dir,
+            api, source_dir
         )
         source_server_typed = source_server
         intermediate_migration = api.migrate(
@@ -197,7 +193,7 @@ class ExampleServerMigration:
         )
         if intermediate_migration.failure:
             return r[t.JsonMapping].fail(
-                f"Intermediate migration failed: {intermediate_migration.error}",
+                f"Intermediate migration failed: {intermediate_migration.error}"
             )
         final_migration = api.migrate(
             input_dir=intermediate_dir,
@@ -207,7 +203,7 @@ class ExampleServerMigration:
         )
         if final_migration.failure:
             return r[t.JsonMapping].fail(
-                f"Final migration failed: {final_migration.error}",
+                f"Final migration failed: {final_migration.error}"
             )
         final_result = final_migration.unwrap()
         final_stats = final_result.stats
@@ -222,7 +218,7 @@ class ExampleServerMigration:
                 "migration_pipeline": "oid → oud → rfc",
                 "parallel_processing": True,
                 "validation_performed": True,
-            }),
+            })
         )
 
     @staticmethod
@@ -245,7 +241,7 @@ class ExampleServerMigration:
         )
         if migration_result.failure:
             return r[p.Ldif.MigrationPipelineResult].fail(
-                f"Migration failed: {migration_result.error}",
+                f"Migration failed: {migration_result.error}"
             )
         pipeline_result = migration_result.unwrap()
         _ = len(pipeline_result.entries)

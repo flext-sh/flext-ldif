@@ -101,11 +101,7 @@ class TestsFlextLdifErrorRecovery:
         assert entry.attributes is not None
         tm.that(
             entry.attributes.attributes["mail"],
-            eq=[
-                "a@example.com",
-                "b@example.com",
-                "c@example.com",
-            ],
+            eq=["a@example.com", "b@example.com", "c@example.com"],
         )
 
     def test_empty_attribute_value_is_preserved(self, api: p.Ldif.Client) -> None:

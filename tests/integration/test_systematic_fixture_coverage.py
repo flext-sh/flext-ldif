@@ -36,15 +36,11 @@ class TestsFlextLdifSystematicFixtureCoverage:
     # input preparation, NOT inspection of the unit under test).
     # ------------------------------------------------------------------
     @staticmethod
-    def _bounded_schema_sample(
-        fixture_data: str,
-        max_definitions: int = 50,
-    ) -> str:
+    def _bounded_schema_sample(fixture_data: str, max_definitions: int = 50) -> str:
         """Return a schema LDIF sample capped to ``max_definitions`` defs."""
         lines = fixture_data.splitlines()
         first_dn = next(
-            (line for line in lines if line.startswith("dn:")),
-            "dn: cn=schema",
+            (line for line in lines if line.startswith("dn:")), "dn: cn=schema"
         )
         selected_lines: list[str] = [first_dn]
         current_chunk: list[str] = []
@@ -77,11 +73,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
     # ------------------------------------------------------------------
     # Shared behavioral assertion: the roundtrip contract.
     # ------------------------------------------------------------------
-    def _assert_roundtrip_preserves_dns(
-        self,
-        api: p.Ldif.Client,
-        content: str,
-    ) -> int:
+    def _assert_roundtrip_preserves_dns(self, api: p.Ldif.Client, content: str) -> int:
         """Parse -> write -> parse ``content`` and assert DN-set preservation.
 
         Returns the number of entries parsed from the original content so
@@ -116,10 +108,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
         ids=["OID Schema", "OUD Schema"],
     )
     def test_schema_fixture_survives_parse_write_roundtrip(
-        self,
-        api: p.Ldif.Client,
-        server_fixture: str,
-        request: pytest.FixtureRequest,
+        self, api: p.Ldif.Client, server_fixture: str, request: pytest.FixtureRequest
     ) -> None:
         """Schema fixtures parse to entries preserved across the roundtrip."""
         fixture_data: str = request.getfixturevalue(server_fixture)
@@ -138,10 +127,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
         ids=["OID ACL", "OUD ACL"],
     )
     def test_acl_fixture_parses_and_writes(
-        self,
-        api: p.Ldif.Client,
-        server_fixture: str,
-        request: pytest.FixtureRequest,
+        self, api: p.Ldif.Client, server_fixture: str, request: pytest.FixtureRequest
     ) -> None:
         """ACL fixtures parse successfully and re-serialize non-empty output."""
         fixture_data: str = request.getfixturevalue(server_fixture)
@@ -166,10 +152,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
         ids=["OID Entries", "OUD Entries"],
     )
     def test_entries_fixture_yields_valid_entries_and_roundtrips(
-        self,
-        api: p.Ldif.Client,
-        server_fixture: str,
-        request: pytest.FixtureRequest,
+        self, api: p.Ldif.Client, server_fixture: str, request: pytest.FixtureRequest
     ) -> None:
         """Each parsed entry exposes a DN and attributes; roundtrip is stable."""
         fixture_data: str = request.getfixturevalue(server_fixture)
@@ -195,10 +178,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
         ids=["OID Integration", "OUD Integration"],
     )
     def test_integration_fixture_roundtrips_without_data_loss(
-        self,
-        api: p.Ldif.Client,
-        server_fixture: str,
-        request: pytest.FixtureRequest,
+        self, api: p.Ldif.Client, server_fixture: str, request: pytest.FixtureRequest
     ) -> None:
         """Large exports keep unique DNs and roughly their size on rewrite."""
         fixture_data: str = request.getfixturevalue(server_fixture)
@@ -228,8 +208,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
     # Baseline RFC operations (always available).
     # ------------------------------------------------------------------
     def test_basic_ldif_operations_are_available_for_any_server(
-        self,
-        api: p.Ldif.Client,
+        self, api: p.Ldif.Client
     ) -> None:
         """A minimal RFC entry parses, writes, and roundtrips with DN intact."""
         content = (
@@ -262,8 +241,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
         tm.that(roundtrip_entries[0].dn_str, eq=entry.dn_str)
 
     def test_parse_ldif_reports_failure_as_result_for_invalid_input(
-        self,
-        api: p.Ldif.Client,
+        self, api: p.Ldif.Client
     ) -> None:
         """Malformed LDIF surfaces through the ``r[T]`` channel, not a crash."""
         # A continuation line with no preceding attribute is not valid LDIF.

@@ -22,16 +22,14 @@ class TestsFlextLdifTransformersService:
     """Cover the observable transformation contract of the ldif transformer."""
 
     def test_convert_model_returns_entry_preserving_dn(
-        self,
-        api: p.Ldif.Client,
+        self, api: p.Ldif.Client
     ) -> None:
         entry = u.Tests.create_real_entry(
-            dn=c.Tests.ANALYSIS_DN_VALID,
-            attributes={"cn": ["valid"]},
+            dn=c.Tests.ANALYSIS_DN_VALID, attributes={"cn": ["valid"]}
         )
 
         converted = u.Tests.assert_success(
-            api.convert_model(c.Tests.RFC, c.Tests.RFC, entry),
+            api.convert_model(c.Tests.RFC, c.Tests.RFC, entry)
         )
 
         tm.that(converted, is_=m.Ldif.Entry)
@@ -47,8 +45,7 @@ class TestsFlextLdifTransformersService:
             attributes={"objectClass": ["top"], "cn": ["keep"]},
         )
         transformer = FlextLdifTransformer(
-            source_server=c.Ldif.ServerTypes.RFC,
-            target_server=c.Ldif.ServerTypes.RFC,
+            source_server=c.Ldif.ServerTypes.RFC, target_server=c.Ldif.ServerTypes.RFC
         )
 
         converted = self._success_entry(transformer.apply(entry))
@@ -58,16 +55,14 @@ class TestsFlextLdifTransformersService:
             raise AssertionError(msg)
         tm.that(converted.dn.value, eq="cn=keep,dc=example,dc=com")
         tm.that(
-            converted.attributes.attributes,
-            eq={"objectClass": ["top"], "cn": ["keep"]},
+            converted.attributes.attributes, eq={"objectClass": ["top"], "cn": ["keep"]}
         )
 
     def test_default_server_types_apply_rfc_identity(self) -> None:
         # Unset source/target default to RFC per the public contract; applying
         # to a plain entry must still yield a success carrying the same entry.
         entry = u.Tests.create_real_entry(
-            dn="cn=default,dc=example,dc=com",
-            attributes={"cn": ["default"]},
+            dn="cn=default,dc=example,dc=com", attributes={"cn": ["default"]}
         )
 
         converted = self._success_entry(FlextLdifTransformer().apply(entry))
@@ -79,10 +74,7 @@ class TestsFlextLdifTransformersService:
 
     @pytest.mark.parametrize(
         ("source_server", "target_server"),
-        [
-            (c.Ldif.ServerTypes.OID, c.Ldif.ServerTypes.OUD),
-            ("oid", "oud"),
-        ],
+        [(c.Ldif.ServerTypes.OID, c.Ldif.ServerTypes.OUD), ("oid", "oud")],
     )
     def test_oid_to_oud_converts_orclaci_to_aci_for_enum_and_string_inputs(
         self,
@@ -96,13 +88,12 @@ class TestsFlextLdifTransformersService:
             attributes={
                 "objectClass": ["top"],
                 "orclaci": [
-                    'access to entry by group="cn=admins,dc=ctbc" (browse,add)',
+                    'access to entry by group="cn=admins,dc=ctbc" (browse,add)'
                 ],
             },
         )
         transformer = FlextLdifTransformer(
-            source_server=source_server,
-            target_server=target_server,
+            source_server=source_server, target_server=target_server
         )
 
         converted = self._success_entry(transformer.apply(entry))
@@ -118,7 +109,7 @@ class TestsFlextLdifTransformersService:
                 (
                     '(targetattr="*")(version 3.0; acl "users Entry by admins"; '
                     'allow (read, search, add) groupdn="ldap:///cn=admins,dc=ctbc";)'
-                ),
+                )
             ],
         )
 
@@ -131,7 +122,7 @@ class TestsFlextLdifTransformersService:
                     (
                         'access to entry by group="cn=x,dc=other" (browse) '
                         'by group="cn=a,dc=ctbc" (browse)'
-                    ),
+                    )
                 ],
             },
         )
@@ -152,18 +143,16 @@ class TestsFlextLdifTransformersService:
                 (
                     '(targetattr="*")(version 3.0; acl "users Entry by x"; '
                     'allow (read, search) groupdn="ldap:///cn=a,dc=ctbc";)'
-                ),
+                )
             ],
         )
 
     def test_unknown_server_type_raises_value_error(self) -> None:
         entry = u.Tests.create_real_entry(
-            dn="cn=bad,dc=example,dc=com",
-            attributes={"cn": ["bad"]},
+            dn="cn=bad,dc=example,dc=com", attributes={"cn": ["bad"]}
         )
         transformer = FlextLdifTransformer(
-            source_server="not-a-server",
-            target_server=c.Ldif.ServerTypes.RFC,
+            source_server="not-a-server", target_server=c.Ldif.ServerTypes.RFC
         )
 
         with pytest.raises(ValueError, match="not-a-server"):

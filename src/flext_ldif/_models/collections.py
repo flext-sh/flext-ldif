@@ -21,8 +21,7 @@ if TYPE_CHECKING:
 class FlextLdifModelsCollections:
     class DynamicCounts(m.DynamicModel):
         model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
-            extra="allow",
-            validate_assignment=True,
+            extra="allow", validate_assignment=True
         )
 
         def __hash__(self) -> int:
@@ -89,20 +88,13 @@ class FlextLdifModelsCollections:
             msg = f"{self.__class__.__name__} is unhashable"
             raise TypeError(msg)
 
-        def __getitem__(
-            self,
-            category: str,
-        ) -> Sequence[p.Ldif.Entry]:
+        def __getitem__(self, category: str) -> Sequence[p.Ldif.Entry]:
             key = category
             if key not in self.categories:
                 self.categories[key] = []
             return self.categories[key]
 
-        def __setitem__(
-            self,
-            category: str,
-            entries: Sequence[p.Ldif.Entry],
-        ) -> None:
+        def __setitem__(self, category: str, entries: Sequence[p.Ldif.Entry]) -> None:
             entry_models = []
             for entry in entries:
                 if not isinstance(entry, mde.Entry):
@@ -111,11 +103,7 @@ class FlextLdifModelsCollections:
                 entry_models.append(entry)
             self.categories[category] = entry_models
 
-        def add_entries(
-            self,
-            category: str,
-            entries: Sequence[p.Ldif.Entry],
-        ) -> None:
+        def add_entries(self, category: str, entries: Sequence[p.Ldif.Entry]) -> None:
             key = category
             existing = self.categories.get(key, [])
             for entry in entries:
@@ -128,27 +116,21 @@ class FlextLdifModelsCollections:
         def __contains__(self, category: str) -> bool:
             return category in self.categories
 
-        def items(
-            self,
-        ) -> Iterator[tuple[str, Sequence[p.Ldif.Entry]]]:
+        def items(self) -> Iterator[tuple[str, Sequence[p.Ldif.Entry]]]:
             yield from self.categories.items()
 
         def keys(self) -> Iterator[str]:
             return iter(self.categories.keys())
 
         def get(
-            self,
-            category: str,
-            default: Sequence[p.Ldif.Entry] | None = None,
+            self, category: str, default: Sequence[p.Ldif.Entry] | None = None
         ) -> Sequence[p.Ldif.Entry]:
             entries = self.categories.get(category)
             if entries is not None:
                 return entries
             return default if default is not None else []
 
-        def values(
-            self,
-        ) -> Iterator[Sequence[p.Ldif.Entry]]:
+        def values(self) -> Iterator[Sequence[p.Ldif.Entry]]:
             yield from self.categories.values()
 
 

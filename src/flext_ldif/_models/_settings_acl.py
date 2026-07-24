@@ -26,16 +26,14 @@ class FlextLdifModelsSettingsAcl:
 
         name: Annotated[str, u.Field(..., description="ACL name")]
         target_clause: Annotated[
-            str,
-            u.Field(..., description="Target clause (e.g., '(targetattr=\"cn\")')"),
+            str, u.Field(..., description="Target clause (e.g., '(targetattr=\"cn\")')")
         ]
         permissions_clause: Annotated[
             str,
             u.Field(..., description="Permissions clause (e.g., 'allow (read,write)')"),
         ]
         bind_rule: Annotated[
-            str,
-            u.Field(..., description="Bind rule (e.g., 'userdn=\"ldap:///self\"')"),
+            str, u.Field(..., description="Bind rule (e.g., 'userdn=\"ldap:///self\"')")
         ]
         aci_prefix: Annotated[str, u.Field(description="ACI attribute prefix")] = (
             "aci: "
@@ -51,30 +49,22 @@ class FlextLdifModelsSettingsAcl:
         ]
         aci_prefix: Annotated[str, u.Field(description="ACI line prefix")] = "aci:"
         version_acl_pattern: Annotated[
-            str,
-            u.Field(
-                description="Regex pattern to extract version and ACL name",
-            ),
+            str, u.Field(description="Regex pattern to extract version and ACL name")
         ] = r'\(version\s+(\d+\.\d+)\s*;\s*acl\s+"([^"]+)"'
         targetattr_pattern: Annotated[
-            str,
-            u.Field(description="Regex pattern to extract target attributes"),
+            str, u.Field(description="Regex pattern to extract target attributes")
         ] = r'(\(targetattr\s*=\s*"([^"]*)")'
         default_targetattr: Annotated[
-            str,
-            u.Field(description="Default targetattr when none found"),
+            str, u.Field(description="Default targetattr when none found")
         ] = "*"
         allow_deny_pattern: Annotated[
-            str,
-            u.Field(description="Regex pattern to extract allow/deny permissions"),
+            str, u.Field(description="Regex pattern to extract allow/deny permissions")
         ] = r"(allow|deny)\s*\(([^)]*)\)"
         ops_separator: Annotated[
-            str,
-            u.Field(description="Separator for operations list"),
+            str, u.Field(description="Separator for operations list")
         ] = ","
         action_filter: Annotated[
-            str | None,
-            u.Field(description="Only include permissions for this action"),
+            str | None, u.Field(description="Only include permissions for this action")
         ] = None
         bind_patterns: Annotated[
             t.MutableStrMapping,
@@ -93,32 +83,24 @@ class FlextLdifModelsSettingsAcl:
             u.Field(description="Additional extraction patterns for extensions"),
         ] = u.Field(default_factory=dict)
         default_name: Annotated[
-            str,
-            u.Field(description="Default ACL name when none found"),
+            str, u.Field(description="Default ACL name when none found")
         ] = "unnamed-acl"
 
     class AclMetadataConfig(m.Value):
         """Configuration for building ACL metadata extensions."""
 
         line_breaks: Annotated[
-            t.JsonValueList | None,
-            u.Field(description="Line break positions"),
+            t.JsonValueList | None, u.Field(description="Line break positions")
         ] = None
         dn_spaces: Annotated[
-            str | None,
-            u.Field(description="DN spacing information"),
+            str | None, u.Field(description="DN spacing information")
         ] = None
         targetscope: Annotated[
-            t.JsonValueList | None,
-            u.Field(description="Target scope values"),
+            t.JsonValueList | None, u.Field(description="Target scope values")
         ] = None
-        version: Annotated[
-            str | None,
-            u.Field(description="ACI version string"),
-        ] = None
+        version: Annotated[str | None, u.Field(description="ACI version string")] = None
         action_type: Annotated[
-            str | None,
-            u.Field(description="Action type (allow/deny)"),
+            str | None, u.Field(description="Action type (allow/deny)")
         ] = None
 
     class PermissionMappingConfig(m.Value):
@@ -130,31 +112,19 @@ class FlextLdifModelsSettingsAcl:
 
         """
 
-        original_acl: Annotated[
-            mdac.Acl,
-            u.Field(
-                description="Original ACL model",
-            ),
-        ]
+        original_acl: Annotated[mdac.Acl, u.Field(description="Original ACL model")]
         converted_acl: Annotated[
-            mdac.Acl,
-            u.Field(
-                description="Converted ACL model (modified in-place)",
-            ),
+            mdac.Acl, u.Field(description="Converted ACL model (modified in-place)")
         ]
         orig_perms_dict: Annotated[
-            t.MutableBoolMapping,
-            u.Field(..., description="Original permissions dict"),
+            t.MutableBoolMapping, u.Field(..., description="Original permissions dict")
         ]
         source_server_type: Annotated[
-            c.Ldif.ServerTypes | None,
-            u.Field(description="Source server type"),
+            c.Ldif.ServerTypes | None, u.Field(description="Source server type")
         ] = None
         target_server_type: Annotated[
-            c.Ldif.ServerTypes | None,
-            u.Field(description="Target server type"),
+            c.Ldif.ServerTypes | None, u.Field(description="Target server type")
         ] = None
         converted_has_permissions: Annotated[
-            bool,
-            u.Field(description="Whether converted ACL has permissions"),
+            bool, u.Field(description="Whether converted ACL has permissions")
         ] = False

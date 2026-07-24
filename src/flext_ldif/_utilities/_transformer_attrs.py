@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 
 class FlextLdifUtilitiesNormalizeAttrsTransformer(
-    FlextLdifUtilitiesTransformer[p.Ldif.Entry],
+    FlextLdifUtilitiesTransformer[p.Ldif.Entry]
 ):
     """Transformer for attribute normalization."""
 
@@ -55,15 +55,14 @@ class FlextLdifUtilitiesNormalizeAttrsTransformer(
         if needs_update:
             update_dict: MutableMapping[str, p.Ldif.Attributes] = {
                 "attributes": m.Ldif.Attributes.model_validate({
-                    "attributes": new_attrs,
-                }),
+                    "attributes": new_attrs
+                })
             }
             item = item.model_copy(update=update_dict)
         return r[p.Ldif.Entry].ok(item)
 
     def _process_value_list(
-        self,
-        values: t.MutableSequenceOf[str],
+        self, values: t.MutableSequenceOf[str]
     ) -> t.MutableSequenceOf[str]:
         """Process a single attribute's values."""
         processed: t.MutableSequenceOf[str] = []

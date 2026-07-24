@@ -52,13 +52,8 @@ class FlextLdifUtilitiesTransformers:
         ) -> FlextLdifUtilitiesNormalizeDnTransformer:
             """Create a DN normalization transformer."""
             return FlextLdifUtilitiesTransformers.NormalizeDnTransformer(
-                case=case,
-                spaces=spaces,
-                validate=validate,
+                case=case, spaces=spaces, validate=validate
             )
 
 
-__all__: list[str] = [
-    "FlextLdifUtilitiesTransformer",
-    "FlextLdifUtilitiesTransformers",
-]
+__all__: list[str] = ["FlextLdifUtilitiesTransformer", "FlextLdifUtilitiesTransformers"]

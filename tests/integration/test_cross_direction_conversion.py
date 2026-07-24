@@ -171,8 +171,7 @@ class TestsFlextLdifCrossDirectionConversion:
             tm.that(written, lacks=token)
 
     def test_oid_attribute_roundtrip_is_text_identical(
-        self,
-        server_registry: FlextLdifServer,
+        self, server_registry: FlextLdifServer
     ) -> None:
         """OID->parse->OID->write is a byte-stable identity for OID-native text."""
         oid_schema = server_registry.resolve_schema_server("oid")
@@ -229,8 +228,7 @@ class TestsFlextLdifCrossDirectionConversion:
         tm.that(str(getattr(parse_result.value, field)), eq=expected)
 
     def test_oid_case_variant_matching_rule_normalizes_through_pipeline(
-        self,
-        server_registry: FlextLdifServer,
+        self, server_registry: FlextLdifServer
     ) -> None:
         """OID case variant is canonicalized at parse and not re-emitted by OUD."""
         oid_schema = server_registry.resolve_schema_server("oid")
@@ -253,8 +251,7 @@ class TestsFlextLdifCrossDirectionConversion:
     # Entry-level conversion (public convert_model contract)
     # ------------------------------------------------------------------
     def test_oid_to_oud_entry_rewrites_embedded_schema_values(
-        self,
-        conversion: FlextLdifConversion,
+        self, conversion: FlextLdifConversion
     ) -> None:
         """convert_model('oid','oud', entry) normalizes embedded schema strings."""
         entry = m.Ldif.Entry.model_validate({
@@ -266,13 +263,13 @@ class TestsFlextLdifCrossDirectionConversion:
                             "( 2.16.840.1.113894.1.1.327 NAME 'orclDASUIType' "
                             "EQUALITY caseIgnoreSubStringsMatch "
                             "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )"
-                        ),
+                        )
                     ],
                     "objectClasses": [
                         (
                             "( 2.16.840.1.113894.1.2.64 NAME 'orclReferenceObject' "
                             "SUP 'top' STRUCTURAL MAY ( orclOwnerGUID $ seeAlso ) )"
-                        ),
+                        )
                     ],
                 },
                 "attribute_metadata": {},
@@ -295,8 +292,7 @@ class TestsFlextLdifCrossDirectionConversion:
         tm.that(objectclass, lacks="SUP 'top'")
 
     def test_oud_to_oid_entry_preserves_generic_matching_rule(
-        self,
-        conversion: FlextLdifConversion,
+        self, conversion: FlextLdifConversion
     ) -> None:
         """convert_model('oud','oid', entry) keeps generic caseIgnoreMatch intact."""
         entry = m.Ldif.Entry.model_validate({
@@ -308,8 +304,8 @@ class TestsFlextLdifCrossDirectionConversion:
                             "( 1.3.6.1.4.1.26027.1.1.1 NAME 'ds-sync-hist' "
                             "EQUALITY caseIgnoreMatch "
                             "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
-                        ),
-                    ],
+                        )
+                    ]
                 },
                 "attribute_metadata": {},
                 "metadata": None,

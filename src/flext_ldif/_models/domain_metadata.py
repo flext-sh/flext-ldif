@@ -36,9 +36,7 @@ class FlextLdifModelsDomainMetadata:
 
         rfc_violations: Annotated[
             t.MutableSequenceOf[str],
-            u.Field(
-                description="RFC violations detected during validation",
-            ),
+            u.Field(description="RFC violations detected during validation"),
         ]
         errors: Annotated[
             t.MutableSequenceOf[str],
@@ -49,14 +47,11 @@ class FlextLdifModelsDomainMetadata:
             u.Field(description="Non-fatal validation warnings"),
         ]
         context: Annotated[
-            t.MutableStrMapping,
-            u.Field(description="Validation context information"),
+            t.MutableStrMapping, u.Field(description="Validation context information")
         ]
         server_specific_violations: Annotated[
             t.MutableSequenceOf[str],
-            u.Field(
-                description="Server-specific validation violations",
-            ),
+            u.Field(description="Server-specific validation violations"),
         ]
         validation_server_type: Annotated[
             c.Ldif.ServerTypes | None,
@@ -71,33 +66,23 @@ class FlextLdifModelsDomainMetadata:
 
         format: Annotated[
             str | None,
-            u.Field(
-                description="LDIF format variant (rfc2849, extended, etc.)",
-            ),
+            u.Field(description="LDIF format variant (rfc2849, extended, etc.)"),
         ] = None
         base_dn: Annotated[
-            str | None,
-            u.Field(description="Base DN for relative DN conversions"),
+            str | None, u.Field(description="Base DN for relative DN conversions")
         ] = None
         hidden_attrs: Annotated[
             t.MutableSequenceOf[str],
-            u.Field(
-                description="Attributes to exclude from output",
-            ),
+            u.Field(description="Attributes to exclude from output"),
         ] = u.Field(default_factory=list)
         sort_entries: Annotated[
-            bool,
-            u.Field(description="Whether to sort entries in output"),
+            bool, u.Field(description="Whether to sort entries in output")
         ] = False
         include_comments: Annotated[
-            bool,
-            u.Field(description="Whether to include comment lines"),
+            bool, u.Field(description="Whether to include comment lines")
         ] = False
         base64_encode_binary: Annotated[
-            bool,
-            u.Field(
-                description="Whether to base64 encode binary attributes",
-            ),
+            bool, u.Field(description="Whether to base64 encode binary attributes")
         ] = False
 
     class FormatDetails(m.FrozenModel):
@@ -107,24 +92,20 @@ class FlextLdifModelsDomainMetadata:
         """
 
         dn_line: Annotated[
-            str | None,
-            u.Field(description="Original DN line formatting"),
+            str | None, u.Field(description="Original DN line formatting")
         ] = None
         syntax: Annotated[
-            str | None,
-            u.Field(description="Original attribute syntax information"),
+            str | None, u.Field(description="Original attribute syntax information")
         ] = None
         encoding: Annotated[
             c.Ldif.Encoding | None,
             u.Field(description="Original encoding (utf-8, etc.)"),
         ] = None
         spacing: Annotated[
-            str | None,
-            u.Field(description="Original spacing/indentation"),
+            str | None, u.Field(description="Original spacing/indentation")
         ] = None
         trailing_info: Annotated[
-            str | None,
-            u.Field(description="Trailing comments or metadata"),
+            str | None, u.Field(description="Trailing comments or metadata")
         ] = None
 
     class SchemaFormatDetails(m.FrozenModel):
@@ -136,38 +117,27 @@ class FlextLdifModelsDomainMetadata:
         original_string_complete: Annotated[
             str | None,
             u.Field(
-                description="Complete original schema definition string for perfect round-trip",
+                description="Complete original schema definition string for perfect round-trip"
             ),
         ] = None
         quotes: Annotated[
-            str | None,
-            u.Field(description="Quoting style used in schema definition"),
+            str | None, u.Field(description="Quoting style used in schema definition")
         ] = None
         spacing: Annotated[
-            str | None,
-            u.Field(description="Spacing around schema fields"),
+            str | None, u.Field(description="Spacing around schema fields")
         ] = None
         field_order: Annotated[
             t.MutableSequenceOf[str],
-            u.Field(
-                description="Original order of schema fields",
-            ),
+            u.Field(description="Original order of schema fields"),
         ] = u.Field(default_factory=list)
         x_origin: Annotated[
-            str | None,
-            u.Field(description="X-ORIGIN value from schema"),
+            str | None, u.Field(description="X-ORIGIN value from schema")
         ] = None
         x_ordered: Annotated[
-            t.MutableSequenceOf[str],
-            u.Field(
-                description="X-ORDERED field values",
-            ),
+            t.MutableSequenceOf[str], u.Field(description="X-ORDERED field values")
         ] = u.Field(default_factory=list)
         extensions: Annotated[
-            t.MutableJsonMapping,
-            u.Field(
-                description="Non-standard schema extensions",
-            ),
+            t.MutableJsonMapping, u.Field(description="Non-standard schema extensions")
         ] = u.Field(default_factory=dict)
 
     class ServerMetadata(m.DynamicModel):
@@ -208,19 +178,19 @@ class FlextLdifModelsDomainMetadata:
         extensions: Annotated[
             t.MutableJsonMapping,
             u.Field(
-                description="Extensible metadata storage for server-specific data (server-injected validation rules, unconverted attributes, etc.)",
+                description="Extensible metadata storage for server-specific data (server-injected validation rules, unconverted attributes, etc.)"
             ),
         ] = u.Field(default_factory=dict)
         rfc_violations: Annotated[
             t.MutableSequenceOf[str],
             u.Field(
-                description="RFC violations detected (e.g., 'RFC 2849 §2: DN required')",
+                description="RFC violations detected (e.g., 'RFC 2849 §2: DN required')"
             ),
         ] = u.Field(default_factory=list)
         rfc_warnings: Annotated[
             t.MutableSequenceOf[str],
             u.Field(
-                description="Non-fatal RFC warnings (e.g., unusual but valid formatting)",
+                description="Non-fatal RFC warnings (e.g., unusual but valid formatting)"
             ),
         ] = u.Field(default_factory=list)
         # mro-wgwh.5 (agent: kimi) — U17: open-ended metadata containers are plain
@@ -231,132 +201,130 @@ class FlextLdifModelsDomainMetadata:
         conversion_notes: Annotated[
             t.MutableJsonMapping,
             u.Field(
-                description="Map of conversion operation name → human-readable description",
+                description="Map of conversion operation name → human-readable description"
             ),
         ] = u.Field(default_factory=dict)
         attribute_transformations: Annotated[
             MutableMapping[
-                str,
-                FlextLdifModelsDomainAttributes.AttributeTransformation,
+                str, FlextLdifModelsDomainAttributes.AttributeTransformation
             ],
             u.Field(
-                description="Per-attribute transformation audit trail captured during conversion.",
+                description="Per-attribute transformation audit trail captured during conversion."
             ),
         ] = u.Field(default_factory=dict)
         server_specific_data: Annotated[
             t.MutableJsonMapping,
             u.Field(
-                description="Preservation of server-proprietary data for round-trip conversions",
+                description="Preservation of server-proprietary data for round-trip conversions"
             ),
         ] = u.Field(default_factory=dict)
         original_server_type: Annotated[
             c.Ldif.ServerTypes | None,
             u.Field(
-                description="Source LDAP server type (e.g., 'oid', 'oud', 'ad', 'openldap')",
+                description="Source LDAP server type (e.g., 'oid', 'oud', 'ad', 'openldap')"
             ),
         ] = None
         target_server_type: Annotated[
             c.Ldif.ServerTypes | None,
             u.Field(
-                description="Target LDAP server type (e.g., 'oid', 'oud', 'ad', 'openldap')",
+                description="Target LDAP server type (e.g., 'oid', 'oud', 'ad', 'openldap')"
             ),
         ] = None
         acls: Annotated[
             t.MutableSequenceOf[str],
             u.Field(
-                description="Access Control Lists extracted from entry attributes during parsing",
+                description="Access Control Lists extracted from entry attributes during parsing"
             ),
         ] = u.Field(default_factory=list)
         objectclasses: Annotated[
             t.MutableSequenceOf[str],
             u.Field(
-                description="ObjectClass definitions for schema validation (not RFC LDIF data)",
+                description="ObjectClass definitions for schema validation (not RFC LDIF data)"
             ),
         ] = u.Field(default_factory=list)
         validation_results: Annotated[
             FlextLdifModelsDomainMetadata.ValidationMetadata | None,
             u.Field(
-                description="Validation results with RFC violations, errors, warnings, and context",
+                description="Validation results with RFC violations, errors, warnings, and context"
             ),
         ] = None
         processing_stats: Annotated[
             m.BaseModel | None,
             u.Field(
-                description="Complete statistics tracking for entry transformations (accepts EntryStatistics)",
+                description="Complete statistics tracking for entry transformations (accepts EntryStatistics)"
             ),
         ] = None
         write_options: Annotated[
             FlextLdifModelsDomainMetadata.WriteOptions | None,
             u.Field(
-                description="Writer configuration including format, base DN, hidden attributes, sorting, and comments",
+                description="Writer configuration including format, base DN, hidden attributes, sorting, and comments"
             ),
         ] = None
         removed_attributes: Annotated[
             t.MutableJsonMapping,
             u.Field(
-                description="Attributes removed during conversion (was entry_metadata.removed_attributes_with_values)",
+                description="Attributes removed during conversion (was entry_metadata.removed_attributes_with_values)"
             ),
         ] = u.Field(default_factory=dict)
         original_format_details: Annotated[
             FlextLdifModelsDomainMetadata.FormatDetails | None,
             u.Field(
-                description="Original formatting details for round-trip preservation (DN line, syntax, encoding, spacing)",
+                description="Original formatting details for round-trip preservation (DN line, syntax, encoding, spacing)"
             ),
         ] = None
         schema_format_details: Annotated[
             (FlextLdifModelsDomainMetadata.SchemaFormatDetails | None),
             u.Field(
-                description="Schema formatting details for round-trip preservation",
+                description="Schema formatting details for round-trip preservation"
             ),
         ] = None
         soft_delete_markers: Annotated[
             t.MutableSequenceOf[str],
             u.Field(
-                description="Attributes soft-deleted during conversion (can be restored). Different from removed_attributes: these are intentionally hidden for target server but preserved for reverse conversion.",
+                description="Attributes soft-deleted during conversion (can be restored). Different from removed_attributes: these are intentionally hidden for target server but preserved for reverse conversion."
             ),
         ] = u.Field(default_factory=list)
         original_attribute_case: Annotated[
             t.MutableJsonMapping,
             u.Field(
-                description="Original case of attribute names: {'objectclass': 'objectClass', 'cn': 'CN'}. Used to restore original case during reverse conversion.",
+                description="Original case of attribute names: {'objectclass': 'objectClass', 'cn': 'CN'}. Used to restore original case during reverse conversion."
             ),
         ] = u.Field(default_factory=dict)
         schema_servers_applied: Annotated[
             t.MutableSequenceOf[str],
             u.Field(
-                description="List of schema servers applied during parsing: ['matching_rule_normalization', 'syntax_oid_conversion', 'schema_dn_server']",
+                description="List of schema servers applied during parsing: ['matching_rule_normalization', 'syntax_oid_conversion', 'schema_dn_server']"
             ),
         ] = u.Field(default_factory=list)
         boolean_conversions: Annotated[
             t.MutableJsonMapping,
             u.Field(
-                description="Boolean conversion tracking: {'orcldasisenabled': {'original': '1', 'converted': 'TRUE', 'format': 'OID->RFC'}}",
+                description="Boolean conversion tracking: {'orcldasisenabled': {'original': '1', 'converted': 'TRUE', 'format': 'OID->RFC'}}"
             ),
         ] = u.Field(default_factory=dict)
         minimal_differences: Annotated[
             t.MutableJsonMapping,
             u.Field(
-                description="Complete minimal differences tracking for zero data loss: {'dn': {'has_differences': True, 'original': 'cn=test, dc=example', 'converted': 'cn=test,dc=example', 'differences': [...], 'spacing_changes': {...}, 'case_changes': [...], 'punctuation_changes': [...], 'original_length': 20, 'converted_length': 19}, 'attribute_cn': {'has_differences': False, ...}, 'schema_attr_uid': {'has_differences': True, 'original': \"attributetypes: ( 0.9.2342... NAME 'uid' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )  \", 'converted': 'attributeTypes: ( 0.9.2342... NAME uid SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )', 'differences': [...], 'syntax_quotes_removed': True, 'trailing_spaces_removed': True, ...}}",
+                description="Complete minimal differences tracking for zero data loss: {'dn': {'has_differences': True, 'original': 'cn=test, dc=example', 'converted': 'cn=test,dc=example', 'differences': [...], 'spacing_changes': {...}, 'case_changes': [...], 'punctuation_changes': [...], 'original_length': 20, 'converted_length': 19}, 'attribute_cn': {'has_differences': False, ...}, 'schema_attr_uid': {'has_differences': True, 'original': \"attributetypes: ( 0.9.2342... NAME 'uid' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )  \", 'converted': 'attributeTypes: ( 0.9.2342... NAME uid SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )', 'differences': [...], 'syntax_quotes_removed': True, 'trailing_spaces_removed': True, ...}}"
             ),
         ] = u.Field(default_factory=dict)
         original_strings: Annotated[
             t.MutableJsonMapping,
             u.Field(
-                description="Complete preservation of original strings before ANY conversion: {'dn_original': 'cn=test, dc=example;', 'attribute_cn_original': 'CN', 'schema_attr_uid_original': \"attributetypes: ( 0.9.2342... NAME 'uid' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )  \", 'acl_original': 'orclaci: { ... }', 'entry_original_ldif': 'dn: cn=test\\ncn: test\\n'}",
+                description="Complete preservation of original strings before ANY conversion: {'dn_original': 'cn=test, dc=example;', 'attribute_cn_original': 'CN', 'schema_attr_uid_original': \"attributetypes: ( 0.9.2342... NAME 'uid' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15{256}' )  \", 'acl_original': 'orclaci: { ... }', 'entry_original_ldif': 'dn: cn=test\\ncn: test\\n'}"
             ),
         ] = u.Field(default_factory=dict)
         conversion_history: Annotated[
             t.MutableSequenceOf[t.MutableStrMapping],
             u.Field(
-                description="Complete conversion history for audit trail: [{'step': 'parse_oid_entry', 'timestamp': '2025-01-01T00:00:00Z', 'original': {...}, 'converted': {...}, 'differences': {...}, 'server_type': 'oid', 'operation': 'parse'}, {'step': 'normalize_to_rfc', 'timestamp': '2025-01-01T00:00:01Z', 'original': {...}, 'converted': {...}, 'differences': {...}, 'server_type': 'rfc', 'operation': 'normalize'}, ...]",
+                description="Complete conversion history for audit trail: [{'step': 'parse_oid_entry', 'timestamp': '2025-01-01T00:00:00Z', 'original': {...}, 'converted': {...}, 'differences': {...}, 'server_type': 'oid', 'operation': 'parse'}, {'step': 'normalize_to_rfc', 'timestamp': '2025-01-01T00:00:01Z', 'original': {...}, 'converted': {...}, 'differences': {...}, 'server_type': 'rfc', 'operation': 'normalize'}, ...]"
             ),
         ] = u.Field(default_factory=list[t.MutableStrMapping])
 
         @u.field_validator("server_type", mode="before")
         @classmethod
         def _coerce_server_type(
-            cls,
-            value: c.Ldif.ServerTypes | str,
+            cls, value: c.Ldif.ServerTypes | str
         ) -> c.Ldif.ServerTypes:
             """Normalize string server types into canonical enum values."""
             if isinstance(value, c.Ldif.ServerTypes):

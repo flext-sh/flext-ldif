@@ -52,10 +52,7 @@ class TestsFlextLdifOidServers:
         ],
     )
     def test_parse_attribute_normalizes_syntax_oid(
-        self,
-        schema: p.Ldif.SchemaServer,
-        attr_def: str,
-        expected_syntax: str,
+        self, schema: p.Ldif.SchemaServer, attr_def: str, expected_syntax: str
     ) -> None:
         """OID-specific syntax OIDs normalize to their RFC equivalent."""
         result = schema.parse_attribute(attr_def)
@@ -83,10 +80,7 @@ class TestsFlextLdifOidServers:
         ],
     )
     def test_parse_attribute_normalizes_equality_matching_rule(
-        self,
-        schema: p.Ldif.SchemaServer,
-        equality_in: str,
-        expected_equality: str,
+        self, schema: p.Ldif.SchemaServer, equality_in: str, expected_equality: str
     ) -> None:
         """OID equality matching-rule variants normalize to RFC rule names."""
         attr_def = (
@@ -99,8 +93,7 @@ class TestsFlextLdifOidServers:
         tm.that(result.unwrap().equality, eq=expected_equality)
 
     def test_parse_attribute_derives_substr_from_substrings_rule(
-        self,
-        schema: p.Ldif.SchemaServer,
+        self, schema: p.Ldif.SchemaServer
     ) -> None:
         """A substrings equality rule populates the public substr field."""
         attr_def = (
@@ -116,8 +109,7 @@ class TestsFlextLdifOidServers:
         tm.that(attr.substr, eq="caseIgnoreSubstringsMatch")
 
     def test_parse_attribute_exposes_public_identity_fields(
-        self,
-        schema: p.Ldif.SchemaServer,
+        self, schema: p.Ldif.SchemaServer
     ) -> None:
         """Parsed attribute exposes name, oid, and flags via the public model."""
         attr_def = (
@@ -130,8 +122,7 @@ class TestsFlextLdifOidServers:
         tm.that(attr.single_value, eq=True)
 
     def test_parse_attribute_without_oid_fails_with_error_message(
-        self,
-        schema: p.Ldif.SchemaServer,
+        self, schema: p.Ldif.SchemaServer
     ) -> None:
         """A definition lacking an OID yields a failed result, not a success."""
         result = schema.parse_attribute("garbage not valid")
@@ -157,10 +148,7 @@ class TestsFlextLdifOidServers:
         ],
     )
     def test_parse_objectclass_normalizes_superior(
-        self,
-        schema: p.Ldif.SchemaServer,
-        oc_def: str,
-        expected_sup: str,
+        self, schema: p.Ldif.SchemaServer, oc_def: str, expected_sup: str
     ) -> None:
         """Quoted and parenthesized SUP forms both resolve to a bare superior."""
         result = schema.parse_objectclass(oc_def)
@@ -168,8 +156,7 @@ class TestsFlextLdifOidServers:
         tm.that(result.unwrap().sup, eq=expected_sup)
 
     def test_parse_objectclass_normalizes_auxiliary_typo(
-        self,
-        schema: p.Ldif.SchemaServer,
+        self, schema: p.Ldif.SchemaServer
     ) -> None:
         """The OID 'AUXILLARY' typo normalizes to the RFC AUXILIARY kind."""
         oc_def = (
@@ -181,8 +168,7 @@ class TestsFlextLdifOidServers:
         tm.that(result.unwrap().kind, eq="AUXILIARY")
 
     def test_write_attribute_round_trip_preserves_matching_rule_text(
-        self,
-        schema: p.Ldif.SchemaServer,
+        self, schema: p.Ldif.SchemaServer
     ) -> None:
         """Same-server round-trip preserves the original matching-rule text."""
         attr_def = (
@@ -197,8 +183,7 @@ class TestsFlextLdifOidServers:
         tm.that(written.unwrap(), has="EQUALITY caseIgnoreSubstringsMatch")
 
     def test_write_objectclass_round_trip_preserves_identity(
-        self,
-        schema: p.Ldif.SchemaServer,
+        self, schema: p.Ldif.SchemaServer
     ) -> None:
         """Objectclass round-trip preserves name and superior in the output."""
         oc_def = (

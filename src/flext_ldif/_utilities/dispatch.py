@@ -20,16 +20,14 @@ class FlextLdifUtilitiesDispatch:
     # Pydantic boundaries require concrete model schemas; public methods below
     # continue to expose the structural protocol contracts.
     _ENTRY_LIST_ADAPTER: ClassVar[p.TypeAdapter[list[m.Ldif.Entry]]] = m.TypeAdapter(
-        list[m.Ldif.Entry],
+        list[m.Ldif.Entry]
     )
     _ACL_LIST_ADAPTER: ClassVar[p.TypeAdapter[list[m.Ldif.Acl]]] = m.TypeAdapter(
-        list[m.Ldif.Acl],
+        list[m.Ldif.Acl]
     )
 
     @staticmethod
-    def as_entry(
-        value: p.Ldif.Entry | t.Ldif.EntryLike | t.ModelInput,
-    ) -> p.Ldif.Entry:
+    def as_entry(value: p.Ldif.Entry | t.Ldif.EntryLike | t.ModelInput) -> p.Ldif.Entry:
         """Coerce an entry-like value into the canonical LDIF entry model."""
         if isinstance(value, m.Ldif.Entry):
             return value
@@ -133,10 +131,7 @@ class FlextLdifUtilitiesDispatch:
     ):
         """Validate entries against rules."""
         match True:
-            case _ if not validators and isinstance(
-                value_or_entries,
-                (str, m.Ldif.DN),
-            ):
+            case _ if not validators and isinstance(value_or_entries, (str, m.Ldif.DN)):
                 result: (
                     p.Result[
                         t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]
@@ -145,31 +140,27 @@ class FlextLdifUtilitiesDispatch:
                     | bool
                 ) = FlextLdifUtilitiesDN.validate_dn(value_or_entries)
             case _ if not validators and FlextLdifUtilitiesDispatch._is_entry_sequence(
-                value_or_entries,
+                value_or_entries
             ):
                 result = FlextLdifUtilitiesDispatch._validate_entries(
-                    value_or_entries,
-                    pipeline=pipeline,
+                    value_or_entries, pipeline=pipeline
                 )
             case _ if isinstance(value_or_entries, Sequence) and not isinstance(
-                value_or_entries,
-                t.STR_BYTES_TYPES,
+                value_or_entries, t.STR_BYTES_TYPES
             ):
                 result = r[t.JsonValue].fail(
-                    "validator call requires scalar, not entry sequence",
+                    "validator call requires scalar, not entry sequence"
                 )
             case _ if isinstance(value_or_entries, m.Ldif.DN):
                 result = FlextLdifUtilitiesValidation.validate_value(
-                    value_or_entries.value,
-                    *validators,
+                    value_or_entries.value, *validators
                 )
             case _:
                 validated_value: t.JsonValue = u.normalize_to_json_value(
-                    value_or_entries,
+                    value_or_entries
                 )
                 result = FlextLdifUtilitiesValidation.validate_value(
-                    validated_value,
-                    *validators,
+                    validated_value, *validators
                 )
         return result
 
@@ -204,9 +195,7 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def find(
-        items: t.JsonList,
-        *,
-        predicate: Callable[..., bool],
+        items: t.JsonList, *, predicate: Callable[..., bool]
     ) -> t.JsonValue | None:
         """Route to CollectionLdif.find (resolves CollectionLdif vs core)."""
         return FlextLdifUtilitiesCollectionLdif.find(items, predicate=predicate)

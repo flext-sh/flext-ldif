@@ -28,9 +28,7 @@ class FlextLdifModelsSettingsRules:
 
         user_dn_patterns: Annotated[
             t.Ldif.NormalizedStrFrozenset,
-            u.Field(
-                description="DN patterns for user entries (e.g., '*,ou=users,*')",
-            ),
+            u.Field(description="DN patterns for user entries (e.g., '*,ou=users,*')"),
         ] = c.Ldif.EMPTY_STR_FROZENSET
         group_dn_patterns: Annotated[
             t.Ldif.NormalizedStrFrozenset,
@@ -38,9 +36,7 @@ class FlextLdifModelsSettingsRules:
         ] = c.Ldif.EMPTY_STR_FROZENSET
         hierarchy_dn_patterns: Annotated[
             t.Ldif.NormalizedStrFrozenset,
-            u.Field(
-                description="DN patterns for organizational hierarchy",
-            ),
+            u.Field(description="DN patterns for organizational hierarchy"),
         ] = c.Ldif.EMPTY_STR_FROZENSET
         schema_dn_patterns: Annotated[
             t.Ldif.NormalizedStrFrozenset,
@@ -48,27 +44,19 @@ class FlextLdifModelsSettingsRules:
         ] = c.Ldif.EMPTY_STR_FROZENSET
         user_objectclasses: Annotated[
             t.Ldif.NormalizedStrFrozenset,
-            u.Field(
-                description="ObjectClasses identifying user entries",
-            ),
+            u.Field(description="ObjectClasses identifying user entries"),
         ] = c.Ldif.EMPTY_STR_FROZENSET
         group_objectclasses: Annotated[
             t.Ldif.NormalizedStrFrozenset,
-            u.Field(
-                description="ObjectClasses identifying group entries",
-            ),
+            u.Field(description="ObjectClasses identifying group entries"),
         ] = c.Ldif.EMPTY_STR_FROZENSET
         hierarchy_objectclasses: Annotated[
             t.Ldif.NormalizedStrFrozenset,
-            u.Field(
-                description="ObjectClasses identifying organizational units",
-            ),
+            u.Field(description="ObjectClasses identifying organizational units"),
         ] = c.Ldif.EMPTY_STR_FROZENSET
         acl_attributes: Annotated[
             t.Ldif.NormalizedStrFrozenset,
-            u.Field(
-                description="Attribute names containing ACL information",
-            ),
+            u.Field(description="Attribute names containing ACL information"),
         ] = c.Ldif.EMPTY_STR_FROZENSET
 
         @u.computed_field()
@@ -100,15 +88,8 @@ class FlextLdifModelsSettingsRules:
         @classmethod
         def normalize_mapping_input(
             cls: type[Self],
-            data: t.MappingKV[
-                str,
-                t.Ldif.ValueType | frozenset[str] | set[str],
-            ]
-            | Self,
-        ) -> t.MappingKV[
-            str,
-            t.Ldif.ValueType | frozenset[str] | set[str],
-        ]:
+            data: t.MappingKV[str, t.Ldif.ValueType | frozenset[str] | set[str]] | Self,
+        ) -> t.MappingKV[str, t.Ldif.ValueType | frozenset[str] | set[str]]:
             """Accept immutable mapping inputs such as MappingProxyType."""
             if isinstance(data, cls):
                 return dict(data.model_dump())
@@ -116,15 +97,11 @@ class FlextLdifModelsSettingsRules:
 
         blocked_objectclasses: Annotated[
             t.Ldif.NormalizedStrFrozenset,
-            u.Field(
-                description="ObjectClasses that should be blocked/rejected",
-            ),
+            u.Field(description="ObjectClasses that should be blocked/rejected"),
         ] = c.Ldif.EMPTY_STR_FROZENSET
         allowed_objectclasses: Annotated[
             t.Ldif.NormalizedStrFrozenset,
-            u.Field(
-                description="ObjectClasses that are explicitly allowed",
-            ),
+            u.Field(description="ObjectClasses that are explicitly allowed"),
         ] = c.Ldif.EMPTY_STR_FROZENSET
         required_attributes: Annotated[
             t.Ldif.NormalizedStrFrozenset,
@@ -132,39 +109,27 @@ class FlextLdifModelsSettingsRules:
         ] = c.Ldif.EMPTY_STR_FROZENSET
         blocked_attributes: Annotated[
             t.Ldif.NormalizedStrFrozenset,
-            u.Field(
-                description="Attributes that should be blocked",
-            ),
+            u.Field(description="Attributes that should be blocked"),
         ] = c.Ldif.EMPTY_STR_FROZENSET
         allowed_attribute_oids: Annotated[
             t.Ldif.NormalizedStrFrozenset,
-            u.Field(
-                description="OID patterns for allowed schema attributes",
-            ),
+            u.Field(description="OID patterns for allowed schema attributes"),
         ] = c.Ldif.EMPTY_STR_FROZENSET
         allowed_objectclass_oids: Annotated[
             t.Ldif.NormalizedStrFrozenset,
-            u.Field(
-                description="OID patterns for allowed objectClasses",
-            ),
+            u.Field(description="OID patterns for allowed objectClasses"),
         ] = c.Ldif.EMPTY_STR_FROZENSET
         allowed_matchingrule_oids: Annotated[
             t.Ldif.NormalizedStrFrozenset,
-            u.Field(
-                description="OID patterns for allowed matchingRules",
-            ),
+            u.Field(description="OID patterns for allowed matchingRules"),
         ] = c.Ldif.EMPTY_STR_FROZENSET
         allowed_matchingruleuse_oids: Annotated[
             t.Ldif.NormalizedStrFrozenset,
-            u.Field(
-                description="OID patterns for allowed matchingRuleUse definitions",
-            ),
+            u.Field(description="OID patterns for allowed matchingRuleUse definitions"),
         ] = c.Ldif.EMPTY_STR_FROZENSET
         allowed_ldapsyntax_oids: Annotated[
             t.Ldif.NormalizedStrFrozenset,
-            u.Field(
-                description="OID patterns for allowed ldapSyntaxes definitions",
-            ),
+            u.Field(description="OID patterns for allowed ldapSyntaxes definitions"),
         ] = c.Ldif.EMPTY_STR_FROZENSET
 
         @u.computed_field()

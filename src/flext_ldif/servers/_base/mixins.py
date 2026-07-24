@@ -14,9 +14,7 @@ class FlextLdifServerMethodsMixin:
     ) -> p.Ldif.ServerServer | None:
         """Get the effective parent server when available."""
         parent_raw: p.Ldif.ServerServer | None = getattr(
-            instance,
-            "_parent_server",
-            None,
+            instance, "_parent_server", None
         )
         if (
             parent_raw is not None
@@ -39,9 +37,7 @@ class FlextLdifServerMethodsMixin:
         return 100
 
     @staticmethod
-    def get_server_type_from_utilities(
-        server_class: type,
-    ) -> c.Ldif.ServerTypes:
+    def get_server_type_from_utilities(server_class: type) -> c.Ldif.ServerTypes:
         """Infer the server type from the namespace."""
         resolved: c.Ldif.ServerTypes = u.Ldif.get_parent_server_type(server_class)
         return resolved
@@ -53,7 +49,7 @@ class FlextLdifServerMethodsMixin:
     def _get_priority(self) -> int:
         """Get server priority from the parent Constants class."""
         return FlextLdifServerMethodsMixin.get_priority_from_parent(
-            self._get_parent_server_safe(),
+            self._get_parent_server_safe()
         )
 
     def _get_server_type(self) -> c.Ldif.ServerTypes:

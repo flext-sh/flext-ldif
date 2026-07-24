@@ -35,15 +35,12 @@ class TestsFlextLdifAclMetadataPreservation:
         extensions = metadata.extensions
         assert extensions is not None
         extensions_dump: t.JsonMapping = t.json_mapping_adapter().validate_python(
-            dict(extensions),
+            dict(extensions)
         )
         return extensions_dump
 
     def _parse_single(
-        self,
-        api: p.Ldif.Client,
-        ldif_text: str,
-        server_type: str,
+        self, api: p.Ldif.Client, ldif_text: str, server_type: str
     ) -> p.Ldif.Entry:
         """Parse LDIF that must yield exactly one entry; assert the r[T] success."""
         result = api.parse_ldif(ldif_text, server_type=server_type)
@@ -108,10 +105,7 @@ class TestsFlextLdifAclMetadataPreservation:
         entry = self._parse_single(api, ldif_text, c.Tests.OID)
         tm.that(self._extensions(entry).get(extension_key), eq=expected)
 
-    def test_oid_all_features_preserved_together(
-        self,
-        api: p.Ldif.Client,
-    ) -> None:
+    def test_oid_all_features_preserved_together(self, api: p.Ldif.Client) -> None:
         """A single OID ACL carrying every feature preserves them all at once."""
         ldif_text = (
             "dn: cn=test,dc=example,dc=com\n"
@@ -204,11 +198,7 @@ class TestsFlextLdifAclMetadataPreservation:
         ],
     )
     def test_oud_feature_preserved_in_extensions(
-        self,
-        api: p.Ldif.Client,
-        aci: str,
-        extension_key: str,
-        expected: str,
+        self, api: p.Ldif.Client, aci: str, extension_key: str, expected: str
     ) -> None:
         """Each OUD ACI feature surfaces under its extension key after parsing."""
         ldif_text = (
@@ -220,10 +210,7 @@ class TestsFlextLdifAclMetadataPreservation:
         entry = self._parse_single(api, ldif_text, c.Tests.OUD)
         tm.that(self._extensions(entry).get(extension_key), eq=expected)
 
-    def test_oud_all_features_preserved_together(
-        self,
-        api: p.Ldif.Client,
-    ) -> None:
+    def test_oud_all_features_preserved_together(self, api: p.Ldif.Client) -> None:
         """A single OUD ACI carrying every feature preserves them all at once."""
         ldif_text = (
             "dn: cn=test,dc=example,dc=com\n"

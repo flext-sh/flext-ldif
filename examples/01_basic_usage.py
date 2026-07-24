@@ -81,25 +81,20 @@ class BasicUsageDry:
 
     @classmethod
     def _parse_validated_entries(
-        cls,
-        source: str | Path,
-        *,
-        server_type: str | None = None,
+        cls, source: str | Path, *, server_type: str | None = None
     ) -> p.Result[list[p.Ldif.Entry]]:
         """Parse and validate LDIF input through the public facade only."""
         match source:
             case Path() as path:
                 parse_result = ldif.parse_ldif_file(
-                    path,
-                    server_type=server_type,
-                    encoding=cls.DEFAULT_ENCODING,
+                    path, server_type=server_type, encoding=cls.DEFAULT_ENCODING
                 )
             case _:
                 parse_result = ldif.parse_ldif(source, server_type=server_type)
         return parse_result.flat_map(
             lambda response: ldif.validate_entries(response).map(
-                lambda _: list(response.entries),
-            ),
+                lambda _: list(response.entries)
+            )
         )
 
     @classmethod
@@ -118,20 +113,16 @@ class BasicUsageDry:
         """
         if not cls.SAMPLE_INPUT_PATH.exists():
             return r[str].fail_op(
-                "load sample ldif",
-                f"Sample file not found: {cls.SAMPLE_INPUT_PATH}",
+                "load sample ldif", f"Sample file not found: {cls.SAMPLE_INPUT_PATH}"
             )
         return cls._resolve_server_type(cls.SAMPLE_INPUT_PATH).flat_map(
             lambda server_type: cls._parse_validated_entries(
-                cls.SAMPLE_INPUT_PATH,
-                server_type=server_type,
+                cls.SAMPLE_INPUT_PATH, server_type=server_type
             ).flat_map(
                 lambda entries: ldif.write_ldif_file(
-                    entries,
-                    cls.SAMPLE_OUTPUT_PATH,
-                    server_type=server_type,
-                ).map(lambda _: "File processing complete"),
-            ),
+                    entries, cls.SAMPLE_OUTPUT_PATH, server_type=server_type
+                ).map(lambda _: "File processing complete")
+            )
         )
 
     def context_pipeline(self) -> p.Result[list[p.Ldif.Entry]]:
@@ -144,9 +135,8 @@ class BasicUsageDry:
         with FlextContext.new_correlation(self.SAMPLE_CORRELATION_ID):
             return self._resolve_server_type(self.SAMPLE_LDIF).flat_map(
                 lambda server_type: self._parse_validated_entries(
-                    self.SAMPLE_LDIF,
-                    server_type=server_type,
-                ),
+                    self.SAMPLE_LDIF, server_type=server_type
+                )
             )
 
     def process_pipeline(self) -> p.Result[list[p.Ldif.Entry]]:
@@ -163,7 +153,6 @@ class BasicUsageDry:
         """
         return self._resolve_server_type(self.SAMPLE_LDIF).flat_map(
             lambda server_type: self._parse_validated_entries(
-                self.SAMPLE_LDIF,
-                server_type=server_type,
-            ),
+                self.SAMPLE_LDIF, server_type=server_type
+            )
         )

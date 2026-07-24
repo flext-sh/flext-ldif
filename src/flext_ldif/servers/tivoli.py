@@ -38,8 +38,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         ])
         DETECTION_PATTERN_STR: ClassVar[str] = "\\b(ibm|tivoli|ldapdb)\\b"
         DETECTION_PATTERN: ClassVar[t.Ldif.RegexPattern] = re.compile(
-            DETECTION_PATTERN_STR,
-            re.IGNORECASE,
+            DETECTION_PATTERN_STR, re.IGNORECASE
         )
         DETECTION_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
             "ibm-entryuuid",
@@ -99,8 +98,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         ACL_DEFAULT_NAME: ClassVar[str] = "Tivoli ACL"
         ACL_ACCESS_PATTERN: ClassVar[str] = 'access\\s+"(\\w+)"'
         ACL_ACCESS_PATTERN_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-            ACL_ACCESS_PATTERN,
-            re.IGNORECASE,
+            ACL_ACCESS_PATTERN, re.IGNORECASE
         )
         ACL_DEFAULT_TARGET_DN: ClassVar[str] = ""
         ACL_DEFAULT_SUBJECT_TYPE: ClassVar[c.Ldif.AclSubjectType] = (
@@ -115,8 +113,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
 
         @override
         def can_handle_attribute(
-            self,
-            attr_definition: str | p.Ldif.SchemaAttribute,
+            self, attr_definition: str | p.Ldif.SchemaAttribute
         ) -> bool:
             """Detect Tivoli-specific attributes."""
             matches: bool = u.Ldif.matches_server_patterns(
@@ -127,8 +124,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
 
         @override
         def can_handle_objectclass(
-            self,
-            oc_definition: str | p.Ldif.SchemaObjectClass,
+            self, oc_definition: str | p.Ldif.SchemaObjectClass
         ) -> bool:
             """Detect Tivoli objectClass definitions."""
             matches: bool = u.Ldif.matches_server_patterns(
@@ -190,7 +186,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 _ = attr_name
                 access_match = (
                     FlextLdifServersTivoli.Constants.ACL_ACCESS_PATTERN_RE.search(
-                        content,
+                        content
                     )
                 )
                 access_type = (
@@ -281,9 +277,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
 
         @override
         def can_handle(
-            self,
-            entry_dn: str,
-            attributes: t.MutableStrSequenceMapping,
+            self, entry_dn: str, attributes: t.MutableStrSequenceMapping
         ) -> bool:
             """Detect Tivoli DS-specific entries."""
             if not entry_dn:
@@ -333,31 +327,27 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             """Normalize IBM Tivoli DS entry attributes."""
             if not entry.dn:
                 return r[p.Ldif.Entry].fail(
-                    "Entry DN is required for Tivoli DS normalization",
+                    "Entry DN is required for Tivoli DS normalization"
                 )
             if not entry.attributes:
                 return r[p.Ldif.Entry].fail(
-                    "Entry attributes are required for Tivoli DS normalization",
+                    "Entry attributes are required for Tivoli DS normalization"
                 )
-            attributes: t.MutableStrSequenceMapping = {
-                **entry.attributes.attributes,
-            }
+            attributes: t.MutableStrSequenceMapping = {**entry.attributes.attributes}
             object_classes = list(attributes.get(c.Ldif.DictKeys.OBJECTCLASS, []))
-            processed_attributes: t.MutableStrSequenceMapping = {
-                **attributes,
-            }
+            processed_attributes: t.MutableStrSequenceMapping = {**attributes}
             for attr_name, attr_values in processed_attributes.items():
                 processed_values: t.MutableSequenceOf[str] = list(attr_values)
                 processed_attributes[attr_name] = processed_values
             processed_attributes[c.Ldif.ServerMetadataKeys.SERVER_TYPE] = [
-                self._get_server_type(),
+                self._get_server_type()
             ]
             processed_attributes[c.Ldif.ServerMetadataKeys.IS_CONFIG_ENTRY] = [
-                str(self._is_config_entry(entry.dn.value)),
+                str(self._is_config_entry(entry.dn.value))
             ]
             processed_attributes[c.Ldif.DictKeys.OBJECTCLASS] = object_classes
             new_attrs = m.Ldif.Attributes.model_validate({
-                "attributes": processed_attributes,
+                "attributes": processed_attributes
             })
             processed_entry = entry.model_copy(update={"attributes": new_attrs})
             return r[p.Ldif.Entry].ok(processed_entry)

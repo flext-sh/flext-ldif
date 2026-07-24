@@ -58,9 +58,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
             acl_service if acl_service is not None else None
         )
         FlextLdifServersBaseSchemaAcl.__init__(
-            self,
-            acl_service=acl_service_typed,
-            _parent_server=None,
+            self, acl_service=acl_service_typed, _parent_server=None
         )
         if parent_server is not None:
             object.__setattr__(self, "_parent_server", parent_server)
@@ -73,10 +71,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
 
     @overload
     def __call__(
-        self,
-        data: str | p.Ldif.Acl | None = None,
-        *,
-        operation: str | None = None,
+        self, data: str | p.Ldif.Acl | None = None, *, operation: str | None = None
     ) -> p.Ldif.Acl | str: ...
 
     def __call__(
@@ -118,10 +113,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         return False
 
     def _denormalize_permission(
-        self,
-        permission: str,
-        _feature_id: str | None,
-        _metadata: t.MutableJsonMapping,
+        self, permission: str, _feature_id: str | None, _metadata: t.MutableJsonMapping
     ) -> str:
         """Convert RFC permission back to server-specific format."""
         return permission
@@ -132,9 +124,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         return super()._get_feature_fallback(_feature_id)
 
     def _normalize_permission(
-        self,
-        permission: str,
-        _metadata: t.MutableJsonMapping,
+        self, permission: str, _metadata: t.MutableJsonMapping
     ) -> tuple[str, str | None]:
         """Normalize a server-specific permission to RFC standard."""
         return (permission, None)
@@ -152,17 +142,13 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
             raw_acl=acl_line,
             server_type=server_type_value,
             metadata=m.Ldif.ServerMetadata(
-                server_type=server_type_value,
-                extensions={"original_format": acl_line},
+                server_type=server_type_value, extensions={"original_format": acl_line}
             ),
         )
         return r[p.Ldif.Acl].ok(acl_model)
 
     def _preserve_unsupported_feature(
-        self,
-        feature_id: str,
-        original_value: str,
-        metadata: t.MutableJsonMapping,
+        self, feature_id: str, original_value: str, metadata: t.MutableJsonMapping
     ) -> None:
         """Preserve unsupported feature in metadata for round-trip."""
         base_key = "unsupported_feature"

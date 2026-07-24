@@ -32,7 +32,7 @@ class FlextLdifUtilitiesSchemaNormalize:
         if not attribute_name or not attribute_list:
             return False
         normalized_input = FlextLdifUtilitiesSchemaNormalize.normalize_attribute_name(
-            attribute_name,
+            attribute_name
         )
         return any(
             FlextLdifUtilitiesSchemaNormalize.normalize_attribute_name(attr)
@@ -42,14 +42,13 @@ class FlextLdifUtilitiesSchemaNormalize:
 
     @staticmethod
     def is_boolean_attribute(
-        attribute_name: str | None,
-        boolean_attributes: set[str],
+        attribute_name: str | None, boolean_attributes: set[str]
     ) -> bool:
         """Check if attribute is in boolean attributes set (case-insensitive)."""
         if not attribute_name or not boolean_attributes:
             return False
         normalized_input = FlextLdifUtilitiesSchemaNormalize.normalize_attribute_name(
-            attribute_name,
+            attribute_name
         )
         normalized_set = {
             FlextLdifUtilitiesSchemaNormalize.normalize_attribute_name(attr)
@@ -59,9 +58,7 @@ class FlextLdifUtilitiesSchemaNormalize:
 
     @staticmethod
     def normalize_attribute_name(
-        attribute_name: str | None,
-        *,
-        case_sensitive: bool = False,
+        attribute_name: str | None, *, case_sensitive: bool = False
     ) -> str | None:
         """Normalize attribute name for case-insensitive comparisons."""
         if not attribute_name:
@@ -70,9 +67,7 @@ class FlextLdifUtilitiesSchemaNormalize:
 
     @staticmethod
     def normalize_matching_rules(
-        equality: str | None,
-        substr: str | None = None,
-        **kwargs: t.StrMapping | None,
+        equality: str | None, substr: str | None = None, **kwargs: t.StrMapping | None
     ) -> tuple[str | None, str | None]:
         """Normalize EQUALITY and SUBSTR matching rules."""
         replacements = kwargs.get("replacements")
@@ -123,9 +118,7 @@ class FlextLdifUtilitiesSchemaNormalize:
 
     @staticmethod
     def normalize_syntax_oid(
-        syntax: str | None,
-        *,
-        replacements: t.StrMapping | None = None,
+        syntax: str | None, *, replacements: t.StrMapping | None = None
     ) -> str | None:
         """Normalize SYNTAX OID field."""
         if not syntax:
@@ -139,8 +132,7 @@ class FlextLdifUtilitiesSchemaNormalize:
 
     @staticmethod
     def replace_invalid_substr_rule(
-        substr: str | None,
-        invalid_rules: t.OptionalStrMapping,
+        substr: str | None, invalid_rules: t.OptionalStrMapping
     ) -> str | None:
         """Replace invalid SUBSTR rule with valid replacement."""
         if not substr or not invalid_rules:

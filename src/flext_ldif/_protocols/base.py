@@ -140,9 +140,7 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
         @property
-        def categorization_rules(
-            self,
-        ) -> FlextLdifProtocolsBase.CategoryRules | None:
+        def categorization_rules(self) -> FlextLdifProtocolsBase.CategoryRules | None:
             """The validated categorization rules."""
             ...
 
@@ -236,16 +234,12 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
         @property
-        def object_class_distribution(
-            self,
-        ) -> FlextLdifProtocolsBase.DynamicCounts:
+        def object_class_distribution(self) -> FlextLdifProtocolsBase.DynamicCounts:
             """Counts grouped by object class."""
             ...
 
         @property
-        def server_type_distribution(
-            self,
-        ) -> FlextLdifProtocolsBase.DynamicCounts:
+        def server_type_distribution(self) -> FlextLdifProtocolsBase.DynamicCounts:
             """Counts grouped by server type."""
             ...
 
@@ -254,31 +248,22 @@ class FlextLdifProtocolsBase(Protocol):
         """Categorized entry groups exposed through protocol-only entry contracts."""
 
         @property
-        def categories(
-            self,
-        ) -> Mapping[str, Sequence[FlextLdifProtocolsBase.Entry]]:
+        def categories(self) -> Mapping[str, Sequence[FlextLdifProtocolsBase.Entry]]:
             """The categorized entries by category."""
             ...
 
-        def __getitem__(
-            self,
-            category: str,
-        ) -> Sequence[FlextLdifProtocolsBase.Entry]:
+        def __getitem__(self, category: str) -> Sequence[FlextLdifProtocolsBase.Entry]:
             """Return entries in one category."""
             ...
 
         def __setitem__(
-            self,
-            category: str,
-            entries: Sequence[FlextLdifProtocolsBase.Entry],
+            self, category: str, entries: Sequence[FlextLdifProtocolsBase.Entry]
         ) -> None:
             """Replace entries in one category."""
             ...
 
         def add_entries(
-            self,
-            category: str,
-            entries: Sequence[FlextLdifProtocolsBase.Entry],
+            self, category: str, entries: Sequence[FlextLdifProtocolsBase.Entry]
         ) -> None:
             """Append validated entries to one category."""
             ...
@@ -287,9 +272,7 @@ class FlextLdifProtocolsBase(Protocol):
             """Report whether a category exists."""
             ...
 
-        def items(
-            self,
-        ) -> Iterator[tuple[str, Sequence[FlextLdifProtocolsBase.Entry]]]:
+        def items(self) -> Iterator[tuple[str, Sequence[FlextLdifProtocolsBase.Entry]]]:
             """Iterate category and entry pairs."""
             ...
 
@@ -305,9 +288,7 @@ class FlextLdifProtocolsBase(Protocol):
             """Iterate category names."""
             ...
 
-        def values(
-            self,
-        ) -> Iterator[Sequence[FlextLdifProtocolsBase.Entry]]:
+        def values(self) -> Iterator[Sequence[FlextLdifProtocolsBase.Entry]]:
             """Iterate categorized entry sequences."""
             ...
 
@@ -371,9 +352,7 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
         def get(
-            self,
-            key: str,
-            default: t.MutableSequenceOf[str] | None = None,
+            self, key: str, default: t.MutableSequenceOf[str] | None = None
         ) -> t.MutableSequenceOf[str]:
             """Return attribute values with optional default."""
             ...
@@ -773,18 +752,13 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
         def mark_filtered(
-            self,
-            filter_type: str,
-            *,
-            passed: bool,
+            self, filter_type: str, *, passed: bool
         ) -> FlextLdifProtocolsBase.EntryStatistics:
             """Return statistics updated with one filter result."""
             ...
 
         def mark_rejected(
-            self,
-            category: str,
-            reason: str,
+            self, category: str, reason: str
         ) -> FlextLdifProtocolsBase.EntryStatistics:
             """Return statistics updated with rejection details."""
             ...
@@ -1219,9 +1193,7 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
         @property
-        def change_operations(
-            self,
-        ) -> Sequence[FlextLdifProtocolsBase.ChangeOperation]:
+        def change_operations(self) -> Sequence[FlextLdifProtocolsBase.ChangeOperation]:
             """The structured modify operations attached to the record."""
             ...
 
@@ -1507,15 +1479,13 @@ class FlextLdifProtocolsBase(Protocol):
         """Protocol for LDIF entry categorization services."""
 
         def categorize_entries(
-            self,
-            entries: Sequence[FlextLdifProtocolsBase.Entry],
+            self, entries: Sequence[FlextLdifProtocolsBase.Entry]
         ) -> p.Result[FlextLdifProtocolsBase.FlexibleCategories]:
             """Categorize validated entries."""
             ...
 
         def filter_by_base_dn(
-            self,
-            categories: FlextLdifProtocolsBase.FlexibleCategories,
+            self, categories: FlextLdifProtocolsBase.FlexibleCategories
         ) -> FlextLdifProtocolsBase.FlexibleCategories:
             """Filter categorized entries by base DN."""
             ...
@@ -1529,8 +1499,7 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
         def filter_schema_by_oids(
-            self,
-            schema_entries: Sequence[FlextLdifProtocolsBase.Entry],
+            self, schema_entries: Sequence[FlextLdifProtocolsBase.Entry]
         ) -> p.Result[Sequence[FlextLdifProtocolsBase.Entry]]:
             """Filter schema entries by allowed OIDs."""
             ...
@@ -1567,23 +1536,18 @@ class FlextLdifProtocolsBase(Protocol):
             """The configured target server type."""
             ...
 
-        def execute(
-            self,
-        ) -> p.Result[FlextLdifProtocolsBase.MigrationPipelineResult]:
+        def execute(self) -> p.Result[FlextLdifProtocolsBase.MigrationPipelineResult]:
             """Execute the migration pipeline."""
             ...
 
         def migrate_entries(
-            self,
-            entries: t.MutableSequenceOf[FlextLdifProtocolsBase.Entry],
+            self, entries: t.MutableSequenceOf[FlextLdifProtocolsBase.Entry]
         ) -> p.Result[t.MutableSequenceOf[FlextLdifProtocolsBase.Entry]]:
             """Migrate validated entries between server formats."""
             ...
 
         def migrate_file(
-            self,
-            input_file: Path,
-            output_file: Path | None = None,
+            self, input_file: Path, output_file: Path | None = None
         ) -> p.Result[FlextLdifProtocolsBase.MigrationPipelineResult]:
             """Migrate one LDIF file."""
             ...

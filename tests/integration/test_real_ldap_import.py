@@ -72,9 +72,7 @@ class TestsFlextLdifRealLdapImport:
         }
 
     def _read_back(
-        self,
-        ldap_connection: p.Ldap.Ldap3Connection,
-        dn: str,
+        self, ldap_connection: p.Ldap.Ldap3Connection, dn: str
     ) -> p.Ldap.Ldap3Entry:
         """Search the freshly imported entry and return the single result."""
         found = ldap_connection.search(
@@ -180,22 +178,16 @@ class TestsFlextLdifRealLdapImport:
         assert u.Ldif.has_attribute(entry, "jpegPhoto")
         tm.that(
             u.Ldif.get_attribute_values(entry, "jpegPhoto"),
-            eq=[
-                binary_data.decode("ascii"),
-            ],
+            eq=[binary_data.decode("ascii")],
         )
 
         dn = self._dn(entry)
         attributes: dict[str, list[str] | bytes] = dict(
-            self._non_objectclass_attrs(entry),
+            self._non_objectclass_attrs(entry)
         )
         # ldap3 requires raw bytes for a binary attribute value.
         attributes["jpegPhoto"] = binary_data
-        ldap_connection.add(
-            dn,
-            self._object_classes(entry),
-            attributes=attributes,
-        )
+        ldap_connection.add(dn, self._object_classes(entry), attributes=attributes)
 
         imported = self._read_back(ldap_connection, dn)
         tm.that(imported["jpegPhoto"].value, eq=binary_data)

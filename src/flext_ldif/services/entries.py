@@ -40,9 +40,7 @@ class FlextLdifEntries(s):
     ]
 
     @staticmethod
-    def _extract_dn_from_dict(
-        entry: t.MutableAttributeMapping,
-    ) -> p.Result[str]:
+    def _extract_dn_from_dict(entry: t.MutableAttributeMapping) -> p.Result[str]:
         dn_value = entry.get("dn")
         if dn_value is None:
             return r[str].fail("Dict entry missing 'dn' key")
@@ -109,7 +107,7 @@ class FlextLdifEntries(s):
                 return r[t.MutableSequenceOf[str]].ok(list(values))
             case _:
                 return r[t.MutableSequenceOf[str]].fail(
-                    "Unsupported attribute input type",
+                    "Unsupported attribute input type"
                 )
 
     @staticmethod
@@ -118,12 +116,8 @@ class FlextLdifEntries(s):
     ) -> p.Result[t.MutableStrSequenceMapping]:
         """Get entry attributes mapping."""
         if entry.attributes is None:
-            return r[t.MutableStrSequenceMapping].fail(
-                "Entry has no attributes",
-            )
-        attrs: t.MutableStrSequenceMapping = dict(
-            entry.attributes.attributes,
-        )
+            return r[t.MutableStrSequenceMapping].fail("Entry has no attributes")
+        attrs: t.MutableStrSequenceMapping = dict(entry.attributes.attributes)
         return r[t.MutableStrSequenceMapping].ok(attrs)
 
     @staticmethod
@@ -143,7 +137,7 @@ class FlextLdifEntries(s):
         attributes_result = FlextLdifEntries.resolve_entry_attributes(entry)
         if attributes_result.failure:
             return r[t.MutableSequenceOf[str]].fail(
-                f"Failed to get entry attributes: {attributes_result.error}",
+                f"Failed to get entry attributes: {attributes_result.error}"
             )
         attributes: t.MutableStrSequenceMapping = {
             attr_name: list(attr_values)
@@ -161,13 +155,12 @@ class FlextLdifEntries(s):
         if objectclasses is not None:
             return r[t.MutableSequenceOf[str]].ok(objectclasses)
         return r[t.MutableSequenceOf[str]].fail(
-            "Entry is missing objectClass attribute",
+            "Entry is missing objectClass attribute"
         )
 
     @staticmethod
     def remove_attributes(
-        entry: p.Ldif.Entry,
-        attributes_to_remove: t.MutableSequenceOf[str],
+        entry: p.Ldif.Entry, attributes_to_remove: t.MutableSequenceOf[str]
     ) -> p.Result[p.Ldif.Entry]:
         """Remove selected attributes from a single entry."""
         if entry.attributes is None:
@@ -180,9 +173,7 @@ class FlextLdifEntries(s):
         }
         dn_value = entry.dn if entry.dn is not None else entry.dn_str
         return m.Ldif.Entry.create(
-            dn=dn_value,
-            attributes=new_attrs,
-            metadata=entry.metadata,
+            dn=dn_value, attributes=new_attrs, metadata=entry.metadata
         )
 
     def run_configured_operation(self) -> p.Result[t.MutableSequenceOf[p.Ldif.Entry]]:
@@ -192,7 +183,7 @@ class FlextLdifEntries(s):
         if self.operation == c.Ldif.ENTRY_OPERATION_REMOVE_ATTRIBUTES:
             if not self.attributes_to_remove:
                 return r[t.MutableSequenceOf[p.Ldif.Entry]].fail(
-                    "No attributes_to_remove specified for remove-attributes operation",
+                    "No attributes_to_remove specified for remove-attributes operation"
                 )
             results: t.MutableSequenceOf[p.Ldif.Entry] = []
             for entry in self.entries:
@@ -201,7 +192,7 @@ class FlextLdifEntries(s):
                     results.append(result.value)
             return r[t.MutableSequenceOf[p.Ldif.Entry]].ok(results)
         return r[t.MutableSequenceOf[p.Ldif.Entry]].fail(
-            f"Unknown operation: {self.operation}",
+            f"Unknown operation: {self.operation}"
         )
 
 

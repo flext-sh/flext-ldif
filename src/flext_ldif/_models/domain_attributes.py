@@ -29,8 +29,7 @@ class FlextLdifModelsDomainAttributes:
         """A single LDIF attribute: its name and its ordered, immutable values."""
 
         name: Annotated[
-            str,
-            u.Field(description="The attribute name (case preserved as parsed)."),
+            str, u.Field(description="The attribute name (case preserved as parsed).")
         ]
         values: Annotated[
             tuple[str, ...],
@@ -56,16 +55,11 @@ class FlextLdifModelsDomainAttributes:
             ),
         ]
 
-        def __getitem__(
-            self,
-            key: str,
-        ) -> FlextLdifModelsDomainAttributes.Property:
+        def __getitem__(self, key: str) -> FlextLdifModelsDomainAttributes.Property:
             return self.root[key]
 
         def __setitem__(
-            self,
-            key: str,
-            value: FlextLdifModelsDomainAttributes.Property,
+            self, key: str, value: FlextLdifModelsDomainAttributes.Property
         ) -> None:
             self.root[key] = value
 
@@ -87,9 +81,7 @@ class FlextLdifModelsDomainAttributes:
         def values(self) -> ValuesView[FlextLdifModelsDomainAttributes.Property]:
             return self.root.values()
 
-        def items(
-            self,
-        ) -> ItemsView[str, FlextLdifModelsDomainAttributes.Property]:
+        def items(self) -> ItemsView[str, FlextLdifModelsDomainAttributes.Property]:
             return self.root.items()
 
         def get(
@@ -115,14 +107,12 @@ class FlextLdifModelsDomainAttributes:
         attribute_metadata: Annotated[
             MutableMapping[str, t.MutableAttributeMapping],
             u.Field(
-                description="Metadata for each attribute, like category or hidden status.",
+                description="Metadata for each attribute, like category or hidden status."
             ),
         ] = u.Field(default_factory=dict)
         metadata: Annotated[
             t.MutableJsonMapping | None,
-            u.Field(
-                description="Metadata for preserving ordering and formats",
-            ),
+            u.Field(description="Metadata for preserving ordering and formats"),
         ] = None
 
         def __getitem__(self, key: str) -> t.MutableSequenceOf[str]:
@@ -173,9 +163,7 @@ class FlextLdifModelsDomainAttributes:
             return self
 
         def get(
-            self,
-            key: str,
-            default: t.MutableSequenceOf[str] | None = None,
+            self, key: str, default: t.MutableSequenceOf[str] | None = None
         ) -> t.MutableSequenceOf[str]:
             """Get attribute values with optional default.
 
@@ -277,20 +265,15 @@ class FlextLdifModelsDomainAttributes:
         """
 
         original_name: Annotated[
-            str,
-            u.Field(..., description="Original attribute name from source server"),
+            str, u.Field(..., description="Original attribute name from source server")
         ]
         target_name: Annotated[
             str | None,
-            u.Field(
-                description="Transformed attribute name (None if removed)",
-            ),
+            u.Field(description="Transformed attribute name (None if removed)"),
         ] = None
         original_values: Annotated[
             t.MutableSequenceOf[str],
-            u.Field(
-                description="Original attribute values from source",
-            ),
+            u.Field(description="Original attribute values from source"),
         ]
         target_values: Annotated[
             t.MutableSequenceOf[str] | None,
@@ -301,8 +284,7 @@ class FlextLdifModelsDomainAttributes:
             u.Field(..., description="Type of transformation applied to the attribute"),
         ]
         reason: Annotated[
-            str,
-            u.Field(description="Human-readable reason for transformation"),
+            str, u.Field(description="Human-readable reason for transformation")
         ] = ""
 
 

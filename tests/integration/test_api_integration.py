@@ -35,15 +35,10 @@ class TestsFlextLdifApiIntegration:
 
     @pytest.mark.parametrize(
         ("ldif_content", "expected_entries"),
-        [
-            (c.Tests.RFC_SAMPLE_LDIF_BASIC, 1),
-            (c.Tests.RFC_SAMPLE_LDIF_MULTIPLE, 2),
-        ],
+        [(c.Tests.RFC_SAMPLE_LDIF_BASIC, 1), (c.Tests.RFC_SAMPLE_LDIF_MULTIPLE, 2)],
     )
     def test_parse_ldif_returns_expected_entry_count(
-        self,
-        ldif_content: str,
-        expected_entries: int,
+        self, ldif_content: str, expected_entries: int
     ) -> None:
         """parse_ldif succeeds and yields entries with populated public state."""
         # Act
@@ -61,15 +56,10 @@ class TestsFlextLdifApiIntegration:
 
     @pytest.mark.parametrize(
         "lenient_content",
-        [
-            "",
-            "this is not ldif at all",
-            "objectClass: person\ncn: no-dn\n",
-        ],
+        ["", "this is not ldif at all", "objectClass: person\ncn: no-dn\n"],
     )
     def test_parse_ldif_is_lenient_and_never_raises_on_non_entries(
-        self,
-        lenient_content: str,
+        self, lenient_content: str
     ) -> None:
         """Content without complete entries parses to a successful empty result."""
         # Act
@@ -236,9 +226,7 @@ class TestsFlextLdifApiIntegration:
 
         # Act
         categorization = ldif.categorization(
-            options=options,
-            base_dn="dc=override,dc=example",
-            server_type=c.Tests.OUD,
+            options=options, base_dn="dc=override,dc=example", server_type=c.Tests.OUD
         )
 
         # Assert
@@ -251,15 +239,11 @@ class TestsFlextLdifApiIntegration:
         """Without an override, categorization keeps the options base DN."""
         # Arrange
         options = m.Ldif.MigrateOptions(
-            base_dn="dc=options,dc=example",
-            forbidden_attributes=["userPassword"],
+            base_dn="dc=options,dc=example", forbidden_attributes=["userPassword"]
         )
 
         # Act
-        categorization = ldif.categorization(
-            options=options,
-            server_type=c.Tests.OUD,
-        )
+        categorization = ldif.categorization(options=options, server_type=c.Tests.OUD)
 
         # Assert
         assert isinstance(categorization, FlextLdifCategorization)
@@ -271,12 +255,10 @@ class TestsFlextLdifApiIntegration:
         # Act
         categorization = ldif.categorization(
             options=m.Ldif.MigrateOptions(
-                schema_whitelist_rules=m.Ldif.WhitelistRules.model_validate(
-                    {
-                        "allowed_attribute_oids": {"1.2.3.4"},
-                        "allowed_objectclass_oids": {"2.3.4.5"},
-                    },
-                ),
+                schema_whitelist_rules=m.Ldif.WhitelistRules.model_validate({
+                    "allowed_attribute_oids": {"1.2.3.4"},
+                    "allowed_objectclass_oids": {"2.3.4.5"},
+                })
             ),
             server_type=c.Tests.OUD,
         )
@@ -291,8 +273,7 @@ class TestsFlextLdifApiIntegration:
     # ------------------------------------------------------------------
 
     def test_migration_pipeline_binds_dirs_servers_and_output_name(
-        self,
-        tmp_path: Path,
+        self, tmp_path: Path
     ) -> None:
         """The pipeline reflects the transform config and migrate options given."""
         # Arrange
@@ -306,8 +287,7 @@ class TestsFlextLdifApiIntegration:
             input_dir=input_dir,
             output_dir=output_dir,
             settings=m.Ldif.TransformConfig.servers(
-                source_server=c.Tests.OID,
-                target_server=c.Tests.OUD,
+                source_server=c.Tests.OID, target_server=c.Tests.OUD
             ),
             options=m.Ldif.MigrateOptions(output_filename="custom.ldif"),
         )

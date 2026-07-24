@@ -47,17 +47,11 @@ class TestsFlextLdifVersion:
 
     def test_version_attribute_returns_public_version(self) -> None:
         """FlextLdifVersion.__version__ equals the exported version string."""
-        tm.that(
-            FlextLdifVersion.__version__,
-            eq=version_module.__version__,
-        )
+        tm.that(FlextLdifVersion.__version__, eq=version_module.__version__)
 
     def test_version_info_attribute_returns_public_version_info(self) -> None:
         """FlextLdifVersion.__version_info__ equals the exported version-info tuple."""
-        tm.that(
-            FlextLdifVersion.__version_info__,
-            eq=version_module.__version_info__,
-        )
+        tm.that(FlextLdifVersion.__version_info__, eq=version_module.__version_info__)
 
     def test_metadata_attributes_mirror_module_exports(self) -> None:
         """The metadata facade attributes mirror the exported module metadata."""

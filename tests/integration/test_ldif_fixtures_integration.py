@@ -48,11 +48,7 @@ class TestsFlextLdifLdifFixturesIntegration:
 
     @pytest.mark.parametrize(("subdir", "filename", "min_entries"), _FIXTURE_CASES)
     def test_parse_succeeds_and_yields_expected_minimum_entries(
-        self,
-        ldif_client: p.Ldif.Client,
-        subdir: str,
-        filename: str,
-        min_entries: int,
+        self, ldif_client: p.Ldif.Client, subdir: str, filename: str, min_entries: int
     ) -> None:
         """Parsing a valid fixture succeeds and returns at least the expected entries."""
         result = ldif_client.parse_ldif(self._fixture_path(subdir, filename))
@@ -65,11 +61,7 @@ class TestsFlextLdifLdifFixturesIntegration:
 
     @pytest.mark.parametrize(("subdir", "filename", "min_entries"), _FIXTURE_CASES)
     def test_every_parsed_entry_exposes_a_wellformed_dn(
-        self,
-        ldif_client: p.Ldif.Client,
-        subdir: str,
-        filename: str,
-        min_entries: int,
+        self, ldif_client: p.Ldif.Client, subdir: str, filename: str, min_entries: int
     ) -> None:
         """Every parsed entry publishes a non-empty, attribute=value shaped DN."""
         result = ldif_client.parse_ldif(self._fixture_path(subdir, filename))
@@ -84,11 +76,7 @@ class TestsFlextLdifLdifFixturesIntegration:
 
     @pytest.mark.parametrize(("subdir", "filename", "min_entries"), _FIXTURE_CASES)
     def test_statistics_total_matches_returned_entry_count(
-        self,
-        ldif_client: p.Ldif.Client,
-        subdir: str,
-        filename: str,
-        min_entries: int,
+        self, ldif_client: p.Ldif.Client, subdir: str, filename: str, min_entries: int
     ) -> None:
         """Reported statistics agree with the number of entries returned."""
         response = ldif_client.parse_ldif(self._fixture_path(subdir, filename)).value
@@ -98,11 +86,7 @@ class TestsFlextLdifLdifFixturesIntegration:
 
     @pytest.mark.parametrize(("subdir", "filename", "min_entries"), _FIXTURE_CASES)
     def test_write_then_reparse_preserves_entry_count(
-        self,
-        ldif_client: p.Ldif.Client,
-        subdir: str,
-        filename: str,
-        min_entries: int,
+        self, ldif_client: p.Ldif.Client, subdir: str, filename: str, min_entries: int
     ) -> None:
         """Writing parsed entries and reparsing the output round-trips the count."""
         parsed = ldif_client.parse_ldif(self._fixture_path(subdir, filename))
@@ -120,11 +104,7 @@ class TestsFlextLdifLdifFixturesIntegration:
 
     @pytest.mark.parametrize(("subdir", "filename", "min_entries"), _FIXTURE_CASES)
     def test_validate_entries_reports_success_for_wellformed_fixtures(
-        self,
-        ldif_client: p.Ldif.Client,
-        subdir: str,
-        filename: str,
-        min_entries: int,
+        self, ldif_client: p.Ldif.Client, subdir: str, filename: str, min_entries: int
     ) -> None:
         """Validating well-formed fixture entries yields a passing validation result."""
         entries = ldif_client.parse_ldif(
@@ -140,8 +120,7 @@ class TestsFlextLdifLdifFixturesIntegration:
         assert not report.invalid_entries
 
     def test_parse_string_matches_parse_ldif_for_same_content(
-        self,
-        ldif_client: p.Ldif.Client,
+        self, ldif_client: p.Ldif.Client
     ) -> None:
         """Parsing a file and parsing its written content produce identical DNs."""
         path = self._fixture_path(c.Tests.RFC, "rfc_entries_fixtures.ldif")
@@ -159,8 +138,7 @@ class TestsFlextLdifLdifFixturesIntegration:
         )
 
     def test_parse_missing_file_fails_with_informative_error(
-        self,
-        ldif_client: p.Ldif.Client,
+        self, ldif_client: p.Ldif.Client
     ) -> None:
         """Parsing a nonexistent fixture returns a failure naming the missing path."""
         missing = self._fixture_path(c.Tests.RFC, "does_not_exist.ldif")

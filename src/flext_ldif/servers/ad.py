@@ -52,8 +52,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         DETECTION_WEIGHT: ClassVar[int] = 8
         ACL_SDDL_PREFIX_PATTERN: ClassVar[str] = "^(O:|G:|D:|S:)"
         ACL_SDDL_PREFIX_PATTERN_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-            r"^(O:|G:|D:|S:)",
-            re.IGNORECASE,
+            r"^(O:|G:|D:|S:)", re.IGNORECASE
         )
         ENCODING_UTF16LE: ClassVar[str] = "utf-16-le"
         ENCODING_ERROR_IGNORE: ClassVar[str] = "ignore"
@@ -161,8 +160,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
 
         @override
         def can_handle_attribute(
-            self,
-            attr_definition: str | p.Ldif.SchemaAttribute,
+            self, attr_definition: str | p.Ldif.SchemaAttribute
         ) -> bool:
             """Detect AD attribute definitions using centralized constants."""
             matches: bool = u.Ldif.matches_server_patterns(
@@ -173,8 +171,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
 
         @override
         def can_handle_objectclass(
-            self,
-            oc_definition: str | p.Ldif.SchemaObjectClass,
+            self, oc_definition: str | p.Ldif.SchemaObjectClass
         ) -> bool:
             """Detect AD objectClass definitions using centralized constants."""
             matches: bool = u.Ldif.matches_server_patterns(
@@ -185,8 +182,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
 
         @override
         def _hook_post_parse_objectclass(
-            self,
-            oc: p.Ldif.SchemaObjectClass,
+            self, oc: p.Ldif.SchemaObjectClass
         ) -> p.Result[p.Ldif.SchemaObjectClass]:
             """Normalize Active Directory objectClass data after RFC parsing."""
             # NOTE (multi-agent, mro-0ftd.3.7.2): helpers return the immutable
@@ -228,7 +224,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 return True
             return (
                 FlextLdifServersAd.Constants.ACL_SDDL_PREFIX_PATTERN_RE.match(
-                    normalized,
+                    normalized
                 )
                 is not None
             )
@@ -316,7 +312,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             if (
                 raw_value
                 and FlextLdifServersAd.Constants.ACL_SDDL_PREFIX_PATTERN_RE.match(
-                    raw_value,
+                    raw_value
                 )
             ):
                 return raw_value
@@ -326,9 +322,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         def _write_ad_acl(acl_data: p.Ldif.Acl) -> p.Result[str]:
             """Write Active Directory ACL content."""
             if not acl_data.raw_acl:
-                return r[str].fail(
-                    "Active Directory ACL write requires raw_acl value",
-                )
+                return r[str].fail("Active Directory ACL write requires raw_acl value")
             acl_attribute = FlextLdifServersAd.Constants.ACL_ATTRIBUTE_NAME
             if acl_data.raw_acl:
                 return r[str].ok(f"{acl_attribute}: {acl_data.raw_acl}")
@@ -339,9 +333,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
 
         @override
         def can_handle(
-            self,
-            entry_dn: str,
-            attributes: t.MutableStrSequenceMapping,
+            self, entry_dn: str, attributes: t.MutableStrSequenceMapping
         ) -> bool:
             """Detect Active Directory entries based on DN, attributes, or classes."""
             if not entry_dn:
