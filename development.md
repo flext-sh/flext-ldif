@@ -75,7 +75,9 @@ make reset          # Full reset of environment
 
 FLEXT-LDIF uses a custom LDIF parser implementation with the following characteristics:
 
-```python notest
+```python
+from __future__ import annotations
+
 from collections.abc import Iterator, Mapping
 
 
@@ -104,7 +106,7 @@ class _ParserHelper:
 
 #### Working with LDIF Entries
 
-```python notest
+```python
 from flext_ldif import ldif, FlextLdifModels
 
 # LDIF entry creation using Factory pattern
@@ -130,7 +132,9 @@ result = api.parse_file("small_directory.ldif")
 
 #### LDIF Validation Patterns
 
-```python notest
+```python
+from __future__ import annotations
+
 from typing import Sequence
 from flext_ldif import p, r, FlextLdifModels
 
@@ -173,7 +177,10 @@ done
 
 ### LDIF Test Data
 
-```python notest
+```python
+from __future__ import annotations
+
+
 # Create test LDIF content
 def create_test_ldif() -> str:
     """Create valid LDIF content for testing."""
@@ -201,7 +208,9 @@ def test_ldif_parsing():
 
 ### Memory Usage Testing
 
-```python notest
+```python
+from __future__ import annotations
+
 import psutil
 import os
 
@@ -233,7 +242,9 @@ def test_memory_usage():
 
 ### Performance Guidelines
 
-```python notest
+```python
+from __future__ import annotations
+
 from flext_ldif import ldif, p, r, m
 import os
 
@@ -285,7 +296,7 @@ When reviewing LDIF-related code, check for:
 
 ### LDIF Format Edge Cases
 
-```python notest
+```python
 # Handle continuation lines
 ldif_with_continuation = """dn: cn=long name that spans multiple lines,
  ou=people,dc=example,dc=com

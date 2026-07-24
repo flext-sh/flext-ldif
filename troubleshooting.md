@@ -28,7 +28,7 @@ This document provides solutions to common issues encountered when using FLEXT-L
 
 **Symptom**: Parse operations fail with format-related error messages.
 
-```python notest
+```python
 from flext_ldif import ldif
 
 if (
@@ -41,7 +41,10 @@ if (
 
 **Solution**:
 
-```python notest
+```python
+from __future__ import annotations
+
+
 def diagnose_ldif_format(content: str) -> None:
     """Diagnose LDIF format issues."""
     lines = content.strip().split("\n")
@@ -72,14 +75,16 @@ def diagnose_ldif_format(content: str) -> None:
 
 **Symptom**: Parse fails with encoding-related errors.
 
-```python notest
+```python
 # Common encoding error
 UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 123
 ```
 
 **Solution**:
 
-```python notest
+```python
+from __future__ import annotations
+
 from flext_ldif import ldif, p, r
 
 
@@ -117,14 +122,16 @@ def parse_with_encoding_detection(file_path: str) -> p.Result[list]:
 
 **Symptom**: Application crashes or becomes unresponsive with large LDIF files.
 
-```python notest
+```python
 # Memory error when processing large files
 MemoryError: Unable to allocate array
 ```
 
 **Solution**:
 
-```python notest
+```python
+from __future__ import annotations
+
 from flext_ldif import ldif, FlextLdifModels, p, r, m, t
 
 
@@ -207,14 +214,16 @@ def process_chunk(chunk_entries: list[str]) -> p.Result[bool]:
 
 **Symptom**: Validation fails with strict mode enabled.
 
-```python notest
+```python
 result = api.validate_entries(entries)
 # Error: "Entry validation failed: unknown attribute 'customAttribute'"
 ```
 
 **Solution**:
 
-```python notest
+```python
+from __future__ import annotations
+
 from flext_ldif import ldif, FlextLdifModels, p, r
 
 
@@ -281,7 +290,10 @@ def analyze_entry_issues(entries: list) -> None:
 
 **Diagnosis**:
 
-```python notest
+```python
+from __future__ import annotations
+
+
 def benchmark_processing(file_path: str) -> None:
     """Benchmark LDIF processing performance."""
     import time
@@ -318,7 +330,10 @@ def benchmark_processing(file_path: str) -> None:
 
 **Optimization**:
 
-```python notest
+```python
+from __future__ import annotations
+
+
 def optimize_processing_config() -> FlextLdifModels.Config:
     """Create optimized configuration for performance."""
     return FlextLdifModels.Config(
@@ -345,7 +360,7 @@ def process_with_optimization(file_path: str) -> p.Result[m.Dict]:
 
 **Symptom**: Services fail to register or retrieve from FlextContainer.
 
-```python notest
+```python
 # Error: "Service registration failed"
 container = FlextContainer.get_global()
 result = container.bind("ldif_api", api)
@@ -354,7 +369,10 @@ result = container.bind("ldif_api", api)
 
 **Solution**:
 
-```python notest
+```python
+from __future__ import annotations
+
+
 def debug_container_issues() -> None:
     """Debug FlextContainer registration issues."""
 
@@ -407,7 +425,7 @@ def safe_service_registration() -> p.Result[ldif]:
 
 **Symptom**: Railway-oriented programming chains fail unexpectedly.
 
-```python notest
+```python
 # Error in chain composition
 result = (
     api
@@ -419,7 +437,10 @@ result = (
 
 **Solution**:
 
-```python notest
+```python
+from __future__ import annotations
+
+
 def correct_railway_chaining(file_path: str) -> p.Result[list]:
     """Demonstrate correct r chaining."""
     api = ldif()
@@ -479,7 +500,10 @@ def debug_railway_chain(file_path: str) -> p.Result[list]:
 
 ### Health Check Utility
 
-```python notest
+```python
+from __future__ import annotations
+
+
 def run_health_check() -> t.JsonMapping:
     """Run comprehensive health check for FLEXT-LDIF."""
     results = {"status": "healthy", "checks": {}, "warnings": [], "errors": []}
@@ -571,7 +595,9 @@ def print_health_check_report() -> None:
 
 ### Debug Mode Configuration
 
-```python notest
+```python
+from __future__ import annotations
+
 from flext_ldif import FlextLdif, FlextLdifModels, ldif, u
 
 
@@ -610,7 +636,10 @@ def enable_debug_mode() -> FlextLdif:
 
 When creating support requests, include:
 
-```python notest
+```python
+from __future__ import annotations
+
+
 def generate_support_info() -> t.JsonMapping:
     """Generate information for support requests."""
     import sys

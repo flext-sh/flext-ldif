@@ -98,21 +98,26 @@ docker run -v $(pwd)/data:/app/data flext:latest
 
 ### 1. Basic Setup
 
-```python notest
-from flext_ldif import ldif, FlextLdifSettings
+```python
+from __future__ import annotations
+
+from flext_ldif import FlextLdifSettings, ldif
 
 settings = FlextLdifSettings(ldif_strict_validation=True)
 api = ldif(settings=settings)
 
-u.Cli.print("FLEXT-LDIF application initialized!")
+print("FLEXT-LDIF application initialized!")
 ```
 
 ### 2. Using flext-ldif for LDIF Processing
 
-```python notest
+```python
+from __future__ import annotations
+
 from flext_ldif import ldif
 
 # Initialize LDIF API
+api = ldif()
 
 # Parse LDIF content
 ldif_content = """dn: cn=test,dc=example,dc=com
@@ -120,26 +125,29 @@ cn: test
 sn: user
 objectClass: inetOrgPerson"""
 
-result = ldif.parse(ldif_content)
+result = api.parse_string(ldif_content)
 if result.success:
     entries = result.unwrap()
-    u.Cli.print(f"Successfully parsed {len(entries)} LDIF entries")
+    print(f"Successfully parsed {len(entries)} LDIF entries")
 else:
-    u.Cli.print(f"Failed to parse LDIF: {result.failure()}")
+    print(f"Failed to parse LDIF: {result.error}")
 ```
 
 ### 3. Railway-Oriented Error Handling
 
-```python notest
-from flext_cli import u
-from flext_core import FlextSettings
+```python
+from __future__ import annotations
+
+from flext_core import p, r
+from flext_ldif import ldif
 
 
 def process_ldif_data(content: str) -> p.Result[str, Exception]:
     # Parse LDIF
-    parse_result = ldif.parse(content)
+    api = ldif()
+    parse_result = api.parse_string(content)
     if parse_result.failure:
-        return r.failure(parse_result.failure())
+        return r.failure(parse_result.error)
 
     entries = parse_result.unwrap()
 
@@ -157,19 +165,25 @@ def process_entries(entries: list) -> str:
 
 
 # Usage
-result = process_ldif_data(ldif_content)
+sample = """dn: cn=test,dc=example,dc=com
+cn: test
+sn: user
+objectClass: inetOrgPerson"""
+result = process_ldif_data(sample)
 if result.success:
-    u.Cli.print(f"Success: {result.unwrap()}")
+    print(f"Success: {result.unwrap()}")
 else:
-    u.Cli.print(f"Error: {result.failure()}")
+    print(f"Error: {result.error}")
 ```
 
 ### 4. CQRS Pattern with Commands and Queries
 
-```python notest
-from flext_cli import u
-from flext_core import FlextSettings
+```python
+from __future__ import annotations
+
 from dataclasses import dataclass
+
+from flext_core import FlextDispatcher, p, r
 
 
 @dataclass
@@ -220,7 +234,7 @@ export FLEXT_LDIF_STRICT_VALIDATION=true
 
 ### Programmatic Configuration
 
-```python notest
+```python
 from flext_ldif import FlextLdifSettings
 
 # Create custom configuration

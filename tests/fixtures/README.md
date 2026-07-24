@@ -60,7 +60,7 @@ Each server has 4 types of fixtures:
 
 ### Loading Fixtures
 
-```python notest
+```python
 from tests import c, u
 
 schema = u.Tests.load(c.Tests.OID, c.Tests.SCHEMA)

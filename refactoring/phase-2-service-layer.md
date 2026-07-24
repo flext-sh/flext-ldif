@@ -215,7 +215,9 @@ ______________________________________________________________________
 
 **Changes**:
 
-```python notest
+```python
+from __future__ import annotations
+
 # Before
 class FlextLdifServersOud(FlextLdifServersRfc):
     class Schema(FlextLdifServersRfc.Schema):
@@ -239,7 +241,10 @@ ______________________________________________________________________
 
 ## Service Composition Pattern
 
-```python notest
+```python
+from __future__ import annotations
+
+
 class FlextLdifServiceComposer:
     """Composes services for a given server type."""
 

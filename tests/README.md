@@ -96,7 +96,10 @@ tests/
 
 **Example**:
 
-```python notest
+```python
+from __future__ import annotations
+
+
 def test_flext_ldif_entry_validation(sample_entry):
     """Test domain entity validation rules."""
     entry = sample_entry
@@ -123,7 +126,10 @@ def test_flext_ldif_entry_validation(sample_entry):
 
 **Example**:
 
-```python notest
+```python
+from __future__ import annotations
+
+
 def test_api_service_integration(flext_ldif_api, sample_ldif_content):
     """Test API service with real dependencies."""
     result = flext_ldif_api.parse(sample_ldif_content)
@@ -146,7 +152,10 @@ def test_api_service_integration(flext_ldif_api, sample_ldif_content):
 
 **Example**:
 
-```python notest
+```python
+from __future__ import annotations
+
+
 def test_e2e_ldif_processing_workflow(tmp_path):
     """Test complete LDIF processing workflow."""
     input_file = tmp_path / "input.ldif"
@@ -183,7 +192,10 @@ def test_e2e_ldif_processing_workflow(tmp_path):
 
 **Example**:
 
-```python notest
+```python
+from __future__ import annotations
+
+
 def test_ldif_rfc_compliance(rfc_compliant_ldif):
     """Test RFC 2849 LDIF specification compliance."""
     result = flext_ldif_parse(rfc_compliant_ldif)
@@ -316,7 +328,10 @@ tests/data/
 
 ### Test Data Generation
 
-```python notest
+```python
+from __future__ import annotations
+
+
 def generate_ldif_with_entries(count: int) -> str:
     """Generate LDIF content with specified number of entries."""
     entries = []
@@ -414,7 +429,10 @@ pytest --tb=long                  # Detailed traceback
 
 ### Test-Driven Development
 
-```python notest
+```python
+from __future__ import annotations
+
+
 def test_new_feature_specification():
     """Test specification for new feature (TDD)."""
     # Arrange - Set up test conditions

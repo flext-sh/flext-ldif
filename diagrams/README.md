@@ -178,7 +178,9 @@ note right : Version: 0.12.0-dev
 
 ### Tooling Integration
 
-```python notest
+```python
+from __future__ import annotations
+
 # docs/diagrams/generate.py - Automated diagram generation
 import os
 from pathlib import Path

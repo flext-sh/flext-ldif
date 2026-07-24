@@ -23,7 +23,7 @@ ______________________________________________________________________
 
 ## ❌ PADRÃO INCORRETO (Deprecado)
 
-```python notest
+```python
 # ERRADO - Instanciação direta de servers
 from flext_ldif import FlextLdifServersOid
 from flext_ldif import FlextLdifServersOud
@@ -45,7 +45,7 @@ ______________________________________________________________________
 
 ## ✅ PADRÃO CORRETO (Obrigatório)
 
-```python notest
+```python
 # CORRETO - Via FlextLdifServer API
 from flext_ldif import FlextLdifServer
 from flext_ldif import FlextLdifServersBase
@@ -72,7 +72,9 @@ ______________________________________________________________________
 
 ### Fixtures Centralizadas (`conftest.py`)
 
-```python notest
+```python
+from __future__ import annotations
+
 import pytest
 from flext_ldif import FlextLdifServer
 from flext_ldif import FlextLdifServersBase
@@ -110,7 +112,10 @@ def rfc_server(server: FlextLdifServer) -> FlextLdifServersBase:
 
 ### Uso nas Funções de Teste
 
-```python notest
+```python
+from __future__ import annotations
+
+
 def test_conversion_oid_to_oud(
     oid_server: FlextLdifServersBase, oud_server: FlextLdifServersBase
 ) -> None:
@@ -126,7 +131,7 @@ ______________________________________________________________________
 
 ### Passo 1: Atualizar Imports
 
-```python notest
+```python
 # ANTES
 from flext_ldif import FlextLdifServersOid
 from flext_ldif import FlextLdifServersOud
@@ -138,7 +143,7 @@ from flext_ldif import FlextLdifServersBase
 
 ### Passo 2: Atualizar Instanciação
 
-```python notest
+```python
 # ANTES
 oid = FlextLdifServersOid()
 oud = FlextLdifServersOud()
@@ -153,7 +158,10 @@ oud = server.server("oud")
 
 ### Passo 3: Atualizar Type Hints
 
-```python notest
+```python
+from __future__ import annotations
+
+
 # ANTES
 def my_function(oid: FlextLdifServersOid) -> None:
     pass
@@ -186,7 +194,7 @@ ______________________________________________________________________
 
 ## 🎯 Servers Disponíveis via API
 
-```python notest
+```python
 from flext_ldif import FlextLdifServer
 
 server = FlextLdifServer()

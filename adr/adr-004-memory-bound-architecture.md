@@ -37,7 +37,9 @@ Implement a **memory-bound processing architecture** that loads entire LDIF file
 
 **Implementation**:
 
-```python notest
+```python
+from __future__ import annotations
+
 from pathlib import Path
 from typing import Sequence
 

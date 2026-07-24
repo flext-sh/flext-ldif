@@ -62,7 +62,7 @@ cd flext-ldif
 make setup
 
 # Verify installation
-python -c "from flext_ldif import ldif; u.Cli.print('FLEXT-LDIF installed successfully')"
+python -c "from flext_ldif import ldif; print('FLEXT-LDIF installed successfully')"
 ```
 
 ### Development Commands
@@ -102,6 +102,8 @@ python -c "from flext_ldif import ldif"
 Create your first LDIF processing script:
 
 ```python
+from __future__ import annotations
+
 from flext_ldif import ldif
 from pathlib import Path
 
@@ -126,15 +128,15 @@ member: cn=John Doe,ou=People,dc=example,dc=com
 result = api.parse_string(sample_ldif)
 if result.success:
     entries = result.unwrap().entries
-    u.Cli.print(f"Successfully parsed {len(entries)} LDIF entries")
+    print(f"Successfully parsed {len(entries)} LDIF entries")
 
     # Display entry information
     for entry in entries:
-        u.Cli.print(f"DN: {entry.dn}")
-        u.Cli.print(f"Attributes: {list(entry.attributes.keys())}")
-        u.Cli.print("---")
+        print(f"DN: {entry.dn}")
+        print(f"Attributes: {list(entry.attributes.keys())}")
+        print("---")
 else:
-    u.Cli.print(f"Parse failed: {result.error}")
+    print(f"Parse failed: {result.error}")
 ```
 
 ### File Operations
@@ -164,17 +166,17 @@ if result.success:
     # Validate entries
     validation_result = api.validate_entries(entries)
     if validation_result.success:
-        u.Cli.print("All entries are valid")
+        print("All entries are valid")
 
         # Write to new file
         output_path = Path("processed_directory.ldif")
         write_result = api.write_ldif_file(entries, output_path)
         if write_result.success:
-            u.Cli.print(f"Successfully wrote {len(entries)} entries to {output_path}")
+            print(f"Successfully wrote {len(entries)} entries to {output_path}")
     else:
-        u.Cli.print(f"Validation failed: {validation_result.error}")
+        print(f"Validation failed: {validation_result.error}")
 else:
-    u.Cli.print(f"Failed to parse {ldif_path}: {result.error}")
+    print(f"Failed to parse {ldif_path}: {result.error}")
 ```
 
 ## Configuration
@@ -183,7 +185,7 @@ else:
 
 Configure LDIF processing behavior:
 
-```python notest
+```python
 from flext_ldif import ldif, FlextLdifSettings
 
 # Create configuration
@@ -202,7 +204,7 @@ api = ldif(settings=settings)
 
 Access additional configuration options:
 
-```python notest
+```python
 from flext_ldif import FlextLdifSettings
 
 # Get global configuration
@@ -247,7 +249,9 @@ python -m flext_ldif parse --help
 Parse LDAP schema files with automatic server-specific handling:
 
 ```python
-from flext_ldif import FlextLdifParser
+from __future__ import annotations
+
+from flext_ldif import FlextLdif
 from pathlib import Path
 
 # Write a sample LDIF schema file
@@ -255,12 +259,12 @@ schema_path = Path("oid_schema.ldif")
 schema_path.write_text("dn: cn=example,dc=example,dc=com\nobjectClass: top\n")
 
 # Initialize parser and parse the sample schema
-parser = FlextLdifParser()
+parser = FlextLdif()
 result = parser.parse_ldif_file(schema_path)
 
 if result.success:
     schema_data = result.unwrap().entries
-    u.Cli.print(f"Parsed schema entries: {len(schema_data)}")
+    print(f"Parsed schema entries: {len(schema_data)}")
 
 # Works with any LDAP server - OpenLDAP, OUD, AD, etc.
 ```
@@ -310,9 +314,9 @@ pipeline = FlextLdifMigration(
 result = pipeline.execute()
 if result.success:
     migration_data = result.unwrap()
-    u.Cli.print("Migration completed successfully")
-    u.Cli.print(f"Entries migrated: {migration_data.get('entries_migrated', 0)}")
-    u.Cli.print(f"Schema files: {migration_data.get('schema_files', [])}")
+    print("Migration completed successfully")
+    print(f"Entries migrated: {migration_data.get('entries_migrated', 0)}")
+    print(f"Schema files: {migration_data.get('schema_files', [])}")
 
 # Generic transformation pipeline:
 # 1. Source servers normalize entries to RFC format
@@ -324,7 +328,7 @@ if result.success:
 
 Handle entries from different LDAP servers in the same workflow:
 
-```python notest
+```python
 from flext_ldif import ServerRegistryService
 
 # Initialize registry once
@@ -362,11 +366,11 @@ if result.success:
     # Validate all entries
     validation_result = api.validate_entries(entries)
     if validation_result.failure:
-        u.Cli.print(f"Validation issues found: {validation_result.error}")
+        print(f"Validation issues found: {validation_result.error}")
     else:
         report = validation_result.unwrap()
         # Continue processing valid entries
-        u.Cli.print(
+        print(
             f"Processing {report.valid_entries} valid entries "
             f"out of {report.total_entries} total entries"
         )
