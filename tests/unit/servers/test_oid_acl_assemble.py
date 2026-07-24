@@ -16,10 +16,10 @@ import pytest
 from structlog.testing import capture_logs
 
 from flext_ldif import m
-from flext_ldif.servers._oid.acl_assemble import FlextLdifServersOidAclAssemble as Asm
-from flext_ldif.servers._oid.acl_convert import FlextLdifServersOidAclConvert as Parser
-from flext_ldif.servers._oid.acl_pipeline import FlextLdifServersOidAclPipeline as Pipe
-from flext_ldif.servers._oid.acl_render import FlextLdifServersOidAclRender as Render
+from flext_ldif.servers.oid import FlextLdifServersOidAclAssemble as Asm
+from flext_ldif.servers.oid import FlextLdifServersOidAclConvert as Parser
+from flext_ldif.servers.oid import FlextLdifServersOidAclPipeline as Pipe
+from flext_ldif.servers.oid import FlextLdifServersOidAclRender as Render
 from flext_tests import tm
 from tests import TestsFlextLdifUtilities as u
 

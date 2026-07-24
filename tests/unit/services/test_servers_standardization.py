@@ -178,7 +178,7 @@ class TestsFlextLdifServersStandardization:
         ],
     )
     def test_can_handle_recognizes_entries_by_markers(
-        self, entry_dn: str, attributes: t.MutableStrSequenceMapping, expected: bool
+        self, entry_dn: str, attributes: t.MutableStrSequenceMapping, *, expected: bool
     ) -> None:
         """can_handle accepts entries with a DN and object-class/changetype only."""
         assert FlextLdifServersRfc.Entry().can_handle(entry_dn, attributes) is expected

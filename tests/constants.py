@@ -58,11 +58,11 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
         DOCKER_PORT: Final[int] = 3390
         DOCKER_BASE_DN: Final[str] = "dc=flext,dc=local"
         DOCKER_ADMIN_DN: Final[str] = "cn=admin,dc=flext,dc=local"
-        DOCKER_ADMIN_PASSWORD: Final[str] = "admin123"
+        DOCKER_ADMIN_CREDENTIAL: Final[str] = "flext-admin"
         DOCKER_LEGACY_ADMIN_DN: Final[str] = (
             "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
         )
-        DOCKER_LEGACY_ADMIN_PASSWORD: Final[str] = "REDACTED_LDAP_BIND_PASSWORD123"
+        DOCKER_LEGACY_ADMIN_CREDENTIAL: Final[str] = "flext-legacy-admin"
 
         SCHEMA_STRUCTURAL: Final[str] = c.Ldif.SchemaKind.STRUCTURAL.value
         SCHEMA_AUXILIARY: Final[str] = c.Ldif.SchemaKind.AUXILIARY.value

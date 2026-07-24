@@ -47,7 +47,7 @@ class FlextLdifProtocols(p):
             """MRO-composed settings contract with the LDIF namespace."""
 
             @property
-            def Ldif(self) -> FlextLdifProtocols.Ldif.LdifSettings:
+            def ldif(self) -> FlextLdifProtocols.Ldif.LdifSettings:
                 """Namespaced LDIF settings branch."""
                 ...
 

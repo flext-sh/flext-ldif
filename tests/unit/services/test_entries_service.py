@@ -105,6 +105,7 @@ class TestsFlextLdifEntries:
         self,
         scenario: str,
         value: str | list[str] | t.StrSequence | set[str] | frozenset[str],
+        *,
         should_succeed: bool,
     ) -> None:
         tm.that(bool(scenario), eq=True)
@@ -142,6 +143,7 @@ class TestsFlextLdifEntries:
         self,
         scenario: str,
         entry_dict: dict[str, str | list[str]],
+        *,
         should_succeed: bool,
     ) -> None:
         tm.that(bool(scenario), eq=True)
@@ -240,7 +242,7 @@ class TestsFlextLdifEntries:
         ),
     )
     def test_run_configured_operation_outcome(
-        self, scenario: str, op: str | None, should_succeed: bool
+        self, scenario: str, op: str | None, *, should_succeed: bool
     ) -> None:
         tm.that(bool(scenario), eq=True)
         entries_svc = FlextLdifEntries(

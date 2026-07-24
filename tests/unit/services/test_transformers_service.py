@@ -169,5 +169,5 @@ class TestsFlextLdifTransformersService:
         converted = u.Tests.assert_success(result)
         if not isinstance(converted, m.Ldif.Entry):
             msg = "Expected transformer to return an Entry"
-            raise AssertionError(msg)
+            raise TypeError(msg)
         return converted

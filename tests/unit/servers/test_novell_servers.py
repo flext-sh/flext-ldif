@@ -188,7 +188,7 @@ class TestsFlextLdifNovellServers:
         ],
     )
     def test_can_handle_acl_recognises_edirectory_acl_lines(
-        self, acl_line: str, expected: bool, acl_server: FlextLdifServersNovell.Acl
+        self, acl_line: str, *, expected: bool, acl_server: FlextLdifServersNovell.Acl
     ) -> None:
         """ACL recognition keys off the ``acl``/``inheritedacl`` attribute name."""
         tm.that(acl_server.can_handle(acl_line) is expected, eq=True)

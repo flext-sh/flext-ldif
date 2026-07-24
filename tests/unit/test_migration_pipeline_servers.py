@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
+from flext_ldif.servers.oid import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.services.migration import FlextLdifMigrationPipeline
 from flext_tests import tm

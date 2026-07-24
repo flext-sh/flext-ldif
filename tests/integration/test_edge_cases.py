@@ -40,15 +40,12 @@ class TestsFlextLdifEdgeCases:
     # -- Empty / minimal content -------------------------------------------
 
     @pytest.mark.parametrize(
-        ("label", "content"),
-        [
-            ("empty", ""),
-            ("whitespace", "   \n\n  \t\n  "),
-            ("comments", "# Comment 1\n# Comment 2\n# Comment 3\n"),
-        ],
+        "content",
+        ["", "   \n\n  \t\n  ", "# Comment 1\n# Comment 2\n# Comment 3\n"],
+        ids=["empty", "whitespace", "comments"],
     )
     def test_content_without_entries_parses_to_empty_list(
-        self, api: p.Ldif.LdifClient, label: str, content: str
+        self, api: p.Ldif.LdifClient, content: str
     ) -> None:
         """Empty, whitespace-only, and comment-only input yield zero entries."""
         result = api.parse_ldif(content)
@@ -201,16 +198,17 @@ class TestsFlextLdifEdgeCases:
     # -- Unicode / encoding boundaries -------------------------------------
 
     @pytest.mark.parametrize(
-        ("label", "text"),
+        "text",
         [
-            ("bmp", "café, naïve, résumé, 中文, 日本語, العربية"),
-            ("supplementary", "emoji: 😀 🎉 🚀"),
-            ("zero_width", _ZERO_WIDTH),
-            ("combining", "combining: é (e + ́)"),
+            "café, naïve, résumé, 中文, 日本語, العربية",
+            "emoji: 😀 🎉 🚀",
+            _ZERO_WIDTH,
+            "combining: é (e + ́)",
         ],
+        ids=["bmp", "supplementary", "zero_width", "combining"],
     )
     def test_unicode_description_preserved_exactly(
-        self, api: p.Ldif.LdifClient, label: str, text: str
+        self, api: p.Ldif.LdifClient, text: str
     ) -> None:
         """Unicode across all ranges is preserved exactly in parsed values."""
         content = (

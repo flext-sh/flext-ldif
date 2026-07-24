@@ -200,9 +200,8 @@ class TestsFlextLdifOudToOidMigration:
         write_result = oid.write(source_entries)
         tm.ok(write_result)
         written_ldif = write_result.value
-        assert isinstance(written_ldif, str) and written_ldif.strip(), (
-            "OID write produced empty content"
-        )
+        assert isinstance(written_ldif, str)
+        assert written_ldif.strip(), "OID write produced empty content"
 
         reparse = client.parse_ldif(written_ldif)
         tm.ok(reparse)
@@ -218,7 +217,8 @@ class TestsFlextLdifOudToOidMigration:
 
         first = oid.write(entries)
         second = oid.write(entries)
-        assert first.success and second.success, "Repeated OID writes must succeed"
+        assert first.success, "First OID write must succeed"
+        assert second.success, "Second OID write must succeed"
 
         first_parse = ldif().parse_ldif(first.value)
         second_parse = ldif().parse_ldif(second.value)

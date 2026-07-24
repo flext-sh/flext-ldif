@@ -185,7 +185,7 @@ class TestsFlextLdifCategorizationRealData:
         ],
     )
     def test_is_under_base_uses_hierarchy_not_substring(
-        self, dn: str | None, base_dn: str | None, expected: bool
+        self, dn: str | None, base_dn: str | None, *, expected: bool
     ) -> None:
         """The public is_under_base contract rejects substring false positives."""
         assert u.Ldif.is_under_base(dn, base_dn) is expected

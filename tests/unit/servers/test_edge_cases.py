@@ -45,6 +45,7 @@ class TestsFlextLdifEdgeCases:
         ldif_content: str,
         expected_entry_count: int,
         expected_min_depth: int,
+        *,
         expect_non_ascii: bool,
     ) -> None:
         """Test inline edge-case parsing rules using centralized datasets."""

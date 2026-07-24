@@ -40,11 +40,11 @@ class FlextLdifServer(s):
         """Initialize registry and trigger auto-discovery."""
         super().model_post_init(__context)
         self._registry = u.build_registry(dispatcher=self.dispatcher)
-        if type(self)._global_instance is None:
-            type(self)._global_instance = self
-        if not type(self)._discovery_initialized:
+        if self._global_instance is None:
+            FlextLdifServer._global_instance = self
+        if not self._discovery_initialized:
             self._auto_discover()
-            type(self)._discovery_initialized = True
+            FlextLdifServer._discovery_initialized = True
 
     def acl(self, server_type: str) -> p.Ldif.AclServer | None:
         """Get ACL server for a server type."""
@@ -151,7 +151,7 @@ class FlextLdifServer(s):
 
     def list_registered_servers(self) -> t.MutableSequenceOf[str]:
         """List all registered server types."""
-        return sorted(type(self)._registered_servers)
+        return sorted(self._registered_servers)
 
     @override
     def server(self, server_type: str) -> p.Result[p.Ldif.ServerServer]:
@@ -160,7 +160,7 @@ class FlextLdifServer(s):
             normalized = u.Ldif.normalize_server_type(server_type)
         except ValueError as e:
             return r[p.Ldif.ServerServer].fail(str(e))
-        plugin = type(self)._registered_servers.get(normalized)
+        plugin = self._registered_servers.get(normalized)
         if plugin is None:
             return r[p.Ldif.ServerServer].fail(normalized)
         return r[p.Ldif.ServerServer].ok(plugin)
@@ -228,7 +228,7 @@ class FlextLdifServer(s):
         ):
             return
         if server_type:
-            type(self)._registered_servers[server_type] = instance
+            self._registered_servers[server_type] = instance
             self._registry.register_plugin(
                 self.SERVERS, server_type, instance, scope=c.RegistrationScope.CLASS
             )

@@ -98,6 +98,7 @@ class TestsFlextLdifAclMetadataPreservation:
         api: p.Ldif.LdifClient,
         acl_clause: str,
         extension_key: str,
+        *,
         expected: str | bool,
     ) -> None:
         """Each OID ACL feature surfaces under its extension key after parsing."""

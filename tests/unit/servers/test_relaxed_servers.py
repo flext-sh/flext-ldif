@@ -80,14 +80,14 @@ class TestsFlextLdifRelaxed:
             _ = tm.that(result.failure, eq=True)
 
     @pytest.mark.parametrize(
-        ("scenario", "definition_data"),
+        ("_scenario", "definition_data"),
         list(c.Tests.RELAXED_OBJECTCLASS_DEFINITIONS.items()),
         ids=list(c.Tests.RELAXED_OBJECTCLASS_DEFINITIONS.keys()),
     )
     def test_parse_objectclass_scenarios(
         self,
         schema_server: FlextLdifServersRelaxed.Schema,
-        scenario: str,
+        _scenario: str,
         definition_data: tuple[str, bool],
     ) -> None:
         """Test parse_objectclass with various scenarios."""
@@ -133,14 +133,14 @@ class TestsFlextLdifRelaxed:
         tm.that(len(written), gt=0)
 
     @pytest.mark.parametrize(
-        ("name", "acl_data"),
+        ("_name", "acl_data"),
         list(c.Tests.RELAXED_ACL_DEFINITIONS.items()),
         ids=list(c.Tests.RELAXED_ACL_DEFINITIONS.keys()),
     )
     def test_parse_acl_scenarios(
         self,
         acl_server: FlextLdifServersRelaxed.Acl,
-        name: str,
+        _name: str,
         acl_data: tuple[str, bool],
     ) -> None:
         """Test ACL parsing in relaxed mode with various scenarios."""
@@ -248,6 +248,7 @@ class TestsFlextLdifRelaxed:
         schema_server: FlextLdifServersRelaxed.Schema,
         parse_type: str,
         definition: str,
+        *,
         expected_success: bool,
     ) -> None:
         """Test relaxed fallback requires an OID to recover binary definitions."""
@@ -308,6 +309,7 @@ class TestsFlextLdifRelaxed:
         self,
         schema_server: FlextLdifServersRelaxed.Schema,
         definition: str,
+        *,
         expected_success: bool,
     ) -> None:
         """Test can_handle_attribute behavior through parse method."""
@@ -328,6 +330,7 @@ class TestsFlextLdifRelaxed:
         self,
         schema_server: FlextLdifServersRelaxed.Schema,
         definition: str,
+        *,
         expected_success: bool,
     ) -> None:
         """Test can_handle_objectclass behavior through parse method."""

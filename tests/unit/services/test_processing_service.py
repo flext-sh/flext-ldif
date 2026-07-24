@@ -32,6 +32,7 @@ class TestsFlextLdifProcessingService:
         self,
         api: p.Ldif.LdifClient,
         processor_name: Literal["transform", "validate"],
+        *,
         parallel: bool,
         batch_size: int,
         max_workers: int,

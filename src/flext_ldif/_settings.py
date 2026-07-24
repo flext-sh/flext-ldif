@@ -37,7 +37,7 @@ class FlextLdifSettings(FlextCliSettings):
         env_prefix="FLEXT_LDIF_", extra="ignore"
     )
 
-    Ldif: LdifSettings = Field(
+    ldif: LdifSettings = Field(
         default_factory=LdifSettings, description="Namespaced LDIF settings branch."
     )
 

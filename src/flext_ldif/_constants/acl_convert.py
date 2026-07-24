@@ -66,11 +66,11 @@ class FlextLdifConstantsAclConvert:
     DN_NORMALIZE_COMMA_RE: ClassVar[t.RegexPattern] = re.compile(r"\s*,\s*")
     DN_NORMALIZE_EQUALS_RE: ClassVar[t.RegexPattern] = re.compile(r"\s*=\s*")
 
-    _SUBJ_MODIFIER_TOKEN = (
+    _SUBJ_MODIFIER_PATTERN = (
         r"(?:\s+(?:added_object_constraint|constraintonaddedobject|bindmode|bindipfilter)"
         r'\s*=\s*(?:\([^)]+\)|"[^"]+"))'
     )
-    _SUBJ_MODIFIERS = rf"(?:{_SUBJ_MODIFIER_TOKEN})*"
+    _SUBJ_MODIFIERS = rf"(?:{_SUBJ_MODIFIER_PATTERN})*"
 
     # by-clause subject matchers; group→subject mapping is the SUBJECT_MATCHERS SSOT.
     SUBJ_SUPERUSER_RE: ClassVar[t.RegexPattern] = re.compile(

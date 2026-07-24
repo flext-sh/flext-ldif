@@ -70,7 +70,7 @@ class TestsFlextLdifUtilitiesComprehensive:
     @pytest.mark.parametrize(
         ("value", "expected"), [("hello", False), (" leading", True), ("café", True)]
     )
-    def test_needs_base64_encoding(self, value: str, expected: bool) -> None:
+    def test_needs_base64_encoding(self, value: str, *, expected: bool) -> None:
         """needs_base64_encoding flags unsafe values, clears safe ASCII."""
         assert u.Ldif.needs_base64_encoding(value) is expected
 
@@ -99,7 +99,7 @@ class TestsFlextLdifUtilitiesComprehensive:
     @pytest.mark.parametrize(
         ("attribute", "expected"), [("aci", True), ("cn", False), ("mail", False)]
     )
-    def test_is_acl_attribute(self, attribute: str, expected: bool) -> None:
+    def test_is_acl_attribute(self, attribute: str, *, expected: bool) -> None:
         """is_acl_attribute recognises ACL attributes and rejects ordinary ones."""
         assert u.Ldif.is_acl_attribute(attribute) is expected
 

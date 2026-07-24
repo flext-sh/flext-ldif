@@ -9,8 +9,7 @@ from typing import TYPE_CHECKING, ClassVar, overload
 
 from flext_ldap import FlextLdapUtilities, u
 
-from flext_tests import FlextTestsUtilities, tk, tm
-from flext_tests._utilities.fixtures_dsl import FlextTestsFixturesDSLMixin
+from flext_tests import FlextTestsUtilities, FlextTestsFixturesDSLMixin, tk, tm
 from tests import c, m, p, t
 
 if TYPE_CHECKING:
@@ -207,8 +206,11 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             env_password = os.getenv("FLEXT_LDAP_BIND_PASSWORD")
             candidates: list[tuple[str, str]] = [
                 *([(env_dn, env_password)] if env_dn and env_password else []),
-                (c.Tests.DOCKER_ADMIN_DN, c.Tests.DOCKER_ADMIN_PASSWORD),
-                (c.Tests.DOCKER_LEGACY_ADMIN_DN, c.Tests.DOCKER_LEGACY_ADMIN_PASSWORD),
+                (c.Tests.DOCKER_ADMIN_DN, c.Tests.DOCKER_ADMIN_CREDENTIAL),
+                (
+                    c.Tests.DOCKER_LEGACY_ADMIN_DN,
+                    c.Tests.DOCKER_LEGACY_ADMIN_CREDENTIAL,
+                ),
             ]
             for candidate_dn, candidate_password in candidates:
                 credentials = cls._probe_admin_credentials(
@@ -220,7 +222,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                 return credentials
             default_credentials = (
                 c.Tests.DOCKER_ADMIN_DN,
-                c.Tests.DOCKER_ADMIN_PASSWORD,
+                c.Tests.DOCKER_ADMIN_CREDENTIAL,
             )
             cache[0] = default_credentials
             return default_credentials
@@ -478,10 +480,10 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             server_proto, data_cls = entry
             if not isinstance(server, server_proto):
                 msg = f"{write_method} is not supported by this server"
-                raise AssertionError(msg)
+                raise TypeError(msg)
             if not isinstance(data, data_cls):
                 msg = f"{write_method} requires a {data_cls.__name__}"
-                raise AssertionError(msg)
+                raise TypeError(msg)
             method: Callable[[m.BaseModel], p.Result[str]] = getattr(
                 server, write_method
             )

@@ -18,7 +18,7 @@ from __future__ import annotations
 import pytest
 
 from flext_ldif import m
-from flext_ldif.servers._oid.acl_convert import FlextLdifServersOidAclConvert as Parser
+from flext_ldif.servers.oid import FlextLdifServersOidAclConvert as Parser
 from flext_tests import tm
 
 _DN: str = "dc=ctbc"

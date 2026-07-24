@@ -129,8 +129,8 @@ class FlextLdifConstantsBase:
     NUMERIC_OID_PATTERN: Final[str] = "^\\d+(\\.\\d+)*$"
     SCHEMA_X_EXTENSION: Final[str] = r"X-([A-Z0-9_-]+)\s+[\"']?([^\"']*)[\"']?(?:\s|$)"
     SCHEMA_DESC_FLEX: Final[str] = r"DESC\s+['\\\"]([^'\\\"]*)['\\\"]"
-    SCHEMA_ORDERING_TOKEN: Final[str] = r"ORDERING\s+([A-Za-z0-9_-]+)"
-    SCHEMA_SUBSTR_TOKEN: Final[str] = r"SUBSTR\s+([A-Za-z0-9_-]+)"
+    SCHEMA_ORDERING_PATTERN: Final[str] = r"ORDERING\s+([A-Za-z0-9_-]+)"
+    SCHEMA_SUBSTR_PATTERN: Final[str] = r"SUBSTR\s+([A-Za-z0-9_-]+)"
     SCHEMA_OID_CAPTURE: Final[str] = r"\(\s*([0-9.]+)"
 
     # === Pre-compiled regex authorities (consumers MUST use these — never re.compile externally). ===
@@ -146,9 +146,9 @@ class FlextLdifConstantsBase:
     )
     SCHEMA_DESC_FLEX_RE: ClassVar[t.RegexPattern] = re.compile(SCHEMA_DESC_FLEX)
     SCHEMA_ORDERING_TOKEN_RE: ClassVar[t.RegexPattern] = re.compile(
-        SCHEMA_ORDERING_TOKEN
+        SCHEMA_ORDERING_PATTERN
     )
-    SCHEMA_SUBSTR_TOKEN_RE: ClassVar[t.RegexPattern] = re.compile(SCHEMA_SUBSTR_TOKEN)
+    SCHEMA_SUBSTR_TOKEN_RE: ClassVar[t.RegexPattern] = re.compile(SCHEMA_SUBSTR_PATTERN)
     SCHEMA_OID_CAPTURE_RE: ClassVar[t.RegexPattern] = re.compile(SCHEMA_OID_CAPTURE)
     SCHEMA_OBJECTCLASS_KIND_RE: ClassVar[t.RegexPattern] = re.compile(
         SCHEMA_OBJECTCLASS_KIND, re.IGNORECASE

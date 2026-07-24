@@ -78,9 +78,9 @@ class TestsFlextLdifConfigIntegration:
         """Cloned settings expose the documented public Ldif field defaults."""
         settings = self.create_settings()
 
-        tm.that(settings.Ldif.ldif_encoding, eq=c.Ldif.Encoding.UTF8)
+        tm.that(settings.ldif.ldif_encoding, eq=c.Ldif.Encoding.UTF8)
         tm.that(
-            settings.Ldif.ldif_strict_validation, eq=c.Ldif.DEFAULT_STRICT_VALIDATION
+            settings.ldif.ldif_strict_validation, eq=c.Ldif.DEFAULT_STRICT_VALIDATION
         )
 
     def test_cloned_settings_preserve_public_field_values(self) -> None:
@@ -88,9 +88,9 @@ class TestsFlextLdifConfigIntegration:
         first = self.create_settings()
         second = self.create_settings()
 
-        tm.that(first.Ldif.ldif_encoding, eq=second.Ldif.ldif_encoding)
+        tm.that(first.ldif.ldif_encoding, eq=second.ldif.ldif_encoding)
         tm.that(
-            first.Ldif.ldif_strict_validation, eq=second.Ldif.ldif_strict_validation
+            first.ldif.ldif_strict_validation, eq=second.ldif.ldif_strict_validation
         )
 
     @pytest.mark.parametrize("server_type", c.Tests.CONFIG_SERVER_TYPES)

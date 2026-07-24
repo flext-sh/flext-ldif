@@ -26,7 +26,7 @@ class TestsFlextLdifAclRegistry:
     """Behavioral suite for the public ACL attribute registry contract."""
 
     @pytest.mark.parametrize(
-        ("scenario", "param_server_type", "required_attrs", "forbidden_attrs"),
+        ("_scenario", "param_server_type", "required_attrs", "forbidden_attrs"),
         [
             (name, data[1], data[2], data[3])
             for name, data in c.Tests.ACL_REGISTRY_GET_ACL_ATTRIBUTES_DATA.items()
@@ -34,7 +34,7 @@ class TestsFlextLdifAclRegistry:
     )
     def test_get_acl_attributes_returns_expected_membership_per_server(
         self,
-        scenario: str,
+        _scenario: str,
         param_server_type: str | None,
         required_attrs: t.StrSequence,
         forbidden_attrs: t.StrSequence,
@@ -121,7 +121,7 @@ class TestsFlextLdifAclRegistry:
         ],
     )
     def test_is_acl_attribute_classifies_attributes(
-        self, attr_name: str, server_type: str | None, expected_result: bool
+        self, attr_name: str, server_type: str | None, *, expected_result: bool
     ) -> None:
         """is_acl_attribute returns the documented boolean per attribute/server."""
         # Act / Assert

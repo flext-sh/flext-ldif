@@ -46,7 +46,7 @@ class FlextLdifConversionSupportMixin(s):
     ) -> p.Result[p.Ldif.SchemaServer]:
         server = self._resolve_server(server_or_type)
         try:
-            schema = type(self)._get_schema_from_attribute(server)
+            schema = self._get_schema_from_attribute(server)
             return r[p.Ldif.SchemaServer].ok(schema)
         except TypeError as e:
             return r[p.Ldif.SchemaServer].fail(f"{role} server error: {e}")
@@ -132,7 +132,7 @@ class FlextLdifConversionSupportMixin(s):
         self, server: p.Ldif.ServerServer, support: t.MutableIntMapping
     ) -> t.MutableIntMapping:
         """Check schema (attribute and objectClass) support."""
-        server_schema = type(self)._get_schema_from_attribute(server)
+        server_schema = self._get_schema_from_attribute(server)
         test_attr_def = "( 2.16.840.1.113894.1.1.1 NAME 'orclTest' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
         test_oc_def = (
             "( 2.16.840.1.113894.1.2.1 NAME 'orclTest' SUP top STRUCTURAL MUST cn )"

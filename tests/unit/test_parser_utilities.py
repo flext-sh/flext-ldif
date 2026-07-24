@@ -119,6 +119,7 @@ class TestsFlextLdifParserUtilities:
         self,
         payload: str,
         expected_type: str,
+        *,
         expected_criticality: bool | None,
         expected_value: str | None,
     ) -> None:
@@ -140,7 +141,7 @@ class TestsFlextLdifParserUtilities:
         ],
     )
     def test_extract_boolean_flag_detects_token(
-        self, definition: str, expected: bool
+        self, definition: str, *, expected: bool
     ) -> None:
         assert u.Ldif.extract_boolean_flag(definition, "SINGLE-VALUE") is expected
 

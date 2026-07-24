@@ -538,9 +538,7 @@ class FlextLdifUtilitiesMetadata:
                 for write_option_key, value in metadata.items()
             }
             config_root: dict[str, t.JsonPayload] = dict(normalized_metadata)
-            object.__setattr__(
-                model, "validation_metadata", m.ConfigMap(root=config_root)
-            )
+            setattr(model, "validation_metadata", m.ConfigMap(root=config_root))
         except c.EXC_BASIC_TYPE:
             pass
 
@@ -719,7 +717,7 @@ class FlextLdifUtilitiesMetadata:
         formatting_details = FlextLdifUtilitiesMetadata.analyze_schema_formatting(
             definition
         )
-        object.__setattr__(metadata, "schema_format_details", formatting_details)
+        setattr(metadata, "schema_format_details", formatting_details)
         FlextLdifUtilitiesMetadata._module_logger.debug(
             "Schema formatting preserved in metadata",
             server_type=metadata.server_type,

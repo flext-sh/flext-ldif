@@ -1,3 +1,5 @@
+"""Unit tests for OID-specific LDIF utilities."""
+
 from __future__ import annotations
 
 import pytest
@@ -73,7 +75,7 @@ class TestsFlextLdifOidUtilities:
         ],
     )
     def test_matches_pattern_reflects_extracted_oid(
-        self, definition: str, pattern: str, expected: bool
+        self, definition: str, pattern: str, *, expected: bool
     ) -> None:
         compiled: t.Ldif.RegexPattern = c.Ldif.compile_pattern(pattern)
 

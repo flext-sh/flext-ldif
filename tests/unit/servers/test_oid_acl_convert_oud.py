@@ -12,7 +12,7 @@ from __future__ import annotations
 import pytest
 
 from flext_ldif import m
-from flext_ldif.servers._oid.acl_convert_oud import FlextLdifServersOidAclToOud as Conv
+from flext_ldif.servers.oid import FlextLdifServersOidAclToOud as Conv
 from flext_tests import tm
 
 
@@ -90,7 +90,7 @@ class TestsFlextLdifOidAclConvertOud:
         ],
     )
     def test_convert_permissions_yields_ordered_allow_set(
-        self, permissions: tuple[str, ...], is_entry: bool, expected: tuple[str, ...]
+        self, permissions: tuple[str, ...], *, is_entry: bool, expected: tuple[str, ...]
     ) -> None:
         result = Conv.convert_permissions(permissions, is_entry=is_entry)
 
@@ -168,7 +168,7 @@ class TestsFlextLdifOidAclConvertOud:
             ("dc=x", "", True),
         ],
     )
-    def test_is_in_scope(self, dn: str, base_dn: str, expected: bool) -> None:
+    def test_is_in_scope(self, dn: str, base_dn: str, *, expected: bool) -> None:
         tm.that(Conv.is_in_scope(dn, base_dn), eq=expected)
 
     # -- high_level_containers --------------------------------------------

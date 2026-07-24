@@ -43,16 +43,16 @@ class FlextLdifUtilitiesObjectClass:
             sup_lower in structural_superiors
             and schema_oc.kind == schema_constants.auxiliary
         ):
-            object.__setattr__(schema_oc, "kind", schema_constants.structural)
+            setattr(schema_oc, "kind", schema_constants.structural)
         elif (
             sup_lower in auxiliary_superiors
             and schema_oc.kind == schema_constants.structural
         ):
-            object.__setattr__(schema_oc, "kind", schema_constants.auxiliary)
+            setattr(schema_oc, "kind", schema_constants.auxiliary)
 
     @staticmethod
     def fix_missing_sup(schema_oc: m.Ldif.SchemaObjectClass) -> None:
         """Fix AUXILIARY ObjectClass missing SUP (superior) attribute."""
         schema_constants = FlextLdifUtilitiesObjectClass.SchemaConstants
         if schema_oc.kind == schema_constants.auxiliary and (not schema_oc.sup):
-            object.__setattr__(schema_oc, "sup", "top")
+            setattr(schema_oc, "sup", "top")
