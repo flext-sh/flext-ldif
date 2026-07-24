@@ -112,7 +112,7 @@ validator = FixtureValidator()
 result = validator.validate_schema_fixture(content)
 if result.is_success:
     stats = result.unwrap()
-    print(f"Found {stats['attribute_count']} attributes")
+    u.Cli.print(f"Found {stats['attribute_count']} attributes")
 ```
 
 ## Example Test Pattern

@@ -95,8 +95,8 @@ from flext_ldif import ldif
 api = ldif(settings=settings)
 
 # Access configuration values
-print(f"Max entries: {settings.max_entries}")
-print(f"Strict validation: {settings.strict_validation}")
+u.Cli.print(f"Max entries: {settings.max_entries}")
+u.Cli.print(f"Strict validation: {settings.strict_validation}")
 ```
 
 ## Global Configuration
@@ -112,7 +112,7 @@ settings = FlextLdifSettings(
 )
 api = FlextLdif(settings=settings)
 
-print(f"Global max entries: {settings.max_entries}")
+u.Cli.print(f"Global max entries: {settings.max_entries}")
 ```
 
 ### Environment Variables
@@ -253,7 +253,7 @@ if validation_result.success:
     settings = validation_result.unwrap()
     api = ldif(settings=settings)
 else:
-    print(f"Configuration error: {validation_result.error}")
+    u.Cli.print(f"Configuration error: {validation_result.error}")
 ```
 
 ### Configuration Inheritance
@@ -364,7 +364,7 @@ settings = FlextLdifModels.Config(max_entries=100000)
 
 registration_result = container.bind("ldif_config", settings)
 if registration_result.success:
-    print("Configuration registered in container")
+    u.Cli.print("Configuration registered in container")
 
 # Retrieve configuration from container
 config_result = container.resolve("ldif_config")

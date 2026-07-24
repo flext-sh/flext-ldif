@@ -46,7 +46,7 @@ cd flext-ldif
 make setup
 
 # Verify LDIF functionality
-python -c "from flext_ldif import ldif; print('LDIF development environment ready')"
+python -c "from flext_ldif import ldif; u.Cli.print('LDIF development environment ready')"
 ```
 
 ### Development Commands

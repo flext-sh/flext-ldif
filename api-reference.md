@@ -112,7 +112,7 @@ def parse_file(
         >>> result = api.parse_file("directory.ldif")
         >>> if result.success:
         ...     entries = result.unwrap()
-        ...     print(f"Parsed {len(entries)} entries")
+        ...     u.Cli.print(f"Parsed {len(entries)} entries")
     """
 ```
 
@@ -159,7 +159,7 @@ def validate_entries(self, entries: t.SequenceOf[FlextLdifModels.Entry]) -> p.Re
         >>> entries = parse_result.unwrap()
         >>> validation = api.validate_entries(entries)
         >>> if validation.success:
-        ...     print("All entries are valid")
+        ...     u.Cli.print("All entries are valid")
     """
 ```
 
@@ -184,7 +184,7 @@ def write_file(
         >>> entries = [...]
         >>> result = api.write_file(entries, "output.ldif")
         >>> if result.success:
-        ...     print("File written successfully")
+        ...     u.Cli.print("File written successfully")
     """
 ```
 
@@ -206,7 +206,7 @@ def write(self, entries: t.SequenceOf[FlextLdifModels.Entry]) -> p.Result[str]:
         >>> result = api.write(entries)
         >>> if result.success:
         ...     ldif_content = result.unwrap()
-        ...     print(ldif_content)
+        ...     u.Cli.print(ldif_content)
     """
 ```
 
@@ -232,7 +232,7 @@ def filter_persons(
         >>> result = api.filter_persons(all_entries)
         >>> if result.success:
         ...     persons = result.unwrap()
-        ...     print(f"Found {len(persons)} person entries")
+        ...     u.Cli.print(f"Found {len(persons)} person entries")
     """
 ```
 
@@ -303,7 +303,7 @@ def get_entry_statistics(
         >>> stats_result = api.get_entry_statistics(entries)
         >>> if stats_result.success:
         ...     stats = stats_result.unwrap()
-        ...     print(f"Object class distribution: {stats}")
+        ...     u.Cli.print(f"Object class distribution: {stats}")
     """
 ```
 
@@ -325,7 +325,7 @@ def analyze_entries(self, entries: t.SequenceOf[FlextLdifModels.Entry]) -> p.Res
         >>> analysis = api.analyze_entries(entries)
         >>> if analysis.success:
         ...     results = analysis.unwrap()
-        ...     print(f"Analysis: {results}")
+        ...     u.Cli.print(f"Analysis: {results}")
     """
 ```
 
@@ -525,16 +525,16 @@ class Entry(m.BaseModel):
 ```python notest
 # Access entry data
 entry = entries[0]
-print(f"DN: {entry.dn}")
-print(f"Common Name: {entry.get_attribute_values('cn')}")
-print(f"Object Classes: {entry.get_object_classes()}")
+u.Cli.print(f"DN: {entry.dn}")
+u.Cli.print(f"Common Name: {entry.get_attribute_values('cn')}")
+u.Cli.print(f"Object Classes: {entry.get_object_classes()}")
 
 # Check entry type
 if entry.is_person():
-    print("This is a person entry")
+    u.Cli.print("This is a person entry")
     email = entry.get_attribute_values("mail")
     if email:
-        print(f"Email: {email[0]}")
+        u.Cli.print(f"Email: {email[0]}")
 ```
 
 ### FlextLdifModels.Config
@@ -644,7 +644,7 @@ settings = FlextLdifSettings(
 )
 
 # Access global configuration
-print(f"Max entries: {settings.max_entries}")
+u.Cli.print(f"Max entries: {settings.max_entries}")
 ```
 
 ### Instance Configuration
@@ -696,7 +696,7 @@ if result.success:
     # Process entries
 else:
     error_message = result.error
-    print(f"Parse failed: {error_message}")
+    u.Cli.print(f"Parse failed: {error_message}")
 
 # Safe value extraction with defaults
 entries = result.unwrap_or([])  # Empty list if failed
@@ -725,9 +725,9 @@ try:
     # Operations that might raise exceptions
     pass
 except FlextLdifParseError as e:
-    print(f"Parse error: {e}")
+    u.Cli.print(f"Parse error: {e}")
 except FlextLdifValidationError as e:
-    print(f"Validation error: {e}")
+    u.Cli.print(f"Validation error: {e}")
 ```
 
 ## ⚠️ Library-Only Usage
@@ -748,7 +748,7 @@ api = ldif()
 result = api.parse_file(Path("directory.ldif"))
 if result.success:
     entries = result.unwrap()
-    print(f"Parsed {len(entries)} entries")
+    u.Cli.print(f"Parsed {len(entries)} entries")
 
 # ❌ OLD (CLI - no longer available):
 # python -m flext_ldif analyze directory.ldif
@@ -760,7 +760,7 @@ if result.success:
     stats_result = api.get_entry_statistics(entries)
     if stats_result.success:
         stats = stats_result.unwrap()
-        print(f"Statistics: {stats}")
+        u.Cli.print(f"Statistics: {stats}")
 
 # ❌ OLD (CLI - no longer available):
 # python -m flext_ldif filter --type person directory.ldif
@@ -772,7 +772,7 @@ if result.success:
     persons_result = api.filter_persons(entries)
     if persons_result.success:
         persons = persons_result.unwrap()
-        print(f"Found {len(persons)} person entries")
+        u.Cli.print(f"Found {len(persons)} person entries")
 ```
 
 ## Advanced Usage Patterns
@@ -929,8 +929,8 @@ oid_parser = RfcSchemaParserService(
 result = oid_parser.execute()
 if result.success:
     schema_data = result.unwrap()
-    print(f"Attributes: {len(schema_data['attributes'])}")
-    print(f"ObjectClasses: {len(schema_data['objectclasses'])}")
+    u.Cli.print(f"Attributes: {len(schema_data['attributes'])}")
+    u.Cli.print(f"ObjectClasses: {len(schema_data['objectclasses'])}")
 
 # ✅ CORRECT: Parse pure RFC 4512 (still requires server_registry)
 rfc_parser = RfcSchemaParserService(
@@ -1047,8 +1047,8 @@ pipeline = FlextLdifMigration(
 result = pipeline.execute()
 if result.success:
     data = result.unwrap()
-    print(f"Migrated {data['entries_migrated']} entries")
-    print(f"Schema files: {data['schema_files']}")
+    u.Cli.print(f"Migrated {data['entries_migrated']} entries")
+    u.Cli.print(f"Schema files: {data['schema_files']}")
 
 # Works with any server combination
 # OpenLDAP to OUD, AD to 389 DS, etc.
@@ -1198,19 +1198,19 @@ ldif_path.write_text(
 ldif_content = ldif_path.read_text()
 parse_result = api.parse_string(ldif_content)
 if parse_result.failure:
-    print(f"Parse failed: {parse_result.error}")
+    u.Cli.print(f"Parse failed: {parse_result.error}")
     exit(1)
 
 entries = parse_result.unwrap()
-print(f"✅ Parsed {len(entries)} entries")
+u.Cli.print(f"✅ Parsed {len(entries)} entries")
 
 # Validate entries
 validation_result = api.validate_entries(entries)
 if validation_result.failure:
-    print(f"Validation failed: {validation_result.error}")
+    u.Cli.print(f"Validation failed: {validation_result.error}")
     exit(1)
 
-print("✅ All entries valid")
+u.Cli.print("✅ All entries valid")
 ```
 
 ### LDIF Parsing Example
@@ -1226,9 +1226,9 @@ api = ldif()
 result = api.parse_string(ldif_content)
 if result.success:
     entries = result.unwrap()
-    print(f"✅ Parsed {len(entries)} entries")
+    u.Cli.print(f"✅ Parsed {len(entries)} entries")
 else:
-    print(f"❌ Failed to parse LDIF: {result.error}")
+    u.Cli.print(f"❌ Failed to parse LDIF: {result.error}")
 ```
 
 ### Generic Migration Pipeline
@@ -1249,11 +1249,11 @@ migration = FlextLdifMigration(
 result = migration.execute()
 if result.success:
     data = result.unwrap()
-    print(f"✅ Migrated {data['entries_migrated']} entries")
-    print(f"✅ Processed {len(data['schema_files'])} schema files")
-    print(f"✅ Generated {len(data['output_files'])} output files")
+    u.Cli.print(f"✅ Migrated {data['entries_migrated']} entries")
+    u.Cli.print(f"✅ Processed {len(data['schema_files'])} schema files")
+    u.Cli.print(f"✅ Generated {len(data['output_files'])} output files")
 else:
-    print(f"❌ Migration failed: {result.error}")
+    u.Cli.print(f"❌ Migration failed: {result.error}")
 
 # Works with ANY server combination (N implementations, not N²)
 # Examples: OID→OUD, OpenLDAP→389DS, AD→OUD, OUD→OpenLDAP, etc.
@@ -1299,9 +1299,9 @@ result = (
 # Handle final result
 if result.success:
     stats = result.unwrap()
-    print(f"✅ Pipeline completed: {stats}")
+    u.Cli.print(f"✅ Pipeline completed: {stats}")
 else:
-    print(f"❌ Pipeline failed: {result.error}")
+    u.Cli.print(f"❌ Pipeline failed: {result.error}")
 ```
 
 ### Supported LDAP Servers

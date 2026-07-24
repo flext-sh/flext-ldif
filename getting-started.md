@@ -62,7 +62,7 @@ cd flext-ldif
 make setup
 
 # Verify installation
-python -c "from flext_ldif import ldif; print('FLEXT-LDIF installed successfully')"
+python -c "from flext_ldif import ldif; u.Cli.print('FLEXT-LDIF installed successfully')"
 ```
 
 ### Development Commands
@@ -126,15 +126,15 @@ member: cn=John Doe,ou=People,dc=example,dc=com
 result = api.parse_string(sample_ldif)
 if result.success:
     entries = result.unwrap().entries
-    print(f"Successfully parsed {len(entries)} LDIF entries")
+    u.Cli.print(f"Successfully parsed {len(entries)} LDIF entries")
 
     # Display entry information
     for entry in entries:
-        print(f"DN: {entry.dn}")
-        print(f"Attributes: {list(entry.attributes.keys())}")
-        print("---")
+        u.Cli.print(f"DN: {entry.dn}")
+        u.Cli.print(f"Attributes: {list(entry.attributes.keys())}")
+        u.Cli.print("---")
 else:
-    print(f"Parse failed: {result.error}")
+    u.Cli.print(f"Parse failed: {result.error}")
 ```
 
 ### File Operations
@@ -164,17 +164,17 @@ if result.success:
     # Validate entries
     validation_result = api.validate_entries(entries)
     if validation_result.success:
-        print("All entries are valid")
+        u.Cli.print("All entries are valid")
 
         # Write to new file
         output_path = Path("processed_directory.ldif")
         write_result = api.write_ldif_file(entries, output_path)
         if write_result.success:
-            print(f"Successfully wrote {len(entries)} entries to {output_path}")
+            u.Cli.print(f"Successfully wrote {len(entries)} entries to {output_path}")
     else:
-        print(f"Validation failed: {validation_result.error}")
+        u.Cli.print(f"Validation failed: {validation_result.error}")
 else:
-    print(f"Failed to parse {ldif_path}: {result.error}")
+    u.Cli.print(f"Failed to parse {ldif_path}: {result.error}")
 ```
 
 ## Configuration
@@ -209,8 +209,8 @@ from flext_ldif import FlextLdifSettings
 settings = FlextLdifSettings()
 
 # Access configuration settings
-print(f"Max entries: {settings.max_entries}")
-print(f"Strict validation: {settings.strict_validation}")
+u.Cli.print(f"Max entries: {settings.max_entries}")
+u.Cli.print(f"Strict validation: {settings.strict_validation}")
 ```
 
 ## Command Line Interface
@@ -260,7 +260,7 @@ result = parser.parse_ldif_file(schema_path)
 
 if result.success:
     schema_data = result.unwrap().entries
-    print(f"Parsed schema entries: {len(schema_data)}")
+    u.Cli.print(f"Parsed schema entries: {len(schema_data)}")
 
 # Works with any LDAP server - OpenLDAP, OUD, AD, etc.
 ```
@@ -310,9 +310,9 @@ pipeline = FlextLdifMigration(
 result = pipeline.execute()
 if result.success:
     migration_data = result.unwrap()
-    print("Migration completed successfully")
-    print(f"Entries migrated: {migration_data.get('entries_migrated', 0)}")
-    print(f"Schema files: {migration_data.get('schema_files', [])}")
+    u.Cli.print("Migration completed successfully")
+    u.Cli.print(f"Entries migrated: {migration_data.get('entries_migrated', 0)}")
+    u.Cli.print(f"Schema files: {migration_data.get('schema_files', [])}")
 
 # Generic transformation pipeline:
 # 1. Source servers normalize entries to RFC format
@@ -362,11 +362,11 @@ if result.success:
     # Validate all entries
     validation_result = api.validate_entries(entries)
     if validation_result.failure:
-        print(f"Validation issues found: {validation_result.error}")
+        u.Cli.print(f"Validation issues found: {validation_result.error}")
     else:
         report = validation_result.unwrap()
         # Continue processing valid entries
-        print(
+        u.Cli.print(
             f"Processing {report.valid_entries} valid entries "
             f"out of {report.total_entries} total entries"
         )

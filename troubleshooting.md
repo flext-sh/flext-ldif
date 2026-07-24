@@ -36,7 +36,7 @@ if (
         "dn: cn=test,dc=example,dc=com\nobjectClass: inetOrgPerson\ncn: test"
     )
 ).failure:
-    print(result.error)
+    u.Cli.print(result.error)
 ```
 
 **Solution**:
@@ -46,26 +46,26 @@ def diagnose_ldif_format(content: str) -> None:
     """Diagnose LDIF format issues."""
     lines = content.strip().split("\n")
 
-    print(f"Total lines: {len(lines)}")
-    print("First few lines:")
+    u.Cli.print(f"Total lines: {len(lines)}")
+    u.Cli.print("First few lines:")
     for i, line in enumerate(lines[:5]):
-        print(f"{i + 1}: '{line}'")
+        u.Cli.print(f"{i + 1}: '{line}'")
 
     # Check for common issues
     if not any(line.startswith("dn:") for line in lines):
-        print("❌ No DN found - LDIF entries must start with 'dn:'")
+        u.Cli.print("❌ No DN found - LDIF entries must start with 'dn:'")
 
     # Check line folding issues
     for i, line in enumerate(lines):
         if line.startswith(" ") and i == 0:
-            print(f"❌ Line {i + 1} starts with space but is first line")
+            u.Cli.print(f"❌ Line {i + 1} starts with space but is first line")
 
     # Check character encoding
     try:
         content.encode("utf-8")
-        print("✓ UTF-8 encoding valid")
+        u.Cli.print("✓ UTF-8 encoding valid")
     except UnicodeError as e:
-        print(f"❌ Encoding issue: {e}")
+        u.Cli.print(f"❌ Encoding issue: {e}")
 ```
 
 #### Character Encoding Issues
@@ -91,10 +91,10 @@ def handle_encoding_issues(file_path: str) -> p.Result[str]:
         try:
             with open(file_path, "r", encoding=encoding) as f:
                 content = f.read()
-            print(f"✓ Successfully read with {encoding} encoding")
+            u.Cli.print(f"✓ Successfully read with {encoding} encoding")
             return r[str].ok(content)
         except UnicodeDecodeError:
-            print(f"✗ Failed with {encoding} encoding")
+            u.Cli.print(f"✗ Failed with {encoding} encoding")
             continue
 
     return r[str].fail("Unable to decode file with any supported encoding")
@@ -137,8 +137,8 @@ def process_large_file_safely(file_path: str) -> p.Result[m.Dict]:
     available_memory_gb = psutil.virtual_memory().available / (1024**3)
     file_size_gb = os.path.getsize(file_path) / (1024**3)
 
-    print(f"File size: {file_size_gb:.2f} GB")
-    print(f"Available memory: {available_memory_gb:.2f} GB")
+    u.Cli.print(f"File size: {file_size_gb:.2f} GB")
+    u.Cli.print(f"Available memory: {available_memory_gb:.2f} GB")
 
     if file_size_gb > available_memory_gb * 0.5:
         return r[m.Dict].fail(
@@ -226,10 +226,10 @@ def handle_validation_errors(entries: list) -> p.Result[list]:
 
     strict_result = strict_api.validate_entries(entries)
     if strict_result.success:
-        print("✓ All entries pass strict validation")
+        u.Cli.print("✓ All entries pass strict validation")
         return r[list].ok(entries)
 
-    print(f"✗ Strict validation failed: {strict_result.error}")
+    u.Cli.print(f"✗ Strict validation failed: {strict_result.error}")
 
     # Try with permissive validation
     permissive_config = FlextLdifModels.Config(
@@ -239,8 +239,8 @@ def handle_validation_errors(entries: list) -> p.Result[list]:
 
     permissive_result = permissive_api.validate_entries(entries)
     if permissive_result.success:
-        print("✓ Entries pass permissive validation")
-        print("⚠️  Consider reviewing data quality")
+        u.Cli.print("✓ Entries pass permissive validation")
+        u.Cli.print("⚠️  Consider reviewing data quality")
         return r[list].ok(entries)
 
     return r[list].fail(f"Validation failed: {permissive_result.error}")
@@ -249,28 +249,28 @@ def handle_validation_errors(entries: list) -> p.Result[list]:
 def analyze_entry_issues(entries: list) -> None:
     """Analyze common entry validation issues."""
     for i, entry in enumerate(entries):
-        print(f"\nEntry {i + 1}: {entry.dn}")
+        u.Cli.print(f"\nEntry {i + 1}: {entry.dn}")
 
         # Check DN format
         if not entry.dn or "=" not in entry.dn:
-            print("  ❌ Invalid DN format")
+            u.Cli.print("  ❌ Invalid DN format")
 
         # Check object classes
         object_classes = entry.get_object_classes()
         if not object_classes:
-            print("  ❌ Missing object class")
+            u.Cli.print("  ❌ Missing object class")
 
         # Check required attributes for person entries
         if "person" in object_classes:
             if not entry.get_attribute_values("cn"):
-                print("  ❌ Person missing required 'cn' attribute")
+                u.Cli.print("  ❌ Person missing required 'cn' attribute")
             if not entry.get_attribute_values("sn"):
-                print("  ❌ Person missing required 'sn' attribute")
+                u.Cli.print("  ❌ Person missing required 'sn' attribute")
 
         # Check for empty attributes
         for attr_name, attr_values in entry.attributes.items():
             if not attr_values or any(not v.strip() for v in attr_values):
-                print(f"  ⚠️  Empty values in attribute '{attr_name}'")
+                u.Cli.print(f"  ⚠️  Empty values in attribute '{attr_name}'")
 ```
 
 ### Performance Issues
@@ -288,7 +288,7 @@ def benchmark_processing(file_path: str) -> None:
     import os
 
     file_size_mb = os.path.getsize(file_path) / (1024 * 1024)
-    print(f"File size: {file_size_mb:.2f} MB")
+    u.Cli.print(f"File size: {file_size_mb:.2f} MB")
 
     api = ldif()
 
@@ -299,9 +299,9 @@ def benchmark_processing(file_path: str) -> None:
 
     if parse_result.success:
         entries = parse_result.unwrap()
-        print(f"Parsed {len(entries)} entries in {parse_time:.2f} seconds")
-        print(f"Processing rate: {len(entries) / parse_time:.1f} entries/second")
-        print(f"Throughput: {file_size_mb / parse_time:.2f} MB/second")
+        u.Cli.print(f"Parsed {len(entries)} entries in {parse_time:.2f} seconds")
+        u.Cli.print(f"Processing rate: {len(entries) / parse_time:.1f} entries/second")
+        u.Cli.print(f"Throughput: {file_size_mb / parse_time:.2f} MB/second")
 
         # Benchmark validation
         start_time = time.time()
@@ -309,11 +309,11 @@ def benchmark_processing(file_path: str) -> None:
         validation_time = time.time() - start_time
 
         if validation_result.success:
-            print(f"Validated in {validation_time:.2f} seconds")
+            u.Cli.print(f"Validated in {validation_time:.2f} seconds")
         else:
-            print(f"Validation failed: {validation_result.error}")
+            u.Cli.print(f"Validation failed: {validation_result.error}")
     else:
-        print(f"Parsing failed: {parse_result.error}")
+        u.Cli.print(f"Parsing failed: {parse_result.error}")
 ```
 
 **Optimization**:
@@ -363,24 +363,24 @@ def debug_container_issues() -> None:
     container = FlextContainer.get_global()
 
     # Check container status
-    print(f"Container type: {type(container)}")
+    u.Cli.print(f"Container type: {type(container)}")
 
     # Try registration with error handling
     api = ldif()
     registration_result = container.bind("ldif_api", api)
 
     if registration_result.success:
-        print("✓ Service registered successfully")
+        u.Cli.print("✓ Service registered successfully")
 
         # Test retrieval
         retrieval_result = container.resolve("ldif_api")
         if retrieval_result.success:
             retrieved_api = retrieval_result.unwrap()
-            print(f"✓ Service retrieved: {type(retrieved_api)}")
+            u.Cli.print(f"✓ Service retrieved: {type(retrieved_api)}")
         else:
-            print(f"✗ Retrieval failed: {retrieval_result.error}")
+            u.Cli.print(f"✗ Retrieval failed: {retrieval_result.error}")
     else:
-        print(f"✗ Registration failed: {registration_result.error}")
+        u.Cli.print(f"✗ Registration failed: {registration_result.error}")
 
 
 def safe_service_registration() -> p.Result[ldif]:
@@ -444,33 +444,33 @@ def debug_railway_chain(file_path: str) -> p.Result[list]:
     api = ldif()
 
     # Step 1: Parse
-    print("Step 1: Parsing file...")
+    u.Cli.print("Step 1: Parsing file...")
     parse_result = api.parse_file(file_path)
     if parse_result.failure:
-        print(f"❌ Parse failed: {parse_result.error}")
+        u.Cli.print(f"❌ Parse failed: {parse_result.error}")
         return parse_result
 
     entries = parse_result.unwrap()
-    print(f"✓ Parsed {len(entries)} entries")
+    u.Cli.print(f"✓ Parsed {len(entries)} entries")
 
     # Step 2: Validate
-    print("Step 2: Validating entries...")
+    u.Cli.print("Step 2: Validating entries...")
     validation_result = api.validate_entries(entries)
     if validation_result.failure:
-        print(f"❌ Validation failed: {validation_result.error}")
+        u.Cli.print(f"❌ Validation failed: {validation_result.error}")
         return r[list].fail(validation_result.error)
 
-    print("✓ Validation passed")
+    u.Cli.print("✓ Validation passed")
 
     # Step 3: Filter
-    print("Step 3: Filtering persons...")
+    u.Cli.print("Step 3: Filtering persons...")
     filter_result = api.filter_persons(entries)
     if filter_result.failure:
-        print(f"❌ Filtering failed: {filter_result.error}")
+        u.Cli.print(f"❌ Filtering failed: {filter_result.error}")
         return filter_result
 
     persons = filter_result.unwrap()
-    print(f"✓ Found {len(persons)} person entries")
+    u.Cli.print(f"✓ Found {len(persons)} person entries")
 
     return r[list].ok(persons)
 ```
@@ -547,26 +547,26 @@ def print_health_check_report() -> None:
     """Print formatted health check report."""
     results = run_health_check()
 
-    print("=== FLEXT-LDIF Health Check ===")
-    print(f"Overall Status: {results['status'].upper()}")
-    print()
+    u.Cli.print("=== FLEXT-LDIF Health Check ===")
+    u.Cli.print(f"Overall Status: {results['status'].upper()}")
+    u.Cli.print()
 
-    print("Checks:")
+    u.Cli.print("Checks:")
     for check, result in results["checks"].items():
-        print(f"  {check}: {result}")
+        u.Cli.print(f"  {check}: {result}")
 
     if results["warnings"]:
-        print("\nWarnings:")
+        u.Cli.print("\nWarnings:")
         for warning in results["warnings"]:
-            print(f"  ⚠️ {warning}")
+            u.Cli.print(f"  ⚠️ {warning}")
 
     if results["errors"]:
-        print("\nErrors:")
+        u.Cli.print("\nErrors:")
         for error in results["errors"]:
-            print(f"  ❌ {error}")
+            u.Cli.print(f"  ❌ {error}")
 
-    print()
-    print("For additional help, see: docs/troubleshooting.md")
+    u.Cli.print()
+    u.Cli.print("For additional help, see: docs/troubleshooting.md")
 ```
 
 ### Debug Mode Configuration
@@ -589,10 +589,10 @@ def enable_debug_mode() -> FlextLdif:
 
     api = ldif(settings=debug_config)
 
-    print("🐛 Debug mode enabled:")
-    print("  - Strict validation active")
-    print("  - All attributes processed")
-    print("  - Verbose logging enabled")
+    u.Cli.print("🐛 Debug mode enabled:")
+    u.Cli.print("  - Strict validation active")
+    u.Cli.print("  - All attributes processed")
+    u.Cli.print("  - Verbose logging enabled")
 
     return api
 ```

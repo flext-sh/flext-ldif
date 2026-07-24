@@ -358,20 +358,20 @@ class LdifCLIService(FlextCliService):
     def _output_ldif_results(self, entries, format_type: str) -> p.Result[bool]:
         """Output LDIF parsing results in specified format."""
         if format_type == 'summary':
-            print(f"LDIF Processing Summary:")
-            print(f"  Total entries: {len(entries)}")
+            u.Cli.print(f"LDIF Processing Summary:")
+            u.Cli.print(f"  Total entries: {len(entries)}")
 
             # Get LDIF-specific statistics
             stats_result = self._ldif_api.get_entry_statistics(entries)
             if stats_result.success:
                 stats = stats_result.unwrap()
-                print(f"  Object class distribution: {stats}")
+                u.Cli.print(f"  Object class distribution: {stats}")
 
             # Count person and group entries
             persons = [e for e in entries if e.is_person()]
             groups = [e for e in entries if e.is_group()]
-            print(f"  Person entries: {len(persons)}")
-            print(f"  Group entries: {len(groups)}")
+            u.Cli.print(f"  Person entries: {len(persons)}")
+            u.Cli.print(f"  Group entries: {len(groups)}")
 
             return r[bool].| ok(value=True)
         elif format_type == 'json':
@@ -385,7 +385,7 @@ class LdifCLIService(FlextCliService):
                 }
                 for entry in entries
             ], indent=2)
-            print(output)
+            u.Cli.print(output)
             return r[bool].| ok(value=True)
         else:
             return r[bool].fail(f"Unsupported LDIF output format: {format_type}")
