@@ -7,38 +7,50 @@
 > Project profile: `flext-ldif`
 
 <!-- TOC START -->
-- [Quick Diagnosis](#quick-diagnosis)
-  - [Health Check Commands](#health-check-commands)
-  - [System Status](#system-status)
-- [Common Issues](#common-issues)
-  - [1. Import Errors](#1-import-errors)
-  - [r](#r)
-  - [2. Type Checking Errors](#2-type-checking-errors)
-  - [3. Test Failures](#3-test-failures)
-  - [4. Configuration Issues](#4-configuration-issues)
-  - [5. LDIF Processing Issues](#5-ldif-processing-issues)
-  - [6. Migration Issues](#6-migration-issues)
-  - [7. Performance Issues](#7-performance-issues)
-- [Debugging Techniques](#debugging-techniques)
-  - [1. Logging Configuration](#1-logging-configuration)
-  - [2. Exception Handling](#2-exception-handling)
-  - [3. Debug Mode](#3-debug-mode)
-  - [4. Step-by-Step Debugging](#4-step-by-step-debugging)
-- [Error Codes Reference](#error-codes-reference)
-  - [FLEXT Core Errors](#flext-core-errors)
-  - [LDIF Processing Errors](#ldif-processing-errors)
-  - [API Errors](#api-errors)
-- [Performance Troubleshooting](#performance-troubleshooting)
-  - [Memory Issues](#memory-issues)
-  - [CPU Issues](#cpu-issues)
-- [Getting Help](#getting-help)
-  - [Self-Service Resources](#self-service-resources)
-  - [Community Support](#community-support)
-  - [Reporting Issues](#reporting-issues)
-  - [Your minimal example here](#your-minimal-example-here)
-- [Prevention](#prevention)
-  - [Best Practices](#best-practices)
-- [Resources](#resources)
+- [flext-ldif - FLEXT Troubleshooting Guide](#flext-ldif---flext-troubleshooting-guide)
+  - [Quick Diagnosis](#quick-diagnosis)
+    - [Health Check Commands](#health-check-commands)
+    - [System Status](#system-status)
+  - [Common Issues](#common-issues)
+    - [1. Import Errors](#1-import-errors)
+      - [Problem: ModuleNotFoundError](#problem-modulenotfounderror)
+      - [Solutions](#solutions)
+    - [r](#r)
+    - [2. Type Checking Errors](#2-type-checking-errors)
+      - [Problem: MyPy errors](#problem-mypy-errors)
+      - [Solutions](#solutions-1)
+    - [3. Test Failures](#3-test-failures)
+      - [Problem: Tests failing](#problem-tests-failing)
+      - [Solutions](#solutions-2)
+    - [4. Configuration Issues](#4-configuration-issues)
+      - [Problem: Configuration not loading](#problem-configuration-not-loading)
+      - [Solutions](#solutions-3)
+    - [5. LDIF Processing Issues](#5-ldif-processing-issues)
+      - [Problem: LDIF parsing fails](#problem-ldif-parsing-fails)
+      - [Solutions](#solutions-4)
+    - [6. Migration Issues](#6-migration-issues)
+      - [Problem: Migration fails](#problem-migration-fails)
+      - [Solutions](#solutions-5)
+    - [7. Performance Issues](#7-performance-issues)
+      - [Problem: Slow processing](#problem-slow-processing)
+      - [Solutions](#solutions-6)
+  - [Debugging Techniques](#debugging-techniques)
+    - [1. Logging Configuration](#1-logging-configuration)
+    - [2. Exception Handling](#2-exception-handling)
+    - [3. Debug Mode](#3-debug-mode)
+    - [4. Step-by-Step Debugging](#4-step-by-step-debugging)
+  - [Error Codes Reference](#error-codes-reference)
+    - [FLEXT Core Errors](#flext-core-errors)
+    - [LDIF Processing Errors](#ldif-processing-errors)
+    - [API Errors](#api-errors)
+  - [Performance Troubleshooting](#performance-troubleshooting)
+    - [Memory Issues](#memory-issues)
+    - [CPU Issues](#cpu-issues)
+  - [Getting Help](#getting-help)
+    - [Self-Service Resources](#self-service-resources)
+    - [Community Support](#community-support)
+    - [Reporting Issues](#reporting-issues)
+  - [Resources](#resources)
 <!-- TOC END -->
 
 This guide covers common issues, their solutions, and debugging techniques for FLEXT applications and libraries.
@@ -514,11 +526,11 @@ def debug_ldif_processing(content: str):
 
 ### LDIF Processing Errors
 
-| Error Code | Description                | Solution                                  |
-| ---------- | -------------------------- | ----------------------------------------- |
-| `LDIF_001` | Invalid LDIF format        | Check LDIF syntax and structure           |
+| Error Code | Description                | Solution                                   |
+| ---------- | -------------------------- | ------------------------------------------ |
+| `LDIF_001` | Invalid LDIF format        | Check LDIF syntax and structure            |
 | `LDIF_002` | Server compatibility error | Enable server servers or check server type |
-| `LDIF_003` | Schema validation failed   | Verify schema definitions and attributes  |
+| `LDIF_003` | Schema validation failed   | Verify schema definitions and attributes   |
 
 ### API Errors
 
