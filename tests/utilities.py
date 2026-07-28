@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, ClassVar, overload
 
 from flext_ldap import FlextLdapUtilities, u
 
-from flext_tests import FlextTestsUtilities, FlextTestsFixturesDSLMixin, tk, tm
+from flext_tests import FlextTestsFixturesDSLMixin, FlextTestsUtilities, tk, tm
 from tests import c, m, p, t
 
 if TYPE_CHECKING:
