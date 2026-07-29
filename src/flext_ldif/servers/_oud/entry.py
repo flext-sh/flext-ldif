@@ -8,17 +8,17 @@ Provides OUD-specific servers for schema, ACL, and entry processing.
 
 from __future__ import annotations
 
-from collections.abc import (
-    Mapping,
-)
-from typing import ClassVar, override
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
 from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
 from flext_ldif.servers._oud.helpers import FlextLdifServersOudHelpersMixin
-from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.servers.rfc import FlextLdifServersRfc
+
+if TYPE_CHECKING:
+    from flext_ldif.servers.base import FlextLdifServersBase
 
 
 class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
@@ -39,19 +39,13 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         _parent_server: FlextLdifServersBase | None = None,
     ) -> None:
         """Initialize OUD entry server."""
-        FlextLdifServersBaseEntry.__init__(
-            self,
-            entry_service,
-            _parent_server=None,
-        )
+        FlextLdifServersBaseEntry.__init__(self, entry_service, _parent_server=None)
         if _parent_server is not None:
             object.__setattr__(self, "_parent_server", _parent_server)
 
     @override
     def can_handle(
-        self,
-        entry_dn: str,
-        attributes: t.MutableStrSequenceMapping,
+        self, entry_dn: str, attributes: t.MutableStrSequenceMapping
     ) -> bool:
         """Match OUD-specific DN/attribute patterns or fall back on objectclass."""
         oud_constants = FlextLdifServersOudConstants
@@ -77,7 +71,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             post_parse_result = self._hook_post_parse_entry(parsed_entry)
             if post_parse_result.failure:
                 return r[t.MutableSequenceOf[m.Ldif.Entry]].fail(
-                    post_parse_result.error or "OUD post-parse failed",
+                    post_parse_result.error or "OUD post-parse failed"
                 )
             entry_after_post: m.Ldif.Entry = post_parse_result.value
             original_dn = entry_after_post.dn.value if entry_after_post.dn else ""
@@ -88,22 +82,18 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 else {}
             )
             finalize_result = self._hook_finalize_entry_parse(
-                entry_after_post,
-                original_dn,
-                original_attrs,
+                entry_after_post, original_dn, original_attrs
             )
             if finalize_result.failure:
                 return r[t.MutableSequenceOf[m.Ldif.Entry]].fail(
-                    finalize_result.error or "OUD finalize parse failed",
+                    finalize_result.error or "OUD finalize parse failed"
                 )
             processed_entries.append(finalize_result.value)
         return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(processed_entries)
 
     @override
     def parse_entry(
-        self,
-        entry_dn: str,
-        entry_attrs: t.MutableStrSequenceMapping | m.Ldif.Entry,
+        self, entry_dn: str, entry_attrs: t.MutableStrSequenceMapping | m.Ldif.Entry
     ) -> p.Result[m.Ldif.Entry]:
         """Delegate RFC parse, then enrich entry metadata with OUD round-trip context."""
         entry_attrs_dict: t.MutableStrSequenceMapping = {}
@@ -119,9 +109,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             return result
         entry = result.value
         original_attribute_case: t.MutableStrMapping = {}
-        if isinstance(entry_attrs, Mapping):
-            for attr_name in entry_attrs:
-                original_attribute_case[attr_name.lower()] = attr_name
+        for attr_name in entry_attrs_dict:
+            original_attribute_case[attr_name.lower()] = attr_name
         metadata_config = m.Ldif.EntryParseMetadataConfig.model_validate({
             "server_type": c.Ldif.ServerTypes.OUD,
             "original_entry_dn": entry_dn,
@@ -131,17 +120,12 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             "dn_was_base64": False,
             "original_attribute_case": original_attribute_case,
         })
-        metadata = u.Ldif.build_entry_parse_metadata(
-            metadata_config,
-        )
+        metadata = u.Ldif.build_entry_parse_metadata(metadata_config)
         entry.metadata = metadata
         return r[m.Ldif.Entry].ok(entry)
 
     def _hook_finalize_entry_parse(
-        self,
-        entry: m.Ldif.Entry,
-        original_dn: str,
-        original_attrs: t.AttributeMapping,
+        self, entry: m.Ldif.Entry, original_dn: str, original_attrs: t.AttributeMapping
     ) -> p.Result[m.Ldif.Entry]:
         """Process ACL attributes (aci) into entry.metadata.extensions."""
         _ = original_dn
@@ -155,24 +139,15 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         if acl_server is None:
             return r[m.Ldif.Entry].ok(entry)
         if entry.metadata is None:
-            entry.metadata = m.Ldif.ServerMetadata.create_for(
-                "oud",
-                extensions=m.Ldif.DynamicMetadata(),
-            )
+            entry.metadata = u.Ldif.server_metadata_for("oud")
         existing: t.Ldif.MutableMetadataInputMapping = (
-            dict(entry.metadata.extensions.to_dict())
-            if entry.metadata.extensions
-            else {}
+            dict(entry.metadata.extensions) if entry.metadata.extensions else {}
         )
         FlextLdifServersOudHelpersMixin.process_aci_list_for_finalize(
             aci_values, acl_server, existing
         )
         if existing:
-            entry.metadata = entry.metadata.model_copy(
-                update={
-                    "extensions": m.Ldif.DynamicMetadata.from_dict(existing),
-                },
-            )
+            entry.metadata = entry.metadata.model_copy(update={"extensions": existing})
         return r[m.Ldif.Entry].ok(entry)
 
     @override
@@ -189,13 +164,12 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 if u.matches_type(aci_value, str):
                     process_result = (
                         FlextLdifServersOudHelpersMixin.process_single_aci_value(
-                            aci_value,
-                            acl_metadata_extensions,
+                            aci_value, acl_metadata_extensions
                         )
                     )
                     if process_result.failure:
                         return r[m.Ldif.Entry].fail(
-                            process_result.error or "ACI processing failed",
+                            process_result.error or "ACI processing failed"
                         )
                     if process_result.value:
                         has_macros = True

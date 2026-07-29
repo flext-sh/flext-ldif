@@ -2,23 +2,13 @@
 
 from __future__ import annotations
 
-from collections.abc import (
-    ItemsView,
-    KeysView,
-    MutableMapping,
-    ValuesView,
-)
-from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
-    from flext_ldif import (
-        FlextLdifProtocols as lp,
-        c,
-        m,
-        p,
-        t,
-    )
+    from collections.abc import KeysView, MutableMapping, ValuesView
+    from pathlib import Path
+
+    from flext_ldif import FlextLdifProtocols as lp, c, m, p, t
     from flext_ldif._protocols.domain import FlextLdifProtocolsDomain as lpd
 
 
@@ -72,27 +62,19 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
         def parse_ldif(
-            self,
-            value: str | Path,
-            *,
-            server_type: str | None = None,
+            self, value: str | Path, *, server_type: str | None = None
         ) -> p.Result[m.Ldif.ParseResponse]:
             """Parse LDIF content from text or file path."""
             ...
 
         def parse_ldif_file(
-            self,
-            path: Path,
-            server_type: str | None = None,
-            encoding: str = "utf-8",
+            self, path: Path, server_type: str | None = None, encoding: str = "utf-8"
         ) -> p.Result[m.Ldif.ParseResponse]:
             """Parse LDIF content from a file path."""
             ...
 
         def parse_string(
-            self,
-            content: str,
-            server_type: str | None = None,
+            self, content: str, server_type: str | None = None
         ) -> p.Result[m.Ldif.ParseResponse]:
             """Parse LDIF content from a raw string."""
             ...
@@ -134,10 +116,7 @@ class FlextLdifProtocolsBase(Protocol):
             """Resolve entry server by server type via the facade DSL."""
             ...
 
-        def resolve_base_server(
-            self,
-            server_type: str,
-        ) -> p.Result[lpd.ServerServer]:
+        def resolve_base_server(self, server_type: str) -> p.Result[lpd.ServerServer]:
             """Resolve base server by server type via the facade DSL."""
             ...
 
@@ -145,28 +124,20 @@ class FlextLdifProtocolsBase(Protocol):
             """Resolve schema server by server type via the facade DSL."""
             ...
 
-        def resolve_schema_server(
-            self,
-            server_type: str,
-        ) -> p.Result[lpd.SchemaServer]:
+        def resolve_schema_server(self, server_type: str) -> p.Result[lpd.SchemaServer]:
             """Resolve schema server by server type via the facade DSL."""
             ...
 
         def resolve_server_bundle(
-            self,
-            server_type: str,
+            self, server_type: str
         ) -> p.Result[
-            t.MappingKV[
-                str,
-                lpd.SchemaServer | lpd.AclServer | lpd.EntryServer,
-            ]
+            t.MappingKV[str, lpd.SchemaServer | lpd.AclServer | lpd.EntryServer]
         ]:
             """Resolve schema/acl/entry bundle by server type via the facade DSL."""
             ...
 
         def resolve_server_constants(
-            self,
-            server_type: str,
+            self, server_type: str
         ) -> p.Result[type[FlextLdifProtocolsBase.ServerConstants]]:
             """Resolve server constants by server type via the facade DSL."""
             ...
@@ -180,8 +151,7 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
         def resolve_supported_conversions(
-            self,
-            server: FlextLdifProtocolsBase.ServerReference | str,
+            self, server: FlextLdifProtocolsBase.ServerReference | str
         ) -> t.MappingKV[str, bool]:
             """Return supported conversion categories for a server server."""
             ...
@@ -199,9 +169,7 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
         def resolve_effective_server_type(
-            self,
-            ldif_path: Path | None = None,
-            ldif_content: str | None = None,
+            self, ldif_path: Path | None = None, ldif_content: str | None = None
         ) -> p.Result[str]:
             """Resolve the effective LDAP server type for public processing flows."""
             ...
@@ -219,17 +187,13 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
         def parse_acl_string(
-            self,
-            acl_string: str,
-            server_type: str,
+            self, acl_string: str, server_type: str
         ) -> p.Result[m.Ldif.Acl]:
             """Parse one ACL string through the public facade DSL."""
             ...
 
         def extract_acls_from_entry(
-            self,
-            entry: m.Ldif.Entry,
-            server_type: str,
+            self, entry: m.Ldif.Entry, server_type: str
         ) -> p.Result[m.Ldif.AclResponse]:
             """Extract ACLs from an entry through the public facade DSL."""
             ...
@@ -252,46 +216,9 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
         def calculate_for_entries(
-            self,
-            entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
+            self, entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse
         ) -> p.Result[m.Ldif.EntriesStatistics]:
             """Calculate entry statistics through the public facade DSL."""
-            ...
-
-    @runtime_checkable
-    class DynamicMetadata(Protocol):
-        """Mapping-like metadata contract for dynamic extensions."""
-
-        def __getitem__(self, key: str) -> t.JsonValue:
-            """Return metadata value by key."""
-            ...
-
-        def get(
-            self,
-            key: str,
-            default: t.JsonValue | None = None,
-        ) -> t.JsonValue | None:
-            """Return metadata value by key with optional default."""
-            ...
-
-        def items(self) -> ItemsView[str, t.JsonValue]:
-            """Return metadata items view."""
-            ...
-
-        def keys(self) -> KeysView[str]:
-            """Return metadata keys view."""
-            ...
-
-        def values(self) -> ValuesView[t.JsonValue]:
-            """Return metadata values view."""
-            ...
-
-        def to_dict(self) -> t.MutableJsonMapping:
-            """Convert metadata to a mutable dictionary."""
-            ...
-
-        def model_dump(self) -> t.JsonMapping:
-            """Serialize metadata to a mapping."""
             ...
 
     @runtime_checkable
@@ -312,7 +239,7 @@ class FlextLdifProtocolsBase(Protocol):
 
         @property
         def value(self) -> str:
-            """Return the DN string value."""
+            """The DN string value."""
             ...
 
     @runtime_checkable
@@ -321,13 +248,11 @@ class FlextLdifProtocolsBase(Protocol):
 
         @property
         def attributes(self) -> MutableMapping[str, t.MutableSequenceOf[str]]:
-            """Return the underlying attribute mapping."""
+            """The underlying attribute mapping."""
             ...
 
         def get(
-            self,
-            key: str,
-            default: t.MutableSequenceOf[str] | None = None,
+            self, key: str, default: t.MutableSequenceOf[str] | None = None
         ) -> t.MutableSequenceOf[str]:
             """Return attribute values with optional default."""
             ...
@@ -387,22 +312,22 @@ class FlextLdifProtocolsBase(Protocol):
 
         @property
         def read(self) -> bool:
-            """Return whether read is allowed."""
+            """Whether read is allowed."""
             ...
 
         @property
         def write(self) -> bool:
-            """Return whether write is allowed."""
+            """Whether write is allowed."""
             ...
 
         @property
         def search(self) -> bool:
-            """Return whether search is allowed."""
+            """Whether search is allowed."""
             ...
 
         @property
         def compare(self) -> bool:
-            """Return whether compare is allowed."""
+            """Whether compare is allowed."""
             ...
 
     @runtime_checkable
@@ -411,12 +336,12 @@ class FlextLdifProtocolsBase(Protocol):
 
         @property
         def target_dn(self) -> str:
-            """Return target DN expression."""
+            """The target DN expression."""
             ...
 
         @property
         def attributes(self) -> t.MutableSequenceOf[str]:
-            """Return target attribute names."""
+            """The target attribute names."""
             ...
 
     @runtime_checkable
@@ -425,12 +350,12 @@ class FlextLdifProtocolsBase(Protocol):
 
         @property
         def subject_type(self) -> str:
-            """Return subject type."""
+            """The subject type."""
             ...
 
         @property
         def subject_value(self) -> str:
-            """Return subject value."""
+            """The subject value."""
             ...
 
     @runtime_checkable
@@ -439,22 +364,22 @@ class FlextLdifProtocolsBase(Protocol):
 
         @property
         def rfc_violations(self) -> t.MutableSequenceOf[str]:
-            """Return RFC violations."""
+            """RFC violations."""
             ...
 
         @property
         def errors(self) -> t.MutableSequenceOf[str]:
-            """Return validation errors."""
+            """The validation errors."""
             ...
 
         @property
         def warnings(self) -> t.MutableSequenceOf[str]:
-            """Return validation warnings."""
+            """The validation warnings."""
             ...
 
         @property
         def context(self) -> t.MutableStrMapping:
-            """Return validation context."""
+            """The validation context."""
             ...
 
     @runtime_checkable
@@ -463,7 +388,7 @@ class FlextLdifProtocolsBase(Protocol):
 
         @property
         def base_dn(self) -> str | None:
-            """Return base DN override."""
+            """The base DN override."""
             ...
 
     @runtime_checkable
@@ -472,32 +397,32 @@ class FlextLdifProtocolsBase(Protocol):
 
         @property
         def line_width(self) -> int:
-            """Return line width for folding."""
+            """The line width for folding."""
             ...
 
         @property
         def sort_attributes(self) -> bool:
-            """Return whether attributes should be sorted."""
+            """Whether attributes should be sorted."""
             ...
 
         @property
         def base64_encode_binary(self) -> bool:
-            """Return whether binary values should be base64 encoded."""
+            """Whether binary values should be base64 encoded."""
             ...
 
         @property
         def include_dn_comments(self) -> bool:
-            """Return whether DN comments should be emitted."""
+            """Whether DN comments should be emitted."""
             ...
 
         @property
         def restore_original_format(self) -> bool:
-            """Return whether original formatting should be restored."""
+            """Whether original formatting should be restored."""
             ...
 
         @property
         def entry_category(self) -> str | None:
-            """Return migration entry category."""
+            """The migration entry category."""
             ...
 
     @runtime_checkable
@@ -506,7 +431,7 @@ class FlextLdifProtocolsBase(Protocol):
 
         @property
         def dn_line(self) -> str | None:
-            """Return original DN line representation."""
+            """The original DN line representation."""
             ...
 
     @runtime_checkable
@@ -515,17 +440,17 @@ class FlextLdifProtocolsBase(Protocol):
 
         @property
         def original_string_complete(self) -> str | None:
-            """Return the original schema definition."""
+            """The original schema definition."""
             ...
 
         @property
         def field_order(self) -> t.MutableSequenceOf[str]:
-            """Return original field order."""
+            """The original field order."""
             ...
 
         @property
-        def extensions(self) -> FlextLdifProtocolsBase.DynamicMetadata:
-            """Return schema extensions metadata."""
+        def extensions(self) -> t.MutableJsonMapping:
+            """The schema extensions metadata."""
             ...
 
     @runtime_checkable
@@ -534,7 +459,7 @@ class FlextLdifProtocolsBase(Protocol):
 
         @property
         def write_options(self) -> FlextLdifProtocolsBase.WriteOptions | None:
-            """Return embedded write options."""
+            """The embedded write options."""
             ...
 
     @runtime_checkable
@@ -563,19 +488,19 @@ class FlextLdifProtocolsBase(Protocol):
 
         @property
         def server_type(self) -> str:
-            """Return server/server type identifier."""
+            """The server/server type identifier."""
             ...
 
         @property
-        def extensions(self) -> FlextLdifProtocolsBase.DynamicMetadata:
-            """Return dynamic extensions."""
+        def extensions(self) -> t.MutableJsonMapping:
+            """The dynamic extensions."""
             ...
 
         @property
         def schema_format_details(
             self,
         ) -> FlextLdifProtocolsBase.SchemaFormatDetails | None:
-            """Return schema round-trip formatting details."""
+            """The schema round-trip formatting details."""
             ...
 
     @runtime_checkable
@@ -584,12 +509,12 @@ class FlextLdifProtocolsBase(Protocol):
 
         @property
         def oid(self) -> str:
-            """Return attribute OID."""
+            """The attribute OID."""
             ...
 
         @property
         def name(self) -> str:
-            """Return attribute name."""
+            """The attribute name."""
             ...
 
     @runtime_checkable
@@ -598,12 +523,12 @@ class FlextLdifProtocolsBase(Protocol):
 
         @property
         def oid(self) -> str:
-            """Return objectClass OID."""
+            """The objectClass OID."""
             ...
 
         @property
         def name(self) -> str:
-            """Return objectClass name."""
+            """The objectClass name."""
             ...
 
     @runtime_checkable
@@ -612,22 +537,22 @@ class FlextLdifProtocolsBase(Protocol):
 
         @property
         def name(self) -> str:
-            """Return ACL name."""
+            """ACL name."""
             ...
 
         @property
         def server_type(self) -> str:
-            """Return ACL server type."""
+            """ACL server type."""
             ...
 
         @property
         def permissions(self) -> FlextLdifProtocolsBase.AclPermissions | None:
-            """Return ACL permissions."""
+            """ACL permissions."""
             ...
 
         @property
         def raw_acl(self) -> str:
-            """Return original ACL string."""
+            """The original ACL string."""
             ...
 
     @runtime_checkable
@@ -638,42 +563,42 @@ class FlextLdifProtocolsBase(Protocol):
 
         @property
         def dn(self) -> FlextLdifProtocolsBase.DN | None:
-            """Return entry DN."""
+            """The entry DN."""
             ...
 
         @property
         def attributes(self) -> FlextLdifProtocolsBase.Attributes | None:
-            """Return entry attributes."""
+            """The entry attributes."""
             ...
 
         @property
         def changetype(self) -> c.Ldif.LdifChangeType | None:
-            """Return changetype when present."""
+            """The changetype when present."""
             ...
 
         @property
         def record_kind(self) -> c.Ldif.RecordKind:
-            """Return whether the record is content or change."""
+            """Whether the record is content or change."""
             ...
 
         @property
-        def controls(self) -> t.SequenceOf[FlextLdifProtocolsBase.Control]:
-            """Return parsed LDIF controls."""
+        def controls(self) -> t.SequenceOf[m.Ldif.Control]:
+            """The parsed LDIF controls."""
             ...
 
         @property
         def newrdn(self) -> str | None:
-            """Return newrdn for moddn/modrdn records."""
+            """The newrdn for moddn/modrdn records."""
             ...
 
         @property
         def deleteoldrdn(self) -> bool | None:
-            """Return deleteoldrdn for moddn/modrdn records."""
+            """The deleteoldrdn for moddn/modrdn records."""
             ...
 
         @property
         def newsuperior(self) -> str | None:
-            """Return newsuperior for moddn records."""
+            """The newsuperior for moddn records."""
             ...
 
     @runtime_checkable
@@ -682,12 +607,12 @@ class FlextLdifProtocolsBase(Protocol):
 
         @property
         def attributes(self) -> FlextLdifProtocolsBase.Attributes | None:
-            """Return entry attributes for validation helpers."""
+            """The entry attributes for validation helpers."""
             ...
 
         @property
         def changetype(self) -> c.Ldif.LdifChangeType | None:
-            """Return entry changetype for validation helpers."""
+            """The entry changetype for validation helpers."""
             ...
 
     @runtime_checkable
@@ -696,7 +621,7 @@ class FlextLdifProtocolsBase(Protocol):
 
         @property
         def metadata(self) -> FlextLdifProtocolsBase.MetadataWithWriteOptions | None:
-            """Return metadata that may carry write options."""
+            """The metadata that may carry write options."""
             ...
 
     @runtime_checkable
@@ -705,22 +630,22 @@ class FlextLdifProtocolsBase(Protocol):
 
         @property
         def total_entries(self) -> int:
-            """Return total processed entries."""
+            """The total processed entries."""
             ...
 
         @property
         def processed_entries(self) -> int:
-            """Return successfully processed entries."""
+            """The successfully processed entries."""
             ...
 
         @property
         def failed_entries(self) -> int:
-            """Return failed entry count."""
+            """The failed entry count."""
             ...
 
         @property
         def rejected_entries(self) -> int:
-            """Return rejected entry count."""
+            """The rejected entry count."""
             ...
 
         @property
@@ -729,7 +654,7 @@ class FlextLdifProtocolsBase(Protocol):
         ) -> t.SequenceOf[
             FlextLdifProtocolsBase.ConversionEvent | FlextLdifProtocolsBase.DnEvent
         ]:
-            """Return accumulated processing events."""
+            """The accumulated processing events."""
             ...
 
     @runtime_checkable
@@ -738,7 +663,7 @@ class FlextLdifProtocolsBase(Protocol):
 
         @property
         def statistics(self) -> FlextLdifProtocolsBase.Statistics:
-            """Return pipeline statistics."""
+            """The pipeline statistics."""
             ...
 
     @runtime_checkable
@@ -747,12 +672,12 @@ class FlextLdifProtocolsBase(Protocol):
 
         @property
         def entries(self) -> t.SequenceOf[FlextLdifProtocolsBase.Entry]:
-            """Return parsed entries."""
+            """The parsed entries."""
             ...
 
         @property
         def detected_server_type(self) -> str | None:
-            """Return detected server type."""
+            """The detected server type."""
             ...
 
     @runtime_checkable
@@ -761,27 +686,27 @@ class FlextLdifProtocolsBase(Protocol):
 
         @property
         def valid(self) -> bool:
-            """Return validation outcome."""
+            """The validation outcome."""
             ...
 
         @property
         def total_entries(self) -> int:
-            """Return validated entry count."""
+            """The validated entry count."""
             ...
 
         @property
         def valid_entries(self) -> int:
-            """Return valid entry count."""
+            """The valid entry count."""
             ...
 
         @property
         def invalid_entries(self) -> int:
-            """Return invalid entry count."""
+            """The invalid entry count."""
             ...
 
         @property
         def errors(self) -> t.StrSequence:
-            """Return validation errors."""
+            """The validation errors."""
             ...
 
     @runtime_checkable
@@ -790,17 +715,17 @@ class FlextLdifProtocolsBase(Protocol):
 
         @property
         def entries(self) -> t.SequenceOf[FlextLdifProtocolsBase.Entry]:
-            """Return migrated entries."""
+            """The migrated entries."""
             ...
 
         @property
         def stats(self) -> FlextLdifProtocolsBase.Statistics:
-            """Return migration statistics."""
+            """The migration statistics."""
             ...
 
         @property
         def output_files(self) -> t.StrSequence:
-            """Return generated output files."""
+            """The generated output files."""
             ...
 
     @runtime_checkable
@@ -809,7 +734,7 @@ class FlextLdifProtocolsBase(Protocol):
 
         @property
         def acls(self) -> t.SequenceOf[FlextLdifProtocolsBase.Acl]:
-            """Return extracted ACLs."""
+            """The extracted ACLs."""
             ...
 
     @runtime_checkable
@@ -818,12 +743,12 @@ class FlextLdifProtocolsBase(Protocol):
 
         @property
         def content(self) -> str | None:
-            """Return serialized LDIF text."""
+            """The serialized LDIF text."""
             ...
 
         @property
         def output_path(self) -> str | None:
-            """Return persisted output path."""
+            """The persisted output path."""
             ...
 
     @runtime_checkable
@@ -832,32 +757,32 @@ class FlextLdifProtocolsBase(Protocol):
 
         @property
         def conversion_operation(self) -> str:
-            """Return conversion operation name."""
+            """The conversion operation name."""
             ...
 
         @property
         def source_format(self) -> str:
-            """Return source format."""
+            """The source format."""
             ...
 
         @property
         def target_format(self) -> str:
-            """Return target format."""
+            """The target format."""
             ...
 
         @property
         def items_converted(self) -> int:
-            """Return converted item count."""
+            """The converted item count."""
             ...
 
         @property
         def items_failed(self) -> int:
-            """Return failed item count."""
+            """The failed item count."""
             ...
 
         @property
         def error_details(self) -> t.StrSequence | None:
-            """Return conversion error details."""
+            """The conversion error details."""
             ...
 
     @runtime_checkable
@@ -866,17 +791,17 @@ class FlextLdifProtocolsBase(Protocol):
 
         @property
         def dn_operation(self) -> str:
-            """Return DN operation name."""
+            """DN operation name."""
             ...
 
         @property
         def input_dn(self) -> str:
-            """Return input DN."""
+            """The input DN."""
             ...
 
         @property
         def output_dn(self) -> str | None:
-            """Return output DN."""
+            """The output DN."""
             ...
 
         validation_result: bool | None
@@ -908,23 +833,19 @@ class FlextLdifProtocolsBase(Protocol):
         """Protocol for LDIF entry categorization services."""
 
         def categorize_entries(
-            self,
-            entries: t.MutableSequenceOf[m.Ldif.Entry],
+            self, entries: t.MutableSequenceOf[m.Ldif.Entry]
         ) -> p.Result[m.Ldif.FlexibleCategories]: ...
 
         def filter_by_base_dn(
-            self,
-            categories: m.Ldif.FlexibleCategories,
+            self, categories: m.Ldif.FlexibleCategories
         ) -> m.Ldif.FlexibleCategories: ...
 
         def validate_dns(
-            self,
-            entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
+            self, entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse
         ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]: ...
 
         def filter_schema_by_oids(
-            self,
-            schema_entries: t.MutableSequenceOf[m.Ldif.Entry],
+            self, schema_entries: t.MutableSequenceOf[m.Ldif.Entry]
         ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]: ...
 
     @runtime_checkable

@@ -2,30 +2,26 @@
 
 from __future__ import annotations
 
-from collections.abc import (
-    Callable,
-    Sequence,
-)
+from collections.abc import Callable, Sequence
 from typing import ClassVar, TypeGuard, overload
 
 from flext_cli import u
-from flext_ldif import c, p, r, t
+from flext_ldif import FlextLdifModels as m, c, p, r, t
 from flext_ldif._utilities.collection_ldif import FlextLdifUtilitiesCollectionLdif
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.pipeline import FlextLdifUtilitiesPipeline
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
 from flext_ldif._utilities.validation import FlextLdifUtilitiesValidation
-from flext_ldif.models import FlextLdifModels as m
 
 
 class FlextLdifUtilitiesDispatch:
     """Override dispatchers that route between parent classes."""
 
     _ENTRY_LIST_ADAPTER: ClassVar[m.TypeAdapter[list[m.Ldif.Entry]]] = m.TypeAdapter(
-        list[m.Ldif.Entry],
+        list[m.Ldif.Entry]
     )
     _ACL_LIST_ADAPTER: ClassVar[m.TypeAdapter[list[m.Ldif.Acl]]] = m.TypeAdapter(
-        list[m.Ldif.Acl],
+        list[m.Ldif.Acl]
     )
 
     @staticmethod
@@ -124,10 +120,7 @@ class FlextLdifUtilitiesDispatch:
     ):
         """Validate entries against rules."""
         match True:
-            case _ if not validators and isinstance(
-                value_or_entries,
-                (str, m.Ldif.DN),
-            ):
+            case _ if not validators and isinstance(value_or_entries, (str, m.Ldif.DN)):
                 result: (
                     p.Result[
                         t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]
@@ -136,34 +129,27 @@ class FlextLdifUtilitiesDispatch:
                     | bool
                 ) = FlextLdifUtilitiesDN.validate_dn(value_or_entries)
             case _ if not validators and FlextLdifUtilitiesDispatch._is_entry_sequence(
-                value_or_entries,
+                value_or_entries
             ):
                 result = FlextLdifUtilitiesDispatch._validate_entries(
-                    value_or_entries,
-                    pipeline=pipeline,
+                    value_or_entries, pipeline=pipeline
                 )
             case _ if isinstance(value_or_entries, Sequence) and not isinstance(
                 value_or_entries, t.STR_BYTES_TYPES
             ):
                 result = r[t.JsonValue].fail(
-                    "validator call requires scalar, not entry sequence",
-                )
-            case _ if isinstance(value_or_entries, bytes):
-                result = r[t.JsonValue].fail(
-                    "bytes value not supported for validation",
+                    "validator call requires scalar, not entry sequence"
                 )
             case _ if isinstance(value_or_entries, m.Ldif.DN):
                 result = FlextLdifUtilitiesValidation.validate_value(
-                    value_or_entries.value,
-                    *validators,
+                    value_or_entries.value, *validators
                 )
             case _:
                 validated_value: t.JsonValue = u.normalize_to_json_value(
-                    value_or_entries,
+                    value_or_entries
                 )
                 result = FlextLdifUtilitiesValidation.validate_value(
-                    validated_value,
-                    *validators,
+                    validated_value, *validators
                 )
         return result
 
@@ -173,7 +159,7 @@ class FlextLdifUtilitiesDispatch:
         *,
         pipeline: FlextLdifUtilitiesPipeline.ValidationPipeline | None = None,
     ) -> p.Result[t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]]:
-        """Internal: Validate LDIF entries."""
+        """Validate LDIF entries."""
         validation_pipeline = (
             pipeline or FlextLdifUtilitiesPipeline.ValidationPipeline()
         )
@@ -198,9 +184,7 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def find(
-        items: t.JsonList,
-        *,
-        predicate: Callable[..., bool],
+        items: t.JsonList, *, predicate: Callable[..., bool]
     ) -> t.JsonValue | None:
         """Route to CollectionLdif.find (resolves CollectionLdif vs core)."""
         return FlextLdifUtilitiesCollectionLdif.find(items, predicate=predicate)

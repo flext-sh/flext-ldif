@@ -4,18 +4,16 @@ from __future__ import annotations
 
 import os
 import uuid
-from collections.abc import Callable, MutableMapping
 from pathlib import Path
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar, overload
 
 from flext_ldap import FlextLdapUtilities, u
-from flext_tests import FlextTestsUtilities, tk, tm
-from flext_tests._utilities.fixtures_dsl import FlextTestsFixturesDSLMixin
 
-from tests.constants import c
-from tests.models import m
-from tests.protocols import p
-from tests.typings import t
+from flext_tests import FlextTestsFixturesDSLMixin, FlextTestsUtilities, tk, tm
+from tests import c, m, p, t
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, MutableMapping
 
 
 class TestsFlextLdifUtilities(FlextTestsUtilities, u):
@@ -39,9 +37,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
 
         @staticmethod
         def create_server_from_url(
-            server_url: str,
-            *,
-            get_info: c.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.ALL,
+            server_url: str, *, get_info: c.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.ALL
         ) -> p.Ldap.Ldap3Server:
             """Create an LDAP server from a URL for test connectivity checks."""
             return FlextLdapUtilities.Ldap.create_server_from_url(
@@ -100,7 +96,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             entry: m.Ldif.Entry = m.Ldif.Entry.model_validate({
                 "dn": {"value": dn or f"cn=test-{entry_id},ou=users,dc=example,dc=com"},
                 "attributes": {
-                    "attributes": {k: list(v) for k, v in payload_attrs.items()},
+                    "attributes": {k: list(v) for k, v in payload_attrs.items()}
                 },
                 "server_type": server_type,
             })
@@ -108,9 +104,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
 
         @staticmethod
         def create_real_ldif_content(
-            entries_count: int = 3,
-            *,
-            include_schema: bool = False,
+            entries_count: int = 3, *, include_schema: bool = False
         ) -> str:
             """Create real LDIF content for testing."""
             blocks: list[str] = []
@@ -154,9 +148,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
 
         @classmethod
         def fixture_metadata(
-            cls,
-            server_type: t.Tests.FixtureServer,
-            fixture_type: t.Tests.FixtureKind,
+            cls, server_type: t.Tests.FixtureServer, fixture_type: t.Tests.FixtureKind
         ) -> m.Tests.FixtureMetadata:
             """Return metadata for one fixture file (cached per file path)."""
             file_path = cls.path(server_type, fixture_type)
@@ -214,13 +206,15 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             env_password = os.getenv("FLEXT_LDAP_BIND_PASSWORD")
             candidates: list[tuple[str, str]] = [
                 *([(env_dn, env_password)] if env_dn and env_password else []),
-                (c.Tests.DOCKER_ADMIN_DN, c.Tests.DOCKER_ADMIN_PASSWORD),
-                (c.Tests.DOCKER_LEGACY_ADMIN_DN, c.Tests.DOCKER_LEGACY_ADMIN_PASSWORD),
+                (c.Tests.DOCKER_ADMIN_DN, c.Tests.DOCKER_ADMIN_CREDENTIAL),
+                (
+                    c.Tests.DOCKER_LEGACY_ADMIN_DN,
+                    c.Tests.DOCKER_LEGACY_ADMIN_CREDENTIAL,
+                ),
             ]
             for candidate_dn, candidate_password in candidates:
                 credentials = cls._probe_admin_credentials(
-                    candidate_dn,
-                    candidate_password,
+                    candidate_dn, candidate_password
                 )
                 if credentials is None:
                     continue
@@ -228,16 +222,14 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                 return credentials
             default_credentials = (
                 c.Tests.DOCKER_ADMIN_DN,
-                c.Tests.DOCKER_ADMIN_PASSWORD,
+                c.Tests.DOCKER_ADMIN_CREDENTIAL,
             )
             cache[0] = default_credentials
             return default_credentials
 
         @classmethod
         def _probe_admin_credentials(
-            cls,
-            candidate_dn: str,
-            candidate_password: str,
+            cls, candidate_dn: str, candidate_password: str
         ) -> tuple[str, str] | None:
             """Return candidate credentials when LDAP bind succeeds."""
             try:
@@ -257,12 +249,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                     connection.unbind()
                     return (candidate_dn, candidate_password)
                 return None
-            except (
-                ConnectionError,
-                OSError,
-                ValueError,
-                t.Ldap.LDAPException,
-            ):
+            except (ConnectionError, OSError, ValueError, t.Ldap.LDAPException):
                 return None
 
         @staticmethod
@@ -275,10 +262,12 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             actual = getattr(value, field, None)
             if isinstance(expected, list) and actual is not None:
                 if list(actual) != list(expected):
-                    raise AssertionError(f"Expected {label} {expected}, got {actual}")
+                    msg = f"Expected {label} {expected}, got {actual}"
+                    raise AssertionError(msg)
                 return
             if actual != expected:
-                raise AssertionError(f"Expected {label} '{expected}', got {actual}")
+                msg = f"Expected {label} '{expected}', got {actual}"
+                raise AssertionError(msg)
 
         @classmethod
         def assert_server_schema_parse_and_properties(
@@ -356,6 +345,32 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             "parse_input": "parse_input",
         }
 
+        @overload
+        @classmethod
+        def server_parse_and_unwrap[
+            SchemaNodeT: (m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass, m.Ldif.Acl)
+        ](
+            cls,
+            server: p.Ldif.SchemaServer | p.Tests.ParseInputServer,
+            content: str,
+            *,
+            parse_method: t.Tests.ParseMethod = ...,
+            expected_type: type[SchemaNodeT],
+            should_succeed: bool | None = ...,
+            message: str | None = ...,
+        ) -> SchemaNodeT | None: ...
+        @overload
+        @classmethod
+        def server_parse_and_unwrap(
+            cls,
+            server: p.Ldif.SchemaServer | p.Tests.ParseInputServer,
+            content: str,
+            *,
+            parse_method: t.Tests.ParseMethod = ...,
+            expected_type: None = ...,
+            should_succeed: bool | None = ...,
+            message: str | None = ...,
+        ) -> m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl | None: ...
         @classmethod
         def server_parse_and_unwrap(
             cls,
@@ -389,12 +404,10 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                 )
             value = result.value
             if expected_type is not None and not isinstance(value, expected_type):
-                raise AssertionError(
-                    f"Expected {expected_type.__name__}, got {type(value).__name__}"
-                )
+                msg_0 = f"Expected {expected_type.__name__}, got {type(value).__name__}"
+                raise AssertionError(msg_0)
             if isinstance(
-                value,
-                (m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass, m.Ldif.Acl),
+                value, (m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass, m.Ldif.Acl)
             ):
                 return value
             return None
@@ -422,9 +435,8 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                 )
             value: m.Ldif.Acl = result.unwrap()
             if expected_type is not None and not isinstance(value, expected_type):
-                raise AssertionError(
-                    f"Expected {expected_type.__name__}, got {type(value).__name__}"
-                )
+                msg = f"Expected {expected_type.__name__}, got {type(value).__name__}"
+                raise AssertionError(msg)
             return value
 
         @staticmethod
@@ -432,9 +444,8 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             """Assert every fragment in ``must_contain`` appears in ``serialized``."""
             for fragment in must_contain:
                 if fragment not in serialized:
-                    raise AssertionError(
-                        f"'{fragment}' not found in output: {serialized[:200]}..."
-                    )
+                    msg = f"'{fragment}' not found in output: {serialized[:200]}..."
+                    raise AssertionError(msg)
 
         @classmethod
         def server_write_and_unwrap(
@@ -450,8 +461,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
         ) -> str:
             """Write content with a server and unwrap the serialized output."""
             dispatch: t.MappingKV[
-                t.Tests.WriteMethod,
-                tuple[type, type[m.BaseModel]],
+                t.Tests.WriteMethod, tuple[type, type[m.BaseModel]]
             ] = {
                 "_write_attribute": (
                     p.Tests.WriteAttributeServer,
@@ -465,12 +475,15 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             }
             entry = dispatch.get(write_method)
             if entry is None:
-                raise AssertionError(f"{write_method} is not supported by this server")
+                msg = f"{write_method} is not supported by this server"
+                raise AssertionError(msg)
             server_proto, data_cls = entry
             if not isinstance(server, server_proto):
-                raise AssertionError(f"{write_method} is not supported by this server")
+                msg = f"{write_method} is not supported by this server"
+                raise TypeError(msg)
             if not isinstance(data, data_cls):
-                raise AssertionError(f"{write_method} requires a {data_cls.__name__}")
+                msg = f"{write_method} requires a {data_cls.__name__}"
+                raise TypeError(msg)
             method: Callable[[m.BaseModel], p.Result[str]] = getattr(
                 server, write_method
             )

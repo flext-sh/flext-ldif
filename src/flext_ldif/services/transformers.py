@@ -18,7 +18,7 @@ class FlextLdifTransformer(s):
             exclude=True,
             description="Source server type used for the conversion.",
         ),
-    ]
+    ] = None
     target_server: Annotated[
         str | c.Ldif.ServerTypes | None,
         u.Field(
@@ -26,7 +26,7 @@ class FlextLdifTransformer(s):
             exclude=True,
             description="Target server type used for the conversion.",
         ),
-    ]
+    ] = None
     base_dn: Annotated[
         str,
         u.Field(
@@ -34,7 +34,7 @@ class FlextLdifTransformer(s):
             exclude=True,
             description="Migration base DN forwarded to ACL scope filtering.",
         ),
-    ]
+    ] = ""
 
     @staticmethod
     def _normalize_server_type(
@@ -48,17 +48,17 @@ class FlextLdifTransformer(s):
     def apply(self, item: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
         """Apply server-specific transformation."""
         source_server = self._normalize_server_type(
-            self.source_server or c.Ldif.ServerTypes.RFC,
+            self.source_server or c.Ldif.ServerTypes.RFC
         )
         target_server = self._normalize_server_type(
-            self.target_server or c.Ldif.ServerTypes.RFC,
+            self.target_server or c.Ldif.ServerTypes.RFC
         )
 
         def ensure_entry(converted: t.Ldif.ConvertedModel) -> p.Result[m.Ldif.Entry]:
             if isinstance(converted, m.Ldif.Entry):
                 return r[m.Ldif.Entry].ok(converted)
             return r[m.Ldif.Entry].fail(
-                f"Conversion returned unexpected type: {type(converted).__name__}",
+                f"Conversion returned unexpected type: {type(converted).__name__}"
             )
 
         return (

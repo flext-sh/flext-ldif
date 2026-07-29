@@ -26,8 +26,7 @@ class FlextLdifFilters(s):
 
     @classmethod
     def _extract_allowed_oids(
-        cls,
-        allowed_oids: m.Ldif.WhitelistRules | t.FrozensetMapping,
+        cls, allowed_oids: m.Ldif.WhitelistRules | t.FrozensetMapping
     ) -> t.FrozensetMapping:
         """Extract allowed OID sets keyed by canonical schema attribute names."""
         if isinstance(allowed_oids, m.Ldif.WhitelistRules):
@@ -39,8 +38,7 @@ class FlextLdifFilters(s):
 
     @classmethod
     def _extract_oid_from_schema_attr(
-        cls,
-        values: t.MutableSequenceOf[str],
+        cls, values: t.MutableSequenceOf[str]
     ) -> str | None:
         """Extract OID from schema attribute value."""
         if not values:
@@ -102,7 +100,7 @@ class FlextLdifFilters(s):
             return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(filtered)
         except c.Ldif.EXC_LDIF_PARSE as e:
             cls._get_or_create_logger().exception(
-                "Failed to filter schema entries by OIDs",
+                "Failed to filter schema entries by OIDs"
             )
             return r[t.MutableSequenceOf[m.Ldif.Entry]].fail_op("Schema OID filter", e)
 
@@ -128,9 +126,9 @@ class FlextLdifFilters(s):
                 filtered_entry = filtered_entry.model_copy(
                     update={
                         "attributes": m.Ldif.Attributes.model_validate({
-                            "attributes": filtered_attrs,
-                        }),
-                    },
+                            "attributes": filtered_attrs
+                        })
+                    }
                 )
         if forbidden_ocs and filtered_entry.attributes is not None:
             oc_attrs = filtered_entry.attributes.attributes
@@ -155,9 +153,9 @@ class FlextLdifFilters(s):
                 filtered_entry = filtered_entry.model_copy(
                     update={
                         "attributes": m.Ldif.Attributes.model_validate({
-                            "attributes": updated,
-                        }),
-                    },
+                            "attributes": updated
+                        })
+                    }
                 )
         return filtered_entry
 
@@ -199,9 +197,9 @@ class FlextLdifFilters(s):
         copied: m.Ldif.Entry = concrete.model_copy(
             update={
                 "attributes": m.Ldif.Attributes.model_validate({
-                    "attributes": updated_attrs,
-                }),
-            },
+                    "attributes": updated_attrs
+                })
+            }
         )
         return copied
 

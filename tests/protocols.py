@@ -5,23 +5,18 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_ldap import p as ldap_p
-from flext_tests import FlextTestsProtocols
 
 from flext_ldif import FlextLdifProtocols
+from flext_tests import FlextTestsProtocols
 
 if TYPE_CHECKING:
     from pathlib import Path
 
     from flext_ldif.services.migration import FlextLdifMigrationPipeline
-    from tests.constants import c
-    from tests.models import m
+    from tests import c, m
 
 
-class TestsFlextLdifProtocols(
-    FlextTestsProtocols,
-    ldap_p,
-    FlextLdifProtocols,
-):
+class TestsFlextLdifProtocols(FlextTestsProtocols, ldap_p, FlextLdifProtocols):
     """Protocol definitions for flext-ldif tests."""
 
     class Ldap(ldap_p.Ldap):
@@ -35,8 +30,7 @@ class TestsFlextLdifProtocols(
             """Server exposing `parse_input` for schema or ACL helpers."""
 
             def parse_input(
-                self,
-                value: str,
+                self, value: str
             ) -> p.Result[
                 m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
             ]:
@@ -48,8 +42,7 @@ class TestsFlextLdifProtocols(
             """Server exposing Apache/Novell attribute writer."""
 
             def _write_attribute(
-                self,
-                attr_data: m.Ldif.SchemaAttribute,
+                self, attr_data: m.Ldif.SchemaAttribute
             ) -> p.Result[str]:
                 """Serialize an attribute definition."""
                 ...
@@ -59,8 +52,7 @@ class TestsFlextLdifProtocols(
             """Server exposing Apache/Novell objectclass writer."""
 
             def _write_objectclass(
-                self,
-                oc_data: m.Ldif.SchemaObjectClass,
+                self, oc_data: m.Ldif.SchemaObjectClass
             ) -> p.Result[str]:
                 """Serialize an objectClass definition."""
                 ...
@@ -69,10 +61,7 @@ class TestsFlextLdifProtocols(
         class WriteAclServer(Protocol):
             """Server exposing Apache ACL writer helper."""
 
-            def _write_acl(
-                self,
-                acl_data: m.Ldif.Acl,
-            ) -> p.Result[str]:
+            def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
                 """Serialize an ACL definition."""
                 ...
 
@@ -80,10 +69,7 @@ class TestsFlextLdifProtocols(
         class ParseAclServer(Protocol):
             """Server exposing ACL parse helper with test models."""
 
-            def parse_server(
-                self,
-                value: str,
-            ) -> p.Result[m.Ldif.Acl]:
+            def parse_server(self, value: str) -> p.Result[m.Ldif.Acl]:
                 """Parse ACL content into the test model."""
                 ...
 
@@ -91,10 +77,7 @@ class TestsFlextLdifProtocols(
         class WriteAclContentServer(Protocol):
             """Server exposing ACL write helper with test models."""
 
-            def write(
-                self,
-                acl_data: m.Ldif.Acl,
-            ) -> p.Result[str]:
+            def write(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
                 """Write ACL content from the test model."""
                 ...
 

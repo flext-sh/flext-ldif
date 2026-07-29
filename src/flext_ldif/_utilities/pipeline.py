@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
-from typing import override
+from typing import TYPE_CHECKING, override
 
 from flext_ldif import c, p, r, t
-from flext_ldif.models import FlextLdifModels as m
+
+if TYPE_CHECKING:
+    from flext_ldif import FlextLdifModels as m
 
 
 class FlextLdifUtilitiesPipeline:
@@ -37,7 +39,7 @@ class FlextLdifUtilitiesPipeline:
 
         @property
         def errors(self) -> t.MutableSequenceOf[str]:
-            """Get list of error messages."""
+            """The list of error messages."""
             return self._errors
 
         @property
@@ -47,7 +49,7 @@ class FlextLdifUtilitiesPipeline:
 
         @property
         def warnings(self) -> t.MutableSequenceOf[str]:
-            """Get list of warning messages."""
+            """The list of warning messages."""
             return self._warnings
 
     class ValidationPipeline:
@@ -56,11 +58,7 @@ class FlextLdifUtilitiesPipeline:
         __slots__ = ("_collect_all", "_max_errors", "_strict")
 
         def __init__(
-            self,
-            *,
-            strict: bool = True,
-            collect_all: bool = True,
-            max_errors: int = 0,
+            self, *, strict: bool = True, collect_all: bool = True, max_errors: int = 0
         ) -> None:
             """Initialize validation pipeline."""
             super().__init__()
@@ -69,8 +67,7 @@ class FlextLdifUtilitiesPipeline:
             self._max_errors = max_errors
 
         def validate(
-            self,
-            entries: t.SequenceOf[m.Ldif.Entry],
+            self, entries: t.SequenceOf[m.Ldif.Entry]
         ) -> p.Result[t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]]:
             """Validate a sequence of entries."""
             results: t.MutableSequenceOf[
@@ -92,13 +89,10 @@ class FlextLdifUtilitiesPipeline:
                     break
             return r[
                 t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]
-            ].ok(
-                results,
-            )
+            ].ok(results)
 
         def validate_one(
-            self,
-            entry: m.Ldif.Entry,
+            self, entry: m.Ldif.Entry
         ) -> p.Result[FlextLdifUtilitiesPipeline.ValidationResult]:
             """Validate a single entry."""
             errors: t.MutableSequenceOf[str] = []
@@ -134,13 +128,9 @@ class FlextLdifUtilitiesPipeline:
                         warnings.append("Entry has no objectClass attribute")
             return r[FlextLdifUtilitiesPipeline.ValidationResult].ok(
                 FlextLdifUtilitiesPipeline.ValidationResult(
-                    valid=not errors,
-                    errors=errors,
-                    warnings=warnings,
-                ),
+                    valid=not errors, errors=errors, warnings=warnings
+                )
             )
 
 
-__all__: list[str] = [
-    "FlextLdifUtilitiesPipeline",
-]
+__all__: list[str] = ["FlextLdifUtilitiesPipeline"]

@@ -1,7 +1,7 @@
 """LDIF settings mix-in: misc.
 
-from flext_ldif.models import m
-from flext_ldif.utilities import u
+from flext_ldif import m
+from flext_ldif import u
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
@@ -11,8 +11,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_core import m
-from flext_core.utilities import FlextUtilities as u
+from flext_core import FlextUtilities as u, m
 from flext_ldif import t
 
 
@@ -23,21 +22,15 @@ class FlextLdifModelsSettingsMisc:
         """Extra context fields for structured event logging."""
 
         user_id: Annotated[str | None, u.Field(description="User identifier")] = None
-        session_id: Annotated[
-            str | None,
-            u.Field(description="Session identifier"),
-        ] = None
-        request_id: Annotated[
-            str | None,
-            u.Field(description="Request identifier"),
-        ] = None
-        component: Annotated[
-            str | None,
-            u.Field(description="Component name"),
-        ] = None
+        session_id: Annotated[str | None, u.Field(description="Session identifier")] = (
+            None
+        )
+        request_id: Annotated[str | None, u.Field(description="Request identifier")] = (
+            None
+        )
+        component: Annotated[str | None, u.Field(description="Component name")] = None
         correlation_id: Annotated[
-            str | None,
-            u.Field(description="Correlation identifier"),
+            str | None, u.Field(description="Correlation identifier")
         ] = None
         trace_id: Annotated[str | None, u.Field(description="Trace identifier")] = None
 
@@ -47,8 +40,7 @@ class FlextLdifModelsSettingsMisc:
         current_attr: Annotated[str, u.Field(description="Current attribute name")] = ""
         current_val: Annotated[str, u.Field(description="Current value")] = ""
         in_value: Annotated[
-            bool,
-            u.Field(description="Whether parser is inside the value portion"),
+            bool, u.Field(description="Whether parser is inside the value portion")
         ] = False
         pairs: Annotated[
             t.MutableStrPairSequence,

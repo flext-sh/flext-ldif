@@ -9,10 +9,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
-from flext_ldif import t
 from flext_ldif._constants.enums import FlextLdifConstantsEnums
+
+if TYPE_CHECKING:
+    from flext_ldif import t
 
 
 class _MissingSentinel:
@@ -35,9 +37,7 @@ class FlextLdifShared:
         return getattr(obj, attr_name, _MISSING_ATTR) is not _MISSING_ATTR
 
     @staticmethod
-    def normalize_server_type(
-        server_type: str,
-    ) -> FlextLdifConstantsEnums.ServerTypes:
+    def normalize_server_type(server_type: str) -> FlextLdifConstantsEnums.ServerTypes:
         """Normalize server type string to canonical ServerTypes enum member.
 
         Converts aliases and variations to canonical enum member:

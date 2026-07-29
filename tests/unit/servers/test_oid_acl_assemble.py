@@ -1,168 +1,172 @@
-"""Tests for OUD aci-string assembly (AciRule → aci: line)."""
+"""Behavioral tests for OID→OUD ACL assembly, rendering, and conversion.
+
+Every assertion exercises observable public contract: rendered ``aci:`` strings,
+``r[T]`` success/failure outcomes, and public Pydantic model fields
+(``allows``, ``notes``, ``targetscope``, ``subjects``). No private attribute or
+method is touched; the only collaborator observed at a boundary is structlog's
+``capture_logs`` (conversion notes are a logged contract, also mirrored on
+``aci.notes``).
+"""
 
 from __future__ import annotations
 
 from pathlib import Path
 
-from flext_tests import tm
+import pytest
 from structlog.testing import capture_logs
 
 from flext_ldif import m
-from flext_ldif.servers._oid.acl_assemble import FlextLdifServersOidAclAssemble as Asm
-from flext_ldif.servers._oid.acl_convert import FlextLdifServersOidAclConvert as Parser
-from flext_ldif.servers._oid.acl_pipeline import FlextLdifServersOidAclPipeline as Pipe
-from flext_ldif.servers._oid.acl_render import FlextLdifServersOidAclRender as Render
-from tests.utilities import TestsFlextLdifUtilities as u
+from flext_ldif.servers.oid import (
+    FlextLdifServersOidAclAssemble as Asm,
+    FlextLdifServersOidAclConvert as Parser,
+    FlextLdifServersOidAclPipeline as Pipe,
+    FlextLdifServersOidAclRender as Render,
+)
+from flext_tests import tm
+from tests import TestsFlextLdifUtilities as u
 
 
 class TestsFlextLdifOidAclAssemble:
-    """render_aci_string parity with the OUD migration oracle to_aci_string."""
+    """OID ACL assemble/render/convert public-contract behavior."""
 
-    def test_entry_two_distinct_perm_allows_with_targetscope(self) -> None:
-        aci = m.Ldif.AciRule(
-            dn="dc=ctbc",
-            targetattr="*",
-            targetscope="base",
-            acl_name="ctbc Entry by admins",
-            allows=(
-                m.Ldif.AciAllow(
-                    subject_type="groupdn",
-                    subject_value="cn=admins,dc=ctbc",
-                    permissions=("read", "search", "add", "delete"),
-                ),
-                m.Ldif.AciAllow(
-                    subject_type="userdn",
-                    subject_value="anyone",
-                    permissions=("read", "search"),
-                ),
-            ),
-        )
+    # ---- helpers -------------------------------------------------------
 
-        tm.that(
-            Render.render_aci_string(aci),
-            eq=(
+    @staticmethod
+    def _build(dn: str, line: str) -> m.Ldif.AciRule:
+        """Parse an OID line then build the OUD AciRule (parse → build)."""
+        rule: m.Ldif.OidAclRule = Parser.parse_oid_acl_line(dn, line).unwrap()
+        aci_rule: m.Ldif.AciRule = Asm.build_aci_rule(rule).unwrap()
+        return aci_rule
+
+    @staticmethod
+    def _entry(attributes: dict[str, list[str]]) -> m.Ldif.Entry:
+        return u.Tests.create_real_entry(dn="cn=users,dc=ctbc", attributes=attributes)
+
+    # ---- render_aci_string: AciRule → aci: line ------------------------
+
+    @pytest.mark.parametrize(
+        ("aci", "expected"),
+        [
+            pytest.param(
+                m.Ldif.AciRule(
+                    dn="dc=ctbc",
+                    targetattr="*",
+                    targetscope="base",
+                    acl_name="ctbc Entry by admins",
+                    allows=(
+                        m.Ldif.AciAllow(
+                            subject_type="groupdn",
+                            subject_value="cn=admins,dc=ctbc",
+                            permissions=("read", "search", "add", "delete"),
+                        ),
+                        m.Ldif.AciAllow(
+                            subject_type="userdn",
+                            subject_value="anyone",
+                            permissions=("read", "search"),
+                        ),
+                    ),
+                ),
                 'aci: (targetattr="*")(targetscope="base")'
                 '(version 3.0; acl "ctbc Entry by admins"; '
                 'allow (read, search, add, delete) groupdn="ldap:///cn=admins,dc=ctbc"; '
-                'allow (read, search) userdn="ldap:///anyone";)'
+                'allow (read, search) userdn="ldap:///anyone";)',
+                id="two-distinct-perm-allows-with-targetscope",
             ),
-        )
-
-    def test_same_perms_collapse_into_one_or_joined_allow(self) -> None:
-        aci = m.Ldif.AciRule(
-            dn="dc=ctbc",
-            targetattr="cn||sn||mail",
-            acl_name="ctbc Attrs by mgr",
-            allows=(
-                m.Ldif.AciAllow(
-                    subject_type="userattr",
-                    subject_value="manager#USERDN",
-                    permissions=("read", "search"),
+            pytest.param(
+                m.Ldif.AciRule(
+                    dn="dc=ctbc",
+                    targetattr="cn||sn||mail",
+                    acl_name="ctbc Attrs by mgr",
+                    allows=(
+                        m.Ldif.AciAllow(
+                            subject_type="userattr",
+                            subject_value="manager#USERDN",
+                            permissions=("read", "search"),
+                        ),
+                        m.Ldif.AciAllow(
+                            subject_type="groupdn",
+                            subject_value="cn=g,dc=ctbc",
+                            permissions=("read", "search"),
+                        ),
+                    ),
                 ),
-                m.Ldif.AciAllow(
-                    subject_type="groupdn",
-                    subject_value="cn=g,dc=ctbc",
-                    permissions=("read", "search"),
-                ),
-            ),
-        )
-
-        tm.that(
-            Render.render_aci_string(aci),
-            eq=(
                 'aci: (targetattr="cn||sn||mail")'
                 '(version 3.0; acl "ctbc Attrs by mgr"; '
                 'allow (read, search) userattr="manager#USERDN" '
-                'or groupdn="ldap:///cn=g,dc=ctbc";)'
+                'or groupdn="ldap:///cn=g,dc=ctbc";)',
+                id="same-perms-collapse-into-one-or-joined-allow",
             ),
-        )
-
-    def test_same_perms_with_different_modifiers_render_separate_allows(self) -> None:
-        aci = m.Ldif.AciRule(
-            dn="dc=ctbc",
-            targetattr="*",
-            acl_name="ctbc Entry by admins",
-            allows=(
-                m.Ldif.AciAllow(
-                    subject_type="groupdn",
-                    subject_value="cn=ssl,dc=ctbc",
-                    permissions=("read", "search"),
-                    authmethod="SSL",
+            pytest.param(
+                m.Ldif.AciRule(
+                    dn="dc=ctbc",
+                    targetattr="*",
+                    acl_name="ctbc Entry by admins",
+                    allows=(
+                        m.Ldif.AciAllow(
+                            subject_type="groupdn",
+                            subject_value="cn=ssl,dc=ctbc",
+                            permissions=("read", "search"),
+                            authmethod="SSL",
+                        ),
+                        m.Ldif.AciAllow(
+                            subject_type="groupdn",
+                            subject_value="cn=simple,dc=ctbc",
+                            permissions=("read", "search"),
+                            authmethod="Simple",
+                        ),
+                    ),
                 ),
-                m.Ldif.AciAllow(
-                    subject_type="groupdn",
-                    subject_value="cn=simple,dc=ctbc",
-                    permissions=("read", "search"),
-                    authmethod="Simple",
-                ),
-            ),
-        )
-
-        tm.that(
-            Render.render_aci_string(aci),
-            eq=(
                 'aci: (targetattr="*")(version 3.0; acl "ctbc Entry by admins"; '
                 'allow (read, search) groupdn="ldap:///cn=ssl,dc=ctbc" '
                 'and authmethod="SSL"; '
                 'allow (read, search) groupdn="ldap:///cn=simple,dc=ctbc" '
-                'and authmethod="Simple";)'
+                'and authmethod="Simple";)',
+                id="same-perms-different-modifiers-render-separate-allows",
             ),
-        )
-
-    def test_negation_targetattr_and_filter(self) -> None:
-        aci = m.Ldif.AciRule(
-            dn="dc=ctbc",
-            targetattr="!=userpassword",
-            targetfilter="objectclass=person",
-            acl_name="n",
-            allows=(
-                m.Ldif.AciAllow(
-                    subject_type="userdn",
-                    subject_value="self",
-                    permissions=("read", "write"),
+            pytest.param(
+                m.Ldif.AciRule(
+                    dn="dc=ctbc",
+                    targetattr="!=userpassword",
+                    targetfilter="objectclass=person",
+                    acl_name="n",
+                    allows=(
+                        m.Ldif.AciAllow(
+                            subject_type="userdn",
+                            subject_value="self",
+                            permissions=("read", "write"),
+                        ),
+                    ),
                 ),
-            ),
-        )
-
-        tm.that(
-            Render.render_aci_string(aci),
-            eq=(
                 'aci: (targetattr!="userpassword")'
                 '(targetfilter="(objectclass=person)")'
-                '(version 3.0; acl "n"; allow (read, write) userdn="ldap:///self";)'
+                '(version 3.0; acl "n"; allow (read, write) userdn="ldap:///self";)',
+                id="negation-targetattr-and-filter",
             ),
-        )
-
-    def test_userattr_bind_omits_ldap_prefix(self) -> None:
-        aci = m.Ldif.AciRule(
-            dn="dc=ctbc",
-            targetattr="*",
-            acl_name="x",
-            allows=(
-                m.Ldif.AciAllow(
-                    subject_type="userattr",
-                    subject_value="owner#GROUPDN",
-                    permissions=("read",),
+            pytest.param(
+                m.Ldif.AciRule(
+                    dn="dc=ctbc",
+                    targetattr="*",
+                    acl_name="x",
+                    allows=(
+                        m.Ldif.AciAllow(
+                            subject_type="userattr",
+                            subject_value="owner#GROUPDN",
+                            permissions=("read",),
+                        ),
+                    ),
                 ),
-            ),
-        )
-
-        tm.that(
-            Render.render_aci_string(aci),
-            eq=(
                 'aci: (targetattr="*")(version 3.0; acl "x"; '
-                'allow (read) userattr="owner#GROUPDN";)'
+                'allow (read) userattr="owner#GROUPDN";)',
+                id="userattr-bind-omits-ldap-prefix",
             ),
-        )
+        ],
+    )
+    def test_render_aci_string_matches_oud_oracle(
+        self, aci: m.Ldif.AciRule, expected: str
+    ) -> None:
+        tm.that(Render.render_aci_string(aci), eq=expected)
 
-
-class TestsFlextLdifOidAclBuild:
-    """build_aci_rule end-to-end parity with the oracle (parse → build → render)."""
-
-    @staticmethod
-    def _build(dn: str, line: str) -> m.Ldif.AciRule:
-        rule = Parser.parse_oid_acl_line(dn, line).unwrap()
-        return Asm.build_aci_rule(rule).unwrap()
+    # ---- build_aci_rule: parse → build parity --------------------------
 
     def test_group_with_deny_fallback_keeps_group_drops_anyone(self) -> None:
         aci = self._build(
@@ -241,8 +245,7 @@ class TestsFlextLdifOidAclBuild:
     def test_anyone_with_sensitive_perms_emits_review_note(self) -> None:
         # 'by * (noread)' on attr complements to write/selfwrite/... for anyone.
         rule = Parser.parse_oid_acl_line(
-            "cn=users,dc=ctbc",
-            "orclaci: access to attr=(cn) by * (noread)",
+            "cn=users,dc=ctbc", "orclaci: access to attr=(cn) by * (noread)"
         ).unwrap()
         aci = Asm.build_aci_rule(rule).unwrap()
 
@@ -251,8 +254,7 @@ class TestsFlextLdifOidAclBuild:
 
     def test_anyone_with_only_read_search_emits_no_sensitive_note(self) -> None:
         rule = Parser.parse_oid_acl_line(
-            "cn=users,dc=ctbc",
-            "orclaci: access to attr=(cn) by * (read,search)",
+            "cn=users,dc=ctbc", "orclaci: access to attr=(cn) by * (read,search)"
         ).unwrap()
         aci = Asm.build_aci_rule(rule).unwrap()
 
@@ -330,9 +332,7 @@ class TestsFlextLdifOidAclBuild:
 
         tm.that(len(aci.allows), eq=1)
 
-
-class TestsFlextLdifOidAclConvertValues:
-    """convert_acl_values: whole-entry OID ACL lines → deduped aci values."""
+    # ---- convert_acl_values: OID lines → deduped aci values ------------
 
     def test_multiple_lines_produce_aci_values_without_prefix(self) -> None:
         result = Pipe.convert_acl_values(
@@ -356,16 +356,14 @@ class TestsFlextLdifOidAclConvertValues:
 
     def test_deny_only_line_emits_no_value(self) -> None:
         result = Pipe.convert_acl_values(
-            "cn=users,dc=ctbc",
-            ("orclaci: access to entry by * (none)",),
+            "cn=users,dc=ctbc", ("orclaci: access to entry by * (none)",)
         )
 
         tm.that(result.unwrap(), eq=())
 
     def test_malformed_line_surfaces_failure(self) -> None:
         result = Pipe.convert_acl_values(
-            "cn=users,dc=ctbc",
-            ("orclaci: this is not a valid acl",),
+            "cn=users,dc=ctbc", ("orclaci: this is not a valid acl",)
         )
 
         tm.that(result.failure, eq=True)
@@ -391,11 +389,7 @@ class TestsFlextLdifOidAclConvertValues:
                 continue
             if not line.startswith(("orclaci:", "orclentrylevelaci:")):
                 continue
-            result = Pipe.convert_acl_values(
-                dn,
-                (line,),
-                base_dn="dc=example,dc=com",
-            )
+            result = Pipe.convert_acl_values(dn, (line,), base_dn="dc=example,dc=com")
             tm.that(result.success, eq=True)
             rules_seen += 1
             values_emitted += len(result.unwrap())
@@ -431,17 +425,10 @@ class TestsFlextLdifOidAclConvertValues:
         ]
         tm.that(len(note_events), eq=1)
         tm.that(
-            any("guidattr" in note for note in note_events[0].get("notes", [])),
-            eq=True,
+            any("guidattr" in note for note in note_events[0].get("notes", [])), eq=True
         )
 
-
-class TestsFlextLdifOidAclConvertEntryAcls:
-    """convert_entry_acls: OID entry orclaci/orclentrylevelaci → aci attribute."""
-
-    @staticmethod
-    def _entry(attributes: dict[str, list[str]]) -> m.Ldif.Entry:
-        return u.Tests.create_real_entry(dn="cn=users,dc=ctbc", attributes=attributes)
+    # ---- convert_entry_acls: entry orclaci → aci attribute -------------
 
     def test_oid_to_oud_replaces_orclaci_with_aci(self) -> None:
         entry = self._entry({
@@ -460,7 +447,7 @@ class TestsFlextLdifOidAclConvertEntryAcls:
 
     def test_non_oid_to_oud_passes_through_unchanged(self) -> None:
         entry = self._entry({
-            "orclaci": ['access to entry by group="cn=a,dc=ctbc" (browse)'],
+            "orclaci": ['access to entry by group="cn=a,dc=ctbc" (browse)']
         })
 
         converted = Pipe.convert_entry_acls(entry, "oid", "rfc").unwrap()

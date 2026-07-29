@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, Protocol, runtime_checkable
 
-from flext_cli import p
-
 if TYPE_CHECKING:
+    from flext_cli import p
     from flext_ldif import m, t
     from flext_ldif._protocols.base import FlextLdifProtocolsBase
 
@@ -32,17 +31,17 @@ class FlextLdifProtocolsDomain(Protocol):
 
         @property
         def schema_server(self) -> FlextLdifProtocolsDomain.SchemaServer:
-            """Return schema server implementation."""
+            """The schema server implementation."""
             ...
 
         @property
         def acl_server(self) -> FlextLdifProtocolsDomain.AclServer:
-            """Return ACL server implementation."""
+            """ACL server implementation."""
             ...
 
         @property
         def entry_server(self) -> FlextLdifProtocolsDomain.EntryServer:
-            """Return entry server implementation."""
+            """The entry server implementation."""
             ...
 
         def parse_ldif(self, value: str) -> p.Result[m.Ldif.ParseResponse]:
@@ -68,15 +67,13 @@ class FlextLdifProtocolsDomain(Protocol):
         """
 
         def parse_server(
-            self,
-            value: str,
+            self, value: str
         ) -> p.Result[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
             """Parse a schema definition into a schema item."""
             ...
 
         def parse_input(
-            self,
-            schema_text: str,
+            self, schema_text: str
         ) -> p.Result[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
             """Parse a schema definition (compatibility entrypoint)."""
             ...
@@ -86,44 +83,34 @@ class FlextLdifProtocolsDomain(Protocol):
             ...
 
         def parse_objectclass(
-            self,
-            definition: str,
+            self, definition: str
         ) -> p.Result[m.Ldif.SchemaObjectClass]:
             """Parse an objectClass definition."""
             ...
 
         def can_handle_attribute(
-            self,
-            attr_definition: str | m.Ldif.SchemaAttribute,
+            self, attr_definition: str | m.Ldif.SchemaAttribute
         ) -> bool:
             """Check if this server can handle a schema attribute."""
             ...
 
         def can_handle_objectclass(
-            self,
-            oc_definition: str | m.Ldif.SchemaObjectClass,
+            self, oc_definition: str | m.Ldif.SchemaObjectClass
         ) -> bool:
             """Check if this server can handle a schema objectClass."""
             ...
 
         def write(
-            self,
-            model: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+            self, model: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass
         ) -> p.Result[str]:
             """Serialize a schema item."""
             ...
 
-        def write_attribute(
-            self,
-            attr_data: m.Ldif.SchemaAttribute,
-        ) -> p.Result[str]:
+        def write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> p.Result[str]:
             """Serialize an attributeType definition."""
             ...
 
-        def write_objectclass(
-            self,
-            oc_data: m.Ldif.SchemaObjectClass,
-        ) -> p.Result[str]:
+        def write_objectclass(self, oc_data: m.Ldif.SchemaObjectClass) -> p.Result[str]:
             """Serialize an objectClass definition."""
             ...
 
@@ -160,17 +147,13 @@ class FlextLdifProtocolsDomain(Protocol):
             ...
 
         def can_handle(
-            self,
-            entry_dn: str,
-            attributes: t.MutableStrSequenceMapping,
+            self, entry_dn: str, attributes: t.MutableStrSequenceMapping
         ) -> bool:
             """Check if this server can handle the entry."""
             ...
 
         def parse_entry(
-            self,
-            entry_dn: str,
-            entry_attrs: t.Ldif.MutableEntryAttributesDict,
+            self, entry_dn: str, entry_attrs: t.Ldif.MutableEntryAttributesDict
         ) -> p.Result[m.Ldif.Entry]:
             """Parse a single entry from DN and attribute mapping."""
             ...
@@ -188,50 +171,41 @@ class FlextLdifProtocolsDomain(Protocol):
         """Registry contract for server-specific servers."""
 
         def server(
-            self,
-            server_type: str,
+            self, server_type: str
         ) -> p.Result[FlextLdifProtocolsDomain.ServerServer]:
             """Return base server for a server type."""
             ...
 
         def resolve_base_server(
-            self,
-            server_type: str,
+            self, server_type: str
         ) -> p.Result[FlextLdifProtocolsDomain.ServerServer]:
             """Resolve base server for a server type."""
             ...
 
         def schema_server(
-            self,
-            server_type: str,
+            self, server_type: str
         ) -> FlextLdifProtocolsDomain.SchemaServer | None:
             """Return schema server for a server type."""
             ...
 
         def resolve_schema_server(
-            self,
-            server_type: str,
+            self, server_type: str
         ) -> FlextLdifProtocolsDomain.SchemaServer | None:
             """Resolve schema server for a server type."""
             ...
 
-        def acl(
-            self,
-            server_type: str,
-        ) -> FlextLdifProtocolsDomain.AclServer | None:
+        def acl(self, server_type: str) -> FlextLdifProtocolsDomain.AclServer | None:
             """Return ACL server for a server type."""
             ...
 
         def entry(
-            self,
-            server_type: str,
+            self, server_type: str
         ) -> FlextLdifProtocolsDomain.EntryServer | None:
             """Return entry server for a server type."""
             ...
 
         def resolve_server_bundle(
-            self,
-            server_type: str,
+            self, server_type: str
         ) -> p.Result[
             t.MappingKV[
                 str,
@@ -244,8 +218,7 @@ class FlextLdifProtocolsDomain(Protocol):
             ...
 
         def resolve_server_constants(
-            self,
-            server_type: str,
+            self, server_type: str
         ) -> p.Result[type[FlextLdifProtocolsBase.ServerConstants]]:
             """Resolve constants class for a server type."""
             ...

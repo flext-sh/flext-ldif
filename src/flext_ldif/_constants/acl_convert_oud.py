@@ -9,10 +9,12 @@ high-level-container scope rules. Split from ``_constants/acl_convert.py``
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from enum import StrEnum, unique
 from types import MappingProxyType
-from typing import ClassVar, Final
+from typing import TYPE_CHECKING, ClassVar, Final
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 
 class FlextLdifConstantsAclConvertOud:
@@ -114,9 +116,13 @@ class FlextLdifConstantsAclConvertOud:
         "compare",
     })
     # OUD perms that are security-sensitive when granted to anyone (review flag).
-    SENSITIVE_PERMS: Final[frozenset[str]] = frozenset(
-        {"proxy", "write", "delete", "add", "selfwrite"},
-    )
+    SENSITIVE_PERMS: Final[frozenset[str]] = frozenset({
+        "proxy",
+        "write",
+        "delete",
+        "add",
+        "selfwrite",
+    })
     # Canonical OUD permission ordering for deterministic aci assembly.
     PERM_ORDERED: Final[tuple[str, ...]] = (
         "all",

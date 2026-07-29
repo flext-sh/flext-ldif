@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
-from flext_ldif import c, p, t
+from flext_ldif import FlextLdifModels as m, c, p, t
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID as uo
 from flext_ldif._utilities.schema_format import FlextLdifUtilitiesSchemaFormat as sf
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer as us
 from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter as uw
-from flext_ldif.models import FlextLdifModels as m
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class FlextLdifUtilitiesSchemaBuild:
@@ -72,7 +74,7 @@ class FlextLdifUtilitiesSchemaBuild:
         type_name: str,
         parts_builder: Callable[..., t.MutableSequenceOf[str]],
     ) -> str:
-        """Generic helper for writing schema elements (DRY pattern)."""
+        """Write a schema element (DRY pattern)."""
         if not isinstance(data, expected_type):
             msg = f"{type_name} must implement {expected_type.__name__}"
             raise TypeError(msg)
@@ -85,9 +87,7 @@ class FlextLdifUtilitiesSchemaBuild:
 
     @staticmethod
     def build_attribute_parts_with_metadata(
-        attr_data: m.Ldif.SchemaAttribute,
-        *,
-        restore_original: bool = True,
+        attr_data: m.Ldif.SchemaAttribute, *, restore_original: bool = True
     ) -> t.MutableSequenceOf[str]:
         """Build RFC 4512 attribute parts with full metadata restoration."""
         if restore_original:
@@ -118,14 +118,11 @@ class FlextLdifUtilitiesSchemaBuild:
 
     @staticmethod
     def build_objectclass_parts_with_metadata(
-        oc_data: m.Ldif.SchemaObjectClass,
-        *,
-        restore_original: bool = True,
+        oc_data: m.Ldif.SchemaObjectClass, *, restore_original: bool = True
     ) -> t.MutableSequenceOf[str]:
         """Build RFC 4512 objectClass parts with full metadata restoration."""
         original_parts = sf.try_restore_objectclass_original_format(
-            oc_data,
-            restore_original=restore_original,
+            oc_data, restore_original=restore_original
         )
         if original_parts:
             return original_parts
@@ -157,29 +154,26 @@ class FlextLdifUtilitiesSchemaBuild:
 
     @staticmethod
     def should_restore_schema_original_format(
-        metadata: m.Ldif.ServerMetadata | None,
-        target_server_type: str | None,
+        metadata: m.Ldif.ServerMetadata | None, target_server_type: str | None
     ) -> bool:
         """Restore original schema text only for same-server round-trips."""
         if metadata is None:
             return False
         source_server_type = metadata.original_server_type
         if source_server_type is None and metadata.extensions:
-            source_server_type = metadata.extensions.schema_source_server
+            source_server_type = metadata.extensions.get("schema_source_server")
         if source_server_type is None:
             source_server_type = str(metadata.server_type)
         if not source_server_type or not target_server_type:
             return True
         try:
-            normalized_source = us.normalize_server_type(
-                str(source_server_type),
-            )
-            normalized_target = us.normalize_server_type(
-                target_server_type,
-            )
+            normalized_source = us.normalize_server_type(str(source_server_type))
+            normalized_target = us.normalize_server_type(target_server_type)
         except c.EXC_TYPE_VALIDATION:
             return str(source_server_type).lower() == target_server_type.lower()
-        return normalized_source == normalized_target
+        normalized_source_value: str = normalized_source.value
+        normalized_target_value: str = normalized_target.value
+        return normalized_source_value == normalized_target_value
 
     @staticmethod
     def validate_syntax_oid(syntax: str | None) -> str | None:

@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from flext_ldif import c
-from flext_ldif.models import FlextLdifModels as m
+
+if TYPE_CHECKING:
+    from flext_ldif import FlextLdifModels as m
 
 
 class FlextLdifUtilitiesObjectClass:
@@ -17,8 +21,7 @@ class FlextLdifUtilitiesObjectClass:
 
     @staticmethod
     def fix_kind_mismatch(
-        schema_oc: m.Ldif.SchemaObjectClass,
-        _server_type: str = "oid",
+        schema_oc: m.Ldif.SchemaObjectClass, _server_type: str = "oid"
     ) -> None:
         """Fix objectClass kind mismatches with superior classes (server-specific)."""
         if not schema_oc.sup or not schema_oc.kind:
@@ -40,18 +43,16 @@ class FlextLdifUtilitiesObjectClass:
             sup_lower in structural_superiors
             and schema_oc.kind == schema_constants.auxiliary
         ):
-            object.__setattr__(schema_oc, "kind", schema_constants.structural)
+            setattr(schema_oc, "kind", schema_constants.structural)
         elif (
             sup_lower in auxiliary_superiors
             and schema_oc.kind == schema_constants.structural
         ):
-            object.__setattr__(schema_oc, "kind", schema_constants.auxiliary)
+            setattr(schema_oc, "kind", schema_constants.auxiliary)
 
     @staticmethod
-    def fix_missing_sup(
-        schema_oc: m.Ldif.SchemaObjectClass,
-    ) -> None:
+    def fix_missing_sup(schema_oc: m.Ldif.SchemaObjectClass) -> None:
         """Fix AUXILIARY ObjectClass missing SUP (superior) attribute."""
         schema_constants = FlextLdifUtilitiesObjectClass.SchemaConstants
         if schema_oc.kind == schema_constants.auxiliary and (not schema_oc.sup):
-            object.__setattr__(schema_oc, "sup", "top")
+            setattr(schema_oc, "sup", "top")

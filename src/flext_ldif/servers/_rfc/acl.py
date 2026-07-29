@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Self, overload, override
+from typing import Self, cast, overload, override
 
 from flext_ldif import m, p, r, t, u
 from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
@@ -59,9 +59,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
             acl_service if acl_service is not None else None
         )
         FlextLdifServersBaseSchemaAcl.__init__(
-            self,
-            acl_service=acl_service_typed,
-            _parent_server=None,
+            self, acl_service=acl_service_typed, _parent_server=None
         )
         if parent_server is not None:
             object.__setattr__(self, "_parent_server", parent_server)
@@ -83,10 +81,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
 
     @overload
     def __call__(
-        self,
-        data: str | m.Ldif.Acl | None = None,
-        *,
-        operation: str | None = None,
+        self, data: str | m.Ldif.Acl | None = None, *, operation: str | None = None
     ) -> m.Ldif.Acl | str: ...
 
     def __call__(
@@ -108,12 +103,10 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
             force_dispatch=server is not None or settings is not None,
         )
         if builder_fields is not None:
-            configured: Self = super().__call__(
-                server=server,
-                settings=settings,
-                **builder_fields,
+            configured = super().__call__(
+                server=server, settings=settings, **builder_fields
             )
-            return configured
+            return cast("Self", configured)
         data_raw = processor_fields.get("data")
         narrowed_data = (
             data_raw
@@ -147,10 +140,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         return False
 
     def _denormalize_permission(
-        self,
-        permission: str,
-        _feature_id: str | None,
-        _metadata: t.MutableJsonMapping,
+        self, permission: str, _feature_id: str | None, _metadata: t.MutableJsonMapping
     ) -> str:
         """Convert RFC permission back to server-specific format."""
         return permission
@@ -161,9 +151,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         return super()._get_feature_fallback(_feature_id)
 
     def _normalize_permission(
-        self,
-        permission: str,
-        _metadata: t.MutableJsonMapping,
+        self, permission: str, _metadata: t.MutableJsonMapping
     ) -> tuple[str, str | None]:
         """Normalize a server-specific permission to RFC standard."""
         return (permission, None)
@@ -175,25 +163,19 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
             return r[m.Ldif.Acl].fail("ACL line must be a non-empty string.")
         server_type_str = self._get_server_type()
         server_type_value = u.Ldif.normalize_server_type(server_type_str)
-        extensions_meta = m.Ldif.DynamicMetadata.model_construct(
-            _fields_set={"original_format"},
-            original_format=acl_line,
-        )
+        # mro-wgwh.5 (agent: kimi-coder) — model_construct bypass removed: plain
+        # mapping validated by the ServerMetadata boundary.
         acl_model = m.Ldif.Acl(
             raw_acl=acl_line,
             server_type=server_type_value,
             metadata=m.Ldif.ServerMetadata(
-                server_type=server_type_value,
-                extensions=extensions_meta,
+                server_type=server_type_value, extensions={"original_format": acl_line}
             ),
         )
         return r[m.Ldif.Acl].ok(acl_model)
 
     def _preserve_unsupported_feature(
-        self,
-        feature_id: str,
-        original_value: str,
-        metadata: m.Ldif.DynamicMetadata,
+        self, feature_id: str, original_value: str, metadata: t.MutableJsonMapping
     ) -> None:
         """Preserve unsupported feature in metadata for round-trip."""
         base_key = "unsupported_feature"

@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_tests import s as tests_s
-
 from flext_ldif import m
+from flext_tests import s as tests_s
 from tests.settings import TestsFlextLdifSettings
 
 
@@ -17,7 +16,10 @@ class TestsFlextLdifServiceBase(tests_s):
     @override
     def fetch_settings(cls) -> TestsFlextLdifSettings:
         """Return the typed LDIF+CLI+Tests settings singleton for test services."""
-        return TestsFlextLdifSettings.fetch_global()
+        resolved = super().fetch_settings()
+        if isinstance(resolved, TestsFlextLdifSettings):
+            return resolved
+        return TestsFlextLdifSettings.model_validate(resolved)
 
     @classmethod
     @override

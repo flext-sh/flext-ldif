@@ -36,10 +36,7 @@ class FlextLdifServersOidAclAssemble:
 
     @classmethod
     def build_aci_rule(
-        cls,
-        rule: m.Ldif.OidAclRule,
-        *,
-        base_dn: str = "",
+        cls, rule: m.Ldif.OidAclRule, *, base_dn: str = ""
     ) -> p.Result[m.Ldif.AciRule]:
         """Assemble a parsed OID rule into one OUD :class:`m.Ldif.AciRule`.
 
@@ -67,7 +64,7 @@ class FlextLdifServersOidAclAssemble:
             if found_deny_all:
                 notes.append(
                     f"dead code after 'by * (none)': "
-                    f"{subject.subject_type} {subject.value!r}",
+                    f"{subject.subject_type} {subject.value!r}"
                 )
                 continue
             is_anyone = subject.subject_type == c.Ldif.OidSubjectKind.ANYONE
@@ -77,7 +74,7 @@ class FlextLdifServersOidAclAssemble:
                 continue
             if is_anyone and dn_normalized in containers:
                 notes.append(
-                    "anyone skipped at high-level container (OUD inherits to subtree)",
+                    "anyone skipped at high-level container (OUD inherits to subtree)"
                 )
                 continue
             bind = Conv.convert_subject_to_oud(subject)
@@ -91,18 +88,18 @@ class FlextLdifServersOidAclAssemble:
                 if not Conv.is_in_scope(bind_value, base_dn):
                     notes.append(
                         f"{subject.subject_type} {bind_value!r} removed "
-                        f"(DN out of scope {base_dn})",
+                        f"(DN out of scope {base_dn})"
                     )
                     continue
             perms = Conv.convert_permissions(subject.permissions, is_entry=is_entry)
             if perms.failure:
                 return r[m.Ldif.AciRule].fail(
-                    perms.error or "invalid OID permission token",
+                    perms.error or "invalid OID permission token"
                 )
             if not perms.value:
                 notes.append(
                     f"{subject.subject_type} {subject.value!r} removed "
-                    f"(no OUD allow permissions / default-deny)",
+                    f"(no OUD allow permissions / default-deny)"
                 )
                 continue
             allows.append(
@@ -112,17 +109,17 @@ class FlextLdifServersOidAclAssemble:
                     permissions=perms.value,
                     authmethod=subject.bindmode,
                     ip=subject.bindipfilter,
-                ),
+                )
             )
             if subject.added_object_constraint:
                 notes.append(
                     f"added_object_constraint=({subject.added_object_constraint}) "
-                    "on this subject needs manual OUD targetfilter review",
+                    "on this subject needs manual OUD targetfilter review"
                 )
             if is_anyone and (sensitive := c.Ldif.SENSITIVE_PERMS & set(perms.value)):
                 notes.append(
                     f"anyone granted sensitive perms {sorted(sensitive)} — "
-                    "verify this is intended",
+                    "verify this is intended"
                 )
             has_anyone = has_anyone or is_anyone
         first_value = rule.subjects[0].value if rule.subjects else ""
@@ -136,13 +133,12 @@ class FlextLdifServersOidAclAssemble:
                 targetattr=Conv.get_targetattr(rule),
                 targetfilter=rule.target_filter,
                 targetscope=Conv.calculate_targetscope(
-                    rule,
-                    has_anyone_subject=has_anyone,
+                    rule, has_anyone_subject=has_anyone
                 ),
                 acl_name=acl_name,
                 allows=tuple(allows),
                 notes=tuple(notes),
-            ),
+            )
         )
 
 

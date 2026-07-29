@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
-from flext_cli import u as core_u
+from typing import TYPE_CHECKING
+
+from flext_cli import u
 from flext_ldif import c, t
-from flext_ldif.models import FlextLdifModels as m
+
+if TYPE_CHECKING:
+    from flext_ldif import FlextLdifModels as m
 
 
 class FlextLdifUtilitiesSchemaFormat:
@@ -19,9 +23,7 @@ class FlextLdifUtilitiesSchemaFormat:
         if not attr_data.metadata or not attr_data.metadata.schema_format_details:
             return
         trailing = getattr(
-            attr_data.metadata.schema_format_details,
-            "trailing_spaces",
-            "",
+            attr_data.metadata.schema_format_details, "trailing_spaces", ""
         )
         if trailing and parts:
             parts[-1] += str(trailing)
@@ -43,7 +45,7 @@ class FlextLdifUtilitiesSchemaFormat:
         name_format = getattr(schema_details, "name_format", "single")
         name_values_ = getattr(schema_details, "name_values", [])
         name_values: t.MutableSequenceOf[str] = (
-            [str(v) for v in name_values_] if core_u.list_like(name_values_) else []
+            [str(v) for v in name_values_] if u.list_like(name_values_) else []
         )
         if name_format == "multiple" and name_values:
             names_str = " ".join(f"'{n}'" for n in name_values)
@@ -65,11 +67,11 @@ class FlextLdifUtilitiesSchemaFormat:
             has_obsolete = bool(
                 getattr(schema_details, "obsolete_presence", False)
                 if schema_details
-                else False,
+                else False
             )
             if not has_obsolete:
                 has_obsolete = bool(
-                    attr_data.metadata.extensions.get(c.Ldif.ObsoleteField.OBSOLETE),
+                    attr_data.metadata.extensions.get(c.Ldif.ObsoleteField.OBSOLETE)
                 )
         if not has_obsolete:
             return
@@ -103,8 +105,7 @@ class FlextLdifUtilitiesSchemaFormat:
 
     @staticmethod
     def format_attribute_list(
-        attr_list: str | t.MutableSequenceOf[str] | None,
-        prefix: str,
+        attr_list: str | t.MutableSequenceOf[str] | None, prefix: str
     ) -> str | None:
         """Format attribute list (MUST/MAY) for objectClass definition."""
         if not attr_list:
@@ -117,9 +118,7 @@ class FlextLdifUtilitiesSchemaFormat:
         return f"{prefix} ( {' $ '.join(attr_strs)} )"
 
     @staticmethod
-    def format_sup_list(
-        sup_value: str | t.MutableSequenceOf[str] | None,
-    ) -> str | None:
+    def format_sup_list(sup_value: str | t.MutableSequenceOf[str] | None) -> str | None:
         """Format SUP (superior) list for objectClass definition."""
         if not sup_value:
             return None
@@ -136,19 +135,15 @@ class FlextLdifUtilitiesSchemaFormat:
         if not attr_data.metadata or not attr_data.metadata.schema_format_details:
             return None
         field_order_ = getattr(
-            attr_data.metadata.schema_format_details,
-            "field_order",
-            None,
+            attr_data.metadata.schema_format_details, "field_order", None
         )
-        if field_order_ and core_u.list_like(field_order_):
+        if field_order_ and u.list_like(field_order_):
             return [str(item) for item in field_order_]
         return None
 
     @staticmethod
     def try_restore_objectclass_original_format(
-        oc_data: m.Ldif.SchemaObjectClass,
-        *,
-        restore_original: bool = True,
+        oc_data: m.Ldif.SchemaObjectClass, *, restore_original: bool = True
     ) -> t.MutableSequenceOf[str] | None:
         """Try to restore original format from metadata for objectClass."""
         if not restore_original or not oc_data.metadata:
@@ -181,10 +176,8 @@ class FlextLdifUtilitiesSchemaFormat:
             return None
         original = str(
             getattr(
-                attr_data.metadata.schema_format_details,
-                "original_string_complete",
-                "",
-            ),
+                attr_data.metadata.schema_format_details, "original_string_complete", ""
+            )
         )
         if not original:
             return None

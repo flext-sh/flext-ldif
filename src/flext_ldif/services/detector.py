@@ -2,18 +2,13 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import override
+import re
+from typing import TYPE_CHECKING, override
 
-from flext_ldif import (
-    c,
-    m,
-    p,
-    r,
-    s,
-    t,
-    u,
-)
+from flext_ldif import c, m, p, r, s, t, u
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class FlextLdifDetector(s):
@@ -25,10 +20,7 @@ class FlextLdifDetector(s):
 
     @staticmethod
     def _add_pattern_if_match(
-        *,
-        condition: bool,
-        description: str,
-        patterns: t.MutableSequenceOf[str],
+        *, condition: bool, description: str, patterns: t.MutableSequenceOf[str]
     ) -> None:
         """Add pattern description if condition is met."""
         if condition:
@@ -41,22 +33,18 @@ class FlextLdifDetector(s):
         return types
 
     def _get_server_constants(
-        self,
-        server_type: str,
+        self, server_type: str
     ) -> type[p.Ldif.ServerConstants] | None:
         """Get server Constants class dynamically via FlextLdifServer registry."""
         constants_result: p.Result[type[p.Ldif.ServerConstants]] = (
             self._server.resolve_server_constants(server_type)
         )
         constants: type[p.Ldif.ServerConstants] | None = constants_result.unwrap_or(
-            None,
+            None
         )
         if constants is None:
             return None
-        pattern_values = (
-            constants.DETECTION_PATTERN,
-            constants.DETECTION_OID_PATTERN,
-        )
+        pattern_values = (constants.DETECTION_PATTERN, constants.DETECTION_OID_PATTERN)
         has_detection_pattern = any(
             bool(
                 pattern_value
@@ -91,21 +79,14 @@ class FlextLdifDetector(s):
                 )
             if not ldif_path.exists():
                 return r[m.Ldif.ServerDetectionResult].fail_op(
-                    "read detection source",
-                    f"LDIF file not found: {ldif_path}",
+                    "read detection source", f"LDIF file not found: {ldif_path}"
                 )
             read = u.Cli.files_read_text(ldif_path)
             if read.failure:
                 return r[m.Ldif.ServerDetectionResult].fail_op(
-                    "read detection source",
-                    read.error,
+                    "read detection source", read.error
                 )
             ldif_content = read.value
-        if ldif_content is None:
-            return r[m.Ldif.ServerDetectionResult].fail_op(
-                "read detection source",
-                "LDIF content is empty",
-            )
         lines = ldif_content.splitlines()
         content_sample = "\n".join(lines[:max_lines])
         scores_dict = self._calculate_scores(content_sample)
@@ -122,15 +103,12 @@ class FlextLdifDetector(s):
         return r[m.Ldif.ServerDetectionResult].ok(detection_result)
 
     def resolve_effective_server_type(
-        self,
-        ldif_path: Path | None = None,
-        ldif_content: str | None = None,
+        self, ldif_path: Path | None = None, ldif_content: str | None = None
     ) -> p.Result[str]:
         """Resolve the effective LDAP server type to use for processing."""
         if ldif_path is not None or ldif_content is not None:
             detection_result = self.detect_server_type(
-                ldif_path=ldif_path,
-                ldif_content=ldif_content,
+                ldif_path=ldif_path, ldif_content=ldif_content
             )
             if detection_result.success:
                 return r[str].ok(detection_result.value.detected_server_type)
@@ -157,10 +135,7 @@ class FlextLdifDetector(s):
                 self._update_server_scores(constants, score_spec, content, scores)
         return scores
 
-    def _determine_server_type(
-        self,
-        scores: t.MutableIntMapping,
-    ) -> tuple[str, float]:
+    def _determine_server_type(self, scores: t.MutableIntMapping) -> tuple[str, float]:
         """Determine the most likely server type from scores."""
         rfc_server_type = c.Ldif.ServerTypes.RFC.value
         if not scores:
@@ -209,8 +184,8 @@ class FlextLdifDetector(s):
         _, pattern_attr, description, case_sensitive = pattern_spec
         pattern_value = getattr(constants, pattern_attr, None) if constants else None
         pattern = (
-            getattr(pattern_value, "pattern")
-            if getattr(pattern_value, "pattern", None) is not None
+            pattern_value.pattern
+            if isinstance(pattern_value, re.Pattern)
             else pattern_value
         )
         if not isinstance(pattern, str):
@@ -255,8 +230,8 @@ class FlextLdifDetector(s):
         _, pattern_attr, case_sensitive = score_spec
         pattern_value = getattr(constants, pattern_attr, None) if constants else None
         pattern = (
-            getattr(pattern_value, "pattern")
-            if getattr(pattern_value, "pattern", None) is not None
+            pattern_value.pattern
+            if isinstance(pattern_value, re.Pattern)
             else pattern_value
         )
         server_type_raw = getattr(constants, "SERVER_TYPE", "") if constants else ""

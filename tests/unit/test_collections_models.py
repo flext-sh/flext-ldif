@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-import pytest
-from flext_tests import tm
+from typing import TYPE_CHECKING
 
-from tests.constants import c
-from tests.models import m
-from tests.typings import t
-from tests.utilities import TestsFlextLdifUtilities as u
+import pytest
+
+from flext_tests import tm
+from tests import TestsFlextLdifUtilities as u, c, m
+
+if TYPE_CHECKING:
+    from tests import t
 
 
 class TestsFlextLdifCollectionsModels:

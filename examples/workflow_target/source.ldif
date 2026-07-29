@@ -1,0 +1,4 @@
+dn: cn=Migration User,dc=example,dc=com
+objectClass: person
+cn: Migration User
+sn: User

@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Literal
 
 from flext_ldap import t
+
 from flext_tests import FlextTestsTypes
 
 
@@ -15,23 +16,14 @@ class TestsFlextLdifTypes(FlextTestsTypes, t):
         """flext-ldif-specific test type definitions namespace."""
 
         type GenericFieldsDict = t.StrMapping
-        type DnRefData = t.MappingKV[
-            str,
-            t.StrMapping | t.StrSequence | str,
-        ]
+        type DnRefData = t.MappingKV[str, t.StrMapping | t.StrSequence | str]
         type FixtureServer = str
         type FixtureKind = str
         type ParseMethod = Literal[
-            "parse_server",
-            "parse_attribute",
-            "parse_objectclass",
-            "parse_input",
+            "parse_server", "parse_attribute", "parse_objectclass", "parse_input"
         ]
         type WriteMethod = Literal[
-            "write",
-            "_write_attribute",
-            "_write_objectclass",
-            "_write_acl",
+            "write", "_write_attribute", "_write_objectclass", "_write_acl"
         ]
 
 

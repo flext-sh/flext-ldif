@@ -12,14 +12,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, MutableMapping
 from typing import ClassVar
 
-from flext_ldif import (
-    c,
-    m,
-    p,
-    r,
-    t,
-    u,
-)
+from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._oud.aci import FlextLdifServersOudAciMixin
 from flext_ldif.servers._oud.acl_extract import FlextLdifServersOudAclExtractMixin
 from flext_ldif.servers._oud.acl_metadata import FlextLdifServersOudAclMetadataMixin
@@ -32,8 +25,7 @@ class FlextLdifServersOudTransformMixin:
 
     @staticmethod
     def apply_phase_aware_acl_handling(
-        entry_data: m.Ldif.Entry,
-        write_options: m.Ldif.WriteFormatOptions | None,
+        entry_data: m.Ldif.Entry, write_options: m.Ldif.WriteFormatOptions | None
     ) -> m.Ldif.Entry:
         """Apply phase-aware ACL attribute commenting."""
         if not (write_options and write_options.comment_acl_in_non_acl_phases):
@@ -62,11 +54,10 @@ class FlextLdifServersOudTransformMixin:
         entry: m.Ldif.Entry,
         validate_aci_macros: Callable[[str], r[bool]],
         correct_rfc_syntax_in_attributes: Callable[
-            [t.Ldif.AttributeDict],
-            r[t.Ldif.AttributeDict],
+            [t.Ldif.AttributeDict], r[t.Ldif.AttributeDict]
         ],
     ) -> p.Result[m.Ldif.Entry]:
-        """Hook: Validate and CORRECT RFC syntax issues before writing Entry - static helper."""
+        """Validate and correct RFC syntax issues before writing entry (static helper)."""
         attrs_dict_raw: t.MutableStrSequenceMapping = (
             entry.attributes.attributes if entry.attributes else {}
         )
@@ -74,15 +65,12 @@ class FlextLdifServersOudTransformMixin:
             k: list(v) for k, v in attrs_dict_raw.items()
         }
         aci_validation_error = FlextLdifServersOudAciMixin.validate_aci_macros_in_entry(
-            attrs_dict,
-            validate_aci_macros,
+            attrs_dict, validate_aci_macros
         )
         if aci_validation_error:
             return r[m.Ldif.Entry].fail(aci_validation_error)
         return FlextLdifServersOudTransformMixin.correct_syntax_and_return_entry(
-            entry,
-            attrs_dict,
-            correct_rfc_syntax_in_attributes,
+            entry, attrs_dict, correct_rfc_syntax_in_attributes
         )
 
     @staticmethod
@@ -110,9 +98,7 @@ class FlextLdifServersOudTransformMixin:
             aci_str: str = aci
             normalized_aci, was_filtered = (
                 FlextLdifServersOudAciMixin.normalize_aci_value(
-                    aci_str,
-                    base_dn,
-                    dn_registry,
+                    aci_str, base_dn, dn_registry
                 )
             )
             if not was_filtered and normalized_aci:
@@ -132,8 +118,8 @@ class FlextLdifServersOudTransformMixin:
         ext = metadata.extensions
         mk = c.Ldif
         original_dn_value = u.to_str(ext.get(mk.ORIGINAL_DN_COMPLETE))
-        dn_diff_raw = m.Ldif.DynamicMetadata.model_validate(
-            ext.get(mk.MINIMAL_DIFFERENCES_DN, {}),
+        dn_diff_raw: t.MutableJsonMapping = t.json_dict_adapter().validate_python(
+            ext.get(mk.MINIMAL_DIFFERENCES_DN, {})
         )
         should_restore_dn = (
             bool(original_dn_value)
@@ -141,9 +127,7 @@ class FlextLdifServersOudTransformMixin:
             and bool(dn_diff_raw.get(mk.HAS_DIFFERENCES, False))
         )
         restored_entry = (
-            entry_data.model_copy(
-                update={"dn": m.Ldif.DN(value=original_dn_value)},
-            )
+            entry_data.model_copy(update={"dn": m.Ldif.DN(value=original_dn_value)})
             if should_restore_dn
             else entry_data
         )
@@ -152,15 +136,19 @@ class FlextLdifServersOudTransformMixin:
         original_case_map = metadata.original_attribute_case
         if attributes is None:
             return restored_entry
-        original_attributes = m.Ldif.DynamicMetadata.model_validate(
-            ext.get(c.Ldif.ORIGINAL_ATTRIBUTES_COMPLETE, {}),
+        original_attributes: t.MutableJsonMapping = (
+            t.json_dict_adapter().validate_python(
+                ext.get(c.Ldif.ORIGINAL_ATTRIBUTES_COMPLETE, {})
+            )
         )
 
         restored: t.MutableStrSequenceMapping = {}
         for attr_name, attr_values in attributes.attributes.items():
             orig_case_raw = original_case_map.get(attr_name.lower(), attr_name)
             orig_case = orig_case_raw if isinstance(orig_case_raw, str) else attr_name
-            fallback_values = [str(item) for item in attr_values or [attr_values]]
+            fallback_values: list[str] = (
+                list(attr_values) if attr_values else [str(attr_values)]
+            )
             if orig_case in original_attributes:
                 original_value = original_attributes[orig_case]
                 restored_values = [str(original_value)]
@@ -173,8 +161,8 @@ class FlextLdifServersOudTransformMixin:
                     "attributes": restored,
                     "attribute_metadata": attributes.attribute_metadata,
                     "metadata": attributes.metadata,
-                }),
-            },
+                })
+            }
         )
         return restored_copy
 
@@ -198,7 +186,7 @@ class FlextLdifServersOudTransformMixin:
             else:
                 attrs_for_model[raw_key] = [str(raw_value)]
         corrected_ldif_attrs = m.Ldif.Attributes.model_validate({
-            "attributes": attrs_for_model,
+            "attributes": attrs_for_model
         })
         corrected_entry = entry.model_copy(update={"attributes": corrected_ldif_attrs})
         FlextLdifServersOudTransformMixin._module_logger.debug(
@@ -213,8 +201,7 @@ class FlextLdifServersOudTransformMixin:
         entry: m.Ldif.Entry,
         attrs_dict: t.Ldif.AttributeDict,
         correct_rfc_syntax_in_attributes: Callable[
-            [t.Ldif.AttributeDict],
-            r[t.Ldif.AttributeDict],
+            [t.Ldif.AttributeDict], r[t.Ldif.AttributeDict]
         ],
     ) -> p.Result[m.Ldif.Entry]:
         """Correct RFC syntax issues and return entry."""
@@ -239,9 +226,7 @@ class FlextLdifServersOudTransformMixin:
             syntax_corrections_typed = syntax_corrections_dict
         if syntax_corrections_typed is not None:
             return FlextLdifServersOudTransformMixin.apply_syntax_corrections(
-                entry,
-                corrected_data_typed,
-                syntax_corrections_typed,
+                entry, corrected_data_typed, syntax_corrections_typed
             )
         return r[m.Ldif.Entry].ok(entry)
 

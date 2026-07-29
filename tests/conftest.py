@@ -2,7 +2,4 @@
 
 from __future__ import annotations
 
-pytest_plugins = [
-    "tests.unit.fixtures",
-    "tests.integration.fixtures",
-]
+pytest_plugins = ["tests.unit.fixtures", "tests.integration.fixtures"]

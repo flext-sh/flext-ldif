@@ -10,9 +10,7 @@ from flext_ldif import c, m, p, r, s, t, u
 from flext_ldif.services.transformers import FlextLdifTransformer
 
 
-class FlextLdifProcessingPipeline(
-    s[t.MutableSequenceOf[m.Ldif.Entry]],
-):
+class FlextLdifProcessingPipeline(s[t.MutableSequenceOf[m.Ldif.Entry]]):
     """Full processing pipeline with configuration."""
 
     _DEFAULT_CASE_FOLD: c.Ldif.CaseFoldOption = c.Ldif.CaseFoldOption.NONE
@@ -26,7 +24,7 @@ class FlextLdifProcessingPipeline(
             exclude=True,
             description="Optional transformation configuration for the processing pipeline.",
         ),
-    ]
+    ] = None
     entries_input: Annotated[
         t.MutableSequenceOf[m.Ldif.Entry] | None,
         u.Field(
@@ -34,13 +32,13 @@ class FlextLdifProcessingPipeline(
             exclude=True,
             description="Optional entry batch used when the service executes without explicit input.",
         ),
-    ]
+    ] = None
     _config: m.Ldif.TransformConfig = u.PrivateAttr(
-        default_factory=m.Ldif.TransformConfig,
+        default_factory=m.Ldif.TransformConfig
     )
     _entries: t.MutableSequenceOf[m.Ldif.Entry] = u.PrivateAttr(default_factory=list)
     _stages: t.SequenceOf[m.Cli.PipelineStageSpec] = u.PrivateAttr(
-        default_factory=tuple,
+        default_factory=tuple
     )
 
     @override
@@ -82,9 +80,7 @@ class FlextLdifProcessingPipeline(
         return cls(transform_config=transform_config)
 
     @override
-    def execute(
-        self,
-    ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
+    def execute(self) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
         """Execute the processing pipeline."""
         batch = self.entries_input
         if batch is None:
@@ -113,9 +109,7 @@ class FlextLdifProcessingPipeline(
         return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(self._entries)
 
     def _apply_transformer(
-        self,
-        stage_id: str,
-        transformer: p.Ldif.EntryTransformer,
+        self, stage_id: str, transformer: p.Ldif.EntryTransformer
     ) -> p.Result[m.Cli.PipelineStageResult]:
         """Apply one entry transformer across the current batch."""
         transformed_entries: t.MutableSequenceOf[m.Ldif.Entry] = []
@@ -131,8 +125,7 @@ class FlextLdifProcessingPipeline(
             "processed_entries": len(transformed_entries)
         })
         stage_result: p.Result[m.Cli.PipelineStageResult] = cli.ok_stage(
-            stage_id,
-            output=output_payload,
+            stage_id, output=output_payload
         )
         return stage_result
 
@@ -155,14 +148,11 @@ class FlextLdifProcessingPipeline(
                 else self._DEFAULT_SPACE_HANDLING
             )
             normalize_dn = u.Ldif.Normalize.dn(
-                case=case_enum,
-                spaces=spaces_enum,
-                validate=dn_config.validate_before,
+                case=case_enum, spaces=spaces_enum, validate=dn_config.validate_before
             )
             handlers[c.Ldif.PROCESSING_STAGE_NORMALIZE_DN] = (
                 lambda _ctx, transformer=normalize_dn: self._apply_transformer(
-                    c.Ldif.PROCESSING_STAGE_NORMALIZE_DN,
-                    transformer,
+                    c.Ldif.PROCESSING_STAGE_NORMALIZE_DN, transformer
                 )
             )
             stage_order.append(c.Ldif.PROCESSING_STAGE_NORMALIZE_DN)
@@ -178,8 +168,7 @@ class FlextLdifProcessingPipeline(
             )
             handlers[c.Ldif.PROCESSING_STAGE_NORMALIZE_ATTRS] = (
                 lambda _ctx, transformer=normalize_attrs: self._apply_transformer(
-                    c.Ldif.PROCESSING_STAGE_NORMALIZE_ATTRS,
-                    transformer,
+                    c.Ldif.PROCESSING_STAGE_NORMALIZE_ATTRS, transformer
                 )
             )
             stage_order.append(c.Ldif.PROCESSING_STAGE_NORMALIZE_ATTRS)
@@ -189,14 +178,10 @@ class FlextLdifProcessingPipeline(
             and self._config.process_config.target_server
         ):
             source_server = c.Ldif.ServerTypes(
-                u.Ldif.normalize_server_type(
-                    self._config.process_config.source_server,
-                ),
+                u.Ldif.normalize_server_type(self._config.process_config.source_server)
             )
             target_server = c.Ldif.ServerTypes(
-                u.Ldif.normalize_server_type(
-                    self._config.process_config.target_server,
-                ),
+                u.Ldif.normalize_server_type(self._config.process_config.target_server)
             )
             server_transform = FlextLdifTransformer(
                 source_server=source_server,
@@ -205,8 +190,7 @@ class FlextLdifProcessingPipeline(
             )
             handlers[c.Ldif.PROCESSING_STAGE_SERVER_TRANSFORM] = (
                 lambda _ctx, transformer=server_transform: self._apply_transformer(
-                    c.Ldif.PROCESSING_STAGE_SERVER_TRANSFORM,
-                    transformer,
+                    c.Ldif.PROCESSING_STAGE_SERVER_TRANSFORM, transformer
                 )
             )
             stage_order.append(c.Ldif.PROCESSING_STAGE_SERVER_TRANSFORM)

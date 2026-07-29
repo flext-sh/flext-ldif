@@ -23,11 +23,7 @@ class FlextLdifServersOidAclPipeline:
 
     @classmethod
     def convert_acl_values(
-        cls,
-        dn: str,
-        oid_acl_lines: t.StrSequence,
-        *,
-        base_dn: str = "",
+        cls, dn: str, oid_acl_lines: t.StrSequence, *, base_dn: str = ""
     ) -> p.Result[t.StrSequence]:
         """Convert an entry's OID ACL lines to deduplicated OUD ``aci`` values.
 
@@ -48,14 +44,12 @@ class FlextLdifServersOidAclPipeline:
                 return r[t.StrSequence].fail(aci.error or "OID ACL build failed")
             if aci.value.notes:
                 FlextLdifServersOidAclPipeline._module_logger.info(
-                    "OID ACL conversion notes",
-                    dn=dn,
-                    notes=list(aci.value.notes),
+                    "OID ACL conversion notes", dn=dn, notes=list(aci.value.notes)
                 )
             if not aci.value.allows:
                 continue
             rendered = Render.render_aci_string(aci.value).removeprefix(
-                c.Ldif.ACI_PREFIX,
+                c.Ldif.ACI_PREFIX
             )
             normalized = c.Ldif.WHITESPACE_RE.sub(" ", rendered.strip().lower())
             if normalized in seen:
@@ -113,7 +107,7 @@ class FlextLdifServersOidAclPipeline:
             if key not in acl_names
         }
         new_attrs = attrs_model.model_copy(
-            update={"attributes": current, "attribute_metadata": kept_meta},
+            update={"attributes": current, "attribute_metadata": kept_meta}
         )
         return r[m.Ldif.Entry].ok(entry.model_copy(update={"attributes": new_attrs}))
 

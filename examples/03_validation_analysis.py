@@ -15,11 +15,12 @@ SRP: Dataset generation, validation, analysis - each isolated, composition handl
 
 from __future__ import annotations
 
-from collections.abc import (
-    MutableSequence,
-)
+from typing import TYPE_CHECKING
 
 from flext_ldif import ldif, m, p, r, t
+
+if TYPE_CHECKING:
+    from collections.abc import MutableSequence
 
 
 class DRYValidationAnalysis:
@@ -41,8 +42,7 @@ class DRYValidationAnalysis:
 
     @staticmethod
     def _generate_test_dataset(
-        count: int,
-        error_rate: float = 0.0,
+        count: int, error_rate: float = 0.0
     ) -> MutableSequence[m.Ldif.Entry]:
         """DRY test dataset generation with configurable errors."""
         api = ldif()

@@ -5,18 +5,10 @@ from __future__ import annotations
 import struct
 from typing import Annotated
 
-from flext_ldif import (
-    p,
-    r,
-    s,
-    t,
-    u,
-)
+from flext_ldif import p, r, s, t, u
 
 
-class FlextLdifValidation(
-    s,
-):
+class FlextLdifValidation(s):
     """FlextLdifValidation class."""
 
     attribute_names: Annotated[
@@ -50,7 +42,7 @@ class FlextLdifValidation(
                     UnicodeDecodeError,
                     struct.error,
                 ),
-            ).map_error(lambda e: f"Failed to validate attribute name: {e}"),
+            ).map_error(lambda e: f"Failed to validate attribute name: {e}")
         )
 
     def validate_objectclass_name(self, name: str) -> p.Result[bool]:

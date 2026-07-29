@@ -2,15 +2,19 @@
 
 from __future__ import annotations
 
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 
-from flext_ldif import c, m, p, r, s, t, u
+from flext_ldif import FlextLdifModels, c, m, p, r, s, t, u
 from flext_ldif.services.conversion_acl_preserve import (
     FlextLdifConversionAclPreserveMixin,
 )
 
+_LdifEntry = FlextLdifModels.Ldif.Entry
+_LdifDN = FlextLdifModels.Ldif.DN
+_LdifAttributes = FlextLdifModels.Ldif.Attributes
 
-class FlextLdifConversionAclMixin(FlextLdifConversionAclPreserveMixin, s):
+
+class FlextLdifConversionAclMixin(FlextLdifConversionAclPreserveMixin, s, ABC):
     """ACL-model conversion orchestration (preservation via the parent mixin)."""
 
     @abstractmethod
@@ -48,7 +52,7 @@ class FlextLdifConversionAclMixin(FlextLdifConversionAclPreserveMixin, s):
                 u.Ldif.normalize_server_type(source_server.server_type)
                 if source_server.server_type
                 else None
-            ),
+            )
         ).map_or(None)
         rfc_entry = self._build_acl_conversion_entry(source_acl, source_server_type)
         target_server_type: c.Ldif.ServerTypes | None = u.try_(
@@ -56,7 +60,7 @@ class FlextLdifConversionAclMixin(FlextLdifConversionAclPreserveMixin, s):
                 u.Ldif.normalize_server_type(target_server.server_type)
                 if target_server.server_type != c.IDENTIFIER_UNKNOWN
                 else None
-            ),
+            )
         ).map_or(None)
         return (
             self
@@ -74,70 +78,46 @@ class FlextLdifConversionAclMixin(FlextLdifConversionAclPreserveMixin, s):
                         converted_acl,
                         source_server_type=source_server_type,
                         target_server_type=target_server_type,
-                    ).model_copy(
-                        update={"server_type": target_server_type},
-                        deep=True,
-                    ),
-                ),
+                    ).model_copy(update={"server_type": target_server_type}, deep=True)
+                )
             )
         )
 
     @staticmethod
     def _build_acl_conversion_entry(
-        acl: m.Ldif.Acl,
-        source_server_type: c.Ldif.ServerTypes | None,
+        acl: m.Ldif.Acl, source_server_type: c.Ldif.ServerTypes | None
     ) -> m.Ldif.Entry:
         """Build the RFC entry carrier used for ACL conversion."""
-        entry_metadata = m.Ldif.ServerMetadata.create_for(
-            source_server_type,
-            extensions=None,
-        )
+        entry_metadata = u.Ldif.server_metadata_for(source_server_type)
         entry_metadata.acls = [acl.raw_acl] if acl.raw_acl else list[str]()
-        return m.Ldif.Entry.create(
-            dn=m.Ldif.DN(
-                value="cn=acl-conversion,dc=example,dc=com",
-                metadata=m.Ldif.EntryMetadata(),
-            ),
-            attributes=m.Ldif.Attributes(
-                attributes={},
-                attribute_metadata={},
-                metadata=None,
+        entry_result = _LdifEntry.create(
+            dn=_LdifDN(value="cn=acl-conversion,dc=example,dc=com", metadata={}),
+            attributes=_LdifAttributes(
+                attributes={}, attribute_metadata={}, metadata=None
             ),
             metadata=entry_metadata,
-        ).unwrap()
+        )
+        entry: m.Ldif.Entry = entry_result.unwrap()
+        return entry
 
     @staticmethod
     def _entry_to_acl(
-        target_server: p.Ldif.ServerServer,
-        converted_entry: t.Ldif.ConvertedModel,
+        target_server: p.Ldif.ServerServer, converted_entry: t.Ldif.ConvertedModel
     ) -> p.Result[m.Ldif.Acl]:
         """Extract and parse the converted ACL from an entry carrier."""
         if not isinstance(converted_entry, m.Ldif.Entry):
             return r[m.Ldif.Acl].fail(
                 "Entry conversion returned unexpected type: "
-                f"{type(converted_entry).__name__}",
+                f"{type(converted_entry).__name__}"
             )
         if converted_entry.metadata is None or not converted_entry.metadata.acls:
-            return r[m.Ldif.Acl].fail(
-                "Converted entry has no ACLs in metadata.acls",
-            )
+            return r[m.Ldif.Acl].fail("Converted entry has no ACLs in metadata.acls")
         return (
             r[m.Ldif.Acl]
             .from_result(
-                target_server.acl_server.parse_server(
-                    converted_entry.metadata.acls[0],
-                ),
+                target_server.acl_server.parse_server(converted_entry.metadata.acls[0])
             )
-            .flat_map(
-                lambda parsed_acl: (
-                    r[m.Ldif.Acl].ok(parsed_acl)
-                    if isinstance(parsed_acl, m.Ldif.Acl)
-                    else r[m.Ldif.Acl].fail(
-                        "ACL conversion returned unexpected parsed type: "
-                        f"{type(parsed_acl).__name__}",
-                    )
-                ),
-            )
+            .flat_map(lambda parsed_acl: r[m.Ldif.Acl].ok(parsed_acl))
         )
 
 

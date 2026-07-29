@@ -23,7 +23,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
             exclude=True,
             description="Directory containing LDIF files to migrate.",
         ),
-    ]
+    ] = None
     output_dir: Annotated[
         Path | None,
         u.Field(
@@ -31,7 +31,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
             exclude=True,
             description="Directory receiving migrated LDIF files.",
         ),
-    ]
+    ] = None
     output_filename: Annotated[
         str | None,
         u.Field(
@@ -39,7 +39,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
             exclude=True,
             description="Optional output filename override used for single-file migration.",
         ),
-    ]
+    ] = None
     mode: Annotated[
         str | None,
         u.Field(
@@ -47,7 +47,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
             exclude=True,
             description="Public migration mode input accepted by the pipeline DSL.",
         ),
-    ]
+    ] = None
     source_server: Annotated[
         str | c.Ldif.ServerTypes | None,
         u.Field(
@@ -55,7 +55,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
             exclude=True,
             description="Legacy source server input accepted for compatibility.",
         ),
-    ]
+    ] = None
     target_server: Annotated[
         str | c.Ldif.ServerTypes | None,
         u.Field(
@@ -63,7 +63,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
             exclude=True,
             description="Legacy target server input accepted for compatibility.",
         ),
-    ]
+    ] = None
     source_server_type: Annotated[
         str | c.Ldif.ServerTypes | None,
         u.Field(
@@ -71,7 +71,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
             exclude=True,
             description="Canonical source server type used by the migration pipeline.",
         ),
-    ]
+    ] = None
     target_server_type: Annotated[
         str | c.Ldif.ServerTypes | None,
         u.Field(
@@ -79,7 +79,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
             exclude=True,
             description="Canonical target server type used by the migration pipeline.",
         ),
-    ]
+    ] = None
     base_dn: Annotated[
         str | None,
         u.Field(
@@ -87,24 +87,21 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
             exclude=True,
             description="Migration base DN forwarded to OID→OUD ACL scope filtering.",
         ),
-    ]
+    ] = None
 
     @override
     def model_post_init(self, __context: t.JsonMapping | None, /) -> None:
         """Normalize migration configuration after Pydantic initialization."""
         super().model_post_init(__context)
         self.source_server_type = self._coerce_server_type(
-            self.source_server_type or self.source_server or self._DEFAULT_SERVER,
+            self.source_server_type or self.source_server or self._DEFAULT_SERVER
         )
         self.target_server_type = self._coerce_server_type(
-            self.target_server_type or self.target_server or self._DEFAULT_SERVER,
+            self.target_server_type or self.target_server or self._DEFAULT_SERVER
         )
 
     @classmethod
-    def _coerce_server_type(
-        cls,
-        value: str | c.Ldif.ServerTypes,
-    ) -> c.Ldif.ServerTypes:
+    def _coerce_server_type(cls, value: str | c.Ldif.ServerTypes) -> c.Ldif.ServerTypes:
         """Coerce configured server type with stable behavior for explicit values."""
         if isinstance(value, c.Ldif.ServerTypes):
             return value
@@ -128,7 +125,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
             return r[m.Ldif.MigrationPipelineResult].fail("No output_dir specified")
         if not in_dir.exists():
             return r[m.Ldif.MigrationPipelineResult].fail(
-                f"Input directory not found: {in_dir}",
+                f"Input directory not found: {in_dir}"
             )
         try:
             return self._execute_directory(in_dir)
@@ -137,8 +134,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
             return r[m.Ldif.MigrationPipelineResult].fail_op("Migration pipeline", e)
 
     def migrate_entries(
-        self,
-        entries: t.MutableSequenceOf[m.Ldif.Entry],
+        self, entries: t.MutableSequenceOf[m.Ldif.Entry]
     ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
         """Migrate entries from source to target server format."""
         source_server = self.source_server_type or self._DEFAULT_SERVER
@@ -150,8 +146,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
                 base_dn=self.base_dn or "",
             )
             return FlextLdifProcessingPipeline(
-                transform_config=pipeline.transform_config,
-                entries_input=entries,
+                transform_config=pipeline.transform_config, entries_input=entries
             ).execute()
         except c.Ldif.EXC_LDIF_PARSE as e:
             self.logger.exception(
@@ -163,24 +158,19 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
             return r[t.MutableSequenceOf[m.Ldif.Entry]].fail_op("Migration", e)
 
     def migrate_file(
-        self,
-        input_file: Path,
-        output_file: Path | None = None,
+        self, input_file: Path, output_file: Path | None = None
     ) -> p.Result[m.Ldif.MigrationPipelineResult]:
         """Migrate a single LDIF file."""
         try:
             return self._migrate_file_core(input_file, output_file)
         except c.Ldif.EXC_LDIF_PARSE as e:
             self.logger.exception(
-                "File migration failed",
-                input_file=str(input_file),
-                error=str(e),
+                "File migration failed", input_file=str(input_file), error=str(e)
             )
             return r[m.Ldif.MigrationPipelineResult].fail_op("File migration", e)
 
     def _execute_directory(
-        self,
-        in_dir: Path,
+        self, in_dir: Path
     ) -> p.Result[m.Ldif.MigrationPipelineResult]:
         """Execute migration across all LDIF files in a directory."""
         total_processed = 0
@@ -202,44 +192,37 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
                     file=str(input_file),
                     error=str(result.error),
                 )
-        pipeline_result = m.Ldif.MigrationPipelineResult.model_validate(
-            {
-                "entries": all_entries,
-                "output_files": output_files,
-                "stats": m.Ldif.Statistics(
-                    total_entries=total_processed,
-                    processed_entries=total_migrated,
-                ),
-            },
-        )
+        pipeline_result = m.Ldif.MigrationPipelineResult.model_validate({
+            "entries": all_entries,
+            "output_files": output_files,
+            "stats": m.Ldif.Statistics(
+                total_entries=total_processed, processed_entries=total_migrated
+            ),
+        })
         return r[m.Ldif.MigrationPipelineResult].ok(pipeline_result)
 
     def _migrate_file_core(
-        self,
-        input_file: Path,
-        output_file: Path | None,
+        self, input_file: Path, output_file: Path | None
     ) -> p.Result[m.Ldif.MigrationPipelineResult]:
         """Migrate one file from disk through parse, transform, and write."""
         if not input_file.exists():
             return r[m.Ldif.MigrationPipelineResult].fail(
-                f"Input file not found: {input_file}",
+                f"Input file not found: {input_file}"
             )
         read = u.Cli.files_read_text(input_file)
         if read.failure:
             return r[m.Ldif.MigrationPipelineResult].fail(
-                f"File migration failed: "
-                f"{read.error or f'unable to read {input_file}'}",
+                f"File migration failed: {read.error or f'unable to read {input_file}'}"
             )
         parse_result = FlextLdifParser().parse_string(
-            read.value,
-            server_type=self.source_server_type,
+            read.value, server_type=self.source_server_type
         )
         if parse_result.failure:
             return r[m.Ldif.MigrationPipelineResult].fail_op(
                 "Parse", parse_result.error
             )
         entries_list: t.MutableSequenceOf[m.Ldif.Entry] = list(
-            parse_result.value.entries,
+            parse_result.value.entries
         )
         migrate_result = self.migrate_entries(entries_list)
         if migrate_result.failure:
@@ -247,10 +230,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
                 "Migration", migrate_result.error
             )
         return self._write_migrated_file(
-            input_file,
-            output_file,
-            entries_list,
-            migrate_result.value,
+            input_file, output_file, entries_list, migrate_result.value
         )
 
     def _write_migrated_file(
@@ -267,31 +247,23 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
             resolved_output_file = self.output_dir / filename
         if resolved_output_file is None:
             return r[m.Ldif.MigrationPipelineResult].fail(
-                "No output file or output_dir specified",
+                "No output file or output_dir specified"
             )
         write_result = FlextLdifWriter().write_ldif_file(
-            migrated,
-            resolved_output_file,
-            server_type=self.target_server_type,
+            migrated, resolved_output_file, server_type=self.target_server_type
         )
         if write_result.failure:
             return r[m.Ldif.MigrationPipelineResult].fail_op(
                 "Write", write_result.error
             )
-        self.logger.debug(
-            "Wrote migrated file",
-            output_file=str(resolved_output_file),
-        )
-        pipeline_result = m.Ldif.MigrationPipelineResult.model_validate(
-            {
-                "entries": migrated,
-                "output_files": [str(resolved_output_file)],
-                "stats": m.Ldif.Statistics(
-                    total_entries=len(entries_list),
-                    processed_entries=len(migrated),
-                ),
-            },
-        )
+        self.logger.debug("Wrote migrated file", output_file=str(resolved_output_file))
+        pipeline_result = m.Ldif.MigrationPipelineResult.model_validate({
+            "entries": migrated,
+            "output_files": [str(resolved_output_file)],
+            "stats": m.Ldif.Statistics(
+                total_entries=len(entries_list), processed_entries=len(migrated)
+            ),
+        })
         return r[m.Ldif.MigrationPipelineResult].ok(pipeline_result)
 
 

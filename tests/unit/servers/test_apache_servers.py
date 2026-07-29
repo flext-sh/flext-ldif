@@ -6,18 +6,25 @@ Directory Server-specific attributes, object classes, entries, and ACLs in LDIF 
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
-from flext_tests import tm
 
 from flext_ldif.servers.apache import FlextLdifServersApache
-from tests.constants import c
-from tests.models import m
-from tests.typings import t
-from tests.utilities import u
+from flext_tests import tm
+from tests import c, m, u
+
+if TYPE_CHECKING:
+    from tests import t
 
 
-class TestsTestFlextLdifApacheServers:
-    """Test Apache Directory Server servers implementation."""
+class TestsFlextLdifApacheServers:
+    """Behavioral contract tests for FlextLdifServersApache.
+
+    Every test asserts observable public behavior: parse/write ``r[T]`` outcomes,
+    detection predicates, and public model state — never private members or
+    internal-collaborator interactions.
+    """
 
     @pytest.mark.parametrize("test_case", c.Tests.APACHE_ATTRIBUTE_TEST_CASES)
     def test_schema_attribute_can_handle(
@@ -26,7 +33,7 @@ class TestsTestFlextLdifApacheServers:
         """Test attribute detection for various scenarios."""
         server = FlextLdifServersApache()
         schema_server = server.schema_server
-        tm.that(schema_server, is_=FlextLdifServersApache.Schema)
+        assert isinstance(schema_server, FlextLdifServersApache.Schema)
         result = schema_server.can_handle_attribute(test_case.attr_definition)
         tm.that(result is test_case.expected_can_handle, eq=True)
 
@@ -71,21 +78,17 @@ class TestsTestFlextLdifApacheServers:
         schema = server.schema_server
         attr_def = "NAME 'ads-enabled' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7"
         u.Tests.server_parse_and_unwrap(
-            schema,
-            attr_def,
-            parse_method="parse_attribute",
-            should_succeed=False,
+            schema, attr_def, parse_method="parse_attribute", should_succeed=False
         )
 
     @pytest.mark.parametrize("test_case", c.Tests.APACHE_OBJECTCLASS_TEST_CASES)
     def test_schema_objectclass_can_handle(
-        self,
-        test_case: m.Tests.ObjectClassTestCase,
+        self, test_case: m.Tests.ObjectClassTestCase
     ) -> None:
         """Test objectClass detection for various scenarios."""
         server = FlextLdifServersApache()
         schema_server = server.schema_server
-        tm.that(schema_server, is_=FlextLdifServersApache.Schema)
+        assert isinstance(schema_server, FlextLdifServersApache.Schema)
         result = schema_server.can_handle_objectclass(test_case.oc_definition)
         tm.that(result is test_case.expected_can_handle, eq=True)
 
@@ -150,10 +153,7 @@ class TestsTestFlextLdifApacheServers:
         schema = server.schema_server
         oc_def = "NAME 'ads-directoryService' SUP top STRUCTURAL"
         u.Tests.server_parse_and_unwrap(
-            schema,
-            oc_def,
-            parse_method="parse_objectclass",
-            should_succeed=False,
+            schema, oc_def, parse_method="parse_objectclass", should_succeed=False
         )
 
     def test_acl_can_handle_with_ads_aci(self) -> None:
@@ -162,15 +162,12 @@ class TestsTestFlextLdifApacheServers:
         acl_server = server.acl_server
         acl_line = "ads-aci: ( version 3.0 ) ( deny grantAdd ) ( grantRemove )"
         acl_model = u.Tests.acl_parse_and_unwrap(
-            acl_server,
-            acl_line,
-            expected_type=m.Ldif.Acl,
+            acl_server, acl_line, expected_type=m.Ldif.Acl
         )
         assert acl_model is not None
         assert isinstance(acl_model, m.Ldif.Acl)
         roundtrip_result = u.Tests.acl_parse_and_unwrap(
-            acl_server,
-            acl_model.raw_acl or str(acl_model),
+            acl_server, acl_model.raw_acl or str(acl_model)
         )
         assert roundtrip_result is not None
 
@@ -180,15 +177,12 @@ class TestsTestFlextLdifApacheServers:
         acl_server = server.acl_server
         acl_line = "aci: ( version 3.0 ) ( deny grantAdd ) ( grantRemove )"
         acl_model = u.Tests.acl_parse_and_unwrap(
-            acl_server,
-            acl_line,
-            expected_type=m.Ldif.Acl,
+            acl_server, acl_line, expected_type=m.Ldif.Acl
         )
         assert acl_model is not None
         assert isinstance(acl_model, m.Ldif.Acl)
         roundtrip_result = u.Tests.acl_parse_and_unwrap(
-            acl_server,
-            acl_model.raw_acl or str(acl_model),
+            acl_server, acl_model.raw_acl or str(acl_model)
         )
         assert roundtrip_result is not None
 
@@ -198,15 +192,12 @@ class TestsTestFlextLdifApacheServers:
         acl_server = server.acl_server
         acl_line = "(version 3.0) (deny grantAdd) (grantRemove)"
         acl_model = u.Tests.acl_parse_and_unwrap(
-            acl_server,
-            acl_line,
-            expected_type=m.Ldif.Acl,
+            acl_server, acl_line, expected_type=m.Ldif.Acl
         )
         assert acl_model is not None
         assert isinstance(acl_model, m.Ldif.Acl)
         roundtrip_result = u.Tests.acl_parse_and_unwrap(
-            acl_server,
-            acl_model.raw_acl or str(acl_model),
+            acl_server, acl_model.raw_acl or str(acl_model)
         )
         assert roundtrip_result is not None
 
@@ -214,7 +205,7 @@ class TestsTestFlextLdifApacheServers:
         """Test ACL detection rejects non-ApacheDS ACLs."""
         server = FlextLdifServersApache()
         acl_server = server.acl_server
-        tm.that(acl_server, is_=FlextLdifServersApache.Acl)
+        assert isinstance(acl_server, FlextLdifServersApache.Acl)
         acl_line = "access to * by * read"
         tm.that(acl_server.can_handle_acl(acl_line) is False, eq=True)
 
@@ -222,7 +213,7 @@ class TestsTestFlextLdifApacheServers:
         """Test ACL detection rejects empty lines."""
         server = FlextLdifServersApache()
         acl_server = server.acl_server
-        tm.that(acl_server, is_=FlextLdifServersApache.Acl)
+        assert isinstance(acl_server, FlextLdifServersApache.Acl)
         tm.that(acl_server.can_handle_acl("") is False, eq=True)
 
     def test_acl_parse_success(self) -> None:
@@ -231,9 +222,7 @@ class TestsTestFlextLdifApacheServers:
         acl_server = server.acl_server
         acl_line = "ads-aci: ( version 3.0 ) ( deny grantAdd ) ( grantRemove )"
         acl_data = u.Tests.acl_parse_and_unwrap(
-            acl_server,
-            acl_line,
-            expected_type=m.Ldif.Acl,
+            acl_server, acl_line, expected_type=m.Ldif.Acl
         )
         assert acl_data is not None
         assert isinstance(acl_data, m.Ldif.Acl)
@@ -246,9 +235,7 @@ class TestsTestFlextLdifApacheServers:
         acl_server = server.acl_server
         acl_line = "aci: ( deny grantAdd )"
         acl_data = u.Tests.acl_parse_and_unwrap(
-            acl_server,
-            acl_line,
-            expected_type=m.Ldif.Acl,
+            acl_server, acl_line, expected_type=m.Ldif.Acl
         )
         assert acl_data is not None
         assert isinstance(acl_data, m.Ldif.Acl)
@@ -267,11 +254,7 @@ class TestsTestFlextLdifApacheServers:
             server_type=c.Ldif.ServerTypes.APACHE,
             raw_acl="( version 3.0 ) ( deny grantAdd )",
         )
-        u.Tests.acl_write_and_unwrap(
-            acl_server,
-            acl_model,
-            must_contain=["aci:"],
-        )
+        u.Tests.acl_write_and_unwrap(acl_server, acl_model, must_contain=["aci:"])
 
     def test_acl_write_empty(self) -> None:
         """Test writing empty ACL to RFC string format."""
@@ -288,9 +271,7 @@ class TestsTestFlextLdifApacheServers:
             raw_acl="",
         )
         u.Tests.acl_write_and_unwrap(
-            acl_server,
-            acl_model,
-            must_contain=["ads-aci", "aci:"],
+            acl_server, acl_model, must_contain=["ads-aci", "aci:"]
         )
 
     @pytest.mark.parametrize("test_case", c.Tests.APACHE_ENTRY_TEST_CASES)
@@ -298,7 +279,7 @@ class TestsTestFlextLdifApacheServers:
         """Test entry detection for various scenarios."""
         server = FlextLdifServersApache()
         entry_server = server.entry_server
-        tm.that(entry_server, is_=FlextLdifServersApache.Entry)
+        assert isinstance(entry_server, FlextLdifServersApache.Entry)
         result = entry_server.can_handle(test_case.entry_dn, test_case.attributes)
         tm.that(result is test_case.expected_can_handle, eq=True)
 
@@ -318,10 +299,17 @@ class TestsTestFlextLdifApacheServers:
         "test_case",
         [tc for tc in c.Tests.APACHE_ENTRY_TEST_CASES if tc.expected_can_handle],
     )
-    def test_entry_parse_ldif(self, test_case: m.Tests.EntryTestCase) -> None:
-        """Test entry parsing via LDIF for Apache-detectable entries."""
+    def test_entry_parse_ldif_yields_entry_with_source_dn(
+        self, test_case: m.Tests.EntryTestCase
+    ) -> None:
+        """parse_server succeeds and returns one Entry carrying the source DN."""
         server = FlextLdifServersApache()
         entry_server = server.entry_server
         ldif = self._build_ldif(test_case.entry_dn, test_case.attributes)
-        result = entry_server.parse_input(ldif)
-        tm.that(result is not None, eq=True)
+        result = entry_server.parse_server(ldif)
+        tm.that(result.success, eq=True)
+        entries = result.unwrap()
+        tm.that(len(entries), eq=1)
+        entry_dn = entries[0].dn
+        assert entry_dn is not None
+        tm.that(entry_dn.value, eq=test_case.entry_dn)

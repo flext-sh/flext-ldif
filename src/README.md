@@ -126,7 +126,7 @@ src/flext_ldif/
 
 ### Direct Module Usage
 
-```python notest
+```python
 # Domain model usage
 from flext_ldif import FlextLdifModels
 
@@ -142,7 +142,7 @@ from flext_ldif import ldif
 
 ### Recommended Public API
 
-```python notest
+```python
 # Simplified public interface
 from flext_ldif import (
     FlextLdif,  # Main application service

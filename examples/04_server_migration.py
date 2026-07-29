@@ -7,10 +7,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping, MutableSequence
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from flext_ldif import c, ldif, m, p, r, t, u
+
+if TYPE_CHECKING:
+    from collections.abc import MutableMapping, MutableSequence
 
 
 class ExampleServerMigration:
@@ -42,8 +45,7 @@ class ExampleServerMigration:
 
     @staticmethod
     def _detect_server_type(
-        api: p.Ldif.ServerDetectionService,
-        source_dir: Path,
+        api: p.Ldif.ServerDetectionService, source_dir: Path
     ) -> tuple[str, t.JsonMapping]:
         """Detect server type from source data."""
         sample_file = source_dir / "data_00.ldif"
@@ -63,19 +65,17 @@ class ExampleServerMigration:
 
     @staticmethod
     def _setup_directories(base_dir: Path) -> tuple[Path, Path, Path]:
-        """Setup migration directories."""
+        """Set up migration directories."""
         source_dir = base_dir / "source"
         intermediate_dir = base_dir / "intermediate"
         final_dir = base_dir / "final"
 
         def setup_dir(dir_path: Path) -> None:
-            """Setup directory."""
+            """Create the directory."""
             dir_path.mkdir(exist_ok=True, parents=True)
 
         _ = u.process(
-            [source_dir, intermediate_dir, final_dir],
-            setup_dir,
-            on_error="skip",
+            [source_dir, intermediate_dir, final_dir], setup_dir, on_error="skip"
         )
         return (source_dir, intermediate_dir, final_dir)
 
@@ -87,7 +87,7 @@ class ExampleServerMigration:
         detect_result = api.detect_server_type(ldif_content=mixed_ldif)
         if detect_result.failure:
             return r[t.JsonMapping].fail(
-                f"Server detection failed: {detect_result.error}",
+                f"Server detection failed: {detect_result.error}"
             )
         detection = detect_result.unwrap()
         detected_server = detection.detected_server_type or "rfc"
@@ -107,7 +107,7 @@ class ExampleServerMigration:
         )
         if migration_result.failure:
             return r[t.JsonMapping].fail(
-                f"Migration to RFC failed: {migration_result.error}",
+                f"Migration to RFC failed: {migration_result.error}"
             )
         return r[t.JsonMapping].ok(
             t.json_mapping_adapter().validate_python({
@@ -182,8 +182,7 @@ class ExampleServerMigration:
         )
         ExampleServerMigration._create_test_data(source_dir)
         source_server, detection_data = ExampleServerMigration._detect_server_type(
-            api,
-            source_dir,
+            api, source_dir
         )
         source_server_typed = source_server
         intermediate_migration = api.migrate(
@@ -194,7 +193,7 @@ class ExampleServerMigration:
         )
         if intermediate_migration.failure:
             return r[t.JsonMapping].fail(
-                f"Intermediate migration failed: {intermediate_migration.error}",
+                f"Intermediate migration failed: {intermediate_migration.error}"
             )
         final_migration = api.migrate(
             input_dir=intermediate_dir,
@@ -204,7 +203,7 @@ class ExampleServerMigration:
         )
         if final_migration.failure:
             return r[t.JsonMapping].fail(
-                f"Final migration failed: {final_migration.error}",
+                f"Final migration failed: {final_migration.error}"
             )
         final_result = final_migration.unwrap()
         final_stats = final_result.stats
@@ -242,7 +241,7 @@ class ExampleServerMigration:
         )
         if migration_result.failure:
             return r[m.Ldif.MigrationPipelineResult].fail(
-                f"Migration failed: {migration_result.error}",
+                f"Migration failed: {migration_result.error}"
             )
         pipeline_result = migration_result.unwrap()
         _ = len(pipeline_result.entries)

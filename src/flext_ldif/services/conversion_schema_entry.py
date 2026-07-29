@@ -9,11 +9,13 @@ the facade MRO (Support precedes this mixin).
 
 from __future__ import annotations
 
+from abc import ABC
+
 from flext_ldif import c, m, p, r, s, t, u
 from flext_ldif.services.conversion_schema import FlextLdifConversionSchemaMixin
 
 
-class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s):
+class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s, ABC):
     """Conversion of schema definitions embedded inside a schema entry."""
 
     def _convert_schema_entry_value(
@@ -38,53 +40,56 @@ class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s):
                 if not isinstance(parsed_item, m.Ldif.SchemaAttribute):
                     return r[str].fail(
                         "Expected SchemaAttribute for "
-                        f"{schema_field_name}, got {type(parsed_item).__name__}",
+                        f"{schema_field_name}, got {type(parsed_item).__name__}"
                     )
                 return (
                     r[str]
-                    .from_result(
-                        target_schema.write_attribute(parsed_item),
-                    )
+                    .from_result(target_schema.write_attribute(parsed_item))
                     .map_error(
                         lambda error: (
                             error or f"Failed to write converted {schema_field_name}"
-                        ),
+                        )
                     )
                 )
             if not isinstance(parsed_item, m.Ldif.SchemaObjectClass):
                 return r[str].fail(
                     "Expected SchemaObjectClass for "
-                    f"{schema_field_name}, got {type(parsed_item).__name__}",
+                    f"{schema_field_name}, got {type(parsed_item).__name__}"
                 )
             return (
                 r[str]
-                .from_result(
-                    target_schema.write_objectclass(parsed_item),
-                )
+                .from_result(target_schema.write_objectclass(parsed_item))
                 .map_error(
                     lambda error: (
                         error or f"Failed to write converted {schema_field_name}"
-                    ),
+                    )
                 )
             )
 
         definition_error = f"Failed to parse {schema_field_name} definition"
         if schema_item_kind == c.Ldif.SchemaItemKind.ATTRIBUTE:
-            parse_result = self._validate_parsed_schema(
-                source_schema.parse_attribute(value),
-                m.Ldif.SchemaAttribute,
-                definition_error,
+            return (
+                self
+                ._validate_parsed_schema(
+                    source_schema.parse_attribute(value),
+                    m.Ldif.SchemaAttribute,
+                    definition_error,
+                )
+                .map_error(
+                    lambda error: error or f"Failed to parse {schema_field_name}"
+                )
+                .flat_map(write_schema_item)
             )
-        else:
-            parse_result = self._validate_parsed_schema(
+        return (
+            self
+            ._validate_parsed_schema(
                 source_schema.parse_objectclass(value),
                 m.Ldif.SchemaObjectClass,
                 definition_error,
             )
-
-        return parse_result.map_error(
-            lambda error: error or f"Failed to parse {schema_field_name}",
-        ).flat_map(write_schema_item)
+            .map_error(lambda error: error or f"Failed to parse {schema_field_name}")
+            .flat_map(write_schema_item)
+        )
 
     def _convert_schema_entry_attributes(
         self,
@@ -95,21 +100,15 @@ class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s):
         """Convert schema definition attributes embedded in a schema entry."""
         if entry.attributes is None or not u.Ldif.is_schema_entry(entry):
             return r[m.Ldif.Entry].ok(entry)
-        source_schema_result = self._resolve_schema_server(
-            source_server,
-            role="Source",
-        )
-        target_schema_result = self._resolve_schema_server(
-            target_server,
-            role="Target",
-        )
+        source_schema_result = self._resolve_schema_server(source_server, role="Source")
+        target_schema_result = self._resolve_schema_server(target_server, role="Target")
         source_schema = source_schema_result.map_or(None)
         target_schema = target_schema_result.map_or(None)
         if source_schema is None or target_schema is None:
             return r[m.Ldif.Entry].fail(
                 source_schema_result.error
                 or target_schema_result.error
-                or "Schema server not available",
+                or "Schema server not available"
             )
         schema_field_kinds: dict[str, c.Ldif.SchemaItemKind] = {
             c.Ldif.ATTRIBUTE_TYPES.lower(): c.Ldif.SchemaItemKind.ATTRIBUTE,
@@ -147,22 +146,21 @@ class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s):
                 .map_error(
                     lambda error, attr_name=field[0]: (
                         error or f"Failed converting schema field {attr_name}"
-                    ),
+                    )
                 )
             ),
         )
         if converted_fields_result.failure:
             return r[m.Ldif.Entry].fail(
-                converted_fields_result.error or "Schema field conversion failed",
+                converted_fields_result.error or "Schema field conversion failed"
             )
         updated_attributes = dict(entry.attributes.attributes)
         updated_attributes.update(dict(converted_fields_result.value))
         updated_entry = entry.model_copy(
             update={
                 "attributes": entry.attributes.model_copy(
-                    update={"attributes": updated_attributes},
-                    deep=True,
-                ),
+                    update={"attributes": updated_attributes}, deep=True
+                )
             },
             deep=True,
         )

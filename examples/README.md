@@ -194,7 +194,7 @@ Production-ready workflows:
 
 All examples follow library-only patterns:
 
-```python notest
+```python
 from flext_ldif import ldif
 
 # Initialize API

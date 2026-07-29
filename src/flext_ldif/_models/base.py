@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_core import m
-from flext_core.utilities import FlextUtilities as u
+from flext_cli import m, u
 from flext_ldif import FlextLdifShared, c, t
 
 
@@ -16,7 +15,7 @@ class FlextLdifModelsBases:
     a single nested class hierarchy using MRO inheritance.
 
     Usage::
-        from flext_core import m
+        from flext_cli import m
         from flext_ldif import FlextLdifModelsBases
 
         Base = m.StrictModel
@@ -28,7 +27,7 @@ class FlextLdifModelsBases:
         validation_metadata: Annotated[
             m.ConfigMap | None,
             u.Field(
-                description="Validation metadata captured during schema processing.",
+                description="Validation metadata captured during schema processing."
             ),
         ] = None
 
@@ -52,7 +51,7 @@ class FlextLdifModelsBases:
         @u.computed_field()
         @property
         def server_type(self) -> str:
-            """Get server type from metadata, default to RFC."""
+            """The server type from metadata, default to RFC."""
             metadata = getattr(self, "metadata", None)
             if metadata is not None:
                 server_type = getattr(metadata, "server_type", None)
@@ -68,9 +67,7 @@ class FlextLdifModelsBases:
 
         server_type: Annotated[
             c.Ldif.ServerTypes,
-            u.Field(
-                description="LDAP server type (oid, oud, openldap, rfc, etc.)",
-            ),
+            u.Field(description="LDAP server type (oid, oud, openldap, rfc, etc.)"),
         ] = c.Ldif.ServerTypes.RFC
         validation_violations: Annotated[
             t.MutableSequenceOf[str],
@@ -81,16 +78,14 @@ class FlextLdifModelsBases:
         ] = u.Field(default_factory=list)
         validation_metadata: Annotated[
             m.ConfigMap | None,
-            u.Field(
-                description="Validation metadata captured during ACL processing.",
-            ),
+            u.Field(description="Validation metadata captured during ACL processing."),
         ] = None
 
         @u.computed_field()
         @property
         def has_server_servers(self) -> bool:
             """Check if element uses server-specific servers."""
-            return self.server_type != "rfc"
+            return str(self.server_type) != "rfc"
 
         @u.computed_field()
         @property
@@ -101,8 +96,7 @@ class FlextLdifModelsBases:
         @u.field_validator("server_type", mode="before")
         @classmethod
         def _coerce_server_type(
-            cls,
-            value: c.Ldif.ServerTypes | str,
+            cls, value: c.Ldif.ServerTypes | str
         ) -> c.Ldif.ServerTypes:
             if isinstance(value, c.Ldif.ServerTypes):
                 return value

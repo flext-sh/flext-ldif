@@ -1,7 +1,7 @@
 """LDIF settings mix-in: validation.
 
-from flext_ldif.models import m
-from flext_ldif.utilities import u
+from flext_ldif import m
+from flext_ldif import u
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
@@ -11,8 +11,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_core import m
-from flext_core.utilities import FlextUtilities as u
+from flext_core import FlextUtilities as u, m
 
 
 class FlextLdifModelsSettingsValidation:
@@ -24,7 +23,7 @@ class FlextLdifModelsSettingsValidation:
         requires_binary_option: Annotated[
             bool,
             u.Field(
-                description="Whether server requires ;binary option for non-ASCII values",
+                description="Whether server requires ;binary option for non-ASCII values"
             ),
         ] = False
         requires_naming_attr: Annotated[
@@ -32,6 +31,5 @@ class FlextLdifModelsSettingsValidation:
             u.Field(description="Whether server requires naming attribute in entry"),
         ] = False
         requires_objectclass: Annotated[
-            bool,
-            u.Field(description="Whether server requires objectClass attribute"),
+            bool, u.Field(description="Whether server requires objectClass attribute")
         ] = True

@@ -160,8 +160,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
 
         @override
         def can_handle_attribute(
-            self,
-            attr_definition: str | m.Ldif.SchemaAttribute,
+            self, attr_definition: str | m.Ldif.SchemaAttribute
         ) -> bool:
             """Detect AD attribute definitions using centralized constants."""
             matches: bool = u.Ldif.matches_server_patterns(
@@ -172,8 +171,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
 
         @override
         def can_handle_objectclass(
-            self,
-            oc_definition: str | m.Ldif.SchemaObjectClass,
+            self, oc_definition: str | m.Ldif.SchemaObjectClass
         ) -> bool:
             """Detect AD objectClass definitions using centralized constants."""
             matches: bool = u.Ldif.matches_server_patterns(
@@ -184,8 +182,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
 
         @override
         def _hook_post_parse_objectclass(
-            self,
-            oc: m.Ldif.SchemaObjectClass,
+            self, oc: m.Ldif.SchemaObjectClass
         ) -> p.Result[m.Ldif.SchemaObjectClass]:
             """Normalize Active Directory objectClass data after RFC parsing."""
             u.Ldif.fix_missing_sup(oc)
@@ -272,7 +269,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                     subject_value=decoded_sddl or (raw_value or ""),
                 ),
                 permissions=m.Ldif.AclPermissions(),
-                metadata=m.Ldif.ServerMetadata.create_for(self._get_server_type()),
+                metadata=u.Ldif.server_metadata_for(self._get_server_type()),
                 raw_acl=acl_line,
             )
             if acl_model.metadata:
@@ -307,7 +304,8 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             if is_base64 and raw_value:
                 decode_result = _decode_base64()
                 if decode_result.success:
-                    return decode_result.value
+                    decoded_value: str = decode_result.value
+                    return decoded_value
                 return None
             if (
                 raw_value
@@ -322,9 +320,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         def _write_ad_acl(acl_data: m.Ldif.Acl) -> p.Result[str]:
             """Write Active Directory ACL content."""
             if not acl_data.raw_acl:
-                return r[str].fail(
-                    "Active Directory ACL write requires raw_acl value",
-                )
+                return r[str].fail("Active Directory ACL write requires raw_acl value")
             acl_attribute = FlextLdifServersAd.Constants.ACL_ATTRIBUTE_NAME
             if acl_data.raw_acl:
                 return r[str].ok(f"{acl_attribute}: {acl_data.raw_acl}")
@@ -335,9 +331,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
 
         @override
         def can_handle(
-            self,
-            entry_dn: str,
-            attributes: t.MutableStrSequenceMapping,
+            self, entry_dn: str, attributes: t.MutableStrSequenceMapping
         ) -> bool:
             """Detect Active Directory entries based on DN, attributes, or classes."""
             if not entry_dn:

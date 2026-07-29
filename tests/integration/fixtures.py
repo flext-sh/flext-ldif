@@ -3,15 +3,17 @@
 from __future__ import annotations
 
 import time
-from collections.abc import Callable, Generator
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
-from tests.constants import c
-from tests.protocols import p
-from tests.typings import t
-from tests.utilities import u
+from tests import c, t, u
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Generator
+
+    from tests import p
 
 
 def _probe_ldap_bind(server_url: str, admin_dn: str, admin_password: str) -> str | None:
@@ -19,22 +21,14 @@ def _probe_ldap_bind(server_url: str, admin_dn: str, admin_password: str) -> str
     try:
         srv = u.Tests.create_server_from_url(server_url)
         conn = u.Tests.create_connection(
-            srv,
-            user=admin_dn,
-            password=admin_password,
-            auto_bind=False,
+            srv, user=admin_dn, password=admin_password, auto_bind=False
         )
         bound: bool = conn.bind()
         conn.unbind()
         if bound:
             return None
         return "LDAP bind returned False"
-    except (
-        t.Ldap.LDAPException,
-        ConnectionError,
-        TimeoutError,
-        OSError,
-    ) as exc:
+    except (t.Ldap.LDAPException, ConnectionError, TimeoutError, OSError) as exc:
         return str(exc)
 
 
@@ -44,13 +38,13 @@ def ldap_container(worker_id: str) -> t.JsonMapping:
     docker_control = u.Tests.get_docker_control(worker_id)
     server_url = f"ldap://localhost:{c.Tests.DOCKER_PORT}"
     lock = u.Tests.FileLock(
-        Path.home() / ".flext" / f"{c.Tests.DOCKER_CONTAINER_NAME}.lock",
+        Path.home() / ".flext" / f"{c.Tests.DOCKER_CONTAINER_NAME}.lock"
     )
     with lock:
         execute_result = docker_control.execute()
         if execute_result.failure:
             pytest.fail(
-                f"Could not start shared OpenLDAP container: {execute_result.error}",
+                f"Could not start shared OpenLDAP container: {execute_result.error}"
             )
         admin_dn, admin_password = u.Tests.get_admin_credentials()
         waited = 0.0
@@ -66,7 +60,7 @@ def ldap_container(worker_id: str) -> t.JsonMapping:
             pytest.fail(
                 "LDAP container is running but bind is not ready"
                 if last_error is None
-                else f"LDAP container bind is not ready: {last_error}",
+                else f"LDAP container bind is not ready: {last_error}"
             )
     return {
         "server_url": server_url,
@@ -112,32 +106,22 @@ def make_test_base_dn(unique_dn_suffix: str) -> Callable[[str], str]:
 
 
 @pytest.fixture
-def ldap_connection(
-    ldap_container: t.JsonMapping,
-) -> Generator[p.Ldap.Ldap3Connection]:
+def ldap_connection(ldap_container: t.JsonMapping) -> Generator[p.Ldap.Ldap3Connection]:
     """Provide a bound LDAP connection for integration tests."""
     server_url = str(ldap_container["server_url"])
     bind_dn = str(ldap_container["bind_dn"])
     password = str(ldap_container["password"])
     srv = u.Tests.create_server_from_url(server_url)
     conn = u.Tests.create_connection(
-        srv,
-        user=bind_dn,
-        password=password,
-        auto_bind=False,
+        srv, user=bind_dn, password=password, auto_bind=False
     )
     try:
         bind_ok: bool = conn.bind()
         if not bind_ok:
             pytest.fail(
-                f"LDAP server not available at {server_url} for bind_dn={bind_dn}",
+                f"LDAP server not available at {server_url} for bind_dn={bind_dn}"
             )
-    except (
-        t.Ldap.LDAPException,
-        ConnectionError,
-        TimeoutError,
-        OSError,
-    ) as exc:
+    except (t.Ldap.LDAPException, ConnectionError, TimeoutError, OSError) as exc:
         pytest.fail(f"LDAP server not available: {exc}")
     yield conn
     conn.unbind()
@@ -145,8 +129,7 @@ def ldap_connection(
 
 @pytest.fixture
 def clean_test_ou(
-    ldap_connection: p.Ldap.Ldap3Connection,
-    make_test_base_dn: Callable[[str], str],
+    ldap_connection: p.Ldap.Ldap3Connection, make_test_base_dn: Callable[[str], str]
 ) -> Generator[str]:
     """Create and clean up an isolated OU for integration tests."""
     test_ou_dn = make_test_base_dn("FlextLdifTests")
@@ -160,11 +143,7 @@ def clean_test_ou(
         dns_to_delete: t.StrSequence = [str(entry.entry_dn) for entry in entries]
         for dn in reversed(dns_to_delete):
             ldap_connection.delete(dn)
-    ldap_connection.add(
-        test_ou_dn,
-        ["organizationalUnit"],
-        {"ou": "FlextLdifTests"},
-    )
+    ldap_connection.add(test_ou_dn, ["organizationalUnit"], {"ou": "FlextLdifTests"})
     yield test_ou_dn
     ldap_connection.search(
         test_ou_dn,

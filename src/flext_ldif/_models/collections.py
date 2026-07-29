@@ -1,30 +1,27 @@
 """Collection and utility models for LDIF processing.
 
-from flext_ldif.models import m
-from flext_ldif.utilities import u
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
-from collections.abc import (
-    Iterator,
-    MutableMapping,
-)
-from typing import Annotated, ClassVar
+from collections.abc import MutableMapping
+from typing import TYPE_CHECKING, Annotated, ClassVar
 
-from flext_core import m
-from flext_core.utilities import FlextUtilities as u
-from flext_ldif import t
+# mro-6int (claude-ulw): import m/t/u from upstream flext_cli, not the own
+# package facade, to break the flext_ldif package-init circular import.
+from flext_cli import m, t, u
 from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries as mde
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 
 class FlextLdifModelsCollections:
     class DynamicCounts(m.DynamicModel):
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
-            extra="allow",
-            validate_assignment=True,
+            extra="allow", validate_assignment=True
         )
 
         def __hash__(self) -> int:
@@ -91,26 +88,19 @@ class FlextLdifModelsCollections:
             msg = f"{self.__class__.__name__} is unhashable"
             raise TypeError(msg)
 
-        def __getitem__(
-            self,
-            category: str,
-        ) -> t.MutableSequenceOf[mde.Entry]:
+        def __getitem__(self, category: str) -> t.MutableSequenceOf[mde.Entry]:
             key = category
             if key not in self.categories:
                 self.categories[key] = []
             return self.categories[key]
 
         def __setitem__(
-            self,
-            category: str,
-            entries: t.MutableSequenceOf[mde.Entry],
+            self, category: str, entries: t.MutableSequenceOf[mde.Entry]
         ) -> None:
             self.categories[category] = list(entries)
 
         def add_entries(
-            self,
-            category: str,
-            entries: t.MutableSequenceOf[mde.Entry],
+            self, category: str, entries: t.MutableSequenceOf[mde.Entry]
         ) -> None:
             key = category
             existing = self.categories.get(key)
@@ -123,27 +113,21 @@ class FlextLdifModelsCollections:
         def __contains__(self, category: str) -> bool:
             return category in self.categories
 
-        def items(
-            self,
-        ) -> Iterator[tuple[str, t.MutableSequenceOf[mde.Entry]]]:
+        def items(self) -> Iterator[tuple[str, t.MutableSequenceOf[mde.Entry]]]:
             yield from self.categories.items()
 
         def keys(self) -> Iterator[str]:
             return iter(self.categories.keys())
 
         def get(
-            self,
-            category: str,
-            default: t.MutableSequenceOf[mde.Entry] | None = None,
+            self, category: str, default: t.MutableSequenceOf[mde.Entry] | None = None
         ) -> t.MutableSequenceOf[mde.Entry]:
             entries = self.categories.get(category)
             if entries is not None:
                 return entries
             return default if default is not None else []
 
-        def values(
-            self,
-        ) -> Iterator[t.MutableSequenceOf[mde.Entry]]:
+        def values(self) -> Iterator[t.MutableSequenceOf[mde.Entry]]:
             yield from self.categories.values()
 
 

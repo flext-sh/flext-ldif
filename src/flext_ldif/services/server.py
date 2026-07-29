@@ -2,12 +2,19 @@
 
 from __future__ import annotations
 
+import importlib
 import inspect
-from typing import Annotated, ClassVar, TypeGuard, override
+import pkgutil
+from typing import TYPE_CHECKING, Annotated, ClassVar, TypeGuard, override
 
-import flext_ldif.servers as ldif_servers
-from flext_ldif import c, p, r, s, t, u
-from flext_ldif.servers.base import FlextLdifServersBase
+from flext_core import s
+from flext_ldif import c, p, r, t, u
+from flext_ldif._protocols.domain import FlextLdifProtocolsDomain
+
+if TYPE_CHECKING:
+    from flext_ldif.servers.base import FlextLdifServersBase
+
+ServerServer = FlextLdifProtocolsDomain.ServerServer
 
 
 class FlextLdifServer(s):
@@ -25,7 +32,7 @@ class FlextLdifServer(s):
             exclude=True,
             description="Optional dispatcher used to build the registry backend.",
         ),
-    ]
+    ] = None
     _registry: p.Registry = u.PrivateAttr()
 
     @override
@@ -33,50 +40,47 @@ class FlextLdifServer(s):
         """Initialize registry and trigger auto-discovery."""
         super().model_post_init(__context)
         self._registry = u.build_registry(dispatcher=self.dispatcher)
-        if not type(self)._discovery_initialized:
+        if self._global_instance is None:
+            FlextLdifServer._global_instance = self
+        if not self._discovery_initialized:
             self._auto_discover()
-            type(self)._discovery_initialized = True
+            FlextLdifServer._discovery_initialized = True
 
     def acl(self, server_type: str) -> p.Ldif.AclServer | None:
         """Get ACL server for a server type."""
-        base = self.server(server_type).unwrap_or(None)
-        if base is None:
+        server_result = self.server(server_type)
+        if server_result.failure:
             return None
+        base: ServerServer = server_result.value
         return base.acl_server
 
     def entry(self, server_type: str) -> p.Ldif.EntryServer | None:
         """Get entry server for a server type."""
-        base = self.server(server_type).unwrap_or(None)
-        if base is None:
+        server_result = self.server(server_type)
+        if server_result.failure:
             return None
+        base: ServerServer = server_result.value
         return base.entry_server
 
     def resolve_server_bundle(
-        self,
-        server_type: str,
+        self, server_type: str
     ) -> p.Result[
-        t.MappingKV[
-            str,
-            p.Ldif.SchemaServer | p.Ldif.AclServer | p.Ldif.EntryServer,
-        ]
+        t.MappingKV[str, p.Ldif.SchemaServer | p.Ldif.AclServer | p.Ldif.EntryServer]
     ]:
         """Get all server types for a server."""
         server_result = self.server(server_type)
         if server_result.failure:
             return r[
                 t.MappingKV[
-                    str,
-                    p.Ldif.SchemaServer | p.Ldif.AclServer | p.Ldif.EntryServer,
+                    str, p.Ldif.SchemaServer | p.Ldif.AclServer | p.Ldif.EntryServer
                 ]
             ].fail_op(
-                "resolve_server_bundle",
-                ValueError(server_result.error or server_type),
+                "resolve_server_bundle", ValueError(server_result.error or server_type)
             )
-        base = server_result.value
+        base: ServerServer = server_result.value
         return r[
             t.MappingKV[
-                str,
-                p.Ldif.SchemaServer | p.Ldif.AclServer | p.Ldif.EntryServer,
+                str, p.Ldif.SchemaServer | p.Ldif.AclServer | p.Ldif.EntryServer
             ]
         ].ok({
             "schema": base.schema_server,
@@ -89,24 +93,21 @@ class FlextLdifServer(s):
         return self.server(server_type)
 
     def resolve_server_constants(
-        self,
-        server_type: str,
+        self, server_type: str
     ) -> p.Result[type[p.Ldif.ServerConstants]]:
         """Get Constants class from server server."""
         server_result = self.server(server_type)
         if server_result.failure:
             return r[type[p.Ldif.ServerConstants]].fail(
-                server_result.error or server_type,
+                server_result.error or server_type
             )
         base = server_result.value
         constants: type[p.Ldif.ServerConstants] | None = getattr(
-            type(base),
-            "Constants",
-            None,
+            type(base), "Constants", None
         )
         if constants is None:
             return r[type[p.Ldif.ServerConstants]].fail(
-                f"Server {server_type} missing Constants",
+                f"Server {server_type} missing Constants"
             )
         return r[type[p.Ldif.ServerConstants]].ok(constants)
 
@@ -129,7 +130,7 @@ class FlextLdifServer(s):
                 else None,
             }
             priorities[st] = base.priority
-        stats: t.JsonDict = {
+        stats: t.Ldif.MutableMetadataInputMapping = {
             "total_servers": len(server_types),
             "servers_by_server": servers_by_server,
             "server_priorities": priorities,
@@ -140,20 +141,17 @@ class FlextLdifServer(s):
         """Get schema server for a server type."""
         return self.resolve_schema_server(server_type)
 
-    def resolve_schema_server(
-        self,
-        server_type: str,
-    ) -> p.Ldif.SchemaServer | None:
+    def resolve_schema_server(self, server_type: str) -> p.Ldif.SchemaServer | None:
         """Get schema server for a server type."""
-        base = self.server(server_type).unwrap_or(None)
-        if base is None:
+        server_result = self.server(server_type)
+        if server_result.failure:
             return None
-        schema_server: p.Ldif.SchemaServer = base.schema_server
-        return schema_server
+        base: ServerServer = server_result.value
+        return base.schema_server
 
     def list_registered_servers(self) -> t.MutableSequenceOf[str]:
         """List all registered server types."""
-        return sorted(type(self)._registered_servers)
+        return sorted(self._registered_servers)
 
     @override
     def server(self, server_type: str) -> p.Result[p.Ldif.ServerServer]:
@@ -162,37 +160,62 @@ class FlextLdifServer(s):
             normalized = u.Ldif.normalize_server_type(server_type)
         except ValueError as e:
             return r[p.Ldif.ServerServer].fail(str(e))
-        plugin = type(self)._registered_servers.get(normalized)
+        plugin = self._registered_servers.get(normalized)
         if plugin is None:
             return r[p.Ldif.ServerServer].fail(normalized)
         return r[p.Ldif.ServerServer].ok(plugin)
 
     def _auto_discover(self) -> None:
-        """Discover and register concrete server classes from servers package."""
-        for name, obj in inspect.getmembers(ldif_servers):
-            if not self._is_discoverable_server(name, obj):
-                continue
-            try:
-                self._register_discovered_server(obj)
-            except c.EXC_ATTR_TYPE:
-                continue
+        """Discover and register concrete classes from installed server modules."""
+        # mro-0ftd.3.5: discovery owns module loading so package initializers
+        # remain side-effect-free and cannot recreate the service import cycle.
+        servers_package = importlib.import_module("flext_ldif.servers")
+        base_candidate = getattr(
+            importlib.import_module("flext_ldif.servers.base"),
+            "FlextLdifServersBase",
+            None,
+        )
+        if not isinstance(base_candidate, type):
+            msg = "flext_ldif.servers.base must expose FlextLdifServersBase"
+            raise TypeError(msg)
+        prefix = f"{servers_package.__name__}."
+        module_names = tuple(
+            sorted(
+                module_info.name
+                for module_info in pkgutil.iter_modules(
+                    servers_package.__path__, prefix=prefix
+                )
+                if not module_info.ispkg
+                and not module_info.name.removeprefix(prefix).startswith("_")
+            )
+        )
+        for module_name in module_names:
+            module = importlib.import_module(module_name)
+            for name, obj in inspect.getmembers(module):
+                if not self._is_discoverable_server(
+                    name, obj, module_name, base_candidate
+                ):
+                    continue
+                try:
+                    self._register_discovered_server(obj)
+                except c.EXC_ATTR_TYPE:
+                    continue
 
     @staticmethod
     def _is_discoverable_server(
-        name: str,
-        candidate: type,
+        name: str, candidate: type, module_name: str, base_class: type
     ) -> TypeGuard[type[FlextLdifServersBase]]:
         """Return whether a module member is a concrete server class."""
         return (
             not name.startswith("_")
             and inspect.isclass(candidate)
-            and candidate is not FlextLdifServersBase
-            and issubclass(candidate, FlextLdifServersBase)
+            and candidate is not base_class
+            and candidate.__module__ == module_name
+            and issubclass(candidate, base_class)
         )
 
     def _register_discovered_server(
-        self,
-        server_class: type[FlextLdifServersBase],
+        self, server_class: type[FlextLdifServersBase]
     ) -> None:
         """Instantiate and register one discovered concrete server class."""
         instance = server_class()
@@ -205,12 +228,9 @@ class FlextLdifServer(s):
         ):
             return
         if server_type:
-            type(self)._registered_servers[server_type] = instance
+            self._registered_servers[server_type] = instance
             self._registry.register_plugin(
-                self.SERVERS,
-                server_type,
-                instance,
-                scope=c.RegistrationScope.CLASS,
+                self.SERVERS, server_type, instance, scope=c.RegistrationScope.CLASS
             )
 
     @classmethod

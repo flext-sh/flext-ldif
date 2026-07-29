@@ -2,17 +2,12 @@
 
 from __future__ import annotations
 
-from collections.abc import (
-    Callable,
-    Mapping,
-    MutableMapping,
-)
+from collections.abc import Callable, Mapping, MutableMapping
 from typing import ClassVar, TypeIs
 
 from flext_cli import u
-from flext_ldif import c, p, t
+from flext_ldif import FlextLdifModels as m, c, p, t
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer as us
-from flext_ldif.models import FlextLdifModels as m
 
 
 class FlextLdifUtilitiesMetadata:
@@ -26,20 +21,18 @@ class FlextLdifUtilitiesMetadata:
         if value is None:
             return ""
         payload_json: str = m.Cli.CliNormalizedJson(
-            t.Cli.JSON_VALUE_ADAPTER.validate_python(
-                u.to_jsonable_python(value),
-            ),
+            t.Cli.JSON_VALUE_ADAPTER.validate_python(u.to_jsonable_python(value))
         ).model_dump_json()
         return payload_json
 
     @staticmethod
-    def dump_dynamic_metadata(
-        value: t.Ldif.MetadataInputMapping | None,
-    ) -> str:
-        """Serialize metadata-shaped mappings through the LDIF metadata model."""
+    def dump_dynamic_metadata(value: t.Ldif.MetadataInputMapping | None) -> str:
+        """Serialize metadata-shaped mappings to a canonical JSON string."""
+        # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: delegate to the
+        # canonical JSON payload dump after the empty-mapping guard.
         if not value:
             return ""
-        dumped: str = m.Ldif.DynamicMetadata.from_dict(value).model_dump_json()
+        dumped: str = FlextLdifUtilitiesMetadata.dump_json_payload(dict(value))
         return dumped
 
     @staticmethod
@@ -55,50 +48,41 @@ class FlextLdifUtilitiesMetadata:
                 t.Cli.JSON_MAPPING_ADAPTER.validate_python({
                     inner_key: u.normalize_to_metadata(inner_value)
                     for inner_key, inner_value in value.items()
-                }),
+                })
             )
             for write_option_key, inner_value in item_data.items():
-                merged_value[write_option_key] = u.normalize_to_metadata(
-                    inner_value,
-                )
+                merged_value[write_option_key] = u.normalize_to_metadata(inner_value)
             metadata[metadata_key] = merged_value
             return
         metadata[metadata_key] = u.normalize_to_metadata(item_data)
 
     @staticmethod
     def _apply_category_update(
-        stats: m.Ldif.EntryStatistics,
-        category: str,
+        stats: m.Ldif.EntryStatistics, category: str
     ) -> m.Ldif.EntryStatistics:
         """Apply category update to stats using model_copy."""
         copied: m.Ldif.EntryStatistics = stats.model_copy(
-            update={"category_assigned": category},
+            update={"category_assigned": category}
         )
         return copied
 
     @staticmethod
     def _apply_filter_update(
-        stats: m.Ldif.EntryStatistics,
-        filter_type: str,
-        *,
-        passed: bool,
+        stats: m.Ldif.EntryStatistics, filter_type: str, *, passed: bool
     ) -> m.Ldif.EntryStatistics:
         """Apply filter marking to stats."""
         return stats.mark_filtered(filter_type, passed=passed)
 
     @staticmethod
     def _apply_rejection_update(
-        stats: m.Ldif.EntryStatistics,
-        rejection_category: str,
-        reason: str,
+        stats: m.Ldif.EntryStatistics, rejection_category: str, reason: str
     ) -> m.Ldif.EntryStatistics:
         """Apply rejection marking to stats."""
         return stats.mark_rejected(rejection_category, reason)
 
     @staticmethod
     def _build_schema_format_model(
-        definition: str,
-        combined: t.Ldif.MutableMetadataMapping,
+        definition: str, combined: t.Ldif.MutableMetadataMapping
     ) -> m.Ldif.SchemaFormatDetails:
         """Build SchemaFormatDetails model from combined details."""
         known_fields = {
@@ -110,7 +94,7 @@ class FlextLdifUtilitiesMetadata:
             "x_ordered",
         }
         known_field_values: t.Ldif.MutableMetadataMapping = {
-            "original_string_complete": definition,
+            "original_string_complete": definition
         }
         extension_kwargs: t.Ldif.MutableMetadataMapping = {}
         for write_option_key, value in combined.items():
@@ -118,19 +102,16 @@ class FlextLdifUtilitiesMetadata:
                 known_field_values[write_option_key] = value
             else:
                 extension_kwargs[write_option_key] = value
-        extensions = m.Ldif.DynamicMetadata.model_validate(
-            extension_kwargs,
-        )
+        # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: the mapping is
+        # validated once by the SchemaFormatDetails boundary below.
         details: m.Ldif.SchemaFormatDetails = m.Ldif.SchemaFormatDetails.model_validate({
             **known_field_values,
-            "extensions": extensions,
+            "extensions": extension_kwargs,
         })
         return details
 
     @staticmethod
-    def _extract_all_schema_details(
-        definition: str,
-    ) -> t.Ldif.MutableMetadataMapping:
+    def _extract_all_schema_details(definition: str) -> t.Ldif.MutableMetadataMapping:
         """Extract all schema formatting details into combined dict."""
         combined: t.Ldif.MutableMetadataMapping = {}
         extractors: t.SequenceOf[
@@ -155,10 +136,10 @@ class FlextLdifUtilitiesMetadata:
             extracted_raw = extractor(definition)
             for write_option_key, value in extracted_raw.items():
                 combined[write_option_key] = t.Cli.JSON_VALUE_ADAPTER.validate_python(
-                    value,
+                    value
                 )
         field_order, field_positions = FlextLdifUtilitiesMetadata._extract_field_order(
-            definition,
+            definition
         )
         field_order_payload: t.JsonValueList = list(field_order)
         field_positions_payload: t.JsonDict = dict(field_positions)
@@ -247,9 +228,7 @@ class FlextLdifUtilitiesMetadata:
         return details
 
     @staticmethod
-    def _extract_matching_rule_details(
-        definition: str,
-    ) -> t.MutableFeatureFlagMapping:
+    def _extract_matching_rule_details(definition: str) -> t.MutableFeatureFlagMapping:
         """Extract EQUALITY/SUBSTR/ORDERING details."""
         details: t.MutableFeatureFlagMapping = {}
         equality_match = c.Ldif.SCHEMA_EQUALITY_TOKEN_RE.search(definition)
@@ -288,9 +267,7 @@ class FlextLdifUtilitiesMetadata:
         return details
 
     @staticmethod
-    def _extract_name_details(
-        definition: str,
-    ) -> t.MutableAttributeMapping:
+    def _extract_name_details(definition: str) -> t.MutableAttributeMapping:
         """Extract NAME format details."""
         details: t.MutableAttributeMapping = {
             "name_format": "single",
@@ -309,24 +286,20 @@ class FlextLdifUtilitiesMetadata:
         name_section = definition[name_match.start() : name_match.end() + 50]
         if multiple_match or (has_parens and " " in name_value):
             all_name_matches = c.Ldif.QUOTED_NAME_TRIPLE_RE.findall(name_section)
-            details.update(
-                {
-                    "name_format": "multiple",
-                    "name_values": [match[1] for match in all_name_matches],
-                    "name_quotes": [match[0] for match in all_name_matches],
-                    "name_spacing_between": c.Ldif.QUOTED_SPACE_QUOTE_RE.findall(
-                        name_section
-                    ),
-                },
-            )
+            details.update({
+                "name_format": "multiple",
+                "name_values": [match[1] for match in all_name_matches],
+                "name_quotes": [match[0] for match in all_name_matches],
+                "name_spacing_between": c.Ldif.QUOTED_SPACE_QUOTE_RE.findall(
+                    name_section
+                ),
+            })
         else:
             quote_char = name_quote_start or name_quote_end
-            details.update(
-                {
-                    "name_values": [name_value],
-                    "name_quotes": [quote_char] if quote_char else [],
-                },
-            )
+            details.update({
+                "name_values": [name_value],
+                "name_quotes": [quote_char] if quote_char else [],
+            })
         name_pos = definition.find("NAME")
         if name_pos >= 0:
             before_match = c.Ldif.WHITESPACE_TRAILING_RE.search(definition[:name_pos])
@@ -395,9 +368,7 @@ class FlextLdifUtilitiesMetadata:
         return details
 
     @staticmethod
-    def _extract_single_value_details(
-        definition: str,
-    ) -> t.MutableFeatureFlagMapping:
+    def _extract_single_value_details(definition: str) -> t.MutableFeatureFlagMapping:
         """Extract SINGLE-VALUE details."""
         details: t.MutableFeatureFlagMapping = {}
         single_value_match = c.Ldif.SCHEMA_SINGLE_VALUE_RE.search(definition)
@@ -458,9 +429,7 @@ class FlextLdifUtilitiesMetadata:
         return details
 
     @staticmethod
-    def _extract_syntax_details(
-        definition: str,
-    ) -> t.MutableOptionalFeatureFlagMapping:
+    def _extract_syntax_details(definition: str) -> t.MutableOptionalFeatureFlagMapping:
         """Extract SYNTAX formatting details."""
         details: t.MutableOptionalFeatureFlagMapping = {
             "syntax_quotes": False,
@@ -471,7 +440,7 @@ class FlextLdifUtilitiesMetadata:
         syntax_match = c.Ldif.SCHEMA_SYNTAX_LOOSE_RE.search(definition)
         if syntax_match:
             details["syntax_quotes"] = bool(
-                syntax_match.group(1) or syntax_match.group(3),
+                syntax_match.group(1) or syntax_match.group(3)
             )
             details["syntax_quote_char"] = (
                 syntax_match.group(1) or syntax_match.group(3) or ""
@@ -554,36 +523,28 @@ class FlextLdifUtilitiesMetadata:
         return normalized
 
     @staticmethod
-    def _normalize_metadata_list_item(
-        item: t.JsonValue,
-    ) -> t.JsonValue:
+    def _normalize_metadata_list_item(item: t.JsonValue) -> t.JsonValue:
         return u.normalize_to_metadata(item)
 
     @staticmethod
     def _set_model_metadata(
-        model: p.Ldif.ModelWithValidationMetadata,
-        metadata: m.Ldif.DynamicMetadata,
+        model: p.Ldif.ModelWithValidationMetadata, metadata: t.Ldif.MetadataInputMapping
     ) -> None:
         """Set validation_metadata on model (handles both mutable and frozen models)."""
         try:
-            metadata_obj = metadata.to_dict()
+            # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: consume the plain mapping.
             normalized_metadata: t.Ldif.MutableMetadataMapping = {
                 write_option_key: u.normalize_to_metadata(value)
-                for write_option_key, value in metadata_obj.items()
+                for write_option_key, value in metadata.items()
             }
             config_root: dict[str, t.JsonPayload] = dict(normalized_metadata)
-            object.__setattr__(
-                model,
-                "validation_metadata",
-                m.ConfigMap(root=config_root),
-            )
+            setattr(model, "validation_metadata", m.ConfigMap(root=config_root))
         except c.EXC_BASIC_TYPE:
             pass
 
     @staticmethod
     def _update_conversion_path(
-        metadata: t.Ldif.MutableMetadataMapping,
-        update_conversion_path: str,
+        metadata: t.Ldif.MutableMetadataMapping, update_conversion_path: str
     ) -> None:
         """Update conversion_path in metadata."""
         if "conversion_path" not in metadata:
@@ -600,31 +561,26 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _update_entry_with_stats(
-        entry: m.Ldif.Entry,
-        updated_stats: m.Ldif.EntryStatistics,
+        entry: m.Ldif.Entry, updated_stats: m.Ldif.EntryStatistics
     ) -> m.Ldif.Entry:
         """Update entry with new processing stats using model_copy."""
         entry_metadata = entry.metadata
         if entry_metadata is None:
-            entry_metadata = m.Ldif.ServerMetadata.create_for(
-                us.normalize_server_type(
-                    c.Ldif.ServerTypes.RFC.value,
-                ),
+            entry_metadata = FlextLdifUtilitiesMetadata.server_metadata_for(
+                us.normalize_server_type(c.Ldif.ServerTypes.RFC.value)
             )
         update_dict: MutableMapping[str, m.Ldif.EntryStatistics] = {
-            "processing_stats": updated_stats,
+            "processing_stats": updated_stats
         }
         updated_metadata = entry_metadata.model_copy(update=update_dict)
         updated_entry: m.Ldif.Entry = entry.model_copy(
-            update={"metadata": updated_metadata},
+            update={"metadata": updated_metadata}
         )
         return updated_entry
 
     @staticmethod
     def analyze_minimal_differences(
-        original: str,
-        converted: str | None,
-        context: str = "entry",
+        original: str, converted: str | None, context: str = "entry"
     ) -> t.Ldif.MutableMetadataMapping:
         """Analyze minimal differences between original and converted strings."""
         mk = c.Ldif
@@ -638,7 +594,7 @@ class FlextLdifUtilitiesMetadata:
                 "differences": empty_diffs,
                 "original_length": len(original),
                 "converted_length": len(converted) if converted else len(original),
-            }),
+            })
         )
         if converted is None or original == converted:
             return differences
@@ -657,8 +613,7 @@ class FlextLdifUtilitiesMetadata:
             fields_captured=len(combined),
         )
         return FlextLdifUtilitiesMetadata._build_schema_format_model(
-            definition,
-            combined,
+            definition, combined
         )
 
     @staticmethod
@@ -701,13 +656,8 @@ class FlextLdifUtilitiesMetadata:
             attr_lines_payload: t.JsonValueList = list(settings.original_attr_lines)
             server_data_dict["original_attribute_lines"] = attr_lines_payload
         if settings.original_attribute_case:
-            attr_case_payload: t.JsonDict = dict(
-                settings.original_attribute_case,
-            )
+            attr_case_payload: t.JsonDict = dict(settings.original_attribute_case)
             server_data_dict["original_attribute_case"] = attr_case_payload
-        server_data = m.Ldif.EntryMetadata.model_validate(
-            server_data_dict,
-        )
         original_ldif_parts: t.MutableSequenceOf[str] = []
         if settings.original_dn_line:
             original_ldif_parts.append(settings.original_dn_line)
@@ -717,13 +667,12 @@ class FlextLdifUtilitiesMetadata:
         extensions_dict: t.Ldif.MutableMetadataMapping = {}
         mk = c.Ldif
         extensions_dict[mk.ORIGINAL_DN_COMPLETE] = settings.original_entry_dn
-        dynamic_extensions = m.Ldif.DynamicMetadata.from_dict(
-            extensions_dict,
-        )
+        # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: the mapping is
+        # validated once by the ServerMetadata boundary.
         metadata = m.Ldif.ServerMetadata(
             server_type=settings.server_type,
-            server_specific_data=server_data,
-            extensions=dynamic_extensions,
+            server_specific_data=server_data_dict,
+            extensions=extensions_dict,
         )
         if original_ldif:
             metadata.original_strings["entry_original_ldif"] = original_ldif
@@ -731,33 +680,25 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def build_original_format_details(
-        server_type: str,
-        **extra: t.Ldif.Scalar,
+        server_type: str, **extra: t.Ldif.Scalar
     ) -> m.Ldif.FormatDetails:
         """Build original format details for round-trip preservation."""
         original_dn_line = extra.get("original_dn_line")
         dn_line = str(original_dn_line) if original_dn_line is not None else None
         return m.Ldif.FormatDetails(
-            dn_line=dn_line,
-            trailing_info=f"server={server_type}",
+            dn_line=dn_line, trailing_info=f"server={server_type}"
         )
 
     @staticmethod
     def build_rfc_compliance_metadata(
-        server_type: str,
-        **extra: t.Ldif.Scalar,
+        server_type: str, **extra: t.Ldif.Scalar
     ) -> MutableMapping[
-        str,
-        str | bool | t.MutableSequenceOf[str] | t.MutableAttributeMapping,
+        str, str | bool | t.MutableSequenceOf[str] | t.MutableAttributeMapping
     ]:
         """Build RFC compliance metadata as a dictionary."""
         result: MutableMapping[
-            str,
-            str | bool | t.MutableSequenceOf[str] | t.MutableAttributeMapping,
-        ] = {
-            "server_type": server_type,
-            "source_server": server_type,
-        }
+            str, str | bool | t.MutableSequenceOf[str] | t.MutableAttributeMapping
+        ] = {"server_type": server_type, "source_server": server_type}
         if "rfc_violations" in extra:
             violations_val = extra["rfc_violations"]
             if isinstance(violations_val, str):
@@ -770,14 +711,13 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def preserve_schema_formatting(
-        metadata: m.Ldif.ServerMetadata,
-        definition: str,
+        metadata: m.Ldif.ServerMetadata, definition: str
     ) -> None:
         """Preserve complete schema formatting details for round-trip."""
         formatting_details = FlextLdifUtilitiesMetadata.analyze_schema_formatting(
-            definition,
+            definition
         )
-        object.__setattr__(metadata, "schema_format_details", formatting_details)
+        setattr(metadata, "schema_format_details", formatting_details)
         FlextLdifUtilitiesMetadata._module_logger.debug(
             "Schema formatting preserved in metadata",
             server_type=metadata.server_type,
@@ -785,9 +725,37 @@ class FlextLdifUtilitiesMetadata:
         )
 
     @staticmethod
+    def server_metadata_for(
+        server_type: str | c.Ldif.ServerTypes | None = None,
+        extensions: t.MutableJsonMapping | t.Ldif.MetadataInputMapping | None = None,
+    ) -> m.Ldif.ServerMetadata:
+        """Create ServerMetadata with extensions validated at the model boundary.
+
+        Args:
+            server_type: Server type identifier. Defaults to RFC if not provided.
+            extensions: Extensions as a plain mapping. Defaults to empty if not provided.
+
+        Returns:
+            ServerMetadata instance with defaults from Constants.
+
+        """
+        # mro-wgwh.5 (agent: kimi-coder) — W2b.2: factory with logic moved out of the
+        # declaration-only models facet (U17); DynamicMetadata -> plain mapping.
+        default_server_type: c.Ldif.ServerTypes | str = (
+            server_type if server_type is not None else c.Ldif.ServerTypes.RFC
+        )
+        extensions_map: t.MutableJsonMapping = (
+            {} if extensions is None else dict(extensions)
+        )
+        validated: m.Ldif.ServerMetadata = m.Ldif.ServerMetadata.model_validate({
+            "server_type": default_server_type,
+            "extensions": extensions_map,
+        })
+        return validated
+
+    @staticmethod
     def store_minimal_differences(
-        metadata: m.Ldif.ServerMetadata,
-        **extra: t.Ldif.Scalar,
+        metadata: m.Ldif.ServerMetadata, **extra: t.Ldif.Scalar
     ) -> None:
         """Store minimal differences in metadata for delta tracking."""
         _ = metadata
@@ -831,26 +799,21 @@ class FlextLdifUtilitiesMetadata:
         if not processing_stats:
             return entry
         updated_stats = m.Ldif.EntryStatistics.model_validate(
-            processing_stats.model_dump(),
+            processing_stats.model_dump()
         )
         if category is not None:
             updated_stats = FlextLdifUtilitiesMetadata._apply_category_update(
-                updated_stats,
-                category,
+                updated_stats, category
             )
         if mark_filtered is not None:
             filter_type, passed = mark_filtered
             updated_stats = FlextLdifUtilitiesMetadata._apply_filter_update(
-                updated_stats,
-                filter_type,
-                passed=passed,
+                updated_stats, filter_type, passed=passed
             )
         if mark_rejected is not None:
             rejection_category, reason = mark_rejected
             updated_stats = FlextLdifUtilitiesMetadata._apply_rejection_update(
-                updated_stats,
-                rejection_category,
-                reason,
+                updated_stats, rejection_category, reason
             )
         return FlextLdifUtilitiesMetadata._update_entry_with_stats(entry, updated_stats)
 

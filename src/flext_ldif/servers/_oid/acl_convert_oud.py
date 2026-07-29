@@ -23,7 +23,7 @@ class FlextLdifServersOidAclToOud:
 
     @staticmethod
     def high_level_containers(base_dn: str) -> frozenset[str]:
-        """Base + high-level-suffix DNs where ``anyone`` inherits to the subtree."""
+        """Return base + high-level-suffix DNs where ``anyone`` inherits to the subtree."""
         base = base_dn.lower().strip()
         return frozenset(
             f"{suffix}{base}" if suffix else base
@@ -32,7 +32,7 @@ class FlextLdifServersOidAclToOud:
 
     @staticmethod
     def is_in_scope(dn: str, base_dn: str) -> bool:
-        """True if ``dn`` is the base or a descendant of it (empty base = all)."""
+        """Return True if ``dn`` is the base or a descendant of it (empty base = all)."""
         if not base_dn:
             return True
         dn_lower = dn.lower().strip()
@@ -63,9 +63,7 @@ class FlextLdifServersOidAclToOud:
 
     @classmethod
     def _map_tokens(
-        cls,
-        bases: set[str],
-        perm_map: t.MappingKV[str, str | None],
+        cls, bases: set[str], perm_map: t.MappingKV[str, str | None]
     ) -> set[str]:
         granted: set[str] = set()
         for base in bases:
@@ -78,10 +76,7 @@ class FlextLdifServersOidAclToOud:
 
     @classmethod
     def convert_permissions(
-        cls,
-        permissions: t.StrSequence,
-        *,
-        is_entry: bool,
+        cls, permissions: t.StrSequence, *, is_entry: bool
     ) -> p.Result[t.StrSequence]:
         """Convert OID permission tokens to the ordered OUD allow set.
 
@@ -132,22 +127,23 @@ class FlextLdifServersOidAclToOud:
     @staticmethod
     def get_targetattr(rule: m.Ldif.OidAclRule) -> str:
         """Compute the OUD ``targetattr`` (entry→``*``, list→``a||b``, ``attr!=``→``!=a||b``)."""
+        attr_negation: str = c.Ldif.OUD_ATTR_NEGATION
+        attr_or: str = c.Ldif.OUD_ATTR_OR
+        wildcard: str = c.Ldif.ACL_WILDCARD
         if rule.target_type == c.Ldif.AclTargetType.ENTRY:
-            return c.Ldif.ACL_WILDCARD
-        attrs = rule.target_attrs
-        if attrs.startswith(c.Ldif.OUD_ATTR_NEGATION):
-            body = attrs[len(c.Ldif.OUD_ATTR_NEGATION) :]
-            joined = body.replace(",", c.Ldif.OUD_ATTR_OR).replace(" ", "")
-            return f"{c.Ldif.OUD_ATTR_NEGATION}{joined}"
-        if attrs in {c.Ldif.ACL_WILDCARD, ""}:
-            return c.Ldif.ACL_WILDCARD
-        return attrs.replace(",", c.Ldif.OUD_ATTR_OR).replace(" ", "")
+            return wildcard
+        attrs: str = rule.target_attrs
+        if attrs.startswith(attr_negation):
+            body = attrs[len(attr_negation) :]
+            joined = body.replace(",", attr_or).replace(" ", "")
+            return f"{attr_negation}{joined}"
+        if attrs in {wildcard, ""}:
+            return wildcard
+        return attrs.replace(",", attr_or).replace(" ", "")
 
     @staticmethod
     def calculate_targetscope(
-        rule: m.Ldif.OidAclRule,
-        *,
-        has_anyone_subject: bool,
+        rule: m.Ldif.OidAclRule, *, has_anyone_subject: bool
     ) -> str | None:
         """Compute the OUD ``targetscope`` (``base`` or default subtree).
 
@@ -156,16 +152,16 @@ class FlextLdifServersOidAclToOud:
         inheritance to the subtree; otherwise the OUD default (subtree) applies
         and ``targetscope`` is omitted (``None``).
         """
+        acl_scope_base: str = c.Ldif.ACL_SCOPE_BASE
         if rule.acl_type == c.Ldif.AclConvertType.ORCLENTRYLEVELACI:
-            return c.Ldif.ACL_SCOPE_BASE
+            return acl_scope_base
         if has_anyone_subject:
-            return c.Ldif.ACL_SCOPE_BASE
+            return acl_scope_base
         return None
 
     @classmethod
     def convert_subject_to_oud(
-        cls,
-        subject: m.Ldif.OidAclSubject,
+        cls, subject: m.Ldif.OidAclSubject
     ) -> p.Result[m.Ldif.AciAllow]:
         """Map one OID by-clause subject to an OUD bind-rule.
 
@@ -198,10 +194,10 @@ class FlextLdifServersOidAclToOud:
             case _:
                 return r[m.Ldif.AciAllow].fail(
                     f"Subject '{kind}' has no OUD equivalent "
-                    f"(manual review required): {value!r}",
+                    f"(manual review required): {value!r}"
                 )
         return r[m.Ldif.AciAllow].ok(
-            m.Ldif.AciAllow(subject_type=bind_type, subject_value=bind_value),
+            m.Ldif.AciAllow(subject_type=bind_type, subject_value=bind_value)
         )
 
 

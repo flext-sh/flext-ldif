@@ -1,0 +1,3 @@
+dn: cn=John Doe,ou=People,dc=example,dc=com
+cn: John Doe
+objectClass: person

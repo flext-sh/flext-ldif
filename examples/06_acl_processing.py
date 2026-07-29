@@ -88,7 +88,7 @@ def execute_acl_service() -> None:
             "objectClass": ["organizationalUnit"],
             "ou": ["Test"],
             "aci": [
-                '(target="ldap:///ou=Test,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Test ACL"; allow (read) userdn="ldap:///anyone";)',
+                '(target="ldap:///ou=Test,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Test ACL"; allow (read) userdn="ldap:///anyone";)'
             ],
         },
     )
