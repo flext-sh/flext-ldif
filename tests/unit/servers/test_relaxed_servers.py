@@ -128,7 +128,7 @@ class TestsFlextLdifRelaxed:
             x_alias=None,
             x_oid=None,
         )
-        written = tm.ok(schema_server.write_attribute(attr_data))
+        written: str = tm.ok(schema_server.write_attribute(attr_data))
         tm.that(written, is_=str)
         tm.that(len(written), gt=0)
 

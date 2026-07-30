@@ -22,7 +22,7 @@ class TestsFlextLdifAclService:
 
     def test_service_check_returns_empty_response(self, svc: p.Ldif.LdifClient) -> None:
         result = svc.service_check()
-        resp = u.Tests.assert_success(result)
+        resp: m.Ldif.AclResponse = u.Tests.assert_success(result)
         tm.that(resp, is_=m.Ldif.AclResponse)
         tm.that(len(resp.acls), eq=c.Tests.ACL_SERVICE_CHECK_EMPTY_ACLS)
 

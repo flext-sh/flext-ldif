@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, ClassVar, overload
 
 from flext_ldap import FlextLdapUtilities, u
 
-from flext_tests import FlextTestsFixturesDSLMixin, FlextTestsUtilities, tk, tm
+from flext_tests import FlextTestsUtilities, tk, tm
 from tests import c, m, p, t
 
 if TYPE_CHECKING:
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 class TestsFlextLdifUtilities(FlextTestsUtilities, u):
     """Project test utility namespace extension."""
 
-    class Tests(FlextTestsFixturesDSLMixin, FlextTestsUtilities.Tests):
+    class Tests(FlextTestsUtilities.Tests):
         """Flat test utility namespace for flext-ldif."""
 
         Docker = tk
