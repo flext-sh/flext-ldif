@@ -135,7 +135,7 @@ class TestsFlextLdifDs389Servers:
 
     def test_parse_abstract_objectclass_reports_kind(self) -> None:
         """ABSTRACT objectClass parse yields a model reporting ABSTRACT kind."""
-        oc_data = tm.ok(
+        oc_data: m.Ldif.SchemaObjectClass = tm.ok(
             self._schema_server().parse_input(
                 "( 2.16.840.1.113730.3.2.3 NAME 'nsds5base' ABSTRACT )"
             )
@@ -160,7 +160,7 @@ class TestsFlextLdifDs389Servers:
             must=["cn"],
             may=["nsslapd-port"],
         )
-        oc_str = tm.ok(self._schema_server().write(oc_data))
+        oc_str: str = tm.ok(self._schema_server().write(oc_data))
         tm.that(oc_str, has=["2.16.840.1.113730.3.2.1", "nscontainer", "STRUCTURAL"])
 
     def test_parsed_objectclass_round_trips_through_write(self) -> None:
@@ -170,9 +170,9 @@ class TestsFlextLdifDs389Servers:
             "SUP top STRUCTURAL MUST ( cn ) )"
         )
         server = self._schema_server()
-        parsed = tm.ok(server.parse_input(oc_def))
+        parsed: m.Ldif.SchemaObjectClass = tm.ok(server.parse_input(oc_def))
         assert isinstance(parsed, m.Ldif.SchemaObjectClass)
-        rendered = tm.ok(server.write(parsed))
+        rendered: str = tm.ok(server.write(parsed))
         tm.that(rendered, has=["2.16.840.1.113730.3.2.1", "nscontainer"])
 
     # ------------------------------------------------------------------

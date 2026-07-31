@@ -69,14 +69,16 @@ class TestsFlextLdifConfigIntegration:
 
     def test_default_facade_parses_basic_entry_preserving_dn(self) -> None:
         """Default facade parses one entry and preserves its DN verbatim."""
-        parsed = tm.ok(ldif.parse_ldif(c.Tests.CONFIG_BASIC_ENTRY))
+        parsed: m.Ldif.ParseResponse = tm.ok(
+            ldif.parse_ldif(c.Tests.CONFIG_BASIC_ENTRY)
+        )
 
         tm.that(len(parsed.entries), eq=1)
         tm.that(self.dn_values(parsed.entries)[0], eq=_BASIC_DN)
 
     def test_custom_settings_expose_default_ldif_contract(self) -> None:
         """Cloned settings expose the documented public Ldif field defaults."""
-        settings = self.create_settings()
+        settings: TestsFlextLdifSettings = self.create_settings()
 
         tm.that(settings.ldif.ldif_encoding, eq=c.Ldif.Encoding.UTF8)
         tm.that(
@@ -85,8 +87,8 @@ class TestsFlextLdifConfigIntegration:
 
     def test_cloned_settings_preserve_public_field_values(self) -> None:
         """Independent clones agree on the public Ldif field contract."""
-        first = self.create_settings()
-        second = self.create_settings()
+        first: TestsFlextLdifSettings = self.create_settings()
+        second: TestsFlextLdifSettings = self.create_settings()
 
         tm.that(first.ldif.ldif_encoding, eq=second.ldif.ldif_encoding)
         tm.that(
@@ -100,7 +102,7 @@ class TestsFlextLdifConfigIntegration:
         """A configured facade parses the basic entry identically per server."""
         api = ldif(settings=self.create_settings())
 
-        parsed = tm.ok(
+        parsed: m.Ldif.ParseResponse = tm.ok(
             api.parse_ldif(c.Tests.CONFIG_BASIC_ENTRY, server_type=server_type)
         )
 
@@ -113,9 +115,11 @@ class TestsFlextLdifConfigIntegration:
     ) -> None:
         """Server-specific content parses to the DN encoded in that content."""
         api = ldif(settings=self.create_settings())
-        content = c.Tests.CONFIG_SERVER_CONTENT[server_type]
+        content: str = c.Tests.CONFIG_SERVER_CONTENT[server_type]
 
-        parsed = tm.ok(api.parse_ldif(content, server_type=server_type))
+        parsed: m.Ldif.ParseResponse = tm.ok(
+            api.parse_ldif(content, server_type=server_type)
+        )
 
         tm.that(len(parsed.entries), eq=1)
         tm.that(
@@ -127,10 +131,10 @@ class TestsFlextLdifConfigIntegration:
         api_oid = ldif(settings=self.create_settings())
         api_openldap = ldif(settings=self.create_settings())
 
-        parsed_oid = tm.ok(
+        parsed_oid: m.Ldif.ParseResponse = tm.ok(
             api_oid.parse_ldif(c.Tests.CONFIG_BASIC_ENTRY, server_type=c.Tests.OID)
         )
-        parsed_openldap = tm.ok(
+        parsed_openldap: m.Ldif.ParseResponse = tm.ok(
             api_openldap.parse_ldif(
                 c.Tests.CONFIG_BASIC_ENTRY, server_type=c.Tests.OPENLDAP
             )
@@ -144,8 +148,12 @@ class TestsFlextLdifConfigIntegration:
         """The same facade parsing the same input twice yields the same DN."""
         api = ldif(settings=self.create_settings())
 
-        first = tm.ok(api.parse_ldif(c.Tests.CONFIG_BASIC_ENTRY))
-        second = tm.ok(api.parse_ldif(c.Tests.CONFIG_BASIC_ENTRY))
+        first: m.Ldif.ParseResponse = tm.ok(
+            api.parse_ldif(c.Tests.CONFIG_BASIC_ENTRY)
+        )
+        second: m.Ldif.ParseResponse = tm.ok(
+            api.parse_ldif(c.Tests.CONFIG_BASIC_ENTRY)
+        )
 
         first_dn = self.dn_values(first.entries)[0]
         tm.that(first_dn, eq=_BASIC_DN)
@@ -154,11 +162,15 @@ class TestsFlextLdifConfigIntegration:
     def test_distinct_contents_parsed_independently(self) -> None:
         """A reused facade keeps successive parses free of shared state."""
         api = ldif(settings=self.create_settings())
-        content1 = "dn: cn=Test1,dc=example,dc=com\ncn: Test1\nobjectClass: person\n"
-        content2 = "dn: cn=Test2,dc=example,dc=com\ncn: Test2\nobjectClass: person\n"
+        content1: str = (
+            "dn: cn=Test1,dc=example,dc=com\ncn: Test1\nobjectClass: person\n"
+        )
+        content2: str = (
+            "dn: cn=Test2,dc=example,dc=com\ncn: Test2\nobjectClass: person\n"
+        )
 
-        parsed1 = tm.ok(api.parse_ldif(content1))
-        parsed2 = tm.ok(api.parse_ldif(content2))
+        parsed1: m.Ldif.ParseResponse = tm.ok(api.parse_ldif(content1))
+        parsed2: m.Ldif.ParseResponse = tm.ok(api.parse_ldif(content2))
 
         tm.that(self.dn_values(parsed1.entries)[0], eq="cn=Test1,dc=example,dc=com")
         tm.that(self.dn_values(parsed2.entries)[0], eq="cn=Test2,dc=example,dc=com")
@@ -167,7 +179,9 @@ class TestsFlextLdifConfigIntegration:
         """Multi-entry input yields every entry with its DN in order."""
         api = ldif(settings=self.create_settings())
 
-        parsed = tm.ok(api.parse_ldif(c.Tests.CONFIG_MULTIPLE_ENTRIES))
+        parsed: m.Ldif.ParseResponse = tm.ok(
+            api.parse_ldif(c.Tests.CONFIG_MULTIPLE_ENTRIES)
+        )
 
         tm.that(len(parsed.entries), eq=3)
         tm.that(
@@ -183,7 +197,7 @@ class TestsFlextLdifConfigIntegration:
         """Empty input succeeds and fabricates no entries (no-invention invariant)."""
         api = ldif(settings=self.create_settings())
 
-        parsed = tm.ok(api.parse_ldif(""))
+        parsed: m.Ldif.ParseResponse = tm.ok(api.parse_ldif(""))
 
         tm.that(len(parsed.entries), eq=0)
 

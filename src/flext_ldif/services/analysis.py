@@ -84,11 +84,10 @@ class FlextLdifAnalysis(s):
 
     def validate_entries(
         self,
-        entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
+        entries: t.MutableSequenceOf[m.Ldif.Entry],
         validation_service: p.Ldif.ValidationService | None = None,
     ) -> p.Result[m.Ldif.ValidationResult]:
         """Validate LDIF entries against RFC 2849/4512 standards."""
-        normalized_entries = u.Ldif.as_entries(entries)
         errors: t.MutableSequenceOf[str] = []
         valid_count = 0
         svc: p.Ldif.ValidationService = (
@@ -105,10 +104,10 @@ class FlextLdifAnalysis(s):
             errors.extend(entry_errors)
             return is_entry_valid
 
-        validation_results = u.map(normalized_entries, validate_entry)
+        validation_results = u.map(entries, validate_entry)
         valid_results = [r for r in validation_results if r is True]
         valid_count = u.count(valid_results)
-        total_entries = u.count(normalized_entries)
+        total_entries = u.count(entries)
         invalid_count = total_entries - valid_count
         return r[m.Ldif.ValidationResult].ok(
             m.Ldif.ValidationResult.model_validate({

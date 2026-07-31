@@ -37,7 +37,7 @@ class TestsFlextLdifOidAclConvert:
             "(browse,add,delete) by * (browse,noadd,nodelete)"
         )
 
-        rule = tm.ok(Parser.parse_oid_acl_line(_DN, line))
+        rule: m.Ldif.OidAclRule = tm.ok(Parser.parse_oid_acl_line(_DN, line))
 
         tm.that(rule.dn, eq=_DN)
         tm.that(rule.acl_type, eq="orclaci")
@@ -55,7 +55,7 @@ class TestsFlextLdifOidAclConvert:
     def test_rule_preserves_raw_line_for_round_trip(self) -> None:
         line = "orclaci: access to entry by * (browse)"
 
-        rule = tm.ok(Parser.parse_oid_acl_line(_DN, line))
+        rule: m.Ldif.OidAclRule = tm.ok(Parser.parse_oid_acl_line(_DN, line))
 
         tm.that(rule.raw_line, eq=line)
 
@@ -74,7 +74,9 @@ class TestsFlextLdifOidAclConvert:
     def test_target_clause_shapes_map_to_public_target_fields(
         self, content: str, expected_type: str, expected_attrs: str
     ) -> None:
-        rule = tm.ok(Parser.parse_oid_acl_line(_DN, f"orclaci: access to {content}"))
+        rule: m.Ldif.OidAclRule = tm.ok(
+            Parser.parse_oid_acl_line(_DN, f"orclaci: access to {content}")
+        )
 
         tm.that(rule.target_type, eq=expected_type)
         tm.that(rule.target_attrs, eq=expected_attrs)
@@ -85,7 +87,7 @@ class TestsFlextLdifOidAclConvert:
             "filter=(objectclass=person) by self (read,write)"
         )
 
-        rule = tm.ok(Parser.parse_oid_acl_line(_DN, line))
+        rule: m.Ldif.OidAclRule = tm.ok(Parser.parse_oid_acl_line(_DN, line))
 
         tm.that(rule.target_filter, eq="objectclass=person")
         tm.that(rule.subjects[0].subject_type, eq="self")
@@ -95,7 +97,7 @@ class TestsFlextLdifOidAclConvert:
     def test_orclentrylevelaci_line_records_its_acl_type(self) -> None:
         line = "orclentrylevelaci: access to entry by dnattr=(manager) (browse)"
 
-        rule = tm.ok(Parser.parse_oid_acl_line(_DN, line))
+        rule: m.Ldif.OidAclRule = tm.ok(Parser.parse_oid_acl_line(_DN, line))
 
         tm.that(rule.acl_type, eq="orclentrylevelaci")
         tm.that(rule.subjects[0].subject_type, eq="dnattr")

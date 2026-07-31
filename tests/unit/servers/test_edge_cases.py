@@ -49,7 +49,7 @@ class TestsFlextLdifEdgeCases:
         expect_non_ascii: bool,
     ) -> None:
         """Test inline edge-case parsing rules using centralized datasets."""
-        entries = tm.ok(
+        entries: list[m.Ldif.Entry] = tm.ok(
             ldif_api.parse_ldif(ldif_content, server_type=c.Tests.RFC)
         ).entries
         tm.that(len(entries), gte=expected_entry_count)
@@ -71,7 +71,7 @@ class TestsFlextLdifEdgeCases:
         fixture_path = (
             c.Tests.FIXTURES_DIR / c.Tests.EDGE_CASE_LARGE_MULTIVALUE_FIXTURE_RELATIVE
         )
-        entries = tm.ok(
+        entries: list[m.Ldif.Entry] = tm.ok(
             ldif_api.parse_ldif(fixture_path, server_type=c.Tests.RFC)
         ).entries
         tm.that(len(entries), gt=0)
@@ -103,7 +103,7 @@ class TestsFlextLdifEdgeCases:
         identical to the original parse. This is the observable roundtrip
         guarantee, stronger than merely counting entries.
         """
-        entries = tm.ok(
+        entries: list[m.Ldif.Entry] = tm.ok(
             ldif_api.parse_ldif(ldif_content, server_type=c.Tests.RFC)
         ).entries
         tm.that(len(entries), eq=1)
@@ -113,7 +113,7 @@ class TestsFlextLdifEdgeCases:
 
         output_path = tmp_path / output_name
         tm.ok(ldif_api.write_ldif_file(entries, output_path, server_type=c.Tests.RFC))
-        roundtrip_entries = tm.ok(
+        roundtrip_entries: list[m.Ldif.Entry] = tm.ok(
             ldif_api.parse_ldif(output_path, server_type=c.Tests.RFC)
         ).entries
         tm.that(len(roundtrip_entries), eq=1)
