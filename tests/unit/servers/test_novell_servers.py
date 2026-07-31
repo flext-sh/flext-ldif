@@ -250,7 +250,7 @@ class TestsFlextLdifNovellServers:
             "dn": "cn=user,o=Example",
             "attributes": {"cn": ["user"], "objectClass": ["ndsperson"]},
         })
-        processed = tm.ok(entry_server.process_entry(entry))
+        processed: m.Ldif.Entry = tm.ok(entry_server.process_entry(entry))
         assert isinstance(processed, m.Ldif.Entry)
         assert processed.attributes is not None
         attributes = processed.attributes.attributes
@@ -270,7 +270,7 @@ class TestsFlextLdifNovellServers:
             "dn": "cn=user,o=Example",
             "attributes": {},
         })
-        processed = tm.ok(entry_server.process_entry(entry))
+        processed: m.Ldif.Entry = tm.ok(entry_server.process_entry(entry))
         assert isinstance(processed, m.Ldif.Entry)
         assert processed.attributes is not None
         tm.that(dict(processed.attributes.attributes) == {}, eq=True)

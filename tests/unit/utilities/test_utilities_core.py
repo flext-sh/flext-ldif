@@ -95,7 +95,9 @@ class TestsFlextLdifUtilitiesCore:
 
     def test_parse_returns_attribute_value_pairs(self) -> None:
         """Parse yields ordered (attr, value) pairs for every component."""
-        parsed = tm.ok(u.Ldif.parse("cn=John,ou=Users,dc=example"))
+        parsed: t.MutableStrPairSequence = tm.ok(
+            u.Ldif.parse("cn=John,ou=Users,dc=example")
+        )
         tm.that(list(parsed), eq=[("cn", "John"), ("ou", "Users"), ("dc", "example")])
 
     @pytest.mark.parametrize(
@@ -114,18 +116,20 @@ class TestsFlextLdifUtilitiesCore:
 
     def test_compare_dns_is_reflexive(self) -> None:
         """Comparing a DN to itself yields equality (0)."""
-        result = tm.ok(u.Ldif.compare_dns("cn=John,dc=example", "cn=John,dc=example"))
+        result: int = tm.ok(u.Ldif.compare_dns("cn=John,dc=example", "cn=John,dc=example"))
         tm.that(result, eq=0)
 
     def test_compare_dns_is_case_insensitive_on_equal_values(self) -> None:
         """DNs differing only by case compare equal."""
-        result = tm.ok(u.Ldif.compare_dns("cn=John,dc=Example", "cn=john,dc=example"))
+        result: int = tm.ok(
+            u.Ldif.compare_dns("cn=John,dc=Example", "cn=john,dc=example")
+        )
         tm.that(result, eq=0)
 
     def test_compare_dns_is_antisymmetric(self) -> None:
         """Swapping arguments flips the sign of the ordering."""
-        forward = tm.ok(u.Ldif.compare_dns("cn=alpha,dc=x", "cn=beta,dc=x"))
-        backward = tm.ok(u.Ldif.compare_dns("cn=beta,dc=x", "cn=alpha,dc=x"))
+        forward: int = tm.ok(u.Ldif.compare_dns("cn=alpha,dc=x", "cn=beta,dc=x"))
+        backward: int = tm.ok(u.Ldif.compare_dns("cn=beta,dc=x", "cn=alpha,dc=x"))
         tm.that(forward, eq=-backward)
         tm.that(forward < 0, eq=True)
 

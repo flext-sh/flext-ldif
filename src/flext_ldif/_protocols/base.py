@@ -81,7 +81,7 @@ class FlextLdifProtocolsBase(Protocol):
 
         def write(
             self,
-            entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
+            entries: t.MutableSequenceOf[m.Ldif.Entry],
             *,
             server_type: str | None = None,
             format_options: FlextLdifProtocolsBase.WriteFormatOptions | None = None,
@@ -91,7 +91,7 @@ class FlextLdifProtocolsBase(Protocol):
 
         def write_ldif_file(
             self,
-            entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
+            entries: t.MutableSequenceOf[m.Ldif.Entry],
             path: Path,
             *,
             server_type: str | None = None,
@@ -102,7 +102,7 @@ class FlextLdifProtocolsBase(Protocol):
 
         def write_to_string(
             self,
-            entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
+            entries: t.MutableSequenceOf[m.Ldif.Entry],
             server_type: str | None = None,
         ) -> p.Result[str]:
             """Write LDIF entries to a string."""
@@ -176,7 +176,7 @@ class FlextLdifProtocolsBase(Protocol):
 
         def validate_entries(
             self,
-            entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
+            entries: t.MutableSequenceOf[m.Ldif.Entry],
             validation_service: FlextLdifProtocolsBase.ValidationService | None = None,
         ) -> p.Result[m.Ldif.ValidationResult]:
             """Validate list of entries."""

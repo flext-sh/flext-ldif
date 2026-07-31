@@ -591,7 +591,7 @@ class FlextLdifUtilitiesDN:
     @staticmethod
     def norm(dn: str | m.Ldif.DN | None) -> p.Result[str]:
         """Normalize DN per RFC 4514 (lowercase attrs, preserve values)."""
-        result = r[str].fail("DN cannot be None")
+        result: p.Result[str] = r[str].fail("DN cannot be None")
         if dn is not None:
             dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
             if not dn_str or "=" not in dn_str:
@@ -679,7 +679,9 @@ class FlextLdifUtilitiesDN:
     @staticmethod
     def parse_dn(dn: str | m.Ldif.DN | None) -> p.Result[t.MutableStrPairSequence]:
         """Parse DN into RFC 4514 components (attr, value pairs)."""
-        result = r[t.MutableStrPairSequence].fail("DN cannot be None")
+        result: p.Result[t.MutableStrPairSequence] = r[t.MutableStrPairSequence].fail(
+            "DN cannot be None"
+        )
         if dn is not None:
             dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
             if not dn_str or "=" not in dn_str:
@@ -699,7 +701,9 @@ class FlextLdifUtilitiesDN:
     @staticmethod
     def parse_rdn(rdn: str) -> p.Result[t.MutableStrPairSequence]:
         """Parse a single RDN component per RFC 4514."""
-        result = r[t.MutableStrPairSequence].fail("RDN must be a non-empty string")
+        result: p.Result[t.MutableStrPairSequence] = r[t.MutableStrPairSequence].fail(
+            "RDN must be a non-empty string"
+        )
         if rdn:
             try:
                 result = FlextLdifUtilitiesDN._parse_rdn_core(rdn)
