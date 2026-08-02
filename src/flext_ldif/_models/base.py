@@ -31,14 +31,14 @@ class FlextLdifModelsBases:
             ),
         ] = None
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def has_metadata(self) -> bool:
             """Check if schema element has server metadata."""
             metadata = getattr(self, "metadata", None)
             return metadata is not None
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def has_server_extensions(self) -> bool:
             """Check if element has server-specific extensions."""
@@ -48,7 +48,7 @@ class FlextLdifModelsBases:
             extensions = getattr(metadata, "extensions", None)
             return bool(extensions)
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def server_type(self) -> str:
             """The server type from metadata, default to RFC."""
@@ -81,13 +81,13 @@ class FlextLdifModelsBases:
             u.Field(description="Validation metadata captured during ACL processing."),
         ] = None
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def has_server_servers(self) -> bool:
             """Check if element uses server-specific servers."""
             return str(self.server_type) != "rfc"
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def valid(self) -> bool:
             """Check if ACL element passed validation."""
