@@ -128,7 +128,6 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         return instance
 
     @overload
-    @override
     def __call__(
         self,
         *,
@@ -137,7 +136,6 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
     ) -> Self: ...
 
     @overload
-    @override
     def __call__(
         self,
         ldif_text: str | None = None,
@@ -146,7 +144,6 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
     ) -> m.Ldif.Entry | str: ...
 
     @overload
-    @override
     def __call__(
         self,
         *args: str | t.MutableSequenceOf[m.Ldif.Entry] | None,

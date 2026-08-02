@@ -148,12 +148,8 @@ class TestsFlextLdifConfigIntegration:
         """The same facade parsing the same input twice yields the same DN."""
         api = ldif(settings=self.create_settings())
 
-        first: m.Ldif.ParseResponse = tm.ok(
-            api.parse_ldif(c.Tests.CONFIG_BASIC_ENTRY)
-        )
-        second: m.Ldif.ParseResponse = tm.ok(
-            api.parse_ldif(c.Tests.CONFIG_BASIC_ENTRY)
-        )
+        first: m.Ldif.ParseResponse = tm.ok(api.parse_ldif(c.Tests.CONFIG_BASIC_ENTRY))
+        second: m.Ldif.ParseResponse = tm.ok(api.parse_ldif(c.Tests.CONFIG_BASIC_ENTRY))
 
         first_dn = self.dn_values(first.entries)[0]
         tm.that(first_dn, eq=_BASIC_DN)

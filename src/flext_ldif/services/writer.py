@@ -32,8 +32,7 @@ class FlextLdifWriter(s):
             m.Ldif.WriteResponse(
                 content=string_result.value,
                 statistics=m.Ldif.Statistics(
-                    total_entries=u.count(entries),
-                    processed_entries=u.count(entries),
+                    total_entries=u.count(entries), processed_entries=u.count(entries)
                 ),
             )
         )
@@ -67,8 +66,7 @@ class FlextLdifWriter(s):
                 content=ldif_content,
                 output_path=str(path),
                 statistics=m.Ldif.Statistics(
-                    total_entries=u.count(entries),
-                    processed_entries=u.count(entries),
+                    total_entries=u.count(entries), processed_entries=u.count(entries)
                 ),
             )
         )

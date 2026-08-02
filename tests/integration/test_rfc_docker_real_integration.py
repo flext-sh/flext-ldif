@@ -94,7 +94,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
         output_file = tmp_path / "written.ldif"
         writer = FlextLdifWriter(server=server)
         write_result = writer.write_ldif_file(
-            response, output_file, server_type=c.Tests.RFC
+            response.entries, output_file, server_type=c.Tests.RFC
         )
 
         tm.ok(write_result)
@@ -121,7 +121,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
         output_file = tmp_path / "acl_output.ldif"
         writer = FlextLdifWriter(server=server)
         result = writer.write_ldif_file(
-            parse_result.value, output_file, server_type=c.Tests.RFC
+            parse_result.value.entries, output_file, server_type=c.Tests.RFC
         )
 
         tm.ok(result)
@@ -145,7 +145,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
         output_file = tmp_path / "roundtrip.ldif"
         writer = FlextLdifWriter(server=server)
         write_result = writer.write_ldif_file(
-            original, output_file, server_type=c.Tests.RFC
+            original.entries, output_file, server_type=c.Tests.RFC
         )
         tm.ok(write_result)
 
