@@ -103,7 +103,7 @@ class TestsFlextLdifRelaxed:
     ) -> None:
         """Test parse_attribute stores original definition for recovery."""
         original = "( 1.2.3.4 NAME 'test' SYNTAX 1.2.3 )"
-        parsed = tm.ok(schema_server.parse_attribute(original))
+        parsed: m.Ldif.SchemaAttribute = tm.ok(schema_server.parse_attribute(original))
         assert parsed.metadata is not None
         tm.that(parsed.metadata.extensions.get("original_format"), eq=original)
 
@@ -128,7 +128,7 @@ class TestsFlextLdifRelaxed:
             x_alias=None,
             x_oid=None,
         )
-        written = tm.ok(schema_server.write_attribute(attr_data))
+        written: str = tm.ok(schema_server.write_attribute(attr_data))
         tm.that(written, is_=str)
         tm.that(len(written), gt=0)
 
@@ -219,7 +219,7 @@ class TestsFlextLdifRelaxed:
             result = schema_server.parse_attribute(bad_input)
         else:
             result = schema_server.parse_objectclass(bad_input)
-        parsed = tm.ok(result)
+        parsed: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass = tm.ok(result)
         assert parsed.metadata is not None
         ext = parsed.metadata.extensions
         tm.that(
@@ -358,7 +358,7 @@ class TestsFlextLdifRelaxed:
             x_alias=None,
             x_oid=None,
         )
-        written = tm.ok(schema_server.write_attribute(attr_data))
+        written: str = tm.ok(schema_server.write_attribute(attr_data))
         tm.that(written, has=["2.16.840.1.113894.1.1.1", "orclGUID"])
 
     def test_conversion_objectclass_oid_to_rfc(
@@ -371,5 +371,5 @@ class TestsFlextLdifRelaxed:
             desc="Oracle Context",
             sup="top",
         )
-        written = tm.ok(schema_server.write_objectclass(oc_data))
+        written: str = tm.ok(schema_server.write_objectclass(oc_data))
         tm.that(written, has=["2.16.840.1.113894.1.2.1", "orclContext"])

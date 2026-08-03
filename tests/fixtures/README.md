@@ -94,7 +94,9 @@ Available markers:
 
 ### Extract Schema Elements
 
-```python
+<!-- pytest-markdown-docs: next-code-block: ignore -->
+
+```python notest
 from tests import helpers
 
 attributes = helpers.extract_attributes(schema_content)
@@ -105,7 +107,9 @@ name = helpers.extract_name(attr_definition)
 
 ### Validate Fixtures
 
-```python
+<!-- pytest-markdown-docs: next-code-block: ignore -->
+
+```python notest
 from tests import FixtureValidator
 
 validator = FixtureValidator()
@@ -150,7 +154,9 @@ Each includes realistic entry structures and ACL configurations.
 
 Run fixture coverage report:
 
-```python
+<!-- pytest-markdown-docs: next-code-block: ignore -->
+
+```python notest
 from tests import FixtureCoverageReport
 
 coverage = FixtureCoverageReport.generate_summary(all_fixtures)

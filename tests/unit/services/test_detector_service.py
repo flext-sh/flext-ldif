@@ -44,7 +44,7 @@ class TestsFlextLdifDetectorService:
         ldif_file.write_text(c.Tests.DETECTOR_RFC_SNIPPET, encoding="utf-8")
 
         result = api.detect_server_type(ldif_path=ldif_file)
-        detection = u.Tests.assert_success(result)
+        detection: m.Ldif.ServerDetectionResult = u.Tests.assert_success(result)
 
         tm.that(detection, is_=m.Ldif.ServerDetectionResult)
         tm.that(detection.detected_server_type, none=False)
@@ -54,7 +54,7 @@ class TestsFlextLdifDetectorService:
         self, api: p.Ldif.LdifClient
     ) -> None:
         result = api.detect_server_type(ldif_content=c.Tests.DETECTOR_RFC_SNIPPET)
-        detection = u.Tests.assert_success(result)
+        detection: m.Ldif.ServerDetectionResult = u.Tests.assert_success(result)
 
         tm.that(detection, is_=m.Ldif.ServerDetectionResult)
         tm.that(detection.is_confident, none=False)
@@ -63,7 +63,7 @@ class TestsFlextLdifDetectorService:
         self, api: p.Ldif.LdifClient
     ) -> None:
         result = api.detect_server_type(ldif_content=c.Tests.DETECTOR_RFC_SNIPPET)
-        detection = u.Tests.assert_success(result)
+        detection: m.Ldif.ServerDetectionResult = u.Tests.assert_success(result)
 
         generic_server_type = u.Ldif.get_server_type_value("GENERIC")
         tm.that(bool(detection.detected_server_type), eq=True)
@@ -74,7 +74,7 @@ class TestsFlextLdifDetectorService:
         self, api: p.Ldif.LdifClient
     ) -> None:
         result = api.detect_server_type(ldif_content=c.Tests.DETECTOR_OID_SNIPPET)
-        detection = u.Tests.assert_success(result)
+        detection: m.Ldif.ServerDetectionResult = u.Tests.assert_success(result)
 
         tm.that(any("ACL" in pattern for pattern in detection.patterns_found), eq=True)
 
@@ -89,7 +89,7 @@ class TestsFlextLdifDetectorService:
         self, scenario: str, snippet: str, expected_type: str, api: p.Ldif.LdifClient
     ) -> None:
         result = api.detect_server_type(ldif_content=snippet)
-        detection = u.Tests.assert_success(
+        detection: m.Ldif.ServerDetectionResult = u.Tests.assert_success(
             result, error_msg=f"detection failed for {scenario}"
         )
 
@@ -101,7 +101,7 @@ class TestsFlextLdifDetectorService:
         result = api.detect_server_type(
             ldif_content=long_content, max_lines=c.Tests.DETECTOR_MAX_LINES_SMALL
         )
-        detection = u.Tests.assert_success(result)
+        detection: m.Ldif.ServerDetectionResult = u.Tests.assert_success(result)
 
         tm.that(detection, is_=m.Ldif.ServerDetectionResult)
         tm.that(0.0 <= detection.confidence <= 1.0, eq=True)
@@ -117,7 +117,7 @@ class TestsFlextLdifDetectorService:
         self, scenario: str, snippet: str, api: p.Ldif.LdifClient
     ) -> None:
         result = api.detect_server_type(ldif_content=snippet)
-        detection = u.Tests.assert_success(
+        detection: m.Ldif.ServerDetectionResult = u.Tests.assert_success(
             result, error_msg=f"detection failed for {scenario}"
         )
 

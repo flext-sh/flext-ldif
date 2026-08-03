@@ -182,7 +182,9 @@ class TestsFlextLdifMigrationPipeline:
         self, migration_pipeline_factory: p.Tests.MigrationPipelineFactory
     ) -> None:
         """An empty input directory succeeds with zero total entries."""
-        migration_result = tm.ok(migration_pipeline_factory().execute())
+        migration_result: m.Ldif.MigrationPipelineResult = tm.ok(
+            migration_pipeline_factory().execute()
+        )
         tm.that(migration_result.stats.total_entries, eq=0)
 
     def test_execute_rfc_to_rfc_processes_entries(
@@ -193,7 +195,9 @@ class TestsFlextLdifMigrationPipeline:
         """An RFC-to-RFC run reports at least one processed entry."""
         input_dir, _ = migration_dirs
         (input_dir / "test.ldif").write_text(c.Tests.RFC_SAMPLE_LDIF_BASIC)
-        migration_result = tm.ok(migration_pipeline_factory().execute())
+        migration_result: m.Ldif.MigrationPipelineResult = tm.ok(
+            migration_pipeline_factory().execute()
+        )
         tm.that(migration_result.stats.processed_entries, gte=1)
 
     def test_execute_aggregates_across_multiple_files(
@@ -207,7 +211,9 @@ class TestsFlextLdifMigrationPipeline:
             "dn: cn=schema\nobjectClass: top\ncn: schema\n"
         )
         (input_dir / "data.ldif").write_text(_BASIC_RFC_ENTRY_LDIF)
-        migration_result = tm.ok(migration_pipeline_factory().execute())
+        migration_result: m.Ldif.MigrationPipelineResult = tm.ok(
+            migration_pipeline_factory().execute()
+        )
         tm.that(migration_result.stats.total_entries, gte=2)
 
     def test_execute_continues_when_a_file_fails_to_parse(
@@ -218,7 +224,9 @@ class TestsFlextLdifMigrationPipeline:
         """A single unparsable file is skipped; execute() still succeeds."""
         input_dir, _ = migration_dirs
         (input_dir / "bad.ldif").write_bytes(c.Tests.WRITER_INVALID_UTF8_BYTES)
-        migration_result = tm.ok(migration_pipeline_factory().execute())
+        migration_result: m.Ldif.MigrationPipelineResult = tm.ok(
+            migration_pipeline_factory().execute()
+        )
         tm.that(migration_result.stats.total_entries, eq=0)
 
     # ── migrate_entries() fallible outcomes ──────────────────────────────
@@ -236,14 +244,18 @@ class TestsFlextLdifMigrationPipeline:
                 ),
             )
         ]
-        migrated = tm.ok(migration_pipeline_factory().migrate_entries(entries))
+        migrated: t.MutableSequenceOf[m.Ldif.Entry] = tm.ok(
+            migration_pipeline_factory().migrate_entries(entries)
+        )
         tm.that(len(migrated), eq=1)
 
     def test_migrate_entries_with_empty_list_returns_empty(
         self, migration_pipeline_factory: p.Tests.MigrationPipelineFactory
     ) -> None:
         """migrate_entries([]) succeeds with an empty result."""
-        migrated = tm.ok(migration_pipeline_factory().migrate_entries([]))
+        migrated: t.MutableSequenceOf[m.Ldif.Entry] = tm.ok(
+            migration_pipeline_factory().migrate_entries([])
+        )
         tm.that(migrated, empty=True)
 
     def test_migrate_entries_base_dn_filters_out_of_scope_acl_bind_dn(self) -> None:
@@ -293,7 +305,9 @@ class TestsFlextLdifMigrationPipeline:
         input_dir, _ = migration_dirs
         input_file = input_dir / "test.ldif"
         input_file.write_text(c.Tests.CONFIG_BASIC_ENTRY)
-        migration_result = tm.ok(migration_pipeline_factory().migrate_file(input_file))
+        migration_result: m.Ldif.MigrationPipelineResult = tm.ok(
+            migration_pipeline_factory().migrate_file(input_file)
+        )
         tm.that(migration_result.stats.total_entries, gte=1)
 
     def test_migrate_file_fails_when_file_missing(

@@ -56,7 +56,7 @@ class TestsFlextLdifOudIntegration:
         """Return an entry's DN string via the public DN model."""
         dn = entry.dn
         assert dn is not None
-        return u.to_str(dn.value)
+        return dn.value
 
     @classmethod
     def _object_classes(cls, entry: m.Ldif.Entry) -> list[str]:

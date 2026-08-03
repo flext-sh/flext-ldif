@@ -160,7 +160,7 @@ class FlextLdifProtocolsDomain(Protocol):
 
         def write(
             self,
-            entry_data: m.Ldif.Entry | t.MutableSequenceOf[m.Ldif.Entry],
+            entry_data: t.MutableSequenceOf[m.Ldif.Entry],
             write_options: m.Ldif.WriteFormatOptions | None = None,
         ) -> p.Result[str]:
             """Serialize one or more entries."""

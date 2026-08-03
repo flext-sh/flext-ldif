@@ -23,7 +23,7 @@ class TestsFlextLdifParserService:
         fixture_file.write_text(c.Tests.RFC_SAMPLE_LDIF_BASIC, encoding="utf-8")
 
         result = api.parse_ldif(fixture_file, server_type=c.Tests.RFC)
-        parsed = u.Tests.assert_success(result)
+        parsed: m.Ldif.ParseResponse = u.Tests.assert_success(result)
 
         tm.that(parsed, is_=m.Ldif.ParseResponse)
         tm.that(len(parsed.entries) > 0, eq=True)

@@ -124,7 +124,7 @@ class TestsFlextLdifWriterService:
         )
 
         payload = u.Tests.assert_success(
-            writer.write(parse_response, server_type=c.Tests.RFC)
+            writer.write(parse_response.entries, server_type=c.Tests.RFC)
         )
 
         tm.that(payload.statistics.total_entries, eq=len(entries))

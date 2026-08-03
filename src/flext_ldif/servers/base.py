@@ -143,6 +143,16 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         operation: str | None = None,
     ) -> m.Ldif.Entry | str: ...
 
+    @overload
+    def __call__(
+        self,
+        *args: str | t.MutableSequenceOf[m.Ldif.Entry] | None,
+        server: p.Ldif.ServerRegistry | None = None,
+        settings: p.Ldif.Settings | None = None,
+        **fields: t.JsonValue | t.MutableSequenceOf[m.Ldif.Entry],
+    ) -> Self | m.Ldif.Entry | str: ...
+
+    @override
     def __call__(
         self,
         *args: str | t.MutableSequenceOf[m.Ldif.Entry] | None,

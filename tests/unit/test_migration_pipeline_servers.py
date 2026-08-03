@@ -17,7 +17,7 @@ from flext_ldif.servers.oid import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.services.migration import FlextLdifMigrationPipeline
 from flext_tests import tm
-from tests import c
+from tests import c, m
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -48,7 +48,7 @@ class TestsFlextLdifMigrationPipelineServers:
             source_server=c.Ldif.ServerTypes(source_server),
             target_server=c.Ldif.ServerTypes(target_server),
         )
-        migrated = tm.ok(pipeline.execute())
+        migrated: m.Ldif.MigrationPipelineResult = tm.ok(pipeline.execute())
 
         output_file = output_dir / "migrated.ldif"
         _ = tm.that(output_file.exists(), eq=True)
