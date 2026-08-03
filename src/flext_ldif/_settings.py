@@ -14,30 +14,29 @@ from __future__ import annotations
 
 from typing import Annotated, ClassVar
 
-from pydantic import BaseModel, Field
 from pydantic_settings import SettingsConfigDict
 
-from flext_cli import FlextCliSettings
+from flext_cli import FlextCliSettings, m
 
 
 class FlextLdifSettings(FlextCliSettings):
     """LDIF processing settings inheriting base FLEXT configuration."""
 
-    class LdifSettings(BaseModel):
+    class LdifSettings(m.BaseModel):
         """Namespaced LDIF runtime settings."""
 
         ldif_encoding: Annotated[
-            str, Field(description="Default encoding for LDIF read/write operations")
+            str, m.Field(description="Default encoding for LDIF read/write operations")
         ] = "utf-8"
         ldif_strict_validation: Annotated[
-            bool, Field(description="Enable strict LDIF validation rules")
+            bool, m.Field(description="Enable strict LDIF validation rules")
         ] = True
 
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
         env_prefix="FLEXT_LDIF_", extra="ignore"
     )
 
-    ldif: LdifSettings = Field(
+    ldif: LdifSettings = m.Field(
         default_factory=LdifSettings, description="Namespaced LDIF settings branch."
     )
 

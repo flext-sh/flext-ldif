@@ -122,7 +122,14 @@ extra_checks = true
 follow_imports = "normal"
 ignore_missing_imports = true
 local_partial_types = true
-mypy_path = ["src", "."]
+mypy_path = [
+  "src",
+  ".",
+  "../flext-cli/src",
+  "../flext-core/src",
+  "../flext-infra/src",
+  "../flext-tests/src",
+]
 namespace_packages = true
 no_implicit_reexport = true
 plugins = ["pydantic.mypy"]
@@ -169,7 +176,14 @@ project-excludes = [
 ]
 project-includes = ["examples/**/*.py*", "src/**/*.py*", "tests/**/*.py*"]
 python-version = "3.13"
-search-path = ["src", "."]
+search-path = [
+  "src",
+  ".",
+  "../flext-cli/src",
+  "../flext-core/src",
+  "../flext-infra/src",
+  "../flext-tests/src",
+]
 use-ignore-files = false
 
 [tool.pyrefly.errors]
@@ -286,7 +300,7 @@ exclude = [
   ".venv",
   "vendor",
 ]
-extraPaths = [".", "src"]
+extraPaths = ["src", "."]
 include = ["examples", "src", "tests"]
 pythonPlatform = "Linux"
 pythonVersion = "3.13"
