@@ -12,7 +12,7 @@ import pytest
 
 from flext_ldif import ldif
 from flext_tests import tm
-from tests import c, m
+from tests import c
 
 if TYPE_CHECKING:
     from pathlib import Path
