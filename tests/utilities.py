@@ -390,7 +390,12 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             if method_name is None or not isinstance(server, p.Ldif.SchemaServer):
                 msg = f"{parse_method} is not supported by this server"
                 raise AssertionError(msg)
-            method: Callable[[str], p.Result[object]] = getattr(server, method_name)
+            method: Callable[
+                [str],
+                p.Result[
+                    m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
+                ],
+            ] = getattr(server, method_name)
             result = method(content)
             if should_succeed is False:
                 if result.success:
