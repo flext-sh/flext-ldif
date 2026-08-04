@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from flext_tests import tk
 from tests import c, t, u
 
 if TYPE_CHECKING:
@@ -35,6 +36,8 @@ def _probe_ldap_bind(server_url: str, admin_dn: str, admin_password: str) -> str
 @pytest.fixture(scope="session")
 def ldap_container(worker_id: str) -> t.JsonMapping:
     """Ensure shared OpenLDAP container is available for integration tests."""
+    if tk.ci_disables_docker():
+        pytest.skip(c.Tests.DOCKER_CI_SKIP_REASON)
     docker_control = u.Tests.get_docker_control(worker_id)
     server_url = f"ldap://localhost:{c.Tests.DOCKER_PORT}"
     lock = u.Tests.FileLock(
@@ -46,7 +49,7 @@ def ldap_container(worker_id: str) -> t.JsonMapping:
             pytest.skip(f"OpenLDAP container unavailable: {execute_result.error}")
         admin_dn, admin_password = u.Tests.get_admin_credentials()
         waited = 0.0
-        max_wait = 8.0
+        max_wait = float(c.Tests.DOCKER_PROBE_MAX_WAIT_SECONDS)
         last_error: str | None = None
         while waited < max_wait:
             last_error = _probe_ldap_bind(server_url, admin_dn, admin_password)
