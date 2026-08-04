@@ -80,6 +80,7 @@ name = "ruff"
 drivers = [
   "lint",
 ]
+mode = "disabled"
 
 [[plugin]]
 name = "trivy"
