@@ -43,9 +43,7 @@ def ldap_container(worker_id: str) -> t.JsonMapping:
     with lock:
         execute_result = docker_control.execute()
         if execute_result.failure:
-            pytest.skip(
-                f"OpenLDAP container unavailable: {execute_result.error}"
-            )
+            pytest.skip(f"OpenLDAP container unavailable: {execute_result.error}")
         admin_dn, admin_password = u.Tests.get_admin_credentials()
         waited = 0.0
         max_wait = 8.0
