@@ -275,7 +275,7 @@ class FlextLdif(
     @override
     def validate_entries(
         self,
-        entries: t.MutableSequenceOf[m.Ldif.Entry],
+        entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
         validation_service: p.Ldif.ValidationService | None = None,
     ) -> p.Result[m.Ldif.ValidationResult]:
         """Validate list of entries."""

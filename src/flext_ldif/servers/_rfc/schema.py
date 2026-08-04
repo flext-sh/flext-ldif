@@ -438,7 +438,12 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
         metadata_extensions[c.Ldif.SCHEMA_SOURCE_SERVER] = server_type
         metadata = m.Ldif.ServerMetadata(
             server_type=server_type,
-            extensions=dict(metadata_extensions) if metadata_extensions else {},
+            # Why: mro-4p0t — coerce schema extension values to JsonMapping.
+            extensions=(
+                t.json_dict_adapter().validate_python(metadata_extensions)
+                if metadata_extensions
+                else {}
+            ),
             original_server_type=server_type,
             target_server_type=server_type,
         )
