@@ -37,6 +37,8 @@ src/flext_ldif/
 
 - **Server behavior is registry-selected via `server_type`** — never hardcode a dialect handler; go through the registry.
 - Entries and results are typed `m.*` models returned directly (no dict roundtrip).
+- Config/settings canonical pattern: ADR-012.
+- Codemod governance (ast-grep + make mod): ADR-014.
 
 ## Anti-Patterns / Gotchas
 
