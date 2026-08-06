@@ -1,8 +1,6 @@
 # Triagem Snyk Code (SAST) — flext-sh/flext-ldif
 
-Gerado a partir do scan Snyk da org Datacosmos (dump 2026-08-06).
-
-Bead de rastreio: `mro-l65n`
+Gerado do scan Snyk (dump 2026-08-06). Bead: `mro-l65n`
 
 ## Resumo
 
@@ -12,26 +10,27 @@ Bead de rastreio: `mro-l65n`
 |---|---|
 | Use of Hardcoded Passwords | 1 |
 
+## Como usar este documento
+
+Cada achado traz o **código real** extraído da worktree (linha `>>>` = sink reportado), a regra completa e o CWE.
+Preencha **Decisão**: `corrigir` / `falso-positivo` (registrar em `.snyk`) / `risco-aceito` (com prazo).
+
 ## Achados
 
-Ordenados por severidade. Coluna **Decisão** a preencher: `corrigir` / `falso-positivo` / `risco-aceito`.
+### 1 · 🟡 MEDIUM · Use of Hardcoded Passwords
+**Local**: `src/flext_ldif/constants.py:458` · **CWE**: -
 
-| # | sev | categoria | arquivo | linha | CWE | Decisão |
-|---|---|---|---|---|---|---|
-| 1 | medium | Use of Hardcoded Passwords | `src/flext_ldif/constants.py` | 458 | CWE-259,CWE-798 | |
+```python
+      454              "substring_assertion": "string",
+      455              "teletex_terminal_identifier": "string",
+      456              "telex_number": "string",
+      457              "unique_member": "dn",
+>>>   458              "user_password": "binary",
+      459              "user_certificate": "binary",
+      460              "ca_certificate": "binary",
+      461              "authority_revocation_list": "binary",
+      462              "certificate_revocation_list": "binary",
+```
 
-## Como triar
-
-1. Abrir `arquivo:linha` e seguir o fluxo de dados até o sink.
-2. Classificar:
-   - **corrigir** — entrada realmente controlável por terceiro chega ao sink sem sanitização.
-   - **falso-positivo** — ex.: credencial em fixture de teste, path derivado de constante interna, entrada já validada a montante. Registrar em `.snyk` com justificativa.
-   - **risco-aceito** — exposição real porém tolerável no contexto; registrar com prazo de revisão.
-3. Preencher a coluna Decisão nesta tabela e abrir tarefas de correção para os itens `corrigir`.
-
-## Notas
-
-- `Use of Hardcoded Passwords` / `Credentials` em código de teste e fixtures costuma ser falso positivo — verificar antes de alterar.
-- `Path Traversal` só é explorável se o caminho vier de entrada externa; paths montados de constantes não são.
-- Dados brutos com `issue_id` e `key` do Snyk: `~/snyk-violations/sast/flext-sh__flext-ldif.sast.json`
+**Decisão**: 
 
