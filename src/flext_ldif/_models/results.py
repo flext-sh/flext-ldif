@@ -11,6 +11,11 @@ from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries as m
 from flext_ldif._models.events import FlextLdifModelsEvents as me
 
 
+def _default_statistics() -> FlextLdifModelsResults.Statistics:
+    """Build the default migration statistics payload."""
+    return FlextLdifModelsResults.Statistics()
+
+
 class FlextLdifModelsResults:
     """Namespace for LDIF result models."""
 
@@ -267,7 +272,7 @@ class FlextLdifModelsResults:
             default_factory=list, description="Migrated LDIF entries"
         )
         stats: FlextLdifModelsResults.Statistics = u.Field(
-            default_factory=lambda: FlextLdifModelsResults.Statistics(),
+            default_factory=_default_statistics,
             description="Migration processing statistics",
         )
         output_files: t.MutableSequenceOf[str] = u.Field(

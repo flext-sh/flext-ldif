@@ -61,13 +61,14 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
                 validated: m.Ldif.WriteFormatOptions = (
                     m.Ldif.WriteFormatOptions.model_validate_json(serialized)
                 )
-                return validated
             except c.EXC_VALIDATION_TYPE as exc:
                 FlextLdifServersBaseEntry._module_logger.warning(
                     "Failed to validate extension write format options",
                     error=str(exc),
                     error_type=type(exc).__name__,
                 )
+            else:
+                return validated
         return None
 
     def can_handle(

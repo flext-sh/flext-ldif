@@ -146,9 +146,10 @@ class FlextLdifServersBaseSchema(
             return c.Ldif.ServerTypes.RFC
         try:
             normalized: c.Ldif.ServerTypes = u.Ldif.normalize_server_type(server_type)
-            return normalized
         except ValueError:
             return c.Ldif.ServerTypes.RFC
+        else:
+            return normalized
 
     @staticmethod
     def build_attribute_metadata(
@@ -296,7 +297,6 @@ class FlextLdifServersBaseSchema(
             attribute: m.Ldif.SchemaAttribute = m.Ldif.SchemaAttribute.model_validate(
                 value
             )
-            return attribute
         except (
             c.ValidationError,
             ValueError,
@@ -306,11 +306,12 @@ class FlextLdifServersBaseSchema(
             struct.error,
         ):
             pass
+        else:
+            return attribute
         try:
             objectclass: m.Ldif.SchemaObjectClass = (
                 m.Ldif.SchemaObjectClass.model_validate(value)
             )
-            return objectclass
         except (
             c.ValidationError,
             ValueError,
@@ -320,6 +321,8 @@ class FlextLdifServersBaseSchema(
             struct.error,
         ):
             pass
+        else:
+            return objectclass
         return None
 
     def _coerce_operation(self, value: t.Ldif.Scalar | None) -> str | None:

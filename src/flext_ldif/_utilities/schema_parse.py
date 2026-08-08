@@ -91,18 +91,20 @@ class FlextLdifUtilitiesSchemaParse:
         """
         try:
             _ = m.Ldif.SchemaAttribute.model_validate(definition)
-            return c.Ldif.SchemaItemKind.ATTRIBUTE
         except c.Ldif.EXC_LDIF_PARSE as exc:
             FlextLdifUtilitiesSchemaParse._module_logger.debug(
                 "SchemaAttribute model validation did not match: %s", exc
             )
+        else:
+            return c.Ldif.SchemaItemKind.ATTRIBUTE
         try:
             _ = m.Ldif.SchemaObjectClass.model_validate(definition)
-            return c.Ldif.SchemaItemKind.OBJECTCLASS
         except c.Ldif.EXC_LDIF_PARSE as exc:
             FlextLdifUtilitiesSchemaParse._module_logger.debug(
                 "SchemaObjectClass model validation did not match: %s", exc
             )
+        else:
+            return c.Ldif.SchemaItemKind.OBJECTCLASS
         definition_str = str(definition)
         definition_lower = definition_str.lower()
         objectclass_only_keywords = [

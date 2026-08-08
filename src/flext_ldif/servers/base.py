@@ -320,10 +320,11 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
             return []
         try:
             entries: t.MutableSequenceOf[m.Ldif.Entry] = u.Ldif.as_entries(raw)
-            return entries
         except c.EXC_VALIDATION_TYPE as exc:
             msg = f"Expected t.MutableSequenceOf[Entry | None] for entries, got {type(raw)}"
             raise TypeError(msg) from exc
+        else:
+            return entries
 
     @staticmethod
     def _extract_ldif_text(

@@ -555,9 +555,7 @@ class Config(m.BaseModel):
     encoding: str = u.Field(
         "utf-8", description="Character encoding for LDIF processing"
     )
-    line_separator: str = u.Field("\n", description="Line separator for LDIF output")
-```
-
+    line_separator: str = u.Field("\n", description="Line separator for LDIF output")```
 **Example Usage**:
 
 ```python
@@ -770,9 +768,7 @@ def process_enterprise_directory(
         )
         # Add error context
         .map_error(lambda error: f"Enterprise processing failed: {error}")
-    )
-```
-
+    )```
 ### Batch Processing
 
 ```text
@@ -795,9 +791,7 @@ def process_multiple_files(file_paths: t.SequenceOf[Path]) -> p.Result[m.Dict]:
         "total_entries": len(all_entries),
         "file_stats": processing_stats,
         "entries": all_entries,
-    })
-```
-
+    })```
 ### Custom Filtering
 
 ```text

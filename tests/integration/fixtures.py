@@ -26,11 +26,12 @@ def _probe_ldap_bind(server_url: str, admin_dn: str, admin_password: str) -> str
         )
         bound: bool = conn.bind()
         conn.unbind()
+    except (t.Ldap.LDAPException, ConnectionError, TimeoutError, OSError) as exc:
+        return str(exc)
+    else:
         if bound:
             return None
         return "LDAP bind returned False"
-    except (t.Ldap.LDAPException, ConnectionError, TimeoutError, OSError) as exc:
-        return str(exc)
 
 
 @pytest.fixture(scope="session")

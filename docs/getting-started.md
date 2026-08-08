@@ -220,9 +220,7 @@ python -m flext_ldif parse directory.ldif
 python -m flext_ldif analyze directory.ldif
 
 # Filter entries by type
-python -m flext_ldif filter --type person directory.ldif
-```
-
+python -m flext_ldif filter --type person directory.ldif```
 ### CLI Help
 
 ```bash
@@ -230,9 +228,7 @@ python -m flext_ldif filter --type person directory.ldif
 python -m flext_ldif --help
 
 # Get help for specific command
-python -m flext_ldif parse --help
-```
-
+python -m flext_ldif parse --help```
 ## Common Use Cases
 
 ### Generic Schema Parsing with Server Servers

@@ -318,21 +318,17 @@ def parse(
 
 **Action**: Flatten test structure to mirror module structure
 
-**Before**:
-
-```
+**Before**:```
 tests/unit/
 ├── rfc/
 ├── services/
 ├── acl/
 ├── schema/
 ├── entry/
-└── ...
-```
-
+└── ...```
 **After**:
 
-```
+```text
 tests/unit/
 ├── servers/              # Only subdirectory (mirrors src)
 ├── test_rfc_ldif_parser.py

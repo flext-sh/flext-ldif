@@ -245,11 +245,14 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                     auto_bind=True,
                     receive_timeout=1,
                 )
-                if connection.bound:
+                bound: bool = connection.bound
+                if bound:
                     connection.unbind()
-                    return (candidate_dn, candidate_password)
-                return None
             except (ConnectionError, OSError, ValueError, t.Ldap.LDAPException):
+                return None
+            else:
+                if bound:
+                    return (candidate_dn, candidate_password)
                 return None
 
         @staticmethod
@@ -411,11 +414,9 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             if expected_type is not None and not isinstance(value, expected_type):
                 msg_0 = f"Expected {expected_type.__name__}, got {type(value).__name__}"
                 raise AssertionError(msg_0)
-            if isinstance(
-                value, (m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass, m.Ldif.Acl)
-            ):
-                return value
-            return None
+            # `method` is typed to return exactly these three models, so the
+            # isinstance narrowing above is total and no fallthrough exists.
+            return value
 
         @staticmethod
         def acl_parse_and_unwrap(
