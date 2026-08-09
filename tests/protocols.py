@@ -4,23 +4,122 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_ldap import p as ldap_p
-
 from flext_ldif import FlextLdifProtocols
 from flext_tests import FlextTestsProtocols
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from pathlib import Path
 
     from flext_ldif.services.migration import FlextLdifMigrationPipeline
-    from tests import c, m
+    from tests import c, m, t
 
 
-class TestsFlextLdifProtocols(FlextTestsProtocols, ldap_p, FlextLdifProtocols):
+class TestsFlextLdifProtocols(FlextTestsProtocols, FlextLdifProtocols):
     """Protocol definitions for flext-ldif tests."""
 
-    class Ldap(ldap_p.Ldap):
-        """LDAP protocol namespace re-exposed for flext-ldif tests."""
+    class Ldap:
+        """Structural contract of the ldap3-compatible client used by the tests.
+
+        flext-ldif is the base library the LDAP client builds on, so the client
+        can never be a declared dependency of this project. The tests describe
+        only the surface they drive and resolve the concrete implementation at
+        runtime through ``tests.utilities`` (see ``u.Tests.require_ldap_client``).
+        """
+
+        @runtime_checkable
+        class Ldap3Server(Protocol):
+            """Opaque ldap3-compatible server handle."""
+
+            @property
+            def name(self) -> str | None:
+                """The configured server name."""
+                ...
+
+        @runtime_checkable
+        class Ldap3Attribute(Protocol):
+            """Structural contract for ldap3-compatible attribute objects."""
+
+            @property
+            def values(self) -> t.SequenceOf[object]:
+                """The raw LDAP values for this attribute."""
+                ...
+
+            @property
+            def value(self) -> object:
+                """The resolved attribute value."""
+                ...
+
+        @runtime_checkable
+        class Ldap3Entry(Protocol):
+            """Structural contract for ldap3-compatible entry objects."""
+
+            @property
+            def entry_dn(self) -> str | None:
+                """The entry distinguished name."""
+                ...
+
+            @property
+            def entry_attributes(self) -> t.StrSequence:
+                """The attribute names present in this entry."""
+                ...
+
+            def __getitem__(self, attribute_name: str) -> p.Ldap.Ldap3Attribute:
+                """Return one ldap3 attribute object by attribute name."""
+                ...
+
+        @runtime_checkable
+        class Ldap3Connection(Protocol):
+            """Structural contract for ldap3-compatible connection objects."""
+
+            @property
+            def bound(self) -> bool:
+                """Whether the connection is currently bound."""
+                ...
+
+            def bind(self) -> bool:
+                """Bind the connection using the configured credentials."""
+                ...
+
+            @property
+            def entries(self) -> t.SequenceOf[p.Ldap.Ldap3Entry]:
+                """The entries produced by the last LDAP operation."""
+                ...
+
+            @property
+            def add(self) -> Callable[..., bool]:
+                """The callable implementing the add operation."""
+                ...
+
+            @property
+            def delete(self) -> Callable[..., bool]:
+                """The callable implementing the delete operation."""
+                ...
+
+            @property
+            def modify(self) -> Callable[..., bool]:
+                """The callable implementing the modify operation."""
+                ...
+
+            @property
+            def search(self) -> Callable[..., bool | t.JsonValue | None]:
+                """The callable implementing the search operation."""
+                ...
+
+            @property
+            def unbind(self) -> Callable[..., bool]:
+                """The callable implementing connection teardown."""
+                ...
+
+        @runtime_checkable
+        class Ldap3EntryAdapter(Protocol):
+            """Structural contract for the ldap3 entry to LDIF entry adapter."""
+
+            def ldap3_to_ldif_entry(
+                self, ldap3_entry: p.Ldap.Ldap3Entry
+            ) -> p.Result[m.Ldif.Entry]:
+                """Convert one ldap3 entry into the LDIF entry model."""
+                ...
 
     class Tests(FlextTestsProtocols.Tests):
         """LDIF helper protocols used only by tests."""

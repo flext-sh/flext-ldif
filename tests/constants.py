@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import re
+from enum import StrEnum, unique
 from pathlib import Path
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Final, Literal
 
-from flext_ldap import c
+from flext_ldif import c
 
 from flext_tests import FlextTestsConstants
 from tests import m
@@ -18,6 +19,32 @@ if TYPE_CHECKING:
 
 class TestsFlextLdifConstants(FlextTestsConstants, c):
     """Flat test constants for flext-ldif."""
+
+    class Ldap:
+        """ldap3 wire constants consumed by the real-directory tests.
+
+        flext-ldif is the base library of the LDAP client, so the client cannot
+        be a declared dependency here (see ``tests.utilities``). These are the
+        ldap3 protocol values the tests pass to the dynamically resolved client,
+        not a second implementation of an owned facade.
+        """
+
+        @unique
+        class Ldap3SearchScope(StrEnum):
+            """ldap3-compatible search scope string values."""
+
+            BASE = "BASE"
+            LEVEL = "LEVEL"
+            SUBTREE = "SUBTREE"
+
+        @unique
+        class Ldap3GetInfo(StrEnum):
+            """ldap3-compatible get-info option string values."""
+
+            ALL = "ALL"
+            DSA = "DSA"
+            NO_INFO = "NO_INFO"
+            SCHEMA = "SCHEMA"
 
     class Tests(FlextTestsConstants.Tests):
         """LDIF test constants namespace."""

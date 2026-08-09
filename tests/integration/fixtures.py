@@ -26,7 +26,7 @@ def _probe_ldap_bind(server_url: str, admin_dn: str, admin_password: str) -> str
         )
         bound: bool = conn.bind()
         conn.unbind()
-    except (t.Ldap.LDAPException, ConnectionError, TimeoutError, OSError) as exc:
+    except u.Tests.ldap_connectivity_errors() as exc:
         return str(exc)
     else:
         if bound:
@@ -125,7 +125,7 @@ def ldap_connection(ldap_container: t.JsonMapping) -> Generator[p.Ldap.Ldap3Conn
             pytest.fail(
                 f"LDAP server not available at {server_url} for bind_dn={bind_dn}"
             )
-    except (t.Ldap.LDAPException, ConnectionError, TimeoutError, OSError) as exc:
+    except u.Tests.ldap_connectivity_errors() as exc:
         pytest.fail(f"LDAP server not available: {exc}")
     yield conn
     conn.unbind()
