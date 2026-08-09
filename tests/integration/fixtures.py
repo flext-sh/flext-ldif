@@ -49,15 +49,17 @@ def ldap_container(worker_id: str) -> t.JsonMapping:
         if execute_result.failure:
             pytest.skip(f"OpenLDAP container unavailable: {execute_result.error}")
         admin_dn, admin_password = u.Tests.get_admin_credentials()
-        waited = 0.0
-        max_wait = float(c.Tests.DOCKER_PROBE_MAX_WAIT_SECONDS)
+        # Wall-clock deadline: each probe against an unreachable server costs
+        # seconds of connect timeout, so counting only the sleeps would let the
+        # wait run several times past the budget and trip the pytest-timeout
+        # before this fixture can report a clean skip.
+        deadline = time.monotonic() + float(c.Tests.DOCKER_PROBE_MAX_WAIT_SECONDS)
         last_error: str | None = None
-        while waited < max_wait:
+        while time.monotonic() < deadline:
             last_error = _probe_ldap_bind(server_url, admin_dn, admin_password)
             if last_error is None:
                 break
             time.sleep(1.0)
-            waited += 1.0
         else:
             pytest.skip(
                 "OpenLDAP container bind not ready"

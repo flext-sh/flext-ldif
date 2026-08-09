@@ -58,7 +58,10 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
         DOCKER_PORT: Final[int] = 3390
         DOCKER_BASE_DN: Final[str] = "dc=flext,dc=local"
         DOCKER_ADMIN_DN: Final[str] = "cn=admin,dc=flext,dc=local"
-        DOCKER_ADMIN_CREDENTIAL: Final[str] = "flext-admin"
+        # SSOT: docker/docker-compose.openldap.yml -> LDAP_ADMIN_PASSWORD of the
+        # shared flext-openldap-test container. A value that does not bind makes
+        # every real-LDAP test skip after burning the whole probe budget.
+        DOCKER_ADMIN_CREDENTIAL: Final[str] = "admin123"
         DOCKER_LEGACY_ADMIN_DN: Final[str] = (
             "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
         )
