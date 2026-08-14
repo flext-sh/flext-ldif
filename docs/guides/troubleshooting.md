@@ -155,15 +155,11 @@ def process(data: t.JsonMapping) -> p.Result[ProcessedData]:
 **Run MyPy with details:**
 
 ```bash
-mypy src/module.py --show-error-codes --show-traceback
-```
-
+mypy src/module.py --show-error-codes --show-traceback```
 **Check specific error:**
 
 ```bash
-mypy src/ --show-error-codes | grep "error-code"
-```
-
+mypy src/ --show-error-codes | grep "error-code"```
 ### 3. Test Failures
 
 #### Problem: Tests failing
@@ -212,9 +208,7 @@ ValidationError: field required```
 **Check environment variables:**
 
 ```bash
-env | grep FLEXT_
-```
-
+env | grep FLEXT_```
 **Validate configuration:**
 
 ```python
@@ -648,7 +642,7 @@ def process(data: dict) -> ProcessedData:
 
    ```python
 
-from **future** import annotations
+from __future__ import annotations
 
    from flext_ldif import p, r
 
@@ -664,12 +658,11 @@ from **future** import annotations
 1. **Use Type Hints**
 
    ```python
-from __future__ import annotations
+   from __future__ import annotations
 
    # ✅ GOOD
    def process(items: t.SequenceOf[Item]) -> p.Result[Sequence[ProcessedItem]]:
        pass
-
 
    # ❌ BAD
    def process(items):
@@ -680,7 +673,7 @@ from __future__ import annotations
 
    ```python
 
-from **future** import annotations
+   from __future__ import annotations
 
    def test_process_data():
        # Test success case

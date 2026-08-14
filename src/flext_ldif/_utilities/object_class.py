@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from flext_ldif import c
 
 if TYPE_CHECKING:
-    from flext_ldif import FlextLdifModels as m
+    from flext_ldif._models.domain_schema import FlextLdifModelsDomainSchema as ms
 
 
 class FlextLdifUtilitiesObjectClass:
@@ -21,7 +21,7 @@ class FlextLdifUtilitiesObjectClass:
 
     @staticmethod
     def fix_kind_mismatch(
-        schema_oc: m.Ldif.SchemaObjectClass, _server_type: str = "oid"
+        schema_oc: ms.SchemaObjectClass, _server_type: str = "oid"
     ) -> None:
         """Fix objectClass kind mismatches with superior classes (server-specific)."""
         if not schema_oc.sup or not schema_oc.kind:
@@ -39,20 +39,22 @@ class FlextLdifUtilitiesObjectClass:
             first_sup = sup_value[0] if sup_value else ""
             sup_lower = first_sup.lower() if first_sup else ""
         schema_constants = FlextLdifUtilitiesObjectClass.SchemaConstants
+        target: ms.SchemaObjectClass = schema_oc
         if (
             sup_lower in structural_superiors
-            and schema_oc.kind == schema_constants.auxiliary
+            and target.kind == schema_constants.auxiliary
         ):
-            setattr(schema_oc, "kind", schema_constants.structural)
+            target.kind = schema_constants.structural
         elif (
             sup_lower in auxiliary_superiors
-            and schema_oc.kind == schema_constants.structural
+            and target.kind == schema_constants.structural
         ):
-            setattr(schema_oc, "kind", schema_constants.auxiliary)
+            target.kind = schema_constants.auxiliary
 
     @staticmethod
-    def fix_missing_sup(schema_oc: m.Ldif.SchemaObjectClass) -> None:
+    def fix_missing_sup(schema_oc: ms.SchemaObjectClass) -> None:
         """Fix AUXILIARY ObjectClass missing SUP (superior) attribute."""
         schema_constants = FlextLdifUtilitiesObjectClass.SchemaConstants
-        if schema_oc.kind == schema_constants.auxiliary and (not schema_oc.sup):
-            setattr(schema_oc, "sup", "top")
+        target: ms.SchemaObjectClass = schema_oc
+        if target.kind == schema_constants.auxiliary and (not target.sup):
+            target.sup = "top"

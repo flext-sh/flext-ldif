@@ -209,9 +209,7 @@ grep -r "FlextLdifServersOid()\|FlextLdifServersOud()\|FlextLdifServersRfc()" sr
 grep -r "from flext_ldif.servers.\(oid\|oud\|rfc\) import" src/
 
 # Buscar uso correto (CORRETO)
-grep -r "server.server(" src/
-```
-
+grep -r "server.server(" src/```
 ______________________________________________________________________
 
 ## 📚 Referências

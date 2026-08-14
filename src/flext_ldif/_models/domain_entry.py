@@ -932,12 +932,13 @@ class FlextLdifModelsDomainEntry:
                 )
                 entry_instance: Self = cls.model_validate(entry_data)
                 ok_result: p.Result[Self] = r[Self].ok(entry_instance)
-                return ok_result
             except c.EXC_BASIC_TYPE as e:
                 fail_result: p.Result[Self] = r[Self].fail(
                     f"Failed to create Entry: {e}"
                 )
                 return fail_result
+            else:
+                return ok_result
 
         @classmethod
         def _build_entry_data(

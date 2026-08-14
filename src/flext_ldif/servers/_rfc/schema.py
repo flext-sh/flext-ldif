@@ -194,9 +194,10 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
             validated: t.MutableJsonMapping = t.json_dict_adapter().validate_python(
                 value
             )
-            return validated
         except c.ValidationError:
             return {}
+        else:
+            return validated
 
     @staticmethod
     def _convert_extensions_for_server(

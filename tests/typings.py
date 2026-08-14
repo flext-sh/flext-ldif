@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from flext_ldap import t
+from flext_ldif import t
 
 from flext_tests import FlextTestsTypes
 

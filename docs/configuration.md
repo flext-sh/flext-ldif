@@ -123,9 +123,7 @@ export FLEXT_LDIF_ENCODING=utf-8
 export FLEXT_LDIF_BUFFER_SIZE=16384
 
 # Logging
-export FLEXT_LDIF_LOG_LEVEL=DEBUG
-```
-
+export FLEXT_LDIF_LOG_LEVEL=DEBUG```
 ### Environment Configuration Loading
 
 ```python

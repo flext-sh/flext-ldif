@@ -163,9 +163,7 @@ grep -c "^dn:" large.ldif
 split -l 10000 large.ldif chunk_
 for chunk in chunk_*; do
     python process_ldif_chunk.py "$chunk"
-done
-```
-
+done```
 ## Testing LDIF Functionality
 
 ### LDIF Test Data
@@ -310,9 +308,7 @@ python -m memory_profiler ldif_script.py
 kernprof -l -v ldif_script.py
 
 # Monitor with system tools
-top -p $(pgrep -f python)
-```
-
+top -p $(pgrep -f python)```
 ## Integration with FLEXT Ecosystem
 
 For FLEXT ecosystem integration patterns, see [flext-core documentation](https://github.com/flext-sh/flext/tree/0.12.0-dev/flext-core/AGENTS.md). FLEXT-LDIF follows standard patterns for:
