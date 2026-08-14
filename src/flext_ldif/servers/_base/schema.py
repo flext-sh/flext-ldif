@@ -203,13 +203,6 @@ class FlextLdifServersBaseSchema(
             target_server_type=resolved_server_type,
         )
         FlextLdifServersBaseSchema._preserve_formatting(metadata, attr_definition)
-        preview_len = 100
-        FlextLdifServersBaseSchema._module_logger.debug(
-            "Preserved schema formatting details",
-            attr_definition_preview=attr_definition[:preview_len]
-            if len(attr_definition) > preview_len
-            else attr_definition,
-        )
         return (
             metadata if metadata_extensions or metadata.schema_format_details else None
         )
