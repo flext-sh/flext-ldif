@@ -172,5 +172,6 @@ class TestsFlextLdifApiFreeze:
 
     def test_unknown_attribute_raises_attribute_error(self) -> None:
         """The lazy ``__getattr__`` rejects names outside the public surface."""
+        missing_name = "FlextLdifDoesNotExist"
         with pytest.raises(AttributeError):
-            getattr(flext_ldif, "FlextLdifDoesNotExist")
+            getattr(flext_ldif, missing_name)

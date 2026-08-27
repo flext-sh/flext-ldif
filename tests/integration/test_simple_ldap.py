@@ -10,6 +10,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import pytest
+
 from flext_ldif import ldif
 from flext_tests import tm
 from tests import c, m
@@ -18,6 +20,8 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from tests import p, t
+
+pytestmark = pytest.mark.docker
 
 
 class TestsFlextLdifSimpleLdap:

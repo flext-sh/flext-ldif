@@ -11,7 +11,7 @@ from __future__ import annotations
 import pytest
 
 from flext_tests import tm
-from tests import c, m, u
+from tests import c, m, t, u
 
 
 @pytest.mark.unit
@@ -116,7 +116,9 @@ class TestsFlextLdifUtilitiesCore:
 
     def test_compare_dns_is_reflexive(self) -> None:
         """Comparing a DN to itself yields equality (0)."""
-        result: int = tm.ok(u.Ldif.compare_dns("cn=John,dc=example", "cn=John,dc=example"))
+        result: int = tm.ok(
+            u.Ldif.compare_dns("cn=John,dc=example", "cn=John,dc=example")
+        )
         tm.that(result, eq=0)
 
     def test_compare_dns_is_case_insensitive_on_equal_values(self) -> None:

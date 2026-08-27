@@ -362,9 +362,10 @@ class FlextLdifUtilitiesDN:
             result = dn_str
             for pattern, replacement in patterns:
                 result = c.Ldif.sub_pattern(pattern, replacement, result)
-            return result
         except c.Ldif.EXC_LDIF_PARSE:
             return dn_str
+        else:
+            return result
 
     @staticmethod
     def clean_dn_with_statistics(dn: str) -> tuple[str, m.Ldif.DNStatistics]:

@@ -2,18 +2,44 @@
 
 from __future__ import annotations
 
+import importlib
 import os
 import uuid
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar, overload
+from typing import TYPE_CHECKING, ClassVar, Final, overload
 
-from flext_ldap import FlextLdapUtilities, u
+import pytest
+
+from flext_ldif import FlextLdifUtilities, u
 
 from flext_tests import FlextTestsUtilities, tk, tm
 from tests import c, m, p, t
 
 if TYPE_CHECKING:
     from collections.abc import Callable, MutableMapping
+    from types import ModuleType
+
+# The real-directory tests drive a live LDAP server through the FLEXT LDAP
+# client, but that client is built ON TOP of flext-ldif: declaring it here
+# would invert the layer and close a dependency cycle, so it can never belong
+# to this project's dependency set. It is therefore resolved dynamically and
+# every test that needs it skips explicitly when it is absent — which is the
+# case for any standalone checkout, CI included.
+_LDAP_CLIENT_MODULE: Final[str] = "flext_ldap"
+_LDAP_ENTRY_ADAPTER_MODULE: Final[str] = "flext_ldap.adapters.entry"
+_LDAP_CLIENT_MISSING_REASON: Final[str] = (
+    f"LDAP client {_LDAP_CLIENT_MODULE!r} is unavailable: it depends on"
+    " flext-ldif and cannot be a dependency of it, so real-directory tests"
+    " only run in a workspace checkout that provides the client."
+)
+
+
+def _import_optional(module_name: str) -> ModuleType | None:
+    """Import an optional module, returning None when it is not installed."""
+    try:
+        return importlib.import_module(module_name)
+    except ImportError:
+        return None
 
 
 class TestsFlextLdifUtilities(FlextTestsUtilities, u):
@@ -26,7 +52,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
         LdapConnectionLike = p.Ldap.Ldap3Connection
         LdapEntryLike = p.Ldap.Ldap3Entry
 
-        logger: ClassVar[p.Logger] = FlextLdapUtilities.fetch_logger(__name__)
+        logger: ClassVar[p.Logger] = FlextLdifUtilities.fetch_logger(__name__)
         _resolved_admin_credentials: ClassVar[list[tuple[str, str] | None]] = [None]
         _FIXTURES_ROOT: ClassVar[Path] = c.Tests.FIXTURES_DIR
         _FILE_EXTENSION: ClassVar[str] = ".ldif"
@@ -36,13 +62,56 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
         FileLock = FlextTestsUtilities.Tests.FileLock
 
         @staticmethod
+        def ldap_client_available() -> bool:
+            """Whether the optional LDAP client is importable."""
+            return _import_optional(_LDAP_CLIENT_MODULE) is not None
+
+        @staticmethod
+        def require_ldap_client() -> ModuleType:
+            """Return the LDAP client module, skipping when it is unavailable."""
+            module = _import_optional(_LDAP_CLIENT_MODULE)
+            if module is None:
+                pytest.skip(_LDAP_CLIENT_MISSING_REASON)
+            return module
+
+        @staticmethod
+        def create_ldap_entry_adapter() -> p.Ldap.Ldap3EntryAdapter:
+            """Return an ldap3-to-LDIF entry adapter, skipping when unavailable."""
+            module = _import_optional(_LDAP_ENTRY_ADAPTER_MODULE)
+            if module is None:
+                pytest.skip(_LDAP_CLIENT_MISSING_REASON)
+            adapter: p.Ldap.Ldap3EntryAdapter = module.FlextLdapEntryAdapter()
+            return adapter
+
+        @staticmethod
+        def ldap_connectivity_errors() -> tuple[type[BaseException], ...]:
+            """Exception types signalling that the LDAP server is unreachable."""
+            transport: tuple[type[BaseException], ...] = (
+                ConnectionError,
+                TimeoutError,
+                OSError,
+            )
+            module = _import_optional(_LDAP_CLIENT_MODULE)
+            if module is None:
+                return transport
+            protocol_error: type[BaseException] = module.t.Ldap.LDAPException
+            return (protocol_error, *transport)
+
+        @classmethod
         def create_server_from_url(
-            server_url: str, *, get_info: c.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.ALL
+            cls,
+            server_url: str,
+            *,
+            get_info: c.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.ALL,
         ) -> p.Ldap.Ldap3Server:
             """Create an LDAP server from a URL for test connectivity checks."""
-            return FlextLdapUtilities.Ldap.create_server_from_url(
-                server_url, get_info=get_info
+            client = cls.require_ldap_client()
+            server: p.Ldap.Ldap3Server = (
+                client.FlextLdapUtilities.Ldap.create_server_from_url(
+                    server_url, get_info=get_info
+                )
             )
+            return server
 
         @classmethod
         def create_bare_server(
@@ -57,8 +126,9 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                 f"ldap://{host}:{port}", get_info=get_info
             )
 
-        @staticmethod
+        @classmethod
         def create_connection(
+            cls,
             server: p.Ldap.Ldap3Server,
             *,
             user: str,
@@ -67,17 +137,20 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             receive_timeout: int | None = None,
         ) -> p.Ldap.Ldap3Connection:
             """Create an LDAP connection for test workflows."""
+            create = cls.require_ldap_client().FlextLdapUtilities.Ldap.create_connection
             if receive_timeout is None:
-                return FlextLdapUtilities.Ldap.create_connection(
+                connection: p.Ldap.Ldap3Connection = create(
                     server, user=user, password=password, auto_bind=auto_bind
                 )
-            return FlextLdapUtilities.Ldap.create_connection(
+                return connection
+            timed_connection: p.Ldap.Ldap3Connection = create(
                 server,
                 user=user,
                 password=password,
                 auto_bind=auto_bind,
                 receive_timeout=receive_timeout,
             )
+            return timed_connection
 
         @staticmethod
         def create_real_entry(
@@ -245,11 +318,14 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                     auto_bind=True,
                     receive_timeout=1,
                 )
-                if connection.bound:
+                bound: bool = connection.bound
+                if bound:
                     connection.unbind()
-                    return (candidate_dn, candidate_password)
+            except (*cls.ldap_connectivity_errors(), ValueError):
                 return None
-            except (ConnectionError, OSError, ValueError, t.Ldap.LDAPException):
+            else:
+                if bound:
+                    return (candidate_dn, candidate_password)
                 return None
 
         @staticmethod
@@ -390,7 +466,12 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             if method_name is None or not isinstance(server, p.Ldif.SchemaServer):
                 msg = f"{parse_method} is not supported by this server"
                 raise AssertionError(msg)
-            method: Callable[[str], p.Result[object]] = getattr(server, method_name)
+            method: Callable[
+                [str],
+                p.Result[
+                    m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
+                ],
+            ] = getattr(server, method_name)
             result = method(content)
             if should_succeed is False:
                 if result.success:
@@ -406,11 +487,9 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             if expected_type is not None and not isinstance(value, expected_type):
                 msg_0 = f"Expected {expected_type.__name__}, got {type(value).__name__}"
                 raise AssertionError(msg_0)
-            if isinstance(
-                value, (m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass, m.Ldif.Acl)
-            ):
-                return value
-            return None
+            # `method` is typed to return exactly these three models, so the
+            # isinstance narrowing above is total and no fallthrough exists.
+            return value
 
         @staticmethod
         def acl_parse_and_unwrap(

@@ -68,25 +68,25 @@ class FlextLdifModelsDomainDN:
             t.StrSequence, u.Field(description="Fatal validation errors")
         ]
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def has_errors(self) -> bool:
             """Check if any validation errors exist."""
             return bool(self.validation_errors)
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def has_warnings(self) -> bool:
             """Check if any validation warnings exist."""
             return bool(self.validation_warnings)
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def transformation_count(self) -> int:
             """Count of unique transformations applied."""
             return len(self.transformations)
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def was_transformed(self) -> bool:
             """Check if any transformations were applied."""

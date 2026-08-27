@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from flext_tests import tk
 from tests import c, t, u
 
 if TYPE_CHECKING:
@@ -25,16 +26,19 @@ def _probe_ldap_bind(server_url: str, admin_dn: str, admin_password: str) -> str
         )
         bound: bool = conn.bind()
         conn.unbind()
+    except u.Tests.ldap_connectivity_errors() as exc:
+        return str(exc)
+    else:
         if bound:
             return None
         return "LDAP bind returned False"
-    except (t.Ldap.LDAPException, ConnectionError, TimeoutError, OSError) as exc:
-        return str(exc)
 
 
 @pytest.fixture(scope="session")
 def ldap_container(worker_id: str) -> t.JsonMapping:
     """Ensure shared OpenLDAP container is available for integration tests."""
+    if tk.ci_disables_docker():
+        pytest.skip(c.Tests.DOCKER_CI_SKIP_REASON)
     docker_control = u.Tests.get_docker_control(worker_id)
     server_url = f"ldap://localhost:{c.Tests.DOCKER_PORT}"
     lock = u.Tests.FileLock(
@@ -43,24 +47,24 @@ def ldap_container(worker_id: str) -> t.JsonMapping:
     with lock:
         execute_result = docker_control.execute()
         if execute_result.failure:
-            pytest.fail(
-                f"Could not start shared OpenLDAP container: {execute_result.error}"
-            )
+            pytest.skip(f"OpenLDAP container unavailable: {execute_result.error}")
         admin_dn, admin_password = u.Tests.get_admin_credentials()
-        waited = 0.0
-        max_wait = 10.0
+        # Wall-clock deadline: each probe against an unreachable server costs
+        # seconds of connect timeout, so counting only the sleeps would let the
+        # wait run several times past the budget and trip the pytest-timeout
+        # before this fixture can report a clean skip.
+        deadline = time.monotonic() + float(c.Tests.DOCKER_PROBE_MAX_WAIT_SECONDS)
         last_error: str | None = None
-        while waited < max_wait:
+        while time.monotonic() < deadline:
             last_error = _probe_ldap_bind(server_url, admin_dn, admin_password)
             if last_error is None:
                 break
             time.sleep(1.0)
-            waited += 1.0
         else:
-            pytest.fail(
-                "LDAP container is running but bind is not ready"
+            pytest.skip(
+                "OpenLDAP container bind not ready"
                 if last_error is None
-                else f"LDAP container bind is not ready: {last_error}"
+                else f"OpenLDAP container bind not ready: {last_error}"
             )
     return {
         "server_url": server_url,
@@ -121,7 +125,7 @@ def ldap_connection(ldap_container: t.JsonMapping) -> Generator[p.Ldap.Ldap3Conn
             pytest.fail(
                 f"LDAP server not available at {server_url} for bind_dn={bind_dn}"
             )
-    except (t.Ldap.LDAPException, ConnectionError, TimeoutError, OSError) as exc:
+    except u.Tests.ldap_connectivity_errors() as exc:
         pytest.fail(f"LDAP server not available: {exc}")
     yield conn
     conn.unbind()

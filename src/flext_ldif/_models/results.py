@@ -11,6 +11,11 @@ from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries as m
 from flext_ldif._models.events import FlextLdifModelsEvents as me
 
 
+def _default_statistics() -> FlextLdifModelsResults.Statistics:
+    """Build the default migration statistics payload."""
+    return FlextLdifModelsResults.Statistics()
+
+
 class FlextLdifModelsResults:
     """Namespace for LDIF result models."""
 
@@ -155,22 +160,22 @@ class FlextLdifModelsResults:
             description="Domain events emitted during processing",
         )
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def failure_rate(self) -> float:
             return self._rate(self.failed_entries)
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def rejection_rate(self) -> float:
             return self._rate(self.rejected_entries)
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def success_rate(self) -> float:
             return self._rate(self.processed_entries)
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def summary(self) -> FlextLdifModelsResults.StatisticsSummary:
             return self.to_summary()
@@ -267,7 +272,7 @@ class FlextLdifModelsResults:
             default_factory=list, description="Migrated LDIF entries"
         )
         stats: FlextLdifModelsResults.Statistics = u.Field(
-            default_factory=lambda: FlextLdifModelsResults.Statistics(),
+            default_factory=_default_statistics,
             description="Migration processing statistics",
         )
         output_files: t.MutableSequenceOf[str] = u.Field(
@@ -275,12 +280,12 @@ class FlextLdifModelsResults:
             description="Output file paths produced by the migration pipeline.",
         )
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def entry_count(self) -> int:
             return len(self.entries)
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def is_empty(self) -> bool:
             has_schema = (
@@ -288,7 +293,7 @@ class FlextLdifModelsResults:
             )
             return not has_schema and self.stats.total_entries == 0
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def migration_summary(self) -> FlextLdifModelsResults.MigrationSummary:
             return FlextLdifModelsResults.MigrationSummary(
@@ -302,7 +307,7 @@ class FlextLdifModelsResults:
                 and self.stats.total_entries == 0,
             )
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def output_file_count(self) -> int:
             return len(self.output_files)
@@ -322,7 +327,7 @@ class FlextLdifModelsResults:
             t.MutableSequenceOf[str], u.Field(description="Validation error messages")
         ]
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def success_rate(self) -> float:
             if self.total_entries == 0:
@@ -352,7 +357,7 @@ class FlextLdifModelsResults:
             str | None, u.Field(description="Reason for using fallback server type")
         ] = None
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def is_confident(self) -> bool:
             confidence: float = self.confidence

@@ -117,7 +117,7 @@ class FlextLdifConversionAclMixin(FlextLdifConversionAclPreserveMixin, s, ABC):
             .from_result(
                 target_server.acl_server.parse_server(converted_entry.metadata.acls[0])
             )
-            .flat_map(lambda parsed_acl: r[m.Ldif.Acl].ok(parsed_acl))
+            .flat_map(r[m.Ldif.Acl].ok)
         )
 
 

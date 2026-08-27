@@ -22,11 +22,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_ldap.adapters.entry import FlextLdapEntryAdapter
 
 from flext_ldif import ldif
 from flext_tests import tm
-from tests import c
+from tests import c, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping, Sequence
@@ -52,7 +51,7 @@ class TestsFlextLdifRealLdapExport:
         ldap3_entries: Sequence[p.Ldap.Ldap3Entry],
     ) -> list[m.Ldif.Entry]:
         """Convert ldap3 search results into ldif entries via the public adapter."""
-        adapter = FlextLdapEntryAdapter()
+        adapter = u.Tests.create_ldap_entry_adapter()
         entries: list[m.Ldif.Entry] = []
         for ldap3_entry in ldap3_entries:
             result = adapter.ldap3_to_ldif_entry(ldap3_entry)

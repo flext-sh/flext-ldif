@@ -176,8 +176,7 @@ class FlextLdifServersOudAclMetadataMixin:
             elif isinstance(value, Mapping):
                 value_dict_inner: t.MutableJsonMapping = {}
                 for k, v in value.items():
-                    key = k
-                    value_dict_inner[key] = (
+                    value_dict_inner[k] = (
                         v
                         if u.primitive(v)
                         else t.Cli.JSON_VALUE_ADAPTER.validate_python(v)

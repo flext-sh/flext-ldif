@@ -538,7 +538,8 @@ class FlextLdifUtilitiesMetadata:
                 for write_option_key, value in metadata.items()
             }
             config_root: dict[str, t.JsonPayload] = dict(normalized_metadata)
-            setattr(model, "validation_metadata", m.ConfigMap(root=config_root))
+            target: p.Ldif.ModelWithValidationMetadata = model
+            target.validation_metadata = m.ConfigMap(root=config_root)
         except c.EXC_BASIC_TYPE:
             pass
 
@@ -605,13 +606,6 @@ class FlextLdifUtilitiesMetadata:
     def analyze_schema_formatting(definition: str) -> m.Ldif.SchemaFormatDetails:
         """Analyze schema definition to extract ALL formatting details."""
         combined = FlextLdifUtilitiesMetadata._extract_all_schema_details(definition)
-        FlextLdifUtilitiesMetadata._module_logger.debug(
-            "Schema formatting analyzed",
-            definition_preview=definition[: c.Ldif.DEFAULT_LINE_WIDTH] + "..."
-            if len(definition) > c.Ldif.DEFAULT_LINE_WIDTH
-            else definition,
-            fields_captured=len(combined),
-        )
         return FlextLdifUtilitiesMetadata._build_schema_format_model(
             definition, combined
         )
@@ -717,12 +711,8 @@ class FlextLdifUtilitiesMetadata:
         formatting_details = FlextLdifUtilitiesMetadata.analyze_schema_formatting(
             definition
         )
-        setattr(metadata, "schema_format_details", formatting_details)
-        FlextLdifUtilitiesMetadata._module_logger.debug(
-            "Schema formatting preserved in metadata",
-            server_type=metadata.server_type,
-            fields_preserved=len(formatting_details.model_fields_set),
-        )
+        target: m.Ldif.ServerMetadata = metadata
+        target.schema_format_details = formatting_details
 
     @staticmethod
     def server_metadata_for(

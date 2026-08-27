@@ -130,7 +130,7 @@ class FlextLdifModelsDomainEntry:
             ),
         ] = 1.0
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def dn_was_transformed(self) -> bool:
             """Check if DN underwent transformation."""
@@ -138,25 +138,25 @@ class FlextLdifModelsDomainEntry:
                 return False
             return self.dn_statistics.was_transformed
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def had_errors(self) -> bool:
             """Check if any errors occurred."""
             return bool(self.errors)
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def had_warnings(self) -> bool:
             """Check if any warnings occurred."""
             return bool(self.warnings)
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def objectclasses_changed(self) -> bool:
             """Check if objectClass values changed."""
             return set(self.objectclasses_original) != set(self.objectclasses_final)
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def total_attribute_changes(self) -> int:
             """Total count of attribute modifications."""
@@ -466,7 +466,7 @@ class FlextLdifModelsDomainEntry:
             ),
         ] = None
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def attributes_dict(self) -> t.MutableStrSequenceMapping:
             """Protocol compliance: p.Ldif.Entry.Entry requires attributes: dict[str, list[str]].
@@ -477,7 +477,7 @@ class FlextLdifModelsDomainEntry:
                 return {}
             return self.attributes.attributes
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def dn_str(self) -> str:
             """Protocol compliance: p.Ldif.Entry.Entry requires dn: str.
@@ -488,13 +488,13 @@ class FlextLdifModelsDomainEntry:
                 return ""
             return self.dn.value
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def is_change_record(self) -> bool:
             """True when the entry represents an LDIF change record."""
             return bool(self.changetype) or self.record_kind == c.Ldif.RecordKind.CHANGE
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def unconverted_attributes(self) -> t.Ldif.UnconvertedAttributes:
             """The unconverted attributes from metadata extensions (read-only view, DRY pattern)."""
@@ -738,7 +738,7 @@ class FlextLdifModelsDomainEntry:
                 cls._VALIDATION_CONTEXT_TOTAL_VIOLATIONS_KEY: str(total_violations),
             }
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def has_validation_errors(self) -> bool:
             """Check if entry has validation errors.
@@ -753,7 +753,7 @@ class FlextLdifModelsDomainEntry:
                 return False
             return bool(self.metadata.validation_results.errors)
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def is_acl_entry(self) -> bool:
             """Check if entry has Access Control Lists.
@@ -766,7 +766,7 @@ class FlextLdifModelsDomainEntry:
                 return False
             return bool(self.metadata.acls)
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def is_schema_entry(self) -> bool:
             """Check if entry is a schema definition entry.
@@ -932,12 +932,13 @@ class FlextLdifModelsDomainEntry:
                 )
                 entry_instance: Self = cls.model_validate(entry_data)
                 ok_result: p.Result[Self] = r[Self].ok(entry_instance)
-                return ok_result
             except c.EXC_BASIC_TYPE as e:
                 fail_result: p.Result[Self] = r[Self].fail(
                     f"Failed to create Entry: {e}"
                 )
                 return fail_result
+            else:
+                return ok_result
 
         @classmethod
         def _build_entry_data(

@@ -169,7 +169,6 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
             return value
         try:
             acl: m.Ldif.Acl = m.Ldif.Acl.model_validate(value)
-            return acl
         except c.ValidationError as exc:
             FlextLdifServersBaseSchemaAcl._module_logger.warning(
                 "Failed to coerce value to ACL model",
@@ -177,6 +176,8 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
                 error_type=type(exc).__name__,
             )
             return None
+        else:
+            return acl
 
     def _coerce_operation(self, value: str) -> str | None:
         """Coerce operation token to supported ACL operation."""

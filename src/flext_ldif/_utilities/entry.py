@@ -259,8 +259,8 @@ class FlextLdifUtilitiesEntry:
                     if not base_attr or not base_attr[0].isalpha()
                     else f"RFC 4512 § 2.5: '{base_attr}' has invalid characters"
                 )
-            for option in parts[1:]:
-                option = option.strip()
+            for raw_option in parts[1:]:
+                option = raw_option.strip()
                 if not option:
                     continue
                 if not c.Ldif.ATTRIBUTE_OPTION_RE.match(option):
@@ -487,12 +487,13 @@ class FlextLdifUtilitiesEntry:
                         validation_rules
                     )
                 )
-                return validated_json
             except c.ValidationError as exc:
                 FlextLdifUtilitiesEntry.logger.warning(
                     f"Failed to validate server rules from JSON string: {exc}"
                 )
                 return None
+            else:
+                return validated_json
         if validation_rules is not None:
             try:
                 validated: FlextLdifModelsSettings.ServerValidationRules = (
@@ -500,11 +501,12 @@ class FlextLdifUtilitiesEntry:
                         validation_rules
                     )
                 )
-                return validated
             except c.ValidationError as exc:
                 FlextLdifUtilitiesEntry.logger.warning(
                     f"Failed to validate server rules from mapping: {exc}"
                 )
+            else:
+                return validated
         return None
 
     @staticmethod
