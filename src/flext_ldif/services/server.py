@@ -33,7 +33,7 @@ class FlextLdifServer(s):
             description="Optional dispatcher used to build the registry backend.",
         ),
     ] = None
-    _registry: p.Registry = u.PrivateAttr()
+    _registry: p.Registry = u.PrivateAttr(default_factory=u.build_registry)
 
     @override
     def model_post_init(self, __context: t.JsonMapping | None, /) -> None:
