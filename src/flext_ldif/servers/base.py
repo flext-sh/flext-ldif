@@ -14,6 +14,11 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 
+def _ensure_trailing_newline(ldif: str) -> str:
+    """Normalize a successful LDIF serialization to one trailing newline."""
+    return ldif if not ldif or ldif.endswith("\n") else f"{ldif}\n"
+
+
 class FlextLdifServersBase(s[m.Ldif.Entry]):
     """Base class for LDIF/LDAP server servers built on `s`."""
 
@@ -456,7 +461,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         if not entry_server:
             return r[str].fail("Entry server not available")
         write_result: p.Result[str] = entry_server.write(entries, write_options).map(
-            lambda ldif: ldif if not ldif or ldif.endswith("\n") else f"{ldif}\n"
+            _ensure_trailing_newline
         )
         return write_result
 
