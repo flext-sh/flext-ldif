@@ -46,7 +46,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
        95      for i in range(30):
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 2 · 🟠 CRITICAL · CODE_SMELL · `python:S3776`
 **Local**: `examples/05_schema_operations.py:179` · **Effort**: 17min
@@ -65,7 +65,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       183      source_dir = migration_dir / "source"
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 3 · 🟠 CRITICAL · CODE_SMELL · `python:S3776`
 **Local**: `examples/05_schema_operations.py:248` · **Effort**: 8min
@@ -84,7 +84,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       252      core_attrs: list[m.Ldif.Entry] = []
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 4 · 🟠 CRITICAL · CODE_SMELL · `python:S1192`
 **Local**: `src/flext_ldif/_utilities/dn.py:120` · **Effort**: 6min
@@ -103,7 +103,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       124                  "had_tab_chars",
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 5 · 🟠 CRITICAL · CODE_SMELL · `python:S3776`
 **Local**: `src/flext_ldif/_utilities/dn.py:298` · **Effort**: 8min
@@ -122,7 +122,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       302          to appear in values (both in their UTF-8 form and in their escaped form).
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 6 · 🟠 CRITICAL · CODE_SMELL · `python:S3776`
 **Local**: `src/flext_ldif/_utilities/dn.py:550` · **Effort**: 10min
@@ -141,7 +141,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       554          errors: t.MutableSequenceOf[str] = []
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 7 · 🟠 CRITICAL · CODE_SMELL · `python:S3776`
 **Local**: `src/flext_ldif/_utilities/dn.py:779` · **Effort**: 8min
@@ -160,7 +160,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       783          ========================
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 8 · 🟠 CRITICAL · CODE_SMELL · `python:S3776`
 **Local**: `src/flext_ldif/_utilities/dn.py:889` · **Effort**: 19min
@@ -179,7 +179,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       893          dn_valued_attributes: frozenset[str] | None = None,
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 9 · 🟠 CRITICAL · CODE_SMELL · `python:S3776`
 **Local**: `src/flext_ldif/_utilities/entry.py:243` · **Effort**: 12min
@@ -198,7 +198,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       247  
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 10 · 🟠 CRITICAL · CODE_SMELL · `python:S3776`
 **Local**: `src/flext_ldif/_utilities/entry.py:556` · **Effort**: 8min
@@ -217,7 +217,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       560          ],
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 11 · 🟠 CRITICAL · CODE_SMELL · `python:S3776`
 **Local**: `src/flext_ldif/_utilities/entry.py:633` · **Effort**: 12min
@@ -236,7 +236,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       637          boolean_attr_names: set[str],
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 12 · 🟠 CRITICAL · CODE_SMELL · `python:S3776`
 **Local**: `src/flext_ldif/_utilities/entry.py:697` · **Effort**: 6min
@@ -255,7 +255,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       701      ) -> bool:
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 13 · 🟠 CRITICAL · CODE_SMELL · `python:S3776`
 **Local**: `src/flext_ldif/_utilities/metadata.py:343` · **Effort**: 13min
@@ -274,7 +274,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       347              attr_match = c.Ldif.LDIF_ATTR_TYPES_PREFIX_RE.search(definition)
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 14 · 🟠 CRITICAL · CODE_SMELL · `python:S3776`
 **Local**: `src/flext_ldif/_utilities/parser.py:134` · **Effort**: 35min
@@ -293,7 +293,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       138          attribute_metadata: MutableMapping[str, t.MutableAttributeMapping] = {}
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 15 · 🟠 CRITICAL · CODE_SMELL · `python:S3776`
 **Local**: `src/flext_ldif/_utilities/parser.py:285` · **Effort**: 8min
@@ -312,7 +312,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       289              value: t.MutableSequenceOf[t.JsonValue] | t.JsonValue | None,
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 16 · 🟠 CRITICAL · CODE_SMELL · `python:S3776`
 **Local**: `src/flext_ldif/_utilities/pipeline.py:94` · **Effort**: 10min
@@ -331,7 +331,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
        98              errors: t.MutableSequenceOf[str] = []
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 17 · 🟠 CRITICAL · CODE_SMELL · `python:S3776`
 **Local**: `src/flext_ldif/_utilities/server.py:101` · **Effort**: 10min
@@ -350,7 +350,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       105              parent_module = sys.modules.get(target_cls.__module__)
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 18 · 🟠 CRITICAL · CODE_SMELL · `python:S3776`
 **Local**: `src/flext_ldif/_utilities/writer.py:65` · **Effort**: 55min
@@ -369,7 +369,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
        69          if not line:
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 19 · 🟠 CRITICAL · CODE_SMELL · `python:S3776`
 **Local**: `src/flext_ldif/servers/_base/entry.py:252` · **Effort**: 1h56min
@@ -388,7 +388,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       256          line_width = c.Ldif.LINE_FOLD_WIDTH
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 20 · 🟠 CRITICAL · CODE_SMELL · `python:S1192`
 **Local**: `src/flext_ldif/servers/_base/schema.py:546` · **Effort**: 8min
@@ -407,7 +407,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       550      ) -> p.Result[m.Ldif.SchemaObjectClass]:
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 21 · 🟠 CRITICAL · CODE_SMELL · `python:S3776`
 **Local**: `src/flext_ldif/servers/_oid/acl.py:301` · **Effort**: 6min
@@ -426,7 +426,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       305          extensions: t.MutableSequenceOf[str] = []
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 22 · 🟠 CRITICAL · CODE_SMELL · `python:S3776`
 **Local**: `src/flext_ldif/servers/_oid/acl.py:496` · **Effort**: 10min
@@ -445,7 +445,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       500              target_dn = "entry"
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 23 · 🟠 CRITICAL · CODE_SMELL · `python:S3776`
 **Local**: `src/flext_ldif/servers/_oid/acl_assemble.py:38` · **Effort**: 22min
@@ -464,7 +464,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
        42  
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 24 · 🟠 CRITICAL · CODE_SMELL · `python:S3776`
 **Local**: `src/flext_ldif/servers/_oid/acl_convert_oud.py:78` · **Effort**: 12min
@@ -483,7 +483,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
        82  
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 25 · 🟠 CRITICAL · CODE_SMELL · `python:S3776`
 **Local**: `src/flext_ldif/servers/_oid/entry.py:259` · **Effort**: 16min
@@ -502,7 +502,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       263          mk = c.Ldif
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 26 · 🟠 CRITICAL · CODE_SMELL · `python:S3776`
 **Local**: `src/flext_ldif/servers/_oid/entry.py:523` · **Effort**: 26min
@@ -521,7 +521,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       527          attributeTypes/objectClasses/matchingRules value strings. Handles context-aware
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 27 · 🟠 CRITICAL · CODE_SMELL · `python:S3776`
 **Local**: `src/flext_ldif/servers/_oid/schema.py:436` · **Effort**: 9min
@@ -540,7 +540,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       440          source_syntax: t.JsonPayload | None = None
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 28 · 🟠 CRITICAL · CODE_SMELL · `python:S3776`
 **Local**: `src/flext_ldif/servers/_oud/aci.py:36` · **Effort**: 38min
@@ -559,7 +559,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
        40          normalize = FlextLdifServersOudAciMixin.normalize_aci_value_simple
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 29 · 🟠 CRITICAL · CODE_SMELL · `python:S3776`
 **Local**: `src/flext_ldif/servers/_oud/aci.py:104` · **Effort**: 8min
@@ -578,7 +578,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       108      ) -> None:
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 30 · 🟠 CRITICAL · CODE_SMELL · `python:S3776`
 **Local**: `src/flext_ldif/servers/_oud/acl.py:130` · **Effort**: 21min
@@ -597,7 +597,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       134          if not perms and acl_data.metadata:
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 31 · 🟠 CRITICAL · CODE_SMELL · `python:S3776`
 **Local**: `src/flext_ldif/servers/_oud/acl.py:244` · **Effort**: 17min
@@ -616,7 +616,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       248              extensions = acl_data.metadata.extensions
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 32 · 🟠 CRITICAL · CODE_SMELL · `python:S3776`
 **Local**: `src/flext_ldif/servers/_oud/acl.py:279` · **Effort**: 6min
@@ -635,7 +635,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       283          ext = acl_data.metadata.extensions if acl_data.metadata else None
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 33 · 🟠 CRITICAL · CODE_SMELL · `python:S3776`
 **Local**: `src/flext_ldif/servers/_oud/acl_metadata.py:156` · **Effort**: 12min
@@ -654,7 +654,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       160          """Process parsed ACL extensions and add to current extensions."""
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 34 · 🟠 CRITICAL · CODE_SMELL · `python:S3776`
 **Local**: `src/flext_ldif/servers/_oud/comments.py:123` · **Effort**: 9min
@@ -673,7 +673,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       127      ) -> None:
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 35 · 🟠 CRITICAL · CODE_SMELL · `python:S3776`
 **Local**: `src/flext_ldif/servers/_oud/comments.py:194` · **Effort**: 6min
@@ -692,7 +692,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       198      ) -> None:
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 36 · 🟠 CRITICAL · CODE_SMELL · `python:S1192`
 **Local**: `src/flext_ldif/servers/_oud/constants.py:216` · **Effort**: 8min
@@ -711,7 +711,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       220      KEYWORD_PATTERNS: ClassVar[t.StrSequence] = ("pwd", "password")
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 37 · 🟠 CRITICAL · CODE_SMELL · `python:S3776`
 **Local**: `src/flext_ldif/servers/_oud/entry.py:154` · **Effort**: 15min
@@ -730,7 +730,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       158          )
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 38 · 🟠 CRITICAL · CODE_SMELL · `python:S3776`
 **Local**: `src/flext_ldif/servers/_oud/schema.py:250` · **Effort**: 7min
@@ -749,7 +749,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       254          if oc and oc.oid:
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 39 · 🟠 CRITICAL · CODE_SMELL · `python:S3776`
 **Local**: `src/flext_ldif/servers/_rfc/schema.py:18` · **Effort**: 6min
@@ -768,7 +768,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
        22          **kwargs: t.Ldif.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 40 · 🟠 CRITICAL · CODE_SMELL · `python:S5797`
 **Local**: `src/flext_ldif/servers/openldap1.py:216` · **Effort**: 2min
@@ -787,7 +787,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       220  
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 41 · 🟠 CRITICAL · CODE_SMELL · `python:S3776`
 **Local**: `src/flext_ldif/servers/relaxed.py:557` · **Effort**: 9min
@@ -806,7 +806,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       561              dn: str = ""
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 42 · 🟠 CRITICAL · CODE_SMELL · `python:S3776`
 **Local**: `src/flext_ldif/services/conversion_schema.py:31` · **Effort**: 13min
@@ -825,7 +825,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
        35          item: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 43 · 🟡 MAJOR · VULNERABILITY · `githubactions:S8264`
 **Local**: `.github/workflows/docs.yml:18` · **Effort**: 5min
@@ -844,7 +844,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
        22  concurrency:
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 44 · 🟡 MAJOR · VULNERABILITY · `githubactions:S8233`
 **Local**: `.github/workflows/docs.yml:19` · **Effort**: 5min
@@ -863,7 +863,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
        23    group: pages
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 45 · 🟡 MAJOR · VULNERABILITY · `githubactions:S8233`
 **Local**: `.github/workflows/docs.yml:20` · **Effort**: 5min
@@ -882,7 +882,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
        24    cancel-in-progress: false
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 46 · 🟡 MAJOR · CODE_SMELL · `python:S3358`
 **Local**: `examples/05_schema_operations.py:223` · **Effort**: 5min
@@ -901,7 +901,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       227          migrate_result = m.Ldif.Entry.create(dn=entry_dn, attributes=attrs_dict)
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 47 · 🟡 MAJOR · VULNERABILITY · `text:S8565`
 **Local**: `pyproject.toml:-` · **Effort**: 5min
@@ -909,7 +909,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
 > Dependency versions are not predictable if the lock file (uv.lock, poetry.lock, pdm.lock or pylock.toml) is missing.
 
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 48 · 🟡 MAJOR · CODE_SMELL · `python:S8786`
 **Local**: `src/flext_ldif/_constants/base.py:124` · **Effort**: 20min
@@ -928,7 +928,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       128      BINARY_CHAR_PATTERN: Final[str] = "[\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\x7f-\\xff]"
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 49 · 🟡 MAJOR · CODE_SMELL · `python:S8786`
 **Local**: `src/flext_ldif/_constants/base.py:125` · **Effort**: 20min
@@ -947,7 +947,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       129      NUMERIC_OID_PATTERN: Final[str] = "^\\d+(\\.\\d+)*$"
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 50 · 🟡 MAJOR · CODE_SMELL · `python:S5869`
 **Local**: `src/flext_ldif/_constants/base.py:141` · **Effort**: 5min
@@ -966,7 +966,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       145          SCHEMA_X_EXTENSION, re.IGNORECASE
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 51 · 🟡 MAJOR · CODE_SMELL · `python:S5869`
 **Local**: `src/flext_ldif/_constants/base.py:141` · **Effort**: 5min
@@ -985,7 +985,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       145          SCHEMA_X_EXTENSION, re.IGNORECASE
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 52 · 🟡 MAJOR · CODE_SMELL · `python:S8786`
 **Local**: `src/flext_ldif/_constants/base.py:210` · **Effort**: 20min
@@ -1004,7 +1004,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       214      )
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 53 · 🟡 MAJOR · BUG · `python:S5855`
 **Local**: `src/flext_ldif/_constants/base.py:217` · **Effort**: 5min
@@ -1023,7 +1023,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       221      )
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 54 · 🟡 MAJOR · BUG · `python:S5855`
 **Local**: `src/flext_ldif/_constants/base.py:220` · **Effort**: 5min
@@ -1042,7 +1042,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       224      DN_SPLIT_OPTIONAL_SPACE_RE: ClassVar[t.RegexPattern] = re.compile(r"\s*,\s*")
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 55 · 🟡 MAJOR · CODE_SMELL · `python:S107`
 **Local**: `src/flext_ldif/_models/domain_entry.py:884` · **Effort**: 20min
@@ -1061,7 +1061,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       888              acls: t.MutableSequenceOf[mdac.Acl] | None = None,
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 56 · 🟡 MAJOR · CODE_SMELL · `python:S107`
 **Local**: `src/flext_ldif/_models/domain_entry.py:944` · **Effort**: 20min
@@ -1080,7 +1080,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       948              acls: t.MutableSequenceOf[mdac.Acl] | None,
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 57 · 🟡 MAJOR · BUG · `pythonbugs:S2583`
 **Local**: `src/flext_ldif/_utilities/acl.py:521` · **Effort**: 15min
@@ -1099,7 +1099,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       525          comments_value: t.Ldif.MetadataCarrierValue | None = (
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 58 · 🟡 MAJOR · CODE_SMELL · `python:S108`
 **Local**: `src/flext_ldif/_utilities/collection_ldif.py:60` · **Effort**: 5min
@@ -1118,7 +1118,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
        64              case list() | tuple() as seq_value:
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 59 · 🟡 MAJOR · CODE_SMELL · `python:S108`
 **Local**: `src/flext_ldif/_utilities/entry.py:672` · **Effort**: 5min
@@ -1137,7 +1137,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       676  
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 60 · 🟡 MAJOR · CODE_SMELL · `python:S3358`
 **Local**: `src/flext_ldif/api.py:84` · **Effort**: 5min
@@ -1156,7 +1156,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
        88          categorization = FlextLdifCategorization(
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 61 · 🟡 MAJOR · VULNERABILITY · `python:S2068`
 **Local**: `src/flext_ldif/constants.py:458` · **Effort**: 30min
@@ -1175,7 +1175,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       462              "certificate_revocation_list": "binary",
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 62 · 🟡 MAJOR · CODE_SMELL · `python:S3358`
 **Local**: `src/flext_ldif/servers/_oud/acl.py:291` · **Effort**: 5min
@@ -1194,7 +1194,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       295                  (subject.subject_value or "").lower() if subject else ""
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 63 · 🟡 MAJOR · CODE_SMELL · `python:S108`
 **Local**: `src/flext_ldif/servers/_oud/acl.py:310` · **Effort**: 5min
@@ -1213,7 +1213,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       314          if not subject_value:
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 64 · 🟡 MAJOR · CODE_SMELL · `python:S108`
 **Local**: `src/flext_ldif/servers/_rfc/schema.py:593` · **Effort**: 5min
@@ -1232,7 +1232,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       597                  FlextLdifServersBaseSchema.validate_and_track_oid(
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 65 · 🟡 MAJOR · CODE_SMELL · `python:S108`
 **Local**: `src/flext_ldif/servers/_rfc/schema.py:605` · **Effort**: 5min
@@ -1251,7 +1251,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       609          self._validate_oid_list(may_list, "MAY", metadata_extensions)
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 66 · 🟡 MAJOR · CODE_SMELL · `python:S108`
 **Local**: `src/flext_ldif/servers/_rfc/schema.py:661` · **Effort**: 5min
@@ -1270,7 +1270,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       665          """Write attribute to RFC-compliant string format (internal)."""
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 67 · 🟡 MAJOR · BUG · `pythonbugs:S2583`
 **Local**: `src/flext_ldif/servers/ad.py:325` · **Effort**: 15min
@@ -1289,7 +1289,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       329      class Entry(FlextLdifServersRfc.Entry):
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 68 · 🟡 MAJOR · CODE_SMELL · `python:S5869`
 **Local**: `src/flext_ldif/servers/openldap.py:111` · **Effort**: 5min
@@ -1308,7 +1308,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       115          ACL_BY_PATTERN: ClassVar[str] = "by\\s+([^\\s]+)\\s+([^\\s]+)"
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 69 · 🟡 MAJOR · CODE_SMELL · `python:S8786`
 **Local**: `src/flext_ldif/servers/openldap.py:122` · **Effort**: 20min
@@ -1327,7 +1327,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       126          ACL_ATTRS_PATTERN: ClassVar[str] = (
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 70 · 🟡 MAJOR · CODE_SMELL · `python:S8786`
 **Local**: `src/flext_ldif/servers/openldap1.py:98` · **Effort**: 20min
@@ -1346,7 +1346,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       102          ACL_SUBJECT_TYPE_USERDN: ClassVar[str] = "userdn"
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 71 · 🟡 MAJOR · CODE_SMELL · `python:S108`
 **Local**: `src/flext_ldif/services/acl.py:67` · **Effort**: 5min
@@ -1365,7 +1365,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
        71                  matched_acl=u.Ldif.as_acl(acls[0]),
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 72 · 🟡 MAJOR · CODE_SMELL · `python:S3358`
 **Local**: `src/flext_ldif/services/categorization.py:213` · **Effort**: 5min
@@ -1384,7 +1384,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       217                  if is_rejected
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 73 · 🟡 MAJOR · CODE_SMELL · `python:S1854`
 **Local**: `src/flext_ldif/services/conversion_acl_preserve.py:98` · **Effort**: 1min
@@ -1403,7 +1403,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       102                      mapped_perms = permission_mapper(
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 74 · 🟡 MAJOR · BUG · `pythonbugs:S2583`
 **Local**: `src/flext_ldif/services/filters.py:46` · **Effort**: 15min
@@ -1422,7 +1422,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
        50              if parts:
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 75 · ⚪ MINOR · CODE_SMELL · `python:S7504`
 **Local**: `conftest.py:20` · **Effort**: 5min
@@ -1441,7 +1441,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
        24                  sys.modules.pop(module_name, None)
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 76 · ⚪ MINOR · CODE_SMELL · `python:S6353`
 **Local**: `src/flext_ldif/_constants/base.py:204` · **Effort**: 5min
@@ -1460,7 +1460,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       208      )
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 77 · ⚪ MINOR · CODE_SMELL · `python:S116`
 **Local**: `src/flext_ldif/_utilities/transformers.py:20` · **Effort**: 2min
@@ -1479,7 +1479,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
        24          type[FlextLdifUtilitiesNormalizeAttrsTransformer]
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 78 · ⚪ MINOR · CODE_SMELL · `python:S116`
 **Local**: `src/flext_ldif/_utilities/transformers.py:23` · **Effort**: 2min
@@ -1498,7 +1498,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
        27      class Normalize:
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 79 · ⚪ MINOR · CODE_SMELL · `python:S5713`
 **Local**: `src/flext_ldif/servers/_base/schema.py:305` · **Effort**: 1min
@@ -1517,7 +1517,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       309          try:
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 80 · ⚪ MINOR · CODE_SMELL · `python:S5713`
 **Local**: `src/flext_ldif/servers/_base/schema.py:319` · **Effort**: 1min
@@ -1536,7 +1536,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       323          return None
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 81 · ⚪ MINOR · CODE_SMELL · `python:S7504`
 **Local**: `src/flext_ldif/servers/_oid/entry.py:539` · **Effort**: 5min
@@ -1555,7 +1555,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       543              updated: list[str] = []
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 82 · ⚪ MINOR · CODE_SMELL · `python:S7504`
 **Local**: `src/flext_ldif/servers/_oid/entry.py:677` · **Effort**: 5min
@@ -1574,7 +1574,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       681              if conv_data:
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 83 · ⚪ MINOR · CODE_SMELL · `python:S7508`
 **Local**: `src/flext_ldif/servers/ad.py:359` · **Effort**: 5min
@@ -1593,7 +1593,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       363                  for oc in normalized_object_classes
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 84 · ⚪ MINOR · CODE_SMELL · `python:S6353`
 **Local**: `src/flext_ldif/servers/relaxed.py:32` · **Effort**: 5min
@@ -1612,7 +1612,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
        36          OID_NUMERIC_ANYWHERE: ClassVar[str] = "([0-9]+\\.[0-9]+(?:\\.[0-9]+)*)"
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 85 · ⚪ MINOR · CODE_SMELL · `python:S6353`
 **Local**: `src/flext_ldif/servers/relaxed.py:32` · **Effort**: 5min
@@ -1631,7 +1631,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
        36          OID_NUMERIC_ANYWHERE: ClassVar[str] = "([0-9]+\\.[0-9]+(?:\\.[0-9]+)*)"
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 86 · ⚪ MINOR · CODE_SMELL · `python:S6353`
 **Local**: `src/flext_ldif/servers/relaxed.py:36` · **Effort**: 5min
@@ -1650,7 +1650,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
        40          OID_ALPHANUMERIC_RELAXED: ClassVar[str] = "\\(\\s*([a-zA-Z0-9._-]+)"
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 87 · ⚪ MINOR · CODE_SMELL · `python:S6353`
 **Local**: `src/flext_ldif/servers/relaxed.py:36` · **Effort**: 5min
@@ -1669,7 +1669,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
        40          OID_ALPHANUMERIC_RELAXED: ClassVar[str] = "\\(\\s*([a-zA-Z0-9._-]+)"
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 88 · ⚪ MINOR · CODE_SMELL · `python:S6353`
 **Local**: `src/flext_ldif/servers/relaxed.py:36` · **Effort**: 5min
@@ -1688,7 +1688,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
        40          OID_ALPHANUMERIC_RELAXED: ClassVar[str] = "\\(\\s*([a-zA-Z0-9._-]+)"
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 89 · ⚪ MINOR · CODE_SMELL · `python:S5685`
 **Local**: `src/flext_ldif/services/acl.py:78` · **Effort**: 10min
@@ -1707,7 +1707,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
        82              if found_result.success:
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 90 · ⚪ MINOR · CODE_SMELL · `python:S7504`
 **Local**: `src/flext_ldif/services/filters.py:178` · **Effort**: 5min
@@ -1726,7 +1726,7 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       182              original = updated_attrs[attr_name]
 ```
 
-**Decisão**: 
+**Decisão**: pendente
 
 ### 91 · ⚪ MINOR · CODE_SMELL · `python:S8714`
 **Local**: `tests/integration/fixtures.py:119` · **Effort**: 5min
@@ -1745,5 +1745,4 @@ Cada issue traz a **mensagem do SonarQube** (descreve o problema e o impacto), o
       123                  f"LDAP server not available at {server_url} for bind_dn={bind_dn}"
 ```
 
-**Decisão**: 
-
+**Decisão**: pendente
