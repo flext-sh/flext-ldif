@@ -89,10 +89,7 @@ class FlextLdifProcessingPipeline(s[t.MutableSequenceOf[m.Ldif.Entry]]):
         if not self._stages:
             return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(self._entries)
         pipeline_result = cli.pipeline(
-            self._stages,
-            context=cli.stage_context(workspace_root=Path.cwd()),
-            fail_fast=True,
-            logger=self.logger,
+            self._stages, context=cli.stage_context(Path.cwd()), logger=self.logger
         )
         if pipeline_result.failure:
             return r[t.MutableSequenceOf[m.Ldif.Entry]].fail(

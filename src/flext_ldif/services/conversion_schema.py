@@ -48,15 +48,15 @@ class FlextLdifConversionSchemaMixin(s, ABC):
         source_server_type = u.try_(
             lambda: u.Ldif.normalize_server_type(source_server.server_type)
         ).map_or(None)
-        source_value_result = (
-            r[str]
-            .from_result(write_result)
-            .map_error(
-                lambda error: (
-                    f"Failed to write {item_name} in source format: "
-                    f"{error or 'Unknown write error'}"
-                )
+
+        def default_write_error(error: str) -> str:
+            return (
+                f"Failed to write {item_name} in source format: "
+                f"{error or 'Unknown write error'}"
             )
+
+        source_value_result = (
+            r[str].from_result(write_result).map_error(default_write_error)
         )
         if source_value_result.failure:
             return r[t.Ldif.ConvertedModel].fail(

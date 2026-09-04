@@ -91,7 +91,7 @@ class TestsFlextLdifAclService:
         self, svc: p.Ldif.LdifClient
     ) -> None:
         entry = m.Ldif.Entry(
-            dn=c.Tests.ACL_ENTRY_DN,
+            dn=m.Ldif.DN(value=c.Tests.ACL_ENTRY_DN),
             attributes=m.Ldif.Attributes.model_validate({
                 "attributes": {"orclaci": [c.Tests.ACL_ENTRY_ORCLACI_VALUE]}
             }),
@@ -103,7 +103,7 @@ class TestsFlextLdifAclService:
         self, svc: p.Ldif.LdifClient
     ) -> None:
         entry = m.Ldif.Entry(
-            dn=c.Tests.ACL_ENTRY_DN,
+            dn=m.Ldif.DN(value=c.Tests.ACL_ENTRY_DN),
             attributes=m.Ldif.Attributes.model_validate({
                 "attributes": {"cn": ["test"]}
             }),
@@ -116,7 +116,7 @@ class TestsFlextLdifAclService:
         self, svc: p.Ldif.LdifClient
     ) -> None:
         entry = m.Ldif.Entry(
-            dn=c.Tests.ACL_ENTRY_DN,
+            dn=m.Ldif.DN(value=c.Tests.ACL_ENTRY_DN),
             attributes=m.Ldif.Attributes.model_validate({
                 "attributes": {"aci": [c.Tests.ACL_ENTRY_ACI_VALUE]}
             }),
@@ -155,7 +155,7 @@ class TestsFlextLdifAclService:
         self, svc: p.Ldif.LdifClient
     ) -> None:
         entry = m.Ldif.Entry(
-            dn=c.Tests.ACL_ENTRY_DN,
+            dn=m.Ldif.DN(value=c.Tests.ACL_ENTRY_DN),
             attributes=m.Ldif.Attributes.model_validate({
                 "attributes": {"aci": [c.Tests.ACL_INVALID_SERVER_TYPE]}
             }),

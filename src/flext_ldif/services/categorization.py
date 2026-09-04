@@ -524,12 +524,14 @@ class FlextLdifCategorization(s):
             return r[type[p.Ldif.ServerConstants]].fail(
                 c.Ldif.ERR_SERVER_REGISTRY_UNAVAILABLE
             )
+
+        def default_registry_error(error: str) -> str:
+            return error or f"Failed to resolve constants for {server_type}"
+
         return (
             r[type[p.Ldif.ServerConstants]]
             .from_result(registry.resolve_server_constants(server_type))
-            .map_error(
-                lambda error: error or f"Failed to resolve constants for {server_type}"
-            )
+            .map_error(default_registry_error)
         )
 
     def _match_entry_to_category(
