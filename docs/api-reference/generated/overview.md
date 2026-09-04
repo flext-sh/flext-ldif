@@ -16,15 +16,17 @@
   Software Development :: Libraries :: Python Modules` (+1 more)
 - Project class: `domain`
 - Keywords: `adapter`, `enterprise`, `flext`, `integration`, `typed`
-- Main facades: `FlextLdif`, `FlextLdifConstants`, `FlextLdifModels`,
-  `FlextLdifProtocols`, `FlextLdifServiceBase`, `FlextLdifSettings`,
-  `FlextLdifShared`, `FlextLdifTypes` (+1 more)
+- Main facades: `FlextLdif`, `FlextLdifAcl`, `FlextLdifAnalysis`,
+  `FlextLdifCategorization`, `FlextLdifConfig`, `FlextLdifConstants`,
+  `FlextLdifConversion`, `FlextLdifConversionAclMixin` (+37 more)
 - Alias exports: `c`, `d`, `e`, `h`, `m`, `p`, `r`, `s`, `t`, `u`, `x`
-- Public symbol exports: `FlextLdif`, `FlextLdifConstants`, `FlextLdifModels`,
-  `FlextLdifProtocols`, `FlextLdifServiceBase`, `FlextLdifSettings`,
-  `FlextLdifShared`, `FlextLdifTypes`, `FlextLdifUtilities`, `ldif` (+1 more)
-- Exported module shortcuts: _none_
-- Generated module pages: `8`
+- Public symbol exports: `FlextLdif`, `FlextLdifAcl`, `FlextLdifAnalysis`,
+  `FlextLdifCategorization`, `FlextLdifConfig`, `FlextLdifConstants`,
+  `FlextLdifConversion`, `FlextLdifConversionAclMixin`,
+  `FlextLdifConversionAclPreserveMixin`, `FlextLdifConversionEntryMixin` (+38
+  more)
+- Exported module shortcuts: `servers`, `services`
+- Generated module pages: `42`
 
 ## Next Pages
 
