@@ -8,9 +8,10 @@ from typing import ClassVar, Self, cast, overload, override
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
 from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
+from flext_ldif.servers.base import FlextLdifServersBase
 
 
-class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
+class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
     """RFC 4512 Compliant Schema Server - STRICT Implementation."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)

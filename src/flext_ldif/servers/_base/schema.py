@@ -218,10 +218,14 @@ class FlextLdifServersBaseSchema(
         """Validate OID and track result in metadata extensions."""
         if not oid_value:
             return
+
+        def default_oid_error(error: str) -> str:
+            return error or f"{oid_name} OID validation failed"
+
         oid_validate_result = (
             r[bool]
             .from_result(u.Ldif.validate_format(oid_value))
-            .map_error(lambda error: error or f"{oid_name} OID validation failed")
+            .map_error(default_oid_error)
         )
         if oid_validate_result.failure:
             metadata_extensions["syntax_validation_error"] = (

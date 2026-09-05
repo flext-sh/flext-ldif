@@ -153,7 +153,6 @@ class FlextLdifServer(s):
         """List all registered server types."""
         return sorted(self._registered_servers)
 
-    @override
     def server(self, server_type: str) -> p.Result[p.Ldif.ServerServer]:
         """Get base server for a server type."""
         try:
