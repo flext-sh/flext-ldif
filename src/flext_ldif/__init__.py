@@ -3,125 +3,125 @@
 
 from __future__ import annotations
 
+from types import MappingProxyType
 from typing import TYPE_CHECKING
 
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
-from flext_ldif.__version__ import (
-    __author__,
-    __author_email__,
-    __description__,
-    __license__,
-    __title__,
-    __url__,
-    __version__,
-    __version_info__,
+
+from .__version__ import (
+    __author__ as __author__,
+    __author_email__ as __author_email__,
+    __description__ as __description__,
+    __license__ as __license__,
+    __title__ as __title__,
+    __url__ as __url__,
+    __version__ as __version__,
+    __version_info__ as __version_info__,
 )
 
 if TYPE_CHECKING:
-    from flext_cli import d, e, h, r, x
+    from enum import StrEnum, unique
+    from typing import TYPE_CHECKING, ClassVar, Final
 
+    from . import c, d, e, h, r, servers as servers, services as services, x
+    from ._config import FlextLdifConfig, config
     from ._settings import FlextLdifSettings, settings
     from .api import FlextLdif, ldif
     from .base import FlextLdifServiceBase, FlextLdifServiceBase as s
-    from .constants import FlextLdifConstants, FlextLdifConstants as c
+    from .constants import FlextLdifConstants
     from .models import FlextLdifModels, FlextLdifModels as m
     from .protocols import FlextLdifProtocols, FlextLdifProtocols as p
+    from .servers.ad import FlextLdifServersAd
+    from .servers.apache import FlextLdifServersApache
+    from .servers.base import FlextLdifServersBase
+    from .servers.ds389 import FlextLdifServersDs389
+    from .servers.oid import (
+        FlextLdifServersOid,
+        FlextLdifServersOidAcl,
+        FlextLdifServersOidConstants,
+        FlextLdifServersOidEntry,
+        FlextLdifServersOidSchema,
+    )
+    from .servers.openldap import FlextLdifServersOpenldap
+    from .servers.oud import FlextLdifServersOud
+    from .servers.relaxed import FlextLdifServersRelaxed
+    from .servers.rfc import FlextLdifServersRfc
+    from .servers.tivoli import FlextLdifServersTivoli
+    from .services.acl import FlextLdifAcl
+    from .services.analysis import FlextLdifAnalysis
+    from .services.categorization import FlextLdifCategorization
+    from .services.conversion import FlextLdifConversion
+    from .services.conversion_acl import FlextLdifConversionAclMixin
+    from .services.conversion_acl_preserve import FlextLdifConversionAclPreserveMixin
+    from .services.conversion_entry import FlextLdifConversionEntryMixin
+    from .services.conversion_metadata import FlextLdifConversionMetadataMixin
+    from .services.conversion_schema import FlextLdifConversionSchemaMixin
+    from .services.conversion_schema_entry import FlextLdifConversionSchemaEntryMixin
+    from .services.conversion_support import FlextLdifConversionSupportMixin
+    from .services.detector import FlextLdifDetector
+    from .services.entries import FlextLdifEntries
+    from .services.filters import FlextLdifFilters
+    from .services.migration import FlextLdifMigrationPipeline
+    from .services.parser import FlextLdifParser
+    from .services.processing import FlextLdifProcessing
+    from .services.server import FlextLdifServer
+    from .services.statistics import FlextLdifStatistics
+    from .services.validation import FlextLdifValidation
+    from .services.writer import FlextLdifWriter
     from .shared import FlextLdifShared
     from .typings import FlextLdifTypes, FlextLdifTypes as t
     from .utilities import FlextLdifUtilities, FlextLdifUtilities as u
-
-    _ = (
-        d,
-        e,
-        h,
-        r,
-        x,
-        FlextLdifSettings,
-        settings,
-        FlextLdif,
-        ldif,
-        FlextLdifServiceBase,
-        s,
-        FlextLdifConstants,
-        c,
-        FlextLdifModels,
-        m,
-        FlextLdifProtocols,
-        p,
-        FlextLdifShared,
-        FlextLdifTypes,
-        t,
-        FlextLdifUtilities,
-        u,
-    )
-
-
-_LAZY_MODULES: dict[str, tuple[str, ...]] = {
-    "._settings": ("FlextLdifSettings", "settings"),
-    ".api": ("FlextLdif", "ldif"),
-    ".base": ("FlextLdifServiceBase", "s"),
-    ".constants": ("FlextLdifConstants", "c"),
-    ".models": ("FlextLdifModels", "m"),
-    ".protocols": ("FlextLdifProtocols", "p"),
-    ".shared": ("FlextLdifShared",),
-    ".typings": ("FlextLdifTypes", "t"),
-    ".utilities": ("FlextLdifUtilities", "u"),
-    "flext_cli": ("d", "e", "h", "r", "x"),
-}
-
-
-_LAZY_ALIAS_GROUPS: dict[str, tuple[tuple[str, str], ...]] = {}
-
-
-_LAZY_IMPORTS = build_lazy_import_map(
-    _LAZY_MODULES, alias_groups=_LAZY_ALIAS_GROUPS, sort_keys=False
-)
-
-_DIRECT_IMPORTS: tuple[str, ...] = (
-    "FlextLdif",
-    "FlextLdifConstants",
-    "FlextLdifModels",
-    "FlextLdifProtocols",
-    "FlextLdifServiceBase",
-    "FlextLdifSettings",
-    "FlextLdifShared",
-    "FlextLdifTypes",
-    "FlextLdifUtilities",
-    "__author__",
-    "__author_email__",
-    "__description__",
-    "__license__",
-    "__title__",
-    "__url__",
-    "__version__",
-    "__version_info__",
-    "build_lazy_import_map",
-    "c",
-    "d",
-    "e",
-    "h",
-    "install_lazy_exports",
-    "ldif",
-    "m",
-    "p",
-    "r",
-    "s",
-    "settings",
-    "t",
-    "u",
-    "x",
-)
-
 __all__: tuple[str, ...] = (
+    "TYPE_CHECKING",
+    "ClassVar",
+    "Final",
     "FlextLdif",
+    "FlextLdifAcl",
+    "FlextLdifAnalysis",
+    "FlextLdifCategorization",
+    "FlextLdifConfig",
     "FlextLdifConstants",
+    "FlextLdifConversion",
+    "FlextLdifConversionAclMixin",
+    "FlextLdifConversionAclPreserveMixin",
+    "FlextLdifConversionEntryMixin",
+    "FlextLdifConversionMetadataMixin",
+    "FlextLdifConversionSchemaEntryMixin",
+    "FlextLdifConversionSchemaMixin",
+    "FlextLdifConversionSupportMixin",
+    "FlextLdifDetector",
+    "FlextLdifEntries",
+    "FlextLdifFilters",
+    "FlextLdifMigrationPipeline",
     "FlextLdifModels",
+    "FlextLdifParser",
+    "FlextLdifProcessing",
     "FlextLdifProtocols",
+    "FlextLdifServer",
+    "FlextLdifServersAd",
+    "FlextLdifServersApache",
+    "FlextLdifServersBase",
+    "FlextLdifServersDs389",
+    "FlextLdifServersOid",
+    "FlextLdifServersOidAcl",
+    "FlextLdifServersOidConstants",
+    "FlextLdifServersOidEntry",
+    "FlextLdifServersOidSchema",
+    "FlextLdifServersOpenldap",
+    "FlextLdifServersOud",
+    "FlextLdifServersRelaxed",
+    "FlextLdifServersRfc",
+    "FlextLdifServersTivoli",
     "FlextLdifServiceBase",
     "FlextLdifSettings",
     "FlextLdifShared",
+    "FlextLdifStatistics",
     "FlextLdifTypes",
     "FlextLdifUtilities",
+    "FlextLdifValidation",
+    "FlextLdifWriter",
+    "MappingProxyType",
+    "StrEnum",
     "__author__",
     "__author_email__",
     "__description__",
@@ -131,6 +131,7 @@ __all__: tuple[str, ...] = (
     "__version__",
     "__version_info__",
     "c",
+    "config",
     "d",
     "e",
     "h",
@@ -139,11 +140,79 @@ __all__: tuple[str, ...] = (
     "p",
     "r",
     "s",
+    "servers",
+    "services",
     "settings",
     "t",
     "u",
+    "unique",
     "x",
 )
 
+_LAZY_IMPORTS = MappingProxyType(
+    build_lazy_import_map(
+        MappingProxyType({
+            ".": ("c", "d", "e", "h", "r", "x"),
+            "._config": ("FlextLdifConfig", "config"),
+            "._settings": ("FlextLdifSettings", "settings"),
+            ".api": ("FlextLdif", "ldif"),
+            ".base": ("FlextLdifServiceBase", "s"),
+            ".constants": ("FlextLdifConstants",),
+            ".models": ("FlextLdifModels", "m"),
+            ".protocols": ("FlextLdifProtocols", "p"),
+            ".servers": ("servers",),
+            ".servers.ad": ("FlextLdifServersAd",),
+            ".servers.apache": ("FlextLdifServersApache",),
+            ".servers.base": ("FlextLdifServersBase",),
+            ".servers.ds389": ("FlextLdifServersDs389",),
+            ".servers.oid": (
+                "FlextLdifServersOid",
+                "FlextLdifServersOidAcl",
+                "FlextLdifServersOidConstants",
+                "FlextLdifServersOidEntry",
+                "FlextLdifServersOidSchema",
+            ),
+            ".servers.openldap": ("FlextLdifServersOpenldap",),
+            ".servers.oud": ("FlextLdifServersOud",),
+            ".servers.relaxed": ("FlextLdifServersRelaxed",),
+            ".servers.rfc": ("FlextLdifServersRfc",),
+            ".servers.tivoli": ("FlextLdifServersTivoli",),
+            ".services": ("services",),
+            ".services.acl": ("FlextLdifAcl",),
+            ".services.analysis": ("FlextLdifAnalysis",),
+            ".services.categorization": ("FlextLdifCategorization",),
+            ".services.conversion": ("FlextLdifConversion",),
+            ".services.conversion_acl": ("FlextLdifConversionAclMixin",),
+            ".services.conversion_acl_preserve": (
+                "FlextLdifConversionAclPreserveMixin",
+            ),
+            ".services.conversion_entry": ("FlextLdifConversionEntryMixin",),
+            ".services.conversion_metadata": ("FlextLdifConversionMetadataMixin",),
+            ".services.conversion_schema": ("FlextLdifConversionSchemaMixin",),
+            ".services.conversion_schema_entry": (
+                "FlextLdifConversionSchemaEntryMixin",
+            ),
+            ".services.conversion_support": ("FlextLdifConversionSupportMixin",),
+            ".services.detector": ("FlextLdifDetector",),
+            ".services.entries": ("FlextLdifEntries",),
+            ".services.filters": ("FlextLdifFilters",),
+            ".services.migration": ("FlextLdifMigrationPipeline",),
+            ".services.parser": ("FlextLdifParser",),
+            ".services.processing": ("FlextLdifProcessing",),
+            ".services.server": ("FlextLdifServer",),
+            ".services.statistics": ("FlextLdifStatistics",),
+            ".services.validation": ("FlextLdifValidation",),
+            ".services.writer": ("FlextLdifWriter",),
+            ".shared": ("FlextLdifShared",),
+            ".typings": ("FlextLdifTypes", "t"),
+            ".utilities": ("FlextLdifUtilities", "u"),
+            "enum": ("StrEnum", "unique"),
+            "types": ("MappingProxyType",),
+            "typing": ("ClassVar", "Final", "TYPE_CHECKING"),
+        }),
+        alias_groups=MappingProxyType({}),
+        sort_keys=False,
+    )
+)
 
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)

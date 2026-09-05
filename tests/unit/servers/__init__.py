@@ -1,41 +1,63 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Servers package."""
+"""Tests.unit.servers package."""
 
 from __future__ import annotations
 
+from types import MappingProxyType
+from typing import TYPE_CHECKING
+
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
-_LAZY_IMPORTS = build_lazy_import_map({
-    ".test_apache_servers": ("TestsFlextLdifApacheServers",),
-    ".test_ds389_servers": ("TestsFlextLdifDs389Servers",),
-    ".test_edge_cases": ("TestsFlextLdifEdgeCases",),
-    ".test_novell_servers": ("TestsFlextLdifNovellServers",),
-    ".test_oid_acl_assemble": ("TestsFlextLdifOidAclAssemble",),
-    ".test_oid_acl_convert": ("TestsFlextLdifOidAclConvert",),
-    ".test_oid_acl_convert_oud": ("TestsFlextLdifOidAclConvertOud",),
-    ".test_oid_acl_endtoend": ("TestsFlextLdifOidAclEndToEnd",),
-    ".test_oid_servers": ("TestsFlextLdifOidServers",),
-    ".test_relaxed_servers": ("TestsFlextLdifRelaxed",),
-    ".test_schema_transformer": ("TestsFlextLdifSchemaTransformer",),
-    "flext_tests": (
-        "c",
-        "d",
-        "e",
-        "h",
-        "m",
-        "p",
-        "r",
-        "s",
-        "t",
-        "td",
-        "tf",
-        "tk",
-        "tm",
-        "tv",
-        "u",
-        "x",
-    ),
-})
+if TYPE_CHECKING:
+    from flext_tests import c, d, e, h, m, p, r, s, t, td, tf, tk, tm, tv, u, x
 
+    from .test_oid_servers import TestsFlextLdifOidServers
+__all__: tuple[str, ...] = (
+    "TestsFlextLdifOidServers",
+    "c",
+    "d",
+    "e",
+    "h",
+    "m",
+    "p",
+    "r",
+    "s",
+    "t",
+    "td",
+    "tf",
+    "tk",
+    "tm",
+    "tv",
+    "u",
+    "x",
+)
 
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)
+_LAZY_IMPORTS = MappingProxyType(
+    build_lazy_import_map(
+        MappingProxyType({
+            ".test_oid_servers": ("TestsFlextLdifOidServers",),
+            "flext_tests": (
+                "c",
+                "d",
+                "e",
+                "h",
+                "m",
+                "p",
+                "r",
+                "s",
+                "t",
+                "td",
+                "tf",
+                "tk",
+                "tm",
+                "tv",
+                "u",
+                "x",
+            ),
+        }),
+        alias_groups=MappingProxyType({}),
+        sort_keys=False,
+    )
+)
+
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)
