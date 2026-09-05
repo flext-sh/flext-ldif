@@ -95,9 +95,7 @@ class FlextLdifProcessingPipeline(s[t.MutableSequenceOf[m.Ldif.Entry]]):
             logger=self.logger,
         )
         if pipeline_result.failure:
-            return r[t.MutableSequenceOf[m.Ldif.Entry]].fail(
-                pipeline_result.error or "processing pipeline failed"
-            )
+            return r[t.MutableSequenceOf[m.Ldif.Entry]].from_failure(pipeline_result)
         failed_stage = next(
             (stage for stage in pipeline_result.value.failed_stages if stage.error),
             None,
@@ -116,9 +114,7 @@ class FlextLdifProcessingPipeline(s[t.MutableSequenceOf[m.Ldif.Entry]]):
         for entry in self._entries:
             transformed = transformer.apply(entry)
             if transformed.failure:
-                return r[m.Cli.PipelineStageResult].fail(
-                    transformed.error or f"stage {stage_id} failed"
-                )
+                return r[m.Cli.PipelineStageResult].from_failure(transformed)
             transformed_entries.append(transformed.value)
         self._entries = transformed_entries
         output_payload: t.JsonMapping = t.Cli.JSON_MAPPING_ADAPTER.validate_python({

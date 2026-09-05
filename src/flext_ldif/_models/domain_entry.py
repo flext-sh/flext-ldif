@@ -318,7 +318,7 @@ class FlextLdifModelsDomainEntry:
         Inherits DynamicModel to legitimize extra='allow' for LDIF dynamic attributes.
         """
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
             strict=True, validate_default=True, validate_assignment=True, extra="allow"
         )
         _DATETIME_FIELDS: ClassVar[t.StrPair] = ("created_at", "updated_at")
@@ -933,9 +933,7 @@ class FlextLdifModelsDomainEntry:
                 entry_instance: Self = cls.model_validate(entry_data)
                 ok_result: p.Result[Self] = r[Self].ok(entry_instance)
             except c.EXC_BASIC_TYPE as e:
-                fail_result: p.Result[Self] = r[Self].fail(
-                    f"Failed to create Entry: {e}"
-                )
+                fail_result: p.Result[Self] = r[Self].fail(f"Failed to create Entry: {e}", exception=e)
                 return fail_result
             else:
                 return ok_result

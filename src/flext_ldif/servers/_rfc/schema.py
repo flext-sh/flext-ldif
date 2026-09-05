@@ -502,9 +502,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
             parse_parts_hook=parse_parts_hook,
         )
         if parse_result_raw.failure:
-            return r[m.Ldif.SchemaAttribute].fail(
-                parse_result_raw.error or "Attribute parsing failed"
-            )
+            return r[m.Ldif.SchemaAttribute].from_failure(parse_result_raw)
         parsed_raw = parse_result_raw.value
         parsed: t.Ldif.MutableMetadataMapping = dict(parsed_raw)
         syntax = parsed.get("syntax")

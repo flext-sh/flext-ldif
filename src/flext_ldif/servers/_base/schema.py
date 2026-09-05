@@ -420,9 +420,7 @@ class FlextLdifServersBaseSchema(
         if self._is_objectclass_schema_type(definition):
             oc_result = self._parse_objectclass(definition)
             if oc_result.failure:
-                return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].fail(
-                    oc_result.error or "Parse failed"
-                )
+                return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].from_failure(oc_result)
             parsed_objectclass = m.Ldif.SchemaObjectClass.model_validate(
                 oc_result.unwrap()
             )
@@ -431,9 +429,7 @@ class FlextLdifServersBaseSchema(
             )
         attr_result = self._parse_attribute(definition)
         if attr_result.failure:
-            return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].fail(
-                attr_result.error or "Parse failed"
-            )
+            return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].from_failure(attr_result)
         parsed_attribute = m.Ldif.SchemaAttribute.model_validate(attr_result.unwrap())
         return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].ok(parsed_attribute)
 
