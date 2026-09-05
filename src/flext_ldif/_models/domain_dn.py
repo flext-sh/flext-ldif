@@ -71,13 +71,13 @@ class FlextLdifModelsDomainDN:
         @u.computed_field
         @property
         def has_errors(self) -> bool:
-            """Check if any validation errors exist."""
+            """Whether any validation errors exist."""
             return bool(self.validation_errors)
 
         @u.computed_field
         @property
         def has_warnings(self) -> bool:
-            """Check if any validation warnings exist."""
+            """Whether any validation warnings exist."""
             return bool(self.validation_warnings)
 
         @u.computed_field
@@ -89,7 +89,7 @@ class FlextLdifModelsDomainDN:
         @u.computed_field
         @property
         def was_transformed(self) -> bool:
-            """Check if any transformations were applied."""
+            """Whether any transformations were applied."""
             return self.original_dn != self.normalized_dn or bool(self.transformations)
 
         @classmethod

@@ -3,18 +3,21 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from types import MappingProxyType
+from typing import TYPE_CHECKING
 
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
+    from typing import TYPE_CHECKING, ClassVar
+
     from flext_ldif.servers._base.constants import FlextLdifServersBaseConstants
-    from typing import ClassVar, TYPE_CHECKING
 
     from .acl import FlextLdifServersRfcAcl
-    from .constants import FlextLdifServersRfcConstants
+    from .constants import (
+        FlextLdifServersRfcConstants,
+        FlextLdifServersRfcConstants as c,
+    )
     from .entry import FlextLdifServersRfcEntry
     from .schema import FlextLdifServersRfcSchema
 __all__: tuple[str, ...] = (
@@ -26,13 +29,14 @@ __all__: tuple[str, ...] = (
     "FlextLdifServersRfcEntry",
     "FlextLdifServersRfcSchema",
     "MappingProxyType",
+    "c",
 )
 
 _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
         MappingProxyType({
             ".acl": ("FlextLdifServersRfcAcl",),
-            ".constants": ("FlextLdifServersRfcConstants",),
+            ".constants": ("FlextLdifServersRfcConstants", "c"),
             ".entry": ("FlextLdifServersRfcEntry",),
             ".schema": ("FlextLdifServersRfcSchema",),
             "flext_ldif.servers._base.constants": ("FlextLdifServersBaseConstants",),

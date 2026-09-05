@@ -3,16 +3,16 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from types import MappingProxyType
+from typing import TYPE_CHECKING
 
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
     from enum import StrEnum, unique
+    from typing import TYPE_CHECKING, ClassVar
+
     from flext_ldif.servers.rfc import FlextLdifServersRfc
-    from typing import ClassVar, TYPE_CHECKING
 
     from .acl import FlextLdifServersOidAcl
     from .acl_assemble import FlextLdifServersOidAclAssemble
@@ -20,7 +20,10 @@ if TYPE_CHECKING:
     from .acl_convert_oud import FlextLdifServersOidAclToOud
     from .acl_pipeline import FlextLdifServersOidAclPipeline
     from .acl_render import FlextLdifServersOidAclRender
-    from .constants import FlextLdifServersOidConstants
+    from .constants import (
+        FlextLdifServersOidConstants,
+        FlextLdifServersOidConstants as c,
+    )
     from .entry import FlextLdifServersOidEntry
     from .schema import FlextLdifServersOidSchema
 __all__: tuple[str, ...] = (
@@ -38,6 +41,7 @@ __all__: tuple[str, ...] = (
     "FlextLdifServersRfc",
     "MappingProxyType",
     "StrEnum",
+    "c",
     "unique",
 )
 
@@ -50,7 +54,7 @@ _LAZY_IMPORTS = MappingProxyType(
             ".acl_convert_oud": ("FlextLdifServersOidAclToOud",),
             ".acl_pipeline": ("FlextLdifServersOidAclPipeline",),
             ".acl_render": ("FlextLdifServersOidAclRender",),
-            ".constants": ("FlextLdifServersOidConstants",),
+            ".constants": ("FlextLdifServersOidConstants", "c"),
             ".entry": ("FlextLdifServersOidEntry",),
             ".schema": ("FlextLdifServersOidSchema",),
             "enum": ("StrEnum", "unique"),

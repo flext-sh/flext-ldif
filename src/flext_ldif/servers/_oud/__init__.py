@@ -3,22 +3,25 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from types import MappingProxyType
+from typing import TYPE_CHECKING
 
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
+    from typing import TYPE_CHECKING, ClassVar
+
     from flext_ldif.servers.rfc import FlextLdifServersRfc
-    from typing import ClassVar, TYPE_CHECKING
 
     from .aci import FlextLdifServersOudAciMixin
     from .acl import FlextLdifServersOudAcl
     from .acl_extract import FlextLdifServersOudAclExtractMixin
     from .acl_metadata import FlextLdifServersOudAclMetadataMixin
     from .comments import FlextLdifServersOudCommentsMixin
-    from .constants import FlextLdifServersOudConstants
+    from .constants import (
+        FlextLdifServersOudConstants,
+        FlextLdifServersOudConstants as c,
+    )
     from .entry import FlextLdifServersOudEntry
     from .helpers import FlextLdifServersOudHelpersMixin
     from .schema import FlextLdifServersOudSchema
@@ -40,6 +43,7 @@ __all__: tuple[str, ...] = (
     "FlextLdifServersOudUtilities",
     "FlextLdifServersRfc",
     "MappingProxyType",
+    "c",
 )
 
 _LAZY_IMPORTS = MappingProxyType(
@@ -50,7 +54,7 @@ _LAZY_IMPORTS = MappingProxyType(
             ".acl_extract": ("FlextLdifServersOudAclExtractMixin",),
             ".acl_metadata": ("FlextLdifServersOudAclMetadataMixin",),
             ".comments": ("FlextLdifServersOudCommentsMixin",),
-            ".constants": ("FlextLdifServersOudConstants",),
+            ".constants": ("FlextLdifServersOudConstants", "c"),
             ".entry": ("FlextLdifServersOudEntry",),
             ".helpers": ("FlextLdifServersOudHelpersMixin",),
             ".schema": ("FlextLdifServersOudSchema",),

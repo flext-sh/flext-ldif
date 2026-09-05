@@ -3,14 +3,13 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from types import MappingProxyType
+from typing import TYPE_CHECKING
 
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from typing import ClassVar, TYPE_CHECKING
+    from typing import TYPE_CHECKING, ClassVar
 
     from .acl import FlextLdifServersBaseSchemaAcl
     from .constants import FlextLdifServersBaseConstants
