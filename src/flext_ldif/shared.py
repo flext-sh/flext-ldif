@@ -55,9 +55,7 @@ class FlextLdifShared:
         try:
             return c.Ldif.ServerTypes(server_type_lower)
         except ValueError as error:
-            valid_types = [
-                server_type.value for server_type in c.Ldif.ServerTypes
-            ]
+            valid_types = [server_type.value for server_type in c.Ldif.ServerTypes]
             msg = f"Invalid server type: {server_type}. Valid types: {valid_types}"
             raise ValueError(msg) from error
 

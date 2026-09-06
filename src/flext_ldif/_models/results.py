@@ -155,8 +155,8 @@ class FlextLdifModelsResults:
             default_factory=mc.DynamicCounts,
             description="Counts of entries rejected by reason category",
         )
-        events: t.MutableSequenceOf[me.ConversionEvent | me.DnEvent] = u.Field(
-            default_factory=list[me.ConversionEvent | me.DnEvent],
+        events: t.MutableSequenceOf[core_m.ConversionEvent | core_m.DnEvent] = u.Field(
+            default_factory=list[core_m.ConversionEvent | core_m.DnEvent],
             description="Domain events emitted during processing",
         )
 

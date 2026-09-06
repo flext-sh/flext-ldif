@@ -70,7 +70,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         for parsed_entry in parsed_result.value:
             post_parse_result = self._hook_post_parse_entry(parsed_entry)
             if post_parse_result.failure:
-                return r[t.MutableSequenceOf[m.Ldif.Entry]].from_failure(post_parse_result)
+                return r[t.MutableSequenceOf[m.Ldif.Entry]].from_failure(
+                    post_parse_result
+                )
             entry_after_post: m.Ldif.Entry = post_parse_result.value
             original_dn = entry_after_post.dn.value if entry_after_post.dn else ""
             original_attrs: t.MutableStrSequenceMapping = (
@@ -83,7 +85,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 entry_after_post, original_dn, original_attrs
             )
             if finalize_result.failure:
-                return r[t.MutableSequenceOf[m.Ldif.Entry]].from_failure(finalize_result)
+                return r[t.MutableSequenceOf[m.Ldif.Entry]].from_failure(
+                    finalize_result
+                )
             processed_entries.append(finalize_result.value)
         return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(processed_entries)
 

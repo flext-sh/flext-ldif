@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from flext_core import FlextLdifConstants
 
+
 class ExamplesFlextLdifConstants(FlextLdifConstants):
     """Constants for flextldif."""
 

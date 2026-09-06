@@ -742,10 +742,10 @@ class FlextLdifModelsDomainEntry:
         @property
         def has_validation_errors(self) -> bool:
             """Whether entry has validation errors.
-            
+
             Returns:
             True if entry has validation errors in validation_metadata, False otherwise
-            
+
             """
             if self.metadata is None:
                 return False
@@ -757,10 +757,10 @@ class FlextLdifModelsDomainEntry:
         @property
         def is_acl_entry(self) -> bool:
             """Whether entry has Access Control Lists.
-            
+
             Returns:
             True if entry has ACLs, False otherwise
-            
+
             """
             if self.metadata is None:
                 return False
@@ -770,13 +770,13 @@ class FlextLdifModelsDomainEntry:
         @property
         def is_schema_entry(self) -> bool:
             """Whether entry is a schema definition entry.
-            
+
             Schema entries contain objectClass definitions and are typically
             found in the schema naming context.
-            
+
             Returns:
             True if entry has objectClasses, False otherwise
-            
+
             """
             if self.metadata is None:
                 return False
@@ -933,7 +933,9 @@ class FlextLdifModelsDomainEntry:
                 entry_instance: Self = cls.model_validate(entry_data)
                 ok_result: p.Result[Self] = r[Self].ok(entry_instance)
             except c.EXC_BASIC_TYPE as e:
-                fail_result: p.Result[Self] = r[Self].fail(f"Failed to create Entry: {e}", exception=e)
+                fail_result: p.Result[Self] = r[Self].fail(
+                    f"Failed to create Entry: {e}", exception=e
+                )
                 return fail_result
             else:
                 return ok_result

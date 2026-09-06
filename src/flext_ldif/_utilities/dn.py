@@ -696,7 +696,9 @@ class FlextLdifUtilitiesDN:
                 try:
                     result = FlextLdifUtilitiesDN._parse_dn_components(dn_str)
                 except c.Ldif.EXC_LDIF_PARSE as e:
-                    result = r[t.MutableStrPairSequence].fail(f"DN parsing error: {e}", exception=e)
+                    result = r[t.MutableStrPairSequence].fail(
+                        f"DN parsing error: {e}", exception=e
+                    )
         return result
 
     @staticmethod
@@ -709,7 +711,9 @@ class FlextLdifUtilitiesDN:
             try:
                 result = FlextLdifUtilitiesDN._parse_rdn_core(rdn)
             except c.Ldif.EXC_LDIF_PARSE as e:
-                result = r[t.MutableStrPairSequence].fail(f"RDN parsing error: {e}", exception=e)
+                result = r[t.MutableStrPairSequence].fail(
+                    f"RDN parsing error: {e}", exception=e
+                )
         return result
 
     @staticmethod

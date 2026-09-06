@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from flext_core import FlextLdifProtocols
 
+
 class ExamplesFlextLdifProtocols(FlextLdifProtocols):
     """Protocol definitions for flextldif."""
 

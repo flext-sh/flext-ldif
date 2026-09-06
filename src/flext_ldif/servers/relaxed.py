@@ -228,7 +228,9 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 return self._parse_relaxed_attribute(attr_definition)
             except c.Ldif.EXC_LDIF_PARSE as e:
                 self.logger.debug("Relaxed attribute parse exception: %s", e)
-                return r[m.Ldif.SchemaAttribute].fail(f"Failed to parse attribute definition: {e}", exception=e)
+                return r[m.Ldif.SchemaAttribute].fail(
+                    f"Failed to parse attribute definition: {e}", exception=e
+                )
 
         def _parse_relaxed_attribute(
             self, attr_definition: str
@@ -599,7 +601,9 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 self.logger.exception(
                     "Failed to parse content", server_type=self._get_server_type()
                 )
-                return r[t.MutableSequenceOf[m.Ldif.Entry]].fail(f"Failed to parse content: {error}", exception=error)
+                return r[t.MutableSequenceOf[m.Ldif.Entry]].fail(
+                    f"Failed to parse content: {error}", exception=error
+                )
 
         def _parse_relaxed_content(
             self, ldif_content: str

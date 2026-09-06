@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from flext_core import FlextLdifUtilities
 
+
 class ExamplesFlextLdifUtilities(FlextLdifUtilities):
     """Utility functions for flextldif."""
 
