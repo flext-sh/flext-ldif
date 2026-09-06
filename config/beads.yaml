@@ -1,0 +1,4 @@
+version: 1
+workspace: flext-ldif
+database: flext-ldif
+issue_prefix: flext-ldif
