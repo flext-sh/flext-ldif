@@ -318,6 +318,24 @@ reportUnusedVariable = "error"
 typeCheckingMode = "strict"
 
 [[tool.pyright.executionEnvironments]]
+extraPaths = [".", "src"]
+reportArgumentType = "none"
+reportAssignmentType = "none"
+reportAttributeAccessIssue = "none"
+reportGeneralTypeIssues = "none"
+reportInvalidTypeForm = "none"
+reportPrivateImportUsage = "none"
+reportPrivateUsage = "none"
+reportReturnType = "none"
+reportUnknownArgumentType = "none"
+reportUnknownLambdaType = "none"
+reportUnknownMemberType = "none"
+reportUnknownParameterType = "none"
+reportUnknownVariableType = "none"
+reportUnusedImport = "none"
+root = "examples"
+
+[[tool.pyright.executionEnvironments]]
 extraPaths = ["src"]
 reportAssignmentType = "none"
 reportAttributeAccessIssue = "none"
@@ -351,24 +369,6 @@ reportUnknownParameterType = "none"
 reportUnknownVariableType = "none"
 reportUnusedImport = "none"
 root = "tests"
-
-[[tool.pyright.executionEnvironments]]
-extraPaths = [".", "src"]
-reportArgumentType = "none"
-reportAssignmentType = "none"
-reportAttributeAccessIssue = "none"
-reportGeneralTypeIssues = "none"
-reportInvalidTypeForm = "none"
-reportPrivateImportUsage = "none"
-reportPrivateUsage = "none"
-reportReturnType = "none"
-reportUnknownArgumentType = "none"
-reportUnknownLambdaType = "none"
-reportUnknownMemberType = "none"
-reportUnknownParameterType = "none"
-reportUnknownVariableType = "none"
-reportUnusedImport = "none"
-root = "examples"
 
 # [MANAGED] pytest
 [tool.pytest.ini_options]
@@ -611,7 +611,7 @@ dev = [
   "faker>=40.37.0",
   "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev",
   "flext-tests @ git+https://github.com/flext-sh/flext-tests.git@0.12.0-dev",
-  "hypothesis>=6.165.10",
+  "hypothesis>=6.167.1",
   "isort>=9.0.1",
   "matplotlib-stubs>=0.3.11",
   "mkdocs>=1.6.1",
@@ -655,8 +655,8 @@ dev = [
   "pytest-xdist>=3.8.0",
   "pyupgrade>=3.21.2",
   "radon>=6.0.1",
-  "ruff>=0.16.0",
-  "rumdl>=0.2.45",
+  "ruff>=0.16.5",
+  "rumdl>=0.2.62",
   "types-cachetools>=7.0.0.20260713",
   "types-cffi>=2.1.0.20260827",
   "types-click>=7.1.8",

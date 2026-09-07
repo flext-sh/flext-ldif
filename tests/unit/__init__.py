@@ -3,17 +3,15 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from types import MappingProxyType
+from typing import TYPE_CHECKING
 
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from . import servers as servers
-    from . import services as services
-    from . import utilities as utilities
     from flext_tests import c, d, e, h, m, p, r, s, t, td, tf, tk, tm, tv, u, x
+
+    from . import servers as servers, services as services, utilities as utilities
 __all__: tuple[str, ...] = (
     "c",
     "d",
