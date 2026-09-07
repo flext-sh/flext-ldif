@@ -53,18 +53,17 @@ slot registry verification).
 - Parent FLEXT chain: read this project's `pyproject.toml` `dependencies` array
   filtered by `flext-*`. The FLEXT cascade is encoded in the inheritance lists
   of the facade classes listed under Module Map above.
-- Public extensions exposed by this project: `FlextLdif`, `FlextLdifConstants`,
-  `FlextLdifModels`, `FlextLdifProtocols`, `FlextLdifServiceBase`,
-  `FlextLdifSettings` (+3 more).
+- Public extensions exposed by this project: `FlextLdif`, `FlextLdifAcl`,
+  `FlextLdifAnalysis`, `FlextLdifCategorization`, `FlextLdifConfig`,
+  `FlextLdifConstants` (+39 more).
 - Library abstraction boundaries: see AGENTS.md §2.7.
 
 ## Quality Gates
 
-Canonical `make` verbs (`check`, `test`, `fmt WHAT=apply APPLY=Y`, `val`,
-`docs`) — see
+Canonical selector-free `make` verbs (`check`, `test`, `fmt`, `conform`, `docs`)
+use `APPLY=Y` — see
 [`/flext/AGENTS.md`](https://github.com/flext-sh/flext/blob/0.12.0-dev/AGENTS.md)
-`Build & Test` and `Required Python quality gates`; selector routing is owned
-universally by `config.AiHub.paths.agents_home`/`skills/make-check/SKILL.md`.
+`Build & Test` and `Required Python quality gates`.
 
 ## Governance Pointer
 

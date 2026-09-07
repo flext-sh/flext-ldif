@@ -98,9 +98,7 @@ class FlextLdifServer(s):
         """Get Constants class from server server."""
         server_result = self.server(server_type)
         if server_result.failure:
-            return r[type[p.Ldif.ServerConstants]].fail(
-                server_result.error or server_type
-            )
+            return r[type[p.Ldif.ServerConstants]].from_failure(server_result)
         base = server_result.value
         constants: type[p.Ldif.ServerConstants] | None = getattr(
             type(base), "Constants", None
@@ -159,7 +157,7 @@ class FlextLdifServer(s):
         try:
             normalized = u.Ldif.normalize_server_type(server_type)
         except ValueError as e:
-            return r[p.Ldif.ServerServer].fail(str(e))
+            return r[p.Ldif.ServerServer].fail(str(e), exception=e)
         plugin = self._registered_servers.get(normalized)
         if plugin is None:
             return r[p.Ldif.ServerServer].fail(normalized)

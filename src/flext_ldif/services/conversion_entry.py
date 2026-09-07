@@ -84,10 +84,7 @@ class FlextLdifConversionEntryMixin(
                 source_server, target_server, converted_entry
             )
             if schema_entry_result.failure:
-                return r[t.Ldif.ConvertedModel].fail(
-                    schema_entry_result.error
-                    or "Failed to convert schema attributes in entry"
-                )
+                return r[t.Ldif.ConvertedModel].from_failure(schema_entry_result)
             converted_entry = schema_entry_result.value
         return self._convert_entry_payload(
             converted_entry, source_type_norm, target_type_norm
@@ -154,9 +151,7 @@ class FlextLdifConversionEntryMixin(
             base_dn=self.base_dn or "",
         )
         if acl_conversion.failure:
-            return r[t.Ldif.ConvertedModel].fail(
-                acl_conversion.error or "Failed to convert OID ACLs to OUD aci"
-            )
+            return r[t.Ldif.ConvertedModel].from_failure(acl_conversion)
         converted_entry = self._transform_entry_dn(
             acl_conversion.value, source_type_norm, target_type_norm
         )

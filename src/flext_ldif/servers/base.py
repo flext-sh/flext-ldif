@@ -22,7 +22,7 @@ def _ensure_trailing_newline(ldif: str) -> str:
 class FlextLdifServersBase(s[m.Ldif.Entry]):
     """Base class for LDIF/LDAP server servers built on `s`."""
 
-    model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+    model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
         arbitrary_types_allowed=True, extra="forbid"
     )
     server_type: ClassVar[str] = c.Ldif.UNKNOWN_VALUE

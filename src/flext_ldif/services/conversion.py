@@ -36,16 +36,12 @@ class FlextLdifConversion(FlextLdifConversionEntryMixin, FlextLdifConversionAclM
                 source_server, role="Source"
             )
             if source_schema_result.failure:
-                return r[t.Ldif.ConvertedModel].fail(
-                    source_schema_result.error or "Source schema not available"
-                )
+                return r[t.Ldif.ConvertedModel].from_failure(source_schema_result)
             target_schema_result = self._resolve_schema_server(
                 target_server, role="Target"
             )
             if target_schema_result.failure:
-                return r[t.Ldif.ConvertedModel].fail(
-                    target_schema_result.error or "Target schema not available"
-                )
+                return r[t.Ldif.ConvertedModel].from_failure(target_schema_result)
             return self._convert_schema_model_via_entry(
                 source_server,
                 target_server,

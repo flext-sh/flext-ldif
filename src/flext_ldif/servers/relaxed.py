@@ -229,7 +229,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             except c.Ldif.EXC_LDIF_PARSE as e:
                 self.logger.debug("Relaxed attribute parse exception: %s", e)
                 return r[m.Ldif.SchemaAttribute].fail(
-                    f"Failed to parse attribute definition: {e}"
+                    f"Failed to parse attribute definition: {e}", exception=e
                 )
 
         def _parse_relaxed_attribute(
@@ -433,7 +433,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 return self._parse_relaxed_acl(acl_line)
             except c.Ldif.EXC_LDIF_PARSE as e:
                 self.logger.debug("Relaxed ACL parse failed: %s", e)
-                return r[m.Ldif.Acl].fail(f"Failed to parse ACL: {e}")
+                return r[m.Ldif.Acl].fail(f"Failed to parse ACL: {e}", exception=e)
 
         def _parse_relaxed_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
             """Parse ACL using RFC first, then relaxed fallback."""
@@ -602,7 +602,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     "Failed to parse content", server_type=self._get_server_type()
                 )
                 return r[t.MutableSequenceOf[m.Ldif.Entry]].fail(
-                    f"Failed to parse content: {error}"
+                    f"Failed to parse content: {error}", exception=error
                 )
 
         def _parse_relaxed_content(
@@ -660,7 +660,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 return self._parse_relaxed_entry(entry_dn, entry_attrs)
             except c.Ldif.EXC_LDIF_PARSE as e:
                 self.logger.debug("Relaxed entry creation failed: %s", e)
-                return r[m.Ldif.Entry].fail(f"Failed to parse entry: {e}")
+                return r[m.Ldif.Entry].fail(f"Failed to parse entry: {e}", exception=e)
 
         def _parse_relaxed_entry(
             self,
@@ -747,7 +747,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 return self._write_relaxed_entry(entry_data)
             except c.Ldif.EXC_LDIF_PARSE as e:
                 self.logger.debug("Write entry failed: %s", e)
-                return r[str].fail(f"Failed to write entry: {e}")
+                return r[str].fail(f"Failed to write entry: {e}", exception=e)
 
         @staticmethod
         def _write_relaxed_entry(entry_data: m.Ldif.Entry) -> p.Result[str]:

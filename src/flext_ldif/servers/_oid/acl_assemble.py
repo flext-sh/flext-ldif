@@ -93,9 +93,7 @@ class FlextLdifServersOidAclAssemble:
                     continue
             perms = Conv.convert_permissions(subject.permissions, is_entry=is_entry)
             if perms.failure:
-                return r[m.Ldif.AciRule].fail(
-                    perms.error or "invalid OID permission token"
-                )
+                return r[m.Ldif.AciRule].from_failure(perms)
             if not perms.value:
                 notes.append(
                     f"{subject.subject_type} {subject.value!r} removed "

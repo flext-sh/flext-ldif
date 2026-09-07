@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING, ClassVar, Final, overload
 import pytest
 
 from flext_ldif import FlextLdifUtilities, u
-
 from flext_tests import FlextTestsUtilities, tk, tm
 from tests import c, m, p, t
 
@@ -251,7 +250,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                     ]
                 )
             )
-            workspace_root = next(
+            repository_root = next(
                 (
                     candidate
                     for candidate in (
@@ -264,7 +263,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             )
             return tk.shared(
                 c.Tests.DOCKER_CONTAINER_NAME,
-                workspace_root=workspace_root,
+                repository_root=repository_root,
                 worker_id=worker_id,
             )
 

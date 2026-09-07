@@ -59,10 +59,7 @@ class FlextLdifConversionSchemaMixin(s, ABC):
             )
         )
         if source_value_result.failure:
-            return r[t.Ldif.ConvertedModel].fail(
-                source_value_result.error
-                or "Failed to write schema item in source format"
-            )
+            return r[t.Ldif.ConvertedModel].from_failure(source_value_result)
         bridge_entry = m.Ldif.Entry.model_validate({
             "dn": m.Ldif.DN(value="cn=schema,dc=example,dc=com", metadata={}),
             "attributes": m.Ldif.Attributes.model_validate({
@@ -76,10 +73,7 @@ class FlextLdifConversionSchemaMixin(s, ABC):
             source_server, target_server, bridge_entry
         )
         if converted_entry_result.failure:
-            return r[t.Ldif.ConvertedModel].fail(
-                converted_entry_result.error
-                or f"Failed to convert {item_name} via Entry intermediary"
-            )
+            return r[t.Ldif.ConvertedModel].from_failure(converted_entry_result)
         converted_entry_value = converted_entry_result.value
         if not isinstance(converted_entry_value, m.Ldif.Entry):
             return r[t.Ldif.ConvertedModel].fail(
@@ -102,25 +96,19 @@ class FlextLdifConversionSchemaMixin(s, ABC):
             parsed_attribute_result = self._validate_parsed_schema(
                 target_schema.parse_attribute(first_value),
                 m.Ldif.SchemaAttribute,
-                "Failed to parse converted attribute",
+                f"Failed to parse {field_name} attribute definition",
             )
             if parsed_attribute_result.failure:
-                return r[t.Ldif.ConvertedModel].fail(
-                    parsed_attribute_result.error
-                    or "Failed to parse converted attribute"
-                )
+                return r[t.Ldif.ConvertedModel].from_failure(parsed_attribute_result)
             converted_model: t.Ldif.ConvertedModel = parsed_attribute_result.value
         else:
             parsed_objectclass_result = self._validate_parsed_schema(
                 target_schema.parse_objectclass(first_value),
                 m.Ldif.SchemaObjectClass,
-                "Failed to parse converted objectclass",
+                f"Failed to parse {field_name} objectclass definition",
             )
             if parsed_objectclass_result.failure:
-                return r[t.Ldif.ConvertedModel].fail(
-                    parsed_objectclass_result.error
-                    or "Failed to parse converted objectclass"
-                )
+                return r[t.Ldif.ConvertedModel].from_failure(parsed_objectclass_result)
             converted_model = parsed_objectclass_result.value
         return r[t.Ldif.ConvertedModel].ok(converted_model)
 
