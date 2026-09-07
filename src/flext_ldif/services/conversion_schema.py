@@ -94,16 +94,14 @@ class FlextLdifConversionSchemaMixin(s, ABC):
         first_value = converted_values[0]
         if field_name == c.Ldif.ATTRIBUTE_TYPES:
             parsed_attribute_result = self._validate_parsed_schema(
-                target_schema.parse_attribute(first_value),
-                m.Ldif.SchemaAttribute,
+                target_schema.parse_attribute(first_value), m.Ldif.SchemaAttribute
             )
             if parsed_attribute_result.failure:
                 return r[t.Ldif.ConvertedModel].from_failure(parsed_attribute_result)
             converted_model: t.Ldif.ConvertedModel = parsed_attribute_result.value
         else:
             parsed_objectclass_result = self._validate_parsed_schema(
-                target_schema.parse_objectclass(first_value),
-                m.Ldif.SchemaObjectClass,
+                target_schema.parse_objectclass(first_value), m.Ldif.SchemaObjectClass
             )
             if parsed_objectclass_result.failure:
                 return r[t.Ldif.ConvertedModel].from_failure(parsed_objectclass_result)

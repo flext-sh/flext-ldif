@@ -9,7 +9,6 @@ from types import MappingProxyType
 from typing import TYPE_CHECKING, Final, Literal
 
 from flext_ldif import c
-
 from flext_tests import FlextTestsConstants
 from tests import m
 

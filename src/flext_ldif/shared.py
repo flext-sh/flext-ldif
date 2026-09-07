@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Final
+
 from flext_ldif import c
 
 if TYPE_CHECKING:

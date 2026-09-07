@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING, ClassVar, Final, overload
 import pytest
 
 from flext_ldif import FlextLdifUtilities, u
-
 from flext_tests import FlextTestsUtilities, tk, tm
 from tests import c, m, p, t
 
