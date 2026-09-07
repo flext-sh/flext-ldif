@@ -643,15 +643,14 @@ def test_parse_invalid_ldif():
 1. **Fixture Not Found**
 
    ```python
-
    from __future__ import annotations
 
    # Check fixture scope and dependencies
 
+
    @pytest.fixture(scope="function")
    def my_fixture():
        return "value"
-
    ```
 
 1. **Test Timeout**

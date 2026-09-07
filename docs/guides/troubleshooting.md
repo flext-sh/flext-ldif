@@ -660,9 +660,11 @@ from __future__ import annotations
    ```python
    from __future__ import annotations
 
+
    # ✅ GOOD
    def process(items: t.SequenceOf[Item]) -> p.Result[Sequence[ProcessedItem]]:
        pass
+
 
    # ❌ BAD
    def process(items):
@@ -672,8 +674,8 @@ from __future__ import annotations
 1. **Test Thoroughly**
 
    ```python
-
    from __future__ import annotations
+
 
    def test_process_data():
        # Test success case
@@ -683,7 +685,6 @@ from __future__ import annotations
        # Test failure case
        result = process_data(None)
        assert result.failure
-
    ```
 
 ## Resources
