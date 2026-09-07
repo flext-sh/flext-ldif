@@ -75,7 +75,7 @@ class TestsFlextLdifProcessingService:
         self, api: p.Ldif.LdifClient
     ) -> None:
         invalid_entry = m.Ldif.Entry(
-            dn=c.Tests.PROCESSING_VALID_DNS[0], attributes=None
+            dn=m.Ldif.DN(value=c.Tests.PROCESSING_VALID_DNS[0]), attributes=None
         )
 
         tm.fail(

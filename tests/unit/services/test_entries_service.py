@@ -189,7 +189,9 @@ class TestsFlextLdifEntries:
         tm.fail(result, has="objectClass")
 
     def test_resolve_objectclasses_fails_when_entry_has_no_attributes(self) -> None:
-        entry = m.Ldif.Entry(dn=c.Tests.ANALYSIS_DN_VALID, attributes=None)
+        entry = m.Ldif.Entry(
+            dn=m.Ldif.DN(value=c.Tests.ANALYSIS_DN_VALID), attributes=None
+        )
         result = FlextLdifEntries.resolve_entry_objectclasses(entry)
         tm.fail(result, has="attributes")
 
