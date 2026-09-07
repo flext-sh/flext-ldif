@@ -47,7 +47,7 @@ class FlextLdifUtilitiesOID:
         try:
             valid = bool(c.Ldif.NUMERIC_OID_RE.match(oid))
         except c.Ldif.EXC_LDIF_PARSE as e:
-            return r[bool].fail(f"Failed to validate OID format: {e}")
+            return r[bool].fail(f"Failed to validate OID format: {e}", exception=e)
         return r[bool].ok(valid)
 
 

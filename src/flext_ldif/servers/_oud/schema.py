@@ -153,9 +153,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         oid = attr.oid
         oid_validation = self._validate_attribute_oid(oid)
         if oid_validation.failure:
-            return r[m.Ldif.SchemaAttribute].fail(
-                oid_validation.error or "OID validation failed"
-            )
+            return r[m.Ldif.SchemaAttribute].from_failure(oid_validation)
         is_valid_oud_oid = oid_validation.value
         existing_metadata = attr.metadata
         if not existing_metadata:
@@ -191,14 +189,10 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         """Validate OUD-specific objectClass features after RFC parsing."""
         sup_validation = self._validate_objectclass_sup(oc)
         if sup_validation.failure:
-            return r[m.Ldif.SchemaObjectClass].fail(
-                sup_validation.error or "SUP validation failed"
-            )
+            return r[m.Ldif.SchemaObjectClass].from_failure(sup_validation)
         oid_and_sup_validation = self._validate_objectclass_oid_and_sup(oc)
         if oid_and_sup_validation.failure:
-            return r[m.Ldif.SchemaObjectClass].fail(
-                oid_and_sup_validation.error or "OID validation failed"
-            )
+            return r[m.Ldif.SchemaObjectClass].from_failure(oid_and_sup_validation)
         oc = oid_and_sup_validation.value
         sup_str = str(oc.sup) if oc.sup else "none"
         FlextLdifServersOudSchema._module_logger.debug(

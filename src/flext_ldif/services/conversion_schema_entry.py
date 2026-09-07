@@ -148,9 +148,7 @@ class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s, ABC
             schema_fields, convert_field
         )
         if converted_fields_result.failure:
-            return r[m.Ldif.Entry].fail(
-                converted_fields_result.error or "Schema field conversion failed"
-            )
+            return r[m.Ldif.Entry].from_failure(converted_fields_result)
         updated_attributes = dict(entry.attributes.attributes)
         updated_attributes.update(dict(converted_fields_result.value))
         updated_entry = entry.model_copy(

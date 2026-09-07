@@ -36,10 +36,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             "ibm-",
             "ids-",
         ])
-        DETECTION_PATTERN_STR: ClassVar[str] = "\\b(ibm|tivoli|ldapdb)\\b"
-        DETECTION_PATTERN: ClassVar[t.Ldif.RegexPattern] = re.compile(
-            DETECTION_PATTERN_STR, re.IGNORECASE
-        )
+        DETECTION_PATTERN: ClassVar[str] = "\\b(ibm|tivoli|ldapdb)\\b"
         DETECTION_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
             "ibm-entryuuid",
             "ibm-entrychecksum",

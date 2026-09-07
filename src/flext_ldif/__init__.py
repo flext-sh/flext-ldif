@@ -3,33 +3,31 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from types import MappingProxyType
+from typing import TYPE_CHECKING
 
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
-from .__version__ import __author__ as __author__
-from .__version__ import __author_email__ as __author_email__
-from .__version__ import __description__ as __description__
-from .__version__ import __license__ as __license__
-from .__version__ import __title__ as __title__
-from .__version__ import __url__ as __url__
-from .__version__ import __version__ as __version__
-from .__version__ import __version_info__ as __version_info__
+from .__version__ import (
+    __author__ as __author__,
+    __author_email__ as __author_email__,
+    __description__ as __description__,
+    __license__ as __license__,
+    __title__ as __title__,
+    __url__ as __url__,
+    __version__ as __version__,
+    __version_info__ as __version_info__,
+)
 
 if TYPE_CHECKING:
-    from . import servers as servers
-    from . import services as services
-    from enum import StrEnum, unique
-    from typing import ClassVar, Final, TYPE_CHECKING
+    from flext_cli import d, e, h, r, x
 
-    from . import c, d, e, h, r, x
+    from . import servers as servers, services as services
     from ._config import FlextLdifConfig, config
     from ._settings import FlextLdifSettings, settings
     from .api import FlextLdif, ldif
     from .base import FlextLdifServiceBase, FlextLdifServiceBase as s
-    from .constants import FlextLdifConstants
+    from .constants import FlextLdifConstants, FlextLdifConstants as c
     from .models import FlextLdifModels, FlextLdifModels as m
     from .protocols import FlextLdifProtocols, FlextLdifProtocols as p
     from .servers.ad import FlextLdifServersAd
@@ -73,9 +71,6 @@ if TYPE_CHECKING:
     from .typings import FlextLdifTypes, FlextLdifTypes as t
     from .utilities import FlextLdifUtilities, FlextLdifUtilities as u
 __all__: tuple[str, ...] = (
-    "TYPE_CHECKING",
-    "ClassVar",
-    "Final",
     "FlextLdif",
     "FlextLdifAcl",
     "FlextLdifAnalysis",
@@ -121,8 +116,6 @@ __all__: tuple[str, ...] = (
     "FlextLdifUtilities",
     "FlextLdifValidation",
     "FlextLdifWriter",
-    "MappingProxyType",
-    "StrEnum",
     "__author__",
     "__author_email__",
     "__description__",
@@ -146,19 +139,17 @@ __all__: tuple[str, ...] = (
     "settings",
     "t",
     "u",
-    "unique",
     "x",
 )
 
 _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
         MappingProxyType({
-            ".": ("c", "d", "e", "h", "r", "x"),
             "._config": ("FlextLdifConfig", "config"),
             "._settings": ("FlextLdifSettings", "settings"),
             ".api": ("FlextLdif", "ldif"),
             ".base": ("FlextLdifServiceBase", "s"),
-            ".constants": ("FlextLdifConstants",),
+            ".constants": ("FlextLdifConstants", "c"),
             ".models": ("FlextLdifModels", "m"),
             ".protocols": ("FlextLdifProtocols", "p"),
             ".servers": ("servers",),
@@ -207,9 +198,7 @@ _LAZY_IMPORTS = MappingProxyType(
             ".shared": ("FlextLdifShared",),
             ".typings": ("FlextLdifTypes", "t"),
             ".utilities": ("FlextLdifUtilities", "u"),
-            "enum": ("StrEnum", "unique"),
-            "types": ("MappingProxyType",),
-            "typing": ("ClassVar", "Final", "TYPE_CHECKING"),
+            "flext_cli": ("d", "e", "h", "r", "x"),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,

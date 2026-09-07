@@ -3,15 +3,13 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from types import MappingProxyType
+from typing import TYPE_CHECKING
 
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_ldif.servers.rfc import FlextLdifServersRfc
-    from typing import ClassVar, TYPE_CHECKING
 
     from .aci import FlextLdifServersOudAciMixin
     from .acl import FlextLdifServersOudAcl
@@ -25,8 +23,6 @@ if TYPE_CHECKING:
     from .transform import FlextLdifServersOudTransformMixin
     from .utilities import FlextLdifServersOudUtilities
 __all__: tuple[str, ...] = (
-    "TYPE_CHECKING",
-    "ClassVar",
     "FlextLdifServersOudAciMixin",
     "FlextLdifServersOudAcl",
     "FlextLdifServersOudAclExtractMixin",
@@ -39,7 +35,6 @@ __all__: tuple[str, ...] = (
     "FlextLdifServersOudTransformMixin",
     "FlextLdifServersOudUtilities",
     "FlextLdifServersRfc",
-    "MappingProxyType",
 )
 
 _LAZY_IMPORTS = MappingProxyType(
@@ -57,8 +52,6 @@ _LAZY_IMPORTS = MappingProxyType(
             ".transform": ("FlextLdifServersOudTransformMixin",),
             ".utilities": ("FlextLdifServersOudUtilities",),
             "flext_ldif.servers.rfc": ("FlextLdifServersRfc",),
-            "types": ("MappingProxyType",),
-            "typing": ("ClassVar", "TYPE_CHECKING"),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,

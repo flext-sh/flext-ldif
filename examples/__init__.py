@@ -3,23 +3,44 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from types import MappingProxyType
+from typing import TYPE_CHECKING
 
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_ldif import c, d, e, h, m, p, r, s, t, u, x
+    from flext_ldif import (
+        FlextLdifConstants,
+        FlextLdifConstants as c,
+        d,
+        e,
+        h,
+        m,
+        p,
+        r,
+        s,
+        t,
+        u,
+        x,
+    )
 
-    from .demo_structured_migration import main
+    from .constants import ExamplesFlextLdifConstants
+    from .models import ExamplesFlextLdifModels
+    from .protocols import ExamplesFlextLdifProtocols
+    from .typings import ExamplesFlextLdifTypes
+    from .utilities import ExamplesFlextLdifUtilities
 __all__: tuple[str, ...] = (
+    "ExamplesFlextLdifConstants",
+    "ExamplesFlextLdifModels",
+    "ExamplesFlextLdifProtocols",
+    "ExamplesFlextLdifTypes",
+    "ExamplesFlextLdifUtilities",
+    "FlextLdifConstants",
     "c",
     "d",
     "e",
     "h",
     "m",
-    "main",
     "p",
     "r",
     "s",
@@ -31,8 +52,25 @@ __all__: tuple[str, ...] = (
 _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
         MappingProxyType({
-            ".demo_structured_migration": ("main",),
-            "flext_ldif": ("c", "d", "e", "h", "m", "p", "r", "s", "t", "u", "x"),
+            ".constants": ("ExamplesFlextLdifConstants",),
+            ".models": ("ExamplesFlextLdifModels",),
+            ".protocols": ("ExamplesFlextLdifProtocols",),
+            ".typings": ("ExamplesFlextLdifTypes",),
+            ".utilities": ("ExamplesFlextLdifUtilities",),
+            "flext_ldif": (
+                "FlextLdifConstants",
+                "c",
+                "d",
+                "e",
+                "h",
+                "m",
+                "p",
+                "r",
+                "s",
+                "t",
+                "u",
+                "x",
+            ),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
