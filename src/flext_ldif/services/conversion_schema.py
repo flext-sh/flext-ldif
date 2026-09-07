@@ -110,11 +110,13 @@ class FlextLdifConversionSchemaMixin(s, ABC):
 
     @staticmethod
     def _validate_parsed_schema[T: m.Ldif.SchemaElement](
-        parse_result: p.Result[T], model_cls: type[T]
+        parse_result: p.Result[T],
+        model_cls: type[T],
+        parse_error_message: str,
     ) -> p.Result[T]:
         """Re-validate a schema parse result into its model (attr / objectclass)."""
         if parse_result.failure:
-            return r[T].from_failure(parse_result)
+            return r[T].fail(parse_result.error or parse_error_message)
         return r[T].ok(model_cls.model_validate(parse_result.value))
 
 

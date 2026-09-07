@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from flext_core import FlextLdifModels
+from flext_ldif import FlextLdifModels
 
 
 class ExamplesFlextLdifModels(FlextLdifModels):

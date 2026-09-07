@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from flext_core import FlextLdifConstants
+from flext_ldif import FlextLdifConstants
 
 
 class ExamplesFlextLdifConstants(FlextLdifConstants):

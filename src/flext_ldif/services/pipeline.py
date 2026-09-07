@@ -91,7 +91,6 @@ class FlextLdifProcessingPipeline(s[t.MutableSequenceOf[m.Ldif.Entry]]):
         pipeline_result = cli.pipeline(
             self._stages,
             context=cli.stage_context(repository_root=Path.cwd()),
-            fail_fast=True,
             logger=self.logger,
         )
         if pipeline_result.failure:
@@ -128,7 +127,7 @@ class FlextLdifProcessingPipeline(s[t.MutableSequenceOf[m.Ldif.Entry]]):
     def _build_pipeline(self) -> t.SequenceOf[m.Cli.PipelineStageSpec]:
         """Build the canonical cli-backed processing stages."""
         stage_order: t.MutableSequenceOf[str] = []
-        handlers: t.MutableMappingKV[str, t.Cli.PipelineHandler] = {}
+        handlers: t.MutableMappingKV[str, p.Cli.PipelineStage] = {}
         if self._config.normalize_dns and self._config.process_config is not None:
             dn_config = (
                 self._config.process_config.dn_config or m.Ldif.DnNormalizationConfig()

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from flext_core import FlextLdifProtocols
+from flext_ldif import FlextLdifProtocols
 
 
 class ExamplesFlextLdifProtocols(FlextLdifProtocols):
