@@ -3,13 +3,17 @@
 
 from __future__ import annotations
 
-from types import MappingProxyType
 from typing import TYPE_CHECKING
+
+from types import MappingProxyType
 
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from . import _base as _base, _oid as _oid, _oud as _oud, _rfc as _rfc
+    from . import _base as _base
+    from . import _oid as _oid
+    from . import _oud as _oud
+    from . import _rfc as _rfc
     from ._base.acl import FlextLdifServersBaseSchemaAcl
     from ._base.constants import FlextLdifServersBaseConstants
     from ._base.entry import FlextLdifServersBaseEntry
