@@ -250,7 +250,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                     ]
                 )
             )
-            workspace_root = next(
+            repository_root = next(
                 (
                     candidate
                     for candidate in (
@@ -263,7 +263,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             )
             return tk.shared(
                 c.Tests.DOCKER_CONTAINER_NAME,
-                workspace_root=workspace_root,
+                repository_root=repository_root,
                 worker_id=worker_id,
             )
 
