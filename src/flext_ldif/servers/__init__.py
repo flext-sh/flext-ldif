@@ -3,16 +3,17 @@
 
 from __future__ import annotations
 
-from types import MappingProxyType
 from typing import TYPE_CHECKING
+
+from types import MappingProxyType
 
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from enum import StrEnum, unique
-    from typing import TYPE_CHECKING, ClassVar
-
-    from . import _base as _base, _oid as _oid, _oud as _oud, _rfc as _rfc
+    from . import _base as _base
+    from . import _oid as _oid
+    from . import _oud as _oud
+    from . import _rfc as _rfc
     from ._base.acl import FlextLdifServersBaseSchemaAcl
     from ._base.constants import FlextLdifServersBaseConstants
     from ._base.entry import FlextLdifServersBaseEntry
@@ -55,8 +56,6 @@ if TYPE_CHECKING:
     from .rfc import FlextLdifServersRfc
     from .tivoli import FlextLdifServersTivoli
 __all__: tuple[str, ...] = (
-    "TYPE_CHECKING",
-    "ClassVar",
     "FlextLdifServerMethodsMixin",
     "FlextLdifServersAd",
     "FlextLdifServersApache",
@@ -96,13 +95,10 @@ __all__: tuple[str, ...] = (
     "FlextLdifServersRfcEntry",
     "FlextLdifServersRfcSchema",
     "FlextLdifServersTivoli",
-    "MappingProxyType",
-    "StrEnum",
     "_base",
     "_oid",
     "_oud",
     "_rfc",
-    "unique",
 )
 
 _LAZY_IMPORTS = MappingProxyType(
@@ -153,9 +149,6 @@ _LAZY_IMPORTS = MappingProxyType(
             ".relaxed": ("FlextLdifServersRelaxed",),
             ".rfc": ("FlextLdifServersRfc",),
             ".tivoli": ("FlextLdifServersTivoli",),
-            "enum": ("StrEnum", "unique"),
-            "types": ("MappingProxyType",),
-            "typing": ("ClassVar", "TYPE_CHECKING"),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,

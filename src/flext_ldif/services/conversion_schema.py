@@ -94,14 +94,18 @@ class FlextLdifConversionSchemaMixin(s, ABC):
         first_value = converted_values[0]
         if field_name == c.Ldif.ATTRIBUTE_TYPES:
             parsed_attribute_result = self._validate_parsed_schema(
-                target_schema.parse_attribute(first_value), m.Ldif.SchemaAttribute
+                target_schema.parse_attribute(first_value),
+                m.Ldif.SchemaAttribute,
+                f"Failed to parse {field_name} attribute definition",
             )
             if parsed_attribute_result.failure:
                 return r[t.Ldif.ConvertedModel].from_failure(parsed_attribute_result)
             converted_model: t.Ldif.ConvertedModel = parsed_attribute_result.value
         else:
             parsed_objectclass_result = self._validate_parsed_schema(
-                target_schema.parse_objectclass(first_value), m.Ldif.SchemaObjectClass
+                target_schema.parse_objectclass(first_value),
+                m.Ldif.SchemaObjectClass,
+                f"Failed to parse {field_name} objectclass definition",
             )
             if parsed_objectclass_result.failure:
                 return r[t.Ldif.ConvertedModel].from_failure(parsed_objectclass_result)
@@ -110,9 +114,7 @@ class FlextLdifConversionSchemaMixin(s, ABC):
 
     @staticmethod
     def _validate_parsed_schema[T: m.Ldif.SchemaElement](
-        parse_result: p.Result[T],
-        model_cls: type[T],
-        parse_error_message: str,
+        parse_result: p.Result[T], model_cls: type[T], parse_error_message: str
     ) -> p.Result[T]:
         """Re-validate a schema parse result into its model (attr / objectclass)."""
         if parse_result.failure:

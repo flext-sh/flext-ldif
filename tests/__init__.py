@@ -3,19 +3,17 @@
 
 from __future__ import annotations
 
-from types import MappingProxyType
 from typing import TYPE_CHECKING
+
+from types import MappingProxyType
 
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from enum import StrEnum, unique
-    from pathlib import Path
-    from typing import TYPE_CHECKING, Final, Literal
-
+    from . import integration as integration
+    from . import unit as unit
     from flext_tests import FlextTestsConstants, d, e, h, r, td, tf, tk, tm, tv, x
 
-    from . import integration as integration, unit as unit
     from .base import TestsFlextLdifServiceBase, TestsFlextLdifServiceBase as s
     from .constants import TestsFlextLdifConstants, TestsFlextLdifConstants as c
     from .models import TestsFlextLdifModels, TestsFlextLdifModels as m
@@ -24,13 +22,7 @@ if TYPE_CHECKING:
     from .typings import TestsFlextLdifTypes, TestsFlextLdifTypes as t
     from .utilities import TestsFlextLdifUtilities, TestsFlextLdifUtilities as u
 __all__: tuple[str, ...] = (
-    "TYPE_CHECKING",
-    "Final",
     "FlextTestsConstants",
-    "Literal",
-    "MappingProxyType",
-    "Path",
-    "StrEnum",
     "TestsFlextLdifConstants",
     "TestsFlextLdifModels",
     "TestsFlextLdifProtocols",
@@ -54,7 +46,6 @@ __all__: tuple[str, ...] = (
     "tm",
     "tv",
     "u",
-    "unique",
     "unit",
     "x",
 )
@@ -71,7 +62,6 @@ _LAZY_IMPORTS = MappingProxyType(
             ".typings": ("TestsFlextLdifTypes", "t"),
             ".unit": ("unit",),
             ".utilities": ("TestsFlextLdifUtilities", "u"),
-            "enum": ("StrEnum", "unique"),
             "flext_tests": (
                 "FlextTestsConstants",
                 "d",
@@ -85,9 +75,6 @@ _LAZY_IMPORTS = MappingProxyType(
                 "tv",
                 "x",
             ),
-            "pathlib": ("Path",),
-            "types": ("MappingProxyType",),
-            "typing": ("Final", "Literal", "TYPE_CHECKING"),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
