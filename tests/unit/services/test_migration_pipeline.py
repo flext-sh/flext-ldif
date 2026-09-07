@@ -378,7 +378,8 @@ class TestsFlextLdifMigrationPipeline:
     def test_processing_execute_succeeds_with_entries(self) -> None:
         """Processing execute() succeeds when an entry batch is supplied."""
         entry = m.Ldif.Entry(
-            dn=c.Tests.ANALYSIS_DN_VALID, attributes=m.Ldif.Attributes(attributes={})
+            dn=m.Ldif.DN(value=c.Tests.ANALYSIS_DN_VALID),
+            attributes=m.Ldif.Attributes(attributes={}),
         )
         tm.ok(
             FlextLdifProcessingPipeline(

@@ -47,10 +47,14 @@ class FlextLdifProcessing(s):
                 results = [future.result() for future in as_completed(futures)]
             return r[t.MutableSequenceOf[m.Ldif.ProcessingResult]].ok(results)
         _ = validated_options.batch_size
+
+        def default_batch_error(error: str) -> str:
+            return error or "Batch processing failed"
+
         return (
             r[t.MutableSequenceOf[m.Ldif.ProcessingResult]]
             .from_result(u.process(entries, self._process_entry, on_error="collect"))
-            .map_error(lambda error: error or "Batch processing failed")
+            .map_error(default_batch_error)
             .map(list)
         )
 

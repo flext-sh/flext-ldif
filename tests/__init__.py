@@ -13,6 +13,7 @@ if TYPE_CHECKING:
 
     from . import integration as integration, unit as unit
     from .base import TestsFlextLdifServiceBase, TestsFlextLdifServiceBase as s
+    from .conftest import pytest_plugins
     from .constants import TestsFlextLdifConstants, TestsFlextLdifConstants as c
     from .models import TestsFlextLdifModels, TestsFlextLdifModels as m
     from .protocols import TestsFlextLdifProtocols, TestsFlextLdifProtocols as p
@@ -52,6 +53,7 @@ _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
         MappingProxyType({
             ".base": ("TestsFlextLdifServiceBase", "s"),
+            ".conftest": ("pytest_plugins",),
             ".constants": ("TestsFlextLdifConstants", "c"),
             ".integration": ("integration",),
             ".models": ("TestsFlextLdifModels", "m"),
