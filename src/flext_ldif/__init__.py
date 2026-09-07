@@ -20,12 +20,14 @@ from .__version__ import (
 )
 
 if TYPE_CHECKING:
-    from . import c, d, e, h, r, servers as servers, services as services, x
+    from flext_cli import d, e, h, r, x
+
+    from . import servers as servers, services as services
     from ._config import FlextLdifConfig, config
     from ._settings import FlextLdifSettings, settings
     from .api import FlextLdif, ldif
     from .base import FlextLdifServiceBase, FlextLdifServiceBase as s
-    from .constants import FlextLdifConstants
+    from .constants import FlextLdifConstants, FlextLdifConstants as c
     from .models import FlextLdifModels, FlextLdifModels as m
     from .protocols import FlextLdifProtocols, FlextLdifProtocols as p
     from .servers.ad import FlextLdifServersAd
@@ -143,12 +145,11 @@ __all__: tuple[str, ...] = (
 _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
         MappingProxyType({
-            ".": ("c", "d", "e", "h", "r", "x"),
             "._config": ("FlextLdifConfig", "config"),
             "._settings": ("FlextLdifSettings", "settings"),
             ".api": ("FlextLdif", "ldif"),
             ".base": ("FlextLdifServiceBase", "s"),
-            ".constants": ("FlextLdifConstants",),
+            ".constants": ("FlextLdifConstants", "c"),
             ".models": ("FlextLdifModels", "m"),
             ".protocols": ("FlextLdifProtocols", "p"),
             ".servers": ("servers",),
@@ -197,6 +198,7 @@ _LAZY_IMPORTS = MappingProxyType(
             ".shared": ("FlextLdifShared",),
             ".typings": ("FlextLdifTypes", "t"),
             ".utilities": ("FlextLdifUtilities", "u"),
+            "flext_cli": ("d", "e", "h", "r", "x"),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
