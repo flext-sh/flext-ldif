@@ -5,8 +5,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_cli import p
-from flext_ldif._protocols.base import FlextLdifProtocolsBase
-from flext_ldif._protocols.domain import FlextLdifProtocolsDomain
+
+from ._protocols.base import FlextLdifProtocolsBase
+from ._protocols.domain import FlextLdifProtocolsDomain
 
 if TYPE_CHECKING:
     from flext_ldif import c

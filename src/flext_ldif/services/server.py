@@ -9,7 +9,8 @@ from typing import TYPE_CHECKING, Annotated, ClassVar, TypeGuard, override
 
 from flext_core import s
 from flext_ldif import c, p, r, t, u
-from flext_ldif._protocols.domain import FlextLdifProtocolsDomain
+
+from .._protocols.domain import FlextLdifProtocolsDomain
 
 if TYPE_CHECKING:
     from flext_ldif.servers.base import FlextLdifServersBase

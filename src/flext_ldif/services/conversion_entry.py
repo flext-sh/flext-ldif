@@ -12,12 +12,13 @@ from __future__ import annotations
 from typing import Annotated, override
 
 from flext_ldif import c, m, p, r, s, t, u
-from flext_ldif.servers._oid.acl_pipeline import FlextLdifServersOidAclPipeline
 from flext_ldif.services.conversion_metadata import FlextLdifConversionMetadataMixin
 from flext_ldif.services.conversion_schema_entry import (
     FlextLdifConversionSchemaEntryMixin,
 )
 from flext_ldif.services.conversion_support import FlextLdifConversionSupportMixin
+
+from ..servers._oid.acl_pipeline import FlextLdifServersOidAclPipeline
 
 
 class FlextLdifConversionEntryMixin(

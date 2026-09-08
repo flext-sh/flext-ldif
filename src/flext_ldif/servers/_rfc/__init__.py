@@ -9,8 +9,7 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_ldif.servers._base.constants import FlextLdifServersBaseConstants
-
+    from .._base.constants import FlextLdifServersBaseConstants
     from .acl import FlextLdifServersRfcAcl
     from .constants import FlextLdifServersRfcConstants
     from .entry import FlextLdifServersRfcEntry

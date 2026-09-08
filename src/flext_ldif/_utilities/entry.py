@@ -6,7 +6,8 @@ from collections.abc import Callable, Mapping, MutableMapping, Sequence
 
 from flext_cli import u
 from flext_ldif import c, p, t
-from flext_ldif._models.settings import FlextLdifModelsSettings
+
+from .._models.settings import FlextLdifModelsSettings
 
 
 class FlextLdifUtilitiesEntry:

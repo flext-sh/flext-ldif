@@ -13,13 +13,14 @@ from __future__ import annotations
 from typing import Annotated, ClassVar
 
 from flext_cli import m, t, u
-from flext_ldif._models.base import FlextLdifModelsBases
-from flext_ldif._models.collections import FlextLdifModelsCollections
-from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries
-from flext_ldif._models.events import FlextLdifModelsEvents
-from flext_ldif._models.processing import FlextLdifModelsProcessing
-from flext_ldif._models.results import FlextLdifModelsResults
-from flext_ldif._models.settings import FlextLdifModelsSettings
+
+from ._models.base import FlextLdifModelsBases
+from ._models.collections import FlextLdifModelsCollections
+from ._models.domain_entries import FlextLdifModelsDomainsEntries
+from ._models.events import FlextLdifModelsEvents
+from ._models.processing import FlextLdifModelsProcessing
+from ._models.results import FlextLdifModelsResults
+from ._models.settings import FlextLdifModelsSettings
 
 
 class FlextLdifModels(m):

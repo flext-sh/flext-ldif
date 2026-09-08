@@ -12,7 +12,8 @@ from typing import TYPE_CHECKING, Annotated, ClassVar
 # mro-6int (claude-ulw): import m/t/u from upstream flext_cli, not the own
 # package facade, to break the flext_ldif package-init circular import.
 from flext_cli import m, t, u
-from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries as mde
+
+from .domain_entries import FlextLdifModelsDomainsEntries as mde
 
 if TYPE_CHECKING:
     from collections.abc import Iterator

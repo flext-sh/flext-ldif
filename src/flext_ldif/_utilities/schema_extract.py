@@ -5,7 +5,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from flext_ldif import FlextLdifModels as m, c, p, r, t
-from flext_ldif._utilities.parser import FlextLdifUtilitiesParser as up
+
+from .parser import FlextLdifUtilitiesParser as up
 
 if TYPE_CHECKING:
     from collections.abc import Callable

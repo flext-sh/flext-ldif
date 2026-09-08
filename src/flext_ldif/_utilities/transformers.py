@@ -5,13 +5,10 @@ from __future__ import annotations
 from typing import ClassVar
 
 from flext_ldif import c, t
-from flext_ldif._utilities._transformer_attrs import (
-    FlextLdifUtilitiesNormalizeAttrsTransformer,
-)
-from flext_ldif._utilities._transformer_base import FlextLdifUtilitiesTransformer
-from flext_ldif._utilities._transformer_dn import (
-    FlextLdifUtilitiesNormalizeDnTransformer,
-)
+
+from ._transformer_attrs import FlextLdifUtilitiesNormalizeAttrsTransformer
+from ._transformer_base import FlextLdifUtilitiesTransformer
+from ._transformer_dn import FlextLdifUtilitiesNormalizeDnTransformer
 
 
 class FlextLdifUtilitiesTransformers:

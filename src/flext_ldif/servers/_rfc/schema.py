@@ -6,9 +6,10 @@ from collections.abc import Mapping, MutableMapping, Sequence
 from typing import ClassVar, Self, cast, overload, override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
-from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
 from flext_ldif.servers.base import FlextLdifServersBase
+
+from .._base.mixins import FlextLdifServerMethodsMixin
+from .._base.schema import FlextLdifServersBaseSchema
 
 
 class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):

@@ -6,10 +6,11 @@ from collections.abc import Mapping, MutableMapping
 from typing import ClassVar, Self, override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
-from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
-from flext_ldif.servers._oud.utilities import FlextLdifServersOudUtilities
 from flext_ldif.servers.rfc import FlextLdifServersRfc
+
+from .._base.acl import FlextLdifServersBaseSchemaAcl
+from .constants import FlextLdifServersOudConstants
+from .utilities import FlextLdifServersOudUtilities
 
 
 class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):

@@ -11,9 +11,10 @@ from __future__ import annotations
 from typing import ClassVar
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._oid.acl_assemble import FlextLdifServersOidAclAssemble as Build
-from flext_ldif.servers._oid.acl_convert import FlextLdifServersOidAclConvert as Parser
-from flext_ldif.servers._oid.acl_render import FlextLdifServersOidAclRender as Render
+
+from .acl_assemble import FlextLdifServersOidAclAssemble as Build
+from .acl_convert import FlextLdifServersOidAclConvert as Parser
+from .acl_render import FlextLdifServersOidAclRender as Render
 
 
 class FlextLdifServersOidAclPipeline:

@@ -5,9 +5,10 @@ from __future__ import annotations
 from typing import Self, cast, overload, override
 
 from flext_ldif import m, p, r, t, u
-from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
-from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
 from flext_ldif.servers.base import FlextLdifServersBase
+
+from .._base.acl import FlextLdifServersBaseSchemaAcl
+from .._base.mixins import FlextLdifServerMethodsMixin
 
 
 class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):

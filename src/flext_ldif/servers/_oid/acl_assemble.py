@@ -8,7 +8,8 @@ orchestration lives in ``acl_pipeline.py``; rendering in ``acl_render.py``.
 from __future__ import annotations
 
 from flext_ldif import c, m, p, r, t
-from flext_ldif.servers._oid.acl_convert_oud import FlextLdifServersOidAclToOud as Conv
+
+from .acl_convert_oud import FlextLdifServersOidAclToOud as Conv
 
 
 class FlextLdifServersOidAclAssemble:

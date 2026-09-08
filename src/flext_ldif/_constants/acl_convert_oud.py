@@ -51,6 +51,7 @@ class FlextLdifConstantsAclConvertOud:
     ACI_ATTR_NAME: Final[str] = "aci"
     "OUD ACL attribute name (replaces OID orclaci/orclentrylevelaci)."
     ACI_VERSION: Final[str] = "version 3.0"
+    ACI_VERSION_NUMBER: Final[str] = "3.0"
     ACI_ALLOW: Final[str] = "allow"
     BIND_OR: Final[str] = " or "
     "Separator joining same-permission bind-rules inside one ``allow`` clause."

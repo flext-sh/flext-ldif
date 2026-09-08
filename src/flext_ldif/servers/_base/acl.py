@@ -5,7 +5,8 @@ from __future__ import annotations
 from typing import Annotated, ClassVar, Self, override
 
 from flext_ldif import c, m, p, r, s, t, u
-from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
+
+from .mixins import FlextLdifServerMethodsMixin
 
 
 class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethodsMixin):

@@ -8,7 +8,8 @@ from collections.abc import Mapping, MutableMapping, MutableSequence
 from typing import Annotated, ClassVar, Self, override
 
 from flext_ldif import c, m, p, r, s, t, u
-from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
+
+from .mixins import FlextLdifServerMethodsMixin
 
 
 class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMixin):

@@ -6,9 +6,10 @@ from collections.abc import Mapping, MutableMapping
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
-from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
+
+from .._base.schema import FlextLdifServersBaseSchema
+from .constants import FlextLdifServersOidConstants
 
 
 class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
