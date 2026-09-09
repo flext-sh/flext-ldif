@@ -146,6 +146,8 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
     class Schema(FlextLdifServersRfc.Schema):
         """Schema servers for Red Hat / 389 Directory Server."""
 
+        _NORMALIZE_OBJECTCLASS: ClassVar[bool] = True
+
         @override
         def can_handle_attribute(
             self, attr_definition: str | m.Ldif.SchemaAttribute
@@ -167,15 +169,6 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 settings=FlextLdifServersDs389.Constants.OBJECTCLASS_PATTERN_SETTINGS,
             )
             return matches
-
-        @override
-        def _hook_post_parse_objectclass(
-            self, oc: m.Ldif.SchemaObjectClass
-        ) -> p.Result[m.Ldif.SchemaObjectClass]:
-            """Normalize 389 DS objectClass data after RFC parsing."""
-            u.Ldif.fix_missing_sup(oc)
-            u.Ldif.fix_kind_mismatch(oc)
-            return super()._hook_post_parse_objectclass(oc)
 
     class Acl(FlextLdifServersRfc.Acl):
         """389 Directory Server ACI server."""

@@ -18,6 +18,8 @@ class FlextLdifServersBaseSchema(
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 
+    _NORMALIZE_OBJECTCLASS: ClassVar[bool] = False
+
     server_type: Annotated[
         str,
         u.Field(
@@ -526,7 +528,10 @@ class FlextLdifServersBaseSchema(
     def _hook_post_parse_objectclass(
         self, oc: m.Ldif.SchemaObjectClass
     ) -> p.Result[m.Ldif.SchemaObjectClass]:
-        """Run hook after parsing an objectClass definition."""
+        """Normalize objectClass data after parse when subclass opts in."""
+        if self._NORMALIZE_OBJECTCLASS:
+            u.Ldif.fix_missing_sup(oc)
+            u.Ldif.fix_kind_mismatch(oc)
         return r[m.Ldif.SchemaObjectClass].ok(oc)
 
     def _hook_validate_attributes(
