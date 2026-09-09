@@ -11,6 +11,8 @@ from typing import TYPE_CHECKING
 
 from flext_ldif import c, ldif, m, p
 
+from .utilities import ExamplesFlextLdifUtilities as examples_u
+
 if TYPE_CHECKING:
     from collections.abc import MutableSequence
 
@@ -59,20 +61,7 @@ def server_migration_workflow() -> None:
 def entry_building_and_processing_workflow() -> None:
     """Run an entry building and processing workflow."""
     api: p.Ldif.LdifClient = ldif
-    created: list[m.Ldif.Entry] = []
-    for idx in range(2):
-        entry = m.Ldif.Entry(
-            dn=m.Ldif.DN(value=f"cn=User{idx},ou=People,dc=example,dc=com"),
-            attributes=m.Ldif.Attributes(
-                attributes={
-                    "objectClass": ["person"],
-                    "cn": [f"User{idx}"],
-                    "sn": ["User"],
-                },
-                attribute_metadata={},
-            ),
-        )
-        created.append(entry)
+    created: list[m.Ldif.Entry] = [examples_u.create_user_entry(idx, sn="User") for idx in range(2)]
     if not created:
         return
     if api.validate_entries(created).failure:

@@ -13,6 +13,8 @@ from typing import TYPE_CHECKING, Annotated, ClassVar, Self, override
 from flext_core import FlextUtilities as u, m
 from flext_ldif import c, p, r, t
 
+from .._utilities.collection_ldif import FlextLdifUtilitiesCollectionLdif
+
 if TYPE_CHECKING:
     from collections.abc import MutableMapping
 
@@ -108,13 +110,7 @@ class FlextLdifModelsDomainDN:
             cls, v: t.MutableSequenceOf[str]
         ) -> t.MutableSequenceOf[str]:
             """Remove duplicate transformations while preserving order."""
-            seen: set[str] = set()
-            result: t.MutableSequenceOf[str] = []
-            for item in v:
-                if item not in seen:
-                    seen.add(item)
-                    result.append(item)
-            return result
+            return FlextLdifUtilitiesCollectionLdif.deduplicate_preserve_order(v)
 
     class DN(m.Value):
         """Distinguished Name value."""

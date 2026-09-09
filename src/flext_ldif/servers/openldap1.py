@@ -251,22 +251,14 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         """OpenLDAP 1.x ACL server (nested)."""
 
         @override
-        def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
-            """Check if this is an OpenLDAP 1.x ACL (public method)."""
-            return self.can_handle_acl(acl_line)
-
         @override
         def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Check if this is an OpenLDAP 1.x ACL."""
-            if isinstance(acl_line, str):
-                return bool(
-                    FlextLdifServersOpenldap1.Constants.ACL_ACCESS_TO_RE.match(acl_line)
-                )
-            raw_acl = getattr(acl_line, "raw_acl", None)
-            if not isinstance(raw_acl, str) or not raw_acl:
+            normalized = self._normalize_acl_line(acl_line)
+            if not normalized:
                 return False
             return bool(
-                FlextLdifServersOpenldap1.Constants.ACL_ACCESS_TO_RE.match(raw_acl)
+                FlextLdifServersOpenldap1.Constants.ACL_ACCESS_TO_RE.match(normalized)
             )
 
         @override

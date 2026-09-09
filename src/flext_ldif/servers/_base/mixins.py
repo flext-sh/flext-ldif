@@ -79,5 +79,24 @@ class FlextLdifServerMethodsMixin:
         """Resolve server type for the current server class."""
         return FlextLdifServerMethodsMixin.get_server_type_from_utilities(type(self))
 
+    @staticmethod
+    def _narrow_operation(operation: t.JsonValue | None) -> str | None:
+        """Narrow operation field to str or None."""
+        return operation if isinstance(operation, str) else None
+
+    @classmethod
+    def builder_fields_or_none[T](
+        cls,
+        fields: t.MappingKV[str, T],
+        processor_keys: frozenset[str],
+        server: p.Ldif.ServerRegistry | None,
+        settings: p.Ldif.Settings | None,
+    ) -> t.JsonDict | None:
+        """Return builder dispatch fields or None to skip dispatch."""
+        return cls.project_processor_fields(
+            fields, processor_keys,
+            force_dispatch=server is not None or settings is not None,
+        )
+
 
 __all__: list[str] = ["FlextLdifServerMethodsMixin"]

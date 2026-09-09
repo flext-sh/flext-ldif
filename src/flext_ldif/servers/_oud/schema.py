@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING, ClassVar, override
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
-from .._base.schema import FlextLdifServersBaseSchema
 from .constants import FlextLdifServersOudConstants
 
 if TYPE_CHECKING:
@@ -26,17 +25,11 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         **kwargs: t.Ldif.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> None:
         """Initialize OUD schema server."""
-        filtered_kwargs: t.MutableConfigValueMapping = {
-            k: v
-            for k, v in kwargs.items()
-            if k not in {"_parent_server", "_schema_service"}
-            and isinstance(v, (str, float, bool))
-        }
-        FlextLdifServersBaseSchema.__init__(
-            self, _schema_service=schema_service, _parent_server=None, **filtered_kwargs
+        self._init_base_schema(
+            schema_service, parent_server,
+            frozenset({"_parent_server", "_schema_service"}),
+            **kwargs,
         )
-        if parent_server is not None:
-            object.__setattr__(self, "_parent_server", parent_server)
 
     @override
     def extract_schemas_from_ldif(

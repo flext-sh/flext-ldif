@@ -108,6 +108,29 @@ class FlextLdifServersBaseSchema(
         if _parent_server is not None:
             object.__setattr__(self, "_parent_server", _parent_server)
 
+    def _init_base_schema(
+        self: Self,
+        schema_service: p.Ldif.SchemaServer | None,
+        parent_server: p.Ldif.SchemaServer | None,
+        excluded_keys: frozenset[str],
+        **kwargs: t.Ldif.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+    ) -> None:
+        """Delegate to FlextLdifServersBaseSchema.__init__ then wire parent server."""
+        filtered_kwargs: t.MutableConfigValueMapping = {
+            key: val
+            for key, val in kwargs.items()
+            if key not in excluded_keys
+            and isinstance(val, t.PRIMITIVES_TYPES)
+        }
+        FlextLdifServersBaseSchema.__init__(
+            self,
+            _schema_service=schema_service,
+            _parent_server=None,
+            **filtered_kwargs,
+        )
+        if parent_server is not None:
+            self.__dict__["_parent_server"] = parent_server
+
     auto_execute: ClassVar[bool] = False
 
     @staticmethod

@@ -264,17 +264,8 @@ class TestsFlextLdifMigrationPipeline:
         Observable contract: the migrated entry's public ``aci`` attribute retains
         only the in-scope ACL clause and is rewritten to OUD syntax.
         """
-        entry = u.Tests.create_real_entry(
-            dn="cn=users,dc=ctbc",
-            attributes={
-                "objectClass": ["top"],
-                "orclaci": [
-                    (
-                        'access to entry by group="cn=x,dc=other" (browse) '
-                        'by group="cn=a,dc=ctbc" (browse)'
-                    )
-                ],
-            },
+        entry = u.Tests.orclaci_base_dn_entry(
+            dn="cn=users,dc=ctbc"
         )
         pipeline = FlextLdifMigrationPipeline(
             source_server_type="oid", target_server_type="oud", base_dn="dc=ctbc"

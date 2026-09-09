@@ -58,9 +58,11 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
     auto_execute: ClassVar[bool] = False
 
     def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
-        """Check if this ACL can be handled after parsing."""
-        _ = acl_line
-        return True
+        """Check if this ACL can be handled after parsing and normalising."""
+        normalized = self._normalize_acl_line(acl_line)
+        if not normalized:
+            return False
+        return self.can_handle_acl(normalized)
 
     def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
         """Check if this server can handle the ACL definition."""

@@ -134,43 +134,21 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         """IBM Tivoli Directory Server ACL servers implementation."""
 
         @override
-        def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
-            """Check if this ACL is a Tivoli DS ACL."""
-            if isinstance(acl_line, str):
-                return self.can_handle_acl(acl_line)
-            raw_acl = getattr(acl_line, "raw_acl", None)
-            if not isinstance(raw_acl, str) or not raw_acl:
-                return False
-            return self.can_handle_acl(raw_acl)
-
-        @override
         def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Detect Tivoli DS ACL values."""
-            if isinstance(acl_line, str):
-                normalized = acl_line.strip() if acl_line else ""
-                if not normalized:
-                    return False
-                normalized_lower = normalized.lower()
-                for marker in FlextLdifServersTivoli.Constants.ACL_NON_TIVOLI_MARKERS:
-                    if marker in normalized_lower:
-                        return False
-                attr_name, _, _ = normalized.partition(":")
-                attr_name_lower = attr_name.strip().lower()
-                if not attr_name_lower:
-                    return False
-                return (
-                    attr_name_lower
-                    in FlextLdifServersTivoli.Constants.ACL_ATTRIBUTE_NAMES
-                )
-            raw_acl = getattr(acl_line, "raw_acl", None)
-            if not isinstance(raw_acl, str) or not raw_acl:
-                return False
-            normalized = raw_acl.strip()
+            normalized = self._normalize_acl_line(acl_line)
             if not normalized:
                 return False
+            normalized_lower = normalized.lower()
+            for marker in FlextLdifServersTivoli.Constants.ACL_NON_TIVOLI_MARKERS:
+                if marker in normalized_lower:
+                    return False
             attr_name, _, _ = normalized.partition(":")
+            attr_name_lower = attr_name.strip().lower()
+            if not attr_name_lower:
+                return False
             return (
-                attr_name.strip().lower()
+                attr_name_lower
                 in FlextLdifServersTivoli.Constants.ACL_ATTRIBUTE_NAMES
             )
 

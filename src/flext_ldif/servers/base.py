@@ -167,10 +167,9 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         **fields: t.JsonValue | t.MutableSequenceOf[m.Ldif.Entry],
     ) -> Self | m.Ldif.Entry | str:
         """Callable interface - use as processor."""
-        builder_fields = FlextLdifServerMethodsMixin.project_processor_fields(
+        builder_fields = FlextLdifServerMethodsMixin.builder_fields_or_none(
             fields,
-            frozenset({"ldif_text", "entries", "operation"}),
-            force_dispatch=server is not None or settings is not None,
+            frozenset({"ldif_text", "entries", "operation"}), server, settings
         )
         if builder_fields is not None:
             configured = super().__call__(
@@ -485,14 +484,6 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
 
     class Schema(FlextLdifServersBaseSchema):
         """Nested Schema server base class."""
-
-    def _normalize_attribute_name(self, attr_name: str) -> str:
-        """Normalize attribute name to RFC 2849 canonical form."""
-        if not attr_name:
-            return attr_name
-        if attr_name.lower() == "objectclass":
-            return "objectClass"
-        return attr_name
 
 
 __all__: list[str] = ["FlextLdifServersBase"]

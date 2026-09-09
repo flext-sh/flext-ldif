@@ -400,10 +400,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         """Relaxed ACL server for lenient LDIF processing."""
 
         @override
-        def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
-            """Check if this is a relaxed ACL (public method)."""
-            if isinstance(acl_line, str):
-                return self.can_handle_acl(acl_line)
+        def can_handle(self, acl_line: str | m.Ldif.Acl | t.JsonValue) -> bool:
+            """Accept any ACL line in relaxed mode."""
             return self.can_handle_acl(acl_line)
 
         @override

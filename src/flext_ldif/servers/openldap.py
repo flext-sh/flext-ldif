@@ -212,29 +212,16 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         """OpenLDAP 2.x ACL server (nested)."""
 
         @override
-        def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
-            """Check if this is an OpenLDAP 2.x ACL."""
-            if isinstance(acl_line, str):
-                return self.can_handle_acl(acl_line)
-            raw_acl_value = getattr(acl_line, "raw_acl", None)
-            if raw_acl_value:
-                return self.can_handle_acl(str(raw_acl_value))
-            return False
-
         @override
         def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Check if this is an OpenLDAP 2.x ACL (internal)."""
-            if isinstance(acl_line, m.Ldif.Acl):
-                raw_acl = getattr(acl_line, "raw_acl", None)
-                if not isinstance(raw_acl, str) or not raw_acl:
-                    return False
-                acl_line = raw_acl
-            if not acl_line:
+            normalized = self._normalize_acl_line(acl_line)
+            if not normalized:
                 return False
-            acl_content = acl_line
+            acl_content = normalized
             olc_prefix = FlextLdifServersOpenldap.Constants.ACL_OLCACCESS_PREFIX
-            if acl_line.startswith(olc_prefix):
-                acl_content = acl_line[len(olc_prefix) :].strip()
+            if normalized.startswith(olc_prefix):
+                acl_content = normalized[len(olc_prefix) :].strip()
             return bool(
                 FlextLdifServersOpenldap.Constants.ACL_INDEX_PREFIX_RE.match(
                     acl_content

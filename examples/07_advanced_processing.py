@@ -20,6 +20,8 @@ from typing import TYPE_CHECKING
 
 from flext_ldif import ldif, m, p, u
 
+from .utilities import ExamplesFlextLdifUtilities as examples_u
+
 if TYPE_CHECKING:
     from collections.abc import MutableSequence
 
@@ -47,20 +49,9 @@ def parallel_processing() -> None:
     Demonstrates creating entries directly via models and validating in batch.
     """
     api: p.Ldif.LdifClient = ldif
-    entries: list[m.Ldif.Entry] = []
-    for i in range(10):
-        entry = m.Ldif.Entry(
-            dn=m.Ldif.DN(value=f"cn=User{i},ou=People,dc=example,dc=com"),
-            attributes=m.Ldif.Attributes(
-                attributes={
-                    "objectClass": ["person"],
-                    "cn": [f"User{i}"],
-                    "sn": [f"User{i}"],
-                },
-                attribute_metadata={},
-            ),
-        )
-        entries.append(entry)
+    entries: list[m.Ldif.Entry] = [
+        examples_u.create_user_entry(i) for i in range(10)
+    ]
     validation_result = api.validate_entries(entries)
     if validation_result.success:
         report = validation_result.unwrap()

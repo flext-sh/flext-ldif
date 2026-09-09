@@ -8,7 +8,6 @@ from typing import ClassVar, override
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
-from .._base.schema import FlextLdifServersBaseSchema
 from .constants import FlextLdifServersOidConstants
 
 
@@ -24,37 +23,10 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
         **kwargs: t.Ldif.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> None:
         """Initialize OID schema server."""
-        filtered_kwargs: t.MutableConfigValueMapping = {
-            k: v
-            for k, v in kwargs.items()
-            if k not in {"_parent_server", "_schema_service"}
-            and isinstance(v, (str, float, bool))
-        }
-        schema_service_typed: p.Ldif.SchemaServer | None = (
-            schema_service if schema_service is not None else None
-        )
-        FlextLdifServersBaseSchema.__init__(
-            self,
-            _schema_service=schema_service_typed,
-            _parent_server=None,
-            **filtered_kwargs,
-        )
-        if parent_server is not None:
-            object.__setattr__(self, "_parent_server", parent_server)
-
-    @override
-    def extract_schemas_from_ldif(
-        self, ldif_content: str, *, validate_dependencies: bool = False
-    ) -> p.Result[
-        MutableMapping[
-            str,
-            t.MutableSequenceOf[m.Ldif.SchemaAttribute]
-            | t.MutableSequenceOf[m.Ldif.SchemaObjectClass],
-        ]
-    ]:
-        """Extract and parse all schema definitions from LDIF content."""
-        return super().extract_schemas_from_ldif(
-            ldif_content, validate_dependencies=validate_dependencies
+        self._init_base_schema(
+            schema_service, parent_server,
+            frozenset({"_parent_server", "_schema_service"}),
+            **kwargs,
         )
 
     def _add_target_metadata(
