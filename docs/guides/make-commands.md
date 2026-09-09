@@ -3,6 +3,8 @@
 
 # flext-ldif - FLEXT Make Commands
 
+> Project profile: `flext-ldif`
+
 <!-- TOC START -->
 - [Discover commands](#discover-commands)
 - [Canonical workflow](#canonical-workflow)
@@ -12,15 +14,13 @@
 - [Related guides](#related-guides)
 <!-- TOC END -->
 
-> Project profile: `flext-ldif`
-
 `make help` at the workspace root is the executable authority for command
 grammar. This guide records the invariants that every declared verb must keep.
 
 ## Discover commands
 
 ```bash
-make setup APPLY=Y
+make setup
 make help
 ```
 
