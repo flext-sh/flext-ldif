@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_cli import u
+
 from flext_ldif import FlextLdifModels as m, c, p, r, t
 
 from .oid import FlextLdifUtilitiesOID as uo

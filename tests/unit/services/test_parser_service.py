@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from uuid import uuid4
 
 from flext_tests import tm
+
 from tests import c, m, u
 
 if TYPE_CHECKING:

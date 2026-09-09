@@ -6,6 +6,7 @@ from collections.abc import Callable, Mapping, MutableMapping
 from typing import ClassVar
 
 from flext_cli import u
+
 from flext_ldif import FlextLdifModels as m, c, p, t
 
 from .server import FlextLdifUtilitiesServer as us

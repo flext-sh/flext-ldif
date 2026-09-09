@@ -8,9 +8,9 @@ attributes, internal collaborators, or implementation details are touched.
 from __future__ import annotations
 
 import pytest
+from flext_tests import tm
 
 from flext_ldif.utilities import u
-from flext_tests import tm
 
 
 class TestsFlextLdifUtilitiesComprehensive:

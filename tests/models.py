@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Annotated, ClassVar
 
-from flext_ldif import m, u
 from flext_tests import FlextTestsModels
+
+from flext_ldif import m, u
 from tests import t
 
 if TYPE_CHECKING:

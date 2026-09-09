@@ -10,10 +10,10 @@ public return value or the ``r[T]`` outcome — never an implementation detail.
 from __future__ import annotations
 
 import pytest
+from flext_tests import tm
 
 from flext_ldif import m
 from flext_ldif.servers.oid import FlextLdifServersOidAclToOud as Conv
-from flext_tests import tm
 
 
 class TestsFlextLdifOidAclConvertOud:

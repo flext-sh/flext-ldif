@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import importlib
 
+from flext_tests import tm
 from packaging.version import Version
 
-from flext_tests import tm
 from tests import c
 
 version_module = importlib.import_module("flext_ldif.__version__")
