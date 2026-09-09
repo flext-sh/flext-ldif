@@ -168,8 +168,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
     ) -> Self | m.Ldif.Entry | str:
         """Callable interface - use as processor."""
         builder_fields = FlextLdifServerMethodsMixin.builder_fields_or_none(
-            fields,
-            frozenset({"ldif_text", "entries", "operation"}), server, settings
+            fields, frozenset({"ldif_text", "entries", "operation"}), server, settings
         )
         if builder_fields is not None:
             configured = super().__call__(

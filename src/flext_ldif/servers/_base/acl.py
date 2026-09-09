@@ -70,9 +70,7 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         return False
 
     @staticmethod
-    def _normalize_acl_line(
-        acl_line: str | m.Ldif.Acl
-    ) -> str | None:
+    def _normalize_acl_line(acl_line: str | m.Ldif.Acl) -> str | None:
         """Extract and strip the raw ACL string from any input type."""
         if isinstance(acl_line, str):
             return acl_line.strip()

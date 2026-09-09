@@ -119,9 +119,7 @@ class TestsFlextLdifTransformersService:
         )
 
     def test_base_dn_excludes_out_of_scope_bind_dn(self) -> None:
-        entry = u.Tests.orclaci_base_dn_entry(
-            dn="cn=users,dc=ctbc"
-        )
+        entry = u.Tests.orclaci_base_dn_entry(dn="cn=users,dc=ctbc")
         transformer = FlextLdifTransformer(
             source_server=c.Ldif.ServerTypes.OID,
             target_server=c.Ldif.ServerTypes.OUD,

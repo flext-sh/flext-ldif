@@ -135,12 +135,12 @@ CALLER_VIRTUAL_ENV := $(patsubst %/,%,$(VIRTUAL_ENV))
 
 # === SECTION: profile routing (managed) ===
 # Source: repository topology. workspace has .gitmodules; standalone does not.
-# Both own their runtime in PROJECT_ROOT.
+# Attached members share their Git superproject runtime; standalone owns itself.
 ifneq ($(filter $(MAKE_PROFILE),workspace standalone),$(MAKE_PROFILE))
 $(error Invalid MAKE_PROFILE '$(MAKE_PROFILE)')
 endif
 
-RUNTIME_ROOT := $(PROJECT_ROOT)
+RUNTIME_ROOT := $(REPOSITORY_ROOT)
 # End SECTION: profile routing
 
 RUNTIME_VENV := $(RUNTIME_ROOT)/.venv
@@ -491,11 +491,9 @@ PROJECT_FLEXT_INFRA := if [ ! -x "$(FLEXT_INFRA_PYTHON)" ]; then printf 'ERROR: 
 # `uv sync --check` permanently divergent. A standalone project owns its venv
 # alone and has no workspace packages to include.
 SHARED_RUNTIME := $(if $(filter-out $(PROJECT_ROOT),$(RUNTIME_ROOT)),1,$(if $(strip $(WORKSPACE_SUBPROJECTS)),1,))
-# CI provisions strictly from the committed lock: internal flext dependencies
-# are plain distribution names resolved by the workspace overlay, which a
-# hosted checkout does not have, so resolution there is unsatisfiable by
-# design. The committed lock carries the direct Git provenance for them.
-UV_SYNC_FLAGS := $(if $(SHARED_RUNTIME),--all-packages ,)--all-extras --all-groups $(if $(CI),--frozen ,)
+# CI must verify the committed lock against declared metadata before syncing.
+# --frozen bypasses that check and can omit newly declared runtime dependencies.
+UV_SYNC_FLAGS := $(if $(SHARED_RUNTIME),--all-packages ,)--all-extras --all-groups $(if $(CI),--locked ,)
 
 -include custom.mk
 SELF_MAKE := $(MAKE) --no-print-directory -f "$(SELF_MAKEFILE)"

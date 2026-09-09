@@ -26,7 +26,8 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
     ) -> None:
         """Initialize OUD schema server."""
         self._init_base_schema(
-            schema_service, parent_server,
+            schema_service,
+            parent_server,
             frozenset({"_parent_server", "_schema_service"}),
             **kwargs,
         )

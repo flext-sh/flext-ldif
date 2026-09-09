@@ -148,8 +148,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             if not attr_name_lower:
                 return False
             return (
-                attr_name_lower
-                in FlextLdifServersTivoli.Constants.ACL_ATTRIBUTE_NAMES
+                attr_name_lower in FlextLdifServersTivoli.Constants.ACL_ATTRIBUTE_NAMES
             )
 
         @override

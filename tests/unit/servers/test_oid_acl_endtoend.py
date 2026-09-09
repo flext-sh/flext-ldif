@@ -95,9 +95,7 @@ class TestsFlextLdifOidAclEndToEnd:
     def test_base_dn_field_excludes_out_of_scope_bind_dn(self) -> None:
         # FlextLdifConversion(base_dn=...) activates the out-of-scope filter:
         # a bind DN outside base_dn is dropped from the emitted aci.
-        entry = u.Tests.orclaci_base_dn_entry(
-            dn="cn=users,dc=ctbc"
-        )
+        entry = u.Tests.orclaci_base_dn_entry(dn="cn=users,dc=ctbc")
         svc = FlextLdifConversion(base_dn="dc=ctbc")
 
         converted = u.Tests.assert_success(
