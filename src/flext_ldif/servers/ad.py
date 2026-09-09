@@ -158,6 +158,8 @@ class FlextLdifServersAd(FlextLdifServersRfc):
     class Schema(FlextLdifServersRfc.Schema):
         """Active Directory schema server."""
 
+        _NORMALIZE_OBJECTCLASS: ClassVar[bool] = True
+
         @override
         def can_handle_attribute(
             self, attr_definition: str | m.Ldif.SchemaAttribute
@@ -179,15 +181,6 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 settings=FlextLdifServersAd.Constants.OBJECTCLASS_PATTERN_SETTINGS,
             )
             return matches
-
-        @override
-        def _hook_post_parse_objectclass(
-            self, oc: m.Ldif.SchemaObjectClass
-        ) -> p.Result[m.Ldif.SchemaObjectClass]:
-            """Normalize Active Directory objectClass data after RFC parsing."""
-            u.Ldif.fix_missing_sup(oc)
-            u.Ldif.fix_kind_mismatch(oc)
-            return super()._hook_post_parse_objectclass(oc)
 
     class Acl(FlextLdifServersRfc.Acl):
         """Active Directory ACL server handling nTSecurityDescriptor entries."""

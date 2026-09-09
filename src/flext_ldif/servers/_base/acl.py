@@ -67,6 +67,18 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         _ = acl_line
         return False
 
+    @staticmethod
+    def _normalize_acl_line(
+        acl_line: str | m.Ldif.Acl
+    ) -> str | None:
+        """Extract and strip the raw ACL string from any input type."""
+        if isinstance(acl_line, str):
+            return acl_line.strip()
+        raw_acl = getattr(acl_line, "raw_acl", None)
+        if not isinstance(raw_acl, str):
+            return None
+        return raw_acl.strip()
+
     def can_handle_attribute(self, attribute: m.Ldif.SchemaAttribute) -> bool:
         """Check if this ACL server should be aware of a specific attribute definition."""
         _ = attribute
