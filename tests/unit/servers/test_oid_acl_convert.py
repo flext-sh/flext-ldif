@@ -16,10 +16,10 @@ All assertions target observable return values / public model state only.
 from __future__ import annotations
 
 import pytest
+from flext_tests import tm
 
 from flext_ldif import m
 from flext_ldif.servers.oid import FlextLdifServersOidAclConvert as Parser
-from flext_tests import tm
 
 _DN: str = "dc=ctbc"
 

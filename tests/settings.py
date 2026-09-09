@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from flext_ldif import FlextLdifSettings
 from flext_tests import FlextTestsSettings
+
+from flext_ldif import FlextLdifSettings
 
 
 class TestsFlextLdifSettings(FlextLdifSettings, FlextTestsSettings):

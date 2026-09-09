@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, overload
 
 from flext_cli import u
+
 from flext_ldif import FlextLdifModels as m, c, p, r, t
 
 if TYPE_CHECKING:

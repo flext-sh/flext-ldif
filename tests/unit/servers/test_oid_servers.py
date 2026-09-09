@@ -10,10 +10,10 @@ under test.
 from __future__ import annotations
 
 import pytest
+from flext_tests import tm
 
 from flext_ldif import p
 from flext_ldif.services.server import FlextLdifServer
-from flext_tests import tm
 
 
 class TestsFlextLdifOidServers:

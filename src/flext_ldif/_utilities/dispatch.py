@@ -6,6 +6,7 @@ from collections.abc import Callable, Sequence
 from typing import ClassVar, TypeGuard, overload
 
 from flext_cli import u
+
 from flext_ldif import FlextLdifModels as m, c, p, r, t
 
 from .collection_ldif import FlextLdifUtilitiesCollectionLdif

@@ -10,9 +10,9 @@ or internal collaborators.
 from __future__ import annotations
 
 import pytest
+from flext_tests import tm
 
 from flext_ldif.servers.novell import FlextLdifServersNovell
-from flext_tests import tm
 from tests import c, m, u
 
 
