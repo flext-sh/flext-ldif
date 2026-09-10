@@ -94,7 +94,8 @@ class FlextLdifServerMethodsMixin:
     ) -> t.JsonDict | None:
         """Return builder dispatch fields or None to skip dispatch."""
         return cls.project_processor_fields(
-            fields, processor_keys,
+            fields,
+            processor_keys,
             force_dispatch=server is not None or settings is not None,
         )
 

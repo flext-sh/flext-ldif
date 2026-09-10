@@ -119,14 +119,10 @@ class FlextLdifServersBaseSchema(
         filtered_kwargs: t.MutableConfigValueMapping = {
             key: val
             for key, val in kwargs.items()
-            if key not in excluded_keys
-            and isinstance(val, t.PRIMITIVES_TYPES)
+            if key not in excluded_keys and isinstance(val, t.PRIMITIVES_TYPES)
         }
         FlextLdifServersBaseSchema.__init__(
-            self,
-            _schema_service=schema_service,
-            _parent_server=None,
-            **filtered_kwargs,
+            self, _schema_service=schema_service, _parent_server=None, **filtered_kwargs
         )
         if parent_server is not None:
             self.__dict__["_parent_server"] = parent_server

@@ -81,11 +81,16 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         self._init_base_schema(
             schema_service,
             parent_server,
-            frozenset(
-                {"_parent_server", "_schema_service", "parent_server",
-                 "attr_definition", "oc_definition", "attr_model",
-                 "oc_model", "operation"}
-            ),
+            frozenset({
+                "_parent_server",
+                "_schema_service",
+                "parent_server",
+                "attr_definition",
+                "oc_definition",
+                "attr_model",
+                "oc_model",
+                "operation",
+            }),
             **kwargs,
         )
 

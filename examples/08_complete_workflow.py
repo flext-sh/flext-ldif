@@ -61,7 +61,9 @@ def server_migration_workflow() -> None:
 def entry_building_and_processing_workflow() -> None:
     """Run an entry building and processing workflow."""
     api: p.Ldif.LdifClient = ldif
-    created: list[m.Ldif.Entry] = [examples_u.create_user_entry(idx, sn="User") for idx in range(2)]
+    created: list[m.Ldif.Entry] = [
+        examples_u.create_user_entry(idx, sn="User") for idx in range(2)
+    ]
     if not created:
         return
     if api.validate_entries(created).failure:
