@@ -5,10 +5,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_cli import u
+
 from flext_ldif import FlextLdifModels as m, c, p, r, t
-from flext_ldif._utilities.oid import FlextLdifUtilitiesOID as uo
-from flext_ldif._utilities.parser import FlextLdifUtilitiesParser as up
-from flext_ldif._utilities.schema_extract import FlextLdifUtilitiesSchemaExtract as se
+
+from .oid import FlextLdifUtilitiesOID as uo
+from .parser import FlextLdifUtilitiesParser as up
+from .schema_extract import FlextLdifUtilitiesSchemaExtract as se
 
 if TYPE_CHECKING:
     from collections.abc import Callable, MutableMapping

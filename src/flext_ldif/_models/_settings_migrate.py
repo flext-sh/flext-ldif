@@ -14,7 +14,8 @@ from typing import Annotated
 
 from flext_core import FlextUtilities as u, m
 from flext_ldif import c, t
-from flext_ldif._models._settings_rules import FlextLdifModelsSettingsRules as msr
+
+from ._settings_rules import FlextLdifModelsSettingsRules as msr
 
 
 class FlextLdifModelsSettingsMigrate:

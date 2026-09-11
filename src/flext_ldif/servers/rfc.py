@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
-from flext_ldif.servers._rfc.constants import FlextLdifServersRfcConstants
-from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
-from flext_ldif.servers._rfc.schema import FlextLdifServersRfcSchema
 from flext_ldif.servers.base import FlextLdifServersBase
+
+from ._rfc.acl import FlextLdifServersRfcAcl
+from ._rfc.constants import FlextLdifServersRfcConstants
+from ._rfc.entry import FlextLdifServersRfcEntry
+from ._rfc.schema import FlextLdifServersRfcSchema
 
 
 class FlextLdifServersRfc(FlextLdifServersBase):

@@ -5,9 +5,10 @@ from __future__ import annotations
 from typing import Self, cast, overload, override
 
 from flext_ldif import m, p, r, t, u
-from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
-from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
 from flext_ldif.servers.base import FlextLdifServersBase
+
+from .._base.acl import FlextLdifServersBaseSchemaAcl
+from .._base.mixins import FlextLdifServerMethodsMixin
 
 
 class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
@@ -97,10 +98,8 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         processor_fields: dict[str, t.JsonValue | m.Ldif.Acl | None] = dict(fields)
         processor_fields["data"] = data
         processor_fields["operation"] = operation
-        builder_fields = FlextLdifServerMethodsMixin.project_processor_fields(
-            processor_fields,
-            frozenset({"data", "operation"}),
-            force_dispatch=server is not None or settings is not None,
+        builder_fields = FlextLdifServerMethodsMixin.builder_fields_or_none(
+            processor_fields, frozenset({"data", "operation"}), server, settings
         )
         if builder_fields is not None:
             configured = super().__call__(
@@ -114,7 +113,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
             else None
         )
         operation_raw = processor_fields.get("operation")
-        narrowed_operation = operation_raw if isinstance(operation_raw, str) else None
+        narrowed_operation = self._narrow_operation(operation_raw)
         result = self.execute(data=narrowed_data, operation=narrowed_operation)
         if isinstance(result.value, str):
             return result.value

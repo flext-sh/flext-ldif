@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Annotated, ClassVar
 
-from flext_ldif import m, u
 from flext_tests import FlextTestsModels
+
+from flext_ldif import m, u
 from tests import t
 
 if TYPE_CHECKING:
@@ -21,7 +22,7 @@ class TestsFlextLdifModels(FlextTestsModels, m):
         class _Frozen(m.BaseModel):
             """Base for every frozen test model in this namespace."""
 
-            model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+            model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         class _CanHandleCase(_Frozen):
             """Shared fields for can_handle-style detection cases."""

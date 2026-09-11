@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, overload
 
 from flext_cli import u
+
 from flext_ldif import FlextLdifModels as m, c, p, r, t
 
 if TYPE_CHECKING:
@@ -434,7 +435,7 @@ class FlextLdifUtilitiesDN:
         try:
             return FlextLdifUtilitiesDN._compare_dns_core(dn1, dn2)
         except c.Ldif.EXC_LDIF_PARSE as e:
-            return r[int].fail(f"DN comparison error: {e}")
+            return r[int].fail(f"DN comparison error: {e}", exception=e)
 
     @staticmethod
     def _compare_dns_core(dn1: str | None, dn2: str | None) -> p.Result[int]:
@@ -618,7 +619,7 @@ class FlextLdifUtilitiesDN:
                         )
                     )
                 except c.Ldif.EXC_LDIF_PARSE as e:
-                    result = r[str].fail(f"DN normalization error: {e}")
+                    result = r[str].fail(f"DN normalization error: {e}", exception=e)
         return result
 
     @staticmethod
@@ -696,7 +697,9 @@ class FlextLdifUtilitiesDN:
                 try:
                     result = FlextLdifUtilitiesDN._parse_dn_components(dn_str)
                 except c.Ldif.EXC_LDIF_PARSE as e:
-                    result = r[t.MutableStrPairSequence].fail(f"DN parsing error: {e}")
+                    result = r[t.MutableStrPairSequence].fail(
+                        f"DN parsing error: {e}", exception=e
+                    )
         return result
 
     @staticmethod
@@ -709,7 +712,9 @@ class FlextLdifUtilitiesDN:
             try:
                 result = FlextLdifUtilitiesDN._parse_rdn_core(rdn)
             except c.Ldif.EXC_LDIF_PARSE as e:
-                result = r[t.MutableStrPairSequence].fail(f"RDN parsing error: {e}")
+                result = r[t.MutableStrPairSequence].fail(
+                    f"RDN parsing error: {e}", exception=e
+                )
         return result
 
     @staticmethod

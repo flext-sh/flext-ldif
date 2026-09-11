@@ -12,12 +12,13 @@ from __future__ import annotations
 from typing import Annotated, override
 
 from flext_ldif import c, m, p, r, s, t, u
-from flext_ldif.servers._oid.acl_pipeline import FlextLdifServersOidAclPipeline
 from flext_ldif.services.conversion_metadata import FlextLdifConversionMetadataMixin
 from flext_ldif.services.conversion_schema_entry import (
     FlextLdifConversionSchemaEntryMixin,
 )
 from flext_ldif.services.conversion_support import FlextLdifConversionSupportMixin
+
+from ..servers._oid.acl_pipeline import FlextLdifServersOidAclPipeline
 
 
 class FlextLdifConversionEntryMixin(
@@ -84,10 +85,7 @@ class FlextLdifConversionEntryMixin(
                 source_server, target_server, converted_entry
             )
             if schema_entry_result.failure:
-                return r[t.Ldif.ConvertedModel].fail(
-                    schema_entry_result.error
-                    or "Failed to convert schema attributes in entry"
-                )
+                return r[t.Ldif.ConvertedModel].from_failure(schema_entry_result)
             converted_entry = schema_entry_result.value
         return self._convert_entry_payload(
             converted_entry, source_type_norm, target_type_norm
@@ -154,9 +152,7 @@ class FlextLdifConversionEntryMixin(
             base_dn=self.base_dn or "",
         )
         if acl_conversion.failure:
-            return r[t.Ldif.ConvertedModel].fail(
-                acl_conversion.error or "Failed to convert OID ACLs to OUD aci"
-            )
+            return r[t.Ldif.ConvertedModel].from_failure(acl_conversion)
         converted_entry = self._transform_entry_dn(
             acl_conversion.value, source_type_norm, target_type_norm
         )

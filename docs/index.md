@@ -10,7 +10,7 @@
 
 <!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
 
-- Version: `0.12.0rc0`
+- Version: `0.12.0`
 - Project class: `domain`
 - Package: `flext_ldif`
 - Description: FLEXT LDIF - Enterprise LDIF Processing Library
@@ -44,11 +44,10 @@ slot registry verification).
 
 ## Quality Gates
 
-Canonical `make` verbs (`check`, `test`, `fmt WHAT=apply APPLY=Y`, `val`,
-`docs`) — see
+Canonical selector-free `make` verbs (`check`, `test`, `fmt`, `conform`, `docs`)
+use `APPLY=Y` — see
 [`/flext/AGENTS.md`](https://github.com/flext-sh/flext/blob/0.12.0-dev/AGENTS.md)
-`Build & Test` and `Required Python quality gates`; selector routing is owned
-universally by `config.AiHub.paths.agents_home`/`skills/make-check/SKILL.md`.
+`Build & Test` and `Required Python quality gates`.
 
 ## Governance Pointer
 

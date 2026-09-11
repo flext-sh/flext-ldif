@@ -214,9 +214,7 @@ class FlextLdifServersOidAclConvert:
         target_type, target_attrs, content = target
         filter_result = cls._extract_filter(content)
         if filter_result.failure:
-            return r[m.Ldif.OidAclRule].fail(
-                filter_result.error or "Invalid ACL filter clause"
-            )
+            return r[m.Ldif.OidAclRule].from_failure(filter_result)
         target_filter, content = filter_result.value
         subjects = tuple(
             subject

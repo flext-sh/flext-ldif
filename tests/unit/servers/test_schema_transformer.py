@@ -9,8 +9,8 @@ private state, no collaborator spying, no patching of the unit under test.
 from __future__ import annotations
 
 import pytest
-
 from flext_tests import tm
+
 from tests import u
 
 

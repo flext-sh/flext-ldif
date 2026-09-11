@@ -8,7 +8,8 @@ from collections.abc import Mapping, MutableMapping, MutableSequence
 from typing import Annotated, ClassVar, Self, override
 
 from flext_ldif import c, m, p, r, s, t, u
-from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
+
+from .mixins import FlextLdifServerMethodsMixin
 
 
 class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMixin):
@@ -533,9 +534,10 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
                 ldif_output += "\n"
             return ldif_output
 
-        return r.traverse(
-            entries, lambda e: self._write_single_entry(e, write_options)
-        ).map(format_output)
+        def write_entry(entry: m.Ldif.Entry) -> p.Result[str]:
+            return self._write_single_entry(entry, write_options)
+
+        return r.traverse(entries, write_entry).map(format_output)
 
     def _write_single_entry(
         self, entry: m.Ldif.Entry, write_options: m.Ldif.WriteFormatOptions | None

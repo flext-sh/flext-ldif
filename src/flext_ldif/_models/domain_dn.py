@@ -13,6 +13,8 @@ from typing import TYPE_CHECKING, Annotated, ClassVar, Self, override
 from flext_core import FlextUtilities as u, m
 from flext_ldif import c, p, r, t
 
+from .._utilities.collection_ldif import FlextLdifUtilitiesCollectionLdif
+
 if TYPE_CHECKING:
     from collections.abc import MutableMapping
 
@@ -71,13 +73,13 @@ class FlextLdifModelsDomainDN:
         @u.computed_field
         @property
         def has_errors(self) -> bool:
-            """Check if any validation errors exist."""
+            """Whether any validation errors exist."""
             return bool(self.validation_errors)
 
         @u.computed_field
         @property
         def has_warnings(self) -> bool:
-            """Check if any validation warnings exist."""
+            """Whether any validation warnings exist."""
             return bool(self.validation_warnings)
 
         @u.computed_field
@@ -89,7 +91,7 @@ class FlextLdifModelsDomainDN:
         @u.computed_field
         @property
         def was_transformed(self) -> bool:
-            """Check if any transformations were applied."""
+            """Whether any transformations were applied."""
             return self.original_dn != self.normalized_dn or bool(self.transformations)
 
         @classmethod
@@ -108,18 +110,12 @@ class FlextLdifModelsDomainDN:
             cls, v: t.MutableSequenceOf[str]
         ) -> t.MutableSequenceOf[str]:
             """Remove duplicate transformations while preserving order."""
-            seen: set[str] = set()
-            result: t.MutableSequenceOf[str] = []
-            for item in v:
-                if item not in seen:
-                    seen.add(item)
-                    result.append(item)
-            return result
+            return FlextLdifUtilitiesCollectionLdif.deduplicate_preserve_order(v)
 
     class DN(m.Value):
         """Distinguished Name value."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
             strict=True,
             frozen=True,
             extra="forbid",

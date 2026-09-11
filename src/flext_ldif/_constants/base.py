@@ -11,7 +11,7 @@ import re
 from typing import TYPE_CHECKING, ClassVar, Final
 
 if TYPE_CHECKING:
-    from flext_ldif._typings.base import FlextLdifTypesBase as t
+    from .._typings.base import FlextLdifTypesBase as t
 
 
 class FlextLdifConstantsBase:

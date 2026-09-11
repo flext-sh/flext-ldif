@@ -3,23 +3,24 @@
 from __future__ import annotations
 
 from flext_cli import u
-from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
-from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
-from flext_ldif._utilities.collection_ldif import FlextLdifUtilitiesCollectionLdif
-from flext_ldif._utilities.dispatch import FlextLdifUtilitiesDispatch
-from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
-from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
-from flext_ldif._utilities.events import FlextLdifUtilitiesEvents
-from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
-from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
-from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
-from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
-from flext_ldif._utilities.pipeline import FlextLdifUtilitiesPipeline
-from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
-from flext_ldif._utilities.server import FlextLdifUtilitiesServer
-from flext_ldif._utilities.transformers import FlextLdifUtilitiesTransformers
-from flext_ldif._utilities.validation import FlextLdifUtilitiesValidation
-from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
+
+from ._utilities.acl import FlextLdifUtilitiesACL
+from ._utilities.attribute import FlextLdifUtilitiesAttribute
+from ._utilities.collection_ldif import FlextLdifUtilitiesCollectionLdif
+from ._utilities.dispatch import FlextLdifUtilitiesDispatch
+from ._utilities.dn import FlextLdifUtilitiesDN
+from ._utilities.entry import FlextLdifUtilitiesEntry
+from ._utilities.events import FlextLdifUtilitiesEvents
+from ._utilities.metadata import FlextLdifUtilitiesMetadata
+from ._utilities.object_class import FlextLdifUtilitiesObjectClass
+from ._utilities.oid import FlextLdifUtilitiesOID
+from ._utilities.parser import FlextLdifUtilitiesParser
+from ._utilities.pipeline import FlextLdifUtilitiesPipeline
+from ._utilities.schema import FlextLdifUtilitiesSchema
+from ._utilities.server import FlextLdifUtilitiesServer
+from ._utilities.transformers import FlextLdifUtilitiesTransformers
+from ._utilities.validation import FlextLdifUtilitiesValidation
+from ._utilities.writer import FlextLdifUtilitiesWriter
 
 
 class FlextLdifUtilities(u):

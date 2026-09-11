@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableMapping
-from typing import ClassVar, TypeIs
+from typing import ClassVar
 
 from flext_cli import u
+
 from flext_ldif import FlextLdifModels as m, c, p, t
-from flext_ldif._utilities.server import FlextLdifUtilitiesServer as us
+
+from .server import FlextLdifUtilitiesServer as us
 
 
 class FlextLdifUtilitiesMetadata:
@@ -508,12 +510,6 @@ class FlextLdifUtilitiesMetadata:
         return value is None or isinstance(value, t.PRIMITIVES_TYPES)
 
     @staticmethod
-    def _is_metadata_scalar_typed(
-        value: t.JsonValue,
-    ) -> TypeIs[str | int | float | bool | None]:
-        return FlextLdifUtilitiesMetadata._is_metadata_scalar(value)
-
-    @staticmethod
     def _normalize_dict_list(
         values: t.SequenceOf[t.JsonValue],
     ) -> t.MutableSequenceOf[t.JsonValue]:
@@ -521,10 +517,6 @@ class FlextLdifUtilitiesMetadata:
         for item in values:
             normalized.append(u.normalize_to_metadata(item))
         return normalized
-
-    @staticmethod
-    def _normalize_metadata_list_item(item: t.JsonValue) -> t.JsonValue:
-        return u.normalize_to_metadata(item)
 
     @staticmethod
     def _set_model_metadata(

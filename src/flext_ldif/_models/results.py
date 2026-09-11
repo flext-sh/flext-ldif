@@ -6,9 +6,10 @@ from typing import Annotated, Self
 
 from flext_core import FlextUtilities as u, m
 from flext_ldif import c, t
-from flext_ldif._models.collections import FlextLdifModelsCollections as mc
-from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries as mde
-from flext_ldif._models.events import FlextLdifModelsEvents as me
+
+from .collections import FlextLdifModelsCollections as mc
+from .domain_entries import FlextLdifModelsDomainsEntries as mde
+from .events import FlextLdifModelsEvents as me
 
 
 def _default_statistics() -> FlextLdifModelsResults.Statistics:

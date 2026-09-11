@@ -33,6 +33,9 @@ class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s, ABC
             else c.Ldif.OBJECT_CLASSES
         )
 
+        def default_write_error(error: str) -> str:
+            return error or f"Failed to write converted {schema_field_name}"
+
         def write_schema_item(
             parsed_item: t.Ldif.SchemaConversionValue,
         ) -> p.Result[str]:
@@ -45,11 +48,7 @@ class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s, ABC
                 return (
                     r[str]
                     .from_result(target_schema.write_attribute(parsed_item))
-                    .map_error(
-                        lambda error: (
-                            error or f"Failed to write converted {schema_field_name}"
-                        )
-                    )
+                    .map_error(default_write_error)
                 )
             if not isinstance(parsed_item, m.Ldif.SchemaObjectClass):
                 return r[str].fail(
@@ -59,21 +58,14 @@ class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s, ABC
             return (
                 r[str]
                 .from_result(target_schema.write_objectclass(parsed_item))
-                .map_error(
-                    lambda error: (
-                        error or f"Failed to write converted {schema_field_name}"
-                    )
-                )
+                .map_error(default_write_error)
             )
 
-        definition_error = f"Failed to parse {schema_field_name} definition"
         if schema_item_kind == c.Ldif.SchemaItemKind.ATTRIBUTE:
             return (
                 self
                 ._validate_parsed_schema(
-                    source_schema.parse_attribute(value),
-                    m.Ldif.SchemaAttribute,
-                    definition_error,
+                    source_schema.parse_attribute(value), m.Ldif.SchemaAttribute
                 )
                 .map_error(
                     lambda error: error or f"Failed to parse {schema_field_name}"
@@ -83,9 +75,7 @@ class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s, ABC
         return (
             self
             ._validate_parsed_schema(
-                source_schema.parse_objectclass(value),
-                m.Ldif.SchemaObjectClass,
-                definition_error,
+                source_schema.parse_objectclass(value), m.Ldif.SchemaObjectClass
             )
             .map_error(lambda error: error or f"Failed to parse {schema_field_name}")
             .flat_map(write_schema_item)
@@ -122,38 +112,38 @@ class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s, ABC
         ]
         if not schema_fields:
             return r[m.Ldif.Entry].ok(entry)
-        converted_fields_result = r[tuple[str, list[str]]].traverse(
-            schema_fields,
-            lambda field: (
+
+        def convert_field(
+            field: tuple[str, c.Ldif.SchemaItemKind, t.MutableSequenceOf[str]],
+        ) -> p.Result[tuple[str, list[str]]]:
+            attr_name, schema_item_kind, values = field
+
+            def convert_value(value: str) -> p.Result[str]:
+                return self._convert_schema_entry_value(
+                    source_schema,
+                    target_schema,
+                    value,
+                    schema_item_kind=schema_item_kind,
+                )
+
+            def to_pair(converted_values: t.SequenceOf[str]) -> tuple[str, list[str]]:
+                return (attr_name, list(converted_values))
+
+            def default_field_error(error: str) -> str:
+                return error or f"Failed converting schema field {attr_name}"
+
+            return (
                 r[str]
-                .traverse(
-                    field[2],
-                    lambda value, schema_item_kind=field[1]: (
-                        self._convert_schema_entry_value(
-                            source_schema,
-                            target_schema,
-                            value,
-                            schema_item_kind=schema_item_kind,
-                        )
-                    ),
-                )
-                .map(
-                    lambda converted_values, attr_name=field[0]: (
-                        attr_name,
-                        list(converted_values),
-                    )
-                )
-                .map_error(
-                    lambda error, attr_name=field[0]: (
-                        error or f"Failed converting schema field {attr_name}"
-                    )
-                )
-            ),
+                .traverse(values, convert_value)
+                .map(to_pair)
+                .map_error(default_field_error)
+            )
+
+        converted_fields_result = r[tuple[str, list[str]]].traverse(
+            schema_fields, convert_field
         )
         if converted_fields_result.failure:
-            return r[m.Ldif.Entry].fail(
-                converted_fields_result.error or "Schema field conversion failed"
-            )
+            return r[m.Ldif.Entry].from_failure(converted_fields_result)
         updated_attributes = dict(entry.attributes.attributes)
         updated_attributes.update(dict(converted_fields_result.value))
         updated_entry = entry.model_copy(

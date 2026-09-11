@@ -13,9 +13,8 @@ from typing import Annotated, Self
 
 from flext_core import FlextUtilities as u, m
 from flext_ldif import FlextLdifShared, c
-from flext_ldif._models._settings_normalization import (
-    FlextLdifModelsSettingsNormalization as msn,
-)
+
+from ._settings_normalization import FlextLdifModelsSettingsNormalization as msn
 
 
 class FlextLdifModelsSettingsProcessing:

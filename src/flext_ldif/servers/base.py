@@ -5,10 +5,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar, Self, cast, overload, override
 
 from flext_ldif import c, m, p, r, s, t, u
-from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
-from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
-from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
-from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
+
+from ._base.acl import FlextLdifServersBaseSchemaAcl
+from ._base.entry import FlextLdifServersBaseEntry
+from ._base.mixins import FlextLdifServerMethodsMixin
+from ._base.schema import FlextLdifServersBaseSchema
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -22,7 +23,7 @@ def _ensure_trailing_newline(ldif: str) -> str:
 class FlextLdifServersBase(s[m.Ldif.Entry]):
     """Base class for LDIF/LDAP server servers built on `s`."""
 
-    model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+    model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
         arbitrary_types_allowed=True, extra="forbid"
     )
     server_type: ClassVar[str] = c.Ldif.UNKNOWN_VALUE
@@ -166,10 +167,8 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         **fields: t.JsonValue | t.MutableSequenceOf[m.Ldif.Entry],
     ) -> Self | m.Ldif.Entry | str:
         """Callable interface - use as processor."""
-        builder_fields = FlextLdifServerMethodsMixin.project_processor_fields(
-            fields,
-            frozenset({"ldif_text", "entries", "operation"}),
-            force_dispatch=server is not None or settings is not None,
+        builder_fields = FlextLdifServerMethodsMixin.builder_fields_or_none(
+            fields, frozenset({"ldif_text", "entries", "operation"}), server, settings
         )
         if builder_fields is not None:
             configured = super().__call__(
@@ -484,14 +483,6 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
 
     class Schema(FlextLdifServersBaseSchema):
         """Nested Schema server base class."""
-
-    def _normalize_attribute_name(self, attr_name: str) -> str:
-        """Normalize attribute name to RFC 2849 canonical form."""
-        if not attr_name:
-            return attr_name
-        if attr_name.lower() == "objectclass":
-            return "objectClass"
-        return attr_name
 
 
 __all__: list[str] = ["FlextLdifServersBase"]

@@ -5,8 +5,9 @@ from __future__ import annotations
 from typing import override
 
 from flext_ldif import FlextLdifModels as m, c, p, r, t
-from flext_ldif._utilities._transformer_base import FlextLdifUtilitiesTransformer
-from flext_ldif._utilities.dn import FlextLdifUtilitiesDN as udn
+
+from ._transformer_base import FlextLdifUtilitiesTransformer
+from .dn import FlextLdifUtilitiesDN as udn
 
 
 class FlextLdifUtilitiesNormalizeDnTransformer(

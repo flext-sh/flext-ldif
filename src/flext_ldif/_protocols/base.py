@@ -9,7 +9,8 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from flext_ldif import FlextLdifProtocols as lp, c, m, p, t
-    from flext_ldif._protocols.domain import FlextLdifProtocolsDomain as lpd
+
+    from .domain import FlextLdifProtocolsDomain as lpd
 
 
 @runtime_checkable

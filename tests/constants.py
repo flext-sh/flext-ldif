@@ -8,9 +8,9 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Final, Literal
 
-from flext_ldif import c
-
 from flext_tests import FlextTestsConstants
+
+from flext_ldif import c
 from tests import m
 
 if TYPE_CHECKING:

@@ -12,11 +12,11 @@ structure.
 from __future__ import annotations
 
 import pytest
+from flext_tests import tm
 
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-from flext_tests import tm
 from tests import t
 
 type ServerClass = type[FlextLdifServersRfc | FlextLdifServersOid | FlextLdifServersOud]

@@ -7,7 +7,8 @@ from collections.abc import Mapping, MutableMapping
 from typing import Annotated, ClassVar, Self, override
 
 from flext_ldif import c, m, p, r, s, t, u
-from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
+
+from .mixins import FlextLdifServerMethodsMixin
 
 
 class FlextLdifServersBaseSchema(
@@ -16,6 +17,8 @@ class FlextLdifServersBaseSchema(
     """Base class for schema servers using `s` with enhanced usability."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
+
+    _NORMALIZE_OBJECTCLASS: ClassVar[bool] = False
 
     server_type: Annotated[
         str,
@@ -104,6 +107,25 @@ class FlextLdifServersBaseSchema(
         self._schema_service = _schema_service
         if _parent_server is not None:
             object.__setattr__(self, "_parent_server", _parent_server)
+
+    def _init_base_schema(
+        self: Self,
+        schema_service: p.Ldif.SchemaServer | None,
+        parent_server: p.Ldif.SchemaServer | None,
+        excluded_keys: frozenset[str],
+        **kwargs: t.Ldif.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+    ) -> None:
+        """Delegate to FlextLdifServersBaseSchema.__init__ then wire parent server."""
+        filtered_kwargs: t.MutableConfigValueMapping = {
+            key: val
+            for key, val in kwargs.items()
+            if key not in excluded_keys and isinstance(val, t.PRIMITIVES_TYPES)
+        }
+        FlextLdifServersBaseSchema.__init__(
+            self, _schema_service=schema_service, _parent_server=None, **filtered_kwargs
+        )
+        if parent_server is not None:
+            self.__dict__["_parent_server"] = parent_server
 
     auto_execute: ClassVar[bool] = False
 
@@ -218,10 +240,14 @@ class FlextLdifServersBaseSchema(
         """Validate OID and track result in metadata extensions."""
         if not oid_value:
             return
+
+        def default_oid_error(error: str) -> str:
+            return error or f"{oid_name} OID validation failed"
+
         oid_validate_result = (
             r[bool]
             .from_result(u.Ldif.validate_format(oid_value))
-            .map_error(lambda error: error or f"{oid_name} OID validation failed")
+            .map_error(default_oid_error)
         )
         if oid_validate_result.failure:
             metadata_extensions["syntax_validation_error"] = (
@@ -420,9 +446,9 @@ class FlextLdifServersBaseSchema(
         if self._is_objectclass_schema_type(definition):
             oc_result = self._parse_objectclass(definition)
             if oc_result.failure:
-                return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].fail(
-                    oc_result.error or "Parse failed"
-                )
+                return r[
+                    m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass
+                ].from_failure(oc_result)
             parsed_objectclass = m.Ldif.SchemaObjectClass.model_validate(
                 oc_result.unwrap()
             )
@@ -431,8 +457,8 @@ class FlextLdifServersBaseSchema(
             )
         attr_result = self._parse_attribute(definition)
         if attr_result.failure:
-            return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].fail(
-                attr_result.error or "Parse failed"
+            return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].from_failure(
+                attr_result
             )
         parsed_attribute = m.Ldif.SchemaAttribute.model_validate(attr_result.unwrap())
         return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].ok(parsed_attribute)
@@ -521,7 +547,10 @@ class FlextLdifServersBaseSchema(
     def _hook_post_parse_objectclass(
         self, oc: m.Ldif.SchemaObjectClass
     ) -> p.Result[m.Ldif.SchemaObjectClass]:
-        """Run hook after parsing an objectClass definition."""
+        """Normalize objectClass data after parse when subclass opts in."""
+        if self._NORMALIZE_OBJECTCLASS:
+            u.Ldif.fix_missing_sup(oc)
+            u.Ldif.fix_kind_mismatch(oc)
         return r[m.Ldif.SchemaObjectClass].ok(oc)
 
     def _hook_validate_attributes(

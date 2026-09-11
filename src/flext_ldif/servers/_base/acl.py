@@ -5,7 +5,8 @@ from __future__ import annotations
 from typing import Annotated, ClassVar, Self, override
 
 from flext_ldif import c, m, p, r, s, t, u
-from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
+
+from .mixins import FlextLdifServerMethodsMixin
 
 
 class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethodsMixin):
@@ -57,14 +58,26 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
     auto_execute: ClassVar[bool] = False
 
     def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
-        """Check if this ACL can be handled after parsing."""
-        _ = acl_line
-        return True
+        """Check if this ACL can be handled after parsing and normalising."""
+        normalized = self._normalize_acl_line(acl_line)
+        if not normalized:
+            return False
+        return self.can_handle_acl(normalized)
 
     def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
         """Check if this server can handle the ACL definition."""
         _ = acl_line
         return False
+
+    @staticmethod
+    def _normalize_acl_line(acl_line: str | m.Ldif.Acl) -> str | None:
+        """Extract and strip the raw ACL string from any input type."""
+        if isinstance(acl_line, str):
+            return acl_line.strip()
+        raw_acl = getattr(acl_line, "raw_acl", None)
+        if not isinstance(raw_acl, str):
+            return None
+        return raw_acl.strip()
 
     def can_handle_attribute(self, attribute: m.Ldif.SchemaAttribute) -> bool:
         """Check if this ACL server should be aware of a specific attribute definition."""

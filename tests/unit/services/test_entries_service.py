@@ -20,9 +20,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
+from flext_tests import tm
 
 from flext_ldif.services.entries import FlextLdifEntries
-from flext_tests import tm
 from tests import TestsFlextLdifUtilities as u, c, m
 
 if TYPE_CHECKING:
@@ -189,7 +189,9 @@ class TestsFlextLdifEntries:
         tm.fail(result, has="objectClass")
 
     def test_resolve_objectclasses_fails_when_entry_has_no_attributes(self) -> None:
-        entry = m.Ldif.Entry(dn=c.Tests.ANALYSIS_DN_VALID, attributes=None)
+        entry = m.Ldif.Entry(
+            dn=m.Ldif.DN(value=c.Tests.ANALYSIS_DN_VALID), attributes=None
+        )
         result = FlextLdifEntries.resolve_entry_objectclasses(entry)
         tm.fail(result, has="attributes")
 

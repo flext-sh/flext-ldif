@@ -6,8 +6,9 @@ from collections.abc import Mapping, MutableMapping
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
+
+from .constants import FlextLdifServersOidConstants
 
 
 class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):

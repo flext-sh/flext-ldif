@@ -6,11 +6,13 @@ from collections.abc import Mapping, MutableMapping, Sequence
 from typing import ClassVar, Self, cast, overload, override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
-from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
+from flext_ldif.servers.base import FlextLdifServersBase
+
+from .._base.mixins import FlextLdifServerMethodsMixin
+from .._base.schema import FlextLdifServersBaseSchema
 
 
-class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
+class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
     """RFC 4512 Compliant Schema Server - STRICT Implementation."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
@@ -76,31 +78,21 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
         **kwargs: t.Ldif.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> None:
         """Initialize RFC schema server service."""
-        filtered_kwargs: dict[str, t.Primitives | None] = {}
-        excluded_keys = {
-            "_parent_server",
-            "parent_server",
-            "_schema_service",
-            "attr_definition",
-            "oc_definition",
-            "attr_model",
-            "oc_model",
-            "operation",
-        }
-        for key, value in kwargs.items():
-            if key in excluded_keys:
-                continue
-            if isinstance(value, t.PRIMITIVES_TYPES):
-                filtered_kwargs[key] = value
-        schema_service_typed: p.Ldif.SchemaServer | None = schema_service
-        FlextLdifServersBaseSchema.__init__(
-            self,
-            _schema_service=schema_service_typed,
-            _parent_server=None,
-            **filtered_kwargs,
+        self._init_base_schema(
+            schema_service,
+            parent_server,
+            frozenset({
+                "_parent_server",
+                "_schema_service",
+                "parent_server",
+                "attr_definition",
+                "oc_definition",
+                "attr_model",
+                "oc_model",
+                "operation",
+            }),
+            **kwargs,
         )
-        if parent_server is not None:
-            object.__setattr__(self, "_parent_server", parent_server)
 
     @overload
     def __call__(
@@ -141,10 +133,8 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
         **fields: t.JsonValue,
     ) -> Self | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str:
         """Callable interface - automatic polymorphic processor."""
-        builder_fields = FlextLdifServerMethodsMixin.project_processor_fields(
-            fields,
-            frozenset({"data", "operation"}),
-            force_dispatch=server is not None or settings is not None,
+        builder_fields = FlextLdifServerMethodsMixin.builder_fields_or_none(
+            fields, frozenset({"data", "operation"}), server, settings
         )
         if builder_fields is not None:
             configured = super().__call__(
@@ -157,7 +147,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
             or data is None
             else None
         )
-        narrowed_operation = operation if isinstance(operation, str) else None
+        narrowed_operation = self._narrow_operation(operation)
         result = self.execute(data=narrowed_data, operation=narrowed_operation)
         if result.failure:
             msg = result.error or "RFC schema operation failed"
@@ -502,9 +492,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBaseSchema):
             parse_parts_hook=parse_parts_hook,
         )
         if parse_result_raw.failure:
-            return r[m.Ldif.SchemaAttribute].fail(
-                parse_result_raw.error or "Attribute parsing failed"
-            )
+            return r[m.Ldif.SchemaAttribute].from_failure(parse_result_raw)
         parsed_raw = parse_result_raw.value
         parsed: t.Ldif.MutableMetadataMapping = dict(parsed_raw)
         syntax = parsed.get("syntax")

@@ -9,10 +9,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, Final, overload
 
 import pytest
+from flext_tests import FlextTestsUtilities, tk, tm
 
 from flext_ldif import FlextLdifUtilities, u
-
-from flext_tests import FlextTestsUtilities, tk, tm
 from tests import c, m, p, t
 
 if TYPE_CHECKING:
@@ -175,6 +174,22 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             })
             return entry
 
+        @classmethod
+        def orclaci_base_dn_entry(cls, dn: str = "cn=users,dc=ctbc") -> m.Ldif.Entry:
+            """Build a real LDIF entry carrying an out-of-scope OID orclaci for base-DN filter tests."""
+            return cls.create_real_entry(
+                dn=dn,
+                attributes={
+                    "objectClass": ["top"],
+                    "orclaci": [
+                        (
+                            'access to entry by group="cn=x,dc=other" (browse) '
+                            'by group="cn=a,dc=ctbc" (browse)'
+                        )
+                    ],
+                },
+            )
+
         @staticmethod
         def create_real_ldif_content(
             entries_count: int = 3, *, include_schema: bool = False
@@ -251,7 +266,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                     ]
                 )
             )
-            workspace_root = next(
+            repository_root = next(
                 (
                     candidate
                     for candidate in (
@@ -264,7 +279,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             )
             return tk.shared(
                 c.Tests.DOCKER_CONTAINER_NAME,
-                workspace_root=workspace_root,
+                repository_root=repository_root,
                 worker_id=worker_id,
             )
 

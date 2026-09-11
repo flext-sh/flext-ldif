@@ -48,21 +48,18 @@ class FlextLdifConversionSchemaMixin(s, ABC):
         source_server_type = u.try_(
             lambda: u.Ldif.normalize_server_type(source_server.server_type)
         ).map_or(None)
-        source_value_result = (
-            r[str]
-            .from_result(write_result)
-            .map_error(
-                lambda error: (
-                    f"Failed to write {item_name} in source format: "
-                    f"{error or 'Unknown write error'}"
-                )
+
+        def default_write_error(error: str) -> str:
+            return (
+                f"Failed to write {item_name} in source format: "
+                f"{error or 'Unknown write error'}"
             )
+
+        source_value_result = (
+            r[str].from_result(write_result).map_error(default_write_error)
         )
         if source_value_result.failure:
-            return r[t.Ldif.ConvertedModel].fail(
-                source_value_result.error
-                or "Failed to write schema item in source format"
-            )
+            return r[t.Ldif.ConvertedModel].from_failure(source_value_result)
         bridge_entry = m.Ldif.Entry.model_validate({
             "dn": m.Ldif.DN(value="cn=schema,dc=example,dc=com", metadata={}),
             "attributes": m.Ldif.Attributes.model_validate({
@@ -76,10 +73,7 @@ class FlextLdifConversionSchemaMixin(s, ABC):
             source_server, target_server, bridge_entry
         )
         if converted_entry_result.failure:
-            return r[t.Ldif.ConvertedModel].fail(
-                converted_entry_result.error
-                or f"Failed to convert {item_name} via Entry intermediary"
-            )
+            return r[t.Ldif.ConvertedModel].from_failure(converted_entry_result)
         converted_entry_value = converted_entry_result.value
         if not isinstance(converted_entry_value, m.Ldif.Entry):
             return r[t.Ldif.ConvertedModel].fail(
@@ -100,37 +94,27 @@ class FlextLdifConversionSchemaMixin(s, ABC):
         first_value = converted_values[0]
         if field_name == c.Ldif.ATTRIBUTE_TYPES:
             parsed_attribute_result = self._validate_parsed_schema(
-                target_schema.parse_attribute(first_value),
-                m.Ldif.SchemaAttribute,
-                "Failed to parse converted attribute",
+                target_schema.parse_attribute(first_value), m.Ldif.SchemaAttribute
             )
             if parsed_attribute_result.failure:
-                return r[t.Ldif.ConvertedModel].fail(
-                    parsed_attribute_result.error
-                    or "Failed to parse converted attribute"
-                )
+                return r[t.Ldif.ConvertedModel].from_failure(parsed_attribute_result)
             converted_model: t.Ldif.ConvertedModel = parsed_attribute_result.value
         else:
             parsed_objectclass_result = self._validate_parsed_schema(
-                target_schema.parse_objectclass(first_value),
-                m.Ldif.SchemaObjectClass,
-                "Failed to parse converted objectclass",
+                target_schema.parse_objectclass(first_value), m.Ldif.SchemaObjectClass
             )
             if parsed_objectclass_result.failure:
-                return r[t.Ldif.ConvertedModel].fail(
-                    parsed_objectclass_result.error
-                    or "Failed to parse converted objectclass"
-                )
+                return r[t.Ldif.ConvertedModel].from_failure(parsed_objectclass_result)
             converted_model = parsed_objectclass_result.value
         return r[t.Ldif.ConvertedModel].ok(converted_model)
 
     @staticmethod
     def _validate_parsed_schema[T: m.Ldif.SchemaElement](
-        parse_result: p.Result[T], model_cls: type[T], parse_error_message: str
+        parse_result: p.Result[T], model_cls: type[T]
     ) -> p.Result[T]:
         """Re-validate a schema parse result into its model (attr / objectclass)."""
         if parse_result.failure:
-            return r[T].fail(parse_result.error or parse_error_message)
+            return r[T].from_failure(parse_result)
         return r[T].ok(model_cls.model_validate(parse_result.value))
 
 

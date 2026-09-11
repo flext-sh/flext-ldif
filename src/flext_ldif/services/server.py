@@ -9,7 +9,8 @@ from typing import TYPE_CHECKING, Annotated, ClassVar, TypeGuard, override
 
 from flext_core import s
 from flext_ldif import c, p, r, t, u
-from flext_ldif._protocols.domain import FlextLdifProtocolsDomain
+
+from .._protocols.domain import FlextLdifProtocolsDomain
 
 if TYPE_CHECKING:
     from flext_ldif.servers.base import FlextLdifServersBase
@@ -98,9 +99,7 @@ class FlextLdifServer(s):
         """Get Constants class from server server."""
         server_result = self.server(server_type)
         if server_result.failure:
-            return r[type[p.Ldif.ServerConstants]].fail(
-                server_result.error or server_type
-            )
+            return r[type[p.Ldif.ServerConstants]].from_failure(server_result)
         base = server_result.value
         constants: type[p.Ldif.ServerConstants] | None = getattr(
             type(base), "Constants", None
@@ -153,13 +152,12 @@ class FlextLdifServer(s):
         """List all registered server types."""
         return sorted(self._registered_servers)
 
-    @override
     def server(self, server_type: str) -> p.Result[p.Ldif.ServerServer]:
         """Get base server for a server type."""
         try:
             normalized = u.Ldif.normalize_server_type(server_type)
         except ValueError as e:
-            return r[p.Ldif.ServerServer].fail(str(e))
+            return r[p.Ldif.ServerServer].fail(str(e), exception=e)
         plugin = self._registered_servers.get(normalized)
         if plugin is None:
             return r[p.Ldif.ServerServer].fail(normalized)

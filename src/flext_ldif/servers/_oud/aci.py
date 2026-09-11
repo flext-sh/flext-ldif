@@ -12,9 +12,10 @@ from __future__ import annotations
 from collections.abc import Callable, MutableSequence
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._oud.acl import FlextLdifServersOudAcl
-from flext_ldif.servers._oud.acl_extract import FlextLdifServersOudAclExtractMixin
-from flext_ldif.servers._oud.acl_metadata import FlextLdifServersOudAclMetadataMixin
+
+from .acl import FlextLdifServersOudAcl
+from .acl_extract import FlextLdifServersOudAclExtractMixin
+from .acl_metadata import FlextLdifServersOudAclMetadataMixin
 
 
 class FlextLdifServersOudAciMixin:

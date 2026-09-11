@@ -23,6 +23,19 @@ class FlextLdifUtilitiesCollectionLdif:
                 return elem
         return None
 
+    @staticmethod
+    def deduplicate_preserve_order(
+        items: t.MutableSequenceOf[str],
+    ) -> t.MutableSequenceOf[str]:
+        """Remove duplicate items while preserving first-occurrence order."""
+        seen: set[str] = set()
+        result: t.MutableSequenceOf[str] = []
+        for item in items:
+            if item not in seen:
+                seen.add(item)
+                result.append(item)
+        return result
+
     @classmethod
     def normalize_ldif(
         cls,

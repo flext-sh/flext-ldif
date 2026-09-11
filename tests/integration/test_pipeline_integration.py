@@ -16,17 +16,17 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
+from flext_tests import tm
 
 from flext_ldif import ldif
-from flext_tests import tm
 
 if TYPE_CHECKING:
     from collections.abc import MutableMapping, MutableSequence
     from pathlib import Path
 
-    from flext_ldif._models.domain_entry import FlextLdifModelsDomainEntry
+    from flext_ldif import m
 
-    type _Entry = FlextLdifModelsDomainEntry.Entry
+    type _Entry = m.Ldif.Entry
     type _Attributes = MutableMapping[str, MutableSequence[str]]
 
 

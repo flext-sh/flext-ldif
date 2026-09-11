@@ -158,6 +158,8 @@ class FlextLdifServersAd(FlextLdifServersRfc):
     class Schema(FlextLdifServersRfc.Schema):
         """Active Directory schema server."""
 
+        _NORMALIZE_OBJECTCLASS: ClassVar[bool] = True
+
         @override
         def can_handle_attribute(
             self, attr_definition: str | m.Ldif.SchemaAttribute
@@ -180,38 +182,13 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             )
             return matches
 
-        @override
-        def _hook_post_parse_objectclass(
-            self, oc: m.Ldif.SchemaObjectClass
-        ) -> p.Result[m.Ldif.SchemaObjectClass]:
-            """Normalize Active Directory objectClass data after RFC parsing."""
-            u.Ldif.fix_missing_sup(oc)
-            u.Ldif.fix_kind_mismatch(oc)
-            return super()._hook_post_parse_objectclass(oc)
-
     class Acl(FlextLdifServersRfc.Acl):
         """Active Directory ACL server handling nTSecurityDescriptor entries."""
 
         @override
-        def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
-            """Check if this is an Active Directory ACL (public method)."""
-            if isinstance(acl_line, str):
-                return self.can_handle_acl(acl_line)
-            raw_acl = getattr(acl_line, "raw_acl", None)
-            if not isinstance(raw_acl, str) or not raw_acl:
-                return False
-            return self.can_handle_acl(raw_acl)
-
-        @override
         def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Check whether the ACL line belongs to an AD security descriptor."""
-            if isinstance(acl_line, str):
-                normalized = acl_line.strip()
-            else:
-                raw_acl = getattr(acl_line, "raw_acl", None)
-                if not isinstance(raw_acl, str):
-                    return False
-                normalized = raw_acl.strip()
+            normalized = self._normalize_acl_line(acl_line)
             if not normalized:
                 return False
             attr_name, _, _ = normalized.partition(":")

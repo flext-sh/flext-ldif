@@ -8,7 +8,8 @@ orchestration lives in ``acl_pipeline.py``; rendering in ``acl_render.py``.
 from __future__ import annotations
 
 from flext_ldif import c, m, p, r, t
-from flext_ldif.servers._oid.acl_convert_oud import FlextLdifServersOidAclToOud as Conv
+
+from .acl_convert_oud import FlextLdifServersOidAclToOud as Conv
 
 
 class FlextLdifServersOidAclAssemble:
@@ -93,9 +94,7 @@ class FlextLdifServersOidAclAssemble:
                     continue
             perms = Conv.convert_permissions(subject.permissions, is_entry=is_entry)
             if perms.failure:
-                return r[m.Ldif.AciRule].fail(
-                    perms.error or "invalid OID permission token"
-                )
+                return r[m.Ldif.AciRule].from_failure(perms)
             if not perms.value:
                 notes.append(
                     f"{subject.subject_type} {subject.value!r} removed "

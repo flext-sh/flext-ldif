@@ -12,10 +12,11 @@ from collections.abc import Mapping
 from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
-from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
-from flext_ldif.servers._oud.helpers import FlextLdifServersOudHelpersMixin
 from flext_ldif.servers.rfc import FlextLdifServersRfc
+
+from .._base.entry import FlextLdifServersBaseEntry
+from .constants import FlextLdifServersOudConstants
+from .helpers import FlextLdifServersOudHelpersMixin
 
 if TYPE_CHECKING:
     from flext_ldif.servers.base import FlextLdifServersBase
@@ -70,8 +71,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         for parsed_entry in parsed_result.value:
             post_parse_result = self._hook_post_parse_entry(parsed_entry)
             if post_parse_result.failure:
-                return r[t.MutableSequenceOf[m.Ldif.Entry]].fail(
-                    post_parse_result.error or "OUD post-parse failed"
+                return r[t.MutableSequenceOf[m.Ldif.Entry]].from_failure(
+                    post_parse_result
                 )
             entry_after_post: m.Ldif.Entry = post_parse_result.value
             original_dn = entry_after_post.dn.value if entry_after_post.dn else ""
@@ -85,8 +86,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 entry_after_post, original_dn, original_attrs
             )
             if finalize_result.failure:
-                return r[t.MutableSequenceOf[m.Ldif.Entry]].fail(
-                    finalize_result.error or "OUD finalize parse failed"
+                return r[t.MutableSequenceOf[m.Ldif.Entry]].from_failure(
+                    finalize_result
                 )
             processed_entries.append(finalize_result.value)
         return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(processed_entries)
@@ -168,9 +169,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                         )
                     )
                     if process_result.failure:
-                        return r[m.Ldif.Entry].fail(
-                            process_result.error or "ACI processing failed"
-                        )
+                        return r[m.Ldif.Entry].from_failure(process_result)
                     if process_result.value:
                         has_macros = True
             if has_macros:

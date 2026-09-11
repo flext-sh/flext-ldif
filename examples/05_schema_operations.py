@@ -411,9 +411,7 @@ def railway_schema_pipeline() -> p.Result[t.JsonMapping]:
         )
     )
     if validated_pipeline.failure:
-        return r[t.JsonMapping].fail(
-            validated_pipeline.error or "Schema pipeline failed"
-        )
+        return r[t.JsonMapping].from_failure(validated_pipeline)
 
     schema_entries, schema_valid_entries, entry_valid_entries = (
         validated_pipeline.unwrap()

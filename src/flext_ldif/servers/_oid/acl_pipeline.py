@@ -11,9 +11,10 @@ from __future__ import annotations
 from typing import ClassVar
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._oid.acl_assemble import FlextLdifServersOidAclAssemble as Build
-from flext_ldif.servers._oid.acl_convert import FlextLdifServersOidAclConvert as Parser
-from flext_ldif.servers._oid.acl_render import FlextLdifServersOidAclRender as Render
+
+from .acl_assemble import FlextLdifServersOidAclAssemble as Build
+from .acl_convert import FlextLdifServersOidAclConvert as Parser
+from .acl_render import FlextLdifServersOidAclRender as Render
 
 
 class FlextLdifServersOidAclPipeline:
@@ -38,10 +39,10 @@ class FlextLdifServersOidAclPipeline:
         for line in oid_acl_lines:
             rule = Parser.parse_oid_acl_line(dn, line)
             if rule.failure:
-                return r[t.StrSequence].fail(rule.error or "OID ACL parse failed")
+                return r[t.StrSequence].from_failure(rule)
             aci = Build.build_aci_rule(rule.value, base_dn=base_dn)
             if aci.failure:
-                return r[t.StrSequence].fail(aci.error or "OID ACL build failed")
+                return r[t.StrSequence].from_failure(aci)
             if aci.value.notes:
                 FlextLdifServersOidAclPipeline._module_logger.info(
                     "OID ACL conversion notes", dn=dn, notes=list(aci.value.notes)
@@ -96,7 +97,7 @@ class FlextLdifServersOidAclPipeline:
         ]
         converted = cls.convert_acl_values(dn_value, oid_lines, base_dn=base_dn)
         if converted.failure:
-            return r[m.Ldif.Entry].fail(converted.error or "OID ACL conversion failed")
+            return r[m.Ldif.Entry].from_failure(converted)
         for name in acl_names:
             del current[name]
         if converted.value:

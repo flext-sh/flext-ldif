@@ -12,9 +12,9 @@ from __future__ import annotations
 import inspect
 
 import pytest
+from flext_tests import tm
 
 import flext_ldif
-from flext_tests import tm
 
 type PublicSymbol = str
 

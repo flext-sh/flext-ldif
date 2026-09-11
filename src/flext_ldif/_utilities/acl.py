@@ -6,8 +6,10 @@ from types import MappingProxyType
 from typing import ClassVar, TypeIs
 
 from flext_cli import u
+
 from flext_ldif import c, m, p, r, t
-from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata as um
+
+from .metadata import FlextLdifUtilitiesMetadata as um
 
 
 class FlextLdifUtilitiesACL:

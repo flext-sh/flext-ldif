@@ -13,6 +13,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from flext_tests import tm
 from structlog.testing import capture_logs
 
 from flext_ldif import m
@@ -22,7 +23,6 @@ from flext_ldif.servers.oid import (
     FlextLdifServersOidAclPipeline as Pipe,
     FlextLdifServersOidAclRender as Render,
 )
-from flext_tests import tm
 from tests import TestsFlextLdifUtilities as u
 
 

@@ -6,9 +6,11 @@ import base64
 from collections.abc import Mapping, MutableMapping
 
 from flext_cli import u
+
 from flext_ldif import FlextLdifModels as m, c, p, r, t
-from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata as um
-from flext_ldif._utilities.server import FlextLdifUtilitiesServer as us
+
+from .metadata import FlextLdifUtilitiesMetadata as um
+from .server import FlextLdifUtilitiesServer as us
 
 
 class FlextLdifUtilitiesParser:

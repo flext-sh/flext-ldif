@@ -15,14 +15,16 @@ from typing import TYPE_CHECKING, Annotated, ClassVar, Self, override
 
 from flext_core import FlextUtilities as u, m
 from flext_ldif import c, p, r, t
-from flext_ldif._models.domain_attributes import FlextLdifModelsDomainAttributes as mda
-from flext_ldif._models.domain_dn import FlextLdifModelsDomainDN as mdn
-from flext_ldif._models.domain_metadata import FlextLdifModelsDomainMetadata as mdm
-from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
+
+from .._utilities.collection_ldif import FlextLdifUtilitiesCollectionLdif
+from .._utilities.entry import FlextLdifUtilitiesEntry
+from .domain_attributes import FlextLdifModelsDomainAttributes as mda
+from .domain_dn import FlextLdifModelsDomainDN as mdn
+from .domain_metadata import FlextLdifModelsDomainMetadata as mdm
 
 if TYPE_CHECKING:
-    from flext_ldif._models.domain_acl import FlextLdifModelsDomainAcl as mdac
-    from flext_ldif._models.domain_schema import FlextLdifModelsDomainSchema as mds
+    from .domain_acl import FlextLdifModelsDomainAcl as mdac
+    from .domain_schema import FlextLdifModelsDomainSchema as mds
 
 
 class FlextLdifModelsDomainEntry:
@@ -133,7 +135,7 @@ class FlextLdifModelsDomainEntry:
         @u.computed_field
         @property
         def dn_was_transformed(self) -> bool:
-            """Check if DN underwent transformation."""
+            """Whether DN underwent transformation."""
             if self.dn_statistics is None:
                 return False
             return self.dn_statistics.was_transformed
@@ -141,19 +143,19 @@ class FlextLdifModelsDomainEntry:
         @u.computed_field
         @property
         def had_errors(self) -> bool:
-            """Check if any errors occurred."""
+            """Whether any errors occurred."""
             return bool(self.errors)
 
         @u.computed_field
         @property
         def had_warnings(self) -> bool:
-            """Check if any warnings occurred."""
+            """Whether any warnings occurred."""
             return bool(self.warnings)
 
         @u.computed_field
         @property
         def objectclasses_changed(self) -> bool:
-            """Check if objectClass values changed."""
+            """Whether objectClass values changed."""
             return set(self.objectclasses_original) != set(self.objectclasses_final)
 
         @u.computed_field
@@ -192,13 +194,7 @@ class FlextLdifModelsDomainEntry:
             cls, v: t.MutableSequenceOf[str]
         ) -> t.MutableSequenceOf[str]:
             """Remove duplicate servers while preserving order."""
-            seen: set[str] = set()
-            result: t.MutableSequenceOf[str] = []
-            for item in v:
-                if item not in seen:
-                    seen.add(item)
-                    result.append(item)
-            return result
+            return FlextLdifUtilitiesCollectionLdif.deduplicate_preserve_order(v)
 
         def add_error(self, error: str) -> Self:
             """Add error message.
@@ -318,7 +314,7 @@ class FlextLdifModelsDomainEntry:
         Inherits DynamicModel to legitimize extra='allow' for LDIF dynamic attributes.
         """
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
             strict=True, validate_default=True, validate_assignment=True, extra="allow"
         )
         _DATETIME_FIELDS: ClassVar[t.StrPair] = ("created_at", "updated_at")
@@ -741,7 +737,7 @@ class FlextLdifModelsDomainEntry:
         @u.computed_field
         @property
         def has_validation_errors(self) -> bool:
-            """Check if entry has validation errors.
+            """Whether entry has validation errors.
 
             Returns:
             True if entry has validation errors in validation_metadata, False otherwise
@@ -756,7 +752,7 @@ class FlextLdifModelsDomainEntry:
         @u.computed_field
         @property
         def is_acl_entry(self) -> bool:
-            """Check if entry has Access Control Lists.
+            """Whether entry has Access Control Lists.
 
             Returns:
             True if entry has ACLs, False otherwise
@@ -769,7 +765,7 @@ class FlextLdifModelsDomainEntry:
         @u.computed_field
         @property
         def is_schema_entry(self) -> bool:
-            """Check if entry is a schema definition entry.
+            """Whether entry is a schema definition entry.
 
             Schema entries contain objectClass definitions and are typically
             found in the schema naming context.
@@ -934,7 +930,7 @@ class FlextLdifModelsDomainEntry:
                 ok_result: p.Result[Self] = r[Self].ok(entry_instance)
             except c.EXC_BASIC_TYPE as e:
                 fail_result: p.Result[Self] = r[Self].fail(
-                    f"Failed to create Entry: {e}"
+                    f"Failed to create Entry: {e}", exception=e
                 )
                 return fail_result
             else:

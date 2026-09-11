@@ -143,16 +143,20 @@ class FlextLdifAcl(s):
             if acl_server is None and server_type == "openldap":
                 acl_server = self._server.acl("openldap2")
         except ValueError as error:
-            return r[m.Ldif.Acl].fail(str(error))
+            return r[m.Ldif.Acl].fail(str(error), exception=error)
         if acl_server is None:
             return r[m.Ldif.Acl].fail(
                 f"No ACL server found for server type: {normalized_server_type}"
             )
+
+        def default_acl_error(error: str) -> str:
+            return error or "ACL parsing failed"
+
         return (
             r[m.Ldif.Acl]
             .from_result(acl_server.parse_server(acl_string))
             .map(m.Ldif.Acl.model_validate)
-            .map_error(lambda error: error or "ACL parsing failed")
+            .map_error(default_acl_error)
         )
 
 

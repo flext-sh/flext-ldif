@@ -12,10 +12,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
+from flext_tests import tm
 
 from flext_ldif.services.migration import FlextLdifMigrationPipeline
 from flext_ldif.services.pipeline import FlextLdifProcessingPipeline
-from flext_tests import tm
 from tests import TestsFlextLdifUtilities as u, c, m
 
 if TYPE_CHECKING:
@@ -264,18 +264,7 @@ class TestsFlextLdifMigrationPipeline:
         Observable contract: the migrated entry's public ``aci`` attribute retains
         only the in-scope ACL clause and is rewritten to OUD syntax.
         """
-        entry = u.Tests.create_real_entry(
-            dn="cn=users,dc=ctbc",
-            attributes={
-                "objectClass": ["top"],
-                "orclaci": [
-                    (
-                        'access to entry by group="cn=x,dc=other" (browse) '
-                        'by group="cn=a,dc=ctbc" (browse)'
-                    )
-                ],
-            },
-        )
+        entry = u.Tests.orclaci_base_dn_entry(dn="cn=users,dc=ctbc")
         pipeline = FlextLdifMigrationPipeline(
             source_server_type="oid", target_server_type="oud", base_dn="dc=ctbc"
         )
@@ -378,7 +367,8 @@ class TestsFlextLdifMigrationPipeline:
     def test_processing_execute_succeeds_with_entries(self) -> None:
         """Processing execute() succeeds when an entry batch is supplied."""
         entry = m.Ldif.Entry(
-            dn=c.Tests.ANALYSIS_DN_VALID, attributes=m.Ldif.Attributes(attributes={})
+            dn=m.Ldif.DN(value=c.Tests.ANALYSIS_DN_VALID),
+            attributes=m.Ldif.Attributes(attributes={}),
         )
         tm.ok(
             FlextLdifProcessingPipeline(

@@ -5,9 +5,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Literal
 
 import pytest
+from flext_tests import tm
 
 from flext_ldif.services.pipeline import FlextLdifProcessingPipeline
-from flext_tests import tm
 from tests import TestsFlextLdifUtilities as u, c, m
 
 if TYPE_CHECKING:
@@ -75,7 +75,7 @@ class TestsFlextLdifProcessingService:
         self, api: p.Ldif.LdifClient
     ) -> None:
         invalid_entry = m.Ldif.Entry(
-            dn=c.Tests.PROCESSING_VALID_DNS[0], attributes=None
+            dn=m.Ldif.DN(value=c.Tests.PROCESSING_VALID_DNS[0]), attributes=None
         )
 
         tm.fail(

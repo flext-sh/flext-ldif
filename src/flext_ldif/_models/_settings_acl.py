@@ -13,7 +13,8 @@ from typing import Annotated
 
 from flext_core import FlextUtilities as u, m
 from flext_ldif import c, t
-from flext_ldif._models.domain_acl import FlextLdifModelsDomainAcl as mdac
+
+from .domain_acl import FlextLdifModelsDomainAcl as mdac
 
 
 class FlextLdifModelsSettingsAcl:
@@ -36,7 +37,9 @@ class FlextLdifModelsSettingsAcl:
         aci_prefix: Annotated[str, u.Field(description="ACI attribute prefix")] = (
             "aci: "
         )
-        version: Annotated[str, u.Field(description="ACI version")] = "3.0"
+        version: Annotated[str, u.Field(description="ACI version")] = (
+            c.Ldif.ACI_VERSION_NUMBER
+        )
 
     class AciParserConfig(m.Value):
         """Configuration for server-specific ACI parsing."""

@@ -14,12 +14,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
+from flext_tests import tm
 
 from flext_ldif import ldif
 from flext_ldif.services.categorization import FlextLdifCategorization
 from flext_ldif.services.migration import FlextLdifMigrationPipeline
 from flext_ldif.services.statistics import FlextLdifStatistics
-from flext_tests import tm
 from tests import c, m
 
 if TYPE_CHECKING:

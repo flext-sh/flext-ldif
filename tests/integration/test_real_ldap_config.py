@@ -18,9 +18,9 @@ import codecs
 from typing import TYPE_CHECKING
 
 import pytest
+from flext_tests import tm
 
 from flext_ldif import ldif
-from flext_tests import tm
 from tests import m
 
 if TYPE_CHECKING:

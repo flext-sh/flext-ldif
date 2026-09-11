@@ -13,9 +13,10 @@ from collections.abc import Callable, Mapping, MutableMapping
 from typing import ClassVar
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._oud.aci import FlextLdifServersOudAciMixin
-from flext_ldif.servers._oud.acl_extract import FlextLdifServersOudAclExtractMixin
-from flext_ldif.servers._oud.acl_metadata import FlextLdifServersOudAclMetadataMixin
+
+from .aci import FlextLdifServersOudAciMixin
+from .acl_extract import FlextLdifServersOudAclExtractMixin
+from .acl_metadata import FlextLdifServersOudAclMetadataMixin
 
 
 class FlextLdifServersOudTransformMixin:
@@ -207,7 +208,7 @@ class FlextLdifServersOudTransformMixin:
         """Correct RFC syntax issues and return entry."""
         corrected_result = correct_rfc_syntax_in_attributes(attrs_dict)
         if corrected_result.failure:
-            return r[m.Ldif.Entry].fail(corrected_result.error or "Unknown error")
+            return r[m.Ldif.Entry].from_failure(corrected_result)
         corrected_data = corrected_result.value
         corrected_data_typed: MutableMapping[
             str,

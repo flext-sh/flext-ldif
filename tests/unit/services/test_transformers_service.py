@@ -14,9 +14,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
+from flext_tests import tm
 
 from flext_ldif.services.transformers import FlextLdifTransformer
-from flext_tests import tm
 from tests import c, m, u
 
 if TYPE_CHECKING:
@@ -119,18 +119,7 @@ class TestsFlextLdifTransformersService:
         )
 
     def test_base_dn_excludes_out_of_scope_bind_dn(self) -> None:
-        entry = u.Tests.create_real_entry(
-            dn="cn=users,dc=ctbc",
-            attributes={
-                "objectClass": ["top"],
-                "orclaci": [
-                    (
-                        'access to entry by group="cn=x,dc=other" (browse) '
-                        'by group="cn=a,dc=ctbc" (browse)'
-                    )
-                ],
-            },
-        )
+        entry = u.Tests.orclaci_base_dn_entry(dn="cn=users,dc=ctbc")
         transformer = FlextLdifTransformer(
             source_server=c.Ldif.ServerTypes.OID,
             target_server=c.Ldif.ServerTypes.OUD,
@@ -166,8 +155,4 @@ class TestsFlextLdifTransformersService:
     @staticmethod
     def _success_entry(result: p.Result[m.Ldif.Entry]) -> m.Ldif.Entry:
         """Assert the fallible conversion succeeded and yields a public Entry."""
-        converted = u.Tests.assert_success(result)
-        if not isinstance(converted, m.Ldif.Entry):
-            msg = "Expected transformer to return an Entry"
-            raise TypeError(msg)
-        return converted
+        return u.Tests.assert_success(result)

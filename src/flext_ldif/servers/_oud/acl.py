@@ -6,10 +6,11 @@ from collections.abc import Mapping, MutableMapping
 from typing import ClassVar, Self, override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
-from flext_ldif.servers._oud.constants import FlextLdifServersOudConstants
-from flext_ldif.servers._oud.utilities import FlextLdifServersOudUtilities
 from flext_ldif.servers.rfc import FlextLdifServersRfc
+
+from .._base.acl import FlextLdifServersBaseSchemaAcl
+from .constants import FlextLdifServersOudConstants
+from .utilities import FlextLdifServersOudUtilities
 
 
 class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
@@ -402,7 +403,9 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             FlextLdifServersOudAcl._module_logger.exception(
                 "Failed to parse OUD ds-privilege-name"
             )
-            return r[m.Ldif.Acl].fail(f"Failed to parse OUD ds-privilege-name: {e}")
+            return r[m.Ldif.Acl].fail(
+                f"Failed to parse OUD ds-privilege-name: {e}", exception=e
+            )
 
     def _should_use_raw_acl(self, acl_data: m.Ldif.Acl) -> bool:
         """Check if raw_acl should be used as-is."""
@@ -421,7 +424,9 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             FlextLdifServersOudAcl._module_logger.exception(
                 "Failed to write ACL to OUD ACI format"
             )
-            return r[str].fail(f"Failed to write ACL to OUD ACI format: {e}")
+            return r[str].fail(
+                f"Failed to write ACL to OUD ACI format: {e}", exception=e
+            )
 
     def _write_oud_aci(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
         """Build an OUD ACI string from the canonical ACL model."""
@@ -447,7 +452,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         aci_parts.append(f'({sc.ACL_DEFAULT_VERSION}; acl "{acl_name}";')
         perms_result = self._build_aci_permissions(acl_data)
         if perms_result.failure:
-            return r[str].fail(perms_result.error or "Unknown error")
+            return r[str].from_failure(perms_result)
         subject_str = self._build_aci_subject(acl_data)
         if not subject_str:
             return r[str].fail("ACL subject DN was filtered out")

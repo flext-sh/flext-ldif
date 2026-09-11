@@ -148,26 +148,9 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             return (attr_name.strip(), remainder.strip())
 
         @override
-        def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
-            """Check if this is a Novell eDirectory ACL."""
-            return self.can_handle_acl(acl_line)
-
-        @override
         def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Detect eDirectory ACL values."""
-            if isinstance(acl_line, str):
-                if not acl_line or not acl_line.strip():
-                    return False
-                normalized = acl_line.strip()
-                attr_name, _, _ = normalized.partition(":")
-                return (
-                    attr_name.strip().lower()
-                    in FlextLdifServersNovell.Constants.ACL_ATTRIBUTE_NAMES
-                )
-            raw_acl = getattr(acl_line, "raw_acl", None)
-            if not isinstance(raw_acl, str) or not raw_acl:
-                return False
-            normalized = raw_acl.strip()
+            normalized = self._normalize_acl_line(acl_line)
             if not normalized:
                 return False
             attr_name, _, _ = normalized.partition(":")

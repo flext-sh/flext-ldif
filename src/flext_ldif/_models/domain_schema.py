@@ -15,8 +15,9 @@ from typing import Annotated
 
 from flext_core import FlextUtilities as u
 from flext_ldif import c, t
-from flext_ldif._models.base import FlextLdifModelsBases as mb
-from flext_ldif._models.domain_metadata import FlextLdifModelsDomainMetadata as mdm
+
+from .base import FlextLdifModelsBases as mb
+from .domain_metadata import FlextLdifModelsDomainMetadata as mdm
 
 
 class FlextLdifModelsDomainSchema:
