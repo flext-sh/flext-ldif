@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from flext_ldif import c, m, p, r, t
 
-from .acl_convert_oud import FlextLdifServersOidAclToOud as Conv
+from .acl_convert_oud import FlextLdifServersOidAclToOud
 
 
 class FlextLdifServersOidAclAssemble:
@@ -49,7 +49,11 @@ class FlextLdifServersOidAclAssemble:
         permission token surfaces as ``r.fail`` (never a silent partial result).
         """
         is_entry = rule.target_type == c.Ldif.AclTargetType.ENTRY
-        containers = Conv.high_level_containers(base_dn) if base_dn else frozenset()
+        containers = (
+            FlextLdifServersOidAclToOud.high_level_containers(base_dn)
+            if base_dn
+            else frozenset()
+        )
         dn_normalized = rule.dn.lower().replace(", ", ",").replace(" ,", ",")
         dn_binds = {c.Ldif.OudSubjectType.GROUPDN, c.Ldif.OudSubjectType.USERDN}
         literal_binds = {
@@ -78,21 +82,23 @@ class FlextLdifServersOidAclAssemble:
                     "anyone skipped at high-level container (OUD inherits to subtree)"
                 )
                 continue
-            bind = Conv.convert_subject_to_oud(subject)
+            bind = FlextLdifServersOidAclToOud.convert_subject_to_oud(subject)
             if bind.failure:
                 notes.append(bind.error or "subject has no OUD equivalent")
                 continue
             bind_type = bind.value.subject_type
             bind_value = bind.value.subject_value
             if bind_type in dn_binds and bind_value not in literal_binds:
-                bind_value = Conv.regex_to_wildcard(bind_value)
-                if not Conv.is_in_scope(bind_value, base_dn):
+                bind_value = FlextLdifServersOidAclToOud.regex_to_wildcard(bind_value)
+                if not FlextLdifServersOidAclToOud.is_in_scope(bind_value, base_dn):
                     notes.append(
                         f"{subject.subject_type} {bind_value!r} removed "
                         f"(DN out of scope {base_dn})"
                     )
                     continue
-            perms = Conv.convert_permissions(subject.permissions, is_entry=is_entry)
+            perms = FlextLdifServersOidAclToOud.convert_permissions(
+                subject.permissions, is_entry=is_entry
+            )
             if perms.failure:
                 return r[m.Ldif.AciRule].from_failure(perms)
             if not perms.value:
@@ -129,9 +135,9 @@ class FlextLdifServersOidAclAssemble:
         return r[m.Ldif.AciRule].ok(
             m.Ldif.AciRule(
                 dn=rule.dn,
-                targetattr=Conv.get_targetattr(rule),
+                targetattr=FlextLdifServersOidAclToOud.get_targetattr(rule),
                 targetfilter=rule.target_filter,
-                targetscope=Conv.calculate_targetscope(
+                targetscope=FlextLdifServersOidAclToOud.calculate_targetscope(
                     rule, has_anyone_subject=has_anyone
                 ),
                 acl_name=acl_name,

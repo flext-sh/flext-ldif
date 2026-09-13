@@ -10,12 +10,8 @@ from typing import TYPE_CHECKING, Annotated, ClassVar, TypeGuard, override
 from flext_core import s
 from flext_ldif import c, p, r, t, u
 
-from .._protocols.domain import FlextLdifProtocolsDomain
-
 if TYPE_CHECKING:
     from flext_ldif.servers.base import FlextLdifServersBase
-
-ServerServer = FlextLdifProtocolsDomain.ServerServer
 
 
 class FlextLdifServer(s):
@@ -52,7 +48,7 @@ class FlextLdifServer(s):
         server_result = self.server(server_type)
         if server_result.failure:
             return None
-        base: ServerServer = server_result.value
+        base: p.Ldif.ServerServer = server_result.value
         return base.acl_server
 
     def entry(self, server_type: str) -> p.Ldif.EntryServer | None:
@@ -60,7 +56,7 @@ class FlextLdifServer(s):
         server_result = self.server(server_type)
         if server_result.failure:
             return None
-        base: ServerServer = server_result.value
+        base: p.Ldif.ServerServer = server_result.value
         return base.entry_server
 
     def resolve_server_bundle(
@@ -78,7 +74,7 @@ class FlextLdifServer(s):
             ].fail_op(
                 "resolve_server_bundle", ValueError(server_result.error or server_type)
             )
-        base: ServerServer = server_result.value
+        base: p.Ldif.ServerServer = server_result.value
         return r[
             t.MappingKV[
                 str, p.Ldif.SchemaServer | p.Ldif.AclServer | p.Ldif.EntryServer
@@ -145,7 +141,7 @@ class FlextLdifServer(s):
         server_result = self.server(server_type)
         if server_result.failure:
             return None
-        base: ServerServer = server_result.value
+        base: p.Ldif.ServerServer = server_result.value
         return base.schema_server
 
     def list_registered_servers(self) -> t.MutableSequenceOf[str]:

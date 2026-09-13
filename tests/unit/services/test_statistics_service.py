@@ -34,7 +34,7 @@ class TestsFlextLdifStatisticsService:
             },
             server_type=server_type,
         )
-        if entry.metadata is None or entry.metadata.extensions is None:
+        if entry.metadata is None:
             return entry
         metadata_with_server = entry.metadata.model_copy(
             update={
