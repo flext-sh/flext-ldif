@@ -14,7 +14,7 @@ from flext_ldif import c, m, p, r, t, u
 
 from .acl_assemble import FlextLdifServersOidAclAssemble
 from .acl_convert import FlextLdifServersOidAclConvert
-from .acl_render import FlextLdifServersOidAclRender as Render
+from .acl_render import FlextLdifServersOidAclRender
 
 
 class FlextLdifServersOidAclPipeline:
@@ -51,9 +51,9 @@ class FlextLdifServersOidAclPipeline:
                 )
             if not aci.value.allows:
                 continue
-            rendered = Render.render_aci_string(aci.value).removeprefix(
-                c.Ldif.ACI_PREFIX
-            )
+            rendered = FlextLdifServersOidAclRender.render_aci_string(
+                aci.value
+            ).removeprefix(c.Ldif.ACI_PREFIX)
             normalized = c.Ldif.WHITESPACE_RE.sub(" ", rendered.strip().lower())
             if normalized in seen:
                 continue

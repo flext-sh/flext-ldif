@@ -577,7 +577,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             # rather than a statically-tautological one (pyright
             # reportUnnecessaryIsInstance).
             server_proto: type
-            data_cls: type[m.BaseModel]
+            data_cls: type
             server_proto, data_cls = entry
             if not isinstance(server, server_proto):
                 msg = f"{write_method} is not supported by this server"
