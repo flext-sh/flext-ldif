@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from flext_ldif.servers.rfc import FlextLdifServersRfc
+from .rfc import FlextLdifServersRfc
 
 from ._oud.acl import FlextLdifServersOudAcl
 from ._oud.constants import FlextLdifServersOudConstants

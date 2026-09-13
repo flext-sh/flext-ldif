@@ -11,7 +11,7 @@ from flext_core import s
 from flext_ldif import c, p, r, t, u
 
 if TYPE_CHECKING:
-    from flext_ldif.servers.base import FlextLdifServersBase
+    from ..base import FlextLdifServersBase
 
 
 class FlextLdifServer(s):

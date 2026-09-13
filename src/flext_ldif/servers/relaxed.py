@@ -6,7 +6,7 @@ import re
 from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers.rfc import FlextLdifServersRfc
+from .rfc import FlextLdifServersRfc
 
 if TYPE_CHECKING:
     from collections.abc import MutableMapping

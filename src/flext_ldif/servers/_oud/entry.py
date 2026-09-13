@@ -12,14 +12,14 @@ from collections.abc import Mapping
 from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers.rfc import FlextLdifServersRfc
+from .rfc import FlextLdifServersRfc
 
 from .._base.entry import FlextLdifServersBaseEntry
 from .constants import FlextLdifServersOudConstants
 from .helpers import FlextLdifServersOudHelpersMixin
 
 if TYPE_CHECKING:
-    from flext_ldif.servers.base import FlextLdifServersBase
+    from ..base import FlextLdifServersBase
 
 
 class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):

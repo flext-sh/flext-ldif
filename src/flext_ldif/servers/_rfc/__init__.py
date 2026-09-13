@@ -30,7 +30,7 @@ _LAZY_IMPORTS = MappingProxyType(
             ".constants": ("FlextLdifServersRfcConstants",),
             ".entry": ("FlextLdifServersRfcEntry",),
             ".schema": ("FlextLdifServersRfcSchema",),
-            "flext_ldif.servers._base.constants": ("FlextLdifServersBaseConstants",),
+            ".._base.constants": ("FlextLdifServersBaseConstants",),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
