@@ -31,9 +31,16 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         """OID Entry server."""
 
 
+# Why: FlextLdifServersOidAcl is excluded here (unlike its Constants/Entry/
+# Schema siblings) because the frozen root API-freeze contract
+# (tests/unit/test_api_freeze.py::PRIVATE_ROOT_SYMBOLS) declares Oid/Oud/Rfc
+# Acl implementation classes private at the package root; the root generator
+# mirrors this module's __all__, so leaving it out here is what keeps it out
+# of flext_ldif.__all__. The remaining Acl helper classes stay listed so
+# their module-level test re-export (tests/unit/servers/test_oid_acl_*.py)
+# satisfies ruff F401 without leaking further up the generated chain.
 __all__: list[str] = [
     "FlextLdifServersOid",
-    "FlextLdifServersOidAcl",
     "FlextLdifServersOidAclAssemble",
     "FlextLdifServersOidAclConvert",
     "FlextLdifServersOidAclPipeline",
