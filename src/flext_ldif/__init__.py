@@ -36,7 +36,6 @@ if TYPE_CHECKING:
     from .servers.ds389 import FlextLdifServersDs389
     from .servers.oid import (
         FlextLdifServersOid,
-        FlextLdifServersOidAcl,
         FlextLdifServersOidConstants,
         FlextLdifServersOidEntry,
         FlextLdifServersOidSchema,
@@ -99,7 +98,6 @@ __all__: tuple[str, ...] = (
     "FlextLdifServersBase",
     "FlextLdifServersDs389",
     "FlextLdifServersOid",
-    "FlextLdifServersOidAcl",
     "FlextLdifServersOidConstants",
     "FlextLdifServersOidEntry",
     "FlextLdifServersOidSchema",
@@ -159,7 +157,6 @@ _LAZY_IMPORTS = MappingProxyType(
             ".servers.ds389": ("FlextLdifServersDs389",),
             ".servers.oid": (
                 "FlextLdifServersOid",
-                "FlextLdifServersOidAcl",
                 "FlextLdifServersOidConstants",
                 "FlextLdifServersOidEntry",
                 "FlextLdifServersOidSchema",

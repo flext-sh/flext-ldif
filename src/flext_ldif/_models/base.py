@@ -57,10 +57,17 @@ class FlextLdifModelsBases:
             if metadata is not None:
                 server_type = getattr(metadata, "server_type", None)
                 if server_type is not None:
-                    try:
-                        return FlextLdifShared.normalize_server_type(str(server_type))
-                    except ValueError:
-                        pass
+                    # Why: pre-check membership instead of exception-driven
+                    # control flow (silent-failure-except-pass) — the "rfc"
+                    # default only applies to a value normalize_server_type
+                    # would actually reject.
+                    server_type_lower = str(server_type).lower().strip()
+                    is_recognized = (
+                        server_type_lower in c.Ldif.SERVER_TYPE_ALIASES
+                        or server_type_lower in c.Ldif.VALID_SERVER_TYPES
+                    )
+                    if is_recognized:
+                        return FlextLdifShared.normalize_server_type(server_type_lower)
             return "rfc"
 
     class AclElement(m.StrictModel):

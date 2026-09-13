@@ -571,6 +571,13 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             if entry is None:
                 msg = f"{write_method} is not supported by this server"
                 raise AssertionError(msg)
+            # Why: widen from the dict's per-key literal tuple type so the
+            # isinstance guards below stay a real runtime check (write_method
+            # is caller-supplied and can mismatch server/data at runtime)
+            # rather than a statically-tautological one (pyright
+            # reportUnnecessaryIsInstance).
+            server_proto: type
+            data_cls: type
             server_proto, data_cls = entry
             if not isinstance(server, server_proto):
                 msg = f"{write_method} is not supported by this server"

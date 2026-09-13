@@ -35,8 +35,6 @@ def main() -> None:
             source_server="rfc",
             target_server="rfc",
         )
-        if result.failure:
-            return
         pipeline_result = result.unwrap()
         for path in pipeline_result.output_files:
             file_path = Path(path)

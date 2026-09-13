@@ -4,14 +4,14 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from flext_ldif import FlextLdifModels, c, m, p, r, s, t, u
+from flext_ldif import c, m, p, r, s, t, u
 from flext_ldif.services.conversion_acl_preserve import (
     FlextLdifConversionAclPreserveMixin,
 )
 
-_LdifEntry = FlextLdifModels.Ldif.Entry
-_LdifDN = FlextLdifModels.Ldif.DN
-_LdifAttributes = FlextLdifModels.Ldif.Attributes
+_LdifEntry = m.Ldif.Entry
+_LdifDN = m.Ldif.DN
+_LdifAttributes = m.Ldif.Attributes
 
 
 class FlextLdifConversionAclMixin(FlextLdifConversionAclPreserveMixin, s, ABC):

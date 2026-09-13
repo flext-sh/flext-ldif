@@ -33,8 +33,7 @@ def basic_batch_processing() -> None:
     api: p.Ldif.LdifClient = ldif
     ldif_content = "dn: cn=User1,ou=People,dc=example,dc=com\nobjectClass: person\ncn: User1\nsn: One\n\ndn: cn=User2,ou=People,dc=example,dc=com\nobjectClass: person\ncn: User2\nsn: Two\n\ndn: cn=User3,ou=People,dc=example,dc=com\nobjectClass: person\ncn: User3\nsn: Three\n"
     parse_result = api.parse_ldif(ldif_content)
-    if parse_result.failure:
-        return
+
     parse_response = parse_result.unwrap()
     entries = parse_response.entries
     validation_result = api.validate_entries(entries)
@@ -150,8 +149,7 @@ def complete_processing_pipeline() -> None:
     api: p.Ldif.LdifClient = ldif
     ldif_content = "dn: cn=Pipeline,ou=People,dc=example,dc=com\nobjectClass: person\ncn: Pipeline\nsn: User\n"
     parse_result = api.parse_ldif(ldif_content)
-    if parse_result.failure:
-        return
+
     parse_response = parse_result.unwrap()
     entries = parse_response.entries
 

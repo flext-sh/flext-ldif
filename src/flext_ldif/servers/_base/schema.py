@@ -81,7 +81,7 @@ class FlextLdifServersBaseSchema(
     def __new__(
         cls,
         _schema_service: p.Ldif.SchemaServer | None = None,
-        _parent_server: Self | None = None,
+        _parent_server: p.Ldif.SchemaServer | None = None,
         **kwargs: t.Ldif.Scalar,
     ) -> Self:
         """Override __new__ to filter _parent_server before passing to s."""
@@ -94,7 +94,7 @@ class FlextLdifServersBaseSchema(
     def __init__(
         self,
         _schema_service: p.Ldif.SchemaServer | None = None,
-        _parent_server: Self | None = None,
+        _parent_server: p.Ldif.SchemaServer | None = None,
         **kwargs: t.Ldif.Scalar,
     ) -> None:
         """Initialize schema server service with optional DI service injection."""
@@ -121,11 +121,17 @@ class FlextLdifServersBaseSchema(
             for key, val in kwargs.items()
             if key not in excluded_keys and isinstance(val, t.PRIMITIVES_TYPES)
         }
+        # Why: pass parent_server straight into __init__ (which already
+        # performs the frozen-model object.__setattr__ dance for
+        # _parent_server) instead of a separate post-init patch — avoids a
+        # second, non-dunder-context __setattr__ call (ruff PLC2801) while
+        # keeping exactly one owner for that assignment.
         FlextLdifServersBaseSchema.__init__(
-            self, _schema_service=schema_service, _parent_server=None, **filtered_kwargs
+            self,
+            _schema_service=schema_service,
+            _parent_server=parent_server,
+            **filtered_kwargs,
         )
-        if parent_server is not None:
-            self.__dict__["_parent_server"] = parent_server
 
     auto_execute: ClassVar[bool] = False
 
