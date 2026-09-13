@@ -519,23 +519,6 @@ class FlextLdifUtilitiesMetadata:
         return normalized
 
     @staticmethod
-    def _set_model_metadata(
-        model: p.Ldif.ModelWithValidationMetadata, metadata: t.Ldif.MetadataInputMapping
-    ) -> None:
-        """Set validation_metadata on model (handles both mutable and frozen models)."""
-        try:
-            # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: consume the plain mapping.
-            normalized_metadata: t.Ldif.MutableMetadataMapping = {
-                write_option_key: u.normalize_to_metadata(value)
-                for write_option_key, value in metadata.items()
-            }
-            config_root: dict[str, t.JsonPayload] = dict(normalized_metadata)
-            target: p.Ldif.ModelWithValidationMetadata = model
-            target.validation_metadata = m.ConfigMap(root=config_root)
-        except c.EXC_BASIC_TYPE:
-            pass
-
-    @staticmethod
     def _update_conversion_path(
         metadata: t.Ldif.MutableMetadataMapping, update_conversion_path: str
     ) -> None:

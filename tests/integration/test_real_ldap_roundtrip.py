@@ -47,7 +47,6 @@ def flext_api() -> p.Ldif.LdifClient:
 
 @pytest.mark.docker
 @pytest.mark.integration
-@pytest.mark.real_ldap
 class TestsFlextLdifRealLdapRoundtrip:
     """Behavioral contract: LDAP -> LDIF -> LDAP preserves entry state."""
 

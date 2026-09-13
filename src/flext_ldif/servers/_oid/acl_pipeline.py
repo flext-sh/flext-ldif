@@ -12,9 +12,9 @@ from typing import ClassVar
 
 from flext_ldif import c, m, p, r, t, u
 
-from .acl_assemble import FlextLdifServersOidAclAssemble as Build
-from .acl_convert import FlextLdifServersOidAclConvert as Parser
-from .acl_render import FlextLdifServersOidAclRender as Render
+from .acl_assemble import FlextLdifServersOidAclAssemble
+from .acl_convert import FlextLdifServersOidAclConvert
+from .acl_render import FlextLdifServersOidAclRender
 
 
 class FlextLdifServersOidAclPipeline:
@@ -37,10 +37,12 @@ class FlextLdifServersOidAclPipeline:
         values: list[str] = []
         seen: set[str] = set()
         for line in oid_acl_lines:
-            rule = Parser.parse_oid_acl_line(dn, line)
+            rule = FlextLdifServersOidAclConvert.parse_oid_acl_line(dn, line)
             if rule.failure:
                 return r[t.StrSequence].from_failure(rule)
-            aci = Build.build_aci_rule(rule.value, base_dn=base_dn)
+            aci = FlextLdifServersOidAclAssemble.build_aci_rule(
+                rule.value, base_dn=base_dn
+            )
             if aci.failure:
                 return r[t.StrSequence].from_failure(aci)
             if aci.value.notes:
@@ -49,9 +51,9 @@ class FlextLdifServersOidAclPipeline:
                 )
             if not aci.value.allows:
                 continue
-            rendered = Render.render_aci_string(aci.value).removeprefix(
-                c.Ldif.ACI_PREFIX
-            )
+            rendered = FlextLdifServersOidAclRender.render_aci_string(
+                aci.value
+            ).removeprefix(c.Ldif.ACI_PREFIX)
             normalized = c.Ldif.WHITESPACE_RE.sub(" ", rendered.strip().lower())
             if normalized in seen:
                 continue

@@ -22,8 +22,7 @@ def extract_acls_from_entry() -> None:
     api = ldif()
     ldif_content = 'dn: cn=test,ou=People,dc=example,dc=com\nobjectClass: person\ncn: test\nsn: user\naci: (target="ldap:///ou=People,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Allow read"; allow (read,search) userdn="ldap:///anyone";)\n'
     parse_result = api.parse_ldif(ldif_content)
-    if parse_result.failure:
-        return
+
     parse_response = parse_result.unwrap()
     entries = parse_response.entries
     if not entries:
@@ -42,8 +41,7 @@ def parse_and_evaluate_acls() -> None:
     api = ldif()
     ldif_content = 'dn: ou=People,dc=example,dc=com\nobjectClass: organizationalUnit\nou: People\naci: (target="ldap:///ou=People,dc=example,dc=com")(targetattr="cn || sn")(version 3.0; acl "Allow self write"; allow (write) userdn="ldap:///self";)\naci: (target="ldap:///ou=People,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Allow admin all"; allow (all) userdn="ldap:///cn=admin,dc=example,dc=com";)\n'
     parse_result = api.parse_ldif(ldif_content)
-    if parse_result.failure:
-        return
+
     parse_response = parse_result.unwrap()
     entries = parse_response.entries
     if not entries:
@@ -51,8 +49,7 @@ def parse_and_evaluate_acls() -> None:
     entry = entries[0]
     acl_service = ldif()
     acl_result = acl_service.extract_acls_from_entry(entry, server_type="openldap")
-    if acl_result.failure:
-        return
+
     acl_response = acl_result.unwrap()
     acls = acl_response.acls
     required_perms: t.MutableBoolMapping = {"read": True, "write": True}
@@ -66,8 +63,7 @@ def process_entries_with_acls() -> None:
     api = ldif()
     ldif_content = 'dn: ou=People,dc=example,dc=com\nobjectClass: organizationalUnit\nou: People\naci: (target="ldap:///ou=People,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Read access"; allow (read) userdn="ldap:///anyone";)\n\ndn: ou=Groups,dc=example,dc=com\nobjectClass: organizationalUnit\nou: Groups\naci: (target="ldap:///ou=Groups,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Admin access"; allow (all) userdn="ldap:///cn=admin,dc=example,dc=com";)\n\ndn: cn=user,ou=People,dc=example,dc=com\nobjectClass: person\ncn: user\nsn: test\n'
     parse_result = api.parse_ldif(ldif_content)
-    if parse_result.failure:
-        return
+
     parse_response = parse_result.unwrap()
     entries = parse_response.entries
     acl_service = ldif()
@@ -82,7 +78,7 @@ def process_entries_with_acls() -> None:
 
 def execute_acl_service() -> None:
     """Execute ACL service with entry data."""
-    entry_result = m.Ldif.Entry.create(
+    m.Ldif.Entry.create(
         dn="ou=Test,dc=example,dc=com",
         attributes={
             "objectClass": ["organizationalUnit"],
@@ -92,8 +88,7 @@ def execute_acl_service() -> None:
             ],
         },
     )
-    if entry_result.failure:
-        return
+
     acl_service = ldif()
     exec_result = acl_service.service_check()
     if exec_result.success:
@@ -105,8 +100,7 @@ def acl_pipeline() -> None:
     api = ldif()
     ldif_content = 'dn: ou=Pipeline,dc=example,dc=com\nobjectClass: organizationalUnit\nou: Pipeline\naci: (target="ldap:///ou=Pipeline,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Pipeline ACL"; allow (read,search) userdn="ldap:///anyone";)\n'
     parse_result = api.parse_ldif(ldif_content)
-    if parse_result.failure:
-        return
+
     parse_response = parse_result.unwrap()
     entries = parse_response.entries
     if not entries:
@@ -114,8 +108,7 @@ def acl_pipeline() -> None:
     entry = entries[0]
     acl_service = ldif()
     acl_result = acl_service.extract_acls_from_entry(entry, server_type="openldap")
-    if acl_result.failure:
-        return
+
     acl_response = acl_result.unwrap()
     acls = acl_response.acls
     required_perms: t.MutableBoolMapping = {"read": True}

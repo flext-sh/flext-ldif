@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from ._base.entry import FlextLdifServersBaseEntry
     from ._base.mixins import FlextLdifServerMethodsMixin
     from ._base.schema import FlextLdifServersBaseSchema
+    from ._oid.acl import FlextLdifServersOidAcl
     from ._oid.acl_assemble import FlextLdifServersOidAclAssemble
     from ._oid.acl_convert import FlextLdifServersOidAclConvert
     from ._oid.acl_convert_oud import FlextLdifServersOidAclToOud
@@ -41,7 +42,6 @@ if TYPE_CHECKING:
     from .ds389 import FlextLdifServersDs389
     from .oid import (
         FlextLdifServersOid,
-        FlextLdifServersOidAcl,
         FlextLdifServersOidConstants,
         FlextLdifServersOidEntry,
         FlextLdifServersOidSchema,
@@ -107,6 +107,7 @@ _LAZY_IMPORTS = MappingProxyType(
             "._base.mixins": ("FlextLdifServerMethodsMixin",),
             "._base.schema": ("FlextLdifServersBaseSchema",),
             "._oid": ("_oid",),
+            "._oid.acl": ("FlextLdifServersOidAcl",),
             "._oid.acl_assemble": ("FlextLdifServersOidAclAssemble",),
             "._oid.acl_convert": ("FlextLdifServersOidAclConvert",),
             "._oid.acl_convert_oud": ("FlextLdifServersOidAclToOud",),
@@ -135,7 +136,6 @@ _LAZY_IMPORTS = MappingProxyType(
             ".ds389": ("FlextLdifServersDs389",),
             ".oid": (
                 "FlextLdifServersOid",
-                "FlextLdifServersOidAcl",
                 "FlextLdifServersOidConstants",
                 "FlextLdifServersOidEntry",
                 "FlextLdifServersOidSchema",

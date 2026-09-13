@@ -42,7 +42,6 @@ def flext_api() -> p.Ldif.LdifClient:
 
 @pytest.mark.docker
 @pytest.mark.integration
-@pytest.mark.real_ldap
 class TestsFlextLdifRealLdapExport:
     """Round-trip behavioral contract of LDIF export from a real LDAP server."""
 

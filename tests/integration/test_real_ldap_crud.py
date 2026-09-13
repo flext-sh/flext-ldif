@@ -40,7 +40,6 @@ def flext_api() -> p.Ldif.LdifClient:
 
 @pytest.mark.docker
 @pytest.mark.integration
-@pytest.mark.real_ldap
 class TestsFlextLdifRealLdapCrud:
     """Behavioral CRUD and batch contracts over a live LDAP directory."""
 
