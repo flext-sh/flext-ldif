@@ -314,7 +314,7 @@ class FlextLdifModelsDomainEntry:
         Inherits DynamicModel to legitimize extra='allow' for LDIF dynamic attributes.
         """
 
-        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
             strict=True, validate_default=True, validate_assignment=True, extra="allow"
         )
         _DATETIME_FIELDS: ClassVar[t.StrPair] = ("created_at", "updated_at")

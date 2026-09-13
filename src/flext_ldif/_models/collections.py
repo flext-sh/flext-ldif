@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
 class FlextLdifModelsCollections:
     class DynamicCounts(m.DynamicModel):
-        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
             extra="allow", validate_assignment=True
         )
 
