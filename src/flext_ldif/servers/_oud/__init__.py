@@ -9,8 +9,6 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_ldif.servers.rfc import FlextLdifServersRfc
-
     from .aci import FlextLdifServersOudAciMixin
     from .acl import FlextLdifServersOudAcl
     from .acl_extract import FlextLdifServersOudAclExtractMixin
@@ -19,6 +17,7 @@ if TYPE_CHECKING:
     from .constants import FlextLdifServersOudConstants
     from .entry import FlextLdifServersOudEntry
     from .helpers import FlextLdifServersOudHelpersMixin
+    from .rfc import FlextLdifServersRfc
     from .schema import FlextLdifServersOudSchema
     from .transform import FlextLdifServersOudTransformMixin
     from .utilities import FlextLdifServersOudUtilities
@@ -48,10 +47,10 @@ _LAZY_IMPORTS = MappingProxyType(
             ".constants": ("FlextLdifServersOudConstants",),
             ".entry": ("FlextLdifServersOudEntry",),
             ".helpers": ("FlextLdifServersOudHelpersMixin",),
+            ".rfc": ("FlextLdifServersRfc",),
             ".schema": ("FlextLdifServersOudSchema",),
             ".transform": ("FlextLdifServersOudTransformMixin",),
             ".utilities": ("FlextLdifServersOudUtilities",),
-            "flext_ldif.servers.rfc": ("FlextLdifServersRfc",),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,

@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import ClassVar, override
 
 from flext_ldif import m, p, r, t, u
-from flext_ldif.servers.base import FlextLdifServersBase
+from ..base import FlextLdifServersBase
 
 
 class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):

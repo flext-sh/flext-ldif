@@ -18,7 +18,7 @@ from typing import Annotated
 
 from flext_core import FlextUtilities as u, m
 from flext_ldif import c, t
-from flext_ldif.shared import FlextLdifShared
+from ..shared import FlextLdifShared
 
 from .domain_attributes import FlextLdifModelsDomainAttributes
 

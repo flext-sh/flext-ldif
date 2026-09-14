@@ -7,7 +7,7 @@ from types import MappingProxyType
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers.rfc import FlextLdifServersRfc
+from .rfc import FlextLdifServersRfc
 
 
 class FlextLdifServersOpenldap(FlextLdifServersRfc):
