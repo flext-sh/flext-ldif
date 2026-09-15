@@ -26,6 +26,7 @@ class FlextLdifServersRfcConstants(FlextLdifServersBaseConstants):
     ACL_ATTRIBUTE_NAME: ClassVar[str] = "aci"
     PERMISSION_READ: ClassVar[str] = "read"
     PERMISSION_WRITE: ClassVar[str] = "write"
+    PERMISSION_ADD: ClassVar[str] = "add"
     PERMISSION_DELETE: ClassVar[str] = "delete"
     PERMISSION_SEARCH: ClassVar[str] = "search"
     PERMISSION_COMPARE: ClassVar[str] = "compare"
@@ -36,6 +37,14 @@ class FlextLdifServersRfcConstants(FlextLdifServersBaseConstants):
     PERMISSION_PROXY: ClassVar[str] = "proxy"
     PERMISSION_AUTH: ClassVar[str] = "auth"
     PERMISSION_ALL: ClassVar[str] = "all"
+    SUPPORTED_PERMISSIONS: ClassVar[frozenset[str]] = frozenset([
+        PERMISSION_READ,
+        PERMISSION_WRITE,
+        PERMISSION_ADD,
+        PERMISSION_DELETE,
+        PERMISSION_SEARCH,
+        PERMISSION_COMPARE,
+    ])
     RFC_ACL_ATTRIBUTES: ClassVar[t.StrSequence] = (
         "aci",
         "acl",
