@@ -35,10 +35,7 @@ _LDAP_CLIENT_MISSING_REASON: Final[str] = (
 
 def _import_optional(module_name: str) -> ModuleType | None:
     """Import an optional module, returning None when it is not installed."""
-    try:
-        return importlib.import_module(module_name)
-    except ImportError:
-        raise
+    return importlib.import_module(module_name)
 
 
 class TestsFlextLdifUtilities(FlextTestsUtilities, u):
@@ -320,28 +317,24 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             cls, candidate_dn: str, candidate_password: str
         ) -> tuple[str, str] | None:
             """Return candidate credentials when LDAP bind succeeds."""
-            try:
-                server = cls.create_bare_server(
-                    "localhost",
-                    port=c.Tests.DOCKER_PORT,
-                    get_info=c.Ldap.Ldap3GetInfo.NO_INFO,
-                )
-                connection = cls.create_connection(
-                    server,
-                    user=candidate_dn,
-                    password=candidate_password,
-                    auto_bind=True,
-                    receive_timeout=1,
-                )
-                bound: bool = connection.bound
-                if bound:
-                    connection.unbind()
-            except (*cls.ldap_connectivity_errors(), ValueError):
-                raise
-            else:
-                if bound:
-                    return (candidate_dn, candidate_password)
-                return None
+            server = cls.create_bare_server(
+                "localhost",
+                port=c.Tests.DOCKER_PORT,
+                get_info=c.Ldap.Ldap3GetInfo.NO_INFO,
+            )
+            connection = cls.create_connection(
+                server,
+                user=candidate_dn,
+                password=candidate_password,
+                auto_bind=True,
+                receive_timeout=1,
+            )
+            bound: bool = connection.bound
+            if bound:
+                connection.unbind()
+            if bound:
+                return (candidate_dn, candidate_password)
+            return None
 
         @staticmethod
         def _assert_field_eq(
