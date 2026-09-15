@@ -274,7 +274,9 @@ class FlextLdifUtilitiesServer:
         return FlextLdifShared.normalize_server_type(server_type)
 
     @staticmethod
-    def validation_rule_flags(server_type: str | c.Ldif.ServerTypes) -> m.SettingsValidation.ServerValidationRules:
+    def validation_rule_flags(
+        server_type: str | c.Ldif.ServerTypes,
+    ) -> m.SettingsValidation.ServerValidationRules:
         """Resolve validation-rule booleans from the canonical server capability map."""
         normalized_server_type = FlextLdifUtilitiesServer.normalize_server_type(
             str(server_type)

@@ -138,8 +138,7 @@ class FlextLdifServersOudConstants(FSR.Constants):
         "ds-cfg-backend-id",
     ])
     PRESERVE_ON_MIGRATION: ClassVar[frozenset[str]] = (
-        FSR.Constants.PRESERVE_ON_MIGRATION
-        | frozenset(["pwdChangedTime"])
+        FSR.Constants.PRESERVE_ON_MIGRATION | frozenset(["pwdChangedTime"])
     )
     BOOLEAN_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
         "pwdlockout",
