@@ -80,6 +80,7 @@ dev = [
   "pytest-cov",
   "pytest-markdown-docs",
   "pytest-randomly>=4.1.0",
+  "pytest-reportlog",
   "pytest-testmon>=2.2.0",
   "pytest-timeout",
   "pytest-xdist",
@@ -571,3 +572,5 @@ whitelines = 1
 link-mode = "copy"
 constraint-dependencies = ["structlog<26"]
 environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
+
+[tool.uv.workspace]

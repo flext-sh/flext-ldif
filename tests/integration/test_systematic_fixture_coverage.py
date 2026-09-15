@@ -4,7 +4,7 @@ Behavioral contract tests: every LDAP server fixture type must survive the
 public parse -> write -> parse cycle exposed by ``flext_ldif.ldif()``. Only the
 public API is exercised (``parse_ldif``, ``write``, ``r[T]`` outcomes and the
 public model surface of parse/write responses and entries); no private state,
-no internal collaborator spying, no monkeypatching.
+no internal collaborator spying, no mock-based testing.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

@@ -5,8 +5,8 @@ Every assertion targets observable public contract only:
 - ``FlextLdifConversion.convert_model`` returning ``r[m.Ldif.Entry]``,
 - public model fields (``.syntax``, ``.equality``) and written schema text.
 
-No private attribute/method access, no internal-collaborator spying, no
-monkeypatching of the units under test.
+No private attribute/method access, no internal-collaborator spying,
+no mock-based testing.
 """
 
 from __future__ import annotations
