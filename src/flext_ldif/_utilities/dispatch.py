@@ -8,7 +8,7 @@ from typing import ClassVar, TypeGuard, overload
 from flext_cli import u
 
 from flext_core import r
-from flext_ldif import FlextLdifModels, c, p, t
+from flext_ldif import FlextLdifModels, p, t
 
 from .collection_ldif import FlextLdifUtilitiesCollectionLdif
 from .dn import FlextLdifUtilitiesDN
@@ -188,12 +188,8 @@ class FlextLdifUtilitiesDispatch:
             return False
         if not isinstance(obj, Sequence):
             return False
-        try:
-            FlextLdifUtilitiesDispatch._ENTRY_LIST_ADAPTER.validate_python(obj)
-        except c.EXC_VALIDATION_TYPE:
-            raise
-        else:
-            return True
+        FlextLdifUtilitiesDispatch._ENTRY_LIST_ADAPTER.validate_python(obj)
+        return True
 
     # --- MRO conflict resolution: Collection methods (CollectionLdif vs FlextUtilities) ---
 

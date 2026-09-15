@@ -183,10 +183,7 @@ class FlextLdifUtilitiesEntry:
         """
         if filter_func is None:
             return True
-        try:
-            return filter_func(entry)
-        except c.Ldif.EXC_LDIF_PARSE:
-            raise
+        return filter_func(entry)
 
     # --- Validation helpers (called by u.model_validators) ---
 

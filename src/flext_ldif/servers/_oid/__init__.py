@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from ..rfc import FlextLdifServersRfc as FSR
+    from ..rfc import FlextLdifServersRfc as FSR  # ruff: ignore[camelcase-imported-as-constant]
     from .acl import FlextLdifServersOidAcl
     from .acl_assemble import FlextLdifServersOidAclAssemble
     from .acl_convert import FlextLdifServersOidAclConvert

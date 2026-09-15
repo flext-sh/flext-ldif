@@ -186,7 +186,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             )
         except c.ValidationError as exc:
             msg = f"JSON validation failed: {exc}"
-            raise TypeError(msg)
+            raise TypeError(msg) from exc
         else:
             return validated
 

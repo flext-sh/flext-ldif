@@ -1004,13 +1004,10 @@ class FlextLdifUtilitiesDN:
             return False
         if not FlextLdifUtilitiesDN._validate_dn_structure(dn_str):
             return False
-        try:
-            components = FlextLdifUtilitiesDN.split(dn_str)
-            return bool(
-                components and FlextLdifUtilitiesDN._validate_components(components)
-            )
-        except c.EXC_TYPE_VALIDATION:
-            raise
+        components = FlextLdifUtilitiesDN.split(dn_str)
+        return bool(
+            components and FlextLdifUtilitiesDN._validate_components(components)
+        )
 
 
 __all__: list[str] = ["FlextLdifUtilitiesDN"]

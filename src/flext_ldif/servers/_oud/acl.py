@@ -89,10 +89,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
     def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
         """Check if this is an Oracle OUD ACL line (implements abstract method from base.py)."""
         if not isinstance(acl_line, str):
-            try:
-                acl_model = m.Ldif.Acl.model_validate(acl_line)
-            except c.Ldif.EXC_LDIF_PARSE:
-                raise
+            acl_model = m.Ldif.Acl.model_validate(acl_line)
             if acl_model.metadata and acl_model.metadata.server_type:
                 metadata_server_type = str(acl_model.metadata.server_type)
                 current_server_type: str = self._get_server_type()

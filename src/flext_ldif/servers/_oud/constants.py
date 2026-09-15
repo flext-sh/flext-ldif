@@ -7,7 +7,7 @@ from types import MappingProxyType
 from typing import ClassVar
 
 from flext_ldif import c, t
-from flext_ldif.servers.rfc import FlextLdifServersRfc as FSR
+from flext_ldif.servers.rfc import FlextLdifServersRfc as FSR  # ruff: ignore[camelcase-imported-as-constant]
 
 
 class FlextLdifServersOudConstants(FSR.Constants):
@@ -43,7 +43,7 @@ class FlextLdifServersOudConstants(FSR.Constants):
     PERMISSION_PROXY: ClassVar[str] = "proxy"
     PERMISSION_ALL: ClassVar[str] = "all"
     SUPPORTED_PERMISSIONS: ClassVar[frozenset[str]] = (
-        FlextLdifServersRfc.Constants.SUPPORTED_PERMISSIONS
+        FSR.Constants.SUPPORTED_PERMISSIONS
         | frozenset([PERMISSION_SELFWRITE, PERMISSION_PROXY, PERMISSION_ALL])
     )
     ACL_DEFAULT_NAME: ClassVar[str] = "OUD ACL"
@@ -138,7 +138,7 @@ class FlextLdifServersOudConstants(FSR.Constants):
         "ds-cfg-backend-id",
     ])
     PRESERVE_ON_MIGRATION: ClassVar[frozenset[str]] = (
-        FlextLdifServersRfc.Constants.PRESERVE_ON_MIGRATION
+        FSR.Constants.PRESERVE_ON_MIGRATION
         | frozenset(["pwdChangedTime"])
     )
     BOOLEAN_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([

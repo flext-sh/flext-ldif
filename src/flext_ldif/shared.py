@@ -21,13 +21,14 @@ class FlextLdifShared:
     """Shared LDIF helpers — single class per module (no loose functions)."""
 
     @staticmethod
-    def _has_attr(obj: t.JsonValue, attr_name: str) -> bool:
+    def _has_attr(_obj: t.JsonValue, _attr_name: str) -> bool:
         """Check if an object has a non-None attribute (canonical implementation).
 
         Uses a sentinel t.JsonValue to distinguish between attributes that are None
         and attributes that don't exist at all.
         """
-        _MISSING_ATTR = None
+        _missing_attr = None
+        return False
 
     @staticmethod
     def normalize_server_type(server_type: str) -> c.Ldif.ServerTypes:

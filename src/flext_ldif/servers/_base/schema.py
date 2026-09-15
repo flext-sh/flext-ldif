@@ -331,7 +331,7 @@ class FlextLdifServersBaseSchema(
             struct.error,
         ) as exc:
             msg = f"Schema validation failed: {exc}"
-            raise TypeError(msg)
+            raise TypeError(msg) from exc
         else:
             return attribute
 

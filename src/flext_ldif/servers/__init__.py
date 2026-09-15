@@ -49,7 +49,7 @@ if TYPE_CHECKING:
     from .openldap import FlextLdifServersOpenldap
     from .oud import FlextLdifServersOud
     from .relaxed import FlextLdifServersRelaxed
-    from .rfc import FlextLdifServersRfc, FlextLdifServersRfc as FSR
+    from .rfc import FlextLdifServersRfc, FlextLdifServersRfc as FSR  # ruff: ignore[camelcase-imported-as-constant]
     from .tivoli import FlextLdifServersTivoli
 __all__: tuple[str, ...] = (
     "FSR",

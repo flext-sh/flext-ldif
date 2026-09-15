@@ -8,7 +8,7 @@ from types import MappingProxyType
 from typing import ClassVar
 
 from flext_ldif import c, t
-from flext_ldif.servers.rfc import FlextLdifServersRfc as FSR
+from flext_ldif.servers.rfc import FlextLdifServersRfc as FSR  # ruff: ignore[camelcase-imported-as-constant]
 
 
 class FlextLdifServersOidConstants(FSR.Constants):
@@ -46,7 +46,7 @@ class FlextLdifServersOidConstants(FSR.Constants):
         "middlename": "middleName"
     })
     OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = (
-        FlextLdifServersRfc.Constants.OPERATIONAL_ATTRIBUTES
+        FSR.Constants.OPERATIONAL_ATTRIBUTES
         | frozenset([
             "orclguid",
             "orclobjectguid",
