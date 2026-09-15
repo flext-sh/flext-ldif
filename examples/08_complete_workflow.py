@@ -9,9 +9,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from examples.utilities import ExamplesFlextLdifUtilities as examples_u
 from flext_ldif import c, ldif, m, p
-
-from .utilities import ExamplesFlextLdifUtilities as examples_u
 
 if TYPE_CHECKING:
     from collections.abc import MutableSequence
