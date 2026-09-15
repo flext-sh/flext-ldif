@@ -132,15 +132,6 @@ class FlextLdifModelsAclConvert:
             ""
         )
 
-        def with_bind(self, bind: str) -> FlextLdifModelsAclConvert.AciAllowGroup:
-            """Return a copy with ``bind`` appended, preserving immutable flow."""
-            return FlextLdifModelsAclConvert.AciAllowGroup(
-                permissions=self.permissions,
-                binds=(*self.binds, bind),
-                authmethod=self.authmethod,
-                ip=self.ip,
-            )
-
     class AciAllowGroups(m.FrozenModel):
         """Pydantic render grouping model replacing ad-hoc dict/list state."""
 
@@ -162,7 +153,15 @@ class FlextLdifModelsAclConvert:
                     group.authmethod == allow.authmethod and group.ip == allow.ip
                 )
                 if same_permissions and same_modifiers:
-                    updated = (*updated, group.with_bind(bind))
+                    updated = (
+                        *updated,
+                        FlextLdifModelsAclConvert.AciAllowGroup(
+                            permissions=group.permissions,
+                            binds=(*group.binds, bind),
+                            authmethod=group.authmethod,
+                            ip=group.ip,
+                        ),
+                    )
                     matched = True
                     continue
                 updated = (*updated, group)

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from flext_ldif import c, p, t
+from flext_ldif import c, FlextLdifModels, p, t
 
 
 class FlextLdifUtilitiesEvents:

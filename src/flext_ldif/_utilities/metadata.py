@@ -7,7 +7,7 @@ from typing import ClassVar
 
 from flext_cli import u
 
-from flext_ldif import c, p, t
+from flext_ldif import FlextLdifModels, c, p, t
 
 from .server import FlextLdifUtilitiesServer as us
 
