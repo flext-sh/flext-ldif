@@ -186,7 +186,7 @@ class FlextLdifUtilitiesEntry:
         try:
             return filter_func(entry)
         except c.Ldif.EXC_LDIF_PARSE:
-            return False
+            raise
 
     # --- Validation helpers (called by u.model_validators) ---
 
@@ -493,7 +493,7 @@ class FlextLdifUtilitiesEntry:
                 FlextLdifUtilitiesEntry.logger.warning(
                     f"Failed to validate server rules from JSON string: {exc}"
                 )
-                return None
+                raise
             else:
                 return validated_json
         if validation_rules is not None:

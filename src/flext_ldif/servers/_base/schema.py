@@ -329,26 +329,11 @@ class FlextLdifServersBaseSchema(
             AttributeError,
             UnicodeDecodeError,
             struct.error,
-        ):
-            pass
+        ) as exc:
+            msg = f"Schema validation failed: {exc}"
+            raise TypeError(msg)
         else:
             return attribute
-        try:
-            objectclass: m.Ldif.SchemaObjectClass = (
-                m.Ldif.SchemaObjectClass.model_validate(value)
-            )
-        except (
-            c.ValidationError,
-            ValueError,
-            KeyError,
-            AttributeError,
-            UnicodeDecodeError,
-            struct.error,
-        ):
-            pass
-        else:
-            return objectclass
-        return None
 
     def _coerce_operation(self, value: t.Ldif.Scalar | None) -> str | None:
         """Coerce raw operation token to a supported schema operation."""
@@ -411,10 +396,7 @@ class FlextLdifServersBaseSchema(
         """Resolve schema operation from parameter or kwargs."""
         if operation is not None:
             return self._coerce_operation(operation)
-        raw_operation = self._parse_operation_kwarg(kwargs).unwrap_or(None)
-        if raw_operation is None:
-            return None
-        return self._coerce_operation(raw_operation)
+        return self._parse_operation_kwarg(kwargs).unwrap()
 
     @staticmethod
     def _parse_operation_kwarg(kwargs: t.JsonMapping) -> p.Result[str]:
@@ -604,21 +586,8 @@ class FlextLdifServersBaseSchema(
                     attr_definition=data, oc_definition=None
                 )
         elif operation == "write":
-            attr_model = self._coerce_attribute_model(data).unwrap_or(None)
-            if attr_model is not None:
-                result = self._handle_write_operation(
-                    attr_model=attr_model, oc_model=None
-                )
-            else:
-                oc_model = self._coerce_objectclass_model(data).unwrap_or(None)
-                if oc_model is not None:
-                    result = self._handle_write_operation(
-                        attr_model=None, oc_model=oc_model
-                    )
-                else:
-                    result = r[t.Ldif.SchemaConversionValue].fail(
-                        f"write operation requires SchemaAttribute or SchemaObjectClass, got {type(data).__name__}"
-                    )
+            attr_model = self._coerce_attribute_model(data).unwrap()
+            result = self._handle_write_operation(attr_model=attr_model, oc_model=None)
         else:
             msg = f"Unknown operation: {operation}"
             raise AssertionError(msg)

@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from flext_ldif import p, r, t
+from flext_core import r
+from flext_ldif import p, t
 
 
 class FlextLdifUtilitiesTransformer[T]:

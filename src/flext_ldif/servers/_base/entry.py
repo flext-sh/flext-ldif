@@ -115,9 +115,7 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
     def parse_input(self, ldif_text: str) -> t.MutableSequenceOf[m.Ldif.Entry] | None:
         """Compatibility parser entrypoint for direct server consumers."""
         parse_result = self.parse_server(ldif_text)
-        if parse_result.failure:
-            return None
-        return parse_result.value
+        return parse_result.unwrap()
 
     def parse_entry(
         self, entry_dn: str, entry_attrs: t.MutableStrSequenceMapping

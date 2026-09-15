@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, override
 
-from flext_ldif import c, p, r, t
+from flext_core import r
+from flext_ldif import c, p, t
 
 if TYPE_CHECKING:
     from flext_ldif import FlextLdifModels as m

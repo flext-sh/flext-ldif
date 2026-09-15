@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_ldif import FlextLdifModels as m, c, p, t
+from flext_ldif import c, p, t
 
 from .oid import FlextLdifUtilitiesOID as uo
 from .schema_format import FlextLdifUtilitiesSchemaFormat as sf
@@ -20,7 +20,7 @@ class FlextLdifUtilitiesSchemaBuild:
 
     @staticmethod
     def _build_attribute_parts_from_model(
-        attr_data: m.Ldif.SchemaAttribute,
+        attr_data: FlextLdifModels.Ldif.SchemaAttribute,
     ) -> t.MutableSequenceOf[str]:
         """Build RFC 4512 attribute definition parts (simple version)."""
         parts: t.MutableSequenceOf[str] = [f"( {attr_data.oid}"]
@@ -42,7 +42,7 @@ class FlextLdifUtilitiesSchemaBuild:
 
     @staticmethod
     def _build_objectclass_parts_from_model(
-        oc_data: m.Ldif.SchemaObjectClass,
+        oc_data: FlextLdifModels.Ldif.SchemaObjectClass,
     ) -> t.MutableSequenceOf[str]:
         """Build RFC 4512 objectClass definition parts (extracted to reduce complexity)."""
         parts: t.MutableSequenceOf[str] = [f"( {oc_data.oid}"]
@@ -71,7 +71,12 @@ class FlextLdifUtilitiesSchemaBuild:
     @staticmethod
     def _write_schema_element(
         data: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
-        expected_type: (type[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]),
+        expected_type: (
+            type[
+                FlextLdifModels.Ldif.SchemaAttribute
+                | FlextLdifModels.Ldif.SchemaObjectClass
+            ]
+        ),
         type_name: str,
         parts_builder: Callable[..., t.MutableSequenceOf[str]],
     ) -> str:
@@ -88,7 +93,9 @@ class FlextLdifUtilitiesSchemaBuild:
 
     @staticmethod
     def build_attribute_parts_with_metadata(
-        attr_data: m.Ldif.SchemaAttribute, *, restore_original: bool = True
+        attr_data: FlextLdifModels.Ldif.SchemaAttribute,
+        *,
+        restore_original: bool = True,
     ) -> t.MutableSequenceOf[str]:
         """Build RFC 4512 attribute parts with full metadata restoration."""
         if restore_original:
@@ -119,7 +126,9 @@ class FlextLdifUtilitiesSchemaBuild:
 
     @staticmethod
     def build_objectclass_parts_with_metadata(
-        oc_data: m.Ldif.SchemaObjectClass, *, restore_original: bool = True
+        oc_data: FlextLdifModels.Ldif.SchemaObjectClass,
+        *,
+        restore_original: bool = True,
     ) -> t.MutableSequenceOf[str]:
         """Build RFC 4512 objectClass parts with full metadata restoration."""
         original_parts = sf.try_restore_objectclass_original_format(
@@ -155,7 +164,8 @@ class FlextLdifUtilitiesSchemaBuild:
 
     @staticmethod
     def should_restore_schema_original_format(
-        metadata: m.Ldif.ServerMetadata | None, target_server_type: str | None
+        metadata: FlextLdifModels.Ldif.ServerMetadata | None,
+        target_server_type: str | None,
     ) -> bool:
         """Restore original schema text only for same-server round-trips."""
         if metadata is None:
@@ -204,7 +214,7 @@ class FlextLdifUtilitiesSchemaBuild:
         """Write RFC 4512 attribute definition string from SchemaAttribute protocol."""
         return FlextLdifUtilitiesSchemaBuild._write_schema_element(
             attr_data,
-            m.Ldif.SchemaAttribute,
+            FlextLdifModels.Ldif.SchemaAttribute,
             "attr_data",
             FlextLdifUtilitiesSchemaBuild._build_attribute_parts_from_model,
         )
@@ -214,7 +224,7 @@ class FlextLdifUtilitiesSchemaBuild:
         """Write RFC 4512 objectClass definition string from SchemaObjectClass protocol."""
         return FlextLdifUtilitiesSchemaBuild._write_schema_element(
             oc_data,
-            m.Ldif.SchemaObjectClass,
+            FlextLdifModels.Ldif.SchemaObjectClass,
             "oc_data",
             FlextLdifUtilitiesSchemaBuild._build_objectclass_parts_from_model,
         )

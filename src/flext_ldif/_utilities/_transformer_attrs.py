@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, override
 
-from flext_ldif import FlextLdifModels as m, p, r, t
+from flext_core import r
+from flext_ldif import p, t
 
 from ._transformer_base import FlextLdifUtilitiesTransformer
 

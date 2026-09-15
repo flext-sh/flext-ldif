@@ -4,14 +4,15 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_ldif import FlextLdifModels as m, c, p, r, t
+from flext_core import r
+from flext_ldif import FlextLdifModels, c, p, t
 
 from ._transformer_base import FlextLdifUtilitiesTransformer
 from .dn import FlextLdifUtilitiesDN as udn
 
 
 class FlextLdifUtilitiesNormalizeDnTransformer(
-    FlextLdifUtilitiesTransformer[m.Ldif.Entry]
+    FlextLdifUtilitiesTransformer[FlextLdifModels.Ldif.Entry]
 ):
     """Transformer for DN normalization."""
 
@@ -48,10 +49,12 @@ class FlextLdifUtilitiesNormalizeDnTransformer(
         return r[bool].ok(value=True)
 
     @override
-    def apply(self, item: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
+    def apply(
+        self, item: FlextLdifModels.Ldif.Entry
+    ) -> p.Result[FlextLdifModels.Ldif.Entry]:
         """Apply DN normalization to an entry."""
         if item.dn is None:
-            return r[m.Ldif.Entry].fail("Entry has no DN")
+            return r[FlextLdifModels.Ldif.Entry].fail("Entry has no DN")
         dn_str = (
             item.dn.value
             if getattr(item.dn, "value", None) is not None
@@ -68,14 +71,16 @@ class FlextLdifUtilitiesNormalizeDnTransformer(
                 .map(lambda __: dn_str)
             )
 
-        def update_entry(normalized_dn: str) -> m.Ldif.Entry:
+        def update_entry(normalized_dn: str) -> FlextLdifModels.Ldif.Entry:
             normalized_text = self._normalize_dn_case_and_spaces(normalized_dn)
             normalized_dn_value = (
                 item.dn.model_copy(update={"value": normalized_text})
-                if isinstance(item.dn, m.Ldif.DN)
-                else m.Ldif.DN.model_validate({"value": normalized_text})
+                if isinstance(item.dn, FlextLdifModels.Ldif.DN)
+                else FlextLdifModels.Ldif.DN.model_validate({"value": normalized_text})
             )
-            copied: m.Ldif.Entry = item.model_copy(update={"dn": normalized_dn_value})
+            copied: FlextLdifModels.Ldif.Entry = item.model_copy(
+                update={"dn": normalized_dn_value}
+            )
             return copied
 
         return (

@@ -119,7 +119,7 @@ class FlextLdifCategorization(s):
                     error=validation_result.error,
                     error_type="ValidationError",
                 )
-                return None
+                raise
             validated: m.Ldif.Entry = validation_result.value
             return validated
         return None

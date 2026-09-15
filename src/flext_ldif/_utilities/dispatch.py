@@ -7,7 +7,8 @@ from typing import ClassVar, TypeGuard, overload
 
 from flext_cli import u
 
-from flext_ldif import FlextLdifModels as m, c, p, r, t
+from flext_core import r
+from flext_ldif import FlextLdifModels, c, p, t
 
 from .collection_ldif import FlextLdifUtilitiesCollectionLdif
 from .dn import FlextLdifUtilitiesDN
@@ -19,43 +20,49 @@ from .validation import FlextLdifUtilitiesValidation
 class FlextLdifUtilitiesDispatch:
     """Override dispatchers that route between parent classes."""
 
-    _ENTRY_LIST_ADAPTER: ClassVar[m.TypeAdapter[list[m.Ldif.Entry]]] = m.TypeAdapter(
-        list[m.Ldif.Entry]
-    )
-    _ACL_LIST_ADAPTER: ClassVar[m.TypeAdapter[list[m.Ldif.Acl]]] = m.TypeAdapter(
-        list[m.Ldif.Acl]
-    )
+    _ENTRY_LIST_ADAPTER: ClassVar[
+        FlextLdifModels.TypeAdapter[list[FlextLdifModels.Ldif.Entry]]
+    ] = FlextLdifModels.TypeAdapter(list[FlextLdifModels.Ldif.Entry])
+    _ACL_LIST_ADAPTER: ClassVar[
+        FlextLdifModels.TypeAdapter[list[FlextLdifModels.Ldif.Acl]]
+    ] = FlextLdifModels.TypeAdapter(list[FlextLdifModels.Ldif.Acl])
 
     @staticmethod
-    def as_entry(value: t.Ldif.EntryLike | t.ModelInput) -> m.Ldif.Entry:
+    def as_entry(value: t.Ldif.EntryLike | t.ModelInput) -> FlextLdifModels.Ldif.Entry:
         """Coerce an entry-like value into the canonical LDIF entry model."""
-        validated: m.Ldif.Entry = m.Ldif.Entry.model_validate(value)
+        validated: FlextLdifModels.Ldif.Entry = (
+            FlextLdifModels.Ldif.Entry.model_validate(value)
+        )
         return validated
 
     @staticmethod
     def as_entries(
-        values: t.SequenceOf[t.Ldif.EntryLike] | m.Ldif.ParseResponse | t.ModelInput,
-    ) -> t.MutableSequenceOf[m.Ldif.Entry]:
+        values: t.SequenceOf[t.Ldif.EntryLike]
+        | FlextLdifModels.Ldif.ParseResponse
+        | t.ModelInput,
+    ) -> t.MutableSequenceOf[FlextLdifModels.Ldif.Entry]:
         """Coerce an entry sequence into canonical LDIF entry models."""
-        if isinstance(values, m.Ldif.ParseResponse):
+        if isinstance(values, FlextLdifModels.Ldif.ParseResponse):
             return values.entries
-        validated: t.MutableSequenceOf[m.Ldif.Entry] = (
+        validated: t.MutableSequenceOf[FlextLdifModels.Ldif.Entry] = (
             FlextLdifUtilitiesDispatch._ENTRY_LIST_ADAPTER.validate_python(values)
         )
         return validated
 
     @staticmethod
-    def as_acl(value: t.Ldif.AclLike | t.ModelInput) -> m.Ldif.Acl:
+    def as_acl(value: t.Ldif.AclLike | t.ModelInput) -> FlextLdifModels.Ldif.Acl:
         """Coerce an ACL-like value into the canonical LDIF ACL model."""
-        validated: m.Ldif.Acl = m.Ldif.Acl.model_validate(value)
+        validated: FlextLdifModels.Ldif.Acl = FlextLdifModels.Ldif.Acl.model_validate(
+            value
+        )
         return validated
 
     @staticmethod
     def as_acls(
         values: t.SequenceOf[t.Ldif.AclLike] | t.ModelInput,
-    ) -> t.MutableSequenceOf[m.Ldif.Acl]:
+    ) -> t.MutableSequenceOf[FlextLdifModels.Ldif.Acl]:
         """Coerce an ACL sequence into canonical LDIF ACL models."""
-        validated: t.MutableSequenceOf[m.Ldif.Acl] = (
+        validated: t.MutableSequenceOf[FlextLdifModels.Ldif.Acl] = (
             FlextLdifUtilitiesDispatch._ACL_LIST_ADAPTER.validate_python(values)
         )
         return validated
@@ -63,7 +70,7 @@ class FlextLdifUtilitiesDispatch:
     @staticmethod
     @overload
     def parse(
-        definition: str | m.Ldif.DN | None,
+        definition: str | FlextLdifModels.Ldif.DN | None,
         server_type: str | None = None,
         parse_parts_hook: None = None,
     ) -> p.Result[t.MutableStrPairSequence]: ...
@@ -71,7 +78,7 @@ class FlextLdifUtilitiesDispatch:
     @staticmethod
     @overload
     def parse(
-        definition: str | m.Ldif.DN | None,
+        definition: str | FlextLdifModels.Ldif.DN | None,
         server_type: str | None,
         parse_parts_hook: Callable[[str], t.Ldif.MutableMetadataMapping]
         | Callable[[str], p.Result[t.Ldif.MutableMetadataMapping]],
@@ -79,7 +86,7 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def parse(
-        definition: str | m.Ldif.DN | None,
+        definition: str | FlextLdifModels.Ldif.DN | None,
         server_type: str | None = None,
         parse_parts_hook: Callable[[str], t.Ldif.MutableMetadataMapping]
         | Callable[[str], p.Result[t.Ldif.MutableMetadataMapping]]
@@ -90,7 +97,7 @@ class FlextLdifUtilitiesDispatch:
         )
         if definition is None:
             result = r[t.Ldif.MutableMetadataMapping].fail("DN cannot be None")
-        elif isinstance(definition, m.Ldif.DN):
+        elif isinstance(definition, FlextLdifModels.Ldif.DN):
             result = FlextLdifUtilitiesDN.parse_dn(definition)
         elif parse_parts_hook is None:
             result = (
@@ -109,10 +116,10 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def validate(
-        value_or_entries: t.MutableSequenceOf[m.Ldif.Entry]
+        value_or_entries: t.MutableSequenceOf[FlextLdifModels.Ldif.Entry]
         | t.JsonValue
         | str
-        | m.Ldif.DN,
+        | FlextLdifModels.Ldif.DN,
         *validators: p.ValidatorSpec,
         pipeline: FlextLdifUtilitiesPipeline.ValidationPipeline | None = None,
     ) -> (
@@ -122,7 +129,9 @@ class FlextLdifUtilitiesDispatch:
     ):
         """Validate entries against rules."""
         match True:
-            case _ if not validators and isinstance(value_or_entries, (str, m.Ldif.DN)):
+            case _ if not validators and isinstance(
+                value_or_entries, (str, FlextLdifModels.Ldif.DN)
+            ):
                 result: (
                     p.Result[
                         t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]
@@ -142,7 +151,7 @@ class FlextLdifUtilitiesDispatch:
                 result = r[t.JsonValue].fail(
                     "validator call requires scalar, not entry sequence"
                 )
-            case _ if isinstance(value_or_entries, m.Ldif.DN):
+            case _ if isinstance(value_or_entries, FlextLdifModels.Ldif.DN):
                 result = FlextLdifUtilitiesValidation.validate_value(
                     value_or_entries.value, *validators
                 )
@@ -157,7 +166,7 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def _validate_entries(
-        entries: t.MutableSequenceOf[m.Ldif.Entry],
+        entries: t.MutableSequenceOf[FlextLdifModels.Ldif.Entry],
         *,
         pipeline: FlextLdifUtilitiesPipeline.ValidationPipeline | None = None,
     ) -> p.Result[t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]]:
@@ -169,17 +178,20 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def _is_entry_sequence(
-        obj: t.MutableSequenceOf[m.Ldif.Entry] | t.JsonValue | str | m.Ldif.DN,
-    ) -> TypeGuard[t.MutableSequenceOf[m.Ldif.Entry]]:
+        obj: t.MutableSequenceOf[FlextLdifModels.Ldif.Entry]
+        | t.JsonValue
+        | str
+        | FlextLdifModels.Ldif.DN,
+    ) -> TypeGuard[t.MutableSequenceOf[FlextLdifModels.Ldif.Entry]]:
         """Check if value is a Sequence of Entry objects (dispatch helper)."""
-        if isinstance(obj, (str, bytes, m.Ldif.DN)):
+        if isinstance(obj, (str, bytes, FlextLdifModels.Ldif.DN)):
             return False
         if not isinstance(obj, Sequence):
             return False
         try:
             FlextLdifUtilitiesDispatch._ENTRY_LIST_ADAPTER.validate_python(obj)
         except c.EXC_VALIDATION_TYPE:
-            return False
+            raise
         else:
             return True
 

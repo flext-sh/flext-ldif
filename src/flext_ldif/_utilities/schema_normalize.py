@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from flext_ldif import FlextLdifModels as m, t
+    from flext_ldif import FlextLdifModels, t
 
 
 class FlextLdifUtilitiesSchemaNormalize:
@@ -13,7 +13,7 @@ class FlextLdifUtilitiesSchemaNormalize:
 
     @staticmethod
     def build_available_attributes_set(
-        attributes: t.MutableSequenceOf[m.Ldif.SchemaAttribute],
+        attributes: t.MutableSequenceOf[FlextLdifModels.Ldif.SchemaAttribute],
     ) -> set[str]:
         """Build set of available attribute names (lowercase) for dependency validation."""
         available: set[str] = set()

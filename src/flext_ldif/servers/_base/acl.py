@@ -188,7 +188,7 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
                 error=str(exc),
                 error_type=type(exc).__name__,
             )
-            return None
+            raise
         else:
             return acl
 
@@ -285,10 +285,7 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         """Resolve operation from parameter or kwargs."""
         if operation is not None:
             return operation
-        operation_raw = self._parse_operation_kwarg(kwargs).unwrap_or(None)
-        if operation_raw is None:
-            return None
-        return self._coerce_operation(operation_raw)
+        return self._parse_operation_kwarg(kwargs).unwrap()
 
     @staticmethod
     def _parse_operation_kwarg(kwargs: t.JsonMapping) -> p.Result[str]:

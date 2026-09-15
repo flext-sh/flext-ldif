@@ -498,11 +498,10 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
     ) -> None:
         """Merge parsed ACL extension metadata into the current extension mapping."""
         acl_result = acl_server.parse_server(acl_value)
-        if not acl_result.success:
-            return
+        return acl_result.unwrap()
         acl_model = m.Ldif.Acl.model_validate(acl_result.value)
         if not (acl_model.metadata and acl_model.metadata.extensions):
-            return
+            return None
         # mro-wgwh.5 (agent: kimi-coder) — extensions is a plain mapping; isinstance(dict)
         # replaces the hasattr(model_dump) dispatch.
         extensions_value = acl_model.metadata.extensions
@@ -519,6 +518,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             mapped_key = key_mapping.get(key)
             if mapped_key and (not current_extensions.get(mapped_key)):
                 current_extensions[mapped_key] = value
+        return None
 
     @staticmethod
     def _normalize_schema_values(attrs: t.MutableStrSequenceMapping) -> None:

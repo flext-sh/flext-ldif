@@ -13,8 +13,8 @@ from datetime import datetime
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Annotated, ClassVar, Self, override
 
-from flext_core import FlextUtilities as u, m
-from flext_ldif import c, p, r, t
+from flext_core import FlextUtilities as u, m, r
+from flext_ldif import c, p, t
 
 from .._utilities.collection_ldif import FlextLdifUtilitiesCollectionLdif
 from .._utilities.entry import FlextLdifUtilitiesEntry

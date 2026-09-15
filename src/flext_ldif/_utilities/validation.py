@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from flext_ldif import c, p, r, t
+from flext_core import r
+from flext_ldif import c, p, t
 
 
 class FlextLdifUtilitiesValidation:

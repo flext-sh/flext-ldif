@@ -38,7 +38,7 @@ def _import_optional(module_name: str) -> ModuleType | None:
     try:
         return importlib.import_module(module_name)
     except ImportError:
-        return None
+        raise
 
 
 class TestsFlextLdifUtilities(FlextTestsUtilities, u):
@@ -337,7 +337,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                 if bound:
                     connection.unbind()
             except (*cls.ldap_connectivity_errors(), ValueError):
-                return None
+                raise
             else:
                 if bound:
                     return (candidate_dn, candidate_password)

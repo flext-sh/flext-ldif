@@ -184,8 +184,9 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             validated: t.MutableJsonMapping = t.json_dict_adapter().validate_python(
                 value
             )
-        except c.ValidationError:
-            return {}
+        except c.ValidationError as exc:
+            msg = f"JSON validation failed: {exc}"
+            raise TypeError(msg)
         else:
             return validated
 

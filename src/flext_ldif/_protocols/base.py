@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from collections.abc import KeysView, MutableMapping, ValuesView
     from pathlib import Path
 
-    from flext_ldif import FlextLdifProtocols as lp, c, m, p, t
+    from flext_ldif import FlextLdifProtocols, c, m, p, t
 
     from .domain import FlextLdifProtocolsDomain as lpd
 
@@ -47,7 +47,7 @@ class FlextLdifProtocolsBase(Protocol):
         """Protocol for LDIF clients that support CRUD operations."""
 
         @property
-        def settings(self) -> lp.Ldif.Settings:
+        def settings(self) -> FlextLdifProtocols.Ldif.Settings:
             """Expose the typed LDIF settings carried by the public facade."""
             ...
 

@@ -7,7 +7,8 @@ from typing import ClassVar, TypeIs
 
 from flext_cli import u
 
-from flext_ldif import c, m, p, r, t
+from flext_core import r
+from flext_ldif import c, m, p, t
 
 from .metadata import FlextLdifUtilitiesMetadata as um
 

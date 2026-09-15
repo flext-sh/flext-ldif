@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from flext_ldif import c, p, r, t
+from flext_core import r
+from flext_ldif import c, p, t
 
 
 class FlextLdifUtilitiesOID:
@@ -35,7 +36,7 @@ class FlextLdifUtilitiesOID:
         """
         oid_result = FlextLdifUtilitiesOID.extract_from_definition(definition)
         if oid_result.failure:
-            return False
+            raise ValueError(oid_result.error or "OID extraction failed")
         oid_value: str = oid_result.value
         return bool(oid_pattern.match(oid_value))
 

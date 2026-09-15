@@ -7,8 +7,8 @@ import inspect
 import pkgutil
 from typing import TYPE_CHECKING, Annotated, ClassVar, TypeGuard, override
 
-from flext_core import s
-from flext_ldif import c, p, r, t, u
+from flext_core import r, s
+from flext_ldif import c, p, t, u
 
 if TYPE_CHECKING:
     from flext_ldif.servers.base import FlextLdifServersBase
@@ -45,19 +45,11 @@ class FlextLdifServer(s):
 
     def acl(self, server_type: str) -> p.Ldif.AclServer | None:
         """Get ACL server for a server type."""
-        server_result = self.server(server_type)
-        if server_result.failure:
-            return None
-        base: p.Ldif.ServerServer = server_result.value
-        return base.acl_server
+        return self.server(server_type).flat_map(lambda base: base.acl_server)
 
     def entry(self, server_type: str) -> p.Ldif.EntryServer | None:
         """Get entry server for a server type."""
-        server_result = self.server(server_type)
-        if server_result.failure:
-            return None
-        base: p.Ldif.ServerServer = server_result.value
-        return base.entry_server
+        return self.server(server_type).flat_map(lambda base: base.entry_server)
 
     def resolve_server_bundle(
         self, server_type: str
@@ -112,9 +104,7 @@ class FlextLdifServer(s):
         servers_by_server: t.JsonDict = {}
         priorities: t.JsonDict = {}
         for st in server_types:
-            base = self.server(st).unwrap_or(None)
-            if base is None:
-                continue
+            base = self.server(st).unwrap()
             servers_by_server[st] = {
                 "schema": type(base.schema_server).__name__
                 if base.schema_server
@@ -138,11 +128,7 @@ class FlextLdifServer(s):
 
     def resolve_schema_server(self, server_type: str) -> p.Ldif.SchemaServer | None:
         """Get schema server for a server type."""
-        server_result = self.server(server_type)
-        if server_result.failure:
-            return None
-        base: p.Ldif.ServerServer = server_result.value
-        return base.schema_server
+        return self.server(server_type).flat_map(lambda base: base.schema_server)
 
     def list_registered_servers(self) -> t.MutableSequenceOf[str]:
         """List all registered server types."""

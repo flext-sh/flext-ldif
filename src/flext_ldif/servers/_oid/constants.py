@@ -5,16 +5,13 @@ from __future__ import annotations
 import re
 from enum import StrEnum, unique
 from types import MappingProxyType
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
-from flext_ldif import c
-from flext_ldif.servers.rfc import FlextLdifServersRfc
-
-if TYPE_CHECKING:
-    from flext_ldif import t
+from flext_ldif import c, t
+from flext_ldif.servers.rfc import FlextLdifServersRfc as FSR
 
 
-class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
+class FlextLdifServersOidConstants(FSR.Constants):
     """Oracle Internet Directory (OID) constants for LDIF processing."""
 
     SERVER_TYPE: ClassVar[str] = c.Ldif.ServerTypes.OID

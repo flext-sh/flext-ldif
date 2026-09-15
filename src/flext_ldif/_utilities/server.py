@@ -5,10 +5,11 @@ from __future__ import annotations
 import sys
 from typing import TYPE_CHECKING, TypeIs
 
-from flext_ldif import FlextLdifShared, c, p, r, t
+from flext_core import r
+from flext_ldif import FlextLdifShared, c, p, t
 
 if TYPE_CHECKING:
-    from flext_ldif import FlextLdifModels as m
+    from flext_ldif import FlextLdifModels
 
 
 class FlextLdifUtilitiesServer:
@@ -36,8 +37,10 @@ class FlextLdifUtilitiesServer:
 
     @staticmethod
     def _extract_pattern_name_candidates(
-        value: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
-        settings: m.Ldif.ServerPatternsConfig,
+        value: str
+        | FlextLdifModels.Ldif.SchemaAttribute
+        | FlextLdifModels.Ldif.SchemaObjectClass,
+        settings: FlextLdifModels.Ldif.ServerPatternsConfig,
     ) -> list[str]:
         """Extract comparable schema names from a raw definition or parsed model."""
         if not isinstance(value, str):
@@ -59,7 +62,7 @@ class FlextLdifUtilitiesServer:
     def _matches_definition_text(
         definition_text: str | None,
         detection_names: frozenset[str],
-        settings: m.Ldif.ServerPatternsConfig,
+        settings: FlextLdifModels.Ldif.ServerPatternsConfig,
     ) -> bool:
         """Check raw definition text when settings require substring-based detection."""
         if not definition_text or not settings.match_definition_text:
@@ -89,7 +92,7 @@ class FlextLdifUtilitiesServer:
         name_without_prefix = class_name[len("FlextLdifServers") :]
         server_name = FlextLdifUtilitiesServer._extract_server_name(
             name_without_prefix
-        ).unwrap_or(None)
+        ).unwrap()
         if server_name is None:
             return None
         server_type_lower = server_name.lower()
@@ -207,8 +210,10 @@ class FlextLdifUtilitiesServer:
 
     @staticmethod
     def matches_server_patterns(
-        value: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
-        settings: m.Ldif.ServerPatternsConfig,
+        value: str
+        | FlextLdifModels.Ldif.SchemaAttribute
+        | FlextLdifModels.Ldif.SchemaObjectClass,
+        settings: FlextLdifModels.Ldif.ServerPatternsConfig,
     ) -> bool:
         r"""Check if value matches server-specific detection patterns.
 

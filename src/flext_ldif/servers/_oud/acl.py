@@ -92,7 +92,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             try:
                 acl_model = m.Ldif.Acl.model_validate(acl_line)
             except c.Ldif.EXC_LDIF_PARSE:
-                return False
+                raise
             if acl_model.metadata and acl_model.metadata.server_type:
                 metadata_server_type = str(acl_model.metadata.server_type)
                 current_server_type: str = self._get_server_type()

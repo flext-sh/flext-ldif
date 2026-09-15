@@ -9,19 +9,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING
 
 from flext_ldif import c
 
 if TYPE_CHECKING:
     from flext_ldif import t
-
-
-class _MissingSentinel:
-    pass
-
-
-_MISSING_ATTR: Final[_MissingSentinel] = _MissingSentinel()
 
 
 class FlextLdifShared:
@@ -34,7 +27,7 @@ class FlextLdifShared:
         Uses a sentinel t.JsonValue to distinguish between attributes that are None
         and attributes that don't exist at all.
         """
-        return getattr(obj, attr_name, _MISSING_ATTR) is not _MISSING_ATTR
+        _MISSING_ATTR = None
 
     @staticmethod
     def normalize_server_type(server_type: str) -> c.Ldif.ServerTypes:

@@ -6,7 +6,8 @@ from typing import TYPE_CHECKING, ClassVar
 
 from flext_cli import u
 
-from flext_ldif import FlextLdifModels as m, c, p, r, t
+from flext_core import r
+from flext_ldif import FlextLdifModels, c, p, t
 
 from .oid import FlextLdifUtilitiesOID as uo
 from .parser import FlextLdifUtilitiesParser as up
@@ -76,7 +77,9 @@ class FlextLdifUtilitiesSchemaParse:
 
     @staticmethod
     def detect_schema_type(
-        definition: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        definition: str
+        | FlextLdifModels.Ldif.SchemaAttribute
+        | FlextLdifModels.Ldif.SchemaObjectClass,
     ) -> c.Ldif.SchemaItemKind:
         """Detect schema type (attribute or objectclass) for automatic routing.
 
@@ -91,9 +94,9 @@ class FlextLdifUtilitiesSchemaParse:
             "attribute" or "objectclass".
 
         """
-        if isinstance(definition, m.Ldif.SchemaAttribute):
+        if isinstance(definition, FlextLdifModels.Ldif.SchemaAttribute):
             return c.Ldif.SchemaItemKind.ATTRIBUTE
-        if isinstance(definition, m.Ldif.SchemaObjectClass):
+        if isinstance(definition, FlextLdifModels.Ldif.SchemaObjectClass):
             return c.Ldif.SchemaItemKind.OBJECTCLASS
         definition_lower = definition.lower()
         objectclass_only_keywords = [
@@ -125,21 +128,29 @@ class FlextLdifUtilitiesSchemaParse:
     @staticmethod
     def extract_attributes_from_lines(
         ldif_content: str,
-        parse_callback: Callable[[str], p.Result[m.Ldif.SchemaAttribute]],
-    ) -> t.MutableSequenceOf[m.Ldif.SchemaAttribute]:
+        parse_callback: Callable[[str], p.Result[FlextLdifModels.Ldif.SchemaAttribute]],
+    ) -> t.MutableSequenceOf[FlextLdifModels.Ldif.SchemaAttribute]:
         """Extract and parse all attributeTypes from LDIF content lines."""
         return se.extract_schema_items_from_lines(
-            ldif_content, parse_callback, "attributetypes:", m.Ldif.SchemaAttribute
+            ldif_content,
+            parse_callback,
+            "attributetypes:",
+            FlextLdifModels.Ldif.SchemaAttribute,
         )
 
     @staticmethod
     def extract_objectclasses_from_lines(
         ldif_content: str,
-        parse_callback: Callable[[str], p.Result[m.Ldif.SchemaObjectClass]],
-    ) -> t.MutableSequenceOf[m.Ldif.SchemaObjectClass]:
+        parse_callback: Callable[
+            [str], p.Result[FlextLdifModels.Ldif.SchemaObjectClass]
+        ],
+    ) -> t.MutableSequenceOf[FlextLdifModels.Ldif.SchemaObjectClass]:
         """Extract and parse all objectClasses from LDIF content lines."""
         return se.extract_schema_items_from_lines(
-            ldif_content, parse_callback, "objectclasses:", m.Ldif.SchemaObjectClass
+            ldif_content,
+            parse_callback,
+            "objectclasses:",
+            FlextLdifModels.Ldif.SchemaObjectClass,
         )
 
     @staticmethod

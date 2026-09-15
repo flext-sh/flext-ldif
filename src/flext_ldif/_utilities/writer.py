@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from flext_ldif import c, t
 
 if TYPE_CHECKING:
-    from flext_ldif import FlextLdifModels as m
+    from flext_ldif import FlextLdifModels
 
 
 class FlextLdifUtilitiesWriter:
@@ -15,7 +15,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def add_attribute_flags(
-        attr_data: m.Ldif.SchemaAttribute, parts: t.MutableSequenceOf[str]
+        attr_data: FlextLdifModels.Ldif.SchemaAttribute, parts: t.MutableSequenceOf[str]
     ) -> None:
         """Add flags to attribute parts list."""
         if attr_data.single_value:
@@ -32,7 +32,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def add_attribute_matching_rules(
-        attr_data: m.Ldif.SchemaAttribute, parts: t.MutableSequenceOf[str]
+        attr_data: FlextLdifModels.Ldif.SchemaAttribute, parts: t.MutableSequenceOf[str]
     ) -> None:
         """Add matching rules to attribute parts list."""
         if attr_data.equality:
@@ -44,7 +44,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def add_attribute_syntax(
-        attr_data: m.Ldif.SchemaAttribute, parts: t.MutableSequenceOf[str]
+        attr_data: FlextLdifModels.Ldif.SchemaAttribute, parts: t.MutableSequenceOf[str]
     ) -> None:
         """Add syntax and length to attribute parts list."""
         if attr_data.syntax:

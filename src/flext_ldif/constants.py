@@ -358,6 +358,7 @@ class FlextLdifConstants(c):
         ERR_SERVER_REGISTRY_UNAVAILABLE: Final[str] = "Server registry not available"
         ERR_UNKNOWN: Final[str] = "Unknown error"
 
+        BINARY_SYNTAX = "binary"
         OID_TO_NAME: ClassVar[t.StrMapping] = MappingProxyType({
             "2.5.5.5": "integer",
             "1.3.6.1.4.1.1466.115.121.1.1": "aci",
@@ -456,7 +457,7 @@ class FlextLdifConstants(c):
             "teletex_terminal_identifier": "string",
             "telex_number": "string",
             "unique_member": "dn",
-            "user_password": "binary",
+            "user_password": BINARY_SYNTAX,
             "user_certificate": "binary",
             "ca_certificate": "binary",
             "authority_revocation_list": "binary",

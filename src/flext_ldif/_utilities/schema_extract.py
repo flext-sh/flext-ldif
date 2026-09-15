@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_ldif import FlextLdifModels as m, c, p, r, t
+from flext_core import r
+from flext_ldif import FlextLdifModels, c, p, t
 
 from .parser import FlextLdifUtilitiesParser as up
 
@@ -117,7 +118,9 @@ class FlextLdifUtilitiesSchemaExtract:
         return r[tuple[str, str, str | None]].ok((oid, name, desc))
 
     @staticmethod
-    def extract_schema_items_from_lines[SchemaModelT: m.Ldif.SchemaElement](
+    def extract_schema_items_from_lines[
+        SchemaModelT: FlextLdifModels.Ldif.SchemaElement
+    ](
         ldif_content: str,
         parse_callback: Callable[[str], p.Result[SchemaModelT]],
         line_prefix: str,
