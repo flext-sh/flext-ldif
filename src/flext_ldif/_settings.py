@@ -16,7 +16,8 @@ from typing import Annotated, ClassVar
 
 from flext_cli import FlextCliSettings
 
-from flext_core import FlextSettings, m
+from flext_core import FlextSettings
+from flext_ldif.models import m
 
 
 class FlextLdifSettings(FlextCliSettings, FlextSettings):

@@ -43,7 +43,7 @@ if TYPE_CHECKING:
     from .servers.openldap import FlextLdifServersOpenldap
     from .servers.oud import FlextLdifServersOud
     from .servers.relaxed import FlextLdifServersRelaxed
-    from .servers.rfc import FlextLdifServersRfc
+    from .servers.rfc import FlextLdifServersRfc, FlextLdifServersRfc as FSR
     from .servers.tivoli import FlextLdifServersTivoli
     from .services.acl import FlextLdifAcl
     from .services.analysis import FlextLdifAnalysis
@@ -70,6 +70,7 @@ if TYPE_CHECKING:
     from .typings import FlextLdifTypes, FlextLdifTypes as t
     from .utilities import FlextLdifUtilities, FlextLdifUtilities as u
 __all__: tuple[str, ...] = (
+    "FSR",
     "FlextLdif",
     "FlextLdifAcl",
     "FlextLdifAnalysis",
@@ -197,7 +198,9 @@ _LAZY_IMPORTS = MappingProxyType(
             ".utilities": ("FlextLdifUtilities", "u"),
             "flext_cli": ("d", "e", "h", "r", "x"),
         }),
-        alias_groups=MappingProxyType({}),
+        alias_groups=MappingProxyType({
+            ".servers.rfc": (("FSR", "FlextLdifServersRfc"),)
+        }),
         sort_keys=False,
     )
 )
