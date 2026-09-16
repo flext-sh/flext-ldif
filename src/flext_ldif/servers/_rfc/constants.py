@@ -99,7 +99,7 @@ class FlextLdifServersRfcConstants(FlextLdifServersBaseConstants):
     ACL_DEFAULT_VERSION: ClassVar[str] = "version 3.0"
     ACL_SELF_SUBJECT: ClassVar[str] = "ldap:///self"
     ACL_ANONYMOUS_SUBJECT: ClassVar[str] = "ldap:///anyone"
-    ACL_DEFAULT_ENTRY_ID: ClassVar[str] = "0.0.0.0"  # ruff: ignore[hardcoded-bind-all-interfaces]
+    ACL_DEFAULT_ENTRY_ID: ClassVar[str] = "0.0.0.0"
     ACL_DEFAULT_ENTRY_RDN: ClassVar[str] = ""
     ACL_DEFAULT_ENTRY_OBSOLETE: ClassVar[str] = ""
 

@@ -7,7 +7,7 @@ from types import MappingProxyType
 from typing import ClassVar
 
 from flext_ldif import c, t
-from flext_ldif.servers.rfc import FlextLdifServersRfc as FSR  # ruff: ignore[camelcase-imported-as-constant]
+from flext_ldif.servers.rfc import FlextLdifServersRfc as FSR
 
 
 class FlextLdifServersOudConstants(FSR.Constants):
