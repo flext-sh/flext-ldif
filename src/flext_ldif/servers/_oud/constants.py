@@ -7,10 +7,10 @@ from types import MappingProxyType
 from typing import ClassVar
 
 from flext_ldif import c, t
-from flext_ldif.servers.rfc import FlextLdifServersRfc as FSR
+from flext_ldif.servers.rfc import FlextLdifServersRfc as fsr
 
 
-class FlextLdifServersOudConstants(FSR.Constants):
+class FlextLdifServersOudConstants(fsr.Constants):
     """Oracle Unified Directory-specific constants using Python 3.13 patterns."""
 
     SERVER_TYPE: ClassVar[str] = c.Ldif.ServerTypes.OUD
@@ -43,7 +43,7 @@ class FlextLdifServersOudConstants(FSR.Constants):
     PERMISSION_PROXY: ClassVar[str] = "proxy"
     PERMISSION_ALL: ClassVar[str] = "all"
     SUPPORTED_PERMISSIONS: ClassVar[frozenset[str]] = (
-        FSR.Constants.SUPPORTED_PERMISSIONS
+        fsr.Constants.SUPPORTED_PERMISSIONS
         | frozenset([PERMISSION_SELFWRITE, PERMISSION_PROXY, PERMISSION_ALL])
     )
     ACL_DEFAULT_NAME: ClassVar[str] = "OUD ACL"
@@ -138,7 +138,7 @@ class FlextLdifServersOudConstants(FSR.Constants):
         "ds-cfg-backend-id",
     ])
     PRESERVE_ON_MIGRATION: ClassVar[frozenset[str]] = (
-        FSR.Constants.PRESERVE_ON_MIGRATION | frozenset(["pwdChangedTime"])
+        fsr.Constants.PRESERVE_ON_MIGRATION | frozenset(["pwdChangedTime"])
     )
     BOOLEAN_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
         "pwdlockout",
