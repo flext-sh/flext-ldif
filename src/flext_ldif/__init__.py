@@ -43,7 +43,7 @@ if TYPE_CHECKING:
     from .servers.openldap import FlextLdifServersOpenldap
     from .servers.oud import FlextLdifServersOud
     from .servers.relaxed import FlextLdifServersRelaxed
-    from .servers.rfc import FlextLdifServersRfc, FlextLdifServersRfc as FSR  # ruff: ignore[camelcase-imported-as-constant]
+    from .servers.rfc import FlextLdifServersRfc, FlextLdifServersRfc as FSR
     from .servers.tivoli import FlextLdifServersTivoli
     from .services.acl import FlextLdifAcl
     from .services.analysis import FlextLdifAnalysis
