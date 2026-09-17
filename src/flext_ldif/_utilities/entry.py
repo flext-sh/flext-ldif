@@ -504,6 +504,7 @@ class FlextLdifUtilitiesEntry:
                 FlextLdifUtilitiesEntry.logger.warning(
                     f"Failed to validate server rules from mapping: {exc}"
                 )
+                raise
             else:
                 return validated
         return None
