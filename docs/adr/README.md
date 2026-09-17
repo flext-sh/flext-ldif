@@ -96,6 +96,5 @@ ADRs are numbered sequentially as created. The format is `ADR-XXX.md` where XXX 
 
 ## Related Documentation
 
-- Architecture Overview - High-level architecture documentation
-- **Architecture Diagrams** - Visual representations of architecture (_Documentation coming soon_)
+- [Architecture Overview](../architecture.md) - High-level architecture documentation
 - Development Guidelines - Implementation guidelines influenced by ADRs

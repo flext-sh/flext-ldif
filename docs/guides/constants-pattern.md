@@ -2,9 +2,9 @@
 
 <!-- TOC START -->
 - [RFC.Constants (Base)](#rfcconstants-base)
-- [Server.Constants (Específicos)](#serverconstants-especficos)
-- [Quando usar o quê](#quando-usar-o-qu)
-- [Benefícios](#benefcios)
+- [Server.Constants (Específicos)](#serverconstants-especificos)
+- [Quando usar o quê](#quando-usar-o-que)
+- [Benefícios](#beneficios)
 <!-- TOC END -->
 
 ## RFC.Constants (Base)

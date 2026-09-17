@@ -342,7 +342,7 @@ def process_with_optimization(file_path: str) -> p.Result[m.Dict]:
 
 ```python
 # Error: "Service registration failed"
-container = FlextContainer.get_global()
+container = FlextContainer()
 result = container.bind("ldif_api", api)
 # result.failure == True```
 **Solution**:
@@ -355,7 +355,7 @@ def debug_container_issues() -> None:
     """Debug FlextContainer registration issues."""
     from flext_ldif import ldif
 
-    container = FlextContainer.get_global()
+    container = FlextContainer()
 
     # Check container status
     u.Cli.print(f"Container type: {type(container)}")
@@ -380,7 +380,7 @@ def debug_container_issues() -> None:
 
 def safe_service_registration() -> p.Result[ldif]:
     """Safely register LDIF service with error handling."""
-    container = FlextContainer.get_global()
+    container = FlextContainer()
 
     # Create API instance
     api = ldif()
@@ -518,7 +518,7 @@ objectClass: person
 
     # Check container integration
     try:
-        container = FlextContainer.get_global()
+        container = FlextContainer()
         reg_result = container.bind("health_check_api", api)
         if reg_result.success:
             results["checks"]["container_integration"] = "✓ Container integration works"

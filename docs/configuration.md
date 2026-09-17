@@ -337,7 +337,7 @@ api = ldif(settings=ConfigurationProfiles.enterprise())```
 from flext_cli import u
 
 # Register configuration in container
-container = FlextContainer.get_global()
+container = FlextContainer()
 settings = FlextLdifModels.Config(max_entries=100000)
 
 registration_result = container.bind("ldif_config", settings)

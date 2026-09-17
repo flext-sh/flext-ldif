@@ -1,19 +1,19 @@
 # Server API Usage Pattern - Padrão Correto
 
 <!-- TOC START -->
-- [❌ PADRÃO INCORRETO (Deprecado)](#padro-incorreto-deprecado)
-- [✅ PADRÃO CORRETO (Obrigatório)](#padro-correto-obrigatrio)
+- [❌ PADRÃO INCORRETO (Deprecado)](#padrao-incorreto-deprecado)
+- [✅ PADRÃO CORRETO (Obrigatório)](#padrao-correto-obrigatorio)
 - [📝 Uso em Testes (Fixtures)](#uso-em-testes-fixtures)
-  - [Fixtures Centralizadas (`conftest.py`)](#fixtures-centralizadas-conftestpy)
-  - [Uso nas Funções de Teste](#uso-nas-funes-de-teste)
-- [🔄 Migração de Código Existente](#migrao-de-cdigo-existente)
+  - [Fixtures Centralizadas (conftest.py)](#fixtures-centralizadas-conftestpy)
+  - [Uso nas Funções de Teste](#uso-nas-funcoes-de-teste)
+- [🔄 Migração de Código Existente](#migracao-de-codigo-existente)
   - [Passo 1: Atualizar Imports](#passo-1-atualizar-imports)
-  - [Passo 2: Atualizar Instanciação](#passo-2-atualizar-instanciao)
+  - [Passo 2: Atualizar Instanciação](#passo-2-atualizar-instanciacao)
   - [Passo 3: Atualizar Type Hints](#passo-3-atualizar-type-hints)
-- [📊 Status de Migração](#status-de-migrao)
-- [🎯 Servers Disponíveis via API](#servers-disponveis-via-api)
-- [🔍 Verificação](#verificao)
-- [📚 Referências](#referncias)
+- [📊 Status de Migração](#status-de-migracao)
+- [🎯 Servers Disponíveis via API](#servers-disponiveis-via-api)
+- [🔍 Verificação](#verificacao)
+- [📚 Referências](#referencias)
 <!-- TOC END -->
 
 **Data**: 2025-11-18
