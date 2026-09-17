@@ -15,6 +15,7 @@
 - [🎯 Servers Disponíveis via API](#servers-disponveis-via-api)
 - [🔍 Verificação](#verificao)
 - [📚 Referências](#referncias)
+
 <!-- TOC END -->
 
 **Data**: 2025-11-18

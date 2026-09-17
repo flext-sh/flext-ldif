@@ -20,6 +20,7 @@
   - [Review Process](#review-process)
   - [Tooling Integration](#tooling-integration)
 - [Related Documentation](#related-documentation)
+
 <!-- TOC END -->
 
 **Version**: 0.12.0-dev | **Framework**: PlantUML + C4 Model | **Updated**: October 10, 2025

@@ -10,6 +10,7 @@
 - [Current ADRs](#current-adrs)
 - [ADR Maintenance](#adr-maintenance)
 - [Related Documentation](#related-documentation)
+
 <!-- TOC END -->
 
 **Purpose**: This directory contains Architecture Decision Records (ADRs) that document architectural decisions made for FLEXT-LDIF. ADRs capture the context, decision, and consequences of significant architectural choices.

@@ -6,6 +6,7 @@
 - [Server.Constants (Específicos)](#serverconstants-especficos)
 - [Quando usar o quê](#quando-usar-o-qu)
 - [Benefícios](#benefcios)
+
 <!-- TOC END -->
 
 ## RFC.Constants (Base)

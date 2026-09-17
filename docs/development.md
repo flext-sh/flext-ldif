@@ -22,6 +22,7 @@
   - [LDIF Format Edge Cases](#ldif-format-edge-cases)
   - [Memory Debugging](#memory-debugging)
 - [Integration with FLEXT Ecosystem](#integration-with-flext-ecosystem)
+
 <!-- TOC END -->
 
 **Version**: 0.12.0-dev | **Updated**: April 14, 2026

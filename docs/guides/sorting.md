@@ -17,6 +17,7 @@
 - [Public Classmethod API](#public-classmethod-api)
 - [Quick Reference](#quick-reference)
 - [See Also](#see-also)
+
 <!-- TOC END -->
 
 Flexible sorting for LDIF entries, attributes, ACL & schemas.

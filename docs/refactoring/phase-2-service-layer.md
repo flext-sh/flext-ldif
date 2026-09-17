@@ -22,6 +22,7 @@
   - [Step 4: Deprecate nested classes](#step-4-deprecate-nested-classes)
 - [Success Criteria](#success-criteria)
 - [Related Documentation](#related-documentation)
+
 <!-- TOC END -->
 
 ## Overview

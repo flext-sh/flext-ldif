@@ -12,6 +12,7 @@
   - [Pattern 6: Schema & Advanced Operations](#pattern-6-schema-advanced-operations)
 - [Quick Reference](#quick-reference)
 - [See Also](#see-also)
+
 <!-- TOC END -->
 
 ## Features
