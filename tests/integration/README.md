@@ -724,7 +724,7 @@ Tests run with:
 - [ ] Test passes linting and type checking
 - [ ] Test follows "Best Practices" guidelines above
 
-______________________________________________________________________
+---
 
 **Integration Test Suite** for ldif LDIF processing library.
 

@@ -1,6 +1,7 @@
 # FLEXT LDIF Sorting Service - Universal Sorting Engine
 
 <!-- TOC START -->
+
 - [DN Handling (RFC 4514 Compliance)](#dn-handling-rfc-4514-compliance)
 - [What It Sorts (sort_target parameter)](#what-it-sorts-sorttarget-parameter)
 - [How It Sorts Entries (sort_by parameter)](#how-it-sorts-entries-sortby-parameter)
@@ -52,7 +53,7 @@ Supports hierarchy, DN, custom predicate, and schema OID sorting.
 
 ### Pattern 1: Execute Method (V1 Style)
 
-```python
+````python
 result = FlextLdifSorting(entries=my_entries, sort_by="hierarchy").execute()
 
 if result.success:
@@ -200,3 +201,4 @@ sorted = FlextLdifSorting.by_custom(
 
 - API Reference
 - Filters Documentation
+````

@@ -1,6 +1,7 @@
 # ADR-004: Memory-Bound Processing Architecture
 
 <!-- TOC START -->
+
 - No sections found
 <!-- TOC END -->
 
@@ -37,7 +38,7 @@ Implement a **memory-bound processing architecture** that loads entire LDIF file
 
 **Implementation**:
 
-```python
+````python
 from __future__ import annotations
 
 from pathlib import Path
@@ -130,3 +131,4 @@ The memory-bound architecture is appropriate for the current use case of directo
 - **Absolute Maximum**: Limited by available system RAM
 - **Monitoring**: File size warnings but no automatic chunking
 - **Future Evolution**: Streaming parser planned for Phase 2
+````

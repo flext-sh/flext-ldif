@@ -6,6 +6,7 @@
 > Project profile: `flext-ldif`
 
 <!-- TOC START -->
+
 - [Ownership order](#ownership-order)
 - [Documentation configuration](#documentation-configuration)
 - [Apply and validate](#apply-and-validate)

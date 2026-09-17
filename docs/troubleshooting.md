@@ -1,6 +1,7 @@
 # FLEXT-LDIF Troubleshooting
 
 <!-- TOC START -->
+
 - [Common Issues and Solutions](#common-issues-and-solutions)
   - [Parse Errors](#parse-errors)
   - [Memory Issues](#memory-issues)
@@ -14,7 +15,7 @@
   - [Support Resources](#support-resources)
   - [Creating Support Requests](#creating-support-requests)
   - [Emergency Contacts](#emergency-contacts)
-<!-- TOC END -->
+  <!-- TOC END -->
 
 **Version**: 0.12.0-dev | **Updated**: April 14, 2026
 
@@ -28,7 +29,7 @@ This document provides solutions to common issues encountered when using FLEXT-L
 
 **Symptom**: Parse operations fail with format-related error messages.
 
-```python
+````python
 from flext_ldif import ldif
 
 if (
@@ -634,3 +635,4 @@ For critical production issues:
 ______________________________________________________________________
 
 This troubleshooting guide provides comprehensive solutions for common FLEXT-LDIF issues while maintaining integration with FLEXT ecosystem support patterns.
+````

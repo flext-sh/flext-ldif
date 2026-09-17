@@ -1,6 +1,7 @@
 # Getting Started with FLEXT-LDIF
 
 <!-- TOC START -->
+
 - [Prerequisites](#prerequisites)
   - [System Requirements](#system-requirements)
   - [FLEXT Ecosystem Dependencies](#flext-ecosystem-dependencies)
@@ -101,7 +102,7 @@ python -c "from flext_ldif import ldif"
 
 Create your first LDIF processing script:
 
-```python
+````python
 from __future__ import annotations
 
 from flext_ldif import ldif
@@ -417,3 +418,4 @@ Once you have FLEXT-LDIF installed and working:
 ______________________________________________________________________
 
 This getting started guide provides the foundation for using FLEXT-LDIF effectively within the FLEXT ecosystem while maintaining software development practices.
+````

@@ -1,6 +1,7 @@
 # FLEXT-LDIF API Reference
 
 <!-- TOC START -->
+
 - [🎯 Library Overview](#library-overview)
   - [Generic RFC-Based Architecture with ZERO Bypass Paths](#generic-rfc-based-architecture-with-zero-bypass-paths)
 - [Core API Classes](#core-api-classes)
@@ -522,7 +523,7 @@ class Entry(m.BaseModel):
 
 **Example Usage**:
 
-```python
+````python
 # Access entry data
 entry = entries[0]
 u.Cli.print(f"DN: {entry.dn}")
@@ -813,7 +814,7 @@ def filter_by_custom_criteria(
         return r[Sequence[FlextLdifModels.Entry]].ok(filtered)
     except Exception as e:
         return r[Sequence[FlextLdifModels.Entry]].fail(f"Filtering failed: {e}")
-```
+````
 
 ## RFC Schema Parser API
 
@@ -821,7 +822,7 @@ def filter_by_custom_criteria(
 
 Parse LDAP schema definitions with RFC 4512 compliance and **MANDATORY servers support**.
 
-```python
+````python
 from __future__ import annotations
 
 # ✅ v1.0+ Flat imports
@@ -1323,3 +1324,4 @@ This API reference provides complete coverage of FLEXT-LDIF functionality, inclu
 
 - [RFC 2849 - The LDAP Data Interchange Format (LDIF)](https://www.rfc-editor.org/rfc/rfc2849.html)
 - [RFC 4512 - LDAP: Technical Specification Road Map](https://www.rfc-editor.org/rfc/rfc4512.html)
+````

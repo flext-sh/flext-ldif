@@ -1,6 +1,7 @@
 # flext-ldif
 
 <!-- TOC START -->
+
 - [Purpose](#purpose)
 - [Module Map](#module-map)
 - [Collection Rules](#collection-rules)
@@ -25,11 +26,11 @@ FLEXT LDIF - Enterprise LDIF Processing Library
 ## Module Map
 
 ::: flext_ldif
-    options:
-      members: false
-      show_root_heading: false
-      show_root_toc_entry: false
-      show_source: false
+options:
+members: false
+show_root_heading: false
+show_root_toc_entry: false
+show_source: false
 
 ## Collection Rules
 

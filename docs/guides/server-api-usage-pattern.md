@@ -1,6 +1,7 @@
 # Server API Usage Pattern - Padrão Correto
 
 <!-- TOC START -->
+
 - [❌ PADRÃO INCORRETO (Deprecado)](#padro-incorreto-deprecado)
 - [✅ PADRÃO CORRETO (Obrigatório)](#padro-correto-obrigatrio)
 - [📝 Uso em Testes (Fixtures)](#uso-em-testes-fixtures)
@@ -19,11 +20,11 @@
 **Data**: 2025-11-18
 **Status**: PADRÃO OBRIGATÓRIO
 
-______________________________________________________________________
+---
 
 ## ❌ PADRÃO INCORRETO (Deprecado)
 
-```python
+````python
 # ERRADO - Instanciação direta de servers
 from flext_ldif import FlextLdifServersOid
 from flext_ldif import FlextLdifServersOud
@@ -222,3 +223,4 @@ ______________________________________________________________________
 ______________________________________________________________________
 
 **IMPORTANTE**: Este padrão é OBRIGATÓRIO para todo código novo. Código existente deve ser migrado progressivamente.
+````

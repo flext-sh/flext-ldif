@@ -1,6 +1,7 @@
 # FLEXT-LDIF Architecture
 
 <!-- TOC START -->
+
 - [Architectural Goals](#architectural-goals)
 - [Package Layout](#package-layout)
 - [Core Components](#core-components)

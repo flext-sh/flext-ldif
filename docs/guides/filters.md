@@ -1,6 +1,7 @@
 # FLEXT LDIF Filters Service - Universal Entry Filtering and Categorization Engine
 
 <!-- TOC START -->
+
 - [Features](#features)
 - [Usage Examples](#usage-examples)
   - [Pattern 1: Direct Classmethod API (Simplified)](#pattern-1-direct-classmethod-api-simplified)
@@ -33,7 +34,7 @@
 
 ### Pattern 1: Direct Classmethod API (Simplified)
 
-```python
+````python
 # Filter entries by DN pattern
 result = FlextLdifFilters.by_dn(
     entries=my_entries, pattern="*,ou=users,dc=example,dc=com", mode="include"
@@ -163,3 +164,4 @@ category, reason = FlextLdifFilters.categorize(entry, rules)```
 
 - API Reference
 - Getting Started
+````

@@ -1,6 +1,7 @@
 # ADR-005: Pluggable Servers System
 
 <!-- TOC START -->
+
 - No sections found
 <!-- TOC END -->
 
@@ -40,7 +41,7 @@ Implement a **pluggable servers system** with:
 
 **Key Components**:
 
-```python
+````python
 from __future__ import annotations
 
 
@@ -133,3 +134,4 @@ The pluggable servers system enables FLEXT-LDIF's multi-server support while mai
 - **Independent Testing**: Each server implementation tested separately
 - **Version Compatibility**: Server servers can be versioned independently
 - **Graceful Degradation**: Stubs allow framework to recognize servers even without full implementation
+````
