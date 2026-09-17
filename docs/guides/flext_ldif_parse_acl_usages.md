@@ -50,7 +50,7 @@ ______________________________________________________________________
 
 ### Base Class Definition
 
-**File**: `/home/marlonsc/flext/flext-ldif/src/flext_ldif/servers/base.py`
+**File**: `~/flext/flext-ldif/src/flext_ldif/servers/base.py`
 
 ```python
 from __future__ import annotations
@@ -69,7 +69,7 @@ class FlextLdifServersBase.Acl(ABC, ServerRegistrationMixin):
         """```
 ### Protocol Definition
 
-**File**: `/home/marlonsc/flext/flext-ldif/src/flext_ldif/protocols.py`
+**File**: `~/flext/flext-ldif/src/flext_ldif/protocols.py`
 
 ```python
 from __future__ import annotations
@@ -119,7 +119,7 @@ ______________________________________________________________________
 
 ### ACL Service
 
-**File**: `/home/marlonsc/flext/flext-ldif/src/flext_ldif/services/acl.py`
+**File**: `~/flext/flext-ldif/src/flext_ldif/services/acl.py`
 
 **Method**: `parse()`
 
@@ -144,7 +144,7 @@ def parse(
 
 ### Categorized Pipeline
 
-**File**: `/home/marlonsc/flext/flext-ldif/src/flext_ldif/categorized_pipeline.py`
+**File**: `~/flext/flext-ldif/src/flext_ldif/categorized_pipeline.py`
 
 **Method**: `_transform_categories()`
 
@@ -205,7 +205,7 @@ ______________________________________________________________________
 
 ### FlextLdifCategorizedMigrationPipeline
 
-**File**: `/home/marlonsc/flext/flext-ldif/src/flext_ldif/categorized_pipeline.py`
+**File**: `~/flext/flext-ldif/src/flext_ldif/categorized_pipeline.py`
 
 **Usage Context**:
 
@@ -217,7 +217,7 @@ ______________________________________________________________________
 
 ### ldif High-Level API
 
-**File**: `/home/marlonsc/flext/flext-ldif/src/flext_ldif/__init__.py`
+**File**: `~/flext/flext-ldif/src/flext_ldif/__init__.py`
 
 **Exposure**:
 
