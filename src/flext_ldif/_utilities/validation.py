@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from flext_core import r
-from flext_ldif import c, p, t
+from flext_core import r, u
+from flext_ldif import p, t
 
 
 class FlextLdifUtilitiesValidation:
@@ -17,32 +17,19 @@ class FlextLdifUtilitiesValidation:
 
         @classmethod
         def is_valid_rfc2849_attribute_value(cls, value: str) -> bool:
-            try:
-                _ = t.Ldif.RFC2849_ATTRIBUTE_VALUE_ADAPTER.validate_python(value)
-            except c.ValidationError:
-                return False
-            else:
-                return True
+            return u.validate_value(
+                t.Ldif.RFC2849_ATTRIBUTE_VALUE_ADAPTER, value
+            ).success
 
         @classmethod
         def is_valid_rfc4512_descriptor(cls, value: str) -> bool:
-            try:
-                _ = t.Ldif.RFC4512_DESCRIPTOR_ADAPTER.validate_python(value)
-            except c.ValidationError:
-                return False
-            else:
-                return True
+            return u.validate_value(t.Ldif.RFC4512_DESCRIPTOR_ADAPTER, value).success
 
         @classmethod
         def is_valid_rfc4514_dn_component(cls, attribute_name: str, value: str) -> bool:
-            try:
-                _ = t.Ldif.RFC4514_DN_COMPONENT_ADAPTER.validate_python(
-                    f"{attribute_name}={value}"
-                )
-            except c.ValidationError:
-                return False
-            else:
-                return True
+            return u.validate_value(
+                t.Ldif.RFC4514_DN_COMPONENT_ADAPTER, f"{attribute_name}={value}"
+            ).success
 
 
 __all__: list[str] = ["FlextLdifUtilitiesValidation"]

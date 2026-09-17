@@ -480,32 +480,13 @@ class FlextLdifUtilitiesEntry:
         if isinstance(validation_rules, FlextLdifModelsSettings.ServerValidationRules):
             return validation_rules
         if isinstance(validation_rules, str):
-            try:
-                validated_json: FlextLdifModelsSettings.ServerValidationRules = (
-                    FlextLdifModelsSettings.ServerValidationRules.model_validate_json(
-                        validation_rules
-                    )
-                )
-            except c.ValidationError as exc:
-                FlextLdifUtilitiesEntry.logger.warning(
-                    f"Failed to validate server rules from JSON string: {exc}"
-                )
-                raise
-            else:
-                return validated_json
+            return FlextLdifModelsSettings.ServerValidationRules.model_validate_json(
+                validation_rules
+            )
         if validation_rules is not None:
-            try:
-                validated: FlextLdifModelsSettings.ServerValidationRules = (
-                    FlextLdifModelsSettings.ServerValidationRules.model_validate(
-                        validation_rules
-                    )
-                )
-            except c.ValidationError as exc:
-                FlextLdifUtilitiesEntry.logger.warning(
-                    f"Failed to validate server rules from mapping: {exc}"
-                )
-            else:
-                return validated
+            return FlextLdifModelsSettings.ServerValidationRules.model_validate(
+                validation_rules
+            )
         return None
 
     @staticmethod

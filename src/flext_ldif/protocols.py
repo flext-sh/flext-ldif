@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, ClassVar, Protocol, runtime_checkable
 
 from flext_cli import p
 
 from ._protocols.base import FlextLdifProtocolsBase
 from ._protocols.domain import FlextLdifProtocolsDomain
+from ._protocols.ldap3 import Protocols
 
 if TYPE_CHECKING:
     from flext_ldif import c
@@ -51,6 +52,19 @@ class FlextLdifProtocols(p):
             def ldif(self) -> FlextLdifProtocols.Ldif.LdifSettings:
                 """Namespaced LDIF settings branch."""
                 ...
+
+        # ── Structural ldap3 contracts (SSOT: _protocols/ldap3.py) ──
+        # Exposed as ClassVar so they appear as namespace attributes without
+        # being treated as structural protocol members.
+
+        Ldap3ServerInfo: ClassVar = Protocols.Ldap3ServerInfo
+        Ldap3Server: ClassVar = Protocols.Ldap3Server
+        Ldap3Entry: ClassVar = Protocols.Ldap3Entry
+        Ldap3Attribute: ClassVar = Protocols.Ldap3Attribute
+        Ldap3Connection: ClassVar = Protocols.Ldap3Connection
+        Ldap3ParseResponse: ClassVar = Protocols.Ldap3ParseResponse
+        RootDseEntry: ClassVar = Protocols.RootDseEntry
+        RootDseConnection: ClassVar = Protocols.RootDseConnection
 
 
 p = FlextLdifProtocols

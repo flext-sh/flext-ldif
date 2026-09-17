@@ -9,11 +9,10 @@ from flext_tests import FlextTestsProtocols
 from flext_ldif import FlextLdifProtocols
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
     from pathlib import Path
 
     from flext_ldif.services.migration import FlextLdifMigrationPipeline
-    from tests import c, m, t
+    from tests import c, m
 
 
 class TestsFlextLdifProtocols(FlextTestsProtocols, FlextLdifProtocols):
@@ -37,80 +36,10 @@ class TestsFlextLdifProtocols(FlextTestsProtocols, FlextLdifProtocols):
                 """The configured server name."""
                 ...
 
-        @runtime_checkable
-        class Ldap3Attribute(Protocol):
-            """Structural contract for ldap3-compatible attribute objects."""
-
-            @property
-            def values(self) -> t.SequenceOf[object]:
-                """The raw LDAP values for this attribute."""
-                ...
-
-            @property
-            def value(self) -> object:
-                """The resolved attribute value."""
-                ...
-
-        @runtime_checkable
-        class Ldap3Entry(Protocol):
-            """Structural contract for ldap3-compatible entry objects."""
-
-            @property
-            def entry_dn(self) -> str | None:
-                """The entry distinguished name."""
-                ...
-
-            @property
-            def entry_attributes(self) -> t.StrSequence:
-                """The attribute names present in this entry."""
-                ...
-
-            def __getitem__(self, attribute_name: str) -> p.Ldap.Ldap3Attribute:
-                """Return one ldap3 attribute object by attribute name."""
-                ...
-
-        @runtime_checkable
-        class Ldap3Connection(Protocol):
-            """Structural contract for ldap3-compatible connection objects."""
-
-            @property
-            def bound(self) -> bool:
-                """Whether the connection is currently bound."""
-                ...
-
-            def bind(self) -> bool:
-                """Bind the connection using the configured credentials."""
-                ...
-
-            @property
-            def entries(self) -> t.SequenceOf[p.Ldap.Ldap3Entry]:
-                """The entries produced by the last LDAP operation."""
-                ...
-
-            @property
-            def add(self) -> Callable[..., bool]:
-                """The callable implementing the add operation."""
-                ...
-
-            @property
-            def delete(self) -> Callable[..., bool]:
-                """The callable implementing the delete operation."""
-                ...
-
-            @property
-            def modify(self) -> Callable[..., bool]:
-                """The callable implementing the modify operation."""
-                ...
-
-            @property
-            def search(self) -> Callable[..., bool | t.JsonValue | None]:
-                """The callable implementing the search operation."""
-                ...
-
-            @property
-            def unbind(self) -> Callable[..., bool]:
-                """The callable implementing connection teardown."""
-                ...
+        # ── Shared structural contracts (SSOT: flext_ldif._protocols.ldap3) ──
+        Ldap3Attribute = FlextLdifProtocols.Ldif.Ldap3Attribute
+        Ldap3Entry = FlextLdifProtocols.Ldif.Ldap3Entry
+        Ldap3Connection = FlextLdifProtocols.Ldif.Ldap3Connection
 
         @runtime_checkable
         class Ldap3EntryAdapter(Protocol):
