@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from ..rfc import FlextLdifServersRfc as FSR
+    from ..rfc import FlextLdifServersRfc as fsr
     from .acl import FlextLdifServersOidAcl
     from .acl_assemble import FlextLdifServersOidAclAssemble
     from .acl_convert import FlextLdifServersOidAclConvert
@@ -23,7 +23,6 @@ if TYPE_CHECKING:
     from .entry import FlextLdifServersOidEntry
     from .schema import FlextLdifServersOidSchema
 __all__: tuple[str, ...] = (
-    "FSR",
     "FlextLdifServersOidAcl",
     "FlextLdifServersOidAclAssemble",
     "FlextLdifServersOidAclConvert",
@@ -34,6 +33,7 @@ __all__: tuple[str, ...] = (
     "FlextLdifServersOidEntry",
     "FlextLdifServersOidSchema",
     "c",
+    "fsr",
 )
 
 _LAZY_IMPORTS = MappingProxyType(
@@ -49,7 +49,7 @@ _LAZY_IMPORTS = MappingProxyType(
             ".entry": ("FlextLdifServersOidEntry",),
             ".schema": ("FlextLdifServersOidSchema",),
         }),
-        alias_groups=MappingProxyType({"..rfc": (("FSR", "FlextLdifServersRfc"),)}),
+        alias_groups=MappingProxyType({"..rfc": (("fsr", "FlextLdifServersRfc"),)}),
         sort_keys=False,
     )
 )
