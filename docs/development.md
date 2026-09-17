@@ -56,7 +56,7 @@ python -c "from flext_ldif import ldif; u.Cli.print('LDIF development environmen
 make lint           # Ruff linting
 make type-check     # MyPy type checking
 make format         # Code formatting
-make val       # Complete validation pipeline
+make check       # Complete validation pipeline
 
 # Testing
 make test           # Run test suite

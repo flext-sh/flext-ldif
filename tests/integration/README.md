@@ -182,29 +182,29 @@ These tests require a running LDAP container (Docker).
 
 ```bash
 # Run all integration tests
-PYTHONPATH=src poetry run pytest tests/integration/ -v
+PYTHONPATH=src make test tests/integration/ -v
 
 # Run specific test class
-PYTHONPATH=src poetry run pytest tests/integration/test_roundtrip_deep_validation.py::TestRoundtripDeepValidation -v
+PYTHONPATH=src make test tests/integration/test_roundtrip_deep_validation.py::TestRoundtripDeepValidation -v
 
 # Run specific test method
-PYTHONPATH=src poetry run pytest tests/integration/test_roundtrip_deep_validation.py::TestRoundtripDeepValidation::test_roundtrip_single_entry -v
+PYTHONPATH=src make test tests/integration/test_roundtrip_deep_validation.py::TestRoundtripDeepValidation::test_roundtrip_single_entry -v
 ```
 
 ### Running Test Categories
 
 ```bash
 # Run comprehensive validation tests (no Docker required)
-PYTHONPATH=src poetry run pytest tests/integration/test_roundtrip_deep_validation.py tests/integration/test_rfc_compliance_validation.py tests/integration/test_systematic_fixture_coverage.py tests/integration/test_error_recovery.py tests/integration/test_edge_cases.py -v
+PYTHONPATH=src make test tests/integration/test_roundtrip_deep_validation.py tests/integration/test_rfc_compliance_validation.py tests/integration/test_systematic_fixture_coverage.py tests/integration/test_error_recovery.py tests/integration/test_edge_cases.py -v
 
 # Run server-specific tests (no Docker required)
-PYTHONPATH=src poetry run pytest tests/integration/test_oid_integration.py tests/integration/test_oud_integration.py tests/integration/test_cross_server_conversion.py -v
+PYTHONPATH=src make test tests/integration/test_oid_integration.py tests/integration/test_oud_integration.py tests/integration/test_cross_server_conversion.py -v
 
 # Run real LDAP tests (requires Docker)
-PYTHONPATH=src poetry run pytest tests/integration/test_real_ldap_*.py -v
+PYTHONPATH=src make test tests/integration/test_real_ldap_*.py -v
 
 # Run with coverage
-PYTHONPATH=src poetry run pytest tests/integration/ --cov=src/flext_ldif --cov-report=term-missing
+PYTHONPATH=src make test tests/integration/ --cov=src/flext_ldif --cov-report=term-missing
 ```
 
 ### Test Markers
@@ -230,13 +230,13 @@ pytest -m e2e
 
 ```bash
 # Run tests using OID fixtures
-PYTHONPATH=src poetry run pytest tests/integration/ -k "oid" -v
+PYTHONPATH=src make test tests/integration/ -k "oid" -v
 
 # Run tests using OUD fixtures
-PYTHONPATH=src poetry run pytest tests/integration/ -k "oud" -v
+PYTHONPATH=src make test tests/integration/ -k "oud" -v
 
 # Run parametrized tests with specific fixture type
-PYTHONPATH=src poetry run pytest tests/integration/test_systematic_fixture_coverage.py::TestSystematicFixtureCoverage::test_schema_fixture_coverage -v
+PYTHONPATH=src make test tests/integration/test_systematic_fixture_coverage.py::TestSystematicFixtureCoverage::test_schema_fixture_coverage -v
 ```
 
 ## 📦 Centralized Fixtures (conftest.py)
@@ -549,13 +549,13 @@ def test_valid_entry(self, api: ldif) -> None:
 
 ```bash
 # Generate coverage report
-PYTHONPATH=src poetry run pytest tests/integration/ --cov=src/flext_ldif --cov-report=html
+PYTHONPATH=src make test tests/integration/ --cov=src/flext_ldif --cov-report=html
 
 # View report
 open htmlcov/index.html
 
 # Coverage by module
-PYTHONPATH=src poetry run pytest tests/integration/ --cov=src/flext_ldif --cov-report=term-missing
+PYTHONPATH=src make test tests/integration/ --cov=src/flext_ldif --cov-report=term-missing
 ```
 
 ## 🆕 Adding New Integration Tests
@@ -639,7 +639,7 @@ def test_roundtrip_preserves_attributes(self, api: ldif) -> None:
 **Solution**: Set PYTHONPATH before running tests
 
 ```bash
-PYTHONPATH=src poetry run pytest tests/integration/
+PYTHONPATH=src make test tests/integration/
 ```
 
 ### Fixture Not Found
@@ -650,7 +650,7 @@ PYTHONPATH=src poetry run pytest tests/integration/
 
 ```bash
 # Check fixture availability
-PYTHONPATH=src poetry run pytest tests/integration/ --fixtures | grep oid_schema
+PYTHONPATH=src make test tests/integration/ --fixtures | grep oid_schema
 ```
 
 ### Docker Container Errors
@@ -684,13 +684,13 @@ All integration tests are run in CI/CD pipelines:
 
 ```bash
 # Complete validation pipeline
-make val
+make check
 
 # Just tests
 make test
 
 # Just integration tests
-PYTHONPATH=src poetry run pytest tests/integration/ -v
+PYTHONPATH=src make test tests/integration/ -v
 ```
 
 ### CI Configuration

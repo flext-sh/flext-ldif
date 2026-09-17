@@ -72,7 +72,7 @@ python -c "from flext_ldif import ldif; print('FLEXT-LDIF installed successfully
 make lint           # Code quality checking with Ruff (ZERO TOLERANCE)
 make type-check     # Type safety validation with Pyrefly (MyPy successor)
 make test           # Run test suite (990/990 tests passing)
-make val       # Complete validation pipeline (lint + type + security + test)
+make check       # Complete validation pipeline (lint + type + security + test)
 
 # Testing commands (⚠️ CRITICAL: Requires PYTHONPATH=src)
 PYTHONPATH=src pytest                           # Full test suite
@@ -87,11 +87,11 @@ PYTHONPATH=src pytest tests/unit/test_oid.py -v  # Specific test file
 
 ```bash
 # ✅ CORRECT
-PYTHONPATH=src poetry run pytest tests/unit/test_oid.py -v
-PYTHONPATH=src poetry run python -c "from flext_ldif import ldif"
+PYTHONPATH=src make test tests/unit/test_oid.py -v
+PYTHONPATH=src python -c "from flext_ldif import ldif"
 
 # ❌ WRONG - Will fail with import errors
-poetry run pytest tests/unit/test_oid.py -v
+make test tests/unit/test_oid.py -v
 python -c "from flext_ldif import ldif"
 ```
 
