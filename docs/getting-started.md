@@ -106,7 +106,7 @@ python -c "from flext_ldif import ldif"
 
 Create your first LDIF processing script:
 
-````python
+```python
 from __future__ import annotations
 
 from flext_ldif import ldif
@@ -140,7 +140,9 @@ if result.success:
         print(f"Attributes: {list(entry.attributes.keys())}")
         print("---")
 else:
-    print(f"Parse failed: {result.error}")```
+    print(f"Parse failed: {result.error}")
+```
+
 ### File Operations
 
 Process LDIF files with error handling:
@@ -148,8 +150,9 @@ Process LDIF files with error handling:
 ```python
 from __future__ import annotations
 
-from flext_ldif import ldif
 from pathlib import Path
+
+from flext_ldif import ldif
 
 api = ldif()
 
@@ -178,7 +181,9 @@ if result.success:
     else:
         print(f"Validation failed: {validation_result.error}")
 else:
-    print(f"Failed to parse {ldif_path}: {result.error}")```
+    print(f"Failed to parse {ldif_path}: {result.error}")
+
+
 ## Configuration
 
 ### Basic Configuration
@@ -186,7 +191,7 @@ else:
 Configure LDIF processing behavior:
 
 ```python
-from flext_ldif import ldif, FlextLdifSettings
+from flext_ldif import FlextLdifSettings, ldif
 
 # Create configuration
 settings = FlextLdifSettings(
@@ -197,7 +202,9 @@ settings = FlextLdifSettings(
 )
 
 # Initialize API with configuration
-api = ldif(settings=settings)```
+api = ldif(settings=settings)
+
+
 ### Advanced Configuration
 
 Access additional configuration options:
@@ -210,7 +217,9 @@ settings = FlextLdifSettings()
 
 # Access configuration settings
 u.Cli.print(f"Max entries: {settings.max_entries}")
-u.Cli.print(f"Strict validation: {settings.strict_validation}")```
+u.Cli.print(f"Strict validation: {settings.strict_validation}")
+```
+
 ## Command Line Interface
 
 ### CLI Installation and Usage
@@ -225,7 +234,9 @@ python -m flext_ldif parse directory.ldif
 python -m flext_ldif analyze directory.ldif
 
 # Filter entries by type
-python -m flext_ldif filter --type person directory.ldif```
+python -m flext_ldif filter --type person directory.ldif
+```
+
 ### CLI Help
 
 ```bash
@@ -233,7 +244,9 @@ python -m flext_ldif filter --type person directory.ldif```
 python -m flext_ldif --help
 
 # Get help for specific command
-python -m flext_ldif parse --help```
+python -m flext_ldif parse --help
+```
+
 ## Common Use Cases
 
 ### Generic Schema Parsing with Server Servers
@@ -243,8 +256,9 @@ Parse LDAP schema files with automatic server-specific handling:
 ```python
 from __future__ import annotations
 
-from flext_ldif import FlextLdif
 from pathlib import Path
+
+from flext_ldif import FlextLdif
 
 # Write a sample LDIF schema file
 schema_path = Path("oid_schema.ldif")
@@ -258,7 +272,9 @@ if result.success:
     schema_data = result.unwrap().entries
     print(f"Parsed schema entries: {len(schema_data)}")
 
-# Works with any LDAP server - OpenLDAP, OUD, AD, etc.```
+# Works with any LDAP server - OpenLDAP, OUD, AD, etc.
+
+
 ### Generic Entry Migration Between Servers
 
 Migrate entries between different LDAP servers using generic transformation:
@@ -311,7 +327,9 @@ if result.success:
 # Generic transformation pipeline:
 # 1. Source servers normalize entries to RFC format
 # 2. Target servers transform from RFC to target format
-# 3. Works with ANY server combination (even unknown servers)```
+# 3. Works with ANY server combination (even unknown servers)
+```
+
 ### Working with Multiple Server Types
 
 Handle entries from different LDAP servers in the same workflow:
@@ -329,13 +347,15 @@ ouds = server_registry.get_entrys("oud")
 
 # Each server knows how to handle server-specific extensions
 # All servers follow the same Protocol interface
-# Servers are tried in priority order (lower number = higher priority)```
+# Servers are tried in priority order (lower number = higher priority)
+```
+
 ### Data Validation and Cleaning
 
 Validate and clean LDIF data:
 
 ```python
-from flext_ldif import ldif, FlextLdifSettings
+from flext_ldif import FlextLdifSettings, ldif
 
 ldif_content = """dn: cn=test,dc=example,dc=com
 objectClass: inetOrgPerson
@@ -359,7 +379,9 @@ if result.success:
         print(
             f"Processing {report.valid_entries} valid entries "
             f"out of {report.total_entries} total entries"
-        )```
+        )
+
+
 ## Troubleshooting
 
 ### Common Issues
@@ -411,15 +433,17 @@ Once you have FLEXT-LDIF installed and working:
 
 **Across Projects**:
 
-- [flext-core Foundation](https://github.com/flext-sh/flext/tree/0.12.0-dev/flext-core/docs/guides/railway-oriented-programming.md) - Railway-oriented programming patterns
-- [flext-ldap Integration](https://github.com/flext-sh/flext/tree/0.12.0-dev/flext-ldap/docs/guides/integration.md) - LDAP operations integration
+- [flext-core Foundation](https://github.com/flext-sh/flext/tree/0.12.0-dev/flext-core/docs/guides/railway-oriented-programming.md) -
+  Railway-oriented programming patterns
+- [flext-ldap Integration](https://github.com/flext-sh/flext/tree/0.12.0-dev/flext-ldap/docs/guides/integration.md) -
+  LDAP operations integration
 
 **External Resources**:
 
 - [PEP 257 - Docstring Conventions](https://peps.python.org/pep-0257/)
 - [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html)
 
-______________________________________________________________________
+---
 
-This getting started guide provides the foundation for using FLEXT-LDIF effectively within the FLEXT ecosystem while maintaining software development practices.
-````
+This getting started guide provides the foundation for using FLEXT-LDIF effectively
+within the FLEXT ecosystem while maintaining software development practices.

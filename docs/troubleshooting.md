@@ -30,7 +30,7 @@ including error diagnosis, performance problems, and integration issues.
 
 **Symptom**: Parse operations fail with format-related error messages.
 
-````python
+```python
 from flext_ldif import ldif
 
 if (
@@ -38,7 +38,9 @@ if (
         "dn: cn=test,dc=example,dc=com\nobjectClass: inetOrgPerson\ncn: test"
     )
 ).failure:
-    u.Cli.print(result.error)```
+    u.Cli.print(result.error)
+```
+
 **Solution**:
 
 ```python
@@ -68,21 +70,26 @@ def diagnose_ldif_format(content: str) -> None:
         content.encode("utf-8")
         u.Cli.print("✓ UTF-8 encoding valid")
     except UnicodeError as e:
-        u.Cli.print(f"❌ Encoding issue: {e}")```
+        u.Cli.print(f"❌ Encoding issue: {e}")
+```
+
 #### Character Encoding Issues
 
 **Symptom**: Parse fails with encoding-related errors.
 
 ```python
 # Common encoding error
-UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 123```
+UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 123
+```
+
 **Solution**:
 
 ```python
 from __future__ import annotations
 
-from flext_ldif import ldif, p, r
 import pathlib
+
+from flext_ldif import ldif, p, r
 
 
 def handle_encoding_issues(file_path: str) -> p.Result[str]:
@@ -109,7 +116,9 @@ def parse_with_encoding_detection(file_path: str) -> p.Result[list]:
         return r[list].fail(content_result.error)
 
     api = ldif()
-    return api.parse_string(content_result.unwrap())```
+    return api.parse_string(content_result.unwrap())
+
+
 ### Memory Issues
 
 #### Out of Memory Errors
@@ -118,14 +127,17 @@ def parse_with_encoding_detection(file_path: str) -> p.Result[list]:
 
 ```python
 # Memory error when processing large files
-MemoryError: Unable to allocate array```
+MemoryError: Unable to allocate array
+```
+
 **Solution**:
 
 ```python
 from __future__ import annotations
 
-from flext_ldif import ldif, FlextLdifModels, p, r, m
 import pathlib
+
+from flext_ldif import FlextLdifModels, ldif, m, p, r
 
 
 def process_large_file_safely(file_path: str) -> p.Result[m.Dict]:
@@ -197,7 +209,9 @@ def process_chunk(chunk_entries: list[str]) -> p.Result[bool]:
     chunk_content = "\n\n".join(chunk_entries)
     api = ldif()
     result = api.parse_string(chunk_content)
-    return result.map(lambda _: None)```
+    return result.map(lambda _: None)
+
+
 ### Validation Errors
 
 #### Strict Validation Failures
@@ -206,13 +220,15 @@ def process_chunk(chunk_entries: list[str]) -> p.Result[bool]:
 
 ```python
 result = api.validate_entries(entries)
-# Error: "Entry validation failed: unknown attribute 'customAttribute'"```
+# Error: "Entry validation failed: unknown attribute 'customAttribute'"
+```
+
 **Solution**:
 
 ```python
 from __future__ import annotations
 
-from flext_ldif import ldif, FlextLdifModels, p, r
+from flext_ldif import FlextLdifModels, ldif, p, r
 
 
 def handle_validation_errors(entries: list) -> p.Result[list]:
@@ -267,7 +283,9 @@ def analyze_entry_issues(entries: list) -> None:
         # Check for empty attributes
         for attr_name, attr_values in entry.attributes.items():
             if not attr_values or any(not v.strip() for v in attr_values):
-                u.Cli.print(f"  ⚠️  Empty values in attribute '{attr_name}'")```
+                u.Cli.print(f"  ⚠️  Empty values in attribute '{attr_name}'")
+
+
 ### Performance Issues
 
 #### Slow Processing
@@ -278,6 +296,7 @@ def analyze_entry_issues(entries: list) -> None:
 
 ```python
 from __future__ import annotations
+
 import pathlib
 
 
@@ -311,7 +330,9 @@ def benchmark_processing(file_path: str) -> None:
         else:
             u.Cli.print(f"Validation failed: {validation_result.error}")
     else:
-        u.Cli.print(f"Parsing failed: {parse_result.error}")```
+        u.Cli.print(f"Parsing failed: {parse_result.error}")
+
+
 **Optimization**:
 
 ```python
@@ -335,7 +356,9 @@ def process_with_optimization(file_path: str) -> p.Result[m.Dict]:
 
     return api.parse_file(file_path).map(
         lambda entries: {"entry_count": len(entries), "processing_optimized": True}
-    )```
+    )
+```
+
 ### Integration Issues
 
 #### FlextContainer Registration Problems
@@ -346,7 +369,9 @@ def process_with_optimization(file_path: str) -> p.Result[m.Dict]:
 # Error: "Service registration failed"
 container = FlextContainer.get_global()
 result = container.bind("ldif_api", api)
-# result.failure == True```
+# result.failure == True
+```
+
 **Solution**:
 
 ```python
@@ -397,7 +422,9 @@ def safe_service_registration() -> p.Result[ldif]:
     if retrieval_result.failure:
         return r[ldif].fail(f"Failed to retrieve LDIF API: {retrieval_result.error}")
 
-    return r[ldif].ok(retrieval_result.unwrap())```
+    return r[ldif].ok(retrieval_result.unwrap())
+```
+
 #### r Chain Errors
 
 **Symptom**: Railway-oriented programming chains fail unexpectedly.
@@ -409,7 +436,9 @@ result = (
     .parse_file(file_path)
     .flat_map(api.validate_entries)  # Error: expects bool, gets list
     .flat_map(api.filter_persons)
-)```
+)
+```
+
 **Solution**:
 
 ```python
@@ -468,7 +497,9 @@ def debug_railway_chain(file_path: str) -> p.Result[list]:
     persons = filter_result.unwrap()
     u.Cli.print(f"✓ Found {len(persons)} person entries")
 
-    return r[list].ok(persons)```
+    return r[list].ok(persons)
+```
+
 ## Diagnostic Tools
 
 ### Health Check Utility
@@ -483,7 +514,7 @@ def run_health_check() -> t.JsonMapping:
 
     # Check imports
     try:
-        from flext_ldif import ldif, FlextLdifModels
+        from flext_ldif import FlextLdifModels, ldif
 
         results["checks"]["imports"] = "✓ All imports successful"
     except ImportError as e:
@@ -563,7 +594,9 @@ def print_health_check_report() -> None:
             u.Cli.print(f"  ❌ {error}")
 
     u.Cli.print()
-    u.Cli.print("For additional help, see: docs/troubleshooting.md")```
+    u.Cli.print("For additional help, see: docs/troubleshooting.md")
+
+
 ### Debug Mode Configuration
 
 ```python
@@ -590,7 +623,9 @@ def enable_debug_mode() -> FlextLdif:
     u.Cli.print("  - All attributes processed")
     u.Cli.print("  - Verbose logging enabled")
 
-    return api```
+    return api
+```
+
 ## Getting Help
 
 ### Support Resources
@@ -610,8 +645,9 @@ from __future__ import annotations
 
 def generate_support_info() -> t.JsonMapping:
     """Generate information for support requests."""
-    import sys
     import platform
+    import sys
+
     from flext_ldif import __version__ as ldif_version
 
     return {
@@ -622,7 +658,9 @@ def generate_support_info() -> t.JsonMapping:
         "reproduction_steps": "Include steps to reproduce the issue",
         "expected_behavior": "Describe expected behavior",
         "actual_behavior": "Describe actual behavior",
-    }```
+    }
+
+
 ### Emergency Contacts
 
 For critical production issues:
@@ -633,7 +671,7 @@ For critical production issues:
 1. Document issue with support information
 1. Contact FLEXT support team with detailed report
 
-______________________________________________________________________
+---
 
-This troubleshooting guide provides comprehensive solutions for common FLEXT-LDIF issues while maintaining integration with FLEXT ecosystem support patterns.
-````
+This troubleshooting guide provides comprehensive solutions for common FLEXT-LDIF issues
+while maintaining integration with FLEXT ecosystem support patterns.

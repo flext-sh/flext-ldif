@@ -54,11 +54,13 @@ custom predicate, and schema OID sorting.
 
 ### Pattern 1: Execute Method (V1 Style)
 
-````python
+```python
 result = FlextLdifSorting(entries=my_entries, sort_by="hierarchy").execute()
 
 if result.success:
-    sorted_entries = result.unwrap()```
+    sorted_entries = result.unwrap()
+```
+
 ### Pattern 2: Classmethod for Composable/Chainable Operations
 
 ```python
@@ -67,7 +69,9 @@ result = (
     .sort(my_entries, by="hierarchy")
     .map(lambda e: e[:10])  # Take first 10
     .and_then(lambda e: FlextLdifSorting.sort(e, by="alphabetical"))
-)```
+)
+```
+
 ### Pattern 3: Fluent Builder Pattern
 
 ```python
@@ -78,7 +82,9 @@ sorted_entries = (
     .with_strategy("hierarchy")
     .with_attribute_sorting(order=["cn", "sn", "mail"])
     .build()  # Returns t.SequenceOf[Entry] directly
-)```
+)
+```
+
 ### Pattern 4: Public Classmethod Helpers (Most Direct)
 
 ```python
@@ -103,13 +109,16 @@ result = FlextLdifSorting.sort_attributes_in_entries(
 result = FlextLdifSorting.sort_acl_in_entries(my_entries)
 
 # Sort schema entries by OID
-result = FlextLdifSorting.by_schema(schema_entries)```
+result = FlextLdifSorting.by_schema(schema_entries)
+```
+
 ## Attribute & ACL Sorting Options
 
 ### When sort_target="attributes"
 
 - `sort_attributes=True` - Sort alphabetically (default)
-- `attribute_order=[...]` - Custom order: `["cn", "sn", "mail"]` (remaining attrs sorted alphabetically)
+- `attribute_order=[...]` - Custom order: `["cn", "sn", "mail"]` (remaining attrs sorted
+  alphabetically)
 
 ### When sort_target="acl"
 
@@ -156,7 +165,9 @@ sorted_entries = (
 # Custom sorting: sort by CN attribute value
 result = FlextLdifSorting.by_custom(
     my_entries, lambda e: e.attributes.attributes.get("cn", [""])[0].lower()
-)```
+)
+```
+
 ## Public Classmethod API
 
 | Method                                             | Returns              | Description                          |
@@ -197,9 +208,10 @@ sorted = (
 # Sort with custom logic
 sorted = FlextLdifSorting.by_custom(
     entries, lambda e: FlextLdifUtilities.DN.get_dn_value(e.dn).count(",")
-).unwrap()```
+).unwrap()
+```
+
 ## See Also
 
 - API Reference
 - Filters Documentation
-````

@@ -40,11 +40,11 @@ LDIF files into memory during processing.
 
 **Implementation**:
 
-````python
+```python
 from __future__ import annotations
 
-from pathlib import Path
 from collections.abc import Sequence
+from pathlib import Path
 
 
 class Entry: ...
@@ -79,7 +79,9 @@ def parse_ldif_file(self, file_path: Path) -> p.Result[Sequence[Entry]]:
 
     # Process in memory
     lines = content.splitlines()
-    return self._parse_lines(lines)```
+    return self._parse_lines(lines)
+
+
 **Consequences**:
 
 **Positive**:
@@ -124,8 +126,10 @@ def parse_ldif_file(self, file_path: Path) -> p.Result[Sequence[Entry]]:
 
 - ADR-006 - Future streaming parser implementation
 
-**Notes**:
-The memory-bound architecture is appropriate for the current use case of directory migrations where files are typically under 100MB. The clear memory limits and warnings guide users to appropriate file sizes. Future versions will implement streaming parsers for larger files while maintaining the same API.
+**Notes**: The memory-bound architecture is appropriate for the current use case of
+directory migrations where files are typically under 100MB. The clear memory limits and
+warnings guide users to appropriate file sizes. Future versions will implement streaming
+parsers for larger files while maintaining the same API.
 
 **Current Limits**:
 
@@ -133,4 +137,3 @@ The memory-bound architecture is appropriate for the current use case of directo
 - **Absolute Maximum**: Limited by available system RAM
 - **Monitoring**: File size warnings but no automatic chunking
 - **Future Evolution**: Streaming parser planned for Phase 2
-````

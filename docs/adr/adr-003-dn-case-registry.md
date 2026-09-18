@@ -35,7 +35,7 @@ compatibility.
 
 **Key Components**:
 
-````python
+```python
 from __future__ import annotations
 
 
@@ -56,7 +56,9 @@ class DnCaseRegistry:
         """Get canonical case for any DN variant."""
 
     def validate_oud_consistency(self) -> p.Result[bool]:
-        """Validate no case conflicts exist for OUD compatibility."""```
+        """Validate no case conflicts exist for OUD compatibility."""
+```
+
 **Implementation**:
 
 ```python
@@ -86,7 +88,9 @@ canonical_ref = registry.get_canonical_dn("cn=ADMIN,dc=example,dc=com")
 # Returns: "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
 
 # Validate for OUD deployment
-result = registry.validate_oud_consistency()```
+result = registry.validate_oud_consistency()
+```
+
 **Consequences**:
 
 **Positive**:
@@ -128,8 +132,10 @@ result = registry.validate_oud_consistency()```
 - ADR-002 - Integration with conversion pipeline
 - ADR-004 - Memory usage implications
 
-**Notes**:
-The DN case registry is critical for OUD migrations from case-insensitive sources like OID. It ensures that all DN references in migrated data use consistent case, preventing the runtime failures that would occur in OUD's case-sensitive environment.
+**Notes**: The DN case registry is critical for OUD migrations from case-insensitive
+sources like OID. It ensures that all DN references in migrated data use consistent
+case, preventing the runtime failures that would occur in OUD's case-sensitive
+environment.
 
 **Implementation Details**:
 
@@ -137,4 +143,3 @@ The DN case registry is critical for OUD migrations from case-insensitive source
 - First-seen DN establishes canonical case for all variants
 - Integrated into universal conversion matrix pipeline
 - Provides validation for OUD deployment readiness
-````

@@ -182,7 +182,7 @@ note right : Version: 0.12.0-dev
 
 ### Tooling Integration
 
-````python
+```python
 from __future__ import annotations
 
 # docs/diagrams/generate.py - Automated diagram generation
@@ -195,14 +195,16 @@ def generate_diagrams():
 
     # Generate component diagrams from code
     # Generate data flow from service interactions
-    # Generate deployment diagrams from infrastructure```
+    # Generate deployment diagrams from infrastructure
+```
+
 ## Related Documentation
 
 - **../architecture-overview.md**: Comprehensive architecture documentation
 - **../adr/**: Architecture Decision Records
 - **../../README.md**: Project overview and usage
 
-______________________________________________________________________
+---
 
-**FLEXT-LDIF Architecture Diagrams**: Visual documentation using C4 Model and PlantUML for comprehensive system understanding.
-````
+**FLEXT-LDIF Architecture Diagrams**: Visual documentation using C4 Model and PlantUML
+for comprehensive system understanding.

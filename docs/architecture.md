@@ -45,7 +45,7 @@ src/flext_ldif/
 ├── models.py             # Public aggregation of domain, processing, and result models
 ├── protocols.py          # Protocol contracts for services and servers
 ├── services/             # Services for parsing, writing, conversion, filtering, etc.
-├── servers/              # Server-specific servers (Schema, Acl, Entry) auto-discovered at runtime
+├── servers/              # Server-specific servers (Schema, Acl, Entry) auto-discov ...
 ├── typings.py            # Typed helper aliases for service responses
 └── utilities.py          # Cross-cutting helpers for DN, ACL, detection, validation
 ```

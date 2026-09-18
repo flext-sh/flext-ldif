@@ -79,7 +79,7 @@ make reset # Full reset of environment
 
 FLEXT-LDIF uses a custom LDIF parser implementation with the following characteristics:
 
-````python
+```python
 from __future__ import annotations
 
 from collections.abc import Iterator
@@ -96,7 +96,9 @@ class _ParserHelper:
     def parse(self) -> Iterator[tuple[str, t.MappingKV[str, list[str]]]]:
         """Parse LDIF content and yield (dn, attributes) tuples."""
         # Process all lines already in memory
-        pass```
+        pass
+```
+
 **Memory Characteristics**:
 
 - Loads entire LDIF file into memory during processing
@@ -109,7 +111,7 @@ class _ParserHelper:
 #### Working with LDIF Entries
 
 ```python
-from flext_ldif import ldif, FlextLdifModels
+from flext_ldif import FlextLdifModels, ldif
 
 # LDIF entry creation using Factory pattern
 entry_data = {
@@ -129,13 +131,15 @@ api = ldif()
 result = api.parse_file("small_directory.ldif")
 
 # For larger files, consider external tools
-# grep "objectClass: person" large_directory.ldif | processing...```
+# grep "objectClass: person" large_directory.ldif | processing...
+
+
 #### LDIF Validation Patterns
 
 ```python
 from __future__ import annotations
 
-from flext_ldif import p, r, FlextLdifModels
+from flext_ldif import FlextLdifModels, p, r
 
 
 # LDIF-specific validation
@@ -152,7 +156,9 @@ def validate_ldif_structure(
         if "objectClass" not in entry.attributes.data:
             return r[bool].fail(f"Missing objectClass in {entry.dn.value}")
 
-    return r[bool].ok(value=True)```
+    return r[bool].ok(value=True)
+
+
 #### Memory-Conscious Processing
 
 ```bash
@@ -167,7 +173,9 @@ grep -c "^dn:" large.ldif
 split -l 10000 large.ldif chunk_
 for chunk in chunk_*; do
     python process_ldif_chunk.py "$chunk"
-done```
+done
+```
+
 ## Testing LDIF Functionality
 
 ### LDIF Test Data
@@ -198,15 +206,18 @@ def test_ldif_parsing():
     result = api.parse_string(create_test_ldif())
     assert result.success
     entries = result.unwrap()
-    assert len(entries) == 2```
+    assert len(entries) == 2
+```
+
 ### Memory Usage Testing
 
 ```python
 from __future__ import annotations
 
-import psutil
 import os
 import pathlib
+
+import psutil
 
 
 def test_memory_usage():
@@ -222,7 +233,9 @@ def test_memory_usage():
 
     # Memory increase should be reasonable for file size
     file_size = pathlib.Path("test_data.ldif").stat().st_size
-    assert memory_increase < file_size * 3  # Allow 3x overhead```
+    assert memory_increase < file_size * 3  # Allow 3x overhead
+
+
 ## Performance Considerations
 
 ### Current Limitations
@@ -237,8 +250,9 @@ def test_memory_usage():
 ```python
 from __future__ import annotations
 
-from flext_ldif import ldif, p, r, m
 import pathlib
+
+from flext_ldif import ldif, m, p, r
 
 
 # Good: Process small files directly
@@ -263,7 +277,9 @@ def process_with_monitoring(file_path: str) -> p.Result[m.Dict]:
     if file_size > 100 * 1024 * 1024:  # 100MB
         return r[m.Dict].fail("File too large for current implementation")
 
-    return process_small_ldif(file_path)```
+    return process_small_ldif(file_path)
+
+
 ## Contributing Guidelines
 
 ### LDIF-Specific Code Review
@@ -301,7 +317,9 @@ cn:: dXNlcg==
 # Handle URL references (if enabled)
 ldif_with_url = """dn: cn=user,dc=example,dc=com
 photo:< file:///path/to/photo.jpg
-"""```
+"""
+```
+
 ### Memory Debugging
 
 ```bash
@@ -312,10 +330,14 @@ python -m memory_profiler ldif_script.py
 kernprof -l -v ldif_script.py
 
 # Monitor with system tools
-top -p $(pgrep -f python)```
+top -p $(pgrep -f python)
+```
+
 ## Integration with FLEXT Ecosystem
 
-For FLEXT ecosystem integration patterns, see [flext-core documentation](https://github.com/flext-sh/flext/tree/0.12.0-dev/flext-core/AGENTS.md). FLEXT-LDIF follows standard patterns for:
+For FLEXT ecosystem integration patterns, see
+[flext-core documentation](https://github.com/flext-sh/flext/tree/0.12.0-dev/flext-core/AGENTS.md).
+FLEXT-LDIF follows standard patterns for:
 
 - r error handling
 - FlextContainer dependency injection
@@ -329,7 +351,7 @@ Focus on LDIF-specific concerns:
 - RFC 2849 compliance
 - Directory data transformation
 
-______________________________________________________________________
+---
 
-**Development Focus**: LDIF processing efficiency, memory optimization, and RFC 2849 compliance within FLEXT ecosystem patterns.
-````
+**Development Focus**: LDIF processing efficiency, memory optimization, and RFC 2849
+compliance within FLEXT ecosystem patterns.

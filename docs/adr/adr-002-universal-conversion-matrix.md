@@ -43,14 +43,16 @@ Source Format → Source.to_rfc() → RFC Format → Target.from_rfc() → Targe
 
 **Implementation**:
 
-````python
+```python
 # N×N conversion with only 2×N implementations
 matrix = ServersConversionMatrix()
 
 # Convert between any server combination
 result = matrix.convert(
     source=oud, target=oid, data_type="attribute", data=oud_attribute_string
-)```
+)
+```
+
 **Consequences**:
 
 **Positive**:
@@ -93,8 +95,10 @@ result = matrix.convert(
 - ADR-003 - DN case handling
 - ADR-005 - Server server implementations
 
-**Notes**:
-The universal conversion matrix is a key innovation enabling FLEXT-LDIF's server migration capabilities. It reduces implementation complexity from O(n²) to O(n) while maintaining standards compliance. The DN case registry integration ensures OUD compatibility during conversions.
+**Notes**: The universal conversion matrix is a key innovation enabling FLEXT-LDIF's
+server migration capabilities. It reduces implementation complexity from O(n²) to O(n)
+while maintaining standards compliance. The DN case registry integration ensures OUD
+compatibility during conversions.
 
 **Implementation Status**:
 
@@ -103,4 +107,3 @@ The universal conversion matrix is a key innovation enabling FLEXT-LDIF's server
 - ✅ 4 complete server implementations (OID, OUD, OpenLDAP 1.x/2.x)
 - ✅ 5 stub implementations ready for enhancement
 - ⚠️ Performance optimization needed for large-scale migrations
-````

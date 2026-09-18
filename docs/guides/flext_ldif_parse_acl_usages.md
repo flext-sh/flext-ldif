@@ -55,7 +55,7 @@ Extensive refactoring required
 
 **File**: `~/flext/flext-ldif/src/flext_ldif/servers/base.py`
 
-````python
+```python
 from __future__ import annotations
 
 class FlextLdifServersBase.Acl(ABC, ServerRegistrationMixin):
@@ -69,7 +69,9 @@ class FlextLdifServersBase.Acl(ABC, ServerRegistrationMixin):
 
         Returns:
             r[FlextLdifModels.Acl]
-        """```
+        """
+```
+
 ### Protocol Definition
 
 **File**: `~/flext/flext-ldif/src/flext_ldif/protocols.py`
@@ -82,15 +84,17 @@ class Acl(Protocol):
     """Protocol for ACL servers."""
 
     def parse(self, acl_line: str) -> p.Result[t.JsonMapping]:
-        """Parse ACL - returns r with dict or Acl model."""```
-______________________________________________________________________
+        """Parse ACL - returns r with dict or Acl model."""
+```
+
+---
 
 ## 2. SERVER SERVERS IMPLEMENTATIONS
 
 ### 13 Server Servers Classes Implementing parse()
 
-| #   | File            | Location                                   | Server Type             |
-| --- | --------------- | ------------------------------------------ | ----------------------- |
+| #   | File            | Location                                    | Server Type             |
+| --- | --------------- | ------------------------------------------- | ----------------------- |
 | 1   | `oid.py`        | `/flext_ldif/servers/servers/oid.py`        | Oracle OID              |
 | 2   | `ouds.py`       | `/flext_ldif/servers/servers/ouds.py`       | Oracle OUD              |
 | 3   | `openldap.py`   | `/flext_ldif/servers/servers/openldap.py`   | OpenLDAP (generic)      |
@@ -116,7 +120,7 @@ Each server servers class has:
 
 **Affected Lines**: ~40-50 lines per file × 13 files = ~520-650 lines
 
-______________________________________________________________________
+---
 
 ## 3. SERVICE LAYER USAGE
 
@@ -142,7 +146,9 @@ def parse(
         return r[FlextLdifModels.Acl].fail(...)
 
     server = server_result.unwrap()
-    return server.parse(acl_line)  # ← Calls server.parse()```
+    return server.parse(acl_line)  # ← Calls server.parse()
+```
+
 **Lines Affected**: 30-40 lines
 
 ### Categorized Pipeline
@@ -166,22 +172,24 @@ def _transform_categories(
     for entry in categorized.get("acl", []):
         for acl_attr in ["orclaci", "orclentrylevelaci"]:
             parse_result = oid_acl.parse(f"{acl_attr}: {acl_value}")
-            # ↑ Uses parse() to parse OID format```
+            # ↑ Uses parse() to parse OID format
+```
+
 **Lines Affected**: 100+ lines for ACL transformation logic
 
-______________________________________________________________________
+---
 
 ## 4. TEST COVERAGE
 
 ### Unit Test Files Using parse()
 
-| File                                 | Location                                     | Test Count   |
-| ------------------------------------ | -------------------------------------------- | ------------ |
+| File                                 | Location                                      | Test Count   |
+| ------------------------------------ | --------------------------------------------- | ------------ |
 | `tests_acl.py`                       | `/tests/unit/servers/tests_acl.py`            | 20+ tests    |
 | `tests_acl_conversion.py`            | `/tests/unit/servers/tests_acl_conversion.py` | 15+ tests    |
-| `test_acl_service.py`                | `/tests/unit/test_acl_service.py`            | 10+ tests    |
-| `test_acl_utils.py`                  | `/tests/unit/test_acl_utils.py`              | 5+ tests     |
-| `test_acl_service_operations.py.bak` | Backup file                                  | Legacy tests |
+| `test_acl_service.py`                | `/tests/unit/test_acl_service.py`             | 10+ tests    |
+| `test_acl_utils.py`                  | `/tests/unit/test_acl_utils.py`               | 5+ tests     |
+| `test_acl_service_operations.py.bak` | Backup file                                   | Legacy tests |
 
 ### Test Pattern
 
@@ -199,10 +207,12 @@ def test_parse_oracle_oid():
     assert result.success
     acl = result.unwrap()
     assert isinstance(acl, FlextLdifModels.Acl)  # ← Tests Acl return type
-    assert acl.server_type == "oid"```
+    assert acl.server_type == "oid"
+```
+
 **Total Tests**: ~50+ test methods using parse()
 
-______________________________________________________________________
+---
 
 ## 5. INTEGRATION POINTS
 
@@ -228,9 +238,11 @@ ______________________________________________________________________
 - Higher-level API returns Entry models (not Acl models)
 - algar-oud-mig uses this API (already compatible with Entry return)
 
-______________________________________________________________________
+---
 
-## 6. CURRENT DATA FLOW```
+## 6. CURRENT DATA FLOW
+
+```
 Input LDIF with OID ACL (orclaci:)
     ↓
 ldif.parse() → FlextLdifModels.Entry[]
@@ -239,8 +251,10 @@ parse(acl_line: str) → r[FlextLdifModels.Acl]
     ↓
 Entry model with aci attributes (after transformation)
     ↓
-Output LDIF with OUD format (aci:)```
-______________________________________________________________________
+Output LDIF with OUD format (aci:)
+```
+
+---
 
 ## 7. AFFECTED CODE LOCATIONS (SUMMARY)
 
@@ -283,7 +297,7 @@ ______________________________________________________________________
 
    - Any type hints expecting Acl model need updating
 
-______________________________________________________________________
+---
 
 ## 8. MIGRATION STRATEGY
 
@@ -313,7 +327,7 @@ ______________________________________________________________________
 
 **Total Estimated Time**: 10-15 hours of development
 
-______________________________________________________________________
+---
 
 ## 9. ECOSYSTEM IMPACT
 
@@ -330,21 +344,21 @@ ______________________________________________________________________
 - flext-ldif itself: 🔴 **EXTENSIVE CHANGES REQUIRED**
 - Other ecosytem projects: 🟡 **REVIEW REQUIRED** (depends on usage)
 
-______________________________________________________________________
+---
 
 ## CONCLUSION
 
-The parse() and format_acl() return type change requires **significant refactoring** within flext-ldif but does **NOT impact algar-oud-mig** because:
+The parse() and format_acl() return type change requires **significant refactoring**
+within flext-ldif but does **NOT impact algar-oud-mig** because:
 
 1. algar-oud-mig uses `ldif.parse()` (high-level API) which returns Entry models
 1. algar-oud-mig does not directly call parse() or format_acl()
 1. The change is internal to flext-ldif's servers system
 
-**Recommendation**: Implement the change in flext-ldif, test thoroughly, then verify algar-oud-mig continues to work (should be automatic with no code changes).
+**Recommendation**: Implement the change in flext-ldif, test thoroughly, then verify
+algar-oud-mig continues to work (should be automatic with no code changes).
 
-______________________________________________________________________
+---
 
-**Generated By**: Claude Code
-**Tools Used**: Grep, Read, Bash
-**Scope**: Complete flext-ldif ACL method analysis
-````
+**Generated By**: Claude Code **Tools Used**: Grep, Read, Bash **Scope**: Complete
+flext-ldif ACL method analysis

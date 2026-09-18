@@ -24,15 +24,15 @@
 
 ## ❌ PADRÃO INCORRETO (Deprecado)
 
-````python
+```python
 # ERRADO - Instanciação direta de servers
-from flext_ldif import FlextLdifServersOid
-from flext_ldif import FlextLdifServersOud
-from flext_ldif import FlextLdifServersRfc
+from flext_ldif import FlextLdifServersOid, FlextLdifServersOud, FlextLdifServersRfc
 
 oid = FlextLdifServersOid()  # ❌ NÃO FAÇA ISSO
 oud = FlextLdifServersOud()  # ❌ NÃO FAÇA ISSO
-rfc = FlextLdifServersRfc()  # ❌ NÃO FAÇA ISSO```
+rfc = FlextLdifServersRfc()  # ❌ NÃO FAÇA ISSO
+
+
 **Problemas**:
 
 - Bypassa o gerenciamento de registro do `FlextLdifServer`
@@ -40,21 +40,22 @@ rfc = FlextLdifServersRfc()  # ❌ NÃO FAÇA ISSO```
 - Quebra o padrão singleton/registry
 - Dificulta manutenção e testes
 
-______________________________________________________________________
+---
 
 ## ✅ PADRÃO CORRETO (Obrigatório)
 
 ```python
 # CORRETO - Via FlextLdifServer API
-from flext_ldif import FlextLdifServer
-from flext_ldif import FlextLdifServersBase
+from flext_ldif import FlextLdifServer, FlextLdifServersBase
 
 server = FlextLdifServer()
 
 # Obter servers via API
 oid_server: FlextLdifServersBase = server.server("oid")
 oud_server: FlextLdifServersBase = server.server("oud")
-rfc_server: FlextLdifServersBase = server.server("rfc")```
+rfc_server: FlextLdifServersBase = server.server("rfc")
+
+
 **Benefícios**:
 
 - ✅ Usa o gerenciamento centralizado de servers
@@ -63,7 +64,7 @@ rfc_server: FlextLdifServersBase = server.server("rfc")```
 - ✅ API única e consistente
 - ✅ Evita duplicação de funcionalidade
 
-______________________________________________________________________
+---
 
 ## 📝 Uso em Testes (Fixtures)
 
@@ -73,8 +74,7 @@ ______________________________________________________________________
 from __future__ import annotations
 
 import pytest
-from flext_ldif import FlextLdifServer
-from flext_ldif import FlextLdifServersBase
+from flext_ldif import FlextLdifServer, FlextLdifServersBase
 
 
 @pytest.fixture
@@ -104,7 +104,9 @@ def rfc_server(server: FlextLdifServer) -> FlextLdifServersBase:
     """Get RFC server server via FlextLdifServer API."""
     server = server.server("rfc")
     assert server is not None, "RFC server must be registered"
-    return server```
+    return server
+
+
 ### Uso nas Funções de Teste
 
 ```python
@@ -117,8 +119,10 @@ def test_conversion_oid_to_oud(
     """Test conversion from OID to OUD."""
     # Use os servers diretamente
     result = conversion_service.convert(oid_server, oud_server, entry)
-    assert result.success```
-______________________________________________________________________
+    assert result.success
+```
+
+---
 
 ## 🔄 Migração de Código Existente
 
@@ -127,7 +131,9 @@ ______________________________________________________________________
 ```python
 # ANTES
 
-# DEPOIS```
+# DEPOIS
+```
+
 ### Passo 2: Atualizar Instanciação
 
 ```python
@@ -140,7 +146,9 @@ from flext_ldif import FlextLdifServer
 
 server = FlextLdifServer()
 oid = server.server("oid")
-oud = server.server("oud")```
+oud = server.server("oud")
+```
+
 ### Passo 3: Atualizar Type Hints
 
 ```python
@@ -154,16 +162,20 @@ def my_function(oid: FlextLdifServersOid) -> None:
 
 # DEPOIS
 def my_function(oid: FlextLdifServersBase) -> None:
-    pass```
-______________________________________________________________________
+    pass
+```
+
+---
 
 ## 📊 Status de Migração
 
 **Arquivos Já Migrados**:
 
 - ✅ `tests/conftest.py` - Fixtures centralizadas criadas
-- ✅ `tests/unit/services/test_conversion_service.py` - Migrado e testado (38/38 tests passing)
-- ✅ `src/flext_ldif/services/conversion.py` - Já usa padrão correto via `_resolve_server()`
+- ✅ `tests/unit/services/test_conversion_service.py` - Migrado e testado (38/38 tests
+  passing)
+- ✅ `src/flext_ldif/services/conversion.py` - Já usa padrão correto via
+  `_resolve_server()`
 
 **Arquivos Pendentes** (~50 arquivos, 231 instanciações diretas):
 
@@ -173,7 +185,7 @@ ______________________________________________________________________
 - ⏳ `tests/integration/*.py` - Tests de integração
 - ⏳ `tests/helpers/*.py` - Helpers
 
-______________________________________________________________________
+---
 
 ## 🎯 Servers Disponíveis via API
 
@@ -195,8 +207,10 @@ server.server("ad")  # Active Directory
 server.server("apache")  # Apache Directory Server
 server.server("ds389")  # Red Hat DS
 server.server("novell")  # Novell eDirectory
-server.server("tivoli")  # IBM Tivoli DS```
-______________________________________________________________________
+server.server("tivoli")  # IBM Tivoli DS
+```
+
+---
 
 ## 🔍 Verificação
 
@@ -210,17 +224,21 @@ grep -r "FlextLdifServersOid()\|FlextLdifServersOud()\|FlextLdifServersRfc()" sr
 grep -r "from flext_ldif.servers.\(oid\|oud\|rfc\) import" src/
 
 # Buscar uso correto (CORRETO)
-grep -r "server.server(" src/```
-______________________________________________________________________
+grep -r "server.server(" src/
+```
+
+---
 
 ## 📚 Referências
 
 - **API Central**: `src/flext_ldif/services/server.py` - FlextLdifServer class
 - **Base Class**: `src/flext_ldif/servers/base.py` - FlextLdifServersBase
-- **Exemplo Correto**: `src/flext_ldif/services/conversion.py` - método `_resolve_server()`
-- **Fixtures Corretas**: `tests/conftest.py` - server, oid_server, oud_server, rfc_server
+- **Exemplo Correto**: `src/flext_ldif/services/conversion.py` - método
+  `_resolve_server()`
+- **Fixtures Corretas**: `tests/conftest.py` - server, oid_server, oud_server,
+  rfc_server
 
-______________________________________________________________________
+---
 
-**IMPORTANTE**: Este padrão é OBRIGATÓRIO para todo código novo. Código existente deve ser migrado progressivamente.
-````
+**IMPORTANTE**: Este padrão é OBRIGATÓRIO para todo código novo. Código existente deve
+ser migrado progressivamente.

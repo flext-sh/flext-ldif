@@ -133,28 +133,19 @@ src/flext_ldif/
 
 ```python
 # Domain model usage
-from flext_ldif import FlextLdifModels
 
 # Application service usage
-from flext_ldif import FlextLdif
 
 # Configuration management
-from flext_ldif import FlextLdifSettings
 
 # Core processing (advanced usage)
-from flext_ldif import ldif
-```
+
 
 ### Recommended Public API
 
 ```python
 # Simplified public interface
-from flext_ldif import (
-    FlextLdif,  # Main application service
-    FlextLdifSettings,  # Configuration management
-    FlextLdifModels,  # Unified domain models
-)
-```
+
 
 ## Future Architecture Migration
 

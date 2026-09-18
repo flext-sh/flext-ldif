@@ -31,7 +31,7 @@ The system needed to:
 
 **Key Implementation**:
 
-````python
+```python
 # RFC parsers always receive server_registry
 parser = RfcLdifParserService(
     params={"file_path": "data.ldif"},
@@ -40,7 +40,9 @@ parser = RfcLdifParserService(
 )
 
 # All operations through facade
-result = ldif.parse(file_path)  # No direct parser access```
+result = ldif.parse(file_path)  # No direct parser access
+```
+
 **Consequences**:
 
 **Positive**:
@@ -80,6 +82,7 @@ result = ldif.parse(file_path)  # No direct parser access```
 
 - ADR-005 - Implementation details of servers system
 
-**Notes**:
-This decision establishes the fundamental architectural pattern for FLEXT-LDIF. All subsequent development must maintain the RFC-first principle and zero bypass paths constraint. The facade pattern ensures consistent application of this principle across all operations.
-````
+**Notes**: This decision establishes the fundamental architectural pattern for
+FLEXT-LDIF. All subsequent development must maintain the RFC-first principle and zero
+bypass paths constraint. The facade pattern ensures consistent application of this
+principle across all operations.

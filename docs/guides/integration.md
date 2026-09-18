@@ -31,11 +31,10 @@ general FLEXT patterns, see
 
 ### Core LDIF Operations with r
 
-````python
+```python
 from __future__ import annotations
 
-from flext_ldif import ldif
-from flext_ldif import p
+from flext_ldif import ldif, p
 
 
 def process_directory_export(file_path: str) -> p.Result[dict]:
@@ -58,7 +57,9 @@ def process_directory_export(file_path: str) -> p.Result[dict]:
         )
         # Add LDIF-specific error context
         .map_error(lambda error: f"LDIF directory processing failed: {error}")
-    )```
+    )
+
+
 ### Memory-Aware LDIF Processing
 
 ```python
@@ -81,7 +82,9 @@ def process_ldif_with_memory_check(file_path: Path) -> p.Result[m.Dict]:
             f"Current implementation limited to {max_size} bytes."
         )
 
-    return api.parse_file(file_path)```
+    return api.parse_file(file_path)
+```
+
 ## Enterprise Directory Migration Integration
 
 ### FLEXT Oracle Unified Directory Migration
@@ -90,7 +93,8 @@ def process_ldif_with_memory_check(file_path: Path) -> p.Result[m.Dict]:
 from __future__ import annotations
 
 from pathlib import Path
-from flext_ldif import ldif, FlextLdifSettings, m, p, r, t, u
+
+from flext_ldif import FlextLdifSettings, ldif, m, p, r, t, u
 
 
 class FLEXTOUDMigrationService:
@@ -220,7 +224,9 @@ class FLEXTOUDMigrationService:
                 "migration_phase": "ldif_processing_complete",
             },
         )
-        return report```
+        return report
+
+
 ## LDIF-Specific Service Integration
 
 ### LDIF API Service Integration
@@ -248,7 +254,7 @@ class LdifAPIService(FlextAPIService):
         if content_size > max_size:
             return r[m.Dict].fail({
                 "status": "error",
-                "message": f"LDIF content too large ({content_size} bytes). Maximum: {max_size} bytes.",
+                "message": f"LDIF content too large ({content_size} bytes). Maximum: ...
                 "error_type": "memory_limit_exceeded",
             })
 
@@ -282,7 +288,9 @@ class LdifAPIService(FlextAPIService):
             "is_person": entry.is_person(),
             "is_group": entry.is_group(),
             "attribute_count": len(entry.attributes),
-        }```
+        }
+```
+
 ### LDIF CLI Service Integration
 
 ```python
@@ -355,7 +363,9 @@ class LdifCLIService(FlextCliService):
             u.Cli.print(output)
             return r[bool].| ok(value=True)
         else:
-            return r[bool].fail(f"Unsupported LDIF output format: {format_type}")```
+            return r[bool].fail(f"Unsupported LDIF output format: {format_type}")
+```
+
 ## LDIF Data Pipeline Integration
 
 ### Batch LDIF Processing
@@ -363,10 +373,11 @@ class LdifCLIService(FlextCliService):
 ```python
 from __future__ import annotations
 
-from flext_ldif import ldif
-from pathlib import Path
-import psutil
 import os
+from pathlib import Path
+
+import psutil
+from flext_ldif import ldif
 
 
 def process_multiple_ldif_files(file_paths: t.SequenceOf[Path]) -> p.Result[m.Dict]:
@@ -413,7 +424,9 @@ def process_multiple_ldif_files(file_paths: t.SequenceOf[Path]) -> p.Result[m.Di
             "total_increase": total_memory_used,
         },
         "entries": all_entries,
-    })```
+    })
+
+
 ## LDIF Integration Best Practices
 
 ### 1. Memory-Aware Processing
@@ -424,6 +437,7 @@ Always check file sizes before processing with current implementation:
 from __future__ import annotations
 
 from pathlib import Path
+
 from flext_ldif import ldif, p, r
 
 
@@ -438,7 +452,9 @@ def safe_ldif_processing(file_path: Path) -> p.Result[list]:
         )
 
     api = ldif()
-    return api.parse_file(file_path)```
+    return api.parse_file(file_path)
+
+
 ### 2. LDIF-Specific Error Handling
 
 Handle LDIF format errors specifically:
@@ -458,7 +474,9 @@ def robust_ldif_processing(content: str) -> p.Result[m.Dict]:
             return r[m.Dict].fail(f"LDIF format error: {error_msg}")
         return r[m.Dict].fail(f"Processing error: {error_msg}")
 
-    return r[m.Dict].ok({"entries": result.unwrap()})```
+    return r[m.Dict].ok({"entries": result.unwrap()})
+```
+
 ### 3. LDIF Entry Type Processing
 
 Use LDIF-specific entry type methods:
@@ -486,7 +504,9 @@ def categorize_ldif_entries(entries) -> t.JsonMapping:
     )
     categories["other"] = [e for e in entries if e not in categorized]
 
-    return categories```
+    return categories
+```
+
 ## Performance Considerations
 
 ### Current Implementation Limitations
@@ -517,8 +537,11 @@ def process_large_ldif(file_path: Path) -> p.Result[str]:
     """For large LDIF files, use external tools first."""
     # Use grep, awk, or other streaming tools to pre-process
     # Then use FLEXT-LDIF for final processing of smaller chunks
-    return r[str].fail("Large file processing not yet implemented")```
-______________________________________________________________________
+    return r[str].fail("Large file processing not yet implemented")
+```
 
-This integration guide focuses on LDIF-specific patterns within the FLEXT ecosystem. For general FLEXT patterns, see [flext-core documentation](https://github.com/flext-sh/flext/tree/0.12.0-dev/flext-core/README.md).
-````
+---
+
+This integration guide focuses on LDIF-specific patterns within the FLEXT ecosystem. For
+general FLEXT patterns, see
+[flext-core documentation](https://github.com/flext-sh/flext/tree/0.12.0-dev/flext-core/README.md).

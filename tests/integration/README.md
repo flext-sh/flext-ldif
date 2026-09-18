@@ -195,20 +195,28 @@ These tests require a running LDAP container (Docker).
 PYTHONPATH=src poetry run pytest tests/integration/ -v
 
 # Run specific test class
-PYTHONPATH=src poetry run pytest tests/integration/test_roundtrip_deep_validation.py::TestRoundtripDeepValidation -v
+PYTHONPATH=src poetry run pytest \
+    tests/integration/test_roundtrip_deep_validation.py::TestRoundtripDeepValidation -v
 
 # Run specific test method
-PYTHONPATH=src poetry run pytest tests/integration/test_roundtrip_deep_validation.py::TestRoundtripDeepValidation::test_roundtrip_single_entry -v
+PYTHONPATH=src poetry run pytest \
+    tests/integration/test_roundtrip_deep_validation.py::TestRoundtripDeepValidation ...
 ```
 
 ### Running Test Categories
 
 ```bash
 # Run comprehensive validation tests (no Docker required)
-PYTHONPATH=src poetry run pytest tests/integration/test_roundtrip_deep_validation.py tests/integration/test_rfc_compliance_validation.py tests/integration/test_systematic_fixture_coverage.py tests/integration/test_error_recovery.py tests/integration/test_edge_cases.py -v
+PYTHONPATH=src poetry run pytest tests/integration/test_roundtrip_deep_validation.py \
+    tests/integration/test_rfc_compliance_validation.py \
+        tests/integration/test_systematic_fixture_coverage.py \
+            tests/integration/test_error_recovery.py \
+                tests/integration/test_edge_cases.py -v
 
 # Run server-specific tests (no Docker required)
-PYTHONPATH=src poetry run pytest tests/integration/test_oid_integration.py tests/integration/test_oud_integration.py tests/integration/test_cross_server_conversion.py -v
+PYTHONPATH=src poetry run pytest tests/integration/test_oid_integration.py \
+    tests/integration/test_oud_integration.py \
+        tests/integration/test_cross_server_conversion.py -v
 
 # Run real LDAP tests (requires Docker)
 PYTHONPATH=src poetry run pytest tests/integration/test_real_ldap_*.py -v
@@ -246,7 +254,9 @@ PYTHONPATH=src poetry run pytest tests/integration/ -k "oid" -v
 PYTHONPATH=src poetry run pytest tests/integration/ -k "oud" -v
 
 # Run parametrized tests with specific fixture type
-PYTHONPATH=src poetry run pytest tests/integration/test_systematic_fixture_coverage.py::TestSystematicFixtureCoverage::test_schema_fixture_coverage -v
+PYTHONPATH=src poetry run pytest \
+    tests/integration/test_systematic_fixture_coverage.py::
+    TestSystematicFixtureCoverage::test_schema_fixture_coverage -v
 ```
 
 ## 📦 Centralized Fixtures (conftest.py)

@@ -52,7 +52,7 @@ FLEXT-LDIF provides flexible configuration management through multiple layers:
 
 Core configuration class with validation:
 
-````python
+```python
 from __future__ import annotations
 
 
@@ -81,7 +81,9 @@ class Config(m.BaseModel):
         8192, description="Buffer size for file operations", ge=1024
     )
 
-    log_level: str = u.Field("INFO", description="Logging level for LDIF operations")```
+    log_level: str = u.Field("INFO", description="Logging level for LDIF operations")
+```
+
 ### Configuration Usage
 
 ```python
@@ -97,7 +99,9 @@ api = ldif(settings=settings)
 
 # Access configuration values
 u.Cli.print(f"Max entries: {settings.max_entries}")
-u.Cli.print(f"Strict validation: {settings.strict_validation}")```
+u.Cli.print(f"Strict validation: {settings.strict_validation}")
+```
+
 ## Global Configuration
 
 ### Initialization
@@ -111,7 +115,9 @@ settings = FlextLdifSettings(
 )
 api = FlextLdif(settings=settings)
 
-u.Cli.print(f"Global max entries: {settings.max_entries}")```
+u.Cli.print(f"Global max entries: {settings.max_entries}")
+```
+
 ### Environment Variables
 
 FLEXT-LDIF supports configuration through environment variables:
@@ -126,13 +132,16 @@ export FLEXT_LDIF_ENCODING=utf-8
 export FLEXT_LDIF_BUFFER_SIZE=16384
 
 # Logging
-export FLEXT_LDIF_LOG_LEVEL=DEBUG```
+export FLEXT_LDIF_LOG_LEVEL=DEBUG
+```
+
 ### Environment Configuration Loading
 
 ```python
 from __future__ import annotations
 
 import os
+
 from flext_ldif import FlextLdifSettings, ldif
 
 
@@ -150,7 +159,9 @@ def load_config_from_environment() -> FlextLdifSettings:
 
 # Use environment-based configuration
 settings = load_config_from_environment()
-api = ldif(settings=settings)```
+api = ldif(settings=settings)
+
+
 ## Configuration Scenarios
 
 ### Development Configuration
@@ -172,7 +183,9 @@ def create_development_config() -> FlextLdifModels.Config:
 
 
 # Development API instance
-dev_api = ldif(settings=create_development_config())```
+dev_api = ldif(settings=create_development_config())
+```
+
 ### Production Configuration
 
 Optimized for production environments:
@@ -194,7 +207,9 @@ def create_production_config() -> FlextLdifModels.Config:
 
 
 # Production API instance
-prod_api = ldif(settings=create_production_config())```
+prod_api = ldif(settings=create_production_config())
+```
+
 ### Migration Configuration
 
 Optimized for large-scale LDAP migrations:
@@ -216,7 +231,9 @@ def create_migration_config() -> FlextLdifModels.Config:
 
 
 # Migration API instance
-migration_api = ldif(settings=create_migration_config())```
+migration_api = ldif(settings=create_migration_config())
+```
+
 ## Advanced Configuration
 
 ### Configuration Validation
@@ -253,7 +270,9 @@ if validation_result.success:
     settings = validation_result.unwrap()
     api = ldif(settings=settings)
 else:
-    u.Cli.print(f"Configuration error: {validation_result.error}")```
+    u.Cli.print(f"Configuration error: {validation_result.error}")
+```
+
 ### Configuration Inheritance
 
 ```python
@@ -281,7 +300,9 @@ specialized_config = create_inherited_config(
         "max_entries": 100000,  # Override for larger files
         "log_level": "DEBUG",  # Add debugging
     },
-)```
+)
+```
+
 ### Configuration Profiles
 
 ```python
@@ -331,7 +352,9 @@ class ConfigurationProfiles:
 
 
 # Use predefined profiles
-api = ldif(settings=ConfigurationProfiles.enterprise())```
+api = ldif(settings=ConfigurationProfiles.enterprise())
+```
+
 ## Integration with FLEXT Configuration
 
 ### FlextContainer Integration
@@ -351,7 +374,9 @@ if registration_result.success:
 config_result = container.resolve("ldif_config")
 if config_result.success:
     retrieved_config = config_result.unwrap()
-    api = ldif(settings=retrieved_config)```
+    api = ldif(settings=retrieved_config)
+```
+
 ### Configuration Logging
 
 ```python
@@ -379,7 +404,9 @@ def log_configuration(settings: FlextLdifModels.Config) -> None:
 # Log configuration during initialization
 settings = FlextLdifModels.Config(max_entries=50000)
 log_configuration(settings)
-api = ldif(settings=settings)```
+api = ldif(settings=settings)
+```
+
 ## Configuration Best Practices
 
 ### 1. Use Type-Safe Configuration
@@ -396,7 +423,9 @@ settings = FlextLdifSettings(ldif_max_entries=50000, ldif_strict_validation=True
 config_dict = {
     "max_entries": "50000",  # Should be int
     "strict_validation": "yes",  # Should be bool
-}```
+}
+```
+
 ### 2. Validate Configuration Early
 
 Validate configuration at application startup:
@@ -405,7 +434,8 @@ Validate configuration at application startup:
 from __future__ import annotations
 
 import os
-from flext_ldif import ldif, p, r, FlextLdifSettings
+
+from flext_ldif import FlextLdifSettings, ldif, p, r
 
 
 def initialize_application_config() -> p.Result[ldif]:
@@ -418,7 +448,9 @@ def initialize_application_config() -> p.Result[ldif]:
         api = ldif(settings=settings)
         return r[ldif].ok(api)
     except Exception as e:
-        return r[ldif].fail(f"Configuration initialization failed: {e}")```
+        return r[ldif].fail(f"Configuration initialization failed: {e}")
+
+
 ### 3. Use Environment-Specific Profiles
 
 Create profiles for different deployment environments:
@@ -441,7 +473,9 @@ def get_environment_config(environment: str) -> FlextLdifModels.Config:
 # Use environment-based configuration
 env = os.getenv("ENVIRONMENT", "development")
 settings = get_environment_config(env)
-api = ldif(settings=settings)```
+api = ldif(settings=settings)
+```
+
 ### 4. Document Configuration Changes
 
 Keep configuration changes documented and version controlled:
@@ -461,20 +495,22 @@ CONFIGURATION_CHANGELOG = {
 
 def get_config_version() -> str:
     """Get current configuration version."""
-    return "0.9.9"```
+    return "0.9.9"
+```
+
 ## Configuration Reference
 
 ### Complete Configuration Options
 
-| Option                      | Type   | Default   | Description                                 |                                               |
-| --------------------------- | ------ | --------- | ------------------------------------------- | --------------------------------------------- |
-| `max_entries`               | `int \ | None`     | `None`                                      | Maximum entries to process (None = unlimited) |
-| `strict_validation`         | `bool` | `False`   | Enable strict RFC 2849 validation           |                                               |
-| `ignore_unknown_attributes` | `bool` | `True`    | Ignore non-standard attributes              |                                               |
-| `encoding`                  | `str`  | `"utf-8"` | Character encoding for files                |                                               |
-| `line_separator`            | `str`  | `"\\n"`   | Line separator for output                   |                                               |
-| `buffer_size`               | `int`  | `8192`    | File operation buffer size                  |                                               |
-| `log_level`                 | `str`  | `"INFO"`  | Logging level (DEBUG, INFO, WARNING, ERROR) |                                               |
+| Option                      | Type          | Default   | Description                                   |
+| --------------------------- | ------------- | --------- | --------------------------------------------- |
+| `max_entries`               | `int \| None` | `None`    | Maximum entries to process (None = unlimited) |
+| `strict_validation`         | `bool`        | `False`   | Enable strict RFC 2849 validation             |
+| `ignore_unknown_attributes` | `bool`        | `True`    | Ignore non-standard attributes                |
+| `encoding`                  | `str`         | `"utf-8"` | Character encoding for files                  |
+| `line_separator`            | `str`         | `"\\n"`   | Line separator for output                     |
+| `buffer_size`               | `int`         | `8192`    | File operation buffer size                    |
+| `log_level`                 | `str`         | `"INFO"`  | Logging level (DEBUG, INFO, WARNING, ERROR)   |
 
 ### Environment Variable Mapping
 
@@ -487,7 +523,8 @@ def get_config_version() -> str:
 | `FLEXT_LDIF_BUFFER_SIZE`          | `buffer_size`               | `16384`  |
 | `FLEXT_LDIF_LOG_LEVEL`            | `log_level`                 | `DEBUG`  |
 
-______________________________________________________________________
+---
 
-This configuration guide provides comprehensive coverage of FLEXT-LDIF configuration options while maintaining integration with FLEXT ecosystem patterns and professional configuration management practices.
-````
+This configuration guide provides comprehensive coverage of FLEXT-LDIF configuration
+options while maintaining integration with FLEXT ecosystem patterns and professional
+configuration management practices.
