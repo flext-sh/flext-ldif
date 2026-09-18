@@ -1,6 +1,7 @@
 # FLEXT-LDIF Architecture Diagrams
 
 <!-- TOC START -->
+
 - [Diagram Overview](#diagram-overview)
   - [C4 Model Structure](#c4-model-structure)
   - [Diagram Categories](#diagram-categories)
@@ -19,6 +20,7 @@
   - [Review Process](#review-process)
   - [Tooling Integration](#tooling-integration)
 - [Related Documentation](#related-documentation)
+
 <!-- TOC END -->
 
 **Version**: 0.12.0-dev | **Framework**: PlantUML + C4 Model | **Updated**: October 10, 2025
@@ -178,7 +180,7 @@ note right : Version: 0.12.0-dev
 
 ### Tooling Integration
 
-```python
+````python
 from __future__ import annotations
 
 # docs/diagrams/generate.py - Automated diagram generation
@@ -201,3 +203,4 @@ def generate_diagrams():
 ______________________________________________________________________
 
 **FLEXT-LDIF Architecture Diagrams**: Visual documentation using C4 Model and PlantUML for comprehensive system understanding.
+````

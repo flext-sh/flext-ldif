@@ -1,6 +1,7 @@
 # ADR-006: Library Simplification and Deduplication
 
 <!-- TOC START -->
+
 - [Context](#context)
   - [Structural Issues](#structural-issues)
   - [Over-Engineering](#over-engineering)
@@ -20,6 +21,7 @@
 - [Validation Criteria](#validation-criteria)
 - [References](#references)
 - [Notes](#notes)
+
 <!-- TOC END -->
 
 **Date**: 2025-01-24
@@ -27,7 +29,7 @@
 **Deciders**: FLEXT Core Team
 **Related ADRs**: ADR-001 (RFC-First Design), ADR-005 (Pluggable Servers System)
 
-______________________________________________________________________
+---
 
 ## Context
 
@@ -58,7 +60,7 @@ flext-ldif has evolved through multiple phases achieving production-ready status
 - **Maintenance**: More code to maintain, test, and document
 - **Integration**: Indirect flext-core usage loses benefits
 
-______________________________________________________________________
+---
 
 ## Decision
 
@@ -129,7 +131,7 @@ src/flext_ldif/
 
 **Before**:
 
-```python
+````python
 from flext_ldif import ldif
 
 processor = ldif.processors  # Unnecessary wrapper
@@ -329,7 +331,7 @@ tests/unit/
 ├── test_detector.py
 ├── test_acl_parser.py
 └── ...
-```
+````
 
 **Rationale**:
 
@@ -337,7 +339,7 @@ tests/unit/
 - Easier to find tests for modules
 - Consistent with flat module organization
 
-______________________________________________________________________
+---
 
 ## Consequences
 
@@ -416,7 +418,7 @@ ______________________________________________________________________
    - Updated architecture docs
    - Professional README.md
 
-______________________________________________________________________
+---
 
 ## Implementation
 
@@ -442,7 +444,7 @@ ______________________________________________________________________
 
 ### **Timeline**: 10-12 hours total
 
-______________________________________________________________________
+---
 
 ## Validation Criteria
 
@@ -455,7 +457,7 @@ ______________________________________________________________________
 - ✅ Professional README.md
 - ✅ Migration guide for users
 
-______________________________________________________________________
+---
 
 ## References
 
@@ -465,7 +467,7 @@ ______________________________________________________________________
 - **Python 3.13+ Pattern Matching**: PEP 636
 - **Flat Module Structure Examples**: requests, httpx, pydantic
 
-______________________________________________________________________
+---
 
 ## Notes
 

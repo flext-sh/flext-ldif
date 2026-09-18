@@ -1,6 +1,7 @@
 # FLEXT-LDIF Development Guide
 
 <!-- TOC START -->
+
 - [Development Environment Setup](#development-environment-setup)
   - [Prerequisites](#prerequisites)
   - [Initial Setup](#initial-setup)
@@ -21,6 +22,7 @@
   - [LDIF Format Edge Cases](#ldif-format-edge-cases)
   - [Memory Debugging](#memory-debugging)
 - [Integration with FLEXT Ecosystem](#integration-with-flext-ecosystem)
+
 <!-- TOC END -->
 
 **Version**: 0.12.0-dev | **Updated**: April 14, 2026
@@ -75,7 +77,7 @@ make reset          # Full reset of environment
 
 FLEXT-LDIF uses a custom LDIF parser implementation with the following characteristics:
 
-```python
+````python
 from __future__ import annotations
 
 from collections.abc import Iterator
@@ -328,3 +330,4 @@ Focus on LDIF-specific concerns:
 ______________________________________________________________________
 
 **Development Focus**: LDIF processing efficiency, memory optimization, and RFC 2849 compliance within FLEXT ecosystem patterns.
+````

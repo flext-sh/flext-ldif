@@ -1,6 +1,7 @@
 # Phase 2: Proper Service Layer Implementation
 
 <!-- TOC START -->
+
 - [Overview](#overview)
 - [Current Architecture Problem](#current-architecture-problem)
   - [As Is](#as-is)
@@ -21,6 +22,7 @@
   - [Step 4: Deprecate nested classes](#step-4-deprecate-nested-classes)
 - [Success Criteria](#success-criteria)
 - [Related Documentation](#related-documentation)
+
 <!-- TOC END -->
 
 ## Overview
@@ -31,7 +33,7 @@ Phase 2 refactors the flext-ldif architecture to create a proper service layer w
 
 **Target State**: Services handle all business logic; servers provide configuration and delegate to services.
 
-______________________________________________________________________
+---
 
 ## Current Architecture Problem
 
@@ -70,7 +72,7 @@ FlextLdifServersOud (extends FlextLdifServersRfc)
 - Services in `/services` directory are underutilized (3 usages)
 - Each server reimplements similar logic with minor variations
 
-______________________________________________________________________
+---
 
 ## Target Architecture
 
@@ -126,7 +128,7 @@ FlextLdifServersOud (extends FlextLdifServersRfc)
 - ✅ Better separation of concerns
 - ✅ Cleaner code with less duplication
 
-______________________________________________________________________
+---
 
 ## Implementation Plan
 
@@ -215,7 +217,7 @@ ______________________________________________________________________
 
 **Changes**:
 
-```python
+````python
 from __future__ import annotations
 
 # Before
@@ -305,3 +307,4 @@ ______________________________________________________________________
 
 - [RFC 2849](https://tools.ietf.org/html/rfc2849) - LDIF Format Specification
 - [RFC 4512](https://tools.ietf.org/html/rfc4512) - LDAP Schema Specification
+````

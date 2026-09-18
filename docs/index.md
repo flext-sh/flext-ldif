@@ -1,11 +1,13 @@
 # flext-ldif Documentation
 
 <!-- TOC START -->
+
 - [Start Here](#start-here)
 - [Public Surface Summary](#public-surface-summary)
 - [Collection Rules](#collection-rules)
 - [Quality Gates](#quality-gates)
 - [Governance Pointer](#governance-pointer)
+
 <!-- TOC END -->
 
 <!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
@@ -28,11 +30,11 @@ real docstrings.
 ## Public Surface Summary
 
 ::: flext_ldif
-    options:
-      members: false
-      show_root_heading: false
-      show_root_toc_entry: false
-      show_source: false
+options:
+members: false
+show_root_heading: false
+show_root_toc_entry: false
+show_source: false
 
 ## Collection Rules
 

@@ -1,6 +1,7 @@
 # Architecture Decision Records (ADRs)
 
 <!-- TOC START -->
+
 - [ADR Process](#adr-process)
   - [When to Create an ADR](#when-to-create-an-adr)
   - [ADR Template](#adr-template)
@@ -9,6 +10,7 @@
 - [Current ADRs](#current-adrs)
 - [ADR Maintenance](#adr-maintenance)
 - [Related Documentation](#related-documentation)
+
 <!-- TOC END -->
 
 **Purpose**: This directory contains Architecture Decision Records (ADRs) that document architectural decisions made for FLEXT-LDIF. ADRs capture the context, decision, and consequences of significant architectural choices.
@@ -85,7 +87,7 @@ ADRs are numbered sequentially as created. The format is `ADR-XXX.md` where XXX 
 | ADR-002 | Universal Conversion Matrix Architecture | Accepted | 2026-04-14 |
 | ADR-003 | DN Case Registry for OUD Compatibility   | Accepted | 2026-04-14 |
 | ADR-004 | Memory-Bound Processing Architecture     | Accepted | 2026-04-14 |
-| ADR-005 | Pluggable Servers System                  | Accepted | 2026-04-14 |
+| ADR-005 | Pluggable Servers System                 | Accepted | 2026-04-14 |
 
 ## ADR Maintenance
 

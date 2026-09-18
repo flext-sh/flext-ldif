@@ -1,6 +1,7 @@
 # Constants Pattern Guide
 
 <!-- TOC START -->
+
 - [RFC.Constants (Base)](#rfcconstants-base)
 - [Server.Constants (Específicos)](#serverconstants-especificos)
 - [Quando usar o quê](#quando-usar-o-que)
@@ -14,7 +15,7 @@
 - Allows all servers to override if needed
 - Provides baseline values
 
-```python
+````python
 from __future__ import annotations
 
 from typing import ClassVar
@@ -62,3 +63,4 @@ class Constants(FlextLdifServersRfc.Constants):
 - ✅ Herança funciona corretamente
 - ✅ Type safety mantida
 - ✅ Flexibilidade para override
+````

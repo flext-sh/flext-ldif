@@ -1,6 +1,7 @@
 # FLEXT-LDIF Ecosystem Integration
 
 <!-- TOC START -->
+
 - [LDIF Processing Integration](#ldif-processing-integration)
   - [Core LDIF Operations with r](#core-ldif-operations-with-r)
   - [Memory-Aware LDIF Processing](#memory-aware-ldif-processing)
@@ -18,7 +19,7 @@
 - [Performance Considerations](#performance-considerations)
   - [Current Implementation Limitations](#current-implementation-limitations)
   - [Recommended Usage Patterns](#recommended-usage-patterns)
-<!-- TOC END -->
+  <!-- TOC END -->
 
 **Version**: 0.12.0-dev | **Updated**: April 14, 2026
 
@@ -28,7 +29,7 @@ LDIF-specific integration patterns for using FLEXT-LDIF within the FLEXT ecosyst
 
 ### Core LDIF Operations with r
 
-```python
+````python
 from __future__ import annotations
 
 from flext_ldif import ldif
@@ -518,3 +519,4 @@ def process_large_ldif(file_path: Path) -> p.Result[str]:
 ______________________________________________________________________
 
 This integration guide focuses on LDIF-specific patterns within the FLEXT ecosystem. For general FLEXT patterns, see [flext-core documentation](https://github.com/flext-sh/flext/tree/0.12.0-dev/flext-core/README.md).
+````

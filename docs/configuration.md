@@ -1,6 +1,7 @@
 # FLEXT-LDIF Configuration
 
 <!-- TOC START -->
+
 - [Configuration Overview](#configuration-overview)
 - [Configuration Models](#configuration-models)
   - [FlextLdifModels.Config](#flextldifmodelsconfig)
@@ -28,7 +29,7 @@
 - [Configuration Reference](#configuration-reference)
   - [Complete Configuration Options](#complete-configuration-options)
   - [Environment Variable Mapping](#environment-variable-mapping)
-<!-- TOC END -->
+  <!-- TOC END -->
 
 **Version**: 0.12.0-dev | **Updated**: April 14, 2026
 
@@ -49,7 +50,7 @@ FLEXT-LDIF provides flexible configuration management through multiple layers:
 
 Core configuration class with validation:
 
-```python
+````python
 from __future__ import annotations
 
 
@@ -487,3 +488,4 @@ def get_config_version() -> str:
 ______________________________________________________________________
 
 This configuration guide provides comprehensive coverage of FLEXT-LDIF configuration options while maintaining integration with FLEXT ecosystem patterns and professional configuration management practices.
+````

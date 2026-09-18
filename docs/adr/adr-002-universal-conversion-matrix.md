@@ -1,7 +1,9 @@
 # ADR-002: Universal Conversion Matrix Architecture
 
 <!-- TOC START -->
+
 - No sections found
+
 <!-- TOC END -->
 
 **Status**: Accepted
@@ -38,7 +40,7 @@ Source Format → Source.to_rfc() → RFC Format → Target.from_rfc() → Targe
 
 **Implementation**:
 
-```python
+````python
 # N×N conversion with only 2×N implementations
 matrix = ServersConversionMatrix()
 
@@ -98,3 +100,4 @@ The universal conversion matrix is a key innovation enabling FLEXT-LDIF's server
 - ✅ 4 complete server implementations (OID, OUD, OpenLDAP 1.x/2.x)
 - ✅ 5 stub implementations ready for enhancement
 - ⚠️ Performance optimization needed for large-scale migrations
+````

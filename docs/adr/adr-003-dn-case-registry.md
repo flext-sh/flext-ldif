@@ -1,7 +1,9 @@
 # ADR-003: DN Case Registry for OUD Compatibility
 
 <!-- TOC START -->
+
 - No sections found
+
 <!-- TOC END -->
 
 **Status**: Accepted
@@ -30,7 +32,7 @@ Implement a **DN Case Registry** that:
 
 **Key Components**:
 
-```python
+````python
 from __future__ import annotations
 
 
@@ -132,3 +134,4 @@ The DN case registry is critical for OUD migrations from case-insensitive source
 - First-seen DN establishes canonical case for all variants
 - Integrated into universal conversion matrix pipeline
 - Provides validation for OUD deployment readiness
+````
