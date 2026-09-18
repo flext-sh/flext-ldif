@@ -24,7 +24,7 @@
 
 ## ❌ PADRÃO INCORRETO (Deprecado)
 
-```python
+````python
 # ERRADO - Instanciação direta de servers
 from flext_ldif import FlextLdifServersOid, FlextLdifServersOud, FlextLdifServersRfc
 
@@ -120,7 +120,7 @@ def test_conversion_oid_to_oud(
     # Use os servers diretamente
     result = conversion_service.convert(oid_server, oud_server, entry)
     assert result.success
-```
+````
 
 ---
 

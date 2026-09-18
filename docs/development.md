@@ -110,7 +110,7 @@ class _ParserHelper:
 
 #### Working with LDIF Entries
 
-```python
+````python
 from flext_ldif import FlextLdifModels, ldif
 
 # LDIF entry creation using Factory pattern
@@ -174,7 +174,7 @@ split -l 10000 large.ldif chunk_
 for chunk in chunk_*; do
     python process_ldif_chunk.py "$chunk"
 done
-```
+````
 
 ## Testing LDIF Functionality
 
@@ -211,7 +211,7 @@ def test_ldif_parsing():
 
 ### Memory Usage Testing
 
-```python
+````python
 from __future__ import annotations
 
 import os
@@ -318,7 +318,7 @@ cn:: dXNlcg==
 ldif_with_url = """dn: cn=user,dc=example,dc=com
 photo:< file:///path/to/photo.jpg
 """
-```
+````
 
 ### Memory Debugging
 

@@ -31,7 +31,7 @@ general FLEXT patterns, see
 
 ### Core LDIF Operations with r
 
-```python
+````python
 from __future__ import annotations
 
 from flext_ldif import ldif, p
@@ -83,13 +83,13 @@ def process_ldif_with_memory_check(file_path: Path) -> p.Result[m.Dict]:
         )
 
     return api.parse_file(file_path)
-```
+````
 
 ## Enterprise Directory Migration Integration
 
 ### FLEXT Oracle Unified Directory Migration
 
-```python
+````python
 from __future__ import annotations
 
 from pathlib import Path
@@ -289,7 +289,7 @@ class LdifAPIService(FlextAPIService):
             "is_group": entry.is_group(),
             "attribute_count": len(entry.attributes),
         }
-```
+````
 
 ### LDIF CLI Service Integration
 
@@ -370,7 +370,7 @@ class LdifCLIService(FlextCliService):
 
 ### Batch LDIF Processing
 
-```python
+````python
 from __future__ import annotations
 
 import os
@@ -475,7 +475,7 @@ def robust_ldif_processing(content: str) -> p.Result[m.Dict]:
         return r[m.Dict].fail(f"Processing error: {error_msg}")
 
     return r[m.Dict].ok({"entries": result.unwrap()})
-```
+````
 
 ### 3. LDIF Entry Type Processing
 

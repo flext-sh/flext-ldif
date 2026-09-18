@@ -80,9 +80,8 @@ def parse_ldif_file(self, file_path: Path) -> p.Result[Sequence[Entry]]:
     # Process in memory
     lines = content.splitlines()
     return self._parse_lines(lines)
-
-
 ```
+
 **Consequences**:
 
 **Positive**:

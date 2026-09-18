@@ -131,7 +131,7 @@ src/flext_ldif/
 
 ### Direct Module Usage
 
-```python
+````python
 # Domain model usage
 
 # Application service usage
@@ -147,7 +147,8 @@ src/flext_ldif/
 # Simplified public interface
 
 
-```
+````
+
 ## Future Architecture Migration
 
 The current flat structure will evolve to proper Clean Architecture directories:

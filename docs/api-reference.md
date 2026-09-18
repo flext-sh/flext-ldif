@@ -589,7 +589,7 @@ api = ldif(settings=settings)
 
 Factory methods for creating domain objects.
 
-```python
+````python
 from __future__ import annotations
 
 from flext_ldif import m, t
@@ -637,7 +637,7 @@ group = FlextLdifModels.Entry(
         "member": ["cn=John Doe,ou=People,dc=example,dc=com"],
     },
 )
-```
+````
 
 ## Configuration Management
 
@@ -693,8 +693,7 @@ entries = result.unwrap_or([])  # Empty list if failed
 
 # Railway-oriented composition
 final_result = (
-    api
-    .parse_file("input.ldif")
+    api.parse_file("input.ldif")
     .flat_map(api.validate_entries)
     .flat_map(lambda entries: api.filter_persons(entries))
     .flat_map(lambda persons: api.write_file(persons, "persons.ldif"))
@@ -726,7 +725,7 @@ must be accessed programmatically through the API.
 
 **Migration from CLI to API**:
 
-```python
+````python
 # ❌ OLD (CLI - no longer available):
 # python -m flext_ldif parse directory.ldif
 
@@ -800,7 +799,7 @@ def process_enterprise_directory(
         # Add error context
         .map_error(lambda error: f"Enterprise processing failed: {error}")
     )
-```
+````
 
 ### Batch Processing
 
@@ -1202,7 +1201,7 @@ logger.info(
 
 ### Basic Usage - Parse, Validate, Write
 
-```python
+````python
 from pathlib import Path
 
 from flext_ldif import ldif
@@ -1250,11 +1249,11 @@ if result.success:
     u.Cli.print(f"✅ Parsed {len(entries)} entries")
 else:
     u.Cli.print(f"❌ Failed to parse LDIF: {result.error}")
-```
+````
 
 ### Generic Migration Pipeline
 
-```python
+````python
 from pathlib import Path
 
 from flext_ldif import FlextLdifMigration
@@ -1343,7 +1342,7 @@ server_type = "openldap"
 
 # OpenLDAP 1.x
 server_type = "openldap1"
-```
+````
 
 **Stub Implementations** (5 servers - ready for enhancement):
 

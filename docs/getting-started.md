@@ -147,7 +147,7 @@ else:
 
 Process LDIF files with error handling:
 
-```python
+````python
 from __future__ import annotations
 
 from pathlib import Path
@@ -218,7 +218,7 @@ settings = FlextLdifSettings()
 # Access configuration settings
 u.Cli.print(f"Max entries: {settings.max_entries}")
 u.Cli.print(f"Strict validation: {settings.strict_validation}")
-```
+````
 
 ## Command Line Interface
 
@@ -253,7 +253,7 @@ python -m flext_ldif parse --help
 
 Parse LDAP schema files with automatic server-specific handling:
 
-```python
+````python
 from __future__ import annotations
 
 from pathlib import Path
@@ -328,7 +328,7 @@ if result.success:
 # 1. Source servers normalize entries to RFC format
 # 2. Target servers transform from RFC to target format
 # 3. Works with ANY server combination (even unknown servers)
-```
+````
 
 ### Working with Multiple Server Types
 
@@ -380,9 +380,8 @@ if result.success:
             f"Processing {report.valid_entries} valid entries "
             f"out of {report.total_entries} total entries"
         )
-
-
 ```
+
 ## Troubleshooting
 
 ### Common Issues

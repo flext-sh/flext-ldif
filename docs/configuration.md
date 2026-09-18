@@ -137,7 +137,7 @@ export FLEXT_LDIF_LOG_LEVEL=DEBUG
 
 ### Environment Configuration Loading
 
-```python
+````python
 from __future__ import annotations
 
 import os
@@ -184,7 +184,7 @@ def create_development_config() -> FlextLdifModels.Config:
 
 # Development API instance
 dev_api = ldif(settings=create_development_config())
-```
+````
 
 ### Production Configuration
 
@@ -250,9 +250,9 @@ def validate_configuration(config_dict: dict) -> p.Result[FlextLdifModels.Config
         settings = FlextLdifModels.Config(**config_dict)
         return r[FlextLdifModels.Config].ok(settings)
     except c.ValidationError as e:
-        error_details = "; ".join([
-            f"{err['loc'][0]}: {err['msg']}" for err in e.errors()
-        ])
+        error_details = "; ".join(
+            [f"{err['loc'][0]}: {err['msg']}" for err in e.errors()]
+        )
         return r[FlextLdifModels.Config].fail(
             f"Configuration validation failed: {error_details}"
         )
@@ -430,7 +430,7 @@ config_dict = {
 
 Validate configuration at application startup:
 
-```python
+````python
 from __future__ import annotations
 
 import os
@@ -474,7 +474,7 @@ def get_environment_config(environment: str) -> FlextLdifModels.Config:
 env = os.getenv("ENVIRONMENT", "development")
 settings = get_environment_config(env)
 api = ldif(settings=settings)
-```
+````
 
 ### 4. Document Configuration Changes
 

@@ -84,7 +84,7 @@ UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 123
 
 **Solution**:
 
-```python
+````python
 from __future__ import annotations
 
 import pathlib
@@ -128,11 +128,11 @@ def parse_with_encoding_detection(file_path: str) -> p.Result[list]:
 ```python
 # Memory error when processing large files
 MemoryError: Unable to allocate array
-```
+````
 
 **Solution**:
 
-```python
+````python
 from __future__ import annotations
 
 import pathlib
@@ -221,11 +221,11 @@ def process_chunk(chunk_entries: list[str]) -> p.Result[bool]:
 ```python
 result = api.validate_entries(entries)
 # Error: "Entry validation failed: unknown attribute 'customAttribute'"
-```
+````
 
 **Solution**:
 
-```python
+````python
 from __future__ import annotations
 
 from flext_ldif import FlextLdifModels, ldif, p, r
@@ -357,7 +357,7 @@ def process_with_optimization(file_path: str) -> p.Result[m.Dict]:
     return api.parse_file(file_path).map(
         lambda entries: {"entry_count": len(entries), "processing_optimized": True}
     )
-```
+````
 
 ### Integration Issues
 
@@ -432,8 +432,7 @@ def safe_service_registration() -> p.Result[ldif]:
 ```python
 # Error in chain composition
 result = (
-    api
-    .parse_file(file_path)
+    api.parse_file(file_path)
     .flat_map(api.validate_entries)  # Error: expects bool, gets list
     .flat_map(api.filter_persons)
 )
@@ -451,8 +450,7 @@ def correct_railway_chaining(file_path: str) -> p.Result[list]:
 
     return (
         # Parse file
-        api
-        .parse_file(file_path)
+        api.parse_file(file_path)
         # Validate entries (return original entries on success)
         .flat_map(
             lambda entries: api.validate_entries(entries).map(lambda _: entries)
@@ -504,7 +502,7 @@ def debug_railway_chain(file_path: str) -> p.Result[list]:
 
 ### Health Check Utility
 
-```python
+````python
 from __future__ import annotations
 
 
@@ -624,7 +622,7 @@ def enable_debug_mode() -> FlextLdif:
     u.Cli.print("  - Verbose logging enabled")
 
     return api
-```
+````
 
 ## Getting Help
 
@@ -662,6 +660,7 @@ def generate_support_info() -> t.JsonMapping:
 
 
 ```
+
 ### Emergency Contacts
 
 For critical production issues:
