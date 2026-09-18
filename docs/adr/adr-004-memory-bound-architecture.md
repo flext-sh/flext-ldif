@@ -82,6 +82,7 @@ def parse_ldif_file(self, file_path: Path) -> p.Result[Sequence[Entry]]:
     return self._parse_lines(lines)
 
 
+```
 **Consequences**:
 
 **Positive**:

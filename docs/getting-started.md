@@ -382,6 +382,7 @@ if result.success:
         )
 
 
+```
 ## Troubleshooting
 
 ### Common Issues

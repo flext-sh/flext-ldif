@@ -661,6 +661,7 @@ def generate_support_info() -> t.JsonMapping:
     }
 
 
+```
 ### Emergency Contacts
 
 For critical production issues:

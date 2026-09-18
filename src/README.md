@@ -147,6 +147,7 @@ src/flext_ldif/
 # Simplified public interface
 
 
+```
 ## Future Architecture Migration
 
 The current flat structure will evolve to proper Clean Architecture directories:
