@@ -26,11 +26,15 @@
 
 <!-- TOC END -->
 
-This directory contains the source code for the FLEXT-LDIF library, organized following Clean Architecture and Domain-Driven Design principles.
+This directory contains the source code for the FLEXT-LDIF library, organized following
+Clean Architecture and Domain-Driven Design principles.
 
 ## Architecture Overview
 
-The source code is structured in a single package (`flext_ldif/`) that implements Clean Architecture patterns while maintaining compatibility with the current project structure. The code is organized into logical modules representing different architectural concerns.
+The source code is structured in a single package (`flext_ldif/`) that implements Clean
+Architecture patterns while maintaining compatibility with the current project
+structure. The code is organized into logical modules representing different
+architectural concerns.
 
 ## Package Structure
 
@@ -60,7 +64,8 @@ src/flext_ldif/
 
 - **Domain Layer**: Pure business logic in `models.py` and `exceptions.py`
 - **Application Layer**: Use case orchestration in `api.py`
-- **Infrastructure Layer**: Technical concerns in `core.py`, `settings.py`, `services.py`
+- **Infrastructure Layer**: Technical concerns in `core.py`, `settings.py`,
+  `services.py`
 - **Interface Layer**: User interfaces in `cli.py`
 
 ### Domain-Driven Design
@@ -185,7 +190,9 @@ When contributing to the source code:
 
 ## Related Documentation
 
-- **[Architecture Guide](../docs/architecture/ARCHITECTURE.md)** - Detailed architectural patterns
+- **[Architecture Guide](../docs/architecture/ARCHITECTURE.md)** - Detailed
+  architectural patterns
 - **[API Documentation](../docs/api/API.md)** - Complete API reference
-- **[Module Organization](../docs/standards/python-module-organization.md)** - Detailed module standards
+- **[Module Organization](../docs/standards/python-module-organization.md)** - Detailed
+  module standards
 - **[Development Guide](../AGENTS.md)** - Development patterns and practices

@@ -13,7 +13,9 @@
 
 <!-- TOC END -->
 
-**Purpose**: This directory contains Architecture Decision Records (ADRs) that document architectural decisions made for FLEXT-LDIF. ADRs capture the context, decision, and consequences of significant architectural choices.
+**Purpose**: This directory contains Architecture Decision Records (ADRs) that document
+architectural decisions made for FLEXT-LDIF. ADRs capture the context, decision, and
+consequences of significant architectural choices.
 
 ## ADR Process
 
@@ -36,14 +38,11 @@ Create an ADR when making a significant architectural decision that:
 
 **Date**: [YYYY-MM-DD]
 
-**Context**:
-[Describe the problem or situation that led to this decision]
+**Context**: [Describe the problem or situation that led to this decision]
 
-**Decision**:
-[Describe the chosen solution and rationale]
+**Decision**: [Describe the chosen solution and rationale]
 
-**Consequences**:
-**Positive**:
+**Consequences**: **Positive**:
 
 - [List benefits and advantages]
 
@@ -63,8 +62,7 @@ Create an ADR when making a significant architectural decision that:
 
 - [Links to related decisions]
 
-**Notes**:
-[Additional context, implementation details, or follow-up items]
+**Notes**: [Additional context, implementation details, or follow-up items]
 ```
 
 ### ADR Status Definitions
@@ -77,7 +75,8 @@ Create an ADR when making a significant architectural decision that:
 
 ### ADR Numbering
 
-ADRs are numbered sequentially as created. The format is `ADR-XXX.md` where XXX is a zero-padded number (e.g., `ADR-001.md`, `ADR-002.md`).
+ADRs are numbered sequentially as created. The format is `ADR-XXX.md` where XXX is a
+zero-padded number (e.g., `ADR-001.md`, `ADR-002.md`).
 
 ## Current ADRs
 
@@ -99,5 +98,6 @@ ADRs are numbered sequentially as created. The format is `ADR-XXX.md` where XXX 
 ## Related Documentation
 
 - Architecture Overview - High-level architecture documentation
-- **Architecture Diagrams** - Visual representations of architecture (_Documentation coming soon_)
+- **Architecture Diagrams** - Visual representations of architecture (_Documentation
+  coming soon_)
 - Development Guidelines - Implementation guidelines influenced by ADRs

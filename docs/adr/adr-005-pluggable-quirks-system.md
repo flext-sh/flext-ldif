@@ -10,8 +10,9 @@
 
 **Date**: 2026-04-14
 
-**Context**:
-LDAP servers implement the RFC standards differently, requiring server-specific adaptations. FLEXT-LDIF must support 9+ LDAP server implementations while maintaining a clean, extensible architecture.
+**Context**: LDAP servers implement the RFC standards differently, requiring
+server-specific adaptations. FLEXT-LDIF must support 9+ LDAP server implementations
+while maintaining a clean, extensible architecture.
 
 Server-specific requirements include:
 
@@ -31,8 +32,7 @@ The challenge was creating an architecture that could:
 - Maintain clean separation between RFC standards and server extensions
 - Provide priority-based resolution for conflicting server requirements
 
-**Decision**:
-Implement a **pluggable servers system** with:
+**Decision**: Implement a **pluggable servers system** with:
 
 1. **ServerBase abstract class** defining standard interfaces
 1. **Auto-discovery registry** for loading server implementations

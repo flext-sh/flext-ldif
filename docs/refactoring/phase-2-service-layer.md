@@ -27,11 +27,14 @@
 
 ## Overview
 
-Phase 2 refactors the flext-ldif architecture to create a proper service layer where business logic is centralized in services, and servers become configuration providers.
+Phase 2 refactors the flext-ldif architecture to create a proper service layer where
+business logic is centralized in services, and servers become configuration providers.
 
-**Current State**: Servers contain nested classes (Schema, Acl, Entry) with inline parsing/writing/transformation logic.
+**Current State**: Servers contain nested classes (Schema, Acl, Entry) with inline
+parsing/writing/transformation logic.
 
-**Target State**: Services handle all business logic; servers provide configuration and delegate to services.
+**Target State**: Services handle all business logic; servers provide configuration and
+delegate to services.
 
 ---
 

@@ -19,7 +19,8 @@
 
 **Version**: 0.12.0-dev | **Updated**: April 14, 2026
 
-This document provides solutions to common issues encountered when using FLEXT-LDIF, including error diagnosis, performance problems, and integration issues.
+This document provides solutions to common issues encountered when using FLEXT-LDIF,
+including error diagnosis, performance problems, and integration issues.
 
 ## Common Issues and Solutions
 

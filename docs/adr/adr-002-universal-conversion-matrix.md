@@ -10,8 +10,10 @@
 
 **Date**: 2026-04-14
 
-**Context**:
-FLEXT-LDIF supports 9+ LDAP server implementations (OID, OUD, OpenLDAP, Active Directory, etc.), each with different syntax requirements and servers. The challenge was providing seamless conversion between any server pair without implementing N×N conversion functions.
+**Context**: FLEXT-LDIF supports 9+ LDAP server implementations (OID, OUD, OpenLDAP,
+Active Directory, etc.), each with different syntax requirements and servers. The
+challenge was providing seamless conversion between any server pair without implementing
+N×N conversion functions.
 
 Traditional approaches would require:
 
@@ -20,10 +22,11 @@ Traditional approaches would require:
 - OUD → OpenLDAP conversion function
 - And so on... resulting in O(n²) implementations
 
-We needed a scalable architecture that could support any-to-any server conversion with minimal implementation effort.
+We needed a scalable architecture that could support any-to-any server conversion with
+minimal implementation effort.
 
-**Decision**:
-Implement a **Universal Conversion Matrix** using RFC standards as intermediate representation:
+**Decision**: Implement a **Universal Conversion Matrix** using RFC standards as
+intermediate representation:
 
 **Conversion Pattern**:
 

@@ -20,8 +20,8 @@
 
 <!-- TOC END -->
 
-Flexible sorting for LDIF entries, attributes, ACL & schemas.
-Supports hierarchy, DN, custom predicate, and schema OID sorting.
+Flexible sorting for LDIF entries, attributes, ACL & schemas. Supports hierarchy, DN,
+custom predicate, and schema OID sorting.
 
 ## DN Handling (RFC 4514 Compliance)
 

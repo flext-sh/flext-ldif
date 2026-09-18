@@ -23,9 +23,11 @@
 
 <!-- TOC END -->
 
-**Version**: 0.12.0-dev | **Framework**: PlantUML + C4 Model | **Updated**: October 10, 2025
+**Version**: 0.12.0-dev | **Framework**: PlantUML + C4 Model | **Updated**: October 10,
+2025
 
-This directory contains architecture diagrams for FLEXT-LDIF using modern diagramming practices and tools.
+This directory contains architecture diagrams for FLEXT-LDIF using modern diagramming
+practices and tools.
 
 ## Diagram Overview
 
@@ -64,8 +66,8 @@ Following the [C4 Model](https://c4model.com/) for visualising software architec
 
 ```bash
 # Install PlantUML
-sudo apt-get install plantuml  # Ubuntu/Debian
-brew install plantuml          # macOS
+sudo apt-get install plantuml # Ubuntu/Debian
+brew install plantuml         # macOS
 ```
 
 ### Rendering Commands
@@ -78,9 +80,9 @@ plantuml system-context.puml
 plantuml *.puml
 
 # Render to specific format
-plantuml -tpng system-context.puml  # PNG output
-plantuml -tsvg system-context.puml  # SVG output
-plantuml -tpdf system-context.puml  # PDF output
+plantuml -tpng system-context.puml # PNG output
+plantuml -tsvg system-context.puml # SVG output
+plantuml -tpdf system-context.puml # PDF output
 ```
 
 ### VS Code Integration

@@ -44,11 +44,13 @@
 
 **Version**: 0.9.9 | **Updated**: October 10, 2025
 
-Complete API documentation for FLEXT-LDIF, including all public classes, methods, and integration patterns with the FLEXT ecosystem.
+Complete API documentation for FLEXT-LDIF, including all public classes, methods, and
+integration patterns with the FLEXT ecosystem.
 
 ## 🎯 Library Overview
 
-**FLEXT-LDIF** is a **library-only** LDIF processing package with NO CLI dependencies. All functionality is exposed through programmatic APIs.
+**FLEXT-LDIF** is a **library-only** LDIF processing package with NO CLI dependencies.
+All functionality is exposed through programmatic APIs.
 
 ### Generic RFC-Based Architecture with ZERO Bypass Paths
 
@@ -56,11 +58,16 @@ FLEXT-LDIF enforces a **strict RFC-first design** with **mandatory servers syste
 
 **Critical Architecture Principles**:
 
-1. ✅ **RFC-First Enforcement**: ALL parse/write/validate operations go through RFC parsers + servers
-1. ✅ **MANDATORY server_registry**: All RFC parsers/writers REQUIRE server_registry parameter (not Optional)
-1. ✅ **Zero Bypass Paths**: NO direct usage of parsers/writers - ALL operations through handlers/facade
-1. ✅ **Generic Transformation**: Source → RFC → Target pipeline works with ANY LDAP server
-1. ✅ **Library-Only Interface**: NO CLI code, tools, or applications - API-only through ldif facade
+1. ✅ **RFC-First Enforcement**: ALL parse/write/validate operations go through RFC
+   parsers + servers
+1. ✅ **MANDATORY server_registry**: All RFC parsers/writers REQUIRE server_registry
+   parameter (not Optional)
+1. ✅ **Zero Bypass Paths**: NO direct usage of parsers/writers - ALL operations through
+   handlers/facade
+1. ✅ **Generic Transformation**: Source → RFC → Target pipeline works with ANY LDAP
+   server
+1. ✅ **Library-Only Interface**: NO CLI code, tools, or applications - API-only through
+   ldif facade
 
 **Architecture Benefits**:
 
@@ -73,7 +80,8 @@ FLEXT-LDIF enforces a **strict RFC-first design** with **mandatory servers syste
 **Supported Servers**:
 
 - ✅ **Complete Implementations** (4): OpenLDAP 1.x/2.x, OID, OUD
-- ⚠️ **Stub Implementations** (5): AD, Apache DS, 389DS, Novell, Tivoli (ready for enhancement)
+- ⚠️ **Stub Implementations** (5): AD, Apache DS, 389DS, Novell, Tivoli (ready for
+  enhancement)
 - ✅ **Universal Conversion Matrix**: N×N server conversions via RFC intermediate format
 - ✅ **DN Case Registry**: Canonical DN case tracking for OUD compatibility
 
@@ -821,7 +829,8 @@ def filter_by_custom_criteria(
 
 ### RfcSchemaParserService
 
-Parse LDAP schema definitions with RFC 4512 compliance and **MANDATORY servers support**.
+Parse LDAP schema definitions with RFC 4512 compliance and **MANDATORY servers
+support**.
 
 ````python
 from __future__ import annotations

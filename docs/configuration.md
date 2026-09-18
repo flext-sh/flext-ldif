@@ -33,7 +33,9 @@
 
 **Version**: 0.12.0-dev | **Updated**: April 14, 2026
 
-This document covers configuration options for FLEXT-LDIF, including settings management, environment configuration, and integration with FLEXT ecosystem configuration patterns.
+This document covers configuration options for FLEXT-LDIF, including settings
+management, environment configuration, and integration with FLEXT ecosystem
+configuration patterns.
 
 ## Configuration Overview
 

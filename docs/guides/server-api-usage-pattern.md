@@ -18,8 +18,7 @@
 
 <!-- TOC END -->
 
-**Data**: 2025-11-18
-**Status**: PADRÃO OBRIGATÓRIO
+**Data**: 2025-11-18 **Status**: PADRÃO OBRIGATÓRIO
 
 ---
 

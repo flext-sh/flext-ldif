@@ -33,18 +33,19 @@
 
 <!-- TOC END -->
 
-**Analysis Date**: 2025-10-28
-**Scope**: Comprehensive mapping of ACL method usage in flext-ldif library
+**Analysis Date**: 2025-10-28 **Scope**: Comprehensive mapping of ACL method usage in
+flext-ldif library
 
 ---
 
 ## SUMMARY
 
-The `parse()` and `format_acl()` methods are defined in the flext-ldif library and have **13 server servers implementations** plus extensive test coverage.
+The `parse()` and `format_acl()` methods are defined in the flext-ldif library and have
+**13 server servers implementations** plus extensive test coverage.
 
-**Files Affected by Return Type Change**: ~45+ files
-**Lines of Code Affected**: ~520+ lines in servers implementations + ~1000+ lines in tests
-**Risk Level**: HIGH - Extensive refactoring required
+**Files Affected by Return Type Change**: ~45+ files **Lines of Code Affected**: ~520+
+lines in servers implementations + ~1000+ lines in tests **Risk Level**: HIGH -
+Extensive refactoring required
 
 ---
 

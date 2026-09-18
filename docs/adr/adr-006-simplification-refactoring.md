@@ -30,34 +30,40 @@
 
 <!-- TOC END -->
 
-**Date**: 2025-01-24
-**Status**: Approved
-**Deciders**: FLEXT Core Team
-**Related ADRs**: ADR-001 (RFC-First Design), ADR-005 (Pluggable Servers System)
+**Date**: 2025-01-24 **Status**: Approved **Deciders**: FLEXT Core Team **Related
+ADRs**: ADR-001 (RFC-First Design), ADR-005 (Pluggable Servers System)
 
 ---
 
 ## Context
 
-flext-ldif has evolved through multiple phases achieving production-ready status with 1766 passing tests, 78% coverage, and 0 type errors. However, complexity has accumulated through:
+flext-ldif has evolved through multiple phases achieving production-ready status with
+1766 passing tests, 78% coverage, and 0 type errors. However, complexity has accumulated
+through:
 
 ### **Structural Issues**
 
-1. **Subdirectory Overhead**: 11 subdirectories (`rfc/`, `services/`, `acl/`, `schema/`, `entry/`, `pipelines/`, `processors/`, `events/`) creating navigation friction
+1. **Subdirectory Overhead**: 11 subdirectories (`rfc/`, `services/`, `acl/`, `schema/`,
+   `entry/`, `pipelines/`, `processors/`, `events/`) creating navigation friction
 1. **Deep Import Paths**: 4-5 level imports (`from flext_ldif import ...`)
-1. **Test Misalignment**: Test subdirectories mirror old structure, creating maintenance burden
+1. **Test Misalignment**: Test subdirectories mirror old structure, creating maintenance
+   burden
 
 ### **Over-Engineering**
 
-1. **Custom Processors**: `processors/ldif_processor.py` (160 lines) wraps `FlextProcessors` from flext-core unnecessarily
-1. **Wrapper Methods**: 600+ lines in `api.py` delegating to model methods (`get_entry_dn`, `get_entry_attributes`, `create_entry`)
-1. **Property Accessors**: 100+ lines exposing imports via properties (`ldif.models`, `ldif.settings`, `ldif.processors`)
+1. **Custom Processors**: `processors/ldif_processor.py` (160 lines) wraps
+   `FlextProcessors` from flext-core unnecessarily
+1. **Wrapper Methods**: 600+ lines in `api.py` delegating to model methods
+   (`get_entry_dn`, `get_entry_attributes`, `create_entry`)
+1. **Property Accessors**: 100+ lines exposing imports via properties (`ldif.models`,
+   `ldif.settings`, `ldif.processors`)
 
 ### **flext-core Under-Utilization**
 
 1. **FlextProcessors**: Not used directly - wrapped unnecessarily
 1. **d**: Not applied (`@log_operation`, `@track_performance`, `@retry`)
-1. **s**: Services don't extend base class (missing automatic logging, context management)
+1. **s**: Services don't extend base class (missing automatic logging, context
+   management)
 
 ### **Impact**
 
@@ -70,7 +76,8 @@ flext-ldif has evolved through multiple phases achieving production-ready status
 
 ## Decision
 
-We will simplify flext-ldif through structural and architectural changes while **maintaining public API stability**.
+We will simplify flext-ldif through structural and architectural changes while
+**maintaining public API stability**.
 
 ### **1. Flatten Module Structure**
 
@@ -80,7 +87,8 @@ We will simplify flext-ldif through structural and architectural changes while *
 
 - **Simpler Navigation**: Direct file access without directory drilling
 - **Faster Imports**: Fewer nesting levels
-- **Industry Standard**: Libraries like `requests`, `httpx`, `pydantic` use flat structure
+- **Industry Standard**: Libraries like `requests`, `httpx`, `pydantic` use flat
+  structure
 - **Clear Dependencies**: Module relationships more visible
 
 **Exception**: Keep `servers/` with `servers/` subdirectory due to:
@@ -131,7 +139,8 @@ src/flext_ldif/
 
 **Rationale**:
 
-- `FlextLdifBatchProcessor` and `FlextLdifParallelProcessor` only wrap `FlextProcessors()`
+- `FlextLdifBatchProcessor` and `FlextLdifParallelProcessor` only wrap
+  `FlextProcessors()`
 - No domain-specific logic - pure delegation
 - Users should import `FlextProcessors` from flext-core directly
 
@@ -477,7 +486,10 @@ tests/unit/
 
 ## Notes
 
-This ADR represents a maturity milestone for flext-ldif. After achieving production-ready quality (0 type errors, 1766 tests), we can now focus on simplification and maintainability. The refactoring removes accidental complexity while preserving essential complexity (servers system, RFC compliance).
+This ADR represents a maturity milestone for flext-ldif. After achieving
+production-ready quality (0 type errors, 1766 tests), we can now focus on simplification
+and maintainability. The refactoring removes accidental complexity while preserving
+essential complexity (servers system, RFC compliance).
 
 The decision aligns with FLEXT principles:
 

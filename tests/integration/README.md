@@ -43,7 +43,8 @@
 
 <!-- TOC END -->
 
-Comprehensive integration testing for LDIF parsing, writing, and roundtrip validation across multiple LDAP server types (OID, OUD, OpenLDAP, RFC).
+Comprehensive integration testing for LDIF parsing, writing, and roundtrip validation
+across multiple LDAP server types (OID, OUD, OpenLDAP, RFC).
 
 ## 📋 Test Organization
 
@@ -77,19 +78,22 @@ tests/integration/
 
 #### 1. **Comprehensive Validation Tests** (Phase 3-5)
 
-These tests validate core LDIF functionality across all server types using centralized fixtures.
+These tests validate core LDIF functionality across all server types using centralized
+fixtures.
 
 **test_roundtrip_deep_validation.py** (9 tests)
 
 - Tests: parse → write → parse roundtrips
-- Coverage: Single/multiple entries, multi-valued attributes, special characters, hierarchical structures
+- Coverage: Single/multiple entries, multi-valued attributes, special characters,
+  hierarchical structures
 - Parametrized: OID and OUD schema/integration fixtures
 - Validates: Deep content preservation (not just entry counts)
 
 **test_rfc_compliance_validation.py** (15 tests)
 
 - Tests: RFC 2849 (LDIF format) and RFC 4512 (schema) compliance
-- Coverage: DN syntax (RFC 4514), LDIF format rules, attribute encoding, line length limits
+- Coverage: DN syntax (RFC 4514), LDIF format rules, attribute encoding, line length
+  limits
 - Validates: Strict RFC compliance for all operations
 
 **test_systematic_fixture_coverage.py** (10 tests)
@@ -108,9 +112,11 @@ These tests validate core LDIF functionality across all server types using centr
 
 - Tests: Malformed LDIF handling and error recovery
 - Coverage:
-  - Malformed content: missing DN, incomplete syntax, invalid format, orphaned continuations (12 tests)
+  - Malformed content: missing DN, incomplete syntax, invalid format, orphaned
+    continuations (12 tests)
   - Incomplete entries: truncated LDIF, unclosed multiline values (3 tests)
-  - Invalid schema: malformed OID, missing required fields, unclosed parentheses (3 tests)
+  - Invalid schema: malformed OID, missing required fields, unclosed parentheses (3
+    tests)
   - Encoding errors: UTF-8, base64, mixed encodings (4 tests)
 - Validates: Graceful handling and best-effort recovery
 
@@ -118,10 +124,14 @@ These tests validate core LDIF functionality across all server types using centr
 
 - Tests: Boundary conditions and edge cases
 - Coverage:
-  - Empty/minimal cases: empty LDIF, whitespace only, comments only, minimal entries (5 tests)
-  - Large/complex cases: many attributes (100+), many values (100+), very long values (10KB+), deep nesting (10+ levels) (4 tests)
-  - Boundary values: single characters, special characters, maximum RDN components, minimum valid DN (4 tests)
-  - Unicode boundaries: BMP, supplementary plane, zero-width, combining characters (4 tests)
+  - Empty/minimal cases: empty LDIF, whitespace only, comments only, minimal entries (5
+    tests)
+  - Large/complex cases: many attributes (100+), many values (100+), very long values
+    (10KB+), deep nesting (10+ levels) (4 tests)
+  - Boundary values: single characters, special characters, maximum RDN components,
+    minimum valid DN (4 tests)
+  - Unicode boundaries: BMP, supplementary plane, zero-width, combining characters (4
+    tests)
   - Roundtrip edge cases: empty roundtrip, single minimal entry, many entries (5 tests)
 - Validates: Correct handling of boundary values
 
@@ -241,7 +251,8 @@ PYTHONPATH=src poetry run pytest tests/integration/test_systematic_fixture_cover
 
 ## 📦 Centralized Fixtures (conftest.py)
 
-All tests use centralized fixtures defined in `tests/integration/conftest.py`. This eliminates duplication and ensures consistent fixture usage across all test files.
+All tests use centralized fixtures defined in `tests/integration/conftest.py`. This
+eliminates duplication and ensures consistent fixture usage across all test files.
 
 ### Fixture Organization
 
@@ -562,7 +573,8 @@ PYTHONPATH=src poetry run pytest tests/integration/ --cov=src/flext_ldif --cov-r
 
 ### Step 1: Choose Test Location
 
-- **Validation Logic**: Add to `test_roundtrip_deep_validation.py` or `test_rfc_compliance_validation.py`
+- **Validation Logic**: Add to `test_roundtrip_deep_validation.py` or
+  `test_rfc_compliance_validation.py`
 - **Error Handling**: Add to `test_error_recovery.py`
 - **Edge Cases**: Add to `test_edge_cases.py`
 - **Server-Specific**: Add to `test_oid_integration.py`, `test_oud_integration.py`, etc.
@@ -728,6 +740,7 @@ Tests run with:
 
 **Integration Test Suite** for ldif LDIF processing library.
 
-**Purpose**: Comprehensive testing of LDIF parsing, writing, and roundtrip validation across all LDAP server types with centralized fixture management.
+**Purpose**: Comprehensive testing of LDIF parsing, writing, and roundtrip validation
+across all LDAP server types with centralized fixture management.
 
 **Maintained**: 2025 | **Test Count**: 100+ | **Coverage**: 65%+ minimum

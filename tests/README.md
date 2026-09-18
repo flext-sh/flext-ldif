@@ -36,11 +36,14 @@
 
 <!-- TOC END -->
 
-This directory contains the test suite for FLEXT-LDIF, implementing testing standards with multiple test categories, fixtures, and quality validation patterns.
+This directory contains the test suite for FLEXT-LDIF, implementing testing standards
+with multiple test categories, fixtures, and quality validation patterns.
 
 ## Overview
 
-The test suite provides coverage across all architectural layers, test categories, and integration scenarios while maintaining high-quality standards and performance benchmarks for enterprise LDIF processing operations.
+The test suite provides coverage across all architectural layers, test categories, and
+integration scenarios while maintaining high-quality standards and performance
+benchmarks for enterprise LDIF processing operations.
 
 ## Test Organization
 
@@ -378,15 +381,15 @@ pytest -m integration --cov --cov-report=term
 
 ```bash
 # Run all quality checks
-make test                          # Full test suite
-make test-unit                     # Unit tests only
-make test-integration              # Integration tests only
-make test-performance              # Performance benchmarks
+make test             # Full test suite
+make test-unit        # Unit tests only
+make test-integration # Integration tests only
+make test-performance # Performance benchmarks
 
 # Continuous testing
-pytest --watch                     # Watch mode for development
-pytest --lf                        # Run last failed tests
-pytest -x                          # Stop on first failure
+pytest --watch # Watch mode for development
+pytest --lf    # Run last failed tests
+pytest -x      # Stop on first failure
 ```
 
 ## Performance Benchmarks
@@ -415,16 +418,16 @@ pytest -m performance --benchmark-compare=baseline
 
 ```bash
 # Quick feedback loop
-pytest -m "not slow" --ff        # Fast tests first, skip slow tests
+pytest -m "not slow" --ff # Fast tests first, skip slow tests
 
 # Comprehensive validation
-pytest --strict-markers           # Enforce marker usage
-pytest --strict-settings            # Enforce configuration compliance
+pytest --strict-markers  # Enforce marker usage
+pytest --strict-settings # Enforce configuration compliance
 
 # Debug test failures
-pytest --pdb                      # Drop into debugger on failure
-pytest -vvv                       # Maximum verbosity
-pytest --tb=long                  # Detailed traceback
+pytest --pdb     # Drop into debugger on failure
+pytest -vvv      # Maximum verbosity
+pytest --tb=long # Detailed traceback
 ```
 
 ### Test-Driven Development
@@ -485,5 +488,6 @@ When adding new tests:
 ## Related Documentation
 
 - **[API Documentation](../docs/api/API.md)** - Complete API reference for testing
-- **[Architecture Guide](../docs/architecture/ARCHITECTURE.md)** - Understanding system design for testing
+- **[Architecture Guide](../docs/architecture/ARCHITECTURE.md)** - Understanding system
+  design for testing
 - **[Development Guide](../AGENTS.md)** - Development patterns and practices

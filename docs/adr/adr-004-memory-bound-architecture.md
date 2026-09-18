@@ -10,8 +10,9 @@
 
 **Date**: 2026-04-14
 
-**Context**:
-FLEXT-LDIF processes LDIF files containing directory data that can range from small configuration files to large enterprise directory exports. The system needs to handle files efficiently while maintaining type safety and RFC compliance.
+**Context**: FLEXT-LDIF processes LDIF files containing directory data that can range
+from small configuration files to large enterprise directory exports. The system needs
+to handle files efficiently while maintaining type safety and RFC compliance.
 
 Key requirements:
 
@@ -27,8 +28,8 @@ Available implementation approaches:
 - **Memory-Bound Parser**: Load entire file into memory for processing
 - **Hybrid Approach**: Stream parsing with memory checkpoints
 
-**Decision**:
-Implement a **memory-bound processing architecture** that loads entire LDIF files into memory during processing.
+**Decision**: Implement a **memory-bound processing architecture** that loads entire
+LDIF files into memory during processing.
 
 **Key Design Decisions**:
 

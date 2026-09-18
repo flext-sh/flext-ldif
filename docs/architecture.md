@@ -21,18 +21,17 @@
 
 **Version**: 0.9.0 | **Updated**: 2025-02-17
 
-This document describes the architecture in `src/flext_ldif`. It connects the
-public facade to the underlying service layer, server discovery, and typed models
-to show how the library processes LDIF while adapting to different LDAP servers.
+This document describes the architecture in `src/flext_ldif`. It connects the public
+facade to the underlying service layer, server discovery, and typed models to show how
+the library processes LDIF while adapting to different LDAP servers.
 
 ## Architectural Goals
 
-- Keep a single, stable facade for callers while allowing the implementation to
-  evolve behind it.
-- Separate RFC-compliant behaviour from server-specific differences via
-  discoverable servers.
-- Provide predictable, typed inputs/outputs using Pydantic v2 models and
-  flext-core `r`.
+- Keep a single, stable facade for callers while allowing the implementation to evolve
+  behind it.
+- Separate RFC-compliant behaviour from server-specific differences via discoverable
+  servers.
+- Provide predictable, typed inputs/outputs using Pydantic v2 models and flext-core `r`.
 - Keep services small and focused so changes remain localized.
 
 ## Package Layout
@@ -58,110 +57,102 @@ Supporting modules live under `models/` (domain/settings/processing/results) and
 
 ### Facade (`api.py`)
 
-`ldif` is the single public entry point. It registers factories for filter
-and categorization services, maps service types to concrete classes via
-`SERVICE_MAPPING`, and lazily instantiates services on first access. The facade
-inherits flext-core `s`, exposing configuration (`FlextLdifSettings`),
-logging, and `r` helpers to callers. Builder-style helpers (parse →
-filter → write) reuse the same instance-level services to avoid redundant
-initialization.
+`ldif` is the single public entry point. It registers factories for filter and
+categorization services, maps service types to concrete classes via `SERVICE_MAPPING`,
+and lazily instantiates services on first access. The facade inherits flext-core `s`,
+exposing configuration (`FlextLdifSettings`), logging, and `r` helpers to callers.
+Builder-style helpers (parse → filter → write) reuse the same instance-level services to
+avoid redundant initialization.
 
 ### Service Base (`base.py`)
 
-All services inherit `s`, a thin wrapper around flext-core
-`s` that exposes namespaced configuration through the `ldif_config`
-property.
+All services inherit `s`, a thin wrapper around flext-core `s` that exposes namespaced
+configuration through the `ldif_config` property.
 
 ### Services (`services/`)
 
 Each service owns one responsibility:
 
-- **Parsing (`services/parser.py`):** converts LDIF strings, files, or ldap3
-  tuples into `ParseResponse` objects using entry servers from the server
-  registry.
+- **Parsing (`services/parser.py`):** converts LDIF strings, files, or ldap3 tuples into
+  `ParseResponse` objects using entry servers from the server registry.
 - **Writing (`services/writer.py`):** serializes entries back to LDIF text with
   configurable encoding and wrapping.
-- **Conversion (`services/conversion.py`):** translates entries between server
-  types using source/target servers.
+- **Conversion (`services/conversion.py`):** translates entries between server types
+  using source/target servers.
 - **Filtering & Categorization (`services/filters.py`, `services/categorization.py`):**
   apply typed filter criteria and grouping rules; factories are pre-registered to
   resolve circular dependencies.
-- **Validation & Syntax (`services/validation.py`, `services/syntax.py`):**
-  validate entries, schemas, and attribute syntax, delegating server nuances to
-  servers.
+- **Validation & Syntax (`services/validation.py`, `services/syntax.py`):** validate
+  entries, schemas, and attribute syntax, delegating server nuances to servers.
 - **Analysis, Sorting, and Statistics (`services/analysis.py`, `services/sorting.py`,
-  `services/statistics.py`):** provide helper routines for inspecting, ordering,
-  and summarizing parsed datasets.
+  `services/statistics.py`):** provide helper routines for inspecting, ordering, and
+  summarizing parsed datasets.
 - **Detection, Entry Manipulation, DN helpers, and Migration (`services/detector.py`,
-  `services/entries.py`, `services/dn.py`, `services/migration.py`):**
-  identify server types, adjust entries, normalize DNs, and orchestrate migration
-  flows.
+  `services/entries.py`, `services/dn.py`, `services/migration.py`):** identify server
+  types, adjust entries, normalize DNs, and orchestrate migration flows.
 
-All services return `r[T]` and share logging/configuration through the
-base class. The writer and conversion services receive the server registry so
-they can format entries for the target server type.
+All services return `r[T]` and share logging/configuration through the base class. The
+writer and conversion services receive the server registry so they can format entries
+for the target server type.
 
 ### Servers (`services/server.py` and `servers/`)
 
 `FlextLdifServer` discovers server implementations in `flext_ldif.servers` using
-reflection. For each subclass of `FlextLdifServersBase`, it instantiates the
-class, validates that nested `Schema`, `Acl`, and `Entry` components exist, and
-registers them by `server_type`. Accessors (`schema`, `acl`, `entry`) return the
-appropriate server instance for a normalized server type supplied by
-`FlextLdifConstants`.
+reflection. For each subclass of `FlextLdifServersBase`, it instantiates the class,
+validates that nested `Schema`, `Acl`, and `Entry` components exist, and registers them
+by `server_type`. Accessors (`schema`, `acl`, `entry`) return the appropriate server
+instance for a normalized server type supplied by `FlextLdifConstants`.
 
-Concrete servers include RFC, Oracle (OID/OUD), OpenLDAP variants, Active
-Directory, 389 DS, Apache DS, Novell, Tivoli, and a relaxed fallback. Each server
-encapsulates server-specific parsing, ACL handling, and schema interpretation
-while keeping the facade and services unchanged.
+Concrete servers include RFC, Oracle (OID/OUD), OpenLDAP variants, Active Directory, 389
+DS, Apache DS, Novell, Tivoli, and a relaxed fallback. Each server encapsulates
+server-specific parsing, ACL handling, and schema interpretation while keeping the
+facade and services unchanged.
 
 ### Models and Typing
 
 Domain, processing, and result models live in `models/` and are aggregated in
-`models.py` under the `FlextLdifModels` namespace. They use Pydantic v2 for
-validation and serialization. `typings.py` defines helper aliases for common
-result shapes, and `constants.py` centralizes literals such as server types and
-encodings.
+`models.py` under the `FlextLdifModels` namespace. They use Pydantic v2 for validation
+and serialization. `typings.py` defines helper aliases for common result shapes, and
+`constants.py` centralizes literals such as server types and encodings.
 
 ## Control Flow Examples
 
 ### Parsing LDIF Text
 
 1. Caller invokes `ldif.parse` or `FlextLdifParser.parse`.
-1. The parser resolves the effective server type (default `rfc`) and requests the
-   entry server from `FlextLdifServer`.
+1. The parser resolves the effective server type (default `rfc`) and requests the entry
+   server from `FlextLdifServer`.
 1. The server parses the content and returns entries; the parser wraps them in
    `ParseResponse` with statistics and server metadata.
 
 ### Writing LDIF Text
 
 1. Caller invokes `ldif.write` with entries and optional format overrides.
-1. Writer options are merged through `u.build_options_from_kwargs`
-   to combine defaults and explicit values.
-1. The writer uses the shared server registry to format entries for the chosen
-   server type before emitting LDIF text or writing to disk.
+1. Writer options are merged through `u.build_options_from_kwargs` to combine defaults
+   and explicit values.
+1. The writer uses the shared server registry to format entries for the chosen server
+   type before emitting LDIF text or writing to disk.
 
 ### Migration and Conversion
 
 - Conversion services request both source and target servers to normalize entries
   between server types.
-- Migration pipelines compose parser, filters, conversion, and writer services to
-  move datasets while preserving server-specific expectations.
+- Migration pipelines compose parser, filters, conversion, and writer services to move
+  datasets while preserving server-specific expectations.
 
 ## Extensibility and Quality Considerations
 
 - **Adding a server:** create `servers/<name>.py` that subclasses
-  `FlextLdifServersBase`, implement nested `Schema`, `Acl`, and `Entry`, and
-  expose `server_type` and `priority`. `FlextLdifServer` will auto-register it on
-  the next discovery cycle.
-- **Adding a service:** subclass `s`, register a factory in
-  `FlextLdifServiceRegistry`, and expose it through the facade mapping.
-- **Reliability:** server discovery is idempotent and cached; typed models and
-  `r` help prevent unexpected exceptions crossing boundaries.
+  `FlextLdifServersBase`, implement nested `Schema`, `Acl`, and `Entry`, and expose
+  `server_type` and `priority`. `FlextLdifServer` will auto-register it on the next
+  discovery cycle.
+- **Adding a service:** subclass `s`, register a factory in `FlextLdifServiceRegistry`,
+  and expose it through the facade mapping.
+- **Reliability:** server discovery is idempotent and cached; typed models and `r` help
+  prevent unexpected exceptions crossing boundaries.
 
-The architecture favors discoverability and small, composable services so that
-new behaviours can be added without widening the public API beyond the
-`ldif` facade.
+The architecture favors discoverability and small, composable services so that new
+behaviours can be added without widening the public API beyond the `ldif` facade.
 
 ## Related Documentation
 
@@ -175,8 +166,10 @@ new behaviours can be added without widening the public API beyond the
 
 **Across Projects**:
 
-- [flext-core Foundation](https://github.com/flext-sh/flext/tree/0.12.0-dev/flext-core/docs/architecture/overview.md) - Clean architecture and CQRS patterns
-- [flext-ldap Architecture](https://github.com/flext-sh/flext/tree/0.12.0-dev/flext-ldap/docs/architecture/README.md) - Universal LDAP interface architecture
+- [flext-core Foundation](https://github.com/flext-sh/flext/tree/0.12.0-dev/flext-core/docs/architecture/overview.md) -
+  Clean architecture and CQRS patterns
+- [flext-ldap Architecture](https://github.com/flext-sh/flext/tree/0.12.0-dev/flext-ldap/docs/architecture/README.md) -
+  Universal LDAP interface architecture
 
 **External Resources**:
 

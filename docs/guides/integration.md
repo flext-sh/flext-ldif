@@ -23,7 +23,9 @@
 
 **Version**: 0.12.0-dev | **Updated**: April 14, 2026
 
-LDIF-specific integration patterns for using FLEXT-LDIF within the FLEXT ecosystem. For general FLEXT patterns, see [flext-core documentation](https://github.com/flext-sh/flext/tree/0.12.0-dev/flext-core/README.md).
+LDIF-specific integration patterns for using FLEXT-LDIF within the FLEXT ecosystem. For
+general FLEXT patterns, see
+[flext-core documentation](https://github.com/flext-sh/flext/tree/0.12.0-dev/flext-core/README.md).
 
 ## LDIF Processing Integration
 

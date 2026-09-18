@@ -10,8 +10,9 @@
 
 **Date**: 2026-04-14
 
-**Context**:
-FLEXT-LDIF processes LDAP Data Interchange Format (LDIF) files for multiple LDAP server implementations. The challenge was ensuring standards compliance while supporting server-specific extensions without compromising architectural integrity.
+**Context**: FLEXT-LDIF processes LDAP Data Interchange Format (LDIF) files for multiple
+LDAP server implementations. The challenge was ensuring standards compliance while
+supporting server-specific extensions without compromising architectural integrity.
 
 The system needed to:
 
@@ -20,8 +21,7 @@ The system needed to:
 - Provide a consistent, maintainable architecture for current and future server support
 - Prevent direct access to internal parsers that could bypass standards compliance
 
-**Decision**:
-Implement a **RFC-First Design with Zero Bypass Paths** where:
+**Decision**: Implement a **RFC-First Design with Zero Bypass Paths** where:
 
 1. **All parsing operations MUST go through RFC-compliant parsers first**
 1. **Server-specific servers are applied as enhancements on top of RFC baseline**

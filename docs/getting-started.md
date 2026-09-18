@@ -33,7 +33,9 @@
 
 **Version**: 0.12.0-dev | **Updated**: October 10, 2025
 
-This guide provides step-by-step instructions for installing and using FLEXT-LDIF, an RFC 2849/4512 compliant LDIF processing library with server-specific servers for the FLEXT ecosystem.
+This guide provides step-by-step instructions for installing and using FLEXT-LDIF, an
+RFC 2849/4512 compliant LDIF processing library with server-specific servers for the
+FLEXT ecosystem.
 
 ## Prerequisites
 
@@ -48,7 +50,8 @@ This guide provides step-by-step instructions for installing and using FLEXT-LDI
 
 FLEXT-LDIF integrates with the broader FLEXT ecosystem:
 
-- **[flext-core](https://github.com/flext-sh/flext/tree/0.12.0-dev/flext-core/README.md)**: Foundation library providing r, FlextContainer, and logging patterns
+- **[flext-core](https://github.com/flext-sh/flext/tree/0.12.0-dev/flext-core/README.md)**:
+  Foundation library providing r, FlextContainer, and logging patterns
 - **Poetry**: Dependency management and virtual environment handling
 - **Python 3.13+**: Modern Python features including improved type annotations
 
@@ -71,16 +74,16 @@ python -c "from flext_ldif import ldif; print('FLEXT-LDIF installed successfully
 
 ```bash
 # Essential development workflow
-make lint           # Code quality checking with Ruff (ZERO TOLERANCE)
-make type-check     # Type safety validation with Pyrefly (MyPy successor)
-make test           # Run test suite (990/990 tests passing)
-make val       # Complete validation pipeline (lint + type + security + test)
+make lint       # Code quality checking with Ruff (ZERO TOLERANCE)
+make type-check # Type safety validation with Pyrefly (MyPy successor)
+make test       # Run test suite (990/990 tests passing)
+make val        # Complete validation pipeline (lint + type + security + test)
 
 # Testing commands (⚠️ CRITICAL: Requires PYTHONPATH=src)
 PYTHONPATH=src pytest                           # Full test suite
 PYTHONPATH=src pytest -m unit                   # Unit tests only
 PYTHONPATH=src pytest --cov=src/flext_ldif      # Coverage report
-PYTHONPATH=src pytest tests/unit/test_oid.py -v  # Specific test file
+PYTHONPATH=src pytest tests/unit/test_oid.py -v # Specific test file
 ```
 
 ### ⚠️ CRITICAL: PYTHONPATH Requirements

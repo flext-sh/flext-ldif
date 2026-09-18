@@ -12,10 +12,10 @@
 - Version: `0.12.0`
 - Description: FLEXT LDIF - Enterprise LDIF Processing Library
 - Doc summary: Flext Ldif package.
-- Classifiers: `Development Status :: 3 - Alpha`, `Intended Audience ::
-Developers`, `Operating System :: OS Independent`, `Programming Language ::
-Python :: 3 :: Only`, `Programming Language :: Python :: 3.13`, `Topic ::
-Software Development :: Libraries :: Python Modules` (+1 more)
+- Classifiers: `Development Status :: 3 - Alpha`, `Intended Audience :: Developers`,
+  `Operating System :: OS Independent`, `Programming Language :: Python :: 3 :: Only`,
+  `Programming Language :: Python :: 3.13`,
+  `Topic :: Software Development :: Libraries :: Python Modules` (+1 more)
 - Project class: `domain`
 - Keywords: `adapter`, `enterprise`, `flext`, `integration`, `typed`
 - Main facades: `FlextLdif`, `FlextLdifAcl`, `FlextLdifAnalysis`,
@@ -25,8 +25,7 @@ Software Development :: Libraries :: Python Modules` (+1 more)
 - Public symbol exports: `FlextLdif`, `FlextLdifAcl`, `FlextLdifAnalysis`,
   `FlextLdifCategorization`, `FlextLdifConfig`, `FlextLdifConstants`,
   `FlextLdifConversion`, `FlextLdifConversionAclMixin`,
-  `FlextLdifConversionAclPreserveMixin`, `FlextLdifConversionEntryMixin` (+37
-  more)
+  `FlextLdifConversionAclPreserveMixin`, `FlextLdifConversionEntryMixin` (+37 more)
 - Exported module shortcuts: `servers`, `services`
 - Generated module pages: `41`
 

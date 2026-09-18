@@ -10,20 +10,23 @@
 
 **Date**: 2026-04-14
 
-**Context**:
-Different LDAP servers handle Distinguished Name (DN) case sensitivity differently:
+**Context**: Different LDAP servers handle Distinguished Name (DN) case sensitivity
+differently:
 
 - **OID (Oracle Internet Directory)**: Case-insensitive DNs
-- **OUD (Oracle Unified Directory)**: Case-sensitive DNs with strict consistency requirements
+- **OUD (Oracle Unified Directory)**: Case-sensitive DNs with strict consistency
+  requirements
 - **OpenLDAP**: Mixed case handling depending on configuration
 - **Active Directory**: Case-insensitive but preserves original case
 
-When migrating between servers (e.g., OID → OUD), DN references in entries, ACLs, and group memberships must maintain consistent case. Without proper case management, OUD operations would fail due to case mismatches.
+When migrating between servers (e.g., OID → OUD), DN references in entries, ACLs, and
+group memberships must maintain consistent case. Without proper case management, OUD
+operations would fail due to case mismatches.
 
-The challenge was tracking canonical DN case during conversions while ensuring OUD compatibility.
+The challenge was tracking canonical DN case during conversions while ensuring OUD
+compatibility.
 
-**Decision**:
-Implement a **DN Case Registry** that:
+**Decision**: Implement a **DN Case Registry** that:
 
 1. **Tracks canonical case** for each normalized DN during conversion
 1. **Ensures consistency** across all DN references in migrated data

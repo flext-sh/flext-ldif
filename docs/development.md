@@ -27,7 +27,8 @@
 
 **Version**: 0.12.0-dev | **Updated**: April 14, 2026
 
-This guide covers LDIF-specific development workflows and technical considerations for contributing to FLEXT-LDIF.
+This guide covers LDIF-specific development workflows and technical considerations for
+contributing to FLEXT-LDIF.
 
 ## Development Environment Setup
 
@@ -36,7 +37,8 @@ This guide covers LDIF-specific development workflows and technical consideratio
 - Python 3.13 or higher
 - Poetry for dependency management
 - Understanding of LDIF format (RFC 2849)
-- Familiarity with FLEXT ecosystem patterns (see [flext-core documentation](https://github.com/flext-sh/flext/tree/0.12.0-dev/flext-core/README.md))
+- Familiarity with FLEXT ecosystem patterns (see
+  [flext-core documentation](https://github.com/flext-sh/flext/tree/0.12.0-dev/flext-core/README.md))
 
 ### Initial Setup
 
@@ -55,20 +57,20 @@ python -c "from flext_ldif import ldif; u.Cli.print('LDIF development environmen
 
 ```bash
 # Code quality
-make lint           # Ruff linting
-make type-check     # MyPy type checking
-make format         # Code formatting
-make val       # Complete validation pipeline
+make lint       # Ruff linting
+make type-check # MyPy type checking
+make format     # Code formatting
+make val        # Complete validation pipeline
 
 # Testing
-make test           # Run test suite
-pytest -m unit      # Unit tests only
-pytest -m integration  # Integration tests
-pytest --cov=src/flext_ldif  # Coverage report
+make test                   # Run test suite
+pytest -m unit              # Unit tests only
+pytest -m integration       # Integration tests
+pytest --cov=src/flext_ldif # Coverage report
 
 # Development utilities
-make clean          # Clean build artifacts
-make reset          # Full reset of environment
+make clean # Clean build artifacts
+make reset # Full reset of environment
 ```
 
 ## LDIF Processing Architecture
