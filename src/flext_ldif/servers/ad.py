@@ -54,6 +54,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         ACL_SDDL_PREFIX_PATTERN_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
             r"^(O:|G:|D:|S:)", re.IGNORECASE
         )
+        ENCODING_UTF8: ClassVar[str] = "utf-8"
         ENCODING_UTF16LE: ClassVar[str] = "utf-16-le"
         ENCODING_ERROR_IGNORE: ClassVar[str] = "ignore"
         AD_REQUIRED_CLASSES: ClassVar[frozenset[str]] = frozenset([

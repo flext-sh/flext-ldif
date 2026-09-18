@@ -92,7 +92,7 @@ class FlextLdifUtilitiesServer:
         name_without_prefix = class_name[len("FlextLdifServers") :]
         server_name = FlextLdifUtilitiesServer._extract_server_name(
             name_without_prefix
-        ).unwrap()
+        ).unwrap_or(None)
         if server_name is None:
             return None
         server_type_lower = server_name.lower()
@@ -276,7 +276,7 @@ class FlextLdifUtilitiesServer:
     @staticmethod
     def validation_rule_flags(
         server_type: str | c.Ldif.ServerTypes,
-    ) -> m.SettingsValidation.ServerValidationRules:
+    ) -> m.Ldif.ServerValidationRules:
         """Resolve validation-rule booleans from the canonical server capability map."""
         normalized_server_type = FlextLdifUtilitiesServer.normalize_server_type(
             str(server_type)
@@ -284,7 +284,7 @@ class FlextLdifUtilitiesServer:
         validation_capabilities = c.Ldif.SERVER_VALIDATION_CAPABILITIES.get(
             normalized_server_type, frozenset()
         )
-        return m.SettingsValidation.ServerValidationRules(
+        return m.Ldif.ServerValidationRules(
             requires_objectclass="requires_objectclass" in validation_capabilities,
             requires_naming_attr="requires_naming_attr" in validation_capabilities,
             requires_binary_option="requires_binary_option" in validation_capabilities,

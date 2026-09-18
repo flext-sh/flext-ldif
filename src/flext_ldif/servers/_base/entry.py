@@ -535,7 +535,7 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         def write_entry(entry: m.Ldif.Entry) -> p.Result[str]:
             return self._write_single_entry(entry, write_options)
 
-        return r.traverse(entries, write_entry).map(format_output)
+        return r[str].traverse(entries, write_entry).map(format_output)
 
     def _write_single_entry(
         self, entry: m.Ldif.Entry, write_options: m.Ldif.WriteFormatOptions | None

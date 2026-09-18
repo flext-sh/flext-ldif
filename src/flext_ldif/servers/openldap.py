@@ -422,7 +422,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             """Inject OpenLDAP-specific validation rules into Entry metadata via DI."""
             server_type = FlextLdifServersOpenldap.Constants.CANONICAL_NAME
             validation_rules: t.JsonDict = {
-                **u.Ldif.validation_rule_flags(server_type),
+                **u.Ldif.validation_rule_flags(server_type).model_dump(),
                 "encoding_rules": {
                     "default_encoding": "utf-8",
                     "allowed_encodings": ["utf-8", "latin-1", "iso-8859-1", "ascii"],

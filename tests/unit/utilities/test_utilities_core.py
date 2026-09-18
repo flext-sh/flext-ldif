@@ -329,4 +329,6 @@ class TestsFlextLdifUtilitiesCore:
         self, server_type: str | c.Ldif.ServerTypes, flag: str, *, expected: bool
     ) -> None:
         """Validation flags reflect each server type's declared capabilities."""
-        tm.that(u.Ldif.validation_rule_flags(server_type)[flag], eq=expected)
+        tm.that(
+            u.Ldif.validation_rule_flags(server_type).model_dump()[flag], eq=expected
+        )

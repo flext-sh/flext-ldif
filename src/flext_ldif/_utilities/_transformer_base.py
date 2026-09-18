@@ -19,7 +19,7 @@ class FlextLdifUtilitiesTransformer[T]:
 
     def apply_batch(self, items: t.MutableSequenceOf[T]) -> p.Result[t.SequenceOf[T]]:
         """Apply transformation to a batch of items."""
-        return r.traverse(items, self.apply)
+        return r[T].traverse(items, self.apply)
 
 
 __all__: list[str] = ["FlextLdifUtilitiesTransformer"]

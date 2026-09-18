@@ -45,11 +45,17 @@ class FlextLdifServer(s):
 
     def acl(self, server_type: str) -> p.Ldif.AclServer | None:
         """Get ACL server for a server type."""
-        return self.server(server_type).flat_map(lambda base: base.acl_server)
+        server_result = self.server(server_type)
+        if server_result.failure:
+            return None
+        return server_result.value.acl_server
 
     def entry(self, server_type: str) -> p.Ldif.EntryServer | None:
         """Get entry server for a server type."""
-        return self.server(server_type).flat_map(lambda base: base.entry_server)
+        server_result = self.server(server_type)
+        if server_result.failure:
+            return None
+        return server_result.value.entry_server
 
     def resolve_server_bundle(
         self, server_type: str
@@ -128,7 +134,10 @@ class FlextLdifServer(s):
 
     def resolve_schema_server(self, server_type: str) -> p.Ldif.SchemaServer | None:
         """Get schema server for a server type."""
-        return self.server(server_type).flat_map(lambda base: base.schema_server)
+        server_result = self.server(server_type)
+        if server_result.failure:
+            return None
+        return server_result.value.schema_server
 
     def list_registered_servers(self) -> t.MutableSequenceOf[str]:
         """List all registered server types."""

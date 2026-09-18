@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 __all__: list[str] = ["Protocols"]
 
 
-class Protocols:
+class Protocols(Protocol):
     """Declared owner for ldap3-compatible structural protocol contracts."""
 
     @runtime_checkable

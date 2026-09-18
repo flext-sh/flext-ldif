@@ -37,9 +37,9 @@ class TestsFlextLdifProtocols(FlextTestsProtocols, FlextLdifProtocols):
                 ...
 
         # ── Shared structural contracts (SSOT: flext_ldif._protocols.ldap3) ──
-        Ldap3Attribute = FlextLdifProtocols.Ldif.Ldap3Attribute
-        Ldap3Entry = FlextLdifProtocols.Ldif.Ldap3Entry
-        Ldap3Connection = FlextLdifProtocols.Ldif.Ldap3Connection
+        type Ldap3Attribute = FlextLdifProtocols.Ldif.Ldap3Attribute
+        type Ldap3Entry = FlextLdifProtocols.Ldif.Ldap3Entry
+        type Ldap3Connection = FlextLdifProtocols.Ldif.Ldap3Connection
 
         @runtime_checkable
         class Ldap3EntryAdapter(Protocol):

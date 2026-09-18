@@ -27,9 +27,7 @@ def _probe_ldap_bind(server_url: str, admin_dn: str, admin_password: str) -> str
         bound: bool = conn.bind()
         conn.unbind()
     except u.Tests.ldap_connectivity_errors() as exc:
-        from flext_ldif import r
-
-        return r[str].fail(str(exc), exception=exc)
+        return str(exc)
     else:
         if bound:
             return None
