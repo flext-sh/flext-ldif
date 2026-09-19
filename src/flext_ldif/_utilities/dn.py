@@ -81,8 +81,6 @@ class FlextLdifUtilitiesDN:
 
     """
 
-    MIN_DN_LENGTH: int = c.Ldif.MIN_DN_LENGTH
-
     @staticmethod
     def _advance_rdn_position(
         char: str,
@@ -290,10 +288,7 @@ class FlextLdifUtilitiesDN:
             lambda: (
                 not (
                     dn_str.endswith(",")
-                    and (
-                        len(dn_str) < FlextLdifUtilitiesDN.MIN_DN_LENGTH
-                        or dn_str[-2] != "\\"
-                    )
+                    and (len(dn_str) < c.Ldif.MIN_DN_LENGTH or dn_str[-2] != "\\")
                 )
             ),
         ]
@@ -574,7 +569,7 @@ class FlextLdifUtilitiesDN:
         )
         if is_bad_lead and strict:
             errors.append(f"Invalid lead character: {value[0]!r}")
-        min_len_for_escape = FlextLdifUtilitiesDN.MIN_DN_LENGTH
+        min_len_for_escape = c.Ldif.MIN_DN_LENGTH
         is_escaped_trail = len(value) >= min_len_for_escape and value[-2] == "\\"
         is_bad_trail = not FlextLdifUtilitiesDN.is_tutf1_char(value[-1]) and (
             not is_escaped_trail

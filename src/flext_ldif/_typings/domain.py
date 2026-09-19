@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from flext_core import FlextTypes as t
-from flext_ldif import p
+
+if TYPE_CHECKING:
+    from flext_ldif import p
 
 
 class FlextLdifTypesDomain:

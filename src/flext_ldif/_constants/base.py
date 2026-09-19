@@ -8,6 +8,7 @@ this module is forbidden by AGENTS.md §3.1 ``regex-from-constants`` rule.
 from __future__ import annotations
 
 import re
+import struct
 from typing import TYPE_CHECKING, ClassVar, Final
 
 if TYPE_CHECKING:
@@ -350,3 +351,35 @@ class FlextLdifConstantsBase:
         "conversion_converted_attribute_names"
     )
     CONVERTED_ATTRIBUTES: Final[str] = "converted_attributes"
+
+    # ===== Parsing boundary exception tuple (ENFORCE-079 owner) =====
+    EXC_LDIF_PARSE: Final[tuple[type[Exception], ...]] = (
+        AttributeError,
+        KeyError,
+        UnicodeDecodeError,
+        ValueError,
+        struct.error,
+    )
+    """LDIF parsing boundary catch: attribute access, dict, unicode,
+    type, and struct unpacking errors raised during entry parsing."""
+
+    # ===== Operational attributes to ignore in LDIF entry processing =====
+    class OperationalAttributes:
+        """Operational attributes to ignore in LDIF entry processing."""
+
+        IGNORE_SET: ClassVar[frozenset[str]] = frozenset({
+            "createTimestamp",
+            "modifyTimestamp",
+            "creatorsName",
+            "modifiersName",
+            "entryUUID",
+            "entryCSN",
+            "hasSubordinates",
+            "numSubordinates",
+            "subschemaSubentry",
+            "dseType",
+        })
+
+    # ===== Service registry name (ENFORCE-079 owner) =====
+    SERVERS: Final[str] = "ldif_servers"
+    """Registry name for the LDIF server registry DSL."""

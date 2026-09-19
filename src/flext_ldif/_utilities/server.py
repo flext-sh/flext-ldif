@@ -15,7 +15,6 @@ if TYPE_CHECKING:
 class FlextLdifUtilitiesServer:
     """Server utilities for LDIF server type resolution."""
 
-    VALID_SERVER_TYPES: frozenset[str] = c.Ldif.VALID_SERVER_TYPES
     CLASS_SUFFIXES: t.StrSequence = c.Ldif.CLASS_SUFFIXES
 
     @staticmethod
@@ -90,14 +89,13 @@ class FlextLdifUtilitiesServer:
         if not class_name.startswith("FlextLdifServers"):
             return None
         name_without_prefix = class_name[len("FlextLdifServers") :]
-        server_name = FlextLdifUtilitiesServer._extract_server_name(
+        extract_result = FlextLdifUtilitiesServer._extract_server_name(
             name_without_prefix
-        ).unwrap_or(None)
-        if server_name is None:
-            return None
-        server_type_lower = server_name.lower()
-        if FlextLdifUtilitiesServer._is_valid_server_type(server_type_lower):
-            return c.Ldif.ServerTypes(server_type_lower)
+        )
+        if extract_result.success:
+            server_type_lower = extract_result.value.lower()
+            if FlextLdifUtilitiesServer._is_valid_server_type(server_type_lower):
+                return c.Ldif.ServerTypes(server_type_lower)
         return None
 
     @staticmethod
@@ -126,7 +124,7 @@ class FlextLdifUtilitiesServer:
 
     @staticmethod
     def _is_valid_server_type(value: str) -> TypeIs[c.Ldif.ServerTypes]:
-        return value in FlextLdifUtilitiesServer.VALID_SERVER_TYPES
+        return value in c.Ldif.VALID_SERVER_TYPES
 
     @staticmethod
     def extract_server_type_from_constants(

@@ -44,11 +44,9 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         if _parent_server is not None:
             object.__setattr__(self, "_parent_server", _parent_server)
 
-    RFC_ACL_ATTRIBUTES: ClassVar[t.StrSequence] = c.Ldif.RFC_ACL_ATTRIBUTES
-
     def resolve_acl_attributes(self) -> t.MutableSequenceOf[str]:
         """Get ACL attributes for this server."""
-        return list(self.RFC_ACL_ATTRIBUTES)
+        return list(c.Ldif.RFC_ACL_ATTRIBUTES)
 
     def matches_acl_attribute(self, attribute_name: str) -> bool:
         """Check if attribute is ACL attribute (case-insensitive)."""
