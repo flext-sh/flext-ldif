@@ -693,7 +693,8 @@ entries = result.unwrap_or([])  # Empty list if failed
 
 # Railway-oriented composition
 final_result = (
-    api.parse_file("input.ldif")
+    api
+    .parse_file("input.ldif")
     .flat_map(api.validate_entries)
     .flat_map(lambda entries: api.filter_persons(entries))
     .flat_map(lambda persons: api.write_file(persons, "persons.ldif"))

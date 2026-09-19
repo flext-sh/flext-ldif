@@ -1,0 +1,19 @@
+# Handwritten topology SSOT consumed by `flext-infra codegen conform`.
+# conform never overwrites this input. Declare members/exclusions here, then
+# run the project's canonical generation surface (`make gen`).
+version: 3
+name: flext-ldif
+repository:
+  name: flext-ldif
+  distribution: flext-ldif
+  provider: flext-sh
+  url: https://github.com/flext-sh/flext-ldif.git
+  path: .
+  role: standalone
+  state: active
+  kind: internal_flext
+  codegen: conform
+  package: true
+  editable: true
+  read_only: false
+members: []
