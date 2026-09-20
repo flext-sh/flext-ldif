@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tk
+from flext_tests import r, tk
 
 from tests import c, t, u
 
@@ -17,8 +17,10 @@ if TYPE_CHECKING:
     from tests import p
 
 
-def _probe_ldap_bind(server_url: str, admin_dn: str, admin_password: str) -> str | None:
-    """Return bind error text, or None when LDAP bind is ready."""
+def _probe_ldap_bind(
+    server_url: str, admin_dn: str, admin_password: str
+) -> p.Result[None]:
+    """Probe one LDAP bind, failing with the connectivity error text."""
     try:
         srv = u.Tests.create_server_from_url(server_url)
         conn = u.Tests.create_connection(
@@ -27,11 +29,11 @@ def _probe_ldap_bind(server_url: str, admin_dn: str, admin_password: str) -> str
         bound: bool = conn.bind()
         conn.unbind()
     except u.Tests.ldap_connectivity_errors() as exc:
-        return str(exc)
+        return r[None].fail(str(exc), exception=exc)
     else:
         if bound:
-            return None
-        return "LDAP bind returned False"
+            return r[None].ok(None)
+        return r[None].fail("LDAP bind returned False")
 
 
 @pytest.fixture(scope="session")
@@ -56,9 +58,10 @@ def ldap_container(worker_id: str) -> t.JsonMapping:
         deadline = time.monotonic() + float(c.Tests.DOCKER_PROBE_MAX_WAIT_SECONDS)
         last_error: str | None = None
         while time.monotonic() < deadline:
-            last_error = _probe_ldap_bind(server_url, admin_dn, admin_password)
-            if last_error is None:
+            bind_result = _probe_ldap_bind(server_url, admin_dn, admin_password)
+            if bind_result.success:
                 break
+            last_error = bind_result.error
             time.sleep(1.0)
         else:
             pytest.skip(

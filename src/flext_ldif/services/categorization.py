@@ -113,15 +113,15 @@ class FlextLdifCategorization(s):
             return value
         if isinstance(value, m.BaseModel):
             validation_result = u.try_(lambda: u.Ldif.as_entry(value))
-            if validation_result.failure:
-                FlextLdifCategorization._get_or_create_logger().warning(
-                    "Failed to coerce BaseModel to Entry",
-                    error=validation_result.error,
-                    error_type="ValidationError",
-                )
-                return None
-            validated: m.Ldif.Entry = validation_result.value
-            return validated
+            if validation_result.success:
+                validated: m.Ldif.Entry = validation_result.value
+                return validated
+            FlextLdifCategorization._get_or_create_logger().warning(
+                "Failed to coerce BaseModel to Entry",
+                error=validation_result.error,
+                error_type="ValidationError",
+            )
+            return None
         return None
 
     @staticmethod

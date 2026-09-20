@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import struct
 from enum import StrEnum, unique
 from types import MappingProxyType
 from typing import ClassVar, Final
@@ -25,16 +24,6 @@ class FlextLdifConstants(c):
         FlextLdifConstantsAclConvertOud,
     ):
         """LDIF domain constants namespace."""
-
-        EXC_LDIF_PARSE: Final[tuple[type[Exception], ...]] = (
-            AttributeError,
-            KeyError,
-            UnicodeDecodeError,
-            ValueError,
-            struct.error,
-        )
-        """LDIF parsing boundary catch: attribute access, dict, unicode,
-        type, and struct unpacking errors raised during entry parsing."""
 
         BINARY_ATTRIBUTE_NAMES: Final[frozenset[str]] = frozenset({
             "usercertificate",
@@ -510,21 +499,9 @@ class FlextLdifConstants(c):
         UNKNOWN_VALUE: Final[str] = "unknown"
         ASCII_THRESHOLD: Final[int] = 127
 
-        class OperationalAttributes:
-            """Operational attributes to ignore in LDIF entry processing."""
-
-            IGNORE_SET: ClassVar[frozenset[str]] = frozenset({
-                "createTimestamp",
-                "modifyTimestamp",
-                "creatorsName",
-                "modifiersName",
-                "entryUUID",
-                "entryCSN",
-                "hasSubordinates",
-                "numSubordinates",
-                "subschemaSubentry",
-                "dseType",
-            })
+        # OperationalAttributes.IGNORE_SET is owned by
+        # ``FlextLdifConstantsBase`` in ``_constants/base.py`` (ENFORCE-079)
+        # and resolves through the MRO.
 
         @unique
         class LogLevelLower(StrEnum):

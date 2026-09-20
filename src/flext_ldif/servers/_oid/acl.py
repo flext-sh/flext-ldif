@@ -23,9 +23,6 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         m.Ldif.OidAclMetadataConfig
     )
 
-    RFC_ACL_ATTRIBUTES: ClassVar[t.StrSequence] = (
-        FlextLdifServersOidConstants.RFC_ACL_ATTRIBUTES
-    )
     OID_ACL_ATTRIBUTES: ClassVar[t.StrSequence] = (
         FlextLdifServersOidConstants.OID_ACL_ATTRIBUTES
     )
@@ -33,7 +30,10 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
     @override
     def resolve_acl_attributes(self) -> t.MutableSequenceOf[str]:
         """Get RFC + OID extensions."""
-        return [*self.RFC_ACL_ATTRIBUTES, *self.OID_ACL_ATTRIBUTES]
+        return [
+            *FlextLdifServersOidConstants.RFC_ACL_ATTRIBUTES,
+            *self.OID_ACL_ATTRIBUTES,
+        ]
 
     @staticmethod
     def _detect_oid_subject(content: str) -> str | None:

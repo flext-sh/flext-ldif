@@ -65,8 +65,7 @@ if result.success:
 
 ```python
 result = (
-    FlextLdifSorting
-    .sort(my_entries, by="hierarchy")
+    FlextLdifSorting.sort(my_entries, by="hierarchy")
     .map(lambda e: e[:10])  # Take first 10
     .and_then(lambda e: FlextLdifSorting.sort(e, by="alphabetical"))
 )
@@ -76,8 +75,7 @@ result = (
 
 ```python
 sorted_entries = (
-    FlextLdifSorting
-    .builder()
+    FlextLdifSorting.builder()
     .with_entries(my_entries)
     .with_strategy("hierarchy")
     .with_attribute_sorting(order=["cn", "sn", "mail"])

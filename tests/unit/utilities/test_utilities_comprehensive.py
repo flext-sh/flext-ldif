@@ -10,6 +10,7 @@ from __future__ import annotations
 import pytest
 from flext_tests import tm
 
+from flext_ldif import c
 from flext_ldif.utilities import u
 
 
@@ -47,7 +48,7 @@ class TestsFlextLdifUtilitiesComprehensive:
         """get_all_server_types enumerates exactly the VALID_SERVER_TYPES set."""
         all_types = u.Ldif.get_all_server_types()
 
-        tm.that(set(all_types), eq=set(u.Ldif.VALID_SERVER_TYPES))
+        tm.that(set(all_types), eq=set(c.Ldif.VALID_SERVER_TYPES))
 
     # --- DN value escaping ---------------------------------------------
 

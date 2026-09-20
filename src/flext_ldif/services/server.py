@@ -17,7 +17,6 @@ if TYPE_CHECKING:
 class FlextLdifServer(s):
     """Server server registry using the canonical registry DSL."""
 
-    SERVERS: ClassVar[str] = "ldif_servers"
     _discovery_initialized: ClassVar[bool] = False
     _global_instance: ClassVar[FlextLdifServer | None] = None
     _registered_servers: ClassVar[dict[str, p.Ldif.ServerServer]] = {}
@@ -46,16 +45,16 @@ class FlextLdifServer(s):
     def acl(self, server_type: str) -> p.Ldif.AclServer | None:
         """Get ACL server for a server type."""
         server_result = self.server(server_type)
-        if server_result.failure:
-            return None
-        return server_result.value.acl_server
+        if server_result.success:
+            return server_result.value.acl_server
+        return None
 
     def entry(self, server_type: str) -> p.Ldif.EntryServer | None:
         """Get entry server for a server type."""
         server_result = self.server(server_type)
-        if server_result.failure:
-            return None
-        return server_result.value.entry_server
+        if server_result.success:
+            return server_result.value.entry_server
+        return None
 
     def resolve_server_bundle(
         self, server_type: str
@@ -135,9 +134,9 @@ class FlextLdifServer(s):
     def resolve_schema_server(self, server_type: str) -> p.Ldif.SchemaServer | None:
         """Get schema server for a server type."""
         server_result = self.server(server_type)
-        if server_result.failure:
-            return None
-        return server_result.value.schema_server
+        if server_result.success:
+            return server_result.value.schema_server
+        return None
 
     def list_registered_servers(self) -> t.MutableSequenceOf[str]:
         """List all registered server types."""
@@ -219,7 +218,7 @@ class FlextLdifServer(s):
         if server_type:
             self._registered_servers[server_type] = instance
             self._registry.register_plugin(
-                self.SERVERS, server_type, instance, scope=c.RegistrationScope.CLASS
+                c.Ldif.SERVERS, server_type, instance, scope=c.RegistrationScope.CLASS
             )
 
     @classmethod
