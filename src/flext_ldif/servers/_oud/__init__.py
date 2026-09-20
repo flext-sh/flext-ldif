@@ -15,18 +15,12 @@ if TYPE_CHECKING:
     from .acl_extract import FlextLdifServersOudAclExtractMixin
     from .acl_metadata import FlextLdifServersOudAclMetadataMixin
     from .comments import FlextLdifServersOudCommentsMixin
-    from .constants import (
-        FlextLdifServersOudConstants,
-        FlextLdifServersOudConstants as c,
-    )
+    from .constants import FlextLdifServersOudConstants
     from .entry import FlextLdifServersOudEntry
     from .helpers import FlextLdifServersOudHelpersMixin
     from .schema import FlextLdifServersOudSchema
     from .transform import FlextLdifServersOudTransformMixin
-    from .utilities import (
-        FlextLdifServersOudUtilities,
-        FlextLdifServersOudUtilities as u,
-    )
+    from .utilities import FlextLdifServersOudUtilities
 __all__: tuple[str, ...] = (
     "FlextLdifServersOudAciMixin",
     "FlextLdifServersOudAcl",
@@ -39,9 +33,7 @@ __all__: tuple[str, ...] = (
     "FlextLdifServersOudSchema",
     "FlextLdifServersOudTransformMixin",
     "FlextLdifServersOudUtilities",
-    "c",
     "fsr",
-    "u",
 )
 
 _LAZY_IMPORTS = MappingProxyType(
@@ -52,12 +44,12 @@ _LAZY_IMPORTS = MappingProxyType(
             ".acl_extract": ("FlextLdifServersOudAclExtractMixin",),
             ".acl_metadata": ("FlextLdifServersOudAclMetadataMixin",),
             ".comments": ("FlextLdifServersOudCommentsMixin",),
-            ".constants": ("FlextLdifServersOudConstants", "c"),
+            ".constants": ("FlextLdifServersOudConstants",),
             ".entry": ("FlextLdifServersOudEntry",),
             ".helpers": ("FlextLdifServersOudHelpersMixin",),
             ".schema": ("FlextLdifServersOudSchema",),
             ".transform": ("FlextLdifServersOudTransformMixin",),
-            ".utilities": ("FlextLdifServersOudUtilities", "u"),
+            ".utilities": ("FlextLdifServersOudUtilities",),
         }),
         alias_groups=MappingProxyType({"..rfc": (("fsr", "FlextLdifServersRfc"),)}),
         sort_keys=False,

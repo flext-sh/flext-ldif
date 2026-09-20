@@ -15,7 +15,6 @@ from __future__ import annotations
 from typing import Annotated, ClassVar
 
 from flext_cli import FlextCliSettings
-from pydantic_settings import SettingsConfigDict
 
 from flext_core import FlextSettings
 from flext_ldif.models import m
@@ -34,7 +33,7 @@ class FlextLdifSettings(FlextCliSettings, FlextSettings):
             bool, m.Field(description="Enable strict LDIF validation rules")
         ] = True
 
-    model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
+    model_config: ClassVar[m.SettingsConfigDict] = m.SettingsConfigDict(
         env_prefix="FLEXT_LDIF_", extra="ignore"
     )
 
