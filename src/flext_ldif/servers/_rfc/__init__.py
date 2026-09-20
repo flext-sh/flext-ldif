@@ -18,8 +18,12 @@ if TYPE_CHECKING:
     from .entry import FlextLdifServersRfcEntry
     from .schema import FlextLdifServersRfcSchema
 __all__: tuple[str, ...] = (
-    "FlextLdifServersBaseConstants", "FlextLdifServersRfcAcl", "FlextLdifServersRfcConstants", "FlextLdifServersRfcEntry",
-    "FlextLdifServersRfcSchema", "c",
+    "FlextLdifServersBaseConstants",
+    "FlextLdifServersRfcAcl",
+    "FlextLdifServersRfcConstants",
+    "FlextLdifServersRfcEntry",
+    "FlextLdifServersRfcSchema",
+    "c",
 )
 
 _LAZY_IMPORTS = MappingProxyType(
