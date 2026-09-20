@@ -13,9 +13,7 @@ if TYPE_CHECKING:
     from .domain import FlextLdifProtocolsDomain
     from .ldap3 import Protocols
 __all__: tuple[str, ...] = (
-    "FlextLdifProtocolsBase",
-    "FlextLdifProtocolsDomain",
-    "Protocols",
+    "FlextLdifProtocolsBase", "FlextLdifProtocolsDomain", "Protocols",
 )
 
 _LAZY_IMPORTS = MappingProxyType(

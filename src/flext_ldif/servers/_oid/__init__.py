@@ -16,20 +16,16 @@ if TYPE_CHECKING:
     from .acl_convert_oud import FlextLdifServersOidAclToOud
     from .acl_pipeline import FlextLdifServersOidAclPipeline
     from .acl_render import FlextLdifServersOidAclRender
-    from .constants import FlextLdifServersOidConstants
+    from .constants import (
+        FlextLdifServersOidConstants,
+        FlextLdifServersOidConstants as c,
+    )
     from .entry import FlextLdifServersOidEntry
     from .schema import FlextLdifServersOidSchema
 __all__: tuple[str, ...] = (
-    "FlextLdifServersOidAcl",
-    "FlextLdifServersOidAclAssemble",
-    "FlextLdifServersOidAclConvert",
-    "FlextLdifServersOidAclPipeline",
-    "FlextLdifServersOidAclRender",
-    "FlextLdifServersOidAclToOud",
-    "FlextLdifServersOidConstants",
-    "FlextLdifServersOidEntry",
-    "FlextLdifServersOidSchema",
-    "fsr",
+    "FlextLdifServersOidAcl", "FlextLdifServersOidAclAssemble", "FlextLdifServersOidAclConvert", "FlextLdifServersOidAclPipeline",
+    "FlextLdifServersOidAclRender", "FlextLdifServersOidAclToOud", "FlextLdifServersOidConstants", "FlextLdifServersOidEntry",
+    "FlextLdifServersOidSchema", "c", "fsr",
 )
 
 _LAZY_IMPORTS = MappingProxyType(
@@ -41,7 +37,7 @@ _LAZY_IMPORTS = MappingProxyType(
             ".acl_convert_oud": ("FlextLdifServersOidAclToOud",),
             ".acl_pipeline": ("FlextLdifServersOidAclPipeline",),
             ".acl_render": ("FlextLdifServersOidAclRender",),
-            ".constants": ("FlextLdifServersOidConstants",),
+            ".constants": ("FlextLdifServersOidConstants", "c"),
             ".entry": ("FlextLdifServersOidEntry",),
             ".schema": ("FlextLdifServersOidSchema",),
         }),
