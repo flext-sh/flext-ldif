@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import re
 from enum import StrEnum, unique
-from typing import TYPE_CHECKING, ClassVar, Final
+from typing import ClassVar, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .._typings.base import FlextLdifTypesBase as t
@@ -49,8 +49,8 @@ class FlextLdifConstantsAclConvert:
         GUIDATTR = "guidattr"
         UNKNOWN = "unknown"
 
-    ACL_ACCESS_TO: Final[str] = "access to"
-    ACL_WILDCARD: Final[str] = "*"
+    ACL_ACCESS_TO: ClassVar[str] = "access to"
+    ACL_WILDCARD: ClassVar[str] = "*"
 
     ATTR_PATTERN_RE: ClassVar[t.RegexPattern] = re.compile(
         r"attr\s*(!?=)\s*\(([^)]*)\)", re.IGNORECASE
@@ -130,7 +130,7 @@ class FlextLdifConstantsAclConvert:
     "by-clause modifier: g1=kind, g2=paren-value, g3=quoted-value."
 
     # Ordered OID-regex → OUD-wildcard replacements (applied to bind DNs).
-    OID_REGEX_REPLACEMENTS: Final[tuple[tuple[str, str], ...]] = (
+    OID_REGEX_REPLACEMENTS: ClassVar[tuple[tuple[str, str], ...]] = (
         (".*", "*"),
         (".+", "*"),
         (r"\.", "."),

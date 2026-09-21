@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from enum import StrEnum, unique
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Final
+from typing import ClassVar, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -117,7 +117,7 @@ class FlextLdifConstantsEnums:
         IBM_TIVOLI = "ibm_tivoli"
         GENERIC = "generic"
 
-    SERVER_TYPE_ALIASES: Final[Mapping[str, ServerTypes]] = MappingProxyType({
+    SERVER_TYPE_ALIASES: ClassVar[Mapping[str, ServerTypes]] = MappingProxyType({
         "active_directory": ServerTypes.AD,
         "activedirectory": ServerTypes.AD,
         "oracle_oid": ServerTypes.OID,

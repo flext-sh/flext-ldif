@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from enum import StrEnum, unique
 from types import MappingProxyType
-from typing import TYPE_CHECKING, ClassVar, Final
+from typing import ClassVar, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -35,33 +35,33 @@ class FlextLdifConstantsAclConvertOud:
         USERDN = "#USERDN"
         GROUPDN = "#GROUPDN"
 
-    ACL_SCOPE_BASE: Final[str] = "base"
+    ACL_SCOPE_BASE: ClassVar[str] = "base"
     "OUD targetscope value for entry-level / anyone-scoped rules."
-    DIRECTORY_MANAGER_DN: Final[str] = "cn=Directory Manager"
+    DIRECTORY_MANAGER_DN: ClassVar[str] = "cn=Directory Manager"
     "OUD root account that OID ``SuperUser`` maps to."
-    LDAP_PREFIX: Final[str] = "ldap:///"
+    LDAP_PREFIX: ClassVar[str] = "ldap:///"
     "URL prefix wrapping a DN inside a ``groupdn``/``userdn`` bind-rule."
-    SUBJECT_SELF: Final[str] = "self"
-    SUBJECT_ANYONE: Final[str] = "anyone"
-    OUD_ATTR_OR: Final[str] = "||"
+    SUBJECT_SELF: ClassVar[str] = "self"
+    SUBJECT_ANYONE: ClassVar[str] = "anyone"
+    OUD_ATTR_OR: ClassVar[str] = "||"
     "OUD ``targetattr`` multi-attribute OR separator (``cn||sn||mail``)."
-    OUD_ATTR_NEGATION: Final[str] = "!="
+    OUD_ATTR_NEGATION: ClassVar[str] = "!="
     "OUD ``targetattr`` negation operator (``targetattr!=...``)."
-    ACI_PREFIX: Final[str] = "aci: "
-    ACI_ATTR_NAME: Final[str] = "aci"
+    ACI_PREFIX: ClassVar[str] = "aci: "
+    ACI_ATTR_NAME: ClassVar[str] = "aci"
     "OUD ACL attribute name (replaces OID orclaci/orclentrylevelaci)."
-    ACI_VERSION: Final[str] = "version 3.0"
-    ACI_VERSION_NUMBER: Final[str] = "3.0"
-    ACI_ALLOW: Final[str] = "allow"
-    BIND_OR: Final[str] = " or "
+    ACI_VERSION: ClassVar[str] = "version 3.0"
+    ACI_VERSION_NUMBER: ClassVar[str] = "3.0"
+    ACI_ALLOW: ClassVar[str] = "allow"
+    BIND_OR: ClassVar[str] = " or "
     "Separator joining same-permission bind-rules inside one ``allow`` clause."
-    UNKNOWN_CONTAINER: Final[str] = "Unknown"
+    UNKNOWN_CONTAINER: ClassVar[str] = "Unknown"
     "acl-name container fallback when the DN has no ``cn=`` RDN."
-    ACL_NAME_ENTRY: Final[str] = "Entry"
-    ACL_NAME_ATTRS: Final[str] = "Attrs"
-    PERM_NONE: Final[str] = "none"
+    ACL_NAME_ENTRY: ClassVar[str] = "Entry"
+    ACL_NAME_ATTRS: ClassVar[str] = "Attrs"
+    PERM_NONE: ClassVar[str] = "none"
     "OID permission token denying all access (``by X (none)``)."
-    PERM_ALL: Final[str] = "all"
+    PERM_ALL: ClassVar[str] = "all"
     "OID/OUD permission token granting all rights."
 
     # OID permission → OUD permission(s); None = negation/deny (dropped).
@@ -103,13 +103,13 @@ class FlextLdifConstantsAclConvertOud:
         "noproxy": "proxy",
         "nobrowse": "browse",
     })
-    ALL_ENTRY_PERMS: Final[frozenset[str]] = frozenset({
+    ALL_ENTRY_PERMS: ClassVar[frozenset[str]] = frozenset({
         "browse",
         "add",
         "delete",
         "proxy",
     })
-    ALL_ATTR_PERMS: Final[frozenset[str]] = frozenset({
+    ALL_ATTR_PERMS: ClassVar[frozenset[str]] = frozenset({
         "read",
         "search",
         "write",
@@ -117,7 +117,7 @@ class FlextLdifConstantsAclConvertOud:
         "compare",
     })
     # OUD perms that are security-sensitive when granted to anyone (review flag).
-    SENSITIVE_PERMS: Final[frozenset[str]] = frozenset({
+    SENSITIVE_PERMS: ClassVar[frozenset[str]] = frozenset({
         "proxy",
         "write",
         "delete",
@@ -125,7 +125,7 @@ class FlextLdifConstantsAclConvertOud:
         "selfwrite",
     })
     # Canonical OUD permission ordering for deterministic aci assembly.
-    PERM_ORDERED: Final[tuple[str, ...]] = (
+    PERM_ORDERED: ClassVar[tuple[str, ...]] = (
         "all",
         "read",
         "search",
@@ -137,7 +137,7 @@ class FlextLdifConstantsAclConvertOud:
         "proxy",
     )
     # DN suffixes (relative to base) treated as high-level containers (filter anyone).
-    HIGH_LEVEL_CONTAINER_SUFFIXES: Final[tuple[str, ...]] = (
+    HIGH_LEVEL_CONTAINER_SUFFIXES: ClassVar[tuple[str, ...]] = (
         "",
         "dc=network,",
         "cn=users,dc=network,",
