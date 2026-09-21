@@ -10,6 +10,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import Annotated
+
 from flext_cli import FlextCliConfig, m
 
 from flext_core import FlextSettings
@@ -30,7 +32,10 @@ class FlextLdifConfig(FlextSettings, FlextCliConfig):
     construction machinery stays intact.
     """
 
-    Ldif: _LdifNamespace = _LdifNamespace()
+    Ldif: Annotated[
+        _LdifNamespace,
+        m.Field(description="Open namespace exposing ``config/*.yaml`` under ``Ldif``."),
+    ] = _LdifNamespace()
 
 
 config: FlextLdifConfig = FlextLdifConfig.fetch_global()
