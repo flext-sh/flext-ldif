@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import re
 import struct
-from typing import ClassVar, TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 if TYPE_CHECKING:
     from .._typings.base import FlextLdifTypesBase as t
@@ -26,7 +26,14 @@ class FlextLdifConstantsBase:
     SAFE_CHAR_MIN: ClassVar[int] = 1
     SAFE_CHAR_MAX: ClassVar[int] = 127
     SAFE_CHAR_EXCLUDE: ClassVar[frozenset[int]] = frozenset({0, 10, 13})
-    SAFE_INIT_CHAR_EXCLUDE: ClassVar[frozenset[int]] = frozenset({0, 10, 13, 32, 58, 60})
+    SAFE_INIT_CHAR_EXCLUDE: ClassVar[frozenset[int]] = frozenset({
+        0,
+        10,
+        13,
+        32,
+        58,
+        60,
+    })
 
     # Base64 start characters
     BASE64_START_CHARS: ClassVar[frozenset[str]] = frozenset({" ", "<", ":"})
@@ -60,7 +67,16 @@ class FlextLdifConstantsBase:
         62,
         92,
     })
-    DN_SUTF1_EXCLUDE: ClassVar[frozenset[int]] = frozenset({0, 34, 43, 44, 59, 60, 62, 92})
+    DN_SUTF1_EXCLUDE: ClassVar[frozenset[int]] = frozenset({
+        0,
+        34,
+        43,
+        44,
+        59,
+        60,
+        62,
+        92,
+    })
 
     # DN escape
     DN_ESCAPE_CHARS: ClassVar[frozenset[str]] = frozenset({
@@ -128,7 +144,9 @@ class FlextLdifConstantsBase:
     ATTRIBUTE_OPTION: ClassVar[str] = ";[a-zA-Z][a-zA-Z0-9-_]*"
     BINARY_CHAR_PATTERN: ClassVar[str] = "[\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\x7f-\\xff]"
     NUMERIC_OID_PATTERN: ClassVar[str] = "^\\d+(\\.\\d+)*$"
-    SCHEMA_X_EXTENSION: ClassVar[str] = r"X-([A-Z0-9_-]+)\s+[\"']?([^\"']*)[\"']?(?:\s|$)"
+    SCHEMA_X_EXTENSION: ClassVar[str] = (
+        r"X-([A-Z0-9_-]+)\s+[\"']?([^\"']*)[\"']?(?:\s|$)"
+    )
     SCHEMA_DESC_FLEX: ClassVar[str] = r"DESC\s+['\\\"]([^'\\\"]*)['\\\"]"
     SCHEMA_ORDERING_PATTERN: ClassVar[str] = r"ORDERING\s+([A-Za-z0-9_-]+)"
     SCHEMA_SUBSTR_PATTERN: ClassVar[str] = r"SUBSTR\s+([A-Za-z0-9_-]+)"
