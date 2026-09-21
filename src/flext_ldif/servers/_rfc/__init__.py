@@ -15,10 +15,7 @@ if TYPE_CHECKING:
     from .entry import FlextLdifServersRfcEntry
     from .schema import FlextLdifServersRfcSchema
 __all__: tuple[str, ...] = (
-    "FlextLdifServersBaseConstants",
-    "FlextLdifServersRfcAcl",
-    "FlextLdifServersRfcConstants",
-    "FlextLdifServersRfcEntry",
+    "FlextLdifServersBaseConstants", "FlextLdifServersRfcAcl", "FlextLdifServersRfcConstants", "FlextLdifServersRfcEntry",
     "FlextLdifServersRfcSchema",
 )
 

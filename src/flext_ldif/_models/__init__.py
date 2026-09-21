@@ -32,28 +32,12 @@ if TYPE_CHECKING:
     from .results import FlextLdifModelsResults
     from .settings import FlextLdifModelsSettings
 __all__: tuple[str, ...] = (
-    "FlextLdifModelsAclConvert",
-    "FlextLdifModelsBases",
-    "FlextLdifModelsCollections",
-    "FlextLdifModelsDomainAcl",
-    "FlextLdifModelsDomainAttributes",
-    "FlextLdifModelsDomainDN",
-    "FlextLdifModelsDomainEntry",
-    "FlextLdifModelsDomainMetadata",
-    "FlextLdifModelsDomainSchema",
-    "FlextLdifModelsDomainsEntries",
-    "FlextLdifModelsEvents",
-    "FlextLdifModelsProcessing",
-    "FlextLdifModelsResults",
-    "FlextLdifModelsSettings",
-    "FlextLdifModelsSettingsAcl",
-    "FlextLdifModelsSettingsCriteria",
-    "FlextLdifModelsSettingsMigrate",
-    "FlextLdifModelsSettingsMisc",
-    "FlextLdifModelsSettingsNormalization",
-    "FlextLdifModelsSettingsProcessing",
-    "FlextLdifModelsSettingsRules",
-    "FlextLdifModelsSettingsValidation",
+    "FlextLdifModelsAclConvert", "FlextLdifModelsBases", "FlextLdifModelsCollections", "FlextLdifModelsDomainAcl",
+    "FlextLdifModelsDomainAttributes", "FlextLdifModelsDomainDN", "FlextLdifModelsDomainEntry", "FlextLdifModelsDomainMetadata",
+    "FlextLdifModelsDomainSchema", "FlextLdifModelsDomainsEntries", "FlextLdifModelsEvents", "FlextLdifModelsProcessing",
+    "FlextLdifModelsResults", "FlextLdifModelsSettings", "FlextLdifModelsSettingsAcl", "FlextLdifModelsSettingsCriteria",
+    "FlextLdifModelsSettingsMigrate", "FlextLdifModelsSettingsMisc", "FlextLdifModelsSettingsNormalization", "FlextLdifModelsSettingsProcessing",
+    "FlextLdifModelsSettingsRules", "FlextLdifModelsSettingsValidation",
 )
 
 _LAZY_IMPORTS = MappingProxyType(
