@@ -168,18 +168,16 @@ def test_e2e_ldif_processing_workflow(tmp_path):
     input_file.write_text(SAMPLE_LDIF_CONTENT)
 
     # Execute CLI command (pseudo-code helper)
-    rc, out, err = run_cli(
-        [
-            sys.executable,
-            "-m",
-            "flext_ldif.cli",
-            "transform",
-            "--filter",
-            "objectClass=person",
-            str(input_file),
-            str(output_file),
-        ]
-    )
+    rc, out, err = run_cli([
+        sys.executable,
+        "-m",
+        "flext_ldif.cli",
+        "transform",
+        "--filter",
+        "objectClass=person",
+        str(input_file),
+        str(output_file),
+    ])
     assert rc == 0
     assert output_file.exists()
 ```

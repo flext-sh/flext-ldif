@@ -9,24 +9,39 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
+    from flext_core import d, e, h, r, x
+
     from .acl import FlextLdifServersBaseSchemaAcl
-    from .constants import FlextLdifServersBaseConstants
+    from .constants import (
+        FlextLdifServersBaseConstants,
+        FlextLdifServersBaseConstants as c,
+    )
     from .entry import FlextLdifServersBaseEntry
     from .mixins import FlextLdifServerMethodsMixin
     from .schema import FlextLdifServersBaseSchema
 __all__: tuple[str, ...] = (
-    "FlextLdifServerMethodsMixin", "FlextLdifServersBaseConstants", "FlextLdifServersBaseEntry", "FlextLdifServersBaseSchema",
+    "FlextLdifServerMethodsMixin",
+    "FlextLdifServersBaseConstants",
+    "FlextLdifServersBaseEntry",
+    "FlextLdifServersBaseSchema",
     "FlextLdifServersBaseSchemaAcl",
+    "c",
+    "d",
+    "e",
+    "h",
+    "r",
+    "x",
 )
 
 _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
         MappingProxyType({
             ".acl": ("FlextLdifServersBaseSchemaAcl",),
-            ".constants": ("FlextLdifServersBaseConstants",),
+            ".constants": ("FlextLdifServersBaseConstants", "c"),
             ".entry": ("FlextLdifServersBaseEntry",),
             ".mixins": ("FlextLdifServerMethodsMixin",),
             ".schema": ("FlextLdifServersBaseSchema",),
+            "flext_core": ("d", "e", "h", "r", "x"),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
