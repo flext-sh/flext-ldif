@@ -15,10 +15,7 @@ if TYPE_CHECKING:
     from .mixins import FlextLdifServerMethodsMixin
     from .schema import FlextLdifServersBaseSchema
 __all__: tuple[str, ...] = (
-    "FlextLdifServerMethodsMixin",
-    "FlextLdifServersBaseConstants",
-    "FlextLdifServersBaseEntry",
-    "FlextLdifServersBaseSchema",
+    "FlextLdifServerMethodsMixin", "FlextLdifServersBaseConstants", "FlextLdifServersBaseEntry", "FlextLdifServersBaseSchema",
     "FlextLdifServersBaseSchemaAcl",
 )
 
