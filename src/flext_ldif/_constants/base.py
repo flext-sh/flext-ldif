@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import re
 import struct
-from typing import ClassVar, TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 if TYPE_CHECKING:
     from .._typings.base import FlextLdifTypesBase as t
