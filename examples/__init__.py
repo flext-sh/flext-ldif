@@ -10,13 +10,13 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_core import d, e, h, r, x
-    from flext_ldif import FlextLdifConstants, s
+    from flext_ldif import FlextLdifConstants, FlextLdifConstants as c, m, p, s, t, u
 
-    from .constants import ExamplesFlextLdifConstants, ExamplesFlextLdifConstants as c
-    from .models import ExamplesFlextLdifModels, ExamplesFlextLdifModels as m
-    from .protocols import ExamplesFlextLdifProtocols, ExamplesFlextLdifProtocols as p
-    from .typings import ExamplesFlextLdifTypes, ExamplesFlextLdifTypes as t
-    from .utilities import ExamplesFlextLdifUtilities, ExamplesFlextLdifUtilities as u
+    from .constants import ExamplesFlextLdifConstants
+    from .models import ExamplesFlextLdifModels
+    from .protocols import ExamplesFlextLdifProtocols
+    from .typings import ExamplesFlextLdifTypes
+    from .utilities import ExamplesFlextLdifUtilities
 __all__: tuple[str, ...] = (
     "ExamplesFlextLdifConstants",
     "ExamplesFlextLdifModels",
@@ -40,13 +40,13 @@ __all__: tuple[str, ...] = (
 _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
         MappingProxyType({
-            ".constants": ("ExamplesFlextLdifConstants", "c"),
-            ".models": ("ExamplesFlextLdifModels", "m"),
-            ".protocols": ("ExamplesFlextLdifProtocols", "p"),
-            ".typings": ("ExamplesFlextLdifTypes", "t"),
-            ".utilities": ("ExamplesFlextLdifUtilities", "u"),
+            ".constants": ("ExamplesFlextLdifConstants",),
+            ".models": ("ExamplesFlextLdifModels",),
+            ".protocols": ("ExamplesFlextLdifProtocols",),
+            ".typings": ("ExamplesFlextLdifTypes",),
+            ".utilities": ("ExamplesFlextLdifUtilities",),
             "flext_core": ("d", "e", "h", "r", "x"),
-            "flext_ldif": ("FlextLdifConstants", "s"),
+            "flext_ldif": ("FlextLdifConstants", "c", "m", "p", "s", "t", "u"),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
