@@ -13,7 +13,10 @@ if TYPE_CHECKING:
 
     from .._base.constants import FlextLdifServersBaseConstants
     from .acl import FlextLdifServersRfcAcl
-    from .constants import FlextLdifServersRfcConstants
+    from .constants import (
+        FlextLdifServersRfcConstants,
+        FlextLdifServersRfcConstants as c,
+    )
     from .entry import FlextLdifServersRfcEntry
     from .schema import FlextLdifServersRfcSchema
 __all__: tuple[str, ...] = (
@@ -22,6 +25,7 @@ __all__: tuple[str, ...] = (
     "FlextLdifServersRfcConstants",
     "FlextLdifServersRfcEntry",
     "FlextLdifServersRfcSchema",
+    "c",
     "d",
     "e",
     "h",
@@ -34,7 +38,7 @@ _LAZY_IMPORTS = MappingProxyType(
         MappingProxyType({
             ".._base.constants": ("FlextLdifServersBaseConstants",),
             ".acl": ("FlextLdifServersRfcAcl",),
-            ".constants": ("FlextLdifServersRfcConstants",),
+            ".constants": ("FlextLdifServersRfcConstants", "c"),
             ".entry": ("FlextLdifServersRfcEntry",),
             ".schema": ("FlextLdifServersRfcSchema",),
             "flext_core": ("d", "e", "h", "r", "x"),

@@ -17,12 +17,18 @@ if TYPE_CHECKING:
     from .acl_extract import FlextLdifServersOudAclExtractMixin
     from .acl_metadata import FlextLdifServersOudAclMetadataMixin
     from .comments import FlextLdifServersOudCommentsMixin
-    from .constants import FlextLdifServersOudConstants
+    from .constants import (
+        FlextLdifServersOudConstants,
+        FlextLdifServersOudConstants as c,
+    )
     from .entry import FlextLdifServersOudEntry
     from .helpers import FlextLdifServersOudHelpersMixin
     from .schema import FlextLdifServersOudSchema
     from .transform import FlextLdifServersOudTransformMixin
-    from .utilities import FlextLdifServersOudUtilities
+    from .utilities import (
+        FlextLdifServersOudUtilities,
+        FlextLdifServersOudUtilities as u,
+    )
 __all__: tuple[str, ...] = (
     "FlextLdifServersOudAciMixin",
     "FlextLdifServersOudAcl",
@@ -35,11 +41,13 @@ __all__: tuple[str, ...] = (
     "FlextLdifServersOudSchema",
     "FlextLdifServersOudTransformMixin",
     "FlextLdifServersOudUtilities",
+    "c",
     "d",
     "e",
     "fsr",
     "h",
     "r",
+    "u",
     "x",
 )
 
@@ -51,12 +59,12 @@ _LAZY_IMPORTS = MappingProxyType(
             ".acl_extract": ("FlextLdifServersOudAclExtractMixin",),
             ".acl_metadata": ("FlextLdifServersOudAclMetadataMixin",),
             ".comments": ("FlextLdifServersOudCommentsMixin",),
-            ".constants": ("FlextLdifServersOudConstants",),
+            ".constants": ("FlextLdifServersOudConstants", "c"),
             ".entry": ("FlextLdifServersOudEntry",),
             ".helpers": ("FlextLdifServersOudHelpersMixin",),
             ".schema": ("FlextLdifServersOudSchema",),
             ".transform": ("FlextLdifServersOudTransformMixin",),
-            ".utilities": ("FlextLdifServersOudUtilities",),
+            ".utilities": ("FlextLdifServersOudUtilities", "u"),
             "flext_core": ("d", "e", "h", "r", "x"),
         }),
         alias_groups=MappingProxyType({"..rfc": (("fsr", "FlextLdifServersRfc"),)}),

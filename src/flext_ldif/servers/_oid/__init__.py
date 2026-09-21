@@ -18,7 +18,10 @@ if TYPE_CHECKING:
     from .acl_convert_oud import FlextLdifServersOidAclToOud
     from .acl_pipeline import FlextLdifServersOidAclPipeline
     from .acl_render import FlextLdifServersOidAclRender
-    from .constants import FlextLdifServersOidConstants
+    from .constants import (
+        FlextLdifServersOidConstants,
+        FlextLdifServersOidConstants as c,
+    )
     from .entry import FlextLdifServersOidEntry
     from .schema import FlextLdifServersOidSchema
 __all__: tuple[str, ...] = (
@@ -31,6 +34,7 @@ __all__: tuple[str, ...] = (
     "FlextLdifServersOidConstants",
     "FlextLdifServersOidEntry",
     "FlextLdifServersOidSchema",
+    "c",
     "d",
     "e",
     "fsr",
@@ -48,7 +52,7 @@ _LAZY_IMPORTS = MappingProxyType(
             ".acl_convert_oud": ("FlextLdifServersOidAclToOud",),
             ".acl_pipeline": ("FlextLdifServersOidAclPipeline",),
             ".acl_render": ("FlextLdifServersOidAclRender",),
-            ".constants": ("FlextLdifServersOidConstants",),
+            ".constants": ("FlextLdifServersOidConstants", "c"),
             ".entry": ("FlextLdifServersOidEntry",),
             ".schema": ("FlextLdifServersOidSchema",),
             "flext_core": ("d", "e", "h", "r", "x"),
