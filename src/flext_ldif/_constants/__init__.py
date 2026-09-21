@@ -14,7 +14,10 @@ if TYPE_CHECKING:
     from .base import FlextLdifConstantsBase
     from .enums import FlextLdifConstantsEnums
 __all__: tuple[str, ...] = (
-    "FlextLdifConstantsAclConvert", "FlextLdifConstantsAclConvertOud", "FlextLdifConstantsBase", "FlextLdifConstantsEnums",
+    "FlextLdifConstantsAclConvert",
+    "FlextLdifConstantsAclConvertOud",
+    "FlextLdifConstantsBase",
+    "FlextLdifConstantsEnums",
 )
 
 _LAZY_IMPORTS = MappingProxyType(

@@ -9,20 +9,8 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_ldif import (
-        FlextLdifConstants,
-        FlextLdifConstants as c,
-        d,
-        e,
-        h,
-        m,
-        p,
-        r,
-        s,
-        t,
-        u,
-        x,
-    )
+    from flext_core import d, e, h, r, x
+    from flext_ldif import FlextLdifConstants, FlextLdifConstants as c, m, p, s, t, u
 
     from .constants import ExamplesFlextLdifConstants
     from .models import ExamplesFlextLdifModels
@@ -30,10 +18,22 @@ if TYPE_CHECKING:
     from .typings import ExamplesFlextLdifTypes
     from .utilities import ExamplesFlextLdifUtilities
 __all__: tuple[str, ...] = (
-    "ExamplesFlextLdifConstants", "ExamplesFlextLdifModels", "ExamplesFlextLdifProtocols", "ExamplesFlextLdifTypes",
-    "ExamplesFlextLdifUtilities", "FlextLdifConstants", "c", "d",
-    "e", "h", "m", "p",
-    "r", "s", "t", "u",
+    "ExamplesFlextLdifConstants",
+    "ExamplesFlextLdifModels",
+    "ExamplesFlextLdifProtocols",
+    "ExamplesFlextLdifTypes",
+    "ExamplesFlextLdifUtilities",
+    "FlextLdifConstants",
+    "c",
+    "d",
+    "e",
+    "h",
+    "m",
+    "p",
+    "r",
+    "s",
+    "t",
+    "u",
     "x",
 )
 
@@ -45,10 +45,8 @@ _LAZY_IMPORTS = MappingProxyType(
             ".protocols": ("ExamplesFlextLdifProtocols",),
             ".typings": ("ExamplesFlextLdifTypes",),
             ".utilities": ("ExamplesFlextLdifUtilities",),
-            "flext_ldif": (
-                "FlextLdifConstants", "c", "d", "e", "h", "m", "p", "r", "s", "t", "u",
-                "x",
-            ),
+            "flext_core": ("d", "e", "h", "r", "x"),
+            "flext_ldif": ("FlextLdifConstants", "c", "m", "p", "s", "t", "u"),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
