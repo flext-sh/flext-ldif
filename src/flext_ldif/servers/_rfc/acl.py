@@ -95,9 +95,9 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         **fields: t.JsonValue,
     ) -> Self | m.Ldif.Acl | str:
         """Callable interface - automatic polymorphic processor."""
-        processor_fields: t.MutableMappingKV[
-            str, t.JsonValue | m.Ldif.Acl | None
-        ] = dict(fields)
+        processor_fields: t.MutableMappingKV[str, t.JsonValue | m.Ldif.Acl | None] = (
+            dict(fields)
+        )
         processor_fields["data"] = data
         processor_fields["operation"] = operation
         builder_fields = FlextLdifServerMethodsMixin.builder_fields_or_none(

@@ -44,7 +44,9 @@ class FlextLdifProtocolsLdap3(Protocol):
             """The entry attributes as an LDAP attribute mapping."""
             ...
 
-        def __getitem__(self, attribute_name: str) -> FlextLdifProtocolsLdap3.Ldap3Attribute:
+        def __getitem__(
+            self, attribute_name: str
+        ) -> FlextLdifProtocolsLdap3.Ldap3Attribute:
             """Return one ldap3 attribute object by attribute name."""
             ...
 

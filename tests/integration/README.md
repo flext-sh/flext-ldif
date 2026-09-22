@@ -194,8 +194,8 @@ make test
 
 The test verb owns scope, impact selection, retained Testmon state, markers, and
 coverage. Do not append test paths, class names, pytest flags, or environment overrides
-to the standard verb. Real LDAP tests require their declared container services.
-See [Make commands](../../docs/guides/make-commands.md).
+to the standard verb. Real LDAP tests require their declared container services. See
+[Make commands](../../docs/guides/make-commands.md).
 
 ## 📦 Centralized Fixtures (conftest.py)
 

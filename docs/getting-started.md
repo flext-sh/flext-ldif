@@ -50,7 +50,8 @@ FLEXT-LDIF integrates with the broader FLEXT ecosystem:
 
 - **[flext-core](https://github.com/flext-sh/flext/tree/0.12.0-dev/flext-core/README.md)**:
   Foundation library providing r, FlextContainer, and logging patterns
-- **Workspace toolchain**: Dependency and virtual environment management through `make setup`
+- **Workspace toolchain**: Dependency and virtual environment management through
+  `make setup`
 
 ## Installation
 
