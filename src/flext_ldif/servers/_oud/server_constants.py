@@ -7,13 +7,13 @@ from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_ldif import c
-from flext_ldif.servers.rfc import FlextLdifServersRfc as fsr
+from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 if TYPE_CHECKING:
     from flext_ldif import t
 
 
-class FlextLdifServersOudConstants(fsr.Constants):
+class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
     """Oracle Unified Directory-specific constants using Python 3.13 patterns."""
 
     SERVER_TYPE: ClassVar[str] = c.Ldif.ServerTypes.OUD
@@ -46,7 +46,7 @@ class FlextLdifServersOudConstants(fsr.Constants):
     PERMISSION_PROXY: ClassVar[str] = "proxy"
     PERMISSION_ALL: ClassVar[str] = "all"
     SUPPORTED_PERMISSIONS: ClassVar[frozenset[str]] = (
-        fsr.Constants.SUPPORTED_PERMISSIONS
+        FlextLdifServersRfc.Constants.SUPPORTED_PERMISSIONS
         | frozenset([PERMISSION_SELFWRITE, PERMISSION_PROXY, PERMISSION_ALL])
     )
     ACL_DEFAULT_NAME: ClassVar[str] = "OUD ACL"
@@ -141,7 +141,7 @@ class FlextLdifServersOudConstants(fsr.Constants):
         "ds-cfg-backend-id",
     ])
     PRESERVE_ON_MIGRATION: ClassVar[frozenset[str]] = (
-        fsr.Constants.PRESERVE_ON_MIGRATION | frozenset(["pwdChangedTime"])
+        FlextLdifServersRfc.Constants.PRESERVE_ON_MIGRATION | frozenset(["pwdChangedTime"])
     )
     BOOLEAN_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
         "pwdlockout",
@@ -245,6 +245,3 @@ class FlextLdifServersOudConstants(fsr.Constants):
         "cn=tasks",
         "cn=monitor",
     ])
-
-
-c = FlextLdifServersOudConstants

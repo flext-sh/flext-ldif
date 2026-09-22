@@ -171,7 +171,7 @@ class FlextLdifFilters(s):
             return concrete
         allowed_value_oids = cls._extract_allowed_oids(allowed_oids)
         attrs_dict = concrete.attributes.attributes
-        updated_attrs: dict[str, list[str]] = {
+        updated_attrs: t.MutableMappingKV[str, list[str]] = {
             k: list(v) for k, v in attrs_dict.items()
         }
         changed = False

@@ -100,7 +100,7 @@ class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s, ABC
                 or target_schema_result.error
                 or "Schema server not available"
             )
-        schema_field_kinds: dict[str, c.Ldif.SchemaItemKind] = {
+        schema_field_kinds: t.MappingKV[str, c.Ldif.SchemaItemKind] = {
             c.Ldif.ATTRIBUTE_TYPES.lower(): c.Ldif.SchemaItemKind.ATTRIBUTE,
             c.Ldif.OBJECT_CLASSES.lower(): c.Ldif.SchemaItemKind.OBJECTCLASS,
         }

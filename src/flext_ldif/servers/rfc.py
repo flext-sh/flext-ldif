@@ -5,9 +5,9 @@ from __future__ import annotations
 from flext_ldif.servers.base import FlextLdifServersBase
 
 from ._rfc.acl import FlextLdifServersRfcAcl
-from ._rfc.constants import FlextLdifServersRfcConstants
 from ._rfc.entry import FlextLdifServersRfcEntry
 from ._rfc.schema import FlextLdifServersRfcSchema
+from ._rfc.server_constants import FlextLdifServersRfcConstants
 
 
 class FlextLdifServersRfc(FlextLdifServersBase):

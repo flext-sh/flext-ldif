@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from flext_ldif import c, m, t
 
-from .constants import FlextLdifServersOudConstants
+from .server_constants import FlextLdifServersOudConstants
 
 
 class FlextLdifServersOudUtilities:
@@ -42,5 +42,3 @@ class FlextLdifServersOudUtilities:
 
 
 __all__: list[str] = ["FlextLdifServersOudUtilities"]
-
-u = FlextLdifServersOudUtilities

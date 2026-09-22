@@ -10,9 +10,9 @@ from ._oid.acl_convert import FlextLdifServersOidAclConvert
 from ._oid.acl_convert_oud import FlextLdifServersOidAclToOud
 from ._oid.acl_pipeline import FlextLdifServersOidAclPipeline
 from ._oid.acl_render import FlextLdifServersOidAclRender
-from ._oid.constants import FlextLdifServersOidConstants
 from ._oid.entry import FlextLdifServersOidEntry
 from ._oid.schema import FlextLdifServersOidSchema
+from ._oid.server_constants import FlextLdifServersOidConstants
 
 
 class FlextLdifServersOid(FlextLdifServersRfc):

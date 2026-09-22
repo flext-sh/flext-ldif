@@ -47,7 +47,7 @@ class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](s[TDomainResult]):
         **fields: t.JsonValue,
     ) -> Self | m.Ldif.Entry | str:
         """Return a cloned DSL instance preserving runtime registry/settings defaults."""
-        payload: dict[
+        payload: t.MutableMappingKV[
             str, t.JsonValue | p.Ldif.ServerRegistry | p.Ldif.Settings | None
         ] = dict(fields)
         payload["server"] = self._server if server is None else server

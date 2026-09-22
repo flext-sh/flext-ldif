@@ -17,10 +17,10 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
     from flext_ldif import t
-__all__: list[str] = ["Protocols"]
+__all__: list[str] = ["FlextLdifProtocolsLdap3"]
 
 
-class Protocols(Protocol):
+class FlextLdifProtocolsLdap3(Protocol):
     """Declared owner for ldap3-compatible structural protocol contracts."""
 
     @runtime_checkable
@@ -44,7 +44,7 @@ class Protocols(Protocol):
             """The entry attributes as an LDAP attribute mapping."""
             ...
 
-        def __getitem__(self, attribute_name: str) -> Protocols.Ldap3Attribute:
+        def __getitem__(self, attribute_name: str) -> FlextLdifProtocolsLdap3.Ldap3Attribute:
             """Return one ldap3 attribute object by attribute name."""
             ...
 
@@ -91,7 +91,7 @@ class Protocols(Protocol):
         """Structural contract for ldap3-compatible server objects."""
 
         @property
-        def info(self) -> Protocols.Ldap3ServerInfo | None:
+        def info(self) -> FlextLdifProtocolsLdap3.Ldap3ServerInfo | None:
             """The ldap3 server-info payload when populated."""
             ...
 
@@ -117,7 +117,7 @@ class Protocols(Protocol):
             ...
 
         @property
-        def entries(self) -> t.SequenceOf[Protocols.Ldap3Entry]:
+        def entries(self) -> t.SequenceOf[FlextLdifProtocolsLdap3.Ldap3Entry]:
             """The entries produced by the last LDAP operation."""
             ...
 
@@ -157,7 +157,7 @@ class Protocols(Protocol):
         """Protocol for ldap3.ParseResponse objects (structural type)."""
 
         @property
-        def entries(self) -> t.SequenceOf[Protocols.Ldap3Entry]:
+        def entries(self) -> t.SequenceOf[FlextLdifProtocolsLdap3.Ldap3Entry]:
             """The list of entries."""
             ...
 
@@ -198,7 +198,7 @@ class Protocols(Protocol):
         def entries(
             self,
         ) -> t.SequenceOf[
-            Protocols.RootDseEntry
+            FlextLdifProtocolsLdap3.RootDseEntry
             | str
             | bytes
             | int

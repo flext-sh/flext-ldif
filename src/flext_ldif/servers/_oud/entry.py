@@ -15,8 +15,8 @@ from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 from .._base.entry import FlextLdifServersBaseEntry
-from .constants import FlextLdifServersOudConstants
 from .helpers import FlextLdifServersOudHelpersMixin
+from .server_constants import FlextLdifServersOudConstants
 
 if TYPE_CHECKING:
     from flext_ldif.servers.base import FlextLdifServersBase

@@ -2,13 +2,10 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, override
+from typing import override
 
 from flext_core import r
-from flext_ldif import c, p, t
-
-if TYPE_CHECKING:
-    from flext_ldif import FlextLdifModels as m
+from flext_ldif import c, m, p, t
 
 
 class FlextLdifUtilitiesPipeline:

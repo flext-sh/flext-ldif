@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import Self
 
-from flext_core import FlextSettings
+from flext_core import FlextSettings, t
 
 from ._settings_acl import FlextLdifModelsSettingsAcl
 from ._settings_criteria import FlextLdifModelsSettingsCriteria
@@ -45,14 +45,14 @@ class FlextLdifModelsSettings(
     # namespacing only — instance machinery stays plain object semantics so the
     # settings singleton/validation machinery cannot leak into instantiated
     # facade composites (e.g. the ``u`` logging facade).
-    def __new__(cls, *args: object, **kwargs: object) -> Self:
+    def __new__(cls, *args: t.JsonValue, **kwargs: t.JsonValue) -> Self:
         _ = args, kwargs
         return object.__new__(cls)
 
-    def __init__(self, *args: object, **kwargs: object) -> None:
+    def __init__(self, *args: t.JsonValue, **kwargs: t.JsonValue) -> None:
         _ = self, args, kwargs
 
-    def __setattr__(self, name: str, value: object) -> None:
+    def __setattr__(self, name: str, value: t.JsonValue) -> None:
         object.__setattr__(self, name, value)
 
     __eq__ = object.__eq__

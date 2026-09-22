@@ -11,11 +11,11 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 if TYPE_CHECKING:
     from .base import FlextLdifProtocolsBase
     from .domain import FlextLdifProtocolsDomain
-    from .ldap3 import Protocols
+    from .ldap3 import FlextLdifProtocolsLdap3
 __all__: tuple[str, ...] = (
     "FlextLdifProtocolsBase",
     "FlextLdifProtocolsDomain",
-    "Protocols",
+    "FlextLdifProtocolsLdap3",
 )
 
 _LAZY_IMPORTS = MappingProxyType(
@@ -23,7 +23,7 @@ _LAZY_IMPORTS = MappingProxyType(
         MappingProxyType({
             ".base": ("FlextLdifProtocolsBase",),
             ".domain": ("FlextLdifProtocolsDomain",),
-            ".ldap3": ("Protocols",),
+            ".ldap3": ("FlextLdifProtocolsLdap3",),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,

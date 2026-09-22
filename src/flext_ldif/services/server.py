@@ -19,7 +19,7 @@ class FlextLdifServer(s):
 
     _discovery_initialized: ClassVar[bool] = False
     _global_instance: ClassVar[FlextLdifServer | None] = None
-    _registered_servers: ClassVar[dict[str, p.Ldif.ServerServer]] = {}
+    _registered_servers: ClassVar[t.MutableMappingKV[str, p.Ldif.ServerServer]] = {}
 
     dispatcher: Annotated[
         p.Dispatcher | None,

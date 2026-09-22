@@ -8,13 +8,13 @@ from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_ldif import c
-from flext_ldif.servers.rfc import FlextLdifServersRfc as fsr
+from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 if TYPE_CHECKING:
     from flext_ldif import t
 
 
-class FlextLdifServersOidConstants(fsr.Constants):
+class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
     """Oracle Internet Directory (OID) constants for LDIF processing."""
 
     SERVER_TYPE: ClassVar[str] = c.Ldif.ServerTypes.OID
@@ -49,7 +49,7 @@ class FlextLdifServersOidConstants(fsr.Constants):
         "middlename": "middleName"
     })
     OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = (
-        fsr.Constants.OPERATIONAL_ATTRIBUTES
+        FlextLdifServersRfc.Constants.OPERATIONAL_ATTRIBUTES
         | frozenset([
             "orclguid",
             "orclobjectguid",
@@ -308,6 +308,3 @@ class FlextLdifServersOidConstants(fsr.Constants):
     ATTRIBUTE_TRANSFORMATION_RFC_TO_OID: ClassVar[t.StrMapping] = (
         c.Ldif.ATTRIBUTE_TRANSFORMATION_RFC_TO_OID
     )
-
-
-c = FlextLdifServersOidConstants

@@ -5,9 +5,9 @@ from __future__ import annotations
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 from ._oud.acl import FlextLdifServersOudAcl
-from ._oud.constants import FlextLdifServersOudConstants
 from ._oud.entry import FlextLdifServersOudEntry
 from ._oud.schema import FlextLdifServersOudSchema
+from ._oud.server_constants import FlextLdifServersOudConstants
 
 
 class FlextLdifServersOud(FlextLdifServersRfc):
