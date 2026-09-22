@@ -3,10 +3,6 @@
 <!-- TOC START -->
 
 - [❌ PADRÃO INCORRETO (Deprecado)](#padrao-incorreto-deprecado)
-- [✅ PADRÃO CORRETO (Obrigatório)](#padrao-correto-obrigatorio)
-- [📝 Uso em Testes (Fixtures)](#uso-em-testes-fixtures)
-  - [Fixtures Centralizadas (conftest.py)](#fixtures-centralizadas-conftestpy)
-  - [Uso nas Funções de Teste](#uso-nas-funcoes-de-teste)
 - [🔄 Migração de Código Existente](#migracao-de-codigo-existente)
   - [Passo 1: Atualizar Imports](#passo-1-atualizar-imports)
   - [Passo 2: Atualizar Instanciação](#passo-2-atualizar-instanciacao)
@@ -15,6 +11,7 @@
 - [🎯 Servers Disponíveis via API](#servers-disponiveis-via-api)
 - [🔍 Verificação](#verificacao)
 - [📚 Referências](#referencias)
+
 <!-- TOC END -->
 
 **Data**: 2025-11-18 **Status**: PADRÃO OBRIGATÓRIO

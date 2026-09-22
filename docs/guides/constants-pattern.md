@@ -3,9 +3,7 @@
 <!-- TOC START -->
 
 - [RFC.Constants (Base)](#rfcconstants-base)
-- [Server.Constants (Específicos)](#serverconstants-especificos)
-- [Quando usar o quê](#quando-usar-o-que)
-- [Benefícios](#beneficios)
+
 <!-- TOC END -->
 
 ## RFC.Constants (Base)
@@ -27,7 +25,8 @@ class Constants:
     OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([...])
 
     # ❌ Errado - não usar Final em RFC
-    # PERMISSION_READ: Final[str] = "read"```
+    # PERMISSION_READ: Final[str] = "read"
+    ```
 ## Server.Constants (Específicos)
 
 **Rule:**
@@ -47,7 +46,8 @@ class Constants(FlextLdifServersRfc.Constants):
     OUD_SPECIFIC_FEATURE: Final[str] = "oud_value"
 
     # ✅ Padrões server-specific - Final OK
-    ACL_TYPE_PATTERN: Final[str] = r"^orclaci:"```
+    ACL_TYPE_PATTERN: Final[str] = r"^orclaci:"
+    ```
 ## Quando usar o quê
 
 | Cenário                        | RFC.Constants | Server.Constants      |

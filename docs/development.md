@@ -12,14 +12,6 @@
 - [Testing LDIF Functionality](#testing-ldif-functionality)
   - [LDIF Test Data](#ldif-test-data)
   - [Memory Usage Testing](#memory-usage-testing)
-- [Performance Considerations](#performance-considerations)
-  - [Current Limitations](#current-limitations)
-  - [Performance Guidelines](#performance-guidelines)
-- [Contributing Guidelines](#contributing-guidelines)
-  - [LDIF-Specific Code Review](#ldif-specific-code-review)
-  - [Future Development Priorities](#future-development-priorities)
-- [Common LDIF Development Issues](#common-ldif-development-issues)
-  - [LDIF Format Edge Cases](#ldif-format-edge-cases)
   - [Memory Debugging](#memory-debugging)
 - [Integration with FLEXT Ecosystem](#integration-with-flext-ecosystem)
 
@@ -91,7 +83,6 @@ class _ParserHelper:
     def parse(self) -> Iterator[tuple[str, t.MappingKV[str, list[str]]]]:
         """Parse LDIF content and yield (dn, attributes) tuples."""
         # Process all lines already in memory
-        pass
 ```
 
 **Memory Characteristics**:

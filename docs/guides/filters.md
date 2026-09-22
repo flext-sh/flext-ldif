@@ -5,13 +5,6 @@
 - [Features](#features)
 - [Usage Examples](#usage-examples)
   - [Pattern 1: Direct Classmethod API (Simplified)](#pattern-1-direct-classmethod-api-simplified)
-  - [Pattern 2: Classmethod for Composable/Chainable Operations](#pattern-2-classmethod-for-composablechainable-operations)
-  - [Pattern 3: Fluent Builder Pattern](#pattern-3-fluent-builder-pattern)
-  - [Pattern 4: Public Classmethod Helpers (Most Direct)](#pattern-4-public-classmethod-helpers-most-direct)
-  - [Pattern 5: Transformation (Remove Attributes/ObjectClasses)](#pattern-5-transformation-remove-attributesobjectclasses)
-  - [Pattern 6: Schema & Advanced Operations](#pattern-6-schema-advanced-operations)
-- [Quick Reference](#quick-reference)
-- [See Also](#see-also)
 
 <!-- TOC END -->
 
@@ -55,7 +48,8 @@ result = FlextLdifFilters.by_attributes(
     attributes=["mail"],
     match_all=False,  # Has ANY attribute
     mode="include",
-)```
+)
+```
 ### Pattern 2: Classmethod for Composable/Chainable Operations
 
 ```python
@@ -73,7 +67,8 @@ result = (
             e, criteria="objectclass", objectclass="person"
         )
     )
-)```
+)
+```
 ### Pattern 3: Fluent Builder Pattern
 
 ```python
@@ -85,7 +80,8 @@ filtered_result = (
     .with_objectclass("person")
     .with_required_attributes(["cn", "mail"])
     .build()  # Returns t.SequenceOf[Entry] directly
-)```
+)
+```
 ### Pattern 4: Public Classmethod Helpers (Most Direct)
 
 ```python
@@ -106,7 +102,8 @@ included, excluded = FlextLdifFilters.by_base_dn(entries, "dc=example,dc=com")
 result = FlextLdifFilters.extract_acl_entries(entries)
 
 # Categorize entry
-category, reason = FlextLdifFilters.categorize(entry, rules)```
+category, reason = FlextLdifFilters.categorize(entry, rules)
+```
 ### Pattern 5: Transformation (Remove Attributes/ObjectClasses)
 
 ```python
@@ -118,7 +115,8 @@ result = FlextLdifFilters.remove_attributes(
 # Remove unwanted objectClasses
 result = FlextLdifFilters.remove_objectclasses(
     entry=my_entry, objectclasses=["temporaryClass"]
-)```
+)
+```
 ### Pattern 6: Schema & Advanced Operations
 
 ```python
@@ -129,7 +127,8 @@ is_schema = FlextLdifFilters.is_schema(entry)
 result = FlextLdifFilters.filter_schema_by_oids(
     entries=schema_entries,
     allowed_oids={"attributes": ["2.5.4.*"], "objectclasses": ["2.5.6.*"]},
-)```
+)
+```
 ## Quick Reference
 
 Most common use cases:
@@ -160,7 +159,8 @@ result = FlextLdifFilters.extract_acl_entries(entries)
 acl_entries = result.unwrap()
 
 # Categorize entry
-category, reason = FlextLdifFilters.categorize(entry, rules)```
+category, reason = FlextLdifFilters.categorize(entry, rules)
+```
 ## See Also
 
 - API Reference

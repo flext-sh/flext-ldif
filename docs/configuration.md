@@ -10,8 +10,6 @@
   - [Initialization](#initialization)
   - [Environment Variables](#environment-variables)
   - [Environment Configuration Loading](#environment-configuration-loading)
-- [Configuration Scenarios](#configuration-scenarios)
-  - [Development Configuration](#development-configuration)
   - [Production Configuration](#production-configuration)
   - [Migration Configuration](#migration-configuration)
 - [Advanced Configuration](#advanced-configuration)
@@ -24,12 +22,12 @@
 - [Configuration Best Practices](#configuration-best-practices)
   - [1. Use Type-Safe Configuration](#1-use-type-safe-configuration)
   - [2. Validate Configuration Early](#2-validate-configuration-early)
-  - [3. Use Environment-Specific Profiles](#3-use-environment-specific-profiles)
   - [4. Document Configuration Changes](#4-document-configuration-changes)
 - [Configuration Reference](#configuration-reference)
   - [Complete Configuration Options](#complete-configuration-options)
   - [Environment Variable Mapping](#environment-variable-mapping)
-  <!-- TOC END -->
+
+<!-- TOC END -->
 
 **Version**: 0.12.0-dev | **Updated**: April 14, 2026
 
