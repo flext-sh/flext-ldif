@@ -32,6 +32,7 @@ if TYPE_CHECKING:
     from ._oud.server_constants import FlextLdifServersOudConstants
     from ._oud.server_utilities import FlextLdifServersOudUtilities
     from ._oud.transform import FlextLdifServersOudTransformMixin
+    from ._oud.utilities import FlextLdifServersOudUtilities
     from ._rfc.acl import FlextLdifServersRfcAcl
     from ._rfc.entry import FlextLdifServersRfcEntry
     from ._rfc.schema import FlextLdifServersRfcSchema
@@ -125,6 +126,7 @@ _LAZY_IMPORTS = MappingProxyType(
             "._oud.server_constants": ("FlextLdifServersOudConstants",),
             "._oud.server_utilities": ("FlextLdifServersOudUtilities",),
             "._oud.transform": ("FlextLdifServersOudTransformMixin",),
+            "._oud.utilities": ("FlextLdifServersOudUtilities",),
             "._rfc": ("_rfc",),
             "._rfc.acl": ("FlextLdifServersRfcAcl",),
             "._rfc.entry": ("FlextLdifServersRfcEntry",),

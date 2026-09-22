@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from .acl_convert_oud import FlextLdifServersOidAclToOud
     from .acl_pipeline import FlextLdifServersOidAclPipeline
     from .acl_render import FlextLdifServersOidAclRender
+    from .constants import FlextLdifServersOidConstants
     from .entry import FlextLdifServersOidEntry
     from .schema import FlextLdifServersOidSchema
     from .server_constants import FlextLdifServersOidConstants
@@ -39,9 +40,9 @@ _LAZY_IMPORTS = MappingProxyType(
             ".acl_convert_oud": ("FlextLdifServersOidAclToOud",),
             ".acl_pipeline": ("FlextLdifServersOidAclPipeline",),
             ".acl_render": ("FlextLdifServersOidAclRender",),
+            ".constants": ("FlextLdifServersOidConstants",),
             ".entry": ("FlextLdifServersOidEntry",),
             ".schema": ("FlextLdifServersOidSchema",),
-            ".server_constants": ("FlextLdifServersOidConstants",),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
