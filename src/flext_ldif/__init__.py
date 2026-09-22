@@ -20,17 +20,18 @@ from .__version__ import (
 )
 
 if TYPE_CHECKING:
-    from flext_cli import d, e, h, r, x
+    from flext_cli import cli, main
+
+    from flext_core import core, d, e, h, lazy_attribute, r, x
 
     from . import servers, services
-    from .__version__ import FlextLdifVersion
     from ._config import FlextLdifConfig, config
     from ._settings import FlextLdifSettings, settings
     from .api import FlextLdif, ldif
-    from .base import FlextLdifServiceBase, FlextLdifServiceBase as s
-    from .constants import FlextLdifConstants, FlextLdifConstants as c
-    from .models import FlextLdifModels, FlextLdifModels as m
-    from .protocols import FlextLdifProtocols, FlextLdifProtocols as p
+    from .base import FlextLdifServiceBase, s
+    from .constants import FlextLdifConstants, c
+    from .models import FlextLdifModels, m
+    from .protocols import FlextLdifProtocols, p
     from .servers.ad import FlextLdifServersAd
     from .servers.apache import FlextLdifServersApache
     from .servers.base import FlextLdifServersBase
@@ -68,8 +69,8 @@ if TYPE_CHECKING:
     from .services.validation import FlextLdifValidation
     from .services.writer import FlextLdifWriter
     from .shared import FlextLdifShared
-    from .typings import FlextLdifTypes, FlextLdifTypes as t
-    from .utilities import FlextLdifUtilities, FlextLdifUtilities as u
+    from .typings import FlextLdifTypes, t
+    from .utilities import FlextLdifUtilities, u
 __all__: tuple[str, ...] = (
     "FlextLdif",
     "FlextLdifAcl",
@@ -114,7 +115,6 @@ __all__: tuple[str, ...] = (
     "FlextLdifTypes",
     "FlextLdifUtilities",
     "FlextLdifValidation",
-    "FlextLdifVersion",
     "FlextLdifWriter",
     "__author__",
     "__author_email__",
@@ -125,12 +125,16 @@ __all__: tuple[str, ...] = (
     "__version__",
     "__version_info__",
     "c",
+    "cli",
     "config",
+    "core",
     "d",
     "e",
     "h",
+    "lazy_attribute",
     "ldif",
     "m",
+    "main",
     "p",
     "r",
     "s",
@@ -145,7 +149,6 @@ __all__: tuple[str, ...] = (
 _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
         MappingProxyType({
-            ".__version__": ("FlextLdifVersion",),
             "._config": ("FlextLdifConfig", "config"),
             "._settings": ("FlextLdifSettings", "settings"),
             ".api": ("FlextLdif", "ldif"),
@@ -198,7 +201,8 @@ _LAZY_IMPORTS = MappingProxyType(
             ".shared": ("FlextLdifShared",),
             ".typings": ("FlextLdifTypes", "t"),
             ".utilities": ("FlextLdifUtilities", "u"),
-            "flext_cli": ("d", "e", "h", "r", "x"),
+            "flext_cli": ("cli", "main"),
+            "flext_core": ("core", "d", "e", "h", "lazy_attribute", "r", "x"),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
