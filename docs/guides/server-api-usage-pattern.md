@@ -1,6 +1,7 @@
 # Server API Usage Pattern - Padrão Correto
 
 <!-- TOC START -->
+
 - [❌ PADRÃO INCORRETO (Deprecado)](#padrao-incorreto-deprecado)
 - [✅ PADRÃO CORRETO (Obrigatório)](#padrao-correto-obrigatorio)
 - [📝 Uso em Testes (Fixtures)](#uso-em-testes-fixtures)
