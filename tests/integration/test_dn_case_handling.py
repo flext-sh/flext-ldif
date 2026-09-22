@@ -13,10 +13,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 from flext_tests import tm
 
 from tests import m
+
+if TYPE_CHECKING:
+    from flext_core import t
 
 
 class TestsFlextLdifDnCaseHandling:
@@ -148,7 +153,7 @@ class TestsFlextLdifDnCaseHandling:
         ],
     )
     def test_multiple_cases_for_one_dn_is_inconsistent(
-        self, registry: m.Ldif.DnRegistry, variants: tuple[str, ...]
+        self, registry: m.Ldif.DnRegistry, variants: t.VariadicTuple[str]
     ) -> None:
         """Two or more case variants of the same DN report inconsistency."""
         for variant in variants:

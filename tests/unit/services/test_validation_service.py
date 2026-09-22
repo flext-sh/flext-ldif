@@ -12,7 +12,9 @@ from tests import c, u
 if TYPE_CHECKING:
     from tests import p
 
-_INVALID_DESCRIPTORS: tuple[str, ...] = ("invalid name", "", " ", "has space")
+    from ... import t
+
+_INVALID_DESCRIPTORS: t.VariadicTuple[str] = ("invalid name", "", " ", "has space")
 
 
 class TestsFlextLdifValidationService:

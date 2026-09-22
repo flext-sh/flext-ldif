@@ -16,6 +16,8 @@ from typing import TYPE_CHECKING, ClassVar
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
+    from flext_core import t
+
 
 class FlextLdifConstantsAclConvertOud:
     """OUD-output ACL conversion constants (one flat namespace; into c.Ldif)."""
@@ -125,7 +127,7 @@ class FlextLdifConstantsAclConvertOud:
         "selfwrite",
     })
     # Canonical OUD permission ordering for deterministic aci assembly.
-    PERM_ORDERED: ClassVar[tuple[str, ...]] = (
+    PERM_ORDERED: ClassVar[t.VariadicTuple[str]] = (
         "all",
         "read",
         "search",
@@ -137,7 +139,7 @@ class FlextLdifConstantsAclConvertOud:
         "proxy",
     )
     # DN suffixes (relative to base) treated as high-level containers (filter anyone).
-    HIGH_LEVEL_CONTAINER_SUFFIXES: ClassVar[tuple[str, ...]] = (
+    HIGH_LEVEL_CONTAINER_SUFFIXES: ClassVar[t.VariadicTuple[str]] = (
         "",
         "dc=network,",
         "cn=users,dc=network,",

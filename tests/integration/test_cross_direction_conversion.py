@@ -11,12 +11,17 @@ no mock-based testing.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 from flext_tests import tm
 
 from flext_ldif.services.conversion import FlextLdifConversion
 from flext_ldif.services.server import FlextLdifServer
 from tests import m
+
+if TYPE_CHECKING:
+    from flext_core import t
 
 pytestmark = [pytest.mark.integration]
 
@@ -87,8 +92,8 @@ class TestsFlextLdifCrossDirectionConversion:
         source: str,
         target: str,
         attr_def: str,
-        must_contain: tuple[str, ...],
-        must_not_contain: tuple[str, ...],
+        must_contain: t.VariadicTuple[str],
+        must_not_contain: t.VariadicTuple[str],
     ) -> None:
         """Parsing in the source server and writing in the target normalizes text."""
         source_schema = server_registry.resolve_schema_server(source)
@@ -149,8 +154,8 @@ class TestsFlextLdifCrossDirectionConversion:
         source: str,
         target: str,
         oc_def: str,
-        must_contain: tuple[str, ...],
-        must_not_contain: tuple[str, ...],
+        must_contain: t.VariadicTuple[str],
+        must_not_contain: t.VariadicTuple[str],
     ) -> None:
         """Parsing in source and writing in target preserves/normalizes semantics."""
         source_schema = server_registry.resolve_schema_server(source)
