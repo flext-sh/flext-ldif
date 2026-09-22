@@ -332,16 +332,14 @@ class FlextLdifModelsDomainEntry:
         )
         _EMPTY_VALIDATION_RESULT_PAYLOAD: ClassVar[
             t.MappingKV[str, t.JsonValue | t.SequenceOf[str]]
-        ] = (
-            MappingProxyType({
-                "rfc_violations": (),
-                "errors": (),
-                "warnings": (),
-                "context": {},
-                "server_specific_violations": (),
-                "validation_server_type": None,
-            })
-        )
+        ] = MappingProxyType({
+            "rfc_violations": (),
+            "errors": (),
+            "warnings": (),
+            "context": {},
+            "server_specific_violations": (),
+            "validation_server_type": None,
+        })
         dn: Annotated[
             mdn.DN | None,
             u.Field(
