@@ -21,7 +21,6 @@ from .__version__ import (
 
 if TYPE_CHECKING:
     from flext_cli import cli
-    from pydantic_core import from_json, to_json, to_jsonable_python
 
     from flext_core import core, d, e, h, lazy_attribute, r, x
 
@@ -30,6 +29,7 @@ if TYPE_CHECKING:
     from ._settings import FlextLdifSettings, settings
     from .api import FlextLdif, ldif
     from .base import FlextLdifServiceBase, s
+    from .cli import main
     from .constants import FlextLdifConstants, c
     from .models import FlextLdifModels, m
     from .protocols import FlextLdifProtocols, p
@@ -131,11 +131,11 @@ __all__: tuple[str, ...] = (
     "core",
     "d",
     "e",
-    "from_json",
     "h",
     "lazy_attribute",
     "ldif",
     "m",
+    "main",
     "p",
     "r",
     "s",
@@ -143,8 +143,6 @@ __all__: tuple[str, ...] = (
     "services",
     "settings",
     "t",
-    "to_json",
-    "to_jsonable_python",
     "u",
     "x",
 )
@@ -156,6 +154,7 @@ _LAZY_IMPORTS = MappingProxyType(
             "._settings": ("FlextLdifSettings", "settings"),
             ".api": ("FlextLdif", "ldif"),
             ".base": ("FlextLdifServiceBase", "s"),
+            ".cli": ("main",),
             ".constants": ("FlextLdifConstants", "c"),
             ".models": ("FlextLdifModels", "m"),
             ".protocols": ("FlextLdifProtocols", "p"),
@@ -206,7 +205,6 @@ _LAZY_IMPORTS = MappingProxyType(
             ".utilities": ("FlextLdifUtilities", "u"),
             "flext_cli": ("cli",),
             "flext_core": ("core", "d", "e", "h", "lazy_attribute", "r", "x"),
-            "pydantic_core": ("from_json", "to_json", "to_jsonable_python"),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,

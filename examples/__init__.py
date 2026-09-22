@@ -10,7 +10,6 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_cli import cli
-    from pydantic_core import from_json, to_json, to_jsonable_python
 
     from flext_core import (
         core,
@@ -23,7 +22,7 @@ if TYPE_CHECKING:
         r,
         x,
     )
-    from flext_ldif import c, config, ldif, m, p, s, settings, t, u
+    from flext_ldif import c, config, ldif, m, main, p, s, settings, t, u
 
     from .constants import ExamplesFlextLdifConstants
     from .models import ExamplesFlextLdifModels
@@ -42,20 +41,18 @@ __all__: tuple[str, ...] = (
     "core",
     "d",
     "e",
-    "from_json",
     "h",
     "lazy",
     "lazy_attribute",
     "ldif",
     "m",
+    "main",
     "normalize_lazy_imports",
     "p",
     "r",
     "s",
     "settings",
     "t",
-    "to_json",
-    "to_jsonable_python",
     "u",
     "x",
 )
@@ -80,8 +77,18 @@ _LAZY_IMPORTS = MappingProxyType(
                 "r",
                 "x",
             ),
-            "flext_ldif": ("c", "config", "ldif", "m", "p", "s", "settings", "t", "u"),
-            "pydantic_core": ("from_json", "to_json", "to_jsonable_python"),
+            "flext_ldif": (
+                "c",
+                "config",
+                "ldif",
+                "m",
+                "main",
+                "p",
+                "s",
+                "settings",
+                "t",
+                "u",
+            ),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
