@@ -10,15 +10,18 @@ unit under test -- every assertion goes through the public package namespace.
 from __future__ import annotations
 
 import inspect
+from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import tm
 
 import flext_ldif
 
+if TYPE_CHECKING:
+    from flext_core import t
 type PublicSymbol = str
 
-PUBLIC_API: tuple[PublicSymbol, ...] = (
+PUBLIC_API: t.VariadicTuple[PublicSymbol] = (
     "FlextLdif",
     "FlextLdifConstants",
     "FlextLdifModels",
@@ -52,12 +55,12 @@ PUBLIC_API: tuple[PublicSymbol, ...] = (
 )
 
 # Public symbols that consumers use as types (subclass / instantiate / isinstance).
-CLASS_SYMBOLS: tuple[PublicSymbol, ...] = tuple(
+CLASS_SYMBOLS: t.VariadicTuple[PublicSymbol] = tuple(
     name for name in PUBLIC_API if name.startswith("FlextLdif")
 )
 
 # Metadata strings exposed at the package root.
-METADATA_STRING_SYMBOLS: tuple[PublicSymbol, ...] = (
+METADATA_STRING_SYMBOLS: t.VariadicTuple[PublicSymbol] = (
     "__author__",
     "__author_email__",
     "__description__",
@@ -81,7 +84,7 @@ FACADE_ALIAS_OWNERS: tuple[tuple[PublicSymbol, PublicSymbol], ...] = (
 
 # Implementation classes that live behind their canonical owner modules and must
 # never leak onto the package root.
-PRIVATE_ROOT_SYMBOLS: tuple[PublicSymbol, ...] = (
+PRIVATE_ROOT_SYMBOLS: t.VariadicTuple[PublicSymbol] = (
     "FlextLdifConstantsBase",
     "FlextLdifConstantsEnums",
     "FlextLdifModelsBases",

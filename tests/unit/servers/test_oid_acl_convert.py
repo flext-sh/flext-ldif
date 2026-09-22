@@ -15,11 +15,16 @@ All assertions target observable return values / public model state only.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 from flext_tests import tm
 
 from flext_ldif import m
 from flext_ldif.servers.oid import FlextLdifServersOidAclConvert as Parser
+
+if TYPE_CHECKING:
+    from .. import t
 
 _DN: str = "dc=ctbc"
 
@@ -157,7 +162,11 @@ class TestsFlextLdifOidAclConvert:
         ],
     )
     def test_subject_clause_maps_to_typed_subject(
-        self, clause: str, subject_type: str, value: str, permissions: tuple[str, ...]
+        self,
+        clause: str,
+        subject_type: str,
+        value: str,
+        permissions: t.VariadicTuple[str],
     ) -> None:
         subject = Parser.parse_subject(clause)
 

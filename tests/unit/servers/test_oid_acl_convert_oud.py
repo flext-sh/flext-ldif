@@ -9,11 +9,16 @@ public return value or the ``r[T]`` outcome — never an implementation detail.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 from flext_tests import tm
 
 from flext_ldif import m
 from flext_ldif.servers.oid import FlextLdifServersOidAclToOud as Conv
+
+if TYPE_CHECKING:
+    from ... import t
 
 
 class TestsFlextLdifOidAclConvertOud:
@@ -90,7 +95,11 @@ class TestsFlextLdifOidAclConvertOud:
         ],
     )
     def test_convert_permissions_yields_ordered_allow_set(
-        self, permissions: tuple[str, ...], *, is_entry: bool, expected: tuple[str, ...]
+        self,
+        permissions: t.VariadicTuple[str],
+        *,
+        is_entry: bool,
+        expected: t.VariadicTuple[str],
     ) -> None:
         result = Conv.convert_permissions(permissions, is_entry=is_entry)
 
@@ -98,7 +107,7 @@ class TestsFlextLdifOidAclConvertOud:
 
     @pytest.mark.parametrize("permissions", [("bogus",), ("nofoo",)])
     def test_convert_permissions_unknown_token_surfaces_failure(
-        self, permissions: tuple[str, ...]
+        self, permissions: t.VariadicTuple[str]
     ) -> None:
         result = Conv.convert_permissions(permissions, is_entry=False)
 

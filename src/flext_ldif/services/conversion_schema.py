@@ -81,7 +81,7 @@ class FlextLdifConversionSchemaMixin(s, ABC):
                 f"{type(converted_entry_value).__name__}"
             )
         attributes_model = converted_entry_value.attributes
-        converted_values: tuple[str, ...] = ()
+        converted_values: t.VariadicTuple[str] = ()
         if attributes_model is not None:
             for attr_name, values in attributes_model.attributes.items():
                 if attr_name.lower() == field_name.lower():

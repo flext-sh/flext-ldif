@@ -27,6 +27,8 @@ from tests import TestsFlextLdifUtilities as u
 if TYPE_CHECKING:
     from tests import m, p
 
+    from .. import t
+
 
 class TestsFlextLdifOudIntegration:
     """Behavioral contract tests for parsing and round-tripping OUD LDIF.
@@ -37,7 +39,7 @@ class TestsFlextLdifOudIntegration:
     """
 
     ORACLE_ENTERPRISE_OID_PREFIX: ClassVar[str] = "2.16.840.1.113894"
-    ORACLE_OBJECTCLASS_MARKERS: ClassVar[tuple[str, ...]] = (
+    ORACLE_OBJECTCLASS_MARKERS: ClassVar[t.VariadicTuple[str]] = (
         "orclcontext",
         "orclcontainer",
         "orclprivilegegroup",

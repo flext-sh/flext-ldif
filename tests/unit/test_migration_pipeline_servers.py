@@ -22,6 +22,8 @@ from tests import c, m
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from . import t
+
 
 class TestsFlextLdifMigrationPipelineServers:
     """Behavioral suite for server-to-server migration via the public pipeline."""
@@ -29,7 +31,7 @@ class TestsFlextLdifMigrationPipelineServers:
     @staticmethod
     def _run_migration(
         *, tmp_path: Path, ldif_content: str, source_server: str, target_server: str
-    ) -> tuple[str, int, tuple[str, ...]]:
+    ) -> tuple[str, int, t.VariadicTuple[str]]:
         """Drive ``execute`` through its public API and return observable state.
 
         Returns the produced output-file text, the model's ``entry_count`` and
