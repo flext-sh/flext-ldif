@@ -250,9 +250,9 @@ def validate_configuration(config_dict: dict) -> p.Result[FlextLdifModels.Config
         settings = FlextLdifModels.Config(**config_dict)
         return r[FlextLdifModels.Config].ok(settings)
     except c.ValidationError as e:
-        error_details = "; ".join([
-            f"{err['loc'][0]}: {err['msg']}" for err in e.errors()
-        ])
+        error_details = "; ".join(
+            [f"{err['loc'][0]}: {err['msg']}" for err in e.errors()]
+        )
         return r[FlextLdifModels.Config].fail(
             f"Configuration validation failed: {error_details}"
         )
