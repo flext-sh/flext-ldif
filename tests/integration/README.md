@@ -6,10 +6,6 @@
   - [Test Structure](#test-structure)
   - [Test Categories](#test-categories)
 - [🔧 Running Tests](#-running-tests)
-  - [Quick Start](#quick-start)
-  - [Running Test Categories](#running-test-categories)
-  - [Test Markers](#test-markers)
-  - [Running with Specific Fixtures](#running-with-specific-fixtures)
 - [📦 Centralized Fixtures (conftest.py)](#-centralized-fixtures-conftestpy)
   - [Fixture Organization](#fixture-organization)
   - [Available Fixtures](#available-fixtures)
@@ -188,76 +184,18 @@ These tests require a running LDAP container (Docker).
 
 ## 🔧 Running Tests
 
-### Quick Start
+Run from the active workspace root:
 
 ```bash
-# Run all integration tests
-PYTHONPATH=src poetry run pytest tests/integration/ -v
-
-# Run specific test class
-PYTHONPATH=src poetry run pytest \
-    tests/integration/test_roundtrip_deep_validation.py::TestRoundtripDeepValidation -v
-
-# Run specific test method
-PYTHONPATH=src poetry run pytest \
-    tests/integration/test_roundtrip_deep_validation.py::TestRoundtripDeepValidation ...
+make setup
+make check
+make test
 ```
 
-### Running Test Categories
-
-```bash
-# Run comprehensive validation tests (no Docker required)
-PYTHONPATH=src poetry run pytest tests/integration/test_roundtrip_deep_validation.py \
-    tests/integration/test_rfc_compliance_validation.py \
-        tests/integration/test_systematic_fixture_coverage.py \
-            tests/integration/test_error_recovery.py \
-                tests/integration/test_edge_cases.py -v
-
-# Run server-specific tests (no Docker required)
-PYTHONPATH=src poetry run pytest tests/integration/test_oid_integration.py \
-    tests/integration/test_oud_integration.py \
-        tests/integration/test_cross_server_conversion.py -v
-
-# Run real LDAP tests (requires Docker)
-PYTHONPATH=src poetry run pytest tests/integration/test_real_ldap_*.py -v
-
-# Run with coverage
-PYTHONPATH=src poetry run pytest tests/integration/ --cov=src/flext_ldif --cov-report=term-missing
-```
-
-### Test Markers
-
-```bash
-# Run only fast tests
-pytest -m unit
-
-# Run only integration tests
-pytest -m integration
-
-# Run LDIF-specific tests
-pytest -m ldif
-
-# Run parser tests
-pytest -m parser
-
-# Run end-to-end tests
-pytest -m e2e
-```
-
-### Running with Specific Fixtures
-
-```bash
-# Run tests using OID fixtures
-PYTHONPATH=src poetry run pytest tests/integration/ -k "oid" -v
-
-# Run tests using OUD fixtures
-PYTHONPATH=src poetry run pytest tests/integration/ -k "oud" -v
-
-# Run parametrized tests with specific fixture type
-PYTHONPATH=src poetry run pytest \
-    tests/integration/test_systematic_fixture_coverage.py::
-    TestSystematicFixtureCoverage::test_schema_fixture_coverage -v
-```
+The test verb owns scope, impact selection, retained Testmon state, markers, and
+coverage. Do not append test paths, class names, pytest flags, or environment overrides
+to the standard verb. Real LDAP tests require their declared container services.
+See [Make commands](../../docs/guides/make-commands.md).
 
 ## 📦 Centralized Fixtures (conftest.py)
 
@@ -569,14 +507,8 @@ def test_valid_entry(self, api: ldif) -> None:
 ### Running with Coverage Reports
 
 ```bash
-# Generate coverage report
-PYTHONPATH=src poetry run pytest tests/integration/ --cov=src/flext_ldif --cov-report=html
-
-# View report
-open htmlcov/index.html
-
-# Coverage by module
-PYTHONPATH=src poetry run pytest tests/integration/ --cov=src/flext_ldif --cov-report=term-missing
+# Coverage is configured by the canonical test owner
+make test
 ```
 
 ## 🆕 Adding New Integration Tests
@@ -658,10 +590,11 @@ def test_roundtrip_preserves_attributes(self, api: ldif) -> None:
 
 **Problem**: `ModuleNotFoundError: No module named 'flext_ldif'`
 
-**Solution**: Set PYTHONPATH before running tests
+**Solution**: Reconstruct the managed environment from the workspace root
 
 ```bash
-PYTHONPATH=src poetry run pytest tests/integration/
+make setup
+make test
 ```
 
 ### Fixture Not Found
@@ -670,10 +603,7 @@ PYTHONPATH=src poetry run pytest tests/integration/
 
 **Solution**: Verify fixture is defined in `conftest.py` and file is named correctly
 
-```bash
-# Check fixture availability
-PYTHONPATH=src poetry run pytest tests/integration/ --fixtures | grep oid_schema
-```
+Read the fixture owner and rerun `make test` from the workspace root.
 
 ### Docker Container Errors
 
@@ -697,7 +627,7 @@ docker logs ldif-test-ldap
 
 ```bash
 # Run the canonical bounded type checker
-MYPY_MEMORY_LIMIT_MB=6144 MYPY_TIMEOUT_SECONDS=600 make check FILES=tests/integration CHECK_GATES=mypy
+make check
 ```
 
 ## 📈 Continuous Integration
@@ -706,13 +636,11 @@ All integration tests are run in CI/CD pipelines:
 
 ```bash
 # Complete validation pipeline
-make val
+make check
 
 # Just tests
 make test
 
-# Just integration tests
-PYTHONPATH=src poetry run pytest tests/integration/ -v
 ```
 
 ### CI Configuration

@@ -5,7 +5,7 @@ from __future__ import annotations
 import struct
 from typing import Annotated
 
-from flext_ldif import p, r, s, t, u
+from flext_ldif import c, p, r, s, t, u
 
 
 class FlextLdifValidation(s):
@@ -36,6 +36,7 @@ class FlextLdifValidation(s):
             u.try_(
                 lambda: u.Ldif.Rfc.is_valid_rfc4512_descriptor(name),
                 catch=(
+                    c.ValidationError,
                     ValueError,
                     KeyError,
                     AttributeError,

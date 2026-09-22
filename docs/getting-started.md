@@ -8,7 +8,6 @@
 - [Installation](#installation)
   - [Development Installation](#development-installation)
   - [Development Commands](#development-commands)
-  - [⚠️ CRITICAL: PYTHONPATH Requirements](#critical-pythonpath-requirements)
 - [First Steps](#first-steps)
   - [Basic LDIF Processing](#basic-ldif-processing)
   - [File Operations](#file-operations)
@@ -41,8 +40,7 @@ FLEXT ecosystem.
 
 ### System Requirements
 
-- Python 3.13 or higher
-- Poetry for dependency management
+- Python version and managed tools provisioned by `make setup`
 - Git for source code access
 - Sufficient memory for LDIF processing (recommended 4GB+ for files >50MB)
 
@@ -52,53 +50,38 @@ FLEXT-LDIF integrates with the broader FLEXT ecosystem:
 
 - **[flext-core](https://github.com/flext-sh/flext/tree/0.12.0-dev/flext-core/README.md)**:
   Foundation library providing r, FlextContainer, and logging patterns
-- **Poetry**: Dependency management and virtual environment handling
-- **Python 3.13+**: Modern Python features including improved type annotations
+- **Workspace toolchain**: Dependency and virtual environment management through `make setup`
 
 ## Installation
 
 ### Development Installation
 
 ```bash
-# Navigate to the FLEXT-LDIF directory
-cd flext-ldif
-
-# Set up development environment
+# Run from the active workspace root
 make setup
-
-# Verify installation
-python -c "from flext_ldif import ldif; print('FLEXT-LDIF installed successfully')"
+make test
 ```
 
 ### Development Commands
 
-```bash
-# Essential development workflow
-make lint       # Code quality checking with Ruff (ZERO TOLERANCE)
-make type-check # Type safety validation with Pyrefly (MyPy successor)
-make test       # Run test suite (990/990 tests passing)
-make val        # Complete validation pipeline (lint + type + security + test)
-
-# Testing commands (⚠️ CRITICAL: Requires PYTHONPATH=src)
-PYTHONPATH=src pytest                           # Full test suite
-PYTHONPATH=src pytest -m unit                   # Unit tests only
-PYTHONPATH=src pytest --cov=src/flext_ldif      # Coverage report
-PYTHONPATH=src pytest tests/unit/test_oid.py -v # Specific test file
-```
-
-### ⚠️ CRITICAL: PYTHONPATH Requirements
-
-**ALL test and script execution requires `PYTHONPATH=src`**:
+Run the canonical lifecycle from the active workspace root, not this member directory:
 
 ```bash
-# ✅ CORRECT
-PYTHONPATH=src poetry run pytest tests/unit/test_oid.py -v
-PYTHONPATH=src poetry run python -c "from flext_ldif import ldif"
-
-# ❌ WRONG - Will fail with import errors
-poetry run pytest tests/unit/test_oid.py -v
-python -c "from flext_ldif import ldif"
+make setup
+make gen
+make mod
+make gen
+make gen
+make fix
+make fmt
+make check
+make test
+make build
 ```
+
+The workspace dispatcher owns the environment, test selection, retained Testmon cache,
+and coverage configuration. Do not append paths, pytest flags, or project selectors to
+standard verbs. See [Make commands](guides/make-commands.md) for the current contract.
 
 ## First Steps
 
@@ -400,10 +383,9 @@ if result.success:
 
 **Type Checking Issues**:
 
-- Ensure Python 3.13+ is being used
+- Ensure the `make setup` toolchain is active
 - Verify all dependencies are properly installed
-- Run `make type-check` to identify issues (uses Pyrefly strict mode)
-- Check PYTHONPATH=src is set for all operations
+- Run `make check` from the workspace root to identify type errors
 
 ### Getting Help
 

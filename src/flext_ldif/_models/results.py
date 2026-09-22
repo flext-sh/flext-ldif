@@ -264,10 +264,9 @@ class FlextLdifModelsResults:
 
     class MigrationPipelineResult(m.FrozenModel):
         migrated_schema: mc.SchemaContent = u.Field(
-            default_factory=lambda: mc.SchemaContent.model_validate({
-                "attributes": [],
-                "object_classes": [],
-            }),
+            default_factory=lambda: mc.SchemaContent(
+                attributes=[], object_classes=[]
+            ),
             description="Schema content after migration transformation",
         )
         entries: t.MutableSequenceOf[mde.Entry] = u.Field(

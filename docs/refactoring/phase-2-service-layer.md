@@ -308,7 +308,6 @@ ______________________________________________________________________
 
 ## Related Documentation
 
-- Hook system patterns (_Documentation coming soon_)
 - [RFC 2849](https://tools.ietf.org/html/rfc2849) - LDIF Format Specification
 - [RFC 4512](https://tools.ietf.org/html/rfc4512) - LDAP Schema Specification
 ````
