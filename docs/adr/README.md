@@ -97,7 +97,5 @@ zero-padded number (e.g., `ADR-001.md`, `ADR-002.md`).
 
 ## Related Documentation
 
-- Architecture Overview - High-level architecture documentation
-- **Architecture Diagrams** - Visual representations of architecture (_Documentation
-  coming soon_)
+- [Architecture Overview](../architecture.md) - High-level architecture documentation
 - Development Guidelines - Implementation guidelines influenced by ADRs

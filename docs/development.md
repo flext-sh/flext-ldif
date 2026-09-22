@@ -34,8 +34,7 @@ contributing to FLEXT-LDIF.
 
 ### Prerequisites
 
-- Python 3.13 or higher
-- Poetry for dependency management
+- Python version and managed tools provisioned by `make setup`
 - Understanding of LDIF format (RFC 2849)
 - Familiarity with FLEXT ecosystem patterns (see
   [flext-core documentation](https://github.com/flext-sh/flext/tree/0.12.0-dev/flext-core/README.md))
@@ -43,35 +42,31 @@ contributing to FLEXT-LDIF.
 ### Initial Setup
 
 ```bash
-# Navigate to project directory
-cd flext-ldif
-
-# Set up development environment
+# Run from the active workspace root
 make setup
-
-# Verify LDIF functionality
-python -c "from flext_ldif import ldif; u.Cli.print('LDIF development environment ready')"
+make test
 ```
 
 ### Development Commands
 
+Run the canonical lifecycle from the active workspace root, not this member directory:
+
 ```bash
-# Code quality
-make lint       # Ruff linting
-make type-check # MyPy type checking
-make format     # Code formatting
-make val        # Complete validation pipeline
-
-# Testing
-make test                   # Run test suite
-pytest -m unit              # Unit tests only
-pytest -m integration       # Integration tests
-pytest --cov=src/flext_ldif # Coverage report
-
-# Development utilities
-make clean # Clean build artifacts
-make reset # Full reset of environment
+make setup
+make gen
+make mod
+make gen
+make gen
+make fix
+make fmt
+make check
+make test
+make build
 ```
+
+The workspace dispatcher owns the environment, test selection, retained Testmon cache,
+and coverage configuration. Do not append paths, pytest flags, or project selectors to
+standard verbs. See [Make commands](guides/make-commands.md) for the current contract.
 
 ## LDIF Processing Architecture
 
