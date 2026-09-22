@@ -9,8 +9,8 @@ from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 from .._base.acl import FlextLdifServersBaseSchemaAcl
-from .constants import FlextLdifServersOudConstants
-from .utilities import FlextLdifServersOudUtilities
+from .server_constants import FlextLdifServersOudConstants
+from .server_utilities import FlextLdifServersOudUtilities
 
 
 class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):

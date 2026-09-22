@@ -8,7 +8,7 @@ from typing import ClassVar, override
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
-from .constants import FlextLdifServersOidConstants
+from .server_constants import FlextLdifServersOidConstants
 
 
 class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):

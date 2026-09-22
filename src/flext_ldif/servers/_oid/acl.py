@@ -8,7 +8,7 @@ from typing import ClassVar, override
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
-from .constants import FlextLdifServersOidConstants
+from .server_constants import FlextLdifServersOidConstants
 
 
 class _OidAclTargetAttributesJson(m.RootModel[t.MutableSequenceOf[str]]):
@@ -640,7 +640,7 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
             }
             and "#" not in subject_value
         ):
-            type_suffix: dict[str, str] = {
+            type_suffix: t.MappingKV[str, str] = {
                 sc.OidAclSubjectType.DN_ATTR: sc.OidAclSubjectSuffix.LDAPURL,
                 sc.OidAclSubjectType.GUID_ATTR: sc.OidAclSubjectSuffix.USERDN,
                 sc.OidAclSubjectType.GROUP_ATTR: sc.OidAclSubjectSuffix.GROUPDN,

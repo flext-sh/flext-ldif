@@ -188,7 +188,7 @@ class FlextLdifModelsDomainDN:
             """Initialize empty DN case registry."""
             super().__init__()
             # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: plain dict registry.
-            self._registry: dict[str, t.JsonValue] = {}
+            self._registry: t.MutableMappingKV[str, t.JsonValue] = {}
             self._case_variants: MutableMapping[str, set[str]] = {}
 
         @staticmethod

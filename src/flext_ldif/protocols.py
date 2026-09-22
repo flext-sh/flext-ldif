@@ -8,7 +8,7 @@ from flext_cli import p
 
 from ._protocols.base import FlextLdifProtocolsBase
 from ._protocols.domain import FlextLdifProtocolsDomain
-from ._protocols.ldap3 import Protocols
+from ._protocols.ldap3 import FlextLdifProtocolsLdap3
 
 if TYPE_CHECKING:
     from flext_ldif import c
@@ -18,7 +18,12 @@ class FlextLdifProtocols(p):
     """Unified LDIF protocol facade."""
 
     @runtime_checkable
-    class Ldif(FlextLdifProtocolsDomain, FlextLdifProtocolsBase, Protocols, Protocol):
+    class Ldif(
+        FlextLdifProtocolsDomain,
+        FlextLdifProtocolsBase,
+        FlextLdifProtocolsLdap3,
+        Protocol,
+    ):
         """LDIF-specific structural protocol namespace."""
 
         @runtime_checkable

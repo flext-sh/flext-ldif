@@ -8,7 +8,7 @@ from typing import ClassVar, override
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
-from .constants import FlextLdifServersOidConstants
+from .server_constants import FlextLdifServersOidConstants
 
 
 class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
@@ -529,7 +529,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         ``caseIgnoreMatch`` (not a substring matching rule), while in SUBSTR context it
         becomes ``caseIgnoreSubstringsMatch`` (lowercase 's').
         """
-        equality_map: dict[str, str] = {
+        equality_map: t.MappingKV[str, str] = {
             "caseIgnoreSubStringsMatch": "caseIgnoreMatch",
             "caseIgnoreSubstringsMatch": "caseIgnoreMatch",
         }

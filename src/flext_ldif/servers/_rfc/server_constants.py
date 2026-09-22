@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, ClassVar
 
 from flext_ldif import c
 
-from .._base.constants import FlextLdifServersBaseConstants
+from .._base.server_constants import FlextLdifServersBaseConstants
 
 if TYPE_CHECKING:
     from flext_ldif import t
@@ -103,8 +103,5 @@ class FlextLdifServersRfcConstants(FlextLdifServersBaseConstants):
     ACL_SELF_SUBJECT: ClassVar[str] = "ldap:///self"
     ACL_ANONYMOUS_SUBJECT: ClassVar[str] = "ldap:///anyone"
 
-
-c = FlextLdifServersRfcConstants
-s = FlextLdifServersRfcConstants
 
 __all__: list[str] = ["FlextLdifServersRfcConstants"]

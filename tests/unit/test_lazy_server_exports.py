@@ -19,6 +19,6 @@ class TestsFlextLdifLazyServerExports:
         assert package_name is not None
         server_namespace = importlib.import_module(package_name)
         assert (
-            getattr(server_namespace, "fsr")
+            server_namespace.fsr
             is FlextLdifServersRfc
         )

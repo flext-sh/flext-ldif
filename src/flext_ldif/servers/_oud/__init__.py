@@ -9,26 +9,17 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core import d, e, h, r, x
-
-    from ..rfc import FlextLdifServersRfc as fsr
     from .aci import FlextLdifServersOudAciMixin
     from .acl import FlextLdifServersOudAcl
     from .acl_extract import FlextLdifServersOudAclExtractMixin
     from .acl_metadata import FlextLdifServersOudAclMetadataMixin
     from .comments import FlextLdifServersOudCommentsMixin
-    from .constants import (
-        FlextLdifServersOudConstants,
-        FlextLdifServersOudConstants as c,
-    )
     from .entry import FlextLdifServersOudEntry
     from .helpers import FlextLdifServersOudHelpersMixin
     from .schema import FlextLdifServersOudSchema
+    from .server_constants import FlextLdifServersOudConstants
+    from .server_utilities import FlextLdifServersOudUtilities
     from .transform import FlextLdifServersOudTransformMixin
-    from .utilities import (
-        FlextLdifServersOudUtilities,
-        FlextLdifServersOudUtilities as u,
-    )
 __all__: tuple[str, ...] = (
     "FlextLdifServersOudAciMixin",
     "FlextLdifServersOudAcl",
@@ -41,14 +32,6 @@ __all__: tuple[str, ...] = (
     "FlextLdifServersOudSchema",
     "FlextLdifServersOudTransformMixin",
     "FlextLdifServersOudUtilities",
-    "c",
-    "d",
-    "e",
-    "fsr",
-    "h",
-    "r",
-    "u",
-    "x",
 )
 
 _LAZY_IMPORTS = MappingProxyType(
@@ -59,15 +42,14 @@ _LAZY_IMPORTS = MappingProxyType(
             ".acl_extract": ("FlextLdifServersOudAclExtractMixin",),
             ".acl_metadata": ("FlextLdifServersOudAclMetadataMixin",),
             ".comments": ("FlextLdifServersOudCommentsMixin",),
-            ".constants": ("FlextLdifServersOudConstants", "c"),
             ".entry": ("FlextLdifServersOudEntry",),
             ".helpers": ("FlextLdifServersOudHelpersMixin",),
             ".schema": ("FlextLdifServersOudSchema",),
+            ".server_constants": ("FlextLdifServersOudConstants",),
+            ".server_utilities": ("FlextLdifServersOudUtilities",),
             ".transform": ("FlextLdifServersOudTransformMixin",),
-            ".utilities": ("FlextLdifServersOudUtilities", "u"),
-            "flext_core": ("d", "e", "h", "r", "x"),
         }),
-        alias_groups=MappingProxyType({"..rfc": (("fsr", "FlextLdifServersRfc"),)}),
+        alias_groups=MappingProxyType({}),
         sort_keys=False,
     )
 )

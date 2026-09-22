@@ -44,10 +44,6 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
     class Tests(FlextTestsUtilities.Tests):
         """Flat test utility namespace for flext-ldif."""
 
-        Docker = tk
-        LdapConnectionLike = p.Ldap.Ldap3Connection
-        LdapEntryLike = p.Ldap.Ldap3Entry
-
         logger: ClassVar[p.Logger] = FlextLdifUtilities.fetch_logger(__name__)
         _resolved_admin_credentials: ClassVar[list[tuple[str, str] | None]] = [None]
         _FIXTURES_ROOT: ClassVar[Path] = c.Tests.FIXTURES_DIR
@@ -55,7 +51,6 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
         _fixture_metadata_cache: ClassVar[
             MutableMapping[Path, m.Tests.FixtureMetadata]
         ] = {}
-        FileLock = FlextTestsUtilities.Tests.FileLock
 
         @staticmethod
         def ldap_client_available() -> bool:

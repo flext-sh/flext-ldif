@@ -318,7 +318,7 @@ class FlextLdifModelsDomainEntry:
             strict=True, validate_default=True, validate_assignment=True, extra="allow"
         )
         _DATETIME_FIELDS: ClassVar[t.StrPair] = ("created_at", "updated_at")
-        _ATTRIBUTES_VALIDATE_DEFAULTS: ClassVar[t.MappingKV[str, object]] = (
+        _ATTRIBUTES_VALIDATE_DEFAULTS: ClassVar[t.MappingKV[str, t.JsonValue]] = (
             MappingProxyType({"attribute_metadata": {}, "metadata": None})
         )
         _VALIDATION_RULES_KEY: ClassVar[str] = "validation_rules"
@@ -330,7 +330,9 @@ class FlextLdifModelsDomainEntry:
         _VALIDATION_CONTEXT_RFC_COMPLIANCE_NAME: ClassVar[str] = (
             "validate_entry_rfc_compliance"
         )
-        _EMPTY_VALIDATION_RESULT_PAYLOAD: ClassVar[t.MappingKV[str, object]] = (
+        _EMPTY_VALIDATION_RESULT_PAYLOAD: ClassVar[
+            t.MappingKV[str, t.JsonValue | t.SequenceOf[str]]
+        ] = (
             MappingProxyType({
                 "rfc_violations": (),
                 "errors": (),
@@ -724,7 +726,7 @@ class FlextLdifModelsDomainEntry:
             dn_value: str,
             attribute_count: int,
             total_violations: int,
-        ) -> dict[str, str]:
+        ) -> t.StrMapping:
             """Build RFC validation context map reusing canonical key constants."""
             return {
                 **old_context,
@@ -963,14 +965,14 @@ class FlextLdifModelsDomainEntry:
             source_entry: str | None,
             unconverted_attributes: t.Ldif.MetadataInputMapping | None,
             statistics: FlextLdifModelsDomainEntry.EntryStatistics | None,
-        ) -> dict[str, t.JsonPayload]:
+        ) -> t.MappingKV[str, t.JsonPayload]:
             """Build validated Entry model input."""
             dn_obj = mdn.DN.from_value(dn)
             attrs_obj = cls._normalize_attributes(attributes)
             resolved_metadata = cls._build_metadata(
                 metadata, server_type, source_entry, unconverted_attributes
             )
-            entry_data: dict[str, t.JsonPayload] = {
+            entry_data: t.MutableMappingKV[str, t.JsonPayload] = {
                 c.Ldif.DictKeys.DN: dn_obj,
                 c.Ldif.DictKeys.ATTRIBUTES: attrs_obj,
                 "record_kind": record_kind,

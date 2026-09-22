@@ -9,7 +9,8 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core import d, e, h, r, x
+    from flext_cli import d, e, h, r, x
+
     from flext_ldif import FlextLdifConstants, s
 
     from .constants import ExamplesFlextLdifConstants, ExamplesFlextLdifConstants as c
@@ -45,7 +46,7 @@ _LAZY_IMPORTS = MappingProxyType(
             ".protocols": ("ExamplesFlextLdifProtocols", "p"),
             ".typings": ("ExamplesFlextLdifTypes", "t"),
             ".utilities": ("ExamplesFlextLdifUtilities", "u"),
-            "flext_core": ("d", "e", "h", "r", "x"),
+            "flext_cli": ("d", "e", "h", "r", "x"),
             "flext_ldif": ("FlextLdifConstants", "s"),
         }),
         alias_groups=MappingProxyType({}),

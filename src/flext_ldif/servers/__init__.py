@@ -9,39 +9,33 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core import d, e, h, r, x
-
     from . import _base, _oid, _oud, _rfc
     from ._base.acl import FlextLdifServersBaseSchemaAcl
-    from ._base.constants import FlextLdifServersBaseConstants
     from ._base.entry import FlextLdifServersBaseEntry
     from ._base.mixins import FlextLdifServerMethodsMixin
     from ._base.schema import FlextLdifServersBaseSchema
+    from ._base.server_constants import FlextLdifServersBaseConstants
     from ._oid.acl import FlextLdifServersOidAcl
     from ._oid.acl_assemble import FlextLdifServersOidAclAssemble
     from ._oid.acl_convert import FlextLdifServersOidAclConvert
     from ._oid.acl_convert_oud import FlextLdifServersOidAclToOud
     from ._oid.acl_pipeline import FlextLdifServersOidAclPipeline
     from ._oid.acl_render import FlextLdifServersOidAclRender
-    from ._oid.constants import c
     from ._oud.aci import FlextLdifServersOudAciMixin
     from ._oud.acl import FlextLdifServersOudAcl
     from ._oud.acl_extract import FlextLdifServersOudAclExtractMixin
     from ._oud.acl_metadata import FlextLdifServersOudAclMetadataMixin
     from ._oud.comments import FlextLdifServersOudCommentsMixin
-    from ._oud.constants import FlextLdifServersOudConstants
     from ._oud.entry import FlextLdifServersOudEntry
     from ._oud.helpers import FlextLdifServersOudHelpersMixin
     from ._oud.schema import FlextLdifServersOudSchema
+    from ._oud.server_constants import FlextLdifServersOudConstants
+    from ._oud.server_utilities import FlextLdifServersOudUtilities
     from ._oud.transform import FlextLdifServersOudTransformMixin
-    from ._oud.utilities import (
-        FlextLdifServersOudUtilities,
-        FlextLdifServersOudUtilities as u,
-    )
     from ._rfc.acl import FlextLdifServersRfcAcl
-    from ._rfc.constants import FlextLdifServersRfcConstants
     from ._rfc.entry import FlextLdifServersRfcEntry
     from ._rfc.schema import FlextLdifServersRfcSchema
+    from ._rfc.server_constants import FlextLdifServersRfcConstants
     from .ad import FlextLdifServersAd
     from .apache import FlextLdifServersApache
     from .base import FlextLdifServersBase
@@ -55,7 +49,7 @@ if TYPE_CHECKING:
     from .openldap import FlextLdifServersOpenldap
     from .oud import FlextLdifServersOud
     from .relaxed import FlextLdifServersRelaxed
-    from .rfc import FlextLdifServersRfc, FlextLdifServersRfc as fsr
+    from .rfc import FlextLdifServersRfc
     from .tivoli import FlextLdifServersTivoli
 __all__: tuple[str, ...] = (
     "FlextLdifServerMethodsMixin",
@@ -101,14 +95,6 @@ __all__: tuple[str, ...] = (
     "_oid",
     "_oud",
     "_rfc",
-    "c",
-    "d",
-    "e",
-    "fsr",
-    "h",
-    "r",
-    "u",
-    "x",
 )
 
 _LAZY_IMPORTS = MappingProxyType(
@@ -116,10 +102,10 @@ _LAZY_IMPORTS = MappingProxyType(
         MappingProxyType({
             "._base": ("_base",),
             "._base.acl": ("FlextLdifServersBaseSchemaAcl",),
-            "._base.constants": ("FlextLdifServersBaseConstants",),
             "._base.entry": ("FlextLdifServersBaseEntry",),
             "._base.mixins": ("FlextLdifServerMethodsMixin",),
             "._base.schema": ("FlextLdifServersBaseSchema",),
+            "._base.server_constants": ("FlextLdifServersBaseConstants",),
             "._oid": ("_oid",),
             "._oid.acl": ("FlextLdifServersOidAcl",),
             "._oid.acl_assemble": ("FlextLdifServersOidAclAssemble",),
@@ -127,24 +113,23 @@ _LAZY_IMPORTS = MappingProxyType(
             "._oid.acl_convert_oud": ("FlextLdifServersOidAclToOud",),
             "._oid.acl_pipeline": ("FlextLdifServersOidAclPipeline",),
             "._oid.acl_render": ("FlextLdifServersOidAclRender",),
-            "._oid.constants": ("c",),
             "._oud": ("_oud",),
             "._oud.aci": ("FlextLdifServersOudAciMixin",),
             "._oud.acl": ("FlextLdifServersOudAcl",),
             "._oud.acl_extract": ("FlextLdifServersOudAclExtractMixin",),
             "._oud.acl_metadata": ("FlextLdifServersOudAclMetadataMixin",),
             "._oud.comments": ("FlextLdifServersOudCommentsMixin",),
-            "._oud.constants": ("FlextLdifServersOudConstants",),
             "._oud.entry": ("FlextLdifServersOudEntry",),
             "._oud.helpers": ("FlextLdifServersOudHelpersMixin",),
             "._oud.schema": ("FlextLdifServersOudSchema",),
+            "._oud.server_constants": ("FlextLdifServersOudConstants",),
+            "._oud.server_utilities": ("FlextLdifServersOudUtilities",),
             "._oud.transform": ("FlextLdifServersOudTransformMixin",),
-            "._oud.utilities": ("FlextLdifServersOudUtilities", "u"),
             "._rfc": ("_rfc",),
             "._rfc.acl": ("FlextLdifServersRfcAcl",),
-            "._rfc.constants": ("FlextLdifServersRfcConstants",),
             "._rfc.entry": ("FlextLdifServersRfcEntry",),
             "._rfc.schema": ("FlextLdifServersRfcSchema",),
+            "._rfc.server_constants": ("FlextLdifServersRfcConstants",),
             ".ad": ("FlextLdifServersAd",),
             ".apache": ("FlextLdifServersApache",),
             ".base": ("FlextLdifServersBase",),
@@ -160,9 +145,8 @@ _LAZY_IMPORTS = MappingProxyType(
             ".relaxed": ("FlextLdifServersRelaxed",),
             ".rfc": ("FlextLdifServersRfc",),
             ".tivoli": ("FlextLdifServersTivoli",),
-            "flext_core": ("d", "e", "h", "r", "x"),
         }),
-        alias_groups=MappingProxyType({".rfc": (("fsr", "FlextLdifServersRfc"),)}),
+        alias_groups=MappingProxyType({}),
         sort_keys=False,
     )
 )

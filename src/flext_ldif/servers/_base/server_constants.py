@@ -48,6 +48,3 @@ class FlextLdifServersBaseConstants:
 
 
 __all__: list[str] = ["FlextLdifServersBaseConstants"]
-
-c = FlextLdifServersBaseConstants
-s = FlextLdifServersBaseConstants
