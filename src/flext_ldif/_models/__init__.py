@@ -30,7 +30,6 @@ if TYPE_CHECKING:
     from .events import FlextLdifModelsEvents
     from .processing import FlextLdifModelsProcessing
     from .results import FlextLdifModelsResults
-    from .results_statistics import FlextLdifModelsResultsStatistics
     from .settings import FlextLdifModelsSettings
 __all__: tuple[str, ...] = (
     "FlextLdifModelsAclConvert",
@@ -46,7 +45,6 @@ __all__: tuple[str, ...] = (
     "FlextLdifModelsEvents",
     "FlextLdifModelsProcessing",
     "FlextLdifModelsResults",
-    "FlextLdifModelsResultsStatistics",
     "FlextLdifModelsSettings",
     "FlextLdifModelsSettingsAcl",
     "FlextLdifModelsSettingsCriteria",
@@ -82,7 +80,6 @@ _LAZY_IMPORTS = MappingProxyType(
             ".events": ("FlextLdifModelsEvents",),
             ".processing": ("FlextLdifModelsProcessing",),
             ".results": ("FlextLdifModelsResults",),
-            ".results_statistics": ("FlextLdifModelsResultsStatistics",),
             ".settings": ("FlextLdifModelsSettings",),
         }),
         alias_groups=MappingProxyType({}),
