@@ -910,7 +910,9 @@ class FlextLdifUtilitiesDN:
         Returns a model_copy with transformed values. Original entry is not mutated.
         """
         attrs_to_transform = dn_valued_attributes or c.Ldif.ALL_DN_VALUED
-        updates: MutableMapping[str, object] = {}
+        updates: MutableMapping[
+            str, FlextLdifModels.Ldif.DN | FlextLdifModels.Ldif.Attributes
+        ] = {}
         entry_dn = entry.dn
         if entry_dn is not None:
             dn_str = FlextLdifUtilitiesDN.get_dn_value(entry_dn)
@@ -949,7 +951,7 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def transform_ldif_files_in_directory(
-        ldif_dir: str | object, source_basedn: str, target_basedn: str
+        ldif_dir: str | Path, source_basedn: str, target_basedn: str
     ) -> MutableMapping[str, int | t.MutableSequenceOf[str]]:
         """Transform base DN in all LDIF files in a directory.
 

@@ -432,7 +432,8 @@ def safe_service_registration() -> p.Result[ldif]:
 ```python
 # Error in chain composition
 result = (
-    api.parse_file(file_path)
+    api
+    .parse_file(file_path)
     .flat_map(api.validate_entries)  # Error: expects bool, gets list
     .flat_map(api.filter_persons)
 )
@@ -450,7 +451,8 @@ def correct_railway_chaining(file_path: str) -> p.Result[list]:
 
     return (
         # Parse file
-        api.parse_file(file_path)
+        api
+        .parse_file(file_path)
         # Validate entries (return original entries on success)
         .flat_map(
             lambda entries: api.validate_entries(entries).map(lambda _: entries)
