@@ -25,9 +25,9 @@
 - Public symbol exports: `FlextLdif`, `FlextLdifAcl`, `FlextLdifAnalysis`,
   `FlextLdifCategorization`, `FlextLdifConfig`, `FlextLdifConstants`,
   `FlextLdifConversion`, `FlextLdifConversionAclMixin`,
-  `FlextLdifConversionAclPreserveMixin`, `FlextLdifConversionEntryMixin` (+37 more)
+  `FlextLdifConversionAclPreserveMixin`, `FlextLdifConversionEntryMixin` (+38 more)
 - Exported module shortcuts: `servers`, `services`
-- Generated module pages: `41`
+- Generated module pages: `42`
 
 ## Next Pages
 

@@ -29,6 +29,6 @@ This section is generated from public exports and real docstrings.
 
 - Primary facades: `FlextLdif`, `FlextLdifAcl`, `FlextLdifAnalysis`,
   `FlextLdifCategorization`, `FlextLdifConfig`, `FlextLdifConstants` (+38 more)
-- Generated module pages: `41`
+- Generated module pages: `42`
 
 Back to [project docs](../index.md).

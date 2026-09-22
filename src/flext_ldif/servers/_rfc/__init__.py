@@ -10,7 +10,6 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
     from .acl import FlextLdifServersRfcAcl
-    from .constants import FlextLdifServersRfcConstants
     from .entry import FlextLdifServersRfcEntry
     from .schema import FlextLdifServersRfcSchema
     from .server_constants import FlextLdifServersRfcConstants
@@ -25,9 +24,9 @@ _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
         MappingProxyType({
             ".acl": ("FlextLdifServersRfcAcl",),
-            ".constants": ("FlextLdifServersRfcConstants",),
             ".entry": ("FlextLdifServersRfcEntry",),
             ".schema": ("FlextLdifServersRfcSchema",),
+            ".server_constants": ("FlextLdifServersRfcConstants",),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
