@@ -20,17 +20,19 @@ from .__version__ import (
 )
 
 if TYPE_CHECKING:
-    from flext_core import d, e, h, r, x
+    from flext_cli import cli
+    from pydantic_core import from_json, to_json, to_jsonable_python
+
+    from flext_core import core, d, e, h, lazy_attribute, r, x
 
     from . import servers, services
-    from .__version__ import FlextLdifVersion
     from ._config import FlextLdifConfig, config
     from ._settings import FlextLdifSettings, settings
     from .api import FlextLdif, ldif
-    from .base import FlextLdifServiceBase, FlextLdifServiceBase as s
-    from .constants import FlextLdifConstants, FlextLdifConstants as c
-    from .models import FlextLdifModels, FlextLdifModels as m
-    from .protocols import FlextLdifProtocols, FlextLdifProtocols as p
+    from .base import FlextLdifServiceBase, s
+    from .constants import FlextLdifConstants, c
+    from .models import FlextLdifModels, m
+    from .protocols import FlextLdifProtocols, p
     from .servers.ad import FlextLdifServersAd
     from .servers.apache import FlextLdifServersApache
     from .servers.base import FlextLdifServersBase
@@ -44,7 +46,7 @@ if TYPE_CHECKING:
     from .servers.openldap import FlextLdifServersOpenldap
     from .servers.oud import FlextLdifServersOud
     from .servers.relaxed import FlextLdifServersRelaxed
-    from .servers.rfc import FlextLdifServersRfc, FlextLdifServersRfc as fsr
+    from .servers.rfc import FlextLdifServersRfc
     from .servers.tivoli import FlextLdifServersTivoli
     from .services.acl import FlextLdifAcl
     from .services.analysis import FlextLdifAnalysis
@@ -68,8 +70,8 @@ if TYPE_CHECKING:
     from .services.validation import FlextLdifValidation
     from .services.writer import FlextLdifWriter
     from .shared import FlextLdifShared
-    from .typings import FlextLdifTypes, FlextLdifTypes as t
-    from .utilities import FlextLdifUtilities, FlextLdifUtilities as u
+    from .typings import FlextLdifTypes, t
+    from .utilities import FlextLdifUtilities, u
 __all__: tuple[str, ...] = (
     "FlextLdif",
     "FlextLdifAcl",
@@ -114,7 +116,6 @@ __all__: tuple[str, ...] = (
     "FlextLdifTypes",
     "FlextLdifUtilities",
     "FlextLdifValidation",
-    "FlextLdifVersion",
     "FlextLdifWriter",
     "__author__",
     "__author_email__",
@@ -125,11 +126,14 @@ __all__: tuple[str, ...] = (
     "__version__",
     "__version_info__",
     "c",
+    "cli",
     "config",
+    "core",
     "d",
     "e",
-    "fsr",
+    "from_json",
     "h",
+    "lazy_attribute",
     "ldif",
     "m",
     "p",
@@ -139,6 +143,8 @@ __all__: tuple[str, ...] = (
     "services",
     "settings",
     "t",
+    "to_json",
+    "to_jsonable_python",
     "u",
     "x",
 )
@@ -146,7 +152,6 @@ __all__: tuple[str, ...] = (
 _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
         MappingProxyType({
-            ".__version__": ("FlextLdifVersion",),
             "._config": ("FlextLdifConfig", "config"),
             "._settings": ("FlextLdifSettings", "settings"),
             ".api": ("FlextLdif", "ldif"),
@@ -199,11 +204,11 @@ _LAZY_IMPORTS = MappingProxyType(
             ".shared": ("FlextLdifShared",),
             ".typings": ("FlextLdifTypes", "t"),
             ".utilities": ("FlextLdifUtilities", "u"),
-            "flext_core": ("d", "e", "h", "r", "x"),
+            "flext_cli": ("cli",),
+            "flext_core": ("core", "d", "e", "h", "lazy_attribute", "r", "x"),
+            "pydantic_core": ("from_json", "to_json", "to_jsonable_python"),
         }),
-        alias_groups=MappingProxyType({
-            ".servers.rfc": (("fsr", "FlextLdifServersRfc"),)
-        }),
+        alias_groups=MappingProxyType({}),
         sort_keys=False,
     )
 )
