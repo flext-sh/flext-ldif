@@ -2,17 +2,17 @@
 
 from __future__ import annotations
 
-from typing import Annotated, Self
+from typing import Annotated
 
 from flext_core import FlextUtilities as u, m
 from flext_ldif import c, t
 
 from .collections import FlextLdifModelsCollections as mc
 from .domain_entries import FlextLdifModelsDomainsEntries as mde
-from .events import FlextLdifModelsEvents as me
+from .results_statistics import FlextLdifModelsResultsStatistics
 
 
-class FlextLdifModelsResults:
+class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
     """Namespace for LDIF result models."""
 
     class MigrationSummary(m.FrozenModel):
@@ -41,7 +41,7 @@ class FlextLdifModelsResults:
             default_factory=list, description="Migrated LDIF entries"
         )
         stats: FlextLdifModelsResults.Statistics = u.Field(
-            default_factory=lambda: FlextLdifModelsResults.Statistics(),
+            default_factory=FlextLdifModelsResultsStatistics.Statistics,
             description="Migration processing statistics",
         )
         output_files: t.MutableSequenceOf[str] = u.Field(
