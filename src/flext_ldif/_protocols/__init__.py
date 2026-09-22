@@ -12,6 +12,8 @@ if TYPE_CHECKING:
     from .base import FlextLdifProtocolsBase
     from .domain import FlextLdifProtocolsDomain
     from .ldap3 import FlextLdifProtocolsLdap3
+
+
 __all__: tuple[str, ...] = (
     "FlextLdifProtocolsBase",
     "FlextLdifProtocolsDomain",
