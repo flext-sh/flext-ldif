@@ -144,14 +144,16 @@ src/flext_ldif/
 from flext_ldif import ldif
 
 processor = ldif.processors  # Unnecessary wrapper
-result = processor.batch_process(entries, func)```
+result = processor.batch_process(entries, func)
+```
 **After**:
 
 ```python
 from flext_core import FlextProcessors
 
 processor = FlextProcessors()  # Direct usage
-result = processor.batch_process(entries, func)```
+result = processor.batch_process(entries, func)
+```
 ### **3. Remove Wrapper Methods**
 
 **Action**: Delete 600+ lines of delegation methods from `api.py`
@@ -173,12 +175,14 @@ result = processor.batch_process(entries, func)```
 
 ```python
 dn = ldif.get_entry_dn(entry)  # Wrapper
-attrs = ldif.get_entry_attributes(entry)  # Wrapper```
+attrs = ldif.get_entry_attributes(entry)  # Wrapper
+```
 **After**:
 
 ```python
 dn = entry.dn.value  # Direct
-attrs = entry.attributes.to_ldap3()  # Direct```
+attrs = entry.attributes.to_ldap3()  # Direct
+```
 ### **4. Remove Property Accessors**
 
 **Action**: Delete 100+ lines of property wrappers
@@ -219,7 +223,8 @@ class RfcLdifParser:
     @d.track_performance()
     def parse(self, file_path: Path) -> p.Result[Sequence[Entry]]:
         """Parse LDIF with automatic logging and metrics."""
-        # Implementation```
+        # Implementation
+        ```
 **Benefits**:
 
 - Automatic operation logging
@@ -247,7 +252,8 @@ from __future__ import annotations
 
 class FlextLdifDetector:
     def __init__(self):
-        self._patterns = {...}```
+        self._patterns = {...}
+        ```
 **After**:
 
 ```python
@@ -261,7 +267,8 @@ class FlextLdifDetector(s):
 
     def execute(self, content: str) -> p.Result[dict]:
         self.logger.info("Detecting server type", extra={"size": len(content)})
-        # self.logger available automatically from s```
+        # self.logger available automatically from s
+        ```
 **Benefits**:
 
 - Automatic logger injection
@@ -285,7 +292,8 @@ def parse(
     if paginate and isinstance(source, list):
         ...
         # 35 lines
-    # 40 lines single source```
+    # 40 lines single source
+    ```
 **After** (80 lines with pattern matching):
 
 ```python
@@ -311,7 +319,8 @@ def parse(
         case "single":
             return self._client.parse_ldif(source, server_type)
         case _:
-            return r.fail(f"Invalid mode: {mode}")```
+            return r.fail(f"Invalid mode: {mode}")
+            ```
 **Benefits**:
 
 - Clearer intent
@@ -323,14 +332,16 @@ def parse(
 
 **Action**: Flatten test structure to mirror module structure
 
-**Before**:```
+**Before**:
+```
 tests/unit/
 ├── rfc/
 ├── services/
 ├── acl/
 ├── schema/
 ├── entry/
-└── ...```
+└── ...
+```
 **After**:
 
 ```text

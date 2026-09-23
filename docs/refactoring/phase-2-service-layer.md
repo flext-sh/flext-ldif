@@ -14,14 +14,6 @@
   - [Phase 2.D: Create EntryTransformationService](#phase-2d-create-entrytransformationservice)
   - [Phase 2.E: Create ServerConfig Abstraction](#phase-2e-create-serverconfig-abstraction)
   - [Phase 2.F: Integrate Services into Servers](#phase-2f-integrate-services-into-servers)
-- [Service Composition Pattern](#service-composition-pattern)
-- [Migration Path](#migration-path)
-  - [Step 1: Create ServiceConfig abstraction](#step-1-create-serviceconfig-abstraction)
-  - [Step 2: Create services with new functionality](#step-2-create-services-with-new-functionality)
-  - [Step 3: Integrate services gradually](#step-3-integrate-services-gradually)
-  - [Step 4: Deprecate nested classes](#step-4-deprecate-nested-classes)
-- [Success Criteria](#success-criteria)
-- [Related Documentation](#related-documentation)
 
 <!-- TOC END -->
 
@@ -239,7 +231,8 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         self.entry_service = FlextLdifEntryService(self.settings)
 
     def parse_attribute(self, attr_def):
-        return self.schema_service.parse_attribute(attr_def)```
+        return self.schema_service.parse_attribute(attr_def)
+        ```
 ______________________________________________________________________
 
 ## Service Composition Pattern
@@ -263,7 +256,8 @@ class FlextLdifServiceComposer:
 
 # Usage in servers
 services = FlextLdifServiceComposer.create_services(self.settings)
-attribute = services.schema.parse_attribute(attr_def)```
+attribute = services.schema.parse_attribute(attr_def)
+```
 ______________________________________________________________________
 
 ## Migration Path

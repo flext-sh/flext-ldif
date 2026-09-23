@@ -18,7 +18,7 @@
 - [5. INTEGRATION POINTS](#5-integration-points)
   - [FlextLdifCategorizedMigrationPipeline](#flextldifcategorizedmigrationpipeline)
   - [ldif High-Level API](#ldif-high-level-api)
-- [6. CURRENT DATA FLOW```](#6-current-data-flow)
+- [6. CURRENT DATA FLOW](#6-current-data-flow)
 - [7. AFFECTED CODE LOCATIONS (SUMMARY)](#7-affected-code-locations-summary)
   - [Must Be Updated (High Impact)](#must-be-updated-high-impact)
   - [Should Review (Medium Impact)](#should-review-medium-impact)

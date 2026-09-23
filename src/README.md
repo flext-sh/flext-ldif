@@ -99,7 +99,7 @@ src/flext_ldif/
 ### User Interfaces
 
 - **`cli.py`**: Command-line interface
-- **`__init__.py`**: Public API exports
+- runtime_bootstrap_options
 
 ### Cross-cutting Concerns
 

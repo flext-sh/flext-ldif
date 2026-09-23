@@ -4,18 +4,15 @@
 
 - [Common Issues and Solutions](#common-issues-and-solutions)
   - [Parse Errors](#parse-errors)
-  - [Memory Issues](#memory-issues)
-  - [Validation Errors](#validation-errors)
-  - [Performance Issues](#performance-issues)
   - [Integration Issues](#integration-issues)
 - [Diagnostic Tools](#diagnostic-tools)
   - [Health Check Utility](#health-check-utility)
-  - [Debug Mode Configuration](#debug-mode-configuration)
 - [Getting Help](#getting-help)
   - [Support Resources](#support-resources)
   - [Creating Support Requests](#creating-support-requests)
   - [Emergency Contacts](#emergency-contacts)
-  <!-- TOC END -->
+
+<!-- TOC END -->
 
 **Version**: 0.12.0-dev | **Updated**: April 14, 2026
 

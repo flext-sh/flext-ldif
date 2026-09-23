@@ -77,7 +77,7 @@ tests/integration/
 These tests validate core LDIF functionality across all server types using centralized
 fixtures.
 
-**test_roundtrip_deep_validation.py** (9 tests)
+runtime_bootstrap_options
 
 - Tests: parse → write → parse roundtrips
 - Coverage: Single/multiple entries, multi-valued attributes, special characters,
@@ -85,14 +85,14 @@ fixtures.
 - Parametrized: OID and OUD schema/integration fixtures
 - Validates: Deep content preservation (not just entry counts)
 
-**test_rfc_compliance_validation.py** (15 tests)
+runtime_bootstrap_options
 
 - Tests: RFC 2849 (LDIF format) and RFC 4512 (schema) compliance
 - Coverage: DN syntax (RFC 4514), LDIF format rules, attribute encoding, line length
   limits
 - Validates: Strict RFC compliance for all operations
 
-**test_systematic_fixture_coverage.py** (10 tests)
+runtime_bootstrap_options
 
 - Tests: All server types × all fixture types (coverage matrix)
 - Coverage:
@@ -143,7 +143,7 @@ fixtures.
 - Tests: Oracle Unified Directory specific features
 - Uses: OUD-specific fixtures and OUD servers
 
-**test_cross_server_conversion.py**
+runtime_bootstrap_options
 
 - Tests: Server-to-server conversion (OID ↔ OUD)
 - Validates: Data integrity during server-specific transformations
@@ -152,32 +152,32 @@ fixtures.
 
 These tests require a running LDAP container (Docker).
 
-**test_real_ldap_export.py**
+runtime_bootstrap_options
 
 - Tests: Export entries from real LDAP container
 - Validates: Container connectivity and export integrity
 
-**test_real_ldap_import.py**
+runtime_bootstrap_options
 
 - Tests: Import LDIF entries into real LDAP container
 - Validates: Import success and consistency
 
-**test_real_ldap_roundtrip.py**
+runtime_bootstrap_options
 
 - Tests: LDAP → LDIF → LDAP roundtrip
 - Validates: Complete roundtrip data integrity
 
-**test_real_ldap_validation.py**
+runtime_bootstrap_options
 
 - Tests: Validation and modification operations
 - Validates: Entry consistency and constraints
 
-**test_real_ldap_crud.py**
+runtime_bootstrap_options
 
 - Tests: Create, read, update, delete operations
 - Validates: CRUD operation completeness
 
-**test_real_ldap_config.py**
+runtime_bootstrap_options
 
 - Tests: Configuration and setup operations
 - Validates: Configuration consistency
@@ -515,11 +515,10 @@ make test
 
 ### Step 1: Choose Test Location
 
-- **Validation Logic**: Add to `test_roundtrip_deep_validation.py` or
-  `test_rfc_compliance_validation.py`
+- runtime_bootstrap_options
 - **Error Handling**: Add to `test_error_recovery.py`
 - **Edge Cases**: Add to `test_edge_cases.py`
-- **Server-Specific**: Add to `test_oid_integration.py`, `test_oud_integration.py`, etc.
+- runtime_bootstrap_options
 - **New Category**: Create new test file `test_my_feature.py`
 
 ### Step 2: Use Centralized Fixtures

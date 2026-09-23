@@ -72,6 +72,8 @@ if TYPE_CHECKING:
     from .shared import FlextLdifShared
     from .typings import FlextLdifTypes, t
     from .utilities import FlextLdifUtilities, u
+
+
 __all__: tuple[str, ...] = (
     "FlextLdif",
     "FlextLdifAcl",
