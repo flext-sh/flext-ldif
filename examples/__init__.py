@@ -9,9 +9,7 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_cli import cli, core, d, e, h, lazy_attribute, r, services, x
-
-    from flext_ldif import c, config, ldif, m, main, p, s, settings, t, u
+    from flext_ldif import c, d, e, h, m, p, r, s, t, u, x
 
     from .constants import ExamplesFlextLdifConstants
     from .models import ExamplesFlextLdifModels
@@ -27,21 +25,13 @@ __all__: tuple[str, ...] = (
     "ExamplesFlextLdifTypes",
     "ExamplesFlextLdifUtilities",
     "c",
-    "cli",
-    "config",
-    "core",
     "d",
     "e",
     "h",
-    "lazy_attribute",
-    "ldif",
     "m",
-    "main",
     "p",
     "r",
     "s",
-    "services",
-    "settings",
     "t",
     "u",
     "x",
@@ -55,29 +45,7 @@ _LAZY_IMPORTS = MappingProxyType(
             ".protocols": ("ExamplesFlextLdifProtocols",),
             ".typings": ("ExamplesFlextLdifTypes",),
             ".utilities": ("ExamplesFlextLdifUtilities",),
-            "flext_cli": (
-                "cli",
-                "core",
-                "d",
-                "e",
-                "h",
-                "lazy_attribute",
-                "r",
-                "services",
-                "x",
-            ),
-            "flext_ldif": (
-                "c",
-                "config",
-                "ldif",
-                "m",
-                "main",
-                "p",
-                "s",
-                "settings",
-                "t",
-                "u",
-            ),
+            "flext_ldif": ("c", "d", "e", "h", "m", "p", "r", "s", "t", "u", "x"),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
