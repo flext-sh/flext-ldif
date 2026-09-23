@@ -86,8 +86,10 @@ class FlextLdifDetector(s):
                 return r[m.Ldif.ServerDetectionResult].fail_op(
                     "read detection source", read.error
                 )
-            ldif_content = read.value
-        lines = ldif_content.splitlines()
+            resolved_content: str = read.value
+        else:
+            resolved_content = ldif_content
+        lines = resolved_content.splitlines()
         content_sample = "\n".join(lines[:max_lines])
         scores_dict = self._calculate_scores(content_sample)
         detected_type_raw, confidence = self._determine_server_type(scores_dict)
