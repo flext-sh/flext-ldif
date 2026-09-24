@@ -6,17 +6,19 @@ from typing import Literal
 
 from flext_tests import FlextTestsTypes
 
-from flext_ldif import t
+from flext_ldif import FlextLdifTypes
 
 
-class TestsFlextLdifTypes(FlextTestsTypes, t):
+class TestsFlextLdifTypes(FlextTestsTypes, FlextLdifTypes):
     """Test types extending TestsFlextTypes and t."""
 
     class Tests(FlextTestsTypes.Tests):
         """flext-ldif-specific test type definitions namespace."""
 
-        type GenericFieldsDict = t.StrMapping
-        type DnRefData = t.MappingKV[str, t.StrMapping | t.StrSequence | str]
+        type GenericFieldsDict = FlextLdifTypes.StrMapping
+        type DnRefData = FlextLdifTypes.MappingKV[
+            str, FlextLdifTypes.StrMapping | FlextLdifTypes.StrSequence | str
+        ]
         type FixtureServer = str
         type FixtureKind = str
         type ParseMethod = Literal[

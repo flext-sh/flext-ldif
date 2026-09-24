@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import Annotated, ClassVar
 
-from flext_cli import m, t, u
+from flext_cli import FlextCliModels, t, u
 
 from ._models.base import FlextLdifModelsBases
 from ._models.collections import FlextLdifModelsCollections
@@ -23,7 +23,7 @@ from ._models.results import FlextLdifModelsResults
 from ._models.settings import FlextLdifModelsSettings
 
 
-class FlextLdifModels(m):
+class FlextLdifModels(FlextCliModels):
     """LDIF domain models — flat façade with MRO class inheritance.
 
     Architecture: Domain layer helper
@@ -46,15 +46,17 @@ class FlextLdifModels(m):
         # COMPOSITE MODELS — defined here, not in models
         # =================================================================
 
-        class Stats(m.BaseModel):
+        class Stats(FlextCliModels.BaseModel):
             """Write statistics for batch content operations."""
 
-            model_config: ClassVar[m.ConfigDict] = m.ConfigDict(validate_default=True)
+            model_config: ClassVar[FlextCliModels.ConfigDict] = (
+                FlextCliModels.ConfigDict(validate_default=True)
+            )
             total_entries: Annotated[t.NonNegativeInt, u.Field()] = 0
             successful: Annotated[t.NonNegativeInt, u.Field()] = 0
             failed: Annotated[t.NonNegativeInt, u.Field()] = 0
 
-        class OidAclMetadataConfig(m.BaseModel):
+        class OidAclMetadataConfig(FlextCliModels.BaseModel):
             """Configuration model for OID ACL metadata parsing."""
 
             acl_line: Annotated[str, u.Field()] = ""
