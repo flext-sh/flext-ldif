@@ -9,29 +9,7 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_cli import cli
-    from flext_tests import (
-        api,
-        config,
-        core,
-        d,
-        e,
-        h,
-        install_local_packages,
-        lazy_attribute,
-        load_infra_report,
-        r,
-        services,
-        settings,
-        td,
-        tf,
-        tk,
-        tm,
-        tv,
-        x,
-    )
-
-    from flext_ldif import ldif, main
+    from flext_tests import api, d, e, h, r, td, tf, tk, tm, tv, x
 
     from . import integration, unit
     from .base import TestsFlextLdifServiceBase, TestsFlextLdifServiceBase as s
@@ -53,24 +31,14 @@ __all__: tuple[str, ...] = (
     "TestsFlextLdifUtilities",
     "api",
     "c",
-    "cli",
-    "config",
-    "core",
     "d",
     "e",
     "h",
-    "install_local_packages",
     "integration",
-    "lazy_attribute",
-    "ldif",
-    "load_infra_report",
     "m",
-    "main",
     "p",
     "r",
     "s",
-    "services",
-    "settings",
     "t",
     "td",
     "tf",
@@ -94,21 +62,12 @@ _LAZY_IMPORTS = MappingProxyType(
             ".typings": ("TestsFlextLdifTypes", "t"),
             ".unit": ("unit",),
             ".utilities": ("TestsFlextLdifUtilities", "u"),
-            "flext_cli": ("cli",),
-            "flext_ldif": ("ldif", "main"),
             "flext_tests": (
                 "api",
-                "config",
-                "core",
                 "d",
                 "e",
                 "h",
-                "install_local_packages",
-                "lazy_attribute",
-                "load_infra_report",
                 "r",
-                "services",
-                "settings",
                 "td",
                 "tf",
                 "tk",
