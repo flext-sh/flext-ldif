@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
+<<<<<<< HEAD
     from flext_cli import cli
 
     from flext_core import (
@@ -23,6 +24,9 @@ if TYPE_CHECKING:
         x,
     )
     from flext_ldif import c, config, ldif, m, main, p, s, settings, t, u
+=======
+    from flext_ldif import c, d, e, h, m, p, r, s, t, u, x
+>>>>>>> recovery/rope-automation-20260921
 
     from .constants import ExamplesFlextLdifConstants
     from .models import ExamplesFlextLdifModels
@@ -38,12 +42,10 @@ __all__: tuple[str, ...] = (
     "ExamplesFlextLdifTypes",
     "ExamplesFlextLdifUtilities",
     "c",
-    "cli",
-    "config",
-    "core",
     "d",
     "e",
     "h",
+<<<<<<< HEAD
     "lazy",
     "lazy_attribute",
     "ldif",
@@ -54,6 +56,12 @@ __all__: tuple[str, ...] = (
     "r",
     "s",
     "settings",
+=======
+    "m",
+    "p",
+    "r",
+    "s",
+>>>>>>> recovery/rope-automation-20260921
     "t",
     "u",
     "x",
@@ -67,6 +75,7 @@ _LAZY_IMPORTS = MappingProxyType(
             ".protocols": ("ExamplesFlextLdifProtocols",),
             ".typings": ("ExamplesFlextLdifTypes",),
             ".utilities": ("ExamplesFlextLdifUtilities",),
+<<<<<<< HEAD
             "flext_cli": ("cli",),
             "flext_core": (
                 "core",
@@ -91,6 +100,9 @@ _LAZY_IMPORTS = MappingProxyType(
                 "t",
                 "u",
             ),
+=======
+            "flext_ldif": ("c", "d", "e", "h", "m", "p", "r", "s", "t", "u", "x"),
+>>>>>>> recovery/rope-automation-20260921
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
