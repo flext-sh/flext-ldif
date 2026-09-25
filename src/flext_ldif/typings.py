@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from flext_cli import t
+from flext_cli import FlextCliTypes
 
 from ._typings.base import FlextLdifTypesBase
 from ._typings.domain import FlextLdifTypesDomain
 
 
-class FlextLdifTypes(t):
+class FlextLdifTypes(FlextCliTypes):
     """LDIF domain types extending flext-core FlextTypes."""
 
     class Ldif(FlextLdifTypesDomain, FlextLdifTypesBase):

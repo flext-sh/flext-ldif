@@ -33,6 +33,9 @@ class FlextLdifUtilitiesOID:
         Returns:
             True if OID matches pattern, False otherwise.
 
+        Raises:
+            ValueError: The definition has no leading OID to match.
+
         """
         oid_result = FlextLdifUtilitiesOID.extract_from_definition(definition)
         if oid_result.failure:

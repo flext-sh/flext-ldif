@@ -5,17 +5,18 @@ from __future__ import annotations
 import importlib
 import inspect
 
-from flext_ldif import FlextLdifServersOidConstants, FlextLdifServersRfc
+from flext_ldif import FlextLdifServersOid, FlextLdifServersRfc
 
 
 class TestsFlextLdifLazyServerExports:
     """Exercise the generated server namespace through its exported classes."""
 
-    def test_oid_namespace_resolves_the_parent_rfc_export(self) -> None:
-        """The generated parent-relative RFC export resolves to its public owner."""
-        constants_module = inspect.getmodule(FlextLdifServersOidConstants)
-        assert constants_module is not None
-        package_name = constants_module.__package__
+    def test_server_namespace_resolves_oid_and_rfc_owners(self) -> None:
+        """The public server package exports canonical classes, not private aliases."""
+        oid_module = inspect.getmodule(FlextLdifServersOid)
+        assert oid_module is not None
+        package_name = oid_module.__package__
         assert package_name is not None
         server_namespace = importlib.import_module(package_name)
-        assert server_namespace.fsr is FlextLdifServersRfc
+        assert server_namespace.FlextLdifServersOid is FlextLdifServersOid
+        assert server_namespace.FlextLdifServersRfc is FlextLdifServersRfc

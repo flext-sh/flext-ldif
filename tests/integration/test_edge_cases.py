@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 _ZERO_WIDTH = "zero" + "\u200b" + "width" + "\u200b" + "spaces"
 
 
-class TestsFlextLdifEdgeCases:
+class TestsFlextLdifIntegrationEdgeCases:
     """Behavioral edge-case coverage for the public LDIF client contract."""
 
     @pytest.fixture
@@ -287,4 +287,4 @@ class TestsFlextLdifEdgeCases:
         tm.that(roundtrip_dns, eq=original_dns)
 
 
-__all__: list[str] = ["TestsFlextLdifEdgeCases"]
+__all__: list[str] = ["TestsFlextLdifIntegrationEdgeCases"]

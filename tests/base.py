@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_tests import s as tests_s
+from flext_tests import FlextTestsServiceBase
 
 from flext_ldif import m
 from tests.settings import TestsFlextLdifSettings
 
 
-class TestsFlextLdifServiceBase(tests_s):
+class TestsFlextLdifServiceBase(FlextTestsServiceBase):
     """LDIF test service base with source and test settings namespaces."""
 
     @classmethod

@@ -22,7 +22,7 @@ from tests import c, m
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from . import t
+    from tests import t
 
 
 class TestsFlextLdifMigrationPipelineServers:

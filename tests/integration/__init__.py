@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from .test_cross_direction_conversion import TestsFlextLdifCrossDirectionConversion
     from .test_cross_server_conversion import TestsFlextLdifCrossServerConversion
     from .test_dn_case_handling import TestsFlextLdifDnCaseHandling
-    from .test_edge_cases import TestsFlextLdifEdgeCases
+    from .test_edge_cases import TestsFlextLdifIntegrationEdgeCases
     from .test_error_recovery import TestsFlextLdifErrorRecovery
     from .test_minimal_differences_metadata import (
         TestsFlextLdifMinimalDifferencesMetadata,
@@ -33,8 +33,8 @@ __all__: tuple[str, ...] = (
     "TestsFlextLdifCrossDirectionConversion",
     "TestsFlextLdifCrossServerConversion",
     "TestsFlextLdifDnCaseHandling",
-    "TestsFlextLdifEdgeCases",
     "TestsFlextLdifErrorRecovery",
+    "TestsFlextLdifIntegrationEdgeCases",
     "TestsFlextLdifMinimalDifferencesMetadata",
     "TestsFlextLdifOidIntegration",
     "TestsFlextLdifOudIntegration",
@@ -54,7 +54,7 @@ _LAZY_IMPORTS = MappingProxyType(
             ),
             ".test_cross_server_conversion": ("TestsFlextLdifCrossServerConversion",),
             ".test_dn_case_handling": ("TestsFlextLdifDnCaseHandling",),
-            ".test_edge_cases": ("TestsFlextLdifEdgeCases",),
+            ".test_edge_cases": ("TestsFlextLdifIntegrationEdgeCases",),
             ".test_error_recovery": ("TestsFlextLdifErrorRecovery",),
             ".test_minimal_differences_metadata": (
                 "TestsFlextLdifMinimalDifferencesMetadata",
