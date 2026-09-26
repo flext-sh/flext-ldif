@@ -24,7 +24,7 @@ from flext_ldif import m
 from flext_ldif.servers.oid import FlextLdifServersOidAclConvert as Parser
 
 if TYPE_CHECKING:
-    from .. import t
+    from tests import t
 
 _DN: str = "dc=ctbc"
 
