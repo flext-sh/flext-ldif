@@ -57,7 +57,7 @@ verification).
   classes listed under Module Map above.
 - Public extensions exposed by this project: `FlextLdif`, `FlextLdifAcl`,
   `FlextLdifAnalysis`, `FlextLdifCategorization`, `FlextLdifConfig`,
-  `FlextLdifConstants` (+38 more).
+  `FlextLdifConstants` (+43 more).
 - Library abstraction boundaries: see AGENTS.md §2.7.
 
 ## Quality Gates
