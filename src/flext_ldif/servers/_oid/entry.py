@@ -338,12 +338,11 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         if not entry.attributes:
             return r[m.Ldif.Entry].ok(entry)
         normalized_attrs = entry.attributes.attributes
-        if not entry.metadata:
-            entry.metadata = u.Ldif.server_metadata_for(c.Ldif.ServerTypes.OID)
-        elif entry.metadata.server_type != c.Ldif.ServerTypes.OID:
-            entry.metadata = entry.metadata.model_copy(
-                update={"server_type": c.Ldif.ServerTypes.OID}
-            )
+        metadata_values = dict(entry.metadata) if entry.metadata is not None else {}
+        entry.metadata = m.Ldif.ServerMetadata.model_validate({
+            **metadata_values,
+            "server_type": c.Ldif.ServerTypes.OID,
+        })
         current_extensions: t.Ldif.MutableMetadataMapping = (
             dict(entry.metadata.extensions) if entry.metadata.extensions else {}
         )
