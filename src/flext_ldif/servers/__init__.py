@@ -16,11 +16,6 @@ if TYPE_CHECKING:
     from ._base.schema import FlextLdifServersBaseSchema
     from ._base.server_constants import FlextLdifServersBaseConstants
     from ._oid.acl import FlextLdifServersOidAcl
-    from ._oid.acl_assemble import FlextLdifServersOidAclAssemble
-    from ._oid.acl_convert import FlextLdifServersOidAclConvert
-    from ._oid.acl_convert_oud import FlextLdifServersOidAclToOud
-    from ._oid.acl_pipeline import FlextLdifServersOidAclPipeline
-    from ._oid.acl_render import FlextLdifServersOidAclRender
     from ._oud.aci import FlextLdifServersOudAciMixin
     from ._oud.acl import FlextLdifServersOudAcl
     from ._oud.acl_extract import FlextLdifServersOudAclExtractMixin
@@ -42,6 +37,11 @@ if TYPE_CHECKING:
     from .ds389 import FlextLdifServersDs389
     from .oid import (
         FlextLdifServersOid,
+        FlextLdifServersOidAclAssemble,
+        FlextLdifServersOidAclConvert,
+        FlextLdifServersOidAclPipeline,
+        FlextLdifServersOidAclRender,
+        FlextLdifServersOidAclToOud,
         FlextLdifServersOidConstants,
         FlextLdifServersOidEntry,
         FlextLdifServersOidSchema,
@@ -110,11 +110,6 @@ _LAZY_IMPORTS = MappingProxyType(
             "._base.server_constants": ("FlextLdifServersBaseConstants",),
             "._oid": ("_oid",),
             "._oid.acl": ("FlextLdifServersOidAcl",),
-            "._oid.acl_assemble": ("FlextLdifServersOidAclAssemble",),
-            "._oid.acl_convert": ("FlextLdifServersOidAclConvert",),
-            "._oid.acl_convert_oud": ("FlextLdifServersOidAclToOud",),
-            "._oid.acl_pipeline": ("FlextLdifServersOidAclPipeline",),
-            "._oid.acl_render": ("FlextLdifServersOidAclRender",),
             "._oud": ("_oud",),
             "._oud.aci": ("FlextLdifServersOudAciMixin",),
             "._oud.acl": ("FlextLdifServersOudAcl",),
@@ -138,6 +133,11 @@ _LAZY_IMPORTS = MappingProxyType(
             ".ds389": ("FlextLdifServersDs389",),
             ".oid": (
                 "FlextLdifServersOid",
+                "FlextLdifServersOidAclAssemble",
+                "FlextLdifServersOidAclConvert",
+                "FlextLdifServersOidAclPipeline",
+                "FlextLdifServersOidAclRender",
+                "FlextLdifServersOidAclToOud",
                 "FlextLdifServersOidConstants",
                 "FlextLdifServersOidEntry",
                 "FlextLdifServersOidSchema",

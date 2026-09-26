@@ -31,17 +31,11 @@ class ExampleServerMigration:
                 return f"dn: cn=Group{i},ou=Groups,dc=example,dc=com\nobjectClass: groupOfUniqueNames\ncn: Group{i}\nuniquemember: cn=User{i},ou=People,dc=example,dc=com\norclguid: group{i}guid123\n"
             return f'dn: cn=User{i},ou=People,dc=example,dc=com\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: User{i}\nsn: TestUser{i}\nmail: user{i}@example.com\norclguid: user{i}guid456\naci: (target="ldap:///cn=User{i}")(version 3.0; acl "self"; allow (all) userdn="ldap:///self";)\n'
 
-        batch_result = u.process(list(range(20)), create_entry_data, on_error="skip")
-        source_data: MutableSequence[str] = []
-        if batch_result.success:
-            source_data = list(batch_result.value)
-
-        def write_file(item: tuple[int, str]) -> None:
-            """Write entry to file."""
-            i, entry = item
+        source_data: MutableSequence[str] = list(
+            u.process(list(range(20)), create_entry_data).unwrap()
+        )
+        for i, entry in enumerate(source_data):
             (source_dir / f"data_{i:02d}.ldif").write_text(entry)
-
-        _ = u.process(list(enumerate(source_data)), write_file, on_error="skip")
 
     @staticmethod
     def _detect_server_type(
@@ -70,13 +64,8 @@ class ExampleServerMigration:
         intermediate_dir = base_dir / "intermediate"
         final_dir = base_dir / "final"
 
-        def setup_dir(dir_path: Path) -> None:
-            """Create the directory."""
+        for dir_path in (source_dir, intermediate_dir, final_dir):
             dir_path.mkdir(exist_ok=True, parents=True)
-
-        _ = u.process(
-            [source_dir, intermediate_dir, final_dir], setup_dir, on_error="skip"
-        )
         return (source_dir, intermediate_dir, final_dir)
 
     @staticmethod

@@ -93,7 +93,7 @@ We will simplify flext-ldif through structural and architectural changes while
 
 **Before**:
 
-```
+```text
 src/flext_ldif/
 ├── rfc/
 │   ├── rfc_ldif_parser.py
@@ -110,7 +110,7 @@ src/flext_ldif/
 
 **After**:
 
-```
+```text
 src/flext_ldif/
 ├── rfc_ldif_parser.py
 ├── rfc_ldif_writer.py
@@ -140,12 +140,13 @@ src/flext_ldif/
 
 **Before**:
 
-````python
+```python
 from flext_ldif import ldif
 
 processor = ldif.processors  # Unnecessary wrapper
 result = processor.batch_process(entries, func)
 ```
+
 **After**:
 
 ```python
@@ -154,6 +155,7 @@ from flext_core import FlextProcessors
 processor = FlextProcessors()  # Direct usage
 result = processor.batch_process(entries, func)
 ```
+
 ### **3. Remove Wrapper Methods**
 
 **Action**: Delete 600+ lines of delegation methods from `api.py`
@@ -177,12 +179,14 @@ result = processor.batch_process(entries, func)
 dn = ldif.get_entry_dn(entry)  # Wrapper
 attrs = ldif.get_entry_attributes(entry)  # Wrapper
 ```
+
 **After**:
 
 ```python
 dn = entry.dn.value  # Direct
 attrs = entry.attributes.to_ldap3()  # Direct
 ```
+
 ### **4. Remove Property Accessors**
 
 **Action**: Delete 100+ lines of property wrappers
@@ -224,7 +228,8 @@ class RfcLdifParser:
     def parse(self, file_path: Path) -> p.Result[Sequence[Entry]]:
         """Parse LDIF with automatic logging and metrics."""
         # Implementation
-        ```
+```
+
 **Benefits**:
 
 - Automatic operation logging
@@ -253,7 +258,8 @@ from __future__ import annotations
 class FlextLdifDetector:
     def __init__(self):
         self._patterns = {...}
-        ```
+```
+
 **After**:
 
 ```python
@@ -268,7 +274,8 @@ class FlextLdifDetector(s):
     def execute(self, content: str) -> p.Result[dict]:
         self.logger.info("Detecting server type", extra={"size": len(content)})
         # self.logger available automatically from s
-        ```
+```
+
 **Benefits**:
 
 - Automatic logger injection
@@ -293,7 +300,8 @@ def parse(
         ...
         # 35 lines
     # 40 lines single source
-    ```
+```
+
 **After** (80 lines with pattern matching):
 
 ```python
@@ -320,7 +328,8 @@ def parse(
             return self._client.parse_ldif(source, server_type)
         case _:
             return r.fail(f"Invalid mode: {mode}")
-            ```
+```
+
 **Benefits**:
 
 - Clearer intent
@@ -333,7 +342,8 @@ def parse(
 **Action**: Flatten test structure to mirror module structure
 
 **Before**:
-```
+
+```text
 tests/unit/
 ├── rfc/
 ├── services/
@@ -342,6 +352,7 @@ tests/unit/
 ├── entry/
 └── ...
 ```
+
 **After**:
 
 ```text
@@ -351,7 +362,7 @@ tests/unit/
 ├── test_detector.py
 ├── test_acl_parser.py
 └── ...
-````
+```
 
 **Rationale**:
 

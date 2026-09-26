@@ -105,7 +105,7 @@ class TestsFlextLdifApiFreeze:
 
     def test_all_retains_the_consumer_facade_contract(self) -> None:
         """Generated exports retain required consumer names as the API grows."""
-        assert set(REQUIRED_PUBLIC_API) <= set(flext_ldif.__all__)
+        tm.that(set(REQUIRED_PUBLIC_API) - set(flext_ldif.__all__), eq=set())
 
     def test_all_entries_are_unique(self) -> None:
         """The advertised surface never lists a name twice."""

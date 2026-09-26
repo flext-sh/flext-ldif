@@ -26,7 +26,7 @@ general FLEXT patterns, see
 
 ### Core LDIF Operations with r
 
-````python
+```python
 from __future__ import annotations
 
 from flext_ldif import ldif, p
@@ -53,7 +53,7 @@ def process_directory_export(file_path: str) -> p.Result[dict]:
         # Add LDIF-specific error context
         .map_error(lambda error: f"LDIF directory processing failed: {error}")
     )
-
+```
 
 ### Memory-Aware LDIF Processing
 
@@ -78,13 +78,13 @@ def process_ldif_with_memory_check(file_path: Path) -> p.Result[m.Dict]:
         )
 
     return api.parse_file(file_path)
-````
+```
 
 ## Enterprise Directory Migration Integration
 
 ### FLEXT Oracle Unified Directory Migration
 
-````python
+```python
 from __future__ import annotations
 
 from pathlib import Path
@@ -220,7 +220,7 @@ class FLEXTOUDMigrationService:
             },
         )
         return report
-
+```
 
 ## LDIF-Specific Service Integration
 
@@ -249,7 +249,8 @@ class LdifAPIService(FlextAPIService):
         if content_size > max_size:
             return r[m.Dict].fail({
                 "status": "error",
-                "message": f"LDIF content too large ({content_size} bytes). Maximum: ...
+                "message": f"LDIF content too large ({content_size} bytes). "
+                f"Maximum: {max_size} bytes.",
                 "error_type": "memory_limit_exceeded",
             })
 
@@ -284,7 +285,7 @@ class LdifAPIService(FlextAPIService):
             "is_group": entry.is_group(),
             "attribute_count": len(entry.attributes),
         }
-````
+```
 
 ### LDIF CLI Service Integration
 
@@ -297,6 +298,7 @@ from flext_core import FlextSettings
 from flext_ldif import ldif
 from pathlib import Path
 
+
 class LdifCLIService(FlextCliService):
     """CLI service for LDIF operations with memory monitoring."""
 
@@ -304,7 +306,9 @@ class LdifCLIService(FlextCliService):
         super().__init__()
         self._ldif_api = ldif()
 
-    def parse_command(self, input_file: str, output_format: str = 'summary') -> p.Result[bool]:
+    def parse_command(
+        self, input_file: str, output_format: str = "summary"
+    ) -> p.Result[bool]:
         """CLI command for parsing LDIF files with size checking."""
         file_path = Path(input_file)
 
@@ -320,14 +324,15 @@ class LdifCLIService(FlextCliService):
             )
 
         return (
-            self._ldif_api.parse_file(file_path)
+            self._ldif_api
+            .parse_file(file_path)
             .flat_map(lambda entries: self._output_ldif_results(entries, output_format))
             .map_error(lambda error: f"LDIF CLI parse failed: {error}")
         )
 
     def _output_ldif_results(self, entries, format_type: str) -> p.Result[bool]:
         """Output LDIF parsing results in specified format."""
-        if format_type == 'summary':
+        if format_type == "summary":
             u.Cli.print(f"LDIF Processing Summary:")
             u.Cli.print(f"  Total entries: {len(entries)}")
 
@@ -343,20 +348,24 @@ class LdifCLIService(FlextCliService):
             u.Cli.print(f"  Person entries: {len(persons)}")
             u.Cli.print(f"  Group entries: {len(groups)}")
 
-            return r[bool].| ok(value=True)
-        elif format_type == 'json':
+            return r[bool].ok(value=True)
+        elif format_type == "json":
             import json
-            output = json.dumps([
-                {
-                    'dn': entry.dn,
-                    'object_classes': entry.get_object_classes(),
-                    'is_person': entry.is_person(),
-                    'is_group': entry.is_group()
-                }
-                for entry in entries
-            ], indent=2)
+
+            output = json.dumps(
+                [
+                    {
+                        "dn": entry.dn,
+                        "object_classes": entry.get_object_classes(),
+                        "is_person": entry.is_person(),
+                        "is_group": entry.is_group(),
+                    }
+                    for entry in entries
+                ],
+                indent=2,
+            )
             u.Cli.print(output)
-            return r[bool].| ok(value=True)
+            return r[bool].ok(value=True)
         else:
             return r[bool].fail(f"Unsupported LDIF output format: {format_type}")
 ```
@@ -365,7 +374,7 @@ class LdifCLIService(FlextCliService):
 
 ### Batch LDIF Processing
 
-````python
+```python
 from __future__ import annotations
 
 import os
@@ -420,7 +429,7 @@ def process_multiple_ldif_files(file_paths: t.SequenceOf[Path]) -> p.Result[m.Di
         },
         "entries": all_entries,
     })
-
+```
 
 ## LDIF Integration Best Practices
 
@@ -448,7 +457,7 @@ def safe_ldif_processing(file_path: Path) -> p.Result[list]:
 
     api = ldif()
     return api.parse_file(file_path)
-
+```
 
 ### 2. LDIF-Specific Error Handling
 
@@ -470,7 +479,7 @@ def robust_ldif_processing(content: str) -> p.Result[m.Dict]:
         return r[m.Dict].fail(f"Processing error: {error_msg}")
 
     return r[m.Dict].ok({"entries": result.unwrap()})
-````
+```
 
 ### 3. LDIF Entry Type Processing
 
