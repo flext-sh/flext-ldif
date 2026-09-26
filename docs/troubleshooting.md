@@ -74,14 +74,14 @@ def diagnose_ldif_format(content: str) -> None:
 
 **Symptom**: Parse fails with encoding-related errors.
 
-```python
+```text
 # Common encoding error
 UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 123
 ```
 
 **Solution**:
 
-````python
+```python
 from __future__ import annotations
 
 import pathlib
@@ -114,7 +114,7 @@ def parse_with_encoding_detection(file_path: str) -> p.Result[list]:
 
     api = ldif()
     return api.parse_string(content_result.unwrap())
-
+```
 
 ### Memory Issues
 
@@ -122,14 +122,14 @@ def parse_with_encoding_detection(file_path: str) -> p.Result[list]:
 
 **Symptom**: Application crashes or becomes unresponsive with large LDIF files.
 
-```python
+```text
 # Memory error when processing large files
 MemoryError: Unable to allocate array
-````
+```
 
 **Solution**:
 
-````python
+```python
 from __future__ import annotations
 
 import pathlib
@@ -207,7 +207,7 @@ def process_chunk(chunk_entries: list[str]) -> p.Result[bool]:
     api = ldif()
     result = api.parse_string(chunk_content)
     return result.map(lambda _: None)
-
+```
 
 ### Validation Errors
 
@@ -218,11 +218,11 @@ def process_chunk(chunk_entries: list[str]) -> p.Result[bool]:
 ```python
 result = api.validate_entries(entries)
 # Error: "Entry validation failed: unknown attribute 'customAttribute'"
-````
+```
 
 **Solution**:
 
-````python
+```python
 from __future__ import annotations
 
 from flext_ldif import FlextLdifModels, ldif, p, r
@@ -281,7 +281,7 @@ def analyze_entry_issues(entries: list) -> None:
         for attr_name, attr_values in entry.attributes.items():
             if not attr_values or any(not v.strip() for v in attr_values):
                 u.Cli.print(f"  ⚠️  Empty values in attribute '{attr_name}'")
-
+```
 
 ### Performance Issues
 
@@ -328,7 +328,7 @@ def benchmark_processing(file_path: str) -> None:
             u.Cli.print(f"Validation failed: {validation_result.error}")
     else:
         u.Cli.print(f"Parsing failed: {parse_result.error}")
-
+```
 
 **Optimization**:
 
@@ -354,7 +354,7 @@ def process_with_optimization(file_path: str) -> p.Result[m.Dict]:
     return api.parse_file(file_path).map(
         lambda entries: {"entry_count": len(entries), "processing_optimized": True}
     )
-````
+```
 
 ### Integration Issues
 
@@ -501,7 +501,7 @@ def debug_railway_chain(file_path: str) -> p.Result[list]:
 
 ### Health Check Utility
 
-````python
+```python
 from __future__ import annotations
 
 
@@ -592,7 +592,7 @@ def print_health_check_report() -> None:
 
     u.Cli.print()
     u.Cli.print("For additional help, see: docs/troubleshooting.md")
-
+```
 
 ### Debug Mode Configuration
 
@@ -621,7 +621,7 @@ def enable_debug_mode() -> FlextLdif:
     u.Cli.print("  - Verbose logging enabled")
 
     return api
-````
+```
 
 ## Getting Help
 

@@ -147,7 +147,7 @@ src/flext_ldif/
 # Simplified public interface
 
 
-````
+```
 
 ## Future Architecture Migration
 
@@ -189,3 +189,4 @@ When contributing to the source code:
 - **[Module Organization](../docs/standards/python-module-organization.md)** - Detailed
   module standards
 - **[Development Guide](../AGENTS.md)** - Development patterns and practices
+````

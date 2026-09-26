@@ -96,7 +96,7 @@ class _ParserHelper:
 
 #### Working with LDIF Entries
 
-````python
+```python
 from flext_ldif import FlextLdifModels, ldif
 
 # LDIF entry creation using Factory pattern
@@ -118,7 +118,7 @@ result = api.parse_file("small_directory.ldif")
 
 # For larger files, consider external tools
 # grep "objectClass: person" large_directory.ldif | processing...
-
+```
 
 #### LDIF Validation Patterns
 
@@ -143,7 +143,7 @@ def validate_ldif_structure(
             return r[bool].fail(f"Missing objectClass in {entry.dn.value}")
 
     return r[bool].ok(value=True)
-
+```
 
 #### Memory-Conscious Processing
 
@@ -160,7 +160,7 @@ split -l 10000 large.ldif chunk_
 for chunk in chunk_*; do
     python process_ldif_chunk.py "$chunk"
 done
-````
+```
 
 ## Testing LDIF Functionality
 
@@ -197,7 +197,7 @@ def test_ldif_parsing():
 
 ### Memory Usage Testing
 
-````python
+```python
 from __future__ import annotations
 
 import os
@@ -220,7 +220,7 @@ def test_memory_usage():
     # Memory increase should be reasonable for file size
     file_size = pathlib.Path("test_data.ldif").stat().st_size
     assert memory_increase < file_size * 3  # Allow 3x overhead
-
+```
 
 ## Performance Considerations
 
@@ -264,7 +264,7 @@ def process_with_monitoring(file_path: str) -> p.Result[m.Dict]:
         return r[m.Dict].fail("File too large for current implementation")
 
     return process_small_ldif(file_path)
-
+```
 
 ## Contributing Guidelines
 
@@ -304,7 +304,7 @@ cn:: dXNlcg==
 ldif_with_url = """dn: cn=user,dc=example,dc=com
 photo:< file:///path/to/photo.jpg
 """
-````
+```
 
 ### Memory Debugging
 

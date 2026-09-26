@@ -383,7 +383,7 @@ class FlextLdifUtilitiesACL:
             Extracted component value or None if not found
 
         Example:
-            >>> pattern = r"targetattr\\\\s*=\\\\s*\\"([^\\"]+)\\""
+            >>> pattern = r"targetattr\s*=\s*\"([^\"]+)\""
             >>> extract_component(aci_content, pattern, group=1)
             "cn,mail,telephoneNumber"
 
