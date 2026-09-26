@@ -135,7 +135,7 @@ export FLEXT_LDIF_LOG_LEVEL=DEBUG
 
 ### Environment Configuration Loading
 
-````python
+```python
 from __future__ import annotations
 
 import os
@@ -158,7 +158,7 @@ def load_config_from_environment() -> FlextLdifSettings:
 # Use environment-based configuration
 settings = load_config_from_environment()
 api = ldif(settings=settings)
-
+```
 
 ## Configuration Scenarios
 
@@ -182,7 +182,7 @@ def create_development_config() -> FlextLdifModels.Config:
 
 # Development API instance
 dev_api = ldif(settings=create_development_config())
-````
+```
 
 ### Production Configuration
 
@@ -428,7 +428,7 @@ config_dict = {
 
 Validate configuration at application startup:
 
-````python
+```python
 from __future__ import annotations
 
 import os
@@ -447,7 +447,7 @@ def initialize_application_config() -> p.Result[ldif]:
         return r[ldif].ok(api)
     except Exception as e:
         return r[ldif].fail(f"Configuration initialization failed: {e}")
-
+```
 
 ### 3. Use Environment-Specific Profiles
 
@@ -472,7 +472,7 @@ def get_environment_config(environment: str) -> FlextLdifModels.Config:
 env = os.getenv("ENVIRONMENT", "development")
 settings = get_environment_config(env)
 api = ldif(settings=settings)
-````
+```
 
 ### 4. Document Configuration Changes
 
