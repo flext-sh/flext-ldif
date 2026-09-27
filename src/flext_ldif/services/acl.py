@@ -102,12 +102,8 @@ class FlextLdifAcl(s):
             for acl_value in u.Ldif.get_attribute_values(entry, attribute_name):
                 parse_result = acl_server.parse_server(acl_value)
                 if parse_result.failure:
-                    return r[m.Ldif.AclResponse].fail(
-                        parse_result.error,
-                        error_code=parse_result.error_code,
-                        error_data=parse_result.error_data,
-                        exception=parse_result.exception,
-                    )
+                    return r[m.Ldif.AclResponse].from_failure(parse_result)
+                
                 acls.append(parse_result.value)
         return r[m.Ldif.AclResponse].ok(
             m.Ldif.AclResponse(
