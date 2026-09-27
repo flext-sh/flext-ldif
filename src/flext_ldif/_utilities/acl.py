@@ -8,7 +8,7 @@ from typing import ClassVar, TypeIs
 from flext_cli import u
 
 from flext_core import r
-from flext_ldif import c, m, p, t
+from flext_ldif import FlextLdifShared, c, m, p, t
 
 from .metadata import FlextLdifUtilitiesMetadata as um
 
@@ -35,8 +35,8 @@ class FlextLdifUtilitiesACL:
         "aclEntry",
     )
     _GENERIC_ACL_ATTRIBUTES: t.StrSequence = ("aci", "acl")
-    _OID_ACL_ATTRIBUTES: t.StrSequence = (*c.Ldif.ACL_ATTR_NAMES, "acl")
-    _OUD_ACL_ATTRIBUTES: t.StrSequence = tuple(c.Ldif.ACL_ATTR_NAMES)
+    _OID_ACL_ATTRIBUTES: t.StrSequence = (*sorted(c.Ldif.ACL_ATTR_NAMES), "acl")
+    _OUD_ACL_ATTRIBUTES: t.StrSequence = tuple(sorted(c.Ldif.ACL_ATTR_NAMES))
     _AD_ACL_ATTRIBUTES: t.StrSequence = ("nTSecurityDescriptor", "aci")
     _ACL_ATTRIBUTES_BY_SERVER_TYPE: t.MappingKV[c.Ldif.ServerTypes, t.StrSequence] = (
         MappingProxyType({
@@ -549,11 +549,7 @@ class FlextLdifUtilitiesACL:
         elif isinstance(server_type, c.Ldif.ServerTypes):
             normalized_server_type = server_type
         else:
-            key = server_type.lower().strip()
-            normalized_server_type = next(
-                (st for st in c.Ldif.ServerTypes if st.value == key),
-                c.Ldif.SERVER_TYPE_ALIASES.get(key),
-            )
+            normalized_server_type = FlextLdifShared.normalize_server_type(server_type)
         attributes = (
             FlextLdifUtilitiesACL._GENERIC_ACL_ATTRIBUTES
             if normalized_server_type is None
