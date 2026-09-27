@@ -6,18 +6,18 @@ import re
 from enum import StrEnum, unique
 from pathlib import Path
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Final, Literal
+from typing import TYPE_CHECKING, ClassVar, Final, Literal
 
 from flext_tests import FlextTestsConstants
 
-from flext_ldif import c
+from flext_ldif import FlextLdifConstants
 from tests import m
 
 if TYPE_CHECKING:
     from tests import t
 
 
-class TestsFlextLdifConstants(FlextTestsConstants, c):
+class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
     """Flat test constants for flext-ldif."""
 
     class Ldap:
@@ -49,28 +49,28 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
     class Tests(FlextTestsConstants.Tests):
         """LDIF test constants namespace."""
 
-        FIXTURES_DIR: Final[Path] = Path(__file__).parent / "fixtures"
-        PROJECT_ROOT: Final[Path] = Path(__file__).resolve().parents[1]
+        FIXTURES_DIR: ClassVar[Path] = Path(__file__).parent / "fixtures"
+        PROJECT_ROOT: ClassVar[Path] = Path(__file__).resolve().parents[1]
 
-        RFC: Final[str] = c.Ldif.ServerTypes.RFC.value
-        OID: Final[str] = c.Ldif.ServerTypes.OID.value
-        OUD: Final[str] = c.Ldif.ServerTypes.OUD.value
-        OPENLDAP: Final[str] = c.Ldif.ServerTypes.OPENLDAP.value
-        OPENLDAP1: Final[str] = c.Ldif.ServerTypes.OPENLDAP1.value
-        GENERIC: Final[str] = c.Ldif.ServerTypes.GENERIC.value
-        DS389: Final[str] = c.Ldif.ServerTypes.DS389.value
-        APACHE: Final[str] = c.Ldif.ServerTypes.APACHE.value
-        NOVELL: Final[str] = c.Ldif.ServerTypes.NOVELL.value
-        TIVOLI: Final[str] = c.Ldif.ServerTypes.IBM_TIVOLI.value
-        AD: Final[str] = c.Ldif.ServerTypes.AD.value
+        RFC: ClassVar[str] = FlextLdifConstants.Ldif.ServerTypes.RFC.value
+        OID: ClassVar[str] = FlextLdifConstants.Ldif.ServerTypes.OID.value
+        OUD: ClassVar[str] = FlextLdifConstants.Ldif.ServerTypes.OUD.value
+        OPENLDAP: ClassVar[str] = FlextLdifConstants.Ldif.ServerTypes.OPENLDAP.value
+        OPENLDAP1: ClassVar[str] = FlextLdifConstants.Ldif.ServerTypes.OPENLDAP1.value
+        GENERIC: ClassVar[str] = FlextLdifConstants.Ldif.ServerTypes.GENERIC.value
+        DS389: ClassVar[str] = FlextLdifConstants.Ldif.ServerTypes.DS389.value
+        APACHE: ClassVar[str] = FlextLdifConstants.Ldif.ServerTypes.APACHE.value
+        NOVELL: ClassVar[str] = FlextLdifConstants.Ldif.ServerTypes.NOVELL.value
+        TIVOLI: ClassVar[str] = FlextLdifConstants.Ldif.ServerTypes.IBM_TIVOLI.value
+        AD: ClassVar[str] = FlextLdifConstants.Ldif.ServerTypes.AD.value
 
-        SCHEMA: Final[str] = "schema"
-        ACL: Final[str] = "acl"
-        ENTRIES: Final[str] = "entries"
-        INTEGRATION: Final[str] = "integration"
-        FIXTURE_SERVERS_SCHEMA: Final[t.StrSequence] = (OID, OUD, OPENLDAP, RFC)
-        FIXTURE_SERVERS_COMMON: Final[t.StrSequence] = (OID, OUD, OPENLDAP)
-        FIXTURE_KIND_SERVERS: Final[t.MappingKV[str, t.StrSequence]] = (
+        SCHEMA: ClassVar[str] = "schema"
+        ACL: ClassVar[str] = "acl"
+        ENTRIES: ClassVar[str] = "entries"
+        INTEGRATION: ClassVar[str] = "integration"
+        FIXTURE_SERVERS_SCHEMA: ClassVar[t.StrSequence] = (OID, OUD, OPENLDAP, RFC)
+        FIXTURE_SERVERS_COMMON: ClassVar[t.StrSequence] = (OID, OUD, OPENLDAP)
+        FIXTURE_KIND_SERVERS: ClassVar[t.MappingKV[str, t.StrSequence]] = (
             MappingProxyType({
                 SCHEMA: FIXTURE_SERVERS_SCHEMA,
                 ACL: FIXTURE_SERVERS_COMMON,
@@ -78,55 +78,63 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                 INTEGRATION: FIXTURE_SERVERS_COMMON,
             })
         )
-        FIXTURE_KINDS: Final[frozenset[str]] = frozenset(FIXTURE_KIND_SERVERS.keys())
-        PARAMETRIZED_REAL_SERVERS: Final[t.StrSequence] = (OPENLDAP, AD, OID, OUD)
+        FIXTURE_KINDS: ClassVar[frozenset[str]] = frozenset(FIXTURE_KIND_SERVERS.keys())
+        PARAMETRIZED_REAL_SERVERS: ClassVar[t.StrSequence] = (OPENLDAP, AD, OID, OUD)
 
-        DOCKER_CONTAINER_NAME: Final[str] = "flext-openldap-test"
-        DOCKER_PORT: Final[int] = 3390
-        DOCKER_BASE_DN: Final[str] = "dc=flext,dc=local"
-        DOCKER_ADMIN_DN: Final[str] = "cn=admin,dc=flext,dc=local"
+        DOCKER_CONTAINER_NAME: ClassVar[str] = "flext-openldap-test"
+        DOCKER_PORT: ClassVar[int] = 3390
+        DOCKER_BASE_DN: ClassVar[str] = "dc=flext,dc=local"
+        DOCKER_ADMIN_DN: ClassVar[str] = "cn=admin,dc=flext,dc=local"
         # SSOT: docker/docker-compose.openldap.yml -> LDAP_ADMIN_PASSWORD of the
         # shared flext-openldap-test container. A value that does not bind makes
         # every real-LDAP test skip after burning the whole probe budget.
-        DOCKER_ADMIN_CREDENTIAL: Final[str] = "admin123"
-        DOCKER_LEGACY_ADMIN_DN: Final[str] = (
+        DOCKER_ADMIN_CREDENTIAL: ClassVar[str] = "admin123"
+        DOCKER_LEGACY_ADMIN_DN: ClassVar[str] = (
             "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
         )
-        DOCKER_LEGACY_ADMIN_CREDENTIAL: Final[str] = "flext-legacy-admin"
+        DOCKER_LEGACY_ADMIN_CREDENTIAL: ClassVar[str] = "flext-legacy-admin"
 
-        SCHEMA_STRUCTURAL: Final[str] = c.Ldif.SchemaKind.STRUCTURAL.value
-        SCHEMA_AUXILIARY: Final[str] = c.Ldif.SchemaKind.AUXILIARY.value
-        SCHEMA_ABSTRACT: Final[str] = c.Ldif.SchemaKind.ABSTRACT.value
+        SCHEMA_STRUCTURAL: ClassVar[str] = (
+            FlextLdifConstants.Ldif.SchemaKind.STRUCTURAL.value
+        )
+        SCHEMA_AUXILIARY: ClassVar[str] = (
+            FlextLdifConstants.Ldif.SchemaKind.AUXILIARY.value
+        )
+        SCHEMA_ABSTRACT: ClassVar[str] = (
+            FlextLdifConstants.Ldif.SchemaKind.ABSTRACT.value
+        )
 
-        NAME_CN: Final[str] = "cn"
-        NAME_SN: Final[str] = "sn"
-        NAME_MAIL: Final[str] = "mail"
-        NAME_DESCRIPTION: Final[str] = "description"
-        NAME_UID: Final[str] = "uid"
-        NAME_OBJECTCLASS: Final[str] = c.Ldif.DictKeys.OBJECTCLASS.value
-        NAME_PERSON: Final[str] = "person"
-        NAME_TOP: Final[str] = "top"
-        NAME_ORCLUSER: Final[str] = "orcluser"
-        NAME_SUBSCHEMA: Final[str] = "subschema"
-        NAME_MEMBER: Final[str] = "member"
-        NAME_GROUP_OF_NAMES: Final[str] = "groupOfNames"
-        NAME_INET_ORG_PERSON: Final[str] = "inetOrgPerson"
-        NAME_ACI: Final[str] = "aci"
-        NAME_ORCLACI: Final[str] = "orclaci"
+        NAME_CN: ClassVar[str] = "cn"
+        NAME_SN: ClassVar[str] = "sn"
+        NAME_MAIL: ClassVar[str] = "mail"
+        NAME_DESCRIPTION: ClassVar[str] = "description"
+        NAME_UID: ClassVar[str] = "uid"
+        NAME_OBJECTCLASS: ClassVar[str] = (
+            FlextLdifConstants.Ldif.DictKeys.OBJECTCLASS.value
+        )
+        NAME_PERSON: ClassVar[str] = "person"
+        NAME_TOP: ClassVar[str] = "top"
+        NAME_ORCLUSER: ClassVar[str] = "orcluser"
+        NAME_SUBSCHEMA: ClassVar[str] = "subschema"
+        NAME_MEMBER: ClassVar[str] = "member"
+        NAME_GROUP_OF_NAMES: ClassVar[str] = "groupOfNames"
+        NAME_INET_ORG_PERSON: ClassVar[str] = "inetOrgPerson"
+        NAME_ACI: ClassVar[str] = "aci"
+        NAME_ORCLACI: ClassVar[str] = "orclaci"
 
-        DN_TEST: Final[str] = "cn=test,dc=example,dc=com"
-        DN_TEST_USER: Final[str] = "cn=testuser,dc=example,dc=com"
+        DN_TEST: ClassVar[str] = "cn=test,dc=example,dc=com"
+        DN_TEST_USER: ClassVar[str] = "cn=testuser,dc=example,dc=com"
 
-        BOOLEAN_TRUE: Final[str] = "TRUE"
-        BOOLEAN_FALSE: Final[str] = "FALSE"
-        ATTR_ORCL_IS_ENABLED: Final[str] = "orclIsEnabled"
-        ATTR_ORCL_ACCOUNT_LOCKED: Final[str] = "orclAccountLocked"
-        ACL_READ_VALUE: Final[str] = "access to entry by * (read)"
+        BOOLEAN_TRUE: ClassVar[str] = "TRUE"
+        BOOLEAN_FALSE: ClassVar[str] = "FALSE"
+        ATTR_ORCL_IS_ENABLED: ClassVar[str] = "orclIsEnabled"
+        ATTR_ORCL_ACCOUNT_LOCKED: ClassVar[str] = "orclAccountLocked"
+        ACL_READ_VALUE: ClassVar[str] = "access to entry by * (read)"
 
-        RFC_SAMPLE_LDIF_BASIC: Final[str] = (
+        RFC_SAMPLE_LDIF_BASIC: ClassVar[str] = (
             "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\nsn: user\n"
         )
-        RFC_SAMPLE_LDIF_MULTIPLE: Final[str] = (
+        RFC_SAMPLE_LDIF_MULTIPLE: ClassVar[str] = (
             "dn: cn=user1,dc=example,dc=com\n"
             "objectClass: person\n"
             "cn: user1\n\n"
@@ -134,11 +142,11 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             "objectClass: person\n"
             "cn: user2\n"
         )
-        RFC_TEST_DN: Final[str] = DN_TEST
+        RFC_TEST_DN: ClassVar[str] = DN_TEST
 
-        ATTR_VALUE_TEST: Final[str] = "test"
-        ATTR_VALUE_USER: Final[str] = "user"
-        VERSION_EXPECTED_EXPORTS: Final[t.StrSequence] = (
+        ATTR_VALUE_TEST: ClassVar[str] = "test"
+        ATTR_VALUE_USER: ClassVar[str] = "user"
+        VERSION_EXPECTED_EXPORTS: ClassVar[t.StrSequence] = (
             "FlextLdifVersion",
             "__author__",
             "__author_email__",
@@ -150,10 +158,10 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             "__version_info__",
         )
 
-        CONFIG_BASIC_ENTRY: Final[str] = (
+        CONFIG_BASIC_ENTRY: ClassVar[str] = (
             "dn: cn=Test,dc=example,dc=com\ncn: Test\nobjectClass: person\n"
         )
-        CONFIG_MULTIPLE_ENTRIES: Final[str] = (
+        CONFIG_MULTIPLE_ENTRIES: ClassVar[str] = (
             "dn: cn=User1,dc=example,dc=com\n"
             "cn: User1\n"
             "objectClass: person\n\n"
@@ -164,14 +172,14 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             "cn: User3\n"
             "objectClass: person\n"
         )
-        CONFIG_SERVER_TYPES: Final[t.StrSequence] = (OID, OUD, OPENLDAP, RFC)
+        CONFIG_SERVER_TYPES: ClassVar[t.StrSequence] = (OID, OUD, OPENLDAP, RFC)
         _CONFIG_SERVER_LABELS: Final[t.MappingKV[str, str]] = MappingProxyType({
             OID: "OID",
             OUD: "OUD",
             OPENLDAP: "OpenLDAP",
             RFC: "RFC",
         })
-        CONFIG_SERVER_CONTENT: Final[t.MappingKV[str, str]] = MappingProxyType({
+        CONFIG_SERVER_CONTENT: ClassVar[t.MappingKV[str, str]] = MappingProxyType({
             server: (
                 f"dn: cn={label} Test,dc=example,dc=com\n"
                 f"cn: {label} Test\n"
@@ -180,35 +188,35 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             for server, label in _CONFIG_SERVER_LABELS.items()
         })
 
-        CROSS_SERVER_OID_ATTRIBUTE_ORCLGUID: Final[str] = (
+        CROSS_SERVER_OID_ATTRIBUTE_ORCLGUID: ClassVar[str] = (
             "( 2.16.840.1.113894.1.1.1 NAME 'orclguid' DESC 'Oracle GUID' "
             "EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )"
         )
-        CROSS_SERVER_OID_OBJECTCLASS_ORCLCONTAINER: Final[str] = (
+        CROSS_SERVER_OID_OBJECTCLASS_ORCLCONTAINER: ClassVar[str] = (
             "( 2.16.840.1.113894.2.1.1 NAME 'orclContainer' DESC 'Oracle Container' "
             "SUP top STRUCTURAL MUST cn MAY description )"
         )
-        CROSS_SERVER_OID_OBJECTCLASS_ORCLCONTEXT: Final[str] = (
+        CROSS_SERVER_OID_OBJECTCLASS_ORCLCONTEXT: ClassVar[str] = (
             "( 2.16.840.1.113894.1.2.1 NAME 'orclContext' SUP top STRUCTURAL MUST cn )"
         )
-        CROSS_SERVER_OID_ACL_ANONYMOUS: Final[str] = (
+        CROSS_SERVER_OID_ACL_ANONYMOUS: ClassVar[str] = (
             "orclaci: access to entry by * (browse)"
         )
-        CROSS_SERVER_OUD_ACI_ANONYMOUS: Final[str] = (
+        CROSS_SERVER_OUD_ACI_ANONYMOUS: ClassVar[str] = (
             'aci: (targetattr="*")(version 3.0; acl "Test ACL"; allow (read,search) userdn="ldap:///anyone";)'
         )
-        CROSS_SERVER_OUD_ATTRIBUTE_ORCLGUID: Final[str] = (
+        CROSS_SERVER_OUD_ATTRIBUTE_ORCLGUID: ClassVar[str] = (
             "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )"
         )
 
-        BOOLEAN_RFC_TO_OID: Final[t.MappingKV[str, str]] = MappingProxyType({
+        BOOLEAN_RFC_TO_OID: ClassVar[t.MappingKV[str, str]] = MappingProxyType({
             "TRUE": "1",
             "FALSE": "0",
         })
-        BOOLEAN_OID_TO_RFC: Final[t.MappingKV[str, str]] = MappingProxyType({
+        BOOLEAN_OID_TO_RFC: ClassVar[t.MappingKV[str, str]] = MappingProxyType({
             v: k for k, v in BOOLEAN_RFC_TO_OID.items()
         })
-        MIGRATION_BOOLEAN_ENTRY_TEMPLATE: Final[str] = (
+        MIGRATION_BOOLEAN_ENTRY_TEMPLATE: ClassVar[str] = (
             "dn: {dn}\n"
             "{objectclass}: {top}\n"
             "{objectclass}: {person}\n"
@@ -218,7 +226,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             "{attr_enabled}: {val_true}\n"
             "{attr_locked}: {val_false}\n"
         )
-        MIGRATION_ACL_ENTRY_TEMPLATE: Final[str] = (
+        MIGRATION_ACL_ENTRY_TEMPLATE: ClassVar[str] = (
             "dn: {dn}\n"
             "{objectclass}: {top}\n"
             "{objectclass}: {person}\n"
@@ -226,102 +234,102 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             "{sn}: {sn_value}\n"
             "{acl_attribute}: {acl_value}\n"
         )
-        MIGRATION_SCHEMA_ENTRY_TEMPLATE: Final[str] = (
+        MIGRATION_SCHEMA_ENTRY_TEMPLATE: ClassVar[str] = (
             "dn: {dn}\n"
             "{objectclass}: {top}\n"
             "{objectclass}: {subschema}\n"
             "{cn}: subschemasubentry\n"
         )
-        MIGRATION_ACI_LINE_REGEX: Final[t.Ldif.RegexPattern] = re.compile(
+        MIGRATION_ACI_LINE_REGEX: ClassVar[t.Ldif.RegexPattern] = re.compile(
             r"(^|\\n)aci:", re.MULTILINE
         )
-        MIGRATION_BOOLEAN_CASES: Final[t.MappingKV[str, tuple[str, str, str, str]]] = (
-            MappingProxyType({
-                "oid_to_rfc": (
-                    OID,
-                    RFC,
-                    BOOLEAN_RFC_TO_OID[BOOLEAN_TRUE],
-                    BOOLEAN_RFC_TO_OID[BOOLEAN_FALSE],
-                ),
-                "rfc_to_oid": (RFC, OID, BOOLEAN_TRUE, BOOLEAN_FALSE),
-            })
-        )
-        MIGRATION_ACL_CASES: Final[t.MappingKV[str, tuple[str, str, str, str]]] = (
+        MIGRATION_BOOLEAN_CASES: ClassVar[
+            t.MappingKV[str, tuple[str, str, str, str]]
+        ] = MappingProxyType({
+            "oid_to_rfc": (
+                OID,
+                RFC,
+                BOOLEAN_RFC_TO_OID[BOOLEAN_TRUE],
+                BOOLEAN_RFC_TO_OID[BOOLEAN_FALSE],
+            ),
+            "rfc_to_oid": (RFC, OID, BOOLEAN_TRUE, BOOLEAN_FALSE),
+        })
+        MIGRATION_ACL_CASES: ClassVar[t.MappingKV[str, tuple[str, str, str, str]]] = (
             MappingProxyType({
                 "oid_to_rfc": (OID, RFC, NAME_ORCLACI, NAME_ACI),
                 "rfc_to_oid": (RFC, OID, NAME_ACI, NAME_ORCLACI),
             })
         )
 
-        WRITER_ENTRY_DNS: Final[frozenset[str]] = frozenset({
+        WRITER_ENTRY_DNS: ClassVar[frozenset[str]] = frozenset({
             "cn=writer-alpha,dc=example,dc=com",
             "cn=writer-beta,dc=example,dc=com",
             "cn=writer-gamma,dc=example,dc=com",
         })
-        WRITER_SERVER_CASES: Final[t.MappingKV[str, str]] = MappingProxyType({
+        WRITER_SERVER_CASES: ClassVar[t.MappingKV[str, str]] = MappingProxyType({
             "writer_rfc": RFC,
             "writer_oid": OID,
             "writer_oud": OUD,
         })
-        WRITER_UNKNOWN_SERVER_PREFIX: Final[str] = "writer_unknown"
-        WRITER_OUTPUT_FILENAME: Final[str] = "writer_output.ldif"
-        WRITER_BLOCKING_PARENT_NAME: Final[str] = "blocking_parent"
-        WRITER_DIRECTORY_TARGET_NAME: Final[str] = "dir_target"
-        WRITER_OUTPUT_REGEX: Final[t.Ldif.RegexPattern] = re.compile(
+        WRITER_UNKNOWN_SERVER_PREFIX: ClassVar[str] = "writer_unknown"
+        WRITER_OUTPUT_FILENAME: ClassVar[str] = "writer_output.ldif"
+        WRITER_BLOCKING_PARENT_NAME: ClassVar[str] = "blocking_parent"
+        WRITER_DIRECTORY_TARGET_NAME: ClassVar[str] = "dir_target"
+        WRITER_OUTPUT_REGEX: ClassVar[t.Ldif.RegexPattern] = re.compile(
             r"^dn:\s+cn=writer-[a-z]+,dc=example,dc=com$", re.MULTILINE
         )
-        WRITER_INVALID_UTF8_BYTES: Final[bytes] = b"\xff\xfe\xfd"
+        WRITER_INVALID_UTF8_BYTES: ClassVar[bytes] = b"\xff\xfe\xfd"
 
         # ── Detector service constants ───────────────────────────────────
-        DETECTOR_OID_SNIPPET: Final[str] = (
+        DETECTOR_OID_SNIPPET: ClassVar[str] = (
             "dn: cn=schema\n"
             "objectClass: top\n"
             "objectClass: subschema\n"
             "orclaci: access to entry by * (browse)\n"
             "orclentrylevelaci: access to attr=(*) by * (read,search,compare)\n"
         )
-        DETECTOR_OUD_SNIPPET: Final[str] = (
+        DETECTOR_OUD_SNIPPET: ClassVar[str] = (
             "dn: cn=schema\n"
             "objectClass: top\n"
             'aci: (targetattr="*")(version 3.0; acl "Test"; allow(read) userdn="ldap:///anyone";)\n'
             "ds-cfg-base-dn: dc=example,dc=com\n"
         )
-        DETECTOR_OPENLDAP_SNIPPET: Final[str] = (
+        DETECTOR_OPENLDAP_SNIPPET: ClassVar[str] = (
             "dn: cn=config\n"
             "objectClass: olcGlobal\n"
             "olcAccess: to * by * read\n"
             "olcLogLevel: stats\n"
         )
-        DETECTOR_RFC_SNIPPET: Final[str] = (
+        DETECTOR_RFC_SNIPPET: ClassVar[str] = (
             "dn: cn=basic,dc=example,dc=com\nobjectClass: person\ncn: basic\nsn: user\n"
         )
-        DETECTOR_SERVER_SNIPPETS: Final[t.MappingKV[str, tuple[str, str]]] = (
+        DETECTOR_SERVER_SNIPPETS: ClassVar[t.MappingKV[str, tuple[str, str]]] = (
             MappingProxyType({
                 "oid": (DETECTOR_OID_SNIPPET, OID),
                 "oud": (DETECTOR_OUD_SNIPPET, OUD),
             })
         )
-        DETECTOR_INVALID_UTF8_BYTES: Final[bytes] = b"\x80\x81\x82"
-        DETECTOR_MISSING_PATH_NAME: Final[str] = "missing_detector.ldif"
-        DETECTOR_BAD_ENCODING_FILENAME: Final[str] = "bad_encoding.ldif"
-        DETECTOR_RFC_FILENAME: Final[str] = "rfc.ldif"
-        DETECTOR_MAX_LINES_SMALL: Final[int] = 5
-        DETECTOR_CONFIDENCE_THRESHOLD: Final[float] = 0.0
+        DETECTOR_INVALID_UTF8_BYTES: ClassVar[bytes] = b"\x80\x81\x82"
+        DETECTOR_MISSING_PATH_NAME: ClassVar[str] = "missing_detector.ldif"
+        DETECTOR_BAD_ENCODING_FILENAME: ClassVar[str] = "bad_encoding.ldif"
+        DETECTOR_RFC_FILENAME: ClassVar[str] = "rfc.ldif"
+        DETECTOR_MAX_LINES_SMALL: ClassVar[int] = 5
+        DETECTOR_CONFIDENCE_THRESHOLD: ClassVar[float] = 0.0
 
         # ── Entries service constants ────────────────────────────────────
-        ENTRIES_DN_VALID: Final[str] = "cn=entries-test,dc=example,dc=com"
-        ENTRIES_DN_INVALID: Final[str] = "not-a-dn"
-        ENTRIES_OBJECTCLASS_PERSON: Final[t.StrSequence] = (
+        ENTRIES_DN_VALID: ClassVar[str] = "cn=entries-test,dc=example,dc=com"
+        ENTRIES_DN_INVALID: ClassVar[str] = "not-a-dn"
+        ENTRIES_OBJECTCLASS_PERSON: ClassVar[t.StrSequence] = (
             "top",
             "person",
             "organizationalPerson",
         )
-        ENTRIES_ATTR_REMOVE_SET: Final[frozenset[str]] = frozenset({
+        ENTRIES_ATTR_REMOVE_SET: ClassVar[frozenset[str]] = frozenset({
             "mail",
             "telephoneNumber",
             "description",
         })
-        ENTRIES_NORMALIZE_CASES: Final[
+        ENTRIES_NORMALIZE_CASES: ClassVar[
             t.MappingKV[
                 str,
                 tuple[
@@ -337,7 +345,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             "empty_string": ("", True),
             "empty_stripped": ("  ", True),
         })
-        ENTRIES_DN_DICT_CASES: Final[
+        ENTRIES_DN_DICT_CASES: ClassVar[
             t.MappingKV[str, tuple[dict[str, str | list[str]], bool]]
         ] = MappingProxyType({
             "str_dn": ({"dn": "cn=x,dc=example,dc=com"}, True),
@@ -345,8 +353,8 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             "empty_list_dn": ({"dn": []}, True),
             "missing_dn": ({}, False),
         })
-        ENTRIES_REMOVE_OPERATION: Final[str] = "remove_attributes"
-        ENTRIES_OP_CASES: Final[t.MappingKV[str, tuple[str | None, bool]]] = (
+        ENTRIES_REMOVE_OPERATION: ClassVar[str] = "remove_attributes"
+        ENTRIES_OP_CASES: ClassVar[t.MappingKV[str, tuple[str | None, bool]]] = (
             MappingProxyType({
                 "no_op": (None, False),
                 "remove_attrs": (ENTRIES_REMOVE_OPERATION, True),
@@ -355,43 +363,43 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
         )
 
         # ── Filters service constants ────────────────────────────────────
-        FILTERS_ATTR_OID_VALID: Final[str] = (
+        FILTERS_ATTR_OID_VALID: ClassVar[str] = (
             "( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
         )
-        FILTERS_ATTR_OID_ALLOWED: Final[str] = "2.5.4.3"
-        FILTERS_OC_OID_VALID: Final[str] = (
+        FILTERS_ATTR_OID_ALLOWED: ClassVar[str] = "2.5.4.3"
+        FILTERS_OC_OID_VALID: ClassVar[str] = (
             "( 2.5.6.6 NAME 'person' SUP top STRUCTURAL )"
         )
-        FILTERS_OC_OID_ALLOWED: Final[str] = "2.5.6.6"
-        FILTERS_SCHEMA_ATTR_KEY: Final[str] = "attributeTypes"
-        FILTERS_SCHEMA_OC_KEY: Final[str] = "objectClasses"
-        FILTERS_ALLOWED_ATTR_KEY: Final[str] = "allowed_attribute_oids"
-        FILTERS_ALLOWED_OC_KEY: Final[str] = "allowed_objectclass_oids"
-        FILTERS_ALLOWED_MR_KEY: Final[str] = "allowed_matchingrule_oids"
-        FILTERS_ALLOWED_MRU_KEY: Final[str] = "allowed_matchingruleuse_oids"
-        FILTERS_DN_SCHEMA: Final[str] = "cn=schema"
-        FILTERS_DN_USER: Final[str] = "cn=user,dc=example,dc=com"
-        FILTERS_DN_BARE: Final[str] = "cn=bare"
-        FILTERS_FORBIDDEN_ATTRS_ORDERED: Final[t.StrSequence] = (
+        FILTERS_OC_OID_ALLOWED: ClassVar[str] = "2.5.6.6"
+        FILTERS_SCHEMA_ATTR_KEY: ClassVar[str] = "attributeTypes"
+        FILTERS_SCHEMA_OC_KEY: ClassVar[str] = "objectClasses"
+        FILTERS_ALLOWED_ATTR_KEY: ClassVar[str] = "allowed_attribute_oids"
+        FILTERS_ALLOWED_OC_KEY: ClassVar[str] = "allowed_objectclass_oids"
+        FILTERS_ALLOWED_MR_KEY: ClassVar[str] = "allowed_matchingrule_oids"
+        FILTERS_ALLOWED_MRU_KEY: ClassVar[str] = "allowed_matchingruleuse_oids"
+        FILTERS_DN_SCHEMA: ClassVar[str] = "cn=schema"
+        FILTERS_DN_USER: ClassVar[str] = "cn=user,dc=example,dc=com"
+        FILTERS_DN_BARE: ClassVar[str] = "cn=bare"
+        FILTERS_FORBIDDEN_ATTRS_ORDERED: ClassVar[t.StrSequence] = (
             NAME_MAIL,
             NAME_DESCRIPTION,
         )
-        FILTERS_FORBIDDEN_ATTRS: Final[frozenset[str]] = frozenset(
+        FILTERS_FORBIDDEN_ATTRS: ClassVar[frozenset[str]] = frozenset(
             FILTERS_FORBIDDEN_ATTRS_ORDERED
         )
-        FILTERS_FORBIDDEN_OCS_ORDERED: Final[t.StrSequence] = (NAME_INET_ORG_PERSON,)
-        FILTERS_USER_MAIL: Final[str] = "user@example.com"
-        FILTERS_USER_DESCRIPTION: Final[str] = "a test user"
-        FILTERS_UNWANTED_ATTR_OID: Final[str] = (
+        FILTERS_FORBIDDEN_OCS_ORDERED: ClassVar[t.StrSequence] = (NAME_INET_ORG_PERSON,)
+        FILTERS_USER_MAIL: ClassVar[str] = "user@example.com"
+        FILTERS_USER_DESCRIPTION: ClassVar[str] = "a test user"
+        FILTERS_UNWANTED_ATTR_OID: ClassVar[str] = (
             "( 9.9.9.9 NAME 'unwanted' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
         )
 
-        PARSER_PATH_FLOW_FILENAME: Final[str] = "path_flow.ldif"
-        PARSER_INVALID_UTF8_FILENAME: Final[str] = "invalid_utf8.ldif"
-        PARSER_RELATIVE_PREFIX: Final[str] = "tmp_parser_relative"
-        PARSER_MISSING_PREFIX: Final[str] = "missing"
-        PARSER_UNKNOWN_PREFIX: Final[str] = "unknown"
-        FILTERS_ALLOWED_OIDS_FULL: Final[t.MappingKV[str, frozenset[str]]] = (
+        PARSER_PATH_FLOW_FILENAME: ClassVar[str] = "path_flow.ldif"
+        PARSER_INVALID_UTF8_FILENAME: ClassVar[str] = "invalid_utf8.ldif"
+        PARSER_RELATIVE_PREFIX: ClassVar[str] = "tmp_parser_relative"
+        PARSER_MISSING_PREFIX: ClassVar[str] = "missing"
+        PARSER_UNKNOWN_PREFIX: ClassVar[str] = "unknown"
+        FILTERS_ALLOWED_OIDS_FULL: ClassVar[t.MappingKV[str, frozenset[str]]] = (
             MappingProxyType({
                 FILTERS_ALLOWED_ATTR_KEY: frozenset({
                     FILTERS_ATTR_OID_ALLOWED,
@@ -402,7 +410,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                 FILTERS_ALLOWED_MRU_KEY: frozenset(),
             })
         )
-        FILTERS_ALLOWED_OIDS_EMPTY: Final[t.MappingKV[str, frozenset[str]]] = (
+        FILTERS_ALLOWED_OIDS_EMPTY: ClassVar[t.MappingKV[str, frozenset[str]]] = (
             MappingProxyType({
                 FILTERS_ALLOWED_ATTR_KEY: frozenset(),
                 FILTERS_ALLOWED_OC_KEY: frozenset(),
@@ -411,22 +419,22 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             })
         )
 
-        RELAXED_PARSE_VALID: Final[str] = "valid"
-        RELAXED_PARSE_MALFORMED: Final[str] = "malformed"
-        API_SCENARIO_SIMPLE_LDIF: Final[str] = "simple_ldif"
-        API_SCENARIO_MULTIPLE_INSTANCES: Final[str] = "multiple_instances"
-        EDGE_CASE_UNICODE_LDIF: Final[str] = (
+        RELAXED_PARSE_VALID: ClassVar[str] = "valid"
+        RELAXED_PARSE_MALFORMED: ClassVar[str] = "malformed"
+        API_SCENARIO_SIMPLE_LDIF: ClassVar[str] = "simple_ldif"
+        API_SCENARIO_MULTIPLE_INSTANCES: ClassVar[str] = "multiple_instances"
+        EDGE_CASE_UNICODE_LDIF: ClassVar[str] = (
             "dn: cn=José,ou=Users,dc=example,dc=com\n"
             "cn: José\n"
             "sn: García\n"
             "objectClass: person\n\n"
         )
-        EDGE_CASE_DEEP_DN_LDIF: Final[str] = (
+        EDGE_CASE_DEEP_DN_LDIF: ClassVar[str] = (
             "dn: cn=level1,ou=level2,ou=level3,ou=level4,ou=level5,ou=level6,dc=example,dc=com\n"
             "cn: level1\n"
             "objectClass: person\n\n"
         )
-        EDGE_CASE_LARGE_MULTIVALUE_LDIF: Final[str] = (
+        EDGE_CASE_LARGE_MULTIVALUE_LDIF: ClassVar[str] = (
             "dn: cn=test,dc=example,dc=com\n"
             "cn: test\n"
             "member: cn=user1,dc=example,dc=com\n"
@@ -436,21 +444,21 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             "member: cn=user5,dc=example,dc=com\n"
             "objectClass: groupOfNames\n\n"
         )
-        EDGE_CASE_NON_ASCII_REGEX: Final[t.Ldif.RegexPattern] = re.compile(
+        EDGE_CASE_NON_ASCII_REGEX: ClassVar[t.Ldif.RegexPattern] = re.compile(
             r"[^\x00-\x7F]"
         )
-        EXACT_OID_1_2_3_RE: Final[t.Ldif.RegexPattern] = re.compile(r"^1\.2\.3$")
-        EDGE_CASE_LARGE_MULTIVALUE_FIXTURE_RELATIVE: Final[Path] = (
+        EXACT_OID_1_2_3_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(r"^1\.2\.3$")
+        EDGE_CASE_LARGE_MULTIVALUE_FIXTURE_RELATIVE: ClassVar[Path] = (
             Path("edge_cases") / "size" / "large_multivalue.ldif"
         )
-        EDGE_CASE_MIN_MULTIVALUE_COUNT: Final[int] = 10
-        EDGE_CASE_INLINE_PARSE_RULES: Final[
+        EDGE_CASE_MIN_MULTIVALUE_COUNT: ClassVar[int] = 10
+        EDGE_CASE_INLINE_PARSE_RULES: ClassVar[
             t.MappingKV[str, tuple[str, int, int, bool]]
         ] = MappingProxyType({
             "unicode": (EDGE_CASE_UNICODE_LDIF, 1, 0, True),
             "deep_dn": (EDGE_CASE_DEEP_DN_LDIF, 1, 7, False),
         })
-        EDGE_CASE_ROUNDTRIP_CASES: Final[t.MappingKV[str, tuple[str, str]]] = (
+        EDGE_CASE_ROUNDTRIP_CASES: ClassVar[t.MappingKV[str, tuple[str, str]]] = (
             MappingProxyType({
                 "unicode": (EDGE_CASE_UNICODE_LDIF, "unicode_roundtrip.ldif"),
                 "deep_dn": (EDGE_CASE_DEEP_DN_LDIF, "deep_dn_roundtrip.ldif"),
@@ -461,7 +469,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             })
         )
 
-        ACL_REGISTRY_GET_ACL_ATTRIBUTES_DATA: Final[
+        ACL_REGISTRY_GET_ACL_ATTRIBUTES_DATA: ClassVar[
             t.MappingKV[str, tuple[str, str | None, t.StrSequence, t.StrSequence]]
         ] = MappingProxyType({
             "get_acl_attributes_rfc_foundation": (
@@ -502,7 +510,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             ),
             "get_acl_attributes_none": ("none", None, ("aci", "acl"), ("orclaci",)),
         })
-        ACL_REGISTRY_IS_ACL_ATTRIBUTE_DATA: Final[
+        ACL_REGISTRY_IS_ACL_ATTRIBUTE_DATA: ClassVar[
             t.MappingKV[str, tuple[str, str, str | None, bool]]
         ] = MappingProxyType({
             "is_acl_attribute_rfc_aci": ("valid_rfc", "aci", None, True),
@@ -548,7 +556,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             ),
         })
 
-        RELAXED_ATTRIBUTE_DEFINITIONS: Final[t.MappingKV[str, tuple[str, bool]]] = (
+        RELAXED_ATTRIBUTE_DEFINITIONS: ClassVar[t.MappingKV[str, tuple[str, bool]]] = (
             MappingProxyType({
                 RELAXED_PARSE_VALID: (
                     "( 1.2.3.4 NAME 'testAttr' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
@@ -569,18 +577,18 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
                 "long_definition": ("( 1.2.3.4 " + "NAME 'test' " * 100 + ")", True),
             })
         )
-        RELAXED_OBJECTCLASS_DEFINITIONS: Final[t.MappingKV[str, tuple[str, bool]]] = (
-            MappingProxyType({
-                RELAXED_PARSE_VALID: ("( 1.2.3 NAME 'testOc' STRUCTURAL )", True),
-                RELAXED_PARSE_MALFORMED: ("( 2.5.6.0 NAME 'broken'", True),
-                "missing_name": ("( 1.2.3.4 STRUCTURAL )", True),
-                "no_oid": ("BROKEN CLASS", False),
-                "empty": ("", False),
-                "whitespace": ("   ", False),
-                "unicode": ("( 1.2.3.4 NAME 'тест' 😀 )", True),
-            })
-        )
-        RELAXED_ACL_DEFINITIONS: Final[t.MappingKV[str, tuple[str, bool]]] = (
+        RELAXED_OBJECTCLASS_DEFINITIONS: ClassVar[
+            t.MappingKV[str, tuple[str, bool]]
+        ] = MappingProxyType({
+            RELAXED_PARSE_VALID: ("( 1.2.3 NAME 'testOc' STRUCTURAL )", True),
+            RELAXED_PARSE_MALFORMED: ("( 2.5.6.0 NAME 'broken'", True),
+            "missing_name": ("( 1.2.3.4 STRUCTURAL )", True),
+            "no_oid": ("BROKEN CLASS", False),
+            "empty": ("", False),
+            "whitespace": ("   ", False),
+            "unicode": ("( 1.2.3.4 NAME 'тест' 😀 )", True),
+        })
+        RELAXED_ACL_DEFINITIONS: ClassVar[t.MappingKV[str, tuple[str, bool]]] = (
             MappingProxyType({
                 RELAXED_PARSE_VALID: (
                     '(targetentry="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com")(version 3.0;acl "REDACTED_LDAP_BIND_PASSWORD";allow(all)',
@@ -591,7 +599,9 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             })
         )
 
-        APACHE_ATTRIBUTE_TEST_CASES: Final[t.SequenceOf[m.Tests.AttributeTestCase]] = (
+        APACHE_ATTRIBUTE_TEST_CASES: ClassVar[
+            t.SequenceOf[m.Tests.AttributeTestCase]
+        ] = (
             m.Tests.AttributeTestCase(
                 scenario="apache_oid",
                 attr_definition="( 1.3.6.1.4.1.18060.0.4.1.2.100 NAME 'ads-enabled' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 )",
@@ -618,7 +628,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             ),
         )
 
-        APACHE_OBJECTCLASS_TEST_CASES: Final[
+        APACHE_OBJECTCLASS_TEST_CASES: ClassVar[
             t.SequenceOf[m.Tests.ObjectClassTestCase]
         ] = (
             m.Tests.ObjectClassTestCase(
@@ -641,7 +651,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             ),
         )
 
-        APACHE_ENTRY_TEST_CASES: Final[t.SequenceOf[m.Tests.EntryTestCase]] = (
+        APACHE_ENTRY_TEST_CASES: ClassVar[t.SequenceOf[m.Tests.EntryTestCase]] = (
             *(
                 m.Tests.EntryTestCase(
                     scenario=(
@@ -679,7 +689,9 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             ),
         )
 
-        DS389_ATTRIBUTE_TEST_CASES: Final[t.SequenceOf[m.Tests.AttributeTestCase]] = (
+        DS389_ATTRIBUTE_TEST_CASES: ClassVar[
+            t.SequenceOf[m.Tests.AttributeTestCase]
+        ] = (
             m.Tests.AttributeTestCase(
                 scenario="ds389_oid",
                 attr_definition="( 2.16.840.1.113730.3.1.1 NAME 'nsslapd-suffix' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )",
@@ -712,7 +724,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             ),
         )
 
-        DS389_OBJECTCLASS_TEST_CASES: Final[
+        DS389_OBJECTCLASS_TEST_CASES: ClassVar[
             t.SequenceOf[m.Tests.ObjectClassTestCase]
         ] = (
             m.Tests.ObjectClassTestCase(
@@ -746,13 +758,15 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             ("nsds_attribute", "nsds5ReplicaId", "1"),
             ("nsuniqueid_attribute", "nsuniqueid", "12345"),
         )
-        DS389_ENTRY_TEST_CASES: Final[t.SequenceOf[m.Tests.EntryTestCase]] = (
+        DS389_ENTRY_TEST_CASES: ClassVar[t.SequenceOf[m.Tests.EntryTestCase]] = (
             *(
                 m.Tests.EntryTestCase(
                     scenario=f"cn_{cn}",
                     entry_dn=f"cn={cn}",
                     attributes={
-                        c.Ldif.DictKeys.OBJECTCLASS.value: list(object_classes)
+                        FlextLdifConstants.Ldif.DictKeys.OBJECTCLASS.value: list(
+                            object_classes
+                        )
                     },
                     expected_can_handle=True,
                 )
@@ -770,14 +784,19 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             m.Tests.EntryTestCase(
                 scenario="ns_objectclass",
                 entry_dn=DN_TEST,
-                attributes={c.Ldif.DictKeys.OBJECTCLASS.value: ["top", "nscontainer"]},
+                attributes={
+                    FlextLdifConstants.Ldif.DictKeys.OBJECTCLASS.value: [
+                        "top",
+                        "nscontainer",
+                    ]
+                },
                 expected_can_handle=True,
             ),
             m.Tests.EntryTestCase(
                 scenario="standard_rfc",
                 entry_dn="cn=user,dc=example,dc=com",
                 attributes={
-                    c.Ldif.DictKeys.OBJECTCLASS.value: ["person"],
+                    FlextLdifConstants.Ldif.DictKeys.OBJECTCLASS.value: ["person"],
                     "cn": ["user"],
                 },
                 expected_can_handle=False,
@@ -787,7 +806,9 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
         # NB: cn_config / cn_settings naming preserved → first case key
         # historically was "cn_config" (not "cn_settings"); align to that.
 
-        NOVELL_ATTRIBUTE_TEST_CASES: Final[t.SequenceOf[m.Tests.AttributeTestCase]] = (
+        NOVELL_ATTRIBUTE_TEST_CASES: ClassVar[
+            t.SequenceOf[m.Tests.AttributeTestCase]
+        ] = (
             m.Tests.AttributeTestCase(
                 scenario="novell_oid",
                 attr_definition="( 2.16.840.1.113719.1.1.4.1.501 NAME 'nspmPasswordPolicyDN' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )",
@@ -820,7 +841,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             ),
         )
 
-        NOVELL_OBJECTCLASS_TEST_CASES: Final[
+        NOVELL_OBJECTCLASS_TEST_CASES: ClassVar[
             t.SequenceOf[m.Tests.ObjectClassTestCase]
         ] = (
             m.Tests.ObjectClassTestCase(
@@ -843,7 +864,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             ),
         )
 
-        NOVELL_ENTRY_TEST_CASES: Final[t.SequenceOf[m.Tests.EntryTestCase]] = (
+        NOVELL_ENTRY_TEST_CASES: ClassVar[t.SequenceOf[m.Tests.EntryTestCase]] = (
             *(
                 m.Tests.EntryTestCase(
                     scenario=f"ou_{ou_name}",
@@ -880,16 +901,18 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
         )
 
         # ── ACL service constants ────────────────────────────────────────
-        ACL_OUD_STRING: Final[str] = (
+        ACL_OUD_STRING: ClassVar[str] = (
             '(targetattr="*")(version 3.0; acl "Test ACL"; allow (read,search) userdn="ldap:///anyone";)'
         )
-        ACL_OID_STRING: Final[str] = "access to entry by * (browse)"
-        ACL_RFC_STRING: Final[str] = ACL_READ_VALUE
-        ACL_SERVER_CASES: Final[t.MappingKV[str, tuple[str, str]]] = MappingProxyType({
-            "oud": (ACL_OUD_STRING, OUD),
-            "oid": (ACL_OID_STRING, OID),
-            "rfc": (ACL_RFC_STRING, RFC),
-        })
+        ACL_OID_STRING: ClassVar[str] = "access to entry by * (browse)"
+        ACL_RFC_STRING: ClassVar[str] = ACL_READ_VALUE
+        ACL_SERVER_CASES: ClassVar[t.MappingKV[str, tuple[str, str]]] = (
+            MappingProxyType({
+                "oud": (ACL_OUD_STRING, OUD),
+                "oid": (ACL_OID_STRING, OID),
+                "rfc": (ACL_RFC_STRING, RFC),
+            })
+        )
         _ACL_PERMISSION_KEYS: Final[t.StrSequence] = (
             "read",
             "write",
@@ -898,48 +921,48 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
             "search",
             "compare",
         )
-        ACL_PERMISSIONS_EMPTY: Final[t.MappingKV[str, bool]] = MappingProxyType(
+        ACL_PERMISSIONS_EMPTY: ClassVar[t.MappingKV[str, bool]] = MappingProxyType(
             dict.fromkeys(_ACL_PERMISSION_KEYS, False)
         )
-        ACL_PERMISSIONS_READ_ONLY: Final[t.MappingKV[str, bool]] = MappingProxyType({
+        ACL_PERMISSIONS_READ_ONLY: ClassVar[t.MappingKV[str, bool]] = MappingProxyType({
             **ACL_PERMISSIONS_EMPTY,
             "read": True,
         })
-        ACL_ENTRY_DN: Final[str] = "cn=acltest,dc=example,dc=com"
-        ACL_ENTRY_ORCLACI_VALUE: Final[str] = "access to entry by * (browse)"
-        ACL_ENTRY_ACI_VALUE: Final[str] = (
+        ACL_ENTRY_DN: ClassVar[str] = "cn=acltest,dc=example,dc=com"
+        ACL_ENTRY_ORCLACI_VALUE: ClassVar[str] = "access to entry by * (browse)"
+        ACL_ENTRY_ACI_VALUE: ClassVar[str] = (
             '(targetattr="*")(version 3.0; acl "Entry ACL"; allow (read,search) userdn="ldap:///anyone";)'
         )
-        ACL_INVALID_SERVER_TYPE: Final[str] = "NOT_A_VALID_SERVER_XYZ"
-        ACL_PARSE_FAILURE_CASES: Final[t.MappingKV[str, tuple[str, str]]] = (
+        ACL_INVALID_SERVER_TYPE: ClassVar[str] = "NOT_A_VALID_SERVER_XYZ"
+        ACL_PARSE_FAILURE_CASES: ClassVar[t.MappingKV[str, tuple[str, str]]] = (
             MappingProxyType({
                 "invalid_server": (ACL_OUD_STRING, ACL_INVALID_SERVER_TYPE),
                 "generic_server_without_acl_server": (ACL_OUD_STRING, GENERIC),
                 "openldap_invalid_acl_format": (ACL_INVALID_SERVER_TYPE, OPENLDAP),
             })
         )
-        ACL_SERVICE_CHECK_EMPTY_ACLS: Final[int] = 0
+        ACL_SERVICE_CHECK_EMPTY_ACLS: ClassVar[int] = 0
 
         # ── Analysis service constants ───────────────────────────────────
-        ANALYSIS_DN_VALID: Final[str] = "cn=analysis-user,dc=example,dc=com"
-        ANALYSIS_ATTR_CN_VALUE: Final[str] = "analysis-user"
-        ANALYSIS_ATTR_INVALID_NAME: Final[str] = "invalid_attr"
-        ANALYSIS_OC_PERSON: Final[str] = "person"
-        ANALYSIS_OC_INVALID: Final[str] = "invalid_oc"
-        ANALYSIS_VALID_ENTRY_ATTRS: Final[t.MappingKV[str, list[str]]] = (
+        ANALYSIS_DN_VALID: ClassVar[str] = "cn=analysis-user,dc=example,dc=com"
+        ANALYSIS_ATTR_CN_VALUE: ClassVar[str] = "analysis-user"
+        ANALYSIS_ATTR_INVALID_NAME: ClassVar[str] = "invalid_attr"
+        ANALYSIS_OC_PERSON: ClassVar[str] = "person"
+        ANALYSIS_OC_INVALID: ClassVar[str] = "invalid_oc"
+        ANALYSIS_VALID_ENTRY_ATTRS: ClassVar[t.MappingKV[str, list[str]]] = (
             MappingProxyType({
                 "objectClass": [ANALYSIS_OC_PERSON, "top"],
                 "cn": [ANALYSIS_ATTR_CN_VALUE],
                 "sn": ["user"],
             })
         )
-        ANALYSIS_INVALID_ATTR_ENTRY_ATTRS: Final[t.MappingKV[str, list[str]]] = (
+        ANALYSIS_INVALID_ATTR_ENTRY_ATTRS: ClassVar[t.MappingKV[str, list[str]]] = (
             MappingProxyType({
                 "objectClass": [ANALYSIS_OC_PERSON],
                 ANALYSIS_ATTR_INVALID_NAME: ["value"],
             })
         )
-        ANALYSIS_PARSE_RESPONSE_LDIF: Final[str] = (
+        ANALYSIS_PARSE_RESPONSE_LDIF: ClassVar[str] = (
             "dn: cn=user1,dc=example,dc=com\n"
             "objectClass: person\n"
             "cn: user1\n\n"
@@ -949,15 +972,15 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
         )
 
         # ── Migration pipeline constants ─────────────────────────────────
-        MIGRATION_INPUT_FILENAME: Final[str] = "mig_input.ldif"
-        MIGRATION_SINGLE_ENTRY_LDIF: Final[str] = (
+        MIGRATION_INPUT_FILENAME: ClassVar[str] = "mig_input.ldif"
+        MIGRATION_SINGLE_ENTRY_LDIF: ClassVar[str] = (
             "dn: cn=migrate-me,dc=example,dc=com\n"
             "objectClass: person\n"
             "cn: migrate-me\n"
             "sn: user\n"
         )
-        MIGRATION_UNKNOWN_SERVER: Final[str] = "TOTALLY_UNKNOWN_SERVER_XYZ"
-        MIGRATION_COERCE_CASES: Final[t.MappingKV[str, tuple[str, str]]] = (
+        MIGRATION_UNKNOWN_SERVER: ClassVar[str] = "TOTALLY_UNKNOWN_SERVER_XYZ"
+        MIGRATION_COERCE_CASES: ClassVar[t.MappingKV[str, tuple[str, str]]] = (
             MappingProxyType({
                 "rfc_lower": ("rfc", RFC),
                 "oid_upper": ("OID", OID),
@@ -968,30 +991,30 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
         # ── Writer advanced constants ────────────────────────────────────
 
         # ── Server service constants ─────────────────────────────────────
-        SERVER_INVALID_SERVER_TYPE: Final[str] = "invalid_server_xyz"
+        SERVER_INVALID_SERVER_TYPE: ClassVar[str] = "invalid_server_xyz"
 
         # ── Validation service constants ─────────────────────────────────
-        VALIDATION_VALID_OC_NAMES: Final[t.StrSequence] = (
+        VALIDATION_VALID_OC_NAMES: ClassVar[t.StrSequence] = (
             "person",
             "top",
             "organizationalUnit",
             "inetOrgPerson",
         )
-        VALIDATION_INVALID_DESCRIPTOR: Final[str] = "invalid name"
+        VALIDATION_INVALID_DESCRIPTOR: ClassVar[str] = "invalid name"
 
         # ── Pipeline constants ───────────────────────────────────────────
 
         # ── Processing service constants ───────────────────────────────
-        PROCESSING_VALID_DNS: Final[t.StrSequence] = (
+        PROCESSING_VALID_DNS: ClassVar[t.StrSequence] = (
             "cn=processing-one,dc=example,dc=com",
             "cn=processing-two,dc=example,dc=com",
         )
-        PROCESSING_ATTRS: Final[t.MappingKV[str, list[str]]] = MappingProxyType({
+        PROCESSING_ATTRS: ClassVar[t.MappingKV[str, list[str]]] = MappingProxyType({
             "objectClass": ["person", "top"],
             "cn": ["processing-user"],
             "sn": ["processing"],
         })
-        PROCESSING_OPTIONS_CASES: Final[
+        PROCESSING_OPTIONS_CASES: ClassVar[
             t.MappingKV[str, tuple[Literal["transform", "validate"], bool, int, int]]
         ] = MappingProxyType({
             "batch_transform": ("transform", False, 1, 2),
@@ -999,8 +1022,8 @@ class TestsFlextLdifConstants(FlextTestsConstants, c):
         })
 
         # ── Statistics service constants ───────────────────────────────
-        STATS_SERVER_TYPES: Final[t.StrSequence] = (RFC, OID)
-        STATS_EXPECTED_OBJECTCLASS: Final[str] = "person"
+        STATS_SERVER_TYPES: ClassVar[t.StrSequence] = (RFC, OID)
+        STATS_EXPECTED_OBJECTCLASS: ClassVar[str] = "person"
 
 
 c = TestsFlextLdifConstants

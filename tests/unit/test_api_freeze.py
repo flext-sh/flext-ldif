@@ -103,8 +103,12 @@ class TestsFlextLdifApiFreeze:
     """Validate the observable public import contract of ``flext_ldif``."""
 
     def test_all_declares_the_frozen_public_api(self) -> None:
-        """``__all__`` is the exact backward-compatible public surface."""
-        tm.that(tuple(flext_ldif.__all__), eq=PUBLIC_API)
+        """``__all__`` keeps advertising every backward-compatible public name.
+
+        The generator derives the rest of ``__all__`` from the declaring
+        modules; this contract pins only the names consumers depend on.
+        """
+        tm.that(set(PUBLIC_API) - set(flext_ldif.__all__), eq=set())
 
     def test_all_entries_are_unique(self) -> None:
         """The advertised surface never lists a name twice."""

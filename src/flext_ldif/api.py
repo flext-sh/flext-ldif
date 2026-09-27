@@ -5,20 +5,21 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Self, cast, override
 
 from flext_ldif import c, e, m, p, r, t, u
-from flext_ldif.services.acl import FlextLdifAcl
-from flext_ldif.services.analysis import FlextLdifAnalysis
-from flext_ldif.services.categorization import FlextLdifCategorization
-from flext_ldif.services.conversion import FlextLdifConversion
-from flext_ldif.services.detector import FlextLdifDetector
-from flext_ldif.services.entries import FlextLdifEntries
-from flext_ldif.services.filters import FlextLdifFilters
-from flext_ldif.services.migration import FlextLdifMigrationPipeline
-from flext_ldif.services.parser import FlextLdifParser
-from flext_ldif.services.pipeline import FlextLdifProcessingPipeline
-from flext_ldif.services.processing import FlextLdifProcessing
-from flext_ldif.services.statistics import FlextLdifStatistics
-from flext_ldif.services.validation import FlextLdifValidation
-from flext_ldif.services.writer import FlextLdifWriter
+
+from .services.acl import FlextLdifAcl
+from .services.analysis import FlextLdifAnalysis
+from .services.categorization import FlextLdifCategorization
+from .services.conversion import FlextLdifConversion
+from .services.detector import FlextLdifDetector
+from .services.entries import FlextLdifEntries
+from .services.filters import FlextLdifFilters
+from .services.migration import FlextLdifMigrationPipeline
+from .services.parser import FlextLdifParser
+from .services.pipeline import FlextLdifProcessingPipeline
+from .services.processing import FlextLdifProcessing
+from .services.statistics import FlextLdifStatistics
+from .services.validation import FlextLdifValidation
+from .services.writer import FlextLdifWriter
 
 if TYPE_CHECKING:
     from pathlib import Path

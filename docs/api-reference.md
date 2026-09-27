@@ -584,7 +584,7 @@ api = ldif(settings=settings)
 
 Factory methods for creating domain objects.
 
-````python
+```python
 from __future__ import annotations
 
 from flext_ldif import m, t
@@ -612,7 +612,7 @@ class Factory:
         dn: str, cn: str, members: t.StringList, **additional_attrs
     ) -> Entry:
         """Create group entry with members."""
-
+```
 
 **Example Usage**:
 
@@ -632,7 +632,7 @@ group = FlextLdifModels.Entry(
         "member": ["cn=John Doe,ou=People,dc=example,dc=com"],
     },
 )
-````
+```
 
 ## Configuration Management
 
@@ -721,7 +721,7 @@ must be accessed programmatically through the API.
 
 **Migration from CLI to API**:
 
-````python
+```python
 # ❌ OLD (CLI - no longer available):
 # python -m flext_ldif parse directory.ldif
 
@@ -759,7 +759,7 @@ if result.success:
     if persons_result.success:
         persons = persons_result.unwrap()
         u.Cli.print(f"Found {len(persons)} person entries")
-
+```
 
 ## Advanced Usage Patterns
 
@@ -795,7 +795,7 @@ def process_enterprise_directory(
         # Add error context
         .map_error(lambda error: f"Enterprise processing failed: {error}")
     )
-````
+```
 
 ### Batch Processing
 
@@ -1197,7 +1197,7 @@ logger.info(
 
 ### Basic Usage - Parse, Validate, Write
 
-````python
+```python
 from pathlib import Path
 
 from flext_ldif import ldif
@@ -1227,7 +1227,7 @@ if validation_result.failure:
     exit(1)
 
 u.Cli.print("✅ All entries valid")
-
+```
 
 ### LDIF Parsing Example
 
@@ -1245,11 +1245,11 @@ if result.success:
     u.Cli.print(f"✅ Parsed {len(entries)} entries")
 else:
     u.Cli.print(f"❌ Failed to parse LDIF: {result.error}")
-````
+```
 
 ### Generic Migration Pipeline
 
-````python
+```python
 from pathlib import Path
 
 from flext_ldif import FlextLdifMigration
@@ -1274,7 +1274,7 @@ else:
 
 # Works with ANY server combination (N implementations, not N²)
 # Examples: OID→OUD, OpenLDAP→389DS, AD→OUD, OUD→OpenLDAP, etc.
-
+```
 
 ### Railway-Oriented Pipeline
 
@@ -1320,7 +1320,7 @@ if result.success:
     u.Cli.print(f"✅ Pipeline completed: {stats}")
 else:
     u.Cli.print(f"❌ Pipeline failed: {result.error}")
-
+```
 
 ### Supported LDAP Servers
 
@@ -1338,7 +1338,7 @@ server_type = "openldap"
 
 # OpenLDAP 1.x
 server_type = "openldap1"
-````
+```
 
 **Stub Implementations** (5 servers - ready for enhancement):
 

@@ -20,12 +20,12 @@
 - Keywords: `adapter`, `enterprise`, `flext`, `integration`, `typed`
 - Main facades: `FlextLdif`, `FlextLdifAcl`, `FlextLdifAnalysis`,
   `FlextLdifCategorization`, `FlextLdifConfig`, `FlextLdifConstants`,
-  `FlextLdifConversion`, `FlextLdifConversionAclMixin` (+36 more)
+  `FlextLdifConversion`, `FlextLdifConversionAclMixin` (+41 more)
 - Alias exports: `c`, `d`, `e`, `h`, `m`, `p`, `r`, `s`, `t`, `u`, `x`
 - Public symbol exports: `FlextLdif`, `FlextLdifAcl`, `FlextLdifAnalysis`,
   `FlextLdifCategorization`, `FlextLdifConfig`, `FlextLdifConstants`,
   `FlextLdifConversion`, `FlextLdifConversionAclMixin`,
-  `FlextLdifConversionAclPreserveMixin`, `FlextLdifConversionEntryMixin` (+38 more)
+  `FlextLdifConversionAclPreserveMixin`, `FlextLdifConversionEntryMixin` (+43 more)
 - Exported module shortcuts: `servers`, `services`
 - Generated module pages: `42`
 

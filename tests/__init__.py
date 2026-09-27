@@ -13,11 +13,11 @@ if TYPE_CHECKING:
 
     from . import integration, unit
     from .base import TestsFlextLdifServiceBase, TestsFlextLdifServiceBase as s
-    from .constants import TestsFlextLdifConstants, c
-    from .models import TestsFlextLdifModels, m
+    from .constants import TestsFlextLdifConstants, TestsFlextLdifConstants as c
+    from .models import TestsFlextLdifModels, TestsFlextLdifModels as m
     from .protocols import TestsFlextLdifProtocols, TestsFlextLdifProtocols as p
     from .settings import TestsFlextLdifSettings
-    from .typings import TestsFlextLdifTypes, t
+    from .typings import TestsFlextLdifTypes, TestsFlextLdifTypes as t
     from .utilities import TestsFlextLdifUtilities, u
 
 

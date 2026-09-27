@@ -6,7 +6,7 @@ from enum import StrEnum, unique
 from types import MappingProxyType
 from typing import ClassVar, Final
 
-from flext_cli import c, t
+from flext_cli import FlextCliConstants, t
 
 from ._constants.acl_convert import FlextLdifConstantsAclConvert
 from ._constants.acl_convert_oud import FlextLdifConstantsAclConvertOud
@@ -14,7 +14,7 @@ from ._constants.base import FlextLdifConstantsBase
 from ._constants.enums import FlextLdifConstantsEnums
 
 
-class FlextLdifConstants(c):
+class FlextLdifConstants(FlextCliConstants):
     """LDIF domain constants extending flext-core FlextConstants."""
 
     class Ldif(

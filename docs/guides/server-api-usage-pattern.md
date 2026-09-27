@@ -20,14 +20,14 @@
 
 ## ❌ PADRÃO INCORRETO (Deprecado)
 
-````python
+```python
 # ERRADO - Instanciação direta de servers
 from flext_ldif import FlextLdifServersOid, FlextLdifServersOud, FlextLdifServersRfc
 
 oid = FlextLdifServersOid()  # ❌ NÃO FAÇA ISSO
 oud = FlextLdifServersOud()  # ❌ NÃO FAÇA ISSO
 rfc = FlextLdifServersRfc()  # ❌ NÃO FAÇA ISSO
-
+```
 
 **Problemas**:
 
@@ -50,7 +50,7 @@ server = FlextLdifServer()
 oid_server: FlextLdifServersBase = server.server("oid")
 oud_server: FlextLdifServersBase = server.server("oud")
 rfc_server: FlextLdifServersBase = server.server("rfc")
-
+```
 
 **Benefícios**:
 
@@ -101,7 +101,7 @@ def rfc_server(server: FlextLdifServer) -> FlextLdifServersBase:
     server = server.server("rfc")
     assert server is not None, "RFC server must be registered"
     return server
-
+```
 
 ### Uso nas Funções de Teste
 
@@ -116,7 +116,7 @@ def test_conversion_oid_to_oud(
     # Use os servers diretamente
     result = conversion_service.convert(oid_server, oud_server, entry)
     assert result.success
-````
+```
 
 ---
 

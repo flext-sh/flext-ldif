@@ -10,7 +10,6 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
     from ._transformer_attrs import FlextLdifUtilitiesNormalizeAttrsTransformer
-    from ._transformer_base import FlextLdifUtilitiesTransformer
     from ._transformer_dn import FlextLdifUtilitiesNormalizeDnTransformer
     from .acl import FlextLdifUtilitiesACL
     from .attribute import FlextLdifUtilitiesAttribute
@@ -31,7 +30,10 @@ if TYPE_CHECKING:
     from .schema_normalize import FlextLdifUtilitiesSchemaNormalize
     from .schema_parse import FlextLdifUtilitiesSchemaParse
     from .server import FlextLdifUtilitiesServer
-    from .transformers import FlextLdifUtilitiesTransformers
+    from .transformers import (
+        FlextLdifUtilitiesTransformer,
+        FlextLdifUtilitiesTransformers,
+    )
     from .validation import FlextLdifUtilitiesValidation
     from .writer import FlextLdifUtilitiesWriter
 
@@ -68,7 +70,6 @@ _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
         MappingProxyType({
             "._transformer_attrs": ("FlextLdifUtilitiesNormalizeAttrsTransformer",),
-            "._transformer_base": ("FlextLdifUtilitiesTransformer",),
             "._transformer_dn": ("FlextLdifUtilitiesNormalizeDnTransformer",),
             ".acl": ("FlextLdifUtilitiesACL",),
             ".attribute": ("FlextLdifUtilitiesAttribute",),
@@ -89,7 +90,10 @@ _LAZY_IMPORTS = MappingProxyType(
             ".schema_normalize": ("FlextLdifUtilitiesSchemaNormalize",),
             ".schema_parse": ("FlextLdifUtilitiesSchemaParse",),
             ".server": ("FlextLdifUtilitiesServer",),
-            ".transformers": ("FlextLdifUtilitiesTransformers",),
+            ".transformers": (
+                "FlextLdifUtilitiesTransformer",
+                "FlextLdifUtilitiesTransformers",
+            ),
             ".validation": ("FlextLdifUtilitiesValidation",),
             ".writer": ("FlextLdifUtilitiesWriter",),
         }),
