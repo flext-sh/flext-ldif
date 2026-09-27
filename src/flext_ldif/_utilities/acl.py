@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
-from types import MappingProxyType
 from typing import ClassVar, TypeIs
 
 from flext_cli import u
 
 from flext_core import r
-from flext_ldif import FlextLdifShared, c, m, p, t
+from flext_ldif import c, m, p, t
 
 from .metadata import FlextLdifUtilitiesMetadata as um
 
@@ -26,26 +25,6 @@ class FlextLdifUtilitiesACL:
     def _is_acl_subject_type(value: str) -> TypeIs[c.Ldif.AclSubjectType]:
         """Type guard to check if a string is a valid ACL subject enum value."""
         return value in FlextLdifUtilitiesACL._ACL_SUBJECT_TYPE_VALUES
-
-    _RFC_ACL_ATTRIBUTES: t.StrSequence = (
-        "aci",
-        "acl",
-        "olcAccess",
-        "aclRights",
-        "aclEntry",
-    )
-    _GENERIC_ACL_ATTRIBUTES: t.StrSequence = ("aci", "acl")
-    _OID_ACL_ATTRIBUTES: t.StrSequence = (*sorted(c.Ldif.ACL_ATTR_NAMES), "acl")
-    _OUD_ACL_ATTRIBUTES: t.StrSequence = tuple(sorted(c.Ldif.ACL_ATTR_NAMES))
-    _AD_ACL_ATTRIBUTES: t.StrSequence = ("nTSecurityDescriptor", "aci")
-    _ACL_ATTRIBUTES_BY_SERVER_TYPE: t.MappingKV[c.Ldif.ServerTypes, t.StrSequence] = (
-        MappingProxyType({
-            c.Ldif.ServerTypes.RFC: _RFC_ACL_ATTRIBUTES,
-            c.Ldif.ServerTypes.OID: _OID_ACL_ATTRIBUTES,
-            c.Ldif.ServerTypes.OUD: _OUD_ACL_ATTRIBUTES,
-            c.Ldif.ServerTypes.AD: _AD_ACL_ATTRIBUTES,
-        })
-    )
 
     @staticmethod
     def _build_extensions(
@@ -538,33 +517,6 @@ class FlextLdifUtilitiesACL:
         else:
             normalized = [str(comments_value)]
         return [*normalized, ""]
-
-    @staticmethod
-    def get_acl_attributes(
-        server_type: c.Ldif.ServerTypes | str | None = None,
-    ) -> t.MutableSequenceOf[str]:
-        """Get ACL attributes for a server type."""
-        if server_type is None:
-            normalized_server_type: c.Ldif.ServerTypes | None = c.Ldif.ServerTypes.RFC
-        elif isinstance(server_type, c.Ldif.ServerTypes):
-            normalized_server_type = server_type
-        else:
-            normalized_server_type = FlextLdifShared.normalize_server_type(server_type)
-        attributes = (
-            FlextLdifUtilitiesACL._GENERIC_ACL_ATTRIBUTES
-            if normalized_server_type is None
-            else FlextLdifUtilitiesACL._ACL_ATTRIBUTES_BY_SERVER_TYPE.get(
-                normalized_server_type, FlextLdifUtilitiesACL._GENERIC_ACL_ATTRIBUTES
-            )
-        )
-        return list(attributes)
-
-    @staticmethod
-    def is_acl_attribute(attribute_name: str, server_type: str | None = None) -> bool:
-        """Check if attribute is an ACL attribute (case-insensitive)."""
-        all_attrs = FlextLdifUtilitiesACL.get_acl_attributes(server_type)
-        all_attrs_lower = {a.lower() for a in all_attrs}
-        return attribute_name.lower() in all_attrs_lower
 
     @staticmethod
     def normalize_permission_key(key: str) -> str:

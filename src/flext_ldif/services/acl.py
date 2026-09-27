@@ -88,10 +88,19 @@ class FlextLdifAcl(s):
         self, entry: m.Ldif.Entry, server_type: str
     ) -> p.Result[m.Ldif.AclResponse]:
         """Extract ACLs from entry using server-specific attribute names."""
+        try:
+            normalized_server_type = u.Ldif.normalize_server_type(server_type)
+        except c.EXC_TYPE_VALIDATION as error:
+            return r[m.Ldif.AclResponse].fail(str(error), exception=error)
+        acl_server = self._server.acl(normalized_server_type)
+        if acl_server is None:
+            return r[m.Ldif.AclResponse].fail(
+                f"No ACL server found for server type: {normalized_server_type}"
+            )
         acls: t.MutableSequenceOf[m.Ldif.Acl] = []
-        for attribute_name in u.Ldif.get_acl_attributes(server_type):
+        for attribute_name in acl_server.resolve_acl_attributes():
             for acl_value in u.Ldif.get_attribute_values(entry, attribute_name):
-                parse_result = self.parse_acl_string(acl_value, server_type)
+                parse_result = acl_server.parse_server(acl_value)
                 if parse_result.failure:
                     return r[m.Ldif.AclResponse].fail(
                         parse_result.error,
@@ -127,11 +136,7 @@ class FlextLdifAcl(s):
                 f"No ACL server found for server type: {normalized_server_type}"
             )
 
-        return (
-            r[m.Ldif.Acl]
-            .from_result(acl_server.parse_server(acl_string))
-            .map(m.Ldif.Acl.model_validate)
-        )
+        return acl_server.parse_server(acl_string)
 
 
 __all__: list[str] = ["FlextLdifAcl"]
