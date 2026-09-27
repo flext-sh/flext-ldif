@@ -95,15 +95,6 @@ class TestsFlextLdifUtilitiesComprehensive:
         """A None attribute name normalizes to None (no fabricated value)."""
         tm.that(u.Ldif.normalize_attribute_name(None), none=True)
 
-    # --- ACL attribute classification ----------------------------------
-
-    @pytest.mark.parametrize(
-        ("attribute", "expected"), [("aci", True), ("cn", False), ("mail", False)]
-    )
-    def test_is_acl_attribute(self, attribute: str, *, expected: bool) -> None:
-        """is_acl_attribute recognises ACL attributes and rejects ordinary ones."""
-        assert u.Ldif.is_acl_attribute(attribute) is expected
-
     # --- DN cleaning ----------------------------------------------------
 
     def test_clean_dn_collapses_component_spacing(self) -> None:

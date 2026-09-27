@@ -48,13 +48,6 @@ class FlextLdifServersRfcConstants(FlextLdifServersBaseConstants):
         PERMISSION_SEARCH,
         PERMISSION_COMPARE,
     ])
-    RFC_ACL_ATTRIBUTES: ClassVar[t.StrSequence] = (
-        "aci",
-        "acl",
-        "olcAccess",
-        "aclRights",
-        "aclEntry",
-    )
     DETECTION_PATTERN: ClassVar[str] = ""
     DETECTION_WEIGHT: ClassVar[int] = 0
     DETECTION_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset()

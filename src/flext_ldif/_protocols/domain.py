@@ -120,6 +120,10 @@ class FlextLdifProtocolsDomain(Protocol):
     class AclServer(Protocol):
         """ACL server contract."""
 
+        def resolve_acl_attributes(self) -> t.MutableSequenceOf[str]:
+            """Return this server's ACL entry attributes in extraction order."""
+            ...
+
         def parse_server(self, value: str) -> p.Result[m.Ldif.Acl]:
             """Parse an ACL line into an ACL model."""
             ...
