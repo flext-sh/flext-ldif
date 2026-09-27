@@ -230,6 +230,3 @@ class TestsFlextLdifRealLdapImport:
         imported = self._read_back(ldap_connection, file_dn)
         tm.that(imported["cn"].value, eq=username)
         tm.that(imported["mail"].value, eq="import@example.com")
-
-
-__all__: list[str] = ["TestsFlextLdifRealLdapImport"]

@@ -228,7 +228,7 @@ class FlextLdifUtilitiesServer:
 
         Example:
             >>> # In a server's can_handle_attribute method:
-            >>> return FlextLdifUtilitiesServer.matches_server_patterns(
+            >>> result = FlextLdifUtilitiesServer.matches_server_patterns(
             ...     value=attr_definition,
             ...     settings=MyServer.Constants.ATTRIBUTE_PATTERN_SETTINGS,
             ... )

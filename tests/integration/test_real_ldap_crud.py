@@ -214,6 +214,3 @@ class TestsFlextLdifRealLdapCrud:
         tm.that(len(parsed_entries), eq=source_count)
         parsed_dns = {entry.dn_str for entry in parsed_entries}
         assert expected_dns <= parsed_dns
-
-
-__all__: list[str] = []

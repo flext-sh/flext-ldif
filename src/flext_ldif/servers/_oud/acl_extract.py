@@ -9,12 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from flext_ldif import c, m, t, u
-
-if TYPE_CHECKING:
-    from collections.abc import MutableMapping
 
 
 class FlextLdifServersOudAclExtractMixin:
@@ -29,10 +24,12 @@ class FlextLdifServersOudAclExtractMixin:
             return entry_data
         existing_metadata = entry_data.metadata
         if not existing_metadata:
-            existing_metadata = u.Ldif.server_metadata_for("oud")
+            existing_metadata = m.Ldif.ServerMetadata(
+                server_type=c.Ldif.ServerTypes.OUD
+            )
         else:
             existing_metadata = m.Ldif.ServerMetadata.model_validate(
-                existing_metadata.model_dump()
+                dict(existing_metadata)
             )
         new_attributes_dict, commented_acl_values, hidden_attrs = (
             FlextLdifServersOudAclExtractMixin.extract_and_remove_acl_attributes(
@@ -48,17 +45,15 @@ class FlextLdifServersOudAclExtractMixin:
                 entry_data.attributes.attributes,
             )
         )
-        copy_result: m.Ldif.Entry = entry_data.model_copy(
-            update={
-                "attributes": m.Ldif.Attributes.model_validate({
-                    "attributes": {**new_attributes_dict},
-                    "attribute_metadata": entry_data.attributes.attribute_metadata,
-                    "metadata": entry_data.attributes.metadata,
-                }),
-                "metadata": updated_metadata,
-            }
-        )
-        return copy_result
+        return m.Ldif.Entry.model_validate({
+            **dict(entry_data),
+            "attributes": m.Ldif.Attributes.model_validate({
+                "attributes": new_attributes_dict,
+                "attribute_metadata": entry_data.attributes.attribute_metadata,
+                "metadata": entry_data.attributes.metadata,
+            }),
+            "metadata": updated_metadata,
+        })
 
     @staticmethod
     def normalize_acl_values(
@@ -166,13 +161,10 @@ class FlextLdifServersOudAclExtractMixin:
             current_extensions[c.Ldif.ACL_COMMENTED_ATTRIBUTES] = (
                 t.Cli.JSON_VALUE_ADAPTER.validate_python(commented_attrs)
             )
-        update_dict_final: MutableMapping[str, t.Ldif.MutableMetadataInputMapping] = {
-            "extensions": current_extensions
-        }
-        copy_result: m.Ldif.ServerMetadata = metadata_typed.model_copy(
-            update=update_dict_final
-        )
-        return copy_result
+        return m.Ldif.ServerMetadata.model_validate({
+            **dict(metadata_typed),
+            "extensions": current_extensions,
+        })
 
 
 __all__: list[str] = ["FlextLdifServersOudAclExtractMixin"]

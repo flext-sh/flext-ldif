@@ -162,6 +162,3 @@ class TestsFlextLdifRealLdapConfig:
 
         tm.ok(result)
         tm.that(result.value.entries, eq=[])
-
-
-__all__: list[str] = ["TestsFlextLdifRealLdapConfig"]

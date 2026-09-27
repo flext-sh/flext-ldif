@@ -83,12 +83,13 @@ class TestsFlextLdifOidUtilities:
         tm.that(result, eq=expected)
 
     @pytest.mark.parametrize(
-        "definition", ["( NAME 'no oid' )", "( NAME 'cn' DESC 'no oid' )"]
+        "definition", ["( NAME 'cn' DESC 'no oid' )", "( NAME 'no oid' )"]
     )
-    def test_matches_pattern_raises_when_definition_has_no_oid(
+    def test_matches_pattern_rejects_definition_without_oid(
         self, definition: str
     ) -> None:
-        with pytest.raises(ValueError, match="missing an OID in definition"):
+        """Malformed definitions propagate extraction failure instead of no-match."""
+        with pytest.raises(ValueError, match="missing an OID"):
             u.Ldif.matches_pattern(definition, c.Tests.EXACT_OID_1_2_3_RE)
 
     def test_matches_pattern_true_against_exact_oid_constant(self) -> None:
