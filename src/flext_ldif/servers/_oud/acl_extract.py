@@ -45,7 +45,7 @@ class FlextLdifServersOudAclExtractMixin:
                 entry_data.attributes.attributes,
             )
         )
-        copy_result = m.Ldif.Entry.model_validate({
+        return m.Ldif.Entry.model_validate({
             **dict(entry_data),
             "attributes": m.Ldif.Attributes.model_validate({
                 "attributes": new_attributes_dict,
@@ -54,7 +54,6 @@ class FlextLdifServersOudAclExtractMixin:
             }),
             "metadata": updated_metadata,
         })
-        return copy_result
 
     @staticmethod
     def normalize_acl_values(
@@ -162,11 +161,10 @@ class FlextLdifServersOudAclExtractMixin:
             current_extensions[c.Ldif.ACL_COMMENTED_ATTRIBUTES] = (
                 t.Cli.JSON_VALUE_ADAPTER.validate_python(commented_attrs)
             )
-        copy_result = m.Ldif.ServerMetadata.model_validate({
+        return m.Ldif.ServerMetadata.model_validate({
             **dict(metadata_typed),
             "extensions": current_extensions,
         })
-        return copy_result
 
 
 __all__: list[str] = ["FlextLdifServersOudAclExtractMixin"]

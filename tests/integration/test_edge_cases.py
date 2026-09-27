@@ -285,6 +285,3 @@ class TestsFlextLdifIntegrationEdgeCases:
         tm.ok(roundtrip)
         roundtrip_dns = [e.dn_str.lower() for e in roundtrip.value.entries]
         tm.that(roundtrip_dns, eq=original_dns)
-
-
-__all__: list[str] = ["TestsFlextLdifIntegrationEdgeCases"]

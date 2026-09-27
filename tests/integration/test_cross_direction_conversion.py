@@ -327,6 +327,3 @@ class TestsFlextLdifCrossDirectionConversion:
         attribute = converted.attributes.attributes["attributeTypes"][0]
         tm.that(attribute, has="caseIgnoreMatch")
         tm.that(attribute, lacks="accessDirectiveMatch")
-
-
-__all__: list[str] = ["TestsFlextLdifCrossDirectionConversion"]

@@ -266,6 +266,3 @@ class TestsFlextLdifSystematicFixtureCoverage:
             tm.that(result.unwrap().entries, eq=[])
         else:
             assert result.error, "Failure result must carry an error message"
-
-
-__all__: list[str] = ["TestsFlextLdifSystematicFixtureCoverage"]

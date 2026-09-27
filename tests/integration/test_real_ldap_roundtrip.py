@@ -131,6 +131,3 @@ class TestsFlextLdifRealLdapRoundtrip:
         tm.that(reimported["mail"], eq=["roundtrip@example.com"])
         tm.that(set(reimported["telephoneNumber"]), eq={"+1-555-1111", "+1-555-2222"})
         tm.that(reimported["description"], eq=["Multi-line\ndescription\ntest"])
-
-
-__all__: list[str] = ["TestsFlextLdifRealLdapRoundtrip"]

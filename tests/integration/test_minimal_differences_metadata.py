@@ -269,6 +269,3 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         tm.fail(result)
         assert result.error is not None
         tm.that(result.error, has="nonexistent_server")
-
-
-__all__: list[str] = ["TestsFlextLdifMinimalDifferencesMetadata"]

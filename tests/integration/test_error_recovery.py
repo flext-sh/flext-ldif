@@ -332,6 +332,3 @@ class TestsFlextLdifErrorRecovery:
         assert original[0].attributes is not None
         assert reparsed[0].attributes is not None
         tm.that(reparsed[0].attributes.attributes, eq=original[0].attributes.attributes)
-
-
-__all__: list[str] = ["TestsFlextLdifErrorRecovery"]
