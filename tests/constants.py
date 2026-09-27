@@ -847,11 +847,11 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
             '(targetattr="*")(version 3.0; acl "Entry ACL"; allow (read,search) userdn="ldap:///anyone";)'
         )
         ACL_INVALID_SERVER_TYPE: ClassVar[str] = "NOT_A_VALID_SERVER_XYZ"
-        ACL_BLANK_ENTRY_VALUE: ClassVar[str] = "   "
         ACL_PARSE_FAILURE_CASES: ClassVar[t.MappingKV[str, tuple[str, str]]] = (
             MappingProxyType({
                 "invalid_server": (ACL_OUD_STRING, ACL_INVALID_SERVER_TYPE),
                 "generic_server_without_acl_server": (ACL_OUD_STRING, GENERIC),
+                "openldap_invalid_acl_format": (ACL_INVALID_SERVER_TYPE, OPENLDAP),
             })
         )
         ACL_SERVICE_CHECK_EMPTY_ACLS: ClassVar[int] = 0
