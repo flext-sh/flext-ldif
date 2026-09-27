@@ -188,6 +188,3 @@ class TestsFlextLdifOidIntegration:
         )
 
         tm.that(roundtrip_count, eq=original_count)
-
-
-__all__: list[str] = ["TestsFlextLdifOidIntegration"]

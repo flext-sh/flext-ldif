@@ -333,15 +333,16 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         original_dn: str,
         original_attrs: t.MutableStrSequenceMapping,
     ) -> p.Result[m.Ldif.Entry]:
-        """Finalize OID entry with ACL and RFC violation metadata."""
+        """Preserve typed OID metadata for serialization and phase-aware ACL writes."""
         _ = original_dn
         if not entry.attributes:
             return r[m.Ldif.Entry].ok(entry)
         normalized_attrs = entry.attributes.attributes
-        if not entry.metadata:
-            entry.metadata = u.Ldif.server_metadata_for("oid")
-        elif entry.metadata.server_type != "oid":
-            entry.metadata = entry.metadata.model_copy(update={"server_type": "oid"})
+        metadata_values = dict(entry.metadata) if entry.metadata is not None else {}
+        entry.metadata = m.Ldif.ServerMetadata.model_validate({
+            **metadata_values,
+            "server_type": c.Ldif.ServerTypes.OID,
+        })
         current_extensions: t.Ldif.MutableMetadataMapping = (
             dict(entry.metadata.extensions) if entry.metadata.extensions else {}
         )

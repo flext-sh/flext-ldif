@@ -293,6 +293,3 @@ class TestsFlextLdifOudIntegration:
         tm.that(attributes.get("orclVersion"), eq=["90600"])
         tm.that(attributes.get("objectClass"), eq=["top", "orclContext"])
         assert entry.metadata is not None
-
-
-__all__: list[str] = ["TestsFlextLdifOudIntegration"]

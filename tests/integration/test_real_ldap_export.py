@@ -229,6 +229,3 @@ class TestsFlextLdifRealLdapExport:
         tm.that(indexed, has=person_dn)
         tm.that(indexed[person_dn]["cn"], has=username)
         tm.that(indexed[person_dn]["mail"], has="export@example.com")
-
-
-__all__: list[str] = ["TestsFlextLdifRealLdapExport"]

@@ -288,6 +288,3 @@ class TestsFlextLdifCrossServerConversion:
         tm.fail(result)
         tm.that(result.error, none=False)
         tm.that(result.error, ne="")
-
-
-__all__: list[str] = ["TestsFlextLdifCrossServerConversion"]

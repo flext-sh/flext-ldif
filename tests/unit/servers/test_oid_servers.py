@@ -193,6 +193,3 @@ class TestsFlextLdifOidServers:
         rendered = written.unwrap()
         tm.that(rendered, has="NAME 'orclReferenceObject'")
         tm.that(rendered, has="SUP top")
-
-
-__all__: list[str] = ["TestsFlextLdifOidServers"]

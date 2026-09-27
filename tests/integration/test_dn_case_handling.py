@@ -224,6 +224,3 @@ class TestsFlextLdifDnCaseHandling:
 
         tm.that(canonical, eq="CN=New,DC=Com")
         tm.that(registry.resolve_canonical_dn("cn=new,dc=com"), eq="CN=New,DC=Com")
-
-
-__all__: list[str] = ["TestsFlextLdifDnCaseHandling"]

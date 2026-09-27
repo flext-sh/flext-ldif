@@ -228,6 +228,3 @@ class TestsFlextLdifOudToOidMigration:
             self._dn_set(first_parse.value.entries),
             eq=self._dn_set(second_parse.value.entries),
         )
-
-
-__all__: list[str] = ["TestsFlextLdifOudToOidMigration"]
