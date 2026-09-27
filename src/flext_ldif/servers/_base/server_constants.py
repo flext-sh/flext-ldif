@@ -5,6 +5,8 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar
 
+from flext_ldif import c
+
 if TYPE_CHECKING:
     from flext_ldif import t
 
@@ -22,13 +24,7 @@ class FlextLdifServersBaseConstants:
     ACL_ATTRIBUTE_NAME: ClassVar[str] = ""
     SCHEMA_DN: ClassVar[str] = ""
     SCHEMA_SUP_SEPARATOR: ClassVar[str] = "$"
-    RFC_ACL_ATTRIBUTES: ClassVar[t.StrSequence] = (
-        "aci",
-        "acl",
-        "olcAccess",
-        "aclRights",
-        "aclEntry",
-    )
+    RFC_ACL_ATTRIBUTES: ClassVar[t.StrSequence] = c.Ldif.RFC_ACL_ATTRIBUTES
     ATTRIBUTE_FIELDS: ClassVar[frozenset[str]] = frozenset()
     ATTRIBUTE_ALIASES: ClassVar[t.StrSequenceMapping] = MappingProxyType({})
     OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset()

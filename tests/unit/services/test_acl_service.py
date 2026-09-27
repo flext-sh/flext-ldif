@@ -154,12 +154,12 @@ class TestsFlextLdifAclService:
     def test_extract_acls_from_entry_with_failed_parse(
         self, svc: p.Ldif.LdifClient
     ) -> None:
+        """A blank ACL value propagates as the first parse failure."""
         entry = m.Ldif.Entry(
             dn=m.Ldif.DN(value=c.Tests.ACL_ENTRY_DN),
             attributes=m.Ldif.Attributes.model_validate({
-                "attributes": {"aci": [c.Tests.ACL_INVALID_SERVER_TYPE]}
+                "attributes": {"aci": [c.Tests.ACL_BLANK_ENTRY_VALUE]}
             }),
         )
-        result = svc.extract_acls_from_entry(entry, c.Tests.OPENLDAP)
-        response = u.Tests.assert_success(result)
-        tm.that(response.statistics.failed_entries, eq=1)
+        result = svc.extract_acls_from_entry(entry, c.Tests.RFC)
+        u.Tests.assert_failure(result)

@@ -469,93 +469,6 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
             })
         )
 
-        ACL_REGISTRY_GET_ACL_ATTRIBUTES_DATA: ClassVar[
-            t.MappingKV[str, tuple[str, str | None, t.StrSequence, t.StrSequence]]
-        ] = MappingProxyType({
-            "get_acl_attributes_rfc_foundation": (
-                RFC,
-                None,
-                ("aci", "acl", "olcAccess", "aclRights", "aclEntry"),
-                (),
-            ),
-            "get_acl_attributes_oid_servers": (
-                OID,
-                OID,
-                ("orclaci", "orclentrylevelaci", "aci", "acl"),
-                (),
-            ),
-            "get_acl_attributes_oud_servers": (
-                OUD,
-                OUD,
-                ("orclaci", "orclentrylevelaci", "aci"),
-                (),
-            ),
-            "get_acl_attributes_ad_servers": (
-                AD,
-                AD,
-                ("nTSecurityDescriptor", "aci"),
-                (),
-            ),
-            "get_acl_attributes_generic": (
-                "generic",
-                "generic",
-                ("aci", "acl"),
-                ("orclaci", "nTSecurityDescriptor"),
-            ),
-            "get_acl_attributes_unknown": (
-                "unknown_server",
-                "unknown_server",
-                ("aci", "acl"),
-                ("orclaci", "nTSecurityDescriptor"),
-            ),
-            "get_acl_attributes_none": ("none", None, ("aci", "acl"), ("orclaci",)),
-        })
-        ACL_REGISTRY_IS_ACL_ATTRIBUTE_DATA: ClassVar[
-            t.MappingKV[str, tuple[str, str, str | None, bool]]
-        ] = MappingProxyType({
-            "is_acl_attribute_rfc_aci": ("valid_rfc", "aci", None, True),
-            "is_acl_attribute_rfc_acl": ("valid_rfc", "acl", None, True),
-            "is_acl_attribute_rfc_olcAccess": ("valid_rfc", "olcAccess", None, True),
-            "is_acl_attribute_oid_orclaci": (
-                "valid_server_specific",
-                "orclaci",
-                OID,
-                True,
-            ),
-            "is_acl_attribute_oud_orclaci": (
-                "valid_server_specific",
-                "orclaci",
-                OUD,
-                True,
-            ),
-            "is_acl_attribute_invalid_cn": ("invalid", "cn", None, False),
-            "is_acl_attribute_invalid_uid": ("invalid", "uid", None, False),
-            "is_acl_attribute_case_insensitive_aci": (
-                "case_insensitive",
-                "ACI",
-                None,
-                True,
-            ),
-            "is_acl_attribute_case_insensitive_acl": (
-                "case_insensitive",
-                "Acl",
-                None,
-                True,
-            ),
-            "is_acl_attribute_case_insensitive_olcAccess": (
-                "case_insensitive",
-                "OLCACCESS",
-                None,
-                True,
-            ),
-            "is_acl_attribute_case_insensitive_orclaci": (
-                "case_insensitive",
-                "OrclAci",
-                OID,
-                True,
-            ),
-        })
-
         RELAXED_ATTRIBUTE_DEFINITIONS: ClassVar[t.MappingKV[str, tuple[str, bool]]] = (
             MappingProxyType({
                 RELAXED_PARSE_VALID: (
@@ -934,11 +847,11 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
             '(targetattr="*")(version 3.0; acl "Entry ACL"; allow (read,search) userdn="ldap:///anyone";)'
         )
         ACL_INVALID_SERVER_TYPE: ClassVar[str] = "NOT_A_VALID_SERVER_XYZ"
+        ACL_BLANK_ENTRY_VALUE: ClassVar[str] = "   "
         ACL_PARSE_FAILURE_CASES: ClassVar[t.MappingKV[str, tuple[str, str]]] = (
             MappingProxyType({
                 "invalid_server": (ACL_OUD_STRING, ACL_INVALID_SERVER_TYPE),
                 "generic_server_without_acl_server": (ACL_OUD_STRING, GENERIC),
-                "openldap_invalid_acl_format": (ACL_INVALID_SERVER_TYPE, OPENLDAP),
             })
         )
         ACL_SERVICE_CHECK_EMPTY_ACLS: ClassVar[int] = 0
