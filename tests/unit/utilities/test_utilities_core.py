@@ -60,7 +60,7 @@ class TestsFlextLdifUtilitiesCore:
         [
             "cn=John,dc=example,dc=com",
             "ou=Users,dc=example,dc=com",
-            "cn=REDACTED_LDAP_BIND_PASSWORD,o=example",
+            "cn=admin,o=example",
             "cn=Test\\, User,dc=example,dc=com",
             "cn=Test\\5CUser,dc=example,dc=com",
             "cn=Test#User,dc=example,dc=com",

@@ -513,7 +513,7 @@ class FlextLdifConstantsBase:
         "orcldassearchable",
         "orcldasselfmodifiable",
         "orcldasviewable",
-        "orcldasREDACTED_LDAP_BIND_PASSWORDmodifiable",
+        "orcldasadminmodifiable",
         "pwdlockout",
         "pwdmustchange",
         "pwdallowuserchange",

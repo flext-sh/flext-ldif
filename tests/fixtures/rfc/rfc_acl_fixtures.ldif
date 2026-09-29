@@ -22,7 +22,7 @@ dn: cn=engineering,ou=groups,dc=example,dc=com
 objectClass: top
 objectClass: groupOfNames
 cn: engineering
-aci: (target="ldap:///cn=engineering,ou=groups,dc=example,dc=com")(targetattr="member || description")(targattrfilters="add=member:(objectClass=inetOrgPerson)")(version 3.0; acl "Group managers"; allow (read,write,add,delete) groupdn="ldap:///cn=directory-REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com";)
+aci: (target="ldap:///cn=engineering,ou=groups,dc=example,dc=com")(targetattr="member || description")(targattrfilters="add=member:(objectClass=inetOrgPerson)")(version 3.0; acl "Group managers"; allow (read,write,add,delete) groupdn="ldap:///cn=directory-admins,ou=groups,dc=example,dc=com";)
 
 dn: cn=user01,ou=users,dc=example,dc=com
 objectClass: top
@@ -66,11 +66,11 @@ cn: user06
 sn: User06
 aci: (target="ldap:///cn=user06,ou=users,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Strong auth"; allow (read,search,compare) userdn="ldap:///self" and authmethod = "ssl" and ssf >= "128";)
 
-dn: cn=directory-REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com
+dn: cn=directory-admins,ou=groups,dc=example,dc=com
 objectClass: top
 objectClass: groupOfNames
-cn: directory-REDACTED_LDAP_BIND_PASSWORDs
-aci: (target="ldap:///cn=directory-REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Admin override"; deny (write,delete) userdn="ldap:///anyone";)
+cn: directory-admins
+aci: (target="ldap:///cn=directory-admins,ou=groups,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Admin override"; deny (write,delete) userdn="ldap:///anyone";)
 
 dn: cn=service-policy,dc=example,dc=com
 objectClass: top
