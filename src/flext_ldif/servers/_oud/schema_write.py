@@ -98,9 +98,10 @@ class FlextLdifServersOudSchemaWriteMixin:
                 f"resolve source schema server for OUD write from {source_type}",
                 source_result.error,
             )
-        return r[
-            t.Pair[p.Ldif.SchemaServer, p.Ldif.SchemaServer]
-        ].ok((source_result.value.schema_server, target_result.value.schema_server))
+        return r[t.Pair[p.Ldif.SchemaServer, p.Ldif.SchemaServer]].ok((
+            source_result.value.schema_server,
+            target_result.value.schema_server,
+        ))
 
     @classmethod
     def _normalize_schema_attributes(
@@ -221,8 +222,7 @@ class FlextLdifServersOudSchemaWriteMixin:
             parse_result_oc = source_schema.parse_objectclass(value)
             if parse_result_oc.failure:
                 return r[str].fail_op(
-                    f"parse {attr_name} definition for OUD write",
-                    parse_result_oc.error,
+                    f"parse {attr_name} definition for OUD write", parse_result_oc.error
                 )
             write_result = target_schema.write_objectclass(parse_result_oc.value)
         if write_result.failure:

@@ -108,8 +108,7 @@ class FlextLdifAcl(s):
             m.Ldif.AclResponse(
                 acls=acls,
                 statistics=m.Ldif.Statistics(
-                    processed_entries=1,
-                    acls_extracted=len(acls),
+                    processed_entries=1, acls_extracted=len(acls)
                 ),
             )
         )
