@@ -849,8 +849,8 @@ def filter_by_custom_criteria(
 
 ### RfcSchemaParserService
 
-Parse LDAP schema definitions with RFC 4512 compliance and **MANDATORY servers
-support**.
+Parse LDAP schema definitions with RFC 4512 compliance and
+**MANDATORY servers support**.
 
 ```python
 from __future__ import annotations

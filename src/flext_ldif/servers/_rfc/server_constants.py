@@ -5,20 +5,18 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_ldif import c
-
+from ..._constants.servers import FlextLdifConstantsServers
 from .._base.server_constants import FlextLdifServersBaseConstants
 
 if TYPE_CHECKING:
     from flext_ldif import t
 
 
-class FlextLdifServersRfcConstants(FlextLdifServersBaseConstants):
+class FlextLdifServersRfcConstants(
+    FlextLdifConstantsServers.Rfc, FlextLdifServersBaseConstants
+):
     """RFC baseline constants (RFC 4512 compliant)."""
 
-    SERVER_TYPE: ClassVar[str] = c.Ldif.ServerTypes.RFC.value
-    PRIORITY: ClassVar[int] = 100
-    DEFAULT_PORT: ClassVar[int] = 389
     DEFAULT_SSL_PORT: ClassVar[int] = 636
     DEFAULT_PAGE_SIZE: ClassVar[int] = 1000
     CANONICAL_NAME: ClassVar[str] = "rfc"
@@ -27,18 +25,8 @@ class FlextLdifServersRfcConstants(FlextLdifServersBaseConstants):
     CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["rfc"])
     ACL_FORMAT: ClassVar[str] = "rfc_generic"
     ACL_ATTRIBUTE_NAME: ClassVar[str] = "aci"
-    PERMISSION_READ: ClassVar[str] = "read"
-    PERMISSION_WRITE: ClassVar[str] = "write"
-    PERMISSION_ADD: ClassVar[str] = "add"
-    PERMISSION_DELETE: ClassVar[str] = "delete"
-    PERMISSION_SEARCH: ClassVar[str] = "search"
-    PERMISSION_COMPARE: ClassVar[str] = "compare"
-    PERMISSION_ADMIN: ClassVar[str] = "admin"
-    PERMISSION_IMPORT: ClassVar[str] = "import"
-    PERMISSION_EXPORT: ClassVar[str] = "export"
     PERMISSION_SELF_WRITE: ClassVar[str] = "self_write"
     PERMISSION_PROXY: ClassVar[str] = "proxy"
-    PERMISSION_AUTH: ClassVar[str] = "auth"
     PERMISSION_ALL: ClassVar[str] = "all"
     SUPPORTED_PERMISSIONS: ClassVar[frozenset[str]] = frozenset([
         PERMISSION_READ,
@@ -55,18 +43,6 @@ class FlextLdifServersRfcConstants(FlextLdifServersBaseConstants):
     DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset()
     DETECTION_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset()
     DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset()
-    ACL_PERMISSION_KEYS: ClassVar[t.StrSequence] = (
-        "read",
-        "write",
-        "add",
-        "delete",
-        "search",
-        "compare",
-        "self_write",
-        "proxy",
-        "auth",
-        "all",
-    )
     ATTRIBUTE_FIELDS: ClassVar[frozenset[str]] = frozenset()
     ATTRIBUTE_ALIASES: ClassVar[t.StrSequenceMapping] = MappingProxyType({})
     OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset()
@@ -76,18 +52,6 @@ class FlextLdifServersRfcConstants(FlextLdifServersBaseConstants):
     CATEGORY_OBJECTCLASSES: ClassVar[t.FrozensetMapping] = MappingProxyType({})
     HIERARCHY_PRIORITY_OBJECTCLASSES: ClassVar[frozenset[str]] = frozenset()
     CATEGORIZATION_ACL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset()
-    MIME_OID_ENCODING: ClassVar[str] = "1.2.840.113556"
-    LDAP_SYNTAXES: ClassVar[t.StrSequence] = (
-        "1.3.6.1.4.1.1466.115.121.1.12",
-        "1.3.6.1.4.1.1466.115.121.1.15",
-        "1.3.6.1.4.1.1466.115.121.1.27",
-        "1.3.6.1.4.1.1466.115.121.1.44",
-        "1.3.6.1.4.1.1466.115.121.1.50",
-        "1.3.6.1.4.1.1466.115.121.1.51",
-        "1.3.6.1.4.1.1466.115.121.1.34",
-        "1.3.6.1.4.1.1466.115.121.1.44",
-    )
-    LDIF_NEWLINE: ClassVar[str] = "\n"
     MATCHING_RULE_TO_RFC: ClassVar[t.StrMapping] = MappingProxyType({})
     SYNTAX_OID_TO_RFC: ClassVar[t.StrMapping] = MappingProxyType({})
     ATTRIBUTE_CASE_MAP: ClassVar[t.StrMapping] = MappingProxyType({})

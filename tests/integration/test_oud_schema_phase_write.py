@@ -51,8 +51,7 @@ _OUD_QUOTED_OBJECTCLASS_DEFINITION = (
 )
 
 _PHASE_MODIFY_FORMAT_OPTIONS = m.Ldif.WriteFormatOptions(
-    ldif_changetype="modify",
-    ldif_modify_operation="add",
+    ldif_changetype="modify", ldif_modify_operation="add"
 )
 
 
@@ -82,9 +81,7 @@ class TestsFlextLdifOudSchemaPhaseWrite:
     ) -> None:
         """Cross-server schema definitions must lose quoted SYNTAX OIDs."""
         parsed = tm.ok(
-            api.parse_ldif(
-                _QUOTED_SCHEMA_SOURCE, server_type=c.Ldif.ServerTypes.OID
-            )
+            api.parse_ldif(_QUOTED_SCHEMA_SOURCE, server_type=c.Ldif.ServerTypes.OID)
         )
 
         written = tm.ok(
@@ -105,8 +102,7 @@ class TestsFlextLdifOudSchemaPhaseWrite:
         assert schema_lines, "phase write must emit schema definitions"
         quoted = [line for line in schema_lines if "SYNTAX '" in line]
         assert quoted == [], (
-            "OUD rejects quoted SYNTAX OIDs (invalidAttributeSyntax);"
-            f" got {quoted}"
+            f"OUD rejects quoted SYNTAX OIDs (invalidAttributeSyntax); got {quoted}"
         )
         assert _OUD_QUOTED_OBJECTCLASS_DEFINITION in logical_lines
 
@@ -115,9 +111,7 @@ class TestsFlextLdifOudSchemaPhaseWrite:
     ) -> None:
         """parse→write→parse→write must not drift or re-quote definitions."""
         parsed = tm.ok(
-            api.parse_ldif(
-                _QUOTED_SCHEMA_SOURCE, server_type=c.Ldif.ServerTypes.OID
-            )
+            api.parse_ldif(_QUOTED_SCHEMA_SOURCE, server_type=c.Ldif.ServerTypes.OID)
         )
         first = tm.ok(
             api.write(

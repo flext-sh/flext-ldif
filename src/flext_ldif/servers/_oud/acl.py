@@ -5,21 +5,18 @@ from __future__ import annotations
 from collections.abc import Mapping, MutableMapping
 from typing import ClassVar, Self, override
 
+import flext_ldif._utilities.flext_ldif_servers_oud_utilities
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 from .._base.acl import FlextLdifServersBaseSchemaAcl
 from .server_constants import FlextLdifServersOudConstants
-from .server_utilities import FlextLdifServersOudUtilities
 
 
 class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
     """Oracle OUD ACL Implementation (RFC 4876 ACI Format)."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
-    OUD_ACL_ATTRIBUTES: ClassVar[t.StrSequence] = (
-        FlextLdifServersOudConstants.OUD_ACL_ATTRIBUTES
-    )
 
     def __init__(
         self,
@@ -122,7 +119,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         """Get RFC + OUD extensions."""
         return [
             *FlextLdifServersOudConstants.RFC_ACL_ATTRIBUTES,
-            *self.OUD_ACL_ATTRIBUTES,
+            *FlextLdifServersOudConstants.OUD_ACL_ATTRIBUTES,
         ]
 
     def _build_aci_permissions(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
@@ -331,7 +328,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
 
     def _parse_aci_format(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
         """Parse RFC 4876 ACI format using utility with OUD-specific settings."""
-        settings = FlextLdifServersOudUtilities.get_parser_config()
+        settings = flext_ldif._utilities.flext_ldif_servers_oud_utilities.FlextLdifServersOudUtilities.get_parser_config()
         result: p.Result[m.Ldif.Acl] = u.Ldif.parse_aci(acl_line, settings)
         if not result.success:
             return result

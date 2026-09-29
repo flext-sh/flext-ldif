@@ -2,26 +2,23 @@
 
 from __future__ import annotations
 
-import re
 from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_ldif import c
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
+from ..._constants.servers import FlextLdifConstantsServers
+
 if TYPE_CHECKING:
     from flext_ldif import t
 
 
-class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
+class FlextLdifServersOudConstants(
+    FlextLdifConstantsServers.Oud, FlextLdifServersRfc.Constants
+):
     """Oracle Unified Directory-specific constants using Python 3.13 patterns."""
 
-    SERVER_TYPE: ClassVar[str] = c.Ldif.ServerTypes.OUD
-    PRIORITY: ClassVar[int] = 10
-    DEFAULT_PORT: ClassVar[int] = 1389
-    DEFAULT_SSL_PORT: ClassVar[int] = 1636
-    DEFAULT_PAGE_SIZE: ClassVar[int] = 1000
-    MAX_LOG_LINE_LENGTH: ClassVar[int] = 200
     CANONICAL_NAME: ClassVar[str] = c.Ldif.ServerTypes.OUD
     ALIASES: ClassVar[frozenset[str]] = frozenset({
         c.Ldif.ServerTypes.OUD,
@@ -41,75 +38,11 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
     })
     ACL_FORMAT: ClassVar[str] = "aci"
     ACL_ATTRIBUTE_NAME: ClassVar[str] = "aci"
-    PERMISSION_SELFWRITE: ClassVar[str] = "selfwrite"
-    PERMISSION_SELF_WRITE: ClassVar[str] = "self_write"
-    PERMISSION_PROXY: ClassVar[str] = "proxy"
-    PERMISSION_ALL: ClassVar[str] = "all"
     SUPPORTED_PERMISSIONS: ClassVar[frozenset[str]] = (
         FlextLdifServersRfc.Constants.SUPPORTED_PERMISSIONS
         | frozenset([PERMISSION_SELFWRITE, PERMISSION_PROXY, PERMISSION_ALL])
     )
-    ACL_DEFAULT_NAME: ClassVar[str] = "OUD ACL"
-    ACL_DEFAULT_VERSION: ClassVar[str] = "version 3.0"
-    ACL_VERSION_PREFIX: ClassVar[str] = "(version 3.0"
-    ACL_ALLOW_PREFIX: ClassVar[str] = "allow ("
-    ACL_ACI_PREFIX: ClassVar[str] = "aci:"
-    ACL_DS_CFG_PREFIX: ClassVar[str] = "ds-cfg-"
-    ACL_TARGETATTR_PREFIX: ClassVar[str] = "targetattr="
-    ACL_TARGETSCOPE_PREFIX: ClassVar[str] = "targetscope="
-    ACL_SELF_SUBJECT: ClassVar[str] = "ldap:///self"
-    ACL_ANONYMOUS_SUBJECT: ClassVar[str] = "ldap:///anyone"
-    ACL_OPS_SEPARATOR: ClassVar[str] = ","
-    ACL_SUBJECT_TYPE_BIND_RULES: ClassVar[str] = "bind_rules"
-    ACL_BIND_RULE_TYPE_USERDN: ClassVar[str] = "userdn"
-    ACL_BIND_RULE_TYPE_GROUPDN: ClassVar[str] = "groupdn"
-    ACL_USERDN_PATTERN: ClassVar[str] = 'userdn\\s*=\\s*"ldap:///([^"]+)"'
-    ACL_GROUPDN_PATTERN: ClassVar[str] = 'groupdn\\s*=\\s*"ldap:///([^"]+)"'
-    ACL_TARGETATTR_PATTERN: ClassVar[str] = '\\(targetattr\\s*(!?=)\\s*"([^"]+)"\\)'
-    ACL_TARGETSCOPE_PATTERN: ClassVar[str] = '\\(targetscope\\s*=\\s*"([^"]+)"\\)'
-    ACL_VERSION_ACL_PATTERN: ClassVar[str] = 'version\\s+([\\d.]+);\\s*acl\\s+"([^"]+)"'
-    ACL_ALLOW_DENY_PATTERN: ClassVar[str] = "(allow|deny)\\s+\\(([^)]+)\\)"
-    ACL_TARGATTRFILTERS_PATTERN: ClassVar[str] = (
-        '\\(targattrfilters\\s*=\\s*"([^"]+)"\\)'
-    )
-    ACL_TARGETCONTROL_PATTERN: ClassVar[str] = '\\(targetcontrol\\s*=\\s*"([^"]+)"\\)'
-    ACL_EXTOP_PATTERN: ClassVar[str] = '\\(extop\\s*=\\s*"([^"]+)"\\)'
-    ACL_IP_PATTERN: ClassVar[str] = 'ip\\s*=\\s*"([^"]+)"'
-    ACL_DNS_PATTERN: ClassVar[str] = 'dns\\s*=\\s*"([^"]+)"'
-    ACL_DAYOFWEEK_PATTERN: ClassVar[str] = 'dayofweek\\s*=\\s*"([^"]+)"'
-    ACL_TIMEOFDAY_PATTERN: ClassVar[str] = 'timeofday\\s*([<>=!]+)\\s*"?(\\d+)"?'
-    ACL_AUTHMETHOD_PATTERN: ClassVar[str] = 'authmethod\\s*=\\s*"?(\\w+)"?'
-    ACL_SSF_PATTERN: ClassVar[str] = 'ssf\\s*([<>=!]+)\\s*"?(\\d+)"?'
-    ACL_TIMEOFDAY_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(ACL_TIMEOFDAY_PATTERN)
-    ACL_SSF_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(ACL_SSF_PATTERN)
-    ACL_BIND_RULE_TUPLE_LENGTH: ClassVar[int] = 2
-    ACL_BIND_RULES_CONFIG: ClassVar[tuple[tuple[str, str, str | None], ...]] = (
-        ("bind_ip", 'ip="{value}"', None),
-        ("bind_dns", 'dns="{value}"', None),
-        ("bind_dayofweek", 'dayofweek="{value}"', None),
-        ("bind_timeofday", 'timeofday {operator} "{value}"', "="),
-        ("authmethod", 'authmethod = "{value}"', None),
-        ("ssf", 'ssf {operator} "{value}"', ">="),
-    )
-    ACL_TARGET_EXTENSIONS_CONFIG: ClassVar[t.StrPairTuple] = (
-        ("targattrfilters", '(targattrfilters="{value}")'),
-        ("targetcontrol", '(targetcontrol="{value}")'),
-        ("extop", '(extop="{value}")'),
-    )
-    ACL_BIND_PATTERNS: ClassVar[t.StrMapping] = MappingProxyType({
-        ACL_BIND_RULE_TYPE_USERDN: ACL_USERDN_PATTERN,
-        ACL_BIND_RULE_TYPE_GROUPDN: ACL_GROUPDN_PATTERN,
-    })
-    ACL_NORMALIZE_DNS_IN_VALUES: ClassVar[bool] = False
-    DS_PRIVILEGE_NAME_KEY: ClassVar[str] = "ds_privilege_name"
-    FORMAT_TYPE_KEY: ClassVar[str] = "format_type"
-    FORMAT_TYPE_DS_PRIVILEGE: ClassVar[str] = "ds-privilege-name"
-    OUD_ACL_ATTRIBUTES: ClassVar[t.StrSequence] = (FORMAT_TYPE_DS_PRIVILEGE,)
     SCHEMA_DN: ClassVar[str] = "cn=schema"
-    SCHEMA_FIELD_ATTRIBUTE_TYPES: ClassVar[str] = "attributetypes"
-    SCHEMA_FIELD_OBJECT_CLASSES: ClassVar[str] = "objectclasses"
-    SCHEMA_FIELD_MATCHING_RULES: ClassVar[str] = "matchingrules"
-    SCHEMA_FIELD_LDAP_SYNTAXES: ClassVar[str] = "ldapsyntaxes"
     SCHEMA_FILTERABLE_FIELDS: ClassVar[frozenset[str]] = frozenset([
         SCHEMA_FIELD_ATTRIBUTE_TYPES,
         SCHEMA_FIELD_OBJECT_CLASSES,
@@ -122,7 +55,6 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
         "allows_multiple_sup": False,
         "requires_explicit_structural": True,
     })
-    DEFAULT_ENCODING: ClassVar[str] = c.Ldif.DEFAULT_ENCODING
     OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
         "createTimestamp",
         "modifyTimestamp",
@@ -157,15 +89,6 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
         "pwdmaxlength",
         "pwdminlength",
     ])
-    ATTRIBUTE_CASE_MAP: ClassVar[t.StrMapping] = MappingProxyType({
-        "uniquemember": "uniqueMember",
-        "displayname": "displayName",
-        "distinguishedname": "distinguishedName",
-        "objectclass": "objectClass",
-        "memberof": "memberOf",
-        "seealsodescription": "seeAlsoDescription",
-        "acl": "aci",
-    })
     ATTRIBUTE_ALIASES: ClassVar[t.StrSequenceMapping] = MappingProxyType({
         "cn": ("commonName",),
         "sn": ("surname",),
@@ -212,12 +135,6 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
         "groups",
         "rejected",
     )
-    DN_DETECTION_PATTERNS: ClassVar[tuple[t.StrSequence, ...]] = (
-        ("cn=settings", "cn=schema"),
-        ("cn=settings", "cn=directory"),
-        ("cn=settings", "cn=ds"),
-    )
-    KEYWORD_PATTERNS: ClassVar[t.StrSequence] = ("pwd", "password")
     DETECTION_PATTERN: ClassVar[str] = "(?i)(ds-sync-|ds-pwp-|ds-cfg-|root dns)"
     DETECTION_OID_PATTERN: ClassVar[str] = DETECTION_PATTERN
     DETECTION_WEIGHT: ClassVar[int] = 14
