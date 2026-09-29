@@ -423,12 +423,7 @@ class FlextLdifConstantsBase:
     """Attribute names (compared lowercased) whose values are binary."""
 
     # ===== Server class-name suffixes (ENFORCE-079 owner) =====
-    CLASS_SUFFIXES: ClassVar[tuple[str, ...]] = (
-        "Acl",
-        "Schema",
-        "Entry",
-        "Constants",
-    )
+    CLASS_SUFFIXES: ClassVar[tuple[str, ...]] = ("Acl", "Schema", "Entry", "Constants")
     """Class-name suffixes for independent-class server type detection."""
 
     # ===== Default ACL attribute names (ENFORCE-079 owner) =====
@@ -459,12 +454,8 @@ class FlextLdifConstantsBase:
             "requires_objectclass",
             "requires_naming_attr",
         }),
-        FlextLdifConstantsEnums.ServerTypes.DS389: frozenset({
-            "requires_objectclass"
-        }),
-        FlextLdifConstantsEnums.ServerTypes.NOVELL: frozenset({
-            "requires_objectclass"
-        }),
+        FlextLdifConstantsEnums.ServerTypes.DS389: frozenset({"requires_objectclass"}),
+        FlextLdifConstantsEnums.ServerTypes.NOVELL: frozenset({"requires_objectclass"}),
         FlextLdifConstantsEnums.ServerTypes.IBM_TIVOLI: frozenset({
             "requires_objectclass"
         }),

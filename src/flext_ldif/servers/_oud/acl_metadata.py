@@ -58,10 +58,7 @@ class FlextLdifServersOudAclMetadataMixin:
         acl_metadata_extensions: t.Ldif.MutableMetadataInputMapping,
     ) -> None:
         """Extract ACL metadata from dict extensions."""
-        for (
-            src_key,
-            dest_key,
-        ) in FlextLdifServersOudConstants.ACL_KEY_MAP.items():
+        for src_key, dest_key in FlextLdifServersOudConstants.ACL_KEY_MAP.items():
             value_raw = acl_extensions.get(src_key)
             if value_raw is not None:
                 acl_metadata_extensions[dest_key] = u.normalize_to_metadata(value_raw)
