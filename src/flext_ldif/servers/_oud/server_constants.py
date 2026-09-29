@@ -7,18 +7,19 @@ from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_ldif import c
+from flext_ldif._constants.servers import FlextLdifConstantsServers
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 if TYPE_CHECKING:
     from flext_ldif import t
 
 
-class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
+class FlextLdifServersOudConstants(
+    FlextLdifConstantsServers.Oud,
+    FlextLdifServersRfc.Constants,
+):
     """Oracle Unified Directory-specific constants using Python 3.13 patterns."""
 
-    SERVER_TYPE: ClassVar[str] = c.Ldif.ServerTypes.OUD
-    PRIORITY: ClassVar[int] = 10
-    DEFAULT_PORT: ClassVar[int] = 1389
     DEFAULT_SSL_PORT: ClassVar[int] = 1636
     DEFAULT_PAGE_SIZE: ClassVar[int] = 1000
     MAX_LOG_LINE_LENGTH: ClassVar[int] = 200
@@ -104,7 +105,6 @@ class FlextLdifServersOudConstants(FlextLdifServersRfc.Constants):
     DS_PRIVILEGE_NAME_KEY: ClassVar[str] = "ds_privilege_name"
     FORMAT_TYPE_KEY: ClassVar[str] = "format_type"
     FORMAT_TYPE_DS_PRIVILEGE: ClassVar[str] = "ds-privilege-name"
-    OUD_ACL_ATTRIBUTES: ClassVar[t.StrSequence] = (FORMAT_TYPE_DS_PRIVILEGE,)
     SCHEMA_DN: ClassVar[str] = "cn=schema"
     SCHEMA_FIELD_ATTRIBUTE_TYPES: ClassVar[str] = "attributetypes"
     SCHEMA_FIELD_OBJECT_CLASSES: ClassVar[str] = "objectclasses"

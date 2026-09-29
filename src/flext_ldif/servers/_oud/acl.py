@@ -17,9 +17,6 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
     """Oracle OUD ACL Implementation (RFC 4876 ACI Format)."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
-    OUD_ACL_ATTRIBUTES: ClassVar[t.StrSequence] = (
-        FlextLdifServersOudConstants.OUD_ACL_ATTRIBUTES
-    )
 
     def __init__(
         self,
@@ -122,7 +119,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         """Get RFC + OUD extensions."""
         return [
             *FlextLdifServersOudConstants.RFC_ACL_ATTRIBUTES,
-            *self.OUD_ACL_ATTRIBUTES,
+            *FlextLdifServersOudConstants.OUD_ACL_ATTRIBUTES,
         ]
 
     def _build_aci_permissions(self, acl_data: m.Ldif.Acl) -> p.Result[str]:

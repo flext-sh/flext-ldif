@@ -24,8 +24,8 @@
 
 <!-- TOC END -->
 
-**Date**: 2025-01-24 **Status**: Approved **Deciders**: FLEXT Core Team **Related
-ADRs**: ADR-001 (RFC-First Design), ADR-005 (Pluggable Servers System)
+**Date**: 2025-01-24 **Status**: Approved **Deciders**: FLEXT Core Team
+**Related ADRs**: ADR-001 (RFC-First Design), ADR-005 (Pluggable Servers System)
 
 ---
 

@@ -5,7 +5,7 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_ldif import c
+from flext_ldif._constants.servers import FlextLdifConstantsServers
 
 from .._base.server_constants import FlextLdifServersBaseConstants
 
@@ -13,12 +13,12 @@ if TYPE_CHECKING:
     from flext_ldif import t
 
 
-class FlextLdifServersRfcConstants(FlextLdifServersBaseConstants):
+class FlextLdifServersRfcConstants(
+    FlextLdifConstantsServers.Rfc,
+    FlextLdifServersBaseConstants,
+):
     """RFC baseline constants (RFC 4512 compliant)."""
 
-    SERVER_TYPE: ClassVar[str] = c.Ldif.ServerTypes.RFC.value
-    PRIORITY: ClassVar[int] = 100
-    DEFAULT_PORT: ClassVar[int] = 389
     DEFAULT_SSL_PORT: ClassVar[int] = 636
     DEFAULT_PAGE_SIZE: ClassVar[int] = 1000
     CANONICAL_NAME: ClassVar[str] = "rfc"

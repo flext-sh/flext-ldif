@@ -25,59 +25,6 @@ class FlextLdifConstants(FlextCliConstants):
     ):
         """LDIF domain constants namespace."""
 
-        BINARY_ATTRIBUTE_NAMES: Final[frozenset[str]] = frozenset({
-            "usercertificate",
-            "cacertificate",
-            "certificaterevocationlist",
-            "authorityrevocationlist",
-            "crosscertificatepair",
-            "photo",
-            "jpegphoto",
-            "audio",
-            "userpkcs12",
-            "usersmimecertificate",
-            "thumbnailphoto",
-            "thumbnaillogo",
-            "objectguid",
-            "objectsid",
-        })
-
-        SERVER_VALIDATION_CAPABILITIES: Final[
-            t.MappingKV[FlextLdifConstantsEnums.ServerTypes, frozenset[str]]
-        ] = MappingProxyType({
-            FlextLdifConstantsEnums.ServerTypes.OID: frozenset({
-                "requires_objectclass",
-                "requires_naming_attr",
-                "requires_binary_option",
-            }),
-            FlextLdifConstantsEnums.ServerTypes.OUD: frozenset({
-                "requires_objectclass",
-                "requires_naming_attr",
-                "requires_binary_option",
-            }),
-            FlextLdifConstantsEnums.ServerTypes.OPENLDAP: frozenset({
-                "requires_binary_option"
-            }),
-            FlextLdifConstantsEnums.ServerTypes.OPENLDAP2: frozenset({
-                "requires_binary_option"
-            }),
-            FlextLdifConstantsEnums.ServerTypes.AD: frozenset({
-                "requires_objectclass",
-                "requires_naming_attr",
-            }),
-            FlextLdifConstantsEnums.ServerTypes.DS389: frozenset({
-                "requires_objectclass"
-            }),
-            FlextLdifConstantsEnums.ServerTypes.NOVELL: frozenset({
-                "requires_objectclass"
-            }),
-            FlextLdifConstantsEnums.ServerTypes.IBM_TIVOLI: frozenset({
-                "requires_objectclass"
-            }),
-        })
-
-        DEFAULT_ACL_ATTRIBUTES: Final[t.StrSequence] = ("acl", "aci", "olcAccess")
-
         RFC_ACL_ATTRIBUTES: Final[t.StrSequence] = (
             "aci",
             "acl",
@@ -252,8 +199,6 @@ class FlextLdifConstants(FlextCliConstants):
                 False,
             ),
         )
-
-        CLASS_SUFFIXES: Final[t.StrSequence] = ("Acl", "Schema", "Entry", "Constants")
 
         PROCESSING_STAGE_NORMALIZE_DN: Final[str] = "normalize_dn"
         PROCESSING_STAGE_NORMALIZE_ATTRS: Final[str] = "normalize_attrs"

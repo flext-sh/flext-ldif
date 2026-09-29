@@ -9,9 +9,14 @@ from __future__ import annotations
 
 import re
 import struct
+from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar
 
+from .enums import FlextLdifConstantsEnums
+
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     from .._typings.base import FlextLdifTypesBase as t
 
 
@@ -397,6 +402,74 @@ class FlextLdifConstantsBase:
             "subschemaSubentry",
             "dseType",
         })
+
+    # ===== Binary-valued LDAP attribute names (ENFORCE-079 owner) =====
+    BINARY_ATTRIBUTE_NAMES: ClassVar[frozenset[str]] = frozenset({
+        "usercertificate",
+        "cacertificate",
+        "certificaterevocationlist",
+        "authorityrevocationlist",
+        "crosscertificatepair",
+        "photo",
+        "jpegphoto",
+        "audio",
+        "userpkcs12",
+        "usersmimecertificate",
+        "thumbnailphoto",
+        "thumbnaillogo",
+        "objectguid",
+        "objectsid",
+    })
+    """Attribute names (compared lowercased) whose values are binary."""
+
+    # ===== Server class-name suffixes (ENFORCE-079 owner) =====
+    CLASS_SUFFIXES: ClassVar[tuple[str, ...]] = (
+        "Acl",
+        "Schema",
+        "Entry",
+        "Constants",
+    )
+    """Class-name suffixes for independent-class server type detection."""
+
+    # ===== Default ACL attribute names (ENFORCE-079 owner) =====
+    DEFAULT_ACL_ATTRIBUTES: ClassVar[tuple[str, ...]] = ("acl", "aci", "olcAccess")
+    """Attribute names probed for ACL entries by default."""
+
+    # ===== Server validation capabilities (ENFORCE-079 owner) =====
+    SERVER_VALIDATION_CAPABILITIES: ClassVar[
+        Mapping[FlextLdifConstantsEnums.ServerTypes, frozenset[str]]
+    ] = MappingProxyType({
+        FlextLdifConstantsEnums.ServerTypes.OID: frozenset({
+            "requires_objectclass",
+            "requires_naming_attr",
+            "requires_binary_option",
+        }),
+        FlextLdifConstantsEnums.ServerTypes.OUD: frozenset({
+            "requires_objectclass",
+            "requires_naming_attr",
+            "requires_binary_option",
+        }),
+        FlextLdifConstantsEnums.ServerTypes.OPENLDAP: frozenset({
+            "requires_binary_option"
+        }),
+        FlextLdifConstantsEnums.ServerTypes.OPENLDAP2: frozenset({
+            "requires_binary_option"
+        }),
+        FlextLdifConstantsEnums.ServerTypes.AD: frozenset({
+            "requires_objectclass",
+            "requires_naming_attr",
+        }),
+        FlextLdifConstantsEnums.ServerTypes.DS389: frozenset({
+            "requires_objectclass"
+        }),
+        FlextLdifConstantsEnums.ServerTypes.NOVELL: frozenset({
+            "requires_objectclass"
+        }),
+        FlextLdifConstantsEnums.ServerTypes.IBM_TIVOLI: frozenset({
+            "requires_objectclass"
+        }),
+    })
+    """Validation features each server type supports."""
 
     # ===== Service registry name (ENFORCE-079 owner) =====
     SERVERS: ClassVar[str] = "ldif_servers"

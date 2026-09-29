@@ -15,8 +15,6 @@ if TYPE_CHECKING:
 class FlextLdifUtilitiesServer:
     """Server utilities for LDIF server type resolution."""
 
-    CLASS_SUFFIXES: t.StrSequence = c.Ldif.CLASS_SUFFIXES
-
     @staticmethod
     def _check_name_patterns(
         name_lower: str,
@@ -74,7 +72,7 @@ class FlextLdifUtilitiesServer:
     @staticmethod
     def _extract_server_name(name_without_prefix: str) -> p.Result[str]:
         """Extract server name from class name suffix."""
-        for suffix in FlextLdifUtilitiesServer.CLASS_SUFFIXES:
+        for suffix in c.Ldif.CLASS_SUFFIXES:
             if name_without_prefix.endswith(suffix):
                 server_name = name_without_prefix[: -len(suffix)]
                 if server_name:

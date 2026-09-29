@@ -8,18 +8,19 @@ from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_ldif import c
+from flext_ldif._constants.servers import FlextLdifConstantsServers
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 if TYPE_CHECKING:
     from flext_ldif import t
 
 
-class FlextLdifServersOidConstants(FlextLdifServersRfc.Constants):
+class FlextLdifServersOidConstants(
+    FlextLdifConstantsServers.Oid,
+    FlextLdifServersRfc.Constants,
+):
     """Oracle Internet Directory (OID) constants for LDIF processing."""
 
-    SERVER_TYPE: ClassVar[str] = c.Ldif.ServerTypes.OID
-    PRIORITY: ClassVar[int] = 10
-    MAX_LOG_LINE_LENGTH: ClassVar[int] = 200
     ORCLACI: ClassVar[str] = "orclaci"
     ORCLENTRYLEVELACI: ClassVar[str] = "orclentrylevelaci"
     ORCL_CONTAINER_LEVEL_ACL: ClassVar[str] = "orclContainerLevelACL"

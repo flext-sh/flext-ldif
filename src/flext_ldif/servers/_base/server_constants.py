@@ -6,19 +6,17 @@ from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_ldif import c
+from flext_ldif._constants.servers import FlextLdifConstantsServers
 
 if TYPE_CHECKING:
     from flext_ldif import t
 
 
-class FlextLdifServersBaseConstants:
+class FlextLdifServersBaseConstants(FlextLdifConstantsServers.Base):
     """Base class for server constants."""
 
     SERVER_TYPE: ClassVar[str]
     PRIORITY: ClassVar[int]
-    CANONICAL_NAME: ClassVar[str] = ""
-    ALIASES: ClassVar[frozenset[str]] = frozenset()
-    CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset()
     CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset()
     ACL_FORMAT: ClassVar[str] = ""
     ACL_ATTRIBUTE_NAME: ClassVar[str] = ""
