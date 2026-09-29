@@ -249,7 +249,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             return metadata
 
         @classmethod
-        def get_docker_control(cls, worker_id: str = "master") -> tk:
+        def get_docker_control(cls) -> tk:
             """Create Docker test infrastructure controller."""
             compose_file = Path(
                 str(
@@ -272,7 +272,6 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             return tk.shared(
                 c.Tests.DOCKER_CONTAINER_NAME,
                 repository_root=repository_root,
-                worker_id=worker_id,
             )
 
         @classmethod
