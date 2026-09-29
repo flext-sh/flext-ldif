@@ -70,7 +70,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset([
             "o=ibm",
             "o=example",
-            "cn=REDACTED_LDAP_BIND_PASSWORD",
+            "cn=admin",
             "cn=configuration",
             "cn=ibm",
         ])

@@ -1579,12 +1579,12 @@ cn: engineering
 member: cn=user001,ou=users,dc=example,dc=com
 member: cn=user002,ou=users,dc=example,dc=com
 member: cn=user003,ou=users,dc=example,dc=com
-orclaci: access to attr=(member,description) by group="cn=directory-REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com" (read,write,compare)
+orclaci: access to attr=(member,description) by group="cn=directory-admins,ou=groups,dc=example,dc=com" (read,write,compare)
 
-dn: cn=directory-REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com
+dn: cn=directory-admins,ou=groups,dc=example,dc=com
 objectClass: top
 objectClass: groupOfNames
-cn: directory-REDACTED_LDAP_BIND_PASSWORDs
+cn: directory-admins
 member: cn=user001,ou=users,dc=example,dc=com
 member: cn=user010,ou=users,dc=example,dc=com
 
@@ -1599,4 +1599,4 @@ mail: svc-sync@example.com
 orclGUID: dddddddd-1111-2222-3333-444444444444
 orclpassword: {SSHA}SvcSyncPassword
 orclisenabled: TRUE
-orclaci: access to entry by "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com" (proxy,read,search,compare)
+orclaci: access to entry by "cn=admin,dc=example,dc=com" (proxy,read,search,compare)
