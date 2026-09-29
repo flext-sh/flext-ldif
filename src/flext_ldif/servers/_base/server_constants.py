@@ -6,7 +6,4 @@ from ..._constants.servers import FlextLdifConstantsServers
 
 
 class FlextLdifServersBaseConstants(FlextLdifConstantsServers.Base):
-    """Base class for server constants."""
-
-
-__all__: list[str] = ["FlextLdifServersBaseConstants"]
+    """Thin inheritor: declarations live in _constants parts."""
