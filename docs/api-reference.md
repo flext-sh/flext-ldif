@@ -19,6 +19,8 @@
   - [r Integration](#r-integration)
   - [Exception Types](#exception-types)
 - [⚠️ Library-Only Usage](#library-only-usage)
+- [Advanced Usage Patterns](#advanced-usage-patterns)
+  - [Pipeline Processing](#pipeline-processing)
   - [Batch Processing](#batch-processing)
   - [Custom Filtering](#custom-filtering)
 - [RFC Schema Parser API](#rfc-schema-parser-api)
@@ -32,7 +34,10 @@
   - [FlextLogger Integration](#flextlogger-integration)
 - [🚀 Quick Start Guide](#quick-start-guide)
   - [Basic Usage - Parse, Validate, Write](#basic-usage-parse-validate-write)
+  - [LDIF Parsing Example](#ldif-parsing-example)
   - [Generic Migration Pipeline](#generic-migration-pipeline)
+  - [Railway-Oriented Pipeline](#railway-oriented-pipeline)
+  - [Supported LDAP Servers](#supported-ldap-servers)
 - [Related Documentation](#related-documentation)
 
 <!-- TOC END -->
@@ -849,8 +854,8 @@ def filter_by_custom_criteria(
 
 ### RfcSchemaParserService
 
-Parse LDAP schema definitions with RFC 4512 compliance and **MANDATORY servers
-support**.
+Parse LDAP schema definitions with RFC 4512 compliance and
+**MANDATORY servers support**.
 
 ```python
 from __future__ import annotations
