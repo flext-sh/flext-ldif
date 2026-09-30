@@ -81,11 +81,11 @@ registry = DnCaseRegistry()
 
 # Register DNs as they're encountered
 canonical_dn = registry.register_dn("CN=Admin,DC=Example,DC=Com")
-# Returns: "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
+# Returns: "cn=admin,dc=example,dc=com"
 
 # All subsequent references use canonical case
 canonical_ref = registry.get_canonical_dn("cn=ADMIN,dc=example,dc=com")
-# Returns: "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
+# Returns: "cn=admin,dc=example,dc=com"
 
 # Validate for OUD deployment
 result = registry.validate_oud_consistency()

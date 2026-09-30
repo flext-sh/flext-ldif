@@ -840,7 +840,7 @@ def filter_by_custom_criteria(
         return (
             entry.has_object_class("person")
             and entry.get_attribute_values("mail")
-            and "REDACTED_LDAP_BIND_PASSWORD" not in entry.dn.lower()
+            and "admin" not in entry.dn.lower()
         )
 
     try:

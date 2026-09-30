@@ -89,9 +89,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
         # shared flext-openldap-test container. A value that does not bind makes
         # every real-LDAP test skip after burning the whole probe budget.
         DOCKER_ADMIN_CREDENTIAL: ClassVar[str] = "admin123"
-        DOCKER_LEGACY_ADMIN_DN: ClassVar[str] = (
-            "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
-        )
+        DOCKER_LEGACY_ADMIN_DN: ClassVar[str] = "cn=admin,dc=flext,dc=local"
         DOCKER_LEGACY_ADMIN_CREDENTIAL: ClassVar[str] = "flext-legacy-admin"
 
         SCHEMA_STRUCTURAL: ClassVar[str] = (
@@ -504,7 +502,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
         RELAXED_ACL_DEFINITIONS: ClassVar[t.MappingKV[str, tuple[str, bool]]] = (
             MappingProxyType({
                 RELAXED_PARSE_VALID: (
-                    '(targetentry="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com")(version 3.0;acl "REDACTED_LDAP_BIND_PASSWORD";allow(all)',
+                    '(targetentry="cn=admin,dc=example,dc=com")(version 3.0;acl "admin";allow(all)',
                     True,
                 ),
                 RELAXED_PARSE_MALFORMED: ("(targetentry incomplete", True),

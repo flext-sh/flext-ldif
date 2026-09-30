@@ -187,8 +187,8 @@ objectClass: person
 objectClass: organizationalPerson
 mail: test@example.com
 
-dn: cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com
-cn: REDACTED_LDAP_BIND_PASSWORD
+dn: cn=admin,dc=example,dc=com
+cn: admin
 objectClass: person
 description: Administrator account
 """

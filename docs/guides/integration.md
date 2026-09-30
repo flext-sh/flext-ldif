@@ -554,3 +554,11 @@ def process_large_ldif(file_path: Path) -> p.Result[str]:
 This integration guide focuses on LDIF-specific patterns within the FLEXT ecosystem. For
 general FLEXT patterns, see
 [flext-core documentation](https://github.com/flext-sh/flext/tree/0.12.0-dev/flext-core/README.md).
+
+## Rejection comments
+
+`WriteFormatOptions(write_rejection_reasons=True)` writes recorded rejection categories
+and reasons as LDIF comments. Each line of a multiline reason is commented separately,
+so metadata cannot introduce active LDAP attributes or entries. The option is disabled
+by default; disabled output retains the same entry content. Updating categorization
+metadata preserves an earlier rejection and initializes statistics when needed.

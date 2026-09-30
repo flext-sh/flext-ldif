@@ -407,6 +407,25 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
                 restored_output += "\n"
             return r[str].ok(restored_output)
 
+        if (
+            format_options is not None
+            and format_options.write_rejection_reasons
+            and entry_data.metadata is not None
+            and entry_data.metadata.processing_stats is not None
+        ):
+            statistics = m.Ldif.EntryStatistics.model_validate(
+                entry_data.metadata.processing_stats.model_dump()
+            )
+            if statistics.was_rejected:
+                for label, value in (
+                    ("Rejection category", statistics.rejection_category),
+                    ("Rejection reason", statistics.rejection_reason),
+                ):
+                    if value is not None:
+                        output_lines.extend(
+                            f"# {label}: {line}" for line in value.splitlines()
+                        )
+
         if write_metadata_as_comments and entry_data.metadata is not None:
             output_lines.append("# Entry Metadata:")
         if include_dn_comments and entry_data.dn:

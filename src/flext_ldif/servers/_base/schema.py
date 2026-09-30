@@ -101,7 +101,7 @@ class FlextLdifServersBaseSchema(
         filtered_kwargs = {k: v for k, v in kwargs.items() if k != "_parent_server"}
         service_kwargs: MutableMapping[str, t.Ldif.Scalar] = {}
         for key, value in filtered_kwargs.items():
-            if isinstance(value, t.SCALAR_TYPES):
+            if isinstance(value, c.SCALAR_TYPES):
                 service_kwargs[key] = value
         super().__init__()
         self._schema_service = _schema_service
@@ -119,7 +119,7 @@ class FlextLdifServersBaseSchema(
         filtered_kwargs: t.MutableConfigValueMapping = {
             key: val
             for key, val in kwargs.items()
-            if key not in excluded_keys and isinstance(val, t.PRIMITIVES_TYPES)
+            if key not in excluded_keys and isinstance(val, c.PRIMITIVES_TYPES)
         }
         # Why: pass parent_server straight into __init__ (which already
         # performs the frozen-model object.__setattr__ dance for

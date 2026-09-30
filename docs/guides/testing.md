@@ -30,6 +30,11 @@ workspace root `AGENTS.md` and the nearest package scope remain authoritative.
   and assertions about private construction are prohibited.
 - Treat warnings, skips, empty collection, and suppressed failures as red.
 
+Private attribute usage is enforced by Pyright's resolved owner and export semantics in
+source, tests, examples, and scripts according to the typed path policy. The
+`ban-test-private-access` ast-grep rule retains only dynamic private-module imports; it
+does not duplicate semantic attribute detection or require deleting test scenarios.
+
 ## Canonical execution
 
 Run tests only through the dispatcher at the workspace root:
@@ -43,6 +48,19 @@ database, whose location the flext-infra generated configuration owns. Its colle
 inventory uses the same marker scope as execution. The runner accounts for every
 selected and deselected test; it never infers selection from console output. Never clear
 or bypass the database, or invoke the underlying runner directly.
+
+The supported Testmon environment combines installed toolchain provenance with current
+`config/*.yaml` content. Declare additional template and resource directories in the
+workspace manifest's `test_inputs.templates` and `test_inputs.resources`. Declare
+behavior-affecting environment variable names in `test_inputs.environment`; only their
+digests enter the environment identifier, never their values. Missing and empty values
+remain distinct. Directory creation, removal, and content changes invalidate the
+selection conservatively while preserving the same external database. Each downstream
+workspace owns its own declarations; the infrastructure template catalog does not stand
+in for downstream inputs. Declared directories use the existing authenticated physical
+inventory contract: symbolic links and multiply linked files fail explicitly. This is
+not an unrestricted filesystem dependency scanner; declare physical source inputs and
+repair the inventory owner if a legitimate native consumer requires another shape.
 
 Run the complete suite through its declared verb:
 
@@ -79,6 +97,17 @@ Run the complete verification gate through the same dispatcher:
 ```bash
 make check
 ```
+
+The checker evaluates the current declared repository. An omitted project selection
+never expands to nested members; a root without project metadata fails even if it
+contains declared members. Fleet orchestration invokes each repository's own lifecycle.
+
+Conformance can explicitly select multiple repository owners for one generation
+transaction. Lazy-init opens a separate Rope index for each selected owner and combines
+the authenticated inputs and publication plans; it never widens the parent's implicit
+scan to include submodules. A module target must resolve in exactly one selected owner.
+Missing or ambiguous targets fail before publication, and repeated generation verifies
+the complete selected set.
 
 Selectors such as project names, file names, patterns, or changed-only flags are not
 part of this command surface. If a required workflow is missing, repair the root Make
