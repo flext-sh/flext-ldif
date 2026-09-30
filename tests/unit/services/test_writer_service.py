@@ -14,6 +14,7 @@ from uuid import uuid4
 import pytest
 from flext_tests import tm
 
+from flext_ldif import ldif
 from tests import c, m, u
 
 if TYPE_CHECKING:
@@ -206,3 +207,83 @@ class TestsFlextLdifWriterService:
         )
 
         tm.fail(result, has="Failed to write LDIF file")
+
+    @pytest.mark.parametrize("server_type", [c.Tests.RFC, "oud"])
+    def test_rejection_comments_are_opt_in_and_cannot_inject_entries(
+        self, writer: p.Ldif.LdifClient, server_type: str
+    ) -> None:
+        """Rejection metadata changes comments only, including multiline reasons."""
+        entry = self._entries()[0]
+        reason = "Outside requested base\r\ndn: cn=injected,dc=example,dc=com\n\ncn: injected"
+        rejected = u.Ldif.update_entry_statistics(
+            entry, mark_rejected=("base_dn_filter", reason)
+        )
+        disabled = m.Ldif.WriteFormatOptions(write_rejection_reasons=False)
+        enabled = m.Ldif.WriteFormatOptions(write_rejection_reasons=True)
+        original = u.Tests.assert_success(writer.write(
+            [entry], server_type=server_type, format_options=disabled
+        ))
+        without_comments = u.Tests.assert_success(writer.write(
+            [rejected], server_type=server_type, format_options=disabled
+        ))
+        with_comments = u.Tests.assert_success(writer.write(
+            [rejected], server_type=server_type, format_options=enabled
+        ))
+        original_text = original.content
+        disabled_text = without_comments.content
+        enabled_text = with_comments.content
+        assert original_text is not None
+        assert disabled_text is not None
+        assert enabled_text is not None
+        assert disabled_text == original_text
+        accepted_output = u.Tests.assert_success(writer.write(
+            [entry], server_type=server_type, format_options=enabled
+        ))
+        assert accepted_output.content == original_text
+        assert "# Rejection category: base_dn_filter" in enabled_text
+        for line in reason.splitlines():
+            assert f"# Rejection reason: {line}" in enabled_text
+
+        def active_lines(text: str) -> list[str]:
+            return [line for line in text.splitlines() if not line.startswith("#")]
+        assert active_lines(enabled_text) == active_lines(original_text)
+        assert entry.metadata is not None
+        assert entry.metadata.processing_stats is None
+        assert rejected.metadata is not None
+        assert rejected.metadata.processing_stats is not None
+        assert rejected.metadata.processing_stats.model_dump()["rejection_reason"] == reason
+
+    def test_rejection_statistics_survive_later_category_updates(self) -> None:
+        """Updating category metadata must not discard the earlier rejection."""
+        entry = self._entries()[0]
+        rejected = u.Ldif.update_entry_statistics(
+            entry, mark_rejected=("base_dn_filter", "Outside requested base")
+        )
+        updated = u.Ldif.update_entry_statistics(rejected, category="rejected")
+        assert updated.metadata is not None
+        assert updated.metadata.processing_stats is not None
+        stats = updated.metadata.processing_stats.model_dump()
+        assert stats["was_rejected"] is True
+        assert stats["rejection_reason"] == "Outside requested base"
+        assert stats["category_assigned"] == "rejected"
+
+    def test_base_dn_rejection_is_preserved_in_export(
+        self, writer: p.Ldif.LdifClient
+    ) -> None:
+        """A real categorization filter must retain its reason through export."""
+        base_dn = "dc=allowed,dc=invalid"
+        entry = u.Tests.create_real_entry(dn="cn=outside,dc=other,dc=invalid")
+        categorizer = ldif.categorization(base_dn=base_dn)
+        categories = m.Ldif.FlexibleCategories.model_validate({
+            "categories": {c.Ldif.Categories.USERS: [entry]}
+        })
+        filtered = categorizer.filter_by_base_dn(categories)
+        rejected = filtered.get(c.Ldif.Categories.REJECTED, [])
+        assert len(rejected) == 1
+        response = u.Tests.assert_success(writer.write(
+            list(rejected), server_type="oud",
+            format_options=m.Ldif.WriteFormatOptions(write_rejection_reasons=True),
+        ))
+        assert response.content is not None
+        assert f"# Rejection reason: DN not under base DN: {base_dn}" in response.content
+        assert "dn: cn=outside,dc=other,dc=invalid" in response.content
