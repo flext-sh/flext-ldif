@@ -11,14 +11,14 @@ dn: ou=users,dc=example,dc=com
 objectClass: top
 objectClass: organizationalUnit
 ou: users
-orclaci: access to entry by group="cn=directory-REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com" (all) bindmode=(SSL) AppendToAll
+orclaci: access to entry by group="cn=directory-admins,ou=groups,dc=example,dc=com" (all) bindmode=(SSL) AppendToAll
 orclaci: access to attr=(cn,sn,mail,telephoneNumber) by * (read,search,compare) filter=(objectClass=inetOrgPerson)
 
 dn: ou=groups,dc=example,dc=com
 objectClass: top
 objectClass: organizationalUnit
 ou: groups
-orclaci: access to entry by "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com" (proxy,read,write,add,delete)
+orclaci: access to entry by "cn=admin,dc=example,dc=com" (proxy,read,write,add,delete)
 orclaci: access to entry by dnattr=(manager) (read,search)
 
 dn: cn=engineering,ou=groups,dc=example,dc=com
@@ -28,10 +28,10 @@ cn: engineering
 orclentrylevelaci: access to entry by * added_object_constraint=(objectClass=groupOfNames) (browse)
 orclaci: access to attr=(description) by self (selfwrite)
 
-dn: cn=directory-REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com
+dn: cn=directory-admins,ou=groups,dc=example,dc=com
 objectClass: top
 objectClass: groupOfNames
-cn: directory-REDACTED_LDAP_BIND_PASSWORDs
+cn: directory-admins
 orclaci: access to entry by guidattr=(orclGUID) (browse)
 orclaci: access to entry by groupattr=(uniqueMember) (read,write)
 
