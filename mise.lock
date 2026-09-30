@@ -199,6 +199,12 @@ url = "https://github.com/kucherenko/jscpd/releases/download/v5.3.2/jscpd-linux-
 url_api = "https://api.github.com/repos/kucherenko/jscpd/releases/assets/583634214"
 provenance = "github-attestations"
 
+[tools."github:kucherenko/jscpd"."platforms.linux-x64-musl"]
+checksum = "sha256:97259f222ea7f6d51a0f2faa98ed5889430233e0fb8d2c129f23d84aff4b93b2"
+url = "https://github.com/kucherenko/jscpd/releases/download/v5.3.2/jscpd-linux-x64-gnu.tar.gz"
+url_api = "https://api.github.com/repos/kucherenko/jscpd/releases/assets/583634214"
+provenance = "github-attestations"
+
 [[tools."github:kucherenko/jscpd"]]
 version = "5.3.2"
 backend = "github:kucherenko/jscpd"
@@ -540,6 +546,15 @@ url = "https://nodejs.org/dist/v26.10.0/node-v26.10.0-darwin-x64.tar.gz"
 [tools.node."platforms.windows-x64"]
 checksum = "sha256:9fef7eca6743a6b910989cd8e78712376b394fcb9b6e1e9c44a0799a287f90c5"
 url = "https://nodejs.org/dist/v26.10.0/node-v26.10.0-win-x64.zip"
+
+[[tools."npm:@ast-grep/cli"]]
+version = "0.45.3"
+aube = { path = ".mise/locks/npm-ast-grep-cli/0.45.3~7a027ead", digest = "sha256:e59172c3ac91ac960cc8cae85e3f4106f868ad3010777268d01e944064bad306" }
+backend = "npm:@ast-grep/cli"
+specifiers = ["latest"]
+
+[tools."npm:@ast-grep/cli".options]
+allow_builds = '["@ast-grep/cli"]'
 
 [[tools."npm:prettier"]]
 version = "3.5.3"
