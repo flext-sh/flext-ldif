@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import r, tk
+from flext_tests import r
 
 from tests import c, t, u
 
@@ -39,9 +39,7 @@ def _probe_ldap_bind(
 @pytest.fixture(scope="session")
 def ldap_container(worker_id: str) -> t.JsonMapping:
     """Ensure shared OpenLDAP container is available for integration tests."""
-    if tk.ci_disables_docker():
-        pytest.skip(c.Tests.DOCKER_CI_SKIP_REASON)
-    docker_control = u.Tests.get_docker_control(worker_id)
+    docker_control = u.Tests.get_docker_control()
     server_url = f"ldap://localhost:{c.Tests.DOCKER_PORT}"
     lock = u.Tests.FileLock(
         Path.home() / ".flext" / f"{c.Tests.DOCKER_CONTAINER_NAME}.lock"
