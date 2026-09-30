@@ -132,7 +132,7 @@ class FlextLdifServersOudAclMetadataMixin:
                 final_key = key
             if value is None or u.primitive(value):
                 current_extensions[final_key] = value
-            elif isinstance(value, t.SEQUENCE_PAIR_TYPES):
+            elif isinstance(value, c.SEQUENCE_PAIR_TYPES):
                 current_extensions[final_key] = (
                     t.Cli.JSON_VALUE_ADAPTER.validate_python([
                         item if item is None or u.primitive(item) else str(item)
