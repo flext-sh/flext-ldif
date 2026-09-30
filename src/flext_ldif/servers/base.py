@@ -33,7 +33,7 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         """Initialize base server and its nested servers."""
         init_kwargs: t.MutableScalarMapping = {}
         for key, value in kwargs.items():
-            if isinstance(value, t.PRIMITIVES_TYPES):
+            if isinstance(value, c.PRIMITIVES_TYPES):
                 init_kwargs[key] = value
         super().__init__()
         parent_ref: FlextLdifServersBase = self

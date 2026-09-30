@@ -38,7 +38,7 @@ note right of flext_ldif : **Key Capabilities:**
 - Type-safe operations
 
 note right of user : **Primary Users:**
-- Directory REDACTED_LDAP_BIND_PASSWORDistrators
+- Directory administrators
 - DevOps engineers
 - Integration developers
 

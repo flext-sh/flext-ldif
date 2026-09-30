@@ -139,10 +139,10 @@ class TestsFlextLdifAclMetadataPreservation:
         ("aci", "extension_key", "expected"),
         [
             pytest.param(
-                '(targetattr="cn")(targattrfilters="add=cn:(cn=REDACTED_LDAP_BIND_PASSWORD)")'
+                '(targetattr="cn")(targattrfilters="add=cn:(cn=admin)")'
                 '(version 3.0; acl "test"; allow (read) userdn="ldap:///self";)',
                 c.Ldif.ACL_TARGETATTR_FILTERS,
-                "add=cn:(cn=REDACTED_LDAP_BIND_PASSWORD)",
+                "add=cn:(cn=admin)",
                 id="targattrfilters",
             ),
             pytest.param(
@@ -220,7 +220,7 @@ class TestsFlextLdifAclMetadataPreservation:
         """A single OUD ACI carrying every feature preserves them all at once."""
         ldif_text = (
             "dn: cn=test,dc=example,dc=com\n"
-            'aci: (targetattr="cn")(targattrfilters="add=cn:(cn=REDACTED_LDAP_BIND_PASSWORD)")'
+            'aci: (targetattr="cn")(targattrfilters="add=cn:(cn=admin)")'
             '(targetcontrol="1.3.6.1.4.1.42.2.27.9.5.2")'
             '(extop="1.3.6.1.4.1.26027.1.6.1")'
             '(version 3.0; acl "test"; allow (read) userdn="ldap:///self" '
@@ -231,10 +231,7 @@ class TestsFlextLdifAclMetadataPreservation:
             "cn: test\n"
         )
         extensions = self._extensions(self._parse_single(api, ldif_text, c.Tests.OUD))
-        assert (
-            extensions.get(c.Ldif.ACL_TARGETATTR_FILTERS)
-            == "add=cn:(cn=REDACTED_LDAP_BIND_PASSWORD)"
-        )
+        assert extensions.get(c.Ldif.ACL_TARGETATTR_FILTERS) == "add=cn:(cn=admin)"
         tm.that(
             extensions.get(c.Ldif.ACL_TARGET_CONTROL), eq="1.3.6.1.4.1.42.2.27.9.5.2"
         )
@@ -273,7 +270,7 @@ class TestsFlextLdifAclMetadataPreservation:
         """OUD ACI metadata is identical after a write/re-parse round-trip."""
         original = (
             "dn: cn=test,dc=example,dc=com\n"
-            'aci: (targetattr="*")(targattrfilters="add=cn:(cn=REDACTED_LDAP_BIND_PASSWORD)")'
+            'aci: (targetattr="*")(targattrfilters="add=cn:(cn=admin)")'
             '(version 3.0; acl "test"; allow (read) userdn="ldap:///self" '
             'and ip="192.168.1.0/24";)\n'
             "objectClass: person\n"
@@ -288,8 +285,5 @@ class TestsFlextLdifAclMetadataPreservation:
 
         reparsed = self._parse_single(api, written, c.Tests.OUD)
         extensions = self._extensions(reparsed)
-        assert (
-            extensions.get(c.Ldif.ACL_TARGETATTR_FILTERS)
-            == "add=cn:(cn=REDACTED_LDAP_BIND_PASSWORD)"
-        )
+        assert extensions.get(c.Ldif.ACL_TARGETATTR_FILTERS) == "add=cn:(cn=admin)"
         tm.that(extensions.get(c.Ldif.ACL_BIND_IP_FILTER), eq="192.168.1.0/24")

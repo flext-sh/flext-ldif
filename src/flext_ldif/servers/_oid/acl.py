@@ -23,16 +23,12 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         m.Ldif.OidAclMetadataConfig
     )
 
-    OID_ACL_ATTRIBUTES: ClassVar[t.StrSequence] = (
-        FlextLdifServersOidConstants.OID_ACL_ATTRIBUTES
-    )
-
     @override
     def resolve_acl_attributes(self) -> t.MutableSequenceOf[str]:
         """Get RFC + OID extensions."""
         return [
             *FlextLdifServersOidConstants.RFC_ACL_ATTRIBUTES,
-            *self.OID_ACL_ATTRIBUTES,
+            *FlextLdifServersOidConstants.OID_ACL_ATTRIBUTES,
         ]
 
     @staticmethod
