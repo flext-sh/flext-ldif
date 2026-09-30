@@ -119,7 +119,7 @@ class FlextLdifServersBaseSchema(
         filtered_kwargs: t.MutableConfigValueMapping = {
             key: val
             for key, val in kwargs.items()
-            if key not in excluded_keys and isinstance(val, t.PRIMITIVES_TYPES)
+            if key not in excluded_keys and isinstance(val, c.PRIMITIVES_TYPES)
         }
         # Why: pass parent_server straight into __init__ (which already
         # performs the frozen-model object.__setattr__ dance for

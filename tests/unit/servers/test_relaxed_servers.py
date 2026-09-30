@@ -154,7 +154,7 @@ class TestsFlextLdifRelaxed:
         self, acl_server: FlextLdifServersRelaxed.Acl
     ) -> None:
         """Test that writing ACL preserves raw content."""
-        raw_acl = '(targetentry="cn=REDACTED_LDAP_BIND_PASSWORD")(version 3.0;acl "REDACTED_LDAP_BIND_PASSWORD";allow(all)'
+        raw_acl = '(targetentry="cn=admin")(version 3.0;acl "admin";allow(all)'
         acl_data = m.Ldif.Acl(
             name="test_acl",
             target=m.Ldif.AclTarget(target_dn="*", attributes=[]),

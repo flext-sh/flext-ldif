@@ -13,7 +13,7 @@
         "objectClass": ["olcDatabaseConfig", "olcMdbConfig"],
         "olcDatabase": ["mdb"],
         "olcSuffix": ["dc=example,dc=com"],
-        "olcRootDN": ["cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"],
+        "olcRootDN": ["cn=admin,dc=example,dc=com"],
         "olcRootPW": ["{SSHA}TrustNo1"],
         "olcDbDirectory": ["/var/lib/ldap"],
         "olcDbMaxsize": ["1073741824"],

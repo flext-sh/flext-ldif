@@ -28,7 +28,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     OUD-specific overrides: ``can_handle`` (DN/attribute pattern detection),
     ``parse_server`` / ``parse_entry`` / ``_hook_post_parse_entry``
     (OUD post-processing), ``_hook_pre_write_entry`` / ``_write_entry``
-    (ACI normalization + comment generation). Stateless helpers come from
+    (schema definition normalization + phase-aware ACL handling + comment
+    generation). Stateless helpers come from
     ``FlextLdifServersOudHelpersMixin`` (composed Mixin facade).
     """
 
@@ -190,8 +191,10 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     @override
     def _hook_pre_write_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
-        """Pre-write hook — entry is already RFC-canonical, no transformation needed."""
-        return r[m.Ldif.Entry].ok(entry)
+        """Normalize schema definitions for OUD (RFC 4512 SYNTAX OIDs) before write."""
+        return FlextLdifServersOudHelpersMixin.normalize_schema_definitions_for_write(
+            entry
+        )
 
     @override
     def _write_entry(self, entry_data: m.Ldif.Entry) -> p.Result[str]:
@@ -211,7 +214,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             )
         )
         entry_data = FlextLdifServersOudHelpersMixin.apply_phase_aware_acl_handling(
-            entry_data, write_options
+            normalized_entry, write_options
         )
         if FlextLdifServersOudConstants.ACL_NORMALIZE_DNS_IN_VALUES:
             entry_data = FlextLdifServersOudHelpersMixin.normalize_acl_dns(entry_data)

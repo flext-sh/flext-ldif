@@ -511,7 +511,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _is_metadata_scalar(value: t.JsonPayload | None) -> bool:
-        return value is None or isinstance(value, t.PRIMITIVES_TYPES)
+        return value is None or isinstance(value, c.PRIMITIVES_TYPES)
 
     @staticmethod
     def _normalize_dict_list(
