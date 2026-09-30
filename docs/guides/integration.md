@@ -4,11 +4,17 @@
 
 - [LDIF Processing Integration](#ldif-processing-integration)
   - [Core LDIF Operations with r](#core-ldif-operations-with-r)
+  - [Memory-Aware LDIF Processing](#memory-aware-ldif-processing)
 - [Enterprise Directory Migration Integration](#enterprise-directory-migration-integration)
   - [FLEXT Oracle Unified Directory Migration](#flext-oracle-unified-directory-migration)
+- [LDIF-Specific Service Integration](#ldif-specific-service-integration)
+  - [LDIF API Service Integration](#ldif-api-service-integration)
   - [LDIF CLI Service Integration](#ldif-cli-service-integration)
 - [LDIF Data Pipeline Integration](#ldif-data-pipeline-integration)
   - [Batch LDIF Processing](#batch-ldif-processing)
+- [LDIF Integration Best Practices](#ldif-integration-best-practices)
+  - [1. Memory-Aware Processing](#1-memory-aware-processing)
+  - [2. LDIF-Specific Error Handling](#2-ldif-specific-error-handling)
   - [3. LDIF Entry Type Processing](#3-ldif-entry-type-processing)
 - [Performance Considerations](#performance-considerations)
   - [Current Implementation Limitations](#current-implementation-limitations)
@@ -292,11 +298,10 @@ class LdifAPIService(FlextAPIService):
 ```python
 from __future__ import annotations
 
-from flext_cli import FlextCliService
-from flext_cli import u
-from flext_core import FlextSettings
-from flext_ldif import ldif
 from pathlib import Path
+
+from flext_cli import FlextCliService, u
+from flext_ldif import ldif
 
 
 class LdifCLIService(FlextCliService):
@@ -333,7 +338,7 @@ class LdifCLIService(FlextCliService):
     def _output_ldif_results(self, entries, format_type: str) -> p.Result[bool]:
         """Output LDIF parsing results in specified format."""
         if format_type == "summary":
-            u.Cli.print(f"LDIF Processing Summary:")
+            u.Cli.print("LDIF Processing Summary:")
             u.Cli.print(f"  Total entries: {len(entries)}")
 
             # Get LDIF-specific statistics
@@ -349,7 +354,7 @@ class LdifCLIService(FlextCliService):
             u.Cli.print(f"  Group entries: {len(groups)}")
 
             return r[bool].ok(value=True)
-        elif format_type == "json":
+        if format_type == "json":
             import json
 
             output = json.dumps(
@@ -366,8 +371,7 @@ class LdifCLIService(FlextCliService):
             )
             u.Cli.print(output)
             return r[bool].ok(value=True)
-        else:
-            return r[bool].fail(f"Unsupported LDIF output format: {format_type}")
+        return r[bool].fail(f"Unsupported LDIF output format: {format_type}")
 ```
 
 ## LDIF Data Pipeline Integration
@@ -381,6 +385,7 @@ import os
 from pathlib import Path
 
 import psutil
+
 from flext_ldif import ldif
 
 

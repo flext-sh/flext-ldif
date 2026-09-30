@@ -4,9 +4,13 @@
 
 - [Common Issues and Solutions](#common-issues-and-solutions)
   - [Parse Errors](#parse-errors)
+  - [Memory Issues](#memory-issues)
+  - [Validation Errors](#validation-errors)
+  - [Performance Issues](#performance-issues)
   - [Integration Issues](#integration-issues)
 - [Diagnostic Tools](#diagnostic-tools)
   - [Health Check Utility](#health-check-utility)
+  - [Debug Mode Configuration](#debug-mode-configuration)
 - [Getting Help](#getting-help)
   - [Support Resources](#support-resources)
   - [Creating Support Requests](#creating-support-requests)
