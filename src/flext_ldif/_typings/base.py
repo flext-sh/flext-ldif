@@ -65,15 +65,6 @@ class FlextLdifTypesBase:
     type NormalizedStrFrozenset = Annotated[
         frozenset[str], m.BeforeValidator(_coerce_normalized_str_frozenset)
     ]
-    RFC4512_DESCRIPTOR_ADAPTER: m.TypeAdapter[Rfc4512Descriptor] = m.TypeAdapter(
-        Rfc4512Descriptor
-    )
-    RFC4514_DN_COMPONENT_ADAPTER: m.TypeAdapter[Rfc4514DnComponent] = m.TypeAdapter(
-        Rfc4514DnComponent
-    )
-    RFC2849_ATTRIBUTE_VALUE_ADAPTER: m.TypeAdapter[Rfc2849AttributeValue] = (
-        m.TypeAdapter(Rfc2849AttributeValue)
-    )
 
 
 __all__: list[str] = ["FlextLdifTypesBase"]
