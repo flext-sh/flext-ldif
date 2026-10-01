@@ -362,6 +362,17 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
     def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
         """Parse Oracle OUD ACL string to RFC-compliant internal model."""
         normalized = acl_line.strip()
+        # The ``aci`` LDIF attribute carries the bare ACI body without the
+        # ``aci:`` wrapper; the RFC parser owns the wrapped form, so the
+        # attribute-value body is wrapped before parsing instead of falling
+        # through to the ds-privilege-name fallback.
+        if normalized.startswith("(") and (
+            FlextLdifServersOudConstants.ACL_ALLOW_PREFIX in normalized
+            or FlextLdifServersOudConstants.ACL_DEFAULT_VERSION in normalized
+        ):
+            return self._parse_aci_format(
+                f"{FlextLdifServersOudConstants.ACL_ACI_PREFIX} {normalized}"
+            )
         if normalized.startswith(FlextLdifServersOudConstants.ACL_ACI_PREFIX):
             return self._parse_aci_format(acl_line)
         rfc_result = super()._parse_acl(acl_line)
