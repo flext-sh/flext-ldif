@@ -7,8 +7,6 @@ name: flext-ldif
 # namespace validator's declared scope — tests host pytest conventions and
 # scripts/examples are thin command and documentation surfaces. Lint, type,
 # constant, and magic-value rules stay fleet-tree-wide.
-namespace_scan_dirs:
-  - src
 repository:
   name: flext-ldif
   distribution: flext-ldif
