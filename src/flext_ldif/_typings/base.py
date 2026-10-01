@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import MutableMapping
 from typing import Annotated
 
-from flext_core import m, r, t, u
+from flext_core import m, r, t
 
 
 class FlextLdifTypesBase:
@@ -65,16 +65,6 @@ class FlextLdifTypesBase:
     type NormalizedStrFrozenset = Annotated[
         frozenset[str], m.BeforeValidator(_coerce_normalized_str_frozenset)
     ]
-    # ``m.TypeAdapter[T]`` is annotation-only; ``u.type_adapter`` constructs.
-    RFC4512_DESCRIPTOR_ADAPTER: m.TypeAdapter[Rfc4512Descriptor] = u.type_adapter(
-        Rfc4512Descriptor
-    )
-    RFC4514_DN_COMPONENT_ADAPTER: m.TypeAdapter[Rfc4514DnComponent] = (
-        u.type_adapter(Rfc4514DnComponent)
-    )
-    RFC2849_ATTRIBUTE_VALUE_ADAPTER: m.TypeAdapter[Rfc2849AttributeValue] = (
-        u.type_adapter(Rfc2849AttributeValue)
-    )
 
 
 __all__: list[str] = ["FlextLdifTypesBase"]
