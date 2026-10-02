@@ -27,7 +27,7 @@
   `FlextLdifConversion`, `FlextLdifConversionAclMixin`,
   `FlextLdifConversionAclPreserveMixin`, `FlextLdifConversionEntryMixin` (+43 more)
 - Exported module shortcuts: `servers`, `services`
-- Generated module pages: `42`
+- Generated module pages: `9`
 
 ## Next Pages
 
