@@ -275,11 +275,11 @@ uniqueMember: cn=user01,ou=users,dc=example,dc=com
 uniqueMember: cn=user02,ou=users,dc=example,dc=com
 orclGUID: a0a0a0a0-a0a0-a0a0-a0a0-a0a0a0a0a0a0
 
-dn: cn=directory-REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com
+dn: cn=directory-admins,ou=groups,dc=example,dc=com
 objectClass: top
 objectClass: groupOfNames
-cn: directory-REDACTED_LDAP_BIND_PASSWORDs
-description: Directory REDACTED_LDAP_BIND_PASSWORDistrators
+cn: directory-admins
+description: Directory administrators
 member: cn=user01,ou=users,dc=example,dc=com
 member: cn=svc-ldap-sync,ou=ServiceAccounts,dc=example,dc=com
 orclGUID: b0b0b0b0-b0b0-b0b0-b0b0-b0b0b0b0b0b0

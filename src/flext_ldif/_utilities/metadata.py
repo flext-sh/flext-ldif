@@ -511,7 +511,7 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _is_metadata_scalar(value: t.JsonPayload | None) -> bool:
-        return value is None or isinstance(value, t.PRIMITIVES_TYPES)
+        return value is None or isinstance(value, c.PRIMITIVES_TYPES)
 
     @staticmethod
     def _normalize_dict_list(
@@ -767,13 +767,19 @@ class FlextLdifUtilitiesMetadata:
         mark_filtered: tuple[str, bool] | None = None,
     ) -> FlextLdifModels.Ldif.Entry:
         """Update entry processing statistics using FlextLdifUtilities."""
-        if not entry.metadata:
-            return entry
-        processing_stats = entry.metadata.processing_stats
-        if not processing_stats:
-            return entry
-        updated_stats = FlextLdifModels.Ldif.EntryStatistics.model_validate(
-            processing_stats.model_dump()
+        processing_stats = (
+            entry.metadata.processing_stats if entry.metadata is not None else None
+        )
+        updated_stats = (
+            FlextLdifModels.Ldif.EntryStatistics.model_validate(
+                processing_stats.model_dump()
+            )
+            if processing_stats is not None
+            else FlextLdifModels.Ldif.EntryStatistics(
+                attributes_added=[], attributes_removed=[], attributes_modified=[],
+                attributes_filtered=[], objectclasses_original=[], objectclasses_final=[],
+                servers_applied=[], filters_applied=[], filter_results={}, errors=[], warnings=[],
+            )
         )
         if category is not None:
             updated_stats = FlextLdifUtilitiesMetadata._apply_category_update(

@@ -154,6 +154,7 @@ class TestsFlextLdifAclService:
     def test_extract_acls_from_entry_with_failed_parse(
         self, svc: p.Ldif.LdifClient
     ) -> None:
+        """An invalid OpenLDAP ACL propagates as the first parse failure."""
         entry = m.Ldif.Entry(
             dn=m.Ldif.DN(value=c.Tests.ACL_ENTRY_DN),
             attributes=m.Ldif.Attributes.model_validate({
@@ -161,5 +162,4 @@ class TestsFlextLdifAclService:
             }),
         )
         result = svc.extract_acls_from_entry(entry, c.Tests.OPENLDAP)
-        response = u.Tests.assert_success(result)
-        tm.that(response.statistics.failed_entries, eq=1)
+        u.Tests.assert_failure(result)

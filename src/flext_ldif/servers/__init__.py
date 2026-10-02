@@ -24,6 +24,7 @@ if TYPE_CHECKING:
     from ._oud.entry import FlextLdifServersOudEntry
     from ._oud.helpers import FlextLdifServersOudHelpersMixin
     from ._oud.schema import FlextLdifServersOudSchema
+    from ._oud.schema_write import FlextLdifServersOudSchemaWriteMixin
     from ._oud.server_constants import FlextLdifServersOudConstants
     from ._oud.server_utilities import FlextLdifServersOudUtilities
     from ._oud.transform import FlextLdifServersOudTransformMixin
@@ -84,6 +85,7 @@ __all__: tuple[str, ...] = (
     "FlextLdifServersOudEntry",
     "FlextLdifServersOudHelpersMixin",
     "FlextLdifServersOudSchema",
+    "FlextLdifServersOudSchemaWriteMixin",
     "FlextLdifServersOudTransformMixin",
     "FlextLdifServersOudUtilities",
     "FlextLdifServersRelaxed",
@@ -119,6 +121,7 @@ _LAZY_IMPORTS = MappingProxyType(
             "._oud.entry": ("FlextLdifServersOudEntry",),
             "._oud.helpers": ("FlextLdifServersOudHelpersMixin",),
             "._oud.schema": ("FlextLdifServersOudSchema",),
+            "._oud.schema_write": ("FlextLdifServersOudSchemaWriteMixin",),
             "._oud.server_constants": ("FlextLdifServersOudConstants",),
             "._oud.server_utilities": ("FlextLdifServersOudUtilities",),
             "._oud.transform": ("FlextLdifServersOudTransformMixin",),

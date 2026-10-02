@@ -13,6 +13,13 @@ if TYPE_CHECKING:
     from .acl_convert_oud import FlextLdifConstantsAclConvertOud
     from .base import FlextLdifConstantsBase
     from .enums import FlextLdifConstantsEnums
+    from .servers import (
+        FlextLdifConstantsServers,
+        FlextLdifConstantsServersBase,
+        FlextLdifConstantsServersOid,
+        FlextLdifConstantsServersOud,
+        FlextLdifConstantsServersRfc,
+    )
 
 
 __all__: tuple[str, ...] = (
@@ -20,6 +27,11 @@ __all__: tuple[str, ...] = (
     "FlextLdifConstantsAclConvertOud",
     "FlextLdifConstantsBase",
     "FlextLdifConstantsEnums",
+    "FlextLdifConstantsServers",
+    "FlextLdifConstantsServersBase",
+    "FlextLdifConstantsServersOid",
+    "FlextLdifConstantsServersOud",
+    "FlextLdifConstantsServersRfc",
 )
 
 _LAZY_IMPORTS = MappingProxyType(
@@ -29,6 +41,13 @@ _LAZY_IMPORTS = MappingProxyType(
             ".acl_convert_oud": ("FlextLdifConstantsAclConvertOud",),
             ".base": ("FlextLdifConstantsBase",),
             ".enums": ("FlextLdifConstantsEnums",),
+            ".servers": (
+                "FlextLdifConstantsServers",
+                "FlextLdifConstantsServersBase",
+                "FlextLdifConstantsServersOid",
+                "FlextLdifConstantsServersOud",
+                "FlextLdifConstantsServersRfc",
+            ),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,

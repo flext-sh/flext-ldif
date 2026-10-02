@@ -8,7 +8,7 @@ from typing import ClassVar, TypeGuard, overload
 from flext_cli import u
 
 from flext_core import r
-from flext_ldif import FlextLdifModels, p, t
+from flext_ldif import FlextLdifModels, c, p, t
 
 from .collection_ldif import FlextLdifUtilitiesCollectionLdif
 from .dn import FlextLdifUtilitiesDN
@@ -22,10 +22,10 @@ class FlextLdifUtilitiesDispatch:
 
     _ENTRY_LIST_ADAPTER: ClassVar[
         FlextLdifModels.TypeAdapter[list[FlextLdifModels.Ldif.Entry]]
-    ] = FlextLdifModels.TypeAdapter(list[FlextLdifModels.Ldif.Entry])
+    ] = u.type_adapter(list[FlextLdifModels.Ldif.Entry])
     _ACL_LIST_ADAPTER: ClassVar[
         FlextLdifModels.TypeAdapter[list[FlextLdifModels.Ldif.Acl]]
-    ] = FlextLdifModels.TypeAdapter(list[FlextLdifModels.Ldif.Acl])
+    ] = u.type_adapter(list[FlextLdifModels.Ldif.Acl])
 
     @staticmethod
     def as_entry(value: t.Ldif.EntryLike | t.ModelInput) -> FlextLdifModels.Ldif.Entry:
@@ -146,7 +146,7 @@ class FlextLdifUtilitiesDispatch:
                     value_or_entries, pipeline=pipeline
                 )
             case _ if isinstance(value_or_entries, Sequence) and not isinstance(
-                value_or_entries, t.STR_BYTES_TYPES
+                value_or_entries, c.STR_BYTES_TYPES
             ):
                 result = r[t.JsonValue].fail(
                     "validator call requires scalar, not entry sequence"

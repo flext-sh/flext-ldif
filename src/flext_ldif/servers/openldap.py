@@ -129,9 +129,6 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         ACL_ATTRS_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
             ACL_ATTRS_PATTERN, re.IGNORECASE
         )
-        ACL_SUBJECT_TYPE_WHO: ClassVar[c.Ldif.AclSubjectType] = (
-            c.Ldif.AclSubjectType.ALL
-        )
         ACL_INDEX_PREFIX_PATTERN: ClassVar[str] = "^(\\{\\d+\\})?\\s*to\\s+"
         ACL_INDEX_PREFIX_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
             ACL_INDEX_PREFIX_PATTERN, re.IGNORECASE
@@ -276,21 +273,10 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             acl_content = self._strip_acl_prefix_and_index(acl_line)
             what, attributes = self._parse_what_clause(acl_content)
             if what is None:
-                acl_minimal = m.Ldif.Acl(
-                    name=FlextLdifServersOpenldap.Constants.ACL_DEFAULT_NAME,
-                    target=m.Ldif.AclTarget(
-                        target_dn=FlextLdifServersOpenldap.Constants.ACL_WILDCARD_TARGET,
-                        attributes=[],
-                    ),
-                    subject=m.Ldif.AclSubject(
-                        subject_type=FlextLdifServersOpenldap.Constants.ACL_SUBJECT_TYPE_WHO,
-                        subject_value=FlextLdifServersOpenldap.Constants.ACL_WILDCARD_TARGET,
-                    ),
-                    permissions=m.Ldif.AclPermissions(),
-                    raw_acl=acl_line,
-                    metadata=self.create_metadata(acl_line),
+                return r[m.Ldif.Acl].fail(
+                    "OpenLDAP 2.x ACL has no 'to <what> by <who> <access>' "
+                    f"clause: {acl_line!r}"
                 )
-                return r[m.Ldif.Acl].ok(acl_minimal)
             subject_value, access = self._parse_by_clauses(acl_content)
             acl = self._build_openldap_acl_model(
                 what, attributes, subject_value, access, acl_line

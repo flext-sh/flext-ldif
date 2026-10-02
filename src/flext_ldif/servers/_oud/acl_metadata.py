@@ -10,45 +10,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from types import MappingProxyType
-from typing import ClassVar
 
 from flext_ldif import c, m, t, u
+
+from .server_constants import FlextLdifServersOudConstants
 
 
 class FlextLdifServersOudAclMetadataMixin:
     """OUD AclMetadata helpers."""
-
-    ACL_KEY_MAP: ClassVar[t.MappingKV[str, str]] = MappingProxyType({
-        "extop": c.Ldif.ACL_EXTOP,
-        "ip": c.Ldif.ACL_BIND_IP_FILTER,
-        "bind_ip": c.Ldif.ACL_BIND_IP_FILTER,
-        "dns": c.Ldif.ACL_BIND_DNS,
-        "bind_dns": c.Ldif.ACL_BIND_DNS,
-        "dayofweek": c.Ldif.ACL_BIND_DAYOFWEEK,
-        "bind_dayofweek": c.Ldif.ACL_BIND_DAYOFWEEK,
-        "timeofday": c.Ldif.ACL_BIND_TIMEOFDAY,
-        "bind_timeofday": c.Ldif.ACL_BIND_TIMEOFDAY,
-        "authmethod": c.Ldif.ACL_AUTHMETHOD,
-        "ssf": c.Ldif.ACL_SSF,
-        "targetcontrol": "targetcontrol",
-        "targetscope": "targetscope",
-        "targattrfilters": c.Ldif.ACL_TARGETATTR_FILTERS,
-    })
-    "Mapping: OUD extension key → canonical c.Ldif.ACL_* metadata key."
-
-    PARSED_ACL_KEY_MAP: ClassVar[t.MappingKV[str, str]] = MappingProxyType({
-        "targattrfilters": c.Ldif.ACL_TARGETATTR_FILTERS,
-        "targetcontrol": c.Ldif.ACL_TARGET_CONTROL,
-        "extop": c.Ldif.ACL_EXTOP,
-        "ip": c.Ldif.ACL_BIND_IP_FILTER,
-        "dns": c.Ldif.ACL_TARGETSCOPE,
-        "dayofweek": c.Ldif.ACL_NUMBERING,
-        "timeofday": c.Ldif.ACL_BINDMODE,
-        "authmethod": c.Ldif.ACL_SOURCE_PERMISSIONS,
-        "ssf": c.Ldif.ACL_SSFS,
-    })
-    "Mapping for parsed-ACL extensions: short alias → canonical c.Ldif.ACL_* key."
 
     @staticmethod
     def extract_acl_metadata(
@@ -89,10 +58,7 @@ class FlextLdifServersOudAclMetadataMixin:
         acl_metadata_extensions: t.Ldif.MutableMetadataInputMapping,
     ) -> None:
         """Extract ACL metadata from dict extensions."""
-        for (
-            src_key,
-            dest_key,
-        ) in FlextLdifServersOudAclMetadataMixin.ACL_KEY_MAP.items():
+        for src_key, dest_key in FlextLdifServersOudConstants.ACL_KEY_MAP.items():
             value_raw = acl_extensions.get(src_key)
             if value_raw is not None:
                 acl_metadata_extensions[dest_key] = u.normalize_to_metadata(value_raw)
@@ -158,7 +124,7 @@ class FlextLdifServersOudAclMetadataMixin:
         current_extensions: t.Ldif.MutableMetadataInputMapping,
     ) -> None:
         """Process parsed ACL extensions and add to current extensions."""
-        key_map = FlextLdifServersOudAclMetadataMixin.PARSED_ACL_KEY_MAP
+        key_map = FlextLdifServersOudConstants.PARSED_ACL_KEY_MAP
         canonical_keys = frozenset(key_map.values())
         for key, value in acl_extensions.items():
             final_key = key_map.get(key) or key_map.get(key.lower()) or key
@@ -166,7 +132,7 @@ class FlextLdifServersOudAclMetadataMixin:
                 final_key = key
             if value is None or u.primitive(value):
                 current_extensions[final_key] = value
-            elif isinstance(value, t.SEQUENCE_PAIR_TYPES):
+            elif isinstance(value, c.SEQUENCE_PAIR_TYPES):
                 current_extensions[final_key] = (
                     t.Cli.JSON_VALUE_ADAPTER.validate_python([
                         item if item is None or u.primitive(item) else str(item)

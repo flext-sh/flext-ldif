@@ -3,6 +3,10 @@
 <!-- TOC START -->
 
 - [❌ PADRÃO INCORRETO (Deprecado)](#padrao-incorreto-deprecado)
+- [✅ PADRÃO CORRETO (Obrigatório)](#padrao-correto-obrigatorio)
+- [📝 Uso em Testes (Fixtures)](#uso-em-testes-fixtures)
+  - [Fixtures Centralizadas (conftest.py)](#fixtures-centralizadas-conftestpy)
+  - [Uso nas Funções de Teste](#uso-nas-funcoes-de-teste)
 - [🔄 Migração de Código Existente](#migracao-de-codigo-existente)
   - [Passo 1: Atualizar Imports](#passo-1-atualizar-imports)
   - [Passo 2: Atualizar Instanciação](#passo-2-atualizar-instanciacao)
@@ -70,6 +74,7 @@ rfc_server: FlextLdifServersBase = server.server("rfc")
 from __future__ import annotations
 
 import pytest
+
 from flext_ldif import FlextLdifServer, FlextLdifServersBase
 
 

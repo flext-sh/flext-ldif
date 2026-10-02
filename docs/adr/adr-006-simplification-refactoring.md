@@ -10,6 +10,12 @@
 - [Decision](#decision)
   - [1. Flatten Module Structure](#1-flatten-module-structure)
   - [2. Delete Over-Engineered Processors](#2-delete-over-engineered-processors)
+  - [3. Remove Wrapper Methods](#3-remove-wrapper-methods)
+  - [4. Remove Property Accessors](#4-remove-property-accessors)
+  - [5. Leverage d](#5-leverage-d)
+  - [6. Refactor Services to s](#6-refactor-services-to-s)
+  - [7. Simplify with Python 3.13+ Pattern Matching](#7-simplify-with-python-313-pattern-matching)
+  - [8. Reorganize Tests](#8-reorganize-tests)
 - [Consequences](#consequences)
   - [Positive](#positive)
   - [Negative](#negative)
@@ -24,8 +30,8 @@
 
 <!-- TOC END -->
 
-**Date**: 2025-01-24 **Status**: Approved **Deciders**: FLEXT Core Team **Related
-ADRs**: ADR-001 (RFC-First Design), ADR-005 (Pluggable Servers System)
+**Date**: 2025-01-24 **Status**: Approved **Deciders**: FLEXT Core Team
+**Related ADRs**: ADR-001 (RFC-First Design), ADR-005 (Pluggable Servers System)
 
 ---
 

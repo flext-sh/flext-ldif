@@ -909,12 +909,24 @@ class FlextLdifUtilitiesDN:
         - The entry's own DN
         - All attributes whose name is in dn_valued_attributes (member, uniqueMember, etc.)
 
+        When the entry's own leftmost RDN changes (a root entry rebased onto a
+        different naming value), LDAP modrdn semantics apply to the naming
+        attribute values: the old RDN pairs are removed and the new pairs added
+        (deleteoldrdn). Descendant entries keep the pure suffix rebase. An
+        unparseable changed RDN fails loud with ``ValueError``.
+
         Returns a model_copy with transformed values. Original entry is not mutated.
         """
         attrs_to_transform = dn_valued_attributes or c.Ldif.ALL_DN_VALUED
         updates: MutableMapping[
             str, FlextLdifModels.Ldif.DN | FlextLdifModels.Ldif.Attributes
         ] = {}
+        rdn_delta: (
+            MutableMapping[
+                str, tuple[t.MutableSequenceOf[str], t.MutableSequenceOf[str]]
+            ]
+            | None
+        ) = None
         entry_dn = entry.dn
         if entry_dn is not None:
             dn_str = FlextLdifUtilitiesDN.get_dn_value(entry_dn)
@@ -924,6 +936,9 @@ class FlextLdifUtilitiesDN:
                 )
                 if new_dn_str != dn_str:
                     updates["dn"] = FlextLdifModels.Ldif.DN(value=new_dn_str)
+                    rdn_delta = FlextLdifUtilitiesDN._modrdn_naming_delta(
+                        dn_str, new_dn_str
+                    )
         entry_attrs = entry.attributes
         if entry_attrs is not None:
             attr_dict = entry_attrs.attributes
@@ -941,6 +956,26 @@ class FlextLdifUtilitiesDN:
                             attr_changed = True
                     if attr_changed:
                         changed_attrs[attr_name] = new_values
+            if rdn_delta is not None:
+                for rdn_attr, (old_values, new_values_rdn) in rdn_delta.items():
+                    existing_key = next(
+                        (key for key in attr_dict if key.lower() == rdn_attr.lower()),
+                        rdn_attr,
+                    )
+                    merged_values: t.MutableSequenceOf[str] = list(
+                        changed_attrs.get(existing_key, attr_dict.get(existing_key, []))
+                    )
+                    old_lowers = {value.lower() for value in old_values}
+                    merged_values = [
+                        value
+                        for value in merged_values
+                        if value.lower() not in old_lowers
+                    ]
+                    present_lowers = {value.lower() for value in merged_values}
+                    for value in new_values_rdn:
+                        if value.lower() not in present_lowers:
+                            merged_values.append(value)
+                    changed_attrs[existing_key] = merged_values
             if changed_attrs:
                 new_attr_dict = dict(attr_dict)
                 new_attr_dict.update(changed_attrs)
@@ -950,6 +985,87 @@ class FlextLdifUtilitiesDN:
             copied: FlextLdifModels.Ldif.Entry = entry.model_copy(update=updates)
             return copied
         return entry
+
+    @staticmethod
+    def _first_rdn_component(dn: str) -> str:
+        """Return the leftmost RDN of a DN, honouring escaped separators."""
+        index = 0
+        while index < len(dn):
+            char = dn[index]
+            if char == "\\":
+                index += 2
+                continue
+            if char == ",":
+                return dn[:index]
+            index += 1
+        return dn
+
+    @staticmethod
+    def _rdn_attribute_pairs(rdn: str) -> list[tuple[str, str]]:
+        """Parse an RDN into (attribute, unescaped value) pairs.
+
+        Supports multi-valued RDNs (``cn=a+sn=b``); every component must be a
+        ``attribute=value`` pair or the RDN is unparseable (fail loud).
+        """
+        components: list[str] = []
+        current: list[str] = []
+        index = 0
+        while index < len(rdn):
+            char = rdn[index]
+            if char == "\\" and index + 1 < len(rdn):
+                current.extend((char, rdn[index + 1]))
+                index += 2
+                continue
+            if char == "+":
+                components.append("".join(current))
+                current = []
+                index += 1
+                continue
+            current.append(char)
+            index += 1
+        components.append("".join(current))
+        pairs: list[tuple[str, str]] = []
+        for component in components:
+            if "=" not in component:
+                msg = f"Unparseable RDN component (missing attribute=value): {component!r}"
+                raise ValueError(msg)
+            attribute, _, raw_value = component.partition("=")
+            attribute = attribute.strip()
+            if not attribute:
+                msg = f"Unparseable RDN component (empty attribute): {component!r}"
+                raise ValueError(msg)
+            pairs.append((attribute, FlextLdifUtilitiesDN.unesc(raw_value)))
+        return pairs
+
+    @staticmethod
+    def _modrdn_naming_delta(
+        old_dn: str, new_dn: str
+    ) -> (
+        MutableMapping[str, tuple[t.MutableSequenceOf[str], t.MutableSequenceOf[str]]]
+        | None
+    ):
+        """Compute deleteoldrdn attribute changes when the entry's own RDN changes.
+
+        Returns ``None`` when the leftmost RDN is unchanged (case-insensitive);
+        otherwise maps each affected attribute to ``(old_values, new_values)``
+        so the caller removes the old pairs and adds the new ones.
+        """
+        old_rdn = FlextLdifUtilitiesDN._first_rdn_component(old_dn)
+        new_rdn = FlextLdifUtilitiesDN._first_rdn_component(new_dn)
+        if old_rdn.lower() == new_rdn.lower():
+            return None
+        old_pairs = FlextLdifUtilitiesDN._rdn_attribute_pairs(old_rdn)
+        new_pairs = FlextLdifUtilitiesDN._rdn_attribute_pairs(new_rdn)
+        delta: MutableMapping[
+            str, tuple[t.MutableSequenceOf[str], t.MutableSequenceOf[str]]
+        ] = {}
+        for attribute, value in old_pairs:
+            removes, _ = delta.setdefault(attribute.lower(), ([], []))
+            removes.append(value)
+        for attribute, value in new_pairs:
+            _, adds = delta.setdefault(attribute.lower(), ([], []))
+            adds.append(value)
+        return delta
 
     @staticmethod
     def transform_ldif_files_in_directory(

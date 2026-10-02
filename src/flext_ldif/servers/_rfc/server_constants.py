@@ -2,11 +2,7 @@
 
 from __future__ import annotations
 
-from types import MappingProxyType
-from typing import TYPE_CHECKING, ClassVar
-
-from flext_ldif import c
-
+from ..._constants.servers import FlextLdifConstantsServers
 from .._base.server_constants import FlextLdifServersBaseConstants
 
 if TYPE_CHECKING:
@@ -97,4 +93,7 @@ class FlextLdifServersRfcConstants(FlextLdifServersBaseConstants):
     ACL_ANONYMOUS_SUBJECT: ClassVar[str] = "ldap:///anyone"
 
 
-__all__: list[str] = ["FlextLdifServersRfcConstants"]
+class FlextLdifServersRfcConstants(
+    FlextLdifConstantsServers.Rfc, FlextLdifServersBaseConstants
+):
+    """Thin inheritor: declarations live in _constants parts."""

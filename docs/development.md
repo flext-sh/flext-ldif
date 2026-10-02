@@ -12,6 +12,14 @@
 - [Testing LDIF Functionality](#testing-ldif-functionality)
   - [LDIF Test Data](#ldif-test-data)
   - [Memory Usage Testing](#memory-usage-testing)
+- [Performance Considerations](#performance-considerations)
+  - [Current Limitations](#current-limitations)
+  - [Performance Guidelines](#performance-guidelines)
+- [Contributing Guidelines](#contributing-guidelines)
+  - [LDIF-Specific Code Review](#ldif-specific-code-review)
+  - [Future Development Priorities](#future-development-priorities)
+- [Common LDIF Development Issues](#common-ldif-development-issues)
+  - [LDIF Format Edge Cases](#ldif-format-edge-cases)
   - [Memory Debugging](#memory-debugging)
 - [Integration with FLEXT Ecosystem](#integration-with-flext-ecosystem)
 
@@ -179,8 +187,8 @@ objectClass: person
 objectClass: organizationalPerson
 mail: test@example.com
 
-dn: cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com
-cn: REDACTED_LDAP_BIND_PASSWORD
+dn: cn=admin,dc=example,dc=com
+cn: admin
 objectClass: person
 description: Administrator account
 """
@@ -253,7 +261,6 @@ def process_large_ldif(file_path: str) -> p.Result[m.Dict]:
     """Process large LDIF files using external tools."""
     # Use grep, awk, or other streaming tools
     # Then process results with FLEXT-LDIF
-    pass
 
 
 # Monitor: Memory usage for production systems
