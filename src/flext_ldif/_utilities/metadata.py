@@ -776,9 +776,17 @@ class FlextLdifUtilitiesMetadata:
             )
             if processing_stats is not None
             else FlextLdifModels.Ldif.EntryStatistics(
-                attributes_added=[], attributes_removed=[], attributes_modified=[],
-                attributes_filtered=[], objectclasses_original=[], objectclasses_final=[],
-                servers_applied=[], filters_applied=[], filter_results={}, errors=[], warnings=[],
+                attributes_added=[],
+                attributes_removed=[],
+                attributes_modified=[],
+                attributes_filtered=[],
+                objectclasses_original=[],
+                objectclasses_final=[],
+                servers_applied=[],
+                filters_applied=[],
+                filter_results={},
+                errors=[],
+                warnings=[],
             )
         )
         if category is not None:

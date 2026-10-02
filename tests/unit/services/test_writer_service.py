@@ -220,15 +220,15 @@ class TestsFlextLdifWriterService:
         )
         disabled = m.Ldif.WriteFormatOptions(write_rejection_reasons=False)
         enabled = m.Ldif.WriteFormatOptions(write_rejection_reasons=True)
-        original = u.Tests.assert_success(writer.write(
-            [entry], server_type=server_type, format_options=disabled
-        ))
-        without_comments = u.Tests.assert_success(writer.write(
-            [rejected], server_type=server_type, format_options=disabled
-        ))
-        with_comments = u.Tests.assert_success(writer.write(
-            [rejected], server_type=server_type, format_options=enabled
-        ))
+        original = u.Tests.assert_success(
+            writer.write([entry], server_type=server_type, format_options=disabled)
+        )
+        without_comments = u.Tests.assert_success(
+            writer.write([rejected], server_type=server_type, format_options=disabled)
+        )
+        with_comments = u.Tests.assert_success(
+            writer.write([rejected], server_type=server_type, format_options=enabled)
+        )
         original_text = original.content
         disabled_text = without_comments.content
         enabled_text = with_comments.content
@@ -236,9 +236,9 @@ class TestsFlextLdifWriterService:
         assert disabled_text is not None
         assert enabled_text is not None
         assert disabled_text == original_text
-        accepted_output = u.Tests.assert_success(writer.write(
-            [entry], server_type=server_type, format_options=enabled
-        ))
+        accepted_output = u.Tests.assert_success(
+            writer.write([entry], server_type=server_type, format_options=enabled)
+        )
         assert accepted_output.content == original_text
         assert "# Rejection category: base_dn_filter" in enabled_text
         for line in reason.splitlines():
@@ -246,12 +246,16 @@ class TestsFlextLdifWriterService:
 
         def active_lines(text: str) -> list[str]:
             return [line for line in text.splitlines() if not line.startswith("#")]
+
         assert active_lines(enabled_text) == active_lines(original_text)
         assert entry.metadata is not None
         assert entry.metadata.processing_stats is None
         assert rejected.metadata is not None
         assert rejected.metadata.processing_stats is not None
-        assert rejected.metadata.processing_stats.model_dump()["rejection_reason"] == reason
+        assert (
+            rejected.metadata.processing_stats.model_dump()["rejection_reason"]
+            == reason
+        )
 
     def test_rejection_statistics_survive_later_category_updates(self) -> None:
         """Updating category metadata must not discard the earlier rejection."""
@@ -280,10 +284,15 @@ class TestsFlextLdifWriterService:
         filtered = categorizer.filter_by_base_dn(categories)
         rejected = filtered.get(c.Ldif.Categories.REJECTED, [])
         assert len(rejected) == 1
-        response = u.Tests.assert_success(writer.write(
-            list(rejected), server_type="oud",
-            format_options=m.Ldif.WriteFormatOptions(write_rejection_reasons=True),
-        ))
+        response = u.Tests.assert_success(
+            writer.write(
+                list(rejected),
+                server_type="oud",
+                format_options=m.Ldif.WriteFormatOptions(write_rejection_reasons=True),
+            )
+        )
         assert response.content is not None
-        assert f"# Rejection reason: DN not under base DN: {base_dn}" in response.content
+        assert (
+            f"# Rejection reason: DN not under base DN: {base_dn}" in response.content
+        )
         assert "dn: cn=outside,dc=other,dc=invalid" in response.content
