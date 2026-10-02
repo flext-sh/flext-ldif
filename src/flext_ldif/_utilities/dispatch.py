@@ -22,10 +22,10 @@ class FlextLdifUtilitiesDispatch:
 
     _ENTRY_LIST_ADAPTER: ClassVar[
         FlextLdifModels.TypeAdapter[list[FlextLdifModels.Ldif.Entry]]
-    ] = FlextLdifModels.TypeAdapter(list[FlextLdifModels.Ldif.Entry])
+    ] = u.type_adapter(list[FlextLdifModels.Ldif.Entry])
     _ACL_LIST_ADAPTER: ClassVar[
         FlextLdifModels.TypeAdapter[list[FlextLdifModels.Ldif.Acl]]
-    ] = FlextLdifModels.TypeAdapter(list[FlextLdifModels.Ldif.Acl])
+    ] = u.type_adapter(list[FlextLdifModels.Ldif.Acl])
 
     @staticmethod
     def as_entry(value: t.Ldif.EntryLike | t.ModelInput) -> FlextLdifModels.Ldif.Entry:
