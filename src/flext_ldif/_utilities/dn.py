@@ -235,7 +235,10 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def _process_rdn_char(
-        char: str, rdn: str, i: int, settings: FlextLdifModels.Ldif.RdnProcessingConfig,
+        char: str,
+        rdn: str,
+        i: int,
+        settings: FlextLdifModels.Ldif.RdnProcessingConfig,
     ) -> tuple[str, str, bool, int, bool]:
         """Process single character in RDN parsing.
 
@@ -247,7 +250,9 @@ class FlextLdifUtilitiesDN:
         in_value = settings.in_value
         if char == "\\" and i + 1 < len(rdn):
             current_val, next_i = FlextLdifUtilitiesDN._process_rdn_escape(
-                rdn, i, settings.current_val,
+                rdn,
+                i,
+                settings.current_val,
             )
             settings.current_val = current_val
             return (current_attr, current_val, in_value, next_i, True)
@@ -634,7 +639,9 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def is_valid_dn_string(
-        value: str, *, strict: bool = True,
+        value: str,
+        *,
+        strict: bool = True,
     ) -> tuple[bool, t.MutableSequenceOf[str]]:
         """Validate DN attribute value per RFC 4514 string production.
 
@@ -796,7 +803,8 @@ class FlextLdifUtilitiesDN:
                     result = FlextLdifUtilitiesDN._parse_dn_components(dn_str)
                 except c.Ldif.EXC_LDIF_PARSE as e:
                     result = r[t.MutableStrPairSequence].fail(
-                        f"DN parsing error: {e}", exception=e,
+                        f"DN parsing error: {e}",
+                        exception=e,
                     )
         return result
 
@@ -815,7 +823,8 @@ class FlextLdifUtilitiesDN:
                 result = FlextLdifUtilitiesDN._parse_rdn_core(rdn)
             except c.Ldif.EXC_LDIF_PARSE as e:
                 result = r[t.MutableStrPairSequence].fail(
-                    f"RDN parsing error: {e}", exception=e,
+                    f"RDN parsing error: {e}",
+                    exception=e,
                 )
         return result
 
@@ -864,7 +873,10 @@ class FlextLdifUtilitiesDN:
             char_at_pos: str = rdn[idx]
             current_attr, current_val, in_value, position = (
                 FlextLdifUtilitiesDN._advance_rdn_position(
-                    char_at_pos, rdn, idx, rdn_config,
+                    char_at_pos,
+                    rdn,
+                    idx,
+                    rdn_config,
                 )
             )
             rdn_config.current_attr = current_attr
@@ -940,12 +952,16 @@ class FlextLdifUtilitiesDN:
     @overload
     @staticmethod
     def transform_dn_attribute(
-        value: FlextLdifModels.Ldif.DN, source_dn: str, target_dn: str,
+        value: FlextLdifModels.Ldif.DN,
+        source_dn: str,
+        target_dn: str,
     ) -> str: ...
 
     @staticmethod
     def transform_dn_attribute(
-        value: str | FlextLdifModels.Ldif.DN, source_dn: str, target_dn: str,
+        value: str | FlextLdifModels.Ldif.DN,
+        source_dn: str,
+        target_dn: str,
     ) -> str:
         """Transform a single DN attribute value by replacing base DN.
 
@@ -960,13 +976,19 @@ class FlextLdifUtilitiesDN:
         source_escaped = c.Ldif.escape_pattern(source_dn)
         result = u.to_str(
             c.Ldif.sub_pattern(
-                f",{source_escaped}$", f",{target_dn}", normalized_dn, ignorecase=True,
+                f",{source_escaped}$",
+                f",{target_dn}",
+                normalized_dn,
+                ignorecase=True,
             ),
         )
         if result == normalized_dn:
             result = u.to_str(
                 c.Ldif.sub_pattern(
-                    f"^{source_escaped}$", target_dn, normalized_dn, ignorecase=True,
+                    f"^{source_escaped}$",
+                    target_dn,
+                    normalized_dn,
+                    ignorecase=True,
                 ),
             )
         return result
@@ -1034,11 +1056,13 @@ class FlextLdifUtilitiesDN:
         """
         attrs_to_transform = dn_valued_attributes or c.Ldif.ALL_DN_VALUED
         updates: MutableMapping[
-            str, FlextLdifModels.Ldif.DN | FlextLdifModels.Ldif.Attributes,
+            str,
+            FlextLdifModels.Ldif.DN | FlextLdifModels.Ldif.Attributes,
         ] = {}
         rdn_delta: (
             MutableMapping[
-                str, tuple[t.MutableSequenceOf[str], t.MutableSequenceOf[str]],
+                str,
+                tuple[t.MutableSequenceOf[str], t.MutableSequenceOf[str]],
             ]
             | None
         ) = None
@@ -1047,12 +1071,15 @@ class FlextLdifUtilitiesDN:
             dn_str = FlextLdifUtilitiesDN.get_dn_value(entry_dn)
             if dn_str:
                 new_dn_str = FlextLdifUtilitiesDN.transform_dn_attribute(
-                    dn_str, source_dn, target_dn,
+                    dn_str,
+                    source_dn,
+                    target_dn,
                 )
                 if new_dn_str != dn_str:
                     updates["dn"] = FlextLdifModels.Ldif.DN(value=new_dn_str)
                     rdn_delta = FlextLdifUtilitiesDN._modrdn_naming_delta(
-                        dn_str, new_dn_str,
+                        dn_str,
+                        new_dn_str,
                     )
         entry_attrs = entry.attributes
         if entry_attrs is not None:
@@ -1064,7 +1091,9 @@ class FlextLdifUtilitiesDN:
                     attr_changed = False
                     for val in values:
                         new_val = FlextLdifUtilitiesDN.transform_dn_attribute(
-                            val, source_dn, target_dn,
+                            val,
+                            source_dn,
+                            target_dn,
                         )
                         new_values.append(new_val)
                         if new_val != val:
@@ -1078,7 +1107,10 @@ class FlextLdifUtilitiesDN:
                         rdn_attr,
                     )
                     merged_values: t.MutableSequenceOf[str] = list(
-                        changed_attrs.get(existing_key, attr_dict.get(existing_key, [])),
+                        changed_attrs.get(
+                            existing_key,
+                            attr_dict.get(existing_key, []),
+                        ),
                     )
                     old_lowers = {value.lower() for value in old_values}
                     merged_values = [
@@ -1161,7 +1193,8 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def _modrdn_naming_delta(
-        old_dn: str, new_dn: str,
+        old_dn: str,
+        new_dn: str,
     ) -> (
         MutableMapping[str, tuple[t.MutableSequenceOf[str], t.MutableSequenceOf[str]]]
         | None
@@ -1183,7 +1216,8 @@ class FlextLdifUtilitiesDN:
         old_pairs = FlextLdifUtilitiesDN._rdn_attribute_pairs(old_rdn)
         new_pairs = FlextLdifUtilitiesDN._rdn_attribute_pairs(new_rdn)
         delta: MutableMapping[
-            str, tuple[t.MutableSequenceOf[str], t.MutableSequenceOf[str]],
+            str,
+            tuple[t.MutableSequenceOf[str], t.MutableSequenceOf[str]],
         ] = {}
         for attribute, value in old_pairs:
             removes, _ = delta.setdefault(attribute.lower(), ([], []))
@@ -1195,7 +1229,9 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def transform_ldif_files_in_directory(
-        ldif_dir: str | Path, source_basedn: str, target_basedn: str,
+        ldif_dir: str | Path,
+        source_basedn: str,
+        target_basedn: str,
     ) -> MutableMapping[str, int | t.MutableSequenceOf[str]]:
         """Transform base DN in all LDIF files in a directory.
 
@@ -1212,7 +1248,9 @@ class FlextLdifUtilitiesDN:
         for ldif_file in sorted(directory.glob("*.ldif")):
             content = ldif_file.read_text(encoding=c.Ldif.DEFAULT_ENCODING)
             new_content = FlextLdifUtilitiesDN._transform_ldif_content(
-                content, source_basedn, target_basedn,
+                content,
+                source_basedn,
+                target_basedn,
             )
             if new_content != content:
                 _ = ldif_file.write_text(new_content, encoding=c.Ldif.DEFAULT_ENCODING)
@@ -1231,7 +1269,10 @@ class FlextLdifUtilitiesDN:
         """
         return u.to_str(
             c.Ldif.sub_pattern(
-                c.Ldif.escape_pattern(source_dn), target_dn, content, ignorecase=True,
+                c.Ldif.escape_pattern(source_dn),
+                target_dn,
+                content,
+                ignorecase=True,
             ),
         )
 

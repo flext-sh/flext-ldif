@@ -180,7 +180,9 @@ class TestsFlextLdifNovellServers:
             "AUXILIARY MAY ( nspmPasswordPolicyDN ) )"
         )
         u.Tests.assert_server_schema_parse_and_properties(
-            schema_server, oc_def, expected_kind="AUXILIARY",
+            schema_server,
+            oc_def,
+            expected_kind="AUXILIARY",
         )
 
     @staticmethod
@@ -190,7 +192,9 @@ class TestsFlextLdifNovellServers:
         """An ABSTRACT objectClass reports the ABSTRACT kind."""
         oc_def = "( 2.16.840.1.113719.2.2.6.3 NAME 'ndsbase' ABSTRACT )"
         u.Tests.assert_server_schema_parse_and_properties(
-            schema_server, oc_def, expected_kind="ABSTRACT",
+            schema_server,
+            oc_def,
+            expected_kind="ABSTRACT",
         )
 
     @staticmethod
@@ -219,7 +223,10 @@ class TestsFlextLdifNovellServers:
         ],
     )
     def test_can_handle_acl_recognises_edirectory_acl_lines(
-        acl_line: str, *, expected: bool, acl_server: FlextLdifServersNovell.Acl,
+        acl_line: str,
+        *,
+        expected: bool,
+        acl_server: FlextLdifServersNovell.Acl,
     ) -> None:
         """ACL recognition keys off the ``acl``/``inheritedacl`` attribute name."""
         tm.that(acl_server.can_handle(acl_line) is expected, eq=True)
@@ -244,7 +251,9 @@ class TestsFlextLdifNovellServers:
         ],
     )
     def test_splitacl_line_separates_attribute_name_from_payload(
-        acl_line: str, expected_name: str, expected_payload: str,
+        acl_line: str,
+        expected_name: str,
+        expected_payload: str,
     ) -> None:
         """Splitting an ACL line yields the trimmed attribute name and payload."""
         attr_name, payload = FlextLdifServersNovell.Acl.splitacl_line(acl_line)

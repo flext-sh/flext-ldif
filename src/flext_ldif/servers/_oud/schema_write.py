@@ -34,7 +34,8 @@ class FlextLdifServersOudSchemaWriteMixin:
 
     @classmethod
     def normalize_schema_definitions_for_write(
-        cls, entry: m.Ldif.Entry,
+        cls,
+        entry: m.Ldif.Entry,
     ) -> p.Result[m.Ldif.Entry]:
         """Canonicalize schema definitions through the source→OUD write cycle.
 
@@ -52,12 +53,16 @@ class FlextLdifServersOudSchemaWriteMixin:
             return r[m.Ldif.Entry].from_failure(servers_result)
         source_schema, target_schema = servers_result.value
         attributes_result = cls._normalize_schema_attributes(
-            entry, source_schema, target_schema,
+            entry,
+            source_schema,
+            target_schema,
         )
         if attributes_result.failure:
             return r[m.Ldif.Entry].from_failure(attributes_result)
         return cls._normalize_schema_change_operations(
-            attributes_result.value, source_schema, target_schema,
+            attributes_result.value,
+            source_schema,
+            target_schema,
         )
 
     @classmethod
@@ -83,7 +88,8 @@ class FlextLdifServersOudSchemaWriteMixin:
 
     @classmethod
     def _resolve_write_schema_servers(
-        cls, entry: m.Ldif.Entry,
+        cls,
+        entry: m.Ldif.Entry,
     ) -> p.Result[t.Pair[p.Ldif.SchemaServer, p.Ldif.SchemaServer]]:
         """Resolve (source, target) schema servers for the entry provenance.
 
@@ -97,7 +103,8 @@ class FlextLdifServersOudSchemaWriteMixin:
         target_result = registry.server(str(c.Ldif.ServerTypes.OUD.value))
         if target_result.failure:
             return r[t.Pair[p.Ldif.SchemaServer, p.Ldif.SchemaServer]].fail_op(
-                "resolve OUD target schema server", target_result.error,
+                "resolve OUD target schema server",
+                target_result.error,
             )
         source_type: str = (
             entry.metadata.server_type
@@ -239,19 +246,22 @@ class FlextLdifServersOudSchemaWriteMixin:
             parse_result = source_schema.parse_attribute(value)
             if parse_result.failure:
                 return r[str].fail_op(
-                    f"parse {attr_name} definition for OUD write", parse_result.error,
+                    f"parse {attr_name} definition for OUD write",
+                    parse_result.error,
                 )
             write_result = target_schema.write_attribute(parse_result.value)
         else:
             parse_result_oc = source_schema.parse_objectclass(value)
             if parse_result_oc.failure:
                 return r[str].fail_op(
-                    f"parse {attr_name} definition for OUD write", parse_result_oc.error,
+                    f"parse {attr_name} definition for OUD write",
+                    parse_result_oc.error,
                 )
             write_result = target_schema.write_objectclass(parse_result_oc.value)
         if write_result.failure:
             return r[str].fail_op(
-                f"serialize {attr_name} definition for OUD write", write_result.error,
+                f"serialize {attr_name} definition for OUD write",
+                write_result.error,
             )
         return write_result
 

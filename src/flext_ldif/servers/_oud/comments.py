@@ -45,7 +45,8 @@ class FlextLdifServersOudCommentsMixin:
 
     @staticmethod
     def add_original_entry_comments(
-        entry_data: m.Ldif.Entry, write_options: m.Ldif.WriteFormatOptions | None,
+        entry_data: m.Ldif.Entry,
+        write_options: m.Ldif.WriteFormatOptions | None,
     ) -> t.MutableSequenceOf[str]:
         """Add original entry as commented LDIF block.
 
@@ -94,16 +95,21 @@ class FlextLdifServersOudCommentsMixin:
             return acl_attr_names_to_skip
         acl_comments_dict: t.MutableStrSequenceMapping = {}
         FlextLdifServersOudCommentsMixin._collect_acl_from_transformations(
-            entry, acl_comments_dict, acl_attr_names_to_skip,
+            entry,
+            acl_comments_dict,
+            acl_attr_names_to_skip,
         )
         FlextLdifServersOudCommentsMixin._collect_acl_from_extensions(
-            entry, acl_comments_dict, acl_attr_names_to_skip,
+            entry,
+            acl_comments_dict,
+            acl_attr_names_to_skip,
         )
         if acl_comments_dict:
             acl_attr_names = list(acl_comments_dict.keys())
             ordered_acl_attrs = (
                 FlextLdifServersOudTransformMixin.determine_attribute_order(
-                    acl_attr_names, format_options,
+                    acl_attr_names,
+                    format_options,
                 )
             )
             for attr_name in ordered_acl_attrs:
@@ -113,7 +119,8 @@ class FlextLdifServersOudCommentsMixin:
 
     @staticmethod
     def _add_rejection_reason_comments(
-        comment_lines: t.MutableSequenceOf[str], entry: m.Ldif.Entry,
+        comment_lines: t.MutableSequenceOf[str],
+        entry: m.Ldif.Entry,
     ) -> None:
         """Add comments with rejection reason if entry was rejected."""
         if (
@@ -133,11 +140,15 @@ class FlextLdifServersOudCommentsMixin:
         entry: m.Ldif.Entry,
         format_options: m.Ldif.WriteFormatOptions | None = None,
     ) -> None:
-        """Add transformation comments for attribute changes, including OUD-specific ACL handling."""
+        """Add transformation comments for attribute changes, including OUD-specific ACL
+        handling.
+        """
         if not entry.metadata:
             return
         acl_attr_names_to_skip = FlextLdifServersOudCommentsMixin._add_oud_acl_comments(
-            comment_lines, entry, format_options,
+            comment_lines,
+            entry,
+            format_options,
         )
         processed_attrs: set[str] = set()
         if entry.metadata.attribute_transformations:
@@ -148,7 +159,8 @@ class FlextLdifServersOudCommentsMixin:
             ]
             ordered_attr_names = (
                 FlextLdifServersOudTransformMixin.determine_attribute_order(
-                    attr_names, format_options,
+                    attr_names,
+                    format_options,
                 )
             )
             for attr_name in ordered_attr_names:
@@ -160,7 +172,10 @@ class FlextLdifServersOudCommentsMixin:
                     else transformation_type
                 )
                 FlextLdifServersOudCommentsMixin._add_attribute_transformation_comments(
-                    comment_lines, attr_name, transformation, comment_type,
+                    comment_lines,
+                    attr_name,
+                    transformation,
+                    comment_type,
                 )
                 processed_attrs.add(attr_name.lower())
         if (
@@ -177,7 +192,8 @@ class FlextLdifServersOudCommentsMixin:
             ]
             ordered_removed_attrs = (
                 FlextLdifServersOudTransformMixin.determine_attribute_order(
-                    removed_attr_names, format_options,
+                    removed_attr_names,
+                    format_options,
                 )
             )
             for attr_name in ordered_removed_attrs:

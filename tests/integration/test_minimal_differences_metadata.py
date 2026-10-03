@@ -71,7 +71,9 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         ],
     )
     def test_parsed_entry_metadata_reports_effective_server_type(
-        parser: FlextLdifParser, server_type: str, effective_server_type: str,
+        parser: FlextLdifParser,
+        server_type: str,
+        effective_server_type: str,
     ) -> None:
         """Entry metadata records the effective (normalized) server family.
 
@@ -195,14 +197,16 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         )
         tm.that(entry_conversion[c.Ldif.CONVERSION_ORIGINAL_VALUE], eq=[raw_value])
         tm.that(
-            entry_conversion[c.Ldif.CONVERSION_CONVERTED_VALUE], eq=[converted_value],
+            entry_conversion[c.Ldif.CONVERSION_CONVERTED_VALUE],
+            eq=[converted_value],
         )
 
     # -- round-trip write --------------------------------------------------
 
     @staticmethod
     def test_round_trip_write_emits_converted_boolean_value(
-        parser: FlextLdifParser, writer: p.Ldif.LdifClient,
+        parser: FlextLdifParser,
+        writer: p.Ldif.LdifClient,
     ) -> None:
         """OID -> write converts the boolean and preserves the DN in output."""
         content = (
@@ -234,7 +238,9 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         ],
     )
     def test_operational_attributes_preserved_through_parse(
-        parser: FlextLdifParser, attribute: str, value: str,
+        parser: FlextLdifParser,
+        attribute: str,
+        value: str,
     ) -> None:
         """Operational attributes survive parsing and stay publicly readable."""
         content = (

@@ -49,7 +49,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         SCHEMA_MAY_SEPARATOR: ClassVar[str] = "$"
         SCHEMA_NAME_PATTERN: ClassVar[str] = "NAME\\s+['\\\"]?([^'\\\" ]+)['\\\"]?"
         SCHEMA_NAME_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-            SCHEMA_NAME_PATTERN, re.IGNORECASE,
+            SCHEMA_NAME_PATTERN,
+            re.IGNORECASE,
         )
         ACL_DEFAULT_NAME: ClassVar[str] = "relaxed_acl"
         ACL_DEFAULT_TARGET_DN: ClassVar[str] = "*"
@@ -92,7 +93,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         @override
         def can_handle_attribute(
-            self, attr_definition: str | m.Ldif.SchemaAttribute,
+            self,
+            attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Accept any attribute definition in relaxed mode.
 
@@ -105,7 +107,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         @override
         def can_handle_objectclass(
-            self, oc_definition: str | m.Ldif.SchemaObjectClass,
+            self,
+            oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Accept any objectClass definition in relaxed mode.
 
@@ -117,7 +120,9 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             return bool(oc_definition.strip())
 
         def _enhance_objectclass_metadata(
-            self, objectclass: m.Ldif.SchemaObjectClass, original_definition: str,
+            self,
+            objectclass: m.Ldif.SchemaObjectClass,
+            original_definition: str,
         ) -> m.Ldif.SchemaObjectClass:
             """Enhance objectClass metadata to indicate relaxed mode parsing.
 
@@ -125,15 +130,18 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 The resulting ``m.Ldif.SchemaObjectClass``.
             """
             result = self._enhance_schema_item_metadata(
-                schema_item=objectclass, original_definition=original_definition,
+                schema_item=objectclass,
+                original_definition=original_definition,
             )
             # _enhance_schema_item_metadata preserves the concrete type at runtime
             if isinstance(result, m.Ldif.SchemaObjectClass):
                 return result
             return objectclass
 
+        @staticmethod
         def _extract_must_may_from_objectclass(
-            self, oc_definition: str,
+            self,
+            oc_definition: str,
         ) -> tuple[t.MutableSequenceOf[str] | None, t.MutableSequenceOf[str] | None]:
             """Extract MUST and MAY fields from objectClass definition.
 
@@ -173,6 +181,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 ]
             return (must, may)
 
+        @staticmethod
         def _extract_oid_with_fallback_patterns(self, definition: str) -> str | None:
             """Extract OID using multiple fallback patterns for relaxed mode.
 
@@ -209,6 +218,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 return relaxed_oid
             return None
 
+        @staticmethod
         def _extract_sup_from_objectclass(self, oc_definition: str) -> str | None:
             """Extract SUP (superior) field from objectClass definition.
 
@@ -237,7 +247,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         @override
         def _parse_attribute(
-            self, attr_definition: str,
+            self,
+            attr_definition: str,
         ) -> p.Result[m.Ldif.SchemaAttribute]:
             """Parse attribute with best-effort approach using RFC baseline.
 
@@ -252,7 +263,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             if parent_result.success:
                 attribute = parent_result.value
                 self._enhance_schema_item_metadata(
-                    schema_item=attribute, original_definition=attr_definition,
+                    schema_item=attribute,
+                    original_definition=attr_definition,
                 )
                 return r[m.Ldif.SchemaAttribute].ok(attribute)
             self.logger.debug(
@@ -263,11 +275,13 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             except c.Ldif.EXC_LDIF_PARSE as e:
                 self.logger.debug("Relaxed attribute parse exception: %s", e)
                 return r[m.Ldif.SchemaAttribute].fail(
-                    f"Failed to parse attribute definition: {e}", exception=e,
+                    f"Failed to parse attribute definition: {e}",
+                    exception=e,
                 )
 
         def _parse_relaxed_attribute(
-            self, attr_definition: str,
+            self,
+            attr_definition: str,
         ) -> p.Result[m.Ldif.SchemaAttribute]:
             """Parse an attribute definition using relaxed fallback rules.
 
@@ -318,7 +332,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         @override
         def _parse_objectclass(
-            self, oc_definition: str,
+            self,
+            oc_definition: str,
         ) -> p.Result[m.Ldif.SchemaObjectClass]:
             """Parse objectClass with best-effort approach using RFC baseline.
 
@@ -341,7 +356,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             return self._parse_objectclass_relaxed(oc_definition)
 
         def _parse_objectclass_relaxed(
-            self, oc_definition: str,
+            self,
+            oc_definition: str,
         ) -> p.Result[m.Ldif.SchemaObjectClass]:
             """Parse objectClass with relaxed/best-effort parsing using utilities.
 
@@ -354,10 +370,13 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     "Failed to extract OID from objectClass definition",
                 )
             name = u.Ldif.extract_optional_field(
-                oc_definition, "\\bNAME\\s+(?:'([^']+)'|\\(([^)]+)\\))\\b", default=oid,
+                oc_definition,
+                "\\bNAME\\s+(?:'([^']+)'|\\(([^)]+)\\))\\b",
+                default=oid,
             )
             desc = u.Ldif.extract_optional_field(
-                oc_definition, "\\bDESC\\s+'([^']+)'\\b",
+                oc_definition,
+                "\\bDESC\\s+'([^']+)'\\b",
             )
             sup = self._extract_sup_from_objectclass(oc_definition)
             kind_match = c.Ldif.SCHEMA_OBJECTCLASS_KIND_RE.search(oc_definition)
@@ -419,7 +438,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         @override
         def _write_objectclass(
-            self, oc_data: m.Ldif.SchemaObjectClass,
+            self,
+            oc_data: m.Ldif.SchemaObjectClass,
         ) -> p.Result[str]:
             """Write objectClass to RFC format - stringify in relaxed mode.
 
@@ -516,14 +536,17 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             parent_result = super()._parse_acl(acl_line)
             if parent_result.success:
                 updated_acl = self._with_relaxed_acl_metadata(
-                    parent_result.value, acl_line,
+                    parent_result.value,
+                    acl_line,
                 )
                 return r[m.Ldif.Acl].ok(updated_acl)
             relaxed_acl = self._build_relaxed_acl(acl_line)
             return r[m.Ldif.Acl].ok(relaxed_acl)
 
         def _with_relaxed_acl_metadata(
-            self, acl: m.Ldif.Acl, acl_line: str,
+            self,
+            acl: m.Ldif.Acl,
+            acl_line: str,
         ) -> m.Ldif.Acl:
             """Attach relaxed metadata to an ACL.
 
@@ -604,7 +627,9 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         @override
         def can_handle(
-            self, entry_dn: str, attributes: t.MutableStrSequenceMapping,
+            self,
+            entry_dn: str,
+            attributes: t.MutableStrSequenceMapping,
         ) -> bool:
             """Accept any entry in relaxed mode.
 
@@ -654,6 +679,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 self.logger.debug("DN normalization exception: %s", e)
                 return r[str].fail_op("DN normalization", e)
 
+        @staticmethod
         def process_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
             """Process entry for relaxed mode.
 
@@ -663,7 +689,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             return r[m.Ldif.Entry].ok(entry)
 
         def _adapted_parse_entry_relaxed(
-            self, entry_content: str,
+            self,
+            entry_content: str,
         ) -> p.Result[m.Ldif.Entry]:
             """Parse entry content in relaxed mode (extracted from _parse_content).
 
@@ -698,7 +725,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         @override
         def _parse_content(
-            self, ldif_content: str,
+            self,
+            ldif_content: str,
         ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
             """Parse raw LDIF content string into Entry models (internal).
 
@@ -715,14 +743,17 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 return self._parse_relaxed_content(ldif_content)
             except c.Ldif.EXC_LDIF_PARSE as error:
                 self.logger.exception(
-                    "Failed to parse content", server_type=self._get_server_type(),
+                    "Failed to parse content",
+                    server_type=self._get_server_type(),
                 )
                 return r[t.MutableSequenceOf[m.Ldif.Entry]].fail(
-                    f"Failed to parse content: {error}", exception=error,
+                    f"Failed to parse content: {error}",
+                    exception=error,
                 )
 
         def _parse_relaxed_content(
-            self, ldif_content: str,
+            self,
+            ldif_content: str,
         ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
             """Parse raw LDIF content with relaxed record splitting.
 

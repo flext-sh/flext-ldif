@@ -24,7 +24,10 @@ class TestsFlextLdifOidMetadataRoundtrip:
     @pytest.mark.parametrize("acl", ["", "orclaci: access to entry by * (browse)\n"])
     @pytest.mark.parametrize("comment_acl", [False, True])
     def test_oid_metadata_survives_oud_phase_write(
-        api: p.Ldif.LdifClient, acl: str, *, comment_acl: bool,
+        api: p.Ldif.LdifClient,
+        acl: str,
+        *,
+        comment_acl: bool,
     ) -> None:
         """Parsing must produce serializable metadata before any target write."""
         source = (

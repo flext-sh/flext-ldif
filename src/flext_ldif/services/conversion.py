@@ -38,15 +38,18 @@ class FlextLdifConversion(FlextLdifConversionEntryMixin, FlextLdifConversionAclM
         if isinstance(model_instance, m.Ldif.Entry):
             return self._convert_entry(source_server, target_server, model_instance)
         if isinstance(
-            model_instance, m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+            model_instance,
+            m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
         ):
             source_schema_result = self._resolve_schema_server(
-                source_server, role="Source",
+                source_server,
+                role="Source",
             )
             if source_schema_result.failure:
                 return r[t.Ldif.ConvertedModel].from_failure(source_schema_result)
             target_schema_result = self._resolve_schema_server(
-                target_server, role="Target",
+                target_server,
+                role="Target",
             )
             if target_schema_result.failure:
                 return r[t.Ldif.ConvertedModel].from_failure(target_schema_result)
@@ -88,7 +91,9 @@ class FlextLdifConversion(FlextLdifConversionEntryMixin, FlextLdifConversionAclM
             source_server = self._resolve_server(source)
             target_server = self._resolve_server(target)
             result = self.dsl_convert_between_servers(
-                source_server, target_server, model_instance,
+                source_server,
+                target_server,
+                model_instance,
             )
         except c.Ldif.EXC_LDIF_PARSE as e:
             result = r[t.Ldif.ConvertedModel].fail_op("Model conversion", e)

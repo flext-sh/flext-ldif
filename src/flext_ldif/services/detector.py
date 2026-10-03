@@ -24,7 +24,10 @@ class FlextLdifDetector(s):
 
     @staticmethod
     def _add_pattern_if_match(
-        *, condition: bool, description: str, patterns: t.MutableSequenceOf[str],
+        *,
+        condition: bool,
+        description: str,
+        patterns: t.MutableSequenceOf[str],
     ) -> None:
         """Add pattern description if condition is met."""
         if condition:
@@ -41,7 +44,8 @@ class FlextLdifDetector(s):
         return types
 
     def _get_server_constants(
-        self, server_type: str,
+        self,
+        server_type: str,
     ) -> type[p.Ldif.ServerConstants] | None:
         """Get server Constants class dynamically via FlextLdifServer registry.
 
@@ -95,12 +99,14 @@ class FlextLdifDetector(s):
                 )
             if not ldif_path.exists():
                 return r[m.Ldif.ServerDetectionResult].fail_op(
-                    "read detection source", f"LDIF file not found: {ldif_path}",
+                    "read detection source",
+                    f"LDIF file not found: {ldif_path}",
                 )
             read = u.Cli.files_read_text(ldif_path)
             if read.failure:
                 return r[m.Ldif.ServerDetectionResult].fail_op(
-                    "read detection source", read.error,
+                    "read detection source",
+                    read.error,
                 )
             resolved_content: str = read.value
         else:
@@ -121,7 +127,9 @@ class FlextLdifDetector(s):
         return r[m.Ldif.ServerDetectionResult].ok(detection_result)
 
     def resolve_effective_server_type(
-        self, ldif_path: Path | None = None, ldif_content: str | None = None,
+        self,
+        ldif_path: Path | None = None,
+        ldif_content: str | None = None,
     ) -> p.Result[str]:
         """Resolve the effective LDAP server type to use for processing.
 
@@ -130,7 +138,8 @@ class FlextLdifDetector(s):
         """
         if ldif_path is not None or ldif_content is not None:
             detection_result = self.detect_server_type(
-                ldif_path=ldif_path, ldif_content=ldif_content,
+                ldif_path=ldif_path,
+                ldif_content=ldif_content,
             )
             if detection_result.success:
                 return r[str].ok(detection_result.value.detected_server_type)

@@ -56,7 +56,8 @@ class FlextLdifUtilitiesParser:
                 val_payload: t.JsonValueList = list(val)
                 extensions_typed[key] = val_payload
             return FlextLdifModels.Ldif.ServerMetadata(
-                server_type=server_type, extensions=extensions_typed,
+                server_type=server_type,
+                extensions=extensions_typed,
             )
         return None
 
@@ -128,7 +129,8 @@ class FlextLdifUtilitiesParser:
             encoded_value = payload[1:].lstrip()
             try:
                 decoded_value = base64.b64decode(encoded_value).decode(
-                    c.Ldif.DEFAULT_ENCODING, errors="replace",
+                    c.Ldif.DEFAULT_ENCODING,
+                    errors="replace",
                 )
             except ValueError:
                 decoded_value = encoded_value
@@ -192,7 +194,8 @@ class FlextLdifUtilitiesParser:
             raw_record_lines.append(line)
             if line == "-":
                 FlextLdifUtilitiesParser.finalize_change_operation(
-                    current_change_operation, change_operations,
+                    current_change_operation,
+                    change_operations,
                 )
                 current_change_operation = None
                 continue
@@ -238,16 +241,20 @@ class FlextLdifUtilitiesParser:
             if changetype == c.Ldif.LdifChangeType.MODIFY:
                 if key_lower in modify_ops:
                     FlextLdifUtilitiesParser.finalize_change_operation(
-                        current_change_operation, change_operations,
+                        current_change_operation,
+                        change_operations,
                     )
                     current_change_operation = FlextLdifModels.Ldif.ChangeOperation(
-                        operation=modify_ops[key_lower], attribute=value,
+                        operation=modify_ops[key_lower],
+                        attribute=value,
                     )
                     continue
                 if current_change_operation is not None:
                     current_change_operation.values.append(
                         FlextLdifModels.Ldif.ChangeOperationValue(
-                            value=value, value_origin=value_origin, raw_value=raw_value,
+                            value=value,
+                            value_origin=value_origin,
+                            raw_value=raw_value,
                         ),
                     )
                     attribute_name = current_change_operation.attribute
@@ -262,7 +269,8 @@ class FlextLdifUtilitiesParser:
             if isinstance(raw_values, list):
                 raw_values.append(raw_value)
         FlextLdifUtilitiesParser.finalize_change_operation(
-            current_change_operation, change_operations,
+            current_change_operation,
+            change_operations,
         )
         if not dn:
             return r[FlextLdifModels.Ldif.Entry].fail("No DN found in entry")
@@ -282,7 +290,9 @@ class FlextLdifUtilitiesParser:
                 newsuperior=newsuperior,
                 raw_record_lines=list(raw_record_lines),
                 metadata=FlextLdifUtilitiesParser.build_rfc_entry_metadata(
-                    dn.strip(), raw_record_lines, comments,
+                    dn.strip(),
+                    raw_record_lines,
+                    comments,
                 ),
             )
             return r[FlextLdifModels.Ldif.Entry].ok(entry)
@@ -359,7 +369,8 @@ class FlextLdifUtilitiesParser:
 
     @staticmethod
     def extract_boolean_flag(
-        definition: str, pattern: t.Ldif.RegexPattern | str,
+        definition: str,
+        pattern: t.Ldif.RegexPattern | str,
     ) -> bool:
         """Check if boolean flag exists in definition.
 
@@ -414,7 +425,9 @@ class FlextLdifUtilitiesParser:
 
     @staticmethod
     def extract_optional_field(
-        definition: str, pattern: t.Ldif.RegexPattern | str, default: str | None = None,
+        definition: str,
+        pattern: t.Ldif.RegexPattern | str,
+        default: str | None = None,
     ) -> str | None:
         """Extract optional field via regex pattern.
 

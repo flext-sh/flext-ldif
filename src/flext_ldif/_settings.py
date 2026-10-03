@@ -27,18 +27,22 @@ class FlextLdifSettings(FlextCliSettings, FlextSettings):
         """Namespaced LDIF runtime settings."""
 
         ldif_encoding: Annotated[
-            str, m.Field(description="Default encoding for LDIF read/write operations"),
+            str,
+            m.Field(description="Default encoding for LDIF read/write operations"),
         ] = "utf-8"
         ldif_strict_validation: Annotated[
-            bool, m.Field(description="Enable strict LDIF validation rules"),
+            bool,
+            m.Field(description="Enable strict LDIF validation rules"),
         ] = True
 
     model_config: ClassVar[m.SettingsConfigDict] = m.SettingsConfigDict(
-        env_prefix="FLEXT_LDIF_", extra="ignore",
+        env_prefix="FLEXT_LDIF_",
+        extra="ignore",
     )
 
     ldif: LdifSettings = m.Field(
-        default_factory=LdifSettings, description="Namespaced LDIF settings branch.",
+        default_factory=LdifSettings,
+        description="Namespaced LDIF settings branch.",
     )
 
 

@@ -54,7 +54,8 @@ _OUD_QUOTED_OBJECTCLASS_DEFINITION = (
 )
 
 _PHASE_MODIFY_FORMAT_OPTIONS = m.Ldif.WriteFormatOptions(
-    ldif_changetype="modify", ldif_modify_operation="add",
+    ldif_changetype="modify",
+    ldif_modify_operation="add",
 )
 
 
@@ -164,7 +165,8 @@ class TestsFlextLdifOudSchemaPhaseWrite:
         """Same-server writes keep OUD-canonical definitions unchanged."""
         parsed = tm.ok(
             api.parse_ldif(
-                _OUD_CANONICAL_SCHEMA_SOURCE, server_type=c.Ldif.ServerTypes.OUD,
+                _OUD_CANONICAL_SCHEMA_SOURCE,
+                server_type=c.Ldif.ServerTypes.OUD,
             ),
         )
 

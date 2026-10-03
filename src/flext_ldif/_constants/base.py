@@ -160,16 +160,19 @@ class FlextLdifConstantsBase:
     SCHEMA_SUBSTR_PATTERN: ClassVar[str] = r"SUBSTR\s+([A-Za-z0-9_-]+)"
     SCHEMA_OID_CAPTURE: ClassVar[str] = r"\(\s*([0-9.]+)"
 
-    # === Pre-compiled regex authorities (consumers MUST use these — never re.compile externally). ===
+    # === Pre-compiled regex authorities (consumers MUST use these —
+    # never re.compile externally). ===
     ATTRIBUTE_NAME_RE: ClassVar[t.RegexPattern] = re.compile(ATTRIBUTE_NAME)
     ATTRIBUTE_OPTION_RE: ClassVar[t.RegexPattern] = re.compile(ATTRIBUTE_OPTION)
     BINARY_CHAR_RE: ClassVar[t.RegexPattern] = re.compile(BINARY_CHAR_PATTERN)
     DN_COMPONENT_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"^[a-zA-Z][a-zA-Z0-9-]*=(?:[^\\,]|\\.)*$", re.IGNORECASE,
+        r"^[a-zA-Z][a-zA-Z0-9-]*=(?:[^\\,]|\\.)*$",
+        re.IGNORECASE,
     )
     NUMERIC_OID_RE: ClassVar[t.RegexPattern] = re.compile(NUMERIC_OID_PATTERN)
     SCHEMA_X_EXTENSION_RE: ClassVar[t.RegexPattern] = re.compile(
-        SCHEMA_X_EXTENSION, re.IGNORECASE,
+        SCHEMA_X_EXTENSION,
+        re.IGNORECASE,
     )
     SCHEMA_DESC_FLEX_RE: ClassVar[t.RegexPattern] = re.compile(SCHEMA_DESC_FLEX)
     SCHEMA_ORDERING_TOKEN_RE: ClassVar[t.RegexPattern] = re.compile(
@@ -178,7 +181,8 @@ class FlextLdifConstantsBase:
     SCHEMA_SUBSTR_TOKEN_RE: ClassVar[t.RegexPattern] = re.compile(SCHEMA_SUBSTR_PATTERN)
     SCHEMA_OID_CAPTURE_RE: ClassVar[t.RegexPattern] = re.compile(SCHEMA_OID_CAPTURE)
     SCHEMA_OBJECTCLASS_KIND_RE: ClassVar[t.RegexPattern] = re.compile(
-        SCHEMA_OBJECTCLASS_KIND, re.IGNORECASE,
+        SCHEMA_OBJECTCLASS_KIND,
+        re.IGNORECASE,
     )
     SCHEMA_OBJECTCLASS_SUP_RE: ClassVar[t.RegexPattern] = re.compile(
         SCHEMA_OBJECTCLASS_SUP,
@@ -194,19 +198,24 @@ class FlextLdifConstantsBase:
     )
     SCHEMA_SYNTAX_LENGTH_RE: ClassVar[t.RegexPattern] = re.compile(SCHEMA_SYNTAX_LENGTH)
     SCHEMA_DEFINITION_PARENS_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"\(.*\)", re.DOTALL,
+        r"\(.*\)",
+        re.DOTALL,
     )
     SCHEMA_EQUALITY_TOKEN_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"\bEQUALITY\b", re.IGNORECASE,
+        r"\bEQUALITY\b",
+        re.IGNORECASE,
     )
     SCHEMA_SUBSTR_TOKEN_BARE_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"\bSUBSTR\b", re.IGNORECASE,
+        r"\bSUBSTR\b",
+        re.IGNORECASE,
     )
     SCHEMA_ORDERING_TOKEN_BARE_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"\bORDERING\b", re.IGNORECASE,
+        r"\bORDERING\b",
+        re.IGNORECASE,
     )
     SCHEMA_OBSOLETE_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"\bOBSOLETE\b", re.IGNORECASE,
+        r"\bOBSOLETE\b",
+        re.IGNORECASE,
     )
     SCHEMA_TRAILING_PAREN_RE: ClassVar[t.RegexPattern] = re.compile(r"\)\s*$")
     SCHEMA_LEADING_PAREN_RE: ClassVar[t.RegexPattern] = re.compile(r"^\s*\(")
@@ -219,19 +228,24 @@ class FlextLdifConstantsBase:
         r"([\"'])([^\"']+)([\"'])",
     )
     SCHEMA_DESC_LOOSE_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"DESC\s+([\"']?)([^\"']+)([\"']?)", re.IGNORECASE,
+        r"DESC\s+([\"']?)([^\"']+)([\"']?)",
+        re.IGNORECASE,
     )
     SCHEMA_SINGLE_VALUE_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"SINGLE-VALUE", re.IGNORECASE,
+        r"SINGLE-VALUE",
+        re.IGNORECASE,
     )
     SCHEMA_SUP_LOOSE_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"SUP\s+([^\s]+)", re.IGNORECASE,
+        r"SUP\s+([^\s]+)",
+        re.IGNORECASE,
     )
     SCHEMA_SYNTAX_LOOSE_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"SYNTAX\s*([\"']?)([0-9.]+)([\"']?)(\{[0-9]+\})?", re.IGNORECASE,
+        r"SYNTAX\s*([\"']?)([0-9.]+)([\"']?)(\{[0-9]+\})?",
+        re.IGNORECASE,
     )
     SCHEMA_X_ORIGIN_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"X-ORIGIN\s+([\"']?)([^\"']+)([\"']?)", re.IGNORECASE,
+        r"X-ORIGIN\s+([\"']?)([^\"']+)([\"']?)",
+        re.IGNORECASE,
     )
     SCHEMA_NAME_LOOSE_RE: ClassVar[t.RegexPattern] = re.compile(
         r"NAME\s+(\()?\s*([\"']?)([^\"'()]+)([\"']?)(\s*\))?",
@@ -241,10 +255,12 @@ class FlextLdifConstantsBase:
     )
     QUOTED_SPACE_QUOTE_RE: ClassVar[t.RegexPattern] = re.compile(r"[\"']\s+([\"'])")
     LDIF_ATTR_TYPES_PREFIX_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"(attributetypes|attributeTypes):", re.IGNORECASE,
+        r"(attributetypes|attributeTypes):",
+        re.IGNORECASE,
     )
     LDIF_OBJECTCLASSES_PREFIX_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"(objectclasses|objectClasses):", re.IGNORECASE,
+        r"(objectclasses|objectClasses):",
+        re.IGNORECASE,
     )
     ACI_MACRO_RE: ClassVar[t.RegexPattern] = re.compile(r"\(\$dn\)|\[\$dn\]|\(\$attr\.")
     ACL_NAME_QUOTED_RE: ClassVar[t.RegexPattern] = re.compile(r'acl\s+"[^"]*"')
@@ -308,7 +324,8 @@ class FlextLdifConstantsBase:
             The resulting ``str``.
         """
         substituted: str = FlextLdifConstantsBase.compile_pattern(
-            pattern, ignorecase=ignorecase,
+            pattern,
+            ignorecase=ignorecase,
         ).sub(replacement, value, count=count)
         return substituted
 
@@ -749,7 +766,9 @@ class FlextLdifConstantsBase:
     WHITELIST_RULE_SCHEMA_ATTRIBUTE_KEYS: Final[tuple[tuple[str, str], ...]] = tuple(
         (field_name, attr_keys[1])
         for field_name, attr_keys in zip(
-            WHITELIST_RULE_OID_FIELDS, SCHEMA_OID_ATTRIBUTE_KEYS, strict=True,
+            WHITELIST_RULE_OID_FIELDS,
+            SCHEMA_OID_ATTRIBUTE_KEYS,
+            strict=True,
         )
     )
 

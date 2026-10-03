@@ -51,7 +51,8 @@ class TestsFlextLdifIntegrationEdgeCases:
         ids=["empty", "whitespace", "comments"],
     )
     def test_content_without_entries_parses_to_empty_list(
-        api: p.Ldif.LdifClient, content: str,
+        api: p.Ldif.LdifClient,
+        content: str,
     ) -> None:
         """Empty, whitespace-only, and comment-only input yield zero entries."""
         result = api.parse_ldif(content)
@@ -174,10 +175,13 @@ class TestsFlextLdifIntegrationEdgeCases:
 
     @staticmethod
     @pytest.mark.parametrize(
-        ("attribute", "value"), [("sn", "*"), ("mail", "+"), ("description", "-")],
+        ("attribute", "value"),
+        [("sn", "*"), ("mail", "+"), ("description", "-")],
     )
     def test_special_single_character_values_preserved(
-        api: p.Ldif.LdifClient, attribute: str, value: str,
+        api: p.Ldif.LdifClient,
+        attribute: str,
+        value: str,
     ) -> None:
         """Special single-character values are preserved exactly."""
         content = (
@@ -225,7 +229,8 @@ class TestsFlextLdifIntegrationEdgeCases:
         ids=["bmp", "supplementary", "zero_width", "combining"],
     )
     def test_unicode_description_preserved_exactly(
-        api: p.Ldif.LdifClient, text: str,
+        api: p.Ldif.LdifClient,
+        text: str,
     ) -> None:
         """Unicode across all ranges is preserved exactly in parsed values."""
         content = (

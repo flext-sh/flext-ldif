@@ -88,7 +88,8 @@ class TestsFlextLdifPipelineIntegration:
         ],
     )
     def test_parse_ldif_returns_expected_entry_count(
-        content: str, expected_count: int,
+        content: str,
+        expected_count: int,
     ) -> None:
         """parse_ldif succeeds and yields the expected number of entries."""
         result = ldif().parse_ldif(content)

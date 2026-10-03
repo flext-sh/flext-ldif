@@ -71,7 +71,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             """
             return (
                 TestsFlextLdifUtilities._import_optional(
-                    TestsFlextLdifUtilities._LDAP_CLIENT_MODULE
+                    TestsFlextLdifUtilities._LDAP_CLIENT_MODULE,
                 )
                 is not None
             )
@@ -80,7 +80,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
         def require_ldap_client() -> ModuleType:
             """Return the LDAP client module, skipping when it is unavailable."""
             module = TestsFlextLdifUtilities._import_optional(
-                TestsFlextLdifUtilities._LDAP_CLIENT_MODULE
+                TestsFlextLdifUtilities._LDAP_CLIENT_MODULE,
             )
             if module is None:
                 pytest.skip(TestsFlextLdifUtilities._LDAP_CLIENT_MISSING_REASON)
@@ -90,7 +90,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
         def create_ldap_entry_adapter() -> p.Ldap.Ldap3EntryAdapter:
             """Return an ldap3-to-LDIF entry adapter, skipping when unavailable."""
             module = TestsFlextLdifUtilities._import_optional(
-                TestsFlextLdifUtilities._LDAP_ENTRY_ADAPTER_MODULE
+                TestsFlextLdifUtilities._LDAP_ENTRY_ADAPTER_MODULE,
             )
             if module is None:
                 pytest.skip(TestsFlextLdifUtilities._LDAP_CLIENT_MISSING_REASON)
@@ -110,7 +110,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                 OSError,
             )
             module = TestsFlextLdifUtilities._import_optional(
-                TestsFlextLdifUtilities._LDAP_CLIENT_MODULE
+                TestsFlextLdifUtilities._LDAP_CLIENT_MODULE,
             )
             if module is None:
                 return transport

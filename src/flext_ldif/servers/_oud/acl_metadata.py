@@ -49,7 +49,9 @@ class FlextLdifServersOudAclMetadataMixin:
             if base_dn is None and isinstance(base_dn_value, str):
                 base_dn = base_dn_value
             dn_registry_value = getattr(
-                entry_data.metadata.write_options, "dn_registry", None,
+                entry_data.metadata.write_options,
+                "dn_registry",
+                None,
             )
             if dn_registry is None and isinstance(dn_registry_value, m.Ldif.DnRegistry):
                 dn_registry = dn_registry_value
@@ -95,7 +97,8 @@ class FlextLdifServersOudAclMetadataMixin:
 
     @staticmethod
     def merge_acl_metadata_to_entry(
-        entry: m.Ldif.Entry, acl_metadata_extensions: t.Ldif.MutableMetadataInputMapping,
+        entry: m.Ldif.Entry,
+        acl_metadata_extensions: t.Ldif.MutableMetadataInputMapping,
     ) -> m.Ldif.Entry:
         """Merge ACL metadata extensions into entry metadata.
 
@@ -108,7 +111,8 @@ class FlextLdifServersOudAclMetadataMixin:
             new_metadata_entry: m.Ldif.Entry = entry.model_copy(
                 update={
                     "metadata": u.Ldif.server_metadata_for(
-                        "oud", extensions=acl_metadata_extensions,
+                        "oud",
+                        extensions=acl_metadata_extensions,
                     ),
                 },
                 deep=True,
@@ -122,7 +126,8 @@ class FlextLdifServersOudAclMetadataMixin:
         updated_entry: m.Ldif.Entry = entry.model_copy(
             update={
                 "metadata": entry.metadata.model_copy(
-                    update={"extensions": current}, deep=True,
+                    update={"extensions": current},
+                    deep=True,
                 ),
             },
             deep=True,

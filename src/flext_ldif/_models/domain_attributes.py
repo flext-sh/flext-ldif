@@ -97,7 +97,9 @@ class FlextLdifModelsDomainAttributes:
             return self
 
         def get(
-            self, key: str, default: t.MutableSequenceOf[str] | None = None,
+            self,
+            key: str,
+            default: t.MutableSequenceOf[str] | None = None,
         ) -> t.MutableSequenceOf[str]:
             """Get attribute values with optional default.
 
@@ -207,7 +209,8 @@ class FlextLdifModelsDomainAttributes:
         """
 
         original_name: Annotated[
-            str, u.Field(..., description="Original attribute name from source server"),
+            str,
+            u.Field(..., description="Original attribute name from source server"),
         ]
         target_name: Annotated[
             str | None,
@@ -226,7 +229,8 @@ class FlextLdifModelsDomainAttributes:
             u.Field(..., description="Type of transformation applied to the attribute"),
         ]
         reason: Annotated[
-            str, u.Field(description="Human-readable reason for transformation"),
+            str,
+            u.Field(description="Human-readable reason for transformation"),
         ] = ""
 
 

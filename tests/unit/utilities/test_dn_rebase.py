@@ -29,7 +29,8 @@ def _entry(dn: str, attributes: dict[str, list[str]] | None = None) -> m.Ldif.En
     return m.Ldif.Entry(
         dn=m.Ldif.DN(value=dn),
         attributes=m.Ldif.Attributes(
-            attributes=attributes or {}, attribute_metadata={},
+            attributes=attributes or {},
+            attribute_metadata={},
         ),
     )
 
@@ -113,7 +114,8 @@ class TestsFlextLdifDnRebase:
     def test_dn_valued_attributes_still_rebase() -> None:
         """Member values pointing under the old base are rewritten."""
         entry = _entry(
-            f"cn=grp,{SOURCE}", {"cn": ["grp"], "member": [f"cn=John,{SOURCE}"]},
+            f"cn=grp,{SOURCE}",
+            {"cn": ["grp"], "member": [f"cn=John,{SOURCE}"]},
         )
         result = u.Ldif.transform_entry_base_dn(entry, SOURCE, TARGET)
         members = tm.not_none(result.attributes).attributes.get("member", [])
@@ -141,5 +143,7 @@ class TestsFlextLdifDnRebase:
         entry = _entry(SOURCE, {"dc": ["example"]})
         with pytest.raises(ValueError, match="DN"):
             u.Ldif.transform_entry_base_dn(
-                entry, SOURCE, f"brokenrdn,{TARGET.split(',', 1)[1]}",
+                entry,
+                SOURCE,
+                f"brokenrdn,{TARGET.split(',', 1)[1]}",
             )

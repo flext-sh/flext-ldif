@@ -170,7 +170,8 @@ class TestsFlextLdifOidAclAssemble:
         ],
     )
     def test_render_aci_string_matches_oud_oracle(
-        aci: m.Ldif.AciRule, expected: str,
+        aci: m.Ldif.AciRule,
+        expected: str,
     ) -> None:
         """Test render aci string matches oud oracle."""
         tm.that(Render.render_aci_string(aci), eq=expected)
@@ -265,7 +266,8 @@ class TestsFlextLdifOidAclAssemble:
         # 'by * (noread)' on attr complements to write/selfwrite/... for anyone.
         """Test anyone with sensitive perms emits review note."""
         rule = Parser.parse_oid_acl_line(
-            "cn=users,dc=ctbc", "orclaci: access to attr=(cn) by * (noread)",
+            "cn=users,dc=ctbc",
+            "orclaci: access to attr=(cn) by * (noread)",
         ).unwrap()
         aci = Asm.build_aci_rule(rule).unwrap()
 
@@ -276,7 +278,8 @@ class TestsFlextLdifOidAclAssemble:
     def test_anyone_with_only_read_search_emits_no_sensitive_note() -> None:
         """Test anyone with only read search emits no sensitive note."""
         rule = Parser.parse_oid_acl_line(
-            "cn=users,dc=ctbc", "orclaci: access to attr=(cn) by * (read,search)",
+            "cn=users,dc=ctbc",
+            "orclaci: access to attr=(cn) by * (read,search)",
         ).unwrap()
         aci = Asm.build_aci_rule(rule).unwrap()
 
@@ -396,7 +399,8 @@ class TestsFlextLdifOidAclAssemble:
     def test_deny_only_line_emits_no_value() -> None:
         """Test deny only line emits no value."""
         result = Pipe.convert_acl_values(
-            "cn=users,dc=ctbc", ("orclaci: access to entry by * (none)",),
+            "cn=users,dc=ctbc",
+            ("orclaci: access to entry by * (none)",),
         )
 
         tm.that(result.unwrap(), eq=())
@@ -405,7 +409,8 @@ class TestsFlextLdifOidAclAssemble:
     def test_malformed_line_surfaces_failure() -> None:
         """Test malformed line surfaces failure."""
         result = Pipe.convert_acl_values(
-            "cn=users,dc=ctbc", ("orclaci: this is not a valid acl",),
+            "cn=users,dc=ctbc",
+            ("orclaci: this is not a valid acl",),
         )
 
         tm.that(result.failure, eq=True)
@@ -475,7 +480,8 @@ class TestsFlextLdifOidAclAssemble:
         ]
         tm.that(len(note_events), eq=1)
         tm.that(
-            any("guidattr" in note for note in note_events[0].get("notes", [])), eq=True,
+            any("guidattr" in note for note in note_events[0].get("notes", [])),
+            eq=True,
         )
 
     # ---- convert_entry_acls: entry orclaci → aci attribute -------------

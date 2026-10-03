@@ -159,7 +159,8 @@ class FlextLdifUtilitiesSchemaBuild:
             The resulting ``t.MutableSequenceOf[str]``.
         """
         original_parts = sf.try_restore_objectclass_original_format(
-            oc_data, restore_original=restore_original,
+            oc_data,
+            restore_original=restore_original,
         )
         if original_parts:
             return original_parts

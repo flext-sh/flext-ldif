@@ -21,15 +21,22 @@ class TestsFlextLdifTypes(FlextTestsTypes, FlextLdifTypes):
 
         type GenericFieldsDict = FlextLdifTypes.StrMapping
         type DnRefData = FlextLdifTypes.MappingKV[
-            str, FlextLdifTypes.StrMapping | FlextLdifTypes.StrSequence | str,
+            str,
+            FlextLdifTypes.StrMapping | FlextLdifTypes.StrSequence | str,
         ]
         type FixtureServer = str
         type FixtureKind = str
         type ParseMethod = Literal[
-            "parse_server", "parse_attribute", "parse_objectclass", "parse_input",
+            "parse_server",
+            "parse_attribute",
+            "parse_objectclass",
+            "parse_input",
         ]
         type WriteMethod = Literal[
-            "write", "_write_attribute", "_write_objectclass", "_write_acl",
+            "write",
+            "_write_attribute",
+            "_write_objectclass",
+            "_write_acl",
         ]
 
 

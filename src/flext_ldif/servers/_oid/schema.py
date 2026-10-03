@@ -33,6 +33,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             **kwargs,
         )
 
+    @staticmethod
     def _add_target_metadata(
         self,
         attr_data: m.Ldif.SchemaAttribute,
@@ -66,8 +67,10 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             u.generate_iso_timestamp()
         )
 
+    @staticmethod
     def _capture_attribute_values(
-        self, attr_data: m.Ldif.SchemaAttribute,
+        self,
+        attr_data: m.Ldif.SchemaAttribute,
     ) -> t.MutableOptionalStrMapping:
         """Capture attribute values for metadata tracking.
 
@@ -84,7 +87,8 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
 
     @override
     def _hook_post_parse_attribute(
-        self, attr: m.Ldif.SchemaAttribute,
+        self,
+        attr: m.Ldif.SchemaAttribute,
     ) -> p.Result[m.Ldif.SchemaAttribute]:
         """Transform parsed attribute using OID-specific normalizations.
 
@@ -100,7 +104,8 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             return r[m.Ldif.SchemaAttribute].fail_op("OID post-parse attribute hook", e)
 
     def _normalize_oid_attribute(
-        self, attr: m.Ldif.SchemaAttribute,
+        self,
+        attr: m.Ldif.SchemaAttribute,
     ) -> m.Ldif.SchemaAttribute:
         """Normalize OID-specific schema attribute fields.
 
@@ -127,13 +132,15 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
                 attr.ordering = normalized_ordering
         if attr.syntax:
             attr.syntax = u.Ldif.normalize_syntax_oid(
-                attr.syntax, replacements=FlextLdifServersOidConstants.SYNTAX_OID_TO_RFC,
+                attr.syntax,
+                replacements=FlextLdifServersOidConstants.SYNTAX_OID_TO_RFC,
             )
         return self._transform_case_ignore_substrings(attr)
 
     @override
     def _hook_post_parse_objectclass(
-        self, oc: m.Ldif.SchemaObjectClass,
+        self,
+        oc: m.Ldif.SchemaObjectClass,
     ) -> p.Result[m.Ldif.SchemaObjectClass]:
         """Transform parsed objectClass using OID-specific normalizations.
 
@@ -147,11 +154,13 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
                 "OID post-parse objectclass hook failed",
             )
             return r[m.Ldif.SchemaObjectClass].fail_op(
-                "OID post-parse objectclass hook", e,
+                "OID post-parse objectclass hook",
+                e,
             )
 
     def _normalize_oid_objectclass(
-        self, oc: m.Ldif.SchemaObjectClass,
+        self,
+        oc: m.Ldif.SchemaObjectClass,
     ) -> m.Ldif.SchemaObjectClass:
         """Normalize OID-specific objectClass fields.
 
@@ -189,8 +198,10 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             return updated_oc
         return oc
 
+    @staticmethod
     def _normalize_attribute_names(
-        self, attr_list: t.MutableSequenceOf[str] | None,
+        self,
+        attr_list: t.MutableSequenceOf[str] | None,
     ) -> t.MutableSequenceOf[str] | None:
         """Normalize attribute names using OID case mappings.
 
@@ -202,8 +213,11 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
         case_map = FlextLdifServersOidConstants.ATTR_NAME_CASE_MAP
         return [case_map.get(attr_name.lower(), attr_name) for attr_name in attr_list]
 
+    @staticmethod
     def _normalize_auxiliary_typo(
-        self, oc_data: m.Ldif.SchemaObjectClass, original_format_str: str,
+        self,
+        oc_data: m.Ldif.SchemaObjectClass,
+        original_format_str: str,
     ) -> str | None:
         """Normalize AUXILLARY typo to AUXILIARY.
 
@@ -234,6 +248,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             case _:
                 return None
 
+    @staticmethod
     def _normalize_sup_from_model(self, oc_data: m.Ldif.SchemaObjectClass) -> str | (
         t.MutableSequenceOf[str] | None
     ):
@@ -267,8 +282,10 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             case _:
                 return None
 
+    @staticmethod
     def _normalize_sup_from_original_format(
-        self, original_format_str: str,
+        self,
+        original_format_str: str,
     ) -> str | None:
         """Normalize SUP from original_format string.
 
@@ -290,7 +307,8 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
 
     @override
     def _parse_attribute(
-        self, attr_definition: str,
+        self,
+        attr_definition: str,
     ) -> p.Result[m.Ldif.SchemaAttribute]:
         """Parse Oracle OID attribute definition (Phase 1: Normalization).
 
@@ -306,7 +324,8 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             return r[m.Ldif.SchemaAttribute].fail_op("OID attribute parsing", e)
 
     def _parse_oid_attribute(
-        self, attr_definition: str,
+        self,
+        attr_definition: str,
     ) -> p.Result[m.Ldif.SchemaAttribute]:
         """Parse OID attribute and attach OID metadata.
 
@@ -334,7 +353,8 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
 
     @override
     def _parse_objectclass(
-        self, oc_definition: str,
+        self,
+        oc_definition: str,
     ) -> p.Result[m.Ldif.SchemaObjectClass]:
         """Parse Oracle OID objectClass definition.
 
@@ -350,7 +370,8 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             return r[m.Ldif.SchemaObjectClass].fail_op("OID objectClass parsing", e)
 
     def _parse_oid_objectclass(
-        self, oc_definition: str,
+        self,
+        oc_definition: str,
     ) -> p.Result[m.Ldif.SchemaObjectClass]:
         """Parse OID objectClass and attach OID metadata.
 
@@ -374,7 +395,8 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
 
     @override
     def _transform_attribute_for_write(
-        self, attr_data: m.Ldif.SchemaAttribute,
+        self,
+        attr_data: m.Ldif.SchemaAttribute,
     ) -> m.Ldif.SchemaAttribute:
         """Apply OID-specific attribute transformations before writing.
 
@@ -386,7 +408,8 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
         fixed_substr = attr_data.substr
         original_substr = fixed_substr
         fixed_substr = u.Ldif.replace_invalid_substr_rule(
-            fixed_substr, FlextLdifServersOidConstants.INVALID_SUBSTR_RULES,
+            fixed_substr,
+            FlextLdifServersOidConstants.INVALID_SUBSTR_RULES,
         )
         if fixed_substr != original_substr:
             FlextLdifServersOidSchema._module_logger.debug(
@@ -397,7 +420,8 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
                 replacement_substr=fixed_substr or "",
             )
         is_boolean = u.Ldif.is_boolean_attribute(
-            fixed_name, set(FlextLdifServersOidConstants.BOOLEAN_ATTRIBUTES),
+            fixed_name,
+            set(FlextLdifServersOidConstants.BOOLEAN_ATTRIBUTES),
         )
         if is_boolean:
             FlextLdifServersOidSchema._module_logger.debug(
@@ -427,8 +451,10 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             x_oid=attr_data.x_oid,
         )
 
+    @staticmethod
     def _transform_case_ignore_substrings(
-        self, attr_data: m.Ldif.SchemaAttribute,
+        self,
+        attr_data: m.Ldif.SchemaAttribute,
     ) -> m.Ldif.SchemaAttribute:
         """Transform caseIgnoreSubstringsMatch from EQUALITY to SUBSTR.
 

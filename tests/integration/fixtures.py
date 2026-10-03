@@ -22,7 +22,9 @@ if TYPE_CHECKING:
 
 
 def _probe_ldap_bind(
-    server_url: str, admin_dn: str, admin_password: str,
+    server_url: str,
+    admin_dn: str,
+    admin_password: str,
 ) -> p.Result[None]:
     """Probe one LDAP bind, failing with the connectivity error text.
 
@@ -32,7 +34,10 @@ def _probe_ldap_bind(
     try:
         srv = u.Tests.create_server_from_url(server_url)
         conn = u.Tests.create_connection(
-            srv, user=admin_dn, password=admin_password, auto_bind=False,
+            srv,
+            user=admin_dn,
+            password=admin_password,
+            auto_bind=False,
         )
         bound: bool = conn.bind()
         conn.unbind()
@@ -138,7 +143,10 @@ def ldap_connection(ldap_container: t.JsonMapping) -> Generator[p.Ldap.Ldap3Conn
     password = str(ldap_container["password"])
     srv = u.Tests.create_server_from_url(server_url)
     conn = u.Tests.create_connection(
-        srv, user=bind_dn, password=password, auto_bind=False,
+        srv,
+        user=bind_dn,
+        password=password,
+        auto_bind=False,
     )
     try:
         bind_ok: bool = conn.bind()
@@ -154,7 +162,8 @@ def ldap_connection(ldap_container: t.JsonMapping) -> Generator[p.Ldap.Ldap3Conn
 
 @pytest.fixture
 def clean_test_ou(
-    ldap_connection: p.Ldap.Ldap3Connection, make_test_base_dn: Callable[[str], str],
+    ldap_connection: p.Ldap.Ldap3Connection,
+    make_test_base_dn: Callable[[str], str],
 ) -> Generator[str]:
     """Create and clean up an isolated OU for integration tests.
 

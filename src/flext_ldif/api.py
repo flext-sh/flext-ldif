@@ -129,7 +129,9 @@ class FlextLdif(
         """
         concrete = u.Ldif.as_entry(entry)
         return FlextLdifFilters.filter_entry_attributes(
-            entry=concrete, forbidden_attrs=forbidden_attrs, forbidden_ocs=forbidden_ocs,
+            entry=concrete,
+            forbidden_attrs=forbidden_attrs,
+            forbidden_ocs=forbidden_ocs,
         )
 
     @staticmethod
@@ -144,7 +146,8 @@ class FlextLdif(
         """
         concrete = u.Ldif.as_entry(entry)
         return FlextLdifFilters.filter_schema_attribute_values(
-            entry=concrete, allowed_oids=allowed_oids,
+            entry=concrete,
+            allowed_oids=allowed_oids,
         )
 
     def acl(self, server_type: str) -> p.Result[p.Ldif.AclServer]:
@@ -157,7 +160,9 @@ class FlextLdif(
         resolved = server_registry.acl(server_type)
         if resolved is None:
             return e.fail_not_found(
-                "acl_server", server_type, result_type=r[p.Ldif.AclServer],
+                "acl_server",
+                server_type,
+                result_type=r[p.Ldif.AclServer],
             )
         return r[p.Ldif.AclServer].ok(resolved)
 
@@ -171,7 +176,9 @@ class FlextLdif(
         resolved = server_registry.entry(server_type)
         if resolved is None:
             return e.fail_not_found(
-                "entry_server", server_type, result_type=r[p.Ldif.EntryServer],
+                "entry_server",
+                server_type,
+                result_type=r[p.Ldif.EntryServer],
             )
         return r[p.Ldif.EntryServer].ok(resolved)
 
@@ -195,7 +202,9 @@ class FlextLdif(
         resolved = server_registry.schema_server(server_type)
         if resolved is None:
             return e.fail_not_found(
-                "schema_server", server_type, result_type=r[p.Ldif.SchemaServer],
+                "schema_server",
+                server_type,
+                result_type=r[p.Ldif.SchemaServer],
             )
         return r[p.Ldif.SchemaServer].ok(resolved)
 
@@ -209,12 +218,15 @@ class FlextLdif(
         resolved = server_registry.resolve_schema_server(server_type)
         if resolved is None:
             return e.fail_not_found(
-                "schema_server", server_type, result_type=r[p.Ldif.SchemaServer],
+                "schema_server",
+                server_type,
+                result_type=r[p.Ldif.SchemaServer],
             )
         return r[p.Ldif.SchemaServer].ok(resolved)
 
     def resolve_server_bundle(
-        self, server_type: str,
+        self,
+        server_type: str,
     ) -> p.Result[
         t.MappingKV[str, p.Ldif.SchemaServer | p.Ldif.AclServer | p.Ldif.EntryServer]
     ]:
@@ -226,12 +238,14 @@ class FlextLdif(
         """
         return r[
             t.MappingKV[
-                str, p.Ldif.SchemaServer | p.Ldif.AclServer | p.Ldif.EntryServer,
+                str,
+                p.Ldif.SchemaServer | p.Ldif.AclServer | p.Ldif.EntryServer,
             ]
         ].from_result(self._server.resolve_server_bundle(server_type))
 
     def resolve_server_constants(
-        self, server_type: str,
+        self,
+        server_type: str,
     ) -> p.Result[type[p.Ldif.ServerConstants]]:
         """Expose server constants lookup through the public facade.
 
@@ -278,7 +292,8 @@ class FlextLdif(
             return FlextLdifProcessingPipeline(transform_config=settings)
         if source_server is not None and target_server is not None:
             return FlextLdifProcessingPipeline.for_servers(
-                source_server=source_server, target_server=target_server,
+                source_server=source_server,
+                target_server=target_server,
             )
         return FlextLdifProcessingPipeline()
 
@@ -327,7 +342,8 @@ class FlextLdif(
             The resulting ``p.Result[m.Ldif.MigrationPipelineResult]``.
         """
         transform_config = m.Ldif.TransformConfig.servers(
-            source_server=source_server, target_server=target_server,
+            source_server=source_server,
+            target_server=target_server,
         )
         pipeline = self.migration_pipeline(
             input_dir=input_dir,

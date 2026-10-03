@@ -94,7 +94,9 @@ class TestsFlextLdifRealLdapConfig:
 
     @staticmethod
     def test_railway_write_parse_validate_preserves_entry(
-        flext_api: p.Ldif.LdifClient, sample_entry: m.Ldif.Entry, tmp_path: Path,
+        flext_api: p.Ldif.LdifClient,
+        sample_entry: m.Ldif.Entry,
+        tmp_path: Path,
     ) -> None:
         """Write, parse, then validate yields the original entry intact."""
         output_file = tmp_path / "railway.ldif"
@@ -119,7 +121,8 @@ class TestsFlextLdifRealLdapConfig:
 
     @staticmethod
     def test_write_to_string_then_parse_is_idempotent(
-        flext_api: p.Ldif.LdifClient, sample_entry: m.Ldif.Entry,
+        flext_api: p.Ldif.LdifClient,
+        sample_entry: m.Ldif.Entry,
     ) -> None:
         """Serialize-to-string then parse-back preserves DN and attributes."""
         parsed = flext_api.write_to_string([sample_entry]).flat_map(
@@ -137,7 +140,8 @@ class TestsFlextLdifRealLdapConfig:
 
     @staticmethod
     def test_validate_entries_reports_full_success(
-        flext_api: p.Ldif.LdifClient, sample_entry: m.Ldif.Entry,
+        flext_api: p.Ldif.LdifClient,
+        sample_entry: m.Ldif.Entry,
     ) -> None:
         """Validating a well-formed entry yields a passing ValidationResult."""
         result = flext_api.validate_entries([sample_entry])
@@ -152,7 +156,8 @@ class TestsFlextLdifRealLdapConfig:
 
     @staticmethod
     def test_parse_missing_file_fails_with_descriptive_error(
-        flext_api: p.Ldif.LdifClient, tmp_path: Path,
+        flext_api: p.Ldif.LdifClient,
+        tmp_path: Path,
     ) -> None:
         """Parsing a nonexistent path returns a failure, never a fake success."""
         missing = tmp_path / "does_not_exist.ldif"
@@ -173,7 +178,8 @@ class TestsFlextLdifRealLdapConfig:
         ],
     )
     def test_parse_content_without_entries_succeeds_empty(
-        flext_api: p.Ldif.LdifClient, content: str,
+        flext_api: p.Ldif.LdifClient,
+        content: str,
     ) -> None:
         """Content carrying no records parses to a successful empty result."""
         result = flext_api.parse_string(content)

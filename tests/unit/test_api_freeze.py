@@ -152,7 +152,8 @@ class TestsFlextLdifApiFreeze:
     @staticmethod
     @pytest.mark.parametrize(("alias", "owner"), FACADE_ALIAS_OWNERS)
     def test_facade_alias_is_its_canonical_owner(
-        alias: PublicSymbol, owner: PublicSymbol,
+        alias: PublicSymbol,
+        owner: PublicSymbol,
     ) -> None:
         """Short facade aliases are the same object as their named owner."""
         assert getattr(flext_ldif, alias) is getattr(flext_ldif, owner)

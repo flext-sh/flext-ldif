@@ -17,7 +17,8 @@ class FlextLdifServersOudAclExtractMixin:
 
     @staticmethod
     def comment_acl_attributes(
-        entry_data: m.Ldif.Entry, acl_attribute_names: t.MutableSequenceOf[str],
+        entry_data: m.Ldif.Entry,
+        acl_attribute_names: t.MutableSequenceOf[str],
     ) -> m.Ldif.Entry:
         """Comment out ACL attributes by removing them from attributes dict and storing in metadata.
 
@@ -37,7 +38,8 @@ class FlextLdifServersOudAclExtractMixin:
             )
         new_attributes_dict, commented_acl_values, hidden_attrs = (
             FlextLdifServersOudAclExtractMixin.extract_and_remove_acl_attributes(
-                entry_data.attributes.attributes, acl_attribute_names,
+                entry_data.attributes.attributes,
+                acl_attribute_names,
             )
         )
         updated_metadata = (
@@ -140,7 +142,9 @@ class FlextLdifServersOudAclExtractMixin:
             hidden_attribute_names = {str(item).lower() for item in hidden_attrs_raw}
         if metadata_typed.write_options is not None:
             legacy_hidden_attrs = getattr(
-                metadata_typed.write_options, "hidden_attrs", [],
+                metadata_typed.write_options,
+                "hidden_attrs",
+                [],
             )
             if isinstance(legacy_hidden_attrs, (list, tuple, frozenset, set)):
                 hidden_attribute_names.update(
@@ -168,7 +172,8 @@ class FlextLdifServersOudAclExtractMixin:
                 })
             )
         commented_attrs_raw = current_extensions.get(
-            c.Ldif.ACL_COMMENTED_ATTRIBUTES, [],
+            c.Ldif.ACL_COMMENTED_ATTRIBUTES,
+            [],
         )
         commented_attrs: t.MutableSequenceOf[str] = (
             [str(x) for x in commented_attrs_raw]

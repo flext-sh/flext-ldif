@@ -58,7 +58,8 @@ class FlextLdifUtilitiesServer:
             return []
         name_candidates: list[str] = []
         name_matches = c.Ldif.compile_pattern(
-            settings.name_regex, ignorecase=True,
+            settings.name_regex,
+            ignorecase=True,
         ).findall(value)
         for match in name_matches:
             if isinstance(match, tuple):
@@ -310,7 +311,8 @@ class FlextLdifUtilitiesServer:
         oid_value = value if isinstance(value, str) else value.oid
         definition_text = value if isinstance(value, str) else None
         name_candidates = FlextLdifUtilitiesServer._extract_pattern_name_candidates(
-            value, settings,
+            value,
+            settings,
         )
         result = check_oid_pattern(oid_value) or any(
             FlextLdifUtilitiesServer._check_name_patterns(
@@ -323,7 +325,9 @@ class FlextLdifUtilitiesServer:
         )
         if not result:
             return FlextLdifUtilitiesServer._matches_definition_text(
-                definition_text, detection_names, settings,
+                definition_text,
+                detection_names,
+                settings,
             )
         return result
 
@@ -349,7 +353,8 @@ class FlextLdifUtilitiesServer:
             str(server_type),
         )
         validation_capabilities = c.Ldif.SERVER_VALIDATION_CAPABILITIES.get(
-            normalized_server_type, frozenset(),
+            normalized_server_type,
+            frozenset(),
         )
         return m.Ldif.ServerValidationRules(
             requires_objectclass="requires_objectclass" in validation_capabilities,

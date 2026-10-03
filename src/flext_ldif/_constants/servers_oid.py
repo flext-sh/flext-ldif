@@ -269,15 +269,18 @@ class FlextLdifConstantsServersOid:
     )
 
     ACL_TARGET_DN_EXTRACT_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-        ACL_TARGET_DN_EXTRACT, re.IGNORECASE,
+        ACL_TARGET_DN_EXTRACT,
+        re.IGNORECASE,
     )
 
     ACL_TARGET_ATTR_OID_EXTRACT_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-        ACL_TARGET_ATTR_OID_EXTRACT, re.IGNORECASE,
+        ACL_TARGET_ATTR_OID_EXTRACT,
+        re.IGNORECASE,
     )
 
     ACL_PERMS_EXTRACT_OID_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-        ACL_PERMS_EXTRACT_OID, re.IGNORECASE,
+        ACL_PERMS_EXTRACT_OID,
+        re.IGNORECASE,
     )
 
     ONE_OID: ClassVar[str] = FlextLdifConstantsBase.OID_TRUE

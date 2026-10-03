@@ -33,7 +33,11 @@ class TestsFlextLdifMigrationPipelineServers:
 
     @staticmethod
     def _run_migration(
-        *, tmp_path: Path, ldif_content: str, source_server: str, target_server: str,
+        *,
+        tmp_path: Path,
+        ldif_content: str,
+        source_server: str,
+        target_server: str,
     ) -> tuple[str, int, t.VariadicTuple[str]]:
         """Drive ``execute`` through its public API and return observable state.
 
@@ -188,7 +192,8 @@ class TestsFlextLdifMigrationPipelineServers:
         )
 
     def test_target_server_form_is_enforced_regardless_of_input_shape(
-        self, tmp_path: Path,
+        self,
+        tmp_path: Path,
     ) -> None:
         """The pipeline converts to the target server form even for RFC-shaped input."""
         ldif_content = (

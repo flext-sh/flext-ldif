@@ -19,7 +19,8 @@ class FlextLdifModelsProcessing:
         """Result of entry processing (transform or validate operation)."""
 
         dn: Annotated[
-            str, u.Field(..., description="Distinguished name of the processed entry"),
+            str,
+            u.Field(..., description="Distinguished name of the processed entry"),
         ]
         attributes: Annotated[
             t.MutableStrSequenceMapping,
@@ -34,11 +35,14 @@ class FlextLdifModelsProcessing:
             u.Field(description="Canonical processor name for entry handling."),
         ]
         parallel: Annotated[
-            bool, u.Field(description="Enable thread-pool execution mode."),
+            bool,
+            u.Field(description="Enable thread-pool execution mode."),
         ] = False
         batch_size: Annotated[
-            int, u.Field(ge=1, description="Batch size for sequential processing."),
+            int,
+            u.Field(ge=1, description="Batch size for sequential processing."),
         ] = 100
         max_workers: Annotated[
-            int, u.Field(ge=1, description="Maximum thread workers for parallel mode."),
+            int,
+            u.Field(ge=1, description="Maximum thread workers for parallel mode."),
         ] = 4

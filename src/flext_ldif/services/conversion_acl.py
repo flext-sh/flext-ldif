@@ -76,7 +76,8 @@ class FlextLdifConversionAclMixin(FlextLdifConversionAclPreserveMixin, s, ABC):
             .map_error(lambda error: error or "Acl conversion returned no entry")
             .flat_map(
                 lambda converted_entry: self._entry_to_acl(
-                    target_server, converted_entry,
+                    target_server,
+                    converted_entry,
                 ),
             )
             .flat_map(
@@ -93,7 +94,8 @@ class FlextLdifConversionAclMixin(FlextLdifConversionAclPreserveMixin, s, ABC):
 
     @staticmethod
     def _build_acl_conversion_entry(
-        acl: m.Ldif.Acl, source_server_type: c.Ldif.ServerTypes | None,
+        acl: m.Ldif.Acl,
+        source_server_type: c.Ldif.ServerTypes | None,
     ) -> m.Ldif.Entry:
         """Build the RFC entry carrier used for ACL conversion.
 
@@ -105,7 +107,9 @@ class FlextLdifConversionAclMixin(FlextLdifConversionAclPreserveMixin, s, ABC):
         entry_result = m.Ldif.Entry.create(
             dn=m.Ldif.DN(value="cn=acl-conversion,dc=example,dc=com", metadata={}),
             attributes=m.Ldif.Attributes(
-                attributes={}, attribute_metadata={}, metadata=None,
+                attributes={},
+                attribute_metadata={},
+                metadata=None,
             ),
             metadata=entry_metadata,
         )
@@ -114,7 +118,8 @@ class FlextLdifConversionAclMixin(FlextLdifConversionAclPreserveMixin, s, ABC):
 
     @staticmethod
     def _entry_to_acl(
-        target_server: p.Ldif.ServerServer, converted_entry: t.Ldif.ConvertedModel,
+        target_server: p.Ldif.ServerServer,
+        converted_entry: t.Ldif.ConvertedModel,
     ) -> p.Result[m.Ldif.Acl]:
         """Extract and parse the converted ACL from an entry carrier.
 

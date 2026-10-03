@@ -48,7 +48,9 @@ class FlextLdifServerMethodsMixin:
             The resulting ``p.Ldif.ServerServer | None``.
         """
         parent_raw: p.Ldif.ServerServer | None = getattr(
-            instance, "_parent_server", None,
+            instance,
+            "_parent_server",
+            None,
         )
         if (
             parent_raw is not None

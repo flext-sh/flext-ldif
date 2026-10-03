@@ -30,7 +30,8 @@ class TestsFlextLdifDetectorService:
 
     @staticmethod
     def test_detect_fails_when_file_is_missing(
-        api: p.Ldif.LdifClient, tmp_path: Path,
+        api: p.Ldif.LdifClient,
+        tmp_path: Path,
     ) -> None:
         """Test detect fails when file is missing."""
         missing = tmp_path / c.Tests.DETECTOR_MISSING_PATH_NAME
@@ -39,7 +40,8 @@ class TestsFlextLdifDetectorService:
 
     @staticmethod
     def test_detect_fails_when_file_has_invalid_utf8(
-        api: p.Ldif.LdifClient, tmp_path: Path,
+        api: p.Ldif.LdifClient,
+        tmp_path: Path,
     ) -> None:
         """Test detect fails when file has invalid utf8."""
         bad_file = tmp_path / c.Tests.DETECTOR_BAD_ENCODING_FILENAME
@@ -49,7 +51,8 @@ class TestsFlextLdifDetectorService:
 
     @staticmethod
     def test_detect_from_file_succeeds(
-        api: p.Ldif.LdifClient, tmp_path: Path,
+        api: p.Ldif.LdifClient,
+        tmp_path: Path,
     ) -> None:
         """Test detect from file succeeds."""
         ldif_file = tmp_path / c.Tests.DETECTOR_RFC_FILENAME
@@ -105,12 +108,16 @@ class TestsFlextLdifDetectorService:
         ),
     )
     def test_detect_recognises_server_types_from_snippets(
-        scenario: str, snippet: str, expected_type: str, api: p.Ldif.LdifClient,
+        scenario: str,
+        snippet: str,
+        expected_type: str,
+        api: p.Ldif.LdifClient,
     ) -> None:
         """Test detect recognises server types from snippets."""
         result = api.detect_server_type(ldif_content=snippet)
         detection: m.Ldif.ServerDetectionResult = u.Tests.assert_success(
-            result, error_msg=f"detection failed for {scenario}",
+            result,
+            error_msg=f"detection failed for {scenario}",
         )
 
         tm.that(detection, is_=m.Ldif.ServerDetectionResult)
@@ -121,7 +128,8 @@ class TestsFlextLdifDetectorService:
         """Test detect respects max lines limit."""
         long_content = (c.Tests.DETECTOR_OID_SNIPPET + "\n") * 50
         result = api.detect_server_type(
-            ldif_content=long_content, max_lines=c.Tests.DETECTOR_MAX_LINES_SMALL,
+            ldif_content=long_content,
+            max_lines=c.Tests.DETECTOR_MAX_LINES_SMALL,
         )
         detection: m.Ldif.ServerDetectionResult = u.Tests.assert_success(result)
 
@@ -137,12 +145,15 @@ class TestsFlextLdifDetectorService:
         ],
     )
     def test_detect_additional_snippets_return_detection(
-        scenario: str, snippet: str, api: p.Ldif.LdifClient,
+        scenario: str,
+        snippet: str,
+        api: p.Ldif.LdifClient,
     ) -> None:
         """Test detect additional snippets return detection."""
         result = api.detect_server_type(ldif_content=snippet)
         detection: m.Ldif.ServerDetectionResult = u.Tests.assert_success(
-            result, error_msg=f"detection failed for {scenario}",
+            result,
+            error_msg=f"detection failed for {scenario}",
         )
 
         tm.that(detection, is_=m.Ldif.ServerDetectionResult)
@@ -187,7 +198,8 @@ class TestsFlextLdifDetectorService:
 
     @staticmethod
     def test_resolve_effective_server_type_missing_file_falls_back_to_rfc(
-        api: p.Ldif.LdifClient, tmp_path: Path,
+        api: p.Ldif.LdifClient,
+        tmp_path: Path,
     ) -> None:
         """Test resolve effective server type missing file falls back to rfc."""
         missing = tmp_path / c.Tests.DETECTOR_MISSING_PATH_NAME

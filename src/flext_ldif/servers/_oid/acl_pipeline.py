@@ -26,7 +26,11 @@ class FlextLdifServersOidAclPipeline:
 
     @classmethod
     def convert_acl_values(
-        cls, dn: str, oid_acl_lines: t.StrSequence, *, base_dn: str = "",
+        cls,
+        dn: str,
+        oid_acl_lines: t.StrSequence,
+        *,
+        base_dn: str = "",
     ) -> p.Result[t.StrSequence]:
         """Convert an entry's OID ACL lines to deduplicated OUD ``aci`` values.
 
@@ -46,13 +50,16 @@ class FlextLdifServersOidAclPipeline:
             if rule.failure:
                 return r[t.StrSequence].from_failure(rule)
             aci = FlextLdifServersOidAclAssemble.build_aci_rule(
-                rule.value, base_dn=base_dn,
+                rule.value,
+                base_dn=base_dn,
             )
             if aci.failure:
                 return r[t.StrSequence].from_failure(aci)
             if aci.value.notes:
                 FlextLdifServersOidAclPipeline._module_logger.info(
-                    "OID ACL conversion notes", dn=dn, notes=list(aci.value.notes),
+                    "OID ACL conversion notes",
+                    dn=dn,
+                    notes=list(aci.value.notes),
                 )
             if not aci.value.allows:
                 continue

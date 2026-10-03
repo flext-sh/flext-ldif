@@ -58,7 +58,9 @@ class TestsFlextLdifOidServers:
         ],
     )
     def test_parse_attribute_normalizes_syntax_oid(
-        schema: p.Ldif.SchemaServer, attr_def: str, expected_syntax: str,
+        schema: p.Ldif.SchemaServer,
+        attr_def: str,
+        expected_syntax: str,
     ) -> None:
         """OID-specific syntax OIDs normalize to their RFC equivalent."""
         result = schema.parse_attribute(attr_def)
@@ -87,7 +89,9 @@ class TestsFlextLdifOidServers:
         ],
     )
     def test_parse_attribute_normalizes_equality_matching_rule(
-        schema: p.Ldif.SchemaServer, equality_in: str, expected_equality: str,
+        schema: p.Ldif.SchemaServer,
+        equality_in: str,
+        expected_equality: str,
     ) -> None:
         """OID equality matching-rule variants normalize to RFC rule names."""
         attr_def = (
@@ -159,7 +163,9 @@ class TestsFlextLdifOidServers:
         ],
     )
     def test_parse_objectclass_normalizes_superior(
-        schema: p.Ldif.SchemaServer, oc_def: str, expected_sup: str,
+        schema: p.Ldif.SchemaServer,
+        oc_def: str,
+        expected_sup: str,
     ) -> None:
         """Quoted and parenthesized SUP forms both resolve to a bare superior."""
         result = schema.parse_objectclass(oc_def)

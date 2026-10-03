@@ -100,7 +100,8 @@ def oid_integration_fixture() -> str:
 
 @pytest.fixture
 def oid_entries(
-    api: p.Ldif.LdifClient, oid_entries_fixture: str,
+    api: p.Ldif.LdifClient,
+    oid_entries_fixture: str,
 ) -> t.SequenceOf[m.Ldif.Entry]:
     """Parse OID entries fixture into Entry models.
 
@@ -108,7 +109,8 @@ def oid_entries(
         The resulting ``t.SequenceOf[m.Ldif.Entry]``.
     """
     parse_response: m.Ldif.ParseResponse = u.Tests.assert_success(
-        api.parse_ldif(oid_entries_fixture), error_msg="OID entries parsing failed",
+        api.parse_ldif(oid_entries_fixture),
+        error_msg="OID entries parsing failed",
     )
     entries: t.SequenceOf[m.Ldif.Entry] = parse_response.entries
     return entries
@@ -160,7 +162,8 @@ def oud_integration_fixture() -> str:
 
 @pytest.fixture
 def oud_entries(
-    api: p.Ldif.LdifClient, oud_entries_fixture: str,
+    api: p.Ldif.LdifClient,
+    oud_entries_fixture: str,
 ) -> t.SequenceOf[m.Ldif.Entry]:
     """Parse OUD entries fixture into Entry models.
 
@@ -168,7 +171,8 @@ def oud_entries(
         The resulting ``t.SequenceOf[m.Ldif.Entry]``.
     """
     parse_response: m.Ldif.ParseResponse = u.Tests.assert_success(
-        api.parse_ldif(oud_entries_fixture), error_msg="OUD entries parsing failed",
+        api.parse_ldif(oud_entries_fixture),
+        error_msg="OUD entries parsing failed",
     )
     entries: t.SequenceOf[m.Ldif.Entry] = parse_response.entries
     return entries
@@ -214,7 +218,8 @@ def oid_server(server: p.Ldif.ServerRegistry) -> p.Ldif.ServerServer:
         The resulting ``p.Ldif.ServerServer``.
     """
     server_instance: p.Ldif.ServerServer = u.Tests.assert_success(
-        server.server("oid"), error_msg="OID server must be registered",
+        server.server("oid"),
+        error_msg="OID server must be registered",
     )
     return server_instance
 
@@ -227,7 +232,8 @@ def oud_server(server: p.Ldif.ServerRegistry) -> p.Ldif.ServerServer:
         The resulting ``p.Ldif.ServerServer``.
     """
     server_instance: p.Ldif.ServerServer = u.Tests.assert_success(
-        server.resolve_base_server("oud"), error_msg="OUD server must be registered",
+        server.resolve_base_server("oud"),
+        error_msg="OUD server must be registered",
     )
     return server_instance
 

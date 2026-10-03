@@ -180,7 +180,8 @@ class TestsFlextLdifRelaxed:
             name="test_acl",
             target=m.Ldif.AclTarget(target_dn="*", attributes=[]),
             subject=m.Ldif.AclSubject(
-                subject_type=c.Ldif.AclSubjectType.ALL, subject_value="*",
+                subject_type=c.Ldif.AclSubjectType.ALL,
+                subject_value="*",
             ),
             permissions=m.Ldif.AclPermissions(),
             raw_acl=raw_acl,
@@ -198,7 +199,9 @@ class TestsFlextLdifRelaxed:
         ids=["spaces_after_comma", "already_tight", "leading_trailing_space"],
     )
     def test_entry_normalize_dn_strips_incidental_whitespace(
-        entry_server: FlextLdifServersRelaxed.Entry, raw_dn: str, normalized: str,
+        entry_server: FlextLdifServersRelaxed.Entry,
+        raw_dn: str,
+        normalized: str,
     ) -> None:
         """normalize_dn returns the whitespace-normalized DN on success."""
         result = entry_server.normalize_dn(raw_dn)
@@ -288,7 +291,8 @@ class TestsFlextLdifRelaxed:
         ids=["valid", "malformed", "binary_noise"],
     )
     def test_schema_can_handle_attribute_accepts_anything(
-        schema_server: FlextLdifServersRelaxed.Schema, definition: str,
+        schema_server: FlextLdifServersRelaxed.Schema,
+        definition: str,
     ) -> None:
         """Relaxed is the last-resort handler: can_handle_attribute is always True."""
         tm.that(schema_server.can_handle_attribute(definition), eq=True)
@@ -300,7 +304,8 @@ class TestsFlextLdifRelaxed:
         ids=["valid", "malformed", "binary_noise"],
     )
     def test_schema_can_handle_objectclass_accepts_anything(
-        schema_server: FlextLdifServersRelaxed.Schema, definition: str,
+        schema_server: FlextLdifServersRelaxed.Schema,
+        definition: str,
     ) -> None:
         """Relaxed is the last-resort handler: can_handle_objectclass is always True."""
         tm.that(schema_server.can_handle_objectclass(definition), eq=True)

@@ -68,7 +68,8 @@ class TestsFlextLdifRealLdapExport:
 
     @staticmethod
     def _parse_back(
-        flext_api: p.Ldif.LdifClient, content: str | None,
+        flext_api: p.Ldif.LdifClient,
+        content: str | None,
     ) -> dict[str, Mapping[str, Sequence[str]]]:
         """Parse exported LDIF and index attribute maps by DN string.
 
@@ -167,11 +168,15 @@ class TestsFlextLdifRealLdapExport:
         ldap_connection.add(people_ou_dn, ["organizationalUnit"], {"ou": "People"})
         person_dn = f"cn={person_name},{people_ou_dn}"
         ldap_connection.add(
-            person_dn, ["person", "inetOrgPerson"], {"cn": person_name, "sn": "Johnson"},
+            person_dn,
+            ["person", "inetOrgPerson"],
+            {"cn": person_name, "sn": "Johnson"},
         )
         group_dn = f"cn={group_name},{groups_ou_dn}"
         ldap_connection.add(
-            group_dn, ["groupOfNames"], {"cn": group_name, "member": person_dn},
+            group_dn,
+            ["groupOfNames"],
+            {"cn": group_name, "member": person_dn},
         )
         ldap_connection.search(
             clean_test_ou,

@@ -64,7 +64,9 @@ class FlextLdifUtilitiesTransformers:
                 The resulting ``FlextLdifUtilitiesNormalizeDnTransformer``.
             """
             return FlextLdifUtilitiesTransformers.NormalizeDnTransformer(
-                case=case, spaces=spaces, validate=validate,
+                case=case,
+                spaces=spaces,
+                validate=validate,
             )
 
 

@@ -71,7 +71,8 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _apply_category_update(
-        stats: FlextLdifModels.Ldif.EntryStatistics, category: str,
+        stats: FlextLdifModels.Ldif.EntryStatistics,
+        category: str,
     ) -> FlextLdifModels.Ldif.EntryStatistics:
         """Apply category update to stats using model_copy.
 
@@ -85,7 +86,10 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _apply_filter_update(
-        stats: FlextLdifModels.Ldif.EntryStatistics, filter_type: str, *, passed: bool,
+        stats: FlextLdifModels.Ldif.EntryStatistics,
+        filter_type: str,
+        *,
+        passed: bool,
     ) -> FlextLdifModels.Ldif.EntryStatistics:
         """Apply filter marking to stats.
 
@@ -109,7 +113,8 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _build_schema_format_model(
-        definition: str, combined: t.Ldif.MutableMetadataMapping,
+        definition: str,
+        combined: t.Ldif.MutableMetadataMapping,
     ) -> FlextLdifModels.Ldif.SchemaFormatDetails:
         """Build SchemaFormatDetails model from combined details.
 
@@ -477,7 +482,8 @@ class FlextLdifUtilitiesMetadata:
             pos2 = field_positions.get(field2)
             if pos1 is not None and pos2 is not None:
                 field1_end_match = c.Ldif.compile_pattern(
-                    field_patterns[field1], ignorecase=True,
+                    field_patterns[field1],
+                    ignorecase=True,
                 ).search(definition[pos1:])
                 if field1_end_match:
                     field1_end = pos1 + field1_end_match.end()
@@ -611,7 +617,8 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def _update_conversion_path(
-        metadata: t.Ldif.MutableMetadataMapping, update_conversion_path: str,
+        metadata: t.Ldif.MutableMetadataMapping,
+        update_conversion_path: str,
     ) -> None:
         """Update conversion_path in metadata."""
         if "conversion_path" not in metadata:
@@ -652,7 +659,9 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def analyze_minimal_differences(
-        original: str, converted: str | None, context: str = "entry",
+        original: str,
+        converted: str | None,
+        context: str = "entry",
     ) -> t.Ldif.MutableMetadataMapping:
         """Analyze minimal differences between original and converted strings.
 
@@ -688,7 +697,8 @@ class FlextLdifUtilitiesMetadata:
         """
         combined = FlextLdifUtilitiesMetadata._extract_all_schema_details(definition)
         return FlextLdifUtilitiesMetadata._build_schema_format_model(
-            definition, combined,
+            definition,
+            combined,
         )
 
     @staticmethod
@@ -767,7 +777,8 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def build_original_format_details(
-        server_type: str, **extra: t.Ldif.Scalar,
+        server_type: str,
+        **extra: t.Ldif.Scalar,
     ) -> FlextLdifModels.Ldif.FormatDetails:
         """Build original format details for round-trip preservation.
 
@@ -777,14 +788,17 @@ class FlextLdifUtilitiesMetadata:
         original_dn_line = extra.get("original_dn_line")
         dn_line = str(original_dn_line) if original_dn_line is not None else None
         return FlextLdifModels.Ldif.FormatDetails(
-            dn_line=dn_line, trailing_info=f"server={server_type}",
+            dn_line=dn_line,
+            trailing_info=f"server={server_type}",
         )
 
     @staticmethod
     def build_rfc_compliance_metadata(
-        server_type: str, **extra: t.Ldif.Scalar,
+        server_type: str,
+        **extra: t.Ldif.Scalar,
     ) -> MutableMapping[
-        str, str | bool | t.MutableSequenceOf[str] | t.MutableAttributeMapping,
+        str,
+        str | bool | t.MutableSequenceOf[str] | t.MutableAttributeMapping,
     ]:
         """Build RFC compliance metadata as a dictionary.
 
@@ -793,7 +807,8 @@ class FlextLdifUtilitiesMetadata:
                 t.MutableAttributeMapping]``.
         """
         result: MutableMapping[
-            str, str | bool | t.MutableSequenceOf[str] | t.MutableAttributeMapping,
+            str,
+            str | bool | t.MutableSequenceOf[str] | t.MutableAttributeMapping,
         ] = {"server_type": server_type, "source_server": server_type}
         if "rfc_violations" in extra:
             violations_val = extra["rfc_violations"]
@@ -807,7 +822,8 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def preserve_schema_formatting(
-        metadata: FlextLdifModels.Ldif.ServerMetadata, definition: str,
+        metadata: FlextLdifModels.Ldif.ServerMetadata,
+        definition: str,
     ) -> None:
         """Preserve complete schema formatting details for round-trip."""
         formatting_details = FlextLdifUtilitiesMetadata.analyze_schema_formatting(
@@ -849,7 +865,8 @@ class FlextLdifUtilitiesMetadata:
 
     @staticmethod
     def store_minimal_differences(
-        metadata: FlextLdifModels.Ldif.ServerMetadata, **extra: t.Ldif.Scalar,
+        metadata: FlextLdifModels.Ldif.ServerMetadata,
+        **extra: t.Ldif.Scalar,
     ) -> None:
         """Store minimal differences in metadata for delta tracking."""
         _ = metadata
@@ -915,17 +932,22 @@ class FlextLdifUtilitiesMetadata:
         )
         if category is not None:
             updated_stats = FlextLdifUtilitiesMetadata._apply_category_update(
-                updated_stats, category,
+                updated_stats,
+                category,
             )
         if mark_filtered is not None:
             filter_type, passed = mark_filtered
             updated_stats = FlextLdifUtilitiesMetadata._apply_filter_update(
-                updated_stats, filter_type, passed=passed,
+                updated_stats,
+                filter_type,
+                passed=passed,
             )
         if mark_rejected is not None:
             rejection_category, reason = mark_rejected
             updated_stats = FlextLdifUtilitiesMetadata._apply_rejection_update(
-                updated_stats, rejection_category, reason,
+                updated_stats,
+                rejection_category,
+                reason,
             )
         return FlextLdifUtilitiesMetadata._update_entry_with_stats(entry, updated_stats)
 

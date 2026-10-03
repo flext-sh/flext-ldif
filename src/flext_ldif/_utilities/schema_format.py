@@ -29,7 +29,9 @@ class FlextLdifUtilitiesSchemaFormat:
         if not attr_data.metadata or not attr_data.metadata.schema_format_details:
             return
         trailing = getattr(
-            attr_data.metadata.schema_format_details, "trailing_spaces", "",
+            attr_data.metadata.schema_format_details,
+            "trailing_spaces",
+            "",
         )
         if trailing and parts:
             parts[-1] += str(trailing)
@@ -122,7 +124,8 @@ class FlextLdifUtilitiesSchemaFormat:
 
     @staticmethod
     def format_attribute_list(
-        attr_list: str | t.MutableSequenceOf[str] | None, prefix: str,
+        attr_list: str | t.MutableSequenceOf[str] | None,
+        prefix: str,
     ) -> str | None:
         """Format attribute list (MUST/MAY) for objectClass definition.
 
@@ -165,7 +168,9 @@ class FlextLdifUtilitiesSchemaFormat:
         if not attr_data.metadata or not attr_data.metadata.schema_format_details:
             return None
         field_order_ = getattr(
-            attr_data.metadata.schema_format_details, "field_order", None,
+            attr_data.metadata.schema_format_details,
+            "field_order",
+            None,
         )
         if field_order_ and u.list_like(field_order_):
             return [str(item) for item in field_order_]
@@ -216,7 +221,9 @@ class FlextLdifUtilitiesSchemaFormat:
             return None
         original = str(
             getattr(
-                attr_data.metadata.schema_format_details, "original_string_complete", "",
+                attr_data.metadata.schema_format_details,
+                "original_string_complete",
+                "",
             ),
         )
         if not original:

@@ -70,7 +70,8 @@ class TestsFlextLdifEntries:
     def test_create_entry_returns_entry_preserving_dn_and_attributes() -> None:
         """Test create entry returns entry preserving dn and attributes."""
         result = FlextLdifEntries.create_entry(
-            c.Tests.ENTRIES_DN_VALID, {"cn": ["x"], "objectClass": ["top"]},
+            c.Tests.ENTRIES_DN_VALID,
+            {"cn": ["x"], "objectClass": ["top"]},
         )
         entry: m.Ldif.Entry = u.Tests.assert_success(result)
         assert entry.attributes is not None
@@ -97,7 +98,8 @@ class TestsFlextLdifEntries:
     def test_create_entry_invalid_dn_fails_with_reason() -> None:
         """Test create entry invalid dn fails with reason."""
         result = FlextLdifEntries.create_entry(
-            c.Tests.ENTRIES_DN_INVALID, {"cn": ["x"]},
+            c.Tests.ENTRIES_DN_INVALID,
+            {"cn": ["x"]},
         )
         tm.fail(result, has="Invalid DN")
 
@@ -204,7 +206,8 @@ class TestsFlextLdifEntries:
     def test_resolve_objectclasses_fails_when_attribute_missing() -> None:
         """Test resolve objectclasses fails when attribute missing."""
         entry = u.Tests.create_real_entry(
-            dn=c.Tests.ENTRIES_DN_VALID, attributes={"cn": ["x"]},
+            dn=c.Tests.ENTRIES_DN_VALID,
+            attributes={"cn": ["x"]},
         )
         result = FlextLdifEntries.resolve_entry_objectclasses(entry)
         tm.fail(result, has="objectClass")
@@ -213,7 +216,8 @@ class TestsFlextLdifEntries:
     def test_resolve_objectclasses_fails_when_entry_has_no_attributes() -> None:
         """Test resolve objectclasses fails when entry has no attributes."""
         entry = m.Ldif.Entry(
-            dn=m.Ldif.DN(value=c.Tests.ANALYSIS_DN_VALID), attributes=None,
+            dn=m.Ldif.DN(value=c.Tests.ANALYSIS_DN_VALID),
+            attributes=None,
         )
         result = FlextLdifEntries.resolve_entry_objectclasses(entry)
         tm.fail(result, has="attributes")
@@ -224,7 +228,8 @@ class TestsFlextLdifEntries:
         """Test remove attributes strips targets and keeps others."""
         entry = self._basic_entry()
         result = FlextLdifEntries.remove_attributes(
-            entry, list(c.Tests.ENTRIES_ATTR_REMOVE_SET),
+            entry,
+            list(c.Tests.ENTRIES_ATTR_REMOVE_SET),
         )
         cleaned: m.Ldif.Entry = u.Tests.assert_success(result)
         assert cleaned.attributes is not None
@@ -238,18 +243,21 @@ class TestsFlextLdifEntries:
         entry = self._basic_entry()
         once: m.Ldif.Entry = u.Tests.assert_success(
             FlextLdifEntries.remove_attributes(
-                entry, list(c.Tests.ENTRIES_ATTR_REMOVE_SET),
+                entry,
+                list(c.Tests.ENTRIES_ATTR_REMOVE_SET),
             ),
         )
         twice: m.Ldif.Entry = u.Tests.assert_success(
             FlextLdifEntries.remove_attributes(
-                once, list(c.Tests.ENTRIES_ATTR_REMOVE_SET),
+                once,
+                list(c.Tests.ENTRIES_ATTR_REMOVE_SET),
             ),
         )
         assert once.attributes is not None
         assert twice.attributes is not None
         tm.that(
-            set(twice.attributes.attributes) == set(once.attributes.attributes), eq=True,
+            set(twice.attributes.attributes) == set(once.attributes.attributes),
+            eq=True,
         )
 
     def test_remove_attributes_noop_when_entry_has_no_attributes(self) -> None:
@@ -270,7 +278,11 @@ class TestsFlextLdifEntries:
         ),
     )
     def test_run_configured_operation_outcome(
-        self, scenario: str, op: str | None, *, should_succeed: bool,
+        self,
+        scenario: str,
+        op: str | None,
+        *,
+        should_succeed: bool,
     ) -> None:
         """Test run configured operation outcome."""
         tm.that(bool(scenario), eq=True)

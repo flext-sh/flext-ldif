@@ -27,10 +27,12 @@ class FlextLdifUtilitiesSchemaExtract:
             The resulting ``tuple[bool, bool]``.
         """
         single_value = up.extract_boolean_flag(
-            attr_definition, c.Ldif.SCHEMA_SINGLE_VALUE,
+            attr_definition,
+            c.Ldif.SCHEMA_SINGLE_VALUE,
         )
         no_user_modification = up.extract_boolean_flag(
-            attr_definition, c.Ldif.SCHEMA_NO_USER_MODIFICATION,
+            attr_definition,
+            c.Ldif.SCHEMA_NO_USER_MODIFICATION,
         )
         return (single_value, no_user_modification)
 
@@ -129,7 +131,8 @@ class FlextLdifUtilitiesSchemaExtract:
 
     @staticmethod
     def extract_schema_basic_fields(
-        definition: str, definition_label: str,
+        definition: str,
+        definition_label: str,
     ) -> p.Result[tuple[str, str, str | None]]:
         oid_result = up.extract_oid(definition)
         if oid_result.failure:
@@ -143,7 +146,9 @@ class FlextLdifUtilitiesSchemaExtract:
             )
         oid = oid_result.value
         name_raw = up.extract_optional_field(
-            definition, c.Ldif.SCHEMA_NAME, default=oid,
+            definition,
+            c.Ldif.SCHEMA_NAME,
+            default=oid,
         )
         name: str = name_raw if name_raw is not None else oid
         desc = up.extract_optional_field(definition, c.Ldif.SCHEMA_DESC)

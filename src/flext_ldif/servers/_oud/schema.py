@@ -37,7 +37,10 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
 
     @override
     def extract_schemas_from_ldif(
-        self, ldif_content: str, *, validate_dependencies: bool = True,
+        self,
+        ldif_content: str,
+        *,
+        validate_dependencies: bool = True,
     ) -> p.Result[
         MutableMapping[
             str,
@@ -53,11 +56,14 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
                 t.MutableSequenceOf[m.Ldif.SchemaObjectClass]]]``.
         """
         return super().extract_schemas_from_ldif(
-            ldif_content, validate_dependencies=validate_dependencies,
+            ldif_content,
+            validate_dependencies=validate_dependencies,
         )
 
+    @staticmethod
     def _transform_by_matching_rules(
-        self, attr_data: m.Ldif.SchemaAttribute,
+        self,
+        attr_data: m.Ldif.SchemaAttribute,
     ) -> tuple[str | None, str | None]:
         """Apply OUD-specific matching rule transformations.
 
@@ -75,7 +81,8 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
             fixed_equality = None
         original_substr = fixed_substr
         fixed_substr = u.Ldif.replace_invalid_substr_rule(
-            fixed_substr, FlextLdifServersOudConstants.INVALID_SUBSTR_RULES,
+            fixed_substr,
+            FlextLdifServersOudConstants.INVALID_SUBSTR_RULES,
         )
         if fixed_substr != original_substr:
             FlextLdifServersOudSchema._module_logger.warning(
@@ -88,7 +95,8 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         return (fixed_equality, fixed_substr)
 
     def _apply_attribute_oid_metadata(
-        self, attr: m.Ldif.SchemaAttribute,
+        self,
+        attr: m.Ldif.SchemaAttribute,
     ) -> m.Ldif.SchemaAttribute:
         """Apply OID validation and tracking metadata to attribute.
 
@@ -120,8 +128,10 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         )
         return updated_attr
 
+    @staticmethod
     def _collect_attribute_extensions(
-        self, attr: m.Ldif.SchemaAttribute,
+        self,
+        attr: m.Ldif.SchemaAttribute,
     ) -> t.MutableSequenceOf[str]:
         """Collect OUD X-* extensions from attribute.
 
@@ -143,7 +153,8 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
 
     @override
     def _hook_post_parse_attribute(
-        self, attr: m.Ldif.SchemaAttribute,
+        self,
+        attr: m.Ldif.SchemaAttribute,
     ) -> p.Result[m.Ldif.SchemaAttribute]:
         """Validate OUD-specific attribute features after RFC parsing.
 
@@ -161,7 +172,8 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         normalized_ordering = attr.ordering
         if attr.ordering:
             normalized_ordering = FlextLdifServersOudConstants.MATCHING_RULE_TO_RFC.get(
-                attr.ordering, attr.ordering,
+                attr.ordering,
+                attr.ordering,
             )
         attr = attr.model_copy(
             update={
@@ -204,7 +216,8 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
 
     @override
     def _hook_post_parse_objectclass(
-        self, oc: m.Ldif.SchemaObjectClass,
+        self,
+        oc: m.Ldif.SchemaObjectClass,
     ) -> p.Result[m.Ldif.SchemaObjectClass]:
         """Validate OUD-specific objectClass features after RFC parsing.
 
@@ -229,7 +242,8 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
 
     @override
     def _transform_attribute_for_write(
-        self, attr_data: m.Ldif.SchemaAttribute,
+        self,
+        attr_data: m.Ldif.SchemaAttribute,
     ) -> m.Ldif.SchemaAttribute:
         """Apply OUD-specific attribute transformations before writing.
 
@@ -238,7 +252,8 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         """
         fixed_equality, fixed_substr = self._transform_by_matching_rules(attr_data)
         is_boolean = u.Ldif.is_boolean_attribute(
-            attr_data.name, set(FlextLdifServersOudConstants.BOOLEAN_ATTRIBUTES),
+            attr_data.name,
+            set(FlextLdifServersOudConstants.BOOLEAN_ATTRIBUTES),
         )
         if is_boolean:
             FlextLdifServersOudSchema._module_logger.debug(
@@ -251,6 +266,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         )
         return self._apply_attribute_oid_metadata(updated_attr)
 
+    @staticmethod
     def _validate_attribute_oid(self, oid: str) -> p.Result[bool]:
         """Validate attribute OID format for OUD.
 
@@ -274,7 +290,8 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         return r[bool].ok(is_valid_oud_oid)
 
     def _validate_objectclass_oid_and_sup(
-        self, oc: m.Ldif.SchemaObjectClass,
+        self,
+        oc: m.Ldif.SchemaObjectClass,
     ) -> p.Result[m.Ldif.SchemaObjectClass]:
         """Validate ObjectClass OID and SUP OID formats.
 
@@ -286,7 +303,8 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
             oid_validation = self._validate_attribute_oid(oid_str)
             if oid_validation.failure:
                 return r[m.Ldif.SchemaObjectClass].fail_op(
-                    "ObjectClass OID validation", oid_validation.error,
+                    "ObjectClass OID validation",
+                    oid_validation.error,
                 )
             is_valid_oud_oid = oid_validation.value
             existing_oc_metadata = oc.metadata
@@ -314,10 +332,12 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
                 sup_validation = self._validate_attribute_oid(sup_str)
                 if sup_validation.failure:
                     return r[m.Ldif.SchemaObjectClass].fail_op(
-                        "ObjectClass SUP OID validation", sup_validation.error,
+                        "ObjectClass SUP OID validation",
+                        sup_validation.error,
                     )
         return r[m.Ldif.SchemaObjectClass].ok(oc)
 
+    @staticmethod
     def _validate_objectclass_sup(self, oc: m.Ldif.SchemaObjectClass) -> p.Result[bool]:
         """Validate objectClass SUP constraint for OUD.
 

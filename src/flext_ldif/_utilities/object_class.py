@@ -25,7 +25,8 @@ class FlextLdifUtilitiesObjectClass:
 
     @staticmethod
     def fix_kind_mismatch(
-        schema_oc: ms.SchemaObjectClass, _server_type: str = "oid",
+        schema_oc: ms.SchemaObjectClass,
+        _server_type: str = "oid",
     ) -> None:
         """Fix objectClass kind mismatches with superior classes (server-specific)."""
         if not schema_oc.sup or not schema_oc.kind:

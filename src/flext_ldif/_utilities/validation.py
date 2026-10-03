@@ -13,7 +13,8 @@ from flext_ldif import p, t
 class FlextLdifUtilitiesValidation:
     @staticmethod
     def validate_value(
-        value: t.JsonValue, *validators: p.ValidatorSpec,
+        value: t.JsonValue,
+        *validators: p.ValidatorSpec,
     ) -> p.Result[t.JsonValue]:
         del validators
         return r[t.JsonValue].ok(value)
@@ -42,7 +43,8 @@ class FlextLdifUtilitiesValidation:
         @classmethod
         def is_valid_rfc4514_dn_component(cls, attribute_name: str, value: str) -> bool:
             return u.validate_value(
-                cls.RFC4514_DN_COMPONENT_ADAPTER, f"{attribute_name}={value}",
+                cls.RFC4514_DN_COMPONENT_ADAPTER,
+                f"{attribute_name}={value}",
             ).success
 
 

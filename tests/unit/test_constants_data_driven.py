@@ -32,7 +32,8 @@ class TestsFlextLdifConstantsDataDriven:
         ],
     )
     def test_server_type_constants_expose_canonical_enum_values(
-        constant_value: str, expected_server_type: str,
+        constant_value: str,
+        expected_server_type: str,
     ) -> None:
         # Arrange / Act done in the parametrize table.
         # Assert the constant is exactly the canonical server-type token.
@@ -81,7 +82,8 @@ class TestsFlextLdifConstantsDataDriven:
         ],
     )
     def test_ldap_name_constants_expose_canonical_attribute_names(
-        name_constant: str, expected_attribute: str,
+        name_constant: str,
+        expected_attribute: str,
     ) -> None:
         """Test ldap name constants expose canonical attribute names."""
         tm.that(name_constant, eq=expected_attribute)
@@ -109,7 +111,8 @@ class TestsFlextLdifConstantsDataDriven:
         ],
     )
     def test_edge_case_ldif_constants_are_well_formed_records(
-        content: str, expected_dn_prefix: str,
+        content: str,
+        expected_dn_prefix: str,
     ) -> None:
         # A valid single LDIF record starts with its DN line and terminates
         # with a blank-line record separator.

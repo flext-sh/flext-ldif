@@ -24,7 +24,8 @@ class TestsFlextLdifParserUtilities:
     # ------------------------------------------------------------------
     @staticmethod
     @pytest.mark.parametrize(
-        "definition", ["", "( NAME 'cn' DESC 'no oid' )", "not-an-oid NAME 'x'"],
+        "definition",
+        ["", "( NAME 'cn' DESC 'no oid' )", "not-an-oid NAME 'x'"],
     )
     def test_extract_oid_fails_without_leading_oid(definition: str) -> None:
         """Test extract oid fails without leading oid."""
@@ -42,7 +43,8 @@ class TestsFlextLdifParserUtilities:
         ],
     )
     def test_extract_oid_returns_leading_oid(
-        definition: str, expected_oid: str,
+        definition: str,
+        expected_oid: str,
     ) -> None:
         """Test extract oid returns leading oid."""
         result = u.Ldif.extract_oid(definition)
@@ -72,7 +74,8 @@ class TestsFlextLdifParserUtilities:
         ],
     )
     def test_parse_attribute_line_splits_name_value_and_base64_flag(
-        line: str, expected: tuple[str, str, bool],
+        line: str,
+        expected: tuple[str, str, bool],
     ) -> None:
         """Test parse attribute line splits name value and base64 flag."""
         result = u.Ldif.parse_attribute_line(line)
@@ -155,7 +158,9 @@ class TestsFlextLdifParserUtilities:
         ],
     )
     def test_extract_boolean_flag_detects_token(
-        definition: str, *, expected: bool,
+        definition: str,
+        *,
+        expected: bool,
     ) -> None:
         """Test extract boolean flag detects token."""
         assert u.Ldif.extract_boolean_flag(definition, "SINGLE-VALUE") is expected
@@ -164,7 +169,8 @@ class TestsFlextLdifParserUtilities:
     def test_extract_optional_field_returns_match_when_present() -> None:
         """Test extract optional field returns match when present."""
         value = u.Ldif.extract_optional_field(
-            "( 1.1 NAME 'x' DESC 'hello world' )", c.Ldif.SCHEMA_DESC_FLEX_RE,
+            "( 1.1 NAME 'x' DESC 'hello world' )",
+            c.Ldif.SCHEMA_DESC_FLEX_RE,
         )
 
         tm.that(value, eq="hello world")
@@ -173,7 +179,9 @@ class TestsFlextLdifParserUtilities:
     def test_extract_optional_field_returns_default_on_empty() -> None:
         """Test extract optional field returns default on empty."""
         value = u.Ldif.extract_optional_field(
-            "", c.Ldif.SCHEMA_DESC_FLEX_RE, default="fallback",
+            "",
+            c.Ldif.SCHEMA_DESC_FLEX_RE,
+            default="fallback",
         )
 
         tm.that(value, eq="fallback")

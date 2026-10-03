@@ -39,7 +39,8 @@ class TestsFlextLdifTransformersService:
             AssertionError: If Expected convert_model to return an Entry with a DN.
         """
         entry = u.Tests.create_real_entry(
-            dn=c.Tests.ANALYSIS_DN_VALID, attributes={"cn": ["valid"]},
+            dn=c.Tests.ANALYSIS_DN_VALID,
+            attributes={"cn": ["valid"]},
         )
 
         converted = u.Tests.assert_success(
@@ -65,7 +66,8 @@ class TestsFlextLdifTransformersService:
             attributes={"objectClass": ["top"], "cn": ["keep"]},
         )
         transformer = FlextLdifTransformer(
-            source_server=c.Ldif.ServerTypes.RFC, target_server=c.Ldif.ServerTypes.RFC,
+            source_server=c.Ldif.ServerTypes.RFC,
+            target_server=c.Ldif.ServerTypes.RFC,
         )
 
         converted = self._success_entry(transformer.apply(entry))
@@ -75,7 +77,8 @@ class TestsFlextLdifTransformersService:
             raise AssertionError(msg)
         tm.that(converted.dn.value, eq="cn=keep,dc=example,dc=com")
         tm.that(
-            converted.attributes.attributes, eq={"objectClass": ["top"], "cn": ["keep"]},
+            converted.attributes.attributes,
+            eq={"objectClass": ["top"], "cn": ["keep"]},
         )
 
     def test_default_server_types_apply_rfc_identity(self) -> None:
@@ -87,7 +90,8 @@ class TestsFlextLdifTransformersService:
             AssertionError: If Expected default transformer to preserve the DN.
         """
         entry = u.Tests.create_real_entry(
-            dn="cn=default,dc=example,dc=com", attributes={"cn": ["default"]},
+            dn="cn=default,dc=example,dc=com",
+            attributes={"cn": ["default"]},
         )
 
         converted = self._success_entry(FlextLdifTransformer().apply(entry))
@@ -123,7 +127,8 @@ class TestsFlextLdifTransformersService:
             },
         )
         transformer = FlextLdifTransformer(
-            source_server=source_server, target_server=target_server,
+            source_server=source_server,
+            target_server=target_server,
         )
 
         converted = self._success_entry(transformer.apply(entry))
@@ -175,10 +180,12 @@ class TestsFlextLdifTransformersService:
     def test_unknown_server_type_raises_value_error() -> None:
         """Test unknown server type raises value error."""
         entry = u.Tests.create_real_entry(
-            dn="cn=bad,dc=example,dc=com", attributes={"cn": ["bad"]},
+            dn="cn=bad,dc=example,dc=com",
+            attributes={"cn": ["bad"]},
         )
         transformer = FlextLdifTransformer(
-            source_server="not-a-server", target_server=c.Ldif.ServerTypes.RFC,
+            source_server="not-a-server",
+            target_server=c.Ldif.ServerTypes.RFC,
         )
 
         with pytest.raises(ValueError, match="not-a-server"):

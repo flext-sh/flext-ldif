@@ -23,7 +23,8 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         "unknown"
     )
     priority: Annotated[
-        int, u.Field(description="Server priority (lower number = higher priority)"),
+        int,
+        u.Field(description="Server priority (lower number = higher priority)"),
     ] = 0
     parent_server: Annotated[
         Self | None,
@@ -75,8 +76,11 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
                 return validated
         return None
 
+    @staticmethod
     def can_handle(
-        self, entry_dn: str, attributes: t.MutableStrSequenceMapping,
+        self,
+        entry_dn: str,
+        attributes: t.MutableStrSequenceMapping,
     ) -> bool:
         """Check if this server can handle the entry.
 
@@ -87,6 +91,7 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         _ = attributes
         return False
 
+    @staticmethod
     def can_handle_attribute(self, attribute: m.Ldif.SchemaAttribute) -> bool:
         """Check if this server can handle a schema attribute.
 
@@ -96,6 +101,7 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         _ = attribute
         return False
 
+    @staticmethod
     def can_handle_objectclass(self, objectclass: m.Ldif.SchemaObjectClass) -> bool:
         """Check if this server can handle a schema objectClass.
 
@@ -107,7 +113,8 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
 
     @override
     def execute(
-        self, **kwargs: str | m.Ldif.Entry | t.MutableJsonMapping,
+        self,
+        **kwargs: str | m.Ldif.Entry | t.MutableJsonMapping,
     ) -> p.Result[t.Ldif.EntryPayload]:
         """Execute entry operation (parse/write).
 
@@ -145,7 +152,9 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         return parse_result.unwrap()
 
     def parse_entry(
-        self, entry_dn: str, entry_attrs: t.MutableStrSequenceMapping,
+        self,
+        entry_dn: str,
+        entry_attrs: t.MutableStrSequenceMapping,
     ) -> p.Result[m.Ldif.Entry]:
         """Parse a single entry from DN and attributes.
 
@@ -181,7 +190,8 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
 
     @staticmethod
     def _build_header_lines(
-        write_options: m.Ldif.WriteFormatOptions | None, entry_count: int,
+        write_options: m.Ldif.WriteFormatOptions | None,
+        entry_count: int,
     ) -> t.MutableSequenceOf[str]:
         """Build header lines based on write options.
 
@@ -202,7 +212,8 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         return lines
 
     def _convert_raw_attributes(
-        self, entry_attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]],
+        self,
+        entry_attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]],
     ) -> t.MutableStrSequenceMapping:
         """Convert raw LDIF attributes to t.MutableStrSequenceMapping format.
 
@@ -226,7 +237,8 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
 
     @staticmethod
     def _denormalize_entry(
-        entry: m.Ldif.Entry, target_server: str | None = None,
+        entry: m.Ldif.Entry,
+        target_server: str | None = None,
     ) -> m.Ldif.Entry:
         """Denormalize entry from RFC format to target server format.
 
@@ -236,6 +248,7 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         _ = target_server
         return entry
 
+    @staticmethod
     def _hook_post_parse_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
         """Run hook after parsing an entry.
 
@@ -244,6 +257,7 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         """
         return r[m.Ldif.Entry].ok(entry)
 
+    @staticmethod
     def _hook_pre_write_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
         """Run hook before writing an entry.
 
@@ -254,7 +268,8 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
 
     @staticmethod
     def _hook_validate_entry_raw(
-        dn: str, attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]],
+        dn: str,
+        attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]],
     ) -> p.Result[bool]:
         """Validate raw entry before parsing.
 
@@ -268,7 +283,8 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
 
     @staticmethod
     def _inject_write_format_options(
-        entry: m.Ldif.Entry, write_options: m.Ldif.WriteFormatOptions,
+        entry: m.Ldif.Entry,
+        write_options: m.Ldif.WriteFormatOptions,
     ) -> m.Ldif.Entry:
         """Inject write format options into entry metadata extensions.
 
@@ -276,7 +292,8 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
             The resulting ``m.Ldif.Entry``.
         """
         format_options_payload = write_options.model_dump(
-            mode="json", exclude_none=True,
+            mode="json",
+            exclude_none=True,
         )
         existing_extensions: t.MutableJsonMapping = (
             # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: deep-copy the
@@ -290,11 +307,13 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
             )
         else:
             updated_metadata = m.Ldif.ServerMetadata(
-                server_type=c.Ldif.ServerTypes.RFC, extensions=existing_extensions,
+                server_type=c.Ldif.ServerTypes.RFC,
+                extensions=existing_extensions,
             )
         copied: m.Ldif.Entry = entry.model_copy(update={"metadata": updated_metadata})
         return copied
 
+    @staticmethod
     def _normalize_attribute_name(self, attr_name: str) -> str:
         """Normalize attribute name to RFC 2849 canonical form.
 
@@ -316,8 +335,10 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         """
         return entry
 
+    @staticmethod
     def _parse_content(
-        self, ldif_content: str,
+        self,
+        ldif_content: str,
     ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
         """Parse raw LDIF content string into Entry models (internal).
 
@@ -403,7 +424,10 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
                 return value
             safe_acl_name = acl_original_format.replace('"', "'")
             replaced_acl_name: str = c.Ldif.sub_pattern(
-                r'acl\\s+"[^"]*"', f'acl "{safe_acl_name}"', value, count=1,
+                r'acl\\s+"[^"]*"',
+                f'acl "{safe_acl_name}"',
+                value,
+                count=1,
             )
             return replaced_acl_name
 
@@ -456,7 +480,8 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
             return f"{line}: {control.value}"
 
         def get_attribute_value_metadata(
-            attr_name: str, value_index: int,
+            attr_name: str,
+            value_index: int,
         ) -> tuple[str | None, str | None]:
             """Return preserved value origin and raw payload for an attribute value."""
             if entry_data.attributes is None:
@@ -529,7 +554,10 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
             return r[str].fail("Entry DN is None")
         for control in entry_data.controls:
             output_lines.extend(
-                u.Ldif.fold_line(emit_control_line(control), width=effective_line_width),
+                u.Ldif.fold_line(
+                    emit_control_line(control),
+                    width=effective_line_width,
+                ),
             )
         effective_changetype = entry_data.changetype or ldif_changetype
         if effective_changetype in {
@@ -568,7 +596,8 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
                     output_lines.append(f"{ldif_modify_operation}: {attr_name}")
                     for value_index, value in enumerate(non_empty):
                         value_origin, raw_value = get_attribute_value_metadata(
-                            attr_name, value_index,
+                            attr_name,
+                            value_index,
                         )
                         attr_line = emit_attribute_line(
                             attr_name,
@@ -587,7 +616,8 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
             if entry_data.newrdn:
                 output_lines.extend(
                     u.Ldif.fold_line(
-                        f"newrdn: {entry_data.newrdn}", width=effective_line_width,
+                        f"newrdn: {entry_data.newrdn}",
+                        width=effective_line_width,
                     ),
                 )
             if entry_data.deleteoldrdn is not None:
@@ -613,7 +643,8 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
                     if not str_value and (not write_empty_values):
                         continue
                     value_origin, raw_value = get_attribute_value_metadata(
-                        attr_name, value_index,
+                        attr_name,
+                        value_index,
                     )
                     attr_line = emit_attribute_line(
                         attr_name,
@@ -653,7 +684,9 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         return r[str].traverse(entries, write_entry).map(format_output)
 
     def _write_single_entry(
-        self, entry: m.Ldif.Entry, write_options: m.Ldif.WriteFormatOptions | None,
+        self,
+        entry: m.Ldif.Entry,
+        write_options: m.Ldif.WriteFormatOptions | None,
     ) -> p.Result[str]:
         """Write single entry to LDIF.
 

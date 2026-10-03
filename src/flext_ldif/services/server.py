@@ -69,7 +69,8 @@ class FlextLdifServer(s):
         return None
 
     def resolve_server_bundle(
-        self, server_type: str,
+        self,
+        server_type: str,
     ) -> p.Result[
         t.MappingKV[str, p.Ldif.SchemaServer | p.Ldif.AclServer | p.Ldif.EntryServer]
     ]:
@@ -83,15 +84,18 @@ class FlextLdifServer(s):
         if server_result.failure:
             return r[
                 t.MappingKV[
-                    str, p.Ldif.SchemaServer | p.Ldif.AclServer | p.Ldif.EntryServer,
+                    str,
+                    p.Ldif.SchemaServer | p.Ldif.AclServer | p.Ldif.EntryServer,
                 ]
             ].fail_op(
-                "resolve_server_bundle", ValueError(server_result.error or server_type),
+                "resolve_server_bundle",
+                ValueError(server_result.error or server_type),
             )
         base: p.Ldif.ServerServer = server_result.value
         return r[
             t.MappingKV[
-                str, p.Ldif.SchemaServer | p.Ldif.AclServer | p.Ldif.EntryServer,
+                str,
+                p.Ldif.SchemaServer | p.Ldif.AclServer | p.Ldif.EntryServer,
             ]
         ].ok({
             "schema": base.schema_server,
@@ -108,7 +112,8 @@ class FlextLdifServer(s):
         return self.server(server_type)
 
     def resolve_server_constants(
-        self, server_type: str,
+        self,
+        server_type: str,
     ) -> p.Result[type[p.Ldif.ServerConstants]]:
         """Get Constants class from server server.
 
@@ -120,7 +125,9 @@ class FlextLdifServer(s):
             return r[type[p.Ldif.ServerConstants]].from_failure(server_result)
         base = server_result.value
         constants: type[p.Ldif.ServerConstants] | None = getattr(
-            type(base), "Constants", None,
+            type(base),
+            "Constants",
+            None,
         )
         if constants is None:
             return r[type[p.Ldif.ServerConstants]].fail(
@@ -220,7 +227,8 @@ class FlextLdifServer(s):
             sorted(
                 module_info.name
                 for module_info in pkgutil.iter_modules(
-                    servers_package.__path__, prefix=prefix,
+                    servers_package.__path__,
+                    prefix=prefix,
                 )
                 if not module_info.ispkg
                 and not module_info.name.removeprefix(prefix).startswith("_")
@@ -230,7 +238,10 @@ class FlextLdifServer(s):
             module = importlib.import_module(module_name)
             for name, obj in inspect.getmembers(module):
                 if not self._is_discoverable_server(
-                    name, obj, module_name, base_candidate,
+                    name,
+                    obj,
+                    module_name,
+                    base_candidate,
                 ):
                     continue
                 try:
@@ -240,7 +251,10 @@ class FlextLdifServer(s):
 
     @staticmethod
     def _is_discoverable_server(
-        name: str, candidate: type, module_name: str, base_class: type,
+        name: str,
+        candidate: type,
+        module_name: str,
+        base_class: type,
     ) -> TypeGuard[type[FlextLdifServersBase]]:
         """Return whether a module member is a concrete server class."""
         return (
@@ -252,7 +266,8 @@ class FlextLdifServer(s):
         )
 
     def _register_discovered_server(
-        self, server_class: type[FlextLdifServersBase],
+        self,
+        server_class: type[FlextLdifServersBase],
     ) -> None:
         """Instantiate and register one discovered concrete server class."""
         instance = server_class()
@@ -267,7 +282,10 @@ class FlextLdifServer(s):
         if server_type:
             self._registered_servers[server_type] = instance
             self._registry.register_plugin(
-                c.Ldif.SERVERS, server_type, instance, scope=c.RegistrationScope.CLASS,
+                c.Ldif.SERVERS,
+                server_type,
+                instance,
+                scope=c.RegistrationScope.CLASS,
             )
 
     @classmethod

@@ -144,7 +144,8 @@ class FlextLdifConversionAclPreserveMixin(s):
                 else replacement_permissions
             )
             converted_acl = permission_settings.converted_acl.model_copy(
-                update={"permissions": resolved_permissions}, deep=True,
+                update={"permissions": resolved_permissions},
+                deep=True,
             )
             self.logger.debug(
                 "ACL t.MappingKV decision",
@@ -165,10 +166,12 @@ class FlextLdifConversionAclPreserveMixin(s):
             return acl_step1
         merged_ext_raw = {**original_extensions, **self._get_extensions_dict(acl_step1)}
         updated_metadata = acl_step1.metadata.model_copy(
-            update={"extensions": merged_ext_raw}, deep=True,
+            update={"extensions": merged_ext_raw},
+            deep=True,
         )
         preserved_acl: m.Ldif.Acl = acl_step1.model_copy(
-            update={"metadata": updated_metadata}, deep=True,
+            update={"metadata": updated_metadata},
+            deep=True,
         )
         return preserved_acl
 
