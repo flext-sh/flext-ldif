@@ -9,7 +9,7 @@
 <!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
 
 - Package: `flext_ldif`
-- Version: `0.12.0`
+- Version: `0.20.0`
 - Description: FLEXT LDIF - Enterprise LDIF Processing Library
 - Doc summary: Flext Ldif package.
 - Classifiers: Development Status :: 3 - Alpha, Intended Audience :: Developers,

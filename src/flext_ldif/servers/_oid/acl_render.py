@@ -12,14 +12,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import c, m, t
+from flext_ldif import c, m, p, t
 
 
 class FlextLdifServersOidAclRender:
     """Render an assembled OUD :class:`m.Ldif.AciRule` to its string form."""
 
     @staticmethod
-    def _render_bind(allow: m.Ldif.AciAllow) -> str:
+    def _render_bind(allow: p.Ldif.AciAllow) -> str:
         if allow.subject_type == c.Ldif.OudSubjectType.USERATTR:
             keyword = c.Ldif.OudSubjectType.USERATTR.value
             bind = f'{keyword}="{allow.subject_value}"'
@@ -32,7 +32,7 @@ class FlextLdifServersOidAclRender:
         return bind
 
     @staticmethod
-    def _target_parts(aci: m.Ldif.AciRule) -> t.StrSequence:
+    def _target_parts(aci: p.Ldif.AciRule) -> t.StrSequence:
         if aci.targetattr.startswith(c.Ldif.OUD_ATTR_NEGATION):
             body = aci.targetattr[len(c.Ldif.OUD_ATTR_NEGATION) :]
             parts = [f'(targetattr{c.Ldif.OUD_ATTR_NEGATION}"{body}")']
@@ -50,7 +50,7 @@ class FlextLdifServersOidAclRender:
         return tuple(parts)
 
     @classmethod
-    def render_aci_string(cls, aci: m.Ldif.AciRule) -> str:
+    def render_aci_string(cls, aci: p.Ldif.AciRule) -> str:
         """Render an :class:`m.Ldif.AciRule` to its OUD ``aci:`` line.
 
         Allows are grouped by identical permission set (first-seen order); each
