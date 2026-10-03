@@ -1,4 +1,8 @@
-"""Attribute utilities for RFC 4512 § 2.5 compliance."""
+"""Attribute utilities for RFC 4512 § 2.5 compliance.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -10,7 +14,11 @@ class FlextLdifUtilitiesAttribute:
 
     @staticmethod
     def validate_attribute_name(attribute_name: str) -> bool:
-        """Validate base attribute name against RFC 4512 § 2.5."""
+        """Validate base attribute name against RFC 4512 § 2.5.
+
+        Returns:
+            The resulting ``bool``.
+        """
         if not attribute_name:
             return False
         if len(attribute_name) > c.Ldif.MAX_ATTRIBUTE_NAME_LENGTH:

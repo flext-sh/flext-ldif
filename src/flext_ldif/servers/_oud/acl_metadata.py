@@ -12,8 +12,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 from flext_ldif import c, m, t, u
-
-from .server_constants import FlextLdifServersOudConstants
+from flext_ldif.servers._oud.server_constants import FlextLdifServersOudConstants
 
 
 class FlextLdifServersOudAclMetadataMixin:
@@ -23,7 +22,11 @@ class FlextLdifServersOudAclMetadataMixin:
     def extract_acl_metadata(
         entry_data: m.Ldif.Entry,
     ) -> tuple[str | None, m.Ldif.DnRegistry | None]:
-        """Extract base_dn and dn_registry from entry metadata for ACL processing."""
+        """Extract base_dn and dn_registry from entry metadata for ACL processing.
+
+        Returns:
+            The resulting ``tuple[str | None, m.Ldif.DnRegistry | None]``.
+        """
         base_dn: str | None = None
         dn_registry: m.Ldif.DnRegistry | None = None
         metadata = entry_data.metadata
@@ -46,7 +49,7 @@ class FlextLdifServersOudAclMetadataMixin:
             if base_dn is None and isinstance(base_dn_value, str):
                 base_dn = base_dn_value
             dn_registry_value = getattr(
-                entry_data.metadata.write_options, "dn_registry", None
+                entry_data.metadata.write_options, "dn_registry", None,
             )
             if dn_registry is None and isinstance(dn_registry_value, m.Ldif.DnRegistry):
                 dn_registry = dn_registry_value
@@ -65,7 +68,11 @@ class FlextLdifServersOudAclMetadataMixin:
 
     @staticmethod
     def get_original_acl_attr(entry: m.Ldif.Entry) -> str:
-        """Get original ACL attribute name (orclaci) from transformations or metadata."""
+        """Get original ACL attribute name (orclaci) from transformations or metadata.
+
+        Returns:
+            The resulting ``str``.
+        """
         if entry.metadata and entry.metadata.attribute_transformations:
             for (
                 attr_name,
@@ -80,7 +87,7 @@ class FlextLdifServersOudAclMetadataMixin:
                     return original_attr_name
         if entry.metadata and entry.metadata.extensions:
             acl_original_format = u.to_str(
-                entry.metadata.extensions.get("original_format")
+                entry.metadata.extensions.get("original_format"),
             )
             if "orclaci:" in acl_original_format:
                 return "orclaci"
@@ -88,17 +95,21 @@ class FlextLdifServersOudAclMetadataMixin:
 
     @staticmethod
     def merge_acl_metadata_to_entry(
-        entry: m.Ldif.Entry, acl_metadata_extensions: t.Ldif.MutableMetadataInputMapping
+        entry: m.Ldif.Entry, acl_metadata_extensions: t.Ldif.MutableMetadataInputMapping,
     ) -> m.Ldif.Entry:
-        """Merge ACL metadata extensions into entry metadata."""
+        """Merge ACL metadata extensions into entry metadata.
+
+        Returns:
+            The resulting ``m.Ldif.Entry``.
+        """
         if not acl_metadata_extensions:
             return entry
         if entry.metadata is None:
             new_metadata_entry: m.Ldif.Entry = entry.model_copy(
                 update={
                     "metadata": u.Ldif.server_metadata_for(
-                        "oud", extensions=acl_metadata_extensions
-                    )
+                        "oud", extensions=acl_metadata_extensions,
+                    ),
                 },
                 deep=True,
             )
@@ -111,8 +122,8 @@ class FlextLdifServersOudAclMetadataMixin:
         updated_entry: m.Ldif.Entry = entry.model_copy(
             update={
                 "metadata": entry.metadata.model_copy(
-                    update={"extensions": current}, deep=True
-                )
+                    update={"extensions": current}, deep=True,
+                ),
             },
             deep=True,
         )

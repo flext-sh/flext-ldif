@@ -1,4 +1,8 @@
-"""LDIF constants and enumerations."""
+"""LDIF constants and enumerations.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -6,10 +10,10 @@ from enum import StrEnum, unique
 
 from flext_cli import FlextCliConstants
 
-from ._constants.acl_convert import FlextLdifConstantsAclConvert
-from ._constants.acl_convert_oud import FlextLdifConstantsAclConvertOud
-from ._constants.base import FlextLdifConstantsBase
-from ._constants.enums import FlextLdifConstantsEnums
+from flext_ldif._constants.acl_convert import FlextLdifConstantsAclConvert
+from flext_ldif._constants.acl_convert_oud import FlextLdifConstantsAclConvertOud
+from flext_ldif._constants.base import FlextLdifConstantsBase
+from flext_ldif._constants.enums import FlextLdifConstantsEnums
 
 
 class FlextLdifConstants(FlextCliConstants):

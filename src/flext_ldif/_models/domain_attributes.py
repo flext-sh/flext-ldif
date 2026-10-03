@@ -37,7 +37,7 @@ class FlextLdifModelsDomainAttributes:
         attribute_metadata: Annotated[
             MutableMapping[str, t.MutableAttributeMapping],
             u.Field(
-                description="Metadata for each attribute, like category or hidden status."
+                description="Metadata for each attribute, like category or hidden status.",
             ),
         ] = u.Field(default_factory=dict)
         metadata: Annotated[
@@ -75,7 +75,11 @@ class FlextLdifModelsDomainAttributes:
             return len(self.attributes)
 
         def __contains__(self, key: str) -> bool:
-            """Check if attribute exists."""
+            """Check if attribute exists.
+
+            Returns:
+                The resulting ``bool``.
+            """
             return key in self.attributes
 
         def add_attribute(self, key: str, values: t.MutableSequenceOf[str]) -> Self:
@@ -93,7 +97,7 @@ class FlextLdifModelsDomainAttributes:
             return self
 
         def get(
-            self, key: str, default: t.MutableSequenceOf[str] | None = None
+            self, key: str, default: t.MutableSequenceOf[str] | None = None,
         ) -> t.MutableSequenceOf[str]:
             """Get attribute values with optional default.
 
@@ -143,7 +147,11 @@ class FlextLdifModelsDomainAttributes:
             return list(self.attributes.keys())
 
         def keys(self) -> KeysView[str]:
-            """Get attribute names."""
+            """Get attribute names.
+
+            Returns:
+                The resulting ``KeysView[str]``.
+            """
             attribute_keys: KeysView[str] = self.attributes.keys()
             return attribute_keys
 
@@ -161,7 +169,11 @@ class FlextLdifModelsDomainAttributes:
             return self
 
         def values(self) -> ValuesView[t.MutableSequenceOf[str]]:
-            """Get attribute values lists."""
+            """Get attribute values lists.
+
+            Returns:
+                The resulting ``ValuesView[t.MutableSequenceOf[str]]``.
+            """
             attribute_values: ValuesView[t.MutableSequenceOf[str]] = (
                 self.attributes.values()
             )
@@ -195,7 +207,7 @@ class FlextLdifModelsDomainAttributes:
         """
 
         original_name: Annotated[
-            str, u.Field(..., description="Original attribute name from source server")
+            str, u.Field(..., description="Original attribute name from source server"),
         ]
         target_name: Annotated[
             str | None,
@@ -214,7 +226,7 @@ class FlextLdifModelsDomainAttributes:
             u.Field(..., description="Type of transformation applied to the attribute"),
         ]
         reason: Annotated[
-            str, u.Field(description="Human-readable reason for transformation")
+            str, u.Field(description="Human-readable reason for transformation"),
         ] = ""
 
 

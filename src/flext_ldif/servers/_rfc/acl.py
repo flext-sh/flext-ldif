@@ -1,14 +1,17 @@
-"""RFC 4512 Compliant Server Servers - Base LDAP Schema/ACL/Entry Implementation."""
+"""RFC 4512 Compliant Server Servers - Base LDAP Schema/ACL/Entry Implementation.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from typing import Self, cast, overload, override
 
 from flext_ldif import m, p, r, t, u
+from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
+from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
 from flext_ldif.servers.base import FlextLdifServersBase
-
-from .._base.acl import FlextLdifServersBaseSchemaAcl
-from .._base.mixins import FlextLdifServerMethodsMixin
 
 
 class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
@@ -60,7 +63,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
             acl_service if acl_service is not None else None
         )
         FlextLdifServersBaseSchemaAcl.__init__(
-            self, acl_service=acl_service_typed, _parent_server=None
+            self, acl_service=acl_service_typed, _parent_server=None,
         )
         if parent_server is not None:
             object.__setattr__(self, "_parent_server", parent_server)
@@ -82,7 +85,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
 
     @overload
     def __call__(
-        self, data: str | m.Ldif.Acl | None = None, *, operation: str | None = None
+        self, data: str | m.Ldif.Acl | None = None, *, operation: str | None = None,
     ) -> m.Ldif.Acl | str: ...
 
     def __call__(
@@ -94,18 +97,22 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         settings: p.Ldif.Settings | None = None,
         **fields: t.JsonValue,
     ) -> Self | m.Ldif.Acl | str:
-        """Callable interface - automatic polymorphic processor."""
+        """Callable interface - automatic polymorphic processor.
+
+        Returns:
+            The resulting ``Self | m.Ldif.Acl | str``.
+        """
         processor_fields: t.MutableMappingKV[str, t.JsonValue | m.Ldif.Acl | None] = (
             dict(fields)
         )
         processor_fields["data"] = data
         processor_fields["operation"] = operation
         builder_fields = FlextLdifServerMethodsMixin.builder_fields_or_none(
-            processor_fields, frozenset({"data", "operation"}), server, settings
+            processor_fields, frozenset({"data", "operation"}), server, settings,
         )
         if builder_fields is not None:
             configured = super().__call__(
-                server=server, settings=settings, **builder_fields
+                server=server, settings=settings, **builder_fields,
             )
             return cast("Self", configured)
         data_raw = processor_fields.get("data")
@@ -119,7 +126,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         # does); narrow the dict-value union before _narrow_operation, which
         # accepts t.JsonValue | None and does not accept m.Ldif.Acl.
         narrowed_operation = self._narrow_operation(
-            None if isinstance(operation_raw, m.Ldif.Acl) else operation_raw
+            None if isinstance(operation_raw, m.Ldif.Acl) else operation_raw,
         )
         result = self.execute(data=narrowed_data, operation=narrowed_operation)
         if isinstance(result.value, str):
@@ -129,42 +136,70 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
 
     @override
     def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
-        """Check if this server can handle the ACL definition."""
+        """Check if this server can handle the ACL definition.
+
+        Returns:
+            The resulting ``bool``.
+        """
         _ = acl_line
         return True
 
     @override
     def can_handle_attribute(self, attribute: m.Ldif.SchemaAttribute) -> bool:
-        """Check if server handles schema attributes."""
+        """Check if server handles schema attributes.
+
+        Returns:
+            The resulting ``bool``.
+        """
         _ = attribute
         return False
 
     @override
     def can_handle_objectclass(self, objectclass: m.Ldif.SchemaObjectClass) -> bool:
-        """Check if server handles objectclasses."""
+        """Check if server handles objectclasses.
+
+        Returns:
+            The resulting ``bool``.
+        """
         _ = objectclass
         return False
 
     def _denormalize_permission(
-        self, permission: str, _feature_id: str | None, _metadata: t.MutableJsonMapping
+        self, permission: str, _feature_id: str | None, _metadata: t.MutableJsonMapping,
     ) -> str:
-        """Convert RFC permission back to server-specific format."""
+        """Convert RFC permission back to server-specific format.
+
+        Returns:
+            The resulting ``str``.
+        """
         return permission
 
     @override
     def _get_feature_fallback(self, _feature_id: str) -> str | None:
-        """Get RFC fallback value for unsupported vendor feature."""
+        """Get RFC fallback value for unsupported vendor feature.
+
+        Returns:
+            The resulting ``str | None``.
+        """
         return super()._get_feature_fallback(_feature_id)
 
     def _normalize_permission(
-        self, permission: str, _metadata: t.MutableJsonMapping
+        self, permission: str, _metadata: t.MutableJsonMapping,
     ) -> tuple[str, str | None]:
-        """Normalize a server-specific permission to RFC standard."""
+        """Normalize a server-specific permission to RFC standard.
+
+        Returns:
+            The resulting ``tuple[str, str | None]``.
+        """
         return (permission, None)
 
     @override
     def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
-        """Parse RFC-compliant ACL line (implements abstract method)."""
+        """Parse RFC-compliant ACL line (implements abstract method).
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.Acl]``.
+        """
         if not acl_line or not acl_line.strip():
             return r[m.Ldif.Acl].fail("ACL line must be a non-empty string.")
         server_type_str = self._get_server_type()
@@ -175,13 +210,13 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
             raw_acl=acl_line,
             server_type=server_type_value,
             metadata=m.Ldif.ServerMetadata(
-                server_type=server_type_value, extensions={"original_format": acl_line}
+                server_type=server_type_value, extensions={"original_format": acl_line},
             ),
         )
         return r[m.Ldif.Acl].ok(acl_model)
 
     def _preserve_unsupported_feature(
-        self, feature_id: str, original_value: str, metadata: t.MutableJsonMapping
+        self, feature_id: str, original_value: str, metadata: t.MutableJsonMapping,
     ) -> None:
         """Preserve unsupported feature in metadata for round-trip."""
         base_key = "unsupported_feature"
@@ -189,12 +224,20 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
 
     @override
     def _supports_feature(self, _feature_id: str) -> bool:
-        """Check if this server supports a specific feature."""
+        """Check if this server supports a specific feature.
+
+        Returns:
+            The resulting ``bool``.
+        """
         return super()._supports_feature(_feature_id)
 
     @override
     def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
-        """Write ACL to RFC-compliant string format (internal)."""
+        """Write ACL to RFC-compliant string format (internal).
+
+        Returns:
+            The resulting ``p.Result[str]``.
+        """
         if acl_data.raw_acl and acl_data.raw_acl.strip():
             return r[str].ok(acl_data.raw_acl)
         if acl_data.name and u.string_non_empty(acl_data.name):

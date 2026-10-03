@@ -1,4 +1,8 @@
-"""Parser service for LDIF content."""
+"""Parser service for LDIF content.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -11,18 +15,26 @@ class FlextLdifParser(s):
     """LDIF parser orchestrator over the server server registry."""
 
     def parse_ldif(
-        self, value: str | Path, *, server_type: str | None = None
+        self, value: str | Path, *, server_type: str | None = None,
     ) -> p.Result[m.Ldif.ParseResponse]:
-        """Parse LDIF content from string or file."""
+        """Parse LDIF content from string or file.
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.ParseResponse]``.
+        """
         effective_type = server_type or self._get_effective_server_type_value()
         if isinstance(value, Path):
             return self.parse_ldif_file(value, server_type=effective_type)
         return self.parse_string(value, server_type=effective_type)
 
     def parse_ldif_file(
-        self, path: Path, server_type: str | None = None, encoding: str = "utf-8"
+        self, path: Path, server_type: str | None = None, encoding: str = "utf-8",
     ) -> p.Result[m.Ldif.ParseResponse]:
-        """Parse LDIF content from a file path with optional encoding override."""
+        """Parse LDIF content from a file path with optional encoding override.
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.ParseResponse]``.
+        """
         resolved_path = path
         if not resolved_path.exists() and not resolved_path.is_absolute():
             project_root = Path(__file__).resolve().parents[2]
@@ -31,7 +43,7 @@ class FlextLdifParser(s):
                 resolved_path = candidate_path
         if not resolved_path.exists():
             return r[m.Ldif.ParseResponse].fail_op(
-                "resolve ldif path", f"File not found: {path}"
+                "resolve ldif path", f"File not found: {path}",
             )
         try:
             content = resolved_path.read_text(encoding=encoding)
@@ -40,16 +52,20 @@ class FlextLdifParser(s):
         return self.parse_string(content, server_type=server_type)
 
     def parse_string(
-        self, content: str, server_type: str | None = None
+        self, content: str, server_type: str | None = None,
     ) -> p.Result[m.Ldif.ParseResponse]:
-        """Parse LDIF content from a string through the selected base server."""
+        """Parse LDIF content from a string through the selected base server.
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.ParseResponse]``.
+        """
         effective_server_type = server_type or self._get_effective_server_type_value()
         return r[m.Ldif.ParseResponse].from_result(
             self._server
             .server(effective_server_type)
             .map_error(lambda error: error or "Failed to resolve LDIF server server")
             .flat_map(lambda server: server.parse_ldif(content))
-            .map_error(lambda error: error or "LDIF parsing failed")
+            .map_error(lambda error: error or "LDIF parsing failed"),
         )
 
 

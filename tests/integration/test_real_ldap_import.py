@@ -37,7 +37,11 @@ if TYPE_CHECKING:
 
 @pytest.fixture
 def flext_api() -> p.Ldif.LdifClient:
-    """Public LDIF client under test."""
+    """Public LDIF client under test.
+
+    Returns:
+        The resulting ``p.Ldif.LdifClient``.
+    """
     return ldif()
 
 
@@ -48,34 +52,55 @@ class TestsFlextLdifRealLdapImport:
 
     @staticmethod
     def _dn(entry: p.Ldif.Entry) -> str:
-        """Distinguished name string via the public DN protocol accessor."""
+        """Distinguished name string via the public DN protocol accessor.
+
+        Returns:
+            The resulting ``str``.
+        """
         assert entry.dn is not None
         return entry.dn.value
 
     @staticmethod
     def _object_classes(entry: p.Ldif.Entry) -> list[str]:
-        """Object class values via the public attribute accessor."""
+        """Object class values via the public attribute accessor.
+
+        Returns:
+            The resulting ``list[str]``.
+        """
         return list(u.Ldif.get_attribute_values(entry, "objectclass"))
 
     @staticmethod
     def _all_attrs(entry: p.Ldif.Entry) -> dict[str, list[str]]:
-        """Full attribute mapping via the public ``Attributes`` protocol."""
+        """Full attribute mapping via the public ``Attributes`` protocol.
+
+        Returns:
+            The resulting ``dict[str, list[str]]``.
+        """
         assert entry.attributes is not None
         return {name: list(values) for name, values in entry.attributes.items()}
 
     @classmethod
     def _non_objectclass_attrs(cls, entry: p.Ldif.Entry) -> dict[str, list[str]]:
-        """Public attribute mapping without objectClass/dn, for an LDAP add."""
+        """Public attribute mapping without objectClass/dn, for an LDAP add.
+
+        Returns:
+            The resulting ``dict[str, list[str]]``.
+        """
         return {
             name: values
             for name, values in cls._all_attrs(entry).items()
             if name.lower() not in {"objectclass", "dn"}
         }
 
+    @staticmethod
     def _read_back(
-        self, ldap_connection: p.Ldap.Ldap3Connection, dn: str
+        ldap_connection: p.Ldap.Ldap3Connection, dn: str,
     ) -> p.Ldap.Ldap3Entry:
-        """Search the freshly imported entry and return the single result."""
+        """Search the freshly imported entry and return the single result.
+
+        Returns:
+            The resulting ``p.Ldap.Ldap3Entry``.
+        """
         found = ldap_connection.search(
             dn,
             "(objectClass=*)",
@@ -184,7 +209,7 @@ class TestsFlextLdifRealLdapImport:
 
         dn = self._dn(entry)
         attributes: dict[str, list[str] | bytes] = dict(
-            self._non_objectclass_attrs(entry)
+            self._non_objectclass_attrs(entry),
         )
         # ldap3 requires raw bytes for a binary attribute value.
         attributes["jpegPhoto"] = binary_data

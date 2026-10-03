@@ -14,15 +14,23 @@ from flext_ldif import ldif, m, p, r, t
 
 
 def _create_entry_or_none(
-    dn: str, attributes: t.MutableAttributeMapping
+    dn: str, attributes: t.MutableAttributeMapping,
 ) -> m.Ldif.Entry | None:
-    """Create an entry, returning None on failure."""
+    """Create an entry, returning None on failure.
+
+    Returns:
+        The resulting ``m.Ldif.Entry | None``.
+    """
     result = m.Ldif.Entry.create(dn=dn, attributes=attributes)
     return result.unwrap() if result.success else None
 
 
 def intelligent_schema_building() -> p.Result[MutableSequence[m.Ldif.Entry]]:
-    """Intelligent schema building with automatic type detection and validation."""
+    """Intelligent schema building with automatic type detection and validation.
+
+    Returns:
+        The resulting ``p.Result[MutableSequence[m.Ldif.Entry]]``.
+    """
     schema_entries: list[m.Ldif.Entry] = []
     schema_root = _create_entry_or_none(
         dn="cn=schema",
@@ -89,7 +97,11 @@ def intelligent_schema_building() -> p.Result[MutableSequence[m.Ldif.Entry]]:
 
 
 def parallel_schema_validation() -> p.Result[t.JsonMapping]:
-    """Validate schema with comprehensive error analysis."""
+    """Validate schema with comprehensive error analysis.
+
+    Returns:
+        The resulting ``p.Result[t.JsonMapping]``.
+    """
     api = ldif()
     test_entries: list[m.Ldif.Entry] = []
     for i in range(30):
@@ -151,7 +163,7 @@ def parallel_schema_validation() -> p.Result[t.JsonMapping]:
     validation_result = api.validate_entries(test_entries)
     if validation_result.failure:
         return r[t.JsonMapping].fail(
-            f"Schema validation failed: {validation_result.error}"
+            f"Schema validation failed: {validation_result.error}",
         )
     validation_report = validation_result.unwrap()
     error_analysis: dict[str, int] = {}
@@ -177,7 +189,11 @@ def parallel_schema_validation() -> p.Result[t.JsonMapping]:
 
 
 def schema_migration_pipeline() -> p.Result[t.JsonMapping]:
-    """Schema-aware migration pipeline with validation."""
+    """Schema-aware migration pipeline with validation.
+
+    Returns:
+        The resulting ``p.Result[t.JsonMapping]``.
+    """
     api = ldif()
     migration_dir = Path("examples/schema_migration")
     source_dir = migration_dir / "source"
@@ -241,12 +257,16 @@ def schema_migration_pipeline() -> p.Result[t.JsonMapping]:
         write_result = api.write_ldif_file(migrated_entries, output_file)
         migration_results["output_written"] = write_result.success
     return r[t.JsonMapping].ok(
-        t.json_mapping_adapter().validate_python(migration_results)
+        t.json_mapping_adapter().validate_python(migration_results),
     )
 
 
 def batch_schema_operations() -> p.Result[t.JsonMapping]:
-    """Batch schema operations with validation."""
+    """Batch schema operations with validation.
+
+    Returns:
+        The resulting ``p.Result[t.JsonMapping]``.
+    """
     api = ldif()
     schema_batches: list[tuple[str, list[m.Ldif.Entry]]] = []
     core_attrs: list[m.Ldif.Entry] = []
@@ -332,7 +352,11 @@ def batch_schema_operations() -> p.Result[t.JsonMapping]:
 
 
 def railway_schema_pipeline() -> p.Result[t.JsonMapping]:
-    """Railway-oriented schema pipeline with integrated validation."""
+    """Railway-oriented schema pipeline with integrated validation.
+
+    Returns:
+        The resulting ``p.Result[t.JsonMapping]``.
+    """
     api = ldif()
     test_entries = [
         entry
@@ -378,16 +402,16 @@ def railway_schema_pipeline() -> p.Result[t.JsonMapping]:
                 .flat_map(
                     lambda schema_report: (
                         r[tuple[list[m.Ldif.Entry], int]].fail(
-                            f"Schema entries invalid: {schema_report.errors}"
+                            f"Schema entries invalid: {schema_report.errors}",
                         )
                         if not schema_report.valid
                         else r[tuple[list[m.Ldif.Entry], int]].ok((
                             list(schema_entries),
                             schema_report.valid_entries,
                         ))
-                    )
+                    ),
                 )
-            )
+            ),
         )
         .flat_map(
             lambda schema_data: (
@@ -397,7 +421,7 @@ def railway_schema_pipeline() -> p.Result[t.JsonMapping]:
                 .flat_map(
                     lambda entry_report: (
                         r[tuple[list[m.Ldif.Entry], int, int]].fail(
-                            f"Test entries invalid: {entry_report.errors}"
+                            f"Test entries invalid: {entry_report.errors}",
                         )
                         if not entry_report.valid
                         else r[tuple[list[m.Ldif.Entry], int, int]].ok((
@@ -405,9 +429,9 @@ def railway_schema_pipeline() -> p.Result[t.JsonMapping]:
                             schema_data[1],
                             entry_report.valid_entries,
                         ))
-                    )
+                    ),
                 )
-            )
+            ),
         )
     )
     if validated_pipeline.failure:
@@ -432,5 +456,5 @@ def railway_schema_pipeline() -> p.Result[t.JsonMapping]:
             "schema_file_written": schema_write.success,
             "entries_file_written": entries_write.success,
             "pipeline_completed": True,
-        })
+        }),
     )

@@ -34,7 +34,11 @@ if TYPE_CHECKING:
 
 @pytest.fixture
 def flext_api() -> p.Ldif.LdifClient:
-    """Ldif API instance."""
+    """Ldif API instance.
+
+    Returns:
+        The resulting ``p.Ldif.LdifClient``.
+    """
     return ldif()
 
 
@@ -45,7 +49,7 @@ class TestsFlextLdifRealLdapCrud:
 
     @staticmethod
     def _add_entry(
-        ldap_connection: p.Ldap.Ldap3Connection, entry: m.Ldif.Entry
+        ldap_connection: p.Ldap.Ldap3Connection, entry: m.Ldif.Entry,
     ) -> None:
         """Store an entry in LDAP using only its public model surface."""
         attrs = dict(entry.attributes_dict)
@@ -60,7 +64,8 @@ class TestsFlextLdifRealLdapCrud:
         }
         ldap_connection.add(entry.dn_str, object_classes, payload)
 
-    def test_create_returns_success_with_public_model_state(self) -> None:
+    @staticmethod
+    def test_create_returns_success_with_public_model_state() -> None:
         """Entry.create yields a success result exposing dn and attributes."""
         result = m.Ldif.Entry.create(
             dn="cn=Alice,ou=people,dc=example,dc=com",
@@ -76,7 +81,7 @@ class TestsFlextLdifRealLdapCrud:
         tm.that(entry.dn_str, eq="cn=Alice,ou=people,dc=example,dc=com")
         tm.that(entry.attributes_dict["cn"], eq=["Alice"])
         tm.that(
-            entry.attributes_dict["objectClass"], eq=["inetOrgPerson", "person", "top"]
+            entry.attributes_dict["objectClass"], eq=["inetOrgPerson", "person", "top"],
         )
         assert not entry.has_validation_errors
 
@@ -110,7 +115,7 @@ class TestsFlextLdifRealLdapCrud:
 
         # Update: replaced attribute is reflected on re-read.
         ldap_connection.modify(
-            entry.dn_str, {"mail": [("MODIFY_REPLACE", ["updated_crud@example.com"])]}
+            entry.dn_str, {"mail": [("MODIFY_REPLACE", ["updated_crud@example.com"])]},
         )
         ldap_connection.search(entry.dn_str, "(objectClass=*)", attributes=["*"])
         assert (
@@ -156,8 +161,8 @@ class TestsFlextLdifRealLdapCrud:
         validation_result = flext_api.validate_entries(entries)
         tm.ok(validation_result)
 
+    @staticmethod
     def test_ldif_export_import_preserves_dns_and_attributes(
-        self,
         ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
         flext_api: p.Ldif.LdifClient,

@@ -1,8 +1,5 @@
 """Example 7: Advanced Processing with Processors and Utilities.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
 Demonstrates ldif advanced functionality:
 - Batch processing with direct API methods (no manual setup!)
 - Utility functions (DN parsing, validation)
@@ -10,6 +7,9 @@ Demonstrates ldif advanced functionality:
 
 All functionality accessed through ldif facade using direct methods.
 No manual processor creation or conversion loops required.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations

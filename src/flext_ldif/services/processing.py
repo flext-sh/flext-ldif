@@ -1,4 +1,8 @@
-"""Processing Service - Batch and Parallel Entry Processing."""
+"""Processing Service - Batch and Parallel Entry Processing.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -32,7 +36,11 @@ class FlextLdifProcessing(s):
         options: m.Ldif.ProcessEntriesOptions | None = None,
         **kwargs: t.JsonValue,
     ) -> p.Result[t.MutableSequenceOf[m.Ldif.ProcessingResult]]:
-        """Unified processing method supporting batch and parallel modes."""
+        """Unified processing method supporting batch and parallel modes.
+
+        Returns:
+            The resulting ``p.Result[t.MutableSequenceOf[m.Ldif.ProcessingResult]]``.
+        """
         payload: t.MutableJsonMapping = (
             options.model_dump(mode="python") if options is not None else {}
         )

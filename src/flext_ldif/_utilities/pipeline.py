@@ -1,4 +1,8 @@
-"""Validation pipeline utilities for LDIF entries."""
+"""Validation pipeline utilities for LDIF entries.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -56,7 +60,7 @@ class FlextLdifUtilitiesPipeline:
         __slots__ = ("_collect_all", "_max_errors", "_strict")
 
         def __init__(
-            self, *, strict: bool = True, collect_all: bool = True, max_errors: int = 0
+            self, *, strict: bool = True, collect_all: bool = True, max_errors: int = 0,
         ) -> None:
             """Initialize validation pipeline."""
             super().__init__()
@@ -65,9 +69,14 @@ class FlextLdifUtilitiesPipeline:
             self._max_errors = max_errors
 
         def validate(
-            self, entries: t.SequenceOf[m.Ldif.Entry]
+            self, entries: t.SequenceOf[m.Ldif.Entry],
         ) -> p.Result[t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]]:
-            """Validate a sequence of entries."""
+            """Validate a sequence of entries.
+
+            Returns:
+                The resulting
+                    ``p.Result[t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]]``.
+            """
             results: t.MutableSequenceOf[
                 FlextLdifUtilitiesPipeline.ValidationResult
             ] = []
@@ -90,9 +99,13 @@ class FlextLdifUtilitiesPipeline:
             ].ok(results)
 
         def validate_one(
-            self, entry: m.Ldif.Entry
+            self, entry: m.Ldif.Entry,
         ) -> p.Result[FlextLdifUtilitiesPipeline.ValidationResult]:
-            """Validate a single entry."""
+            """Validate a single entry.
+
+            Returns:
+                The resulting ``p.Result[FlextLdifUtilitiesPipeline.ValidationResult]``.
+            """
             errors: t.MutableSequenceOf[str] = []
             warnings: t.MutableSequenceOf[str] = []
             if entry.dn is None:
@@ -126,8 +139,8 @@ class FlextLdifUtilitiesPipeline:
                         warnings.append("Entry has no objectClass attribute")
             return r[FlextLdifUtilitiesPipeline.ValidationResult].ok(
                 FlextLdifUtilitiesPipeline.ValidationResult(
-                    valid=not errors, errors=errors, warnings=warnings
-                )
+                    valid=not errors, errors=errors, warnings=warnings,
+                ),
             )
 
 

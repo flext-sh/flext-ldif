@@ -1,4 +1,8 @@
-"""Behavioral tests for public LDIF processing service APIs."""
+"""Behavioral tests for public LDIF processing service APIs.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -20,7 +24,7 @@ class TestsFlextLdifProcessingService:
     @staticmethod
     def _entry(dn: str) -> m.Ldif.Entry:
         return u.Tests.create_real_entry(
-            dn=dn, attributes=c.Tests.PROCESSING_ATTRS, server_type=c.Tests.RFC
+            dn=dn, attributes=c.Tests.PROCESSING_ATTRS, server_type=c.Tests.RFC,
         )
 
     @pytest.mark.parametrize(
@@ -37,6 +41,7 @@ class TestsFlextLdifProcessingService:
         batch_size: int,
         max_workers: int,
     ) -> None:
+        """Test process entries returns results for configured modes."""
         entries = [self._entry(dn) for dn in c.Tests.PROCESSING_VALID_DNS]
         options = m.Ldif.ProcessEntriesOptions(
             processor_name=processor_name,
@@ -54,8 +59,9 @@ class TestsFlextLdifProcessingService:
         tm.that(processed_dns == set(c.Tests.PROCESSING_VALID_DNS), eq=True)
 
     def test_process_entries_supports_kwargs_option_payload(
-        self, api: p.Ldif.LdifClient
+        self, api: p.Ldif.LdifClient,
     ) -> None:
+        """Test process entries supports kwargs option payload."""
         entries = [self._entry(c.Tests.PROCESSING_VALID_DNS[0])]
 
         result = api.process_entries(
@@ -71,11 +77,13 @@ class TestsFlextLdifProcessingService:
         tm.that(len(processed), eq=1)
         tm.that(processed[0].dn, eq=c.Tests.PROCESSING_VALID_DNS[0])
 
+    @staticmethod
     def test_process_entries_batch_returns_failure_for_none_attributes(
-        self, api: p.Ldif.LdifClient
+        api: p.Ldif.LdifClient,
     ) -> None:
+        """Test process entries batch returns failure for none attributes."""
         invalid_entry = m.Ldif.Entry(
-            dn=m.Ldif.DN(value=c.Tests.PROCESSING_VALID_DNS[0]), attributes=None
+            dn=m.Ldif.DN(value=c.Tests.PROCESSING_VALID_DNS[0]), attributes=None,
         )
 
         tm.fail(
@@ -85,14 +93,16 @@ class TestsFlextLdifProcessingService:
                 parallel=False,
                 batch_size=1,
                 max_workers=1,
-            )
+            ),
         )
 
+    @staticmethod
     def test_process_entries_parallel_raises_for_none_dn(
-        self, api: p.Ldif.LdifClient
+        api: p.Ldif.LdifClient,
     ) -> None:
+        """Test process entries parallel raises for none dn."""
         invalid_entry = m.Ldif.Entry(
-            dn=None, attributes=m.Ldif.Attributes(attributes={"cn": ["x"]})
+            dn=None, attributes=m.Ldif.Attributes(attributes={"cn": ["x"]}),
         )
 
         with pytest.raises(ValueError, match="Entry DN cannot be None"):
@@ -104,9 +114,11 @@ class TestsFlextLdifProcessingService:
                 max_workers=1,
             )
 
-    def test_pipeline_base_dn_filters_out_of_scope_acl_bind_dn(self) -> None:
+    @staticmethod
+    def test_pipeline_base_dn_filters_out_of_scope_acl_bind_dn() -> None:
         # TransformConfig.servers(base_dn=...) flows through the processing
         # pipeline → FlextLdifTransformer → ACL scope filter.
+        """Test pipeline base dn filters out of scope acl bind dn."""
         entry = u.Tests.create_real_entry(
             dn="cn=users,dc=ctbc",
             attributes={
@@ -115,16 +127,16 @@ class TestsFlextLdifProcessingService:
                     (
                         'access to entry by group="cn=x,dc=other" (browse) '
                         'by group="cn=a,dc=ctbc" (browse)'
-                    )
+                    ),
                 ],
             },
         )
         config = m.Ldif.TransformConfig.servers(
-            source_server="oid", target_server="oud", base_dn="dc=ctbc"
+            source_server="oid", target_server="oud", base_dn="dc=ctbc",
         )
 
         result = FlextLdifProcessingPipeline(
-            transform_config=config, entries_input=[entry]
+            transform_config=config, entries_input=[entry],
         ).execute()
         converted: t.MutableSequenceOf[m.Ldif.Entry] = u.Tests.assert_success(result)
         assert converted[0].attributes is not None
@@ -136,6 +148,6 @@ class TestsFlextLdifProcessingService:
                 (
                     '(targetattr="*")(version 3.0; acl "users Entry by x"; '
                     'allow (read, search) groupdn="ldap:///cn=a,dc=ctbc";)'
-                )
+                ),
             ],
         )

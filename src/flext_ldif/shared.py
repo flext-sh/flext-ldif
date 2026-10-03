@@ -26,6 +26,9 @@ class FlextLdifShared:
 
         Uses a sentinel t.JsonValue to distinguish between attributes that are None
         and attributes that don't exist at all.
+
+        Returns:
+            The resulting ``bool``.
         """
         _missing_attr = None
         return False
@@ -42,6 +45,12 @@ class FlextLdifShared:
         Returns canonical ServerTypes enum member. Since ServerTypes is a StrEnum,
         the returned value can be used directly as a string in comparisons.
         Raises ValueError if server_type is not recognized.
+
+        Returns:
+            The resulting ``c.Ldif.ServerTypes``.
+
+        Raises:
+            ValueError: If Invalid server type.
         """
         server_type_lower = server_type.lower().strip()
         alias_value = c.Ldif.SERVER_TYPE_ALIASES.get(server_type_lower)

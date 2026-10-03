@@ -5,6 +5,9 @@ suffixes, permission maps, the canonical permission ordering, and the
 high-level-container scope rules. Split from ``_constants/acl_convert.py``
 (parse patterns) per the 200-LOC SUPREME LAW (AGENTS.md §3.1); composed into
 ``c.Ldif`` alongside it.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations

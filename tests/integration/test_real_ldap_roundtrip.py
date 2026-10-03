@@ -41,7 +41,11 @@ _LDIF_OPERATIONAL_ATTRS: frozenset[str] = frozenset({
 
 @pytest.fixture
 def flext_api() -> p.Ldif.LdifClient:
-    """Live ``ldif()`` API instance."""
+    """Live ``ldif()`` API instance.
+
+    Returns:
+        The resulting ``p.Ldif.LdifClient``.
+    """
     return ldif()
 
 
@@ -52,9 +56,13 @@ class TestsFlextLdifRealLdapRoundtrip:
 
     @staticmethod
     def _read_ldap_attrs(
-        ldap_connection: p.Ldap.Ldap3Connection, dn: str
+        ldap_connection: p.Ldap.Ldap3Connection, dn: str,
     ) -> t.MutableAttributeMapping:
-        """Read one LDAP entry back as a plain attribute mapping (boundary)."""
+        """Read one LDAP entry back as a plain attribute mapping (boundary).
+
+        Returns:
+            The resulting ``t.MutableAttributeMapping``.
+        """
         assert ldap_connection.search(dn, "(objectClass=*)", attributes=["*"])
         entry = ldap_connection.entries[0]
         attrs: t.MutableAttributeMapping = {}
@@ -90,7 +98,7 @@ class TestsFlextLdifRealLdapRoundtrip:
         read_back = self._read_ldap_attrs(ldap_connection, source_dn)
 
         entry_result = m.Ldif.Entry.create(
-            dn=source_dn, attributes=read_back, metadata=None
+            dn=source_dn, attributes=read_back, metadata=None,
         )
         tm.ok(entry_result)
         source_entry = entry_result.unwrap()

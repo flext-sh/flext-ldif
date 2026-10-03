@@ -1,4 +1,8 @@
-"""Detector Service - LDAP Server Type Auto-Detection from LDIF Content."""
+"""Detector Service - LDAP Server Type Auto-Detection from LDIF Content.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -20,7 +24,7 @@ class FlextLdifDetector(s):
 
     @staticmethod
     def _add_pattern_if_match(
-        *, condition: bool, description: str, patterns: t.MutableSequenceOf[str]
+        *, condition: bool, description: str, patterns: t.MutableSequenceOf[str],
     ) -> None:
         """Add pattern description if condition is met."""
         if condition:
@@ -28,14 +32,22 @@ class FlextLdifDetector(s):
 
     @staticmethod
     def _get_all_server_types() -> t.MutableSequenceOf[str]:
-        """Get all supported server types from constants."""
+        """Get all supported server types from constants.
+
+        Returns:
+            The resulting ``t.MutableSequenceOf[str]``.
+        """
         types: t.MutableSequenceOf[str] = u.Ldif.get_all_server_types()
         return types
 
     def _get_server_constants(
-        self, server_type: str
+        self, server_type: str,
     ) -> type[p.Ldif.ServerConstants] | None:
-        """Get server Constants class dynamically via FlextLdifServer registry."""
+        """Get server Constants class dynamically via FlextLdifServer registry.
+
+        Returns:
+            The resulting ``type[p.Ldif.ServerConstants] | None``.
+        """
         constants_result: p.Result[type[p.Ldif.ServerConstants]] = (
             self._server.resolve_server_constants(server_type)
         )
@@ -51,7 +63,7 @@ class FlextLdifDetector(s):
                     if isinstance(pattern_value, str)
                     else ""
                     if pattern_value is None
-                    else pattern_value.pattern
+                    else pattern_value.pattern,
                 )
                 for pattern_value in pattern_values
             )
@@ -69,7 +81,11 @@ class FlextLdifDetector(s):
         ldif_content: str | None = None,
         max_lines: int | None = None,
     ) -> p.Result[m.Ldif.ServerDetectionResult]:
-        """Detect LDAP server type from LDIF file or content."""
+        """Detect LDAP server type from LDIF file or content.
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.ServerDetectionResult]``.
+        """
         max_lines = max_lines or u.Ldif.get_server_detection_default_max_lines()
         if ldif_content is None:
             if ldif_path is None:
@@ -79,12 +95,12 @@ class FlextLdifDetector(s):
                 )
             if not ldif_path.exists():
                 return r[m.Ldif.ServerDetectionResult].fail_op(
-                    "read detection source", f"LDIF file not found: {ldif_path}"
+                    "read detection source", f"LDIF file not found: {ldif_path}",
                 )
             read = u.Cli.files_read_text(ldif_path)
             if read.failure:
                 return r[m.Ldif.ServerDetectionResult].fail_op(
-                    "read detection source", read.error
+                    "read detection source", read.error,
                 )
             resolved_content: str = read.value
         else:
@@ -105,12 +121,16 @@ class FlextLdifDetector(s):
         return r[m.Ldif.ServerDetectionResult].ok(detection_result)
 
     def resolve_effective_server_type(
-        self, ldif_path: Path | None = None, ldif_content: str | None = None
+        self, ldif_path: Path | None = None, ldif_content: str | None = None,
     ) -> p.Result[str]:
-        """Resolve the effective LDAP server type to use for processing."""
+        """Resolve the effective LDAP server type to use for processing.
+
+        Returns:
+            The resulting ``p.Result[str]``.
+        """
         if ldif_path is not None or ldif_content is not None:
             detection_result = self.detect_server_type(
-                ldif_path=ldif_path, ldif_content=ldif_content
+                ldif_path=ldif_path, ldif_content=ldif_content,
             )
             if detection_result.success:
                 return r[str].ok(detection_result.value.detected_server_type)
@@ -118,7 +138,11 @@ class FlextLdifDetector(s):
 
     @override
     def _get_effective_server_type_value(self) -> str:
-        """Resolve effective server type via detector (overrides ParserMixin default)."""
+        """Resolve effective server type via detector (overrides ParserMixin default).
+
+        Returns:
+            The resulting ``str``.
+        """
         result: p.Result[str] = self.resolve_effective_server_type()
         if result.success:
             effective_server_type: str = result.unwrap()
@@ -127,7 +151,11 @@ class FlextLdifDetector(s):
         return rfc_server_type
 
     def _calculate_scores(self, content: str) -> t.MutableIntMapping:
-        """Calculate detection scores for each server type."""
+        """Calculate detection scores for each server type.
+
+        Returns:
+            The resulting ``t.MutableIntMapping``.
+        """
         scores: t.MutableIntMapping = dict.fromkeys(self._get_all_server_types(), 0)
         scores[u.Ldif.get_server_type_value("GENERIC")] = 1
         for score_spec in c.Ldif.DETECTION_SCORE_SPECS:
@@ -137,8 +165,13 @@ class FlextLdifDetector(s):
                 self._update_server_scores(constants, score_spec, content, scores)
         return scores
 
-    def _determine_server_type(self, scores: t.MutableIntMapping) -> tuple[str, float]:
-        """Determine the most likely server type from scores."""
+    @staticmethod
+    def _determine_server_type(scores: t.MutableIntMapping) -> tuple[str, float]:
+        """Determine the most likely server type from scores.
+
+        Returns:
+            The resulting ``tuple[str, float]``.
+        """
         rfc_server_type = c.Ldif.ServerTypes.RFC.value
         if not scores:
             return (rfc_server_type, 0.0)
@@ -200,7 +233,11 @@ class FlextLdifDetector(s):
         )
 
     def _extract_patterns(self, content: str) -> t.MutableSequenceOf[str]:
-        """Extract detected patterns from content."""
+        """Extract detected patterns from content.
+
+        Returns:
+            The resulting ``t.MutableSequenceOf[str]``.
+        """
         patterns: t.MutableSequenceOf[str] = []
         content_lower = content.lower()
         for pattern_spec in c.Ldif.DETECTION_PATTERN_SPECS:
@@ -221,8 +258,8 @@ class FlextLdifDetector(s):
                 )
         return patterns
 
+    @staticmethod
     def _update_server_scores(
-        self,
         constants: type[p.Ldif.ServerConstants] | None,
         score_spec: tuple[c.Ldif.ServerTypes, str, bool],
         content: str,

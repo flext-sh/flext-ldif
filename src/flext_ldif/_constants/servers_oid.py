@@ -2,6 +2,9 @@
 
 ENFORCE-079 part module: declarations live in the
 _constants package; the server constants classes compose them via MRO.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -11,12 +14,12 @@ from enum import StrEnum
 from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar
 
-from .base import FlextLdifConstantsBase
-from .enums import FlextLdifConstantsEnums
-from .servers_rfc import FlextLdifConstantsServersRfc
+from flext_ldif._constants.base import FlextLdifConstantsBase
+from flext_ldif._constants.enums import FlextLdifConstantsEnums
+from flext_ldif._constants.servers_rfc import FlextLdifConstantsServersRfc
 
 if TYPE_CHECKING:
-    from ..typings import FlextLdifTypes as t
+    from flext_ldif.typings import FlextLdifTypes as t
 
 
 class FlextLdifConstantsServersOid:
@@ -49,15 +52,15 @@ class FlextLdifConstantsServersOid:
     })
 
     MATCHING_RULE_RFC_TO_OID: ClassVar[t.StrMapping] = MappingProxyType({
-        "caseIgnoreSubstringsMatch": "caseIgnoreSubStringsMatch"
+        "caseIgnoreSubstringsMatch": "caseIgnoreSubStringsMatch",
     })
 
     SYNTAX_OID_TO_RFC: ClassVar[t.StrMapping] = MappingProxyType({
-        "1.3.6.1.4.1.1466.115.121.1.1": "1.3.6.1.4.1.1466.115.121.1.15"
+        "1.3.6.1.4.1.1466.115.121.1.1": "1.3.6.1.4.1.1466.115.121.1.15",
     })
 
     ATTR_NAME_CASE_MAP: ClassVar[t.StrMapping] = MappingProxyType({
-        "middlename": "middleName"
+        "middlename": "middleName",
     })
 
     OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = (
@@ -124,7 +127,7 @@ class FlextLdifConstantsServersOid:
     })
 
     CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset({
-        FlextLdifConstantsEnums.ServerTypes.OID
+        FlextLdifConstantsEnums.ServerTypes.OID,
     })
 
     CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset({
@@ -266,15 +269,15 @@ class FlextLdifConstantsServersOid:
     )
 
     ACL_TARGET_DN_EXTRACT_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-        ACL_TARGET_DN_EXTRACT, re.IGNORECASE
+        ACL_TARGET_DN_EXTRACT, re.IGNORECASE,
     )
 
     ACL_TARGET_ATTR_OID_EXTRACT_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-        ACL_TARGET_ATTR_OID_EXTRACT, re.IGNORECASE
+        ACL_TARGET_ATTR_OID_EXTRACT, re.IGNORECASE,
     )
 
     ACL_PERMS_EXTRACT_OID_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-        ACL_PERMS_EXTRACT_OID, re.IGNORECASE
+        ACL_PERMS_EXTRACT_OID, re.IGNORECASE,
     )
 
     ONE_OID: ClassVar[str] = FlextLdifConstantsBase.OID_TRUE

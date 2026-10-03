@@ -4,6 +4,9 @@ These tests assert observable public behavior of the ``ldif()`` facade and the
 ``m.Ldif.Entry`` model contract: capturing a live LDAP entry, serializing it to
 LDIF text, and parsing that text back. Only the ldap3 connection is treated as
 an external boundary; every flext-ldif assertion goes through the public API.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -27,17 +30,21 @@ pytestmark = pytest.mark.docker
 class TestsFlextLdifSimpleLdap:
     """Behavior contract for the flext-ldif facade over live LDAP data."""
 
+    @staticmethod
     def _capture_live_entry(
-        self, ldap_connection: p.Ldap.Ldap3Connection, base_dn: str, username: str
+        ldap_connection: p.Ldap.Ldap3Connection, base_dn: str, username: str,
     ) -> m.Ldif.Entry:
         """Create a person entry in LDAP and return it as an ``m.Ldif.Entry``.
 
         The ldap3 connection is the external boundary; the returned value is the
         public flext-ldif model the tests assert against.
+
+        Returns:
+            The resulting ``m.Ldif.Entry``.
         """
         test_dn = f"cn={username},{base_dn}"
         ldap_connection.search(
-            test_dn, "(objectClass=*)", search_scope=c.Ldap.Ldap3SearchScope.BASE.value
+            test_dn, "(objectClass=*)", search_scope=c.Ldap.Ldap3SearchScope.BASE.value,
         )
         if ldap_connection.entries:
             ldap_connection.delete(test_dn)
@@ -59,14 +66,15 @@ class TestsFlextLdifSimpleLdap:
         entry: m.Ldif.Entry = entry_result.unwrap()
         return entry
 
+    @staticmethod
     def test_bound_connection_reaches_configured_base_dn(
-        self, ldap_connection: p.Ldap.Ldap3Connection, ldap_container: t.StrMapping
+        ldap_connection: p.Ldap.Ldap3Connection, ldap_container: t.StrMapping,
     ) -> None:
         """A base-scoped search on the configured base DN yields its entry."""
         base_dn = ldap_container.get("base_dn", "dc=flext,dc=local")
 
         found = ldap_connection.search(
-            base_dn, "(objectClass=*)", search_scope=c.Ldap.Ldap3SearchScope.BASE.value
+            base_dn, "(objectClass=*)", search_scope=c.Ldap.Ldap3SearchScope.BASE.value,
         )
 
         assert ldap_connection.bound

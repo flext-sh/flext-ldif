@@ -1,4 +1,8 @@
-"""Extracted nested class from FlextLdifUtilities."""
+"""Extracted nested class from FlextLdifUtilities.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -11,7 +15,11 @@ class FlextLdifUtilitiesOID:
 
     @staticmethod
     def extract_from_definition(definition: str) -> p.Result[str]:
-        """Extract OID from schema definition string."""
+        """Extract OID from schema definition string.
+
+        Returns:
+            The resulting ``p.Result[str]``.
+        """
         match = c.Ldif.SCHEMA_OID_CAPTURE_RE.search(definition)
         if match:
             return r[str].ok(match.group(1))
@@ -45,7 +53,11 @@ class FlextLdifUtilitiesOID:
 
     @staticmethod
     def validate_format(oid: str) -> p.Result[bool]:
-        """Validate OID format compliance with LDAP OID syntax."""
+        """Validate OID format compliance with LDAP OID syntax.
+
+        Returns:
+            The resulting ``p.Result[bool]``.
+        """
         if not oid:
             return r[bool].ok(False)
         try:

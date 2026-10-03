@@ -70,7 +70,7 @@ class TestsFlextLdifConfigIntegration:
     def test_default_facade_parses_basic_entry_preserving_dn(self) -> None:
         """Default facade parses one entry and preserves its DN verbatim."""
         parsed: m.Ldif.ParseResponse = tm.ok(
-            ldif.parse_ldif(c.Tests.CONFIG_BASIC_ENTRY)
+            ldif.parse_ldif(c.Tests.CONFIG_BASIC_ENTRY),
         )
 
         tm.that(len(parsed.entries), eq=1)
@@ -82,7 +82,7 @@ class TestsFlextLdifConfigIntegration:
 
         tm.that(settings.ldif.ldif_encoding, eq=c.Ldif.Encoding.UTF8)
         tm.that(
-            settings.ldif.ldif_strict_validation, eq=c.Ldif.DEFAULT_STRICT_VALIDATION
+            settings.ldif.ldif_strict_validation, eq=c.Ldif.DEFAULT_STRICT_VALIDATION,
         )
 
     def test_cloned_settings_preserve_public_field_values(self) -> None:
@@ -92,18 +92,18 @@ class TestsFlextLdifConfigIntegration:
 
         tm.that(first.ldif.ldif_encoding, eq=second.ldif.ldif_encoding)
         tm.that(
-            first.ldif.ldif_strict_validation, eq=second.ldif.ldif_strict_validation
+            first.ldif.ldif_strict_validation, eq=second.ldif.ldif_strict_validation,
         )
 
     @pytest.mark.parametrize("server_type", c.Tests.CONFIG_SERVER_TYPES)
     def test_configured_facade_parses_entry_for_each_server_type(
-        self, server_type: str
+        self, server_type: str,
     ) -> None:
         """A configured facade parses the basic entry identically per server."""
         api = ldif(settings=self.create_settings())
 
         parsed: m.Ldif.ParseResponse = tm.ok(
-            api.parse_ldif(c.Tests.CONFIG_BASIC_ENTRY, server_type=server_type)
+            api.parse_ldif(c.Tests.CONFIG_BASIC_ENTRY, server_type=server_type),
         )
 
         tm.that(len(parsed.entries), eq=1)
@@ -111,19 +111,19 @@ class TestsFlextLdifConfigIntegration:
 
     @pytest.mark.parametrize(("server_type", "label"), _SERVER_TYPE_LABELS)
     def test_server_specific_content_round_trips_dn(
-        self, server_type: str, label: str
+        self, server_type: str, label: str,
     ) -> None:
         """Server-specific content parses to the DN encoded in that content."""
         api = ldif(settings=self.create_settings())
         content: str = c.Tests.CONFIG_SERVER_CONTENT[server_type]
 
         parsed: m.Ldif.ParseResponse = tm.ok(
-            api.parse_ldif(content, server_type=server_type)
+            api.parse_ldif(content, server_type=server_type),
         )
 
         tm.that(len(parsed.entries), eq=1)
         tm.that(
-            self.dn_values(parsed.entries)[0], eq=f"cn={label} Test,dc=example,dc=com"
+            self.dn_values(parsed.entries)[0], eq=f"cn={label} Test,dc=example,dc=com",
         )
 
     def test_independent_facades_produce_identical_dn(self) -> None:
@@ -132,12 +132,12 @@ class TestsFlextLdifConfigIntegration:
         api_openldap = ldif(settings=self.create_settings())
 
         parsed_oid: m.Ldif.ParseResponse = tm.ok(
-            api_oid.parse_ldif(c.Tests.CONFIG_BASIC_ENTRY, server_type=c.Tests.OID)
+            api_oid.parse_ldif(c.Tests.CONFIG_BASIC_ENTRY, server_type=c.Tests.OID),
         )
         parsed_openldap: m.Ldif.ParseResponse = tm.ok(
             api_openldap.parse_ldif(
-                c.Tests.CONFIG_BASIC_ENTRY, server_type=c.Tests.OPENLDAP
-            )
+                c.Tests.CONFIG_BASIC_ENTRY, server_type=c.Tests.OPENLDAP,
+            ),
         )
 
         oid_dn = self.dn_values(parsed_oid.entries)[0]
@@ -176,7 +176,7 @@ class TestsFlextLdifConfigIntegration:
         api = ldif(settings=self.create_settings())
 
         parsed: m.Ldif.ParseResponse = tm.ok(
-            api.parse_ldif(c.Tests.CONFIG_MULTIPLE_ENTRIES)
+            api.parse_ldif(c.Tests.CONFIG_MULTIPLE_ENTRIES),
         )
 
         tm.that(len(parsed.entries), eq=3)

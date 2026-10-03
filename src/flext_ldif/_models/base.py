@@ -1,4 +1,8 @@
-"""Base classes for flext-ldif models."""
+"""Base classes for flext-ldif models.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -28,7 +32,7 @@ class FlextLdifModelsBases:
         validation_metadata: Annotated[
             m.ConfigMap | None,
             u.Field(
-                description="Validation metadata captured during schema processing."
+                description="Validation metadata captured during schema processing.",
             ),
         ] = None
 
@@ -104,7 +108,7 @@ class FlextLdifModelsBases:
         @u.field_validator("server_type", mode="before")
         @classmethod
         def _coerce_server_type(
-            cls, value: c.Ldif.ServerTypes | str
+            cls, value: c.Ldif.ServerTypes | str,
         ) -> c.Ldif.ServerTypes:
             if isinstance(value, c.Ldif.ServerTypes):
                 return value

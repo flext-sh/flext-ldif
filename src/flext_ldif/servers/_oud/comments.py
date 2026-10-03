@@ -10,10 +10,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldif import c, m, t, u
-
-from .acl_extract import FlextLdifServersOudAclExtractMixin
-from .acl_metadata import FlextLdifServersOudAclMetadataMixin
-from .transform import FlextLdifServersOudTransformMixin
+from flext_ldif.servers._oud.acl_extract import FlextLdifServersOudAclExtractMixin
+from flext_ldif.servers._oud.acl_metadata import FlextLdifServersOudAclMetadataMixin
+from flext_ldif.servers._oud.transform import FlextLdifServersOudTransformMixin
 
 
 class FlextLdifServersOudCommentsMixin:
@@ -46,15 +45,19 @@ class FlextLdifServersOudCommentsMixin:
 
     @staticmethod
     def add_original_entry_comments(
-        entry_data: m.Ldif.Entry, write_options: m.Ldif.WriteFormatOptions | None
+        entry_data: m.Ldif.Entry, write_options: m.Ldif.WriteFormatOptions | None,
     ) -> t.MutableSequenceOf[str]:
-        """Add original entry as commented LDIF block."""
+        """Add original entry as commented LDIF block.
+
+        Returns:
+            The resulting ``t.MutableSequenceOf[str]``.
+        """
         if not (write_options and write_options.write_original_entry_as_comment):
             return []
         if not entry_data.metadata:
             return []
         original_ldif_raw = u.to_str(
-            entry_data.metadata.original_strings.get(c.Ldif.ENTRY_ORIGINAL_LDIF)
+            entry_data.metadata.original_strings.get(c.Ldif.ENTRY_ORIGINAL_LDIF),
         )
         if not original_ldif_raw:
             return []
@@ -81,22 +84,26 @@ class FlextLdifServersOudCommentsMixin:
         entry: m.Ldif.Entry,
         format_options: m.Ldif.WriteFormatOptions | None = None,
     ) -> set[str]:
-        """Add OUD-specific ACL comments for phases 01-03."""
+        """Add OUD-specific ACL comments for phases 01-03.
+
+        Returns:
+            The resulting ``set[str]``.
+        """
         acl_attr_names_to_skip: set[str] = set()
         if not entry.metadata:
             return acl_attr_names_to_skip
         acl_comments_dict: t.MutableStrSequenceMapping = {}
         FlextLdifServersOudCommentsMixin._collect_acl_from_transformations(
-            entry, acl_comments_dict, acl_attr_names_to_skip
+            entry, acl_comments_dict, acl_attr_names_to_skip,
         )
         FlextLdifServersOudCommentsMixin._collect_acl_from_extensions(
-            entry, acl_comments_dict, acl_attr_names_to_skip
+            entry, acl_comments_dict, acl_attr_names_to_skip,
         )
         if acl_comments_dict:
             acl_attr_names = list(acl_comments_dict.keys())
             ordered_acl_attrs = (
                 FlextLdifServersOudTransformMixin.determine_attribute_order(
-                    acl_attr_names, format_options
+                    acl_attr_names, format_options,
                 )
             )
             for attr_name in ordered_acl_attrs:
@@ -106,7 +113,7 @@ class FlextLdifServersOudCommentsMixin:
 
     @staticmethod
     def _add_rejection_reason_comments(
-        comment_lines: t.MutableSequenceOf[str], entry: m.Ldif.Entry
+        comment_lines: t.MutableSequenceOf[str], entry: m.Ldif.Entry,
     ) -> None:
         """Add comments with rejection reason if entry was rejected."""
         if (
@@ -115,7 +122,7 @@ class FlextLdifServersOudCommentsMixin:
             and u.matches_type(entry.metadata.extensions, dict)
         ):
             rejection_reason_raw = u.to_str(
-                entry.metadata.extensions.get("rejection_reason")
+                entry.metadata.extensions.get("rejection_reason"),
             )
             if rejection_reason_raw:
                 comment_lines.append(f"# [REJECTION] {rejection_reason_raw}")
@@ -130,7 +137,7 @@ class FlextLdifServersOudCommentsMixin:
         if not entry.metadata:
             return
         acl_attr_names_to_skip = FlextLdifServersOudCommentsMixin._add_oud_acl_comments(
-            comment_lines, entry, format_options
+            comment_lines, entry, format_options,
         )
         processed_attrs: set[str] = set()
         if entry.metadata.attribute_transformations:
@@ -141,7 +148,7 @@ class FlextLdifServersOudCommentsMixin:
             ]
             ordered_attr_names = (
                 FlextLdifServersOudTransformMixin.determine_attribute_order(
-                    attr_names, format_options
+                    attr_names, format_options,
                 )
             )
             for attr_name in ordered_attr_names:
@@ -153,7 +160,7 @@ class FlextLdifServersOudCommentsMixin:
                     else transformation_type
                 )
                 FlextLdifServersOudCommentsMixin._add_attribute_transformation_comments(
-                    comment_lines, attr_name, transformation, comment_type
+                    comment_lines, attr_name, transformation, comment_type,
                 )
                 processed_attrs.add(attr_name.lower())
         if (
@@ -170,7 +177,7 @@ class FlextLdifServersOudCommentsMixin:
             ]
             ordered_removed_attrs = (
                 FlextLdifServersOudTransformMixin.determine_attribute_order(
-                    removed_attr_names, format_options
+                    removed_attr_names, format_options,
                 )
             )
             for attr_name in ordered_removed_attrs:
@@ -201,17 +208,17 @@ class FlextLdifServersOudCommentsMixin:
         if not entry.metadata or not entry.metadata.extensions:
             return
         commented_acl_values_raw = entry.metadata.extensions.get(
-            c.Ldif.COMMENTED_ATTRIBUTE_VALUES
+            c.Ldif.COMMENTED_ATTRIBUTE_VALUES,
         )
         commented_acl_values = (
             FlextLdifServersOudAclExtractMixin.parse_commented_values(
-                commented_acl_values_raw
+                commented_acl_values_raw,
             )
         )
         if not commented_acl_values:
             return
         original_acl_attr = FlextLdifServersOudAclMetadataMixin.get_original_acl_attr(
-            entry
+            entry,
         )
         for acl_attr_name, acl_values_raw in commented_acl_values.items():
             if acl_attr_name.lower() in acl_attr_names_to_skip:
@@ -228,7 +235,7 @@ class FlextLdifServersOudCommentsMixin:
                 acl_values = [u.to_str(acl_values_raw)]
             else:
                 normalized = FlextLdifServersOudAclExtractMixin.normalize_acl_values(
-                    acl_values_raw
+                    acl_values_raw,
                 )
                 acl_values = (
                     list(normalized)

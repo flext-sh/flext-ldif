@@ -12,10 +12,9 @@ from __future__ import annotations
 from collections.abc import Callable, MutableSequence
 
 from flext_ldif import c, m, p, r, t, u
-
-from .acl import FlextLdifServersOudAcl
-from .acl_extract import FlextLdifServersOudAclExtractMixin
-from .acl_metadata import FlextLdifServersOudAclMetadataMixin
+from flext_ldif.servers._oud.acl import FlextLdifServersOudAcl
+from flext_ldif.servers._oud.acl_extract import FlextLdifServersOudAclExtractMixin
+from flext_ldif.servers._oud.acl_metadata import FlextLdifServersOudAclMetadataMixin
 
 
 class FlextLdifServersOudAciMixin:
@@ -25,7 +24,11 @@ class FlextLdifServersOudAciMixin:
     def _find_aci_in_dict(
         attrs: t.AttributeMapping | None,
     ) -> t.MutableSequenceOf[str] | str | None:
-        """Find ACI value in dictionary (case-insensitive)."""
+        """Find ACI value in dictionary (case-insensitive).
+
+        Returns:
+            The resulting ``t.MutableSequenceOf[str] | str | None``.
+        """
         if not attrs:
             return None
         for key, value in attrs.items():
@@ -35,9 +38,13 @@ class FlextLdifServersOudAciMixin:
 
     @staticmethod
     def find_aci_values(
-        entry: m.Ldif.Entry, original_attrs: t.AttributeMapping
+        entry: m.Ldif.Entry, original_attrs: t.AttributeMapping,
     ) -> t.MutableSequenceOf[str] | str | None:
-        """Find ACI values from entry attributes, original_attrs, or commented metadata."""
+        """Find ACI values from entry attributes, original_attrs, or commented metadata.
+
+        Returns:
+            The resulting ``t.MutableSequenceOf[str] | str | None``.
+        """
         normalize = FlextLdifServersOudAciMixin.normalize_aci_value_simple
         find_in_dict = FlextLdifServersOudAciMixin._find_aci_in_dict
         entry_attrs = (
@@ -68,7 +75,7 @@ class FlextLdifServersOudAciMixin:
             )
             if extensions is not None:
                 commented = FlextLdifServersOudAclExtractMixin.parse_commented_values(
-                    extensions.get(c.Ldif.COMMENTED_ATTRIBUTE_VALUES)
+                    extensions.get(c.Ldif.COMMENTED_ATTRIBUTE_VALUES),
                 )
                 if commented:
                     for key, value in commented.items():
@@ -85,16 +92,24 @@ class FlextLdifServersOudAciMixin:
 
     @staticmethod
     def normalize_aci_value(
-        aci_value: str, _base_dn: str | None, _dn_registry: m.Ldif.DnRegistry | None
+        aci_value: str, _base_dn: str | None, _dn_registry: m.Ldif.DnRegistry | None,
     ) -> tuple[str, bool]:
-        """Normalize ACI value DNs (already RFC canonical, no changes needed)."""
+        """Normalize ACI value DNs (already RFC canonical, no changes needed).
+
+        Returns:
+            The resulting ``tuple[str, bool]``.
+        """
         return (aci_value, False)
 
     @staticmethod
     def normalize_aci_value_simple(
         value: t.Ldif.ValueType | t.Ldif.MetadataInputMapping | None,
     ) -> t.MutableSequenceOf[str] | str | None:
-        """Normalize ACI value to t.MutableSequenceOf[str] | str | None."""
+        """Normalize ACI value to t.MutableSequenceOf[str] | str | None.
+
+        Returns:
+            The resulting ``t.MutableSequenceOf[str] | str | None``.
+        """
         if value is None:
             return None
         if isinstance(value, list):
@@ -132,14 +147,18 @@ class FlextLdifServersOudAciMixin:
                         key = raw_key
                         acl_extensions[key] = u.normalize_to_metadata(raw_value)
                     FlextLdifServersOudAclMetadataMixin.process_parsed_acl_extensions(
-                        acl_extensions, current_extensions
+                        acl_extensions, current_extensions,
                     )
 
     @staticmethod
     def process_single_aci_value(
-        aci_value: str, acl_metadata_extensions: t.Ldif.MutableMetadataInputMapping
+        aci_value: str, acl_metadata_extensions: t.Ldif.MutableMetadataInputMapping,
     ) -> p.Result[bool]:
-        """Process single ACI value, extract metadata, return has_macros flag."""
+        """Process single ACI value, extract metadata, return has_macros flag.
+
+        Returns:
+            The resulting ``p.Result[bool]``.
+        """
         has_macros = bool(c.Ldif.ACI_MACRO_RE.search(aci_value))
         validation_result = FlextLdifServersOudAciMixin._validate_aci_macros(aci_value)
         if validation_result.failure:
@@ -155,20 +174,28 @@ class FlextLdifServersOudAciMixin:
                 acl_extensions = parsed_acl.metadata.extensions
                 if isinstance(acl_extensions, dict):
                     FlextLdifServersOudAclMetadataMixin.extract_acl_metadata_from_dict(
-                        acl_extensions, acl_metadata_extensions
+                        acl_extensions, acl_metadata_extensions,
                     )
         return r[bool].ok(has_macros)
 
     @staticmethod
     def _validate_aci_macros(_aci_value: str) -> p.Result[bool]:
-        """Validate OUD ACI macro consistency rules (no-op)."""
+        """Validate OUD ACI macro consistency rules (no-op).
+
+        Returns:
+            The resulting ``p.Result[bool]``.
+        """
         return r[bool].ok(True)
 
     @staticmethod
     def validate_aci_macros_in_entry(
-        attrs_dict: t.Ldif.AttributeDict, validate_aci_macros: Callable[[str], r[bool]]
+        attrs_dict: t.Ldif.AttributeDict, validate_aci_macros: Callable[[str], r[bool]],
     ) -> str | None:
-        """Validate ACI macros if present. Returns error message or None if valid."""
+        """Validate ACI macros if present. Returns error message or None if valid.
+
+        Returns:
+            The resulting ``str | None``.
+        """
         aci_attrs = attrs_dict.get("aci")
         if aci_attrs and u.matches_type(aci_attrs, (list, tuple)):
             for aci_value in aci_attrs:

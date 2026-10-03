@@ -3,6 +3,9 @@
 Owns every compiled ``re.Pattern`` for the LDIF domain. Consumer modules
 import the pre-compiled ``*_RE`` constants directly; ``import re`` outside
 this module is forbidden by AGENTS.md §3.1 ``regex-from-constants`` rule.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -12,12 +15,12 @@ import struct
 from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar, Final
 
-from .enums import FlextLdifConstantsEnums
+from flext_ldif._constants.enums import FlextLdifConstantsEnums
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from ..typings import FlextLdifTypes as t
+    from flext_ldif.typings import FlextLdifTypes as t
 
 
 class FlextLdifConstantsBase:
@@ -162,92 +165,92 @@ class FlextLdifConstantsBase:
     ATTRIBUTE_OPTION_RE: ClassVar[t.RegexPattern] = re.compile(ATTRIBUTE_OPTION)
     BINARY_CHAR_RE: ClassVar[t.RegexPattern] = re.compile(BINARY_CHAR_PATTERN)
     DN_COMPONENT_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"^[a-zA-Z][a-zA-Z0-9-]*=(?:[^\\,]|\\.)*$", re.IGNORECASE
+        r"^[a-zA-Z][a-zA-Z0-9-]*=(?:[^\\,]|\\.)*$", re.IGNORECASE,
     )
     NUMERIC_OID_RE: ClassVar[t.RegexPattern] = re.compile(NUMERIC_OID_PATTERN)
     SCHEMA_X_EXTENSION_RE: ClassVar[t.RegexPattern] = re.compile(
-        SCHEMA_X_EXTENSION, re.IGNORECASE
+        SCHEMA_X_EXTENSION, re.IGNORECASE,
     )
     SCHEMA_DESC_FLEX_RE: ClassVar[t.RegexPattern] = re.compile(SCHEMA_DESC_FLEX)
     SCHEMA_ORDERING_TOKEN_RE: ClassVar[t.RegexPattern] = re.compile(
-        SCHEMA_ORDERING_PATTERN
+        SCHEMA_ORDERING_PATTERN,
     )
     SCHEMA_SUBSTR_TOKEN_RE: ClassVar[t.RegexPattern] = re.compile(SCHEMA_SUBSTR_PATTERN)
     SCHEMA_OID_CAPTURE_RE: ClassVar[t.RegexPattern] = re.compile(SCHEMA_OID_CAPTURE)
     SCHEMA_OBJECTCLASS_KIND_RE: ClassVar[t.RegexPattern] = re.compile(
-        SCHEMA_OBJECTCLASS_KIND, re.IGNORECASE
+        SCHEMA_OBJECTCLASS_KIND, re.IGNORECASE,
     )
     SCHEMA_OBJECTCLASS_SUP_RE: ClassVar[t.RegexPattern] = re.compile(
-        SCHEMA_OBJECTCLASS_SUP
+        SCHEMA_OBJECTCLASS_SUP,
     )
     SCHEMA_OBJECTCLASS_MUST_RE: ClassVar[t.RegexPattern] = re.compile(
-        SCHEMA_OBJECTCLASS_MUST
+        SCHEMA_OBJECTCLASS_MUST,
     )
     SCHEMA_OBJECTCLASS_MAY_RE: ClassVar[t.RegexPattern] = re.compile(
-        SCHEMA_OBJECTCLASS_MAY
+        SCHEMA_OBJECTCLASS_MAY,
     )
     SCHEMA_NO_USER_MODIFICATION_RE: ClassVar[t.RegexPattern] = re.compile(
-        SCHEMA_NO_USER_MODIFICATION
+        SCHEMA_NO_USER_MODIFICATION,
     )
     SCHEMA_SYNTAX_LENGTH_RE: ClassVar[t.RegexPattern] = re.compile(SCHEMA_SYNTAX_LENGTH)
     SCHEMA_DEFINITION_PARENS_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"\(.*\)", re.DOTALL
+        r"\(.*\)", re.DOTALL,
     )
     SCHEMA_EQUALITY_TOKEN_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"\bEQUALITY\b", re.IGNORECASE
+        r"\bEQUALITY\b", re.IGNORECASE,
     )
     SCHEMA_SUBSTR_TOKEN_BARE_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"\bSUBSTR\b", re.IGNORECASE
+        r"\bSUBSTR\b", re.IGNORECASE,
     )
     SCHEMA_ORDERING_TOKEN_BARE_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"\bORDERING\b", re.IGNORECASE
+        r"\bORDERING\b", re.IGNORECASE,
     )
     SCHEMA_OBSOLETE_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"\bOBSOLETE\b", re.IGNORECASE
+        r"\bOBSOLETE\b", re.IGNORECASE,
     )
     SCHEMA_TRAILING_PAREN_RE: ClassVar[t.RegexPattern] = re.compile(r"\)\s*$")
     SCHEMA_LEADING_PAREN_RE: ClassVar[t.RegexPattern] = re.compile(r"^\s*\(")
     WHITESPACE_TRAILING_RE: ClassVar[t.RegexPattern] = re.compile(r"(\s+)$")
     WHITESPACE_LEADING_RE: ClassVar[t.RegexPattern] = re.compile(r"(\s*)")
     OID_CAPTURE_NUMERIC_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"\(\s*([0-9.]+)(\s*)"
+        r"\(\s*([0-9.]+)(\s*)",
     )
     QUOTED_NAME_TRIPLE_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"([\"'])([^\"']+)([\"'])"
+        r"([\"'])([^\"']+)([\"'])",
     )
     SCHEMA_DESC_LOOSE_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"DESC\s+([\"']?)([^\"']+)([\"']?)", re.IGNORECASE
+        r"DESC\s+([\"']?)([^\"']+)([\"']?)", re.IGNORECASE,
     )
     SCHEMA_SINGLE_VALUE_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"SINGLE-VALUE", re.IGNORECASE
+        r"SINGLE-VALUE", re.IGNORECASE,
     )
     SCHEMA_SUP_LOOSE_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"SUP\s+([^\s]+)", re.IGNORECASE
+        r"SUP\s+([^\s]+)", re.IGNORECASE,
     )
     SCHEMA_SYNTAX_LOOSE_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"SYNTAX\s*([\"']?)([0-9.]+)([\"']?)(\{[0-9]+\})?", re.IGNORECASE
+        r"SYNTAX\s*([\"']?)([0-9.]+)([\"']?)(\{[0-9]+\})?", re.IGNORECASE,
     )
     SCHEMA_X_ORIGIN_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"X-ORIGIN\s+([\"']?)([^\"']+)([\"']?)", re.IGNORECASE
+        r"X-ORIGIN\s+([\"']?)([^\"']+)([\"']?)", re.IGNORECASE,
     )
     SCHEMA_NAME_LOOSE_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"NAME\s+(\()?\s*([\"']?)([^\"'()]+)([\"']?)(\s*\))?"
+        r"NAME\s+(\()?\s*([\"']?)([^\"'()]+)([\"']?)(\s*\))?",
     )
     SCHEMA_NAME_MULTIPLE_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"NAME\s+\(\s*([\"'])([^\"']+)([\"'])\s+([\"'])([^\"']+)([\"'])"
+        r"NAME\s+\(\s*([\"'])([^\"']+)([\"'])\s+([\"'])([^\"']+)([\"'])",
     )
     QUOTED_SPACE_QUOTE_RE: ClassVar[t.RegexPattern] = re.compile(r"[\"']\s+([\"'])")
     LDIF_ATTR_TYPES_PREFIX_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"(attributetypes|attributeTypes):", re.IGNORECASE
+        r"(attributetypes|attributeTypes):", re.IGNORECASE,
     )
     LDIF_OBJECTCLASSES_PREFIX_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"(objectclasses|objectClasses):", re.IGNORECASE
+        r"(objectclasses|objectClasses):", re.IGNORECASE,
     )
     ACI_MACRO_RE: ClassVar[t.RegexPattern] = re.compile(r"\(\$dn\)|\[\$dn\]|\(\$attr\.")
     ACL_NAME_QUOTED_RE: ClassVar[t.RegexPattern] = re.compile(r'acl\s+"[^"]*"')
     DN_SPLIT_OPTIONAL_SPACE_RE: ClassVar[t.RegexPattern] = re.compile(r"\s*,\s*")
     DN_SPLIT_UNESCAPED_COMMA_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"(?<!\\)\s*,\s*"
+        r"(?<!\\)\s*,\s*",
     )
 
     @staticmethod
@@ -263,6 +266,9 @@ class FlextLdifConstantsBase:
         Sole sanctioned ``re.compile`` entry-point for non-constant patterns
         (e.g. user-supplied DN filters). Consumer modules MUST call this
         instead of importing ``re`` directly.
+
+        Returns:
+            The resulting ``t.RegexPattern``.
         """
         flags = 0
         if ignorecase:
@@ -278,6 +284,9 @@ class FlextLdifConstantsBase:
         """Escape special regex metacharacters in ``value``.
 
         Sole sanctioned ``re.escape`` entry-point for non-constant strings.
+
+        Returns:
+            The resulting ``str``.
         """
         return re.escape(value)
 
@@ -294,9 +303,12 @@ class FlextLdifConstantsBase:
 
         Sole sanctioned ``re.sub`` entry-point for runtime patterns; the
         compiled pattern is built via ``compile_pattern`` and re-used.
+
+        Returns:
+            The resulting ``str``.
         """
         substituted: str = FlextLdifConstantsBase.compile_pattern(
-            pattern, ignorecase=ignorecase
+            pattern, ignorecase=ignorecase,
         ).sub(replacement, value, count=count)
         return substituted
 
@@ -445,10 +457,10 @@ class FlextLdifConstantsBase:
             "requires_binary_option",
         }),
         FlextLdifConstantsEnums.ServerTypes.OPENLDAP: frozenset({
-            "requires_binary_option"
+            "requires_binary_option",
         }),
         FlextLdifConstantsEnums.ServerTypes.OPENLDAP2: frozenset({
-            "requires_binary_option"
+            "requires_binary_option",
         }),
         FlextLdifConstantsEnums.ServerTypes.AD: frozenset({
             "requires_objectclass",
@@ -457,7 +469,7 @@ class FlextLdifConstantsBase:
         FlextLdifConstantsEnums.ServerTypes.DS389: frozenset({"requires_objectclass"}),
         FlextLdifConstantsEnums.ServerTypes.NOVELL: frozenset({"requires_objectclass"}),
         FlextLdifConstantsEnums.ServerTypes.IBM_TIVOLI: frozenset({
-            "requires_objectclass"
+            "requires_objectclass",
         }),
     })
     """Validation features each server type supports."""
@@ -684,7 +696,7 @@ class FlextLdifConstantsBase:
     })
 
     CATEGORY_RULE_ATTRIBUTE_FIELDS: Final[t.MappingKV[str, str]] = MappingProxyType({
-        FlextLdifConstantsEnums.Category.ACL: "acl_attributes"
+        FlextLdifConstantsEnums.Category.ACL: "acl_attributes",
     })
 
     CATEGORY_ATTRIBUTE_MARKER_PREFIX: Final[str] = "attr:"
@@ -737,7 +749,7 @@ class FlextLdifConstantsBase:
     WHITELIST_RULE_SCHEMA_ATTRIBUTE_KEYS: Final[tuple[tuple[str, str], ...]] = tuple(
         (field_name, attr_keys[1])
         for field_name, attr_keys in zip(
-            WHITELIST_RULE_OID_FIELDS, SCHEMA_OID_ATTRIBUTE_KEYS, strict=True
+            WHITELIST_RULE_OID_FIELDS, SCHEMA_OID_ATTRIBUTE_KEYS, strict=True,
         )
     )
 

@@ -1,4 +1,8 @@
-"""Extracted nested class from FlextLdifUtilities."""
+"""Extracted nested class from FlextLdifUtilities.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -7,7 +11,7 @@ from typing import TYPE_CHECKING
 from flext_ldif import c
 
 if TYPE_CHECKING:
-    from .._models.domain_schema import FlextLdifModelsDomainSchema as ms
+    from flext_ldif._models.domain_schema import FlextLdifModelsDomainSchema as ms
 
 
 class FlextLdifUtilitiesObjectClass:
@@ -21,7 +25,7 @@ class FlextLdifUtilitiesObjectClass:
 
     @staticmethod
     def fix_kind_mismatch(
-        schema_oc: ms.SchemaObjectClass, _server_type: str = "oid"
+        schema_oc: ms.SchemaObjectClass, _server_type: str = "oid",
     ) -> None:
         """Fix objectClass kind mismatches with superior classes (server-specific)."""
         if not schema_oc.sup or not schema_oc.kind:

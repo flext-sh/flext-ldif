@@ -1,15 +1,18 @@
 """Schema utilities facade for FLEXT-LDIF.
 
 Composed from focused MRO mixins; public API remains ``FlextLdifUtilitiesSchema``.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
-from .schema_build import FlextLdifUtilitiesSchemaBuild
-from .schema_extract import FlextLdifUtilitiesSchemaExtract
-from .schema_format import FlextLdifUtilitiesSchemaFormat
-from .schema_normalize import FlextLdifUtilitiesSchemaNormalize
-from .schema_parse import FlextLdifUtilitiesSchemaParse
+from flext_ldif._utilities.schema_build import FlextLdifUtilitiesSchemaBuild
+from flext_ldif._utilities.schema_extract import FlextLdifUtilitiesSchemaExtract
+from flext_ldif._utilities.schema_format import FlextLdifUtilitiesSchemaFormat
+from flext_ldif._utilities.schema_normalize import FlextLdifUtilitiesSchemaNormalize
+from flext_ldif._utilities.schema_parse import FlextLdifUtilitiesSchemaParse
 
 
 class FlextLdifUtilitiesSchema(

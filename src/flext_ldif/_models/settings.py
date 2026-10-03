@@ -13,15 +13,16 @@ from __future__ import annotations
 from typing import Self
 
 from flext_core import FlextSettings, t
-
-from ._settings_acl import FlextLdifModelsSettingsAcl
-from ._settings_criteria import FlextLdifModelsSettingsCriteria
-from ._settings_migrate import FlextLdifModelsSettingsMigrate
-from ._settings_misc import FlextLdifModelsSettingsMisc
-from ._settings_normalization import FlextLdifModelsSettingsNormalization
-from ._settings_processing import FlextLdifModelsSettingsProcessing
-from ._settings_rules import FlextLdifModelsSettingsRules
-from ._settings_validation import FlextLdifModelsSettingsValidation
+from flext_ldif._models._settings_acl import FlextLdifModelsSettingsAcl
+from flext_ldif._models._settings_criteria import FlextLdifModelsSettingsCriteria
+from flext_ldif._models._settings_migrate import FlextLdifModelsSettingsMigrate
+from flext_ldif._models._settings_misc import FlextLdifModelsSettingsMisc
+from flext_ldif._models._settings_normalization import (
+    FlextLdifModelsSettingsNormalization,
+)
+from flext_ldif._models._settings_processing import FlextLdifModelsSettingsProcessing
+from flext_ldif._models._settings_rules import FlextLdifModelsSettingsRules
+from flext_ldif._models._settings_validation import FlextLdifModelsSettingsValidation
 
 
 class FlextLdifModelsSettings(

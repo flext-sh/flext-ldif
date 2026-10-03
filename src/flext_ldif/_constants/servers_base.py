@@ -2,6 +2,9 @@
 
 ENFORCE-079 part module: declarations live in the
 _constants package; the server constants classes compose them via MRO.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -9,10 +12,10 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar
 
-from .base import FlextLdifConstantsBase
+from flext_ldif._constants.base import FlextLdifConstantsBase
 
 if TYPE_CHECKING:
-    from ..typings import FlextLdifTypes as t
+    from flext_ldif.typings import FlextLdifTypes as t
 
 
 class FlextLdifConstantsServersBase:

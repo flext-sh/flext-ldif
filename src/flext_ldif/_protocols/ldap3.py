@@ -17,7 +17,6 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
     from flext_ldif import t
-__all__: list[str] = ["FlextLdifProtocolsLdap3"]
 
 
 class FlextLdifProtocolsLdap3(Protocol):
@@ -45,7 +44,8 @@ class FlextLdifProtocolsLdap3(Protocol):
             ...
 
         def __getitem__(
-            self, attribute_name: str
+            self,
+            attribute_name: str,
         ) -> FlextLdifProtocolsLdap3.Ldap3Attribute:
             """Return one ldap3 attribute object by attribute name."""
             ...
@@ -210,3 +210,6 @@ class FlextLdifProtocolsLdap3(Protocol):
         ]:
             """The entry payloads produced by the last search."""
             ...
+
+
+__all__: list[str] = ["FlextLdifProtocolsLdap3"]

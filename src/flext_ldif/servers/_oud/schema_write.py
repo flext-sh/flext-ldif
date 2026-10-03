@@ -34,13 +34,16 @@ class FlextLdifServersOudSchemaWriteMixin:
 
     @classmethod
     def normalize_schema_definitions_for_write(
-        cls, entry: m.Ldif.Entry
+        cls, entry: m.Ldif.Entry,
     ) -> p.Result[m.Ldif.Entry]:
         """Canonicalize schema definitions through the source→OUD write cycle.
 
         Non-schema entries and definitions already in OUD-canonical form pass
         through unchanged; values that fail to parse or serialize for OUD fail
         the write loudly.
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.Entry]``.
         """
         if not cls._carries_schema_definitions(entry):
             return r[m.Ldif.Entry].ok(entry)
@@ -49,17 +52,21 @@ class FlextLdifServersOudSchemaWriteMixin:
             return r[m.Ldif.Entry].from_failure(servers_result)
         source_schema, target_schema = servers_result.value
         attributes_result = cls._normalize_schema_attributes(
-            entry, source_schema, target_schema
+            entry, source_schema, target_schema,
         )
         if attributes_result.failure:
             return r[m.Ldif.Entry].from_failure(attributes_result)
         return cls._normalize_schema_change_operations(
-            attributes_result.value, source_schema, target_schema
+            attributes_result.value, source_schema, target_schema,
         )
 
     @classmethod
     def _carries_schema_definitions(cls, entry: m.Ldif.Entry) -> bool:
-        """Detect schema definition values in attributes or change operations."""
+        """Detect schema definition values in attributes or change operations.
+
+        Returns:
+            The resulting ``bool``.
+        """
         attribute_names = (
             {name.lower() for name in entry.attributes.attributes}
             if entry.attributes is not None
@@ -71,21 +78,26 @@ class FlextLdifServersOudSchemaWriteMixin:
         }
         return bool(
             attribute_names & cls._SCHEMA_DEFINITION_ATTRS
-            or change_operation_names & cls._SCHEMA_DEFINITION_ATTRS
+            or change_operation_names & cls._SCHEMA_DEFINITION_ATTRS,
         )
 
     @classmethod
     def _resolve_write_schema_servers(
-        cls, entry: m.Ldif.Entry
+        cls, entry: m.Ldif.Entry,
     ) -> p.Result[t.Pair[p.Ldif.SchemaServer, p.Ldif.SchemaServer]]:
-        """Resolve (source, target) schema servers for the entry provenance."""
+        """Resolve (source, target) schema servers for the entry provenance.
+
+        Returns:
+            The resulting ``p.Result[t.Pair[p.Ldif.SchemaServer,
+                p.Ldif.SchemaServer]]``.
+        """
         from flext_ldif.services.server import FlextLdifServer
 
         registry = FlextLdifServer.fetch_global_instance()
         target_result = registry.server(str(c.Ldif.ServerTypes.OUD.value))
         if target_result.failure:
             return r[t.Pair[p.Ldif.SchemaServer, p.Ldif.SchemaServer]].fail_op(
-                "resolve OUD target schema server", target_result.error
+                "resolve OUD target schema server", target_result.error,
             )
         source_type: str = (
             entry.metadata.server_type
@@ -110,7 +122,11 @@ class FlextLdifServersOudSchemaWriteMixin:
         source_schema: p.Ldif.SchemaServer,
         target_schema: p.Ldif.SchemaServer,
     ) -> p.Result[m.Ldif.Entry]:
-        """Re-serialize schema definition attribute values for OUD."""
+        """Re-serialize schema definition attribute values for OUD.
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.Entry]``.
+        """
         if entry.attributes is None:
             return r[m.Ldif.Entry].ok(entry)
         normalized_values: dict[str, list[str]] = {}
@@ -133,7 +149,7 @@ class FlextLdifServersOudSchemaWriteMixin:
         if not normalized_values:
             return r[m.Ldif.Entry].ok(entry)
         merged_attributes: t.MutableStrSequenceMapping = dict(
-            entry.attributes.attributes.items()
+            entry.attributes.attributes.items(),
         )
         merged_attributes.update(normalized_values)
         pruned_metadata: dict[str, t.MutableAttributeMapping] = {
@@ -150,9 +166,9 @@ class FlextLdifServersOudSchemaWriteMixin:
                         "attributes": merged_attributes,
                         "attribute_metadata": pruned_metadata,
                         "metadata": entry.attributes.metadata,
-                    })
-                }
-            )
+                    }),
+                },
+            ),
         )
 
     @classmethod
@@ -162,7 +178,11 @@ class FlextLdifServersOudSchemaWriteMixin:
         source_schema: p.Ldif.SchemaServer,
         target_schema: p.Ldif.SchemaServer,
     ) -> p.Result[m.Ldif.Entry]:
-        """Re-serialize schema definition values inside modify blocks."""
+        """Re-serialize schema definition values inside modify blocks.
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.Entry]``.
+        """
         if not entry.change_operations:
             return r[m.Ldif.Entry].ok(entry)
         normalized_operations: t.MutableSequenceOf[m.Ldif.ChangeOperation] = []
@@ -189,16 +209,16 @@ class FlextLdifServersOudSchemaWriteMixin:
                             "value": normalized_result.value,
                             "value_origin": c.Ldif.ValueOrigin.PLAIN,
                             "raw_value": None,
-                        }
-                    )
+                        },
+                    ),
                 )
             normalized_operations.append(
-                change_operation.model_copy(update={"values": new_values})
+                change_operation.model_copy(update={"values": new_values}),
             )
         if not changed:
             return r[m.Ldif.Entry].ok(entry)
         return r[m.Ldif.Entry].ok(
-            entry.model_copy(update={"change_operations": normalized_operations})
+            entry.model_copy(update={"change_operations": normalized_operations}),
         )
 
     @classmethod
@@ -210,24 +230,28 @@ class FlextLdifServersOudSchemaWriteMixin:
         source_schema: p.Ldif.SchemaServer,
         target_schema: p.Ldif.SchemaServer,
     ) -> p.Result[str]:
-        """Canonicalize one schema definition through source-parse→OUD-write."""
+        """Canonicalize one schema definition through source-parse→OUD-write.
+
+        Returns:
+            The resulting ``p.Result[str]``.
+        """
         if attr_name.lower() == c.Ldif.ATTRIBUTE_TYPES.lower():
             parse_result = source_schema.parse_attribute(value)
             if parse_result.failure:
                 return r[str].fail_op(
-                    f"parse {attr_name} definition for OUD write", parse_result.error
+                    f"parse {attr_name} definition for OUD write", parse_result.error,
                 )
             write_result = target_schema.write_attribute(parse_result.value)
         else:
             parse_result_oc = source_schema.parse_objectclass(value)
             if parse_result_oc.failure:
                 return r[str].fail_op(
-                    f"parse {attr_name} definition for OUD write", parse_result_oc.error
+                    f"parse {attr_name} definition for OUD write", parse_result_oc.error,
                 )
             write_result = target_schema.write_objectclass(parse_result_oc.value)
         if write_result.failure:
             return r[str].fail_op(
-                f"serialize {attr_name} definition for OUD write", write_result.error
+                f"serialize {attr_name} definition for OUD write", write_result.error,
             )
         return write_result
 

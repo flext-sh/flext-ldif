@@ -33,12 +33,13 @@ class TestsFlextLdifApiIntegration:
     # Parsing — observable results
     # ------------------------------------------------------------------
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("ldif_content", "expected_entries"),
         [(c.Tests.RFC_SAMPLE_LDIF_BASIC, 1), (c.Tests.RFC_SAMPLE_LDIF_MULTIPLE, 2)],
     )
     def test_parse_ldif_returns_expected_entry_count(
-        self, ldif_content: str, expected_entries: int
+        ldif_content: str, expected_entries: int,
     ) -> None:
         """parse_ldif succeeds and yields entries with populated public state."""
         # Act
@@ -54,12 +55,13 @@ class TestsFlextLdifApiIntegration:
             assert entry.dn.value
             assert entry.attributes.attributes
 
+    @staticmethod
     @pytest.mark.parametrize(
         "lenient_content",
         ["", "this is not ldif at all", "objectClass: person\ncn: no-dn\n"],
     )
     def test_parse_ldif_is_lenient_and_never_raises_on_non_entries(
-        self, lenient_content: str
+        lenient_content: str,
     ) -> None:
         """Content without complete entries parses to a successful empty result."""
         # Act
@@ -69,7 +71,8 @@ class TestsFlextLdifApiIntegration:
         tm.ok(result)
         tm.that(result.value.entries, eq=[])
 
-    def test_parse_ldif_merges_repeated_attribute_into_multivalue(self) -> None:
+    @staticmethod
+    def test_parse_ldif_merges_repeated_attribute_into_multivalue() -> None:
         """A repeated attribute name is preserved as an ordered multi-value list."""
         # Arrange
         content = "dn: cn=a,dc=example,dc=com\ncn: a\ncn: b\nobjectClass: person\n"
@@ -83,7 +86,8 @@ class TestsFlextLdifApiIntegration:
         assert entry.attributes is not None
         tm.that(entry.attributes.attributes[c.Tests.NAME_CN], eq=["a", "b"])
 
-    def test_parse_write_parse_round_trip_is_idempotent(self) -> None:
+    @staticmethod
+    def test_parse_write_parse_round_trip_is_idempotent() -> None:
         """Parsing serialized output reproduces the same DN and attributes."""
         # Arrange
         original = ldif.parse_ldif(c.Tests.RFC_SAMPLE_LDIF_BASIC)
@@ -108,7 +112,8 @@ class TestsFlextLdifApiIntegration:
     # Entry model construction — public state
     # ------------------------------------------------------------------
 
-    def test_build_entry_exposes_public_model_state(self) -> None:
+    @staticmethod
+    def test_build_entry_exposes_public_model_state() -> None:
         """A programmatically built entry exposes its DN and attributes."""
         # Arrange / Act
         entry = m.Ldif.Entry(
@@ -128,10 +133,11 @@ class TestsFlextLdifApiIntegration:
         assert entry.attributes is not None
         tm.that(entry.dn.value, eq=c.Tests.RFC_TEST_DN)
         tm.that(
-            entry.attributes.attributes[c.Tests.NAME_CN], eq=[c.Tests.ATTR_VALUE_TEST]
+            entry.attributes.attributes[c.Tests.NAME_CN], eq=[c.Tests.ATTR_VALUE_TEST],
         )
 
-    def test_entry_create_returns_success_result_and_validates(self) -> None:
+    @staticmethod
+    def test_entry_create_returns_success_result_and_validates() -> None:
         """Entry.create yields a success FlextResult whose value validates."""
         # Act
         create_result = m.Ldif.Entry.create(
@@ -153,7 +159,8 @@ class TestsFlextLdifApiIntegration:
     # Validation and statistics — end-to-end observable behavior
     # ------------------------------------------------------------------
 
-    def test_validate_parsed_entries_succeeds(self) -> None:
+    @staticmethod
+    def test_validate_parsed_entries_succeeds() -> None:
         """Entries parsed from valid LDIF validate successfully."""
         # Arrange
         parsed = ldif.parse_ldif(c.Tests.RFC_SAMPLE_LDIF_BASIC)
@@ -165,7 +172,8 @@ class TestsFlextLdifApiIntegration:
         # Assert
         tm.ok(validated)
 
-    def test_statistics_report_total_entries_from_public_result(self) -> None:
+    @staticmethod
+    def test_statistics_report_total_entries_from_public_result() -> None:
         """Statistics expose the parsed entry count via the public result model."""
         # Arrange
         parsed = ldif.parse_ldif(c.Tests.RFC_SAMPLE_LDIF_BASIC)
@@ -178,7 +186,8 @@ class TestsFlextLdifApiIntegration:
         tm.ok(analyzed)
         tm.that(analyzed.value.total_entries, eq=1)
 
-    def test_statistics_over_empty_input_reports_zero_total(self) -> None:
+    @staticmethod
+    def test_statistics_over_empty_input_reports_zero_total() -> None:
         """Statistics over an empty entry list report zero total entries."""
         # Act
         analyzed = FlextLdifStatistics().calculate_for_entries([])
@@ -191,7 +200,8 @@ class TestsFlextLdifApiIntegration:
     # Facade instance semantics
     # ------------------------------------------------------------------
 
-    def test_configured_facade_instances_are_independent(self) -> None:
+    @staticmethod
+    def test_configured_facade_instances_are_independent() -> None:
         """Calling the facade yields distinct instances with consistent output."""
         # Arrange
         ldif1 = ldif()
@@ -215,7 +225,8 @@ class TestsFlextLdifApiIntegration:
     # Categorization factory — options binding contract
     # ------------------------------------------------------------------
 
-    def test_categorization_explicit_base_dn_overrides_options(self) -> None:
+    @staticmethod
+    def test_categorization_explicit_base_dn_overrides_options() -> None:
         """An explicit base_dn overrides the value carried by migrate options."""
         # Arrange
         options = m.Ldif.MigrateOptions(
@@ -226,7 +237,7 @@ class TestsFlextLdifApiIntegration:
 
         # Act
         categorization = ldif.categorization(
-            options=options, base_dn="dc=override,dc=example", server_type=c.Tests.OUD
+            options=options, base_dn="dc=override,dc=example", server_type=c.Tests.OUD,
         )
 
         # Assert
@@ -235,11 +246,12 @@ class TestsFlextLdifApiIntegration:
         tm.that(categorization.forbidden_attributes, eq=["userPassword"])
         tm.that(categorization.forbidden_objectclasses, eq=["groupOfNames"])
 
-    def test_categorization_defaults_base_dn_from_options(self) -> None:
+    @staticmethod
+    def test_categorization_defaults_base_dn_from_options() -> None:
         """Without an override, categorization keeps the options base DN."""
         # Arrange
         options = m.Ldif.MigrateOptions(
-            base_dn="dc=options,dc=example", forbidden_attributes=["userPassword"]
+            base_dn="dc=options,dc=example", forbidden_attributes=["userPassword"],
         )
 
         # Act
@@ -250,7 +262,8 @@ class TestsFlextLdifApiIntegration:
         tm.that(categorization.base_dn, eq="dc=options,dc=example")
         tm.that(categorization.forbidden_attributes, eq=["userPassword"])
 
-    def test_categorization_normalizes_schema_whitelist_rules(self) -> None:
+    @staticmethod
+    def test_categorization_normalizes_schema_whitelist_rules() -> None:
         """Raw whitelist mappings are normalized into a WhitelistRules model."""
         # Act
         categorization = ldif.categorization(
@@ -258,7 +271,7 @@ class TestsFlextLdifApiIntegration:
                 schema_whitelist_rules=m.Ldif.WhitelistRules.model_validate({
                     "allowed_attribute_oids": {"1.2.3.4"},
                     "allowed_objectclass_oids": {"2.3.4.5"},
-                })
+                }),
             ),
             server_type=c.Tests.OUD,
         )
@@ -272,8 +285,9 @@ class TestsFlextLdifApiIntegration:
     # Migration pipeline factory — configuration contract
     # ------------------------------------------------------------------
 
+    @staticmethod
     def test_migration_pipeline_binds_dirs_servers_and_output_name(
-        self, tmp_path: Path
+        tmp_path: Path,
     ) -> None:
         """The pipeline reflects the transform config and migrate options given."""
         # Arrange
@@ -287,7 +301,7 @@ class TestsFlextLdifApiIntegration:
             input_dir=input_dir,
             output_dir=output_dir,
             settings=m.Ldif.TransformConfig.servers(
-                source_server=c.Tests.OID, target_server=c.Tests.OUD
+                source_server=c.Tests.OID, target_server=c.Tests.OUD,
             ),
             options=m.Ldif.MigrateOptions(output_filename="custom.ldif"),
         )

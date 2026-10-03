@@ -1,14 +1,21 @@
-"""Power Method Transformers - Entry transformation classes for pipelines."""
+"""Power Method Transformers - Entry transformation classes for pipelines.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from typing import ClassVar
 
 from flext_ldif import c, t
-
-from ._transformer_attrs import FlextLdifUtilitiesNormalizeAttrsTransformer
-from ._transformer_base import FlextLdifUtilitiesTransformer
-from ._transformer_dn import FlextLdifUtilitiesNormalizeDnTransformer
+from flext_ldif._utilities._transformer_attrs import (
+    FlextLdifUtilitiesNormalizeAttrsTransformer,
+)
+from flext_ldif._utilities._transformer_base import FlextLdifUtilitiesTransformer
+from flext_ldif._utilities._transformer_dn import (
+    FlextLdifUtilitiesNormalizeDnTransformer,
+)
 
 
 class FlextLdifUtilitiesTransformers:
@@ -33,7 +40,11 @@ class FlextLdifUtilitiesTransformers:
             trim_values: bool = True,
             remove_empty: bool = False,
         ) -> FlextLdifUtilitiesNormalizeAttrsTransformer:
-            """Create an attribute normalization transformer."""
+            """Create an attribute normalization transformer.
+
+            Returns:
+                The resulting ``FlextLdifUtilitiesNormalizeAttrsTransformer``.
+            """
             return FlextLdifUtilitiesTransformers.NormalizeAttrsTransformer(
                 case_fold_names=case_fold_names,
                 trim_values=trim_values,
@@ -47,9 +58,13 @@ class FlextLdifUtilitiesTransformers:
             spaces: c.Ldif.SpaceHandlingOption = c.Ldif.SpaceHandlingOption.TRIM,
             validate: bool = True,
         ) -> FlextLdifUtilitiesNormalizeDnTransformer:
-            """Create a DN normalization transformer."""
+            """Create a DN normalization transformer.
+
+            Returns:
+                The resulting ``FlextLdifUtilitiesNormalizeDnTransformer``.
+            """
             return FlextLdifUtilitiesTransformers.NormalizeDnTransformer(
-                case=case, spaces=spaces, validate=validate
+                case=case, spaces=spaces, validate=validate,
             )
 
 

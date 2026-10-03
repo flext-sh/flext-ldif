@@ -1,4 +1,8 @@
-"""Test model definitions composing src models for centralized test objects."""
+"""Test model definitions composing src models for centralized test objects.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -30,20 +34,20 @@ class TestsFlextLdifModels(FlextTestsModels, FlextLdifModels):
             """Shared fields for can_handle-style detection cases."""
 
             scenario: Annotated[
-                str, FlextLdifModels.Field(description="Scenario identifier")
+                str, FlextLdifModels.Field(description="Scenario identifier"),
             ]
             expected_can_handle: Annotated[
-                bool, FlextLdifModels.Field(description="Expected can_handle result")
+                bool, FlextLdifModels.Field(description="Expected can_handle result"),
             ]
 
         class _SchemaCase(_CanHandleCase):
             """Shared OID/NAME parsed-value expectations."""
 
             expected_oid: Annotated[
-                str | None, FlextLdifModels.Field(description="Expected parsed OID")
+                str | None, FlextLdifModels.Field(description="Expected parsed OID"),
             ] = None
             expected_name: Annotated[
-                str | None, FlextLdifModels.Field(description="Expected parsed name")
+                str | None, FlextLdifModels.Field(description="Expected parsed name"),
             ] = None
 
         class LdifTestData(FlextLdifModels.Value):
@@ -52,25 +56,25 @@ class TestsFlextLdifModels(FlextTestsModels, FlextLdifModels):
             id: Annotated[
                 str,
                 FlextLdifModels.Field(
-                    description="Unique identifier for the test data entry"
+                    description="Unique identifier for the test data entry",
                 ),
             ]
             server_type: Annotated[
                 str,
                 FlextLdifModels.Field(
-                    description="Type of server associated with the entry"
+                    description="Type of server associated with the entry",
                 ),
             ]
             dn: Annotated[
                 str,
                 FlextLdifModels.Field(
-                    description="Distinguished name of the LDAP entry"
+                    description="Distinguished name of the LDAP entry",
                 ),
             ]
             attributes: Annotated[
                 t.StrSequenceMapping,
                 FlextLdifModels.Field(
-                    description="LDAP attributes mapped to their values"
+                    description="LDAP attributes mapped to their values",
                 ),
             ]
 
@@ -86,36 +90,36 @@ class TestsFlextLdifModels(FlextTestsModels, FlextLdifModels):
                 FlextLdifModels.Field(description="Fixture category identifier"),
             ]
             file_path: Annotated[
-                Path, FlextLdifModels.Field(description="Fixture file path")
+                Path, FlextLdifModels.Field(description="Fixture file path"),
             ]
             line_count: Annotated[
                 int,
                 FlextLdifModels.Field(
-                    description="Number of lines in the fixture file"
+                    description="Number of lines in the fixture file",
                 ),
             ]
             entry_count: Annotated[
                 int,
                 FlextLdifModels.Field(
-                    description="Number of LDIF entries in the fixture"
+                    description="Number of LDIF entries in the fixture",
                 ),
             ]
             size_bytes: Annotated[
-                int, FlextLdifModels.Field(description="Fixture file size in bytes")
+                int, FlextLdifModels.Field(description="Fixture file size in bytes"),
             ]
 
         class AttributeTestCase(_SchemaCase):
             """Unified test case for attribute detection."""
 
             attr_definition: Annotated[
-                str, FlextLdifModels.Field(description="Attribute definition")
+                str, FlextLdifModels.Field(description="Attribute definition"),
             ]
 
         class ObjectClassTestCase(_SchemaCase):
             """Unified test case for objectClass detection."""
 
             oc_definition: Annotated[
-                str, FlextLdifModels.Field(description="ObjectClass definition")
+                str, FlextLdifModels.Field(description="ObjectClass definition"),
             ]
             expected_kind: Annotated[
                 str | None,
@@ -135,18 +139,18 @@ class TestsFlextLdifModels(FlextTestsModels, FlextLdifModels):
             """Server implementation for protocol testing."""
 
             name: Annotated[
-                str, FlextLdifModels.Field(description="Implementation name")
+                str, FlextLdifModels.Field(description="Implementation name"),
             ]
             server_class: Annotated[
-                type, FlextLdifModels.Field(description="Server class")
+                type, FlextLdifModels.Field(description="Server class"),
             ]
             schema_class: Annotated[
-                type, FlextLdifModels.Field(description="Schema class")
+                type, FlextLdifModels.Field(description="Schema class"),
             ]
             fixture_servers: Annotated[
                 t.SequenceOf[t.Tests.FixtureServer],
                 FlextLdifModels.Field(
-                    description="Servers covered by the implementation"
+                    description="Servers covered by the implementation",
                 ),
             ] = ()
 
@@ -155,13 +159,13 @@ class TestsFlextLdifModels(FlextTestsModels, FlextLdifModels):
 
             scenario: Annotated[str, FlextLdifModels.Field(description="ACL scenario")]
             acl_line: Annotated[
-                str | None, FlextLdifModels.Field(description="ACL line")
+                str | None, FlextLdifModels.Field(description="ACL line"),
             ] = None
             expected_can_handle: Annotated[
-                bool, FlextLdifModels.Field(description="Expected can_handle result")
+                bool, FlextLdifModels.Field(description="Expected can_handle result"),
             ] = False
             expected_success: Annotated[
-                bool, FlextLdifModels.Field(description="Expected parse success")
+                bool, FlextLdifModels.Field(description="Expected parse success"),
             ] = False
 
 

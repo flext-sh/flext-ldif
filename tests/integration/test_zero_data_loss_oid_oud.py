@@ -42,28 +42,44 @@ class TestsFlextLdifZeroDataLossOidOud:
         "entrycsn",
     })
 
+    @staticmethod
     @pytest.fixture
-    def api(self) -> p.Ldif.LdifClient:
-        """Create ldif API instance."""
+    def api() -> p.Ldif.LdifClient:
+        """Create ldif API instance.
+
+        Returns:
+            The resulting ``p.Ldif.LdifClient``.
+        """
         return ldif()
 
+    @staticmethod
     @pytest.fixture
-    def oid_fixture(self) -> str:
-        """Load OID entries fixture."""
+    def oid_fixture() -> str:
+        """Load OID entries fixture.
+
+        Returns:
+            The resulting ``str``.
+        """
         fixture: str = u.Tests.load(c.Tests.OID, c.Tests.ENTRIES)
         return fixture
 
+    @staticmethod
     @pytest.fixture
-    def oud_fixture(self) -> str:
-        """Load OUD entries fixture."""
+    def oud_fixture() -> str:
+        """Load OUD entries fixture.
+
+        Returns:
+            The resulting ``str``.
+        """
         fixture: str = u.Tests.load(c.Tests.OUD, c.Tests.ENTRIES)
         return fixture
 
     # -- edge cases / invariants ------------------------------------------
 
+    @staticmethod
     @pytest.mark.parametrize("content", ["", "not a valid ldif record"])
     def test_parse_of_non_entry_input_succeeds_with_no_entries(
-        self, api: p.Ldif.LdifClient, content: str
+        api: p.Ldif.LdifClient, content: str,
     ) -> None:
         """Input without LDIF records yields a success result with no entries."""
         result = api.parse_ldif(content, server_type=c.Tests.OID)
@@ -71,8 +87,9 @@ class TestsFlextLdifZeroDataLossOidOud:
         tm.ok(result)
         tm.that(result.value.entries, eq=[])
 
+    @staticmethod
     def test_parse_is_idempotent_in_entry_count(
-        self, api: p.Ldif.LdifClient, oid_fixture: str
+        api: p.Ldif.LdifClient, oid_fixture: str,
     ) -> None:
         """Parsing the same fixture twice yields the same entry count."""
         first = api.parse_ldif(oid_fixture, server_type=c.Tests.OID)
@@ -84,9 +101,9 @@ class TestsFlextLdifZeroDataLossOidOud:
 
     # -- original text preservation ---------------------------------------
 
+    @staticmethod
     @pytest.mark.parametrize("server_type", [c.Tests.OID, c.Tests.OUD])
     def test_parse_preserves_original_ldif_per_entry(
-        self,
         api: p.Ldif.LdifClient,
         oid_fixture: str,
         oud_fixture: str,
@@ -106,8 +123,9 @@ class TestsFlextLdifZeroDataLossOidOud:
             assert original, f"Entry {entry.dn} lost its original LDIF"
             tm.that(original.lower(), has="dn:")
 
+    @staticmethod
     def test_original_strings_records_dn_original_when_dn_differs(
-        self, api: p.Ldif.LdifClient, oid_fixture: str
+        api: p.Ldif.LdifClient, oid_fixture: str,
     ) -> None:
         """When a DN has minimal differences, the original DN string is kept."""
         result = api.parse_ldif(oid_fixture, server_type=c.Tests.OID)
@@ -117,15 +135,16 @@ class TestsFlextLdifZeroDataLossOidOud:
             assert entry.metadata is not None
             # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: validate the plain mapping.
             dn_diff: t.MutableJsonMapping = t.json_dict_adapter().validate_python(
-                entry.metadata.minimal_differences.get("dn", {})
+                entry.metadata.minimal_differences.get("dn", {}),
             )
             if bool(dn_diff.get("has_differences", False)):
                 tm.that(entry.metadata.original_strings, has="dn_original")
 
     # -- conversion tracking ----------------------------------------------
 
+    @staticmethod
     def test_boolean_conversions_record_original_converted_and_format(
-        self, api: p.Ldif.LdifClient
+        api: p.Ldif.LdifClient,
     ) -> None:
         """Tracked boolean conversions expose original, converted and format."""
         oid_boolean_entry = """
@@ -147,11 +166,11 @@ orclIsEnabled: 1
             if metadata is None:
                 continue
             converted: t.MutableJsonMapping = t.json_dict_adapter().validate_python(
-                metadata.extensions[c.Ldif.CONVERTED_ATTRIBUTES]
+                metadata.extensions[c.Ldif.CONVERTED_ATTRIBUTES],
             )
             boolean_conversions: t.MutableJsonMapping = (
                 t.json_dict_adapter().validate_python(
-                    converted[c.Ldif.CONVERSION_BOOLEAN_CONVERSIONS]
+                    converted[c.Ldif.CONVERSION_BOOLEAN_CONVERSIONS],
                 )
             )
             tracked_conversions.append(boolean_conversions)
@@ -170,8 +189,9 @@ orclIsEnabled: 1
                 tm.that(conversion.get(c.Ldif.ORIGINAL_FORMAT), eq="1/0")
                 tm.that(conversion.get("converted_format"), eq="TRUE/FALSE")
 
+    @staticmethod
     def test_minimal_differences_carry_original_and_differences(
-        self, api: p.Ldif.LdifClient, oid_fixture: str
+        api: p.Ldif.LdifClient, oid_fixture: str,
     ) -> None:
         """Any tracked difference exposes an original value and a diff list."""
         result = api.parse_ldif(oid_fixture, server_type=c.Tests.OID)
@@ -186,8 +206,9 @@ orclIsEnabled: 1
                 tm.that(raw, has="original")
                 tm.that(raw, has="differences")
 
+    @staticmethod
     def test_conversion_history_is_a_list(
-        self, api: p.Ldif.LdifClient, oid_fixture: str
+        api: p.Ldif.LdifClient, oid_fixture: str,
     ) -> None:
         """Every entry exposes conversion history as a list."""
         result = api.parse_ldif(oid_fixture, server_type=c.Tests.OID)
@@ -197,8 +218,9 @@ orclIsEnabled: 1
             assert entry.metadata is not None
             tm.that(entry.metadata.conversion_history, is_=list)
 
+    @staticmethod
     def test_soft_deleted_attributes_are_preserved(
-        self, api: p.Ldif.LdifClient, oid_fixture: str
+        api: p.Ldif.LdifClient, oid_fixture: str,
     ) -> None:
         """Soft-deleted attributes keep their values in removed_attributes."""
         result = api.parse_ldif(oid_fixture, server_type=c.Tests.OID)
@@ -220,7 +242,7 @@ orclIsEnabled: 1
     # -- conversion / round-trip ------------------------------------------
 
     def test_oid_to_oud_conversion_loses_no_user_attribute(
-        self, api: p.Ldif.LdifClient, oid_fixture: str
+        self, api: p.Ldif.LdifClient, oid_fixture: str,
     ) -> None:
         """OID -> RFC -> OUD conversion preserves every non-operational attr."""
         oid = api.parse_ldif(oid_fixture, server_type=c.Tests.OID)
@@ -249,8 +271,9 @@ orclIsEnabled: 1
             }
             assert not lost, f"Data loss detected for {original.dn}: {sorted(lost)}"
 
+    @staticmethod
     def test_round_trip_oid_oud_oid_preserves_entry_count_and_original_text(
-        self, api: p.Ldif.LdifClient, oid_fixture: str
+        api: p.Ldif.LdifClient, oid_fixture: str,
     ) -> None:
         """OID -> OUD -> OID round-trip keeps entry count and original text."""
         original = api.parse_ldif(oid_fixture, server_type=c.Tests.OID)
@@ -285,8 +308,9 @@ orclIsEnabled: 1
                 f"Original text lost for {orig.dn}"
             )
 
+    @staticmethod
     def test_restore_original_format_reproduces_original_entry_text(
-        self, api: p.Ldif.LdifClient, oid_fixture: str
+        api: p.Ldif.LdifClient, oid_fixture: str,
     ) -> None:
         """restore_original_format writes back each entry's exact original text."""
         parsed = api.parse_ldif(oid_fixture, server_type=c.Tests.OID)

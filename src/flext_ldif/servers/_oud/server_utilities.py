@@ -1,10 +1,13 @@
-"""Oracle Unified Directory (OUD) Utilities."""
+"""Oracle Unified Directory (OUD) Utilities.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from flext_ldif import c, m, t
-
-from .server_constants import FlextLdifServersOudConstants
+from flext_ldif.servers._oud.server_constants import FlextLdifServersOudConstants
 
 
 class FlextLdifServersOudUtilities:
@@ -12,7 +15,11 @@ class FlextLdifServersOudUtilities:
 
     @staticmethod
     def get_parser_config() -> m.Ldif.AciParserConfig:
-        """Create AciParserConfig for OUD ACL parsing."""
+        """Create AciParserConfig for OUD ACL parsing.
+
+        Returns:
+            The resulting ``m.Ldif.AciParserConfig``.
+        """
         constants = FlextLdifServersOudConstants
         config: m.Ldif.AciParserConfig = m.Ldif.AciParserConfig.model_validate({
             "server_type": c.Ldif.ServerTypes.OUD,
@@ -21,7 +28,7 @@ class FlextLdifServersOudUtilities:
             "targetattr_pattern": constants.ACL_TARGETATTR_PATTERN,
             "allow_deny_pattern": constants.ACL_ALLOW_DENY_PATTERN,
             "bind_patterns": t.str_dict_adapter().validate_python(
-                constants.ACL_BIND_PATTERNS
+                constants.ACL_BIND_PATTERNS,
             ),
             "permission_map": {},
             "special_subjects": {},

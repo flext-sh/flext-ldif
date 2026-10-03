@@ -1,4 +1,8 @@
-"""ACL Service - Direct ACL Processing with flext-core APIs."""
+"""ACL Service - Direct ACL Processing with flext-core APIs.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -10,7 +14,11 @@ class FlextLdifAcl(s):
 
     @staticmethod
     def _is_schema_entry(entry: m.Ldif.Entry) -> bool:
-        """Check if entry is a schema entry."""
+        """Check if entry is a schema entry.
+
+        Returns:
+            The resulting ``bool``.
+        """
         is_schema: bool = u.Ldif.is_schema_entry(entry, strict=False)
         return is_schema
 
@@ -19,14 +27,18 @@ class FlextLdifAcl(s):
         acls: t.SequenceOf[t.Ldif.AclLike],
         required_permissions: m.Ldif.AclPermissions | t.MutableBoolMapping,
     ) -> p.Result[m.Ldif.AclEvaluationResult]:
-        """Evaluate if ACLs grant required permissions."""
+        """Evaluate if ACLs grant required permissions.
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.AclEvaluationResult]``.
+        """
         required = (
             required_permissions
             if isinstance(required_permissions, m.Ldif.AclPermissions)
             else m.Ldif.AclPermissions.model_validate(
                 m.Ldif.AclPermissions.filter_rfc_compliant_permissions(
-                    dict(required_permissions)
-                )
+                    dict(required_permissions),
+                ),
             )
         )
         permission_keys = (
@@ -78,16 +90,21 @@ class FlextLdifAcl(s):
                 )
         return r[m.Ldif.AclEvaluationResult].ok(evaluation)
 
-    def service_check(self) -> p.Result[m.Ldif.AclResponse]:
+    @staticmethod
+    def service_check() -> p.Result[m.Ldif.AclResponse]:
         """Return a minimal ACL response for service wiring checks."""
         return r[m.Ldif.AclResponse].ok(
-            m.Ldif.AclResponse(acls=[], statistics=m.Ldif.Statistics())
+            m.Ldif.AclResponse(acls=[], statistics=m.Ldif.Statistics()),
         )
 
     def extract_acls_from_entry(
-        self, entry: m.Ldif.Entry, server_type: str
+        self, entry: m.Ldif.Entry, server_type: str,
     ) -> p.Result[m.Ldif.AclResponse]:
-        """Extract ACLs from entry using server-specific attribute names."""
+        """Extract ACLs from entry using server-specific attribute names.
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.AclResponse]``.
+        """
         try:
             normalized_server_type = u.Ldif.normalize_server_type(server_type)
         except c.EXC_TYPE_VALIDATION as error:
@@ -95,7 +112,7 @@ class FlextLdifAcl(s):
         acl_server = self._server.acl(normalized_server_type)
         if acl_server is None:
             return r[m.Ldif.AclResponse].fail(
-                f"No ACL server found for server type: {normalized_server_type}"
+                f"No ACL server found for server type: {normalized_server_type}",
             )
         acls: t.MutableSequenceOf[m.Ldif.Acl] = []
         for attribute_name in acl_server.resolve_acl_attributes():
@@ -108,15 +125,19 @@ class FlextLdifAcl(s):
             m.Ldif.AclResponse(
                 acls=acls,
                 statistics=m.Ldif.Statistics(
-                    processed_entries=1, acls_extracted=len(acls)
+                    processed_entries=1, acls_extracted=len(acls),
                 ),
-            )
+            ),
         )
 
     def parse_acl_string(
-        self, acl_string: str, server_type: str
+        self, acl_string: str, server_type: str,
     ) -> p.Result[m.Ldif.Acl]:
-        """Parse ACL string using server-specific servers."""
+        """Parse ACL string using server-specific servers.
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.Acl]``.
+        """
         try:
             normalized_server_type = u.Ldif.normalize_server_type(server_type)
         except c.EXC_TYPE_VALIDATION as error:
@@ -127,7 +148,7 @@ class FlextLdifAcl(s):
             return r[m.Ldif.Acl].fail(str(error), exception=error)
         if acl_server is None:
             return r[m.Ldif.Acl].fail(
-                f"No ACL server found for server type: {normalized_server_type}"
+                f"No ACL server found for server type: {normalized_server_type}",
             )
 
         return acl_server.parse_server(acl_string)

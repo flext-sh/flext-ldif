@@ -5,6 +5,9 @@ and ``_convert_schema_entry_attributes``) used by the entry mixin. Inherits the
 shared schema helpers (``_validate_parsed_schema``, the ``_resolve_schema_server``
 stub) from :class:`FlextLdifConversionSchemaMixin`; the concrete resolver wins via
 the facade MRO (Support precedes this mixin).
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -26,7 +29,11 @@ class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s, ABC
         *,
         schema_item_kind: c.Ldif.SchemaItemKind,
     ) -> p.Result[str]:
-        """Convert a schema definition string embedded inside an LDIF entry."""
+        """Convert a schema definition string embedded inside an LDIF entry.
+
+        Returns:
+            The resulting ``p.Result[str]``.
+        """
         schema_field_name = (
             c.Ldif.ATTRIBUTE_TYPES
             if schema_item_kind == c.Ldif.SchemaItemKind.ATTRIBUTE
@@ -43,7 +50,7 @@ class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s, ABC
                 if not isinstance(parsed_item, m.Ldif.SchemaAttribute):
                     return r[str].fail(
                         "Expected SchemaAttribute for "
-                        f"{schema_field_name}, got {type(parsed_item).__name__}"
+                        f"{schema_field_name}, got {type(parsed_item).__name__}",
                     )
                 return (
                     r[str]
@@ -53,7 +60,7 @@ class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s, ABC
             if not isinstance(parsed_item, m.Ldif.SchemaObjectClass):
                 return r[str].fail(
                     "Expected SchemaObjectClass for "
-                    f"{schema_field_name}, got {type(parsed_item).__name__}"
+                    f"{schema_field_name}, got {type(parsed_item).__name__}",
                 )
             return (
                 r[str]
@@ -65,17 +72,17 @@ class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s, ABC
             return (
                 self
                 ._validate_parsed_schema(
-                    source_schema.parse_attribute(value), m.Ldif.SchemaAttribute
+                    source_schema.parse_attribute(value), m.Ldif.SchemaAttribute,
                 )
                 .map_error(
-                    lambda error: error or f"Failed to parse {schema_field_name}"
+                    lambda error: error or f"Failed to parse {schema_field_name}",
                 )
                 .flat_map(write_schema_item)
             )
         return (
             self
             ._validate_parsed_schema(
-                source_schema.parse_objectclass(value), m.Ldif.SchemaObjectClass
+                source_schema.parse_objectclass(value), m.Ldif.SchemaObjectClass,
             )
             .map_error(lambda error: error or f"Failed to parse {schema_field_name}")
             .flat_map(write_schema_item)
@@ -87,7 +94,11 @@ class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s, ABC
         target_server: p.Ldif.ServerServer,
         entry: m.Ldif.Entry,
     ) -> p.Result[m.Ldif.Entry]:
-        """Convert schema definition attributes embedded in a schema entry."""
+        """Convert schema definition attributes embedded in a schema entry.
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.Entry]``.
+        """
         if entry.attributes is None or not u.Ldif.is_schema_entry(entry):
             return r[m.Ldif.Entry].ok(entry)
         source_schema_result = self._resolve_schema_server(source_server, role="Source")
@@ -98,7 +109,7 @@ class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s, ABC
             return r[m.Ldif.Entry].fail(
                 source_schema_result.error
                 or target_schema_result.error
-                or "Schema server not available"
+                or "Schema server not available",
             )
         schema_field_kinds: t.MappingKV[str, c.Ldif.SchemaItemKind] = {
             c.Ldif.ATTRIBUTE_TYPES.lower(): c.Ldif.SchemaItemKind.ATTRIBUTE,
@@ -140,7 +151,7 @@ class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s, ABC
             )
 
         converted_fields_result = r[tuple[str, list[str]]].traverse(
-            schema_fields, convert_field
+            schema_fields, convert_field,
         )
         if converted_fields_result.failure:
             return r[m.Ldif.Entry].from_failure(converted_fields_result)
@@ -149,8 +160,8 @@ class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s, ABC
         updated_entry = entry.model_copy(
             update={
                 "attributes": entry.attributes.model_copy(
-                    update={"attributes": updated_attributes}, deep=True
-                )
+                    update={"attributes": updated_attributes}, deep=True,
+                ),
             },
             deep=True,
         )

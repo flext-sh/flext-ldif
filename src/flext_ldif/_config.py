@@ -35,7 +35,7 @@ class FlextLdifConfig(FlextSettings, FlextCliConfig):
     Ldif: Annotated[
         _LdifNamespace,
         m.Field(
-            description="Open namespace exposing ``config/*.yaml`` under ``Ldif``."
+            description="Open namespace exposing ``config/*.yaml`` under ``Ldif``.",
         ),
     ] = _LdifNamespace()
 
