@@ -94,7 +94,8 @@ class TestsFlextLdifRealLdapImport:
 
     @staticmethod
     def _read_back(
-        ldap_connection: p.Ldap.Ldap3Connection, dn: str,
+        ldap_connection: p.Ldap.Ldap3Connection,
+        dn: str,
     ) -> p.Ldap.Ldap3Entry:
         """Search the freshly imported entry and return the single result.
 

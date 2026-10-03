@@ -98,7 +98,9 @@ class FlextLdifAcl(s):
         )
 
     def extract_acls_from_entry(
-        self, entry: m.Ldif.Entry, server_type: str,
+        self,
+        entry: m.Ldif.Entry,
+        server_type: str,
     ) -> p.Result[m.Ldif.AclResponse]:
         """Extract ACLs from entry using server-specific attribute names.
 
@@ -125,13 +127,16 @@ class FlextLdifAcl(s):
             m.Ldif.AclResponse(
                 acls=acls,
                 statistics=m.Ldif.Statistics(
-                    processed_entries=1, acls_extracted=len(acls),
+                    processed_entries=1,
+                    acls_extracted=len(acls),
                 ),
             ),
         )
 
     def parse_acl_string(
-        self, acl_string: str, server_type: str,
+        self,
+        acl_string: str,
+        server_type: str,
     ) -> p.Result[m.Ldif.Acl]:
         """Parse ACL string using server-specific servers.
 

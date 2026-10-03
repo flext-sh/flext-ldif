@@ -19,116 +19,146 @@ class FlextLdifModelsResultsStatistics:
 
     class StatisticsSummary(m.FrozenModel):
         total_entries: Annotated[
-            int, u.Field(description="Total number of entries processed"),
+            int,
+            u.Field(description="Total number of entries processed"),
         ] = 0
         processed_entries: Annotated[
-            int, u.Field(description="Entries successfully processed"),
+            int,
+            u.Field(description="Entries successfully processed"),
         ] = 0
         failed_entries: Annotated[
-            int, u.Field(description="Entries that failed processing"),
+            int,
+            u.Field(description="Entries that failed processing"),
         ] = 0
         rejected_entries: Annotated[
-            int, u.Field(description="Entries rejected by filter rules"),
+            int,
+            u.Field(description="Entries rejected by filter rules"),
         ] = 0
         success_rate: Annotated[
-            float, u.Field(description="Percentage of entries successfully processed"),
+            float,
+            u.Field(description="Percentage of entries successfully processed"),
         ] = 0.0
         failure_rate: Annotated[
-            float, u.Field(description="Percentage of entries that failed"),
+            float,
+            u.Field(description="Percentage of entries that failed"),
         ] = 0.0
         rejection_rate: Annotated[
-            float, u.Field(description="Percentage of entries rejected"),
+            float,
+            u.Field(description="Percentage of entries rejected"),
         ] = 0.0
         schema_entries: Annotated[
-            int, u.Field(description="Count of schema definition entries"),
+            int,
+            u.Field(description="Count of schema definition entries"),
         ] = 0
         data_entries: Annotated[int, u.Field(description="Count of data entries")] = 0
         hierarchy_entries: Annotated[
-            int, u.Field(description="Count of organizational hierarchy entries"),
+            int,
+            u.Field(description="Count of organizational hierarchy entries"),
         ] = 0
         user_entries: Annotated[int, u.Field(description="Count of user entries")] = 0
         group_entries: Annotated[int, u.Field(description="Count of group entries")] = 0
         acl_entries: Annotated[int, u.Field(description="Count of ACL entries")] = 0
         acls_extracted: Annotated[
-            int, u.Field(description="ACLs successfully extracted"),
+            int,
+            u.Field(description="ACLs successfully extracted"),
         ] = 0
         acls_failed: Annotated[
-            int, u.Field(description="ACLs that failed extraction"),
+            int,
+            u.Field(description="ACLs that failed extraction"),
         ] = 0
         parse_errors: Annotated[
-            int, u.Field(description="Count of parse errors encountered"),
+            int,
+            u.Field(description="Count of parse errors encountered"),
         ] = 0
         entries_written: Annotated[
-            int, u.Field(description="Entries written to output"),
+            int,
+            u.Field(description="Entries written to output"),
         ] = 0
 
     class Statistics(m.FrozenModel):
         total_entries: Annotated[
-            t.NonNegativeInt, u.Field(description="Total number of entries processed"),
+            t.NonNegativeInt,
+            u.Field(description="Total number of entries processed"),
         ] = 0
         processed_entries: Annotated[
-            t.NonNegativeInt, u.Field(description="Entries successfully processed"),
+            t.NonNegativeInt,
+            u.Field(description="Entries successfully processed"),
         ] = 0
         failed_entries: Annotated[
-            t.NonNegativeInt, u.Field(description="Entries that failed processing"),
+            t.NonNegativeInt,
+            u.Field(description="Entries that failed processing"),
         ] = 0
         schema_entries: Annotated[
-            t.NonNegativeInt, u.Field(description="Count of schema definition entries"),
+            t.NonNegativeInt,
+            u.Field(description="Count of schema definition entries"),
         ] = 0
         data_entries: Annotated[
-            t.NonNegativeInt, u.Field(description="Count of data entries"),
+            t.NonNegativeInt,
+            u.Field(description="Count of data entries"),
         ] = 0
         hierarchy_entries: Annotated[
             t.NonNegativeInt,
             u.Field(description="Count of organizational hierarchy entries"),
         ] = 0
         user_entries: Annotated[
-            t.NonNegativeInt, u.Field(description="Count of user entries"),
+            t.NonNegativeInt,
+            u.Field(description="Count of user entries"),
         ] = 0
         group_entries: Annotated[
-            t.NonNegativeInt, u.Field(description="Count of group entries"),
+            t.NonNegativeInt,
+            u.Field(description="Count of group entries"),
         ] = 0
         acl_entries: Annotated[
-            t.NonNegativeInt, u.Field(description="Count of ACL entries"),
+            t.NonNegativeInt,
+            u.Field(description="Count of ACL entries"),
         ] = 0
         rejected_entries: Annotated[
-            t.NonNegativeInt, u.Field(description="Entries rejected by filter rules"),
+            t.NonNegativeInt,
+            u.Field(description="Entries rejected by filter rules"),
         ] = 0
         schema_attributes: Annotated[
-            t.NonNegativeInt, u.Field(description="Count of schema attributes parsed"),
+            t.NonNegativeInt,
+            u.Field(description="Count of schema attributes parsed"),
         ] = 0
         schema_objectclasses: Annotated[
             t.NonNegativeInt,
             u.Field(description="Count of schema object classes parsed"),
         ] = 0
         acls_extracted: Annotated[
-            t.NonNegativeInt, u.Field(description="ACLs successfully extracted"),
+            t.NonNegativeInt,
+            u.Field(description="ACLs successfully extracted"),
         ] = 0
         acls_failed: Annotated[
-            t.NonNegativeInt, u.Field(description="ACLs that failed extraction"),
+            t.NonNegativeInt,
+            u.Field(description="ACLs that failed extraction"),
         ] = 0
         acl_attribute_name: Annotated[
             str | None,
             u.Field(description="Name of the ACL attribute used for extraction"),
         ] = None
         parse_errors: Annotated[
-            t.NonNegativeInt, u.Field(description="Count of parse errors encountered"),
+            t.NonNegativeInt,
+            u.Field(description="Count of parse errors encountered"),
         ] = 0
         detected_server_type: Annotated[
             c.Ldif.ServerTypes | None,
             u.Field(description="LDAP server type detected from LDIF content"),
         ] = None
         entries_written: Annotated[
-            t.NonNegativeInt, u.Field(description="Entries written to output"),
+            t.NonNegativeInt,
+            u.Field(description="Entries written to output"),
         ] = 0
         output_file: Annotated[
-            str | None, u.Field(description="Path to the output file"),
+            str | None,
+            u.Field(description="Path to the output file"),
         ] = None
         file_size_bytes: Annotated[
-            t.NonNegativeInt, u.Field(description="Output file size in bytes"),
+            t.NonNegativeInt,
+            u.Field(description="Output file size in bytes"),
         ] = 0
         encoding: Annotated[
-            c.Ldif.Encoding, u.Field(description="Character encoding used for output"),
+            c.Ldif.Encoding,
+            u.Field(description="Character encoding used for output"),
         ] = c.Ldif.Encoding.UTF8
         processing_duration: Annotated[
             t.NonNegativeFloat,

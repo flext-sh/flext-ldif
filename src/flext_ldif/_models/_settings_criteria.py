@@ -22,7 +22,8 @@ class FlextLdifModelsSettingsCriteria:
         """Configuration for server pattern matching."""
 
         oid_pattern: Annotated[
-            str, u.Field(description="Regex pattern used for schema OID detection"),
+            str,
+            u.Field(description="Regex pattern used for schema OID detection"),
         ] = ""
 
         dn_patterns: Annotated[
@@ -40,7 +41,8 @@ class FlextLdifModelsSettingsCriteria:
             u.Field(description="Set of attribute names that indicate this server"),
         ] = frozenset()
         keyword_patterns: Annotated[
-            t.StrSequence, u.Field(description="Keywords to search in attribute names"),
+            t.StrSequence,
+            u.Field(description="Keywords to search in attribute names"),
         ] = ()
         detection_string: Annotated[
             str | None,
@@ -98,7 +100,8 @@ class FlextLdifModelsSettingsCriteria:
             u.Field(description="At least one of these attributes must exist"),
         ] = None
         dn_pattern: Annotated[
-            str | None, u.Field(description="Regex pattern that DN must match"),
+            str | None,
+            u.Field(description="Regex pattern that DN must match"),
         ] = None
         is_schema: Annotated[
             bool | None,
@@ -132,7 +135,8 @@ class FlextLdifModelsSettingsCriteria:
             ),
         ]
         original_entry_dn: Annotated[
-            str, u.Field(..., description="Original DN as parsed from LDIF"),
+            str,
+            u.Field(..., description="Original DN as parsed from LDIF"),
         ]
         cleaned_dn: Annotated[str, u.Field(..., description="Cleaned/normalized DN")]
         original_dn_line: Annotated[
@@ -144,7 +148,8 @@ class FlextLdifModelsSettingsCriteria:
             u.Field(description="Original attribute lines from LDIF"),
         ] = None
         dn_was_base64: Annotated[
-            bool, u.Field(description="Whether DN was base64 encoded"),
+            bool,
+            u.Field(description="Whether DN was base64 encoded"),
         ] = False
         original_attribute_case: Annotated[
             t.MutableStrMapping | None,

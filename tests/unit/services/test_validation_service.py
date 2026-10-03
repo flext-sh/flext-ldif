@@ -24,10 +24,13 @@ class TestsFlextLdifValidationService:
 
     @staticmethod
     @pytest.mark.parametrize(
-        "name", c.Tests.VALIDATION_VALID_OC_NAMES, ids=c.Tests.VALIDATION_VALID_OC_NAMES,
+        "name",
+        c.Tests.VALIDATION_VALID_OC_NAMES,
+        ids=c.Tests.VALIDATION_VALID_OC_NAMES,
     )
     def test_validate_attribute_name_accepts_valid_descriptors(
-        api: p.Ldif.LdifClient, name: str,
+        api: p.Ldif.LdifClient,
+        name: str,
     ) -> None:
         """Test validate attribute name accepts valid descriptors."""
         result = api.validate_attribute_name(name)
@@ -37,10 +40,13 @@ class TestsFlextLdifValidationService:
 
     @staticmethod
     @pytest.mark.parametrize(
-        "name", _INVALID_DESCRIPTORS, ids=("named", "empty", "space", "embedded-space"),
+        "name",
+        _INVALID_DESCRIPTORS,
+        ids=("named", "empty", "space", "embedded-space"),
     )
     def test_validate_attribute_name_rejects_invalid_descriptors(
-        api: p.Ldif.LdifClient, name: str,
+        api: p.Ldif.LdifClient,
+        name: str,
     ) -> None:
         """Test validate attribute name rejects invalid descriptors."""
         result = api.validate_attribute_name(name)
@@ -50,10 +56,13 @@ class TestsFlextLdifValidationService:
 
     @staticmethod
     @pytest.mark.parametrize(
-        "name", c.Tests.VALIDATION_VALID_OC_NAMES, ids=c.Tests.VALIDATION_VALID_OC_NAMES,
+        "name",
+        c.Tests.VALIDATION_VALID_OC_NAMES,
+        ids=c.Tests.VALIDATION_VALID_OC_NAMES,
     )
     def test_validate_objectclass_name_accepts_valid_descriptors(
-        api: p.Ldif.LdifClient, name: str,
+        api: p.Ldif.LdifClient,
+        name: str,
     ) -> None:
         """Test validate objectclass name accepts valid descriptors."""
         result = api.validate_objectclass_name(name)
@@ -63,10 +72,13 @@ class TestsFlextLdifValidationService:
 
     @staticmethod
     @pytest.mark.parametrize(
-        "name", _INVALID_DESCRIPTORS, ids=("named", "empty", "space", "embedded-space"),
+        "name",
+        _INVALID_DESCRIPTORS,
+        ids=("named", "empty", "space", "embedded-space"),
     )
     def test_validate_objectclass_name_rejects_invalid_descriptors(
-        api: p.Ldif.LdifClient, name: str,
+        api: p.Ldif.LdifClient,
+        name: str,
     ) -> None:
         """Test validate objectclass name rejects invalid descriptors."""
         result = api.validate_objectclass_name(name)
@@ -76,10 +88,12 @@ class TestsFlextLdifValidationService:
 
     @staticmethod
     @pytest.mark.parametrize(
-        "name", [*c.Tests.VALIDATION_VALID_OC_NAMES, *_INVALID_DESCRIPTORS],
+        "name",
+        [*c.Tests.VALIDATION_VALID_OC_NAMES, *_INVALID_DESCRIPTORS],
     )
     def test_objectclass_validation_agrees_with_attribute_validation(
-        api: p.Ldif.LdifClient, name: str,
+        api: p.Ldif.LdifClient,
+        name: str,
     ) -> None:
         """Both public descriptor checks share one RFC 4512 verdict."""
         attribute_verdict = u.Tests.assert_success(api.validate_attribute_name(name))
@@ -95,7 +109,8 @@ class TestsFlextLdifValidationService:
         [c.Tests.VALIDATION_VALID_OC_NAMES[0], c.Tests.VALIDATION_INVALID_DESCRIPTOR],
     )
     def test_validate_attribute_name_is_idempotent(
-        api: p.Ldif.LdifClient, name: str,
+        api: p.Ldif.LdifClient,
+        name: str,
     ) -> None:
         """Repeated validation of the same descriptor is stable."""
         first = u.Tests.assert_success(api.validate_attribute_name(name))

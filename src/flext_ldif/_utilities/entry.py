@@ -23,7 +23,8 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def get_attribute_values(
-        entry: p.Ldif.Entry, attribute_name: str,
+        entry: p.Ldif.Entry,
+        attribute_name: str,
     ) -> t.MutableSequenceOf[str]:
         """Get all values for a specific attribute (case-insensitive).
 
@@ -66,7 +67,8 @@ class FlextLdifUtilitiesEntry:
             The resulting ``t.MutableSequenceOf[str]``.
         """
         return FlextLdifUtilitiesEntry.get_attribute_values(
-            entry, c.Ldif.DictKeys.OBJECTCLASS,
+            entry,
+            c.Ldif.DictKeys.OBJECTCLASS,
         )
 
     @staticmethod
@@ -96,7 +98,8 @@ class FlextLdifUtilitiesEntry:
 
         """
         return object_class in FlextLdifUtilitiesEntry.get_attribute_values(
-            entry, c.Ldif.DictKeys.OBJECTCLASS,
+            entry,
+            c.Ldif.DictKeys.OBJECTCLASS,
         )
 
     @staticmethod
@@ -126,7 +129,9 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def transform_entry_attributes_between_oid_rfc(
-        entry: p.Ldif.Entry, source_type_norm: str, target_type_norm: str,
+        entry: p.Ldif.Entry,
+        source_type_norm: str,
+        target_type_norm: str,
     ) -> t.MutableStrSequenceMapping | None:
         """Compute transformed attribute map between OID and RFC formats.
 
@@ -154,7 +159,9 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def transform_schema_dn_between_oid_rfc(
-        entry: p.Ldif.Entry, source_type_norm: str, target_type_norm: str,
+        entry: p.Ldif.Entry,
+        source_type_norm: str,
+        target_type_norm: str,
     ) -> str | None:
         """Compute transformed schema DN between OID and RFC conventions.
 
@@ -186,7 +193,8 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def matches_filter(
-        entry: p.Ldif.Entry, filter_func: Callable[[p.Ldif.Entry], bool] | None = None,
+        entry: p.Ldif.Entry,
+        filter_func: Callable[[p.Ldif.Entry], bool] | None = None,
     ) -> bool:
         """Check if entry matches a filter function.
 
@@ -372,7 +380,8 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def validate_naming_attribute(
-        entry: p.Ldif.EntryValidationSubject, dn_value: str,
+        entry: p.Ldif.EntryValidationSubject,
+        dn_value: str,
     ) -> t.MutableSequenceOf[str]:
         """Validate naming attribute presence per RFC 4512 section 2.3.
 
@@ -406,7 +415,8 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def validate_objectclass(
-        entry: p.Ldif.EntryValidationSubject, dn_value: str,
+        entry: p.Ldif.EntryValidationSubject,
+        dn_value: str,
     ) -> t.MutableSequenceOf[str]:
         """Validate objectClass presence per RFC 4512 section 2.4.1.
 
@@ -564,7 +574,8 @@ class FlextLdifUtilitiesEntry:
                 normalized[key_str] = raw_value
                 continue
             if isinstance(raw_value, Sequence) and not isinstance(
-                raw_value, str | bytes,
+                raw_value,
+                str | bytes,
             ):
                 normalized[key_str] = [
                     str(item) for item in u.Cli.json_as_sequence(raw_value)
@@ -577,7 +588,9 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def analyze_minimal_differences(
-        original: str, converted: str | None, context: str = "entry",
+        original: str,
+        converted: str | None,
+        context: str = "entry",
     ) -> t.Ldif.MutableMetadataMapping:
         """Analyze minimal differences between original and converted strings.
 
@@ -603,7 +616,8 @@ class FlextLdifUtilitiesEntry:
     def analyze_differences(
         entry_attrs: t.Ldif.MetadataInputMapping,
         converted_attrs: MutableMapping[
-            str, t.MutableSequenceOf[t.Ldif.AttributeValue],
+            str,
+            t.MutableSequenceOf[t.Ldif.AttributeValue],
         ],
         original_dn: str,
         cleaned_dn: str,
@@ -689,7 +703,8 @@ class FlextLdifUtilitiesEntry:
     @staticmethod
     def convert_boolean_attributes(
         attributes: t.MappingKV[
-            str, t.MutableSequenceOf[str] | t.MutableSequenceOf[bytes] | str | bytes,
+            str,
+            t.MutableSequenceOf[str] | t.MutableSequenceOf[bytes] | str | bytes,
         ],
         boolean_attr_names: set[str],
         *,
@@ -822,7 +837,8 @@ class FlextLdifUtilitiesEntry:
             checks.append(
                 bool(
                     c.Ldif.compile_pattern(
-                        resolved_config.dn_pattern, ignorecase=True,
+                        resolved_config.dn_pattern,
+                        ignorecase=True,
                     ).search(dn_value),
                 ),
             )

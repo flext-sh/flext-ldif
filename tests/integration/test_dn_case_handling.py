@@ -58,7 +58,8 @@ class TestsFlextLdifDnCaseHandling:
         ],
     )
     def test_later_variants_return_the_original_canonical(
-        registry: m.Ldif.DnRegistry, variant: str,
+        registry: m.Ldif.DnRegistry,
+        variant: str,
     ) -> None:
         """Registering any case variant returns the already-canonical form."""
         registry.register_dn("CN=Admin,DC=Example,DC=Com")
@@ -111,7 +112,8 @@ class TestsFlextLdifDnCaseHandling:
         ],
     )
     def test_resolution_is_case_insensitive(
-        registry: m.Ldif.DnRegistry, lookup: str,
+        registry: m.Ldif.DnRegistry,
+        lookup: str,
     ) -> None:
         """Any case variant resolves to the registered canonical DN."""
         registry.register_dn("cn=test,dc=example,dc=com")
@@ -120,10 +122,12 @@ class TestsFlextLdifDnCaseHandling:
 
     @staticmethod
     @pytest.mark.parametrize(
-        "lookup", ["cn=admin, dc=com", "cn=admin,  dc=com", "CN=Admin , DC=Com"],
+        "lookup",
+        ["cn=admin, dc=com", "cn=admin,  dc=com", "CN=Admin , DC=Com"],
     )
     def test_resolution_ignores_whitespace_between_components(
-        registry: m.Ldif.DnRegistry, lookup: str,
+        registry: m.Ldif.DnRegistry,
+        lookup: str,
     ) -> None:
         """Insignificant whitespace does not affect canonical resolution."""
         registry.register_dn("cn=admin,dc=com")
@@ -169,7 +173,8 @@ class TestsFlextLdifDnCaseHandling:
         ],
     )
     def test_multiple_cases_for_one_dn_is_inconsistent(
-        registry: m.Ldif.DnRegistry, variants: t.VariadicTuple[str],
+        registry: m.Ldif.DnRegistry,
+        variants: t.VariadicTuple[str],
     ) -> None:
         """Two or more case variants of the same DN report inconsistency."""
         for variant in variants:

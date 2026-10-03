@@ -34,7 +34,8 @@ class FlextLdifFilters(s):
 
     @classmethod
     def _extract_allowed_oids(
-        cls, allowed_oids: m.Ldif.WhitelistRules | t.FrozensetMapping,
+        cls,
+        allowed_oids: m.Ldif.WhitelistRules | t.FrozensetMapping,
     ) -> t.FrozensetMapping:
         """Extract allowed OID sets keyed by canonical schema attribute names.
 
@@ -50,7 +51,8 @@ class FlextLdifFilters(s):
 
     @classmethod
     def _extract_oid_from_schema_attr(
-        cls, values: t.MutableSequenceOf[str],
+        cls,
+        values: t.MutableSequenceOf[str],
     ) -> str | None:
         """Extract OID from schema attribute value.
 

@@ -184,7 +184,8 @@ class FlextLdifEntries(s):
 
     @staticmethod
     def remove_attributes(
-        entry: m.Ldif.Entry, attributes_to_remove: t.MutableSequenceOf[str],
+        entry: m.Ldif.Entry,
+        attributes_to_remove: t.MutableSequenceOf[str],
     ) -> p.Result[m.Ldif.Entry]:
         """Remove selected attributes from a single entry.
 
@@ -201,7 +202,9 @@ class FlextLdifEntries(s):
         }
         dn_value = entry.dn if entry.dn is not None else entry.dn_str
         return m.Ldif.Entry.create(
-            dn=dn_value, attributes=new_attrs, metadata=entry.metadata,
+            dn=dn_value,
+            attributes=new_attrs,
+            metadata=entry.metadata,
         )
 
     def run_configured_operation(self) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:

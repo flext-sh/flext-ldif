@@ -22,7 +22,8 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
     """Base class for LDIF/LDAP server servers built on `s`."""
 
     model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
-        arbitrary_types_allowed=True, extra="forbid",
+        arbitrary_types_allowed=True,
+        extra="forbid",
     )
     server_type: ClassVar[str] = c.Ldif.UNKNOWN_VALUE
     priority: ClassVar[int] = 0
@@ -130,7 +131,8 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         instance: Self = object.__new__(cls)
         filtered_kwargs: t.MutableConfigValueMapping = {}
         execute_kwargs: t.MutableMappingKV[
-            str, str | int | bool | t.MutableSequenceOf[m.Ldif.Entry],
+            str,
+            str | int | bool | t.MutableSequenceOf[m.Ldif.Entry],
         ] = {}
         for k, v in kwargs.items():
             value = v
@@ -142,7 +144,9 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         if cls.auto_execute:
             ldif_text, entries, operation = cls._extract_execute_params(execute_kwargs)
             result = instance.execute(
-                ldif_text=ldif_text, entries=entries, operation=operation,
+                ldif_text=ldif_text,
+                entries=entries,
+                operation=operation,
             )
             unwrapped = result.value
             if isinstance(unwrapped, cls):
@@ -188,15 +192,21 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
             The resulting ``Self | m.Ldif.Entry | str``.
         """
         builder_fields = FlextLdifServerMethodsMixin.builder_fields_or_none(
-            fields, frozenset({"ldif_text", "entries", "operation"}), server, settings,
+            fields,
+            frozenset({"ldif_text", "entries", "operation"}),
+            server,
+            settings,
         )
         if builder_fields is not None:
             configured = super().__call__(
-                server=server, settings=settings, **builder_fields,
+                server=server,
+                settings=settings,
+                **builder_fields,
             )
             return cast("Self", configured)
         execute_kwargs: t.MutableMappingKV[
-            str, str | int | bool | t.MutableSequenceOf[m.Ldif.Entry],
+            str,
+            str | int | bool | t.MutableSequenceOf[m.Ldif.Entry],
         ] = {}
         ldif_text_raw = fields.get("ldif_text")
         if ldif_text_raw is not None:
@@ -236,7 +246,8 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
     def _extract_execute_params(
         cls,
         kwargs: t.MutableMappingKV[
-            str, str | int | bool | t.MutableSequenceOf[m.Ldif.Entry],
+            str,
+            str | int | bool | t.MutableSequenceOf[m.Ldif.Entry],
         ],
     ) -> tuple[str | None, t.MutableSequenceOf[m.Ldif.Entry] | None, str | None]:
         """Extract type-safe execution parameters from kwargs.
@@ -296,7 +307,9 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
             ) or mro_cls.__name__.endswith(("Schema", "Acl", "Entry")):
                 continue
             server_type = getattr(
-                getattr(mro_cls, "Constants", None), "SERVER_TYPE", None,
+                getattr(mro_cls, "Constants", None),
+                "SERVER_TYPE",
+                None,
             )
             if isinstance(server_type, str) and server_type:
                 normalized: str = u.Ldif.normalize_server_type(server_type)
@@ -316,7 +329,8 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
             registry_obj: p.Ldif.ServerRegistry | t.JsonValue,
         ) -> (
             Callable[
-                [str, p.Ldif.SchemaServer | t.JsonValue | FlextLdifServersBase], None,
+                [str, p.Ldif.SchemaServer | t.JsonValue | FlextLdifServersBase],
+                None,
             ]
             | None
         ):
@@ -341,7 +355,8 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
 
         def perform_registration(
             register_func: Callable[
-                [str, p.Ldif.SchemaServer | t.JsonValue | FlextLdifServersBase], None,
+                [str, p.Ldif.SchemaServer | t.JsonValue | FlextLdifServersBase],
+                None,
             ]
             | None,
             instance: p.Ldif.SchemaServer | FlextLdifServersBase,
@@ -361,7 +376,8 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
     @staticmethod
     def _extract_entries(
         kwargs: t.MutableMappingKV[
-            str, str | int | bool | t.MutableSequenceOf[m.Ldif.Entry],
+            str,
+            str | int | bool | t.MutableSequenceOf[m.Ldif.Entry],
         ],
     ) -> t.MutableSequenceOf[m.Ldif.Entry] | None:
         """Extract and validate entries parameter.
@@ -388,7 +404,8 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
     @staticmethod
     def _extract_ldif_text(
         kwargs: t.MutableMappingKV[
-            str, str | int | bool | t.MutableSequenceOf[m.Ldif.Entry],
+            str,
+            str | int | bool | t.MutableSequenceOf[m.Ldif.Entry],
         ],
     ) -> str | None:
         """Extract and validate ldif_text parameter.
@@ -413,7 +430,8 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
     @staticmethod
     def _extract_operation(
         kwargs: t.MutableMappingKV[
-            str, str | int | bool | t.MutableSequenceOf[m.Ldif.Entry],
+            str,
+            str | int | bool | t.MutableSequenceOf[m.Ldif.Entry],
         ],
     ) -> str | None:
         """Extract and validate operation parameter.

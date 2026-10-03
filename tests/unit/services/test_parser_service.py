@@ -23,7 +23,8 @@ class TestsFlextLdifParserService:
 
     @staticmethod
     def test_parse_ldif_from_path_uses_file_flow(
-        api: p.Ldif.LdifClient, tmp_path: Path,
+        api: p.Ldif.LdifClient,
+        tmp_path: Path,
     ) -> None:
         """Test parse ldif from path uses file flow."""
         fixture_file = tmp_path / c.Tests.PARSER_PATH_FLOW_FILENAME
@@ -67,14 +68,17 @@ class TestsFlextLdifParserService:
 
     @staticmethod
     def test_parse_ldif_file_returns_failure_when_decode_fails(
-        api: p.Ldif.LdifClient, tmp_path: Path,
+        api: p.Ldif.LdifClient,
+        tmp_path: Path,
     ) -> None:
         """Test parse ldif file returns failure when decode fails."""
         invalid_utf8_path = tmp_path / c.Tests.PARSER_INVALID_UTF8_FILENAME
         invalid_utf8_path.write_bytes(c.Tests.WRITER_INVALID_UTF8_BYTES)
 
         result = api.parse_ldif_file(
-            invalid_utf8_path, server_type=c.Tests.RFC, encoding="utf-8",
+            invalid_utf8_path,
+            server_type=c.Tests.RFC,
+            encoding="utf-8",
         )
 
         tm.fail(result, has="utf-8")

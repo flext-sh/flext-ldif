@@ -57,7 +57,8 @@ class FlextLdifUtilitiesNormalizeDnTransformer(
 
     @override
     def apply(
-        self, item: FlextLdifModels.Ldif.Entry,
+        self,
+        item: FlextLdifModels.Ldif.Entry,
     ) -> p.Result[FlextLdifModels.Ldif.Entry]:
         """Apply DN normalization to an entry.
 

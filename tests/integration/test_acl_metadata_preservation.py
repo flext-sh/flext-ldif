@@ -55,7 +55,9 @@ class TestsFlextLdifAclMetadataPreservation:
 
     @staticmethod
     def _parse_single(
-        api: p.Ldif.LdifClient, ldif_text: str, server_type: str,
+        api: p.Ldif.LdifClient,
+        ldif_text: str,
+        server_type: str,
     ) -> m.Ldif.Entry:
         """Parse LDIF that must yield exactly one entry; assert the r[T] success.
 
@@ -141,7 +143,8 @@ class TestsFlextLdifAclMetadataPreservation:
         tm.that(extensions.get(c.Ldif.ACL_DENY_GROUP_OVERRIDE), eq=True)
         tm.that(extensions.get(c.Ldif.ACL_APPEND_TO_ALL), eq=True)
         tm.that(
-            extensions.get(c.Ldif.ACL_BIND_IP_FILTER), eq="orclipaddress=192.168.1.*",
+            extensions.get(c.Ldif.ACL_BIND_IP_FILTER),
+            eq="orclipaddress=192.168.1.*",
         )
         assert (
             extensions.get(c.Ldif.ACL_CONSTRAIN_TO_ADDED_OBJECT) == "objectclass=person"
@@ -218,7 +221,11 @@ class TestsFlextLdifAclMetadataPreservation:
         ],
     )
     def test_oud_feature_preserved_in_extensions(
-        self, api: p.Ldif.LdifClient, aci: str, extension_key: str, expected: str,
+        self,
+        api: p.Ldif.LdifClient,
+        aci: str,
+        extension_key: str,
+        expected: str,
     ) -> None:
         """Each OUD ACI feature surfaces under its extension key after parsing."""
         ldif_text = (
@@ -247,7 +254,8 @@ class TestsFlextLdifAclMetadataPreservation:
         extensions = self._extensions(self._parse_single(api, ldif_text, c.Tests.OUD))
         assert extensions.get(c.Ldif.ACL_TARGETATTR_FILTERS) == "add=cn:(cn=admin)"
         tm.that(
-            extensions.get(c.Ldif.ACL_TARGET_CONTROL), eq="1.3.6.1.4.1.42.2.27.9.5.2",
+            extensions.get(c.Ldif.ACL_TARGET_CONTROL),
+            eq="1.3.6.1.4.1.42.2.27.9.5.2",
         )
         tm.that(extensions.get(c.Ldif.ACL_EXTOP), eq="1.3.6.1.4.1.26027.1.6.1")
         tm.that(extensions.get(c.Ldif.ACL_BIND_IP_FILTER), eq="192.168.1.0/24")

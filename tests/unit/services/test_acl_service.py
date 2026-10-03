@@ -83,7 +83,10 @@ class TestsFlextLdifAclService:
         ),
     )
     def test_parse_acl_string_failure_cases(
-        scenario: str, acl_string: str, server_type: str, svc: p.Ldif.LdifClient,
+        scenario: str,
+        acl_string: str,
+        server_type: str,
+        svc: p.Ldif.LdifClient,
     ) -> None:
         """Test parse acl string failure cases."""
         result = svc.parse_acl_string(acl_string, server_type)
@@ -108,7 +111,10 @@ class TestsFlextLdifAclService:
         tuple((sc, data[0], data[1]) for sc, data in c.Tests.ACL_SERVER_CASES.items()),
     )
     def test_parse_acl_string_parametrized(
-        scenario: str, acl_string: str, server_type: str, svc: p.Ldif.LdifClient,
+        scenario: str,
+        acl_string: str,
+        server_type: str,
+        svc: p.Ldif.LdifClient,
     ) -> None:
         """Test parse acl string parametrized."""
         result = svc.parse_acl_string(acl_string, server_type)

@@ -45,7 +45,8 @@ class TestsFlextLdifSystematicFixtureCoverage:
         """Return a schema LDIF sample capped to ``max_definitions`` defs."""
         lines = fixture_data.splitlines()
         first_dn = next(
-            (line for line in lines if line.startswith("dn:")), "dn: cn=schema",
+            (line for line in lines if line.startswith("dn:")),
+            "dn: cn=schema",
         )
         selected_lines: list[str] = [first_dn]
         current_chunk: list[str] = []
@@ -80,7 +81,8 @@ class TestsFlextLdifSystematicFixtureCoverage:
     # ------------------------------------------------------------------
     @staticmethod
     def _assert_roundtrip_preserves_dns(
-        api: p.Ldif.LdifClient, content: str,
+        api: p.Ldif.LdifClient,
+        content: str,
     ) -> int:
         """Parse -> write -> parse ``content`` and assert DN-set preservation.
 

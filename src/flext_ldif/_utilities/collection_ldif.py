@@ -19,7 +19,9 @@ class FlextLdifUtilitiesCollectionLdif:
 
     @staticmethod
     def find(
-        items: t.JsonList, *, predicate: Callable[..., bool],
+        items: t.JsonList,
+        *,
+        predicate: Callable[..., bool],
     ) -> t.JsonValue | None:
         """Find first item matching predicate.
 

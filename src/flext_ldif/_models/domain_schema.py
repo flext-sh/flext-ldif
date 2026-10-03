@@ -38,10 +38,12 @@ class FlextLdifModelsDomainSchema:
         name: Annotated[str, u.Field(..., description="Attribute name")]
         oid: Annotated[str, u.Field(..., description="Attribute OID")]
         desc: Annotated[
-            str | None, u.Field(description="Attribute description (RFC 4512 DESC)"),
+            str | None,
+            u.Field(description="Attribute description (RFC 4512 DESC)"),
         ] = None
         sup: Annotated[
-            str | None, u.Field(description="Superior attribute type (RFC 4512 SUP)"),
+            str | None,
+            u.Field(description="Superior attribute type (RFC 4512 SUP)"),
         ] = None
         equality: Annotated[
             str | None,
@@ -52,16 +54,20 @@ class FlextLdifModelsDomainSchema:
             u.Field(description="Ordering matching rule (RFC 4512 ORDERING)"),
         ] = None
         substr: Annotated[
-            str | None, u.Field(description="Substring matching rule (RFC 4512 SUBSTR)"),
+            str | None,
+            u.Field(description="Substring matching rule (RFC 4512 SUBSTR)"),
         ] = None
         syntax: Annotated[
-            str | None, u.Field(description="Attribute syntax OID (RFC 4512 SYNTAX)"),
+            str | None,
+            u.Field(description="Attribute syntax OID (RFC 4512 SYNTAX)"),
         ] = None
         length: Annotated[
-            int | None, u.Field(description="Maximum length constraint"),
+            int | None,
+            u.Field(description="Maximum length constraint"),
         ] = None
         usage: Annotated[
-            str | None, u.Field(description="Attribute usage (RFC 4512 USAGE)"),
+            str | None,
+            u.Field(description="Attribute usage (RFC 4512 USAGE)"),
         ] = None
         single_value: Annotated[
             bool,
@@ -82,7 +88,8 @@ class FlextLdifModelsDomainSchema:
             ),
         ] = False
         immutable: Annotated[
-            bool, u.Field(description="Whether attribute is immutable (OUD extension)"),
+            bool,
+            u.Field(description="Whether attribute is immutable (OUD extension)"),
         ] = False
         user_modification: Annotated[
             bool,
@@ -91,7 +98,8 @@ class FlextLdifModelsDomainSchema:
             ),
         ] = True
         obsolete: Annotated[
-            bool, u.Field(description="Whether attribute is obsolete (OUD extension)"),
+            bool,
+            u.Field(description="Whether attribute is obsolete (OUD extension)"),
         ] = False
         x_origin: Annotated[
             str | None,
@@ -155,7 +163,8 @@ class FlextLdifModelsDomainSchema:
             ),
         ]
         desc: Annotated[
-            str | None, u.Field(None, description="Syntax description and purpose"),
+            str | None,
+            u.Field(None, description="Syntax description and purpose"),
         ]
         type_category: Annotated[
             str,
@@ -164,13 +173,16 @@ class FlextLdifModelsDomainSchema:
             ),
         ] = "string"
         is_binary: Annotated[
-            bool, u.Field(description="Whether this syntax uses binary encoding"),
+            bool,
+            u.Field(description="Whether this syntax uses binary encoding"),
         ] = False
         max_length: Annotated[
-            int | None, u.Field(description="Maximum length in bytes (if applicable)"),
+            int | None,
+            u.Field(description="Maximum length in bytes (if applicable)"),
         ] = None
         case_insensitive: Annotated[
-            bool, u.Field(description="Whether comparisons are case-insensitive"),
+            bool,
+            u.Field(description="Whether comparisons are case-insensitive"),
         ] = False
         allows_multivalued: Annotated[
             bool,
@@ -225,7 +237,8 @@ class FlextLdifModelsDomainSchema:
         name: Annotated[str, u.Field(..., description="Object class name")]
         oid: Annotated[str, u.Field(..., description="Object class OID")]
         desc: Annotated[
-            str | None, u.Field(description="Object class description (RFC 4512 DESC)"),
+            str | None,
+            u.Field(description="Object class description (RFC 4512 DESC)"),
         ] = None
         sup: Annotated[
             str | t.MutableSequenceOf[str] | None,

@@ -39,7 +39,8 @@ class TestsFlextLdifApiIntegration:
         [(c.Tests.RFC_SAMPLE_LDIF_BASIC, 1), (c.Tests.RFC_SAMPLE_LDIF_MULTIPLE, 2)],
     )
     def test_parse_ldif_returns_expected_entry_count(
-        ldif_content: str, expected_entries: int,
+        ldif_content: str,
+        expected_entries: int,
     ) -> None:
         """parse_ldif succeeds and yields entries with populated public state."""
         # Act
@@ -133,7 +134,8 @@ class TestsFlextLdifApiIntegration:
         assert entry.attributes is not None
         tm.that(entry.dn.value, eq=c.Tests.RFC_TEST_DN)
         tm.that(
-            entry.attributes.attributes[c.Tests.NAME_CN], eq=[c.Tests.ATTR_VALUE_TEST],
+            entry.attributes.attributes[c.Tests.NAME_CN],
+            eq=[c.Tests.ATTR_VALUE_TEST],
         )
 
     @staticmethod
@@ -237,7 +239,9 @@ class TestsFlextLdifApiIntegration:
 
         # Act
         categorization = ldif.categorization(
-            options=options, base_dn="dc=override,dc=example", server_type=c.Tests.OUD,
+            options=options,
+            base_dn="dc=override,dc=example",
+            server_type=c.Tests.OUD,
         )
 
         # Assert
@@ -251,7 +255,8 @@ class TestsFlextLdifApiIntegration:
         """Without an override, categorization keeps the options base DN."""
         # Arrange
         options = m.Ldif.MigrateOptions(
-            base_dn="dc=options,dc=example", forbidden_attributes=["userPassword"],
+            base_dn="dc=options,dc=example",
+            forbidden_attributes=["userPassword"],
         )
 
         # Act
@@ -301,7 +306,8 @@ class TestsFlextLdifApiIntegration:
             input_dir=input_dir,
             output_dir=output_dir,
             settings=m.Ldif.TransformConfig.servers(
-                source_server=c.Tests.OID, target_server=c.Tests.OUD,
+                source_server=c.Tests.OID,
+                target_server=c.Tests.OUD,
             ),
             options=m.Ldif.MigrateOptions(output_filename="custom.ldif"),
         )

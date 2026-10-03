@@ -26,11 +26,15 @@ class TestsFlextLdifOidAclEndToEnd:
 
     @staticmethod
     def _convert(
-        api: p.Ldif.LdifClient, dn: str, attrs: dict[str, list[str]],
+        api: p.Ldif.LdifClient,
+        dn: str,
+        attrs: dict[str, list[str]],
     ) -> t.MutableStrSequenceMapping:
         entry = u.Tests.create_real_entry(dn=dn, attributes=attrs)
         result = api.convert_model(
-            c.Ldif.ServerTypes.OID, c.Ldif.ServerTypes.OUD, entry,
+            c.Ldif.ServerTypes.OID,
+            c.Ldif.ServerTypes.OUD,
+            entry,
         )
         converted = u.Tests.assert_success(result)
         if not isinstance(converted, m.Ldif.Entry) or converted.attributes is None:

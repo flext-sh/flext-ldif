@@ -43,7 +43,8 @@ class TestsFlextLdifUtilitiesCore:
         ],
     )
     def test_split_preserves_escaped_separators(
-        dn: str, expected: list[str],
+        dn: str,
+        expected: list[str],
     ) -> None:
         """Split keeps escaped commas/backslashes inside their component."""
         tm.that(u.Ldif.split(dn), eq=expected)
@@ -115,7 +116,8 @@ class TestsFlextLdifUtilitiesCore:
         [("", "empty"), ("no_equals", "missing '=' separator")],
     )
     def test_parse_reports_failure_for_malformed_dn(
-        bad_dn: str, error_fragment: str,
+        bad_dn: str,
+        error_fragment: str,
     ) -> None:
         """Parse returns a failure result describing the malformed input."""
         tm.fail(u.Ldif.parse(bad_dn), contains=error_fragment)
@@ -153,7 +155,8 @@ class TestsFlextLdifUtilitiesCore:
 
     @staticmethod
     @pytest.mark.parametrize(
-        "value", ["Test, Value", "plain", "a+b=c", "trailing ", " leading"],
+        "value",
+        ["Test, Value", "plain", "a+b=c", "trailing ", " leading"],
     )
     def test_esc_unesc_roundtrip_is_identity(value: str) -> None:
         """unesc(esc(value)) reconstructs the original value."""
@@ -195,7 +198,10 @@ class TestsFlextLdifUtilitiesCore:
     ) -> None:
         """An AUXILIARY class lacking SUP gains the 'top' superior."""
         oc = m.Ldif.SchemaObjectClass(
-            oid="1.2.3.4", name="orcldasattrcategory", kind=kind, sup=None,
+            oid="1.2.3.4",
+            name="orcldasattrcategory",
+            kind=kind,
+            sup=None,
         )
         u.Ldif.fix_missing_sup(oc)
         tm.that(oc.sup, eq="top")
@@ -241,11 +247,16 @@ class TestsFlextLdifUtilitiesCore:
         ],
     )
     def test_fix_kind_mismatch_aligns_kind_to_superior(
-        start_kind: c.Ldif.SchemaKind, sup: str, expected_kind: c.Ldif.SchemaKind,
+        start_kind: c.Ldif.SchemaKind,
+        sup: str,
+        expected_kind: c.Ldif.SchemaKind,
     ) -> None:
         """Kind is corrected to match the kind of its declared superior."""
         oc = m.Ldif.SchemaObjectClass(
-            oid="1.2.3.4.9", name="testClass", kind=start_kind, sup=sup,
+            oid="1.2.3.4.9",
+            name="testClass",
+            kind=start_kind,
+            sup=sup,
         )
         u.Ldif.fix_kind_mismatch(oc)
         tm.that(oc.kind, eq=expected_kind)
@@ -330,10 +341,12 @@ class TestsFlextLdifUtilitiesCore:
 
     @staticmethod
     @pytest.mark.parametrize(
-        ("raw", "expected"), [("oracle_oid", "oid"), ("rfc", "rfc")],
+        ("raw", "expected"),
+        [("oracle_oid", "oid"), ("rfc", "rfc")],
     )
     def test_normalize_server_type_maps_aliases_to_canonical(
-        raw: str, expected: str,
+        raw: str,
+        expected: str,
     ) -> None:
         """Vendor aliases normalize to their canonical server type."""
         tm.that(u.Ldif.normalize_server_type(raw), eq=expected)
@@ -357,9 +370,13 @@ class TestsFlextLdifUtilitiesCore:
         ],
     )
     def test_validation_rule_flags_derive_from_server_capabilities(
-        server_type: str | c.Ldif.ServerTypes, flag: str, *, expected: bool,
+        server_type: str | c.Ldif.ServerTypes,
+        flag: str,
+        *,
+        expected: bool,
     ) -> None:
         """Validation flags reflect each server type's declared capabilities."""
         tm.that(
-            u.Ldif.validation_rule_flags(server_type).model_dump()[flag], eq=expected,
+            u.Ldif.validation_rule_flags(server_type).model_dump()[flag],
+            eq=expected,
         )

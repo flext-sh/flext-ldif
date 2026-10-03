@@ -72,7 +72,9 @@ class TestsFlextLdifRfcDockerReal:
         ],
     )
     def test_parse_fixture_returns_success_with_wellformed_entries(
-        fixtures_dir: Path, server_dir: str, filename: str,
+        fixtures_dir: Path,
+        server_dir: str,
+        filename: str,
     ) -> None:
         """Parsing a real fixture yields success and RFC-well-formed entries."""
         # Arrange
@@ -153,7 +155,9 @@ class TestsFlextLdifRfcDockerReal:
         ],
     )
     def test_parse_integration_fixture_yields_resolved_result(
-        fixtures_dir: Path, server_dir: str, filename: str,
+        fixtures_dir: Path,
+        server_dir: str,
+        filename: str,
     ) -> None:
         """Integration fixtures resolve to a definite success-or-failure r[T]."""
         # Arrange
@@ -198,13 +202,16 @@ class TestsFlextLdifRfcDockerReal:
         entry = ldif_m.Ldif.Entry(
             dn=ldif_m.Ldif.DN(value="cn=test,dc=example,dc=com"),
             attributes=ldif_m.Ldif.Attributes(
-                attributes={"cn": ["test"]}, attribute_metadata={},
+                attributes={"cn": ["test"]},
+                attribute_metadata={},
             ),
         )
 
         # Act
         result = FlextLdifWriter().write_ldif_file(
-            [entry], tmp_path, server_type=c.Tests.RFC,
+            [entry],
+            tmp_path,
+            server_type=c.Tests.RFC,
         )
 
         # Assert
@@ -214,10 +221,12 @@ class TestsFlextLdifRfcDockerReal:
 
     @staticmethod
     @pytest.mark.parametrize(
-        "subdir", [Path("edge_cases") / "unicode", Path("broken") / "structure"],
+        "subdir",
+        [Path("edge_cases") / "unicode", Path("broken") / "structure"],
     )
     def test_parse_edge_and_broken_fixtures_resolve_cleanly(
-        fixtures_dir: Path, subdir: Path,
+        fixtures_dir: Path,
+        subdir: Path,
     ) -> None:
         """Edge-case and malformed LDIF never crash; each resolves to r[T]."""
         # Arrange
@@ -246,7 +255,8 @@ class TestsFlextLdifRfcDockerReal:
 
     @staticmethod
     def test_roundtrip_preserves_entry_dns(
-        fixtures_dir: Path, tmp_path: Path,
+        fixtures_dir: Path,
+        tmp_path: Path,
     ) -> None:
         """Parse -> write -> re-parse preserves the full set of entry DNs."""
         # Arrange
@@ -264,7 +274,9 @@ class TestsFlextLdifRfcDockerReal:
 
         # Act
         write_result = FlextLdifWriter().write_ldif_file(
-            original_entries, output_file, server_type=c.Tests.OID,
+            original_entries,
+            output_file,
+            server_type=c.Tests.OID,
         )
         tm.ok(write_result)
         reparse_result = FlextLdifParser().parse_ldif_file(output_file)
@@ -282,7 +294,8 @@ class TestsFlextLdifRfcDockerReal:
 
     @staticmethod
     def test_write_reports_statistics_and_persists_all_entries(
-        server_registry: FlextLdifServer, tmp_path: Path,
+        server_registry: FlextLdifServer,
+        tmp_path: Path,
     ) -> None:
         """Writing N entries reports N in statistics and persists N DNs."""
         # Arrange
@@ -305,7 +318,9 @@ class TestsFlextLdifRfcDockerReal:
 
         # Act
         result = FlextLdifWriter(server=server_registry).write_ldif_file(
-            entries, output_file, server_type=c.Tests.RFC,
+            entries,
+            output_file,
+            server_type=c.Tests.RFC,
         )
 
         # Assert — public WriteResponse contract + persisted content

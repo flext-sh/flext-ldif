@@ -56,7 +56,8 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         DETECTION_WEIGHT: ClassVar[int] = 8
         ACL_SDDL_PREFIX_PATTERN: ClassVar[str] = "^(O:|G:|D:|S:)"
         ACL_SDDL_PREFIX_PATTERN_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-            r"^(O:|G:|D:|S:)", re.IGNORECASE,
+            r"^(O:|G:|D:|S:)",
+            re.IGNORECASE,
         )
         ENCODING_UTF8: ClassVar[str] = "utf-8"
         ENCODING_UTF16LE: ClassVar[str] = "utf-16-le"
@@ -167,7 +168,8 @@ class FlextLdifServersAd(FlextLdifServersRfc):
 
         @override
         def can_handle_attribute(
-            self, attr_definition: str | m.Ldif.SchemaAttribute,
+            self,
+            attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Detect AD attribute definitions using centralized constants.
 
@@ -182,7 +184,8 @@ class FlextLdifServersAd(FlextLdifServersRfc):
 
         @override
         def can_handle_objectclass(
-            self, oc_definition: str | m.Ldif.SchemaObjectClass,
+            self,
+            oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Detect AD objectClass definitions using centralized constants.
 
@@ -349,7 +352,9 @@ class FlextLdifServersAd(FlextLdifServersRfc):
 
         @override
         def can_handle(
-            self, entry_dn: str, attributes: t.MutableStrSequenceMapping,
+            self,
+            entry_dn: str,
+            attributes: t.MutableStrSequenceMapping,
         ) -> bool:
             """Detect Active Directory entries based on DN, attributes, or classes.
 

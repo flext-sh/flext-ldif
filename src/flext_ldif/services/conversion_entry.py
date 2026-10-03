@@ -88,17 +88,23 @@ class FlextLdifConversionEntryMixin(
         source_type_norm = source_server_name.lower()
         target_type_norm = str(target_server_type).lower()
         converted_entry = self._prepare_converted_entry(
-            entry, validated_server_type, source_server_name,
+            entry,
+            validated_server_type,
+            source_server_name,
         )
         if source_type_norm != target_type_norm:
             schema_entry_result = self._convert_schema_entry_attributes(
-                source_server, target_server, converted_entry,
+                source_server,
+                target_server,
+                converted_entry,
             )
             if schema_entry_result.failure:
                 return r[t.Ldif.ConvertedModel].from_failure(schema_entry_result)
             converted_entry = schema_entry_result.value
         return self._convert_entry_payload(
-            converted_entry, source_type_norm, target_type_norm,
+            converted_entry,
+            source_type_norm,
+            target_type_norm,
         )
 
     @staticmethod
@@ -133,7 +139,8 @@ class FlextLdifConversionEntryMixin(
             else None
         )
         conversion_analysis = self._analyze_metadata_for_conversion(
-            metadata_for_analysis, validated_server_type,
+            metadata_for_analysis,
+            validated_server_type,
         )
         updated_entry: m.Ldif.Entry = self._update_entry_metadata(
             entry.model_copy(deep=True),
@@ -155,7 +162,9 @@ class FlextLdifConversionEntryMixin(
             The resulting ``p.Result[t.Ldif.ConvertedModel]``.
         """
         transformed_attributes = u.Ldif.transform_entry_attributes_between_oid_rfc(
-            converted_entry, source_type_norm, target_type_norm,
+            converted_entry,
+            source_type_norm,
+            target_type_norm,
         )
         if transformed_attributes is not None:
             converted_entry = converted_entry.model_copy(
@@ -176,13 +185,17 @@ class FlextLdifConversionEntryMixin(
         if acl_conversion.failure:
             return r[t.Ldif.ConvertedModel].from_failure(acl_conversion)
         converted_entry = self._transform_entry_dn(
-            acl_conversion.value, source_type_norm, target_type_norm,
+            acl_conversion.value,
+            source_type_norm,
+            target_type_norm,
         )
         return r[t.Ldif.ConvertedModel].ok(converted_entry)
 
     @staticmethod
     def _transform_entry_dn(
-        converted_entry: m.Ldif.Entry, source_type_norm: str, target_type_norm: str,
+        converted_entry: m.Ldif.Entry,
+        source_type_norm: str,
+        target_type_norm: str,
     ) -> m.Ldif.Entry:
         """Transform schema DN when moving between OID and RFC dialects.
 
@@ -190,7 +203,9 @@ class FlextLdifConversionEntryMixin(
             The resulting ``m.Ldif.Entry``.
         """
         transformed_dn = u.Ldif.transform_schema_dn_between_oid_rfc(
-            converted_entry, source_type_norm, target_type_norm,
+            converted_entry,
+            source_type_norm,
+            target_type_norm,
         )
         if transformed_dn is None:
             return converted_entry

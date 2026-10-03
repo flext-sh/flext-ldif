@@ -72,7 +72,8 @@ class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s, ABC
             return (
                 self
                 ._validate_parsed_schema(
-                    source_schema.parse_attribute(value), m.Ldif.SchemaAttribute,
+                    source_schema.parse_attribute(value),
+                    m.Ldif.SchemaAttribute,
                 )
                 .map_error(
                     lambda error: error or f"Failed to parse {schema_field_name}",
@@ -82,7 +83,8 @@ class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s, ABC
         return (
             self
             ._validate_parsed_schema(
-                source_schema.parse_objectclass(value), m.Ldif.SchemaObjectClass,
+                source_schema.parse_objectclass(value),
+                m.Ldif.SchemaObjectClass,
             )
             .map_error(lambda error: error or f"Failed to parse {schema_field_name}")
             .flat_map(write_schema_item)
@@ -151,7 +153,8 @@ class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s, ABC
             )
 
         converted_fields_result = r[tuple[str, list[str]]].traverse(
-            schema_fields, convert_field,
+            schema_fields,
+            convert_field,
         )
         if converted_fields_result.failure:
             return r[m.Ldif.Entry].from_failure(converted_fields_result)
@@ -160,7 +163,8 @@ class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s, ABC
         updated_entry = entry.model_copy(
             update={
                 "attributes": entry.attributes.model_copy(
-                    update={"attributes": updated_attributes}, deep=True,
+                    update={"attributes": updated_attributes},
+                    deep=True,
                 ),
             },
             deep=True,

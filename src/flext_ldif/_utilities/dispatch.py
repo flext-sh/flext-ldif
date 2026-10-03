@@ -155,7 +155,8 @@ class FlextLdifUtilitiesDispatch:
         """
         match True:
             case _ if not validators and isinstance(
-                value_or_entries, (str, FlextLdifModels.Ldif.DN),
+                value_or_entries,
+                (str, FlextLdifModels.Ldif.DN),
             ):
                 result: (
                     p.Result[
@@ -168,24 +169,28 @@ class FlextLdifUtilitiesDispatch:
                 value_or_entries,
             ):
                 result = FlextLdifUtilitiesDispatch._validate_entries(
-                    value_or_entries, pipeline=pipeline,
+                    value_or_entries,
+                    pipeline=pipeline,
                 )
             case _ if isinstance(value_or_entries, Sequence) and not isinstance(
-                value_or_entries, c.STR_BYTES_TYPES,
+                value_or_entries,
+                c.STR_BYTES_TYPES,
             ):
                 result = r[t.JsonValue].fail(
                     "validator call requires scalar, not entry sequence",
                 )
             case _ if isinstance(value_or_entries, FlextLdifModels.Ldif.DN):
                 result = FlextLdifUtilitiesValidation.validate_value(
-                    value_or_entries.value, *validators,
+                    value_or_entries.value,
+                    *validators,
                 )
             case _:
                 validated_value: t.JsonValue = u.normalize_to_json_value(
                     value_or_entries,
                 )
                 result = FlextLdifUtilitiesValidation.validate_value(
-                    validated_value, *validators,
+                    validated_value,
+                    *validators,
                 )
         return result
 
@@ -230,7 +235,9 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def find(
-        items: t.JsonList, *, predicate: Callable[..., bool],
+        items: t.JsonList,
+        *,
+        predicate: Callable[..., bool],
     ) -> t.JsonValue | None:
         """Route to CollectionLdif.find (resolves CollectionLdif vs core).
 

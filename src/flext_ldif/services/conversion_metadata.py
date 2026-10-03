@@ -16,7 +16,8 @@ class FlextLdifConversionMetadataMixin(s):
 
     @staticmethod
     def _analyze_attribute_case(
-        original_attribute_case: t.JsonMapping, target_server_type: str,
+        original_attribute_case: t.JsonMapping,
+        target_server_type: str,
     ) -> t.MutableMappingKV[str, t.Ldif.MutableMetadataInputMapping]:
         """Analyze attribute case for target compatibility.
 
@@ -37,7 +38,8 @@ class FlextLdifConversionMetadataMixin(s):
 
     @staticmethod
     def _analyze_boolean_conversions(
-        boolean_conversions: t.JsonMapping, target_server_type: str,
+        boolean_conversions: t.JsonMapping,
+        target_server_type: str,
     ) -> t.MutableMappingKV[str, t.Ldif.MutableMetadataInputMapping]:
         """Analyze boolean conversions for target compatibility.
 
@@ -97,7 +99,8 @@ class FlextLdifConversionMetadataMixin(s):
                 t.Ldif.MutableMetadataInputMapping]``.
         """
         conversion_analysis: t.MutableMappingKV[
-            str, t.Ldif.MutableMetadataInputMapping,
+            str,
+            t.Ldif.MutableMetadataInputMapping,
         ] = {}
         if not source_metadata:
             return conversion_analysis
@@ -109,7 +112,8 @@ class FlextLdifConversionMetadataMixin(s):
                 if source_metadata.original_format_details is None
                 else t.json_mapping_adapter().validate_python(
                     source_metadata.original_format_details.model_dump(
-                        mode="json", exclude_none=True,
+                        mode="json",
+                        exclude_none=True,
                     ),
                 )
             )
@@ -125,14 +129,17 @@ class FlextLdifConversionMetadataMixin(s):
             )
         boolean_analysis = (
             FlextLdifConversionMetadataMixin._analyze_boolean_conversions(
-                boolean_conversions, target_server_type,
+                boolean_conversions,
+                target_server_type,
             )
         )
         attr_case_analysis = FlextLdifConversionMetadataMixin._analyze_attribute_case(
-            attr_case_val, target_server_type,
+            attr_case_val,
+            target_server_type,
         )
         dn_format_analysis = FlextLdifConversionMetadataMixin._analyze_dn_format(
-            format_val, target_server_type,
+            format_val,
+            target_server_type,
         )
         for analysis in (boolean_analysis, attr_case_analysis, dn_format_analysis):
             conversion_analysis.update(analysis)
@@ -156,7 +163,8 @@ class FlextLdifConversionMetadataMixin(s):
         if not get_metadata(current_entry):
             metadata_obj = u.Ldif.server_metadata_for(server_type=validated_server_type)
             current_entry = current_entry.model_copy(
-                update={"metadata": metadata_obj}, deep=True,
+                update={"metadata": metadata_obj},
+                deep=True,
             )
         entry_metadata = current_entry.metadata
         if (
@@ -165,10 +173,12 @@ class FlextLdifConversionMetadataMixin(s):
             and (not get_extensions(entry_metadata))
         ):
             updated_metadata = entry_metadata.model_copy(
-                update={"extensions": {}}, deep=True,
+                update={"extensions": {}},
+                deep=True,
             )
             current_entry = current_entry.model_copy(
-                update={"metadata": updated_metadata}, deep=True,
+                update={"metadata": updated_metadata},
+                deep=True,
             )
         entry_metadata = current_entry.metadata
         if entry_metadata and get_metadata(current_entry):
@@ -200,7 +210,8 @@ class FlextLdifConversionMetadataMixin(s):
                 deep=True,
             )
             current_entry = current_entry.model_copy(
-                update={"metadata": updated_metadata}, deep=True,
+                update={"metadata": updated_metadata},
+                deep=True,
             )
         return current_entry
 

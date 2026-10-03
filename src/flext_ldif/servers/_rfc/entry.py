@@ -19,8 +19,10 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 
+    @staticmethod
     def _parse_entry_from_lines(
-        self, lines: t.MutableSequenceOf[str],
+        self,
+        lines: t.MutableSequenceOf[str],
     ) -> p.Result[m.Ldif.Entry]:
         """Parse one unfolded LDIF record using the shared RFC utility.
 
@@ -32,7 +34,9 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
 
     @override
     def can_handle(
-        self, entry_dn: str, attributes: t.MutableStrSequenceMapping,
+        self,
+        entry_dn: str,
+        attributes: t.MutableStrSequenceMapping,
     ) -> bool:
         """Check if this RFC server can handle the entry.
 
@@ -46,7 +50,8 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
 
     @override
     def _parse_content(
-        self, ldif_content: str,
+        self,
+        ldif_content: str,
     ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
         """Parse raw LDIF content string into Entry models.
 
@@ -64,7 +69,8 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
             return r[t.MutableSequenceOf[m.Ldif.Entry]].fail_op("Processing", exc)
 
     def _parse_ldif_records(
-        self, ldif_content: str,
+        self,
+        ldif_content: str,
     ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
         """Parse all LDIF records from non-empty content.
 
@@ -78,7 +84,8 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
                 entries.append(result.value)
                 continue
             FlextLdifServersRfcEntry._module_logger.debug(
-                "Skipping invalid entry block", error=result.error or "",
+                "Skipping invalid entry block",
+                error=result.error or "",
             )
         return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(entries)
 

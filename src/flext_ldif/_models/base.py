@@ -27,7 +27,9 @@ class FlextLdifModelsBases:
     """
 
     class SchemaElement(m.StrictModel):
-        """Base class for all LDAP schema elements (attributes, objectClasses, syntaxes)."""
+        """Base class for all LDAP schema elements (attributes, objectClasses,
+        syntaxes).
+        """
 
         validation_metadata: Annotated[
             m.ConfigMap | None,
@@ -108,7 +110,8 @@ class FlextLdifModelsBases:
         @u.field_validator("server_type", mode="before")
         @classmethod
         def _coerce_server_type(
-            cls, value: c.Ldif.ServerTypes | str,
+            cls,
+            value: c.Ldif.ServerTypes | str,
         ) -> c.Ldif.ServerTypes:
             if isinstance(value, c.Ldif.ServerTypes):
                 return value

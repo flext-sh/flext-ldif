@@ -30,17 +30,21 @@ class FlextLdifWriter(s):
             The resulting ``p.Result[m.Ldif.WriteResponse]``.
         """
         string_result = self.write_to_string(
-            entries, server_type=server_type, format_options=format_options,
+            entries,
+            server_type=server_type,
+            format_options=format_options,
         )
         if string_result.failure:
             return r[m.Ldif.WriteResponse].fail_op(
-                "write ldif entries", string_result.error or "LDIF writing failed",
+                "write ldif entries",
+                string_result.error or "LDIF writing failed",
             )
         return r[m.Ldif.WriteResponse].ok(
             m.Ldif.WriteResponse(
                 content=string_result.value,
                 statistics=m.Ldif.Statistics(
-                    total_entries=u.count(entries), processed_entries=u.count(entries),
+                    total_entries=u.count(entries),
+                    processed_entries=u.count(entries),
                 ),
             ),
         )
@@ -59,7 +63,9 @@ class FlextLdifWriter(s):
             The resulting ``p.Result[m.Ldif.WriteResponse]``.
         """
         string_result = self.write_to_string(
-            entries, server_type=server_type, format_options=format_options,
+            entries,
+            server_type=server_type,
+            format_options=format_options,
         )
         if string_result.failure:
             return r[m.Ldif.WriteResponse].fail_op(
@@ -78,7 +84,8 @@ class FlextLdifWriter(s):
                 content=ldif_content,
                 output_path=str(path),
                 statistics=m.Ldif.Statistics(
-                    total_entries=u.count(entries), processed_entries=u.count(entries),
+                    total_entries=u.count(entries),
+                    processed_entries=u.count(entries),
                 ),
             ),
         )

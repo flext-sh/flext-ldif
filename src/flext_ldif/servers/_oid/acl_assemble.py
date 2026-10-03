@@ -43,7 +43,10 @@ class FlextLdifServersOidAclAssemble:
 
     @classmethod
     def build_aci_rule(
-        cls, rule: m.Ldif.OidAclRule, *, base_dn: str = "",
+        cls,
+        rule: m.Ldif.OidAclRule,
+        *,
+        base_dn: str = "",
     ) -> p.Result[m.Ldif.AciRule]:
         """Assemble a parsed OID rule into one OUD :class:`m.Ldif.AciRule`.
 
@@ -106,7 +109,8 @@ class FlextLdifServersOidAclAssemble:
                     )
                     continue
             perms = FlextLdifServersOidAclToOud.convert_permissions(
-                subject.permissions, is_entry=is_entry,
+                subject.permissions,
+                is_entry=is_entry,
             )
             if perms.failure:
                 return r[m.Ldif.AciRule].from_failure(perms)
@@ -147,7 +151,8 @@ class FlextLdifServersOidAclAssemble:
                 targetattr=FlextLdifServersOidAclToOud.get_targetattr(rule),
                 targetfilter=rule.target_filter,
                 targetscope=FlextLdifServersOidAclToOud.calculate_targetscope(
-                    rule, has_anyone_subject=has_anyone,
+                    rule,
+                    has_anyone_subject=has_anyone,
                 ),
                 acl_name=acl_name,
                 allows=tuple(allows),

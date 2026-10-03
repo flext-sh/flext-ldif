@@ -104,7 +104,8 @@ class TestsFlextLdifApiServerRegistry:
         ["resolve_base_server", "resolve_server_bundle", "resolve_server_constants"],
     )
     def test_valid_but_unregistered_server_type_fails_lookup(
-        api: p.Ldif.LdifClient, resolver_name: str,
+        api: p.Ldif.LdifClient,
+        resolver_name: str,
     ) -> None:
         """A valid-but-unregistered type fails gracefully on each resolver."""
         resolver = getattr(api, resolver_name)

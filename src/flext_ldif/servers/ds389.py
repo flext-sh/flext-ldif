@@ -107,23 +107,28 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         ACL_CLAUSE_PATTERN: ClassVar[str] = "\\([^()]+\\)"
         ACL_NAME_PATTERN: ClassVar[str] = 'acl\\s+\\"([^\\"]+)\\"'
         ACL_NAME_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-            ACL_NAME_PATTERN, re.IGNORECASE,
+            ACL_NAME_PATTERN,
+            re.IGNORECASE,
         )
         ACL_ALLOW_PATTERN: ClassVar[str] = "allow\\s*\\(([^)]+)\\)"
         ACL_ALLOW_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-            ACL_ALLOW_PATTERN, re.IGNORECASE,
+            ACL_ALLOW_PATTERN,
+            re.IGNORECASE,
         )
         ACL_TARGETATTR_PATTERN: ClassVar[str] = 'targetattr\\s*=\\s*\\"([^\\"]+)\\"'
         ACL_TARGETATTR_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-            ACL_TARGETATTR_PATTERN, re.IGNORECASE,
+            ACL_TARGETATTR_PATTERN,
+            re.IGNORECASE,
         )
         ACL_USERDN_PATTERN: ClassVar[str] = 'userdn\\s*=\\s*\\"([^\\"]+)\\"'
         ACL_USERDN_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-            ACL_USERDN_PATTERN, re.IGNORECASE,
+            ACL_USERDN_PATTERN,
+            re.IGNORECASE,
         )
         ACL_TARGET_PATTERN: ClassVar[str] = 'target\\s*=\\s*\\"([^\\"]+)\\"'
         ACL_TARGET_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-            ACL_TARGET_PATTERN, re.IGNORECASE,
+            ACL_TARGET_PATTERN,
+            re.IGNORECASE,
         )
         ACL_DEFAULT_NAME: ClassVar[str] = "389 DS ACL"
         ACL_TARGET_DN_PREFIX: ClassVar[str] = "dn:"
@@ -154,7 +159,8 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
         @override
         def can_handle_attribute(
-            self, attr_definition: str | m.Ldif.SchemaAttribute,
+            self,
+            attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Detect 389 DS attribute definitions using centralized constants.
 
@@ -169,7 +175,8 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
         @override
         def can_handle_objectclass(
-            self, oc_definition: str | m.Ldif.SchemaObjectClass,
+            self,
+            oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Detect 389 DS objectClass definitions using centralized constants.
 
@@ -232,6 +239,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 return True
             return normalized.lower().startswith("(version")
 
+        @staticmethod
         def _build_acl_string(
             self,
             acl_name: str,
@@ -269,8 +277,10 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             )
             return r[str].ok(acl_str)
 
+        @staticmethod
         def _extract_acl_permissions(
-            self, permissions_data: m.Ldif.AclPermissions | None,
+            self,
+            permissions_data: m.Ldif.AclPermissions | None,
         ) -> t.MutableSequenceOf[str]:
             """Extract permission names from Permissions model flags.
 
@@ -455,7 +465,9 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
         @override
         def can_handle(
-            self, entry_dn: str, attributes: t.MutableStrSequenceMapping,
+            self,
+            entry_dn: str,
+            attributes: t.MutableStrSequenceMapping,
         ) -> bool:
             """Detect 389 DS-specific entries.
 
@@ -504,6 +516,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                     ),
                 )
 
+        @staticmethod
         def _process_ds389_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
             """Normalize a 389 DS entry and attach metadata.
 

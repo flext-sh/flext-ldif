@@ -31,5 +31,6 @@ class FlextLdifModelsSettingsValidation:
             u.Field(description="Whether server requires naming attribute in entry"),
         ] = False
         requires_objectclass: Annotated[
-            bool, u.Field(description="Whether server requires objectClass attribute"),
+            bool,
+            u.Field(description="Whether server requires objectClass attribute"),
         ] = True

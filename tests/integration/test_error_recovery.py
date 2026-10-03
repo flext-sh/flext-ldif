@@ -78,7 +78,9 @@ class TestsFlextLdifErrorRecovery:
         ],
     )
     def test_structural_prefixes_do_not_alter_parsed_dn(
-        api: p.Ldif.LdifClient, content: str, expected_dn: str,
+        api: p.Ldif.LdifClient,
+        content: str,
+        expected_dn: str,
     ) -> None:
         """Version lines, comments, and unicode DNs yield one entry with the exact DN."""
         result = api.parse_ldif(content)
@@ -274,7 +276,9 @@ class TestsFlextLdifErrorRecovery:
         ],
     )
     def test_partial_input_recovers_valid_entries(
-        api: p.Ldif.LdifClient, content: str, expected_count: int,
+        api: p.Ldif.LdifClient,
+        content: str,
+        expected_count: int,
     ) -> None:
         """Truncated / orphaned / unterminated input recovers the valid entries."""
         result = api.parse_ldif(content)
@@ -304,7 +308,8 @@ class TestsFlextLdifErrorRecovery:
         ],
     )
     def test_malformed_content_returns_structured_result_without_raising(
-        api: p.Ldif.LdifClient, content: str,
+        api: p.Ldif.LdifClient,
+        content: str,
     ) -> None:
         """Malformed schema/base64 input returns an r[T] result rather than raising."""
         result = api.parse_ldif(content)

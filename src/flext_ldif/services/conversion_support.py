@@ -17,7 +17,8 @@ class FlextLdifConversionSupportMixin(s):
         return server.schema_server
 
     def _resolve_server(
-        self, server_or_type: str | p.Ldif.ServerReference | p.Ldif.ServerServer,
+        self,
+        server_or_type: str | p.Ldif.ServerReference | p.Ldif.ServerServer,
     ) -> p.Ldif.ServerServer:
         """Resolve server server instance from string type or return instance.
 
@@ -63,7 +64,8 @@ class FlextLdifConversionSupportMixin(s):
             return r[p.Ldif.SchemaServer].fail(f"{role} server error: {e}")
 
     def resolve_supported_conversions(
-        self, server: p.Ldif.ServerReference | str,
+        self,
+        server: p.Ldif.ServerReference | str,
     ) -> t.MutableBoolMapping:
         """Check which data types a server supports for conversion.
 
@@ -102,7 +104,8 @@ class FlextLdifConversionSupportMixin(s):
 
     @staticmethod
     def _check_acl_support(
-        server: p.Ldif.ServerServer, support: t.MutableIntMapping,
+        server: p.Ldif.ServerServer,
+        support: t.MutableIntMapping,
     ) -> t.MutableIntMapping:
         """Check ACL support.
 
@@ -134,7 +137,8 @@ class FlextLdifConversionSupportMixin(s):
 
     @staticmethod
     def _check_entry_support(
-        server: p.Ldif.ServerServer, support: t.MutableIntMapping,
+        server: p.Ldif.ServerServer,
+        support: t.MutableIntMapping,
     ) -> t.MutableIntMapping:
         """Check Entry support via the canonical entry server public surface.
 
@@ -162,7 +166,9 @@ class FlextLdifConversionSupportMixin(s):
         return support
 
     def _check_schema_support(
-        self, server: p.Ldif.ServerServer, support: t.MutableIntMapping,
+        self,
+        server: p.Ldif.ServerServer,
+        support: t.MutableIntMapping,
     ) -> t.MutableIntMapping:
         """Check schema (attribute and objectClass) support.
 

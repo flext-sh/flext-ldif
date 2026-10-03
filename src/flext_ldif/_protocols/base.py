@@ -66,19 +66,27 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
         def parse_ldif(
-            self, value: str | Path, *, server_type: str | None = None,
+            self,
+            value: str | Path,
+            *,
+            server_type: str | None = None,
         ) -> p.Result[m.Ldif.ParseResponse]:
             """Parse LDIF content from text or file path."""
             ...
 
         def parse_ldif_file(
-            self, path: Path, server_type: str | None = None, encoding: str = "utf-8",
+            self,
+            path: Path,
+            server_type: str | None = None,
+            encoding: str = "utf-8",
         ) -> p.Result[m.Ldif.ParseResponse]:
             """Parse LDIF content from a file path."""
             ...
 
         def parse_string(
-            self, content: str, server_type: str | None = None,
+            self,
+            content: str,
+            server_type: str | None = None,
         ) -> p.Result[m.Ldif.ParseResponse]:
             """Parse LDIF content from a raw string."""
             ...
@@ -133,7 +141,8 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
         def resolve_server_bundle(
-            self, server_type: str,
+            self,
+            server_type: str,
         ) -> p.Result[
             t.MappingKV[str, lpd.SchemaServer | lpd.AclServer | lpd.EntryServer]
         ]:
@@ -141,7 +150,8 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
         def resolve_server_constants(
-            self, server_type: str,
+            self,
+            server_type: str,
         ) -> p.Result[type[FlextLdifProtocolsBase.ServerConstants]]:
             """Resolve server constants by server type via the facade DSL."""
             ...
@@ -155,7 +165,8 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
         def resolve_supported_conversions(
-            self, server: FlextLdifProtocolsBase.ServerReference | str,
+            self,
+            server: FlextLdifProtocolsBase.ServerReference | str,
         ) -> t.MappingKV[str, bool]:
             """Return supported conversion categories for a server server."""
             ...
@@ -173,7 +184,9 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
         def resolve_effective_server_type(
-            self, ldif_path: Path | None = None, ldif_content: str | None = None,
+            self,
+            ldif_path: Path | None = None,
+            ldif_content: str | None = None,
         ) -> p.Result[str]:
             """Resolve the effective LDAP server type for public processing flows."""
             ...
@@ -191,13 +204,17 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
         def parse_acl_string(
-            self, acl_string: str, server_type: str,
+            self,
+            acl_string: str,
+            server_type: str,
         ) -> p.Result[m.Ldif.Acl]:
             """Parse one ACL string through the public facade DSL."""
             ...
 
         def extract_acls_from_entry(
-            self, entry: m.Ldif.Entry, server_type: str,
+            self,
+            entry: m.Ldif.Entry,
+            server_type: str,
         ) -> p.Result[m.Ldif.AclResponse]:
             """Extract ACLs from an entry through the public facade DSL."""
             ...
@@ -220,7 +237,8 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
         def calculate_for_entries(
-            self, entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
+            self,
+            entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
         ) -> p.Result[m.Ldif.EntriesStatistics]:
             """Calculate entry statistics through the public facade DSL."""
             ...
@@ -256,7 +274,9 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
         def get(
-            self, key: str, default: t.MutableSequenceOf[str] | None = None,
+            self,
+            key: str,
+            default: t.MutableSequenceOf[str] | None = None,
         ) -> t.MutableSequenceOf[str]:
             """Return attribute values with optional default."""
             ...
@@ -837,19 +857,23 @@ class FlextLdifProtocolsBase(Protocol):
         """Protocol for LDIF entry categorization services."""
 
         def categorize_entries(
-            self, entries: t.MutableSequenceOf[m.Ldif.Entry],
+            self,
+            entries: t.MutableSequenceOf[m.Ldif.Entry],
         ) -> p.Result[m.Ldif.FlexibleCategories]: ...
 
         def filter_by_base_dn(
-            self, categories: m.Ldif.FlexibleCategories,
+            self,
+            categories: m.Ldif.FlexibleCategories,
         ) -> m.Ldif.FlexibleCategories: ...
 
         def validate_dns(
-            self, entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
+            self,
+            entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
         ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]: ...
 
         def filter_schema_by_oids(
-            self, schema_entries: t.MutableSequenceOf[m.Ldif.Entry],
+            self,
+            schema_entries: t.MutableSequenceOf[m.Ldif.Entry],
         ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]: ...
 
     @runtime_checkable

@@ -56,7 +56,8 @@ class TestsFlextLdifRealLdapRoundtrip:
 
     @staticmethod
     def _read_ldap_attrs(
-        ldap_connection: p.Ldap.Ldap3Connection, dn: str,
+        ldap_connection: p.Ldap.Ldap3Connection,
+        dn: str,
     ) -> t.MutableAttributeMapping:
         """Read one LDAP entry back as a plain attribute mapping (boundary).
 
@@ -98,7 +99,9 @@ class TestsFlextLdifRealLdapRoundtrip:
         read_back = self._read_ldap_attrs(ldap_connection, source_dn)
 
         entry_result = m.Ldif.Entry.create(
-            dn=source_dn, attributes=read_back, metadata=None,
+            dn=source_dn,
+            attributes=read_back,
+            metadata=None,
         )
         tm.ok(entry_result)
         source_entry = entry_result.unwrap()

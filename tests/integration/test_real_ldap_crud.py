@@ -49,7 +49,8 @@ class TestsFlextLdifRealLdapCrud:
 
     @staticmethod
     def _add_entry(
-        ldap_connection: p.Ldap.Ldap3Connection, entry: m.Ldif.Entry,
+        ldap_connection: p.Ldap.Ldap3Connection,
+        entry: m.Ldif.Entry,
     ) -> None:
         """Store an entry in LDAP using only its public model surface."""
         attrs = dict(entry.attributes_dict)
@@ -81,7 +82,8 @@ class TestsFlextLdifRealLdapCrud:
         tm.that(entry.dn_str, eq="cn=Alice,ou=people,dc=example,dc=com")
         tm.that(entry.attributes_dict["cn"], eq=["Alice"])
         tm.that(
-            entry.attributes_dict["objectClass"], eq=["inetOrgPerson", "person", "top"],
+            entry.attributes_dict["objectClass"],
+            eq=["inetOrgPerson", "person", "top"],
         )
         assert not entry.has_validation_errors
 
@@ -115,7 +117,8 @@ class TestsFlextLdifRealLdapCrud:
 
         # Update: replaced attribute is reflected on re-read.
         ldap_connection.modify(
-            entry.dn_str, {"mail": [("MODIFY_REPLACE", ["updated_crud@example.com"])]},
+            entry.dn_str,
+            {"mail": [("MODIFY_REPLACE", ["updated_crud@example.com"])]},
         )
         ldap_connection.search(entry.dn_str, "(objectClass=*)", attributes=["*"])
         assert (

@@ -46,7 +46,8 @@ class FlextLdifUtilitiesSchemaParse:
         if not syntax or not syntax.strip():
             return None
         syntax_extensions: MutableMapping[
-            str, bool | t.MutableSequenceOf[str] | str | None,
+            str,
+            bool | t.MutableSequenceOf[str] | str | None,
         ] = {}
         validate_result = uo.validate_format(syntax)
         if validate_result.failure:
@@ -157,7 +158,8 @@ class FlextLdifUtilitiesSchemaParse:
     def extract_objectclasses_from_lines(
         ldif_content: str,
         parse_callback: Callable[
-            [str], p.Result[FlextLdifModels.Ldif.SchemaObjectClass],
+            [str],
+            p.Result[FlextLdifModels.Ldif.SchemaObjectClass],
         ],
     ) -> t.MutableSequenceOf[FlextLdifModels.Ldif.SchemaObjectClass]:
         """Extract and parse all objectClasses from LDIF content lines.
@@ -175,7 +177,9 @@ class FlextLdifUtilitiesSchemaParse:
 
     @staticmethod
     def parse_attribute(
-        attr_definition: str, *, validate_syntax: bool = True,
+        attr_definition: str,
+        *,
+        validate_syntax: bool = True,
     ) -> p.Result[t.Ldif.MutableMetadataMapping]:
         """Parse RFC 4512 attribute definition into structured data.
 
@@ -207,7 +211,8 @@ class FlextLdifUtilitiesSchemaParse:
             syntax_validation_result
         )
         extensions_raw = FlextLdifUtilitiesSchemaParse.build_metadata(
-            attr_definition, additional_extensions=additional_extensions_converted,
+            attr_definition,
+            additional_extensions=additional_extensions_converted,
         )
         extensions_converted = (
             FlextLdifUtilitiesSchemaParse._convert_metadata_extensions(extensions_raw)

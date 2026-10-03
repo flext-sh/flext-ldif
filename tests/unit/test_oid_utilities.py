@@ -29,7 +29,8 @@ class TestsFlextLdifOidUtilities:
         ],
     )
     def test_extract_from_definition_returns_leading_oid(
-        definition: str, expected_oid: str,
+        definition: str,
+        expected_oid: str,
     ) -> None:
         """Test extract from definition returns leading oid."""
         result = u.Ldif.extract_from_definition(definition)
@@ -87,7 +88,10 @@ class TestsFlextLdifOidUtilities:
         ],
     )
     def test_matches_pattern_reflects_extracted_oid(
-        definition: str, pattern: str, *, expected: bool,
+        definition: str,
+        pattern: str,
+        *,
+        expected: bool,
     ) -> None:
         """Test matches pattern reflects extracted oid."""
         compiled: t.Ldif.RegexPattern = c.Ldif.compile_pattern(pattern)
@@ -98,7 +102,8 @@ class TestsFlextLdifOidUtilities:
 
     @staticmethod
     @pytest.mark.parametrize(
-        "definition", ["( NAME 'cn' DESC 'no oid' )", "( NAME 'no oid' )"],
+        "definition",
+        ["( NAME 'cn' DESC 'no oid' )", "( NAME 'no oid' )"],
     )
     def test_matches_pattern_rejects_definition_without_oid(
         definition: str,
@@ -111,7 +116,8 @@ class TestsFlextLdifOidUtilities:
     def test_matches_pattern_true_against_exact_oid_constant() -> None:
         """Test matches pattern true against exact oid constant."""
         result = u.Ldif.matches_pattern(
-            "( 1.2.3 NAME 'cn' )", c.Tests.EXACT_OID_1_2_3_RE,
+            "( 1.2.3 NAME 'cn' )",
+            c.Tests.EXACT_OID_1_2_3_RE,
         )
 
         tm.that(result, eq=True)

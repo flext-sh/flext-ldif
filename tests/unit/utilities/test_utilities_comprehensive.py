@@ -36,7 +36,8 @@ class TestsFlextLdifUtilitiesComprehensive:
         ],
     )
     def test_normalize_server_type_is_case_insensitive(
-        raw: str, expected: str,
+        raw: str,
+        expected: str,
     ) -> None:
         """Map any casing to the canonical enum value (aliases resolved)."""
         normalized = u.Ldif.normalize_server_type(raw)
@@ -60,7 +61,8 @@ class TestsFlextLdifUtilitiesComprehensive:
 
     @staticmethod
     @pytest.mark.parametrize(
-        "value", ["a,b+c", 'quote"here', "back\\slash", "semi;colon", "plain", ""],
+        "value",
+        ["a,b+c", 'quote"here', "back\\slash", "semi;colon", "plain", ""],
     )
     def test_esc_unesc_roundtrip_is_lossless(value: str) -> None:
         """Round-trip esc then unesc restores the original DN value (invariant)."""
@@ -78,7 +80,8 @@ class TestsFlextLdifUtilitiesComprehensive:
 
     @staticmethod
     @pytest.mark.parametrize(
-        ("value", "expected"), [("hello", False), (" leading", True), ("café", True)],
+        ("value", "expected"),
+        [("hello", False), (" leading", True), ("café", True)],
     )
     def test_needs_base64_encoding(value: str, *, expected: bool) -> None:
         """needs_base64_encoding flags unsafe values, clears safe ASCII."""

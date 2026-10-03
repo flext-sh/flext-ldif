@@ -99,7 +99,9 @@ class FlextLdifUtilitiesEvents:
         """
         aggregate_id = f"{settings.source_format}_to_{settings.target_format}_{settings.conversion_operation}"
         error_details_list = FlextLdifUtilitiesEvents._to_error_details_list(
-            list(settings.error_details) if settings.error_details is not None else None,
+            list(settings.error_details)
+            if settings.error_details is not None
+            else None,
         )
         event: FlextLdifModels.Ldif.ConversionEvent = (
             FlextLdifModels.Ldif.ConversionEvent.model_validate({
@@ -155,7 +157,11 @@ class FlextLdifUtilitiesEvents:
             FlextLdifUtilitiesEvents._build_conversion_event_logging(event, settings)
         )
         FlextLdifUtilitiesEvents._log_and_emit_generic_event(
-            logger, log_context, log_message, log_level, extras,
+            logger,
+            log_context,
+            log_message,
+            log_level,
+            extras,
         )
         return event
 

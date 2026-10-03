@@ -11,6 +11,7 @@ from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 
 class FlextLdifServersOidConstants(
-    FlextLdifConstantsServers.Oid, FlextLdifServersRfc.Constants,
+    FlextLdifConstantsServers.Oid,
+    FlextLdifServersRfc.Constants,
 ):
     """Thin inheritor: declarations live in _constants parts."""

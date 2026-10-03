@@ -85,7 +85,9 @@ class TestsFlextLdifOidAclConvert:
         ],
     )
     def test_target_clause_shapes_map_to_public_target_fields(
-        content: str, expected_type: str, expected_attrs: str,
+        content: str,
+        expected_type: str,
+        expected_attrs: str,
     ) -> None:
         """Test target clause shapes map to public target fields."""
         rule: m.Ldif.OidAclRule = tm.ok(
@@ -140,7 +142,8 @@ class TestsFlextLdifOidAclConvert:
         ],
     )
     def test_malformed_line_fails_with_descriptive_error(
-        line: str, error_fragment: str,
+        line: str,
+        error_fragment: str,
     ) -> None:
         """Test malformed line fails with descriptive error."""
         result = Parser.parse_oid_acl_line(_DN, line)

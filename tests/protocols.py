@@ -50,7 +50,8 @@ class TestsFlextLdifProtocols(FlextTestsProtocols, FlextLdifProtocols):
             """Structural contract for the ldap3 entry to LDIF entry adapter."""
 
             def ldap3_to_ldif_entry(
-                self, ldap3_entry: p.Ldap.Ldap3Entry,
+                self,
+                ldap3_entry: p.Ldap.Ldap3Entry,
             ) -> p.Result[m.Ldif.Entry]:
                 """Convert one ldap3 entry into the LDIF entry model."""
                 ...
@@ -63,7 +64,8 @@ class TestsFlextLdifProtocols(FlextTestsProtocols, FlextLdifProtocols):
             """Server exposing `parse_input` for schema or ACL helpers."""
 
             def parse_input(
-                self, value: str,
+                self,
+                value: str,
             ) -> p.Result[
                 m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
             ]:
@@ -75,7 +77,8 @@ class TestsFlextLdifProtocols(FlextTestsProtocols, FlextLdifProtocols):
             """Server exposing Apache/Novell attribute writer."""
 
             def _write_attribute(
-                self, attr_data: m.Ldif.SchemaAttribute,
+                self,
+                attr_data: m.Ldif.SchemaAttribute,
             ) -> p.Result[str]:
                 """Serialize an attribute definition."""
                 ...
@@ -85,7 +88,8 @@ class TestsFlextLdifProtocols(FlextTestsProtocols, FlextLdifProtocols):
             """Server exposing Apache/Novell objectclass writer."""
 
             def _write_objectclass(
-                self, oc_data: m.Ldif.SchemaObjectClass,
+                self,
+                oc_data: m.Ldif.SchemaObjectClass,
             ) -> p.Result[str]:
                 """Serialize an objectClass definition."""
                 ...

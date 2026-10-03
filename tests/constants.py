@@ -243,7 +243,8 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
             "{cn}: subschemasubentry\n"
         )
         MIGRATION_ACI_LINE_REGEX: ClassVar[t.Ldif.RegexPattern] = re.compile(
-            r"(^|\\n)aci:", re.MULTILINE,
+            r"(^|\\n)aci:",
+            re.MULTILINE,
         )
         MIGRATION_BOOLEAN_CASES: ClassVar[
             t.MappingKV[str, tuple[str, str, str, str]]
@@ -278,7 +279,8 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
         WRITER_BLOCKING_PARENT_NAME: ClassVar[str] = "blocking_parent"
         WRITER_DIRECTORY_TARGET_NAME: ClassVar[str] = "dir_target"
         WRITER_OUTPUT_REGEX: ClassVar[t.Ldif.RegexPattern] = re.compile(
-            r"^dn:\s+cn=writer-[a-z]+,dc=example,dc=com$", re.MULTILINE,
+            r"^dn:\s+cn=writer-[a-z]+,dc=example,dc=com$",
+            re.MULTILINE,
         )
         WRITER_INVALID_UTF8_BYTES: ClassVar[bytes] = b"\xff\xfe\xfd"
 
@@ -335,7 +337,8 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
             t.MappingKV[
                 str,
                 tuple[
-                    str | list[str] | t.StrSequence | set[str] | frozenset[str], bool,
+                    str | list[str] | t.StrSequence | set[str] | frozenset[str],
+                    bool,
                 ],
             ]
         ] = MappingProxyType({

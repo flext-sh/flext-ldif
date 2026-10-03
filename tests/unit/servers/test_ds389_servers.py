@@ -35,7 +35,8 @@ class TestsFlextLdifDs389Servers:
 
     @pytest.mark.parametrize("test_case", c.Tests.DS389_ATTRIBUTE_TEST_CASES)
     def test_can_handle_attribute_matches_expected(
-        self, test_case: m.Tests.AttributeTestCase,
+        self,
+        test_case: m.Tests.AttributeTestCase,
     ) -> None:
         """can_handle_attribute reflects DS389 ownership per case table."""
         tm.that(
@@ -100,7 +101,8 @@ class TestsFlextLdifDs389Servers:
 
     @pytest.mark.parametrize("test_case", c.Tests.DS389_OBJECTCLASS_TEST_CASES)
     def test_can_handle_objectclass_matches_expected(
-        self, test_case: m.Tests.ObjectClassTestCase,
+        self,
+        test_case: m.Tests.ObjectClassTestCase,
     ) -> None:
         """can_handle_objectclass reflects DS389 ownership per case table."""
         tm.that(
@@ -133,7 +135,9 @@ class TestsFlextLdifDs389Servers:
             "MAY ( nsds5ReplicaId $ nsds5ReplicaRoot ) )"
         )
         u.Tests.assert_server_schema_parse_and_properties(
-            self._schema_server(), oc_def, expected_kind="AUXILIARY",
+            self._schema_server(),
+            oc_def,
+            expected_kind="AUXILIARY",
         )
 
     def test_parse_abstract_objectclass_reports_kind(self) -> None:
@@ -219,7 +223,9 @@ class TestsFlextLdifDs389Servers:
         ],
     )
     def test_acl_can_handle_matches_expected(
-        acl_line: str, *, expected: bool,
+        acl_line: str,
+        *,
+        expected: bool,
     ) -> None:
         """Acl.can_handle claims aci/version lines and rejects other input."""
         acl_server = FlextLdifServersDs389().acl_server

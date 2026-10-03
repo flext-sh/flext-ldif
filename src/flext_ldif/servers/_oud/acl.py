@@ -50,7 +50,8 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
 
     @staticmethod
     def _extension_get_str(
-        extensions: t.Ldif.MetadataInputMapping | None, key: str,
+        extensions: t.Ldif.MetadataInputMapping | None,
+        key: str,
     ) -> str | None:
         """Read a metadata extension as string.
 
@@ -153,6 +154,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             *FlextLdifServersOudConstants.OUD_ACL_ATTRIBUTES,
         ]
 
+    @staticmethod
     def _build_aci_permissions(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
         """Build ACI permissions clause from ACL model.
 
@@ -222,7 +224,8 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         permission_normalization = {"self_write": "selfwrite"}
         normalized_ops = [permission_normalization.get(op, op) for op in ops]
         filtered_ops = u.Ldif.filter_supported_permissions(
-            normalized_ops, FlextLdifServersOudConstants.SUPPORTED_PERMISSIONS,
+            normalized_ops,
+            FlextLdifServersOudConstants.SUPPORTED_PERMISSIONS,
         )
         meta_extensions = acl_data.metadata.extensions if acl_data.metadata else None
         self_write_to_write_enabled = (
@@ -268,13 +271,17 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             else subject_value
         )
         bind_operator = {"user": "userdn", "group": "groupdn", "role": "roledn"}.get(
-            subject_type, "userdn",
+            subject_type,
+            "userdn",
         )
         formatted: str = u.Ldif.format_aci_subject(
-            subject_type, filtered_value, bind_operator,
+            subject_type,
+            filtered_value,
+            bind_operator,
         )
         return formatted
 
+    @staticmethod
     def _build_aci_target(self, acl_data: m.Ldif.Acl) -> str:
         """Build ACI target clause from ACL model.
 
@@ -315,7 +322,8 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         return clause
 
     def _extract_and_resolve_acl_subject(
-        self, acl_data: m.Ldif.Acl,
+        self,
+        acl_data: m.Ldif.Acl,
     ) -> tuple[str | None, str, str]:
         """Extract metadata and resolve subject type and value in one pass.
 
@@ -373,6 +381,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             if result.success:
                 acls.append(result.value)
 
+    @staticmethod
     def _parse_aci_format(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
         """Parse RFC 4876 ACI format using utility with OUD-specific settings.
 
@@ -400,7 +409,8 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             extensions[c.Ldif.ACL_SSF] = f"{ssf_match.group(1)}{ssf_match.group(2)}"
         server_type_value = settings.server_type if settings else "oud"
         new_metadata = u.Ldif.server_metadata_for(
-            server_type_value, extensions=extensions,
+            server_type_value,
+            extensions=extensions,
         )
         update_dict: MutableMapping[str, m.Ldif.ServerMetadata] = {
             "metadata": new_metadata,
@@ -437,6 +447,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                 return rfc_result
         return self._parse_ds_privilege_name(normalized)
 
+    @staticmethod
     def _parse_ds_privilege_name(self, privilege_name: str) -> p.Result[m.Ldif.Acl]:
         """Parse OUD ds-privilege-name format (simple privilege names).
 
@@ -468,9 +479,11 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                 "Failed to parse OUD ds-privilege-name",
             )
             return r[m.Ldif.Acl].fail(
-                f"Failed to parse OUD ds-privilege-name: {e}", exception=e,
+                f"Failed to parse OUD ds-privilege-name: {e}",
+                exception=e,
             )
 
+    @staticmethod
     def _should_use_raw_acl(self, acl_data: m.Ldif.Acl) -> bool:
         """Check if raw_acl should be used as-is.
 
@@ -497,7 +510,8 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                 "Failed to write ACL to OUD ACI format",
             )
             return r[str].fail(
-                f"Failed to write ACL to OUD ACI format: {e}", exception=e,
+                f"Failed to write ACL to OUD ACI format: {e}",
+                exception=e,
             )
 
     def _write_oud_aci(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
@@ -513,7 +527,9 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             else None
         )
         aci_output_lines = u.Ldif.format_conversion_comments(
-            extensions, "converted_from_server", "conversion_comments",
+            extensions,
+            "converted_from_server",
+            "conversion_comments",
         )
         if self._should_use_raw_acl(acl_data):
             aci_output_lines.append(acl_data.raw_acl)
@@ -521,7 +537,8 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         aci_parts = [self._build_aci_target(acl_data)]
         aci_parts.extend(
             u.Ldif.extract_target_extensions(
-                extensions, sc.ACL_TARGET_EXTENSIONS_CONFIG,
+                extensions,
+                sc.ACL_TARGET_EXTENSIONS_CONFIG,
             ),
         )
         acl_name = acl_data.name or sc.ACL_DEFAULT_NAME

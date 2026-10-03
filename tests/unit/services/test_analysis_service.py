@@ -36,11 +36,13 @@ class TestsFlextLdifAnalysisService:
         return m.Ldif.Entry(dn=dn_model, attributes=attributes)
 
     def test_validate_entries_valid_entry_reports_all_valid(
-        self, api: p.Ldif.LdifClient,
+        self,
+        api: p.Ldif.LdifClient,
     ) -> None:
         """Test validate entries valid entry reports all valid."""
         entry = self._make_entry(
-            c.Tests.ANALYSIS_DN_VALID, dict(c.Tests.ANALYSIS_VALID_ENTRY_ATTRS),
+            c.Tests.ANALYSIS_DN_VALID,
+            dict(c.Tests.ANALYSIS_VALID_ENTRY_ATTRS),
         )
         result = api.validate_entries([entry])
         val_result = u.Tests.assert_success(result)
@@ -76,11 +78,13 @@ class TestsFlextLdifAnalysisService:
         tm.that(val_result.valid, eq=True)
 
     def test_validate_entries_invalid_attr_name_reports_error(
-        self, api: p.Ldif.LdifClient,
+        self,
+        api: p.Ldif.LdifClient,
     ) -> None:
         """Test validate entries invalid attr name reports error."""
         entry = self._make_entry(
-            c.Tests.ANALYSIS_DN_VALID, dict(c.Tests.ANALYSIS_INVALID_ATTR_ENTRY_ATTRS),
+            c.Tests.ANALYSIS_DN_VALID,
+            dict(c.Tests.ANALYSIS_INVALID_ATTR_ENTRY_ATTRS),
         )
         result = api.validate_entries([entry])
         val_result = u.Tests.assert_success(result)
@@ -90,7 +94,8 @@ class TestsFlextLdifAnalysisService:
         tm.that(len(val_result.errors) > 0, eq=True)
 
     def test_validate_entries_none_attributes_reports_invalid(
-        self, api: p.Ldif.LdifClient,
+        self,
+        api: p.Ldif.LdifClient,
     ) -> None:
         """Test validate entries none attributes reports invalid."""
         entry = self._make_entry(c.Tests.ANALYSIS_DN_VALID, None)
@@ -101,14 +106,17 @@ class TestsFlextLdifAnalysisService:
         tm.that(len(val_result.errors) > 0, eq=True)
 
     def test_validate_entries_mixed_batch_counts_each_side(
-        self, api: p.Ldif.LdifClient,
+        self,
+        api: p.Ldif.LdifClient,
     ) -> None:
         """Test validate entries mixed batch counts each side."""
         valid_entry = self._make_entry(
-            c.Tests.ANALYSIS_DN_VALID, dict(c.Tests.ANALYSIS_VALID_ENTRY_ATTRS),
+            c.Tests.ANALYSIS_DN_VALID,
+            dict(c.Tests.ANALYSIS_VALID_ENTRY_ATTRS),
         )
         invalid_entry = self._make_entry(
-            c.Tests.ANALYSIS_DN_VALID, dict(c.Tests.ANALYSIS_INVALID_ATTR_ENTRY_ATTRS),
+            c.Tests.ANALYSIS_DN_VALID,
+            dict(c.Tests.ANALYSIS_INVALID_ATTR_ENTRY_ATTRS),
         )
         result = api.validate_entries([valid_entry, invalid_entry])
         val_result = u.Tests.assert_success(result)
@@ -118,14 +126,17 @@ class TestsFlextLdifAnalysisService:
         tm.that(val_result.valid, eq=False)
 
     def test_validate_entries_order_independent_for_mixed_batch(
-        self, api: p.Ldif.LdifClient,
+        self,
+        api: p.Ldif.LdifClient,
     ) -> None:
         """Test validate entries order independent for mixed batch."""
         valid_entry = self._make_entry(
-            c.Tests.ANALYSIS_DN_VALID, dict(c.Tests.ANALYSIS_VALID_ENTRY_ATTRS),
+            c.Tests.ANALYSIS_DN_VALID,
+            dict(c.Tests.ANALYSIS_VALID_ENTRY_ATTRS),
         )
         invalid_entry = self._make_entry(
-            c.Tests.ANALYSIS_DN_VALID, dict(c.Tests.ANALYSIS_INVALID_ATTR_ENTRY_ATTRS),
+            c.Tests.ANALYSIS_DN_VALID,
+            dict(c.Tests.ANALYSIS_INVALID_ATTR_ENTRY_ATTRS),
         )
         forward = u.Tests.assert_success(
             api.validate_entries([valid_entry, invalid_entry]),
@@ -140,7 +151,9 @@ class TestsFlextLdifAnalysisService:
 
     @pytest.mark.parametrize("oc_name", c.Tests.VALIDATION_VALID_OC_NAMES)
     def test_valid_objectclass_names_pass_validation(
-        self, oc_name: str, api: p.Ldif.LdifClient,
+        self,
+        oc_name: str,
+        api: p.Ldif.LdifClient,
     ) -> None:
         """Test valid objectclass names pass validation."""
         entry = self._make_entry(c.Tests.ANALYSIS_DN_VALID, {"objectClass": [oc_name]})
@@ -150,7 +163,8 @@ class TestsFlextLdifAnalysisService:
         tm.that(val_result.valid_entries, eq=1)
 
     def test_validate_entries_empty_dn_reports_invalid(
-        self, api: p.Ldif.LdifClient,
+        self,
+        api: p.Ldif.LdifClient,
     ) -> None:
         """Test validate entries empty dn reports invalid."""
         entry = self._make_entry("", {"objectClass": ["person"]})
@@ -161,11 +175,13 @@ class TestsFlextLdifAnalysisService:
         tm.that(len(val_result.errors) > 0, eq=True)
 
     def test_validate_entries_invalid_objectclass_name_reports_invalid(
-        self, api: p.Ldif.LdifClient,
+        self,
+        api: p.Ldif.LdifClient,
     ) -> None:
         """Test validate entries invalid objectclass name reports invalid."""
         entry = self._make_entry(
-            c.Tests.ANALYSIS_DN_VALID, {"objectClass": [c.Tests.ANALYSIS_OC_INVALID]},
+            c.Tests.ANALYSIS_DN_VALID,
+            {"objectClass": [c.Tests.ANALYSIS_OC_INVALID]},
         )
         result = api.validate_entries([entry])
         val_result = u.Tests.assert_success(result)
@@ -174,7 +190,8 @@ class TestsFlextLdifAnalysisService:
         tm.that(len(val_result.errors) > 0, eq=True)
 
     def test_validate_entries_none_dn_reports_invalid(
-        self, api: p.Ldif.LdifClient,
+        self,
+        api: p.Ldif.LdifClient,
     ) -> None:
         """Test validate entries none dn reports invalid."""
         entry = self._make_entry(None, {})

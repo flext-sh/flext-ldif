@@ -25,7 +25,8 @@ class FlextLdifServersOudTransformMixin:
 
     @staticmethod
     def apply_phase_aware_acl_handling(
-        entry_data: m.Ldif.Entry, write_options: m.Ldif.WriteFormatOptions | None,
+        entry_data: m.Ldif.Entry,
+        write_options: m.Ldif.WriteFormatOptions | None,
     ) -> m.Ldif.Entry:
         """Apply phase-aware ACL attribute commenting.
 
@@ -40,7 +41,8 @@ class FlextLdifServersOudTransformMixin:
             return entry_data
         acl_attrs_list = list(acl_attrs)
         return FlextLdifServersOudAclExtractMixin.comment_acl_attributes(
-            entry_data, acl_attrs_list,
+            entry_data,
+            acl_attrs_list,
         )
 
     @staticmethod
@@ -62,7 +64,8 @@ class FlextLdifServersOudTransformMixin:
         entry: m.Ldif.Entry,
         validate_aci_macros: Callable[[str], r[bool]],
         correct_rfc_syntax_in_attributes: Callable[
-            [t.Ldif.AttributeDict], r[t.Ldif.AttributeDict],
+            [t.Ldif.AttributeDict],
+            r[t.Ldif.AttributeDict],
         ],
     ) -> p.Result[m.Ldif.Entry]:
         """Validate and correct RFC syntax issues before writing entry (static helper).
@@ -77,12 +80,15 @@ class FlextLdifServersOudTransformMixin:
             k: list(v) for k, v in attrs_dict_raw.items()
         }
         aci_validation_error = FlextLdifServersOudAciMixin.validate_aci_macros_in_entry(
-            attrs_dict, validate_aci_macros,
+            attrs_dict,
+            validate_aci_macros,
         )
         if aci_validation_error:
             return r[m.Ldif.Entry].fail(aci_validation_error)
         return FlextLdifServersOudTransformMixin.correct_syntax_and_return_entry(
-            entry, attrs_dict, correct_rfc_syntax_in_attributes,
+            entry,
+            attrs_dict,
+            correct_rfc_syntax_in_attributes,
         )
 
     @staticmethod
@@ -118,7 +124,9 @@ class FlextLdifServersOudTransformMixin:
             aci_str: str = aci
             normalized_aci, was_filtered = (
                 FlextLdifServersOudAciMixin.normalize_aci_value(
-                    aci_str, base_dn, dn_registry,
+                    aci_str,
+                    base_dn,
+                    dn_registry,
                 )
             )
             if not was_filtered and normalized_aci:
@@ -229,7 +237,8 @@ class FlextLdifServersOudTransformMixin:
         entry: m.Ldif.Entry,
         attrs_dict: t.Ldif.AttributeDict,
         correct_rfc_syntax_in_attributes: Callable[
-            [t.Ldif.AttributeDict], r[t.Ldif.AttributeDict],
+            [t.Ldif.AttributeDict],
+            r[t.Ldif.AttributeDict],
         ],
     ) -> p.Result[m.Ldif.Entry]:
         """Correct RFC syntax issues and return entry.
@@ -258,7 +267,9 @@ class FlextLdifServersOudTransformMixin:
             syntax_corrections_typed = syntax_corrections_dict
         if syntax_corrections_typed is not None:
             return FlextLdifServersOudTransformMixin.apply_syntax_corrections(
-                entry, corrected_data_typed, syntax_corrections_typed,
+                entry,
+                corrected_data_typed,
+                syntax_corrections_typed,
             )
         return r[m.Ldif.Entry].ok(entry)
 

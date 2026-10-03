@@ -33,7 +33,9 @@ class TestsFlextLdifOidAclConvertOud:
 
     @staticmethod
     def _rule(
-        target_type: str, target_attrs: str = "*", acl_type: str = "orclaci",
+        target_type: str,
+        target_attrs: str = "*",
+        acl_type: str = "orclaci",
     ) -> m.Ldif.OidAclRule:
         return m.Ldif.OidAclRule(
             dn="dc=ctbc",
@@ -57,7 +59,11 @@ class TestsFlextLdifOidAclConvertOud:
         ],
     )
     def test_subject_maps_to_expected_bind_rule(
-        self, kind: str, value: str, bind_type: str, bind_value: str,
+        self,
+        kind: str,
+        value: str,
+        bind_type: str,
+        bind_value: str,
     ) -> None:
         """Test subject maps to expected bind rule."""
         result = Conv.convert_subject_to_oud(self._subject(kind, value))
@@ -73,10 +79,13 @@ class TestsFlextLdifOidAclConvertOud:
         tm.that(result.unwrap().permissions, eq=())
 
     @pytest.mark.parametrize(
-        ("kind", "value"), [("guidattr", "orclguid"), ("nosuchkind", "")],
+        ("kind", "value"),
+        [("guidattr", "orclguid"), ("nosuchkind", "")],
     )
     def test_subject_without_oud_equivalent_surfaces_failure(
-        self, kind: str, value: str,
+        self,
+        kind: str,
+        value: str,
     ) -> None:
         """Test subject without oud equivalent surfaces failure."""
         result = Conv.convert_subject_to_oud(self._subject(kind, value))
@@ -135,7 +144,10 @@ class TestsFlextLdifOidAclConvertOud:
         ],
     )
     def test_get_targetattr(
-        self, target_type: str, target_attrs: str, expected: str,
+        self,
+        target_type: str,
+        target_attrs: str,
+        expected: str,
     ) -> None:
         """Test get targetattr."""
         tm.that(Conv.get_targetattr(self._rule(target_type, target_attrs)), eq=expected)
@@ -145,7 +157,8 @@ class TestsFlextLdifOidAclConvertOud:
     def test_scope_orclaci_without_anyone_is_default(self) -> None:
         """Test scope orclaci without anyone is default."""
         scope = Conv.calculate_targetscope(
-            self._rule("entry"), has_anyone_subject=False,
+            self._rule("entry"),
+            has_anyone_subject=False,
         )
 
         tm.that(scope is None, eq=True)
@@ -159,7 +172,8 @@ class TestsFlextLdifOidAclConvertOud:
     def test_scope_orclentrylevelaci_is_always_base(self) -> None:
         """Test scope orclentrylevelaci is always base."""
         scope = Conv.calculate_targetscope(
-            self._rule("entry", acl_type="orclentrylevelaci"), has_anyone_subject=False,
+            self._rule("entry", acl_type="orclentrylevelaci"),
+            has_anyone_subject=False,
         )
 
         tm.that(scope, eq="base")

@@ -71,7 +71,8 @@ class FlextLdifUtilitiesNormalizeAttrsTransformer(
         return r[m.Ldif.Entry].ok(item)
 
     def _process_value_list(
-        self, values: t.MutableSequenceOf[str],
+        self,
+        values: t.MutableSequenceOf[str],
     ) -> t.MutableSequenceOf[str]:
         """Process a single attribute's values.
 

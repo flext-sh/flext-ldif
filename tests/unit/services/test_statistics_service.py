@@ -66,7 +66,8 @@ class TestsFlextLdifStatisticsService:
         ]
 
     def test_returns_success_result_for_entry_list(
-        self, api: p.Ldif.LdifClient,
+        self,
+        api: p.Ldif.LdifClient,
     ) -> None:
         """Test returns success result for entry list."""
         result = api.calculate_for_entries(self._entries(2))
@@ -76,7 +77,9 @@ class TestsFlextLdifStatisticsService:
 
     @pytest.mark.parametrize("count", [0, 1, 2, 5])
     def test_total_entries_equals_input_count(
-        self, api: p.Ldif.LdifClient, count: int,
+        self,
+        api: p.Ldif.LdifClient,
+        count: int,
     ) -> None:
         """Test total entries equals input count."""
         result = api.calculate_for_entries(self._entries(count))
@@ -85,7 +88,8 @@ class TestsFlextLdifStatisticsService:
         tm.that(stats.total_entries, eq=count)
 
     def test_object_class_distribution_counts_shared_objectclass(
-        self, api: p.Ldif.LdifClient,
+        self,
+        api: p.Ldif.LdifClient,
     ) -> None:
         """Test object class distribution counts shared objectclass."""
         result = api.calculate_for_entries(self._entries(3))
@@ -98,7 +102,8 @@ class TestsFlextLdifStatisticsService:
         tm.that(stats.object_class_distribution.get("top", 0), eq=3)
 
     def test_server_type_distribution_partitions_by_server_type(
-        self, api: p.Ldif.LdifClient,
+        self,
+        api: p.Ldif.LdifClient,
     ) -> None:
         """Test server type distribution partitions by server type."""
         entries = [
@@ -114,7 +119,9 @@ class TestsFlextLdifStatisticsService:
 
     @pytest.mark.parametrize("server_type", [c.Tests.RFC, c.Tests.OID])
     def test_single_server_type_produces_single_count(
-        self, api: p.Ldif.LdifClient, server_type: str,
+        self,
+        api: p.Ldif.LdifClient,
+        server_type: str,
     ) -> None:
         """Test single server type produces single count."""
         entries = [
@@ -140,7 +147,8 @@ class TestsFlextLdifStatisticsService:
         tm.that(len(stats.server_type_distribution), eq=0)
 
     def test_parse_response_input_equals_entry_list_input(
-        self, api: p.Ldif.LdifClient,
+        self,
+        api: p.Ldif.LdifClient,
     ) -> None:
         """Test parse response input equals entry list input."""
         entries = [

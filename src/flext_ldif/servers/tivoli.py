@@ -99,7 +99,8 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         ACL_DEFAULT_NAME: ClassVar[str] = "Tivoli ACL"
         ACL_ACCESS_PATTERN: ClassVar[str] = 'access\\s+"(\\w+)"'
         ACL_ACCESS_PATTERN_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-            ACL_ACCESS_PATTERN, re.IGNORECASE,
+            ACL_ACCESS_PATTERN,
+            re.IGNORECASE,
         )
         ACL_DEFAULT_TARGET_DN: ClassVar[str] = ""
         ACL_DEFAULT_SUBJECT_TYPE: ClassVar[c.Ldif.AclSubjectType] = (
@@ -114,7 +115,8 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
 
         @override
         def can_handle_attribute(
-            self, attr_definition: str | m.Ldif.SchemaAttribute,
+            self,
+            attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Detect Tivoli-specific attributes.
 
@@ -129,7 +131,8 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
 
         @override
         def can_handle_objectclass(
-            self, oc_definition: str | m.Ldif.SchemaObjectClass,
+            self,
+            oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Detect Tivoli objectClass definitions.
 
@@ -278,7 +281,9 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
 
         @override
         def can_handle(
-            self, entry_dn: str, attributes: t.MutableStrSequenceMapping,
+            self,
+            entry_dn: str,
+            attributes: t.MutableStrSequenceMapping,
         ) -> bool:
             """Detect Tivoli DS-specific entries.
 
@@ -309,6 +314,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 for oc in object_classes
             )
 
+        @staticmethod
         def normalize_attribute_name(self, attr_name: str) -> str:
             """Normalize attribute name for Tivoli DS.
 
@@ -317,6 +323,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             """
             return attr_name.lower()
 
+        @staticmethod
         def normalize_dn(self, entry_dn: str) -> str:
             """Normalize DN for Tivoli DS.
 

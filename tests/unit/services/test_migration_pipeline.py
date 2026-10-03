@@ -53,7 +53,8 @@ class TestsFlextLdifMigrationPipeline:
         """Supplied directories and server types surface on public fields."""
         input_dir, output_dir = migration_dirs
         pipeline = migration_pipeline_factory(
-            source_server_type=c.Tests.OID, target_server_type=c.Tests.OUD,
+            source_server_type=c.Tests.OID,
+            target_server_type=c.Tests.OUD,
         )
         assert pipeline is not None
         tm.that(pipeline.input_dir, eq=input_dir)
@@ -90,7 +91,8 @@ class TestsFlextLdifMigrationPipeline:
     ) -> None:
         """Each known source/target pair round-trips onto the public fields."""
         pipeline = migration_pipeline_factory(
-            source_server_type=source, target_server_type=target,
+            source_server_type=source,
+            target_server_type=target,
         )
         tm.that(pipeline.source_server_type, eq=c.Ldif.ServerTypes(source))
         tm.that(pipeline.target_server_type, eq=c.Ldif.ServerTypes(target))
@@ -112,7 +114,8 @@ class TestsFlextLdifMigrationPipeline:
         / ``target_server_type`` fields expose the normalized ``ServerTypes``.
         """
         pipeline = migration_pipeline_factory(
-            source_server_type=raw_server, target_server_type=raw_server,
+            source_server_type=raw_server,
+            target_server_type=raw_server,
         )
         tm.that(pipeline.source_server_type, eq=c.Ldif.ServerTypes(expected_server))
         tm.that(pipeline.target_server_type, eq=c.Ldif.ServerTypes(expected_server))
@@ -140,7 +143,8 @@ class TestsFlextLdifMigrationPipeline:
     def test_execute_fails_without_input_dir() -> None:
         """execute() returns failure naming input_dir when none was configured."""
         pipeline = FlextLdifMigrationPipeline(
-            source_server_type=c.Tests.OID, target_server_type=c.Tests.OUD,
+            source_server_type=c.Tests.OID,
+            target_server_type=c.Tests.OUD,
         )
         tm.fail(pipeline.execute(), has="input_dir")
 
@@ -277,7 +281,9 @@ class TestsFlextLdifMigrationPipeline:
         """
         entry = u.Tests.orclaci_base_dn_entry(dn="cn=users,dc=ctbc")
         pipeline = FlextLdifMigrationPipeline(
-            source_server_type="oid", target_server_type="oud", base_dn="dc=ctbc",
+            source_server_type="oid",
+            target_server_type="oud",
+            base_dn="dc=ctbc",
         )
 
         migrated: t.MutableSequenceOf[m.Ldif.Entry] = u.Tests.assert_success(
@@ -335,7 +341,8 @@ class TestsFlextLdifMigrationPipeline:
         output_as_directory.mkdir()
         tm.fail(
             migration_pipeline_factory().migrate_file(
-                input_file, output_file=output_as_directory,
+                input_file,
+                output_file=output_as_directory,
             ),
             has="Write failed",
         )
@@ -363,7 +370,8 @@ class TestsFlextLdifMigrationPipeline:
         input_file = input_dir / "test.ldif"
         input_file.write_text(c.Tests.RFC_SAMPLE_LDIF_BASIC)
         pipeline = FlextLdifMigrationPipeline(
-            source_server_type=c.Tests.RFC, target_server_type=c.Tests.RFC,
+            source_server_type=c.Tests.RFC,
+            target_server_type=c.Tests.RFC,
         )
         tm.fail(pipeline.migrate_file(input_file, output_file=None))
 
@@ -386,7 +394,8 @@ class TestsFlextLdifMigrationPipeline:
         )
         tm.ok(
             FlextLdifProcessingPipeline(
-                transform_config=None, entries_input=[entry],
+                transform_config=None,
+                entries_input=[entry],
             ).execute(),
         )
 
@@ -399,11 +408,13 @@ class TestsFlextLdifMigrationPipeline:
         transform_config = m.Ldif.TransformConfig(
             **{field: True},
             process_config=m.Ldif.ProcessConfig(
-                source_server=c.Tests.RFC, target_server=c.Tests.RFC,
+                source_server=c.Tests.RFC,
+                target_server=c.Tests.RFC,
             ),
         )
         tm.ok(
             FlextLdifProcessingPipeline(
-                transform_config=transform_config, entries_input=[],
+                transform_config=transform_config,
+                entries_input=[],
             ).execute(),
         )

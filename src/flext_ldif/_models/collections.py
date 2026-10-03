@@ -22,7 +22,8 @@ if TYPE_CHECKING:
 class FlextLdifModelsCollections:
     class DynamicCounts(m.DynamicModel):
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
-            extra="allow", validate_assignment=True,
+            extra="allow",
+            validate_assignment=True,
         )
 
         def __hash__(self) -> int:
@@ -96,12 +97,16 @@ class FlextLdifModelsCollections:
             return self.categories[key]
 
         def __setitem__(
-            self, category: str, entries: t.MutableSequenceOf[mde.Entry],
+            self,
+            category: str,
+            entries: t.MutableSequenceOf[mde.Entry],
         ) -> None:
             self.categories[category] = list(entries)
 
         def add_entries(
-            self, category: str, entries: t.MutableSequenceOf[mde.Entry],
+            self,
+            category: str,
+            entries: t.MutableSequenceOf[mde.Entry],
         ) -> None:
             key = category
             existing = self.categories.get(key)
@@ -121,7 +126,9 @@ class FlextLdifModelsCollections:
             return iter(self.categories.keys())
 
         def get(
-            self, category: str, default: t.MutableSequenceOf[mde.Entry] | None = None,
+            self,
+            category: str,
+            default: t.MutableSequenceOf[mde.Entry] | None = None,
         ) -> t.MutableSequenceOf[mde.Entry]:
             entries = self.categories.get(category)
             if entries is not None:
