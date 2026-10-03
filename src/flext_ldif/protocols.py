@@ -18,6 +18,10 @@ if TYPE_CHECKING:
     from flext_ldif import c
 
 
+from flext_ldif._protocols.client import FlextLdifProtocolsClient
+from flext_ldif._protocols.values import FlextLdifProtocolsValues
+
+
 class FlextLdifProtocols(FlextCliProtocols):
     """Unified LDIF protocol facade."""
 
@@ -27,6 +31,8 @@ class FlextLdifProtocols(FlextCliProtocols):
         FlextLdifProtocolsBase,
         FlextLdifProtocolsLdap3,
         Protocol,
+        FlextLdifProtocolsValues,
+        FlextLdifProtocolsClient,
     ):
         """LDIF-specific structural protocol namespace."""
 
