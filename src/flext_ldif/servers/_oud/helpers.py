@@ -9,12 +9,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from .aci import FlextLdifServersOudAciMixin
-from .acl_extract import FlextLdifServersOudAclExtractMixin
-from .acl_metadata import FlextLdifServersOudAclMetadataMixin
-from .comments import FlextLdifServersOudCommentsMixin
-from .schema_write import FlextLdifServersOudSchemaWriteMixin
-from .transform import FlextLdifServersOudTransformMixin
+from flext_ldif.servers._oud.aci import FlextLdifServersOudAciMixin
+from flext_ldif.servers._oud.acl_extract import FlextLdifServersOudAclExtractMixin
+from flext_ldif.servers._oud.acl_metadata import FlextLdifServersOudAclMetadataMixin
+from flext_ldif.servers._oud.comments import FlextLdifServersOudCommentsMixin
+from flext_ldif.servers._oud.schema_write import FlextLdifServersOudSchemaWriteMixin
+from flext_ldif.servers._oud.transform import FlextLdifServersOudTransformMixin
 
 
 class FlextLdifServersOudHelpersMixin(

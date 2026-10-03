@@ -1,4 +1,8 @@
-"""Attribute normalization transformer."""
+"""Attribute normalization transformer.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -6,15 +10,14 @@ from typing import TYPE_CHECKING, override
 
 from flext_core import r
 from flext_ldif import m, p, t
-
-from ._transformer_base import FlextLdifUtilitiesTransformer
+from flext_ldif._utilities._transformer_base import FlextLdifUtilitiesTransformer
 
 if TYPE_CHECKING:
     from collections.abc import MutableMapping
 
 
 class FlextLdifUtilitiesNormalizeAttrsTransformer(
-    FlextLdifUtilitiesTransformer[m.Ldif.Entry]
+    FlextLdifUtilitiesTransformer[m.Ldif.Entry],
 ):
     """Transformer for attribute normalization."""
 
@@ -35,7 +38,11 @@ class FlextLdifUtilitiesNormalizeAttrsTransformer(
 
     @override
     def apply(self, item: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
-        """Apply attribute normalization to an entry."""
+        """Apply attribute normalization to an entry.
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.Entry]``.
+        """
         if item.attributes is None:
             return r[m.Ldif.Entry].fail("Entry has no attributes")
         attrs: t.MutableStrSequenceMapping = (
@@ -57,16 +64,20 @@ class FlextLdifUtilitiesNormalizeAttrsTransformer(
         if needs_update:
             update_dict: MutableMapping[str, m.Ldif.Attributes] = {
                 "attributes": m.Ldif.Attributes.model_validate({
-                    "attributes": new_attrs
-                })
+                    "attributes": new_attrs,
+                }),
             }
             item = item.model_copy(update=update_dict)
         return r[m.Ldif.Entry].ok(item)
 
     def _process_value_list(
-        self, values: t.MutableSequenceOf[str]
+        self, values: t.MutableSequenceOf[str],
     ) -> t.MutableSequenceOf[str]:
-        """Process a single attribute's values."""
+        """Process a single attribute's values.
+
+        Returns:
+            The resulting ``t.MutableSequenceOf[str]``.
+        """
         processed: t.MutableSequenceOf[str] = []
         for value_item in values:
             trimmed_value = value_item.strip() if self._trim_values else value_item

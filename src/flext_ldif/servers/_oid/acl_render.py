@@ -5,6 +5,9 @@ Faithful port of the oracle ``AciRule.to_aci_string`` (non-formatted form):
 "name"; allow (perms) bindrule; …)``. Same-permission subjects collapse into
 one ``allow`` clause with ``or``-joined bind-rules. Pure string assembly —
 total function, no failure channel. Format literals are the ``c.Ldif`` SSOT.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -52,6 +55,9 @@ class FlextLdifServersOidAclRender:
 
         Allows are grouped by identical permission set (first-seen order); each
         group becomes one ``allow (perms) bind1 or bind2;`` clause.
+
+        Returns:
+            The resulting ``str``.
         """
         grouped = m.Ldif.AciAllowGroups()
         for allow in aci.allows:

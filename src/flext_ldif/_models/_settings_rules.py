@@ -90,7 +90,12 @@ class FlextLdifModelsSettingsRules:
             cls: type[Self],
             data: t.MappingKV[str, t.Ldif.ValueType | frozenset[str] | set[str]] | Self,
         ) -> t.MappingKV[str, t.Ldif.ValueType | frozenset[str] | set[str]]:
-            """Accept immutable mapping inputs such as MappingProxyType."""
+            """Accept immutable mapping inputs such as MappingProxyType.
+
+            Returns:
+                The resulting ``t.MappingKV[str, t.Ldif.ValueType | frozenset[str] |
+                    set[str]]``.
+            """
             if isinstance(data, cls):
                 return dict(data.model_dump())
             return dict(data)

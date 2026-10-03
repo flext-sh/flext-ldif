@@ -1,9 +1,9 @@
 """Oracle Unified Directory (OUD) Servers.
 
+Provides OUD-specific servers for schema, ACL, and entry processing.
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
-Provides OUD-specific servers for schema, ACL, and entry processing.
 """
 
 from __future__ import annotations
@@ -12,11 +12,10 @@ from collections.abc import Mapping
 from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
+from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
+from flext_ldif.servers._oud.helpers import FlextLdifServersOudHelpersMixin
+from flext_ldif.servers._oud.server_constants import FlextLdifServersOudConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-
-from .._base.entry import FlextLdifServersBaseEntry
-from .helpers import FlextLdifServersOudHelpersMixin
-from .server_constants import FlextLdifServersOudConstants
 
 if TYPE_CHECKING:
     from flext_ldif.servers.base import FlextLdifServersBase
@@ -47,9 +46,15 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     @override
     def can_handle(
-        self, entry_dn: str, attributes: t.MutableStrSequenceMapping
+        self,
+        entry_dn: str,
+        attributes: t.MutableStrSequenceMapping,
     ) -> bool:
-        """Match OUD-specific DN/attribute patterns or fall back on objectclass."""
+        """Match OUD-specific DN/attribute patterns or fall back on objectclass.
+
+        Returns:
+            The resulting ``bool``.
+        """
         oud_constants = FlextLdifServersOudConstants
         patterns_config = m.Ldif.ServerPatternsConfig(
             dn_patterns=oud_constants.DN_DETECTION_PATTERNS,
@@ -64,7 +69,11 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     @override
     def parse_server(self, value: str) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
-        """Parse LDIF content and apply OUD post-processing hooks."""
+        """Parse LDIF content and apply OUD post-processing hooks.
+
+        Returns:
+            The resulting ``p.Result[t.MutableSequenceOf[m.Ldif.Entry]]``.
+        """
         parsed_result = super().parse_server(value)
         if parsed_result.failure:
             return parsed_result
@@ -73,7 +82,7 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             post_parse_result = self._hook_post_parse_entry(parsed_entry)
             if post_parse_result.failure:
                 return r[t.MutableSequenceOf[m.Ldif.Entry]].from_failure(
-                    post_parse_result
+                    post_parse_result,
                 )
             entry_after_post: m.Ldif.Entry = post_parse_result.value
             original_dn = entry_after_post.dn.value if entry_after_post.dn else ""
@@ -84,20 +93,28 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 else {}
             )
             finalize_result = self._hook_finalize_entry_parse(
-                entry_after_post, original_dn, original_attrs
+                entry_after_post,
+                original_dn,
+                original_attrs,
             )
             if finalize_result.failure:
                 return r[t.MutableSequenceOf[m.Ldif.Entry]].from_failure(
-                    finalize_result
+                    finalize_result,
                 )
             processed_entries.append(finalize_result.value)
         return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(processed_entries)
 
     @override
     def parse_entry(
-        self, entry_dn: str, entry_attrs: t.MutableStrSequenceMapping | m.Ldif.Entry
+        self,
+        entry_dn: str,
+        entry_attrs: t.MutableStrSequenceMapping | m.Ldif.Entry,
     ) -> p.Result[m.Ldif.Entry]:
-        """Delegate RFC parse, then enrich entry metadata with OUD round-trip context."""
+        """Delegate RFC parse, then enrich entry metadata with OUD round-trip context.
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.Entry]``.
+        """
         entry_attrs_dict: t.MutableStrSequenceMapping = {}
         if isinstance(entry_attrs, Mapping):
             for key, values in entry_attrs.items():
@@ -127,12 +144,20 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         return r[m.Ldif.Entry].ok(entry)
 
     def _hook_finalize_entry_parse(
-        self, entry: m.Ldif.Entry, original_dn: str, original_attrs: t.AttributeMapping
+        self,
+        entry: m.Ldif.Entry,
+        original_dn: str,
+        original_attrs: t.AttributeMapping,
     ) -> p.Result[m.Ldif.Entry]:
-        """Process ACL attributes (aci) into entry.metadata.extensions."""
+        """Process ACL attributes (aci) into entry.metadata.extensions.
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.Entry]``.
+        """
         _ = original_dn
         aci_values = FlextLdifServersOudHelpersMixin.find_aci_values(
-            entry, original_attrs
+            entry,
+            original_attrs,
         )
         if not aci_values:
             return r[m.Ldif.Entry].ok(entry)
@@ -146,7 +171,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             dict(entry.metadata.extensions) if entry.metadata.extensions else {}
         )
         FlextLdifServersOudHelpersMixin.process_aci_list_for_finalize(
-            aci_values, acl_server, existing
+            aci_values,
+            acl_server,
+            existing,
         )
         if existing:
             entry.metadata = entry.metadata.model_copy(update={"extensions": existing})
@@ -154,7 +181,11 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     @override
     def _hook_post_parse_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
-        """Validate OUD ACI macros and merge ACL metadata into the parsed entry."""
+        """Validate OUD ACI macros and merge ACL metadata into the parsed entry.
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.Entry]``.
+        """
         attrs_dict: t.MutableStrSequenceMapping = (
             entry.attributes.attributes if entry.attributes is not None else {}
         )
@@ -166,7 +197,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                 if u.matches_type(aci_value, str):
                     process_result = (
                         FlextLdifServersOudHelpersMixin.process_single_aci_value(
-                            aci_value, acl_metadata_extensions
+                            aci_value,
+                            acl_metadata_extensions,
                         )
                     )
                     if process_result.failure:
@@ -185,36 +217,47 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
                     aci_count=len(aci_list),
                 )
             entry = FlextLdifServersOudHelpersMixin.merge_acl_metadata_to_entry(
-                entry, acl_metadata_extensions
+                entry,
+                acl_metadata_extensions,
             )
         return r[m.Ldif.Entry].ok(entry)
 
     @override
     def _hook_pre_write_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
-        """Normalize schema definitions for OUD (RFC 4512 SYNTAX OIDs) before write."""
+        """Normalize schema definitions for OUD (RFC 4512 SYNTAX OIDs) before write.
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.Entry]``.
+        """
         return FlextLdifServersOudHelpersMixin.normalize_schema_definitions_for_write(
-            entry
+            entry,
         )
 
     @override
     def _write_entry(self, entry_data: m.Ldif.Entry) -> p.Result[str]:
-        """Write entry with OUD pre-write hook + phase-aware ACL handling + DN normalization."""
+        """Write entry with OUD pre-write hook + phase-aware ACL handling + DN normalization.
+
+        Returns:
+            The resulting ``p.Result[str]``.
+        """
         hook_result = self._hook_pre_write_entry(entry_data)
         if hook_result.failure:
             return r[str].fail_op("Pre-write hook", hook_result.error)
         normalized_entry = hook_result.value
         entry_to_write = FlextLdifServersOudHelpersMixin.restore_entry_from_metadata(
-            normalized_entry
+            normalized_entry,
         )
         write_options = self._extract_write_format_options(entry_to_write.metadata)
         ldif_parts: t.MutableSequenceOf[str] = []
         ldif_parts.extend(
             FlextLdifServersOudHelpersMixin.add_original_entry_comments(
-                entry_data, write_options
-            )
+                entry_data,
+                write_options,
+            ),
         )
         entry_data = FlextLdifServersOudHelpersMixin.apply_phase_aware_acl_handling(
-            normalized_entry, write_options
+            normalized_entry,
+            write_options,
         )
         if FlextLdifServersOudConstants.ACL_NORMALIZE_DNS_IN_VALUES:
             entry_data = FlextLdifServersOudHelpersMixin.normalize_acl_dns(entry_data)

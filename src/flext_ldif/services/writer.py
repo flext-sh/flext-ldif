@@ -1,4 +1,8 @@
-"""Writer service for LDIF output orchestration."""
+"""Writer service for LDIF output orchestration.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -20,21 +24,25 @@ class FlextLdifWriter(s):
         server_type: str | None = None,
         format_options: p.Ldif.WriteFormatOptions | None = None,
     ) -> p.Result[m.Ldif.WriteResponse]:
-        """Write entries to LDIF text and return canonical write metadata."""
+        """Write entries to LDIF text and return canonical write metadata.
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.WriteResponse]``.
+        """
         string_result = self.write_to_string(
-            entries, server_type=server_type, format_options=format_options
+            entries, server_type=server_type, format_options=format_options,
         )
         if string_result.failure:
             return r[m.Ldif.WriteResponse].fail_op(
-                "write ldif entries", string_result.error or "LDIF writing failed"
+                "write ldif entries", string_result.error or "LDIF writing failed",
             )
         return r[m.Ldif.WriteResponse].ok(
             m.Ldif.WriteResponse(
                 content=string_result.value,
                 statistics=m.Ldif.Statistics(
-                    total_entries=u.count(entries), processed_entries=u.count(entries)
+                    total_entries=u.count(entries), processed_entries=u.count(entries),
                 ),
-            )
+            ),
         )
 
     def write_ldif_file(
@@ -45,9 +53,13 @@ class FlextLdifWriter(s):
         server_type: str | None = None,
         format_options: p.Ldif.WriteFormatOptions | None = None,
     ) -> p.Result[m.Ldif.WriteResponse]:
-        """Write entries to an LDIF file and return canonical write metadata."""
+        """Write entries to an LDIF file and return canonical write metadata.
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.WriteResponse]``.
+        """
         string_result = self.write_to_string(
-            entries, server_type=server_type, format_options=format_options
+            entries, server_type=server_type, format_options=format_options,
         )
         if string_result.failure:
             return r[m.Ldif.WriteResponse].fail_op(
@@ -59,16 +71,16 @@ class FlextLdifWriter(s):
         if write.failure:
             return r[m.Ldif.WriteResponse].fail(
                 f"Failed to write LDIF file {path}: "
-                f"{write.error or 'unknown write error'}"
+                f"{write.error or 'unknown write error'}",
             )
         return r[m.Ldif.WriteResponse].ok(
             m.Ldif.WriteResponse(
                 content=ldif_content,
                 output_path=str(path),
                 statistics=m.Ldif.Statistics(
-                    total_entries=u.count(entries), processed_entries=u.count(entries)
+                    total_entries=u.count(entries), processed_entries=u.count(entries),
                 ),
-            )
+            ),
         )
 
     def write_to_string(
@@ -77,7 +89,11 @@ class FlextLdifWriter(s):
         server_type: str | None = None,
         format_options: p.Ldif.WriteFormatOptions | None = None,
     ) -> p.Result[str]:
-        """Write entries to LDIF text through the selected base server."""
+        """Write entries to LDIF text through the selected base server.
+
+        Returns:
+            The resulting ``p.Result[str]``.
+        """
         effective_server_type = server_type or self._get_effective_server_type_value()
         concrete_options = (
             format_options

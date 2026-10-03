@@ -36,7 +36,11 @@ if TYPE_CHECKING:
 
 @pytest.fixture
 def flext_api() -> p.Ldif.LdifClient:
-    """Public Ldif API instance under test."""
+    """Public Ldif API instance under test.
+
+    Returns:
+        The resulting ``p.Ldif.LdifClient``.
+    """
     return ldif()
 
 
@@ -49,7 +53,11 @@ class TestsFlextLdifRealLdapExport:
     def _to_ldif_entries(
         ldap3_entries: Sequence[p.Ldap.Ldap3Entry],
     ) -> list[m.Ldif.Entry]:
-        """Convert ldap3 search results into ldif entries via the public adapter."""
+        """Convert ldap3 search results into ldif entries via the public adapter.
+
+        Returns:
+            The resulting ``list[m.Ldif.Entry]``.
+        """
         adapter = u.Tests.create_ldap_entry_adapter()
         entries: list[m.Ldif.Entry] = []
         for ldap3_entry in ldap3_entries:
@@ -58,14 +66,18 @@ class TestsFlextLdifRealLdapExport:
             entries.append(result.unwrap())
         return entries
 
+    @staticmethod
     def _parse_back(
-        self, flext_api: p.Ldif.LdifClient, content: str | None
+        flext_api: p.Ldif.LdifClient, content: str | None,
     ) -> dict[str, Mapping[str, Sequence[str]]]:
         """Parse exported LDIF and index attribute maps by DN string.
 
         Parsing the export through the public parser is the strongest available
         behavioral check: it proves the exported bytes are valid LDIF that
         faithfully round-trips every DN and attribute.
+
+        Returns:
+            The resulting ``dict[str, Mapping[str, Sequence[str]]]``.
         """
         assert content is not None
         parsed = flext_api.parse_string(content)
@@ -133,7 +145,7 @@ class TestsFlextLdifRealLdapExport:
         tm.ok(write_result)
         indexed = self._parse_back(flext_api, write_result.unwrap().content)
         for i, (username, person_dn) in enumerate(
-            zip(usernames, expected_dns, strict=True)
+            zip(usernames, expected_dns, strict=True),
         ):
             tm.that(indexed, has=person_dn)
             tm.that(indexed[person_dn]["cn"], has=username)
@@ -155,11 +167,11 @@ class TestsFlextLdifRealLdapExport:
         ldap_connection.add(people_ou_dn, ["organizationalUnit"], {"ou": "People"})
         person_dn = f"cn={person_name},{people_ou_dn}"
         ldap_connection.add(
-            person_dn, ["person", "inetOrgPerson"], {"cn": person_name, "sn": "Johnson"}
+            person_dn, ["person", "inetOrgPerson"], {"cn": person_name, "sn": "Johnson"},
         )
         group_dn = f"cn={group_name},{groups_ou_dn}"
         ldap_connection.add(
-            group_dn, ["groupOfNames"], {"cn": group_name, "member": person_dn}
+            group_dn, ["groupOfNames"], {"cn": group_name, "member": person_dn},
         )
         ldap_connection.search(
             clean_test_ou,

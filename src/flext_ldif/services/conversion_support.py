@@ -1,4 +1,8 @@
-"""Support-check helpers for server-to-server conversion."""
+"""Support-check helpers for server-to-server conversion.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -13,9 +17,16 @@ class FlextLdifConversionSupportMixin(s):
         return server.schema_server
 
     def _resolve_server(
-        self, server_or_type: str | p.Ldif.ServerReference | p.Ldif.ServerServer
+        self, server_or_type: str | p.Ldif.ServerReference | p.Ldif.ServerServer,
     ) -> p.Ldif.ServerServer:
-        """Resolve server server instance from string type or return instance."""
+        """Resolve server server instance from string type or return instance.
+
+        Returns:
+            The resulting ``p.Ldif.ServerServer``.
+
+        Raises:
+            ValueError: If Unknown server type.
+        """
         if isinstance(server_or_type, str):
             server_type_str: str = server_or_type
             resolved_result = self._server.resolve_base_server(server_type_str)
@@ -52,9 +63,13 @@ class FlextLdifConversionSupportMixin(s):
             return r[p.Ldif.SchemaServer].fail(f"{role} server error: {e}")
 
     def resolve_supported_conversions(
-        self, server: p.Ldif.ServerReference | str
+        self, server: p.Ldif.ServerReference | str,
     ) -> t.MutableBoolMapping:
-        """Check which data types a server supports for conversion."""
+        """Check which data types a server supports for conversion.
+
+        Returns:
+            The resulting ``t.MutableBoolMapping``.
+        """
         attribute_key = c.Ldif.SchemaItemKind.ATTRIBUTE.value
         objectclass_key = c.Ldif.SchemaItemKind.OBJECTCLASS.value
         support: t.MutableIntMapping = {
@@ -64,7 +79,7 @@ class FlextLdifConversionSupportMixin(s):
             "entry": 0,
         }
         concrete_server = self._server.resolve_base_server(
-            server if isinstance(server, str) else server.server_type
+            server if isinstance(server, str) else server.server_type,
         ).map_or(None)
         if concrete_server is None:
             return {
@@ -85,10 +100,15 @@ class FlextLdifConversionSupportMixin(s):
             "entry": bool(support.get("entry", 0)),
         }
 
+    @staticmethod
     def _check_acl_support(
-        self, server: p.Ldif.ServerServer, support: t.MutableIntMapping
+        server: p.Ldif.ServerServer, support: t.MutableIntMapping,
     ) -> t.MutableIntMapping:
-        """Check ACL support."""
+        """Check ACL support.
+
+        Returns:
+            The resulting ``t.MutableIntMapping``.
+        """
         acl = server.acl_server
         test_acl_def = 'targetattr="*" (version 3.0; acl "test"; allow (read) userdn="ldap:///self";)'
         acl_result = acl.parse_server(test_acl_def)
@@ -96,42 +116,59 @@ class FlextLdifConversionSupportMixin(s):
             support["acl"] = 1
         return support
 
+    @staticmethod
     def _check_attribute_support(
-        self,
         server_schema: p.Ldif.SchemaServer,
         test_attr_def: str,
         support: t.MutableIntMapping,
     ) -> t.MutableIntMapping:
-        """Check attribute support for schema server."""
+        """Check attribute support for schema server.
+
+        Returns:
+            The resulting ``t.MutableIntMapping``.
+        """
         attribute_result = server_schema.parse_attribute(test_attr_def)
         if attribute_result.success:
             support[c.Ldif.SchemaItemKind.ATTRIBUTE.value] = 1
         return support
 
+    @staticmethod
     def _check_entry_support(
-        self, server: p.Ldif.ServerServer, support: t.MutableIntMapping
+        server: p.Ldif.ServerServer, support: t.MutableIntMapping,
     ) -> t.MutableIntMapping:
-        """Check Entry support via the canonical entry server public surface."""
+        """Check Entry support via the canonical entry server public surface.
+
+        Returns:
+            The resulting ``t.MutableIntMapping``.
+        """
         if server.entry_server.parse_entry("cn=test,dc=example,dc=com", {}).success:
             support["entry"] = 1
         return support
 
+    @staticmethod
     def _check_objectclass_support(
-        self,
         server_schema: p.Ldif.SchemaServer,
         test_oc_def: str,
         support: t.MutableIntMapping,
     ) -> t.MutableIntMapping:
-        """Check objectClass support for schema server."""
+        """Check objectClass support for schema server.
+
+        Returns:
+            The resulting ``t.MutableIntMapping``.
+        """
         objectclass_result = server_schema.parse_objectclass(test_oc_def)
         if objectclass_result.success:
             support[c.Ldif.SchemaItemKind.OBJECTCLASS.value] = 1
         return support
 
     def _check_schema_support(
-        self, server: p.Ldif.ServerServer, support: t.MutableIntMapping
+        self, server: p.Ldif.ServerServer, support: t.MutableIntMapping,
     ) -> t.MutableIntMapping:
-        """Check schema (attribute and objectClass) support."""
+        """Check schema (attribute and objectClass) support.
+
+        Returns:
+            The resulting ``t.MutableIntMapping``.
+        """
         server_schema = self._get_schema_from_attribute(server)
         test_attr_def = "( 2.16.840.1.113894.1.1.1 NAME 'orclTest' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
         test_oc_def = (

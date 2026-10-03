@@ -5,6 +5,9 @@ Every test exercises the OBSERVABLE public contract of ``FlextLdifServersDs389``
 ``can_handle*`` / ``parse_input`` / ``write`` methods). No private attribute or
 method is touched, and the real server implementations are used end-to-end
 without mocking the unit under test.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -32,7 +35,7 @@ class TestsFlextLdifDs389Servers:
 
     @pytest.mark.parametrize("test_case", c.Tests.DS389_ATTRIBUTE_TEST_CASES)
     def test_can_handle_attribute_matches_expected(
-        self, test_case: m.Tests.AttributeTestCase
+        self, test_case: m.Tests.AttributeTestCase,
     ) -> None:
         """can_handle_attribute reflects DS389 ownership per case table."""
         tm.that(
@@ -86,7 +89,7 @@ class TestsFlextLdifDs389Servers:
         """A definition missing its OID yields a failed r[T] with a reason."""
         tm.fail(
             self._schema_server().parse_input(
-                "NAME 'nsslapd-port' SYNTAX 1.3.6.1.4.1.1466.115.121.1.27"
+                "NAME 'nsslapd-port' SYNTAX 1.3.6.1.4.1.1466.115.121.1.27",
             ),
             has="missing an OID",
         )
@@ -97,7 +100,7 @@ class TestsFlextLdifDs389Servers:
 
     @pytest.mark.parametrize("test_case", c.Tests.DS389_OBJECTCLASS_TEST_CASES)
     def test_can_handle_objectclass_matches_expected(
-        self, test_case: m.Tests.ObjectClassTestCase
+        self, test_case: m.Tests.ObjectClassTestCase,
     ) -> None:
         """can_handle_objectclass reflects DS389 ownership per case table."""
         tm.that(
@@ -130,15 +133,15 @@ class TestsFlextLdifDs389Servers:
             "MAY ( nsds5ReplicaId $ nsds5ReplicaRoot ) )"
         )
         u.Tests.assert_server_schema_parse_and_properties(
-            self._schema_server(), oc_def, expected_kind="AUXILIARY"
+            self._schema_server(), oc_def, expected_kind="AUXILIARY",
         )
 
     def test_parse_abstract_objectclass_reports_kind(self) -> None:
         """ABSTRACT objectClass parse yields a model reporting ABSTRACT kind."""
         parsed = tm.ok(
             self._schema_server().parse_input(
-                "( 2.16.840.1.113730.3.2.3 NAME 'nsds5base' ABSTRACT )"
-            )
+                "( 2.16.840.1.113730.3.2.3 NAME 'nsds5base' ABSTRACT )",
+            ),
         )
         assert isinstance(parsed, m.Ldif.SchemaObjectClass)
         oc_data = parsed
@@ -181,9 +184,10 @@ class TestsFlextLdifDs389Servers:
     # Entry detection
     # ------------------------------------------------------------------
 
+    @staticmethod
     @pytest.mark.parametrize("test_case", c.Tests.DS389_ENTRY_TEST_CASES)
     def test_entry_can_handle_matches_expected(
-        self, test_case: m.Tests.EntryTestCase
+        test_case: m.Tests.EntryTestCase,
     ) -> None:
         """Entry.can_handle reflects DS389 ownership per case table."""
         entry_server = FlextLdifServersDs389().entry_server
@@ -193,7 +197,8 @@ class TestsFlextLdifDs389Servers:
             eq=test_case.expected_can_handle,
         )
 
-    def test_entry_can_handle_rejects_empty_dn(self) -> None:
+    @staticmethod
+    def test_entry_can_handle_rejects_empty_dn() -> None:
         """An empty DN with no DS389 markers is not claimed by the server."""
         entry_server = FlextLdifServersDs389().entry_server
         empty_attrs: t.MutableStrSequenceMapping = {}
@@ -203,6 +208,7 @@ class TestsFlextLdifDs389Servers:
     # ACL detection
     # ------------------------------------------------------------------
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("acl_line", "expected"),
         [
@@ -213,7 +219,7 @@ class TestsFlextLdifDs389Servers:
         ],
     )
     def test_acl_can_handle_matches_expected(
-        self, acl_line: str, *, expected: bool
+        acl_line: str, *, expected: bool,
     ) -> None:
         """Acl.can_handle claims aci/version lines and rejects other input."""
         acl_server = FlextLdifServersDs389().acl_server

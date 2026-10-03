@@ -1,8 +1,5 @@
 """Example 6: ACL (Access Control List) Processing.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
 Demonstrates ldif ACL-related functionality:
 - Extracting ACLs from LDIF entries
 - Parsing ACL attributes
@@ -10,6 +7,9 @@ Demonstrates ldif ACL-related functionality:
 - Working with ACL components
 
 All functionality accessed through ldif facade and FlextLdifAcl service.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -84,7 +84,7 @@ def execute_acl_service() -> None:
             "objectClass": ["organizationalUnit"],
             "ou": ["Test"],
             "aci": [
-                '(target="ldap:///ou=Test,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Test ACL"; allow (read) userdn="ldap:///anyone";)'
+                '(target="ldap:///ou=Test,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Test ACL"; allow (read) userdn="ldap:///anyone";)',
             ],
         },
     )

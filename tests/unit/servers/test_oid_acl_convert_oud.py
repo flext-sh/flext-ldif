@@ -5,6 +5,9 @@ Exercises the observable behavior of
 subject → OUD bind-rule mapping, permission-token conversion, targetattr /
 targetscope computation, and the DN-scoping helpers. Every assertion targets a
 public return value or the ``r[T]`` outcome — never an implementation detail.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -18,7 +21,7 @@ from flext_ldif import m
 from flext_ldif.servers.oid import FlextLdifServersOidAclToOud as Conv
 
 if TYPE_CHECKING:
-    from ... import t
+    from tests import t
 
 
 class TestsFlextLdifOidAclConvertOud:
@@ -30,7 +33,7 @@ class TestsFlextLdifOidAclConvertOud:
 
     @staticmethod
     def _rule(
-        target_type: str, target_attrs: str = "*", acl_type: str = "orclaci"
+        target_type: str, target_attrs: str = "*", acl_type: str = "orclaci",
     ) -> m.Ldif.OidAclRule:
         return m.Ldif.OidAclRule(
             dn="dc=ctbc",
@@ -54,8 +57,9 @@ class TestsFlextLdifOidAclConvertOud:
         ],
     )
     def test_subject_maps_to_expected_bind_rule(
-        self, kind: str, value: str, bind_type: str, bind_value: str
+        self, kind: str, value: str, bind_type: str, bind_value: str,
     ) -> None:
+        """Test subject maps to expected bind rule."""
         result = Conv.convert_subject_to_oud(self._subject(kind, value))
 
         allow = result.unwrap()
@@ -63,16 +67,18 @@ class TestsFlextLdifOidAclConvertOud:
         tm.that(allow.subject_value, eq=bind_value)
 
     def test_converted_subject_leaves_permissions_empty(self) -> None:
+        """Test converted subject leaves permissions empty."""
         result = Conv.convert_subject_to_oud(self._subject("user", "uid=joe,dc=ctbc"))
 
         tm.that(result.unwrap().permissions, eq=())
 
     @pytest.mark.parametrize(
-        ("kind", "value"), [("guidattr", "orclguid"), ("nosuchkind", "")]
+        ("kind", "value"), [("guidattr", "orclguid"), ("nosuchkind", "")],
     )
     def test_subject_without_oud_equivalent_surfaces_failure(
-        self, kind: str, value: str
+        self, kind: str, value: str,
     ) -> None:
+        """Test subject without oud equivalent surfaces failure."""
         result = Conv.convert_subject_to_oud(self._subject(kind, value))
 
         tm.that(result.failure, eq=True)
@@ -80,6 +86,7 @@ class TestsFlextLdifOidAclConvertOud:
 
     # -- convert_permissions ----------------------------------------------
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("permissions", "is_entry", "expected"),
         [
@@ -95,20 +102,22 @@ class TestsFlextLdifOidAclConvertOud:
         ],
     )
     def test_convert_permissions_yields_ordered_allow_set(
-        self,
         permissions: t.VariadicTuple[str],
         *,
         is_entry: bool,
         expected: t.VariadicTuple[str],
     ) -> None:
+        """Test convert permissions yields ordered allow set."""
         result = Conv.convert_permissions(permissions, is_entry=is_entry)
 
         tm.that(result.unwrap(), eq=expected)
 
+    @staticmethod
     @pytest.mark.parametrize("permissions", [("bogus",), ("nofoo",)])
     def test_convert_permissions_unknown_token_surfaces_failure(
-        self, permissions: t.VariadicTuple[str]
+        permissions: t.VariadicTuple[str],
     ) -> None:
+        """Test convert permissions unknown token surfaces failure."""
         result = Conv.convert_permissions(permissions, is_entry=False)
 
         tm.that(result.failure, eq=True)
@@ -126,33 +135,38 @@ class TestsFlextLdifOidAclConvertOud:
         ],
     )
     def test_get_targetattr(
-        self, target_type: str, target_attrs: str, expected: str
+        self, target_type: str, target_attrs: str, expected: str,
     ) -> None:
+        """Test get targetattr."""
         tm.that(Conv.get_targetattr(self._rule(target_type, target_attrs)), eq=expected)
 
     # -- calculate_targetscope --------------------------------------------
 
     def test_scope_orclaci_without_anyone_is_default(self) -> None:
+        """Test scope orclaci without anyone is default."""
         scope = Conv.calculate_targetscope(
-            self._rule("entry"), has_anyone_subject=False
+            self._rule("entry"), has_anyone_subject=False,
         )
 
         tm.that(scope is None, eq=True)
 
     def test_scope_orclaci_with_anyone_is_base(self) -> None:
+        """Test scope orclaci with anyone is base."""
         scope = Conv.calculate_targetscope(self._rule("entry"), has_anyone_subject=True)
 
         tm.that(scope, eq="base")
 
     def test_scope_orclentrylevelaci_is_always_base(self) -> None:
+        """Test scope orclentrylevelaci is always base."""
         scope = Conv.calculate_targetscope(
-            self._rule("entry", acl_type="orclentrylevelaci"), has_anyone_subject=False
+            self._rule("entry", acl_type="orclentrylevelaci"), has_anyone_subject=False,
         )
 
         tm.that(scope, eq="base")
 
     # -- regex_to_wildcard ------------------------------------------------
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("value", "expected"),
         [
@@ -163,11 +177,13 @@ class TestsFlextLdifOidAclConvertOud:
             ("cn=a[0-9]b", "cn=a[0-9]b"),
         ],
     )
-    def test_regex_to_wildcard(self, value: str, expected: str) -> None:
+    def test_regex_to_wildcard(value: str, expected: str) -> None:
+        """Test regex to wildcard."""
         tm.that(Conv.regex_to_wildcard(value), eq=expected)
 
     # -- is_in_scope ------------------------------------------------------
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("dn", "base_dn", "expected"),
         [
@@ -177,12 +193,15 @@ class TestsFlextLdifOidAclConvertOud:
             ("dc=x", "", True),
         ],
     )
-    def test_is_in_scope(self, dn: str, base_dn: str, *, expected: bool) -> None:
+    def test_is_in_scope(dn: str, base_dn: str, *, expected: bool) -> None:
+        """Test is in scope."""
         tm.that(Conv.is_in_scope(dn, base_dn), eq=expected)
 
     # -- high_level_containers --------------------------------------------
 
-    def test_high_level_containers_are_base_relative_and_case_folded(self) -> None:
+    @staticmethod
+    def test_high_level_containers_are_base_relative_and_case_folded() -> None:
+        """Test high level containers are base relative and case folded."""
         containers = Conv.high_level_containers("dc=CTBC")
 
         tm.that("dc=ctbc" in containers, eq=True)

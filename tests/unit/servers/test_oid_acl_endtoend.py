@@ -2,6 +2,9 @@
 
 Asserts that an OID entry's orclaci/orclentrylevelaci attributes convert to
 ``aci`` values byte-matching the OUD migration oracle ``to_aci_string`` output.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -23,11 +26,11 @@ class TestsFlextLdifOidAclEndToEnd:
 
     @staticmethod
     def _convert(
-        api: p.Ldif.LdifClient, dn: str, attrs: dict[str, list[str]]
+        api: p.Ldif.LdifClient, dn: str, attrs: dict[str, list[str]],
     ) -> t.MutableStrSequenceMapping:
         entry = u.Tests.create_real_entry(dn=dn, attributes=attrs)
         result = api.convert_model(
-            c.Ldif.ServerTypes.OID, c.Ldif.ServerTypes.OUD, entry
+            c.Ldif.ServerTypes.OID, c.Ldif.ServerTypes.OUD, entry,
         )
         converted = u.Tests.assert_success(result)
         if not isinstance(converted, m.Ldif.Entry) or converted.attributes is None:
@@ -81,6 +84,7 @@ class TestsFlextLdifOidAclEndToEnd:
         source_value: str,
         expected_aci: str,
     ) -> None:
+        """Test oid acl converts to expected aci and drops source attr."""
         attrs = self._convert(
             api,
             "cn=users,dc=ctbc",
@@ -92,14 +96,20 @@ class TestsFlextLdifOidAclEndToEnd:
         tm.that(source_attr not in attrs, eq=True)
         tm.that(attrs["aci"], eq=[expected_aci])
 
-    def test_base_dn_field_excludes_out_of_scope_bind_dn(self) -> None:
+    @staticmethod
+    def test_base_dn_field_excludes_out_of_scope_bind_dn() -> None:
         # FlextLdifConversion(base_dn=...) activates the out-of-scope filter:
         # a bind DN outside base_dn is dropped from the emitted aci.
+        """Test base dn field excludes out of scope bind dn.
+
+        Raises:
+            AssertionError: If convert_model did not return an Entry with attributes.
+        """
         entry = u.Tests.orclaci_base_dn_entry(dn="cn=users,dc=ctbc")
         svc = FlextLdifConversion(base_dn="dc=ctbc")
 
         converted = u.Tests.assert_success(
-            svc.convert_model(c.Ldif.ServerTypes.OID, c.Ldif.ServerTypes.OUD, entry)
+            svc.convert_model(c.Ldif.ServerTypes.OID, c.Ldif.ServerTypes.OUD, entry),
         )
         if not isinstance(converted, m.Ldif.Entry) or converted.attributes is None:
             msg = "convert_model did not return an Entry with attributes"
@@ -111,6 +121,6 @@ class TestsFlextLdifOidAclEndToEnd:
                 (
                     '(targetattr="*")(version 3.0; acl "users Entry by x"; '
                     'allow (read, search) groupdn="ldap:///cn=a,dc=ctbc";)'
-                )
+                ),
             ],
         )

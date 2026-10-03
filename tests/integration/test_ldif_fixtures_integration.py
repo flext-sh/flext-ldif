@@ -38,13 +38,23 @@ class TestsFlextLdifLdifFixturesIntegration:
         ("openldap2", "openldap2_integration_fixtures.ldif", 45),
     )
 
+    @staticmethod
     @pytest.fixture
-    def ldif_client(self) -> p.Ldif.LdifClient:
-        """Provide the public FlextLdif facade under test."""
+    def ldif_client() -> p.Ldif.LdifClient:
+        """Provide the public FlextLdif facade under test.
+
+        Returns:
+            The resulting ``p.Ldif.LdifClient``.
+        """
         return ldif
 
-    def _fixture_path(self, subdir: str, filename: str) -> Path:
-        """Resolve a fixture path from its server subdirectory and filename."""
+    @staticmethod
+    def _fixture_path(subdir: str, filename: str) -> Path:
+        """Resolve a fixture path from its server subdirectory and filename.
+
+        Returns:
+            The resulting ``Path``.
+        """
         fixture_path: Path = c.Tests.FIXTURES_DIR / subdir / filename
         return fixture_path
 
@@ -130,7 +140,7 @@ class TestsFlextLdifLdifFixturesIntegration:
     ) -> None:
         """Validating well-formed fixture entries yields a passing validation result."""
         entries = ldif_client.parse_ldif(
-            self._fixture_path(subdir, filename)
+            self._fixture_path(subdir, filename),
         ).value.entries
 
         validation = ldif_client.validate_entries(entries)
@@ -142,7 +152,7 @@ class TestsFlextLdifLdifFixturesIntegration:
         assert not report.invalid_entries
 
     def test_parse_string_matches_parse_ldif_for_same_content(
-        self, ldif_client: p.Ldif.LdifClient
+        self, ldif_client: p.Ldif.LdifClient,
     ) -> None:
         """Parsing a file and parsing its written content produce identical DNs."""
         path = self._fixture_path(c.Tests.RFC, "rfc_entries_fixtures.ldif")
@@ -160,7 +170,7 @@ class TestsFlextLdifLdifFixturesIntegration:
         )
 
     def test_parse_missing_file_fails_with_informative_error(
-        self, ldif_client: p.Ldif.LdifClient
+        self, ldif_client: p.Ldif.LdifClient,
     ) -> None:
         """Parsing a nonexistent fixture returns a failure naming the missing path."""
         missing = self._fixture_path(c.Tests.RFC, "does_not_exist.ldif")

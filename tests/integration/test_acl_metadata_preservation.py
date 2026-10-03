@@ -27,27 +27,41 @@ if TYPE_CHECKING:
 class TestsFlextLdifAclMetadataPreservation:
     """Behavioral tests for OID/OUD ACL metadata preservation and round-trips."""
 
+    @staticmethod
     @pytest.fixture
-    def api(self) -> p.Ldif.LdifClient:
-        """Provide a real LDIF client (public facade, no mocked internals)."""
+    def api() -> p.Ldif.LdifClient:
+        """Provide a real LDIF client (public facade, no mocked internals).
+
+        Returns:
+            The resulting ``p.Ldif.LdifClient``.
+        """
         return ldif()
 
     @staticmethod
     def _extensions(entry: m.Ldif.Entry) -> t.JsonMapping:
-        """Read the entry's public metadata extensions as a plain mapping."""
+        """Read the entry's public metadata extensions as a plain mapping.
+
+        Returns:
+            The resulting ``t.JsonMapping``.
+        """
         metadata = entry.metadata
         assert metadata is not None
         extensions = metadata.extensions
         assert extensions is not None
         extensions_dump: t.JsonMapping = t.json_mapping_adapter().validate_python(
-            dict(extensions)
+            dict(extensions),
         )
         return extensions_dump
 
+    @staticmethod
     def _parse_single(
-        self, api: p.Ldif.LdifClient, ldif_text: str, server_type: str
+        api: p.Ldif.LdifClient, ldif_text: str, server_type: str,
     ) -> m.Ldif.Entry:
-        """Parse LDIF that must yield exactly one entry; assert the r[T] success."""
+        """Parse LDIF that must yield exactly one entry; assert the r[T] success.
+
+        Returns:
+            The resulting ``m.Ldif.Entry``.
+        """
         result = api.parse_ldif(ldif_text, server_type=server_type)
         tm.ok(result)
         response: m.Ldif.ParseResponse = result.unwrap()
@@ -127,7 +141,7 @@ class TestsFlextLdifAclMetadataPreservation:
         tm.that(extensions.get(c.Ldif.ACL_DENY_GROUP_OVERRIDE), eq=True)
         tm.that(extensions.get(c.Ldif.ACL_APPEND_TO_ALL), eq=True)
         tm.that(
-            extensions.get(c.Ldif.ACL_BIND_IP_FILTER), eq="orclipaddress=192.168.1.*"
+            extensions.get(c.Ldif.ACL_BIND_IP_FILTER), eq="orclipaddress=192.168.1.*",
         )
         assert (
             extensions.get(c.Ldif.ACL_CONSTRAIN_TO_ADDED_OBJECT) == "objectclass=person"
@@ -204,7 +218,7 @@ class TestsFlextLdifAclMetadataPreservation:
         ],
     )
     def test_oud_feature_preserved_in_extensions(
-        self, api: p.Ldif.LdifClient, aci: str, extension_key: str, expected: str
+        self, api: p.Ldif.LdifClient, aci: str, extension_key: str, expected: str,
     ) -> None:
         """Each OUD ACI feature surfaces under its extension key after parsing."""
         ldif_text = (
@@ -233,7 +247,7 @@ class TestsFlextLdifAclMetadataPreservation:
         extensions = self._extensions(self._parse_single(api, ldif_text, c.Tests.OUD))
         assert extensions.get(c.Ldif.ACL_TARGETATTR_FILTERS) == "add=cn:(cn=admin)"
         tm.that(
-            extensions.get(c.Ldif.ACL_TARGET_CONTROL), eq="1.3.6.1.4.1.42.2.27.9.5.2"
+            extensions.get(c.Ldif.ACL_TARGET_CONTROL), eq="1.3.6.1.4.1.42.2.27.9.5.2",
         )
         tm.that(extensions.get(c.Ldif.ACL_EXTOP), eq="1.3.6.1.4.1.26027.1.6.1")
         tm.that(extensions.get(c.Ldif.ACL_BIND_IP_FILTER), eq="192.168.1.0/24")

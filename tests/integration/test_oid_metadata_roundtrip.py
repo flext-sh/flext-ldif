@@ -1,4 +1,8 @@
-"""OID metadata remains typed through phase-aware OUD serialization."""
+"""OID metadata remains typed through phase-aware OUD serialization.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -16,10 +20,11 @@ if TYPE_CHECKING:
 class TestsFlextLdifOidMetadataRoundtrip:
     """Exercise the public parse/write boundary used by OID migrations."""
 
+    @staticmethod
     @pytest.mark.parametrize("acl", ["", "orclaci: access to entry by * (browse)\n"])
     @pytest.mark.parametrize("comment_acl", [False, True])
     def test_oid_metadata_survives_oud_phase_write(
-        self, api: p.Ldif.LdifClient, acl: str, *, comment_acl: bool
+        api: p.Ldif.LdifClient, acl: str, *, comment_acl: bool,
     ) -> None:
         """Parsing must produce serializable metadata before any target write."""
         source = (
@@ -43,11 +48,11 @@ class TestsFlextLdifOidMetadataRoundtrip:
                     comment_acl_in_non_acl_phases=comment_acl,
                     acl_attribute_names=frozenset({"aci", "orclaci"}),
                 ),
-            )
+            ),
         )
         assert written.content
         converted = tm.ok(
-            api.parse_ldif(written.content, server_type=c.Ldif.ServerTypes.OUD)
+            api.parse_ldif(written.content, server_type=c.Ldif.ServerTypes.OUD),
         )
         assert len(converted.entries) == len(parsed.entries)
         assert converted.entries[0].dn_str == entry.dn_str

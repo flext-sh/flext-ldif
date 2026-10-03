@@ -3,6 +3,9 @@
 Every test exercises ``FlextLdifUtilities.Ldif`` public methods through their
 observable return values: ``r[T]`` outcomes, plain return values, and public
 model fields. No private attribute access, no internal-collaborator spying.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -19,14 +22,17 @@ class TestsFlextLdifParserUtilities:
     # ------------------------------------------------------------------
     # extract_oid
     # ------------------------------------------------------------------
+    @staticmethod
     @pytest.mark.parametrize(
-        "definition", ["", "( NAME 'cn' DESC 'no oid' )", "not-an-oid NAME 'x'"]
+        "definition", ["", "( NAME 'cn' DESC 'no oid' )", "not-an-oid NAME 'x'"],
     )
-    def test_extract_oid_fails_without_leading_oid(self, definition: str) -> None:
+    def test_extract_oid_fails_without_leading_oid(definition: str) -> None:
+        """Test extract oid fails without leading oid."""
         result = u.Ldif.extract_oid(definition)
 
         u.Tests.assert_failure(result)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("definition", "expected_oid"),
         [
@@ -36,8 +42,9 @@ class TestsFlextLdifParserUtilities:
         ],
     )
     def test_extract_oid_returns_leading_oid(
-        self, definition: str, expected_oid: str
+        definition: str, expected_oid: str,
     ) -> None:
+        """Test extract oid returns leading oid."""
         result = u.Ldif.extract_oid(definition)
 
         value = u.Tests.assert_success(result)
@@ -46,11 +53,14 @@ class TestsFlextLdifParserUtilities:
     # ------------------------------------------------------------------
     # parse_attribute_line
     # ------------------------------------------------------------------
-    def test_parse_attribute_line_fails_without_colon(self) -> None:
+    @staticmethod
+    def test_parse_attribute_line_fails_without_colon() -> None:
+        """Test parse attribute line fails without colon."""
         result = u.Ldif.parse_attribute_line("cn value")
 
         u.Tests.assert_failure(result)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("line", "expected"),
         [
@@ -62,8 +72,9 @@ class TestsFlextLdifParserUtilities:
         ],
     )
     def test_parse_attribute_line_splits_name_value_and_base64_flag(
-        self, line: str, expected: tuple[str, str, bool]
+        line: str, expected: tuple[str, str, bool],
     ) -> None:
+        """Test parse attribute line splits name value and base64 flag."""
         result = u.Ldif.parse_attribute_line(line)
 
         value = u.Tests.assert_success(result)
@@ -72,6 +83,7 @@ class TestsFlextLdifParserUtilities:
     # ------------------------------------------------------------------
     # decode_value
     # ------------------------------------------------------------------
+    @staticmethod
     @pytest.mark.parametrize(
         ("remainder", "expected_value", "expected_origin", "expected_raw"),
         [
@@ -92,12 +104,12 @@ class TestsFlextLdifParserUtilities:
         ],
     )
     def test_decode_value_classifies_origin_and_decodes(
-        self,
         remainder: str,
         expected_value: str,
         expected_origin: c.Ldif.ValueOrigin,
         expected_raw: str,
     ) -> None:
+        """Test decode value classifies origin and decodes."""
         decoded, origin, raw = u.Ldif.decode_value(remainder)
 
         tm.that(decoded, eq=expected_value)
@@ -107,6 +119,7 @@ class TestsFlextLdifParserUtilities:
     # ------------------------------------------------------------------
     # build_control
     # ------------------------------------------------------------------
+    @staticmethod
     @pytest.mark.parametrize(
         ("payload", "expected_type", "expected_criticality", "expected_value"),
         [
@@ -116,13 +129,13 @@ class TestsFlextLdifParserUtilities:
         ],
     )
     def test_build_control_parses_control_fields(
-        self,
         payload: str,
         expected_type: str,
         *,
         expected_criticality: bool | None,
         expected_value: str | None,
     ) -> None:
+        """Test build control parses control fields."""
         control = u.Ldif.build_control(payload)
 
         tm.that(control.control_type, eq=expected_type)
@@ -132,6 +145,7 @@ class TestsFlextLdifParserUtilities:
     # ------------------------------------------------------------------
     # extract_boolean_flag / extract_optional_field
     # ------------------------------------------------------------------
+    @staticmethod
     @pytest.mark.parametrize(
         ("definition", "expected"),
         [
@@ -141,20 +155,25 @@ class TestsFlextLdifParserUtilities:
         ],
     )
     def test_extract_boolean_flag_detects_token(
-        self, definition: str, *, expected: bool
+        definition: str, *, expected: bool,
     ) -> None:
+        """Test extract boolean flag detects token."""
         assert u.Ldif.extract_boolean_flag(definition, "SINGLE-VALUE") is expected
 
-    def test_extract_optional_field_returns_match_when_present(self) -> None:
+    @staticmethod
+    def test_extract_optional_field_returns_match_when_present() -> None:
+        """Test extract optional field returns match when present."""
         value = u.Ldif.extract_optional_field(
-            "( 1.1 NAME 'x' DESC 'hello world' )", c.Ldif.SCHEMA_DESC_FLEX_RE
+            "( 1.1 NAME 'x' DESC 'hello world' )", c.Ldif.SCHEMA_DESC_FLEX_RE,
         )
 
         tm.that(value, eq="hello world")
 
-    def test_extract_optional_field_returns_default_on_empty(self) -> None:
+    @staticmethod
+    def test_extract_optional_field_returns_default_on_empty() -> None:
+        """Test extract optional field returns default on empty."""
         value = u.Ldif.extract_optional_field(
-            "", c.Ldif.SCHEMA_DESC_FLEX_RE, default="fallback"
+            "", c.Ldif.SCHEMA_DESC_FLEX_RE, default="fallback",
         )
 
         tm.that(value, eq="fallback")
@@ -162,28 +181,36 @@ class TestsFlextLdifParserUtilities:
     # ------------------------------------------------------------------
     # extract_extensions
     # ------------------------------------------------------------------
-    def test_extract_extensions_captures_x_tokens_and_desc(self) -> None:
+    @staticmethod
+    def test_extract_extensions_captures_x_tokens_and_desc() -> None:
+        """Test extract extensions captures x tokens and desc."""
         extensions = u.Ldif.extract_extensions(
-            "( 1.1 NAME 'x' DESC 'hi there' X-ORIGIN 'user' )"
+            "( 1.1 NAME 'x' DESC 'hi there' X-ORIGIN 'user' )",
         )
 
         tm.that(extensions["X-ORIGIN"], eq=["user"])
         tm.that(extensions["DESC"], eq=["hi there"])
 
-    def test_extract_extensions_empty_definition_returns_empty_mapping(self) -> None:
+    @staticmethod
+    def test_extract_extensions_empty_definition_returns_empty_mapping() -> None:
+        """Test extract extensions empty definition returns empty mapping."""
         tm.that(u.Ldif.extract_extensions(""), eq={})
 
     # ------------------------------------------------------------------
     # unfold_lines
     # ------------------------------------------------------------------
-    def test_unfold_lines_merges_continuation_lines(self) -> None:
+    @staticmethod
+    def test_unfold_lines_merges_continuation_lines() -> None:
+        """Test unfold lines merges continuation lines."""
         unfolded = u.Ldif.unfold_lines("cn: hello\n world\nsn: last")
 
         # RFC 2849 folding: the single leading space is stripped and the
         # remainder is concatenated verbatim onto the previous line.
         tm.that(unfolded, eq=["cn: helloworld", "sn: last"])
 
-    def test_unfold_lines_preserves_record_separating_blank(self) -> None:
+    @staticmethod
+    def test_unfold_lines_preserves_record_separating_blank() -> None:
+        """Test unfold lines preserves record separating blank."""
         unfolded = u.Ldif.unfold_lines("dn: cn=a\n\ndn: cn=b")
 
         tm.that(unfolded, eq=["dn: cn=a", "", "dn: cn=b"])
@@ -191,9 +218,11 @@ class TestsFlextLdifParserUtilities:
     # ------------------------------------------------------------------
     # split_ldif_records
     # ------------------------------------------------------------------
-    def test_split_ldif_records_drops_version_and_groups_by_blank(self) -> None:
+    @staticmethod
+    def test_split_ldif_records_drops_version_and_groups_by_blank() -> None:
+        """Test split ldif records drops version and groups by blank."""
         records = u.Ldif.split_ldif_records(
-            "version: 1\ndn: cn=a\ncn: a\n\ndn: cn=b\ncn: b"
+            "version: 1\ndn: cn=a\ncn: a\n\ndn: cn=b\ncn: b",
         )
 
         tm.that(records, eq=[["dn: cn=a", "cn: a"], ["dn: cn=b", "cn: b"]])
@@ -201,7 +230,9 @@ class TestsFlextLdifParserUtilities:
     # ------------------------------------------------------------------
     # parse_ldif_record
     # ------------------------------------------------------------------
-    def test_parse_ldif_record_builds_entry_from_valid_record(self) -> None:
+    @staticmethod
+    def test_parse_ldif_record_builds_entry_from_valid_record() -> None:
+        """Test parse ldif record builds entry from valid record."""
         result = u.Ldif.parse_ldif_record([
             "dn: cn=alice,dc=example,dc=com",
             "cn: alice",
@@ -215,7 +246,9 @@ class TestsFlextLdifParserUtilities:
         tm.that(entry.attributes.attributes["cn"], eq=["alice"])
         tm.that(entry.attributes.attributes["objectClass"], eq=["person"])
 
-    def test_parse_ldif_record_fails_without_dn(self) -> None:
+    @staticmethod
+    def test_parse_ldif_record_fails_without_dn() -> None:
+        """Test parse ldif record fails without dn."""
         result = u.Ldif.parse_ldif_record(["cn: alice", "sn: smith"])
 
         error = u.Tests.assert_failure(result)

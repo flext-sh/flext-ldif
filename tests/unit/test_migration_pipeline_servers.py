@@ -5,6 +5,9 @@ the ``r[T]`` outcome, the public fields of the returned
 ``MigrationPipelineResult`` model, and the observable content of the produced
 output file. No private attributes, internal collaborators, or line-coverage
 pokes are touched.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -30,12 +33,15 @@ class TestsFlextLdifMigrationPipelineServers:
 
     @staticmethod
     def _run_migration(
-        *, tmp_path: Path, ldif_content: str, source_server: str, target_server: str
+        *, tmp_path: Path, ldif_content: str, source_server: str, target_server: str,
     ) -> tuple[str, int, t.VariadicTuple[str]]:
         """Drive ``execute`` through its public API and return observable state.
 
         Returns the produced output-file text, the model's ``entry_count`` and
         its ``output_files`` tuple -- all public contract surface.
+
+        Returns:
+            The resulting ``tuple[str, int, t.VariadicTuple[str]]``.
         """
         input_dir = tmp_path / "input"
         output_dir = tmp_path / "output"
@@ -182,7 +188,7 @@ class TestsFlextLdifMigrationPipelineServers:
         )
 
     def test_target_server_form_is_enforced_regardless_of_input_shape(
-        self, tmp_path: Path
+        self, tmp_path: Path,
     ) -> None:
         """The pipeline converts to the target server form even for RFC-shaped input."""
         ldif_content = (
@@ -203,8 +209,9 @@ class TestsFlextLdifMigrationPipelineServers:
         tm.that(entry_count, eq=1)
         tm.that(content, has=f"{c.Tests.ATTR_ORCL_IS_ENABLED.lower()}: {val_true_oid}")
 
+    @staticmethod
     def test_execute_fails_when_input_directory_is_missing(
-        self, tmp_path: Path
+        tmp_path: Path,
     ) -> None:
         """execute() surfaces a typed failure r[T] when input_dir does not exist."""
         missing_input = tmp_path / "does_not_exist"

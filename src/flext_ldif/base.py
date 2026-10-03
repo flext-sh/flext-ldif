@@ -1,4 +1,8 @@
-"""Shared service base that provides typed LDIF configuration access."""
+"""Shared service base that provides typed LDIF configuration access.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -12,7 +16,7 @@ class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](s[TDomainResult]):
     """Base class for LDIF services with typed settings helper."""
 
     _server: p.Ldif.ServerRegistry = u.PrivateAttr(
-        default_factory=FlextLdifServer.fetch_global_instance
+        default_factory=FlextLdifServer.fetch_global_instance,
     )
     server: Annotated[
         p.Ldif.ServerRegistry | None,
@@ -32,7 +36,11 @@ class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](s[TDomainResult]):
     @property
     @override
     def settings(self) -> p.Ldif.Settings:
-        """The typed LDIF configuration namespace."""
+        """The typed LDIF configuration namespace.
+
+        Raises:
+            TypeError: If Runtime settings do not satisfy the LDIF settings contract.
+        """
         resolved = super().settings
         if not isinstance(resolved, p.Ldif.Settings):
             msg = "Runtime settings do not satisfy the LDIF settings contract"
@@ -48,7 +56,7 @@ class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](s[TDomainResult]):
     ) -> Self | m.Ldif.Entry | str:
         """Return a cloned DSL instance preserving runtime registry/settings defaults."""
         payload: t.MutableMappingKV[
-            str, t.JsonValue | p.Ldif.ServerRegistry | p.Ldif.Settings | None
+            str, t.JsonValue | p.Ldif.ServerRegistry | p.Ldif.Settings | None,
         ] = dict(fields)
         payload["server"] = self._server if server is None else server
         payload["runtime_settings"] = settings
@@ -56,7 +64,11 @@ class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](s[TDomainResult]):
         return instance
 
     def bind_runtime_settings(self, runtime_settings: p.Ldif.Settings | None) -> Self:
-        """Bind typed LDIF settings through the inherited runtime bootstrap field."""
+        """Bind typed LDIF settings through the inherited runtime bootstrap field.
+
+        Returns:
+            The resulting ``Self``.
+        """
         # NOTE (multi-agent): mro-i6nq.12 — FlextMixins runtime-bootstrap is now a
         # native Pydantic field; assign directly (validate_assignment enforces type).
         if runtime_settings is not None:
@@ -68,7 +80,8 @@ class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](s[TDomainResult]):
         """Return runtime bootstrap options for LDIF services."""
         return m.RuntimeBootstrapOptions(settings_type=FlextLdifSettings)
 
-    def _get_effective_server_type_value(self) -> str:
+    @staticmethod
+    def _get_effective_server_type_value() -> str:
         """Return the default server type used by parser and writer services."""
         default_server_type: str = c.Ldif.ServerTypes.RFC.value
         return default_server_type

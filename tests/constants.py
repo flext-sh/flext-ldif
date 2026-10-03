@@ -1,4 +1,8 @@
-"""Centralized flat test constants for flext-ldif."""
+"""Centralized flat test constants for flext-ldif.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -239,7 +243,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
             "{cn}: subschemasubentry\n"
         )
         MIGRATION_ACI_LINE_REGEX: ClassVar[t.Ldif.RegexPattern] = re.compile(
-            r"(^|\\n)aci:", re.MULTILINE
+            r"(^|\\n)aci:", re.MULTILINE,
         )
         MIGRATION_BOOLEAN_CASES: ClassVar[
             t.MappingKV[str, tuple[str, str, str, str]]
@@ -274,7 +278,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
         WRITER_BLOCKING_PARENT_NAME: ClassVar[str] = "blocking_parent"
         WRITER_DIRECTORY_TARGET_NAME: ClassVar[str] = "dir_target"
         WRITER_OUTPUT_REGEX: ClassVar[t.Ldif.RegexPattern] = re.compile(
-            r"^dn:\s+cn=writer-[a-z]+,dc=example,dc=com$", re.MULTILINE
+            r"^dn:\s+cn=writer-[a-z]+,dc=example,dc=com$", re.MULTILINE,
         )
         WRITER_INVALID_UTF8_BYTES: ClassVar[bytes] = b"\xff\xfe\xfd"
 
@@ -331,7 +335,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
             t.MappingKV[
                 str,
                 tuple[
-                    str | list[str] | t.StrSequence | set[str] | frozenset[str], bool
+                    str | list[str] | t.StrSequence | set[str] | frozenset[str], bool,
                 ],
             ]
         ] = MappingProxyType({
@@ -383,7 +387,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
             NAME_DESCRIPTION,
         )
         FILTERS_FORBIDDEN_ATTRS: ClassVar[frozenset[str]] = frozenset(
-            FILTERS_FORBIDDEN_ATTRS_ORDERED
+            FILTERS_FORBIDDEN_ATTRS_ORDERED,
         )
         FILTERS_FORBIDDEN_OCS_ORDERED: ClassVar[t.StrSequence] = (NAME_INET_ORG_PERSON,)
         FILTERS_USER_MAIL: ClassVar[str] = "user@example.com"
@@ -443,7 +447,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
             "objectClass: groupOfNames\n\n"
         )
         EDGE_CASE_NON_ASCII_REGEX: ClassVar[t.Ldif.RegexPattern] = re.compile(
-            r"[^\x00-\x7F]"
+            r"[^\x00-\x7F]",
         )
         EXACT_OID_1_2_3_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(r"^1\.2\.3$")
         EDGE_CASE_LARGE_MULTIVALUE_FIXTURE_RELATIVE: ClassVar[Path] = (
@@ -480,7 +484,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
                 "whitespace": ("   ", False),
                 "binary_data": (
                     "( 1.2.3.4 NAME 'test' \x00\x01 )".encode("latin1").decode(
-                        "latin1"
+                        "latin1",
                     ),
                     True,
                 ),
@@ -676,8 +680,8 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
                     entry_dn=f"cn={cn}",
                     attributes={
                         FlextLdifConstants.Ldif.DictKeys.OBJECTCLASS.value: list(
-                            object_classes
-                        )
+                            object_classes,
+                        ),
                     },
                     expected_can_handle=True,
                 )
@@ -699,7 +703,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
                     FlextLdifConstants.Ldif.DictKeys.OBJECTCLASS.value: [
                         "top",
                         "nscontainer",
-                    ]
+                    ],
                 },
                 expected_can_handle=True,
             ),
@@ -833,7 +837,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
             "compare",
         )
         ACL_PERMISSIONS_EMPTY: ClassVar[t.MappingKV[str, bool]] = MappingProxyType(
-            dict.fromkeys(_ACL_PERMISSION_KEYS, False)
+            dict.fromkeys(_ACL_PERMISSION_KEYS, False),
         )
         ACL_PERMISSIONS_READ_ONLY: ClassVar[t.MappingKV[str, bool]] = MappingProxyType({
             **ACL_PERMISSIONS_EMPTY,

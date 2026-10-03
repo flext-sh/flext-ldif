@@ -8,6 +8,9 @@ through the canonical source-parse → OUD-write cycle, while same-server
 round trips stay byte-stable. Live OUD 14.1.2.1.0 evidence: the quoted form
 of ``OUD_QUOTED_OBJECTCLASS_DEFINITION`` fails with ``Result Code: 21`` and
 the unquoted form of ``OUD_UNQUOTED_OBJECTCLASS_DEFINITION`` succeeds.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -51,12 +54,16 @@ _OUD_QUOTED_OBJECTCLASS_DEFINITION = (
 )
 
 _PHASE_MODIFY_FORMAT_OPTIONS = m.Ldif.WriteFormatOptions(
-    ldif_changetype="modify", ldif_modify_operation="add"
+    ldif_changetype="modify", ldif_modify_operation="add",
 )
 
 
 def _active_logical_lines(ldif_text: str) -> list[str]:
-    """Unfold RFC 2849 continuation lines and drop comment lines."""
+    """Unfold RFC 2849 continuation lines and drop comment lines.
+
+    Returns:
+        The resulting ``list[str]``.
+    """
     logical_lines: list[str] = []
     current: str | None = None
     for line in ldif_text.splitlines():
@@ -76,12 +83,13 @@ def _active_logical_lines(ldif_text: str) -> list[str]:
 class TestsFlextLdifOudSchemaPhaseWrite:
     """Exercise the phase-aware OUD schema write path through the public API."""
 
+    @staticmethod
     def test_oud_phase_write_emits_rfc4512_syntax_oids(
-        self, api: p.Ldif.LdifClient
+        api: p.Ldif.LdifClient,
     ) -> None:
         """Cross-server schema definitions must lose quoted SYNTAX OIDs."""
         parsed = tm.ok(
-            api.parse_ldif(_QUOTED_SCHEMA_SOURCE, server_type=c.Ldif.ServerTypes.OID)
+            api.parse_ldif(_QUOTED_SCHEMA_SOURCE, server_type=c.Ldif.ServerTypes.OID),
         )
 
         written = tm.ok(
@@ -89,7 +97,7 @@ class TestsFlextLdifOudSchemaPhaseWrite:
                 list(parsed.entries),
                 server_type=c.Ldif.ServerTypes.OUD,
                 format_options=_PHASE_MODIFY_FORMAT_OPTIONS,
-            )
+            ),
         )
         assert written.content is not None
 
@@ -106,23 +114,24 @@ class TestsFlextLdifOudSchemaPhaseWrite:
         )
         assert _OUD_QUOTED_OBJECTCLASS_DEFINITION in logical_lines
 
+    @staticmethod
     def test_oud_phase_write_roundtrip_keeps_definitions_stable(
-        self, api: p.Ldif.LdifClient
+        api: p.Ldif.LdifClient,
     ) -> None:
         """parse→write→parse→write must not drift or re-quote definitions."""
         parsed = tm.ok(
-            api.parse_ldif(_QUOTED_SCHEMA_SOURCE, server_type=c.Ldif.ServerTypes.OID)
+            api.parse_ldif(_QUOTED_SCHEMA_SOURCE, server_type=c.Ldif.ServerTypes.OID),
         )
         first = tm.ok(
             api.write(
                 list(parsed.entries),
                 server_type=c.Ldif.ServerTypes.OUD,
                 format_options=_PHASE_MODIFY_FORMAT_OPTIONS,
-            )
+            ),
         )
         assert first.content is not None
         reparsed = tm.ok(
-            api.parse_ldif(first.content, server_type=c.Ldif.ServerTypes.OUD)
+            api.parse_ldif(first.content, server_type=c.Ldif.ServerTypes.OUD),
         )
         assert len(reparsed.entries) == len(parsed.entries)
 
@@ -131,7 +140,7 @@ class TestsFlextLdifOudSchemaPhaseWrite:
                 list(reparsed.entries),
                 server_type=c.Ldif.ServerTypes.OUD,
                 format_options=_PHASE_MODIFY_FORMAT_OPTIONS,
-            )
+            ),
         )
         assert second.content is not None
 
@@ -148,14 +157,15 @@ class TestsFlextLdifOudSchemaPhaseWrite:
         assert second_values == first_values
         assert not [line for line in second_values if "SYNTAX '" in line]
 
+    @staticmethod
     def test_oud_phase_write_preserves_oud_canonical_definitions(
-        self, api: p.Ldif.LdifClient
+        api: p.Ldif.LdifClient,
     ) -> None:
         """Same-server writes keep OUD-canonical definitions unchanged."""
         parsed = tm.ok(
             api.parse_ldif(
-                _OUD_CANONICAL_SCHEMA_SOURCE, server_type=c.Ldif.ServerTypes.OUD
-            )
+                _OUD_CANONICAL_SCHEMA_SOURCE, server_type=c.Ldif.ServerTypes.OUD,
+            ),
         )
 
         written = tm.ok(
@@ -163,7 +173,7 @@ class TestsFlextLdifOudSchemaPhaseWrite:
                 list(parsed.entries),
                 server_type=c.Ldif.ServerTypes.OUD,
                 format_options=_PHASE_MODIFY_FORMAT_OPTIONS,
-            )
+            ),
         )
         assert written.content is not None
 

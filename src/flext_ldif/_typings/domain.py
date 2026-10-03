@@ -1,11 +1,14 @@
-"""Protocol-based LDIF composite type aliases."""
+"""Protocol-based LDIF composite type aliases.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from flext_core import FlextTypes as t
-
-from .._protocols.base import FlextLdifProtocolsBase as p
-from .._protocols.domain import FlextLdifProtocolsDomain as pd
+from flext_ldif._protocols.base import FlextLdifProtocolsBase as p
+from flext_ldif._protocols.domain import FlextLdifProtocolsDomain as pd
 
 
 class FlextLdifTypesDomain:

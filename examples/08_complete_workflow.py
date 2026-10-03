@@ -143,7 +143,7 @@ def error_handling_and_recovery() -> None:
     """Run an error handling and recovery workflow."""
     api: p.Ldif.LdifClient = ldif
     parse_result = api.parse_ldif(
-        "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n"
+        "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n",
     )
 
     parse_response = parse_result.unwrap()

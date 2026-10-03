@@ -1,4 +1,8 @@
-"""LDIF protocol facade."""
+"""LDIF protocol facade.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -6,9 +10,9 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_cli import FlextCliProtocols
 
-from ._protocols.base import FlextLdifProtocolsBase
-from ._protocols.domain import FlextLdifProtocolsDomain
-from ._protocols.ldap3 import FlextLdifProtocolsLdap3
+from flext_ldif._protocols.base import FlextLdifProtocolsBase
+from flext_ldif._protocols.domain import FlextLdifProtocolsDomain
+from flext_ldif._protocols.ldap3 import FlextLdifProtocolsLdap3
 
 if TYPE_CHECKING:
     from flext_ldif import c

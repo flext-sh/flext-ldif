@@ -1,4 +1,8 @@
-"""DN normalization transformer."""
+"""DN normalization transformer.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -6,13 +10,12 @@ from typing import override
 
 from flext_core import r
 from flext_ldif import FlextLdifModels, c, p, t
-
-from ._transformer_base import FlextLdifUtilitiesTransformer
-from .dn import FlextLdifUtilitiesDN as udn
+from flext_ldif._utilities._transformer_base import FlextLdifUtilitiesTransformer
+from flext_ldif._utilities.dn import FlextLdifUtilitiesDN as udn
 
 
 class FlextLdifUtilitiesNormalizeDnTransformer(
-    FlextLdifUtilitiesTransformer[FlextLdifModels.Ldif.Entry]
+    FlextLdifUtilitiesTransformer[FlextLdifModels.Ldif.Entry],
 ):
     """Transformer for DN normalization."""
 
@@ -33,7 +36,11 @@ class FlextLdifUtilitiesNormalizeDnTransformer(
 
     @staticmethod
     def validate_dn_components(dn_str: str) -> p.Result[bool]:
-        """Validate DN components."""
+        """Validate DN components.
+
+        Returns:
+            The resulting ``p.Result[bool]``.
+        """
         components = udn.split(dn_str)
         all_errors: t.MutableSequenceOf[str] = []
         for comp in components:
@@ -50,9 +57,13 @@ class FlextLdifUtilitiesNormalizeDnTransformer(
 
     @override
     def apply(
-        self, item: FlextLdifModels.Ldif.Entry
+        self, item: FlextLdifModels.Ldif.Entry,
     ) -> p.Result[FlextLdifModels.Ldif.Entry]:
-        """Apply DN normalization to an entry."""
+        """Apply DN normalization to an entry.
+
+        Returns:
+            The resulting ``p.Result[FlextLdifModels.Ldif.Entry]``.
+        """
         if item.dn is None:
             return r[FlextLdifModels.Ldif.Entry].fail("Entry has no DN")
         dn_str = (
@@ -79,7 +90,7 @@ class FlextLdifUtilitiesNormalizeDnTransformer(
                 else FlextLdifModels.Ldif.DN.model_validate({"value": normalized_text})
             )
             copied: FlextLdifModels.Ldif.Entry = item.model_copy(
-                update={"dn": normalized_dn_value}
+                update={"dn": normalized_dn_value},
             )
             return copied
 
@@ -88,7 +99,11 @@ class FlextLdifUtilitiesNormalizeDnTransformer(
         )
 
     def _normalize_dn_case_and_spaces(self, normalized_dn: str) -> str:
-        """Apply case folding and space handling."""
+        """Apply case folding and space handling.
+
+        Returns:
+            The resulting ``str``.
+        """
         if self._case == "lower":
             normalized_dn = normalized_dn.lower()
         elif self._case == "upper":

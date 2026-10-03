@@ -2,6 +2,9 @@
 
 This module tests the Relaxed implementation for lenient parsing of malformed LDIF,
 accepting entries that don't conform strictly to RFC standards while preserving content.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -29,28 +32,43 @@ class TestsFlextLdifRelaxed:
     - Error recovery and edge cases via public model state
     """
 
+    @staticmethod
     @pytest.fixture
-    def schema_server(self) -> FlextLdifServersRelaxed.Schema:
-        """Create relaxed schema server instance."""
+    def schema_server() -> FlextLdifServersRelaxed.Schema:
+        """Create relaxed schema server instance.
+
+        Returns:
+            The resulting ``FlextLdifServersRelaxed.Schema``.
+        """
         return FlextLdifServersRelaxed.Schema()
 
+    @staticmethod
     @pytest.fixture
-    def acl_server(self) -> FlextLdifServersRelaxed.Acl:
-        """Create relaxed ACL server instance."""
+    def acl_server() -> FlextLdifServersRelaxed.Acl:
+        """Create relaxed ACL server instance.
+
+        Returns:
+            The resulting ``FlextLdifServersRelaxed.Acl``.
+        """
         return FlextLdifServersRelaxed.Acl()
 
+    @staticmethod
     @pytest.fixture
-    def entry_server(self) -> FlextLdifServersRelaxed.Entry:
-        """Create relaxed entry server instance."""
+    def entry_server() -> FlextLdifServersRelaxed.Entry:
+        """Create relaxed entry server instance.
+
+        Returns:
+            The resulting ``FlextLdifServersRelaxed.Entry``.
+        """
         return FlextLdifServersRelaxed.Entry()
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("scenario", "definition_data"),
         list(c.Tests.RELAXED_ATTRIBUTE_DEFINITIONS.items()),
         ids=list(c.Tests.RELAXED_ATTRIBUTE_DEFINITIONS.keys()),
     )
     def test_parse_attribute_scenarios(
-        self,
         schema_server: FlextLdifServersRelaxed.Schema,
         scenario: str,
         definition_data: tuple[str, bool],
@@ -79,13 +97,13 @@ class TestsFlextLdifRelaxed:
         else:
             _ = tm.that(result.failure, eq=True)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("_scenario", "definition_data"),
         list(c.Tests.RELAXED_OBJECTCLASS_DEFINITIONS.items()),
         ids=list(c.Tests.RELAXED_OBJECTCLASS_DEFINITIONS.keys()),
     )
     def test_parse_objectclass_scenarios(
-        self,
         schema_server: FlextLdifServersRelaxed.Schema,
         _scenario: str,
         definition_data: tuple[str, bool],
@@ -98,8 +116,9 @@ class TestsFlextLdifRelaxed:
         else:
             _ = tm.that(result.failure, eq=True)
 
+    @staticmethod
     def test_parse_attribute_stores_original_definition(
-        self, schema_server: FlextLdifServersRelaxed.Schema
+        schema_server: FlextLdifServersRelaxed.Schema,
     ) -> None:
         """Test parse_attribute stores original definition for recovery."""
         original = "( 1.2.3.4 NAME 'test' SYNTAX 1.2.3 )"
@@ -107,8 +126,9 @@ class TestsFlextLdifRelaxed:
         assert parsed.metadata is not None
         tm.that(parsed.metadata.extensions.get("original_format"), eq=original)
 
+    @staticmethod
     def test_write_attribute_to_rfc(
-        self, schema_server: FlextLdifServersRelaxed.Schema
+        schema_server: FlextLdifServersRelaxed.Schema,
     ) -> None:
         """Test writing attribute back to RFC format."""
         attr_data = m.Ldif.SchemaAttribute(
@@ -132,13 +152,13 @@ class TestsFlextLdifRelaxed:
         tm.that(written, is_=str)
         tm.that(len(written), gt=0)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("_name", "acl_data"),
         list(c.Tests.RELAXED_ACL_DEFINITIONS.items()),
         ids=list(c.Tests.RELAXED_ACL_DEFINITIONS.keys()),
     )
     def test_parse_acl_scenarios(
-        self,
         acl_server: FlextLdifServersRelaxed.Acl,
         _name: str,
         acl_data: tuple[str, bool],
@@ -150,8 +170,9 @@ class TestsFlextLdifRelaxed:
             parsed = result.value
             tm.that(parsed.raw_acl, eq=acl_line)
 
+    @staticmethod
     def test_write_acl_preserves_raw_content(
-        self, acl_server: FlextLdifServersRelaxed.Acl
+        acl_server: FlextLdifServersRelaxed.Acl,
     ) -> None:
         """Test that writing ACL preserves raw content."""
         raw_acl = '(targetentry="cn=admin")(version 3.0;acl "admin";allow(all)'
@@ -159,13 +180,14 @@ class TestsFlextLdifRelaxed:
             name="test_acl",
             target=m.Ldif.AclTarget(target_dn="*", attributes=[]),
             subject=m.Ldif.AclSubject(
-                subject_type=c.Ldif.AclSubjectType.ALL, subject_value="*"
+                subject_type=c.Ldif.AclSubjectType.ALL, subject_value="*",
             ),
             permissions=m.Ldif.AclPermissions(),
             raw_acl=raw_acl,
         )
         tm.that(tm.ok(acl_server.write(acl_data)), eq=raw_acl)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("raw_dn", "normalized"),
         [
@@ -176,20 +198,20 @@ class TestsFlextLdifRelaxed:
         ids=["spaces_after_comma", "already_tight", "leading_trailing_space"],
     )
     def test_entry_normalize_dn_strips_incidental_whitespace(
-        self, entry_server: FlextLdifServersRelaxed.Entry, raw_dn: str, normalized: str
+        entry_server: FlextLdifServersRelaxed.Entry, raw_dn: str, normalized: str,
     ) -> None:
         """normalize_dn returns the whitespace-normalized DN on success."""
         result = entry_server.normalize_dn(raw_dn)
         tm.that(result.success, eq=True)
         tm.that(tm.ok(result), eq=normalized)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("bad_dn", "error_fragment"),
         [("", "empty"), ("not a dn at all", "missing '=' separator")],
         ids=["empty_dn", "no_separator"],
     )
     def test_entry_normalize_dn_fails_on_unrecoverable_input(
-        self,
         entry_server: FlextLdifServersRelaxed.Entry,
         bad_dn: str,
         error_fragment: str,
@@ -199,6 +221,7 @@ class TestsFlextLdifRelaxed:
         tm.that(result.failure, eq=True)
         tm.that(result.error, has=[error_fragment])
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("parse_type", "bad_input"),
         [
@@ -208,7 +231,6 @@ class TestsFlextLdifRelaxed:
         ids=["attribute_with_binary", "objectclass_with_binary"],
     )
     def test_error_recovery_with_binary_content(
-        self,
         schema_server: FlextLdifServersRelaxed.Schema,
         parse_type: str,
         bad_input: str,
@@ -228,6 +250,7 @@ class TestsFlextLdifRelaxed:
             eq=True,
         )
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("parse_type", "definition", "expected_success"),
         [
@@ -244,7 +267,6 @@ class TestsFlextLdifRelaxed:
         ],
     )
     def test_fallback_behavior_depends_on_oid_presence(
-        self,
         schema_server: FlextLdifServersRelaxed.Schema,
         parse_type: str,
         definition: str,
@@ -259,35 +281,37 @@ class TestsFlextLdifRelaxed:
             result = schema_server.parse_objectclass(definition)
         tm.that(result.success, eq=expected_success)
 
+    @staticmethod
     @pytest.mark.parametrize(
         "definition",
         ["( 1.2.3 NAME 'valid' )", "MALFORMED", "( 1.2.3 \x00 garbage )"],
         ids=["valid", "malformed", "binary_noise"],
     )
     def test_schema_can_handle_attribute_accepts_anything(
-        self, schema_server: FlextLdifServersRelaxed.Schema, definition: str
+        schema_server: FlextLdifServersRelaxed.Schema, definition: str,
     ) -> None:
         """Relaxed is the last-resort handler: can_handle_attribute is always True."""
         tm.that(schema_server.can_handle_attribute(definition), eq=True)
 
+    @staticmethod
     @pytest.mark.parametrize(
         "definition",
         ["( 1.2.3 NAME 'valid' STRUCTURAL )", "BROKEN CLASS", "( 1.2.3 \x00 garbage )"],
         ids=["valid", "malformed", "binary_noise"],
     )
     def test_schema_can_handle_objectclass_accepts_anything(
-        self, schema_server: FlextLdifServersRelaxed.Schema, definition: str
+        schema_server: FlextLdifServersRelaxed.Schema, definition: str,
     ) -> None:
         """Relaxed is the last-resort handler: can_handle_objectclass is always True."""
         tm.that(schema_server.can_handle_objectclass(definition), eq=True)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("entry_dn", "attributes"),
         [("cn=x,dc=y", {"cn": ["x"]}), ("", {}), ("garbled dn", {"weird": ["v"]})],
         ids=["well_formed", "empty", "malformed"],
     )
     def test_entry_can_handle_accepts_any_entry(
-        self,
         entry_server: FlextLdifServersRelaxed.Entry,
         entry_dn: str,
         attributes: t.MutableStrSequenceMapping,
@@ -295,6 +319,7 @@ class TestsFlextLdifRelaxed:
         """Relaxed entry server claims every entry, well-formed or not."""
         tm.that(entry_server.can_handle(entry_dn, attributes), eq=True)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("definition", "expected_success"),
         [
@@ -306,7 +331,6 @@ class TestsFlextLdifRelaxed:
         ids=["valid_attr", "malformed_no_oid", "empty", "whitespace"],
     )
     def test_can_handle_attribute_via_parse(
-        self,
         schema_server: FlextLdifServersRelaxed.Schema,
         definition: str,
         *,
@@ -316,6 +340,7 @@ class TestsFlextLdifRelaxed:
         result = schema_server.parse_input(definition)
         tm.that(result.success, eq=expected_success)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("definition", "expected_success"),
         [
@@ -327,7 +352,6 @@ class TestsFlextLdifRelaxed:
         ids=["valid_oc", "malformed_no_oid", "empty", "whitespace"],
     )
     def test_can_handle_objectclass_via_parse(
-        self,
         schema_server: FlextLdifServersRelaxed.Schema,
         definition: str,
         *,
@@ -337,8 +361,9 @@ class TestsFlextLdifRelaxed:
         result = schema_server.parse_input(definition)
         tm.that(result.success, eq=expected_success)
 
+    @staticmethod
     def test_conversion_attribute_oid_to_rfc(
-        self, schema_server: FlextLdifServersRelaxed.Schema
+        schema_server: FlextLdifServersRelaxed.Schema,
     ) -> None:
         """Test attribute conversion from OID format to c.RFC."""
         attr_data = m.Ldif.SchemaAttribute(
@@ -361,8 +386,9 @@ class TestsFlextLdifRelaxed:
         written: str = tm.ok(schema_server.write_attribute(attr_data))
         tm.that(written, has=["2.16.840.1.113894.1.1.1", "orclGUID"])
 
+    @staticmethod
     def test_conversion_objectclass_oid_to_rfc(
-        self, schema_server: FlextLdifServersRelaxed.Schema
+        schema_server: FlextLdifServersRelaxed.Schema,
     ) -> None:
         """Test objectclass conversion from OID format to c.RFC."""
         oc_data = m.Ldif.SchemaObjectClass(

@@ -1,4 +1,8 @@
-"""Schema-definition extraction helpers for FLEXT-LDIF."""
+"""Schema-definition extraction helpers for FLEXT-LDIF.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -6,8 +10,7 @@ from typing import TYPE_CHECKING
 
 from flext_core import r
 from flext_ldif import FlextLdifModels, c, p, t
-
-from .parser import FlextLdifUtilitiesParser as up
+from flext_ldif._utilities.parser import FlextLdifUtilitiesParser as up
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -18,12 +21,16 @@ class FlextLdifUtilitiesSchemaExtract:
 
     @staticmethod
     def extract_attribute_flags(attr_definition: str) -> tuple[bool, bool]:
-        """Extract boolean flags (single_value, no_user_modification) from attribute definition."""
+        """Extract boolean flags (single_value, no_user_modification) from attribute definition.
+
+        Returns:
+            The resulting ``tuple[bool, bool]``.
+        """
         single_value = up.extract_boolean_flag(
-            attr_definition, c.Ldif.SCHEMA_SINGLE_VALUE
+            attr_definition, c.Ldif.SCHEMA_SINGLE_VALUE,
         )
         no_user_modification = up.extract_boolean_flag(
-            attr_definition, c.Ldif.SCHEMA_NO_USER_MODIFICATION
+            attr_definition, c.Ldif.SCHEMA_NO_USER_MODIFICATION,
         )
         return (single_value, no_user_modification)
 
@@ -31,7 +38,11 @@ class FlextLdifUtilitiesSchemaExtract:
     def extract_attribute_matching_rules(
         attr_definition: str,
     ) -> tuple[str | None, str | None, str | None]:
-        """Extract matching rules (equality, substr, ordering) from attribute definition."""
+        """Extract matching rules (equality, substr, ordering) from attribute definition.
+
+        Returns:
+            The resulting ``tuple[str | None, str | None, str | None]``.
+        """
         equality = up.extract_optional_field(attr_definition, c.Ldif.SCHEMA_EQUALITY)
         substr = up.extract_optional_field(attr_definition, c.Ldif.SCHEMA_SUBSTR)
         ordering = up.extract_optional_field(attr_definition, c.Ldif.SCHEMA_ORDERING)
@@ -41,14 +52,22 @@ class FlextLdifUtilitiesSchemaExtract:
     def extract_attribute_sup_usage(
         attr_definition: str,
     ) -> tuple[str | None, str | None]:
-        """Extract SUP and USAGE from attribute definition."""
+        """Extract SUP and USAGE from attribute definition.
+
+        Returns:
+            The resulting ``tuple[str | None, str | None]``.
+        """
         sup = up.extract_optional_field(attr_definition, c.Ldif.SCHEMA_SUP)
         usage = up.extract_optional_field(attr_definition, c.Ldif.SCHEMA_USAGE)
         return (sup, usage)
 
     @staticmethod
     def extract_attribute_syntax(attr_definition: str) -> tuple[str | None, int | None]:
-        """Extract SYNTAX and length from attribute definition."""
+        """Extract SYNTAX and length from attribute definition.
+
+        Returns:
+            The resulting ``tuple[str | None, int | None]``.
+        """
         syntax_match = c.Ldif.SCHEMA_SYNTAX_LENGTH_RE.search(attr_definition)
         syntax = syntax_match.group(1) if syntax_match else None
         length = (
@@ -60,7 +79,11 @@ class FlextLdifUtilitiesSchemaExtract:
 
     @staticmethod
     def extract_objectclass_kind(oc_definition: str) -> str:
-        """Extract KIND from objectClass definition."""
+        """Extract KIND from objectClass definition.
+
+        Returns:
+            The resulting ``str``.
+        """
         kind_match = c.Ldif.SCHEMA_OBJECTCLASS_KIND_RE.search(oc_definition)
         if kind_match is None:
             return str(c.Ldif.SchemaKind.STRUCTURAL.value)
@@ -73,7 +96,12 @@ class FlextLdifUtilitiesSchemaExtract:
     def extract_objectclass_must_may(
         oc_definition: str,
     ) -> tuple[t.MutableSequenceOf[str] | None, t.MutableSequenceOf[str] | None]:
-        """Extract MUST and MAY attributes from objectClass definition."""
+        """Extract MUST and MAY attributes from objectClass definition.
+
+        Returns:
+            The resulting ``tuple[t.MutableSequenceOf[str] | None,
+                t.MutableSequenceOf[str] | None]``.
+        """
         must = None
         must_match = c.Ldif.SCHEMA_OBJECTCLASS_MUST_RE.search(oc_definition)
         if must_match:
@@ -88,7 +116,11 @@ class FlextLdifUtilitiesSchemaExtract:
 
     @staticmethod
     def extract_objectclass_sup(oc_definition: str) -> str | None:
-        """Extract SUP from objectClass definition."""
+        """Extract SUP from objectClass definition.
+
+        Returns:
+            The resulting ``str | None``.
+        """
         sup_match = c.Ldif.SCHEMA_OBJECTCLASS_SUP_RE.search(oc_definition)
         if not sup_match:
             return None
@@ -97,21 +129,21 @@ class FlextLdifUtilitiesSchemaExtract:
 
     @staticmethod
     def extract_schema_basic_fields(
-        definition: str, definition_label: str
+        definition: str, definition_label: str,
     ) -> p.Result[tuple[str, str, str | None]]:
         oid_result = up.extract_oid(definition)
         if oid_result.failure:
             error = oid_result.error or "unknown OID extraction error"
             return r[tuple[str, str, str | None]].fail(
-                f"RFC {definition_label} parsing failed: {error}"
+                f"RFC {definition_label} parsing failed: {error}",
             )
         if not oid_result.success:
             return r[tuple[str, str, str | None]].fail(
-                f"RFC {definition_label} parsing failed: unknown result state"
+                f"RFC {definition_label} parsing failed: unknown result state",
             )
         oid = oid_result.value
         name_raw = up.extract_optional_field(
-            definition, c.Ldif.SCHEMA_NAME, default=oid
+            definition, c.Ldif.SCHEMA_NAME, default=oid,
         )
         name: str = name_raw if name_raw is not None else oid
         desc = up.extract_optional_field(definition, c.Ldif.SCHEMA_DESC)
@@ -119,14 +151,18 @@ class FlextLdifUtilitiesSchemaExtract:
 
     @staticmethod
     def extract_schema_items_from_lines[
-        SchemaModelT: FlextLdifModels.Ldif.SchemaElement
+        SchemaModelT: FlextLdifModels.Ldif.SchemaElement,
     ](
         ldif_content: str,
         parse_callback: Callable[[str], p.Result[SchemaModelT]],
         line_prefix: str,
         model_type: type[SchemaModelT],
     ) -> t.MutableSequenceOf[SchemaModelT]:
-        """Extract schema items from LDIF content lines."""
+        """Extract schema items from LDIF content lines.
+
+        Returns:
+            The resulting ``t.MutableSequenceOf[SchemaModelT]``.
+        """
         items: t.MutableSequenceOf[SchemaModelT] = []
         for raw_line in ldif_content.split("\n"):
             line = raw_line.strip()

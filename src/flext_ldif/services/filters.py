@@ -1,4 +1,8 @@
-"""Filters service - LDIF Entry Filtering Operations."""
+"""Filters service - LDIF Entry Filtering Operations.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -15,7 +19,11 @@ class FlextLdifFilters(s):
         attr_keys: t.StrPair,
         allowed_set: frozenset[str],
     ) -> tuple[bool, bool]:
-        """Check if schema OID matches allowed set."""
+        """Check if schema OID matches allowed set.
+
+        Returns:
+            The resulting ``tuple[bool, bool]``.
+        """
         key1, key2 = attr_keys
         if key1 not in attrs and key2 not in attrs:
             return (False, True)
@@ -26,9 +34,13 @@ class FlextLdifFilters(s):
 
     @classmethod
     def _extract_allowed_oids(
-        cls, allowed_oids: m.Ldif.WhitelistRules | t.FrozensetMapping
+        cls, allowed_oids: m.Ldif.WhitelistRules | t.FrozensetMapping,
     ) -> t.FrozensetMapping:
-        """Extract allowed OID sets keyed by canonical schema attribute names."""
+        """Extract allowed OID sets keyed by canonical schema attribute names.
+
+        Returns:
+            The resulting ``t.FrozensetMapping``.
+        """
         if isinstance(allowed_oids, m.Ldif.WhitelistRules):
             return allowed_oids.schema_oid_filters
         return {
@@ -38,9 +50,13 @@ class FlextLdifFilters(s):
 
     @classmethod
     def _extract_oid_from_schema_attr(
-        cls, values: t.MutableSequenceOf[str]
+        cls, values: t.MutableSequenceOf[str],
     ) -> str | None:
-        """Extract OID from schema attribute value."""
+        """Extract OID from schema attribute value.
+
+        Returns:
+            The resulting ``str | None``.
+        """
         if not values:
             return None
         value = values[0] if values else ""
@@ -59,7 +75,11 @@ class FlextLdifFilters(s):
         entry: m.Ldif.Entry,
         allowed_oids: m.Ldif.WhitelistRules | t.FrozensetMapping,
     ) -> bool:
-        """Check if entry should be included based on OID filters."""
+        """Check if entry should be included based on OID filters.
+
+        Returns:
+            The resulting ``bool``.
+        """
         attrs = entry.attributes
         if attrs is None:
             return True
@@ -82,7 +102,11 @@ class FlextLdifFilters(s):
         entries: t.MutableSequenceOf[m.Ldif.Entry],
         allowed_oids: m.Ldif.WhitelistRules | t.FrozensetMapping,
     ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
-        """Filter schema entries by allowed OIDs."""
+        """Filter schema entries by allowed OIDs.
+
+        Returns:
+            The resulting ``p.Result[t.MutableSequenceOf[m.Ldif.Entry]]``.
+        """
         try:
             allowed_oid_map = cls._extract_allowed_oids(allowed_oids)
             if not any(allowed_oid_map.values()):
@@ -100,7 +124,7 @@ class FlextLdifFilters(s):
             return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(filtered)
         except c.Ldif.EXC_LDIF_PARSE as e:
             cls._get_or_create_logger().exception(
-                "Failed to filter schema entries by OIDs"
+                "Failed to filter schema entries by OIDs",
             )
             return r[t.MutableSequenceOf[m.Ldif.Entry]].fail_op("Schema OID filter", e)
 
@@ -111,7 +135,11 @@ class FlextLdifFilters(s):
         forbidden_attrs: t.StrSequence,
         forbidden_ocs: t.StrSequence,
     ) -> m.Ldif.Entry:
-        """Strip forbidden attributes and objectClasses from an entry."""
+        """Strip forbidden attributes and objectClasses from an entry.
+
+        Returns:
+            The resulting ``m.Ldif.Entry``.
+        """
         filtered_entry: m.Ldif.Entry = u.Ldif.as_entry(entry)
         if entry.attributes and forbidden_attrs:
             attrs_dict = entry.attributes.attributes
@@ -126,9 +154,9 @@ class FlextLdifFilters(s):
                 filtered_entry = filtered_entry.model_copy(
                     update={
                         "attributes": m.Ldif.Attributes.model_validate({
-                            "attributes": filtered_attrs
-                        })
-                    }
+                            "attributes": filtered_attrs,
+                        }),
+                    },
                 )
         if forbidden_ocs and filtered_entry.attributes is not None:
             oc_attrs = filtered_entry.attributes.attributes
@@ -153,9 +181,9 @@ class FlextLdifFilters(s):
                 filtered_entry = filtered_entry.model_copy(
                     update={
                         "attributes": m.Ldif.Attributes.model_validate({
-                            "attributes": updated
-                        })
-                    }
+                            "attributes": updated,
+                        }),
+                    },
                 )
         return filtered_entry
 
@@ -165,7 +193,11 @@ class FlextLdifFilters(s):
         entry: m.Ldif.Entry | p.Ldif.Entry,
         allowed_oids: m.Ldif.WhitelistRules | t.FrozensetMapping,
     ) -> m.Ldif.Entry:
-        """Filter individual OID values within schema entry attributes."""
+        """Filter individual OID values within schema entry attributes.
+
+        Returns:
+            The resulting ``m.Ldif.Entry``.
+        """
         concrete: m.Ldif.Entry = u.Ldif.as_entry(entry)
         if concrete.attributes is None:
             return concrete
@@ -197,9 +229,9 @@ class FlextLdifFilters(s):
         copied: m.Ldif.Entry = concrete.model_copy(
             update={
                 "attributes": m.Ldif.Attributes.model_validate({
-                    "attributes": updated_attrs
-                })
-            }
+                    "attributes": updated_attrs,
+                }),
+            },
         )
         return copied
 

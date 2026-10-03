@@ -3,6 +3,9 @@
 Holds ``_preserve_acl_metadata`` (permission remap by server pair + extension
 merge) and ``_get_extensions_dict``, the preservation half of ACL conversion;
 ``FlextLdifConversionAclMixin`` inherits it. Self-contained (only ``self.logger``).
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -13,14 +16,19 @@ from flext_ldif import c, m, s, t, u
 class FlextLdifConversionAclPreserveMixin(s):
     """ACL permission + metadata preservation helpers."""
 
+    @staticmethod
     def _get_extensions_dict(
-        self, acl: m.Ldif.Acl
+        acl: m.Ldif.Acl,
     ) -> t.Ldif.MutableMetadataInputMapping:
-        """Extract extensions dict from ACL metadata."""
+        """Extract extensions dict from ACL metadata.
+
+        Returns:
+            The resulting ``t.Ldif.MutableMetadataInputMapping``.
+        """
 
         def to_general_value(value: t.JsonPayload | None) -> t.JsonValue:
             normalized_local: t.JsonValue = u.normalize_to_json_value(
-                value if value is not None else ""
+                value if value is not None else "",
             )
             return normalized_local
 
@@ -39,7 +47,11 @@ class FlextLdifConversionAclPreserveMixin(s):
         source_server_type: c.Ldif.ServerTypes | None = None,
         target_server_type: c.Ldif.ServerTypes | None = None,
     ) -> m.Ldif.Acl:
-        """Preserve permissions and metadata from original ACL."""
+        """Preserve permissions and metadata from original ACL.
+
+        Returns:
+            The resulting ``m.Ldif.Acl``.
+        """
         converted_permissions = converted_acl.permissions
         converted_has_permissions = converted_permissions is not None and any((
             converted_permissions.read,
@@ -100,7 +112,7 @@ class FlextLdifConversionAclPreserveMixin(s):
             match permission_mapping:
                 case (mapping_type, permission_mapper):
                     mapped_perms = permission_mapper(
-                        permission_settings.orig_perms_dict
+                        permission_settings.orig_perms_dict,
                     )
                     normalized_perms = u.Ldif.build_mapped_permissions_dict(
                         mapped_perms,
@@ -115,7 +127,7 @@ class FlextLdifConversionAclPreserveMixin(s):
                         if value is not None
                     }
                     replacement_permissions = m.Ldif.AclPermissions.model_validate(
-                        clean_permissions
+                        clean_permissions,
                     )
                 case None if (
                     not permission_settings.converted_has_permissions
@@ -132,7 +144,7 @@ class FlextLdifConversionAclPreserveMixin(s):
                 else replacement_permissions
             )
             converted_acl = permission_settings.converted_acl.model_copy(
-                update={"permissions": resolved_permissions}, deep=True
+                update={"permissions": resolved_permissions}, deep=True,
             )
             self.logger.debug(
                 "ACL t.MappingKV decision",
@@ -153,10 +165,10 @@ class FlextLdifConversionAclPreserveMixin(s):
             return acl_step1
         merged_ext_raw = {**original_extensions, **self._get_extensions_dict(acl_step1)}
         updated_metadata = acl_step1.metadata.model_copy(
-            update={"extensions": merged_ext_raw}, deep=True
+            update={"extensions": merged_ext_raw}, deep=True,
         )
         preserved_acl: m.Ldif.Acl = acl_step1.model_copy(
-            update={"metadata": updated_metadata}, deep=True
+            update={"metadata": updated_metadata}, deep=True,
         )
         return preserved_acl
 
