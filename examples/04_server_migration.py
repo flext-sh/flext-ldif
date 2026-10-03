@@ -43,7 +43,8 @@ class ExampleServerMigration:
 
     @staticmethod
     def _detect_server_type(
-        api: p.Ldif.ServerDetectionService, source_dir: Path,
+        api: p.Ldif.ServerDetectionService,
+        source_dir: Path,
     ) -> tuple[str, t.JsonMapping]:
         """Detect server type from source data.
 
@@ -195,7 +196,8 @@ class ExampleServerMigration:
         )
         ExampleServerMigration._create_test_data(source_dir)
         source_server, detection_data = ExampleServerMigration._detect_server_type(
-            api, source_dir,
+            api,
+            source_dir,
         )
         source_server_typed = source_server
         intermediate_migration = api.migrate(

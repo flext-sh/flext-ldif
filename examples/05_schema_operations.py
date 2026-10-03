@@ -14,7 +14,8 @@ from flext_ldif import ldif, m, p, r, t
 
 
 def _create_entry_or_none(
-    dn: str, attributes: t.MutableAttributeMapping,
+    dn: str,
+    attributes: t.MutableAttributeMapping,
 ) -> m.Ldif.Entry | None:
     """Create an entry, returning None on failure.
 
