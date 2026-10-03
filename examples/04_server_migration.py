@@ -10,7 +10,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from flext_ldif import c, ldif, p, r, t, u
+from flext_ldif import c, ldif, m, p, r, t, u
 
 if TYPE_CHECKING:
     from collections.abc import MutableMapping, MutableSequence
@@ -24,30 +24,32 @@ class ExampleServerMigration:
         """Create and write test data files."""
 
         def create_entry_data(i: int) -> str:
-            """Create entry data based on index."""
+            """Create entry data based on index.
+
+            Returns:
+                The resulting ``str``.
+            """
             if i % 4 == 0:
                 return f"dn: ou=Container{i},dc=example,dc=com\nobjectClass: organizationalUnit\nou: Container{i}\ndescription: Container {i}\norclaci: access to * by * read\n"
             if i % 2 == 0:
                 return f"dn: cn=Group{i},ou=Groups,dc=example,dc=com\nobjectClass: groupOfUniqueNames\ncn: Group{i}\nuniquemember: cn=User{i},ou=People,dc=example,dc=com\norclguid: group{i}guid123\n"
             return f'dn: cn=User{i},ou=People,dc=example,dc=com\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: User{i}\nsn: TestUser{i}\nmail: user{i}@example.com\norclguid: user{i}guid456\naci: (target="ldap:///cn=User{i}")(version 3.0; acl "self"; allow (all) userdn="ldap:///self";)\n'
 
-        batch_result = u.process(list(range(20)), create_entry_data, on_error="skip")
-        source_data: MutableSequence[str] = []
-        if batch_result.success:
-            source_data = list(batch_result.value)
-
-        def write_file(item: tuple[int, str]) -> None:
-            """Write entry to file."""
-            i, entry = item
+        source_data: MutableSequence[str] = list(
+            u.process(list(range(20)), create_entry_data).unwrap(),
+        )
+        for i, entry in enumerate(source_data):
             (source_dir / f"data_{i:02d}.ldif").write_text(entry)
-
-        _ = u.process(list(enumerate(source_data)), write_file, on_error="skip")
 
     @staticmethod
     def _detect_server_type(
-        api: p.Ldif.ServerDetectionService, source_dir: Path
+        api: p.Ldif.ServerDetectionService, source_dir: Path,
     ) -> tuple[str, t.JsonMapping]:
-        """Detect server type from source data."""
+        """Detect server type from source data.
+
+        Returns:
+            The resulting ``tuple[str, t.JsonMapping]``.
+        """
         sample_file = source_dir / "data_00.ldif"
         detect_result = api.detect_server_type(ldif_content=sample_file.read_text())
         detection_data: t.JsonMapping = t.json_mapping_adapter().validate_python({})
@@ -65,29 +67,32 @@ class ExampleServerMigration:
 
     @staticmethod
     def _setup_directories(base_dir: Path) -> tuple[Path, Path, Path]:
-        """Set up migration directories."""
+        """Set up migration directories.
+
+        Returns:
+            The resulting ``tuple[Path, Path, Path]``.
+        """
         source_dir = base_dir / "source"
         intermediate_dir = base_dir / "intermediate"
         final_dir = base_dir / "final"
 
-        def setup_dir(dir_path: Path) -> None:
-            """Create the directory."""
+        for dir_path in (source_dir, intermediate_dir, final_dir):
             dir_path.mkdir(exist_ok=True, parents=True)
-
-        _ = u.process(
-            [source_dir, intermediate_dir, final_dir], setup_dir, on_error="skip"
-        )
         return (source_dir, intermediate_dir, final_dir)
 
     @staticmethod
     def auto_detection_migration_pipeline() -> p.Result[t.JsonMapping]:
-        """Migration pipeline with automatic server detection."""
+        """Migration pipeline with automatic server detection.
+
+        Returns:
+            The resulting ``p.Result[t.JsonMapping]``.
+        """
         api = ldif()
         mixed_ldif = 'dn: cn=Auto Detect Test,ou=People,dc=example,dc=com\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: Auto Detect Test\nsn: Test\nmail: auto@example.com\n# This could be from OID (has orclaci) or OUD (has aci)\norclaci: access to * by * read\naci: (target="ldap:///cn=Auto Detect Test")(version 3.0; acl "test"; allow (read) userdn="ldap:///anyone";)\n\ndn: cn=Auto Group,ou=Groups,dc=example,dc=com\nobjectClass: groupOfUniqueNames\nobjectClass: groupOfNames\ncn: Auto Group\nuniquemember: cn=Auto Detect Test,ou=People,dc=example,dc=com\nmember: cn=Auto Detect Test,ou=People,dc=example,dc=com\n'
         detect_result = api.detect_server_type(ldif_content=mixed_ldif)
         if detect_result.failure:
             return r[t.JsonMapping].fail(
-                f"Server detection failed: {detect_result.error}"
+                f"Server detection failed: {detect_result.error}",
             )
         detection = detect_result.unwrap()
         detected_server = detection.detected_server_type or "rfc"
@@ -107,7 +112,7 @@ class ExampleServerMigration:
         )
         if migration_result.failure:
             return r[t.JsonMapping].fail(
-                f"Migration to RFC failed: {migration_result.error}"
+                f"Migration to RFC failed: {migration_result.error}",
             )
         return r[t.JsonMapping].ok(
             t.json_mapping_adapter().validate_python({
@@ -116,12 +121,16 @@ class ExampleServerMigration:
                 "patterns_found": detection.patterns_found,
                 "total_entries": len(entries),
                 "migration_success": True,
-            })
+            }),
         )
 
     @staticmethod
     def batch_server_comparison() -> p.Result[t.JsonMapping]:
-        """Batch comparison of parsing across multiple LDAP servers."""
+        """Batch comparison of parsing across multiple LDAP servers.
+
+        Returns:
+            The resulting ``p.Result[t.JsonMapping]``.
+        """
         api = ldif()
         test_ldif = 'dn: cn=Server Comparison,ou=People,dc=example,dc=com\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: Server Comparison\nsn: Test\nmail: comparison@example.com\n# OID-specific attributes\norclguid: abc123def456\norclaci: access to attr=mail by * read\n# OUD-specific attributes\naci: (targetattr="mail")(version 3.0; acl "mail access"; allow (read,search) userdn="ldap:///anyone";)\n# OpenLDAP-specific attributes\nentryUUID: 12345678-1234-1234-1234-123456789012\nentryCSN: 20240101000000.000000Z#000000#000#000000\n'
         servers: t.SequenceOf[str] = ("rfc", "oid", "oud", "openldap")
@@ -169,12 +178,16 @@ class ExampleServerMigration:
                 if total_servers > 0
                 else 0,
                 "server_results": comparison_results,
-            })
+            }),
         )
 
     @staticmethod
     def comprehensive_migration_workflow() -> p.Result[t.JsonMapping]:
-        """Comprehensive migration workflow with parallel processing and validation."""
+        """Comprehensive migration workflow with parallel processing and validation.
+
+        Returns:
+            The resulting ``p.Result[t.JsonMapping]``.
+        """
         api = ldif()
         workflow_dir = Path("examples/comprehensive_migration")
         source_dir, intermediate_dir, final_dir = (
@@ -182,7 +195,7 @@ class ExampleServerMigration:
         )
         ExampleServerMigration._create_test_data(source_dir)
         source_server, detection_data = ExampleServerMigration._detect_server_type(
-            api, source_dir
+            api, source_dir,
         )
         source_server_typed = source_server
         intermediate_migration = api.migrate(
@@ -193,7 +206,7 @@ class ExampleServerMigration:
         )
         if intermediate_migration.failure:
             return r[t.JsonMapping].fail(
-                f"Intermediate migration failed: {intermediate_migration.error}"
+                f"Intermediate migration failed: {intermediate_migration.error}",
             )
         final_migration = api.migrate(
             input_dir=intermediate_dir,
@@ -203,7 +216,7 @@ class ExampleServerMigration:
         )
         if final_migration.failure:
             return r[t.JsonMapping].fail(
-                f"Final migration failed: {final_migration.error}"
+                f"Final migration failed: {final_migration.error}",
             )
         final_result = final_migration.unwrap()
         final_stats = final_result.stats
@@ -218,12 +231,16 @@ class ExampleServerMigration:
                 "migration_pipeline": "oid → oud → rfc",
                 "parallel_processing": True,
                 "validation_performed": True,
-            })
+            }),
         )
 
     @staticmethod
-    def parallel_server_migration() -> p.Result[p.Ldif.MigrationPipelineResult]:
-        """Parallel migration between servers with comprehensive error handling."""
+    def parallel_server_migration() -> p.Result[m.Ldif.MigrationPipelineResult]:
+        """Parallel migration between servers with comprehensive error handling.
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.MigrationPipelineResult]``.
+        """
         api = ldif()
         input_dir = Path("examples/migration_input")
         output_dir = Path("examples/migration_output")
@@ -240,11 +257,11 @@ class ExampleServerMigration:
             target_server="oud",
         )
         if migration_result.failure:
-            return r[p.Ldif.MigrationPipelineResult].fail(
-                f"Migration failed: {migration_result.error}"
+            return r[m.Ldif.MigrationPipelineResult].fail(
+                f"Migration failed: {migration_result.error}",
             )
         pipeline_result = migration_result.unwrap()
         _ = len(pipeline_result.entries)
         stats = pipeline_result.stats
         _ = stats.processed_entries
-        return r[p.Ldif.MigrationPipelineResult].ok(pipeline_result)
+        return r[m.Ldif.MigrationPipelineResult].ok(pipeline_result)

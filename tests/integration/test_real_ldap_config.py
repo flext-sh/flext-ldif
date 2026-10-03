@@ -21,24 +21,36 @@ import pytest
 from flext_tests import tm
 
 from flext_ldif import ldif
-from tests import m, p
+from tests import m
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+    from tests import p
 
 
 @pytest.mark.integration
 class TestsFlextLdifRealLdapConfig:
     """Public-contract tests for LDIF settings and railway composition."""
 
+    @staticmethod
     @pytest.fixture
-    def flext_api(self) -> p.Ldif.Client:
-        """Ldif API instance under test."""
+    def flext_api() -> p.Ldif.LdifClient:
+        """Ldif API instance under test.
+
+        Returns:
+            The resulting ``p.Ldif.LdifClient``.
+        """
         return ldif()
 
+    @staticmethod
     @pytest.fixture
-    def sample_entry(self) -> p.Ldif.Entry:
-        """Build a valid inetOrgPerson entry through the public model API."""
+    def sample_entry() -> m.Ldif.Entry:
+        """Build a valid inetOrgPerson entry through the public model API.
+
+        Returns:
+            The resulting ``m.Ldif.Entry``.
+        """
         result = m.Ldif.Entry.create(
             dn="cn=RailwayTest,ou=people,dc=example,dc=com",
             attributes={
@@ -50,35 +62,39 @@ class TestsFlextLdifRealLdapConfig:
             metadata=None,
         )
         tm.ok(result)
-        entry: p.Ldif.Entry = result.value
+        entry: m.Ldif.Entry = result.value
         return entry
 
     # -- settings contract ------------------------------------------------
 
+    @staticmethod
     def test_settings_encoding_is_a_usable_codec(
-        self, flext_api: p.Ldif.Client
+        flext_api: p.Ldif.LdifClient,
     ) -> None:
         """The configured LDIF encoding resolves to a real Python codec."""
-        encoding: str = str(flext_api.settings.Ldif.ldif_encoding)
+        encoding: str = str(flext_api.settings.ldif.ldif_encoding)
 
         # A settings value that is not a resolvable codec is a broken contract.
         assert codecs.lookup(encoding).name
 
+    @staticmethod
     def test_settings_strict_validation_is_boolean(
-        self, flext_api: p.Ldif.Client
+        flext_api: p.Ldif.LdifClient,
     ) -> None:
         """The strict-validation flag is exposed as a plain bool."""
-        tm.that(flext_api.settings.Ldif.ldif_strict_validation, is_=bool)
+        tm.that(flext_api.settings.ldif.ldif_strict_validation, is_=bool)
 
-    def test_process_options_expose_positive_worker_capacity(self) -> None:
+    @staticmethod
+    def test_process_options_expose_positive_worker_capacity() -> None:
         """Processing options always advertise at least one worker (SSOT)."""
         options = m.Ldif.ProcessEntriesOptions(processor_name="transform")
         assert options.max_workers >= 1
 
     # -- railway composition ----------------------------------------------
 
+    @staticmethod
     def test_railway_write_parse_validate_preserves_entry(
-        self, flext_api: p.Ldif.Client, sample_entry: p.Ldif.Entry, tmp_path: Path
+        flext_api: p.Ldif.LdifClient, sample_entry: m.Ldif.Entry, tmp_path: Path,
     ) -> None:
         """Write, parse, then validate yields the original entry intact."""
         output_file = tmp_path / "railway.ldif"
@@ -89,8 +105,8 @@ class TestsFlextLdifRealLdapConfig:
             .flat_map(lambda _: flext_api.parse_ldif(output_file))
             .flat_map(
                 lambda parsed: flext_api.validate_entries(parsed.entries).map(
-                    lambda _: parsed
-                )
+                    lambda _: parsed,
+                ),
             )
         )
 
@@ -101,12 +117,13 @@ class TestsFlextLdifRealLdapConfig:
         tm.that(round_tripped.dn_str, eq=sample_entry.dn_str)
         tm.that(round_tripped.attributes_dict["mail"], eq=["railway@example.com"])
 
+    @staticmethod
     def test_write_to_string_then_parse_is_idempotent(
-        self, flext_api: p.Ldif.Client, sample_entry: p.Ldif.Entry
+        flext_api: p.Ldif.LdifClient, sample_entry: m.Ldif.Entry,
     ) -> None:
         """Serialize-to-string then parse-back preserves DN and attributes."""
         parsed = flext_api.write_to_string([sample_entry]).flat_map(
-            flext_api.parse_string
+            flext_api.parse_string,
         )
 
         tm.ok(parsed)
@@ -118,8 +135,9 @@ class TestsFlextLdifRealLdapConfig:
             == sample_entry.attributes_dict["objectClass"]
         )
 
+    @staticmethod
     def test_validate_entries_reports_full_success(
-        self, flext_api: p.Ldif.Client, sample_entry: p.Ldif.Entry
+        flext_api: p.Ldif.LdifClient, sample_entry: m.Ldif.Entry,
     ) -> None:
         """Validating a well-formed entry yields a passing ValidationResult."""
         result = flext_api.validate_entries([sample_entry])
@@ -132,8 +150,9 @@ class TestsFlextLdifRealLdapConfig:
 
     # -- edge cases and failure channel -----------------------------------
 
+    @staticmethod
     def test_parse_missing_file_fails_with_descriptive_error(
-        self, flext_api: p.Ldif.Client, tmp_path: Path
+        flext_api: p.Ldif.LdifClient, tmp_path: Path,
     ) -> None:
         """Parsing a nonexistent path returns a failure, never a fake success."""
         missing = tmp_path / "does_not_exist.ldif"
@@ -144,6 +163,7 @@ class TestsFlextLdifRealLdapConfig:
         assert result.error is not None
         tm.that(result.error.lower(), has="not found")
 
+    @staticmethod
     @pytest.mark.parametrize(
         "content",
         [
@@ -153,13 +173,10 @@ class TestsFlextLdifRealLdapConfig:
         ],
     )
     def test_parse_content_without_entries_succeeds_empty(
-        self, flext_api: p.Ldif.Client, content: str
+        flext_api: p.Ldif.LdifClient, content: str,
     ) -> None:
         """Content carrying no records parses to a successful empty result."""
         result = flext_api.parse_string(content)
 
         tm.ok(result)
         tm.that(result.value.entries, eq=[])
-
-
-__all__: list[str] = ["TestsFlextLdifRealLdapConfig"]

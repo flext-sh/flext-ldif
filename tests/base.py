@@ -1,16 +1,20 @@
-"""Service base for flext-ldif tests."""
+"""Service base for flext-ldif tests.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from typing import override
 
-from flext_tests import s as tests_s
+from flext_tests import FlextTestsServiceBase
 
-from flext_ldif import m, p
+from flext_ldif import m
 from tests.settings import TestsFlextLdifSettings
 
 
-class TestsFlextLdifServiceBase(tests_s):
+class TestsFlextLdifServiceBase(FlextTestsServiceBase):
     """LDIF test service base with source and test settings namespaces."""
 
     @classmethod
@@ -24,7 +28,7 @@ class TestsFlextLdifServiceBase(tests_s):
 
     @classmethod
     @override
-    def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
+    def runtime_bootstrap_options(cls) -> m.RuntimeBootstrapOptions:
         return m.RuntimeBootstrapOptions(settings_type=TestsFlextLdifSettings)
 
 

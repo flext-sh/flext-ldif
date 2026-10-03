@@ -1,8 +1,17 @@
-"""Extracted nested class from FlextLdifUtilities."""
+"""Extracted nested class from FlextLdifUtilities.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
-from flext_ldif import c, p
+from typing import TYPE_CHECKING
+
+from flext_ldif import c
+
+if TYPE_CHECKING:
+    from flext_ldif._models.domain_schema import FlextLdifModelsDomainSchema as ms
 
 
 class FlextLdifUtilitiesObjectClass:
@@ -16,15 +25,11 @@ class FlextLdifUtilitiesObjectClass:
 
     @staticmethod
     def fix_kind_mismatch(
-        schema_oc: p.Ldif.SchemaObjectClass,
-    ) -> p.Ldif.SchemaObjectClass:
-        """Return an ObjectClass with the kind corrected for its superior.
-
-        Pydantic-2-way immutable transition (no in-place mutation): returns the
-        corrected ``model_copy`` or the same object when no fix applies.
-        """
+        schema_oc: ms.SchemaObjectClass, _server_type: str = "oid",
+    ) -> None:
+        """Fix objectClass kind mismatches with superior classes (server-specific)."""
         if not schema_oc.sup or not schema_oc.kind:
-            return schema_oc
+            return
         structural_superiors = {
             "orclpwdverifierprofile",
             "orclapplicationentity",
@@ -38,27 +43,22 @@ class FlextLdifUtilitiesObjectClass:
             first_sup = sup_value[0] if sup_value else ""
             sup_lower = first_sup.lower() if first_sup else ""
         schema_constants = FlextLdifUtilitiesObjectClass.SchemaConstants
+        target: ms.SchemaObjectClass = schema_oc
         if (
             sup_lower in structural_superiors
-            and schema_oc.kind == schema_constants.auxiliary
+            and target.kind == schema_constants.auxiliary
         ):
-            return schema_oc.model_copy(update={"kind": schema_constants.structural})
-        if (
+            target.kind = schema_constants.structural
+        elif (
             sup_lower in auxiliary_superiors
-            and schema_oc.kind == schema_constants.structural
+            and target.kind == schema_constants.structural
         ):
-            return schema_oc.model_copy(update={"kind": schema_constants.auxiliary})
-        return schema_oc
+            target.kind = schema_constants.auxiliary
 
     @staticmethod
-    def fix_missing_sup(
-        schema_oc: p.Ldif.SchemaObjectClass,
-    ) -> p.Ldif.SchemaObjectClass:
-        """Return an AUXILIARY ObjectClass with a default SUP when missing.
-
-        Pydantic-2-way immutable transition (no in-place mutation).
-        """
+    def fix_missing_sup(schema_oc: ms.SchemaObjectClass) -> None:
+        """Fix AUXILIARY ObjectClass missing SUP (superior) attribute."""
         schema_constants = FlextLdifUtilitiesObjectClass.SchemaConstants
-        if schema_oc.kind == schema_constants.auxiliary and (not schema_oc.sup):
-            return schema_oc.model_copy(update={"sup": "top"})
-        return schema_oc
+        target: ms.SchemaObjectClass = schema_oc
+        if target.kind == schema_constants.auxiliary and (not target.sup):
+            target.sup = "top"

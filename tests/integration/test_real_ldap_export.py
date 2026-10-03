@@ -22,50 +22,62 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_ldap.adapters.entry import FlextLdapEntryAdapter
 from flext_tests import tm
 
 from flext_ldif import ldif
-from tests import c, p
+from tests import c, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping, Sequence
     from pathlib import Path
 
+    from tests import m, p
+
 
 @pytest.fixture
-def flext_api() -> p.Ldif.Client:
-    """Public Ldif API instance under test."""
+def flext_api() -> p.Ldif.LdifClient:
+    """Public Ldif API instance under test.
+
+    Returns:
+        The resulting ``p.Ldif.LdifClient``.
+    """
     return ldif()
 
 
 @pytest.mark.docker
 @pytest.mark.integration
-@pytest.mark.real_ldap
 class TestsFlextLdifRealLdapExport:
     """Round-trip behavioral contract of LDIF export from a real LDAP server."""
 
     @staticmethod
     def _to_ldif_entries(
         ldap3_entries: Sequence[p.Ldap.Ldap3Entry],
-    ) -> list[p.Ldif.Entry]:
-        """Convert ldap3 search results into ldif entries via the public adapter."""
-        adapter = FlextLdapEntryAdapter()
-        entries: list[p.Ldif.Entry] = []
+    ) -> list[m.Ldif.Entry]:
+        """Convert ldap3 search results into ldif entries via the public adapter.
+
+        Returns:
+            The resulting ``list[m.Ldif.Entry]``.
+        """
+        adapter = u.Tests.create_ldap_entry_adapter()
+        entries: list[m.Ldif.Entry] = []
         for ldap3_entry in ldap3_entries:
             result = adapter.ldap3_to_ldif_entry(ldap3_entry)
             tm.ok(result)
             entries.append(result.unwrap())
         return entries
 
+    @staticmethod
     def _parse_back(
-        self, flext_api: p.Ldif.Client, content: str | None
+        flext_api: p.Ldif.LdifClient, content: str | None,
     ) -> dict[str, Mapping[str, Sequence[str]]]:
         """Parse exported LDIF and index attribute maps by DN string.
 
         Parsing the export through the public parser is the strongest available
         behavioral check: it proves the exported bytes are valid LDIF that
         faithfully round-trips every DN and attribute.
+
+        Returns:
+            The resulting ``dict[str, Mapping[str, Sequence[str]]]``.
         """
         assert content is not None
         parsed = flext_api.parse_string(content)
@@ -78,7 +90,7 @@ class TestsFlextLdifRealLdapExport:
         self,
         ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
-        flext_api: p.Ldif.Client,
+        flext_api: p.Ldif.LdifClient,
         make_test_username: Callable[[str], str],
     ) -> None:
         """A single exported entry round-trips its DN and every attribute value."""
@@ -111,7 +123,7 @@ class TestsFlextLdifRealLdapExport:
         self,
         ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
-        flext_api: p.Ldif.Client,
+        flext_api: p.Ldif.LdifClient,
         make_test_username: Callable[[str], str],
     ) -> None:
         """Batch export reproduces each source DN with its distinct attributes."""
@@ -133,7 +145,7 @@ class TestsFlextLdifRealLdapExport:
         tm.ok(write_result)
         indexed = self._parse_back(flext_api, write_result.unwrap().content)
         for i, (username, person_dn) in enumerate(
-            zip(usernames, expected_dns, strict=True)
+            zip(usernames, expected_dns, strict=True),
         ):
             tm.that(indexed, has=person_dn)
             tm.that(indexed[person_dn]["cn"], has=username)
@@ -143,7 +155,7 @@ class TestsFlextLdifRealLdapExport:
         self,
         ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
-        flext_api: p.Ldif.Client,
+        flext_api: p.Ldif.LdifClient,
         make_test_username: Callable[[str], str],
     ) -> None:
         """A nested directory subtree exports so every container and leaf DN survives."""
@@ -155,11 +167,11 @@ class TestsFlextLdifRealLdapExport:
         ldap_connection.add(people_ou_dn, ["organizationalUnit"], {"ou": "People"})
         person_dn = f"cn={person_name},{people_ou_dn}"
         ldap_connection.add(
-            person_dn, ["person", "inetOrgPerson"], {"cn": person_name, "sn": "Johnson"}
+            person_dn, ["person", "inetOrgPerson"], {"cn": person_name, "sn": "Johnson"},
         )
         group_dn = f"cn={group_name},{groups_ou_dn}"
         ldap_connection.add(
-            group_dn, ["groupOfNames"], {"cn": group_name, "member": person_dn}
+            group_dn, ["groupOfNames"], {"cn": group_name, "member": person_dn},
         )
         ldap_connection.search(
             clean_test_ou,
@@ -180,7 +192,7 @@ class TestsFlextLdifRealLdapExport:
         self,
         ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
-        flext_api: p.Ldif.Client,
+        flext_api: p.Ldif.LdifClient,
         make_test_username: Callable[[str], str],
     ) -> None:
         """Exporting the same entries twice yields identical LDIF content."""
@@ -205,7 +217,7 @@ class TestsFlextLdifRealLdapExport:
         self,
         ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
-        flext_api: p.Ldif.Client,
+        flext_api: p.Ldif.LdifClient,
         tmp_path: Path,
         make_test_username: Callable[[str], str],
     ) -> None:
@@ -229,6 +241,3 @@ class TestsFlextLdifRealLdapExport:
         tm.that(indexed, has=person_dn)
         tm.that(indexed[person_dn]["cn"], has=username)
         tm.that(indexed[person_dn]["mail"], has="export@example.com")
-
-
-__all__: list[str] = ["TestsFlextLdifRealLdapExport"]

@@ -8,93 +8,23 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping
 from typing import TYPE_CHECKING, Annotated, ClassVar, Self
 
-from flext_cli import m, u
+from flext_core import FlextUtilities as u, m
+from flext_ldif import c, t
 
 if TYPE_CHECKING:
-    from collections.abc import ItemsView, KeysView, MutableMapping, ValuesView
-
-    from flext_ldif import c, t
+    from collections.abc import KeysView, ValuesView
 
 
 class FlextLdifModelsDomainAttributes:
     """Namespace for LDIF attributes domain models."""
 
-    # NOTE (mro-0ftd.3.7.2): typed dynamic-property container replacing the
-    # model-less dict[str, list[str]] (operator law 2026-07-15: never model-less,
-    # dynamic entry properties are a typed tuple-of-values model in an advanced
-    # Mapping container mirroring flext-core containers.py _MappingRootBase).
-    class Property(m.FrozenModel):
-        """A single LDIF attribute: its name and its ordered, immutable values."""
-
-        name: Annotated[
-            str, u.Field(description="The attribute name (case preserved as parsed).")
-        ]
-        values: Annotated[
-            tuple[str, ...],
-            u.Field(description="Ordered attribute values (immutable)."),
-        ] = ()
-
-    class Properties(
-        m.RootModel[dict[str, "FlextLdifModelsDomainAttributes.Property"]]
-    ):
-        """Advanced typed Mapping of attribute name -> Property.
-
-        Root-model container with an explicit dict-like API (mirrors flext-core
-        FlextModelsContainers._MappingRootBase) so consumers keep ``props[name]``,
-        ``props.get``, ``props.items`` ergonomics while every value is a typed
-        Property instead of a raw list. This is the SSOT for entry attribute data.
-        """
-
-        root: Annotated[
-            dict[str, FlextLdifModelsDomainAttributes.Property],
-            u.Field(
-                default_factory=dict,
-                description="Validated attribute-name to Property mapping.",
-            ),
-        ]
-
-        def __getitem__(self, key: str) -> FlextLdifModelsDomainAttributes.Property:
-            return self.root[key]
-
-        def __setitem__(
-            self, key: str, value: FlextLdifModelsDomainAttributes.Property
-        ) -> None:
-            self.root[key] = value
-
-        def __delitem__(self, key: str) -> None:
-            del self.root[key]
-
-        def __contains__(self, key: object) -> bool:
-            return key in self.root
-
-        def __len__(self) -> int:
-            return len(self.root)
-
-        def __bool__(self) -> bool:
-            return bool(self.root)
-
-        def keys(self) -> KeysView[str]:
-            return self.root.keys()
-
-        def values(self) -> ValuesView[FlextLdifModelsDomainAttributes.Property]:
-            return self.root.values()
-
-        def items(self) -> ItemsView[str, FlextLdifModelsDomainAttributes.Property]:
-            return self.root.items()
-
-        def get(
-            self,
-            key: str,
-            default: FlextLdifModelsDomainAttributes.Property | None = None,
-        ) -> FlextLdifModelsDomainAttributes.Property | None:
-            return self.root.get(key, default)
-
     class Attributes(m.ArbitraryTypesModel):
         """LDIF attributes container - simplified dict-like interface."""
 
-        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
             validate_assignment=True,
             extra="forbid",
             use_enum_values=True,
@@ -107,7 +37,7 @@ class FlextLdifModelsDomainAttributes:
         attribute_metadata: Annotated[
             MutableMapping[str, t.MutableAttributeMapping],
             u.Field(
-                description="Metadata for each attribute, like category or hidden status."
+                description="Metadata for each attribute, like category or hidden status.",
             ),
         ] = u.Field(default_factory=dict)
         metadata: Annotated[
@@ -145,7 +75,11 @@ class FlextLdifModelsDomainAttributes:
             return len(self.attributes)
 
         def __contains__(self, key: str) -> bool:
-            """Check if attribute exists."""
+            """Check if attribute exists.
+
+            Returns:
+                The resulting ``bool``.
+            """
             return key in self.attributes
 
         def add_attribute(self, key: str, values: t.MutableSequenceOf[str]) -> Self:
@@ -163,7 +97,7 @@ class FlextLdifModelsDomainAttributes:
             return self
 
         def get(
-            self, key: str, default: t.MutableSequenceOf[str] | None = None
+            self, key: str, default: t.MutableSequenceOf[str] | None = None,
         ) -> t.MutableSequenceOf[str]:
             """Get attribute values with optional default.
 
@@ -213,7 +147,11 @@ class FlextLdifModelsDomainAttributes:
             return list(self.attributes.keys())
 
         def keys(self) -> KeysView[str]:
-            """Get attribute names."""
+            """Get attribute names.
+
+            Returns:
+                The resulting ``KeysView[str]``.
+            """
             attribute_keys: KeysView[str] = self.attributes.keys()
             return attribute_keys
 
@@ -231,7 +169,11 @@ class FlextLdifModelsDomainAttributes:
             return self
 
         def values(self) -> ValuesView[t.MutableSequenceOf[str]]:
-            """Get attribute values lists."""
+            """Get attribute values lists.
+
+            Returns:
+                The resulting ``ValuesView[t.MutableSequenceOf[str]]``.
+            """
             attribute_values: ValuesView[t.MutableSequenceOf[str]] = (
                 self.attributes.values()
             )
@@ -265,7 +207,7 @@ class FlextLdifModelsDomainAttributes:
         """
 
         original_name: Annotated[
-            str, u.Field(..., description="Original attribute name from source server")
+            str, u.Field(..., description="Original attribute name from source server"),
         ]
         target_name: Annotated[
             str | None,
@@ -284,7 +226,7 @@ class FlextLdifModelsDomainAttributes:
             u.Field(..., description="Type of transformation applied to the attribute"),
         ]
         reason: Annotated[
-            str, u.Field(description="Human-readable reason for transformation")
+            str, u.Field(description="Human-readable reason for transformation"),
         ] = ""
 
 

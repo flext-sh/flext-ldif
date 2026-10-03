@@ -1,8 +1,5 @@
 """Example 3: DRY Validation Analysis - Zero Manual Work, Maximum Intelligence.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
 flext-ldif enables validation analysis with ZERO code bloat:
 - Auto-generate test datasets with configurable error injection
 - Railway composition: generate → validate → analyze → report in ONE pipeline
@@ -11,6 +8,9 @@ flext-ldif enables validation analysis with ZERO code bloat:
 
 Original: 246 lines | DRY Advanced: ~50 lines (80% reduction)
 SRP: Dataset generation, validation, analysis - each isolated, composition handles flow
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -28,9 +28,13 @@ class DRYValidationAnalysis:
 
     @staticmethod
     def _analyze_validation_results(
-        validation_result: p.Ldif.ValidationResult,
-    ) -> p.Result[p.Ldif.ValidationResult]:
-        """DRY validation analysis: categorize errors and detect patterns."""
+        validation_result: m.Ldif.ValidationResult,
+    ) -> p.Result[m.Ldif.ValidationResult]:
+        """DRY validation analysis: categorize errors and detect patterns.
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.ValidationResult]``.
+        """
         if not validation_result.valid:
             error_groups: dict[str, list[str]] = {}
             for error in validation_result.errors:
@@ -38,15 +42,20 @@ class DRYValidationAnalysis:
                 if category not in error_groups:
                     error_groups[category] = []
                 error_groups[category].append(error)
-        return r[p.Ldif.ValidationResult].ok(validation_result)
+        return r[m.Ldif.ValidationResult].ok(validation_result)
 
     @staticmethod
     def _generate_test_dataset(
-        count: int, error_rate: float = 0.0
-    ) -> MutableSequence[p.Ldif.Entry]:
-        """DRY test dataset generation with configurable errors."""
+        count: int,
+        error_rate: float = 0.0,
+    ) -> MutableSequence[m.Ldif.Entry]:
+        """DRY test dataset generation with configurable errors.
+
+        Returns:
+            The resulting ``MutableSequence[m.Ldif.Entry]``.
+        """
         api = ldif()
-        entries: MutableSequence[p.Ldif.Entry] = []
+        entries: MutableSequence[m.Ldif.Entry] = []
         error_mod = int(1 / error_rate) if error_rate > 0 else 0
         for i in range(count):
             is_error = error_mod > 0 and i % error_mod == 0
@@ -66,8 +75,12 @@ class DRYValidationAnalysis:
         return entries
 
     @staticmethod
-    def parallel_validation() -> p.Result[p.Ldif.ValidationResult]:
-        """DRY parallel validation: generate dataset → validate → analyze."""
+    def parallel_validation() -> p.Result[m.Ldif.ValidationResult]:
+        """DRY parallel validation: generate dataset → validate → analyze.
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.ValidationResult]``.
+        """
         api = ldif()
         entries = DRYValidationAnalysis._generate_test_dataset(100, error_rate=0.1)
         validate_result = api.validate_entries(entries)
@@ -80,7 +93,7 @@ class DRYValidationAnalysis:
                 invalid_entries=total_entries,
                 errors=[str(validate_result.error)],
             )
-            return r[p.Ldif.ValidationResult].ok(validation_result)
+            return r[m.Ldif.ValidationResult].ok(validation_result)
         vr = validate_result.unwrap()
         validation_result = m.Ldif.ValidationResult(
             valid=vr.valid,
@@ -93,7 +106,11 @@ class DRYValidationAnalysis:
 
     @staticmethod
     def statistical_analysis() -> p.Result[t.MappingKV[str, t.Numeric]]:
-        """DRY statistical analysis: comprehensive metrics in one pipeline."""
+        """DRY statistical analysis: comprehensive metrics in one pipeline.
+
+        Returns:
+            The resulting ``p.Result[t.MappingKV[str, t.Numeric]]``.
+        """
         api = ldif()
         entries = DRYValidationAnalysis._generate_test_dataset(500, error_rate=0.05)
         validate_result = api.validate_entries(entries)

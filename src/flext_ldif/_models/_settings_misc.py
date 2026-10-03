@@ -9,12 +9,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Annotated
+from typing import Annotated
 
 from flext_core import FlextUtilities as u, m
-
-if TYPE_CHECKING:
-    from flext_ldif import t
+from flext_ldif import t
 
 
 class FlextLdifModelsSettingsMisc:
@@ -32,7 +30,7 @@ class FlextLdifModelsSettingsMisc:
         )
         component: Annotated[str | None, u.Field(description="Component name")] = None
         correlation_id: Annotated[
-            str | None, u.Field(description="Correlation identifier")
+            str | None, u.Field(description="Correlation identifier"),
         ] = None
         trace_id: Annotated[str | None, u.Field(description="Trace identifier")] = None
 
@@ -42,7 +40,7 @@ class FlextLdifModelsSettingsMisc:
         current_attr: Annotated[str, u.Field(description="Current attribute name")] = ""
         current_val: Annotated[str, u.Field(description="Current value")] = ""
         in_value: Annotated[
-            bool, u.Field(description="Whether parser is inside the value portion")
+            bool, u.Field(description="Whether parser is inside the value portion"),
         ] = False
         pairs: Annotated[
             t.MutableStrPairSequence,

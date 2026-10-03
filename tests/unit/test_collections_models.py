@@ -1,4 +1,8 @@
-"""Unit tests for LDIF collection-oriented models."""
+"""Unit tests for LDIF collection-oriented models.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -22,7 +26,9 @@ class TestsFlextLdifCollectionsModels:
             },
         )
 
-    def test_dynamic_counts_exposes_count_mapping_contract(self) -> None:
+    @staticmethod
+    def test_dynamic_counts_exposes_count_mapping_contract() -> None:
+        """Test dynamic counts exposes count mapping contract."""
         counts = m.Ldif.DynamicCounts.model_validate({
             c.Ldif.Category.USERS.value: 3,
             c.Ldif.Category.GROUPS.value: "2",
@@ -44,13 +50,17 @@ class TestsFlextLdifCollectionsModels:
             ],
         )
 
-    def test_dynamic_counts_missing_key_raises_key_error(self) -> None:
+    @staticmethod
+    def test_dynamic_counts_missing_key_raises_key_error() -> None:
+        """Test dynamic counts missing key raises key error."""
         counts = m.Ldif.DynamicCounts()
 
         with pytest.raises(KeyError, match="missing"):
             _ = counts["missing"]
 
-    def test_dynamic_counts_update_count_tracks_new_extra_key(self) -> None:
+    @staticmethod
+    def test_dynamic_counts_update_count_tracks_new_extra_key() -> None:
+        """Test dynamic counts update count tracks new extra key."""
         counts = m.Ldif.DynamicCounts()
 
         counts.update_count(c.Ldif.Category.REJECTED.value, 4)
@@ -58,7 +68,9 @@ class TestsFlextLdifCollectionsModels:
         tm.that(counts.get(c.Ldif.Category.REJECTED.value), eq=4)
         tm.that(counts[c.Ldif.Category.REJECTED.value], eq=4)
 
-    def test_schema_content_accepts_empty_sequences(self) -> None:
+    @staticmethod
+    def test_schema_content_accepts_empty_sequences() -> None:
+        """Test schema content accepts empty sequences."""
         schema_content = m.Ldif.SchemaContent.model_validate({
             "attributes": [],
             "object_classes": [],
@@ -67,7 +79,9 @@ class TestsFlextLdifCollectionsModels:
         tm.that(schema_content.attributes, eq=[])
         tm.that(schema_content.object_classes, eq=[])
 
-    def test_flexible_categories_getitem_auto_initializes_bucket(self) -> None:
+    @staticmethod
+    def test_flexible_categories_getitem_auto_initializes_bucket() -> None:
+        """Test flexible categories getitem auto initializes bucket."""
         categories = m.Ldif.FlexibleCategories()
 
         users_entries = categories[c.Ldif.Category.USERS.value]
@@ -76,6 +90,7 @@ class TestsFlextLdifCollectionsModels:
         tm.that(c.Ldif.Category.USERS.value in categories, eq=True)
 
     def test_flexible_categories_setitem_copies_entries(self) -> None:
+        """Test flexible categories setitem copies entries."""
         categories = m.Ldif.FlexibleCategories()
         original_entries: t.MutableSequenceOf[p.Ldif.Entry] = [self._entry("alpha")]
 
@@ -87,6 +102,7 @@ class TestsFlextLdifCollectionsModels:
         tm.that(stored_entries[0].dn_str, eq=c.Tests.ENTRIES_DN_VALID)
 
     def test_flexible_categories_add_entries_appends_to_existing_bucket(self) -> None:
+        """Test flexible categories add entries appends to existing bucket."""
         categories = m.Ldif.FlexibleCategories()
 
         categories.add_entries(c.Ldif.Category.USERS.value, [self._entry("alpha")])
@@ -96,6 +112,7 @@ class TestsFlextLdifCollectionsModels:
         tm.that(len(stored_entries), eq=2)
 
     def test_flexible_categories_exposes_mapping_views_and_hash_error(self) -> None:
+        """Test flexible categories exposes mapping views and hash error."""
         categories = m.Ldif.FlexibleCategories()
         default_entries = [self._entry("fallback")]
 
@@ -112,7 +129,9 @@ class TestsFlextLdifCollectionsModels:
         with pytest.raises(TypeError, match="unhashable"):
             _ = hash(categories)
 
-    def test_oid_acl_rule_models_carry_typed_subjects(self) -> None:
+    @staticmethod
+    def test_oid_acl_rule_models_carry_typed_subjects() -> None:
+        """Test oid acl rule models carry typed subjects."""
         subject = m.Ldif.OidAclSubject(
             subject_type="group",
             value="cn=admins,dc=ctbc",
@@ -134,7 +153,9 @@ class TestsFlextLdifCollectionsModels:
         tm.that(rule.subjects[0].subject_type, eq="group")
         tm.that(rule.subjects[0].permissions, eq=("add", "delete", "browse"))
 
-    def test_aci_rule_models_carry_typed_allows(self) -> None:
+    @staticmethod
+    def test_aci_rule_models_carry_typed_allows() -> None:
+        """Test aci rule models carry typed allows."""
         allow = m.Ldif.AciAllow(
             subject_type="groupdn",
             subject_value="ldap:///cn=admins,dc=ctbc",

@@ -6,10 +6,6 @@
   - [Test Structure](#test-structure)
   - [Test Categories](#test-categories)
 - [🔧 Running Tests](#-running-tests)
-  - [Quick Start](#quick-start)
-  - [Running Test Categories](#running-test-categories)
-  - [Test Markers](#test-markers)
-  - [Running with Specific Fixtures](#running-with-specific-fixtures)
 - [📦 Centralized Fixtures (conftest.py)](#-centralized-fixtures-conftestpy)
   - [Fixture Organization](#fixture-organization)
   - [Available Fixtures](#available-fixtures)
@@ -43,7 +39,8 @@
 
 <!-- TOC END -->
 
-Comprehensive integration testing for LDIF parsing, writing, and roundtrip validation across multiple LDAP server types (OID, OUD, OpenLDAP, RFC).
+Comprehensive integration testing for LDIF parsing, writing, and roundtrip validation
+across multiple LDAP server types (OID, OUD, OpenLDAP, RFC).
 
 ## 📋 Test Organization
 
@@ -77,22 +74,25 @@ tests/integration/
 
 #### 1. **Comprehensive Validation Tests** (Phase 3-5)
 
-These tests validate core LDIF functionality across all server types using centralized fixtures.
+These tests validate core LDIF functionality across all server types using centralized
+fixtures.
 
-**test_roundtrip_deep_validation.py** (9 tests)
+runtime_bootstrap_options
 
 - Tests: parse → write → parse roundtrips
-- Coverage: Single/multiple entries, multi-valued attributes, special characters, hierarchical structures
+- Coverage: Single/multiple entries, multi-valued attributes, special characters,
+  hierarchical structures
 - Parametrized: OID and OUD schema/integration fixtures
 - Validates: Deep content preservation (not just entry counts)
 
-**test_rfc_compliance_validation.py** (15 tests)
+runtime_bootstrap_options
 
 - Tests: RFC 2849 (LDIF format) and RFC 4512 (schema) compliance
-- Coverage: DN syntax (RFC 4514), LDIF format rules, attribute encoding, line length limits
+- Coverage: DN syntax (RFC 4514), LDIF format rules, attribute encoding, line length
+  limits
 - Validates: Strict RFC compliance for all operations
 
-**test_systematic_fixture_coverage.py** (10 tests)
+runtime_bootstrap_options
 
 - Tests: All server types × all fixture types (coverage matrix)
 - Coverage:
@@ -108,9 +108,11 @@ These tests validate core LDIF functionality across all server types using centr
 
 - Tests: Malformed LDIF handling and error recovery
 - Coverage:
-  - Malformed content: missing DN, incomplete syntax, invalid format, orphaned continuations (12 tests)
+  - Malformed content: missing DN, incomplete syntax, invalid format, orphaned
+    continuations (12 tests)
   - Incomplete entries: truncated LDIF, unclosed multiline values (3 tests)
-  - Invalid schema: malformed OID, missing required fields, unclosed parentheses (3 tests)
+  - Invalid schema: malformed OID, missing required fields, unclosed parentheses (3
+    tests)
   - Encoding errors: UTF-8, base64, mixed encodings (4 tests)
 - Validates: Graceful handling and best-effort recovery
 
@@ -118,10 +120,14 @@ These tests validate core LDIF functionality across all server types using centr
 
 - Tests: Boundary conditions and edge cases
 - Coverage:
-  - Empty/minimal cases: empty LDIF, whitespace only, comments only, minimal entries (5 tests)
-  - Large/complex cases: many attributes (100+), many values (100+), very long values (10KB+), deep nesting (10+ levels) (4 tests)
-  - Boundary values: single characters, special characters, maximum RDN components, minimum valid DN (4 tests)
-  - Unicode boundaries: BMP, supplementary plane, zero-width, combining characters (4 tests)
+  - Empty/minimal cases: empty LDIF, whitespace only, comments only, minimal entries (5
+    tests)
+  - Large/complex cases: many attributes (100+), many values (100+), very long values
+    (10KB+), deep nesting (10+ levels) (4 tests)
+  - Boundary values: single characters, special characters, maximum RDN components,
+    minimum valid DN (4 tests)
+  - Unicode boundaries: BMP, supplementary plane, zero-width, combining characters (4
+    tests)
   - Roundtrip edge cases: empty roundtrip, single minimal entry, many entries (5 tests)
 - Validates: Correct handling of boundary values
 
@@ -137,7 +143,7 @@ These tests validate core LDIF functionality across all server types using centr
 - Tests: Oracle Unified Directory specific features
 - Uses: OUD-specific fixtures and OUD servers
 
-**test_cross_server_conversion.py**
+runtime_bootstrap_options
 
 - Tests: Server-to-server conversion (OID ↔ OUD)
 - Validates: Data integrity during server-specific transformations
@@ -146,102 +152,55 @@ These tests validate core LDIF functionality across all server types using centr
 
 These tests require a running LDAP container (Docker).
 
-**test_real_ldap_export.py**
+runtime_bootstrap_options
 
 - Tests: Export entries from real LDAP container
 - Validates: Container connectivity and export integrity
 
-**test_real_ldap_import.py**
+runtime_bootstrap_options
 
 - Tests: Import LDIF entries into real LDAP container
 - Validates: Import success and consistency
 
-**test_real_ldap_roundtrip.py**
+runtime_bootstrap_options
 
 - Tests: LDAP → LDIF → LDAP roundtrip
 - Validates: Complete roundtrip data integrity
 
-**test_real_ldap_validation.py**
+runtime_bootstrap_options
 
 - Tests: Validation and modification operations
 - Validates: Entry consistency and constraints
 
-**test_real_ldap_crud.py**
+runtime_bootstrap_options
 
 - Tests: Create, read, update, delete operations
 - Validates: CRUD operation completeness
 
-**test_real_ldap_config.py**
+runtime_bootstrap_options
 
 - Tests: Configuration and setup operations
 - Validates: Configuration consistency
 
 ## 🔧 Running Tests
 
-### Quick Start
+Run from the active workspace root:
 
 ```bash
-# Run all integration tests
-PYTHONPATH=src poetry run pytest tests/integration/ -v
-
-# Run specific test class
-PYTHONPATH=src poetry run pytest tests/integration/test_roundtrip_deep_validation.py::TestRoundtripDeepValidation -v
-
-# Run specific test method
-PYTHONPATH=src poetry run pytest tests/integration/test_roundtrip_deep_validation.py::TestRoundtripDeepValidation::test_roundtrip_single_entry -v
+make setup
+make check
+make test
 ```
 
-### Running Test Categories
-
-```bash
-# Run comprehensive validation tests (no Docker required)
-PYTHONPATH=src poetry run pytest tests/integration/test_roundtrip_deep_validation.py tests/integration/test_rfc_compliance_validation.py tests/integration/test_systematic_fixture_coverage.py tests/integration/test_error_recovery.py tests/integration/test_edge_cases.py -v
-
-# Run server-specific tests (no Docker required)
-PYTHONPATH=src poetry run pytest tests/integration/test_oid_integration.py tests/integration/test_oud_integration.py tests/integration/test_cross_server_conversion.py -v
-
-# Run real LDAP tests (requires Docker)
-PYTHONPATH=src poetry run pytest tests/integration/test_real_ldap_*.py -v
-
-# Run with coverage
-PYTHONPATH=src poetry run pytest tests/integration/ --cov=src/flext_ldif --cov-report=term-missing
-```
-
-### Test Markers
-
-```bash
-# Run only fast tests
-pytest -m unit
-
-# Run only integration tests
-pytest -m integration
-
-# Run LDIF-specific tests
-pytest -m ldif
-
-# Run parser tests
-pytest -m parser
-
-# Run end-to-end tests
-pytest -m e2e
-```
-
-### Running with Specific Fixtures
-
-```bash
-# Run tests using OID fixtures
-PYTHONPATH=src poetry run pytest tests/integration/ -k "oid" -v
-
-# Run tests using OUD fixtures
-PYTHONPATH=src poetry run pytest tests/integration/ -k "oud" -v
-
-# Run parametrized tests with specific fixture type
-PYTHONPATH=src poetry run pytest tests/integration/test_systematic_fixture_coverage.py::TestSystematicFixtureCoverage::test_schema_fixture_coverage -v
-```
+The test verb owns scope, impact selection, retained Testmon state, markers, and
+coverage. Do not append test paths, class names, pytest flags, or environment overrides
+to the standard verb. Real LDAP tests require their declared container services. See
+[Make commands](../../docs/guides/make-commands.md).
 
 ## 📦 Centralized Fixtures (conftest.py)
 
-All tests use centralized fixtures defined in `tests/integration/conftest.py`. This eliminates duplication and ensures consistent fixture usage across all test files.
+All tests use centralized fixtures defined in `tests/integration/conftest.py`. This
+eliminates duplication and ensures consistent fixture usage across all test files.
 
 ### Fixture Organization
 
@@ -548,24 +507,18 @@ def test_valid_entry(self, api: ldif) -> None:
 ### Running with Coverage Reports
 
 ```bash
-# Generate coverage report
-PYTHONPATH=src poetry run pytest tests/integration/ --cov=src/flext_ldif --cov-report=html
-
-# View report
-open htmlcov/index.html
-
-# Coverage by module
-PYTHONPATH=src poetry run pytest tests/integration/ --cov=src/flext_ldif --cov-report=term-missing
+# Coverage is configured by the canonical test owner
+make test
 ```
 
 ## 🆕 Adding New Integration Tests
 
 ### Step 1: Choose Test Location
 
-- **Validation Logic**: Add to `test_roundtrip_deep_validation.py` or `test_rfc_compliance_validation.py`
+- runtime_bootstrap_options
 - **Error Handling**: Add to `test_error_recovery.py`
 - **Edge Cases**: Add to `test_edge_cases.py`
-- **Server-Specific**: Add to `test_oid_integration.py`, `test_oud_integration.py`, etc.
+- runtime_bootstrap_options
 - **New Category**: Create new test file `test_my_feature.py`
 
 ### Step 2: Use Centralized Fixtures
@@ -636,10 +589,11 @@ def test_roundtrip_preserves_attributes(self, api: ldif) -> None:
 
 **Problem**: `ModuleNotFoundError: No module named 'flext_ldif'`
 
-**Solution**: Set PYTHONPATH before running tests
+**Solution**: Reconstruct the managed environment from the workspace root
 
 ```bash
-PYTHONPATH=src poetry run pytest tests/integration/
+make setup
+make test
 ```
 
 ### Fixture Not Found
@@ -648,10 +602,7 @@ PYTHONPATH=src poetry run pytest tests/integration/
 
 **Solution**: Verify fixture is defined in `conftest.py` and file is named correctly
 
-```bash
-# Check fixture availability
-PYTHONPATH=src poetry run pytest tests/integration/ --fixtures | grep oid_schema
-```
+Read the fixture owner and rerun `make test` from the workspace root.
 
 ### Docker Container Errors
 
@@ -675,7 +626,7 @@ docker logs ldif-test-ldap
 
 ```bash
 # Run the canonical bounded type checker
-MYPY_MEMORY_LIMIT_MB=6144 MYPY_TIMEOUT_SECONDS=600 make check FILES=tests/integration CHECK_GATES=mypy
+make check
 ```
 
 ## 📈 Continuous Integration
@@ -684,13 +635,11 @@ All integration tests are run in CI/CD pipelines:
 
 ```bash
 # Complete validation pipeline
-make val
+make check
 
 # Just tests
 make test
 
-# Just integration tests
-PYTHONPATH=src poetry run pytest tests/integration/ -v
 ```
 
 ### CI Configuration
@@ -724,10 +673,11 @@ Tests run with:
 - [ ] Test passes linting and type checking
 - [ ] Test follows "Best Practices" guidelines above
 
-______________________________________________________________________
+---
 
 **Integration Test Suite** for ldif LDIF processing library.
 
-**Purpose**: Comprehensive testing of LDIF parsing, writing, and roundtrip validation across all LDAP server types with centralized fixture management.
+**Purpose**: Comprehensive testing of LDIF parsing, writing, and roundtrip validation
+across all LDAP server types with centralized fixture management.
 
 **Maintained**: 2025 | **Test Count**: 100+ | **Coverage**: 65%+ minimum

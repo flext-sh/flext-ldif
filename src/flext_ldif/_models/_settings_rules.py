@@ -59,7 +59,7 @@ class FlextLdifModelsSettingsRules:
             u.Field(description="Attribute names containing ACL information"),
         ] = c.Ldif.EMPTY_STR_FROZENSET
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def category_markers(self) -> t.FrozensetMapping:
             """The category markers already normalized for matching."""
@@ -90,7 +90,12 @@ class FlextLdifModelsSettingsRules:
             cls: type[Self],
             data: t.MappingKV[str, t.Ldif.ValueType | frozenset[str] | set[str]] | Self,
         ) -> t.MappingKV[str, t.Ldif.ValueType | frozenset[str] | set[str]]:
-            """Accept immutable mapping inputs such as MappingProxyType."""
+            """Accept immutable mapping inputs such as MappingProxyType.
+
+            Returns:
+                The resulting ``t.MappingKV[str, t.Ldif.ValueType | frozenset[str] |
+                    set[str]]``.
+            """
             if isinstance(data, cls):
                 return dict(data.model_dump())
             return dict(data)
@@ -132,7 +137,7 @@ class FlextLdifModelsSettingsRules:
             u.Field(description="OID patterns for allowed ldapSyntaxes definitions"),
         ] = c.Ldif.EMPTY_STR_FROZENSET
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def schema_oid_filters(self) -> t.FrozensetMapping:
             """The whitelist OID filters keyed by canonical schema attribute names."""
@@ -141,7 +146,7 @@ class FlextLdifModelsSettingsRules:
                 for field_name, attr_name in c.Ldif.WHITELIST_RULE_SCHEMA_ATTRIBUTE_KEYS
             })
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def has_oid_filters(self) -> bool:
             """Whether any schema OID whitelist is configured."""

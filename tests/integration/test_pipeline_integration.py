@@ -13,20 +13,21 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping, MutableSequence
 from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import tm
 
 from flext_ldif import ldif
-from flext_ldif._models.domain_entry import FlextLdifModelsDomainEntry
 
 if TYPE_CHECKING:
+    from collections.abc import MutableMapping, MutableSequence
     from pathlib import Path
 
-type _Entry = FlextLdifModelsDomainEntry.Entry
-type _Attributes = MutableMapping[str, MutableSequence[str]]
+    from flext_ldif import m
+
+    type _Entry = m.Ldif.Entry
+    type _Attributes = MutableMapping[str, MutableSequence[str]]
 
 
 SINGLE_ENTRY = (
@@ -75,6 +76,7 @@ class TestsFlextLdifPipelineIntegration:
         attributes: _Attributes = entry.attributes.attributes
         return attributes
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("content", "expected_count"),
         [
@@ -86,7 +88,7 @@ class TestsFlextLdifPipelineIntegration:
         ],
     )
     def test_parse_ldif_returns_expected_entry_count(
-        self, content: str, expected_count: int
+        content: str, expected_count: int,
     ) -> None:
         """parse_ldif succeeds and yields the expected number of entries."""
         result = ldif().parse_ldif(content)
@@ -131,13 +133,15 @@ class TestsFlextLdifPipelineIntegration:
         tm.that(attributes, has="cn")
         tm.that(attributes, lacks="version")
 
-    def test_parse_ldif_reports_detected_server_type(self) -> None:
+    @staticmethod
+    def test_parse_ldif_reports_detected_server_type() -> None:
         """A generic document is detected as the RFC server type."""
         response = ldif().parse_ldif(SINGLE_ENTRY).unwrap()
 
         tm.that(response.detected_server_type, eq="rfc")
 
-    def test_parse_ldif_statistics_match_entry_count(self) -> None:
+    @staticmethod
+    def test_parse_ldif_statistics_match_entry_count() -> None:
         """The response statistics agree with the observable entry list."""
         response = ldif().parse_ldif(THREE_ENTRIES).unwrap()
 
@@ -153,7 +157,8 @@ class TestsFlextLdifPipelineIntegration:
         tm.that(len(response.entries), eq=1)
         tm.that(self._dn_value(response.entries[0]), eq="cn=test,dc=example,dc=com")
 
-    def test_parse_ldif_missing_file_fails_with_error(self, tmp_path: Path) -> None:
+    @staticmethod
+    def test_parse_ldif_missing_file_fails_with_error(tmp_path: Path) -> None:
         """A non-existent path yields a failure carrying a descriptive error."""
         missing = tmp_path / "does-not-exist.ldif"
 
@@ -163,21 +168,24 @@ class TestsFlextLdifPipelineIntegration:
         assert result.error is not None
         tm.that(result.error.lower(), has="not found")
 
-    def test_parse_map_combinator_projects_entry_count(self) -> None:
+    @staticmethod
+    def test_parse_map_combinator_projects_entry_count() -> None:
         """FlextResult.map transforms the success value without unwrapping."""
         count = ldif().parse_ldif(THREE_ENTRIES).map(lambda r: len(r.entries))
 
         tm.ok(count)
         tm.that(count.unwrap(), eq=3)
 
-    def test_validate_entries_accepts_wellformed_entries(self) -> None:
+    @staticmethod
+    def test_validate_entries_accepts_wellformed_entries() -> None:
         """Validation of parsed entries succeeds through the public API."""
         api = ldif()
         entries = api.parse_ldif(SINGLE_ENTRY).unwrap().entries
 
         tm.ok(api.validate_entries(entries))
 
-    def test_write_produces_content_and_statistics(self) -> None:
+    @staticmethod
+    def test_write_produces_content_and_statistics() -> None:
         """Writing entries returns serialized content plus matching statistics."""
         api = ldif()
         entries = api.parse_ldif(SINGLE_ENTRY).unwrap().entries

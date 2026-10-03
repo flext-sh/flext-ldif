@@ -5,6 +5,9 @@ Faithful port of the OUD migration oracle converter
 maps to one OUD bind-rule (``m.Ldif.AciAllow``); subjects with no OUD
 equivalent (``guidattr``/unknown) surface as ``r.fail`` carrying the manual
 review note — never a silent drop. Taxonomy is the ``c.Ldif`` SSOT.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -45,6 +48,9 @@ class FlextLdifServersOidAclToOud:
 
         Unescapes ``\.``/``\,``; a residual regex metacharacter means the DN
         cannot be safely wildcarded — return it unchanged.
+
+        Returns:
+            The resulting ``str``.
         """
         if not value:
             return value
@@ -63,7 +69,7 @@ class FlextLdifServersOidAclToOud:
 
     @classmethod
     def _map_tokens(
-        cls, bases: set[str], perm_map: t.MappingKV[str, str | None]
+        cls, bases: set[str], perm_map: t.MappingKV[str, str | None],
     ) -> set[str]:
         granted: set[str] = set()
         for base in bases:
@@ -76,7 +82,7 @@ class FlextLdifServersOidAclToOud:
 
     @classmethod
     def convert_permissions(
-        cls, permissions: t.StrSequence, *, is_entry: bool
+        cls, permissions: t.StrSequence, *, is_entry: bool,
     ) -> p.Result[t.StrSequence]:
         """Convert OID permission tokens to the ordered OUD allow set.
 
@@ -85,6 +91,9 @@ class FlextLdifServersOidAclToOud:
         before applying any ``no*`` negation, avoiding OUD overgrant. A perm
         valid only at the other scope (``read`` on an entry rule) grants nothing
         here and is skipped; a token in neither scope → ``r.fail``.
+
+        Returns:
+            The resulting ``p.Result[t.StrSequence]``.
         """
         perm_map = c.Ldif.ENTRY_PERM_MAP if is_entry else c.Ldif.ATTR_PERM_MAP
         all_perms = c.Ldif.ALL_ENTRY_PERMS if is_entry else c.Ldif.ALL_ATTR_PERMS
@@ -125,8 +134,12 @@ class FlextLdifServersOidAclToOud:
         return r[t.StrSequence].ok(())
 
     @staticmethod
-    def get_targetattr(rule: p.Ldif.OidAclRule) -> str:
-        """Compute the OUD ``targetattr`` (entry→``*``, list→``a||b``, ``attr!=``→``!=a||b``)."""
+    def get_targetattr(rule: m.Ldif.OidAclRule) -> str:
+        """Compute the OUD ``targetattr`` (entry→``*``, list→``a||b``, ``attr!=``→``!=a||b``).
+
+        Returns:
+            The resulting ``str``.
+        """
         attr_negation: str = c.Ldif.OUD_ATTR_NEGATION
         attr_or: str = c.Ldif.OUD_ATTR_OR
         wildcard: str = c.Ldif.ACL_WILDCARD
@@ -143,7 +156,7 @@ class FlextLdifServersOidAclToOud:
 
     @staticmethod
     def calculate_targetscope(
-        rule: p.Ldif.OidAclRule, *, has_anyone_subject: bool
+        rule: m.Ldif.OidAclRule, *, has_anyone_subject: bool,
     ) -> str | None:
         """Compute the OUD ``targetscope`` (``base`` or default subtree).
 
@@ -151,6 +164,9 @@ class FlextLdifServersOidAclToOud:
         with a surviving ``anyone`` subject is pinned to ``base`` to prevent
         inheritance to the subtree; otherwise the OUD default (subtree) applies
         and ``targetscope`` is omitted (``None``).
+
+        Returns:
+            The resulting ``str | None``.
         """
         acl_scope_base: str = c.Ldif.ACL_SCOPE_BASE
         if rule.acl_type == c.Ldif.AclConvertType.ORCLENTRYLEVELACI:
@@ -161,8 +177,8 @@ class FlextLdifServersOidAclToOud:
 
     @classmethod
     def convert_subject_to_oud(
-        cls, subject: p.Ldif.OidAclSubject
-    ) -> p.Result[p.Ldif.AciAllow]:
+        cls, subject: m.Ldif.OidAclSubject,
+    ) -> p.Result[m.Ldif.AciAllow]:
         """Map one OID by-clause subject to an OUD bind-rule.
 
         Returns an :class:`m.Ldif.AciAllow` whose ``subject_value`` is the
@@ -170,6 +186,9 @@ class FlextLdifServersOidAclToOud:
         ``permissions`` are left empty — Step 5 fills the converted permission
         set. ``guidattr``/unknown subjects have no OUD equivalent and surface as
         ``r.fail`` (the caller records the manual-review note).
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.AciAllow]``.
         """
         kind = subject.subject_type
         value = subject.value
@@ -192,12 +211,12 @@ class FlextLdifServersOidAclToOud:
                 bind_type = oud.USERATTR.value
                 bind_value = f"{value}{c.Ldif.UserAttrSuffix.GROUPDN.value}"
             case _:
-                return r[p.Ldif.AciAllow].fail(
+                return r[m.Ldif.AciAllow].fail(
                     f"Subject '{kind}' has no OUD equivalent "
-                    f"(manual review required): {value!r}"
+                    f"(manual review required): {value!r}",
                 )
-        return r[p.Ldif.AciAllow].ok(
-            m.Ldif.AciAllow(subject_type=bind_type, subject_value=bind_value)
+        return r[m.Ldif.AciAllow].ok(
+            m.Ldif.AciAllow(subject_type=bind_type, subject_value=bind_value),
         )
 
 

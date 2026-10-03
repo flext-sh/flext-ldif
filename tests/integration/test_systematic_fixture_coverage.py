@@ -4,7 +4,7 @@ Behavioral contract tests: every LDAP server fixture type must survive the
 public parse -> write -> parse cycle exposed by ``flext_ldif.ldif()``. Only the
 public API is exercised (``parse_ldif``, ``write``, ``r[T]`` outcomes and the
 public model surface of parse/write responses and entries); no private state,
-no internal collaborator spying, no monkeypatching.
+no internal collaborator spying, no mock-based testing.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -26,9 +26,14 @@ if TYPE_CHECKING:
 class TestsFlextLdifSystematicFixtureCoverage:
     """Public parse/write contract across the server×fixture-type matrix."""
 
+    @staticmethod
     @pytest.fixture(scope="class")
-    def api(self) -> p.Ldif.Client:
-        """Public LDIF client under test."""
+    def api() -> p.Ldif.LdifClient:
+        """Public LDIF client under test.
+
+        Returns:
+            The resulting ``p.Ldif.LdifClient``.
+        """
         return ldif()
 
     # ------------------------------------------------------------------
@@ -40,7 +45,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
         """Return a schema LDIF sample capped to ``max_definitions`` defs."""
         lines = fixture_data.splitlines()
         first_dn = next(
-            (line for line in lines if line.startswith("dn:")), "dn: cn=schema"
+            (line for line in lines if line.startswith("dn:")), "dn: cn=schema",
         )
         selected_lines: list[str] = [first_dn]
         current_chunk: list[str] = []
@@ -73,11 +78,17 @@ class TestsFlextLdifSystematicFixtureCoverage:
     # ------------------------------------------------------------------
     # Shared behavioral assertion: the roundtrip contract.
     # ------------------------------------------------------------------
-    def _assert_roundtrip_preserves_dns(self, api: p.Ldif.Client, content: str) -> int:
+    @staticmethod
+    def _assert_roundtrip_preserves_dns(
+        api: p.Ldif.LdifClient, content: str,
+    ) -> int:
         """Parse -> write -> parse ``content`` and assert DN-set preservation.
 
         Returns the number of entries parsed from the original content so
         callers can add fixture-specific invariants.
+
+        Returns:
+            The resulting ``int``.
         """
         parse_result = api.parse_ldif(content)
         tm.ok(parse_result)
@@ -108,7 +119,10 @@ class TestsFlextLdifSystematicFixtureCoverage:
         ids=["OID Schema", "OUD Schema"],
     )
     def test_schema_fixture_survives_parse_write_roundtrip(
-        self, api: p.Ldif.Client, server_fixture: str, request: pytest.FixtureRequest
+        self,
+        api: p.Ldif.LdifClient,
+        server_fixture: str,
+        request: pytest.FixtureRequest,
     ) -> None:
         """Schema fixtures parse to entries preserved across the roundtrip."""
         fixture_data: str = request.getfixturevalue(server_fixture)
@@ -121,13 +135,16 @@ class TestsFlextLdifSystematicFixtureCoverage:
     # ------------------------------------------------------------------
     # ACL fixtures (ACLs are attributes on entries, not standalone entries).
     # ------------------------------------------------------------------
+    @staticmethod
     @pytest.mark.parametrize(
         "server_fixture",
         ["oid_acl_fixture", "oud_acl_fixture"],
         ids=["OID ACL", "OUD ACL"],
     )
     def test_acl_fixture_parses_and_writes(
-        self, api: p.Ldif.Client, server_fixture: str, request: pytest.FixtureRequest
+        api: p.Ldif.LdifClient,
+        server_fixture: str,
+        request: pytest.FixtureRequest,
     ) -> None:
         """ACL fixtures parse successfully and re-serialize non-empty output."""
         fixture_data: str = request.getfixturevalue(server_fixture)
@@ -152,7 +169,10 @@ class TestsFlextLdifSystematicFixtureCoverage:
         ids=["OID Entries", "OUD Entries"],
     )
     def test_entries_fixture_yields_valid_entries_and_roundtrips(
-        self, api: p.Ldif.Client, server_fixture: str, request: pytest.FixtureRequest
+        self,
+        api: p.Ldif.LdifClient,
+        server_fixture: str,
+        request: pytest.FixtureRequest,
     ) -> None:
         """Each parsed entry exposes a DN and attributes; roundtrip is stable."""
         fixture_data: str = request.getfixturevalue(server_fixture)
@@ -178,7 +198,10 @@ class TestsFlextLdifSystematicFixtureCoverage:
         ids=["OID Integration", "OUD Integration"],
     )
     def test_integration_fixture_roundtrips_without_data_loss(
-        self, api: p.Ldif.Client, server_fixture: str, request: pytest.FixtureRequest
+        self,
+        api: p.Ldif.LdifClient,
+        server_fixture: str,
+        request: pytest.FixtureRequest,
     ) -> None:
         """Large exports keep unique DNs and roughly their size on rewrite."""
         fixture_data: str = request.getfixturevalue(server_fixture)
@@ -207,8 +230,9 @@ class TestsFlextLdifSystematicFixtureCoverage:
     # ------------------------------------------------------------------
     # Baseline RFC operations (always available).
     # ------------------------------------------------------------------
+    @staticmethod
     def test_basic_ldif_operations_are_available_for_any_server(
-        self, api: p.Ldif.Client
+        api: p.Ldif.LdifClient,
     ) -> None:
         """A minimal RFC entry parses, writes, and roundtrips with DN intact."""
         content = (
@@ -240,8 +264,9 @@ class TestsFlextLdifSystematicFixtureCoverage:
         tm.that(len(roundtrip_entries), eq=1)
         tm.that(roundtrip_entries[0].dn_str, eq=entry.dn_str)
 
+    @staticmethod
     def test_parse_ldif_reports_failure_as_result_for_invalid_input(
-        self, api: p.Ldif.Client
+        api: p.Ldif.LdifClient,
     ) -> None:
         """Malformed LDIF surfaces through the ``r[T]`` channel, not a crash."""
         # A continuation line with no preceding attribute is not valid LDIF.
@@ -251,6 +276,3 @@ class TestsFlextLdifSystematicFixtureCoverage:
             tm.that(result.unwrap().entries, eq=[])
         else:
             assert result.error, "Failure result must carry an error message"
-
-
-__all__: list[str] = ["TestsFlextLdifSystematicFixtureCoverage"]

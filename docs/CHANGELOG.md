@@ -1,0 +1,13 @@
+# Changelog
+
+<!-- TOC START -->
+
+- [0.12.0 - 2026-09-08](#0120-2026-09-08)
+
+<!-- TOC END -->
+
+## 0.12.0 - 2026-09-08
+
+- Release tag: `v0.12.0`
+
+Full notes: `docs/releases/v0.12.0.md`

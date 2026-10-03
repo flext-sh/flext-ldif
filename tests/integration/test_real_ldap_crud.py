@@ -23,28 +23,33 @@ import pytest
 from flext_tests import tm
 
 from flext_ldif import ldif
-from tests import c, m, p, t
+from tests import c, m
 
 if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
 
+    from tests import p, t
+
 
 @pytest.fixture
-def flext_api() -> p.Ldif.Client:
-    """Ldif API instance."""
+def flext_api() -> p.Ldif.LdifClient:
+    """Ldif API instance.
+
+    Returns:
+        The resulting ``p.Ldif.LdifClient``.
+    """
     return ldif()
 
 
 @pytest.mark.docker
 @pytest.mark.integration
-@pytest.mark.real_ldap
 class TestsFlextLdifRealLdapCrud:
     """Behavioral CRUD and batch contracts over a live LDAP directory."""
 
     @staticmethod
     def _add_entry(
-        ldap_connection: p.Ldap.Ldap3Connection, entry: p.Ldif.Entry
+        ldap_connection: p.Ldap.Ldap3Connection, entry: m.Ldif.Entry,
     ) -> None:
         """Store an entry in LDAP using only its public model surface."""
         attrs = dict(entry.attributes_dict)
@@ -59,7 +64,8 @@ class TestsFlextLdifRealLdapCrud:
         }
         ldap_connection.add(entry.dn_str, object_classes, payload)
 
-    def test_create_returns_success_with_public_model_state(self) -> None:
+    @staticmethod
+    def test_create_returns_success_with_public_model_state() -> None:
         """Entry.create yields a success result exposing dn and attributes."""
         result = m.Ldif.Entry.create(
             dn="cn=Alice,ou=people,dc=example,dc=com",
@@ -75,7 +81,7 @@ class TestsFlextLdifRealLdapCrud:
         tm.that(entry.dn_str, eq="cn=Alice,ou=people,dc=example,dc=com")
         tm.that(entry.attributes_dict["cn"], eq=["Alice"])
         tm.that(
-            entry.attributes_dict["objectClass"], eq=["inetOrgPerson", "person", "top"]
+            entry.attributes_dict["objectClass"], eq=["inetOrgPerson", "person", "top"],
         )
         assert not entry.has_validation_errors
 
@@ -109,7 +115,7 @@ class TestsFlextLdifRealLdapCrud:
 
         # Update: replaced attribute is reflected on re-read.
         ldap_connection.modify(
-            entry.dn_str, {"mail": [("MODIFY_REPLACE", ["updated_crud@example.com"])]}
+            entry.dn_str, {"mail": [("MODIFY_REPLACE", ["updated_crud@example.com"])]},
         )
         ldap_connection.search(entry.dn_str, "(objectClass=*)", attributes=["*"])
         assert (
@@ -129,11 +135,11 @@ class TestsFlextLdifRealLdapCrud:
         self,
         ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
-        flext_api: p.Ldif.Client,
+        flext_api: p.Ldif.LdifClient,
         make_test_username: Callable[[str], str],
     ) -> None:
         """A batch built via the API validates and stores as valid entries."""
-        entries: list[p.Ldif.Entry] = []
+        entries: list[m.Ldif.Entry] = []
         for i in range(20):
             username = make_test_username(f"BatchUser{i}")
             result = m.Ldif.Entry.create(
@@ -155,11 +161,11 @@ class TestsFlextLdifRealLdapCrud:
         validation_result = flext_api.validate_entries(entries)
         tm.ok(validation_result)
 
+    @staticmethod
     def test_ldif_export_import_preserves_dns_and_attributes(
-        self,
         ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
-        flext_api: p.Ldif.Client,
+        flext_api: p.Ldif.LdifClient,
         tmp_path: Path,
         make_test_username: Callable[[str], str],
     ) -> None:
@@ -184,7 +190,7 @@ class TestsFlextLdifRealLdapCrud:
         source_count = len(ldap_connection.entries)
         assert source_count > 0, "No entries found in LDAP"
 
-        entries: list[p.Ldif.Entry] = []
+        entries: list[m.Ldif.Entry] = []
         for ldap_entry in ldap_connection.entries:
             attrs: t.MutableAttributeMapping = {
                 name: [
@@ -213,6 +219,3 @@ class TestsFlextLdifRealLdapCrud:
         tm.that(len(parsed_entries), eq=source_count)
         parsed_dns = {entry.dn_str for entry in parsed_entries}
         assert expected_dns <= parsed_dns
-
-
-__all__: list[str] = []

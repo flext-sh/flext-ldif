@@ -1,18 +1,28 @@
-"""Behavioral tests for the LDIF facade server-registry public contract."""
+"""Behavioral tests for the LDIF facade server-registry public contract.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import tm
 
-from tests import c, p, u
+from tests import c, u
+
+if TYPE_CHECKING:
+    from tests import p
 
 
 class TestsFlextLdifApiServerRegistry:
     """Validate registry behavior through the public LDIF facade only."""
 
+    @staticmethod
     def test_list_registered_servers_includes_core_server_types(
-        self, api: p.Ldif.Client
+        api: p.Ldif.LdifClient,
     ) -> None:
         """The facade exposes the real registered server catalog."""
         registered_servers = u.Tests.assert_success(
@@ -21,8 +31,9 @@ class TestsFlextLdifApiServerRegistry:
         )
         tm.that(registered_servers, has=[c.Tests.RFC, c.Tests.OID, c.Tests.OUD])
 
+    @staticmethod
     def test_base_server_resolution_returns_requested_server_type(
-        self, api: p.Ldif.Client
+        api: p.Ldif.LdifClient,
     ) -> None:
         """Resolving a registered type yields a server whose type round-trips."""
         server = u.Tests.assert_success(
@@ -31,15 +42,19 @@ class TestsFlextLdifApiServerRegistry:
         )
         tm.that(server.server_type, eq=c.Tests.OID)
 
+    @staticmethod
     def test_component_lookups_succeed_for_registered_server_type(
-        self, api: p.Ldif.Client
+        api: p.Ldif.LdifClient,
     ) -> None:
         """Schema, ACL, and entry component lookups succeed for a real type."""
         tm.ok(api.schema_server(c.Tests.OID))
         tm.ok(api.acl(c.Tests.OID))
         tm.ok(api.entry(c.Tests.OID))
 
-    def test_server_bundle_exposes_component_contract(self, api: p.Ldif.Client) -> None:
+    @staticmethod
+    def test_server_bundle_exposes_component_contract(
+        api: p.Ldif.LdifClient,
+    ) -> None:
         """The resolved bundle exposes schema/acl/entry component keys."""
         server_bundle = u.Tests.assert_success(
             api.resolve_server_bundle(c.Tests.OUD),
@@ -47,8 +62,9 @@ class TestsFlextLdifApiServerRegistry:
         )
         tm.that(server_bundle, has=["schema", "acl", "entry"])
 
+    @staticmethod
     def test_server_constants_expose_categorization_priority(
-        self, api: p.Ldif.Client
+        api: p.Ldif.LdifClient,
     ) -> None:
         """Resolved server constants publish the categorization priority contract."""
         constants = u.Tests.assert_success(
@@ -57,8 +73,9 @@ class TestsFlextLdifApiServerRegistry:
         )
         tm.that(constants.CATEGORIZATION_PRIORITY, none=False)
 
+    @staticmethod
     def test_registry_summary_exposes_statistics_contract(
-        self, api: p.Ldif.Client
+        api: p.Ldif.LdifClient,
     ) -> None:
         """The registry summary publishes per-server and priority statistics."""
         stats = u.Tests.assert_success(
@@ -67,8 +84,9 @@ class TestsFlextLdifApiServerRegistry:
         )
         tm.that(stats, has=["servers_by_server", "server_priorities"])
 
+    @staticmethod
     def test_invalid_server_type_fails_every_resolution_endpoint(
-        self, api: p.Ldif.Client
+        api: p.Ldif.LdifClient,
     ) -> None:
         """A syntactically invalid identifier fails gracefully on all endpoints."""
         invalid = c.Tests.SERVER_INVALID_SERVER_TYPE
@@ -80,12 +98,13 @@ class TestsFlextLdifApiServerRegistry:
         tm.fail(api.resolve_server_bundle(invalid))
         tm.fail(api.resolve_server_constants(invalid))
 
+    @staticmethod
     @pytest.mark.parametrize(
         "resolver_name",
         ["resolve_base_server", "resolve_server_bundle", "resolve_server_constants"],
     )
     def test_valid_but_unregistered_server_type_fails_lookup(
-        self, api: p.Ldif.Client, resolver_name: str
+        api: p.Ldif.LdifClient, resolver_name: str,
     ) -> None:
         """A valid-but-unregistered type fails gracefully on each resolver."""
         resolver = getattr(api, resolver_name)

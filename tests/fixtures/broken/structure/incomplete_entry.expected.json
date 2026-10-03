@@ -12,7 +12,9 @@
           "objectClass": ["person"],
           "cn": ["incomplete"]
         },
-        "validation_errors": ["Missing required attribute 'sn' for objectClass 'person'"]
+        "validation_errors": [
+          "Missing required attribute 'sn' for objectClass 'person'"
+        ]
       }
     ]
   },
@@ -41,6 +43,10 @@
   "metadata": {
     "type": "broken_fixture",
     "issue_type": "schema_violation",
-    "test_aspects": ["error_handling", "strict_vs_relaxed_mode", "schema_validation"]
+    "test_aspects": [
+      "error_handling",
+      "strict_vs_relaxed_mode",
+      "schema_validation"
+    ]
   }
 }

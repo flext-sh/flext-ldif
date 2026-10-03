@@ -1,10 +1,15 @@
-"""Base classes for flext-ldif models."""
+"""Base classes for flext-ldif models.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from typing import Annotated
 
 from flext_cli import m, u
+
 from flext_ldif import FlextLdifShared, c, t
 
 
@@ -27,18 +32,18 @@ class FlextLdifModelsBases:
         validation_metadata: Annotated[
             m.ConfigMap | None,
             u.Field(
-                description="Validation metadata captured during schema processing."
+                description="Validation metadata captured during schema processing.",
             ),
         ] = None
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def has_metadata(self) -> bool:
             """Whether schema element has server metadata."""
             metadata = getattr(self, "metadata", None)
             return metadata is not None
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def has_server_extensions(self) -> bool:
             """Whether element has server-specific extensions."""
@@ -48,7 +53,7 @@ class FlextLdifModelsBases:
             extensions = getattr(metadata, "extensions", None)
             return bool(extensions)
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def server_type(self) -> str:
             """The server type from metadata, default to RFC."""
@@ -56,10 +61,17 @@ class FlextLdifModelsBases:
             if metadata is not None:
                 server_type = getattr(metadata, "server_type", None)
                 if server_type is not None:
-                    try:
-                        return FlextLdifShared.normalize_server_type(str(server_type))
-                    except ValueError:
-                        pass
+                    # Why: pre-check membership instead of exception-driven
+                    # control flow (silent-failure-except-pass) — the "rfc"
+                    # default only applies to a value normalize_server_type
+                    # would actually reject.
+                    server_type_lower = str(server_type).lower().strip()
+                    is_recognized = (
+                        server_type_lower in c.Ldif.SERVER_TYPE_ALIASES
+                        or server_type_lower in c.Ldif.VALID_SERVER_TYPES
+                    )
+                    if is_recognized:
+                        return FlextLdifShared.normalize_server_type(server_type_lower)
             return "rfc"
 
     class AclElement(m.StrictModel):
@@ -81,13 +93,13 @@ class FlextLdifModelsBases:
             u.Field(description="Validation metadata captured during ACL processing."),
         ] = None
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def has_server_servers(self) -> bool:
             """Whether element uses server-specific servers."""
             return str(self.server_type) != "rfc"
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def valid(self) -> bool:
             """Whether ACL element passed validation."""
@@ -96,7 +108,7 @@ class FlextLdifModelsBases:
         @u.field_validator("server_type", mode="before")
         @classmethod
         def _coerce_server_type(
-            cls, value: c.Ldif.ServerTypes | str
+            cls, value: c.Ldif.ServerTypes | str,
         ) -> c.Ldif.ServerTypes:
             if isinstance(value, c.Ldif.ServerTypes):
                 return value

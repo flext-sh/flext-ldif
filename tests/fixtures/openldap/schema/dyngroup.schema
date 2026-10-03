@@ -14,7 +14,7 @@
 ## <http://www.OpenLDAP.org/license.html>.
 #
 # Dynamic Group schema (experimental), as defined by Netscape.  See
-# http://www.redhat.com/docs/manuals/ent-server/pdf/esREDACTED_LDAP_BIND_PASSWORD611.pdf
+# http://www.redhat.com/docs/manuals/ent-server/pdf/esadmin611.pdf
 # page 70 for details on how these groups were used.
 #
 # A description of the objectclass definition is available here:

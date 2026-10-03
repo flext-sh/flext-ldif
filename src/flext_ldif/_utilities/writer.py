@@ -1,8 +1,17 @@
-"""Extracted nested class from FlextLdifUtilities."""
+"""Extracted nested class from FlextLdifUtilities.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
-from flext_ldif import c, p, t
+from typing import TYPE_CHECKING
+
+from flext_ldif import c, t
+
+if TYPE_CHECKING:
+    from flext_ldif import FlextLdifModels
 
 
 class FlextLdifUtilitiesWriter:
@@ -10,7 +19,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def add_attribute_flags(
-        attr_data: p.Ldif.SchemaAttribute, parts: t.MutableSequenceOf[str]
+        attr_data: FlextLdifModels.Ldif.SchemaAttribute, parts: t.MutableSequenceOf[str],
     ) -> None:
         """Add flags to attribute parts list."""
         if attr_data.single_value:
@@ -27,7 +36,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def add_attribute_matching_rules(
-        attr_data: p.Ldif.SchemaAttribute, parts: t.MutableSequenceOf[str]
+        attr_data: FlextLdifModels.Ldif.SchemaAttribute, parts: t.MutableSequenceOf[str],
     ) -> None:
         """Add matching rules to attribute parts list."""
         if attr_data.equality:
@@ -39,7 +48,7 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def add_attribute_syntax(
-        attr_data: p.Ldif.SchemaAttribute, parts: t.MutableSequenceOf[str]
+        attr_data: FlextLdifModels.Ldif.SchemaAttribute, parts: t.MutableSequenceOf[str],
     ) -> None:
         """Add syntax and length to attribute parts list."""
         if attr_data.syntax:
@@ -50,7 +59,11 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def finalize_ldif_text(ldif_lines: t.MutableSequenceOf[str]) -> str:
-        """Join LDIF lines and ensure proper trailing newline."""
+        """Join LDIF lines and ensure proper trailing newline.
+
+        Returns:
+            The resulting ``str``.
+        """
         ldif_text = "\n".join(ldif_lines)
         if ldif_text and (not ldif_text.endswith("\n")):
             ldif_text += "\n"
@@ -58,9 +71,13 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def fold_line(
-        line: str, width: int = c.Ldif.LINE_FOLD_WIDTH
+        line: str, width: int = c.Ldif.LINE_FOLD_WIDTH,
     ) -> t.MutableSequenceOf[str]:
-        """Fold long LDIF line according to RFC 2849 §3."""
+        """Fold long LDIF line according to RFC 2849 §3.
+
+        Returns:
+            The resulting ``t.MutableSequenceOf[str]``.
+        """
         if not line:
             return [line]
         keyword_token_max_length = 12
@@ -83,13 +100,13 @@ class FlextLdifUtilitiesWriter:
             else:
                 chunk_end = pos + 1
                 chunk = line_bytes[pos:chunk_end].decode(
-                    c.Ldif.DEFAULT_ENCODING, errors="replace"
+                    c.Ldif.DEFAULT_ENCODING, errors="replace",
                 )
 
             # Prefer folding at whitespace to avoid splitting tokens across lines.
             if chunk_end < len(line_bytes):
                 split_index = max(
-                    chunk.rfind(c.Ldif.LINE_CONTINUATION_SPACE), chunk.rfind("\t")
+                    chunk.rfind(c.Ldif.LINE_CONTINUATION_SPACE), chunk.rfind("\t"),
                 )
                 prefix_end = 0
                 if not folded:
@@ -119,7 +136,7 @@ class FlextLdifUtilitiesWriter:
                             and len(left_token) <= keyword_token_max_length
                         ):
                             earlier_space = left_text.rfind(
-                                c.Ldif.LINE_CONTINUATION_SPACE
+                                c.Ldif.LINE_CONTINUATION_SPACE,
                             )
                             earlier_tab = left_text.rfind("\t")
                             earlier_split = max(earlier_space, earlier_tab)
@@ -140,7 +157,11 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def is_safe_char(char: str) -> bool:
-        """Check if char is SAFE-CHAR per RFC 2849 §2."""
+        """Check if char is SAFE-CHAR per RFC 2849 §2.
+
+        Returns:
+            The resulting ``bool``.
+        """
         if not char or len(char) != 1:
             return False
         code = ord(char)
@@ -151,7 +172,11 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def is_safe_init_char(char: str) -> bool:
-        """Check if char is SAFE-INIT-CHAR per RFC 2849 §2."""
+        """Check if char is SAFE-INIT-CHAR per RFC 2849 §2.
+
+        Returns:
+            The resulting ``bool``.
+        """
         if not char or len(char) != 1:
             return False
         code = ord(char)
@@ -161,7 +186,11 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def needs_base64_encoding(value: str, *, check_trailing_space: bool = True) -> bool:
-        """Check if value needs base64 encoding per RFC 2849 §2."""
+        """Check if value needs base64 encoding per RFC 2849 §2.
+
+        Returns:
+            The resulting ``bool``.
+        """
         if not value:
             return False
         if value[0] in c.Ldif.BASE64_START_CHARS:

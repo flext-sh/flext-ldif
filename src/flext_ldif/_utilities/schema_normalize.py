@@ -1,11 +1,15 @@
-"""Schema normalization helpers for FLEXT-LDIF."""
+"""Schema normalization helpers for FLEXT-LDIF.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from flext_ldif import p, t
+    from flext_ldif import FlextLdifModels, t
 
 
 class FlextLdifUtilitiesSchemaNormalize:
@@ -13,10 +17,13 @@ class FlextLdifUtilitiesSchemaNormalize:
 
     @staticmethod
     def build_available_attributes_set(
-        # NOTE (multi-agent, mro-0ftd.3.7.2): behavior layer accepts protocol (§3.2).
-        attributes: t.MutableSequenceOf[p.Ldif.SchemaAttribute],
+        attributes: t.MutableSequenceOf[FlextLdifModels.Ldif.SchemaAttribute],
     ) -> set[str]:
-        """Build set of available attribute names (lowercase) for dependency validation."""
+        """Build set of available attribute names (lowercase) for dependency validation.
+
+        Returns:
+            The resulting ``set[str]``.
+        """
         available: set[str] = set()
         for attr_data in attributes:
             attr_name = attr_data.name.lower()
@@ -28,11 +35,15 @@ class FlextLdifUtilitiesSchemaNormalize:
         attribute_name: str | None,
         attribute_list: t.MutableSequenceOf[str] | set[str] | None,
     ) -> bool:
-        """Check if attribute exists in list or set (case-insensitive)."""
+        """Check if attribute exists in list or set (case-insensitive).
+
+        Returns:
+            The resulting ``bool``.
+        """
         if not attribute_name or not attribute_list:
             return False
         normalized_input = FlextLdifUtilitiesSchemaNormalize.normalize_attribute_name(
-            attribute_name
+            attribute_name,
         )
         return any(
             FlextLdifUtilitiesSchemaNormalize.normalize_attribute_name(attr)
@@ -42,13 +53,17 @@ class FlextLdifUtilitiesSchemaNormalize:
 
     @staticmethod
     def is_boolean_attribute(
-        attribute_name: str | None, boolean_attributes: set[str]
+        attribute_name: str | None, boolean_attributes: set[str],
     ) -> bool:
-        """Check if attribute is in boolean attributes set (case-insensitive)."""
+        """Check if attribute is in boolean attributes set (case-insensitive).
+
+        Returns:
+            The resulting ``bool``.
+        """
         if not attribute_name or not boolean_attributes:
             return False
         normalized_input = FlextLdifUtilitiesSchemaNormalize.normalize_attribute_name(
-            attribute_name
+            attribute_name,
         )
         normalized_set = {
             FlextLdifUtilitiesSchemaNormalize.normalize_attribute_name(attr)
@@ -58,18 +73,26 @@ class FlextLdifUtilitiesSchemaNormalize:
 
     @staticmethod
     def normalize_attribute_name(
-        attribute_name: str | None, *, case_sensitive: bool = False
+        attribute_name: str | None, *, case_sensitive: bool = False,
     ) -> str | None:
-        """Normalize attribute name for case-insensitive comparisons."""
+        """Normalize attribute name for case-insensitive comparisons.
+
+        Returns:
+            The resulting ``str | None``.
+        """
         if not attribute_name:
             return attribute_name
         return attribute_name if case_sensitive else attribute_name.lower()
 
     @staticmethod
     def normalize_matching_rules(
-        equality: str | None, substr: str | None = None, **kwargs: t.StrMapping | None
+        equality: str | None, substr: str | None = None, **kwargs: t.StrMapping | None,
     ) -> tuple[str | None, str | None]:
-        """Normalize EQUALITY and SUBSTR matching rules."""
+        """Normalize EQUALITY and SUBSTR matching rules.
+
+        Returns:
+            The resulting ``tuple[str | None, str | None]``.
+        """
         replacements = kwargs.get("replacements")
         substr_rules_in_equality = kwargs.get("substr_rules_in_equality")
         normalized_substr_values = kwargs.get("normalized_substr_values")
@@ -98,7 +121,11 @@ class FlextLdifUtilitiesSchemaNormalize:
         suffixes_to_remove: t.MutableSequenceOf[str] | None = None,
         char_replacements: t.MutableStrMapping | None = None,
     ) -> str | None:
-        """Normalize attribute NAME field."""
+        """Normalize attribute NAME field.
+
+        Returns:
+            The resulting ``str | None``.
+        """
         if not name_value:
             return name_value
         result = name_value
@@ -118,9 +145,13 @@ class FlextLdifUtilitiesSchemaNormalize:
 
     @staticmethod
     def normalize_syntax_oid(
-        syntax: str | None, *, replacements: t.StrMapping | None = None
+        syntax: str | None, *, replacements: t.StrMapping | None = None,
     ) -> str | None:
-        """Normalize SYNTAX OID field."""
+        """Normalize SYNTAX OID field.
+
+        Returns:
+            The resulting ``str | None``.
+        """
         if not syntax:
             return syntax
         result = syntax
@@ -132,9 +163,13 @@ class FlextLdifUtilitiesSchemaNormalize:
 
     @staticmethod
     def replace_invalid_substr_rule(
-        substr: str | None, invalid_rules: t.OptionalStrMapping
+        substr: str | None, invalid_rules: t.OptionalStrMapping,
     ) -> str | None:
-        """Replace invalid SUBSTR rule with valid replacement."""
+        """Replace invalid SUBSTR rule with valid replacement.
+
+        Returns:
+            The resulting ``str | None``.
+        """
         if not substr or not invalid_rules:
             return substr
         if substr in invalid_rules:

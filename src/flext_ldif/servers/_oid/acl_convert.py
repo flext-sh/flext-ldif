@@ -4,6 +4,9 @@ Faithful port of the OUD migration oracle parser
 (``parse_oid_acl_line`` / ``Parsing.parse_subject``) into flext-ldif. Pure,
 side-effect-free: a malformed ACL surfaces as ``r.fail`` (never a silent skip).
 Patterns/permission taxonomy are the ``c.Ldif`` SSOT; models are ``m.Ldif``.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -15,7 +18,7 @@ class FlextLdifServersOidAclConvert:
     """Parse OID ACL lines into typed :class:`m.Ldif.OidAclRule` value objects."""
 
     @staticmethod
-    def subject_matcher_catalog() -> p.Ldif.AclSubjectMatcherCatalog:
+    def subject_matcher_catalog() -> m.Ldif.AclSubjectMatcherCatalog:
         """Return the typed subject matcher catalog for OID by-clause parsing."""
         return m.Ldif.AclSubjectMatcherCatalog(
             matchers=(
@@ -73,7 +76,7 @@ class FlextLdifServersOidAclConvert:
                     value_group=1,
                     perms_group=2,
                 ),
-            )
+            ),
         )
 
     @staticmethod
@@ -81,7 +84,7 @@ class FlextLdifServersOidAclConvert:
         return tuple(token.strip() for token in raw.split(",") if token.strip())
 
     @staticmethod
-    def _subject_modifiers(subject_str: str) -> p.Ldif.OidAclSubjectModifiers:
+    def _subject_modifiers(subject_str: str) -> m.Ldif.OidAclSubjectModifiers:
         bindmode = ""
         bindipfilter = ""
         added_object_constraint = ""
@@ -105,11 +108,14 @@ class FlextLdifServersOidAclConvert:
         )
 
     @classmethod
-    def parse_subject(cls, subject_str: str) -> p.Ldif.OidAclSubject:
+    def parse_subject(cls, subject_str: str) -> m.Ldif.OidAclSubject:
         """Identify one ``by <subject> (perms)`` clause as a typed subject.
 
         Returns ``subject_type="unknown"`` when no matcher applies (the caller
         drops unknown subjects), mirroring the oracle's default contract.
+
+        Returns:
+            The resulting ``m.Ldif.OidAclSubject``.
         """
         text = subject_str.strip()
         modifiers = cls._subject_modifiers(text)
@@ -167,7 +173,11 @@ class FlextLdifServersOidAclConvert:
 
     @classmethod
     def _extract_filter(cls, content: str) -> p.Result[tuple[str | None, str]]:
-        """Balanced-paren scan of a ``filter=(...)`` clause → ``(filter, rest)``."""
+        """Balanced-paren scan of a ``filter=(...)`` clause → ``(filter, rest)``.
+
+        Returns:
+            The resulting ``p.Result[tuple[str | None, str]]``.
+        """
         prefix = c.Ldif.FILTER_PREFIX_RE.match(content)
         if prefix is None:
             return r[tuple[str | None, str]].ok((None, content))
@@ -184,7 +194,7 @@ class FlextLdifServersOidAclConvert:
                     break
         if end is None:
             return r[tuple[str | None, str]].fail(
-                f"Unbalanced ACL filter clause: {content[:40]!r}"
+                f"Unbalanced ACL filter clause: {content[:40]!r}",
             )
         return r[tuple[str | None, str]].ok((
             content[start + 1 : end - 1],
@@ -192,31 +202,32 @@ class FlextLdifServersOidAclConvert:
         ))
 
     @classmethod
-    def parse_oid_acl_line(cls, dn: str, line: str) -> p.Result[p.Ldif.OidAclRule]:
+    def parse_oid_acl_line(cls, dn: str, line: str) -> p.Result[m.Ldif.OidAclRule]:
         """Parse one full ``orclaci:``/``orclentrylevelaci:`` line into a rule.
 
         Malformation (wrong prefix, missing ``access to``, unknown target, or no
         recognizable subjects) surfaces as ``r.fail`` — never a silent drop.
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.OidAclRule]``.
         """
         line = line.strip()
         prefixed = cls._strip_acl_prefix(line)
         if prefixed is None:
-            return r[p.Ldif.OidAclRule].fail(f"Not an OID ACL line: {line[:40]!r}")
+            return r[m.Ldif.OidAclRule].fail(f"Not an OID ACL line: {line[:40]!r}")
         acl_type, content = prefixed
         if not content.lower().startswith(c.Ldif.ACL_ACCESS_TO):
-            return r[p.Ldif.OidAclRule].fail(
-                f"ACL missing '{c.Ldif.ACL_ACCESS_TO}': {content[:40]!r}"
+            return r[m.Ldif.OidAclRule].fail(
+                f"ACL missing '{c.Ldif.ACL_ACCESS_TO}': {content[:40]!r}",
             )
         content = content[len(c.Ldif.ACL_ACCESS_TO) :].strip()
         target = cls._parse_target(content)
         if target is None:
-            return r[p.Ldif.OidAclRule].fail(f"Unknown ACL target: {content[:40]!r}")
+            return r[m.Ldif.OidAclRule].fail(f"Unknown ACL target: {content[:40]!r}")
         target_type, target_attrs, content = target
         filter_result = cls._extract_filter(content)
         if filter_result.failure:
-            return r[p.Ldif.OidAclRule].fail(
-                filter_result.error or "Invalid ACL filter clause"
-            )
+            return r[m.Ldif.OidAclRule].from_failure(filter_result)
         target_filter, content = filter_result.value
         subjects = tuple(
             subject
@@ -224,8 +235,8 @@ class FlextLdifServersOidAclConvert:
             if (subject := cls.parse_subject(raw.group(0))).subject_type != "unknown"
         )
         if not subjects:
-            return r[p.Ldif.OidAclRule].fail(f"No subjects in ACL: {content[:40]!r}")
-        return r[p.Ldif.OidAclRule].ok(
+            return r[m.Ldif.OidAclRule].fail(f"No subjects in ACL: {content[:40]!r}")
+        return r[m.Ldif.OidAclRule].ok(
             m.Ldif.OidAclRule(
                 dn=dn,
                 acl_type=acl_type,
@@ -234,7 +245,7 @@ class FlextLdifServersOidAclConvert:
                 target_filter=target_filter,
                 subjects=subjects,
                 raw_line=line,
-            )
+            ),
         )
 
 

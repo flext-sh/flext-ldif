@@ -9,15 +9,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Annotated, Self
+from typing import Annotated, Self
 
 from flext_core import FlextUtilities as u, m
 from flext_ldif import FlextLdifShared, c
-
-if TYPE_CHECKING:
-    from flext_ldif._models._settings_normalization import (
-        FlextLdifModelsSettingsNormalization as msn,
-    )
+from flext_ldif._models._settings_normalization import (
+    FlextLdifModelsSettingsNormalization as msn,
+)
 
 
 class FlextLdifModelsSettingsProcessing:
@@ -35,17 +33,17 @@ class FlextLdifModelsSettingsProcessing:
             return FlextLdifShared.normalize_server_type(value).value
 
         type NormalizedServerTypeValue = Annotated[
-            str | None, m.BeforeValidator(_coerce_server_type_value)
+            str | None, m.BeforeValidator(_coerce_server_type_value),
         ]
 
         batch_size: Annotated[
-            int, u.Field(description="Number of entries to process per batch")
+            int, u.Field(description="Number of entries to process per batch"),
         ] = 100
         timeout_seconds: Annotated[
-            int, u.Field(description="Maximum processing time in seconds")
+            int, u.Field(description="Maximum processing time in seconds"),
         ] = 300
         max_retries: Annotated[
-            int, u.Field(description="Maximum retry attempts on failure")
+            int, u.Field(description="Maximum retry attempts on failure"),
         ] = 3
         source_server: Annotated[
             NormalizedServerTypeValue,
@@ -76,7 +74,11 @@ class FlextLdifModelsSettingsProcessing:
             target_server: str | c.Ldif.ServerTypes | None,
             base_dn: str = "",
         ) -> Self:
-            """Build processing config keeping model defaults untouched."""
+            """Build processing config keeping model defaults untouched.
+
+            Returns:
+                The resulting ``Self``.
+            """
             return cls(
                 source_server=source_server,
                 target_server=target_server,
@@ -87,19 +89,19 @@ class FlextLdifModelsSettingsProcessing:
         """Configuration for transformation operations."""
 
         fail_fast: Annotated[
-            bool, u.Field(description="Stop on first transformation error")
+            bool, u.Field(description="Stop on first transformation error"),
         ] = False
         preserve_order: Annotated[
-            bool, u.Field(description="Preserve original entry ordering")
+            bool, u.Field(description="Preserve original entry ordering"),
         ] = True
         track_changes: Annotated[
-            bool, u.Field(description="Track attribute-level changes for audit")
+            bool, u.Field(description="Track attribute-level changes for audit"),
         ] = False
         normalize_dns: Annotated[
-            bool, u.Field(description="Normalize DNs during transformation")
+            bool, u.Field(description="Normalize DNs during transformation"),
         ] = False
         normalize_attrs: Annotated[
-            bool, u.Field(description="Normalize attributes during transformation")
+            bool, u.Field(description="Normalize attributes during transformation"),
         ] = False
         process_config: Annotated[
             FlextLdifModelsSettingsProcessing.ProcessConfig | None,
@@ -114,7 +116,11 @@ class FlextLdifModelsSettingsProcessing:
             target_server: str | c.Ldif.ServerTypes | None,
             base_dn: str = "",
         ) -> Self:
-            """Build transform config for server-to-server conversion only."""
+            """Build transform config for server-to-server conversion only.
+
+            Returns:
+                The resulting ``Self``.
+            """
             return cls(
                 normalize_dns=True,
                 normalize_attrs=True,

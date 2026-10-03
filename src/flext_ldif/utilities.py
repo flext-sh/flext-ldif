@@ -1,8 +1,13 @@
-"""FLEXT LDIF Utilities - Reusable helpers for LDIF operations."""
+"""FLEXT LDIF Utilities - Reusable helpers for LDIF operations.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
-from flext_cli import u
+from flext_cli import FlextCliUtilities
+
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
 from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
 from flext_ldif._utilities.collection_ldif import FlextLdifUtilitiesCollectionLdif
@@ -22,7 +27,7 @@ from flext_ldif._utilities.validation import FlextLdifUtilitiesValidation
 from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
 
 
-class FlextLdifUtilities(u):
+class FlextLdifUtilities(FlextCliUtilities):
     """FLEXT LDIF Utilities - Centralized helpers for LDIF operations."""
 
     class Ldif(

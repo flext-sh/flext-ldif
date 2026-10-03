@@ -10,8 +10,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Annotated, ClassVar, Self, override
 
-from flext_core import FlextUtilities as u, m
-from flext_ldif import c, p, r, t
+from flext_core import FlextUtilities as u, m, r
+from flext_ldif import c, p, t
+from flext_ldif._utilities.collection_ldif import FlextLdifUtilitiesCollectionLdif
 
 if TYPE_CHECKING:
     from collections.abc import MutableMapping
@@ -24,68 +25,69 @@ class FlextLdifModelsDomainDN:
         """Statistics tracking for DN transformations and validation."""
 
         original_dn: Annotated[
-            str, u.Field(..., description="Original DN as received from input")
+            str, u.Field(..., description="Original DN as received from input"),
         ]
         cleaned_dn: Annotated[
-            str, u.Field(..., description="DN after clean_dn() transformation")
+            str, u.Field(..., description="DN after clean_dn() transformation"),
         ]
         normalized_dn: Annotated[
-            str, u.Field(..., description="Final normalized DN (RFC 4514 compliant)")
+            str, u.Field(..., description="Final normalized DN (RFC 4514 compliant)"),
         ]
         transformations: Annotated[
-            t.StrTuple, u.Field(description="Ordered list of transformations applied")
-        ] = ()
+            t.StrSequence,
+            u.Field(description="Ordered list of transformations applied"),
+        ]
         had_tab_chars: Annotated[
-            bool, u.Field(description="DN contained TAB characters")
+            bool, u.Field(description="DN contained TAB characters"),
         ] = False
         had_trailing_spaces: Annotated[
-            bool, u.Field(description="DN had trailing spaces")
+            bool, u.Field(description="DN had trailing spaces"),
         ] = False
         had_leading_spaces: Annotated[
-            bool, u.Field(description="DN had leading spaces")
+            bool, u.Field(description="DN had leading spaces"),
         ] = False
         had_extra_spaces: Annotated[
-            bool, u.Field(description="DN had multiple consecutive spaces")
+            bool, u.Field(description="DN had multiple consecutive spaces"),
         ] = False
         was_base64_encoded: Annotated[
-            bool, u.Field(description="DN was base64 encoded in LDIF (dn::)")
+            bool, u.Field(description="DN was base64 encoded in LDIF (dn::)"),
         ] = False
         had_utf8_chars: Annotated[
-            bool, u.Field(description="DN contained UTF-8 multi-byte characters")
+            bool, u.Field(description="DN contained UTF-8 multi-byte characters"),
         ] = False
         had_escape_sequences: Annotated[
-            bool, u.Field(description="DN contained LDAP escape sequences")
+            bool, u.Field(description="DN contained LDAP escape sequences"),
         ] = False
         validation_status: Annotated[
             str,
             u.Field(description="Validation status (use ValidationStatus constants)"),
         ] = "valid"
         validation_warnings: Annotated[
-            t.StrTuple, u.Field(description="Non-fatal validation warnings")
-        ] = ()
+            t.StrSequence, u.Field(description="Non-fatal validation warnings"),
+        ]
         validation_errors: Annotated[
-            t.StrTuple, u.Field(description="Fatal validation errors")
-        ] = ()
+            t.StrSequence, u.Field(description="Fatal validation errors"),
+        ]
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def has_errors(self) -> bool:
             """Whether any validation errors exist."""
             return bool(self.validation_errors)
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def has_warnings(self) -> bool:
             """Whether any validation warnings exist."""
             return bool(self.validation_warnings)
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def transformation_count(self) -> int:
             """Count of unique transformations applied."""
             return len(self.transformations)
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def was_transformed(self) -> bool:
             """Whether any transformations were applied."""
@@ -93,7 +95,11 @@ class FlextLdifModelsDomainDN:
 
         @classmethod
         def create_minimal(cls, dn: str) -> Self:
-            """Create minimal statistics for unchanged DN."""
+            """Create minimal statistics for unchanged DN.
+
+            Returns:
+                The resulting ``Self``.
+            """
             validated: Self = cls.model_validate({
                 "original_dn": dn,
                 "cleaned_dn": dn,
@@ -103,20 +109,20 @@ class FlextLdifModelsDomainDN:
 
         @u.field_validator("transformations", mode="after")
         @classmethod
-        def deduplicate_transformations(cls, v: t.StrTuple) -> t.StrTuple:
-            """Remove duplicate transformations while preserving order."""
-            seen: set[str] = set()
-            result: t.MutableSequenceOf[str] = []
-            for item in v:
-                if item not in seen:
-                    seen.add(item)
-                    result.append(item)
-            return tuple(result)
+        def deduplicate_transformations(
+            cls, v: t.MutableSequenceOf[str],
+        ) -> t.MutableSequenceOf[str]:
+            """Remove duplicate transformations while preserving order.
+
+            Returns:
+                The resulting ``t.MutableSequenceOf[str]``.
+            """
+            return FlextLdifUtilitiesCollectionLdif.deduplicate_preserve_order(v)
 
     class DN(m.Value):
         """Distinguished Name value."""
 
-        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
             strict=True,
             frozen=True,
             extra="forbid",
@@ -127,13 +133,13 @@ class FlextLdifModelsDomainDN:
         value: Annotated[
             str,
             u.Field(
-                ..., description="DN string value (lenient processing - no max_length)"
+                ..., description="DN string value (lenient processing - no max_length)",
             ),
         ]
         metadata: Annotated[
             t.MutableJsonMapping,
             u.Field(
-                description="Server-specific metadata for preserving original format"
+                description="Server-specific metadata for preserving original format",
             ),
         ] = u.Field(default_factory=dict)
 
@@ -147,6 +153,12 @@ class FlextLdifModelsDomainDN:
             ``c.Ldif.DN_COMPONENT_RE`` (``attr=value`` shape with optional
             backslash-escapes). Invalid components raise ``ValueError`` so
             Pydantic surfaces a structured ``ValidationError``.
+
+            Returns:
+                The resulting ``str``.
+
+            Raises:
+                ValueError: If RFC 4514 § 2.3.
             """
             if not value:
                 return value
@@ -170,7 +182,14 @@ class FlextLdifModelsDomainDN:
 
         @classmethod
         def from_value(cls, dn: str | Self | None) -> Self:
-            """Create DN from string or existing instance."""
+            """Create DN from string or existing instance.
+
+            Returns:
+                The resulting ``Self``.
+
+            Raises:
+                ValueError: If dn cannot be None.
+            """
             if dn is None:
                 msg = "dn cannot be None"
                 raise ValueError(msg)
@@ -189,12 +208,16 @@ class FlextLdifModelsDomainDN:
             """Initialize empty DN case registry."""
             super().__init__()
             # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: plain dict registry.
-            self._registry: dict[str, t.JsonValue] = {}
+            self._registry: t.MutableMappingKV[str, t.JsonValue] = {}
             self._case_variants: MutableMapping[str, set[str]] = {}
 
         @staticmethod
         def _normalize_dn(dn: str) -> str:
-            """Convert DN to lowercase for case-insensitive dict lookup."""
+            """Convert DN to lowercase for case-insensitive dict lookup.
+
+            Returns:
+                The resulting ``str``.
+            """
             return dn.lower().replace(" ", "")
 
         def clear(self) -> None:
@@ -203,13 +226,21 @@ class FlextLdifModelsDomainDN:
             self._case_variants.clear()
 
         def resolve_canonical_dn(self, dn: str) -> str | None:
-            """Get canonical case for a DN (case-insensitive lookup)."""
+            """Get canonical case for a DN (case-insensitive lookup).
+
+            Returns:
+                The resulting ``str | None``.
+            """
             normalized = self._normalize_dn(dn)
             value = self._registry.get(normalized)
             return value if isinstance(value, str) else None
 
         def register_dn(self, dn: str, *, force: bool = False) -> str:
-            """Register DN and return its canonical case."""
+            """Register DN and return its canonical case.
+
+            Returns:
+                The resulting ``str``.
+            """
             normalized = self._normalize_dn(dn)
             if normalized not in self._case_variants:
                 self._case_variants[normalized] = set[str]()
@@ -220,7 +251,11 @@ class FlextLdifModelsDomainDN:
             return str(value)
 
         def validate_oud_consistency(self) -> p.Result[bool]:
-            """Validate DN case consistency for server conversion."""
+            """Validate DN case consistency for server conversion.
+
+            Returns:
+                The resulting ``p.Result[bool]``.
+            """
             inconsistencies: t.MutableSequenceOf[
                 MutableMapping[str, str | int | t.MutableSequenceOf[str]]
             ] = []

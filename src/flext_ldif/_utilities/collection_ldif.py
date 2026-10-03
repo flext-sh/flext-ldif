@@ -1,4 +1,8 @@
-"""LDIF-specific collection/merge/DSL utilities for FLEXT-LDIF."""
+"""LDIF-specific collection/merge/DSL utilities for FLEXT-LDIF.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -15,13 +19,34 @@ class FlextLdifUtilitiesCollectionLdif:
 
     @staticmethod
     def find(
-        items: t.JsonList, *, predicate: Callable[..., bool]
+        items: t.JsonList, *, predicate: Callable[..., bool],
     ) -> t.JsonValue | None:
-        """Find first item matching predicate."""
+        """Find first item matching predicate.
+
+        Returns:
+            The resulting ``t.JsonValue | None``.
+        """
         for elem in items:
             if predicate(elem):
                 return elem
         return None
+
+    @staticmethod
+    def deduplicate_preserve_order(
+        items: t.MutableSequenceOf[str],
+    ) -> t.MutableSequenceOf[str]:
+        """Remove duplicate items while preserving first-occurrence order.
+
+        Returns:
+            The resulting ``t.MutableSequenceOf[str]``.
+        """
+        seen: set[str] = set()
+        result: t.MutableSequenceOf[str] = []
+        for item in items:
+            if item not in seen:
+                seen.add(item)
+                result.append(item)
+        return result
 
     @classmethod
     def normalize_ldif(
@@ -40,7 +65,11 @@ class FlextLdifUtilitiesCollectionLdif:
         *,
         case: str = "lower",
     ) -> str | t.MutableSequenceOf[str] | set[str] | bool:
-        """Normalize for LDIF comparison (mnemonic: nz)."""
+        """Normalize for LDIF comparison (mnemonic: nz).
+
+        Returns:
+            The resulting ``str | t.MutableSequenceOf[str] | set[str] | bool``.
+        """
 
         def normalize_single(v: str) -> str:
             match case:

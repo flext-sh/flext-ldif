@@ -1,38 +1,38 @@
-"""Protocol-based LDIF composite type aliases."""
+"""Protocol-based LDIF composite type aliases.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
-from flext_cli import t
-from flext_ldif._protocols.base import FlextLdifProtocolsBase
-from flext_ldif._protocols.domain import FlextLdifProtocolsDomain
+from flext_core import FlextTypes as t
+from flext_ldif._protocols.base import FlextLdifProtocolsBase as p
+from flext_ldif._protocols.domain import FlextLdifProtocolsDomain as pd
 
 
 class FlextLdifTypesDomain:
     """Composite LDIF aliases built from canonical protocols."""
 
-    # NOTE (multi-agent, mro-0ftd.3.7.2): PEP 695 aliases bind directly to the
-    # acyclic private declarations and never resolve the public p facade.
-    type AclPayload = FlextLdifProtocolsBase.Acl | str
-    type EntryPayload = FlextLdifProtocolsBase.Entry | str
-    type EntryLike = FlextLdifProtocolsBase.Entry
-    type EntrySequence = t.MutableSequenceOf[FlextLdifProtocolsBase.Entry]
-    type EntryOrEntries = FlextLdifProtocolsBase.Entry | EntrySequence
-    type SchemaAttributeLike = FlextLdifProtocolsBase.SchemaAttribute
-    type SchemaObjectClassLike = FlextLdifProtocolsBase.SchemaObjectClass
+    type AclPayload = p.Acl | str
+    type EntryPayload = p.Entry | str
+    type EntryLike = p.Entry
+    type EntrySequence = t.MutableSequenceOf[p.Entry]
+    type EntryOrEntries = p.Entry | EntrySequence
+    type SchemaAttributeLike = p.SchemaAttribute
+    type SchemaObjectClassLike = p.SchemaObjectClass
     type SchemaItem = SchemaAttributeLike | SchemaObjectClassLike
-    type AclLike = FlextLdifProtocolsBase.Acl
+    type AclLike = p.Acl
     type AclSequence = t.MutableSequenceOf[AclLike]
     type ConvertedModel = EntryLike | SchemaItem | AclLike
     type SchemaConversionValue = SchemaItem | str
-    type EventType = (
-        FlextLdifProtocolsBase.ConversionEvent | FlextLdifProtocolsBase.DnEvent
-    )
-    type ResponseLike = FlextLdifProtocolsBase.Response
-    type ParseResponseLike = FlextLdifProtocolsBase.ParseResponse
-    type ValidationResultLike = FlextLdifProtocolsBase.ValidationResult
-    type MigrationPipelineResultLike = FlextLdifProtocolsBase.MigrationPipelineResult
-    type WriteResponseLike = FlextLdifProtocolsBase.WriteResponse
-    type ServerServerLike = FlextLdifProtocolsDomain.ServerServer
+    type EventType = p.ConversionEvent | p.DnEvent
+    type ResponseLike = p.Response
+    type ParseResponseLike = p.ParseResponse
+    type ValidationResultLike = p.ValidationResult
+    type MigrationPipelineResultLike = p.MigrationPipelineResult
+    type WriteResponseLike = p.WriteResponse
+    type ServerServerLike = pd.ServerServer
 
 
 __all__: list[str] = ["FlextLdifTypesDomain"]

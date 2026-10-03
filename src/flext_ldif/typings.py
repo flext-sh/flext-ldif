@@ -1,13 +1,18 @@
-"""LDIF type facade."""
+"""LDIF type facade.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
-from flext_cli import t
+from flext_cli import FlextCliTypes
+
 from flext_ldif._typings.base import FlextLdifTypesBase
 from flext_ldif._typings.domain import FlextLdifTypesDomain
 
 
-class FlextLdifTypes(t):
+class FlextLdifTypes(FlextCliTypes):
     """LDIF domain types extending flext-core FlextTypes."""
 
     class Ldif(FlextLdifTypesDomain, FlextLdifTypesBase):

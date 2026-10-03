@@ -1,6 +1,6 @@
 """Behavioral tests for LDIF parse -> import against a live LDAP server.
 
-Exercises the PUBLIC LDIF client contract (``p.Ldif.Client.parse_ldif``)
+Exercises the PUBLIC LDIF client contract (``p.Ldif.LdifClient.parse_ldif``)
 end-to-end: parse LDIF text/file into the promised ``m.Ldif.ParseResponse``,
 then push the parsed entries to a real LDAP server through the ldap3 boundary
 and assert the observable round-tripped state.
@@ -26,55 +26,81 @@ import pytest
 from flext_tests import tm
 
 from flext_ldif import ldif
-from tests import c, p, u
+from tests import c, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
 
+    from tests import p
+
 
 @pytest.fixture
-def flext_api() -> p.Ldif.Client:
-    """Public LDIF client under test."""
+def flext_api() -> p.Ldif.LdifClient:
+    """Public LDIF client under test.
+
+    Returns:
+        The resulting ``p.Ldif.LdifClient``.
+    """
     return ldif()
 
 
 @pytest.mark.docker
 @pytest.mark.integration
-@pytest.mark.real_ldap
 class TestsFlextLdifRealLdapImport:
     """Behavioral contract of parsing LDIF and importing it into live LDAP."""
 
     @staticmethod
     def _dn(entry: p.Ldif.Entry) -> str:
-        """Distinguished name string via the public DN protocol accessor."""
+        """Distinguished name string via the public DN protocol accessor.
+
+        Returns:
+            The resulting ``str``.
+        """
         assert entry.dn is not None
         return entry.dn.value
 
     @staticmethod
     def _object_classes(entry: p.Ldif.Entry) -> list[str]:
-        """Object class values via the public attribute accessor."""
+        """Object class values via the public attribute accessor.
+
+        Returns:
+            The resulting ``list[str]``.
+        """
         return list(u.Ldif.get_attribute_values(entry, "objectclass"))
 
     @staticmethod
     def _all_attrs(entry: p.Ldif.Entry) -> dict[str, list[str]]:
-        """Full attribute mapping via the public ``Attributes`` protocol."""
+        """Full attribute mapping via the public ``Attributes`` protocol.
+
+        Returns:
+            The resulting ``dict[str, list[str]]``.
+        """
         assert entry.attributes is not None
         return {name: list(values) for name, values in entry.attributes.items()}
 
     @classmethod
     def _non_objectclass_attrs(cls, entry: p.Ldif.Entry) -> dict[str, list[str]]:
-        """Public attribute mapping without objectClass/dn, for an LDAP add."""
+        """Public attribute mapping without objectClass/dn, for an LDAP add.
+
+        Returns:
+            The resulting ``dict[str, list[str]]``.
+        """
         return {
             name: values
             for name, values in cls._all_attrs(entry).items()
             if name.lower() not in {"objectclass", "dn"}
         }
 
+    @staticmethod
     def _read_back(
-        self, ldap_connection: p.Ldap.Ldap3Connection, dn: str
+        ldap_connection: p.Ldap.Ldap3Connection, dn: str,
     ) -> p.Ldap.Ldap3Entry:
-        """Search the freshly imported entry and return the single result."""
+        """Search the freshly imported entry and return the single result.
+
+        Returns:
+            The resulting ``p.Ldap.Ldap3Entry``.
+        """
         found = ldap_connection.search(
             dn,
             "(objectClass=*)",
@@ -96,7 +122,7 @@ class TestsFlextLdifRealLdapImport:
     def test_parse_exposes_declared_attributes_through_public_api(
         self,
         clean_test_ou: str,
-        flext_api: p.Ldif.Client,
+        flext_api: p.Ldif.LdifClient,
         make_test_username: Callable[[str], str],
         attribute: str,
         expected: str | None,
@@ -127,7 +153,7 @@ class TestsFlextLdifRealLdapImport:
         self,
         ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
-        flext_api: p.Ldif.Client,
+        flext_api: p.Ldif.LdifClient,
         make_test_username: Callable[[str], str],
     ) -> None:
         """A parsed entry, imported via public accessors, reads back intact."""
@@ -157,7 +183,7 @@ class TestsFlextLdifRealLdapImport:
         self,
         ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
-        flext_api: p.Ldif.Client,
+        flext_api: p.Ldif.LdifClient,
         make_test_username: Callable[[str], str],
     ) -> None:
         """Base64 (``::``) binary attributes survive parse and LDAP round-trip."""
@@ -183,7 +209,7 @@ class TestsFlextLdifRealLdapImport:
 
         dn = self._dn(entry)
         attributes: dict[str, list[str] | bytes] = dict(
-            self._non_objectclass_attrs(entry)
+            self._non_objectclass_attrs(entry),
         )
         # ldap3 requires raw bytes for a binary attribute value.
         attributes["jpegPhoto"] = binary_data
@@ -196,7 +222,7 @@ class TestsFlextLdifRealLdapImport:
         self,
         ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
-        flext_api: p.Ldif.Client,
+        flext_api: p.Ldif.LdifClient,
         tmp_path: Path,
         make_test_username: Callable[[str], str],
     ) -> None:
@@ -229,6 +255,3 @@ class TestsFlextLdifRealLdapImport:
         imported = self._read_back(ldap_connection, file_dn)
         tm.that(imported["cn"].value, eq=username)
         tm.that(imported["mail"].value, eq="import@example.com")
-
-
-__all__: list[str] = ["TestsFlextLdifRealLdapImport"]

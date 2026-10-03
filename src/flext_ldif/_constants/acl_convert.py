@@ -6,13 +6,16 @@ orclaci/orclentrylevelaci line. The OUD-output taxonomy (permission maps,
 bind-rule keywords, scope rules) lives in the sibling
 ``_constants/acl_convert_oud.py``. Consumers import the ``*_RE`` authorities —
 ``import re`` outside this module is forbidden (AGENTS.md §3.1).
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
 import re
 from enum import StrEnum, unique
-from typing import TYPE_CHECKING, ClassVar, Final
+from typing import TYPE_CHECKING, ClassVar
 
 if TYPE_CHECKING:
     from flext_ldif._typings.base import FlextLdifTypesBase as t
@@ -49,15 +52,15 @@ class FlextLdifConstantsAclConvert:
         GUIDATTR = "guidattr"
         UNKNOWN = "unknown"
 
-    ACL_ACCESS_TO: Final[str] = "access to"
-    ACL_WILDCARD: Final[str] = "*"
+    ACL_ACCESS_TO: ClassVar[str] = "access to"
+    ACL_WILDCARD: ClassVar[str] = "*"
 
     ATTR_PATTERN_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"attr\s*(!?=)\s*\(([^)]*)\)", re.IGNORECASE
+        r"attr\s*(!?=)\s*\(([^)]*)\)", re.IGNORECASE,
     )
     "Matches ``attr=(a,b)`` / ``attr!=(a,b)`` — group(1)=operator, group(2)=attrs."
     FILTER_PREFIX_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"filter\s*=\s*\(", re.IGNORECASE
+        r"filter\s*=\s*\(", re.IGNORECASE,
     )
     "Matches the start of a ``filter=(...)`` clause (balanced-paren scan follows)."
     CN_EXTRACT_RE: ClassVar[t.RegexPattern] = re.compile(r"cn=([^,]+)", re.IGNORECASE)
@@ -66,15 +69,15 @@ class FlextLdifConstantsAclConvert:
     DN_NORMALIZE_COMMA_RE: ClassVar[t.RegexPattern] = re.compile(r"\s*,\s*")
     DN_NORMALIZE_EQUALS_RE: ClassVar[t.RegexPattern] = re.compile(r"\s*=\s*")
 
-    _SUBJ_MODIFIER_TOKEN = (
+    _SUBJ_MODIFIER_PATTERN = (
         r"(?:\s+(?:added_object_constraint|constraintonaddedobject|bindmode|bindipfilter)"
         r'\s*=\s*(?:\([^)]+\)|"[^"]+"))'
     )
-    _SUBJ_MODIFIERS = rf"(?:{_SUBJ_MODIFIER_TOKEN})*"
+    _SUBJ_MODIFIERS = rf"(?:{_SUBJ_MODIFIER_PATTERN})*"
 
     # by-clause subject matchers; group→subject mapping is the SUBJECT_MATCHERS SSOT.
     SUBJ_SUPERUSER_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"by\s+SuperUser\s*\(([^)]+)\)", re.IGNORECASE
+        r"by\s+SuperUser\s*\(([^)]+)\)", re.IGNORECASE,
     )
     SUBJ_GROUP_RE: ClassVar[t.RegexPattern] = re.compile(
         rf'by\s+group\s*=\s*"([^"]+)"{_SUBJ_MODIFIERS}\s*\(([^)]+)\)'
@@ -92,19 +95,19 @@ class FlextLdifConstantsAclConvert:
         re.IGNORECASE,
     )
     SUBJ_SELF_RE: ClassVar[t.RegexPattern] = re.compile(
-        rf"by\s+self{_SUBJ_MODIFIERS}\s*\(([^)]+)\){_SUBJ_MODIFIERS}\s*$", re.IGNORECASE
+        rf"by\s+self{_SUBJ_MODIFIERS}\s*\(([^)]+)\){_SUBJ_MODIFIERS}\s*$", re.IGNORECASE,
     )
     SUBJ_ANYONE_RE: ClassVar[t.RegexPattern] = re.compile(
-        rf"by\s+\*{_SUBJ_MODIFIERS}\s*\(([^)]+)\){_SUBJ_MODIFIERS}\s*$", re.IGNORECASE
+        rf"by\s+\*{_SUBJ_MODIFIERS}\s*\(([^)]+)\){_SUBJ_MODIFIERS}\s*$", re.IGNORECASE,
     )
     SUBJ_DNATTR_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"by\s+dnattr\s*=\s*\(([^)]+)\)\s*\(([^)]+)\)", re.IGNORECASE
+        r"by\s+dnattr\s*=\s*\(([^)]+)\)\s*\(([^)]+)\)", re.IGNORECASE,
     )
     SUBJ_GROUPATTR_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"by\s+groupattr\s*=\s*\(([^)]+)\)\s*\(([^)]+)\)", re.IGNORECASE
+        r"by\s+groupattr\s*=\s*\(([^)]+)\)\s*\(([^)]+)\)", re.IGNORECASE,
     )
     SUBJ_GUIDATTR_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"by\s+guidattr\s*=\s*\(([^)]+)\)\s*\(([^)]+)\)", re.IGNORECASE
+        r"by\s+guidattr\s*=\s*\(([^)]+)\)\s*\(([^)]+)\)", re.IGNORECASE,
     )
 
     BY_CLAUSE_RE: ClassVar[t.RegexPattern] = re.compile(
@@ -130,7 +133,7 @@ class FlextLdifConstantsAclConvert:
     "by-clause modifier: g1=kind, g2=paren-value, g3=quoted-value."
 
     # Ordered OID-regex → OUD-wildcard replacements (applied to bind DNs).
-    OID_REGEX_REPLACEMENTS: Final[tuple[tuple[str, str], ...]] = (
+    OID_REGEX_REPLACEMENTS: ClassVar[tuple[tuple[str, str], ...]] = (
         (".*", "*"),
         (".+", "*"),
         (r"\.", "."),

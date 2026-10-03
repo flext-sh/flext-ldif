@@ -1,4 +1,8 @@
-"""Servers conversion matrix for LDAP server translation."""
+"""Servers conversion matrix for LDAP server translation.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -21,31 +25,31 @@ class FlextLdifConversion(FlextLdifConversionEntryMixin, FlextLdifConversionAclM
         self,
         source_server: p.Ldif.ServerServer,
         target_server: p.Ldif.ServerServer,
-        model_instance: p.Ldif.Entry
-        | p.Ldif.SchemaAttribute
-        | p.Ldif.SchemaObjectClass
-        | p.Ldif.Acl,
+        model_instance: m.Ldif.Entry
+        | m.Ldif.SchemaAttribute
+        | m.Ldif.SchemaObjectClass
+        | m.Ldif.Acl,
     ) -> p.Result[t.Ldif.ConvertedModel]:
-        """DSL: orchestrate model conversion between servers."""
+        """DSL: orchestrate model conversion between servers.
+
+        Returns:
+            The resulting ``p.Result[t.Ldif.ConvertedModel]``.
+        """
         if isinstance(model_instance, m.Ldif.Entry):
             return self._convert_entry(source_server, target_server, model_instance)
         if isinstance(
-            model_instance, m.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass
+            model_instance, m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
         ):
             source_schema_result = self._resolve_schema_server(
-                source_server, role="Source"
+                source_server, role="Source",
             )
             if source_schema_result.failure:
-                return r[t.Ldif.ConvertedModel].fail(
-                    source_schema_result.error or "Source schema not available"
-                )
+                return r[t.Ldif.ConvertedModel].from_failure(source_schema_result)
             target_schema_result = self._resolve_schema_server(
-                target_server, role="Target"
+                target_server, role="Target",
             )
             if target_schema_result.failure:
-                return r[t.Ldif.ConvertedModel].fail(
-                    target_schema_result.error or "Target schema not available"
-                )
+                return r[t.Ldif.ConvertedModel].from_failure(target_schema_result)
             return self._convert_schema_model_via_entry(
                 source_server,
                 target_server,
@@ -59,12 +63,16 @@ class FlextLdifConversion(FlextLdifConversionEntryMixin, FlextLdifConversionAclM
         self,
         source: str | p.Ldif.ServerReference | p.Ldif.ServerServer,
         target: str | p.Ldif.ServerReference | p.Ldif.ServerServer,
-        model_instance: p.Ldif.Entry
-        | p.Ldif.SchemaAttribute
-        | p.Ldif.SchemaObjectClass
-        | p.Ldif.Acl,
+        model_instance: m.Ldif.Entry
+        | m.Ldif.SchemaAttribute
+        | m.Ldif.SchemaObjectClass
+        | m.Ldif.Acl,
     ) -> p.Result[t.Ldif.ConvertedModel]:
-        """Convert a model from a source server format to a target server format."""
+        """Convert a model from a source server format to a target server format.
+
+        Returns:
+            The resulting ``p.Result[t.Ldif.ConvertedModel]``.
+        """
         start_time = time.perf_counter()
         source_format = source if isinstance(source, str) else source.server_type
         target_format = target if isinstance(target, str) else target.server_type
@@ -80,7 +88,7 @@ class FlextLdifConversion(FlextLdifConversionEntryMixin, FlextLdifConversionAclM
             source_server = self._resolve_server(source)
             target_server = self._resolve_server(target)
             result = self.dsl_convert_between_servers(
-                source_server, target_server, model_instance
+                source_server, target_server, model_instance,
             )
         except c.Ldif.EXC_LDIF_PARSE as e:
             result = r[t.Ldif.ConvertedModel].fail_op("Model conversion", e)

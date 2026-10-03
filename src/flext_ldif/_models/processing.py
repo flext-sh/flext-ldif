@@ -1,13 +1,15 @@
-"""Processing Models - Type-safe processing results."""
+"""Processing Models - Type-safe processing results.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Annotated, Literal
+from typing import Annotated, Literal
 
 from flext_core import FlextUtilities as u, m
-
-if TYPE_CHECKING:
-    from flext_ldif import t
+from flext_ldif import t
 
 
 class FlextLdifModelsProcessing:
@@ -17,7 +19,7 @@ class FlextLdifModelsProcessing:
         """Result of entry processing (transform or validate operation)."""
 
         dn: Annotated[
-            str, u.Field(..., description="Distinguished name of the processed entry")
+            str, u.Field(..., description="Distinguished name of the processed entry"),
         ]
         attributes: Annotated[
             t.MutableStrSequenceMapping,
@@ -32,11 +34,11 @@ class FlextLdifModelsProcessing:
             u.Field(description="Canonical processor name for entry handling."),
         ]
         parallel: Annotated[
-            bool, u.Field(description="Enable thread-pool execution mode.")
+            bool, u.Field(description="Enable thread-pool execution mode."),
         ] = False
         batch_size: Annotated[
-            int, u.Field(ge=1, description="Batch size for sequential processing.")
+            int, u.Field(ge=1, description="Batch size for sequential processing."),
         ] = 100
         max_workers: Annotated[
-            int, u.Field(ge=1, description="Maximum thread workers for parallel mode.")
+            int, u.Field(ge=1, description="Maximum thread workers for parallel mode."),
         ] = 4

@@ -1,4 +1,8 @@
-"""Statistics Service - Pipeline Statistics Generation and Analysis."""
+"""Statistics Service - Pipeline Statistics Generation and Analysis.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -10,10 +14,15 @@ from flext_ldif import m, p, r, s, t, u
 class FlextLdifStatistics(s):
     """Statistics service for LDIF processing pipeline."""
 
+    @staticmethod
     def calculate_for_entries(
-        self, entries: t.MutableSequenceOf[p.Ldif.Entry] | p.Ldif.ParseResponse
-    ) -> p.Result[p.Ldif.EntriesStatistics]:
-        """Calculate general-purpose statistics for a list of Entry models."""
+        entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
+    ) -> p.Result[m.Ldif.EntriesStatistics]:
+        """Calculate general-purpose statistics for a list of Entry models.
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.EntriesStatistics]``.
+        """
         normalized_entries = u.Ldif.as_entries(entries)
         object_class_distribution: Counter[str] = Counter()
         server_type_distribution: Counter[str] = Counter()
@@ -35,7 +44,7 @@ class FlextLdifStatistics(s):
             object_class_distribution=obj_class_model,
             server_type_distribution=server_type_model,
         )
-        return r[p.Ldif.EntriesStatistics].ok(entries_stats)
+        return r[m.Ldif.EntriesStatistics].ok(entries_stats)
 
 
 __all__: list[str] = ["FlextLdifStatistics"]

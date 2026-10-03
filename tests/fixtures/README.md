@@ -60,7 +60,7 @@ Each server has 4 types of fixtures:
 
 ### Loading Fixtures
 
-```python notest
+```python
 from tests import c, u
 
 schema = u.Tests.load(c.Tests.OID, c.Tests.SCHEMA)
@@ -94,7 +94,9 @@ Available markers:
 
 ### Extract Schema Elements
 
-```text
+<!-- pytest-markdown-docs: next-code-block: ignore -->
+
+```python notest
 from tests import helpers
 
 attributes = helpers.extract_attributes(schema_content)
@@ -105,14 +107,16 @@ name = helpers.extract_name(attr_definition)
 
 ### Validate Fixtures
 
-```text
+<!-- pytest-markdown-docs: next-code-block: ignore -->
+
+```python notest
 from tests import FixtureValidator
 
 validator = FixtureValidator()
 result = validator.validate_schema_fixture(content)
 if result.is_success:
     stats = result.unwrap()
-    print(f"Found {stats['attribute_count']} attributes")
+    u.Cli.print(f"Found {stats['attribute_count']} attributes")
 ```
 
 ## Example Test Pattern
@@ -150,7 +154,9 @@ Each includes realistic entry structures and ACL configurations.
 
 Run fixture coverage report:
 
-```text
+<!-- pytest-markdown-docs: next-code-block: ignore -->
+
+```python notest
 from tests import FixtureCoverageReport
 
 coverage = FixtureCoverageReport.generate_summary(all_fixtures)

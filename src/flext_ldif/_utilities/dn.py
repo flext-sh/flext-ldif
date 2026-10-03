@@ -1,4 +1,8 @@
-"""Extracted nested class from FlextLdifUtilities."""
+"""Extracted nested class from FlextLdifUtilities.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -7,7 +11,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING, overload
 
 from flext_cli import u
-from flext_ldif import FlextLdifModels as m, c, p, r, t
+
+from flext_core import r
+from flext_ldif import FlextLdifModels, c, p, t
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator, MutableMapping
@@ -74,18 +80,23 @@ class FlextLdifUtilitiesDN:
     Pure functions: no server-specific logic, no side effects.
 
     Supports both:
-    - m.Ldif.DN (DN model)
+    - FlextLdifModels.Ldif.DN (DN model)
     - str (DN string value)
 
     """
 
-    MIN_DN_LENGTH: int = c.Ldif.MIN_DN_LENGTH
-
     @staticmethod
     def _advance_rdn_position(
-        char: str, rdn: str, position: int, settings: p.Ldif.RdnProcessingConfig
+        char: str,
+        rdn: str,
+        position: int,
+        settings: FlextLdifModels.Ldif.RdnProcessingConfig,
     ) -> tuple[str, str, bool, int]:
-        """Advance position during RDN parsing and return new state."""
+        """Advance position during RDN parsing and return new state.
+
+        Returns:
+            The resulting ``tuple[str, str, bool, int]``.
+        """
         result = FlextLdifUtilitiesDN._process_rdn_char(char, rdn, position, settings)
         attr, val, in_val, next_pos, _ = result
         return (attr, val, in_val, next_pos)
@@ -98,7 +109,12 @@ class FlextLdifUtilitiesDN:
         t.MutableSequenceOf[str],
         MutableMapping[str, bool | str | t.MutableSequenceOf[str]],
     ]:
-        """Apply DN transformations and collect flags."""
+        """Apply DN transformations and collect flags.
+
+        Returns:
+            The resulting ``tuple[str, t.MutableSequenceOf[str], MutableMapping[str,
+                bool | str | t.MutableSequenceOf[str]]]``.
+        """
         transformations: t.MutableSequenceOf[str] = []
         empty_warnings: t.MutableSequenceOf[str] = []
         empty_errors: t.MutableSequenceOf[str] = []
@@ -182,7 +198,11 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def _has_double_unescaped_commas(dn_str: str) -> bool:
-        """Check for consecutive unescaped commas in DN string."""
+        """Check for consecutive unescaped commas in DN string.
+
+        Returns:
+            The resulting ``bool``.
+        """
         i = 0
         while i < len(dn_str) - 1:
             if (
@@ -196,30 +216,38 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def _normalize_dns_for_comparison(dn1: str, dn2: str) -> p.Result[t.StrPair]:
-        """Normalize both DNs for comparison."""
+        """Normalize both DNs for comparison.
+
+        Returns:
+            The resulting ``p.Result[t.StrPair]``.
+        """
         norm1_result = FlextLdifUtilitiesDN.norm(dn1)
         if not norm1_result.success:
             return r[t.StrPair].fail(
-                f"Comparison failed (RFC 4514): Failed to normalize first DN: {norm1_result.error}"
+                f"Comparison failed (RFC 4514): Failed to normalize first DN: {norm1_result.error}",
             )
         norm2_result = FlextLdifUtilitiesDN.norm(dn2)
         if not norm2_result.success:
             return r[t.StrPair].fail(
-                f"Comparison failed (RFC 4514): Failed to normalize second DN: {norm2_result.error}"
+                f"Comparison failed (RFC 4514): Failed to normalize second DN: {norm2_result.error}",
             )
         return r[t.StrPair].ok((norm1_result.value.lower(), norm2_result.value.lower()))
 
     @staticmethod
     def _process_rdn_char(
-        char: str, rdn: str, i: int, settings: p.Ldif.RdnProcessingConfig
+        char: str, rdn: str, i: int, settings: FlextLdifModels.Ldif.RdnProcessingConfig,
     ) -> tuple[str, str, bool, int, bool]:
-        """Process single character in RDN parsing."""
+        """Process single character in RDN parsing.
+
+        Returns:
+            The resulting ``tuple[str, str, bool, int, bool]``.
+        """
         current_attr = settings.current_attr
         current_val = settings.current_val
         in_value = settings.in_value
         if char == "\\" and i + 1 < len(rdn):
             current_val, next_i = FlextLdifUtilitiesDN._process_rdn_escape(
-                rdn, i, settings.current_val
+                rdn, i, settings.current_val,
             )
             settings.current_val = current_val
             return (current_attr, current_val, in_value, next_i, True)
@@ -246,7 +274,11 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def _process_rdn_escape(rdn: str, i: int, current_val: str) -> tuple[str, int]:
-        """Process escape sequence in RDN parsing (extracted to reduce complexity)."""
+        """Process escape sequence in RDN parsing (extracted to reduce complexity).
+
+        Returns:
+            The resulting ``tuple[str, int]``.
+        """
         if i + 1 < len(rdn):
             next_char = rdn[i + 1]
             if i + 2 < len(rdn) and all(
@@ -258,15 +290,27 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def _validate_basic_format(dn_str: str) -> bool:
-        """Validate basic DN format requirements."""
+        """Validate basic DN format requirements.
+
+        Returns:
+            The resulting ``bool``.
+        """
         return bool(dn_str and "=" in dn_str)
 
     @staticmethod
     def _validate_components(components: t.MutableSequenceOf[str]) -> bool:
-        """Validate each DN component has attr=value format (helper method)."""
+        """Validate each DN component has attr=value format (helper method).
+
+        Returns:
+            The resulting ``bool``.
+        """
 
         def is_valid_component(comp: str) -> bool:
-            """Check if component is valid."""
+            """Check if component is valid.
+
+            Returns:
+                The resulting ``bool``.
+            """
             if "=" not in comp:
                 return False
             attr, _, value = comp.partition("=")
@@ -277,7 +321,11 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def _validate_dn_structure(dn_str: str) -> bool:
-        """Validate DN structure (commas, escape sequences, components)."""
+        """Validate DN structure (commas, escape sequences, components).
+
+        Returns:
+            The resulting ``bool``.
+        """
         checks: t.MutableSequenceOf[Callable[[], bool]] = [
             lambda: FlextLdifUtilitiesDN._validate_escape_sequences(dn_str),
             lambda: not FlextLdifUtilitiesDN._has_double_unescaped_commas(dn_str),
@@ -285,10 +333,7 @@ class FlextLdifUtilitiesDN:
             lambda: (
                 not (
                     dn_str.endswith(",")
-                    and (
-                        len(dn_str) < FlextLdifUtilitiesDN.MIN_DN_LENGTH
-                        or dn_str[-2] != "\\"
-                    )
+                    and (len(dn_str) < c.Ldif.MIN_DN_LENGTH or dn_str[-2] != "\\")
                 )
             ),
         ]
@@ -341,11 +386,15 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def clean_dn(dn: p.Ldif.DN) -> str: ...
+    def clean_dn(dn: FlextLdifModels.Ldif.DN) -> str: ...
 
     @staticmethod
-    def clean_dn(dn: str | p.Ldif.DN) -> str:
-        """Clean DN string to fix spacing and escaping issues."""
+    def clean_dn(dn: str | FlextLdifModels.Ldif.DN) -> str:
+        """Clean DN string to fix spacing and escaping issues.
+
+        Returns:
+            The resulting ``str``.
+        """
         dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
         if not dn_str:
             return dn_str
@@ -362,12 +411,15 @@ class FlextLdifUtilitiesDN:
             result = dn_str
             for pattern, replacement in patterns:
                 result = c.Ldif.sub_pattern(pattern, replacement, result)
-            return result
         except c.Ldif.EXC_LDIF_PARSE:
             return dn_str
+        else:
+            return result
 
     @staticmethod
-    def clean_dn_with_statistics(dn: str) -> tuple[str, p.Ldif.DNStatistics]:
+    def clean_dn_with_statistics(
+        dn: str,
+    ) -> tuple[str, FlextLdifModels.Ldif.DNStatistics]:
         r"""Clean DN and track all transformations with statistics.
 
         Returns both cleaned DN and complete transformation history
@@ -387,11 +439,13 @@ class FlextLdifUtilitiesDN:
         """
         original_dn = FlextLdifUtilitiesDN.get_dn_value(dn)
         if not original_dn:
-            stats_domain = m.Ldif.DNStatistics.create_minimal(original_dn)
-            stats = m.Ldif.DNStatistics.model_validate(stats_domain.model_dump())
+            stats_domain = FlextLdifModels.Ldif.DNStatistics.create_minimal(original_dn)
+            stats = FlextLdifModels.Ldif.DNStatistics.model_validate(
+                stats_domain.model_dump(),
+            )
             return (original_dn, stats)
         result, transformations, flags = FlextLdifUtilitiesDN._apply_dn_transformations(
-            original_dn
+            original_dn,
         )
         validation_status_raw = flags.get("validation_status", "")
         validation_status: str = (
@@ -409,7 +463,7 @@ class FlextLdifUtilitiesDN:
             if isinstance(validation_errors_raw, list)
             else []
         )
-        stats_domain = m.Ldif.DNStatistics(
+        stats_domain = FlextLdifModels.Ldif.DNStatistics(
             original_dn=original_dn,
             cleaned_dn=result,
             normalized_dn=result,
@@ -429,15 +483,23 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def compare_dns(dn1: str | None, dn2: str | None) -> p.Result[int]:
-        """Compare two DNs per RFC 4514 (case-insensitive)."""
+        """Compare two DNs per RFC 4514 (case-insensitive).
+
+        Returns:
+            The resulting ``p.Result[int]``.
+        """
         try:
             return FlextLdifUtilitiesDN._compare_dns_core(dn1, dn2)
         except c.Ldif.EXC_LDIF_PARSE as e:
-            return r[int].fail(f"DN comparison error: {e}")
+            return r[int].fail(f"DN comparison error: {e}", exception=e)
 
     @staticmethod
     def _compare_dns_core(dn1: str | None, dn2: str | None) -> p.Result[int]:
-        """Compare normalized DN pair."""
+        """Compare normalized DN pair.
+
+        Returns:
+            The resulting ``p.Result[int]``.
+        """
         if not dn1 or not dn2:
             return r[int].fail("Both DNs must be provided for comparison")
         norm_result = FlextLdifUtilitiesDN._normalize_dns_for_comparison(dn1, dn2)
@@ -473,7 +535,11 @@ class FlextLdifUtilitiesDN:
             return value
 
         def escape_char(item: tuple[int, str]) -> str:
-            """Escape single character if needed."""
+            """Escape single character if needed.
+
+            Returns:
+                The resulting ``str``.
+            """
             i, char = item
             is_special = char in c.Ldif.DN_ESCAPE_CHARS
             is_leading_space = i == 0 and char == " "
@@ -488,15 +554,23 @@ class FlextLdifUtilitiesDN:
         return "".join(mapped_result)
 
     @staticmethod
-    def get_dn_value(dn: p.Ldif.DN | str) -> str:
-        """Extract DN string value from DN model or string (public utility method)."""
+    def get_dn_value(dn: FlextLdifModels.Ldif.DN | str) -> str:
+        """Extract DN string value from DN model or string (public utility method).
+
+        Returns:
+            The resulting ``str``.
+        """
         if isinstance(dn, str):
             return dn
         return dn.value
 
     @staticmethod
     def is_lutf1_char(char: str) -> bool:
-        """Check if char is valid LUTF1 (lead char) per RFC 4514."""
+        """Check if char is valid LUTF1 (lead char) per RFC 4514.
+
+        Returns:
+            The resulting ``bool``.
+        """
         if not char or len(char) != 1:
             return False
         code = ord(char)
@@ -509,7 +583,11 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def is_sutf1_char(char: str) -> bool:
-        """Check if char is valid SUTF1 (string char) per RFC 4514."""
+        """Check if char is valid SUTF1 (string char) per RFC 4514.
+
+        Returns:
+            The resulting ``bool``.
+        """
         if not char or len(char) != 1:
             return False
         code = ord(char)
@@ -522,7 +600,11 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def is_tutf1_char(char: str) -> bool:
-        """Check if char is valid TUTF1 (trail char) per RFC 4514."""
+        """Check if char is valid TUTF1 (trail char) per RFC 4514.
+
+        Returns:
+            The resulting ``bool``.
+        """
         if not char or len(char) != 1:
             return False
         code = ord(char)
@@ -535,7 +617,11 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def is_under_base(dn: str | None, base_dn: str | None) -> bool:
-        """Check if DN is under base DN (hierarchical check)."""
+        """Check if DN is under base DN (hierarchical check).
+
+        Returns:
+            The resulting ``bool``.
+        """
         if not dn or not base_dn:
             return False
         dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
@@ -548,9 +634,13 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def is_valid_dn_string(
-        value: str, *, strict: bool = True
+        value: str, *, strict: bool = True,
     ) -> tuple[bool, t.MutableSequenceOf[str]]:
-        """Validate DN attribute value per RFC 4514 string production."""
+        """Validate DN attribute value per RFC 4514 string production.
+
+        Returns:
+            The resulting ``tuple[bool, t.MutableSequenceOf[str]]``.
+        """
         errors: t.MutableSequenceOf[str] = []
         if not value:
             return (True, errors)
@@ -564,7 +654,7 @@ class FlextLdifUtilitiesDN:
         )
         if is_bad_lead and strict:
             errors.append(f"Invalid lead character: {value[0]!r}")
-        min_len_for_escape = FlextLdifUtilitiesDN.MIN_DN_LENGTH
+        min_len_for_escape = c.Ldif.MIN_DN_LENGTH
         is_escaped_trail = len(value) >= min_len_for_escape and value[-2] == "\\"
         is_bad_trail = not FlextLdifUtilitiesDN.is_tutf1_char(value[-1]) and (
             not is_escaped_trail
@@ -586,12 +676,16 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def norm(dn: p.Ldif.DN) -> p.Result[str]: ...
+    def norm(dn: FlextLdifModels.Ldif.DN) -> p.Result[str]: ...
 
     @staticmethod
-    def norm(dn: str | p.Ldif.DN | None) -> p.Result[str]:
-        """Normalize DN per RFC 4514 (lowercase attrs, preserve values)."""
-        result = r[str].fail("DN cannot be None")
+    def norm(dn: str | FlextLdifModels.Ldif.DN | None) -> p.Result[str]:
+        """Normalize DN per RFC 4514 (lowercase attrs, preserve values).
+
+        Returns:
+            The resulting ``p.Result[str]``.
+        """
+        result: p.Result[str] = r[str].fail("DN cannot be None")
         if dn is not None:
             dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
             if not dn_str or "=" not in dn_str:
@@ -613,11 +707,11 @@ class FlextLdifUtilitiesDN:
                         r[str].ok(",".join(normalized))
                         if normalized
                         else r[str].fail(
-                            f"Failed to normalize DN: no valid components in '{dn_str}'"
+                            f"Failed to normalize DN: no valid components in '{dn_str}'",
                         )
                     )
                 except c.Ldif.EXC_LDIF_PARSE as e:
-                    result = r[str].fail(f"DN normalization error: {e}")
+                    result = r[str].fail(f"DN normalization error: {e}", exception=e)
         return result
 
     @staticmethod
@@ -674,12 +768,20 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def parse_dn(dn: p.Ldif.DN) -> p.Result[t.MutableStrPairSequence]: ...
+    def parse_dn(dn: FlextLdifModels.Ldif.DN) -> p.Result[t.MutableStrPairSequence]: ...
 
     @staticmethod
-    def parse_dn(dn: str | p.Ldif.DN | None) -> p.Result[t.MutableStrPairSequence]:
-        """Parse DN into RFC 4514 components (attr, value pairs)."""
-        result = r[t.MutableStrPairSequence].fail("DN cannot be None")
+    def parse_dn(
+        dn: str | FlextLdifModels.Ldif.DN | None,
+    ) -> p.Result[t.MutableStrPairSequence]:
+        """Parse DN into RFC 4514 components (attr, value pairs).
+
+        Returns:
+            The resulting ``p.Result[t.MutableStrPairSequence]``.
+        """
+        result: p.Result[t.MutableStrPairSequence] = r[t.MutableStrPairSequence].fail(
+            "DN cannot be None",
+        )
         if dn is not None:
             dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
             if not dn_str or "=" not in dn_str:
@@ -693,23 +795,37 @@ class FlextLdifUtilitiesDN:
                 try:
                     result = FlextLdifUtilitiesDN._parse_dn_components(dn_str)
                 except c.Ldif.EXC_LDIF_PARSE as e:
-                    result = r[t.MutableStrPairSequence].fail(f"DN parsing error: {e}")
+                    result = r[t.MutableStrPairSequence].fail(
+                        f"DN parsing error: {e}", exception=e,
+                    )
         return result
 
     @staticmethod
     def parse_rdn(rdn: str) -> p.Result[t.MutableStrPairSequence]:
-        """Parse a single RDN component per RFC 4514."""
-        result = r[t.MutableStrPairSequence].fail("RDN must be a non-empty string")
+        """Parse a single RDN component per RFC 4514.
+
+        Returns:
+            The resulting ``p.Result[t.MutableStrPairSequence]``.
+        """
+        result: p.Result[t.MutableStrPairSequence] = r[t.MutableStrPairSequence].fail(
+            "RDN must be a non-empty string",
+        )
         if rdn:
             try:
                 result = FlextLdifUtilitiesDN._parse_rdn_core(rdn)
             except c.Ldif.EXC_LDIF_PARSE as e:
-                result = r[t.MutableStrPairSequence].fail(f"RDN parsing error: {e}")
+                result = r[t.MutableStrPairSequence].fail(
+                    f"RDN parsing error: {e}", exception=e,
+                )
         return result
 
     @staticmethod
     def _parse_dn_components(dn_str: str) -> p.Result[t.MutableStrPairSequence]:
-        """Parse already validated DN string components."""
+        """Parse already validated DN string components.
+
+        Returns:
+            The resulting ``p.Result[t.MutableStrPairSequence]``.
+        """
         parsed_pairs: t.MutableStrPairSequence = []
         failure_message: str | None = None
         for component in FlextLdifUtilitiesDN.split(dn_str):
@@ -721,12 +837,16 @@ class FlextLdifUtilitiesDN:
         if failure_message is None and parsed_pairs:
             return r[t.MutableStrPairSequence].ok(parsed_pairs)
         return r[t.MutableStrPairSequence].fail(
-            failure_message or f"Failed to parse DN components from '{dn_str}'"
+            failure_message or f"Failed to parse DN components from '{dn_str}'",
         )
 
     @staticmethod
     def _parse_rdn_core(rdn: str) -> p.Result[t.MutableStrPairSequence]:
-        """Parse a non-empty RDN component."""
+        """Parse a non-empty RDN component.
+
+        Returns:
+            The resulting ``p.Result[t.MutableStrPairSequence]``.
+        """
         pairs: t.MutableStrPairSequence = []
         current_attr = ""
         current_val = ""
@@ -734,7 +854,7 @@ class FlextLdifUtilitiesDN:
         rdn_len: int = len(rdn)
         position: int = 0
         error_message: str | None = None
-        rdn_config = m.Ldif.RdnProcessingConfig()
+        rdn_config = FlextLdifModels.Ldif.RdnProcessingConfig()
         rdn_config.current_attr = current_attr
         rdn_config.current_val = current_val
         rdn_config.in_value = in_value
@@ -744,7 +864,7 @@ class FlextLdifUtilitiesDN:
             char_at_pos: str = rdn[idx]
             current_attr, current_val, in_value, position = (
                 FlextLdifUtilitiesDN._advance_rdn_position(
-                    char_at_pos, rdn, idx, rdn_config
+                    char_at_pos, rdn, idx, rdn_config,
                 )
             )
             rdn_config.current_attr = current_attr
@@ -769,10 +889,10 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def split(dn: p.Ldif.DN) -> t.MutableSequenceOf[str]: ...
+    def split(dn: FlextLdifModels.Ldif.DN) -> t.MutableSequenceOf[str]: ...
 
     @staticmethod
-    def split(dn: str | p.Ldif.DN) -> t.MutableSequenceOf[str]:
+    def split(dn: str | FlextLdifModels.Ldif.DN) -> t.MutableSequenceOf[str]:
         r"""Split DN string into individual RDN components per RFC 4514.
 
         RFC 4514 Section 2 ABNF:
@@ -783,6 +903,9 @@ class FlextLdifUtilitiesDN:
 
         Properly handles escaped commas (\\\\,) and other special characters.
         Does NOT treat escaped commas as component separators.
+
+        Returns:
+            The resulting ``t.MutableSequenceOf[str]``.
         """
         dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
         if not dn_str:
@@ -817,14 +940,18 @@ class FlextLdifUtilitiesDN:
     @overload
     @staticmethod
     def transform_dn_attribute(
-        value: p.Ldif.DN, source_dn: str, target_dn: str
+        value: FlextLdifModels.Ldif.DN, source_dn: str, target_dn: str,
     ) -> str: ...
 
     @staticmethod
     def transform_dn_attribute(
-        value: str | p.Ldif.DN, source_dn: str, target_dn: str
+        value: str | FlextLdifModels.Ldif.DN, source_dn: str, target_dn: str,
     ) -> str:
-        """Transform a single DN attribute value by replacing base DN."""
+        """Transform a single DN attribute value by replacing base DN.
+
+        Returns:
+            The resulting ``str``.
+        """
         dn_str = FlextLdifUtilitiesDN.get_dn_value(value)
         if not dn_str or not source_dn or (not target_dn):
             return dn_str
@@ -833,14 +960,14 @@ class FlextLdifUtilitiesDN:
         source_escaped = c.Ldif.escape_pattern(source_dn)
         result = u.to_str(
             c.Ldif.sub_pattern(
-                f",{source_escaped}$", f",{target_dn}", normalized_dn, ignorecase=True
-            )
+                f",{source_escaped}$", f",{target_dn}", normalized_dn, ignorecase=True,
+            ),
         )
         if result == normalized_dn:
             result = u.to_str(
                 c.Ldif.sub_pattern(
-                    f"^{source_escaped}$", target_dn, normalized_dn, ignorecase=True
-                )
+                    f"^{source_escaped}$", target_dn, normalized_dn, ignorecase=True,
+                ),
             )
         return result
 
@@ -883,30 +1010,50 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def transform_entry_base_dn(
-        entry: p.Ldif.Entry,
+        entry: FlextLdifModels.Ldif.Entry,
         source_dn: str,
         target_dn: str,
         dn_valued_attributes: frozenset[str] | None = None,
-    ) -> p.Ldif.Entry:
+    ) -> FlextLdifModels.Ldif.Entry:
         """Transform an entry's DN and DN-valued attributes from source to target base DN.
 
         Rewrites:
         - The entry's own DN
         - All attributes whose name is in dn_valued_attributes (member, uniqueMember, etc.)
 
+        When the entry's own leftmost RDN changes (a root entry rebased onto a
+        different naming value), LDAP modrdn semantics apply to the naming
+        attribute values: the old RDN pairs are removed and the new pairs added
+        (deleteoldrdn). Descendant entries keep the pure suffix rebase. An
+        unparseable changed RDN fails loud with ``ValueError``.
+
         Returns a model_copy with transformed values. Original entry is not mutated.
+
+        Returns:
+            The resulting ``FlextLdifModels.Ldif.Entry``.
         """
         attrs_to_transform = dn_valued_attributes or c.Ldif.ALL_DN_VALUED
-        updates: MutableMapping[str, p.BaseModel] = {}
+        updates: MutableMapping[
+            str, FlextLdifModels.Ldif.DN | FlextLdifModels.Ldif.Attributes,
+        ] = {}
+        rdn_delta: (
+            MutableMapping[
+                str, tuple[t.MutableSequenceOf[str], t.MutableSequenceOf[str]],
+            ]
+            | None
+        ) = None
         entry_dn = entry.dn
         if entry_dn is not None:
             dn_str = FlextLdifUtilitiesDN.get_dn_value(entry_dn)
             if dn_str:
                 new_dn_str = FlextLdifUtilitiesDN.transform_dn_attribute(
-                    dn_str, source_dn, target_dn
+                    dn_str, source_dn, target_dn,
                 )
                 if new_dn_str != dn_str:
-                    updates["dn"] = m.Ldif.DN(value=new_dn_str)
+                    updates["dn"] = FlextLdifModels.Ldif.DN(value=new_dn_str)
+                    rdn_delta = FlextLdifUtilitiesDN._modrdn_naming_delta(
+                        dn_str, new_dn_str,
+                    )
         entry_attrs = entry.attributes
         if entry_attrs is not None:
             attr_dict = entry_attrs.attributes
@@ -917,26 +1064,138 @@ class FlextLdifUtilitiesDN:
                     attr_changed = False
                     for val in values:
                         new_val = FlextLdifUtilitiesDN.transform_dn_attribute(
-                            val, source_dn, target_dn
+                            val, source_dn, target_dn,
                         )
                         new_values.append(new_val)
                         if new_val != val:
                             attr_changed = True
                     if attr_changed:
                         changed_attrs[attr_name] = new_values
+            if rdn_delta is not None:
+                for rdn_attr, (old_values, new_values_rdn) in rdn_delta.items():
+                    existing_key = next(
+                        (key for key in attr_dict if key.lower() == rdn_attr.lower()),
+                        rdn_attr,
+                    )
+                    merged_values: t.MutableSequenceOf[str] = list(
+                        changed_attrs.get(existing_key, attr_dict.get(existing_key, [])),
+                    )
+                    old_lowers = {value.lower() for value in old_values}
+                    merged_values = [
+                        value
+                        for value in merged_values
+                        if value.lower() not in old_lowers
+                    ]
+                    present_lowers = {value.lower() for value in merged_values}
+                    for value in new_values_rdn:
+                        if value.lower() not in present_lowers:
+                            merged_values.append(value)
+                    changed_attrs[existing_key] = merged_values
             if changed_attrs:
                 new_attr_dict = dict(attr_dict)
                 new_attr_dict.update(changed_attrs)
                 new_attrs = entry_attrs.model_copy(update={"attributes": new_attr_dict})
                 updates["attributes"] = new_attrs
         if updates:
-            copied: p.Ldif.Entry = entry.model_copy(update=updates)
+            copied: FlextLdifModels.Ldif.Entry = entry.model_copy(update=updates)
             return copied
         return entry
 
     @staticmethod
+    def _first_rdn_component(dn: str) -> str:
+        """Return the leftmost RDN of a DN, honouring escaped separators."""
+        index = 0
+        while index < len(dn):
+            char = dn[index]
+            if char == "\\":
+                index += 2
+                continue
+            if char == ",":
+                return dn[:index]
+            index += 1
+        return dn
+
+    @staticmethod
+    def _rdn_attribute_pairs(rdn: str) -> list[tuple[str, str]]:
+        """Parse an RDN into (attribute, unescaped value) pairs.
+
+        Supports multi-valued RDNs (``cn=a+sn=b``); every component must be a
+        ``attribute=value`` pair or the RDN is unparseable (fail loud).
+
+        Returns:
+            The resulting ``list[tuple[str, str]]``.
+
+        Raises:
+            ValueError: If Unparseable RDN component (missing attribute=value); or if
+                Unparseable RDN component (empty attribute).
+        """
+        components: list[str] = []
+        current: list[str] = []
+        index = 0
+        while index < len(rdn):
+            char = rdn[index]
+            if char == "\\" and index + 1 < len(rdn):
+                current.extend((char, rdn[index + 1]))
+                index += 2
+                continue
+            if char == "+":
+                components.append("".join(current))
+                current = []
+                index += 1
+                continue
+            current.append(char)
+            index += 1
+        components.append("".join(current))
+        pairs: list[tuple[str, str]] = []
+        for component in components:
+            if "=" not in component:
+                msg = f"Unparseable RDN component (missing attribute=value): {component!r}"
+                raise ValueError(msg)
+            attribute, _, raw_value = component.partition("=")
+            attribute = attribute.strip()
+            if not attribute:
+                msg = f"Unparseable RDN component (empty attribute): {component!r}"
+                raise ValueError(msg)
+            pairs.append((attribute, FlextLdifUtilitiesDN.unesc(raw_value)))
+        return pairs
+
+    @staticmethod
+    def _modrdn_naming_delta(
+        old_dn: str, new_dn: str,
+    ) -> (
+        MutableMapping[str, tuple[t.MutableSequenceOf[str], t.MutableSequenceOf[str]]]
+        | None
+    ):
+        """Compute deleteoldrdn attribute changes when the entry's own RDN changes.
+
+        Returns ``None`` when the leftmost RDN is unchanged (case-insensitive);
+        otherwise maps each affected attribute to ``(old_values, new_values)``
+        so the caller removes the old pairs and adds the new ones.
+
+        Returns:
+            The resulting ``MutableMapping[str, tuple[t.MutableSequenceOf[str],
+                t.MutableSequenceOf[str]]] | None``.
+        """
+        old_rdn = FlextLdifUtilitiesDN._first_rdn_component(old_dn)
+        new_rdn = FlextLdifUtilitiesDN._first_rdn_component(new_dn)
+        if old_rdn.lower() == new_rdn.lower():
+            return None
+        old_pairs = FlextLdifUtilitiesDN._rdn_attribute_pairs(old_rdn)
+        new_pairs = FlextLdifUtilitiesDN._rdn_attribute_pairs(new_rdn)
+        delta: MutableMapping[
+            str, tuple[t.MutableSequenceOf[str], t.MutableSequenceOf[str]],
+        ] = {}
+        for attribute, value in old_pairs:
+            removes, _ = delta.setdefault(attribute.lower(), ([], []))
+            removes.append(value)
+        for attribute, value in new_pairs:
+            _, adds = delta.setdefault(attribute.lower(), ([], []))
+            adds.append(value)
+        return delta
+
+    @staticmethod
     def transform_ldif_files_in_directory(
-        ldif_dir: str | object, source_basedn: str, target_basedn: str
+        ldif_dir: str | Path, source_basedn: str, target_basedn: str,
     ) -> MutableMapping[str, int | t.MutableSequenceOf[str]]:
         """Transform base DN in all LDIF files in a directory.
 
@@ -944,13 +1203,16 @@ class FlextLdifUtilitiesDN:
         in all DN lines and DN-valued attribute values, and writes back.
 
         Returns dict with total_count (files transformed) and transformed_files list.
+
+        Returns:
+            The resulting ``MutableMapping[str, int | t.MutableSequenceOf[str]]``.
         """
         directory = Path(str(ldif_dir))
         transformed_files: t.MutableSequenceOf[str] = []
         for ldif_file in sorted(directory.glob("*.ldif")):
             content = ldif_file.read_text(encoding=c.Ldif.DEFAULT_ENCODING)
             new_content = FlextLdifUtilitiesDN._transform_ldif_content(
-                content, source_basedn, target_basedn
+                content, source_basedn, target_basedn,
             )
             if new_content != content:
                 _ = ldif_file.write_text(new_content, encoding=c.Ldif.DEFAULT_ENCODING)
@@ -962,15 +1224,19 @@ class FlextLdifUtilitiesDN:
 
     @staticmethod
     def _transform_ldif_content(content: str, source_dn: str, target_dn: str) -> str:
-        """Transform all DN references in raw LDIF content string."""
+        """Transform all DN references in raw LDIF content string.
+
+        Returns:
+            The resulting ``str``.
+        """
         return u.to_str(
             c.Ldif.sub_pattern(
-                c.Ldif.escape_pattern(source_dn), target_dn, content, ignorecase=True
-            )
+                c.Ldif.escape_pattern(source_dn), target_dn, content, ignorecase=True,
+            ),
         )
 
     @staticmethod
-    def validate_dn(dn: str | p.Ldif.DN) -> bool:
+    def validate_dn(dn: str | FlextLdifModels.Ldif.DN) -> bool:
         r"""Validate DN format according to RFC 4514.
 
         Properly handles escaped characters. Checks for:
@@ -978,19 +1244,19 @@ class FlextLdifUtilitiesDN:
         - No leading/trailing unescaped commas
         - All components have attr=value format
         - Valid hex escape sequences (\\XX where X is hex digit)
+
+        Returns:
+            The resulting ``bool``.
         """
         dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
         if not FlextLdifUtilitiesDN._validate_basic_format(dn_str):
             return False
         if not FlextLdifUtilitiesDN._validate_dn_structure(dn_str):
             return False
-        try:
-            components = FlextLdifUtilitiesDN.split(dn_str)
-            return bool(
-                components and FlextLdifUtilitiesDN._validate_components(components)
-            )
-        except c.EXC_TYPE_VALIDATION:
-            return False
+        components = FlextLdifUtilitiesDN.split(dn_str)
+        return bool(
+            components and FlextLdifUtilitiesDN._validate_components(components),
+        )
 
 
 __all__: list[str] = ["FlextLdifUtilitiesDN"]

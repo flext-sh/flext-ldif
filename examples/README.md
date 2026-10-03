@@ -33,11 +33,14 @@
 
 <!-- TOC END -->
 
-This directory contains examples demonstrating the functionality of the flext-ldif library.
+This directory contains examples demonstrating the functionality of the flext-ldif
+library.
 
 ## Library Usage Examples
 
-All examples demonstrate library usage only - no CLI patterns, no `main()` functions, no print statements. Each example demonstrates specific functionality through reusable function patterns.
+All examples demonstrate library usage only - no CLI patterns, no `main()` functions, no
+print statements. Each example demonstrates specific functionality through reusable
+function patterns.
 
 ## 🎯 Example Overview
 
@@ -179,7 +182,8 @@ Production-ready workflows:
 - End-to-end LDIF processing pipelines
 - Multi-step validation and transformation
 - Error handling and recovery
-- Access to all namespace classes (Models, Constants, Types, Protocols, Exceptions, Mixins, Utilities)
+- Access to all namespace classes (Models, Constants, Types, Protocols, Exceptions,
+  Mixins, Utilities)
 
 **Key Functions**:
 
@@ -194,7 +198,7 @@ Production-ready workflows:
 
 All examples follow library-only patterns:
 
-```python notest
+```python
 from flext_ldif import ldif
 
 # Initialize API
@@ -329,6 +333,6 @@ When adding examples:
 - Demonstrate specific functionality
 - Add clear docstrings
 
-______________________________________________________________________
+---
 
 FLEXT-LDIF - RFC-compliant LDIF processing library

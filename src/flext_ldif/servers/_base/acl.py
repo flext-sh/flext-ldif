@@ -1,15 +1,17 @@
-"""Base Server Classes for LDIF/LDAP Server Extensions."""
+"""Base Server Classes for LDIF/LDAP Server Extensions.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from typing import Annotated, ClassVar, Self, override
 
-from flext_core import s
-from flext_ldif import c, m, p, r, t, u
+from flext_ldif import c, m, p, r, s, t, u
 from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
 
 
-# mro-wkii.17.26 (Codex): avoid the local registry service cycle in server primitives.
 class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethodsMixin):
     """Base class for ACL servers - satisfies Acl (structural typing)."""
 
@@ -19,11 +21,11 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
     server_type: Annotated[
         str,
         u.Field(
-            description="Server type identifier (e.g., 'oid', 'oud', 'openldap', 'rfc')"
+            description="Server type identifier (e.g., 'oid', 'oud', 'openldap', 'rfc')",
         ),
     ] = "rfc"
     priority: Annotated[
-        int, u.Field(description="Server priority (lower number = higher priority)")
+        int, u.Field(description="Server priority (lower number = higher priority)"),
     ] = 0
     parent_server: Annotated[
         Self | None,
@@ -45,38 +47,74 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         if _parent_server is not None:
             object.__setattr__(self, "_parent_server", _parent_server)
 
-    RFC_ACL_ATTRIBUTES: ClassVar[t.StrSequence] = c.Ldif.RFC_ACL_ATTRIBUTES
-
     def resolve_acl_attributes(self) -> t.MutableSequenceOf[str]:
-        """Get ACL attributes for this server."""
-        return list(self.RFC_ACL_ATTRIBUTES)
+        """Get ACL attributes for this server.
+
+        Returns:
+            The resulting ``t.MutableSequenceOf[str]``.
+        """
+        return list(c.Ldif.RFC_ACL_ATTRIBUTES)
 
     def matches_acl_attribute(self, attribute_name: str) -> bool:
-        """Check if attribute is ACL attribute (case-insensitive)."""
+        """Check if attribute is ACL attribute (case-insensitive).
+
+        Returns:
+            The resulting ``bool``.
+        """
         all_attrs_lower = {a.lower() for a in self.resolve_acl_attributes()}
         return attribute_name.lower() in all_attrs_lower
 
     auto_execute: ClassVar[bool] = False
 
-    # NOTE (multi-agent, mro-0ftd.3.7.2): base SSOT — protocol payload (§3.2);
-    # matches can_handle_acl (already p.X) and the override tree.
-    def can_handle(self, acl_line: str | p.Ldif.Acl) -> bool:
-        """Check if this ACL can be handled after parsing."""
-        _ = acl_line
-        return True
+    def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
+        """Check if this ACL can be handled after parsing and normalising.
 
-    def can_handle_acl(self, acl_line: str | p.Ldif.Acl) -> bool:
-        """Check if this server can handle the ACL definition."""
+        Returns:
+            The resulting ``bool``.
+        """
+        normalized = self._normalize_acl_line(acl_line)
+        if not normalized:
+            return False
+        return self.can_handle_acl(normalized)
+
+    def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
+        """Check if this server can handle the ACL definition.
+
+        Returns:
+            The resulting ``bool``.
+        """
         _ = acl_line
         return False
 
-    def can_handle_attribute(self, attribute: p.Ldif.SchemaAttribute) -> bool:
-        """Check if this ACL server should be aware of a specific attribute definition."""
+    @staticmethod
+    def _normalize_acl_line(acl_line: str | m.Ldif.Acl) -> str | None:
+        """Extract and strip the raw ACL string from any input type.
+
+        Returns:
+            The resulting ``str | None``.
+        """
+        if isinstance(acl_line, str):
+            return acl_line.strip()
+        raw_acl = getattr(acl_line, "raw_acl", None)
+        if not isinstance(raw_acl, str):
+            return None
+        return raw_acl.strip()
+
+    def can_handle_attribute(self, attribute: m.Ldif.SchemaAttribute) -> bool:
+        """Check if this ACL server should be aware of a specific attribute definition.
+
+        Returns:
+            The resulting ``bool``.
+        """
         _ = attribute
         return False
 
-    def can_handle_objectclass(self, objectclass: p.Ldif.SchemaObjectClass) -> bool:
-        """Check if this ACL server should be aware of a specific objectClass definition."""
+    def can_handle_objectclass(self, objectclass: m.Ldif.SchemaObjectClass) -> bool:
+        """Check if this ACL server should be aware of a specific objectClass definition.
+
+        Returns:
+            The resulting ``bool``.
+        """
         _ = objectclass
         return False
 
@@ -84,28 +122,36 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         self,
         original_format: str,
         extensions: t.Ldif.MetadataInputMapping | None = None,
-    ) -> p.Ldif.ServerMetadata:
-        """Create ACL server metadata."""
+    ) -> m.Ldif.ServerMetadata:
+        """Create ACL server metadata.
+
+        Returns:
+            The resulting ``m.Ldif.ServerMetadata``.
+        """
         all_extensions: t.Ldif.MutableMetadataInputMapping = {
-            "original_format": original_format
+            "original_format": original_format,
         }
         if extensions:
             all_extensions.update(extensions)
         # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: the ServerMetadata
         # boundary validates the plain mapping.
         return m.Ldif.ServerMetadata(
-            server_type=self._get_server_type(), extensions=all_extensions
+            server_type=self._get_server_type(), extensions=all_extensions,
         )
 
     @override
     def execute(
         self,
         *,
-        data: str | p.Ldif.Acl | None = None,
+        data: str | m.Ldif.Acl | None = None,
         operation: str | None = None,
         **kwargs: t.Ldif.Scalar,
     ) -> p.Result[t.Ldif.AclPayload]:
-        """Execute ACL operation with auto-detection: str→parse, Acl→write."""
+        """Execute ACL operation with auto-detection: str→parse, Acl→write.
+
+        Returns:
+            The resulting ``p.Result[t.Ldif.AclPayload]``.
+        """
         kwargs_dict: t.MutableJsonMapping = {
             key: t.json_value_adapter().validate_python(u.to_jsonable_python(value))
             for key, value in kwargs.items()
@@ -120,11 +166,15 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
     def format_acl_value(
         self,
         acl_value: str,
-        acl_metadata: p.Ldif.AclWriteMetadata,
+        acl_metadata: m.Ldif.AclWriteMetadata,
         *,
         use_original_format_as_name: bool = False,
     ) -> p.Result[str]:
-        """Format ACL value for writing, optionally using original format as name."""
+        """Format ACL value for writing, optionally using original format as name.
+
+        Returns:
+            The resulting ``p.Result[str]``.
+        """
         result: p.Result[str]
         if not use_original_format_as_name or not acl_metadata.has_original_format():
             result = r[str].ok(acl_value)
@@ -134,7 +184,7 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
                 result = r[str].ok(acl_value)
             else:
                 sanitize_result_raw: tuple[str, bool] = u.Ldif.sanitize_acl_name(
-                    original_format
+                    original_format,
                 )
                 sanitized_name, _was_sanitized = sanitize_result_raw
                 if not sanitized_name:
@@ -146,90 +196,138 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
                     else:
                         pattern, replacement_template = pattern_result.value
                         formatted_value = pattern.sub(
-                            replacement_template.format(sanitized_name), acl_value
+                            replacement_template.format(sanitized_name), acl_value,
                         )
                         result = r[str].ok(formatted_value)
         return result
 
-    def parse_server(self, value: str) -> p.Result[p.Ldif.Acl]:
-        """Parse ACL line to Acl model."""
-        parse_result = self._parse_acl(value)
-        if parse_result.failure:
-            return r[p.Ldif.Acl].fail(parse_result.error or "ACL parsing failed")
-        return r[p.Ldif.Acl].ok(parse_result.value)
+    def parse_server(self, value: str) -> p.Result[m.Ldif.Acl]:
+        """Parse ACL line to Acl model.
 
-    def write(self, acl_data: p.Ldif.Acl) -> p.Result[str]:
-        """Write Acl model to string format."""
-        return self._write_acl(u.Ldif.as_acl(acl_data))
+        Returns:
+            The resulting ``p.Result[m.Ldif.Acl]``.
+        """
+        return self._parse_acl(value)
 
+    def parse_input(self, acl_text: str) -> p.Result[m.Ldif.Acl]:
+        """Compatibility parser entrypoint for direct ACL server consumers.
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.Acl]``.
+        """
+        return self.parse_server(acl_text)
+
+    def write(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
+        """Write Acl model to string format.
+
+        Returns:
+            The resulting ``p.Result[str]``.
+        """
+        return self._write_acl(acl_data)
+
+    @staticmethod
     def _coerce_acl_data(
-        self, value: str | t.JsonValue | p.Ldif.Acl | None
-    ) -> str | p.Ldif.Acl | None:
-        """Coerce generic value to ACL payload union."""
+        value: str | t.JsonValue | m.Ldif.Acl | None,
+    ) -> str | m.Ldif.Acl | None:
+        """Coerce generic value to ACL payload union.
+
+        Returns:
+            The resulting ``str | m.Ldif.Acl | None``.
+
+        Raises:
+            ValidationError: If a ``c.ValidationError`` is caught.
+        """
         if value is None:
             return None
         if isinstance(value, str):
             return value
         try:
-            acl: p.Ldif.Acl = m.Ldif.Acl.model_validate(value)
-            return acl
+            acl: m.Ldif.Acl = m.Ldif.Acl.model_validate(value)
         except c.ValidationError as exc:
             FlextLdifServersBaseSchemaAcl._module_logger.warning(
                 "Failed to coerce value to ACL model",
                 error=str(exc),
                 error_type=type(exc).__name__,
             )
-            return None
+            raise
+        else:
+            return acl
 
-    def _coerce_operation(self, value: str) -> str | None:
-        """Coerce operation token to supported ACL operation."""
+    @staticmethod
+    def _coerce_operation(value: str) -> str | None:
+        """Coerce operation token to supported ACL operation.
+
+        Returns:
+            The resulting ``str | None``.
+        """
         if value in {"parse", "write"}:
             return value
         return None
 
-    def _detect_operation(self, operation: str | None, data: str | p.Ldif.Acl) -> str:
-        """Detect operation type from explicit param or data type."""
+    @staticmethod
+    def _detect_operation(operation: str | None, data: str | m.Ldif.Acl) -> str:
+        """Detect operation type from explicit param or data type.
+
+        Returns:
+            The resulting ``str``.
+        """
         if operation is not None and operation in {"parse", "write"}:
             return "parse" if operation == "parse" else "write"
         return "parse" if isinstance(data, str) else "write"
 
     def _execute_acl_parse(self, data: str) -> p.Result[t.Ldif.AclPayload]:
-        """Execute ACL parse operation."""
+        """Execute ACL parse operation.
+
+        Returns:
+            The resulting ``p.Result[t.Ldif.AclPayload]``.
+        """
         parse_result = self.parse_server(data)
         if parse_result.success:
             return r[t.Ldif.AclPayload].ok(parse_result.value)
         return r[t.Ldif.AclPayload].fail(parse_result.error or "Parse failed")
 
-    def _execute_acl_write(self, data: p.Ldif.Acl) -> p.Result[t.Ldif.AclPayload]:
-        """Execute ACL write operation."""
+    def _execute_acl_write(self, data: m.Ldif.Acl) -> p.Result[t.Ldif.AclPayload]:
+        """Execute ACL write operation.
+
+        Returns:
+            The resulting ``p.Result[t.Ldif.AclPayload]``.
+        """
         write_result = self.write(data)
         if write_result.success:
             return r[t.Ldif.AclPayload].ok(write_result.value)
         return r[t.Ldif.AclPayload].fail(write_result.error or "Write failed")
 
     def _execute_detected_operation(
-        self, *, detected_op: str, data: str | p.Ldif.Acl
+        self, *, detected_op: str, data: str | m.Ldif.Acl,
     ) -> p.Result[t.Ldif.AclPayload]:
-        """Execute parse/write with strongly typed dispatch."""
+        """Execute parse/write with strongly typed dispatch.
+
+        Returns:
+            The resulting ``p.Result[t.Ldif.AclPayload]``.
+        """
         if detected_op == "parse":
             if not isinstance(data, str):
                 return r[t.Ldif.AclPayload].fail(
-                    f"parse requires str, got {type(data).__name__}"
+                    f"parse requires str, got {type(data).__name__}",
                 )
             return self._execute_acl_parse(data)
         parsed_acl = self._coerce_acl_data(data)
         if parsed_acl is None or isinstance(parsed_acl, str):
             return r[t.Ldif.AclPayload].fail(
-                f"write requires Acl, got {type(data).__name__}"
+                f"write requires Acl, got {type(data).__name__}",
             )
         return self._execute_acl_write(parsed_acl)
 
     def _extract_acl_parameters(
-        self, kwargs: t.MutableJsonMapping
-    ) -> tuple[str | p.Ldif.Acl | None, str | None]:
-        """Extract and validate ACL operation parameters from kwargs."""
+        self, kwargs: t.MutableJsonMapping,
+    ) -> tuple[str | m.Ldif.Acl | None, str | None]:
+        """Extract and validate ACL operation parameters from kwargs.
+
+        Returns:
+            The resulting ``tuple[str | m.Ldif.Acl | None, str | None]``.
+        """
         data_raw = kwargs.get("data")
-        data: str | p.Ldif.Acl | None = self._coerce_acl_data(data_raw)
+        data: str | m.Ldif.Acl | None = self._coerce_acl_data(data_raw)
         operation_raw = kwargs.get("operation")
         operation = (
             self._coerce_operation(operation_raw)
@@ -239,49 +337,74 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         return (data, operation)
 
     def _get_feature_fallback(self, _feature_id: str) -> str | None:
-        """Get RFC fallback value for unsupported vendor feature."""
+        """Get RFC fallback value for unsupported vendor feature.
+
+        Returns:
+            The resulting ``str | None``.
+        """
         return None
 
-    def _hook_format_acl_name_pattern(
-        self,
-    ) -> p.Result[tuple[t.Ldif.RegexPattern, str]]:
-        """Provide server-specific ACL name pattern matching."""
+    @staticmethod
+    def _hook_format_acl_name_pattern() -> p.Result[tuple[t.Ldif.RegexPattern, str]]:
+        """Provide server-specific ACL name pattern matching.
+
+        Returns:
+            The resulting ``p.Result[tuple[t.Ldif.RegexPattern, str]]``.
+        """
         pattern = c.Ldif.ACL_NAME_QUOTED_RE
         replacement_template = 'acl "{0}"'
         return r[tuple[t.Ldif.RegexPattern, str]].ok((pattern, replacement_template))
 
-    def _hook_post_parse_acl(self, acl: p.Ldif.Acl) -> p.Result[p.Ldif.Acl]:
-        """Run hook after parsing an ACL line."""
-        return r[p.Ldif.Acl].ok(acl)
+    @staticmethod
+    def _hook_post_parse_acl(acl: m.Ldif.Acl) -> p.Result[m.Ldif.Acl]:
+        """Run hook after parsing an ACL line.
 
-    def _parse_acl(self, acl_line: str) -> p.Result[p.Ldif.Acl]:
-        """Parse server-specific ACL definition (internal, required)."""
+        Returns:
+            The resulting ``p.Result[m.Ldif.Acl]``.
+        """
+        return r[m.Ldif.Acl].ok(acl)
+
+    def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
+        """Parse server-specific ACL definition (internal, required).
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.Acl]``.
+        """
         _ = acl_line
-        return r[p.Ldif.Acl].fail("Must be implemented by subclass")
+        return r[m.Ldif.Acl].fail("Must be implemented by subclass")
 
     def _resolve_data(
-        self, data: str | p.Ldif.Acl | None, kwargs: t.JsonMapping
-    ) -> str | p.Ldif.Acl | None:
-        """Resolve data from parameter or kwargs."""
+        self, data: str | m.Ldif.Acl | None, kwargs: t.JsonMapping,
+    ) -> str | m.Ldif.Acl | None:
+        """Resolve data from parameter or kwargs.
+
+        Returns:
+            The resulting ``str | m.Ldif.Acl | None``.
+        """
         if data is not None:
             return data
         data_raw = kwargs.get("data")
         return self._coerce_acl_data(data_raw)
 
     def _resolve_operation(
-        self, operation: str | None, kwargs: t.JsonMapping
+        self, operation: str | None, kwargs: t.JsonMapping,
     ) -> str | None:
-        """Resolve operation from parameter or kwargs."""
+        """Resolve operation from parameter or kwargs.
+
+        Returns:
+            The resulting ``str | None``.
+        """
         if operation is not None:
             return operation
-        operation_raw = self._parse_operation_kwarg(kwargs).unwrap_or(None)
-        if operation_raw is None:
-            return None
-        return self._coerce_operation(operation_raw)
+        return self._parse_operation_kwarg(kwargs).unwrap()
 
     @staticmethod
     def _parse_operation_kwarg(kwargs: t.JsonMapping) -> p.Result[str]:
-        """Validate the raw 'operation' kwarg as a string, propagating failures."""
+        """Validate the raw 'operation' kwarg as a string, propagating failures.
+
+        Returns:
+            The resulting ``p.Result[str]``.
+        """
         try:
             operation_raw = t.str_adapter().validate_python(kwargs.get("operation"))
         except c.ValidationError as exc:
@@ -289,10 +412,18 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         return r[str].ok(operation_raw)
 
     def _supports_feature(self, _feature_id: str) -> bool:
-        """Check if this server supports a specific feature."""
+        """Check if this server supports a specific feature.
+
+        Returns:
+            The resulting ``bool``.
+        """
         return False
 
-    def _write_acl(self, acl_data: p.Ldif.Acl) -> p.Result[str]:
-        """Write ACL data to RFC-compliant string format (internal)."""
+    def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
+        """Write ACL data to RFC-compliant string format (internal).
+
+        Returns:
+            The resulting ``p.Result[str]``.
+        """
         _ = acl_data
         return r[str].fail("Must be implemented by subclass")

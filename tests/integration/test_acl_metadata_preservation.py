@@ -12,43 +12,62 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 from flext_tests import tm
 
 from flext_ldif import ldif
-from tests import c, p, t
+from tests import c, t
+
+if TYPE_CHECKING:
+    from tests import m, p
 
 
 class TestsFlextLdifAclMetadataPreservation:
     """Behavioral tests for OID/OUD ACL metadata preservation and round-trips."""
 
+    @staticmethod
     @pytest.fixture
-    def api(self) -> p.Ldif.Client:
-        """Provide a real LDIF client (public facade, no mocked internals)."""
+    def api() -> p.Ldif.LdifClient:
+        """Provide a real LDIF client (public facade, no mocked internals).
+
+        Returns:
+            The resulting ``p.Ldif.LdifClient``.
+        """
         return ldif()
 
     @staticmethod
-    def _extensions(entry: p.Ldif.Entry) -> t.JsonMapping:
-        """Read the entry's public metadata extensions as a plain mapping."""
+    def _extensions(entry: m.Ldif.Entry) -> t.JsonMapping:
+        """Read the entry's public metadata extensions as a plain mapping.
+
+        Returns:
+            The resulting ``t.JsonMapping``.
+        """
         metadata = entry.metadata
         assert metadata is not None
         extensions = metadata.extensions
         assert extensions is not None
         extensions_dump: t.JsonMapping = t.json_mapping_adapter().validate_python(
-            dict(extensions)
+            dict(extensions),
         )
         return extensions_dump
 
+    @staticmethod
     def _parse_single(
-        self, api: p.Ldif.Client, ldif_text: str, server_type: str
-    ) -> p.Ldif.Entry:
-        """Parse LDIF that must yield exactly one entry; assert the r[T] success."""
+        api: p.Ldif.LdifClient, ldif_text: str, server_type: str,
+    ) -> m.Ldif.Entry:
+        """Parse LDIF that must yield exactly one entry; assert the r[T] success.
+
+        Returns:
+            The resulting ``m.Ldif.Entry``.
+        """
         result = api.parse_ldif(ldif_text, server_type=server_type)
         tm.ok(result)
-        response: p.Ldif.ParseResponse = result.unwrap()
+        response: m.Ldif.ParseResponse = result.unwrap()
         entries = response.entries
         tm.that(len(entries), eq=1)
-        entry: p.Ldif.Entry = entries[0]
+        entry: m.Ldif.Entry = entries[0]
         return entry
 
     # -- OID ACL feature preservation ------------------------------------
@@ -90,9 +109,10 @@ class TestsFlextLdifAclMetadataPreservation:
     )
     def test_oid_feature_preserved_in_extensions(
         self,
-        api: p.Ldif.Client,
+        api: p.Ldif.LdifClient,
         acl_clause: str,
         extension_key: str,
+        *,
         expected: str | bool,
     ) -> None:
         """Each OID ACL feature surfaces under its extension key after parsing."""
@@ -105,7 +125,7 @@ class TestsFlextLdifAclMetadataPreservation:
         entry = self._parse_single(api, ldif_text, c.Tests.OID)
         tm.that(self._extensions(entry).get(extension_key), eq=expected)
 
-    def test_oid_all_features_preserved_together(self, api: p.Ldif.Client) -> None:
+    def test_oid_all_features_preserved_together(self, api: p.Ldif.LdifClient) -> None:
         """A single OID ACL carrying every feature preserves them all at once."""
         ldif_text = (
             "dn: cn=test,dc=example,dc=com\n"
@@ -121,7 +141,7 @@ class TestsFlextLdifAclMetadataPreservation:
         tm.that(extensions.get(c.Ldif.ACL_DENY_GROUP_OVERRIDE), eq=True)
         tm.that(extensions.get(c.Ldif.ACL_APPEND_TO_ALL), eq=True)
         tm.that(
-            extensions.get(c.Ldif.ACL_BIND_IP_FILTER), eq="orclipaddress=192.168.1.*"
+            extensions.get(c.Ldif.ACL_BIND_IP_FILTER), eq="orclipaddress=192.168.1.*",
         )
         assert (
             extensions.get(c.Ldif.ACL_CONSTRAIN_TO_ADDED_OBJECT) == "objectclass=person"
@@ -133,10 +153,10 @@ class TestsFlextLdifAclMetadataPreservation:
         ("aci", "extension_key", "expected"),
         [
             pytest.param(
-                '(targetattr="cn")(targattrfilters="add=cn:(cn=REDACTED_LDAP_BIND_PASSWORD)")'
+                '(targetattr="cn")(targattrfilters="add=cn:(cn=admin)")'
                 '(version 3.0; acl "test"; allow (read) userdn="ldap:///self";)',
                 c.Ldif.ACL_TARGETATTR_FILTERS,
-                "add=cn:(cn=REDACTED_LDAP_BIND_PASSWORD)",
+                "add=cn:(cn=admin)",
                 id="targattrfilters",
             ),
             pytest.param(
@@ -198,7 +218,7 @@ class TestsFlextLdifAclMetadataPreservation:
         ],
     )
     def test_oud_feature_preserved_in_extensions(
-        self, api: p.Ldif.Client, aci: str, extension_key: str, expected: str
+        self, api: p.Ldif.LdifClient, aci: str, extension_key: str, expected: str,
     ) -> None:
         """Each OUD ACI feature surfaces under its extension key after parsing."""
         ldif_text = (
@@ -210,11 +230,11 @@ class TestsFlextLdifAclMetadataPreservation:
         entry = self._parse_single(api, ldif_text, c.Tests.OUD)
         tm.that(self._extensions(entry).get(extension_key), eq=expected)
 
-    def test_oud_all_features_preserved_together(self, api: p.Ldif.Client) -> None:
+    def test_oud_all_features_preserved_together(self, api: p.Ldif.LdifClient) -> None:
         """A single OUD ACI carrying every feature preserves them all at once."""
         ldif_text = (
             "dn: cn=test,dc=example,dc=com\n"
-            'aci: (targetattr="cn")(targattrfilters="add=cn:(cn=REDACTED_LDAP_BIND_PASSWORD)")'
+            'aci: (targetattr="cn")(targattrfilters="add=cn:(cn=admin)")'
             '(targetcontrol="1.3.6.1.4.1.42.2.27.9.5.2")'
             '(extop="1.3.6.1.4.1.26027.1.6.1")'
             '(version 3.0; acl "test"; allow (read) userdn="ldap:///self" '
@@ -225,12 +245,9 @@ class TestsFlextLdifAclMetadataPreservation:
             "cn: test\n"
         )
         extensions = self._extensions(self._parse_single(api, ldif_text, c.Tests.OUD))
-        assert (
-            extensions.get(c.Ldif.ACL_TARGETATTR_FILTERS)
-            == "add=cn:(cn=REDACTED_LDAP_BIND_PASSWORD)"
-        )
+        assert extensions.get(c.Ldif.ACL_TARGETATTR_FILTERS) == "add=cn:(cn=admin)"
         tm.that(
-            extensions.get(c.Ldif.ACL_TARGET_CONTROL), eq="1.3.6.1.4.1.42.2.27.9.5.2"
+            extensions.get(c.Ldif.ACL_TARGET_CONTROL), eq="1.3.6.1.4.1.42.2.27.9.5.2",
         )
         tm.that(extensions.get(c.Ldif.ACL_EXTOP), eq="1.3.6.1.4.1.26027.1.6.1")
         tm.that(extensions.get(c.Ldif.ACL_BIND_IP_FILTER), eq="192.168.1.0/24")
@@ -242,7 +259,7 @@ class TestsFlextLdifAclMetadataPreservation:
 
     # -- Round-trip preservation (parse -> write -> parse) ----------------
 
-    def test_oid_acl_survives_round_trip(self, api: p.Ldif.Client) -> None:
+    def test_oid_acl_survives_round_trip(self, api: p.Ldif.LdifClient) -> None:
         """OID ACL metadata is identical after a write/re-parse round-trip."""
         original = (
             "dn: cn=test,dc=example,dc=com\n"
@@ -263,11 +280,11 @@ class TestsFlextLdifAclMetadataPreservation:
         tm.that(extensions.get(c.Ldif.ACL_BINDMODE), eq="Simple")
         tm.that(extensions.get(c.Ldif.ACL_DENY_GROUP_OVERRIDE), eq=True)
 
-    def test_oud_aci_survives_round_trip(self, api: p.Ldif.Client) -> None:
+    def test_oud_aci_survives_round_trip(self, api: p.Ldif.LdifClient) -> None:
         """OUD ACI metadata is identical after a write/re-parse round-trip."""
         original = (
             "dn: cn=test,dc=example,dc=com\n"
-            'aci: (targetattr="*")(targattrfilters="add=cn:(cn=REDACTED_LDAP_BIND_PASSWORD)")'
+            'aci: (targetattr="*")(targattrfilters="add=cn:(cn=admin)")'
             '(version 3.0; acl "test"; allow (read) userdn="ldap:///self" '
             'and ip="192.168.1.0/24";)\n'
             "objectClass: person\n"
@@ -282,8 +299,5 @@ class TestsFlextLdifAclMetadataPreservation:
 
         reparsed = self._parse_single(api, written, c.Tests.OUD)
         extensions = self._extensions(reparsed)
-        assert (
-            extensions.get(c.Ldif.ACL_TARGETATTR_FILTERS)
-            == "add=cn:(cn=REDACTED_LDAP_BIND_PASSWORD)"
-        )
+        assert extensions.get(c.Ldif.ACL_TARGETATTR_FILTERS) == "add=cn:(cn=admin)"
         tm.that(extensions.get(c.Ldif.ACL_BIND_IP_FILTER), eq="192.168.1.0/24")

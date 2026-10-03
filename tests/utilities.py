@@ -1,50 +1,142 @@
-"""Test utilities facade with shared helper re-exports."""
+"""Test utilities facade with shared helper re-exports.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
+import importlib
 import os
 import uuid
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, Final, overload
 
-from flext_ldap import FlextLdapUtilities, u
+import pytest
 from flext_tests import FlextTestsUtilities, tk, tm
-from flext_tests._utilities.fixtures_dsl import FlextTestsFixturesDSLMixin
 
-# mro-0ftd.3.6: the utility facade follows the finite local c/t/p/m dependency DAG.
+from flext_ldif import FlextLdifUtilities, u
 from tests import c, m, p, t
 
 if TYPE_CHECKING:
     from collections.abc import Callable, MutableMapping
+    from types import ModuleType
 
 
 class TestsFlextLdifUtilities(FlextTestsUtilities, u):
     """Project test utility namespace extension."""
 
-    class Tests(FlextTestsFixturesDSLMixin, FlextTestsUtilities.Tests):
+    # The real-directory tests drive a live LDAP server through the FLEXT LDAP
+    # client, but that client is built ON TOP of flext-ldif: declaring it here
+    # would invert the layer and close a dependency cycle, so it can never belong
+    # to this project's dependency set. It is therefore resolved dynamically and
+    # every test that needs it skips explicitly when it is absent — which is the
+    # case for any standalone checkout, CI included.
+    _LDAP_CLIENT_MODULE: Final[str] = "flext_ldap"
+
+    _LDAP_ENTRY_ADAPTER_MODULE: Final[str] = "flext_ldap.adapters.entry"
+
+    _LDAP_CLIENT_MISSING_REASON: Final[str] = (
+        f"LDAP client {_LDAP_CLIENT_MODULE!r} is unavailable: it depends on"
+        " flext-ldif and cannot be a dependency of it, so real-directory tests"
+        " only run in a workspace checkout that provides the client."
+    )
+
+    @staticmethod
+    def _import_optional(module_name: str) -> ModuleType | None:
+        """Import an optional module, returning None when it is not installed.
+
+        Returns:
+            The resulting ``ModuleType | None``.
+        """
+        return importlib.import_module(module_name)
+
+    class Tests(FlextTestsUtilities.Tests):
         """Flat test utility namespace for flext-ldif."""
 
-        Docker = tk
-        LdapConnectionLike = p.Ldap.Ldap3Connection
-        LdapEntryLike = p.Ldap.Ldap3Entry
-
-        logger: ClassVar[p.Logger] = FlextLdapUtilities.fetch_logger(__name__)
+        logger: ClassVar[p.Logger] = FlextLdifUtilities.fetch_logger(__name__)
         _resolved_admin_credentials: ClassVar[list[tuple[str, str] | None]] = [None]
         _FIXTURES_ROOT: ClassVar[Path] = c.Tests.FIXTURES_DIR
         _FILE_EXTENSION: ClassVar[str] = ".ldif"
         _fixture_metadata_cache: ClassVar[
-            MutableMapping[Path, p.Tests.FixtureMetadata]
+            MutableMapping[Path, m.Tests.FixtureMetadata]
         ] = {}
-        FileLock = FlextTestsUtilities.Tests.FileLock
 
         @staticmethod
-        def create_server_from_url(
-            server_url: str, *, get_info: c.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.ALL
-        ) -> p.Ldap.Ldap3Server:
-            """Create an LDAP server from a URL for test connectivity checks."""
-            return FlextLdapUtilities.Ldap.create_server_from_url(
-                server_url, get_info=get_info
+        def ldap_client_available() -> bool:
+            """Whether the optional LDAP client is importable.
+
+            Returns:
+                The resulting ``bool``.
+            """
+            return (
+                TestsFlextLdifUtilities._import_optional(
+                    TestsFlextLdifUtilities._LDAP_CLIENT_MODULE
+                )
+                is not None
             )
+
+        @staticmethod
+        def require_ldap_client() -> ModuleType:
+            """Return the LDAP client module, skipping when it is unavailable."""
+            module = TestsFlextLdifUtilities._import_optional(
+                TestsFlextLdifUtilities._LDAP_CLIENT_MODULE
+            )
+            if module is None:
+                pytest.skip(TestsFlextLdifUtilities._LDAP_CLIENT_MISSING_REASON)
+            return module
+
+        @staticmethod
+        def create_ldap_entry_adapter() -> p.Ldap.Ldap3EntryAdapter:
+            """Return an ldap3-to-LDIF entry adapter, skipping when unavailable."""
+            module = TestsFlextLdifUtilities._import_optional(
+                TestsFlextLdifUtilities._LDAP_ENTRY_ADAPTER_MODULE
+            )
+            if module is None:
+                pytest.skip(TestsFlextLdifUtilities._LDAP_CLIENT_MISSING_REASON)
+            adapter: p.Ldap.Ldap3EntryAdapter = module.FlextLdapEntryAdapter()
+            return adapter
+
+        @staticmethod
+        def ldap_connectivity_errors() -> tuple[type[BaseException], ...]:
+            """Exception types signalling that the LDAP server is unreachable.
+
+            Returns:
+                The resulting ``tuple[type[BaseException], ...]``.
+            """
+            transport: tuple[type[BaseException], ...] = (
+                ConnectionError,
+                TimeoutError,
+                OSError,
+            )
+            module = TestsFlextLdifUtilities._import_optional(
+                TestsFlextLdifUtilities._LDAP_CLIENT_MODULE
+            )
+            if module is None:
+                return transport
+            protocol_error: type[BaseException] = module.t.Ldap.LDAPException
+            return (protocol_error, *transport)
+
+        @classmethod
+        def create_server_from_url(
+            cls,
+            server_url: str,
+            *,
+            get_info: c.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.ALL,
+        ) -> p.Ldap.Ldap3Server:
+            """Create an LDAP server from a URL for test connectivity checks.
+
+            Returns:
+                The resulting ``p.Ldap.Ldap3Server``.
+            """
+            client = cls.require_ldap_client()
+            server: p.Ldap.Ldap3Server = (
+                client.FlextLdapUtilities.Ldap.create_server_from_url(
+                    server_url,
+                    get_info=get_info,
+                )
+            )
+            return server
 
         @classmethod
         def create_bare_server(
@@ -54,13 +146,19 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             port: int = c.Tests.DOCKER_PORT,
             get_info: c.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.NO_INFO,
         ) -> p.Ldap.Ldap3Server:
-            """Create a minimal LDAP server for connectivity checks."""
+            """Create a minimal LDAP server for connectivity checks.
+
+            Returns:
+                The resulting ``p.Ldap.Ldap3Server``.
+            """
             return cls.create_server_from_url(
-                f"ldap://{host}:{port}", get_info=get_info
+                f"ldap://{host}:{port}",
+                get_info=get_info,
             )
 
-        @staticmethod
+        @classmethod
         def create_connection(
+            cls,
             server: p.Ldap.Ldap3Server,
             *,
             user: str,
@@ -68,26 +166,40 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             auto_bind: bool = True,
             receive_timeout: int | None = None,
         ) -> p.Ldap.Ldap3Connection:
-            """Create an LDAP connection for test workflows."""
+            """Create an LDAP connection for test workflows.
+
+            Returns:
+                The resulting ``p.Ldap.Ldap3Connection``.
+            """
+            create = cls.require_ldap_client().FlextLdapUtilities.Ldap.create_connection
             if receive_timeout is None:
-                return FlextLdapUtilities.Ldap.create_connection(
-                    server, user=user, password=password, auto_bind=auto_bind
+                connection: p.Ldap.Ldap3Connection = create(
+                    server,
+                    user=user,
+                    password=password,
+                    auto_bind=auto_bind,
                 )
-            return FlextLdapUtilities.Ldap.create_connection(
+                return connection
+            timed_connection: p.Ldap.Ldap3Connection = create(
                 server,
                 user=user,
                 password=password,
                 auto_bind=auto_bind,
                 receive_timeout=receive_timeout,
             )
+            return timed_connection
 
         @staticmethod
         def create_real_entry(
             dn: str | None = None,
             attributes: t.MappingKV[str, t.StrSequence] | None = None,
             server_type: str = "generic",
-        ) -> p.Ldif.Entry:
-            """Create a real Entry model with valid data."""
+        ) -> m.Ldif.Entry:
+            """Create a real Entry model with valid data.
+
+            Returns:
+                The resulting ``m.Ldif.Entry``.
+            """
             entry_id = uuid.uuid4().hex[:8]
             payload_attrs = attributes or {
                 "cn": [f"test-{entry_id}"],
@@ -95,20 +207,46 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                 "mail": [f"test-{entry_id}@example.com"],
                 "objectClass": ["person", "organizationalPerson", "inetOrgPerson"],
             }
-            entry: p.Ldif.Entry = m.Ldif.Entry.model_validate({
+            entry: m.Ldif.Entry = m.Ldif.Entry.model_validate({
                 "dn": {"value": dn or f"cn=test-{entry_id},ou=users,dc=example,dc=com"},
                 "attributes": {
-                    "attributes": {k: list(v) for k, v in payload_attrs.items()}
+                    "attributes": {k: list(v) for k, v in payload_attrs.items()},
                 },
                 "server_type": server_type,
             })
             return entry
 
+        @classmethod
+        def orclaci_base_dn_entry(cls, dn: str = "cn=users,dc=ctbc") -> m.Ldif.Entry:
+            """Build a real LDIF entry carrying an out-of-scope OID orclaci for base-DN filter tests.
+
+            Returns:
+                The resulting ``m.Ldif.Entry``.
+            """
+            return cls.create_real_entry(
+                dn=dn,
+                attributes={
+                    "objectClass": ["top"],
+                    "orclaci": [
+                        (
+                            'access to entry by group="cn=x,dc=other" (browse) '
+                            'by group="cn=a,dc=ctbc" (browse)'
+                        ),
+                    ],
+                },
+            )
+
         @staticmethod
         def create_real_ldif_content(
-            entries_count: int = 3, *, include_schema: bool = False
+            entries_count: int = 3,
+            *,
+            include_schema: bool = False,
         ) -> str:
-            """Create real LDIF content for testing."""
+            """Create real LDIF content for testing.
+
+            Returns:
+                The resulting ``str``.
+            """
             blocks: list[str] = []
             if include_schema:
                 blocks.append(
@@ -117,7 +255,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                     "objectClass: ldapSubentry\n"
                     "objectClass: subschema\n"
                     "\n"
-                    "attributeTypes: ( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )\n"
+                    "attributeTypes: ( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )\n",
                 )
             for index in range(entries_count):
                 entry_id = uuid.uuid4().hex[:8]
@@ -128,13 +266,17 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                     "objectClass: inetOrgPerson\n"
                     f"cn: User {entry_id}\n"
                     f"sn: Test{index}\n"
-                    f"mail: user{entry_id}@example.com\n"
+                    f"mail: user{entry_id}@example.com\n",
                 )
             return "\n".join(blocks)
 
         @staticmethod
-        def parametrize_real_data() -> t.SequenceOf[p.Tests.LdifTestData]:
-            """Generate parametrized test data for comprehensive coverage."""
+        def parametrize_real_data() -> t.SequenceOf[m.Tests.LdifTestData]:
+            """Generate parametrized test data for comprehensive coverage.
+
+            Returns:
+                The resulting ``t.SequenceOf[m.Tests.LdifTestData]``.
+            """
             return [
                 m.Tests.LdifTestData(
                     id=f"entry_{server_type}",
@@ -150,8 +292,10 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
 
         @classmethod
         def fixture_metadata(
-            cls, server_type: t.Tests.FixtureServer, fixture_type: t.Tests.FixtureKind
-        ) -> p.Tests.FixtureMetadata:
+            cls,
+            server_type: t.Tests.FixtureServer,
+            fixture_type: t.Tests.FixtureKind,
+        ) -> m.Tests.FixtureMetadata:
             """Return metadata for one fixture file (cached per file path)."""
             file_path = cls.path(server_type, fixture_type)
             cached = cls._fixture_metadata_cache.get(file_path)
@@ -171,16 +315,20 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             return metadata
 
         @classmethod
-        def get_docker_control(cls, worker_id: str = "master") -> tk:
-            """Create Docker test infrastructure controller."""
+        def get_docker_control(cls) -> tk:
+            """Create Docker test infrastructure controller.
+
+            Returns:
+                The resulting ``tk``.
+            """
             compose_file = Path(
                 str(
                     c.Tests.SHARED_CONTAINERS[c.Tests.DOCKER_CONTAINER_NAME][
                         "compose_file"
-                    ]
-                )
+                    ],
+                ),
             )
-            workspace_root = next(
+            repository_root = next(
                 (
                     candidate
                     for candidate in (
@@ -193,13 +341,16 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             )
             return tk.shared(
                 c.Tests.DOCKER_CONTAINER_NAME,
-                workspace_root=workspace_root,
-                worker_id=worker_id,
+                repository_root=repository_root,
             )
 
         @classmethod
         def get_admin_credentials(cls) -> tuple[str, str]:
-            """Resolve LDAP admin credentials, preferring a working pair."""
+            """Resolve LDAP admin credentials, preferring a working pair.
+
+            Returns:
+                The resulting ``tuple[str, str]``.
+            """
             cache = cls._resolved_admin_credentials
             cached = cache[0]
             if cached is not None:
@@ -208,12 +359,16 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             env_password = os.getenv("FLEXT_LDAP_BIND_PASSWORD")
             candidates: list[tuple[str, str]] = [
                 *([(env_dn, env_password)] if env_dn and env_password else []),
-                (c.Tests.DOCKER_ADMIN_DN, c.Tests.DOCKER_ADMIN_PASSWORD),
-                (c.Tests.DOCKER_LEGACY_ADMIN_DN, c.Tests.DOCKER_LEGACY_ADMIN_PASSWORD),
+                (c.Tests.DOCKER_ADMIN_DN, c.Tests.DOCKER_ADMIN_CREDENTIAL),
+                (
+                    c.Tests.DOCKER_LEGACY_ADMIN_DN,
+                    c.Tests.DOCKER_LEGACY_ADMIN_CREDENTIAL,
+                ),
             ]
             for candidate_dn, candidate_password in candidates:
                 credentials = cls._probe_admin_credentials(
-                    candidate_dn, candidate_password
+                    candidate_dn,
+                    candidate_password,
                 )
                 if credentials is None:
                     continue
@@ -221,38 +376,64 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                 return credentials
             default_credentials = (
                 c.Tests.DOCKER_ADMIN_DN,
-                c.Tests.DOCKER_ADMIN_PASSWORD,
+                c.Tests.DOCKER_ADMIN_CREDENTIAL,
             )
             cache[0] = default_credentials
             return default_credentials
 
         @classmethod
         def _probe_admin_credentials(
-            cls, candidate_dn: str, candidate_password: str
+            cls,
+            candidate_dn: str,
+            candidate_password: str,
         ) -> tuple[str, str] | None:
             """Return candidate credentials when LDAP bind succeeds."""
-            try:
-                server = cls.create_bare_server(
-                    "localhost",
-                    port=c.Tests.DOCKER_PORT,
-                    get_info=c.Ldap.Ldap3GetInfo.NO_INFO,
-                )
-                connection = cls.create_connection(
-                    server,
-                    user=candidate_dn,
-                    password=candidate_password,
-                    auto_bind=True,
-                    receive_timeout=1,
-                )
-                if connection.bound:
-                    connection.unbind()
-                    return (candidate_dn, candidate_password)
-                return None
-            except (ConnectionError, OSError, ValueError, t.Ldap.LDAPException):
-                return None
+            server = cls.create_bare_server(
+                "localhost",
+                port=c.Tests.DOCKER_PORT,
+                get_info=c.Ldap.Ldap3GetInfo.NO_INFO,
+            )
+            connection = cls.create_connection(
+                server,
+                user=candidate_dn,
+                password=candidate_password,
+                auto_bind=True,
+                receive_timeout=1,
+            )
+            bound: bool = connection.bound
+            if bound:
+                connection.unbind()
+            if bound:
+                return (candidate_dn, candidate_password)
+            return None
 
         @staticmethod
+        def _assert_field_eq(
+            value: object,
+            field: str,
+            expected: object,
+            label: str,
+        ) -> None:
+            """Assert ``getattr(value, field) == expected`` with consistent diagnostic.
+
+            Raises:
+                AssertionError: If Expected.
+            """
+            if expected is None:
+                return
+            actual = getattr(value, field, None)
+            if isinstance(expected, list) and actual is not None:
+                if list(actual) != list(expected):
+                    msg = f"Expected {label} {expected}, got {actual}"
+                    raise AssertionError(msg)
+                return
+            if actual != expected:
+                msg = f"Expected {label} '{expected}', got {actual}"
+                raise AssertionError(msg)
+
+        @classmethod
         def assert_server_schema_parse_and_properties(
+            cls,
             server: p.Ldif.SchemaServer,
             schema_def: str,
             *,
@@ -266,8 +447,12 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             expected_sup: str | None = None,
             expected_must: t.StrSequence | None = None,
             expected_may: t.StrSequence | None = None,
-        ) -> p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass:
-            """Parse schema content and assert the expected properties."""
+        ) -> m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass:
+            """Parse schema content and assert the expected properties.
+
+            Returns:
+                The resulting ``m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass``.
+            """
             is_objectclass = any(
                 kind in schema_def
                 for kind in (
@@ -276,47 +461,134 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                     c.Tests.SCHEMA_ABSTRACT,
                 )
             )
+            value_raw: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass = tm.ok(
+                server.parse_objectclass(schema_def)
+                if is_objectclass
+                else server.parse_attribute(schema_def),
+            )
+            value: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass
             if is_objectclass:
-                result = server.parse_objectclass(schema_def)
-                tm.ok(result)
-                value = result.unwrap()
-                # mro-0ftd.3.6.1: narrow the protocol result through its source model.
-                if not isinstance(value, m.Ldif.SchemaObjectClass):
-                    msg = "Schema parser did not return an objectClass model"
-                    raise AssertionError(msg)
-                if expected_oid is not None:
-                    tm.that(value.oid, eq=expected_oid)
-                if expected_name is not None:
-                    tm.that(value.name, eq=expected_name)
-                if expected_desc is not None:
-                    tm.that(value.desc, eq=expected_desc)
-                if expected_kind is not None:
-                    tm.that(value.kind, eq=expected_kind)
-                if expected_sup is not None:
-                    tm.that(value.sup, eq=expected_sup)
-                if expected_must is not None:
-                    tm.that(value.must, eq=list(expected_must))
-                if expected_may is not None:
-                    tm.that(value.may, eq=list(expected_may))
+                value = m.Ldif.SchemaObjectClass.model_validate(value_raw)
+            else:
+                value = m.Ldif.SchemaAttribute.model_validate(value_raw)
+            common_checks: tuple[tuple[str, object, str], ...] = (
+                ("oid", expected_oid, "OID"),
+                ("name", expected_name, "NAME"),
+                ("desc", expected_desc, "DESC"),
+            )
+            for field, expected, label in common_checks:
+                cls._assert_field_eq(value, field, expected, label)
+            if isinstance(value, m.Ldif.SchemaAttribute):
+                attr_checks: tuple[tuple[str, object, str], ...] = (
+                    ("syntax", expected_syntax, "SYNTAX"),
+                    ("single_value", expected_single_value, "SINGLE-VALUE"),
+                    ("length", expected_length, "length"),
+                )
+                for field, expected, label in attr_checks:
+                    cls._assert_field_eq(value, field, expected, label)
                 return value
-            result = server.parse_attribute(schema_def)
-            tm.ok(result)
-            value = result.unwrap()
-            if not isinstance(value, m.Ldif.SchemaAttribute):
-                msg = "Schema parser did not return an attribute model"
+            oc_checks: tuple[tuple[str, object, str], ...] = (
+                ("kind", expected_kind, "KIND"),
+                ("sup", expected_sup, "SUP"),
+                (
+                    "must",
+                    list(expected_must) if expected_must is not None else None,
+                    "MUST",
+                ),
+                (
+                    "may",
+                    list(expected_may) if expected_may is not None else None,
+                    "MAY",
+                ),
+            )
+            for field, expected, label in oc_checks:
+                cls._assert_field_eq(value, field, expected, label)
+            return value
+
+        _PARSE_DISPATCH: ClassVar[t.MappingKV[t.Tests.ParseMethod, str]] = {
+            "parse_attribute": "parse_attribute",
+            "parse_objectclass": "parse_objectclass",
+            "parse_input": "parse_input",
+        }
+
+        @overload
+        @classmethod
+        def server_parse_and_unwrap[
+            SchemaNodeT: (m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass, m.Ldif.Acl),
+        ](
+            cls,
+            server: p.Ldif.SchemaServer | p.Tests.ParseInputServer,
+            content: str,
+            *,
+            parse_method: t.Tests.ParseMethod = ...,
+            expected_type: type[SchemaNodeT],
+            should_succeed: bool | None = ...,
+            message: str | None = ...,
+        ) -> SchemaNodeT | None: ...
+        @overload
+        @classmethod
+        def server_parse_and_unwrap(
+            cls,
+            server: p.Ldif.SchemaServer | p.Tests.ParseInputServer,
+            content: str,
+            *,
+            parse_method: t.Tests.ParseMethod = ...,
+            expected_type: None = ...,
+            should_succeed: bool | None = ...,
+            message: str | None = ...,
+        ) -> m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl | None: ...
+        @classmethod
+        def server_parse_and_unwrap(
+            cls,
+            server: p.Ldif.SchemaServer | p.Tests.ParseInputServer,
+            content: str,
+            *,
+            parse_method: t.Tests.ParseMethod = "parse_server",
+            expected_type: (
+                type[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl]
+                | None
+            ) = None,
+            should_succeed: bool | None = None,
+            message: str | None = None,
+        ) -> m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl | None:
+            """Parse content with a server and unwrap the typed result.
+
+            Returns:
+                The resulting ``m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass |
+                    m.Ldif.Acl | None``.
+
+            Raises:
+                AssertionError: If ``method_name is None or not isinstance(server,
+                    p.Ldif.SchemaServer)``; or if ``result.failure``; or if Expected; or
+                    if ``result.success``.
+            """
+            method_name = cls._PARSE_DISPATCH.get(parse_method)
+            if method_name is None or not isinstance(server, p.Ldif.SchemaServer):
+                msg = f"{parse_method} is not supported by this server"
                 raise AssertionError(msg)
-            if expected_oid is not None:
-                tm.that(value.oid, eq=expected_oid)
-            if expected_name is not None:
-                tm.that(value.name, eq=expected_name)
-            if expected_desc is not None:
-                tm.that(value.desc, eq=expected_desc)
-            if expected_syntax is not None:
-                tm.that(value.syntax, eq=expected_syntax)
-            if expected_single_value is not None:
-                tm.that(value.single_value, eq=expected_single_value)
-            if expected_length is not None:
-                tm.that(value.length, eq=expected_length)
+            method: Callable[
+                [str],
+                p.Result[
+                    m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
+                ],
+            ] = getattr(server, method_name)
+            result = method(content)
+            if should_succeed is False:
+                if result.success:
+                    raise AssertionError(
+                        message or "Expected failure but parse succeeded",
+                    )
+                return None
+            if result.failure:
+                raise AssertionError(
+                    message or f"Expected success but parse failed: {result.error}",
+                )
+            value = result.value
+            if expected_type is not None and not isinstance(value, expected_type):
+                msg_0 = f"Expected {expected_type.__name__}, got {type(value).__name__}"
+                raise AssertionError(msg_0)
+            # `method` is typed to return exactly these three models, so the
+            # isinstance narrowing above is total and no fallthrough exists.
             return value
 
         @staticmethod
@@ -324,37 +596,47 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             server: p.Tests.ParseAclServer,
             content: str,
             *,
-            expected_type: type[p.Ldif.Acl] | None = None,
+            expected_type: type[m.Ldif.Acl] | None = None,
             should_succeed: bool | None = None,
             message: str | None = None,
-        ) -> p.Ldif.Acl | None:
-            """Parse ACL content and unwrap the resulting model."""
+        ) -> m.Ldif.Acl | None:
+            """Parse ACL content and unwrap the resulting model.
+
+            Returns:
+                The resulting ``m.Ldif.Acl | None``.
+
+            Raises:
+                AssertionError: If ``result.failure``; or if Expected; or if
+                    ``result.success``.
+            """
             result = server.parse_server(content)
             if should_succeed is False:
                 if result.success:
                     raise AssertionError(
-                        message or "Expected failure but parse succeeded"
+                        message or "Expected failure but parse succeeded",
                     )
                 return None
             if result.failure:
                 raise AssertionError(
-                    message or f"Expected success but parse failed: {result.error}"
+                    message or f"Expected success but parse failed: {result.error}",
                 )
-            value: p.Ldif.Acl = result.unwrap()
+            value: m.Ldif.Acl = result.unwrap()
             if expected_type is not None and not isinstance(value, expected_type):
-                raise AssertionError(
-                    f"Expected {expected_type.__name__}, got {type(value).__name__}"
-                )
+                msg = f"Expected {expected_type.__name__}, got {type(value).__name__}"
+                raise AssertionError(msg)
             return value
 
         @staticmethod
         def _assert_must_contain(serialized: str, must_contain: t.StrSequence) -> None:
-            """Assert every fragment in ``must_contain`` appears in ``serialized``."""
+            """Assert every fragment in ``must_contain`` appears in ``serialized``.
+
+            Raises:
+                AssertionError: If ``fragment not in serialized``.
+            """
             for fragment in must_contain:
                 if fragment not in serialized:
-                    raise AssertionError(
-                        f"'{fragment}' not found in output: {serialized[:200]}..."
-                    )
+                    msg = f"'{fragment}' not found in output: {serialized[:200]}..."
+                    raise AssertionError(msg)
 
         @classmethod
         def server_write_and_unwrap(
@@ -362,15 +644,25 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             server: p.Tests.WriteAttributeServer
             | p.Tests.WriteObjectClassServer
             | p.Tests.WriteAclServer,
-            data: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | p.Ldif.Acl,
+            data: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl,
             *,
             write_method: t.Tests.WriteMethod = "write",
             must_contain: t.StrSequence | None = None,
             message: str | None = None,
         ) -> str:
-            """Write content with a server and unwrap the serialized output."""
+            """Write content with a server and unwrap the serialized output.
+
+            Returns:
+                The resulting ``str``.
+
+            Raises:
+                AssertionError: If ``entry is None``; or if ``result.failure``.
+                TypeError: If ``not isinstance(server, server_proto)``; or if ``not
+                    isinstance(data, data_cls)``.
+            """
             dispatch: t.MappingKV[
-                t.Tests.WriteMethod, tuple[type, type[p.BaseModel]]
+                t.Tests.WriteMethod,
+                tuple[type, type[m.BaseModel]],
             ] = {
                 "_write_attribute": (
                     p.Tests.WriteAttributeServer,
@@ -384,14 +676,25 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             }
             entry = dispatch.get(write_method)
             if entry is None:
-                raise AssertionError(f"{write_method} is not supported by this server")
+                msg = f"{write_method} is not supported by this server"
+                raise AssertionError(msg)
+            # Why: widen from the dict's per-key literal tuple type so the
+            # isinstance guards below stay a real runtime check (write_method
+            # is caller-supplied and can mismatch server/data at runtime)
+            # rather than a statically-tautological one (pyright
+            # reportUnnecessaryIsInstance).
+            server_proto: type
+            data_cls: type
             server_proto, data_cls = entry
             if not isinstance(server, server_proto):
-                raise AssertionError(f"{write_method} is not supported by this server")
+                msg = f"{write_method} is not supported by this server"
+                raise TypeError(msg)
             if not isinstance(data, data_cls):
-                raise AssertionError(f"{write_method} requires a {data_cls.__name__}")
-            method: Callable[[p.BaseModel], p.Result[str]] = getattr(
-                server, write_method
+                msg = f"{write_method} requires a {data_cls.__name__}"
+                raise TypeError(msg)
+            method: Callable[[m.BaseModel], p.Result[str]] = getattr(
+                server,
+                write_method,
             )
             result = method(data)
             if result.failure:
@@ -405,12 +708,19 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
         def acl_write_and_unwrap(
             cls,
             server: p.Tests.WriteAclContentServer,
-            data: p.Ldif.Acl,
+            data: m.Ldif.Acl,
             *,
             must_contain: t.StrSequence | None = None,
             message: str | None = None,
         ) -> str:
-            """Write ACL content and unwrap the serialized output."""
+            """Write ACL content and unwrap the serialized output.
+
+            Returns:
+                The resulting ``str``.
+
+            Raises:
+                AssertionError: If ``result.failure``.
+            """
             result = server.write(data)
             if result.failure:
                 raise AssertionError(message or f"Write failed: {result.error}")

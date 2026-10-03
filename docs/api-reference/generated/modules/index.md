@@ -1,11 +1,18 @@
-<!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
-
 # flext-ldif Module Index
+
+<!-- TOC START -->
+
+- No sections found
+
+<!-- TOC END -->
+
+<!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
 
 These pages are generated from public modules and their docstrings.
 
 - [flext_ldif.api](api.md)
 - [flext_ldif.base](base.md)
+- [flext_ldif.cli](cli.md)
 - [flext_ldif.constants](constants.md)
 - [flext_ldif.models](models.md)
 - [flext_ldif.protocols](protocols.md)

@@ -3,7 +3,7 @@
 Exercises the PUBLIC contract of
 :class:`flext_ldif.servers._oid.acl_convert.FlextLdifServersOidAclConvert`:
 
-* ``parse_oid_acl_line`` returns ``r[p.Ldif.OidAclRule]`` — success carries the
+* ``parse_oid_acl_line`` returns ``r[m.Ldif.OidAclRule]`` — success carries the
   typed rule, malformation surfaces as a failure with a descriptive error.
 * ``parse_subject`` maps one ``by <subject> (perms)`` clause to a typed
   ``m.Ldif.OidAclSubject`` value object.
@@ -11,15 +11,23 @@ Exercises the PUBLIC contract of
   recognition.
 
 All assertions target observable return values / public model state only.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import tm
 
 from flext_ldif import m
-from flext_ldif.servers._oid.acl_convert import FlextLdifServersOidAclConvert as Parser
+from flext_ldif.servers.oid import FlextLdifServersOidAclConvert as Parser
+
+if TYPE_CHECKING:
+    from tests import t
 
 _DN: str = "dc=ctbc"
 
@@ -31,13 +39,15 @@ class TestsFlextLdifOidAclConvert:
     # parse_oid_acl_line — full-line success behavior
     # ------------------------------------------------------------------ #
 
-    def test_entry_rule_exposes_ordered_typed_subjects(self) -> None:
+    @staticmethod
+    def test_entry_rule_exposes_ordered_typed_subjects() -> None:
+        """Test entry rule exposes ordered typed subjects."""
         line = (
             'orclaci: access to entry by group="cn=admins,dc=ctbc" '
             "(browse,add,delete) by * (browse,noadd,nodelete)"
         )
 
-        rule = tm.ok(Parser.parse_oid_acl_line(_DN, line))
+        rule: m.Ldif.OidAclRule = tm.ok(Parser.parse_oid_acl_line(_DN, line))
 
         tm.that(rule.dn, eq=_DN)
         tm.that(rule.acl_type, eq="orclaci")
@@ -52,13 +62,16 @@ class TestsFlextLdifOidAclConvert:
         tm.that(rule.subjects[1].value, eq="anyone")
         tm.that(rule.subjects[1].permissions, eq=("browse", "noadd", "nodelete"))
 
-    def test_rule_preserves_raw_line_for_round_trip(self) -> None:
+    @staticmethod
+    def test_rule_preserves_raw_line_for_round_trip() -> None:
+        """Test rule preserves raw line for round trip."""
         line = "orclaci: access to entry by * (browse)"
 
-        rule = tm.ok(Parser.parse_oid_acl_line(_DN, line))
+        rule: m.Ldif.OidAclRule = tm.ok(Parser.parse_oid_acl_line(_DN, line))
 
         tm.that(rule.raw_line, eq=line)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("content", "expected_type", "expected_attrs"),
         [
@@ -72,30 +85,37 @@ class TestsFlextLdifOidAclConvert:
         ],
     )
     def test_target_clause_shapes_map_to_public_target_fields(
-        self, content: str, expected_type: str, expected_attrs: str
+        content: str, expected_type: str, expected_attrs: str,
     ) -> None:
-        rule = tm.ok(Parser.parse_oid_acl_line(_DN, f"orclaci: access to {content}"))
+        """Test target clause shapes map to public target fields."""
+        rule: m.Ldif.OidAclRule = tm.ok(
+            Parser.parse_oid_acl_line(_DN, f"orclaci: access to {content}"),
+        )
 
         tm.that(rule.target_type, eq=expected_type)
         tm.that(rule.target_attrs, eq=expected_attrs)
 
-    def test_filter_clause_is_extracted_via_balanced_paren_scan(self) -> None:
+    @staticmethod
+    def test_filter_clause_is_extracted_via_balanced_paren_scan() -> None:
+        """Test filter clause is extracted via balanced paren scan."""
         line = (
             "orclaci: access to attr=(userpassword) "
             "filter=(objectclass=person) by self (read,write)"
         )
 
-        rule = tm.ok(Parser.parse_oid_acl_line(_DN, line))
+        rule: m.Ldif.OidAclRule = tm.ok(Parser.parse_oid_acl_line(_DN, line))
 
         tm.that(rule.target_filter, eq="objectclass=person")
         tm.that(rule.subjects[0].subject_type, eq="self")
         tm.that(rule.subjects[0].value, eq="self")
         tm.that(rule.subjects[0].permissions, eq=("read", "write"))
 
-    def test_orclentrylevelaci_line_records_its_acl_type(self) -> None:
+    @staticmethod
+    def test_orclentrylevelaci_line_records_its_acl_type() -> None:
+        """Test orclentrylevelaci line records its acl type."""
         line = "orclentrylevelaci: access to entry by dnattr=(manager) (browse)"
 
-        rule = tm.ok(Parser.parse_oid_acl_line(_DN, line))
+        rule: m.Ldif.OidAclRule = tm.ok(Parser.parse_oid_acl_line(_DN, line))
 
         tm.that(rule.acl_type, eq="orclentrylevelaci")
         tm.that(rule.subjects[0].subject_type, eq="dnattr")
@@ -105,6 +125,7 @@ class TestsFlextLdifOidAclConvert:
     # parse_oid_acl_line — malformation surfaces as descriptive failure
     # ------------------------------------------------------------------ #
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("line", "error_fragment"),
         [
@@ -119,8 +140,9 @@ class TestsFlextLdifOidAclConvert:
         ],
     )
     def test_malformed_line_fails_with_descriptive_error(
-        self, line: str, error_fragment: str
+        line: str, error_fragment: str,
     ) -> None:
+        """Test malformed line fails with descriptive error."""
         result = Parser.parse_oid_acl_line(_DN, line)
 
         tm.that(result.failure, eq=True)
@@ -130,6 +152,7 @@ class TestsFlextLdifOidAclConvert:
     # parse_subject — one by-clause to a typed subject value object
     # ------------------------------------------------------------------ #
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("clause", "subject_type", "value", "permissions"),
         [
@@ -155,24 +178,32 @@ class TestsFlextLdifOidAclConvert:
         ],
     )
     def test_subject_clause_maps_to_typed_subject(
-        self, clause: str, subject_type: str, value: str, permissions: tuple[str, ...]
+        clause: str,
+        subject_type: str,
+        value: str,
+        permissions: t.VariadicTuple[str],
     ) -> None:
+        """Test subject clause maps to typed subject."""
         subject = Parser.parse_subject(clause)
 
         tm.that(subject.subject_type, eq=subject_type)
         tm.that(subject.value, eq=value)
         tm.that(subject.permissions, eq=permissions)
 
-    def test_constraint_modifier_populates_added_object_constraint(self) -> None:
+    @staticmethod
+    def test_constraint_modifier_populates_added_object_constraint() -> None:
+        """Test constraint modifier populates added object constraint."""
         subject = Parser.parse_subject(
-            "by * (browse) constraintonaddedobject=(objectClass=person)"
+            "by * (browse) constraintonaddedobject=(objectClass=person)",
         )
 
         tm.that(subject.subject_type, eq="anyone")
         tm.that(subject.permissions, eq=("browse",))
         tm.that(subject.added_object_constraint, eq="objectClass=person")
 
-    def test_unrecognized_subject_yields_unknown_type(self) -> None:
+    @staticmethod
+    def test_unrecognized_subject_yields_unknown_type() -> None:
+        """Test unrecognized subject yields unknown type."""
         subject = Parser.parse_subject("by nonsense clause")
 
         tm.that(subject.subject_type, eq="unknown")
@@ -183,7 +214,9 @@ class TestsFlextLdifOidAclConvert:
     # subject_matcher_catalog — typed catalog contract
     # ------------------------------------------------------------------ #
 
-    def test_subject_matcher_catalog_returns_typed_non_empty_catalog(self) -> None:
+    @staticmethod
+    def test_subject_matcher_catalog_returns_typed_non_empty_catalog() -> None:
+        """Test subject matcher catalog returns typed non empty catalog."""
         catalog = Parser.subject_matcher_catalog()
 
         tm.that(catalog, is_=m.Ldif.AclSubjectMatcherCatalog)

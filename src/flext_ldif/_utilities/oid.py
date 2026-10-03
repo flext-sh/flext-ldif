@@ -1,8 +1,13 @@
-"""Extracted nested class from FlextLdifUtilities."""
+"""Extracted nested class from FlextLdifUtilities.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
-from flext_ldif import c, p, r, t
+from flext_core import r
+from flext_ldif import c, p, t
 
 
 class FlextLdifUtilitiesOID:
@@ -10,7 +15,11 @@ class FlextLdifUtilitiesOID:
 
     @staticmethod
     def extract_from_definition(definition: str) -> p.Result[str]:
-        """Extract OID from schema definition string."""
+        """Extract OID from schema definition string.
+
+        Returns:
+            The resulting ``p.Result[str]``.
+        """
         match = c.Ldif.SCHEMA_OID_CAPTURE_RE.search(definition)
         if match:
             return r[str].ok(match.group(1))
@@ -32,22 +41,29 @@ class FlextLdifUtilitiesOID:
         Returns:
             True if OID matches pattern, False otherwise.
 
+        Raises:
+            ValueError: The definition has no leading OID to match.
+
         """
         oid_result = FlextLdifUtilitiesOID.extract_from_definition(definition)
         if oid_result.failure:
-            return False
+            raise ValueError(oid_result.error or "OID extraction failed")
         oid_value: str = oid_result.value
         return bool(oid_pattern.match(oid_value))
 
     @staticmethod
     def validate_format(oid: str) -> p.Result[bool]:
-        """Validate OID format compliance with LDAP OID syntax."""
+        """Validate OID format compliance with LDAP OID syntax.
+
+        Returns:
+            The resulting ``p.Result[bool]``.
+        """
         if not oid:
             return r[bool].ok(False)
         try:
             valid = bool(c.Ldif.NUMERIC_OID_RE.match(oid))
         except c.Ldif.EXC_LDIF_PARSE as e:
-            return r[bool].fail(f"Failed to validate OID format: {e}")
+            return r[bool].fail(f"Failed to validate OID format: {e}", exception=e)
         return r[bool].ok(valid)
 
 

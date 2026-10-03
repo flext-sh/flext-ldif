@@ -1,4 +1,8 @@
-"""Analysis Service - Entry Analysis and Validation."""
+"""Analysis Service - Entry Analysis and Validation.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -11,9 +15,13 @@ class FlextLdifAnalysis(s):
 
     @staticmethod
     def _validate_entry_attributes(
-        entry: p.Ldif.Entry, dn_str: str, validation_service: p.Ldif.ValidationService
+        entry: m.Ldif.Entry, dn_str: str, validation_service: p.Ldif.ValidationService,
     ) -> tuple[bool, t.MutableSequenceOf[str]]:
-        """Validate entry attributes."""
+        """Validate entry attributes.
+
+        Returns:
+            The resulting ``tuple[bool, t.MutableSequenceOf[str]]``.
+        """
         errors: t.MutableSequenceOf[str] = []
         valid = True
         if entry.attributes is None:
@@ -28,9 +36,13 @@ class FlextLdifAnalysis(s):
 
     @staticmethod
     def _validate_entry_dn(
-        entry: p.Ldif.Entry,
+        entry: m.Ldif.Entry,
     ) -> tuple[bool, str, t.MutableSequenceOf[str]]:
-        """Validate entry DN."""
+        """Validate entry DN.
+
+        Returns:
+            The resulting ``tuple[bool, str, t.MutableSequenceOf[str]]``.
+        """
         errors: t.MutableSequenceOf[str] = []
         if entry.dn is None:
             errors.append("Entry has None DN")
@@ -43,9 +55,13 @@ class FlextLdifAnalysis(s):
 
     @staticmethod
     def _validate_entry_objectclasses(
-        entry: p.Ldif.Entry, dn_str: str, validation_service: p.Ldif.ValidationService
+        entry: m.Ldif.Entry, dn_str: str, validation_service: p.Ldif.ValidationService,
     ) -> tuple[bool, t.MutableSequenceOf[str]]:
-        """Validate entry objectClass values."""
+        """Validate entry objectClass values.
+
+        Returns:
+            The resulting ``tuple[bool, t.MutableSequenceOf[str]]``.
+        """
         errors: t.MutableSequenceOf[str] = []
         valid = True
         oc_values: t.MutableSequenceOf[str] = u.Ldif.get_objectclass_names(entry)
@@ -58,9 +74,13 @@ class FlextLdifAnalysis(s):
 
     @staticmethod
     def _validate_single_entry(
-        entry: p.Ldif.Entry, validation_service: p.Ldif.ValidationService
+        entry: m.Ldif.Entry, validation_service: p.Ldif.ValidationService,
     ) -> tuple[bool, t.MutableSequenceOf[str]]:
-        """Validate a single LDIF entry."""
+        """Validate a single LDIF entry.
+
+        Returns:
+            The resulting ``tuple[bool, t.MutableSequenceOf[str]]``.
+        """
         errors: t.MutableSequenceOf[str] = []
         is_entry_valid = True
         dn_valid, dn_str, dn_errors = FlextLdifAnalysis._validate_entry_dn(entry)
@@ -69,14 +89,14 @@ class FlextLdifAnalysis(s):
             return (False, errors)
         is_entry_valid = is_entry_valid and dn_valid
         attrs_valid, attrs_errors = FlextLdifAnalysis._validate_entry_attributes(
-            entry, dn_str, validation_service
+            entry, dn_str, validation_service,
         )
         errors.extend(attrs_errors)
         if not attrs_valid:
             return (False, errors)
         is_entry_valid = is_entry_valid and attrs_valid
         oc_valid, oc_errors = FlextLdifAnalysis._validate_entry_objectclasses(
-            entry, dn_str, validation_service
+            entry, dn_str, validation_service,
         )
         errors.extend(oc_errors)
         is_entry_valid = is_entry_valid and oc_valid
@@ -84,10 +104,15 @@ class FlextLdifAnalysis(s):
 
     def validate_entries(
         self,
-        entries: t.MutableSequenceOf[p.Ldif.Entry] | p.Ldif.ParseResponse,
+        entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
         validation_service: p.Ldif.ValidationService | None = None,
-    ) -> p.Result[p.Ldif.ValidationResult]:
-        """Validate LDIF entries against RFC 2849/4512 standards."""
+    ) -> p.Result[m.Ldif.ValidationResult]:
+        """Validate LDIF entries against RFC 2849/4512 standards.
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.ValidationResult]``.
+        """
+        # Why: mro-4p0t — accept ParseResponse like statistics/categorization services.
         normalized_entries = u.Ldif.as_entries(entries)
         errors: t.MutableSequenceOf[str] = []
         valid_count = 0
@@ -97,10 +122,14 @@ class FlextLdifAnalysis(s):
             else FlextLdifValidation()
         )
 
-        def validate_entry(entry: p.Ldif.Entry) -> bool:
-            """Validate single entry and collect errors."""
+        def validate_entry(entry: m.Ldif.Entry) -> bool:
+            """Validate single entry and collect errors.
+
+            Returns:
+                The resulting ``bool``.
+            """
             is_entry_valid, entry_errors = FlextLdifAnalysis._validate_single_entry(
-                entry, svc
+                entry, svc,
             )
             errors.extend(entry_errors)
             return is_entry_valid
@@ -110,14 +139,14 @@ class FlextLdifAnalysis(s):
         valid_count = u.count(valid_results)
         total_entries = u.count(normalized_entries)
         invalid_count = total_entries - valid_count
-        return r[p.Ldif.ValidationResult].ok(
+        return r[m.Ldif.ValidationResult].ok(
             m.Ldif.ValidationResult.model_validate({
                 "valid": invalid_count == 0,
                 "total_entries": total_entries,
                 "valid_entries": valid_count,
                 "invalid_entries": invalid_count,
                 "errors": errors[:100],
-            })
+            }),
         )
 
 

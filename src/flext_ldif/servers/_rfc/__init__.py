@@ -1,6 +1,42 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Rfc package."""
+"""Flext Ldif.servers. Rfc package.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
-__all__: tuple[str, ...] = ()
+from types import MappingProxyType
+from typing import TYPE_CHECKING
+
+from flext_core import build_lazy_import_map, install_lazy_exports
+
+if TYPE_CHECKING:
+    from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
+    from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
+    from flext_ldif.servers._rfc.schema import FlextLdifServersRfcSchema
+    from flext_ldif.servers._rfc.server_constants import FlextLdifServersRfcConstants
+
+
+__all__: tuple[str, ...] = (
+    "FlextLdifServersRfcAcl",
+    "FlextLdifServersRfcConstants",
+    "FlextLdifServersRfcEntry",
+    "FlextLdifServersRfcSchema",
+)
+
+_LAZY_IMPORTS = MappingProxyType(
+    build_lazy_import_map(
+        MappingProxyType({
+            ".acl": ("FlextLdifServersRfcAcl",),
+            ".entry": ("FlextLdifServersRfcEntry",),
+            ".schema": ("FlextLdifServersRfcSchema",),
+            ".server_constants": ("FlextLdifServersRfcConstants",),
+        }),
+        alias_groups=MappingProxyType({}),
+        sort_keys=False,
+    ),
+)
+
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)

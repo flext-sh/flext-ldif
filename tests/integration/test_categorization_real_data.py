@@ -15,15 +15,23 @@ hierarchical DN check (``is_under_base``), never substring matching, so
 
 Generic ``dc=example`` data is used deliberately; project-specific scenarios
 live in the consuming migration projects.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import tm
 
 from flext_ldif import ldif
-from tests import c, m, p, t, u
+from tests import c, m, u
+
+if TYPE_CHECKING:
+    from tests import t
 
 _BASE_DN = "dc=example"
 
@@ -32,18 +40,26 @@ class TestsFlextLdifCategorizationRealData:
     """Behavioral tests for categorization with real-world DN scenarios."""
 
     @staticmethod
-    def _entry(dn: str, objectclass: str) -> p.Ldif.Entry:
-        """Build an in-memory entry with a single objectClass."""
+    def _entry(dn: str, objectclass: str) -> m.Ldif.Entry:
+        """Build an in-memory entry with a single objectClass.
+
+        Returns:
+            The resulting ``m.Ldif.Entry``.
+        """
         return m.Ldif.Entry(
             dn=m.Ldif.DN(value=dn),
             attributes=m.Ldif.Attributes(
-                attributes={"objectClass": [objectclass]}, attribute_metadata={}
+                attributes={"objectClass": [objectclass]}, attribute_metadata={},
             ),
         )
 
     @staticmethod
-    def _acl_entry(dn: str) -> p.Ldif.Entry:
-        """Build an in-memory entry carrying an ACI attribute."""
+    def _acl_entry(dn: str) -> m.Ldif.Entry:
+        """Build an in-memory entry carrying an ACI attribute.
+
+        Returns:
+            The resulting ``m.Ldif.Entry``.
+        """
         return m.Ldif.Entry(
             dn=m.Ldif.DN(value=dn),
             attributes=m.Ldif.Attributes(
@@ -53,8 +69,12 @@ class TestsFlextLdifCategorizationRealData:
         )
 
     @pytest.fixture
-    def hierarchy_entries(self) -> t.MutableSequenceOf[p.Ldif.Entry]:
-        """Mixed entries: three under dc=example, two under dc=example2."""
+    def hierarchy_entries(self) -> t.MutableSequenceOf[m.Ldif.Entry]:
+        """Mixed entries: three under dc=example, two under dc=example2.
+
+        Returns:
+            The resulting ``t.MutableSequenceOf[m.Ldif.Entry]``.
+        """
         return [
             self._entry("dc=example", "domain"),
             self._entry("ou=users,dc=example", "organizationalUnit"),
@@ -64,14 +84,18 @@ class TestsFlextLdifCategorizationRealData:
         ]
 
     @staticmethod
-    def _dns(entries: t.MutableSequenceOf[p.Ldif.Entry]) -> set[str]:
-        """Collect the DN string values from a category bucket."""
+    def _dns(entries: t.MutableSequenceOf[m.Ldif.Entry]) -> set[str]:
+        """Collect the DN string values from a category bucket.
+
+        Returns:
+            The resulting ``set[str]``.
+        """
         return {e.dn.value for e in entries if e.dn is not None}
 
     # -- validate_dns ---------------------------------------------------------
 
     def test_validate_dns_succeeds_and_returns_all_valid_entries(
-        self, hierarchy_entries: t.MutableSequenceOf[p.Ldif.Entry]
+        self, hierarchy_entries: t.MutableSequenceOf[m.Ldif.Entry],
     ) -> None:
         """validate_dns returns a success result preserving every valid entry."""
         categorization = ldif.categorization(base_dn=_BASE_DN, server_type=c.Tests.OUD)
@@ -85,7 +109,7 @@ class TestsFlextLdifCategorizationRealData:
     # -- categorize_entries ---------------------------------------------------
 
     def test_categorize_entries_places_domains_ous_and_people_by_contract(
-        self, hierarchy_entries: t.MutableSequenceOf[p.Ldif.Entry]
+        self, hierarchy_entries: t.MutableSequenceOf[m.Ldif.Entry],
     ) -> None:
         """Domains/OUs categorize as HIERARCHY, person entries as USERS."""
         categorization = ldif.categorization(base_dn=_BASE_DN, server_type=c.Tests.OUD)
@@ -118,7 +142,7 @@ class TestsFlextLdifCategorizationRealData:
     # -- filter_by_base_dn (substring safety) --------------------------------
 
     def test_filter_by_base_dn_keeps_under_base_and_rejects_outside(
-        self, hierarchy_entries: t.MutableSequenceOf[p.Ldif.Entry]
+        self, hierarchy_entries: t.MutableSequenceOf[m.Ldif.Entry],
     ) -> None:
         """Base-DN filtering uses hierarchy, so dc=example2 never matches dc=example."""
         categorization = ldif.categorization(base_dn=_BASE_DN, server_type=c.Tests.OUD)
@@ -165,6 +189,7 @@ class TestsFlextLdifCategorizationRealData:
         tm.that(rejected, has="dc=example2")
         tm.that(rejected, has="cn=settings")
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("dn", "base_dn", "expected"),
         [
@@ -180,7 +205,7 @@ class TestsFlextLdifCategorizationRealData:
         ],
     )
     def test_is_under_base_uses_hierarchy_not_substring(
-        self, dn: str | None, base_dn: str | None, expected: bool
+        dn: str | None, base_dn: str | None, *, expected: bool,
     ) -> None:
         """The public is_under_base contract rejects substring false positives."""
         assert u.Ldif.is_under_base(dn, base_dn) is expected

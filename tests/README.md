@@ -36,11 +36,14 @@
 
 <!-- TOC END -->
 
-This directory contains the test suite for FLEXT-LDIF, implementing testing standards with multiple test categories, fixtures, and quality validation patterns.
+This directory contains the test suite for FLEXT-LDIF, implementing testing standards
+with multiple test categories, fixtures, and quality validation patterns.
 
 ## Overview
 
-The test suite provides coverage across all architectural layers, test categories, and integration scenarios while maintaining high-quality standards and performance benchmarks for enterprise LDIF processing operations.
+The test suite provides coverage across all architectural layers, test categories, and
+integration scenarios while maintaining high-quality standards and performance
+benchmarks for enterprise LDIF processing operations.
 
 ## Test Organization
 
@@ -96,7 +99,10 @@ tests/
 
 **Example**:
 
-```python notest
+```python
+from __future__ import annotations
+
+
 def test_flext_ldif_entry_validation(sample_entry):
     """Test domain entity validation rules."""
     entry = sample_entry
@@ -123,7 +129,10 @@ def test_flext_ldif_entry_validation(sample_entry):
 
 **Example**:
 
-```python notest
+```python
+from __future__ import annotations
+
+
 def test_api_service_integration(flext_ldif_api, sample_ldif_content):
     """Test API service with real dependencies."""
     result = flext_ldif_api.parse(sample_ldif_content)
@@ -146,7 +155,10 @@ def test_api_service_integration(flext_ldif_api, sample_ldif_content):
 
 **Example**:
 
-```python notest
+```python
+from __future__ import annotations
+
+
 def test_e2e_ldif_processing_workflow(tmp_path):
     """Test complete LDIF processing workflow."""
     input_file = tmp_path / "input.ldif"
@@ -183,7 +195,10 @@ def test_e2e_ldif_processing_workflow(tmp_path):
 
 **Example**:
 
-```python notest
+```python
+from __future__ import annotations
+
+
 def test_ldif_rfc_compliance(rfc_compliant_ldif):
     """Test RFC 2849 LDIF specification compliance."""
     result = flext_ldif_parse(rfc_compliant_ldif)
@@ -316,7 +331,10 @@ tests/data/
 
 ### Test Data Generation
 
-```python notest
+```python
+from __future__ import annotations
+
+
 def generate_ldif_with_entries(count: int) -> str:
     """Generate LDIF content with specified number of entries."""
     entries = []
@@ -363,15 +381,15 @@ pytest -m integration --cov --cov-report=term
 
 ```bash
 # Run all quality checks
-make test                          # Full test suite
-make test-unit                     # Unit tests only
-make test-integration              # Integration tests only
-make test-performance              # Performance benchmarks
+make test             # Full test suite
+make test-unit        # Unit tests only
+make test-integration # Integration tests only
+make test-performance # Performance benchmarks
 
 # Continuous testing
-pytest --watch                     # Watch mode for development
-pytest --lf                        # Run last failed tests
-pytest -x                          # Stop on first failure
+pytest --watch # Watch mode for development
+pytest --lf    # Run last failed tests
+pytest -x      # Stop on first failure
 ```
 
 ## Performance Benchmarks
@@ -400,21 +418,24 @@ pytest -m performance --benchmark-compare=baseline
 
 ```bash
 # Quick feedback loop
-pytest -m "not slow" --ff        # Fast tests first, skip slow tests
+pytest -m "not slow" --ff # Fast tests first, skip slow tests
 
 # Comprehensive validation
-pytest --strict-markers           # Enforce marker usage
-pytest --strict-settings            # Enforce configuration compliance
+pytest --strict-markers  # Enforce marker usage
+pytest --strict-settings # Enforce configuration compliance
 
 # Debug test failures
-pytest --pdb                      # Drop into debugger on failure
-pytest -vvv                       # Maximum verbosity
-pytest --tb=long                  # Detailed traceback
+pytest --pdb     # Drop into debugger on failure
+pytest -vvv      # Maximum verbosity
+pytest --tb=long # Detailed traceback
 ```
 
 ### Test-Driven Development
 
-```python notest
+```python
+from __future__ import annotations
+
+
 def test_new_feature_specification():
     """Test specification for new feature (TDD)."""
     # Arrange - Set up test conditions
@@ -467,5 +488,6 @@ When adding new tests:
 ## Related Documentation
 
 - **[API Documentation](../docs/api/API.md)** - Complete API reference for testing
-- **[Architecture Guide](../docs/architecture/ARCHITECTURE.md)** - Understanding system design for testing
+- **[Architecture Guide](../docs/architecture/ARCHITECTURE.md)** - Understanding system
+  design for testing
 - **[Development Guide](../AGENTS.md)** - Development patterns and practices

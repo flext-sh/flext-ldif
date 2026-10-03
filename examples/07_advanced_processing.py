@@ -1,8 +1,5 @@
 """Example 7: Advanced Processing with Processors and Utilities.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
 Demonstrates ldif advanced functionality:
 - Batch processing with direct API methods (no manual setup!)
 - Utility functions (DN parsing, validation)
@@ -10,29 +7,32 @@ Demonstrates ldif advanced functionality:
 
 All functionality accessed through ldif facade using direct methods.
 No manual processor creation or conversion loops required.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING
 
+from examples.utilities import ExamplesFlextLdifUtilities as examples_u
 from flext_ldif import ldif, m, p, u
 
 if TYPE_CHECKING:
     from collections.abc import MutableSequence
 
-_BYTES_PER_UNIT: Final = 1024.0
+BYTES_PER_UNIT = 1024.0
 
 
 def basic_batch_processing() -> None:
     """Process entries in batches using direct API method."""
-    api: p.Ldif.Client = ldif
+    api: p.Ldif.LdifClient = ldif
     ldif_content = "dn: cn=User1,ou=People,dc=example,dc=com\nobjectClass: person\ncn: User1\nsn: One\n\ndn: cn=User2,ou=People,dc=example,dc=com\nobjectClass: person\ncn: User2\nsn: Two\n\ndn: cn=User3,ou=People,dc=example,dc=com\nobjectClass: person\ncn: User3\nsn: Three\n"
     parse_result = api.parse_ldif(ldif_content)
-    if parse_result.failure:
-        return
+
     parse_response = parse_result.unwrap()
     entries = parse_response.entries
     validation_result = api.validate_entries(entries)
@@ -46,21 +46,8 @@ def parallel_processing() -> None:
 
     Demonstrates creating entries directly via models and validating in batch.
     """
-    api: p.Ldif.Client = ldif
-    entries: list[p.Ldif.Entry] = []
-    for i in range(10):
-        entry = m.Ldif.Entry(
-            dn=m.Ldif.DN(value=f"cn=User{i},ou=People,dc=example,dc=com"),
-            attributes=m.Ldif.Attributes(
-                attributes={
-                    "objectClass": ["person"],
-                    "cn": [f"User{i}"],
-                    "sn": [f"User{i}"],
-                },
-                attribute_metadata={},
-            ),
-        )
-        entries.append(entry)
+    api: p.Ldif.LdifClient = ldif
+    entries: list[m.Ldif.Entry] = [examples_u.create_user_entry(i) for i in range(10)]
     validation_result = api.validate_entries(entries)
     if validation_result.success:
         report = validation_result.unwrap()
@@ -84,10 +71,10 @@ def use_text_utilities() -> None:
     """Use text formatting utilities."""
     size_bytes: float = 1024 * 1024
     for unit in ["", "K", "M", "G", "T"]:
-        if size_bytes < _BYTES_PER_UNIT:
+        if size_bytes < BYTES_PER_UNIT:
             size_str = f"{size_bytes:.1f} {unit}B"
             break
-        size_bytes /= _BYTES_PER_UNIT
+        size_bytes /= BYTES_PER_UNIT
     else:
         size_str = f"{size_bytes:.1f} PB"
     _ = size_str
@@ -110,7 +97,7 @@ def use_validation_utilities() -> None:
 
 def use_ldif_utilities() -> None:
     """Use LDIF-specific utilities."""
-    api: p.Ldif.Client = ldif
+    api: p.Ldif.LdifClient = ldif
     ldif_content = (
         "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\nsn: user\n"
     )
@@ -158,15 +145,14 @@ def use_file_utilities() -> None:
 
 def complete_processing_pipeline() -> None:
     """Complete pipeline using utilities and direct processing methods."""
-    api: p.Ldif.Client = ldif
+    api: p.Ldif.LdifClient = ldif
     ldif_content = "dn: cn=Pipeline,ou=People,dc=example,dc=com\nobjectClass: person\ncn: Pipeline\nsn: User\n"
     parse_result = api.parse_ldif(ldif_content)
-    if parse_result.failure:
-        return
+
     parse_response = parse_result.unwrap()
     entries = parse_response.entries
 
-    valid_entries: MutableSequence[p.Ldif.Entry] = []
+    valid_entries: MutableSequence[m.Ldif.Entry] = []
     for entry in entries:
         dn_result = u.Ldif.parse_dn(entry.dn.value if entry.dn else "")
         if dn_result.success:
@@ -184,10 +170,10 @@ def access_all_utilities() -> None:
     timestamp = time_utils.timestamp()
     size_bytes: float = 1024
     for unit in ["", "K", "M", "G", "T"]:
-        if size_bytes < _BYTES_PER_UNIT:
+        if size_bytes < BYTES_PER_UNIT:
             formatted_size = f"{size_bytes:.1f} {unit}B"
             break
-        size_bytes /= _BYTES_PER_UNIT
+        size_bytes /= BYTES_PER_UNIT
     else:
         formatted_size = f"{size_bytes:.1f} PB"
     dn_result = u.Ldif.parse_dn("cn=test,dc=example,dc=com")

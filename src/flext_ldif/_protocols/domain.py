@@ -1,17 +1,18 @@
-"""Higher-level LDIF service and registry contracts."""
+"""Higher-level LDIF service and registry contracts.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from flext_cli import p
 
-    from flext_cli import p, t
+    from flext_ldif import m, t
     from flext_ldif._protocols.base import FlextLdifProtocolsBase
-
-# NOTE (multi-agent, mro-0ftd.3.7.2): domain contracts depend one-way on the
-# declaration-only base facet; no project facade or model is resolved here.
 
 
 @runtime_checkable
@@ -22,9 +23,7 @@ class FlextLdifProtocolsDomain(Protocol):
     class EntryTransformer(Protocol):
         """Transformer contract for entry-processing pipelines."""
 
-        def apply(
-            self, item: FlextLdifProtocolsBase.Entry
-        ) -> p.Result[FlextLdifProtocolsBase.Entry]:
+        def apply(self, item: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
             """Transform one entry and return the canonical result container."""
             ...
 
@@ -50,16 +49,14 @@ class FlextLdifProtocolsDomain(Protocol):
             """The entry server implementation."""
             ...
 
-        def parse_ldif(
-            self, value: str
-        ) -> p.Result[FlextLdifProtocolsBase.ParseResponse]:
+        def parse_ldif(self, value: str) -> p.Result[m.Ldif.ParseResponse]:
             """Parse LDIF text through the server's entry implementation."""
             ...
 
         def write(
             self,
-            entries: Sequence[FlextLdifProtocolsBase.Entry],
-            write_options: FlextLdifProtocolsBase.WriteFormatOptions | None = None,
+            entries: t.MutableSequenceOf[m.Ldif.Entry],
+            write_options: m.Ldif.WriteFormatOptions | None = None,
         ) -> p.Result[str]:
             """Write canonical entries through the server's entry implementation."""
             ...
@@ -75,55 +72,50 @@ class FlextLdifProtocolsDomain(Protocol):
         """
 
         def parse_server(
-            self, value: str
-        ) -> p.Result[
-            FlextLdifProtocolsBase.SchemaAttribute
-            | FlextLdifProtocolsBase.SchemaObjectClass
-        ]:
+            self, value: str,
+        ) -> p.Result[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
             """Parse a schema definition into a schema item."""
             ...
 
-        def parse_attribute(
-            self, definition: str
-        ) -> p.Result[FlextLdifProtocolsBase.SchemaAttribute]:
+        def parse_input(
+            self, schema_text: str,
+        ) -> p.Result[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
+            """Parse a schema definition (compatibility entrypoint)."""
+            ...
+
+        def parse_attribute(self, definition: str) -> p.Result[m.Ldif.SchemaAttribute]:
             """Parse an attributeType definition."""
             ...
 
         def parse_objectclass(
-            self, definition: str
-        ) -> p.Result[FlextLdifProtocolsBase.SchemaObjectClass]:
+            self, definition: str,
+        ) -> p.Result[m.Ldif.SchemaObjectClass]:
             """Parse an objectClass definition."""
             ...
 
         def can_handle_attribute(
-            self, attr_definition: str | FlextLdifProtocolsBase.SchemaAttribute
+            self, attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
             """Check if this server can handle a schema attribute."""
             ...
 
         def can_handle_objectclass(
-            self, oc_definition: str | FlextLdifProtocolsBase.SchemaObjectClass
+            self, oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
             """Check if this server can handle a schema objectClass."""
             ...
 
         def write(
-            self,
-            model: FlextLdifProtocolsBase.SchemaAttribute
-            | FlextLdifProtocolsBase.SchemaObjectClass,
+            self, model: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
         ) -> p.Result[str]:
             """Serialize a schema item."""
             ...
 
-        def write_attribute(
-            self, attr_data: FlextLdifProtocolsBase.SchemaAttribute
-        ) -> p.Result[str]:
+        def write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> p.Result[str]:
             """Serialize an attributeType definition."""
             ...
 
-        def write_objectclass(
-            self, oc_data: FlextLdifProtocolsBase.SchemaObjectClass
-        ) -> p.Result[str]:
+        def write_objectclass(self, oc_data: m.Ldif.SchemaObjectClass) -> p.Result[str]:
             """Serialize an objectClass definition."""
             ...
 
@@ -131,15 +123,19 @@ class FlextLdifProtocolsDomain(Protocol):
     class AclServer(Protocol):
         """ACL server contract."""
 
-        def parse_server(self, value: str) -> p.Result[FlextLdifProtocolsBase.Acl]:
+        def resolve_acl_attributes(self) -> t.MutableSequenceOf[str]:
+            """Return this server's ACL entry attributes in extraction order."""
+            ...
+
+        def parse_server(self, value: str) -> p.Result[m.Ldif.Acl]:
             """Parse an ACL line into an ACL model."""
             ...
 
-        def can_handle_acl(self, acl_line: str | FlextLdifProtocolsBase.Acl) -> bool:
+        def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Check if this server can handle an ACL line."""
             ...
 
-        def write(self, acl_data: FlextLdifProtocolsBase.Acl) -> p.Result[str]:
+        def write(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
             """Serialize an ACL model."""
             ...
 
@@ -148,28 +144,33 @@ class FlextLdifProtocolsDomain(Protocol):
         """Entry server contract."""
 
         def parse_server(
-            self, value: str
-        ) -> p.Result[Sequence[FlextLdifProtocolsBase.Entry]]:
+            self, value: str,
+        ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
             """Parse LDIF text into entry models."""
             ...
 
+        def parse_input(
+            self, ldif_text: str,
+        ) -> t.MutableSequenceOf[m.Ldif.Entry] | None:
+            """Compatibility parser entrypoint for direct entry server consumers."""
+            ...
+
         def can_handle(
-            self, entry_dn: str, attributes: t.MutableStrSequenceMapping
+            self, entry_dn: str, attributes: t.MutableStrSequenceMapping,
         ) -> bool:
             """Check if this server can handle the entry."""
             ...
 
         def parse_entry(
-            self, entry_dn: str, entry_attrs: t.MutableStrSequenceMapping
-        ) -> p.Result[FlextLdifProtocolsBase.Entry]:
+            self, entry_dn: str, entry_attrs: t.Ldif.MutableEntryAttributesDict,
+        ) -> p.Result[m.Ldif.Entry]:
             """Parse a single entry from DN and attribute mapping."""
             ...
 
         def write(
             self,
-            entry_data: FlextLdifProtocolsBase.Entry
-            | Sequence[FlextLdifProtocolsBase.Entry],
-            write_options: FlextLdifProtocolsBase.WriteFormatOptions | None = None,
+            entry_data: t.MutableSequenceOf[m.Ldif.Entry],
+            write_options: m.Ldif.WriteFormatOptions | None = None,
         ) -> p.Result[str]:
             """Serialize one or more entries."""
             ...
@@ -179,25 +180,25 @@ class FlextLdifProtocolsDomain(Protocol):
         """Registry contract for server-specific servers."""
 
         def server(
-            self, server_type: str
+            self, server_type: str,
         ) -> p.Result[FlextLdifProtocolsDomain.ServerServer]:
             """Return base server for a server type."""
             ...
 
         def resolve_base_server(
-            self, server_type: str
+            self, server_type: str,
         ) -> p.Result[FlextLdifProtocolsDomain.ServerServer]:
             """Resolve base server for a server type."""
             ...
 
         def schema_server(
-            self, server_type: str
+            self, server_type: str,
         ) -> FlextLdifProtocolsDomain.SchemaServer | None:
             """Return schema server for a server type."""
             ...
 
         def resolve_schema_server(
-            self, server_type: str
+            self, server_type: str,
         ) -> FlextLdifProtocolsDomain.SchemaServer | None:
             """Resolve schema server for a server type."""
             ...
@@ -207,13 +208,13 @@ class FlextLdifProtocolsDomain(Protocol):
             ...
 
         def entry(
-            self, server_type: str
+            self, server_type: str,
         ) -> FlextLdifProtocolsDomain.EntryServer | None:
             """Return entry server for a server type."""
             ...
 
         def resolve_server_bundle(
-            self, server_type: str
+            self, server_type: str,
         ) -> p.Result[
             t.MappingKV[
                 str,
@@ -226,19 +227,16 @@ class FlextLdifProtocolsDomain(Protocol):
             ...
 
         def resolve_server_constants(
-            self, server_type: str
+            self, server_type: str,
         ) -> p.Result[type[FlextLdifProtocolsBase.ServerConstants]]:
             """Resolve constants class for a server type."""
             ...
 
-        # NOTE (multi-agent, mro-0ftd.3.7.2): return type matches the concrete
-        # SSOT (services/server.py:160 -> t.MutableSequenceOf[str]); the prior
-        # Sequence[str] under-declared the mutable contract the impl provides.
         def list_registered_servers(self) -> t.MutableSequenceOf[str]:
             """Return all registered normalized server types."""
             ...
 
-        def summarize_registry(self) -> t.MutableJsonMapping:
+        def summarize_registry(self) -> t.Ldif.MutableMetadataInputMapping:
             """Return registry summary metadata."""
             ...
 

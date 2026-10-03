@@ -4,16 +4,19 @@
 render (with dedup), yielding raw ``aci`` attribute values; ``convert_entry_acls``
 rewrites a whole OID entry, replacing its ``orclaci``/``orclentrylevelaci``
 attributes with one ``aci`` attribute. Malformed input surfaces as ``r.fail``.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
 from typing import ClassVar
 
-from flext_ldif import c, p, r, t, u
-from flext_ldif.servers._oid.acl_assemble import FlextLdifServersOidAclAssemble as Build
-from flext_ldif.servers._oid.acl_convert import FlextLdifServersOidAclConvert as Parser
-from flext_ldif.servers._oid.acl_render import FlextLdifServersOidAclRender as Render
+from flext_ldif import c, m, p, r, t, u
+from flext_ldif.servers._oid.acl_assemble import FlextLdifServersOidAclAssemble
+from flext_ldif.servers._oid.acl_convert import FlextLdifServersOidAclConvert
+from flext_ldif.servers._oid.acl_render import FlextLdifServersOidAclRender
 
 
 class FlextLdifServersOidAclPipeline:
@@ -23,7 +26,7 @@ class FlextLdifServersOidAclPipeline:
 
     @classmethod
     def convert_acl_values(
-        cls, dn: str, oid_acl_lines: t.StrSequence, *, base_dn: str = ""
+        cls, dn: str, oid_acl_lines: t.StrSequence, *, base_dn: str = "",
     ) -> p.Result[t.StrSequence]:
         """Convert an entry's OID ACL lines to deduplicated OUD ``aci`` values.
 
@@ -32,25 +35,30 @@ class FlextLdifServersOidAclPipeline:
         and case-normalized) are merged keeping first order. A malformed line or
         unknown perm token surfaces as ``r.fail``. Returned values exclude the
         ``aci: `` prefix (they are raw ``aci`` attribute values).
+
+        Returns:
+            The resulting ``p.Result[t.StrSequence]``.
         """
         values: list[str] = []
         seen: set[str] = set()
         for line in oid_acl_lines:
-            rule = Parser.parse_oid_acl_line(dn, line)
+            rule = FlextLdifServersOidAclConvert.parse_oid_acl_line(dn, line)
             if rule.failure:
-                return r[t.StrSequence].fail(rule.error or "OID ACL parse failed")
-            aci = Build.build_aci_rule(rule.value, base_dn=base_dn)
+                return r[t.StrSequence].from_failure(rule)
+            aci = FlextLdifServersOidAclAssemble.build_aci_rule(
+                rule.value, base_dn=base_dn,
+            )
             if aci.failure:
-                return r[t.StrSequence].fail(aci.error or "OID ACL build failed")
+                return r[t.StrSequence].from_failure(aci)
             if aci.value.notes:
                 FlextLdifServersOidAclPipeline._module_logger.info(
-                    "OID ACL conversion notes", dn=dn, notes=list(aci.value.notes)
+                    "OID ACL conversion notes", dn=dn, notes=list(aci.value.notes),
                 )
             if not aci.value.allows:
                 continue
-            rendered = Render.render_aci_string(aci.value).removeprefix(
-                c.Ldif.ACI_PREFIX
-            )
+            rendered = FlextLdifServersOidAclRender.render_aci_string(
+                aci.value,
+            ).removeprefix(c.Ldif.ACI_PREFIX)
             normalized = c.Ldif.WHITESPACE_RE.sub(" ", rendered.strip().lower())
             if normalized in seen:
                 continue
@@ -61,27 +69,30 @@ class FlextLdifServersOidAclPipeline:
     @classmethod
     def convert_entry_acls(
         cls,
-        entry: p.Ldif.Entry,
+        entry: m.Ldif.Entry,
         source_type_norm: str,
         target_type_norm: str,
         *,
         base_dn: str = "",
-    ) -> p.Result[p.Ldif.Entry]:
+    ) -> p.Result[m.Ldif.Entry]:
         """Rewrite an OID entry's ACL attributes to a single OUD ``aci`` attribute.
 
         Fires only for oid→oud entries carrying ``orclaci``/``orclentrylevelaci``;
         their values convert (via :meth:`convert_acl_values`) into ``aci`` values
         and the OID ACL attributes are removed. A malformed ACL surfaces as
         ``r.fail``; non-matching entries pass through unchanged.
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.Entry]``.
         """
         if not (
             source_type_norm == c.Ldif.ServerTypes.OID
             and target_type_norm == c.Ldif.ServerTypes.OUD
         ):
-            return r[p.Ldif.Entry].ok(entry)
+            return r[m.Ldif.Entry].ok(entry)
         attrs_model = entry.attributes
         if attrs_model is None or not attrs_model.attributes:
-            return r[p.Ldif.Entry].ok(entry)
+            return r[m.Ldif.Entry].ok(entry)
         current = dict(attrs_model.attributes)
         oid_acl_attrs = {
             c.Ldif.AclConvertType.ORCLACI.value,
@@ -89,14 +100,14 @@ class FlextLdifServersOidAclPipeline:
         }
         acl_names = [name for name in current if name.lower() in oid_acl_attrs]
         if not acl_names:
-            return r[p.Ldif.Entry].ok(entry)
+            return r[m.Ldif.Entry].ok(entry)
         dn_value = entry.dn.value if entry.dn else ""
         oid_lines = [
             f"{name}: {value}" for name in acl_names for value in current[name]
         ]
         converted = cls.convert_acl_values(dn_value, oid_lines, base_dn=base_dn)
         if converted.failure:
-            return r[p.Ldif.Entry].fail(converted.error or "OID ACL conversion failed")
+            return r[m.Ldif.Entry].from_failure(converted)
         for name in acl_names:
             del current[name]
         if converted.value:
@@ -107,9 +118,9 @@ class FlextLdifServersOidAclPipeline:
             if key not in acl_names
         }
         new_attrs = attrs_model.model_copy(
-            update={"attributes": current, "attribute_metadata": kept_meta}
+            update={"attributes": current, "attribute_metadata": kept_meta},
         )
-        return r[p.Ldif.Entry].ok(entry.model_copy(update={"attributes": new_attrs}))
+        return r[m.Ldif.Entry].ok(entry.model_copy(update={"attributes": new_attrs}))
 
 
 __all__: list[str] = ["FlextLdifServersOidAclPipeline"]

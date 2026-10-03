@@ -13,6 +13,7 @@ from flext_ldif.servers._oud.aci import FlextLdifServersOudAciMixin
 from flext_ldif.servers._oud.acl_extract import FlextLdifServersOudAclExtractMixin
 from flext_ldif.servers._oud.acl_metadata import FlextLdifServersOudAclMetadataMixin
 from flext_ldif.servers._oud.comments import FlextLdifServersOudCommentsMixin
+from flext_ldif.servers._oud.schema_write import FlextLdifServersOudSchemaWriteMixin
 from flext_ldif.servers._oud.transform import FlextLdifServersOudTransformMixin
 
 
@@ -21,6 +22,7 @@ class FlextLdifServersOudHelpersMixin(
     FlextLdifServersOudAclExtractMixin,
     FlextLdifServersOudAclMetadataMixin,
     FlextLdifServersOudCommentsMixin,
+    FlextLdifServersOudSchemaWriteMixin,
     FlextLdifServersOudTransformMixin,
 ):
     """Composed Mixin facade for OUD entry helpers."""

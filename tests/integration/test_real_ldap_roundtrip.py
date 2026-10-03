@@ -22,10 +22,12 @@ import pytest
 from flext_tests import tm
 
 from flext_ldif import ldif
-from tests import m, p, t, u
+from tests import m, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from tests import p, t
 
 # Attributes that LDIF/LDAP layers may inject and that are not part of the
 # user-supplied contract under test.
@@ -38,22 +40,29 @@ _LDIF_OPERATIONAL_ATTRS: frozenset[str] = frozenset({
 
 
 @pytest.fixture
-def flext_api() -> p.Ldif.Client:
-    """Live ``ldif()`` API instance."""
+def flext_api() -> p.Ldif.LdifClient:
+    """Live ``ldif()`` API instance.
+
+    Returns:
+        The resulting ``p.Ldif.LdifClient``.
+    """
     return ldif()
 
 
 @pytest.mark.docker
 @pytest.mark.integration
-@pytest.mark.real_ldap
 class TestsFlextLdifRealLdapRoundtrip:
     """Behavioral contract: LDAP -> LDIF -> LDAP preserves entry state."""
 
     @staticmethod
     def _read_ldap_attrs(
-        ldap_connection: p.Ldap.Ldap3Connection, dn: str
+        ldap_connection: p.Ldap.Ldap3Connection, dn: str,
     ) -> t.MutableAttributeMapping:
-        """Read one LDAP entry back as a plain attribute mapping (boundary)."""
+        """Read one LDAP entry back as a plain attribute mapping (boundary).
+
+        Returns:
+            The resulting ``t.MutableAttributeMapping``.
+        """
         assert ldap_connection.search(dn, "(objectClass=*)", attributes=["*"])
         entry = ldap_connection.entries[0]
         attrs: t.MutableAttributeMapping = {}
@@ -71,7 +80,7 @@ class TestsFlextLdifRealLdapRoundtrip:
         self,
         ldap_connection: p.Ldap.Ldap3Connection,
         clean_test_ou: str,
-        flext_api: p.Ldif.Client,
+        flext_api: p.Ldif.LdifClient,
         make_test_username: Callable[[str], str],
     ) -> None:
         """LDAP -> LDIF -> LDAP yields an entry with identical public state."""
@@ -89,7 +98,7 @@ class TestsFlextLdifRealLdapRoundtrip:
         read_back = self._read_ldap_attrs(ldap_connection, source_dn)
 
         entry_result = m.Ldif.Entry.create(
-            dn=source_dn, attributes=read_back, metadata=None
+            dn=source_dn, attributes=read_back, metadata=None,
         )
         tm.ok(entry_result)
         source_entry = entry_result.unwrap()
@@ -130,6 +139,3 @@ class TestsFlextLdifRealLdapRoundtrip:
         tm.that(reimported["mail"], eq=["roundtrip@example.com"])
         tm.that(set(reimported["telephoneNumber"]), eq={"+1-555-1111", "+1-555-2222"})
         tm.that(reimported["description"], eq=["Multi-line\ndescription\ntest"])
-
-
-__all__: list[str] = ["TestsFlextLdifRealLdapRoundtrip"]

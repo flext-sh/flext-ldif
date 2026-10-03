@@ -15,10 +15,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 from flext_tests import tm
 
-from tests import p, t, u
+from tests import u
+
+if TYPE_CHECKING:
+    from tests import m, p, t
 
 ORACLE_OID_PREFIX = "2.16.840.1.113894"
 
@@ -31,16 +36,20 @@ class TestsFlextLdifOidIntegration:
     """
 
     @staticmethod
-    def _entries(api: p.Ldif.Client, content: str) -> t.SequenceOf[p.Ldif.Entry]:
-        """Parse ``content`` through the public client and return its entries."""
-        response: p.Ldif.ParseResponse = u.Tests.assert_success(
-            api.parse_ldif(content), error_msg="OID fixture parsing failed"
+    def _entries(api: p.Ldif.LdifClient, content: str) -> t.SequenceOf[m.Ldif.Entry]:
+        """Parse ``content`` through the public client and return its entries.
+
+        Returns:
+            The resulting ``t.SequenceOf[m.Ldif.Entry]``.
+        """
+        response: m.Ldif.ParseResponse = u.Tests.assert_success(
+            api.parse_ldif(content), error_msg="OID fixture parsing failed",
         )
         return response.entries
 
     @staticmethod
     def _schema_definitions(
-        entry: p.Ldif.Entry, attribute_name: str
+        entry: m.Ldif.Entry, attribute_name: str,
     ) -> t.SequenceOf[str]:
         """Return the raw schema definition strings for ``attribute_name``.
 
@@ -51,17 +60,25 @@ class TestsFlextLdifOidIntegration:
         return attrs.get(attribute_name, [])
 
     @staticmethod
-    def _attribute_value_count(entry: p.Ldif.Entry, attribute_name: str) -> int:
-        """Count values held under ``attribute_name`` via the public contract."""
+    def _attribute_value_count(entry: m.Ldif.Entry, attribute_name: str) -> int:
+        """Count values held under ``attribute_name`` via the public contract.
+
+        Returns:
+            The resulting ``int``.
+        """
         return len(entry.attributes_dict.get(attribute_name, []))
 
     @classmethod
     def _roundtrip(
-        cls, api: p.Ldif.Client, entries: t.SequenceOf[p.Ldif.Entry]
-    ) -> t.SequenceOf[p.Ldif.Entry]:
-        """Write ``entries`` and re-parse the produced LDIF text."""
-        written: p.Ldif.WriteResponse = u.Tests.assert_success(
-            api.write(list(entries)), error_msg="writing OID entries failed"
+        cls, api: p.Ldif.LdifClient, entries: t.SequenceOf[m.Ldif.Entry],
+    ) -> t.SequenceOf[m.Ldif.Entry]:
+        """Write ``entries`` and re-parse the produced LDIF text.
+
+        Returns:
+            The resulting ``t.SequenceOf[m.Ldif.Entry]``.
+        """
+        written: m.Ldif.WriteResponse = u.Tests.assert_success(
+            api.write(list(entries)), error_msg="writing OID entries failed",
         )
         assert written.content is not None
         return cls._entries(api, written.content)
@@ -69,7 +86,7 @@ class TestsFlextLdifOidIntegration:
     # ----------------------------------------------------------------- schema
 
     def test_parse_schema_fixture_yields_entries_with_dns(
-        self, api: p.Ldif.Client, oid_schema_fixture: str
+        self, api: p.Ldif.LdifClient, oid_schema_fixture: str,
     ) -> None:
         """Parsing the OID schema returns entries, each exposing a DN."""
         entries = self._entries(api, oid_schema_fixture)
@@ -85,7 +102,7 @@ class TestsFlextLdifOidIntegration:
         ids=["attribute-types", "object-classes"],
     )
     def test_oracle_definitions_detected_in_parsed_schema(
-        self, api: p.Ldif.Client, oid_schema_fixture: str, definition_attr: str
+        self, api: p.Ldif.LdifClient, oid_schema_fixture: str, definition_attr: str,
     ) -> None:
         """Oracle-namespaced schema definitions are present after parsing.
 
@@ -107,7 +124,7 @@ class TestsFlextLdifOidIntegration:
     # ------------------------------------------------------------- entry data
 
     def test_parse_integration_fixture_yields_full_dataset(
-        self, api: p.Ldif.Client, oid_integration_fixture: str
+        self, api: p.Ldif.LdifClient, oid_integration_fixture: str,
     ) -> None:
         """The integration fixture parses into a large, real dataset."""
         entries = self._entries(api, oid_integration_fixture)
@@ -123,7 +140,7 @@ class TestsFlextLdifOidIntegration:
         ids=["acl", "entry-level-acl", "is-enabled", "password"],
     )
     def test_oracle_attribute_preserved_in_parsing(
-        self, api: p.Ldif.Client, oid_integration_fixture: str, attribute_name: str
+        self, api: p.Ldif.LdifClient, oid_integration_fixture: str, attribute_name: str,
     ) -> None:
         """Oracle-specific attributes survive parsing on at least one entry."""
         entries = self._entries(api, oid_integration_fixture)
@@ -139,7 +156,7 @@ class TestsFlextLdifOidIntegration:
     # --------------------------------------------------------------- roundtrip
 
     def test_roundtrip_preserves_entry_count(
-        self, api: p.Ldif.Client, oid_integration_fixture: str
+        self, api: p.Ldif.LdifClient, oid_integration_fixture: str,
     ) -> None:
         """Parse -> write -> parse keeps the entry count identical."""
         original = self._entries(api, oid_integration_fixture)
@@ -150,7 +167,7 @@ class TestsFlextLdifOidIntegration:
         tm.that(len(roundtrip), eq=len(original))
 
     def test_roundtrip_preserves_dns_exactly(
-        self, api: p.Ldif.Client, oid_integration_fixture: str
+        self, api: p.Ldif.LdifClient, oid_integration_fixture: str,
     ) -> None:
         """Every DN is preserved byte-for-byte across a round-trip."""
         original = self._entries(api, oid_integration_fixture)
@@ -166,7 +183,7 @@ class TestsFlextLdifOidIntegration:
         ids=["acl", "entry-level-acl"],
     )
     def test_roundtrip_preserves_oracle_acl_value_counts(
-        self, api: p.Ldif.Client, oid_integration_fixture: str, acl_attribute: str
+        self, api: p.Ldif.LdifClient, oid_integration_fixture: str, acl_attribute: str,
     ) -> None:
         """Total Oracle ACL value counts are invariant across a round-trip."""
         original = self._entries(api, oid_integration_fixture)
@@ -183,6 +200,3 @@ class TestsFlextLdifOidIntegration:
         )
 
         tm.that(roundtrip_count, eq=original_count)
-
-
-__all__: list[str] = ["TestsFlextLdifOidIntegration"]

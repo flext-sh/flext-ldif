@@ -1,4 +1,8 @@
-"""Oracle Internet Directory (OID) Servers."""
+"""Oracle Internet Directory (OID) Servers.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -6,7 +10,7 @@ from collections.abc import Mapping, MutableMapping
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._oid.constants import FlextLdifServersOidConstants
+from flext_ldif.servers._oid.server_constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 
@@ -16,22 +20,24 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 
     def _convert_boolean_attributes_to_rfc(
-        self, entry_attributes: t.MutableStrSequenceMapping
+        self, entry_attributes: t.MutableStrSequenceMapping,
     ) -> tuple[
         t.MutableStrSequenceMapping,
         set[str],
         MutableMapping[str, t.MutableAttributeMapping],
     ]:
-        """Convert OID boolean attribute values to RFC format."""
+        """Convert OID boolean attribute values to RFC format.
+
+        Returns:
+            The resulting ``tuple[t.MutableStrSequenceMapping, set[str],
+                MutableMapping[str, t.MutableAttributeMapping]]``.
+        """
         boolean_attributes = FlextLdifServersOidConstants.BOOLEAN_ATTRIBUTES
         boolean_attr_names = {attr.lower() for attr in boolean_attributes}
         converted_attrs_for_util: t.MutableStrSequenceMapping = dict(
-            entry_attributes.items()
+            entry_attributes.items(),
         )
-        source_format = (
-            f"{FlextLdifServersOidConstants.ZERO_OID}/"
-            f"{FlextLdifServersOidConstants.ONE_OID}"
-        )
+        source_format = f"{FlextLdifServersOidConstants.ZERO_OID}/{FlextLdifServersOidConstants.ONE_OID}"
         target_format = "TRUE/FALSE"
         converted_attributes = u.Ldif.convert_boolean_attributes(
             converted_attrs_for_util,
@@ -45,17 +51,14 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             if attr_name.lower() in boolean_attr_names:
                 original_values: t.MutableSequenceOf[str] = list(attr_values)
                 converted_values: t.MutableSequenceOf[str] = converted_attributes.get(
-                    attr_name, original_values
+                    attr_name, original_values,
                 )
                 if converted_values != original_values:
                     converted_attrs.add(attr_name)
-                    original_format_str = (
-                        f"{FlextLdifServersOidConstants.ONE_OID}/"
-                        f"{FlextLdifServersOidConstants.ZERO_OID}"
-                    )
+                    original_format_str = f"{FlextLdifServersOidConstants.ONE_OID}/{FlextLdifServersOidConstants.ZERO_OID}"
                     converted_format_str = f"{c.Ldif.TRUE_RFC}/{c.Ldif.FALSE_RFC}"
                     conversion_dict: MutableMapping[
-                        str, str | t.MutableSequenceOf[str]
+                        str, str | t.MutableSequenceOf[str],
                     ] = {}
                     original_key: str = c.Ldif.CONVERSION_ORIGINAL_VALUE
                     converted_key: str = c.Ldif.CONVERSION_CONVERTED_VALUE
@@ -67,7 +70,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                     conversion_dict["converted_format"] = converted_format_str
                     boolean_conversions[attr_name] = conversion_dict
                     FlextLdifServersOidEntry._module_logger.debug(
-                        "Converted boolean attribute OID→RFC", attribute_name=attr_name
+                        "Converted boolean attribute OID→RFC", attribute_name=attr_name,
                     )
         return (converted_attributes, converted_attrs, boolean_conversions)
 
@@ -89,21 +92,29 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             restored_attrs[attr_name] = new_values
 
     def _convert_line_acl_to_oid(self, original_line: str) -> str:
-        """Convert RFC ACL attribute name (aci) to OID format (orclaci)."""
+        """Convert RFC ACL attribute name (aci) to OID format (orclaci).
+
+        Returns:
+            The resulting ``str``.
+        """
         if ":" not in original_line:
             return original_line
         parts = original_line.split(":", 1)
         attr_lower = parts[0].strip().lower()
         if attr_lower == "aci":
             FlextLdifServersOidEntry._module_logger.debug(
-                "Converting aci to orclaci", line=original_line
+                "Converting aci to orclaci", line=original_line,
             )
             value_part = parts[1]
             return f"orclaci:{value_part}"
         return original_line
 
     def _convert_line_boolean_to_oid(self, original_line: str) -> str:
-        """Convert RFC boolean values in line to OID format."""
+        """Convert RFC boolean values in line to OID format.
+
+        Returns:
+            The resulting ``str``.
+        """
         if ":" not in original_line:
             return original_line
         parts = original_line.split(":", 1)
@@ -118,7 +129,11 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         return original_line
 
     def _convert_rfc_boolean_to_oid(self, value: str) -> tuple[str, bool]:
-        """Convert single RFC boolean value to OID format."""
+        """Convert single RFC boolean value to OID format.
+
+        Returns:
+            The resulting ``tuple[str, bool]``.
+        """
         if value == "TRUE":
             return (FlextLdifServersOidConstants.ONE_OID, True)
         if value == "FALSE":
@@ -126,9 +141,13 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         return (value, False)
 
     def _denormalize_oid_attributes_for_output(
-        self, attrs: t.MutableStrSequenceMapping, metadata: p.Ldif.ServerMetadata | None
+        self, attrs: t.MutableStrSequenceMapping, metadata: m.Ldif.ServerMetadata | None,
     ) -> t.MutableStrSequenceMapping:
-        """Denormalize RFC attributes to OID format."""
+        """Denormalize RFC attributes to OID format.
+
+        Returns:
+            The resulting ``t.MutableStrSequenceMapping``.
+        """
         mk = c.Ldif
         original_attrs_raw = (
             metadata.extensions.get(mk.ORIGINAL_ATTRIBUTES_COMPLETE)
@@ -148,7 +167,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         denormalized: t.MutableStrSequenceMapping = {}
         for attr_name, attr_values in attrs.items():
             restored_name, restored_values = self._restore_single_attribute(
-                attr_name, attr_values, original_attrs
+                attr_name, attr_values, original_attrs,
             )
             denormalized[restored_name] = restored_values
         return denormalized
@@ -157,15 +176,19 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         self,
         entry_attrs: t.MutableStrSequenceMapping,
         converted_attributes: t.MutableStrSequenceMapping,
-    ) -> MutableMapping[str, p.Ldif.AttributeTransformation]:
-        """Detect ACL attribute transformations (orclaci→aci)."""
+    ) -> MutableMapping[str, m.Ldif.AttributeTransformation]:
+        """Detect ACL attribute transformations (orclaci→aci).
+
+        Returns:
+            The resulting ``MutableMapping[str, m.Ldif.AttributeTransformation]``.
+        """
         original_attr_names: t.MutableStrMapping = {
             normalized.lower(): raw_attr_name
             for raw_attr_name in entry_attrs
             if (normalized := self._normalize_attribute_name(raw_attr_name)).lower()
             != raw_attr_name.lower()
         }
-        acl_transformations: MutableMapping[str, p.Ldif.AttributeTransformation] = {
+        acl_transformations: MutableMapping[str, m.Ldif.AttributeTransformation] = {
             original_name: m.Ldif.AttributeTransformation.model_validate({
                 "original_name": original_name,
                 "target_name": attr_name,
@@ -182,11 +205,16 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         return acl_transformations
 
     def _detect_rfc_violations(
-        self, converted_attributes: t.MutableStrSequenceMapping
+        self, converted_attributes: t.MutableStrSequenceMapping,
     ) -> tuple[
-        t.MutableSequenceOf[str], t.MutableSequenceOf[t.MutableAttributeMapping]
+        t.MutableSequenceOf[str], t.MutableSequenceOf[t.MutableAttributeMapping],
     ]:
-        """Detect RFC compliance violations in entry."""
+        """Detect RFC compliance violations in entry.
+
+        Returns:
+            The resulting ``tuple[t.MutableSequenceOf[str],
+                t.MutableSequenceOf[t.MutableAttributeMapping]]``.
+        """
         object_classes_raw = converted_attributes.get("objectClass", [])
         object_classes: t.MutableSequenceOf[str] = list(object_classes_raw)
         object_classes_lower = {oc.lower() for oc in object_classes}
@@ -231,24 +259,24 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         return (rfc_violations, attribute_conflicts)
 
     def extract_acl_metadata_from_string(
-        self, acl_value: str, current_extensions: t.Ldif.MutableMetadataMapping
+        self, acl_value: str, current_extensions: t.Ldif.MutableMetadataMapping,
     ) -> None:
         """Extract OID-specific ACL metadata from ACL string."""
         bindmode = u.Ldif.extract_component(
-            acl_value, FlextLdifServersOidConstants.ACL_BINDMODE_PATTERN, group=1
+            acl_value, FlextLdifServersOidConstants.ACL_BINDMODE_PATTERN, group=1,
         )
         if bindmode:
             current_extensions[c.Ldif.ACL_BINDMODE] = bindmode
         if u.Ldif.extract_component(
-            acl_value, FlextLdifServersOidConstants.ACL_DENY_GROUP_OVERRIDE_PATTERN
+            acl_value, FlextLdifServersOidConstants.ACL_DENY_GROUP_OVERRIDE_PATTERN,
         ):
             current_extensions[c.Ldif.ACL_DENY_GROUP_OVERRIDE] = True
         if u.Ldif.extract_component(
-            acl_value, FlextLdifServersOidConstants.ACL_APPEND_TO_ALL_PATTERN
+            acl_value, FlextLdifServersOidConstants.ACL_APPEND_TO_ALL_PATTERN,
         ):
             current_extensions[c.Ldif.ACL_APPEND_TO_ALL] = True
         bind_ip_filter = u.Ldif.extract_component(
-            acl_value, FlextLdifServersOidConstants.ACL_BIND_IP_FILTER_PATTERN, group=1
+            acl_value, FlextLdifServersOidConstants.ACL_BIND_IP_FILTER_PATTERN, group=1,
         )
         if bind_ip_filter:
             current_extensions[c.Ldif.ACL_BIND_IP_FILTER] = bind_ip_filter
@@ -263,9 +291,13 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             )
 
     def _parse_metadata_boolean_flags(
-        self, entry_data: p.Ldif.Entry
+        self, entry_data: m.Ldif.Entry,
     ) -> MutableMapping[str, t.MutableAttributeMapping]:
-        """Extract boolean conversions from entry metadata."""
+        """Extract boolean conversions from entry metadata.
+
+        Returns:
+            The resulting ``MutableMapping[str, t.MutableAttributeMapping]``.
+        """
         mk = c.Ldif
         boolean_conversions: MutableMapping[str, t.MutableAttributeMapping] = {}
         if not (entry_data.metadata and entry_data.metadata.extensions):
@@ -278,7 +310,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         converted_attrs_value: t.JsonPayload | None = converted_attrs_data
         if isinstance(converted_attrs_value, Mapping):
             boolean_conversions_obj: t.JsonPayload | None = converted_attrs_value.get(
-                mk.CONVERSION_BOOLEAN_CONVERSIONS, {}
+                mk.CONVERSION_BOOLEAN_CONVERSIONS, {},
             )
             if isinstance(boolean_conversions_obj, Mapping):
                 for key, value in boolean_conversions_obj.items():
@@ -299,9 +331,13 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         return boolean_conversions
 
     def _extract_original_extensions(
-        self, original_entry: p.Ldif.Entry
+        self, original_entry: m.Ldif.Entry,
     ) -> t.Ldif.MutableMetadataMapping:
-        """Extract compatible extensions from original entry metadata."""
+        """Extract compatible extensions from original entry metadata.
+
+        Returns:
+            The resulting ``t.Ldif.MutableMetadataMapping``.
+        """
         original_extensions: t.Ldif.MutableMetadataMapping = {}
         if not (original_entry.metadata and original_entry.metadata.extensions):
             return original_extensions
@@ -318,9 +354,13 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         return original_extensions
 
     def _get_current_attrs_with_acl_equivalence(
-        self, entry_data: p.Ldif.Entry
+        self, entry_data: m.Ldif.Entry,
     ) -> set[str]:
-        """Get current attribute names with OID ACL equivalence."""
+        """Get current attribute names with OID ACL equivalence.
+
+        Returns:
+            The resulting ``set[str]``.
+        """
         current_attrs: set[str] = set()
         if entry_data.attributes and entry_data.attributes.attributes:
             current_attrs = {
@@ -334,20 +374,26 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
     def _hook_finalize_entry_parse(
         self,
-        entry: p.Ldif.Entry,
+        entry: m.Ldif.Entry,
         original_dn: str,
         original_attrs: t.MutableStrSequenceMapping,
-    ) -> p.Result[p.Ldif.Entry]:
-        """Finalize OID entry with ACL and RFC violation metadata."""
+    ) -> p.Result[m.Ldif.Entry]:
+        """Preserve typed OID metadata for serialization and phase-aware ACL writes.
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.Entry]``.
+        """
         _ = original_dn
         if not entry.attributes:
-            return r[p.Ldif.Entry].ok(entry)
+            return r[m.Ldif.Entry].ok(entry)
         normalized_attrs = entry.attributes.attributes
-        metadata = entry.metadata or u.Ldif.server_metadata_for("oid")
-        if metadata.server_type != "oid":
-            metadata = metadata.model_copy(update={"server_type": "oid"})
+        metadata_values = dict(entry.metadata) if entry.metadata is not None else {}
+        entry.metadata = m.Ldif.ServerMetadata.model_validate({
+            **metadata_values,
+            "server_type": c.Ldif.ServerTypes.OID,
+        })
         current_extensions: t.Ldif.MutableMetadataMapping = (
-            dict(metadata.extensions) if metadata.extensions else {}
+            dict(entry.metadata.extensions) if entry.metadata.extensions else {}
         )
         mk = c.Ldif
         current_extensions[mk.ORIGINAL_DN_COMPLETE] = original_dn
@@ -359,21 +405,21 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             orclaci_values = list(orclaci_raw)
         self._process_orclaci_values(orclaci_values, current_extensions)
         acl_transformations = self._detect_entry_acl_transformations(
-            original_attrs, normalized_attrs
+            original_attrs, normalized_attrs,
         )
         rfc_violations, attribute_conflicts = self._detect_rfc_violations(
-            normalized_attrs
+            normalized_attrs,
         )
         if acl_transformations:
             acl_transformations_dict = {
                 name: trans.model_dump() for name, trans in acl_transformations.items()
             }
             current_extensions["acl_transformations"] = u.Ldif.dump_dynamic_metadata(
-                acl_transformations_dict
+                acl_transformations_dict,
             )
         if rfc_violations:
             current_extensions["rfc_violations"] = u.Ldif.dump_json_payload(
-                list(rfc_violations)
+                list(rfc_violations),
             )
         if attribute_conflicts:
             attribute_conflicts_json: t.JsonValue = (
@@ -386,33 +432,38 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 ])
             )
             current_extensions["attribute_conflicts"] = u.Ldif.dump_json_payload(
-                attribute_conflicts_json
+                attribute_conflicts_json,
             )
-        updated_metadata = metadata.model_copy(
-            update={"extensions": current_extensions}
-        )
-        return r[p.Ldif.Entry].ok(
-            entry.model_copy(update={"metadata": updated_metadata})
-        )
+        # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: assign the plain
+        # mapping built above (already JSON-normalized).
+        entry.metadata.extensions = current_extensions
+        return r[m.Ldif.Entry].ok(entry)
 
     @override
-    def _hook_post_parse_entry(self, entry: p.Ldif.Entry) -> p.Result[p.Ldif.Entry]:
-        """Transform parsed entry using OID-specific enhancements."""
+    def _hook_post_parse_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
+        """Transform parsed entry using OID-specific enhancements.
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.Entry]``.
+        """
         try:
             return self._post_parse_oid_entry(entry)
         except c.Ldif.EXC_LDIF_PARSE as e:
             FlextLdifServersOidEntry._module_logger.exception(
-                "OID post-parse entry hook failed"
+                "OID post-parse entry hook failed",
             )
-            return r[p.Ldif.Entry].fail_op("OID post-parse entry hook", e)
+            return r[m.Ldif.Entry].fail_op("OID post-parse entry hook", e)
 
-    def _post_parse_oid_entry(self, entry: p.Ldif.Entry) -> p.Result[p.Ldif.Entry]:
-        """Normalize OID entry attributes after RFC parsing."""
-        attributes = entry.attributes
-        if attributes is None or not entry.dn:
-            return r[p.Ldif.Entry].ok(entry)
+    def _post_parse_oid_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
+        """Normalize OID entry attributes after RFC parsing.
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.Entry]``.
+        """
+        if not entry.attributes or not entry.dn:
+            return r[m.Ldif.Entry].ok(entry)
         converted_attributes, converted_attrs, boolean_conversions = (
-            self._convert_boolean_attributes_to_rfc(attributes.attributes)
+            self._convert_boolean_attributes_to_rfc(entry.attributes.attributes)
         )
         normalized_attributes: t.MutableStrSequenceMapping = {}
         name_renames: t.MutableStrMapping = {}
@@ -422,64 +473,56 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             if normalized_name != attr_name:
                 name_renames[normalized_name] = attr_name
         self._normalize_schema_values(normalized_attributes)
-        updated_entry = entry.model_copy(
-            update={
-                "attributes": attributes.model_copy(
-                    update={"attributes": normalized_attributes}
-                )
-            }
-        )
+        entry.attributes.attributes = normalized_attributes
         mk = c.Ldif
-        metadata = updated_entry.metadata
-        if metadata:
-            current_extensions = dict(metadata.extensions)
+        if entry.metadata:
+            if not entry.metadata.extensions:
+                entry.metadata.extensions = {}
             converted_attrs_list: t.MutableSequenceOf[t.JsonValue] = list(
-                converted_attrs
+                converted_attrs,
             )
             converted_attrs_json: t.JsonValueList = list(
-                t.Cli.JSON_LIST_ADAPTER.validate_python(converted_attrs_list)
+                t.Cli.JSON_LIST_ADAPTER.validate_python(converted_attrs_list),
             )
             if boolean_conversions:
                 boolean_conversions_dict: MutableMapping[str, t.JsonValue] = {
                     attr_name: {
                         conversion_key: t.Cli.JSON_VALUE_ADAPTER.validate_python(
-                            conversion_value
+                            conversion_value,
                         )
                         for conversion_key, conversion_value in conversion_data.items()
                     }
                     for attr_name, conversion_data in boolean_conversions.items()
                 }
-                boolean_conversions_json: t.JsonMapping = (
-                    t.Cli.JSON_MAPPING_ADAPTER.validate_python({
-                        attr_name: u.normalize_to_json_value(conversion_data)
-                        for attr_name, conversion_data in (
-                            boolean_conversions_dict.items()
-                        )
-                    })
-                )
+                boolean_conversions_json: t.JsonMapping = t.Cli.JSON_MAPPING_ADAPTER.validate_python({
+                    attr_name: u.normalize_to_json_value(conversion_data)
+                    for attr_name, conversion_data in boolean_conversions_dict.items()
+                })
                 conv_data = u.normalize_to_json_value({
                     mk.CONVERSION_CONVERTED_ATTRIBUTE_NAMES: converted_attrs_json,
                     mk.CONVERSION_BOOLEAN_CONVERSIONS: boolean_conversions_json,
                 })
-                current_extensions[mk.CONVERTED_ATTRIBUTES] = conv_data
+                # mro-wgwh.5 (agent: kimi-coder) — extensions is a plain mapping now:
+                # subscript assignment instead of DynamicMetadata setattr.
+                entry.metadata.extensions[mk.CONVERTED_ATTRIBUTES] = conv_data
             else:
-                current_extensions[mk.CONVERTED_ATTRIBUTES] = converted_attrs_json
+                entry.metadata.extensions[mk.CONVERTED_ATTRIBUTES] = (
+                    converted_attrs_json
+                )
             if name_renames:
                 rename_metadata: t.JsonDict = dict(name_renames)
-                current_extensions["attribute_name_renames"] = rename_metadata
-            updated_entry = updated_entry.model_copy(
-                update={
-                    "metadata": metadata.model_copy(
-                        update={"extensions": current_extensions}
-                    )
-                }
-            )
-        return r[p.Ldif.Entry].ok(updated_entry)
+                entry.metadata.extensions["attribute_name_renames"] = rename_metadata
+        return r[m.Ldif.Entry].ok(entry)
 
     def _hook_transform_entry_raw(
-        self, dn: str, attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]]
+        self, dn: str, attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]],
     ) -> p.Result[tuple[str, MutableMapping[str, t.MutableSequenceOf[str | bytes]]]]:
-        """Transform OID-specific DN and attributes before RFC parsing."""
+        """Transform OID-specific DN and attributes before RFC parsing.
+
+        Returns:
+            The resulting ``p.Result[tuple[str, MutableMapping[str,
+                t.MutableSequenceOf[str | bytes]]]]``.
+        """
         cleaned_dn, _ = u.Ldif.clean_dn_with_statistics(dn)
         normalized_dn = cleaned_dn
         if cleaned_dn.lower() == FlextLdifServersOidConstants.SCHEMA_DN_SERVER.lower():
@@ -503,11 +546,11 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         """Parse ACL and merge additional extensions from parsed model."""
         try:
             self._merge_parsed_acl_extensions_core(
-                acl_server, acl_value, current_extensions
+                acl_server, acl_value, current_extensions,
             )
         except c.Ldif.EXC_LDIF_PARSE:
             FlextLdifServersOidEntry._module_logger.debug(
-                "Failed to parse ACL extension metadata", exc_info=True
+                "Failed to parse ACL extension metadata", exc_info=True,
             )
 
     def _merge_parsed_acl_extensions_core(
@@ -518,13 +561,11 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
     ) -> None:
         """Merge parsed ACL extension metadata into the current extension mapping."""
         acl_result = acl_server.parse_server(acl_value)
-        if not acl_result.success:
-            return
         acl_model = m.Ldif.Acl.model_validate(acl_result.value)
         if not (acl_model.metadata and acl_model.metadata.extensions):
             return
-        # mro-wgwh.5 (agent: kimi-coder) — extensions is a plain mapping;
-        # isinstance(dict) replaces the hasattr(model_dump) dispatch.
+        # mro-wgwh.5 (agent: kimi-coder) — extensions is a plain mapping; isinstance(dict)
+        # replaces the hasattr(model_dump) dispatch.
         extensions_value = acl_model.metadata.extensions
         acl_extensions: t.MutableJsonMapping = (
             extensions_value
@@ -539,6 +580,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             mapped_key = key_mapping.get(key)
             if mapped_key and (not current_extensions.get(mapped_key)):
                 current_extensions[mapped_key] = value
+        return
 
     @staticmethod
     def _normalize_schema_values(attrs: t.MutableStrSequenceMapping) -> None:
@@ -550,7 +592,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         ``caseIgnoreMatch`` (not a substring matching rule), while in SUBSTR context it
         becomes ``caseIgnoreSubstringsMatch`` (lowercase 's').
         """
-        equality_map: dict[str, str] = {
+        equality_map: t.MappingKV[str, str] = {
             "caseIgnoreSubStringsMatch": "caseIgnoreMatch",
             "caseIgnoreSubstringsMatch": "caseIgnoreMatch",
         }
@@ -574,7 +616,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                     substr_token = f"SUBSTR {oid_rule}"
                     if substr_token in new_value:
                         new_value = new_value.replace(
-                            substr_token, f"SUBSTR {rfc_rule}"
+                            substr_token, f"SUBSTR {rfc_rule}",
                         )
                         changed = True
                 for oid_syntax, rfc_syntax in syntax_map.items():
@@ -585,12 +627,12 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                         changed = True
                     elif f" {oid_syntax} " in new_value:
                         new_value = new_value.replace(
-                            f" {oid_syntax} ", f" {rfc_syntax} "
+                            f" {oid_syntax} ", f" {rfc_syntax} ",
                         )
                         changed = True
                 if attr_name.lower() in {"objectclasses", "attributetypes"}:
                     sup_quoted = c.Ldif.sub_pattern(
-                        r"SUP\s+'([^']+)'", r"SUP \1", new_value
+                        r"SUP\s+'([^']+)'", r"SUP \1", new_value,
                     )
                     if sup_quoted != new_value:
                         new_value = sup_quoted
@@ -601,7 +643,11 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
     @override
     def _normalize_attribute_name(self, attr_name: str) -> str:
-        """Normalize OID attribute names to RFC-canonical format."""
+        """Normalize OID attribute names to RFC-canonical format.
+
+        Returns:
+            The resulting ``str``.
+        """
         match attr_name.lower():
             case attr_lower if attr_lower in {
                 FlextLdifServersOidConstants.ORCLACI.lower(),
@@ -613,9 +659,13 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
     @override
     def _parse_entry_from_lines(
-        self, lines: t.MutableSequenceOf[str]
-    ) -> p.Result[p.Ldif.Entry]:
-        """Parse LDIF lines, normalize OID to RFC, and finalize metadata."""
+        self, lines: t.MutableSequenceOf[str],
+    ) -> p.Result[m.Ldif.Entry]:
+        """Parse entry from LDIF lines, apply OID→RFC normalization, finalize metadata.
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.Entry]``.
+        """
         result = super()._parse_entry_from_lines(lines)
         if result.failure:
             return result
@@ -624,13 +674,11 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             original_dn = str(entry.dn)
             cleaned_dn, _ = u.Ldif.clean_dn_with_statistics(original_dn)
             if cleaned_dn != original_dn:
-                entry = entry.model_copy(
-                    update={"dn": m.Ldif.DN.model_validate({"value": cleaned_dn})}
-                )
+                entry.dn = m.Ldif.DN.model_validate({"value": cleaned_dn})
         original_dn = str(entry.dn) if entry.dn else ""
         original_attrs = entry.attributes.attributes if entry.attributes else {}
         finalize_result = self._hook_finalize_entry_parse(
-            entry, original_dn, original_attrs
+            entry, original_dn, original_attrs,
         )
         if finalize_result.failure:
             return finalize_result
@@ -657,7 +705,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             self.extract_acl_metadata_from_string(acl_value, current_extensions)
             if acl_server is not None:
                 self._merge_parsed_acl_extensions(
-                    acl_server, acl_value, current_extensions
+                    acl_server, acl_value, current_extensions,
                 )
 
     def _restore_boolean_attribute_from_metadata(
@@ -666,7 +714,11 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         conv_data: t.MutableAttributeMapping,
         restored_attrs: t.MutableStrSequenceMapping,
     ) -> bool:
-        """Restore single boolean attribute from conversion metadata."""
+        """Restore single boolean attribute from conversion metadata.
+
+        Returns:
+            The resulting ``bool``.
+        """
         mk = c.Ldif
         converted_val = conv_data.get(mk.CONVERSION_CONVERTED_VALUE)
         match converted_val:
@@ -688,8 +740,12 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         )
         return True
 
-    def _restore_boolean_values_to_oid(self, entry_data: p.Ldif.Entry) -> p.Ldif.Entry:
-        """Restore OID boolean format from RFC format (RFC → OID: TRUE/FALSE → 0/1)."""
+    def _restore_boolean_values_to_oid(self, entry_data: m.Ldif.Entry) -> m.Ldif.Entry:
+        """Restore OID boolean format from RFC format (RFC → OID: TRUE/FALSE → 0/1).
+
+        Returns:
+            The resulting ``m.Ldif.Entry``.
+        """
         if not entry_data.attributes:
             return entry_data
         boolean_conversions = self._parse_metadata_boolean_flags(entry_data)
@@ -703,18 +759,18 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             conv_data = boolean_conversions.get(attr_name, {})
             if conv_data:
                 self._restore_boolean_attribute_from_metadata(
-                    attr_name, conv_data, restored_attrs
+                    attr_name, conv_data, restored_attrs,
                 )
                 continue
             self._convert_boolean_values_to_oid(
-                attr_name, restored_attrs[attr_name], restored_attrs
+                attr_name, restored_attrs[attr_name], restored_attrs,
             )
         if restored_attrs == entry_data.attributes.attributes:
             return entry_data
         entry_metadata: t.MutableJsonMapping | None = None
         if entry_data.attributes and entry_data.attributes.metadata:
             entry_metadata = entry_data.attributes.metadata
-        copied: p.Ldif.Entry = entry_data.model_copy(
+        copied: m.Ldif.Entry = entry_data.model_copy(
             update={
                 "attributes": m.Ldif.Attributes.model_validate({
                     "attributes": restored_attrs,
@@ -722,13 +778,17 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                     if entry_data.attributes
                     else {},
                     "metadata": entry_metadata,
-                })
-            }
+                }),
+            },
         )
         return copied
 
-    def restore_entry_from_metadata(self, entry_data: p.Ldif.Entry) -> p.Ldif.Entry:
-        """Restore OID-specific formats from metadata (RFC → OID denormalization)."""
+    def restore_entry_from_metadata(self, entry_data: m.Ldif.Entry) -> m.Ldif.Entry:
+        """Restore OID-specific formats from metadata (RFC → OID denormalization).
+
+        Returns:
+            The resulting ``m.Ldif.Entry``.
+        """
         restored_entry = self._restore_boolean_values_to_oid(entry_data)
         metadata = restored_entry.metadata
         attributes = restored_entry.attributes
@@ -750,20 +810,24 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             changed = True
         if not changed:
             return restored_entry
-        restored_copy: p.Ldif.Entry = restored_entry.model_copy(
+        restored_copy: m.Ldif.Entry = restored_entry.model_copy(
             update={
                 "attributes": m.Ldif.Attributes.model_validate({
                     "attributes": restored_attrs,
                     "attribute_metadata": attributes.attribute_metadata,
                     "metadata": attributes.metadata,
-                })
-            }
+                }),
+            },
         )
         return restored_copy
 
     @override
-    def _write_entry(self, entry_data: p.Ldif.Entry) -> p.Result[str]:
-        """Write OID entry preserving OID-specific denormalized attribute names."""
+    def _write_entry(self, entry_data: m.Ldif.Entry) -> p.Result[str]:
+        """Write OID entry preserving OID-specific denormalized attribute names.
+
+        Returns:
+            The resulting ``p.Result[str]``.
+        """
         entry_to_write = self.restore_entry_from_metadata(entry_data)
         return super()._write_entry(entry_to_write)
 
@@ -773,7 +837,11 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         attr_values: t.MutableSequenceOf[str],
         original_attrs: t.MutableStrSequenceMapping | None,
     ) -> tuple[str, t.MutableSequenceOf[str]]:
-        """Restore attribute from metadata or apply denormalization."""
+        """Restore attribute from metadata or apply denormalization.
+
+        Returns:
+            The resulting ``tuple[str, t.MutableSequenceOf[str]]``.
+        """
         if original_attrs:
             for orig_name, orig_values in original_attrs.items():
                 if self._normalize_attribute_name(orig_name) == attr_name:
@@ -791,17 +859,21 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         self,
         original_line: str,
         current_attrs: set[str],
-        write_options: p.Ldif.WriteFormatOptions | None,
+        write_options: m.Ldif.WriteFormatOptions | None,
         *,
         write_empty_values: bool,
     ) -> bool:
-        """Check if original line should be skipped during restoration."""
+        """Check if original line should be skipped during restoration.
+
+        Returns:
+            The resulting ``bool``.
+        """
         _ = write_empty_values
         if original_line.lower().startswith("dn:"):
             return True
         if original_line.strip().startswith("#"):
             include_comments = write_options and getattr(
-                write_options, "write_metadata_as_comments", False
+                write_options, "write_metadata_as_comments", False,
             )
             if not include_comments:
                 return True
@@ -815,16 +887,20 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
     def _write_original_attr_lines(
         self,
         ldif_lines: t.MutableSequenceOf[str],
-        entry_data: p.Ldif.Entry,
+        entry_data: m.Ldif.Entry,
         original_attr_lines_complete: t.MutableSequenceOf[str],
-        write_options: p.Ldif.WriteFormatOptions | None,
+        write_options: m.Ldif.WriteFormatOptions | None,
     ) -> set[str]:
-        """Write original attribute lines preserving exact formatting."""
+        """Write original attribute lines preserving exact formatting.
+
+        Returns:
+            The resulting ``set[str]``.
+        """
         written_attrs: set[str] = set()
         current_attrs = self._get_current_attrs_with_acl_equivalence(entry_data)
         for original_line in original_attr_lines_complete:
             if self._should_skip_original_line(
-                original_line, current_attrs, write_options, write_empty_values=True
+                original_line, current_attrs, write_options, write_empty_values=True,
             ):
                 continue
             if ":" in original_line:

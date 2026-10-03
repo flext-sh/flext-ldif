@@ -12,7 +12,8 @@ from __future__ import annotations
 
 from typing import Annotated, ClassVar
 
-from flext_cli import m, t, u
+from flext_cli import FlextCliModels, t, u
+
 from flext_ldif._models.base import FlextLdifModelsBases
 from flext_ldif._models.collections import FlextLdifModelsCollections
 from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries
@@ -22,7 +23,7 @@ from flext_ldif._models.results import FlextLdifModelsResults
 from flext_ldif._models.settings import FlextLdifModelsSettings
 
 
-class FlextLdifModels(m):
+class FlextLdifModels(FlextCliModels):
     """LDIF domain models — flat façade with MRO class inheritance.
 
     Architecture: Domain layer helper
@@ -45,15 +46,17 @@ class FlextLdifModels(m):
         # COMPOSITE MODELS — defined here, not in models
         # =================================================================
 
-        class Stats(m.BaseModel):
+        class Stats(FlextCliModels.BaseModel):
             """Write statistics for batch content operations."""
 
-            model_config: ClassVar[t.ConfigDict] = m.ConfigDict(validate_default=True)
+            model_config: ClassVar[FlextCliModels.ConfigDict] = (
+                FlextCliModels.ConfigDict(validate_default=True)
+            )
             total_entries: Annotated[t.NonNegativeInt, u.Field()] = 0
             successful: Annotated[t.NonNegativeInt, u.Field()] = 0
             failed: Annotated[t.NonNegativeInt, u.Field()] = 0
 
-        class OidAclMetadataConfig(m.BaseModel):
+        class OidAclMetadataConfig(FlextCliModels.BaseModel):
             """Configuration model for OID ACL metadata parsing."""
 
             acl_line: Annotated[str, u.Field()] = ""
@@ -61,7 +64,7 @@ class FlextLdifModels(m):
             rfc_subject_type: Annotated[str, u.Field()] = ""
             oid_subject_value: Annotated[str, u.Field()] = ""
             perms_dict: Annotated[t.MutableBoolMapping, u.Field()] = u.Field(
-                default_factory=dict
+                default_factory=dict,
             )
             target_dn: Annotated[str, u.Field()] = "entry"
             target_attrs: t.MutableSequenceOf[str] = u.Field(default_factory=list)

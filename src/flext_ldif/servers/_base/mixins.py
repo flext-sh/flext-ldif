@@ -1,20 +1,54 @@
-"""Base server mixins for LDIF server implementations."""
+"""Base server mixins for LDIF server implementations.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
-from flext_ldif import c, p, u
+from flext_ldif import c, p, t, u
 
 
 class FlextLdifServerMethodsMixin:
     """Common server methods shared by schema, ACL, and entry servers."""
 
     @staticmethod
+    def project_processor_fields[T](
+        fields: t.MappingKV[str, T],
+        processor_keys: frozenset[str],
+        *,
+        force_dispatch: bool = False,
+    ) -> t.JsonDict | None:
+        """Validate fields outside the processor key set for super().__call__ dispatch.
+
+        Returns ``None`` when every field is a processor key and no forced
+        dispatch was requested — signalling the caller to skip ``super().__call__``
+        and run the local processor branch instead. Non-processor field values
+        are coerced through ``t.json_value_adapter()`` (caller is responsible
+        for ensuring those values are JsonValue-compatible).
+
+        Returns:
+            The resulting ``t.JsonDict | None``.
+        """
+        if not (force_dispatch or any(key not in processor_keys for key in fields)):
+            return None
+        return {
+            key: t.json_value_adapter().validate_python(value)
+            for key, value in fields.items()
+            if key not in processor_keys
+        }
+
+    @staticmethod
     def get_parent_server_from_instance(
         instance: FlextLdifServerMethodsMixin,
     ) -> p.Ldif.ServerServer | None:
-        """Get the effective parent server when available."""
+        """Get the effective parent server when available.
+
+        Returns:
+            The resulting ``p.Ldif.ServerServer | None``.
+        """
         parent_raw: p.Ldif.ServerServer | None = getattr(
-            instance, "_parent_server", None
+            instance, "_parent_server", None,
         )
         if (
             parent_raw is not None
@@ -25,7 +59,11 @@ class FlextLdifServerMethodsMixin:
 
     @staticmethod
     def get_priority_from_parent(parent: p.Ldif.ServerServer | None) -> int:
-        """Resolve priority from the parent server Constants class."""
+        """Resolve priority from the parent server Constants class.
+
+        Returns:
+            The resulting ``int``.
+        """
         if parent is None:
             return 100
         constants_attr = getattr(parent, "Constants", None)
@@ -38,23 +76,63 @@ class FlextLdifServerMethodsMixin:
 
     @staticmethod
     def get_server_type_from_utilities(server_class: type) -> c.Ldif.ServerTypes:
-        """Infer the server type from the namespace."""
+        """Infer the server type from the utilities namespace.
+
+        Returns:
+            The resulting ``c.Ldif.ServerTypes``.
+        """
         resolved: c.Ldif.ServerTypes = u.Ldif.get_parent_server_type(server_class)
         return resolved
 
     def _get_parent_server_safe(self) -> p.Ldif.ServerServer | None:
-        """Get the effective parent server safely."""
+        """Get the effective parent server safely.
+
+        Returns:
+            The resulting ``p.Ldif.ServerServer | None``.
+        """
         return FlextLdifServerMethodsMixin.get_parent_server_from_instance(self)
 
     def _get_priority(self) -> int:
-        """Get server priority from the parent Constants class."""
+        """Get server priority from the parent Constants class.
+
+        Returns:
+            The resulting ``int``.
+        """
         return FlextLdifServerMethodsMixin.get_priority_from_parent(
-            self._get_parent_server_safe()
+            self._get_parent_server_safe(),
         )
 
     def _get_server_type(self) -> c.Ldif.ServerTypes:
-        """Resolve server type for the current server class."""
+        """Resolve server type for the current server class.
+
+        Returns:
+            The resulting ``c.Ldif.ServerTypes``.
+        """
         return FlextLdifServerMethodsMixin.get_server_type_from_utilities(type(self))
+
+    @staticmethod
+    def _narrow_operation(operation: t.JsonValue | None) -> str | None:
+        """Narrow operation field to str or None.
+
+        Returns:
+            The resulting ``str | None``.
+        """
+        return operation if isinstance(operation, str) else None
+
+    @classmethod
+    def builder_fields_or_none[T](
+        cls,
+        fields: t.MappingKV[str, T],
+        processor_keys: frozenset[str],
+        server: p.Ldif.ServerRegistry | None,
+        settings: p.Ldif.Settings | None,
+    ) -> t.JsonDict | None:
+        """Return builder dispatch fields or None to skip dispatch."""
+        return cls.project_processor_fields(
+            fields,
+            processor_keys,
+            force_dispatch=server is not None or settings is not None,
+        )
 
 
 __all__: list[str] = ["FlextLdifServerMethodsMixin"]

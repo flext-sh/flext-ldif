@@ -1,14 +1,14 @@
 """Demo: Structured Migration with 6-File Output.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
 This example demonstrates the new structured migration feature that produces
 6 organized LDIF files (00-schema through 06-rejected) with:
 - Automatic categorization (schema, hierarchy, users, groups, ACLs, data)
 - Removed attribute tracking and commenting
 - Jinja2 header templates
 - Unlimited line width (no line folding)
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -35,8 +35,6 @@ def main() -> None:
             source_server="rfc",
             target_server="rfc",
         )
-        if result.failure:
-            return
         pipeline_result = result.unwrap()
         for path in pipeline_result.output_files:
             file_path = Path(path)

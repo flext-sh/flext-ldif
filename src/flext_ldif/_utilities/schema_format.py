@@ -1,9 +1,19 @@
-"""Schema-format restoration helpers for FLEXT-LDIF."""
+"""Schema-format restoration helpers for FLEXT-LDIF.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from flext_cli import u
-from flext_ldif import c, p, t
+
+from flext_ldif import c, t
+
+if TYPE_CHECKING:
+    from flext_ldif import FlextLdifModels
 
 
 class FlextLdifUtilitiesSchemaFormat:
@@ -11,25 +21,31 @@ class FlextLdifUtilitiesSchemaFormat:
 
     @staticmethod
     def apply_trailing_spaces(
-        attr_data: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
+        attr_data: FlextLdifModels.Ldif.SchemaAttribute
+        | FlextLdifModels.Ldif.SchemaObjectClass,
         parts: t.MutableSequenceOf[str],
     ) -> None:
         """Apply trailing spaces from metadata if available."""
         if not attr_data.metadata or not attr_data.metadata.schema_format_details:
             return
         trailing = getattr(
-            attr_data.metadata.schema_format_details, "trailing_spaces", ""
+            attr_data.metadata.schema_format_details, "trailing_spaces", "",
         )
         if trailing and parts:
             parts[-1] += str(trailing)
 
     @staticmethod
     def build_name_part(
-        attr_data: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
+        attr_data: FlextLdifModels.Ldif.SchemaAttribute
+        | FlextLdifModels.Ldif.SchemaObjectClass,
         *,
         restore_format: bool = False,
     ) -> str | None:
-        """Build NAME part with optional format restoration."""
+        """Build NAME part with optional format restoration.
+
+        Returns:
+            The resulting ``str | None``.
+        """
         if not attr_data.name:
             return None
         if not restore_format or not attr_data.metadata:
@@ -49,7 +65,8 @@ class FlextLdifUtilitiesSchemaFormat:
 
     @staticmethod
     def build_obsolete_part(
-        attr_data: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
+        attr_data: FlextLdifModels.Ldif.SchemaAttribute
+        | FlextLdifModels.Ldif.SchemaObjectClass,
         parts: t.MutableSequenceOf[str],
         field_order: t.MutableSequenceOf[str] | None,
         *,
@@ -62,11 +79,11 @@ class FlextLdifUtilitiesSchemaFormat:
             has_obsolete = bool(
                 getattr(schema_details, "obsolete_presence", False)
                 if schema_details
-                else False
+                else False,
             )
             if not has_obsolete:
                 has_obsolete = bool(
-                    attr_data.metadata.extensions.get(c.Ldif.ObsoleteField.OBSOLETE)
+                    attr_data.metadata.extensions.get(c.Ldif.ObsoleteField.OBSOLETE),
                 )
         if not has_obsolete:
             return
@@ -78,11 +95,16 @@ class FlextLdifUtilitiesSchemaFormat:
 
     @staticmethod
     def build_x_origin_part(
-        attr_data: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
+        attr_data: FlextLdifModels.Ldif.SchemaAttribute
+        | FlextLdifModels.Ldif.SchemaObjectClass,
         *,
         restore_format: bool = False,
     ) -> str | None:
-        """Build X-ORIGIN part with optional format restoration."""
+        """Build X-ORIGIN part with optional format restoration.
+
+        Returns:
+            The resulting ``str | None``.
+        """
         if not attr_data.metadata:
             return None
         schema_details = attr_data.metadata.schema_format_details
@@ -100,9 +122,13 @@ class FlextLdifUtilitiesSchemaFormat:
 
     @staticmethod
     def format_attribute_list(
-        attr_list: str | t.SequenceOf[str] | None, prefix: str
+        attr_list: str | t.MutableSequenceOf[str] | None, prefix: str,
     ) -> str | None:
-        """Format attribute list (MUST/MAY) for objectClass definition."""
+        """Format attribute list (MUST/MAY) for objectClass definition.
+
+        Returns:
+            The resulting ``str | None``.
+        """
         if not attr_list:
             return None
         if isinstance(attr_list, str):
@@ -113,8 +139,12 @@ class FlextLdifUtilitiesSchemaFormat:
         return f"{prefix} ( {' $ '.join(attr_strs)} )"
 
     @staticmethod
-    def format_sup_list(sup_value: str | t.SequenceOf[str] | None) -> str | None:
-        """Format SUP (superior) list for objectClass definition."""
+    def format_sup_list(sup_value: str | t.MutableSequenceOf[str] | None) -> str | None:
+        """Format SUP (superior) list for objectClass definition.
+
+        Returns:
+            The resulting ``str | None``.
+        """
         if not sup_value:
             return None
         if isinstance(sup_value, str):
@@ -124,13 +154,18 @@ class FlextLdifUtilitiesSchemaFormat:
 
     @staticmethod
     def get_field_order(
-        attr_data: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
+        attr_data: FlextLdifModels.Ldif.SchemaAttribute
+        | FlextLdifModels.Ldif.SchemaObjectClass,
     ) -> t.MutableSequenceOf[str] | None:
-        """Extract field order from metadata if available."""
+        """Extract field order from metadata if available.
+
+        Returns:
+            The resulting ``t.MutableSequenceOf[str] | None``.
+        """
         if not attr_data.metadata or not attr_data.metadata.schema_format_details:
             return None
         field_order_ = getattr(
-            attr_data.metadata.schema_format_details, "field_order", None
+            attr_data.metadata.schema_format_details, "field_order", None,
         )
         if field_order_ and u.list_like(field_order_):
             return [str(item) for item in field_order_]
@@ -138,9 +173,15 @@ class FlextLdifUtilitiesSchemaFormat:
 
     @staticmethod
     def try_restore_objectclass_original_format(
-        oc_data: p.Ldif.SchemaObjectClass, *, restore_original: bool = True
+        oc_data: FlextLdifModels.Ldif.SchemaObjectClass,
+        *,
+        restore_original: bool = True,
     ) -> t.MutableSequenceOf[str] | None:
-        """Try to restore original format from metadata for objectClass."""
+        """Try to restore original format from metadata for objectClass.
+
+        Returns:
+            The resulting ``t.MutableSequenceOf[str] | None``.
+        """
         if not restore_original or not oc_data.metadata:
             return None
         schema_details = oc_data.metadata.schema_format_details
@@ -156,9 +197,13 @@ class FlextLdifUtilitiesSchemaFormat:
 
     @staticmethod
     def try_restore_original_format(
-        attr_data: p.Ldif.SchemaAttribute,
+        attr_data: FlextLdifModels.Ldif.SchemaAttribute,
     ) -> t.MutableSequenceOf[str] | None:
-        """Try to restore original format from metadata for perfect round-trip."""
+        """Try to restore original format from metadata for perfect round-trip.
+
+        Returns:
+            The resulting ``t.MutableSequenceOf[str] | None``.
+        """
         if not (
             attr_data.metadata
             and attr_data.metadata.schema_format_details
@@ -171,8 +216,8 @@ class FlextLdifUtilitiesSchemaFormat:
             return None
         original = str(
             getattr(
-                attr_data.metadata.schema_format_details, "original_string_complete", ""
-            )
+                attr_data.metadata.schema_format_details, "original_string_complete", "",
+            ),
         )
         if not original:
             return None
