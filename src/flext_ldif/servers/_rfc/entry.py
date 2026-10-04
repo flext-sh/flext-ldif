@@ -19,7 +19,6 @@ class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 
-    @staticmethod
     def _parse_entry_from_lines(
         self,
         lines: t.MutableSequenceOf[str],
