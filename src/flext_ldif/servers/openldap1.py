@@ -501,7 +501,6 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             )
             return not is_config_dn and (not has_olc_attrs)
 
-        @staticmethod
         def process_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
             """Process entry for OpenLDAP 1.x format.
 

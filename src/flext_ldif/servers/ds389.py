@@ -516,7 +516,6 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                     ),
                 )
 
-        @staticmethod
         def _process_ds389_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
             """Normalize a 389 DS entry and attach metadata.
 

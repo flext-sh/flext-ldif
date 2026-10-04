@@ -742,7 +742,6 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         })
         return r[m.Ldif.SchemaObjectClass].ok(objectclass)
 
-    @staticmethod
     def _post_write_attribute(self, written_str: str) -> str:
         """Transform written attribute string (subclass hook).
 
@@ -751,7 +750,6 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         """
         return written_str
 
-    @staticmethod
     def _post_write_objectclass(self, written_str: str) -> str:
         """Transform written objectClass string (subclass hook).
 

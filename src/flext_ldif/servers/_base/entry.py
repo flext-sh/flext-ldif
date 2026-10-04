@@ -91,7 +91,6 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         _ = attributes
         return False
 
-    @staticmethod
     def can_handle_attribute(self, attribute: m.Ldif.SchemaAttribute) -> bool:
         """Check if this server can handle a schema attribute.
 
@@ -101,7 +100,6 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         _ = attribute
         return False
 
-    @staticmethod
     def can_handle_objectclass(self, objectclass: m.Ldif.SchemaObjectClass) -> bool:
         """Check if this server can handle a schema objectClass.
 
@@ -248,7 +246,6 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         _ = target_server
         return entry
 
-    @staticmethod
     def _hook_post_parse_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
         """Run hook after parsing an entry.
 
@@ -257,7 +254,6 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         """
         return r[m.Ldif.Entry].ok(entry)
 
-    @staticmethod
     def _hook_pre_write_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
         """Run hook before writing an entry.
 
@@ -313,7 +309,6 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         copied: m.Ldif.Entry = entry.model_copy(update={"metadata": updated_metadata})
         return copied
 
-    @staticmethod
     def _normalize_attribute_name(self, attr_name: str) -> str:
         """Normalize attribute name to RFC 2849 canonical form.
 

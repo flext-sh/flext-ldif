@@ -768,7 +768,6 @@ class FlextLdifServersBaseSchema(
             raise AssertionError(msg)
         return result
 
-    @staticmethod
     def _write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> p.Result[str]:
         """Write attribute data to RFC-compliant string format (internal).
 
@@ -778,7 +777,6 @@ class FlextLdifServersBaseSchema(
         _ = attr_data
         return r[str].fail("Must be implemented by subclass")
 
-    @staticmethod
     def _write_objectclass(self, oc_data: m.Ldif.SchemaObjectClass) -> p.Result[str]:
         """Write objectClass data to RFC-compliant string format (internal).
 

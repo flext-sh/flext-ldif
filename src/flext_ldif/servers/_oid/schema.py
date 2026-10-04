@@ -248,7 +248,6 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             case _:
                 return None
 
-    @staticmethod
     def _normalize_sup_from_model(self, oc_data: m.Ldif.SchemaObjectClass) -> str | (
         t.MutableSequenceOf[str] | None
     ):

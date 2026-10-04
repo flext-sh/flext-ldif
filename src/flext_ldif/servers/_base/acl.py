@@ -48,7 +48,6 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         if _parent_server is not None:
             object.__setattr__(self, "_parent_server", _parent_server)
 
-    @staticmethod
     def resolve_acl_attributes(self) -> t.MutableSequenceOf[str]:
         """Get ACL attributes for this server.
 
@@ -79,7 +78,6 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
             return False
         return self.can_handle_acl(normalized)
 
-    @staticmethod
     def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
         """Check if this server can handle the ACL definition.
 
@@ -103,7 +101,6 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
             return None
         return raw_acl.strip()
 
-    @staticmethod
     def can_handle_attribute(self, attribute: m.Ldif.SchemaAttribute) -> bool:
         """Check if this ACL server should be aware of a specific attribute definition.
 
@@ -113,7 +110,6 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         _ = attribute
         return False
 
-    @staticmethod
     def can_handle_objectclass(self, objectclass: m.Ldif.SchemaObjectClass) -> bool:
         """Check if this ACL server should be aware of a specific objectClass definition.
 
@@ -347,7 +343,6 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         )
         return (data, operation)
 
-    @staticmethod
     def _get_feature_fallback(self, _feature_id: str) -> str | None:
         """Get RFC fallback value for unsupported vendor feature.
 
@@ -376,7 +371,6 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         """
         return r[m.Ldif.Acl].ok(acl)
 
-    @staticmethod
     def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
         """Parse server-specific ACL definition (internal, required).
 
@@ -428,7 +422,6 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
             return r[str].fail(str(exc), exception=exc)
         return r[str].ok(operation_raw)
 
-    @staticmethod
     def _supports_feature(self, _feature_id: str) -> bool:
         """Check if this server supports a specific feature.
 
@@ -437,7 +430,6 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         """
         return False
 
-    @staticmethod
     def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
         """Write ACL data to RFC-compliant string format (internal).
 
