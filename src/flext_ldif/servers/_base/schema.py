@@ -293,7 +293,6 @@ class FlextLdifServersBaseSchema(
         else:
             metadata_extensions["syntax_oid_valid"] = True
 
-    @staticmethod
     def can_handle_attribute(
         self,
         attr_definition: str | m.Ldif.SchemaAttribute,
@@ -306,7 +305,6 @@ class FlextLdifServersBaseSchema(
         _ = attr_definition
         return False
 
-    @staticmethod
     def can_handle_objectclass(
         self,
         oc_definition: str | m.Ldif.SchemaObjectClass,
@@ -665,7 +663,6 @@ class FlextLdifServersBaseSchema(
             return r[t.Ldif.SchemaConversionValue].fail(error_msg)
         return r[t.Ldif.SchemaConversionValue].fail("No write parameter provided")
 
-    @staticmethod
     def _hook_post_parse_attribute(
         self,
         attr: m.Ldif.SchemaAttribute,
@@ -705,7 +702,6 @@ class FlextLdifServersBaseSchema(
         _ = available_attrs
         return r[bool].ok(value=True)
 
-    @staticmethod
     def _parse_attribute(
         self,
         attr_definition: str,
@@ -718,7 +714,6 @@ class FlextLdifServersBaseSchema(
         del attr_definition
         return r[m.Ldif.SchemaAttribute].fail("Must be implemented by subclass")
 
-    @staticmethod
     def _parse_objectclass(
         self,
         oc_definition: str,
@@ -768,7 +763,6 @@ class FlextLdifServersBaseSchema(
             raise AssertionError(msg)
         return result
 
-    @staticmethod
     def _write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> p.Result[str]:
         """Write attribute data to RFC-compliant string format (internal).
 
@@ -778,7 +772,6 @@ class FlextLdifServersBaseSchema(
         _ = attr_data
         return r[str].fail("Must be implemented by subclass")
 
-    @staticmethod
     def _write_objectclass(self, oc_data: m.Ldif.SchemaObjectClass) -> p.Result[str]:
         """Write objectClass data to RFC-compliant string format (internal).
 

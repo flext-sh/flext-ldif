@@ -241,7 +241,6 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
         @staticmethod
         def _build_acl_string(
-            self,
             acl_name: str,
             permissions: t.MutableSequenceOf[str],
             targetattr: str,
@@ -279,7 +278,6 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
         @staticmethod
         def _extract_acl_permissions(
-            self,
             permissions_data: m.Ldif.AclPermissions | None,
         ) -> t.MutableSequenceOf[str]:
             """Extract permission names from Permissions model flags.
@@ -517,7 +515,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 )
 
         @staticmethod
-        def _process_ds389_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
+        def _process_ds389_entry(entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
             """Normalize a 389 DS entry and attach metadata.
 
             Returns:
