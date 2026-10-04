@@ -154,8 +154,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             *FlextLdifServersOudConstants.OUD_ACL_ATTRIBUTES,
         ]
 
-    @staticmethod
-    def _build_aci_permissions(acl_data: m.Ldif.Acl) -> p.Result[str]:
+    def _build_aci_permissions(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
         """Build ACI permissions clause from ACL model.
 
         Returns:
@@ -281,8 +280,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         )
         return formatted
 
-    @staticmethod
-    def _build_aci_target(acl_data: m.Ldif.Acl) -> str:
+    def _build_aci_target(self, acl_data: m.Ldif.Acl) -> str:
         """Build ACI target clause from ACL model.
 
         Returns:
@@ -381,8 +379,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             if result.success:
                 acls.append(result.value)
 
-    @staticmethod
-    def _parse_aci_format(acl_line: str) -> p.Result[m.Ldif.Acl]:
+    def _parse_aci_format(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
         """Parse RFC 4876 ACI format using utility with OUD-specific settings.
 
         Returns:
@@ -447,8 +444,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                 return rfc_result
         return self._parse_ds_privilege_name(normalized)
 
-    @staticmethod
-    def _parse_ds_privilege_name(privilege_name: str) -> p.Result[m.Ldif.Acl]:
+    def _parse_ds_privilege_name(self, privilege_name: str) -> p.Result[m.Ldif.Acl]:
         """Parse OUD ds-privilege-name format (simple privilege names).
 
         Returns:
@@ -483,8 +479,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                 exception=e,
             )
 
-    @staticmethod
-    def _should_use_raw_acl(acl_data: m.Ldif.Acl) -> bool:
+    def _should_use_raw_acl(self, acl_data: m.Ldif.Acl) -> bool:
         """Check if raw_acl should be used as-is.
 
         Returns:

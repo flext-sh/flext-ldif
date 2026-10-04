@@ -336,8 +336,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             )
             return r[m.Ldif.Acl].ok(acl)
 
-        @staticmethod
-        def _parse_by_clauses(acl_content: str) -> t.StrPair:
+        def _parse_by_clauses(self, acl_content: str) -> t.StrPair:
             """Parse "by <who> <access>" clauses.
 
             Returns:
@@ -385,8 +384,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 ]
             return (what, attributes)
 
-        @staticmethod
-        def _strip_acl_prefix_and_index(acl_line: str) -> str:
+        def _strip_acl_prefix_and_index(self, acl_line: str) -> str:
             """Remove olcAccess: prefix and {n} index from ACL line.
 
             Returns:

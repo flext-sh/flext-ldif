@@ -264,8 +264,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         )
         return self._apply_attribute_oid_metadata(updated_attr)
 
-    @staticmethod
-    def _validate_attribute_oid(oid: str) -> p.Result[bool]:
+    def _validate_attribute_oid(self, oid: str) -> p.Result[bool]:
         """Validate attribute OID format for OUD.
 
         Returns:
@@ -335,8 +334,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
                     )
         return r[m.Ldif.SchemaObjectClass].ok(oc)
 
-    @staticmethod
-    def _validate_objectclass_sup(oc: m.Ldif.SchemaObjectClass) -> p.Result[bool]:
+    def _validate_objectclass_sup(self, oc: m.Ldif.SchemaObjectClass) -> p.Result[bool]:
         """Validate objectClass SUP constraint for OUD.
 
         Returns:
