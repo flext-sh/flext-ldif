@@ -21,7 +21,6 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
     @staticmethod
     def _convert_boolean_attributes_to_rfc(
-        self,
         entry_attributes: t.MutableStrSequenceMapping,
     ) -> tuple[
         t.MutableStrSequenceMapping,
@@ -97,7 +96,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             restored_attrs[attr_name] = new_values
 
     @staticmethod
-    def _convert_line_acl_to_oid(self, original_line: str) -> str:
+    def _convert_line_acl_to_oid(original_line: str) -> str:
         """Convert RFC ACL attribute name (aci) to OID format (orclaci).
 
         Returns:
@@ -117,7 +116,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         return original_line
 
     @staticmethod
-    def _convert_line_boolean_to_oid(self, original_line: str) -> str:
+    def _convert_line_boolean_to_oid(original_line: str) -> str:
         """Convert RFC boolean values in line to OID format.
 
         Returns:
@@ -137,7 +136,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         return original_line
 
     @staticmethod
-    def _convert_rfc_boolean_to_oid(self, value: str) -> tuple[str, bool]:
+    def _convert_rfc_boolean_to_oid(value: str) -> tuple[str, bool]:
         """Convert single RFC boolean value to OID format.
 
         Returns:
@@ -219,7 +218,6 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
     @staticmethod
     def _detect_rfc_violations(
-        self,
         converted_attributes: t.MutableStrSequenceMapping,
     ) -> tuple[
         t.MutableSequenceOf[str],
@@ -276,7 +274,6 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
     @staticmethod
     def extract_acl_metadata_from_string(
-        self,
         acl_value: str,
         current_extensions: t.Ldif.MutableMetadataMapping,
     ) -> None:
@@ -317,7 +314,6 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
     @staticmethod
     def _parse_metadata_boolean_flags(
-        self,
         entry_data: m.Ldif.Entry,
     ) -> MutableMapping[str, t.MutableAttributeMapping]:
         """Extract boolean conversions from entry metadata.
@@ -360,7 +356,6 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
     @staticmethod
     def _extract_original_extensions(
-        self,
         original_entry: m.Ldif.Entry,
     ) -> t.Ldif.MutableMetadataMapping:
         """Extract compatible extensions from original entry metadata.
@@ -385,7 +380,6 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
     @staticmethod
     def _get_current_attrs_with_acl_equivalence(
-        self,
         entry_data: m.Ldif.Entry,
     ) -> set[str]:
         """Get current attribute names with OID ACL equivalence.
@@ -549,7 +543,6 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
     @staticmethod
     def _hook_transform_entry_raw(
-        self,
         dn: str,
         attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]],
     ) -> p.Result[tuple[str, MutableMapping[str, t.MutableSequenceOf[str | bytes]]]]:
@@ -594,7 +587,6 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
     @staticmethod
     def _merge_parsed_acl_extensions_core(
-        self,
         acl_server: p.Ldif.AclServer,
         acl_value: str,
         current_extensions: t.Ldif.MutableMetadataMapping,
@@ -759,7 +751,6 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
     @staticmethod
     def _restore_boolean_attribute_from_metadata(
-        self,
         attr_name: str,
         conv_data: t.MutableAttributeMapping,
         restored_attrs: t.MutableStrSequenceMapping,
@@ -911,7 +902,6 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
 
     @staticmethod
     def _should_skip_original_line(
-        self,
         original_line: str,
         current_attrs: set[str],
         write_options: m.Ldif.WriteFormatOptions | None,

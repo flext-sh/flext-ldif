@@ -176,7 +176,6 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
 
     @staticmethod
     def _denormalize_permission(
-        self,
         permission: str,
         _feature_id: str | None,
         _metadata: t.MutableJsonMapping,
@@ -199,7 +198,6 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
 
     @staticmethod
     def _normalize_permission(
-        self,
         permission: str,
         _metadata: t.MutableJsonMapping,
     ) -> tuple[str, str | None]:
@@ -235,7 +233,6 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
 
     @staticmethod
     def _preserve_unsupported_feature(
-        self,
         feature_id: str,
         original_value: str,
         metadata: t.MutableJsonMapping,

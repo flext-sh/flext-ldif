@@ -35,7 +35,6 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
 
     @staticmethod
     def _add_target_metadata(
-        self,
         attr_data: m.Ldif.SchemaAttribute,
         target_values: t.MutableOptionalStrMapping,
     ) -> None:
@@ -69,7 +68,6 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
 
     @staticmethod
     def _capture_attribute_values(
-        self,
         attr_data: m.Ldif.SchemaAttribute,
     ) -> t.MutableOptionalStrMapping:
         """Capture attribute values for metadata tracking.
@@ -200,7 +198,6 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
 
     @staticmethod
     def _normalize_attribute_names(
-        self,
         attr_list: t.MutableSequenceOf[str] | None,
     ) -> t.MutableSequenceOf[str] | None:
         """Normalize attribute names using OID case mappings.
@@ -215,7 +212,6 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
 
     @staticmethod
     def _normalize_auxiliary_typo(
-        self,
         oc_data: m.Ldif.SchemaObjectClass,
         original_format_str: str,
     ) -> str | None:
@@ -249,7 +245,7 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
                 return None
 
     @staticmethod
-    def _normalize_sup_from_model(self, oc_data: m.Ldif.SchemaObjectClass) -> str | (
+    def _normalize_sup_from_model(oc_data: m.Ldif.SchemaObjectClass) -> str | (
         t.MutableSequenceOf[str] | None
     ):
         """Normalize SUP from objectClass model.
@@ -284,7 +280,6 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
 
     @staticmethod
     def _normalize_sup_from_original_format(
-        self,
         original_format_str: str,
     ) -> str | None:
         """Normalize SUP from original_format string.
@@ -453,7 +448,6 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
 
     @staticmethod
     def _transform_case_ignore_substrings(
-        self,
         attr_data: m.Ldif.SchemaAttribute,
     ) -> m.Ldif.SchemaAttribute:
         """Transform caseIgnoreSubstringsMatch from EQUALITY to SUBSTR.

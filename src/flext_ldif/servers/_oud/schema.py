@@ -62,7 +62,6 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
 
     @staticmethod
     def _transform_by_matching_rules(
-        self,
         attr_data: m.Ldif.SchemaAttribute,
     ) -> tuple[str | None, str | None]:
         """Apply OUD-specific matching rule transformations.
@@ -130,7 +129,6 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
 
     @staticmethod
     def _collect_attribute_extensions(
-        self,
         attr: m.Ldif.SchemaAttribute,
     ) -> t.MutableSequenceOf[str]:
         """Collect OUD X-* extensions from attribute.
@@ -267,7 +265,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         return self._apply_attribute_oid_metadata(updated_attr)
 
     @staticmethod
-    def _validate_attribute_oid(self, oid: str) -> p.Result[bool]:
+    def _validate_attribute_oid(oid: str) -> p.Result[bool]:
         """Validate attribute OID format for OUD.
 
         Returns:
@@ -338,7 +336,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         return r[m.Ldif.SchemaObjectClass].ok(oc)
 
     @staticmethod
-    def _validate_objectclass_sup(self, oc: m.Ldif.SchemaObjectClass) -> p.Result[bool]:
+    def _validate_objectclass_sup(oc: m.Ldif.SchemaObjectClass) -> p.Result[bool]:
         """Validate objectClass SUP constraint for OUD.
 
         Returns:

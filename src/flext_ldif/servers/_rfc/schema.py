@@ -324,7 +324,6 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
     @staticmethod
     def _detect_oc_via_constants(
-        self,
         oc_definition: str | m.Ldif.SchemaObjectClass,
         *,
         settings: m.Ldif.ServerPatternsConfig,
@@ -553,7 +552,6 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
     @staticmethod
     def _ensure_x_origin(
-        self,
         output_str: str,
         metadata: m.Ldif.ServerMetadata | None,
     ) -> str:
@@ -743,7 +741,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         return r[m.Ldif.SchemaObjectClass].ok(objectclass)
 
     @staticmethod
-    def _post_write_attribute(self, written_str: str) -> str:
+    def _post_write_attribute(written_str: str) -> str:
         """Transform written attribute string (subclass hook).
 
         Returns:
@@ -752,7 +750,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         return written_str
 
     @staticmethod
-    def _post_write_objectclass(self, written_str: str) -> str:
+    def _post_write_objectclass(written_str: str) -> str:
         """Transform written objectClass string (subclass hook).
 
         Returns:
@@ -760,7 +758,6 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         """
         return written_str
 
-    @staticmethod
     def _transform_attribute_for_write(
         self,
         attr_data: m.Ldif.SchemaAttribute,
@@ -772,7 +769,6 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         """
         return attr_data
 
-    @staticmethod
     def _transform_objectclass_for_write(
         self,
         oc_data: m.Ldif.SchemaObjectClass,
@@ -786,7 +782,6 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
 
     @staticmethod
     def _validate_oid_list(
-        self,
         oids: t.MutableSequenceOf[str] | None,
         oid_type: str,
         metadata_extensions: MutableMapping[

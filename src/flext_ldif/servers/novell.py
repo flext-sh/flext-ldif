@@ -183,7 +183,6 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
 
         @staticmethod
         def _build_novell_permissions_from_rights(
-            self,
             rights: t.MutableSequenceOf[str],
             permission_name_map: t.StrMapping,
         ) -> t.MutableBoolMapping:

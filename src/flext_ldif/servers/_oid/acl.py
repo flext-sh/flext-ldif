@@ -294,7 +294,6 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     @staticmethod
     def _build_oid_acl_metadata(
-        self,
         settings: m.Ldif.OidAclMetadataConfig,
     ) -> t.Ldif.MutableMetadataMapping:
         """Build metadata extensions for OID ACL with Oracle-specific features.
@@ -341,7 +340,6 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     @staticmethod
     def _extract_extensions_dict(
-        self,
         metadata: m.Ldif.ServerMetadata
         | MutableMapping[
             str,
@@ -360,7 +358,6 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     @staticmethod
     def _format_extensions(
-        self,
         meta_extensions: t.Ldif.MutableMetadataMapping,
     ) -> t.MutableSequenceOf[str]:
         """Format extension values based on metadata key type.
@@ -429,7 +426,6 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     @staticmethod
     def _map_bind_rules_to_oid(
-        self,
         rfc_subject_value: str,
         source_subject_type: str | None,
     ) -> str:
@@ -468,7 +464,6 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     @staticmethod
     def _map_oid_subject_to_rfc(
-        self,
         oid_subject_type: str,
         oid_subject_value: str,
     ) -> tuple[c.Ldif.AclSubjectType, str]:
@@ -752,7 +747,6 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     @staticmethod
     def _prepare_subject_value_with_suffix(
-        self,
         subject_value: str,
         oid_subject_type: str,
     ) -> str:
@@ -781,7 +775,6 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
 
     @staticmethod
     def _update_acl_with_oid_metadata(
-        self,
         acl_data: m.Ldif.Acl,
         _acl_line: str,
     ) -> m.Ldif.Acl:
