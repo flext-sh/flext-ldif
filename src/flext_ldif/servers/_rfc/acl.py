@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Self, cast, overload, override
 
-from flext_ldif import m, p, r, t, u
+from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
 from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
 from flext_ldif.servers.base import FlextLdifServersBase
@@ -145,6 +145,15 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         return acl
 
     @override
+    def resolve_acl_attributes(self) -> t.MutableSequenceOf[str]:
+        """Get the RFC ACL attributes.
+
+        Returns:
+            The resulting ``t.MutableSequenceOf[str]``.
+        """
+        return list(c.Ldif.RFC_ACL_ATTRIBUTES)
+
+    @override
     def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
         """Check if this server can handle the ACL definition.
 
@@ -194,7 +203,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         Returns:
             The resulting ``str | None``.
         """
-        return super()._get_feature_fallback(_feature_id)
+        return None
 
     @staticmethod
     def _normalize_permission(
@@ -248,7 +257,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         Returns:
             The resulting ``bool``.
         """
-        return super()._supports_feature(_feature_id)
+        return False
 
     @override
     def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:

@@ -297,25 +297,17 @@ class FlextLdifServersBaseSchema(
         self,
         attr_definition: str | m.Ldif.SchemaAttribute,
     ) -> bool:
-        """Check if this server can handle the attribute definition.
-
-        Returns:
-            The resulting ``bool``.
-        """
-        _ = attr_definition
-        return False
+        """Check if this server can handle the attribute definition."""
+        msg = "Schema servers must implement can_handle_attribute"
+        raise NotImplementedError(msg)
 
     def can_handle_objectclass(
         self,
         oc_definition: str | m.Ldif.SchemaObjectClass,
     ) -> bool:
-        """Check if this server can handle the objectClass definition.
-
-        Returns:
-            The resulting ``bool``.
-        """
-        _ = oc_definition
-        return False
+        """Check if this server can handle the objectClass definition."""
+        msg = "Schema servers must implement can_handle_objectclass"
+        raise NotImplementedError(msg)
 
     @override
     def execute(
@@ -667,12 +659,9 @@ class FlextLdifServersBaseSchema(
         self,
         attr: m.Ldif.SchemaAttribute,
     ) -> p.Result[m.Ldif.SchemaAttribute]:
-        """Run hook after parsing an attribute definition.
-
-        Returns:
-            The resulting ``p.Result[m.Ldif.SchemaAttribute]``.
-        """
-        return r[m.Ldif.SchemaAttribute].ok(attr)
+        """Run hook after parsing an attribute definition."""
+        msg = "Schema servers must implement _hook_post_parse_attribute"
+        raise NotImplementedError(msg)
 
     def _hook_post_parse_objectclass(
         self,
@@ -706,25 +695,17 @@ class FlextLdifServersBaseSchema(
         self,
         attr_definition: str,
     ) -> p.Result[m.Ldif.SchemaAttribute]:
-        """Parse server-specific attribute definition (internal).
-
-        Returns:
-            The resulting ``p.Result[m.Ldif.SchemaAttribute]``.
-        """
-        del attr_definition
-        return r[m.Ldif.SchemaAttribute].fail("Must be implemented by subclass")
+        """Parse server-specific attribute definition (internal)."""
+        msg = "Schema servers must implement _parse_attribute"
+        raise NotImplementedError(msg)
 
     def _parse_objectclass(
         self,
         oc_definition: str,
     ) -> p.Result[m.Ldif.SchemaObjectClass]:
-        """Parse server-specific objectClass definition (internal).
-
-        Returns:
-            The resulting ``p.Result[m.Ldif.SchemaObjectClass]``.
-        """
-        _ = oc_definition
-        return r[m.Ldif.SchemaObjectClass].fail("Must be implemented by subclass")
+        """Parse server-specific objectClass definition (internal)."""
+        msg = "Schema servers must implement _parse_objectclass"
+        raise NotImplementedError(msg)
 
     def _route_operation(
         self,
@@ -764,19 +745,27 @@ class FlextLdifServersBaseSchema(
         return result
 
     def _write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> p.Result[str]:
-        """Write attribute data to RFC-compliant string format (internal).
-
-        Returns:
-            The resulting ``p.Result[str]``.
-        """
-        _ = attr_data
-        return r[str].fail("Must be implemented by subclass")
+        """Write attribute data to RFC-compliant string format (internal)."""
+        msg = "Schema servers must implement _write_attribute"
+        raise NotImplementedError(msg)
 
     def _write_objectclass(self, oc_data: m.Ldif.SchemaObjectClass) -> p.Result[str]:
-        """Write objectClass data to RFC-compliant string format (internal).
+        """Write objectClass data to RFC-compliant string format (internal)."""
+        msg = "Schema servers must implement _write_objectclass"
+        raise NotImplementedError(msg)
 
-        Returns:
-            The resulting ``p.Result[str]``.
-        """
-        _ = oc_data
-        return r[str].fail("Must be implemented by subclass")
+    def _transform_attribute_for_write(
+        self,
+        attr_data: m.Ldif.SchemaAttribute,
+    ) -> m.Ldif.SchemaAttribute:
+        """Transform attribute before writing."""
+        msg = "Schema servers must implement _transform_attribute_for_write"
+        raise NotImplementedError(msg)
+
+    def _transform_objectclass_for_write(
+        self,
+        oc_data: m.Ldif.SchemaObjectClass,
+    ) -> m.Ldif.SchemaObjectClass:
+        """Transform objectClass before writing."""
+        msg = "Schema servers must implement _transform_objectclass_for_write"
+        raise NotImplementedError(msg)

@@ -49,12 +49,9 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
             object.__setattr__(self, "_parent_server", _parent_server)
 
     def resolve_acl_attributes(self) -> t.MutableSequenceOf[str]:
-        """Get ACL attributes for this server.
-
-        Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
-        """
-        return list(c.Ldif.RFC_ACL_ATTRIBUTES)
+        """Get ACL attributes for this server."""
+        msg = "ACL servers must implement resolve_acl_attributes"
+        raise NotImplementedError(msg)
 
     def matches_acl_attribute(self, attribute_name: str) -> bool:
         """Check if attribute is ACL attribute (case-insensitive).
@@ -79,13 +76,9 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         return self.can_handle_acl(normalized)
 
     def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
-        """Check if this server can handle the ACL definition.
-
-        Returns:
-            The resulting ``bool``.
-        """
-        _ = acl_line
-        return False
+        """Check if this server can handle the ACL definition."""
+        msg = "ACL servers must implement can_handle_acl"
+        raise NotImplementedError(msg)
 
     @staticmethod
     def _normalize_acl_line(acl_line: str | m.Ldif.Acl) -> str | None:
@@ -102,22 +95,14 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         return raw_acl.strip()
 
     def can_handle_attribute(self, attribute: m.Ldif.SchemaAttribute) -> bool:
-        """Check if this ACL server should be aware of a specific attribute definition.
-
-        Returns:
-            The resulting ``bool``.
-        """
-        _ = attribute
-        return False
+        """Check if this ACL server is aware of an attribute definition."""
+        msg = "ACL servers must implement can_handle_attribute"
+        raise NotImplementedError(msg)
 
     def can_handle_objectclass(self, objectclass: m.Ldif.SchemaObjectClass) -> bool:
-        """Check if this ACL server should be aware of a specific objectClass definition.
-
-        Returns:
-            The resulting ``bool``.
-        """
-        _ = objectclass
-        return False
+        """Check if this ACL server is aware of an objectClass definition."""
+        msg = "ACL servers must implement can_handle_objectclass"
+        raise NotImplementedError(msg)
 
     def create_metadata(
         self,
@@ -344,12 +329,9 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         return (data, operation)
 
     def _get_feature_fallback(self, _feature_id: str) -> str | None:
-        """Get RFC fallback value for unsupported vendor feature.
-
-        Returns:
-            The resulting ``str | None``.
-        """
-        return None
+        """Get RFC fallback value for unsupported vendor feature."""
+        msg = "ACL servers must implement _get_feature_fallback"
+        raise NotImplementedError(msg)
 
     @staticmethod
     def _hook_format_acl_name_pattern() -> p.Result[tuple[t.Ldif.RegexPattern, str]]:
@@ -372,13 +354,9 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         return r[m.Ldif.Acl].ok(acl)
 
     def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
-        """Parse server-specific ACL definition (internal, required).
-
-        Returns:
-            The resulting ``p.Result[m.Ldif.Acl]``.
-        """
-        _ = acl_line
-        return r[m.Ldif.Acl].fail("Must be implemented by subclass")
+        """Parse server-specific ACL definition (internal, required)."""
+        msg = "ACL servers must implement _parse_acl"
+        raise NotImplementedError(msg)
 
     def _resolve_data(
         self,
@@ -423,18 +401,11 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         return r[str].ok(operation_raw)
 
     def _supports_feature(self, _feature_id: str) -> bool:
-        """Check if this server supports a specific feature.
-
-        Returns:
-            The resulting ``bool``.
-        """
-        return False
+        """Check if this server supports a specific feature."""
+        msg = "ACL servers must implement _supports_feature"
+        raise NotImplementedError(msg)
 
     def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
-        """Write ACL data to RFC-compliant string format (internal).
-
-        Returns:
-            The resulting ``p.Result[str]``.
-        """
-        _ = acl_data
-        return r[str].fail("Must be implemented by subclass")
+        """Write ACL data to RFC-compliant string format (internal)."""
+        msg = "ACL servers must implement _write_acl"
+        raise NotImplementedError(msg)

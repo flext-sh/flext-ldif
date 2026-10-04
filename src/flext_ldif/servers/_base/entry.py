@@ -81,32 +81,19 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         entry_dn: str,
         attributes: t.MutableStrSequenceMapping,
     ) -> bool:
-        """Check if this server can handle the entry.
-
-        Returns:
-            The resulting ``bool``.
-        """
-        _ = entry_dn
-        _ = attributes
-        return False
+        """Check if this server can handle the entry."""
+        msg = "Entry servers must implement can_handle"
+        raise NotImplementedError(msg)
 
     def can_handle_attribute(self, attribute: m.Ldif.SchemaAttribute) -> bool:
-        """Check if this server can handle a schema attribute.
-
-        Returns:
-            The resulting ``bool``.
-        """
-        _ = attribute
-        return False
+        """Check if this server can handle a schema attribute."""
+        msg = "Entry servers must implement can_handle_attribute"
+        raise NotImplementedError(msg)
 
     def can_handle_objectclass(self, objectclass: m.Ldif.SchemaObjectClass) -> bool:
-        """Check if this server can handle a schema objectClass.
-
-        Returns:
-            The resulting ``bool``.
-        """
-        _ = objectclass
-        return False
+        """Check if this server can handle a schema objectClass."""
+        msg = "Entry servers must implement can_handle_objectclass"
+        raise NotImplementedError(msg)
 
     @override
     def execute(
@@ -246,20 +233,14 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         return entry
 
     def _hook_post_parse_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
-        """Run hook after parsing an entry.
-
-        Returns:
-            The resulting ``p.Result[m.Ldif.Entry]``.
-        """
-        return r[m.Ldif.Entry].ok(entry)
+        """Run hook after parsing an entry."""
+        msg = "Entry servers must implement _hook_post_parse_entry"
+        raise NotImplementedError(msg)
 
     def _hook_pre_write_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
-        """Run hook before writing an entry.
-
-        Returns:
-            The resulting ``p.Result[m.Ldif.Entry]``.
-        """
-        return r[m.Ldif.Entry].ok(entry)
+        """Run hook before writing an entry."""
+        msg = "Entry servers must implement _hook_pre_write_entry"
+        raise NotImplementedError(msg)
 
     @staticmethod
     def _hook_validate_entry_raw(
@@ -309,16 +290,9 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         return copied
 
     def _normalize_attribute_name(self, attr_name: str) -> str:
-        """Normalize attribute name to RFC 2849 canonical form.
-
-        Returns:
-            The resulting ``str``.
-        """
-        if not attr_name:
-            return attr_name
-        if attr_name.lower() == "objectclass":
-            return "objectClass"
-        return attr_name
+        """Normalize attribute name to the server's canonical form."""
+        msg = "Entry servers must implement _normalize_attribute_name"
+        raise NotImplementedError(msg)
 
     @staticmethod
     def _normalize_entry(entry: m.Ldif.Entry) -> m.Ldif.Entry:
@@ -333,15 +307,17 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         self,
         ldif_content: str,
     ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
-        """Parse raw LDIF content string into Entry models (internal).
+        """Parse raw LDIF content string into Entry models (internal)."""
+        msg = "Entry servers must implement _parse_content"
+        raise NotImplementedError(msg)
 
-        Returns:
-            The resulting ``p.Result[t.MutableSequenceOf[m.Ldif.Entry]]``.
-        """
-        _ = ldif_content
-        return r[t.MutableSequenceOf[m.Ldif.Entry]].fail(
-            "Must be implemented by subclass",
-        )
+    def _parse_entry_from_lines(
+        self,
+        lines: t.MutableSequenceOf[str],
+    ) -> p.Result[m.Ldif.Entry]:
+        """Parse one unfolded LDIF record into an Entry model."""
+        msg = "Entry servers must implement _parse_entry_from_lines"
+        raise NotImplementedError(msg)
 
     def _write_entry(self, entry_data: m.Ldif.Entry) -> p.Result[str]:
         """Write Entry model to RFC-compliant LDIF string (internal).
