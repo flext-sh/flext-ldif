@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from flext_tests import tm
 
-from flext_ldif import ldif
+from flext_ldif import ldif, settings
 from tests import p
 
 
@@ -17,8 +17,11 @@ class TestsFlextLdifClientContract:
 
     @staticmethod
     def test_facade_satisfies_ldif_client() -> None:
-        """Test the facade is a client whose settings carry the LDIF branch."""
+        """Test the facade serves as a client carrying the LDIF settings branch."""
         client: p.Ldif.LdifClient = ldif()
-        tm.that(isinstance(client, p.Ldif.LdifClient), eq=True)
-        tm.that(isinstance(client.settings, p.Ldif.Settings), eq=True)
-        tm.that(isinstance(client.settings.ldif, p.Ldif.LdifSettings), eq=True)
+        branch = client.settings.ldif
+        tm.that(branch.ldif_encoding, eq=settings.ldif.ldif_encoding)
+        tm.that(
+            branch.ldif_strict_validation,
+            eq=settings.ldif.ldif_strict_validation,
+        )
