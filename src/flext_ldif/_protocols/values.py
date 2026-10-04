@@ -21,7 +21,7 @@ class FlextLdifProtocolsValues(Protocol):
     """Protocol-only view of canonical LDIF Pydantic values."""
 
     @runtime_checkable
-    class AciAllow(p.BaseModel, Protocol):
+    class AciAllow(p.Model, Protocol):
         """Rendered OUD allow-clause contract."""
 
         @property
@@ -40,7 +40,7 @@ class FlextLdifProtocolsValues(Protocol):
         def ip(self) -> str: ...
 
     @runtime_checkable
-    class AciLineFormatConfig(p.BaseModel, Protocol):
+    class AciLineFormatConfig(p.Model, Protocol):
         """ACI line formatting contract."""
 
         @property
@@ -62,7 +62,7 @@ class FlextLdifProtocolsValues(Protocol):
         def version(self) -> str: ...
 
     @runtime_checkable
-    class AciParserConfig(p.BaseModel, Protocol):
+    class AciParserConfig(p.Model, Protocol):
         """Server-specific ACI parsing contract."""
 
         @property
@@ -105,7 +105,7 @@ class FlextLdifProtocolsValues(Protocol):
         def default_name(self) -> str: ...
 
     @runtime_checkable
-    class AciRule(p.BaseModel, Protocol):
+    class AciRule(p.Model, Protocol):
         """OUD ACI rule contract."""
 
         @property
@@ -127,7 +127,7 @@ class FlextLdifProtocolsValues(Protocol):
         def notes(self) -> t.StrSequence: ...
 
     @runtime_checkable
-    class AclMetadataConfig(p.BaseModel, Protocol):
+    class AclMetadataConfig(p.Model, Protocol):
         """ACL metadata-extension contract."""
 
         @property
@@ -146,7 +146,7 @@ class FlextLdifProtocolsValues(Protocol):
         def action_type(self) -> str | None: ...
 
     @runtime_checkable
-    class AclSubjectMatcher(p.BaseModel, Protocol):
+    class AclSubjectMatcher(p.Model, Protocol):
         """Compiled OID subject matcher contract."""
 
         @property
@@ -162,14 +162,14 @@ class FlextLdifProtocolsValues(Protocol):
         def perms_group(self) -> int: ...
 
     @runtime_checkable
-    class AclSubjectMatcherCatalog(p.BaseModel, Protocol):
+    class AclSubjectMatcherCatalog(p.Model, Protocol):
         """OID matcher catalog contract."""
 
         @property
         def matchers(self) -> Sequence[FlextLdifProtocolsValues.AclSubjectMatcher]: ...
 
     @runtime_checkable
-    class AclWriteMetadata(p.BaseModel, Protocol):
+    class AclWriteMetadata(p.Model, Protocol):
         """ACL write-format metadata contract."""
 
         @property
@@ -178,7 +178,7 @@ class FlextLdifProtocolsValues(Protocol):
         def has_original_format(self) -> bool: ...
 
     @runtime_checkable
-    class ConversionEventConfig(p.BaseModel, Protocol):
+    class ConversionEventConfig(p.Model, Protocol):
         """Conversion-event construction contract."""
 
         @property
@@ -206,7 +206,7 @@ class FlextLdifProtocolsValues(Protocol):
         def error_details(self) -> Sequence[str] | None: ...
 
     @runtime_checkable
-    class DnEventConfig(p.BaseModel, Protocol):
+    class DnEventConfig(p.Model, Protocol):
         """DN-event construction contract."""
 
         @property
@@ -225,7 +225,7 @@ class FlextLdifProtocolsValues(Protocol):
         def validation_result(self) -> bool | None: ...
 
     @runtime_checkable
-    class EntryParseMetadataConfig(p.BaseModel, Protocol):
+    class EntryParseMetadataConfig(p.Model, Protocol):
         """Entry parse-metadata contract."""
 
         @property
@@ -250,7 +250,7 @@ class FlextLdifProtocolsValues(Protocol):
         def original_attribute_case(self) -> Mapping[str, str] | None: ...
 
     @runtime_checkable
-    class LogContextExtras(p.BaseModel, Protocol):
+    class LogContextExtras(p.Model, Protocol):
         """Optional structured logging context."""
 
         @property
@@ -272,7 +272,7 @@ class FlextLdifProtocolsValues(Protocol):
         def trace_id(self) -> str | None: ...
 
     @runtime_checkable
-    class OidAclMetadataConfig(p.BaseModel, Protocol):
+    class OidAclMetadataConfig(p.Model, Protocol):
         """OID ACL metadata parsing contract."""
 
         @property
@@ -318,7 +318,7 @@ class FlextLdifProtocolsValues(Protocol):
         def constrain_to_added_object(self) -> str: ...
 
     @runtime_checkable
-    class OidAclRule(p.BaseModel, Protocol):
+    class OidAclRule(p.Model, Protocol):
         """Parsed OID ACL rule contract."""
 
         @property
@@ -340,7 +340,7 @@ class FlextLdifProtocolsValues(Protocol):
         def subjects(self) -> Sequence[FlextLdifProtocolsValues.OidAclSubject]: ...
 
     @runtime_checkable
-    class OidAclSubject(p.BaseModel, Protocol):
+    class OidAclSubject(p.Model, Protocol):
         """Parsed OID ACL subject contract."""
 
         @property
@@ -362,7 +362,7 @@ class FlextLdifProtocolsValues(Protocol):
         def added_object_constraint(self) -> str: ...
 
     @runtime_checkable
-    class OidAclSubjectModifiers(p.BaseModel, Protocol):
+    class OidAclSubjectModifiers(p.Model, Protocol):
         """Optional OID subject modifiers."""
 
         @property
@@ -375,7 +375,7 @@ class FlextLdifProtocolsValues(Protocol):
         def added_object_constraint(self) -> str: ...
 
     @runtime_checkable
-    class RdnProcessingConfig(p.BaseModel, Protocol):
+    class RdnProcessingConfig(p.Model, Protocol):
         """Mutable RDN-parser state contract."""
 
         current_attr: str
@@ -384,7 +384,7 @@ class FlextLdifProtocolsValues(Protocol):
         pairs: t.MutableStrPairSequence
 
     @runtime_checkable
-    class ServerPatternsConfig(p.BaseModel, Protocol):
+    class ServerPatternsConfig(p.Model, Protocol):
         """Server schema-detection patterns contract."""
 
         @property
@@ -415,7 +415,7 @@ class FlextLdifProtocolsValues(Protocol):
         def match_definition_text(self) -> bool: ...
 
     @runtime_checkable
-    class DnNormalizationConfig(p.BaseModel, Protocol):
+    class DnNormalizationConfig(p.Model, Protocol):
         """DN normalization options."""
 
         @property
@@ -437,7 +437,7 @@ class FlextLdifProtocolsValues(Protocol):
         def validate_before(self) -> bool: ...
 
     @runtime_checkable
-    class AttrNormalizationConfig(p.BaseModel, Protocol):
+    class AttrNormalizationConfig(p.Model, Protocol):
         """Attribute normalization options."""
 
         @property
@@ -462,7 +462,7 @@ class FlextLdifProtocolsValues(Protocol):
         def remove_empty(self) -> bool: ...
 
     @runtime_checkable
-    class ProcessConfig(p.BaseModel, Protocol):
+    class ProcessConfig(p.Model, Protocol):
         """Batch-processing configuration contract."""
 
         @property
@@ -485,7 +485,7 @@ class FlextLdifProtocolsValues(Protocol):
         ) -> FlextLdifProtocolsValues.AttrNormalizationConfig | None: ...
 
     @runtime_checkable
-    class TransformConfig(p.BaseModel, Protocol):
+    class TransformConfig(p.Model, Protocol):
         """Transformation pipeline configuration contract."""
 
         @property

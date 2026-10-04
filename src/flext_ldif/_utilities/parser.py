@@ -173,7 +173,7 @@ class FlextLdifUtilitiesParser:
             FlextLdifModels.Ldif.ChangeOperation
         ] = []
         current_change_operation: FlextLdifModels.Ldif.ChangeOperation | None = None
-        changetype: c.Ldif.LdifChangeType | None = None
+        changetype: c.Ldif.ChangeType | None = None
         record_kind = c.Ldif.RecordKind.CONTENT
         newrdn: str | None = None
         deleteoldrdn: bool | None = None
@@ -219,15 +219,15 @@ class FlextLdifUtilitiesParser:
             if key_lower == "changetype":
                 normalized_change_type = value.lower()
                 try:
-                    changetype = c.Ldif.LdifChangeType(normalized_change_type)
+                    changetype = c.Ldif.ChangeType(normalized_change_type)
                 except ValueError:
                     changetype = None
                     continue
                 record_kind = c.Ldif.RecordKind.CHANGE
                 continue
             if changetype in {
-                c.Ldif.LdifChangeType.MODDN,
-                c.Ldif.LdifChangeType.MODRDN,
+                c.Ldif.ChangeType.MODDN,
+                c.Ldif.ChangeType.MODRDN,
             }:
                 if key_lower == "newrdn":
                     newrdn = value
@@ -238,7 +238,7 @@ class FlextLdifUtilitiesParser:
                 if key_lower == "newsuperior":
                     newsuperior = value
                     continue
-            if changetype == c.Ldif.LdifChangeType.MODIFY:
+            if changetype == c.Ldif.ChangeType.MODIFY:
                 if key_lower in modify_ops:
                     FlextLdifUtilitiesParser.finalize_change_operation(
                         current_change_operation,
