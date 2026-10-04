@@ -30,9 +30,9 @@ class FlextLdifProtocols(FlextCliProtocols):
         FlextLdifProtocolsDomain,
         FlextLdifProtocolsBase,
         FlextLdifProtocolsLdap3,
-        Protocol,
         FlextLdifProtocolsValues,
         FlextLdifProtocolsClient,
+        Protocol,
     ):
         """LDIF-specific structural protocol namespace."""
 

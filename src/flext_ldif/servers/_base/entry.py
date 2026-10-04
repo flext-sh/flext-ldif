@@ -561,14 +561,14 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
             )
         effective_changetype = entry_data.changetype or ldif_changetype
         if effective_changetype in {
-            c.Ldif.LdifChangeType.ADD,
-            c.Ldif.LdifChangeType.DELETE,
-            c.Ldif.LdifChangeType.MODIFY,
-            c.Ldif.LdifChangeType.MODDN,
-            c.Ldif.LdifChangeType.MODRDN,
+            c.Ldif.ChangeType.ADD,
+            c.Ldif.ChangeType.DELETE,
+            c.Ldif.ChangeType.MODIFY,
+            c.Ldif.ChangeType.MODDN,
+            c.Ldif.ChangeType.MODRDN,
         }:
             output_lines.append(f"changetype: {effective_changetype}")
-        if effective_changetype == c.Ldif.LdifChangeType.MODIFY:
+        if effective_changetype == c.Ldif.ChangeType.MODIFY:
             if entry_data.change_operations:
                 for change_operation in entry_data.change_operations:
                     output_lines.append(
@@ -610,8 +610,8 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
             output_lines.append("")
             return r[str].ok("\n".join(output_lines))
         if effective_changetype in {
-            c.Ldif.LdifChangeType.MODDN,
-            c.Ldif.LdifChangeType.MODRDN,
+            c.Ldif.ChangeType.MODDN,
+            c.Ldif.ChangeType.MODRDN,
         }:
             if entry_data.newrdn:
                 output_lines.extend(
@@ -632,7 +632,7 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
                 )
             output_lines.append("")
             return r[str].ok("\n".join(output_lines))
-        if effective_changetype == c.Ldif.LdifChangeType.DELETE:
+        if effective_changetype == c.Ldif.ChangeType.DELETE:
             output_lines.append("")
             return r[str].ok("\n".join(output_lines))
         if hasattr(entry_data, "attributes") and entry_data.attributes:
