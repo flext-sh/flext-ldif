@@ -596,7 +596,7 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
         @property
-        def changetype(self) -> c.Ldif.LdifChangeType | None:
+        def changetype(self) -> c.Ldif.ChangeType | None:
             """The changetype when present."""
             ...
 
@@ -635,7 +635,7 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
         @property
-        def changetype(self) -> c.Ldif.LdifChangeType | None:
+        def changetype(self) -> c.Ldif.ChangeType | None:
             """The entry changetype for validation helpers."""
             ...
 
