@@ -316,8 +316,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 for oc in object_classes
             )
 
-        @staticmethod
-        def normalize_attribute_name(attr_name: str) -> str:
+        def normalize_attribute_name(self, attr_name: str) -> str:
             """Normalize attribute name for Tivoli DS.
 
             Returns:
@@ -325,8 +324,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             """
             return attr_name.lower()
 
-        @staticmethod
-        def normalize_dn(entry_dn: str) -> str:
+        def normalize_dn(self, entry_dn: str) -> str:
             """Normalize DN for Tivoli DS.
 
             Returns:

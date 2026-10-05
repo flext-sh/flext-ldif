@@ -180,8 +180,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 ]
             return (must, may)
 
-        @staticmethod
-        def _extract_oid_with_fallback_patterns(definition: str) -> str | None:
+        def _extract_oid_with_fallback_patterns(self, definition: str) -> str | None:
             """Extract OID using multiple fallback patterns for relaxed mode.
 
             Returns:
@@ -217,8 +216,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 return relaxed_oid
             return None
 
-        @staticmethod
-        def _extract_sup_from_objectclass(oc_definition: str) -> str | None:
+        def _extract_sup_from_objectclass(self, oc_definition: str) -> str | None:
             """Extract SUP (superior) field from objectClass definition.
 
             Returns:
@@ -684,8 +682,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 self.logger.debug("DN normalization exception: %s", e)
                 return r[str].fail_op("DN normalization", e)
 
-        @staticmethod
-        def process_entry(entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
+        def process_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
             """Process entry for relaxed mode.
 
             Returns:

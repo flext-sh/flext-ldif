@@ -98,8 +98,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         if changed:
             restored_attrs[attr_name] = new_values
 
-    @staticmethod
-    def _convert_line_acl_to_oid(original_line: str) -> str:
+    def _convert_line_acl_to_oid(self, original_line: str) -> str:
         """Convert RFC ACL attribute name (aci) to OID format (orclaci).
 
         Returns:
@@ -118,8 +117,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             return f"orclaci:{value_part}"
         return original_line
 
-    @staticmethod
-    def _convert_line_boolean_to_oid(original_line: str) -> str:
+    def _convert_line_boolean_to_oid(self, original_line: str) -> str:
         """Convert RFC boolean values in line to OID format.
 
         Returns:
@@ -138,8 +136,7 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             return f"{parts[0]}: {FlextLdifServersOidConstants.ZERO_OID}"
         return original_line
 
-    @staticmethod
-    def _convert_rfc_boolean_to_oid(value: str) -> tuple[str, bool]:
+    def _convert_rfc_boolean_to_oid(self, value: str) -> tuple[str, bool]:
         """Convert single RFC boolean value to OID format.
 
         Returns:
