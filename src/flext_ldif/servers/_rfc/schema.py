@@ -306,7 +306,6 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         Returns:
             The resulting ``bool``.
         """
-        _ = (self, attr_definition)
         return True
 
     @override
@@ -319,7 +318,6 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         Returns:
             The resulting ``bool``.
         """
-        _ = (self, oc_definition)
         return True
 
     @staticmethod
@@ -464,17 +462,17 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
             ]
         ].ok(schema_dict)
 
-    def should_filter_out_attribute(self, _attribute: m.Ldif.SchemaAttribute) -> bool:
+    @staticmethod
+    def should_filter_out_attribute(_attribute: m.Ldif.SchemaAttribute) -> bool:
         """RFC server does not filter attributes.
 
         Returns:
             The resulting ``bool``.
         """
-        _ = self
         return False
 
+    @staticmethod
     def should_filter_out_objectclass(
-        self,
         _objectclass: m.Ldif.SchemaObjectClass,
     ) -> bool:
         """RFC server does not filter objectClasses.
@@ -482,7 +480,6 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         Returns:
             The resulting ``bool``.
         """
-        _ = (self, _objectclass)
         return False
 
     def _build_attribute_parts(
@@ -573,6 +570,18 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
                     x_origin_str = f" X-ORIGIN '{x_origin_raw}'"
                     result = output_str.rstrip(")") + x_origin_str + ")"
         return result
+
+    @override
+    def _hook_post_parse_attribute(
+        self,
+        attr: m.Ldif.SchemaAttribute,
+    ) -> p.Result[m.Ldif.SchemaAttribute]:
+        """Run hook after parsing an attribute definition.
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.SchemaAttribute]``.
+        """
+        return r[m.Ldif.SchemaAttribute].ok(attr)
 
     @override
     def _parse_attribute(
@@ -758,6 +767,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         """
         return written_str
 
+    @override
     def _transform_attribute_for_write(
         self,
         attr_data: m.Ldif.SchemaAttribute,
@@ -769,6 +779,7 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         """
         return attr_data
 
+    @override
     def _transform_objectclass_for_write(
         self,
         oc_data: m.Ldif.SchemaObjectClass,

@@ -257,7 +257,10 @@ class TestsFlextLdifWriterService:
     ) -> None:
         """Rejection metadata changes comments only, including multiline reasons."""
         entry = self._entries()[0]
-        reason = "Outside requested base\r\ndn: cn=injected,dc=example,dc=com\n\ncn: injected"
+        reason = (
+            "Outside requested base\r\ndn: cn=injected,dc=example,dc=com\n\ncn: "
+            "injected"
+        )
         rejected = u.Ldif.update_entry_statistics(
             entry,
             mark_rejected=("base_dn_filter", reason),

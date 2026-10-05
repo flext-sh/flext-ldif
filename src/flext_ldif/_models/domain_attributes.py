@@ -37,7 +37,8 @@ class FlextLdifModelsDomainAttributes:
         attribute_metadata: Annotated[
             MutableMapping[str, t.MutableAttributeMapping],
             u.Field(
-                description="Metadata for each attribute, like category or hidden status.",
+                description="Metadata for each attribute, like category or hidden "
+                "status.",
             ),
         ] = u.Field(default_factory=dict)
         metadata: Annotated[

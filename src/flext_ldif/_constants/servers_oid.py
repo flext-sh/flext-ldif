@@ -121,7 +121,9 @@ class FlextLdifConstantsServersOid:
         FlextLdifConstantsEnums.ServerTypes.OID,
         *(
             alias
-            for alias, server_type in FlextLdifConstantsEnums.SERVER_TYPE_ALIASES.items()
+            for alias, server_type in (
+                FlextLdifConstantsEnums.SERVER_TYPE_ALIASES.items()
+            )
             if server_type == FlextLdifConstantsEnums.ServerTypes.OID
         ),
     })
@@ -265,7 +267,9 @@ class FlextLdifConstantsServersOid:
     ACL_TARGET_ATTR_OID_EXTRACT: ClassVar[str] = "attr\\s*=\\s*\\(([^)]+)\\)"
 
     ACL_PERMS_EXTRACT_OID: ClassVar[str] = (
-        "\\s\\(([^()]+)\\)(?:\\s*(?:filter=|added_object | bindmode|Deny | Append|bindip | constrain|$))"
+        "\\s\\(([^()]+)\\)"
+        "(?:\\s*(?:filter=|added_object | bindmode|Deny | Append"
+        "|bindip | constrain|$))"
     )
 
     ACL_TARGET_DN_EXTRACT_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(

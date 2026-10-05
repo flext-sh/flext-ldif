@@ -288,7 +288,10 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
             priority = getattr(getattr(mro_cls, "Constants", None), "PRIORITY", None)
             if isinstance(priority, int):
                 return priority
-        msg = f"Cannot find PRIORITY in Constants for server class: {server_class.__name__}"
+        msg = (
+            f"Cannot find PRIORITY in Constants for server class: "
+            f"{server_class.__name__}"
+        )
         raise AttributeError(msg)
 
     @classmethod
@@ -314,7 +317,10 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
             if isinstance(server_type, str) and server_type:
                 normalized: str = u.Ldif.normalize_server_type(server_type)
                 return normalized
-        msg = f"Cannot find SERVER_TYPE in Constants for server class: {server_class.__name__}"
+        msg = (
+            f"Cannot find SERVER_TYPE in Constants for server class: "
+            f"{server_class.__name__}"
+        )
         raise AttributeError(msg)
 
     @classmethod
@@ -396,7 +402,10 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
         try:
             entries: t.MutableSequenceOf[m.Ldif.Entry] = u.Ldif.as_entries(raw)
         except c.EXC_VALIDATION_TYPE as exc:
-            msg = f"Expected t.MutableSequenceOf[Entry | None] for entries, got {type(raw)}"
+            msg = (
+                f"Expected t.MutableSequenceOf[Entry | None] for entries, "
+                f"got {type(raw)}"
+            )
             raise TypeError(msg) from exc
         else:
             return entries
@@ -453,7 +462,10 @@ class FlextLdifServersBase(s[m.Ldif.Entry]):
             case "write":
                 return "write"
             case str() as raw_operation:
-                msg = f"Expected 'parse' | 'write' | None for operation, got {raw_operation}"
+                msg = (
+                    f"Expected 'parse' | 'write' | None for operation, "
+                    f"got {raw_operation}"
+                )
                 raise ValueError(msg)
             case raw:
                 msg = (

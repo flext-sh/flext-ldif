@@ -56,7 +56,9 @@ class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](
         settings: p.Ldif.Settings | None = None,
         **fields: t.JsonValue,
     ) -> Self | m.Ldif.Entry | str:
-        """Return a cloned DSL instance preserving runtime registry/settings defaults."""
+        """Return a cloned DSL instance preserving runtime registry/settings
+        defaults.
+        """
         payload: t.MutableMappingKV[
             str,
             t.JsonValue | p.Ldif.ServerRegistry | p.Ldif.Settings | None,

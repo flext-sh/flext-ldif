@@ -134,7 +134,8 @@ class TestsFlextLdifOidAclConvert:
             ("cn: not an acl", "Not an OID ACL line"),
             ("orclaci: entry by * (read)", "access to"),
             (
-                "orclaci: access to attr=(cn) filter=(objectclass=person by self (read)",
+                "orclaci: access to attr=(cn) filter=(objectclass=person by self "
+                "(read)",
                 "Unbalanced ACL filter clause",
             ),
             ("orclaci: access to entry by nonsense", "No subjects in ACL"),

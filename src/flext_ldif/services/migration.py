@@ -41,7 +41,8 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
         u.Field(
             default=None,
             exclude=True,
-            description="Optional output filename override used for single-file migration.",
+            description="Optional output filename override used for single-file "
+            "migration.",
         ),
     ] = None
     mode: Annotated[
@@ -250,7 +251,8 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
         read = u.Cli.files_read_text(input_file)
         if read.failure:
             return r[m.Ldif.MigrationPipelineResult].fail(
-                f"File migration failed: {read.error or f'unable to read {input_file}'}",
+                f"File migration failed: "
+                f"{read.error or f'unable to read {input_file}'}",
             )
         parse_result = FlextLdifParser().parse_string(
             read.value,

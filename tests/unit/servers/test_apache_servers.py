@@ -46,7 +46,10 @@ class TestsFlextLdifApacheServers:
         """Test parsing Apache DS attribute definition."""
         server = FlextLdifServersApache()
         schema = server.schema_server
-        attr_def = "( 1.3.6.1.4.1.18060.0.4.1.2.100 NAME 'ads-enabled' DESC 'Enable flag' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 SINGLE-VALUE )"
+        attr_def = (
+            "( 1.3.6.1.4.1.18060.0.4.1.2.100 NAME 'ads-enabled' DESC 'Enable "
+            "flag' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 SINGLE-VALUE )"
+        )
         attr_data = u.Tests.server_parse_and_unwrap(
             schema,
             attr_def,
@@ -66,7 +69,10 @@ class TestsFlextLdifApacheServers:
         """Test parsing attribute with syntax length specification."""
         server = FlextLdifServersApache()
         schema = server.schema_server
-        attr_def = "( 1.3.6.1.4.1.18060.0.4.1.2.1 NAME 'ads-directoryServiceId' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )"
+        attr_def = (
+            "( 1.3.6.1.4.1.18060.0.4.1.2.1 NAME 'ads-directoryServiceId' SYNTAX "
+            "1.3.6.1.4.1.1466.115.121.1.15{256} )"
+        )
         attr_data = u.Tests.server_parse_and_unwrap(
             schema,
             attr_def,
@@ -108,7 +114,11 @@ class TestsFlextLdifApacheServers:
         """Test parsing STRUCTURAL objectClass."""
         server = FlextLdifServersApache()
         schema = server.schema_server
-        oc_def = "( 1.3.6.1.4.1.18060.0.4.1.3.100 NAME 'ads-directoryService' DESC 'Directory service' SUP top STRUCTURAL MUST ( cn $ ads-directoryServiceId ) MAY ( ads-enabled ) )"
+        oc_def = (
+            "( 1.3.6.1.4.1.18060.0.4.1.3.100 NAME 'ads-directoryService' DESC "
+            "'Directory service' SUP top STRUCTURAL MUST ( cn $ ads-directoryServiceId "
+            ") MAY ( ads-enabled ) )"
+        )
         oc_data = u.Tests.server_parse_and_unwrap(
             schema,
             oc_def,
@@ -134,7 +144,10 @@ class TestsFlextLdifApacheServers:
         """Test parsing AUXILIARY objectClass."""
         server = FlextLdifServersApache()
         schema = server.schema_server
-        oc_def = "( 1.3.6.1.4.1.18060.0.4.1.3.200 NAME 'ads-partition' AUXILIARY MAY ( ads-partitionSuffix $ ads-contextEntry ) )"
+        oc_def = (
+            "( 1.3.6.1.4.1.18060.0.4.1.3.200 NAME 'ads-partition' AUXILIARY MAY ( "
+            "ads-partitionSuffix $ ads-contextEntry ) )"
+        )
         oc_data = u.Tests.server_parse_and_unwrap(
             schema,
             oc_def,

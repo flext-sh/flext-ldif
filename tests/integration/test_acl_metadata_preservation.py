@@ -96,13 +96,15 @@ class TestsFlextLdifAclMetadataPreservation:
                 id="append-to-all",
             ),
             pytest.param(
-                "access to entry by * (browse) bindipfilter=(orclipaddress=192.168.1.*)",
+                "access to entry by * (browse) "
+                "bindipfilter=(orclipaddress=192.168.1.*)",
                 c.Ldif.ACL_BIND_IP_FILTER,
                 "orclipaddress=192.168.1.*",
                 id="bind-ip-filter",
             ),
             pytest.param(
-                "access to entry by * (add) constraintonaddedobject=(objectclass=person)",
+                "access to entry by * (add) "
+                "constraintonaddedobject=(objectclass=person)",
                 c.Ldif.ACL_CONSTRAIN_TO_ADDED_OBJECT,
                 "objectclass=person",
                 id="constrain-to-added-object",

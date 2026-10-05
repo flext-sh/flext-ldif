@@ -87,7 +87,8 @@ class FlextLdifModelsBases:
             t.MutableSequenceOf[str],
             u.Field(
                 default_factory=list,
-                description="Validation violations recorded while normalizing ACL data.",
+                description="Validation violations recorded while normalizing ACL "
+                "data.",
             ),
         ] = u.Field(default_factory=list)
         validation_metadata: Annotated[

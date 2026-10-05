@@ -516,7 +516,8 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 )
             if entry.metadata is None:
                 return entry
-            # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: canonical JSON dump.
+            # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: canonical JSON
+            # dump.
             validation_rules_str = u.Ldif.dump_json_payload(validation_rules)
             entry.metadata.extensions["validation_rules"] = validation_rules_str
             acl_format_rules = validation_rules["acl_format_rules"]

@@ -192,7 +192,8 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
 
         CROSS_SERVER_OID_ATTRIBUTE_ORCLGUID: ClassVar[str] = (
             "( 2.16.840.1.113894.1.1.1 NAME 'orclguid' DESC 'Oracle GUID' "
-            "EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )"
+            "EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 "
+            "SINGLE-VALUE )"
         )
         CROSS_SERVER_OID_OBJECTCLASS_ORCLCONTAINER: ClassVar[str] = (
             "( 2.16.840.1.113894.2.1.1 NAME 'orclContainer' DESC 'Oracle Container' "
@@ -208,7 +209,8 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
             'aci: (targetattr="*")(version 3.0; acl "Test ACL"; allow (read,search) userdn="ldap:///anyone";)'
         )
         CROSS_SERVER_OUD_ATTRIBUTE_ORCLGUID: ClassVar[str] = (
-            "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )"
+            "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX "
+            "1.3.6.1.4.1.1466.115.121.1.40 )"
         )
 
         BOOLEAN_RFC_TO_OID: ClassVar[t.MappingKV[str, str]] = MappingProxyType({
@@ -435,7 +437,8 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
             "objectClass: person\n\n"
         )
         EDGE_CASE_DEEP_DN_LDIF: ClassVar[str] = (
-            "dn: cn=level1,ou=level2,ou=level3,ou=level4,ou=level5,ou=level6,dc=example,dc=com\n"
+            "dn: "
+            "cn=level1,ou=level2,ou=level3,ou=level4,ou=level5,ou=level6,dc=example,dc=com\n"
             "cn: level1\n"
             "objectClass: person\n\n"
         )
@@ -509,7 +512,8 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
         RELAXED_ACL_DEFINITIONS: ClassVar[t.MappingKV[str, tuple[str, bool]]] = (
             MappingProxyType({
                 RELAXED_PARSE_VALID: (
-                    '(targetentry="cn=admin,dc=example,dc=com")(version 3.0;acl "admin";allow(all)',
+                    '(targetentry="cn=admin,dc=example,dc=com")(version 3.0;acl '
+                    '"admin";allow(all)',
                     True,
                 ),
                 RELAXED_PARSE_MALFORMED: ("(targetentry incomplete", True),
@@ -522,25 +526,29 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
         ] = (
             m.Tests.AttributeTestCase(
                 scenario="apache_oid",
-                attr_definition="( 1.3.6.1.4.1.18060.0.4.1.2.100 NAME 'ads-enabled' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 )",
+                attr_definition="( 1.3.6.1.4.1.18060.0.4.1.2.100 NAME 'ads-enabled' "
+                "SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 )",
                 expected_can_handle=True,
                 expected_name="ads-enabled",
             ),
             m.Tests.AttributeTestCase(
                 scenario="ads_prefix",
-                attr_definition="( 2.16.840.1.113730.3.1.1 NAME 'ads-searchBaseDN' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )",
+                attr_definition="( 2.16.840.1.113730.3.1.1 NAME 'ads-searchBaseDN' "
+                "SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )",
                 expected_can_handle=True,
                 expected_name="ads-searchBaseDN",
             ),
             m.Tests.AttributeTestCase(
                 scenario="apacheds_name",
-                attr_definition="( 1.2.3.4 NAME 'apachedsSystemId' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+                attr_definition="( 1.2.3.4 NAME 'apachedsSystemId' SYNTAX "
+                "1.3.6.1.4.1.1466.115.121.1.15 )",
                 expected_can_handle=True,
                 expected_name="apachedsSystemId",
             ),
             m.Tests.AttributeTestCase(
                 scenario="standard_rfc",
-                attr_definition="( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+                attr_definition="( 2.5.4.3 NAME 'cn' SYNTAX "
+                "1.3.6.1.4.1.1466.115.121.1.15 )",
                 expected_can_handle=False,
                 expected_name="cn",
             ),
@@ -551,7 +559,8 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
         ] = (
             m.Tests.ObjectClassTestCase(
                 scenario="apache_oid",
-                oc_definition="( 1.3.6.1.4.1.18060.0.4.1.3.100 NAME 'ads-directoryService' SUP top STRUCTURAL )",
+                oc_definition="( 1.3.6.1.4.1.18060.0.4.1.3.100 NAME "
+                "'ads-directoryService' SUP top STRUCTURAL )",
                 expected_can_handle=True,
                 expected_name="ads-directoryService",
             ),
@@ -612,32 +621,37 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
         ] = (
             m.Tests.AttributeTestCase(
                 scenario="ds389_oid",
-                attr_definition="( 2.16.840.1.113730.3.1.1 NAME 'nsslapd-suffix' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )",
+                attr_definition="( 2.16.840.1.113730.3.1.1 NAME 'nsslapd-suffix' "
+                "SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )",
                 expected_can_handle=True,
                 expected_oid="2.16.840.1.113730.3.1.1",
                 expected_name="nsslapd-suffix",
             ),
             m.Tests.AttributeTestCase(
                 scenario="nsslapd_prefix",
-                attr_definition="( 1.2.3.4 NAME 'nsslapd-port' SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 )",
+                attr_definition="( 1.2.3.4 NAME 'nsslapd-port' SYNTAX "
+                "1.3.6.1.4.1.1466.115.121.1.27 )",
                 expected_can_handle=True,
                 expected_name="nsslapd-port",
             ),
             m.Tests.AttributeTestCase(
                 scenario="nsds_prefix",
-                attr_definition="( 1.2.3.4 NAME 'nsds5ReplicaId' SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 )",
+                attr_definition="( 1.2.3.4 NAME 'nsds5ReplicaId' SYNTAX "
+                "1.3.6.1.4.1.1466.115.121.1.27 )",
                 expected_can_handle=True,
                 expected_name="nsds5ReplicaId",
             ),
             m.Tests.AttributeTestCase(
                 scenario="nsuniqueid_prefix",
-                attr_definition="( 1.2.3.4 NAME 'nsuniqueid' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+                attr_definition="( 1.2.3.4 NAME 'nsuniqueid' SYNTAX "
+                "1.3.6.1.4.1.1466.115.121.1.15 )",
                 expected_can_handle=True,
                 expected_name="nsuniqueid",
             ),
             m.Tests.AttributeTestCase(
                 scenario="standard_rfc",
-                attr_definition="( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+                attr_definition="( 2.5.4.3 NAME 'cn' SYNTAX "
+                "1.3.6.1.4.1.1466.115.121.1.15 )",
                 expected_can_handle=False,
             ),
         )
@@ -647,7 +661,8 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
         ] = (
             m.Tests.ObjectClassTestCase(
                 scenario="ds389_oid",
-                oc_definition="( 2.16.840.1.113730.3.2.1 NAME 'nscontainer' SUP top STRUCTURAL )",
+                oc_definition="( 2.16.840.1.113730.3.2.1 NAME 'nscontainer' SUP top "
+                "STRUCTURAL )",
                 expected_can_handle=True,
                 expected_oid="2.16.840.1.113730.3.2.1",
                 expected_name="nscontainer",
@@ -729,32 +744,37 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
         ] = (
             m.Tests.AttributeTestCase(
                 scenario="novell_oid",
-                attr_definition="( 2.16.840.1.113719.1.1.4.1.501 NAME 'nspmPasswordPolicyDN' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )",
+                attr_definition="( 2.16.840.1.113719.1.1.4.1.501 NAME "
+                "'nspmPasswordPolicyDN' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )",
                 expected_can_handle=True,
                 expected_oid="2.16.840.1.113719.1.1.4.1.501",
                 expected_name="nspmPasswordPolicyDN",
             ),
             m.Tests.AttributeTestCase(
                 scenario="nspm_prefix",
-                attr_definition="( 1.2.3.4 NAME 'nspmPasswordPolicy' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+                attr_definition="( 1.2.3.4 NAME 'nspmPasswordPolicy' SYNTAX "
+                "1.3.6.1.4.1.1466.115.121.1.15 )",
                 expected_can_handle=True,
                 expected_name="nspmPasswordPolicy",
             ),
             m.Tests.AttributeTestCase(
                 scenario="login_prefix",
-                attr_definition="( 1.2.3.4 NAME 'loginDisabled' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 )",
+                attr_definition="( 1.2.3.4 NAME 'loginDisabled' SYNTAX "
+                "1.3.6.1.4.1.1466.115.121.1.7 )",
                 expected_can_handle=True,
                 expected_name="loginDisabled",
             ),
             m.Tests.AttributeTestCase(
                 scenario="dirxml_prefix",
-                attr_definition="( 1.2.3.4 NAME 'dirxml-associations' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+                attr_definition="( 1.2.3.4 NAME 'dirxml-associations' SYNTAX "
+                "1.3.6.1.4.1.1466.115.121.1.15 )",
                 expected_can_handle=True,
                 expected_name="dirxml-associations",
             ),
             m.Tests.AttributeTestCase(
                 scenario="standard_rfc",
-                attr_definition="( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+                attr_definition="( 2.5.4.3 NAME 'cn' SYNTAX "
+                "1.3.6.1.4.1.1466.115.121.1.15 )",
                 expected_can_handle=False,
             ),
         )
@@ -764,7 +784,8 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
         ] = (
             m.Tests.ObjectClassTestCase(
                 scenario="novell_oid",
-                oc_definition="( 2.16.840.1.113719.2.2.6.1 NAME 'ndsPerson' SUP top STRUCTURAL )",
+                oc_definition="( 2.16.840.1.113719.2.2.6.1 NAME 'ndsPerson' SUP top "
+                "STRUCTURAL )",
                 expected_can_handle=True,
                 expected_oid="2.16.840.1.113719.2.2.6.1",
                 expected_name="ndsPerson",
