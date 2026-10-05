@@ -282,7 +282,8 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
                 is_valid_oud_oid = base_validation.value
         if not is_valid_oud_oid:
             return r[bool].fail(
-                f"Invalid OUD OID format: {oid} (must be numeric RFC OID or end with -oid suffix)",
+                f"Invalid OUD OID format: {oid} "
+                f"(must be numeric RFC OID or end with -oid suffix)",
             )
         return r[bool].ok(is_valid_oud_oid)
 
@@ -345,6 +346,8 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
             sup_str = str(sup)
             if "$" in sup_str:
                 return r[bool].fail(
-                    f"OUD objectClass '{oc.name}' has multiple SUPs: {sup_str}. OUD only allows single SUP (use AUXILIARY classes for additional features).",
+                    f"OUD objectClass '{oc.name}' has multiple SUPs: {sup_str}. "
+                    f"OUD only allows single SUP "
+                    f"(use AUXILIARY classes for additional features).",
                 )
         return r[bool].ok(value=True)

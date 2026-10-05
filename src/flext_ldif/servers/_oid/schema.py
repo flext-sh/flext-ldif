@@ -556,6 +556,3 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             },
         )
         return super()._write_attribute(attr_copy)
-
-
-"Oracle Internet Directory (OID) Servers.\n\nCopyright (c) 2025 FLEXT Team. All rights reserved.\nSPDX-License-Identifier: MIT\n\nImplements Oracle OID-specific extensions as servers on top of RFC-compliant\nbase parsers. This wraps existing OID parser logic as composable servers.\n\nOID-specific features:\n- Oracle OID attribute types (2.16.840.1.113894.* namespace)\n- Oracle orclaci and orclentrylevelaci ACLs\n- Oracle-specific schema attributes\n- Oracle operational attributes\n"

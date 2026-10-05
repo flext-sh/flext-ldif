@@ -224,12 +224,14 @@ class FlextLdifUtilitiesDN:
         norm1_result = FlextLdifUtilitiesDN.norm(dn1)
         if not norm1_result.success:
             return r[t.StrPair].fail(
-                f"Comparison failed (RFC 4514): Failed to normalize first DN: {norm1_result.error}",
+                f"Comparison failed (RFC 4514): "
+                f"Failed to normalize first DN: {norm1_result.error}",
             )
         norm2_result = FlextLdifUtilitiesDN.norm(dn2)
         if not norm2_result.success:
             return r[t.StrPair].fail(
-                f"Comparison failed (RFC 4514): Failed to normalize second DN: {norm2_result.error}",
+                f"Comparison failed (RFC 4514): "
+                f"Failed to normalize second DN: {norm2_result.error}",
             )
         return r[t.StrPair].ok((norm1_result.value.lower(), norm2_result.value.lower()))
 
@@ -699,7 +701,10 @@ class FlextLdifUtilitiesDN:
                 error_msg = (
                     "Failed to normalize DN: DN string is empty"
                     if not dn_str
-                    else f"Failed to normalize DN: Invalid DN format: missing '=' separator in '{dn_str}'"
+                    else (
+                        f"Failed to normalize DN: Invalid DN format: "
+                        f"missing '=' separator in '{dn_str}'"
+                    )
                 )
                 result = r[str].fail(error_msg)
             else:
@@ -714,7 +719,8 @@ class FlextLdifUtilitiesDN:
                         r[str].ok(",".join(normalized))
                         if normalized
                         else r[str].fail(
-                            f"Failed to normalize DN: no valid components in '{dn_str}'",
+                            f"Failed to normalize DN: "
+                            f"no valid components in '{dn_str}'",
                         )
                     )
                 except c.Ldif.EXC_LDIF_PARSE as e:
@@ -1037,11 +1043,13 @@ class FlextLdifUtilitiesDN:
         target_dn: str,
         dn_valued_attributes: frozenset[str] | None = None,
     ) -> FlextLdifModels.Ldif.Entry:
-        """Transform an entry's DN and DN-valued attributes from source to target base DN.
+        """Transform an entry's DN and DN-valued attributes from source to target base
+        DN.
 
         Rewrites:
         - The entry's own DN
-        - All attributes whose name is in dn_valued_attributes (member, uniqueMember, etc.)
+        - All attributes whose name is in dn_valued_attributes (member, uniqueMember,
+        etc.)
 
         When the entry's own leftmost RDN changes (a root entry rebased onto a
         different naming value), LDAP modrdn semantics apply to the naming
@@ -1181,7 +1189,10 @@ class FlextLdifUtilitiesDN:
         pairs: list[tuple[str, str]] = []
         for component in components:
             if "=" not in component:
-                msg = f"Unparseable RDN component (missing attribute=value): {component!r}"
+                msg = (
+                    f"Unparseable RDN component "
+                    f"(missing attribute=value): {component!r}"
+                )
                 raise ValueError(msg)
             attribute, _, raw_value = component.partition("=")
             attribute = attribute.strip()

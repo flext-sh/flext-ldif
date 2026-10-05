@@ -105,7 +105,8 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
 
     @override
     def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
-        """Check if this is an Oracle OUD ACL line (implements abstract method from base.py).
+        """Check if this is an Oracle OUD ACL line (implements abstract method from
+        base.py).
 
         Returns:
             The resulting ``bool``.
@@ -240,7 +241,10 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
             filtered_ops.append("write")
         if not filtered_ops:
             return r[str].fail(
-                f"ACL model has no OUD-supported permissions (all were unsupported vendor-specific permissions like {FlextLdifServersOudConstants.PERMISSION_SELF_WRITE}, stored in metadata)",
+                f"ACL model has no OUD-supported permissions "
+                f"(all were unsupported vendor-specific permissions like "
+                f"{FlextLdifServersOudConstants.PERMISSION_SELF_WRITE}, "
+                f"stored in metadata)",
             )
         ops_str = ",".join(filtered_ops)
         return r[str].ok(f"{FlextLdifServersOudConstants.ACL_ALLOW_PREFIX}{ops_str})")
@@ -464,8 +468,12 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
                 metadata=m.Ldif.ServerMetadata(
                     server_type=c.Ldif.ServerTypes.OUD,
                     extensions={
-                        FlextLdifServersOudConstants.DS_PRIVILEGE_NAME_KEY: privilege_name,
-                        FlextLdifServersOudConstants.FORMAT_TYPE_KEY: FlextLdifServersOudConstants.FORMAT_TYPE_DS_PRIVILEGE,
+                        FlextLdifServersOudConstants.DS_PRIVILEGE_NAME_KEY: (
+                            privilege_name
+                        ),
+                        FlextLdifServersOudConstants.FORMAT_TYPE_KEY: (
+                            FlextLdifServersOudConstants.FORMAT_TYPE_DS_PRIVILEGE
+                        ),
                     },
                 ),
             )
@@ -493,7 +501,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
 
     @override
     def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
-        """Write RFC-compliant ACL model to OUD ACI string format (protected internal method).
+        """Write RFC-compliant ACL model to OUD ACI string (internal).
 
         Returns:
             The resulting ``p.Result[str]``.

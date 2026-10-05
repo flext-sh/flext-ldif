@@ -30,7 +30,9 @@ class FlextLdifUtilitiesEvents:
                 "success_rate_pct": event.conversion_success_rate,
                 "throughput_items_per_sec": event.throughput_items_per_sec,
             },
-            f"Conversion '{settings.conversion_operation}' from {settings.source_format} to {settings.target_format} completed",
+            f"Conversion '{settings.conversion_operation}' "
+            f"from {settings.source_format} to {settings.target_format} "
+            f"completed",
         )
 
     @staticmethod
@@ -97,7 +99,10 @@ class FlextLdifUtilitiesEvents:
         Returns:
             The resulting ``FlextLdifModels.Ldif.ConversionEvent``.
         """
-        aggregate_id = f"{settings.source_format}_to_{settings.target_format}_{settings.conversion_operation}"
+        aggregate_id = (
+            f"{settings.source_format}_to_{settings.target_format}"
+            f"_{settings.conversion_operation}"
+        )
         error_details_list = FlextLdifUtilitiesEvents._to_error_details_list(
             list(settings.error_details)
             if settings.error_details is not None

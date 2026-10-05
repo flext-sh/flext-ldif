@@ -419,7 +419,9 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             }
             if any(
                 marker in normalized_attrs
-                for marker in FlextLdifServersNovell.Constants.DETECTION_ATTRIBUTE_MARKERS
+                for marker in (
+                    FlextLdifServersNovell.Constants.DETECTION_ATTRIBUTE_MARKERS
+                )
             ):
                 return True
             object_classes = attributes.get(c.Ldif.DictKeys.OBJECTCLASS, [])

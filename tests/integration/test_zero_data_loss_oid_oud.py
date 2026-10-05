@@ -136,7 +136,8 @@ class TestsFlextLdifZeroDataLossOidOud:
 
         for entry in result.value.entries:
             assert entry.metadata is not None
-            # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: validate the plain mapping.
+            # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: validate the
+            # plain mapping.
             dn_diff: t.MutableJsonMapping = t.json_dict_adapter().validate_python(
                 entry.metadata.minimal_differences.get("dn", {}),
             )

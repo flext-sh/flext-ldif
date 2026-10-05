@@ -182,7 +182,8 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         tm.ok(result)
         metadata = result.value.entries[0].metadata
         assert metadata is not None
-        # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: validate plain mappings.
+        # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: validate plain
+        # mappings.
         converted: t.MutableJsonMapping = t.json_dict_adapter().validate_python(
             metadata.extensions[c.Ldif.CONVERTED_ATTRIBUTES],
         )

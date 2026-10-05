@@ -176,7 +176,10 @@ class FlextLdifConversionSupportMixin(s):
             The resulting ``t.MutableIntMapping``.
         """
         server_schema = self._get_schema_from_attribute(server)
-        test_attr_def = "( 2.16.840.1.113894.1.1.1 NAME 'orclTest' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+        test_attr_def = (
+            "( 2.16.840.1.113894.1.1.1 NAME 'orclTest' SYNTAX "
+            "1.3.6.1.4.1.1466.115.121.1.15 )"
+        )
         test_oc_def = (
             "( 2.16.840.1.113894.1.2.1 NAME 'orclTest' SUP top STRUCTURAL MUST cn )"
         )

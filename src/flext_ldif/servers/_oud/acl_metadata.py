@@ -118,7 +118,8 @@ class FlextLdifServersOudAclMetadataMixin:
                 deep=True,
             )
             return new_metadata_entry
-        # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: merge plain mappings.
+        # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: merge plain
+        # mappings.
         current: t.MutableJsonMapping = (
             dict(entry.metadata.extensions) if entry.metadata.extensions else {}
         )
