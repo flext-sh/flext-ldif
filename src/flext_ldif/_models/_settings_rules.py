@@ -12,7 +12,6 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import Annotated, Self
 
-
 from flext_core import FlextUtilities as u, m
 from flext_ldif import c, t
 
