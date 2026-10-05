@@ -37,7 +37,10 @@ class FlextLdifUtilitiesPipeline:
         def __repr__(self) -> str:
             """Return string representation."""
             status = "valid" if self._is_valid else "invalid"
-            return f"ValidationResult({status}, errors={len(self._errors)}, warnings={len(self._warnings)})"
+            return (
+                f"ValidationResult({status}, errors={len(self._errors)}, "
+                f"warnings={len(self._warnings)})"
+            )
 
         @property
         def errors(self) -> t.MutableSequenceOf[str]:

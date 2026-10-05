@@ -304,7 +304,9 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             if any(
                 attr_name.startswith(prefix)
                 for attr_name in normalized_attrs
-                for prefix in FlextLdifServersTivoli.Constants.DETECTION_ATTRIBUTE_PREFIXES
+                for prefix in (
+                    FlextLdifServersTivoli.Constants.DETECTION_ATTRIBUTE_PREFIXES
+                )
             ):
                 return True
             object_classes = list(attributes.get(c.Ldif.DictKeys.OBJECTCLASS, []))

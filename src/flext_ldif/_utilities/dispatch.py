@@ -231,7 +231,8 @@ class FlextLdifUtilitiesDispatch:
         FlextLdifUtilitiesDispatch._ENTRY_LIST_ADAPTER.validate_python(obj)
         return True
 
-    # --- MRO conflict resolution: Collection methods (CollectionLdif vs FlextUtilities) ---
+    # --- MRO conflict resolution: Collection methods (CollectionLdif vs
+    # FlextUtilities) ---
 
     @staticmethod
     def find(

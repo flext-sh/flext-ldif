@@ -235,7 +235,8 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
 
     @override
     def _write_entry(self, entry_data: m.Ldif.Entry) -> p.Result[str]:
-        """Write entry with OUD pre-write hook + phase-aware ACL handling + DN normalization.
+        """Write entry with OUD pre-write hook + phase-aware ACL handling + DN
+        # normalization.
 
         Returns:
             The resulting ``p.Result[str]``.

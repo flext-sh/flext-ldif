@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, ClassVar, Final, overload
 import pytest
 from flext_tests import FlextTestsUtilities, tk, tm
 
-from flext_ldif import FlextLdifUtilities, u
+from flext_ldif import FlextLdifUtilities
 from tests import c, m, p, t
 
 if TYPE_CHECKING:
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from types import ModuleType
 
 
-class TestsFlextLdifUtilities(FlextTestsUtilities, u):
+class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
     """Project test utility namespace extension."""
 
     # The real-directory tests drive a live LDAP server through the FLEXT LDAP
@@ -218,7 +218,8 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
 
         @classmethod
         def orclaci_base_dn_entry(cls, dn: str = "cn=users,dc=ctbc") -> m.Ldif.Entry:
-            """Build a real LDIF entry carrying an out-of-scope OID orclaci for base-DN filter tests.
+            """Build a real LDIF entry carrying an out-of-scope OID orclaci for
+            # base-DN filter tests.
 
             Returns:
                 The resulting ``m.Ldif.Entry``.
@@ -255,7 +256,8 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                     "objectClass: ldapSubentry\n"
                     "objectClass: subschema\n"
                     "\n"
-                    "attributeTypes: ( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )\n",
+                    "attributeTypes: ( 2.5.4.3 NAME 'cn' SYNTAX "
+                    "1.3.6.1.4.1.1466.115.121.1.15 )\n",
                 )
             for index in range(entries_count):
                 entry_id = uuid.uuid4().hex[:8]
@@ -538,16 +540,15 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
             message: str | None = ...,
         ) -> m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl | None: ...
         @classmethod
-        def server_parse_and_unwrap(
+        def server_parse_and_unwrap[
+            SchemaNodeT: (m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass, m.Ldif.Acl),
+        ](
             cls,
             server: p.Ldif.SchemaServer | p.Tests.ParseInputServer,
             content: str,
             *,
             parse_method: t.Tests.ParseMethod = "parse_server",
-            expected_type: (
-                type[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl]
-                | None
-            ) = None,
+            expected_type: type[SchemaNodeT] | None = None,
             should_succeed: bool | None = None,
             message: str | None = None,
         ) -> m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl | None:

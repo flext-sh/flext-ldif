@@ -125,8 +125,10 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 The resulting ``bool``.
             """
             if isinstance(attr_definition, str):
-                if not FlextLdifServersOpenldap1.Constants.SCHEMA_OPENLDAP1_ATTRIBUTE_RE.match(
-                    attr_definition,
+                if not (
+                    FlextLdifServersOpenldap1.Constants.SCHEMA_OPENLDAP1_ATTRIBUTE_RE.match(
+                        attr_definition,
+                    )
                 ):
                     return False
                 has_olc = "olc" in attr_definition.lower()
@@ -147,8 +149,10 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 The resulting ``bool``.
             """
             if isinstance(oc_definition, str):
-                if not FlextLdifServersOpenldap1.Constants.SCHEMA_OPENLDAP1_OBJECTCLASS_RE.match(
-                    oc_definition,
+                if not (
+                    FlextLdifServersOpenldap1.Constants.SCHEMA_OPENLDAP1_OBJECTCLASS_RE.match(
+                        oc_definition,
+                    )
                 ):
                     return False
                 has_olc = "olc" in oc_definition.lower()

@@ -177,7 +177,8 @@ class FlextLdifModelsDomainAcl:
             """Get ACL format for this server type.
 
             Business Rule: This method doesn't use instance state, only class constants.
-            Implication: Can be a class method for better clarity and allows override in subclasses.
+            Implication: Can be a class method for better clarity and allows override
+            in subclasses.
 
             Returns:
                 Default ACL format string from constants.
@@ -187,7 +188,8 @@ class FlextLdifModelsDomainAcl:
             return default_acl_format
 
         def resolve_acl_type(self) -> str:
-            """Get ACL type identifier for this server using canonical enum normalization.
+            """Get ACL type identifier for this server using canonical enum
+            # normalization.
 
             Returns:
                 The resulting ``str``.
@@ -249,7 +251,8 @@ class FlextLdifModelsDomainAcl:
             )
             if acl_is_defined and not (self.raw_acl and self.raw_acl.strip()):
                 violations.append(
-                    "ACL is defined (has target/subject/permissions) but raw_acl is empty",
+                    "ACL is defined (has target/subject/permissions) but raw_acl is "
+                    "empty",
                 )
             if violations:
                 self.validation_violations.clear()
@@ -259,14 +262,16 @@ class FlextLdifModelsDomainAcl:
     class AclWriteMetadata(m.FrozenModel):
         """Metadata for ACL write formatting operations.
 
-        This frozen model encapsulates ACL metadata extracted from ServerMetadata.extensions
+        This frozen model encapsulates ACL metadata extracted from
+        ServerMetadata.extensions
         for use in ACL formatting during LDIF writing operations.
 
         Used by Entry servers to format ACI attributes with original ACL format names,
         following SRP by separating ACL formatting from Writer serialization.
 
         Attributes:
-            original_format: Original ACL string format (always preserve for conversion).
+            original_format: Original ACL string format (always preserve for
+            conversion).
             source_server: Server that parsed this ACL (oid, oud, openldap, etc.).
             name_sanitized: True if ACL name was sanitized (had control chars).
             original_name_raw: Original ACL name before sanitization (for audit).

@@ -48,7 +48,9 @@ class FlextLdifCategorization(s):
         u.Field(
             default=None,
             exclude=True,
-            description="Optional schema whitelist rules used to filter schema entries.",
+            description=(
+                "Optional schema whitelist rules used to filter schema entries.",
+            ),
         ),
     ] = None
     forbidden_attributes: Annotated[
@@ -56,7 +58,10 @@ class FlextLdifCategorization(s):
         u.Field(
             default=None,
             exclude=True,
-            description="Attribute names removed from categorized entries after classification.",
+            description=(
+                "Attribute names removed from categorized entries after "
+                "classification.",
+            ),
         ),
     ] = None
     forbidden_objectclasses: Annotated[
@@ -64,7 +69,10 @@ class FlextLdifCategorization(s):
         u.Field(
             default=None,
             exclude=True,
-            description="objectClass names removed from categorized entries after classification.",
+            description=(
+                "objectClass names removed from categorized entries after "
+                "classification.",
+            ),
         ),
     ] = None
     base_dn: Annotated[
@@ -80,7 +88,10 @@ class FlextLdifCategorization(s):
         u.Field(
             default=c.Ldif.ServerTypes.RFC.value,
             exclude=True,
-            description="Server type used to resolve categorization defaults from the registry.",
+            description=(
+                "Server type used to resolve categorization defaults from the "
+                "registry.",
+            ),
         ),
     ] = c.Ldif.ServerTypes.RFC.value
     server_registry: Annotated[
@@ -88,7 +99,10 @@ class FlextLdifCategorization(s):
         u.Field(
             default=None,
             exclude=True,
-            description="Optional server registry override for categorization constants lookup.",
+            description=(
+                "Optional server registry override for categorization "
+                "constants lookup.",
+            ),
         ),
     ] = None
     rejection_tracker: Annotated[
@@ -520,7 +534,8 @@ class FlextLdifCategorization(s):
                     entry,
                     mark_rejected=(
                         c.Ldif.RejectionCategory.INVALID_DN.value,
-                        f"DN normalization failed: {norm_result.error or c.Ldif.ERR_UNKNOWN}",
+                        f"DN normalization "
+                        f"failed: {norm_result.error or c.Ldif.ERR_UNKNOWN}",
                     ),
                 )
                 self.rejection_tracker[

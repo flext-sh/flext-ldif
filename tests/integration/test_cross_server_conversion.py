@@ -203,7 +203,9 @@ class TestsFlextLdifCrossServerConversion:
         conversion_matrix: FlextLdifConversion,
         oud_server: FlextLdifServersBase,
     ) -> None:
-        """A full-featured server advertises support for every convertible model kind."""
+        """A full-featured server advertises support for every convertible model
+        kind.
+        """
         supported = conversion_matrix.resolve_supported_conversions(oud_server)
         tm.that(supported["attribute"], eq=True)
         tm.that(supported["objectClass"], eq=True)

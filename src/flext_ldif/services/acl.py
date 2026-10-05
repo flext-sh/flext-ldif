@@ -80,7 +80,8 @@ class FlextLdifAcl(s):
                 evaluation = m.Ldif.AclEvaluationResult(
                     granted=True,
                     matched_acl=u.Ldif.as_acl(found_acl),
-                    message=f"ACL '{found_acl.name}' grants required permissions: {required_perms}",
+                    message=f"ACL '{found_acl.name}' "
+                    f"grants required permissions: {required_perms}",
                 )
             else:
                 evaluation = m.Ldif.AclEvaluationResult(

@@ -246,7 +246,8 @@ class FlextLdifUtilitiesEntry:
     ) -> t.MutableSequenceOf[str]:
         """Validate that entry has at least one attribute per RFC 2849 section 2.
 
-        Note: entry.attributes may be None when using model_construct (bypasses validation).
+        Note: entry.attributes may be None when using model_construct (bypasses
+        validation).
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
@@ -274,7 +275,8 @@ class FlextLdifUtilitiesEntry:
     ) -> t.MutableSequenceOf[str]:
         """Validate attribute descriptions per RFC 4512 section 2.5.
 
-        Note: entry.attributes may be None when using model_construct (bypasses validation).
+        Note: entry.attributes may be None when using model_construct (bypasses
+        validation).
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
@@ -299,7 +301,9 @@ class FlextLdifUtilitiesEntry:
                     violations.append(
                         f"RFC 4512 § 2.5: option '{option}' must start with letter"
                         if not option or not option[0].isalpha()
-                        else f"RFC 4512 § 2.5: option '{option}' has invalid characters",
+                        else (
+                            f"RFC 4512 § 2.5: option '{option}' has invalid characters"
+                        ),
                     )
         return violations
 
@@ -309,7 +313,8 @@ class FlextLdifUtilitiesEntry:
     ) -> t.MutableSequenceOf[str]:
         """Validate attribute name/option syntax per RFC 4512 section 2.5.1-2.5.2.
 
-        Note: entry.attributes may be None when using model_construct (bypasses validation).
+        Note: entry.attributes may be None when using model_construct (bypasses
+        validation).
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
@@ -340,7 +345,8 @@ class FlextLdifUtilitiesEntry:
         Uses compiled regex for O(1)-per-match detection instead of
         Python char-by-char ord() loops.
 
-        Note: entry.attributes may be None when using model_construct (bypasses validation).
+        Note: entry.attributes may be None when using model_construct (bypasses
+        validation).
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
@@ -385,7 +391,8 @@ class FlextLdifUtilitiesEntry:
     ) -> t.MutableSequenceOf[str]:
         """Validate naming attribute presence per RFC 4512 section 2.3.
 
-        Note: entry.attributes may be None when using model_construct (bypasses validation).
+        Note: entry.attributes may be None when using model_construct (bypasses
+        validation).
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
@@ -420,7 +427,8 @@ class FlextLdifUtilitiesEntry:
     ) -> t.MutableSequenceOf[str]:
         """Validate objectClass presence per RFC 4512 section 2.4.1.
 
-        Note: entry.attributes may be None when using model_construct (bypasses validation).
+        Note: entry.attributes may be None when using model_construct (bypasses
+        validation).
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.

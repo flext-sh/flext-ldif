@@ -76,7 +76,8 @@ class TestsFlextLdifOidAclAssemble:
                 ),
                 'aci: (targetattr="*")(targetscope="base")'
                 '(version 3.0; acl "ctbc Entry by admins"; '
-                'allow (read, search, add, delete) groupdn="ldap:///cn=admins,dc=ctbc"; '
+                "allow (read, search, add, delete) "
+                'groupdn="ldap:///cn=admins,dc=ctbc"; '
                 'allow (read, search) userdn="ldap:///anyone";)',
                 id="two-distinct-perm-allows-with-targetscope",
             ),

@@ -18,7 +18,9 @@ class FlextLdifUtilitiesObjectClass:
     """RFC 4512 ObjectClass Validation and Correction Utilities."""
 
     class SchemaConstants:
-        """Schema constants container for type safety (single class, no loose helpers)."""
+        """Schema constants container for type safety (single class, no loose
+        helpers).
+        """
 
         auxiliary: str = c.Ldif.SchemaKind.AUXILIARY.value
         structural: str = c.Ldif.SchemaKind.STRUCTURAL.value

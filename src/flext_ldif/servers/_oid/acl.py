@@ -353,7 +353,8 @@ class FlextLdifServersOidAcl(FlextLdifServersRfc.Acl):
         """
         metadata = m.Ldif.ServerMetadata.model_validate(metadata)
         extensions = getattr(metadata, "extensions", None)
-        # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: copy the plain mapping.
+        # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: copy the plain
+        # mapping.
         return dict(extensions) if extensions is not None else {}
 
     @staticmethod
