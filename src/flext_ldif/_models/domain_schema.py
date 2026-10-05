@@ -72,7 +72,8 @@ class FlextLdifModelsDomainSchema:
         single_value: Annotated[
             bool,
             u.Field(
-                description="Whether attribute is single-valued (RFC 4512 SINGLE-VALUE)",
+                description="Whether attribute is single-valued (RFC 4512 "
+                "SINGLE-VALUE)",
             ),
         ] = False
         collective: Annotated[
@@ -84,7 +85,8 @@ class FlextLdifModelsDomainSchema:
         no_user_modification: Annotated[
             bool,
             u.Field(
-                description="Whether users can modify this attribute (RFC 4512 NO-USER-MODIFICATION)",
+                description="Whether users can modify this attribute (RFC 4512 "
+                "NO-USER-MODIFICATION)",
             ),
         ] = False
         immutable: Annotated[
@@ -104,31 +106,36 @@ class FlextLdifModelsDomainSchema:
         x_origin: Annotated[
             str | None,
             u.Field(
-                description="Origin of attribute definition (server-specific X-ORIGIN extension)",
+                description="Origin of attribute definition (server-specific X-ORIGIN "
+                "extension)",
             ),
         ] = None
         x_file_ref: Annotated[
             str | None,
             u.Field(
-                description="File reference for attribute definition (server-specific X-FILE-REF extension)",
+                description="File reference for attribute definition (server-specific "
+                "X-FILE-REF extension)",
             ),
         ] = None
         x_name: Annotated[
             str | None,
             u.Field(
-                description="Extended name for attribute (server-specific X-NAME extension)",
+                description="Extended name for attribute (server-specific X-NAME "
+                "extension)",
             ),
         ] = None
         x_alias: Annotated[
             str | None,
             u.Field(
-                description="Extended alias for attribute (server-specific X-ALIAS extension)",
+                description="Extended alias for attribute (server-specific X-ALIAS "
+                "extension)",
             ),
         ] = None
         x_oid: Annotated[
             str | None,
             u.Field(
-                description="Extended OID for attribute (server-specific X-OID extension)",
+                description="Extended OID for attribute (server-specific X-OID "
+                "extension)",
             ),
         ] = None
         metadata: Annotated[
@@ -152,7 +159,8 @@ class FlextLdifModelsDomainSchema:
             str,
             u.Field(
                 ...,
-                description="Syntax OID (RFC 4517, format: 1.3.6.1.4.1.1466.115.121.1.X)",
+                description="Syntax OID (RFC 4517, format: "
+                "1.3.6.1.4.1.1466.115.121.1.X)",
             ),
         ]
         name: Annotated[
@@ -169,7 +177,8 @@ class FlextLdifModelsDomainSchema:
         type_category: Annotated[
             str,
             u.Field(
-                description="Syntax type category: string, integer, binary, dn, time, boolean",
+                description="Syntax type category: string, integer, binary, dn, time, "
+                "boolean",
             ),
         ] = "string"
         is_binary: Annotated[
@@ -193,7 +202,8 @@ class FlextLdifModelsDomainSchema:
         encoding: Annotated[
             c.Ldif.Encoding,
             u.Field(
-                description="Expected character encoding (utf-8, ascii, iso-8859-1, etc.)",
+                description="Expected character encoding (utf-8, ascii, iso-8859-1, "
+                "etc.)",
             ),
         ] = c.Ldif.Encoding.UTF8
         validation_pattern: Annotated[
@@ -247,7 +257,8 @@ class FlextLdifModelsDomainSchema:
         kind: Annotated[
             str,
             u.Field(
-                description="Object class kind (RFC 4512: STRUCTURAL, AUXILIARY, ABSTRACT)",
+                description="Object class kind (RFC 4512: STRUCTURAL, AUXILIARY, "
+                "ABSTRACT)",
             ),
         ] = "STRUCTURAL"
         must: Annotated[

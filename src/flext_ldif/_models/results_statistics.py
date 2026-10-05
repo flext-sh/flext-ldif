@@ -261,11 +261,9 @@ class FlextLdifModelsResultsStatistics:
             return copied
 
         def to_summary(self) -> FlextLdifModelsResultsStatistics.StatisticsSummary:
-            fields = {
-                name: getattr(self, name)
-                for name in FlextLdifModelsResultsStatistics.StatisticsSummary.model_fields
-            }
-            return FlextLdifModelsResultsStatistics.StatisticsSummary(**fields)
+            summary_cls = FlextLdifModelsResultsStatistics.StatisticsSummary
+            fields = {name: getattr(self, name) for name in summary_cls.model_fields}
+            return summary_cls(**fields)
 
         def _rate(self, numerator: int) -> float:
             return (

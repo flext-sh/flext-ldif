@@ -159,7 +159,9 @@ class TestsFlextLdifRealLdapExport:
         flext_api: p.Ldif.LdifClient,
         make_test_username: Callable[[str], str],
     ) -> None:
-        """A nested directory subtree exports so every container and leaf DN survives."""
+        """A nested directory subtree exports so every container and leaf DN
+        survives.
+        """
         person_name = make_test_username("Alice")
         group_name = make_test_username("Admins")
         groups_ou_dn = f"ou=Groups,{clean_test_ou}"

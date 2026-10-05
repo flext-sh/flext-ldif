@@ -20,7 +20,14 @@ from flext_ldif import ldif, m, t
 def extract_acls_from_entry() -> None:
     """Extract ACL information from an LDIF entry."""
     api = ldif()
-    ldif_content = 'dn: cn=test,ou=People,dc=example,dc=com\nobjectClass: person\ncn: test\nsn: user\naci: (target="ldap:///ou=People,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Allow read"; allow (read,search) userdn="ldap:///anyone";)\n'
+    ldif_content = (
+        "dn: cn=test,ou=People,dc=example,dc=com\nobjectClass: person\ncn: "
+        "test\nsn: user\n"
+        'aci: (target="ldap:///ou=People,dc=example,dc=com")'
+        '(targetattr="*")'
+        '(version 3.0; acl "Allow read"; '
+        'allow (read,search) userdn="ldap:///anyone";)\n'
+    )
     parse_result = api.parse_ldif(ldif_content)
 
     parse_response = parse_result.unwrap()
@@ -39,7 +46,18 @@ def extract_acls_from_entry() -> None:
 def parse_and_evaluate_acls() -> None:
     """Parse ACL attributes and evaluate against context."""
     api = ldif()
-    ldif_content = 'dn: ou=People,dc=example,dc=com\nobjectClass: organizationalUnit\nou: People\naci: (target="ldap:///ou=People,dc=example,dc=com")(targetattr="cn || sn")(version 3.0; acl "Allow self write"; allow (write) userdn="ldap:///self";)\naci: (target="ldap:///ou=People,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Allow admin all"; allow (all) userdn="ldap:///cn=admin,dc=example,dc=com";)\n'
+    ldif_content = (
+        "dn: ou=People,dc=example,dc=com\nobjectClass: "
+        "organizationalUnit\nou: People\n"
+        'aci: (target="ldap:///ou=People,dc=example,dc=com")'
+        '(targetattr="cn || sn")'
+        '(version 3.0; acl "Allow self write"; '
+        'allow (write) userdn="ldap:///self";)\n'
+        'aci: (target="ldap:///ou=People,dc=example,dc=com")'
+        '(targetattr="*")'
+        '(version 3.0; acl "Allow admin all"; '
+        'allow (all) userdn="ldap:///cn=admin,dc=example,dc=com";)\n'
+    )
     parse_result = api.parse_ldif(ldif_content)
 
     parse_response = parse_result.unwrap()
@@ -61,7 +79,25 @@ def parse_and_evaluate_acls() -> None:
 def process_entries_with_acls() -> None:
     """Process entries that contain ACL information."""
     api = ldif()
-    ldif_content = 'dn: ou=People,dc=example,dc=com\nobjectClass: organizationalUnit\nou: People\naci: (target="ldap:///ou=People,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Read access"; allow (read) userdn="ldap:///anyone";)\n\ndn: ou=Groups,dc=example,dc=com\nobjectClass: organizationalUnit\nou: Groups\naci: (target="ldap:///ou=Groups,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Admin access"; allow (all) userdn="ldap:///cn=admin,dc=example,dc=com";)\n\ndn: cn=user,ou=People,dc=example,dc=com\nobjectClass: person\ncn: user\nsn: test\n'
+    ldif_content = (
+        "dn: ou=People,dc=example,dc=com\nobjectClass: "
+        "organizationalUnit\nou: People\n"
+        'aci: (target="ldap:///ou=People,dc=example,dc=com")'
+        '(targetattr="*")'
+        '(version 3.0; acl "Read access"; '
+        'allow (read) userdn="ldap:///anyone";)\n'
+        "\ndn: ou=Groups,dc=example,dc=com\n"
+        "objectClass: organizationalUnit\n"
+        "ou: Groups\n"
+        'aci: (target="ldap:///ou=Groups,dc=example,dc=com")'
+        '(targetattr="*")'
+        '(version 3.0; acl "Admin access"; '
+        'allow (all) userdn="ldap:///cn=admin,dc=example,dc=com";)\n'
+        "\ndn: cn=user,ou=People,dc=example,dc=com\n"
+        "objectClass: person\n"
+        "cn: user\n"
+        "sn: test\n"
+    )
     parse_result = api.parse_ldif(ldif_content)
 
     parse_response = parse_result.unwrap()
@@ -84,7 +120,8 @@ def execute_acl_service() -> None:
             "objectClass": ["organizationalUnit"],
             "ou": ["Test"],
             "aci": [
-                '(target="ldap:///ou=Test,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Test ACL"; allow (read) userdn="ldap:///anyone";)',
+                '(target="ldap:///ou=Test,dc=example,dc=com")(targetattr="*")(version '
+                '3.0; acl "Test ACL"; allow (read) userdn="ldap:///anyone";)',
             ],
         },
     )
@@ -98,7 +135,14 @@ def execute_acl_service() -> None:
 def acl_pipeline() -> None:
     """Complete ACL processing pipeline."""
     api = ldif()
-    ldif_content = 'dn: ou=Pipeline,dc=example,dc=com\nobjectClass: organizationalUnit\nou: Pipeline\naci: (target="ldap:///ou=Pipeline,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Pipeline ACL"; allow (read,search) userdn="ldap:///anyone";)\n'
+    ldif_content = (
+        "dn: ou=Pipeline,dc=example,dc=com\nobjectClass: "
+        "organizationalUnit\nou: Pipeline\n"
+        'aci: (target="ldap:///ou=Pipeline,dc=example,dc=com")'
+        '(targetattr="*")'
+        '(version 3.0; acl "Pipeline ACL"; '
+        'allow (read,search) userdn="ldap:///anyone";)\n'
+    )
     parse_result = api.parse_ldif(ldif_content)
 
     parse_response = parse_result.unwrap()

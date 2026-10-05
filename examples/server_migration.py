@@ -30,10 +30,32 @@ class ExampleServerMigration:
                 The resulting ``str``.
             """
             if i % 4 == 0:
-                return f"dn: ou=Container{i},dc=example,dc=com\nobjectClass: organizationalUnit\nou: Container{i}\ndescription: Container {i}\norclaci: access to * by * read\n"
+                return (
+                    f"dn: ou=Container{i},dc=example,dc=com\n"
+                    f"objectClass: organizationalUnit\n"
+                    f"ou: Container{i}\n"
+                    f"description: Container {i}\n"
+                    f"orclaci: access to * by * read\n"
+                )
             if i % 2 == 0:
-                return f"dn: cn=Group{i},ou=Groups,dc=example,dc=com\nobjectClass: groupOfUniqueNames\ncn: Group{i}\nuniquemember: cn=User{i},ou=People,dc=example,dc=com\norclguid: group{i}guid123\n"
-            return f'dn: cn=User{i},ou=People,dc=example,dc=com\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: User{i}\nsn: TestUser{i}\nmail: user{i}@example.com\norclguid: user{i}guid456\naci: (target="ldap:///cn=User{i}")(version 3.0; acl "self"; allow (all) userdn="ldap:///self";)\n'
+                return (
+                    f"dn: cn=Group{i},ou=Groups,dc=example,dc=com\n"
+                    f"objectClass: groupOfUniqueNames\n"
+                    f"cn: Group{i}\n"
+                    f"uniquemember: cn=User{i},ou=People,dc=example,dc=com\n"
+                    f"orclguid: group{i}guid123\n"
+                )
+            return (
+                f"dn: cn=User{i},ou=People,dc=example,dc=com\n"
+                f"objectClass: person\n"
+                f"objectClass: inetOrgPerson\n"
+                f"cn: User{i}\n"
+                f"sn: TestUser{i}\n"
+                f"mail: user{i}@example.com\n"
+                f"orclguid: user{i}guid456\n"
+                f'aci: (target="ldap:///cn=User{i}")'
+                f'(version 3.0; acl "self"; allow (all) userdn="ldap:///self";)\n'
+            )
 
         source_data: MutableSequence[str] = list(
             u.process(list(range(20)), create_entry_data).unwrap(),
@@ -89,7 +111,26 @@ class ExampleServerMigration:
             The resulting ``p.Result[t.JsonMapping]``.
         """
         api = ldif()
-        mixed_ldif = 'dn: cn=Auto Detect Test,ou=People,dc=example,dc=com\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: Auto Detect Test\nsn: Test\nmail: auto@example.com\n# This could be from OID (has orclaci) or OUD (has aci)\norclaci: access to * by * read\naci: (target="ldap:///cn=Auto Detect Test")(version 3.0; acl "test"; allow (read) userdn="ldap:///anyone";)\n\ndn: cn=Auto Group,ou=Groups,dc=example,dc=com\nobjectClass: groupOfUniqueNames\nobjectClass: groupOfNames\ncn: Auto Group\nuniquemember: cn=Auto Detect Test,ou=People,dc=example,dc=com\nmember: cn=Auto Detect Test,ou=People,dc=example,dc=com\n'
+        mixed_ldif = (
+            "dn: cn=Auto Detect "
+            "Test,ou=People,dc=example,dc=com\n"
+            "objectClass: person\n"
+            "objectClass: inetOrgPerson\n"
+            "cn: Auto Detect Test\n"
+            "sn: Test\n"
+            "mail: auto@example.com\n"
+            "# This could be from OID (has orclaci) or OUD (has aci)\n"
+            "orclaci: access to * by * read\n"
+            'aci: (target="ldap:///cn=Auto Detect Test")'
+            '(version 3.0; acl "test"; allow (read) userdn="ldap:///anyone";)\n'
+            "\n"
+            "dn: cn=Auto Group,ou=Groups,dc=example,dc=com\n"
+            "objectClass: groupOfUniqueNames\n"
+            "objectClass: groupOfNames\n"
+            "cn: Auto Group\n"
+            "uniquemember: cn=Auto Detect Test,ou=People,dc=example,dc=com\n"
+            "member: cn=Auto Detect Test,ou=People,dc=example,dc=com\n"
+        )
         detect_result = api.detect_server_type(ldif_content=mixed_ldif)
         if detect_result.failure:
             return r[t.JsonMapping].fail(
@@ -133,7 +174,25 @@ class ExampleServerMigration:
             The resulting ``p.Result[t.JsonMapping]``.
         """
         api = ldif()
-        test_ldif = 'dn: cn=Server Comparison,ou=People,dc=example,dc=com\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: Server Comparison\nsn: Test\nmail: comparison@example.com\n# OID-specific attributes\norclguid: abc123def456\norclaci: access to attr=mail by * read\n# OUD-specific attributes\naci: (targetattr="mail")(version 3.0; acl "mail access"; allow (read,search) userdn="ldap:///anyone";)\n# OpenLDAP-specific attributes\nentryUUID: 12345678-1234-1234-1234-123456789012\nentryCSN: 20240101000000.000000Z#000000#000#000000\n'
+        test_ldif = (
+            "dn: cn=Server "
+            "Comparison,ou=People,dc=example,dc=com\n"
+            "objectClass: person\n"
+            "objectClass: inetOrgPerson\n"
+            "cn: Server Comparison\n"
+            "sn: Test\n"
+            "mail: comparison@example.com\n"
+            "# OID-specific attributes\n"
+            "orclguid: abc123def456\n"
+            "orclaci: access to attr=mail by * read\n"
+            "# OUD-specific attributes\n"
+            'aci: (targetattr="mail")'
+            '(version 3.0; acl "mail access"; '
+            'allow (read,search) userdn="ldap:///anyone";)\n'
+            "# OpenLDAP-specific attributes\n"
+            "entryUUID: 12345678-1234-1234-1234-123456789012\n"
+            "entryCSN: 20240101000000.000000Z#000000#000#000000\n"
+        )
         servers: t.SequenceOf[str] = ("rfc", "oid", "oud", "openldap")
         comparison_results: MutableMapping[str, t.JsonMapping] = {}
         for server in servers:
@@ -248,8 +307,28 @@ class ExampleServerMigration:
         output_dir = Path("examples/migration_output")
         input_dir.mkdir(exist_ok=True, parents=True)
         output_dir.mkdir(exist_ok=True, parents=True)
-        oid_ldif = "dn: cn=OID User,ou=People,dc=example,dc=com\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: OID User\nsn: Test\nmail: oid@example.com\norclguid: 1234567890abcdef\norclaci: access to * by * read\n\ndn: cn=OID Group,ou=Groups,dc=example,dc=com\nobjectClass: groupOfUniqueNames\ncn: OID Group\nuniquemember: cn=OID User,ou=People,dc=example,dc=com\n"
-        oud_ldif = 'dn: cn=OUD User,ou=People,dc=example,dc=com\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: OUD User\nsn: Test\nmail: oud@example.com\naci: (target="ldap:///cn=OUD User")(version 3.0; acl "Anonymous read"; allow (read,search,compare) userdn="ldap:///anyone";)\n\ndn: cn=OUD Group,ou=Groups,dc=example,dc=com\nobjectClass: groupOfNames\ncn: OUD Group\nmember: cn=OUD User,ou=People,dc=example,dc=com\n'
+        oid_ldif = (
+            "dn: cn=OID User,ou=People,dc=example,dc=com\nobjectClass: "
+            "person\nobjectClass: inetOrgPerson\ncn: OID User\nsn: Test\n"
+            "mail: oid@example.com\n"
+            "orclguid: 1234567890abcdef\n"
+            "orclaci: access to * by * read\n\n"
+            "dn: cn=OID Group,ou=Groups,dc=example,dc=com\n"
+            "objectClass: groupOfUniqueNames\ncn: OID Group\n"
+            "uniquemember: cn=OID User,ou=People,dc=example,dc=com\n"
+        )
+        oud_ldif = (
+            "dn: cn=OUD User,ou=People,dc=example,dc=com\nobjectClass: "
+            "person\nobjectClass: inetOrgPerson\ncn: OUD User\nsn: Test\n"
+            "mail: oud@example.com\n"
+            'aci: (target="ldap:///cn=OUD User")'
+            '(version 3.0; acl "Anonymous read"; '
+            'allow (read,search,compare) userdn="ldap:///anyone";)\n'
+            "\n"
+            "dn: cn=OUD Group,ou=Groups,dc=example,dc=com\n"
+            "objectClass: groupOfNames\ncn: OUD Group\n"
+            "member: cn=OUD User,ou=People,dc=example,dc=com\n"
+        )
         (input_dir / "oid_data.ldif").write_text(oid_ldif)
         (input_dir / "oud_data.ldif").write_text(oud_ldif)
         migration_result = api.migrate(

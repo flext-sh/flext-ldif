@@ -103,7 +103,8 @@ class FlextLdifServersOudTransformMixin:
 
     @staticmethod
     def normalize_acl_dns(entry_data: m.Ldif.Entry) -> m.Ldif.Entry:
-        """Normalize and filter DNs in ACL attribute values (userdn/groupdn inside ACL strings).
+        """Normalize and filter DNs in ACL attribute values (userdn/groupdn inside ACL
+        # strings).
 
         Returns:
             The resulting ``m.Ldif.Entry``.
@@ -226,7 +227,8 @@ class FlextLdifServersOudTransformMixin:
         })
         corrected_entry = entry.model_copy(update={"attributes": corrected_ldif_attrs})
         FlextLdifServersOudTransformMixin._module_logger.debug(
-            "OUD servers: Applied syntax corrections before writing (structure preserved)",
+            "OUD servers: Applied syntax corrections before writing (structure "
+            "preserved)",
             entry_dn=str(entry.dn) if entry.dn else "",
             corrections_count=len(syntax_corrections) if syntax_corrections else 0,
         )

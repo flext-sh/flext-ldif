@@ -4,14 +4,14 @@
 
 - [Library Usage Examples](#library-usage-examples)
 - [🎯 Example Overview](#-example-overview)
-  - [01_basic_usage.py - Core API Operations](#01basicusagepy-core-api-operations)
-  - [02_entry_operations.py - Entry Building & Manipulation](#02entryoperationspy-entry-building-manipulation)
-  - [03_validation_analysis.py - Validation & Analytics](#03validationanalysispy-validation-analytics)
-  - [04_server_migration.py - Server-Specific Operations](#04servermigrationpy-server-specific-operations)
-  - [05_schema_operations.py - Schema Building & Validation](#05schemaoperationspy-schema-building-validation)
-  - [06_acl_processing.py - ACL Operations](#06aclprocessingpy-acl-operations)
-  - [07_advanced_processing.py - Processors & Utilities](#07advancedprocessingpy-processors-utilities)
-  - [08_complete_workflow.py - Real-World Integration](#08completeworkflowpy-real-world-integration)
+  - [basic_usage.py - Core API Operations](#01basicusagepy-core-api-operations)
+  - [entry_operations.py - Entry Building & Manipulation](#02entryoperationspy-entry-building-manipulation)
+  - [validation_analysis.py - Validation & Analytics](#03validationanalysispy-validation-analytics)
+  - [server_migration.py - Server-Specific Operations](#04servermigrationpy-server-specific-operations)
+  - [schema_operations.py - Schema Building & Validation](#05schemaoperationspy-schema-building-validation)
+  - [acl_processing.py - ACL Operations](#06aclprocessingpy-acl-operations)
+  - [advanced_processing.py - Processors & Utilities](#07advancedprocessingpy-processors-utilities)
+  - [complete_workflow.py - Real-World Integration](#08completeworkflowpy-real-world-integration)
 - [🚀 Usage Patterns](#-usage-patterns)
 - [📖 Learning Path](#-learning-path)
 - [🎓 Example Features](#-example-features)
@@ -44,7 +44,7 @@ function patterns.
 
 ## 🎯 Example Overview
 
-### 01_basic_usage.py - Core API Operations
+### basic_usage.py - Core API Operations
 
 **Demonstrates**: `parse()`, `write()`, r error handling
 
@@ -63,7 +63,7 @@ Learn the fundamentals:
 - `write_ldif_file()` - Write to file
 - `railway_oriented_pipeline()` - Error handling chains
 
-### 02_entry_operations.py - Entry Building & Manipulation
+### entry_operations.py - Entry Building & Manipulation
 
 **Demonstrates**: EntryBuilder, models, filtering operations
 
@@ -82,7 +82,7 @@ Master entry operations:
 - `filter_entries_by_objectclass()` - Filter by objectClass
 - `convert_entries_json_dict()` - Format conversions
 
-### 03_validation_analysis.py - Validation & Analytics
+### validation_analysis.py - Validation & Analytics
 
 **Demonstrates**: `validate_entries()`, `analyze()`
 
@@ -100,7 +100,7 @@ Ensure data quality:
 - `railway_validation_pipeline()` - Validation chains
 - `validate_and_filter_valid_entries()` - Filter valid entries
 
-### 04_server_migration.py - Server-Specific Operations
+### server_migration.py - Server-Specific Operations
 
 **Demonstrates**: `migrate()`, server_type parameter, servers handling
 
@@ -118,7 +118,7 @@ Handle server differences:
 - `migrate_openldap_to_oud()` - OpenLDAP → OUD migration
 - `migrate_to_rfc_compliant()` - Normalize to RFC format
 
-### 05_schema_operations.py - Schema Building & Validation
+### schema_operations.py - Schema Building & Validation
 
 **Demonstrates**: SchemaBuilder, SchemaValidator
 
@@ -136,7 +136,7 @@ Work with LDAP schemas:
 - `validate_entries_with_schema()` - Schema validation
 - `schema_building_pipeline()` - End-to-end schema workflow
 
-### 06_acl_processing.py - ACL Operations
+### acl_processing.py - ACL Operations
 
 **Demonstrates**: AclService, ACL extraction and processing
 
@@ -154,7 +154,7 @@ Process access control lists:
 - `parse_and_evaluate_acls()` - Parse and evaluate
 - `filter_entries_with_acls()` - Find ACL-enabled entries
 
-### 07_advanced_processing.py - Processors & Utilities
+### advanced_processing.py - Processors & Utilities
 
 **Demonstrates**: FlextProcessors, utility functions
 
@@ -173,7 +173,7 @@ Advanced processing capabilities:
 - `use_validation_utilities()` - Validation helpers
 - `access_all_utilities()` - Complete utility access
 
-### 08_complete_workflow.py - Real-World Integration
+### complete_workflow.py - Real-World Integration
 
 **Demonstrates**: Complete API integration, production patterns
 

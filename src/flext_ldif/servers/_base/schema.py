@@ -27,7 +27,9 @@ class FlextLdifServersBaseSchema(
     server_type: Annotated[
         str,
         u.Field(
-            description="Server type identifier (e.g., 'oid', 'oud', 'openldap', 'rfc')",
+            description=(
+                "Server type identifier (e.g., 'oid', 'oud', 'openldap', 'rfc')",
+            ),
         ),
     ] = "rfc"
     priority: Annotated[
@@ -282,12 +284,14 @@ class FlextLdifServersBaseSchema(
         )
         if oid_validate_result.failure:
             metadata_extensions["syntax_validation_error"] = (
-                f"{oid_name.capitalize()} OID validation failed: {oid_validate_result.error}"
+                f"{oid_name.capitalize()} OID validation "
+                f"failed: {oid_validate_result.error}"
             )
             metadata_extensions["syntax_oid_valid"] = False
         elif not oid_validate_result.value:
             metadata_extensions["syntax_validation_error"] = (
-                f"Invalid {oid_name} OID format: {oid_value} (must be numeric dot-separated format)"
+                f"Invalid {oid_name} OID format: {oid_value} "
+                f"(must be numeric dot-separated format)"
             )
             metadata_extensions["syntax_oid_valid"] = False
         else:

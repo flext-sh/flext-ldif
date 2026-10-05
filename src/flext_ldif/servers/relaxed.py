@@ -493,7 +493,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         @override
         def can_handle_attribute(self, attribute: m.Ldif.SchemaAttribute) -> bool:
-            """Check if this ACL server should be aware of a specific attribute definition.
+            """Check if this ACL server should be aware of a specific attribute
+            definition.
 
             Returns:
                 The resulting ``bool``.
@@ -503,7 +504,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         @override
         def can_handle_objectclass(self, objectclass: m.Ldif.SchemaObjectClass) -> bool:
-            """Check if this ACL server should be aware of a specific objectClass definition.
+            """Check if this ACL server should be aware of a specific objectClass
+            definition.
 
             Returns:
                 The resulting ``bool``.
@@ -583,12 +585,16 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             relaxed_acl: m.Ldif.Acl = m.Ldif.Acl.model_validate({
                 "name": FlextLdifServersRelaxed.Constants.ACL_DEFAULT_NAME,
                 "target": m.Ldif.AclTarget.model_validate({
-                    "target_dn": FlextLdifServersRelaxed.Constants.ACL_DEFAULT_TARGET_DN,
+                    "target_dn": (
+                        FlextLdifServersRelaxed.Constants.ACL_DEFAULT_TARGET_DN
+                    ),
                     "attributes": [],
                 }),
                 "subject": m.Ldif.AclSubject.model_validate({
                     "subject_type": "all",
-                    "subject_value": FlextLdifServersRelaxed.Constants.ACL_DEFAULT_SUBJECT_VALUE,
+                    "subject_value": (
+                        FlextLdifServersRelaxed.Constants.ACL_DEFAULT_SUBJECT_VALUE
+                    ),
                 }),
                 "permissions": m.Ldif.AclPermissions.model_validate({}),
                 "server_type": self._get_server_type(),
@@ -641,7 +647,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         @override
         def can_handle_attribute(self, attribute: m.Ldif.SchemaAttribute) -> bool:
-            """Check if this Entry server has special handling for an attribute definition.
+            """Check if this Entry server has special attribute handling.
 
             Returns:
                 The resulting ``bool``.
@@ -651,7 +657,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         @override
         def can_handle_objectclass(self, objectclass: m.Ldif.SchemaObjectClass) -> bool:
-            """Check if this Entry server has special handling for an objectClass definition.
+            """Check if this Entry server has special objectClass handling.
 
             Returns:
                 The resulting ``bool``.

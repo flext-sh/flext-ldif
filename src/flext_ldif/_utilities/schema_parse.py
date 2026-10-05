@@ -56,7 +56,8 @@ class FlextLdifUtilitiesSchemaParse:
             )
         elif not validate_result.value:
             syntax_extensions[c.Ldif.SYNTAX_VALIDATION_ERROR] = (
-                f"Invalid syntax OID format: {syntax} (must be numeric dot-separated format)"
+                f"Invalid syntax OID format: {syntax} "
+                f"(must be numeric dot-separated format)"
             )
         syntax_extensions[c.Ldif.SYNTAX_OID_VALID] = (
             c.Ldif.SYNTAX_VALIDATION_ERROR not in syntax_extensions

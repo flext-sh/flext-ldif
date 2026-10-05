@@ -19,7 +19,10 @@ if TYPE_CHECKING:
 def complete_ldif_processing_workflow() -> None:
     """Run a complete LDIF processing workflow."""
     api: p.Ldif.LdifClient = ldif
-    content = "dn: cn=Workflow User,dc=example,dc=com\nobjectClass: person\ncn: Workflow User\nsn: User\n"
+    content = (
+        "dn: cn=Workflow User,dc=example,dc=com\nobjectClass: person\ncn: "
+        "Workflow User\nsn: User\n"
+    )
     parse_result = api.parse_ldif(content, server_type=c.Ldif.ServerTypes.RFC)
 
     parse_response = parse_result.unwrap()
@@ -40,7 +43,8 @@ def server_migration_workflow() -> None:
     target_dir.mkdir(exist_ok=True)
     source_file = source_dir / "source.ldif"
     source_file.write_text(
-        "dn: cn=Migration User,dc=example,dc=com\nobjectClass: person\ncn: Migration User\nsn: User\n",
+        "dn: cn=Migration User,dc=example,dc=com\nobjectClass: person\ncn: Migration "
+        "User\nsn: User\n",
         encoding=c.Ldif.Encoding.UTF8,
     )
     migration_result = api.migrate(
@@ -93,7 +97,13 @@ def schema_driven_workflow() -> None:
 def acl_processing_workflow() -> None:
     """Run an ACL processing workflow."""
     api: p.Ldif.LdifClient = ldif
-    ldif_content = 'dn: ou=Secure,dc=example,dc=com\nobjectClass: organizationalUnit\nou: Secure\naci: (targetattr="*")(version 3.0; acl "a"; allow (read) userdn="ldap:///anyone";)\n'
+    ldif_content = (
+        "dn: ou=Secure,dc=example,dc=com\nobjectClass: "
+        "organizationalUnit\nou: Secure\n"
+        'aci: (targetattr="*")'
+        '(version 3.0; acl "a"; '
+        'allow (read) userdn="ldap:///anyone";)\n'
+    )
     parse_result = api.parse_ldif(ldif_content)
 
     parse_response = parse_result.unwrap()

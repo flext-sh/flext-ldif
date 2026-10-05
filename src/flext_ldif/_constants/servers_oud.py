@@ -36,7 +36,9 @@ class FlextLdifConstantsServersOud:
         FlextLdifConstantsEnums.ServerTypes.OUD,
         *(
             alias
-            for alias, server_type in FlextLdifConstantsEnums.SERVER_TYPE_ALIASES.items()
+            for alias, server_type in (
+                FlextLdifConstantsEnums.SERVER_TYPE_ALIASES.items()
+            )
             if server_type == FlextLdifConstantsEnums.ServerTypes.OUD
         ),
     })

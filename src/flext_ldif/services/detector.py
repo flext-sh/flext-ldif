@@ -274,7 +274,9 @@ class FlextLdifDetector(s):
         content: str,
         scores: t.MutableIntMapping,
     ) -> None:
-        """Update scores for a server type based on constants-defined detection signals."""
+        """Update scores for a server type based on constants-defined detection
+        signals.
+        """
         _, pattern_attr, case_sensitive = score_spec
         pattern_value = getattr(constants, pattern_attr, None) if constants else None
         pattern = (

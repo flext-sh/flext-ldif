@@ -33,12 +33,13 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
             The resulting ``tuple[t.MutableStrSequenceMapping, set[str],
                 MutableMapping[str, t.MutableAttributeMapping]]``.
         """
-        boolean_attributes = FlextLdifServersOidConstants.BOOLEAN_ATTRIBUTES
+        oid_constants = FlextLdifServersOidConstants
+        boolean_attributes = oid_constants.BOOLEAN_ATTRIBUTES
         boolean_attr_names = {attr.lower() for attr in boolean_attributes}
         converted_attrs_for_util: t.MutableStrSequenceMapping = dict(
             entry_attributes.items(),
         )
-        source_format = f"{FlextLdifServersOidConstants.ZERO_OID}/{FlextLdifServersOidConstants.ONE_OID}"
+        source_format = f"{oid_constants.ZERO_OID}/{oid_constants.ONE_OID}"
         target_format = "TRUE/FALSE"
         converted_attributes = u.Ldif.convert_boolean_attributes(
             converted_attrs_for_util,
@@ -57,7 +58,9 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                 )
                 if converted_values != original_values:
                     converted_attrs.add(attr_name)
-                    original_format_str = f"{FlextLdifServersOidConstants.ONE_OID}/{FlextLdifServersOidConstants.ZERO_OID}"
+                    original_format_str = (
+                        f"{oid_constants.ONE_OID}/{oid_constants.ZERO_OID}"
+                    )
                     converted_format_str = f"{c.Ldif.TRUE_RFC}/{c.Ldif.FALSE_RFC}"
                     conversion_dict: MutableMapping[
                         str,
@@ -521,10 +524,14 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
                     }
                     for attr_name, conversion_data in boolean_conversions.items()
                 }
-                boolean_conversions_json: t.JsonMapping = t.Cli.JSON_MAPPING_ADAPTER.validate_python({
-                    attr_name: u.normalize_to_json_value(conversion_data)
-                    for attr_name, conversion_data in boolean_conversions_dict.items()
-                })
+                boolean_conversions_json: t.JsonMapping = (
+                    t.Cli.JSON_MAPPING_ADAPTER.validate_python({
+                        attr_name: u.normalize_to_json_value(conversion_data)
+                        for attr_name, conversion_data in (
+                            boolean_conversions_dict.items()
+                        )
+                    })
+                )
                 conv_data = u.normalize_to_json_value({
                     mk.CONVERSION_CONVERTED_ATTRIBUTE_NAMES: converted_attrs_json,
                     mk.CONVERSION_BOOLEAN_CONVERSIONS: boolean_conversions_json,
@@ -596,7 +603,8 @@ class FlextLdifServersOidEntry(FlextLdifServersRfc.Entry):
         acl_model = m.Ldif.Acl.model_validate(acl_result.value)
         if not (acl_model.metadata and acl_model.metadata.extensions):
             return
-        # mro-wgwh.5 (agent: kimi-coder) — extensions is a plain mapping; isinstance(dict)
+        # mro-wgwh.5 (agent: kimi-coder) — extensions is a plain mapping;
+        # isinstance(dict)
         # replaces the hasattr(model_dump) dispatch.
         extensions_value = acl_model.metadata.extensions
         acl_extensions: t.MutableJsonMapping = (
