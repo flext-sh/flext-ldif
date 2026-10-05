@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
+
 from flext_core import FlextUtilities as u
 from flext_ldif import c, t
 from flext_ldif._models.base import FlextLdifModelsBases as mb

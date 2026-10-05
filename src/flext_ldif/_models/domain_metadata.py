@@ -16,6 +16,7 @@ from __future__ import annotations
 from collections.abc import MutableMapping
 from typing import Annotated
 
+
 from flext_core import FlextUtilities as u, m
 from flext_ldif import c, t
 from flext_ldif._models.domain_attributes import FlextLdifModelsDomainAttributes

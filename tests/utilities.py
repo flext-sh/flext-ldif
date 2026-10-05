@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, ClassVar, Final, overload
 import pytest
 from flext_tests import FlextTestsUtilities, tk, tm
 
-from flext_ldif import FlextLdifUtilities, u
+from flext_ldif import FlextLdifUtilities
 from tests import c, m, p, t
 
 if TYPE_CHECKING:
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from types import ModuleType
 
 
-class TestsFlextLdifUtilities(FlextTestsUtilities, u):
+class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
     """Project test utility namespace extension."""
 
     # The real-directory tests drive a live LDAP server through the FLEXT LDAP
