@@ -540,16 +540,15 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
             message: str | None = ...,
         ) -> m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl | None: ...
         @classmethod
-        def server_parse_and_unwrap(
+        def server_parse_and_unwrap[
+            SchemaNodeT: (m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass, m.Ldif.Acl),
+        ](
             cls,
             server: p.Ldif.SchemaServer | p.Tests.ParseInputServer,
             content: str,
             *,
             parse_method: t.Tests.ParseMethod = "parse_server",
-            expected_type: (
-                type[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl]
-                | None
-            ) = None,
+            expected_type: type[SchemaNodeT] | None = None,
             should_succeed: bool | None = None,
             message: str | None = None,
         ) -> m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl | None:
