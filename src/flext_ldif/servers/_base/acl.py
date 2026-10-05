@@ -21,7 +21,8 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
     server_type: Annotated[
         str,
         u.Field(
-            description="Server type identifier (e.g., 'oid', 'oud', 'openldap', 'rfc')",
+            description="Server type identifier (e.g., 'oid', 'oud', 'openldap', "
+            "'rfc')",
         ),
     ] = "rfc"
     priority: Annotated[

@@ -218,7 +218,8 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
 
         @classmethod
         def orclaci_base_dn_entry(cls, dn: str = "cn=users,dc=ctbc") -> m.Ldif.Entry:
-            """Build a real LDIF entry carrying an out-of-scope OID orclaci for base-DN filter tests.
+            """Build a real LDIF entry carrying an out-of-scope OID orclaci for
+            # base-DN filter tests.
 
             Returns:
                 The resulting ``m.Ldif.Entry``.
@@ -255,7 +256,8 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, u):
                     "objectClass: ldapSubentry\n"
                     "objectClass: subschema\n"
                     "\n"
-                    "attributeTypes: ( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )\n",
+                    "attributeTypes: ( 2.5.4.3 NAME 'cn' SYNTAX "
+                    "1.3.6.1.4.1.1466.115.121.1.15 )\n",
                 )
             for index in range(entries_count):
                 entry_id = uuid.uuid4().hex[:8]

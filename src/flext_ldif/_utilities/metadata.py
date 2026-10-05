@@ -841,7 +841,8 @@ class FlextLdifUtilitiesMetadata:
 
         Args:
             server_type: Server type identifier. Defaults to RFC if not provided.
-            extensions: Extensions as a plain mapping. Defaults to empty if not provided.
+            extensions: Extensions as a plain mapping. Defaults to empty if not
+            provided.
 
         Returns:
             ServerMetadata instance with defaults from Constants.

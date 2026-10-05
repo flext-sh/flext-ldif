@@ -348,7 +348,8 @@ class FlextLdifModelsDomainEntry:
 
         This model provides these through:
         - dn field (DN) which has .value property returning str
-        - attributes field (Attributes) which has .attributes property returning FlextLdifModelsDomainsEntries.UnconvertedAttributes
+        - attributes field (Attributes) which has .attributes property returning
+        FlextLdifModelsDomainsEntries.UnconvertedAttributes
 
         Inherits DynamicModel to legitimize extra='allow' for LDIF dynamic attributes.
         """
@@ -385,19 +386,31 @@ class FlextLdifModelsDomainEntry:
         dn: Annotated[
             mdn.DN | None,
             u.Field(
-                description="Distinguished Name of the entry (REQUIRED per RFC 2849 § 2). Allows None for RFC violation capture. Coerced from str via u.field_validator - PROTOCOL COMPATIBLE with p.Ldif.Entry.Entry",
+                description=(
+                    "Distinguished Name of the entry (REQUIRED per RFC 2849 § 2). "
+                    "Allows None for RFC violation capture. Coerced from str via "
+                    "u.field_validator - PROTOCOL COMPATIBLE with p.Ldif.Entry.Entry"
+                ),
             ),
         ]
         attributes: Annotated[
             mda.Attributes | None,
             u.Field(
-                description="Entry attributes container (REQUIRED per RFC 2849 § 2). Allows None for RFC violation capture. Coerced from dict[str, list[str]] via u.field_validator - PROTOCOL COMPATIBLE with p.Ldif.Entry.Entry",
+                description=(
+                    "Entry attributes container (REQUIRED per RFC 2849 § 2). Allows "
+                    "None for RFC violation capture. Coerced from "
+                    "dict[str, list[str]] via u.field_validator - PROTOCOL "
+                    "COMPATIBLE with p.Ldif.Entry.Entry"
+                ),
             ),
         ]
         record_kind: Annotated[
             c.Ldif.RecordKind,
             u.Field(
-                description="Whether this Entry represents LDIF content or an LDIF change record.",
+                description=(
+                    "Whether this Entry represents LDIF content or an LDIF change "
+                    "record."
+                ),
             ),
         ] = c.Ldif.RecordKind.CONTENT
         controls: Annotated[
@@ -420,7 +433,8 @@ class FlextLdifModelsDomainEntry:
             """Convert dict to Attributes instance.
 
             Allows None to pass through for violation capture in u.model_validator.
-            RFC 2849 § 2 violations (attributes required) are captured in validate_entry_rfc_compliance.
+            RFC 2849 § 2 violations (attributes required) are captured in
+            validate_entry_rfc_compliance.
 
             Returns:
                 The resulting ``mda.Attributes | None``.
@@ -473,7 +487,10 @@ class FlextLdifModelsDomainEntry:
         changetype: Annotated[
             c.Ldif.ChangeType | None,
             u.Field(
-                description="Change operation type per RFC 2849 § 5.7 (add/delete/modify/moddn/modrdn)",
+                description=(
+                    "Change operation type per RFC 2849 § 5.7 "
+                    "(add/delete/modify/moddn/modrdn)"
+                ),
             ),
         ] = None
 
@@ -510,20 +527,26 @@ class FlextLdifModelsDomainEntry:
         metadata: Annotated[
             mdm.ServerMetadata | None,
             u.Field(
-                description="Server-specific metadata for processing data, ACLs, statistics, validation (non-RFC data)",
+                description=(
+                    "Server-specific metadata for processing data, ACLs, "
+                    "statistics, validation (non-RFC data)"
+                ),
             ),
         ] = None
         validation_metadata: Annotated[
             m.ConfigMap | None,
             u.Field(
-                description="Validation metadata captured during parsing and transformation.",
+                description=(
+                    "Validation metadata captured during parsing and transformation."
+                ),
             ),
         ] = None
 
         @u.computed_field
         @property
         def attributes_dict(self) -> t.MutableStrSequenceMapping:
-            """Protocol compliance: p.Ldif.Entry.Entry requires attributes: dict[str, list[str]].
+            """Protocol compliance: p.Ldif.Entry.Entry requires attributes:
+            dict[str, list[str]].
 
             Returns the attributes as a dict for protocol compatibility.
             """
@@ -570,12 +593,13 @@ class FlextLdifModelsDomainEntry:
             """Ensure metadata field is always initialized to a ServerMetadata instance.
 
             Also handles datetime coercion from ISO strings for JSON round-trips.
-            This is necessary because strict=True doesn't auto-coerce strings to datetime.
+            This is necessary because strict=True doesn't auto-coerce strings
+            to datetime.
 
             Pydantic v2 Context Pattern: Using u.model_validator with mode='before'
             to initialize fields before field validators run. This validator executes
-            at instantiation time, when the module is fully loaded and FlextLdifModelsDomainsEntries
-            is in scope.
+            at instantiation time, when the module is fully loaded and
+            FlextLdifModelsDomainsEntries is in scope.
 
             Args:
                 data: Input data for model instantiation
@@ -809,7 +833,9 @@ class FlextLdifModelsDomainEntry:
             """
             return {
                 **old_context,
-                cls._VALIDATION_CONTEXT_VALIDATOR_KEY: cls._VALIDATION_CONTEXT_RFC_COMPLIANCE_NAME,
+                cls._VALIDATION_CONTEXT_VALIDATOR_KEY: (
+                    cls._VALIDATION_CONTEXT_RFC_COMPLIANCE_NAME
+                ),
                 cls._VALIDATION_CONTEXT_DN_KEY: dn_value,
                 cls._VALIDATION_CONTEXT_ATTRIBUTE_COUNT_KEY: str(attribute_count),
                 cls._VALIDATION_CONTEXT_TOTAL_VIOLATIONS_KEY: str(total_violations),
@@ -877,7 +903,8 @@ class FlextLdifModelsDomainEntry:
             if source_entry:
                 ext_kwargs["source_entry"] = source_entry
             if unconverted_attributes:
-                # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: pass the plain mapping.
+                # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed:
+                # pass the plain mapping.
                 ext_kwargs["unconverted_attributes"] = dict(unconverted_attributes)
             return ext_kwargs
 
@@ -901,7 +928,8 @@ class FlextLdifModelsDomainEntry:
                     source_entry,
                     unconverted_attributes,
                 )
-                # mro-wgwh.5 (agent: kimi-coder) — create_for removed; direct validated construction.
+                # mro-wgwh.5 (agent: kimi-coder) — create_for removed; direct
+                # validated construction.
                 validated_metadata: mdm.ServerMetadata = (
                     mdm.ServerMetadata.model_validate({
                         "server_type": c.Ldif.ServerTypes.GENERIC,
@@ -932,8 +960,8 @@ class FlextLdifModelsDomainEntry:
                 Attributes t.JsonValue with normalized values
 
             Note:
-                Lenient processing: Empty attributes dict is accepted and will be captured
-                in validation_metadata as RFC violation.
+                Lenient processing: Empty attributes dict is accepted and will
+                be captured in validation_metadata as RFC violation.
 
             """
             if isinstance(attributes, mda.Attributes):
@@ -966,7 +994,8 @@ class FlextLdifModelsDomainEntry:
             if source_entry:
                 metadata.extensions["source_entry"] = source_entry
             if unconverted_attributes:
-                # mro-wgwh.5 (agent: kimi-coder) — plain mapping items, no __pydantic_extra__.
+                # mro-wgwh.5 (agent: kimi-coder) — plain mapping items,
+                # no __pydantic_extra__.
                 for key, value in unconverted_attributes.items():
                     metadata.extensions[f"unconverted_{key}"] = str(value)
 

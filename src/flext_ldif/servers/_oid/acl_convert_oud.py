@@ -26,7 +26,9 @@ class FlextLdifServersOidAclToOud:
 
     @staticmethod
     def high_level_containers(base_dn: str) -> frozenset[str]:
-        """Return base + high-level-suffix DNs where ``anyone`` inherits to the subtree."""
+        """Return base + high-level-suffix DNs where ``anyone`` inherits to the
+        subtree.
+        """
         base = base_dn.lower().strip()
         return frozenset(
             f"{suffix}{base}" if suffix else base
@@ -35,7 +37,9 @@ class FlextLdifServersOidAclToOud:
 
     @staticmethod
     def is_in_scope(dn: str, base_dn: str) -> bool:
-        """Return True if ``dn`` is the base or a descendant of it (empty base = all)."""
+        """Return True if ``dn`` is the base or a descendant of it (empty base =
+        all).
+        """
         if not base_dn:
             return True
         dn_lower = dn.lower().strip()
@@ -140,7 +144,8 @@ class FlextLdifServersOidAclToOud:
 
     @staticmethod
     def get_targetattr(rule: m.Ldif.OidAclRule) -> str:
-        """Compute the OUD ``targetattr`` (entry→``*``, list→``a||b``, ``attr!=``→``!=a||b``).
+        """Compute the OUD ``targetattr`` (entry→``*``, list→``a||b``,
+        # ``attr!=``→``!=a||b``).
 
         Returns:
             The resulting ``str``.

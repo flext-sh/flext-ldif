@@ -578,7 +578,11 @@ class FlextLdifUtilitiesACL:
 
         """
         sanitized_name, _ = FlextLdifUtilitiesACL.sanitize_acl_name(settings.name)
-        return f'{settings.aci_prefix}{settings.target_clause}(version {settings.version}; acl "{sanitized_name}"; {settings.permissions_clause} {settings.bind_rule};)'
+        return (
+            f"{settings.aci_prefix}{settings.target_clause}"
+            f'(version {settings.version}; acl "{sanitized_name}"; '
+            f"{settings.permissions_clause} {settings.bind_rule};)"
+        )
 
     @staticmethod
     def format_aci_subject(

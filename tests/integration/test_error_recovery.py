@@ -66,7 +66,8 @@ class TestsFlextLdifErrorRecovery:
                 id="version-line-ignored",
             ),
             pytest.param(
-                "# a comment\ndn: cn=W,dc=example,dc=com\n# mid comment\nobjectClass: person\ncn: W\n",
+                "# a comment\ndn: cn=W,dc=example,dc=com\n# mid comment\nobjectClass: "
+                "person\ncn: W\n",
                 "cn=W,dc=example,dc=com",
                 id="comment-lines-ignored",
             ),
@@ -82,7 +83,9 @@ class TestsFlextLdifErrorRecovery:
         content: str,
         expected_dn: str,
     ) -> None:
-        """Version lines, comments, and unicode DNs yield one entry with the exact DN."""
+        """Version lines, comments, and unicode DNs yield one entry with the exact
+        DN.
+        """
         result = api.parse_ldif(content)
 
         tm.ok(result)
@@ -269,7 +272,8 @@ class TestsFlextLdifErrorRecovery:
                 id="orphaned-continuation-recovers",
             ),
             pytest.param(
-                "dn: cn=NoBlank,dc=example,dc=com\nobjectClass: person\ncn: NoBlank\nsn: Test",
+                "dn: cn=NoBlank,dc=example,dc=com\nobjectClass: person\ncn: "
+                "NoBlank\nsn: Test",
                 1,
                 id="missing-trailing-blank-line",
             ),
@@ -292,7 +296,8 @@ class TestsFlextLdifErrorRecovery:
         [
             pytest.param(
                 "dn: cn=Schema,cn=settings\nobjectClass: schema\n"
-                "attributeTypes: ( invalid-oid NAME 'test' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )\n",
+                "attributeTypes: ( invalid-oid NAME 'test' SYNTAX "
+                "1.3.6.1.4.1.1466.115.121.1.15 )\n",
                 id="malformed-oid",
             ),
             pytest.param(

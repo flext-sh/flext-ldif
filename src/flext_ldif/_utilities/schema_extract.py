@@ -21,7 +21,8 @@ class FlextLdifUtilitiesSchemaExtract:
 
     @staticmethod
     def extract_attribute_flags(attr_definition: str) -> tuple[bool, bool]:
-        """Extract boolean flags (single_value, no_user_modification) from attribute definition.
+        """Extract boolean flags (single_value, no_user_modification) from attribute
+        # definition.
 
         Returns:
             The resulting ``tuple[bool, bool]``.
@@ -40,7 +41,8 @@ class FlextLdifUtilitiesSchemaExtract:
     def extract_attribute_matching_rules(
         attr_definition: str,
     ) -> tuple[str | None, str | None, str | None]:
-        """Extract matching rules (equality, substr, ordering) from attribute definition.
+        """Extract matching rules (equality, substr, ordering) from attribute
+        # definition.
 
         Returns:
             The resulting ``tuple[str | None, str | None, str | None]``.

@@ -20,7 +20,8 @@ class FlextLdifEntries(s):
         u.Field(
             default_factory=list,
             exclude=True,
-            description="Entries processed when the configured operation runner is used.",
+            description="Entries processed when the configured operation runner is "
+            "used.",
         ),
     ]
     operation: Annotated[
@@ -28,7 +29,8 @@ class FlextLdifEntries(s):
         u.Field(
             default=None,
             exclude=True,
-            description="Configured entry operation executed by run_configured_operation().",
+            description="Configured entry operation executed by "
+            "run_configured_operation().",
         ),
     ]
     attributes_to_remove: Annotated[

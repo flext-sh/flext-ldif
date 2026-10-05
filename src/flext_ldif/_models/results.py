@@ -198,7 +198,8 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
         output_path: Annotated[
             str | None,
             u.Field(
-                description="Target file path when the write operation persisted content",
+                description="Target file path when the write operation persisted "
+                "content",
             ),
         ] = None
 
