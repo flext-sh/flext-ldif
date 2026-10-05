@@ -423,17 +423,6 @@ class FlextLdifModelsDomainEntry:
                 description="Structured modify operation blocks for changetype=modify",
             ),
         ] = u.Field(default_factory=list)
-        # Redeclared with an assignment default: upstream flext-core Entity declares
-        # domain_events only inside Annotated[...] (no class-level assignment), which
-        # the pydantic mypy plugin reads as a REQUIRED constructor argument even
-        # though runtime default_factory=list applies. The assignment form is the
-        # project-wide field style and restores the synthesized __init__ contract.
-        domain_events: Annotated[
-            t.MutableSequenceOf[m.DomainEvent],
-            u.Field(
-                description="List of uncommitted domain events for event sourcing",
-            ),
-        ] = u.Field(default_factory=list)
 
         @u.field_validator("attributes", mode="before")
         @classmethod
