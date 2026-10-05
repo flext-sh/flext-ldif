@@ -1,7 +1,8 @@
 """Example 2: DRY Entry Operations - Zero Code Bloat, Maximum Intelligence.
 
 flext-ldif enables intelligent operations with ZERO manual work:
-- Auto-detect entry types from attributes (mail -> inetOrgPerson, member -> groupOfNames)
+- Auto-detect entry types from attributes (mail -> inetOrgPerson, member ->
+groupOfNames)
 - Railway composition: build -> filter -> process -> validate in ONE pipeline
 - Batch operations with validation and error aggregation
 - Advanced filtering with type-safe predicates

@@ -203,9 +203,15 @@ def schema_migration_pipeline() -> p.Result[t.JsonMapping]:
     for dir_path in [source_dir, migrated_dir, schema_dir]:
         dir_path.mkdir(exist_ok=True, parents=True)
     legacy_entries = [
-        "dn: cn=Legacy User1,ou=People,dc=example,dc=com\nobjectClass: person\ncn: Legacy User1\nsn: User1\nemailAddress: legacy1@example.com\n",
-        "dn: cn=Legacy Group,ou=Groups,dc=example,dc=com\nobjectClass: groupOfUniqueNames\ncn: Legacy Group\nuniquemember: cn=Legacy User1,ou=People,dc=example,dc=com\n",
-        "dn: cn=Modern User,ou=People,dc=example,dc=com\nobjectClass: person\nobjectClass: inetOrgPerson\ncn: Modern User\nsn: Modern\nmail: modern@example.com\n",
+        "dn: cn=Legacy User1,ou=People,dc=example,dc=com\n"
+        "objectClass: person\ncn: "
+        "Legacy User1\nsn: User1\nemailAddress: legacy1@example.com\n",
+        "dn: cn=Legacy Group,ou=Groups,dc=example,dc=com\nobjectClass: "
+        "groupOfUniqueNames\ncn: Legacy Group\n"
+        "uniquemember: cn=Legacy User1,ou=People,dc=example,dc=com\n",
+        "dn: cn=Modern User,ou=People,dc=example,dc=com\nobjectClass: "
+        "person\nobjectClass: inetOrgPerson\ncn: Modern User\nsn: Modern\n"
+        "mail: modern@example.com\n",
     ]
     for i, entry_text in enumerate(legacy_entries):
         (source_dir / f"legacy_{i}.ldif").write_text(entry_text)
