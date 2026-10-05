@@ -10,7 +10,7 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core import build_lazy_import_map, install_lazy_exports
+from flext_core import install_lazy_exports
 
 if TYPE_CHECKING:
     from examples.constants import ExamplesFlextLdifConstants
@@ -40,19 +40,26 @@ __all__: tuple[str, ...] = (
     "x",
 )
 
-_LAZY_IMPORTS = MappingProxyType(
-    build_lazy_import_map(
-        MappingProxyType({
-            ".constants": ("ExamplesFlextLdifConstants",),
-            ".models": ("ExamplesFlextLdifModels",),
-            ".protocols": ("ExamplesFlextLdifProtocols",),
-            ".typings": ("ExamplesFlextLdifTypes",),
-            ".utilities": ("ExamplesFlextLdifUtilities",),
-            "flext_ldif": ("c", "d", "e", "h", "m", "p", "r", "s", "t", "u", "x"),
-        }),
-        alias_groups=MappingProxyType({}),
-        sort_keys=False,
-    ),
+install_lazy_exports(
+    __name__,
+    globals(),
+    MappingProxyType({
+        "ExamplesFlextLdifConstants": ".constants",
+        "ExamplesFlextLdifModels": ".models",
+        "ExamplesFlextLdifProtocols": ".protocols",
+        "ExamplesFlextLdifTypes": ".typings",
+        "ExamplesFlextLdifUtilities": ".utilities",
+        "c": "flext_ldif",
+        "d": "flext_ldif",
+        "e": "flext_ldif",
+        "h": "flext_ldif",
+        "m": "flext_ldif",
+        "p": "flext_ldif",
+        "r": "flext_ldif",
+        "s": "flext_ldif",
+        "t": "flext_ldif",
+        "u": "flext_ldif",
+        "x": "flext_ldif",
+    }),
+    public_exports=__all__,
 )
-
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)

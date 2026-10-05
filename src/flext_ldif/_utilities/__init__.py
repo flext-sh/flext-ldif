@@ -10,7 +10,7 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core import build_lazy_import_map, install_lazy_exports
+from flext_core import install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_ldif._utilities._transformer_attrs import (
@@ -74,40 +74,35 @@ __all__: tuple[str, ...] = (
     "FlextLdifUtilitiesWriter",
 )
 
-_LAZY_IMPORTS = MappingProxyType(
-    build_lazy_import_map(
-        MappingProxyType({
-            "._transformer_attrs": ("FlextLdifUtilitiesNormalizeAttrsTransformer",),
-            "._transformer_dn": ("FlextLdifUtilitiesNormalizeDnTransformer",),
-            ".acl": ("FlextLdifUtilitiesACL",),
-            ".attribute": ("FlextLdifUtilitiesAttribute",),
-            ".collection_ldif": ("FlextLdifUtilitiesCollectionLdif",),
-            ".dispatch": ("FlextLdifUtilitiesDispatch",),
-            ".dn": ("FlextLdifUtilitiesDN",),
-            ".entry": ("FlextLdifUtilitiesEntry",),
-            ".events": ("FlextLdifUtilitiesEvents",),
-            ".metadata": ("FlextLdifUtilitiesMetadata",),
-            ".object_class": ("FlextLdifUtilitiesObjectClass",),
-            ".oid": ("FlextLdifUtilitiesOID",),
-            ".parser": ("FlextLdifUtilitiesParser",),
-            ".pipeline": ("FlextLdifUtilitiesPipeline",),
-            ".schema": ("FlextLdifUtilitiesSchema",),
-            ".schema_build": ("FlextLdifUtilitiesSchemaBuild",),
-            ".schema_extract": ("FlextLdifUtilitiesSchemaExtract",),
-            ".schema_format": ("FlextLdifUtilitiesSchemaFormat",),
-            ".schema_normalize": ("FlextLdifUtilitiesSchemaNormalize",),
-            ".schema_parse": ("FlextLdifUtilitiesSchemaParse",),
-            ".server": ("FlextLdifUtilitiesServer",),
-            ".transformers": (
-                "FlextLdifUtilitiesTransformer",
-                "FlextLdifUtilitiesTransformers",
-            ),
-            ".validation": ("FlextLdifUtilitiesValidation",),
-            ".writer": ("FlextLdifUtilitiesWriter",),
-        }),
-        alias_groups=MappingProxyType({}),
-        sort_keys=False,
-    ),
+install_lazy_exports(
+    __name__,
+    globals(),
+    MappingProxyType({
+        "FlextLdifUtilitiesACL": ".acl",
+        "FlextLdifUtilitiesAttribute": ".attribute",
+        "FlextLdifUtilitiesCollectionLdif": ".collection_ldif",
+        "FlextLdifUtilitiesDN": ".dn",
+        "FlextLdifUtilitiesDispatch": ".dispatch",
+        "FlextLdifUtilitiesEntry": ".entry",
+        "FlextLdifUtilitiesEvents": ".events",
+        "FlextLdifUtilitiesMetadata": ".metadata",
+        "FlextLdifUtilitiesNormalizeAttrsTransformer": "._transformer_attrs",
+        "FlextLdifUtilitiesNormalizeDnTransformer": "._transformer_dn",
+        "FlextLdifUtilitiesOID": ".oid",
+        "FlextLdifUtilitiesObjectClass": ".object_class",
+        "FlextLdifUtilitiesParser": ".parser",
+        "FlextLdifUtilitiesPipeline": ".pipeline",
+        "FlextLdifUtilitiesSchema": ".schema",
+        "FlextLdifUtilitiesSchemaBuild": ".schema_build",
+        "FlextLdifUtilitiesSchemaExtract": ".schema_extract",
+        "FlextLdifUtilitiesSchemaFormat": ".schema_format",
+        "FlextLdifUtilitiesSchemaNormalize": ".schema_normalize",
+        "FlextLdifUtilitiesSchemaParse": ".schema_parse",
+        "FlextLdifUtilitiesServer": ".server",
+        "FlextLdifUtilitiesTransformer": ".transformers",
+        "FlextLdifUtilitiesTransformers": ".transformers",
+        "FlextLdifUtilitiesValidation": ".validation",
+        "FlextLdifUtilitiesWriter": ".writer",
+    }),
+    public_exports=__all__,
 )
-
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)
