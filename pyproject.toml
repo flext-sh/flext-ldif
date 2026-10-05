@@ -163,6 +163,7 @@ include = ["/src/flext_ldif/**"]
 [tool.mypy]
 mypy_path = ["src"]
 plugins = ["pydantic.mypy"]
+disable_error_code = ["prop-decorator", "call-arg"]
 python_version = "3.13"
 allow_redefinition = true
 check_untyped_defs = true
@@ -399,7 +400,11 @@ quote-style = "double"
 skip-magic-trailing-comma = false
 
 [tool.ruff.lint]
-extend-safe-fixes = ["camelcase-imported-as-lowercase", "relative-imports"]
+extend-safe-fixes = [
+  "camelcase-imported-as-lowercase",
+  "relative-imports",
+  "typing-only-first-party-import",
+]
 ignore = [
   "camelcase-imported-as-lowercase",
   "implicit-namespace-package",
@@ -423,6 +428,83 @@ unfixable = [
 
 [tool.ruff.lint.flake8-copyright]
 notice-rgx = "Copyright \\(c\\) \\d{4} \\S[^\\n]*\\. All rights reserved\\."
+
+[tool.ruff.lint.flake8-type-checking]
+runtime-evaluated-base-classes = [
+  "flext_cli.FlextCliConfig",
+  "flext_cli.FlextCliModels.BaseModel",
+  "flext_cli.FlextCliSettings",
+  "flext_cli.m.BaseModel",
+  "flext_cli.m.DynamicModel",
+  "flext_cli.m.FrozenModel",
+  "flext_cli.m.StrictModel",
+  "flext_core.FlextService",
+  "flext_core.FlextSettings",
+  "flext_core.m.ArbitraryTypesModel",
+  "flext_core.m.DomainEvent",
+  "flext_core.m.DynamicModel",
+  "flext_core.m.Entity",
+  "flext_core.m.FrozenDynamicModel",
+  "flext_core.m.FrozenModel",
+  "flext_core.m.StrictModel",
+  "flext_core.m.Value",
+  "flext_core.s",
+  "flext_ldif.FlextLdifModels.BaseModel",
+  "flext_ldif.FlextLdifModels.Value",
+  "flext_ldif.FlextLdifSettings",
+  "flext_ldif._models.base.FlextLdifModelsBases.AclElement",
+  "flext_ldif._models.base.FlextLdifModelsBases.SchemaElement",
+  "flext_ldif._models.results.Response",
+  "flext_ldif._models.settings.FlextLdifModelsSettings",
+  "flext_ldif.m.RootModel",
+  "flext_ldif.models.m.BaseModel",
+  "flext_ldif.s",
+  "flext_ldif.servers._base.acl.FlextLdifServersBaseSchemaAcl",
+  "flext_ldif.servers._base.entry.FlextLdifServersBaseEntry",
+  "flext_ldif.servers._base.schema.FlextLdifServersBaseSchema",
+  "flext_ldif.servers._oid.acl.FlextLdifServersOidAcl",
+  "flext_ldif.servers._oid.entry.FlextLdifServersOidEntry",
+  "flext_ldif.servers._oid.schema.FlextLdifServersOidSchema",
+  "flext_ldif.servers._oud.acl.FlextLdifServersOudAcl",
+  "flext_ldif.servers._oud.entry.FlextLdifServersOudEntry",
+  "flext_ldif.servers._oud.schema.FlextLdifServersOudSchema",
+  "flext_ldif.servers._rfc.acl.FlextLdifServersRfcAcl",
+  "flext_ldif.servers._rfc.entry.FlextLdifServersRfcEntry",
+  "flext_ldif.servers._rfc.schema.FlextLdifServersRfcSchema",
+  "flext_ldif.servers.base.FlextLdifServersBase",
+  "flext_ldif.servers.base.FlextLdifServersBase.Acl",
+  "flext_ldif.servers.base.FlextLdifServersBase.Entry",
+  "flext_ldif.servers.base.FlextLdifServersBase.Schema",
+  "flext_ldif.servers.rfc.FlextLdifServersRfc",
+  "flext_ldif.servers.rfc.FlextLdifServersRfc.Acl",
+  "flext_ldif.servers.rfc.FlextLdifServersRfc.Entry",
+  "flext_ldif.servers.rfc.FlextLdifServersRfc.Schema",
+  "flext_ldif.services.acl.FlextLdifAcl",
+  "flext_ldif.services.analysis.FlextLdifAnalysis",
+  "flext_ldif.services.categorization.FlextLdifCategorization",
+  "flext_ldif.services.conversion.FlextLdifConversion",
+  "flext_ldif.services.conversion_acl.FlextLdifConversionAclMixin",
+  "flext_ldif.services.conversion_acl_preserve.FlextLdifConversionAclPreserveMixin",
+  "flext_ldif.services.conversion_entry.FlextLdifConversionEntryMixin",
+  "flext_ldif.services.conversion_metadata.FlextLdifConversionMetadataMixin",
+  "flext_ldif.services.conversion_schema.FlextLdifConversionSchemaMixin",
+  "flext_ldif.services.conversion_schema_entry.FlextLdifConversionSchemaEntryMixin",
+  "flext_ldif.services.conversion_support.FlextLdifConversionSupportMixin",
+  "flext_ldif.services.detector.FlextLdifDetector",
+  "flext_ldif.services.entries.FlextLdifEntries",
+  "flext_ldif.services.parser.FlextLdifParser",
+  "flext_ldif.services.processing.FlextLdifProcessing",
+  "flext_ldif.services.statistics.FlextLdifStatistics",
+  "flext_ldif.services.validation.FlextLdifValidation",
+  "flext_ldif.services.writer.FlextLdifWriter",
+  "flext_tests.FlextTestsServiceBase",
+  "flext_tests.FlextTestsSettings",
+  "flext_tests.FlextTestsUtilities.Tests",
+  "pydantic.BaseModel",
+  "tests.models._CanHandleCase",
+  "tests.models._Frozen",
+  "tests.models._SchemaCase",
+]
 
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"
