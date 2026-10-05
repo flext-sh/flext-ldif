@@ -758,7 +758,8 @@ class FlextLdifUtilitiesDN:
             >>> FlextLdifUtilitiesDN.norm_or_fallback(None)
             ''
             >>> FlextLdifUtilitiesDN.norm_or_fallback(
-            ...     "invalid\\\\\\\\dn", fallback="original"
+            ...     "invalid\\\\\\\\dn",
+            ...     fallback="original",
             ... )
             'invalid\\\\\\\\dn'
 

@@ -10,7 +10,7 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core import build_lazy_import_map, install_lazy_exports
+from flext_core import install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_ldif.services.acl import FlextLdifAcl
@@ -64,34 +64,31 @@ __all__: tuple[str, ...] = (
     "FlextLdifWriter",
 )
 
-_LAZY_IMPORTS = MappingProxyType(
-    build_lazy_import_map(
-        MappingProxyType({
-            ".acl": ("FlextLdifAcl",),
-            ".analysis": ("FlextLdifAnalysis",),
-            ".categorization": ("FlextLdifCategorization",),
-            ".conversion": ("FlextLdifConversion",),
-            ".conversion_acl": ("FlextLdifConversionAclMixin",),
-            ".conversion_acl_preserve": ("FlextLdifConversionAclPreserveMixin",),
-            ".conversion_entry": ("FlextLdifConversionEntryMixin",),
-            ".conversion_metadata": ("FlextLdifConversionMetadataMixin",),
-            ".conversion_schema": ("FlextLdifConversionSchemaMixin",),
-            ".conversion_schema_entry": ("FlextLdifConversionSchemaEntryMixin",),
-            ".conversion_support": ("FlextLdifConversionSupportMixin",),
-            ".detector": ("FlextLdifDetector",),
-            ".entries": ("FlextLdifEntries",),
-            ".filters": ("FlextLdifFilters",),
-            ".migration": ("FlextLdifMigrationPipeline",),
-            ".parser": ("FlextLdifParser",),
-            ".processing": ("FlextLdifProcessing",),
-            ".server": ("FlextLdifServer",),
-            ".statistics": ("FlextLdifStatistics",),
-            ".validation": ("FlextLdifValidation",),
-            ".writer": ("FlextLdifWriter",),
-        }),
-        alias_groups=MappingProxyType({}),
-        sort_keys=False,
-    ),
+install_lazy_exports(
+    __name__,
+    globals(),
+    MappingProxyType({
+        "FlextLdifAcl": ".acl",
+        "FlextLdifAnalysis": ".analysis",
+        "FlextLdifCategorization": ".categorization",
+        "FlextLdifConversion": ".conversion",
+        "FlextLdifConversionAclMixin": ".conversion_acl",
+        "FlextLdifConversionAclPreserveMixin": ".conversion_acl_preserve",
+        "FlextLdifConversionEntryMixin": ".conversion_entry",
+        "FlextLdifConversionMetadataMixin": ".conversion_metadata",
+        "FlextLdifConversionSchemaEntryMixin": ".conversion_schema_entry",
+        "FlextLdifConversionSchemaMixin": ".conversion_schema",
+        "FlextLdifConversionSupportMixin": ".conversion_support",
+        "FlextLdifDetector": ".detector",
+        "FlextLdifEntries": ".entries",
+        "FlextLdifFilters": ".filters",
+        "FlextLdifMigrationPipeline": ".migration",
+        "FlextLdifParser": ".parser",
+        "FlextLdifProcessing": ".processing",
+        "FlextLdifServer": ".server",
+        "FlextLdifStatistics": ".statistics",
+        "FlextLdifValidation": ".validation",
+        "FlextLdifWriter": ".writer",
+    }),
+    public_exports=__all__,
 )
-
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)

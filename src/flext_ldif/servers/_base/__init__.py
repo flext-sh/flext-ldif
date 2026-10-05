@@ -10,7 +10,7 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core import build_lazy_import_map, install_lazy_exports
+from flext_core import install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
@@ -28,18 +28,15 @@ __all__: tuple[str, ...] = (
     "FlextLdifServersBaseSchemaAcl",
 )
 
-_LAZY_IMPORTS = MappingProxyType(
-    build_lazy_import_map(
-        MappingProxyType({
-            ".acl": ("FlextLdifServersBaseSchemaAcl",),
-            ".entry": ("FlextLdifServersBaseEntry",),
-            ".mixins": ("FlextLdifServerMethodsMixin",),
-            ".schema": ("FlextLdifServersBaseSchema",),
-            ".server_constants": ("FlextLdifServersBaseConstants",),
-        }),
-        alias_groups=MappingProxyType({}),
-        sort_keys=False,
-    ),
+install_lazy_exports(
+    __name__,
+    globals(),
+    MappingProxyType({
+        "FlextLdifServerMethodsMixin": ".mixins",
+        "FlextLdifServersBaseConstants": ".server_constants",
+        "FlextLdifServersBaseEntry": ".entry",
+        "FlextLdifServersBaseSchema": ".schema",
+        "FlextLdifServersBaseSchemaAcl": ".acl",
+    }),
+    public_exports=__all__,
 )
-
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)

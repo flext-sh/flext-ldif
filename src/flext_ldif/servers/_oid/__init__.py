@@ -10,7 +10,7 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core import build_lazy_import_map, install_lazy_exports
+from flext_core import install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_ldif.servers._oid.acl import FlextLdifServersOidAcl
@@ -36,22 +36,19 @@ __all__: tuple[str, ...] = (
     "FlextLdifServersOidSchema",
 )
 
-_LAZY_IMPORTS = MappingProxyType(
-    build_lazy_import_map(
-        MappingProxyType({
-            ".acl": ("FlextLdifServersOidAcl",),
-            ".acl_assemble": ("FlextLdifServersOidAclAssemble",),
-            ".acl_convert": ("FlextLdifServersOidAclConvert",),
-            ".acl_convert_oud": ("FlextLdifServersOidAclToOud",),
-            ".acl_pipeline": ("FlextLdifServersOidAclPipeline",),
-            ".acl_render": ("FlextLdifServersOidAclRender",),
-            ".entry": ("FlextLdifServersOidEntry",),
-            ".schema": ("FlextLdifServersOidSchema",),
-            ".server_constants": ("FlextLdifServersOidConstants",),
-        }),
-        alias_groups=MappingProxyType({}),
-        sort_keys=False,
-    ),
+install_lazy_exports(
+    __name__,
+    globals(),
+    MappingProxyType({
+        "FlextLdifServersOidAcl": ".acl",
+        "FlextLdifServersOidAclAssemble": ".acl_assemble",
+        "FlextLdifServersOidAclConvert": ".acl_convert",
+        "FlextLdifServersOidAclPipeline": ".acl_pipeline",
+        "FlextLdifServersOidAclRender": ".acl_render",
+        "FlextLdifServersOidAclToOud": ".acl_convert_oud",
+        "FlextLdifServersOidConstants": ".server_constants",
+        "FlextLdifServersOidEntry": ".entry",
+        "FlextLdifServersOidSchema": ".schema",
+    }),
+    public_exports=__all__,
 )
-
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)
