@@ -310,11 +310,10 @@ class FlextLdifModelsDomainMetadata:
         soft_delete_markers: Annotated[
             t.MutableSequenceOf[str],
             u.Field(
-                description="Attributes soft-deleted during conversion (can be "(
-                    "restored). Different from removed_attributes: these are "
-                    "intentionally hidden for target server but preserved for "
-                    "reverse conversion.",
-                ),
+                description="Attributes soft-deleted during conversion (can be "
+                "restored). Different from removed_attributes: these are "
+                "intentionally hidden for target server but preserved for "
+                "reverse conversion.",
             ),
         ] = u.Field(default_factory=list)
         original_attribute_case: Annotated[

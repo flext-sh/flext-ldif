@@ -127,7 +127,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             if isinstance(attr_definition, str):
                 if not (
                     FlextLdifServersOpenldap1.Constants.SCHEMA_OPENLDAP1_ATTRIBUTE_RE.match(
-                        attr_definition
+                        attr_definition,
                     )
                 ):
                     return False
@@ -151,7 +151,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             if isinstance(oc_definition, str):
                 if not (
                     FlextLdifServersOpenldap1.Constants.SCHEMA_OPENLDAP1_OBJECTCLASS_RE.match(
-                        oc_definition
+                        oc_definition,
                     )
                 ):
                     return False
