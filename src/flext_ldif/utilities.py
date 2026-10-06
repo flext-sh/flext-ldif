@@ -107,8 +107,13 @@ def _lazy_ldif_meta() -> type:
     return _Meta
 
 
+from flext_ldif._utilities.collection_ldif import (
+    FlextLdifUtilitiesCollectionLdif,
+)
+
 class FlextLdifUtilities(
     FlextCliUtilities,
+    FlextLdifUtilitiesCollectionLdif,
     metaclass=_lazy_ldif_meta(),
 ):
     """FLEXT LDIF Utilities - Centralized helpers for LDIF operations."""
