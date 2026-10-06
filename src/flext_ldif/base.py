@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import Annotated, Self, override
 
 from flext_core import FlextService
-from flext_ldif import FlextLdifServer, FlextLdifSettings, c, m, p, t, u
+from flext_ldif import FlextLdifSettings, c, m, p, t, u
 
 
 class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](
@@ -17,8 +17,14 @@ class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](
 ):
     """Base class for LDIF services with typed settings helper."""
 
+    def _default_ldif_server():  # noqa: ANN202, ANN001 - zero-arg callable contract
+        """Resolve the shared server lazily (cuts the base/server init cycle)."""
+        from flext_ldif.services.server import FlextLdifServer
+
+        return FlextLdifServer.fetch_global_instance()
+
     _server: p.Ldif.ServerRegistry = u.PrivateAttr(
-        default_factory=FlextLdifServer.fetch_global_instance,
+        default_factory=_default_ldif_server,
     )
     server: Annotated[
         p.Ldif.ServerRegistry | None,
