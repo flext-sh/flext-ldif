@@ -1,3 +1,10 @@
+"""Examples flext ldif utilities module.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+src/flext_ldif/_utilities/examples_flext_ldif_utilities
+SPDX-License-Identifier: MIT
+"""
+
 from __future__ import annotations
 
 from flext_ldif import FlextLdifUtilities, m
