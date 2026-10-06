@@ -78,7 +78,9 @@ class _AciRuleAssembler:
             The resulting ``p.Result[None]``.
         """
         is_anyone = subject.subject_type == c.Ldif.OidSubjectKind.ANYONE
-        if is_anyone and self._is_deny_none(subject.permissions):
+        if is_anyone and FlextLdifServersOidAclAssemble._is_deny_none(
+            subject.permissions,
+        ):
             self._found_deny_all = True
             self._notes.append("'by * (none)' removed (OUD default-deny)")
             return r[bool].ok(True)
