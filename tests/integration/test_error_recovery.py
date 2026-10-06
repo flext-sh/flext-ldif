@@ -83,8 +83,9 @@ class TestsFlextLdifErrorRecovery:
         content: str,
         expected_dn: str,
     ) -> None:
-        """Version lines, comments, and unicode DNs yield one entry with the exact
-        DN.
+        """Parse version lines, comments, and unicode DNs.
+
+        Exactly one entry with the exact DN is yielded.
         """
         result = api.parse_ldif(content)
 

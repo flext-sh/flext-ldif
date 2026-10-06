@@ -1,4 +1,4 @@
-"""Systematic fixture coverage for all server×fixture type combinations.
+"""Systematic fixture coverage for all serverxfixture type combinations.
 
 Behavioral contract tests: every LDAP server fixture type must survive the
 public parse -> write -> parse cycle exposed by ``flext_ldif.ldif()``. Only the
@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 
 class TestsFlextLdifSystematicFixtureCoverage:
-    """Public parse/write contract across the server×fixture-type matrix."""
+    """Public parse/write contract across the serverxfixture-type matrix."""
 
     @staticmethod
     @pytest.fixture(scope="class")

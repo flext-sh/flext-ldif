@@ -19,7 +19,7 @@ class FlextLdifACLPermissions:
     )
 
     @staticmethod
-    def _is_acl_subject_type(value: str) -> TypeIs[c.Ldif.AclSubjectType]:
+    def is_acl_subject_type(value: str) -> TypeIs[c.Ldif.AclSubjectType]:
         """Type guard to check if a string is a valid ACL subject enum value.
 
         Returns:

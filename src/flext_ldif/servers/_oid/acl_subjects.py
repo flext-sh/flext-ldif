@@ -1,4 +1,7 @@
-"""Oracle Internet Directory (OID) ACL server — subject detection and OID/RFC subject mapping.
+"""Oracle Internet Directory (OID) ACL server: subject detection and mapping.
+
+OID/RFC subject mapping helpers.
+
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

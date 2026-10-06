@@ -251,7 +251,11 @@ class FlextLdifServer(s):
 
     @staticmethod
     def _is_public_module_member(name: str) -> bool:
-        """Whether a module member name is public (not underscore-private)."""
+        """Whether a module member name is public (not underscore-private).
+
+        Returns:
+            True when the member name does not start with an underscore.
+        """
         return not name.startswith("_")
 
     @staticmethod
@@ -259,7 +263,11 @@ class FlextLdifServer(s):
         candidate: type,
         base_class: type,
     ) -> bool:
-        """Whether the candidate is a concrete subclass defined in the module."""
+        """Whether the candidate is a concrete subclass defined in the module.
+
+        Returns:
+            True when the candidate is a concrete subclass of the base.
+        """
         return (
             inspect.isclass(candidate)
             and candidate is not base_class

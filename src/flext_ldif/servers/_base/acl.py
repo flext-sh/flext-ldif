@@ -429,7 +429,7 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         """
         if operation is not None:
             return operation
-        return self._parse_operation_kwarg(kwargs).unwrap()
+        return self.parse_operation_kwarg(kwargs).unwrap()
 
     def _supports_feature(self, _feature_id: str) -> bool:
         """Check if this server supports a specific feature."""

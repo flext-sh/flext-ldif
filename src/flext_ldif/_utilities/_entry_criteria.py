@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable, Iterable
+
 from flext_ldif import c, p, t
 from flext_ldif._models.settings import FlextLdifModelsSettings
 from flext_ldif._utilities._entry_access import FlextLdifEntryAccess
@@ -55,7 +57,31 @@ class FlextLdifEntryCriteria:
         )
 
     @staticmethod
+    def _attrs_criterion(
+        configured_attrs: t.StrSequence | None,
+        entry: p.Ldif.Entry,
+        aggregate: Callable[[Iterable[bool]], bool],
+    ) -> bool | None:
+        """Evaluate one attribute-membership criterion when configured.
+
+        Args:
+            configured_attrs: The configured attribute names, or None to skip.
+            entry: The parsed entry carrying the attribute set.
+            aggregate: The membership aggregation (``all`` or ``any``).
+
+        Returns:
+            The resulting ``bool | None``.
+        """
+        if not configured_attrs:
+            return None
+        if not entry.attributes:
+            return False
+        entry_attrs_lower = {k.lower() for k in entry.attributes.attributes}
+        return aggregate(a.lower() in entry_attrs_lower for a in configured_attrs)
+
+    @classmethod
     def _required_attrs_criterion(
+        cls,
         entry: p.Ldif.Entry,
         resolved_config: FlextLdifModelsSettings.EntryCriteriaConfig,
     ) -> bool | None:
@@ -64,17 +90,15 @@ class FlextLdifEntryCriteria:
         Returns:
             The resulting ``bool | None``.
         """
-        if not resolved_config.required_attrs:
-            return None
-        if not entry.attributes:
-            return False
-        entry_attrs_lower = {k.lower() for k in entry.attributes.attributes}
-        return all(
-            a.lower() in entry_attrs_lower for a in resolved_config.required_attrs
+        return cls._attrs_criterion(
+            resolved_config.required_attrs,
+            entry,
+            all,
         )
 
-    @staticmethod
+    @classmethod
     def _any_attrs_criterion(
+        cls,
         entry: p.Ldif.Entry,
         resolved_config: FlextLdifModelsSettings.EntryCriteriaConfig,
     ) -> bool | None:
@@ -83,12 +107,11 @@ class FlextLdifEntryCriteria:
         Returns:
             The resulting ``bool | None``.
         """
-        if not resolved_config.any_attrs:
-            return None
-        if not entry.attributes:
-            return False
-        entry_attrs_lower = {k.lower() for k in entry.attributes.attributes}
-        return any(a.lower() in entry_attrs_lower for a in resolved_config.any_attrs)
+        return cls._attrs_criterion(
+            resolved_config.any_attrs,
+            entry,
+            any,
+        )
 
     @staticmethod
     def _dn_pattern_criterion(

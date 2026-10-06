@@ -109,7 +109,11 @@ class FlextLdifParserRecord:
         key_lower: str,
         value: str,
     ) -> bool:
-        """Apply a moddn/modrdn payload field; report whether it was consumed."""
+        """Apply a moddn/modrdn payload field.
+
+        Returns:
+            Whether the field was consumed.
+        """
         if state.changetype not in {
             c.Ldif.ChangeType.MODDN,
             c.Ldif.ChangeType.MODRDN,
@@ -134,9 +138,9 @@ class FlextLdifParserRecord:
     ) -> str | None:
         """Apply a modify block line and resolve the attribute name to store.
 
-        Returns ``None`` when the line opened a new operation and nothing
-        should be stored; otherwise returns the attribute name under which
-        the value belongs.
+        Returns:
+            The attribute name under which the value belongs, or ``None``
+            when the line opened a new operation and nothing is stored.
         """
         key_lower = key.lower()
         if key_lower in _MODIFY_OPS:
@@ -186,7 +190,8 @@ class FlextLdifParserRecord:
     ) -> bool:
         """Consume control/dn/changetype/moddn lines.
 
-        Returns whether the line was consumed as a special record line.
+        Returns:
+            Whether the line was consumed as a special record line.
         """
         if key_lower == "control":
             state.controls.append(

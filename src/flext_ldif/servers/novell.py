@@ -456,9 +456,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
 
 # The Novell dialect schema settings are owned by ``Constants`` and bound here
 # because a nested class body cannot reference the not-yet-defined class.
-FlextLdifServersNovell.Schema._ATTRIBUTE_PATTERN_SETTINGS = (
-    FlextLdifServersNovell.Constants.ATTRIBUTE_PATTERN_SETTINGS
-)
-FlextLdifServersNovell.Schema._OBJECTCLASS_PATTERN_SETTINGS = (
-    FlextLdifServersNovell.Constants.OBJECTCLASS_PATTERN_SETTINGS
+FlextLdifServersNovell.Schema.bind_pattern_settings(
+    attribute_settings=FlextLdifServersNovell.Constants.ATTRIBUTE_PATTERN_SETTINGS,
+    objectclass_settings=FlextLdifServersNovell.Constants.OBJECTCLASS_PATTERN_SETTINGS,
 )

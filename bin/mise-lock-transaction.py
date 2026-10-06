@@ -83,9 +83,7 @@ class MiseLockTransaction:
                         break
                     except OSError:
                         if time.monotonic() >= deadline:
-                            timeout_seconds = (
-                                MiseLockTransaction.MUTEX_TIMEOUT_SECONDS
-                            )
+                            timeout_seconds = MiseLockTransaction.MUTEX_TIMEOUT_SECONDS
                             message = (
                                 "Mise transaction mutex is held elsewhere for over "
                                 f"{timeout_seconds:.0f}s: {mutex}"
@@ -767,10 +765,9 @@ class MiseLockTransaction:
         Raises:
             ValueError: When the subcommand arguments are invalid.
         """
-        if (
-            len(arguments) != MiseLockTransaction.EXPECTED_ARGUMENTS
-            or arguments[0] not in {"publish", "recover"}
-        ):
+        if len(arguments) != MiseLockTransaction.EXPECTED_ARGUMENTS or arguments[
+            0
+        ] not in {"publish", "recover"}:
             message = "usage: mise-lock-transaction.py (publish|recover) PROJECT STAGE"
             raise ValueError(message)
         project = Path(arguments[1]).absolute()

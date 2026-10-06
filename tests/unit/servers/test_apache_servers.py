@@ -25,11 +25,7 @@ def _assert_acl_roundtrip(
     acl_server: p.Tests.ParseAclServer,
     acl_line: str,
 ) -> None:
-    """Parse an ACL line, then re-parse its own raw rendering.
-
-    Raises:
-        AssertionError: If the parse or the round-trip unwrap fails.
-    """
+    """Parse an ACL line, then re-parse its own raw rendering."""
     acl_model = u.Tests.acl_parse_and_unwrap(
         acl_server,
         acl_line,

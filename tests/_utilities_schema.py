@@ -123,7 +123,11 @@ class TestsSchemaAclAssertionsMixin:
 
     @staticmethod
     def _schema_definition_is_objectclass(schema_def: str) -> bool:
-        """Whether the definition text declares an objectClass kind."""
+        """Whether the definition text declares an objectClass kind.
+
+        Returns:
+            True when the definition text declares an objectClass kind.
+        """
         return any(
             kind in schema_def
             for kind in (
@@ -236,6 +240,7 @@ class TestsSchemaAclAssertionsMixin:
         content: str,
         parse_method: t.Tests.ParseMethod = ...,
         expected_type: type[SchemaNodeT] = ...,
+        *,
         should_succeed: bool | None = ...,
     ) -> SchemaNodeT | None: ...
     @overload
@@ -245,6 +250,7 @@ class TestsSchemaAclAssertionsMixin:
         content: str,
         parse_method: t.Tests.ParseMethod = ...,
         expected_type: None = ...,
+        *,
         should_succeed: bool | None = ...,
     ) -> m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl | None: ...
     @staticmethod
@@ -255,6 +261,7 @@ class TestsSchemaAclAssertionsMixin:
         content: str,
         parse_method: t.Tests.ParseMethod = "parse_server",
         expected_type: type[SchemaNodeT] | None = None,
+        *,
         should_succeed: bool | None = None,
     ) -> m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl | None:
         """Parse content with a server and unwrap the typed result.
@@ -300,6 +307,7 @@ class TestsSchemaAclAssertionsMixin:
         server: p.Tests.ParseAclServer,
         content: str,
         expected_type: type[m.Ldif.Acl] | None = None,
+        *,
         should_succeed: bool | None = None,
         message: str | None = None,
     ) -> m.Ldif.Acl | None:

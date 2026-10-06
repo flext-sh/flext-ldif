@@ -18,6 +18,7 @@ class FlextLdifServersEntryLineEmitter:
     def __init__(
         self,
         entry: m.Ldif.Entry,
+        *,
         normalize_attribute_names: bool,
         use_original_acl_format_as_name: bool,
         acl_original_format: str | None,

@@ -95,17 +95,17 @@ class FlextLdifMetadataSchemaAnalysis:
                 t.MappingKV[str, str | bool | int | t.MutableSequenceOf[str] | None],
             ]
         ] = [
-            FlextLdifMetadataPrefixDetails._extract_prefix_details,
-            FlextLdifMetadataSyntaxOriginDetails._extract_oid_details,
-            FlextLdifMetadataSyntaxOriginDetails._extract_syntax_details,
-            FlextLdifMetadataNameDescDetails._extract_name_details,
-            FlextLdifMetadataNameDescDetails._extract_desc_details,
-            FlextLdifMetadataSyntaxOriginDetails._extract_x_origin_details,
-            FlextLdifMetadataSyntaxOriginDetails._extract_obsolete_details,
-            FlextLdifMetadataMatchDetails._extract_leading_trailing_spaces,
-            FlextLdifMetadataMatchDetails._extract_matching_rule_details,
-            FlextLdifMetadataMatchDetails._extract_sup_details,
-            FlextLdifMetadataMatchDetails._extract_single_value_details,
+            FlextLdifMetadataPrefixDetails.extract_prefix_details,
+            FlextLdifMetadataSyntaxOriginDetails.extract_oid_details,
+            FlextLdifMetadataSyntaxOriginDetails.extract_syntax_details,
+            FlextLdifMetadataNameDescDetails.extract_name_details,
+            FlextLdifMetadataNameDescDetails.extract_desc_details,
+            FlextLdifMetadataSyntaxOriginDetails.extract_x_origin_details,
+            FlextLdifMetadataSyntaxOriginDetails.extract_obsolete_details,
+            FlextLdifMetadataMatchDetails.extract_leading_trailing_spaces,
+            FlextLdifMetadataMatchDetails.extract_matching_rule_details,
+            FlextLdifMetadataMatchDetails.extract_sup_details,
+            FlextLdifMetadataMatchDetails.extract_single_value_details,
         ]
         for extractor in extractors:
             extracted_raw = extractor(definition)

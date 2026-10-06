@@ -289,7 +289,8 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 for oc in object_classes
             )
 
-        def normalize_attribute_name(self, attr_name: str) -> str:
+        @staticmethod
+        def normalize_attribute_name(attr_name: str) -> str:
             """Normalize attribute name for Tivoli DS.
 
             Returns:
@@ -297,7 +298,8 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             """
             return attr_name.lower()
 
-        def normalize_dn(self, entry_dn: str) -> str:
+        @staticmethod
+        def normalize_dn(entry_dn: str) -> str:
             """Normalize DN for Tivoli DS.
 
             Returns:
@@ -367,9 +369,7 @@ __all__: list[str] = ["FlextLdifServersTivoli"]
 
 # The Tivoli dialect schema settings are owned by ``Constants`` and bound here
 # because a nested class body cannot reference the not-yet-defined class.
-FlextLdifServersTivoli.Schema._ATTRIBUTE_PATTERN_SETTINGS = (
-    FlextLdifServersTivoli.Constants.ATTRIBUTE_PATTERN_SETTINGS
-)
-FlextLdifServersTivoli.Schema._OBJECTCLASS_PATTERN_SETTINGS = (
-    FlextLdifServersTivoli.Constants.OBJECTCLASS_PATTERN_SETTINGS
+FlextLdifServersTivoli.Schema.bind_pattern_settings(
+    attribute_settings=FlextLdifServersTivoli.Constants.ATTRIBUTE_PATTERN_SETTINGS,
+    objectclass_settings=FlextLdifServersTivoli.Constants.OBJECTCLASS_PATTERN_SETTINGS,
 )

@@ -22,6 +22,7 @@ class FlextLdifWriterLineFolding:
             line_bytes: bytes,
             pos: int = 0,
             chunk_end: int = 0,
+            *,
             is_first: bool = True,
         ) -> None:
             """Bind the walk state.

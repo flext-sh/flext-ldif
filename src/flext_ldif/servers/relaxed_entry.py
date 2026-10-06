@@ -71,7 +71,8 @@ class FlextLdifServersRelaxedEntry(FlextLdifServersRfc.Entry):
             self.logger.debug("DN normalization exception: %s", e)
             return r[str].fail_op("DN normalization", e)
 
-    def process_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
+    @staticmethod
+    def process_entry(entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
         """Process entry for relaxed mode.
 
         Returns:
@@ -128,7 +129,7 @@ class FlextLdifServersRelaxedEntry(FlextLdifServersRfc.Entry):
         if parent_result.success:
             return parent_result
         self.logger.debug(
-            f"RFC parser failed, using relaxed mode: {parent_result.error}",
+            "RFC parser failed, using relaxed mode: %s", parent_result.error,
         )
         try:
             return self._parse_relaxed_content(ldif_content)
@@ -307,7 +308,7 @@ class FlextLdifServersRelaxedEntry(FlextLdifServersRfc.Entry):
         if parent_result.success:
             return parent_result
         self.logger.debug(
-            f"RFC write failed, using relaxed mode: {parent_result.error}",
+            "RFC write failed, using relaxed mode: %s", parent_result.error,
         )
         try:
             return self._write_relaxed_entry(entry_data)

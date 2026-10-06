@@ -275,7 +275,8 @@ class FlextLdifDNRebasing:
         target_dn: str,
         dn_valued_attributes: frozenset[str] | None = None,
     ) -> FlextLdifModels.Ldif.Entry:
-        """Transform an entry's DN and DN-valued attributes from source to target base
+        """Transform an entry's DN and DN-valued attributes from source to target base.
+
         DN.
 
         Rewrites:

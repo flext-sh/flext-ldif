@@ -15,7 +15,7 @@ class FlextLdifServersOidEntryNormalizeMixin(FlextLdifServersRfc.Entry):
     """OID entry schema value normalization helpers."""
 
     @staticmethod
-    def _apply_matching_rule_tokens(
+    def apply_matching_rule_tokens(
         value: str,
         token_map: t.MappingKV[str, str],
         prefix: str,
@@ -35,7 +35,7 @@ class FlextLdifServersOidEntryNormalizeMixin(FlextLdifServersRfc.Entry):
         return (new_value, changed)
 
     @staticmethod
-    def _apply_syntax_tokens(
+    def apply_syntax_tokens(
         value: str,
         syntax_map: t.MappingKV[str, str],
     ) -> tuple[str, bool]:
@@ -61,7 +61,7 @@ class FlextLdifServersOidEntryNormalizeMixin(FlextLdifServersRfc.Entry):
         return (new_value, changed)
 
     @staticmethod
-    def _unquote_sup_value(value: str) -> tuple[str, bool]:
+    def unquote_sup_value(value: str) -> tuple[str, bool]:
         """Unquote ``SUP '<oid>'`` tokens in schema definition strings.
 
         Returns:
@@ -87,22 +87,22 @@ class FlextLdifServersOidEntryNormalizeMixin(FlextLdifServersRfc.Entry):
             "caseIgnoreSubstringsMatch": "caseIgnoreMatch",
         }
         mixin = FlextLdifServersOidEntryNormalizeMixin
-        new_value, _ = mixin._apply_matching_rule_tokens(
+        new_value, _ = mixin.apply_matching_rule_tokens(
             value,
             equality_map,
             "EQUALITY",
         )
-        new_value, _ = mixin._apply_matching_rule_tokens(
+        new_value, _ = mixin.apply_matching_rule_tokens(
             new_value,
             FlextLdifServersOidConstants.MATCHING_RULE_TO_RFC,
             "SUBSTR",
         )
-        new_value, _ = mixin._apply_syntax_tokens(
+        new_value, _ = mixin.apply_syntax_tokens(
             new_value,
             FlextLdifServersOidConstants.SYNTAX_OID_TO_RFC,
         )
         if attr_name_lower in {"objectclasses", "attributetypes"}:
-            new_value, _ = mixin._unquote_sup_value(new_value)
+            new_value, _ = mixin.unquote_sup_value(new_value)
         return new_value
 
     @staticmethod

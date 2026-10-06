@@ -35,7 +35,7 @@ class FlextLdifServersDialectSchema(FlextLdifServersRfc.Schema):
         """
         matches: bool = u.Ldif.matches_server_patterns(
             value=attr_definition,
-            settings=type(self)._ATTRIBUTE_PATTERN_SETTINGS,
+            settings=self._ATTRIBUTE_PATTERN_SETTINGS,
         )
         return matches
 
@@ -51,9 +51,24 @@ class FlextLdifServersDialectSchema(FlextLdifServersRfc.Schema):
         """
         matches: bool = u.Ldif.matches_server_patterns(
             value=oc_definition,
-            settings=type(self)._OBJECTCLASS_PATTERN_SETTINGS,
+            settings=self._OBJECTCLASS_PATTERN_SETTINGS,
         )
         return matches
+
+    @classmethod
+    def bind_pattern_settings(
+        cls,
+        attribute_settings: m.Ldif.ServerPatternsConfig,
+        objectclass_settings: m.Ldif.ServerPatternsConfig,
+    ) -> None:
+        """Bind the dialect ``Constants`` pattern settings to this schema class.
+
+        A nested class body cannot reference the not-yet-defined outer
+        dialect class, so each dialect binds its owned settings after the
+        class tree is built through this canonical binder.
+        """
+        cls._ATTRIBUTE_PATTERN_SETTINGS = attribute_settings
+        cls._OBJECTCLASS_PATTERN_SETTINGS = objectclass_settings
 
 
 __all__: list[str] = ["FlextLdifServersDialectSchema"]

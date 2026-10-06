@@ -26,7 +26,8 @@ class FlextLdifServersOidAclToOud:
 
     @staticmethod
     def high_level_containers(base_dn: str) -> frozenset[str]:
-        """Return base + high-level-suffix DNs where ``anyone`` inherits to the
+        """Return base + high-level-suffix DNs where ``anyone`` inherits to the.
+
         subtree.
         """
         base = base_dn.lower().strip()
@@ -37,7 +38,8 @@ class FlextLdifServersOidAclToOud:
 
     @staticmethod
     def is_in_scope(dn: str, base_dn: str) -> bool:
-        """Return True if ``dn`` is the base or a descendant of it (empty base =
+        """Return True if ``dn`` is the base or a descendant of it (empty base =.
+
         all).
         """
         if not base_dn:
@@ -162,6 +164,7 @@ class FlextLdifServersOidAclToOud:
     def convert_permissions(
         cls,
         permissions: t.StrSequence,
+        *,
         is_entry: bool,
     ) -> p.Result[t.StrSequence]:
         """Convert OID permission tokens to the ordered OUD allow set.
@@ -186,7 +189,8 @@ class FlextLdifServersOidAclToOud:
 
     @staticmethod
     def get_targetattr(rule: m.Ldif.OidAclRule) -> str:
-        """Compute the OUD ``targetattr`` (entry→``*``, list→``a||b``,
+        """Compute the OUD ``targetattr`` (entry→``*``, list→``a||b``,.
+
         # ``attr!=``→``!=a||b``).
 
         Returns:

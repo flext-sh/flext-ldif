@@ -77,7 +77,8 @@ class FlextLdifServersRfcSchemaWriteMixin(FlextLdifServersBase.Schema):
                     result = output_str.rstrip(")") + x_origin_str + ")"
         return result
 
-    def _post_write_attribute(self, written_str: str) -> str:
+    @staticmethod
+    def _post_write_attribute(written_str: str) -> str:
         """Transform written attribute string (subclass hook).
 
         Returns:
@@ -85,7 +86,8 @@ class FlextLdifServersRfcSchemaWriteMixin(FlextLdifServersBase.Schema):
         """
         return written_str
 
-    def _post_write_objectclass(self, written_str: str) -> str:
+    @staticmethod
+    def _post_write_objectclass(written_str: str) -> str:
         """Transform written objectClass string (subclass hook).
 
         Returns:

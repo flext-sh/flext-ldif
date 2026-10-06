@@ -41,8 +41,6 @@ def _resolve_schema_server(
     Returns:
         The resulting ``p.Ldif.SchemaServer``.
 
-    Raises:
-        AssertionError: If the server type does not resolve.
     """
     schema = registry.resolve_schema_server(server_type)
     assert schema is not None
@@ -54,12 +52,7 @@ def _assert_definition_roundtrip(
     case: tuple[str, str, str, t.VariadicTuple[str], t.VariadicTuple[str]],
     parse_method: t.Tests.ParseMethod,
 ) -> None:
-    """Parse the definition in the source server and write it in the target.
-
-    Raises:
-        AssertionError: If any parse/write outcome fails or a written token is
-            missing or present against expectations.
-    """
+    """Parse the definition in the source server and write it in the target."""
     source, target, definition, must_contain, must_not_contain = case
     source_schema = _resolve_schema_server(registry, source)
     target_schema = _resolve_schema_server(registry, target)

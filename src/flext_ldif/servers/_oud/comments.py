@@ -138,7 +138,11 @@ class FlextLdifServersOudCommentsMixin(FlextLdifServersOudCommentsAclMixin):
         entry: m.Ldif.Entry,
         format_options: m.Ldif.WriteFormatOptions | None = None,
     ) -> None:
-        """Add transformation comments for attribute changes, including OUD-specific ACL
+        """Add transformation comments for attribute changes.
+
+        Includes OUD-specific ACL handling.
+
+
         handling.
         """
         if not entry.metadata:

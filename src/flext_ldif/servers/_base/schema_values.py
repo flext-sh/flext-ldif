@@ -145,7 +145,7 @@ class FlextLdifServersBaseSchemaValuesMixin:
         """
         if operation is not None:
             return self._coerce_operation(operation)
-        return FlextLdifServerMethodsMixin._parse_operation_kwarg(kwargs).unwrap()
+        return FlextLdifServerMethodsMixin.parse_operation_kwarg(kwargs).unwrap()
 
 
 __all__: list[str] = ["FlextLdifServersBaseSchemaValuesMixin"]

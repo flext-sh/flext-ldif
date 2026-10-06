@@ -104,7 +104,8 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfc.Schema):
             field_value = ""
         return [value.strip() for value in field_value.split(separator)]
 
-    def _extract_oid_with_fallback_patterns(self, definition: str) -> str | None:
+    @staticmethod
+    def _extract_oid_with_fallback_patterns(definition: str) -> str | None:
         """Extract OID using multiple fallback patterns for relaxed mode.
 
         Returns:
@@ -125,7 +126,8 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfc.Schema):
                 return str(oid_match.group(1))
         return None
 
-    def _extract_sup_from_objectclass(self, oc_definition: str) -> str | None:
+    @staticmethod
+    def _extract_sup_from_objectclass(oc_definition: str) -> str | None:
         """Extract SUP (superior) field from objectClass definition.
 
         Returns:
@@ -202,7 +204,8 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfc.Schema):
             )
             return r[m.Ldif.SchemaAttribute].ok(attribute)
         self.logger.debug(
-            f"RFC parser failed, using best-effort parsing: {parent_result.error}",
+            "RFC parser failed, using best-effort parsing: %s",
+            parent_result.error,
         )
         try:
             return self._parse_relaxed_attribute(attr_definition)
@@ -285,7 +288,8 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfc.Schema):
                 self._enhance_objectclass_metadata(objectclass, oc_definition),
             )
         self.logger.debug(
-            f"RFC parser failed, using best-effort parsing: {parent_result.error}",
+            "RFC parser failed, using best-effort parsing: %s",
+            parent_result.error,
         )
         return self._parse_objectclass_relaxed(oc_definition)
 
@@ -341,8 +345,8 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfc.Schema):
             }),
         )
 
+    @staticmethod
     def _relaxed_original_output(
-        self,
         schema_data: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> str | None:
         """Return the preserved original-format text for a relaxed schema item.

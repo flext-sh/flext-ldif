@@ -287,8 +287,8 @@ class FlextLdifModelsDomainDN:
                         "variant_count": len(variants),
                     })
             if inconsistencies:
-                return r[bool].ok(False)
-            return r[bool].ok(True)
+                return r[bool].ok(value=False)
+            return r[bool].ok(value=True)
 
 
 __all__: list[str] = ["FlextLdifModelsDomainDN"]

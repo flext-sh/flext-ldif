@@ -20,7 +20,8 @@ class FlextLdifServersOudAclExtractMixin:
         entry_data: m.Ldif.Entry,
         acl_attribute_names: t.MutableSequenceOf[str],
     ) -> m.Ldif.Entry:
-        """Comment out ACL attributes by removing them from attributes dict and
+        """Comment out ACL attributes by removing them from attributes dict and.
+
         # storing in metadata.
 
         Returns:

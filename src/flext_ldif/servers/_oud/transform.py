@@ -103,7 +103,8 @@ class FlextLdifServersOudTransformMixin:
 
     @staticmethod
     def normalize_acl_dns(entry_data: m.Ldif.Entry) -> m.Ldif.Entry:
-        """Normalize and filter DNs in ACL attribute values (userdn/groupdn inside ACL
+        """Normalize and filter DNs in ACL attribute values (userdn/groupdn inside ACL.
+
         # strings).
 
         Returns:

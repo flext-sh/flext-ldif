@@ -24,6 +24,7 @@ if TYPE_CHECKING:
 def _attribute_case(
     scenario: str,
     attr_definition: str,
+    *,
     expected_can_handle: bool,
     expected_oid: str | None = None,
     expected_name: str | None = None,
@@ -143,7 +144,14 @@ def _server_attribute_cases(server: str) -> t.SequenceOf[m.Tests.AttributeTestCa
         The resulting ``t.SequenceOf[m.Tests.AttributeTestCase]``.
     """
     return tuple(
-        _attribute_case(*row[1:]) for row in _ATTRIBUTE_CASE_ROWS if row[0] == server
+        _attribute_case(
+            *row[1:3],
+            expected_can_handle=row[3],
+            expected_oid=row[4],
+            expected_name=row[5],
+        )
+        for row in _ATTRIBUTE_CASE_ROWS
+        if row[0] == server
     )
 
 

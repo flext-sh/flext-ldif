@@ -27,7 +27,8 @@ class FlextLdifModelsBases:
     """
 
     class SchemaElement(m.StrictModel):
-        """Base class for all LDAP schema elements (attributes, objectClasses,
+        """Base class for all LDAP schema elements (attributes, objectClasses,.
+
         syntaxes).
         """
 

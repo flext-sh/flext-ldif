@@ -479,7 +479,8 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                     ),
                 )
 
-        def _process_ds389_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
+        @staticmethod
+        def _process_ds389_entry(entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
             """Normalize a 389 DS entry and attach metadata.
 
             Returns:
@@ -508,9 +509,7 @@ __all__: list[str] = ["FlextLdifServersDs389"]
 
 # The 389DS dialect schema settings are owned by ``Constants`` and bound here
 # because a nested class body cannot reference the not-yet-defined class.
-FlextLdifServersDs389.Schema._ATTRIBUTE_PATTERN_SETTINGS = (
-    FlextLdifServersDs389.Constants.ATTRIBUTE_PATTERN_SETTINGS
-)
-FlextLdifServersDs389.Schema._OBJECTCLASS_PATTERN_SETTINGS = (
-    FlextLdifServersDs389.Constants.OBJECTCLASS_PATTERN_SETTINGS
+FlextLdifServersDs389.Schema.bind_pattern_settings(
+    attribute_settings=FlextLdifServersDs389.Constants.ATTRIBUTE_PATTERN_SETTINGS,
+    objectclass_settings=FlextLdifServersDs389.Constants.OBJECTCLASS_PATTERN_SETTINGS,
 )

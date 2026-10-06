@@ -74,10 +74,10 @@ class FlextLdifServersEntryWriteContext:
         )
         self._lines = FlextLdifServersEntryLineEmitter(
             entry_data,
-            normalize_attribute_names,
-            use_original_acl_format_as_name,
-            acl_original_format,
-            effective_line_width,
+            normalize_attribute_names=normalize_attribute_names,
+            use_original_acl_format_as_name=use_original_acl_format_as_name,
+            acl_original_format=acl_original_format,
+            effective_line_width=effective_line_width,
         )
 
     @classmethod

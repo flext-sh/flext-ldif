@@ -17,6 +17,7 @@ class FlextLdifMetadataPrefixDetails:
 
         def __init__(
             self,
+            *,
             marker_present: bool,
             prefix_pattern: t.Ldif.RegexPattern,
             case_key: str,
@@ -57,7 +58,7 @@ class FlextLdifMetadataPrefixDetails:
                 details[spec.spacing_key] = spacing_match.group(1)
 
     @classmethod
-    def _extract_prefix_details(cls, definition: str) -> t.MutableStrMapping:
+    def extract_prefix_details(cls, definition: str) -> t.MutableStrMapping:
         """Extract attribute/ObjectClass prefix details.
 
         Returns:

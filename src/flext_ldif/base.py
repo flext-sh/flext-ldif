@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import importlib
 from typing import Annotated, Self, override
 
 from flext_core import FlextService
@@ -23,9 +24,8 @@ class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](
         Returns:
             The resulting value.
         """
-        from flext_ldif.services.server import FlextLdifServer
-
-        return FlextLdifServer.fetch_global_instance()
+        server_module = importlib.import_module("flext_ldif.services.server")
+        return server_module.FlextLdifServer.fetch_global_instance()
 
     _server: p.Ldif.ServerRegistry = u.PrivateAttr(
         default_factory=_default_ldif_server,
@@ -66,7 +66,8 @@ class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](
         settings: p.Ldif.Settings | None = None,
         **fields: t.JsonValue,
     ) -> Self | m.Ldif.Entry | str:
-        """Return a cloned DSL instance preserving runtime registry/settings
+        """Return a cloned DSL instance preserving runtime registry/settings.
+
         defaults.
         """
         payload: t.MutableMappingKV[

@@ -188,7 +188,8 @@ class FlextLdifModelsDomainAcl:
             return default_acl_format
 
         def resolve_acl_type(self) -> str:
-            """Get ACL type identifier for this server using canonical enum
+            """Get ACL type identifier for this server using canonical enum.
+
             # normalization.
 
             Returns:

@@ -13,7 +13,7 @@ class FlextLdifServerMethodsMixin:
     """Common server methods shared by schema, ACL, and entry servers."""
 
     @staticmethod
-    def _parse_operation_kwarg(kwargs: t.JsonMapping) -> p.Result[str]:
+    def parse_operation_kwarg(kwargs: t.JsonMapping) -> p.Result[str]:
         """Validate the raw ``operation`` kwarg as a string, propagating failures.
 
         Returns:

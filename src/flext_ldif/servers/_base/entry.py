@@ -255,7 +255,7 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         _ = attrs
         if not dn:
             return r[bool].fail("DN cannot be empty")
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     @staticmethod
     def _inject_write_format_options(

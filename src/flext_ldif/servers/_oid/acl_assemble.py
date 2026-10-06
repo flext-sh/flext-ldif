@@ -77,21 +77,21 @@ class _AciRuleAssembler:
             The resulting ``p.Result[None]``.
         """
         is_anyone = subject.subject_type == c.Ldif.OidSubjectKind.ANYONE
-        if is_anyone and FlextLdifServersOidAclAssemble._is_deny_none(
+        if is_anyone and FlextLdifServersOidAclAssemble.is_deny_none(
             subject.permissions,
         ):
             self._found_deny_all = True
             self._notes.append("'by * (none)' removed (OUD default-deny)")
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
         if is_anyone and self._dn_normalized in self._containers:
             self._notes.append(
                 "anyone skipped at high-level container (OUD inherits to subtree)",
             )
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
         bind = FlextLdifServersOidAclToOud.convert_subject_to_oud(subject)
         if bind.failure:
             self._notes.append(bind.error or "subject has no OUD equivalent")
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
         bind_type = bind.value.subject_type
         bind_value = bind.value.subject_value
         if bind_type in self._dn_binds and bind_value not in self._literal_binds:
@@ -101,14 +101,20 @@ class _AciRuleAssembler:
                     f"{subject.subject_type} {bind_value!r} removed "
                     f"(DN out of scope {self._base_dn})",
                 )
-                return r[bool].ok(True)
-        return self._append_allow(subject, bind_type, bind_value, is_anyone)
+                return r[bool].ok(value=True)
+        return self._append_allow(
+            subject,
+            bind_type,
+            bind_value,
+            is_anyone=is_anyone,
+        )
 
     def _append_allow(
         self,
         subject: m.Ldif.OidAclSubject,
         bind_type: str,
         bind_value: str,
+        *,
         is_anyone: bool,
     ) -> p.Result[bool]:
         """Convert permissions and append one allow clause with its notes.
@@ -127,7 +133,7 @@ class _AciRuleAssembler:
                 f"{subject.subject_type} {subject.value!r} removed "
                 f"(no OUD allow permissions / default-deny)",
             )
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
         self._allows.append(
             m.Ldif.AciAllow(
                 subject_type=bind_type,
@@ -148,7 +154,7 @@ class _AciRuleAssembler:
                 "verify this is intended",
             )
         self._has_anyone = self._has_anyone or is_anyone
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     def _build_rule(self) -> m.Ldif.AciRule:
         """Derive the acl name and assemble the final OUD AciRule.
@@ -183,7 +189,7 @@ class FlextLdifServersOidAclAssemble:
     """Build OUD aci value objects from parsed OID rules and orchestrate entries."""
 
     @staticmethod
-    def _is_deny_none(permissions: t.StrSequence) -> bool:
+    def is_deny_none(permissions: t.StrSequence) -> bool:
         return [perm.lower() for perm in permissions] == [c.Ldif.PERM_NONE]
 
     @staticmethod

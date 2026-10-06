@@ -87,12 +87,7 @@ class TestsFlextLdifOudIntegration:
         fixture_content: str,
         attribute_name: str,
     ) -> None:
-        """Assert the schema entry exposes Oracle-namespaced definitions.
-
-        Raises:
-            AssertionError: If the definition list is empty or carries no
-                Oracle-namespaced definition.
-        """
+        """Assert the schema entry exposes Oracle-namespaced definitions."""
         response: m.Ldif.ParseResponse = u.Tests.assert_success(
             api.parse_ldif(fixture_content),
         )

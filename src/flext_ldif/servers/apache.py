@@ -197,11 +197,9 @@ class FlextLdifServersApache(FlextLdifServersRfc):
 
 # The ApacheDS dialect schema settings are owned by ``Constants`` and bound
 # here because a nested class body cannot reference the not-yet-defined class.
-FlextLdifServersApache.Schema._ATTRIBUTE_PATTERN_SETTINGS = (
-    FlextLdifServersApache.Constants.ATTRIBUTE_PATTERN_SETTINGS
-)
-FlextLdifServersApache.Schema._OBJECTCLASS_PATTERN_SETTINGS = (
-    FlextLdifServersApache.Constants.OBJECTCLASS_PATTERN_SETTINGS
+FlextLdifServersApache.Schema.bind_pattern_settings(
+    attribute_settings=FlextLdifServersApache.Constants.ATTRIBUTE_PATTERN_SETTINGS,
+    objectclass_settings=FlextLdifServersApache.Constants.OBJECTCLASS_PATTERN_SETTINGS,
 )
 
 

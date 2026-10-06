@@ -100,8 +100,8 @@ class FlextLdifServersOudAclWriteMixin(FlextLdifServersOudAclSubjectMixin):
                 perms_data[key] = u.normalize_to_metadata(str_list)
         return perms_data
 
+    @staticmethod
     def _supported_oud_permissions(
-        self,
         perms: m.Ldif.AclPermissions,
         acl_data: m.Ldif.Acl,
     ) -> t.MutableSequenceOf[str]:
@@ -197,7 +197,8 @@ class FlextLdifServersOudAclWriteMixin(FlextLdifServersOudAclSubjectMixin):
             "attributes": attrs,
         })
 
-    def _should_use_raw_acl(self, acl_data: m.Ldif.Acl) -> bool:
+    @staticmethod
+    def _should_use_raw_acl(acl_data: m.Ldif.Acl) -> bool:
         """Check if raw_acl should be used as-is.
 
         Returns:

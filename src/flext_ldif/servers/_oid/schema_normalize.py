@@ -141,7 +141,8 @@ class FlextLdifServersOidSchemaNormalizeMixin(FlextLdifServersRfc.Schema):
             case _:
                 return None
 
-    def _normalize_sup_from_model(self, oc_data: m.Ldif.SchemaObjectClass) -> str | (
+    @staticmethod
+    def _normalize_sup_from_model(oc_data: m.Ldif.SchemaObjectClass) -> str | (
         t.MutableSequenceOf[str] | None
     ):
         """Normalize SUP from objectClass model.

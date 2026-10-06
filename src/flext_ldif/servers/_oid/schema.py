@@ -89,8 +89,8 @@ class FlextLdifServersOidSchema(
             "name": attr_data.name,
         }
 
+    @staticmethod
     def _guarded_post_parse[T](
-        self,
         item: T,
         normalize: Callable[[T], T],
         item_kind: str,
@@ -108,8 +108,8 @@ class FlextLdifServersOidSchema(
             )
             return r[T].fail_op(f"OID post-parse {item_kind} hook", e)
 
+    @staticmethod
     def _guarded_parse[T](
-        self,
         definition: str,
         parse: Callable[[str], p.Result[T]],
         item_kind: str,

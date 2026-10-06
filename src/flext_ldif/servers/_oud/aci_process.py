@@ -93,7 +93,7 @@ class FlextLdifServersOudAciProcessMixin:
         Returns:
             The resulting ``p.Result[bool]``.
         """
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     @staticmethod
     def validate_aci_macros_in_entry(
