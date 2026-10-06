@@ -17,8 +17,12 @@ class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](
 ):
     """Base class for LDIF services with typed settings helper."""
 
-    def _default_ldif_server():  # noqa: ANN202, ANN001 - zero-arg callable contract
-        """Resolve the shared server lazily (cuts the base/server init cycle)."""
+    def _default_ldif_server():  # ruff: ignore[missing-return-type-private-function] - zero-arg callable contract
+        """Resolve the shared server lazily (cuts the base/server init cycle).
+
+        Returns:
+            The resulting value.
+        """
         from flext_ldif.services.server import FlextLdifServer
 
         return FlextLdifServer.fetch_global_instance()

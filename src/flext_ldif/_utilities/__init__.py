@@ -26,6 +26,9 @@ if TYPE_CHECKING:
     from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
     from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
     from flext_ldif._utilities.events import FlextLdifUtilitiesEvents
+    from flext_ldif._utilities.examples_flext_ldif_utilities import (
+        ExamplesFlextLdifUtilities,
+    )
     from flext_ldif._utilities.flext_ldif_servers_oud_utilities import (
         FlextLdifServersOudUtilities,
     )
@@ -50,6 +53,7 @@ if TYPE_CHECKING:
 
 
 __all__: tuple[str, ...] = (
+    "ExamplesFlextLdifUtilities",
     "FlextLdifServersOudUtilities",
     "FlextLdifUtilitiesACL",
     "FlextLdifUtilitiesAttribute",
@@ -82,6 +86,7 @@ install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
+        "ExamplesFlextLdifUtilities": ".examples_flext_ldif_utilities",
         "FlextLdifServersOudUtilities": ".flext_ldif_servers_oud_utilities",
         "FlextLdifUtilitiesACL": ".acl",
         "FlextLdifUtilitiesAttribute": ".attribute",

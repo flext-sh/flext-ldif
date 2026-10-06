@@ -13,7 +13,6 @@ from flext_cli import u
 
 from flext_core import r
 from flext_ldif import FlextLdifModels, c, p, t
-from flext_ldif._utilities.collection_ldif import FlextLdifUtilitiesCollectionLdif
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.pipeline import FlextLdifUtilitiesPipeline
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema

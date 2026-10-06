@@ -19,10 +19,10 @@ import pytest
 from flext_tests import tm
 
 import flext_ldif
+from tests.unit.typings import PublicSymbol
 
 if TYPE_CHECKING:
     from flext_core import t
-type PublicSymbol = str
 
 REQUIRED_PUBLIC_API: t.VariadicTuple[PublicSymbol] = (
     "FlextLdif",

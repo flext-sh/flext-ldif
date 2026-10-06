@@ -10,6 +10,8 @@ from typing import TYPE_CHECKING
 
 from flext_cli import FlextCliUtilities
 
+from flext_ldif._utilities.collection_ldif import FlextLdifUtilitiesCollectionLdif
+
 if TYPE_CHECKING:
     from typing import Any
 
@@ -37,9 +39,7 @@ def _build_ldif_tree() -> type:
         return _Ldif_tree
     from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
     from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
-    from flext_ldif._utilities.collection_ldif import (
-        FlextLdifUtilitiesCollectionLdif,
-    )
+    from flext_ldif._utilities.collection_ldif import FlextLdifUtilitiesCollectionLdif
     from flext_ldif._utilities.dispatch import FlextLdifUtilitiesDispatch
     from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
     from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
@@ -98,18 +98,15 @@ def _lazy_ldif_meta() -> type:
         def __getattr__(cls, name: str) -> Any:
             if name == "Ldif":
                 tree = _build_ldif_tree()
-                setattr(cls, "Ldif", tree)
+                cls.Ldif = tree
                 return tree
+            msg = f"type object {cls.__name__!r} has no attribute {name!r}"
             raise AttributeError(
-                f"type object {cls.__name__!r} has no attribute {name!r}",
+                msg,
             )
 
     return _Meta
 
-
-from flext_ldif._utilities.collection_ldif import (
-    FlextLdifUtilitiesCollectionLdif,
-)
 
 class FlextLdifUtilities(
     FlextCliUtilities,
