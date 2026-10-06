@@ -21,8 +21,7 @@ from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from tests import t
-
-type ServerClass = type[FlextLdifServersRfc | FlextLdifServersOid | FlextLdifServersOud]
+from tests.unit.services.typings import ServerClass
 
 # (server class, canonical identity, priority) — the standardized identity table.
 _STANDARDIZED_SERVERS: tuple[tuple[ServerClass, str, int], ...] = (
