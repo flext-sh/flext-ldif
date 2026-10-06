@@ -55,7 +55,9 @@ class FlextLdifServersOudAclWriteMixin(FlextLdifServersOudAclSubjectMixin):
             extensions.get("acl_target_permissions") if extensions else None
         )
         if not target_perms_dict_raw:
-            target_perms_dict_raw = extensions.get("target_permissions") if extensions else None
+            target_perms_dict_raw = (
+                extensions.get("target_permissions") if extensions else None
+            )
         permissions_value: t.JsonPayload | None = target_perms_dict_raw
         if not isinstance(permissions_value, Mapping):
             return None

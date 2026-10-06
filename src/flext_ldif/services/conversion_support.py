@@ -32,7 +32,8 @@ class FlextLdifConversionSupportMixin(s):
             return convert()
         except c.Ldif.EXC_LDIF_PARSE as e:
             self.logger.exception(
-                f"Failed to convert {operation} model",
+                "Failed to convert %s model",
+                operation,
                 error=str(e),
             )
             return r[T].fail_op(f"{operation} conversion", e)

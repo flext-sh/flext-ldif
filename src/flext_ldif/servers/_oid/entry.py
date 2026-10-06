@@ -6,21 +6,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping
 from typing import ClassVar, override
 
-from flext_ldif import c, m, p, r, t, u
+from flext_ldif import m, p, t, u
 from flext_ldif.servers._oid.entry_boolean import FlextLdifServersOidEntryBooleanMixin
-from flext_ldif.servers._oid.entry_metadata import (
-    FlextLdifServersOidEntryMetadataMixin,
-)
+from flext_ldif.servers._oid.entry_metadata import FlextLdifServersOidEntryMetadataMixin
 from flext_ldif.servers._oid.entry_normalize import (
     FlextLdifServersOidEntryNormalizeMixin,
 )
 from flext_ldif.servers._oid.entry_parse import FlextLdifServersOidEntryParseMixin
-from flext_ldif.servers._oid.entry_restore import (
-    FlextLdifServersOidEntryRestoreMixin,
-)
+from flext_ldif.servers._oid.entry_restore import FlextLdifServersOidEntryRestoreMixin
 from flext_ldif.servers._oid.server_constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
@@ -42,25 +37,6 @@ class FlextLdifServersOidEntry(
     """
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     @override
     def _normalize_attribute_name(self, attr_name: str) -> str:
@@ -134,9 +110,6 @@ class FlextLdifServersOidEntry(
                     current_extensions,
                 )
 
-
-
-
     @override
     def _write_entry(self, entry_data: m.Ldif.Entry) -> p.Result[str]:
         """Write OID entry preserving OID-specific denormalized attribute names.
@@ -146,6 +119,3 @@ class FlextLdifServersOidEntry(
         """
         entry_to_write = self.restore_entry_from_metadata(entry_data)
         return super()._write_entry(entry_to_write)
-
-
-

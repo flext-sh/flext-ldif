@@ -102,12 +102,8 @@ class TestsFlextLdifOudIntegration:
 
         assert definitions, f"Schema entry must expose {attribute_name}"
         assert any(
-            cls.ORACLE_ENTERPRISE_OID_PREFIX in definition
-            for definition in definitions
-        ), (
-            "Expected at least one Oracle-namespaced "
-            f"{attribute_name.removesuffix('s')}"
-        )
+            cls.ORACLE_ENTERPRISE_OID_PREFIX in definition for definition in definitions
+        ), f"Expected at least one Oracle-namespaced {attribute_name.removesuffix('s')}"
 
     def test_schema_entry_exposes_oracle_attribute_definitions(
         self,

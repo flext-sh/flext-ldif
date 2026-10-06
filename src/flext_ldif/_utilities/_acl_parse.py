@@ -7,7 +7,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import r
-
 from flext_ldif import c, m, p, t
 from flext_ldif._utilities._acl_extract import FlextLdifACLExtraction
 from flext_ldif._utilities._acl_format import FlextLdifACLFormatting

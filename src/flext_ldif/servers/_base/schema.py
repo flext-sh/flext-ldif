@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping
+from collections.abc import MutableMapping
 from typing import Annotated, ClassVar, Self, override
 
 from flext_ldif import c, m, p, r, s, t, u
@@ -14,9 +14,7 @@ from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
 from flext_ldif.servers._base.schema_metadata import (
     FlextLdifServersBaseSchemaMetadataMixin,
 )
-from flext_ldif.servers._base.schema_values import (
-    FlextLdifServersBaseSchemaValuesMixin,
-)
+from flext_ldif.servers._base.schema_values import FlextLdifServersBaseSchemaValuesMixin
 
 
 class FlextLdifServersBaseSchema(

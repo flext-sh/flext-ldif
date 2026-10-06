@@ -10,12 +10,8 @@ from collections.abc import Callable
 
 from flext_ldif import FlextLdifModels, c, t
 from flext_ldif._utilities._metadata_match import FlextLdifMetadataMatchDetails
-from flext_ldif._utilities._metadata_name_desc import (
-    FlextLdifMetadataNameDescDetails,
-)
-from flext_ldif._utilities._metadata_prefix import (
-    FlextLdifMetadataPrefixDetails,
-)
+from flext_ldif._utilities._metadata_name_desc import FlextLdifMetadataNameDescDetails
+from flext_ldif._utilities._metadata_prefix import FlextLdifMetadataPrefixDetails
 from flext_ldif._utilities._metadata_syntax_origin import (
     FlextLdifMetadataSyntaxOriginDetails,
 )
@@ -124,11 +120,13 @@ class FlextLdifMetadataSchemaAnalysis:
         field_positions_payload: t.JsonDict = dict(field_positions)
         combined["field_order"] = field_order_payload
         combined["field_positions"] = field_positions_payload
-        spacing_result = FlextLdifMetadataSchemaAnalysis._extract_spacing_between_fields(
-            definition,
-            field_order,
-            field_positions,
-            dict(_FIELD_PATTERNS),
+        spacing_result = (
+            FlextLdifMetadataSchemaAnalysis._extract_spacing_between_fields(
+                definition,
+                field_order,
+                field_positions,
+                dict(_FIELD_PATTERNS),
+            )
         )
         spacing_payload: t.JsonDict = dict(spacing_result)
         combined["spacing_between_fields"] = spacing_payload
@@ -192,8 +190,8 @@ class FlextLdifMetadataSchemaAnalysis:
         definition: str,
     ) -> None:
         """Preserve complete schema formatting details for round-trip."""
-        formatting_details = (
-            FlextLdifMetadataSchemaAnalysis.analyze_schema_formatting(definition)
+        formatting_details = FlextLdifMetadataSchemaAnalysis.analyze_schema_formatting(
+            definition,
         )
         target: FlextLdifModels.Ldif.ServerMetadata = metadata
         target.schema_format_details = formatting_details

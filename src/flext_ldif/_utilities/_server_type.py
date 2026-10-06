@@ -10,7 +10,6 @@ import sys
 from typing import TypeIs
 
 from flext_core import r
-
 from flext_ldif import c, p, t
 
 
@@ -158,8 +157,8 @@ class FlextLdifServerTypeResolution:
         server_type = FlextLdifServerTypeResolution._get_type_from_nested_class(cls)
         if server_type:
             return server_type
-        server_type = (
-            FlextLdifServerTypeResolution._get_type_from_independent_class(cls)
+        server_type = FlextLdifServerTypeResolution._get_type_from_independent_class(
+            cls,
         )
         if server_type:
             return server_type

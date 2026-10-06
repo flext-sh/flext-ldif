@@ -7,11 +7,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import r
-
 from flext_ldif import FlextLdifModels, c, p, t
-from flext_ldif._utilities._parser_metadata import (
-    FlextLdifParserMetadataBuilders,
-)
+from flext_ldif._utilities._parser_metadata import FlextLdifParserMetadataBuilders
 from flext_ldif._utilities._parser_values import FlextLdifParserValues
 
 _MODIFY_OPS: t.MutableStrMapping = {
@@ -29,10 +26,10 @@ class FlextLdifParserRecord:
         """Mutable accumulation state for one LDIF record parse."""
 
         __slots__ = (
-            "attrs",
             "attribute_metadata",
-            "changetype",
+            "attrs",
             "change_operations",
+            "changetype",
             "comments",
             "controls",
             "current_change_operation",
@@ -55,9 +52,9 @@ class FlextLdifParserRecord:
             self.change_operations: t.MutableSequenceOf[
                 FlextLdifModels.Ldif.ChangeOperation
             ] = []
-            self.current_change_operation: FlextLdifModels.Ldif.ChangeOperation | None = (
-                None
-            )
+            self.current_change_operation: (
+                FlextLdifModels.Ldif.ChangeOperation | None
+            ) = None
             self.changetype: c.Ldif.ChangeType | None = None
             self.record_kind = c.Ldif.RecordKind.CONTENT
             self.newrdn: str | None = None

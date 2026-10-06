@@ -124,9 +124,7 @@ class FlextLdifACLPermissions:
         for perm_name, perm_value in normalized_orig_perms.items():
             if perm_name == "browse":
                 mapped_perms["read"] = mapped_perms.get("read", False) or perm_value
-                mapped_perms["search"] = (
-                    mapped_perms.get("search", False) or perm_value
-                )
+                mapped_perms["search"] = mapped_perms.get("search", False) or perm_value
                 continue
             if perm_name == "selfwrite":
                 mapped_perms["write"] = mapped_perms.get("write", False) or perm_value

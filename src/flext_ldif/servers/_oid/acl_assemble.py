@@ -67,8 +67,7 @@ class _AciRuleAssembler:
     def _note_dead_subject(self, subject: m.Ldif.OidAclSubject) -> None:
         """Record one subject dead-coded after the ``by * (none)`` fallback."""
         self._notes.append(
-            f"dead code after 'by * (none)': "
-            f"{subject.subject_type} {subject.value!r}",
+            f"dead code after 'by * (none)': {subject.subject_type} {subject.value!r}",
         )
 
     def _process_subject(self, subject: m.Ldif.OidAclSubject) -> p.Result[bool]:

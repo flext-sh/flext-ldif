@@ -11,16 +11,13 @@ from __future__ import annotations
 
 from collections.abc import MutableMapping
 
-from flext_ldif import c, m, p, r, s, t, u
-from flext_ldif.services.categorization_rules import (
-    FlextLdifCategorizationRules,
-)
+from flext_ldif import c, m, p, r, t, u
+from flext_ldif.services.categorization_rules import FlextLdifCategorizationRules
 from flext_ldif.services.filters import FlextLdifFilters
 
 
 class FlextLdifCategorizationFiltering(FlextLdifCategorizationRules):
     """Forbidden-attribute, whitelist-OID, and base-DN filtering helpers."""
-
 
     @staticmethod
     def _ensure_entry_model(
@@ -155,15 +152,18 @@ class FlextLdifCategorizationFiltering(FlextLdifCategorizationRules):
                     entry_model
                     for entry_raw in entries
                     if (
-                        entry_model := FlextLdifCategorizationFiltering._ensure_entry_model(
+                        entry_model
+                        := FlextLdifCategorizationFiltering._ensure_entry_model(
                             entry_raw,
                         )
                     )
                     is not None
                 ]
-                included, excluded = FlextLdifCategorizationFiltering._filter_entries_by_base_dn(
-                    entries_list,
-                    self.base_dn,
+                included, excluded = (
+                    FlextLdifCategorizationFiltering._filter_entries_by_base_dn(
+                        entries_list,
+                        self.base_dn,
+                    )
                 )
                 included_updated = self._update_metadata_for_filtered_entries(
                     included,
@@ -192,13 +192,17 @@ class FlextLdifCategorizationFiltering(FlextLdifCategorizationRules):
                     entry_model
                     for entry_raw in entries
                     if (
-                        entry_model := FlextLdifCategorizationFiltering._ensure_entry_model(
+                        entry_model
+                        := FlextLdifCategorizationFiltering._ensure_entry_model(
                             entry_raw,
                         )
                     )
                     is not None
                 ]
-        FlextLdifCategorizationFiltering._append_rejected_entries(filtered, all_excluded_entries)
+        FlextLdifCategorizationFiltering._append_rejected_entries(
+            filtered,
+            all_excluded_entries,
+        )
         return filtered
 
     def filter_schema_by_oids(
@@ -255,7 +259,6 @@ class FlextLdifCategorizationFiltering(FlextLdifCategorizationRules):
             )
             for entry in entries
         ]
-
 
 
 __all__: list[str] = ["FlextLdifCategorizationFiltering"]

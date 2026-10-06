@@ -160,9 +160,9 @@ class FlextLdifServersOudEntry(
                 acl_metadata_extensions,
             )
             if process_result.failure:
-                return r[
-                    t.Pair[bool, t.Ldif.MutableMetadataInputMapping]
-                ].from_failure(process_result)
+                return r[t.Pair[bool, t.Ldif.MutableMetadataInputMapping]].from_failure(
+                    process_result,
+                )
             if process_result.value:
                 has_macros = True
         return r[t.Pair[bool, t.Ldif.MutableMetadataInputMapping]].ok((
@@ -171,7 +171,10 @@ class FlextLdifServersOudEntry(
         ))
 
     @staticmethod
-    def _log_aci_macros_preserved(entry: m.Ldif.Entry, aci_attrs: t.StrSequence) -> None:
+    def _log_aci_macros_preserved(
+        entry: m.Ldif.Entry,
+        aci_attrs: t.StrSequence,
+    ) -> None:
         """Log that an entry carries OUD ACI macros preserved for runtime expansion."""
         aci_list = (
             list(aci_attrs)

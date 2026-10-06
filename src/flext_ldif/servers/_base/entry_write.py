@@ -60,9 +60,7 @@ class FlextLdifServersEntryWriteContext:
             self._write_hidden_attributes_as_comments = (
                 format_options.write_hidden_attributes_as_comments
             )
-            self._write_metadata_as_comments = (
-                format_options.write_metadata_as_comments
-            )
+            self._write_metadata_as_comments = format_options.write_metadata_as_comments
             use_original_acl_format_as_name = (
                 format_options.use_original_acl_format_as_name
             )
@@ -303,7 +301,11 @@ class FlextLdifServersEntryWriteContext:
                         value_origin=value_origin,
                         raw_value=raw_value,
                     )
-                    self._lines.append_attribute_line(output_lines, attr_name, attr_line)
+                    self._lines.append_attribute_line(
+                        output_lines,
+                        attr_name,
+                        attr_line,
+                    )
                 output_lines.append("-")
 
     def _emit_entry_attribute_values(

@@ -18,6 +18,7 @@ from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
 from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
 from flext_ldif.servers._base.server_type import FlextLdifServersBaseMroMixin
 
+
 class FlextLdifServersBase(
     FlextLdifServersBaseMroMixin,
     FlextLdifServersBaseExecuteParamsMixin,

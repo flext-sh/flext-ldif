@@ -137,7 +137,9 @@ class FlextLdifDNCleaning:
         )
         validation_errors_raw = flags.get("validation_errors", [])
         validation_errors: t.MutableSequenceOf[str] = (
-            list(validation_errors_raw) if isinstance(validation_errors_raw, list) else []
+            list(validation_errors_raw)
+            if isinstance(validation_errors_raw, list)
+            else []
         )
         return FlextLdifModels.Ldif.DNStatistics(
             original_dn=original_dn,

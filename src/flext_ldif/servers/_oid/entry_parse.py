@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping
+from collections.abc import MutableMapping
 from typing import override
 
 from flext_ldif import c, m, p, r, t, u
@@ -48,6 +48,7 @@ class FlextLdifServersOidEntryParseMixin(FlextLdifServersRfc.Entry):
             in {"orclaci", "orclentrylevelaci"}
         }
         return acl_transformations
+
     @staticmethod
     def _detect_rfc_violations(
         converted_attributes: t.MutableStrSequenceMapping,
@@ -103,6 +104,7 @@ class FlextLdifServersOidEntryParseMixin(FlextLdifServersRfc.Entry):
             and attr_name.lower() in domain_invalid_attrs
         ]
         return (rfc_violations, attribute_conflicts)
+
     @staticmethod
     def _get_current_attrs_with_acl_equivalence(
         entry_data: m.Ldif.Entry,
@@ -122,6 +124,7 @@ class FlextLdifServersOidEntryParseMixin(FlextLdifServersRfc.Entry):
             if "orclaci" in current_attrs:
                 current_attrs.add("aci")
         return current_attrs
+
     def _hook_finalize_entry_parse(
         self,
         entry: m.Ldif.Entry,
@@ -189,6 +192,7 @@ class FlextLdifServersOidEntryParseMixin(FlextLdifServersRfc.Entry):
         # mapping built above (already JSON-normalized).
         entry.metadata.extensions = current_extensions
         return r[m.Ldif.Entry].ok(entry)
+
     @override
     def _hook_post_parse_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
         """Transform parsed entry using OID-specific enhancements.
@@ -203,6 +207,7 @@ class FlextLdifServersOidEntryParseMixin(FlextLdifServersRfc.Entry):
                 "OID post-parse entry hook failed",
             )
             return r[m.Ldif.Entry].fail_op("OID post-parse entry hook", e)
+
     def _post_parse_oid_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
         """Normalize OID entry attributes after RFC parsing.
 
@@ -266,6 +271,7 @@ class FlextLdifServersOidEntryParseMixin(FlextLdifServersRfc.Entry):
                 rename_metadata: t.JsonDict = dict(name_renames)
                 entry.metadata.extensions["attribute_name_renames"] = rename_metadata
         return r[m.Ldif.Entry].ok(entry)
+
     @staticmethod
     def _hook_transform_entry_raw(
         dn: str,
@@ -290,6 +296,7 @@ class FlextLdifServersOidEntryParseMixin(FlextLdifServersRfc.Entry):
             normalized_dn,
             attrs,
         ))
+
     def _merge_parsed_acl_extensions(
         self,
         acl_server: p.Ldif.AclServer,
@@ -308,6 +315,7 @@ class FlextLdifServersOidEntryParseMixin(FlextLdifServersRfc.Entry):
                 "Failed to parse ACL extension metadata",
                 exc_info=True,
             )
+
     @staticmethod
     def _merge_parsed_acl_extensions_core(
         acl_server: p.Ldif.AclServer,

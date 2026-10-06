@@ -6,10 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping
-from typing import override
+from collections.abc import Mapping
 
-from flext_ldif import c, m, p, r, t, u
+from flext_ldif import c, m, t
 from flext_ldif.servers._oid.server_constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
@@ -35,6 +34,7 @@ class FlextLdifServersOidEntryRestoreMixin(FlextLdifServersRfc.Entry):
             value_part = parts[1]
             return f"orclaci:{value_part}"
         return original_line
+
     def _convert_line_boolean_to_oid(self, original_line: str) -> str:
         """Convert RFC boolean values in line to OID format.
 
@@ -53,6 +53,7 @@ class FlextLdifServersOidEntryRestoreMixin(FlextLdifServersRfc.Entry):
         if value_part == "FALSE":
             return f"{parts[0]}: {FlextLdifServersOidConstants.ZERO_OID}"
         return original_line
+
     def _denormalize_oid_attributes_for_output(
         self,
         attrs: t.MutableStrSequenceMapping,
@@ -88,6 +89,7 @@ class FlextLdifServersOidEntryRestoreMixin(FlextLdifServersRfc.Entry):
             )
             denormalized[restored_name] = restored_values
         return denormalized
+
     def restore_entry_from_metadata(self, entry_data: m.Ldif.Entry) -> m.Ldif.Entry:
         """Restore OID-specific formats from metadata (RFC → OID denormalization).
 
@@ -125,6 +127,7 @@ class FlextLdifServersOidEntryRestoreMixin(FlextLdifServersRfc.Entry):
             },
         )
         return restored_copy
+
     def _restore_single_attribute(
         self,
         attr_name: str,
@@ -148,6 +151,7 @@ class FlextLdifServersOidEntryRestoreMixin(FlextLdifServersRfc.Entry):
             else attr_name
         )
         return (denorm_name, attr_values)
+
     @staticmethod
     def _should_skip_original_line(
         original_line: str,
@@ -178,6 +182,7 @@ class FlextLdifServersOidEntryRestoreMixin(FlextLdifServersRfc.Entry):
             if current_attrs and attr_name_part not in current_attrs:
                 return True
         return False
+
     def _write_original_attr_lines(
         self,
         ldif_lines: t.MutableSequenceOf[str],

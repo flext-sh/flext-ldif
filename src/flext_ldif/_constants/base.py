@@ -507,9 +507,20 @@ class FlextLdifConstantsBase:
     )
 
     ALL_DN_VALUED: Final[frozenset[str]] = frozenset((
-        "member", "uniqueMember", "owner", "managedBy", "manager",
-        "secretary", "seeAlso", "parent", "refersTo", "memberOf",
-        "groups", "authorizedTo", "hasSubordinates", "subordinateDn",
+        "member",
+        "uniqueMember",
+        "owner",
+        "managedBy",
+        "manager",
+        "secretary",
+        "seeAlso",
+        "parent",
+        "refersTo",
+        "memberOf",
+        "groups",
+        "authorizedTo",
+        "hasSubordinates",
+        "subordinateDn",
     ))
 
     OID_TRUE: Final[str] = "1"
