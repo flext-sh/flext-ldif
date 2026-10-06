@@ -290,9 +290,17 @@ class FlextLdifServer(s):
 
     @classmethod
     def fetch_global_instance(cls) -> FlextLdifServer:
-        """Return the shared registry instance, creating it on first call."""
+        """Return the shared registry instance, creating it on first call.
+
+        The singleton is pre-bound before ``__init__`` runs: the inherited
+        service-base ``_server`` default resolves through this classmethod
+        during construction, so an unguarded ``cls()`` here would re-enter
+        forever. With the pre-bind, a re-entrant fetch returns the instance
+        under construction instead of recursing.
+        """
         if cls._global_instance is None:
-            cls._global_instance = cls()
+            cls._global_instance = cls.__new__(cls)
+            cls._global_instance.__init__()
         return cls._global_instance
 
 

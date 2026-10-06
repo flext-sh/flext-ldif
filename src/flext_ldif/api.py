@@ -51,13 +51,19 @@ class FlextLdif(
         self,
         *,
         server: p.Ldif.ServerRegistry | None = None,
+        registry: p.Ldif.ServerRegistry | None = None,
         settings: p.Ldif.Settings | None = None,
         runtime_settings: p.Ldif.Settings | None = None,
     ) -> None:
-        """Initialize the LDIF facade with the canonical shared registry."""
+        """Initialize the LDIF facade with the canonical shared registry.
+
+        ``registry`` is the service-base field name (the base DSL payload
+        feeds it); ``server`` remains the public facade alias.
+        """
         super().__init__()
-        if server is not None:
-            self.server = server
+        resolved_registry = server if server is not None else registry
+        if resolved_registry is not None:
+            self.registry = resolved_registry
         resolved_settings = (
             runtime_settings if runtime_settings is not None else settings
         )
@@ -71,7 +77,7 @@ class FlextLdif(
         **fields: t.JsonValue,
     ) -> Self:
         """Return a configured facade instance while keeping the DSL alias callable."""
-        configured = super().__call__(server=server, settings=settings, **fields)
+        configured = super().__call__(registry=server, settings=settings, **fields)
         return cast("Self", configured)
 
     def categorization(
@@ -108,7 +114,7 @@ class FlextLdif(
             else None,
             base_dn=resolved_base_dn,
             server_type=server_type,
-            server=self._server,
+            registry=self._server,
             server_registry=self._server,
         )
         bound_categorization: FlextLdifCategorization = (
@@ -321,7 +327,7 @@ class FlextLdif(
                 process_config.target_server if process_config is not None else None
             ),
             output_filename=(options.output_filename if options is not None else None),
-            server=self._server,
+            registry=self._server,
         )
         bound_pipeline: FlextLdifMigrationPipeline = pipeline.bind_runtime_settings(
             self.settings,
