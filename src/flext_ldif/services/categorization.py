@@ -631,7 +631,7 @@ class FlextLdifCategorization(s):
         Returns:
             The resulting ``p.Result[type[p.Ldif.ServerConstants]]``.
         """
-        registry = self.server_registry or self.server
+        registry = self.server_registry or self._server
         if registry is None:
             return r[type[p.Ldif.ServerConstants]].fail(
                 c.Ldif.ERR_SERVER_REGISTRY_UNAVAILABLE,

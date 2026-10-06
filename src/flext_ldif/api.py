@@ -57,7 +57,7 @@ class FlextLdif(
         """Initialize the LDIF facade with the canonical shared registry."""
         super().__init__()
         if server is not None:
-            self.server = server
+            self.registry = server
         resolved_settings = (
             runtime_settings if runtime_settings is not None else settings
         )
@@ -71,7 +71,7 @@ class FlextLdif(
         **fields: t.JsonValue,
     ) -> Self:
         """Return a configured facade instance while keeping the DSL alias callable."""
-        configured = super().__call__(server=server, settings=settings, **fields)
+        configured = super().__call__(registry=server, settings=settings, **fields)
         return cast("Self", configured)
 
     def categorization(
@@ -108,7 +108,7 @@ class FlextLdif(
             else None,
             base_dn=resolved_base_dn,
             server_type=server_type,
-            server=self._server,
+            registry=self._server,
             server_registry=self._server,
         )
         bound_categorization: FlextLdifCategorization = (
@@ -321,7 +321,7 @@ class FlextLdif(
                 process_config.target_server if process_config is not None else None
             ),
             output_filename=(options.output_filename if options is not None else None),
-            server=self._server,
+            registry=self._server,
         )
         bound_pipeline: FlextLdifMigrationPipeline = pipeline.bind_runtime_settings(
             self.settings,
