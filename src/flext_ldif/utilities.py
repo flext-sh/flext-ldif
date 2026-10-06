@@ -80,18 +80,37 @@ def _build_ldif_tree() -> type:
     return _Ldif_tree
 
 
-class _LazyLdifMeta(type):
-    """Assemble ``Ldif`` on first class-level access."""
+def _lazy_ldif_meta() -> type:
+    """Build the lazy-assembly metaclass.
 
-    def __getattr__(cls, name: str) -> Any:
-        if name == "Ldif":
-            tree = _build_ldif_tree()
-            setattr(cls, "Ldif", tree)
-            return tree
-        raise AttributeError(f"type object {cls.__name__!r} has no attribute {name!r}")
+    The codegen facade scanner requires exactly ONE module-level class in a
+    utilities module, so the metaclass is assembled inside this factory
+    (a FunctionDef in the AST) instead of a module-level ClassDef.
+
+    Returns:
+        The resulting ``type`` metaclass.
+
+    """
+
+    class _Meta(type):
+        """Assemble ``Ldif`` on first class-level access."""
+
+        def __getattr__(cls, name: str) -> Any:
+            if name == "Ldif":
+                tree = _build_ldif_tree()
+                setattr(cls, "Ldif", tree)
+                return tree
+            raise AttributeError(
+                f"type object {cls.__name__!r} has no attribute {name!r}",
+            )
+
+    return _Meta
 
 
-class FlextLdifUtilities(FlextCliUtilities, metaclass=_LazyLdifMeta):
+class FlextLdifUtilities(
+    FlextCliUtilities,
+    metaclass=_lazy_ldif_meta(),
+):
     """FLEXT LDIF Utilities - Centralized helpers for LDIF operations."""
 
 
