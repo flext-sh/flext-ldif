@@ -120,6 +120,21 @@ class FlextLdifConversionSupportMixin(s):
         return support
 
     @staticmethod
+    def _record_schema_support(
+        parse_result: p.Result[m.Ldif.SchemaElement],
+        support_key: str,
+        support: t.MutableIntMapping,
+    ) -> t.MutableIntMapping:
+        """Record one schema parse probe outcome into the support map.
+
+        Returns:
+            The resulting ``t.MutableIntMapping``.
+        """
+        if parse_result.success:
+            support[support_key] = 1
+        return support
+
+    @staticmethod
     def _check_attribute_support(
         server_schema: p.Ldif.SchemaServer,
         test_attr_def: str,
@@ -130,10 +145,11 @@ class FlextLdifConversionSupportMixin(s):
         Returns:
             The resulting ``t.MutableIntMapping``.
         """
-        attribute_result = server_schema.parse_attribute(test_attr_def)
-        if attribute_result.success:
-            support[c.Ldif.SchemaItemKind.ATTRIBUTE.value] = 1
-        return support
+        return FlextLdifConversionSupportMixin._record_schema_support(
+            server_schema.parse_attribute(test_attr_def),
+            c.Ldif.SchemaItemKind.ATTRIBUTE.value,
+            support,
+        )
 
     @staticmethod
     def _check_entry_support(
@@ -160,10 +176,11 @@ class FlextLdifConversionSupportMixin(s):
         Returns:
             The resulting ``t.MutableIntMapping``.
         """
-        objectclass_result = server_schema.parse_objectclass(test_oc_def)
-        if objectclass_result.success:
-            support[c.Ldif.SchemaItemKind.OBJECTCLASS.value] = 1
-        return support
+        return FlextLdifConversionSupportMixin._record_schema_support(
+            server_schema.parse_objectclass(test_oc_def),
+            c.Ldif.SchemaItemKind.OBJECTCLASS.value,
+            support,
+        )
 
     def _check_schema_support(
         self,
