@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Annotated, ClassVar, Self, override
 
 from flext_ldif import c, m, p, r, s, t, u
@@ -358,6 +359,48 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         """Parse server-specific ACL definition (internal, required)."""
         msg = "ACL servers must implement _parse_acl"
         raise NotImplementedError(msg)
+
+    def _parse_dialect_acl(
+        self,
+        acl_line: str,
+        parser: Callable[[str], p.Result[m.Ldif.Acl]],
+        context: str,
+    ) -> p.Result[m.Ldif.Acl]:
+        """Parse through one dialect parser, converting typed parse errors.
+
+        Args:
+            acl_line: The raw ACL line to parse.
+            parser: The dialect-specific ACL parser callable.
+            context: The operation context for the typed failure.
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.Acl]``.
+        """
+        try:
+            return parser(acl_line)
+        except c.EXC_BASIC_TYPE as exc:
+            return r[m.Ldif.Acl].fail_op(context, exc)
+
+    def _write_dialect_acl(
+        self,
+        acl_data: m.Ldif.Acl,
+        writer: Callable[[m.Ldif.Acl], p.Result[str]],
+        context: str,
+    ) -> p.Result[str]:
+        """Write through one dialect writer, converting typed write errors.
+
+        Args:
+            acl_data: The canonical ACL to write.
+            writer: The dialect-specific ACL writer callable.
+            context: The operation context for the typed failure.
+
+        Returns:
+            The resulting ``p.Result[str]``.
+        """
+        try:
+            return writer(acl_data)
+        except c.EXC_BASIC_TYPE as exc:
+            return r[str].fail_op(context, exc)
 
     def _resolve_data(
         self,

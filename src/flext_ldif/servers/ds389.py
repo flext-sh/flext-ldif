@@ -280,14 +280,11 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             Returns:
                 The resulting ``p.Result[m.Ldif.Acl]``.
             """
-            try:
-                return self._parse_ds389_acl(acl_line)
-            except c.EXC_BASIC_TYPE as exc:
-                return r[m.Ldif.Acl].fail(
-                    FlextLdifServersDs389.Constants.ERROR_ACL_PARSING_FAILED.format(
-                        exc=exc,
-                    ),
-                )
+            return self._parse_dialect_acl(
+                acl_line,
+                self._parse_ds389_acl,
+                "389 Directory Server ACL parsing",
+            )
 
         @override
         def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
@@ -296,14 +293,11 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             Returns:
                 The resulting ``p.Result[str]``.
             """
-            try:
-                return self._write_ds389_acl(acl_data)
-            except c.EXC_BASIC_TYPE as exc:
-                return r[str].fail(
-                    FlextLdifServersDs389.Constants.ERROR_ACL_WRITE_FAILED.format(
-                        exc=exc,
-                    ),
-                )
+            return self._write_dialect_acl(
+                acl_data,
+                self._write_ds389_acl,
+                "389 Directory Server ACL write",
+            )
 
         def _parse_ds389_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
             """Parse 389 DS ACI content into a canonical ACL.

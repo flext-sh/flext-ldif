@@ -202,10 +202,11 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             Returns:
                 The resulting ``p.Result[m.Ldif.Acl]``.
             """
-            try:
-                return self._parse_ad_acl(acl_line)
-            except c.EXC_BASIC_TYPE as exc:
-                return r[m.Ldif.Acl].fail_op("Active Directory ACL parsing", exc)
+            return self._parse_dialect_acl(
+                acl_line,
+                self._parse_ad_acl,
+                "Active Directory ACL parsing",
+            )
 
         @override
         def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
@@ -214,10 +215,11 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             Returns:
                 The resulting ``p.Result[str]``.
             """
-            try:
-                return self._write_ad_acl(acl_data)
-            except c.EXC_BASIC_TYPE as exc:
-                return r[str].fail_op("Active Directory ACL write", exc)
+            return self._write_dialect_acl(
+                acl_data,
+                self._write_ad_acl,
+                "Active Directory ACL write",
+            )
 
         def _parse_ad_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
             """Parse Active Directory ACL content.

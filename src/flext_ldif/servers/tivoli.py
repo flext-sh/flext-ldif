@@ -192,10 +192,11 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             Returns:
                 The resulting ``p.Result[str]``.
             """
-            try:
-                return self._write_tivoli_acl(acl_data)
-            except c.EXC_BASIC_TYPE as exc:
-                return r[str].fail_op("IBM Tivoli DS ACL write", exc)
+            return self._write_dialect_acl(
+                acl_data,
+                self._write_tivoli_acl,
+                "IBM Tivoli DS ACL write",
+            )
 
         def _write_tivoli_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
             """Write IBM Tivoli DS ACL content.
