@@ -51,13 +51,19 @@ class FlextLdif(
         self,
         *,
         server: p.Ldif.ServerRegistry | None = None,
+        registry: p.Ldif.ServerRegistry | None = None,
         settings: p.Ldif.Settings | None = None,
         runtime_settings: p.Ldif.Settings | None = None,
     ) -> None:
-        """Initialize the LDIF facade with the canonical shared registry."""
+        """Initialize the LDIF facade with the canonical shared registry.
+
+        ``registry`` is the service-base field name (the base DSL payload
+        feeds it); ``server`` remains the public facade alias.
+        """
         super().__init__()
-        if server is not None:
-            self.registry = server
+        resolved_registry = server if server is not None else registry
+        if resolved_registry is not None:
+            self.registry = resolved_registry
         resolved_settings = (
             runtime_settings if runtime_settings is not None else settings
         )
