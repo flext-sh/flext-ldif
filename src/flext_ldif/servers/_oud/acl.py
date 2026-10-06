@@ -9,10 +9,10 @@ from __future__ import annotations
 from collections.abc import Mapping, MutableMapping
 from typing import ClassVar, Self, override
 
+import flext_ldif._utilities.flext_ldif_servers_oud_utilities
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
 from flext_ldif.servers._oud.server_constants import FlextLdifServersOudConstants
-from flext_ldif.servers._oud.server_utilities import FlextLdifServersOudUtilities
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 
@@ -389,7 +389,7 @@ class FlextLdifServersOudAcl(FlextLdifServersRfc.Acl):
         Returns:
             The resulting ``p.Result[m.Ldif.Acl]``.
         """
-        settings = FlextLdifServersOudUtilities.get_parser_config()
+        settings = flext_ldif._utilities.flext_ldif_servers_oud_utilities.FlextLdifServersOudUtilities.get_parser_config()
         result: p.Result[m.Ldif.Acl] = u.Ldif.parse_aci(acl_line, settings)
         if not result.success:
             return result
