@@ -231,21 +231,5 @@ class FlextLdifUtilitiesDispatch:
         FlextLdifUtilitiesDispatch._ENTRY_LIST_ADAPTER.validate_python(obj)
         return True
 
-    # --- MRO conflict resolution: Collection methods (CollectionLdif vs
-    # FlextUtilities) ---
-
-    @staticmethod
-    def find(
-        items: t.JsonList,
-        *,
-        predicate: Callable[..., bool],
-    ) -> t.JsonValue | None:
-        """Route to CollectionLdif.find (resolves CollectionLdif vs core).
-
-        Returns:
-            The resulting ``t.JsonValue | None``.
-        """
-        return FlextLdifUtilitiesCollectionLdif.find(items, predicate=predicate)
-
 
 __all__: list[str] = ["FlextLdifUtilitiesDispatch"]

@@ -19,6 +19,12 @@ from flext_core import FlextSettings
 from flext_ldif import m
 
 
+class _LdifNamespace(m.BaseModel):
+    """Open, frozen namespace exposing every ``config/*.yaml`` domain model-less."""
+
+    model_config = m.ConfigDict(extra="allow", frozen=True)
+
+
 class FlextLdifConfig(FlextSettings, FlextCliConfig):
     """Ldif config auto-loaded model-less from ``config/*.yaml``.
 
