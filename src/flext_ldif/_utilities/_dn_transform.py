@@ -52,7 +52,10 @@ class FlextLdifDNTransforming:
         normalized_dn = norm_result.map_or(dn_str)
         source_escaped = c.Ldif.escape_pattern(source_dn)
         result = u.to_str(
-            c.Ldif.compile_pattern(f", ignorecase=True).sub({source_escaped}$", f"),
+            c.Ldif.compile_pattern(f",{source_escaped}$", ignorecase=True).sub(
+                f",{target_dn}",
+                normalized_dn,
+            ),
         )
         if result == normalized_dn:
             result = u.to_str(
