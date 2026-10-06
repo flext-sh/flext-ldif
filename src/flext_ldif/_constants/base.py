@@ -306,7 +306,6 @@ class FlextLdifConstantsBase:
         """
         return re.escape(value)
 
-
     # Schema metadata keys
     SCHEMA_ORIGINAL_FORMAT: ClassVar[str] = "schema_original_format"
     SCHEMA_ORIGINAL_STRING_COMPLETE: ClassVar[str] = "schema_original_string_complete"

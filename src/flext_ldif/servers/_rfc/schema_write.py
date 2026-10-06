@@ -180,7 +180,10 @@ class FlextLdifServersRfcSchemaWriteMixin(FlextLdifServersBase.Schema):
                     attr_case = getattr(fmt, "attribute_case", c.Ldif.ATTRIBUTE_TYPES)
                     attr_types_lower = c.Ldif.ATTRIBUTE_TYPES.lower()
                     if attr_types_lower in transformed_str.lower():
-                        transformed_str = c.Ldif.compile_pattern(f"{attr_types_lower}:", ignorecase=True).sub(f"{attr_case}:", transformed_str)
+                        transformed_str = c.Ldif.compile_pattern(
+                            f"{attr_types_lower}:",
+                            ignorecase=True,
+                        ).sub(f"{attr_case}:", transformed_str)
             return r[str].ok(
                 self._ensure_x_origin(transformed_str, attr_transformed.metadata),
             )

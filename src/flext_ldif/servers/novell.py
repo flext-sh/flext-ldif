@@ -248,8 +248,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 subject=m.Ldif.AclSubject(
                     subject_type=c.Ldif.AclSubjectType.USER,
                     subject_value=(
-                        trustee
-                        or FlextLdifServersNovell.Constants.ACL_SUBJECT_UNKNOWN
+                        trustee or FlextLdifServersNovell.Constants.ACL_SUBJECT_UNKNOWN
                     ),
                 ),
                 permissions=m.Ldif.AclPermissions(
