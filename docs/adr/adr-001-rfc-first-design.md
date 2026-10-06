@@ -30,15 +30,15 @@ The system needed to:
 **Key Implementation**:
 
 ```python
-# RFC parsers always receive server_registry
-parser = RfcLdifParserService(
-    params={"file_path": "data.ldif"},
-    server_registry=server_registry,  # MANDATORY
-    server_type="oid",  # Applied as enhancement
-)
+from pathlib import Path
 
-# All operations through facade
-result = ldif.parse(file_path)  # No direct parser access
+from flext_ldif import ldif
+
+# RFC parsers always receive the MANDATORY server_registry, wired by the facade.
+api = ldif()  # No direct parser access; the facade owns the registry.
+
+# Server-specific behavior is applied as an enhancement over the RFC baseline.
+parse_result = api.parse_ldif_file(Path("data.ldif"), server_type="oid")
 ```
 
 **Consequences**:
