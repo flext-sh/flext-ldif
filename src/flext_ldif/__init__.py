@@ -50,13 +50,21 @@ if TYPE_CHECKING:
         FlextLdifServersOidSchema,
     )
     from flext_ldif.servers.openldap import FlextLdifServersOpenldap
+    from flext_ldif.servers.openldap1_entry import FlextLdifServersOpenldap1Entry
     from flext_ldif.servers.oud import FlextLdifServersOud
     from flext_ldif.servers.relaxed import FlextLdifServersRelaxed
+    from flext_ldif.servers.relaxed_constants import FlextLdifServersRelaxedConstants
+    from flext_ldif.servers.relaxed_entry import FlextLdifServersRelaxedEntry
+    from flext_ldif.servers.relaxed_schema import FlextLdifServersRelaxedSchema
     from flext_ldif.servers.rfc import FlextLdifServersRfc
     from flext_ldif.servers.tivoli import FlextLdifServersTivoli
     from flext_ldif.services.acl import FlextLdifAcl
     from flext_ldif.services.analysis import FlextLdifAnalysis
     from flext_ldif.services.categorization import FlextLdifCategorization
+    from flext_ldif.services.categorization_filtering import (
+        FlextLdifCategorizationFiltering,
+    )
+    from flext_ldif.services.categorization_rules import FlextLdifCategorizationRules
     from flext_ldif.services.conversion import FlextLdifConversion
     from flext_ldif.services.conversion_acl import FlextLdifConversionAclMixin
     from flext_ldif.services.conversion_acl_preserve import (
@@ -70,6 +78,7 @@ if TYPE_CHECKING:
     )
     from flext_ldif.services.conversion_support import FlextLdifConversionSupportMixin
     from flext_ldif.services.detector import FlextLdifDetector
+    from flext_ldif.services.detector_scoring import FlextLdifDetectorScoring
     from flext_ldif.services.entries import FlextLdifEntries
     from flext_ldif.services.filters import FlextLdifFilters
     from flext_ldif.services.migration import FlextLdifMigrationPipeline
@@ -89,6 +98,8 @@ __all__: tuple[str, ...] = (
     "FlextLdifAcl",
     "FlextLdifAnalysis",
     "FlextLdifCategorization",
+    "FlextLdifCategorizationFiltering",
+    "FlextLdifCategorizationRules",
     "FlextLdifConfig",
     "FlextLdifConstants",
     "FlextLdifConversion",
@@ -100,6 +111,7 @@ __all__: tuple[str, ...] = (
     "FlextLdifConversionSchemaMixin",
     "FlextLdifConversionSupportMixin",
     "FlextLdifDetector",
+    "FlextLdifDetectorScoring",
     "FlextLdifEntries",
     "FlextLdifFilters",
     "FlextLdifMigrationPipeline",
@@ -122,8 +134,12 @@ __all__: tuple[str, ...] = (
     "FlextLdifServersOidEntry",
     "FlextLdifServersOidSchema",
     "FlextLdifServersOpenldap",
+    "FlextLdifServersOpenldap1Entry",
     "FlextLdifServersOud",
     "FlextLdifServersRelaxed",
+    "FlextLdifServersRelaxedConstants",
+    "FlextLdifServersRelaxedEntry",
+    "FlextLdifServersRelaxedSchema",
     "FlextLdifServersRfc",
     "FlextLdifServersTivoli",
     "FlextLdifServiceBase",
@@ -169,6 +185,8 @@ install_lazy_exports(
         "FlextLdifAcl": ".services.acl",
         "FlextLdifAnalysis": ".services.analysis",
         "FlextLdifCategorization": ".services.categorization",
+        "FlextLdifCategorizationFiltering": ".services.categorization_filtering",
+        "FlextLdifCategorizationRules": ".services.categorization_rules",
         "FlextLdifConfig": "._config",
         "FlextLdifConstants": ".constants",
         "FlextLdifConversion": ".services.conversion",
@@ -180,6 +198,7 @@ install_lazy_exports(
         "FlextLdifConversionSchemaMixin": ".services.conversion_schema",
         "FlextLdifConversionSupportMixin": ".services.conversion_support",
         "FlextLdifDetector": ".services.detector",
+        "FlextLdifDetectorScoring": ".services.detector_scoring",
         "FlextLdifEntries": ".services.entries",
         "FlextLdifFilters": ".services.filters",
         "FlextLdifMigrationPipeline": ".services.migration",
@@ -202,8 +221,12 @@ install_lazy_exports(
         "FlextLdifServersOidEntry": ".servers.oid",
         "FlextLdifServersOidSchema": ".servers.oid",
         "FlextLdifServersOpenldap": ".servers.openldap",
+        "FlextLdifServersOpenldap1Entry": ".servers.openldap1_entry",
         "FlextLdifServersOud": ".servers.oud",
         "FlextLdifServersRelaxed": ".servers.relaxed",
+        "FlextLdifServersRelaxedConstants": ".servers.relaxed_constants",
+        "FlextLdifServersRelaxedEntry": ".servers.relaxed_entry",
+        "FlextLdifServersRelaxedSchema": ".servers.relaxed_schema",
         "FlextLdifServersRfc": ".servers.rfc",
         "FlextLdifServersTivoli": ".servers.tivoli",
         "FlextLdifServiceBase": ".base",

@@ -24,6 +24,24 @@ if TYPE_CHECKING:
     from tests import m, p, t
 
 
+def _parse_fixture_entries(
+    api: p.Ldif.LdifClient,
+    fixture_content: str,
+    error_msg: str,
+) -> t.SequenceOf[m.Ldif.Entry]:
+    """Parse one fixture's LDIF text into Entry models.
+
+    Returns:
+        The resulting ``t.SequenceOf[m.Ldif.Entry]``.
+    """
+    parse_response: m.Ldif.ParseResponse = u.Tests.assert_success(
+        api.parse_ldif(fixture_content),
+        error_msg=error_msg,
+    )
+    entries: t.SequenceOf[m.Ldif.Entry] = parse_response.entries
+    return entries
+
+
 @pytest.fixture
 def api() -> p.Ldif.LdifClient:
     """Create ldif API instance for testing.
@@ -108,12 +126,11 @@ def oid_entries(
     Returns:
         The resulting ``t.SequenceOf[m.Ldif.Entry]``.
     """
-    parse_response: m.Ldif.ParseResponse = u.Tests.assert_success(
-        api.parse_ldif(oid_entries_fixture),
-        error_msg="OID entries parsing failed",
+    return _parse_fixture_entries(
+        api,
+        oid_entries_fixture,
+        "OID entries parsing failed",
     )
-    entries: t.SequenceOf[m.Ldif.Entry] = parse_response.entries
-    return entries
 
 
 @pytest.fixture
@@ -170,12 +187,11 @@ def oud_entries(
     Returns:
         The resulting ``t.SequenceOf[m.Ldif.Entry]``.
     """
-    parse_response: m.Ldif.ParseResponse = u.Tests.assert_success(
-        api.parse_ldif(oud_entries_fixture),
-        error_msg="OUD entries parsing failed",
+    return _parse_fixture_entries(
+        api,
+        oud_entries_fixture,
+        "OUD entries parsing failed",
     )
-    entries: t.SequenceOf[m.Ldif.Entry] = parse_response.entries
-    return entries
 
 
 @pytest.fixture

@@ -250,6 +250,23 @@ class FlextLdifServer(s):
                     continue
 
     @staticmethod
+    def _is_public_module_member(name: str) -> bool:
+        """Whether a module member name is public (not underscore-private)."""
+        return not name.startswith("_")
+
+    @staticmethod
+    def _is_concrete_server_subclass(
+        candidate: type,
+        base_class: type,
+    ) -> bool:
+        """Whether the candidate is a concrete subclass defined in the module."""
+        return (
+            inspect.isclass(candidate)
+            and candidate is not base_class
+            and issubclass(candidate, base_class)
+        )
+
+    @staticmethod
     def _is_discoverable_server(
         name: str,
         candidate: type,
@@ -258,11 +275,9 @@ class FlextLdifServer(s):
     ) -> TypeGuard[type[FlextLdifServersBase]]:
         """Return whether a module member is a concrete server class."""
         return (
-            not name.startswith("_")
-            and inspect.isclass(candidate)
-            and candidate is not base_class
+            FlextLdifServer._is_public_module_member(name)
+            and FlextLdifServer._is_concrete_server_subclass(candidate, base_class)
             and candidate.__module__ == module_name
-            and issubclass(candidate, base_class)
         )
 
     def _register_discovered_server(

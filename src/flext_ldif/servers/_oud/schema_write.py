@@ -232,7 +232,6 @@ class FlextLdifServersOudSchemaWriteMixin:
     def _normalize_definition_value(
         cls,
         value: str,
-        *,
         attr_name: str,
         source_schema: p.Ldif.SchemaServer,
         target_schema: p.Ldif.SchemaServer,

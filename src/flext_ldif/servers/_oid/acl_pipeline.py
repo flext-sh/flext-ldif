@@ -79,7 +79,6 @@ class FlextLdifServersOidAclPipeline:
         entry: m.Ldif.Entry,
         source_type_norm: str,
         target_type_norm: str,
-        *,
         base_dn: str = "",
     ) -> p.Result[m.Ldif.Entry]:
         """Rewrite an OID entry's ACL attributes to a single OUD ``aci`` attribute.

@@ -136,17 +136,46 @@ class FlextLdifServersOudAclMetadataMixin:
         return updated_entry
 
     @staticmethod
+    def _extension_target_key(key: str, key_map: t.MappingKV[str, str]) -> str:
+        """Resolve the canonical destination key for one ACL extension key.
+
+        Returns:
+            The resulting ``str``.
+        """
+        canonical_keys = frozenset(key_map.values())
+        final_key = key_map.get(key) or key_map.get(key.lower()) or key
+        if final_key not in canonical_keys and key not in canonical_keys:
+            return key
+        return final_key
+
+    @staticmethod
+    def _normalized_mapping_value(value: t.JsonMapping) -> t.JsonValue:
+        """Normalize one mapping ACL extension value into a JSON payload.
+
+        Returns:
+            The resulting ``t.JsonValue``.
+        """
+        value_dict_inner: t.MutableJsonMapping = {}
+        for k, v in value.items():
+            value_dict_inner[k] = (
+                v
+                if u.primitive(v)
+                else t.Cli.JSON_VALUE_ADAPTER.validate_python(v)
+            )
+        return t.Cli.JSON_VALUE_ADAPTER.validate_python(value_dict_inner)
+
+    @staticmethod
     def process_parsed_acl_extensions(
         acl_extensions: t.Ldif.MetadataInputMapping,
         current_extensions: t.Ldif.MutableMetadataInputMapping,
     ) -> None:
         """Process parsed ACL extensions and add to current extensions."""
         key_map = FlextLdifServersOudConstants.PARSED_ACL_KEY_MAP
-        canonical_keys = frozenset(key_map.values())
         for key, value in acl_extensions.items():
-            final_key = key_map.get(key) or key_map.get(key.lower()) or key
-            if final_key not in canonical_keys and key not in canonical_keys:
-                final_key = key
+            final_key = FlextLdifServersOudAclMetadataMixin._extension_target_key(
+                key,
+                key_map,
+            )
             if value is None or u.primitive(value):
                 current_extensions[final_key] = value
             elif isinstance(value, c.SEQUENCE_PAIR_TYPES):
@@ -157,15 +186,8 @@ class FlextLdifServersOudAclMetadataMixin:
                     ])
                 )
             elif isinstance(value, Mapping):
-                value_dict_inner: t.MutableJsonMapping = {}
-                for k, v in value.items():
-                    value_dict_inner[k] = (
-                        v
-                        if u.primitive(v)
-                        else t.Cli.JSON_VALUE_ADAPTER.validate_python(v)
-                    )
                 current_extensions[final_key] = (
-                    t.Cli.JSON_VALUE_ADAPTER.validate_python(value_dict_inner)
+                    FlextLdifServersOudAclMetadataMixin._normalized_mapping_value(value)
                 )
             else:
                 current_extensions[final_key] = str(value)

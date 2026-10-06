@@ -66,11 +66,13 @@ class TestsFlextLdifDs389Servers:
         u.Tests.assert_server_schema_parse_and_properties(
             self._schema_server(),
             attr_def,
-            expected_oid="2.16.840.1.113730.3.1.1",
-            expected_name="nsslapd-suffix",
-            expected_desc="Directory suffix",
-            expected_syntax="1.3.6.1.4.1.1466.115.121.1.12",
-            expected_single_value=True,
+            expectations=u.Tests.SchemaExpectations(
+                oid="2.16.840.1.113730.3.1.1",
+                name="nsslapd-suffix",
+                desc="Directory suffix",
+                syntax="1.3.6.1.4.1.1466.115.121.1.12",
+                single_value=True,
+            ),
         )
 
     def test_parse_attribute_preserves_syntax_length(self) -> None:
@@ -82,8 +84,10 @@ class TestsFlextLdifDs389Servers:
         u.Tests.assert_server_schema_parse_and_properties(
             self._schema_server(),
             attr_def,
-            expected_syntax="1.3.6.1.4.1.1466.115.121.1.15",
-            expected_length=256,
+            expectations=u.Tests.SchemaExpectations(
+                syntax="1.3.6.1.4.1.1466.115.121.1.15",
+                length=256,
+            ),
         )
 
     def test_parse_attribute_without_oid_fails_with_message(self) -> None:
@@ -120,12 +124,14 @@ class TestsFlextLdifDs389Servers:
         u.Tests.assert_server_schema_parse_and_properties(
             self._schema_server(),
             oc_def,
-            expected_oid="2.16.840.1.113730.3.2.1",
-            expected_name="nscontainer",
-            expected_kind="STRUCTURAL",
-            expected_sup="top",
-            expected_must=["cn"],
-            expected_may=["nsslapd-port"],
+            expectations=u.Tests.SchemaExpectations(
+                oid="2.16.840.1.113730.3.2.1",
+                name="nscontainer",
+                kind="STRUCTURAL",
+                sup="top",
+                must=["cn"],
+                may=["nsslapd-port"],
+            ),
         )
 
     def test_parse_auxiliary_objectclass_reports_kind(self) -> None:
@@ -137,7 +143,7 @@ class TestsFlextLdifDs389Servers:
         u.Tests.assert_server_schema_parse_and_properties(
             self._schema_server(),
             oc_def,
-            expected_kind="AUXILIARY",
+            expectations=u.Tests.SchemaExpectations(kind="AUXILIARY"),
         )
 
     def test_parse_abstract_objectclass_reports_kind(self) -> None:

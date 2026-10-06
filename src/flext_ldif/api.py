@@ -25,6 +25,7 @@ from flext_ldif.services.validation import FlextLdifValidation
 from flext_ldif.services.writer import FlextLdifWriter
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from pathlib import Path
 
 
@@ -156,38 +157,50 @@ class FlextLdif(
             allowed_oids=allowed_oids,
         )
 
+    def _resolve_registry_server[T](
+        self,
+        server_type: str,
+        *,
+        resource_type: str,
+        lookup: Callable[[p.Ldif.ServerRegistry, str], T | None],
+    ) -> p.Result[T]:
+        """Resolve one registry server with the canonical not-found failure.
+
+        Returns:
+            The resulting ``p.Result[T]``.
+        """
+        server_registry: p.Ldif.ServerRegistry = self._server
+        resolved = lookup(server_registry, server_type)
+        if resolved is None:
+            return e.fail_not_found(
+                resource_type,
+                server_type,
+                result_type=r[T],
+            )
+        return r[T].ok(resolved)
+
     def acl(self, server_type: str) -> p.Result[p.Ldif.AclServer]:
         """Expose ACL server lookup through the public facade (ENFORCE-056).
 
         Returns:
             The resulting ``p.Result[p.Ldif.AclServer]``.
         """
-        server_registry: p.Ldif.ServerRegistry = self._server
-        resolved = server_registry.acl(server_type)
-        if resolved is None:
-            return e.fail_not_found(
-                "acl_server",
-                server_type,
-                result_type=r[p.Ldif.AclServer],
-            )
-        return r[p.Ldif.AclServer].ok(resolved)
-
+        return self._resolve_registry_server(
+            server_type,
+            resource_type="acl_server",
+            lookup=lambda registry, requested: registry.acl(requested),
+        )
     def entry(self, server_type: str) -> p.Result[p.Ldif.EntryServer]:
         """Expose entry server lookup through the public facade (ENFORCE-056).
 
         Returns:
             The resulting ``p.Result[p.Ldif.EntryServer]``.
         """
-        server_registry: p.Ldif.ServerRegistry = self._server
-        resolved = server_registry.entry(server_type)
-        if resolved is None:
-            return e.fail_not_found(
-                "entry_server",
-                server_type,
-                result_type=r[p.Ldif.EntryServer],
-            )
-        return r[p.Ldif.EntryServer].ok(resolved)
-
+        return self._resolve_registry_server(
+            server_type,
+            resource_type="entry_server",
+            lookup=lambda registry, requested: registry.entry(requested),
+        )
     def resolve_base_server(self, server_type: str) -> p.Result[p.Ldif.ServerServer]:
         """Expose base server resolution through the public facade.
 
@@ -204,32 +217,22 @@ class FlextLdif(
         Returns:
             The resulting ``p.Result[p.Ldif.SchemaServer]``.
         """
-        server_registry: p.Ldif.ServerRegistry = self._server
-        resolved = server_registry.schema_server(server_type)
-        if resolved is None:
-            return e.fail_not_found(
-                "schema_server",
-                server_type,
-                result_type=r[p.Ldif.SchemaServer],
-            )
-        return r[p.Ldif.SchemaServer].ok(resolved)
-
+        return self._resolve_registry_server(
+            server_type,
+            resource_type="schema_server",
+            lookup=lambda registry, requested: registry.schema_server(requested),
+        )
     def resolve_schema_server(self, server_type: str) -> p.Result[p.Ldif.SchemaServer]:
         """Expose canonical schema server resolution (ENFORCE-056).
 
         Returns:
             The resulting ``p.Result[p.Ldif.SchemaServer]``.
         """
-        server_registry: p.Ldif.ServerRegistry = self._server
-        resolved = server_registry.resolve_schema_server(server_type)
-        if resolved is None:
-            return e.fail_not_found(
-                "schema_server",
-                server_type,
-                result_type=r[p.Ldif.SchemaServer],
-            )
-        return r[p.Ldif.SchemaServer].ok(resolved)
-
+        return self._resolve_registry_server(
+            server_type,
+            resource_type="schema_server",
+            lookup=lambda registry, requested: registry.resolve_schema_server(requested),
+        )
     def resolve_server_bundle(
         self,
         server_type: str,

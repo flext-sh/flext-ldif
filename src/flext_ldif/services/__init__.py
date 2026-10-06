@@ -16,6 +16,10 @@ if TYPE_CHECKING:
     from flext_ldif.services.acl import FlextLdifAcl
     from flext_ldif.services.analysis import FlextLdifAnalysis
     from flext_ldif.services.categorization import FlextLdifCategorization
+    from flext_ldif.services.categorization_filtering import (
+        FlextLdifCategorizationFiltering,
+    )
+    from flext_ldif.services.categorization_rules import FlextLdifCategorizationRules
     from flext_ldif.services.conversion import FlextLdifConversion
     from flext_ldif.services.conversion_acl import FlextLdifConversionAclMixin
     from flext_ldif.services.conversion_acl_preserve import (
@@ -29,6 +33,7 @@ if TYPE_CHECKING:
     )
     from flext_ldif.services.conversion_support import FlextLdifConversionSupportMixin
     from flext_ldif.services.detector import FlextLdifDetector
+    from flext_ldif.services.detector_scoring import FlextLdifDetectorScoring
     from flext_ldif.services.entries import FlextLdifEntries
     from flext_ldif.services.filters import FlextLdifFilters
     from flext_ldif.services.migration import FlextLdifMigrationPipeline
@@ -44,6 +49,8 @@ __all__: tuple[str, ...] = (
     "FlextLdifAcl",
     "FlextLdifAnalysis",
     "FlextLdifCategorization",
+    "FlextLdifCategorizationFiltering",
+    "FlextLdifCategorizationRules",
     "FlextLdifConversion",
     "FlextLdifConversionAclMixin",
     "FlextLdifConversionAclPreserveMixin",
@@ -53,6 +60,7 @@ __all__: tuple[str, ...] = (
     "FlextLdifConversionSchemaMixin",
     "FlextLdifConversionSupportMixin",
     "FlextLdifDetector",
+    "FlextLdifDetectorScoring",
     "FlextLdifEntries",
     "FlextLdifFilters",
     "FlextLdifMigrationPipeline",
@@ -71,6 +79,8 @@ install_lazy_exports(
         "FlextLdifAcl": ".acl",
         "FlextLdifAnalysis": ".analysis",
         "FlextLdifCategorization": ".categorization",
+        "FlextLdifCategorizationFiltering": ".categorization_filtering",
+        "FlextLdifCategorizationRules": ".categorization_rules",
         "FlextLdifConversion": ".conversion",
         "FlextLdifConversionAclMixin": ".conversion_acl",
         "FlextLdifConversionAclPreserveMixin": ".conversion_acl_preserve",
@@ -80,6 +90,7 @@ install_lazy_exports(
         "FlextLdifConversionSchemaMixin": ".conversion_schema",
         "FlextLdifConversionSupportMixin": ".conversion_support",
         "FlextLdifDetector": ".detector",
+        "FlextLdifDetectorScoring": ".detector_scoring",
         "FlextLdifEntries": ".entries",
         "FlextLdifFilters": ".filters",
         "FlextLdifMigrationPipeline": ".migration",

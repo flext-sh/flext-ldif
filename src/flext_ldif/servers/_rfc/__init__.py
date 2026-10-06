@@ -16,6 +16,11 @@ if TYPE_CHECKING:
     from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
     from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
     from flext_ldif.servers._rfc.schema import FlextLdifServersRfcSchema
+    from flext_ldif.servers._rfc.schema_parse import FlextLdifServersRfcSchemaParseMixin
+    from flext_ldif.servers._rfc.schema_values import (
+        FlextLdifServersRfcSchemaValuesMixin,
+    )
+    from flext_ldif.servers._rfc.schema_write import FlextLdifServersRfcSchemaWriteMixin
     from flext_ldif.servers._rfc.server_constants import FlextLdifServersRfcConstants
 
 
@@ -24,6 +29,9 @@ __all__: tuple[str, ...] = (
     "FlextLdifServersRfcConstants",
     "FlextLdifServersRfcEntry",
     "FlextLdifServersRfcSchema",
+    "FlextLdifServersRfcSchemaParseMixin",
+    "FlextLdifServersRfcSchemaValuesMixin",
+    "FlextLdifServersRfcSchemaWriteMixin",
 )
 
 install_lazy_exports(
@@ -34,6 +42,9 @@ install_lazy_exports(
         "FlextLdifServersRfcConstants": ".server_constants",
         "FlextLdifServersRfcEntry": ".entry",
         "FlextLdifServersRfcSchema": ".schema",
+        "FlextLdifServersRfcSchemaParseMixin": ".schema_parse",
+        "FlextLdifServersRfcSchemaValuesMixin": ".schema_values",
+        "FlextLdifServersRfcSchemaWriteMixin": ".schema_write",
     }),
     public_exports=__all__,
 )

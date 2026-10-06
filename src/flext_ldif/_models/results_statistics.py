@@ -193,30 +193,6 @@ class FlextLdifModelsResultsStatistics:
         def summary(self) -> FlextLdifModelsResultsStatistics.StatisticsSummary:
             return self.to_summary()
 
-        @classmethod
-        def for_pipeline(
-            cls,
-            *,
-            total: int,
-            processed: int,
-            rejected: int,
-            schema: int,
-            hierarchy: int,
-            users: int,
-            groups: int,
-            acl: int,
-        ) -> Self:
-            return cls(
-                total_entries=total,
-                processed_entries=processed,
-                rejected_entries=rejected,
-                schema_entries=schema,
-                hierarchy_entries=hierarchy,
-                user_entries=users,
-                group_entries=groups,
-                acl_entries=acl,
-            )
-
         def merge(self, other: Self) -> Self:
             merged_reasons = t.int_dict_adapter().validate_python(
                 self.rejection_reasons,

@@ -6,15 +6,21 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping
+from collections.abc import Callable, Mapping, MutableMapping
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
+from flext_ldif.servers._oid.schema_normalize import (
+    FlextLdifServersOidSchemaNormalizeMixin,
+)
 from flext_ldif.servers._oid.server_constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 
-class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
+class FlextLdifServersOidSchema(
+    FlextLdifServersOidSchemaNormalizeMixin,
+    FlextLdifServersRfc.Schema,
+):
     """Oracle Internet Directory (OID) schema servers implementation."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
@@ -83,6 +89,44 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             "name": attr_data.name,
         }
 
+    def _guarded_post_parse[T](
+        self,
+        item: T,
+        normalize: Callable[[T], T],
+        item_kind: str,
+    ) -> p.Result[T]:
+        """Normalize one parsed schema item, guarding OID hook failures.
+
+        Returns:
+            The resulting ``p.Result[T]``.
+        """
+        try:
+            return r[T].ok(normalize(item))
+        except c.Ldif.EXC_LDIF_PARSE as e:
+            FlextLdifServersOidSchema._module_logger.exception(
+                f"OID post-parse {item_kind} hook failed",
+            )
+            return r[T].fail_op(f"OID post-parse {item_kind} hook", e)
+
+    def _guarded_parse[T](
+        self,
+        definition: str,
+        parse: Callable[[str], p.Result[T]],
+        item_kind: str,
+    ) -> p.Result[T]:
+        """Run one OID parse step, guarding LDIF parse failures.
+
+        Returns:
+            The resulting ``p.Result[T]``.
+        """
+        try:
+            return parse(definition)
+        except c.Ldif.EXC_LDIF_PARSE as e:
+            FlextLdifServersOidSchema._module_logger.exception(
+                f"OID {item_kind} parsing failed",
+            )
+            return r[T].fail_op(f"OID {item_kind} parsing", e)
+
     @override
     def _hook_post_parse_attribute(
         self,
@@ -93,47 +137,12 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
         Returns:
             The resulting ``p.Result[m.Ldif.SchemaAttribute]``.
         """
-        try:
-            return r[m.Ldif.SchemaAttribute].ok(self._normalize_oid_attribute(attr))
-        except c.Ldif.EXC_LDIF_PARSE as e:
-            FlextLdifServersOidSchema._module_logger.exception(
-                "OID post-parse attribute hook failed",
-            )
-            return r[m.Ldif.SchemaAttribute].fail_op("OID post-parse attribute hook", e)
-
-    def _normalize_oid_attribute(
-        self,
-        attr: m.Ldif.SchemaAttribute,
-    ) -> m.Ldif.SchemaAttribute:
-        """Normalize OID-specific schema attribute fields.
-
-        Returns:
-            The resulting ``m.Ldif.SchemaAttribute``.
-        """
-        if attr.syntax:
-            attr.syntax = u.Ldif.normalize_syntax_oid(attr.syntax)
-        normalized_equality, normalized_substr = u.Ldif.normalize_matching_rules(
-            attr.equality,
-            attr.substr,
-            replacements=FlextLdifServersOidConstants.MATCHING_RULE_TO_RFC,
-            normalized_substr_values=FlextLdifServersOidConstants.MATCHING_RULE_TO_RFC,
+        return self._guarded_post_parse(
+            attr,
+            self._normalize_oid_attribute,
+            "attribute",
         )
-        if normalized_equality != attr.equality:
-            attr.equality = normalized_equality
-        if normalized_substr != attr.substr:
-            attr.substr = normalized_substr
-        if attr.ordering:
-            normalized_ordering = FlextLdifServersOidConstants.MATCHING_RULE_TO_RFC.get(
-                attr.ordering,
-            )
-            if normalized_ordering:
-                attr.ordering = normalized_ordering
-        if attr.syntax:
-            attr.syntax = u.Ldif.normalize_syntax_oid(
-                attr.syntax,
-                replacements=FlextLdifServersOidConstants.SYNTAX_OID_TO_RFC,
-            )
-        return self._transform_case_ignore_substrings(attr)
+
 
     @override
     def _hook_post_parse_objectclass(
@@ -145,159 +154,16 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
         Returns:
             The resulting ``p.Result[m.Ldif.SchemaObjectClass]``.
         """
-        try:
-            return r[m.Ldif.SchemaObjectClass].ok(self._normalize_oid_objectclass(oc))
-        except c.Ldif.EXC_LDIF_PARSE as e:
-            FlextLdifServersOidSchema._module_logger.exception(
-                "OID post-parse objectclass hook failed",
-            )
-            return r[m.Ldif.SchemaObjectClass].fail_op(
-                "OID post-parse objectclass hook",
-                e,
-            )
-
-    def _normalize_oid_objectclass(
-        self,
-        oc: m.Ldif.SchemaObjectClass,
-    ) -> m.Ldif.SchemaObjectClass:
-        """Normalize OID-specific objectClass fields.
-
-        Returns:
-            The resulting ``m.Ldif.SchemaObjectClass``.
-        """
-        original_format_str = (
-            str(
-                oc.metadata.extensions.get(
-                    c.Ldif.SCHEMA_ORIGINAL_FORMAT,
-                    oc.metadata.extensions.get(c.Ldif.ORIGINAL_FORMAT, ""),
-                ),
-            )
-            if oc.metadata and oc.metadata.extensions
-            else ""
+        return self._guarded_post_parse(
+            oc,
+            self._normalize_oid_objectclass,
+            "objectclass",
         )
-        updated_sup = self._normalize_sup_from_model(oc)
-        if updated_sup is None and original_format_str:
-            updated_sup = self._normalize_sup_from_original_format(original_format_str)
-        updated_kind = self._normalize_auxiliary_typo(oc, original_format_str)
-        normalized_must = self._normalize_attribute_names(oc.must)
-        normalized_may = self._normalize_attribute_names(oc.may)
-        update_dict: MutableMapping[str, str | t.MutableSequenceOf[str] | None] = {
-            k: v
-            for k, v in {
-                "sup": updated_sup,
-                "kind": updated_kind,
-                "must": normalized_must if normalized_must != oc.must else None,
-                "may": normalized_may if normalized_may != oc.may else None,
-            }.items()
-            if v
-        }
-        if update_dict:
-            updated_oc: m.Ldif.SchemaObjectClass = oc.model_copy(update=update_dict)
-            return updated_oc
-        return oc
 
-    @staticmethod
-    def _normalize_attribute_names(
-        attr_list: t.MutableSequenceOf[str] | None,
-    ) -> t.MutableSequenceOf[str] | None:
-        """Normalize attribute names using OID case mappings.
 
-        Returns:
-            The resulting ``t.MutableSequenceOf[str] | None``.
-        """
-        if not attr_list:
-            return attr_list
-        case_map = FlextLdifServersOidConstants.ATTR_NAME_CASE_MAP
-        return [case_map.get(attr_name.lower(), attr_name) for attr_name in attr_list]
 
-    @staticmethod
-    def _normalize_auxiliary_typo(
-        oc_data: m.Ldif.SchemaObjectClass,
-        original_format_str: str,
-    ) -> str | None:
-        """Normalize AUXILLARY typo to AUXILIARY.
 
-        Returns:
-            The resulting ``str | None``.
-        """
-        kind = getattr(oc_data, "kind", None)
-        match (kind, original_format_str):
-            case [k, _] if k and k.upper() == "AUXILLARY":
-                FlextLdifServersOidSchema._module_logger.debug(
-                    "OID→RFC transform: AUXILLARY → AUXILIARY",
-                    objectclass_name=oc_data.name,
-                    objectclass_oid=oc_data.oid,
-                    original_kind=k,
-                    normalized_kind="AUXILIARY",
-                )
-                return "AUXILIARY"
-            case [_, fmt] if fmt and "AUXILLARY" in fmt:
-                FlextLdifServersOidSchema._module_logger.debug(
-                    "OID→RFC: AUXILLARY → AUXILIARY (original_format)",
-                    objectclass_name=oc_data.name,
-                    objectclass_oid=oc_data.oid,
-                    original_format_preview=fmt[
-                        : FlextLdifServersOidConstants.MAX_LOG_LINE_LENGTH
-                    ],
-                )
-                return "AUXILIARY"
-            case _:
-                return None
 
-    def _normalize_sup_from_model(self, oc_data: m.Ldif.SchemaObjectClass) -> str | (
-        t.MutableSequenceOf[str] | None
-    ):
-        """Normalize SUP from objectClass model.
-
-        Returns:
-            The resulting ``str | (t.MutableSequenceOf[str] | None)``.
-        """
-        if not oc_data.sup:
-            return None
-        sup_normalize_set = {"( top )", "(top)", "'top'", '"top"'}
-        match oc_data.sup:
-            case sup_str if (sup_clean := str(sup_str).strip()) in sup_normalize_set:
-                FlextLdifServersOidSchema._module_logger.debug(
-                    "OID→RFC transform: SUP normalization",
-                    objectclass_name=oc_data.name,
-                    objectclass_oid=oc_data.oid,
-                    original_sup=sup_clean,
-                    normalized_sup="top",
-                )
-                return "top"
-            case [sup_item] if (sup_clean := sup_item.strip()) in sup_normalize_set:
-                FlextLdifServersOidSchema._module_logger.debug(
-                    "OID→RFC transform: SUP normalization (list)",
-                    objectclass_name=oc_data.name,
-                    objectclass_oid=oc_data.oid,
-                    original_sup=sup_clean,
-                    normalized_sup="top",
-                )
-                return "top"
-            case _:
-                return None
-
-    @staticmethod
-    def _normalize_sup_from_original_format(
-        original_format_str: str,
-    ) -> str | None:
-        """Normalize SUP from original_format string.
-
-        Returns:
-            The resulting ``str | None``.
-        """
-        sup_patterns = ("SUP 'top'", "SUP ( top )", "SUP (top)")
-        match original_format_str:
-            case s if any(pattern in s for pattern in sup_patterns):
-                FlextLdifServersOidSchema._module_logger.debug(
-                    "OID→RFC transform: SUP normalization (from original_format)",
-                    original_format_preview=s[
-                        : FlextLdifServersOidConstants.MAX_LOG_LINE_LENGTH
-                    ],
-                )
-                return "top"
-            case _:
-                return None
 
     @override
     def _parse_attribute(
@@ -309,13 +175,11 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
         Returns:
             The resulting ``p.Result[m.Ldif.SchemaAttribute]``.
         """
-        try:
-            return self._parse_oid_attribute(attr_definition)
-        except c.Ldif.EXC_LDIF_PARSE as e:
-            FlextLdifServersOidSchema._module_logger.exception(
-                "OID attribute parsing failed",
-            )
-            return r[m.Ldif.SchemaAttribute].fail_op("OID attribute parsing", e)
+        return self._guarded_parse(
+            attr_definition,
+            self._parse_oid_attribute,
+            "attribute",
+        )
 
     def _parse_oid_attribute(
         self,
@@ -355,13 +219,11 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
         Returns:
             The resulting ``p.Result[m.Ldif.SchemaObjectClass]``.
         """
-        try:
-            return self._parse_oid_objectclass(oc_definition)
-        except c.Ldif.EXC_LDIF_PARSE as e:
-            FlextLdifServersOidSchema._module_logger.exception(
-                "OID objectClass parsing failed",
-            )
-            return r[m.Ldif.SchemaObjectClass].fail_op("OID objectClass parsing", e)
+        return self._guarded_parse(
+            oc_definition,
+            self._parse_oid_objectclass,
+            "objectclass",
+        )
 
     def _parse_oid_objectclass(
         self,
@@ -445,48 +307,100 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             x_oid=attr_data.x_oid,
         )
 
-    @staticmethod
-    def _transform_case_ignore_substrings(
-        attr_data: m.Ldif.SchemaAttribute,
-    ) -> m.Ldif.SchemaAttribute:
-        """Transform caseIgnoreSubstringsMatch from EQUALITY to SUBSTR.
+
+    def _oid_matching_rules(
+        self,
+        attr_copy: m.Ldif.SchemaAttribute,
+    ) -> tuple[str | None, str | None, str | None]:
+        """Resolve OID-denormalized equality/substr/ordering matching rules.
 
         Returns:
-            The resulting ``m.Ldif.SchemaAttribute``.
+            The resulting ``tuple[str | None, str | None, str | None]``.
         """
-        normalized_equality, normalized_substr = u.Ldif.normalize_matching_rules(
-            attr_data.equality,
-            attr_data.substr,
-            substr_rules_in_equality={
-                "caseIgnoreSubstringsMatch": "caseIgnoreMatch",
-                "caseIgnoreSubStringsMatch": "caseIgnoreMatch",
-            },
+        source_rules: t.JsonPayload | None = None
+        if attr_copy.metadata and attr_copy.metadata.extensions:
+            source_rules = attr_copy.metadata.extensions.get(
+                c.Ldif.SCHEMA_SOURCE_MATCHING_RULES,
+            )
+        if isinstance(source_rules, Mapping):
+            return self._matching_rules_from_source(source_rules, attr_copy)
+        oid_equality, oid_substr = u.Ldif.normalize_matching_rules(
+            attr_copy.equality,
+            attr_copy.substr,
+            replacements=FlextLdifServersOidConstants.MATCHING_RULE_RFC_TO_OID,
+            normalized_substr_values=FlextLdifServersOidConstants.MATCHING_RULE_RFC_TO_OID,
         )
-        if (
-            normalized_equality != attr_data.equality
-            or normalized_substr != attr_data.substr
-        ):
-            FlextLdifServersOidSchema._module_logger.debug(
-                "Moved caseIgnoreSubstringsMatch from EQUALITY to SUBSTR",
-                attribute_name=attr_data.name,
-                original_equality=attr_data.equality or "",
-                normalized_substr=normalized_substr or "",
+        oid_ordering = attr_copy.ordering
+        if attr_copy.ordering:
+            mapped = FlextLdifServersOidConstants.MATCHING_RULE_RFC_TO_OID.get(
+                attr_copy.ordering,
             )
-            original_format = (
-                attr_data.metadata.extensions.get("original_format")
-                if attr_data.metadata and attr_data.metadata.extensions
-                else None
+            if mapped:
+                oid_ordering = mapped
+        return (oid_equality, oid_substr, oid_ordering)
+
+    @staticmethod
+    def _matching_rules_from_source(
+        source_rules: t.JsonPayload,
+        attr_copy: m.Ldif.SchemaAttribute,
+    ) -> tuple[str | None, str | None, str | None]:
+        """Resolve matching rules from preserved source matching-rule metadata.
+
+        Returns:
+            The resulting ``tuple[str | None, str | None, str | None]``.
+        """
+        equality_raw = source_rules.get("equality", attr_copy.equality)
+        substr_raw = source_rules.get("substr", attr_copy.substr)
+        ordering_raw = source_rules.get("ordering", attr_copy.ordering)
+        oid_equality = (
+            equality_raw if isinstance(equality_raw, str) else attr_copy.equality
+        )
+        oid_substr = substr_raw if isinstance(substr_raw, str) else attr_copy.substr
+        oid_ordering = (
+            ordering_raw if isinstance(ordering_raw, str) else attr_copy.ordering
+        )
+        return (oid_equality, oid_substr, oid_ordering)
+
+    @staticmethod
+    def _oid_syntax_value(
+        attr_copy: m.Ldif.SchemaAttribute,
+    ) -> t.JsonPayload | None:
+        """Resolve the OID-denormalized syntax OID for writing.
+
+        Returns:
+            The resulting ``t.JsonPayload | None``.
+        """
+        source_syntax: t.JsonPayload | None = None
+        if attr_copy.metadata and attr_copy.metadata.extensions:
+            source_syntax = attr_copy.metadata.extensions.get(
+                c.Ldif.SCHEMA_SOURCE_SYNTAX_OID,
             )
-            transformed = attr_data.model_copy(
-                update={"equality": normalized_equality, "substr": normalized_substr},
+        return (
+            source_syntax
+            if isinstance(source_syntax, str)
+            else (attr_copy.syntax or None)
+        )
+
+    @staticmethod
+    def _oid_write_metadata(
+        attr_copy: m.Ldif.SchemaAttribute,
+    ) -> m.Ldif.ServerMetadata | None:
+        """Strip original-format tracking from metadata before the OID write.
+
+        Returns:
+            The resulting ``m.Ldif.ServerMetadata | None``.
+        """
+        if attr_copy.metadata and attr_copy.metadata.extensions:
+            keys_to_remove = {c.Ldif.SCHEMA_ORIGINAL_FORMAT}
+            new_extensions: t.MutableJsonMapping = {
+                k: v
+                for k, v in attr_copy.metadata.extensions.items()
+                if k not in keys_to_remove
+            }
+            return attr_copy.metadata.model_copy(
+                update={"extensions": new_extensions},
             )
-            if original_format and transformed.metadata:
-                transformed.metadata.extensions[c.Ldif.SCHEMA_ORIGINAL_FORMAT] = (
-                    original_format
-                )
-            transformed_attr: m.Ldif.SchemaAttribute = transformed
-            return transformed_attr
-        return attr_data
+        return attr_copy.metadata
 
     @override
     def _write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> p.Result[str]:
@@ -496,63 +410,14 @@ class FlextLdifServersOidSchema(FlextLdifServersRfc.Schema):
             The resulting ``p.Result[str]``.
         """
         attr_copy = attr_data.model_copy(deep=True)
-        source_rules: t.JsonPayload | None = None
-        source_syntax: t.JsonPayload | None = None
-        if attr_copy.metadata and attr_copy.metadata.extensions:
-            source_rules = attr_copy.metadata.extensions.get(
-                c.Ldif.SCHEMA_SOURCE_MATCHING_RULES,
-            )
-            source_syntax = attr_copy.metadata.extensions.get(
-                c.Ldif.SCHEMA_SOURCE_SYNTAX_OID,
-            )
-        if isinstance(source_rules, Mapping):
-            equality_raw = source_rules.get("equality", attr_copy.equality)
-            substr_raw = source_rules.get("substr", attr_copy.substr)
-            ordering_raw = source_rules.get("ordering", attr_copy.ordering)
-            oid_equality = (
-                equality_raw if isinstance(equality_raw, str) else attr_copy.equality
-            )
-            oid_substr = substr_raw if isinstance(substr_raw, str) else attr_copy.substr
-            oid_ordering = (
-                ordering_raw if isinstance(ordering_raw, str) else attr_copy.ordering
-            )
-        else:
-            oid_equality, oid_substr = u.Ldif.normalize_matching_rules(
-                attr_copy.equality,
-                attr_copy.substr,
-                replacements=FlextLdifServersOidConstants.MATCHING_RULE_RFC_TO_OID,
-                normalized_substr_values=FlextLdifServersOidConstants.MATCHING_RULE_RFC_TO_OID,
-            )
-            oid_ordering = attr_copy.ordering
-            if attr_copy.ordering:
-                mapped = FlextLdifServersOidConstants.MATCHING_RULE_RFC_TO_OID.get(
-                    attr_copy.ordering,
-                )
-                if mapped:
-                    oid_ordering = mapped
-        oid_syntax = (
-            source_syntax
-            if isinstance(source_syntax, str)
-            else (attr_copy.syntax or None)
-        )
-        oid_metadata = attr_copy.metadata
-        if attr_copy.metadata and attr_copy.metadata.extensions:
-            keys_to_remove = {c.Ldif.SCHEMA_ORIGINAL_FORMAT}
-            new_extensions: t.MutableJsonMapping = {
-                k: v
-                for k, v in attr_copy.metadata.extensions.items()
-                if k not in keys_to_remove
-            }
-            oid_metadata = attr_copy.metadata.model_copy(
-                update={"extensions": new_extensions},
-            )
+        oid_equality, oid_substr, oid_ordering = self._oid_matching_rules(attr_copy)
         attr_copy = attr_copy.model_copy(
             update={
                 "equality": oid_equality,
                 "substr": oid_substr,
                 "ordering": oid_ordering,
-                "syntax": oid_syntax,
-                "metadata": oid_metadata,
+                "syntax": self._oid_syntax_value(attr_copy),
+                "metadata": self._oid_write_metadata(attr_copy),
             },
         )
         return super()._write_attribute(attr_copy)

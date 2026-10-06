@@ -12,6 +12,7 @@ import re
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
+from flext_ldif.servers._base.dialect_schema import FlextLdifServersDialectSchema
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 
@@ -161,42 +162,12 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         )
         ACL_TARGET_WILDCARD: ClassVar[str] = "*"
 
-    class Schema(FlextLdifServersRfc.Schema):
+    class Schema(FlextLdifServersDialectSchema):
         """Active Directory schema server."""
 
         _NORMALIZE_OBJECTCLASS: ClassVar[bool] = True
-
-        @override
-        def can_handle_attribute(
-            self,
-            attr_definition: str | m.Ldif.SchemaAttribute,
-        ) -> bool:
-            """Detect AD attribute definitions using centralized constants.
-
-            Returns:
-                The resulting ``bool``.
-            """
-            matches: bool = u.Ldif.matches_server_patterns(
-                value=attr_definition,
-                settings=FlextLdifServersAd.Constants.ATTRIBUTE_PATTERN_SETTINGS,
-            )
-            return matches
-
-        @override
-        def can_handle_objectclass(
-            self,
-            oc_definition: str | m.Ldif.SchemaObjectClass,
-        ) -> bool:
-            """Detect AD objectClass definitions using centralized constants.
-
-            Returns:
-                The resulting ``bool``.
-            """
-            matches: bool = u.Ldif.matches_server_patterns(
-                value=oc_definition,
-                settings=FlextLdifServersAd.Constants.OBJECTCLASS_PATTERN_SETTINGS,
-            )
-            return matches
+        _ATTRIBUTE_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig]
+        _OBJECTCLASS_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig]
 
     class Acl(FlextLdifServersRfc.Acl):
         """Active Directory ACL server handling nTSecurityDescriptor entries."""
@@ -286,44 +257,48 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             return r[m.Ldif.Acl].ok(acl_model)
 
         @staticmethod
+        def _decoded_sddl_text(decoded_bytes: bytes) -> str | None:
+            """Decode raw SDDL bytes preferring UTF-16LE then UTF-8.
+
+            Returns:
+                The resulting ``str | None``.
+            """
+            try:
+                return (
+                    decoded_bytes.decode(
+                        FlextLdifServersAd.Constants.ENCODING_UTF16LE,
+                        errors=FlextLdifServersAd.Constants.ENCODING_ERROR_IGNORE,
+                    ).strip()
+                    or decoded_bytes.decode(
+                        FlextLdifServersAd.Constants.ENCODING_UTF8,
+                        errors=FlextLdifServersAd.Constants.ENCODING_ERROR_IGNORE,
+                    ).strip()
+                )
+            except UnicodeDecodeError:
+                return None
+
+        @staticmethod
+        def _decoded_base64_sddl(raw_value: str) -> str | None:
+            """Decode base64-encoded SDDL bytes, or None when undecodable.
+
+            Returns:
+                The resulting ``str | None``.
+            """
+            try:
+                decoded_bytes = base64.b64decode(raw_value, validate=True)
+            except binascii.Error:
+                return None
+            return FlextLdifServersAd._decoded_sddl_text(decoded_bytes)
+
+        @staticmethod
         def _decode_sddl(raw_value: str, *, is_base64: bool) -> str | None:
             """Decode SDDL from raw or base64 nTSecurityDescriptor value.
 
             Returns:
                 The resulting ``str | None``.
             """
-
-            def _decode_base64() -> p.Result[str]:
-                """Decode base64 SDDL bytes, propagating the decode failure.
-
-                Returns:
-                    The resulting ``p.Result[str]``.
-                """
-                try:
-                    decoded_bytes = base64.b64decode(raw_value, validate=True)
-                except binascii.Error as exc:
-                    return r[str].fail(str(exc), exception=exc)
-                try:
-                    decoded = (
-                        decoded_bytes.decode(
-                            FlextLdifServersAd.Constants.ENCODING_UTF16LE,
-                            errors=FlextLdifServersAd.Constants.ENCODING_ERROR_IGNORE,
-                        ).strip()
-                        or decoded_bytes.decode(
-                            FlextLdifServersAd.Constants.ENCODING_UTF8,
-                            errors=FlextLdifServersAd.Constants.ENCODING_ERROR_IGNORE,
-                        ).strip()
-                    )
-                except UnicodeDecodeError as exc:
-                    return r[str].fail(str(exc), exception=exc)
-                return r[str].ok(decoded)
-
             if is_base64 and raw_value:
-                decode_result = _decode_base64()
-                if decode_result.success:
-                    decoded_value: str = decode_result.value
-                    return decoded_value
-                return None
+                return FlextLdifServersAd._decoded_base64_sddl(raw_value)
             if (
                 raw_value
                 and FlextLdifServersAd.Constants.ACL_SDDL_PREFIX_PATTERN_RE.match(
@@ -389,6 +364,16 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 oc.lower() in FlextLdifServersAd.Constants.DETECTION_OBJECTCLASS_NAMES
                 for oc in normalized_object_classes
             )
+
+
+# The AD dialect schema settings are owned by ``Constants`` and bound here
+# because a nested class body cannot reference the not-yet-defined outer class.
+FlextLdifServersAd.Schema._ATTRIBUTE_PATTERN_SETTINGS = (
+    FlextLdifServersAd.Constants.ATTRIBUTE_PATTERN_SETTINGS
+)
+FlextLdifServersAd.Schema._OBJECTCLASS_PATTERN_SETTINGS = (
+    FlextLdifServersAd.Constants.OBJECTCLASS_PATTERN_SETTINGS
+)
 
 
 __all__: list[str] = ["FlextLdifServersAd"]

@@ -23,6 +23,17 @@ from tests import m
 if TYPE_CHECKING:
     from flext_core import t
 
+_LATER_VARIANT_CASES: t.VariadicTuple[str] = (
+    "cn=admin,dc=example,dc=com",
+    "CN=ADMIN,DC=EXAMPLE,DC=COM",
+    "Cn=Admin,Dc=Example,Dc=Com",
+)
+_RESOLUTION_LOOKUP_CASES: t.VariadicTuple[str] = (
+    "cn=test,dc=example,dc=com",
+    "CN=Test,DC=Example,DC=Com",
+    "cn=TEST,dc=EXAMPLE,dc=COM",
+)
+
 
 class TestsFlextLdifDnCaseHandling:
     """Public-contract behavior of the DN case registry."""
@@ -49,14 +60,7 @@ class TestsFlextLdifDnCaseHandling:
         tm.that(canonical, eq="CN=Admin,DC=Example,DC=Com")
 
     @staticmethod
-    @pytest.mark.parametrize(
-        "variant",
-        [
-            "cn=admin,dc=example,dc=com",
-            "CN=ADMIN,DC=EXAMPLE,DC=COM",
-            "Cn=Admin,Dc=Example,Dc=Com",
-        ],
-    )
+    @pytest.mark.parametrize("variant", _LATER_VARIANT_CASES)
     def test_later_variants_return_the_original_canonical(
         registry: m.Ldif.DnRegistry,
         variant: str,
@@ -103,14 +107,7 @@ class TestsFlextLdifDnCaseHandling:
     # -- resolution ----------------------------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize(
-        "lookup",
-        [
-            "cn=test,dc=example,dc=com",
-            "CN=Test,DC=Example,DC=Com",
-            "cn=TEST,dc=EXAMPLE,dc=COM",
-        ],
-    )
+    @pytest.mark.parametrize("lookup", _RESOLUTION_LOOKUP_CASES)
     def test_resolution_is_case_insensitive(
         registry: m.Ldif.DnRegistry,
         lookup: str,

@@ -22,10 +22,11 @@ if TYPE_CHECKING:
     from tests.protocols import TestsFlextLdifProtocols, p
     from tests.settings import TestsFlextLdifSettings
     from tests.typings import TestsFlextLdifTypes, t
-    from tests.utilities import TestsFlextLdifUtilities, u
+    from tests.utilities import SchemaExpectations, TestsFlextLdifUtilities, u
 
 
 __all__: tuple[str, ...] = (
+    "SchemaExpectations",
     "TestsFlextLdifConstants",
     "TestsFlextLdifModels",
     "TestsFlextLdifProtocols",
@@ -57,6 +58,7 @@ install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
+        "SchemaExpectations": ".utilities",
         "TestsFlextLdifConstants": ".constants",
         "TestsFlextLdifModels": ".models",
         "TestsFlextLdifProtocols": ".protocols",

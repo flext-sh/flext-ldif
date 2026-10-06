@@ -6,7 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import c, p, r, s, t
+from collections.abc import Callable
+
+from flext_ldif import c, m, p, r, s, t
 
 
 class FlextLdifConversionSupportMixin(s):
@@ -15,6 +17,25 @@ class FlextLdifConversionSupportMixin(s):
     @staticmethod
     def _get_schema_from_attribute(server: p.Ldif.ServerServer) -> p.Ldif.SchemaServer:
         return server.schema_server
+
+    def _guard_conversion[T](
+        self,
+        operation: str,
+        convert: Callable[[], p.Result[T]],
+    ) -> p.Result[T]:
+        """Run one conversion step under the canonical parse-failure guard.
+
+        Returns:
+            The resulting ``p.Result[T]``.
+        """
+        try:
+            return convert()
+        except c.Ldif.EXC_LDIF_PARSE as e:
+            self.logger.exception(
+                f"Failed to convert {operation} model",
+                error=str(e),
+            )
+            return r[T].fail_op(f"{operation} conversion", e)
 
     def _resolve_server(
         self,
@@ -120,6 +141,21 @@ class FlextLdifConversionSupportMixin(s):
         return support
 
     @staticmethod
+    def _record_schema_support(
+        parse_result: p.Result[m.Ldif.SchemaElement],
+        support_key: str,
+        support: t.MutableIntMapping,
+    ) -> t.MutableIntMapping:
+        """Record one schema parse probe outcome into the support map.
+
+        Returns:
+            The resulting ``t.MutableIntMapping``.
+        """
+        if parse_result.success:
+            support[support_key] = 1
+        return support
+
+    @staticmethod
     def _check_attribute_support(
         server_schema: p.Ldif.SchemaServer,
         test_attr_def: str,
@@ -130,10 +166,11 @@ class FlextLdifConversionSupportMixin(s):
         Returns:
             The resulting ``t.MutableIntMapping``.
         """
-        attribute_result = server_schema.parse_attribute(test_attr_def)
-        if attribute_result.success:
-            support[c.Ldif.SchemaItemKind.ATTRIBUTE.value] = 1
-        return support
+        return FlextLdifConversionSupportMixin._record_schema_support(
+            server_schema.parse_attribute(test_attr_def),
+            c.Ldif.SchemaItemKind.ATTRIBUTE.value,
+            support,
+        )
 
     @staticmethod
     def _check_entry_support(
@@ -160,10 +197,11 @@ class FlextLdifConversionSupportMixin(s):
         Returns:
             The resulting ``t.MutableIntMapping``.
         """
-        objectclass_result = server_schema.parse_objectclass(test_oc_def)
-        if objectclass_result.success:
-            support[c.Ldif.SchemaItemKind.OBJECTCLASS.value] = 1
-        return support
+        return FlextLdifConversionSupportMixin._record_schema_support(
+            server_schema.parse_objectclass(test_oc_def),
+            c.Ldif.SchemaItemKind.OBJECTCLASS.value,
+            support,
+        )
 
     def _check_schema_support(
         self,

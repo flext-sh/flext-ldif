@@ -28,7 +28,8 @@ This section is generated from public exports and real docstrings.
 ## Surface Summary
 
 - Primary facades: `FlextLdif`, `FlextLdifAcl`, `FlextLdifAnalysis`,
-  `FlextLdifCategorization`, `FlextLdifConfig`, `FlextLdifConstants` (+43 more)
+  `FlextLdifCategorization`, `FlextLdifCategorizationFiltering`,
+  `FlextLdifCategorizationRules` (+50 more)
 - Generated module pages: `9`
 
 Back to [project docs](../index.md).

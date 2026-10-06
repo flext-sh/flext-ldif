@@ -10,6 +10,7 @@ import re
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
+from flext_ldif.servers._base.dialect_schema import FlextLdifServersDialectSchema
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 
@@ -110,40 +111,11 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         ACL_PRIMARY_ATTRIBUTE_NAME: ClassVar[str] = "ibm-slapdaccesscontrol"
         ACL_SEPARATOR: ClassVar[str] = "#"
 
-    class Schema(FlextLdifServersRfc.Schema):
+    class Schema(FlextLdifServersDialectSchema):
         """IBM Tivoli Directory Server schema servers implementation."""
 
-        @override
-        def can_handle_attribute(
-            self,
-            attr_definition: str | m.Ldif.SchemaAttribute,
-        ) -> bool:
-            """Detect Tivoli-specific attributes.
-
-            Returns:
-                The resulting ``bool``.
-            """
-            matches: bool = u.Ldif.matches_server_patterns(
-                value=attr_definition,
-                settings=FlextLdifServersTivoli.Constants.ATTRIBUTE_PATTERN_SETTINGS,
-            )
-            return matches
-
-        @override
-        def can_handle_objectclass(
-            self,
-            oc_definition: str | m.Ldif.SchemaObjectClass,
-        ) -> bool:
-            """Detect Tivoli objectClass definitions.
-
-            Returns:
-                The resulting ``bool``.
-            """
-            matches: bool = u.Ldif.matches_server_patterns(
-                value=oc_definition,
-                settings=FlextLdifServersTivoli.Constants.OBJECTCLASS_PATTERN_SETTINGS,
-            )
-            return matches
+        _ATTRIBUTE_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig]
+        _OBJECTCLASS_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig]
 
     class Acl(FlextLdifServersRfc.Acl):
         """IBM Tivoli Directory Server ACL servers implementation."""
@@ -391,3 +363,12 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
 
 
 __all__: list[str] = ["FlextLdifServersTivoli"]
+
+# The Tivoli dialect schema settings are owned by ``Constants`` and bound here
+# because a nested class body cannot reference the not-yet-defined class.
+FlextLdifServersTivoli.Schema._ATTRIBUTE_PATTERN_SETTINGS = (
+    FlextLdifServersTivoli.Constants.ATTRIBUTE_PATTERN_SETTINGS
+)
+FlextLdifServersTivoli.Schema._OBJECTCLASS_PATTERN_SETTINGS = (
+    FlextLdifServersTivoli.Constants.OBJECTCLASS_PATTERN_SETTINGS
+)

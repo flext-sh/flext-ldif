@@ -21,6 +21,61 @@ if TYPE_CHECKING:
     from tests import p
 
 
+def _schema_attribute(
+    oid: str,
+    name: str,
+    desc: str,
+    syntax: str,
+) -> m.Ldif.SchemaAttribute:
+    """Build a minimal RFC attribute model with every optional field unset.
+
+    Returns:
+        The resulting ``m.Ldif.SchemaAttribute``.
+    """
+    return m.Ldif.SchemaAttribute(
+        oid=oid,
+        name=name,
+        desc=desc,
+        sup=None,
+        equality=None,
+        ordering=None,
+        substr=None,
+        syntax=syntax,
+        length=None,
+        usage=None,
+        x_origin=None,
+        x_file_ref=None,
+        x_name=None,
+        x_alias=None,
+        x_oid=None,
+    )
+
+
+def _assert_parse_input_success(
+    schema_server: FlextLdifServersRelaxed.Schema,
+    definition: str,
+    expected_success: bool,
+) -> None:
+    """Assert ``parse_input`` succeeds exactly when the definition recovers."""
+    result = schema_server.parse_input(definition)
+    tm.that(result.success, eq=expected_success)
+
+
+_CAN_HANDLE_ATTRIBUTE_CASES = (
+    pytest.param("( 1.2.3 NAME 'test' )", True, id="valid_attr"),
+    pytest.param("MALFORMED", False, id="malformed_no_oid"),
+    pytest.param("", False, id="empty"),
+    pytest.param("   ", False, id="whitespace"),
+)
+
+_CAN_HANDLE_OBJECTCLASS_CASES = (
+    pytest.param("( 1.2.3 NAME 'test' STRUCTURAL )", True, id="valid_oc"),
+    pytest.param("BROKEN CLASS", False, id="malformed_no_oid"),
+    pytest.param("", False, id="empty"),
+    pytest.param("   ", False, id="whitespace"),
+)
+
+
 @pytest.mark.unit
 class TestsFlextLdifRelaxed:
     """Behavioral test suite for the Relaxed server public contract.
@@ -131,22 +186,11 @@ class TestsFlextLdifRelaxed:
         schema_server: FlextLdifServersRelaxed.Schema,
     ) -> None:
         """Test writing attribute back to RFC format."""
-        attr_data = m.Ldif.SchemaAttribute(
-            oid="1.2.3.4",
-            name="testAttr",
-            desc="Test attribute",
-            sup=None,
-            equality=None,
-            ordering=None,
-            substr=None,
-            syntax="1.3.6.1.4.1.1466.115.121.1.15",
-            length=None,
-            usage=None,
-            x_origin=None,
-            x_file_ref=None,
-            x_name=None,
-            x_alias=None,
-            x_oid=None,
+        attr_data = _schema_attribute(
+            "1.2.3.4",
+            "testAttr",
+            "Test attribute",
+            "1.3.6.1.4.1.1466.115.121.1.15",
         )
         written: str = tm.ok(schema_server.write_attribute(attr_data))
         tm.that(written, is_=str)
@@ -327,13 +371,7 @@ class TestsFlextLdifRelaxed:
     @staticmethod
     @pytest.mark.parametrize(
         ("definition", "expected_success"),
-        [
-            ("( 1.2.3 NAME 'test' )", True),
-            ("MALFORMED", False),
-            ("", False),
-            ("   ", False),
-        ],
-        ids=["valid_attr", "malformed_no_oid", "empty", "whitespace"],
+        _CAN_HANDLE_ATTRIBUTE_CASES,
     )
     def test_can_handle_attribute_via_parse(
         schema_server: FlextLdifServersRelaxed.Schema,
@@ -342,19 +380,12 @@ class TestsFlextLdifRelaxed:
         expected_success: bool,
     ) -> None:
         """Test can_handle_attribute behavior through parse method."""
-        result = schema_server.parse_input(definition)
-        tm.that(result.success, eq=expected_success)
+        _assert_parse_input_success(schema_server, definition, expected_success)
 
     @staticmethod
     @pytest.mark.parametrize(
         ("definition", "expected_success"),
-        [
-            ("( 1.2.3 NAME 'test' STRUCTURAL )", True),
-            ("BROKEN CLASS", False),
-            ("", False),
-            ("   ", False),
-        ],
-        ids=["valid_oc", "malformed_no_oid", "empty", "whitespace"],
+        _CAN_HANDLE_OBJECTCLASS_CASES,
     )
     def test_can_handle_objectclass_via_parse(
         schema_server: FlextLdifServersRelaxed.Schema,
@@ -363,30 +394,18 @@ class TestsFlextLdifRelaxed:
         expected_success: bool,
     ) -> None:
         """Test can_handle_objectclass behavior through parse method."""
-        result = schema_server.parse_input(definition)
-        tm.that(result.success, eq=expected_success)
+        _assert_parse_input_success(schema_server, definition, expected_success)
 
     @staticmethod
     def test_conversion_attribute_oid_to_rfc(
         schema_server: FlextLdifServersRelaxed.Schema,
     ) -> None:
         """Test attribute conversion from OID format to c.RFC."""
-        attr_data = m.Ldif.SchemaAttribute(
-            oid="2.16.840.1.113894.1.1.1",
-            name="orclGUID",
-            desc="Oracle GUID",
-            sup=None,
-            equality=None,
-            ordering=None,
-            substr=None,
-            syntax="1.3.6.1.4.1.1466.115.121.1.40",
-            length=None,
-            usage=None,
-            x_origin=None,
-            x_file_ref=None,
-            x_name=None,
-            x_alias=None,
-            x_oid=None,
+        attr_data = _schema_attribute(
+            "2.16.840.1.113894.1.1.1",
+            "orclGUID",
+            "Oracle GUID",
+            "1.3.6.1.4.1.1466.115.121.1.40",
         )
         written: str = tm.ok(schema_server.write_attribute(attr_data))
         tm.that(written, has=["2.16.840.1.113894.1.1.1", "orclGUID"])

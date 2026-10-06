@@ -14,9 +14,25 @@ from flext_tests import tm
 from tests import c, u
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from tests import p, t
 
 _INVALID_DESCRIPTORS: t.VariadicTuple[str] = ("invalid name", "", " ", "has space")
+
+
+def _assert_descriptor(
+    api: p.Ldif.LdifClient,
+    validate: Callable[[str], p.Result[bool]],
+    name: str,
+    *,
+    is_valid: bool,
+) -> None:
+    """Assert one public descriptor check returns the expected verdict."""
+    result = validate(name)
+    is_valid_result = u.Tests.assert_success(result)
+
+    tm.that(is_valid_result, eq=is_valid)
 
 
 class TestsFlextLdifValidationService:
@@ -33,10 +49,7 @@ class TestsFlextLdifValidationService:
         name: str,
     ) -> None:
         """Test validate attribute name accepts valid descriptors."""
-        result = api.validate_attribute_name(name)
-        is_valid = u.Tests.assert_success(result)
-
-        tm.that(is_valid, eq=True)
+        _assert_descriptor(api, api.validate_attribute_name, name, is_valid=True)
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -49,10 +62,7 @@ class TestsFlextLdifValidationService:
         name: str,
     ) -> None:
         """Test validate attribute name rejects invalid descriptors."""
-        result = api.validate_attribute_name(name)
-        is_valid = u.Tests.assert_success(result)
-
-        tm.that(is_valid, eq=False)
+        _assert_descriptor(api, api.validate_attribute_name, name, is_valid=False)
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -65,10 +75,7 @@ class TestsFlextLdifValidationService:
         name: str,
     ) -> None:
         """Test validate objectclass name accepts valid descriptors."""
-        result = api.validate_objectclass_name(name)
-        is_valid = u.Tests.assert_success(result)
-
-        tm.that(is_valid, eq=True)
+        _assert_descriptor(api, api.validate_objectclass_name, name, is_valid=True)
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -81,10 +88,7 @@ class TestsFlextLdifValidationService:
         name: str,
     ) -> None:
         """Test validate objectclass name rejects invalid descriptors."""
-        result = api.validate_objectclass_name(name)
-        is_valid = u.Tests.assert_success(result)
-
-        tm.that(is_valid, eq=False)
+        _assert_descriptor(api, api.validate_objectclass_name, name, is_valid=False)
 
     @staticmethod
     @pytest.mark.parametrize(

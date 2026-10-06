@@ -18,6 +18,36 @@ from flext_tests import tm
 from flext_ldif import p
 from flext_ldif.services.server import FlextLdifServer
 
+_SYNTAX_NORMALIZATION_CASES: tuple[tuple[str, str, str], ...] = (
+    (
+        "( 2.16.840.1.113894.1.1.1 NAME 'orclIsEnabled' "
+        "SYNTAX 1.3.6.1.4.1.1466.115.121.1.1 SINGLE-VALUE )",
+        "1.3.6.1.4.1.1466.115.121.1.15",
+        "boolean-syntax-normalized-to-directorystring",
+    ),
+    (
+        "( 2.16.840.1.113894.1.1.2 NAME 'orclDirString' "
+        "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+        "1.3.6.1.4.1.1466.115.121.1.15",
+        "rfc-syntax-preserved",
+    ),
+)
+
+_SUPERIOR_NORMALIZATION_CASES: tuple[tuple[str, str, str], ...] = (
+    (
+        "( 2.16.840.1.113894.1.2.64 NAME 'orclReferenceObject' "
+        "SUP 'top' STRUCTURAL MAY ( orclOwnerGUID $ seeAlso ) )",
+        "top",
+        "quoted-sup-top",
+    ),
+    (
+        "( 2.16.840.1.113894.1.2.50 NAME 'orclParenSup' "
+        "SUP ( top ) STRUCTURAL MAY ( cn ) )",
+        "top",
+        "parenthesized-sup",
+    ),
+)
+
 
 class TestsFlextLdifOidServers:
     """Public-contract behavior of the OID schema server."""
@@ -42,20 +72,7 @@ class TestsFlextLdifOidServers:
     @staticmethod
     @pytest.mark.parametrize(
         ("attr_def", "expected_syntax"),
-        [
-            pytest.param(
-                "( 2.16.840.1.113894.1.1.1 NAME 'orclIsEnabled' "
-                "SYNTAX 1.3.6.1.4.1.1466.115.121.1.1 SINGLE-VALUE )",
-                "1.3.6.1.4.1.1466.115.121.1.15",
-                id="boolean-syntax-normalized-to-directorystring",
-            ),
-            pytest.param(
-                "( 2.16.840.1.113894.1.1.2 NAME 'orclDirString' "
-                "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
-                "1.3.6.1.4.1.1466.115.121.1.15",
-                id="rfc-syntax-preserved",
-            ),
-        ],
+        [pytest.param(*tc[:2], id=tc[2]) for tc in _SYNTAX_NORMALIZATION_CASES],
     )
     def test_parse_attribute_normalizes_syntax_oid(
         schema: p.Ldif.SchemaServer,
@@ -147,20 +164,7 @@ class TestsFlextLdifOidServers:
     @staticmethod
     @pytest.mark.parametrize(
         ("oc_def", "expected_sup"),
-        [
-            pytest.param(
-                "( 2.16.840.1.113894.1.2.64 NAME 'orclReferenceObject' "
-                "SUP 'top' STRUCTURAL MAY ( orclOwnerGUID $ seeAlso ) )",
-                "top",
-                id="quoted-sup-top",
-            ),
-            pytest.param(
-                "( 2.16.840.1.113894.1.2.50 NAME 'orclParenSup' "
-                "SUP ( top ) STRUCTURAL MAY ( cn ) )",
-                "top",
-                id="parenthesized-sup",
-            ),
-        ],
+        [pytest.param(*tc[:2], id=tc[2]) for tc in _SUPERIOR_NORMALIZATION_CASES],
     )
     def test_parse_objectclass_normalizes_superior(
         schema: p.Ldif.SchemaServer,

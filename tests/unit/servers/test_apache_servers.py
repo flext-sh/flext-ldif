@@ -18,7 +18,30 @@ from flext_ldif.servers.apache import FlextLdifServersApache
 from tests import c, m, u
 
 if TYPE_CHECKING:
-    from tests import t
+    from tests import p, t
+
+
+def _assert_acl_roundtrip(
+    acl_server: p.Tests.ParseAclServer,
+    acl_line: str,
+) -> None:
+    """Parse an ACL line, then re-parse its own raw rendering.
+
+    Raises:
+        AssertionError: If the parse or the round-trip unwrap fails.
+    """
+    acl_model = u.Tests.acl_parse_and_unwrap(
+        acl_server,
+        acl_line,
+        expected_type=m.Ldif.Acl,
+    )
+    assert acl_model is not None
+    assert isinstance(acl_model, m.Ldif.Acl)
+    roundtrip_result = u.Tests.acl_parse_and_unwrap(
+        acl_server,
+        acl_model.raw_acl or str(acl_model),
+    )
+    assert roundtrip_result is not None
 
 
 class TestsFlextLdifApacheServers:
@@ -193,18 +216,7 @@ class TestsFlextLdifApacheServers:
         server = FlextLdifServersApache()
         acl_server = server.acl_server
         acl_line = "ads-aci: ( version 3.0 ) ( deny grantAdd ) ( grantRemove )"
-        acl_model = u.Tests.acl_parse_and_unwrap(
-            acl_server,
-            acl_line,
-            expected_type=m.Ldif.Acl,
-        )
-        assert acl_model is not None
-        assert isinstance(acl_model, m.Ldif.Acl)
-        roundtrip_result = u.Tests.acl_parse_and_unwrap(
-            acl_server,
-            acl_model.raw_acl or str(acl_model),
-        )
-        assert roundtrip_result is not None
+        _assert_acl_roundtrip(acl_server, acl_line)
 
     @staticmethod
     def test_acl_can_handle_with_aci() -> None:
@@ -212,18 +224,7 @@ class TestsFlextLdifApacheServers:
         server = FlextLdifServersApache()
         acl_server = server.acl_server
         acl_line = "aci: ( version 3.0 ) ( deny grantAdd ) ( grantRemove )"
-        acl_model = u.Tests.acl_parse_and_unwrap(
-            acl_server,
-            acl_line,
-            expected_type=m.Ldif.Acl,
-        )
-        assert acl_model is not None
-        assert isinstance(acl_model, m.Ldif.Acl)
-        roundtrip_result = u.Tests.acl_parse_and_unwrap(
-            acl_server,
-            acl_model.raw_acl or str(acl_model),
-        )
-        assert roundtrip_result is not None
+        _assert_acl_roundtrip(acl_server, acl_line)
 
     @staticmethod
     def test_acl_can_handle_with_version_prefix() -> None:
@@ -231,18 +232,7 @@ class TestsFlextLdifApacheServers:
         server = FlextLdifServersApache()
         acl_server = server.acl_server
         acl_line = "(version 3.0) (deny grantAdd) (grantRemove)"
-        acl_model = u.Tests.acl_parse_and_unwrap(
-            acl_server,
-            acl_line,
-            expected_type=m.Ldif.Acl,
-        )
-        assert acl_model is not None
-        assert isinstance(acl_model, m.Ldif.Acl)
-        roundtrip_result = u.Tests.acl_parse_and_unwrap(
-            acl_server,
-            acl_model.raw_acl or str(acl_model),
-        )
-        assert roundtrip_result is not None
+        _assert_acl_roundtrip(acl_server, acl_line)
 
     @staticmethod
     def test_acl_can_handle_negative() -> None:

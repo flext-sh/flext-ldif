@@ -12,9 +12,17 @@ from flext_ldif import c, m, p, r, s, t, u
 from flext_ldif.services.conversion_acl_preserve import (
     FlextLdifConversionAclPreserveMixin,
 )
+from flext_ldif.services.conversion_support import (
+    FlextLdifConversionSupportMixin,
+)
 
 
-class FlextLdifConversionAclMixin(FlextLdifConversionAclPreserveMixin, s, ABC):
+class FlextLdifConversionAclMixin(
+    FlextLdifConversionAclPreserveMixin,
+    FlextLdifConversionSupportMixin,
+    s,
+    ABC,
+):
     """ACL-model conversion orchestration (preservation via the parent mixin)."""
 
     @abstractmethod
@@ -37,12 +45,10 @@ class FlextLdifConversionAclMixin(FlextLdifConversionAclPreserveMixin, s, ABC):
         Returns:
             The resulting ``p.Result[t.Ldif.ConvertedModel]``.
         """
-        try:
-            return self._convert_acl_core(source_server, target_server, acl)
-        except c.Ldif.EXC_LDIF_PARSE as e:
-            self.logger.exception("Failed to convert ACL model", error=str(e))
-            return r[t.Ldif.ConvertedModel].fail_op("Acl conversion", e)
-
+        return self._guard_conversion(
+            "Acl",
+            lambda: self._convert_acl_core(source_server, target_server, acl),
+        )
     def _convert_acl_core(
         self,
         source_server: p.Ldif.ServerServer,

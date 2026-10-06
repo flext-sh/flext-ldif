@@ -96,7 +96,6 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
     def __call__(
         self,
         data: t.JsonValue | m.Ldif.Acl | None = None,
-        *,
         operation: t.JsonValue | None = None,
         server: p.Ldif.ServerRegistry | None = None,
         settings: p.Ldif.Settings | None = None,

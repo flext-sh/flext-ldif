@@ -35,6 +35,14 @@ if TYPE_CHECKING:
     from flext_ldif._models.domain_dn import FlextLdifModelsDomainDN
     from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries
     from flext_ldif._models.domain_entry import FlextLdifModelsDomainEntry
+    from flext_ldif._models.domain_entry_change import (
+        FlextLdifModelsDomainEntryChangeOperation,
+        FlextLdifModelsDomainEntryChangeOperationValue,
+        FlextLdifModelsDomainEntryControl,
+    )
+    from flext_ldif._models.domain_entry_statistics import (
+        FlextLdifModelsDomainEntryStatistics,
+    )
     from flext_ldif._models.domain_metadata import FlextLdifModelsDomainMetadata
     from flext_ldif._models.domain_schema import FlextLdifModelsDomainSchema
     from flext_ldif._models.events import FlextLdifModelsEvents
@@ -52,6 +60,10 @@ __all__: tuple[str, ...] = (
     "FlextLdifModelsDomainAttributes",
     "FlextLdifModelsDomainDN",
     "FlextLdifModelsDomainEntry",
+    "FlextLdifModelsDomainEntryChangeOperation",
+    "FlextLdifModelsDomainEntryChangeOperationValue",
+    "FlextLdifModelsDomainEntryControl",
+    "FlextLdifModelsDomainEntryStatistics",
     "FlextLdifModelsDomainMetadata",
     "FlextLdifModelsDomainSchema",
     "FlextLdifModelsDomainsEntries",
@@ -81,6 +93,10 @@ install_lazy_exports(
         "FlextLdifModelsDomainAttributes": ".domain_attributes",
         "FlextLdifModelsDomainDN": ".domain_dn",
         "FlextLdifModelsDomainEntry": ".domain_entry",
+        "FlextLdifModelsDomainEntryChangeOperation": ".domain_entry_change",
+        "FlextLdifModelsDomainEntryChangeOperationValue": ".domain_entry_change",
+        "FlextLdifModelsDomainEntryControl": ".domain_entry_change",
+        "FlextLdifModelsDomainEntryStatistics": ".domain_entry_statistics",
         "FlextLdifModelsDomainMetadata": ".domain_metadata",
         "FlextLdifModelsDomainSchema": ".domain_schema",
         "FlextLdifModelsDomainsEntries": ".domain_entries",
