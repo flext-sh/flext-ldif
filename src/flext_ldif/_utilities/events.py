@@ -30,9 +30,11 @@ class FlextLdifUtilitiesEvents:
                 "success_rate_pct": event.conversion_success_rate,
                 "throughput_items_per_sec": event.throughput_items_per_sec,
             },
-            f"Conversion '{settings.conversion_operation}' "
-            f"from {settings.source_format} to {settings.target_format} "
-            f"completed",
+            (
+                f"Conversion '{settings.conversion_operation}' "
+                f"from {settings.source_format} to {settings.target_format} "
+                f"completed"
+            ),
         )
 
     @staticmethod
