@@ -16,7 +16,8 @@ from flext_ldif.servers.rfc import FlextLdifServersRfc
 class FlextLdifServersOidEntryRestoreMixin(FlextLdifServersRfc.Entry):
     """OID entry round-trip restore helpers."""
 
-    def _convert_line_acl_to_oid(self, original_line: str) -> str:
+    @staticmethod
+    def _convert_line_acl_to_oid(original_line: str) -> str:
         """Convert RFC ACL attribute name (aci) to OID format (orclaci).
 
         Returns:
@@ -35,7 +36,8 @@ class FlextLdifServersOidEntryRestoreMixin(FlextLdifServersRfc.Entry):
             return f"orclaci:{value_part}"
         return original_line
 
-    def _convert_line_boolean_to_oid(self, original_line: str) -> str:
+    @staticmethod
+    def _convert_line_boolean_to_oid(original_line: str) -> str:
         """Convert RFC boolean values in line to OID format.
 
         Returns:

@@ -6,15 +6,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import importlib
+from functools import lru_cache
+from typing import TYPE_CHECKING
+
 from flext_cli import FlextCliUtilities
 
-from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
-from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
 from flext_ldif._utilities.collection_ldif import FlextLdifUtilitiesCollectionLdif
 
 if TYPE_CHECKING:
-    from typing import Any
-
     from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
     from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
     from flext_ldif._utilities.dispatch import FlextLdifUtilitiesDispatch
@@ -41,81 +41,43 @@ if TYPE_CHECKING:
 # the package is fully initialized, making both import orders
 # (models-first and utilities-first) safe.
 
-_Ldif_tree: type | None = None
+_LAZY_UTILITIES: tuple[tuple[str, str], ...] = (
+    ("acl", "FlextLdifUtilitiesACL"),
+    ("attribute", "FlextLdifUtilitiesAttribute"),
+    ("dispatch", "FlextLdifUtilitiesDispatch"),
+    ("dn", "FlextLdifUtilitiesDN"),
+    ("entry", "FlextLdifUtilitiesEntry"),
+    ("events", "FlextLdifUtilitiesEvents"),
+    ("metadata", "FlextLdifUtilitiesMetadata"),
+    ("object_class", "FlextLdifUtilitiesObjectClass"),
+    ("oid", "FlextLdifUtilitiesOID"),
+    ("parser", "FlextLdifUtilitiesParser"),
+    ("pipeline", "FlextLdifUtilitiesPipeline"),
+    ("schema", "FlextLdifUtilitiesSchema"),
+    ("server", "FlextLdifUtilitiesServer"),
+    ("transformers", "FlextLdifUtilitiesTransformers"),
+    ("validation", "FlextLdifUtilitiesValidation"),
+    ("writer", "FlextLdifUtilitiesWriter"),
+)
 
 
+@lru_cache(maxsize=1)
 def _build_ldif_tree() -> type:
     """Assemble the ``Ldif`` mixin tree on first access.
 
+    The lazy, cached assembly keeps both import orders (models-first and
+    utilities-first) safe: the ``_utilities`` family evaluates
+    ``FlextLdifModels`` at class level, so the tree may only be built once
+    the package is fully initialized.
+
     Returns:
         The assembled ``Ldif`` utility namespace class.
-
     """
-    global _Ldif_tree
-    if _Ldif_tree is not None:
-        return _Ldif_tree
-    from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
-    from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
-    from flext_ldif._utilities.collection_ldif import FlextLdifUtilitiesCollectionLdif
-    from flext_ldif._utilities.dispatch import FlextLdifUtilitiesDispatch
-    from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
-    from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
-    from flext_ldif._utilities.events import FlextLdifUtilitiesEvents
-    from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
-    from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
-    from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
-    from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
-    from flext_ldif._utilities.pipeline import FlextLdifUtilitiesPipeline
-    from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
-    from flext_ldif._utilities.server import FlextLdifUtilitiesServer
-    from flext_ldif._utilities.transformers import FlextLdifUtilitiesTransformers
-    from flext_ldif._utilities.validation import FlextLdifUtilitiesValidation
-    from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
-
-    class Ldif(
-        FlextLdifUtilitiesACL,
-        FlextLdifUtilitiesAttribute,
-        FlextLdifUtilitiesCollectionLdif,
-        FlextLdifUtilitiesDispatch,
-        FlextLdifUtilitiesDN,
-        FlextLdifUtilitiesEntry,
-        FlextLdifUtilitiesEvents,
-        FlextLdifUtilitiesMetadata,
-        FlextLdifUtilitiesObjectClass,
-        FlextLdifUtilitiesOID,
-        FlextLdifUtilitiesParser,
-        FlextLdifUtilitiesPipeline,
-        FlextLdifUtilitiesSchema,
-        FlextLdifUtilitiesServer,
-        FlextLdifUtilitiesTransformers,
-        FlextLdifUtilitiesValidation,
-        FlextLdifUtilitiesWriter,
-    ):
-        """LDIF-specific utility namespace."""
-
-    class Ldif(
-        FlextLdifUtilitiesACL,
-        FlextLdifUtilitiesAttribute,
-        FlextLdifUtilitiesCollectionLdif,
-        FlextLdifUtilitiesDispatch,
-        FlextLdifUtilitiesDN,
-        FlextLdifUtilitiesEntry,
-        FlextLdifUtilitiesEvents,
-        FlextLdifUtilitiesMetadata,
-        FlextLdifUtilitiesObjectClass,
-        FlextLdifUtilitiesOID,
-        FlextLdifUtilitiesParser,
-        FlextLdifUtilitiesPipeline,
-        FlextLdifUtilitiesSchema,
-        FlextLdifUtilitiesServer,
-        FlextLdifUtilitiesTransformers,
-        FlextLdifUtilitiesValidation,
-        FlextLdifUtilitiesWriter,
-    ):
-        """LDIF-specific utility namespace."""
-
-    _Ldif_tree = Ldif
-    return _Ldif_tree
+    bases: list[type] = [FlextLdifUtilitiesCollectionLdif]
+    for module_name, class_name in _LAZY_UTILITIES:
+        module = importlib.import_module(f"flext_ldif._utilities.{module_name}")
+        bases.append(getattr(module, class_name))
+    return type("Ldif", tuple(bases), {"__doc__": "LDIF-specific utility namespace."})
 
 
 def _lazy_ldif_meta() -> type:
@@ -133,7 +95,7 @@ def _lazy_ldif_meta() -> type:
     class _Meta(type):
         """Assemble ``Ldif`` on first class-level access."""
 
-        def __getattr__(cls, name: str) -> Any:
+        def __getattr__(cls, name: str) -> type:
             if name == "Ldif":
                 tree = _build_ldif_tree()
                 cls.Ldif = tree

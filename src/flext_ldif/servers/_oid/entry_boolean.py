@@ -95,7 +95,8 @@ class FlextLdifServersOidEntryBooleanMixin(FlextLdifServersRfc.Entry):
         if changed:
             restored_attrs[attr_name] = new_values
 
-    def _convert_rfc_boolean_to_oid(self, value: str) -> tuple[str, bool]:
+    @staticmethod
+    def _convert_rfc_boolean_to_oid(value: str) -> tuple[str, bool]:
         """Convert single RFC boolean value to OID format.
 
         Returns:

@@ -360,8 +360,8 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         msg = "ACL servers must implement _parse_acl"
         raise NotImplementedError(msg)
 
+    @staticmethod
     def _parse_dialect_acl(
-        self,
         acl_line: str,
         parser: Callable[[str], p.Result[m.Ldif.Acl]],
         context: str,
@@ -381,8 +381,8 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         except c.EXC_BASIC_TYPE as exc:
             return r[m.Ldif.Acl].fail_op(context, exc)
 
+    @staticmethod
     def _write_dialect_acl(
-        self,
         acl_data: m.Ldif.Acl,
         writer: Callable[[m.Ldif.Acl], p.Result[str]],
         context: str,

@@ -70,7 +70,8 @@ class FlextLdifServersEntryLineEmitter:
             return f"{effective_name}:: {encoded}"
         return f"{effective_name}: {effective_value}"
 
-    def control_line(self, control: m.Ldif.Control) -> str:
+    @staticmethod
+    def control_line(control: m.Ldif.Control) -> str:
         """Serialize RFC 2849 control line.
 
         Returns:
