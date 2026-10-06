@@ -11,8 +11,8 @@ import inspect
 import pkgutil
 from typing import TYPE_CHECKING, Annotated, ClassVar, TypeGuard, override
 
-from flext_core import r, s
-from flext_ldif import c, p, t, u
+from flext_core import r
+from flext_ldif import c, p, s, t, u
 
 if TYPE_CHECKING:
     from flext_ldif.servers.base import FlextLdifServersBase
