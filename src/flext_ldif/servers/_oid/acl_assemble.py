@@ -71,7 +71,7 @@ class _AciRuleAssembler:
             f"{subject.subject_type} {subject.value!r}",
         )
 
-    def _process_subject(self, subject: m.Ldif.OidAclSubject) -> p.Result[None]:
+    def _process_subject(self, subject: m.Ldif.OidAclSubject) -> p.Result[bool]:
         """Convert one subject clause, appending allows and notes.
 
         Returns:
@@ -81,16 +81,16 @@ class _AciRuleAssembler:
         if is_anyone and self._is_deny_none(subject.permissions):
             self._found_deny_all = True
             self._notes.append("'by * (none)' removed (OUD default-deny)")
-            return r[None].ok(None)
+            return r[bool].ok(True)
         if is_anyone and self._dn_normalized in self._containers:
             self._notes.append(
                 "anyone skipped at high-level container (OUD inherits to subtree)",
             )
-            return r[None].ok(None)
+            return r[bool].ok(True)
         bind = FlextLdifServersOidAclToOud.convert_subject_to_oud(subject)
         if bind.failure:
             self._notes.append(bind.error or "subject has no OUD equivalent")
-            return r[None].ok(None)
+            return r[bool].ok(True)
         bind_type = bind.value.subject_type
         bind_value = bind.value.subject_value
         if bind_type in self._dn_binds and bind_value not in self._literal_binds:
@@ -100,7 +100,7 @@ class _AciRuleAssembler:
                     f"{subject.subject_type} {bind_value!r} removed "
                     f"(DN out of scope {self._base_dn})",
                 )
-                return r[None].ok(None)
+                return r[bool].ok(True)
         return self._append_allow(subject, bind_type, bind_value, is_anyone)
 
     def _append_allow(
@@ -109,7 +109,7 @@ class _AciRuleAssembler:
         bind_type: str,
         bind_value: str,
         is_anyone: bool,
-    ) -> p.Result[None]:
+    ) -> p.Result[bool]:
         """Convert permissions and append one allow clause with its notes.
 
         Returns:
@@ -120,13 +120,13 @@ class _AciRuleAssembler:
             is_entry=self._is_entry,
         )
         if perms.failure:
-            return r[None].from_failure(perms)
+            return r[bool].from_failure(perms)
         if not perms.value:
             self._notes.append(
                 f"{subject.subject_type} {subject.value!r} removed "
                 f"(no OUD allow permissions / default-deny)",
             )
-            return r[None].ok(None)
+            return r[bool].ok(True)
         self._allows.append(
             m.Ldif.AciAllow(
                 subject_type=bind_type,
@@ -147,7 +147,7 @@ class _AciRuleAssembler:
                 "verify this is intended",
             )
         self._has_anyone = self._has_anyone or is_anyone
-        return r[None].ok(None)
+        return r[bool].ok(True)
 
     def _build_rule(self) -> m.Ldif.AciRule:
         """Derive the acl name and assemble the final OUD AciRule.

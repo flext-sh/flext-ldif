@@ -78,6 +78,7 @@ if TYPE_CHECKING:
     )
     from flext_ldif.services.conversion_support import FlextLdifConversionSupportMixin
     from flext_ldif.services.detector import FlextLdifDetector
+    from flext_ldif.services.detector_scoring import FlextLdifDetectorScoring
     from flext_ldif.services.entries import FlextLdifEntries
     from flext_ldif.services.filters import FlextLdifFilters
     from flext_ldif.services.migration import FlextLdifMigrationPipeline
@@ -110,6 +111,7 @@ __all__: tuple[str, ...] = (
     "FlextLdifConversionSchemaMixin",
     "FlextLdifConversionSupportMixin",
     "FlextLdifDetector",
+    "FlextLdifDetectorScoring",
     "FlextLdifEntries",
     "FlextLdifFilters",
     "FlextLdifMigrationPipeline",
@@ -196,6 +198,7 @@ install_lazy_exports(
         "FlextLdifConversionSchemaMixin": ".services.conversion_schema",
         "FlextLdifConversionSupportMixin": ".services.conversion_support",
         "FlextLdifDetector": ".services.detector",
+        "FlextLdifDetectorScoring": ".services.detector_scoring",
         "FlextLdifEntries": ".services.entries",
         "FlextLdifFilters": ".services.filters",
         "FlextLdifMigrationPipeline": ".services.migration",
