@@ -512,8 +512,10 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
         RELAXED_ACL_DEFINITIONS: ClassVar[t.MappingKV[str, tuple[str, bool]]] = (
             MappingProxyType({
                 RELAXED_PARSE_VALID: (
-                    '(targetentry="cn=admin,dc=example,dc=com")(version 3.0;acl '
-                    '"admin";allow(all)',
+                    (
+                        '(targetentry="cn=admin,dc=example,dc=com")(version 3.0;acl '
+                        '"admin";allow(all)'
+                    ),
                     True,
                 ),
                 RELAXED_PARSE_MALFORMED: ("(targetentry incomplete", True),
