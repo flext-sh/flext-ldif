@@ -355,22 +355,11 @@ class FlextLdifConstantsServersOid:
     })
 
     ACL_PERMISSION_NAMES: ClassVar[t.StrMapping] = MappingProxyType({
-        "read": "read",
-        "write": "write",
-        "add": "add",
-        "delete": "delete",
-        "search": "search",
-        "compare": "compare",
-        "self_write": "selfwrite",
-        "proxy": "proxy",
-        "browse": "browse",
-        "auth": "auth",
-        "all": "all",
-        "no_write": "nowrite",
-        "no_add": "noadd",
-        "no_delete": "nodelete",
-        "no_browse": "nobrowse",
-        "no_self_write": "noselfwrite",
+        "read": "read", "write": "write", "add": "add", "delete": "delete",
+        "search": "search", "compare": "compare", "self_write": "selfwrite",
+        "proxy": "proxy", "browse": "browse", "auth": "auth", "all": "all",
+        "no_write": "nowrite", "no_add": "noadd", "no_delete": "nodelete",
+        "no_browse": "nobrowse", "no_self_write": "noselfwrite",
     })
 
     SUPPORTED_PERMISSIONS: ClassVar[frozenset[str]] = frozenset({

@@ -10,12 +10,15 @@ import re
 from typing import TYPE_CHECKING, override
 
 from flext_ldif import c, m, p, r, s, t, u
+from flext_ldif.services.detector_scoring import (
+    FlextLdifDetectorScoring,
+)
 
 if TYPE_CHECKING:
     from pathlib import Path
 
 
-class FlextLdifDetector(s):
+class FlextLdifDetector(FlextLdifDetectorScoring, s):
     """Detector service composed directly into the LDIF facade via MRO.
 
     Overrides ``_get_effective_server_type_value`` from parser and writer
@@ -267,43 +270,6 @@ class FlextLdifDetector(s):
                 )
         return patterns
 
-    @staticmethod
-    def _update_server_scores(
-        constants: type[p.Ldif.ServerConstants] | None,
-        score_spec: tuple[c.Ldif.ServerTypes, str, bool],
-        content: str,
-        scores: t.MutableIntMapping,
-    ) -> None:
-        """Update scores for a server type based on constants-defined detection
-        signals.
-        """
-        _, pattern_attr, case_sensitive = score_spec
-        pattern_value = getattr(constants, pattern_attr, None) if constants else None
-        pattern = (
-            pattern_value.pattern
-            if isinstance(pattern_value, re.Pattern)
-            else pattern_value
-        )
-        server_type_raw = getattr(constants, "SERVER_TYPE", "") if constants else ""
-        if not isinstance(pattern, str) or not isinstance(server_type_raw, str):
-            return
-        server_type = u.Ldif.normalize_server_type(server_type_raw)
-        if not server_type:
-            return
-        search_content = content if case_sensitive else content.lower()
-        weight = constants.DETECTION_WEIGHT if constants else 0
-        if c.Ldif.compile_pattern(pattern).search(search_content):
-            scores[server_type] += weight
-        score_attr_match = u.Ldif.get_attribute_match_score()
-        attributes = constants.DETECTION_ATTRIBUTES if constants else ()
-        objectclasses = constants.DETECTION_OBJECTCLASS_NAMES or () if constants else ()
-        server_type_lower = server_type.lower()
-        scores[server_type] += sum(
-            score_attr_match
-            for item in (*attributes, *objectclasses)
-            if (server_type_lower in (item_lower := item.lower()))
-            or (item_lower in server_type_lower)
-        )
 
 
 __all__: list[str] = ["FlextLdifDetector"]
