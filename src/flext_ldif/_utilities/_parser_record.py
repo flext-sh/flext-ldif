@@ -199,7 +199,12 @@ class FlextLdifParserRecord:
         if key_lower == "changetype":
             FlextLdifParserRecord._handle_changetype_line(state, remainder)
             return True
-        return bool(FlextLdifParserRecord._apply_moddn_field(state, key_lower, remainder))
+        consumed = FlextLdifParserRecord._apply_moddn_field(
+            state,
+            key_lower,
+            remainder,
+        )
+        return bool(consumed)
 
     @classmethod
     def _parse_data_line(cls, state: _RecordState, line: str) -> None:
