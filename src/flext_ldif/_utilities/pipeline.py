@@ -106,6 +106,61 @@ class FlextLdifUtilitiesPipeline:
                 t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]
             ].ok(results)
 
+        @staticmethod
+        def _dn_component_error(component: str) -> str | None:
+            """Return the DN component violation message, if any.
+
+            Returns:
+                The resulting ``str | None``.
+            """
+            component_stripped = component.strip()
+            if "=" not in component_stripped:
+                return f"Invalid RDN (missing '='): {component_stripped}"
+            _, _, value = component_stripped.partition("=")
+            if not value.strip():
+                return f"Invalid RDN (missing value): {component_stripped}"
+            return None
+
+        def _collect_dn_errors(
+            self,
+            entry: m.Ldif.Entry,
+            errors: t.MutableSequenceOf[str],
+        ) -> None:
+            """Collect DN-related violations for one entry."""
+            if entry.dn is None:
+                errors.append("Entry has no DN (RFC 2849 violation)")
+                return
+            dn_str = str(entry.dn)
+            for component in dn_str.split(","):
+                component_error = self._dn_component_error(component)
+                if component_error is not None:
+                    errors.append(component_error)
+
+        def _collect_attribute_messages(
+            self,
+            entry: m.Ldif.Entry,
+            errors: t.MutableSequenceOf[str],
+            warnings: t.MutableSequenceOf[str],
+        ) -> None:
+            """Collect attribute-presence violations for one entry."""
+            if entry.attributes is None:
+                errors.append("Entry has no attributes (RFC 2849 violation)")
+                return
+            attrs: t.MutableStrSequenceMapping = (
+                entry.attributes.attributes
+                if getattr(entry.attributes, "attributes", None) is not None
+                else {}
+            )
+            has_objectclass = any(
+                key.lower() == c.Ldif.DictKeys.OBJECTCLASS.lower() for key in attrs
+            )
+            if has_objectclass:
+                return
+            if self._strict:
+                errors.append("Entry has no objectClass attribute")
+            else:
+                warnings.append("Entry has no objectClass attribute")
+
         def validate_one(
             self,
             entry: m.Ldif.Entry,
@@ -117,35 +172,8 @@ class FlextLdifUtilitiesPipeline:
             """
             errors: t.MutableSequenceOf[str] = []
             warnings: t.MutableSequenceOf[str] = []
-            if entry.dn is None:
-                errors.append("Entry has no DN (RFC 2849 violation)")
-            else:
-                dn_str = str(entry.dn)
-                components = dn_str.split(",")
-                for comp in components:
-                    comp_stripped = comp.strip()
-                    if "=" not in comp_stripped:
-                        errors.append(f"Invalid RDN (missing '='): {comp_stripped}")
-                        continue
-                    _, _, value = comp_stripped.partition("=")
-                    if not value.strip():
-                        errors.append(f"Invalid RDN (missing value): {comp_stripped}")
-            if entry.attributes is None:
-                errors.append("Entry has no attributes (RFC 2849 violation)")
-            else:
-                attrs: t.MutableStrSequenceMapping = (
-                    entry.attributes.attributes
-                    if getattr(entry.attributes, "attributes", None) is not None
-                    else {}
-                )
-                has_objectclass = any(
-                    key.lower() == c.Ldif.DictKeys.OBJECTCLASS.lower() for key in attrs
-                )
-                if not has_objectclass:
-                    if self._strict:
-                        errors.append("Entry has no objectClass attribute")
-                    else:
-                        warnings.append("Entry has no objectClass attribute")
+            self._collect_dn_errors(entry, errors)
+            self._collect_attribute_messages(entry, errors, warnings)
             return r[FlextLdifUtilitiesPipeline.ValidationResult].ok(
                 FlextLdifUtilitiesPipeline.ValidationResult(
                     valid=not errors,

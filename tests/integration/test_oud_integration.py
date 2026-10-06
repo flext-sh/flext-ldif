@@ -80,24 +80,46 @@ class TestsFlextLdifOudIntegration:
 
         tm.that(len(response.entries), eq=1)
 
+    @classmethod
+    def _assert_oracle_definitions_exposed(
+        cls,
+        api: p.Ldif.LdifClient,
+        fixture_content: str,
+        attribute_name: str,
+    ) -> None:
+        """Assert the schema entry exposes Oracle-namespaced definitions.
+
+        Raises:
+            AssertionError: If the definition list is empty or carries no
+                Oracle-namespaced definition.
+        """
+        response: m.Ldif.ParseResponse = u.Tests.assert_success(
+            api.parse_ldif(fixture_content),
+        )
+        schema_entry = response.entries[0]
+
+        definitions = cls._attrs(schema_entry).get(attribute_name) or []
+
+        assert definitions, f"Schema entry must expose {attribute_name}"
+        assert any(
+            cls.ORACLE_ENTERPRISE_OID_PREFIX in definition
+            for definition in definitions
+        ), (
+            "Expected at least one Oracle-namespaced "
+            f"{attribute_name.removesuffix('s')}"
+        )
+
     def test_schema_entry_exposes_oracle_attribute_definitions(
         self,
         api: p.Ldif.LdifClient,
         oud_schema_fixture: str,
     ) -> None:
         """The schema entry carries Oracle-namespaced attributeType definitions."""
-        response: m.Ldif.ParseResponse = u.Tests.assert_success(
-            api.parse_ldif(oud_schema_fixture),
+        self._assert_oracle_definitions_exposed(
+            api,
+            oud_schema_fixture,
+            "attributeTypes",
         )
-        schema_entry = response.entries[0]
-
-        attribute_types = self._attrs(schema_entry).get("attributeTypes") or []
-
-        assert attribute_types, "Schema entry must expose attributeTypes"
-        assert any(
-            self.ORACLE_ENTERPRISE_OID_PREFIX in definition
-            for definition in attribute_types
-        ), "Expected at least one Oracle-namespaced attributeType"
 
     def test_schema_entry_exposes_oracle_object_class_definitions(
         self,
@@ -105,18 +127,11 @@ class TestsFlextLdifOudIntegration:
         oud_schema_fixture: str,
     ) -> None:
         """The schema entry carries Oracle-namespaced objectClass definitions."""
-        response: m.Ldif.ParseResponse = u.Tests.assert_success(
-            api.parse_ldif(oud_schema_fixture),
+        self._assert_oracle_definitions_exposed(
+            api,
+            oud_schema_fixture,
+            "objectClasses",
         )
-        schema_entry = response.entries[0]
-
-        object_classes = self._attrs(schema_entry).get("objectClasses") or []
-
-        assert object_classes, "Schema entry must expose objectClasses"
-        assert any(
-            self.ORACLE_ENTERPRISE_OID_PREFIX in definition
-            for definition in object_classes
-        ), "Expected at least one Oracle-namespaced objectClass"
 
     # --- ACL fixture ------------------------------------------------------
 

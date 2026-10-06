@@ -8,7 +8,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, override
 
-from flext_ldif import c, m, p, r, t, u
+from flext_ldif import c, m, p, r, t
+from flext_ldif.servers._base.dialect_schema import FlextLdifServersDialectSchema
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 if TYPE_CHECKING:
@@ -84,42 +85,16 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         ACL_SUBJECT_VALUE_WILDCARD: ClassVar[str] = "*"
         DN_CONFIG_ENTRY_MARKER: ClassVar[str] = "ou=settings"
 
-    class Schema(FlextLdifServersRfc.Schema):
+    class Schema(FlextLdifServersDialectSchema):
         """Schema servers for Apache Directory Server (ApacheDS)."""
 
         _NORMALIZE_OBJECTCLASS: ClassVar[bool] = True
-
-        @override
-        def can_handle_attribute(
-            self,
-            attr_definition: str | m.Ldif.SchemaAttribute,
-        ) -> bool:
-            """Detect ApacheDS attribute definitions using centralized constants.
-
-            Returns:
-                The resulting ``bool``.
-            """
-            matches: bool = u.Ldif.matches_server_patterns(
-                value=attr_definition,
-                settings=FlextLdifServersApache.Constants.ATTRIBUTE_PATTERN_SETTINGS,
-            )
-            return matches
-
-        @override
-        def can_handle_objectclass(
-            self,
-            oc_definition: str | m.Ldif.SchemaObjectClass,
-        ) -> bool:
-            """Detect ApacheDS objectClass definitions using centralized constants.
-
-            Returns:
-                The resulting ``bool``.
-            """
-            matches: bool = u.Ldif.matches_server_patterns(
-                value=oc_definition,
-                settings=FlextLdifServersApache.Constants.OBJECTCLASS_PATTERN_SETTINGS,
-            )
-            return matches
+        _ATTRIBUTE_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig] = (
+            FlextLdifServersApache.Constants.ATTRIBUTE_PATTERN_SETTINGS
+        )
+        _OBJECTCLASS_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig] = (
+            FlextLdifServersApache.Constants.OBJECTCLASS_PATTERN_SETTINGS
+        )
 
     class Acl(FlextLdifServersRfc.Acl):
         """Apache Directory Server ACI server."""

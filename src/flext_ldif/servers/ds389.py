@@ -10,6 +10,7 @@ import re
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
+from flext_ldif.servers._base.dialect_schema import FlextLdifServersDialectSchema
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 
@@ -152,42 +153,16 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             "389 Directory Server entry processing failed: {exc}"
         )
 
-    class Schema(FlextLdifServersRfc.Schema):
+    class Schema(FlextLdifServersDialectSchema):
         """Schema servers for Red Hat / 389 Directory Server."""
 
         _NORMALIZE_OBJECTCLASS: ClassVar[bool] = True
-
-        @override
-        def can_handle_attribute(
-            self,
-            attr_definition: str | m.Ldif.SchemaAttribute,
-        ) -> bool:
-            """Detect 389 DS attribute definitions using centralized constants.
-
-            Returns:
-                The resulting ``bool``.
-            """
-            matches: bool = u.Ldif.matches_server_patterns(
-                value=attr_definition,
-                settings=FlextLdifServersDs389.Constants.ATTRIBUTE_PATTERN_SETTINGS,
-            )
-            return matches
-
-        @override
-        def can_handle_objectclass(
-            self,
-            oc_definition: str | m.Ldif.SchemaObjectClass,
-        ) -> bool:
-            """Detect 389 DS objectClass definitions using centralized constants.
-
-            Returns:
-                The resulting ``bool``.
-            """
-            matches: bool = u.Ldif.matches_server_patterns(
-                value=oc_definition,
-                settings=FlextLdifServersDs389.Constants.OBJECTCLASS_PATTERN_SETTINGS,
-            )
-            return matches
+        _ATTRIBUTE_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig] = (
+            FlextLdifServersDs389.Constants.ATTRIBUTE_PATTERN_SETTINGS
+        )
+        _OBJECTCLASS_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig] = (
+            FlextLdifServersDs389.Constants.OBJECTCLASS_PATTERN_SETTINGS
+        )
 
     class Acl(FlextLdifServersRfc.Acl):
         """389 Directory Server ACI server."""

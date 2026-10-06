@@ -89,6 +89,38 @@ class FlextLdifUtilitiesSchemaParse:
         return extensions
 
     @staticmethod
+    def _detect_schema_kind_from_text(definition_lower: str) -> c.Ldif.SchemaItemKind:
+        """Classify a string definition via RFC 4512 keyword patterns.
+
+        Returns:
+            "attribute" or "objectclass".
+
+        """
+        objectclass_only_keywords = [
+            " structural",
+            " auxiliary",
+            " abstract",
+            " must (",
+            " may (",
+        ]
+        attribute_only_keywords = [
+            " equality ",
+            " substr ",
+            " ordering ",
+            " syntax ",
+            " usage ",
+            " single-value",
+            " no-user-modification",
+        ]
+        if any(keyword in definition_lower for keyword in objectclass_only_keywords):
+            return c.Ldif.SchemaItemKind.OBJECTCLASS
+        if any(keyword in definition_lower for keyword in attribute_only_keywords):
+            return c.Ldif.SchemaItemKind.ATTRIBUTE
+        if "objectclass" in definition_lower or "oclass" in definition_lower:
+            return c.Ldif.SchemaItemKind.OBJECTCLASS
+        return c.Ldif.SchemaItemKind.ATTRIBUTE
+
+    @staticmethod
     def detect_schema_type(
         definition: str
         | FlextLdifModels.Ldif.SchemaAttribute
@@ -111,32 +143,9 @@ class FlextLdifUtilitiesSchemaParse:
             return c.Ldif.SchemaItemKind.ATTRIBUTE
         if isinstance(definition, FlextLdifModels.Ldif.SchemaObjectClass):
             return c.Ldif.SchemaItemKind.OBJECTCLASS
-        definition_lower = definition.lower()
-        objectclass_only_keywords = [
-            " structural",
-            " auxiliary",
-            " abstract",
-            " must (",
-            " may (",
-        ]
-        for keyword in objectclass_only_keywords:
-            if keyword in definition_lower:
-                return c.Ldif.SchemaItemKind.OBJECTCLASS
-        attribute_only_keywords = [
-            " equality ",
-            " substr ",
-            " ordering ",
-            " syntax ",
-            " usage ",
-            " single-value",
-            " no-user-modification",
-        ]
-        for keyword in attribute_only_keywords:
-            if keyword in definition_lower:
-                return c.Ldif.SchemaItemKind.ATTRIBUTE
-        if "objectclass" in definition_lower or "oclass" in definition_lower:
-            return c.Ldif.SchemaItemKind.OBJECTCLASS
-        return c.Ldif.SchemaItemKind.ATTRIBUTE
+        return FlextLdifUtilitiesSchemaParse._detect_schema_kind_from_text(
+            definition.lower(),
+        )
 
     @staticmethod
     def extract_attributes_from_lines(

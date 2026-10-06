@@ -136,7 +136,6 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         | m.Ldif.SchemaObjectClass
         | None = None,
         operation: t.JsonValue | None = None,
-        *,
         server: p.Ldif.ServerRegistry | None = None,
         settings: p.Ldif.Settings | None = None,
         **fields: t.JsonValue,
@@ -617,20 +616,11 @@ class FlextLdifServersRfcSchema(FlextLdifServersBase.Schema):
         syntax_validation_error = self._extract_syntax_validation_error(
             parsed.get("syntax_validation"),
         )
-        attribute_oid = str(parsed.get("oid")) if parsed.get("oid") else None
         metadata = FlextLdifServersBaseSchema.build_attribute_metadata(
             attr_definition,
             syntax_str,
             syntax_validation_error,
-            attribute_oid=attribute_oid,
-            equality_oid=str(parsed.get("equality"))
-            if parsed.get("equality")
-            else None,
-            ordering_oid=str(parsed.get("ordering"))
-            if parsed.get("ordering")
-            else None,
-            substr_oid=str(parsed.get("substr")) if parsed.get("substr") else None,
-            sup_oid=str(parsed.get("sup")) if parsed.get("sup") else None,
+            parsed,
             server_type=server_type,
         )
         attr_name = self._to_optional_str(parsed.get("name"))

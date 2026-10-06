@@ -196,15 +196,33 @@ class FlextLdifServersBaseSchema(
             return normalized
 
     @staticmethod
+    def _attribute_oid_fields(
+        parsed_definition: t.Ldif.MutableMetadataMapping,
+    ) -> t.MappingKV[str, str | None]:
+        """Collect the OID slots declared by one parsed attribute definition.
+
+        Returns:
+            The resulting ``t.MappingKV[str, str | None]``.
+        """
+
+        def optional_oid(key: str) -> str | None:
+            value = parsed_definition.get(key)
+            return str(value) if value else None
+
+        return {
+            "attribute": optional_oid("oid"),
+            "equality matching rule": optional_oid("equality"),
+            "ordering matching rule": optional_oid("ordering"),
+            "substring matching rule": optional_oid("substr"),
+            "SUP": optional_oid("sup"),
+        }
+
+    @staticmethod
     def build_attribute_metadata(
         attr_definition: str,
         syntax: str | None,
         syntax_validation_error: str | None,
-        attribute_oid: str | None = None,
-        equality_oid: str | None = None,
-        ordering_oid: str | None = None,
-        substr_oid: str | None = None,
-        sup_oid: str | None = None,
+        parsed_definition: t.Ldif.MutableMetadataMapping,
         server_type: str | None = None,
     ) -> m.Ldif.ServerMetadata | None:
         """Build metadata for attribute including extensions and OID validation.
@@ -219,26 +237,15 @@ class FlextLdifServersBaseSchema(
             metadata_extensions["syntax_oid_valid"] = syntax_validation_error is None
             if syntax_validation_error:
                 metadata_extensions["syntax_validation_error"] = syntax_validation_error
-        FlextLdifServersBaseSchema.validate_and_track_oid(
-            metadata_extensions,
-            attribute_oid,
-            "attribute",
+        oid_fields = FlextLdifServersBaseSchema._attribute_oid_fields(
+            parsed_definition,
         )
-        for rule_name, rule_oid in [
-            ("equality matching rule", equality_oid),
-            ("ordering matching rule", ordering_oid),
-            ("substring matching rule", substr_oid),
-        ]:
+        for rule_name, rule_oid in oid_fields.items():
             FlextLdifServersBaseSchema.validate_and_track_oid(
                 metadata_extensions,
                 rule_oid,
                 rule_name,
             )
-        FlextLdifServersBaseSchema.validate_and_track_oid(
-            metadata_extensions,
-            sup_oid,
-            "SUP",
-        )
         metadata_extensions["original_format"] = attr_definition.strip()
         metadata_extensions["schema_original_string_complete"] = attr_definition
         resolved_server_type: c.Ldif.ServerTypes = (

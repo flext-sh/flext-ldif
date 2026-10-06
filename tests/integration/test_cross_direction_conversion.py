@@ -29,6 +29,36 @@ if TYPE_CHECKING:
 pytestmark = [pytest.mark.integration]
 
 
+def _resolve_schema_server(
+    registry: FlextLdifServer,
+    server_type: str,
+) -> p.Ldif.SchemaServer:
+    """Resolve one schema server through the public registry.
+
+    Returns:
+        The resulting ``p.Ldif.SchemaServer``.
+
+    Raises:
+        AssertionError: If the server type does not resolve.
+    """
+    schema = registry.resolve_schema_server(server_type)
+    assert schema is not None
+    return schema
+
+
+def _assert_written_tokens(
+    write_result: p.Result[str],
+    token_expectations: tuple[t.VariadicTuple[str], t.VariadicTuple[str]],
+) -> None:
+    """Assert the written schema text carries (or lacks) the expected tokens."""
+    written = write_result.value
+    must_contain, must_not_contain = token_expectations
+    for token in must_contain:
+        tm.that(written, has=token)
+    for token in must_not_contain:
+        tm.that(written, lacks=token)
+
+
 class TestsFlextLdifCrossDirectionConversion:
     """Cross-direction schema conversion observable behavior."""
 

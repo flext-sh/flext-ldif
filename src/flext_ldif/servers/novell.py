@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
+from flext_ldif.servers._base.dialect_schema import FlextLdifServersDialectSchema
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 
@@ -117,40 +118,15 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         NOVELL_PERMISSION_SUPERVISOR: ClassVar[str] = "supervisor"
         NOVELL_PERMISSION_ENTRY: ClassVar[str] = "entry"
 
-    class Schema(FlextLdifServersRfc.Schema):
+    class Schema(FlextLdifServersDialectSchema):
         """Novell eDirectory schema server."""
 
-        @override
-        def can_handle_attribute(
-            self,
-            attr_definition: str | m.Ldif.SchemaAttribute,
-        ) -> bool:
-            """Detect eDirectory attribute definitions using Constants.
-
-            Returns:
-                The resulting ``bool``.
-            """
-            matches: bool = u.Ldif.matches_server_patterns(
-                value=attr_definition,
-                settings=FlextLdifServersNovell.Constants.ATTRIBUTE_PATTERN_SETTINGS,
-            )
-            return matches
-
-        @override
-        def can_handle_objectclass(
-            self,
-            oc_definition: str | m.Ldif.SchemaObjectClass,
-        ) -> bool:
-            """Detect eDirectory objectClass definitions using Constants.
-
-            Returns:
-                The resulting ``bool``.
-            """
-            matches: bool = u.Ldif.matches_server_patterns(
-                value=oc_definition,
-                settings=FlextLdifServersNovell.Constants.OBJECTCLASS_PATTERN_SETTINGS,
-            )
-            return matches
+        _ATTRIBUTE_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig] = (
+            FlextLdifServersNovell.Constants.ATTRIBUTE_PATTERN_SETTINGS
+        )
+        _OBJECTCLASS_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig] = (
+            FlextLdifServersNovell.Constants.OBJECTCLASS_PATTERN_SETTINGS
+        )
 
     class Acl(FlextLdifServersRfc.Acl):
         """Novell eDirectory ACL server."""
