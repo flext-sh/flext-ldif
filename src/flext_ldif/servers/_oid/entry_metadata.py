@@ -56,6 +56,60 @@ class FlextLdifServersOidEntryMetadataMixin(FlextLdifServersRfc.Entry):
             current_extensions[c.Ldif.ACL_CONSTRAIN_TO_ADDED_OBJECT] = (
                 constrain_to_added
             )
+
+    @staticmethod
+    def _boolean_conversions_container(
+        entry_data: m.Ldif.Entry,
+    ) -> t.JsonPayload | None:
+        """Read the boolean-conversions mapping from entry metadata extensions.
+
+        Returns:
+            The resulting ``t.JsonPayload | None``.
+        """
+        mk = c.Ldif
+        if not (entry_data.metadata and entry_data.metadata.extensions):
+            return None
+        converted_attrs_data = entry_data.metadata.extensions.get(
+            mk.CONVERTED_ATTRIBUTES,
+        )
+        converted_attrs_value: t.JsonPayload | None = converted_attrs_data
+        if not isinstance(converted_attrs_value, Mapping):
+            return None
+        boolean_conversions_obj: t.JsonPayload | None = converted_attrs_value.get(
+            mk.CONVERSION_BOOLEAN_CONVERSIONS,
+            {},
+        )
+        return (
+            boolean_conversions_obj
+            if isinstance(boolean_conversions_obj, Mapping)
+            else None
+        )
+
+    @staticmethod
+    def _typed_conversion_entry(
+        value: t.JsonPayload,
+    ) -> t.MutableAttributeMapping | None:
+        """Type one boolean-conversion metadata entry.
+
+        Returns:
+            The resulting ``t.MutableAttributeMapping | None``.
+        """
+        if not isinstance(value, Mapping):
+            return None
+        value_metadata: t.MutableJsonMapping = t.json_dict_adapter().validate_python(
+            value,
+        )
+        typed_dict: t.MutableAttributeMapping = {}
+        for key_str, raw_value in value_metadata.items():
+            if isinstance(raw_value, str):
+                typed_dict[key_str] = raw_value
+            elif isinstance(raw_value, list):
+                typed_items: t.MutableSequenceOf[str] = [
+                    str(item) for item in raw_value if u.primitive(item)
+                ]
+                typed_dict[key_str] = typed_items
+        return typed_dict
+
     @staticmethod
     def _parse_metadata_boolean_flags(
         entry_data: m.Ldif.Entry,
@@ -65,38 +119,22 @@ class FlextLdifServersOidEntryMetadataMixin(FlextLdifServersRfc.Entry):
         Returns:
             The resulting ``MutableMapping[str, t.MutableAttributeMapping]``.
         """
-        mk = c.Ldif
         boolean_conversions: MutableMapping[str, t.MutableAttributeMapping] = {}
-        if not (entry_data.metadata and entry_data.metadata.extensions):
-            return boolean_conversions
-        converted_attrs_data = (
-            entry_data.metadata.extensions.get(mk.CONVERTED_ATTRIBUTES)
-            if entry_data.metadata and entry_data.metadata.extensions
-            else None
-        )
-        converted_attrs_value: t.JsonPayload | None = converted_attrs_data
-        if isinstance(converted_attrs_value, Mapping):
-            boolean_conversions_obj: t.JsonPayload | None = converted_attrs_value.get(
-                mk.CONVERSION_BOOLEAN_CONVERSIONS,
-                {},
+        conversions_obj = (
+            FlextLdifServersOidEntryMetadataMixin._boolean_conversions_container(
+                entry_data,
             )
-            if isinstance(boolean_conversions_obj, Mapping):
-                for key, value in boolean_conversions_obj.items():
-                    if isinstance(value, Mapping):
-                        value_metadata: t.MutableJsonMapping = (
-                            t.json_dict_adapter().validate_python(value)
-                        )
-                        typed_dict: t.MutableAttributeMapping = {}
-                        for key_str, raw_value in value_metadata.items():
-                            if isinstance(raw_value, str):
-                                typed_dict[key_str] = raw_value
-                            elif isinstance(raw_value, list):
-                                typed_items: t.MutableSequenceOf[str] = [
-                                    str(item) for item in raw_value if u.primitive(item)
-                                ]
-                                typed_dict[key_str] = typed_items
-                        boolean_conversions[key] = typed_dict
+        )
+        if conversions_obj is None:
+            return boolean_conversions
+        for key, value in conversions_obj.items():
+            typed_dict = FlextLdifServersOidEntryMetadataMixin._typed_conversion_entry(
+                value,
+            )
+            if typed_dict is not None:
+                boolean_conversions[key] = typed_dict
         return boolean_conversions
+
     @staticmethod
     def _extract_original_extensions(
         original_entry: m.Ldif.Entry,
