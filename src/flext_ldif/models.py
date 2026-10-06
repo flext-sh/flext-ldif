@@ -12,8 +12,9 @@ from __future__ import annotations
 
 from typing import Annotated, ClassVar
 
-from flext_cli import FlextCliModels, t, u
+from flext_cli import FlextCliModels
 
+from flext_ldif import t, u
 from flext_ldif._models.base import FlextLdifModelsBases
 from flext_ldif._models.collections import FlextLdifModelsCollections
 from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries

@@ -12,9 +12,10 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_cli import FlextCliConfig, m
+from flext_cli import FlextCliConfig
 
 from flext_core import FlextSettings
+from flext_ldif import m
 
 
 class _LdifNamespace(m.BaseModel):

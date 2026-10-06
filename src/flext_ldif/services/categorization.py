@@ -59,8 +59,10 @@ class FlextLdifCategorization(s):
             default=None,
             exclude=True,
             description=(
-                "Attribute names removed from categorized entries after "
-                "classification.",
+                (
+                    "Attribute names removed from categorized entries after "
+                    "classification."
+                ),
             ),
         ),
     ] = None
@@ -70,8 +72,10 @@ class FlextLdifCategorization(s):
             default=None,
             exclude=True,
             description=(
-                "objectClass names removed from categorized entries after "
-                "classification.",
+                (
+                    "objectClass names removed from categorized entries after "
+                    "classification."
+                ),
             ),
         ),
     ] = None
@@ -89,8 +93,10 @@ class FlextLdifCategorization(s):
             default=c.Ldif.ServerTypes.RFC.value,
             exclude=True,
             description=(
-                "Server type used to resolve categorization defaults from the "
-                "registry.",
+                (
+                    "Server type used to resolve categorization defaults from the "
+                    "registry."
+                ),
             ),
         ),
     ] = c.Ldif.ServerTypes.RFC.value
@@ -100,8 +106,10 @@ class FlextLdifCategorization(s):
             default=None,
             exclude=True,
             description=(
-                "Optional server registry override for categorization "
-                "constants lookup.",
+                (
+                    "Optional server registry override for categorization "
+                    "constants lookup."
+                ),
             ),
         ),
     ] = None
@@ -534,8 +542,10 @@ class FlextLdifCategorization(s):
                     entry,
                     mark_rejected=(
                         c.Ldif.RejectionCategory.INVALID_DN.value,
-                        f"DN normalization "
-                        f"failed: {norm_result.error or c.Ldif.ERR_UNKNOWN}",
+                        (
+                            f"DN normalization "
+                            f"failed: {norm_result.error or c.Ldif.ERR_UNKNOWN}"
+                        ),
                     ),
                 )
                 self.rejection_tracker[
