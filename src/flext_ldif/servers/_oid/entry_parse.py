@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping
 from typing import override
 
 from flext_ldif import c, m, p, r, t, u
@@ -198,7 +199,7 @@ class FlextLdifServersOidEntryParseMixin(FlextLdifServersRfc.Entry):
         try:
             return self._post_parse_oid_entry(entry)
         except c.Ldif.EXC_LDIF_PARSE as e:
-            FlextLdifServersOidEntry._module_logger.exception(
+            FlextLdifServersOidEntryParseMixin._module_logger.exception(
                 "OID post-parse entry hook failed",
             )
             return r[m.Ldif.Entry].fail_op("OID post-parse entry hook", e)
@@ -280,7 +281,7 @@ class FlextLdifServersOidEntryParseMixin(FlextLdifServersRfc.Entry):
         normalized_dn = cleaned_dn
         if cleaned_dn.lower() == FlextLdifServersOidConstants.SCHEMA_DN_SERVER.lower():
             normalized_dn = FlextLdifServersRfc.Constants.SCHEMA_DN
-            FlextLdifServersOidEntry._module_logger.debug(
+            FlextLdifServersOidEntryParseMixin._module_logger.debug(
                 "OID→RFC transform: Normalizing schema DN",
                 original_dn=cleaned_dn,
                 normalized_dn=normalized_dn,
@@ -303,7 +304,7 @@ class FlextLdifServersOidEntryParseMixin(FlextLdifServersRfc.Entry):
                 current_extensions,
             )
         except c.Ldif.EXC_LDIF_PARSE:
-            FlextLdifServersOidEntry._module_logger.debug(
+            FlextLdifServersOidEntryParseMixin._module_logger.debug(
                 "Failed to parse ACL extension metadata",
                 exc_info=True,
             )

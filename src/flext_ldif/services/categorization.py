@@ -218,7 +218,5 @@ class FlextLdifCategorization(FlextLdifCategorizationFiltering, s):
             )
         return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(validated)
 
-    @staticmethod
-
 
 __all__: list[str] = ["FlextLdifCategorization"]

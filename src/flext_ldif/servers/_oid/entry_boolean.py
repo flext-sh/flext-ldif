@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping
 from typing import override
 
 from flext_ldif import c, m, p, r, t, u
@@ -72,7 +73,7 @@ class FlextLdifServersOidEntryBooleanMixin(FlextLdifServersRfc.Entry):
                     conversion_dict[format_key] = original_format_str
                     conversion_dict["converted_format"] = converted_format_str
                     boolean_conversions[attr_name] = conversion_dict
-                    FlextLdifServersOidEntry._module_logger.debug(
+                    FlextLdifServersOidEntryBooleanMixin._module_logger.debug(
                         "Converted boolean attribute OID→RFC",
                         attribute_name=attr_name,
                     )
@@ -127,7 +128,7 @@ class FlextLdifServersOidEntryBooleanMixin(FlextLdifServersRfc.Entry):
         rfc_value = converted_val_list[0]
         oid_value = FlextLdifServersOidConstants.RFC_TO_OID.get(rfc_value, rfc_value)
         restored_attrs[attr_name] = [oid_value]
-        FlextLdifServersOidEntry._module_logger.debug(
+        FlextLdifServersOidEntryBooleanMixin._module_logger.debug(
             "Restored OID boolean format from metadata",
             attribute_name=attr_name,
             rfc_value=rfc_value,

@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import override
 
 from flext_ldif import c, m, p, r, t, u
@@ -27,7 +28,7 @@ class FlextLdifServersOidEntryRestoreMixin(FlextLdifServersRfc.Entry):
         parts = original_line.split(":", 1)
         attr_lower = parts[0].strip().lower()
         if attr_lower == "aci":
-            FlextLdifServersOidEntry._module_logger.debug(
+            FlextLdifServersOidEntryRestoreMixin._module_logger.debug(
                 "Converting aci to orclaci",
                 line=original_line,
             )
@@ -209,7 +210,7 @@ class FlextLdifServersOidEntryRestoreMixin(FlextLdifServersRfc.Entry):
             line_to_write = self._convert_line_boolean_to_oid(original_line)
             line_to_write = self._convert_line_acl_to_oid(line_to_write)
             ldif_lines.append(line_to_write)
-        FlextLdifServersOidEntry._module_logger.debug(
+        FlextLdifServersOidEntryRestoreMixin._module_logger.debug(
             "Restored original attribute lines from metadata",
             entry_dn=entry_data.dn.value[:50] if entry_data.dn else "",
             original_lines_count=len(original_attr_lines_complete),
