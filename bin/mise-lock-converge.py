@@ -174,14 +174,21 @@ class MiseLockConverge:
         # informational warning on every version listing (newer releases are
         # hidden by the declared age window, by design). It is not a defect:
         # treating it as blocking would make every converge fail forever.
+        # Cross-platform lock-time listing noise is equally deterministic:
+        # third-party releases (jscpd, qlty) publish no SLSA attestations and
+        # some python-build releases ship assets for only a subset of the
+        # six lockfile platforms, so their listings resolve on fewer targets.
         expected_warnings = (
             "hidden by minimum_release_age",
+            "lock-time provenance verification failed",
+            "failed to resolve",
         )
         warned = [line for line in diagnostics.splitlines() if "mise WARN" in line]
+        expected_folded = [expected.lower() for expected in expected_warnings]
         unexpected = [
             line
             for line in warned
-            if not any(expected in line for expected in expected_warnings)
+            if not any(expected in line.lower() for expected in expected_folded)
         ]
         if unexpected:
             sys.stderr.write(diagnostics)
