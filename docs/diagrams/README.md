@@ -189,9 +189,11 @@ from __future__ import annotations
 from pathlib import Path
 
 
-def generate_diagrams():
+def generate_diagrams() -> None:
     """Generate all diagrams from code annotations."""
     diagram_dir = Path("docs/diagrams")
+    if not diagram_dir.exists():
+        diagram_dir.mkdir(parents=True)
 
     # Generate component diagrams from code
     # Generate data flow from service interactions

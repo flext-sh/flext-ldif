@@ -34,27 +34,19 @@ compatibility.
 **Key Components**:
 
 ```python
-from __future__ import annotations
+from flext_ldif import m
 
+# Tracks canonical DN case for migration consistency (first-seen wins).
+registry = m.Ldif.DnRegistry()
 
-class Result: ...
+# Register a DN; the first-seen case becomes canonical.
+canonical_dn = registry.register_dn("CN=Admin,DC=Example,DC=Com")
 
+# Resolve any case variant to the canonical case.
+canonical_ref = registry.resolve_canonical_dn("cn=ADMIN,dc=example,dc=com")
 
-class p:
-    Result = Result
-
-
-class DnCaseRegistry:
-    """Tracks canonical DN case for migration consistency."""
-
-    def register_dn(self, dn: str) -> str:
-        """Register DN and return canonical case (first-seen wins)."""
-
-    def get_canonical_dn(self, dn: str) -> str:
-        """Get canonical case for any DN variant."""
-
-    def validate_oud_consistency(self) -> p.Result[bool]:
-        """Validate no case conflicts exist for OUD compatibility."""
+# Validate no case conflicts exist for OUD compatibility.
+result = registry.validate_oud_consistency()
 ```
 
 **Implementation**:
@@ -77,13 +69,11 @@ class DnCaseRegistry:
 # During conversion pipeline
 registry = DnCaseRegistry()
 
-# Register DNs as they're encountered
+# Register DNs as they're encountered; the first-seen case becomes canonical.
 canonical_dn = registry.register_dn("CN=Admin,DC=Example,DC=Com")
-# Returns: "cn=admin,dc=example,dc=com"
 
-# All subsequent references use canonical case
+# All subsequent references resolve to the canonical case.
 canonical_ref = registry.get_canonical_dn("cn=ADMIN,dc=example,dc=com")
-# Returns: "cn=admin,dc=example,dc=com"
 
 # Validate for OUD deployment
 result = registry.validate_oud_consistency()

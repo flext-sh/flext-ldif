@@ -533,6 +533,13 @@ class Entry(m.BaseModel):
 **Example Usage**:
 
 ```python
+from pathlib import Path
+
+from flext_ldif import ldif, u
+
+api = ldif()
+entries = api.parse_file(Path("data.ldif")).unwrap().entries
+
 # Access entry data
 entry = entries[0]
 u.Cli.print(f"DN: {entry.dn}")
@@ -572,24 +579,26 @@ class Config(m.BaseModel):
 
 **Example Usage**:
 
-```python
+from flext_ldif import FlextLdifModels, ldif
+
 # Create custom configuration
+
 settings = FlextLdifModels.Config(
-    max_entries=50000,
-    strict_validation=True,
-    ignore_unknown_attributes=False,
-    encoding="utf-8",
+max_entries=50000,
+strict_validation=True,
+ignore_unknown_attributes=False,
+encoding="utf-8",
 )
 
 # Use configuration with API
+
 api = ldif(settings=settings)
-```
 
 ### FlextLdifModels.Factory
 
 Factory methods for creating domain objects.
 
-```python
+```text
 from __future__ import annotations
 
 from flext_ldif import m, t
@@ -643,17 +652,17 @@ group = FlextLdifModels.Entry(
 
 ### Global Configuration
 
-```python
-from flext_ldif import FlextLdifSettings
+from flext_ldif import FlextLdifSettings, u
 
 # Initialize configuration
+
 settings = FlextLdifSettings(
-    max_entries=100000, strict_validation=True, encoding="utf-8"
+max_entries=100000, strict_validation=True, encoding="utf-8"
 )
 
 # Access global configuration
+
 u.Cli.print(f"Max entries: {settings.max_entries}")
-```
 
 ### Instance Configuration
 
@@ -679,6 +688,10 @@ All API operations return r for composable error handling:
 ```python
 from flext_cli import u
 
+from flext_ldif import ldif
+
+api = ldif()
+
 # Successful operation
 result = api.parse_file("valid.ldif")
 if result.success:
@@ -696,7 +709,7 @@ final_result = (
     api
     .parse_file("input.ldif")
     .flat_map(api.validate_entries)
-    .flat_map(lambda entries: api.filter_persons(entries))
+    .flat_map(api.filter_persons)
     .flat_map(lambda persons: api.write_file(persons, "persons.ldif"))
 )
 ```
@@ -707,6 +720,7 @@ final_result = (
 from flext_ldif import (
     FlextLdifParseError,  # LDIF parsing errors
     FlextLdifValidationError,  # Validation errors
+    u,
 )
 
 # Exception builder pattern
@@ -733,7 +747,7 @@ must be accessed programmatically through the API.
 # ✅ NEW (Library API):
 from pathlib import Path
 
-from flext_ldif import ldif
+from flext_ldif import ldif, u
 
 api = ldif()
 result = api.parse_file(Path("directory.ldif"))
@@ -857,7 +871,7 @@ def filter_by_custom_criteria(
 Parse LDAP schema definitions with RFC 4512 compliance and
 **MANDATORY servers support**.
 
-```python
+```text
 from __future__ import annotations
 
 # ✅ v1.0+ Flat imports
@@ -903,7 +917,7 @@ architecture with zero bypass paths.
 
 **Example Usage**:
 
-```python
+```text
 # ✅ CORRECT: v1.0+ flat imports with MANDATORY server_registry
 from flext_ldif import ServerRegistryService
 
@@ -957,54 +971,18 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from flext_ldif import FlextLdifMigrationPipeline, m, p
 
-class Result: ...
+# Generic LDIF migration pipeline using servers-based transformation.
+pipeline = FlextLdifMigrationPipeline(
+    input_dir=Path("source_oid"),
+    output_dir=Path("target_oud"),
+    source_server_type="oid",
+    target_server_type="oud",
+)
 
-
-class m:
-    Dict = dict
-
-
-class p:
-    Result = Result
-
-
-class FlextLdifMigration:
-    """Generic LDIF migration pipeline using servers-based transformation."""
-
-    def __init__(
-        self,
-        input_dir: Path,
-        output_dir: Path,
-        source_server_type: str,
-        target_server_type: str,
-    ) -> None:
-        """Initialize migration pipeline.
-
-        Args:
-            input_dir: Source LDIF directory
-            output_dir: Target LDIF directory
-            source_server_type: Source server type (e.g., "oid", "openldap")
-            target_server_type: Target server type (e.g., "oud", "openldap")
-
-        """
-
-    def execute(self) -> p.Result[m.Dict]:
-        """Execute migration pipeline.
-
-        Generic transformation process:
-        1. Parse source LDIF files
-        2. Migrate schema (source → RFC → target)
-        3. Migrate entries (source → RFC → target)
-        4. Write target LDIF files
-
-        Returns:
-            r with migration results containing:
-                - entries_migrated: Number of entries migrated
-                - schema_files: List of schema files processed
-                - output_files: List of generated output files
-
-        """
+# Execute migration: source -> RFC -> target
+result: p.Result[m.Ldif.MigrationPipelineResult] = pipeline.execute()
 ```
 
 **Example Usage**:
@@ -1014,32 +992,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from flext_cli import u
 
-class Result:
-    def __init__(self, success: bool, value=None) -> None:
-        self.success = success
-        self._value = value
-
-    def unwrap(self):
-        return self._value
-
-
-class FlextLdifMigration:
-    def __init__(
-        self,
-        input_dir: Path,
-        output_dir: Path,
-        source_server_type: str,
-        target_server_type: str,
-    ) -> None:
-        pass
-
-    def execute(self) -> Result:
-        return Result(True, {"entries_migrated": 100, "schema_files": []})
-
+from flext_ldif import FlextLdifMigrationPipeline
 
 # OID to OUD migration
-pipeline = FlextLdifMigration(
+pipeline = FlextLdifMigrationPipeline(
     input_dir=Path("source_oid"),
     output_dir=Path("target_oud"),
     source_server_type="oid",
@@ -1062,7 +1020,7 @@ if result.success:
 
 Central registry for managing server-specific servers.
 
-```python
+```text
 from __future__ import annotations
 
 from flext_ldif import ServerRegistryService
@@ -1125,7 +1083,7 @@ acl_server = client.acl("openldap")
 
 ### FlextContainer Usage
 
-```python
+```text
 from __future__ import annotations
 
 
@@ -1180,7 +1138,12 @@ if api_result.success:
 ```python
 from __future__ import annotations
 
-from flext_ldif import u
+from flext_ldif import settings, u
+
+# Sample processing inputs for the illustration below
+input_file = "data.ldif"
+entries: list = []
+elapsed_time = 1.5
 
 # Structured logging in LDIF operations
 logger = u.fetch_logger(__name__)
@@ -1203,24 +1166,28 @@ logger.info(
 ### Basic Usage - Parse, Validate, Write
 
 ```python
+import sys
 from pathlib import Path
 
-from flext_ldif import ldif
+from flext_ldif import ldif, u
 
 # Initialize API (library-only, no CLI)
 api = ldif()
 
 # Write a sample LDIF file and load it as text
 ldif_path = Path("directory.ldif")
-ldif_path.write_text(
-    "dn: cn=user,ou=people,dc=example,dc=com\nobjectClass: person\ncn: user\n"
+sample_ldif = (
+    "dn: cn=user,ou=people,dc=example,dc=com\n"
+    "objectClass: person\n"
+    "cn: user\n"
 )
+ldif_path.write_text(sample_ldif, encoding="utf-8")
 
-ldif_content = ldif_path.read_text()
+ldif_content = ldif_path.read_text(encoding="utf-8")
 parse_result = api.parse_string(ldif_content)
 if parse_result.failure:
     u.Cli.print(f"Parse failed: {parse_result.error}")
-    exit(1)
+    sys.exit(1)
 
 entries = parse_result.unwrap()
 u.Cli.print(f"✅ Parsed {len(entries)} entries")
@@ -1229,7 +1196,7 @@ u.Cli.print(f"✅ Parsed {len(entries)} entries")
 validation_result = api.validate_entries(entries)
 if validation_result.failure:
     u.Cli.print(f"Validation failed: {validation_result.error}")
-    exit(1)
+    sys.exit(1)
 
 u.Cli.print("✅ All entries valid")
 ```
@@ -1237,7 +1204,7 @@ u.Cli.print("✅ All entries valid")
 ### LDIF Parsing Example
 
 ```python
-from flext_ldif import ldif
+from flext_ldif import ldif, u
 
 ldif_content = """dn: cn=test,dc=example,dc=com
 objectClass: inetOrgPerson
@@ -1254,43 +1221,47 @@ else:
 
 ### Generic Migration Pipeline
 
-```python
 from pathlib import Path
 
-from flext_ldif import FlextLdifMigration
+from flext_ldif import FlextLdifMigration, u
 
 # Migrate OID → OUD using generic transformation pipeline
+
 migration = FlextLdifMigration(
-    input_dir=Path("source_oid_ldif"),
-    output_dir=Path("target_oud_ldif"),
-    source_server_type="oid",  # Oracle Internet Directory
-    target_server_type="oud",  # Oracle Unified Directory
+input_dir=Path("source_oid_ldif"),
+output_dir=Path("target_oud_ldif"),
+source_server_type="oid", # Oracle Internet Directory
+target_server_type="oud", # Oracle Unified Directory
 )
 
 # Execute migration: OID → RFC → OUD
+
 result = migration.execute()
 if result.success:
-    data = result.unwrap()
-    u.Cli.print(f"✅ Migrated {data['entries_migrated']} entries")
-    u.Cli.print(f"✅ Processed {len(data['schema_files'])} schema files")
-    u.Cli.print(f"✅ Generated {len(data['output_files'])} output files")
+data = result.unwrap()
+u.Cli.print(f"✅ Migrated {data['entries_migrated']} entries")
+u.Cli.print(f"✅ Processed {len(data['schema_files'])} schema files")
+u.Cli.print(f"✅ Generated {len(data['output_files'])} output files")
 else:
-    u.Cli.print(f"❌ Migration failed: {result.error}")
+u.Cli.print(f"❌ Migration failed: {result.error}")
 
 # Works with ANY server combination (N implementations, not N²)
+
 # Examples: OID→OUD, OpenLDAP→389DS, AD→OUD, OUD→OpenLDAP, etc.
-```
 
 ### Railway-Oriented Pipeline
 
 ```python
 from pathlib import Path
 
-from flext_ldif import ldif
+from flext_ldif import ldif, u
 
-Path("directory.ldif").write_text(
-    "dn: cn=John Doe,dc=example,dc=com\nobjectClass: person\ncn: John Doe\n"
+sample_ldif = (
+    "dn: cn=John Doe,dc=example,dc=com\n"
+    "objectClass: person\n"
+    "cn: John Doe\n"
 )
+Path("directory.ldif").write_text(sample_ldif, encoding="utf-8")
 
 api = ldif()
 
@@ -1306,14 +1277,14 @@ result = (
     # Generate statistics
     .flat_map(
         lambda persons: api.get_entry_statistics(persons).map(
-            lambda stats: {"persons": persons, "stats": stats}
-        )
+            lambda stats: {"persons": persons, "stats": stats},
+        ),
     )
     # Write filtered entries
     .flat_map(
         lambda data: api.write_file(data["persons"], Path("persons.ldif")).map(
-            lambda _: data["stats"]
-        )
+            lambda _: data["stats"],
+        ),
     )
     # Add error context
     .map_error(lambda error: f"Processing failed: {error}")

@@ -32,11 +32,11 @@ including error diagnosis, performance problems, and integration issues.
 **Symptom**: Parse operations fail with format-related error messages.
 
 ```python
-from flext_ldif import ldif
+from flext_ldif import ldif, u
 
 if (
     result := ldif.parse_string(
-        "dn: cn=test,dc=example,dc=com\nobjectClass: inetOrgPerson\ncn: test"
+        "dn: cn=test,dc=example,dc=com\nobjectClass: inetOrgPerson\ncn: test",
     )
 ).failure:
     u.Cli.print(result.error)
@@ -44,13 +44,12 @@ if (
 
 **Solution**:
 
-```python
-from __future__ import annotations
-
+from **future** import annotations
+from flext_ldif import u
 
 def diagnose_ldif_format(content: str) -> None:
-    """Diagnose LDIF format issues."""
-    lines = content.strip().split("\n")
+"""Diagnose LDIF format issues."""
+lines = content.strip().split("\n")
 
     u.Cli.print(f"Total lines: {len(lines)}")
     u.Cli.print("First few lines:")
@@ -72,7 +71,6 @@ def diagnose_ldif_format(content: str) -> None:
         u.Cli.print("✓ UTF-8 encoding valid")
     except UnicodeError as e:
         u.Cli.print(f"❌ Encoding issue: {e}")
-```
 
 #### Character Encoding Issues
 
@@ -85,17 +83,15 @@ UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 123
 
 **Solution**:
 
-```python
-from __future__ import annotations
+from **future** import annotations
 
 import pathlib
 
-from flext_ldif import ldif, p, r
-
+from flext_ldif import ldif, p, r, u
 
 def handle_encoding_issues(file_path: str) -> p.Result[str]:
-    """Handle various character encodings."""
-    encodings_to_try = ["utf-8", "latin-1", "cp1252", "iso-8859-1"]
+"""Handle various character encodings."""
+encodings_to_try = ["utf-8", "latin-1", "cp1252", "iso-8859-1"]
 
     for encoding in encodings_to_try:
         try:
@@ -108,17 +104,16 @@ def handle_encoding_issues(file_path: str) -> p.Result[str]:
 
     return r[str].fail("Unable to decode file with any supported encoding")
 
-
 # Usage with custom encoding
+
 def parse_with_encoding_detection(file_path: str) -> p.Result[list]:
-    """Parse LDIF with automatic encoding detection."""
-    content_result = handle_encoding_issues(file_path)
-    if content_result.failure:
-        return r[list].fail(content_result.error)
+"""Parse LDIF with automatic encoding detection."""
+content_result = handle_encoding_issues(file_path)
+if content_result.failure:
+return r[list].fail(content_result.error)
 
     api = ldif()
     return api.parse_string(content_result.unwrap())
-```
 
 ### Memory Issues
 
@@ -137,14 +132,15 @@ MemoryError: Unable to allocate array
 from __future__ import annotations
 
 import pathlib
+import typing
 
-from flext_ldif import FlextLdifModels, ldif, m, p, r
+import psutil
+
+from flext_ldif import FlextLdifModels, ldif, m, p, r, u
 
 
 def process_large_file_safely(file_path: str) -> p.Result[m.Dict]:
     """Process large LDIF files with memory management."""
-    import psutil
-
     # Check available memory
     available_memory_gb = psutil.virtual_memory().available / (1024**3)
     file_size_gb = pathlib.Path(file_path).stat().st_size / (1024**3)
@@ -155,7 +151,7 @@ def process_large_file_safely(file_path: str) -> p.Result[m.Dict]:
     if file_size_gb > available_memory_gb * 0.5:
         return r[m.Dict].fail(
             f"File too large for available memory. "
-            f"File: {file_size_gb:.2f}GB, Available: {available_memory_gb:.2f}GB"
+            f"File: {file_size_gb:.2f}GB, Available: {available_memory_gb:.2f}GB",
         )
 
     # Configure for large files
@@ -168,41 +164,46 @@ def process_large_file_safely(file_path: str) -> p.Result[m.Dict]:
     return api.parse_file(file_path)
 
 
+def _iter_chunks(
+    lines: typing.TextIO,
+    chunk_size: int,
+) -> typing.Iterator[list[str]]:
+    """Yield LDIF entry chunks of at most ``chunk_size`` entries."""
+    current_chunk: list[str] = []
+    current_entry: list[str] = []
+
+    for line in lines:
+        if line.startswith("dn:") and current_entry:
+            # Process completed entry
+            current_chunk.append("\n".join(current_entry))
+            current_entry = [line.strip()]
+
+            if len(current_chunk) >= chunk_size:
+                yield current_chunk
+                current_chunk = []
+        else:
+            current_entry.append(line.strip())
+
+    # Process final chunk
+    if current_chunk:
+        yield current_chunk
+
+
 def chunk_process_file(file_path: str, chunk_size: int = 10000) -> p.Result[m.Dict]:
     """Process file in chunks to manage memory."""
-    results = {"total_entries": 0, "processed_chunks": 0}
+    results: dict[str, int] = {"total_entries": 0, "processed_chunks": 0}
 
     try:
-        with pathlib.Path(file_path).open("r", encoding="utf-8") as f:
-            current_chunk = []
-            current_entry = []
-
-            for line in f:
-                if line.startswith("dn:") and current_entry:
-                    # Process completed entry
-                    current_chunk.append("\n".join(current_entry))
-                    current_entry = [line.strip()]
-
-                    if len(current_chunk) >= chunk_size:
-                        # Process chunk
-                        chunk_result = process_chunk(current_chunk)
-                        if chunk_result.success:
-                            results["total_entries"] += len(current_chunk)
-                            results["processed_chunks"] += 1
-                        current_chunk = []
-                else:
-                    current_entry.append(line.strip())
-
-            # Process final chunk
-            if current_chunk:
+        with pathlib.Path(file_path).open("r", encoding="utf-8") as handle:
+            for current_chunk in _iter_chunks(handle, chunk_size):
                 chunk_result = process_chunk(current_chunk)
                 if chunk_result.success:
                     results["total_entries"] += len(current_chunk)
                     results["processed_chunks"] += 1
-
-        return r[m.Dict].ok(results)
-    except Exception as e:
+    except OSError as e:
         return r[m.Dict].fail(f"Chunk processing failed: {e}")
+
+    return r[m.Dict].ok(results)
 
 
 def process_chunk(chunk_entries: list[str]) -> p.Result[bool]:
@@ -220,23 +221,24 @@ def process_chunk(chunk_entries: list[str]) -> p.Result[bool]:
 **Symptom**: Validation fails with strict mode enabled.
 
 ```python
+from flext_ldif import ldif
+
+api = ldif()
+entries = api.parse_string("dn: cn=test,dc=example,dc=com\ncn: test").unwrap()
 result = api.validate_entries(entries)
-# Error: "Entry validation failed: unknown attribute 'customAttribute'"
+# Fails with: Entry validation failed, unknown attribute customAttribute
 ```
 
 **Solution**:
 
-```python
-from __future__ import annotations
+from **future** import annotations
 
-from flext_ldif import FlextLdifModels, ldif, p, r
-
+from flext_ldif import FlextLdifModels, ldif, p, r, u
 
 def handle_validation_errors(entries: list) -> p.Result[list]:
-    """Handle validation errors with detailed reporting."""
-    # Try with strict validation first
-    strict_config = FlextLdifModels.Config(strict_validation=True)
-    strict_api = ldif(settings=strict_config)
+"""Handle validation errors with detailed reporting.""" # Try with strict validation first
+strict_config = FlextLdifModels.Config(strict_validation=True)
+strict_api = ldif(settings=strict_config)
 
     strict_result = strict_api.validate_entries(entries)
     if strict_result.success:
@@ -259,11 +261,10 @@ def handle_validation_errors(entries: list) -> p.Result[list]:
 
     return r[list].fail(f"Validation failed: {permissive_result.error}")
 
-
 def analyze_entry_issues(entries: list) -> None:
-    """Analyze common entry validation issues."""
-    for i, entry in enumerate(entries):
-        u.Cli.print(f"\nEntry {i + 1}: {entry.dn}")
+"""Analyze common entry validation issues."""
+for i, entry in enumerate(entries):
+u.Cli.print(f"\nEntry {i + 1}: {entry.dn}")
 
         # Check DN format
         if not entry.dn or "=" not in entry.dn:
@@ -285,7 +286,6 @@ def analyze_entry_issues(entries: list) -> None:
         for attr_name, attr_values in entry.attributes.items():
             if not attr_values or any(not v.strip() for v in attr_values):
                 u.Cli.print(f"  ⚠️  Empty values in attribute '{attr_name}'")
-```
 
 ### Performance Issues
 
@@ -299,12 +299,13 @@ def analyze_entry_issues(entries: list) -> None:
 from __future__ import annotations
 
 import pathlib
+import time
+
+from flext_ldif import ldif, u
 
 
 def benchmark_processing(file_path: str) -> None:
     """Benchmark LDIF processing performance."""
-    import time
-
     file_size_mb = pathlib.Path(file_path).stat().st_size / (1024 * 1024)
     u.Cli.print(f"File size: {file_size_mb:.2f} MB")
 
@@ -336,29 +337,26 @@ def benchmark_processing(file_path: str) -> None:
 
 **Optimization**:
 
-```python
-from __future__ import annotations
-
+from **future** import annotations
+from flext_ldif import FlextLdifModels, ldif, m, p
 
 def optimize_processing_config() -> FlextLdifModels.Config:
-    """Create optimized configuration for performance."""
-    return FlextLdifModels.Config(
-        max_entries=None,  # No artificial limits
-        strict_validation=False,  # Faster processing
-        ignore_unknown_attributes=True,  # Skip unknown attributes
-        buffer_size=32768,  # Larger buffer for I/O
-    )
-
+"""Create optimized configuration for performance."""
+return FlextLdifModels.Config(
+max_entries=None, # No artificial limits
+strict_validation=False, # Faster processing
+ignore_unknown_attributes=True, # Skip unknown attributes
+buffer_size=32768, # Larger buffer for I/O
+)
 
 def process_with_optimization(file_path: str) -> p.Result[m.Dict]:
-    """Process LDIF with performance optimizations."""
-    settings = optimize_processing_config()
-    api = ldif(settings=settings)
+"""Process LDIF with performance optimizations."""
+settings = optimize_processing_config()
+api = ldif(settings=settings)
 
     return api.parse_file(file_path).map(
         lambda entries: {"entry_count": len(entries), "processing_optimized": True}
     )
-```
 
 ### Integration Issues
 
@@ -367,10 +365,14 @@ def process_with_optimization(file_path: str) -> p.Result[m.Dict]:
 **Symptom**: Services fail to register or retrieve from FlextContainer.
 
 ```python
-# Error: "Service registration failed"
+from flext_core import FlextContainer
+from flext_ldif import ldif
+
 container = FlextContainer()
+api = ldif()
 result = container.bind("ldif_api", api)
-# result.failure == True
+# Fails with: Service registration failed
+# The bind result reports failure
 ```
 
 **Solution**:
@@ -378,11 +380,12 @@ result = container.bind("ldif_api", api)
 ```python
 from __future__ import annotations
 
+from flext_core import FlextContainer
+from flext_ldif import ldif, p, r, u
+
 
 def debug_container_issues() -> None:
     """Debug FlextContainer registration issues."""
-    from flext_ldif import ldif
-
     container = FlextContainer()
 
     # Check container status
@@ -431,6 +434,11 @@ def safe_service_registration() -> p.Result[ldif]:
 **Symptom**: Railway-oriented programming chains fail unexpectedly.
 
 ```python
+from flext_ldif import ldif
+
+api = ldif()
+file_path = "data.ldif"
+
 # Error in chain composition
 result = (
     api
@@ -442,13 +450,12 @@ result = (
 
 **Solution**:
 
-```python
-from __future__ import annotations
-
+from **future** import annotations
+from flext_ldif import ldif, p, r, u
 
 def correct_railway_chaining(file_path: str) -> p.Result[list]:
-    """Demonstrate correct r chaining."""
-    api = ldif()
+"""Demonstrate correct r chaining."""
+api = ldif()
 
     return (
         # Parse file
@@ -464,10 +471,9 @@ def correct_railway_chaining(file_path: str) -> p.Result[list]:
         .map_error(lambda error: f"Processing chain failed: {error}")
     )
 
-
 def debug_railway_chain(file_path: str) -> p.Result[list]:
-    """Debug railway-oriented programming chains."""
-    api = ldif()
+"""Debug railway-oriented programming chains."""
+api = ldif()
 
     # Step 1: Parse
     u.Cli.print("Step 1: Parsing file...")
@@ -499,7 +505,6 @@ def debug_railway_chain(file_path: str) -> p.Result[list]:
     u.Cli.print(f"✓ Found {len(persons)} person entries")
 
     return r[list].ok(persons)
-```
 
 ## Diagnostic Tools
 
@@ -508,66 +513,59 @@ def debug_railway_chain(file_path: str) -> p.Result[list]:
 ```python
 from __future__ import annotations
 
+from flext_core import FlextContainer
+from flext_ldif import ldif, t, u
+
 
 def run_health_check() -> t.JsonMapping:
     """Run comprehensive health check for FLEXT-LDIF."""
-    results = {"status": "healthy", "checks": {}, "warnings": [], "errors": []}
-
-    # Check imports
-    try:
-        from flext_ldif import FlextLdifModels, ldif
-
-        results["checks"]["imports"] = "✓ All imports successful"
-    except ImportError as e:
-        results["checks"]["imports"] = f"❌ Import failed: {e}"
-        results["status"] = "unhealthy"
-        results["errors"].append(f"Import error: {e}")
+    results: dict[str, t.JsonValue] = {
+        "status": "healthy",
+        "checks": {},
+        "warnings": [],
+        "errors": [],
+    }
 
     # Check API initialization
     try:
         api = ldif()
         results["checks"]["api_init"] = "✓ API initializes successfully"
-    except Exception as e:
+    except (TypeError, ValueError, RuntimeError) as e:
         results["checks"]["api_init"] = f"❌ API initialization failed: {e}"
         results["status"] = "unhealthy"
         results["errors"].append(f"API initialization error: {e}")
+        return results
 
     # Check basic functionality
-    try:
-        test_ldif = """dn: cn=test,dc=example,dc=com
-cn: test
-objectClass: person
-"""
-        parse_result = api.parse_string(test_ldif)
-        if parse_result.success:
-            results["checks"]["basic_parsing"] = "✓ Basic parsing works"
-        else:
-            results["checks"]["basic_parsing"] = (
-                f"⚠️ Basic parsing issue: {parse_result.error}"
-            )
-            results["warnings"].append(f"Basic parsing issue: {parse_result.error}")
-    except Exception as e:
-        results["checks"]["basic_parsing"] = f"❌ Basic parsing failed: {e}"
-        results["errors"].append(f"Basic parsing error: {e}")
+    test_ldif = "dn: cn=test,dc=example,dc=com\ncn: test\nobjectClass: person\n"
+    parse_result = api.parse_string(test_ldif)
+    if parse_result.success:
+        results["checks"]["basic_parsing"] = "✓ Basic parsing works"
+    else:
+        results["checks"]["basic_parsing"] = (
+            f"⚠️ Basic parsing issue: {parse_result.error}"
+        )
+        results["warnings"].append(f"Basic parsing issue: {parse_result.error}")
 
     # Check container integration
     try:
         container = FlextContainer()
         reg_result = container.bind("health_check_api", api)
-        if reg_result.success:
-            results["checks"]["container_integration"] = "✓ Container integration works"
-        else:
-            results["checks"]["container_integration"] = (
-                f"⚠️ Container issue: {reg_result.error}"
-            )
-            results["warnings"].append(
-                f"Container integration issue: {reg_result.error}"
-            )
-    except Exception as e:
+    except (TypeError, ValueError, RuntimeError) as e:
         results["checks"]["container_integration"] = (
             f"❌ Container integration failed: {e}"
         )
         results["errors"].append(f"Container integration error: {e}")
+    else:
+        results["checks"]["container_integration"] = (
+            "✓ Container integration works"
+            if reg_result.success
+            else f"⚠️ Container issue: {reg_result.error}"
+        )
+        if not reg_result.success:
+            results["warnings"].append(
+                f"Container integration issue: {reg_result.error}",
+            )
 
     return results
 
@@ -614,7 +612,7 @@ def enable_debug_mode() -> FlextLdif:
 
     # Create debug configuration
     debug_config = FlextLdifModels.Config(
-        strict_validation=True, ignore_unknown_attributes=False, log_level="DEBUG"
+        strict_validation=True, ignore_unknown_attributes=False, log_level="DEBUG",
     )
 
     api = ldif(settings=debug_config)
@@ -640,17 +638,18 @@ def enable_debug_mode() -> FlextLdif:
 
 When creating support requests, include:
 
-```python
+```text
 from __future__ import annotations
+
+import platform
+import sys
+
+from flext_ldif import __version__ as ldif_version
+from flext_ldif import t
 
 
 def generate_support_info() -> t.JsonMapping:
     """Generate information for support requests."""
-    import platform
-    import sys
-
-    from flext_ldif import __version__ as ldif_version
-
     return {
         "flext_ldif_version": ldif_version,
         "python_version": sys.version,

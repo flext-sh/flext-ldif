@@ -142,12 +142,15 @@ api = ldif()
 
 # Prepare a sample LDIF file
 ldif_path = Path("directory.ldif")
-ldif_path.write_text(
-    "dn: cn=John Doe,ou=People,dc=example,dc=com\ncn: John Doe\nobjectClass: person\n"
+sample_ldif = (
+    "dn: cn=John Doe,ou=People,dc=example,dc=com\n"
+    "cn: John Doe\n"
+    "objectClass: person\n"
 )
+ldif_path.write_text(sample_ldif, encoding="utf-8")
 
 # Parse LDIF file
-result = api.parse_string(ldif_path.read_text())
+result = api.parse_string(ldif_path.read_text(encoding="utf-8"))
 
 if result.success:
     entries = result.unwrap().entries
@@ -193,16 +196,16 @@ api = ldif(settings=settings)
 
 Access additional configuration options:
 
-```python
-from flext_ldif import FlextLdifSettings
+from flext_ldif import FlextLdifSettings, u
 
 # Get global configuration
+
 settings = FlextLdifSettings()
 
 # Access configuration settings
+
 u.Cli.print(f"Max entries: {settings.max_entries}")
 u.Cli.print(f"Strict validation: {settings.strict_validation}")
-```
 
 ## Command Line Interface
 
@@ -246,7 +249,8 @@ from flext_ldif import FlextLdif
 
 # Write a sample LDIF schema file
 schema_path = Path("oid_schema.ldif")
-schema_path.write_text("dn: cn=example,dc=example,dc=com\nobjectClass: top\n")
+sample_schema = "dn: cn=example,dc=example,dc=com\nobjectClass: top\n"
+schema_path.write_text(sample_schema, encoding="utf-8")
 
 # Initialize parser and parse the sample schema
 parser = FlextLdif()
@@ -268,32 +272,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
-class Result:
-    def __init__(self, success: bool, value=None) -> None:
-        self.success = success
-        self._value = value
-
-    def unwrap(self):
-        return self._value
-
-
-class FlextLdifMigration:
-    def __init__(
-        self,
-        input_dir: Path,
-        output_dir: Path,
-        source_server_type: str,
-        target_server_type: str,
-    ) -> None:
-        pass
-
-    def execute(self) -> Result:
-        return Result(True, {"entries_migrated": 42, "schema_files": []})
-
+from flext_ldif import FlextLdifMigrationPipeline
 
 # Initialize migration pipeline with source and target servers
-pipeline = FlextLdifMigration(
+pipeline = FlextLdifMigrationPipeline(
     input_dir=Path("source_ldifs"),
     output_dir=Path("target_ldifs"),
     source_server_type="oid",  # Source: Oracle Internet Directory
@@ -362,7 +344,7 @@ if result.success:
         # Continue processing valid entries
         print(
             f"Processing {report.valid_entries} valid entries "
-            f"out of {report.total_entries} total entries"
+            f"out of {report.total_entries} total entries",
         )
 ```
 

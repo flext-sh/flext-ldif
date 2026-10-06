@@ -41,43 +41,14 @@ LDIF files into memory during processing.
 ```python
 from __future__ import annotations
 
-from collections.abc import Sequence
 from pathlib import Path
 
+from flext_ldif import ldif
 
-class Entry: ...
-
-
-class Result: ...
-
-
-class p:
-    Result = Result
-
-
-class Logger:
-    def warning(self, message: str) -> None:
-        pass
-
-
-logger = Logger()
-
-
-# Memory-bound file processing
-def parse_ldif_file(self, file_path: Path) -> p.Result[Sequence[Entry]]:
-    """Parse LDIF file with memory-bound architecture."""
-    # Check file size and warn
-    file_size_mb = file_path.stat().st_size / (1024 * 1024)
-    if file_size_mb > 100:
-        logger.warning(f"Large file detected: {file_size_mb:.1f}MB")
-
-    # Load entire file into memory
-    with file_path.open("r", encoding="utf-8") as f:
-        content = f.read()
-
-    # Process in memory
-    lines = content.splitlines()
-    return self._parse_lines(lines)
+# Memory-bound file processing: the parser loads the complete file into
+# memory before RFC-compliant parsing.
+api = ldif()
+parse_result = api.parse_ldif_file(Path("data.ldif"))
 ```
 
 **Consequences**:

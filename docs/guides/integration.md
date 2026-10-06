@@ -54,8 +54,8 @@ def process_directory_export(file_path: str) -> p.Result[dict]:
         # Generate LDIF-specific statistics
         .flat_map(
             lambda persons: api.get_entry_statistics(persons).map(
-                lambda stats: {"persons": persons, "stats": stats}
-            )
+                lambda stats: {"persons": persons, "stats": stats},
+            ),
         )
         # Add LDIF-specific error context
         .map_error(lambda error: f"LDIF directory processing failed: {error}")
@@ -69,6 +69,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from flext_ldif import ldif, m, p, r
+
 
 def process_ldif_with_memory_check(file_path: Path) -> p.Result[m.Dict]:
     """Process LDIF with memory size validation."""
@@ -81,7 +83,7 @@ def process_ldif_with_memory_check(file_path: Path) -> p.Result[m.Dict]:
     if file_size > max_size:
         return r[m.Dict].fail(
             f"File too large ({file_size} bytes). "
-            f"Current implementation limited to {max_size} bytes."
+            f"Current implementation limited to {max_size} bytes.",
         )
 
     return api.parse_file(file_path)
@@ -139,33 +141,45 @@ class FLEXTOUDMigrationService:
             .map(self._log_ldif_completion)
         )
 
-    def _categorize_ldif_entries(self, entries) -> p.Result[m.Dict]:
+    def _categorize_ldif_entries(
+        self,
+        entries: t.SequenceOf[p.Ldif.Entry],
+    ) -> p.Result[m.Dict]:
         """Categorize LDIF entries for migration processing."""
         try:
-            users = []
-            groups = []
-            organizational_units = []
-            other = []
-
-            for entry in entries:
-                if entry.is_person():
-                    users.append(entry)
-                elif entry.is_group():
-                    groups.append(entry)
-                elif entry.has_object_class("organizationalUnit"):
-                    organizational_units.append(entry)
-                else:
-                    other.append(entry)
-
-            return r[m.Dict].ok({
-                "users": users,
-                "groups": groups,
-                "organizational_units": organizational_units,
-                "other": other,
-                "total": len(entries),
-            })
-        except Exception as e:
+            categorized = self._partition_entries(entries)
+        except (AttributeError, TypeError) as e:
             return r[m.Dict].fail(f"LDIF entry categorization failed: {e}")
+
+        categorized["total"] = len(entries)
+        return r[m.Dict].ok(categorized)
+
+    def _partition_entries(
+        self,
+        entries: t.SequenceOf[p.Ldif.Entry],
+    ) -> t.JsonMapping:
+        """Partition LDIF entries into migration processing groups."""
+        users = []
+        groups = []
+        organizational_units = []
+        other = []
+
+        for entry in entries:
+            if entry.is_person():
+                users.append(entry)
+            elif entry.is_group():
+                groups.append(entry)
+            elif entry.has_object_class("organizationalUnit"):
+                organizational_units.append(entry)
+            else:
+                other.append(entry)
+
+        return {
+            "users": users,
+            "groups": groups,
+            "organizational_units": organizational_units,
+            "other": other,
+        }
 
     def _apply_migration_transformations(self, categorized: dict) -> p.Result[m.Dict]:
         """Apply FLEXT-specific LDIF entry transformations."""
@@ -193,12 +207,18 @@ class FLEXTOUDMigrationService:
             "total": categorized["total"],
         })
 
-    def _transform_user_entries(self, user_entries):
+    def _transform_user_entries(
+        self,
+        user_entries: t.SequenceOf[p.Ldif.Entry],
+    ) -> t.SequenceOf[p.Ldif.Entry]:
         """Transform user LDIF entries for FLEXT migration."""
         # LDIF-specific user entry transformations
         return user_entries
 
-    def _transform_group_entries(self, group_entries):
+    def _transform_group_entries(
+        self,
+        group_entries: t.SequenceOf[p.Ldif.Entry],
+    ) -> t.SequenceOf[p.Ldif.Entry]:
         """Transform group LDIF entries for FLEXT migration."""
         # LDIF-specific group entry transformations
         return group_entries
@@ -238,7 +258,7 @@ from __future__ import annotations
 
 from flext_api import FlextAPIService
 
-from flext_ldif import ldif
+from flext_ldif import ldif, m, p, r, t
 
 
 class LdifAPIService(FlextAPIService):
@@ -273,18 +293,18 @@ class LdifAPIService(FlextAPIService):
                     "entries": [
                         self._serialize_ldif_entry(entry) for entry in entries[:100]
                     ],  # Limit response size
-                }
+                },
             )
             .map_error(
                 lambda error: {
                     "status": "error",
                     "message": f"LDIF parsing failed: {error}",
                     "error_type": "ldif_parse_error",
-                }
+                },
             )
         )
 
-    def _serialize_ldif_entry(self, entry) -> t.JsonMapping:
+    def _serialize_ldif_entry(self, entry: p.Ldif.Entry) -> t.JsonMapping:
         """Serialize LDIF entry for API response."""
         return {
             "dn": entry.dn,
@@ -300,11 +320,12 @@ class LdifAPIService(FlextAPIService):
 ```python
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from flext_cli import FlextCliService, u
 
-from flext_ldif import ldif
+from flext_ldif import ldif, p, r, t
 
 
 class LdifCLIService(FlextCliService):
@@ -315,7 +336,7 @@ class LdifCLIService(FlextCliService):
         self._ldif_api = ldif()
 
     def parse_command(
-        self, input_file: str, output_format: str = "summary"
+        self, input_file: str, output_format: str = "summary",
     ) -> p.Result[bool]:
         """CLI command for parsing LDIF files with size checking."""
         file_path = Path(input_file)
@@ -328,7 +349,7 @@ class LdifCLIService(FlextCliService):
         if file_size > 100 * 1024 * 1024:  # 100MB limit
             return r[bool].fail(
                 f"LDIF file too large ({file_size} bytes). "
-                f"Current implementation limited to 100MB."
+                f"Current implementation limited to 100MB.",
             )
 
         return (
@@ -338,7 +359,11 @@ class LdifCLIService(FlextCliService):
             .map_error(lambda error: f"LDIF CLI parse failed: {error}")
         )
 
-    def _output_ldif_results(self, entries, format_type: str) -> p.Result[bool]:
+    def _output_ldif_results(
+        self,
+        entries: t.SequenceOf[p.Ldif.Entry],
+        format_type: str,
+    ) -> p.Result[bool]:
         """Output LDIF parsing results in specified format."""
         if format_type == "summary":
             u.Cli.print("LDIF Processing Summary:")
@@ -358,8 +383,6 @@ class LdifCLIService(FlextCliService):
 
             return r[bool].ok(value=True)
         if format_type == "json":
-            import json
-
             output = json.dumps(
                 [
                     {
@@ -389,7 +412,7 @@ from pathlib import Path
 
 import psutil
 
-from flext_ldif import ldif
+from flext_ldif import ldif, m, p, r, t
 
 
 def process_multiple_ldif_files(file_paths: t.SequenceOf[Path]) -> p.Result[m.Dict]:
@@ -409,7 +432,7 @@ def process_multiple_ldif_files(file_paths: t.SequenceOf[Path]) -> p.Result[m.Di
         if memory_increase > 500 * 1024 * 1024:  # 500MB increase limit
             return r[m.Dict].fail(
                 f"Memory usage too high ({memory_increase} bytes). "
-                f"Processed {len(processing_stats)} files before limit."
+                f"Processed {len(processing_stats)} files before limit.",
             )
 
         result = api.parse_file(file_path)
@@ -460,7 +483,7 @@ def safe_ldif_processing(file_path: Path) -> p.Result[list]:
 
     if file_size > max_size:
         return r[list].fail(
-            f"File too large for current implementation: {file_size} bytes"
+            f"File too large for current implementation: {file_size} bytes",
         )
 
     api = ldif()
@@ -471,13 +494,12 @@ def safe_ldif_processing(file_path: Path) -> p.Result[list]:
 
 Handle LDIF format errors specifically:
 
-```python
-from __future__ import annotations
-
+from **future** import annotations
+from flext_ldif import ldif, m, p, r
 
 def robust_ldif_processing(content: str) -> p.Result[m.Dict]:
-    """Process LDIF with format-specific error handling."""
-    api = ldif()
+"""Process LDIF with format-specific error handling."""
+api = ldif()
 
     result = api.parse_string(content)
     if result.failure:
@@ -487,7 +509,6 @@ def robust_ldif_processing(content: str) -> p.Result[m.Dict]:
         return r[m.Dict].fail(f"Processing error: {error_msg}")
 
     return r[m.Dict].ok({"entries": result.unwrap()})
-```
 
 ### 3. LDIF Entry Type Processing
 
@@ -496,8 +517,10 @@ Use LDIF-specific entry type methods:
 ```python
 from __future__ import annotations
 
+from flext_ldif import p, t
 
-def categorize_ldif_entries(entries) -> t.JsonMapping:
+
+def categorize_ldif_entries(entries: t.SequenceOf[p.Ldif.Entry]) -> t.JsonMapping:
     """Categorize LDIF entries by type."""
     categories = {
         "persons": [e for e in entries if e.is_person()],
@@ -512,7 +535,7 @@ def categorize_ldif_entries(entries) -> t.JsonMapping:
     categorized = set(
         categories["persons"]
         + categories["groups"]
-        + categories["organizational_units"]
+        + categories["organizational_units"],
     )
     categories["other"] = [e for e in entries if e not in categorized]
 
@@ -533,6 +556,10 @@ def categorize_ldif_entries(entries) -> t.JsonMapping:
 ```python
 from __future__ import annotations
 
+from pathlib import Path
+
+from flext_ldif import ldif, m, p, r
+
 
 # ✅ Good: Small to medium LDIF files
 def process_small_ldif(file_path: Path) -> p.Result[m.Dict]:
@@ -549,7 +576,7 @@ def process_large_ldif(file_path: Path) -> p.Result[str]:
     """For large LDIF files, use external tools first."""
     # Use grep, awk, or other streaming tools to pre-process
     # Then use FLEXT-LDIF for final processing of smaller chunks
-    return r[str].fail("Large file processing not yet implemented")
+    return r[str].fail(f"Large file processing not yet implemented: {file_path}")
 ```
 
 ---
