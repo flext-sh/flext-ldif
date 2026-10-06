@@ -111,6 +111,7 @@ from flext_ldif._utilities.collection_ldif import (
     FlextLdifUtilitiesCollectionLdif,
 )
 
+
 class FlextLdifUtilities(
     FlextCliUtilities,
     FlextLdifUtilitiesCollectionLdif,
