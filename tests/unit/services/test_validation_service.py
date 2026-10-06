@@ -22,7 +22,6 @@ _INVALID_DESCRIPTORS: t.VariadicTuple[str] = ("invalid name", "", " ", "has spac
 
 
 def _assert_descriptor(
-    api: p.Ldif.LdifClient,
     validate: Callable[[str], p.Result[bool]],
     name: str,
     *,
@@ -49,7 +48,7 @@ class TestsFlextLdifValidationService:
         name: str,
     ) -> None:
         """Test validate attribute name accepts valid descriptors."""
-        _assert_descriptor(api, api.validate_attribute_name, name, is_valid=True)
+        _assert_descriptor(api.validate_attribute_name, name, is_valid=True)
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -62,7 +61,7 @@ class TestsFlextLdifValidationService:
         name: str,
     ) -> None:
         """Test validate attribute name rejects invalid descriptors."""
-        _assert_descriptor(api, api.validate_attribute_name, name, is_valid=False)
+        _assert_descriptor(api.validate_attribute_name, name, is_valid=False)
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -75,7 +74,7 @@ class TestsFlextLdifValidationService:
         name: str,
     ) -> None:
         """Test validate objectclass name accepts valid descriptors."""
-        _assert_descriptor(api, api.validate_objectclass_name, name, is_valid=True)
+        _assert_descriptor(api.validate_objectclass_name, name, is_valid=True)
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -88,7 +87,7 @@ class TestsFlextLdifValidationService:
         name: str,
     ) -> None:
         """Test validate objectclass name rejects invalid descriptors."""
-        _assert_descriptor(api, api.validate_objectclass_name, name, is_valid=False)
+        _assert_descriptor(api.validate_objectclass_name, name, is_valid=False)
 
     @staticmethod
     @pytest.mark.parametrize(

@@ -46,7 +46,87 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
     @runtime_checkable
-    class LdifClient(ValidationService, ServerDetectionService, Protocol):
+    @runtime_checkable
+    class ServerResolutionService(Protocol):
+        """Contract for server registry resolution and model conversion."""
+
+        def acl(self, server_type: str) -> p.Result[lpd.AclServer]:
+            """Resolve ACL server by server type via the facade DSL."""
+            ...
+
+        def entry(self, server_type: str) -> p.Result[lpd.EntryServer]:
+            """Resolve entry server by server type via the facade DSL."""
+            ...
+
+        def resolve_base_server(self, server_type: str) -> p.Result[lpd.ServerServer]:
+            """Resolve base server by server type via the facade DSL."""
+            ...
+
+        def schema_server(self, server_type: str) -> p.Result[lpd.SchemaServer]:
+            """Resolve schema server by server type via the facade DSL."""
+            ...
+
+        def resolve_schema_server(self, server_type: str) -> p.Result[lpd.SchemaServer]:
+            """Resolve schema server by server type via the facade DSL."""
+            ...
+
+        def resolve_server_bundle(
+            self,
+            server_type: str,
+        ) -> p.Result[
+            t.MappingKV[str, lpd.SchemaServer | lpd.AclServer | lpd.EntryServer]
+        ]:
+            """Resolve schema/acl/entry bundle by server type via the facade DSL."""
+            ...
+
+        def resolve_server_constants(
+            self,
+            server_type: str,
+        ) -> p.Result[type[FlextLdifProtocolsBase.ServerConstants]]:
+            """Resolve server constants by server type via the facade DSL."""
+            ...
+
+        def list_registered_servers(self) -> p.Result[t.MutableSequenceOf[str]]:
+            """List registered server types via the facade DSL."""
+            ...
+
+        def summarize_registry(self) -> p.Result[t.Ldif.MutableMetadataInputMapping]:
+            """Return registry summary metadata via the facade DSL."""
+            ...
+
+        def resolve_supported_conversions(
+            self,
+            server: FlextLdifProtocolsBase.ServerReference | str,
+        ) -> t.MappingKV[str, bool]:
+            """Return supported conversion categories for a server server."""
+            ...
+
+        def convert_model(
+            self,
+            source: str | FlextLdifProtocolsBase.ServerReference | lpd.ServerServer,
+            target: str | FlextLdifProtocolsBase.ServerReference | lpd.ServerServer,
+            model_instance: m.Ldif.Entry
+            | m.Ldif.SchemaAttribute
+            | m.Ldif.SchemaObjectClass
+            | m.Ldif.Acl,
+        ) -> p.Result[t.Ldif.ConvertedModel]:
+            """Convert one LDIF model between server servers."""
+            ...
+
+        def resolve_effective_server_type(
+            self,
+            ldif_path: Path | None = None,
+            ldif_content: str | None = None,
+        ) -> p.Result[str]:
+            """Resolve the effective LDAP server type for public processing flows."""
+            ...
+
+    class LdifClient(
+        ValidationService,
+        ServerDetectionService,
+        ServerResolutionService,
+        Protocol,
+    ):
         """Protocol for LDIF clients that support CRUD operations."""
 
         @property
@@ -118,77 +198,6 @@ class FlextLdifProtocolsBase(Protocol):
             server_type: str | None = None,
         ) -> p.Result[str]:
             """Write LDIF entries to a string."""
-            ...
-
-        def acl(self, server_type: str) -> p.Result[lpd.AclServer]:
-            """Resolve ACL server by server type via the facade DSL."""
-            ...
-
-        def entry(self, server_type: str) -> p.Result[lpd.EntryServer]:
-            """Resolve entry server by server type via the facade DSL."""
-            ...
-
-        def resolve_base_server(self, server_type: str) -> p.Result[lpd.ServerServer]:
-            """Resolve base server by server type via the facade DSL."""
-            ...
-
-        def schema_server(self, server_type: str) -> p.Result[lpd.SchemaServer]:
-            """Resolve schema server by server type via the facade DSL."""
-            ...
-
-        def resolve_schema_server(self, server_type: str) -> p.Result[lpd.SchemaServer]:
-            """Resolve schema server by server type via the facade DSL."""
-            ...
-
-        def resolve_server_bundle(
-            self,
-            server_type: str,
-        ) -> p.Result[
-            t.MappingKV[str, lpd.SchemaServer | lpd.AclServer | lpd.EntryServer]
-        ]:
-            """Resolve schema/acl/entry bundle by server type via the facade DSL."""
-            ...
-
-        def resolve_server_constants(
-            self,
-            server_type: str,
-        ) -> p.Result[type[FlextLdifProtocolsBase.ServerConstants]]:
-            """Resolve server constants by server type via the facade DSL."""
-            ...
-
-        def list_registered_servers(self) -> p.Result[t.MutableSequenceOf[str]]:
-            """List registered server types via the facade DSL."""
-            ...
-
-        def summarize_registry(self) -> p.Result[t.Ldif.MutableMetadataInputMapping]:
-            """Return registry summary metadata via the facade DSL."""
-            ...
-
-        def resolve_supported_conversions(
-            self,
-            server: FlextLdifProtocolsBase.ServerReference | str,
-        ) -> t.MappingKV[str, bool]:
-            """Return supported conversion categories for a server server."""
-            ...
-
-        def convert_model(
-            self,
-            source: str | FlextLdifProtocolsBase.ServerReference | lpd.ServerServer,
-            target: str | FlextLdifProtocolsBase.ServerReference | lpd.ServerServer,
-            model_instance: m.Ldif.Entry
-            | m.Ldif.SchemaAttribute
-            | m.Ldif.SchemaObjectClass
-            | m.Ldif.Acl,
-        ) -> p.Result[t.Ldif.ConvertedModel]:
-            """Convert one LDIF model between server servers."""
-            ...
-
-        def resolve_effective_server_type(
-            self,
-            ldif_path: Path | None = None,
-            ldif_content: str | None = None,
-        ) -> p.Result[str]:
-            """Resolve the effective LDAP server type for public processing flows."""
             ...
 
         def validate_entries(

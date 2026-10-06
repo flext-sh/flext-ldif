@@ -129,7 +129,8 @@ class FlextLdifServersRelaxedEntry(FlextLdifServersRfc.Entry):
         if parent_result.success:
             return parent_result
         self.logger.debug(
-            "RFC parser failed, using relaxed mode: %s", parent_result.error,
+            "RFC parser failed, using relaxed mode: %s",
+            parent_result.error,
         )
         try:
             return self._parse_relaxed_content(ldif_content)
@@ -308,7 +309,8 @@ class FlextLdifServersRelaxedEntry(FlextLdifServersRfc.Entry):
         if parent_result.success:
             return parent_result
         self.logger.debug(
-            "RFC write failed, using relaxed mode: %s", parent_result.error,
+            "RFC write failed, using relaxed mode: %s",
+            parent_result.error,
         )
         try:
             return self._write_relaxed_entry(entry_data)

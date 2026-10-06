@@ -212,7 +212,8 @@ class TestsFlextLdifSystematicFixtureCoverage:
         parse_result = api.parse_ldif(fixture_data)
         tm.ok(parse_result)
         entries = parse_result.unwrap().entries
-        assert len(entries) >= 5, (
+        min_fixture_entries = 5
+        assert len(entries) >= min_fixture_entries, (
             f"Integration fixture should hold multiple entries, got {len(entries)}"
         )
 

@@ -147,73 +147,13 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersRfc.Acl):
         target_dn, target_attrs = self._extract_oid_target(acl_line)
         if not target_dn:
             target_dn = "entry"
-        oid_subject_type = self._detect_oid_subject(acl_line)
-        oid_subject_value: str | None = None
-        if oid_subject_type:
-            for (
-                regex,
-                subj_type,
-                _,
-            ) in FlextLdifServersOidConstants.ACL_SUBJECT_PATTERNS.values():
-                if subj_type == oid_subject_type and regex:
-                    oid_subject_value = u.Ldif.extract_component(
-                        acl_line,
-                        regex,
-                        group=1,
-                    )
-                    if oid_subject_value:
-                        break
-            oid_subject_value = (
-                oid_subject_value
-                or FlextLdifServersOidConstants.OidAclSubjectType.ANONYMOUS
-            )
-        else:
-            oid_subject_type = FlextLdifServersOidConstants.OidAclSubjectType.SELF
-            oid_subject_value = FlextLdifServersOidConstants.OidAclSubjectType.SELF
+        oid_subject_type, oid_subject_value = self._resolve_oid_subject(acl_line)
         rfc_subject_type, rfc_subject_value = self._map_oid_subject_to_rfc(
             oid_subject_type,
             oid_subject_value,
         )
         perms_dict = self._parse_oid_permissions(acl_line)
-        acl_filter = u.Ldif.extract_component(
-            acl_line,
-            FlextLdifServersOidConstants.ACL_FILTER_PATTERN,
-            group=1,
-        )
-        acl_constraint = u.Ldif.extract_component(
-            acl_line,
-            FlextLdifServersOidConstants.ACL_CONSTRAINT_PATTERN,
-            group=1,
-        )
-        bindmode = u.Ldif.extract_component(
-            acl_line,
-            FlextLdifServersOidConstants.ACL_BINDMODE_PATTERN,
-            group=1,
-        )
-        deny_group_override = (
-            u.Ldif.extract_component(
-                acl_line,
-                FlextLdifServersOidConstants.ACL_DENY_GROUP_OVERRIDE_PATTERN,
-            )
-            is not None
-        )
-        append_to_all = (
-            u.Ldif.extract_component(
-                acl_line,
-                FlextLdifServersOidConstants.ACL_APPEND_TO_ALL_PATTERN,
-            )
-            is not None
-        )
-        bind_ip_filter = u.Ldif.extract_component(
-            acl_line,
-            FlextLdifServersOidConstants.ACL_BIND_IP_FILTER_PATTERN,
-            group=1,
-        )
-        constrain_to_added_object = u.Ldif.extract_component(
-            acl_line,
-            FlextLdifServersOidConstants.ACL_CONSTRAIN_TO_ADDED_PATTERN,
-            group=1,
-        )
+        options = self._extract_oid_acl_options(acl_line)
         settings = self.OidAclMetadataConfig.model_validate({
             "acl_line": acl_line,
             "oid_subject_type": oid_subject_type,
@@ -222,13 +162,7 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersRfc.Acl):
             "perms_dict": perms_dict,
             "target_dn": target_dn,
             "target_attrs": target_attrs,
-            "acl_filter": acl_filter or "",
-            "acl_constraint": acl_constraint or "",
-            "bindmode": bindmode or "",
-            "deny_group_override": deny_group_override,
-            "append_to_all": append_to_all,
-            "bind_ip_filter": bind_ip_filter or "",
-            "constrain_to_added_object": constrain_to_added_object or "",
+            **options,
         })
         extensions = self._build_oid_acl_metadata(settings)
         server_type: c.Ldif.ServerTypes = c.Ldif.ServerTypes.OID
@@ -256,6 +190,80 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersRfc.Acl):
             "validation_violations": [],
         })
         return r[m.Ldif.Acl].ok(acl_model)
+
+    def _resolve_oid_subject(
+        self,
+        acl_line: str,
+    ) -> tuple[str, str | None]:
+        """Detect the OID subject of one ACL line and resolve its value.
+
+        Returns:
+            The resulting ``tuple[str, str | None]``.
+        """
+        oid_subject_type = self._detect_oid_subject(acl_line)
+        if not oid_subject_type:
+            oid_subject_type = FlextLdifServersOidConstants.OidAclSubjectType.SELF
+            return (
+                oid_subject_type,
+                FlextLdifServersOidConstants.OidAclSubjectType.SELF,
+            )
+        subject_value: str | None = None
+        for regex, subj_type, _ in (
+            FlextLdifServersOidConstants.ACL_SUBJECT_PATTERNS.values()
+        ):
+            if subj_type == oid_subject_type and regex:
+                subject_value = u.Ldif.extract_component(
+                    acl_line,
+                    regex,
+                    group=1,
+                )
+                if subject_value:
+                    break
+        return oid_subject_type, (
+            subject_value or FlextLdifServersOidConstants.OidAclSubjectType.ANONYMOUS
+        )
+
+    @staticmethod
+    def _extract_oid_acl_options(acl_line: str) -> dict[str, str | bool]:
+        """Extract the optional ACL components of one OID ACL line.
+
+        Returns:
+            The resulting ``dict[str, str | bool]``.
+        """
+        extract = u.Ldif.extract_component
+        kls = FlextLdifServersOidConstants
+        return {
+            "acl_filter": extract(acl_line, kls.ACL_FILTER_PATTERN, group=1) or "",
+            "acl_constraint": extract(
+                acl_line,
+                kls.ACL_CONSTRAINT_PATTERN,
+                group=1,
+            )
+            or "",
+            "bindmode": extract(acl_line, kls.ACL_BINDMODE_PATTERN, group=1) or "",
+            "deny_group_override": extract(
+                acl_line,
+                kls.ACL_DENY_GROUP_OVERRIDE_PATTERN,
+            )
+            is not None,
+            "append_to_all": extract(
+                acl_line,
+                kls.ACL_APPEND_TO_ALL_PATTERN,
+            )
+            is not None,
+            "bind_ip_filter": extract(
+                acl_line,
+                kls.ACL_BIND_IP_FILTER_PATTERN,
+                group=1,
+            )
+            or "",
+            "constrain_to_added_object": extract(
+                acl_line,
+                kls.ACL_CONSTRAIN_TO_ADDED_PATTERN,
+                group=1,
+            )
+            or "",
+        }
 
     @staticmethod
     def _update_acl_with_oid_metadata(

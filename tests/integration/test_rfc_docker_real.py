@@ -137,7 +137,10 @@ class TestsFlextLdifRfcDockerReal:
         source = fixtures_dir / c.Tests.OID / "oid_schema_fixtures.ldif"
         if not source.exists():
             pytest.skip(f"Fixture not available: {source}")
-        assert source.stat().st_size > 300_000, "expected large schema fixture"
+        min_schema_fixture_bytes = 300_000
+        assert source.stat().st_size > min_schema_fixture_bytes, (
+            "expected large schema fixture"
+        )
 
         # Act
         result = FlextLdifParser().parse_ldif_file(source)

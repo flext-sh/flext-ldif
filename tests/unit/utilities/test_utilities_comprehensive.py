@@ -170,10 +170,11 @@ class TestsFlextLdifUtilitiesComprehensive:
     @staticmethod
     def test_fold_line_respects_width_and_marks_continuations() -> None:
         """fold_line keeps the first chunk within width; continuations start ' '."""
-        folded = u.Ldif.fold_line("a" * 100, 76)
+        fold_width = 76
+        folded = u.Ldif.fold_line("a" * 100, fold_width)
 
         assert len(folded) > 1
-        assert len(folded[0]) <= 76
+        assert len(folded[0]) <= fold_width
         assert all(cont.startswith(" ") for cont in folded[1:])
 
     @staticmethod

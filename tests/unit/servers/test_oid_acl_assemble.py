@@ -416,16 +416,11 @@ class TestsFlextLdifOidAclAssemble:
 
         tm.that(result.failure, eq=True)
 
+
+class TestsFlextLdifOidAclFixtureAndEntry:
+    """OID ACL fixture conversion and entry-level orclaci conversion."""
+
     @staticmethod
-    def test_unknown_perm_token_surfaces_failure() -> None:
-        """Test unknown perm token surfaces failure."""
-        result = Pipe.convert_acl_values(
-            "cn=users,dc=ctbc",
-            ('orclaci: access to entry by group="cn=a,dc=ctbc" (bogus)',),
-        )
-
-        tm.that(result.failure, eq=True)
-
     @staticmethod
     def test_oid_acl_fixture_lines_convert_without_partial_failures() -> None:
         """Test oid acl fixture lines convert without partial failures."""
@@ -529,3 +524,13 @@ class TestsFlextLdifOidAclAssemble:
         entry = self._entry({"orclaci": ["not a valid acl"]})
 
         tm.that(Pipe.convert_entry_acls(entry, "oid", "oud").failure, eq=True)
+
+    @staticmethod
+    def test_unknown_perm_token_surfaces_failure() -> None:
+        """Test unknown perm token surfaces failure."""
+        result = Pipe.convert_acl_values(
+            "cn=users,dc=ctbc",
+            ('orclaci: access to entry by group="cn=a,dc=ctbc" (bogus)',),
+        )
+
+        tm.that(result.failure, eq=True)

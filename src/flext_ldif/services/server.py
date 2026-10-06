@@ -9,7 +9,7 @@ from __future__ import annotations
 import importlib
 import inspect
 import pkgutil
-from typing import TYPE_CHECKING, Annotated, ClassVar, TypeGuard, override
+from typing import TYPE_CHECKING, Annotated, ClassVar, Self, TypeGuard, override
 
 from flext_core import r
 from flext_ldif import c, p, s, t, u
@@ -34,6 +34,22 @@ class FlextLdifServer(s):
         ),
     ] = None
     _registry: p.Registry = u.PrivateAttr(default_factory=u.build_registry)
+
+    @override
+    def __new__(cls, *args: object, **kwargs: object) -> Self:
+        """Pre-bind the shared singleton before pydantic initialization.
+
+        The inherited service-base ``_server`` private-attribute default
+        resolves ``fetch_global_instance`` during construction; binding the
+        instance in ``__new__`` turns that re-entrant fetch into a return of
+        the instance under construction instead of unbounded recursion.
+        """
+        _ = args, kwargs
+        singleton = FlextLdifServer._global_instance
+        if singleton is None:
+            singleton = super().__new__(cls)
+            FlextLdifServer._global_instance = singleton
+        return singleton
 
     @override
     def model_post_init(self, __context: t.JsonMapping | None, /) -> None:
@@ -315,16 +331,13 @@ class FlextLdifServer(s):
     def fetch_global_instance(cls) -> FlextLdifServer:
         """Return the shared registry instance, creating it on first call.
 
-        The singleton is pre-bound before ``__init__`` runs: the inherited
-        service-base ``_server`` default resolves through this classmethod
-        during construction, so an unguarded ``cls()`` here would re-enter
-        forever. With the pre-bind, a re-entrant fetch returns the instance
-        under construction instead of recursing.
+        ``__new__`` pre-binds the singleton, so plain instantiation is safe:
+        the inherited service-base ``_server`` default resolves through this
+        classmethod during construction and returns the instance under
+        construction instead of recursing.
         """
         if cls._global_instance is None:
-            instance = cls.__new__(cls)
-            cls._global_instance = instance
-            instance.__init__()
+            cls._global_instance = cls()
         return cls._global_instance
 
 
