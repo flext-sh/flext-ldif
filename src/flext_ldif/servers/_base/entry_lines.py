@@ -140,12 +140,7 @@ class FlextLdifServersEntryLineEmitter:
         if attr_name.lower() != "aci" or not self._acl_original_format:
             return value
         safe_acl_name = self._acl_original_format.replace('"', "'")
-        replaced_acl_name: str = c.Ldif.sub_pattern(
-            r'acl\\s+"[^"]*"',
-            f'acl "{safe_acl_name}"',
-            value,
-            count=1,
-        )
+        replaced_acl_name: str = c.Ldif.compile_pattern(r'acl\\s+"[^"]*"', ignorecase=False).sub(f'acl "{safe_acl_name}"', value, count=1)
         return replaced_acl_name
 
 

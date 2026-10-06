@@ -52,21 +52,11 @@ class FlextLdifDNTransforming:
         normalized_dn = norm_result.map_or(dn_str)
         source_escaped = c.Ldif.escape_pattern(source_dn)
         result = u.to_str(
-            c.Ldif.sub_pattern(
-                f",{source_escaped}$",
-                f",{target_dn}",
-                normalized_dn,
-                ignorecase=True,
-            ),
+            c.Ldif.compile_pattern(f", ignorecase=True).sub({source_escaped}$", f"),
         )
         if result == normalized_dn:
             result = u.to_str(
-                c.Ldif.sub_pattern(
-                    f"^{source_escaped}$",
-                    target_dn,
-                    normalized_dn,
-                    ignorecase=True,
-                ),
+                c.Ldif.compile_pattern(f"^{source_escaped}$", ignorecase=True).sub(target_dn, normalized_dn),
             )
         return result
 
@@ -78,12 +68,7 @@ class FlextLdifDNTransforming:
             The resulting ``str``.
         """
         return u.to_str(
-            c.Ldif.sub_pattern(
-                c.Ldif.escape_pattern(source_dn),
-                target_dn,
-                content,
-                ignorecase=True,
-            ),
+            c.Ldif.compile_pattern(c.Ldif.escape_pattern(source_dn), ignorecase=True).sub(target_dn, content),
         )
 
     @staticmethod

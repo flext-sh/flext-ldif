@@ -69,11 +69,7 @@ class FlextLdifServersOidEntryNormalizeMixin(FlextLdifServersRfc.Entry):
         Returns:
             The resulting ``tuple[str, bool]``.
         """
-        sup_quoted = c.Ldif.sub_pattern(
-            r"SUP\s+'([^']+)'",
-            r"SUP \1",
-            value,
-        )
+        sup_quoted = c.Ldif.compile_pattern(r"SUP\s+'([^']+)'", ignorecase=False).sub(r"SUP \1", value)
         if sup_quoted != value:
             return (sup_quoted, True)
         return (value, False)
