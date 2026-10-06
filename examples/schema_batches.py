@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from examples.schema_building import create_entry_or_none
 from flext_ldif import FlextLdif, ldif, m, p, r, t
 
 
@@ -78,9 +79,9 @@ def _object_class_entries() -> list[m.Ldif.Entry]:
             attrs["must"] = must_attrs
         if may_attrs:
             attrs["may"] = may_attrs
-        oc_result = m.Ldif.Entry.create(dn=f"cn={name},cn=schema", attributes=attrs)
-        if oc_result.success:
-            object_classes.append(oc_result.unwrap())
+        oc_entry = create_entry_or_none(dn=f"cn={name},cn=schema", attributes=attrs)
+        if oc_entry is not None:
+            object_classes.append(oc_entry)
     return object_classes
 
 
