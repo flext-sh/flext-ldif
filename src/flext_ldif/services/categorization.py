@@ -17,8 +17,6 @@ from flext_ldif.services.categorization_filtering import (
 class FlextLdifCategorization(FlextLdifCategorizationFiltering, s):
     """LDIF Entry Categorization Service."""
 
-
-
     def categorize_entries(
         self,
         entries: t.MutableSequenceOf[m.Ldif.Entry],
@@ -65,7 +63,6 @@ class FlextLdifCategorization(FlextLdifCategorizationFiltering, s):
                     entries_count=len(cat_entries),
                 )
         return r[m.Ldif.FlexibleCategories].ok(categories)
-
 
     def categorize_entry(
         self,
@@ -125,7 +122,6 @@ class FlextLdifCategorization(FlextLdifCategorizationFiltering, s):
                 merged_category_map,
             )
         )
-
 
     def validate_dns(
         self,
@@ -214,7 +210,6 @@ class FlextLdifCategorization(FlextLdifCategorizationFiltering, s):
                 rejected_dns_preview=", ".join(sample_rejected_dns),
             )
         return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(validated)
-
 
 
 __all__: list[str] = ["FlextLdifCategorization"]

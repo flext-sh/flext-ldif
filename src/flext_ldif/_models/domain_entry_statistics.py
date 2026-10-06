@@ -268,4 +268,5 @@ class FlextLdifModelsDomainEntryStatistics(m.FrozenDynamicModel):
         )
         return copy_result
 
+
 __all__: list[str] = ["FlextLdifModelsDomainEntryStatistics"]

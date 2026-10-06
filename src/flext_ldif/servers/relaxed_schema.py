@@ -102,9 +102,7 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfc.Schema):
             field_value = field_match.group(2).strip()
         else:
             field_value = ""
-        return [
-            value.strip() for value in field_value.split(separator)
-        ]
+        return [value.strip() for value in field_value.split(separator)]
 
     def _extract_oid_with_fallback_patterns(self, definition: str) -> str | None:
         """Extract OID using multiple fallback patterns for relaxed mode.
@@ -354,9 +352,7 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfc.Schema):
         """
         extensions = schema_data.metadata.extensions if schema_data.metadata else None
         source_server = (
-            extensions.get("schema_source_server")
-            if extensions is not None
-            else None
+            extensions.get("schema_source_server") if extensions is not None else None
         )
         original_format = (
             u.to_str(extensions.get("original_format"))

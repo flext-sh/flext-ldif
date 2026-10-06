@@ -20,7 +20,6 @@ from flext_ldif import c, m, p, r, s, t, u
 class FlextLdifCategorizationRules(s):
     """Categorization configuration fields and rule matching helpers."""
 
-
     @staticmethod
     def _build_rejection_tracker() -> MutableMapping[
         str,
@@ -344,7 +343,6 @@ class FlextLdifCategorizationRules(s):
                 ),
             ).map_error(lambda e: f"Invalid rules mapping: {e}"),
         )
-
 
 
 __all__: list[str] = ["FlextLdifCategorizationRules"]

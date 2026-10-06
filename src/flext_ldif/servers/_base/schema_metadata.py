@@ -102,8 +102,10 @@ class FlextLdifServersBaseSchemaMetadataMixin:
         Returns:
             The resulting ``m.Ldif.ServerMetadata | None``.
         """
-        metadata_extensions = FlextLdifServersBaseSchemaMetadataMixin._extract_metadata_extensions(
-            attr_definition,
+        metadata_extensions = (
+            FlextLdifServersBaseSchemaMetadataMixin._extract_metadata_extensions(
+                attr_definition,
+            )
         )
         if syntax:
             metadata_extensions["syntax_oid_valid"] = syntax_validation_error is None
@@ -135,7 +137,10 @@ class FlextLdifServersBaseSchemaMetadataMixin:
             original_server_type=resolved_server_type,
             target_server_type=resolved_server_type,
         )
-        FlextLdifServersBaseSchemaMetadataMixin._preserve_formatting(metadata, attr_definition)
+        FlextLdifServersBaseSchemaMetadataMixin._preserve_formatting(
+            metadata,
+            attr_definition,
+        )
         return (
             metadata if metadata_extensions or metadata.schema_format_details else None
         )
@@ -175,7 +180,6 @@ class FlextLdifServersBaseSchemaMetadataMixin:
             metadata_extensions["syntax_oid_valid"] = False
         else:
             metadata_extensions["syntax_oid_valid"] = True
-
 
 
 __all__: list[str] = ["FlextLdifServersBaseSchemaMetadataMixin"]

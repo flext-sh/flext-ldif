@@ -6,7 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
@@ -39,6 +38,7 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersRfc.Acl):
             attr_str = attr_match.group(1)
             attributes = [a.strip() for a in attr_str.split(",")]
         return (target_dn, attributes)
+
     @staticmethod
     def _parse_oid_permissions(content: str) -> t.MutableBoolMapping:
         """Parse OID ACL permissions clause.
@@ -64,6 +64,7 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersRfc.Acl):
                 else:
                     permissions[perm_name.lower()] = not is_negative
         return permissions
+
     @override
     def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
         """Check if this is an Oracle OID ACL.
@@ -87,6 +88,7 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersRfc.Acl):
                 "access to ",
             ))
         return can_handle
+
     @override
     def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
         """Parse Oracle OID ACL string to RFC-compliant internal model.
@@ -115,6 +117,7 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersRfc.Acl):
         ):
             return r[m.Ldif.Acl].ok(acl_data)
         return self._parse_oid_specific_acl(acl_line)
+
     def _parse_oid_specific_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
         """Parse OID-specific ACL format when RFC parser fails.
 
@@ -134,6 +137,7 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersRfc.Acl):
                 acl_line_length=len(acl_line),
             )
             return r[m.Ldif.Acl].fail_op("OID ACL parsing", e)
+
     def _parse_oid_specific_acl_core(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
         """Parse OID-specific ACL data into the canonical ACL model.
 
@@ -252,6 +256,7 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersRfc.Acl):
             "validation_violations": [],
         })
         return r[m.Ldif.Acl].ok(acl_model)
+
     @staticmethod
     def _update_acl_with_oid_metadata(
         acl_data: m.Ldif.Acl,

@@ -126,7 +126,10 @@ class FlextLdifDNRebasing:
             str,
             FlextLdifModels.Ldif.DN | FlextLdifModels.Ldif.Attributes,
         ],
-    ) -> MutableMapping[str, tuple[t.MutableSequenceOf[str], t.MutableSequenceOf[str]]] | None:
+    ) -> (
+        MutableMapping[str, tuple[t.MutableSequenceOf[str], t.MutableSequenceOf[str]]]
+        | None
+    ):
         """Rewrite the entry DN onto the target base and record the update.
 
         Returns:
@@ -214,9 +217,9 @@ class FlextLdifDNRebasing:
         old_lowers = {value.lower() for value in old_values}
         merged = [value for value in merged_values if value.lower() not in old_lowers]
         present_lowers = {value.lower() for value in merged}
-        for value in new_values_rdn:
-            if value.lower() not in present_lowers:
-                merged.append(value)
+        merged.extend(
+            value for value in new_values_rdn if value.lower() not in present_lowers
+        )
         return merged
 
     @staticmethod

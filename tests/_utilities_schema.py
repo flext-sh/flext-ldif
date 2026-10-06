@@ -274,18 +274,18 @@ class TestsSchemaAclAssertionsMixin:
             raise AssertionError(msg)
         method: Callable[
             [str],
-            p.Result[
-                m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl
-            ],
+            p.Result[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl],
         ] = getattr(server, method_name)
         result = method(content)
         if should_succeed is False:
             if result.success:
-                raise AssertionError("Expected failure but parse succeeded")
+                msg_0 = "Expected failure but parse succeeded"
+                raise AssertionError(msg_0)
             return None
         if result.failure:
+            msg_0 = f"Expected success but parse failed: {result.error}"
             raise AssertionError(
-                f"Expected success but parse failed: {result.error}",
+                msg_0,
             )
         value = result.value
         if expected_type is not None and not isinstance(value, expected_type):

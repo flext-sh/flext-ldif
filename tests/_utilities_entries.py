@@ -16,7 +16,6 @@ from tests import c, m, t
 
 if TYPE_CHECKING:
     from collections.abc import MutableMapping
-
     from pathlib import Path
 
 

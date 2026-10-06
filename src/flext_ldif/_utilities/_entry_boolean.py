@@ -85,8 +85,8 @@ class FlextLdifEntryBooleanConversion:
             for raw_item in FlextLdifEntryBooleanConversion._raw_value_items(
                 attributes[attr_name],
             ):
-                normalized_value = (
-                    FlextLdifEntryBooleanConversion._decode_raw_value(raw_item)
+                normalized_value = FlextLdifEntryBooleanConversion._decode_raw_value(
+                    raw_item,
                 )
                 if attr_name.lower() in normalized_boolean_names:
                     normalized_value = (

@@ -17,10 +17,7 @@ from flext_tests import FlextTestsUtilities
 from flext_ldif import FlextLdifUtilities
 from tests._utilities_entries import TestsLdifEntryBuildersMixin
 from tests._utilities_ldap import TestsLdapClientMixin
-from tests._utilities_schema import (
-    SchemaExpectations,
-    TestsSchemaAclAssertionsMixin,
-)
+from tests._utilities_schema import SchemaExpectations, TestsSchemaAclAssertionsMixin
 
 if TYPE_CHECKING:
     from tests import p

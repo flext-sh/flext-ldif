@@ -61,18 +61,15 @@ class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s, ABC
                 m.Ldif.SchemaObjectClass,
             )
         )
-        return (
-            parse_result.map_error(
-                lambda error: error or f"Failed to parse {schema_field_name}",
-            )
-            .flat_map(
-                lambda parsed_item: self._write_converted_schema_item(
-                    target_schema,
-                    schema_item_kind,
-                    schema_field_name,
-                    parsed_item,
-                ),
-            )
+        return parse_result.map_error(
+            lambda error: error or f"Failed to parse {schema_field_name}",
+        ).flat_map(
+            lambda parsed_item: self._write_converted_schema_item(
+                target_schema,
+                schema_item_kind,
+                schema_field_name,
+                parsed_item,
+            ),
         )
 
     @staticmethod
@@ -102,9 +99,12 @@ class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s, ABC
             if schema_item_kind == c.Ldif.SchemaItemKind.ATTRIBUTE
             else target_schema.write_objectclass(parsed_item)
         )
-        return r[str].from_result(write_result).map_error(
-            lambda error: error
-            or f"Failed to write converted {schema_field_name}",
+        return (
+            r[str]
+            .from_result(write_result)
+            .map_error(
+                lambda error: error or f"Failed to write converted {schema_field_name}",
+            )
         )
 
     def _convert_schema_entry_attributes(
@@ -213,11 +213,10 @@ class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s, ABC
                 schema_item_kind=schema_item_kind,
             ),
         )
-        return (
-            converted_values.map(lambda converted: (attr_name, list(converted)))
-            .map_error(
-                lambda error: error or f"Failed converting schema field {attr_name}",
-            )
+        return converted_values.map(
+            lambda converted: (attr_name, list(converted)),
+        ).map_error(
+            lambda error: error or f"Failed converting schema field {attr_name}",
         )
 
     @staticmethod

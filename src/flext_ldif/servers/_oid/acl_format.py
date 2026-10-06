@@ -7,9 +7,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, MutableMapping
-from typing import ClassVar, override
+from typing import ClassVar
 
-from flext_ldif import c, m, p, r, t, u
+from flext_ldif import c, m, p, t, u
 from flext_ldif.servers._oid.server_constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
@@ -37,6 +37,7 @@ class FlextLdifServersOidAclFormatMixin(FlextLdifServersRfc.Acl):
         if allowed_perms:
             return f"({','.join(allowed_perms)})"
         return "(none)"
+
     @staticmethod
     def _format_oid_subject(subject_type: str, subject_value: str) -> str:
         """Format OID ACL subject clause in orclaci format.
@@ -44,7 +45,9 @@ class FlextLdifServersOidAclFormatMixin(FlextLdifServersRfc.Acl):
         Returns:
             The resulting ``str``.
         """
-        clean_value = FlextLdifServersOidAclFormatMixin.clean_subject_value(subject_value)
+        clean_value = FlextLdifServersOidAclFormatMixin.clean_subject_value(
+            subject_value,
+        )
         sc = FlextLdifServersOidConstants
         match subject_type.lower():
             case sc.OidAclSubjectType.SELF:
@@ -68,6 +71,7 @@ class FlextLdifServersOidAclFormatMixin(FlextLdifServersRfc.Acl):
                     else sc.OidAclSubjectType.ANONYMOUS
                 )
         return result
+
     @staticmethod
     def _format_oid_target(target_dn: str, attributes: t.MutableSequenceOf[str]) -> str:
         """Format OID ACL target clause.
@@ -81,6 +85,7 @@ class FlextLdifServersOidAclFormatMixin(FlextLdifServersRfc.Acl):
             return "attr=(*)"
         attrs_str = ",".join(attributes)
         return f"attr=({attrs_str})"
+
     @staticmethod
     def _normalize_permissions_to_dict(
         permissions: m.Ldif.AclPermissions | t.MutableBoolMapping | None,
@@ -107,6 +112,7 @@ class FlextLdifServersOidAclFormatMixin(FlextLdifServersRfc.Acl):
             "auth": bool(raw_perms.get("auth", False)),
             "all": bool(raw_perms.get("all", False)),
         }
+
     @staticmethod
     def _normalize_to_dict(
         value: m.Ldif.AclSubject
@@ -140,6 +146,7 @@ class FlextLdifServersOidAclFormatMixin(FlextLdifServersRfc.Acl):
             for key, raw_value in dumped.items()
             if isinstance(raw_value, (str, int, bool))
         }
+
     @staticmethod
     def clean_subject_value(subject_value: str) -> str:
         """Clean OID subject value by removing ldap:/// prefix and parser suffixes.
@@ -159,6 +166,7 @@ class FlextLdifServersOidAclFormatMixin(FlextLdifServersRfc.Acl):
                     clean_value = clean_value[: -len(suffix)]
                     break
         return clean_value
+
     def _build_metadata_extensions(
         self,
         metadata: m.Ldif.ServerMetadata
@@ -179,6 +187,7 @@ class FlextLdifServersOidAclFormatMixin(FlextLdifServersRfc.Acl):
         if not meta_extensions:
             return []
         return self._format_extensions(meta_extensions)
+
     @staticmethod
     def _extract_extensions_dict(
         metadata: m.Ldif.ServerMetadata
@@ -197,6 +206,7 @@ class FlextLdifServersOidAclFormatMixin(FlextLdifServersRfc.Acl):
         # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: copy the plain
         # mapping.
         return dict(extensions) if extensions is not None else {}
+
     @staticmethod
     def _format_extensions(
         meta_extensions: t.Ldif.MutableMetadataMapping,

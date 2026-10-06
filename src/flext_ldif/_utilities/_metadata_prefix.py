@@ -56,8 +56,7 @@ class FlextLdifMetadataPrefixDetails:
         FlextLdifMetadataPrefixDetails._extract_single_prefix_details(
             definition,
             marker_present=(
-                "objectclasses:" in definition.lower()
-                or "objectClasses:" in definition
+                "objectclasses:" in definition.lower() or "objectClasses:" in definition
             ),
             prefix_pattern=c.Ldif.LDIF_OBJECTCLASSES_PREFIX_RE,
             case_key="objectclass_case",

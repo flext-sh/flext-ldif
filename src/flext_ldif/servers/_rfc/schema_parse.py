@@ -14,7 +14,6 @@ from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
 from flext_ldif.servers.base import FlextLdifServersBase
 
 
-
 class FlextLdifServersRfcSchemaParseMixin(FlextLdifServersBase.Schema):
     """Parse RFC 4512 objectClass definitions and extract schema from LDIF."""
 
@@ -47,6 +46,7 @@ class FlextLdifServersRfcSchemaParseMixin(FlextLdifServersBase.Schema):
         )
         attr_names = {name.lower() for name in settings.attr_names}
         return any(name.lower() in attr_names for name in name_matches)
+
     def extract_schemas_from_ldif(
         self,
         ldif_content: str,
@@ -82,6 +82,7 @@ class FlextLdifServersRfcSchemaParseMixin(FlextLdifServersBase.Schema):
                     | t.MutableSequenceOf[m.Ldif.SchemaObjectClass],
                 ]
             ].fail_op("Schema extraction", e)
+
     def _extract_schemas_from_ldif(
         self,
         ldif_content: str,
@@ -139,6 +140,7 @@ class FlextLdifServersRfcSchemaParseMixin(FlextLdifServersBase.Schema):
                 | t.MutableSequenceOf[m.Ldif.SchemaObjectClass],
             ]
         ].ok(schema_dict)
+
     def _build_objectclass_metadata(
         self,
         oc_definition: str,
@@ -167,6 +169,7 @@ class FlextLdifServersRfcSchemaParseMixin(FlextLdifServersBase.Schema):
         )
         u.Ldif.preserve_schema_formatting(metadata, oc_definition)
         return metadata
+
     def _parse_objectclass_core(
         self,
         oc_definition: str,
@@ -183,6 +186,7 @@ class FlextLdifServersRfcSchemaParseMixin(FlextLdifServersBase.Schema):
                 "RFC objectClass parsing exception",
             )
             return r[m.Ldif.SchemaObjectClass].fail_op("RFC objectClass parsing", e)
+
     def _parse_rfc_objectclass_core(
         self,
         oc_definition: str,
@@ -246,6 +250,7 @@ class FlextLdifServersRfcSchemaParseMixin(FlextLdifServersBase.Schema):
             "metadata": metadata,
         })
         return r[m.Ldif.SchemaObjectClass].ok(objectclass)
+
     @staticmethod
     def _validate_oid_list(
         oids: t.MutableSequenceOf[str] | None,

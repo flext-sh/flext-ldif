@@ -74,7 +74,9 @@ class FlextLdifACLFormatting:
                 return " "
             return char
 
-        sanitized_chars: t.MutableSequenceOf[str] = [sanitize_char(ch) for ch in raw_name]
+        sanitized_chars: t.MutableSequenceOf[str] = [
+            sanitize_char(ch) for ch in raw_name
+        ]
         sanitized_chars_list: t.MutableSequenceOf[str] = sanitized_chars
         was_sanitized = sanitized_chars_list != list(raw_name)
         result_chars: t.MutableSequenceOf[str] = []

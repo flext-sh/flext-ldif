@@ -12,9 +12,7 @@ from flext_ldif import c, m, p, r, s, t, u
 from flext_ldif.services.conversion_acl_preserve import (
     FlextLdifConversionAclPreserveMixin,
 )
-from flext_ldif.services.conversion_support import (
-    FlextLdifConversionSupportMixin,
-)
+from flext_ldif.services.conversion_support import FlextLdifConversionSupportMixin
 
 
 class FlextLdifConversionAclMixin(
@@ -49,6 +47,7 @@ class FlextLdifConversionAclMixin(
             "Acl",
             lambda: self._convert_acl_core(source_server, target_server, acl),
         )
+
     def _convert_acl_core(
         self,
         source_server: p.Ldif.ServerServer,

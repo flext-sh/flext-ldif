@@ -231,6 +231,4 @@ class FlextLdifDetectorScoring(s):
         )
 
 
-
-
 __all__: list[str] = ["FlextLdifDetectorScoring"]

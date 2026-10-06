@@ -336,7 +336,9 @@ class LdifCLIService(FlextCliService):
         self._ldif_api = ldif()
 
     def parse_command(
-        self, input_file: str, output_format: str = "summary",
+        self,
+        input_file: str,
+        output_format: str = "summary",
     ) -> p.Result[bool]:
         """CLI command for parsing LDIF files with size checking."""
         file_path = Path(input_file)

@@ -44,7 +44,6 @@ class FlextLdifModelsDomainEntry:
     ChangeOperation = FlextLdifModelsDomainEntryChangeOperation
     """Canonical RFC 2849 modify operation model (implementation module: domain_entry_change)."""
 
-
     class Entry(m.Entity, m.DynamicModel):
         """LDIF entry domain model.
 
@@ -466,8 +465,8 @@ class FlextLdifModelsDomainEntry:
                 "server_specific_violations": list[str](),
                 "context": context_payload,
             })
-            self.metadata.validation_results = (
-                mdm.ValidationMetadata.model_validate(payload)
+            self.metadata.validation_results = mdm.ValidationMetadata.model_validate(
+                payload,
             )
 
         @u.model_validator(mode="after")

@@ -107,7 +107,7 @@ class FlextLdifDNCleaning:
             flag_name,
         ) in transform_rules:
             if c.Ldif.compile_pattern(detect_pattern).search(result):
-                result = c.Ldif.compile_pattern(replace_pattern, ignorecase=False).sub(replacement, result)
+                result = c.Ldif.compile_pattern(replace_pattern).sub(replacement, result)
                 transformations.append(transform_type)
                 if flag_name:
                     flags[flag_name] = True
@@ -137,7 +137,9 @@ class FlextLdifDNCleaning:
         )
         validation_errors_raw = flags.get("validation_errors", [])
         validation_errors: t.MutableSequenceOf[str] = (
-            list(validation_errors_raw) if isinstance(validation_errors_raw, list) else []
+            list(validation_errors_raw)
+            if isinstance(validation_errors_raw, list)
+            else []
         )
         return FlextLdifModels.Ldif.DNStatistics(
             original_dn=original_dn,
@@ -186,7 +188,7 @@ class FlextLdifDNCleaning:
         try:
             result = dn_str
             for pattern, replacement in patterns:
-                result = c.Ldif.compile_pattern(pattern, ignorecase=False).sub(replacement, result)
+                result = c.Ldif.compile_pattern(pattern).sub(replacement, result)
         except c.Ldif.EXC_LDIF_PARSE:
             return dn_str
         else:

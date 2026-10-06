@@ -93,7 +93,6 @@ class FlextLdifUtilitiesDN(
 
     """
 
-
     @staticmethod
     def is_under_base(dn: str | None, base_dn: str | None) -> bool:
         """Check if DN is under base DN (hierarchical check).

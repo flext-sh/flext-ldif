@@ -6,10 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping
-from typing import override
+from collections.abc import MutableMapping
 
-from flext_ldif import c, m, p, r, t, u
+from flext_ldif import c, m, t, u
 from flext_ldif.servers._oid.server_constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
@@ -78,6 +77,7 @@ class FlextLdifServersOidEntryBooleanMixin(FlextLdifServersRfc.Entry):
                         attribute_name=attr_name,
                     )
         return (converted_attributes, converted_attrs, boolean_conversions)
+
     def _convert_boolean_values_to_oid(
         self,
         attr_name: str,
@@ -94,6 +94,7 @@ class FlextLdifServersOidEntryBooleanMixin(FlextLdifServersRfc.Entry):
                 changed = True
         if changed:
             restored_attrs[attr_name] = new_values
+
     def _convert_rfc_boolean_to_oid(self, value: str) -> tuple[str, bool]:
         """Convert single RFC boolean value to OID format.
 
@@ -105,6 +106,7 @@ class FlextLdifServersOidEntryBooleanMixin(FlextLdifServersRfc.Entry):
         if value == "FALSE":
             return (FlextLdifServersOidConstants.ZERO_OID, True)
         return (value, False)
+
     @staticmethod
     def _restore_boolean_attribute_from_metadata(
         attr_name: str,
@@ -136,6 +138,7 @@ class FlextLdifServersOidEntryBooleanMixin(FlextLdifServersRfc.Entry):
             operation="_restore_boolean_values_to_oid",
         )
         return True
+
     def _restore_boolean_values_to_oid(self, entry_data: m.Ldif.Entry) -> m.Ldif.Entry:
         """Restore OID boolean format from RFC format (RFC → OID: TRUE/FALSE → 0/1).
 
