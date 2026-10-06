@@ -1,3 +1,10 @@
+"""Flext ldif servers oud utilities module.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+src/flext_ldif/_utilities/flext_ldif_servers_oud_utilities
+SPDX-License-Identifier: MIT
+"""
+
 from __future__ import annotations
 
 from flext_ldif import c, m, t
