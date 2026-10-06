@@ -6,10 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from flext_cli import FlextCliUtilities
 
+from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
+from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
 from flext_ldif._utilities.collection_ldif import FlextLdifUtilitiesCollectionLdif
 
 if TYPE_CHECKING:
@@ -71,6 +71,27 @@ def _build_ldif_tree() -> type:
     from flext_ldif._utilities.transformers import FlextLdifUtilitiesTransformers
     from flext_ldif._utilities.validation import FlextLdifUtilitiesValidation
     from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
+
+    class Ldif(
+        FlextLdifUtilitiesACL,
+        FlextLdifUtilitiesAttribute,
+        FlextLdifUtilitiesCollectionLdif,
+        FlextLdifUtilitiesDispatch,
+        FlextLdifUtilitiesDN,
+        FlextLdifUtilitiesEntry,
+        FlextLdifUtilitiesEvents,
+        FlextLdifUtilitiesMetadata,
+        FlextLdifUtilitiesObjectClass,
+        FlextLdifUtilitiesOID,
+        FlextLdifUtilitiesParser,
+        FlextLdifUtilitiesPipeline,
+        FlextLdifUtilitiesSchema,
+        FlextLdifUtilitiesServer,
+        FlextLdifUtilitiesTransformers,
+        FlextLdifUtilitiesValidation,
+        FlextLdifUtilitiesWriter,
+    ):
+        """LDIF-specific utility namespace."""
 
     class Ldif(
         FlextLdifUtilitiesACL,
