@@ -16,6 +16,9 @@ from flext_ldif.servers._oid.entry_normalize import (
 )
 from flext_ldif.servers._oid.entry_parse import FlextLdifServersOidEntryParseMixin
 from flext_ldif.servers._oid.entry_restore import FlextLdifServersOidEntryRestoreMixin
+from flext_ldif.servers._oid.entry_restore_lines import (
+    FlextLdifServersOidEntryRestoreLinesMixin,
+)
 from flext_ldif.servers._oid.server_constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
@@ -24,6 +27,7 @@ class FlextLdifServersOidEntry(
     FlextLdifServersOidEntryBooleanMixin,
     FlextLdifServersOidEntryMetadataMixin,
     FlextLdifServersOidEntryParseMixin,
+    FlextLdifServersOidEntryRestoreLinesMixin,
     FlextLdifServersOidEntryRestoreMixin,
     FlextLdifServersOidEntryNormalizeMixin,
     FlextLdifServersRfc.Entry,
@@ -32,7 +36,8 @@ class FlextLdifServersOidEntry(
 
     OID-specific behavior is composed from focused mixins: boolean value
     conversion (``entry_boolean``), metadata extraction (``entry_metadata``),
-    parse hooks (``entry_parse``), round-trip restore (``entry_restore``),
+    parse hooks (``entry_parse``), round-trip attribute restore
+    (``entry_restore``), original-line restoration (``entry_restore_lines``),
     and schema value normalization (``entry_normalize``).
     """
 
