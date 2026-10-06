@@ -11,6 +11,7 @@ from typing import ClassVar
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
+from flext_ldif.servers.base import FlextLdifServersBase
 
 
 

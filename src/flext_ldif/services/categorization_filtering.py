@@ -1,4 +1,4 @@
-"""Categorization post-filtering concern (attribute/objectClass/OID/base-DN).
+"""Categorization filtering concern: forbidden/OID/base-DN post-filters.
 
 Holds the filtering half of the LDIF categorization service; composition and
 rejection tracking live on ``FlextLdifCategorization``.
@@ -9,11 +9,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping
+
 from flext_ldif import c, m, p, s, t, u
 from flext_ldif.services.filters import FlextLdifFilters
 
 
-class FlextLdifCategorizationFiltering(s):
+class FlextLdifCategorizationFiltering(FlextLdifCategorizationRules):
     """Forbidden-attribute, whitelist-OID, and base-DN filtering helpers."""
 
 def _ensure_entry_model(
@@ -34,6 +36,7 @@ def _ensure_entry_model(
         return None
     return None
 
+@staticmethod
 def _filter_entries_by_base_dn(
     entries: t.MutableSequenceOf[m.Ldif.Entry],
     base_dn: str,
@@ -55,6 +58,7 @@ def _filter_entries_by_base_dn(
             excluded.append(entry)
     return (included, excluded)
 
+@staticmethod
 def _append_rejected_entries(
     filtered: m.Ldif.FlexibleCategories,
     rejected_entries: t.MutableSequenceOf[m.Ldif.Entry],

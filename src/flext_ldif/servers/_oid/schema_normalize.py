@@ -116,7 +116,7 @@ class FlextLdifServersOidSchemaNormalizeMixin(FlextLdifServersRfc.Schema):
         kind = getattr(oc_data, "kind", None)
         match (kind, original_format_str):
             case [k, _] if k and k.upper() == "AUXILLARY":
-                FlextLdifServersOidSchema._module_logger.debug(
+                FlextLdifServersOidSchemaNormalizeMixin._module_logger.debug(
                     "OID→RFC transform: AUXILLARY → AUXILIARY",
                     objectclass_name=oc_data.name,
                     objectclass_oid=oc_data.oid,
@@ -125,7 +125,7 @@ class FlextLdifServersOidSchemaNormalizeMixin(FlextLdifServersRfc.Schema):
                 )
                 return "AUXILIARY"
             case [_, fmt] if fmt and "AUXILLARY" in fmt:
-                FlextLdifServersOidSchema._module_logger.debug(
+                FlextLdifServersOidSchemaNormalizeMixin._module_logger.debug(
                     "OID→RFC: AUXILLARY → AUXILIARY (original_format)",
                     objectclass_name=oc_data.name,
                     objectclass_oid=oc_data.oid,
@@ -149,7 +149,7 @@ class FlextLdifServersOidSchemaNormalizeMixin(FlextLdifServersRfc.Schema):
         sup_normalize_set = {"( top )", "(top)", "'top'", '"top"'}
         match oc_data.sup:
             case sup_str if (sup_clean := str(sup_str).strip()) in sup_normalize_set:
-                FlextLdifServersOidSchema._module_logger.debug(
+                FlextLdifServersOidSchemaNormalizeMixin._module_logger.debug(
                     "OID→RFC transform: SUP normalization",
                     objectclass_name=oc_data.name,
                     objectclass_oid=oc_data.oid,
@@ -158,7 +158,7 @@ class FlextLdifServersOidSchemaNormalizeMixin(FlextLdifServersRfc.Schema):
                 )
                 return "top"
             case [sup_item] if (sup_clean := sup_item.strip()) in sup_normalize_set:
-                FlextLdifServersOidSchema._module_logger.debug(
+                FlextLdifServersOidSchemaNormalizeMixin._module_logger.debug(
                     "OID→RFC transform: SUP normalization (list)",
                     objectclass_name=oc_data.name,
                     objectclass_oid=oc_data.oid,
@@ -180,7 +180,7 @@ class FlextLdifServersOidSchemaNormalizeMixin(FlextLdifServersRfc.Schema):
         sup_patterns = ("SUP 'top'", "SUP ( top )", "SUP (top)")
         match original_format_str:
             case s if any(pattern in s for pattern in sup_patterns):
-                FlextLdifServersOidSchema._module_logger.debug(
+                FlextLdifServersOidSchemaNormalizeMixin._module_logger.debug(
                     "OID→RFC transform: SUP normalization (from original_format)",
                     original_format_preview=s[
                         : FlextLdifServersOidConstants.MAX_LOG_LINE_LENGTH
@@ -210,7 +210,7 @@ class FlextLdifServersOidSchemaNormalizeMixin(FlextLdifServersRfc.Schema):
             normalized_equality != attr_data.equality
             or normalized_substr != attr_data.substr
         ):
-            FlextLdifServersOidSchema._module_logger.debug(
+            FlextLdifServersOidSchemaNormalizeMixin._module_logger.debug(
                 "Moved caseIgnoreSubstringsMatch from EQUALITY to SUBSTR",
                 attribute_name=attr_data.name,
                 original_equality=attr_data.equality or "",

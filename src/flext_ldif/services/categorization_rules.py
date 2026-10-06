@@ -1,7 +1,8 @@
-"""Categorization rule normalization, merging, and matching concern.
+"""Categorization rules concern: fields, normalization, merging, matching.
 
-Holds the rule-normalization and server-constants merging half of the LDIF
-categorization service; ``FlextLdifCategorization`` composes it via MRO.
+Owns the categorization configuration fields and the rule/constant
+normalization and entry-matching half of the LDIF categorization service;
+``FlextLdifCategorization`` composes it via MRO.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -10,12 +11,117 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import struct
+from collections.abc import MutableMapping
 
 from flext_ldif import c, m, p, s, t, u
 
 
 class FlextLdifCategorizationRules(s):
-    """Rule normalization, constant merging, and entry matching helpers."""
+    """Categorization configuration fields and rule matching helpers."""
+
+def _build_rejection_tracker() -> MutableMapping[
+    str,
+    t.MutableSequenceOf[m.Ldif.Entry],
+]:
+    """Build the canonical rejection tracker structure for one categorization run.
+
+    Returns:
+        The resulting ``MutableMapping[str, t.MutableSequenceOf[m.Ldif.Entry]]``.
+    """
+    return {
+        c.Ldif.RejectionTrackerKey.INVALID_DN_RFC4514: [],
+        c.Ldif.RejectionTrackerKey.BASE_DN_FILTER: [],
+        c.Ldif.RejectionTrackerKey.CATEGORIZATION_REJECTED: [],
+    }
+
+categorization_rules: Annotated[
+    m.Ldif.CategoryRules
+    | MutableMapping[str, str | t.MutableSequenceOf[str] | None]
+    | None,
+    u.Field(
+        default=None,
+        exclude=True,
+        description="Optional categorization rules applied before server defaults.",
+    ),
+] = None
+schema_whitelist_rules: Annotated[
+    m.Ldif.WhitelistRules | None,
+    u.Field(
+        default=None,
+        exclude=True,
+        description=(
+            "Optional schema whitelist rules used to filter schema entries.",
+        ),
+    ),
+] = None
+forbidden_attributes: Annotated[
+    t.MutableSequenceOf[str] | None,
+    u.Field(
+        default=None,
+        exclude=True,
+        description=(
+            (
+                "Attribute names removed from categorized entries after "
+                "classification."
+            ),
+        ),
+    ),
+] = None
+forbidden_objectclasses: Annotated[
+    t.MutableSequenceOf[str] | None,
+    u.Field(
+        default=None,
+        exclude=True,
+        description=(
+            (
+                "objectClass names removed from categorized entries after "
+                "classification."
+            ),
+        ),
+    ),
+] = None
+base_dn: Annotated[
+    str | None,
+    u.Field(
+        default=None,
+        exclude=True,
+        description="Base DN filter applied after categorization when provided.",
+    ),
+] = None
+server_type: Annotated[
+    str,
+    u.Field(
+        default=c.Ldif.ServerTypes.RFC.value,
+        exclude=True,
+        description=(
+            (
+                "Server type used to resolve categorization defaults from the "
+                "registry."
+            ),
+        ),
+    ),
+] = c.Ldif.ServerTypes.RFC.value
+server_registry: Annotated[
+    p.Ldif.ServerRegistry | None,
+    u.Field(
+        default=None,
+        exclude=True,
+        description=(
+            (
+                "Optional server registry override for categorization "
+                "constants lookup."
+            ),
+        ),
+    ),
+] = None
+rejection_tracker: Annotated[
+    t.MutableMappingKV[str, t.MutableSequenceOf[m.Ldif.Entry]],
+    u.Field(
+        default_factory=_build_rejection_tracker,
+        exclude=True,
+        description="Tracks rejected entries by rejection reason.",
+    ),
+] = u.Field(default_factory=_build_rejection_tracker)
 
 def _normalize_initial_category_rules(self) -> m.Ldif.CategoryRules:
     """Normalize initial categorization rules into the canonical model.
@@ -49,6 +155,7 @@ def _merge_category_from_constants(
             override_existing=override_existing,
         )
 
+@staticmethod
 def _merge_one_category(
     category_map: t.MutableFrozensetMapping,
     key_str: str,
@@ -94,6 +201,7 @@ def _check_hierarchy_priority(
     entry_ocs = {oc.lower() for oc in u.Ldif.get_objectclass_names(entry)}
     return bool(priority_classes & entry_ocs)
 
+@staticmethod
 def _get_priority_order_from_constants(
     constants: type[p.Ldif.ServerConstants] | None,
 ) -> t.MutableSequenceOf[str]:
@@ -134,6 +242,7 @@ def _get_categorization_server_constants(
         .map_error(default_registry_error)
     )
 
+@staticmethod
 def _match_entry_to_category(
     entry: m.Ldif.Entry,
     priority_order: t.MutableSequenceOf[str],
@@ -168,6 +277,7 @@ def _match_entry_to_category(
             return (category, None)
     return (c.Ldif.Category.REJECTED, c.Ldif.REJECTION_REASON_NO_CATEGORY_MATCH)
 
+@staticmethod
 def _merge_server_constants_to_map(
     category_map: t.MutableFrozensetMapping,
     constants: type[p.Ldif.ServerConstants],
