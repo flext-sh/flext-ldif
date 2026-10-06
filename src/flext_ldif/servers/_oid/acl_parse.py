@@ -126,7 +126,7 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersRfc.Acl):
         except c.Ldif.EXC_LDIF_PARSE as e:
             max_len = FlextLdifServersOidConstants.MAX_LOG_LINE_LENGTH
             acl_preview = acl_line[:max_len] if len(acl_line) > max_len else acl_line
-            FlextLdifServersOidAcl._module_logger.debug(
+            FlextLdifServersOidAclParseMixin._module_logger.debug(
                 "OID ACL parse failed",
                 error=e,
                 error_type=type(e).__name__,

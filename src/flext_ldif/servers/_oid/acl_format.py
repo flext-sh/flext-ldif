@@ -44,7 +44,7 @@ class FlextLdifServersOidAclFormatMixin(FlextLdifServersRfc.Acl):
         Returns:
             The resulting ``str``.
         """
-        clean_value = FlextLdifServersOidAcl.clean_subject_value(subject_value)
+        clean_value = FlextLdifServersOidAclFormatMixin.clean_subject_value(subject_value)
         sc = FlextLdifServersOidConstants
         match subject_type.lower():
             case sc.OidAclSubjectType.SELF:
