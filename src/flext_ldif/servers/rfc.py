@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
 from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
 from flext_ldif.servers._rfc.schema import FlextLdifServersRfcSchema
@@ -16,10 +18,12 @@ from flext_ldif.servers.base import FlextLdifServersBase
 class FlextLdifServersRfc(FlextLdifServersBase):
     """RFC-Compliant LDAP Server Implementation - STRICT Baseline."""
 
-    Constants = FlextLdifServersRfcConstants
-    Acl = FlextLdifServersRfcAcl
-    Schema = FlextLdifServersRfcSchema
-    Entry = FlextLdifServersRfcEntry
+    Constants: ClassVar[type[FlextLdifServersRfcConstants]] = (
+        FlextLdifServersRfcConstants
+    )
+    Acl: ClassVar[type[FlextLdifServersRfcAcl]] = FlextLdifServersRfcAcl
+    Schema: ClassVar[type[FlextLdifServersRfcSchema]] = FlextLdifServersRfcSchema
+    Entry: ClassVar[type[FlextLdifServersRfcEntry]] = FlextLdifServersRfcEntry
 
 
 __all__: list[str] = ["FlextLdifServersRfc"]
