@@ -77,6 +77,29 @@ class TestsFlextLdifRealLdapRoundtrip:
                 attrs[name] = [str(value)]
         return attrs
 
+    @staticmethod
+    def _write_parse_entry(
+        flext_api: p.Ldif.LdifClient,
+        source_entry: m.Ldif.Entry,
+    ) -> m.Ldif.Entry:
+        """Serialize one entry to LDIF and parse the LDIF text back (boundary).
+
+        Returns:
+            The resulting ``m.Ldif.Entry``.
+        """
+        write_result = flext_api.write([source_entry])
+        tm.ok(write_result)
+        ldif_text = write_result.unwrap().content
+        assert ldif_text
+
+        parse_result = flext_api.parse_ldif(ldif_text)
+        tm.ok(parse_result)
+        parsed_entries = parse_result.unwrap().entries
+
+        # Exactly one entry survives the roundtrip.
+        tm.that(len(parsed_entries), eq=1)
+        return parsed_entries[0]
+
     def test_roundtrip_through_ldif_preserves_entry_state(
         self,
         ldap_connection: p.Ldap.Ldap3Connection,
@@ -107,18 +130,7 @@ class TestsFlextLdifRealLdapRoundtrip:
         source_entry = entry_result.unwrap()
 
         # Act: serialize to LDIF, then parse the LDIF back.
-        write_result = flext_api.write([source_entry])
-        tm.ok(write_result)
-        ldif_text = write_result.unwrap().content
-        assert ldif_text
-
-        parse_result = flext_api.parse_ldif(ldif_text)
-        tm.ok(parse_result)
-        parsed_entries = parse_result.unwrap().entries
-
-        # Assert: exactly one entry survives, with the same DN.
-        tm.that(len(parsed_entries), eq=1)
-        parsed_entry = parsed_entries[0]
+        parsed_entry = self._write_parse_entry(flext_api, source_entry)
         tm.that(parsed_entry.dn_str, eq=source_dn)
 
         # Assert: objectClass set is preserved through the roundtrip.
