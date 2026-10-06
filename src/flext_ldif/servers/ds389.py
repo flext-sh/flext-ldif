@@ -157,12 +157,8 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         """Schema servers for Red Hat / 389 Directory Server."""
 
         _NORMALIZE_OBJECTCLASS: ClassVar[bool] = True
-        _ATTRIBUTE_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig] = (
-            FlextLdifServersDs389.Constants.ATTRIBUTE_PATTERN_SETTINGS
-        )
-        _OBJECTCLASS_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig] = (
-            FlextLdifServersDs389.Constants.OBJECTCLASS_PATTERN_SETTINGS
-        )
+        _ATTRIBUTE_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig]
+        _OBJECTCLASS_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig]
 
     class Acl(FlextLdifServersRfc.Acl):
         """389 Directory Server ACI server."""

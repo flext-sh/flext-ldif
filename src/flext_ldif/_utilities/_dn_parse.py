@@ -99,7 +99,8 @@ class FlextLdifDNParsing:
         parsed_pairs: t.MutableStrPairSequence = []
         failure_message: str | None = None
         for component in FlextLdifDNParsing.split(dn_str):
-            parsed_component = FlextLdifDNRdnParsing.parse_rdn(component)            if parsed_component.failure:
+            parsed_component = FlextLdifDNRdnParsing.parse_rdn(component)
+            if parsed_component.failure:
                 failure_message = str(parsed_component.error)
                 break
             parsed_pairs.extend(parsed_component.value)

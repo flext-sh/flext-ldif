@@ -121,12 +121,8 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
     class Schema(FlextLdifServersDialectSchema):
         """Novell eDirectory schema server."""
 
-        _ATTRIBUTE_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig] = (
-            FlextLdifServersNovell.Constants.ATTRIBUTE_PATTERN_SETTINGS
-        )
-        _OBJECTCLASS_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig] = (
-            FlextLdifServersNovell.Constants.OBJECTCLASS_PATTERN_SETTINGS
-        )
+        _ATTRIBUTE_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig]
+        _OBJECTCLASS_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig]
 
     class Acl(FlextLdifServersRfc.Acl):
         """Novell eDirectory ACL server."""

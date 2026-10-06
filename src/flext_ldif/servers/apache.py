@@ -195,4 +195,14 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             return r[m.Ldif.Entry].ok(processed_entry)
 
 
+# The ApacheDS dialect schema settings are owned by ``Constants`` and bound
+# here because a nested class body cannot reference the not-yet-defined class.
+FlextLdifServersApache.Schema._ATTRIBUTE_PATTERN_SETTINGS = (
+    FlextLdifServersApache.Constants.ATTRIBUTE_PATTERN_SETTINGS
+)
+FlextLdifServersApache.Schema._OBJECTCLASS_PATTERN_SETTINGS = (
+    FlextLdifServersApache.Constants.OBJECTCLASS_PATTERN_SETTINGS
+)
+
+
 __all__: list[str] = ["FlextLdifServersApache"]

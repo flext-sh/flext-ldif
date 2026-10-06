@@ -114,12 +114,8 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
     class Schema(FlextLdifServersDialectSchema):
         """IBM Tivoli Directory Server schema servers implementation."""
 
-        _ATTRIBUTE_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig] = (
-            FlextLdifServersTivoli.Constants.ATTRIBUTE_PATTERN_SETTINGS
-        )
-        _OBJECTCLASS_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig] = (
-            FlextLdifServersTivoli.Constants.OBJECTCLASS_PATTERN_SETTINGS
-        )
+        _ATTRIBUTE_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig]
+        _OBJECTCLASS_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig]
 
     class Acl(FlextLdifServersRfc.Acl):
         """IBM Tivoli Directory Server ACL servers implementation."""
