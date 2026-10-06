@@ -1243,7 +1243,7 @@ u.Cli.print(f"❌ Migration failed: {result.error}")
 
 # Works with ANY server combination (N implementations, not N²)
 
-# Examples: OID→OUD, OpenLDAP→389DS, AD→OUD, OUD→OpenLDAP, etc.
+# Examples: OID↔OUD, OpenLDAP↔389DS, AD→OUD
 
 ### Railway-Oriented Pipeline
 
