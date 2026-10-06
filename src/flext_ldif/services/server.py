@@ -322,8 +322,9 @@ class FlextLdifServer(s):
         under construction instead of recursing.
         """
         if cls._global_instance is None:
-            cls._global_instance = cls.__new__(cls)
-            cls._global_instance.__init__()
+            instance = cls.__new__(cls)
+            cls._global_instance = instance
+            instance.__init__()
         return cls._global_instance
 
 

@@ -70,9 +70,10 @@ class FlextLdifWriterLineFolding:
         while chunk_end > pos:
             try:
                 chunk = line_bytes[pos:chunk_end].decode(c.Ldif.DEFAULT_ENCODING)
-                return (chunk, chunk_end)
             except UnicodeDecodeError:
                 chunk_end -= 1
+            else:
+                return (chunk, chunk_end)
         return (
             line_bytes[pos : pos + 1].decode(
                 c.Ldif.DEFAULT_ENCODING,
