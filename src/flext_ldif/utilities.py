@@ -15,6 +15,23 @@ from flext_ldif._utilities.collection_ldif import FlextLdifUtilitiesCollectionLd
 if TYPE_CHECKING:
     from typing import Any
 
+    from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
+    from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
+    from flext_ldif._utilities.dispatch import FlextLdifUtilitiesDispatch
+    from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
+    from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
+    from flext_ldif._utilities.events import FlextLdifUtilitiesEvents
+    from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
+    from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
+    from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
+    from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
+    from flext_ldif._utilities.pipeline import FlextLdifUtilitiesPipeline
+    from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
+    from flext_ldif._utilities.server import FlextLdifUtilitiesServer
+    from flext_ldif._utilities.transformers import FlextLdifUtilitiesTransformers
+    from flext_ldif._utilities.validation import FlextLdifUtilitiesValidation
+    from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
+
 # NOTE (import discipline): models.py binds the ``u`` namespace while
 # flext_ldif.models is still mid-init (``u.Field`` runs at class-definition
 # time). Building the full ``Ldif`` mixin tree here would re-enter the partial
@@ -114,6 +131,33 @@ class FlextLdifUtilities(
     metaclass=_lazy_ldif_meta(),
 ):
     """FLEXT LDIF Utilities - Centralized helpers for LDIF operations."""
+
+    if TYPE_CHECKING:
+        # Static view of the lazily assembled ``Ldif`` namespace: runtime
+        # assembly stays inside the metaclass (import-order safety), while
+        # this nested class makes ``Ldif.*`` statically resolvable for
+        # consumers fleet-wide. It reuses the real ``_utilities`` mixin
+        # classes, so signatures have a single owner.
+        class Ldif(
+            FlextLdifUtilitiesACL,
+            FlextLdifUtilitiesAttribute,
+            FlextLdifUtilitiesCollectionLdif,
+            FlextLdifUtilitiesDispatch,
+            FlextLdifUtilitiesDN,
+            FlextLdifUtilitiesEntry,
+            FlextLdifUtilitiesEvents,
+            FlextLdifUtilitiesMetadata,
+            FlextLdifUtilitiesObjectClass,
+            FlextLdifUtilitiesOID,
+            FlextLdifUtilitiesParser,
+            FlextLdifUtilitiesPipeline,
+            FlextLdifUtilitiesSchema,
+            FlextLdifUtilitiesServer,
+            FlextLdifUtilitiesTransformers,
+            FlextLdifUtilitiesValidation,
+            FlextLdifUtilitiesWriter,
+        ):
+            """Static view of the LDIF-specific utility namespace."""
 
 
 u = FlextLdifUtilities
