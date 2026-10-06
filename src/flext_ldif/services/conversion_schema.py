@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 
 from flext_ldif import c, m, p, r, s, t, u
 
@@ -40,43 +41,20 @@ class FlextLdifConversionSchemaMixin(s, ABC):
         source_schema: p.Ldif.SchemaServer,
         target_schema: p.Ldif.SchemaServer,
     ) -> p.Result[t.Ldif.ConvertedModel]:
-        """Orchestrate schema conversion through m.Ldif.Entry intermediary.
+        """Orchestrate schema conversion through an m.Ldif.Entry intermediary.
 
         Returns:
             The resulting ``p.Result[t.Ldif.ConvertedModel]``.
         """
-        if isinstance(item, m.Ldif.SchemaAttribute):
-            item_name = c.Ldif.SchemaItemKind.ATTRIBUTE.value
-            write_result = source_schema.write_attribute(item)
-            field_name = c.Ldif.ATTRIBUTE_TYPES
-        else:
-            item_name = c.Ldif.SchemaItemKind.OBJECTCLASS.value
-            write_result = source_schema.write_objectclass(item)
-            field_name = c.Ldif.OBJECT_CLASSES
-        source_server_type = u.try_(
-            lambda: u.Ldif.normalize_server_type(source_server.server_type),
-        ).map_or(None)
-
-        def default_write_error(error: str) -> str:
-            return (
-                f"Failed to write {item_name} in source format: "
-                f"{error or 'Unknown write error'}"
-            )
-
-        source_value_result = (
-            r[str].from_result(write_result).map_error(default_write_error)
+        source_write = self._write_schema_source_value(item, source_schema)
+        if source_write.failure:
+            return r[t.Ldif.ConvertedModel].from_failure(source_write)
+        _, field_name, source_value = source_write.value
+        bridge_entry = self._schema_bridge_entry(
+            source_server,
+            field_name,
+            source_value,
         )
-        if source_value_result.failure:
-            return r[t.Ldif.ConvertedModel].from_failure(source_value_result)
-        bridge_entry = m.Ldif.Entry.model_validate({
-            "dn": m.Ldif.DN(value="cn=schema,dc=example,dc=com", metadata={}),
-            "attributes": m.Ldif.Attributes.model_validate({
-                "attributes": {field_name: [source_value_result.value]},
-                "attribute_metadata": {},
-                "metadata": None,
-            }),
-            "metadata": u.Ldif.server_metadata_for(source_server_type),
-        })
         converted_entry_result = self._convert_entry(
             source_server,
             target_server,
@@ -84,41 +62,124 @@ class FlextLdifConversionSchemaMixin(s, ABC):
         )
         if converted_entry_result.failure:
             return r[t.Ldif.ConvertedModel].from_failure(converted_entry_result)
-        converted_entry_value = converted_entry_result.value
+        converted_values = self._schema_values_from_converted(
+            converted_entry_result.value,
+            field_name,
+        )
+        if converted_values.failure:
+            return r[t.Ldif.ConvertedModel].from_failure(converted_values)
+        return self._parse_converted_schema_item(
+            target_schema,
+            field_name,
+            converted_values.value[0],
+        )
+
+    @staticmethod
+    def _schema_write_error(item_name: str) -> Callable[[str], str]:
+        """Build the canonical source-write failure mapper for one schema kind."""
+
+        def default_write_error(error: str) -> str:
+            return (
+                f"Failed to write {item_name} in source format: "
+                f"{error or 'Unknown write error'}"
+            )
+
+        return default_write_error
+
+    def _write_schema_source_value(
+        self,
+        item: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        source_schema: p.Ldif.SchemaServer,
+    ) -> p.Result[tuple[str, str, str]]:
+        """Write the schema item in source format.
+
+        Returns:
+            The resulting ``p.Result[tuple[str, str, str]]``:
+            (item kind, schema field name, written source value).
+        """
+        if isinstance(item, m.Ldif.SchemaAttribute):
+            item_name = c.Ldif.SchemaItemKind.ATTRIBUTE.value
+            field_name = c.Ldif.ATTRIBUTE_TYPES
+            write_result = source_schema.write_attribute(item)
+        else:
+            item_name = c.Ldif.SchemaItemKind.OBJECTCLASS.value
+            field_name = c.Ldif.OBJECT_CLASSES
+            write_result = source_schema.write_objectclass(item)
+        return (
+            r[str]
+            .from_result(write_result)
+            .map_error(self._schema_write_error(item_name))
+            .map(lambda source_value: (item_name, field_name, source_value))
+        )
+
+    @staticmethod
+    def _schema_bridge_entry(
+        source_server: p.Ldif.ServerServer,
+        field_name: str,
+        source_value: str,
+    ) -> m.Ldif.Entry:
+        """Build the synthetic schema entry that carries one written definition.
+
+        Returns:
+            The resulting ``m.Ldif.Entry``.
+        """
+        source_server_type = u.try_(
+            lambda: u.Ldif.normalize_server_type(source_server.server_type),
+        ).map_or(None)
+        return m.Ldif.Entry.model_validate({
+            "dn": m.Ldif.DN(value="cn=schema,dc=example,dc=com", metadata={}),
+            "attributes": m.Ldif.Attributes.model_validate({
+                "attributes": {field_name: [source_value]},
+                "attribute_metadata": {},
+                "metadata": None,
+            }),
+            "metadata": u.Ldif.server_metadata_for(source_server_type),
+        })
+
+    @staticmethod
+    def _schema_values_from_converted(
+        converted_entry_value: t.Ldif.ConvertedModel,
+        field_name: str,
+    ) -> p.Result[tuple[str, ...]]:
+        """Extract the converted schema values from the entry intermediary.
+
+        Returns:
+            The resulting ``p.Result[tuple[str, ...]]``.
+        """
         if not isinstance(converted_entry_value, m.Ldif.Entry):
-            return r[t.Ldif.ConvertedModel].fail(
+            return r[tuple[str, ...]].fail(
                 "Entry intermediary returned unexpected type: "
                 f"{type(converted_entry_value).__name__}",
             )
         attributes_model = converted_entry_value.attributes
-        converted_values: t.VariadicTuple[str] = ()
         if attributes_model is not None:
             for attr_name, values in attributes_model.attributes.items():
                 if attr_name.lower() == field_name.lower():
-                    converted_values = tuple(values)
-                    break
-        if not converted_values:
-            return r[t.Ldif.ConvertedModel].fail(
-                f"Converted Entry does not contain {field_name}",
-            )
-        first_value = converted_values[0]
+                    return r[tuple[str, ...]].ok(tuple(values))
+        return r[tuple[str, ...]].fail(
+            f"Converted Entry does not contain {field_name}",
+        )
+
+    def _parse_converted_schema_item(
+        self,
+        target_schema: p.Ldif.SchemaServer,
+        field_name: str,
+        first_value: str,
+    ) -> p.Result[t.Ldif.ConvertedModel]:
+        """Parse the converted definition back into its target model.
+
+        Returns:
+            The resulting ``p.Result[t.Ldif.ConvertedModel]``.
+        """
         if field_name == c.Ldif.ATTRIBUTE_TYPES:
-            parsed_attribute_result = self._validate_parsed_schema(
+            return self._validate_parsed_schema(
                 target_schema.parse_attribute(first_value),
                 m.Ldif.SchemaAttribute,
             )
-            if parsed_attribute_result.failure:
-                return r[t.Ldif.ConvertedModel].from_failure(parsed_attribute_result)
-            converted_model: t.Ldif.ConvertedModel = parsed_attribute_result.value
-        else:
-            parsed_objectclass_result = self._validate_parsed_schema(
-                target_schema.parse_objectclass(first_value),
-                m.Ldif.SchemaObjectClass,
-            )
-            if parsed_objectclass_result.failure:
-                return r[t.Ldif.ConvertedModel].from_failure(parsed_objectclass_result)
-            converted_model = parsed_objectclass_result.value
-        return r[t.Ldif.ConvertedModel].ok(converted_model)
+        return self._validate_parsed_schema(
+            target_schema.parse_objectclass(first_value),
+            m.Ldif.SchemaObjectClass,
+        )
 
     @staticmethod
     def _validate_parsed_schema[T: m.Ldif.SchemaElement](

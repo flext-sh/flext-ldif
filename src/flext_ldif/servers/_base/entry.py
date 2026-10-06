@@ -6,12 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import base64
 import copy
 from collections.abc import Mapping, MutableMapping, MutableSequence
 from typing import Annotated, ClassVar, Self, override
 
 from flext_ldif import c, m, p, r, s, t, u
+from flext_ldif.servers._base.entry_write import FlextLdifServersEntryWriteContext
 from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
 
 
@@ -325,210 +325,19 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         Returns:
             The resulting ``p.Result[str]``.
         """
-        output_lines: t.MutableSequenceOf[str] = []
-        fold_long_lines = True
-        line_width = c.Ldif.LINE_FOLD_WIDTH
-        include_dn_comments = False
-        normalize_attribute_names = False
-        restore_original_format = False
-        write_empty_values = True
-        write_hidden_attributes_as_comments = False
-        write_metadata_as_comments = False
-        use_original_acl_format_as_name = False
-        hidden_attributes: set[str] = set()
-        acl_original_format: str | None = None
-        extensions_data: t.Ldif.MutableMetadataMapping = {}
-        if entry_data.metadata:
-            metadata_extensions = entry_data.metadata.extensions
-            if u.matches_type(metadata_extensions, Mapping):
-                extensions_data = dict(metadata_extensions)
-        hidden_raw = extensions_data.get(c.Ldif.HIDDEN_ATTRIBUTES)
-        if isinstance(hidden_raw, list):
-            hidden_text: t.MutableSequenceOf[str] = [str(value) for value in hidden_raw]
-            hidden_attributes = {attr.lower() for attr in hidden_text}
-        acl_original_raw = extensions_data.get(c.Ldif.ACL_ORIGINAL_FORMAT)
-        if isinstance(acl_original_raw, str):
-            acl_original_format = acl_original_raw
-        format_options = self._extract_write_format_options(entry_data.metadata)
-        ldif_changetype: str | None = None
-        ldif_modify_operation: str = "add"
-        if format_options is not None:
-            fold_long_lines = format_options.fold_long_lines
-            line_width = format_options.line_width
-            include_dn_comments = format_options.include_dn_comments
-            normalize_attribute_names = format_options.normalize_attribute_names
-            restore_original_format = format_options.restore_original_format
-            write_empty_values = format_options.write_empty_values
-            write_hidden_attributes_as_comments = (
-                format_options.write_hidden_attributes_as_comments
-            )
-            write_metadata_as_comments = format_options.write_metadata_as_comments
-            use_original_acl_format_as_name = (
-                format_options.use_original_acl_format_as_name
-            )
-            ldif_changetype = format_options.ldif_changetype
-            ldif_modify_operation = format_options.ldif_modify_operation or "add"
-
-        effective_line_width = (
-            line_width if fold_long_lines else max(line_width, 1_000_000)
+        context = FlextLdifServersEntryWriteContext.build(
+            entry_data,
+            self.server_type,
+            self._extract_write_format_options(entry_data.metadata),
         )
-
-        def should_restore_original() -> bool:
-            """Restore original LDIF only for same-server round-trips.
-
-            Returns:
-                The resulting ``bool``.
-            """
-            if not restore_original_format or entry_data.metadata is None:
-                return False
-            return (
-                str(entry_data.metadata.original_server_type).lower()
-                == self.server_type.lower()
-            )
-
-        def maybe_replace_acl_name(attr_name: str, value: str) -> str:
-            if not use_original_acl_format_as_name:
-                return value
-            if attr_name.lower() != "aci" or not acl_original_format:
-                return value
-            safe_acl_name = acl_original_format.replace('"', "'")
-            replaced_acl_name: str = c.Ldif.sub_pattern(
-                r'acl\\s+"[^"]*"',
-                f'acl "{safe_acl_name}"',
-                value,
-                count=1,
-            )
-            return replaced_acl_name
-
-        def emit_attribute_line(
-            attr_name: str,
-            value: str,
-            *,
-            value_origin: str | None = None,
-            raw_value: str | None = None,
-        ) -> str:
-            effective_name = (
-                attr_name.lower() if normalize_attribute_names else attr_name
-            )
-            effective_value = maybe_replace_acl_name(attr_name, value)
-            if value_origin == c.Ldif.ValueOrigin.BASE64 and raw_value:
-                return f"{effective_name}:: {raw_value}"
-            if (
-                value_origin in {c.Ldif.ValueOrigin.URL, c.Ldif.ValueOrigin.FILE}
-                and raw_value
-            ):
-                return f"{effective_name}:< {raw_value}"
-            should_encode = effective_name.lower() in c.Ldif.BINARY_ATTRIBUTE_NAMES
-            if should_encode or u.Ldif.needs_base64_encoding(effective_value):
-                encoded = base64.b64encode(effective_value.encode("utf-8")).decode(
-                    "ascii",
-                )
-                return f"{effective_name}:: {encoded}"
-            return f"{effective_name}: {effective_value}"
-
-        def emit_control_line(control: m.Ldif.Control) -> str:
-            """Serialize RFC 2849 control line.
-
-            Returns:
-                The resulting ``str``.
-            """
-            line = f"control: {control.control_type}"
-            if control.criticality is not None:
-                line += " true" if control.criticality else " false"
-            if control.value is None:
-                return line
-            if control.value_origin == c.Ldif.ValueOrigin.BASE64:
-                encoded_value = control.raw_value or control.value
-                return f"{line}:: {encoded_value}"
-            if control.value_origin in {
-                c.Ldif.ValueOrigin.URL,
-                c.Ldif.ValueOrigin.FILE,
-            }:
-                url_value = control.raw_value or control.value
-                return f"{line}:< {url_value}"
-            return f"{line}: {control.value}"
-
-        def get_attribute_value_metadata(
-            attr_name: str,
-            value_index: int,
-        ) -> tuple[str | None, str | None]:
-            """Return preserved value origin and raw payload for an attribute value."""
-            if entry_data.attributes is None:
-                return (None, None)
-            attribute_metadata = entry_data.attributes.attribute_metadata.get(attr_name)
-            if not isinstance(attribute_metadata, Mapping):
-                return (None, None)
-            origins_raw = attribute_metadata.get("value_origins")
-            raw_values_raw = attribute_metadata.get("raw_values")
-            origin: str | None = None
-            raw_value: str | None = None
-            if isinstance(origins_raw, list) and value_index < len(origins_raw):
-                origin = origins_raw[value_index]
-            if isinstance(raw_values_raw, list) and value_index < len(raw_values_raw):
-                raw_value = raw_values_raw[value_index]
-            return (origin, raw_value)
-
-        acl_attribute_names: set[str] = {
-            name.lower() for name in c.Ldif.DEFAULT_ACL_ATTRIBUTES
-        }
-
-        def append_attribute_line(attr_name: str, line: str) -> None:
-            if attr_name.lower() in acl_attribute_names:
-                output_lines.append(line)
-                return
-            output_lines.extend(u.Ldif.fold_line(line, width=effective_line_width))
-
-        if should_restore_original() and entry_data.metadata is not None:
-            original_strings = entry_data.metadata.original_strings
-            original_ldif_raw = original_strings.get("entry_original_ldif", "")
-            try:
-                restored_output: str = t.str_adapter().validate_python(
-                    original_ldif_raw,
-                )
-            except c.ValidationError as exc:
-                return r[str].fail_op("restore original LDIF text", exc)
-            if not restored_output:
-                return r[str].ok("")
-            if restored_output and not restored_output.endswith("\n"):
-                restored_output += "\n"
-            return r[str].ok(restored_output)
-
-        if (
-            format_options is not None
-            and format_options.write_rejection_reasons
-            and entry_data.metadata is not None
-            and entry_data.metadata.processing_stats is not None
-        ):
-            statistics = m.Ldif.EntryStatistics.model_validate(
-                entry_data.metadata.processing_stats.model_dump(),
-            )
-            if statistics.was_rejected:
-                for label, value in (
-                    ("Rejection category", statistics.rejection_category),
-                    ("Rejection reason", statistics.rejection_reason),
-                ):
-                    if value is not None:
-                        output_lines.extend(
-                            f"# {label}: {line}" for line in value.splitlines()
-                        )
-
-        if write_metadata_as_comments and entry_data.metadata is not None:
-            output_lines.append("# Entry Metadata:")
-        if include_dn_comments and entry_data.dn:
-            output_lines.append(f"# DN: {entry_data.dn.value}")
-        if entry_data.dn:
-            dn_line = f"dn: {entry_data.dn.value}"
-            output_lines.extend(u.Ldif.fold_line(dn_line, width=effective_line_width))
-        else:
-            return r[str].fail("Entry DN is None")
-        for control in entry_data.controls:
-            output_lines.extend(
-                u.Ldif.fold_line(
-                    emit_control_line(control),
-                    width=effective_line_width,
-                ),
-            )
-        effective_changetype = entry_data.changetype or ldif_changetype
+        restored = context.restore_original()
+        if restored is not None:
+            return restored
+        output_lines: t.MutableSequenceOf[str] = []
+        header_failure = context.emit_entry_header(output_lines)
+        if header_failure is not None:
+            return header_failure
+        effective_changetype = entry_data.changetype or context.ldif_changetype
         if effective_changetype in {
             c.Ldif.ChangeType.ADD,
             c.Ldif.ChangeType.DELETE,
@@ -538,95 +347,16 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         }:
             output_lines.append(f"changetype: {effective_changetype}")
         if effective_changetype == c.Ldif.ChangeType.MODIFY:
-            if entry_data.change_operations:
-                for change_operation in entry_data.change_operations:
-                    output_lines.append(
-                        f"{change_operation.operation}: {change_operation.attribute}",
-                    )
-                    for value_data in change_operation.values:
-                        attr_line = emit_attribute_line(
-                            change_operation.attribute,
-                            value_data.value,
-                            value_origin=value_data.value_origin,
-                            raw_value=value_data.raw_value,
-                        )
-                        append_attribute_line(change_operation.attribute, attr_line)
-                    output_lines.append("-")
-                output_lines.append("")
-                return r[str].ok("\n".join(output_lines))
-            modify_excluded = {"objectclass", "cn", "changetype", "dn"}
-            if hasattr(entry_data, "attributes") and entry_data.attributes:
-                for attr_name, values in entry_data.attributes.items():
-                    if attr_name.lower() in modify_excluded:
-                        continue
-                    non_empty = [v for v in values if v]
-                    if not non_empty:
-                        continue
-                    output_lines.append(f"{ldif_modify_operation}: {attr_name}")
-                    for value_index, value in enumerate(non_empty):
-                        value_origin, raw_value = get_attribute_value_metadata(
-                            attr_name,
-                            value_index,
-                        )
-                        attr_line = emit_attribute_line(
-                            attr_name,
-                            value,
-                            value_origin=value_origin,
-                            raw_value=raw_value,
-                        )
-                        append_attribute_line(attr_name, attr_line)
-                    output_lines.append("-")
-            output_lines.append("")
-            return r[str].ok("\n".join(output_lines))
+            return context.emit_modify_entry(output_lines)
         if effective_changetype in {
             c.Ldif.ChangeType.MODDN,
             c.Ldif.ChangeType.MODRDN,
         }:
-            if entry_data.newrdn:
-                output_lines.extend(
-                    u.Ldif.fold_line(
-                        f"newrdn: {entry_data.newrdn}",
-                        width=effective_line_width,
-                    ),
-                )
-            if entry_data.deleteoldrdn is not None:
-                delete_old = "1" if entry_data.deleteoldrdn else "0"
-                output_lines.append(f"deleteoldrdn: {delete_old}")
-            if entry_data.newsuperior:
-                output_lines.extend(
-                    u.Ldif.fold_line(
-                        f"newsuperior: {entry_data.newsuperior}",
-                        width=effective_line_width,
-                    ),
-                )
-            output_lines.append("")
-            return r[str].ok("\n".join(output_lines))
+            return context.emit_modifydn_entry(output_lines)
         if effective_changetype == c.Ldif.ChangeType.DELETE:
             output_lines.append("")
             return r[str].ok("\n".join(output_lines))
-        if hasattr(entry_data, "attributes") and entry_data.attributes:
-            for attr_name, values in entry_data.attributes.items():
-                attr_is_hidden = attr_name.lower() in hidden_attributes
-                for value_index, value in enumerate(values):
-                    str_value = value
-                    if not str_value and (not write_empty_values):
-                        continue
-                    value_origin, raw_value = get_attribute_value_metadata(
-                        attr_name,
-                        value_index,
-                    )
-                    attr_line = emit_attribute_line(
-                        attr_name,
-                        str_value,
-                        value_origin=value_origin,
-                        raw_value=raw_value,
-                    )
-                    if attr_is_hidden and write_hidden_attributes_as_comments:
-                        attr_line = f"# {attr_line}"
-                    append_attribute_line(attr_name, attr_line)
-        output_lines.append("")
-        ldif_content = "\n".join(output_lines)
-        return r[str].ok(ldif_content)
+        return context.emit_add_entry(output_lines)
 
     def _write_entry_list(
         self,

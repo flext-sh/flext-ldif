@@ -166,12 +166,8 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         """Active Directory schema server."""
 
         _NORMALIZE_OBJECTCLASS: ClassVar[bool] = True
-        _ATTRIBUTE_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig] = (
-            FlextLdifServersAd.Constants.ATTRIBUTE_PATTERN_SETTINGS
-        )
-        _OBJECTCLASS_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig] = (
-            FlextLdifServersAd.Constants.OBJECTCLASS_PATTERN_SETTINGS
-        )
+        _ATTRIBUTE_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig]
+        _OBJECTCLASS_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig]
 
     class Acl(FlextLdifServersRfc.Acl):
         """Active Directory ACL server handling nTSecurityDescriptor entries."""
@@ -368,6 +364,16 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 oc.lower() in FlextLdifServersAd.Constants.DETECTION_OBJECTCLASS_NAMES
                 for oc in normalized_object_classes
             )
+
+
+# The AD dialect schema settings are owned by ``Constants`` and bound here
+# because a nested class body cannot reference the not-yet-defined outer class.
+FlextLdifServersAd.Schema._ATTRIBUTE_PATTERN_SETTINGS = (
+    FlextLdifServersAd.Constants.ATTRIBUTE_PATTERN_SETTINGS
+)
+FlextLdifServersAd.Schema._OBJECTCLASS_PATTERN_SETTINGS = (
+    FlextLdifServersAd.Constants.OBJECTCLASS_PATTERN_SETTINGS
+)
 
 
 __all__: list[str] = ["FlextLdifServersAd"]
