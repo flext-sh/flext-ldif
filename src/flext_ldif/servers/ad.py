@@ -288,7 +288,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 decoded_bytes = base64.b64decode(raw_value, validate=True)
             except binascii.Error:
                 return None
-            return FlextLdifServersAd._decoded_sddl_text(decoded_bytes)
+            return FlextLdifServersAd.Acl._decoded_sddl_text(decoded_bytes)
 
         @staticmethod
         def _decode_sddl(raw_value: str, *, is_base64: bool) -> str | None:
@@ -298,7 +298,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 The resulting ``str | None``.
             """
             if is_base64 and raw_value:
-                return FlextLdifServersAd._decoded_base64_sddl(raw_value)
+                return FlextLdifServersAd.Acl._decoded_base64_sddl(raw_value)
             if (
                 raw_value
                 and FlextLdifServersAd.Constants.ACL_SDDL_PREFIX_PATTERN_RE.match(
