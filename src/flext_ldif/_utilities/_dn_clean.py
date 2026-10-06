@@ -107,7 +107,7 @@ class FlextLdifDNCleaning:
             flag_name,
         ) in transform_rules:
             if c.Ldif.compile_pattern(detect_pattern).search(result):
-                result = c.Ldif.sub_pattern(replace_pattern, replacement, result)
+                result = c.Ldif.compile_pattern(replace_pattern).sub(replacement, result)
                 transformations.append(transform_type)
                 if flag_name:
                     flags[flag_name] = True
@@ -188,7 +188,7 @@ class FlextLdifDNCleaning:
         try:
             result = dn_str
             for pattern, replacement in patterns:
-                result = c.Ldif.sub_pattern(pattern, replacement, result)
+                result = c.Ldif.compile_pattern(pattern).sub(replacement, result)
         except c.Ldif.EXC_LDIF_PARSE:
             return dn_str
         else:
