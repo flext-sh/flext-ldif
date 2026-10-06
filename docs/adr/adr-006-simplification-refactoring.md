@@ -146,7 +146,7 @@ src/flext_ldif/
 
 **Before**:
 
-```python
+```text
 from flext_ldif import ldif
 
 processor = ldif.processors  # Unnecessary wrapper
@@ -155,7 +155,7 @@ result = processor.batch_process(entries, func)
 
 **After**:
 
-```python
+```text
 from flext_core import FlextProcessors
 
 processor = FlextProcessors()  # Direct usage
@@ -181,14 +181,14 @@ result = processor.batch_process(entries, func)
 
 **Before**:
 
-```python
+```text
 dn = ldif.get_entry_dn(entry)  # Wrapper
 attrs = ldif.get_entry_attributes(entry)  # Wrapper
 ```
 
 **After**:
 
-```python
+```text
 dn = entry.dn.value  # Direct
 attrs = entry.attributes.to_ldap3()  # Direct
 ```
@@ -222,7 +222,7 @@ attrs = entry.attributes.to_ldap3()  # Direct
 
 **Example**:
 
-```python
+```text
 from __future__ import annotations
 
 from flext_core import d
@@ -262,25 +262,23 @@ from __future__ import annotations
 
 
 class FlextLdifDetector:
-    def __init__(self):
+    def __init__(self) -> None:
         self._patterns = {...}
 ```
 
 **After**:
 
-```python
-from __future__ import annotations
+from **future** import annotations
+from flext_ldif import p
 
 from flext_core import s
 
-
 class FlextLdifDetector(s):
-    """Server detection service with automatic logging."""
+"""Server detection service with automatic logging."""
 
     def execute(self, content: str) -> p.Result[dict]:
         self.logger.info("Detecting server type", extra={"size": len(content)})
         # self.logger available automatically from s
-```
 
 **Benefits**:
 
@@ -295,7 +293,7 @@ class FlextLdifDetector(s):
 
 **Before** (170 lines with nested if/else):
 
-```python
+```text
 def parse(
     self, source, server_type="rfc", *, batch=False, paginate=False, page_size=1000
 ):
@@ -310,7 +308,7 @@ def parse(
 
 **After** (80 lines with pattern matching):
 
-```python
+```text
 from __future__ import annotations
 
 from typing import Literal

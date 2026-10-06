@@ -5,6 +5,13 @@
 - [Features](#features)
 - [Usage Examples](#usage-examples)
   - [Pattern 1: Direct Classmethod API (Simplified)](#pattern-1-direct-classmethod-api-simplified)
+  - [Pattern 2: Classmethod for Composable/Chainable Operations](#pattern-2-classmethod-for-composablechainable-operations)
+  - [Pattern 3: Fluent Builder Pattern](#pattern-3-fluent-builder-pattern)
+  - [Pattern 4: Public Classmethod Helpers (Most Direct)](#pattern-4-public-classmethod-helpers-most-direct)
+  - [Pattern 5: Transformation (Remove Attributes/ObjectClasses)](#pattern-5-transformation-remove-attributesobjectclasses)
+  - [Pattern 6: Schema & Advanced Operations](#pattern-6-schema-advanced-operations)
+- [Quick Reference](#quick-reference)
+- [See Also](#see-also)
 
 <!-- TOC END -->
 
@@ -28,7 +35,7 @@
 
 ### Pattern 1: Direct Classmethod API (Simplified)
 
-````python
+```text
 # Filter entries by DN pattern
 result = FlextLdifFilters.by_dn(
     entries=my_entries, pattern="*,ou=users,dc=example,dc=com", mode="include"
@@ -50,9 +57,10 @@ result = FlextLdifFilters.by_attributes(
     mode="include",
 )
 ```
+
 ### Pattern 2: Classmethod for Composable/Chainable Operations
 
-```python
+```text
 from __future__ import annotations
 
 from flext_ldif import FlextLdifFilters
@@ -69,9 +77,10 @@ result = (
     )
 )
 ```
+
 ### Pattern 3: Fluent Builder Pattern
 
-```python
+```text
 filtered_result = (
     FlextLdifFilters
     .builder()
@@ -82,9 +91,10 @@ filtered_result = (
     .build()  # Returns t.SequenceOf[Entry] directly
 )
 ```
+
 ### Pattern 4: Public Classmethod Helpers (Most Direct)
 
-```python
+```text
 # Filter by DN pattern
 result = FlextLdifFilters.by_dn(entries, "*,ou=users,*")
 filtered = result.unwrap()
@@ -104,9 +114,10 @@ result = FlextLdifFilters.extract_acl_entries(entries)
 # Categorize entry
 category, reason = FlextLdifFilters.categorize(entry, rules)
 ```
+
 ### Pattern 5: Transformation (Remove Attributes/ObjectClasses)
 
-```python
+```text
 # Remove temporary attributes
 result = FlextLdifFilters.remove_attributes(
     entry=my_entry, attributes=["tempAttribute", "debugInfo"]
@@ -117,9 +128,10 @@ result = FlextLdifFilters.remove_objectclasses(
     entry=my_entry, objectclasses=["temporaryClass"]
 )
 ```
+
 ### Pattern 6: Schema & Advanced Operations
 
-```python
+```text
 # Check if entry is schema
 is_schema = FlextLdifFilters.is_schema(entry)
 
@@ -129,11 +141,12 @@ result = FlextLdifFilters.filter_schema_by_oids(
     allowed_oids={"attributes": ["2.5.4.*"], "objectclasses": ["2.5.6.*"]},
 )
 ```
+
 ## Quick Reference
 
 Most common use cases:
 
-```python
+```text
 # Filter entries by DN pattern
 result = FlextLdifFilters.by_dn(entries, "*,ou=users,*")
 filtered = result.unwrap()
@@ -161,8 +174,8 @@ acl_entries = result.unwrap()
 # Categorize entry
 category, reason = FlextLdifFilters.categorize(entry, rules)
 ```
+
 ## See Also
 
 - API Reference
 - Getting Started
-````

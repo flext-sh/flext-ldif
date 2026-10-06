@@ -3,6 +3,9 @@
 <!-- TOC START -->
 
 - [RFC.Constants (Base)](#rfcconstants-base)
+- [Server.Constants (Específicos)](#serverconstants-especificos)
+- [Quando usar o quê](#quando-usar-o-que)
+- [Benefícios](#beneficios)
 
 <!-- TOC END -->
 
@@ -13,7 +16,7 @@
 - Allows all servers to override if needed
 - Provides baseline values
 
-````python
+```python
 from __future__ import annotations
 
 from typing import ClassVar
@@ -24,9 +27,9 @@ class Constants:
     PERMISSION_READ: ClassVar[str] = "read"
     OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([...])
 
-    # ❌ Errado - não usar Final em RFC
-    # PERMISSION_READ: Final[str] = "read"
-    ```
+    # ❌ Errado - não declarar PERMISSION_READ com Final, pois RFC permite override
+```
+
 ## Server.Constants (Específicos)
 
 **Rule:**
@@ -36,6 +39,10 @@ class Constants:
 
 ```python
 from __future__ import annotations
+
+from typing import ClassVar, Final
+
+from flext_ldif import FlextLdifServersRfc
 
 
 class Constants(FlextLdifServersRfc.Constants):
@@ -47,7 +54,8 @@ class Constants(FlextLdifServersRfc.Constants):
 
     # ✅ Padrões server-specific - Final OK
     ACL_TYPE_PATTERN: Final[str] = r"^orclaci:"
-    ```
+```
+
 ## Quando usar o quê
 
 | Cenário                        | RFC.Constants | Server.Constants      |
@@ -63,4 +71,3 @@ class Constants(FlextLdifServersRfc.Constants):
 - ✅ Herança funciona corretamente
 - ✅ Type safety mantida
 - ✅ Flexibilidade para override
-````
