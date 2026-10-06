@@ -89,12 +89,8 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         """Schema servers for Apache Directory Server (ApacheDS)."""
 
         _NORMALIZE_OBJECTCLASS: ClassVar[bool] = True
-        _ATTRIBUTE_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig] = (
-            FlextLdifServersApache.Constants.ATTRIBUTE_PATTERN_SETTINGS
-        )
-        _OBJECTCLASS_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig] = (
-            FlextLdifServersApache.Constants.OBJECTCLASS_PATTERN_SETTINGS
-        )
+        _ATTRIBUTE_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig]
+        _OBJECTCLASS_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig]
 
     class Acl(FlextLdifServersRfc.Acl):
         """Apache Directory Server ACI server."""
