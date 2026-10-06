@@ -6,21 +6,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import struct
 from collections.abc import MutableMapping
-from typing import Annotated
 
-from flext_ldif import c, m, p, r, s, t, u
-from flext_ldif.services.filters import FlextLdifFilters
+from flext_ldif import c, m, p, s, t, u
+from flext_ldif.services.categorization_filtering import (
+    FlextLdifCategorizationFiltering,
+)
 
 
 class FlextLdifCategorization(FlextLdifCategorizationFiltering, s):
     """LDIF Entry Categorization Service."""
 
-    @staticmethod
 
-
-    @staticmethod
 
     def categorize_entries(
         self,
@@ -217,6 +214,7 @@ class FlextLdifCategorization(FlextLdifCategorizationFiltering, s):
                 rejected_dns_preview=", ".join(sample_rejected_dns),
             )
         return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(validated)
+
 
 
 __all__: list[str] = ["FlextLdifCategorization"]

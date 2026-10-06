@@ -12,12 +12,16 @@ from __future__ import annotations
 from collections.abc import MutableMapping
 
 from flext_ldif import c, m, p, s, t, u
+from flext_ldif.services.categorization_rules import (
+    FlextLdifCategorizationRules,
+)
 from flext_ldif.services.filters import FlextLdifFilters
 
 
 class FlextLdifCategorizationFiltering(FlextLdifCategorizationRules):
     """Forbidden-attribute, whitelist-OID, and base-DN filtering helpers."""
 
+@staticmethod
 def _ensure_entry_model(
     value: t.JsonValue | m.BaseModel | m.Ldif.Entry,
 ) -> m.Ldif.Entry | None:
@@ -225,6 +229,7 @@ def filter_schema_by_oids(
     error_msg = result.error or c.Ldif.ERR_FAILED_FILTER_ENTRIES
     return r[t.MutableSequenceOf[m.Ldif.Entry]].fail(error_msg)
 
+@staticmethod
 def _update_metadata_for_filtered_entries(
     entries: t.MutableSequenceOf[m.Ldif.Entry],
     *,

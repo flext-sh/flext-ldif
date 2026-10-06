@@ -1,6 +1,6 @@
 """Categorization rules concern: fields, normalization, merging, matching.
 
-Owns the categorization configuration fields and the rule/constant
+Owns the categorization configuration fields plus the rule/constant
 normalization and entry-matching half of the LDIF categorization service;
 ``FlextLdifCategorization`` composes it via MRO.
 
@@ -19,6 +19,7 @@ from flext_ldif import c, m, p, s, t, u
 class FlextLdifCategorizationRules(s):
     """Categorization configuration fields and rule matching helpers."""
 
+@staticmethod
 def _build_rejection_tracker() -> MutableMapping[
     str,
     t.MutableSequenceOf[m.Ldif.Entry],
@@ -141,6 +142,7 @@ def _whitelist_rules_with_oid_filters(self) -> m.Ldif.WhitelistRules | None:
         return None
     return whitelist_rules
 
+@staticmethod
 def _merge_category_from_constants(
     category_map: t.MutableFrozensetMapping,
     server_map: MutableMapping[str, frozenset[str] | str],
@@ -174,6 +176,7 @@ def _merge_one_category(
     existing = category_map.get(key_str, c.Ldif.EMPTY_STR_FROZENSET)
     category_map[key_str] = existing | normalized_value
 
+@staticmethod
 def matches_schema_entry(entry: m.Ldif.Entry) -> bool:
     """Check if entry is a schema definition.
 
@@ -186,6 +189,7 @@ def matches_schema_entry(entry: m.Ldif.Entry) -> bool:
     entry_attrs = {attr.lower() for attr in attrs_dict}
     return bool(c.Ldif.SCHEMA_CATEGORY_ATTRIBUTE_KEYS & entry_attrs)
 
+@staticmethod
 def _check_hierarchy_priority(
     entry: m.Ldif.Entry,
     constants: type[p.Ldif.ServerConstants],
