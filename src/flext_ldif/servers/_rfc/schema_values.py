@@ -77,7 +77,7 @@ class FlextLdifServersRfcSchemaValuesMixin(FlextLdifServersBase.Schema):
             isinstance(json_value, Sequence) and not isinstance(json_value, str | bytes)
         ):
             return None
-        parsed = FlextLdifServersRfcSchema._parse_int(json_value)
+        parsed = FlextLdifServersRfcSchemaValuesMixin._parse_int(json_value)
         if parsed.success:
             parsed_value: int = parsed.value
             return parsed_value
