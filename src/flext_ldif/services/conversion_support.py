@@ -6,7 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import c, p, r, s, t
+from collections.abc import Callable
+
+from flext_ldif import c, m, p, r, s, t
 
 
 class FlextLdifConversionSupportMixin(s):
@@ -15,6 +17,25 @@ class FlextLdifConversionSupportMixin(s):
     @staticmethod
     def _get_schema_from_attribute(server: p.Ldif.ServerServer) -> p.Ldif.SchemaServer:
         return server.schema_server
+
+    def _guard_conversion[T](
+        self,
+        operation: str,
+        convert: Callable[[], p.Result[T]],
+    ) -> p.Result[T]:
+        """Run one conversion step under the canonical parse-failure guard.
+
+        Returns:
+            The resulting ``p.Result[T]``.
+        """
+        try:
+            return convert()
+        except c.Ldif.EXC_LDIF_PARSE as e:
+            self.logger.exception(
+                f"Failed to convert {operation} model",
+                error=str(e),
+            )
+            return r[T].fail_op(f"{operation} conversion", e)
 
     def _resolve_server(
         self,

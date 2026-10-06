@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from flext_ldif import m, t, u
+from flext_ldif import c, m, r, t, u
 
 
 class FlextLdifServersBaseSchemaMetadataMixin:
@@ -102,18 +102,18 @@ class FlextLdifServersBaseSchemaMetadataMixin:
         Returns:
             The resulting ``m.Ldif.ServerMetadata | None``.
         """
-        metadata_extensions = FlextLdifServersBaseSchema._extract_metadata_extensions(
+        metadata_extensions = FlextLdifServersBaseSchemaMetadataMixin._extract_metadata_extensions(
             attr_definition,
         )
         if syntax:
             metadata_extensions["syntax_oid_valid"] = syntax_validation_error is None
             if syntax_validation_error:
                 metadata_extensions["syntax_validation_error"] = syntax_validation_error
-        oid_fields = FlextLdifServersBaseSchema._attribute_oid_fields(
+        oid_fields = FlextLdifServersBaseSchemaMetadataMixin._attribute_oid_fields(
             parsed_definition,
         )
         for rule_name, rule_oid in oid_fields.items():
-            FlextLdifServersBaseSchema.validate_and_track_oid(
+            FlextLdifServersBaseSchemaMetadataMixin.validate_and_track_oid(
                 metadata_extensions,
                 rule_oid,
                 rule_name,
@@ -121,7 +121,7 @@ class FlextLdifServersBaseSchemaMetadataMixin:
         metadata_extensions["original_format"] = attr_definition.strip()
         metadata_extensions["schema_original_string_complete"] = attr_definition
         resolved_server_type: c.Ldif.ServerTypes = (
-            FlextLdifServersBaseSchema._resolve_server_type(server_type)
+            FlextLdifServersBaseSchemaMetadataMixin._resolve_server_type(server_type)
         )
         schema_source_server: str = resolved_server_type.value
         metadata_extensions[c.Ldif.SCHEMA_SOURCE_SERVER] = schema_source_server
@@ -135,7 +135,7 @@ class FlextLdifServersBaseSchemaMetadataMixin:
             original_server_type=resolved_server_type,
             target_server_type=resolved_server_type,
         )
-        FlextLdifServersBaseSchema._preserve_formatting(metadata, attr_definition)
+        FlextLdifServersBaseSchemaMetadataMixin._preserve_formatting(metadata, attr_definition)
         return (
             metadata if metadata_extensions or metadata.schema_format_details else None
         )

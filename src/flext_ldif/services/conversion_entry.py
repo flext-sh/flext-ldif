@@ -58,11 +58,10 @@ class FlextLdifConversionEntryMixin(
         Returns:
             The resulting ``p.Result[t.Ldif.ConvertedModel]``.
         """
-        try:
-            return self._convert_entry_core(source_server, target_server, entry)
-        except c.Ldif.EXC_LDIF_PARSE as e:
-            self.logger.exception("Failed to convert Entry model", error=str(e))
-            return r[t.Ldif.ConvertedModel].fail_op("Entry conversion", e)
+        return self._guard_conversion(
+            "Entry",
+            lambda: self._convert_entry_core(source_server, target_server, entry),
+        )
 
     def _convert_entry_core(
         self,
