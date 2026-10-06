@@ -21,6 +21,117 @@ if TYPE_CHECKING:
     from tests import t
 
 
+def _attribute_case(
+    scenario: str,
+    attr_definition: str,
+    expected_can_handle: bool,
+    expected_oid: str | None = None,
+    expected_name: str | None = None,
+) -> m.Tests.AttributeTestCase:
+    """Build one attribute can-handle test case from a data row.
+
+    Returns:
+        The resulting ``m.Tests.AttributeTestCase``.
+    """
+    return m.Tests.AttributeTestCase(
+        scenario=scenario,
+        attr_definition=attr_definition,
+        expected_can_handle=expected_can_handle,
+        expected_oid=expected_oid,
+        expected_name=expected_name,
+    )
+
+
+_SERVER_ATTRIBUTE_CASE_DATA: Final[
+    t.MappingKV[str, tuple[tuple[str, str, bool, str | None, str | None], ...]]
+] = MappingProxyType({
+    "ds389": (
+        (
+            "ds389_oid",
+            "( 2.16.840.1.113730.3.1.1 NAME 'nsslapd-suffix' "
+            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )",
+            True,
+            "2.16.840.1.113730.3.1.1",
+            "nsslapd-suffix",
+        ),
+        (
+            "nsslapd_prefix",
+            "( 1.2.3.4 NAME 'nsslapd-port' SYNTAX "
+            "1.3.6.1.4.1.1466.115.121.1.27 )",
+            True,
+            None,
+            "nsslapd-port",
+        ),
+        (
+            "nsds_prefix",
+            "( 1.2.3.4 NAME 'nsds5ReplicaId' SYNTAX "
+            "1.3.6.1.4.1.1466.115.121.1.27 )",
+            True,
+            None,
+            "nsds5ReplicaId",
+        ),
+        (
+            "nsuniqueid_prefix",
+            "( 1.2.3.4 NAME 'nsuniqueid' SYNTAX "
+            "1.3.6.1.4.1.1466.115.121.1.15 )",
+            True,
+            None,
+            "nsuniqueid",
+        ),
+        (
+            "standard_rfc",
+            "( 2.5.4.3 NAME 'cn' SYNTAX "
+            "1.3.6.1.4.1.1466.115.121.1.15 )",
+            False,
+            None,
+            None,
+        ),
+    ),
+    "novell": (
+        (
+            "novell_oid",
+            "( 2.16.840.1.113719.1.1.4.1.501 NAME "
+            "'nspmPasswordPolicyDN' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )",
+            True,
+            "2.16.840.1.113719.1.1.4.1.501",
+            "nspmPasswordPolicyDN",
+        ),
+        (
+            "nspm_prefix",
+            "( 1.2.3.4 NAME 'nspmPasswordPolicy' SYNTAX "
+            "1.3.6.1.4.1.1466.115.121.1.15 )",
+            True,
+            None,
+            "nspmPasswordPolicy",
+        ),
+        (
+            "login_prefix",
+            "( 1.2.3.4 NAME 'loginDisabled' SYNTAX "
+            "1.3.6.1.4.1.1466.115.121.1.7 )",
+            True,
+            None,
+            "loginDisabled",
+        ),
+        (
+            "dirxml_prefix",
+            "( 1.2.3.4 NAME 'dirxml-associations' SYNTAX "
+            "1.3.6.1.4.1.1466.115.121.1.15 )",
+            True,
+            None,
+            "dirxml-associations",
+        ),
+        (
+            "standard_rfc",
+            "( 2.5.4.3 NAME 'cn' SYNTAX "
+            "1.3.6.1.4.1.1466.115.121.1.15 )",
+            False,
+            None,
+            None,
+        ),
+    ),
+})
+
+
 class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
     """Flat test constants for flext-ldif."""
 
@@ -620,42 +731,8 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
 
         DS389_ATTRIBUTE_TEST_CASES: ClassVar[
             t.SequenceOf[m.Tests.AttributeTestCase]
-        ] = (
-            m.Tests.AttributeTestCase(
-                scenario="ds389_oid",
-                attr_definition="( 2.16.840.1.113730.3.1.1 NAME 'nsslapd-suffix' "
-                "SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )",
-                expected_can_handle=True,
-                expected_oid="2.16.840.1.113730.3.1.1",
-                expected_name="nsslapd-suffix",
-            ),
-            m.Tests.AttributeTestCase(
-                scenario="nsslapd_prefix",
-                attr_definition="( 1.2.3.4 NAME 'nsslapd-port' SYNTAX "
-                "1.3.6.1.4.1.1466.115.121.1.27 )",
-                expected_can_handle=True,
-                expected_name="nsslapd-port",
-            ),
-            m.Tests.AttributeTestCase(
-                scenario="nsds_prefix",
-                attr_definition="( 1.2.3.4 NAME 'nsds5ReplicaId' SYNTAX "
-                "1.3.6.1.4.1.1466.115.121.1.27 )",
-                expected_can_handle=True,
-                expected_name="nsds5ReplicaId",
-            ),
-            m.Tests.AttributeTestCase(
-                scenario="nsuniqueid_prefix",
-                attr_definition="( 1.2.3.4 NAME 'nsuniqueid' SYNTAX "
-                "1.3.6.1.4.1.1466.115.121.1.15 )",
-                expected_can_handle=True,
-                expected_name="nsuniqueid",
-            ),
-            m.Tests.AttributeTestCase(
-                scenario="standard_rfc",
-                attr_definition="( 2.5.4.3 NAME 'cn' SYNTAX "
-                "1.3.6.1.4.1.1466.115.121.1.15 )",
-                expected_can_handle=False,
-            ),
+        ] = tuple(
+            _attribute_case(*case) for case in _SERVER_ATTRIBUTE_CASE_DATA[DS389]
         )
 
         DS389_OBJECTCLASS_TEST_CASES: ClassVar[
@@ -743,42 +820,8 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
 
         NOVELL_ATTRIBUTE_TEST_CASES: ClassVar[
             t.SequenceOf[m.Tests.AttributeTestCase]
-        ] = (
-            m.Tests.AttributeTestCase(
-                scenario="novell_oid",
-                attr_definition="( 2.16.840.1.113719.1.1.4.1.501 NAME "
-                "'nspmPasswordPolicyDN' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )",
-                expected_can_handle=True,
-                expected_oid="2.16.840.1.113719.1.1.4.1.501",
-                expected_name="nspmPasswordPolicyDN",
-            ),
-            m.Tests.AttributeTestCase(
-                scenario="nspm_prefix",
-                attr_definition="( 1.2.3.4 NAME 'nspmPasswordPolicy' SYNTAX "
-                "1.3.6.1.4.1.1466.115.121.1.15 )",
-                expected_can_handle=True,
-                expected_name="nspmPasswordPolicy",
-            ),
-            m.Tests.AttributeTestCase(
-                scenario="login_prefix",
-                attr_definition="( 1.2.3.4 NAME 'loginDisabled' SYNTAX "
-                "1.3.6.1.4.1.1466.115.121.1.7 )",
-                expected_can_handle=True,
-                expected_name="loginDisabled",
-            ),
-            m.Tests.AttributeTestCase(
-                scenario="dirxml_prefix",
-                attr_definition="( 1.2.3.4 NAME 'dirxml-associations' SYNTAX "
-                "1.3.6.1.4.1.1466.115.121.1.15 )",
-                expected_can_handle=True,
-                expected_name="dirxml-associations",
-            ),
-            m.Tests.AttributeTestCase(
-                scenario="standard_rfc",
-                attr_definition="( 2.5.4.3 NAME 'cn' SYNTAX "
-                "1.3.6.1.4.1.1466.115.121.1.15 )",
-                expected_can_handle=False,
-            ),
+        ] = tuple(
+            _attribute_case(*case) for case in _SERVER_ATTRIBUTE_CASE_DATA[NOVELL]
         )
 
         NOVELL_OBJECTCLASS_TEST_CASES: ClassVar[

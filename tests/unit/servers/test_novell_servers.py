@@ -101,11 +101,13 @@ class TestsFlextLdifNovellServers:
         u.Tests.assert_server_schema_parse_and_properties(
             schema_server,
             attr_def,
-            expected_oid="2.16.840.1.113719.1.1.4.1.501",
-            expected_name="nspmPasswordPolicyDN",
-            expected_desc="Password Policy DN",
-            expected_syntax="1.3.6.1.4.1.1466.115.121.1.12",
-            expected_single_value=True,
+            expectations=u.Tests.SchemaExpectations(
+                oid="2.16.840.1.113719.1.1.4.1.501",
+                name="nspmPasswordPolicyDN",
+                desc="Password Policy DN",
+                syntax="1.3.6.1.4.1.1466.115.121.1.12",
+                single_value=True,
+            ),
         )
 
     @staticmethod
@@ -120,8 +122,10 @@ class TestsFlextLdifNovellServers:
         u.Tests.assert_server_schema_parse_and_properties(
             schema_server,
             attr_def,
-            expected_syntax="1.3.6.1.4.1.1466.115.121.1.15",
-            expected_length=256,
+            expectations=u.Tests.SchemaExpectations(
+                syntax="1.3.6.1.4.1.1466.115.121.1.15",
+                length=256,
+            ),
         )
 
     @staticmethod
@@ -162,12 +166,14 @@ class TestsFlextLdifNovellServers:
         u.Tests.assert_server_schema_parse_and_properties(
             schema_server,
             oc_def,
-            expected_oid="2.16.840.1.113719.2.2.6.1",
-            expected_name="ndsPerson",
-            expected_kind="STRUCTURAL",
-            expected_sup="top",
-            expected_must=["cn"],
-            expected_may=["loginDisabled"],
+            expectations=u.Tests.SchemaExpectations(
+                oid="2.16.840.1.113719.2.2.6.1",
+                name="ndsPerson",
+                kind="STRUCTURAL",
+                sup="top",
+                must=["cn"],
+                may=["loginDisabled"],
+            ),
         )
 
     @staticmethod
@@ -182,7 +188,7 @@ class TestsFlextLdifNovellServers:
         u.Tests.assert_server_schema_parse_and_properties(
             schema_server,
             oc_def,
-            expected_kind="AUXILIARY",
+            expectations=u.Tests.SchemaExpectations(kind="AUXILIARY"),
         )
 
     @staticmethod
@@ -194,7 +200,7 @@ class TestsFlextLdifNovellServers:
         u.Tests.assert_server_schema_parse_and_properties(
             schema_server,
             oc_def,
-            expected_kind="ABSTRACT",
+            expectations=u.Tests.SchemaExpectations(kind="ABSTRACT"),
         )
 
     @staticmethod

@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
+from flext_ldif.servers._oud.entry_parse import FlextLdifServersOudEntryParseMixin
 from flext_ldif.servers._oud.helpers import FlextLdifServersOudHelpersMixin
 from flext_ldif.servers._oud.server_constants import FlextLdifServersOudConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
@@ -21,7 +22,10 @@ if TYPE_CHECKING:
     from flext_ldif.servers.base import FlextLdifServersBase
 
 
-class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
+class FlextLdifServersOudEntry(
+    FlextLdifServersOudEntryParseMixin,
+    FlextLdifServersRfc.Entry,
+):
     """Oracle OUD Entry implementation extending RFC 2849.
 
     OUD-specific overrides: ``can_handle`` (DN/attribute pattern detection),
@@ -29,7 +33,9 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
     (OUD post-processing), ``_hook_pre_write_entry`` / ``_write_entry``
     (schema definition normalization + phase-aware ACL handling + comment
     generation). Stateless helpers come from
-    ``FlextLdifServersOudHelpersMixin`` (composed Mixin facade).
+    ``FlextLdifServersOudHelpersMixin`` (composed Mixin facade); the parse
+    loop and ACL finalize hook come from
+    ``FlextLdifServersOudEntryParseMixin``.
     """
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
@@ -66,43 +72,6 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             u.Ldif.matches_entry_server_patterns(entry_dn, attributes, patterns_config)
             or "objectclass" in attributes
         )
-
-    @override
-    def parse_server(self, value: str) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
-        """Parse LDIF content and apply OUD post-processing hooks.
-
-        Returns:
-            The resulting ``p.Result[t.MutableSequenceOf[m.Ldif.Entry]]``.
-        """
-        parsed_result = super().parse_server(value)
-        if parsed_result.failure:
-            return parsed_result
-        processed_entries: t.MutableSequenceOf[m.Ldif.Entry] = []
-        for parsed_entry in parsed_result.value:
-            post_parse_result = self._hook_post_parse_entry(parsed_entry)
-            if post_parse_result.failure:
-                return r[t.MutableSequenceOf[m.Ldif.Entry]].from_failure(
-                    post_parse_result,
-                )
-            entry_after_post: m.Ldif.Entry = post_parse_result.value
-            original_dn = entry_after_post.dn.value if entry_after_post.dn else ""
-            original_attrs: t.MutableStrSequenceMapping = (
-                entry_after_post.attributes.attributes
-                if entry_after_post.attributes
-                and entry_after_post.attributes.attributes
-                else {}
-            )
-            finalize_result = self._hook_finalize_entry_parse(
-                entry_after_post,
-                original_dn,
-                original_attrs,
-            )
-            if finalize_result.failure:
-                return r[t.MutableSequenceOf[m.Ldif.Entry]].from_failure(
-                    finalize_result,
-                )
-            processed_entries.append(finalize_result.value)
-        return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(processed_entries)
 
     @override
     def parse_entry(
@@ -143,42 +112,6 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
         entry.metadata = metadata
         return r[m.Ldif.Entry].ok(entry)
 
-    def _hook_finalize_entry_parse(
-        self,
-        entry: m.Ldif.Entry,
-        original_dn: str,
-        original_attrs: t.AttributeMapping,
-    ) -> p.Result[m.Ldif.Entry]:
-        """Process ACL attributes (aci) into entry.metadata.extensions.
-
-        Returns:
-            The resulting ``p.Result[m.Ldif.Entry]``.
-        """
-        _ = original_dn
-        aci_values = FlextLdifServersOudHelpersMixin.find_aci_values(
-            entry,
-            original_attrs,
-        )
-        if not aci_values:
-            return r[m.Ldif.Entry].ok(entry)
-        parent = self._get_parent_server_safe()
-        acl_server = parent.acl_server if parent is not None else None
-        if acl_server is None:
-            return r[m.Ldif.Entry].ok(entry)
-        if entry.metadata is None:
-            entry.metadata = u.Ldif.server_metadata_for("oud")
-        existing: t.Ldif.MutableMetadataInputMapping = (
-            dict(entry.metadata.extensions) if entry.metadata.extensions else {}
-        )
-        FlextLdifServersOudHelpersMixin.process_aci_list_for_finalize(
-            aci_values,
-            acl_server,
-            existing,
-        )
-        if existing:
-            entry.metadata = entry.metadata.model_copy(update={"extensions": existing})
-        return r[m.Ldif.Entry].ok(entry)
-
     @override
     def _hook_post_parse_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
         """Validate OUD ACI macros and merge ACL metadata into the parsed entry.
@@ -190,37 +123,66 @@ class FlextLdifServersOudEntry(FlextLdifServersRfc.Entry):
             entry.attributes.attributes if entry.attributes is not None else {}
         )
         aci_attrs = attrs_dict.get("aci")
-        if aci_attrs and u.matches_type(aci_attrs, (list, tuple)):
-            has_macros = False
-            acl_metadata_extensions: t.Ldif.MutableMetadataInputMapping = {}
-            for aci_value in aci_attrs:
-                if u.matches_type(aci_value, str):
-                    process_result = (
-                        FlextLdifServersOudHelpersMixin.process_single_aci_value(
-                            aci_value,
-                            acl_metadata_extensions,
-                        )
-                    )
-                    if process_result.failure:
-                        return r[m.Ldif.Entry].from_failure(process_result)
-                    if process_result.value:
-                        has_macros = True
-            if has_macros:
-                aci_list = (
-                    list(aci_attrs)
-                    if u.matches_type(aci_attrs, (list, tuple))
-                    else [str(aci_attrs)]
-                )
-                FlextLdifServersOudEntry._module_logger.debug(
-                    "Entry contains OUD ACI macros - preserved for runtime expansion",
-                    entry_dn=str(entry.dn) if entry.dn else "",
-                    aci_count=len(aci_list),
-                )
-            entry = FlextLdifServersOudHelpersMixin.merge_acl_metadata_to_entry(
+        if not (aci_attrs and u.matches_type(aci_attrs, (list, tuple))):
+            return r[m.Ldif.Entry].ok(entry)
+        process_result = FlextLdifServersOudEntry._process_aci_attribute_values(
+            aci_attrs,
+        )
+        if process_result.failure:
+            return r[m.Ldif.Entry].from_failure(process_result)
+        has_macros, acl_metadata_extensions = process_result.value
+        if has_macros:
+            FlextLdifServersOudEntry._log_aci_macros_preserved(entry, aci_attrs)
+        return r[m.Ldif.Entry].ok(
+            FlextLdifServersOudHelpersMixin.merge_acl_metadata_to_entry(
                 entry,
                 acl_metadata_extensions,
+            ),
+        )
+
+    @staticmethod
+    def _process_aci_attribute_values(
+        aci_attrs: t.StrSequence,
+    ) -> p.Result[t.Pair[bool, t.Ldif.MutableMetadataInputMapping]]:
+        """Process each ACI value, accumulating metadata and the macro flag.
+
+        Returns:
+            The resulting ``p.Result[t.Pair[bool,
+                t.Ldif.MutableMetadataInputMapping]]``.
+        """
+        has_macros = False
+        acl_metadata_extensions: t.Ldif.MutableMetadataInputMapping = {}
+        for aci_value in aci_attrs:
+            if not u.matches_type(aci_value, str):
+                continue
+            process_result = FlextLdifServersOudHelpersMixin.process_single_aci_value(
+                aci_value,
+                acl_metadata_extensions,
             )
-        return r[m.Ldif.Entry].ok(entry)
+            if process_result.failure:
+                return r[
+                    t.Pair[bool, t.Ldif.MutableMetadataInputMapping]
+                ].from_failure(process_result)
+            if process_result.value:
+                has_macros = True
+        return r[t.Pair[bool, t.Ldif.MutableMetadataInputMapping]].ok((
+            has_macros,
+            acl_metadata_extensions,
+        ))
+
+    @staticmethod
+    def _log_aci_macros_preserved(entry: m.Ldif.Entry, aci_attrs: t.StrSequence) -> None:
+        """Log that an entry carries OUD ACI macros preserved for runtime expansion."""
+        aci_list = (
+            list(aci_attrs)
+            if u.matches_type(aci_attrs, (list, tuple))
+            else [str(aci_attrs)]
+        )
+        FlextLdifServersOudEntry._module_logger.debug(
+            "Entry contains OUD ACI macros - preserved for runtime expansion",
+            entry_dn=str(entry.dn) if entry.dn else "",
+            aci_count=len(aci_list),
+        )
 
     @override
     def _hook_pre_write_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:

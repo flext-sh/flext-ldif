@@ -202,6 +202,53 @@ class FlextLdifServersOidAclConvert:
         ))
 
     @classmethod
+    def _parse_acl_header(cls, line: str) -> p.Result[tuple[str, str]]:
+        """Strip the OID ACL prefix and the mandatory ``access to`` keyword.
+
+        Returns:
+            The resulting ``p.Result[tuple[str, str]]``.
+        """
+        prefixed = cls._strip_acl_prefix(line)
+        if prefixed is None:
+            return r[tuple[str, str]].fail(f"Not an OID ACL line: {line[:40]!r}")
+        acl_type, content = prefixed
+        if not content.lower().startswith(c.Ldif.ACL_ACCESS_TO):
+            return r[tuple[str, str]].fail(
+                f"ACL missing '{c.Ldif.ACL_ACCESS_TO}': {content[:40]!r}",
+            )
+        return r[tuple[str, str]].ok((
+            acl_type,
+            content[len(c.Ldif.ACL_ACCESS_TO) :].strip(),
+        ))
+
+    @classmethod
+    def _parse_acl_target_and_filter(
+        cls,
+        content: str,
+    ) -> p.Result[tuple[str, str, str | None, str]]:
+        """Parse the target clause plus the optional balanced filter.
+
+        Returns:
+            The resulting ``p.Result[tuple[str, str, str | None, str]]``.
+        """
+        target = cls._parse_target(content)
+        if target is None:
+            return r[tuple[str, str, str | None, str]].fail(
+                f"Unknown ACL target: {content[:40]!r}",
+            )
+        target_type, target_attrs, content = target
+        filter_result = cls._extract_filter(content)
+        if filter_result.failure:
+            return r[tuple[str, str, str | None, str]].from_failure(filter_result)
+        target_filter, remaining = filter_result.value
+        return r[tuple[str, str, str | None, str]].ok((
+            target_type,
+            target_attrs,
+            target_filter,
+            remaining,
+        ))
+
+    @classmethod
     def parse_oid_acl_line(cls, dn: str, line: str) -> p.Result[m.Ldif.OidAclRule]:
         """Parse one full ``orclaci:``/``orclentrylevelaci:`` line into a rule.
 
@@ -212,23 +259,14 @@ class FlextLdifServersOidAclConvert:
             The resulting ``p.Result[m.Ldif.OidAclRule]``.
         """
         line = line.strip()
-        prefixed = cls._strip_acl_prefix(line)
-        if prefixed is None:
-            return r[m.Ldif.OidAclRule].fail(f"Not an OID ACL line: {line[:40]!r}")
-        acl_type, content = prefixed
-        if not content.lower().startswith(c.Ldif.ACL_ACCESS_TO):
-            return r[m.Ldif.OidAclRule].fail(
-                f"ACL missing '{c.Ldif.ACL_ACCESS_TO}': {content[:40]!r}",
-            )
-        content = content[len(c.Ldif.ACL_ACCESS_TO) :].strip()
-        target = cls._parse_target(content)
-        if target is None:
-            return r[m.Ldif.OidAclRule].fail(f"Unknown ACL target: {content[:40]!r}")
-        target_type, target_attrs, content = target
-        filter_result = cls._extract_filter(content)
-        if filter_result.failure:
-            return r[m.Ldif.OidAclRule].from_failure(filter_result)
-        target_filter, content = filter_result.value
+        header = cls._parse_acl_header(line)
+        if header.failure:
+            return r[m.Ldif.OidAclRule].from_failure(header)
+        acl_type, content = header.value
+        parsed_target = cls._parse_acl_target_and_filter(content)
+        if parsed_target.failure:
+            return r[m.Ldif.OidAclRule].from_failure(parsed_target)
+        target_type, target_attrs, target_filter, content = parsed_target.value
         subjects = tuple(
             subject
             for raw in c.Ldif.BY_CLAUSE_RE.finditer(content)

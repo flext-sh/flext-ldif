@@ -40,26 +40,28 @@ __all__: tuple[str, ...] = (
     "x",
 )
 
+_LAZY_EXPORT_SOURCES: tuple[tuple[str, str], ...] = (
+    ("ExamplesFlextLdifConstants", ".constants"),
+    ("ExamplesFlextLdifModels", ".models"),
+    ("ExamplesFlextLdifProtocols", ".protocols"),
+    ("ExamplesFlextLdifTypes", ".typings"),
+    ("ExamplesFlextLdifUtilities", ".utilities"),
+    ("c", "flext_ldif"),
+    ("d", "flext_ldif"),
+    ("e", "flext_ldif"),
+    ("h", "flext_ldif"),
+    ("m", "flext_ldif"),
+    ("p", "flext_ldif"),
+    ("r", "flext_ldif"),
+    ("s", "flext_ldif"),
+    ("t", "flext_ldif"),
+    ("u", "flext_ldif"),
+    ("x", "flext_ldif"),
+)
+
 install_lazy_exports(
     __name__,
     globals(),
-    MappingProxyType({
-        "ExamplesFlextLdifConstants": ".constants",
-        "ExamplesFlextLdifModels": ".models",
-        "ExamplesFlextLdifProtocols": ".protocols",
-        "ExamplesFlextLdifTypes": ".typings",
-        "ExamplesFlextLdifUtilities": ".utilities",
-        "c": "flext_ldif",
-        "d": "flext_ldif",
-        "e": "flext_ldif",
-        "h": "flext_ldif",
-        "m": "flext_ldif",
-        "p": "flext_ldif",
-        "r": "flext_ldif",
-        "s": "flext_ldif",
-        "t": "flext_ldif",
-        "u": "flext_ldif",
-        "x": "flext_ldif",
-    }),
+    MappingProxyType(dict(_LAZY_EXPORT_SOURCES)),
     public_exports=__all__,
 )

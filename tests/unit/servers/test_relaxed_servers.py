@@ -61,6 +61,21 @@ def _assert_parse_input_success(
     tm.that(result.success, eq=expected_success)
 
 
+_CAN_HANDLE_ATTRIBUTE_CASES = (
+    pytest.param("( 1.2.3 NAME 'test' )", True, id="valid_attr"),
+    pytest.param("MALFORMED", False, id="malformed_no_oid"),
+    pytest.param("", False, id="empty"),
+    pytest.param("   ", False, id="whitespace"),
+)
+
+_CAN_HANDLE_OBJECTCLASS_CASES = (
+    pytest.param("( 1.2.3 NAME 'test' STRUCTURAL )", True, id="valid_oc"),
+    pytest.param("BROKEN CLASS", False, id="malformed_no_oid"),
+    pytest.param("", False, id="empty"),
+    pytest.param("   ", False, id="whitespace"),
+)
+
+
 @pytest.mark.unit
 class TestsFlextLdifRelaxed:
     """Behavioral test suite for the Relaxed server public contract.
@@ -356,13 +371,7 @@ class TestsFlextLdifRelaxed:
     @staticmethod
     @pytest.mark.parametrize(
         ("definition", "expected_success"),
-        [
-            ("( 1.2.3 NAME 'test' )", True),
-            ("MALFORMED", False),
-            ("", False),
-            ("   ", False),
-        ],
-        ids=["valid_attr", "malformed_no_oid", "empty", "whitespace"],
+        _CAN_HANDLE_ATTRIBUTE_CASES,
     )
     def test_can_handle_attribute_via_parse(
         schema_server: FlextLdifServersRelaxed.Schema,
@@ -376,13 +385,7 @@ class TestsFlextLdifRelaxed:
     @staticmethod
     @pytest.mark.parametrize(
         ("definition", "expected_success"),
-        [
-            ("( 1.2.3 NAME 'test' STRUCTURAL )", True),
-            ("BROKEN CLASS", False),
-            ("", False),
-            ("   ", False),
-        ],
-        ids=["valid_oc", "malformed_no_oid", "empty", "whitespace"],
+        _CAN_HANDLE_OBJECTCLASS_CASES,
     )
     def test_can_handle_objectclass_via_parse(
         schema_server: FlextLdifServersRelaxed.Schema,

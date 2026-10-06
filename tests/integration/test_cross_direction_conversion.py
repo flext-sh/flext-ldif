@@ -24,7 +24,11 @@ from flext_ldif.services.server import FlextLdifServer
 from tests import m
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from flext_core import t
+
+    from tests import p
 
 pytestmark = [pytest.mark.integration]
 
@@ -46,13 +50,36 @@ def _resolve_schema_server(
     return schema
 
 
-def _assert_written_tokens(
-    write_result: p.Result[str],
-    token_expectations: tuple[t.VariadicTuple[str], t.VariadicTuple[str]],
+def _assert_definition_roundtrip(
+    registry: FlextLdifServer,
+    case: tuple[str, str, str, t.VariadicTuple[str], t.VariadicTuple[str]],
+    parse_method: t.Tests.ParseMethod,
 ) -> None:
-    """Assert the written schema text carries (or lacks) the expected tokens."""
+    """Parse the definition in the source server and write it in the target.
+
+    Raises:
+        AssertionError: If any parse/write outcome fails or a written token is
+            missing or present against expectations.
+    """
+    source, target, definition, must_contain, must_not_contain = case
+    source_schema = _resolve_schema_server(registry, source)
+    target_schema = _resolve_schema_server(registry, target)
+    parse: Callable[
+        [str],
+        p.Result[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass],
+    ] = getattr(source_schema, parse_method)
+    parse_result = parse(definition)
+    tm.ok(parse_result)
+    write: Callable[
+        [m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass],
+        p.Result[str],
+    ] = getattr(
+        target_schema,
+        f"write_{parse_method.removeprefix('parse_')}",
+    )
+    write_result = write(parse_result.value)
+    tm.ok(write_result)
     written = write_result.value
-    must_contain, must_not_contain = token_expectations
     for token in must_contain:
         tm.that(written, has=token)
     for token in must_not_contain:
@@ -87,136 +114,112 @@ class TestsFlextLdifCrossDirectionConversion:
     # ------------------------------------------------------------------
     @staticmethod
     @pytest.mark.parametrize(
-        ("source", "target", "attr_def", "must_contain", "must_not_contain"),
+        "case",
         [
             pytest.param(
-                "oid",
-                "oud",
-                "( 2.16.840.1.113894.1.1.327 NAME 'orclDASUIType' "
-                "EQUALITY caseIgnoreSubstringsMatch "
-                "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )",
-                ("SUBSTR caseIgnoreSubstringsMatch",),
-                ("EQUALITY caseIgnoreSubstringsMatch",),
+                (
+                    "oid",
+                    "oud",
+                    "( 2.16.840.1.113894.1.1.327 NAME 'orclDASUIType' "
+                    "EQUALITY caseIgnoreSubstringsMatch "
+                    "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )",
+                    ("SUBSTR caseIgnoreSubstringsMatch",),
+                    ("EQUALITY caseIgnoreSubstringsMatch",),
+                ),
                 id="oid-to-oud-substrings-rule-moves-to-substr",
             ),
             pytest.param(
-                "oid",
-                "oud",
-                "( 2.16.840.1.113894.1.1.1 NAME 'orclIsEnabled' "
-                "SYNTAX 1.3.6.1.4.1.1466.115.121.1.1 SINGLE-VALUE )",
-                ("1.3.6.1.4.1.1466.115.121.1.15",),
-                ("SYNTAX 1.3.6.1.4.1.1466.115.121.1.1 SINGLE-VALUE",),
+                (
+                    "oid",
+                    "oud",
+                    "( 2.16.840.1.113894.1.1.1 NAME 'orclIsEnabled' "
+                    "SYNTAX 1.3.6.1.4.1.1466.115.121.1.1 SINGLE-VALUE )",
+                    ("1.3.6.1.4.1.1466.115.121.1.15",),
+                    ("SYNTAX 1.3.6.1.4.1.1466.115.121.1.1 SINGLE-VALUE",),
+                ),
                 id="oid-to-oud-syntax-rfc-normalized",
             ),
             pytest.param(
-                "oud",
-                "oid",
-                "( 1.3.6.1.4.1.26027.1.1.1 NAME 'ds-sync-hist' "
-                "EQUALITY caseIgnoreMatch "
-                "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
-                ("caseIgnoreMatch",),
-                ("accessDirectiveMatch",),
+                (
+                    "oud",
+                    "oid",
+                    "( 1.3.6.1.4.1.26027.1.1.1 NAME 'ds-sync-hist' "
+                    "EQUALITY caseIgnoreMatch "
+                    "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+                    ("caseIgnoreMatch",),
+                    ("accessDirectiveMatch",),
+                ),
                 id="oud-to-oid-generic-rule-not-rewritten",
             ),
             pytest.param(
-                "oud",
-                "oud",
-                "( 1.3.6.1.4.1.26027.1.1.1 NAME 'ds-sync-hist' "
-                "EQUALITY caseIgnoreMatch "
-                "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
-                ("ds-sync-hist",),
-                (),
+                (
+                    "oud",
+                    "oud",
+                    "( 1.3.6.1.4.1.26027.1.1.1 NAME 'ds-sync-hist' "
+                    "EQUALITY caseIgnoreMatch "
+                    "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+                    ("ds-sync-hist",),
+                    (),
+                ),
                 id="oud-roundtrip-attribute-stable",
             ),
         ],
     )
     def test_attribute_definition_conversion_normalizes_output(
         server_registry: FlextLdifServer,
-        source: str,
-        target: str,
-        attr_def: str,
-        must_contain: t.VariadicTuple[str],
-        must_not_contain: t.VariadicTuple[str],
+        case: tuple[str, str, str, t.VariadicTuple[str], t.VariadicTuple[str]],
     ) -> None:
         """Parsing in the source server and writing in the target normalizes text."""
-        source_schema = server_registry.resolve_schema_server(source)
-        target_schema = server_registry.resolve_schema_server(target)
-        assert source_schema is not None
-        assert target_schema is not None
-
-        parse_result = source_schema.parse_attribute(attr_def)
-        tm.ok(parse_result)
-
-        write_result = target_schema.write_attribute(parse_result.value)
-        tm.ok(write_result)
-
-        written = write_result.value
-        for token in must_contain:
-            tm.that(written, has=token)
-        for token in must_not_contain:
-            tm.that(written, lacks=token)
+        _assert_definition_roundtrip(server_registry, case, "parse_attribute")
 
     # ------------------------------------------------------------------
     # ObjectClass definition conversion
     # ------------------------------------------------------------------
     @staticmethod
     @pytest.mark.parametrize(
-        ("source", "target", "oc_def", "must_contain", "must_not_contain"),
+        "case",
         [
             pytest.param(
-                "oid",
-                "oud",
-                "( 2.16.840.1.113894.1.2.64 NAME 'orclReferenceObject' "
-                "SUP 'top' STRUCTURAL MAY ( orclOwnerGUID $ seeAlso ) )",
-                ("SUP top",),
-                ("SUP 'top'",),
+                (
+                    "oid",
+                    "oud",
+                    "( 2.16.840.1.113894.1.2.64 NAME 'orclReferenceObject' "
+                    "SUP 'top' STRUCTURAL MAY ( orclOwnerGUID $ seeAlso ) )",
+                    ("SUP top",),
+                    ("SUP 'top'",),
+                ),
                 id="oid-to-oud-quoted-sup-normalized",
             ),
             pytest.param(
-                "oid",
-                "oid",
-                "( 2.16.840.1.113894.1.2.50 NAME 'orclTestOC' "
-                "SUP top STRUCTURAL MUST cn MAY ( sn $ description ) )",
-                ("orclTestOC", "SUP top", "STRUCTURAL"),
-                (),
+                (
+                    "oid",
+                    "oid",
+                    "( 2.16.840.1.113894.1.2.50 NAME 'orclTestOC' "
+                    "SUP top STRUCTURAL MUST cn MAY ( sn $ description ) )",
+                    ("orclTestOC", "SUP top", "STRUCTURAL"),
+                    (),
+                ),
                 id="oid-roundtrip-objectclass-semantics-preserved",
             ),
             pytest.param(
-                "oud",
-                "oud",
-                "( 1.3.6.1.4.1.26027.1.2.1 NAME 'ds-root-dse' "
-                "SUP top STRUCTURAL MAY cn )",
-                ("ds-root-dse", "STRUCTURAL"),
-                (),
+                (
+                    "oud",
+                    "oud",
+                    "( 1.3.6.1.4.1.26027.1.2.1 NAME 'ds-root-dse' "
+                    "SUP top STRUCTURAL MAY cn )",
+                    ("ds-root-dse", "STRUCTURAL"),
+                    (),
+                ),
                 id="oud-roundtrip-objectclass-stable",
             ),
         ],
     )
     def test_objectclass_definition_conversion_normalizes_output(
         server_registry: FlextLdifServer,
-        source: str,
-        target: str,
-        oc_def: str,
-        must_contain: t.VariadicTuple[str],
-        must_not_contain: t.VariadicTuple[str],
+        case: tuple[str, str, str, t.VariadicTuple[str], t.VariadicTuple[str]],
     ) -> None:
         """Parsing in source and writing in target preserves/normalizes semantics."""
-        source_schema = server_registry.resolve_schema_server(source)
-        target_schema = server_registry.resolve_schema_server(target)
-        assert source_schema is not None
-        assert target_schema is not None
-
-        parse_result = source_schema.parse_objectclass(oc_def)
-        tm.ok(parse_result)
-
-        write_result = target_schema.write_objectclass(parse_result.value)
-        tm.ok(write_result)
-
-        written = write_result.value
-        for token in must_contain:
-            tm.that(written, has=token)
-        for token in must_not_contain:
-            tm.that(written, lacks=token)
+        _assert_definition_roundtrip(server_registry, case, "parse_objectclass")
 
     @staticmethod
     def test_oid_attribute_roundtrip_is_text_identical(

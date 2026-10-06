@@ -16,17 +16,10 @@ from flext_ldif.servers.base import FlextLdifServersBase
 class FlextLdifServersRfc(FlextLdifServersBase):
     """RFC-Compliant LDAP Server Implementation - STRICT Baseline."""
 
-    class Constants(FlextLdifServersRfcConstants):
-        """RFC baseline constants (RFC 4512 compliant)."""
-
-    class Acl(FlextLdifServersRfcAcl):
-        """Aclbaseline constants (RFC 4512 compliant)."""
-
-    class Schema(FlextLdifServersRfcSchema):
-        """RFC baseline constants (RFC 4512 compliant)."""
-
-    class Entry(FlextLdifServersRfcEntry):
-        """RFC baseline constants (RFC 4512 compliant)."""
+    Constants = FlextLdifServersRfcConstants
+    Acl = FlextLdifServersRfcAcl
+    Schema = FlextLdifServersRfcSchema
+    Entry = FlextLdifServersRfcEntry
 
 
 __all__: list[str] = ["FlextLdifServersRfc"]

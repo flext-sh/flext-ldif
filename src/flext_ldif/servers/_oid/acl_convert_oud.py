@@ -87,10 +87,81 @@ class FlextLdifServersOidAclToOud:
         return granted
 
     @classmethod
+    def _collect_permission_bases(
+        cls,
+        permissions: t.StrSequence,
+        perm_map: t.MappingKV[str, str | None],
+        all_perms: frozenset[str],
+    ) -> p.Result[tuple[set[str], set[str], bool, bool]]:
+        """Split OID permission tokens into positive/negated base sets.
+
+        Returns:
+            The resulting ``p.Result[tuple[set[str], set[str], bool, bool]]``.
+        """
+        positive_bases: set[str] = set()
+        negated_bases: set[str] = set()
+        deny_all = False
+        explicit_all = False
+        known_positive = c.Ldif.ALL_ENTRY_PERMS | c.Ldif.ALL_ATTR_PERMS
+        for raw in permissions:
+            perm = raw.strip().lower()
+            if not perm:
+                continue
+            if perm == "none":
+                deny_all = True
+            elif perm.startswith("no"):
+                base = c.Ldif.NEGATION_TO_BASE.get(perm)
+                if base is None:
+                    return r[tuple[set[str], set[str], bool, bool]].fail(
+                        f"Unknown negation perm: {perm!r}",
+                    )
+                negated_bases.add(base)
+            elif perm == c.Ldif.PERM_ALL:
+                explicit_all = True
+                positive_bases.update(all_perms)
+            elif perm in perm_map:
+                positive_bases.add(perm)
+            elif perm not in known_positive:
+                return r[tuple[set[str], set[str], bool, bool]].fail(
+                    f"Unknown permission token: {perm!r}",
+                )
+        return r[tuple[set[str], set[str], bool, bool]].ok((
+            positive_bases,
+            negated_bases,
+            deny_all,
+            explicit_all,
+        ))
+
+    @classmethod
+    def _resolve_allowed_perms(
+        cls,
+        perm_map: t.MappingKV[str, str | None],
+        all_perms: frozenset[str],
+        bases: tuple[set[str], set[str], bool, bool],
+    ) -> t.StrSequence:
+        """Expand collected positive/negated bases into the ordered allow set.
+
+        Returns:
+            The resulting ``t.StrSequence``.
+        """
+        positive_bases, negated_bases, deny_all, explicit_all = bases
+        if positive_bases:
+            effective_bases = (
+                positive_bases - negated_bases if explicit_all else positive_bases
+            )
+            if explicit_all and not negated_bases:
+                return (c.Ldif.PERM_ALL,)
+            allow = cls._map_tokens(effective_bases, perm_map)
+            return cls._order_perms(allow)
+        if negated_bases and not deny_all:
+            complement = cls._map_tokens(set(all_perms) - negated_bases, perm_map)
+            return cls._order_perms(complement)
+        return ()
+
+    @classmethod
     def convert_permissions(
         cls,
         permissions: t.StrSequence,
-        *,
         is_entry: bool,
     ) -> p.Result[t.StrSequence]:
         """Convert OID permission tokens to the ordered OUD allow set.
@@ -106,41 +177,12 @@ class FlextLdifServersOidAclToOud:
         """
         perm_map = c.Ldif.ENTRY_PERM_MAP if is_entry else c.Ldif.ATTR_PERM_MAP
         all_perms = c.Ldif.ALL_ENTRY_PERMS if is_entry else c.Ldif.ALL_ATTR_PERMS
-        positive_bases: set[str] = set()
-        negated_bases: set[str] = set()
-        deny_all = False
-        explicit_all = False
-        known_positive = c.Ldif.ALL_ENTRY_PERMS | c.Ldif.ALL_ATTR_PERMS
-        for raw in permissions:
-            perm = raw.strip().lower()
-            if not perm:
-                continue
-            if perm == "none":
-                deny_all = True
-            elif perm.startswith("no"):
-                base = c.Ldif.NEGATION_TO_BASE.get(perm)
-                if base is None:
-                    return r[t.StrSequence].fail(f"Unknown negation perm: {perm!r}")
-                negated_bases.add(base)
-            elif perm == c.Ldif.PERM_ALL:
-                explicit_all = True
-                positive_bases.update(all_perms)
-            elif perm in perm_map:
-                positive_bases.add(perm)
-            elif perm not in known_positive:
-                return r[t.StrSequence].fail(f"Unknown permission token: {perm!r}")
-        if positive_bases:
-            effective_bases = (
-                positive_bases - negated_bases if explicit_all else positive_bases
-            )
-            if explicit_all and not negated_bases:
-                return r[t.StrSequence].ok((c.Ldif.PERM_ALL,))
-            allow = cls._map_tokens(effective_bases, perm_map)
-            return r[t.StrSequence].ok(cls._order_perms(allow))
-        if negated_bases and not deny_all:
-            complement = cls._map_tokens(set(all_perms) - negated_bases, perm_map)
-            return r[t.StrSequence].ok(cls._order_perms(complement))
-        return r[t.StrSequence].ok(())
+        bases_result = cls._collect_permission_bases(permissions, perm_map, all_perms)
+        if bases_result.failure:
+            return r[t.StrSequence].from_failure(bases_result)
+        return r[t.StrSequence].ok(
+            cls._resolve_allowed_perms(perm_map, all_perms, bases_result.value),
+        )
 
     @staticmethod
     def get_targetattr(rule: m.Ldif.OidAclRule) -> str:

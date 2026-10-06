@@ -16,17 +16,10 @@ from flext_ldif.servers.rfc import FlextLdifServersRfc
 class FlextLdifServersOud(FlextLdifServersRfc):
     """Oracle Unified Directory (OUD) Server Implementation."""
 
-    class Constants(FlextLdifServersOudConstants):
-        """OUD server constants."""
-
-    class Acl(FlextLdifServersOudAcl):
-        """OUD ACL server."""
-
-    class Schema(FlextLdifServersOudSchema):
-        """OUD Schema server."""
-
-    class Entry(FlextLdifServersOudEntry):
-        """OUD Entry server."""
+    Constants = FlextLdifServersOudConstants
+    Acl = FlextLdifServersOudAcl
+    Schema = FlextLdifServersOudSchema
+    Entry = FlextLdifServersOudEntry
 
 
 __all__: list[str] = ["FlextLdifServersOud"]

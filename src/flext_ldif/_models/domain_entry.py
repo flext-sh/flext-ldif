@@ -11,332 +11,39 @@ from __future__ import annotations
 from collections.abc import Mapping, MutableMapping
 from datetime import datetime
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Annotated, ClassVar, Self, override
+from typing import Annotated, ClassVar, Self, override
 
 from flext_core import FlextUtilities as u, m, r
 from flext_ldif import c, p, t
 from flext_ldif._models.domain_attributes import FlextLdifModelsDomainAttributes as mda
 from flext_ldif._models.domain_dn import FlextLdifModelsDomainDN as mdn
+from flext_ldif._models.domain_entry_change import (
+    FlextLdifModelsDomainEntryChangeOperation,
+    FlextLdifModelsDomainEntryChangeOperationValue,
+    FlextLdifModelsDomainEntryControl,
+)
+from flext_ldif._models.domain_entry_statistics import (
+    FlextLdifModelsDomainEntryStatistics,
+)
 from flext_ldif._models.domain_metadata import FlextLdifModelsDomainMetadata as mdm
-from flext_ldif._utilities.collection_ldif import FlextLdifUtilitiesCollectionLdif
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
-
-if TYPE_CHECKING:
-    from flext_ldif._models.domain_acl import FlextLdifModelsDomainAcl as mdac
-    from flext_ldif._models.domain_schema import FlextLdifModelsDomainSchema as mds
 
 
 class FlextLdifModelsDomainEntry:
     """Namespace for LDIF entry domain models."""
 
-    class EntryStatistics(m.FrozenDynamicModel):
-        """Statistics tracking for entry-level transformations and validation.
+    EntryStatistics = FlextLdifModelsDomainEntryStatistics
+    """Canonical entry statistics model (implementation module: domain_entry_statistics)."""
 
-        Tracks complete entry lifecycle from parsing through validation,
-        transformation, filtering, and output. Captures all attribute
-        modifications, server applications, and rejection reasons.
+    Control = FlextLdifModelsDomainEntryControl
+    """Canonical RFC 2849 control line model (implementation module: domain_entry_change)."""
 
-        Designed for aggregation across large LDIF files to provide
-        comprehensive migration diagnostics.
+    ChangeOperationValue = FlextLdifModelsDomainEntryChangeOperationValue
+    """Canonical modify-operation value model (implementation module: domain_entry_change)."""
 
-        Inherits from m.BaseModel (flext-core):
-        - model_config (frozen=True, validate_default=True, validate_assignment=True)
-        - aggregate() classmethod (automatic statistics aggregation)
-        """
+    ChangeOperation = FlextLdifModelsDomainEntryChangeOperation
+    """Canonical RFC 2849 modify operation model (implementation module: domain_entry_change)."""
 
-        was_parsed: Annotated[
-            bool,
-            u.Field(description="Entry was successfully parsed from LDIF"),
-        ] = True
-        was_validated: Annotated[
-            bool,
-            u.Field(description="Entry passed validation checks"),
-        ] = False
-        was_filtered: Annotated[
-            bool,
-            u.Field(description="Entry was filtered by rules (base DN, schema, etc.)"),
-        ] = False
-        was_written: Annotated[
-            bool,
-            u.Field(description="Entry was written to output LDIF"),
-        ] = False
-        was_rejected: Annotated[
-            bool,
-            u.Field(description="Entry was rejected during processing"),
-        ] = False
-        rejection_category: Annotated[
-            str | None,
-            u.Field(description="Rejection category (use RejectionCategory constants)"),
-        ] = None
-        rejection_reason: Annotated[
-            str | None,
-            u.Field(description="Human-readable rejection reason"),
-        ] = None
-        attributes_added: Annotated[
-            t.MutableSequenceOf[str],
-            u.Field(description="Attribute names added during processing"),
-        ]
-        attributes_removed: Annotated[
-            t.MutableSequenceOf[str],
-            u.Field(description="Attribute names removed during processing"),
-        ]
-        attributes_modified: Annotated[
-            t.MutableSequenceOf[str],
-            u.Field(description="Attribute names modified during processing"),
-        ]
-        attributes_filtered: Annotated[
-            t.MutableSequenceOf[str],
-            u.Field(description="Attribute names filtered by whitelist/blacklist"),
-        ]
-        objectclasses_original: Annotated[
-            t.MutableSequenceOf[str],
-            u.Field(description="Original objectClass values"),
-        ]
-        objectclasses_final: Annotated[
-            t.MutableSequenceOf[str],
-            u.Field(description="Final objectClass values after transformation"),
-        ]
-        servers_applied: Annotated[
-            t.MutableSequenceOf[str],
-            u.Field(description="List of server types applied to this entry"),
-        ]
-        server_transformations: Annotated[
-            int,
-            u.Field(description="Count of server transformations applied"),
-        ] = 0
-        dn_statistics: Annotated[
-            mdn.DNStatistics | None,
-            u.Field(description="DN transformation statistics (if applicable)"),
-        ] = None
-        filters_applied: Annotated[
-            t.MutableSequenceOf[str],
-            u.Field(description="List of filters applied (use FilterType constants)"),
-        ]
-        filter_results: Annotated[
-            t.MutableBoolMapping,
-            u.Field(description="Filter results: {filter_name: passed}"),
-        ]
-        errors: Annotated[
-            t.MutableSequenceOf[str],
-            u.Field(
-                description="Error messages (use ErrorCategory constants for keys)",
-            ),
-        ]
-        warnings: Annotated[
-            t.MutableSequenceOf[str],
-            u.Field(description="Warning messages"),
-        ]
-        category_assigned: Annotated[
-            str | None,
-            u.Field(
-                description="Category assigned (schema, hierarchy, users, groups, acl)",
-            ),
-        ] = None
-        category_confidence: Annotated[
-            float,
-            u.Field(
-                ge=0.0,
-                le=1.0,
-                description="Confidence score for category assignment",
-            ),
-        ] = 1.0
-
-        @u.computed_field
-        @property
-        def dn_was_transformed(self) -> bool:
-            """Whether DN underwent transformation."""
-            if self.dn_statistics is None:
-                return False
-            return self.dn_statistics.was_transformed
-
-        @u.computed_field
-        @property
-        def had_errors(self) -> bool:
-            """Whether any errors occurred."""
-            return bool(self.errors)
-
-        @u.computed_field
-        @property
-        def had_warnings(self) -> bool:
-            """Whether any warnings occurred."""
-            return bool(self.warnings)
-
-        @u.computed_field
-        @property
-        def objectclasses_changed(self) -> bool:
-            """Whether objectClass values changed."""
-            return set(self.objectclasses_original) != set(self.objectclasses_final)
-
-        @u.computed_field
-        @property
-        def total_attribute_changes(self) -> int:
-            """Total count of attribute modifications."""
-            return (
-                len(self.attributes_added)
-                + len(self.attributes_removed)
-                + len(self.attributes_modified)
-            )
-
-        @classmethod
-        def create_minimal(cls) -> Self:
-            """Create minimal statistics for newly parsed entry.
-
-            Returns:
-                The resulting ``Self``.
-            """
-            validated: Self = cls.model_validate({"was_parsed": True})
-            return validated
-
-        @u.field_validator("filters_applied", mode="after")
-        @classmethod
-        def deduplicate_filters(
-            cls,
-            v: t.MutableSequenceOf[str],
-        ) -> t.MutableSequenceOf[str]:
-            """Remove duplicate filters while preserving order.
-
-            Returns:
-                The resulting ``t.MutableSequenceOf[str]``.
-            """
-            seen: set[str] = set()
-            result: t.MutableSequenceOf[str] = []
-            for item in v:
-                if item not in seen:
-                    seen.add(item)
-                    result.append(item)
-            return result
-
-        @u.field_validator("servers_applied", mode="after")
-        @classmethod
-        def deduplicate_servers(
-            cls,
-            v: t.MutableSequenceOf[str],
-        ) -> t.MutableSequenceOf[str]:
-            """Remove duplicate servers while preserving order.
-
-            Returns:
-                The resulting ``t.MutableSequenceOf[str]``.
-            """
-            return FlextLdifUtilitiesCollectionLdif.deduplicate_preserve_order(v)
-
-        def add_error(self, error: str) -> Self:
-            """Add error message.
-
-            Returns new instance with error added (frozen model).
-
-            Returns:
-                The resulting ``Self``.
-            """
-            errors = [*self.errors, error]
-            copy_result: Self = self.model_copy(update={"errors": errors})
-            return copy_result
-
-        def add_warning(self, warning: str) -> Self:
-            """Add warning message.
-
-            Returns new instance with warning added (frozen model).
-
-            Returns:
-                The resulting ``Self``.
-            """
-            warnings = [*self.warnings, warning]
-            copy_result: Self = self.model_copy(update={"warnings": warnings})
-            return copy_result
-
-        def mark_filtered(self, filter_type: str, *, passed: bool) -> Self:
-            """Mark entry as filtered with result.
-
-            Args:
-                filter_type: Type of filter applied
-                passed: Whether entry passed the filter (keyword-only)
-
-            Returns new instance with updated filter state (frozen model).
-
-            Returns:
-                The resulting ``Self``.
-            """
-            filters_applied = [*self.filters_applied, filter_type]
-            filter_results = {**self.filter_results, filter_type: passed}
-            copy_result: Self = self.model_copy(
-                update={
-                    "was_filtered": True,
-                    "filters_applied": filters_applied,
-                    "filter_results": filter_results,
-                },
-            )
-            return copy_result
-
-        def mark_rejected(self, category: str, reason: str) -> Self:
-            """Mark entry as rejected.
-
-            Returns new instance with rejection details (frozen model).
-
-            Returns:
-                The resulting ``Self``.
-            """
-            copy_result: Self = self.model_copy(
-                update={
-                    "was_rejected": True,
-                    "rejection_category": category,
-                    "rejection_reason": reason,
-                },
-            )
-            return copy_result
-
-    class Control(m.Value):
-        """Structured RFC 2849 control line."""
-
-        control_type: Annotated[
-            str,
-            u.Field(description="LDAP control OID or descriptor"),
-        ]
-        criticality: Annotated[
-            bool | None,
-            u.Field(description="Optional criticality flag from control line"),
-        ] = None
-        value: Annotated[str | None, u.Field(description="Optional control value")] = (
-            None
-        )
-        value_origin: Annotated[
-            c.Ldif.ValueOrigin | None,
-            u.Field(description="Original control value encoding/source"),
-        ] = None
-        raw_value: Annotated[
-            str | None,
-            u.Field(description="Original serialized control payload"),
-        ] = None
-
-    class ChangeOperationValue(m.Value):
-        """Single value captured inside a modify operation block."""
-
-        value: Annotated[
-            str,
-            u.Field(description="Decoded value used by the operation"),
-        ]
-        value_origin: Annotated[
-            c.Ldif.ValueOrigin,
-            u.Field(description="Original LDIF encoding/source for this value"),
-        ] = c.Ldif.ValueOrigin.PLAIN
-        raw_value: Annotated[
-            str | None,
-            u.Field(description="Original serialized value payload before decoding"),
-        ] = None
-
-    class ChangeOperation(m.Value):
-        """Structured RFC 2849 modify operation block."""
-
-        operation: Annotated[
-            c.Ldif.ChangeOperation,
-            u.Field(description="Modify operation name"),
-        ]
-        attribute: Annotated[
-            str,
-            u.Field(description="Target attribute for the modify block"),
-        ]
-        values: Annotated[
-            t.MutableSequenceOf[FlextLdifModelsDomainEntry.ChangeOperationValue],
-            u.Field(description="Decoded values in the block"),
-        ] = u.Field(default_factory=list)
 
     class Entry(m.Entity, m.DynamicModel):
         """LDIF entry domain model.
@@ -439,17 +146,11 @@ class FlextLdifModelsDomainEntry:
             Returns:
                 The resulting ``mda.Attributes | None``.
             """
-            if value is None:
-                return None
-            if isinstance(value, mda.Attributes):
+            if value is None or isinstance(value, mda.Attributes):
                 return value
             if "attributes" not in value:
-                validated_dict: mda.Attributes = mda.Attributes.model_validate({
-                    "attributes": dict(value),
-                })
-                return validated_dict
-            validated: mda.Attributes = mda.Attributes.model_validate(value)
-            return validated
+                return mda.Attributes.model_validate({"attributes": dict(value)})
+            return mda.Attributes.model_validate(value)
 
         @u.field_validator("dn", mode="before")
         @classmethod
@@ -465,13 +166,10 @@ class FlextLdifModelsDomainEntry:
             Returns:
                 The resulting ``mdn.DN | None``.
             """
-            if value is None:
-                return None
-            if isinstance(value, mdn.DN):
+            if value is None or isinstance(value, mdn.DN):
                 return value
             if isinstance(value, Mapping):
-                validated: mdn.DN = mdn.DN.model_validate(value)
-                return validated
+                return mdn.DN.model_validate(value)
             return mdn.DN(value=value, metadata={})
 
         @u.field_validator("record_kind", mode="before")
@@ -502,9 +200,7 @@ class FlextLdifModelsDomainEntry:
             Returns:
                 The resulting ``c.Ldif.ChangeType | None``.
             """
-            if isinstance(value, str):
-                return c.Ldif.ChangeType(value)
-            return value
+            return c.Ldif.ChangeType(value) if isinstance(value, str) else value
 
         newrdn: Annotated[
             str | None,
@@ -550,9 +246,7 @@ class FlextLdifModelsDomainEntry:
 
             Returns the attributes as a dict for protocol compatibility.
             """
-            if self.attributes is None:
-                return {}
-            return self.attributes.attributes
+            return {} if self.attributes is None else self.attributes.attributes
 
         @u.computed_field
         @property
@@ -561,9 +255,7 @@ class FlextLdifModelsDomainEntry:
 
             Returns the DN as a string for protocol compatibility.
             """
-            if self.dn is None:
-                return ""
-            return self.dn.value
+            return "" if self.dn is None else self.dn.value
 
         @u.computed_field
         @property
@@ -612,6 +304,23 @@ class FlextLdifModelsDomainEntry:
                 str,
                 t.JsonValue | datetime | mdm.ServerMetadata,
             ] = dict(data)
+            cls._coerce_datetime_fields(data_dict)
+            if data_dict.get("metadata") is None:
+                # mro-wgwh.5 (agent: kimi-coder) — create_for removed from the model
+                # (U17); models validate directly at this internal boundary.
+                data_dict["metadata"] = mdm.ServerMetadata.model_validate({
+                    "server_type": cls._coerce_default_server_type(
+                        data_dict.get("server_type"),
+                    ),
+                })
+            return data_dict
+
+        @classmethod
+        def _coerce_datetime_fields(
+            cls,
+            data_dict: MutableMapping[str, t.JsonValue | datetime | mdm.ServerMetadata],
+        ) -> None:
+            """Coerce ISO datetime strings in place (strict mode lacks auto-coercion)."""
             for dt_field in cls._DATETIME_FIELDS:
                 field_value = data_dict.get(dt_field)
                 if isinstance(field_value, str):
@@ -619,23 +328,19 @@ class FlextLdifModelsDomainEntry:
                         data_dict[dt_field] = datetime.fromisoformat(field_value)
                     except ValueError:
                         data_dict[dt_field] = field_value
-            if data_dict.get("metadata") is None:
-                server_type_value = data_dict.get("server_type")
-                final_server_type_val: c.Ldif.ServerTypes
-                if isinstance(server_type_value, str):
-                    try:
-                        final_server_type_val = c.Ldif.ServerTypes(server_type_value)
-                    except ValueError:
-                        final_server_type_val = c.Ldif.ServerTypes.RFC
-                else:
-                    final_server_type_val = c.Ldif.ServerTypes.RFC
-                # mro-wgwh.5 (agent: kimi-coder) — create_for removed from the model
-                # (U17); models validate directly at this internal boundary.
-                metadata_obj = mdm.ServerMetadata.model_validate({
-                    "server_type": final_server_type_val,
-                })
-                data_dict["metadata"] = metadata_obj
-            return data_dict
+
+        @classmethod
+        def _coerce_default_server_type(
+            cls,
+            server_type_value: t.JsonValue | None,
+        ) -> c.Ldif.ServerTypes:
+            """Coerce a raw server-type token into the enum, defaulting to RFC."""
+            if isinstance(server_type_value, str):
+                try:
+                    return c.Ldif.ServerTypes(server_type_value)
+                except ValueError:
+                    return c.Ldif.ServerTypes.RFC
+            return c.Ldif.ServerTypes.RFC
 
         @override
         def model_post_init(self, context: t.ScalarMapping | None, /) -> None:
@@ -657,16 +362,14 @@ class FlextLdifModelsDomainEntry:
             Returns:
                 The resulting ``Self``.
             """
-            if self.changetype and self.record_kind != c.Ldif.RecordKind.CHANGE:
-                copy_change: Self = self.model_copy(
-                    update={"record_kind": c.Ldif.RecordKind.CHANGE},
-                )
-                return copy_change
-            if not self.changetype and self.record_kind != c.Ldif.RecordKind.CONTENT:
-                copy_content: Self = self.model_copy(
-                    update={"record_kind": c.Ldif.RecordKind.CONTENT},
-                )
-                return copy_content
+            target_kind = (
+                c.Ldif.RecordKind.CHANGE
+                if self.changetype
+                else c.Ldif.RecordKind.CONTENT
+            )
+            if self.record_kind != target_kind:
+                normalized: Self = self.model_copy(update={"record_kind": target_kind})
+                return normalized
             return self
 
         @u.model_validator(mode="after")
@@ -699,56 +402,73 @@ class FlextLdifModelsDomainEntry:
             Returns:
                 The resulting ``Self``.
             """
-            violations: t.MutableSequenceOf[str] = []
+            dn_value, violations = self._collect_rfc_violations()
+            self._store_rfc_violations(dn_value, violations)
+            return self
 
+        def _collect_rfc_violations(self) -> tuple[str, t.MutableSequenceOf[str]]:
+            """Collect RFC 2849/4514 violations without rejecting the entry.
+
+            Returns:
+                The resulting ``tuple[str, t.MutableSequenceOf[str]]``.
+            """
+            violations: t.MutableSequenceOf[str] = []
             dn_value = "<None>"
             if self.dn is None:
                 violations.append("RFC 2849 § 2: DN is required")
-            else:
-                dn_value = self.dn.value
-                violations.extend(FlextLdifUtilitiesEntry.validate_dn_format(dn_value))
-                violations.extend(
-                    FlextLdifUtilitiesEntry.validate_attributes_required(self),
+                return (dn_value, violations)
+            dn_value = self.dn.value
+            violations.extend(FlextLdifUtilitiesEntry.validate_dn_format(dn_value))
+            violations.extend(
+                FlextLdifUtilitiesEntry.validate_attributes_required(self),
+            )
+            violations.extend(
+                FlextLdifUtilitiesEntry.validate_attribute_descriptions(self),
+            )
+            violations.extend(
+                FlextLdifUtilitiesEntry.validate_objectclass(self, dn_value),
+            )
+            violations.extend(
+                FlextLdifUtilitiesEntry.validate_naming_attribute(self, dn_value),
+            )
+            violations.extend(FlextLdifUtilitiesEntry.validate_binary_options(self))
+            violations.extend(
+                FlextLdifUtilitiesEntry.validate_attribute_syntax(self),
+            )
+            violations.extend(FlextLdifUtilitiesEntry.validate_changetype(self))
+            return (dn_value, violations)
+
+        def _store_rfc_violations(
+            self,
+            dn_value: str,
+            violations: t.MutableSequenceOf[str],
+        ) -> None:
+            """Persist collected violations into validation metadata."""
+            if not violations or self.metadata is None:
+                return
+            attribute_count = len(self.attributes) if self.attributes else 0
+            old_context: t.MutableStrMapping = {}
+            if self.metadata.validation_results is not None:
+                old_context = t.str_dict_adapter().validate_python(
+                    self.metadata.validation_results.context,
                 )
-                violations.extend(
-                    FlextLdifUtilitiesEntry.validate_attribute_descriptions(self),
-                )
-                violations.extend(
-                    FlextLdifUtilitiesEntry.validate_objectclass(self, dn_value),
-                )
-                violations.extend(
-                    FlextLdifUtilitiesEntry.validate_naming_attribute(self, dn_value),
-                )
-                violations.extend(FlextLdifUtilitiesEntry.validate_binary_options(self))
-                violations.extend(
-                    FlextLdifUtilitiesEntry.validate_attribute_syntax(self),
-                )
-                violations.extend(FlextLdifUtilitiesEntry.validate_changetype(self))
-            if violations and self.metadata is not None:
-                attribute_count = len(self.attributes) if self.attributes else 0
-                old_context: t.MutableStrMapping = {}
-                if self.metadata.validation_results is not None:
-                    old_context = t.str_dict_adapter().validate_python(
-                        self.metadata.validation_results.context,
-                    )
-                context_payload = self._build_rfc_validation_context(
-                    old_context=old_context,
-                    dn_value=dn_value,
-                    attribute_count=attribute_count,
-                    total_violations=len(violations),
-                )
-                payload: t.JsonMapping = t.json_mapping_adapter().validate_python({
-                    **self._EMPTY_VALIDATION_RESULT_PAYLOAD,
-                    "rfc_violations": list(violations),
-                    "errors": list[str](),
-                    "warnings": list[str](),
-                    "server_specific_violations": list[str](),
-                    "context": context_payload,
-                })
-                self.metadata.validation_results = (
-                    mdm.ValidationMetadata.model_validate(payload)
-                )
-            return self
+            context_payload = self._build_rfc_validation_context(
+                old_context=old_context,
+                dn_value=dn_value,
+                attribute_count=attribute_count,
+                total_violations=len(violations),
+            )
+            payload: t.JsonMapping = t.json_mapping_adapter().validate_python({
+                **self._EMPTY_VALIDATION_RESULT_PAYLOAD,
+                "rfc_violations": list(violations),
+                "errors": list[str](),
+                "warnings": list[str](),
+                "server_specific_violations": list[str](),
+                "context": context_payload,
+            })
+            self.metadata.validation_results = (
+                mdm.ValidationMetadata.model_validate(payload)
+            )
 
         @u.model_validator(mode="after")
         def validate_server_specific_rules(self) -> Self:
@@ -757,14 +477,17 @@ class FlextLdifModelsDomainEntry:
             Returns:
                 The resulting ``Self``.
             """
-            if not self.metadata:
-                return self
-            if self._VALIDATION_RULES_KEY not in self.metadata.extensions:
+            if (
+                self.metadata is None
+                or self._VALIDATION_RULES_KEY not in self.metadata.extensions
+            ):
                 return self
             validation_rules = self.metadata.extensions.get(self._VALIDATION_RULES_KEY)
-            if not isinstance(validation_rules, (str, Mapping)):
-                return self
-            rules = FlextLdifUtilitiesEntry.parse_validation_rules(validation_rules)
+            rules = (
+                FlextLdifUtilitiesEntry.parse_validation_rules(validation_rules)
+                if isinstance(validation_rules, (str, Mapping))
+                else None
+            )
             if rules is None:
                 return self
             dn_value = self.dn.value if self.dn else ""
@@ -778,25 +501,23 @@ class FlextLdifModelsDomainEntry:
             server_violations.extend(
                 FlextLdifUtilitiesEntry.check_binary_option_rule(self, rules),
             )
-            if self.metadata:
-                self.metadata.extensions[self._VALIDATION_SERVER_TYPE_KEY] = (
-                    self.metadata.server_type
-                )
-            if server_violations and self.metadata:
-                if self.metadata.validation_results is None:
-                    self.metadata.validation_results = self._empty_validation_results()
-                updated_validation_results = (
-                    self.metadata.validation_results.model_copy(
-                        update={
-                            "server_specific_violations": server_violations,
-                            "validation_server_type": self.metadata.server_type,
-                        },
-                    )
-                )
-                self.metadata.validation_results = updated_validation_results
-                ext_violations: t.JsonValueList = list(server_violations)
-                # mro-wgwh.5 (agent: kimi-coder) — extensions is a plain mapping now.
-                self.metadata.extensions["server_specific_violations"] = ext_violations
+            self.metadata.extensions[self._VALIDATION_SERVER_TYPE_KEY] = (
+                self.metadata.server_type
+            )
+            if not server_violations:
+                return self
+            if self.metadata.validation_results is None:
+                self.metadata.validation_results = self._empty_validation_results()
+            updated_validation_results = self.metadata.validation_results.model_copy(
+                update={
+                    "server_specific_violations": server_violations,
+                    "validation_server_type": self.metadata.server_type,
+                },
+            )
+            self.metadata.validation_results = updated_validation_results
+            ext_violations: t.JsonValueList = list(server_violations)
+            # mro-wgwh.5 (agent: kimi-coder) — extensions is a plain mapping now.
+            self.metadata.extensions["server_specific_violations"] = ext_violations
             return self
 
         @classmethod
@@ -850,11 +571,11 @@ class FlextLdifModelsDomainEntry:
             True if entry has validation errors in validation_metadata, False otherwise
 
             """
-            if self.metadata is None:
-                return False
-            if self.metadata.validation_results is None:
-                return False
-            return bool(self.metadata.validation_results.errors)
+            return bool(
+                self.metadata
+                and self.metadata.validation_results
+                and self.metadata.validation_results.errors,
+            )
 
         @u.computed_field
         @property
@@ -865,9 +586,7 @@ class FlextLdifModelsDomainEntry:
             True if entry has ACLs, False otherwise
 
             """
-            if self.metadata is None:
-                return False
-            return bool(self.metadata.acls)
+            return bool(self.metadata and self.metadata.acls)
 
         @u.computed_field
         @property
@@ -881,70 +600,7 @@ class FlextLdifModelsDomainEntry:
             True if entry has objectClasses, False otherwise
 
             """
-            if self.metadata is None:
-                return False
-            return bool(self.metadata.objectclasses)
-
-        @classmethod
-        def _build_extension_kwargs(
-            cls,
-            server_type: c.Ldif.ServerTypes | None,
-            source_entry: str | None,
-            unconverted_attributes: t.Ldif.MetadataInputMapping | None,
-        ) -> t.Ldif.MutableMetadataMapping:
-            """Build extension kwargs for metadata extensions.
-
-            Returns:
-                The resulting ``t.Ldif.MutableMetadataMapping``.
-            """
-            ext_kwargs: t.Ldif.MutableMetadataMapping = {}
-            if server_type:
-                ext_kwargs["server_type"] = server_type
-            if source_entry:
-                ext_kwargs["source_entry"] = source_entry
-            if unconverted_attributes:
-                # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed:
-                # pass the plain mapping.
-                ext_kwargs["unconverted_attributes"] = dict(unconverted_attributes)
-            return ext_kwargs
-
-        @classmethod
-        def _build_metadata(
-            cls,
-            metadata: mdm.ServerMetadata | None,
-            server_type: c.Ldif.ServerTypes | None,
-            source_entry: str | None,
-            unconverted_attributes: t.Ldif.MetadataInputMapping | None,
-        ) -> mdm.ServerMetadata | None:
-            """Build or update metadata with server-specific extensions.
-
-            Returns:
-                The resulting ``mdm.ServerMetadata | None``.
-            """
-            has_new_metadata = server_type or source_entry or unconverted_attributes
-            if metadata is None and has_new_metadata:
-                ext_kwargs = cls._build_extension_kwargs(
-                    server_type,
-                    source_entry,
-                    unconverted_attributes,
-                )
-                # mro-wgwh.5 (agent: kimi-coder) — create_for removed; direct
-                # validated construction.
-                validated_metadata: mdm.ServerMetadata = (
-                    mdm.ServerMetadata.model_validate({
-                        "server_type": c.Ldif.ServerTypes.GENERIC,
-                        "extensions": ext_kwargs,
-                    })
-                )
-                return validated_metadata
-            if metadata is not None and has_new_metadata:
-                cls._update_existing_metadata(
-                    metadata,
-                    server_type,
-                    source_entry,
-                    unconverted_attributes,
-                )
-            return metadata
+            return bool(self.metadata and self.metadata.objectclasses)
 
         @classmethod
         def _normalize_attributes(
@@ -981,75 +637,19 @@ class FlextLdifModelsDomainEntry:
             return validated
 
         @classmethod
-        def _update_existing_metadata(
-            cls,
-            metadata: mdm.ServerMetadata,
-            server_type: c.Ldif.ServerTypes | None,
-            source_entry: str | None,
-            unconverted_attributes: t.Ldif.MetadataInputMapping | None,
-        ) -> None:
-            """Update existing metadata extensions in place."""
-            if server_type:
-                metadata.extensions["server_type"] = server_type
-            if source_entry:
-                metadata.extensions["source_entry"] = source_entry
-            if unconverted_attributes:
-                # mro-wgwh.5 (agent: kimi-coder) — plain mapping items,
-                # no __pydantic_extra__.
-                for key, value in unconverted_attributes.items():
-                    metadata.extensions[f"unconverted_{key}"] = str(value)
-
-        @classmethod
         def create(
             cls,
             dn: str | mdn.DN,
             attributes: t.MutableAttributeMapping | mda.Attributes,
             metadata: mdm.ServerMetadata | None = None,
-            acls: t.MutableSequenceOf[mdac.Acl] | None = None,
-            objectclasses: t.MutableSequenceOf[mds.SchemaObjectClass] | None = None,
-            attributes_schema: t.MutableSequenceOf[mds.SchemaAttribute] | None = None,
-            entry_metadata: t.MutableJsonMapping | None = None,
-            validation_metadata: mdm.ValidationMetadata | None = None,
-            server_type: c.Ldif.ServerTypes | None = None,
-            record_kind: c.Ldif.RecordKind = c.Ldif.RecordKind.CONTENT,
-            controls: t.SequenceOf[FlextLdifModelsDomainEntry.Control] | None = None,
-            change_operations: t.MutableSequenceOf[
-                FlextLdifModelsDomainEntry.ChangeOperation
-            ]
-            | None = None,
-            changetype: c.Ldif.ChangeType | None = None,
-            newrdn: str | None = None,
-            *,
-            deleteoldrdn: bool | None = None,
-            newsuperior: str | None = None,
-            raw_record_lines: t.MutableSequenceOf[str] | None = None,
-            source_entry: str | None = None,
-            unconverted_attributes: t.Ldif.MetadataInputMapping | None = None,
-            statistics: FlextLdifModelsDomainEntry.EntryStatistics | None = None,
         ) -> p.Result[Self]:
+            """Create a validated Entry from canonical domain inputs.
+
+            Returns:
+                The resulting ``p.Result[Self]``.
+            """
             try:
-                entry_data = cls._build_entry_data(
-                    dn,
-                    attributes,
-                    metadata,
-                    acls,
-                    objectclasses,
-                    attributes_schema,
-                    entry_metadata,
-                    validation_metadata,
-                    server_type,
-                    record_kind,
-                    controls,
-                    change_operations,
-                    changetype,
-                    newrdn,
-                    deleteoldrdn=deleteoldrdn,
-                    newsuperior=newsuperior,
-                    raw_record_lines=raw_record_lines,
-                    source_entry=source_entry,
-                    unconverted_attributes=unconverted_attributes,
-                    statistics=statistics,
-                )
+                entry_data = cls._build_entry_data(dn, attributes, metadata)
                 entry_instance: Self = cls.model_validate(entry_data)
                 ok_result: p.Result[Self] = r[Self].ok(entry_instance)
             except c.EXC_BASIC_TYPE as e:
@@ -1067,74 +667,18 @@ class FlextLdifModelsDomainEntry:
             dn: str | mdn.DN,
             attributes: t.MutableAttributeMapping | mda.Attributes,
             metadata: mdm.ServerMetadata | None,
-            acls: t.MutableSequenceOf[mdac.Acl] | None,
-            objectclasses: t.MutableSequenceOf[mds.SchemaObjectClass] | None,
-            attributes_schema: t.MutableSequenceOf[mds.SchemaAttribute] | None,
-            entry_metadata: t.MutableJsonMapping | None,
-            validation_metadata: mdm.ValidationMetadata | None,
-            server_type: c.Ldif.ServerTypes | None,
-            record_kind: c.Ldif.RecordKind,
-            controls: t.SequenceOf[FlextLdifModelsDomainEntry.Control] | None,
-            change_operations: t.MutableSequenceOf[
-                FlextLdifModelsDomainEntry.ChangeOperation
-            ]
-            | None,
-            changetype: c.Ldif.ChangeType | None,
-            newrdn: str | None,
-            *,
-            deleteoldrdn: bool | None,
-            newsuperior: str | None,
-            raw_record_lines: t.MutableSequenceOf[str] | None,
-            source_entry: str | None,
-            unconverted_attributes: t.Ldif.MetadataInputMapping | None,
-            statistics: FlextLdifModelsDomainEntry.EntryStatistics | None,
         ) -> t.MappingKV[str, t.JsonPayload]:
             """Build validated Entry model input.
 
             Returns:
                 The resulting ``t.MappingKV[str, t.JsonPayload]``.
             """
-            dn_obj = mdn.DN.from_value(dn)
-            attrs_obj = cls._normalize_attributes(attributes)
-            resolved_metadata = cls._build_metadata(
-                metadata,
-                server_type,
-                source_entry,
-                unconverted_attributes,
-            )
             entry_data: t.MutableMappingKV[str, t.JsonPayload] = {
-                c.Ldif.DictKeys.DN: dn_obj,
-                c.Ldif.DictKeys.ATTRIBUTES: attrs_obj,
-                "record_kind": record_kind,
+                c.Ldif.DictKeys.DN: mdn.DN.from_value(dn),
+                c.Ldif.DictKeys.ATTRIBUTES: cls._normalize_attributes(attributes),
             }
-            if resolved_metadata is not None:
-                entry_data["metadata"] = resolved_metadata
-            if acls is not None:
-                entry_data["acls"] = acls
-            if objectclasses is not None:
-                entry_data["objectclasses"] = objectclasses
-            if attributes_schema is not None:
-                entry_data["attributes_schema"] = attributes_schema
-            if entry_metadata is not None:
-                entry_data["entry_metadata"] = entry_metadata
-            if validation_metadata is not None:
-                entry_data["validation_metadata"] = validation_metadata
-            if controls is not None:
-                entry_data["controls"] = controls
-            if change_operations is not None:
-                entry_data["change_operations"] = change_operations
-            if changetype is not None:
-                entry_data["changetype"] = changetype
-            if newrdn is not None:
-                entry_data["newrdn"] = newrdn
-            if deleteoldrdn is not None:
-                entry_data["deleteoldrdn"] = deleteoldrdn
-            if newsuperior is not None:
-                entry_data["newsuperior"] = newsuperior
-            if raw_record_lines is not None:
-                entry_data["raw_record_lines"] = list(raw_record_lines)
-            if statistics is not None:
-                entry_data["statistics"] = statistics
+            if metadata is not None:
+                entry_data["metadata"] = metadata
             return entry_data
 
 

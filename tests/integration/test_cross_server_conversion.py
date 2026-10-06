@@ -20,9 +20,44 @@ from flext_tests import tm
 from tests import c, m
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from flext_ldif.servers.base import FlextLdifServersBase
     from flext_ldif.services.conversion import FlextLdifConversion
     from tests import p, t
+
+
+def _assert_cross_server_identity(
+    source_schema: p.Ldif.SchemaServer,
+    target_schema: p.Ldif.SchemaServer,
+    definition: str,
+    parse_method: t.Tests.ParseMethod,
+    tokens: t.VariadicTuple[str],
+) -> None:
+    """Render via source, re-parse via target, and assert the identity tokens.
+
+    Raises:
+        AssertionError: If any parse/write outcome fails or a token is missing.
+    """
+    parse: Callable[
+        [str],
+        p.Result[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass],
+    ] = getattr(source_schema, parse_method)
+    parsed = parse(definition)
+    tm.ok(parsed)
+    rfc_text = source_schema.write(parsed.value)
+    tm.ok(rfc_text)
+
+    target_parse: Callable[
+        [str],
+        p.Result[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass],
+    ] = getattr(target_schema, parse_method)
+    target_parsed = target_parse(rfc_text.value)
+    tm.ok(target_parsed)
+    target_text = target_schema.write(target_parsed.value)
+    tm.ok(target_text)
+    for token in tokens:
+        tm.that(target_text.value, has=token)
 
 
 class TestsFlextLdifCrossServerConversion:
@@ -217,44 +252,28 @@ class TestsFlextLdifCrossServerConversion:
         oud_server: FlextLdifServersBase,
         oid_server: FlextLdifServersBase,
     ) -> None:
-        """OUD attribute -> RFC -> OID renders back to OID text carrying the Oracle oid
-        and name.
-        """
-        parsed = oud_server.schema_server.parse_attribute(
+        """OUD attribute rendered through RFC into OID keeps Oracle identity."""
+        _assert_cross_server_identity(
+            oud_server.schema_server,
+            oid_server.schema_server,
             c.Tests.CROSS_SERVER_OUD_ATTRIBUTE_ORCLGUID,
+            "parse_attribute",
+            ("2.16.840.1.113894.1.1.1", "orclGUID"),
         )
-        tm.ok(parsed)
-        rfc_text = oud_server.schema_server.write(parsed.value)
-        tm.ok(rfc_text)
-
-        oid_parsed = oid_server.schema_server.parse_attribute(rfc_text.value)
-        tm.ok(oid_parsed)
-        oid_text = oid_server.schema_server.write(oid_parsed.value)
-        tm.ok(oid_text)
-        tm.that(oid_text.value, has="2.16.840.1.113894.1.1.1")
-        tm.that(oid_text.value, has="orclGUID")
 
     @staticmethod
     def test_objectclass_converts_oid_to_oud_rendering_oracle_identity(
         oud_server: FlextLdifServersBase,
         oid_server: FlextLdifServersBase,
     ) -> None:
-        """OID objectClass -> RFC -> OUD renders back to OUD text carrying the Oracle
-        oid and name.
-        """
-        parsed = oid_server.schema_server.parse_objectclass(
+        """OID objectClass rendered through RFC into OUD keeps Oracle identity."""
+        _assert_cross_server_identity(
+            oid_server.schema_server,
+            oud_server.schema_server,
             c.Tests.CROSS_SERVER_OID_OBJECTCLASS_ORCLCONTEXT,
+            "parse_objectclass",
+            ("2.16.840.1.113894.1.2.1", "orclContext"),
         )
-        tm.ok(parsed)
-        rfc_text = oid_server.schema_server.write(parsed.value)
-        tm.ok(rfc_text)
-
-        oud_parsed = oud_server.schema_server.parse_objectclass(rfc_text.value)
-        tm.ok(oud_parsed)
-        oud_text = oud_server.schema_server.write(oud_parsed.value)
-        tm.ok(oud_text)
-        tm.that(oud_text.value, has="2.16.840.1.113894.1.2.1")
-        tm.that(oud_text.value, has="orclContext")
 
     @staticmethod
     def test_batch_attribute_conversion_preserves_each_attribute_name(

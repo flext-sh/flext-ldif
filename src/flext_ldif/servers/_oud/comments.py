@@ -10,28 +10,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldif import c, m, t, u
-from flext_ldif.servers._oud.acl_extract import FlextLdifServersOudAclExtractMixin
-from flext_ldif.servers._oud.acl_metadata import FlextLdifServersOudAclMetadataMixin
+from flext_ldif.servers._oud.comments_acl import FlextLdifServersOudCommentsAclMixin
 from flext_ldif.servers._oud.transform import FlextLdifServersOudTransformMixin
 
 
-class FlextLdifServersOudCommentsMixin:
+class FlextLdifServersOudCommentsMixin(FlextLdifServersOudCommentsAclMixin):
     """OUD Comments helpers."""
-
-    @staticmethod
-    def _add_acl_value_comments(
-        comments: t.MutableSequenceOf[str],
-        original_attr: str,
-        attr_name: str,
-        acl_values: t.MutableSequenceOf[str] | str | m.Ldif.Acl,
-    ) -> None:
-        """Add TRANSFORMED and SKIP_TO_04 comments for ACL values."""
-        values = acl_values if isinstance(acl_values, list) else [str(acl_values)]
-        for v in values:
-            comments.extend([
-                f"# [TRANSFORMED] {original_attr}: {v}",
-                f"# [SKIP_TO_04] {attr_name}: {v}",
-            ])
 
     @staticmethod
     def _add_attribute_transformation_comments(
@@ -135,6 +119,20 @@ class FlextLdifServersOudCommentsMixin:
                 comment_lines.append(f"# [REJECTION] {rejection_reason_raw}")
 
     @staticmethod
+    def _removed_attribute_values(removed_raw: t.JsonValue) -> t.MutableSequenceOf[str]:
+        """Render removed-attribute raw metadata as comment values.
+
+        Returns:
+            The resulting ``t.MutableSequenceOf[str]``.
+        """
+        normalized = u.normalize_to_metadata(removed_raw)
+        return (
+            [u.to_str(v) for v in t.json_list_adapter().validate_python(normalized)]
+            if u.matches_type(normalized, list)
+            else [u.to_str(normalized)]
+        )
+
+    @staticmethod
     def _add_transformation_comments(
         comment_lines: t.MutableSequenceOf[str],
         entry: m.Ldif.Entry,
@@ -150,146 +148,99 @@ class FlextLdifServersOudCommentsMixin:
             entry,
             format_options,
         )
-        processed_attrs: set[str] = set()
-        if entry.metadata.attribute_transformations:
-            attr_names = [
-                attr_name
-                for attr_name in entry.metadata.attribute_transformations
-                if attr_name.lower() not in acl_attr_names_to_skip
-            ]
-            ordered_attr_names = (
-                FlextLdifServersOudTransformMixin.determine_attribute_order(
-                    attr_names,
-                    format_options,
-                )
-            )
-            for attr_name in ordered_attr_names:
-                transformation = entry.metadata.attribute_transformations[attr_name]
-                transformation_type = transformation.transformation_type.upper()
-                comment_type = (
-                    "TRANSFORMED"
-                    if transformation_type in {"MODIFIED", "TRANSFORMED"}
-                    else transformation_type
-                )
-                FlextLdifServersOudCommentsMixin._add_attribute_transformation_comments(
-                    comment_lines,
-                    attr_name,
-                    transformation,
-                    comment_type,
-                )
-                processed_attrs.add(attr_name.lower())
-        if (
-            format_options
-            and format_options.write_removed_attributes_as_comments
-            and entry.metadata.removed_attributes
-        ):
-            removed_attrs_dict = entry.metadata.removed_attributes
-            removed_attr_names: t.MutableSequenceOf[str] = [
-                attr_name
-                for attr_name in removed_attrs_dict
-                if u.matches_type(attr_name, str)
-                and attr_name.lower() not in acl_attr_names_to_skip
-            ]
-            ordered_removed_attrs = (
-                FlextLdifServersOudTransformMixin.determine_attribute_order(
-                    removed_attr_names,
-                    format_options,
-                )
-            )
-            for attr_name in ordered_removed_attrs:
-                if attr_name.lower() in processed_attrs:
-                    continue
-                normalized = u.normalize_to_metadata(removed_attrs_dict[attr_name])
-                removed_values = (
-                    [
-                        u.to_str(v)
-                        for v in t.json_list_adapter().validate_python(normalized)
-                    ]
-                    if u.matches_type(normalized, list)
-                    else [u.to_str(normalized)]
-                )
-                comment_lines.extend(
-                    f"# [REMOVED] {attr_name}: {value}" for value in removed_values
-                )
+        processed_attrs = FlextLdifServersOudCommentsMixin._add_attribute_comments(
+            comment_lines,
+            entry,
+            format_options,
+            acl_attr_names_to_skip,
+        )
+        FlextLdifServersOudCommentsMixin._add_removed_attribute_comments(
+            comment_lines,
+            entry,
+            format_options,
+            acl_attr_names_to_skip,
+            processed_attrs,
+        )
         if comment_lines:
             comment_lines.append("")
 
     @staticmethod
-    def _collect_acl_from_extensions(
+    def _add_attribute_comments(
+        comment_lines: t.MutableSequenceOf[str],
         entry: m.Ldif.Entry,
-        acl_comments_dict: t.MutableStrSequenceMapping,
+        format_options: m.Ldif.WriteFormatOptions | None,
         acl_attr_names_to_skip: set[str],
-    ) -> None:
-        """Collect ACL comments from extensions.commented_attribute_values."""
-        if not entry.metadata or not entry.metadata.extensions:
-            return
-        commented_acl_values_raw = entry.metadata.extensions.get(
-            c.Ldif.COMMENTED_ATTRIBUTE_VALUES,
+    ) -> set[str]:
+        """Add transformation comments and return the processed attribute names.
+
+        Returns:
+            The resulting ``set[str]``.
+        """
+        processed_attrs: set[str] = set()
+        if not entry.metadata.attribute_transformations:
+            return processed_attrs
+        attr_names = [
+            attr_name
+            for attr_name in entry.metadata.attribute_transformations
+            if attr_name.lower() not in acl_attr_names_to_skip
+        ]
+        ordered_attr_names = FlextLdifServersOudTransformMixin.determine_attribute_order(
+            attr_names,
+            format_options,
         )
-        commented_acl_values = (
-            FlextLdifServersOudAclExtractMixin.parse_commented_values(
-                commented_acl_values_raw,
+        for attr_name in ordered_attr_names:
+            transformation = entry.metadata.attribute_transformations[attr_name]
+            transformation_type = transformation.transformation_type.upper()
+            comment_type = (
+                "TRANSFORMED"
+                if transformation_type in {"MODIFIED", "TRANSFORMED"}
+                else transformation_type
             )
-        )
-        if not commented_acl_values:
-            return
-        original_acl_attr = FlextLdifServersOudAclMetadataMixin.get_original_acl_attr(
-            entry,
-        )
-        for acl_attr_name, acl_values_raw in commented_acl_values.items():
-            if acl_attr_name.lower() in acl_attr_names_to_skip:
-                continue
-            acl_attr_names_to_skip.add(acl_attr_name.lower())
-            sort_key = original_acl_attr or acl_attr_name
-            if sort_key not in acl_comments_dict:
-                acl_comments_dict[sort_key] = []
-            if isinstance(acl_values_raw, list):
-                acl_values: t.MutableSequenceOf[str] = [
-                    u.to_str(item) for item in acl_values_raw
-                ]
-            elif isinstance(acl_values_raw, dict):
-                acl_values = [u.to_str(acl_values_raw)]
-            else:
-                normalized = FlextLdifServersOudAclExtractMixin.normalize_acl_values(
-                    acl_values_raw,
-                )
-                acl_values = (
-                    list(normalized)
-                    if isinstance(normalized, list)
-                    else [u.to_str(normalized)]
-                )
-            FlextLdifServersOudCommentsMixin._add_acl_value_comments(
-                acl_comments_dict[sort_key],
-                original_acl_attr,
-                acl_attr_name,
-                acl_values,
+            FlextLdifServersOudCommentsMixin._add_attribute_transformation_comments(
+                comment_lines,
+                attr_name,
+                transformation,
+                comment_type,
             )
+            processed_attrs.add(attr_name.lower())
+        return processed_attrs
 
     @staticmethod
-    def _collect_acl_from_transformations(
+    def _add_removed_attribute_comments(
+        comment_lines: t.MutableSequenceOf[str],
         entry: m.Ldif.Entry,
-        acl_comments_dict: t.MutableStrSequenceMapping,
+        format_options: m.Ldif.WriteFormatOptions | None,
         acl_attr_names_to_skip: set[str],
+        processed_attrs: set[str],
     ) -> None:
-        """Collect ACL comments from attribute_transformations with SKIP_TO_04."""
-        if not entry.metadata or not entry.metadata.attribute_transformations:
+        """Add comments for attributes removed during transformation."""
+        if not (
+            format_options
+            and format_options.write_removed_attributes_as_comments
+            and entry.metadata
+            and entry.metadata.removed_attributes
+        ):
             return
-        for (
-            attr_name,
-            transformation,
-        ) in entry.metadata.attribute_transformations.items():
-            is_skip_to_04 = (
-                transformation.reason and "SKIP_TO_04" in transformation.reason.upper()
+        removed_attrs_dict = entry.metadata.removed_attributes
+        removed_attr_names: t.MutableSequenceOf[str] = [
+            attr_name
+            for attr_name in removed_attrs_dict
+            if u.matches_type(attr_name, str)
+            and attr_name.lower() not in acl_attr_names_to_skip
+        ]
+        ordered_removed_attrs = FlextLdifServersOudTransformMixin.determine_attribute_order(
+            removed_attr_names,
+            format_options,
+        )
+        for attr_name in ordered_removed_attrs:
+            if attr_name.lower() in processed_attrs:
+                continue
+            removed_values = FlextLdifServersOudCommentsMixin._removed_attribute_values(
+                removed_attrs_dict[attr_name],
             )
-            if is_skip_to_04 and attr_name.lower() in c.Ldif.ACL_ATTR_NAMES:
-                acl_attr_names_to_skip.add(attr_name.lower())
-                if attr_name not in acl_comments_dict:
-                    acl_comments_dict[attr_name] = []
-                for acl_value in transformation.original_values:
-                    acl_comments_dict[attr_name].extend([
-                        f"# [REMOVED] {attr_name}: {acl_value}",
-                        f"# [SKIP_TO_04] {attr_name}: {acl_value}",
-                    ])
+            comment_lines.extend(
+                f"# [REMOVED] {attr_name}: {value}" for value in removed_values
+            )
 
 
 __all__: list[str] = ["FlextLdifServersOudCommentsMixin"]
