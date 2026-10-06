@@ -40,12 +40,13 @@ The challenge was creating an architecture that could:
 
 **Key Components**:
 
-```python
-from __future__ import annotations
-
+from **future** import annotations
+from abc import ABC
+from abc import abstractmethod
+from flext_ldif import p
 
 class ServerBase(ABC):
-    """Base class for server-specific server implementations."""
+"""Base class for server-specific server implementations."""
 
     @property
     @abstractmethod
@@ -64,11 +65,10 @@ class ServerBase(ABC):
     @abstractmethod
     def from_rfc(self, data: str, data_type: str) -> p.Result[str]:
         """Convert RFC standard to server format."""
-```
 
 **Implementation**:
 
-```python
+```text
 # Auto-discovery and registration
 registry = FlextLdifServer()
 registry.load_alls()

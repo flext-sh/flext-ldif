@@ -76,16 +76,15 @@ class FlextLdifServersBase.Acl(ABC, ServerRegistrationMixin):
 
 **File**: `~/flext/flext-ldif/src/flext_ldif/protocols.py`
 
-```python
-from __future__ import annotations
-
+from **future** import annotations
+from typing import Protocol
+from flext_ldif import p, t
 
 class Acl(Protocol):
-    """Protocol for ACL servers."""
+"""Protocol for ACL servers."""
 
     def parse(self, acl_line: str) -> p.Result[t.JsonMapping]:
         """Parse ACL - returns r with dict or Acl model."""
-```
 
 ---
 
@@ -130,7 +129,7 @@ Each server servers class has:
 
 **Method**: `parse()`
 
-```python
+```text
 from __future__ import annotations
 
 
@@ -157,7 +156,7 @@ def parse(
 
 **Method**: `_transform_categories()`
 
-```python
+```text
 from __future__ import annotations
 
 
@@ -193,14 +192,13 @@ def _transform_categories(
 
 ### Test Pattern
 
-```python
-from __future__ import annotations
-
+from **future** import annotations
+from flext_ldif import FlextLdifModels, FlextLdifServersOid
 
 def test_parse_oracle_oid():
-    """Test OID ACL parsing."""
-    server = FlextLdifServersOid.Acl()
-    acl_line = "orclaci: access to entry by * (browse)"
+"""Test OID ACL parsing."""
+server = FlextLdifServersOid.Acl()
+acl_line = "orclaci: access to entry by * (browse)"
 
     result = server.parse(acl_line)
 
@@ -208,7 +206,6 @@ def test_parse_oracle_oid():
     acl = result.unwrap()
     assert isinstance(acl, FlextLdifModels.Acl)  # ← Tests Acl return type
     assert acl.server_type == "oid"
-```
 
 **Total Tests**: ~50+ test methods using parse()
 

@@ -74,15 +74,15 @@ standard verbs. See [Make commands](guides/make-commands.md) for the current con
 
 FLEXT-LDIF uses a custom LDIF parser implementation with the following characteristics:
 
-```python
-from __future__ import annotations
+from **future** import annotations
+from flext_ldif import t
 
 from collections.abc import Iterator
 
-
 # Current implementation approach
+
 class _ParserHelper:
-    """Custom LDIF parser - loads entire files into memory."""
+"""Custom LDIF parser - loads entire files into memory."""
 
     def __init__(self, content: str) -> None:
         self._content = content
@@ -91,7 +91,6 @@ class _ParserHelper:
     def parse(self) -> Iterator[tuple[str, t.MappingKV[str, list[str]]]]:
         """Parse LDIF content and yield (dn, attributes) tuples."""
         # Process all lines already in memory
-```
 
 **Memory Characteristics**:
 
@@ -130,28 +129,25 @@ result = api.parse_file("small_directory.ldif")
 
 #### LDIF Validation Patterns
 
-```python
-from __future__ import annotations
+from **future** import annotations
 
-from flext_ldif import FlextLdifModels, p, r
-
+from flext_ldif import FlextLdifModels, p, r, t
 
 # LDIF-specific validation
+
 def validate_ldif_structure(
-    entries: t.SequenceOf[FlextLdifModels.Entry],
+entries: t.SequenceOf[FlextLdifModels.Entry],
 ) -> p.Result[bool]:
-    """Validate LDIF entries for common issues."""
-    for entry in entries:
-        # Check DN format
-        if not entry.dn.value:
-            return r[bool].fail("Empty DN found")
+"""Validate LDIF entries for common issues."""
+for entry in entries: # Check DN format
+if not entry.dn.value:
+return r[bool].fail("Empty DN found")
 
         # Check required attributes
         if "objectClass" not in entry.attributes.data:
             return r[bool].fail(f"Missing objectClass in {entry.dn.value}")
 
     return r[bool].ok(value=True)
-```
 
 #### Memory-Conscious Processing
 
@@ -174,14 +170,14 @@ done
 
 ### LDIF Test Data
 
-```python
-from __future__ import annotations
-
+from **future** import annotations
+from flext_ldif import ldif
 
 # Create test LDIF content
+
 def create_test_ldif() -> str:
-    """Create valid LDIF content for testing."""
-    return """dn: cn=test,dc=example,dc=com
+"""Create valid LDIF content for testing."""
+return """dn: cn=test,dc=example,dc=com
 cn: test
 objectClass: person
 objectClass: organizationalPerson
@@ -193,15 +189,14 @@ objectClass: person
 description: Administrator account
 """
 
-
 # Test parsing with various LDIF formats
+
 def test_ldif_parsing():
-    api = ldif()
-    result = api.parse_string(create_test_ldif())
-    assert result.success
-    entries = result.unwrap()
-    assert len(entries) == 2
-```
+api = ldif()
+result = api.parse_string(create_test_ldif())
+assert result.success
+entries = result.unwrap()
+assert len(entries) == 2
 
 ### Memory Usage Testing
 
@@ -213,14 +208,17 @@ import pathlib
 
 import psutil
 
+from flext_ldif import ldif
 
-def test_memory_usage():
+
+def test_memory_usage() -> None:
     """Monitor memory usage during LDIF processing."""
     process = psutil.Process(os.getpid())
     initial_memory = process.memory_info().rss
 
     api = ldif()
     result = api.parse_file("test_data.ldif")
+    assert result.success
 
     final_memory = process.memory_info().rss
     memory_increase = final_memory - initial_memory

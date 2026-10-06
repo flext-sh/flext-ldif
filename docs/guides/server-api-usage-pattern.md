@@ -110,7 +110,7 @@ def rfc_server(server: FlextLdifServer) -> FlextLdifServersBase:
 
 ### Uso nas Funções de Teste
 
-```python
+```text
 from __future__ import annotations
 
 
@@ -137,22 +137,22 @@ def test_conversion_oid_to_oud(
 
 ### Passo 2: Atualizar Instanciação
 
-```python
 # ANTES
+
 oid = FlextLdifServersOid()
 oud = FlextLdifServersOud()
 
 # DEPOIS
-from flext_ldif import FlextLdifServer
+
+from flext_ldif import FlextLdifServer, FlextLdifServersOid, FlextLdifServersOud
 
 server = FlextLdifServer()
 oid = server.server("oid")
 oud = server.server("oud")
-```
 
 ### Passo 3: Atualizar Type Hints
 
-```python
+```text
 from __future__ import annotations
 
 
@@ -203,7 +203,7 @@ server.server("openldap")  # OpenLDAP 2.x
 server.server("openldap1")  # OpenLDAP 1.x
 server.server("relaxed")  # Lenient parsing mode
 
-# Servers com stubs
+# Servers com implementação parcial
 server.server("ad")  # Active Directory
 server.server("apache")  # Apache Directory Server
 server.server("ds389")  # Red Hat DS

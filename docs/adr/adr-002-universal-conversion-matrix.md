@@ -42,13 +42,20 @@ Source Format → Source.to_rfc() → RFC Format → Target.from_rfc() → Targe
 **Implementation**:
 
 ```python
-# N×N conversion with only 2×N implementations
-matrix = ServersConversionMatrix()
+from pathlib import Path
+
+from flext_ldif import FlextLdifMigrationPipeline
+
+# NxN conversion with only 2xN implementations: source -> RFC -> target
+pipeline = FlextLdifMigrationPipeline(
+    input_dir=Path("source_oud_ldif"),
+    output_dir=Path("target_oid_ldif"),
+    source_server_type="oud",
+    target_server_type="oid",
+)
 
 # Convert between any server combination
-result = matrix.convert(
-    source=oud, target=oid, data_type="attribute", data=oud_attribute_string
-)
+result = pipeline.execute()
 ```
 
 **Consequences**:
