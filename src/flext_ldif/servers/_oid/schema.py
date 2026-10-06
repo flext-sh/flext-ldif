@@ -308,6 +308,100 @@ class FlextLdifServersOidSchema(
         )
 
 
+    def _oid_matching_rules(
+        self,
+        attr_copy: m.Ldif.SchemaAttribute,
+    ) -> tuple[str | None, str | None, str | None]:
+        """Resolve OID-denormalized equality/substr/ordering matching rules.
+
+        Returns:
+            The resulting ``tuple[str | None, str | None, str | None]``.
+        """
+        source_rules: t.JsonPayload | None = None
+        if attr_copy.metadata and attr_copy.metadata.extensions:
+            source_rules = attr_copy.metadata.extensions.get(
+                c.Ldif.SCHEMA_SOURCE_MATCHING_RULES,
+            )
+        if isinstance(source_rules, Mapping):
+            return self._matching_rules_from_source(source_rules, attr_copy)
+        oid_equality, oid_substr = u.Ldif.normalize_matching_rules(
+            attr_copy.equality,
+            attr_copy.substr,
+            replacements=FlextLdifServersOidConstants.MATCHING_RULE_RFC_TO_OID,
+            normalized_substr_values=FlextLdifServersOidConstants.MATCHING_RULE_RFC_TO_OID,
+        )
+        oid_ordering = attr_copy.ordering
+        if attr_copy.ordering:
+            mapped = FlextLdifServersOidConstants.MATCHING_RULE_RFC_TO_OID.get(
+                attr_copy.ordering,
+            )
+            if mapped:
+                oid_ordering = mapped
+        return (oid_equality, oid_substr, oid_ordering)
+
+    @staticmethod
+    def _matching_rules_from_source(
+        source_rules: t.JsonPayload,
+        attr_copy: m.Ldif.SchemaAttribute,
+    ) -> tuple[str | None, str | None, str | None]:
+        """Resolve matching rules from preserved source matching-rule metadata.
+
+        Returns:
+            The resulting ``tuple[str | None, str | None, str | None]``.
+        """
+        equality_raw = source_rules.get("equality", attr_copy.equality)
+        substr_raw = source_rules.get("substr", attr_copy.substr)
+        ordering_raw = source_rules.get("ordering", attr_copy.ordering)
+        oid_equality = (
+            equality_raw if isinstance(equality_raw, str) else attr_copy.equality
+        )
+        oid_substr = substr_raw if isinstance(substr_raw, str) else attr_copy.substr
+        oid_ordering = (
+            ordering_raw if isinstance(ordering_raw, str) else attr_copy.ordering
+        )
+        return (oid_equality, oid_substr, oid_ordering)
+
+    @staticmethod
+    def _oid_syntax_value(
+        attr_copy: m.Ldif.SchemaAttribute,
+    ) -> t.JsonPayload | None:
+        """Resolve the OID-denormalized syntax OID for writing.
+
+        Returns:
+            The resulting ``t.JsonPayload | None``.
+        """
+        source_syntax: t.JsonPayload | None = None
+        if attr_copy.metadata and attr_copy.metadata.extensions:
+            source_syntax = attr_copy.metadata.extensions.get(
+                c.Ldif.SCHEMA_SOURCE_SYNTAX_OID,
+            )
+        return (
+            source_syntax
+            if isinstance(source_syntax, str)
+            else (attr_copy.syntax or None)
+        )
+
+    @staticmethod
+    def _oid_write_metadata(
+        attr_copy: m.Ldif.SchemaAttribute,
+    ) -> m.Ldif.ServerMetadata | None:
+        """Strip original-format tracking from metadata before the OID write.
+
+        Returns:
+            The resulting ``m.Ldif.ServerMetadata | None``.
+        """
+        if attr_copy.metadata and attr_copy.metadata.extensions:
+            keys_to_remove = {c.Ldif.SCHEMA_ORIGINAL_FORMAT}
+            new_extensions: t.MutableJsonMapping = {
+                k: v
+                for k, v in attr_copy.metadata.extensions.items()
+                if k not in keys_to_remove
+            }
+            return attr_copy.metadata.model_copy(
+                update={"extensions": new_extensions},
+            )
+        return attr_copy.metadata
+
     @override
     def _write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> p.Result[str]:
         """Write Oracle OID attribute definition (Phase 2: Denormalization).
@@ -316,63 +410,14 @@ class FlextLdifServersOidSchema(
             The resulting ``p.Result[str]``.
         """
         attr_copy = attr_data.model_copy(deep=True)
-        source_rules: t.JsonPayload | None = None
-        source_syntax: t.JsonPayload | None = None
-        if attr_copy.metadata and attr_copy.metadata.extensions:
-            source_rules = attr_copy.metadata.extensions.get(
-                c.Ldif.SCHEMA_SOURCE_MATCHING_RULES,
-            )
-            source_syntax = attr_copy.metadata.extensions.get(
-                c.Ldif.SCHEMA_SOURCE_SYNTAX_OID,
-            )
-        if isinstance(source_rules, Mapping):
-            equality_raw = source_rules.get("equality", attr_copy.equality)
-            substr_raw = source_rules.get("substr", attr_copy.substr)
-            ordering_raw = source_rules.get("ordering", attr_copy.ordering)
-            oid_equality = (
-                equality_raw if isinstance(equality_raw, str) else attr_copy.equality
-            )
-            oid_substr = substr_raw if isinstance(substr_raw, str) else attr_copy.substr
-            oid_ordering = (
-                ordering_raw if isinstance(ordering_raw, str) else attr_copy.ordering
-            )
-        else:
-            oid_equality, oid_substr = u.Ldif.normalize_matching_rules(
-                attr_copy.equality,
-                attr_copy.substr,
-                replacements=FlextLdifServersOidConstants.MATCHING_RULE_RFC_TO_OID,
-                normalized_substr_values=FlextLdifServersOidConstants.MATCHING_RULE_RFC_TO_OID,
-            )
-            oid_ordering = attr_copy.ordering
-            if attr_copy.ordering:
-                mapped = FlextLdifServersOidConstants.MATCHING_RULE_RFC_TO_OID.get(
-                    attr_copy.ordering,
-                )
-                if mapped:
-                    oid_ordering = mapped
-        oid_syntax = (
-            source_syntax
-            if isinstance(source_syntax, str)
-            else (attr_copy.syntax or None)
-        )
-        oid_metadata = attr_copy.metadata
-        if attr_copy.metadata and attr_copy.metadata.extensions:
-            keys_to_remove = {c.Ldif.SCHEMA_ORIGINAL_FORMAT}
-            new_extensions: t.MutableJsonMapping = {
-                k: v
-                for k, v in attr_copy.metadata.extensions.items()
-                if k not in keys_to_remove
-            }
-            oid_metadata = attr_copy.metadata.model_copy(
-                update={"extensions": new_extensions},
-            )
+        oid_equality, oid_substr, oid_ordering = self._oid_matching_rules(attr_copy)
         attr_copy = attr_copy.model_copy(
             update={
                 "equality": oid_equality,
                 "substr": oid_substr,
                 "ordering": oid_ordering,
-                "syntax": oid_syntax,
-                "metadata": oid_metadata,
+                "syntax": self._oid_syntax_value(attr_copy),
+                "metadata": self._oid_write_metadata(attr_copy),
             },
         )
         return super()._write_attribute(attr_copy)
