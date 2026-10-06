@@ -448,3 +448,13 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             })
             new_entry = entry.model_copy(update={"attributes": new_attrs})
             return r[m.Ldif.Entry].ok(new_entry)
+
+
+# The Novell dialect schema settings are owned by ``Constants`` and bound here
+# because a nested class body cannot reference the not-yet-defined class.
+FlextLdifServersNovell.Schema._ATTRIBUTE_PATTERN_SETTINGS = (
+    FlextLdifServersNovell.Constants.ATTRIBUTE_PATTERN_SETTINGS
+)
+FlextLdifServersNovell.Schema._OBJECTCLASS_PATTERN_SETTINGS = (
+    FlextLdifServersNovell.Constants.OBJECTCLASS_PATTERN_SETTINGS
+)

@@ -363,3 +363,12 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
 
 
 __all__: list[str] = ["FlextLdifServersTivoli"]
+
+# The Tivoli dialect schema settings are owned by ``Constants`` and bound here
+# because a nested class body cannot reference the not-yet-defined class.
+FlextLdifServersTivoli.Schema._ATTRIBUTE_PATTERN_SETTINGS = (
+    FlextLdifServersTivoli.Constants.ATTRIBUTE_PATTERN_SETTINGS
+)
+FlextLdifServersTivoli.Schema._OBJECTCLASS_PATTERN_SETTINGS = (
+    FlextLdifServersTivoli.Constants.OBJECTCLASS_PATTERN_SETTINGS
+)

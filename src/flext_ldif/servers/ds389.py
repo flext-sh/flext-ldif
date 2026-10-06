@@ -511,3 +511,12 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
 
 __all__: list[str] = ["FlextLdifServersDs389"]
+
+# The 389DS dialect schema settings are owned by ``Constants`` and bound here
+# because a nested class body cannot reference the not-yet-defined class.
+FlextLdifServersDs389.Schema._ATTRIBUTE_PATTERN_SETTINGS = (
+    FlextLdifServersDs389.Constants.ATTRIBUTE_PATTERN_SETTINGS
+)
+FlextLdifServersDs389.Schema._OBJECTCLASS_PATTERN_SETTINGS = (
+    FlextLdifServersDs389.Constants.OBJECTCLASS_PATTERN_SETTINGS
+)
