@@ -234,6 +234,37 @@ class FlextLdifServersEntryWriteContext:
         output_lines.append("")
         return r[str].ok("\n".join(output_lines))
 
+    def emit_changetype_body(
+        self,
+        entry_data: m.Ldif.Entry,
+        output_lines: t.MutableSequenceOf[str],
+    ) -> p.Result[str]:
+        """Emit the changetype line and dispatch the matching entry body.
+
+        Returns:
+            The resulting ``p.Result[str]``.
+        """
+        effective_changetype = entry_data.changetype or self.ldif_changetype
+        if effective_changetype in {
+            c.Ldif.ChangeType.ADD,
+            c.Ldif.ChangeType.DELETE,
+            c.Ldif.ChangeType.MODIFY,
+            c.Ldif.ChangeType.MODDN,
+            c.Ldif.ChangeType.MODRDN,
+        }:
+            output_lines.append(f"changetype: {effective_changetype}")
+        if effective_changetype == c.Ldif.ChangeType.MODIFY:
+            return self.emit_modify_entry(output_lines)
+        if effective_changetype in {
+            c.Ldif.ChangeType.MODDN,
+            c.Ldif.ChangeType.MODRDN,
+        }:
+            return self.emit_modifydn_entry(output_lines)
+        if effective_changetype == c.Ldif.ChangeType.DELETE:
+            output_lines.append("")
+            return r[str].ok("\n".join(output_lines))
+        return self.emit_add_entry(output_lines)
+
     def _should_restore_original(self) -> bool:
         """Restore original LDIF only for same-server round-trips.
 
