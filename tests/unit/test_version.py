@@ -27,9 +27,12 @@ class TestsFlextLdifVersion:
         tm.that(version_module.__title__, is_=str)
         tm.that(version_module.__license__, is_=str)
         tm.that(version_module.__all__, is_=list)
-        tm.that(version_module.__version__, eq=True)
-        tm.that(version_module.__title__, eq=True)
-        tm.that(version_module.__license__, eq=True)
+        for metadata in (
+            version_module.__version__,
+            version_module.__title__,
+            version_module.__license__,
+        ):
+            tm.that(len(metadata) > 0, eq=True)
 
     @staticmethod
     def test_all_expected_symbols_are_exported() -> None:
