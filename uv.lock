@@ -1,5 +1,5 @@
 version = 1
-revision = 5
+revision = 3
 requires-python = "==3.13.*"
 resolution-markers = [
     "sys_platform == 'linux'",
@@ -1749,7 +1749,7 @@ wheels = [
 [[package]]
 name = "rope"
 version = "1.14.0+dc.3"
-source = { git = "https://github.com/marlon-costa-dc/rope.git?rev=datacosmos#64134bf54db1c02ca19602f320d26e1a570e7786" }
+source = { git = "https://github.com/marlon-costa-dc/rope.git?rev=datacosmos#7a6494e897c22630035e6288ddd1571d93b77fd1" }
 dependencies = [
     { name = "pytoolconfig", extra = ["global"] },
 ]
