@@ -23,6 +23,7 @@ class TestsFlextLdifRfcServers:
     ATTRIBUTE_DEFINITION = (
         "( 2.5.4.3 NAME 'cn' DESC 'common name' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
     )
+    SUP_ONLY_ATTRIBUTE_DEFINITION = "( 2.5.4.4 NAME 'sn' SUP name )"
     OBJECTCLASS_DEFINITION = (
         "( 2.5.6.6 NAME 'person' SUP top STRUCTURAL MUST ( sn $ cn ) )"
     )
@@ -98,6 +99,20 @@ class TestsFlextLdifRfcServers:
         objectclass = cls._parsed_objectclass()
         tm.that(objectclass.oid, eq="2.5.6.6")
         tm.that(schema.write_objectclass(objectclass).unwrap(), has="NAME 'person'")
+
+    @classmethod
+    def test_rfc_schema_parses_definitions_without_syntax_clause(cls) -> None:
+        """An attribute that inherits its syntax from SUP parses without SYNTAX."""
+        attribute = (
+            FlextLdifServersRfc
+            .Schema()
+            .parse_attribute(cls.SUP_ONLY_ATTRIBUTE_DEFINITION)
+            .unwrap()
+        )
+        tm.that(attribute.oid, eq="2.5.4.4")
+        tm.that(attribute.name, eq="sn")
+        tm.that(attribute.sup, eq="name")
+        tm.that(attribute.syntax, eq=None)
 
     @staticmethod
     def test_base_acl_hook_raises_when_not_redefined() -> None:
