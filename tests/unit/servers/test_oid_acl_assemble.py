@@ -29,6 +29,11 @@ from flext_ldif.servers.oid import (
 from tests import TestsFlextLdifUtilities as u
 
 
+def _acl_entry(attributes: dict[str, list[str]]) -> m.Ldif.Entry:
+    """Build one real entry at the shared ACL test DN."""
+    return u.Tests.create_real_entry(dn="cn=users,dc=ctbc", attributes=attributes)
+
+
 class TestsFlextLdifOidAclAssemble:
     """OID ACL assemble/render/convert public-contract behavior."""
 
@@ -44,10 +49,6 @@ class TestsFlextLdifOidAclAssemble:
         rule: m.Ldif.OidAclRule = Parser.parse_oid_acl_line(dn, line).unwrap()
         aci_rule: m.Ldif.AciRule = Asm.build_aci_rule(rule).unwrap()
         return aci_rule
-
-    @staticmethod
-    def _entry(attributes: dict[str, list[str]]) -> m.Ldif.Entry:
-        return u.Tests.create_real_entry(dn="cn=users,dc=ctbc", attributes=attributes)
 
     # ---- render_aci_string: AciRule → aci: line ------------------------
 
@@ -421,7 +422,6 @@ class TestsFlextLdifOidAclFixtureAndEntry:
     """OID ACL fixture conversion and entry-level orclaci conversion."""
 
     @staticmethod
-    @staticmethod
     def test_oid_acl_fixture_lines_convert_without_partial_failures() -> None:
         """Test oid acl fixture lines convert without partial failures."""
         fixture_path = (
@@ -484,7 +484,7 @@ class TestsFlextLdifOidAclFixtureAndEntry:
 
     def test_oid_to_oud_replaces_orclaci_with_aci(self) -> None:
         """Test oid to oud replaces orclaci with aci."""
-        entry = self._entry({
+        entry = _acl_entry({
             "objectClass": ["top"],
             "orclaci": ['access to entry by group="cn=a,dc=ctbc" (browse)'],
         })
@@ -500,7 +500,7 @@ class TestsFlextLdifOidAclFixtureAndEntry:
 
     def test_non_oid_to_oud_passes_through_unchanged(self) -> None:
         """Test non oid to oud passes through unchanged."""
-        entry = self._entry({
+        entry = _acl_entry({
             "orclaci": ['access to entry by group="cn=a,dc=ctbc" (browse)'],
         })
 
@@ -511,7 +511,7 @@ class TestsFlextLdifOidAclFixtureAndEntry:
 
     def test_entry_without_acl_attrs_unchanged(self) -> None:
         """Test entry without acl attrs unchanged."""
-        entry = self._entry({"cn": ["x"], "objectClass": ["top"]})
+        entry = _acl_entry({"cn": ["x"], "objectClass": ["top"]})
 
         converted = Pipe.convert_entry_acls(entry, "oid", "oud").unwrap()
         assert converted.attributes is not None
@@ -521,7 +521,7 @@ class TestsFlextLdifOidAclFixtureAndEntry:
 
     def test_malformed_acl_surfaces_failure(self) -> None:
         """Test malformed acl surfaces failure."""
-        entry = self._entry({"orclaci": ["not a valid acl"]})
+        entry = _acl_entry({"orclaci": ["not a valid acl"]})
 
         tm.that(Pipe.convert_entry_acls(entry, "oid", "oud").failure, eq=True)
 

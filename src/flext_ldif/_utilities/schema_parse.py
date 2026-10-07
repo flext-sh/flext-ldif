@@ -277,6 +277,8 @@ class FlextLdifUtilitiesSchemaParse:
         validation = FlextLdifUtilitiesSchemaParse._validate_attribute_syntax(syntax)
         return validation, (
             FlextLdifUtilitiesSchemaParse._convert_metadata_extensions(validation)
+            if validation
+            else None
         )
 
     @staticmethod
