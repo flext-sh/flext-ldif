@@ -72,6 +72,8 @@ class FlextLdifServersOudAciMixin(FlextLdifServersOudAciProcessMixin):
         commented = FlextLdifServersOudAclExtractMixin.parse_commented_values(
             extensions.get(c.Ldif.COMMENTED_ATTRIBUTE_VALUES),
         )
+        if commented is None:
+            return None
         for key, value in commented.items():
             if key.lower() != "aci":
                 continue
