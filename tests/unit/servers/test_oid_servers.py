@@ -20,14 +20,18 @@ from flext_ldif.services.server import FlextLdifServer
 
 _SYNTAX_NORMALIZATION_CASES: tuple[tuple[str, str, str], ...] = (
     (
-        "( 2.16.840.1.113894.1.1.1 NAME 'orclIsEnabled' "
-        "SYNTAX 1.3.6.1.4.1.1466.115.121.1.1 SINGLE-VALUE )",
+        (
+            "( 2.16.840.1.113894.1.1.1 NAME 'orclIsEnabled' "
+            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.1 SINGLE-VALUE )"
+        ),
         "1.3.6.1.4.1.1466.115.121.1.15",
         "boolean-syntax-normalized-to-directorystring",
     ),
     (
-        "( 2.16.840.1.113894.1.1.2 NAME 'orclDirString' "
-        "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+        (
+            "( 2.16.840.1.113894.1.1.2 NAME 'orclDirString' "
+            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+        ),
         "1.3.6.1.4.1.1466.115.121.1.15",
         "rfc-syntax-preserved",
     ),
@@ -35,14 +39,18 @@ _SYNTAX_NORMALIZATION_CASES: tuple[tuple[str, str, str], ...] = (
 
 _SUPERIOR_NORMALIZATION_CASES: tuple[tuple[str, str, str], ...] = (
     (
-        "( 2.16.840.1.113894.1.2.64 NAME 'orclReferenceObject' "
-        "SUP 'top' STRUCTURAL MAY ( orclOwnerGUID $ seeAlso ) )",
+        (
+            "( 2.16.840.1.113894.1.2.64 NAME 'orclReferenceObject' "
+            "SUP 'top' STRUCTURAL MAY ( orclOwnerGUID $ seeAlso ) )"
+        ),
         "top",
         "quoted-sup-top",
     ),
     (
-        "( 2.16.840.1.113894.1.2.50 NAME 'orclParenSup' "
-        "SUP ( top ) STRUCTURAL MAY ( cn ) )",
+        (
+            "( 2.16.840.1.113894.1.2.50 NAME 'orclParenSup' "
+            "SUP ( top ) STRUCTURAL MAY ( cn ) )"
+        ),
         "top",
         "parenthesized-sup",
     ),

@@ -9,9 +9,9 @@ from __future__ import annotations
 from collections.abc import MutableMapping
 from typing import ClassVar, Self, override
 
-import flext_ldif._utilities.flext_ldif_servers_oud_utilities
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
+from flext_ldif.servers._oud import server_utilities
 from flext_ldif.servers._oud.acl_write import FlextLdifServersOudAclWriteMixin
 from flext_ldif.servers._oud.server_constants import FlextLdifServersOudConstants
 
@@ -81,7 +81,8 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWriteMixin):
 
     @override
     def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
-        """Check if this is an Oracle OUD ACL line (implements abstract method from
+        """Check if this is an Oracle OUD ACL line (implements abstract method from.
+
         base.py).
 
         Returns:
@@ -143,13 +144,14 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWriteMixin):
             if result.success:
                 acls.append(result.value)
 
-    def _parse_aci_format(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
+    @staticmethod
+    def _parse_aci_format(acl_line: str) -> p.Result[m.Ldif.Acl]:
         """Parse RFC 4876 ACI format using utility with OUD-specific settings.
 
         Returns:
             The resulting ``p.Result[m.Ldif.Acl]``.
         """
-        settings = flext_ldif._utilities.flext_ldif_servers_oud_utilities.FlextLdifServersOudUtilities.get_parser_config()
+        settings = server_utilities.FlextLdifServersOudUtilities.get_parser_config()
         result: p.Result[m.Ldif.Acl] = u.Ldif.parse_aci(acl_line, settings)
         if not result.success:
             return result
@@ -208,7 +210,8 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWriteMixin):
                 return rfc_result
         return self._parse_ds_privilege_name(normalized)
 
-    def _parse_ds_privilege_name(self, privilege_name: str) -> p.Result[m.Ldif.Acl]:
+    @staticmethod
+    def _parse_ds_privilege_name(privilege_name: str) -> p.Result[m.Ldif.Acl]:
         """Parse OUD ds-privilege-name format (simple privilege names).
 
         Returns:

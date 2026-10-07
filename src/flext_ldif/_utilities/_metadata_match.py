@@ -13,7 +13,7 @@ class FlextLdifMetadataMatchDetails:
     """Extract matching-rule, SUP, and value-flag formatting details."""
 
     @staticmethod
-    def _extract_matching_rule_details(definition: str) -> t.MutableFeatureFlagMapping:
+    def extract_matching_rule_details(definition: str) -> t.MutableFeatureFlagMapping:
         """Extract EQUALITY/SUBSTR/ORDERING details.
 
         Returns:
@@ -56,7 +56,7 @@ class FlextLdifMetadataMatchDetails:
         return details
 
     @staticmethod
-    def _extract_sup_details(definition: str) -> t.MutableFeatureFlagMapping:
+    def extract_sup_details(definition: str) -> t.MutableFeatureFlagMapping:
         """Extract SUP details.
 
         Returns:
@@ -80,7 +80,7 @@ class FlextLdifMetadataMatchDetails:
         return details
 
     @staticmethod
-    def _extract_single_value_details(definition: str) -> t.MutableFeatureFlagMapping:
+    def extract_single_value_details(definition: str) -> t.MutableFeatureFlagMapping:
         """Extract SINGLE-VALUE details.
 
         Returns:
@@ -101,7 +101,7 @@ class FlextLdifMetadataMatchDetails:
         return details
 
     @staticmethod
-    def _extract_leading_trailing_spaces(definition: str) -> t.MutableStrMapping:
+    def extract_leading_trailing_spaces(definition: str) -> t.MutableStrMapping:
         """Extract leading and trailing spaces.
 
         Returns:

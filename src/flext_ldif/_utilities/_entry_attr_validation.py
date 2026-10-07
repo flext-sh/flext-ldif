@@ -58,14 +58,14 @@ class FlextLdifEntryAttributeValidation:
             return violations
         for attr_desc in entry.attributes.attributes:
             parts = attr_desc.split(";")
-            base_violation = (
-                FlextLdifEntryAttributeValidation._base_name_violation(parts[0])
+            base_violation = FlextLdifEntryAttributeValidation._base_name_violation(
+                parts[0],
             )
             if base_violation is not None:
                 violations.append(base_violation)
             for raw_option in parts[1:]:
-                option_violation = (
-                    FlextLdifEntryAttributeValidation._option_violation(raw_option)
+                option_violation = FlextLdifEntryAttributeValidation._option_violation(
+                    raw_option,
                 )
                 if option_violation is not None:
                     violations.append(option_violation)

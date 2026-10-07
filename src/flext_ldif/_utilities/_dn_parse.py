@@ -9,7 +9,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, overload
 
 from flext_core import r
-
 from flext_ldif import FlextLdifModels, c, p, t
 from flext_ldif._utilities._dn_rdn import FlextLdifDNRdnParsing
 

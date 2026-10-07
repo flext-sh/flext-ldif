@@ -9,8 +9,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import ClassVar
 
-from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
+from flext_ldif import c, p, r, t, u
 from flext_ldif.servers.base import FlextLdifServersBase
 
 
@@ -24,6 +23,7 @@ class FlextLdifServersRfcSchemaValuesMixin(FlextLdifServersBase.Schema):
         syntax_validation = cls._coerce_dynamic_metadata(value)
         syntax_error = syntax_validation.get("syntax_validation_error")
         return syntax_error if isinstance(syntax_error, str) else None
+
     @classmethod
     def _to_optional_str_or_list(
         cls,
@@ -32,6 +32,7 @@ class FlextLdifServersRfcSchemaValuesMixin(FlextLdifServersBase.Schema):
         if isinstance(value, str):
             return value
         return cls._to_string_list(value)
+
     @staticmethod
     def _coerce_dynamic_metadata(value: t.JsonValue | None) -> t.MutableJsonMapping:
         # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: coerce to a plain
@@ -49,6 +50,7 @@ class FlextLdifServersRfcSchemaValuesMixin(FlextLdifServersBase.Schema):
             raise TypeError(msg) from exc
         else:
             return validated
+
     @staticmethod
     def _convert_extensions_for_server(
         metadata: t.Ldif.MetadataInputMapping,
@@ -66,6 +68,7 @@ class FlextLdifServersRfcSchemaValuesMixin(FlextLdifServersBase.Schema):
             else:
                 extensions[key] = str(u.normalize_to_json_value(json_value))
         return extensions
+
     @staticmethod
     def _to_optional_int(value: t.JsonValue | None) -> int | None:
         json_value: t.JsonPayload | None = value
@@ -82,6 +85,7 @@ class FlextLdifServersRfcSchemaValuesMixin(FlextLdifServersBase.Schema):
             parsed_value: int = parsed.value
             return parsed_value
         return None
+
     @staticmethod
     def _parse_int(json_value: t.JsonPayload) -> p.Result[int]:
         """Parse a JSON scalar into an int, propagating the conversion failure.
@@ -94,6 +98,7 @@ class FlextLdifServersRfcSchemaValuesMixin(FlextLdifServersBase.Schema):
         except c.EXC_TYPE_VALIDATION as exc:
             return r[int].fail(str(exc), exception=exc)
         return r[int].ok(parsed_int)
+
     @staticmethod
     def _to_optional_str(value: t.JsonValue | None) -> str | None:
         json_value: t.JsonPayload | None = value
@@ -106,6 +111,7 @@ class FlextLdifServersRfcSchemaValuesMixin(FlextLdifServersBase.Schema):
         if isinstance(json_value, str):
             return json_value
         return str(json_value)
+
     @staticmethod
     def _to_required_value(value: t.JsonValue | None, default: str = "") -> str:
         json_value: t.JsonPayload | None = value
@@ -118,6 +124,7 @@ class FlextLdifServersRfcSchemaValuesMixin(FlextLdifServersBase.Schema):
         if isinstance(json_value, str):
             return json_value
         return str(json_value)
+
     @staticmethod
     def _to_string_list(value: t.JsonValue | None) -> t.MutableSequenceOf[str] | None:
         json_value: t.JsonPayload | None = value

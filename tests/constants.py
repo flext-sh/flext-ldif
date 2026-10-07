@@ -24,6 +24,7 @@ if TYPE_CHECKING:
 def _attribute_case(
     scenario: str,
     attr_definition: str,
+    *,
     expected_can_handle: bool,
     expected_oid: str | None = None,
     expected_name: str | None = None,
@@ -42,94 +43,116 @@ def _attribute_case(
     )
 
 
-_SERVER_ATTRIBUTE_CASE_DATA: Final[
-    t.MappingKV[str, tuple[tuple[str, str, bool, str | None, str | None], ...]]
-] = MappingProxyType({
-    "ds389": (
+# One flat SSOT row table: (server, scenario, definition, can_handle, oid, name).
+# DS389 and Novell rows share the keyed shape instead of parallel blocks.
+_ATTRIBUTE_CASE_ROWS: Final[
+    tuple[tuple[str, str, str, bool, str | None, str | None], ...]
+] = (
+    (
+        "ds389",
+        "ds389_oid",
         (
-            "ds389_oid",
             "( 2.16.840.1.113730.3.1.1 NAME 'nsslapd-suffix' "
-            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )",
-            True,
-            "2.16.840.1.113730.3.1.1",
-            "nsslapd-suffix",
+            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )"
         ),
-        (
-            "nsslapd_prefix",
-            "( 1.2.3.4 NAME 'nsslapd-port' SYNTAX "
-            "1.3.6.1.4.1.1466.115.121.1.27 )",
-            True,
-            None,
-            "nsslapd-port",
-        ),
-        (
-            "nsds_prefix",
-            "( 1.2.3.4 NAME 'nsds5ReplicaId' SYNTAX "
-            "1.3.6.1.4.1.1466.115.121.1.27 )",
-            True,
-            None,
-            "nsds5ReplicaId",
-        ),
-        (
-            "nsuniqueid_prefix",
-            "( 1.2.3.4 NAME 'nsuniqueid' SYNTAX "
-            "1.3.6.1.4.1.1466.115.121.1.15 )",
-            True,
-            None,
-            "nsuniqueid",
-        ),
-        (
-            "standard_rfc",
-            "( 2.5.4.3 NAME 'cn' SYNTAX "
-            "1.3.6.1.4.1.1466.115.121.1.15 )",
-            False,
-            None,
-            None,
-        ),
+        True,
+        "2.16.840.1.113730.3.1.1",
+        "nsslapd-suffix",
     ),
-    "novell": (
+    (
+        "ds389",
+        "nsslapd_prefix",
+        ("( 1.2.3.4 NAME 'nsslapd-port' SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 )"),
+        True,
+        None,
+        "nsslapd-port",
+    ),
+    (
+        "ds389",
+        "nsds_prefix",
+        ("( 1.2.3.4 NAME 'nsds5ReplicaId' SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 )"),
+        True,
+        None,
+        "nsds5ReplicaId",
+    ),
+    (
+        "ds389",
+        "nsuniqueid_prefix",
+        ("( 1.2.3.4 NAME 'nsuniqueid' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"),
+        True,
+        None,
+        "nsuniqueid",
+    ),
+    (
+        "ds389",
+        "standard_rfc",
+        ("( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"),
+        False,
+        None,
+        None,
+    ),
+    (
+        "novell",
+        "novell_oid",
         (
-            "novell_oid",
             "( 2.16.840.1.113719.1.1.4.1.501 NAME "
-            "'nspmPasswordPolicyDN' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )",
-            True,
-            "2.16.840.1.113719.1.1.4.1.501",
-            "nspmPasswordPolicyDN",
+            "'nspmPasswordPolicyDN' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )"
         ),
-        (
-            "nspm_prefix",
-            "( 1.2.3.4 NAME 'nspmPasswordPolicy' SYNTAX "
-            "1.3.6.1.4.1.1466.115.121.1.15 )",
-            True,
-            None,
-            "nspmPasswordPolicy",
-        ),
-        (
-            "login_prefix",
-            "( 1.2.3.4 NAME 'loginDisabled' SYNTAX "
-            "1.3.6.1.4.1.1466.115.121.1.7 )",
-            True,
-            None,
-            "loginDisabled",
-        ),
-        (
-            "dirxml_prefix",
-            "( 1.2.3.4 NAME 'dirxml-associations' SYNTAX "
-            "1.3.6.1.4.1.1466.115.121.1.15 )",
-            True,
-            None,
-            "dirxml-associations",
-        ),
-        (
-            "standard_rfc",
-            "( 2.5.4.3 NAME 'cn' SYNTAX "
-            "1.3.6.1.4.1.1466.115.121.1.15 )",
-            False,
-            None,
-            None,
-        ),
+        True,
+        "2.16.840.1.113719.1.1.4.1.501",
+        "nspmPasswordPolicyDN",
     ),
-})
+    (
+        "novell",
+        "nspm_prefix",
+        ("( 1.2.3.4 NAME 'nspmPasswordPolicy' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"),
+        True,
+        None,
+        "nspmPasswordPolicy",
+    ),
+    (
+        "novell",
+        "login_prefix",
+        ("( 1.2.3.4 NAME 'loginDisabled' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 )"),
+        True,
+        None,
+        "loginDisabled",
+    ),
+    (
+        "novell",
+        "dirxml_prefix",
+        ("( 1.2.3.4 NAME 'dirxml-associations' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"),
+        True,
+        None,
+        "dirxml-associations",
+    ),
+    (
+        "novell",
+        "standard_rfc",
+        ("( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"),
+        False,
+        None,
+        None,
+    ),
+)
+
+
+def _server_attribute_cases(server: str) -> t.SequenceOf[m.Tests.AttributeTestCase]:
+    """Build the attribute cases of one server from the flat row table.
+
+    Returns:
+        The resulting ``t.SequenceOf[m.Tests.AttributeTestCase]``.
+    """
+    return tuple(
+        _attribute_case(
+            *row[1:3],
+            expected_can_handle=row[3],
+            expected_oid=row[4],
+            expected_name=row[5],
+        )
+        for row in _ATTRIBUTE_CASE_ROWS
+        if row[0] == server
+    )
 
 
 class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
@@ -731,9 +754,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
 
         DS389_ATTRIBUTE_TEST_CASES: ClassVar[
             t.SequenceOf[m.Tests.AttributeTestCase]
-        ] = tuple(
-            _attribute_case(*case) for case in _SERVER_ATTRIBUTE_CASE_DATA[DS389]
-        )
+        ] = _server_attribute_cases(DS389)
 
         DS389_OBJECTCLASS_TEST_CASES: ClassVar[
             t.SequenceOf[m.Tests.ObjectClassTestCase]
@@ -820,9 +841,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
 
         NOVELL_ATTRIBUTE_TEST_CASES: ClassVar[
             t.SequenceOf[m.Tests.AttributeTestCase]
-        ] = tuple(
-            _attribute_case(*case) for case in _SERVER_ATTRIBUTE_CASE_DATA[NOVELL]
-        )
+        ] = _server_attribute_cases(NOVELL)
 
         NOVELL_OBJECTCLASS_TEST_CASES: ClassVar[
             t.SequenceOf[m.Tests.ObjectClassTestCase]

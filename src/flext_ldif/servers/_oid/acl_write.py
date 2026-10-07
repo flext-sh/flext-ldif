@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping
+from collections.abc import MutableMapping
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
@@ -30,6 +30,7 @@ class FlextLdifServersOidAclWriteMixin(FlextLdifServersRfc.Acl):
             *FlextLdifServersOidConstants.RFC_ACL_ATTRIBUTES,
             *FlextLdifServersOidConstants.OID_ACL_ATTRIBUTES,
         ]
+
     def _authorize_write_permissions(
         self,
         acl_subject: m.Ldif.AclSubject | t.MutableConfigurationMapping,
@@ -64,6 +65,7 @@ class FlextLdifServersOidAclWriteMixin(FlextLdifServersRfc.Acl):
         permissions_dict = self._normalize_permissions_to_dict(acl_permissions)
         permissions_clause = self._format_oid_permissions(permissions_dict)
         return (subject_clause, permissions_clause)
+
     @override
     def _write_acl(
         self,

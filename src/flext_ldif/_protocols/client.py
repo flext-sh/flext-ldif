@@ -49,87 +49,9 @@ class FlextLdifProtocolsClient(Protocol):
         """The validated LDIF settings branch."""
 
     @runtime_checkable
-    class Client(
-        FlextLdifProtocolsBase.ValidationService,
-        FlextLdifProtocolsBase.ServerDetectionService,
-        Protocol,
-    ):
-        """Public contract for the composed LDIF facade."""
-
-        @property
-        def settings(self) -> FlextLdifProtocolsClient.Settings:
-            """The validated runtime settings carried by the facade."""
-            ...
-
-        def migrate(
-            self,
-            input_dir: Path | None = None,
-            output_dir: Path | None = None,
-            source_server: str = c.Ldif.ServerTypes.RFC.value,
-            target_server: str = c.Ldif.ServerTypes.RFC.value,
-            options: FlextLdifProtocolsBase.MigrateOptions | None = None,
-        ) -> p.Result[FlextLdifProtocolsBase.MigrationPipelineResult]:
-            """Run the public LDIF migration pipeline."""
-            ...
-
-        def parse_ldif(
-            self,
-            value: str | Path,
-            *,
-            server_type: str | None = None,
-        ) -> p.Result[FlextLdifProtocolsBase.ParseResponse]:
-            """Parse LDIF content from text or a file path."""
-            ...
-
-        def parse_ldif_file(
-            self,
-            path: Path,
-            server_type: str | None = None,
-            encoding: str = "utf-8",
-        ) -> p.Result[FlextLdifProtocolsBase.ParseResponse]:
-            """Parse LDIF content from a file path."""
-            ...
-
-        def parse_string(
-            self,
-            content: str,
-            server_type: str | None = None,
-        ) -> p.Result[FlextLdifProtocolsBase.ParseResponse]:
-            """Parse LDIF content from a raw string."""
-            ...
-
-        def write(
-            self,
-            entries: Sequence[FlextLdifProtocolsBase.Entry]
-            | FlextLdifProtocolsBase.ParseResponse,
-            *,
-            server_type: str | None = None,
-            format_options: FlextLdifProtocolsBase.WriteFormatOptions | None = None,
-        ) -> p.Result[FlextLdifProtocolsBase.WriteResponse]:
-            """Write canonical LDIF entries to a response."""
-            ...
-
-        def write_ldif_file(
-            self,
-            entries: Sequence[FlextLdifProtocolsBase.Entry]
-            | FlextLdifProtocolsBase.ParseResponse,
-            path: Path,
-            *,
-            server_type: str | None = None,
-            format_options: FlextLdifProtocolsBase.WriteFormatOptions | None = None,
-        ) -> p.Result[FlextLdifProtocolsBase.WriteResponse]:
-            """Write canonical LDIF entries to a file."""
-            ...
-
-        def write_to_string(
-            self,
-            entries: Sequence[FlextLdifProtocolsBase.Entry]
-            | FlextLdifProtocolsBase.ParseResponse,
-            server_type: str | None = None,
-            format_options: FlextLdifProtocolsBase.WriteFormatOptions | None = None,
-        ) -> p.Result[str]:
-            """Write canonical LDIF entries to text."""
-            ...
+    @runtime_checkable
+    class ServerResolutionService(Protocol):
+        """Contract for server registry resolution and model conversion."""
 
         def acl(self, server_type: str) -> p.Result[FlextLdifProtocolsDomain.AclServer]:
             """Resolve an ACL server by server type."""
@@ -228,6 +150,89 @@ class FlextLdifProtocolsClient(Protocol):
             ldif_content: str | None = None,
         ) -> p.Result[str]:
             """Resolve the effective LDAP server type."""
+            ...
+
+    class Client(
+        FlextLdifProtocolsBase.ValidationService,
+        FlextLdifProtocolsBase.ServerDetectionService,
+        ServerResolutionService,
+        Protocol,
+    ):
+        """Public contract for the composed LDIF facade."""
+
+        @property
+        def settings(self) -> FlextLdifProtocolsClient.Settings:
+            """The validated runtime settings carried by the facade."""
+            ...
+
+        def migrate(
+            self,
+            input_dir: Path | None = None,
+            output_dir: Path | None = None,
+            source_server: str = c.Ldif.ServerTypes.RFC.value,
+            target_server: str = c.Ldif.ServerTypes.RFC.value,
+            options: FlextLdifProtocolsBase.MigrateOptions | None = None,
+        ) -> p.Result[FlextLdifProtocolsBase.MigrationPipelineResult]:
+            """Run the public LDIF migration pipeline."""
+            ...
+
+        def parse_ldif(
+            self,
+            value: str | Path,
+            *,
+            server_type: str | None = None,
+        ) -> p.Result[FlextLdifProtocolsBase.ParseResponse]:
+            """Parse LDIF content from text or a file path."""
+            ...
+
+        def parse_ldif_file(
+            self,
+            path: Path,
+            server_type: str | None = None,
+            encoding: str = "utf-8",
+        ) -> p.Result[FlextLdifProtocolsBase.ParseResponse]:
+            """Parse LDIF content from a file path."""
+            ...
+
+        def parse_string(
+            self,
+            content: str,
+            server_type: str | None = None,
+        ) -> p.Result[FlextLdifProtocolsBase.ParseResponse]:
+            """Parse LDIF content from a raw string."""
+            ...
+
+        def write(
+            self,
+            entries: Sequence[FlextLdifProtocolsBase.Entry]
+            | FlextLdifProtocolsBase.ParseResponse,
+            *,
+            server_type: str | None = None,
+            format_options: FlextLdifProtocolsBase.WriteFormatOptions | None = None,
+        ) -> p.Result[FlextLdifProtocolsBase.WriteResponse]:
+            """Write canonical LDIF entries to a response."""
+            ...
+
+        def write_ldif_file(
+            self,
+            entries: Sequence[FlextLdifProtocolsBase.Entry]
+            | FlextLdifProtocolsBase.ParseResponse,
+            path: Path,
+            *,
+            server_type: str | None = None,
+            format_options: FlextLdifProtocolsBase.WriteFormatOptions | None = None,
+        ) -> p.Result[FlextLdifProtocolsBase.WriteResponse]:
+            """Write canonical LDIF entries to a file."""
+            ...
+
+        def write_to_string(
+            self,
+            entries: Sequence[FlextLdifProtocolsBase.Entry]
+            | FlextLdifProtocolsBase.ParseResponse,
+            server_type: str | None = None,
+            format_options: FlextLdifProtocolsBase.WriteFormatOptions | None = None,
+        ) -> p.Result[str]:
+            """Write canonical LDIF entries to text."""
             ...
 
         def validate_entries(

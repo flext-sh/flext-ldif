@@ -90,7 +90,10 @@ from flext_ldif import FlextLdifModels, ldif, u
 
 # Create configuration with custom settings
 settings = FlextLdifModels.Config(
-    max_entries=100000, strict_validation=True, encoding="utf-8", log_level="DEBUG",
+    max_entries=100000,
+    strict_validation=True,
+    encoding="utf-8",
+    log_level="DEBUG",
 )
 
 # Use configuration with API

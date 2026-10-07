@@ -113,34 +113,5 @@ class FlextLdifMetadataJsonCore:
                     f"{current_path_obj}->{update_conversion_path}"
                 )
 
-    @staticmethod
-    def analyze_minimal_differences(
-        original: str,
-        converted: str | None,
-        context: str = "entry",
-    ) -> t.Ldif.MutableMetadataMapping:
-        """Analyze minimal differences between original and converted strings.
-
-        Returns:
-            The resulting ``t.Ldif.MutableMetadataMapping``.
-        """
-        mk = c.Ldif
-        empty_diffs: t.MutableSequenceOf[str] = []
-        differences = dict(
-            t.Cli.JSON_MAPPING_ADAPTER.validate_python({
-                mk.HAS_DIFFERENCES: False,
-                "context": context,
-                "original": original,
-                "converted": converted if converted is not None else original,
-                "differences": empty_diffs,
-                "original_length": len(original),
-                "converted_length": len(converted) if converted else len(original),
-            }),
-        )
-        if converted is None or original == converted:
-            return differences
-        differences[mk.HAS_DIFFERENCES] = True
-        return differences
-
 
 __all__: list[str] = ["FlextLdifMetadataJsonCore"]

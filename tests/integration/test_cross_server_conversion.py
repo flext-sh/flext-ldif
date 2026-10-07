@@ -34,11 +34,7 @@ def _assert_cross_server_identity(
     parse_method: t.Tests.ParseMethod,
     tokens: t.VariadicTuple[str],
 ) -> None:
-    """Render via source, re-parse via target, and assert the identity tokens.
-
-    Raises:
-        AssertionError: If any parse/write outcome fails or a token is missing.
-    """
+    """Render via source, re-parse via target, and assert the identity tokens."""
     parse: Callable[
         [str],
         p.Result[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass],
@@ -76,8 +72,9 @@ class TestsFlextLdifCrossServerConversion:
         oid_schema_server: p.Ldif.SchemaServer,
         oud_schema_server: p.Ldif.SchemaServer,
     ) -> None:
-        """Parsing an OID attribute, rendering it, then parsing with OUD keeps
-        oid/name/syntax.
+        """Parse an OID attribute, render it, then parse it with OUD.
+
+        The oid/name/syntax fields survive the round-trip.
         """
         parse_result = oid_schema_server.parse_server(
             c.Tests.CROSS_SERVER_OID_ATTRIBUTE_ORCLGUID,
@@ -104,8 +101,9 @@ class TestsFlextLdifCrossServerConversion:
         oid_schema_server: p.Ldif.SchemaServer,
         oud_schema_server: p.Ldif.SchemaServer,
     ) -> None:
-        """Parsing an OID objectClass, rendering it, then parsing with OUD keeps
-        oid/name/kind/sup.
+        """Parse an OID objectClass, render it, then parse it with OUD.
+
+        The oid/name/kind/sup fields survive the round-trip.
         """
         parse_result = oid_schema_server.parse_server(
             c.Tests.CROSS_SERVER_OID_OBJECTCLASS_ORCLCONTAINER,
@@ -165,8 +163,9 @@ class TestsFlextLdifCrossServerConversion:
         conversion_matrix: FlextLdifConversion,
         oid_acl_server: p.Ldif.AclServer,
     ) -> None:
-        """convert_model(OID->RFC) yields an Acl retagged to RFC with a rendered
-        raw_acl.
+        """Convert an OID ACL to RFC with a rendered ``raw_acl``.
+
+        The converted Acl is retagged to RFC.
         """
         parse_result = oid_acl_server.parse_server(
             c.Tests.CROSS_SERVER_OID_ACL_ANONYMOUS,
@@ -191,8 +190,9 @@ class TestsFlextLdifCrossServerConversion:
         oud_schema_server: p.Ldif.SchemaServer,
         oid_schema_fixture: str,
     ) -> None:
-        """Every parseable Oracle attribute in the OID fixture round-trips to OUD with
-        oid/name intact.
+        """Round-trip every parseable Oracle attribute from OID to OUD.
+
+        The oid/name fields stay intact.
         """
         oracle_attr_defs = [
             line.split(":", 1)[1].strip()
@@ -238,8 +238,9 @@ class TestsFlextLdifCrossServerConversion:
         conversion_matrix: FlextLdifConversion,
         oud_server: FlextLdifServersBase,
     ) -> None:
-        """A full-featured server advertises support for every convertible model
-        kind.
+        """Advertise support for every convertible model kind.
+
+        A full-featured server resolves every kind.
         """
         supported = conversion_matrix.resolve_supported_conversions(oud_server)
         tm.that(supported["attribute"], eq=True)
@@ -280,8 +281,9 @@ class TestsFlextLdifCrossServerConversion:
         oud_server: FlextLdifServersBase,
         oid_server: FlextLdifServersBase,
     ) -> None:
-        """Converting a batch of OUD attributes to OID preserves each distinct attribute
-        name.
+        """Convert a batch of OUD attributes to OID.
+
+        Each distinct attribute name is preserved.
         """
         oud_attr_strings: t.SequenceOf[str] = [
             c.Tests.CROSS_SERVER_OUD_ATTRIBUTE_ORCLGUID,
@@ -311,8 +313,9 @@ class TestsFlextLdifCrossServerConversion:
         oud_server: FlextLdifServersBase,
         oid_server: FlextLdifServersBase,
     ) -> None:
-        """OUD->RFC->OID->RFC->OUD keeps the Oracle oid and name in the final rendered
-        text.
+        """Chain OUD->RFC->OID->RFC->OUD conversions.
+
+        The Oracle oid and name survive in the final rendered text.
         """
         rendered = c.Tests.CROSS_SERVER_OUD_ATTRIBUTE_ORCLGUID
         servers = (
@@ -336,8 +339,9 @@ class TestsFlextLdifCrossServerConversion:
         oud_server: FlextLdifServersBase,
         oid_server: FlextLdifServersBase,
     ) -> None:
-        """Converting an entry with null dn/attributes yields a failure result with an
-        error message.
+        """Convert an entry with a null DN and null attributes.
+
+        The result fails with an error message.
         """
         invalid_model = m.Ldif.Entry(dn=None, attributes=None)
         result = conversion_matrix.convert_model(oud_server, oid_server, invalid_model)

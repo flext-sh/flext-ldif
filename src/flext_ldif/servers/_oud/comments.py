@@ -138,7 +138,11 @@ class FlextLdifServersOudCommentsMixin(FlextLdifServersOudCommentsAclMixin):
         entry: m.Ldif.Entry,
         format_options: m.Ldif.WriteFormatOptions | None = None,
     ) -> None:
-        """Add transformation comments for attribute changes, including OUD-specific ACL
+        """Add transformation comments for attribute changes.
+
+        Includes OUD-specific ACL handling.
+
+
         handling.
         """
         if not entry.metadata:
@@ -184,9 +188,11 @@ class FlextLdifServersOudCommentsMixin(FlextLdifServersOudCommentsAclMixin):
             for attr_name in entry.metadata.attribute_transformations
             if attr_name.lower() not in acl_attr_names_to_skip
         ]
-        ordered_attr_names = FlextLdifServersOudTransformMixin.determine_attribute_order(
-            attr_names,
-            format_options,
+        ordered_attr_names = (
+            FlextLdifServersOudTransformMixin.determine_attribute_order(
+                attr_names,
+                format_options,
+            )
         )
         for attr_name in ordered_attr_names:
             transformation = entry.metadata.attribute_transformations[attr_name]
@@ -228,9 +234,11 @@ class FlextLdifServersOudCommentsMixin(FlextLdifServersOudCommentsAclMixin):
             if u.matches_type(attr_name, str)
             and attr_name.lower() not in acl_attr_names_to_skip
         ]
-        ordered_removed_attrs = FlextLdifServersOudTransformMixin.determine_attribute_order(
-            removed_attr_names,
-            format_options,
+        ordered_removed_attrs = (
+            FlextLdifServersOudTransformMixin.determine_attribute_order(
+                removed_attr_names,
+                format_options,
+            )
         )
         for attr_name in ordered_removed_attrs:
             if attr_name.lower() in processed_attrs:

@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Annotated, ClassVar, Self, override
 
 from flext_ldif import c, m, p, r, s, t, u
@@ -359,6 +360,48 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         msg = "ACL servers must implement _parse_acl"
         raise NotImplementedError(msg)
 
+    @staticmethod
+    def _parse_dialect_acl(
+        acl_line: str,
+        parser: Callable[[str], p.Result[m.Ldif.Acl]],
+        context: str,
+    ) -> p.Result[m.Ldif.Acl]:
+        """Parse through one dialect parser, converting typed parse errors.
+
+        Args:
+            acl_line: The raw ACL line to parse.
+            parser: The dialect-specific ACL parser callable.
+            context: The operation context for the typed failure.
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.Acl]``.
+        """
+        try:
+            return parser(acl_line)
+        except c.EXC_BASIC_TYPE as exc:
+            return r[m.Ldif.Acl].fail_op(context, exc)
+
+    @staticmethod
+    def _write_dialect_acl(
+        acl_data: m.Ldif.Acl,
+        writer: Callable[[m.Ldif.Acl], p.Result[str]],
+        context: str,
+    ) -> p.Result[str]:
+        """Write through one dialect writer, converting typed write errors.
+
+        Args:
+            acl_data: The canonical ACL to write.
+            writer: The dialect-specific ACL writer callable.
+            context: The operation context for the typed failure.
+
+        Returns:
+            The resulting ``p.Result[str]``.
+        """
+        try:
+            return writer(acl_data)
+        except c.EXC_BASIC_TYPE as exc:
+            return r[str].fail_op(context, exc)
+
     def _resolve_data(
         self,
         data: str | m.Ldif.Acl | None,
@@ -386,20 +429,7 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         """
         if operation is not None:
             return operation
-        return self._parse_operation_kwarg(kwargs).unwrap()
-
-    @staticmethod
-    def _parse_operation_kwarg(kwargs: t.JsonMapping) -> p.Result[str]:
-        """Validate the raw 'operation' kwarg as a string, propagating failures.
-
-        Returns:
-            The resulting ``p.Result[str]``.
-        """
-        try:
-            operation_raw = t.str_adapter().validate_python(kwargs.get("operation"))
-        except c.ValidationError as exc:
-            return r[str].fail(str(exc), exception=exc)
-        return r[str].ok(operation_raw)
+        return self.parse_operation_kwarg(kwargs).unwrap()
 
     def _supports_feature(self, _feature_id: str) -> bool:
         """Check if this server supports a specific feature."""

@@ -16,7 +16,6 @@ from tests import c, m, t
 
 if TYPE_CHECKING:
     from collections.abc import MutableMapping
-
     from pathlib import Path
 
 
@@ -58,8 +57,9 @@ class TestsLdifEntryBuildersMixin:
 
     @classmethod
     def orclaci_base_dn_entry(cls, dn: str = "cn=users,dc=ctbc") -> m.Ldif.Entry:
-        """Build a real LDIF entry carrying an out-of-scope OID orclaci for
-        # base-DN filter tests.
+        """Build a real LDIF entry with an out-of-scope ``orclaci`` OID line.
+
+        The OID line doubles as a base-DN filter test payload.
 
         Returns:
             The resulting ``m.Ldif.Entry``.

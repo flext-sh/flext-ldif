@@ -145,6 +145,7 @@ class TestsLdapClientMixin:
         server: p.Ldap.Ldap3Server,
         user: str,
         password: str,
+        *,
         auto_bind: bool = True,
         receive_timeout: int | None = None,
     ) -> p.Ldap.Ldap3Connection:

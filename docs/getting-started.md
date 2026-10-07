@@ -143,9 +143,7 @@ api = ldif()
 # Prepare a sample LDIF file
 ldif_path = Path("directory.ldif")
 sample_ldif = (
-    "dn: cn=John Doe,ou=People,dc=example,dc=com\n"
-    "cn: John Doe\n"
-    "objectClass: person\n"
+    "dn: cn=John Doe,ou=People,dc=example,dc=com\ncn: John Doe\nobjectClass: person\n"
 )
 ldif_path.write_text(sample_ldif, encoding="utf-8")
 

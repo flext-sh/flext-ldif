@@ -33,17 +33,28 @@ class FlextLdifModelsDomainEntry:
     """Namespace for LDIF entry domain models."""
 
     EntryStatistics = FlextLdifModelsDomainEntryStatistics
-    """Canonical entry statistics model (implementation module: domain_entry_statistics)."""
+    """Canonical entry statistics model.
+
+    Implementation module: ``domain_entry_statistics``.
+    """
 
     Control = FlextLdifModelsDomainEntryControl
-    """Canonical RFC 2849 control line model (implementation module: domain_entry_change)."""
+    """Canonical RFC 2849 control line model.
+
+    Implementation module: ``domain_entry_change``.
+    """
 
     ChangeOperationValue = FlextLdifModelsDomainEntryChangeOperationValue
-    """Canonical modify-operation value model (implementation module: domain_entry_change)."""
+    """Canonical modify-operation value model.
+
+    Implementation module: ``domain_entry_change``.
+    """
 
     ChangeOperation = FlextLdifModelsDomainEntryChangeOperation
-    """Canonical RFC 2849 modify operation model (implementation module: domain_entry_change)."""
+    """Canonical RFC 2849 modify operation model.
 
+    Implementation module: ``domain_entry_change``.
+    """
 
     class Entry(m.Entity, m.DynamicModel):
         """LDIF entry domain model.
@@ -241,7 +252,8 @@ class FlextLdifModelsDomainEntry:
         @u.computed_field
         @property
         def attributes_dict(self) -> t.MutableStrSequenceMapping:
-            """Protocol compliance: p.Ldif.Entry.Entry requires attributes:
+            """Protocol compliance: p.Ldif.Entry.Entry requires attributes:.
+
             dict[str, list[str]].
 
             Returns the attributes as a dict for protocol compatibility.
@@ -266,7 +278,8 @@ class FlextLdifModelsDomainEntry:
         @u.computed_field
         @property
         def unconverted_attributes(self) -> t.Ldif.UnconvertedAttributes:
-            """The unconverted attributes from metadata extensions (read-only view, DRY
+            """The unconverted attributes from metadata extensions (read-only view, DRY.
+
             pattern).
             """
             empty_attrs: t.Ldif.UnconvertedAttributes = {}
@@ -320,7 +333,10 @@ class FlextLdifModelsDomainEntry:
             cls,
             data_dict: MutableMapping[str, t.JsonValue | datetime | mdm.ServerMetadata],
         ) -> None:
-            """Coerce ISO datetime strings in place (strict mode lacks auto-coercion)."""
+            """Coerce ISO datetime strings in place.
+
+            Strict mode lacks auto-coercion.
+            """
             for dt_field in cls._DATETIME_FIELDS:
                 field_value = data_dict.get(dt_field)
                 if isinstance(field_value, str):
@@ -334,7 +350,11 @@ class FlextLdifModelsDomainEntry:
             cls,
             server_type_value: t.JsonValue | None,
         ) -> c.Ldif.ServerTypes:
-            """Coerce a raw server-type token into the enum, defaulting to RFC."""
+            """Coerce a raw server-type token into the enum.
+
+            Returns:
+                The parsed server type, defaulting to RFC.
+            """
             if isinstance(server_type_value, str):
                 try:
                     return c.Ldif.ServerTypes(server_type_value)
@@ -466,8 +486,8 @@ class FlextLdifModelsDomainEntry:
                 "server_specific_violations": list[str](),
                 "context": context_payload,
             })
-            self.metadata.validation_results = (
-                mdm.ValidationMetadata.model_validate(payload)
+            self.metadata.validation_results = mdm.ValidationMetadata.model_validate(
+                payload,
             )
 
         @u.model_validator(mode="after")

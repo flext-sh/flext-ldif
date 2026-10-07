@@ -19,7 +19,7 @@ class FlextLdifACLPermissions:
     )
 
     @staticmethod
-    def _is_acl_subject_type(value: str) -> TypeIs[c.Ldif.AclSubjectType]:
+    def is_acl_subject_type(value: str) -> TypeIs[c.Ldif.AclSubjectType]:
         """Type guard to check if a string is a valid ACL subject enum value.
 
         Returns:
@@ -124,9 +124,7 @@ class FlextLdifACLPermissions:
         for perm_name, perm_value in normalized_orig_perms.items():
             if perm_name == "browse":
                 mapped_perms["read"] = mapped_perms.get("read", False) or perm_value
-                mapped_perms["search"] = (
-                    mapped_perms.get("search", False) or perm_value
-                )
+                mapped_perms["search"] = mapped_perms.get("search", False) or perm_value
                 continue
             if perm_name == "selfwrite":
                 mapped_perms["write"] = mapped_perms.get("write", False) or perm_value

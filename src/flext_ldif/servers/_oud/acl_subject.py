@@ -112,8 +112,8 @@ class FlextLdifServersOudAclSubjectMixin(FlextLdifServersRfc.Acl):
             )
         return (base_dn, subject_type, subject_value)
 
+    @staticmethod
     def _resolved_bind_rules_subject_type(
-        self,
         subject: m.Ldif.AclSubject | None,
         source_subject_type: str | None,
     ) -> str:

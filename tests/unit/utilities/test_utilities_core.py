@@ -263,6 +263,10 @@ class TestsFlextLdifUtilitiesCore:
 
     # ---- Attribute-name normalization --------------------------------
 
+
+class TestsFlextLdifUtilitiesCoreSchemaAndLdif:
+    """Schema normalization and LDIF line behavior."""
+
     @staticmethod
     def test_normalize_name_strips_binary_suffix_and_normalizes_separators() -> None:
         """normalize_name drops ';binary' and canonicalizes underscores."""

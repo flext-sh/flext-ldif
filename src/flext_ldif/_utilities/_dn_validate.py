@@ -40,7 +40,7 @@ class FlextLdifDNValidation:
 
     @staticmethod
     def _consume_dn_escape(dn_str: str, i: int) -> int | None:
-        """Return the next index after a valid escape at ``i``, else ``None``.
+        r"""Return the next index after a valid escape at ``i``, else ``None``.
 
         Hex escapes (``\\\\XX``) consume three characters; escaped specials and
         UTF-8 lead bytes consume the backslash only.

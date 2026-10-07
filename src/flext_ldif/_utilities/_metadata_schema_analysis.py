@@ -10,12 +10,8 @@ from collections.abc import Callable
 
 from flext_ldif import FlextLdifModels, c, t
 from flext_ldif._utilities._metadata_match import FlextLdifMetadataMatchDetails
-from flext_ldif._utilities._metadata_name_desc import (
-    FlextLdifMetadataNameDescDetails,
-)
-from flext_ldif._utilities._metadata_prefix import (
-    FlextLdifMetadataPrefixDetails,
-)
+from flext_ldif._utilities._metadata_name_desc import FlextLdifMetadataNameDescDetails
+from flext_ldif._utilities._metadata_prefix import FlextLdifMetadataPrefixDetails
 from flext_ldif._utilities._metadata_syntax_origin import (
     FlextLdifMetadataSyntaxOriginDetails,
 )
@@ -99,17 +95,17 @@ class FlextLdifMetadataSchemaAnalysis:
                 t.MappingKV[str, str | bool | int | t.MutableSequenceOf[str] | None],
             ]
         ] = [
-            FlextLdifMetadataPrefixDetails._extract_prefix_details,
-            FlextLdifMetadataSyntaxOriginDetails._extract_oid_details,
-            FlextLdifMetadataSyntaxOriginDetails._extract_syntax_details,
-            FlextLdifMetadataNameDescDetails._extract_name_details,
-            FlextLdifMetadataNameDescDetails._extract_desc_details,
-            FlextLdifMetadataSyntaxOriginDetails._extract_x_origin_details,
-            FlextLdifMetadataSyntaxOriginDetails._extract_obsolete_details,
-            FlextLdifMetadataMatchDetails._extract_leading_trailing_spaces,
-            FlextLdifMetadataMatchDetails._extract_matching_rule_details,
-            FlextLdifMetadataMatchDetails._extract_sup_details,
-            FlextLdifMetadataMatchDetails._extract_single_value_details,
+            FlextLdifMetadataPrefixDetails.extract_prefix_details,
+            FlextLdifMetadataSyntaxOriginDetails.extract_oid_details,
+            FlextLdifMetadataSyntaxOriginDetails.extract_syntax_details,
+            FlextLdifMetadataNameDescDetails.extract_name_details,
+            FlextLdifMetadataNameDescDetails.extract_desc_details,
+            FlextLdifMetadataSyntaxOriginDetails.extract_x_origin_details,
+            FlextLdifMetadataSyntaxOriginDetails.extract_obsolete_details,
+            FlextLdifMetadataMatchDetails.extract_leading_trailing_spaces,
+            FlextLdifMetadataMatchDetails.extract_matching_rule_details,
+            FlextLdifMetadataMatchDetails.extract_sup_details,
+            FlextLdifMetadataMatchDetails.extract_single_value_details,
         ]
         for extractor in extractors:
             extracted_raw = extractor(definition)
@@ -124,11 +120,13 @@ class FlextLdifMetadataSchemaAnalysis:
         field_positions_payload: t.JsonDict = dict(field_positions)
         combined["field_order"] = field_order_payload
         combined["field_positions"] = field_positions_payload
-        spacing_result = FlextLdifMetadataSchemaAnalysis._extract_spacing_between_fields(
-            definition,
-            field_order,
-            field_positions,
-            dict(_FIELD_PATTERNS),
+        spacing_result = (
+            FlextLdifMetadataSchemaAnalysis._extract_spacing_between_fields(
+                definition,
+                field_order,
+                field_positions,
+                dict(_FIELD_PATTERNS),
+            )
         )
         spacing_payload: t.JsonDict = dict(spacing_result)
         combined["spacing_between_fields"] = spacing_payload
@@ -192,8 +190,8 @@ class FlextLdifMetadataSchemaAnalysis:
         definition: str,
     ) -> None:
         """Preserve complete schema formatting details for round-trip."""
-        formatting_details = (
-            FlextLdifMetadataSchemaAnalysis.analyze_schema_formatting(definition)
+        formatting_details = FlextLdifMetadataSchemaAnalysis.analyze_schema_formatting(
+            definition,
         )
         target: FlextLdifModels.Ldif.ServerMetadata = metadata
         target.schema_format_details = formatting_details

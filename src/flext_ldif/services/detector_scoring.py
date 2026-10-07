@@ -202,7 +202,8 @@ class FlextLdifDetectorScoring(s):
         content: str,
         scores: t.MutableIntMapping,
     ) -> None:
-        """Update scores for a server type based on constants-defined detection
+        """Update scores for a server type based on constants-defined detection.
+
         signals.
         """
         _, pattern_attr, case_sensitive = score_spec
@@ -229,8 +230,6 @@ class FlextLdifDetectorScoring(s):
             if (server_type_lower in (item_lower := item.lower()))
             or (item_lower in server_type_lower)
         )
-
-
 
 
 __all__: list[str] = ["FlextLdifDetectorScoring"]

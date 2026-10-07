@@ -612,7 +612,9 @@ def enable_debug_mode() -> FlextLdif:
 
     # Create debug configuration
     debug_config = FlextLdifModels.Config(
-        strict_validation=True, ignore_unknown_attributes=False, log_level="DEBUG",
+        strict_validation=True,
+        ignore_unknown_attributes=False,
+        log_level="DEBUG",
     )
 
     api = ldif(settings=debug_config)

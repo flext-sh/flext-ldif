@@ -7,7 +7,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import r
-
 from flext_ldif import c, m, p, t
 from flext_ldif._utilities._acl_extract import FlextLdifACLExtraction
 from flext_ldif._utilities._acl_format import FlextLdifACLFormatting
@@ -259,7 +258,7 @@ class FlextLdifACLParsing:
             }),
             subject=m.Ldif.AclSubject(
                 subject_type=subject_type
-                if FlextLdifACLPermissions._is_acl_subject_type(subject_type)
+                if FlextLdifACLPermissions.is_acl_subject_type(subject_type)
                 else c.Ldif.AclSubjectType.USER,
                 subject_value=subject_value,
             ),

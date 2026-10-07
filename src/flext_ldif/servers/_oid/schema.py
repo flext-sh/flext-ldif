@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, MutableMapping
+from collections.abc import Callable, Mapping
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
@@ -89,8 +89,8 @@ class FlextLdifServersOidSchema(
             "name": attr_data.name,
         }
 
+    @staticmethod
     def _guarded_post_parse[T](
-        self,
         item: T,
         normalize: Callable[[T], T],
         item_kind: str,
@@ -108,8 +108,8 @@ class FlextLdifServersOidSchema(
             )
             return r[T].fail_op(f"OID post-parse {item_kind} hook", e)
 
+    @staticmethod
     def _guarded_parse[T](
-        self,
         definition: str,
         parse: Callable[[str], p.Result[T]],
         item_kind: str,
@@ -143,7 +143,6 @@ class FlextLdifServersOidSchema(
             "attribute",
         )
 
-
     @override
     def _hook_post_parse_objectclass(
         self,
@@ -159,11 +158,6 @@ class FlextLdifServersOidSchema(
             self._normalize_oid_objectclass,
             "objectclass",
         )
-
-
-
-
-
 
     @override
     def _parse_attribute(
@@ -306,7 +300,6 @@ class FlextLdifServersOidSchema(
             x_alias=attr_data.x_alias,
             x_oid=attr_data.x_oid,
         )
-
 
     def _oid_matching_rules(
         self,

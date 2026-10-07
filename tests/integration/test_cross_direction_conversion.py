@@ -27,7 +27,6 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from flext_core import t
-
     from tests import p
 
 pytestmark = [pytest.mark.integration]
@@ -42,8 +41,6 @@ def _resolve_schema_server(
     Returns:
         The resulting ``p.Ldif.SchemaServer``.
 
-    Raises:
-        AssertionError: If the server type does not resolve.
     """
     schema = registry.resolve_schema_server(server_type)
     assert schema is not None
@@ -55,12 +52,7 @@ def _assert_definition_roundtrip(
     case: tuple[str, str, str, t.VariadicTuple[str], t.VariadicTuple[str]],
     parse_method: t.Tests.ParseMethod,
 ) -> None:
-    """Parse the definition in the source server and write it in the target.
-
-    Raises:
-        AssertionError: If any parse/write outcome fails or a written token is
-            missing or present against expectations.
-    """
+    """Parse the definition in the source server and write it in the target."""
     source, target, definition, must_contain, must_not_contain = case
     source_schema = _resolve_schema_server(registry, source)
     target_schema = _resolve_schema_server(registry, target)
@@ -120,9 +112,11 @@ class TestsFlextLdifCrossDirectionConversion:
                 (
                     "oid",
                     "oud",
-                    "( 2.16.840.1.113894.1.1.327 NAME 'orclDASUIType' "
-                    "EQUALITY caseIgnoreSubstringsMatch "
-                    "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )",
+                    (
+                        "( 2.16.840.1.113894.1.1.327 NAME 'orclDASUIType' "
+                        "EQUALITY caseIgnoreSubstringsMatch "
+                        "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )"
+                    ),
                     ("SUBSTR caseIgnoreSubstringsMatch",),
                     ("EQUALITY caseIgnoreSubstringsMatch",),
                 ),
@@ -132,8 +126,10 @@ class TestsFlextLdifCrossDirectionConversion:
                 (
                     "oid",
                     "oud",
-                    "( 2.16.840.1.113894.1.1.1 NAME 'orclIsEnabled' "
-                    "SYNTAX 1.3.6.1.4.1.1466.115.121.1.1 SINGLE-VALUE )",
+                    (
+                        "( 2.16.840.1.113894.1.1.1 NAME 'orclIsEnabled' "
+                        "SYNTAX 1.3.6.1.4.1.1466.115.121.1.1 SINGLE-VALUE )"
+                    ),
                     ("1.3.6.1.4.1.1466.115.121.1.15",),
                     ("SYNTAX 1.3.6.1.4.1.1466.115.121.1.1 SINGLE-VALUE",),
                 ),
@@ -143,9 +139,11 @@ class TestsFlextLdifCrossDirectionConversion:
                 (
                     "oud",
                     "oid",
-                    "( 1.3.6.1.4.1.26027.1.1.1 NAME 'ds-sync-hist' "
-                    "EQUALITY caseIgnoreMatch "
-                    "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+                    (
+                        "( 1.3.6.1.4.1.26027.1.1.1 NAME 'ds-sync-hist' "
+                        "EQUALITY caseIgnoreMatch "
+                        "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+                    ),
                     ("caseIgnoreMatch",),
                     ("accessDirectiveMatch",),
                 ),
@@ -155,9 +153,11 @@ class TestsFlextLdifCrossDirectionConversion:
                 (
                     "oud",
                     "oud",
-                    "( 1.3.6.1.4.1.26027.1.1.1 NAME 'ds-sync-hist' "
-                    "EQUALITY caseIgnoreMatch "
-                    "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+                    (
+                        "( 1.3.6.1.4.1.26027.1.1.1 NAME 'ds-sync-hist' "
+                        "EQUALITY caseIgnoreMatch "
+                        "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+                    ),
                     ("ds-sync-hist",),
                     (),
                 ),
@@ -183,8 +183,10 @@ class TestsFlextLdifCrossDirectionConversion:
                 (
                     "oid",
                     "oud",
-                    "( 2.16.840.1.113894.1.2.64 NAME 'orclReferenceObject' "
-                    "SUP 'top' STRUCTURAL MAY ( orclOwnerGUID $ seeAlso ) )",
+                    (
+                        "( 2.16.840.1.113894.1.2.64 NAME 'orclReferenceObject' "
+                        "SUP 'top' STRUCTURAL MAY ( orclOwnerGUID $ seeAlso ) )"
+                    ),
                     ("SUP top",),
                     ("SUP 'top'",),
                 ),
@@ -194,8 +196,10 @@ class TestsFlextLdifCrossDirectionConversion:
                 (
                     "oid",
                     "oid",
-                    "( 2.16.840.1.113894.1.2.50 NAME 'orclTestOC' "
-                    "SUP top STRUCTURAL MUST cn MAY ( sn $ description ) )",
+                    (
+                        "( 2.16.840.1.113894.1.2.50 NAME 'orclTestOC' "
+                        "SUP top STRUCTURAL MUST cn MAY ( sn $ description ) )"
+                    ),
                     ("orclTestOC", "SUP top", "STRUCTURAL"),
                     (),
                 ),
@@ -205,8 +209,10 @@ class TestsFlextLdifCrossDirectionConversion:
                 (
                     "oud",
                     "oud",
-                    "( 1.3.6.1.4.1.26027.1.2.1 NAME 'ds-root-dse' "
-                    "SUP top STRUCTURAL MAY cn )",
+                    (
+                        "( 1.3.6.1.4.1.26027.1.2.1 NAME 'ds-root-dse' "
+                        "SUP top STRUCTURAL MAY cn )"
+                    ),
                     ("ds-root-dse", "STRUCTURAL"),
                     (),
                 ),

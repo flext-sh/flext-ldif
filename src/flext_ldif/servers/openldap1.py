@@ -128,9 +128,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         @classmethod
         def _accepts_openldap1_definition(
             cls,
-            definition: str
-            | m.Ldif.SchemaAttribute
-            | m.Ldif.SchemaObjectClass,
+            definition: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
             definition_re: t.Ldif.RegexPattern,
         ) -> bool:
             """Match one definition against OpenLDAP 1.x shape, rejecting olc.
@@ -144,8 +142,8 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 return not cls._has_olc_marker(definition)
             return not cls._has_olc_marker(definition.oid, definition.name)
 
+        @staticmethod
         def _parse_stripped_openldap1_definition[T](
-            self,
             definition: str,
             prefix_re: t.Ldif.RegexPattern,
             parse: Callable[[str], p.Result[T]],

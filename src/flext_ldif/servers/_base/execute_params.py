@@ -174,10 +174,7 @@ def _perform_registration(
     if register_func is None:
         return
     required_methods = ("parse", "write")
-    if all(
-        callable(getattr(instance, method, None))
-        for method in required_methods
-    ):
+    if all(callable(getattr(instance, method, None)) for method in required_methods):
         register_func("auto", instance)
 
 

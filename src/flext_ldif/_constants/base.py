@@ -23,30 +23,6 @@ if TYPE_CHECKING:
     from flext_ldif.typings import FlextLdifTypes as t
 
 
-def constants_sub_pattern(
-    pattern: str,
-    replacement: str,
-    value: str,
-    *,
-    ignorecase: bool = False,
-    count: int = 0,
-) -> str:
-    """Substitute matches of a runtime-supplied regex pattern in ``value``.
-
-    Sole sanctioned ``re.sub`` entry-point for runtime patterns; the compiled
-    pattern is built via ``FlextLdifConstantsBase.compile_pattern`` and re-used.
-    Exposed on ``FlextLdifConstantsBase`` as ``sub_pattern``.
-
-    Returns:
-        The resulting ``str``.
-    """
-    substituted: str = FlextLdifConstantsBase.compile_pattern(
-        pattern,
-        ignorecase=ignorecase,
-    ).sub(replacement, value, count=count)
-    return substituted
-
-
 class FlextLdifConstantsBase:
     """Base and foundational LDIF constants."""
 
@@ -330,8 +306,6 @@ class FlextLdifConstantsBase:
         """
         return re.escape(value)
 
-    sub_pattern = staticmethod(constants_sub_pattern)
-
     # Schema metadata keys
     SCHEMA_ORIGINAL_FORMAT: ClassVar[str] = "schema_original_format"
     SCHEMA_ORIGINAL_STRING_COMPLETE: ClassVar[str] = "schema_original_string_complete"
@@ -507,9 +481,20 @@ class FlextLdifConstantsBase:
     )
 
     ALL_DN_VALUED: Final[frozenset[str]] = frozenset((
-        "member", "uniqueMember", "owner", "managedBy", "manager",
-        "secretary", "seeAlso", "parent", "refersTo", "memberOf",
-        "groups", "authorizedTo", "hasSubordinates", "subordinateDn",
+        "member",
+        "uniqueMember",
+        "owner",
+        "managedBy",
+        "manager",
+        "secretary",
+        "seeAlso",
+        "parent",
+        "refersTo",
+        "memberOf",
+        "groups",
+        "authorizedTo",
+        "hasSubordinates",
+        "subordinateDn",
     ))
 
     OID_TRUE: Final[str] = "1"

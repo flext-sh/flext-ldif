@@ -18,6 +18,7 @@ class FlextLdifServersEntryLineEmitter:
     def __init__(
         self,
         entry: m.Ldif.Entry,
+        *,
         normalize_attribute_names: bool,
         use_original_acl_format_as_name: bool,
         acl_original_format: str | None,
@@ -70,7 +71,8 @@ class FlextLdifServersEntryLineEmitter:
             return f"{effective_name}:: {encoded}"
         return f"{effective_name}: {effective_value}"
 
-    def control_line(self, control: m.Ldif.Control) -> str:
+    @staticmethod
+    def control_line(control: m.Ldif.Control) -> str:
         """Serialize RFC 2849 control line.
 
         Returns:
@@ -140,12 +142,10 @@ class FlextLdifServersEntryLineEmitter:
         if attr_name.lower() != "aci" or not self._acl_original_format:
             return value
         safe_acl_name = self._acl_original_format.replace('"', "'")
-        replaced_acl_name: str = c.Ldif.sub_pattern(
+        replaced_acl_name: str = c.Ldif.compile_pattern(
             r'acl\\s+"[^"]*"',
-            f'acl "{safe_acl_name}"',
-            value,
-            count=1,
-        )
+            ignorecase=False,
+        ).sub(f'acl "{safe_acl_name}"', value, count=1)
         return replaced_acl_name
 
 

@@ -54,16 +54,20 @@ class FlextLdifEntryOidRfcTransforming:
         current_attrs = dict(attributes_model.attributes)
         transformed_attrs: t.MutableStrSequenceMapping | None = None
         if source_type_norm == "oid" and target_type_norm == "rfc":
-            transformed_attrs = FlextLdifEntryOidRfcTransforming.remap_oid_rfc_attributes(
-                current_attrs,
-                attribute_mapping=c.Ldif.ATTRIBUTE_TRANSFORMATION_OID_TO_RFC,
-                boolean_value_mapping=c.Ldif.OID_TO_RFC_BOOL,
+            transformed_attrs = (
+                FlextLdifEntryOidRfcTransforming.remap_oid_rfc_attributes(
+                    current_attrs,
+                    attribute_mapping=c.Ldif.ATTRIBUTE_TRANSFORMATION_OID_TO_RFC,
+                    boolean_value_mapping=c.Ldif.OID_TO_RFC_BOOL,
+                )
             )
         elif source_type_norm == "rfc" and target_type_norm == "oid":
-            transformed_attrs = FlextLdifEntryOidRfcTransforming.remap_oid_rfc_attributes(
-                current_attrs,
-                attribute_mapping=c.Ldif.ATTRIBUTE_TRANSFORMATION_RFC_TO_OID,
-                boolean_value_mapping=c.Ldif.RFC_TO_OID_BOOL,
+            transformed_attrs = (
+                FlextLdifEntryOidRfcTransforming.remap_oid_rfc_attributes(
+                    current_attrs,
+                    attribute_mapping=c.Ldif.ATTRIBUTE_TRANSFORMATION_RFC_TO_OID,
+                    boolean_value_mapping=c.Ldif.RFC_TO_OID_BOOL,
+                )
             )
         return transformed_attrs
 

@@ -6,10 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping
-from typing import override
+from collections.abc import MutableMapping
 
-from flext_ldif import c, m, p, r, t, u
+from flext_ldif import c, m, t, u
 from flext_ldif.servers._oid.server_constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
@@ -56,28 +55,39 @@ class FlextLdifServersOidEntryBooleanMixin(FlextLdifServersRfc.Entry):
                 )
                 if converted_values != original_values:
                     converted_attrs.add(attr_name)
-                    original_format_str = (
-                        f"{oid_constants.ONE_OID}/{oid_constants.ZERO_OID}"
+                    boolean_conversions[attr_name] = (
+                        FlextLdifServersOidEntryBooleanMixin._boolean_conversion_record(
+                            original_values,
+                            converted_values,
+                        )
                     )
-                    converted_format_str = f"{c.Ldif.TRUE_RFC}/{c.Ldif.FALSE_RFC}"
-                    conversion_dict: MutableMapping[
-                        str,
-                        str | t.MutableSequenceOf[str],
-                    ] = {}
-                    original_key: str = c.Ldif.CONVERSION_ORIGINAL_VALUE
-                    converted_key: str = c.Ldif.CONVERSION_CONVERTED_VALUE
-                    format_key: str = c.Ldif.ORIGINAL_FORMAT
-                    conversion_dict[original_key] = original_values
-                    conversion_dict[converted_key] = converted_values
-                    conversion_dict["conversion_type"] = "boolean_oid_to_rfc"
-                    conversion_dict[format_key] = original_format_str
-                    conversion_dict["converted_format"] = converted_format_str
-                    boolean_conversions[attr_name] = conversion_dict
                     FlextLdifServersOidEntryBooleanMixin._module_logger.debug(
                         "Converted boolean attribute OID→RFC",
                         attribute_name=attr_name,
                     )
         return (converted_attributes, converted_attrs, boolean_conversions)
+
+    @staticmethod
+    def _boolean_conversion_record(
+        original_values: t.MutableSequenceOf[str],
+        converted_values: t.MutableSequenceOf[str],
+    ) -> MutableMapping[str, str | t.MutableSequenceOf[str]]:
+        """Build one OID→RFC boolean conversion metadata record.
+
+        Returns:
+            The resulting ``MutableMapping[str, str | t.MutableSequenceOf[str]]``.
+        """
+        oid_constants = FlextLdifServersOidConstants
+        return {
+            c.Ldif.CONVERSION_ORIGINAL_VALUE: original_values,
+            c.Ldif.CONVERSION_CONVERTED_VALUE: converted_values,
+            "conversion_type": "boolean_oid_to_rfc",
+            c.Ldif.ORIGINAL_FORMAT: (
+                f"{oid_constants.ONE_OID}/{oid_constants.ZERO_OID}"
+            ),
+            "converted_format": f"{c.Ldif.TRUE_RFC}/{c.Ldif.FALSE_RFC}",
+        }
+
     def _convert_boolean_values_to_oid(
         self,
         attr_name: str,
@@ -94,7 +104,9 @@ class FlextLdifServersOidEntryBooleanMixin(FlextLdifServersRfc.Entry):
                 changed = True
         if changed:
             restored_attrs[attr_name] = new_values
-    def _convert_rfc_boolean_to_oid(self, value: str) -> tuple[str, bool]:
+
+    @staticmethod
+    def _convert_rfc_boolean_to_oid(value: str) -> tuple[str, bool]:
         """Convert single RFC boolean value to OID format.
 
         Returns:
@@ -105,6 +117,7 @@ class FlextLdifServersOidEntryBooleanMixin(FlextLdifServersRfc.Entry):
         if value == "FALSE":
             return (FlextLdifServersOidConstants.ZERO_OID, True)
         return (value, False)
+
     @staticmethod
     def _restore_boolean_attribute_from_metadata(
         attr_name: str,
@@ -136,6 +149,7 @@ class FlextLdifServersOidEntryBooleanMixin(FlextLdifServersRfc.Entry):
             operation="_restore_boolean_values_to_oid",
         )
         return True
+
     def _restore_boolean_values_to_oid(self, entry_data: m.Ldif.Entry) -> m.Ldif.Entry:
         """Restore OID boolean format from RFC format (RFC → OID: TRUE/FALSE → 0/1).
 

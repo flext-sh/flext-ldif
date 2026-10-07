@@ -196,63 +196,88 @@ class FlextLdifUtilitiesSchemaParse:
         Returns:
             The resulting ``p.Result[t.Ldif.MutableMetadataMapping]``.
         """
-        basic_fields_result = se.extract_schema_basic_fields(
+        basic_fields = se.extract_schema_basic_fields(
             definition=attr_definition,
             definition_label=c.Ldif.SchemaItemKind.ATTRIBUTE.value,
         )
-        if basic_fields_result.failure:
-            return r[t.Ldif.MutableMetadataMapping].fail(basic_fields_result.error)
-        basic_fields_value = basic_fields_result.value
-        oid = basic_fields_value[0]
-        name = basic_fields_value[1]
-        desc = basic_fields_value[2]
-        syntax, length = se.extract_attribute_syntax(attr_definition)
-        syntax_validation_result: t.Ldif.MutableMetadataMapping | None = None
-        if validate_syntax:
-            syntax_validation_result = (
-                FlextLdifUtilitiesSchemaParse._validate_attribute_syntax(syntax)
+        if basic_fields.failure:
+            return r[t.Ldif.MutableMetadataMapping].fail(basic_fields.error)
+        oid, name, desc = basic_fields.value
+        syntax, fields = FlextLdifUtilitiesSchemaParse._attribute_syntax_fields(
+            attr_definition,
+        )
+        syntax_validation, syntax_validation_converted = (
+            FlextLdifUtilitiesSchemaParse._validated_syntax_extensions(
+                syntax,
+                validate=validate_syntax,
             )
+        )
+        extensions_raw = FlextLdifUtilitiesSchemaParse.build_metadata(
+            attr_definition,
+            additional_extensions=syntax_validation,
+        )
+        extensions_converted = (
+            FlextLdifUtilitiesSchemaParse._convert_metadata_extensions(extensions_raw)
+        )
+        payload = {
+            "oid": oid,
+            "name": name,
+            "desc": desc,
+            **fields,
+            "metadata_extensions": extensions_converted,
+            "syntax_validation": syntax_validation_converted,
+        }
+        parsed_dict = dict(t.Cli.JSON_MAPPING_ADAPTER.validate_python(payload))
+        return r[t.Ldif.MutableMetadataMapping].ok(parsed_dict)
+
+    @staticmethod
+    def _attribute_syntax_fields(
+        attr_definition: str,
+    ) -> tuple[str, t.Ldif.MutableMetadataMapping]:
+        """Extract the syntax, matching-rule, and flag fields of one attribute.
+
+        Returns:
+            The resulting ``tuple[str, t.Ldif.MutableMetadataMapping]``.
+        """
+        syntax, length = se.extract_attribute_syntax(attr_definition)
         equality, substr, ordering = se.extract_attribute_matching_rules(
             attr_definition,
         )
         single_value, no_user_modification = se.extract_attribute_flags(attr_definition)
         sup, usage = se.extract_attribute_sup_usage(attr_definition)
-        additional_extensions_converted: t.Ldif.MutableMetadataMapping | None = (
-            syntax_validation_result
+        return syntax, {
+            "syntax": syntax,
+            "length": length,
+            "equality": equality,
+            "ordering": ordering,
+            "substr": substr,
+            "single_value": single_value,
+            "no_user_modification": no_user_modification,
+            "sup": sup,
+            "usage": usage,
+        }
+
+    @staticmethod
+    def _validated_syntax_extensions(
+        syntax: str,
+        *,
+        validate: bool,
+    ) -> tuple[
+        t.Ldif.MutableMetadataMapping | None,
+        t.Ldif.MutableMetadataMapping | None,
+    ]:
+        """Validate one attribute syntax and convert its metadata extensions.
+
+        Returns:
+            The resulting ``tuple[t.Ldif.MutableMetadataMapping | None,
+            t.Ldif.MutableMetadataMapping | None]``.
+        """
+        if not validate:
+            return None, None
+        validation = FlextLdifUtilitiesSchemaParse._validate_attribute_syntax(syntax)
+        return validation, (
+            FlextLdifUtilitiesSchemaParse._convert_metadata_extensions(validation)
         )
-        extensions_raw = FlextLdifUtilitiesSchemaParse.build_metadata(
-            attr_definition,
-            additional_extensions=additional_extensions_converted,
-        )
-        extensions_converted = (
-            FlextLdifUtilitiesSchemaParse._convert_metadata_extensions(extensions_raw)
-        )
-        syntax_validation_converted: t.Ldif.MutableMetadataMapping | None = None
-        if syntax_validation_result is not None:
-            syntax_validation_converted = (
-                FlextLdifUtilitiesSchemaParse._convert_metadata_extensions(
-                    syntax_validation_result,
-                )
-            )
-        parsed_dict = dict(
-            t.Cli.JSON_MAPPING_ADAPTER.validate_python({
-                "oid": oid,
-                "name": name,
-                "desc": desc,
-                "syntax": syntax,
-                "length": length,
-                "equality": equality,
-                "ordering": ordering,
-                "substr": substr,
-                "single_value": single_value,
-                "no_user_modification": no_user_modification,
-                "sup": sup,
-                "usage": usage,
-                "metadata_extensions": extensions_converted,
-                "syntax_validation": syntax_validation_converted,
-            }),
-        )
-        return r[t.Ldif.MutableMetadataMapping].ok(parsed_dict)
 
     @staticmethod
     def parse_objectclass(oc_definition: str) -> t.Ldif.MutableMetadataMapping:

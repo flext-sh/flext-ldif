@@ -76,7 +76,11 @@ class FlextLdifConversionSchemaMixin(s, ABC):
 
     @staticmethod
     def _schema_write_error(item_name: str) -> Callable[[str], str]:
-        """Build the canonical source-write failure mapper for one schema kind."""
+        """Build the canonical source-write failure mapper for one schema kind.
+
+        Returns:
+            A callable mapping a write error to its message.
+        """
 
         def default_write_error(error: str) -> str:
             return (

@@ -190,6 +190,7 @@ class FlextLdif(
             resource_type="acl_server",
             lookup=lambda registry, requested: registry.acl(requested),
         )
+
     def entry(self, server_type: str) -> p.Result[p.Ldif.EntryServer]:
         """Expose entry server lookup through the public facade (ENFORCE-056).
 
@@ -201,6 +202,7 @@ class FlextLdif(
             resource_type="entry_server",
             lookup=lambda registry, requested: registry.entry(requested),
         )
+
     def resolve_base_server(self, server_type: str) -> p.Result[p.Ldif.ServerServer]:
         """Expose base server resolution through the public facade.
 
@@ -222,6 +224,7 @@ class FlextLdif(
             resource_type="schema_server",
             lookup=lambda registry, requested: registry.schema_server(requested),
         )
+
     def resolve_schema_server(self, server_type: str) -> p.Result[p.Ldif.SchemaServer]:
         """Expose canonical schema server resolution (ENFORCE-056).
 
@@ -231,8 +234,11 @@ class FlextLdif(
         return self._resolve_registry_server(
             server_type,
             resource_type="schema_server",
-            lookup=lambda registry, requested: registry.resolve_schema_server(requested),
+            lookup=lambda registry, requested: registry.resolve_schema_server(
+                requested,
+            ),
         )
+
     def resolve_server_bundle(
         self,
         server_type: str,

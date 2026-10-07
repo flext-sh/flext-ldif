@@ -66,8 +66,9 @@ class TestsFlextLdifLdifFixturesIntegration:
         filename: str,
         min_entries: int,
     ) -> None:
-        """Parsing a valid fixture succeeds and returns at least the expected
-        entries.
+        """Parse a valid fixture successfully.
+
+        At least the expected number of entries is returned.
         """
         result = ldif_client.parse_ldif(self._fixture_path(subdir, filename))
 

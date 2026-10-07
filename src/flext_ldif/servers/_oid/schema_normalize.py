@@ -52,6 +52,7 @@ class FlextLdifServersOidSchemaNormalizeMixin(FlextLdifServersRfc.Schema):
                 replacements=FlextLdifServersOidConstants.SYNTAX_OID_TO_RFC,
             )
         return self._transform_case_ignore_substrings(attr)
+
     def _normalize_oid_objectclass(
         self,
         oc: m.Ldif.SchemaObjectClass,
@@ -91,6 +92,7 @@ class FlextLdifServersOidSchemaNormalizeMixin(FlextLdifServersRfc.Schema):
             updated_oc: m.Ldif.SchemaObjectClass = oc.model_copy(update=update_dict)
             return updated_oc
         return oc
+
     @staticmethod
     def _normalize_attribute_names(
         attr_list: t.MutableSequenceOf[str] | None,
@@ -104,6 +106,7 @@ class FlextLdifServersOidSchemaNormalizeMixin(FlextLdifServersRfc.Schema):
             return attr_list
         case_map = FlextLdifServersOidConstants.ATTR_NAME_CASE_MAP
         return [case_map.get(attr_name.lower(), attr_name) for attr_name in attr_list]
+
     @staticmethod
     def _normalize_auxiliary_typo(
         oc_data: m.Ldif.SchemaObjectClass,
@@ -137,7 +140,9 @@ class FlextLdifServersOidSchemaNormalizeMixin(FlextLdifServersRfc.Schema):
                 return "AUXILIARY"
             case _:
                 return None
-    def _normalize_sup_from_model(self, oc_data: m.Ldif.SchemaObjectClass) -> str | (
+
+    @staticmethod
+    def _normalize_sup_from_model(oc_data: m.Ldif.SchemaObjectClass) -> str | (
         t.MutableSequenceOf[str] | None
     ):
         """Normalize SUP from objectClass model.
@@ -169,6 +174,7 @@ class FlextLdifServersOidSchemaNormalizeMixin(FlextLdifServersRfc.Schema):
                 return "top"
             case _:
                 return None
+
     @staticmethod
     def _normalize_sup_from_original_format(
         original_format_str: str,
@@ -190,6 +196,7 @@ class FlextLdifServersOidSchemaNormalizeMixin(FlextLdifServersRfc.Schema):
                 return "top"
             case _:
                 return None
+
     @staticmethod
     def _transform_case_ignore_substrings(
         attr_data: m.Ldif.SchemaAttribute,

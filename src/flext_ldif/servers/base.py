@@ -16,11 +16,14 @@ from flext_ldif.servers._base.execute_params import (
 )
 from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
 from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
+from flext_ldif.servers._base.server_io import FlextLdifServersBaseIoMixin
 from flext_ldif.servers._base.server_type import FlextLdifServersBaseMroMixin
+
 
 class FlextLdifServersBase(
     FlextLdifServersBaseMroMixin,
     FlextLdifServersBaseExecuteParamsMixin,
+    FlextLdifServersBaseIoMixin,
     s[m.Ldif.Entry],
 ):
     """Base class for LDIF/LDAP server servers built on `s`."""
@@ -31,15 +34,6 @@ class FlextLdifServersBase(
     )
     server_type: ClassVar[str] = c.Ldif.UNKNOWN_VALUE
     priority: ClassVar[int] = 0
-
-    @staticmethod
-    def _ensure_trailing_newline(ldif: str) -> str:
-        """Normalize a successful LDIF serialization to one trailing newline.
-
-        Returns:
-            The resulting ``str``.
-        """
-        return ldif if not ldif or ldif.endswith("\n") else f"{ldif}\n"
 
     def __init__(self, **kwargs: t.Ldif.Scalar) -> None:
         """Initialize base server and its nested servers."""
@@ -182,6 +176,28 @@ class FlextLdifServersBase(
         **fields: t.JsonValue | t.MutableSequenceOf[m.Ldif.Entry],
     ) -> Self | m.Ldif.Entry | str: ...
 
+    @staticmethod
+    def _absorb_positional_args(
+        args: tuple[str | t.MutableSequenceOf[m.Ldif.Entry] | None, ...],
+        execute_kwargs: t.MutableMappingKV[
+            str,
+            str | int | bool | t.MutableSequenceOf[m.Ldif.Entry],
+        ],
+    ) -> None:
+        """Absorb up to three positional arguments into the execute kwargs."""
+        for index, value in enumerate(args[:3]):
+            match index:
+                case 0 if "ldif_text" not in execute_kwargs and isinstance(value, str):
+                    execute_kwargs["ldif_text"] = value
+                case 0 if "entries" not in execute_kwargs and value is not None:
+                    execute_kwargs["entries"] = u.Ldif.as_entries(value)
+                case 1 if "entries" not in execute_kwargs and value is not None:
+                    execute_kwargs["entries"] = u.Ldif.as_entries(value)
+                case 2 if "operation" not in execute_kwargs and isinstance(value, str):
+                    execute_kwargs["operation"] = value
+                case _:
+                    continue
+
     @override
     def __call__(
         self,
@@ -226,18 +242,7 @@ class FlextLdifServersBase(
         if operation_raw is not None:
             validated_operation: str = t.str_adapter().validate_python(operation_raw)
             execute_kwargs["operation"] = validated_operation
-        for index, value in enumerate(args[:3]):
-            match index:
-                case 0 if "ldif_text" not in execute_kwargs and isinstance(value, str):
-                    execute_kwargs["ldif_text"] = value
-                case 0 if "entries" not in execute_kwargs and value is not None:
-                    execute_kwargs["entries"] = u.Ldif.as_entries(value)
-                case 1 if "entries" not in execute_kwargs and value is not None:
-                    execute_kwargs["entries"] = u.Ldif.as_entries(value)
-                case 2 if "operation" not in execute_kwargs and isinstance(value, str):
-                    execute_kwargs["operation"] = value
-                case _:
-                    continue
+        self._absorb_positional_args(args, execute_kwargs)
         ldif_text, entries, operation = self._extract_execute_params(execute_kwargs)
         result = self.execute(ldif_text=ldif_text, entries=entries, operation=operation)
         value = result.unwrap()
@@ -278,91 +283,6 @@ class FlextLdifServersBase(
         else:
             result = r[m.Ldif.Entry].fail("No valid parameters")
         return result
-
-    def parse_ldif(self, value: str) -> p.Result[m.Ldif.ParseResponse]:
-        """Parse LDIF text to Entry models.
-
-        Returns:
-            The resulting ``p.Result[m.Ldif.ParseResponse]``.
-        """
-        entry_server = getattr(self, "entry_server", None)
-        if entry_server is None:
-            return r[m.Ldif.ParseResponse].fail("Entry server not available")
-        detected_server = getattr(self, "server_type", None)
-        detected_server_type: c.Ldif.ServerTypes | None = None
-        if isinstance(detected_server, c.Ldif.ServerTypes):
-            detected_server_type = detected_server
-        elif isinstance(detected_server, str):
-            try:
-                detected_server_type = c.Ldif.ServerTypes(
-                    u.Ldif.normalize_server_type(detected_server),
-                )
-            except ValueError:
-                detected_server_type = None
-
-        def normalize_parse_error(error: str) -> str:
-            return error or "Entry parsing failed"
-
-        def build_parse_response(
-            parsed_entries: t.Ldif.EntrySequence,
-        ) -> m.Ldif.ParseResponse:
-            domain_entries = u.Ldif.as_entries(parsed_entries)
-            for entry in domain_entries:
-                if entry.metadata and detected_server_type is not None:
-                    entry.metadata = entry.metadata.model_copy(
-                        update={"original_server_type": detected_server_type},
-                    )
-            statistics = m.Ldif.Statistics(
-                total_entries=len(domain_entries),
-                processed_entries=len(domain_entries),
-                detected_server_type=detected_server_type,
-            )
-            return m.Ldif.ParseResponse(
-                entries=[entry.model_copy(deep=True) for entry in domain_entries],
-                statistics=statistics,
-                detected_server_type=detected_server_type,
-            )
-
-        parse_response_result: p.Result[m.Ldif.ParseResponse] = (
-            entry_server
-            .parse_server(value)
-            .map_error(normalize_parse_error)
-            .map(build_parse_response)
-        )
-        return parse_response_result
-
-    def write(
-        self,
-        entries: t.MutableSequenceOf[m.Ldif.Entry],
-        write_options: m.Ldif.WriteFormatOptions | None = None,
-    ) -> p.Result[str]:
-        """Write Entry models to LDIF text.
-
-        Returns:
-            The resulting ``p.Result[str]``.
-        """
-        entry_server = getattr(self, "entry_server", None)
-        if not entry_server:
-            return r[str].fail("Entry server not available")
-        write_result: p.Result[str] = entry_server.write(entries, write_options).map(
-            FlextLdifServersBase._ensure_trailing_newline,
-        )
-        return write_result
-
-    def _execute_parse(self, ldif_text: str) -> p.Result[m.Ldif.Entry]:
-        """Execute parse operation.
-
-        Returns:
-            The resulting ``p.Result[m.Ldif.Entry]``.
-        """
-        parse_result = self.parse_ldif(ldif_text)
-        if not parse_result.success:
-            return r[m.Ldif.Entry].fail(parse_result.error or "Parse failed")
-        entries = u.Ldif.as_entries(parse_result.unwrap())
-        if not entries:
-            return r[m.Ldif.Entry].fail("No entries parsed")
-        first_entry = entries[0]
-        return r[m.Ldif.Entry].ok(first_entry)
 
     class Acl(FlextLdifServersBaseSchemaAcl):
         """Nested Acl server base class."""

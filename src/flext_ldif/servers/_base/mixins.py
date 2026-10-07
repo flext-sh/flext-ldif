@@ -6,11 +6,24 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import c, p, t, u
+from flext_ldif import c, p, r, t, u
 
 
 class FlextLdifServerMethodsMixin:
     """Common server methods shared by schema, ACL, and entry servers."""
+
+    @staticmethod
+    def parse_operation_kwarg(kwargs: t.JsonMapping) -> p.Result[str]:
+        """Validate the raw ``operation`` kwarg as a string, propagating failures.
+
+        Returns:
+            The resulting ``p.Result[str]``.
+        """
+        try:
+            operation_raw = t.str_adapter().validate_python(kwargs.get("operation"))
+        except c.ValidationError as exc:
+            return r[str].fail(str(exc), exception=exc)
+        return r[str].ok(operation_raw)
 
     @staticmethod
     def project_processor_fields[T](

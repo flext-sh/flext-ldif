@@ -20,7 +20,53 @@ class FlextLdifServersOudAciProcessMixin:
     """OUD Aci metadata extraction and macro validation helpers."""
 
     @staticmethod
+    def _normalized_aci(aci_value: str) -> str:
+        """Normalize one raw ACI value to the canonical ``aci:``-prefixed form.
+
+        Returns:
+            The resulting ``str``.
+        """
+        normalized_aci = aci_value.strip()
+        if not normalized_aci.startswith("aci:"):
+            return f"aci: {normalized_aci}"
+        return normalized_aci
+
+    @staticmethod
+    def _parsed_acl_extensions(
+        acl_server: p.Ldif.AclServer,
+        aci_value: str,
+    ) -> t.Ldif.MutableMetadataInputMapping | None:
+        """Parse one ACI value and return its normalized extensions mapping.
+
+        Returns:
+            The extensions mapping when the parsed ACL carries one, else None.
+
+        """
+        acl_result = acl_server.parse_server(
+            FlextLdifServersOudAciProcessMixin._normalized_aci(aci_value),
+        )
+        if not acl_result.success:
+            return None
+        acl_model = m.Ldif.Acl.model_validate(acl_result.value)
+        metadata = acl_model.metadata
+        if not (metadata and metadata.extensions):
+            return None
+        # mro-wgwh.5 (agent: kimi-coder) — isinstance(dict) replaces the
+        # hasattr(model_dump) dispatch; extensions is a plain mapping.
+        extensions_value = metadata.extensions
+        acl_ext_raw: t.MutableJsonMapping = (
+            extensions_value
+            if isinstance(extensions_value, dict)
+            else dict(extensions_value)
+        )
+        return {
+            raw_key: u.normalize_to_metadata(raw_value)
+            for raw_key, raw_value in acl_ext_raw.items()
+        }
+
+    @classmethod
     def process_aci_list_for_finalize(
+        cls,
         aci_values: t.MutableSequenceOf[str] | str,
         acl_server: p.Ldif.AclServer,
         current_extensions: t.Ldif.MutableMetadataInputMapping,
@@ -30,29 +76,12 @@ class FlextLdifServersOudAciProcessMixin:
             [*aci_values] if isinstance(aci_values, MutableSequence) else [aci_values]
         )
         for aci_value in aci_list:
-            normalized_aci = aci_value.strip()
-            if not normalized_aci.startswith("aci:"):
-                normalized_aci = f"aci: {normalized_aci}"
-            acl_result = acl_server.parse_server(normalized_aci)
-            if acl_result.success:
-                acl_model = m.Ldif.Acl.model_validate(acl_result.value)
-                if acl_model.metadata and acl_model.metadata.extensions:
-                    # mro-wgwh.5 (agent: kimi-coder) — isinstance(dict) replaces the
-                    # hasattr(model_dump) dispatch; extensions is a plain mapping.
-                    extensions_value = acl_model.metadata.extensions
-                    acl_ext_raw: t.MutableJsonMapping = (
-                        extensions_value
-                        if isinstance(extensions_value, dict)
-                        else dict(extensions_value)
-                    )
-                    acl_extensions: t.Ldif.MutableMetadataInputMapping = {}
-                    for raw_key, raw_value in acl_ext_raw.items():
-                        key = raw_key
-                        acl_extensions[key] = u.normalize_to_metadata(raw_value)
-                    FlextLdifServersOudAclMetadataMixin.process_parsed_acl_extensions(
-                        acl_extensions,
-                        current_extensions,
-                    )
+            acl_extensions = cls._parsed_acl_extensions(acl_server, aci_value)
+            if acl_extensions is not None:
+                FlextLdifServersOudAclMetadataMixin.process_parsed_acl_extensions(
+                    acl_extensions,
+                    current_extensions,
+                )
 
     @staticmethod
     def process_single_aci_value(
@@ -93,7 +122,7 @@ class FlextLdifServersOudAciProcessMixin:
         Returns:
             The resulting ``p.Result[bool]``.
         """
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     @staticmethod
     def validate_aci_macros_in_entry(

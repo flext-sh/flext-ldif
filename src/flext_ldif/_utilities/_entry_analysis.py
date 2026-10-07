@@ -82,7 +82,10 @@ class FlextLdifEntryAnalysis:
     @staticmethod
     def _analyze_attribute_differences(
         entry_attrs: t.Ldif.MetadataInputMapping,
-        converted_attrs: MutableMapping[str, t.MutableSequenceOf[t.Ldif.AttributeValue]],
+        converted_attrs: MutableMapping[
+            str,
+            t.MutableSequenceOf[t.Ldif.AttributeValue],
+        ],
         normalize: Callable[[str], str],
     ) -> tuple[
         MutableMapping[str, t.Ldif.MutableMetadataMapping],

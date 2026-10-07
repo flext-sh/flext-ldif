@@ -54,6 +54,7 @@ def _schema_attribute(
 def _assert_parse_input_success(
     schema_server: FlextLdifServersRelaxed.Schema,
     definition: str,
+    *,
     expected_success: bool,
 ) -> None:
     """Assert ``parse_input`` succeeds exactly when the definition recovers."""
@@ -380,7 +381,11 @@ class TestsFlextLdifRelaxed:
         expected_success: bool,
     ) -> None:
         """Test can_handle_attribute behavior through parse method."""
-        _assert_parse_input_success(schema_server, definition, expected_success)
+        _assert_parse_input_success(
+            schema_server,
+            definition,
+            expected_success=expected_success,
+        )
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -394,7 +399,11 @@ class TestsFlextLdifRelaxed:
         expected_success: bool,
     ) -> None:
         """Test can_handle_objectclass behavior through parse method."""
-        _assert_parse_input_success(schema_server, definition, expected_success)
+        _assert_parse_input_success(
+            schema_server,
+            definition,
+            expected_success=expected_success,
+        )
 
     @staticmethod
     def test_conversion_attribute_oid_to_rfc(

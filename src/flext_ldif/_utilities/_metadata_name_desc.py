@@ -13,7 +13,7 @@ class FlextLdifMetadataNameDescDetails:
     """Extract NAME and DESC formatting details from schema definitions."""
 
     @staticmethod
-    def _extract_name_details(definition: str) -> t.MutableAttributeMapping:
+    def extract_name_details(definition: str) -> t.MutableAttributeMapping:
         """Extract NAME format details.
 
         Returns:
@@ -59,7 +59,7 @@ class FlextLdifMetadataNameDescDetails:
         return details
 
     @staticmethod
-    def _extract_desc_details(definition: str) -> t.MutableFeatureFlagMapping:
+    def extract_desc_details(definition: str) -> t.MutableFeatureFlagMapping:
         """Extract DESC details.
 
         Returns:

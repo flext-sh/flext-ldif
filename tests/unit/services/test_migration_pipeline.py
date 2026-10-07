@@ -361,6 +361,10 @@ class TestsFlextLdifMigrationPipeline:
             has="File migration failed",
         )
 
+
+class TestsFlextLdifMigrationPipelineFileAndProcessing:
+    """Migrate-file and processing execution behavior."""
+
     @staticmethod
     def test_migrate_file_fails_without_output_target(
         migration_dirs: t.Pair[Path, Path],

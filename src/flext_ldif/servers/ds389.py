@@ -280,14 +280,11 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             Returns:
                 The resulting ``p.Result[m.Ldif.Acl]``.
             """
-            try:
-                return self._parse_ds389_acl(acl_line)
-            except c.EXC_BASIC_TYPE as exc:
-                return r[m.Ldif.Acl].fail(
-                    FlextLdifServersDs389.Constants.ERROR_ACL_PARSING_FAILED.format(
-                        exc=exc,
-                    ),
-                )
+            return self._parse_dialect_acl(
+                acl_line,
+                self._parse_ds389_acl,
+                "389 Directory Server ACL parsing",
+            )
 
         @override
         def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
@@ -296,14 +293,11 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             Returns:
                 The resulting ``p.Result[str]``.
             """
-            try:
-                return self._write_ds389_acl(acl_data)
-            except c.EXC_BASIC_TYPE as exc:
-                return r[str].fail(
-                    FlextLdifServersDs389.Constants.ERROR_ACL_WRITE_FAILED.format(
-                        exc=exc,
-                    ),
-                )
+            return self._write_dialect_acl(
+                acl_data,
+                self._write_ds389_acl,
+                "389 Directory Server ACL write",
+            )
 
         def _parse_ds389_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
             """Parse 389 DS ACI content into a canonical ACL.
@@ -485,7 +479,8 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                     ),
                 )
 
-        def _process_ds389_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
+        @staticmethod
+        def _process_ds389_entry(entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
             """Normalize a 389 DS entry and attach metadata.
 
             Returns:
@@ -514,9 +509,7 @@ __all__: list[str] = ["FlextLdifServersDs389"]
 
 # The 389DS dialect schema settings are owned by ``Constants`` and bound here
 # because a nested class body cannot reference the not-yet-defined class.
-FlextLdifServersDs389.Schema._ATTRIBUTE_PATTERN_SETTINGS = (
-    FlextLdifServersDs389.Constants.ATTRIBUTE_PATTERN_SETTINGS
-)
-FlextLdifServersDs389.Schema._OBJECTCLASS_PATTERN_SETTINGS = (
-    FlextLdifServersDs389.Constants.OBJECTCLASS_PATTERN_SETTINGS
+FlextLdifServersDs389.Schema.bind_pattern_settings(
+    attribute_settings=FlextLdifServersDs389.Constants.ATTRIBUTE_PATTERN_SETTINGS,
+    objectclass_settings=FlextLdifServersDs389.Constants.OBJECTCLASS_PATTERN_SETTINGS,
 )

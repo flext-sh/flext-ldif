@@ -6,10 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping
-from typing import ClassVar, override
+from typing import ClassVar
 
-from flext_ldif import c, m, p, r, t, u
+from flext_ldif import m, p, t, u
 from flext_ldif.servers._oid.acl_format import FlextLdifServersOidAclFormatMixin
 from flext_ldif.servers._oid.acl_parse import FlextLdifServersOidAclParseMixin
 from flext_ldif.servers._oid.acl_subjects import FlextLdifServersOidAclSubjectMixin
@@ -35,18 +34,6 @@ class FlextLdifServersOidAcl(
     OidAclMetadataConfig: ClassVar[type[m.Ldif.OidAclMetadataConfig]] = (
         m.Ldif.OidAclMetadataConfig
     )
-
-
-
-
-
-
-
-
-
-
-
-
 
     @staticmethod
     def _build_oid_acl_metadata(
@@ -93,17 +80,3 @@ class FlextLdifServersOidAcl(
         if settings.oid_subject_type:
             metadata_dict["acl_source_subject_type"] = settings.oid_subject_type
         return metadata_dict
-
-
-
-
-
-
-
-
-
-
-
-
-
-

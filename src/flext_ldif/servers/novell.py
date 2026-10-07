@@ -98,6 +98,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         ])
         ACL_DEFAULT_SUBJECT_TYPE: ClassVar[str] = "trustee"
         ACL_DEFAULT_SUBJECT_VALUE_UNKNOWN: ClassVar[str] = c.Ldif.UNKNOWN_VALUE
+        ACL_SUBJECT_UNKNOWN: ClassVar[str] = ACL_DEFAULT_SUBJECT_VALUE_UNKNOWN
         ACL_ATTRIBUTE_NAME_WRITE: ClassVar[str] = "acl"
         ACL_ATTRIBUTE_NAMES: ClassVar[frozenset[str]] = frozenset([
             "acl",
@@ -188,10 +189,11 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             Returns:
                 The resulting ``p.Result[m.Ldif.Acl]``.
             """
-            try:
-                return self._parse_novell_acl(acl_line)
-            except c.EXC_BASIC_TYPE as exc:
-                return r[m.Ldif.Acl].fail_op("Novell eDirectory ACL parsing", exc)
+            return self._parse_dialect_acl(
+                acl_line,
+                self._parse_novell_acl,
+                "Novell eDirectory ACL parsing",
+            )
 
         @override
         def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
@@ -200,10 +202,11 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             Returns:
                 The resulting ``p.Result[str]``.
             """
-            try:
-                return self._write_novell_acl(acl_data)
-            except c.EXC_BASIC_TYPE as exc:
-                return r[str].fail_op("Novell eDirectory ACL write", exc)
+            return self._write_dialect_acl(
+                acl_data,
+                self._write_novell_acl,
+                "Novell eDirectory ACL write",
+            )
 
         def _parse_novell_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
             """Parse Novell eDirectory ACL content.
@@ -244,8 +247,9 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 }),
                 subject=m.Ldif.AclSubject(
                     subject_type=c.Ldif.AclSubjectType.USER,
-                    subject_value=trustee
-                    or FlextLdifServersNovell.Constants.ACL_DEFAULT_SUBJECT_VALUE_UNKNOWN,
+                    subject_value=(
+                        trustee or FlextLdifServersNovell.Constants.ACL_SUBJECT_UNKNOWN
+                    ),
                 ),
                 permissions=m.Ldif.AclPermissions(
                     **self._build_novell_permissions_from_rights(
@@ -452,9 +456,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
 
 # The Novell dialect schema settings are owned by ``Constants`` and bound here
 # because a nested class body cannot reference the not-yet-defined class.
-FlextLdifServersNovell.Schema._ATTRIBUTE_PATTERN_SETTINGS = (
-    FlextLdifServersNovell.Constants.ATTRIBUTE_PATTERN_SETTINGS
-)
-FlextLdifServersNovell.Schema._OBJECTCLASS_PATTERN_SETTINGS = (
-    FlextLdifServersNovell.Constants.OBJECTCLASS_PATTERN_SETTINGS
+FlextLdifServersNovell.Schema.bind_pattern_settings(
+    attribute_settings=FlextLdifServersNovell.Constants.ATTRIBUTE_PATTERN_SETTINGS,
+    objectclass_settings=FlextLdifServersNovell.Constants.OBJECTCLASS_PATTERN_SETTINGS,
 )

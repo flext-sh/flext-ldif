@@ -46,7 +46,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         @override
         def can_handle_attribute(self, attribute: m.Ldif.SchemaAttribute) -> bool:
-            """Check if this ACL server should be aware of a specific attribute
+            """Check if this ACL server should be aware of a specific attribute.
+
             definition.
 
             Returns:
@@ -57,7 +58,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         @override
         def can_handle_objectclass(self, objectclass: m.Ldif.SchemaObjectClass) -> bool:
-            """Check if this ACL server should be aware of a specific objectClass
+            """Check if this ACL server should be aware of a specific objectClass.
+
             definition.
 
             Returns:

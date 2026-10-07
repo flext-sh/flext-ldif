@@ -181,7 +181,7 @@ return """dn: cn=test,dc=example,dc=com
 cn: test
 objectClass: person
 objectClass: organizationalPerson
-mail: test@example.com
+mail: <test@example.com>
 
 dn: cn=admin,dc=example,dc=com
 cn: admin

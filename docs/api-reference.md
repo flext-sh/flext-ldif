@@ -1176,11 +1176,7 @@ api = ldif()
 
 # Write a sample LDIF file and load it as text
 ldif_path = Path("directory.ldif")
-sample_ldif = (
-    "dn: cn=user,ou=people,dc=example,dc=com\n"
-    "objectClass: person\n"
-    "cn: user\n"
-)
+sample_ldif = "dn: cn=user,ou=people,dc=example,dc=com\nobjectClass: person\ncn: user\n"
 ldif_path.write_text(sample_ldif, encoding="utf-8")
 
 ldif_content = ldif_path.read_text(encoding="utf-8")
@@ -1247,7 +1243,7 @@ u.Cli.print(f"❌ Migration failed: {result.error}")
 
 # Works with ANY server combination (N implementations, not N²)
 
-# Examples: OID→OUD, OpenLDAP→389DS, AD→OUD, OUD→OpenLDAP, etc.
+# Examples: OID↔OUD, OpenLDAP↔389DS, AD→OUD
 
 ### Railway-Oriented Pipeline
 
@@ -1256,11 +1252,7 @@ from pathlib import Path
 
 from flext_ldif import ldif, u
 
-sample_ldif = (
-    "dn: cn=John Doe,dc=example,dc=com\n"
-    "objectClass: person\n"
-    "cn: John Doe\n"
-)
+sample_ldif = "dn: cn=John Doe,dc=example,dc=com\nobjectClass: person\ncn: John Doe\n"
 Path("directory.ldif").write_text(sample_ldif, encoding="utf-8")
 
 api = ldif()

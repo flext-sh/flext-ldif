@@ -15,7 +15,7 @@ class FlextLdifMetadataSyntaxOriginDetails:
     """Extract SYNTAX, X-ORIGIN, OBSOLETE, and OID formatting details."""
 
     @staticmethod
-    def _extract_syntax_details(definition: str) -> t.MutableOptionalFeatureFlagMapping:
+    def extract_syntax_details(definition: str) -> t.MutableOptionalFeatureFlagMapping:
         """Extract SYNTAX formatting details.
 
         Returns:
@@ -52,7 +52,7 @@ class FlextLdifMetadataSyntaxOriginDetails:
         return details
 
     @staticmethod
-    def _extract_x_origin_details(
+    def extract_x_origin_details(
         definition: str,
     ) -> t.MutableOptionalFeatureFlagMapping:
         """Extract X-ORIGIN details.
@@ -83,7 +83,7 @@ class FlextLdifMetadataSyntaxOriginDetails:
         return details
 
     @staticmethod
-    def _extract_obsolete_details(
+    def extract_obsolete_details(
         definition: str,
     ) -> MutableMapping[str, bool | int | str | None]:
         """Extract OBSOLETE details.
@@ -108,7 +108,7 @@ class FlextLdifMetadataSyntaxOriginDetails:
         return details
 
     @staticmethod
-    def _extract_oid_details(definition: str) -> t.MutableStrMapping:
+    def extract_oid_details(definition: str) -> t.MutableStrMapping:
         """Extract OID and spacing details.
 
         Returns:

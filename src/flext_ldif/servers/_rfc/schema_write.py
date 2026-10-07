@@ -9,9 +9,7 @@ from __future__ import annotations
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
 from flext_ldif.servers.base import FlextLdifServersBase
-
 
 
 class FlextLdifServersRfcSchemaWriteMixin(FlextLdifServersBase.Schema):
@@ -36,6 +34,7 @@ class FlextLdifServersRfcSchemaWriteMixin(FlextLdifServersBase.Schema):
             ),
         )
         return parts
+
     def _build_objectclass_parts(
         self,
         oc_data: m.Ldif.SchemaObjectClass,
@@ -53,6 +52,7 @@ class FlextLdifServersRfcSchemaWriteMixin(FlextLdifServersBase.Schema):
             ),
         )
         return parts
+
     @staticmethod
     def _ensure_x_origin(
         output_str: str,
@@ -76,20 +76,25 @@ class FlextLdifServersRfcSchemaWriteMixin(FlextLdifServersBase.Schema):
                     x_origin_str = f" X-ORIGIN '{x_origin_raw}'"
                     result = output_str.rstrip(")") + x_origin_str + ")"
         return result
-    def _post_write_attribute(self, written_str: str) -> str:
+
+    @staticmethod
+    def _post_write_attribute(written_str: str) -> str:
         """Transform written attribute string (subclass hook).
 
         Returns:
             The resulting ``str``.
         """
         return written_str
-    def _post_write_objectclass(self, written_str: str) -> str:
+
+    @staticmethod
+    def _post_write_objectclass(written_str: str) -> str:
         """Transform written objectClass string (subclass hook).
 
         Returns:
             The resulting ``str``.
         """
         return written_str
+
     @override
     def _transform_attribute_for_write(
         self,
@@ -101,6 +106,7 @@ class FlextLdifServersRfcSchemaWriteMixin(FlextLdifServersBase.Schema):
             The resulting ``m.Ldif.SchemaAttribute``.
         """
         return attr_data
+
     @override
     def _transform_objectclass_for_write(
         self,
@@ -112,6 +118,7 @@ class FlextLdifServersRfcSchemaWriteMixin(FlextLdifServersBase.Schema):
             The resulting ``m.Ldif.SchemaObjectClass``.
         """
         return oc_data
+
     @override
     def _write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> p.Result[str]:
         """Write attribute to RFC-compliant string format (internal).
@@ -120,6 +127,7 @@ class FlextLdifServersRfcSchemaWriteMixin(FlextLdifServersBase.Schema):
             The resulting ``p.Result[str]``.
         """
         return self._write_schema_item(attr_data)
+
     @override
     def _write_objectclass(self, oc_data: m.Ldif.SchemaObjectClass) -> p.Result[str]:
         """Write objectClass to RFC-compliant string format (internal).
@@ -128,6 +136,7 @@ class FlextLdifServersRfcSchemaWriteMixin(FlextLdifServersBase.Schema):
             The resulting ``p.Result[str]``.
         """
         return self._write_schema_item(oc_data)
+
     def _write_schema_item(
         self,
         data: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
@@ -150,6 +159,7 @@ class FlextLdifServersRfcSchemaWriteMixin(FlextLdifServersBase.Schema):
                 item_type,
             )
             return r[str].fail(f"RFC {item_type} writing failed: {e}")
+
     def _write_schema_item_core(
         self,
         data: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
@@ -172,12 +182,10 @@ class FlextLdifServersRfcSchemaWriteMixin(FlextLdifServersBase.Schema):
                     attr_case = getattr(fmt, "attribute_case", c.Ldif.ATTRIBUTE_TYPES)
                     attr_types_lower = c.Ldif.ATTRIBUTE_TYPES.lower()
                     if attr_types_lower in transformed_str.lower():
-                        transformed_str = c.Ldif.sub_pattern(
+                        transformed_str = c.Ldif.compile_pattern(
                             f"{attr_types_lower}:",
-                            f"{attr_case}:",
-                            transformed_str,
                             ignorecase=True,
-                        )
+                        ).sub(f"{attr_case}:", transformed_str)
             return r[str].ok(
                 self._ensure_x_origin(transformed_str, attr_transformed.metadata),
             )

@@ -255,7 +255,7 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         _ = attrs
         if not dn:
             return r[bool].fail("DN cannot be empty")
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     @staticmethod
     def _inject_write_format_options(
@@ -337,26 +337,7 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         header_failure = context.emit_entry_header(output_lines)
         if header_failure is not None:
             return header_failure
-        effective_changetype = entry_data.changetype or context.ldif_changetype
-        if effective_changetype in {
-            c.Ldif.ChangeType.ADD,
-            c.Ldif.ChangeType.DELETE,
-            c.Ldif.ChangeType.MODIFY,
-            c.Ldif.ChangeType.MODDN,
-            c.Ldif.ChangeType.MODRDN,
-        }:
-            output_lines.append(f"changetype: {effective_changetype}")
-        if effective_changetype == c.Ldif.ChangeType.MODIFY:
-            return context.emit_modify_entry(output_lines)
-        if effective_changetype in {
-            c.Ldif.ChangeType.MODDN,
-            c.Ldif.ChangeType.MODRDN,
-        }:
-            return context.emit_modifydn_entry(output_lines)
-        if effective_changetype == c.Ldif.ChangeType.DELETE:
-            output_lines.append("")
-            return r[str].ok("\n".join(output_lines))
-        return context.emit_add_entry(output_lines)
+        return context.emit_changetype_body(entry_data, output_lines)
 
     def _write_entry_list(
         self,

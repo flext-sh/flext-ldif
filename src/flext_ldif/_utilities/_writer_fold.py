@@ -14,29 +14,49 @@ class FlextLdifWriterLineFolding:
 
     _KEYWORD_TOKEN_MAX_LENGTH: int = 12
 
-    @staticmethod
-    def _initial_chunk_end(
-        pos: int,
-        width: int,
-        total: int,
-        *,
-        is_first: bool,
-    ) -> int:
+    class Fold:
+        """Folding cursor: where the walk stands in the raw byte line."""
+
+        def __init__(
+            self,
+            line_bytes: bytes,
+            pos: int = 0,
+            chunk_end: int = 0,
+            *,
+            is_first: bool = True,
+        ) -> None:
+            """Bind the walk state.
+
+            Args:
+                line_bytes: The raw encoded LDIF line.
+                pos: Byte offset the current chunk starts at.
+                chunk_end: Byte offset the current chunk was cut at.
+                is_first: Whether the chunk is the unfolded first chunk.
+            """
+            self.line_bytes = line_bytes
+            self.pos = pos
+            self.chunk_end = chunk_end
+            self.is_first = is_first
+
+        def advance(self, chunk_end: int) -> None:
+            """Move the cursor to the next chunk after ``chunk_end``."""
+            self.pos = chunk_end
+            self.chunk_end = chunk_end
+            self.is_first = False
+
+    @classmethod
+    def _initial_chunk_end(cls, fold: Fold, width: int) -> int:
         """Compute the byte end of the next chunk before whitespace preference.
 
         Returns:
             The resulting ``int``.
         """
-        span = width if is_first else width - 1
-        return min(pos + span, total)
+        span = width if fold.is_first else width - 1
+        return min(fold.pos + span, len(fold.line_bytes))
 
-    @staticmethod
-    def _decode_chunk(
-        line_bytes: bytes,
-        pos: int,
-        chunk_end: int,
-    ) -> tuple[str, int]:
-        """Decode the widest valid character chunk at ``pos``.
+    @classmethod
+    def _decode_chunk(cls, fold: Fold) -> tuple[str, int]:
+        """Decode the widest valid character chunk at the cursor.
 
         Shrinks the chunk on ``UnicodeDecodeError`` until it decodes; when no
         character fits, decodes one byte with replacement.
@@ -44,12 +64,16 @@ class FlextLdifWriterLineFolding:
         Returns:
             The resulting ``tuple[str, int]``.
         """
+        line_bytes = fold.line_bytes
+        pos = fold.pos
+        chunk_end = fold.chunk_end
         while chunk_end > pos:
             try:
                 chunk = line_bytes[pos:chunk_end].decode(c.Ldif.DEFAULT_ENCODING)
-                return (chunk, chunk_end)
             except UnicodeDecodeError:
                 chunk_end -= 1
+            else:
+                return (chunk, chunk_end)
         return (
             line_bytes[pos : pos + 1].decode(
                 c.Ldif.DEFAULT_ENCODING,
@@ -122,41 +146,38 @@ class FlextLdifWriterLineFolding:
         earlier_split = max(earlier_space, earlier_tab)
         return earlier_split if earlier_split > 0 else split_index
 
-    @staticmethod
+    @classmethod
     def _prefer_whitespace_split(
-        line_bytes: bytes,
+        cls,
+        fold: Fold,
         chunk: str,
-        pos: int,
-        chunk_end: int,
-        *,
-        is_first: bool,
-        keyword_token_max_length: int,
     ) -> tuple[str, int]:
         """Adjust the chunk to fold at whitespace instead of splitting tokens.
 
         Returns:
             The resulting ``tuple[str, int]``.
         """
-        if chunk_end >= len(line_bytes):
-            return (chunk, chunk_end)
-        split_index = FlextLdifWriterLineFolding._initial_split_index(
+        if fold.chunk_end >= len(fold.line_bytes):
+            return (chunk, fold.chunk_end)
+        split_index = cls._initial_split_index(
             chunk,
-            is_first=is_first,
+            is_first=fold.is_first,
         )
         if split_index > 0:
-            split_index = FlextLdifWriterLineFolding._adjust_split_for_keyword_token(
+            split_index = cls._adjust_split_for_keyword_token(
                 chunk,
                 split_index,
-                keyword_token_max_length,
+                cls._KEYWORD_TOKEN_MAX_LENGTH,
             )
         split_chunk = chunk[: split_index + 1]
         split_bytes = split_chunk.encode(c.Ldif.DEFAULT_ENCODING)
         if split_bytes:
-            return (split_chunk, pos + len(split_bytes))
-        return (chunk, chunk_end)
+            return (split_chunk, fold.pos + len(split_bytes))
+        return (chunk, fold.chunk_end)
 
-    @staticmethod
+    @classmethod
     def fold_line(
+        cls,
         line: str,
         width: int = c.Ldif.LINE_FOLD_WIDTH,
     ) -> t.MutableSequenceOf[str]:
@@ -171,34 +192,16 @@ class FlextLdifWriterLineFolding:
         if len(line_bytes) <= width:
             return [line]
         folded: t.MutableSequenceOf[str] = []
-        pos = 0
-        while pos < len(line_bytes):
-            chunk_end = FlextLdifWriterLineFolding._initial_chunk_end(
-                pos,
-                width,
-                len(line_bytes),
-                is_first=not folded,
-            )
-            chunk, chunk_end = FlextLdifWriterLineFolding._decode_chunk(
-                line_bytes,
-                pos,
-                chunk_end,
-            )
-            chunk, chunk_end = FlextLdifWriterLineFolding._prefer_whitespace_split(
-                line_bytes,
-                chunk,
-                pos,
-                chunk_end,
-                is_first=not folded,
-                keyword_token_max_length=(
-                    FlextLdifWriterLineFolding._KEYWORD_TOKEN_MAX_LENGTH
-                ),
-            )
+        fold = cls.Fold(line_bytes)
+        while fold.pos < len(line_bytes):
+            fold.chunk_end = cls._initial_chunk_end(fold, width)
+            chunk, chunk_end = cls._decode_chunk(fold)
+            chunk, chunk_end = cls._prefer_whitespace_split(fold, chunk)
             if folded:
                 folded.append(c.Ldif.LINE_CONTINUATION_SPACE + chunk)
             else:
                 folded.append(chunk)
-            pos = chunk_end
+            fold.advance(chunk_end)
         return folded
 
 

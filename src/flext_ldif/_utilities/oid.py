@@ -59,12 +59,12 @@ class FlextLdifUtilitiesOID:
             The resulting ``p.Result[bool]``.
         """
         if not oid:
-            return r[bool].ok(False)
+            return r[bool].ok(value=False)
         try:
             valid = bool(c.Ldif.NUMERIC_OID_RE.match(oid))
         except c.Ldif.EXC_LDIF_PARSE as e:
             return r[bool].fail(f"Failed to validate OID format: {e}", exception=e)
-        return r[bool].ok(valid)
+        return r[bool].ok(value=valid)
 
 
 __all__: list[str] = ["FlextLdifUtilitiesOID"]

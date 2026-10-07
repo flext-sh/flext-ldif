@@ -9,6 +9,7 @@ from __future__ import annotations
 import struct
 
 from flext_ldif import c, m, p, r, t, u
+from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
 
 
 class FlextLdifServersBaseSchemaValuesMixin:
@@ -144,21 +145,7 @@ class FlextLdifServersBaseSchemaValuesMixin:
         """
         if operation is not None:
             return self._coerce_operation(operation)
-        return self._parse_operation_kwarg(kwargs).unwrap()
-
-    @staticmethod
-    def _parse_operation_kwarg(kwargs: t.JsonMapping) -> p.Result[str]:
-        """Validate the raw 'operation' kwarg as a string, propagating failures.
-
-        Returns:
-            The resulting ``p.Result[str]``.
-        """
-        try:
-            raw_operation = t.str_adapter().validate_python(kwargs.get("operation"))
-        except c.ValidationError as exc:
-            return r[str].fail(str(exc), exception=exc)
-        return r[str].ok(raw_operation)
-
+        return FlextLdifServerMethodsMixin.parse_operation_kwarg(kwargs).unwrap()
 
 
 __all__: list[str] = ["FlextLdifServersBaseSchemaValuesMixin"]

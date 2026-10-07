@@ -9,7 +9,6 @@ from __future__ import annotations
 import string
 
 from flext_core import r
-
 from flext_ldif import FlextLdifModels, c, p, t
 
 

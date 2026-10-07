@@ -17,6 +17,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import importlib
 from typing import ClassVar
 
 from flext_ldif import c, m, p, r, t, u
@@ -97,9 +98,8 @@ class FlextLdifServersOudSchemaWriteMixin:
             The resulting ``p.Result[t.Pair[p.Ldif.SchemaServer,
                 p.Ldif.SchemaServer]]``.
         """
-        from flext_ldif.services.server import FlextLdifServer
-
-        registry = FlextLdifServer.fetch_global_instance()
+        server_module = importlib.import_module("flext_ldif.services.server")
+        registry = server_module.FlextLdifServer.fetch_global_instance()
         target_result = registry.server(str(c.Ldif.ServerTypes.OUD.value))
         if target_result.failure:
             return r[t.Pair[p.Ldif.SchemaServer, p.Ldif.SchemaServer]].fail_op(
