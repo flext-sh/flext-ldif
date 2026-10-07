@@ -55,28 +55,38 @@ class FlextLdifServersOidEntryBooleanMixin(FlextLdifServersRfc.Entry):
                 )
                 if converted_values != original_values:
                     converted_attrs.add(attr_name)
-                    original_format_str = (
-                        f"{oid_constants.ONE_OID}/{oid_constants.ZERO_OID}"
+                    boolean_conversions[attr_name] = (
+                        FlextLdifServersOidEntryBooleanMixin._boolean_conversion_record(
+                            original_values,
+                            converted_values,
+                        )
                     )
-                    converted_format_str = f"{c.Ldif.TRUE_RFC}/{c.Ldif.FALSE_RFC}"
-                    conversion_dict: MutableMapping[
-                        str,
-                        str | t.MutableSequenceOf[str],
-                    ] = {}
-                    original_key: str = c.Ldif.CONVERSION_ORIGINAL_VALUE
-                    converted_key: str = c.Ldif.CONVERSION_CONVERTED_VALUE
-                    format_key: str = c.Ldif.ORIGINAL_FORMAT
-                    conversion_dict[original_key] = original_values
-                    conversion_dict[converted_key] = converted_values
-                    conversion_dict["conversion_type"] = "boolean_oid_to_rfc"
-                    conversion_dict[format_key] = original_format_str
-                    conversion_dict["converted_format"] = converted_format_str
-                    boolean_conversions[attr_name] = conversion_dict
                     FlextLdifServersOidEntryBooleanMixin._module_logger.debug(
                         "Converted boolean attribute OID→RFC",
                         attribute_name=attr_name,
                     )
         return (converted_attributes, converted_attrs, boolean_conversions)
+
+    @staticmethod
+    def _boolean_conversion_record(
+        original_values: t.MutableSequenceOf[str],
+        converted_values: t.MutableSequenceOf[str],
+    ) -> MutableMapping[str, str | t.MutableSequenceOf[str]]:
+        """Build one OID→RFC boolean conversion metadata record.
+
+        Returns:
+            The resulting ``MutableMapping[str, str | t.MutableSequenceOf[str]]``.
+        """
+        oid_constants = FlextLdifServersOidConstants
+        return {
+            c.Ldif.CONVERSION_ORIGINAL_VALUE: original_values,
+            c.Ldif.CONVERSION_CONVERTED_VALUE: converted_values,
+            "conversion_type": "boolean_oid_to_rfc",
+            c.Ldif.ORIGINAL_FORMAT: (
+                f"{oid_constants.ONE_OID}/{oid_constants.ZERO_OID}"
+            ),
+            "converted_format": f"{c.Ldif.TRUE_RFC}/{c.Ldif.FALSE_RFC}",
+        }
 
     def _convert_boolean_values_to_oid(
         self,

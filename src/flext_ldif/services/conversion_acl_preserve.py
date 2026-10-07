@@ -40,18 +40,25 @@ class FlextLdifConversionAclPreserveMixin(s):
             key: to_general_value(value) for key, value in metadata.extensions.items()
         }
 
-    def _preserve_acl_metadata(
+    def _apply_permission_mapping(
         self,
         original_acl: m.Ldif.Acl,
         converted_acl: m.Ldif.Acl,
-        source_server_type: c.Ldif.ServerTypes | None = None,
-        target_server_type: c.Ldif.ServerTypes | None = None,
+        *,
+        source_server_type: c.Ldif.ServerTypes | None,
+        target_server_type: c.Ldif.ServerTypes | None,
     ) -> m.Ldif.Acl:
-        """Preserve permissions and metadata from original ACL.
+        """Map original permissions onto the converted ACL.
 
         Returns:
             The resulting ``m.Ldif.Acl``.
         """
+        original_permissions = original_acl.permissions
+        orig_perms_dict: t.MutableBoolMapping = (
+            original_permissions.model_dump(exclude_defaults=True, exclude_unset=True)
+            if original_permissions
+            else {}
+        )
         converted_permissions = converted_acl.permissions
         converted_has_permissions = converted_permissions is not None and any((
             converted_permissions.read,
@@ -66,6 +73,90 @@ class FlextLdifConversionAclPreserveMixin(s):
             converted_permissions.auth,
             converted_permissions.all,
         ))
+        permission_settings = m.Ldif.PermissionMappingConfig.model_validate({
+            "original_acl": original_acl,
+            "converted_acl": converted_acl,
+            "orig_perms_dict": orig_perms_dict,
+            "source_server_type": source_server_type,
+            "target_server_type": target_server_type,
+            "converted_has_permissions": converted_has_permissions,
+        })
+        server_pair = (
+            (
+                permission_settings.source_server_type,
+                permission_settings.target_server_type,
+            )
+            if permission_settings.source_server_type is not None
+            and permission_settings.target_server_type is not None
+            else None
+        )
+        permission_mapping = {
+            None: None,
+            (c.Ldif.ServerTypes.OID, c.Ldif.ServerTypes.OUD): (
+                "oid_to_oud",
+                u.Ldif.map_oid_to_oud_permissions,
+            ),
+            (c.Ldif.ServerTypes.OUD, c.Ldif.ServerTypes.OID): (
+                "oud_to_oid",
+                u.Ldif.map_oud_to_oid_permissions,
+            ),
+        }.get(server_pair)
+        mapping_type = "none"
+        replacement_permissions: m.Ldif.AclPermissions | None = None
+        match permission_mapping:
+            case (mapping_type, permission_mapper):
+                mapped_perms = permission_mapper(permission_settings.orig_perms_dict)
+                normalized_perms = u.Ldif.build_mapped_permissions_dict(
+                    mapped_perms,
+                    {
+                        key: u.Ldif.normalize_permission_key(key)
+                        for key in c.Ldif.ACL_PERMISSION_KEYS
+                    },
+                )
+                clean_permissions: t.MutableBoolMapping = {
+                    key: value
+                    for key, value in normalized_perms.items()
+                    if value is not None
+                }
+                replacement_permissions = m.Ldif.AclPermissions.model_validate(
+                    clean_permissions,
+                )
+            case None if (
+                not converted_has_permissions and original_permissions is not None
+            ):
+                mapping_type = "preserve_original"
+                replacement_permissions = original_acl.permissions.model_copy(deep=True)
+            case None:
+                replacement_permissions = None
+        resolved_permissions = (
+            permission_settings.converted_acl.permissions
+            if replacement_permissions is None
+            else replacement_permissions
+        )
+        updated_acl: m.Ldif.Acl = permission_settings.converted_acl.model_copy(
+            update={"permissions": resolved_permissions},
+            deep=True,
+        )
+        self.logger.debug(
+            "ACL t.MappingKV decision",
+            mapping_type=mapping_type,
+            normalized_source=str(permission_settings.source_server_type),
+            normalized_target=str(permission_settings.target_server_type),
+        )
+        return updated_acl
+
+    def _preserve_acl_metadata(
+        self,
+        original_acl: m.Ldif.Acl,
+        converted_acl: m.Ldif.Acl,
+        source_server_type: c.Ldif.ServerTypes | None = None,
+        target_server_type: c.Ldif.ServerTypes | None = None,
+    ) -> m.Ldif.Acl:
+        """Preserve permissions and metadata from original ACL.
+
+        Returns:
+            The resulting ``m.Ldif.Acl``.
+        """
         original_permissions = original_acl.permissions
         orig_perms_dict: t.MutableBoolMapping = (
             original_permissions.model_dump(exclude_defaults=True, exclude_unset=True)
@@ -79,79 +170,11 @@ class FlextLdifConversionAclPreserveMixin(s):
                 target_server_type=target_server_type or "",
                 original_permissions=str(orig_perms_dict),
             )
-            permission_settings = m.Ldif.PermissionMappingConfig.model_validate({
-                "original_acl": original_acl,
-                "converted_acl": converted_acl,
-                "orig_perms_dict": orig_perms_dict,
-                "source_server_type": source_server_type,
-                "target_server_type": target_server_type,
-                "converted_has_permissions": converted_has_permissions,
-            })
-            server_pair = (
-                (
-                    permission_settings.source_server_type,
-                    permission_settings.target_server_type,
-                )
-                if permission_settings.source_server_type is not None
-                and permission_settings.target_server_type is not None
-                else None
-            )
-            permission_mapping = {
-                None: None,
-                (c.Ldif.ServerTypes.OID, c.Ldif.ServerTypes.OUD): (
-                    "oid_to_oud",
-                    u.Ldif.map_oid_to_oud_permissions,
-                ),
-                (c.Ldif.ServerTypes.OUD, c.Ldif.ServerTypes.OID): (
-                    "oud_to_oid",
-                    u.Ldif.map_oud_to_oid_permissions,
-                ),
-            }.get(server_pair)
-            mapping_type = "none"
-            replacement_permissions: m.Ldif.AclPermissions | None = None
-            match permission_mapping:
-                case (mapping_type, permission_mapper):
-                    mapped_perms = permission_mapper(
-                        permission_settings.orig_perms_dict,
-                    )
-                    normalized_perms = u.Ldif.build_mapped_permissions_dict(
-                        mapped_perms,
-                        {
-                            key: u.Ldif.normalize_permission_key(key)
-                            for key in c.Ldif.ACL_PERMISSION_KEYS
-                        },
-                    )
-                    clean_permissions: t.MutableBoolMapping = {
-                        key: value
-                        for key, value in normalized_perms.items()
-                        if value is not None
-                    }
-                    replacement_permissions = m.Ldif.AclPermissions.model_validate(
-                        clean_permissions,
-                    )
-                case None if (
-                    not permission_settings.converted_has_permissions
-                    and original_permissions is not None
-                ):
-                    mapping_type = "preserve_original"
-                    replacement_permissions = original_permissions.model_copy(deep=True)
-                case None:
-                    mapping_type = "none"
-                    replacement_permissions = None
-            resolved_permissions = (
-                permission_settings.converted_acl.permissions
-                if replacement_permissions is None
-                else replacement_permissions
-            )
-            converted_acl = permission_settings.converted_acl.model_copy(
-                update={"permissions": resolved_permissions},
-                deep=True,
-            )
-            self.logger.debug(
-                "ACL t.MappingKV decision",
-                mapping_type=mapping_type,
-                normalized_source=str(permission_settings.source_server_type),
-                normalized_target=str(permission_settings.target_server_type),
+            converted_acl = self._apply_permission_mapping(
+                original_acl,
+                converted_acl,
+                source_server_type=source_server_type,
+                target_server_type=target_server_type,
             )
         acl_step1 = (
             converted_acl.model_copy(

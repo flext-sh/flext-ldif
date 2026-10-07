@@ -327,9 +327,8 @@ class FlextLdifServersOidEntryParseMixin(FlextLdifServersRfc.Entry):
         acl_model = m.Ldif.Acl.model_validate(acl_result.value)
         if not (acl_model.metadata and acl_model.metadata.extensions):
             return
-        # mro-wgwh.5 (agent: kimi-coder) — extensions is a plain mapping;
-        # isinstance(dict)
-        # replaces the hasattr(model_dump) dispatch.
+        # Extensions is a plain mapping: isinstance(dict) replaces the
+        # hasattr(model_dump) dispatch.
         extensions_value = acl_model.metadata.extensions
         acl_extensions: t.MutableJsonMapping = (
             extensions_value

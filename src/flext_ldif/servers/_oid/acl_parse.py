@@ -208,9 +208,11 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersRfc.Acl):
                 FlextLdifServersOidConstants.OidAclSubjectType.SELF,
             )
         subject_value: str | None = None
-        for regex, subj_type, _ in (
-            FlextLdifServersOidConstants.ACL_SUBJECT_PATTERNS.values()
-        ):
+        for (
+            regex,
+            subj_type,
+            _,
+        ) in FlextLdifServersOidConstants.ACL_SUBJECT_PATTERNS.values():
             if subj_type == oid_subject_type and regex:
                 subject_value = u.Ldif.extract_component(
                     acl_line,

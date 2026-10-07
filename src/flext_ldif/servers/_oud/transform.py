@@ -149,33 +149,57 @@ class FlextLdifServersOudTransformMixin:
         metadata = entry_data.metadata
         if metadata is None or not metadata.extensions:
             return entry_data
-        ext = metadata.extensions
+        dn_restored = FlextLdifServersOudTransformMixin._dn_restored_entry(entry_data)
+        return FlextLdifServersOudTransformMixin._attributes_restored_entry(
+            dn_restored,
+            metadata,
+        )
+
+    @staticmethod
+    def _dn_restored_entry(entry_data: m.Ldif.Entry) -> m.Ldif.Entry:
+        """Restore the original DN from entry metadata extensions.
+
+        Returns:
+            The resulting ``m.Ldif.Entry``.
+        """
+        metadata = entry_data.metadata
+        if metadata is None:
+            return entry_data
         mk = c.Ldif
-        original_dn_value = u.to_str(ext.get(mk.ORIGINAL_DN_COMPLETE))
+        original_dn_value = u.to_str(metadata.extensions.get(mk.ORIGINAL_DN_COMPLETE))
         dn_diff_raw: t.MutableJsonMapping = t.json_dict_adapter().validate_python(
-            ext.get(mk.MINIMAL_DIFFERENCES_DN, {}),
+            metadata.extensions.get(mk.MINIMAL_DIFFERENCES_DN, {}),
         )
         should_restore_dn = (
             bool(original_dn_value)
             and entry_data.dn is not None
             and bool(dn_diff_raw.get(mk.HAS_DIFFERENCES, False))
         )
-        restored_entry = (
-            entry_data.model_copy(update={"dn": m.Ldif.DN(value=original_dn_value)})
-            if should_restore_dn
-            else entry_data
-        )
+        if should_restore_dn:
+            return entry_data.model_copy(
+                update={"dn": m.Ldif.DN(value=original_dn_value)},
+            )
+        return entry_data
 
-        attributes = restored_entry.attributes
-        original_case_map = metadata.original_attribute_case
+    @staticmethod
+    def _attributes_restored_entry(
+        entry_data: m.Ldif.Entry,
+        metadata: m.Ldif.ServerMetadata,
+    ) -> m.Ldif.Entry:
+        """Restore original attribute names and values from metadata.
+
+        Returns:
+            The resulting ``m.Ldif.Entry``.
+        """
+        attributes = entry_data.attributes
         if attributes is None:
-            return restored_entry
+            return entry_data
+        original_case_map = metadata.original_attribute_case
         original_attributes: t.MutableJsonMapping = (
             t.json_dict_adapter().validate_python(
-                ext.get(c.Ldif.ORIGINAL_ATTRIBUTES_COMPLETE, {}),
+                metadata.extensions.get(c.Ldif.ORIGINAL_ATTRIBUTES_COMPLETE, {}),
             )
         )
-
         restored: t.MutableStrSequenceMapping = {}
         for attr_name, attr_values in attributes.attributes.items():
             orig_case_raw = original_case_map.get(attr_name.lower(), attr_name)
@@ -184,12 +208,11 @@ class FlextLdifServersOudTransformMixin:
                 list(attr_values) if attr_values else [str(attr_values)]
             )
             if orig_case in original_attributes:
-                original_value = original_attributes[orig_case]
-                restored_values = [str(original_value)]
+                restored_values = [str(original_attributes[orig_case])]
             else:
                 restored_values = fallback_values
             restored[orig_case] = restored_values
-        restored_copy: m.Ldif.Entry = restored_entry.model_copy(
+        return entry_data.model_copy(
             update={
                 "attributes": m.Ldif.Attributes.model_validate({
                     "attributes": restored,
@@ -198,7 +221,6 @@ class FlextLdifServersOudTransformMixin:
                 }),
             },
         )
-        return restored_copy
 
     @staticmethod
     def apply_syntax_corrections(
