@@ -1,3 +1,13 @@
+"""Shared example workflows utilities for flext-ldif.
+
+Published example helpers consumed by the ``examples`` package workflows;
+extends the public ``FlextLdifUtilities`` facade so examples exercise only
+the package's own utilities surface.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
 from __future__ import annotations
 
 from flext_ldif import FlextLdifUtilities, m

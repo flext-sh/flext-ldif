@@ -13,14 +13,13 @@ from __future__ import annotations
 import importlib
 import os
 import uuid
-from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, Final
 
 import pytest
 from flext_tests import FlextTestsFixturesDSLMixin, FlextTestsUtilities, tk, tm
 
 from flext_ldif import FlextLdifUtilities
-from tests import c, m, p, t
+from tests import c, m, t
 from tests._utilities_entries import MutableMapping, Path
 from tests._utilities_ldap import ModuleType, p
 from tests._utilities_schema import (
@@ -33,9 +32,6 @@ from tests._utilities_schema import (
 
 if TYPE_CHECKING:
     from tests import p
-
-
-__all__: list[str] = ["SchemaExpectations", "TestsFlextLdifUtilities", "u"]
 
 
 class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
@@ -72,9 +68,10 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
             Returns:
                 The resulting ``m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass``.
             """
-            if TestsFlextLdifUtilities.TestsSchemaAclAssertionsMixin._schema_definition_is_objectclass(
-                schema_def
-            ):
+            is_objectclass = (
+                TestsFlextLdifUtilities.TestsSchemaAclAssertionsMixin._schema_definition_is_objectclass
+            )
+            if is_objectclass(schema_def):
                 value_raw = tm.ok(server.parse_objectclass(schema_def))
                 value: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass = (
                     m.Ldif.SchemaObjectClass.model_validate(value_raw)
@@ -727,3 +724,5 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
 
 
 u = TestsFlextLdifUtilities
+
+__all__: list[str] = ["SchemaExpectations", "TestsFlextLdifUtilities", "u"]
