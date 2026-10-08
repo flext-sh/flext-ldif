@@ -38,16 +38,19 @@ __all__: tuple[str, ...] = (
     "FlextLdifConstantsServersRfc",
 )
 
-_EXPORT_MODULES: MappingProxyType[str, str] = MappingProxyType({
-    "FlextLdifConstantsAclConvert": ".acl_convert",
-    "FlextLdifConstantsAclConvertOud": ".acl_convert_oud",
-    "FlextLdifConstantsBase": ".base",
-    "FlextLdifConstantsEnums": ".enums",
-    "FlextLdifConstantsServers": ".servers",
-    "FlextLdifConstantsServersBase": ".servers",
-    "FlextLdifConstantsServersOid": ".servers",
-    "FlextLdifConstantsServersOud": ".servers",
-    "FlextLdifConstantsServersRfc": ".servers",
-})
-
-install_lazy_exports(__name__, globals(), _EXPORT_MODULES, public_exports=__all__)
+install_lazy_exports(
+    __name__,
+    globals(),
+    MappingProxyType({
+        "FlextLdifConstantsAclConvert": ".acl_convert",
+        "FlextLdifConstantsAclConvertOud": ".acl_convert_oud",
+        "FlextLdifConstantsBase": ".base",
+        "FlextLdifConstantsEnums": ".enums",
+        "FlextLdifConstantsServers": ".servers",
+        "FlextLdifConstantsServersBase": ".servers",
+        "FlextLdifConstantsServersOid": ".servers",
+        "FlextLdifConstantsServersOud": ".servers",
+        "FlextLdifConstantsServersRfc": ".servers",
+    }),
+    public_exports=__all__,
+)
