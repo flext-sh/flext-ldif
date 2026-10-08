@@ -24,10 +24,6 @@ locked = true
 lockfile_platforms = ["linux-x64", "linux-x64-musl", "linux-arm64", "macos-x64", "macos-arm64", "windows-x64"]
 [settings.python]
 compile = false
-[settings.npm]
-# Aube replays the locked dependency graph. Only the configured ast-grep
-# package is approved below to run its native binary-selection lifecycle.
-package_manager = "aube"
 [tool_config]
 locked = true
 # End SECTION: settings
@@ -49,12 +45,11 @@ helm = "latest"
 kind = "latest"
 direnv = "latest"
 taplo = "latest"
-"npm:@ast-grep/cli" = { version = "latest", allow_builds = ["@ast-grep/cli"] }
+"aqua:ast-grep/ast-grep" = "latest"
 gitleaks = "latest"
 "aqua:boyter/scc" = "latest"
 kubeconform = "latest"
 node = "latest"
-"npm:prettier" = "3.5.3"
 go = "latest"
 make = "latest"
 [tools."github:qltysh/qlty"]
