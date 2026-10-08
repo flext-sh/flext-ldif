@@ -223,6 +223,9 @@ class MiseLockTransaction:
         if content is None or b"<<<<<<< " not in content:
             return cls._sidecars(content, project)
         git_exec = shutil.which("git")
+        if git_exec is None:
+            message = "git executable not found on PATH"
+            raise ValueError(message)
         index = subprocess.run(
             [git_exec, "-C", str(project), "ls-files", "-u", "--", cls.LOCK],
             check=True,
