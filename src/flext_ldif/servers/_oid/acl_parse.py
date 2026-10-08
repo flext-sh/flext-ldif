@@ -248,7 +248,7 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
     def _resolve_oid_subject(
         self,
         acl_line: str,
-    ) -> tuple[str, str | None]:
+    ) -> tuple[str, str]:
         """Detect the OID subject of one ACL line and resolve its value.
 
         Returns:

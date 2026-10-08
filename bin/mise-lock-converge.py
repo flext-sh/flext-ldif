@@ -562,9 +562,14 @@ class MiseLockConverge:
             if len(arguments) not in {2, 3}:
                 message = "usage: mise-lock-converge.py pin STAGE [COMMITTED_LOCK]"
                 raise ValueError(message)
-            committed = Path(arguments[2]).absolute() if len(
-                arguments,
-            ) == cls.EXPECTED_ARGUMENTS else None
+            committed = (
+                Path(arguments[2]).absolute()
+                if len(
+                    arguments,
+                )
+                == cls.EXPECTED_ARGUMENTS
+                else None
+            )
             return cls.pin_stage_manifest(
                 Path(arguments[1]).absolute(),
                 committed,

@@ -18,9 +18,9 @@ from flext_ldif.servers.base import FlextLdifServersBase
 
 
 class FlextLdifServersRfcSchema(
-    FlextLdifServersRfcSchemaValuesMixin,
     FlextLdifServersRfcSchemaWriteMixin,
     FlextLdifServersRfcSchemaParseMixin,
+    FlextLdifServersRfcSchemaValuesMixin,
     FlextLdifServersBase.Schema,
 ):
     """RFC 4512 Compliant Schema Server - STRICT Implementation."""

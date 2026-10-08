@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Annotated, ClassVar, Final, overload
+from typing import TYPE_CHECKING, Annotated, ClassVar, Final
 
 from flext_tests import tm
 
@@ -231,28 +231,6 @@ class TestsSchemaAclAssertionsMixin:
             cls._assert_objectclass_expectations(value, expectations)
         return value
 
-    @overload
-    @staticmethod
-    def server_parse_and_unwrap[
-        SchemaNodeT: (m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass, m.Ldif.Acl),
-    ](
-        server: p.Ldif.SchemaServer | p.Tests.ParseInputServer,
-        content: str,
-        parse_method: t.Tests.ParseMethod = ...,
-        expected_type: type[SchemaNodeT] = ...,
-        *,
-        should_succeed: bool | None = ...,
-    ) -> SchemaNodeT | None: ...
-    @overload
-    @staticmethod
-    def server_parse_and_unwrap(
-        server: p.Ldif.SchemaServer | p.Tests.ParseInputServer,
-        content: str,
-        parse_method: t.Tests.ParseMethod = ...,
-        expected_type: None = ...,
-        *,
-        should_succeed: bool | None = ...,
-    ) -> m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl | None: ...
     @staticmethod
     def server_parse_and_unwrap[
         SchemaNodeT: (m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass, m.Ldif.Acl),
@@ -260,19 +238,25 @@ class TestsSchemaAclAssertionsMixin:
         server: p.Ldif.SchemaServer | p.Tests.ParseInputServer,
         content: str,
         parse_method: t.Tests.ParseMethod = "parse_server",
-        expected_type: type[SchemaNodeT] | None = None,
         *,
+        expected_type: type[SchemaNodeT],
         should_succeed: bool | None = None,
-    ) -> m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl | None:
+    ) -> SchemaNodeT | None:
         """Parse content with a server and unwrap the typed result.
 
         Returns:
-            The resulting ``m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass |
-                m.Ldif.Acl | None``.
+            The resulting ``SchemaNodeT | None``.
 
         Raises:
             AssertionError: If ``method_name is None or not isinstance(server,
                 p.Ldif.SchemaServer)``; or if ``result.failure``; or if Expected; or
+                if ``result.success``.
+
+        Raises:
+            TypeError: If ``method_name is None or not isinstance(server,
+                p.Ldif.SchemaServer)``; or if the parsed value does not match
+                ``expected_type``.
+            AssertionError: If ``result.failure``; or if Expected; or
                 if ``result.success``.
         """
         method_name = _PARSE_DISPATCH.get(parse_method)
@@ -295,9 +279,9 @@ class TestsSchemaAclAssertionsMixin:
                 msg_0,
             )
         value = result.value
-        if expected_type is not None and not isinstance(value, expected_type):
+        if not isinstance(value, expected_type):
             msg_0 = f"Expected {expected_type.__name__}, got {type(value).__name__}"
-            raise AssertionError(msg_0)
+            raise TypeError(msg_0)
         # `method` is typed to return exactly these three models, so the
         # isinstance narrowing above is total and no fallthrough exists.
         return value

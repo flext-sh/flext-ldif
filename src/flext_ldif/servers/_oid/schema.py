@@ -334,7 +334,7 @@ class FlextLdifServersOidSchema(
 
     @staticmethod
     def _matching_rules_from_source(
-        source_rules: t.JsonPayload,
+        source_rules: Mapping[str, t.JsonPayload],
         attr_copy: m.Ldif.SchemaAttribute,
     ) -> tuple[str | None, str | None, str | None]:
         """Resolve matching rules from preserved source matching-rule metadata.

@@ -113,6 +113,7 @@ class TestsFlextLdifApacheServers:
             schema,
             attr_def,
             parse_method="parse_attribute",
+            expected_type=m.Ldif.SchemaAttribute,
             should_succeed=False,
         )
 
@@ -203,6 +204,7 @@ class TestsFlextLdifApacheServers:
             schema,
             oc_def,
             parse_method="parse_objectclass",
+            expected_type=m.Ldif.SchemaObjectClass,
             should_succeed=False,
         )
 

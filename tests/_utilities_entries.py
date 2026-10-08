@@ -12,6 +12,8 @@ from __future__ import annotations
 import uuid
 from typing import TYPE_CHECKING, ClassVar
 
+from flext_tests import FlextTestsFixturesDSLMixin
+
 from tests import c, m, t
 
 if TYPE_CHECKING:
@@ -19,7 +21,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
-class TestsLdifEntryBuildersMixin:
+class TestsLdifEntryBuildersMixin(FlextTestsFixturesDSLMixin):
     """Builders for real entry models, LDIF content, and fixture metadata."""
 
     _FIXTURES_ROOT: ClassVar[Path] = c.Tests.FIXTURES_DIR

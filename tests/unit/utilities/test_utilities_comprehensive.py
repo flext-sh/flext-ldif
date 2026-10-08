@@ -13,8 +13,7 @@ from __future__ import annotations
 import pytest
 from flext_tests import tm
 
-from flext_ldif import c
-from flext_ldif.utilities import u
+from flext_ldif import c, u
 
 
 class TestsFlextLdifUtilitiesComprehensive:

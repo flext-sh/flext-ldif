@@ -26,11 +26,15 @@ from flext_ldif.servers.oid import (
     FlextLdifServersOidAclPipeline as Pipe,
     FlextLdifServersOidAclRender as Render,
 )
-from tests import TestsFlextLdifUtilities as u
+from tests import u
 
 
 def _acl_entry(attributes: dict[str, list[str]]) -> m.Ldif.Entry:
-    """Build one real entry at the shared ACL test DN."""
+    """Build one real entry at the shared ACL test DN.
+
+    Returns:
+        The resulting ``m.Ldif.Entry``.
+    """
     return u.Tests.create_real_entry(dn="cn=users,dc=ctbc", attributes=attributes)
 
 
@@ -482,7 +486,8 @@ class TestsFlextLdifOidAclFixtureAndEntry:
 
     # ---- convert_entry_acls: entry orclaci → aci attribute -------------
 
-    def test_oid_to_oud_replaces_orclaci_with_aci(self) -> None:
+    @staticmethod
+    def test_oid_to_oud_replaces_orclaci_with_aci() -> None:
         """Test oid to oud replaces orclaci with aci."""
         entry = _acl_entry({
             "objectClass": ["top"],
@@ -498,7 +503,8 @@ class TestsFlextLdifOidAclFixtureAndEntry:
         tm.that(len(attrs["aci"]), eq=1)
         tm.that(attrs["aci"][0].startswith('(targetattr="*")'), eq=True)
 
-    def test_non_oid_to_oud_passes_through_unchanged(self) -> None:
+    @staticmethod
+    def test_non_oid_to_oud_passes_through_unchanged() -> None:
         """Test non oid to oud passes through unchanged."""
         entry = _acl_entry({
             "orclaci": ['access to entry by group="cn=a,dc=ctbc" (browse)'],
@@ -509,7 +515,8 @@ class TestsFlextLdifOidAclFixtureAndEntry:
 
         tm.that("orclaci" in converted.attributes.attributes, eq=True)
 
-    def test_entry_without_acl_attrs_unchanged(self) -> None:
+    @staticmethod
+    def test_entry_without_acl_attrs_unchanged() -> None:
         """Test entry without acl attrs unchanged."""
         entry = _acl_entry({"cn": ["x"], "objectClass": ["top"]})
 
@@ -519,7 +526,8 @@ class TestsFlextLdifOidAclFixtureAndEntry:
         tm.that("aci" not in converted.attributes.attributes, eq=True)
         tm.that("cn" in converted.attributes.attributes, eq=True)
 
-    def test_malformed_acl_surfaces_failure(self) -> None:
+    @staticmethod
+    def test_malformed_acl_surfaces_failure() -> None:
         """Test malformed acl surfaces failure."""
         entry = _acl_entry({"orclaci": ["not a valid acl"]})
 

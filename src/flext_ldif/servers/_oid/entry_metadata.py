@@ -59,11 +59,11 @@ class FlextLdifServersOidEntryMetadataMixin(FlextLdifServersRfc.Entry):
     @staticmethod
     def _boolean_conversions_container(
         entry_data: m.Ldif.Entry,
-    ) -> t.JsonPayload | None:
+    ) -> t.MutableJsonMapping | None:
         """Read the boolean-conversions mapping from entry metadata extensions.
 
         Returns:
-            The resulting ``t.JsonPayload | None``.
+            The resulting ``t.MutableJsonMapping | None``.
         """
         mk = c.Ldif
         if not (entry_data.metadata and entry_data.metadata.extensions):
@@ -78,11 +78,9 @@ class FlextLdifServersOidEntryMetadataMixin(FlextLdifServersRfc.Entry):
             mk.CONVERSION_BOOLEAN_CONVERSIONS,
             {},
         )
-        return (
-            boolean_conversions_obj
-            if isinstance(boolean_conversions_obj, Mapping)
-            else None
-        )
+        if not isinstance(boolean_conversions_obj, Mapping):
+            return None
+        return t.json_dict_adapter().validate_python(boolean_conversions_obj)
 
     @staticmethod
     def _typed_conversion_entry(

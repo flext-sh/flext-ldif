@@ -176,14 +176,20 @@ class FlextLdifConversionSchemaMixin(s, ABC):
             The resulting ``p.Result[t.Ldif.ConvertedModel]``.
         """
         if field_name == c.Ldif.ATTRIBUTE_TYPES:
-            return self._validate_parsed_schema(
+            validated = self._validate_parsed_schema(
                 target_schema.parse_attribute(first_value),
                 m.Ldif.SchemaAttribute,
             )
-        return self._validate_parsed_schema(
-            target_schema.parse_objectclass(first_value),
-            m.Ldif.SchemaObjectClass,
-        )
+        else:
+            validated = self._validate_parsed_schema(
+                target_schema.parse_objectclass(first_value),
+                m.Ldif.SchemaObjectClass,
+            )
+        if validated.failure:
+            return r[t.Ldif.ConvertedModel].fail(
+                validated.error or "Schema conversion validation failed",
+            )
+        return r[t.Ldif.ConvertedModel].ok(validated.value)
 
     @staticmethod
     def _validate_parsed_schema[T: m.Ldif.SchemaElement](

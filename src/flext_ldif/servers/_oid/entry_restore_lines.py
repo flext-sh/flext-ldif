@@ -7,11 +7,15 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldif import m, t
+from flext_ldif.servers._oid.entry_parse import FlextLdifServersOidEntryParseMixin
 from flext_ldif.servers._oid.server_constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 
-class FlextLdifServersOidEntryRestoreLinesMixin(FlextLdifServersRfc.Entry):
+class FlextLdifServersOidEntryRestoreLinesMixin(
+    FlextLdifServersOidEntryParseMixin,
+    FlextLdifServersRfc.Entry,
+):
     """OID entry original-line restoration and line conversion helpers."""
 
     @staticmethod

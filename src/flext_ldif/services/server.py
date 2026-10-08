@@ -43,12 +43,22 @@ class FlextLdifServer(s):
         resolves ``fetch_global_instance`` during construction; binding the
         instance in ``__new__`` turns that re-entrant fetch into a return of
         the instance under construction instead of unbounded recursion.
+
+        Raises:
+            TypeError: If the global singleton belongs to another class.
         """
         _ = args, kwargs
         singleton = FlextLdifServer._global_instance
         if singleton is None:
             singleton = super().__new__(cls)
             FlextLdifServer._global_instance = singleton
+            return singleton
+        if not isinstance(singleton, cls):
+            msg = (
+                f"Global FlextLdifServer singleton is {type(singleton).__name__}, "
+                f"not {cls.__name__}"
+            )
+            raise TypeError(msg)
         return singleton
 
     @override

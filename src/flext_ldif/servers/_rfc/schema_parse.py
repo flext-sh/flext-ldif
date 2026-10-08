@@ -11,10 +11,13 @@ from typing import ClassVar
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
-from flext_ldif.servers.base import FlextLdifServersBase
+from flext_ldif.servers._rfc.schema_values import FlextLdifServersRfcSchemaValuesMixin
 
 
-class FlextLdifServersRfcSchemaParseMixin(FlextLdifServersBase.Schema):
+class FlextLdifServersRfcSchemaParseMixin(
+    FlextLdifServersRfcSchemaValuesMixin,
+    FlextLdifServersBaseSchema,
+):
     """Parse RFC 4512 objectClass definitions and extract schema from LDIF."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
