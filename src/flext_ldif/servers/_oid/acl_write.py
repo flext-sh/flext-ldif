@@ -13,7 +13,6 @@ from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._oid.acl_format import FlextLdifServersOidAclFormatMixin
 from flext_ldif.servers._oid.acl_subjects import FlextLdifServersOidAclSubjectMixin
 from flext_ldif.servers._oid.server_constants import FlextLdifServersOidConstants
-from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 
 class FlextLdifServersOidAclWriteMixin(
