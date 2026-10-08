@@ -153,6 +153,7 @@ class FlextLdifProtocolsClient(Protocol):
             """Resolve the effective LDAP server type."""
             ...
 
+    @runtime_checkable
     class Client(
         FlextLdifProtocolsBase.ValidationService,
         FlextLdifProtocolsBase.ServerDetectionService,

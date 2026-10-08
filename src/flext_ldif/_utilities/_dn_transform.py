@@ -45,7 +45,7 @@ class FlextLdifDNTransforming:
         Returns:
             The resulting ``str``.
         """
-        dn_str = FlextLdifDNParsing.get_dn_value(value)
+        dn_str = FlextLdifDNParsing.resolve_dn_value(value)
         if not dn_str or not source_dn or (not target_dn):
             return dn_str
         norm_result = FlextLdifDNNormalization.norm(dn_str)

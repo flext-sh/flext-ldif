@@ -51,8 +51,10 @@ class FlextLdifServersOudCommentsAclMixin:
         )
         if not commented_acl_values:
             return
-        original_acl_attr = FlextLdifServersOudAclMetadataMixin.get_original_acl_attr(
-            entry,
+        original_acl_attr = (
+            FlextLdifServersOudAclMetadataMixin.resolve_original_acl_attr(
+                entry,
+            )
         )
         for acl_attr_name, acl_values_raw in commented_acl_values.items():
             if acl_attr_name.lower() in acl_attr_names_to_skip:

@@ -176,7 +176,7 @@ class FlextLdifDNCleaning:
         Returns:
             The resulting ``str``.
         """
-        dn_str = FlextLdifDNParsing.get_dn_value(dn)
+        dn_str = FlextLdifDNParsing.resolve_dn_value(dn)
         if not dn_str:
             return dn_str
         patterns = [
@@ -218,7 +218,7 @@ class FlextLdifDNCleaning:
             )
 
         """
-        original_dn = FlextLdifDNParsing.get_dn_value(dn)
+        original_dn = FlextLdifDNParsing.resolve_dn_value(dn)
         if not original_dn:
             stats_domain = FlextLdifModels.Ldif.DNStatistics.create_minimal(original_dn)
             stats = FlextLdifModels.Ldif.DNStatistics.model_validate(

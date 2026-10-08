@@ -7,10 +7,10 @@ These tests exercise ONLY the public categorization contract exposed by the
 - ``validate_dns`` / ``categorize_entries`` / ``filter_by_base_dn`` (``r[T]`` and
   ``FlexibleCategories`` public surface),
 - ``parse_ldif`` end-to-end pipeline,
-- the ``u.Ldif.is_under_base`` public utility contract.
+- the ``u.Ldif.under_base`` public utility contract.
 
 The core business rule under test: entries are placed and filtered using a
-hierarchical DN check (``is_under_base``), never substring matching, so
+hierarchical DN check (``under_base``), never substring matching, so
 ``dc=example2`` is never treated as being under ``dc=example``.
 
 Generic ``dc=example`` data is used deliberately; project-specific scenarios
@@ -214,8 +214,8 @@ class TestsFlextLdifCategorizationRealData:
         *,
         expected: bool,
     ) -> None:
-        """The public is_under_base contract rejects substring false positives."""
-        assert u.Ldif.is_under_base(dn, base_dn) is expected
+        """The public under_base contract rejects substring false positives."""
+        assert u.Ldif.under_base(dn, base_dn) is expected
 
     # -- end-to-end pipeline --------------------------------------------------
 

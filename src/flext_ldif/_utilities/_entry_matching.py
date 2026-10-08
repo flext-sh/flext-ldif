@@ -15,7 +15,7 @@ class FlextLdifEntryMatching:
     """Match entries against schema markers and server pattern settings."""
 
     @staticmethod
-    def is_schema_entry(entry: p.Ldif.Entry, *, strict: bool = True) -> bool:
+    def detects_schema_entry(entry: p.Ldif.Entry, *, strict: bool = True) -> bool:
         """Check if entry is a REAL schema entry with schema definitions.
 
         Returns:
@@ -27,7 +27,7 @@ class FlextLdifEntryMatching:
         has_schema_attrs = bool(attrs_lower & c.Ldif.SCHEMA_CATEGORY_ATTRIBUTE_KEYS)
         dn_lower = entry.dn.value.lower() if entry.dn else ""
         has_schema_dn = any(pattern in dn_lower for pattern in c.Ldif.SCHEMA_DN_MARKERS)
-        object_classes = FlextLdifEntryAccess.get_objectclass_names(entry)
+        object_classes = FlextLdifEntryAccess.resolve_objectclass_names(entry)
         has_schema_objectclass = any(
             oc.lower() in c.Ldif.SCHEMA_OBJECTCLASS_MARKERS for oc in object_classes
         )

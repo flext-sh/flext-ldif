@@ -14,10 +14,6 @@ from flext_ldif.servers._oid.server_constants import FlextLdifServersOidConstant
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 
-class _OidAclTargetAttributesJson(m.RootModel[t.MutableSequenceOf[str]]):
-    pass
-
-
 class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
     """OID ACL OID ACL parsing."""
 
@@ -36,7 +32,7 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
             The resulting ``t.Ldif.MutableMetadataMapping``.
         """
         target_attrs_str: str = (
-            _OidAclTargetAttributesJson(root=settings.target_attrs).model_dump_json()
+            u.Ldif.dump_json_payload(list(settings.target_attrs))
             if settings.target_attrs
             else ""
         )

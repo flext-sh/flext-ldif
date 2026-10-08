@@ -7,7 +7,7 @@ and assert the observable round-tripped state.
 
 Only public accessors are used to move data out of a parsed entry:
 the ``entry.dn`` / ``entry.attributes`` protocol accessors and
-``u.Ldif.get_attribute_values`` / ``u.Ldif.has_attribute``. No private
+``u.Ldif.resolve_attribute_values`` / ``u.Ldif.has_attribute``. No private
 attributes or internal collaborators are
 inspected. The ldap3 connection is a genuine external boundary provided by the
 docker fixture infrastructure in ``tests/integration/fixtures.py``.
@@ -67,7 +67,7 @@ class TestsFlextLdifRealLdapImport:
         Returns:
             The resulting ``list[str]``.
         """
-        return list(u.Ldif.get_attribute_values(entry, "objectclass"))
+        return list(u.Ldif.resolve_attribute_values(entry, "objectclass"))
 
     @staticmethod
     def _all_attrs(entry: p.Ldif.Entry) -> dict[str, list[str]]:
@@ -147,7 +147,7 @@ class TestsFlextLdifRealLdapImport:
         tm.that(self._dn(entry), eq=f"cn={username},{clean_test_ou}")
         tm.that(self._object_classes(entry), eq=["person", "inetOrgPerson"])
         assert u.Ldif.has_attribute(entry, attribute)
-        values = u.Ldif.get_attribute_values(entry, attribute)
+        values = u.Ldif.resolve_attribute_values(entry, attribute)
         tm.that(values, eq=[expected if expected is not None else username])
 
     def test_import_single_entry_roundtrips_to_ldap(
@@ -204,7 +204,7 @@ class TestsFlextLdifRealLdapImport:
         # Parse contract: the base64 payload is decoded and exposed as a value.
         assert u.Ldif.has_attribute(entry, "jpegPhoto")
         tm.that(
-            u.Ldif.get_attribute_values(entry, "jpegPhoto"),
+            u.Ldif.resolve_attribute_values(entry, "jpegPhoto"),
             eq=[binary_data.decode("ascii")],
         )
 

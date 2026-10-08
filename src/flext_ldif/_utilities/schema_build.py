@@ -126,7 +126,7 @@ class FlextLdifUtilitiesSchemaBuild:
             if original_parts:
                 return original_parts
         parts: t.MutableSequenceOf[str] = [f"( {attr_data.oid}"]
-        field_order = sf.get_field_order(attr_data)
+        field_order = sf.resolve_field_order(attr_data)
         name_part = sf.build_name_part(attr_data, restore_format=True)
         if name_part:
             parts.append(name_part)
@@ -170,7 +170,7 @@ class FlextLdifUtilitiesSchemaBuild:
             parts.append(name_part)
         if oc_data.desc:
             parts.append(f"DESC '{oc_data.desc}'")
-        field_order = sf.get_field_order(oc_data)
+        field_order = sf.resolve_field_order(oc_data)
         sf.build_obsolete_part(oc_data, parts, field_order, restore_position=True)
         sup_part = sf.format_sup_list(oc_data.sup)
         if sup_part:

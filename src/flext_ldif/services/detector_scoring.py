@@ -36,7 +36,7 @@ class FlextLdifDetectorScoring(s):
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
         """
-        types: t.MutableSequenceOf[str] = u.Ldif.get_all_server_types()
+        types: t.MutableSequenceOf[str] = u.Ldif.resolve_all_server_types()
         return types
 
     @staticmethod
@@ -97,7 +97,7 @@ class FlextLdifDetectorScoring(s):
             The resulting ``t.MutableIntMapping``.
         """
         scores: t.MutableIntMapping = dict.fromkeys(self._get_all_server_types(), 0)
-        scores[u.Ldif.get_server_type_value("GENERIC")] = 1
+        scores[u.Ldif.resolve_server_type_value("GENERIC")] = 1
         for score_spec in c.Ldif.DETECTION_SCORE_SPECS:
             server_type, _pattern_attr, _case_sensitive = score_spec
             constants = self._get_server_constants(server_type)
@@ -122,7 +122,7 @@ class FlextLdifDetectorScoring(s):
         confidence = max_score / total_score if total_score > 0 else 0.0
         detected_key: str = max(scores, key=scores.__getitem__)
         if (
-            confidence < u.Ldif.get_confidence_threshold()
+            confidence < u.Ldif.resolve_confidence_threshold()
             or detected_key == c.Ldif.ServerTypes.GENERIC.value
         ):
             return (rfc_server_type, confidence)
@@ -220,7 +220,7 @@ class FlextLdifDetectorScoring(s):
         weight = constants.DETECTION_WEIGHT if constants else 0
         if c.Ldif.compile_pattern(pattern).search(search_content):
             scores[server_type] += weight
-        score_attr_match = u.Ldif.get_attribute_match_score()
+        score_attr_match = u.Ldif.resolve_attribute_match_score()
         attributes = constants.DETECTION_ATTRIBUTES if constants else ()
         objectclasses = constants.DETECTION_OBJECTCLASS_NAMES or () if constants else ()
         server_type_lower = server_type.lower()

@@ -98,7 +98,7 @@ class FlextLdifServersOudTransformMixin:
         Returns:
             The resulting ``bool``.
         """
-        is_schema_entry: bool = u.Ldif.is_schema_entry(entry, strict=False)
+        is_schema_entry: bool = u.Ldif.detects_schema_entry(entry, strict=False)
         return is_schema_entry
 
     @staticmethod

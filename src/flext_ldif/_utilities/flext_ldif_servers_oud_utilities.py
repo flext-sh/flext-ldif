@@ -15,7 +15,7 @@ class FlextLdifServersOudUtilities:
     """Oracle Unified Directory-specific utilities."""
 
     @staticmethod
-    def get_parser_config() -> m.Ldif.AciParserConfig:
+    def resolve_parser_config() -> m.Ldif.AciParserConfig:
         """Create AciParserConfig for OUD ACL parsing.
 
         Returns:

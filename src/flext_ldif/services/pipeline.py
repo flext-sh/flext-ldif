@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from functools import partial
 from pathlib import Path
 from typing import Annotated, Self, override
 
@@ -123,16 +124,16 @@ class FlextLdifProcessingPipeline(s[t.MutableSequenceOf[m.Ldif.Entry]]):
     def _apply_transformer(
         self,
         stage_id: str,
-        transformer: p.Ldif.EntryTransformer,
+        step: p.Ldif.EntryStep,
     ) -> p.Result[m.Cli.PipelineStageResult]:
-        """Apply one entry transformer across the current batch.
+        """Apply one entry step across the current batch.
 
         Returns:
             The resulting ``p.Result[m.Cli.PipelineStageResult]``.
         """
         transformed_entries: t.MutableSequenceOf[m.Ldif.Entry] = []
         for entry in self._entries:
-            transformed = transformer.apply(entry)
+            transformed = step(entry)
             if transformed.failure:
                 return r[m.Cli.PipelineStageResult].from_failure(transformed)
             transformed_entries.append(transformed.value)
@@ -168,15 +169,16 @@ class FlextLdifProcessingPipeline(s[t.MutableSequenceOf[m.Ldif.Entry]]):
                 if dn_config.space_handling is not None
                 else self._DEFAULT_SPACE_HANDLING
             )
-            normalize_dn = u.Ldif.Normalize.dn(
+            normalize_dn = partial(
+                u.Ldif.normalize_entry_dn,
                 case=case_enum,
                 spaces=spaces_enum,
                 validate=dn_config.validate_before,
             )
             handlers[c.Ldif.PROCESSING_STAGE_NORMALIZE_DN] = (
-                lambda _ctx, transformer=normalize_dn: self._apply_transformer(
+                lambda _ctx, step=normalize_dn: self._apply_transformer(
                     c.Ldif.PROCESSING_STAGE_NORMALIZE_DN,
-                    transformer,
+                    step,
                 )
             )
             stage_order.append(c.Ldif.PROCESSING_STAGE_NORMALIZE_DN)
@@ -185,15 +187,16 @@ class FlextLdifProcessingPipeline(s[t.MutableSequenceOf[m.Ldif.Entry]]):
                 self._config.process_config.attr_config
                 or m.Ldif.AttrNormalizationConfig()
             )
-            normalize_attrs = u.Ldif.Normalize.attrs(
+            normalize_attrs = partial(
+                u.Ldif.normalize_entry_attrs,
                 case_fold_names=attr_config.case_fold_names,
                 trim_values=attr_config.trim_values,
                 remove_empty=attr_config.remove_empty,
             )
             handlers[c.Ldif.PROCESSING_STAGE_NORMALIZE_ATTRS] = (
-                lambda _ctx, transformer=normalize_attrs: self._apply_transformer(
+                lambda _ctx, step=normalize_attrs: self._apply_transformer(
                     c.Ldif.PROCESSING_STAGE_NORMALIZE_ATTRS,
-                    transformer,
+                    step,
                 )
             )
             stage_order.append(c.Ldif.PROCESSING_STAGE_NORMALIZE_ATTRS)
@@ -214,9 +217,9 @@ class FlextLdifProcessingPipeline(s[t.MutableSequenceOf[m.Ldif.Entry]]):
                 base_dn=self._config.process_config.base_dn,
             )
             handlers[c.Ldif.PROCESSING_STAGE_SERVER_TRANSFORM] = (
-                lambda _ctx, transformer=server_transform: self._apply_transformer(
+                lambda _ctx, step=server_transform.apply: self._apply_transformer(
                     c.Ldif.PROCESSING_STAGE_SERVER_TRANSFORM,
-                    transformer,
+                    step,
                 )
             )
             stage_order.append(c.Ldif.PROCESSING_STAGE_SERVER_TRANSFORM)

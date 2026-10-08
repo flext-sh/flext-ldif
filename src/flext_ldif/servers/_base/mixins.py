@@ -6,7 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from flext_ldif import c, p, r, t, u
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class FlextLdifServerMethodsMixin:
@@ -52,7 +57,7 @@ class FlextLdifServerMethodsMixin:
         }
 
     @staticmethod
-    def get_parent_server_from_instance(
+    def resolve_parent_server_from_instance(
         instance: FlextLdifServerMethodsMixin,
     ) -> p.Ldif.ServerServer | None:
         """Get the effective parent server when available.
@@ -73,7 +78,7 @@ class FlextLdifServerMethodsMixin:
         return None
 
     @staticmethod
-    def get_priority_from_parent(parent: p.Ldif.ServerServer | None) -> int:
+    def resolve_priority_from_parent(parent: p.Ldif.ServerServer | None) -> int:
         """Resolve priority from the parent server Constants class.
 
         Returns:
@@ -90,13 +95,13 @@ class FlextLdifServerMethodsMixin:
         return 100
 
     @staticmethod
-    def get_server_type_from_utilities(server_class: type) -> c.Ldif.ServerTypes:
+    def resolve_server_type_from_utilities(server_class: type) -> c.Ldif.ServerTypes:
         """Infer the server type from the utilities namespace.
 
         Returns:
             The resulting ``c.Ldif.ServerTypes``.
         """
-        resolved: c.Ldif.ServerTypes = u.Ldif.get_parent_server_type(server_class)
+        resolved: c.Ldif.ServerTypes = u.Ldif.resolve_parent_server_type(server_class)
         return resolved
 
     def _get_parent_server_safe(self) -> p.Ldif.ServerServer | None:
@@ -105,7 +110,7 @@ class FlextLdifServerMethodsMixin:
         Returns:
             The resulting ``p.Ldif.ServerServer | None``.
         """
-        return FlextLdifServerMethodsMixin.get_parent_server_from_instance(self)
+        return FlextLdifServerMethodsMixin.resolve_parent_server_from_instance(self)
 
     def _get_priority(self) -> int:
         """Get server priority from the parent Constants class.
@@ -113,7 +118,7 @@ class FlextLdifServerMethodsMixin:
         Returns:
             The resulting ``int``.
         """
-        return FlextLdifServerMethodsMixin.get_priority_from_parent(
+        return FlextLdifServerMethodsMixin.resolve_priority_from_parent(
             self._get_parent_server_safe(),
         )
 
@@ -123,7 +128,9 @@ class FlextLdifServerMethodsMixin:
         Returns:
             The resulting ``c.Ldif.ServerTypes``.
         """
-        return FlextLdifServerMethodsMixin.get_server_type_from_utilities(type(self))
+        return FlextLdifServerMethodsMixin.resolve_server_type_from_utilities(
+            type(self)
+        )
 
     @staticmethod
     def _narrow_operation(operation: t.JsonValue | None) -> str | None:
@@ -148,6 +155,33 @@ class FlextLdifServerMethodsMixin:
             processor_keys,
             force_dispatch=server is not None or settings is not None,
         )
+
+    @classmethod
+    def dispatch_builder[T, V](
+        cls,
+        builder: Callable[..., T],
+        fields: t.MappingKV[str, V],
+        processor_keys: frozenset[str],
+        server: p.Ldif.ServerRegistry | None,
+        settings: p.Ldif.Settings | None,
+    ) -> T | None:
+        """Clone through ``builder`` when builder fields or bindings are present.
+
+        Returns ``None`` when every field is a processor key and no runtime
+        binding was given, signalling the caller to run its processor branch.
+
+        Returns:
+            The resulting ``T | None``.
+        """
+        builder_fields = cls.builder_fields_or_none(
+            fields,
+            processor_keys,
+            server,
+            settings,
+        )
+        if builder_fields is None:
+            return None
+        return builder(server=server, settings=settings, **builder_fields)
 
 
 __all__: list[str] = ["FlextLdifServerMethodsMixin"]

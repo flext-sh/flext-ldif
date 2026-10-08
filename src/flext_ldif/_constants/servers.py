@@ -1,6 +1,6 @@
 """FlextLdifConstantsServers - composer for the server-family part modules.
 
-ENFORCE-079 owner surface for the ``servers/*`` family: the four part modules
+ENFORCE-079 owner surface for the ``servers/*`` family: the part modules
 carry the declarations; this composer re-exports them as nested names so
 consumers keep the ``FlextLdifConstantsServers.<Family>`` path and the server
 constants classes stay thin MRO inheritors.
@@ -14,6 +14,7 @@ from __future__ import annotations
 from flext_ldif._constants.servers_base import FlextLdifConstantsServersBase
 from flext_ldif._constants.servers_oid import FlextLdifConstantsServersOid
 from flext_ldif._constants.servers_oud import FlextLdifConstantsServersOud
+from flext_ldif._constants.servers_relaxed import FlextLdifConstantsServersRelaxed
 from flext_ldif._constants.servers_rfc import FlextLdifConstantsServersRfc
 
 
@@ -24,6 +25,7 @@ class FlextLdifConstantsServers:
     Rfc = FlextLdifConstantsServersRfc
     Oid = FlextLdifConstantsServersOid
     Oud = FlextLdifConstantsServersOud
+    Relaxed = FlextLdifConstantsServersRelaxed
 
 
 __all__: list[str] = [
@@ -31,5 +33,6 @@ __all__: list[str] = [
     "FlextLdifConstantsServersBase",
     "FlextLdifConstantsServersOid",
     "FlextLdifConstantsServersOud",
+    "FlextLdifConstantsServersRelaxed",
     "FlextLdifConstantsServersRfc",
 ]

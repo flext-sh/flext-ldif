@@ -117,7 +117,7 @@ class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s, ABC
         Returns:
             The resulting ``p.Result[m.Ldif.Entry]``.
         """
-        if entry.attributes is None or not u.Ldif.is_schema_entry(entry):
+        if entry.attributes is None or not u.Ldif.detects_schema_entry(entry):
             return r[m.Ldif.Entry].ok(entry)
         schema_pair = self._resolve_schema_pair(source_server, target_server)
         if schema_pair.failure:

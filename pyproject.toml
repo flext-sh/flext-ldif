@@ -469,7 +469,6 @@ runtime-evaluated-base-classes = [
   "flext_ldif._models.results.Response",
   "flext_ldif._models.settings.FlextLdifModelsSettings",
   "flext_ldif.m.BaseModel",
-  "flext_ldif.m.RootModel",
   "flext_ldif.s",
   "flext_ldif.servers._base.acl.FlextLdifServersBaseSchemaAcl",
   "flext_ldif.servers._base.dialect_schema.FlextLdifServersDialectSchema",

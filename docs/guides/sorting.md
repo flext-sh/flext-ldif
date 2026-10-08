@@ -97,7 +97,7 @@ result = FlextLdifSorting.by_dn(my_entries)
 
 # Sort entries by custom predicate
 result = FlextLdifSorting.by_custom(
-    my_entries, lambda e: FlextLdifUtilities.DN.get_dn_value(e.dn).count(",")
+    my_entries, lambda e: FlextLdifUtilities.DN.resolve_dn_value(e.dn).count(",")
 )
 
 # Sort attributes in entries
@@ -156,7 +156,7 @@ sorted_entries = (
     FlextLdifSorting(
         entries=my_entries,
         sort_by="custom",
-        custom_predicate=lambda e: len(FlextLdifUtilities.DN.get_dn_value(e.dn)),
+        custom_predicate=lambda e: len(FlextLdifUtilities.DN.resolve_dn_value(e.dn)),
     )
     .execute()
     .unwrap()
@@ -207,7 +207,7 @@ sorted = (
 
 # Sort with custom logic
 sorted = FlextLdifSorting.by_custom(
-    entries, lambda e: FlextLdifUtilities.DN.get_dn_value(e.dn).count(",")
+    entries, lambda e: FlextLdifUtilities.DN.resolve_dn_value(e.dn).count(",")
 ).unwrap()
 ```
 

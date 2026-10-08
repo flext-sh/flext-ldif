@@ -24,6 +24,7 @@ if TYPE_CHECKING:
         FlextLdifConstantsServersOud,
         FlextLdifConstantsServersRfc,
     )
+    from flext_ldif._constants.servers_relaxed import FlextLdifConstantsServersRelaxed
 
 
 __all__: tuple[str, ...] = (
@@ -35,6 +36,7 @@ __all__: tuple[str, ...] = (
     "FlextLdifConstantsServersBase",
     "FlextLdifConstantsServersOid",
     "FlextLdifConstantsServersOud",
+    "FlextLdifConstantsServersRelaxed",
     "FlextLdifConstantsServersRfc",
 )
 
@@ -50,6 +52,7 @@ install_lazy_exports(
         "FlextLdifConstantsServersBase": ".servers",
         "FlextLdifConstantsServersOid": ".servers",
         "FlextLdifConstantsServersOud": ".servers",
+        "FlextLdifConstantsServersRelaxed": ".servers_relaxed",
         "FlextLdifConstantsServersRfc": ".servers",
     }),
     public_exports=__all__,

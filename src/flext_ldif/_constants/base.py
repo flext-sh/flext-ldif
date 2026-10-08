@@ -34,14 +34,6 @@ class FlextLdifConstantsBase:
     SAFE_CHAR_MIN: ClassVar[int] = 1
     SAFE_CHAR_MAX: ClassVar[int] = 127
     SAFE_CHAR_EXCLUDE: ClassVar[frozenset[int]] = frozenset({0, 10, 13})
-    SAFE_INIT_CHAR_EXCLUDE: ClassVar[frozenset[int]] = frozenset({
-        0,
-        10,
-        13,
-        32,
-        58,
-        60,
-    })
 
     # Base64 start characters
     BASE64_START_CHARS: ClassVar[frozenset[str]] = frozenset({" ", "<", ":"})

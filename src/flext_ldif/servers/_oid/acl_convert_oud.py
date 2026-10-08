@@ -37,7 +37,7 @@ class FlextLdifServersOidAclToOud:
         )
 
     @staticmethod
-    def is_in_scope(dn: str, base_dn: str) -> bool:
+    def in_scope(dn: str, base_dn: str) -> bool:
         """Return True if ``dn`` is the base or a descendant of it (empty base =.
 
         all).
@@ -188,7 +188,7 @@ class FlextLdifServersOidAclToOud:
         )
 
     @staticmethod
-    def get_targetattr(rule: m.Ldif.OidAclRule) -> str:
+    def resolve_targetattr(rule: m.Ldif.OidAclRule) -> str:
         """Compute the OUD ``targetattr`` (entry→``*``, list→``a||b``,.
 
         # ``attr!=``→``!=a||b``).

@@ -68,7 +68,7 @@ class FlextLdifAnalysis(s):
         """
         errors: t.MutableSequenceOf[str] = []
         valid = True
-        oc_values: t.MutableSequenceOf[str] = u.Ldif.get_objectclass_names(entry)
+        oc_values: t.MutableSequenceOf[str] = u.Ldif.resolve_objectclass_names(entry)
         for oc_item in oc_values:
             oc_result = validation_service.validate_objectclass_name(oc_item)
             if oc_result.failure or not oc_result.value:

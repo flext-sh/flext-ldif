@@ -131,7 +131,7 @@ class TestsFlextLdifOidAclConvertOud:
 
         tm.that(result.failure, eq=True)
 
-    # -- get_targetattr ---------------------------------------------------
+    # -- resolve_targetattr ---------------------------------------------------
 
     @pytest.mark.parametrize(
         ("target_type", "target_attrs", "expected"),
@@ -150,7 +150,9 @@ class TestsFlextLdifOidAclConvertOud:
         expected: str,
     ) -> None:
         """Test get targetattr."""
-        tm.that(Conv.get_targetattr(self._rule(target_type, target_attrs)), eq=expected)
+        tm.that(
+            Conv.resolve_targetattr(self._rule(target_type, target_attrs)), eq=expected
+        )
 
     # -- calculate_targetscope --------------------------------------------
 
@@ -195,7 +197,7 @@ class TestsFlextLdifOidAclConvertOud:
         """Test regex to wildcard."""
         tm.that(Conv.regex_to_wildcard(value), eq=expected)
 
-    # -- is_in_scope ------------------------------------------------------
+    # -- in_scope ------------------------------------------------------
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -209,7 +211,7 @@ class TestsFlextLdifOidAclConvertOud:
     )
     def test_is_in_scope(dn: str, base_dn: str, *, expected: bool) -> None:
         """Test is in scope."""
-        tm.that(Conv.is_in_scope(dn, base_dn), eq=expected)
+        tm.that(Conv.in_scope(dn, base_dn), eq=expected)
 
     # -- high_level_containers --------------------------------------------
 

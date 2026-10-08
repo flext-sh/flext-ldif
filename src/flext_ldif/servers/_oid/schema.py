@@ -269,7 +269,7 @@ class FlextLdifServersOidSchema(
                 original_substr=original_substr or "",
                 replacement_substr=fixed_substr or "",
             )
-        is_boolean = u.Ldif.is_boolean_attribute(
+        is_boolean = u.Ldif.boolean_attribute(
             fixed_name,
             set(FlextLdifServersOidConstants.BOOLEAN_ATTRIBUTES),
         )

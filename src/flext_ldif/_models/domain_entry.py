@@ -19,9 +19,11 @@ from flext_ldif._models.domain_attributes import FlextLdifModelsDomainAttributes
 from flext_ldif._models.domain_dn import FlextLdifModelsDomainDN as mdn
 from flext_ldif._models.domain_entry_change import (
     FlextLdifModelsDomainEntryChangeOperation,
-    FlextLdifModelsDomainEntryChangeOperationValue,
-    FlextLdifModelsDomainEntryControl,
 )
+from flext_ldif._models.domain_entry_change_value import (
+    FlextLdifModelsDomainEntryChangeOperationValue,
+)
+from flext_ldif._models.domain_entry_control import FlextLdifModelsDomainEntryControl
 from flext_ldif._models.domain_entry_statistics import (
     FlextLdifModelsDomainEntryStatistics,
 )
@@ -41,13 +43,13 @@ class FlextLdifModelsDomainEntry:
     Control = FlextLdifModelsDomainEntryControl
     """Canonical RFC 2849 control line model.
 
-    Implementation module: ``domain_entry_change``.
+    Implementation module: ``domain_entry_control``.
     """
 
     ChangeOperationValue = FlextLdifModelsDomainEntryChangeOperationValue
     """Canonical modify-operation value model.
 
-    Implementation module: ``domain_entry_change``.
+    Implementation module: ``domain_entry_change_value``.
     """
 
     ChangeOperation = FlextLdifModelsDomainEntryChangeOperation

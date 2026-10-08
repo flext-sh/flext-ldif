@@ -249,7 +249,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
             The resulting ``m.Ldif.SchemaAttribute``.
         """
         fixed_equality, fixed_substr = self._transform_by_matching_rules(attr_data)
-        is_boolean = u.Ldif.is_boolean_attribute(
+        is_boolean = u.Ldif.boolean_attribute(
             attr_data.name,
             set(FlextLdifServersOudConstants.BOOLEAN_ATTRIBUTES),
         )

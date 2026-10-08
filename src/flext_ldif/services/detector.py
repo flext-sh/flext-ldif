@@ -33,7 +33,7 @@ class FlextLdifDetector(FlextLdifDetectorScoring, s):
         Returns:
             The resulting ``p.Result[m.Ldif.ServerDetectionResult]``.
         """
-        max_lines = max_lines or u.Ldif.get_server_detection_default_max_lines()
+        max_lines = max_lines or u.Ldif.resolve_server_detection_default_max_lines()
         if ldif_content is None:
             if ldif_path is None:
                 return r[m.Ldif.ServerDetectionResult].fail_op(

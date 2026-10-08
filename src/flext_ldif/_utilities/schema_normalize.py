@@ -31,28 +31,7 @@ class FlextLdifUtilitiesSchemaNormalize:
         return available
 
     @staticmethod
-    def is_attribute_in_list(
-        attribute_name: str | None,
-        attribute_list: t.MutableSequenceOf[str] | set[str] | None,
-    ) -> bool:
-        """Check if attribute exists in list or set (case-insensitive).
-
-        Returns:
-            The resulting ``bool``.
-        """
-        if not attribute_name or not attribute_list:
-            return False
-        normalized_input = FlextLdifUtilitiesSchemaNormalize.normalize_attribute_name(
-            attribute_name,
-        )
-        return any(
-            FlextLdifUtilitiesSchemaNormalize.normalize_attribute_name(attr)
-            == normalized_input
-            for attr in attribute_list
-        )
-
-    @staticmethod
-    def is_boolean_attribute(
+    def boolean_attribute(
         attribute_name: str | None,
         boolean_attributes: set[str],
     ) -> bool:

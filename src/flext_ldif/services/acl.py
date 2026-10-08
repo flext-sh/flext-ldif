@@ -19,7 +19,7 @@ class FlextLdifAcl(s):
         Returns:
             The resulting ``bool``.
         """
-        is_schema: bool = u.Ldif.is_schema_entry(entry, strict=False)
+        is_schema: bool = u.Ldif.detects_schema_entry(entry, strict=False)
         return is_schema
 
     @staticmethod
@@ -119,7 +119,7 @@ class FlextLdifAcl(s):
             )
         acls: t.MutableSequenceOf[m.Ldif.Acl] = []
         for attribute_name in acl_server.resolve_acl_attributes():
-            for acl_value in u.Ldif.get_attribute_values(entry, attribute_name):
+            for acl_value in u.Ldif.resolve_attribute_values(entry, attribute_name):
                 parse_result = acl_server.parse_server(acl_value)
                 if parse_result.failure:
                     return r[m.Ldif.AclResponse].from_failure(parse_result)

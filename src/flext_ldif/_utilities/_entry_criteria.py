@@ -49,7 +49,7 @@ class FlextLdifEntryCriteria:
         """
         if resolved_config.is_schema is None:
             return None
-        return FlextLdifEntryMatching.is_schema_entry(entry) == (
+        return FlextLdifEntryMatching.detects_schema_entry(entry) == (
             resolved_config.is_schema
         )
 
@@ -66,7 +66,7 @@ class FlextLdifEntryCriteria:
         """
         if not resolved_config.objectclasses:
             return None
-        entry_ocs: t.StrSequence = FlextLdifEntryAccess.get_objectclass_names(entry)
+        entry_ocs: t.StrSequence = FlextLdifEntryAccess.resolve_objectclass_names(entry)
         matched = cls._membership_criterion(
             resolved_config.objectclasses,
             entry_ocs,

@@ -20,10 +20,10 @@ class FlextLdifProtocolsDomain(Protocol):
     """Service-level LDIF protocols built on top of base value contracts."""
 
     @runtime_checkable
-    class EntryTransformer(Protocol):
-        """Transformer contract for entry-processing pipelines."""
+    class EntryStep(Protocol):
+        """Callable step contract for entry-processing pipelines."""
 
-        def apply(self, item: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
+        def __call__(self, item: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
             """Transform one entry and return the canonical result container."""
             ...
 
