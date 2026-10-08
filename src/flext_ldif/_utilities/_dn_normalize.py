@@ -10,7 +10,6 @@ from typing import overload
 
 from flext_core import r
 from flext_ldif import FlextLdifModels, c, p, t
-from flext_ldif._utilities._dn_parse import FlextLdifDNParsing
 
 
 class FlextLdifDNNormalization:
@@ -31,6 +30,8 @@ class FlextLdifDNNormalization:
         Returns:
             The resulting ``p.Result[str]``.
         """
+        from flext_ldif._utilities import FlextLdifDNParsing
+
         result: p.Result[str] = r[str].fail("DN cannot be None")
         if dn is not None:
             dn_str = FlextLdifDNParsing.resolve_dn_value(dn)

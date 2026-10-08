@@ -12,7 +12,7 @@ from __future__ import annotations
 from typing import Annotated, Self
 
 from flext_core import FlextUtilities as u, m
-from flext_ldif import FlextLdifShared, c
+from flext_ldif import c
 from flext_ldif._models._settings_normalization import (
     FlextLdifModelsSettingsNormalization as msn,
 )
@@ -28,6 +28,8 @@ class FlextLdifModelsSettingsProcessing:
         def _coerce_server_type_value(
             value: c.Ldif.ServerTypes | str | None,
         ) -> str | None:
+            from flext_ldif import FlextLdifShared
+
             if value is None:
                 return None
             return FlextLdifShared.normalize_server_type(value).value

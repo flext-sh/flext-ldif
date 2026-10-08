@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from flext_core import r
-from flext_ldif import FlextLdifModels, c, p, t
+from flext_ldif import c, p, t
 from flext_ldif._utilities.parser import FlextLdifUtilitiesParser as up
 
 if TYPE_CHECKING:

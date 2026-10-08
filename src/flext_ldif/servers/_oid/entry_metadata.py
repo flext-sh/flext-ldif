@@ -9,7 +9,6 @@ from __future__ import annotations
 from collections.abc import Mapping, MutableMapping
 
 from flext_ldif import c, m, t, u
-from flext_ldif.servers._oid.server_constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 
@@ -22,6 +21,10 @@ class FlextLdifServersOidEntryMetadataMixin(FlextLdifServersRfc.Entry):
         current_extensions: t.Ldif.MutableMetadataMapping,
     ) -> None:
         """Extract OID-specific ACL metadata from ACL string."""
+        from flext_ldif.servers._oid.server_constants import (
+            FlextLdifServersOidConstants,
+        )
+
         bindmode = u.Ldif.extract_component(
             acl_value,
             FlextLdifServersOidConstants.ACL_BINDMODE_PATTERN,

@@ -7,7 +7,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldif import c, t
-from flext_ldif.servers._oid.server_constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 
@@ -82,6 +81,10 @@ class FlextLdifServersOidEntryNormalizeMixin(FlextLdifServersRfc.Entry):
         Returns:
             The resulting ``str``.
         """
+        from flext_ldif.servers._oid.server_constants import (
+            FlextLdifServersOidConstants,
+        )
+
         equality_map: t.MappingKV[str, str] = {
             "caseIgnoreSubStringsMatch": "caseIgnoreMatch",
             "caseIgnoreSubstringsMatch": "caseIgnoreMatch",

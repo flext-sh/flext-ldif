@@ -15,7 +15,6 @@ from flext_ldif.servers._oid.entry_metadata import FlextLdifServersOidEntryMetad
 from flext_ldif.servers._oid.entry_normalize import (
     FlextLdifServersOidEntryNormalizeMixin,
 )
-from flext_ldif.servers._oid.server_constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 
@@ -319,6 +318,10 @@ class FlextLdifServersOidEntryParseMixin(
             The resulting ``p.Result[tuple[str, MutableMapping[str,
                 t.MutableSequenceOf[str | bytes]]]]``.
         """
+        from flext_ldif.servers._oid.server_constants import (
+            FlextLdifServersOidConstants,
+        )
+
         cleaned_dn, _ = u.Ldif.clean_dn_with_statistics(dn)
         normalized_dn = cleaned_dn
         if cleaned_dn.lower() == FlextLdifServersOidConstants.SCHEMA_DN_SERVER.lower():

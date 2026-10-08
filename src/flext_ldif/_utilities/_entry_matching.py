@@ -7,8 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldif import c, p, t
-from flext_ldif._models.settings import FlextLdifModelsSettings
-from flext_ldif._utilities._entry_access import FlextLdifEntryAccess
+from flext_ldif._models import FlextLdifModelsSettings
 
 
 class FlextLdifEntryMatching:
@@ -21,6 +20,8 @@ class FlextLdifEntryMatching:
         Returns:
             The resulting ``bool``.
         """
+        from flext_ldif._utilities import FlextLdifEntryAccess
+
         if entry.attributes is None:
             return False
         attrs_lower = {k.lower() for k in entry.attributes.attributes}

@@ -10,7 +10,6 @@ from collections.abc import Mapping
 
 from flext_ldif import c, m, t
 from flext_ldif.servers._oid.entry_boolean import FlextLdifServersOidEntryBooleanMixin
-from flext_ldif.servers._oid.server_constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 
@@ -105,6 +104,10 @@ class FlextLdifServersOidEntryRestoreMixin(
         Returns:
             The resulting ``tuple[str, t.MutableSequenceOf[str]]``.
         """
+        from flext_ldif.servers._oid.server_constants import (
+            FlextLdifServersOidConstants,
+        )
+
         if original_attrs:
             for orig_name, orig_values in original_attrs.items():
                 if self._normalize_attribute_name(orig_name) == attr_name:

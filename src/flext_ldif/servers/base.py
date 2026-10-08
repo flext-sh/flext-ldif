@@ -14,7 +14,6 @@ from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
 from flext_ldif.servers._base.execute_params import (
     FlextLdifServersBaseExecuteParamsMixin,
 )
-from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
 from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
 from flext_ldif.servers._base.server_io import FlextLdifServersBaseIoMixin
 from flext_ldif.servers._base.server_type import FlextLdifServersBaseMroMixin
@@ -211,6 +210,8 @@ class FlextLdifServersBase(
         Returns:
             The resulting ``Self | m.Ldif.Entry | str``.
         """
+        from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
+
         configured = FlextLdifServerMethodsMixin.dispatch_builder(
             super().__call__,
             fields,

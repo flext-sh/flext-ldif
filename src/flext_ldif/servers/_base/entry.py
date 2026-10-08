@@ -11,7 +11,6 @@ from collections.abc import Mapping, MutableMapping, MutableSequence
 from typing import Annotated, ClassVar, Self, override
 
 from flext_ldif import c, m, p, r, s, t, u
-from flext_ldif.servers._base.entry_write import FlextLdifServersEntryWriteContext
 from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
 
 
@@ -325,6 +324,10 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         Returns:
             The resulting ``p.Result[str]``.
         """
+        from flext_ldif.servers._base.entry_write import (
+            FlextLdifServersEntryWriteContext,
+        )
+
         context = FlextLdifServersEntryWriteContext.build(
             entry_data,
             self.server_type,

@@ -18,7 +18,6 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from flext_ldif import m
-    from flext_ldif._protocols.domain import FlextLdifProtocolsDomain
 
 # NOTE (multi-agent, mro-0ftd.3.7.2): client declarations are the highest
 # private protocol facet and may depend one-way on both base and domain.
@@ -46,112 +45,17 @@ class FlextLdifProtocolsClient(Protocol):
     class Settings(p.Cli.Settings, Protocol):
         """MRO-composed settings contract with the LDIF namespace."""
 
-        Ldif: FlextLdifProtocolsClient.LdifSettings
-        """The validated LDIF settings branch."""
+        @property
+        def ldif(self) -> FlextLdifProtocolsClient.LdifSettings:
+            """Namespaced LDIF settings branch."""
+            ...
 
     @runtime_checkable
-    @runtime_checkable
-    class ServerResolutionService(Protocol):
-        """Contract for server registry resolution and model conversion."""
-
-        def acl(self, server_type: str) -> p.Result[FlextLdifProtocolsDomain.AclServer]:
-            """Resolve an ACL server by server type."""
-            ...
-
-        def entry(
-            self,
-            server_type: str,
-        ) -> p.Result[FlextLdifProtocolsDomain.EntryServer]:
-            """Resolve an entry server by server type."""
-            ...
-
-        def resolve_base_server(
-            self,
-            server_type: str,
-        ) -> p.Result[FlextLdifProtocolsDomain.ServerServer]:
-            """Resolve a base server by server type."""
-            ...
-
-        def schema_server(
-            self,
-            server_type: str,
-        ) -> p.Result[FlextLdifProtocolsDomain.SchemaServer]:
-            """Resolve a schema server by server type."""
-            ...
-
-        def resolve_schema_server(
-            self,
-            server_type: str,
-        ) -> p.Result[FlextLdifProtocolsDomain.SchemaServer]:
-            """Resolve the canonical schema server by server type."""
-            ...
-
-        def resolve_server_bundle(
-            self,
-            server_type: str,
-        ) -> p.Result[
-            t.MappingKV[
-                str,
-                FlextLdifProtocolsDomain.SchemaServer
-                | FlextLdifProtocolsDomain.AclServer
-                | FlextLdifProtocolsDomain.EntryServer,
-            ]
-        ]:
-            """Resolve the schema, ACL, and entry server bundle."""
-            ...
-
-        def resolve_server_constants(
-            self,
-            server_type: str,
-        ) -> p.Result[type[FlextLdifProtocolsBase.ServerConstants]]:
-            """Resolve server constants by server type."""
-            ...
-
-        # NOTE (multi-agent, mro-0ftd.3.7.2): mutable element type matches the
-        # public facade (api.py:223) and concrete registry SSOT (server.py:160).
-        def list_registered_servers(self) -> p.Result[t.MutableSequenceOf[str]]:
-            """List normalized registered server types."""
-            ...
-
-        def summarize_registry(self) -> p.Result[t.MutableJsonMapping]:
-            """Summarize the server registry."""
-            ...
-
-        def resolve_supported_conversions(
-            self,
-            server: FlextLdifProtocolsBase.ServerReference | str,
-        ) -> t.MappingKV[str, bool]:
-            """Return conversion capabilities for a server."""
-            ...
-
-        def convert_model(
-            self,
-            source: str
-            | FlextLdifProtocolsBase.ServerReference
-            | FlextLdifProtocolsDomain.ServerServer,
-            target: str
-            | FlextLdifProtocolsBase.ServerReference
-            | FlextLdifProtocolsDomain.ServerServer,
-            model_instance: FlextLdifProtocolsBase.Entry
-            | FlextLdifProtocolsBase.SchemaAttribute
-            | FlextLdifProtocolsBase.SchemaObjectClass
-            | FlextLdifProtocolsBase.Acl,
-        ) -> p.Result[
-            FlextLdifProtocolsBase.Entry
-            | FlextLdifProtocolsBase.SchemaAttribute
-            | FlextLdifProtocolsBase.SchemaObjectClass
-            | FlextLdifProtocolsBase.Acl
-        ]:
-            """Convert one LDIF model between server implementations."""
-            ...
-
-        def resolve_effective_server_type(
-            self,
-            ldif_path: Path | None = None,
-            ldif_content: str | None = None,
-        ) -> p.Result[str]:
-            """Resolve the effective LDAP server type."""
-            ...
+    class ServerResolutionService(
+        FlextLdifProtocolsBase.ServerResolutionService,
+        Protocol,
+    ):
+        """Single-owner contract inherited from the base facet unchanged."""
 
     @runtime_checkable
     class Client(
