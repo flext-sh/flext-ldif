@@ -320,7 +320,7 @@ class TestsFlextLdifRfcDockerReal:
         output_file = tmp_path / "large_output.ldif"
 
         # Act
-        result = FlextLdifWriter(server=server_registry).write_ldif_file(
+        result = FlextLdifWriter(registry=server_registry).write_ldif_file(
             entries,
             output_file,
             server_type=c.Tests.RFC,
@@ -349,7 +349,7 @@ class TestsFlextLdifRfcDockerReal:
                 ),
             ),
         ]
-        writer = FlextLdifWriter(server=server_registry)
+        writer = FlextLdifWriter(registry=server_registry)
 
         # Act
         first = writer.write_to_string(entries, server_type=c.Tests.RFC)

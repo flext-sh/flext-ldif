@@ -114,7 +114,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
         response = parser.parse_ldif_file(source_file).unwrap()
 
         output_file = tmp_path / "written.ldif"
-        writer = FlextLdifWriter(server=server)
+        writer = FlextLdifWriter(registry=server)
         write_result = writer.write_ldif_file(
             response.entries,
             output_file,
@@ -146,7 +146,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
             pytest.skip(f"Failed to parse ACL fixture: {parse_result.error}")
 
         output_file = tmp_path / "acl_output.ldif"
-        writer = FlextLdifWriter(server=server)
+        writer = FlextLdifWriter(registry=server)
         result = writer.write_ldif_file(
             parse_result.value.entries,
             output_file,
@@ -175,7 +175,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
         }
 
         output_file = tmp_path / "roundtrip.ldif"
-        writer = FlextLdifWriter(server=server)
+        writer = FlextLdifWriter(registry=server)
         write_result = writer.write_ldif_file(
             original.entries,
             output_file,
@@ -221,7 +221,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
                 attribute_metadata={},
             ),
         )
-        writer = FlextLdifWriter(server=server)
+        writer = FlextLdifWriter(registry=server)
         try:
             result = writer.write_ldif_file(
                 [entry],
