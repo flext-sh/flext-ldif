@@ -111,18 +111,14 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         )
         processor_fields["data"] = data
         processor_fields["operation"] = operation
-        builder_fields = FlextLdifServerMethodsMixin.builder_fields_or_none(
+        configured = FlextLdifServerMethodsMixin.dispatch_builder(
+            super().__call__,
             processor_fields,
             frozenset({"data", "operation"}),
             server,
             settings,
         )
-        if builder_fields is not None:
-            configured = super().__call__(
-                server=server,
-                settings=settings,
-                **builder_fields,
-            )
+        if configured is not None:
             return cast("Self", configured)
         data_raw = processor_fields.get("data")
         narrowed_data = (

@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from examples.schema_building import create_entry_or_none
+from examples.schema_building import object_class_entries
 from flext_ldif import FlextLdif, ldif, m, p, r, t
 
 
@@ -49,7 +49,6 @@ def _object_class_entries() -> list[m.Ldif.Entry]:
     Returns:
         The resulting ``list[m.Ldif.Entry]``.
     """
-    object_classes: list[m.Ldif.Entry] = []
     oc_definitions: t.SequenceOf[tuple[str, str, str, list[str], list[str]]] = [
         ("person", "Person", "top", ["cn", "sn"], ["mail", "telephoneNumber"]),
         (
@@ -68,21 +67,7 @@ def _object_class_entries() -> list[m.Ldif.Entry]:
             ["description", "businessCategory"],
         ),
     ]
-    for name, desc, sup, must_attrs, may_attrs in oc_definitions:
-        attrs: t.MutableAttributeMapping = {
-            "objectClass": ["top", "ldapSubentry", "objectClassDescription"],
-            "cn": [name],
-            "description": [desc],
-            "sup": [sup],
-        }
-        if must_attrs:
-            attrs["must"] = must_attrs
-        if may_attrs:
-            attrs["may"] = may_attrs
-        oc_entry = create_entry_or_none(dn=f"cn={name},cn=schema", attributes=attrs)
-        if oc_entry is not None:
-            object_classes.append(oc_entry)
-    return object_classes
+    return object_class_entries(oc_definitions)
 
 
 def _validated_batch_results(
