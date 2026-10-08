@@ -19,6 +19,12 @@ if TYPE_CHECKING:
     from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
     from flext_ldif.servers._base.entry_lines import FlextLdifServersEntryLineEmitter
     from flext_ldif.servers._base.entry_write import FlextLdifServersEntryWriteContext
+    from flext_ldif.servers._base.entry_write_body import (
+        FlextLdifServersEntryWriteBodyEmitter,
+    )
+    from flext_ldif.servers._base.entry_write_options import (
+        FlextLdifServersEntryWriteOptions,
+    )
     from flext_ldif.servers._base.execute_params import (
         FlextLdifServersBaseExecuteParamsMixin,
     )
@@ -31,6 +37,7 @@ if TYPE_CHECKING:
         FlextLdifServersBaseSchemaValuesMixin,
     )
     from flext_ldif.servers._base.server_constants import FlextLdifServersBaseConstants
+    from flext_ldif.servers._base.server_io import FlextLdifServersBaseIoMixin
     from flext_ldif.servers._base.server_type import FlextLdifServersBaseMroMixin
     from flext_ldif.servers._oid.acl import FlextLdifServersOidAcl
     from flext_ldif.servers._oid.acl_format import FlextLdifServersOidAclFormatMixin
@@ -49,6 +56,9 @@ if TYPE_CHECKING:
     from flext_ldif.servers._oid.entry_parse import FlextLdifServersOidEntryParseMixin
     from flext_ldif.servers._oid.entry_restore import (
         FlextLdifServersOidEntryRestoreMixin,
+    )
+    from flext_ldif.servers._oid.entry_restore_lines import (
+        FlextLdifServersOidEntryRestoreLinesMixin,
     )
     from flext_ldif.servers._oid.schema_normalize import (
         FlextLdifServersOidSchemaNormalizeMixin,
@@ -100,6 +110,12 @@ if TYPE_CHECKING:
     from flext_ldif.servers.relaxed import FlextLdifServersRelaxed
     from flext_ldif.servers.relaxed_constants import FlextLdifServersRelaxedConstants
     from flext_ldif.servers.relaxed_entry import FlextLdifServersRelaxedEntry
+    from flext_ldif.servers.relaxed_entry_parse import (
+        FlextLdifServersRelaxedEntryParseMixin,
+    )
+    from flext_ldif.servers.relaxed_entry_write import (
+        FlextLdifServersRelaxedEntryWriteMixin,
+    )
     from flext_ldif.servers.relaxed_schema import FlextLdifServersRelaxedSchema
     from flext_ldif.servers.rfc import FlextLdifServersRfc
     from flext_ldif.servers.tivoli import FlextLdifServersTivoli
@@ -113,6 +129,7 @@ __all__: tuple[str, ...] = (
     "FlextLdifServersBaseConstants",
     "FlextLdifServersBaseEntry",
     "FlextLdifServersBaseExecuteParamsMixin",
+    "FlextLdifServersBaseIoMixin",
     "FlextLdifServersBaseMroMixin",
     "FlextLdifServersBaseSchema",
     "FlextLdifServersBaseSchemaAcl",
@@ -121,7 +138,9 @@ __all__: tuple[str, ...] = (
     "FlextLdifServersDialectSchema",
     "FlextLdifServersDs389",
     "FlextLdifServersEntryLineEmitter",
+    "FlextLdifServersEntryWriteBodyEmitter",
     "FlextLdifServersEntryWriteContext",
+    "FlextLdifServersEntryWriteOptions",
     "FlextLdifServersOid",
     "FlextLdifServersOidAcl",
     "FlextLdifServersOidAclAssemble",
@@ -139,6 +158,7 @@ __all__: tuple[str, ...] = (
     "FlextLdifServersOidEntryMetadataMixin",
     "FlextLdifServersOidEntryNormalizeMixin",
     "FlextLdifServersOidEntryParseMixin",
+    "FlextLdifServersOidEntryRestoreLinesMixin",
     "FlextLdifServersOidEntryRestoreMixin",
     "FlextLdifServersOidSchema",
     "FlextLdifServersOidSchemaNormalizeMixin",
@@ -165,6 +185,8 @@ __all__: tuple[str, ...] = (
     "FlextLdifServersRelaxed",
     "FlextLdifServersRelaxedConstants",
     "FlextLdifServersRelaxedEntry",
+    "FlextLdifServersRelaxedEntryParseMixin",
+    "FlextLdifServersRelaxedEntryWriteMixin",
     "FlextLdifServersRelaxedSchema",
     "FlextLdifServersRfc",
     "FlextLdifServersRfcAcl",
@@ -192,6 +214,7 @@ install_lazy_exports(
         "FlextLdifServersBaseConstants": "._base.server_constants",
         "FlextLdifServersBaseEntry": "._base.entry",
         "FlextLdifServersBaseExecuteParamsMixin": "._base.execute_params",
+        "FlextLdifServersBaseIoMixin": "._base.server_io",
         "FlextLdifServersBaseMroMixin": "._base.server_type",
         "FlextLdifServersBaseSchema": "._base.schema",
         "FlextLdifServersBaseSchemaAcl": "._base.acl",
@@ -200,7 +223,9 @@ install_lazy_exports(
         "FlextLdifServersDialectSchema": "._base.dialect_schema",
         "FlextLdifServersDs389": ".ds389",
         "FlextLdifServersEntryLineEmitter": "._base.entry_lines",
+        "FlextLdifServersEntryWriteBodyEmitter": "._base.entry_write_body",
         "FlextLdifServersEntryWriteContext": "._base.entry_write",
+        "FlextLdifServersEntryWriteOptions": "._base.entry_write_options",
         "FlextLdifServersOid": ".oid",
         "FlextLdifServersOidAcl": "._oid.acl",
         "FlextLdifServersOidAclAssemble": ".oid",
@@ -218,6 +243,7 @@ install_lazy_exports(
         "FlextLdifServersOidEntryMetadataMixin": "._oid.entry_metadata",
         "FlextLdifServersOidEntryNormalizeMixin": "._oid.entry_normalize",
         "FlextLdifServersOidEntryParseMixin": "._oid.entry_parse",
+        "FlextLdifServersOidEntryRestoreLinesMixin": "._oid.entry_restore_lines",
         "FlextLdifServersOidEntryRestoreMixin": "._oid.entry_restore",
         "FlextLdifServersOidSchema": ".oid",
         "FlextLdifServersOidSchemaNormalizeMixin": "._oid.schema_normalize",
@@ -244,6 +270,8 @@ install_lazy_exports(
         "FlextLdifServersRelaxed": ".relaxed",
         "FlextLdifServersRelaxedConstants": ".relaxed_constants",
         "FlextLdifServersRelaxedEntry": ".relaxed_entry",
+        "FlextLdifServersRelaxedEntryParseMixin": ".relaxed_entry_parse",
+        "FlextLdifServersRelaxedEntryWriteMixin": ".relaxed_entry_write",
         "FlextLdifServersRelaxedSchema": ".relaxed_schema",
         "FlextLdifServersRfc": ".rfc",
         "FlextLdifServersRfcAcl": "._rfc.acl",
