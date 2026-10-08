@@ -26,8 +26,7 @@ from tests import m
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_core import t
-    from tests import p
+    from tests import p, t
 
 pytestmark = [pytest.mark.integration]
 

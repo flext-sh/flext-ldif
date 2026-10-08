@@ -54,7 +54,7 @@ class FlextLdifCategorizationFiltering(FlextLdifCategorizationRules):
         excluded: t.MutableSequenceOf[m.Ldif.Entry] = []
         for entry in model_entries:
             dn_str = str(entry.dn) if entry.dn else None
-            if dn_str and u.Ldif.is_under_base(dn_str, base_dn):
+            if dn_str and u.Ldif.under_base(dn_str, base_dn):
                 included.append(entry)
             else:
                 excluded.append(entry)

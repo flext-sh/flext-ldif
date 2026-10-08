@@ -37,7 +37,11 @@ if TYPE_CHECKING:
     from flext_ldif._models.domain_entry import FlextLdifModelsDomainEntry
     from flext_ldif._models.domain_entry_change import (
         FlextLdifModelsDomainEntryChangeOperation,
+    )
+    from flext_ldif._models.domain_entry_change_value import (
         FlextLdifModelsDomainEntryChangeOperationValue,
+    )
+    from flext_ldif._models.domain_entry_control import (
         FlextLdifModelsDomainEntryControl,
     )
     from flext_ldif._models.domain_entry_statistics import (
@@ -94,8 +98,8 @@ install_lazy_exports(
         "FlextLdifModelsDomainDN": ".domain_dn",
         "FlextLdifModelsDomainEntry": ".domain_entry",
         "FlextLdifModelsDomainEntryChangeOperation": ".domain_entry_change",
-        "FlextLdifModelsDomainEntryChangeOperationValue": ".domain_entry_change",
-        "FlextLdifModelsDomainEntryControl": ".domain_entry_change",
+        "FlextLdifModelsDomainEntryChangeOperationValue": ".domain_entry_change_value",
+        "FlextLdifModelsDomainEntryControl": ".domain_entry_control",
         "FlextLdifModelsDomainEntryStatistics": ".domain_entry_statistics",
         "FlextLdifModelsDomainMetadata": ".domain_metadata",
         "FlextLdifModelsDomainSchema": ".domain_schema",

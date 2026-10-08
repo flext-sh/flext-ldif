@@ -33,7 +33,7 @@ class FlextLdifDNNormalization:
         """
         result: p.Result[str] = r[str].fail("DN cannot be None")
         if dn is not None:
-            dn_str = FlextLdifDNParsing.get_dn_value(dn)
+            dn_str = FlextLdifDNParsing.resolve_dn_value(dn)
             if not dn_str or "=" not in dn_str:
                 error_msg = (
                     "Failed to normalize DN: DN string is empty"

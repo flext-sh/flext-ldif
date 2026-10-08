@@ -181,11 +181,13 @@ class FlextLdifServersOudCommentsMixin(FlextLdifServersOudCommentsAclMixin):
             The resulting ``set[str]``.
         """
         processed_attrs: set[str] = set()
-        if not entry.metadata.attribute_transformations:
+        metadata = entry.metadata
+        if metadata is None or not metadata.attribute_transformations:
             return processed_attrs
+        transformations = metadata.attribute_transformations
         attr_names = [
             attr_name
-            for attr_name in entry.metadata.attribute_transformations
+            for attr_name in transformations
             if attr_name.lower() not in acl_attr_names_to_skip
         ]
         ordered_attr_names = (
@@ -195,7 +197,7 @@ class FlextLdifServersOudCommentsMixin(FlextLdifServersOudCommentsAclMixin):
             )
         )
         for attr_name in ordered_attr_names:
-            transformation = entry.metadata.attribute_transformations[attr_name]
+            transformation = transformations[attr_name]
             transformation_type = transformation.transformation_type.upper()
             comment_type = (
                 "TRANSFORMED"

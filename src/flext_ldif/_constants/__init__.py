@@ -24,6 +24,7 @@ if TYPE_CHECKING:
         FlextLdifConstantsServersOud,
         FlextLdifConstantsServersRfc,
     )
+    from flext_ldif._constants.servers_relaxed import FlextLdifConstantsServersRelaxed
 
 
 __all__: tuple[str, ...] = (
@@ -35,19 +36,24 @@ __all__: tuple[str, ...] = (
     "FlextLdifConstantsServersBase",
     "FlextLdifConstantsServersOid",
     "FlextLdifConstantsServersOud",
+    "FlextLdifConstantsServersRelaxed",
     "FlextLdifConstantsServersRfc",
 )
 
-_EXPORT_MODULES: MappingProxyType[str, str] = MappingProxyType({
-    "FlextLdifConstantsAclConvert": ".acl_convert",
-    "FlextLdifConstantsAclConvertOud": ".acl_convert_oud",
-    "FlextLdifConstantsBase": ".base",
-    "FlextLdifConstantsEnums": ".enums",
-    "FlextLdifConstantsServers": ".servers",
-    "FlextLdifConstantsServersBase": ".servers",
-    "FlextLdifConstantsServersOid": ".servers",
-    "FlextLdifConstantsServersOud": ".servers",
-    "FlextLdifConstantsServersRfc": ".servers",
-})
-
-install_lazy_exports(__name__, globals(), _EXPORT_MODULES, public_exports=__all__)
+install_lazy_exports(
+    __name__,
+    globals(),
+    MappingProxyType({
+        "FlextLdifConstantsAclConvert": ".acl_convert",
+        "FlextLdifConstantsAclConvertOud": ".acl_convert_oud",
+        "FlextLdifConstantsBase": ".base",
+        "FlextLdifConstantsEnums": ".enums",
+        "FlextLdifConstantsServers": ".servers",
+        "FlextLdifConstantsServersBase": ".servers",
+        "FlextLdifConstantsServersOid": ".servers",
+        "FlextLdifConstantsServersOud": ".servers",
+        "FlextLdifConstantsServersRelaxed": ".servers_relaxed",
+        "FlextLdifConstantsServersRfc": ".servers",
+    }),
+    public_exports=__all__,
+)

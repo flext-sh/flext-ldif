@@ -69,7 +69,7 @@ class FlextLdifServersOudAclMetadataMixin:
                 acl_metadata_extensions[dest_key] = u.normalize_to_metadata(value_raw)
 
     @staticmethod
-    def get_original_acl_attr(entry: m.Ldif.Entry) -> str:
+    def resolve_original_acl_attr(entry: m.Ldif.Entry) -> str:
         """Get original ACL attribute name (orclaci) from transformations or metadata.
 
         Returns:

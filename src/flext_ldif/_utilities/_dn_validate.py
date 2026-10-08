@@ -154,7 +154,7 @@ class FlextLdifDNValidation:
         Returns:
             The resulting ``bool``.
         """
-        dn_str = FlextLdifDNParsing.get_dn_value(dn)
+        dn_str = FlextLdifDNParsing.resolve_dn_value(dn)
         if not FlextLdifDNValidation._validate_basic_format(dn_str):
             return False
         if not FlextLdifDNValidation._validate_dn_structure(dn_str):

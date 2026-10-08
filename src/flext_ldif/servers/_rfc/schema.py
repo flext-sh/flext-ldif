@@ -18,9 +18,9 @@ from flext_ldif.servers.base import FlextLdifServersBase
 
 
 class FlextLdifServersRfcSchema(
-    FlextLdifServersRfcSchemaValuesMixin,
     FlextLdifServersRfcSchemaWriteMixin,
     FlextLdifServersRfcSchemaParseMixin,
+    FlextLdifServersRfcSchemaValuesMixin,
     FlextLdifServersBase.Schema,
 ):
     """RFC 4512 Compliant Schema Server - STRICT Implementation."""
@@ -157,18 +157,14 @@ class FlextLdifServersRfcSchema(
             TypeError: If RFC schema operation returned unsupported value.
             ValueError: If ``result.failure``.
         """
-        builder_fields = FlextLdifServerMethodsMixin.builder_fields_or_none(
+        configured = FlextLdifServerMethodsMixin.dispatch_builder(
+            super().__call__,
             fields,
             frozenset({"data", "operation"}),
             server,
             settings,
         )
-        if builder_fields is not None:
-            configured = super().__call__(
-                server=server,
-                settings=settings,
-                **builder_fields,
-            )
+        if configured is not None:
             return cast("Self", configured)
         narrowed_data = (
             data

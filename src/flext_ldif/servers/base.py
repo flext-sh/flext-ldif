@@ -211,18 +211,14 @@ class FlextLdifServersBase(
         Returns:
             The resulting ``Self | m.Ldif.Entry | str``.
         """
-        builder_fields = FlextLdifServerMethodsMixin.builder_fields_or_none(
+        configured = FlextLdifServerMethodsMixin.dispatch_builder(
+            super().__call__,
             fields,
             frozenset({"ldif_text", "entries", "operation"}),
             server,
             settings,
         )
-        if builder_fields is not None:
-            configured = super().__call__(
-                server=server,
-                settings=settings,
-                **builder_fields,
-            )
+        if configured is not None:
             return cast("Self", configured)
         execute_kwargs: t.MutableMappingKV[
             str,

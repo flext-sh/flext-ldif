@@ -84,7 +84,7 @@ class TestsFlextLdifDetectorService:
         result = api.detect_server_type(ldif_content=c.Tests.DETECTOR_RFC_SNIPPET)
         detection: m.Ldif.ServerDetectionResult = u.Tests.assert_success(result)
 
-        generic_server_type = u.Ldif.get_server_type_value("GENERIC")
+        generic_server_type = u.Ldif.resolve_server_type_value("GENERIC")
         tm.that(bool(detection.detected_server_type), eq=True)
         tm.that(detection.scores[generic_server_type], eq=1)
         tm.that(detection.patterns_found, eq=[])

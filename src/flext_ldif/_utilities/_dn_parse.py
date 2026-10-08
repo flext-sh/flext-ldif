@@ -20,7 +20,7 @@ class FlextLdifDNParsing:
     """Split DN strings and parse them into RFC 4514 components."""
 
     @staticmethod
-    def get_dn_value(dn: FlextLdifModels.Ldif.DN | str) -> str:
+    def resolve_dn_value(dn: FlextLdifModels.Ldif.DN | str) -> str:
         """Extract DN string value from DN model or string (public utility method).
 
         Returns:
@@ -66,7 +66,7 @@ class FlextLdifDNParsing:
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
         """
-        dn_str = FlextLdifDNParsing.get_dn_value(dn)
+        dn_str = FlextLdifDNParsing.resolve_dn_value(dn)
         if not dn_str:
             return []
 
@@ -130,7 +130,7 @@ class FlextLdifDNParsing:
             "DN cannot be None",
         )
         if dn is not None:
-            dn_str = FlextLdifDNParsing.get_dn_value(dn)
+            dn_str = FlextLdifDNParsing.resolve_dn_value(dn)
             if not dn_str or "=" not in dn_str:
                 error_msg = (
                     "DN string is empty"

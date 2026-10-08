@@ -125,7 +125,7 @@ class FlextLdifConversionAclPreserveMixin(s):
                 not converted_has_permissions and original_permissions is not None
             ):
                 mapping_type = "preserve_original"
-                replacement_permissions = original_acl.permissions.model_copy(deep=True)
+                replacement_permissions = original_permissions.model_copy(deep=True)
             case None:
                 replacement_permissions = None
         resolved_permissions = (

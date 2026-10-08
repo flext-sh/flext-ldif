@@ -84,21 +84,20 @@ class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s, ABC
         Returns:
             The resulting ``p.Result[str]``.
         """
-        expected_item_cls = (
-            m.Ldif.SchemaAttribute
-            if schema_item_kind == c.Ldif.SchemaItemKind.ATTRIBUTE
-            else m.Ldif.SchemaObjectClass
-        )
-        if not isinstance(parsed_item, expected_item_cls):
-            return r[str].fail(
-                f"Expected {expected_item_cls.__name__} for "
-                f"{schema_field_name}, got {type(parsed_item).__name__}",
-            )
-        write_result = (
-            target_schema.write_attribute(parsed_item)
-            if schema_item_kind == c.Ldif.SchemaItemKind.ATTRIBUTE
-            else target_schema.write_objectclass(parsed_item)
-        )
+        if schema_item_kind == c.Ldif.SchemaItemKind.ATTRIBUTE:
+            if not isinstance(parsed_item, m.Ldif.SchemaAttribute):
+                return r[str].fail(
+                    f"Expected SchemaAttribute for "
+                    f"{schema_field_name}, got {type(parsed_item).__name__}",
+                )
+            write_result = target_schema.write_attribute(parsed_item)
+        else:
+            if not isinstance(parsed_item, m.Ldif.SchemaObjectClass):
+                return r[str].fail(
+                    f"Expected SchemaObjectClass for "
+                    f"{schema_field_name}, got {type(parsed_item).__name__}",
+                )
+            write_result = target_schema.write_objectclass(parsed_item)
         return (
             r[str]
             .from_result(write_result)
@@ -118,7 +117,7 @@ class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s, ABC
         Returns:
             The resulting ``p.Result[m.Ldif.Entry]``.
         """
-        if entry.attributes is None or not u.Ldif.is_schema_entry(entry):
+        if entry.attributes is None or not u.Ldif.detects_schema_entry(entry):
             return r[m.Ldif.Entry].ok(entry)
         schema_pair = self._resolve_schema_pair(source_server, target_server)
         if schema_pair.failure:
@@ -185,6 +184,8 @@ class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s, ABC
             c.Ldif.ATTRIBUTE_TYPES.lower(): c.Ldif.SchemaItemKind.ATTRIBUTE,
             c.Ldif.OBJECT_CLASSES.lower(): c.Ldif.SchemaItemKind.OBJECTCLASS,
         }
+        if entry.attributes is None:
+            return []
         return [
             (attr_name, schema_item_kind, values)
             for attr_name, values in entry.attributes.attributes.items()
@@ -229,11 +230,14 @@ class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s, ABC
         Returns:
             The resulting ``m.Ldif.Entry``.
         """
-        updated_attributes = dict(entry.attributes.attributes)
+        attributes_model = entry.attributes
+        if attributes_model is None:
+            return entry
+        updated_attributes = dict(attributes_model.attributes)
         updated_attributes.update(dict(converted_fields))
         return entry.model_copy(
             update={
-                "attributes": entry.attributes.model_copy(
+                "attributes": attributes_model.model_copy(
                     update={"attributes": updated_attributes},
                     deep=True,
                 ),

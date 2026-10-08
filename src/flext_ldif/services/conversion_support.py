@@ -143,7 +143,7 @@ class FlextLdifConversionSupportMixin(s):
 
     @staticmethod
     def _record_schema_support(
-        parse_result: p.Result[m.Ldif.SchemaElement],
+        parse_result: p.ResultView[m.Ldif.SchemaElement],
         support_key: str,
         support: t.MutableIntMapping,
     ) -> t.MutableIntMapping:

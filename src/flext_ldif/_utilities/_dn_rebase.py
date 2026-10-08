@@ -139,7 +139,7 @@ class FlextLdifDNRebasing:
         entry_dn = entry.dn
         if entry_dn is None:
             return None
-        dn_str = FlextLdifDNParsing.get_dn_value(entry_dn)
+        dn_str = FlextLdifDNParsing.resolve_dn_value(entry_dn)
         if not dn_str:
             return None
         new_dn_str = FlextLdifDNTransforming.transform_dn_attribute(

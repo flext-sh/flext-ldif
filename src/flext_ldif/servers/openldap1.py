@@ -143,7 +143,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             return not cls._has_olc_marker(definition.oid, definition.name)
 
         @staticmethod
-        def _parse_stripped_openldap1_definition[T](
+        def _parse_stripped_openldap1_definition[T: m.Ldif.SchemaElement](
             definition: str,
             prefix_re: t.Ldif.RegexPattern,
             parse: Callable[[str], p.Result[T]],

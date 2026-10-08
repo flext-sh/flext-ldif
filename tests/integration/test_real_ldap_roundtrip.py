@@ -6,7 +6,7 @@ must re-materialize into an entry whose public state (DN, objectClass set,
 scalar and multi-valued attributes) is identical to the original. Only the
 public surface is exercised -- ``write``/``parse_ldif`` returning ``r[T]``,
 ``m.Ldif.Entry.create``, the ``attributes_dict`` computed field and the
-``u.Ldif.get_attribute_values`` utility. The LDAP server is a genuine
+``u.Ldif.resolve_attribute_values`` utility. The LDAP server is a genuine
 external boundary reached through the ``ldap_connection`` fixture.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -134,7 +134,7 @@ class TestsFlextLdifRealLdapRoundtrip:
         tm.that(parsed_entry.dn_str, eq=source_dn)
 
         # Assert: objectClass set is preserved through the roundtrip.
-        object_classes = u.Ldif.get_attribute_values(parsed_entry, "objectclass")
+        object_classes = u.Ldif.resolve_attribute_values(parsed_entry, "objectclass")
         tm.that({oc.lower() for oc in object_classes}, eq={"person", "inetorgperson"})
 
         # Re-import the parsed entry into LDAP via its PUBLIC attribute view.

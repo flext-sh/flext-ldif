@@ -121,6 +121,7 @@ class FlextLdifProtocolsBase(Protocol):
             """Resolve the effective LDAP server type for public processing flows."""
             ...
 
+    @runtime_checkable
     class LdifClient(
         ValidationService,
         ServerDetectionService,

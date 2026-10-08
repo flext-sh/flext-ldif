@@ -9,11 +9,15 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 from flext_ldif import c, m, t
+from flext_ldif.servers._oid.entry_boolean import FlextLdifServersOidEntryBooleanMixin
 from flext_ldif.servers._oid.server_constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 
-class FlextLdifServersOidEntryRestoreMixin(FlextLdifServersRfc.Entry):
+class FlextLdifServersOidEntryRestoreMixin(
+    FlextLdifServersOidEntryBooleanMixin,
+    FlextLdifServersRfc.Entry,
+):
     """OID entry round-trip attribute denormalization from metadata."""
 
     def _denormalize_oid_attributes_for_output(

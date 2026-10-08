@@ -203,7 +203,7 @@ class FlextLdifCategorizationRules(s):
         priority_classes = frozenset(
             oc.lower() for oc in constants.HIERARCHY_PRIORITY_OBJECTCLASSES
         )
-        entry_ocs = {oc.lower() for oc in u.Ldif.get_objectclass_names(entry)}
+        entry_ocs = {oc.lower() for oc in u.Ldif.resolve_objectclass_names(entry)}
         return bool(priority_classes & entry_ocs)
 
     @staticmethod

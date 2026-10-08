@@ -27,7 +27,7 @@ class FlextLdifDNCharClass:
         return code not in excluded
 
     @staticmethod
-    def is_lutf1_char(char: str) -> bool:
+    def lutf1_char(char: str) -> bool:
         """Check if char is valid LUTF1 (lead char) per RFC 4514.
 
         Returns:
@@ -36,7 +36,7 @@ class FlextLdifDNCharClass:
         return FlextLdifDNCharClass._is_rfc_char_class(char, c.Ldif.DN_LUTF1_EXCLUDE)
 
     @staticmethod
-    def is_sutf1_char(char: str) -> bool:
+    def sutf1_char(char: str) -> bool:
         """Check if char is valid SUTF1 (string char) per RFC 4514.
 
         Returns:
@@ -45,7 +45,7 @@ class FlextLdifDNCharClass:
         return FlextLdifDNCharClass._is_rfc_char_class(char, c.Ldif.DN_SUTF1_EXCLUDE)
 
     @staticmethod
-    def is_tutf1_char(char: str) -> bool:
+    def tutf1_char(char: str) -> bool:
         """Check if char is valid TUTF1 (trail char) per RFC 4514.
 
         Returns:
@@ -54,7 +54,7 @@ class FlextLdifDNCharClass:
         return FlextLdifDNCharClass._is_rfc_char_class(char, c.Ldif.DN_TUTF1_EXCLUDE)
 
     @staticmethod
-    def is_valid_dn_string(
+    def valid_dn_string(
         value: str,
         *,
         strict: bool = True,
@@ -68,24 +68,24 @@ class FlextLdifDNCharClass:
         if not value:
             return (True, errors)
         if len(value) == 1:
-            if not FlextLdifDNCharClass.is_lutf1_char(value) and strict:
+            if not FlextLdifDNCharClass.lutf1_char(value) and strict:
                 errors.append(f"Invalid lead character: {value!r}")
             return (not errors, errors)
         is_escaped_lead = value[0] == "\\" and len(value) > 1
-        is_bad_lead = not FlextLdifDNCharClass.is_lutf1_char(value[0]) and (
+        is_bad_lead = not FlextLdifDNCharClass.lutf1_char(value[0]) and (
             not is_escaped_lead
         )
         if is_bad_lead and strict:
             errors.append(f"Invalid lead character: {value[0]!r}")
         min_len_for_escape = c.Ldif.MIN_DN_LENGTH
         is_escaped_trail = len(value) >= min_len_for_escape and value[-2] == "\\"
-        is_bad_trail = not FlextLdifDNCharClass.is_tutf1_char(value[-1]) and (
+        is_bad_trail = not FlextLdifDNCharClass.tutf1_char(value[-1]) and (
             not is_escaped_trail
         )
         if is_bad_trail and strict:
             errors.append(f"Invalid trail character: {value[-1]!r}")
         for i, char in enumerate(value[1:-1], start=1):
-            if FlextLdifDNCharClass.is_sutf1_char(char):
+            if FlextLdifDNCharClass.sutf1_char(char):
                 continue
             is_escape_char = char == "\\"
             is_after_escape = i > 0 and value[i - 1] == "\\"

@@ -10,7 +10,9 @@ from collections.abc import MutableMapping
 from typing import override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers.relaxed_constants import FlextLdifServersRelaxedConstants
+from flext_ldif.servers._relaxed.server_constants import (
+    FlextLdifServersRelaxedConstants,
+)
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 

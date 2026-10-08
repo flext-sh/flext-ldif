@@ -10,11 +10,15 @@ from collections.abc import MutableMapping
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
+from flext_ldif.servers._oid.acl_format import FlextLdifServersOidAclFormatMixin
+from flext_ldif.servers._oid.acl_subjects import FlextLdifServersOidAclSubjectMixin
 from flext_ldif.servers._oid.server_constants import FlextLdifServersOidConstants
-from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 
-class FlextLdifServersOidAclWriteMixin(FlextLdifServersRfc.Acl):
+class FlextLdifServersOidAclWriteMixin(
+    FlextLdifServersOidAclSubjectMixin,
+    FlextLdifServersOidAclFormatMixin,
+):
     """OID ACL OID ACL write assembly."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)

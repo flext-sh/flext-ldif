@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
     from pathlib import Path
 
+    from flext_ldif import m
     from flext_ldif._protocols.domain import FlextLdifProtocolsDomain
 
 # NOTE (multi-agent, mro-0ftd.3.7.2): client declarations are the highest
@@ -152,6 +153,7 @@ class FlextLdifProtocolsClient(Protocol):
             """Resolve the effective LDAP server type."""
             ...
 
+    @runtime_checkable
     class Client(
         FlextLdifProtocolsBase.ValidationService,
         FlextLdifProtocolsBase.ServerDetectionService,
@@ -171,7 +173,7 @@ class FlextLdifProtocolsClient(Protocol):
             output_dir: Path | None = None,
             source_server: str = c.Ldif.ServerTypes.RFC.value,
             target_server: str = c.Ldif.ServerTypes.RFC.value,
-            options: FlextLdifProtocolsBase.MigrateOptions | None = None,
+            options: m.Ldif.MigrateOptions | None = None,
         ) -> p.Result[FlextLdifProtocolsBase.MigrationPipelineResult]:
             """Run the public LDIF migration pipeline."""
             ...
@@ -269,16 +271,16 @@ class FlextLdifProtocolsClient(Protocol):
             acls: Sequence[FlextLdifProtocolsBase.Acl],
             required_permissions: FlextLdifProtocolsBase.AclPermissions
             | t.MutableBoolMapping,
-        ) -> p.Result[FlextLdifProtocolsBase.AclEvaluationResult]:
+        ) -> p.Result[m.Ldif.AclEvaluationResult]:
             """Evaluate ACLs against the required permissions."""
             ...
 
         def process_entries(
             self,
             entries: Sequence[FlextLdifProtocolsBase.Entry],
-            options: FlextLdifProtocolsBase.ProcessEntriesOptions | None = None,
+            options: m.Ldif.ProcessEntriesOptions | None = None,
             **kwargs: t.JsonValue,
-        ) -> p.Result[Sequence[FlextLdifProtocolsBase.ProcessingResult]]:
+        ) -> p.Result[Sequence[m.Ldif.ProcessingResult]]:
             """Process entries through the public facade."""
             ...
 
@@ -286,7 +288,7 @@ class FlextLdifProtocolsClient(Protocol):
             self,
             entries: Sequence[FlextLdifProtocolsBase.Entry]
             | FlextLdifProtocolsBase.ParseResponse,
-        ) -> p.Result[FlextLdifProtocolsBase.EntriesStatistics]:
+        ) -> p.Result[m.Ldif.EntriesStatistics]:
             """Calculate aggregate entry statistics."""
             ...
 

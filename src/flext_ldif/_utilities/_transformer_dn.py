@@ -1,4 +1,4 @@
-"""DN normalization transformer.
+"""DN normalization step for LDIF entry pipelines.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -6,33 +6,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import override
-
 from flext_core import r
 from flext_ldif import FlextLdifModels, c, p, t
-from flext_ldif._utilities._transformer_base import FlextLdifUtilitiesTransformer
-from flext_ldif._utilities.dn import FlextLdifUtilitiesDN as udn
+from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 
 
-class FlextLdifUtilitiesNormalizeDnTransformer(
-    FlextLdifUtilitiesTransformer[FlextLdifModels.Ldif.Entry],
-):
-    """Transformer for DN normalization."""
-
-    __slots__ = ("_case", "_spaces", "_validate")
-
-    def __init__(
-        self,
-        *,
-        case: c.Ldif.CaseFoldOption = c.Ldif.CaseFoldOption.LOWER,
-        spaces: c.Ldif.SpaceHandlingOption = c.Ldif.SpaceHandlingOption.TRIM,
-        validate: bool = True,
-    ) -> None:
-        """Initialize DN normalization transformer."""
-        super().__init__()
-        self._case = case
-        self._spaces = spaces
-        self._validate = validate
+class FlextLdifUtilitiesEntryDnNormalization:
+    """Stateless DN normalization of one LDIF entry."""
 
     @staticmethod
     def validate_dn_components(dn_str: str) -> p.Result[bool]:
@@ -41,77 +21,69 @@ class FlextLdifUtilitiesNormalizeDnTransformer(
         Returns:
             The resulting ``p.Result[bool]``.
         """
-        components = udn.split(dn_str)
+        components = FlextLdifUtilitiesDN.split(dn_str)
         all_errors: t.MutableSequenceOf[str] = []
         for comp in components:
             if "=" not in comp:
                 all_errors.append(f"Invalid RDN (missing '='): {comp}")
                 continue
             _, _, value = comp.partition("=")
-            valid, errors = udn.is_valid_dn_string(value.strip())
+            valid, errors = FlextLdifUtilitiesDN.valid_dn_string(value.strip())
             if not valid:
                 all_errors.extend([f"RDN value '{value}': {e}" for e in errors])
         if all_errors:
             return r[bool].fail(f"Invalid DN: {', '.join(all_errors)}")
         return r[bool].ok(value=True)
 
-    @override
-    def apply(
-        self,
+    @staticmethod
+    def normalize_entry_dn(
         item: FlextLdifModels.Ldif.Entry,
+        *,
+        case: c.Ldif.CaseFoldOption = c.Ldif.CaseFoldOption.LOWER,
+        spaces: c.Ldif.SpaceHandlingOption = c.Ldif.SpaceHandlingOption.TRIM,
+        validate: bool = True,
     ) -> p.Result[FlextLdifModels.Ldif.Entry]:
-        """Apply DN normalization to an entry.
+        """Normalize the DN of one entry (validation, case folding, spaces).
 
         Returns:
             The resulting ``p.Result[FlextLdifModels.Ldif.Entry]``.
         """
         if item.dn is None:
             return r[FlextLdifModels.Ldif.Entry].fail("Entry has no DN")
-        dn_str = (
-            item.dn.value
-            if getattr(item.dn, "value", None) is not None
-            else str(item.dn)
-        )
+        entry_dn = item.dn
+        dn_str = entry_dn.value
 
         def validate_dn(_: str) -> p.Result[str]:
-            if not self._validate:
+            if not validate:
                 return r[str].ok(dn_str)
             return (
-                FlextLdifUtilitiesNormalizeDnTransformer
+                FlextLdifUtilitiesEntryDnNormalization
                 .validate_dn_components(dn_str)
                 .map_error(lambda error: error or "DN validation failed")
                 .map(lambda __: dn_str)
             )
 
         def update_entry(normalized_dn: str) -> FlextLdifModels.Ldif.Entry:
-            normalized_text = self._normalize_dn_case_and_spaces(normalized_dn)
-            normalized_dn_value = (
-                item.dn.model_copy(update={"value": normalized_text})
-                if isinstance(item.dn, FlextLdifModels.Ldif.DN)
-                else FlextLdifModels.Ldif.DN.model_validate({"value": normalized_text})
-            )
+            if case == c.Ldif.CaseFoldOption.LOWER:
+                normalized_dn = normalized_dn.lower()
+            elif case == c.Ldif.CaseFoldOption.UPPER:
+                normalized_dn = normalized_dn.upper()
+            if spaces == c.Ldif.SpaceHandlingOption.TRIM:
+                normalized_dn = normalized_dn.strip()
             copied: FlextLdifModels.Ldif.Entry = item.model_copy(
-                update={"dn": normalized_dn_value},
+                update={
+                    "dn": entry_dn.model_copy(update={"value": normalized_dn}),
+                },
             )
             return copied
 
         return (
-            r[str].ok(dn_str).flat_map(validate_dn).flat_map(udn.norm).map(update_entry)
+            r[str]
+            .ok(dn_str)
+            .flat_map(validate_dn)
+            .flat_map(FlextLdifUtilitiesDN.norm)
+            .map(update_entry)
         )
 
-    def _normalize_dn_case_and_spaces(self, normalized_dn: str) -> str:
-        """Apply case folding and space handling.
 
-        Returns:
-            The resulting ``str``.
-        """
-        if self._case == "lower":
-            normalized_dn = normalized_dn.lower()
-        elif self._case == "upper":
-            normalized_dn = normalized_dn.upper()
-        if self._spaces == "trim":
-            normalized_dn = normalized_dn.strip()
-        return normalized_dn
-
-
-__all__: list[str] = ["FlextLdifUtilitiesNormalizeDnTransformer"]
+__all__: list[str] = ["FlextLdifUtilitiesEntryDnNormalization"]

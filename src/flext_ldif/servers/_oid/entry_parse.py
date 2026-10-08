@@ -10,11 +10,21 @@ from collections.abc import MutableMapping
 from typing import override
 
 from flext_ldif import c, m, p, r, t, u
+from flext_ldif.servers._oid.entry_boolean import FlextLdifServersOidEntryBooleanMixin
+from flext_ldif.servers._oid.entry_metadata import FlextLdifServersOidEntryMetadataMixin
+from flext_ldif.servers._oid.entry_normalize import (
+    FlextLdifServersOidEntryNormalizeMixin,
+)
 from flext_ldif.servers._oid.server_constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 
-class FlextLdifServersOidEntryParseMixin(FlextLdifServersRfc.Entry):
+class FlextLdifServersOidEntryParseMixin(
+    FlextLdifServersOidEntryBooleanMixin,
+    FlextLdifServersOidEntryMetadataMixin,
+    FlextLdifServersOidEntryNormalizeMixin,
+    FlextLdifServersRfc.Entry,
+):
     """OID entry parse hook helpers."""
 
     def _detect_entry_acl_transformations(
@@ -104,6 +114,32 @@ class FlextLdifServersOidEntryParseMixin(FlextLdifServersRfc.Entry):
             and attr_name.lower() in domain_invalid_attrs
         ]
         return (rfc_violations, attribute_conflicts)
+
+    def _process_orclaci_values(
+        self,
+        orclaci_values: t.MutableSequenceOf[str] | str | None,
+        current_extensions: t.Ldif.MutableMetadataMapping,
+    ) -> None:
+        """Process orclaci values and extract ACL metadata."""
+        if not orclaci_values:
+            return
+        parent = self._get_parent_server_safe()
+        acl_server = parent.acl_server if parent is not None else None
+        acl_list = (
+            list(orclaci_values)
+            if u.matches_type(orclaci_values, (list, tuple))
+            else [str(orclaci_values)]
+        )
+        for acl_value in acl_list:
+            if not u.matches_type(acl_value, str):
+                continue
+            self.extract_acl_metadata_from_string(acl_value, current_extensions)
+            if acl_server is not None:
+                self._merge_parsed_acl_extensions(
+                    acl_server,
+                    acl_value,
+                    current_extensions,
+                )
 
     @staticmethod
     def _get_current_attrs_with_acl_equivalence(

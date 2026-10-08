@@ -19,9 +19,11 @@ from flext_ldif._models.domain_attributes import FlextLdifModelsDomainAttributes
 from flext_ldif._models.domain_dn import FlextLdifModelsDomainDN as mdn
 from flext_ldif._models.domain_entry_change import (
     FlextLdifModelsDomainEntryChangeOperation,
-    FlextLdifModelsDomainEntryChangeOperationValue,
-    FlextLdifModelsDomainEntryControl,
 )
+from flext_ldif._models.domain_entry_change_value import (
+    FlextLdifModelsDomainEntryChangeOperationValue,
+)
+from flext_ldif._models.domain_entry_control import FlextLdifModelsDomainEntryControl
 from flext_ldif._models.domain_entry_statistics import (
     FlextLdifModelsDomainEntryStatistics,
 )
@@ -41,13 +43,13 @@ class FlextLdifModelsDomainEntry:
     Control = FlextLdifModelsDomainEntryControl
     """Canonical RFC 2849 control line model.
 
-    Implementation module: ``domain_entry_change``.
+    Implementation module: ``domain_entry_control``.
     """
 
     ChangeOperationValue = FlextLdifModelsDomainEntryChangeOperationValue
     """Canonical modify-operation value model.
 
-    Implementation module: ``domain_entry_change``.
+    Implementation module: ``domain_entry_change_value``.
     """
 
     ChangeOperation = FlextLdifModelsDomainEntryChangeOperation
@@ -321,9 +323,10 @@ class FlextLdifModelsDomainEntry:
             if data_dict.get("metadata") is None:
                 # mro-wgwh.5 (agent: kimi-coder) — create_for removed from the model
                 # (U17); models validate directly at this internal boundary.
+                raw_server_type = data_dict.get("server_type")
                 data_dict["metadata"] = mdm.ServerMetadata.model_validate({
                     "server_type": cls._coerce_default_server_type(
-                        data_dict.get("server_type"),
+                        raw_server_type if isinstance(raw_server_type, str) else None,
                     ),
                 })
             return data_dict

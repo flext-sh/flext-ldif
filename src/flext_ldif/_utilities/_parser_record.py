@@ -25,21 +25,19 @@ class FlextLdifParserRecord:
     class _RecordState:
         """Mutable accumulation state for one LDIF record parse."""
 
-        __slots__ = (
-            "attribute_metadata",
-            "attrs",
-            "change_operations",
-            "changetype",
-            "comments",
-            "controls",
-            "current_change_operation",
-            "deleteoldrdn",
-            "dn",
-            "newrdn",
-            "newsuperior",
-            "raw_record_lines",
-            "record_kind",
-        )
+        dn: str
+        attrs: t.MutableStrSequenceMapping
+        attribute_metadata: dict[str, t.MutableAttributeMapping]
+        comments: t.MutableSequenceOf[str]
+        raw_record_lines: t.MutableSequenceOf[str]
+        controls: t.MutableSequenceOf[FlextLdifModels.Ldif.Control]
+        change_operations: t.MutableSequenceOf[FlextLdifModels.Ldif.ChangeOperation]
+        current_change_operation: FlextLdifModels.Ldif.ChangeOperation | None
+        changetype: c.Ldif.ChangeType | None
+        record_kind: c.Ldif.RecordKind
+        newrdn: str | None
+        deleteoldrdn: bool | None
+        newsuperior: str | None
 
         def __init__(self) -> None:
             """Initialize an empty record state."""
@@ -92,8 +90,12 @@ class FlextLdifParserRecord:
         if current_op is not None:
             change_operations.append(current_op)
 
-    @staticmethod
-    def _handle_changetype_line(state: _RecordState, value: str) -> None:
+    @classmethod
+    def _handle_changetype_line(
+        cls,
+        state: FlextLdifParserRecord._RecordState,
+        value: str,
+    ) -> None:
         """Consume a changetype line, tolerating unknown change types."""
         normalized_change_type = value.lower()
         try:
@@ -103,9 +105,10 @@ class FlextLdifParserRecord:
             return
         state.record_kind = c.Ldif.RecordKind.CHANGE
 
-    @staticmethod
+    @classmethod
     def _apply_moddn_field(
-        state: _RecordState,
+        cls,
+        state: FlextLdifParserRecord._RecordState,
         key_lower: str,
         value: str,
     ) -> bool:
@@ -130,9 +133,10 @@ class FlextLdifParserRecord:
             return True
         return False
 
-    @staticmethod
+    @classmethod
     def _apply_modify_field(
-        state: _RecordState,
+        cls,
+        state: FlextLdifParserRecord._RecordState,
         key: str,
         decoded: _DecodedValue,
     ) -> str | None:
@@ -144,7 +148,7 @@ class FlextLdifParserRecord:
         """
         key_lower = key.lower()
         if key_lower in _MODIFY_OPS:
-            FlextLdifParserRecord.finalize_change_operation(
+            cls.finalize_change_operation(
                 state.current_change_operation,
                 state.change_operations,
             )
@@ -166,7 +170,7 @@ class FlextLdifParserRecord:
 
     @staticmethod
     def _store_attribute(
-        state: _RecordState,
+        state: FlextLdifParserRecord._RecordState,
         attribute_name: str,
         decoded: _DecodedValue,
     ) -> None:
@@ -182,9 +186,10 @@ class FlextLdifParserRecord:
         if isinstance(raw_values, list):
             raw_values.append(decoded.raw_value)
 
-    @staticmethod
+    @classmethod
     def _apply_special_line(
-        state: _RecordState,
+        cls,
+        state: FlextLdifParserRecord._RecordState,
         key_lower: str,
         remainder: str,
     ) -> bool:
@@ -202,17 +207,20 @@ class FlextLdifParserRecord:
             state.dn = remainder
             return True
         if key_lower == "changetype":
-            FlextLdifParserRecord._handle_changetype_line(state, remainder)
+            cls._handle_changetype_line(state, remainder)
             return True
-        consumed = FlextLdifParserRecord._apply_moddn_field(
+        return cls._apply_moddn_field(
             state,
             key_lower,
             remainder,
         )
-        return bool(consumed)
 
     @classmethod
-    def _parse_data_line(cls, state: _RecordState, line: str) -> None:
+    def _parse_data_line(
+        cls,
+        state: FlextLdifParserRecord._RecordState,
+        line: str,
+    ) -> None:
         """Consume one non-separator record line into the state."""
         if ":" not in line:
             return
@@ -231,7 +239,7 @@ class FlextLdifParserRecord:
 
     @staticmethod
     def _build_entry(
-        state: _RecordState,
+        state: FlextLdifParserRecord._RecordState,
     ) -> FlextLdifModels.Ldif.Entry:
         """Build the Entry model from accumulated record state.
 

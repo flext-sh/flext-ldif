@@ -151,7 +151,7 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWriteMixin):
         Returns:
             The resulting ``p.Result[m.Ldif.Acl]``.
         """
-        settings = server_utilities.FlextLdifServersOudUtilities.get_parser_config()
+        settings = server_utilities.FlextLdifServersOudUtilities.resolve_parser_config()
         result: p.Result[m.Ldif.Acl] = u.Ldif.parse_aci(acl_line, settings)
         if not result.success:
             return result

@@ -22,7 +22,7 @@ class FlextLdifServerConfig:
         return FlextLdifShared.normalize_server_type(server_type)
 
     @staticmethod
-    def get_all_server_types() -> t.MutableSequenceOf[str]:
+    def resolve_all_server_types() -> t.MutableSequenceOf[str]:
         """Get all supported server type values.
 
         Returns:
@@ -31,7 +31,7 @@ class FlextLdifServerConfig:
         return [s.value for s in c.Ldif.ServerTypes.__members__.values()]
 
     @staticmethod
-    def get_server_type_value(name: str) -> str:
+    def resolve_server_type_value(name: str) -> str:
         """Get the enum value for a server type by its member name.
 
         Args:
@@ -55,7 +55,7 @@ class FlextLdifServerConfig:
         return normalized in [allowed.lower().strip() for allowed in allowed_types]
 
     @staticmethod
-    def get_attribute_match_score() -> int:
+    def resolve_attribute_match_score() -> int:
         """Get attribute match score for server detection.
 
         Returns:
@@ -65,7 +65,7 @@ class FlextLdifServerConfig:
         return score
 
     @staticmethod
-    def get_confidence_threshold() -> float:
+    def resolve_confidence_threshold() -> float:
         """Get confidence threshold for server detection.
 
         Returns:
@@ -75,7 +75,7 @@ class FlextLdifServerConfig:
         return threshold
 
     @staticmethod
-    def get_server_detection_default_max_lines() -> int:
+    def resolve_server_detection_default_max_lines() -> int:
         """Get default max lines for server detection.
 
         Returns:

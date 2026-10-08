@@ -156,7 +156,7 @@ class FlextLdifUtilitiesSchemaFormat:
         return f"SUP ( {' $ '.join(sup_strs)} )"
 
     @staticmethod
-    def get_field_order(
+    def resolve_field_order(
         attr_data: FlextLdifModels.Ldif.SchemaAttribute
         | FlextLdifModels.Ldif.SchemaObjectClass,
     ) -> t.MutableSequenceOf[str] | None:

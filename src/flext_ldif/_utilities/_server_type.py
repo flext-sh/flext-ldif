@@ -138,7 +138,7 @@ class FlextLdifServerTypeResolution:
         return FlextLdifServerTypeResolution._server_type_from_mro(target_cls)
 
     @staticmethod
-    def get_parent_server_type(
+    def resolve_parent_server_type(
         nested_class_instance_or_type: type | t.JsonValue,
     ) -> c.Ldif.ServerTypes:
         """Get server_type from parent server class via __qualname__.

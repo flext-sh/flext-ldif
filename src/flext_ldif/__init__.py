@@ -53,8 +53,13 @@ if TYPE_CHECKING:
     from flext_ldif.servers.openldap1_entry import FlextLdifServersOpenldap1Entry
     from flext_ldif.servers.oud import FlextLdifServersOud
     from flext_ldif.servers.relaxed import FlextLdifServersRelaxed
-    from flext_ldif.servers.relaxed_constants import FlextLdifServersRelaxedConstants
     from flext_ldif.servers.relaxed_entry import FlextLdifServersRelaxedEntry
+    from flext_ldif.servers.relaxed_entry_parse import (
+        FlextLdifServersRelaxedEntryParseMixin,
+    )
+    from flext_ldif.servers.relaxed_entry_write import (
+        FlextLdifServersRelaxedEntryWriteMixin,
+    )
     from flext_ldif.servers.relaxed_schema import FlextLdifServersRelaxedSchema
     from flext_ldif.servers.rfc import FlextLdifServersRfc
     from flext_ldif.servers.tivoli import FlextLdifServersTivoli
@@ -137,8 +142,9 @@ __all__: tuple[str, ...] = (
     "FlextLdifServersOpenldap1Entry",
     "FlextLdifServersOud",
     "FlextLdifServersRelaxed",
-    "FlextLdifServersRelaxedConstants",
     "FlextLdifServersRelaxedEntry",
+    "FlextLdifServersRelaxedEntryParseMixin",
+    "FlextLdifServersRelaxedEntryWriteMixin",
     "FlextLdifServersRelaxedSchema",
     "FlextLdifServersRfc",
     "FlextLdifServersTivoli",
@@ -224,8 +230,9 @@ install_lazy_exports(
         "FlextLdifServersOpenldap1Entry": ".servers.openldap1_entry",
         "FlextLdifServersOud": ".servers.oud",
         "FlextLdifServersRelaxed": ".servers.relaxed",
-        "FlextLdifServersRelaxedConstants": ".servers.relaxed_constants",
         "FlextLdifServersRelaxedEntry": ".servers.relaxed_entry",
+        "FlextLdifServersRelaxedEntryParseMixin": ".servers.relaxed_entry_parse",
+        "FlextLdifServersRelaxedEntryWriteMixin": ".servers.relaxed_entry_write",
         "FlextLdifServersRelaxedSchema": ".servers.relaxed_schema",
         "FlextLdifServersRfc": ".servers.rfc",
         "FlextLdifServersTivoli": ".servers.tivoli",

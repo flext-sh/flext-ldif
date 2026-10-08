@@ -27,7 +27,7 @@ class FlextLdifStatistics(s):
         object_class_distribution: Counter[str] = Counter()
         server_type_distribution: Counter[str] = Counter()
         for entry in normalized_entries:
-            object_class_distribution.update(u.Ldif.get_objectclass_names(entry))
+            object_class_distribution.update(u.Ldif.resolve_objectclass_names(entry))
             metadata = entry.metadata
             if metadata is not None:
                 server_type_value = metadata.extensions.get("server_type")

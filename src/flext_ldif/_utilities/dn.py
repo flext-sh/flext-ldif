@@ -94,7 +94,7 @@ class FlextLdifUtilitiesDN(
     """
 
     @staticmethod
-    def is_under_base(dn: str | None, base_dn: str | None) -> bool:
+    def under_base(dn: str | None, base_dn: str | None) -> bool:
         """Check if DN is under base DN (hierarchical check).
 
         Returns:
@@ -103,8 +103,8 @@ class FlextLdifUtilitiesDN(
         """
         if not dn or not base_dn:
             return False
-        dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
-        base_dn_str = FlextLdifUtilitiesDN.get_dn_value(base_dn)
+        dn_str = FlextLdifUtilitiesDN.resolve_dn_value(dn)
+        base_dn_str = FlextLdifUtilitiesDN.resolve_dn_value(base_dn)
         if not dn_str or not base_dn_str:
             return False
         dn_lower = dn_str.lower().strip()

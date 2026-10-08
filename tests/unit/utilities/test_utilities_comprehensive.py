@@ -13,8 +13,7 @@ from __future__ import annotations
 import pytest
 from flext_tests import tm
 
-from flext_ldif import c
-from flext_ldif.utilities import u
+from flext_ldif import c, u
 
 
 class TestsFlextLdifUtilitiesComprehensive:
@@ -52,8 +51,8 @@ class TestsFlextLdifUtilitiesComprehensive:
 
     @staticmethod
     def test_get_all_server_types_matches_valid_set() -> None:
-        """get_all_server_types enumerates exactly the VALID_SERVER_TYPES set."""
-        all_types = u.Ldif.get_all_server_types()
+        """resolve_all_server_types enumerates exactly the VALID_SERVER_TYPES set."""
+        all_types = u.Ldif.resolve_all_server_types()
 
         tm.that(set(all_types), eq=set(c.Ldif.VALID_SERVER_TYPES))
 

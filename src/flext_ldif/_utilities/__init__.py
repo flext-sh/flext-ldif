@@ -62,10 +62,10 @@ if TYPE_CHECKING:
     from flext_ldif._utilities._server_detect import FlextLdifServerDetection
     from flext_ldif._utilities._server_type import FlextLdifServerTypeResolution
     from flext_ldif._utilities._transformer_attrs import (
-        FlextLdifUtilitiesNormalizeAttrsTransformer,
+        FlextLdifUtilitiesEntryAttrsNormalization,
     )
     from flext_ldif._utilities._transformer_dn import (
-        FlextLdifUtilitiesNormalizeDnTransformer,
+        FlextLdifUtilitiesEntryDnNormalization,
     )
     from flext_ldif._utilities._writer_chars import FlextLdifWriterRfcChars
     from flext_ldif._utilities._writer_fold import FlextLdifWriterLineFolding
@@ -77,9 +77,6 @@ if TYPE_CHECKING:
     from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
     from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
     from flext_ldif._utilities.events import FlextLdifUtilitiesEvents
-    from flext_ldif._utilities.examples_flext_ldif_utilities import (
-        ExamplesFlextLdifUtilities,
-    )
     from flext_ldif._utilities.flext_ldif_servers_oud_utilities import (
         FlextLdifServersOudUtilities,
     )
@@ -95,16 +92,12 @@ if TYPE_CHECKING:
     from flext_ldif._utilities.schema_normalize import FlextLdifUtilitiesSchemaNormalize
     from flext_ldif._utilities.schema_parse import FlextLdifUtilitiesSchemaParse
     from flext_ldif._utilities.server import FlextLdifUtilitiesServer
-    from flext_ldif._utilities.transformers import (
-        FlextLdifUtilitiesTransformer,
-        FlextLdifUtilitiesTransformers,
-    )
+    from flext_ldif._utilities.transformers import FlextLdifUtilitiesTransformers
     from flext_ldif._utilities.validation import FlextLdifUtilitiesValidation
     from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
 
 
 __all__: tuple[str, ...] = (
-    "ExamplesFlextLdifUtilities",
     "FlextLdifACLExtensionFormatting",
     "FlextLdifACLExtraction",
     "FlextLdifACLFormatting",
@@ -152,10 +145,10 @@ __all__: tuple[str, ...] = (
     "FlextLdifUtilitiesDN",
     "FlextLdifUtilitiesDispatch",
     "FlextLdifUtilitiesEntry",
+    "FlextLdifUtilitiesEntryAttrsNormalization",
+    "FlextLdifUtilitiesEntryDnNormalization",
     "FlextLdifUtilitiesEvents",
     "FlextLdifUtilitiesMetadata",
-    "FlextLdifUtilitiesNormalizeAttrsTransformer",
-    "FlextLdifUtilitiesNormalizeDnTransformer",
     "FlextLdifUtilitiesOID",
     "FlextLdifUtilitiesObjectClass",
     "FlextLdifUtilitiesParser",
@@ -167,7 +160,6 @@ __all__: tuple[str, ...] = (
     "FlextLdifUtilitiesSchemaNormalize",
     "FlextLdifUtilitiesSchemaParse",
     "FlextLdifUtilitiesServer",
-    "FlextLdifUtilitiesTransformer",
     "FlextLdifUtilitiesTransformers",
     "FlextLdifUtilitiesValidation",
     "FlextLdifUtilitiesWriter",
@@ -180,7 +172,6 @@ install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
-        "ExamplesFlextLdifUtilities": ".examples_flext_ldif_utilities",
         "FlextLdifACLExtensionFormatting": "._acl_extensions",
         "FlextLdifACLExtraction": "._acl_extract",
         "FlextLdifACLFormatting": "._acl_format",
@@ -228,10 +219,10 @@ install_lazy_exports(
         "FlextLdifUtilitiesDN": ".dn",
         "FlextLdifUtilitiesDispatch": ".dispatch",
         "FlextLdifUtilitiesEntry": ".entry",
+        "FlextLdifUtilitiesEntryAttrsNormalization": "._transformer_attrs",
+        "FlextLdifUtilitiesEntryDnNormalization": "._transformer_dn",
         "FlextLdifUtilitiesEvents": ".events",
         "FlextLdifUtilitiesMetadata": ".metadata",
-        "FlextLdifUtilitiesNormalizeAttrsTransformer": "._transformer_attrs",
-        "FlextLdifUtilitiesNormalizeDnTransformer": "._transformer_dn",
         "FlextLdifUtilitiesOID": ".oid",
         "FlextLdifUtilitiesObjectClass": ".object_class",
         "FlextLdifUtilitiesParser": ".parser",
@@ -243,7 +234,6 @@ install_lazy_exports(
         "FlextLdifUtilitiesSchemaNormalize": ".schema_normalize",
         "FlextLdifUtilitiesSchemaParse": ".schema_parse",
         "FlextLdifUtilitiesServer": ".server",
-        "FlextLdifUtilitiesTransformer": ".transformers",
         "FlextLdifUtilitiesTransformers": ".transformers",
         "FlextLdifUtilitiesValidation": ".validation",
         "FlextLdifUtilitiesWriter": ".writer",

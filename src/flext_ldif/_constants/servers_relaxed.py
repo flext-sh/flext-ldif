@@ -1,4 +1,7 @@
-"""Relaxed server constants for lenient LDIF processing.
+"""Relaxed (lenient) server-profile constants.
+
+ENFORCE-079 part module: declarations live in the
+_constants package; the server constants classes compose them via MRO.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -7,16 +10,18 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
-from flext_ldif import t
-from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif._constants.enums import FlextLdifConstantsEnums
+
+if TYPE_CHECKING:
+    from flext_ldif.typings import FlextLdifTypes as t
 
 
-class FlextLdifServersRelaxedConstants(FlextLdifServersRfc.Constants):
-    """Standardized constants for Relaxed (lenient) server."""
+class FlextLdifConstantsServersRelaxed:
+    """Relaxed (lenient) server-profile constants."""
 
-    SERVER_TYPE: ClassVar[str] = "relaxed"
+    SERVER_TYPE: ClassVar[str] = FlextLdifConstantsEnums.ServerTypes.RELAXED.value
     PRIORITY: ClassVar[int] = 200
     CANONICAL_NAME: ClassVar[str] = "relaxed"
     ALIASES: ClassVar[frozenset[str]] = frozenset(["relaxed", "lenient"])
@@ -59,4 +64,4 @@ class FlextLdifServersRelaxedConstants(FlextLdifServersRfc.Constants):
     LDIF_JOIN_SEPARATOR: ClassVar[str] = "\n"
 
 
-__all__: list[str] = ["FlextLdifServersRelaxedConstants"]
+__all__: list[str] = ["FlextLdifConstantsServersRelaxed"]

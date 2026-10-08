@@ -28,6 +28,32 @@ def create_entry_or_none(
     return result.unwrap() if result.success else None
 
 
+def object_class_entries(
+    definitions: t.SequenceOf[tuple[str, str, str, list[str], list[str]]],
+) -> list[m.Ldif.Entry]:
+    """Build objectClass schema entries from ``(name, desc, sup, must, may)`` rows.
+
+    Returns:
+        The resulting ``list[m.Ldif.Entry]``.
+    """
+    entries: list[m.Ldif.Entry] = []
+    for name, desc, sup, must_attrs, may_attrs in definitions:
+        attrs: t.MutableAttributeMapping = {
+            "objectClass": ["top", "ldapSubentry", "objectClassDescription"],
+            "cn": [name],
+            "description": [desc],
+            "sup": [sup],
+        }
+        if must_attrs:
+            attrs["must"] = must_attrs
+        if may_attrs:
+            attrs["may"] = may_attrs
+        entry = create_entry_or_none(dn=f"cn={name},cn=schema", attributes=attrs)
+        if entry is not None:
+            entries.append(entry)
+    return entries
+
+
 def intelligent_schema_building() -> p.Result[MutableSequence[m.Ldif.Entry]]:
     """Intelligent schema building with automatic type detection and validation.
 
@@ -82,18 +108,5 @@ def intelligent_schema_building() -> p.Result[MutableSequence[m.Ldif.Entry]]:
         ),
         ("groupOfNames", "Group of names", "top", ["cn", "member"], ["description"]),
     ]
-    for name, desc, sup, must_attrs, may_attrs in object_classes:
-        attrs: t.MutableAttributeMapping = {
-            "objectClass": ["top", "ldapSubentry", "objectClassDescription"],
-            "cn": [name],
-            "description": [desc],
-            "sup": [sup],
-        }
-        if must_attrs:
-            attrs["must"] = must_attrs
-        if may_attrs:
-            attrs["may"] = may_attrs
-        entry = create_entry_or_none(dn=f"cn={name},cn=schema", attributes=attrs)
-        if entry is not None:
-            schema_entries.append(entry)
+    schema_entries.extend(object_class_entries(object_classes))
     return r[MutableSequence[m.Ldif.Entry]].ok(schema_entries)

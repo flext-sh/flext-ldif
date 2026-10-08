@@ -6,10 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import override
+from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t
-from flext_ldif.servers.relaxed_constants import FlextLdifServersRelaxedConstants
+from flext_ldif.servers._relaxed.server_constants import (
+    FlextLdifServersRelaxedConstants,
+)
 from flext_ldif.servers.relaxed_entry import FlextLdifServersRelaxedEntry
 from flext_ldif.servers.relaxed_schema import FlextLdifServersRelaxedSchema
 from flext_ldif.servers.rfc import FlextLdifServersRfc
@@ -20,7 +22,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
     Constants = FlextLdifServersRelaxedConstants
     Schema = FlextLdifServersRelaxedSchema
-    Entry = FlextLdifServersRelaxedEntry
+    Entry: ClassVar[type[FlextLdifServersRelaxedEntry]] = FlextLdifServersRelaxedEntry
 
     class Acl(FlextLdifServersRfc.Acl):
         """Relaxed ACL server for lenient LDIF processing."""

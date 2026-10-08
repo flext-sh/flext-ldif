@@ -15,7 +15,7 @@ class FlextLdifEntryAccess:
     """Read attributes, DN components, and objectClasses from entries."""
 
     @staticmethod
-    def get_attribute_values(
+    def resolve_attribute_values(
         entry: p.Ldif.Entry,
         attribute_name: str,
     ) -> t.MutableSequenceOf[str]:
@@ -41,25 +41,13 @@ class FlextLdifEntryAccess:
         return []
 
     @staticmethod
-    def get_dn_components(entry: p.Ldif.Entry) -> t.MutableSequenceOf[str]:
-        """Get DN components (RDN parts) from the entry's DN.
-
-        Returns:
-            List of DN components (e.g., ["cn=admin", "dc=example", "dc=com"])
-
-        """
-        if entry.dn is None:
-            return []
-        return [comp.strip() for comp in entry.dn.value.split(",") if comp.strip()]
-
-    @staticmethod
-    def get_objectclass_names(entry: p.Ldif.Entry) -> t.MutableSequenceOf[str]:
+    def resolve_objectclass_names(entry: p.Ldif.Entry) -> t.MutableSequenceOf[str]:
         """Get list of objectClass attribute values from entry.
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
         """
-        return FlextLdifEntryAccess.get_attribute_values(
+        return FlextLdifEntryAccess.resolve_attribute_values(
             entry,
             c.Ldif.DictKeys.OBJECTCLASS,
         )
@@ -76,7 +64,9 @@ class FlextLdifEntryAccess:
             True if attribute exists with at least one value, False otherwise
 
         """
-        return bool(FlextLdifEntryAccess.get_attribute_values(entry, attribute_name))
+        return bool(
+            FlextLdifEntryAccess.resolve_attribute_values(entry, attribute_name)
+        )
 
     @staticmethod
     def has_object_class(entry: p.Ldif.Entry, object_class: str) -> bool:
@@ -90,7 +80,7 @@ class FlextLdifEntryAccess:
             True if entry has the object class, False otherwise
 
         """
-        return object_class in FlextLdifEntryAccess.get_attribute_values(
+        return object_class in FlextLdifEntryAccess.resolve_attribute_values(
             entry,
             c.Ldif.DictKeys.OBJECTCLASS,
         )

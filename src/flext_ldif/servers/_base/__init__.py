@@ -18,6 +18,12 @@ if TYPE_CHECKING:
     from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
     from flext_ldif.servers._base.entry_lines import FlextLdifServersEntryLineEmitter
     from flext_ldif.servers._base.entry_write import FlextLdifServersEntryWriteContext
+    from flext_ldif.servers._base.entry_write_body import (
+        FlextLdifServersEntryWriteBodyEmitter,
+    )
+    from flext_ldif.servers._base.entry_write_options import (
+        FlextLdifServersEntryWriteOptions,
+    )
     from flext_ldif.servers._base.execute_params import (
         FlextLdifServersBaseExecuteParamsMixin,
     )
@@ -30,6 +36,7 @@ if TYPE_CHECKING:
         FlextLdifServersBaseSchemaValuesMixin,
     )
     from flext_ldif.servers._base.server_constants import FlextLdifServersBaseConstants
+    from flext_ldif.servers._base.server_io import FlextLdifServersBaseIoMixin
     from flext_ldif.servers._base.server_type import FlextLdifServersBaseMroMixin
 
 
@@ -38,6 +45,7 @@ __all__: tuple[str, ...] = (
     "FlextLdifServersBaseConstants",
     "FlextLdifServersBaseEntry",
     "FlextLdifServersBaseExecuteParamsMixin",
+    "FlextLdifServersBaseIoMixin",
     "FlextLdifServersBaseMroMixin",
     "FlextLdifServersBaseSchema",
     "FlextLdifServersBaseSchemaAcl",
@@ -45,7 +53,9 @@ __all__: tuple[str, ...] = (
     "FlextLdifServersBaseSchemaValuesMixin",
     "FlextLdifServersDialectSchema",
     "FlextLdifServersEntryLineEmitter",
+    "FlextLdifServersEntryWriteBodyEmitter",
     "FlextLdifServersEntryWriteContext",
+    "FlextLdifServersEntryWriteOptions",
 )
 
 install_lazy_exports(
@@ -56,6 +66,7 @@ install_lazy_exports(
         "FlextLdifServersBaseConstants": ".server_constants",
         "FlextLdifServersBaseEntry": ".entry",
         "FlextLdifServersBaseExecuteParamsMixin": ".execute_params",
+        "FlextLdifServersBaseIoMixin": ".server_io",
         "FlextLdifServersBaseMroMixin": ".server_type",
         "FlextLdifServersBaseSchema": ".schema",
         "FlextLdifServersBaseSchemaAcl": ".acl",
@@ -63,7 +74,9 @@ install_lazy_exports(
         "FlextLdifServersBaseSchemaValuesMixin": ".schema_values",
         "FlextLdifServersDialectSchema": ".dialect_schema",
         "FlextLdifServersEntryLineEmitter": ".entry_lines",
+        "FlextLdifServersEntryWriteBodyEmitter": ".entry_write_body",
         "FlextLdifServersEntryWriteContext": ".entry_write",
+        "FlextLdifServersEntryWriteOptions": ".entry_write_options",
     }),
     public_exports=__all__,
 )

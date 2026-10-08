@@ -233,7 +233,7 @@ class FlextLdifUtilitiesSchemaParse:
     @staticmethod
     def _attribute_syntax_fields(
         attr_definition: str,
-    ) -> tuple[str, t.Ldif.MutableMetadataMapping]:
+    ) -> tuple[str | None, t.Ldif.MutableMetadataMapping]:
         """Extract the syntax, matching-rule, and flag fields of one attribute.
 
         Returns:
@@ -259,7 +259,7 @@ class FlextLdifUtilitiesSchemaParse:
 
     @staticmethod
     def _validated_syntax_extensions(
-        syntax: str,
+        syntax: str | None,
         *,
         validate: bool,
     ) -> tuple[
