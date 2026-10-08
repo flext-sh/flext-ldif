@@ -29,7 +29,7 @@ This section is generated from public exports and real docstrings.
 
 - Primary facades: `FlextLdif`, `FlextLdifAcl`, `FlextLdifAnalysis`,
   `FlextLdifCategorization`, `FlextLdifCategorizationFiltering`,
-  `FlextLdifCategorizationRules` (+52 more)
+  `FlextLdifCategorizationRules` (+51 more)
 - Generated module pages: `9`
 
 Back to [project docs](../index.md).
