@@ -44,7 +44,7 @@ def main() -> None:
         "dn: cn=app-data,dc=example,dc=com\nobjectClass: applicationProcess\n"
         "cn: app-data\ndescription: Application data entry\n"
     )
-    api: p.Ldif.Client = ldif()
+    api: p.Ldif.LdifClient = ldif()
     with tempfile.TemporaryDirectory() as tmpdir:
         input_dir = Path(tmpdir) / "input"
         output_dir = Path(tmpdir) / "output"

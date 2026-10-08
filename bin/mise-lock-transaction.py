@@ -18,7 +18,7 @@ import json
 import os
 import shutil
 import stat
-import subprocess
+import subprocess  # ruff: ignore[suspicious-subprocess-import] - stdlib bootstrap: git invocation
 import sys
 import time
 import tomllib
@@ -223,7 +223,10 @@ class MiseLockTransaction:
         if content is None or b"<<<<<<< " not in content:
             return cls._sidecars(content, project)
         git_exec = shutil.which("git")
-        index = subprocess.run(
+        if git_exec is None:
+            message = "git executable not found on PATH"
+            raise ValueError(message)
+        index = subprocess.run(  # ruff: ignore[subprocess-without-shell-equals-true] - git resolved via shutil.which
             [git_exec, "-C", str(project), "ls-files", "-u", "--", cls.LOCK],
             check=True,
             capture_output=True,
@@ -234,7 +237,7 @@ class MiseLockTransaction:
         ):
             message = f"conflicted {cls.LOCK} has no Git stage-2 source"
             raise ValueError(message)
-        prior = subprocess.run(
+        prior = subprocess.run(  # ruff: ignore[subprocess-without-shell-equals-true] - git resolved via shutil.which
             [git_exec, "-C", str(project), "show", f":2:{cls.LOCK}"],
             check=True,
             capture_output=True,

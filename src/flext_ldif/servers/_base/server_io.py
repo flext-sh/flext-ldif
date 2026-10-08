@@ -6,12 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import Self
 
 from flext_ldif import c, m, p, r, t, u
-
-if TYPE_CHECKING:
-    from flext_ldif.servers.base import FlextLdifServersBase
 
 
 class FlextLdifServersBaseIoMixin:
@@ -27,7 +24,7 @@ class FlextLdifServersBaseIoMixin:
         return ldif if not ldif or ldif.endswith("\n") else f"{ldif}\n"
 
     def parse_ldif(
-        self: FlextLdifServersBase,
+        self: Self,
         value: str,
     ) -> p.Result[m.Ldif.ParseResponse]:
         """Parse LDIF text to Entry models.
@@ -82,7 +79,7 @@ class FlextLdifServersBaseIoMixin:
         return parse_response_result
 
     def write(
-        self: FlextLdifServersBase,
+        self: Self,
         entries: t.MutableSequenceOf[m.Ldif.Entry],
         write_options: m.Ldif.WriteFormatOptions | None = None,
     ) -> p.Result[str]:
@@ -100,7 +97,7 @@ class FlextLdifServersBaseIoMixin:
         return write_result
 
     def _execute_parse(
-        self: FlextLdifServersBase,
+        self: Self,
         ldif_text: str,
     ) -> p.Result[m.Ldif.Entry]:
         """Execute parse operation.
