@@ -18,7 +18,7 @@ class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](
 ):
     """Base class for LDIF services with typed settings helper."""
 
-    def _default_ldif_server():  # ruff: ignore[missing-return-type-private-function] - zero-arg callable contract
+    def _default_ldif_server() -> p.Ldif.ServerRegistry:
         """Resolve the shared server lazily (cuts the base/server init cycle).
 
         Returns:

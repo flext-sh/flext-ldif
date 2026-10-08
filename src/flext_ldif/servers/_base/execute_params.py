@@ -168,7 +168,7 @@ def _validate_registry(
 
 def _perform_registration(
     register_func: Callable[[str, p.Ldif.SchemaServer | t.JsonValue], None] | None,
-    instance: p.Ldif.SchemaServer,
+    instance: p.Ldif.SchemaServer | t.JsonValue,
 ) -> None:
     """Execute registration if the instance exposes the required methods."""
     if register_func is None:

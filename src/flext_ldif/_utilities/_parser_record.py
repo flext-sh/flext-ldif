@@ -41,6 +41,20 @@ class FlextLdifParserRecord:
             "record_kind",
         )
 
+        dn: str
+        attrs: t.MutableStrSequenceMapping
+        attribute_metadata: dict[str, t.MutableAttributeMapping]
+        comments: t.MutableSequenceOf[str]
+        raw_record_lines: t.MutableSequenceOf[str]
+        controls: t.MutableSequenceOf[FlextLdifModels.Ldif.Control]
+        change_operations: t.MutableSequenceOf[FlextLdifModels.Ldif.ChangeOperation]
+        current_change_operation: FlextLdifModels.Ldif.ChangeOperation | None
+        changetype: c.Ldif.ChangeType | None
+        record_kind: c.Ldif.RecordKind
+        newrdn: str | None
+        deleteoldrdn: bool | None
+        newsuperior: str | None
+
         def __init__(self) -> None:
             """Initialize an empty record state."""
             self.dn = ""
@@ -204,12 +218,11 @@ class FlextLdifParserRecord:
         if key_lower == "changetype":
             FlextLdifParserRecord._handle_changetype_line(state, remainder)
             return True
-        consumed = FlextLdifParserRecord._apply_moddn_field(
+        return FlextLdifParserRecord._apply_moddn_field(
             state,
             key_lower,
             remainder,
         )
-        return bool(consumed)
 
     @classmethod
     def _parse_data_line(cls, state: _RecordState, line: str) -> None:
