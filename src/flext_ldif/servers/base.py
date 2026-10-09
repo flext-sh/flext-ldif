@@ -280,7 +280,9 @@ class FlextLdifServersBase(
             result = r[m.Ldif.Entry].fail("No valid parameters")
         return result
 
-    Acl: ClassVar[type[FlextLdifServersBaseSchemaAcl]] = FlextLdifServersBaseSchemaAcl
+    Acl: ClassVar[type[FlextLdifServersBaseSchemaAcl]] = (
+        FlextLdifServersBaseSchemaAcl
+    )
     Entry: ClassVar[type[FlextLdifServersBaseEntry]] = FlextLdifServersBaseEntry
     Schema: ClassVar[type[FlextLdifServersBaseSchema]] = FlextLdifServersBaseSchema
 
