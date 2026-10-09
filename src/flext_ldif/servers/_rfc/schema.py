@@ -9,7 +9,10 @@ from __future__ import annotations
 from typing import ClassVar, Self, cast, overload, override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._base import FlextLdifServersBaseSchema
+from flext_ldif.servers._base import (
+    FlextLdifServerMethodsMixin,
+    FlextLdifServersBaseSchema,
+)
 from flext_ldif.servers._rfc.schema_parse import FlextLdifServersRfcSchemaParseMixin
 from flext_ldif.servers._rfc.schema_values import FlextLdifServersRfcSchemaValuesMixin
 from flext_ldif.servers._rfc.schema_write import FlextLdifServersRfcSchemaWriteMixin
@@ -155,8 +158,6 @@ class FlextLdifServersRfcSchema(
             TypeError: If RFC schema operation returned unsupported value.
             ValueError: If ``result.failure``.
         """
-        from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
-
         configured = FlextLdifServerMethodsMixin.dispatch_builder(
             super().__call__,
             fields,
