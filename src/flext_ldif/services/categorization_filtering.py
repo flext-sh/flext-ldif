@@ -13,7 +13,6 @@ from collections.abc import MutableMapping
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.services.categorization_rules import FlextLdifCategorizationRules
-from flext_ldif.services.filters import FlextLdifFilters
 
 
 class FlextLdifCategorizationFiltering(FlextLdifCategorizationRules):
@@ -94,6 +93,8 @@ class FlextLdifCategorizationFiltering(FlextLdifCategorizationRules):
         ``forbidden_objectclasses``, and ``schema_whitelist_rules`` stored
         during ``__init__``.
         """
+        from flext_ldif.services.filters import FlextLdifFilters
+
         schema_whitelist_rules = self._whitelist_rules_with_oid_filters()
         forbidden_attributes = self.forbidden_attributes or []
         forbidden_objectclasses = self.forbidden_objectclasses or []
@@ -214,6 +215,8 @@ class FlextLdifCategorizationFiltering(FlextLdifCategorizationRules):
         Returns:
             The resulting ``p.Result[t.MutableSequenceOf[m.Ldif.Entry]]``.
         """
+        from flext_ldif.services.filters import FlextLdifFilters
+
         sw_rules = self._whitelist_rules_with_oid_filters()
         if sw_rules is None:
             return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(schema_entries)

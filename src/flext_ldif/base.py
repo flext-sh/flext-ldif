@@ -10,7 +10,7 @@ import importlib
 from typing import Annotated, Self, override
 
 from flext_core import FlextService
-from flext_ldif import FlextLdifSettings, c, m, p, t, u
+from flext_ldif import c, m, p, t, u
 
 
 class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](
@@ -94,6 +94,8 @@ class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](
     @classmethod
     def runtime_bootstrap_options(cls) -> m.RuntimeBootstrapOptions:
         """Return runtime bootstrap options for LDIF services."""
+        from flext_ldif import FlextLdifSettings
+
         return m.RuntimeBootstrapOptions(settings_type=FlextLdifSettings)
 
     @staticmethod

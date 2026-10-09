@@ -8,10 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_cli import u
-
 from flext_ldif import FlextLdifModels, c, t
-from flext_ldif._utilities._dn_parse import FlextLdifDNParsing
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -106,6 +103,7 @@ class FlextLdifDNValidation:
         Returns:
             The resulting ``bool``.
         """
+        from flext_cli import u
 
         def is_valid_component(comp: str) -> bool:
             """Check if component is valid.
@@ -154,6 +152,8 @@ class FlextLdifDNValidation:
         Returns:
             The resulting ``bool``.
         """
+        from flext_ldif._utilities import FlextLdifDNParsing
+
         dn_str = FlextLdifDNParsing.resolve_dn_value(dn)
         if not FlextLdifDNValidation._validate_basic_format(dn_str):
             return False

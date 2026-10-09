@@ -24,7 +24,7 @@ dependencies = [
   "flext-cli @ git+https://github.com/flext-sh/flext-cli.git@0.12.0-dev",
   "flext-core @ git+https://github.com/flext-sh/flext-core.git@0.12.0-dev",
   "packaging>=26.3",
-  "pydantic>=2.13.5,<3",
+  "pydantic>=2.14.0,<3",
   "pydantic-settings>=2.15.0",
   "pyyaml>=6.0.3",
   "structlog>=26.1.0,<27",
@@ -193,12 +193,11 @@ warn_required_dynamic_aliases = true
 [tool.pyrefly]
 disable-project-excludes-heuristics = true
 project-excludes = [
-  "**/*_pb2*.py",
-  "**/*_pb2_grpc*.py",
   "**/.venv/**",
   "**/__pycache__",
   "**/__pyrefly_virtual__/**",
   "**/node_modules",
+  "**/protos/**",
   "**/site-packages/**",
   "**/typings/**",
   "**/vendor/**",
@@ -307,6 +306,7 @@ exclude = [
   "**/dist-packages",
   "**/dist-packages/**",
   "**/node_modules",
+  "**/protos/**",
   "**/site-packages",
   "**/site-packages/**",
   "**/venv",
@@ -387,12 +387,12 @@ testpaths = ["tests"]
 [tool.ruff]
 extend-exclude = [
   "**/.archive/**",
-  "**/protos/**",
   "**/.agents/aihub-hooks/**",
   "**/.claude/aihub-hooks/**",
   "**/.codex/aihub-hooks/**",
   "**/.cursor/aihub-hooks/**",
   "**/.gemini/aihub-hooks/**",
+  "**/protos/**",
 ]
 fix = false
 line-length = 88

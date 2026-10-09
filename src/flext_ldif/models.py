@@ -15,13 +15,15 @@ from typing import Annotated, ClassVar
 from flext_cli import FlextCliModels
 
 from flext_ldif import t, u
-from flext_ldif._models.base import FlextLdifModelsBases
-from flext_ldif._models.collections import FlextLdifModelsCollections
-from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries
-from flext_ldif._models.events import FlextLdifModelsEvents
-from flext_ldif._models.processing import FlextLdifModelsProcessing
-from flext_ldif._models.results import FlextLdifModelsResults
-from flext_ldif._models.settings import FlextLdifModelsSettings
+from flext_ldif._models import (
+    FlextLdifModelsBases,
+    FlextLdifModelsCollections,
+    FlextLdifModelsDomainsEntries,
+    FlextLdifModelsEvents,
+    FlextLdifModelsProcessing,
+    FlextLdifModelsResults,
+    FlextLdifModelsSettings,
+)
 
 
 class FlextLdifModels(FlextCliModels):

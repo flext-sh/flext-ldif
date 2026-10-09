@@ -17,7 +17,6 @@ from flext_ldif.servers._oid.entry_restore import FlextLdifServersOidEntryRestor
 from flext_ldif.servers._oid.entry_restore_lines import (
     FlextLdifServersOidEntryRestoreLinesMixin,
 )
-from flext_ldif.servers._oid.server_constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 
@@ -46,6 +45,10 @@ class FlextLdifServersOidEntry(
         Returns:
             The resulting ``str``.
         """
+        from flext_ldif.servers._oid.server_constants import (
+            FlextLdifServersOidConstants,
+        )
+
         match attr_name.lower():
             case attr_lower if attr_lower in {
                 FlextLdifServersOidConstants.ORCLACI.lower(),

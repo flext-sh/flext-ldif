@@ -10,8 +10,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldif import c, m, t, u
-from flext_ldif.servers._oud.acl_extract import FlextLdifServersOudAclExtractMixin
-from flext_ldif.servers._oud.acl_metadata import FlextLdifServersOudAclMetadataMixin
 
 
 class FlextLdifServersOudCommentsAclMixin:
@@ -39,6 +37,13 @@ class FlextLdifServersOudCommentsAclMixin:
         acl_attr_names_to_skip: set[str],
     ) -> None:
         """Collect ACL comments from extensions.commented_attribute_values."""
+        from flext_ldif.servers._oud.acl_extract import (
+            FlextLdifServersOudAclExtractMixin,
+        )
+        from flext_ldif.servers._oud.acl_metadata import (
+            FlextLdifServersOudAclMetadataMixin,
+        )
+
         if not entry.metadata or not entry.metadata.extensions:
             return
         commented_acl_values_raw = entry.metadata.extensions.get(

@@ -13,7 +13,6 @@ from typing import Annotated, Self, override
 from flext_cli import cli
 
 from flext_ldif import c, m, p, r, s, t, u
-from flext_ldif.services.transformers import FlextLdifTransformer
 
 
 class FlextLdifProcessingPipeline(s[t.MutableSequenceOf[m.Ldif.Entry]]):
@@ -153,6 +152,8 @@ class FlextLdifProcessingPipeline(s[t.MutableSequenceOf[m.Ldif.Entry]]):
         Returns:
             The resulting ``t.SequenceOf[m.Cli.PipelineStageSpec]``.
         """
+        from flext_ldif.services.transformers import FlextLdifTransformer
+
         stage_order: t.MutableSequenceOf[str] = []
         handlers: t.MutableMappingKV[str, p.Cli.PipelineStage] = {}
         if self._config.normalize_dns and self._config.process_config is not None:

@@ -8,9 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from flext_cli import u
-
-from flext_ldif import FlextLdifModels, c, p, t
+from flext_ldif import c, p, t
 
 
 class FlextLdifMetadataJsonCore:
@@ -23,6 +21,10 @@ class FlextLdifMetadataJsonCore:
         Returns:
             The resulting ``str``.
         """
+        from flext_cli import u
+
+        from flext_ldif import FlextLdifModels
+
         if value is None:
             return ""
         payload_json: str = FlextLdifModels.Cli.CliNormalizedJson(
@@ -49,6 +51,8 @@ class FlextLdifMetadataJsonCore:
         item_data: t.JsonValue,
     ) -> None:
         """Add item to dict metadata."""
+        from flext_cli import u
+
         value = metadata.get(metadata_key)
         if isinstance(value, Mapping) and isinstance(item_data, Mapping):
             merged_value = dict(
@@ -72,6 +76,10 @@ class FlextLdifMetadataJsonCore:
         Returns:
             The resulting ``t.Ldif.MutableMetadataMapping``.
         """
+        from flext_cli import u
+
+        from flext_ldif import FlextLdifModels
+
         metadata_obj = getattr(model, "validation_metadata", None)
         if metadata_obj is None:
             metadata_obj = FlextLdifModels.Metadata(attributes={})
@@ -90,6 +98,8 @@ class FlextLdifMetadataJsonCore:
     def _normalize_dict_list(
         values: t.SequenceOf[t.JsonValue],
     ) -> t.MutableSequenceOf[t.JsonValue]:
+        from flext_cli import u
+
         normalized: t.MutableSequenceOf[t.JsonValue] = []
         for item in values:
             normalized.append(u.normalize_to_metadata(item))

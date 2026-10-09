@@ -28,7 +28,6 @@ from flext_ldif._models.domain_entry_statistics import (
     FlextLdifModelsDomainEntryStatistics,
 )
 from flext_ldif._models.domain_metadata import FlextLdifModelsDomainMetadata as mdm
-from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 
 
 class FlextLdifModelsDomainEntry:
@@ -284,6 +283,8 @@ class FlextLdifModelsDomainEntry:
 
             pattern).
             """
+            from flext_ldif._utilities import FlextLdifUtilitiesEntry
+
             empty_attrs: t.Ldif.UnconvertedAttributes = {}
             if self.metadata is None:
                 return empty_attrs
@@ -435,6 +436,8 @@ class FlextLdifModelsDomainEntry:
             Returns:
                 The resulting ``tuple[str, t.MutableSequenceOf[str]]``.
             """
+            from flext_ldif._utilities import FlextLdifUtilitiesEntry
+
             violations: t.MutableSequenceOf[str] = []
             dn_value = "<None>"
             if self.dn is None:
@@ -500,6 +503,8 @@ class FlextLdifModelsDomainEntry:
             Returns:
                 The resulting ``Self``.
             """
+            from flext_ldif._utilities import FlextLdifUtilitiesEntry
+
             if (
                 self.metadata is None
                 or self._VALIDATION_RULES_KEY not in self.metadata.extensions

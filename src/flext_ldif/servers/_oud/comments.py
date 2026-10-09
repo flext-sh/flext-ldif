@@ -11,7 +11,6 @@ from __future__ import annotations
 
 from flext_ldif import c, m, t, u
 from flext_ldif.servers._oud.comments_acl import FlextLdifServersOudCommentsAclMixin
-from flext_ldif.servers._oud.transform import FlextLdifServersOudTransformMixin
 
 
 class FlextLdifServersOudCommentsMixin(FlextLdifServersOudCommentsAclMixin):
@@ -74,6 +73,8 @@ class FlextLdifServersOudCommentsMixin(FlextLdifServersOudCommentsAclMixin):
         Returns:
             The resulting ``set[str]``.
         """
+        from flext_ldif.servers._oud.transform import FlextLdifServersOudTransformMixin
+
         acl_attr_names_to_skip: set[str] = set()
         if not entry.metadata:
             return acl_attr_names_to_skip
@@ -180,6 +181,8 @@ class FlextLdifServersOudCommentsMixin(FlextLdifServersOudCommentsAclMixin):
         Returns:
             The resulting ``set[str]``.
         """
+        from flext_ldif.servers._oud.transform import FlextLdifServersOudTransformMixin
+
         processed_attrs: set[str] = set()
         metadata = entry.metadata
         if metadata is None or not metadata.attribute_transformations:
@@ -222,6 +225,8 @@ class FlextLdifServersOudCommentsMixin(FlextLdifServersOudCommentsAclMixin):
         processed_attrs: set[str],
     ) -> None:
         """Add comments for attributes removed during transformation."""
+        from flext_ldif.servers._oud.transform import FlextLdifServersOudTransformMixin
+
         if not (
             format_options
             and format_options.write_removed_attributes_as_comments

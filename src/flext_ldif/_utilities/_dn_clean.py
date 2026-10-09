@@ -9,7 +9,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, overload
 
 from flext_ldif import FlextLdifModels, c, t
-from flext_ldif._utilities._dn_parse import FlextLdifDNParsing
 
 if TYPE_CHECKING:
     from collections.abc import MutableMapping
@@ -176,6 +175,8 @@ class FlextLdifDNCleaning:
         Returns:
             The resulting ``str``.
         """
+        from flext_ldif._utilities import FlextLdifDNParsing
+
         dn_str = FlextLdifDNParsing.resolve_dn_value(dn)
         if not dn_str:
             return dn_str
@@ -218,6 +219,8 @@ class FlextLdifDNCleaning:
             )
 
         """
+        from flext_ldif._utilities import FlextLdifDNParsing
+
         original_dn = FlextLdifDNParsing.resolve_dn_value(dn)
         if not original_dn:
             stats_domain = FlextLdifModels.Ldif.DNStatistics.create_minimal(original_dn)

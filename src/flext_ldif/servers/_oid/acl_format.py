@@ -10,7 +10,6 @@ from collections.abc import Mapping, MutableMapping
 from typing import ClassVar
 
 from flext_ldif import c, m, p, t, u
-from flext_ldif.servers._oid.server_constants import FlextLdifServersOidConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 
@@ -26,6 +25,10 @@ class FlextLdifServersOidAclFormatMixin(FlextLdifServersRfc.Acl):
         Returns:
             The resulting ``str``.
         """
+        from flext_ldif.servers._oid.server_constants import (
+            FlextLdifServersOidConstants,
+        )
+
         allowed_perms: t.MutableSequenceOf[str] = []
         for perm, allowed in permissions.items():
             if allowed:
@@ -45,6 +48,10 @@ class FlextLdifServersOidAclFormatMixin(FlextLdifServersRfc.Acl):
         Returns:
             The resulting ``str``.
         """
+        from flext_ldif.servers._oid.server_constants import (
+            FlextLdifServersOidConstants,
+        )
+
         clean_value = FlextLdifServersOidAclFormatMixin.clean_subject_value(
             subject_value,
         )

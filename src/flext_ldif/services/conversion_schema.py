@@ -186,9 +186,7 @@ class FlextLdifConversionSchemaMixin(s, ABC):
                 m.Ldif.SchemaObjectClass,
             )
         if validated.failure:
-            return r[t.Ldif.ConvertedModel].fail(
-                validated.error or "Schema conversion validation failed",
-            )
+            return r[t.Ldif.ConvertedModel].from_failure(validated)
         return r[t.Ldif.ConvertedModel].ok(validated.value)
 
     @staticmethod
