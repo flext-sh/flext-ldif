@@ -239,6 +239,25 @@ class TestsFlextLdifParserUtilities:
     # parse_ldif_record
     # ------------------------------------------------------------------
     @staticmethod
+    @pytest.mark.parametrize("fill", ["", " ", "   "])
+    def test_modify_record_preserves_operations_with_rfc_fill(fill: str) -> None:
+        """RFC 2849 permits zero or more spaces after the changetype colon."""
+        entry = u.Ldif.parse_ldif_record([
+            "dn: cn=schema",
+            f"changetype:{fill}modify",
+            "add: description",
+            "description: schema change",
+            "-",
+        ]).unwrap()
+        assert entry.changetype == c.Ldif.ChangeType.MODIFY
+        assert entry.record_kind == c.Ldif.RecordKind.CHANGE
+        assert len(entry.change_operations) == 1
+        operation = entry.change_operations[0]
+        assert operation.attribute == "description"
+        assert [value.value for value in operation.values] == ["schema change"]
+        assert "add" not in entry.attributes_dict
+
+    @staticmethod
     def test_parse_ldif_record_builds_entry_from_valid_record() -> None:
         """Test parse ldif record builds entry from valid record."""
         result = u.Ldif.parse_ldif_record([

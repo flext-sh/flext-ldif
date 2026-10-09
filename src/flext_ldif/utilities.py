@@ -78,7 +78,11 @@ class FlextLdifUtilities(
     FlextLdifUtilitiesCollectionLdif,
     metaclass=_LazyLdifMeta,
 ):
-    """FLEXT LDIF Utilities - Centralized helpers for LDIF operations."""
+    """Centralized helpers with domain collection behavior under ``Ldif``.
+
+    The root inherits the core ``find`` Result contract. LDIF's optional-item
+    ``find`` belongs only to ``Ldif`` and must not enter the root MRO.
+    """
 
     # NOTE (import discipline): models.py binds the ``u`` namespace while
     # flext_ldif.models is still mid-init (``u.Field`` runs at class-definition
@@ -120,7 +124,10 @@ class FlextLdifUtilities(
         Returns:
             The assembled ``Ldif`` utility namespace class.
         """
-        bases: list[type] = [FlextLdifUtilitiesCollectionLdif]
+        bases: list[type] = [
+            FlextLdifUtilitiesCollectionLdif.Search,
+            FlextLdifUtilitiesCollectionLdif,
+        ]
         for module_name, class_name in FlextLdifUtilities._LAZY_UTILITIES:
             module = importlib.import_module(f"flext_ldif._utilities.{module_name}")
             bases.append(getattr(module, class_name))
@@ -137,6 +144,7 @@ class FlextLdifUtilities(
         class Ldif(
             FlextLdifUtilitiesACL,
             FlextLdifUtilitiesAttribute,
+            FlextLdifUtilitiesCollectionLdif.Search,
             FlextLdifUtilitiesCollectionLdif,
             FlextLdifUtilitiesDispatch,
             FlextLdifUtilitiesDN,
