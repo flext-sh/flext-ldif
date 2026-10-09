@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._oud.entry_parse import FlextLdifServersOudEntryParseMixin
-from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
 
 if TYPE_CHECKING:
     from flext_ldif.servers.base import FlextLdifServersBase
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
 class FlextLdifServersOudEntry(
     FlextLdifServersOudEntryParseMixin,
-    FlextLdifServersRfc.Entry,
+    FlextLdifServersRfcEntry,
 ):
     """Oracle OUD Entry implementation extending RFC 2849.
 

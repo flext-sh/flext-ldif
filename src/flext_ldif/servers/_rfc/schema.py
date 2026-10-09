@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import ClassVar, Self, cast, overload, override
 
 from flext_ldif import c, m, p, r, t, u
+from flext_ldif.servers._base import FlextLdifServersBaseSchema
 from flext_ldif.servers._rfc.schema_parse import FlextLdifServersRfcSchemaParseMixin
 from flext_ldif.servers._rfc.schema_values import FlextLdifServersRfcSchemaValuesMixin
 from flext_ldif.servers._rfc.schema_write import FlextLdifServersRfcSchemaWriteMixin
@@ -31,8 +32,6 @@ class FlextLdifServersRfcSchema(
         **kwargs: t.Ldif.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> Self:
         """Override __new__ to support auto-execute and processor instantiation."""
-        from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
-
         instance = object.__new__(cls)
         parent_server_raw = (
             parent_server if parent_server is not None else kwargs.get("_parent_server")
@@ -270,8 +269,6 @@ class FlextLdifServersRfcSchema(
         Returns:
             The resulting ``p.Result[m.Ldif.SchemaAttribute]``.
         """
-        from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
-
         server_type = self._get_server_type()
 
         def parse_parts_hook(

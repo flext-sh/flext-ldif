@@ -46,7 +46,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             "nsds5ReplConflict",
         ])
         SUPPORTED_PERMISSIONS: ClassVar[frozenset[str]] = (
-            FlextLdifServersRfc.Constants.SUPPORTED_PERMISSIONS
+            FlextLdifServersRfcConstants.SUPPORTED_PERMISSIONS
             | frozenset(["proxy", "all"])
         )
         DETECTION_OID_PATTERN: ClassVar[str] = "2\\.16\\.840\\.1\\.113730\\."

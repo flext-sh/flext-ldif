@@ -10,12 +10,12 @@ from collections.abc import MutableMapping
 
 from flext_ldif import c, m, t, u
 from flext_ldif.servers._oid.entry_metadata import FlextLdifServersOidEntryMetadataMixin
-from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
 
 
 class FlextLdifServersOidEntryBooleanMixin(
     FlextLdifServersOidEntryMetadataMixin,
-    FlextLdifServersRfc.Entry,
+    FlextLdifServersRfcEntry,
 ):
     """OID entry boolean value conversion helpers."""
 

@@ -126,7 +126,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             "whenChanged",
         ])
         SUPPORTED_PERMISSIONS: ClassVar[frozenset[str]] = (
-            FlextLdifServersRfc.Constants.SUPPORTED_PERMISSIONS
+            FlextLdifServersRfcConstants.SUPPORTED_PERMISSIONS
             | frozenset(["control_access"])
         )
         DETECTION_OID_PATTERN: ClassVar[str] = "1\\.2\\.840\\.113556\\."

@@ -49,7 +49,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         ACL_ATTRIBUTE_NAME: ClassVar[str] = "access"
         ACL_PERMISSION_AUTH: ClassVar[str] = "auth"
         SUPPORTED_PERMISSIONS: ClassVar[frozenset[str]] = (
-            FlextLdifServersRfc.Constants.SUPPORTED_PERMISSIONS
+            FlextLdifServersRfcConstants.SUPPORTED_PERMISSIONS
             | frozenset([ACL_PERMISSION_AUTH])
         )
         OPENLDAP_1_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
@@ -440,8 +440,8 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             Returns:
                 The resulting ``m.Ldif.AclPermissions``.
             """
-            read_perm = FlextLdifServersRfc.Constants.PERMISSION_READ
-            write_perm = FlextLdifServersRfc.Constants.PERMISSION_WRITE
+            read_perm = FlextLdifServersRfcConstants.PERMISSION_READ
+            write_perm = FlextLdifServersRfcConstants.PERMISSION_WRITE
             auth_perm = FlextLdifServersOpenldap1.Constants.ACL_PERMISSION_AUTH
             return m.Ldif.AclPermissions(
                 read=read_perm in first_access or write_perm in first_access,

@@ -81,11 +81,11 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             "olcSchemaConfig",
         ])
         OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = (
-            FlextLdifServersRfc.Constants.OPERATIONAL_ATTRIBUTES
+            FlextLdifServersRfcConstants.OPERATIONAL_ATTRIBUTES
             | frozenset(["entryUUID", "entryCSN", "contextCSN", "hasSubordinates"])
         )
         SUPPORTED_PERMISSIONS: ClassVar[frozenset[str]] = (
-            FlextLdifServersRfc.Constants.SUPPORTED_PERMISSIONS | frozenset(["auth"])
+            FlextLdifServersRfcConstants.SUPPORTED_PERMISSIONS | frozenset(["auth"])
         )
         ATTRIBUTE_FIELDS: ClassVar[frozenset[str]] = frozenset(["x_origin", "ordering"])
         OBJECTCLASS_REQUIREMENTS: ClassVar[t.BoolMapping] = MappingProxyType({

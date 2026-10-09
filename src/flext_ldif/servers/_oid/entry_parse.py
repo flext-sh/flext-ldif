@@ -15,14 +15,15 @@ from flext_ldif.servers._oid.entry_metadata import FlextLdifServersOidEntryMetad
 from flext_ldif.servers._oid.entry_normalize import (
     FlextLdifServersOidEntryNormalizeMixin,
 )
-from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
+from flext_ldif.servers._rfc.server_constants import FlextLdifServersRfcConstants
 
 
 class FlextLdifServersOidEntryParseMixin(
     FlextLdifServersOidEntryBooleanMixin,
     FlextLdifServersOidEntryMetadataMixin,
     FlextLdifServersOidEntryNormalizeMixin,
-    FlextLdifServersRfc.Entry,
+    FlextLdifServersRfcEntry,
 ):
     """OID entry parse hook helpers."""
 
@@ -325,7 +326,7 @@ class FlextLdifServersOidEntryParseMixin(
         cleaned_dn, _ = u.Ldif.clean_dn_with_statistics(dn)
         normalized_dn = cleaned_dn
         if cleaned_dn.lower() == FlextLdifServersOidConstants.SCHEMA_DN_SERVER.lower():
-            normalized_dn = FlextLdifServersRfc.Constants.SCHEMA_DN
+            normalized_dn = FlextLdifServersRfcConstants.SCHEMA_DN
             FlextLdifServersOidEntryParseMixin._module_logger.debug(
                 "OID→RFC transform: Normalizing schema DN",
                 original_dn=cleaned_dn,
