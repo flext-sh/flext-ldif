@@ -20,17 +20,18 @@ from flext_tests import FlextTestsFixturesDSLMixin, FlextTestsUtilities, tk, tm
 
 from flext_ldif import FlextLdifUtilities
 from tests import c, m, t
-from tests._utilities_entries import MutableMapping, Path
-from tests._utilities_ldap import ModuleType, p
 from tests._utilities_schema import (
     _PARSE_DISPATCH,
-    Callable,
     SchemaExpectations,
     _assert_field_eq,
     _assert_must_contain,
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, MutableMapping
+    from pathlib import Path
+    from types import ModuleType
+
     from tests import p
 
 
