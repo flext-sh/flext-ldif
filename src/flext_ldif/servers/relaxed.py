@@ -24,9 +24,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
     Constants: ClassVar[type[FlextLdifServersRelaxedConstants]] = (
         FlextLdifServersRelaxedConstants
     )
-    Schema: ClassVar[type[FlextLdifServersRelaxedSchema]] = (
-        FlextLdifServersRelaxedSchema
-    )
+    Schema: ClassVar[type[FlextLdifServersRelaxedSchema]] = FlextLdifServersRelaxedSchema
     Entry: ClassVar[type[FlextLdifServersRelaxedEntry]] = FlextLdifServersRelaxedEntry
 
     class Acl(FlextLdifServersRfcAcl):
