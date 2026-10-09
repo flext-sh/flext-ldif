@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 from flext_core import m, r, u
 from flext_ldif import p, t
 
@@ -23,13 +25,19 @@ class FlextLdifUtilitiesValidation:
         """RFC validation helpers."""
 
         RFC2849_ATTRIBUTE_VALUE_ADAPTER: m.TypeAdapter[t.Ldif.Rfc2849AttributeValue] = (
-            u.type_adapter(t.Ldif.Rfc2849AttributeValue)
+            u.type_adapter(
+                cast("type[t.Ldif.Rfc2849AttributeValue]", t.Ldif.Rfc2849AttributeValue)
+            )
         )
         RFC4512_DESCRIPTOR_ADAPTER: m.TypeAdapter[t.Ldif.Rfc4512Descriptor] = (
-            u.type_adapter(t.Ldif.Rfc4512Descriptor)
+            u.type_adapter(
+                cast("type[t.Ldif.Rfc4512Descriptor]", t.Ldif.Rfc4512Descriptor)
+            )
         )
         RFC4514_DN_COMPONENT_ADAPTER: m.TypeAdapter[t.Ldif.Rfc4514DnComponent] = (
-            u.type_adapter(t.Ldif.Rfc4514DnComponent)
+            u.type_adapter(
+                cast("type[t.Ldif.Rfc4514DnComponent]", t.Ldif.Rfc4514DnComponent)
+            )
         )
 
         @classmethod

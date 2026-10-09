@@ -9,29 +9,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-
     from flext_ldif import t
 
 
 class FlextLdifUtilitiesCollectionLdif:
     """LDIF-specific collection, merge, and DSL methods."""
-
-    @staticmethod
-    def find(
-        items: t.JsonList,
-        *,
-        predicate: Callable[..., bool],
-    ) -> t.JsonValue | None:
-        """Find first item matching predicate.
-
-        Returns:
-            The resulting ``t.JsonValue | None``.
-        """
-        for elem in items:
-            if predicate(elem):
-                return elem
-        return None
 
     @staticmethod
     def deduplicate_preserve_order(

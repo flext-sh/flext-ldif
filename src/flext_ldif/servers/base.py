@@ -175,29 +175,6 @@ class FlextLdifServersBase(
         **fields: t.JsonValue | t.MutableSequenceOf[m.Ldif.Entry],
     ) -> Self | m.Ldif.Entry | str: ...
 
-    @staticmethod
-    def _absorb_positional_args(
-        args: tuple[str | t.MutableSequenceOf[m.Ldif.Entry] | None, ...],
-        execute_kwargs: t.MutableMappingKV[
-            str,
-            str | int | bool | t.MutableSequenceOf[m.Ldif.Entry],
-        ],
-    ) -> None:
-        """Absorb up to three positional arguments into the execute kwargs."""
-        for index, value in enumerate(args[:3]):
-            match index:
-                case 0 if "ldif_text" not in execute_kwargs and isinstance(value, str):
-                    execute_kwargs["ldif_text"] = value
-                case 0 if "entries" not in execute_kwargs and value is not None:
-                    execute_kwargs["entries"] = u.Ldif.as_entries(value)
-                case 1 if "entries" not in execute_kwargs and value is not None:
-                    execute_kwargs["entries"] = u.Ldif.as_entries(value)
-                case 2 if "operation" not in execute_kwargs and isinstance(value, str):
-                    execute_kwargs["operation"] = value
-                case _:
-                    continue
-
-    @override
     def __call__(
         self,
         *args: str | t.MutableSequenceOf[m.Ldif.Entry] | None,
@@ -248,6 +225,29 @@ class FlextLdifServersBase(
         as_entry: m.Ldif.Entry = u.Ldif.as_entry(value)
         return as_entry
 
+
+
+    @staticmethod
+    def _absorb_positional_args(
+        args: tuple[str | t.MutableSequenceOf[m.Ldif.Entry] | None, ...],
+        execute_kwargs: t.MutableMappingKV[
+            str,
+            str | int | bool | t.MutableSequenceOf[m.Ldif.Entry],
+        ],
+    ) -> None:
+        """Absorb up to three positional arguments into the execute kwargs."""
+        for index, value in enumerate(args[:3]):
+            match index:
+                case 0 if "ldif_text" not in execute_kwargs and isinstance(value, str):
+                    execute_kwargs["ldif_text"] = value
+                case 0 if "entries" not in execute_kwargs and value is not None:
+                    execute_kwargs["entries"] = u.Ldif.as_entries(value)
+                case 1 if "entries" not in execute_kwargs and value is not None:
+                    execute_kwargs["entries"] = u.Ldif.as_entries(value)
+                case 2 if "operation" not in execute_kwargs and isinstance(value, str):
+                    execute_kwargs["operation"] = value
+                case _:
+                    continue
     @override
     def execute(
         self,
