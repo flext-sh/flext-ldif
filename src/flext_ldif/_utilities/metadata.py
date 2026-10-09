@@ -13,7 +13,7 @@ from flext_ldif._utilities._metadata_match import FlextLdifMetadataMatchDetails
 from flext_ldif._utilities._metadata_name_desc import FlextLdifMetadataNameDescDetails
 from flext_ldif._utilities._metadata_prefix import FlextLdifMetadataPrefixDetails
 from flext_ldif._utilities._metadata_schema_analysis import (
-    FlextLdifFlextUtilitiesMetadataSchemaAnalysis,
+    FlextLdifMetadataSchemaAnalysis,
 )
 from flext_ldif._utilities._metadata_syntax_origin import (
     FlextLdifMetadataSyntaxOriginDetails,
@@ -30,7 +30,7 @@ class FlextLdifUtilitiesMetadata(
     FlextLdifMetadataNameDescDetails,
     FlextLdifMetadataSyntaxOriginDetails,
     FlextLdifMetadataMatchDetails,
-    FlextLdifFlextUtilitiesMetadataSchemaAnalysis.FlextLdifMetadataSchemaAnalysis,
+    FlextLdifMetadataSchemaAnalysis,
 ):
     """Metadata utilities for LDIF validation metadata management."""
 

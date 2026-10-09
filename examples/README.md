@@ -207,7 +207,7 @@ api = ldif()
 # Use functionality
 result = api.parse_string("dn: cn=test,dc=example,dc=com\ncn: test\n")
 
-if result.is_success:
+if result.success:
     entries = result.unwrap()
     # Process entries
 else:

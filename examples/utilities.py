@@ -1,13 +1,39 @@
 """Utility functions for flextldif.
 
+Shared example-workflow helpers for the ``examples`` package: extends the
+public ``FlextLdifUtilities`` facade so every example exercises only the
+package's own utilities surface.
+
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
-from flext_ldif._utilities.examples_flext_ldif_utilities import (
-    ExamplesFlextLdifUtilities,
-)
+from flext_ldif import FlextLdifUtilities, m
+
+
+class ExamplesFlextLdifUtilities(FlextLdifUtilities):
+    """Utility functions for flextldif."""
+
+    @staticmethod
+    def create_user_entry(index: int, *, sn: str | None = None) -> m.Ldif.Entry:
+        """Create a person entry for example workflows.
+
+        Returns:
+            The resulting ``m.Ldif.Entry``.
+        """
+        return m.Ldif.Entry(
+            dn=m.Ldif.DN(value=f"cn=User{index},ou=People,dc=example,dc=com"),
+            attributes=m.Ldif.Attributes(
+                attributes={
+                    "objectClass": ["person"],
+                    "cn": [f"User{index}"],
+                    "sn": [sn if sn is not None else f"User{index}"],
+                },
+                attribute_metadata={},
+            ),
+        )
+
 
 __all__: list[str] = ["ExamplesFlextLdifUtilities"]

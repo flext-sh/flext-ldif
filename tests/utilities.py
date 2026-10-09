@@ -19,7 +19,7 @@ import pytest
 from flext_tests import FlextTestsFixturesDSLMixin, FlextTestsUtilities, tk, tm
 
 from flext_ldif import FlextLdifUtilities
-from tests import c, m, t
+from tests import c, m, p, t
 from tests._utilities_schema import (
     _PARSE_DISPATCH,
     SchemaExpectations,
@@ -31,8 +31,6 @@ if TYPE_CHECKING:
     from collections.abc import Callable, MutableMapping
     from pathlib import Path
     from types import ModuleType
-
-    from tests import p
 
 
 class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
@@ -69,9 +67,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
             Returns:
                 The resulting ``m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass``.
             """
-            is_objectclass = (
-                TestsFlextLdifUtilities.TestsSchemaAclAssertionsMixin._schema_definition_is_objectclass
-            )
+            is_objectclass = TestsFlextLdifUtilities.TestsSchemaAclAssertionsMixin._schema_definition_is_objectclass
             if is_objectclass(schema_def):
                 value_raw = tm.ok(server.parse_objectclass(schema_def))
                 value: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass = (
