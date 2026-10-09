@@ -42,7 +42,7 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
             description="Schema content after migration transformation",
         )
         entries: t.MutableSequenceOf[mde.Entry] = u.Field(
-            default_factory=list,
+            default_factory=list[mde.Entry],
             description="Migrated LDIF entries",
         )
         stats: FlextLdifModelsResults.Statistics = u.Field(
@@ -50,7 +50,7 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
             description="Migration processing statistics",
         )
         output_files: t.MutableSequenceOf[str] = u.Field(
-            default_factory=list,
+            default_factory=list[str],
             description="Output file paths produced by the migration pipeline.",
         )
 

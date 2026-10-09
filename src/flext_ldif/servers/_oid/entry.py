@@ -79,7 +79,9 @@ class FlextLdifServersOidEntry(
             if cleaned_dn != original_dn:
                 entry.dn = m.Ldif.DN.model_validate({"value": cleaned_dn})
         original_dn = str(entry.dn) if entry.dn else ""
-        original_attrs = entry.attributes.attributes if entry.attributes else {}
+        original_attrs: t.MutableStrSequenceMapping = (
+            entry.attributes.attributes if entry.attributes else {}
+        )
         finalize_result = self._hook_finalize_entry_parse(
             entry,
             original_dn,

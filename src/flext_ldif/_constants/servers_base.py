@@ -57,7 +57,7 @@ class FlextLdifConstantsServersBase:
 
     CATEGORIZATION_ACL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset()
 
-    DETECTION_PATTERN: ClassVar[str | t.Ldif.RegexPattern] = ""
+    DETECTION_PATTERN: ClassVar[str] = ""
 
     DETECTION_WEIGHT: ClassVar[int] = 0
 

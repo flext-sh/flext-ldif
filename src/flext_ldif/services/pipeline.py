@@ -43,9 +43,11 @@ class FlextLdifProcessingPipeline(s[t.MutableSequenceOf[m.Ldif.Entry]]):
     _config: m.Ldif.TransformConfig = u.PrivateAttr(
         default_factory=m.Ldif.TransformConfig,
     )
-    _entries: t.MutableSequenceOf[m.Ldif.Entry] = u.PrivateAttr(default_factory=list)
+    _entries: t.MutableSequenceOf[m.Ldif.Entry] = u.PrivateAttr(
+        default_factory=list[m.Ldif.Entry],
+    )
     _stages: t.SequenceOf[m.Cli.PipelineStageSpec] = u.PrivateAttr(
-        default_factory=tuple,
+        default_factory=tuple[m.Cli.PipelineStageSpec, ...],
     )
 
     @override

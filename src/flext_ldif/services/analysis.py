@@ -110,8 +110,8 @@ class FlextLdifAnalysis(s):
         is_entry_valid = is_entry_valid and oc_valid
         return (is_entry_valid, errors)
 
-    @staticmethod
     def validate_entries(
+        self,
         entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
         validation_service: p.Ldif.ValidationService | None = None,
     ) -> p.Result[m.Ldif.ValidationResult]:
@@ -120,6 +120,7 @@ class FlextLdifAnalysis(s):
         Returns:
             The resulting ``p.Result[m.Ldif.ValidationResult]``.
         """
+        _ = self
         # Why: mro-4p0t — accept ParseResponse like statistics/categorization services.
         from flext_ldif.services.validation import FlextLdifValidation
 

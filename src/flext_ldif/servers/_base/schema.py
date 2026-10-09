@@ -33,7 +33,7 @@ class FlextLdifServersBaseSchema(
         str,
         u.Field(
             description=(
-                "Server type identifier (e.g., 'oid', 'oud', 'openldap', 'rfc')",
+                "Server type identifier (e.g., 'oid', 'oud', 'openldap', 'rfc')"
             ),
         ),
     ] = "rfc"

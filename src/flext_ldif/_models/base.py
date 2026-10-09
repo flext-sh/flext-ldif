@@ -93,7 +93,7 @@ class FlextLdifModelsBases:
                 description="Validation violations recorded while normalizing ACL "
                 "data.",
             ),
-        ] = u.Field(default_factory=list)
+        ] = u.Field(default_factory=list[str])
         validation_metadata: Annotated[
             m.ConfigMap | None,
             u.Field(description="Validation metadata captured during ACL processing."),

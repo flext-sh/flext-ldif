@@ -99,9 +99,9 @@ class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](
 
         return m.RuntimeBootstrapOptions(settings_type=FlextLdifSettings)
 
-    @staticmethod
-    def _get_effective_server_type_value() -> str:
+    def _get_effective_server_type_value(self) -> str:
         """Return the default server type used by parser and writer services."""
+        _ = self
         default_server_type: str = c.Ldif.ServerTypes.RFC.value
         return default_server_type
 

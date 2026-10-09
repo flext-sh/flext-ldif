@@ -35,7 +35,7 @@ class FlextLdifServersOidAclAssemble:
             self._rule = rule
             self._base_dn = base_dn
             self._is_entry = rule.target_type == c.Ldif.AclTargetType.ENTRY
-            self._containers = (
+            self._containers: frozenset[str] = (
                 FlextLdifServersOidAclToOud.high_level_containers(base_dn)
                 if base_dn
                 else frozenset()

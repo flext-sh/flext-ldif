@@ -29,7 +29,7 @@ class FlextLdifModelsDomainEntryChangeOperation(m.Value):
     values: Annotated[
         t.MutableSequenceOf[FlextLdifModelsDomainEntryChangeOperationValue],
         u.Field(description="Decoded values in the block"),
-    ] = u.Field(default_factory=list)
+    ] = u.Field(default_factory=list[FlextLdifModelsDomainEntryChangeOperationValue])
 
 
 __all__: list[str] = ["FlextLdifModelsDomainEntryChangeOperation"]

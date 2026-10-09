@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import MutableMapping
-from typing import Annotated
+from typing import Annotated, cast
 
 from flext_ldif import c, m, p, r, s, t, u
 
@@ -66,7 +66,7 @@ class FlextLdifEntries(s):
         if isinstance(dn_value, str):
             return r[str].ok(dn_value)
         if isinstance(dn_value, list):
-            return r[str].ok(dn_value[0] if dn_value else "")
+            return r[str].ok(cast("str", dn_value[0] if dn_value else ""))
         return r[str].fail("Invalid DN value type")
 
     @staticmethod

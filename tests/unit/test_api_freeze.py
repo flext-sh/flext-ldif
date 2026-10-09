@@ -109,7 +109,7 @@ class TestsFlextLdifApiFreeze:
     @staticmethod
     def test_all_retains_the_consumer_facade_contract() -> None:
         """Generated exports retain required consumer names as the API grows."""
-        tm.that(set(REQUIRED_PUBLIC_API) - set(flext_ldif.__all__), eq=set())
+        tm.that(set(REQUIRED_PUBLIC_API) - set(flext_ldif.__all__), eq=set[str]())
 
     @staticmethod
     def test_all_entries_are_unique() -> None:
@@ -119,7 +119,7 @@ class TestsFlextLdifApiFreeze:
     @staticmethod
     def test_public_surface_and_private_symbols_are_disjoint() -> None:
         """No private implementation class is advertised as public."""
-        tm.that(set(PUBLIC_API) & set(PRIVATE_ROOT_SYMBOLS), eq=set())
+        tm.that(set(PUBLIC_API) & set(PRIVATE_ROOT_SYMBOLS), eq=set[str]())
 
     @staticmethod
     @pytest.mark.parametrize("symbol", PUBLIC_API)

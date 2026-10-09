@@ -11,10 +11,12 @@ SPDX-License-Identifier: MIT.
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 from flext_tests import tm
 
-from tests import m, u
+from tests import m, t, u
 
 SOURCE = "dc=example,dc=invalid"
 TARGET = "dc=r123,dc=algar,dc=local"
@@ -29,7 +31,7 @@ def _entry(dn: str, attributes: dict[str, list[str]] | None = None) -> m.Ldif.En
     return m.Ldif.Entry(
         dn=m.Ldif.DN(value=dn),
         attributes=m.Ldif.Attributes(
-            attributes=attributes or {},
+            attributes=cast("t.MutableStrSequenceMapping", attributes or {}),
             attribute_metadata={},
         ),
     )

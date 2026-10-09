@@ -141,7 +141,7 @@ class FlextLdifModelsDomainEntry:
             u.Field(
                 description="Structured modify operation blocks for changetype=modify",
             ),
-        ] = u.Field(default_factory=list)
+        ] = u.Field(default_factory=list[FlextLdifModelsDomainEntryChangeOperation])
 
         @u.field_validator("attributes", mode="before")
         @classmethod
@@ -231,7 +231,7 @@ class FlextLdifModelsDomainEntry:
             u.Field(
                 description="Original unfolded LDIF lines for loss-aware round-trip",
             ),
-        ] = u.Field(default_factory=list)
+        ] = u.Field(default_factory=list[str])
         metadata: Annotated[
             mdm.ServerMetadata | None,
             u.Field(

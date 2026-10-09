@@ -52,7 +52,7 @@ class FlextLdifCategorizationRules(s):
             default=None,
             exclude=True,
             description=(
-                "Optional schema whitelist rules used to filter schema entries.",
+                "Optional schema whitelist rules used to filter schema entries."
             ),
         ),
     ] = None
@@ -62,10 +62,7 @@ class FlextLdifCategorizationRules(s):
             default=None,
             exclude=True,
             description=(
-                (
-                    "Attribute names removed from categorized entries after "
-                    "classification."
-                ),
+                "Attribute names removed from categorized entries after classification."
             ),
         ),
     ] = None
@@ -75,10 +72,8 @@ class FlextLdifCategorizationRules(s):
             default=None,
             exclude=True,
             description=(
-                (
-                    "objectClass names removed from categorized entries after "
-                    "classification."
-                ),
+                "objectClass names removed from categorized entries after "
+                "classification."
             ),
         ),
     ] = None
@@ -96,10 +91,7 @@ class FlextLdifCategorizationRules(s):
             default=c.Ldif.ServerTypes.RFC.value,
             exclude=True,
             description=(
-                (
-                    "Server type used to resolve categorization defaults from the "
-                    "registry."
-                ),
+                "Server type used to resolve categorization defaults from the registry."
             ),
         ),
     ] = c.Ldif.ServerTypes.RFC.value
@@ -109,10 +101,7 @@ class FlextLdifCategorizationRules(s):
             default=None,
             exclude=True,
             description=(
-                (
-                    "Optional server registry override for categorization "
-                    "constants lookup."
-                ),
+                "Optional server registry override for categorization constants lookup."
             ),
         ),
     ] = None
@@ -233,10 +222,6 @@ class FlextLdifCategorizationRules(s):
             The resulting ``p.Result[type[p.Ldif.ServerConstants]]``.
         """
         registry = self.server_registry or self._server
-        if registry is None:
-            return r[type[p.Ldif.ServerConstants]].fail(
-                c.Ldif.ERR_SERVER_REGISTRY_UNAVAILABLE,
-            )
 
         def default_registry_error(error: str) -> str:
             return error or f"Failed to resolve constants for {server_type}"

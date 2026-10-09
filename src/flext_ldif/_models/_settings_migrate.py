@@ -293,7 +293,7 @@ class FlextLdifModelsSettingsMigrate:
                 description="Set of ACL attribute names (e.g., {'orclaci', "
                 "'orclentrylevelaci'}). Used to identify ACL attributes.",
             ),
-        ] = u.Field(default_factory=frozenset)
+        ] = u.Field(default_factory=frozenset[str])
         comment_acl_in_non_acl_phases: Annotated[
             bool,
             u.Field(
@@ -381,4 +381,4 @@ class FlextLdifModelsSettingsMigrate:
                 "statistics summary. Example: {'users': 150, 'groups': 25, 'acl': "
                 "42}.",
             ),
-        ] = u.Field(default_factory=dict)
+        ] = u.Field(default_factory=dict[str, int])

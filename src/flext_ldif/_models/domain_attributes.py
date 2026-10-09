@@ -40,7 +40,7 @@ class FlextLdifModelsDomainAttributes:
                 description="Metadata for each attribute, like category or hidden "
                 "status.",
             ),
-        ] = u.Field(default_factory=dict)
+        ] = u.Field(default_factory=dict[str, t.MutableAttributeMapping])
         metadata: Annotated[
             t.MutableJsonMapping | None,
             u.Field(description="Metadata for preserving ordering and formats"),

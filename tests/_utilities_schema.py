@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated, ClassVar, Final
+from typing import Annotated, ClassVar, Final, cast
 
 from flext_ldif import FlextLdifModels
 from tests import t
@@ -68,14 +68,14 @@ class SchemaExpectations(FlextLdifModels.BaseModel):
     ] = None
 
 
-_PARSE_DISPATCH: Final[t.MappingKV[t.Tests.ParseMethod, str]] = {
+PARSE_DISPATCH: Final[t.MappingKV[t.Tests.ParseMethod, str]] = {
     "parse_attribute": "parse_attribute",
     "parse_objectclass": "parse_objectclass",
     "parse_input": "parse_input",
 }
 
 
-def _assert_field_eq(
+def assert_field_eq(
     value: object,
     field: str,
     expected: object,
@@ -90,7 +90,8 @@ def _assert_field_eq(
         return
     actual = getattr(value, field, None)
     if isinstance(expected, list) and actual is not None:
-        if list(actual) != list(expected):
+        expected_items = cast("list[object]", expected)
+        if list(actual) != expected_items:
             msg = f"Expected {label} {expected}, got {actual}"
             raise AssertionError(msg)
         return
@@ -99,7 +100,7 @@ def _assert_field_eq(
         raise AssertionError(msg)
 
 
-def _assert_must_contain(serialized: str, must_contain: t.StrSequence) -> None:
+def assert_must_contain(serialized: str, must_contain: t.StrSequence) -> None:
     """Assert every fragment in ``must_contain`` appears in ``serialized``.
 
     Raises:

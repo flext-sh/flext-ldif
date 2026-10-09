@@ -15,7 +15,7 @@ from flext_ldif import FlextLdifModels, c, p, t
 class FlextLdifParserRecord:
     """Parse a single unfolded LDIF record into an Entry model."""
 
-    _MODIFY_OPS: ClassVar[t.MutableStrMapping] = {
+    _MODIFY_OPS: ClassVar[t.MutableMappingKV[str, c.Ldif.ChangeOperation]] = {
         "add": c.Ldif.ChangeOperation.ADD,
         "delete": c.Ldif.ChangeOperation.DELETE,
         "replace": c.Ldif.ChangeOperation.REPLACE,
