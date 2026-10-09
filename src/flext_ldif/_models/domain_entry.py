@@ -13,21 +13,17 @@ from datetime import datetime
 from types import MappingProxyType
 from typing import Annotated, ClassVar, Self, override
 
-from flext_core import FlextUtilities as u, m, r
-from flext_ldif import c, p, t
-from flext_ldif._models.domain_attributes import FlextLdifModelsDomainAttributes as mda
-from flext_ldif._models.domain_dn import FlextLdifModelsDomainDN as mdn
-from flext_ldif._models.domain_entry_change import (
+from flext_core import m
+from flext_ldif import c, p, r, t, u
+from flext_ldif._models import (
+    FlextLdifModelsDomainAttributes as mda,
+    FlextLdifModelsDomainDN as mdn,
     FlextLdifModelsDomainEntryChangeOperation,
-)
-from flext_ldif._models.domain_entry_change_value import (
     FlextLdifModelsDomainEntryChangeOperationValue,
-)
-from flext_ldif._models.domain_entry_control import FlextLdifModelsDomainEntryControl
-from flext_ldif._models.domain_entry_statistics import (
+    FlextLdifModelsDomainEntryControl,
     FlextLdifModelsDomainEntryStatistics,
+    FlextLdifModelsDomainMetadata as mdm,
 )
-from flext_ldif._models.domain_metadata import FlextLdifModelsDomainMetadata as mdm
 
 
 class FlextLdifModelsDomainEntry:
