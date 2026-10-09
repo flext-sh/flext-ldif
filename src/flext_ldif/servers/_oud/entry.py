@@ -12,6 +12,7 @@ from collections.abc import Mapping
 from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
+from flext_ldif.servers._base import FlextLdifServersBaseEntry
 from flext_ldif.servers._oud import (
     FlextLdifServersOudConstants,
     FlextLdifServersOudEntryParseMixin,
@@ -47,8 +48,6 @@ class FlextLdifServersOudEntry(
         _parent_server: FlextLdifServersBase | None = None,
     ) -> None:
         """Initialize OUD entry server."""
-        from flext_ldif.servers._base import FlextLdifServersBaseEntry
-
         FlextLdifServersBaseEntry.__init__(self, entry_service, _parent_server=None)
         if _parent_server is not None:
             object.__setattr__(self, "_parent_server", _parent_server)

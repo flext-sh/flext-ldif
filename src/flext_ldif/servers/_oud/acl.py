@@ -10,6 +10,7 @@ from collections.abc import MutableMapping
 from typing import ClassVar, Self, override
 
 from flext_ldif import c, m, p, r, t, u
+from flext_ldif.servers._base import FlextLdifServersBaseSchemaAcl
 from flext_ldif.servers._oud import (
     FlextLdifServersOudAclWriteMixin,
     FlextLdifServersOudConstants,
@@ -29,8 +30,6 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWriteMixin):
         **kwargs: t.Ldif.Scalar,
     ) -> None:
         """Initialize OUD ACL server."""
-        from flext_ldif.servers._base import FlextLdifServersBaseSchemaAcl
-
         filtered_kwargs: t.MutableConfigValueMapping = {
             k: v
             for k, v in kwargs.items()

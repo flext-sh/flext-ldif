@@ -11,6 +11,7 @@ from typing import Annotated
 from flext_cli import m, u
 
 from flext_ldif import c, t
+from flext_ldif.shared import FlextLdifShared
 
 
 class FlextLdifModelsBases:
@@ -60,8 +61,6 @@ class FlextLdifModelsBases:
         @property
         def server_type(self) -> str:
             """The server type from metadata, default to RFC."""
-            from flext_ldif import FlextLdifShared
-
             metadata = getattr(self, "metadata", None)
             if metadata is not None:
                 server_type = getattr(metadata, "server_type", None)
@@ -117,7 +116,6 @@ class FlextLdifModelsBases:
             cls,
             value: c.Ldif.ServerTypes | str,
         ) -> c.Ldif.ServerTypes:
-            from flext_ldif import FlextLdifShared
 
             if isinstance(value, c.Ldif.ServerTypes):
                 return value
