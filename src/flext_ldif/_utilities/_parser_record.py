@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from flext_core import r
-from flext_ldif import FlextLdifModels, c, p, t
+from flext_ldif import FlextLdifModels, c, p, r, t
+from flext_ldif._utilities import FlextLdifParserMetadataBuilders, FlextLdifParserValues
 
 
 class FlextLdifParserRecord:
@@ -198,8 +198,6 @@ class FlextLdifParserRecord:
         Returns:
             Whether the line was consumed as a special record line.
         """
-        from flext_ldif._utilities import FlextLdifParserValues
-
         if key_lower == "control":
             state.controls.append(
                 FlextLdifParserValues.build_control(remainder.lstrip()),
@@ -224,8 +222,6 @@ class FlextLdifParserRecord:
         line: str,
     ) -> None:
         """Consume one non-separator record line into the state."""
-        from flext_ldif._utilities import FlextLdifParserValues
-
         if ":" not in line:
             return
         key, _, remainder = line.partition(":")
@@ -250,8 +246,6 @@ class FlextLdifParserRecord:
         Returns:
             The resulting ``FlextLdifModels.Ldif.Entry``.
         """
-        from flext_ldif._utilities import FlextLdifParserMetadataBuilders
-
         return FlextLdifModels.Ldif.Entry(
             dn=FlextLdifModels.Ldif.DN(value=state.dn.strip()),
             attributes=FlextLdifModels.Ldif.Attributes.model_validate({

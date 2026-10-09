@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 
+from flext_cli import u
+
 from flext_ldif import c, t
 
 
@@ -25,8 +27,6 @@ class FlextLdifEntryAnalysis:
         Returns:
             The resulting ``t.Ldif.MutableMetadataMapping``.
         """
-        from flext_cli import u
-
         mk = c.Ldif
         differences: t.Ldif.MutableMetadataMapping = {
             mk.HAS_DIFFERENCES: False,
@@ -97,8 +97,6 @@ class FlextLdifEntryAnalysis:
             The resulting ``tuple[MutableMapping[str, t.Ldif.MutableMetadataMapping],
                 t.Ldif.MutableMetadataMapping]``.
         """
-        from flext_cli import u
-
         attribute_differences: MutableMapping[str, t.Ldif.MutableMetadataMapping] = {}
         original_attributes_complete: t.Ldif.MutableMetadataMapping = {}
         for attr_name, attr_values in entry_attrs.items():
@@ -186,8 +184,6 @@ class FlextLdifEntryAnalysis:
         Returns:
             The resulting ``t.Ldif.UnconvertedAttributes``.
         """
-        from flext_cli import u
-
         if not isinstance(value, Mapping):
             return {}
         normalized: t.Ldif.UnconvertedAttributes = {}

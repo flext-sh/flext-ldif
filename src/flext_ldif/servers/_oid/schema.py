@@ -10,10 +10,11 @@ from collections.abc import Callable, Mapping
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._oid.schema_normalize import (
+from flext_ldif.servers._oid import (
+    FlextLdifServersOidConstants,
     FlextLdifServersOidSchemaNormalizeMixin,
 )
-from flext_ldif.servers._rfc.schema import FlextLdifServersRfcSchema
+from flext_ldif.servers._rfc import FlextLdifServersRfcSchema
 
 
 class FlextLdifServersOidSchema(
@@ -252,10 +253,6 @@ class FlextLdifServersOidSchema(
         Returns:
             The resulting ``m.Ldif.SchemaAttribute``.
         """
-        from flext_ldif.servers._oid.server_constants import (
-            FlextLdifServersOidConstants,
-        )
-
         fixed_name = u.Ldif.normalize_name(attr_data.name) or attr_data.name
         fixed_equality = attr_data.equality
         fixed_substr = attr_data.substr
@@ -313,10 +310,6 @@ class FlextLdifServersOidSchema(
         Returns:
             The resulting ``tuple[str | None, str | None, str | None]``.
         """
-        from flext_ldif.servers._oid.server_constants import (
-            FlextLdifServersOidConstants,
-        )
-
         source_rules: t.JsonPayload | None = None
         if attr_copy.metadata and attr_copy.metadata.extensions:
             source_rules = attr_copy.metadata.extensions.get(

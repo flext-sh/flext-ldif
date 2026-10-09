@@ -10,6 +10,7 @@ from collections.abc import Callable, Iterable
 
 from flext_ldif import c, p, t
 from flext_ldif._models import FlextLdifModelsSettings
+from flext_ldif._utilities import FlextLdifEntryAccess, FlextLdifEntryMatching
 
 
 class FlextLdifEntryCriteria:
@@ -46,8 +47,6 @@ class FlextLdifEntryCriteria:
         Returns:
             The resulting ``bool | None``.
         """
-        from flext_ldif._utilities import FlextLdifEntryMatching
-
         if resolved_config.is_schema is None:
             return None
         return FlextLdifEntryMatching.detects_schema_entry(entry) == (
@@ -65,8 +64,6 @@ class FlextLdifEntryCriteria:
         Returns:
             The resulting ``bool | None``.
         """
-        from flext_ldif._utilities import FlextLdifEntryAccess
-
         if not resolved_config.objectclasses:
             return None
         entry_ocs: t.StrSequence = FlextLdifEntryAccess.resolve_objectclass_names(entry)

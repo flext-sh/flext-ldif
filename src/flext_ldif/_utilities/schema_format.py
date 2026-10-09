@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from flext_cli import u
+
 from flext_ldif import c, t
 
 if TYPE_CHECKING:
@@ -46,8 +48,6 @@ class FlextLdifUtilitiesSchemaFormat:
         Returns:
             The resulting ``str | None``.
         """
-        from flext_cli import u
-
         if not attr_data.name:
             return None
         if not restore_format or not attr_data.metadata:
@@ -165,8 +165,6 @@ class FlextLdifUtilitiesSchemaFormat:
         Returns:
             The resulting ``t.MutableSequenceOf[str] | None``.
         """
-        from flext_cli import u
-
         if not attr_data.metadata or not attr_data.metadata.schema_format_details:
             return None
         field_order_ = getattr(

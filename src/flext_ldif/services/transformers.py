@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_ldif import c, m, p, r, s, t, u
+from flext_ldif import FlextLdifConversion, FlextLdifShared, c, m, p, r, s, t, u
 
 
 class FlextLdifTransformer(s):
@@ -48,8 +48,6 @@ class FlextLdifTransformer(s):
         Returns:
             The resulting ``c.Ldif.ServerTypes``.
         """
-        from flext_ldif import FlextLdifShared
-
         if isinstance(server_type, c.Ldif.ServerTypes):
             return server_type
         return FlextLdifShared.normalize_server_type(server_type)
@@ -60,8 +58,6 @@ class FlextLdifTransformer(s):
         Returns:
             The resulting ``p.Result[m.Ldif.Entry]``.
         """
-        from flext_ldif.services.conversion import FlextLdifConversion
-
         source_server = self._normalize_server_type(
             self.source_server or c.Ldif.ServerTypes.RFC,
         )

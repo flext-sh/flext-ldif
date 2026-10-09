@@ -9,16 +9,17 @@ from __future__ import annotations
 from typing import ClassVar, override
 
 from flext_ldif import m, p, t, u
-from flext_ldif.servers._oid.entry_normalize import (
+from flext_ldif.servers._oid import (
+    FlextLdifServersOidConstants,
     FlextLdifServersOidEntryNormalizeMixin,
-)
-from flext_ldif.servers._oid.entry_parse import FlextLdifServersOidEntryParseMixin
-from flext_ldif.servers._oid.entry_restore import FlextLdifServersOidEntryRestoreMixin
-from flext_ldif.servers._oid.entry_restore_lines import (
+    FlextLdifServersOidEntryParseMixin,
     FlextLdifServersOidEntryRestoreLinesMixin,
+    FlextLdifServersOidEntryRestoreMixin,
 )
-from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
-from flext_ldif.servers._rfc.server_constants import FlextLdifServersRfcConstants
+from flext_ldif.servers._rfc import (
+    FlextLdifServersRfcConstants,
+    FlextLdifServersRfcEntry,
+)
 
 
 class FlextLdifServersOidEntry(
@@ -46,10 +47,6 @@ class FlextLdifServersOidEntry(
         Returns:
             The resulting ``str``.
         """
-        from flext_ldif.servers._oid.server_constants import (
-            FlextLdifServersOidConstants,
-        )
-
         match attr_name.lower():
             case attr_lower if attr_lower in {
                 FlextLdifServersOidConstants.ORCLACI.lower(),

@@ -9,7 +9,8 @@ from __future__ import annotations
 from typing import override
 
 from flext_ldif import c, m, p, r, t
-from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
+from flext_ldif.servers._relaxed import FlextLdifServersRelaxedConstants
+from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
 
 
 class FlextLdifServersRelaxedEntryWriteMixin(FlextLdifServersRfcEntry):
@@ -86,10 +87,6 @@ class FlextLdifServersRelaxedEntryWriteMixin(FlextLdifServersRfcEntry):
         Returns:
             The resulting ``p.Result[str]``.
         """
-        from flext_ldif.servers._relaxed.server_constants import (
-            FlextLdifServersRelaxedConstants,
-        )
-
         ldif_lines: t.MutableSequenceOf[str] = []
         if not entry_data.dn or not entry_data.dn.value:
             return r[str].fail("Entry DN is required for LDIF output")

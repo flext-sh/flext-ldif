@@ -10,8 +10,11 @@ from collections.abc import MutableMapping
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._oid.acl_format import FlextLdifServersOidAclFormatMixin
-from flext_ldif.servers._oid.acl_subjects import FlextLdifServersOidAclSubjectMixin
+from flext_ldif.servers._oid import (
+    FlextLdifServersOidAclFormatMixin,
+    FlextLdifServersOidAclSubjectMixin,
+    FlextLdifServersOidConstants,
+)
 
 
 class FlextLdifServersOidAclWriteMixin(
@@ -29,10 +32,6 @@ class FlextLdifServersOidAclWriteMixin(
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
         """
-        from flext_ldif.servers._oid.server_constants import (
-            FlextLdifServersOidConstants,
-        )
-
         return [
             *FlextLdifServersOidConstants.RFC_ACL_ATTRIBUTES,
             *FlextLdifServersOidConstants.OID_ACL_ATTRIBUTES,
@@ -84,10 +83,6 @@ class FlextLdifServersOidAclWriteMixin(
         Returns:
             The resulting ``p.Result[str]``.
         """
-        from flext_ldif.servers._oid.server_constants import (
-            FlextLdifServersOidConstants,
-        )
-
         if acl_data.raw_acl and acl_data.raw_acl.startswith(
             FlextLdifServersOidConstants.ORCLACI + ":",
         ):

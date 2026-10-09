@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldif import c, m, p, r, t
+from flext_ldif.servers._oid import FlextLdifServersOidAclToOud
 
 
 class FlextLdifServersOidAclAssemble:
@@ -28,10 +29,6 @@ class FlextLdifServersOidAclAssemble:
 
         def __init__(self, rule: m.Ldif.OidAclRule, base_dn: str) -> None:
             """Bind the rule, scope, and converted-subject accumulators."""
-            from flext_ldif.servers._oid.acl_convert_oud import (
-                FlextLdifServersOidAclToOud,
-            )
-
             self._rule = rule
             self._base_dn = base_dn
             self._is_entry = rule.target_type == c.Ldif.AclTargetType.ENTRY
@@ -86,10 +83,6 @@ class FlextLdifServersOidAclAssemble:
             Returns:
                 The resulting ``p.Result[None]``.
             """
-            from flext_ldif.servers._oid.acl_convert_oud import (
-                FlextLdifServersOidAclToOud,
-            )
-
             is_anyone = subject.subject_type == c.Ldif.OidSubjectKind.ANYONE
             if is_anyone and FlextLdifServersOidAclAssemble.deny_none(
                 subject.permissions,
@@ -136,10 +129,6 @@ class FlextLdifServersOidAclAssemble:
             Returns:
                 The resulting ``p.Result[None]``.
             """
-            from flext_ldif.servers._oid.acl_convert_oud import (
-                FlextLdifServersOidAclToOud,
-            )
-
             perms = FlextLdifServersOidAclToOud.convert_permissions(
                 subject.permissions,
                 is_entry=self._is_entry,
@@ -180,10 +169,6 @@ class FlextLdifServersOidAclAssemble:
             Returns:
                 The resulting ``m.Ldif.AciRule``.
             """
-            from flext_ldif.servers._oid.acl_convert_oud import (
-                FlextLdifServersOidAclToOud,
-            )
-
             first_value = self._rule.subjects[0].value if self._rule.subjects else ""
             acl_name = FlextLdifServersOidAclAssemble.generate_acl_name(
                 self._rule.dn,

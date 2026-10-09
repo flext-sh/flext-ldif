@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload
 
-from flext_core import r
-from flext_ldif import FlextLdifModels, c, p, t
+from flext_ldif import FlextLdifModels, c, p, r, t
+from flext_ldif._utilities import FlextLdifDNRdnParsing
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterator
@@ -94,8 +94,6 @@ class FlextLdifDNParsing:
         Returns:
             The resulting ``p.Result[t.MutableStrPairSequence]``.
         """
-        from flext_ldif._utilities import FlextLdifDNRdnParsing
-
         parsed_pairs: t.MutableStrPairSequence = []
         failure_message: str | None = None
         for component in FlextLdifDNParsing.split(dn_str):

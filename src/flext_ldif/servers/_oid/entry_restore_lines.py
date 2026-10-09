@@ -7,8 +7,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldif import m, t
-from flext_ldif.servers._oid.entry_parse import FlextLdifServersOidEntryParseMixin
-from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
+from flext_ldif.servers._oid import (
+    FlextLdifServersOidConstants,
+    FlextLdifServersOidEntryParseMixin,
+)
+from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
 
 
 class FlextLdifServersOidEntryRestoreLinesMixin(
@@ -44,10 +47,6 @@ class FlextLdifServersOidEntryRestoreLinesMixin(
         Returns:
             The resulting ``str``.
         """
-        from flext_ldif.servers._oid.server_constants import (
-            FlextLdifServersOidConstants,
-        )
-
         if ":" not in original_line:
             return original_line
         parts = original_line.split(":", 1)

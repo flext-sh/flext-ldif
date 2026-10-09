@@ -12,7 +12,8 @@ from __future__ import annotations
 from typing import override
 
 from flext_ldif import m, p, r, t, u
-from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
+from flext_ldif.servers._oud import FlextLdifServersOudHelpersMixin
+from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
 
 
 class FlextLdifServersOudEntryParseMixin(FlextLdifServersRfcEntry):
@@ -69,8 +70,6 @@ class FlextLdifServersOudEntryParseMixin(FlextLdifServersRfcEntry):
         Returns:
             The resulting ``p.Result[m.Ldif.Entry]``.
         """
-        from flext_ldif.servers._oud.helpers import FlextLdifServersOudHelpersMixin
-
         _ = original_dn
         aci_values = FlextLdifServersOudHelpersMixin.find_aci_values(
             entry,

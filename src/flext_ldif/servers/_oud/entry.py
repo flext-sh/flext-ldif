@@ -12,11 +12,15 @@ from collections.abc import Mapping
 from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._oud.entry_parse import FlextLdifServersOudEntryParseMixin
-from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
+from flext_ldif.servers._oud import (
+    FlextLdifServersOudConstants,
+    FlextLdifServersOudEntryParseMixin,
+    FlextLdifServersOudHelpersMixin,
+)
+from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
 
 if TYPE_CHECKING:
-    from flext_ldif.servers.base import FlextLdifServersBase
+    from flext_ldif import FlextLdifServersBase
 
 
 class FlextLdifServersOudEntry(
@@ -43,7 +47,7 @@ class FlextLdifServersOudEntry(
         _parent_server: FlextLdifServersBase | None = None,
     ) -> None:
         """Initialize OUD entry server."""
-        from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
+        from flext_ldif.servers._base import FlextLdifServersBaseEntry
 
         FlextLdifServersBaseEntry.__init__(self, entry_service, _parent_server=None)
         if _parent_server is not None:
@@ -60,10 +64,6 @@ class FlextLdifServersOudEntry(
         Returns:
             The resulting ``bool``.
         """
-        from flext_ldif.servers._oud.server_constants import (
-            FlextLdifServersOudConstants,
-        )
-
         oud_constants = FlextLdifServersOudConstants
         patterns_config = m.Ldif.ServerPatternsConfig(
             dn_patterns=oud_constants.DN_DETECTION_PATTERNS,
@@ -122,8 +122,6 @@ class FlextLdifServersOudEntry(
         Returns:
             The resulting ``p.Result[m.Ldif.Entry]``.
         """
-        from flext_ldif.servers._oud.helpers import FlextLdifServersOudHelpersMixin
-
         attrs_dict: t.MutableStrSequenceMapping = (
             entry.attributes.attributes if entry.attributes is not None else {}
         )
@@ -155,8 +153,6 @@ class FlextLdifServersOudEntry(
             The resulting ``p.Result[t.Pair[bool,
                 t.Ldif.MutableMetadataInputMapping]]``.
         """
-        from flext_ldif.servers._oud.helpers import FlextLdifServersOudHelpersMixin
-
         has_macros = False
         acl_metadata_extensions: t.Ldif.MutableMetadataInputMapping = {}
         for aci_value in aci_attrs:
@@ -201,8 +197,6 @@ class FlextLdifServersOudEntry(
         Returns:
             The resulting ``p.Result[m.Ldif.Entry]``.
         """
-        from flext_ldif.servers._oud.helpers import FlextLdifServersOudHelpersMixin
-
         return FlextLdifServersOudHelpersMixin.normalize_schema_definitions_for_write(
             entry,
         )
@@ -216,11 +210,6 @@ class FlextLdifServersOudEntry(
         Returns:
             The resulting ``p.Result[str]``.
         """
-        from flext_ldif.servers._oud.helpers import FlextLdifServersOudHelpersMixin
-        from flext_ldif.servers._oud.server_constants import (
-            FlextLdifServersOudConstants,
-        )
-
         hook_result = self._hook_pre_write_entry(entry_data)
         if hook_result.failure:
             return r[str].fail_op("Pre-write hook", hook_result.error)

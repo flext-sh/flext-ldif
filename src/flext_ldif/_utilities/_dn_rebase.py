@@ -9,6 +9,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from flext_ldif import FlextLdifModels, c, t
+from flext_ldif._utilities import (
+    FlextLdifDNEscaping,
+    FlextLdifDNParsing,
+    FlextLdifDNTransforming,
+)
 
 if TYPE_CHECKING:
     from collections.abc import MutableMapping
@@ -45,8 +50,6 @@ class FlextLdifDNRebasing:
             ValueError: If Unparseable RDN component (missing attribute=value); or if
                 Unparseable RDN component (empty attribute).
         """
-        from flext_ldif._utilities import FlextLdifDNEscaping
-
         components: list[str] = []
         current: list[str] = []
         index = 0
@@ -135,8 +138,6 @@ class FlextLdifDNRebasing:
             The resulting ``MutableMapping[str, tuple[t.MutableSequenceOf[str],
                 t.MutableSequenceOf[str]]] | None``.
         """
-        from flext_ldif._utilities import FlextLdifDNParsing, FlextLdifDNTransforming
-
         entry_dn = entry.dn
         if entry_dn is None:
             return None
@@ -164,8 +165,6 @@ class FlextLdifDNRebasing:
         Returns:
             The resulting ``tuple[t.MutableSequenceOf[str], bool]``.
         """
-        from flext_ldif._utilities import FlextLdifDNTransforming
-
         new_values: t.MutableSequenceOf[str] = []
         attr_changed = False
         for val in values:
