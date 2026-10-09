@@ -12,8 +12,6 @@ from __future__ import annotations
 from collections.abc import Callable, MutableSequence
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._oud.acl import FlextLdifServersOudAcl
-from flext_ldif.servers._oud.acl_metadata import FlextLdifServersOudAclMetadataMixin
 
 
 class FlextLdifServersOudAciProcessMixin:
@@ -72,6 +70,10 @@ class FlextLdifServersOudAciProcessMixin:
         current_extensions: t.Ldif.MutableMetadataInputMapping,
     ) -> None:
         """Process list of ACI values and extract metadata."""
+        from flext_ldif.servers._oud.acl_metadata import (
+            FlextLdifServersOudAclMetadataMixin,
+        )
+
         aci_list: t.MutableSequenceOf[str] = (
             [*aci_values] if isinstance(aci_values, MutableSequence) else [aci_values]
         )
@@ -93,6 +95,11 @@ class FlextLdifServersOudAciProcessMixin:
         Returns:
             The resulting ``p.Result[bool]``.
         """
+        from flext_ldif.servers._oud.acl import FlextLdifServersOudAcl
+        from flext_ldif.servers._oud.acl_metadata import (
+            FlextLdifServersOudAclMetadataMixin,
+        )
+
         has_macros = bool(c.Ldif.ACI_MACRO_RE.search(aci_value))
         validation_result = FlextLdifServersOudAciProcessMixin._validate_aci_macros(
             aci_value,

@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 from flext_ldif import c
 
 if TYPE_CHECKING:
-    from flext_ldif._models.domain_schema import FlextLdifModelsDomainSchema as ms
+    from flext_ldif._models import FlextLdifModelsDomainSchema as ms
 
 
 class FlextLdifUtilitiesObjectClass:

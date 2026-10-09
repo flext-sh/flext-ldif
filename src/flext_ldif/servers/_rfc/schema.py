@@ -9,19 +9,20 @@ from __future__ import annotations
 from typing import ClassVar, Self, cast, overload, override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
-from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
+from flext_ldif.servers._base import (
+    FlextLdifServerMethodsMixin,
+    FlextLdifServersBaseSchema,
+)
 from flext_ldif.servers._rfc.schema_parse import FlextLdifServersRfcSchemaParseMixin
 from flext_ldif.servers._rfc.schema_values import FlextLdifServersRfcSchemaValuesMixin
 from flext_ldif.servers._rfc.schema_write import FlextLdifServersRfcSchemaWriteMixin
-from flext_ldif.servers.base import FlextLdifServersBase
 
 
 class FlextLdifServersRfcSchema(
     FlextLdifServersRfcSchemaWriteMixin,
     FlextLdifServersRfcSchemaParseMixin,
     FlextLdifServersRfcSchemaValuesMixin,
-    FlextLdifServersBase.Schema,
+    FlextLdifServersBaseSchema,
 ):
     """RFC 4512 Compliant Schema Server - STRICT Implementation."""
 

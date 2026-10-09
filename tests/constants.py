@@ -43,8 +43,6 @@ def _attribute_case(
     )
 
 
-# One flat SSOT row table: (server, scenario, definition, can_handle, oid, name).
-# DS389 and Novell rows share the keyed shape instead of parallel blocks.
 _ATTRIBUTE_CASE_ROWS: Final[
     tuple[tuple[str, str, str, bool, str | None, str | None], ...]
 ] = (
@@ -157,6 +155,9 @@ def _server_attribute_cases(server: str) -> t.SequenceOf[m.Tests.AttributeTestCa
 
 class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
     """Flat test constants for flext-ldif."""
+
+    # One flat SSOT row table: (server, scenario, definition, can_handle, oid, name).
+    # DS389 and Novell rows share the keyed shape instead of parallel blocks.
 
     class Ldap:
         """ldap3 wire constants consumed by the real-directory tests.

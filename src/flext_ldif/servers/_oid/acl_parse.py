@@ -10,8 +10,7 @@ from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._oid.acl_subjects import FlextLdifServersOidAclSubjectMixin
-from flext_ldif.servers._oid.server_constants import FlextLdifServersOidConstants
-from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.servers._rfc.server_constants import FlextLdifServersRfcConstants
 
 
 class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
@@ -31,6 +30,10 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
         Returns:
             The resulting ``t.Ldif.MutableMetadataMapping``.
         """
+        from flext_ldif.servers._oid.server_constants import (
+            FlextLdifServersOidConstants,
+        )
+
         target_attrs_str: str = (
             u.Ldif.dump_json_payload(list(settings.target_attrs))
             if settings.target_attrs
@@ -77,6 +80,10 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
         Returns:
             The resulting ``tuple[str | None, t.MutableSequenceOf[str]]``.
         """
+        from flext_ldif.servers._oid.server_constants import (
+            FlextLdifServersOidConstants,
+        )
+
         target_dn: str | None = None
         attributes: t.MutableSequenceOf[str] = []
         patterns = FlextLdifServersOidConstants
@@ -96,6 +103,10 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
         Returns:
             The resulting ``t.MutableBoolMapping``.
         """
+        from flext_ldif.servers._oid.server_constants import (
+            FlextLdifServersOidConstants,
+        )
+
         permissions: t.MutableBoolMapping = {}
         const = FlextLdifServersOidConstants
         perm_match = const.ACL_PERMS_EXTRACT_OID_RE.search(content)
@@ -122,6 +133,10 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
         Returns:
             The resulting ``bool``.
         """
+        from flext_ldif.servers._oid.server_constants import (
+            FlextLdifServersOidConstants,
+        )
+
         can_handle = False
         if not isinstance(acl_line, str):
             try:
@@ -174,6 +189,10 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
         Returns:
             The resulting ``p.Result[m.Ldif.Acl]``.
         """
+        from flext_ldif.servers._oid.server_constants import (
+            FlextLdifServersOidConstants,
+        )
+
         try:
             return self._parse_oid_specific_acl_core(acl_line)
         except c.Ldif.EXC_LDIF_PARSE as e:
@@ -220,7 +239,7 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
             perms_dict,
         )
         acl_model = m.Ldif.Acl.model_validate({
-            "name": FlextLdifServersRfc.Constants.ACL_ATTRIBUTE_NAME,
+            "name": FlextLdifServersRfcConstants.ACL_ATTRIBUTE_NAME,
             "target": m.Ldif.AclTarget.model_validate({
                 "target_dn": target_dn,
                 "attributes": target_attrs or [],
@@ -250,6 +269,10 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
         Returns:
             The resulting ``tuple[str, str | None]``.
         """
+        from flext_ldif.servers._oid.server_constants import (
+            FlextLdifServersOidConstants,
+        )
+
         oid_subject_type = self._detect_oid_subject(acl_line)
         if not oid_subject_type:
             oid_subject_type = FlextLdifServersOidConstants.OidAclSubjectType.SELF
@@ -282,6 +305,10 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
         Returns:
             The resulting ``dict[str, str | bool]``.
         """
+        from flext_ldif.servers._oid.server_constants import (
+            FlextLdifServersOidConstants,
+        )
+
         extract = u.Ldif.extract_component
         kls = FlextLdifServersOidConstants
         return {
@@ -327,6 +354,10 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
         Returns:
             The resulting ``m.Ldif.Acl``.
         """
+        from flext_ldif.servers._oid.server_constants import (
+            FlextLdifServersOidConstants,
+        )
+
         server_type = FlextLdifServersOidConstants.SERVER_TYPE
         updated_metadata = (
             acl_data.metadata.model_copy(update={"server_type": server_type})

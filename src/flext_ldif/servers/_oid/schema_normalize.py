@@ -10,11 +10,10 @@ from collections.abc import MutableMapping
 from typing import ClassVar
 
 from flext_ldif import c, m, p, t, u
-from flext_ldif.servers._oid.server_constants import FlextLdifServersOidConstants
-from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.servers._rfc.schema import FlextLdifServersRfcSchema
 
 
-class FlextLdifServersOidSchemaNormalizeMixin(FlextLdifServersRfc.Schema):
+class FlextLdifServersOidSchemaNormalizeMixin(FlextLdifServersRfcSchema):
     """Normalize parsed OID schema fields toward RFC-canonical values."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
@@ -28,6 +27,10 @@ class FlextLdifServersOidSchemaNormalizeMixin(FlextLdifServersRfc.Schema):
         Returns:
             The resulting ``m.Ldif.SchemaAttribute``.
         """
+        from flext_ldif.servers._oid.server_constants import (
+            FlextLdifServersOidConstants,
+        )
+
         if attr.syntax:
             attr.syntax = u.Ldif.normalize_syntax_oid(attr.syntax)
         normalized_equality, normalized_substr = u.Ldif.normalize_matching_rules(
@@ -102,6 +105,10 @@ class FlextLdifServersOidSchemaNormalizeMixin(FlextLdifServersRfc.Schema):
         Returns:
             The resulting ``t.MutableSequenceOf[str] | None``.
         """
+        from flext_ldif.servers._oid.server_constants import (
+            FlextLdifServersOidConstants,
+        )
+
         if not attr_list:
             return attr_list
         case_map = FlextLdifServersOidConstants.ATTR_NAME_CASE_MAP
@@ -117,6 +124,10 @@ class FlextLdifServersOidSchemaNormalizeMixin(FlextLdifServersRfc.Schema):
         Returns:
             The resulting ``str | None``.
         """
+        from flext_ldif.servers._oid.server_constants import (
+            FlextLdifServersOidConstants,
+        )
+
         kind = getattr(oc_data, "kind", None)
         match (kind, original_format_str):
             case [k, _] if k and k.upper() == "AUXILLARY":
@@ -184,6 +195,10 @@ class FlextLdifServersOidSchemaNormalizeMixin(FlextLdifServersRfc.Schema):
         Returns:
             The resulting ``str | None``.
         """
+        from flext_ldif.servers._oid.server_constants import (
+            FlextLdifServersOidConstants,
+        )
+
         sup_patterns = ("SUP 'top'", "SUP ( top )", "SUP (top)")
         match original_format_str:
             case s if any(pattern in s for pattern in sup_patterns):

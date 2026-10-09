@@ -10,13 +10,13 @@ from collections.abc import Mapping
 
 from flext_ldif import c, m, t
 from flext_ldif.servers._oid.entry_boolean import FlextLdifServersOidEntryBooleanMixin
-from flext_ldif.servers._oid.server_constants import FlextLdifServersOidConstants
-from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
+from flext_ldif.servers._rfc.server_constants import FlextLdifServersRfcConstants
 
 
 class FlextLdifServersOidEntryRestoreMixin(
     FlextLdifServersOidEntryBooleanMixin,
-    FlextLdifServersRfc.Entry,
+    FlextLdifServersRfcEntry,
 ):
     """OID entry round-trip attribute denormalization from metadata."""
 
@@ -105,6 +105,10 @@ class FlextLdifServersOidEntryRestoreMixin(
         Returns:
             The resulting ``tuple[str, t.MutableSequenceOf[str]]``.
         """
+        from flext_ldif.servers._oid.server_constants import (
+            FlextLdifServersOidConstants,
+        )
+
         if original_attrs:
             for orig_name, orig_values in original_attrs.items():
                 if self._normalize_attribute_name(orig_name) == attr_name:
@@ -113,7 +117,7 @@ class FlextLdifServersOidEntryRestoreMixin(
         denorm_name = (
             FlextLdifServersOidConstants.ORCLACI
             if attr_name.lower()
-            == FlextLdifServersRfc.Constants.ACL_ATTRIBUTE_NAME.lower()
+            == FlextLdifServersRfcConstants.ACL_ATTRIBUTE_NAME.lower()
             else attr_name
         )
         return (denorm_name, attr_values)

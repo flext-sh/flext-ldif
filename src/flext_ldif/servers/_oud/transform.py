@@ -13,9 +13,6 @@ from collections.abc import Callable, Mapping, MutableMapping
 from typing import ClassVar
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._oud.aci import FlextLdifServersOudAciMixin
-from flext_ldif.servers._oud.acl_extract import FlextLdifServersOudAclExtractMixin
-from flext_ldif.servers._oud.acl_metadata import FlextLdifServersOudAclMetadataMixin
 
 
 class FlextLdifServersOudTransformMixin:
@@ -33,6 +30,10 @@ class FlextLdifServersOudTransformMixin:
         Returns:
             The resulting ``m.Ldif.Entry``.
         """
+        from flext_ldif.servers._oud.acl_extract import (
+            FlextLdifServersOudAclExtractMixin,
+        )
+
         if not (write_options and write_options.comment_acl_in_non_acl_phases):
             return entry_data
         category = write_options.entry_category
@@ -73,6 +74,8 @@ class FlextLdifServersOudTransformMixin:
         Returns:
             The resulting ``p.Result[m.Ldif.Entry]``.
         """
+        from flext_ldif.servers._oud.aci import FlextLdifServersOudAciMixin
+
         attrs_dict_raw: t.MutableStrSequenceMapping = (
             entry.attributes.attributes if entry.attributes else {}
         )
@@ -110,6 +113,11 @@ class FlextLdifServersOudTransformMixin:
         Returns:
             The resulting ``m.Ldif.Entry``.
         """
+        from flext_ldif.servers._oud.aci import FlextLdifServersOudAciMixin
+        from flext_ldif.servers._oud.acl_metadata import (
+            FlextLdifServersOudAclMetadataMixin,
+        )
+
         if not entry_data.attributes or not entry_data.attributes.attributes:
             return entry_data
         base_dn, dn_registry = FlextLdifServersOudAclMetadataMixin.extract_acl_metadata(

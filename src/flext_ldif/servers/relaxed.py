@@ -12,6 +12,7 @@ from flext_ldif import c, m, p, r, t
 from flext_ldif.servers._relaxed.server_constants import (
     FlextLdifServersRelaxedConstants,
 )
+from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
 from flext_ldif.servers.relaxed_entry import FlextLdifServersRelaxedEntry
 from flext_ldif.servers.relaxed_schema import FlextLdifServersRelaxedSchema
 from flext_ldif.servers.rfc import FlextLdifServersRfc
@@ -20,11 +21,13 @@ from flext_ldif.servers.rfc import FlextLdifServersRfc
 class FlextLdifServersRelaxed(FlextLdifServersRfc):
     """Relaxed mode server servers for non-compliant LDIF."""
 
-    Constants = FlextLdifServersRelaxedConstants
-    Schema = FlextLdifServersRelaxedSchema
+    Constants: ClassVar[type[FlextLdifServersRelaxedConstants]] = (
+        FlextLdifServersRelaxedConstants
+    )
+    Schema: ClassVar[type[FlextLdifServersRelaxedSchema]] = FlextLdifServersRelaxedSchema
     Entry: ClassVar[type[FlextLdifServersRelaxedEntry]] = FlextLdifServersRelaxedEntry
 
-    class Acl(FlextLdifServersRfc.Acl):
+    class Acl(FlextLdifServersRfcAcl):
         """Relaxed ACL server for lenient LDIF processing."""
 
         @override

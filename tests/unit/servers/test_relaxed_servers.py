@@ -15,6 +15,8 @@ import pytest
 from flext_tests import tm
 
 from flext_ldif.servers.relaxed import FlextLdifServersRelaxed
+from flext_ldif.servers.relaxed_entry import FlextLdifServersRelaxedEntry
+from flext_ldif.servers.relaxed_schema import FlextLdifServersRelaxedSchema
 from tests import c, m, t
 
 if TYPE_CHECKING:
@@ -52,7 +54,7 @@ def _schema_attribute(
 
 
 def _assert_parse_input_success(
-    schema_server: FlextLdifServersRelaxed.Schema,
+    schema_server: FlextLdifServersRelaxedSchema,
     definition: str,
     *,
     expected_success: bool,
@@ -90,13 +92,13 @@ class TestsFlextLdifRelaxed:
 
     @staticmethod
     @pytest.fixture
-    def schema_server() -> FlextLdifServersRelaxed.Schema:
+    def schema_server() -> FlextLdifServersRelaxedSchema:
         """Create relaxed schema server instance.
 
         Returns:
-            The resulting ``FlextLdifServersRelaxed.Schema``.
+            The resulting ``FlextLdifServersRelaxedSchema``.
         """
-        return FlextLdifServersRelaxed.Schema()
+        return FlextLdifServersRelaxedSchema()
 
     @staticmethod
     @pytest.fixture
@@ -110,13 +112,13 @@ class TestsFlextLdifRelaxed:
 
     @staticmethod
     @pytest.fixture
-    def entry_server() -> FlextLdifServersRelaxed.Entry:
+    def entry_server() -> FlextLdifServersRelaxedEntry:
         """Create relaxed entry server instance.
 
         Returns:
-            The resulting ``FlextLdifServersRelaxed.Entry``.
+            The resulting ``FlextLdifServersRelaxedEntry``.
         """
-        return FlextLdifServersRelaxed.Entry()
+        return FlextLdifServersRelaxedEntry()
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -125,7 +127,7 @@ class TestsFlextLdifRelaxed:
         ids=list(c.Tests.RELAXED_ATTRIBUTE_DEFINITIONS.keys()),
     )
     def test_parse_attribute_scenarios(
-        schema_server: FlextLdifServersRelaxed.Schema,
+        schema_server: FlextLdifServersRelaxedSchema,
         scenario: str,
         definition_data: tuple[str, bool],
     ) -> None:
@@ -160,7 +162,7 @@ class TestsFlextLdifRelaxed:
         ids=list(c.Tests.RELAXED_OBJECTCLASS_DEFINITIONS.keys()),
     )
     def test_parse_objectclass_scenarios(
-        schema_server: FlextLdifServersRelaxed.Schema,
+        schema_server: FlextLdifServersRelaxedSchema,
         _scenario: str,
         definition_data: tuple[str, bool],
     ) -> None:
@@ -174,7 +176,7 @@ class TestsFlextLdifRelaxed:
 
     @staticmethod
     def test_parse_attribute_stores_original_definition(
-        schema_server: FlextLdifServersRelaxed.Schema,
+        schema_server: FlextLdifServersRelaxedSchema,
     ) -> None:
         """Test parse_attribute stores original definition for recovery."""
         original = "( 1.2.3.4 NAME 'test' SYNTAX 1.2.3 )"
@@ -184,7 +186,7 @@ class TestsFlextLdifRelaxed:
 
     @staticmethod
     def test_write_attribute_to_rfc(
-        schema_server: FlextLdifServersRelaxed.Schema,
+        schema_server: FlextLdifServersRelaxedSchema,
     ) -> None:
         """Test writing attribute back to RFC format."""
         attr_data = _schema_attribute(
@@ -244,7 +246,7 @@ class TestsFlextLdifRelaxed:
         ids=["spaces_after_comma", "already_tight", "leading_trailing_space"],
     )
     def test_entry_normalize_dn_strips_incidental_whitespace(
-        entry_server: FlextLdifServersRelaxed.Entry,
+        entry_server: FlextLdifServersRelaxedEntry,
         raw_dn: str,
         normalized: str,
     ) -> None:
@@ -260,7 +262,7 @@ class TestsFlextLdifRelaxed:
         ids=["empty_dn", "no_separator"],
     )
     def test_entry_normalize_dn_fails_on_unrecoverable_input(
-        entry_server: FlextLdifServersRelaxed.Entry,
+        entry_server: FlextLdifServersRelaxedEntry,
         bad_dn: str,
         error_fragment: str,
     ) -> None:
@@ -279,7 +281,7 @@ class TestsFlextLdifRelaxed:
         ids=["attribute_with_binary", "objectclass_with_binary"],
     )
     def test_error_recovery_with_binary_content(
-        schema_server: FlextLdifServersRelaxed.Schema,
+        schema_server: FlextLdifServersRelaxedSchema,
         parse_type: str,
         bad_input: str,
     ) -> None:
@@ -315,7 +317,7 @@ class TestsFlextLdifRelaxed:
         ],
     )
     def test_fallback_behavior_depends_on_oid_presence(
-        schema_server: FlextLdifServersRelaxed.Schema,
+        schema_server: FlextLdifServersRelaxedSchema,
         parse_type: str,
         definition: str,
         *,
@@ -336,7 +338,7 @@ class TestsFlextLdifRelaxed:
         ids=["valid", "malformed", "binary_noise"],
     )
     def test_schema_can_handle_attribute_accepts_anything(
-        schema_server: FlextLdifServersRelaxed.Schema,
+        schema_server: FlextLdifServersRelaxedSchema,
         definition: str,
     ) -> None:
         """Relaxed is the last-resort handler: can_handle_attribute is always True."""
@@ -349,7 +351,7 @@ class TestsFlextLdifRelaxed:
         ids=["valid", "malformed", "binary_noise"],
     )
     def test_schema_can_handle_objectclass_accepts_anything(
-        schema_server: FlextLdifServersRelaxed.Schema,
+        schema_server: FlextLdifServersRelaxedSchema,
         definition: str,
     ) -> None:
         """Relaxed is the last-resort handler: can_handle_objectclass is always True."""
@@ -362,7 +364,7 @@ class TestsFlextLdifRelaxed:
         ids=["well_formed", "empty", "malformed"],
     )
     def test_entry_can_handle_accepts_any_entry(
-        entry_server: FlextLdifServersRelaxed.Entry,
+        entry_server: FlextLdifServersRelaxedEntry,
         entry_dn: str,
         attributes: t.MutableStrSequenceMapping,
     ) -> None:
@@ -375,7 +377,7 @@ class TestsFlextLdifRelaxed:
         _CAN_HANDLE_ATTRIBUTE_CASES,
     )
     def test_can_handle_attribute_via_parse(
-        schema_server: FlextLdifServersRelaxed.Schema,
+        schema_server: FlextLdifServersRelaxedSchema,
         definition: str,
         *,
         expected_success: bool,
@@ -393,7 +395,7 @@ class TestsFlextLdifRelaxed:
         _CAN_HANDLE_OBJECTCLASS_CASES,
     )
     def test_can_handle_objectclass_via_parse(
-        schema_server: FlextLdifServersRelaxed.Schema,
+        schema_server: FlextLdifServersRelaxedSchema,
         definition: str,
         *,
         expected_success: bool,
@@ -407,7 +409,7 @@ class TestsFlextLdifRelaxed:
 
     @staticmethod
     def test_conversion_attribute_oid_to_rfc(
-        schema_server: FlextLdifServersRelaxed.Schema,
+        schema_server: FlextLdifServersRelaxedSchema,
     ) -> None:
         """Test attribute conversion from OID format to c.RFC."""
         attr_data = _schema_attribute(
@@ -421,7 +423,7 @@ class TestsFlextLdifRelaxed:
 
     @staticmethod
     def test_conversion_objectclass_oid_to_rfc(
-        schema_server: FlextLdifServersRelaxed.Schema,
+        schema_server: FlextLdifServersRelaxedSchema,
     ) -> None:
         """Test objectclass conversion from OID format to c.RFC."""
         oc_data = m.Ldif.SchemaObjectClass(

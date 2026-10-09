@@ -7,32 +7,27 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import ClassVar
 
 from flext_ldif import FlextLdifModels, c, t
-from flext_ldif._utilities._metadata_match import FlextLdifMetadataMatchDetails
-from flext_ldif._utilities._metadata_name_desc import FlextLdifMetadataNameDescDetails
-from flext_ldif._utilities._metadata_prefix import FlextLdifMetadataPrefixDetails
-from flext_ldif._utilities._metadata_syntax_origin import (
-    FlextLdifMetadataSyntaxOriginDetails,
-)
-
-_FIELD_PATTERNS: t.MutableStrMapping = {
-    "OID": "\\(\\s*([0-9.]+)",
-    "NAME": "NAME",
-    "DESC": "DESC",
-    "EQUALITY": "EQUALITY",
-    "SUBSTR": "SUBSTR",
-    "ORDERING": "ORDERING",
-    "SYNTAX": "SYNTAX",
-    "SUP": "SUP",
-    "SINGLE-VALUE": "SINGLE-VALUE",
-    "OBSOLETE": "OBSOLETE",
-    "X-ORIGIN": "X-ORIGIN",
-}
 
 
 class FlextLdifMetadataSchemaAnalysis:
     """Analyze complete schema definition formatting for round-trip fidelity."""
+
+    _FIELD_PATTERNS: ClassVar[t.MutableStrMapping] = {
+        "OID": "\\(\\s*([0-9.]+)",
+        "NAME": "NAME",
+        "DESC": "DESC",
+        "EQUALITY": "EQUALITY",
+        "SUBSTR": "SUBSTR",
+        "ORDERING": "ORDERING",
+        "SYNTAX": "SYNTAX",
+        "SUP": "SUP",
+        "SINGLE-VALUE": "SINGLE-VALUE",
+        "OBSOLETE": "OBSOLETE",
+        "X-ORIGIN": "X-ORIGIN",
+    }
 
     @staticmethod
     def _extract_field_order(
@@ -42,10 +37,14 @@ class FlextLdifMetadataSchemaAnalysis:
 
         Returns:
             The resulting ``tuple[t.MutableSequenceOf[str], t.MutableIntMapping]``.
+
         """
         field_order: t.MutableSequenceOf[str] = []
         field_positions: t.MutableIntMapping = {}
-        for field_name, pattern in _FIELD_PATTERNS.items():
+        for (
+            field_name,
+            pattern,
+        ) in FlextLdifMetadataSchemaAnalysis._FIELD_PATTERNS.items():
             match = c.Ldif.compile_pattern(pattern, ignorecase=True).search(definition)
             if match:
                 field_order.append(field_name)
@@ -63,6 +62,7 @@ class FlextLdifMetadataSchemaAnalysis:
 
         Returns:
             The resulting ``t.MutableStrMapping``.
+
         """
         spacing_between: t.MutableStrMapping = {}
         for i in range(len(field_order) - 1):
@@ -82,12 +82,22 @@ class FlextLdifMetadataSchemaAnalysis:
         return spacing_between
 
     @staticmethod
-    def _extract_all_schema_details(definition: str) -> t.Ldif.MutableMetadataMapping:
+    def _extract_all_schema_details(
+        definition: str,
+    ) -> t.Ldif.MutableMetadataMapping:
         """Extract all schema formatting details into combined dict.
 
         Returns:
             The resulting ``t.Ldif.MutableMetadataMapping``.
+
         """
+        from flext_ldif._utilities import (
+            FlextLdifMetadataMatchDetails,
+            FlextLdifMetadataNameDescDetails,
+            FlextLdifMetadataPrefixDetails,
+            FlextLdifMetadataSyntaxOriginDetails,
+        )
+
         combined: t.Ldif.MutableMetadataMapping = {}
         extractors: t.SequenceOf[
             Callable[
@@ -125,7 +135,7 @@ class FlextLdifMetadataSchemaAnalysis:
                 definition,
                 field_order,
                 field_positions,
-                dict(_FIELD_PATTERNS),
+                dict(FlextLdifMetadataSchemaAnalysis._FIELD_PATTERNS),
             )
         )
         spacing_payload: t.JsonDict = dict(spacing_result)
@@ -141,6 +151,7 @@ class FlextLdifMetadataSchemaAnalysis:
 
         Returns:
             The resulting ``FlextLdifModels.Ldif.SchemaFormatDetails``.
+
         """
         known_fields = {
             "original_string_complete",
@@ -175,6 +186,7 @@ class FlextLdifMetadataSchemaAnalysis:
 
         Returns:
             The resulting ``FlextLdifModels.Ldif.SchemaFormatDetails``.
+
         """
         combined = FlextLdifMetadataSchemaAnalysis._extract_all_schema_details(
             definition,

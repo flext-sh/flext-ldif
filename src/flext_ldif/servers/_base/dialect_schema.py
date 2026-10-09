@@ -9,10 +9,10 @@ from __future__ import annotations
 from typing import ClassVar, override
 
 from flext_ldif import m, u
-from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.servers._rfc.schema import FlextLdifServersRfcSchema
 
 
-class FlextLdifServersDialectSchema(FlextLdifServersRfc.Schema):
+class FlextLdifServersDialectSchema(FlextLdifServersRfcSchema):
     """Pattern-driven schema detection shared by LDAP dialect servers.
 
     Dialect families bind their ``Constants`` pattern configurations to

@@ -14,7 +14,6 @@ from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
 from flext_ldif.servers._base.execute_params import (
     FlextLdifServersBaseExecuteParamsMixin,
 )
-from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
 from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
 from flext_ldif.servers._base.server_io import FlextLdifServersBaseIoMixin
 from flext_ldif.servers._base.server_type import FlextLdifServersBaseMroMixin
@@ -176,29 +175,6 @@ class FlextLdifServersBase(
         **fields: t.JsonValue | t.MutableSequenceOf[m.Ldif.Entry],
     ) -> Self | m.Ldif.Entry | str: ...
 
-    @staticmethod
-    def _absorb_positional_args(
-        args: tuple[str | t.MutableSequenceOf[m.Ldif.Entry] | None, ...],
-        execute_kwargs: t.MutableMappingKV[
-            str,
-            str | int | bool | t.MutableSequenceOf[m.Ldif.Entry],
-        ],
-    ) -> None:
-        """Absorb up to three positional arguments into the execute kwargs."""
-        for index, value in enumerate(args[:3]):
-            match index:
-                case 0 if "ldif_text" not in execute_kwargs and isinstance(value, str):
-                    execute_kwargs["ldif_text"] = value
-                case 0 if "entries" not in execute_kwargs and value is not None:
-                    execute_kwargs["entries"] = u.Ldif.as_entries(value)
-                case 1 if "entries" not in execute_kwargs and value is not None:
-                    execute_kwargs["entries"] = u.Ldif.as_entries(value)
-                case 2 if "operation" not in execute_kwargs and isinstance(value, str):
-                    execute_kwargs["operation"] = value
-                case _:
-                    continue
-
-    @override
     def __call__(
         self,
         *args: str | t.MutableSequenceOf[m.Ldif.Entry] | None,
@@ -211,6 +187,8 @@ class FlextLdifServersBase(
         Returns:
             The resulting ``Self | m.Ldif.Entry | str``.
         """
+        from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
+
         configured = FlextLdifServerMethodsMixin.dispatch_builder(
             super().__call__,
             fields,
@@ -247,6 +225,28 @@ class FlextLdifServersBase(
         as_entry: m.Ldif.Entry = u.Ldif.as_entry(value)
         return as_entry
 
+    @staticmethod
+    def _absorb_positional_args(
+        args: tuple[str | t.MutableSequenceOf[m.Ldif.Entry] | None, ...],
+        execute_kwargs: t.MutableMappingKV[
+            str,
+            str | int | bool | t.MutableSequenceOf[m.Ldif.Entry],
+        ],
+    ) -> None:
+        """Absorb up to three positional arguments into the execute kwargs."""
+        for index, value in enumerate(args[:3]):
+            match index:
+                case 0 if "ldif_text" not in execute_kwargs and isinstance(value, str):
+                    execute_kwargs["ldif_text"] = value
+                case 0 if "entries" not in execute_kwargs and value is not None:
+                    execute_kwargs["entries"] = u.Ldif.as_entries(value)
+                case 1 if "entries" not in execute_kwargs and value is not None:
+                    execute_kwargs["entries"] = u.Ldif.as_entries(value)
+                case 2 if "operation" not in execute_kwargs and isinstance(value, str):
+                    execute_kwargs["operation"] = value
+                case _:
+                    continue
+
     @override
     def execute(
         self,
@@ -280,14 +280,11 @@ class FlextLdifServersBase(
             result = r[m.Ldif.Entry].fail("No valid parameters")
         return result
 
-    class Acl(FlextLdifServersBaseSchemaAcl):
-        """Nested Acl server base class."""
-
-    class Entry(FlextLdifServersBaseEntry):
-        """Nested Entry server base class."""
-
-    class Schema(FlextLdifServersBaseSchema):
-        """Nested Schema server base class."""
+    Acl: ClassVar[type[FlextLdifServersBaseSchemaAcl]] = (
+        FlextLdifServersBaseSchemaAcl
+    )
+    Entry: ClassVar[type[FlextLdifServersBaseEntry]] = FlextLdifServersBaseEntry
+    Schema: ClassVar[type[FlextLdifServersBaseSchema]] = FlextLdifServersBaseSchema
 
 
 __all__: list[str] = ["FlextLdifServersBase"]

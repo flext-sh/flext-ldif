@@ -9,14 +9,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._oud.server_constants import FlextLdifServersOudConstants
-from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.servers._rfc.schema import FlextLdifServersRfcSchema
 
 if TYPE_CHECKING:
     from collections.abc import MutableMapping
 
 
-class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
+class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
     """Oracle OUD Schema Implementation (RFC 4512 + OUD Extensions)."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
@@ -69,6 +68,10 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         Returns:
             The resulting ``tuple[str | None, str | None]``.
         """
+        from flext_ldif.servers._oud.server_constants import (
+            FlextLdifServersOudConstants,
+        )
+
         fixed_equality = attr_data.equality
         fixed_substr = attr_data.substr
         if fixed_equality == "caseIgnoreSubstringsMatch":
@@ -159,6 +162,10 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         Returns:
             The resulting ``p.Result[m.Ldif.SchemaAttribute]``.
         """
+        from flext_ldif.servers._oud.server_constants import (
+            FlextLdifServersOudConstants,
+        )
+
         if not attr or not attr.oid:
             return r[m.Ldif.SchemaAttribute].ok(attr)
         normalized_equality, normalized_substr = u.Ldif.normalize_matching_rules(
@@ -248,6 +255,10 @@ class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
         Returns:
             The resulting ``m.Ldif.SchemaAttribute``.
         """
+        from flext_ldif.servers._oud.server_constants import (
+            FlextLdifServersOudConstants,
+        )
+
         fixed_equality, fixed_substr = self._transform_by_matching_rules(attr_data)
         is_boolean = u.Ldif.boolean_attribute(
             attr_data.name,

@@ -12,11 +12,10 @@ from __future__ import annotations
 from typing import override
 
 from flext_ldif import m, p, r, t, u
-from flext_ldif.servers._oud.helpers import FlextLdifServersOudHelpersMixin
-from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
 
 
-class FlextLdifServersOudEntryParseMixin(FlextLdifServersRfc.Entry):
+class FlextLdifServersOudEntryParseMixin(FlextLdifServersRfcEntry):
     """OUD entry parse orchestration (server parse loop + ACL finalize hook)."""
 
     @override
@@ -70,6 +69,8 @@ class FlextLdifServersOudEntryParseMixin(FlextLdifServersRfc.Entry):
         Returns:
             The resulting ``p.Result[m.Ldif.Entry]``.
         """
+        from flext_ldif.servers._oud.helpers import FlextLdifServersOudHelpersMixin
+
         _ = original_dn
         aci_values = FlextLdifServersOudHelpersMixin.find_aci_values(
             entry,

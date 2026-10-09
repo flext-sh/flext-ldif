@@ -6,21 +6,21 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 from flext_core import r
 from flext_ldif import FlextLdifModels, c, p, t
-from flext_ldif._utilities._parser_metadata import FlextLdifParserMetadataBuilders
-from flext_ldif._utilities._parser_values import FlextLdifParserValues
-
-_MODIFY_OPS: t.MutableStrMapping = {
-    "add": c.Ldif.ChangeOperation.ADD,
-    "delete": c.Ldif.ChangeOperation.DELETE,
-    "replace": c.Ldif.ChangeOperation.REPLACE,
-    "increment": c.Ldif.ChangeOperation.INCREMENT,
-}
 
 
 class FlextLdifParserRecord:
     """Parse a single unfolded LDIF record into an Entry model."""
+
+    _MODIFY_OPS: ClassVar[t.MutableStrMapping] = {
+        "add": c.Ldif.ChangeOperation.ADD,
+        "delete": c.Ldif.ChangeOperation.DELETE,
+        "replace": c.Ldif.ChangeOperation.REPLACE,
+        "increment": c.Ldif.ChangeOperation.INCREMENT,
+    }
 
     class _RecordState:
         """Mutable accumulation state for one LDIF record parse."""
@@ -147,13 +147,13 @@ class FlextLdifParserRecord:
             when the line opened a new operation and nothing is stored.
         """
         key_lower = key.lower()
-        if key_lower in _MODIFY_OPS:
+        if key_lower in FlextLdifParserRecord._MODIFY_OPS:
             cls.finalize_change_operation(
                 state.current_change_operation,
                 state.change_operations,
             )
             state.current_change_operation = FlextLdifModels.Ldif.ChangeOperation(
-                operation=_MODIFY_OPS[key_lower],
+                operation=FlextLdifParserRecord._MODIFY_OPS[key_lower],
                 attribute=decoded.value,
             )
             return None
@@ -198,6 +198,8 @@ class FlextLdifParserRecord:
         Returns:
             Whether the line was consumed as a special record line.
         """
+        from flext_ldif._utilities import FlextLdifParserValues
+
         if key_lower == "control":
             state.controls.append(
                 FlextLdifParserValues.build_control(remainder.lstrip()),
@@ -222,6 +224,8 @@ class FlextLdifParserRecord:
         line: str,
     ) -> None:
         """Consume one non-separator record line into the state."""
+        from flext_ldif._utilities import FlextLdifParserValues
+
         if ":" not in line:
             return
         key, _, remainder = line.partition(":")
@@ -246,6 +250,8 @@ class FlextLdifParserRecord:
         Returns:
             The resulting ``FlextLdifModels.Ldif.Entry``.
         """
+        from flext_ldif._utilities import FlextLdifParserMetadataBuilders
+
         return FlextLdifModels.Ldif.Entry(
             dn=FlextLdifModels.Ldif.DN(value=state.dn.strip()),
             attributes=FlextLdifModels.Ldif.Attributes.model_validate({
@@ -304,7 +310,7 @@ class FlextLdifParserRecord:
             return r[FlextLdifModels.Ldif.Entry].ok(entry)
         except ValueError as exc:
             return r[FlextLdifModels.Ldif.Entry].fail(
-                f"Failed to create entry {state.dn}: {exc}",
+                f"Failed to create entry {state.dn}: {exc}", exception=exc
             )
 
 

@@ -10,10 +10,8 @@ from collections.abc import MutableMapping
 from typing import ClassVar, Self, override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
 from flext_ldif.servers._oud import server_utilities
 from flext_ldif.servers._oud.acl_write import FlextLdifServersOudAclWriteMixin
-from flext_ldif.servers._oud.server_constants import FlextLdifServersOudConstants
 
 
 class FlextLdifServersOudAcl(FlextLdifServersOudAclWriteMixin):
@@ -28,6 +26,8 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWriteMixin):
         **kwargs: t.Ldif.Scalar,
     ) -> None:
         """Initialize OUD ACL server."""
+        from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
+
         filtered_kwargs: t.MutableConfigValueMapping = {
             k: v
             for k, v in kwargs.items()
@@ -64,6 +64,10 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWriteMixin):
         Returns:
             The resulting ``bool``.
         """
+        from flext_ldif.servers._oud.server_constants import (
+            FlextLdifServersOudConstants,
+        )
+
         return line.lower().startswith(
             FlextLdifServersOudConstants.ACL_ACI_PREFIX.lower(),
         )
@@ -75,6 +79,10 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWriteMixin):
         Returns:
             The resulting ``bool``.
         """
+        from flext_ldif.servers._oud.server_constants import (
+            FlextLdifServersOudConstants,
+        )
+
         return line.lower().startswith(
             FlextLdifServersOudConstants.ACL_DS_CFG_PREFIX.lower(),
         )
@@ -88,6 +96,10 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWriteMixin):
         Returns:
             The resulting ``bool``.
         """
+        from flext_ldif.servers._oud.server_constants import (
+            FlextLdifServersOudConstants,
+        )
+
         if not isinstance(acl_line, str):
             acl_model = m.Ldif.Acl.model_validate(acl_line)
             if acl_model.metadata and acl_model.metadata.server_type:
@@ -127,6 +139,10 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWriteMixin):
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
         """
+        from flext_ldif.servers._oud.server_constants import (
+            FlextLdifServersOudConstants,
+        )
+
         return [
             *FlextLdifServersOudConstants.RFC_ACL_ATTRIBUTES,
             *FlextLdifServersOudConstants.OUD_ACL_ATTRIBUTES,
@@ -151,6 +167,10 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWriteMixin):
         Returns:
             The resulting ``p.Result[m.Ldif.Acl]``.
         """
+        from flext_ldif.servers._oud.server_constants import (
+            FlextLdifServersOudConstants,
+        )
+
         settings = server_utilities.FlextLdifServersOudUtilities.resolve_parser_config()
         result: p.Result[m.Ldif.Acl] = u.Ldif.parse_aci(acl_line, settings)
         if not result.success:
@@ -189,6 +209,10 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWriteMixin):
         Returns:
             The resulting ``p.Result[m.Ldif.Acl]``.
         """
+        from flext_ldif.servers._oud.server_constants import (
+            FlextLdifServersOudConstants,
+        )
+
         normalized = acl_line.strip()
         # The ``aci`` LDIF attribute carries the bare ACI body without the
         # ``aci:`` wrapper; the RFC parser owns the wrapped form, so the
@@ -217,6 +241,10 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWriteMixin):
         Returns:
             The resulting ``p.Result[m.Ldif.Acl]``.
         """
+        from flext_ldif.servers._oud.server_constants import (
+            FlextLdifServersOudConstants,
+        )
+
         try:
             server_type_oud: c.Ldif.ServerTypes = c.Ldif.ServerTypes.OUD
             acl_model = m.Ldif.Acl(

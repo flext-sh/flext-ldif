@@ -10,13 +10,16 @@ from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._base.dialect_schema import FlextLdifServersDialectSchema
+from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
+from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
+from flext_ldif.servers._rfc.server_constants import FlextLdifServersRfcConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 
 class FlextLdifServersNovell(FlextLdifServersRfc):
     """Novell eDirectory servers implementation."""
 
-    class Constants(FlextLdifServersRfc.Constants):
+    class Constants(FlextLdifServersRfcConstants):
         """Standardized constants for Novell eDirectory server."""
 
         SERVER_TYPE: ClassVar[str] = "novell"
@@ -125,7 +128,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         _ATTRIBUTE_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig]
         _OBJECTCLASS_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig]
 
-    class Acl(FlextLdifServersRfc.Acl):
+    class Acl(FlextLdifServersRfcAcl):
         """Novell eDirectory ACL server."""
 
         @staticmethod
@@ -368,7 +371,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                     active_perms.append(cls._NOVELL_PERMISSION_MAP[perm_name])
             return active_perms
 
-    class Entry(FlextLdifServersRfc.Entry):
+    class Entry(FlextLdifServersRfcEntry):
         """Novell eDirectory entry server."""
 
         @override

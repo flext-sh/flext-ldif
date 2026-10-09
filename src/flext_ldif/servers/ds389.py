@@ -11,13 +11,16 @@ from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._base.dialect_schema import FlextLdifServersDialectSchema
+from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
+from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
+from flext_ldif.servers._rfc.server_constants import FlextLdifServersRfcConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 
 class FlextLdifServersDs389(FlextLdifServersRfc):
     """389 Directory Server servers implementation."""
 
-    class Constants(FlextLdifServersRfc.Constants):
+    class Constants(FlextLdifServersRfcConstants):
         """Standardized constants for 389 Directory Server server."""
 
         SERVER_TYPE: ClassVar[str] = "ds389"
@@ -43,7 +46,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             "nsds5ReplConflict",
         ])
         SUPPORTED_PERMISSIONS: ClassVar[frozenset[str]] = (
-            FlextLdifServersRfc.Constants.SUPPORTED_PERMISSIONS
+            FlextLdifServersRfcConstants.SUPPORTED_PERMISSIONS
             | frozenset(["proxy", "all"])
         )
         DETECTION_OID_PATTERN: ClassVar[str] = "2\\.16\\.840\\.1\\.113730\\."
@@ -160,7 +163,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         _ATTRIBUTE_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig]
         _OBJECTCLASS_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig]
 
-    class Acl(FlextLdifServersRfc.Acl):
+    class Acl(FlextLdifServersRfcAcl):
         """389 Directory Server ACI server."""
 
         @staticmethod
@@ -423,7 +426,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             userdn = self._resolve_acl_userdn(acl_data.subject)
             return self._build_acl_string(acl_name, permissions, targetattr, userdn)
 
-    class Entry(FlextLdifServersRfc.Entry):
+    class Entry(FlextLdifServersRfcEntry):
         """Entry servers for 389 Directory Server."""
 
         @override
@@ -505,11 +508,11 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             return r[m.Ldif.Entry].ok(processed_entry)
 
 
-__all__: list[str] = ["FlextLdifServersDs389"]
-
 # The 389DS dialect schema settings are owned by ``Constants`` and bound here
 # because a nested class body cannot reference the not-yet-defined class.
 FlextLdifServersDs389.Schema.bind_pattern_settings(
     attribute_settings=FlextLdifServersDs389.Constants.ATTRIBUTE_PATTERN_SETTINGS,
     objectclass_settings=FlextLdifServersDs389.Constants.OBJECTCLASS_PATTERN_SETTINGS,
 )
+
+__all__: list[str] = ["FlextLdifServersDs389"]

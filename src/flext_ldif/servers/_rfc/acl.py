@@ -10,11 +10,9 @@ from typing import Self, cast, overload, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
-from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
-from flext_ldif.servers.base import FlextLdifServersBase
 
 
-class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
+class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
     """LDAP ACL Server - Base Implementation."""
 
     def __new__(
@@ -58,6 +56,8 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         **kwargs: t.Ldif.Scalar | m.Ldif.Acl,
     ) -> None:
         """Initialize RFC ACL server service."""
+        from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
+
         _ = kwargs
         acl_service_typed: p.Ldif.AclServer | None = (
             acl_service if acl_service is not None else None
@@ -106,6 +106,8 @@ class FlextLdifServersRfcAcl(FlextLdifServersBase.Acl):
         Returns:
             The resulting ``Self | m.Ldif.Acl | str``.
         """
+        from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
+
         processor_fields: t.MutableMappingKV[str, t.JsonValue | m.Ldif.Acl | None] = (
             dict(fields)
         )

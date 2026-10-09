@@ -11,13 +11,16 @@ from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._base.dialect_schema import FlextLdifServersDialectSchema
+from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
+from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
+from flext_ldif.servers._rfc.server_constants import FlextLdifServersRfcConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 
 class FlextLdifServersTivoli(FlextLdifServersRfc):
     """Schema servers for IBM Tivoli Directory Server."""
 
-    class Constants(FlextLdifServersRfc.Constants):
+    class Constants(FlextLdifServersRfcConstants):
         """Standardized constants for IBM Tivoli Directory Server server."""
 
         SERVER_TYPE: ClassVar[str] = "ibm_tivoli"
@@ -117,7 +120,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         _ATTRIBUTE_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig]
         _OBJECTCLASS_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig]
 
-    class Acl(FlextLdifServersRfc.Acl):
+    class Acl(FlextLdifServersRfcAcl):
         """IBM Tivoli Directory Server ACL servers implementation."""
 
         @override
@@ -249,7 +252,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                     active_perms.append(permission_map[perm_name])
             return active_perms
 
-    class Entry(FlextLdifServersRfc.Entry):
+    class Entry(FlextLdifServersRfcEntry):
         """IBM Tivoli DS entry server."""
 
         @override
@@ -365,11 +368,11 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             )
 
 
-__all__: list[str] = ["FlextLdifServersTivoli"]
-
 # The Tivoli dialect schema settings are owned by ``Constants`` and bound here
 # because a nested class body cannot reference the not-yet-defined class.
 FlextLdifServersTivoli.Schema.bind_pattern_settings(
     attribute_settings=FlextLdifServersTivoli.Constants.ATTRIBUTE_PATTERN_SETTINGS,
     objectclass_settings=FlextLdifServersTivoli.Constants.OBJECTCLASS_PATTERN_SETTINGS,
 )
+
+__all__: list[str] = ["FlextLdifServersTivoli"]

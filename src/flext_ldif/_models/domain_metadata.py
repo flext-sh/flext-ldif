@@ -19,7 +19,6 @@ from typing import Annotated
 from flext_core import FlextUtilities as u, m
 from flext_ldif import c, t
 from flext_ldif._models.domain_attributes import FlextLdifModelsDomainAttributes
-from flext_ldif.shared import FlextLdifShared
 
 
 class FlextLdifModelsDomainMetadata:
@@ -402,6 +401,8 @@ class FlextLdifModelsDomainMetadata:
             Returns:
                 The resulting ``c.Ldif.ServerTypes``.
             """
+            from flext_ldif.shared import FlextLdifShared
+
             if isinstance(value, c.Ldif.ServerTypes):
                 return value
             return FlextLdifShared.normalize_server_type(value)

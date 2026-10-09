@@ -10,7 +10,7 @@ import importlib
 from typing import Annotated, Self, override
 
 from flext_core import FlextService
-from flext_ldif import FlextLdifSettings, c, m, p, t, u
+from flext_ldif import c, m, p, t, u
 
 
 class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](
@@ -18,6 +18,7 @@ class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](
 ):
     """Base class for LDIF services with typed settings helper."""
 
+    @staticmethod
     def _default_ldif_server() -> p.Ldif.ServerRegistry:
         """Resolve the shared server lazily (cuts the base/server init cycle).
 
@@ -94,6 +95,8 @@ class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](
     @classmethod
     def runtime_bootstrap_options(cls) -> m.RuntimeBootstrapOptions:
         """Return runtime bootstrap options for LDIF services."""
+        from flext_ldif import FlextLdifSettings
+
         return m.RuntimeBootstrapOptions(settings_type=FlextLdifSettings)
 
     @staticmethod

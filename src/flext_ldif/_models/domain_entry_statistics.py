@@ -11,7 +11,6 @@ from typing import Annotated, Self
 from flext_core import FlextUtilities as u, m
 from flext_ldif import t
 from flext_ldif._models.domain_dn import FlextLdifModelsDomainDN as mdn
-from flext_ldif._utilities.collection_ldif import FlextLdifUtilitiesCollectionLdif
 
 
 class FlextLdifModelsDomainEntryStatistics(m.FrozenDynamicModel):
@@ -202,6 +201,8 @@ class FlextLdifModelsDomainEntryStatistics(m.FrozenDynamicModel):
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
         """
+        from flext_ldif._utilities import FlextLdifUtilitiesCollectionLdif
+
         return FlextLdifUtilitiesCollectionLdif.deduplicate_preserve_order(v)
 
     def add_error(self, error: str) -> Self:

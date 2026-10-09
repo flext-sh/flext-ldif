@@ -15,10 +15,7 @@ from flext_ldif.services.categorization import FlextLdifCategorization
 from flext_ldif.services.conversion import FlextLdifConversion
 from flext_ldif.services.detector import FlextLdifDetector
 from flext_ldif.services.entries import FlextLdifEntries
-from flext_ldif.services.filters import FlextLdifFilters
-from flext_ldif.services.migration import FlextLdifMigrationPipeline
 from flext_ldif.services.parser import FlextLdifParser
-from flext_ldif.services.pipeline import FlextLdifProcessingPipeline
 from flext_ldif.services.processing import FlextLdifProcessing
 from flext_ldif.services.statistics import FlextLdifStatistics
 from flext_ldif.services.validation import FlextLdifValidation
@@ -78,7 +75,7 @@ class FlextLdif(
         **fields: t.JsonValue,
     ) -> Self:
         """Return a configured facade instance while keeping the DSL alias callable."""
-        configured = super().__call__(registry=server, settings=settings, **fields)
+        configured = super().__call__(server=server, settings=settings, **fields)
         return cast("Self", configured)
 
     def categorization(
@@ -134,6 +131,8 @@ class FlextLdif(
         Returns:
             The resulting ``p.Ldif.Entry``.
         """
+        from flext_ldif.services.filters import FlextLdifFilters
+
         concrete = u.Ldif.as_entry(entry)
         return FlextLdifFilters.filter_entry_attributes(
             entry=concrete,
@@ -151,6 +150,8 @@ class FlextLdif(
         Returns:
             The resulting ``p.Ldif.Entry``.
         """
+        from flext_ldif.services.filters import FlextLdifFilters
+
         concrete = u.Ldif.as_entry(entry)
         return FlextLdifFilters.filter_schema_attribute_values(
             entry=concrete,
@@ -303,6 +304,8 @@ class FlextLdif(
         Returns:
             The resulting ``p.Ldif.ProcessingPipeline``.
         """
+        from flext_ldif.services.pipeline import FlextLdifProcessingPipeline
+
         if settings is not None:
             return FlextLdifProcessingPipeline(transform_config=settings)
         if source_server is not None and target_server is not None:
@@ -325,6 +328,8 @@ class FlextLdif(
         Returns:
             The resulting ``p.Ldif.MigrationPipeline``.
         """
+        from flext_ldif.services.migration import FlextLdifMigrationPipeline
+
         process_config = settings.process_config if settings is not None else None
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
