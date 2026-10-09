@@ -6,8 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import r
-from flext_ldif import FlextLdifModels, c, p, t
+from flext_ldif import FlextLdifModels, c, p, r, t
+from flext_ldif._utilities import FlextLdifUtilitiesDN
 
 
 class FlextLdifUtilitiesEntryDnNormalization:
@@ -20,8 +20,6 @@ class FlextLdifUtilitiesEntryDnNormalization:
         Returns:
             The resulting ``p.Result[bool]``.
         """
-        from flext_ldif._utilities import FlextLdifUtilitiesDN
-
         components = FlextLdifUtilitiesDN.split(dn_str)
         all_errors: t.MutableSequenceOf[str] = []
         for comp in components:
@@ -49,8 +47,6 @@ class FlextLdifUtilitiesEntryDnNormalization:
         Returns:
             The resulting ``p.Result[FlextLdifModels.Ldif.Entry]``.
         """
-        from flext_ldif._utilities import FlextLdifUtilitiesDN
-
         if item.dn is None:
             return r[FlextLdifModels.Ldif.Entry].fail("Entry has no DN")
         entry_dn = item.dn

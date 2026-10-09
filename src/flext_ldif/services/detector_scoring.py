@@ -41,12 +41,16 @@ class FlextLdifDetectorScoring(s):
 
     @staticmethod
     def _detection_pattern_value(
-        pattern_value: str | re.Pattern[str] | None,
-    ) -> str:
+        pattern_value: t.JsonValue | re.Pattern[str] | None,
+    ) -> t.JsonValue:
         """Normalize a detection pattern constant into its source text.
 
+        Args:
+            pattern_value: Raw constant value read through ``getattr``; only
+                ``str`` and ``re.Pattern[str]`` members carry a usable pattern.
+
         Returns:
-            The resulting ``str``.
+            The resulting ``t.JsonValue`` (``str`` when well-typed).
         """
         return (
             pattern_value.pattern

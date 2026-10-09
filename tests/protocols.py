@@ -130,6 +130,7 @@ class TestsFlextLdifProtocols(FlextTestsProtocols, FlextLdifProtocols):
                 target_server_type: c.Ldif.ServerTypes | str | None = None,
             ) -> FlextLdifMigrationPipeline:
                 """Provide ``__call__``."""
+                ...
 
 
 p = TestsFlextLdifProtocols

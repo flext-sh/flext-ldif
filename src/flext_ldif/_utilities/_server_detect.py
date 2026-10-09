@@ -55,7 +55,7 @@ class FlextLdifServerDetection:
         if not settings.name_regex:
             return []
         name_candidates: list[str] = []
-        name_matches = c.Ldif.compile_pattern(
+        name_matches: list[str | tuple[str, ...]] = c.Ldif.compile_pattern(
             settings.name_regex,
             ignorecase=True,
         ).findall(value)

@@ -9,7 +9,19 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Annotated, Final, override
 
-from flext_ldif import c, m, p, r, s, t, u
+from flext_ldif import (
+    FlextLdifParser,
+    FlextLdifShared,
+    FlextLdifWriter,
+    c,
+    m,
+    p,
+    r,
+    s,
+    t,
+    u,
+)
+from flext_ldif.services.pipeline import FlextLdifProcessingPipeline
 
 
 class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
@@ -109,8 +121,6 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
         Returns:
             The resulting ``c.Ldif.ServerTypes``.
         """
-        from flext_ldif import FlextLdifShared
-
         if isinstance(value, c.Ldif.ServerTypes):
             return value
         lowered = value.lower().strip()
@@ -154,8 +164,6 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
         Returns:
             The resulting ``p.Result[t.MutableSequenceOf[m.Ldif.Entry]]``.
         """
-        from flext_ldif.services.pipeline import FlextLdifProcessingPipeline
-
         source_server = self.source_server_type or self._DEFAULT_SERVER
         target_server = self.target_server_type or self._DEFAULT_SERVER
         try:
@@ -245,8 +253,6 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
         Returns:
             The resulting ``p.Result[m.Ldif.MigrationPipelineResult]``.
         """
-        from flext_ldif.services.parser import FlextLdifParser
-
         if not input_file.exists():
             return r[m.Ldif.MigrationPipelineResult].fail(
                 f"Input file not found: {input_file}",
@@ -294,8 +300,6 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
         Returns:
             The resulting ``p.Result[m.Ldif.MigrationPipelineResult]``.
         """
-        from flext_ldif.services.writer import FlextLdifWriter
-
         resolved_output_file = output_file
         if resolved_output_file is None and self.output_dir is not None:
             filename = self.output_filename or input_file.name

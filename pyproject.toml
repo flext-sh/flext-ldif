@@ -76,6 +76,7 @@ dev = [
   "mkdocs-section-index>=0.3.12",
   "mkdocstrings>=1.0.6",
   "mkdocstrings-python>=2.0.8",
+  "msgpack-types",
   "mypy>=2.3.1",
   "platformdirs>=4.12.0",
   "pymdown-extensions",
@@ -99,6 +100,7 @@ dev = [
   "types-defusedxml>=0.7.0.20260504",
   "types-docker>=7.2.0.20260827",
   "types-flask>=1.1.6",
+  "types-grpcio",
   "types-jsonschema>=4.26.0.20260518",
   "types-ldap3>=2.9.13.20260827",
   "types-openpyxl>=3.1.5.20260827",
@@ -128,9 +130,6 @@ exclude_also = [
   "if _t.TYPE_CHECKING:",
   "if TYPE_CHECKING:",
   "if typing.TYPE_CHECKING:",
-  "if _t.TYPE_CHECKING:",
-  "if TYPE_CHECKING:",
-  "if typing.TYPE_CHECKING:",
 ]
 precision = 2
 show_missing = true
@@ -139,9 +138,6 @@ skip_covered = false
 [tool.coverage.run]
 source = ["src"]
 omit = [
-  "*/dependency_injector/providers.pyx",
-  "*/protocols.py",
-  "*/_protocols/*",
   "*/dependency_injector/providers.pyx",
   "*/protocols.py",
   "*/_protocols/*",
@@ -358,10 +354,6 @@ addopts = [
   "--strict-markers",
   "--markdown-docs",
   "--durations=10",
-  "--benchmark-disable",
-  "--strict-markers",
-  "--markdown-docs",
-  "--durations=10",
   "--timeout=10",
 ]
 flext_slow_timeout_seconds = "30"
@@ -372,22 +364,6 @@ filterwarnings = [
   "once::pytest.PytestAssertRewriteWarning",
 ]
 markers = [
-  "smoke: public-interface smoke tests",
-  "unit: unit tests",
-  "integration: integration tests",
-  "functional: functional behavior tests",
-  "performance: performance and benchmark tests",
-  "slow: slow-running tests",
-  "docker: tests requiring Docker",
-  "oracle: tests requiring the shared Oracle database",
-  "remote: tests requiring remote/external network services",
-  "e2e: end-to-end integration tests",
-  "edge_cases: edge case tests",
-  "stress: stress tests",
-  "resilience: resilience tests",
-  "discovery: catalog and stream discovery tests",
-  "singer: Singer protocol contract tests",
-  "requires_engine: native check engine required by this test",
   "smoke: public-interface smoke tests",
   "unit: unit tests",
   "integration: integration tests",
@@ -439,10 +415,7 @@ skip-magic-trailing-comma = false
 [tool.ruff.lint]
 extend-safe-fixes = [
   "camelcase-imported-as-lowercase",
-  "camelcase-imported-as-lowercase",
   "relative-imports",
-  "relative-imports",
-  "typing-only-first-party-import",
   "typing-only-first-party-import",
 ]
 ignore = [
@@ -455,25 +428,16 @@ ignore = [
   "typing-only-standard-library-import",
   "typing-only-third-party-import",
 ]
-select = ["ALL", "ALL"]
+select = ["ALL"]
 unfixable = [
   "duplicate-value",
-  "duplicate-value",
-  "multi-value-repeated-key-literal",
   "multi-value-repeated-key-literal",
   "multi-value-repeated-key-variable",
-  "multi-value-repeated-key-variable",
-  "outdated-version-block",
   "outdated-version-block",
   "p-print",
-  "p-print",
-  "print",
   "print",
   "pytest-duplicate-parametrize-test-cases",
-  "pytest-duplicate-parametrize-test-cases",
   "redefined-while-unused",
-  "redefined-while-unused",
-  "unused-variable",
   "unused-variable",
 ]
 
@@ -508,6 +472,7 @@ runtime-evaluated-base-classes = [
   "flext_ldif._models.results.Response",
   "flext_ldif.m.BaseModel",
   "flext_ldif.s",
+  "flext_ldif.servers._base.FlextLdifServersBaseSchema",
   "flext_ldif.servers._base.acl.FlextLdifServersBaseSchemaAcl",
   "flext_ldif.servers._base.dialect_schema.FlextLdifServersDialectSchema",
   "flext_ldif.servers._base.entry.FlextLdifServersBaseEntry",
@@ -529,20 +494,17 @@ runtime-evaluated-base-classes = [
   "flext_ldif.servers._oud.acl_subject.FlextLdifServersOudAclSubjectMixin",
   "flext_ldif.servers._oud.acl_write.FlextLdifServersOudAclWriteMixin",
   "flext_ldif.servers._oud.entry_parse.FlextLdifServersOudEntryParseMixin",
+  "flext_ldif.servers._rfc.acl.FlextLdifServersRfcAcl",
+  "flext_ldif.servers._rfc.entry.FlextLdifServersRfcEntry",
+  "flext_ldif.servers._rfc.schema.FlextLdifServersRfcSchema",
   "flext_ldif.servers._rfc.schema_parse.FlextLdifServersRfcSchemaParseMixin",
   "flext_ldif.servers._rfc.schema_values.FlextLdifServersRfcSchemaValuesMixin",
   "flext_ldif.servers._rfc.schema_write.FlextLdifServersRfcSchemaWriteMixin",
   "flext_ldif.servers.base.FlextLdifServersBase",
-  "flext_ldif.servers.base.FlextLdifServersBase.Acl",
-  "flext_ldif.servers.base.FlextLdifServersBase.Entry",
-  "flext_ldif.servers.base.FlextLdifServersBase.Schema",
   "flext_ldif.servers.openldap1_entry.FlextLdifServersOpenldap1Entry",
   "flext_ldif.servers.relaxed_entry_parse.FlextLdifServersRelaxedEntryParseMixin",
   "flext_ldif.servers.relaxed_entry_write.FlextLdifServersRelaxedEntryWriteMixin",
   "flext_ldif.servers.rfc.FlextLdifServersRfc",
-  "flext_ldif.servers.rfc.FlextLdifServersRfc.Acl",
-  "flext_ldif.servers.rfc.FlextLdifServersRfc.Entry",
-  "flext_ldif.servers.rfc.FlextLdifServersRfc.Schema",
   "flext_ldif.services.acl.FlextLdifAcl",
   "flext_ldif.services.analysis.FlextLdifAnalysis",
   "flext_ldif.services.categorization.FlextLdifCategorization",
@@ -598,6 +560,10 @@ known-first-party = ["flext_core", "flext_ldif"]
 split-on-trailing-comma = false
 
 [tool.ruff.lint.per-file-ignores]
+"**/.agents/skills/webapp-testing/scripts/with_server.py" = [
+  "subprocess-without-shell-equals-true",
+  "suspicious-subprocess-import",
+]
 "**/__init__.py" = ["line-too-long", "non-empty-init-module", "unused-import"]
 "**/_config.py" = ["invalid-function-name"]
 "**/bin/**" = [
@@ -691,6 +657,14 @@ split-on-trailing-comma = false
   "commented-out-code",
   "line-too-long",
   "typing-only-first-party-import",
+]
+"src/flext_cli/_utilities/processes.py" = [
+  "subprocess-without-shell-equals-true",
+  "suspicious-subprocess-import",
+]
+"src/flext_cli/_utilities/runtime.py" = [
+  "subprocess-without-shell-equals-true",
+  "suspicious-subprocess-import",
 ]
 "tests/**/*.py" = ["assert"]
 "tests/test_snapshot_drill.py" = ["import-private-name"]

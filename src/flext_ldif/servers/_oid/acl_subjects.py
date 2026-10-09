@@ -12,7 +12,8 @@ from __future__ import annotations
 from typing import ClassVar
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
+from flext_ldif.servers._oid import FlextLdifServersOidConstants
+from flext_ldif.servers._rfc import FlextLdifServersRfcAcl
 
 
 class FlextLdifServersOidAclSubjectMixin(FlextLdifServersRfcAcl):
@@ -27,10 +28,6 @@ class FlextLdifServersOidAclSubjectMixin(FlextLdifServersRfcAcl):
         Returns:
             The resulting ``str | None``.
         """
-        from flext_ldif.servers._oid.server_constants import (
-            FlextLdifServersOidConstants,
-        )
-
         if not content:
             return None
         const = FlextLdifServersOidConstants
@@ -83,10 +80,6 @@ class FlextLdifServersOidAclSubjectMixin(FlextLdifServersRfcAcl):
         Returns:
             The resulting ``str``.
         """
-        from flext_ldif.servers._oid.server_constants import (
-            FlextLdifServersOidConstants,
-        )
-
         sc = FlextLdifServersOidConstants
         if (
             isinstance(source_subject_type, str)
@@ -125,10 +118,6 @@ class FlextLdifServersOidAclSubjectMixin(FlextLdifServersRfcAcl):
         Returns:
             The resulting ``tuple[c.Ldif.AclSubjectType, str]``.
         """
-        from flext_ldif.servers._oid.server_constants import (
-            FlextLdifServersOidConstants,
-        )
-
         sc = FlextLdifServersOidConstants
         if oid_subject_type == sc.OidAclSubjectType.SELF:
             result = (c.Ldif.AclSubjectType.SELF, "ldap:///self")
@@ -156,10 +145,6 @@ class FlextLdifServersOidAclSubjectMixin(FlextLdifServersRfcAcl):
         Returns:
             The resulting ``str``.
         """
-        from flext_ldif.servers._oid.server_constants import (
-            FlextLdifServersOidConstants,
-        )
-
         rfc_subject_type = str(rfc_subject.subject_type)
         rfc_subject_value = rfc_subject.subject_value
         source_subject_type = self._get_source_subject_type(metadata)
@@ -213,10 +198,6 @@ class FlextLdifServersOidAclSubjectMixin(FlextLdifServersRfcAcl):
         Returns:
             The resulting ``str``.
         """
-        from flext_ldif.servers._oid.server_constants import (
-            FlextLdifServersOidConstants,
-        )
-
         sc = FlextLdifServersOidConstants
         if (
             oid_subject_type

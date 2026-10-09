@@ -9,7 +9,8 @@ from __future__ import annotations
 from typing import ClassVar
 
 from flext_ldif import m, p, t, u
-from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
+from flext_ldif.servers._oud import FlextLdifServersOudConstants
+from flext_ldif.servers._rfc import FlextLdifServersRfcAcl
 
 
 class FlextLdifServersOudAclSubjectMixin(FlextLdifServersRfcAcl):
@@ -47,10 +48,6 @@ class FlextLdifServersOudAclSubjectMixin(FlextLdifServersRfcAcl):
         Returns:
             The resulting ``str``.
         """
-        from flext_ldif.servers._oud.server_constants import (
-            FlextLdifServersOudConstants,
-        )
-
         base_dn, subject_type, subject_value = self._extract_and_resolve_acl_subject(
             acl_data,
         )
@@ -89,10 +86,6 @@ class FlextLdifServersOudAclSubjectMixin(FlextLdifServersRfcAcl):
         Returns:
             The resulting ``tuple[str | None, str, str]``.
         """
-        from flext_ldif.servers._oud.server_constants import (
-            FlextLdifServersOudConstants,
-        )
-
         ext = acl_data.metadata.extensions if acl_data.metadata else None
         base_dn = self._extension_get_str(ext, "base_dn")
         source_subject_type = self._extension_get_str(ext, "acl_source_subject_type")
@@ -129,10 +122,6 @@ class FlextLdifServersOudAclSubjectMixin(FlextLdifServersRfcAcl):
         Returns:
             The resulting ``str``.
         """
-        from flext_ldif.servers._oud.server_constants import (
-            FlextLdifServersOudConstants,
-        )
-
         subject_value_lower = (subject.subject_value or "").lower() if subject else ""
         source_subject_type_normalized = source_subject_type or ""
         match source_subject_type_normalized:

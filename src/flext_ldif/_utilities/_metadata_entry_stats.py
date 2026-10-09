@@ -9,7 +9,10 @@ from __future__ import annotations
 from collections.abc import MutableMapping
 
 from flext_ldif import FlextLdifModels, c, t
-from flext_ldif._utilities.server import FlextLdifUtilitiesServer as us
+from flext_ldif._utilities import (
+    FlextLdifMetadataBuilders,
+    FlextLdifUtilitiesServer as us,
+)
 
 
 class FlextLdifMetadataEntryStats:
@@ -67,8 +70,6 @@ class FlextLdifMetadataEntryStats:
         Returns:
             The resulting ``FlextLdifModels.Ldif.Entry``.
         """
-        from flext_ldif._utilities import FlextLdifMetadataBuilders
-
         entry_metadata = entry.metadata
         if entry_metadata is None:
             entry_metadata = FlextLdifMetadataBuilders.server_metadata_for(

@@ -84,7 +84,7 @@ class FlextLdifModelsCollections:
         categories: Annotated[
             MutableMapping[str, t.MutableSequenceOf[mde.Entry]],
             u.Field(description="Category name to grouped LDIF entries mapping."),
-        ] = u.Field(default_factory=dict)
+        ] = u.Field(default_factory=dict[str, t.MutableSequenceOf[mde.Entry]])
 
         def __hash__(self) -> int:
             msg = f"{self.__class__.__name__} is unhashable"

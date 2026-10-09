@@ -14,6 +14,11 @@ from __future__ import annotations
 from typing import ClassVar
 
 from flext_ldif import c, m, p, r, t, u
+from flext_ldif.servers._oid import (
+    FlextLdifServersOidAclAssemble,
+    FlextLdifServersOidAclConvert,
+    FlextLdifServersOidAclRender,
+)
 
 
 class FlextLdifServersOidAclPipeline:
@@ -40,10 +45,6 @@ class FlextLdifServersOidAclPipeline:
         Returns:
             The resulting ``p.Result[t.StrSequence]``.
         """
-        from flext_ldif.servers._oid.acl_assemble import FlextLdifServersOidAclAssemble
-        from flext_ldif.servers._oid.acl_convert import FlextLdifServersOidAclConvert
-        from flext_ldif.servers._oid.acl_render import FlextLdifServersOidAclRender
-
         values: list[str] = []
         seen: set[str] = set()
         for line in oid_acl_lines:

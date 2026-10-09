@@ -6,9 +6,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import r
-from flext_ldif import c, m, p, t
-from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata as um
+from flext_ldif import c, m, p, r, t
+from flext_ldif._utilities import (
+    FlextLdifACLExtraction,
+    FlextLdifACLFormatting,
+    FlextLdifACLPermissions,
+    FlextLdifUtilitiesMetadata as um,
+)
 
 
 class FlextLdifACLParsing:
@@ -98,8 +102,6 @@ class FlextLdifACLParsing:
         Returns:
             The resulting ``tuple[t.MutableSequenceOf[str], str]``.
         """
-        from flext_ldif._utilities import FlextLdifACLExtraction
-
         targetattr_extracted = FlextLdifACLExtraction.extract_component(
             aci_content,
             settings.targetattr_pattern,
@@ -149,8 +151,6 @@ class FlextLdifACLParsing:
         Returns:
             The resulting ``t.Ldif.MutableMetadataInputMapping``.
         """
-        from flext_ldif._utilities import FlextLdifACLExtraction
-
         extensions: t.Ldif.MutableMetadataInputMapping = {
             "version": version,
             "original_format": acl_line,
@@ -192,11 +192,6 @@ class FlextLdifACLParsing:
         Returns:
             The resulting ``tuple[str, str, t.MutableBoolMapping]``.
         """
-        from flext_ldif._utilities import (
-            FlextLdifACLExtraction,
-            FlextLdifACLPermissions,
-        )
-
         permissions_list = FlextLdifACLExtraction.extract_permissions(
             aci_content,
             settings.allow_deny_pattern,
@@ -232,11 +227,6 @@ class FlextLdifACLParsing:
         Returns:
             The resulting ``p.Result[m.Ldif.Acl]``.
         """
-        from flext_ldif._utilities import (
-            FlextLdifACLFormatting,
-            FlextLdifACLPermissions,
-        )
-
         valid, aci_content = FlextLdifACLFormatting.validate_aci_format(
             acl_line,
             settings.aci_prefix,

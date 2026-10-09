@@ -47,4 +47,4 @@ class FlextLdifModelsSettingsMisc:
         pairs: Annotated[
             t.MutableStrPairSequence,
             u.Field(description="Accumulated (attr, value) pairs"),
-        ] = u.Field(default_factory=list)
+        ] = u.Field(default_factory=list[t.StrPair])

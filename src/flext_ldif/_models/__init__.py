@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 from flext_core import install_lazy_exports
 
 if TYPE_CHECKING:
+    from flext_ldif._models._ldif_namespace import LdifNamespace
     from flext_ldif._models._settings_acl import FlextLdifModelsSettingsAcl
     from flext_ldif._models._settings_criteria import FlextLdifModelsSettingsCriteria
     from flext_ldif._models._settings_migrate import FlextLdifModelsSettingsMigrate
@@ -84,6 +85,7 @@ __all__: tuple[str, ...] = (
     "FlextLdifModelsSettingsProcessing",
     "FlextLdifModelsSettingsRules",
     "FlextLdifModelsSettingsValidation",
+    "LdifNamespace",
 )
 
 install_lazy_exports(
@@ -117,6 +119,7 @@ install_lazy_exports(
         "FlextLdifModelsSettingsProcessing": "._settings_processing",
         "FlextLdifModelsSettingsRules": "._settings_rules",
         "FlextLdifModelsSettingsValidation": "._settings_validation",
+        "LdifNamespace": "._ldif_namespace",
     }),
     public_exports=__all__,
 )

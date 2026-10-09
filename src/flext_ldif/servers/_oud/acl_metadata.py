@@ -12,6 +12,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 from flext_ldif import c, m, t, u
+from flext_ldif.servers._oud import FlextLdifServersOudConstants
 
 
 class FlextLdifServersOudAclMetadataMixin:
@@ -62,10 +63,6 @@ class FlextLdifServersOudAclMetadataMixin:
         acl_metadata_extensions: t.Ldif.MutableMetadataInputMapping,
     ) -> None:
         """Extract ACL metadata from dict extensions."""
-        from flext_ldif.servers._oud.server_constants import (
-            FlextLdifServersOudConstants,
-        )
-
         for src_key, dest_key in FlextLdifServersOudConstants.ACL_KEY_MAP.items():
             value_raw = acl_extensions.get(src_key)
             if value_raw is not None:
@@ -171,10 +168,6 @@ class FlextLdifServersOudAclMetadataMixin:
         current_extensions: t.Ldif.MutableMetadataInputMapping,
     ) -> None:
         """Process parsed ACL extensions and add to current extensions."""
-        from flext_ldif.servers._oud.server_constants import (
-            FlextLdifServersOudConstants,
-        )
-
         key_map = FlextLdifServersOudConstants.PARSED_ACL_KEY_MAP
         for key, value in acl_extensions.items():
             final_key = FlextLdifServersOudAclMetadataMixin._extension_target_key(

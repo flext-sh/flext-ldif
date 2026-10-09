@@ -34,7 +34,7 @@ class FlextLdifProtocols(FlextCliProtocols):
         """LDIF-specific structural protocol namespace.
 
         ``LdifSettings``, ``Settings``, and ``ServerResolutionService`` have a
-        single owner in ``FlextLdifProtocolsClient`` and are inherited unchanged.
+        single owner in ``FlextLdifProtocolsBase`` and are inherited unchanged.
         """
 
 

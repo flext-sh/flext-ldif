@@ -9,7 +9,10 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING, overload
 
+from flext_cli import u
+
 from flext_ldif import FlextLdifModels, c, t
+from flext_ldif._utilities import FlextLdifDNNormalization, FlextLdifDNParsing
 
 if TYPE_CHECKING:
     from collections.abc import MutableMapping
@@ -41,10 +44,6 @@ class FlextLdifDNTransforming:
         Returns:
             The resulting ``str``.
         """
-        from flext_cli import u
-
-        from flext_ldif._utilities import FlextLdifDNNormalization, FlextLdifDNParsing
-
         dn_str = FlextLdifDNParsing.resolve_dn_value(value)
         if not dn_str or not source_dn or (not target_dn):
             return dn_str
@@ -73,8 +72,6 @@ class FlextLdifDNTransforming:
         Returns:
             The resulting ``str``.
         """
-        from flext_cli import u
-
         return u.to_str(
             c.Ldif.compile_pattern(
                 c.Ldif.escape_pattern(source_dn),

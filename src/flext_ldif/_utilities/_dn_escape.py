@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import string
 
+from flext_cli import u
+
 from flext_ldif import c, t
 
 
@@ -32,8 +34,6 @@ class FlextLdifDNEscaping:
             The escaped value string.
 
         """
-        from flext_cli import u
-
         if not value:
             return value
 

@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldif import c, m, t
+from flext_ldif.shared import FlextLdifShared
 
 
 class FlextLdifServerConfig:
@@ -19,8 +20,6 @@ class FlextLdifServerConfig:
         Returns:
             The resulting ``c.Ldif.ServerTypes``.
         """
-        from flext_ldif import FlextLdifShared
-
         return FlextLdifShared.normalize_server_type(server_type)
 
     @staticmethod
