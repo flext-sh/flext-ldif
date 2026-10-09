@@ -10,6 +10,7 @@ from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._oid.acl_subjects import FlextLdifServersOidAclSubjectMixin
+from flext_ldif.servers._rfc.server_constants import FlextLdifServersRfcConstants
 
 
 class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
@@ -212,8 +213,6 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
         Returns:
             The resulting ``p.Result[m.Ldif.Acl]``.
         """
-        from flext_ldif.servers.rfc import FlextLdifServersRfc
-
         target_dn, target_attrs = self._extract_oid_target(acl_line)
         if not target_dn:
             target_dn = "entry"
@@ -240,7 +239,7 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
             perms_dict,
         )
         acl_model = m.Ldif.Acl.model_validate({
-            "name": FlextLdifServersRfc.Constants.ACL_ATTRIBUTE_NAME,
+            "name": FlextLdifServersRfcConstants.ACL_ATTRIBUTE_NAME,
             "target": m.Ldif.AclTarget.model_validate({
                 "target_dn": target_dn,
                 "attributes": target_attrs or [],

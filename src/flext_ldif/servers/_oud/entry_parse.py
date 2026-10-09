@@ -12,10 +12,10 @@ from __future__ import annotations
 from typing import override
 
 from flext_ldif import m, p, r, t, u
-from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
 
 
-class FlextLdifServersOudEntryParseMixin(FlextLdifServersRfc.Entry):
+class FlextLdifServersOudEntryParseMixin(FlextLdifServersRfcEntry):
     """OUD entry parse orchestration (server parse loop + ACL finalize hook)."""
 
     @override

@@ -13,12 +13,12 @@ from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._oid.schema_normalize import (
     FlextLdifServersOidSchemaNormalizeMixin,
 )
-from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.servers._rfc.schema import FlextLdifServersRfcSchema
 
 
 class FlextLdifServersOidSchema(
     FlextLdifServersOidSchemaNormalizeMixin,
-    FlextLdifServersRfc.Schema,
+    FlextLdifServersRfcSchema,
 ):
     """Oracle Internet Directory (OID) schema servers implementation."""
 

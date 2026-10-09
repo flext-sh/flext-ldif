@@ -13,7 +13,7 @@ from flext_ldif.servers._oid.acl_format import FlextLdifServersOidAclFormatMixin
 from flext_ldif.servers._oid.acl_parse import FlextLdifServersOidAclParseMixin
 from flext_ldif.servers._oid.acl_subjects import FlextLdifServersOidAclSubjectMixin
 from flext_ldif.servers._oid.acl_write import FlextLdifServersOidAclWriteMixin
-from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
 
 
 class FlextLdifServersOidAcl(
@@ -21,7 +21,7 @@ class FlextLdifServersOidAcl(
     FlextLdifServersOidAclParseMixin,
     FlextLdifServersOidAclSubjectMixin,
     FlextLdifServersOidAclFormatMixin,
-    FlextLdifServersRfc.Acl,
+    FlextLdifServersRfcAcl,
 ):
     """Oracle Internet Directory (OID) ACL implementation."""
 

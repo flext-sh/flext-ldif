@@ -10,6 +10,9 @@ from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_ldif import c, m, p, r, t
 from flext_ldif.servers._base.dialect_schema import FlextLdifServersDialectSchema
+from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
+from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
+from flext_ldif.servers._rfc.server_constants import FlextLdifServersRfcConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 if TYPE_CHECKING:
@@ -19,7 +22,7 @@ if TYPE_CHECKING:
 class FlextLdifServersApache(FlextLdifServersRfc):
     """Apache Directory Server servers implementation."""
 
-    class Constants(FlextLdifServersRfc.Constants):
+    class Constants(FlextLdifServersRfcConstants):
         """Standardized constants for Apache Directory Server server."""
 
         SERVER_TYPE: ClassVar[str] = "apache"
@@ -92,7 +95,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         _ATTRIBUTE_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig]
         _OBJECTCLASS_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig]
 
-    class Acl(FlextLdifServersRfc.Acl):
+    class Acl(FlextLdifServersRfcAcl):
         """Apache Directory Server ACI server."""
 
         @override
@@ -130,7 +133,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 return r[str].from_result(parent_result)
             return r[str].from_result(parent_result)
 
-    class Entry(FlextLdifServersRfc.Entry):
+    class Entry(FlextLdifServersRfcEntry):
         """Entry servers for Apache Directory Server."""
 
         @override

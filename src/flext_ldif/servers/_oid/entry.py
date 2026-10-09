@@ -17,7 +17,8 @@ from flext_ldif.servers._oid.entry_restore import FlextLdifServersOidEntryRestor
 from flext_ldif.servers._oid.entry_restore_lines import (
     FlextLdifServersOidEntryRestoreLinesMixin,
 )
-from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
+from flext_ldif.servers._rfc.server_constants import FlextLdifServersRfcConstants
 
 
 class FlextLdifServersOidEntry(
@@ -25,7 +26,7 @@ class FlextLdifServersOidEntry(
     FlextLdifServersOidEntryParseMixin,
     FlextLdifServersOidEntryRestoreMixin,
     FlextLdifServersOidEntryNormalizeMixin,
-    FlextLdifServersRfc.Entry,
+    FlextLdifServersRfcEntry,
 ):
     """Oracle Internet Directory (OID) Entry implementation.
 
@@ -54,7 +55,7 @@ class FlextLdifServersOidEntry(
                 FlextLdifServersOidConstants.ORCLACI.lower(),
                 FlextLdifServersOidConstants.ORCLENTRYLEVELACI.lower(),
             }:
-                return FlextLdifServersRfc.Constants.ACL_ATTRIBUTE_NAME
+                return FlextLdifServersRfcConstants.ACL_ATTRIBUTE_NAME
             case _:
                 return super()._normalize_attribute_name(attr_name)
 

@@ -10,10 +10,10 @@ from collections.abc import MutableMapping
 from typing import ClassVar
 
 from flext_ldif import c, m, p, t, u
-from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.servers._rfc.schema import FlextLdifServersRfcSchema
 
 
-class FlextLdifServersOidSchemaNormalizeMixin(FlextLdifServersRfc.Schema):
+class FlextLdifServersOidSchemaNormalizeMixin(FlextLdifServersRfcSchema):
     """Normalize parsed OID schema fields toward RFC-canonical values."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)

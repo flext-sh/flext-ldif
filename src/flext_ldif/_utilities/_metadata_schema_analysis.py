@@ -45,9 +45,7 @@ class FlextLdifMetadataSchemaAnalysis:
             field_name,
             pattern,
         ) in FlextLdifMetadataSchemaAnalysis._FIELD_PATTERNS.items():
-            match = c.Ldif.compile_pattern(pattern, ignorecase=True).search(
-                definition
-            )
+            match = c.Ldif.compile_pattern(pattern, ignorecase=True).search(definition)
             if match:
                 field_order.append(field_name)
                 field_positions[field_name] = match.start()
@@ -104,9 +102,7 @@ class FlextLdifMetadataSchemaAnalysis:
         extractors: t.SequenceOf[
             Callable[
                 [str],
-                t.MappingKV[
-                    str, str | bool | int | t.MutableSequenceOf[str] | None
-                ],
+                t.MappingKV[str, str | bool | int | t.MutableSequenceOf[str] | None],
             ]
         ] = [
             FlextLdifMetadataPrefixDetails.extract_prefix_details,
@@ -124,25 +120,23 @@ class FlextLdifMetadataSchemaAnalysis:
         for extractor in extractors:
             extracted_raw = extractor(definition)
             for write_option_key, value in extracted_raw.items():
-                combined[write_option_key] = (
-                    t.Cli.JSON_VALUE_ADAPTER.validate_python(
-                        value,
-                    )
+                combined[write_option_key] = t.Cli.JSON_VALUE_ADAPTER.validate_python(
+                    value,
                 )
         field_order, field_positions = (
-            FlextLdifMetadataSchemaAnalysis._extract_field_order(
-                definition
-            )
+            FlextLdifMetadataSchemaAnalysis._extract_field_order(definition)
         )
         field_order_payload: t.JsonValueList = list(field_order)
         field_positions_payload: t.JsonDict = dict(field_positions)
         combined["field_order"] = field_order_payload
         combined["field_positions"] = field_positions_payload
-        spacing_result = FlextLdifMetadataSchemaAnalysis._extract_spacing_between_fields(
-            definition,
-            field_order,
-            field_positions,
-            dict(FlextLdifMetadataSchemaAnalysis._FIELD_PATTERNS),
+        spacing_result = (
+            FlextLdifMetadataSchemaAnalysis._extract_spacing_between_fields(
+                definition,
+                field_order,
+                field_positions,
+                dict(FlextLdifMetadataSchemaAnalysis._FIELD_PATTERNS),
+            )
         )
         spacing_payload: t.JsonDict = dict(spacing_result)
         combined["spacing_between_fields"] = spacing_payload

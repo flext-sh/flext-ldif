@@ -9,10 +9,10 @@ from __future__ import annotations
 from typing import ClassVar
 
 from flext_ldif import m, p, t, u
-from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
 
 
-class FlextLdifServersOudAclSubjectMixin(FlextLdifServersRfc.Acl):
+class FlextLdifServersOudAclSubjectMixin(FlextLdifServersRfcAcl):
     """OUD ACI subject/bind-rule clause helpers."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)

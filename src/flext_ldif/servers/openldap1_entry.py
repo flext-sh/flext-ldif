@@ -9,10 +9,10 @@ from __future__ import annotations
 from typing import override
 
 from flext_ldif import c, m, p, r, t
-from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
 
 
-class FlextLdifServersOpenldap1Entry(FlextLdifServersRfc.Entry):
+class FlextLdifServersOpenldap1Entry(FlextLdifServersRfcEntry):
     """OpenLDAP 1.x entry server."""
 
     @override

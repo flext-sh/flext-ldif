@@ -8,12 +8,12 @@ from __future__ import annotations
 
 from flext_ldif import m, t
 from flext_ldif.servers._oid.entry_parse import FlextLdifServersOidEntryParseMixin
-from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
 
 
 class FlextLdifServersOidEntryRestoreLinesMixin(
     FlextLdifServersOidEntryParseMixin,
-    FlextLdifServersRfc.Entry,
+    FlextLdifServersRfcEntry,
 ):
     """OID entry original-line restoration and line conversion helpers."""
 

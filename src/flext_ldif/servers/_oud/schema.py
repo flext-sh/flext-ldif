@@ -9,13 +9,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.servers._rfc.schema import FlextLdifServersRfcSchema
 
 if TYPE_CHECKING:
     from collections.abc import MutableMapping
 
 
-class FlextLdifServersOudSchema(FlextLdifServersRfc.Schema):
+class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
     """Oracle OUD Schema Implementation (RFC 4512 + OUD Extensions)."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)

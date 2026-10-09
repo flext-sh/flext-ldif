@@ -7,10 +7,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldif import c, t
-from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
 
 
-class FlextLdifServersOidEntryNormalizeMixin(FlextLdifServersRfc.Entry):
+class FlextLdifServersOidEntryNormalizeMixin(FlextLdifServersRfcEntry):
     """OID entry schema value normalization helpers."""
 
     @staticmethod

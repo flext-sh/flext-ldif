@@ -11,13 +11,17 @@ from types import MappingProxyType
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
+from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
+from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
+from flext_ldif.servers._rfc.schema import FlextLdifServersRfcSchema
+from flext_ldif.servers._rfc.server_constants import FlextLdifServersRfcConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 
 class FlextLdifServersOpenldap(FlextLdifServersRfc):
     """OpenLDAP 2.x Servers - Complete Implementation."""
 
-    class Constants(FlextLdifServersRfc.Constants):
+    class Constants(FlextLdifServersRfcConstants):
         """Standardized constants for OpenLDAP 2.x server."""
 
         SERVER_TYPE: ClassVar[str] = "openldap2"
@@ -77,11 +81,11 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             "olcSchemaConfig",
         ])
         OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = (
-            FlextLdifServersRfc.Constants.OPERATIONAL_ATTRIBUTES
+            FlextLdifServersRfcConstants.OPERATIONAL_ATTRIBUTES
             | frozenset(["entryUUID", "entryCSN", "contextCSN", "hasSubordinates"])
         )
         SUPPORTED_PERMISSIONS: ClassVar[frozenset[str]] = (
-            FlextLdifServersRfc.Constants.SUPPORTED_PERMISSIONS | frozenset(["auth"])
+            FlextLdifServersRfcConstants.SUPPORTED_PERMISSIONS | frozenset(["auth"])
         )
         ATTRIBUTE_FIELDS: ClassVar[frozenset[str]] = frozenset(["x_origin", "ordering"])
         OBJECTCLASS_REQUIREMENTS: ClassVar[t.BoolMapping] = MappingProxyType({
@@ -153,7 +157,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             "Invalid OpenLDAP ACL format: missing 'to' clause"
         )
 
-    class Schema(FlextLdifServersRfc.Schema):
+    class Schema(FlextLdifServersRfcSchema):
         """OpenLDAP 2.x schema server."""
 
         @override
@@ -236,7 +240,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             """
             return super()._transform_objectclass_for_write(oc_data)
 
-    class Acl(FlextLdifServersRfc.Acl):
+    class Acl(FlextLdifServersRfcAcl):
         """OpenLDAP 2.x ACL server (nested)."""
 
         @override
@@ -451,7 +455,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             acl_str = " ".join(acl_parts)
             return r[str].ok(acl_str)
 
-    class Entry(FlextLdifServersRfc.Entry):
+    class Entry(FlextLdifServersRfcEntry):
         """OpenLDAP 2.x entry server (nested)."""
 
         @override
