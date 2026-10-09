@@ -8,9 +8,9 @@ from __future__ import annotations
 
 from typing import Annotated, Self
 
-from flext_core import FlextUtilities as u, m
-from flext_ldif import t
-from flext_ldif._models.domain_dn import FlextLdifModelsDomainDN as mdn
+from flext_core import m
+from flext_ldif import t, u
+from flext_ldif._models import FlextLdifModelsDomainDN as mdn
 
 
 class FlextLdifModelsDomainEntryStatistics(m.FrozenDynamicModel):
