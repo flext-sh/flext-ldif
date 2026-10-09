@@ -33,25 +33,33 @@ from flext_ldif._models.domain_metadata import FlextLdifModelsDomainMetadata as 
 class FlextLdifModelsDomainEntry:
     """Namespace for LDIF entry domain models."""
 
-    EntryStatistics = FlextLdifModelsDomainEntryStatistics
+    EntryStatistics: ClassVar[type[FlextLdifModelsDomainEntryStatistics]] = (
+        FlextLdifModelsDomainEntryStatistics
+    )
     """Canonical entry statistics model.
 
     Implementation module: ``domain_entry_statistics``.
     """
 
-    Control = FlextLdifModelsDomainEntryControl
+    Control: ClassVar[type[FlextLdifModelsDomainEntryControl]] = (
+        FlextLdifModelsDomainEntryControl
+    )
     """Canonical RFC 2849 control line model.
 
     Implementation module: ``domain_entry_control``.
     """
 
-    ChangeOperationValue = FlextLdifModelsDomainEntryChangeOperationValue
+    ChangeOperationValue: ClassVar[
+        type[FlextLdifModelsDomainEntryChangeOperationValue]
+    ] = FlextLdifModelsDomainEntryChangeOperationValue
     """Canonical modify-operation value model.
 
     Implementation module: ``domain_entry_change_value``.
     """
 
-    ChangeOperation = FlextLdifModelsDomainEntryChangeOperation
+    ChangeOperation: ClassVar[type[FlextLdifModelsDomainEntryChangeOperation]] = (
+        FlextLdifModelsDomainEntryChangeOperation
+    )
     """Canonical RFC 2849 modify operation model.
 
     Implementation module: ``domain_entry_change``.

@@ -9,10 +9,10 @@ from __future__ import annotations
 from collections.abc import Mapping, MutableMapping
 
 from flext_ldif import c, m, t, u
-from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
 
 
-class FlextLdifServersOidEntryMetadataMixin(FlextLdifServersRfc.Entry):
+class FlextLdifServersOidEntryMetadataMixin(FlextLdifServersRfcEntry):
     """OID entry metadata extraction helpers."""
 
     @staticmethod

@@ -9,10 +9,10 @@ from __future__ import annotations
 from typing import ClassVar, override
 
 from flext_ldif import m, p, r, t, u
-from flext_ldif.servers.base import FlextLdifServersBase
+from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
 
 
-class FlextLdifServersRfcEntry(FlextLdifServersBase.Entry):
+class FlextLdifServersRfcEntry(FlextLdifServersBaseEntry):
     """RFC 2849 compliant LDIF entry processing."""
 
     __doc_inline__ = True

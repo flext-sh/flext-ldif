@@ -13,6 +13,9 @@ from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._base.dialect_schema import FlextLdifServersDialectSchema
+from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
+from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
+from flext_ldif.servers._rfc.server_constants import FlextLdifServersRfcConstants
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 
@@ -53,7 +56,7 @@ def _decoded_base64_sddl(raw_value: str) -> str | None:
 class FlextLdifServersAd(FlextLdifServersRfc):
     """Active Directory server servers implementation."""
 
-    class Constants(FlextLdifServersRfc.Constants):
+    class Constants(FlextLdifServersRfcConstants):
         """Standardized constants for Active Directory server."""
 
         SERVER_TYPE: ClassVar[str] = "ad"
@@ -203,7 +206,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         _ATTRIBUTE_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig]
         _OBJECTCLASS_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig]
 
-    class Acl(FlextLdifServersRfc.Acl):
+    class Acl(FlextLdifServersRfcAcl):
         """Active Directory ACL server handling nTSecurityDescriptor entries."""
 
         @override
@@ -324,7 +327,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 return r[str].ok(f"{acl_attribute}: {acl_data.raw_acl}")
             return r[str].ok(f"{acl_attribute}:")
 
-    class Entry(FlextLdifServersRfc.Entry):
+    class Entry(FlextLdifServersRfcEntry):
         """Active Directory entry processing server."""
 
         @override

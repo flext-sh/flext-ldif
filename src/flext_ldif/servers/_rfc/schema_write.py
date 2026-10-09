@@ -9,10 +9,10 @@ from __future__ import annotations
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers.base import FlextLdifServersBase
+from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
 
 
-class FlextLdifServersRfcSchemaWriteMixin(FlextLdifServersBase.Schema):
+class FlextLdifServersRfcSchemaWriteMixin(FlextLdifServersBaseSchema):
     """Write schema attributes/objectClasses to RFC-compliant strings."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)

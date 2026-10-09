@@ -12,14 +12,13 @@ from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._rfc.schema_parse import FlextLdifServersRfcSchemaParseMixin
 from flext_ldif.servers._rfc.schema_values import FlextLdifServersRfcSchemaValuesMixin
 from flext_ldif.servers._rfc.schema_write import FlextLdifServersRfcSchemaWriteMixin
-from flext_ldif.servers.base import FlextLdifServersBase
 
 
 class FlextLdifServersRfcSchema(
     FlextLdifServersRfcSchemaWriteMixin,
     FlextLdifServersRfcSchemaParseMixin,
     FlextLdifServersRfcSchemaValuesMixin,
-    FlextLdifServersBase.Schema,
+    FlextLdifServersBaseSchema,
 ):
     """RFC 4512 Compliant Schema Server - STRICT Implementation."""
 

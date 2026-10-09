@@ -11,6 +11,9 @@ from collections.abc import Callable
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
+from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
+from flext_ldif.servers._rfc.schema import FlextLdifServersRfcSchema
+from flext_ldif.servers._rfc.server_constants import FlextLdifServersRfcConstants
 from flext_ldif.servers.openldap1_entry import FlextLdifServersOpenldap1Entry
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
@@ -18,7 +21,7 @@ from flext_ldif.servers.rfc import FlextLdifServersRfc
 class FlextLdifServersOpenldap1(FlextLdifServersRfc):
     """OpenLDAP 1.x Legacy Servers - Complete Implementation."""
 
-    class Constants(FlextLdifServersRfc.Constants):
+    class Constants(FlextLdifServersRfcConstants):
         """Standardized constants for OpenLDAP 1.x server."""
 
         SERVER_TYPE: ClassVar[str] = c.Ldif.ServerTypes.OPENLDAP1
@@ -113,7 +116,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         ACL_SUBJECT_TYPE_USERDN: ClassVar[str] = "userdn"
         ACL_OPS_SEPARATOR: ClassVar[str] = ","
 
-    class Schema(FlextLdifServersRfc.Schema):
+    class Schema(FlextLdifServersRfcSchema):
         """OpenLDAP 1.x schema server."""
 
         @staticmethod
@@ -306,7 +309,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             oc_str += " )"
             return r[str].ok(oc_str)
 
-    class Acl(FlextLdifServersRfc.Acl):
+    class Acl(FlextLdifServersRfcAcl):
         """OpenLDAP 1.x ACL server (nested)."""
 
         @override

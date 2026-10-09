@@ -225,8 +225,6 @@ class FlextLdifServersBase(
         as_entry: m.Ldif.Entry = u.Ldif.as_entry(value)
         return as_entry
 
-
-
     @staticmethod
     def _absorb_positional_args(
         args: tuple[str | t.MutableSequenceOf[m.Ldif.Entry] | None, ...],
@@ -248,6 +246,7 @@ class FlextLdifServersBase(
                     execute_kwargs["operation"] = value
                 case _:
                     continue
+
     @override
     def execute(
         self,
@@ -281,14 +280,9 @@ class FlextLdifServersBase(
             result = r[m.Ldif.Entry].fail("No valid parameters")
         return result
 
-    class Acl(FlextLdifServersBaseSchemaAcl):
-        """Nested Acl server base class."""
-
-    class Entry(FlextLdifServersBaseEntry):
-        """Nested Entry server base class."""
-
-    class Schema(FlextLdifServersBaseSchema):
-        """Nested Schema server base class."""
+    Acl: ClassVar[type[FlextLdifServersBaseSchemaAcl]] = FlextLdifServersBaseSchemaAcl
+    Entry: ClassVar[type[FlextLdifServersBaseEntry]] = FlextLdifServersBaseEntry
+    Schema: ClassVar[type[FlextLdifServersBaseSchema]] = FlextLdifServersBaseSchema
 
 
 __all__: list[str] = ["FlextLdifServersBase"]

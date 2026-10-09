@@ -12,10 +12,10 @@ from __future__ import annotations
 from typing import ClassVar
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
 
 
-class FlextLdifServersOidAclSubjectMixin(FlextLdifServersRfc.Acl):
+class FlextLdifServersOidAclSubjectMixin(FlextLdifServersRfcAcl):
     """OID ACL subject detection and OID/RFC subject mapping."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)

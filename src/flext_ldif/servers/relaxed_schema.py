@@ -10,10 +10,10 @@ import re
 from typing import override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.servers._rfc.schema import FlextLdifServersRfcSchema
 
 
-class FlextLdifServersRelaxedSchema(FlextLdifServersRfc.Schema):
+class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
     """Relaxed schema server - main class for lenient LDIF processing."""
 
     def _enhance_schema_item_metadata(

@@ -10,10 +10,10 @@ from collections.abc import MutableMapping
 from typing import override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
 
 
-class FlextLdifServersRelaxedEntryParseMixin(FlextLdifServersRfc.Entry):
+class FlextLdifServersRelaxedEntryParseMixin(FlextLdifServersRfcEntry):
     """Relaxed entry parse side for lenient LDIF processing."""
 
     def normalize_dn(self, dn: str) -> p.Result[str]:
