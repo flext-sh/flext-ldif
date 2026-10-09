@@ -84,9 +84,7 @@ class FlextLdifParserRecord:
     @staticmethod
     def finalize_change_operation(
         current_op: FlextLdifModels.Ldif.ChangeOperation | None,
-        change_operations: t.MutableSequenceOf[
-            FlextLdifModels.Ldif.ChangeOperation
-        ],
+        change_operations: t.MutableSequenceOf[FlextLdifModels.Ldif.ChangeOperation],
     ) -> None:
         """Append a pending modify block when present."""
         if current_op is not None:
@@ -155,9 +153,7 @@ class FlextLdifParserRecord:
                 state.change_operations,
             )
             state.current_change_operation = FlextLdifModels.Ldif.ChangeOperation(
-                operation=FlextLdifParserRecord._MODIFY_OPS[
-                    key_lower
-                ],
+                operation=FlextLdifParserRecord._MODIFY_OPS[key_lower],
                 attribute=decoded.value,
             )
             return None
@@ -286,9 +282,7 @@ class FlextLdifParserRecord:
         Returns:
             The resulting ``p.Result[FlextLdifModels.Ldif.Entry]``.
         """
-        state = (
-            FlextLdifParserRecord._RecordState()
-        )
+        state = FlextLdifParserRecord._RecordState()
         for raw_line in lines:
             line = raw_line.rstrip()
             if not line:
@@ -304,9 +298,7 @@ class FlextLdifParserRecord:
                 )
                 state.current_change_operation = None
                 continue
-            FlextLdifParserRecord._parse_data_line(
-                state, line
-            )
+            FlextLdifParserRecord._parse_data_line(state, line)
         FlextLdifParserRecord.finalize_change_operation(
             state.current_change_operation,
             state.change_operations,
@@ -314,9 +306,7 @@ class FlextLdifParserRecord:
         if not state.dn:
             return r[FlextLdifModels.Ldif.Entry].fail("No DN found in entry")
         try:
-            entry = FlextLdifParserRecord._build_entry(
-                state
-            )
+            entry = FlextLdifParserRecord._build_entry(state)
             return r[FlextLdifModels.Ldif.Entry].ok(entry)
         except ValueError as exc:
             return r[FlextLdifModels.Ldif.Entry].fail(
