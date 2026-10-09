@@ -45,7 +45,7 @@ def _meta_getattr(cls: type, name: str) -> type:
         AttributeError: If type object.
     """
     if name == "Ldif":
-        return FlextLdifUtilities._build_ldif_tree()
+        return FlextLdifUtilities.build_ldif_tree()
     msg = f"type object {cls.__name__!r} has no attribute {name!r}"
     raise AttributeError(
         msg,
@@ -109,7 +109,7 @@ class FlextLdifUtilities(
 
     @staticmethod
     @lru_cache(maxsize=1)
-    def _build_ldif_tree() -> type:
+    def build_ldif_tree() -> type:
         """Assemble the ``Ldif`` mixin tree on first access.
 
         The lazy, cached assembly keeps both import orders (models-first and

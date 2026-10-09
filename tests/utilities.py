@@ -67,7 +67,9 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
             Returns:
                 The resulting ``m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass``.
             """
-            is_objectclass = TestsFlextLdifUtilities.TestsSchemaAclAssertionsMixin._schema_definition_is_objectclass
+            is_objectclass = (
+                TestsFlextLdifUtilities.TestsSchemaAclAssertionsMixin._schema_definition_is_objectclass
+            )
             if is_objectclass(schema_def):
                 value_raw = tm.ok(server.parse_objectclass(schema_def))
                 value: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass = (
