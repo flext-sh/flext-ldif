@@ -17,21 +17,24 @@ if TYPE_CHECKING:
 class FlextLdifUtilitiesCollectionLdif:
     """LDIF-specific collection, merge, and DSL methods."""
 
-    @staticmethod
-    def find(
-        items: t.JsonList,
-        *,
-        predicate: Callable[..., bool],
-    ) -> t.JsonValue | None:
-        """Find first item matching predicate.
+    class Search:
+        """Optional-item search composed only into the LDIF domain namespace."""
 
-        Returns:
-            The resulting ``t.JsonValue | None``.
-        """
-        for elem in items:
-            if predicate(elem):
-                return elem
-        return None
+        @staticmethod
+        def find(
+            items: t.JsonList,
+            *,
+            predicate: Callable[..., bool],
+        ) -> t.JsonValue | None:
+            """Find first item matching predicate.
+
+            Returns:
+                The resulting ``t.JsonValue | None``.
+            """
+            for elem in items:
+                if predicate(elem):
+                    return elem
+            return None
 
     @staticmethod
     def deduplicate_preserve_order(

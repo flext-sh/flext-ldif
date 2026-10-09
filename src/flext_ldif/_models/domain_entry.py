@@ -31,7 +31,7 @@ from flext_ldif._models.domain_metadata import FlextLdifModelsDomainMetadata as 
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 
 
-class FlextLdifModelsDomainEntry:
+class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
     """Namespace for LDIF entry domain models."""
 
     EntryStatistics = FlextLdifModelsDomainEntryStatistics
@@ -50,12 +50,6 @@ class FlextLdifModelsDomainEntry:
     """Canonical modify-operation value model.
 
     Implementation module: ``domain_entry_change_value``.
-    """
-
-    ChangeOperation = FlextLdifModelsDomainEntryChangeOperation
-    """Canonical RFC 2849 modify operation model.
-
-    Implementation module: ``domain_entry_change``.
     """
 
     class Entry(m.Entity, m.DynamicModel):

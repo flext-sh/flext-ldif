@@ -97,7 +97,7 @@ class FlextLdifParserRecord:
         value: str,
     ) -> None:
         """Consume a changetype line, tolerating unknown change types."""
-        normalized_change_type = value.lower()
+        normalized_change_type = value.lstrip(" ").lower()
         try:
             state.changetype = c.Ldif.ChangeType(normalized_change_type)
         except ValueError:
