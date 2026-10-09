@@ -15,21 +15,24 @@ from flext_ldif._models.domain_entry_change_value import (
 )
 
 
-class FlextLdifModelsDomainEntryChangeOperation(m.Value):
-    """Structured RFC 2849 modify operation block."""
+class FlextLdifModelsDomainEntryChangeOperation:
+    """Compose the operation model into the public namespace through MRO."""
 
-    operation: Annotated[
-        c.Ldif.ChangeOperation,
-        u.Field(description="Modify operation name"),
-    ]
-    attribute: Annotated[
-        str,
-        u.Field(description="Target attribute for the modify block"),
-    ]
-    values: Annotated[
-        t.MutableSequenceOf[FlextLdifModelsDomainEntryChangeOperationValue],
-        u.Field(description="Decoded values in the block"),
-    ] = u.Field(default_factory=list[FlextLdifModelsDomainEntryChangeOperationValue])
+    class ChangeOperation(m.Value):
+        """Structured RFC 2849 modify operation block."""
+
+        operation: Annotated[
+            c.Ldif.ChangeOperation,
+            u.Field(description="Modify operation name"),
+        ]
+        attribute: Annotated[
+            str,
+            u.Field(description="Target attribute for the modify block"),
+        ]
+        values: Annotated[
+            t.MutableSequenceOf[FlextLdifModelsDomainEntryChangeOperationValue],
+            u.Field(description="Decoded values in the block"),
+        ] = u.Field(default_factory=list)
 
 
 __all__: list[str] = ["FlextLdifModelsDomainEntryChangeOperation"]
