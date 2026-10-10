@@ -370,6 +370,7 @@ _bootstrap_setup_tools:
 	mise_pin=; \
 	mise_url=; \
 	mise_checksum=; \
+	mise_lock_usable=0; \
 	case "$$(uname -s)/$$(uname -m)" in \
 		Linux/x86_64) mise_platform=linux-x64 ;; \
 		Linux/aarch64) mise_platform=linux-arm64 ;; \
