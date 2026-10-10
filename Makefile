@@ -354,10 +354,19 @@ _bootstrap_setup_tools:
 		printf 'ERROR: mise is not installed; install it (https://mise.run) and retry\n' >&2; \
 		exit 2; \
 	fi; \
-	mise_lock="$(PROJECT_ROOT)/mise.lock"; \
-	mise_lock_usable=0; \
-	if [ -f "$$mise_lock" ] && ! grep -qE '^(<<<<<<< |=======$$|>>>>>>> )' "$$mise_lock"; then \
-		mise_lock_usable=1; \
+	mise_pin=; \
+	mise_lock_resolved=0; \
+	if [ -f "$(PROJECT_ROOT)/mise.lock" ]; then \
+		mise_pin="$$( awk 'index($$0, "[[tools.\"github:jdx/mise\"]]") == 1 { inside = 1; next } inside && substr($$0, 1, 1) == "[" { exit } inside && $$1 == "version" { gsub(/[",]/, "", $$3); print $$3; exit }' "$(PROJECT_ROOT)/mise.lock" )"; \
+	fi; \
+	if [ -z "$$mise_pin" ] && [ "$(TOOL_BOOTSTRAP_RESOLVE)" = "1" ]; then \
+		mise -C "$(PROJECT_ROOT)" lock --upgrade --bump; \
+		mise_lock_resolved=1; \
+		mise_pin="$$( awk 'index($$0, "[[tools.\"github:jdx/mise\"]]") == 1 { inside = 1; next } inside && substr($$0, 1, 1) == "[" { exit } inside && $$1 == "version" { gsub(/[",]/, "", $$3); print $$3; exit }' "$(PROJECT_ROOT)/mise.lock" )"; \
+	fi; \
+	if [ -z "$$mise_pin" ]; then \
+		printf 'ERROR: mise.lock pins no github:jdx/mise release; run make upg\n' >&2; \
+		exit 2; \
 	fi; \
 	mise_pin=; \
 	mise_url=; \
@@ -411,11 +420,7 @@ _bootstrap_setup_tools:
 		mise_bootstrap_bin="$$(command -v mise)"; \
 		mise_receipt="$$("$$mise_bootstrap_bin" --version | cut -d ' ' -f1)"; \
 	fi; \
-	export MISE_SHIMS_DIR="$$mise_bootstrap_root/$$mise_receipt/shims"; \
-	if [ "$(TOOL_BOOTSTRAP_RESOLVE)" = "1" ]; then \
-		if [ "$$mise_lock_usable" = 0 ]; then \
-			rm -f "$$mise_lock"; \
-		fi; \
+	if [ "$(TOOL_BOOTSTRAP_RESOLVE)" = "1" ] && [ "$$mise_lock_resolved" = "0" ]; then \
 		"$$mise_bootstrap_bin" -C "$(PROJECT_ROOT)" lock --upgrade --bump; \
 		mise_lock_usable=1; \
 	fi; \
