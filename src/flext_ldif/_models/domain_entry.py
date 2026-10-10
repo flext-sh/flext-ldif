@@ -11,18 +11,18 @@ from __future__ import annotations
 from collections.abc import Mapping, MutableMapping
 from datetime import datetime
 from types import MappingProxyType
-from typing import Annotated, ClassVar, Self, override
+from typing import Annotated, ClassVar, Self, cast, override
 
-from flext_core import m
-from flext_ldif import c, p, r, t, u
+from flext_core import FlextUtilities as u, m
+from flext_ldif import c, p, r, t
 from flext_ldif._models import (
-    FlextLdifModelsDomainAttributes as mda,
-    FlextLdifModelsDomainDN as mdn,
+    FlextLdifModelsDomainAttributes,
+    FlextLdifModelsDomainDN,
     FlextLdifModelsDomainEntryChangeOperation,
     FlextLdifModelsDomainEntryChangeOperationValue,
     FlextLdifModelsDomainEntryControl,
     FlextLdifModelsDomainEntryStatistics,
-    FlextLdifModelsDomainMetadata as mdm,
+    FlextLdifModelsDomainMetadata,
 )
 from flext_ldif._utilities import FlextLdifUtilitiesEntry
 
@@ -54,7 +54,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
         Implements p.Models.Entry through structural typing.
         The protocol requires:
         - dn: str
-        - attributes: mda.Attributes
+        - attributes: FlextLdifModelsDomainAttributes.Attributes
 
         This model provides these through:
         - dn field (DN) which has .value property returning str
@@ -94,7 +94,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             "validation_server_type": None,
         })
         dn: Annotated[
-            mdn.DN | None,
+            FlextLdifModelsDomainDN.DN | None,
             u.Field(
                 description=(
                     "Distinguished Name of the entry (REQUIRED per RFC 2849 § 2). "
@@ -104,7 +104,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             ),
         ]
         attributes: Annotated[
-            mda.Attributes | None,
+            FlextLdifModelsDomainAttributes.Attributes | None,
             u.Field(
                 description=(
                     "Entry attributes container (REQUIRED per RFC 2849 § 2). Allows "
@@ -124,11 +124,11 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             ),
         ] = c.Ldif.RecordKind.CONTENT
         controls: Annotated[
-            t.SequenceOf[FlextLdifModelsDomainEntry.Control],
+            t.SequenceOf[FlextLdifModelsDomainEntryControl],
             u.Field(description="RFC 2849 control lines associated with the record"),
         ] = u.Field(default_factory=tuple)
         change_operations: Annotated[
-            t.MutableSequenceOf[FlextLdifModelsDomainEntry.ChangeOperation],
+            t.MutableSequenceOf[FlextLdifModelsDomainEntryChangeOperation],
             u.Field(
                 description="Structured modify operation blocks for changetype=modify",
             ),
@@ -138,8 +138,10 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
         @classmethod
         def coerce_attributes_from_dict(
             cls,
-            value: mda.Attributes | t.MutableJsonMapping | None,
-        ) -> mda.Attributes | None:
+            value: FlextLdifModelsDomainAttributes.Attributes
+            | t.MutableJsonMapping
+            | None,
+        ) -> FlextLdifModelsDomainAttributes.Attributes | None:
             """Convert dict to Attributes instance.
 
             Allows None to pass through for violation capture in u.model_validator.
@@ -147,33 +149,37 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             validate_entry_rfc_compliance.
 
             Returns:
-                The resulting ``mda.Attributes | None``.
+                The resulting ``FlextLdifModelsDomainAttributes.Attributes | None``.
             """
-            if value is None or isinstance(value, mda.Attributes):
+            if value is None or isinstance(
+                value, FlextLdifModelsDomainAttributes.Attributes
+            ):
                 return value
             if "attributes" not in value:
-                return mda.Attributes.model_validate({"attributes": dict(value)})
-            return mda.Attributes.model_validate(value)
+                return FlextLdifModelsDomainAttributes.Attributes.model_validate({
+                    "attributes": dict(value)
+                })
+            return FlextLdifModelsDomainAttributes.Attributes.model_validate(value)
 
         @u.field_validator("dn", mode="before")
         @classmethod
         def coerce_dn_from_string(
             cls,
-            value: mdn.DN | t.MutableJsonMapping | str | None,
-        ) -> mdn.DN | None:
+            value: FlextLdifModelsDomainDN.DN | t.MutableJsonMapping | str | None,
+        ) -> FlextLdifModelsDomainDN.DN | None:
             """Convert string DN to DN instance.
 
             Allows None to pass through for violation capture in u.model_validator.
             RFC 2849 § 2 violations are captured in validate_entry_rfc_compliance.
 
             Returns:
-                The resulting ``mdn.DN | None``.
+                The resulting ``FlextLdifModelsDomainDN.DN | None``.
             """
-            if value is None or isinstance(value, mdn.DN):
+            if value is None or isinstance(value, FlextLdifModelsDomainDN.DN):
                 return value
             if isinstance(value, Mapping):
-                return mdn.DN.model_validate(value)
-            return mdn.DN(value=value, metadata={})
+                return FlextLdifModelsDomainDN.DN.model_validate(value)
+            return FlextLdifModelsDomainDN.DN(value=value, metadata={})
 
         @u.field_validator("record_kind", mode="before")
         @classmethod
@@ -224,7 +230,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             ),
         ] = u.Field(default_factory=list[str])
         metadata: Annotated[
-            mdm.ServerMetadata | None,
+            FlextLdifModelsDomainMetadata.ServerMetadata | None,
             u.Field(
                 description=(
                     "Server-specific metadata for processing data, ACLs, "
@@ -286,7 +292,9 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
         def ensure_metadata_initialized(
             cls,
             data: t.MutableJsonMapping,
-        ) -> MutableMapping[str, t.JsonValue | datetime | mdm.ServerMetadata]:
+        ) -> MutableMapping[
+            str, t.JsonValue | datetime | FlextLdifModelsDomainMetadata.ServerMetadata
+        ]:
             """Ensure metadata field is always initialized to a ServerMetadata instance.
 
             Also handles datetime coercion from ISO strings for JSON round-trips.
@@ -307,24 +315,31 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             """
             data_dict: MutableMapping[
                 str,
-                t.JsonValue | datetime | mdm.ServerMetadata,
+                t.JsonValue | datetime | FlextLdifModelsDomainMetadata.ServerMetadata,
             ] = dict(data)
             cls._coerce_datetime_fields(data_dict)
             if data_dict.get("metadata") is None:
                 # mro-wgwh.5 (agent: kimi-coder) — create_for removed from the model
                 # (U17); models validate directly at this internal boundary.
                 raw_server_type = data_dict.get("server_type")
-                data_dict["metadata"] = mdm.ServerMetadata.model_validate({
-                    "server_type": cls._coerce_default_server_type(
-                        raw_server_type if isinstance(raw_server_type, str) else None,
-                    ),
-                })
+                data_dict["metadata"] = (
+                    FlextLdifModelsDomainMetadata.ServerMetadata.model_validate({
+                        "server_type": cls._coerce_default_server_type(
+                            raw_server_type
+                            if isinstance(raw_server_type, str)
+                            else None,
+                        ),
+                    })
+                )
             return data_dict
 
         @classmethod
         def _coerce_datetime_fields(
             cls,
-            data_dict: MutableMapping[str, t.JsonValue | datetime | mdm.ServerMetadata],
+            data_dict: MutableMapping[
+                str,
+                t.JsonValue | datetime | FlextLdifModelsDomainMetadata.ServerMetadata,
+            ],
         ) -> None:
             """Coerce ISO datetime strings in place.
 
@@ -364,9 +379,11 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             and prevent infinite re-validation recursion (Pydantic v2 pattern).
             """
             if self.metadata is None:
-                self.metadata = mdm.ServerMetadata.model_validate({
-                    "server_type": c.Ldif.ServerTypes.RFC,
-                })
+                self.metadata = (
+                    FlextLdifModelsDomainMetadata.ServerMetadata.model_validate({
+                        "server_type": c.Ldif.ServerTypes.RFC,
+                    })
+                )
 
         @u.model_validator(mode="after")
         def normalize_record_kind(self) -> Self:
@@ -479,8 +496,10 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
                 "server_specific_violations": list[str](),
                 "context": context_payload,
             })
-            self.metadata.validation_results = mdm.ValidationMetadata.model_validate(
-                payload,
+            self.metadata.validation_results = (
+                FlextLdifModelsDomainMetadata.ValidationMetadata.model_validate(
+                    payload,
+                )
             )
 
         @u.model_validator(mode="after")
@@ -534,11 +553,13 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             return self
 
         @classmethod
-        def _empty_validation_results(cls) -> mdm.ValidationMetadata:
+        def _empty_validation_results(
+            cls,
+        ) -> FlextLdifModelsDomainMetadata.ValidationMetadata:
             """Create empty ValidationMetadata from canonical immutable payload.
 
             Returns:
-                The resulting ``mdm.ValidationMetadata``.
+                The resulting ``FlextLdifModelsDomainMetadata.ValidationMetadata``.
             """
             payload: t.JsonMapping = t.json_mapping_adapter().validate_python({
                 **cls._EMPTY_VALIDATION_RESULT_PAYLOAD,
@@ -547,8 +568,10 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
                 "warnings": list[str](),
                 "server_specific_violations": list[str](),
             })
-            validated: mdm.ValidationMetadata = mdm.ValidationMetadata.model_validate(
-                payload,
+            validated: FlextLdifModelsDomainMetadata.ValidationMetadata = (
+                FlextLdifModelsDomainMetadata.ValidationMetadata.model_validate(
+                    payload,
+                )
             )
             return validated
 
@@ -618,8 +641,9 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
         @classmethod
         def _normalize_attributes(
             cls,
-            attributes: t.MutableAttributeMapping | mda.Attributes,
-        ) -> mda.Attributes:
+            attributes: t.MutableAttributeMapping
+            | FlextLdifModelsDomainAttributes.Attributes,
+        ) -> FlextLdifModelsDomainAttributes.Attributes:
             """Normalize attributes to Attributes t.JsonValue.
 
             Args:
@@ -633,7 +657,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
                 be captured in validation_metadata as RFC violation.
 
             """
-            if isinstance(attributes, mda.Attributes):
+            if isinstance(attributes, FlextLdifModelsDomainAttributes.Attributes):
                 return attributes
             attrs_dict: t.MutableStrSequenceMapping = {}
             for attr_name, attr_values in attributes.items():
@@ -646,15 +670,20 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
                 "attributes": attrs_dict,
                 **cls._ATTRIBUTES_VALIDATE_DEFAULTS,
             })
-            validated: mda.Attributes = mda.Attributes.model_validate(validate_payload)
+            validated: FlextLdifModelsDomainAttributes.Attributes = (
+                FlextLdifModelsDomainAttributes.Attributes.model_validate(
+                    validate_payload
+                )
+            )
             return validated
 
         @classmethod
         def create(
             cls,
-            dn: str | mdn.DN,
-            attributes: t.MutableAttributeMapping | mda.Attributes,
-            metadata: mdm.ServerMetadata | None = None,
+            dn: str | FlextLdifModelsDomainDN.DN,
+            attributes: t.MutableAttributeMapping
+            | FlextLdifModelsDomainAttributes.Attributes,
+            metadata: FlextLdifModelsDomainMetadata.ServerMetadata | None = None,
         ) -> p.Result[Self]:
             """Create a validated Entry from canonical domain inputs.
 
@@ -666,20 +695,20 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
                 entry_instance: Self = cls.model_validate(entry_data)
                 ok_result: p.Result[Self] = r[Self].ok(entry_instance)
             except c.EXC_BASIC_TYPE as e:
-                fail_result: p.Result[Self] = r[Self].fail(
-                    f"Failed to create Entry: {e}",
-                    exception=e,
+                return cast(
+                    "p.Result[Self]",
+                    r[Self].fail(f"Failed to create Entry: {e}", exception=e),
                 )
-                return fail_result
             else:
                 return ok_result
 
         @classmethod
         def _build_entry_data(
             cls,
-            dn: str | mdn.DN,
-            attributes: t.MutableAttributeMapping | mda.Attributes,
-            metadata: mdm.ServerMetadata | None,
+            dn: str | FlextLdifModelsDomainDN.DN,
+            attributes: t.MutableAttributeMapping
+            | FlextLdifModelsDomainAttributes.Attributes,
+            metadata: FlextLdifModelsDomainMetadata.ServerMetadata | None,
         ) -> t.MappingKV[str, t.JsonPayload]:
             """Build validated Entry model input.
 
@@ -687,7 +716,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
                 The resulting ``t.MappingKV[str, t.JsonPayload]``.
             """
             entry_data: t.MutableMappingKV[str, t.JsonPayload] = {
-                c.Ldif.DictKeys.DN: mdn.DN.from_value(dn),
+                c.Ldif.DictKeys.DN: FlextLdifModelsDomainDN.DN.from_value(dn),
                 c.Ldif.DictKeys.ATTRIBUTES: cls._normalize_attributes(attributes),
             }
             if metadata is not None:

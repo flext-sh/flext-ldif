@@ -29,7 +29,7 @@ from flext_core import FlextContext
 from flext_ldif import ldif
 
 
-class BasicUsageDry:
+class ExamplesFlextLdifBasicUsage:
     """DRY railway pattern: auto-detect -> parse -> validate -> process."""
 
     SAMPLE_LDIF: Final[str] = (

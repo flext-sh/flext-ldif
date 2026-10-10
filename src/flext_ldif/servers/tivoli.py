@@ -368,12 +368,13 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 for marker in FlextLdifServersTivoli.Constants.DETECTION_DN_MARKERS
             )
 
+    # The Tivoli dialect schema settings are owned by ``Constants`` and bound
+    # here in the owner class body: a nested class body cannot reference the
+    # sibling ``Constants`` while the outer class is still being built.
+    Schema.bind_pattern_settings(
+        attribute_settings=Constants.ATTRIBUTE_PATTERN_SETTINGS,
+        objectclass_settings=Constants.OBJECTCLASS_PATTERN_SETTINGS,
+    )
 
-# The Tivoli dialect schema settings are owned by ``Constants`` and bound here
-# because a nested class body cannot reference the not-yet-defined class.
-FlextLdifServersTivoli.Schema.bind_pattern_settings(
-    attribute_settings=FlextLdifServersTivoli.Constants.ATTRIBUTE_PATTERN_SETTINGS,
-    objectclass_settings=FlextLdifServersTivoli.Constants.OBJECTCLASS_PATTERN_SETTINGS,
-)
 
 __all__: list[str] = ["FlextLdifServersTivoli"]

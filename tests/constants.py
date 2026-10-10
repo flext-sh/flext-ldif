@@ -7,7 +7,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from enum import StrEnum, unique
 from pathlib import Path
 from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar, Final, Literal
@@ -16,16 +15,25 @@ from flext_tests import FlextTestsConstants
 
 from flext_ldif import FlextLdifConstants
 from tests import m
+from tests._constants_ldap import TestsFlextLdifLdapConstants
 
 if TYPE_CHECKING:
     from tests import t
 
 
-class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
-    """Flat test constants for flext-ldif."""
+class TestsFlextLdifConstants(
+    TestsFlextLdifLdapConstants,
+    FlextTestsConstants,
+    FlextLdifConstants,
+):
+    """Flat test constants for flext-ldif.
+
+    The ldap3 wire constants compose in through their focused module so the
+    ``c.Ldap3*`` surface stays unchanged without a second nested namespace.
+    """
 
     @staticmethod
-    def _server_attribute_cases(
+    def server_attribute_cases(
         server: str,
     ) -> t.SequenceOf[m.Tests.AttributeTestCase]:
         """Build the attribute cases of one server from the flat row table.
@@ -165,32 +173,6 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
 
     # One flat SSOT row table: (server, scenario, definition, can_handle, oid, name).
     # DS389 and Novell rows share the keyed shape instead of parallel blocks.
-
-    class Ldap:
-        """ldap3 wire constants consumed by the real-directory tests.
-
-        flext-ldif is the base library of the LDAP client, so the client cannot
-        be a declared dependency here (see ``tests.utilities``). These are the
-        ldap3 protocol values the tests pass to the dynamically resolved client,
-        not a second implementation of an owned facade.
-        """
-
-        @unique
-        class Ldap3SearchScope(StrEnum):
-            """ldap3-compatible search scope string values."""
-
-            BASE = "BASE"
-            LEVEL = "LEVEL"
-            SUBTREE = "SUBTREE"
-
-        @unique
-        class Ldap3GetInfo(StrEnum):
-            """ldap3-compatible get-info option string values."""
-
-            ALL = "ALL"
-            DSA = "DSA"
-            NO_INFO = "NO_INFO"
-            SCHEMA = "SCHEMA"
 
     class Tests(FlextTestsConstants.Tests):
         """LDIF test constants namespace."""
@@ -495,7 +477,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
             "empty_stripped": ("  ", True),
         })
         ENTRIES_DN_DICT_CASES: ClassVar[
-            t.MappingKV[str, tuple[dict[str, str | list[str]], bool]]
+            t.MappingKV[str, tuple[t.MappingKV[str, str | t.StrSequence], bool]]
         ] = MappingProxyType({
             "str_dn": ({"dn": "cn=x,dc=example,dc=com"}, True),
             "list_dn": ({"dn": ["cn=y,dc=example,dc=com"]}, True),
@@ -1038,11 +1020,11 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
 
 
 _ldif_tests = TestsFlextLdifConstants.Tests
-_ldif_tests.DS389_ATTRIBUTE_TEST_CASES = (
-    TestsFlextLdifConstants._server_attribute_cases(_ldif_tests.DS389)
+_ldif_tests.DS389_ATTRIBUTE_TEST_CASES = TestsFlextLdifConstants.server_attribute_cases(
+    _ldif_tests.DS389
 )
 _ldif_tests.NOVELL_ATTRIBUTE_TEST_CASES = (
-    TestsFlextLdifConstants._server_attribute_cases(_ldif_tests.NOVELL)
+    TestsFlextLdifConstants.server_attribute_cases(_ldif_tests.NOVELL)
 )
 del _ldif_tests
 

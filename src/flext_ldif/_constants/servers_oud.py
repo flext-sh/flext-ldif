@@ -173,13 +173,6 @@ class FlextLdifConstantsServersOud:
 
     SCHEMA_FIELD_LDAP_SYNTAXES: ClassVar[str] = "ldapsyntaxes"
 
-    SCHEMA_FILTERABLE_FIELDS: ClassVar[frozenset[str]] = frozenset([
-        SCHEMA_FIELD_ATTRIBUTE_TYPES,
-        SCHEMA_FIELD_OBJECT_CLASSES,
-        SCHEMA_FIELD_MATCHING_RULES,
-        SCHEMA_FIELD_LDAP_SYNTAXES,
-    ])
-
     ATTRIBUTE_FIELDS: ClassVar[frozenset[str]] = frozenset(["x_origin"])
 
     OBJECTCLASS_REQUIREMENTS: ClassVar[t.BoolMapping] = MappingProxyType({

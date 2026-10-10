@@ -11,9 +11,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 
 from tests import tm, u
+
+if TYPE_CHECKING:
+    from tests import t
 
 
 class TestsFlextLdifSchemaTransformer:
@@ -43,7 +48,7 @@ class TestsFlextLdifSchemaTransformer:
     def test_normalize_name_applies_suffix_and_char_rules(
         name_value: str,
         suffixes: list[str] | None,
-        replacements: dict[str, str] | None,
+        replacements: t.MutableMappingKV[str, str] | None,
         expected: str,
     ) -> None:
         """Configured suffixes and char replacements produce the RFC name."""
@@ -212,7 +217,7 @@ class TestsFlextLdifSchemaTransformer:
     )
     def test_syntax_oid_strips_quotes_then_applies_replacements(
         syntax: str,
-        replacements: dict[str, str] | None,
+        replacements: t.MutableMappingKV[str, str] | None,
         expected: str,
     ) -> None:
         """Surrounding quotes are removed, then replacement mapping is applied."""

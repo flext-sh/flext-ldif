@@ -16,8 +16,8 @@ from __future__ import annotations
 from collections.abc import MutableMapping
 from typing import Annotated
 
-from flext_core import m
-from flext_ldif import FlextLdifShared, c, t, u
+from flext_core import FlextUtilities as u, m
+from flext_ldif import FlextLdifShared, c, t
 from flext_ldif._models import FlextLdifModelsDomainAttributes
 
 

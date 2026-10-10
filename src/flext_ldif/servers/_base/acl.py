@@ -48,7 +48,7 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         super().__init__()
         self._acl_service = acl_service
         if _parent_server is not None:
-            object.__setattr__(self, "_parent_server", _parent_server)
+            object.__setattr__(self, "parent_server", _parent_server)
 
     def resolve_acl_attributes(self) -> t.MutableSequenceOf[str]:
         """Get ACL attributes for this server."""

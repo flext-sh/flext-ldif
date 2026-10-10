@@ -6,11 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import importlib
-from typing import Annotated, Self, override
+from typing import TYPE_CHECKING, Annotated, Self, override
 
+import flext_ldif
 from flext_core import FlextService
 from flext_ldif import FlextLdifSettings, c, m, p, t, u
+
+if TYPE_CHECKING:
+    from flext_ldif.services.server import FlextLdifServer
 
 
 class FlextLdifServiceBase[TDomainResult](
@@ -25,8 +28,11 @@ class FlextLdifServiceBase[TDomainResult](
         Returns:
             The resulting value.
         """
-        server_module = importlib.import_module("flext_ldif.services.server")
-        return server_module.FlextLdifServer.fetch_global_instance()
+        # The root facade resolves its exports lazily (PEP 562), so the
+        # base/server init cycle stays cut: the server module loads on the
+        # first default_factory call, never at import time.
+        instance: FlextLdifServer = flext_ldif.FlextLdifServer.fetch_global_instance()
+        return instance
 
     _server: p.Ldif.ServerRegistry = u.PrivateAttr(
         default_factory=_default_ldif_server,

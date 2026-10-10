@@ -6,13 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import importlib
 from functools import lru_cache
-from typing import TYPE_CHECKING, ClassVar, Final
+from typing import TYPE_CHECKING, ClassVar
 
 from flext_cli import FlextCliUtilities
 
+from flext_ldif import _utilities as _utilities_family
 from flext_ldif._utilities import FlextLdifUtilitiesCollectionLdif
+from flext_ldif._utilities._lazy_meta import FlextLdifUtilitiesLazyMeta
 
 if TYPE_CHECKING:
     from flext_ldif._utilities import (
@@ -35,48 +36,10 @@ if TYPE_CHECKING:
     )
 
 
-def _meta_getattr(cls: type, name: str) -> type:
-    """Assemble and return the ``Ldif`` tree on first class-level access.
-
-    Returns:
-        The resulting ``type``.
-
-    Raises:
-        AttributeError: If type object.
-    """
-    if name == "Ldif":
-        return FlextLdifUtilities.build_ldif_tree()
-    msg = f"type object {cls.__name__!r} has no attribute {name!r}"
-    raise AttributeError(
-        msg,
-    )
-
-
-if TYPE_CHECKING:
-    # Static metaclass contract: static analysis needs a real class symbol for
-    # the ``metaclass=`` expression, while the codegen facade scanner requires
-    # exactly ONE runtime module-level class in a utilities module. The runtime
-    # branch below assembles the structurally identical metaclass dynamically.
-    class _LazyLdifMeta(type):
-        """Assemble ``Ldif`` on first class-level access."""
-
-        __getattr__ = _meta_getattr
-
-else:
-    _LazyLdifMeta: Final[type] = type(
-        "_LazyLdifMeta",
-        (type,),
-        {
-            "__doc__": "Assemble ``Ldif`` on first class-level access.",
-            "__getattr__": _meta_getattr,
-        },
-    )
-
-
 class FlextLdifUtilities(
     FlextCliUtilities,
     FlextLdifUtilitiesCollectionLdif,
-    metaclass=_LazyLdifMeta,
+    metaclass=FlextLdifUtilitiesLazyMeta,
 ):
     """Centralized helpers with domain collection behavior under ``Ldif``.
 
@@ -92,7 +55,7 @@ class FlextLdifUtilities(
     # root. The tree is therefore assembled lazily on first ``Ldif`` access, when
     # the package is fully initialized, making both import orders
     # (models-first and utilities-first) safe.
-    _LAZY_UTILITIES: ClassVar[tuple[tuple[str, str], ...]] = (
+    LAZY_UTILITIES: ClassVar[tuple[tuple[str, str], ...]] = (
         ("acl", "FlextLdifUtilitiesACL"),
         ("attribute", "FlextLdifUtilitiesAttribute"),
         ("dispatch", "FlextLdifUtilitiesDispatch"),
@@ -128,9 +91,9 @@ class FlextLdifUtilities(
             FlextLdifUtilitiesCollectionLdif.Search,
             FlextLdifUtilitiesCollectionLdif,
         ]
-        for module_name, class_name in FlextLdifUtilities._LAZY_UTILITIES:
-            module = importlib.import_module(f"flext_ldif._utilities.{module_name}")
-            bases.append(getattr(module, class_name))
+        family = _utilities_family
+        for _, class_name in FlextLdifUtilities.LAZY_UTILITIES:
+            bases.append(getattr(family, class_name))
         return type(
             "Ldif", tuple(bases), {"__doc__": "LDIF-specific utility namespace."}
         )

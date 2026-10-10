@@ -18,7 +18,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from examples import ExamplesFlextLdifUtilities as examples_u, m, p, u
+from examples import ExamplesFlextLdifUtilities, m, p, u
 from flext_ldif import ldif
 
 if TYPE_CHECKING:
@@ -54,7 +54,9 @@ def parallel_processing() -> None:
     Demonstrates creating entries directly via models and validating in batch.
     """
     api: p.Ldif.LdifClient = ldif
-    entries: list[m.Ldif.Entry] = [examples_u.create_user_entry(i) for i in range(10)]
+    entries: list[m.Ldif.Entry] = [
+        ExamplesFlextLdifUtilities.create_user_entry(i) for i in range(10)
+    ]
     validation_result = api.validate_entries(entries)
     if validation_result.success:
         report = validation_result.unwrap()

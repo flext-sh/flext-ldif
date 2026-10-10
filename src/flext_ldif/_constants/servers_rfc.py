@@ -86,6 +86,13 @@ class FlextLdifConstantsServersRfc:
 
     DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset()
 
+    SCHEMA_FILTERABLE_FIELDS: ClassVar[frozenset[str]] = frozenset([
+        "attributetypes",
+        "objectclasses",
+        "matchingrules",
+        "ldapsyntaxes",
+    ])
+
     ACL_PERMISSION_KEYS: ClassVar[t.StrSequence] = (
         "read",
         "write",

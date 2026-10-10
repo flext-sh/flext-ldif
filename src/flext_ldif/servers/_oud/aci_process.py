@@ -37,22 +37,23 @@ class FlextLdifServersOudAciProcessMixin:
     def _parsed_acl_extensions(
         acl_server: p.Ldif.AclServer,
         aci_value: str,
-    ) -> t.Ldif.MutableMetadataInputMapping | None:
+    ) -> p.Result[t.Ldif.MutableMetadataInputMapping]:
         """Parse one ACI value and return its normalized extensions mapping.
 
         Returns:
-            The extensions mapping when the parsed ACL carries one, else None.
+            The resulting ``p.Result[t.Ldif.MutableMetadataInputMapping]``;
+            the mapping is empty when the parsed ACL carries no extensions.
 
         """
         acl_result = acl_server.parse_server(
             FlextLdifServersOudAciProcessMixin._normalized_aci(aci_value),
         )
-        if not acl_result.success:
-            return None
+        if acl_result.failure:
+            return r[t.Ldif.MutableMetadataInputMapping].from_failure(acl_result)
         acl_model = m.Ldif.Acl.model_validate(acl_result.value)
         metadata = acl_model.metadata
         if not (metadata and metadata.extensions):
-            return None
+            return r[t.Ldif.MutableMetadataInputMapping].ok({})
         # mro-wgwh.5 (agent: kimi-coder) — isinstance(dict) replaces the
         # hasattr(model_dump) dispatch; extensions is a plain mapping.
         extensions_value = metadata.extensions
@@ -61,10 +62,10 @@ class FlextLdifServersOudAciProcessMixin:
             if isinstance(extensions_value, dict)
             else dict(extensions_value)
         )
-        return {
+        return r[t.Ldif.MutableMetadataInputMapping].ok({
             raw_key: u.normalize_to_metadata(raw_value)
             for raw_key, raw_value in acl_ext_raw.items()
-        }
+        })
 
     @classmethod
     def process_aci_list_for_finalize(
@@ -72,18 +73,26 @@ class FlextLdifServersOudAciProcessMixin:
         aci_values: t.MutableSequenceOf[str] | str,
         acl_server: p.Ldif.AclServer,
         current_extensions: t.Ldif.MutableMetadataInputMapping,
-    ) -> None:
-        """Process list of ACI values and extract metadata."""
+    ) -> p.Result[bool]:
+        """Process list of ACI values and extract metadata.
+
+        Returns:
+            The resulting ``p.Result[bool]``.
+        """
         aci_list: t.MutableSequenceOf[str] = (
             [*aci_values] if isinstance(aci_values, MutableSequence) else [aci_values]
         )
         for aci_value in aci_list:
-            acl_extensions = cls._parsed_acl_extensions(acl_server, aci_value)
-            if acl_extensions is not None:
+            acl_extensions_result = cls._parsed_acl_extensions(acl_server, aci_value)
+            if acl_extensions_result.failure:
+                return r[bool].from_failure(acl_extensions_result)
+            acl_extensions = acl_extensions_result.value
+            if acl_extensions:
                 FlextLdifServersOudAclMetadataMixin.process_parsed_acl_extensions(
                     acl_extensions,
                     current_extensions,
                 )
+        return r[bool].ok(value=True)
 
     @staticmethod
     def process_single_aci_value(

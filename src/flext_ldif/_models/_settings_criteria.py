@@ -11,8 +11,8 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_core import FlextUtilities as u, m
-from flext_ldif import c, t
+from flext_core import FlextUtilities as u, m, t
+from flext_ldif._constants.base import FlextLdifConstantsEnums
 
 
 class FlextLdifModelsSettingsCriteria:
@@ -92,9 +92,9 @@ class FlextLdifModelsSettingsCriteria:
             u.Field(description="Required objectClasses"),
         ] = None
         objectclass_mode: Annotated[
-            c.Ldif.EntryCriteriaMode,
+            FlextLdifConstantsEnums.EntryCriteriaMode,
             u.Field(description='"any" (has any) or "all" (has all)'),
-        ] = c.Ldif.EntryCriteriaMode.ANY
+        ] = FlextLdifConstantsEnums.EntryCriteriaMode.ANY
         required_attrs: Annotated[
             t.MutableSequenceOf[str] | None,
             u.Field(description="All of these attributes must exist"),
@@ -132,7 +132,7 @@ class FlextLdifModelsSettingsCriteria:
         """
 
         server_type: Annotated[
-            c.Ldif.ServerTypes,
+            FlextLdifConstantsEnums.ServerTypes,
             u.Field(
                 ...,
                 description="Server type performing the parse (oid, oud, rfc, etc.)",

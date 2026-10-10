@@ -37,7 +37,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
         )
         acl_instance: Self = instance
         if parent_server_value is not None:
-            object.__setattr__(acl_instance, "_parent_server", parent_server_value)
+            object.__setattr__(acl_instance, "parent_server", parent_server_value)
         if cls.auto_execute:
             data_raw = kwargs.get("data")
             data: str | m.Ldif.Acl | None = (
@@ -69,7 +69,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
             _parent_server=None,
         )
         if parent_server is not None:
-            object.__setattr__(self, "_parent_server", parent_server)
+            object.__setattr__(self, "parent_server", parent_server)
 
     @overload
     def __call__(

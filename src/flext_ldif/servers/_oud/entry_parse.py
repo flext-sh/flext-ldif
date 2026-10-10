@@ -86,11 +86,13 @@ class FlextLdifServersOudEntryParseMixin(FlextLdifServersRfcEntry):
         existing: t.Ldif.MutableMetadataInputMapping = (
             dict(entry.metadata.extensions) if entry.metadata.extensions else {}
         )
-        FlextLdifServersOudHelpersMixin.process_aci_list_for_finalize(
+        finalize_result = FlextLdifServersOudHelpersMixin.process_aci_list_for_finalize(
             aci_values,
             acl_server,
             existing,
         )
+        if finalize_result.failure:
+            return r[m.Ldif.Entry].from_failure(finalize_result)
         if existing:
             entry.metadata = entry.metadata.model_copy(update={"extensions": existing})
         return r[m.Ldif.Entry].ok(entry)

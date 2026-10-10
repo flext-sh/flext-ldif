@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, ClassVar, cast
 
 from flext_core import FlextUtilities as u, m
 from flext_ldif import c
@@ -14,6 +14,13 @@ from flext_ldif import c
 
 class FlextLdifModelsDomainEntryChangeOperationValue(m.Value):
     """Single value captured inside a modify operation block."""
+
+    # Inherited unchanged; the narrow settings-config annotation keeps the
+    # composed facade MRO attribute definitions compatible (ENFORCE-042).
+    model_config: ClassVar[m.SettingsConfigDict] = cast(
+        "m.SettingsConfigDict",
+        m.Value.model_config,
+    )
 
     value: Annotated[
         str,

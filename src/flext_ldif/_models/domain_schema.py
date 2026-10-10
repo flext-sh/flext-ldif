@@ -15,22 +15,19 @@ from typing import Annotated
 
 from flext_core import FlextUtilities as u
 from flext_ldif import c, t
-from flext_ldif._models import (
-    FlextLdifModelsBases as mb,
-    FlextLdifModelsDomainMetadata as mdm,
-)
+from flext_ldif._models import FlextLdifModelsBases, FlextLdifModelsDomainMetadata
 
 
 class FlextLdifModelsDomainSchema:
     """Namespace mixin for LDIF schema domain models."""
 
-    class SchemaAttribute(mb.SchemaElement):
+    class SchemaAttribute(FlextLdifModelsBases.SchemaElement):
         """LDAP schema attribute definition model (RFC 4512 compliant).
 
         Represents an LDAP attribute type definition from schema with full
         RFC 4512 support.
 
-        Inherits from mb.SchemaElement:
+        Inherits from FlextLdifModelsBases.SchemaElement:
         - model_config (strict=True, validate_default=True, validate_assignment=True)
         - has_metadata computed field
         - server_type computed field
@@ -141,16 +138,16 @@ class FlextLdifModelsDomainSchema:
             ),
         ] = None
         metadata: Annotated[
-            mdm.ServerMetadata | None,
+            FlextLdifModelsDomainMetadata.ServerMetadata | None,
             u.Field(description="Server-specific metadata for schema attribute"),
         ] = None
 
-    class Syntax(mb.SchemaElement):
+    class Syntax(FlextLdifModelsBases.SchemaElement):
         """LDAP attribute syntax definition model (RFC 4517 compliant).
 
         Represents an LDAP attribute syntax OID and its validation rules per RFC 4517.
 
-        Inherits from mb.SchemaElement:
+        Inherits from FlextLdifModelsBases.SchemaElement:
         - model_config (strict=True, validate_default=True, validate_assignment=True)
         - has_metadata computed field
         - server_type computed field
@@ -213,7 +210,7 @@ class FlextLdifModelsDomainSchema:
             u.Field(description="Optional regex pattern for value validation"),
         ] = None
         metadata: Annotated[
-            mdm.ServerMetadata | None,
+            FlextLdifModelsDomainMetadata.ServerMetadata | None,
             u.Field(description="Server-specific server metadata"),
         ] = None
 
@@ -233,13 +230,13 @@ class FlextLdifModelsDomainSchema:
                 raise ValueError(msg)
             return v
 
-    class SchemaObjectClass(mb.SchemaElement):
+    class SchemaObjectClass(FlextLdifModelsBases.SchemaElement):
         """LDAP schema object class definition model (RFC 4512 compliant).
 
         Represents an LDAP object class definition from schema with full
         RFC 4512 support.
 
-        Inherits from mb.SchemaElement:
+        Inherits from FlextLdifModelsBases.SchemaElement:
         - model_config (strict=True, validate_default=True, validate_assignment=True)
         - has_metadata computed field
         - server_type computed field
@@ -272,7 +269,7 @@ class FlextLdifModelsDomainSchema:
             u.Field(description="Optional attributes (RFC 4512 MAY)"),
         ] = None
         metadata: Annotated[
-            mdm.ServerMetadata | None,
+            FlextLdifModelsDomainMetadata.ServerMetadata | None,
             u.Field(description="Server-specific metadata for schema object class"),
         ] = None
 

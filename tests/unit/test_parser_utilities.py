@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import pytest
 
-from tests import c, tm, u
+from tests import c, m, tm, u
 
 
 class TestsFlextLdifParserUtilities:
@@ -138,7 +138,7 @@ class TestsFlextLdifParserUtilities:
         expected_value: str | None,
     ) -> None:
         """Test build control parses control fields."""
-        control = u.Ldif.build_control(payload)
+        control: m.Ldif.Control = u.Ldif.build_control(payload)
 
         tm.that(control.control_type, eq=expected_type)
         tm.that(control.criticality, eq=expected_criticality)

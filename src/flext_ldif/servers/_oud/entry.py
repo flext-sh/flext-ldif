@@ -50,7 +50,7 @@ class FlextLdifServersOudEntry(
         """Initialize OUD entry server."""
         FlextLdifServersBaseEntry.__init__(self, entry_service, _parent_server=None)
         if _parent_server is not None:
-            object.__setattr__(self, "_parent_server", _parent_server)
+            object.__setattr__(self, "parent_server", _parent_server)
 
     @override
     def can_handle(

@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
 
-    from tests import p
+    from tests import p, t
 
 
 @pytest.fixture
@@ -69,21 +69,24 @@ class TestsFlextLdifRealLdapImport:
         return list(u.Ldif.resolve_attribute_values(entry, "objectclass"))
 
     @staticmethod
-    def _all_attrs(entry: p.Ldif.Entry) -> dict[str, list[str]]:
+    def _all_attrs(entry: p.Ldif.Entry) -> t.MutableMappingKV[str, list[str]]:
         """Full attribute mapping via the public ``Attributes`` protocol.
 
         Returns:
-            The resulting ``dict[str, list[str]]``.
+            The resulting ``t.MutableMappingKV[str, list[str]]``.
         """
         assert entry.attributes is not None
         return {name: list(values) for name, values in entry.attributes.items()}
 
     @classmethod
-    def _non_objectclass_attrs(cls, entry: p.Ldif.Entry) -> dict[str, list[str]]:
+    def _non_objectclass_attrs(
+        cls,
+        entry: p.Ldif.Entry,
+    ) -> t.MutableMappingKV[str, list[str]]:
         """Public attribute mapping without objectClass/dn, for an LDAP add.
 
         Returns:
-            The resulting ``dict[str, list[str]]``.
+            The resulting ``t.MutableMappingKV[str, list[str]]``.
         """
         return {
             name: values
@@ -93,22 +96,22 @@ class TestsFlextLdifRealLdapImport:
 
     @staticmethod
     def _read_back(
-        ldap_connection: p.Ldap.Ldap3Connection,
+        ldap_connection: p.Ldap3Connection,
         dn: str,
-    ) -> p.Ldap.Ldap3Entry:
+    ) -> p.Ldap3Entry:
         """Search the freshly imported entry and return the single result.
 
         Returns:
-            The resulting ``p.Ldap.Ldap3Entry``.
+            The resulting ``p.Ldap3Entry``.
         """
         found = ldap_connection.search(
             dn,
             "(objectClass=*)",
-            search_scope=c.Ldap.Ldap3SearchScope.BASE.value,
+            search_scope=c.Ldap3SearchScope.BASE.value,
             attributes=["*"],
         )
         assert found, f"expected imported entry to be searchable at {dn}"
-        ldap_entry: p.Ldap.Ldap3Entry = ldap_connection.entries[0]
+        ldap_entry: p.Ldap3Entry = ldap_connection.entries[0]
         return ldap_entry
 
     @pytest.mark.parametrize(
@@ -151,7 +154,7 @@ class TestsFlextLdifRealLdapImport:
 
     def test_import_single_entry_roundtrips_to_ldap(
         self,
-        ldap_connection: p.Ldap.Ldap3Connection,
+        ldap_connection: p.Ldap3Connection,
         clean_test_ou: str,
         flext_api: p.Ldif.LdifClient,
         make_test_username: Callable[[str], str],
@@ -181,7 +184,7 @@ class TestsFlextLdifRealLdapImport:
 
     def test_import_preserves_binary_attribute(
         self,
-        ldap_connection: p.Ldap.Ldap3Connection,
+        ldap_connection: p.Ldap3Connection,
         clean_test_ou: str,
         flext_api: p.Ldif.LdifClient,
         make_test_username: Callable[[str], str],
@@ -208,7 +211,7 @@ class TestsFlextLdifRealLdapImport:
         )
 
         dn = self._dn(entry)
-        attributes: dict[str, list[str] | bytes] = dict(
+        attributes: t.MutableMappingKV[str, list[str] | bytes] = dict(
             self._non_objectclass_attrs(entry),
         )
         # ldap3 requires raw bytes for a binary attribute value.
@@ -220,7 +223,7 @@ class TestsFlextLdifRealLdapImport:
 
     def test_import_from_file_matches_string_parse(
         self,
-        ldap_connection: p.Ldap.Ldap3Connection,
+        ldap_connection: p.Ldap3Connection,
         clean_test_ou: str,
         flext_api: p.Ldif.LdifClient,
         tmp_path: Path,

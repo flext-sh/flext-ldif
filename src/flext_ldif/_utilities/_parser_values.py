@@ -9,7 +9,8 @@ from __future__ import annotations
 import base64
 
 from flext_core import r
-from flext_ldif import FlextLdifModels, c, p
+from flext_ldif import c, p
+from flext_ldif._models import FlextLdifModelsDomainEntryControl
 
 
 class FlextLdifParserValues:
@@ -44,11 +45,11 @@ class FlextLdifParserValues:
         return (payload, c.Ldif.ValueOrigin.PLAIN, payload)
 
     @staticmethod
-    def build_control(payload: str) -> FlextLdifModels.Ldif.Control:
+    def build_control(payload: str) -> FlextLdifModelsDomainEntryControl:
         """Parse RFC 2849 control payload into a structured model.
 
         Returns:
-            The resulting ``FlextLdifModels.Ldif.Control``.
+            The resulting ``FlextLdifModelsDomainEntryControl``.
         """
         minimum_control_tokens = 2
         control_tokens_with_value = 3
@@ -70,7 +71,7 @@ class FlextLdifParserValues:
             value, value_origin, raw_value = FlextLdifParserValues.decode_value(
                 value_token,
             )
-        return FlextLdifModels.Ldif.Control(
+        return FlextLdifModelsDomainEntryControl(
             control_type=control_type,
             criticality=criticality,
             value=value,

@@ -287,12 +287,17 @@ class TestsFlextLdifRelaxed:
         bad_input: str,
     ) -> None:
         """Test relaxed mode recovers from binary content if OID present."""
-        result: p.Result[m.Ldif.SchemaAttribute] | p.Result[m.Ldif.SchemaObjectClass]
+        parsed: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass
         if parse_type == "attribute":
-            result = schema_server.parse_attribute(bad_input)
+            attribute_result: p.Result[m.Ldif.SchemaAttribute] = (
+                schema_server.parse_attribute(bad_input)
+            )
+            parsed = tm.ok(attribute_result)
         else:
-            result = schema_server.parse_objectclass(bad_input)
-        parsed: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass = tm.ok(result)
+            objectclass_result: p.Result[m.Ldif.SchemaObjectClass] = (
+                schema_server.parse_objectclass(bad_input)
+            )
+            parsed = tm.ok(objectclass_result)
         assert parsed.metadata is not None
         ext = parsed.metadata.extensions
         tm.that(

@@ -10,8 +10,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Annotated, ClassVar, Self, override
 
-from flext_core import m
-from flext_ldif import c, p, r, t, u
+from flext_core import FlextUtilities as u, m
+from flext_ldif import c, p, r, t
 from flext_ldif._utilities import FlextLdifUtilitiesCollectionLdif
 
 if TYPE_CHECKING:

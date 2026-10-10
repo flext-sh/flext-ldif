@@ -278,11 +278,11 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
         )
 
     @staticmethod
-    def _extract_oid_acl_options(acl_line: str) -> dict[str, str | bool]:
+    def _extract_oid_acl_options(acl_line: str) -> t.MutableMappingKV[str, str | bool]:
         """Extract the optional ACL components of one OID ACL line.
 
         Returns:
-            The resulting ``dict[str, str | bool]``.
+            The resulting ``t.MutableMappingKV[str, str | bool]``.
         """
         extract = u.Ldif.extract_component
         kls = FlextLdifServersOidConstants

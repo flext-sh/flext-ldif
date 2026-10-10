@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from collections.abc import MutableSequence
 
 
-class DRYValidationAnalysis:
+class ExamplesFlextLdifValidationAnalysis:
     """DRY validation analysis: auto-generate → validate → analyze."""
 
     @staticmethod
@@ -83,7 +83,9 @@ class DRYValidationAnalysis:
             The resulting ``p.Result[m.Ldif.ValidationResult]``.
         """
         api = ldif()
-        entries = DRYValidationAnalysis._generate_test_dataset(100, error_rate=0.1)
+        entries = ExamplesFlextLdifValidationAnalysis._generate_test_dataset(
+            100, error_rate=0.1
+        )
         validate_result = api.validate_entries(entries)
         total_entries = len(entries)
         if validate_result.failure:
@@ -103,7 +105,9 @@ class DRYValidationAnalysis:
             invalid_entries=0 if vr.valid else total_entries,
             errors=[],
         )
-        return DRYValidationAnalysis._analyze_validation_results(validation_result)
+        return ExamplesFlextLdifValidationAnalysis._analyze_validation_results(
+            validation_result
+        )
 
     @staticmethod
     def statistical_analysis() -> p.Result[t.MappingKV[str, t.Numeric]]:
@@ -113,7 +117,9 @@ class DRYValidationAnalysis:
             The resulting ``p.Result[t.MappingKV[str, t.Numeric]]``.
         """
         api = ldif()
-        entries = DRYValidationAnalysis._generate_test_dataset(500, error_rate=0.05)
+        entries = ExamplesFlextLdifValidationAnalysis._generate_test_dataset(
+            500, error_rate=0.05
+        )
         validate_result = api.validate_entries(entries)
         if validate_result.failure:
             return r[t.MappingKV[str, t.Numeric]].fail(validate_result.error)

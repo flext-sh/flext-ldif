@@ -10,10 +10,7 @@ from typing import Annotated, Self
 
 from flext_core import FlextUtilities as u, m
 from flext_ldif import c, t
-from flext_ldif._models import (
-    FlextLdifModelsCollections as mc,
-    FlextLdifModelsEvents as me,
-)
+from flext_ldif._models import FlextLdifModelsCollections, FlextLdifModelsEvents
 
 
 class FlextLdifModelsResultsStatistics:
@@ -166,12 +163,16 @@ class FlextLdifModelsResultsStatistics:
             t.NonNegativeFloat,
             u.Field(description="Total processing duration in seconds"),
         ] = 0.0
-        rejection_reasons: mc.DynamicCounts = u.Field(
-            default_factory=mc.DynamicCounts,
+        rejection_reasons: FlextLdifModelsCollections.DynamicCounts = u.Field(
+            default_factory=FlextLdifModelsCollections.DynamicCounts,
             description="Counts of entries rejected by reason category",
         )
-        events: t.MutableSequenceOf[me.ConversionEvent | me.DnEvent] = u.Field(
-            default_factory=list[me.ConversionEvent | me.DnEvent],
+        events: t.MutableSequenceOf[
+            FlextLdifModelsEvents.ConversionEvent | FlextLdifModelsEvents.DnEvent
+        ] = u.Field(
+            default_factory=list[
+                FlextLdifModelsEvents.ConversionEvent | FlextLdifModelsEvents.DnEvent
+            ],
             description="Domain events emitted during processing",
         )
 
@@ -232,7 +233,9 @@ class FlextLdifModelsResultsStatistics:
                 or other.detected_server_type,
                 "output_file": self.output_file or other.output_file,
                 "encoding": self.encoding,
-                "rejection_reasons": mc.DynamicCounts(**merged_reasons),
+                "rejection_reasons": FlextLdifModelsCollections.DynamicCounts(
+                    **merged_reasons
+                ),
                 "events": [*self.events, *other.events],
             }
             copied: Self = self.model_copy(update=updates)

@@ -12,7 +12,8 @@ from typing import Annotated, Self
 
 from flext_core import FlextUtilities as u, m
 from flext_ldif import c, t
-from flext_ldif._models import FlextLdifModelsBases as mb, FlextLdifModelsDomainMetadata
+from flext_ldif._constants.enums import FlextLdifConstantsEnums
+from flext_ldif._models import FlextLdifModelsBases, FlextLdifModelsDomainMetadata
 
 
 class FlextLdifModelsDomainAcl:
@@ -133,10 +134,10 @@ class FlextLdifModelsDomainAcl:
         ]
         subject_value: Annotated[str, u.Field(..., description="Subject value/pattern")]
 
-    class Acl(mb.AclElement):
+    class Acl(FlextLdifModelsBases.AclElement):
         """Universal ACL model for all LDAP server types.
 
-        Inherits from mb.AclElement:
+        Inherits from FlextLdifModelsBases.AclElement:
         - model_config (strict=True, validate_default=True, validate_assignment=True)
         - server_type field with default "rfc"
         - metadata field (ServerMetadata | None)
@@ -354,6 +355,40 @@ class FlextLdifModelsDomainAcl:
                 The resulting ``bool``.
             """
             return self.original_format is not None and bool(self.original_format)
+
+    class PermissionMappingConfig(m.Value):
+        """Configuration for permission mapping during ACL conversion.
+
+        Consolidates parameters for
+        FlextLdifConversion._apply_permission_mapping method.
+        Reduces function signature from 6 parameters to 1 model.
+
+        """
+
+        original_acl: Annotated[
+            FlextLdifModelsDomainAcl.Acl,
+            u.Field(description="Original ACL model"),
+        ]
+        converted_acl: Annotated[
+            FlextLdifModelsDomainAcl.Acl,
+            u.Field(description="Converted ACL model (modified in-place)"),
+        ]
+        orig_perms_dict: Annotated[
+            t.MutableBoolMapping,
+            u.Field(..., description="Original permissions dict"),
+        ]
+        source_server_type: Annotated[
+            FlextLdifConstantsEnums.ServerTypes | None,
+            u.Field(description="Source server type"),
+        ] = None
+        target_server_type: Annotated[
+            FlextLdifConstantsEnums.ServerTypes | None,
+            u.Field(description="Target server type"),
+        ] = None
+        converted_has_permissions: Annotated[
+            bool,
+            u.Field(description="Whether converted ACL has permissions"),
+        ] = False
 
 
 __all__: list[str] = ["FlextLdifModelsDomainAcl"]

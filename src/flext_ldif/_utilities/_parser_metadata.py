@@ -13,8 +13,8 @@ from flext_cli import u
 from flext_ldif import FlextLdifModels, c, t
 from flext_ldif._utilities import (
     FlextLdifParserSchemaFields,
-    FlextLdifUtilitiesMetadata as um,
-    FlextLdifUtilitiesServer as us,
+    FlextLdifUtilitiesMetadata,
+    FlextLdifUtilitiesServer,
 )
 
 
@@ -85,7 +85,7 @@ class FlextLdifParserMetadataBuilders:
         Returns:
             The resulting ``FlextLdifModels.Ldif.ServerMetadata``.
         """
-        metadata = um.server_metadata_for("rfc")
+        metadata = FlextLdifUtilitiesMetadata.server_metadata_for("rfc")
         metadata.original_server_type = c.Ldif.ServerTypes.RFC
         metadata.target_server_type = c.Ldif.ServerTypes.RFC
         metadata.original_strings["dn_original"] = dn
@@ -121,9 +121,9 @@ class FlextLdifParserMetadataBuilders:
         metadata_extensions["original_format"] = [attr_definition.strip()]
         metadata_extensions["schema_original_string_complete"] = [attr_definition]
         server_type = (
-            us.normalize_server_type(server_type)
+            FlextLdifUtilitiesServer.normalize_server_type(server_type)
             if server_type
-            else us.normalize_server_type("rfc")
+            else FlextLdifUtilitiesServer.normalize_server_type("rfc")
         )
         if metadata_extensions:
             extensions_typed: t.Ldif.MutableMetadataMapping = {}

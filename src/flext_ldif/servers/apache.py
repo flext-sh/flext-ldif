@@ -198,13 +198,13 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             processed_entry = entry.model_copy(update={"metadata": metadata})
             return r[m.Ldif.Entry].ok(processed_entry)
 
-
-# The ApacheDS dialect schema settings are owned by ``Constants`` and bound
-# here because a nested class body cannot reference the not-yet-defined class.
-FlextLdifServersApache.Schema.bind_pattern_settings(
-    attribute_settings=FlextLdifServersApache.Constants.ATTRIBUTE_PATTERN_SETTINGS,
-    objectclass_settings=FlextLdifServersApache.Constants.OBJECTCLASS_PATTERN_SETTINGS,
-)
+    # The ApacheDS dialect schema settings are owned by ``Constants`` and bound
+    # here in the owner class body: a nested class body cannot reference the
+    # sibling ``Constants`` while the outer class is still being built.
+    Schema.bind_pattern_settings(
+        attribute_settings=Constants.ATTRIBUTE_PATTERN_SETTINGS,
+        objectclass_settings=Constants.OBJECTCLASS_PATTERN_SETTINGS,
+    )
 
 
 __all__: list[str] = ["FlextLdifServersApache"]

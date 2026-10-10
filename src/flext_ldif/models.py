@@ -14,15 +14,20 @@ from typing import Annotated, ClassVar
 
 from flext_cli import FlextCliModels
 
-from flext_ldif import t, u
+from flext_core import FlextUtilities as u
+from flext_ldif import t
 from flext_ldif._models import (
     FlextLdifModelsBases,
     FlextLdifModelsCollections,
+    FlextLdifModelsDomainEntryChangeOperationValue,
+    FlextLdifModelsDomainEntryControl,
+    FlextLdifModelsDomainEntryStatistics,
     FlextLdifModelsDomainsEntries,
     FlextLdifModelsEvents,
     FlextLdifModelsProcessing,
     FlextLdifModelsResults,
     FlextLdifModelsSettings,
+    FlextLdifNamespace,
 )
 
 
@@ -42,6 +47,10 @@ class FlextLdifModels(FlextCliModels):
         FlextLdifModelsCollections,
         FlextLdifModelsProcessing,
         FlextLdifModelsBases,
+        FlextLdifModelsDomainEntryChangeOperationValue,
+        FlextLdifModelsDomainEntryControl,
+        FlextLdifModelsDomainEntryStatistics,
+        FlextLdifNamespace,
     ):
         """LDIF namespace for cross-project access."""
 
@@ -69,7 +78,6 @@ class FlextLdifModels(FlextCliModels):
             perms_dict: Annotated[t.MutableBoolMapping, u.Field()] = u.Field(
                 default_factory=dict[str, bool],
             )
-            target_dn: Annotated[str, u.Field()] = "entry"
             target_attrs: t.MutableSequenceOf[str] = u.Field(default_factory=list[str])
             acl_filter: Annotated[str, u.Field()] = ""
             acl_constraint: Annotated[str, u.Field()] = ""

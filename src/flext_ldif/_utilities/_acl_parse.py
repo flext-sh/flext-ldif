@@ -11,7 +11,7 @@ from flext_ldif._utilities import (
     FlextLdifACLExtraction,
     FlextLdifACLFormatting,
     FlextLdifACLPermissions,
-    FlextLdifUtilitiesMetadata as um,
+    FlextLdifUtilitiesMetadata,
 )
 
 
@@ -266,7 +266,7 @@ class FlextLdifACLParsing:
             permissions=m.Ldif.AclPermissions(**permissions_dict),
             server_type=settings.server_type,
             raw_acl=acl_line,
-            metadata=um.server_metadata_for(
+            metadata=FlextLdifUtilitiesMetadata.server_metadata_for(
                 settings.server_type,
                 extensions=extensions or None,
             ),

@@ -21,7 +21,10 @@ SOURCE = "dc=example,dc=invalid"
 TARGET = "dc=r123,dc=algar,dc=local"
 
 
-def _entry(dn: str, attributes: dict[str, list[str]] | None = None) -> m.Ldif.Entry:
+def _entry(
+    dn: str,
+    attributes: t.MappingKV[str, t.StrSequence] | None = None,
+) -> m.Ldif.Entry:
     """Build a minimal LDIF entry model for transform tests.
 
     Returns:
