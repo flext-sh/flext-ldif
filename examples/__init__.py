@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 from flext_core import install_lazy_exports
 
 if TYPE_CHECKING:
+    from examples import _utilities
     from examples.constants import ExamplesFlextLdifConstants
     from examples.models import ExamplesFlextLdifModels
     from examples.protocols import ExamplesFlextLdifProtocols
@@ -34,6 +35,7 @@ __all__: tuple[str, ...] = (
     "ExamplesFlextLdifProtocols",
     "ExamplesFlextLdifTypes",
     "ExamplesFlextLdifUtilities",
+    "_utilities",
     "batch_schema_operations",
     "c",
     "d",
@@ -61,6 +63,7 @@ install_lazy_exports(
         "ExamplesFlextLdifProtocols": ".protocols",
         "ExamplesFlextLdifTypes": ".typings",
         "ExamplesFlextLdifUtilities": ".utilities",
+        "_utilities": "._utilities",
         "batch_schema_operations": ".schema_operations",
         "c": "flext_ldif",
         "d": "flext_ldif",

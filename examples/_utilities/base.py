@@ -1,3 +1,9 @@
+"""Shared LDIF example entry builders.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
 from __future__ import annotations
 
 from examples import m
@@ -5,7 +11,7 @@ from examples import m
 from flext_ldif import FlextLdifUtilities
 
 
-class ExamplesFlextLdifUtilities(FlextLdifUtilities):
+class ExamplesFlextLdifUtilitiesBase(FlextLdifUtilities):
     """Utility functions for flextldif."""
 
     @staticmethod
@@ -26,3 +32,6 @@ class ExamplesFlextLdifUtilities(FlextLdifUtilities):
                 attribute_metadata={},
             ),
         )
+
+
+__all__: list[str] = ["ExamplesFlextLdifUtilitiesBase"]

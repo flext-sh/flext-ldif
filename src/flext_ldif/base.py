@@ -7,10 +7,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import importlib
-from typing import Annotated, Self, override
+from typing import TYPE_CHECKING, Annotated, Self, override
 
 from flext_core import FlextService
 from flext_ldif import FlextLdifSettings, c, m, p, t, u
+
+if TYPE_CHECKING:
+    from flext_ldif.services.server import FlextLdifServer
 
 
 class FlextLdifServiceBase[TDomainResult](
@@ -26,7 +29,8 @@ class FlextLdifServiceBase[TDomainResult](
             The resulting value.
         """
         server_module = importlib.import_module("flext_ldif.services.server")
-        return server_module.FlextLdifServer.fetch_global_instance()
+        server_cls: type[FlextLdifServer] = server_module.FlextLdifServer
+        return server_cls.fetch_global_instance()
 
     _server: p.Ldif.ServerRegistry = u.PrivateAttr(
         default_factory=_default_ldif_server,
