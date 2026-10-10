@@ -371,6 +371,7 @@ markers = [
   "performance: performance and benchmark tests",
   "slow: slow-running tests",
   "docker: tests requiring Docker",
+  "ldap: tests using the shared LDAP test container",
   "oracle: tests requiring the shared Oracle database",
   "remote: tests requiring remote/external network services",
   "e2e: end-to-end integration tests",
