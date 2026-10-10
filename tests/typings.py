@@ -26,6 +26,13 @@ class TestsFlextLdifTypes(FlextTestsTypes, FlextLdifTypes):
         ]
         type FixtureServer = str
         type FixtureKind = str
+        type AttributeCaseRow = tuple[str, str, bool, str | None, str | None]
+        type ObjectClassCaseRow = tuple[
+            str, str, bool, str | None, str | None, str | None
+        ]
+        type EntryCaseRow = tuple[
+            str, str, FlextLdifTypes.MappingKV[str, FlextLdifTypes.StrSequence], bool
+        ]
         type ParseMethod = Literal[
             "parse_server",
             "parse_attribute",

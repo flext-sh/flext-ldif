@@ -15,7 +15,6 @@ from typing import TYPE_CHECKING, ClassVar, Final, Literal
 from flext_tests import FlextTestsConstants
 
 from flext_ldif import FlextLdifConstants
-from tests import m
 
 if TYPE_CHECKING:
     from tests import t
@@ -24,49 +23,7 @@ if TYPE_CHECKING:
 class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
     """Flat test constants for flext-ldif."""
 
-    @staticmethod
-    def _server_attribute_cases(
-        server: str,
-    ) -> t.SequenceOf[m.Tests.AttributeTestCase]:
-        """Build the attribute cases of one server from the flat row table.
-
-        Returns:
-            The resulting ``t.SequenceOf[m.Tests.AttributeTestCase]``.
-        """
-        return tuple(
-            TestsFlextLdifConstants._attribute_case(
-                *row[1:3],
-                expected_can_handle=row[3],
-                expected_oid=row[4],
-                expected_name=row[5],
-            )
-            for row in TestsFlextLdifConstants._ATTRIBUTE_CASE_ROWS
-            if row[0] == server
-        )
-
-    @staticmethod
-    def _attribute_case(
-        scenario: str,
-        attr_definition: str,
-        *,
-        expected_can_handle: bool,
-        expected_oid: str | None = None,
-        expected_name: str | None = None,
-    ) -> m.Tests.AttributeTestCase:
-        """Build one attribute can-handle test case from a data row.
-
-        Returns:
-            The resulting ``m.Tests.AttributeTestCase``.
-        """
-        return m.Tests.AttributeTestCase(
-            scenario=scenario,
-            attr_definition=attr_definition,
-            expected_can_handle=expected_can_handle,
-            expected_oid=expected_oid,
-            expected_name=expected_name,
-        )
-
-    _ATTRIBUTE_CASE_ROWS: Final[
+    ATTRIBUTE_CASE_ROWS: Final[
         tuple[tuple[str, str, str, bool, str | None, str | None], ...]
     ] = (
         (
@@ -665,127 +622,138 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
             })
         )
 
-        APACHE_ATTRIBUTE_TEST_CASES: ClassVar[
-            t.SequenceOf[m.Tests.AttributeTestCase]
+        APACHE_ATTRIBUTE_CASE_ROWS: ClassVar[
+            t.SequenceOf[t.Tests.AttributeCaseRow]
         ] = (
-            m.Tests.AttributeTestCase(
-                scenario="apache_oid",
-                attr_definition="( 1.3.6.1.4.1.18060.0.4.1.2.100 NAME 'ads-enabled' "
+            (
+                "apache_oid",
+                "( 1.3.6.1.4.1.18060.0.4.1.2.100 NAME 'ads-enabled' "
                 "SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 )",
-                expected_can_handle=True,
-                expected_name="ads-enabled",
+                True,
+                None,
+                "ads-enabled",
             ),
-            m.Tests.AttributeTestCase(
-                scenario="ads_prefix",
-                attr_definition="( 2.16.840.1.113730.3.1.1 NAME 'ads-searchBaseDN' "
+            (
+                "ads_prefix",
+                "( 2.16.840.1.113730.3.1.1 NAME 'ads-searchBaseDN' "
                 "SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )",
-                expected_can_handle=True,
-                expected_name="ads-searchBaseDN",
+                True,
+                None,
+                "ads-searchBaseDN",
             ),
-            m.Tests.AttributeTestCase(
-                scenario="apacheds_name",
-                attr_definition="( 1.2.3.4 NAME 'apachedsSystemId' SYNTAX "
+            (
+                "apacheds_name",
+                "( 1.2.3.4 NAME 'apachedsSystemId' SYNTAX "
                 "1.3.6.1.4.1.1466.115.121.1.15 )",
-                expected_can_handle=True,
-                expected_name="apachedsSystemId",
+                True,
+                None,
+                "apachedsSystemId",
             ),
-            m.Tests.AttributeTestCase(
-                scenario="standard_rfc",
-                attr_definition="( 2.5.4.3 NAME 'cn' SYNTAX "
+            (
+                "standard_rfc",
+                "( 2.5.4.3 NAME 'cn' SYNTAX "
                 "1.3.6.1.4.1.1466.115.121.1.15 )",
-                expected_can_handle=False,
-                expected_name="cn",
+                False,
+                None,
+                "cn",
             ),
         )
 
-        APACHE_OBJECTCLASS_TEST_CASES: ClassVar[
-            t.SequenceOf[m.Tests.ObjectClassTestCase]
+        APACHE_OBJECTCLASS_CASE_ROWS: ClassVar[
+            t.SequenceOf[t.Tests.ObjectClassCaseRow]
         ] = (
-            m.Tests.ObjectClassTestCase(
-                scenario="apache_oid",
-                oc_definition="( 1.3.6.1.4.1.18060.0.4.1.3.100 NAME "
+            (
+                "apache_oid",
+                "( 1.3.6.1.4.1.18060.0.4.1.3.100 NAME "
                 "'ads-directoryService' SUP top STRUCTURAL )",
-                expected_can_handle=True,
-                expected_name="ads-directoryService",
+                True,
+                None,
+                "ads-directoryService",
+                None,
             ),
-            m.Tests.ObjectClassTestCase(
-                scenario="ads_name",
-                oc_definition="( 2.5.6.0 NAME 'ads-base' SUP top ABSTRACT )",
-                expected_can_handle=True,
-                expected_name="ads-base",
+            (
+                "ads_name",
+                "( 2.5.6.0 NAME 'ads-base' SUP top ABSTRACT )",
+                True,
+                None,
+                "ads-base",
+                None,
             ),
-            m.Tests.ObjectClassTestCase(
-                scenario="standard_rfc",
-                oc_definition="( 2.5.6.6 NAME 'posixAccount' SUP top STRUCTURAL )",
-                expected_can_handle=False,
-                expected_name="posixAccount",
+            (
+                "standard_rfc",
+                "( 2.5.6.6 NAME 'posixAccount' SUP top STRUCTURAL )",
+                False,
+                None,
+                "posixAccount",
+                None,
             ),
         )
 
-        APACHE_ENTRY_TEST_CASES: ClassVar[t.SequenceOf[m.Tests.EntryTestCase]] = (
+        APACHE_ENTRY_CASE_ROWS: ClassVar[t.SequenceOf[t.Tests.EntryCaseRow]] = (
             *(
-                m.Tests.EntryTestCase(
-                    scenario=(
+                (
+                    (
                         "ou_config" if ou_name == "settings" else f"ou_{ou_name}"
                     ),
-                    entry_dn=f"ou={ou_name},dc=example,dc=com",
-                    attributes={"objectClass": ["organizationalUnit"]},
-                    expected_can_handle=True,
+                    f"ou={ou_name},dc=example,dc=com",
+                    MappingProxyType({"objectClass": ("organizationalUnit",)}),
+                    True,
                 )
                 for ou_name in ("settings", "services", "system", "partitions")
             ),
-            m.Tests.EntryTestCase(
-                scenario="ads_attribute",
-                entry_dn=DN_TEST,
-                attributes={"ads-enabled": ["TRUE"], "objectClass": ["top"]},
-                expected_can_handle=True,
+            (
+                "ads_attribute",
+                DN_TEST,
+                MappingProxyType({"ads-enabled": ("TRUE",), "objectClass": ("top",)}),
+                True,
             ),
-            m.Tests.EntryTestCase(
-                scenario="apacheds_attribute",
-                entry_dn=DN_TEST,
-                attributes={"apachedsSystemId": ["test"], "objectClass": ["top"]},
-                expected_can_handle=True,
+            (
+                "apacheds_attribute",
+                DN_TEST,
+                MappingProxyType({"apachedsSystemId": ("test",), "objectClass": ("top",)}),
+                True,
             ),
-            m.Tests.EntryTestCase(
-                scenario="ads_objectclass",
-                entry_dn=DN_TEST,
-                attributes={"objectClass": ["top", "ads-directory"]},
-                expected_can_handle=True,
+            (
+                "ads_objectclass",
+                DN_TEST,
+                MappingProxyType({"objectClass": ("top", "ads-directory")}),
+                True,
             ),
-            m.Tests.EntryTestCase(
-                scenario="standard_rfc",
-                entry_dn="cn=user,dc=example,dc=com",
-                attributes={"objectClass": ["person"], "cn": ["user"]},
-                expected_can_handle=True,
+            (
+                "standard_rfc",
+                "cn=user,dc=example,dc=com",
+                MappingProxyType({"objectClass": ("person",), "cn": ("user",)}),
+                True,
             ),
         )
 
-        DS389_ATTRIBUTE_TEST_CASES: ClassVar[
-            t.SequenceOf[m.Tests.AttributeTestCase]
-        ] = ()
-
-        DS389_OBJECTCLASS_TEST_CASES: ClassVar[
-            t.SequenceOf[m.Tests.ObjectClassTestCase]
+        DS389_OBJECTCLASS_CASE_ROWS: ClassVar[
+            t.SequenceOf[t.Tests.ObjectClassCaseRow]
         ] = (
-            m.Tests.ObjectClassTestCase(
-                scenario="ds389_oid",
-                oc_definition="( 2.16.840.1.113730.3.2.1 NAME 'nscontainer' SUP top "
+            (
+                "ds389_oid",
+                "( 2.16.840.1.113730.3.2.1 NAME 'nscontainer' SUP top "
                 "STRUCTURAL )",
-                expected_can_handle=True,
-                expected_oid="2.16.840.1.113730.3.2.1",
-                expected_name="nscontainer",
-                expected_kind="STRUCTURAL",
+                True,
+                "2.16.840.1.113730.3.2.1",
+                "nscontainer",
+                "STRUCTURAL",
             ),
-            m.Tests.ObjectClassTestCase(
-                scenario="ns_name",
-                oc_definition="( 2.5.6.0 NAME 'nsperson' SUP top STRUCTURAL )",
-                expected_can_handle=True,
-                expected_name="nsperson",
+            (
+                "ns_name",
+                "( 2.5.6.0 NAME 'nsperson' SUP top STRUCTURAL )",
+                True,
+                None,
+                "nsperson",
+                None,
             ),
-            m.Tests.ObjectClassTestCase(
-                scenario="standard_rfc",
-                oc_definition="( 2.5.6.6 NAME 'posixAccount' SUP top STRUCTURAL )",
-                expected_can_handle=False,
+            (
+                "standard_rfc",
+                "( 2.5.6.6 NAME 'posixAccount' SUP top STRUCTURAL )",
+                False,
+                None,
+                None,
+                None,
             ),
         )
 
@@ -799,115 +767,115 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
             ("nsds_attribute", "nsds5ReplicaId", "1"),
             ("nsuniqueid_attribute", "nsuniqueid", "12345"),
         )
-        DS389_ENTRY_TEST_CASES: ClassVar[t.SequenceOf[m.Tests.EntryTestCase]] = (
+        DS389_ENTRY_CASE_ROWS: ClassVar[t.SequenceOf[t.Tests.EntryCaseRow]] = (
             *(
-                m.Tests.EntryTestCase(
-                    scenario=f"cn_{cn}",
-                    entry_dn=f"cn={cn}",
-                    attributes={
-                        FlextLdifConstants.Ldif.DictKeys.OBJECTCLASS.value: list(
-                            object_classes,
-                        ),
-                    },
-                    expected_can_handle=True,
+                (
+                    f"cn_{cn}",
+                    f"cn={cn}",
+                    MappingProxyType({
+                        FlextLdifConstants.Ldif.DictKeys.OBJECTCLASS: object_classes,
+                    }),
+                    True,
                 )
                 for cn, object_classes in _DS389_CN_KIND_CASES
             ),
             *(
-                m.Tests.EntryTestCase(
-                    scenario=scenario,
-                    entry_dn="cn=test,dc=example,dc=com",
-                    attributes={attr: [value], "objectclass": ["top"]},
-                    expected_can_handle=True,
+                (
+                    scenario,
+                    "cn=test,dc=example,dc=com",
+                    MappingProxyType({attr: (value,), "objectclass": ("top",)}),
+                    True,
                 )
                 for scenario, attr, value in _DS389_ATTR_PROBE_CASES
             ),
-            m.Tests.EntryTestCase(
-                scenario="ns_objectclass",
-                entry_dn=DN_TEST,
-                attributes={
-                    FlextLdifConstants.Ldif.DictKeys.OBJECTCLASS.value: [
+            (
+                "ns_objectclass",
+                DN_TEST,
+                MappingProxyType({
+                    FlextLdifConstants.Ldif.DictKeys.OBJECTCLASS: (
                         "top",
                         "nscontainer",
-                    ],
-                },
-                expected_can_handle=True,
+                    ),
+                }),
+                True,
             ),
-            m.Tests.EntryTestCase(
-                scenario="standard_rfc",
-                entry_dn="cn=user,dc=example,dc=com",
-                attributes={
-                    FlextLdifConstants.Ldif.DictKeys.OBJECTCLASS.value: ["person"],
-                    "cn": ["user"],
-                },
-                expected_can_handle=False,
+            (
+                "standard_rfc",
+                "cn=user,dc=example,dc=com",
+                MappingProxyType({
+                    FlextLdifConstants.Ldif.DictKeys.OBJECTCLASS: ("person",),
+                    "cn": ("user",),
+                }),
+                False,
             ),
         )
 
         # NB: cn_config / cn_settings naming preserved → first case key
         # historically was "cn_config" (not "cn_settings"); align to that.
 
-        NOVELL_ATTRIBUTE_TEST_CASES: ClassVar[
-            t.SequenceOf[m.Tests.AttributeTestCase]
-        ] = ()
-
-        NOVELL_OBJECTCLASS_TEST_CASES: ClassVar[
-            t.SequenceOf[m.Tests.ObjectClassTestCase]
+        NOVELL_OBJECTCLASS_CASE_ROWS: ClassVar[
+            t.SequenceOf[t.Tests.ObjectClassCaseRow]
         ] = (
-            m.Tests.ObjectClassTestCase(
-                scenario="novell_oid",
-                oc_definition="( 2.16.840.1.113719.2.2.6.1 NAME 'ndsPerson' SUP top "
+            (
+                "novell_oid",
+                "( 2.16.840.1.113719.2.2.6.1 NAME 'ndsPerson' SUP top "
                 "STRUCTURAL )",
-                expected_can_handle=True,
-                expected_oid="2.16.840.1.113719.2.2.6.1",
-                expected_name="ndsPerson",
+                True,
+                "2.16.840.1.113719.2.2.6.1",
+                "ndsPerson",
+                None,
             ),
-            m.Tests.ObjectClassTestCase(
-                scenario="nds_name",
-                oc_definition="( 2.5.6.0 NAME 'ndsserver' SUP top STRUCTURAL )",
-                expected_can_handle=True,
-                expected_name="ndsserver",
+            (
+                "nds_name",
+                "( 2.5.6.0 NAME 'ndsserver' SUP top STRUCTURAL )",
+                True,
+                None,
+                "ndsserver",
+                None,
             ),
-            m.Tests.ObjectClassTestCase(
-                scenario="standard_rfc",
-                oc_definition="( 2.5.6.6 NAME 'posixAccount' SUP top STRUCTURAL )",
-                expected_can_handle=False,
+            (
+                "standard_rfc",
+                "( 2.5.6.6 NAME 'posixAccount' SUP top STRUCTURAL )",
+                False,
+                None,
+                None,
+                None,
             ),
         )
 
-        NOVELL_ENTRY_TEST_CASES: ClassVar[t.SequenceOf[m.Tests.EntryTestCase]] = (
+        NOVELL_ENTRY_CASE_ROWS: ClassVar[t.SequenceOf[t.Tests.EntryCaseRow]] = (
             *(
-                m.Tests.EntryTestCase(
-                    scenario=f"ou_{ou_name}",
-                    entry_dn=f"ou={ou_name},o=Example",
-                    attributes={"objectClass": ["organizationalUnit"]},
-                    expected_can_handle=True,
+                (
+                    f"ou_{ou_name}",
+                    f"ou={ou_name},o=Example",
+                    MappingProxyType({"objectClass": ("organizationalUnit",)}),
+                    True,
                 )
                 for ou_name in ("services", "apps", "system")
             ),
-            m.Tests.EntryTestCase(
-                scenario="nspm_attribute",
-                entry_dn="cn=user,o=Example",
-                attributes={"nspmpasswordpolicy": ["policy1"], "objectClass": ["top"]},
-                expected_can_handle=True,
+            (
+                "nspm_attribute",
+                "cn=user,o=Example",
+                MappingProxyType({"nspmpasswordpolicy": ("policy1",), "objectClass": ("top",)}),
+                True,
             ),
-            m.Tests.EntryTestCase(
-                scenario="login_attribute",
-                entry_dn="cn=user,o=Example",
-                attributes={"logindisabled": ["TRUE"], "objectClass": ["top"]},
-                expected_can_handle=True,
+            (
+                "login_attribute",
+                "cn=user,o=Example",
+                MappingProxyType({"logindisabled": ("TRUE",), "objectClass": ("top",)}),
+                True,
             ),
-            m.Tests.EntryTestCase(
-                scenario="nds_objectclass",
-                entry_dn="cn=user,o=Example",
-                attributes={"objectClass": ["top", "ndsperson"]},
-                expected_can_handle=True,
+            (
+                "nds_objectclass",
+                "cn=user,o=Example",
+                MappingProxyType({"objectClass": ("top", "ndsperson")}),
+                True,
             ),
-            m.Tests.EntryTestCase(
-                scenario="standard_rfc",
-                entry_dn="cn=user,dc=example,dc=com",
-                attributes={"objectClass": ["person"], "cn": ["user"]},
-                expected_can_handle=False,
+            (
+                "standard_rfc",
+                "cn=user,dc=example,dc=com",
+                MappingProxyType({"objectClass": ("person",), "cn": ("user",)}),
+                False,
             ),
         )
 
@@ -1036,15 +1004,6 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
         STATS_SERVER_TYPES: ClassVar[t.StrSequence] = (RFC, OID)
         STATS_EXPECTED_OBJECTCLASS: ClassVar[str] = "person"
 
-
-_ldif_tests = TestsFlextLdifConstants.Tests
-_ldif_tests.DS389_ATTRIBUTE_TEST_CASES = (
-    TestsFlextLdifConstants._server_attribute_cases(_ldif_tests.DS389)
-)
-_ldif_tests.NOVELL_ATTRIBUTE_TEST_CASES = (
-    TestsFlextLdifConstants._server_attribute_cases(_ldif_tests.NOVELL)
-)
-del _ldif_tests
 
 c = TestsFlextLdifConstants
 

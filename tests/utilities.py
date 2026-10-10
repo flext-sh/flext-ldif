@@ -722,6 +722,71 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
 
         logger: ClassVar[p.Logger] = FlextLdifUtilities.fetch_logger(__name__)
 
+        @staticmethod
+        def server_attribute_test_cases(
+            server: str,
+        ) -> t.VariadicTuple[m.Tests.AttributeTestCase]:
+            """Construct the selected dialect's attribute cases from constant rows."""
+            return tuple(
+                m.Tests.AttributeTestCase(
+                    scenario=scenario,
+                    attr_definition=definition,
+                    expected_can_handle=can_handle,
+                    expected_oid=oid,
+                    expected_name=name,
+                )
+                for dialect, scenario, definition, can_handle, oid, name in c.ATTRIBUTE_CASE_ROWS
+                if dialect == server
+            )
+
+        @staticmethod
+        def attribute_test_cases(
+            rows: t.SequenceOf[t.Tests.AttributeCaseRow],
+        ) -> t.VariadicTuple[m.Tests.AttributeTestCase]:
+            """Construct attribute cases from immutable declaration data."""
+            return tuple(
+                m.Tests.AttributeTestCase(
+                    scenario=scenario,
+                    attr_definition=definition,
+                    expected_can_handle=can_handle,
+                    expected_oid=oid,
+                    expected_name=name,
+                )
+                for scenario, definition, can_handle, oid, name in rows
+            )
+
+        @staticmethod
+        def objectclass_test_cases(
+            rows: t.SequenceOf[t.Tests.ObjectClassCaseRow],
+        ) -> t.VariadicTuple[m.Tests.ObjectClassTestCase]:
+            """Construct objectClass cases from immutable declaration data."""
+            return tuple(
+                m.Tests.ObjectClassTestCase(
+                    scenario=scenario,
+                    oc_definition=definition,
+                    expected_can_handle=can_handle,
+                    expected_oid=oid,
+                    expected_name=name,
+                    expected_kind=kind,
+                )
+                for scenario, definition, can_handle, oid, name, kind in rows
+            )
+
+        @staticmethod
+        def entry_test_cases(
+            rows: t.SequenceOf[t.Tests.EntryCaseRow],
+        ) -> t.VariadicTuple[m.Tests.EntryTestCase]:
+            """Construct entry cases with fresh mutable protocol attributes."""
+            return tuple(
+                m.Tests.EntryTestCase(
+                    scenario=scenario,
+                    entry_dn=dn,
+                    attributes={key: list(values) for key, values in attributes.items()},
+                    expected_can_handle=can_handle,
+                )
+                for scenario, dn, attributes, can_handle in rows
+            )
+
 
 u = TestsFlextLdifUtilities
 
