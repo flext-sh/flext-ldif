@@ -8,9 +8,14 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
+from flext_cli import u
+
 from flext_ldif import FlextLdifModels, c, t
-from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata as um
-from flext_ldif._utilities.server import FlextLdifUtilitiesServer as us
+from flext_ldif._utilities import (
+    FlextLdifParserSchemaFields,
+    FlextLdifUtilitiesMetadata as um,
+    FlextLdifUtilitiesServer as us,
+)
 
 
 class FlextLdifParserMetadataBuilders:
@@ -57,8 +62,6 @@ class FlextLdifParserMetadataBuilders:
         Returns:
             The resulting ``t.MutableStrSequenceMapping``.
         """
-        from flext_cli import u
-
         result: t.JsonMapping | t.JsonValue | None = metadata.get("extensions")
         if not isinstance(result, Mapping):
             return FlextLdifParserMetadataBuilders._strict_str_list_view(metadata)
@@ -104,8 +107,6 @@ class FlextLdifParserMetadataBuilders:
         Returns:
             The resulting ``FlextLdifModels.Ldif.ServerMetadata | None``.
         """
-        from flext_ldif._utilities import FlextLdifParserSchemaFields
-
         metadata_extensions = FlextLdifParserSchemaFields.extract_extensions(
             attr_definition,
         )

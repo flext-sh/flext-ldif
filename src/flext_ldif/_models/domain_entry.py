@@ -13,24 +13,21 @@ from datetime import datetime
 from types import MappingProxyType
 from typing import Annotated, ClassVar, Self, override
 
-from flext_core import FlextUtilities as u, m, r
-from flext_ldif import c, p, t
-from flext_ldif._models.domain_attributes import FlextLdifModelsDomainAttributes as mda
-from flext_ldif._models.domain_dn import FlextLdifModelsDomainDN as mdn
-from flext_ldif._models.domain_entry_change import (
+from flext_core import m
+from flext_ldif import c, p, r, t, u
+from flext_ldif._models import (
+    FlextLdifModelsDomainAttributes as mda,
+    FlextLdifModelsDomainDN as mdn,
     FlextLdifModelsDomainEntryChangeOperation,
-)
-from flext_ldif._models.domain_entry_change_value import (
     FlextLdifModelsDomainEntryChangeOperationValue,
-)
-from flext_ldif._models.domain_entry_control import FlextLdifModelsDomainEntryControl
-from flext_ldif._models.domain_entry_statistics import (
+    FlextLdifModelsDomainEntryControl,
     FlextLdifModelsDomainEntryStatistics,
+    FlextLdifModelsDomainMetadata as mdm,
 )
-from flext_ldif._models.domain_metadata import FlextLdifModelsDomainMetadata as mdm
+from flext_ldif._utilities import FlextLdifUtilitiesEntry
 
 
-class FlextLdifModelsDomainEntry:
+class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
     """Namespace for LDIF entry domain models."""
 
     EntryStatistics = FlextLdifModelsDomainEntryStatistics
@@ -49,12 +46,6 @@ class FlextLdifModelsDomainEntry:
     """Canonical modify-operation value model.
 
     Implementation module: ``domain_entry_change_value``.
-    """
-
-    ChangeOperation = FlextLdifModelsDomainEntryChangeOperation
-    """Canonical RFC 2849 modify operation model.
-
-    Implementation module: ``domain_entry_change``.
     """
 
     class Entry(m.Entity, m.DynamicModel):
@@ -141,7 +132,7 @@ class FlextLdifModelsDomainEntry:
             u.Field(
                 description="Structured modify operation blocks for changetype=modify",
             ),
-        ] = u.Field(default_factory=list)
+        ] = u.Field(default_factory=list[FlextLdifModelsDomainEntryChangeOperation])
 
         @u.field_validator("attributes", mode="before")
         @classmethod
@@ -231,7 +222,7 @@ class FlextLdifModelsDomainEntry:
             u.Field(
                 description="Original unfolded LDIF lines for loss-aware round-trip",
             ),
-        ] = u.Field(default_factory=list)
+        ] = u.Field(default_factory=list[str])
         metadata: Annotated[
             mdm.ServerMetadata | None,
             u.Field(
@@ -283,8 +274,6 @@ class FlextLdifModelsDomainEntry:
 
             pattern).
             """
-            from flext_ldif._utilities import FlextLdifUtilitiesEntry
-
             empty_attrs: t.Ldif.UnconvertedAttributes = {}
             if self.metadata is None:
                 return empty_attrs
@@ -436,8 +425,6 @@ class FlextLdifModelsDomainEntry:
             Returns:
                 The resulting ``tuple[str, t.MutableSequenceOf[str]]``.
             """
-            from flext_ldif._utilities import FlextLdifUtilitiesEntry
-
             violations: t.MutableSequenceOf[str] = []
             dn_value = "<None>"
             if self.dn is None:
@@ -503,8 +490,6 @@ class FlextLdifModelsDomainEntry:
             Returns:
                 The resulting ``Self``.
             """
-            from flext_ldif._utilities import FlextLdifUtilitiesEntry
-
             if (
                 self.metadata is None
                 or self._VALIDATION_RULES_KEY not in self.metadata.extensions

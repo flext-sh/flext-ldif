@@ -10,8 +10,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Annotated, ClassVar, Self, override
 
-from flext_core import FlextUtilities as u, m, r
-from flext_ldif import c, p, t
+from flext_core import m
+from flext_ldif import c, p, r, t, u
+from flext_ldif._utilities.collection_ldif import FlextLdifUtilitiesCollectionLdif
 
 if TYPE_CHECKING:
     from collections.abc import MutableMapping
@@ -129,8 +130,6 @@ class FlextLdifModelsDomainDN:
             Returns:
                 The resulting ``t.MutableSequenceOf[str]``.
             """
-            from flext_ldif._utilities import FlextLdifUtilitiesCollectionLdif
-
             return FlextLdifUtilitiesCollectionLdif.deduplicate_preserve_order(v)
 
     class DN(m.Value):
@@ -156,7 +155,7 @@ class FlextLdifModelsDomainDN:
             u.Field(
                 description="Server-specific metadata for preserving original format",
             ),
-        ] = u.Field(default_factory=dict)
+        ] = u.Field(default_factory=dict[str, t.JsonValue])
 
         @u.field_validator("value", mode="after")
         @classmethod

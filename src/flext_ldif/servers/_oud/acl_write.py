@@ -10,7 +10,10 @@ from collections.abc import Mapping
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._oud.acl_subject import FlextLdifServersOudAclSubjectMixin
+from flext_ldif.servers._oud import (
+    FlextLdifServersOudAclSubjectMixin,
+    FlextLdifServersOudConstants,
+)
 
 
 class FlextLdifServersOudAclWriteMixin(FlextLdifServersOudAclSubjectMixin):
@@ -24,10 +27,6 @@ class FlextLdifServersOudAclWriteMixin(FlextLdifServersOudAclSubjectMixin):
         Returns:
             The resulting ``p.Result[str]``.
         """
-        from flext_ldif.servers._oud.server_constants import (
-            FlextLdifServersOudConstants,
-        )
-
         perms = acl_data.permissions or self._permissions_from_extensions(acl_data)
         if not perms:
             return r[str].fail("ACL model has no permissions t.JsonValue")
@@ -113,10 +112,6 @@ class FlextLdifServersOudAclWriteMixin(FlextLdifServersOudAclSubjectMixin):
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
         """
-        from flext_ldif.servers._oud.server_constants import (
-            FlextLdifServersOudConstants,
-        )
-
         sc = FlextLdifServersOudConstants
         ops: t.MutableSequenceOf[str] = [
             field_name
@@ -211,10 +206,6 @@ class FlextLdifServersOudAclWriteMixin(FlextLdifServersOudAclSubjectMixin):
         Returns:
             The resulting ``bool``.
         """
-        from flext_ldif.servers._oud.server_constants import (
-            FlextLdifServersOudConstants,
-        )
-
         if not acl_data.raw_acl:
             return False
         raw_acl_str: str = acl_data.raw_acl
@@ -245,10 +236,6 @@ class FlextLdifServersOudAclWriteMixin(FlextLdifServersOudAclSubjectMixin):
         Returns:
             The resulting ``p.Result[str]``.
         """
-        from flext_ldif.servers._oud.server_constants import (
-            FlextLdifServersOudConstants,
-        )
-
         sc = FlextLdifServersOudConstants
         extensions: t.Ldif.MutableMetadataMapping | None = (
             acl_data.metadata.extensions

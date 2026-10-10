@@ -15,7 +15,7 @@ from typing import Annotated
 from flext_cli import FlextCliConfig
 
 from flext_core import FlextSettings, m
-from flext_ldif._models._ldif_namespace import _LdifNamespace
+from flext_ldif._models._ldif_namespace import LdifNamespace
 
 
 class FlextLdifConfig(FlextSettings, FlextCliConfig):
@@ -28,11 +28,11 @@ class FlextLdifConfig(FlextSettings, FlextCliConfig):
     """
 
     Ldif: Annotated[
-        _LdifNamespace,
+        LdifNamespace,
         m.Field(
             description="Open namespace exposing ``config/*.yaml`` under ``Ldif``.",
         ),
-    ] = _LdifNamespace()
+    ] = LdifNamespace()
 
 
 config: FlextLdifConfig = FlextLdifConfig.fetch_global()

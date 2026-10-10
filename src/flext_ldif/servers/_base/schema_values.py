@@ -9,6 +9,7 @@ from __future__ import annotations
 import struct
 
 from flext_ldif import c, m, p, r, t, u
+from flext_ldif.servers._base import FlextLdifServerMethodsMixin
 
 
 class FlextLdifServersBaseSchemaValuesMixin:
@@ -142,8 +143,6 @@ class FlextLdifServersBaseSchemaValuesMixin:
         Returns:
             The resulting ``str | None``.
         """
-        from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
-
         if operation is not None:
             return self._coerce_operation(operation)
         return FlextLdifServerMethodsMixin.parse_operation_kwarg(kwargs).unwrap()

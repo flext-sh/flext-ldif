@@ -56,9 +56,23 @@ class FlextLdifModelsSettings(
     def __setattr__(self, name: str, value: t.JsonValue) -> None:
         object.__setattr__(self, name, value)
 
-    __eq__ = object.__eq__
+    def __eq__(self, other: object) -> bool:
+        """Identity equality per the namespace-holder contract.
 
-    __hash__ = object.__hash__
+        Returns:
+            The resulting ``bool``.
+
+        """
+        return object.__eq__(self, other)
+
+    def __hash__(self) -> int:
+        """Identity hash per the namespace-holder contract.
+
+        Returns:
+            The resulting ``int``.
+
+        """
+        return object.__hash__(self)
 
 
 __all__: list[str] = ["FlextLdifModelsSettings"]

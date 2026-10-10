@@ -10,6 +10,12 @@ from collections.abc import Callable
 from typing import ClassVar
 
 from flext_ldif import FlextLdifModels, c, t
+from flext_ldif._utilities import (
+    FlextLdifMetadataMatchDetails,
+    FlextLdifMetadataNameDescDetails,
+    FlextLdifMetadataPrefixDetails,
+    FlextLdifMetadataSyntaxOriginDetails,
+)
 
 
 class FlextLdifMetadataSchemaAnalysis:
@@ -91,13 +97,6 @@ class FlextLdifMetadataSchemaAnalysis:
             The resulting ``t.Ldif.MutableMetadataMapping``.
 
         """
-        from flext_ldif._utilities import (
-            FlextLdifMetadataMatchDetails,
-            FlextLdifMetadataNameDescDetails,
-            FlextLdifMetadataPrefixDetails,
-            FlextLdifMetadataSyntaxOriginDetails,
-        )
-
         combined: t.Ldif.MutableMetadataMapping = {}
         extractors: t.SequenceOf[
             Callable[

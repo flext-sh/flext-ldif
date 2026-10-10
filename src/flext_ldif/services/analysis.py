@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import m, p, r, s, t, u
+from flext_ldif import FlextLdifValidation, m, p, r, s, t, u
 
 
 class FlextLdifAnalysis(s):
@@ -110,8 +110,8 @@ class FlextLdifAnalysis(s):
         is_entry_valid = is_entry_valid and oc_valid
         return (is_entry_valid, errors)
 
-    @staticmethod
     def validate_entries(
+        self,
         entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
         validation_service: p.Ldif.ValidationService | None = None,
     ) -> p.Result[m.Ldif.ValidationResult]:
@@ -120,8 +120,8 @@ class FlextLdifAnalysis(s):
         Returns:
             The resulting ``p.Result[m.Ldif.ValidationResult]``.
         """
+        _ = self
         # Why: mro-4p0t — accept ParseResponse like statistics/categorization services.
-        from flext_ldif.services.validation import FlextLdifValidation
 
         normalized_entries = u.Ldif.as_entries(entries)
         errors: t.MutableSequenceOf[str] = []

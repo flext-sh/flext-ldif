@@ -11,9 +11,13 @@ from typing import ClassVar, TypeGuard, overload
 
 from flext_cli import u
 
-from flext_core import r
-from flext_ldif import FlextLdifModels, c, p, t
-from flext_ldif._utilities.pipeline import FlextLdifUtilitiesPipeline
+from flext_ldif import FlextLdifModels, c, p, r, t
+from flext_ldif._utilities import (
+    FlextLdifUtilitiesDN,
+    FlextLdifUtilitiesPipeline,
+    FlextLdifUtilitiesSchema,
+    FlextLdifUtilitiesValidation,
+)
 
 
 class FlextLdifUtilitiesDispatch:
@@ -107,7 +111,6 @@ class FlextLdifUtilitiesDispatch:
         | Callable[[str], p.Result[t.Ldif.MutableMetadataMapping]]
         | None = None,
     ) -> p.Result[t.MutableStrPairSequence] | p.Result[t.Ldif.MutableMetadataMapping]:
-        from flext_ldif._utilities import FlextLdifUtilitiesDN, FlextLdifUtilitiesSchema
 
         result: (
             p.Result[t.MutableStrPairSequence] | p.Result[t.Ldif.MutableMetadataMapping]
@@ -151,11 +154,6 @@ class FlextLdifUtilitiesDispatch:
                 ``p.Result[t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]]
                 | p.Result[t.JsonValue] | bool``.
         """
-        from flext_ldif._utilities import (
-            FlextLdifUtilitiesDN,
-            FlextLdifUtilitiesValidation,
-        )
-
         match True:
             case _ if not validators and isinstance(
                 value_or_entries,

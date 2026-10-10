@@ -10,7 +10,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldif import c, m, t, u
-from flext_ldif.servers._oud.aci_process import FlextLdifServersOudAciProcessMixin
+from flext_ldif.servers._oud import (
+    FlextLdifServersOudAciProcessMixin,
+    FlextLdifServersOudAclExtractMixin,
+)
 
 
 class FlextLdifServersOudAciMixin(FlextLdifServersOudAciProcessMixin):
@@ -65,10 +68,6 @@ class FlextLdifServersOudAciMixin(FlextLdifServersOudAciProcessMixin):
         Returns:
             The resulting ``t.MutableSequenceOf[str] | str | None``.
         """
-        from flext_ldif.servers._oud.acl_extract import (
-            FlextLdifServersOudAclExtractMixin,
-        )
-
         extensions = entry.metadata.extensions if entry.metadata is not None else None
         if extensions is None:
             return None

@@ -10,7 +10,7 @@ import importlib
 from typing import Annotated, Self, override
 
 from flext_core import FlextService
-from flext_ldif import c, m, p, t, u
+from flext_ldif import FlextLdifSettings, c, m, p, t, u
 
 
 class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](
@@ -95,13 +95,11 @@ class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](
     @classmethod
     def runtime_bootstrap_options(cls) -> m.RuntimeBootstrapOptions:
         """Return runtime bootstrap options for LDIF services."""
-        from flext_ldif import FlextLdifSettings
-
         return m.RuntimeBootstrapOptions(settings_type=FlextLdifSettings)
 
-    @staticmethod
-    def _get_effective_server_type_value() -> str:
+    def _get_effective_server_type_value(self) -> str:
         """Return the default server type used by parser and writer services."""
+        _ = self
         default_server_type: str = c.Ldif.ServerTypes.RFC.value
         return default_server_type
 

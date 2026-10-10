@@ -7,8 +7,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._base.entry_write_body import (
+from flext_ldif.servers._base import (
+    FlextLdifServersEntryLineEmitter,
     FlextLdifServersEntryWriteBodyEmitter,
+    FlextLdifServersEntryWriteOptions,
 )
 
 
@@ -22,13 +24,6 @@ class FlextLdifServersEntryWriteContext(FlextLdifServersEntryWriteBodyEmitter):
         format_options: m.Ldif.WriteFormatOptions | None,
     ) -> None:
         """Resolve write options and the effective line emitter."""
-        from flext_ldif.servers._base.entry_lines import (
-            FlextLdifServersEntryLineEmitter,
-        )
-        from flext_ldif.servers._base.entry_write_options import (
-            FlextLdifServersEntryWriteOptions,
-        )
-
         self._entry = entry_data
         self._server_type = server_type
         self._format_options = format_options

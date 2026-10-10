@@ -10,7 +10,8 @@ from collections.abc import MutableMapping
 from typing import override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
+from flext_ldif.servers._relaxed import FlextLdifServersRelaxedConstants
+from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
 
 
 class FlextLdifServersRelaxedEntryParseMixin(FlextLdifServersRfcEntry):
@@ -244,10 +245,6 @@ class FlextLdifServersRelaxedEntryParseMixin(FlextLdifServersRfcEntry):
         Returns:
             The resulting ``t.MutableStrSequenceMapping``.
         """
-        from flext_ldif.servers._relaxed.server_constants import (
-            FlextLdifServersRelaxedConstants,
-        )
-
         attr_dict: t.MutableStrSequenceMapping = {}
         for attr_key, attr_value in entry_attrs.items():
             converted_list: t.MutableSequenceOf[str] = []

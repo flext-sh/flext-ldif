@@ -73,7 +73,7 @@ class FlextLdifServersOudSchemaWriteMixin:
         Returns:
             The resulting ``bool``.
         """
-        attribute_names = (
+        attribute_names: set[str] = (
             {name.lower() for name in entry.attributes.attributes}
             if entry.attributes is not None
             else set()

@@ -16,6 +16,7 @@ from flext_ldif import c
 from flext_ldif._models._settings_normalization import (
     FlextLdifModelsSettingsNormalization as msn,
 )
+from flext_ldif.shared import FlextLdifShared
 
 
 class FlextLdifModelsSettingsProcessing:
@@ -28,7 +29,6 @@ class FlextLdifModelsSettingsProcessing:
         def _coerce_server_type_value(
             value: c.Ldif.ServerTypes | str | None,
         ) -> str | None:
-            from flext_ldif import FlextLdifShared
 
             if value is None:
                 return None

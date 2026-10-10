@@ -10,7 +10,8 @@ import re
 from typing import override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._rfc.schema import FlextLdifServersRfcSchema
+from flext_ldif.servers._relaxed import FlextLdifServersRelaxedConstants
+from flext_ldif.servers._rfc import FlextLdifServersRfcSchema
 
 
 class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
@@ -69,10 +70,6 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
             The resulting ``tuple[t.MutableSequenceOf[str] | None,
                 t.MutableSequenceOf[str] | None]``.
         """
-        from flext_ldif.servers._relaxed.server_constants import (
-            FlextLdifServersRelaxedConstants,
-        )
-
         must = None
         must_match = c.Ldif.SCHEMA_OBJECTCLASS_MUST_RE.search(oc_definition)
         if must_match:
@@ -114,10 +111,6 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
         Returns:
             The resulting ``str | None``.
         """
-        from flext_ldif.servers._relaxed.server_constants import (
-            FlextLdifServersRelaxedConstants,
-        )
-
         oid_result = u.Ldif.extract_oid(definition)
         if oid_result.success:
             oid_val: str = oid_result.value
@@ -140,10 +133,6 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
         Returns:
             The resulting ``str | None``.
         """
-        from flext_ldif.servers._relaxed.server_constants import (
-            FlextLdifServersRelaxedConstants,
-        )
-
         sup_match = c.Ldif.SCHEMA_OBJECTCLASS_SUP_RE.search(oc_definition)
         if not sup_match:
             return None
@@ -236,10 +225,6 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
         Returns:
             The resulting ``p.Result[m.Ldif.SchemaAttribute]``.
         """
-        from flext_ldif.servers._relaxed.server_constants import (
-            FlextLdifServersRelaxedConstants,
-        )
-
         oid = self._extract_oid_with_fallback_patterns(attr_definition)
         if not oid:
             return r[m.Ldif.SchemaAttribute].fail(

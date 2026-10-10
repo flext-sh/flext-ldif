@@ -51,20 +51,17 @@ class FlextLdifProtocolsClient(Protocol):
             ...
 
     @runtime_checkable
-    class ServerResolutionService(
-        FlextLdifProtocolsBase.ServerResolutionService,
-        Protocol,
-    ):
-        """Single-owner contract inherited from the base facet unchanged."""
-
-    @runtime_checkable
     class Client(
         FlextLdifProtocolsBase.ValidationService,
         FlextLdifProtocolsBase.ServerDetectionService,
-        ServerResolutionService,
+        FlextLdifProtocolsBase.ServerResolutionService,
         Protocol,
     ):
-        """Public contract for the composed LDIF facade."""
+        """Public contract for the composed LDIF facade.
+
+        ``ServerResolutionService`` has a single owner in
+        ``FlextLdifProtocolsBase`` and is composed unchanged.
+        """
 
         @property
         def settings(self) -> FlextLdifProtocolsClient.Settings:

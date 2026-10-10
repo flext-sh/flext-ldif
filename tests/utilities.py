@@ -17,14 +17,15 @@ from typing import TYPE_CHECKING, ClassVar, Final
 
 import pytest
 from flext_tests import FlextTestsFixturesDSLMixin, FlextTestsUtilities, tk, tm
+from flext_tests.docker import FlextTestsDocker
 
 from flext_ldif import FlextLdifUtilities
 from tests import c, m, p, t
 from tests._utilities_schema import (
-    _PARSE_DISPATCH,
+    PARSE_DISPATCH,
     SchemaExpectations,
-    _assert_field_eq,
-    _assert_must_contain,
+    assert_field_eq,
+    assert_must_contain,
 )
 
 if TYPE_CHECKING:
@@ -67,7 +68,8 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
             Returns:
                 The resulting ``m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass``.
             """
-            is_objectclass = TestsFlextLdifUtilities.TestsSchemaAclAssertionsMixin._schema_definition_is_objectclass
+            mixin_class = TestsFlextLdifUtilities.TestsSchemaAclAssertionsMixin
+            is_objectclass = mixin_class._schema_definition_is_objectclass
             if is_objectclass(schema_def):
                 value_raw = tm.ok(server.parse_objectclass(schema_def))
                 value: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass = (
@@ -92,7 +94,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
                 ("desc", expectations.desc, "DESC"),
             )
             for field, expected, label in common_checks:
-                _assert_field_eq(value, field, expected, label)
+                assert_field_eq(value, field, expected, label)
 
         @staticmethod
         def _assert_attribute_expectations(
@@ -106,7 +108,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
                 ("length", expectations.length, "length"),
             )
             for field, expected, label in attr_checks:
-                _assert_field_eq(value, field, expected, label)
+                assert_field_eq(value, field, expected, label)
 
         @staticmethod
         def _assert_objectclass_expectations(
@@ -129,7 +131,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
                 ),
             )
             for field, expected, label in oc_checks:
-                _assert_field_eq(value, field, expected, label)
+                assert_field_eq(value, field, expected, label)
 
         @classmethod
         def assert_server_schema_parse_and_properties(
@@ -180,7 +182,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
                 AssertionError: If ``result.failure``; or if Expected; or
                     if ``result.success``.
             """
-            method_name = _PARSE_DISPATCH.get(parse_method)
+            method_name = PARSE_DISPATCH.get(parse_method)
             if method_name is None or not isinstance(server, p.Ldif.SchemaServer):
                 msg = f"{parse_method} is not supported by this server"
                 raise AssertionError(msg)
@@ -305,7 +307,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
                 raise AssertionError(message or f"Write failed: {result.error}")
             serialized: str = result.unwrap()
             if must_contain is not None:
-                _assert_must_contain(serialized, must_contain)
+                assert_must_contain(serialized, must_contain)
             return serialized
 
         @staticmethod
@@ -328,7 +330,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
                 raise AssertionError(message or f"Write failed: {result.error}")
             serialized: str = result.unwrap()
             if must_contain is not None:
-                _assert_must_contain(serialized, must_contain)
+                assert_must_contain(serialized, must_contain)
             return serialized
 
     class TestsLdapClientMixin:
@@ -543,7 +545,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
             return default_credentials
 
         @staticmethod
-        def get_docker_control() -> tk:
+        def get_docker_control() -> FlextTestsDocker:
             """Create Docker test infrastructure controller.
 
             Returns:
@@ -575,7 +577,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
     class TestsLdifEntryBuildersMixin(FlextTestsFixturesDSLMixin):
         """Builders for real entry models, LDIF content, and fixture metadata."""
 
-        _FIXTURES_ROOT: ClassVar[Path] = c.Tests.FIXTURES_DIR
+        _FIXTURES_ROOT: ClassVar[Path | None] = c.Tests.FIXTURES_DIR
         _FILE_EXTENSION: ClassVar[str] = ".ldif"
         _fixture_metadata_cache: ClassVar[
             MutableMapping[Path, m.Tests.FixtureMetadata]

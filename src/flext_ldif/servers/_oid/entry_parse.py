@@ -10,13 +10,16 @@ from collections.abc import MutableMapping
 from typing import override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._oid.entry_boolean import FlextLdifServersOidEntryBooleanMixin
-from flext_ldif.servers._oid.entry_metadata import FlextLdifServersOidEntryMetadataMixin
-from flext_ldif.servers._oid.entry_normalize import (
+from flext_ldif.servers._oid import (
+    FlextLdifServersOidConstants,
+    FlextLdifServersOidEntryBooleanMixin,
+    FlextLdifServersOidEntryMetadataMixin,
     FlextLdifServersOidEntryNormalizeMixin,
 )
-from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
-from flext_ldif.servers._rfc.server_constants import FlextLdifServersRfcConstants
+from flext_ldif.servers._rfc import (
+    FlextLdifServersRfcConstants,
+    FlextLdifServersRfcEntry,
+)
 
 
 class FlextLdifServersOidEntryParseMixin(
@@ -319,10 +322,6 @@ class FlextLdifServersOidEntryParseMixin(
             The resulting ``p.Result[tuple[str, MutableMapping[str,
                 t.MutableSequenceOf[str | bytes]]]]``.
         """
-        from flext_ldif.servers._oid.server_constants import (
-            FlextLdifServersOidConstants,
-        )
-
         cleaned_dn, _ = u.Ldif.clean_dn_with_statistics(dn)
         normalized_dn = cleaned_dn
         if cleaned_dn.lower() == FlextLdifServersOidConstants.SCHEMA_DN_SERVER.lower():

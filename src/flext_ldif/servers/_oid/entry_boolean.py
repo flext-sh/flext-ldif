@@ -9,8 +9,11 @@ from __future__ import annotations
 from collections.abc import MutableMapping
 
 from flext_ldif import c, m, t, u
-from flext_ldif.servers._oid.entry_metadata import FlextLdifServersOidEntryMetadataMixin
-from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
+from flext_ldif.servers._oid import (
+    FlextLdifServersOidConstants,
+    FlextLdifServersOidEntryMetadataMixin,
+)
+from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
 
 
 class FlextLdifServersOidEntryBooleanMixin(
@@ -33,10 +36,6 @@ class FlextLdifServersOidEntryBooleanMixin(
             The resulting ``tuple[t.MutableStrSequenceMapping, set[str],
                 MutableMapping[str, t.MutableAttributeMapping]]``.
         """
-        from flext_ldif.servers._oid.server_constants import (
-            FlextLdifServersOidConstants,
-        )
-
         oid_constants = FlextLdifServersOidConstants
         boolean_attributes = oid_constants.BOOLEAN_ATTRIBUTES
         boolean_attr_names = {attr.lower() for attr in boolean_attributes}
@@ -84,10 +83,6 @@ class FlextLdifServersOidEntryBooleanMixin(
         Returns:
             The resulting ``MutableMapping[str, str | t.MutableSequenceOf[str]]``.
         """
-        from flext_ldif.servers._oid.server_constants import (
-            FlextLdifServersOidConstants,
-        )
-
         oid_constants = FlextLdifServersOidConstants
         return {
             c.Ldif.CONVERSION_ORIGINAL_VALUE: original_values,
@@ -123,10 +118,6 @@ class FlextLdifServersOidEntryBooleanMixin(
         Returns:
             The resulting ``tuple[str, bool]``.
         """
-        from flext_ldif.servers._oid.server_constants import (
-            FlextLdifServersOidConstants,
-        )
-
         if value == "TRUE":
             return (FlextLdifServersOidConstants.ONE_OID, True)
         if value == "FALSE":
@@ -144,10 +135,6 @@ class FlextLdifServersOidEntryBooleanMixin(
         Returns:
             The resulting ``bool``.
         """
-        from flext_ldif.servers._oid.server_constants import (
-            FlextLdifServersOidConstants,
-        )
-
         mk = c.Ldif
         converted_val = conv_data.get(mk.CONVERSION_CONVERTED_VALUE)
         match converted_val:
@@ -175,10 +162,6 @@ class FlextLdifServersOidEntryBooleanMixin(
         Returns:
             The resulting ``m.Ldif.Entry``.
         """
-        from flext_ldif.servers._oid.server_constants import (
-            FlextLdifServersOidConstants,
-        )
-
         if not entry_data.attributes:
             return entry_data
         boolean_conversions = self._parse_metadata_boolean_flags(entry_data)

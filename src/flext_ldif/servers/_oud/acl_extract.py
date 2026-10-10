@@ -143,18 +143,14 @@ class FlextLdifServersOudAclExtractMixin:
         if isinstance(hidden_attrs_raw, (list, tuple, frozenset, set)):
             hidden_attribute_names = {str(item).lower() for item in hidden_attrs_raw}
         if metadata_typed.write_options is not None:
-            legacy_hidden_attrs = getattr(
-                metadata_typed.write_options,
-                "hidden_attrs",
-                [],
+            hidden_attribute_names.update(
+                attr.lower() for attr in metadata_typed.write_options.hidden_attrs
             )
-            if isinstance(legacy_hidden_attrs, (list, tuple, frozenset, set)):
-                hidden_attribute_names.update(
-                    str(item).lower() for item in legacy_hidden_attrs
+            if metadata_typed.write_options.base_dn is not None:
+                current_extensions.setdefault(
+                    c.Ldif.BASE_DN,
+                    metadata_typed.write_options.base_dn,
                 )
-            base_dn_value = getattr(metadata_typed.write_options, "base_dn", None)
-            if isinstance(base_dn_value, str):
-                current_extensions.setdefault(c.Ldif.BASE_DN, base_dn_value)
         hidden_attribute_names.update(attr.lower() for attr in hidden_attrs)
         if hidden_attribute_names:
             current_extensions[c.Ldif.HIDDEN_ATTRIBUTES] = (

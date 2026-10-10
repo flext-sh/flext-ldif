@@ -14,12 +14,19 @@ from __future__ import annotations
 
 from typing import Annotated, override
 
-from flext_ldif import c, m, p, r, s, t, u
-from flext_ldif.services.conversion_metadata import FlextLdifConversionMetadataMixin
-from flext_ldif.services.conversion_schema_entry import (
+from flext_ldif import (
+    FlextLdifConversionMetadataMixin,
     FlextLdifConversionSchemaEntryMixin,
+    FlextLdifConversionSupportMixin,
+    c,
+    m,
+    p,
+    r,
+    s,
+    t,
+    u,
 )
-from flext_ldif.services.conversion_support import FlextLdifConversionSupportMixin
+from flext_ldif.servers._oid import FlextLdifServersOidAclPipeline
 
 
 class FlextLdifConversionEntryMixin(
@@ -159,8 +166,6 @@ class FlextLdifConversionEntryMixin(
         Returns:
             The resulting ``p.Result[t.Ldif.ConvertedModel]``.
         """
-        from flext_ldif.servers._oid.acl_pipeline import FlextLdifServersOidAclPipeline
-
         transformed_attributes = u.Ldif.transform_entry_attributes_between_oid_rfc(
             converted_entry,
             source_type_norm,

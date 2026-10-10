@@ -67,10 +67,10 @@ class FlextLdifModels(FlextCliModels):
             rfc_subject_type: Annotated[str, u.Field()] = ""
             oid_subject_value: Annotated[str, u.Field()] = ""
             perms_dict: Annotated[t.MutableBoolMapping, u.Field()] = u.Field(
-                default_factory=dict,
+                default_factory=dict[str, bool],
             )
             target_dn: Annotated[str, u.Field()] = "entry"
-            target_attrs: t.MutableSequenceOf[str] = u.Field(default_factory=list)
+            target_attrs: t.MutableSequenceOf[str] = u.Field(default_factory=list[str])
             acl_filter: Annotated[str, u.Field()] = ""
             acl_constraint: Annotated[str, u.Field()] = ""
             bindmode: Annotated[str, u.Field()] = ""
