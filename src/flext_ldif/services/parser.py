@@ -11,7 +11,7 @@ from pathlib import Path
 from flext_ldif import c, m, p, r, s
 
 
-class FlextLdifParser(s):
+class FlextLdifParser(s[m.Ldif.Response]):
     """LDIF parser orchestrator over the server server registry."""
 
     def parse_ldif(

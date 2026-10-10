@@ -9,7 +9,7 @@ from __future__ import annotations
 from flext_ldif import FlextLdifValidation, m, p, r, s, t, u
 
 
-class FlextLdifAnalysis(s):
+class FlextLdifAnalysis(s[m.Ldif.Response]):
     """Service for entry analysis and validation."""
 
     @staticmethod

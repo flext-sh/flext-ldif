@@ -11,13 +11,13 @@ import inspect
 import pkgutil
 from typing import TYPE_CHECKING, Annotated, ClassVar, Self, TypeGuard, override
 
-from flext_ldif import c, p, r, s, t, u
+from flext_ldif import c, m, p, r, s, t, u
 
 if TYPE_CHECKING:
     from flext_ldif import FlextLdifServersBase
 
 
-class FlextLdifServer(s):
+class FlextLdifServer(s[m.Ldif.Response]):
     """Server server registry using the canonical registry DSL."""
 
     _discovery_initialized: ClassVar[bool] = False

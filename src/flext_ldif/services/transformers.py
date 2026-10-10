@@ -11,7 +11,7 @@ from typing import Annotated
 from flext_ldif import FlextLdifConversion, FlextLdifShared, c, m, p, r, s, t, u
 
 
-class FlextLdifTransformer(s):
+class FlextLdifTransformer(s[m.Ldif.Response]):
     """Transformer for server-specific conversions."""
 
     source_server: Annotated[

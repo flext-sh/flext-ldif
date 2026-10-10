@@ -13,7 +13,7 @@ from __future__ import annotations
 from flext_ldif import c, m, s, t, u
 
 
-class FlextLdifConversionAclPreserveMixin(s):
+class FlextLdifConversionAclPreserveMixin(s[m.Ldif.Response]):
     """ACL permission + metadata preservation helpers."""
 
     @staticmethod

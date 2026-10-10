@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
-class FlextLdifWriter(s):
+class FlextLdifWriter(s[m.Ldif.Response]):
     """LDIF writer orchestrator over the server server registry."""
 
     def write(

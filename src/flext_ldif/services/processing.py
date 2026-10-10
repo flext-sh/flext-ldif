@@ -11,7 +11,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from flext_ldif import m, p, r, s, t, u
 
 
-class FlextLdifProcessing(s):
+class FlextLdifProcessing(s[m.Ldif.Response]):
     """Service for batch and parallel entry processing."""
 
     @staticmethod
