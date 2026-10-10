@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from flext_cli import p
 
     from flext_ldif import m, t
-    from flext_ldif._protocols.base import FlextLdifProtocolsBase
+    from flext_ldif._protocols import FlextLdifProtocolsBase
 
 
 @runtime_checkable

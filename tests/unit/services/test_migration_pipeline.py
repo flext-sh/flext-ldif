@@ -15,11 +15,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
 
-from flext_ldif.services.migration import FlextLdifMigrationPipeline
+from flext_ldif.services import FlextLdifMigrationPipeline
 from flext_ldif.services.pipeline import FlextLdifProcessingPipeline
-from tests import TestsFlextLdifUtilities as u, c, m
+from tests import TestsFlextLdifUtilities as u, c, m, tm
 
 if TYPE_CHECKING:
     from pathlib import Path

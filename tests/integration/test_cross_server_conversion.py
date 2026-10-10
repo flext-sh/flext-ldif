@@ -15,15 +15,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_tests import tm
-
-from tests import c, m
+from tests import c, m, tm
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_ldif.servers.base import FlextLdifServersBase
-    from flext_ldif.services.conversion import FlextLdifConversion
+    from flext_ldif.servers import FlextLdifServersBase
+    from flext_ldif.services import FlextLdifConversion
     from tests import p, t
 
 

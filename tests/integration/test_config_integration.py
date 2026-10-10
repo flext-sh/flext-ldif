@@ -22,15 +22,12 @@ from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
 
 from flext_ldif import ldif
-from tests import c
-from tests.base import s
+from tests import c, s, tm
 
 if TYPE_CHECKING:
-    from tests import m
-    from tests.settings import TestsFlextLdifSettings
+    from tests import TestsFlextLdifSettings, m
 
 # Expected DN observable in CONFIG_BASIC_ENTRY.
 _BASIC_DN = "cn=Test,dc=example,dc=com"

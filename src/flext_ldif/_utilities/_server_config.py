@@ -6,8 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import c, m, t
-from flext_ldif.shared import FlextLdifShared
+from flext_ldif import FlextLdifShared, c, m, t
 
 
 class FlextLdifServerConfig:

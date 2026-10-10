@@ -11,8 +11,8 @@ from typing import TYPE_CHECKING
 from flext_ldif import c, m, p, r, t, u
 
 if TYPE_CHECKING:
-    from flext_ldif.servers._base.entry_lines import FlextLdifServersEntryLineEmitter
-    from flext_ldif.servers._base.entry_write_options import (
+    from flext_ldif.servers._base import (
+        FlextLdifServersEntryLineEmitter,
         FlextLdifServersEntryWriteOptions,
     )
 

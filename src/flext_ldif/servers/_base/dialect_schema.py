@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import ClassVar, override
 
 from flext_ldif import m, u
-from flext_ldif.servers._rfc.schema import FlextLdifServersRfcSchema
+from flext_ldif.servers._rfc import FlextLdifServersRfcSchema
 
 
 class FlextLdifServersDialectSchema(FlextLdifServersRfcSchema):

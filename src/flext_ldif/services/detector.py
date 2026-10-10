@@ -8,8 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, override
 
-from flext_ldif import c, m, p, r, s, u
-from flext_ldif.services.detector_scoring import FlextLdifDetectorScoring
+from flext_ldif import FlextLdifDetectorScoring, c, m, p, r, s, u
 
 if TYPE_CHECKING:
     from pathlib import Path

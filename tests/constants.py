@@ -21,140 +21,147 @@ if TYPE_CHECKING:
     from tests import t
 
 
-def _attribute_case(
-    scenario: str,
-    attr_definition: str,
-    *,
-    expected_can_handle: bool,
-    expected_oid: str | None = None,
-    expected_name: str | None = None,
-) -> m.Tests.AttributeTestCase:
-    """Build one attribute can-handle test case from a data row.
-
-    Returns:
-        The resulting ``m.Tests.AttributeTestCase``.
-    """
-    return m.Tests.AttributeTestCase(
-        scenario=scenario,
-        attr_definition=attr_definition,
-        expected_can_handle=expected_can_handle,
-        expected_oid=expected_oid,
-        expected_name=expected_name,
-    )
-
-
-_ATTRIBUTE_CASE_ROWS: Final[
-    tuple[tuple[str, str, str, bool, str | None, str | None], ...]
-] = (
-    (
-        "ds389",
-        "ds389_oid",
-        (
-            "( 2.16.840.1.113730.3.1.1 NAME 'nsslapd-suffix' "
-            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )"
-        ),
-        True,
-        "2.16.840.1.113730.3.1.1",
-        "nsslapd-suffix",
-    ),
-    (
-        "ds389",
-        "nsslapd_prefix",
-        ("( 1.2.3.4 NAME 'nsslapd-port' SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 )"),
-        True,
-        None,
-        "nsslapd-port",
-    ),
-    (
-        "ds389",
-        "nsds_prefix",
-        ("( 1.2.3.4 NAME 'nsds5ReplicaId' SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 )"),
-        True,
-        None,
-        "nsds5ReplicaId",
-    ),
-    (
-        "ds389",
-        "nsuniqueid_prefix",
-        ("( 1.2.3.4 NAME 'nsuniqueid' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"),
-        True,
-        None,
-        "nsuniqueid",
-    ),
-    (
-        "ds389",
-        "standard_rfc",
-        ("( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"),
-        False,
-        None,
-        None,
-    ),
-    (
-        "novell",
-        "novell_oid",
-        (
-            "( 2.16.840.1.113719.1.1.4.1.501 NAME "
-            "'nspmPasswordPolicyDN' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )"
-        ),
-        True,
-        "2.16.840.1.113719.1.1.4.1.501",
-        "nspmPasswordPolicyDN",
-    ),
-    (
-        "novell",
-        "nspm_prefix",
-        ("( 1.2.3.4 NAME 'nspmPasswordPolicy' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"),
-        True,
-        None,
-        "nspmPasswordPolicy",
-    ),
-    (
-        "novell",
-        "login_prefix",
-        ("( 1.2.3.4 NAME 'loginDisabled' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 )"),
-        True,
-        None,
-        "loginDisabled",
-    ),
-    (
-        "novell",
-        "dirxml_prefix",
-        ("( 1.2.3.4 NAME 'dirxml-associations' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"),
-        True,
-        None,
-        "dirxml-associations",
-    ),
-    (
-        "novell",
-        "standard_rfc",
-        ("( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"),
-        False,
-        None,
-        None,
-    ),
-)
-
-
-def _server_attribute_cases(server: str) -> t.SequenceOf[m.Tests.AttributeTestCase]:
-    """Build the attribute cases of one server from the flat row table.
-
-    Returns:
-        The resulting ``t.SequenceOf[m.Tests.AttributeTestCase]``.
-    """
-    return tuple(
-        _attribute_case(
-            *row[1:3],
-            expected_can_handle=row[3],
-            expected_oid=row[4],
-            expected_name=row[5],
-        )
-        for row in _ATTRIBUTE_CASE_ROWS
-        if row[0] == server
-    )
-
-
 class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
     """Flat test constants for flext-ldif."""
+
+    @staticmethod
+    def _server_attribute_cases(
+        server: str,
+    ) -> t.SequenceOf[m.Tests.AttributeTestCase]:
+        """Build the attribute cases of one server from the flat row table.
+
+        Returns:
+            The resulting ``t.SequenceOf[m.Tests.AttributeTestCase]``.
+        """
+        return tuple(
+            TestsFlextLdifConstants._attribute_case(
+                *row[1:3],
+                expected_can_handle=row[3],
+                expected_oid=row[4],
+                expected_name=row[5],
+            )
+            for row in TestsFlextLdifConstants._ATTRIBUTE_CASE_ROWS
+            if row[0] == server
+        )
+
+    @staticmethod
+    def _attribute_case(
+        scenario: str,
+        attr_definition: str,
+        *,
+        expected_can_handle: bool,
+        expected_oid: str | None = None,
+        expected_name: str | None = None,
+    ) -> m.Tests.AttributeTestCase:
+        """Build one attribute can-handle test case from a data row.
+
+        Returns:
+            The resulting ``m.Tests.AttributeTestCase``.
+        """
+        return m.Tests.AttributeTestCase(
+            scenario=scenario,
+            attr_definition=attr_definition,
+            expected_can_handle=expected_can_handle,
+            expected_oid=expected_oid,
+            expected_name=expected_name,
+        )
+
+    _ATTRIBUTE_CASE_ROWS: Final[
+        tuple[tuple[str, str, str, bool, str | None, str | None], ...]
+    ] = (
+        (
+            "ds389",
+            "ds389_oid",
+            (
+                "( 2.16.840.1.113730.3.1.1 NAME 'nsslapd-suffix' "
+                "SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )"
+            ),
+            True,
+            "2.16.840.1.113730.3.1.1",
+            "nsslapd-suffix",
+        ),
+        (
+            "ds389",
+            "nsslapd_prefix",
+            ("( 1.2.3.4 NAME 'nsslapd-port' SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 )"),
+            True,
+            None,
+            "nsslapd-port",
+        ),
+        (
+            "ds389",
+            "nsds_prefix",
+            ("( 1.2.3.4 NAME 'nsds5ReplicaId' SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 )"),
+            True,
+            None,
+            "nsds5ReplicaId",
+        ),
+        (
+            "ds389",
+            "nsuniqueid_prefix",
+            ("( 1.2.3.4 NAME 'nsuniqueid' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"),
+            True,
+            None,
+            "nsuniqueid",
+        ),
+        (
+            "ds389",
+            "standard_rfc",
+            ("( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"),
+            False,
+            None,
+            None,
+        ),
+        (
+            "novell",
+            "novell_oid",
+            (
+                "( 2.16.840.1.113719.1.1.4.1.501 NAME "
+                "'nspmPasswordPolicyDN' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )"
+            ),
+            True,
+            "2.16.840.1.113719.1.1.4.1.501",
+            "nspmPasswordPolicyDN",
+        ),
+        (
+            "novell",
+            "nspm_prefix",
+            (
+                "( 1.2.3.4 NAME 'nspmPasswordPolicy' SYNTAX "
+                "1.3.6.1.4.1.1466.115.121.1.15 )"
+            ),
+            True,
+            None,
+            "nspmPasswordPolicy",
+        ),
+        (
+            "novell",
+            "login_prefix",
+            ("( 1.2.3.4 NAME 'loginDisabled' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 )"),
+            True,
+            None,
+            "loginDisabled",
+        ),
+        (
+            "novell",
+            "dirxml_prefix",
+            (
+                "( 1.2.3.4 NAME 'dirxml-associations' SYNTAX "
+                "1.3.6.1.4.1.1466.115.121.1.15 )"
+            ),
+            True,
+            None,
+            "dirxml-associations",
+        ),
+        (
+            "novell",
+            "standard_rfc",
+            ("( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"),
+            False,
+            None,
+            None,
+        ),
+    )
 
     # One flat SSOT row table: (server, scenario, definition, can_handle, oid, name).
     # DS389 and Novell rows share the keyed shape instead of parallel blocks.
@@ -755,7 +762,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
 
         DS389_ATTRIBUTE_TEST_CASES: ClassVar[
             t.SequenceOf[m.Tests.AttributeTestCase]
-        ] = _server_attribute_cases(DS389)
+        ] = ()
 
         DS389_OBJECTCLASS_TEST_CASES: ClassVar[
             t.SequenceOf[m.Tests.ObjectClassTestCase]
@@ -842,7 +849,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
 
         NOVELL_ATTRIBUTE_TEST_CASES: ClassVar[
             t.SequenceOf[m.Tests.AttributeTestCase]
-        ] = _server_attribute_cases(NOVELL)
+        ] = ()
 
         NOVELL_OBJECTCLASS_TEST_CASES: ClassVar[
             t.SequenceOf[m.Tests.ObjectClassTestCase]
@@ -1029,6 +1036,15 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
         STATS_SERVER_TYPES: ClassVar[t.StrSequence] = (RFC, OID)
         STATS_EXPECTED_OBJECTCLASS: ClassVar[str] = "person"
 
+
+_ldif_tests = TestsFlextLdifConstants.Tests
+_ldif_tests.DS389_ATTRIBUTE_TEST_CASES = (
+    TestsFlextLdifConstants._server_attribute_cases(_ldif_tests.DS389)
+)
+_ldif_tests.NOVELL_ATTRIBUTE_TEST_CASES = (
+    TestsFlextLdifConstants._server_attribute_cases(_ldif_tests.NOVELL)
+)
+del _ldif_tests
 
 c = TestsFlextLdifConstants
 

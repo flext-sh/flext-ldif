@@ -10,9 +10,11 @@ from typing import Annotated
 
 from flext_core import FlextUtilities as u, m
 from flext_ldif import c, t
-from flext_ldif._models.collections import FlextLdifModelsCollections as mc
-from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries as mde
-from flext_ldif._models.results_statistics import FlextLdifModelsResultsStatistics
+from flext_ldif._models import (
+    FlextLdifModelsCollections as mc,
+    FlextLdifModelsDomainsEntries as mde,
+    FlextLdifModelsResultsStatistics,
+)
 
 
 class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):

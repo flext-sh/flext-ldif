@@ -6,13 +6,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif._models.acl_convert import FlextLdifModelsAclConvert
-from flext_ldif._models.domain_acl import FlextLdifModelsDomainAcl
-from flext_ldif._models.domain_attributes import FlextLdifModelsDomainAttributes
-from flext_ldif._models.domain_dn import FlextLdifModelsDomainDN
-from flext_ldif._models.domain_entry import FlextLdifModelsDomainEntry
-from flext_ldif._models.domain_metadata import FlextLdifModelsDomainMetadata
-from flext_ldif._models.domain_schema import FlextLdifModelsDomainSchema
+from flext_ldif._models import (
+    FlextLdifModelsAclConvert,
+    FlextLdifModelsDomainAcl,
+    FlextLdifModelsDomainAttributes,
+    FlextLdifModelsDomainDN,
+    FlextLdifModelsDomainEntry,
+    FlextLdifModelsDomainMetadata,
+    FlextLdifModelsDomainSchema,
+)
 
 
 class FlextLdifModelsDomainsEntries(

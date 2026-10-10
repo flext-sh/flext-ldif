@@ -6,15 +6,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif._utilities._dn_chars import FlextLdifDNCharClass
-from flext_ldif._utilities._dn_clean import FlextLdifDNCleaning
-from flext_ldif._utilities._dn_escape import FlextLdifDNEscaping
-from flext_ldif._utilities._dn_normalize import FlextLdifDNNormalization
-from flext_ldif._utilities._dn_parse import FlextLdifDNParsing
-from flext_ldif._utilities._dn_rdn import FlextLdifDNRdnParsing
-from flext_ldif._utilities._dn_rebase import FlextLdifDNRebasing
-from flext_ldif._utilities._dn_transform import FlextLdifDNTransforming
-from flext_ldif._utilities._dn_validate import FlextLdifDNValidation
+from flext_ldif._utilities import (
+    FlextLdifDNCharClass,
+    FlextLdifDNCleaning,
+    FlextLdifDNEscaping,
+    FlextLdifDNNormalization,
+    FlextLdifDNParsing,
+    FlextLdifDNRdnParsing,
+    FlextLdifDNRebasing,
+    FlextLdifDNTransforming,
+    FlextLdifDNValidation,
+)
 
 
 class FlextLdifUtilitiesDN(

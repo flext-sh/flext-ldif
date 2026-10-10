@@ -13,7 +13,7 @@ from flext_core import FlextService
 from flext_ldif import FlextLdifSettings, c, m, p, t, u
 
 
-class FlextLdifServiceBase[TDomainResult = m.Ldif.Response](
+class FlextLdifServiceBase[TDomainResult](
     FlextService[TDomainResult],
 ):
     """Base class for LDIF services with typed settings helper."""

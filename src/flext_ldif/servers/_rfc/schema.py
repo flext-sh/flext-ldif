@@ -13,9 +13,11 @@ from flext_ldif.servers._base import (
     FlextLdifServerMethodsMixin,
     FlextLdifServersBaseSchema,
 )
-from flext_ldif.servers._rfc.schema_parse import FlextLdifServersRfcSchemaParseMixin
-from flext_ldif.servers._rfc.schema_values import FlextLdifServersRfcSchemaValuesMixin
-from flext_ldif.servers._rfc.schema_write import FlextLdifServersRfcSchemaWriteMixin
+from flext_ldif.servers._rfc import (
+    FlextLdifServersRfcSchemaParseMixin,
+    FlextLdifServersRfcSchemaValuesMixin,
+    FlextLdifServersRfcSchemaWriteMixin,
+)
 
 
 class FlextLdifServersRfcSchema(

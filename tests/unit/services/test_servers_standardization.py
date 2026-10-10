@@ -15,14 +15,17 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_tests import tm
 
-from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
-from flext_ldif.servers._rfc.server_constants import FlextLdifServersRfcConstants
-from flext_ldif.servers.oid import FlextLdifServersOid
-from flext_ldif.servers.oud import FlextLdifServersOud
-from flext_ldif.servers.rfc import FlextLdifServersRfc
-from tests import t
+from flext_ldif.servers import (
+    FlextLdifServersOid,
+    FlextLdifServersOud,
+    FlextLdifServersRfc,
+)
+from flext_ldif.servers._rfc import (
+    FlextLdifServersRfcConstants,
+    FlextLdifServersRfcEntry,
+)
+from tests import t, tm
 from tests.unit.services.typings import ServerClass
 
 # (server class, canonical identity, priority) — the standardized identity table.

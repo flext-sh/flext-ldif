@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence
 
-from flext_ldif import m, p, r, t
+from examples import m, p, r, t
 
 
 def create_entry_or_none(
