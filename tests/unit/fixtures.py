@@ -11,11 +11,13 @@ from typing import TYPE_CHECKING
 import pytest
 
 from flext_ldif import ldif
-from flext_ldif.services.conversion import FlextLdifConversion
-from flext_ldif.services.migration import FlextLdifMigrationPipeline
-from flext_ldif.services.parser import FlextLdifParser
-from flext_ldif.services.server import FlextLdifServer
-from flext_ldif.services.writer import FlextLdifWriter
+from flext_ldif.services import (
+    FlextLdifConversion,
+    FlextLdifMigrationPipeline,
+    FlextLdifParser,
+    FlextLdifServer,
+    FlextLdifWriter,
+)
 from tests import c, u
 
 if TYPE_CHECKING:

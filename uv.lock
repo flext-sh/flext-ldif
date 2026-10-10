@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = "==3.13.*"
 resolution-markers = [
     "sys_platform == 'linux'",
@@ -451,7 +451,6 @@ version = "0.12.0"
 source = { git = "https://github.com/flext-sh/flext-infra.git?rev=0.12.0-dev#289812e4819afbb73fb41de6b8b7ae501d520f49" }
 dependencies = [
     { name = "annotated-types" },
-    { name = "beartype" },
     { name = "defusedxml" },
     { name = "dependency-injector" },
     { name = "flext-cli" },

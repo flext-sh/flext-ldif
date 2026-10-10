@@ -15,7 +15,7 @@ from flext_ldif import FlextLdifProtocols
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from flext_ldif.services.migration import FlextLdifMigrationPipeline
+    from flext_ldif.services import FlextLdifMigrationPipeline
     from tests import c, m
 
 

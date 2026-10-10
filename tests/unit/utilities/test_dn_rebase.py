@@ -14,9 +14,8 @@ from __future__ import annotations
 from typing import cast
 
 import pytest
-from flext_tests import tm
 
-from tests import m, t, u
+from tests import m, t, tm, u
 
 SOURCE = "dc=example,dc=invalid"
 TARGET = "dc=r123,dc=algar,dc=local"

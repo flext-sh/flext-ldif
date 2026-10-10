@@ -20,9 +20,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar
 
 import pytest
-from flext_tests import tm
 
-from tests import TestsFlextLdifUtilities as u
+from tests import TestsFlextLdifUtilities as u, tm
 
 if TYPE_CHECKING:
     from tests import m, p, t

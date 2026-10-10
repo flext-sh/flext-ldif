@@ -10,7 +10,7 @@ from collections.abc import Mapping, Sequence
 from typing import ClassVar
 
 from flext_ldif import c, p, r, t, u
-from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
+from flext_ldif.servers._base import FlextLdifServersBaseSchema
 
 
 class FlextLdifServersRfcSchemaValuesMixin(FlextLdifServersBaseSchema):

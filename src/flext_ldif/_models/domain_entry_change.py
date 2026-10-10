@@ -10,9 +10,7 @@ from typing import Annotated
 
 from flext_core import FlextUtilities as u, m
 from flext_ldif import c, t
-from flext_ldif._models.domain_entry_change_value import (
-    FlextLdifModelsDomainEntryChangeOperationValue,
-)
+from flext_ldif._models import FlextLdifModelsDomainEntryChangeOperationValue
 
 
 class FlextLdifModelsDomainEntryChangeOperation:

@@ -12,9 +12,11 @@ from flext_cli import u
 
 from flext_core import r
 from flext_ldif import FlextLdifModels, c, p, t
-from flext_ldif._utilities.oid import FlextLdifUtilitiesOID as uo
-from flext_ldif._utilities.parser import FlextLdifUtilitiesParser as up
-from flext_ldif._utilities.schema_extract import FlextLdifUtilitiesSchemaExtract as se
+from flext_ldif._utilities import (
+    FlextLdifUtilitiesOID as uo,
+    FlextLdifUtilitiesParser as up,
+    FlextLdifUtilitiesSchemaExtract as se,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable, MutableMapping

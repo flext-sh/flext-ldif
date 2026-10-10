@@ -11,9 +11,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import r
 
-from tests import c, t, u
+from tests import c, r, t, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator
@@ -64,26 +63,20 @@ def ldap_container(worker_id: str) -> t.JsonMapping:
     with lock:
         execute_result = docker_control.execute()
         if execute_result.failure:
-            pytest.skip(f"OpenLDAP container unavailable: {execute_result.error}")
+            pytest.fail("OpenLDAP container setup failed after readiness")
         admin_dn, admin_password = u.Tests.get_admin_credentials()
         # Wall-clock deadline: each probe against an unreachable server costs
         # seconds of connect timeout, so counting only the sleeps would let the
         # wait run several times past the budget and trip the pytest-timeout
         # before this fixture can report a clean skip.
         deadline = time.monotonic() + float(c.Tests.DOCKER_PROBE_MAX_WAIT_SECONDS)
-        last_error: str | None = None
         while time.monotonic() < deadline:
             bind_result = _probe_ldap_bind(server_url, admin_dn, admin_password)
             if bind_result.success:
                 break
-            last_error = bind_result.error
             time.sleep(1.0)
         else:
-            pytest.skip(
-                "OpenLDAP container bind not ready"
-                if last_error is None
-                else f"OpenLDAP container bind not ready: {last_error}",
-            )
+            pytest.fail("OpenLDAP bind failed after transport readiness")
     return {
         "server_url": server_url,
         "host": "localhost",

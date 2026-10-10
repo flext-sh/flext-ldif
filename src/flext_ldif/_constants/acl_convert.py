@@ -18,7 +18,7 @@ from enum import StrEnum, unique
 from typing import TYPE_CHECKING, ClassVar
 
 if TYPE_CHECKING:
-    from flext_ldif._typings import FlextLdifTypesBase as t
+    from flext_ldif import t
 
 
 class FlextLdifConstantsAclConvert:

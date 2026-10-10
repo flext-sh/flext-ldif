@@ -12,12 +12,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
 
-from flext_ldif.servers.relaxed import FlextLdifServersRelaxed
-from flext_ldif.servers.relaxed_entry import FlextLdifServersRelaxedEntry
-from flext_ldif.servers.relaxed_schema import FlextLdifServersRelaxedSchema
-from tests import c, m, t
+from flext_ldif.servers import (
+    FlextLdifServersRelaxed,
+    FlextLdifServersRelaxedEntry,
+    FlextLdifServersRelaxedSchema,
+)
+from tests import c, m, t, tm
 
 if TYPE_CHECKING:
     from tests import p

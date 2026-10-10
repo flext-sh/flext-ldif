@@ -11,16 +11,19 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_tests import tm
 
 from flext_ldif import FlextLdifServersRfc
-from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
-from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
-from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
-from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
-from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
-from flext_ldif.servers._rfc.schema import FlextLdifServersRfcSchema
-from tests import c, m
+from flext_ldif.servers._base import (
+    FlextLdifServersBaseEntry,
+    FlextLdifServersBaseSchema,
+    FlextLdifServersBaseSchemaAcl,
+)
+from flext_ldif.servers._rfc import (
+    FlextLdifServersRfcAcl,
+    FlextLdifServersRfcEntry,
+    FlextLdifServersRfcSchema,
+)
+from tests import c, m, tm
 
 
 class TestsFlextLdifRfcServers:

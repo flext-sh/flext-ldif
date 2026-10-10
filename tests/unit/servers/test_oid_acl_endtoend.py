@@ -12,10 +12,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
 
-from flext_ldif.services.conversion import FlextLdifConversion
-from tests import c, m, u
+from flext_ldif.services import FlextLdifConversion
+from tests import c, m, tm, u
 
 if TYPE_CHECKING:
     from tests import p, t

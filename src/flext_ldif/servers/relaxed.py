@@ -8,17 +8,22 @@ from __future__ import annotations
 
 from typing import ClassVar, override
 
-from flext_ldif import c, m, p, r, t
-from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
-from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
-from flext_ldif.servers._relaxed.server_constants import (
-    FlextLdifServersRelaxedConstants,
+from flext_ldif import (
+    FlextLdifServersRelaxedEntry,
+    FlextLdifServersRelaxedSchema,
+    FlextLdifServersRfc,
+    c,
+    m,
+    p,
+    r,
+    t,
 )
-from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
-from flext_ldif.servers._rfc.server_constants import FlextLdifServersRfcConstants
-from flext_ldif.servers.relaxed_entry import FlextLdifServersRelaxedEntry
-from flext_ldif.servers.relaxed_schema import FlextLdifServersRelaxedSchema
-from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.servers._base import (
+    FlextLdifServersBaseEntry,
+    FlextLdifServersBaseSchema,
+)
+from flext_ldif.servers._relaxed import FlextLdifServersRelaxedConstants
+from flext_ldif.servers._rfc import FlextLdifServersRfcAcl, FlextLdifServersRfcConstants
 
 
 class FlextLdifServersRelaxed(FlextLdifServersRfc):

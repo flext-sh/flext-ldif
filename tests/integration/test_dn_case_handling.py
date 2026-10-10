@@ -16,12 +16,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
 
-from tests import m
+from tests import m, tm
 
 if TYPE_CHECKING:
-    from flext_core import t
+    from tests import t
 
 _LATER_VARIANT_CASES: t.VariadicTuple[str] = (
     "cn=admin,dc=example,dc=com",

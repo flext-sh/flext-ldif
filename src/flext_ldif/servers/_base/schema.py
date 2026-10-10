@@ -10,11 +10,11 @@ from collections.abc import MutableMapping
 from typing import Annotated, ClassVar, Self, override
 
 from flext_ldif import c, m, p, r, s, t, u
-from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
-from flext_ldif.servers._base.schema_metadata import (
+from flext_ldif.servers._base import (
+    FlextLdifServerMethodsMixin,
     FlextLdifServersBaseSchemaMetadataMixin,
+    FlextLdifServersBaseSchemaValuesMixin,
 )
-from flext_ldif.servers._base.schema_values import FlextLdifServersBaseSchemaValuesMixin
 
 
 class FlextLdifServersBaseSchema(

@@ -128,11 +128,17 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             u.Field(description="RFC 2849 control lines associated with the record"),
         ] = u.Field(default_factory=tuple)
         change_operations: Annotated[
-            t.MutableSequenceOf[FlextLdifModelsDomainEntry.ChangeOperation],
+            t.MutableSequenceOf[
+                FlextLdifModelsDomainEntryChangeOperation.ChangeOperation
+            ],
             u.Field(
                 description="Structured modify operation blocks for changetype=modify",
             ),
-        ] = u.Field(default_factory=list[FlextLdifModelsDomainEntryChangeOperation])
+        ] = u.Field(
+            default_factory=list[
+                FlextLdifModelsDomainEntryChangeOperation.ChangeOperation
+            ]
+        )
 
         @u.field_validator("attributes", mode="before")
         @classmethod

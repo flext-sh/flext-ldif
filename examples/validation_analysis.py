@@ -17,7 +17,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_ldif import ldif, m, p, r, t
+from examples import m, p, r, t
+from flext_ldif import ldif
 
 if TYPE_CHECKING:
     from collections.abc import MutableSequence

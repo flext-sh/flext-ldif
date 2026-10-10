@@ -15,10 +15,9 @@ from typing import TYPE_CHECKING
 from uuid import uuid4
 
 import pytest
-from flext_tests import tm
 
 from flext_ldif import ldif
-from tests import c, m, u
+from tests import c, m, tm, u
 
 if TYPE_CHECKING:
     from pathlib import Path

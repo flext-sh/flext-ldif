@@ -7,8 +7,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif.servers.oid import FlextLdifServersOid
-from flext_ldif.servers.oud import FlextLdifServersOud
-from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.servers import (
+    FlextLdifServersOid,
+    FlextLdifServersOud,
+    FlextLdifServersRfc,
+)
 
 type ServerClass = type[FlextLdifServersRfc | FlextLdifServersOid | FlextLdifServersOud]

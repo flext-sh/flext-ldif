@@ -10,7 +10,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from flext_ldif import c, ldif, m, p, r, t, u
+from examples import c, m, p, r, t, u
+from flext_ldif import ldif
 
 if TYPE_CHECKING:
     from collections.abc import MutableMapping, MutableSequence
