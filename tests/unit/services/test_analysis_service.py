@@ -9,9 +9,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from tests import tm
 
-from tests import c, m, u
+from tests import c, m, tm, u
 
 if TYPE_CHECKING:
     from tests import p

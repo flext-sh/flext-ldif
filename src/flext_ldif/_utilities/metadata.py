@@ -6,15 +6,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif._utilities import FlextLdifMetadataBuilders
-from flext_ldif._utilities import FlextLdifMetadataEntryStats
-from flext_ldif._utilities import FlextLdifMetadataJsonCore
-from flext_ldif._utilities import FlextLdifMetadataMatchDetails
-from flext_ldif._utilities import FlextLdifMetadataNameDescDetails
-from flext_ldif._utilities import FlextLdifMetadataPrefixDetails
-from flext_ldif._utilities import FlextLdifMetadataSchemaAnalysis
-from flext_ldif._utilities import FlextLdifMetadataSyntaxOriginDetails
-from flext_ldif._utilities import FlextLdifMetadataTracking
+from flext_ldif._utilities import (
+    FlextLdifMetadataBuilders,
+    FlextLdifMetadataEntryStats,
+    FlextLdifMetadataJsonCore,
+    FlextLdifMetadataMatchDetails,
+    FlextLdifMetadataNameDescDetails,
+    FlextLdifMetadataPrefixDetails,
+    FlextLdifMetadataSchemaAnalysis,
+    FlextLdifMetadataSyntaxOriginDetails,
+    FlextLdifMetadataTracking,
+)
 
 
 class FlextLdifUtilitiesMetadata(

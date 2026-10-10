@@ -13,8 +13,7 @@ import re
 from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_ldif._constants import FlextLdifConstantsBase
-from flext_ldif._constants import FlextLdifConstantsEnums
+from flext_ldif._constants import FlextLdifConstantsBase, FlextLdifConstantsEnums
 from flext_ldif._constants.servers_rfc import FlextLdifConstantsServersRfc
 
 if TYPE_CHECKING:

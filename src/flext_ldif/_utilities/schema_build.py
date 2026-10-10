@@ -9,10 +9,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from flext_ldif import FlextLdifModels, c, p, t
-from flext_ldif._utilities import FlextLdifUtilitiesOID as uo
-from flext_ldif._utilities import FlextLdifUtilitiesSchemaFormat as sf
-from flext_ldif._utilities import FlextLdifUtilitiesServer as us
-from flext_ldif._utilities import FlextLdifUtilitiesWriter as uw
+from flext_ldif._utilities import (
+    FlextLdifUtilitiesOID as uo,
+    FlextLdifUtilitiesSchemaFormat as sf,
+    FlextLdifUtilitiesServer as us,
+    FlextLdifUtilitiesWriter as uw,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable

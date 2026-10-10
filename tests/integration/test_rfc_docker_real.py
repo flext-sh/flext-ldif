@@ -15,13 +15,10 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from tests import tm
 
 from flext_ldif import m as ldif_m
-from flext_ldif.services import FlextLdifParser
-from flext_ldif.services import FlextLdifServer
-from flext_ldif.services import FlextLdifWriter
-from tests import c
+from flext_ldif.services import FlextLdifParser, FlextLdifServer, FlextLdifWriter
+from tests import c, tm
 
 
 def _has_schema_attrs(entry: ldif_m.Ldif.Entry) -> bool:

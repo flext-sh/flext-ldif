@@ -9,10 +9,12 @@ from __future__ import annotations
 from typing import ClassVar
 
 from flext_ldif import p, u
-from flext_ldif.servers._oid import FlextLdifServersOidAclFormatMixin
-from flext_ldif.servers._oid import FlextLdifServersOidAclParseMixin
-from flext_ldif.servers._oid import FlextLdifServersOidAclSubjectMixin
-from flext_ldif.servers._oid import FlextLdifServersOidAclWriteMixin
+from flext_ldif.servers._oid import (
+    FlextLdifServersOidAclFormatMixin,
+    FlextLdifServersOidAclParseMixin,
+    FlextLdifServersOidAclSubjectMixin,
+    FlextLdifServersOidAclWriteMixin,
+)
 from flext_ldif.servers._rfc import FlextLdifServersRfcAcl
 
 

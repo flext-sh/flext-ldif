@@ -9,8 +9,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from examples import ExamplesFlextLdifUtilities as examples_u
-from examples import c, m, p
+from examples import ExamplesFlextLdifUtilities as examples_u, c, m, p
 from flext_ldif import ldif
 
 if TYPE_CHECKING:

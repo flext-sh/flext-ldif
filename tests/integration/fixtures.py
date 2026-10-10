@@ -11,9 +11,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
-from tests import r
 
-from tests import c, t, u
+from tests import c, r, t, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator

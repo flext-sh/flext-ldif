@@ -6,9 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif._utilities import FlextLdifWriterRfcChars
-from flext_ldif._utilities import FlextLdifWriterLineFolding
-from flext_ldif._utilities import FlextLdifWriterSchemaParts
+from flext_ldif._utilities import (
+    FlextLdifWriterLineFolding,
+    FlextLdifWriterRfcChars,
+    FlextLdifWriterSchemaParts,
+)
 
 
 class FlextLdifUtilitiesWriter(

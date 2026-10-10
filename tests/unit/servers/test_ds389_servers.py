@@ -13,10 +13,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from tests import tm
 
 from flext_ldif.servers import FlextLdifServersDs389
-from tests import c, m, t, u
+from tests import c, m, t, tm, u
 
 
 class TestsFlextLdifDs389Servers:

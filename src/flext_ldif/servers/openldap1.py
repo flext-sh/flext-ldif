@@ -10,12 +10,21 @@ import re
 from collections.abc import Callable
 from typing import ClassVar, override
 
-from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._rfc import FlextLdifServersRfcAcl
-from flext_ldif.servers._rfc import FlextLdifServersRfcSchema
-from flext_ldif.servers._rfc import FlextLdifServersRfcConstants
-from flext_ldif import FlextLdifServersOpenldap1Entry
-from flext_ldif import FlextLdifServersRfc
+from flext_ldif import (
+    FlextLdifServersOpenldap1Entry,
+    FlextLdifServersRfc,
+    c,
+    m,
+    p,
+    r,
+    t,
+    u,
+)
+from flext_ldif.servers._rfc import (
+    FlextLdifServersRfcAcl,
+    FlextLdifServersRfcConstants,
+    FlextLdifServersRfcSchema,
+)
 
 
 class FlextLdifServersOpenldap1(FlextLdifServersRfc):

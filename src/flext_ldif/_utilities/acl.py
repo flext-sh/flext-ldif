@@ -6,11 +6,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif._utilities import FlextLdifACLExtensionFormatting
-from flext_ldif._utilities import FlextLdifACLExtraction
-from flext_ldif._utilities import FlextLdifACLFormatting
-from flext_ldif._utilities import FlextLdifACLParsing
-from flext_ldif._utilities import FlextLdifACLPermissions
+from flext_ldif._utilities import (
+    FlextLdifACLExtensionFormatting,
+    FlextLdifACLExtraction,
+    FlextLdifACLFormatting,
+    FlextLdifACLParsing,
+    FlextLdifACLPermissions,
+)
 
 
 class FlextLdifUtilitiesACL(

@@ -10,8 +10,7 @@ from typing import override
 
 from flext_tests import FlextTestsServiceBase
 
-from tests import m
-from tests import TestsFlextLdifSettings
+from tests import TestsFlextLdifSettings, m
 
 
 class TestsFlextLdifServiceBase(FlextTestsServiceBase):

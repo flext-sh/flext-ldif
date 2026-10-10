@@ -23,10 +23,9 @@ import base64
 from typing import TYPE_CHECKING
 
 import pytest
-from tests import tm
 
 from flext_ldif import ldif
-from tests import c, u
+from tests import c, tm, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable

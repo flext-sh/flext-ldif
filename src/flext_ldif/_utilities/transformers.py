@@ -6,8 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif._utilities import FlextLdifUtilitiesEntryAttrsNormalization
-from flext_ldif._utilities import FlextLdifUtilitiesEntryDnNormalization
+from flext_ldif._utilities import (
+    FlextLdifUtilitiesEntryAttrsNormalization,
+    FlextLdifUtilitiesEntryDnNormalization,
+)
 
 
 class FlextLdifUtilitiesTransformers(

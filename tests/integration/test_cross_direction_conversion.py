@@ -17,11 +17,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from tests import tm
 
-from flext_ldif.services import FlextLdifConversion
-from flext_ldif.services import FlextLdifServer
-from tests import m
+from flext_ldif.services import FlextLdifConversion, FlextLdifServer
+from tests import m, tm
 
 if TYPE_CHECKING:
     from collections.abc import Callable

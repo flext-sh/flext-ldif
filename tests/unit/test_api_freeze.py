@@ -16,9 +16,9 @@ import inspect
 from typing import TYPE_CHECKING
 
 import pytest
-from tests import tm
 
 import flext_ldif
+from tests import tm
 from tests.unit.typings import PublicSymbol
 
 if TYPE_CHECKING:

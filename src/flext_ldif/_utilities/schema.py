@@ -8,11 +8,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif._utilities import FlextLdifUtilitiesSchemaBuild
-from flext_ldif._utilities import FlextLdifUtilitiesSchemaExtract
-from flext_ldif._utilities import FlextLdifUtilitiesSchemaFormat
-from flext_ldif._utilities import FlextLdifUtilitiesSchemaNormalize
-from flext_ldif._utilities import FlextLdifUtilitiesSchemaParse
+from flext_ldif._utilities import (
+    FlextLdifUtilitiesSchemaBuild,
+    FlextLdifUtilitiesSchemaExtract,
+    FlextLdifUtilitiesSchemaFormat,
+    FlextLdifUtilitiesSchemaNormalize,
+    FlextLdifUtilitiesSchemaParse,
+)
 
 
 class FlextLdifUtilitiesSchema(

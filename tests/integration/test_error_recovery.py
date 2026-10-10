@@ -15,9 +15,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from tests import tm
 
 from flext_ldif import ldif
+from tests import tm
 
 if TYPE_CHECKING:
     from tests import p

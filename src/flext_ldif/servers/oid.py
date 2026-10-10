@@ -6,16 +6,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif.servers._oid import FlextLdifServersOidAcl
-from flext_ldif.servers._oid import FlextLdifServersOidAclAssemble
-from flext_ldif.servers._oid import FlextLdifServersOidAclConvert
-from flext_ldif.servers._oid import FlextLdifServersOidAclToOud
-from flext_ldif.servers._oid import FlextLdifServersOidAclPipeline
-from flext_ldif.servers._oid import FlextLdifServersOidAclRender
-from flext_ldif.servers._oid import FlextLdifServersOidEntry
-from flext_ldif.servers._oid import FlextLdifServersOidSchema
-from flext_ldif.servers._oid import FlextLdifServersOidConstants
 from flext_ldif.servers import FlextLdifServersRfc
+from flext_ldif.servers._oid import (
+    FlextLdifServersOidAcl,
+    FlextLdifServersOidAclAssemble,
+    FlextLdifServersOidAclConvert,
+    FlextLdifServersOidAclPipeline,
+    FlextLdifServersOidAclRender,
+    FlextLdifServersOidAclToOud,
+    FlextLdifServersOidConstants,
+    FlextLdifServersOidEntry,
+    FlextLdifServersOidSchema,
+)
 
 
 class FlextLdifServersOid(FlextLdifServersRfc):

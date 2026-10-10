@@ -14,8 +14,7 @@ from __future__ import annotations
 
 from abc import ABC
 
-from flext_ldif import c, m, p, r, s, t, u
-from flext_ldif import FlextLdifConversionSchemaMixin
+from flext_ldif import FlextLdifConversionSchemaMixin, c, m, p, r, s, t, u
 
 
 class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s, ABC):

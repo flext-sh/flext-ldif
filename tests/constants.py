@@ -127,7 +127,8 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
             "novell",
             "nspm_prefix",
             (
-                "( 1.2.3.4 NAME 'nspmPasswordPolicy' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+                "( 1.2.3.4 NAME 'nspmPasswordPolicy' SYNTAX "
+                "1.3.6.1.4.1.1466.115.121.1.15 )"
             ),
             True,
             None,
@@ -145,7 +146,8 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
             "novell",
             "dirxml_prefix",
             (
-                "( 1.2.3.4 NAME 'dirxml-associations' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+                "( 1.2.3.4 NAME 'dirxml-associations' SYNTAX "
+                "1.3.6.1.4.1.1466.115.121.1.15 )"
             ),
             True,
             None,

@@ -14,11 +14,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from tests import tm
 
 from flext_ldif import ldif
 from flext_ldif.services import FlextLdifFilters
-from tests import TestsFlextLdifUtilities as u, c, m
+from tests import TestsFlextLdifUtilities as u, c, m, tm
 
 if TYPE_CHECKING:
     from tests import t

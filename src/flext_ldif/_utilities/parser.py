@@ -6,11 +6,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif._utilities import FlextLdifParserMetadataBuilders
-from flext_ldif._utilities import FlextLdifParserRecord
-from flext_ldif._utilities import FlextLdifParserRecordSplitter
-from flext_ldif._utilities import FlextLdifParserSchemaFields
-from flext_ldif._utilities import FlextLdifParserValues
+from flext_ldif._utilities import (
+    FlextLdifParserMetadataBuilders,
+    FlextLdifParserRecord,
+    FlextLdifParserRecordSplitter,
+    FlextLdifParserSchemaFields,
+    FlextLdifParserValues,
+)
 
 
 class FlextLdifUtilitiesParser(

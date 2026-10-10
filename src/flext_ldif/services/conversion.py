@@ -8,9 +8,16 @@ from __future__ import annotations
 
 import time
 
-from flext_ldif import c, m, p, r, t, u
-from flext_ldif import FlextLdifConversionAclMixin
-from flext_ldif import FlextLdifConversionEntryMixin
+from flext_ldif import (
+    FlextLdifConversionAclMixin,
+    FlextLdifConversionEntryMixin,
+    c,
+    m,
+    p,
+    r,
+    t,
+    u,
+)
 
 
 class FlextLdifConversion(FlextLdifConversionEntryMixin, FlextLdifConversionAclMixin):

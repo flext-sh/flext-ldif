@@ -18,9 +18,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from tests import tm
 
-from tests import u
+from tests import tm, u
 
 if TYPE_CHECKING:
     from tests import m, p, t

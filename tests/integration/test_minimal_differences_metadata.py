@@ -16,12 +16,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
-from tests import tm
 
 from flext_ldif import ldif
-from tests import m
 from flext_ldif.services import FlextLdifParser
-from tests import c, t
+from tests import c, m, t, tm
 
 if TYPE_CHECKING:
     from tests import p

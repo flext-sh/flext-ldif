@@ -7,9 +7,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from tests import tm
 
-from tests import c, t, u
+from tests import c, t, tm, u
 
 
 class TestsFlextLdifOidUtilities:

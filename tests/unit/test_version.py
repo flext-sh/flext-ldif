@@ -8,10 +8,9 @@ from __future__ import annotations
 
 import importlib
 
-from tests import tm
 from packaging.version import Version
 
-from tests import c
+from tests import c, tm
 
 version_module = importlib.import_module("flext_ldif.__version__")
 FlextLdifVersion = version_module.FlextLdifVersion
