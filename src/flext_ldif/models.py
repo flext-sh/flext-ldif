@@ -19,6 +19,7 @@ from flext_ldif import t
 from flext_ldif._models import (
     FlextLdifModelsBases,
     FlextLdifModelsCollections,
+    FlextLdifModelsDomainEntry,
     FlextLdifModelsDomainEntryChangeOperationValue,
     FlextLdifModelsDomainEntryControl,
     FlextLdifModelsDomainEntryStatistics,
@@ -41,6 +42,7 @@ class FlextLdifModels(FlextCliModels):
 
     class Ldif(
         FlextLdifModelsDomainsEntries,
+        FlextLdifModelsDomainEntry,
         FlextLdifModelsSettings,
         FlextLdifModelsEvents,
         FlextLdifModelsResults,
@@ -78,6 +80,7 @@ class FlextLdifModels(FlextCliModels):
             perms_dict: Annotated[t.MutableBoolMapping, u.Field()] = u.Field(
                 default_factory=dict[str, bool],
             )
+            target_dn: Annotated[str, u.Field()] = "entry"
             target_attrs: t.MutableSequenceOf[str] = u.Field(default_factory=list[str])
             acl_filter: Annotated[str, u.Field()] = ""
             acl_constraint: Annotated[str, u.Field()] = ""
@@ -86,6 +89,11 @@ class FlextLdifModels(FlextCliModels):
             append_to_all: Annotated[bool, u.Field()] = False
             bind_ip_filter: Annotated[str, u.Field()] = ""
             constrain_to_added_object: Annotated[str, u.Field()] = ""
+
+    # Top-level facade aliases: the api-freeze contract requires
+    # ``flext_ldif.m.X`` and ``flext_ldif.FlextLdifModels.X`` to be the same
+    # object for every published model.
+    Entry = Ldif.Entry
 
 
 m = FlextLdifModels

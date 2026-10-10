@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, ClassVar
 
 from flext_cli import FlextCliUtilities
 
-from flext_ldif import _utilities as _utilities_family
+from flext_ldif import _utilities
 from flext_ldif._utilities import FlextLdifUtilitiesCollectionLdif
 from flext_ldif._utilities._lazy_meta import FlextLdifUtilitiesLazyMeta
 
@@ -55,7 +55,7 @@ class FlextLdifUtilities(
     # root. The tree is therefore assembled lazily on first ``Ldif`` access, when
     # the package is fully initialized, making both import orders
     # (models-first and utilities-first) safe.
-    LAZY_UTILITIES: ClassVar[tuple[tuple[str, str], ...]] = (
+    _LAZY_UTILITIES: ClassVar[tuple[tuple[str, str], ...]] = (
         ("acl", "FlextLdifUtilitiesACL"),
         ("attribute", "FlextLdifUtilitiesAttribute"),
         ("dispatch", "FlextLdifUtilitiesDispatch"),
@@ -82,7 +82,8 @@ class FlextLdifUtilities(
         The lazy, cached assembly keeps both import orders (models-first and
         utilities-first) safe: the ``_utilities`` family evaluates
         ``FlextLdifModels`` at class level, so the tree may only be built once
-        the package is fully initialized.
+        the package is fully initialized. The assembled ``Ldif`` utility
+        namespace class is cached on the builder function.
 
         Returns:
             The assembled ``Ldif`` utility namespace class.
@@ -91,12 +92,21 @@ class FlextLdifUtilities(
             FlextLdifUtilitiesCollectionLdif.Search,
             FlextLdifUtilitiesCollectionLdif,
         ]
-        family = _utilities_family
-        for _, class_name in FlextLdifUtilities.LAZY_UTILITIES:
+        family = _utilities
+        for _, class_name in FlextLdifUtilities.lazy_utilities_table():
             bases.append(getattr(family, class_name))
         return type(
             "Ldif", tuple(bases), {"__doc__": "LDIF-specific utility namespace."}
         )
+
+    @classmethod
+    def lazy_utilities_table(cls) -> tuple[tuple[str, str], ...]:
+        """Expose the lazy utilities registration table.
+
+        Returns:
+            The resulting ``tuple[tuple[str, str], ...]``.
+        """
+        return cls._LAZY_UTILITIES
 
     if TYPE_CHECKING:
         # Static view of the lazily assembled ``Ldif`` namespace: runtime

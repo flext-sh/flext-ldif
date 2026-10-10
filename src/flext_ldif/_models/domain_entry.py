@@ -11,7 +11,7 @@ from __future__ import annotations
 from collections.abc import Mapping, MutableMapping
 from datetime import datetime
 from types import MappingProxyType
-from typing import Annotated, ClassVar, Self, cast, override
+from typing import Annotated, ClassVar, Self, override
 
 from flext_core import FlextUtilities as u, m
 from flext_ldif import c, p, r, t
@@ -128,11 +128,17 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             u.Field(description="RFC 2849 control lines associated with the record"),
         ] = u.Field(default_factory=tuple)
         change_operations: Annotated[
-            t.MutableSequenceOf[FlextLdifModelsDomainEntryChangeOperation],
+            t.MutableSequenceOf[
+                FlextLdifModelsDomainEntryChangeOperation.ChangeOperation
+            ],
             u.Field(
                 description="Structured modify operation blocks for changetype=modify",
             ),
-        ] = u.Field(default_factory=list[FlextLdifModelsDomainEntryChangeOperation])
+        ] = u.Field(
+            default_factory=list[
+                FlextLdifModelsDomainEntryChangeOperation.ChangeOperation
+            ],
+        )
 
         @u.field_validator("attributes", mode="before")
         @classmethod
@@ -695,10 +701,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
                 entry_instance: Self = cls.model_validate(entry_data)
                 ok_result: p.Result[Self] = r[Self].ok(entry_instance)
             except c.EXC_BASIC_TYPE as e:
-                return cast(
-                    "p.Result[Self]",
-                    r[Self].fail(f"Failed to create Entry: {e}", exception=e),
-                )
+                return r[Self].fail(f"Failed to create Entry: {e}", exception=e)
             else:
                 return ok_result
 

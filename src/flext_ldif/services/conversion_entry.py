@@ -33,7 +33,7 @@ class FlextLdifConversionEntryMixin(
     FlextLdifConversionMetadataMixin,
     FlextLdifConversionSupportMixin,
     FlextLdifConversionSchemaEntryMixin,
-    s,
+    s[m.Ldif.Response],
 ):
     """Concrete Entry-model conversion + the conversion state it owns."""
 

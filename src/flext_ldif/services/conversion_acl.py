@@ -24,7 +24,7 @@ from flext_ldif import (
 class FlextLdifConversionAclMixin(
     FlextLdifConversionAclPreserveMixin,
     FlextLdifConversionSupportMixin,
-    s,
+    s[m.Ldif.Response],
     ABC,
 ):
     """ACL-model conversion orchestration (preservation via the parent mixin)."""
