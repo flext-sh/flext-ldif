@@ -71,12 +71,10 @@ def ldap_container(worker_id: str) -> t.JsonMapping:
         # wait run several times past the budget and trip the pytest-timeout
         # before this fixture can report a clean skip.
         deadline = time.monotonic() + float(c.Tests.DOCKER_PROBE_MAX_WAIT_SECONDS)
-        last_error: str | None = None
         while time.monotonic() < deadline:
             bind_result = _probe_ldap_bind(server_url, admin_dn, admin_password)
             if bind_result.success:
                 break
-            last_error = bind_result.error
             time.sleep(1.0)
         else:
             pytest.fail("OpenLDAP bind failed after transport readiness")
