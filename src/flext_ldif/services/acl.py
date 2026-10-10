@@ -9,7 +9,7 @@ from __future__ import annotations
 from flext_ldif import c, m, p, r, s, t, u
 
 
-class FlextLdifAcl(s):
+class FlextLdifAcl(s[m.Ldif.Response]):
     """Direct ACL processing service using flext-core APIs."""
 
     @staticmethod

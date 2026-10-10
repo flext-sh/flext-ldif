@@ -17,10 +17,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import importlib
 from typing import ClassVar
 
+import flext_ldif.services.server
 from flext_ldif import c, m, p, r, t, u
+from flext_ldif._models.domain_entry_change_value import (
+    FlextLdifModelsDomainEntryChangeOperationValue,
+)
 
 
 class FlextLdifServersOudSchemaWriteMixin:
@@ -98,8 +101,7 @@ class FlextLdifServersOudSchemaWriteMixin:
             The resulting ``p.Result[t.Pair[p.Ldif.SchemaServer,
                 p.Ldif.SchemaServer]]``.
         """
-        server_module = importlib.import_module("flext_ldif.services.server")
-        registry = server_module.FlextLdifServer.fetch_global_instance()
+        registry = flext_ldif.services.server.FlextLdifServer.fetch_global_instance()
         target_result = registry.server(str(c.Ldif.ServerTypes.OUD.value))
         if target_result.failure:
             return r[t.Pair[p.Ldif.SchemaServer, p.Ldif.SchemaServer]].fail_op(
@@ -136,7 +138,7 @@ class FlextLdifServersOudSchemaWriteMixin:
         """
         if entry.attributes is None:
             return r[m.Ldif.Entry].ok(entry)
-        normalized_values: dict[str, list[str]] = {}
+        normalized_values: t.MutableStrSequenceMapping = {}
         for attr_name, values in entry.attributes.attributes.items():
             if attr_name.lower() not in cls._SCHEMA_DEFINITION_ATTRS:
                 continue
@@ -159,7 +161,7 @@ class FlextLdifServersOudSchemaWriteMixin:
             entry.attributes.attributes.items(),
         )
         merged_attributes.update(normalized_values)
-        pruned_metadata: dict[str, t.MutableAttributeMapping] = {
+        pruned_metadata: t.MutableMappingKV[str, t.MutableAttributeMapping] = {
             attr_name: attribute_metadata
             for attr_name, attribute_metadata in (
                 entry.attributes.attribute_metadata or {}
@@ -198,7 +200,9 @@ class FlextLdifServersOudSchemaWriteMixin:
             if change_operation.attribute.lower() not in cls._SCHEMA_DEFINITION_ATTRS:
                 normalized_operations.append(change_operation)
                 continue
-            new_values: t.MutableSequenceOf[m.Ldif.ChangeOperationValue] = []
+            new_values: t.MutableSequenceOf[
+                FlextLdifModelsDomainEntryChangeOperationValue
+            ] = []
             for value_data in change_operation.values:
                 normalized_result = cls._normalize_definition_value(
                     value_data.value,

@@ -17,7 +17,11 @@ from abc import ABC
 from flext_ldif import FlextLdifConversionSchemaMixin, c, m, p, r, s, t, u
 
 
-class FlextLdifConversionSchemaEntryMixin(FlextLdifConversionSchemaMixin, s, ABC):
+class FlextLdifConversionSchemaEntryMixin(
+    FlextLdifConversionSchemaMixin,
+    s[m.Ldif.Response],
+    ABC,
+):
     """Conversion of schema definitions embedded inside a schema entry."""
 
     @staticmethod

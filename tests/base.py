@@ -10,7 +10,8 @@ from typing import override
 
 from flext_tests import FlextTestsServiceBase
 
-from tests import TestsFlextLdifSettings, m
+from tests.models import TestsFlextLdifModels
+from tests.settings import TestsFlextLdifSettings
 
 
 class TestsFlextLdifServiceBase(FlextTestsServiceBase):
@@ -27,8 +28,10 @@ class TestsFlextLdifServiceBase(FlextTestsServiceBase):
 
     @classmethod
     @override
-    def runtime_bootstrap_options(cls) -> m.RuntimeBootstrapOptions:
-        return m.RuntimeBootstrapOptions(settings_type=TestsFlextLdifSettings)
+    def runtime_bootstrap_options(cls) -> TestsFlextLdifModels.RuntimeBootstrapOptions:
+        return TestsFlextLdifModels.RuntimeBootstrapOptions(
+            settings_type=TestsFlextLdifSettings,
+        )
 
 
 s = TestsFlextLdifServiceBase

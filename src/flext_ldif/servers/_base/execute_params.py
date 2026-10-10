@@ -45,8 +45,51 @@ class FlextLdifServersBaseExecuteParamsMixin:
         registry: p.Ldif.ServerRegistry | t.JsonValue,
     ) -> None:
         """Register a server instance in the registry."""
-        register_func = _validate_registry(registry)
-        _perform_registration(register_func, server_instance)
+        register_func = FlextLdifServersBaseExecuteParamsMixin._validate_registry(
+            registry,
+        )
+        FlextLdifServersBaseExecuteParamsMixin._perform_registration(
+            register_func,
+            server_instance,
+        )
+
+    @staticmethod
+    def _validate_registry(
+        registry_obj: p.Ldif.ServerRegistry | t.JsonValue,
+    ) -> Callable[[str, p.Ldif.SchemaServer | FlextLdifServersBase], None] | None:
+        """Validate registry has a register_server method.
+
+        Returns:
+            The resulting ``Callable[[str, p.Ldif.SchemaServer | FlextLdifServersBase],
+                None] | None``.
+        """
+        method = getattr(registry_obj, "register_server", None)
+        if method is None or not callable(method):
+            return None
+        captured = method
+
+        def typed_register(
+            server_type: str,
+            server: p.Ldif.SchemaServer | FlextLdifServersBase,
+        ) -> None:
+            _ = captured(server_type, server)
+
+        return typed_register
+
+    @staticmethod
+    def _perform_registration(
+        register_func: Callable[[str, p.Ldif.SchemaServer | FlextLdifServersBase], None]
+        | None,
+        instance: p.Ldif.SchemaServer | FlextLdifServersBase,
+    ) -> None:
+        """Execute registration if the instance exposes the required methods."""
+        if register_func is None:
+            return
+        required_methods = ("parse", "write")
+        if all(
+            callable(getattr(instance, method, None)) for method in required_methods
+        ):
+            register_func("auto", instance)
 
     @staticmethod
     def _extract_entries(
@@ -141,42 +184,6 @@ class FlextLdifServersBaseExecuteParamsMixin:
                     f"Expected 'parse' | 'write' | None for operation, got {type(raw)}"
                 )
                 raise TypeError(msg)
-
-
-def _validate_registry(
-    registry_obj: p.Ldif.ServerRegistry | t.JsonValue,
-) -> Callable[[str, p.Ldif.SchemaServer | FlextLdifServersBase], None] | None:
-    """Validate registry has a register_server method.
-
-    Returns:
-        The resulting ``Callable[[str, p.Ldif.SchemaServer | FlextLdifServersBase],
-            None] | None``.
-    """
-    method = getattr(registry_obj, "register_server", None)
-    if method is None or not callable(method):
-        return None
-    captured = method
-
-    def typed_register(
-        server_type: str,
-        server: p.Ldif.SchemaServer | FlextLdifServersBase,
-    ) -> None:
-        _ = captured(server_type, server)
-
-    return typed_register
-
-
-def _perform_registration(
-    register_func: Callable[[str, p.Ldif.SchemaServer | FlextLdifServersBase], None]
-    | None,
-    instance: p.Ldif.SchemaServer | FlextLdifServersBase,
-) -> None:
-    """Execute registration if the instance exposes the required methods."""
-    if register_func is None:
-        return
-    required_methods = ("parse", "write")
-    if all(callable(getattr(instance, method, None)) for method in required_methods):
-        register_func("auto", instance)
 
 
 __all__: list[str] = ["FlextLdifServersBaseExecuteParamsMixin"]

@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from collections.abc import MutableMapping, MutableSequence
 
 
-class ExampleServerMigration:
+class ExamplesFlextLdifServerMigration:
     """Demonstrates advanced server migration capabilities with parallel processing."""
 
     @staticmethod
@@ -252,12 +252,14 @@ class ExampleServerMigration:
         api = ldif()
         workflow_dir = Path("examples/comprehensive_migration")
         source_dir, intermediate_dir, final_dir = (
-            ExampleServerMigration._setup_directories(workflow_dir)
+            ExamplesFlextLdifServerMigration._setup_directories(workflow_dir)
         )
-        ExampleServerMigration._create_test_data(source_dir)
-        source_server, detection_data = ExampleServerMigration._detect_server_type(
-            api,
-            source_dir,
+        ExamplesFlextLdifServerMigration._create_test_data(source_dir)
+        source_server, detection_data = (
+            ExamplesFlextLdifServerMigration._detect_server_type(
+                api,
+                source_dir,
+            )
         )
         source_server_typed = source_server
         intermediate_migration = api.migrate(

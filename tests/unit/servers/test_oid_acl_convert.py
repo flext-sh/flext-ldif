@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_ldif.servers import FlextLdifServersOidAclConvert as Parser
+from flext_ldif.servers import FlextLdifServersOidAclConvert
 from tests import m, tm
 
 if TYPE_CHECKING:
@@ -46,7 +46,9 @@ class TestsFlextLdifOidAclConvert:
             "(browse,add,delete) by * (browse,noadd,nodelete)"
         )
 
-        rule: m.Ldif.OidAclRule = tm.ok(Parser.parse_oid_acl_line(_DN, line))
+        rule: m.Ldif.OidAclRule = tm.ok(
+            FlextLdifServersOidAclConvert.parse_oid_acl_line(_DN, line)
+        )
 
         tm.that(rule.dn, eq=_DN)
         tm.that(rule.acl_type, eq="orclaci")
@@ -66,7 +68,9 @@ class TestsFlextLdifOidAclConvert:
         """Test rule preserves raw line for round trip."""
         line = "orclaci: access to entry by * (browse)"
 
-        rule: m.Ldif.OidAclRule = tm.ok(Parser.parse_oid_acl_line(_DN, line))
+        rule: m.Ldif.OidAclRule = tm.ok(
+            FlextLdifServersOidAclConvert.parse_oid_acl_line(_DN, line)
+        )
 
         tm.that(rule.raw_line, eq=line)
 
@@ -90,7 +94,9 @@ class TestsFlextLdifOidAclConvert:
     ) -> None:
         """Test target clause shapes map to public target fields."""
         rule: m.Ldif.OidAclRule = tm.ok(
-            Parser.parse_oid_acl_line(_DN, f"orclaci: access to {content}"),
+            FlextLdifServersOidAclConvert.parse_oid_acl_line(
+                _DN, f"orclaci: access to {content}"
+            ),
         )
 
         tm.that(rule.target_type, eq=expected_type)
@@ -104,7 +110,9 @@ class TestsFlextLdifOidAclConvert:
             "filter=(objectclass=person) by self (read,write)"
         )
 
-        rule: m.Ldif.OidAclRule = tm.ok(Parser.parse_oid_acl_line(_DN, line))
+        rule: m.Ldif.OidAclRule = tm.ok(
+            FlextLdifServersOidAclConvert.parse_oid_acl_line(_DN, line)
+        )
 
         tm.that(rule.target_filter, eq="objectclass=person")
         tm.that(rule.subjects[0].subject_type, eq="self")
@@ -116,7 +124,9 @@ class TestsFlextLdifOidAclConvert:
         """Test orclentrylevelaci line records its acl type."""
         line = "orclentrylevelaci: access to entry by dnattr=(manager) (browse)"
 
-        rule: m.Ldif.OidAclRule = tm.ok(Parser.parse_oid_acl_line(_DN, line))
+        rule: m.Ldif.OidAclRule = tm.ok(
+            FlextLdifServersOidAclConvert.parse_oid_acl_line(_DN, line)
+        )
 
         tm.that(rule.acl_type, eq="orclentrylevelaci")
         tm.that(rule.subjects[0].subject_type, eq="dnattr")
@@ -148,7 +158,7 @@ class TestsFlextLdifOidAclConvert:
         error_fragment: str,
     ) -> None:
         """Test malformed line fails with descriptive error."""
-        result = Parser.parse_oid_acl_line(_DN, line)
+        result = FlextLdifServersOidAclConvert.parse_oid_acl_line(_DN, line)
 
         tm.that(result.failure, eq=True)
         tm.fail(result, has=error_fragment)
@@ -189,7 +199,7 @@ class TestsFlextLdifOidAclConvert:
         permissions: t.VariadicTuple[str],
     ) -> None:
         """Test subject clause maps to typed subject."""
-        subject = Parser.parse_subject(clause)
+        subject = FlextLdifServersOidAclConvert.parse_subject(clause)
 
         tm.that(subject.subject_type, eq=subject_type)
         tm.that(subject.value, eq=value)
@@ -198,7 +208,7 @@ class TestsFlextLdifOidAclConvert:
     @staticmethod
     def test_constraint_modifier_populates_added_object_constraint() -> None:
         """Test constraint modifier populates added object constraint."""
-        subject = Parser.parse_subject(
+        subject = FlextLdifServersOidAclConvert.parse_subject(
             "by * (browse) constraintonaddedobject=(objectClass=person)",
         )
 
@@ -209,7 +219,7 @@ class TestsFlextLdifOidAclConvert:
     @staticmethod
     def test_unrecognized_subject_yields_unknown_type() -> None:
         """Test unrecognized subject yields unknown type."""
-        subject = Parser.parse_subject("by nonsense clause")
+        subject = FlextLdifServersOidAclConvert.parse_subject("by nonsense clause")
 
         tm.that(subject.subject_type, eq="unknown")
         tm.that(subject.value, empty=True)
@@ -222,7 +232,7 @@ class TestsFlextLdifOidAclConvert:
     @staticmethod
     def test_subject_matcher_catalog_returns_typed_non_empty_catalog() -> None:
         """Test subject matcher catalog returns typed non empty catalog."""
-        catalog = Parser.subject_matcher_catalog()
+        catalog = FlextLdifServersOidAclConvert.subject_matcher_catalog()
 
         tm.that(catalog, is_=m.Ldif.AclSubjectMatcherCatalog)
         tm.that(catalog.matchers, empty=False)

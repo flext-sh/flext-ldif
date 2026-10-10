@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING, ClassVar
 
 import pytest
 
-from tests import TestsFlextLdifUtilities as u, tm
+from tests import tm, u
 
 if TYPE_CHECKING:
     from tests import m, p, t

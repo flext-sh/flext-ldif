@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_ldif.servers import FlextLdifServersOidAclToOud as Conv
+from flext_ldif.servers import FlextLdifServersOidAclToOud
 from tests import m, tm
 
 if TYPE_CHECKING:
@@ -65,7 +65,9 @@ class TestsFlextLdifOidAclConvertOud:
         bind_value: str,
     ) -> None:
         """Test subject maps to expected bind rule."""
-        result = Conv.convert_subject_to_oud(self._subject(kind, value))
+        result = FlextLdifServersOidAclToOud.convert_subject_to_oud(
+            self._subject(kind, value)
+        )
 
         allow = result.unwrap()
         tm.that(allow.subject_type, eq=bind_type)
@@ -73,7 +75,9 @@ class TestsFlextLdifOidAclConvertOud:
 
     def test_converted_subject_leaves_permissions_empty(self) -> None:
         """Test converted subject leaves permissions empty."""
-        result = Conv.convert_subject_to_oud(self._subject("user", "uid=joe,dc=ctbc"))
+        result = FlextLdifServersOidAclToOud.convert_subject_to_oud(
+            self._subject("user", "uid=joe,dc=ctbc")
+        )
 
         tm.that(result.unwrap().permissions, eq=())
 
@@ -87,7 +91,9 @@ class TestsFlextLdifOidAclConvertOud:
         value: str,
     ) -> None:
         """Test subject without oud equivalent surfaces failure."""
-        result = Conv.convert_subject_to_oud(self._subject(kind, value))
+        result = FlextLdifServersOidAclToOud.convert_subject_to_oud(
+            self._subject(kind, value)
+        )
 
         tm.that(result.failure, eq=True)
         tm.that(result.error, contains="manual review")
@@ -116,7 +122,9 @@ class TestsFlextLdifOidAclConvertOud:
         expected: t.VariadicTuple[str],
     ) -> None:
         """Test convert permissions yields ordered allow set."""
-        result = Conv.convert_permissions(permissions, is_entry=is_entry)
+        result = FlextLdifServersOidAclToOud.convert_permissions(
+            permissions, is_entry=is_entry
+        )
 
         tm.that(result.unwrap(), eq=expected)
 
@@ -126,7 +134,9 @@ class TestsFlextLdifOidAclConvertOud:
         permissions: t.VariadicTuple[str],
     ) -> None:
         """Test convert permissions unknown token surfaces failure."""
-        result = Conv.convert_permissions(permissions, is_entry=False)
+        result = FlextLdifServersOidAclToOud.convert_permissions(
+            permissions, is_entry=False
+        )
 
         tm.that(result.failure, eq=True)
 
@@ -150,14 +160,17 @@ class TestsFlextLdifOidAclConvertOud:
     ) -> None:
         """Test get targetattr."""
         tm.that(
-            Conv.resolve_targetattr(self._rule(target_type, target_attrs)), eq=expected
+            FlextLdifServersOidAclToOud.resolve_targetattr(
+                self._rule(target_type, target_attrs)
+            ),
+            eq=expected,
         )
 
     # -- calculate_targetscope --------------------------------------------
 
     def test_scope_orclaci_without_anyone_is_default(self) -> None:
         """Test scope orclaci without anyone is default."""
-        scope = Conv.calculate_targetscope(
+        scope = FlextLdifServersOidAclToOud.calculate_targetscope(
             self._rule("entry"),
             has_anyone_subject=False,
         )
@@ -166,13 +179,15 @@ class TestsFlextLdifOidAclConvertOud:
 
     def test_scope_orclaci_with_anyone_is_base(self) -> None:
         """Test scope orclaci with anyone is base."""
-        scope = Conv.calculate_targetscope(self._rule("entry"), has_anyone_subject=True)
+        scope = FlextLdifServersOidAclToOud.calculate_targetscope(
+            self._rule("entry"), has_anyone_subject=True
+        )
 
         tm.that(scope, eq="base")
 
     def test_scope_orclentrylevelaci_is_always_base(self) -> None:
         """Test scope orclentrylevelaci is always base."""
-        scope = Conv.calculate_targetscope(
+        scope = FlextLdifServersOidAclToOud.calculate_targetscope(
             self._rule("entry", acl_type="orclentrylevelaci"),
             has_anyone_subject=False,
         )
@@ -194,7 +209,7 @@ class TestsFlextLdifOidAclConvertOud:
     )
     def test_regex_to_wildcard(value: str, expected: str) -> None:
         """Test regex to wildcard."""
-        tm.that(Conv.regex_to_wildcard(value), eq=expected)
+        tm.that(FlextLdifServersOidAclToOud.regex_to_wildcard(value), eq=expected)
 
     # -- in_scope ------------------------------------------------------
 
@@ -210,14 +225,14 @@ class TestsFlextLdifOidAclConvertOud:
     )
     def test_is_in_scope(dn: str, base_dn: str, *, expected: bool) -> None:
         """Test is in scope."""
-        tm.that(Conv.in_scope(dn, base_dn), eq=expected)
+        tm.that(FlextLdifServersOidAclToOud.in_scope(dn, base_dn), eq=expected)
 
     # -- high_level_containers --------------------------------------------
 
     @staticmethod
     def test_high_level_containers_are_base_relative_and_case_folded() -> None:
         """Test high level containers are base relative and case folded."""
-        containers = Conv.high_level_containers("dc=CTBC")
+        containers = FlextLdifServersOidAclToOud.high_level_containers("dc=CTBC")
 
         tm.that("dc=ctbc" in containers, eq=True)
         tm.that("dc=network,dc=ctbc" in containers, eq=True)

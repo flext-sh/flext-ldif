@@ -46,7 +46,7 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         super().__init__()
         self._entry_service = entry_service
         if _parent_server is not None:
-            object.__setattr__(self, "_parent_server", _parent_server)
+            object.__setattr__(self, "parent_server", _parent_server)
 
     auto_execute: ClassVar[bool] = False
 

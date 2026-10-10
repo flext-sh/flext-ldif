@@ -27,7 +27,7 @@ class TestsFlextLdifOidAclEndToEnd:
     def _convert(
         api: p.Ldif.LdifClient,
         dn: str,
-        attrs: dict[str, list[str]],
+        attrs: t.MappingKV[str, t.StrSequence],
     ) -> t.MutableStrSequenceMapping:
         entry = u.Tests.create_real_entry(dn=dn, attributes=attrs)
         result = api.convert_model(

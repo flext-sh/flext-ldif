@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
-class FlextLdifDetector(FlextLdifDetectorScoring, s):
+class FlextLdifDetector(FlextLdifDetectorScoring, s[m.Ldif.Response]):
     """Detector service composed directly into the LDIF facade via MRO.
 
     Overrides ``_get_effective_server_type_value`` from parser and writer

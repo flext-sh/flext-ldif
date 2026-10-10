@@ -215,6 +215,13 @@ class FlextLdifConstantsEnums:
         IS_TRADITIONAL_DIT = "is_traditional_dit"
 
     @unique
+    class EntryCriteriaMode(StrEnum):
+        """Matching strategy for entry criteria evaluation."""
+
+        ANY = "any"
+        ALL = "all"
+
+    @unique
     class Categories(StrEnum):
         """Entry category constants."""
 

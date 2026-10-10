@@ -62,19 +62,20 @@ class FlextLdifServerMethodsMixin:
     ) -> p.Ldif.ServerServer | None:
         """Get the effective parent server when available.
 
+        Reads the declared ``parent_server`` surface the composed schema, ACL,
+        and entry models expose; the second probe resolves only when the
+        parent itself is a nested server.
+
         Returns:
             The resulting ``p.Ldif.ServerServer | None``.
         """
-        parent_raw: p.Ldif.ServerServer | None = getattr(
+        parent: p.Ldif.ServerServer | None = getattr(
             instance,
-            "_parent_server",
+            "parent_server",
             None,
         )
-        if (
-            parent_raw is not None
-            and getattr(parent_raw, "_parent_server", None) is not None
-        ):
-            return parent_raw
+        if parent is not None and getattr(parent, "parent_server", None) is not None:
+            return parent
         return None
 
     @staticmethod

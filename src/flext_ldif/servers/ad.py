@@ -20,40 +20,6 @@ from flext_ldif.servers._rfc import (
 )
 
 
-def _decoded_sddl_text(decoded_bytes: bytes) -> str | None:
-    """Decode raw SDDL bytes preferring UTF-16LE then UTF-8.
-
-    Returns:
-        The resulting ``str | None``.
-    """
-    try:
-        return (
-            decoded_bytes.decode(
-                FlextLdifServersAd.Constants.ENCODING_UTF16LE,
-                errors=FlextLdifServersAd.Constants.ENCODING_ERROR_IGNORE,
-            ).strip()
-            or decoded_bytes.decode(
-                FlextLdifServersAd.Constants.ENCODING_UTF8,
-                errors=FlextLdifServersAd.Constants.ENCODING_ERROR_IGNORE,
-            ).strip()
-        )
-    except UnicodeDecodeError:
-        return None
-
-
-def _decoded_base64_sddl(raw_value: str) -> str | None:
-    """Decode base64-encoded SDDL bytes, or None when undecodable.
-
-    Returns:
-        The resulting ``str | None``.
-    """
-    try:
-        decoded_bytes = base64.b64decode(raw_value, validate=True)
-    except binascii.Error:
-        return None
-    return _decoded_sddl_text(decoded_bytes)
-
-
 class FlextLdifServersAd(FlextLdifServersRfc):
     """Active Directory server servers implementation."""
 
@@ -277,7 +243,9 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             if is_base64:
                 remainder = remainder[1:].strip()
             raw_value = remainder
-            decoded_sddl = self._decode_sddl(raw_value, is_base64=is_base64)
+            decoded_result = self._decode_sddl(raw_value, is_base64=is_base64)
+            if decoded_result.failure:
+                return r[m.Ldif.Acl].from_failure(decoded_result)
             acl_model = m.Ldif.Acl(
                 name=attr_name,
                 target=m.Ldif.AclTarget(
@@ -286,7 +254,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 ),
                 subject=m.Ldif.AclSubject(
                     subject_type=c.Ldif.AclSubjectType.SDDL,
-                    subject_value=decoded_sddl or (raw_value or ""),
+                    subject_value=decoded_result.value or (raw_value or ""),
                 ),
                 permissions=m.Ldif.AclPermissions(),
                 metadata=u.Ldif.server_metadata_for(self._get_server_type()),
@@ -297,22 +265,35 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             return r[m.Ldif.Acl].ok(acl_model)
 
         @staticmethod
-        def _decode_sddl(raw_value: str, *, is_base64: bool) -> str | None:
+        def _decode_sddl(raw_value: str, *, is_base64: bool) -> p.Result[str]:
             """Decode SDDL from raw or base64 nTSecurityDescriptor value.
 
+            Base64 values decode to bytes, then to text preferring UTF-16LE
+            over UTF-8; a failing decode returns the typed failure.
+
             Returns:
-                The resulting ``str | None``.
+                The resulting ``p.Result[str]``.
             """
-            if is_base64 and raw_value:
-                return _decoded_base64_sddl(raw_value)
-            if (
-                raw_value
-                and FlextLdifServersAd.Constants.ACL_SDDL_PREFIX_PATTERN_RE.match(
-                    raw_value,
+            if not (is_base64 and raw_value):
+                return r[str].ok(raw_value)
+            try:
+                decoded_bytes = base64.b64decode(raw_value, validate=True)
+            except binascii.Error as exc:
+                return r[str].fail_op("decode base64 SDDL value", exc)
+            try:
+                decoded = (
+                    decoded_bytes.decode(
+                        FlextLdifServersAd.Constants.ENCODING_UTF16LE,
+                        errors=FlextLdifServersAd.Constants.ENCODING_ERROR_IGNORE,
+                    ).strip()
+                    or decoded_bytes.decode(
+                        FlextLdifServersAd.Constants.ENCODING_UTF8,
+                        errors=FlextLdifServersAd.Constants.ENCODING_ERROR_IGNORE,
+                    ).strip()
                 )
-            ):
-                return raw_value
-            return None
+            except UnicodeDecodeError as exc:
+                return r[str].fail_op("decode SDDL bytes to text", exc)
+            return r[str].ok(decoded)
 
         @staticmethod
         def _write_ad_acl(acl_data: m.Ldif.Acl) -> p.Result[str]:
@@ -371,13 +352,13 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 for oc in normalized_object_classes
             )
 
-
-# The AD dialect schema settings are owned by ``Constants`` and bound here
-# because a nested class body cannot reference the not-yet-defined outer class.
-FlextLdifServersAd.Schema.bind_pattern_settings(
-    attribute_settings=FlextLdifServersAd.Constants.ATTRIBUTE_PATTERN_SETTINGS,
-    objectclass_settings=FlextLdifServersAd.Constants.OBJECTCLASS_PATTERN_SETTINGS,
-)
+    # The AD dialect schema settings are owned by ``Constants`` and bound here
+    # in the owner class body: a nested class body cannot reference the
+    # sibling ``Constants`` while the outer class is still being built.
+    Schema.bind_pattern_settings(
+        attribute_settings=Constants.ATTRIBUTE_PATTERN_SETTINGS,
+        objectclass_settings=Constants.OBJECTCLASS_PATTERN_SETTINGS,
+    )
 
 
 __all__: list[str] = ["FlextLdifServersAd"]

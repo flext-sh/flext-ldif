@@ -16,6 +16,8 @@ from flext_ldif import c, t
 class FlextLdifEntryAnalysis:
     """Analyze differences between original and converted entries."""
 
+    logger = u.fetch_logger(__name__)
+
     @staticmethod
     def analyze_minimal_differences(
         original: str,
@@ -56,10 +58,13 @@ class FlextLdifEntryAnalysis:
         for attr_name in entry_attrs:
             try:
                 canonical = normalize(attr_name)
-                if canonical != attr_name:
-                    original_attribute_case[canonical] = attr_name
-            except c.EXC_BASIC_TYPE:
+            except c.EXC_BASIC_TYPE as exc:
+                FlextLdifEntryAnalysis.logger.warning(
+                    f"Skipping attribute casing restore for {attr_name!r}: {exc}",
+                )
                 continue
+            if canonical != attr_name:
+                original_attribute_case[canonical] = attr_name
         return original_attribute_case
 
     @staticmethod

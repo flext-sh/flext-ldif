@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from flext_tests import FlextTestsProtocols
 
 from flext_ldif import FlextLdifProtocols
+from tests._protocols_ldap import TestsFlextLdifLdapProtocols
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -19,42 +20,16 @@ if TYPE_CHECKING:
     from tests import c, m
 
 
-class TestsFlextLdifProtocols(FlextTestsProtocols, FlextLdifProtocols):
-    """Protocol definitions for flext-ldif tests."""
+class TestsFlextLdifProtocols(
+    TestsFlextLdifLdapProtocols,
+    FlextTestsProtocols,
+    FlextLdifProtocols,
+):
+    """Protocol definitions for flext-ldif tests.
 
-    class Ldap:
-        """Structural contract of the ldap3-compatible client used by the tests.
-
-        flext-ldif is the base library the LDAP client builds on, so the client
-        can never be a declared dependency of this project. The tests describe
-        only the surface they drive and resolve the concrete implementation at
-        runtime through ``tests.utilities`` (see ``u.Tests.require_ldap_client``).
-        """
-
-        @runtime_checkable
-        class Ldap3Server(Protocol):
-            """Opaque ldap3-compatible server handle."""
-
-            @property
-            def name(self) -> str | None:
-                """The configured server name."""
-                ...
-
-        # ── Shared structural contracts (SSOT: flext_ldif._protocols.ldap3) ──
-        type Ldap3Attribute = FlextLdifProtocols.Ldif.Ldap3Attribute
-        type Ldap3Entry = FlextLdifProtocols.Ldif.Ldap3Entry
-        type Ldap3Connection = FlextLdifProtocols.Ldif.Ldap3Connection
-
-        @runtime_checkable
-        class Ldap3EntryAdapter(Protocol):
-            """Structural contract for the ldap3 entry to LDIF entry adapter."""
-
-            def ldap3_to_ldif_entry(
-                self,
-                ldap3_entry: p.Ldap.Ldap3Entry,
-            ) -> p.Result[m.Ldif.Entry]:
-                """Convert one ldap3 entry into the LDIF entry model."""
-                ...
+    The ldap3 client contracts compose in through their focused module so the
+    ``p.Ldap3*`` surface stays unchanged without a second nested namespace.
+    """
 
     class Tests(FlextTestsProtocols.Tests):
         """LDIF helper protocols used only by tests."""

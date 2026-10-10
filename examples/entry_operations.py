@@ -22,7 +22,7 @@ from examples import m, p, r
 from flext_ldif import ldif
 
 
-class DRYEntryOperations:
+class ExamplesFlextLdifEntryOperations:
     """DRY entry operations: intelligent builders + railway composition."""
 
     @staticmethod
@@ -32,7 +32,7 @@ class DRYEntryOperations:
         Returns:
             The resulting ``p.Result[MutableSequence[m.Ldif.Entry]]``.
         """
-        return DRYEntryOperations.intelligent_builders().map(
+        return ExamplesFlextLdifEntryOperations.intelligent_builders().map(
             lambda entries: [
                 entry
                 for entry in entries
@@ -51,7 +51,7 @@ class DRYEntryOperations:
             The resulting ``p.Result[MutableSequence[m.Ldif.Entry]]``.
         """
         api = ldif()
-        return DRYEntryOperations.advanced_filtering().flat_map(
+        return ExamplesFlextLdifEntryOperations.advanced_filtering().flat_map(
             lambda entries: api.validate_entries(entries).map(lambda _: entries),
         )
 

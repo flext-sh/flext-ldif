@@ -10,9 +10,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Self
+import builtins
+from typing import ClassVar, Self
 
-from flext_core import FlextSettings, t
+from flext_core import FlextSettings, m, t
 from flext_ldif._models._settings_acl import FlextLdifModelsSettingsAcl
 from flext_ldif._models._settings_criteria import FlextLdifModelsSettingsCriteria
 from flext_ldif._models._settings_migrate import FlextLdifModelsSettingsMigrate
@@ -42,6 +43,10 @@ class FlextLdifModelsSettings(
     holder, never instantiated — nested namespaces resolve via the MRO.
     """
 
+    # Inherited unchanged; the redeclaration keeps the composed facade MRO
+    # attribute definitions compatible with the model-family namespaces.
+    model_config: ClassVar[m.SettingsConfigDict] = FlextSettings.model_config
+
     # ENFORCE-042 namespace-holder contract: ``FlextSettings`` contributes
     # namespacing only — instance machinery stays plain object semantics so the
     # settings singleton/validation machinery cannot leak into instantiated
@@ -56,7 +61,7 @@ class FlextLdifModelsSettings(
     def __setattr__(self, name: str, value: t.JsonValue) -> None:
         object.__setattr__(self, name, value)
 
-    def __eq__(self, other: object) -> bool:
+    def __eq__(self, other: builtins.object) -> bool:
         """Identity equality per the namespace-holder contract.
 
         Returns:

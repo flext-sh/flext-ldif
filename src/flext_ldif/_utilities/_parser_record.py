@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import ClassVar
 
 from flext_ldif import FlextLdifModels, c, p, r, t
+from flext_ldif._models import FlextLdifModelsDomainEntryControl
 from flext_ldif._utilities import FlextLdifParserMetadataBuilders, FlextLdifParserValues
 
 
@@ -27,10 +28,10 @@ class FlextLdifParserRecord:
 
         dn: str
         attrs: t.MutableStrSequenceMapping
-        attribute_metadata: dict[str, t.MutableAttributeMapping]
+        attribute_metadata: t.MutableMappingKV[str, t.MutableAttributeMapping]
         comments: t.MutableSequenceOf[str]
         raw_record_lines: t.MutableSequenceOf[str]
-        controls: t.MutableSequenceOf[FlextLdifModels.Ldif.Control]
+        controls: t.MutableSequenceOf[FlextLdifModelsDomainEntryControl]
         change_operations: t.MutableSequenceOf[FlextLdifModels.Ldif.ChangeOperation]
         current_change_operation: FlextLdifModels.Ldif.ChangeOperation | None
         changetype: c.Ldif.ChangeType | None
@@ -43,10 +44,13 @@ class FlextLdifParserRecord:
             """Initialize an empty record state."""
             self.dn = ""
             self.attrs: t.MutableStrSequenceMapping = {}
-            self.attribute_metadata: dict[str, t.MutableAttributeMapping] = {}
+            self.attribute_metadata: t.MutableMappingKV[
+                str,
+                t.MutableAttributeMapping,
+            ] = {}
             self.comments: t.MutableSequenceOf[str] = []
             self.raw_record_lines: t.MutableSequenceOf[str] = []
-            self.controls: t.MutableSequenceOf[FlextLdifModels.Ldif.Control] = []
+            self.controls: t.MutableSequenceOf[FlextLdifModelsDomainEntryControl] = []
             self.change_operations: t.MutableSequenceOf[
                 FlextLdifModels.Ldif.ChangeOperation
             ] = []
@@ -102,8 +106,8 @@ class FlextLdifParserRecord:
             state.changetype = c.Ldif.ChangeType(normalized_change_type)
         except ValueError:
             state.changetype = None
-            return
-        state.record_kind = c.Ldif.RecordKind.CHANGE
+        else:
+            state.record_kind = c.Ldif.RecordKind.CHANGE
 
     @classmethod
     def _apply_moddn_field(

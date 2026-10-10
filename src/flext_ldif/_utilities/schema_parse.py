@@ -13,9 +13,9 @@ from flext_cli import u
 from flext_core import r
 from flext_ldif import FlextLdifModels, c, p, t
 from flext_ldif._utilities import (
-    FlextLdifUtilitiesOID as uo,
-    FlextLdifUtilitiesParser as up,
-    FlextLdifUtilitiesSchemaExtract as se,
+    FlextLdifUtilitiesOID,
+    FlextLdifUtilitiesParser,
+    FlextLdifUtilitiesSchemaExtract,
 )
 
 if TYPE_CHECKING:
@@ -51,7 +51,7 @@ class FlextLdifUtilitiesSchemaParse:
             str,
             bool | t.MutableSequenceOf[str] | str | None,
         ] = {}
-        validate_result = uo.validate_format(syntax)
+        validate_result = FlextLdifUtilitiesOID.validate_format(syntax)
         if validate_result.failure:
             syntax_extensions[c.Ldif.SYNTAX_VALIDATION_ERROR] = (
                 f"Syntax OID validation failed: {validate_result.error}"
@@ -80,7 +80,7 @@ class FlextLdifUtilitiesSchemaParse:
         Returns:
             The resulting ``t.Ldif.MutableMetadataMapping``.
         """
-        extensions_raw = up.extract_extensions(definition)
+        extensions_raw = FlextLdifUtilitiesParser.extract_extensions(definition)
         extensions: t.Ldif.MutableMetadataMapping = {}
         for key, val in extensions_raw.items():
             val_payload: t.JsonValueList = list(val)
@@ -159,7 +159,7 @@ class FlextLdifUtilitiesSchemaParse:
         Returns:
             The resulting ``t.MutableSequenceOf[FlextLdifModels.Ldif.SchemaAttribute]``.
         """
-        return se.extract_schema_items_from_lines(
+        return FlextLdifUtilitiesSchemaExtract.extract_schema_items_from_lines(
             ldif_content,
             parse_callback,
             "attributetypes:",
@@ -180,7 +180,7 @@ class FlextLdifUtilitiesSchemaParse:
             The resulting
                 ``t.MutableSequenceOf[FlextLdifModels.Ldif.SchemaObjectClass]``.
         """
-        return se.extract_schema_items_from_lines(
+        return FlextLdifUtilitiesSchemaExtract.extract_schema_items_from_lines(
             ldif_content,
             parse_callback,
             "objectclasses:",
@@ -198,7 +198,7 @@ class FlextLdifUtilitiesSchemaParse:
         Returns:
             The resulting ``p.Result[t.Ldif.MutableMetadataMapping]``.
         """
-        basic_fields = se.extract_schema_basic_fields(
+        basic_fields = FlextLdifUtilitiesSchemaExtract.extract_schema_basic_fields(
             definition=attr_definition,
             definition_label=c.Ldif.SchemaItemKind.ATTRIBUTE.value,
         )
@@ -241,12 +241,20 @@ class FlextLdifUtilitiesSchemaParse:
         Returns:
             The resulting ``tuple[str, t.Ldif.MutableMetadataMapping]``.
         """
-        syntax, length = se.extract_attribute_syntax(attr_definition)
-        equality, substr, ordering = se.extract_attribute_matching_rules(
-            attr_definition,
+        syntax, length = FlextLdifUtilitiesSchemaExtract.extract_attribute_syntax(
+            attr_definition
         )
-        single_value, no_user_modification = se.extract_attribute_flags(attr_definition)
-        sup, usage = se.extract_attribute_sup_usage(attr_definition)
+        equality, substr, ordering = (
+            FlextLdifUtilitiesSchemaExtract.extract_attribute_matching_rules(
+                attr_definition,
+            )
+        )
+        single_value, no_user_modification = (
+            FlextLdifUtilitiesSchemaExtract.extract_attribute_flags(attr_definition)
+        )
+        sup, usage = FlextLdifUtilitiesSchemaExtract.extract_attribute_sup_usage(
+            attr_definition
+        )
         return syntax, {
             "syntax": syntax,
             "length": length,
@@ -293,9 +301,11 @@ class FlextLdifUtilitiesSchemaParse:
         Raises:
             ValueError: If ``basic_fields_result.failure``.
         """
-        basic_fields_result = se.extract_schema_basic_fields(
-            definition=oc_definition,
-            definition_label=c.Ldif.SchemaItemKind.OBJECTCLASS.value,
+        basic_fields_result = (
+            FlextLdifUtilitiesSchemaExtract.extract_schema_basic_fields(
+                definition=oc_definition,
+                definition_label=c.Ldif.SchemaItemKind.OBJECTCLASS.value,
+            )
         )
         if basic_fields_result.failure:
             msg = basic_fields_result.error or "RFC objectClass parsing failed"
@@ -304,9 +314,11 @@ class FlextLdifUtilitiesSchemaParse:
         oid = basic_fields_value[0]
         name = basic_fields_value[1]
         desc = basic_fields_value[2]
-        sup = se.extract_objectclass_sup(oc_definition)
-        kind = se.extract_objectclass_kind(oc_definition)
-        must, may = se.extract_objectclass_must_may(oc_definition)
+        sup = FlextLdifUtilitiesSchemaExtract.extract_objectclass_sup(oc_definition)
+        kind = FlextLdifUtilitiesSchemaExtract.extract_objectclass_kind(oc_definition)
+        must, may = FlextLdifUtilitiesSchemaExtract.extract_objectclass_must_may(
+            oc_definition
+        )
         extensions_raw = FlextLdifUtilitiesSchemaParse.build_metadata(oc_definition)
         extensions_converted = (
             FlextLdifUtilitiesSchemaParse._convert_metadata_extensions(extensions_raw)

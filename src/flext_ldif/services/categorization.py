@@ -11,7 +11,7 @@ from collections.abc import MutableMapping
 from flext_ldif import FlextLdifCategorizationFiltering, c, m, p, r, s, t, u
 
 
-class FlextLdifCategorization(FlextLdifCategorizationFiltering, s):
+class FlextLdifCategorization(FlextLdifCategorizationFiltering, s[m.Ldif.Response]):
     """LDIF Entry Categorization Service."""
 
     def categorize_entries(

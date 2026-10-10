@@ -25,7 +25,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from flext_ldif.services import FlextLdifEntries
-from tests import TestsFlextLdifUtilities as u, c, m, tm
+from tests import c, m, tm, u
 
 if TYPE_CHECKING:
     from tests import t
@@ -35,8 +35,10 @@ class TestsFlextLdifEntries:
     """Public-contract behavior of the FlextLdifEntries service."""
 
     @staticmethod
-    def _basic_entry(extra_attrs: dict[str, list[str]] | None = None) -> m.Ldif.Entry:
-        attrs: dict[str, list[str]] = {
+    def _basic_entry(
+        extra_attrs: t.MappingKV[str, list[str]] | None = None,
+    ) -> m.Ldif.Entry:
+        attrs: t.MutableMappingKV[str, list[str]] = {
             "objectClass": list(c.Tests.ENTRIES_OBJECTCLASS_PERSON),
             "cn": ["entries-test"],
             "sn": ["user"],
@@ -56,7 +58,7 @@ class TestsFlextLdifEntries:
 
     @staticmethod
     def _to_attribute_mapping(
-        data: dict[str, str | list[str]],
+        data: t.MappingKV[str, str | t.StrSequence],
     ) -> t.MutableAttributeMapping:
         typed: t.MutableAttributeMapping = {}
         for key, value in data.items():
@@ -158,7 +160,7 @@ class TestsFlextLdifEntries:
     def test_resolve_dn_from_dict_yields_expected_value(
         self,
         scenario: str,
-        entry_dict: dict[str, str | list[str]],
+        entry_dict: t.MappingKV[str, str | t.StrSequence],
         *,
         should_succeed: bool,
     ) -> None:

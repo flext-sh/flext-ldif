@@ -19,12 +19,12 @@ import pytest
 
 import flext_ldif
 from tests import tm
-from tests.unit.typings import PublicSymbol
+from tests.unit.typings import TestsFlextLdifUnitTypings
 
 if TYPE_CHECKING:
     from tests import t
 
-REQUIRED_PUBLIC_API: t.VariadicTuple[PublicSymbol] = (
+REQUIRED_PUBLIC_API: t.VariadicTuple[TestsFlextLdifUnitTypings.PublicSymbol] = (
     "FlextLdif",
     "FlextLdifConstants",
     "FlextLdifModels",
@@ -56,15 +56,17 @@ REQUIRED_PUBLIC_API: t.VariadicTuple[PublicSymbol] = (
     "u",
     "x",
 )
-PUBLIC_API: t.VariadicTuple[PublicSymbol] = tuple(flext_ldif.__all__)
+PUBLIC_API: t.VariadicTuple[TestsFlextLdifUnitTypings.PublicSymbol] = tuple(
+    flext_ldif.__all__
+)
 
 # Public symbols that consumers use as types (subclass / instantiate / isinstance).
-CLASS_SYMBOLS: t.VariadicTuple[PublicSymbol] = tuple(
+CLASS_SYMBOLS: t.VariadicTuple[TestsFlextLdifUnitTypings.PublicSymbol] = tuple(
     name for name in PUBLIC_API if name.startswith("FlextLdif")
 )
 
 # Metadata strings exposed at the package root.
-METADATA_STRING_SYMBOLS: t.VariadicTuple[PublicSymbol] = (
+METADATA_STRING_SYMBOLS: t.VariadicTuple[TestsFlextLdifUnitTypings.PublicSymbol] = (
     "__author__",
     "__author_email__",
     "__description__",
@@ -77,7 +79,12 @@ METADATA_STRING_SYMBOLS: t.VariadicTuple[PublicSymbol] = (
 # Facade alias -> canonical owner name. Aliases MUST be the *same object* so that
 # `isinstance(x, flext_ldif.m.Entry)` and `flext_ldif.FlextLdifModels.Entry`
 # agree for every consumer.
-FACADE_ALIAS_OWNERS: tuple[tuple[PublicSymbol, PublicSymbol], ...] = (
+FACADE_ALIAS_OWNERS: tuple[
+    tuple[
+        TestsFlextLdifUnitTypings.PublicSymbol, TestsFlextLdifUnitTypings.PublicSymbol
+    ],
+    ...,
+] = (
     ("c", "FlextLdifConstants"),
     ("m", "FlextLdifModels"),
     ("p", "FlextLdifProtocols"),
@@ -88,7 +95,7 @@ FACADE_ALIAS_OWNERS: tuple[tuple[PublicSymbol, PublicSymbol], ...] = (
 
 # Implementation classes that live behind their canonical owner modules and must
 # never leak onto the package root.
-PRIVATE_ROOT_SYMBOLS: t.VariadicTuple[PublicSymbol] = (
+PRIVATE_ROOT_SYMBOLS: t.VariadicTuple[TestsFlextLdifUnitTypings.PublicSymbol] = (
     "FlextLdifConstantsBase",
     "FlextLdifConstantsEnums",
     "FlextLdifModelsBases",
@@ -124,14 +131,16 @@ class TestsFlextLdifApiFreeze:
     @staticmethod
     @pytest.mark.parametrize("symbol", PUBLIC_API)
     def test_public_symbol_resolves_to_a_real_object(
-        symbol: PublicSymbol,
+        symbol: TestsFlextLdifUnitTypings.PublicSymbol,
     ) -> None:
         """Accessing any advertised name yields a bound, non-None object."""
         tm.that(getattr(flext_ldif, symbol), ne=None)
 
     @staticmethod
     @pytest.mark.parametrize("symbol", PUBLIC_API)
-    def test_lazy_resolution_is_idempotent(symbol: PublicSymbol) -> None:
+    def test_lazy_resolution_is_idempotent(
+        symbol: TestsFlextLdifUnitTypings.PublicSymbol,
+    ) -> None:
         """Repeated access returns the identical object (stable identity)."""
         first = getattr(flext_ldif, symbol)
         second = getattr(flext_ldif, symbol)
@@ -139,21 +148,25 @@ class TestsFlextLdifApiFreeze:
 
     @staticmethod
     @pytest.mark.parametrize("symbol", PUBLIC_API)
-    def test_public_symbol_is_discoverable_via_dir(symbol: PublicSymbol) -> None:
+    def test_public_symbol_is_discoverable_via_dir(
+        symbol: TestsFlextLdifUnitTypings.PublicSymbol,
+    ) -> None:
         """Every public name shows up in ``dir()`` for interactive discovery."""
         tm.that(symbol in dir(flext_ldif), eq=True)
 
     @staticmethod
     @pytest.mark.parametrize("symbol", CLASS_SYMBOLS)
-    def test_flext_symbols_resolve_to_classes(symbol: PublicSymbol) -> None:
+    def test_flext_symbols_resolve_to_classes(
+        symbol: TestsFlextLdifUnitTypings.PublicSymbol,
+    ) -> None:
         """Every ``FlextLdif*`` public name is a class consumers can use."""
         tm.that(inspect.isclass(getattr(flext_ldif, symbol)), eq=True)
 
     @staticmethod
     @pytest.mark.parametrize(("alias", "owner"), FACADE_ALIAS_OWNERS)
     def test_facade_alias_is_its_canonical_owner(
-        alias: PublicSymbol,
-        owner: PublicSymbol,
+        alias: TestsFlextLdifUnitTypings.PublicSymbol,
+        owner: TestsFlextLdifUnitTypings.PublicSymbol,
     ) -> None:
         """Short facade aliases are the same object as their named owner."""
         assert getattr(flext_ldif, alias) is getattr(flext_ldif, owner)
@@ -165,7 +178,9 @@ class TestsFlextLdifApiFreeze:
 
     @staticmethod
     @pytest.mark.parametrize("symbol", METADATA_STRING_SYMBOLS)
-    def test_metadata_strings_are_non_empty_strings(symbol: PublicSymbol) -> None:
+    def test_metadata_strings_are_non_empty_strings(
+        symbol: TestsFlextLdifUnitTypings.PublicSymbol,
+    ) -> None:
         """Package metadata is exposed as populated strings."""
         value = getattr(flext_ldif, symbol)
         tm.that(value, is_=str)
@@ -178,14 +193,16 @@ class TestsFlextLdifApiFreeze:
 
     @staticmethod
     @pytest.mark.parametrize("symbol", PRIVATE_ROOT_SYMBOLS)
-    def test_private_symbol_is_not_advertised(symbol: PublicSymbol) -> None:
+    def test_private_symbol_is_not_advertised(
+        symbol: TestsFlextLdifUnitTypings.PublicSymbol,
+    ) -> None:
         """Implementation classes never appear in the advertised surface."""
         tm.that(symbol in flext_ldif.__all__, eq=False)
 
     @staticmethod
     @pytest.mark.parametrize("symbol", PRIVATE_ROOT_SYMBOLS)
     def test_private_symbol_is_not_accessible_from_root(
-        symbol: PublicSymbol,
+        symbol: TestsFlextLdifUnitTypings.PublicSymbol,
     ) -> None:
         """Accessing a private implementation class raises ``AttributeError``."""
         with pytest.raises(AttributeError):

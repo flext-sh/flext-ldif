@@ -127,11 +127,11 @@ class FlextLdifUtilitiesDispatch:
             )
         else:
             parsed_value = parse_parts_hook(definition)
-            result = (
-                parsed_value
-                if isinstance(parsed_value, p.Result)
-                else r[t.Ldif.MutableMetadataMapping].ok(dict(parsed_value))
-            )
+            if isinstance(parsed_value, p.Result):
+                result = parsed_value
+            else:
+                converted: t.Ldif.MutableMetadataMapping = dict(parsed_value)
+                result = r[t.Ldif.MutableMetadataMapping].ok(converted)
         return result
 
     @staticmethod

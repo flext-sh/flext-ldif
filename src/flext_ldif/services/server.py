@@ -6,22 +6,32 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import importlib
 import inspect
-import pkgutil
-from typing import TYPE_CHECKING, Annotated, ClassVar, Self, TypeGuard, override
+from typing import Annotated, ClassVar, Self, TypeGuard, override
 
-from flext_ldif import c, p, r, s, t, u
+from flext_ldif import c, m, p, r, s, t, u
+from flext_ldif.servers import (
+    ad,
+    apache,
+    ds389,
+    novell,
+    oid,
+    openldap,
+    openldap1,
+    oud,
+    relaxed,
+    rfc,
+    tivoli,
+)
+from flext_ldif.servers.base import FlextLdifServersBase
 
-if TYPE_CHECKING:
-    from flext_ldif import FlextLdifServersBase
 
-
-class FlextLdifServer(s):
+class FlextLdifServer(s[m.Ldif.Response]):
     """Server server registry using the canonical registry DSL."""
 
     _discovery_initialized: ClassVar[bool] = False
     _global_instance: ClassVar[FlextLdifServer | None] = None
+    _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
     _registered_servers: ClassVar[t.MutableMappingKV[str, p.Ldif.ServerServer]] = {}
 
     dispatcher: Annotated[
@@ -35,7 +45,7 @@ class FlextLdifServer(s):
     _registry: p.Registry = u.PrivateAttr(default_factory=u.build_registry)
 
     @override
-    def __new__(cls, *args: object, **kwargs: object) -> Self:
+    def __new__(cls, *args: t.JsonValue, **kwargs: t.JsonValue) -> Self:
         """Pre-bind the shared singleton before pydantic initialization.
 
         The inherited service-base ``_server`` private-attribute default
@@ -231,48 +241,43 @@ class FlextLdifServer(s):
         return r[p.Ldif.ServerServer].ok(plugin)
 
     def _auto_discover(self) -> None:
-        """Discover and register concrete classes from installed server modules.
-
-        Raises:
-            TypeError: If flext_ldif.servers.base must expose FlextLdifServersBase.
-        """
-        # mro-0ftd.3.5: discovery owns module loading so package initializers
-        # remain side-effect-free and cannot recreate the service import cycle.
-        servers_package = importlib.import_module("flext_ldif.servers")
-        base_candidate = getattr(
-            importlib.import_module("flext_ldif.servers.base"),
-            "FlextLdifServersBase",
-            None,
-        )
-        if not isinstance(base_candidate, type):
-            msg = "flext_ldif.servers.base must expose FlextLdifServersBase"
-            raise TypeError(msg)
-        prefix = f"{servers_package.__name__}."
-        module_names = tuple(
-            sorted(
-                module_info.name
-                for module_info in pkgutil.iter_modules(
-                    servers_package.__path__,
-                    prefix=prefix,
-                )
-                if not module_info.ispkg
-                and not module_info.name.removeprefix(prefix).startswith("_")
-            ),
-        )
-        for module_name in module_names:
-            module = importlib.import_module(module_name)
-            for name, obj in inspect.getmembers(module):
+        """Discover and register concrete classes from the server modules."""
+        # mro-0ftd.3.5 (updated): the concrete server modules are declared as
+        # module-level imports so the import law sees them; discovery scans
+        # their members for concrete FlextLdifServersBase subclasses, keeping
+        # the package initializers side-effect-free.
+        for server_module in (
+            ad,
+            apache,
+            ds389,
+            novell,
+            oid,
+            openldap,
+            openldap1,
+            oud,
+            relaxed,
+            rfc,
+            tivoli,
+        ):
+            module_name: str = server_module.__name__
+            for name, obj in inspect.getmembers(server_module):
                 if not self._is_discoverable_server(
                     name,
                     obj,
                     module_name,
-                    base_candidate,
+                    FlextLdifServersBase,
                 ):
                     continue
                 try:
                     self._register_discovered_server(obj)
-                except c.EXC_ATTR_TYPE:
-                    continue
+                except c.EXC_ATTR_TYPE as exc:
+                    self._module_logger.warning(
+                        "Server registration failed during discovery",
+                        error=exc,
+                        error_type=type(exc).__name__,
+                        server_class=obj.__name__,
+                        server_module=module_name,
+                    )
 
     @staticmethod
     def _is_public_module_member(name: str) -> bool:

@@ -12,7 +12,7 @@ from typing import Annotated, cast
 from flext_ldif import c, m, p, r, s, t, u
 
 
-class FlextLdifEntries(s):
+class FlextLdifEntries(s[m.Ldif.Response]):
     """Entry operations with strict contracts."""
 
     entries: Annotated[

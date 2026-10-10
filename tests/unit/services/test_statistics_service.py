@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from tests import TestsFlextLdifUtilities as u, c, m, tm
+from tests import c, m, tm, u
 
 if TYPE_CHECKING:
     from tests import p

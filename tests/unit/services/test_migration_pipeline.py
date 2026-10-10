@@ -18,7 +18,7 @@ import pytest
 
 from flext_ldif.services import FlextLdifMigrationPipeline
 from flext_ldif.services.pipeline import FlextLdifProcessingPipeline
-from tests import TestsFlextLdifUtilities as u, c, m, tm
+from tests import c, m, tm, u
 
 if TYPE_CHECKING:
     from pathlib import Path

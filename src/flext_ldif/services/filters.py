@@ -9,7 +9,7 @@ from __future__ import annotations
 from flext_ldif import c, m, p, r, s, t, u
 
 
-class FlextLdifFilters(s):
+class FlextLdifFilters(s[m.Ldif.Response]):
     """LDIF entry filtering service."""
 
     @classmethod
