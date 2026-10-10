@@ -11,7 +11,7 @@ from collections.abc import Callable
 from flext_ldif import c, m, p, r, s, t
 
 
-class FlextLdifConversionSupportMixin(s):
+class FlextLdifConversionSupportMixin(s[m.Ldif.Response]):
     """Support-check helpers shared by the conversion facade."""
 
     @staticmethod

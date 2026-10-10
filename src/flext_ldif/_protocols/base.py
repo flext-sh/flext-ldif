@@ -13,7 +13,10 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from flext_ldif import FlextLdifProtocols, c, m, p, t
-    from flext_ldif._protocols.domain import FlextLdifProtocolsDomain as lpd
+    from flext_ldif._models.domain_entry_change_value import (
+        FlextLdifModelsDomainEntryChangeOperationValue,
+    )
+    from flext_ldif._protocols.domain import FlextLdifProtocolsDomain
 
 
 @runtime_checkable
@@ -50,23 +53,31 @@ class FlextLdifProtocolsBase(Protocol):
     class ServerResolutionService(Protocol):
         """Contract for server registry resolution and model conversion."""
 
-        def acl(self, server_type: str) -> p.Result[lpd.AclServer]:
+        def acl(self, server_type: str) -> p.Result[FlextLdifProtocolsDomain.AclServer]:
             """Resolve ACL server by server type via the facade DSL."""
             ...
 
-        def entry(self, server_type: str) -> p.Result[lpd.EntryServer]:
+        def entry(
+            self, server_type: str
+        ) -> p.Result[FlextLdifProtocolsDomain.EntryServer]:
             """Resolve entry server by server type via the facade DSL."""
             ...
 
-        def resolve_base_server(self, server_type: str) -> p.Result[lpd.ServerServer]:
+        def resolve_base_server(
+            self, server_type: str
+        ) -> p.Result[FlextLdifProtocolsDomain.ServerServer]:
             """Resolve base server by server type via the facade DSL."""
             ...
 
-        def schema_server(self, server_type: str) -> p.Result[lpd.SchemaServer]:
+        def schema_server(
+            self, server_type: str
+        ) -> p.Result[FlextLdifProtocolsDomain.SchemaServer]:
             """Resolve schema server by server type via the facade DSL."""
             ...
 
-        def resolve_schema_server(self, server_type: str) -> p.Result[lpd.SchemaServer]:
+        def resolve_schema_server(
+            self, server_type: str
+        ) -> p.Result[FlextLdifProtocolsDomain.SchemaServer]:
             """Resolve schema server by server type via the facade DSL."""
             ...
 
@@ -74,7 +85,12 @@ class FlextLdifProtocolsBase(Protocol):
             self,
             server_type: str,
         ) -> p.Result[
-            t.MappingKV[str, lpd.SchemaServer | lpd.AclServer | lpd.EntryServer]
+            t.MappingKV[
+                str,
+                FlextLdifProtocolsDomain.SchemaServer
+                | FlextLdifProtocolsDomain.AclServer
+                | FlextLdifProtocolsDomain.EntryServer,
+            ]
         ]:
             """Resolve schema/acl/entry bundle by server type via the facade DSL."""
             ...
@@ -103,8 +119,12 @@ class FlextLdifProtocolsBase(Protocol):
 
         def convert_model(
             self,
-            source: str | FlextLdifProtocolsBase.ServerReference | lpd.ServerServer,
-            target: str | FlextLdifProtocolsBase.ServerReference | lpd.ServerServer,
+            source: str
+            | FlextLdifProtocolsBase.ServerReference
+            | FlextLdifProtocolsDomain.ServerServer,
+            target: str
+            | FlextLdifProtocolsBase.ServerReference
+            | FlextLdifProtocolsDomain.ServerServer,
             model_instance: m.Ldif.Entry
             | m.Ldif.SchemaAttribute
             | m.Ldif.SchemaObjectClass
@@ -338,7 +358,7 @@ class FlextLdifProtocolsBase(Protocol):
 
         operation: c.Ldif.ChangeOperation
         attribute: str
-        values: t.SequenceOf[m.Ldif.ChangeOperationValue]
+        values: t.SequenceOf[FlextLdifModelsDomainEntryChangeOperationValue]
 
     @runtime_checkable
     class AclPermissions(Protocol):

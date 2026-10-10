@@ -20,12 +20,13 @@ from flext_ldif.servers._oud import (
     FlextLdifServersOudEntry,
     FlextLdifServersOudSchema,
 )
+from flext_ldif.servers._rfc import FlextLdifServersRfcConstants
 
 
 class FlextLdifServersOud(FlextLdifServersRfc):
     """Oracle Unified Directory (OUD) Server Implementation."""
 
-    Constants: ClassVar[type[FlextLdifServersOudConstants]] = (
+    Constants: ClassVar[type[FlextLdifServersRfcConstants]] = (
         FlextLdifServersOudConstants
     )
     Acl: ClassVar[type[FlextLdifServersBaseSchemaAcl]] = FlextLdifServersOudAcl

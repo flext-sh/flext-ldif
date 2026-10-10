@@ -27,10 +27,10 @@ from flext_ldif import ldif
 from tests import c, tm, u
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Mapping, Sequence
+    from collections.abc import Callable, Sequence
     from pathlib import Path
 
-    from tests import m, p
+    from tests import m, p, t
 
 
 @pytest.fixture
@@ -50,7 +50,7 @@ class TestsFlextLdifRealLdapExport:
 
     @staticmethod
     def _to_ldif_entries(
-        ldap3_entries: Sequence[p.Ldap.Ldap3Entry],
+        ldap3_entries: Sequence[p.Ldap3Entry],
     ) -> list[m.Ldif.Entry]:
         """Convert ldap3 search results into ldif entries via the public adapter.
 
@@ -69,7 +69,7 @@ class TestsFlextLdifRealLdapExport:
     def _parse_back(
         flext_api: p.Ldif.LdifClient,
         content: str | None,
-    ) -> dict[str, Mapping[str, Sequence[str]]]:
+    ) -> t.MappingKV[str, t.MappingKV[str, t.StrSequence]]:
         """Parse exported LDIF and index attribute maps by DN string.
 
         Parsing the export through the public parser is the strongest available
@@ -77,7 +77,7 @@ class TestsFlextLdifRealLdapExport:
         faithfully round-trips every DN and attribute.
 
         Returns:
-            The resulting ``dict[str, Mapping[str, Sequence[str]]]``.
+            The resulting ``t.MappingKV[str, t.MappingKV[str, t.StrSequence]]``.
         """
         assert content is not None
         parsed = flext_api.parse_string(content)
@@ -88,7 +88,7 @@ class TestsFlextLdifRealLdapExport:
 
     def test_single_entry_export_round_trips_dn_and_attributes(
         self,
-        ldap_connection: p.Ldap.Ldap3Connection,
+        ldap_connection: p.Ldap3Connection,
         clean_test_ou: str,
         flext_api: p.Ldif.LdifClient,
         make_test_username: Callable[[str], str],
@@ -121,7 +121,7 @@ class TestsFlextLdifRealLdapExport:
 
     def test_multiple_entries_export_round_trips_every_dn(
         self,
-        ldap_connection: p.Ldap.Ldap3Connection,
+        ldap_connection: p.Ldap3Connection,
         clean_test_ou: str,
         flext_api: p.Ldif.LdifClient,
         make_test_username: Callable[[str], str],
@@ -153,7 +153,7 @@ class TestsFlextLdifRealLdapExport:
 
     def test_hierarchical_export_round_trips_containers_and_leaves(
         self,
-        ldap_connection: p.Ldap.Ldap3Connection,
+        ldap_connection: p.Ldap3Connection,
         clean_test_ou: str,
         flext_api: p.Ldif.LdifClient,
         make_test_username: Callable[[str], str],
@@ -183,7 +183,7 @@ class TestsFlextLdifRealLdapExport:
         ldap_connection.search(
             clean_test_ou,
             "(objectClass=*)",
-            search_scope=c.Ldap.Ldap3SearchScope.SUBTREE.value,
+            search_scope=c.Ldap3SearchScope.SUBTREE.value,
             attributes=["*"],
         )
 
@@ -197,7 +197,7 @@ class TestsFlextLdifRealLdapExport:
 
     def test_export_is_idempotent_for_fixed_entries(
         self,
-        ldap_connection: p.Ldap.Ldap3Connection,
+        ldap_connection: p.Ldap3Connection,
         clean_test_ou: str,
         flext_api: p.Ldif.LdifClient,
         make_test_username: Callable[[str], str],
@@ -222,7 +222,7 @@ class TestsFlextLdifRealLdapExport:
 
     def test_export_to_file_writes_parseable_ldif(
         self,
-        ldap_connection: p.Ldap.Ldap3Connection,
+        ldap_connection: p.Ldap3Connection,
         clean_test_ou: str,
         flext_api: p.Ldif.LdifClient,
         tmp_path: Path,

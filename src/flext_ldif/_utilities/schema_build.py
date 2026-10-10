@@ -10,10 +10,10 @@ from typing import TYPE_CHECKING
 
 from flext_ldif import FlextLdifModels, c, p, t
 from flext_ldif._utilities import (
-    FlextLdifUtilitiesOID as uo,
-    FlextLdifUtilitiesSchemaFormat as sf,
-    FlextLdifUtilitiesServer as us,
-    FlextLdifUtilitiesWriter as uw,
+    FlextLdifUtilitiesOID,
+    FlextLdifUtilitiesSchemaFormat,
+    FlextLdifUtilitiesServer,
+    FlextLdifUtilitiesWriter,
 )
 
 if TYPE_CHECKING:
@@ -39,9 +39,9 @@ class FlextLdifUtilitiesSchemaBuild:
             parts.append(f"DESC '{attr_data.desc}'")
         if attr_data.sup:
             parts.append(f"SUP {attr_data.sup}")
-        uw.add_attribute_matching_rules(attr_data, parts)
-        uw.add_attribute_syntax(attr_data, parts)
-        uw.add_attribute_flags(attr_data, parts)
+        FlextLdifUtilitiesWriter.add_attribute_matching_rules(attr_data, parts)
+        FlextLdifUtilitiesWriter.add_attribute_syntax(attr_data, parts)
+        FlextLdifUtilitiesWriter.add_attribute_flags(attr_data, parts)
         if attr_data.usage:
             parts.append(f"USAGE {attr_data.usage}")
         if attr_data.x_origin:
@@ -63,19 +63,23 @@ class FlextLdifUtilitiesSchemaBuild:
             parts.append(f"NAME '{oc_data.name}'")
         if oc_data.desc:
             parts.append(f"DESC '{oc_data.desc}'")
-        sf.build_obsolete_part(oc_data, parts, None)
-        sup_part = sf.format_sup_list(oc_data.sup)
+        FlextLdifUtilitiesSchemaFormat.build_obsolete_part(oc_data, parts, None)
+        sup_part = FlextLdifUtilitiesSchemaFormat.format_sup_list(oc_data.sup)
         if sup_part:
             parts.append(sup_part)
         kind = oc_data.kind or c.Ldif.SchemaKind.STRUCTURAL.value
         parts.append(kind)
-        must_part = sf.format_attribute_list(oc_data.must, "MUST")
+        must_part = FlextLdifUtilitiesSchemaFormat.format_attribute_list(
+            oc_data.must, "MUST"
+        )
         if must_part:
             parts.append(must_part)
-        may_part = sf.format_attribute_list(oc_data.may, "MAY")
+        may_part = FlextLdifUtilitiesSchemaFormat.format_attribute_list(
+            oc_data.may, "MAY"
+        )
         if may_part:
             parts.append(may_part)
-        x_origin_part = sf.build_x_origin_part(oc_data)
+        x_origin_part = FlextLdifUtilitiesSchemaFormat.build_x_origin_part(oc_data)
         if x_origin_part:
             parts.append(x_origin_part)
         parts.append(")")
@@ -124,12 +128,16 @@ class FlextLdifUtilitiesSchemaBuild:
             The resulting ``t.MutableSequenceOf[str]``.
         """
         if restore_original:
-            original_parts = sf.try_restore_original_format(attr_data)
+            original_parts = FlextLdifUtilitiesSchemaFormat.try_restore_original_format(
+                attr_data
+            )
             if original_parts:
                 return original_parts
         parts: t.MutableSequenceOf[str] = [f"( {attr_data.oid}"]
-        field_order = sf.resolve_field_order(attr_data)
-        name_part = sf.build_name_part(attr_data, restore_format=True)
+        field_order = FlextLdifUtilitiesSchemaFormat.resolve_field_order(attr_data)
+        name_part = FlextLdifUtilitiesSchemaFormat.build_name_part(
+            attr_data, restore_format=True
+        )
         if name_part:
             parts.append(name_part)
         if attr_data.desc:
@@ -138,15 +146,19 @@ class FlextLdifUtilitiesSchemaBuild:
             parts.append(f"SUP {attr_data.sup}")
         if attr_data.usage:
             parts.append(f"USAGE {attr_data.usage}")
-        sf.build_obsolete_part(attr_data, parts, field_order, restore_position=True)
-        uw.add_attribute_matching_rules(attr_data, parts)
-        uw.add_attribute_syntax(attr_data, parts)
-        uw.add_attribute_flags(attr_data, parts)
-        x_origin_part = sf.build_x_origin_part(attr_data, restore_format=True)
+        FlextLdifUtilitiesSchemaFormat.build_obsolete_part(
+            attr_data, parts, field_order, restore_position=True
+        )
+        FlextLdifUtilitiesWriter.add_attribute_matching_rules(attr_data, parts)
+        FlextLdifUtilitiesWriter.add_attribute_syntax(attr_data, parts)
+        FlextLdifUtilitiesWriter.add_attribute_flags(attr_data, parts)
+        x_origin_part = FlextLdifUtilitiesSchemaFormat.build_x_origin_part(
+            attr_data, restore_format=True
+        )
         if x_origin_part:
             parts.append(x_origin_part)
         parts.append(")")
-        sf.apply_trailing_spaces(attr_data, parts)
+        FlextLdifUtilitiesSchemaFormat.apply_trailing_spaces(attr_data, parts)
         return parts
 
     @staticmethod
@@ -160,36 +172,48 @@ class FlextLdifUtilitiesSchemaBuild:
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
         """
-        original_parts = sf.try_restore_objectclass_original_format(
-            oc_data,
-            restore_original=restore_original,
+        original_parts = (
+            FlextLdifUtilitiesSchemaFormat.try_restore_objectclass_original_format(
+                oc_data,
+                restore_original=restore_original,
+            )
         )
         if original_parts:
             return original_parts
         parts: t.MutableSequenceOf[str] = [f"( {oc_data.oid}"]
-        name_part = sf.build_name_part(oc_data, restore_format=True)
+        name_part = FlextLdifUtilitiesSchemaFormat.build_name_part(
+            oc_data, restore_format=True
+        )
         if name_part:
             parts.append(name_part)
         if oc_data.desc:
             parts.append(f"DESC '{oc_data.desc}'")
-        field_order = sf.resolve_field_order(oc_data)
-        sf.build_obsolete_part(oc_data, parts, field_order, restore_position=True)
-        sup_part = sf.format_sup_list(oc_data.sup)
+        field_order = FlextLdifUtilitiesSchemaFormat.resolve_field_order(oc_data)
+        FlextLdifUtilitiesSchemaFormat.build_obsolete_part(
+            oc_data, parts, field_order, restore_position=True
+        )
+        sup_part = FlextLdifUtilitiesSchemaFormat.format_sup_list(oc_data.sup)
         if sup_part:
             parts.append(sup_part)
         kind = oc_data.kind or c.Ldif.SchemaKind.STRUCTURAL.value
         parts.append(kind)
-        must_part = sf.format_attribute_list(oc_data.must, "MUST")
+        must_part = FlextLdifUtilitiesSchemaFormat.format_attribute_list(
+            oc_data.must, "MUST"
+        )
         if must_part:
             parts.append(must_part)
-        may_part = sf.format_attribute_list(oc_data.may, "MAY")
+        may_part = FlextLdifUtilitiesSchemaFormat.format_attribute_list(
+            oc_data.may, "MAY"
+        )
         if may_part:
             parts.append(may_part)
-        x_origin_part = sf.build_x_origin_part(oc_data, restore_format=True)
+        x_origin_part = FlextLdifUtilitiesSchemaFormat.build_x_origin_part(
+            oc_data, restore_format=True
+        )
         if x_origin_part:
             parts.append(x_origin_part)
         parts.append(")")
-        sf.apply_trailing_spaces(oc_data, parts)
+        FlextLdifUtilitiesSchemaFormat.apply_trailing_spaces(oc_data, parts)
         return parts
 
     @staticmethod
@@ -212,8 +236,12 @@ class FlextLdifUtilitiesSchemaBuild:
         if not source_server_type or not target_server_type:
             return True
         try:
-            normalized_source = us.normalize_server_type(str(source_server_type))
-            normalized_target = us.normalize_server_type(target_server_type)
+            normalized_source = FlextLdifUtilitiesServer.normalize_server_type(
+                str(source_server_type)
+            )
+            normalized_target = FlextLdifUtilitiesServer.normalize_server_type(
+                target_server_type
+            )
         except c.EXC_TYPE_VALIDATION:
             return str(source_server_type).lower() == target_server_type.lower()
         normalized_source_value: str = normalized_source.value
@@ -236,7 +264,7 @@ class FlextLdifUtilitiesSchemaBuild:
         """
         if syntax is None or not syntax.strip():
             return None
-        validate_result = uo.validate_format(syntax)
+        validate_result = FlextLdifUtilitiesOID.validate_format(syntax)
         if validate_result.failure:
             return f"Syntax OID validation failed: {validate_result.error}"
         if not validate_result.value:

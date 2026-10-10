@@ -1,4 +1,4 @@
-"""Typings module.
+"""Service test typings for flext-ldif.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 tests/unit/services/typings
@@ -13,4 +13,13 @@ from flext_ldif.servers import (
     FlextLdifServersRfc,
 )
 
-type ServerClass = type[FlextLdifServersRfc | FlextLdifServersOid | FlextLdifServersOud]
+
+class TestsFlextLdifServiceTypings:
+    """Service test typings namespace."""
+
+    type ServerClass = type[
+        FlextLdifServersRfc | FlextLdifServersOid | FlextLdifServersOud
+    ]
+
+
+__all__: list[str] = ["TestsFlextLdifServiceTypings"]

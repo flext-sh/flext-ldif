@@ -12,10 +12,10 @@ from __future__ import annotations
 
 import re
 
-from flext_ldif import c, p, s, t, u
+from flext_ldif import c, m, p, s, t, u
 
 
-class FlextLdifDetectorScoring(s):
+class FlextLdifDetectorScoring(s[m.Ldif.Response]):
     """Detection scoring and pattern extraction helpers."""
 
     @staticmethod

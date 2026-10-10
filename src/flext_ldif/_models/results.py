@@ -11,8 +11,8 @@ from typing import Annotated
 from flext_core import FlextUtilities as u, m
 from flext_ldif import c, t
 from flext_ldif._models import (
-    FlextLdifModelsCollections as mc,
-    FlextLdifModelsDomainsEntries as mde,
+    FlextLdifModelsCollections,
+    FlextLdifModelsDomainsEntries,
     FlextLdifModelsResultsStatistics,
 )
 
@@ -39,12 +39,14 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
         ] = True
 
     class MigrationPipelineResult(m.FrozenModel):
-        migrated_schema: mc.SchemaContent = u.Field(
-            default_factory=lambda: mc.SchemaContent(attributes=[], object_classes=[]),
+        migrated_schema: FlextLdifModelsCollections.SchemaContent = u.Field(
+            default_factory=lambda: FlextLdifModelsCollections.SchemaContent(
+                attributes=[], object_classes=[]
+            ),
             description="Schema content after migration transformation",
         )
-        entries: t.MutableSequenceOf[mde.Entry] = u.Field(
-            default_factory=list[mde.Entry],
+        entries: t.MutableSequenceOf[FlextLdifModelsDomainsEntries.Entry] = u.Field(
+            default_factory=list[FlextLdifModelsDomainsEntries.Entry],
             description="Migrated LDIF entries",
         )
         stats: FlextLdifModelsResults.Statistics = u.Field(
@@ -122,7 +124,7 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
             description="Detection confidence score between 0 and 1",
         )
         scores: Annotated[
-            mc.DynamicCounts,
+            FlextLdifModelsCollections.DynamicCounts,
             u.Field(description="Per-server-type detection scores"),
         ]
         patterns_found: Annotated[
@@ -148,11 +150,11 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
     class EntriesStatistics(m.Value):
         total_entries: Annotated[int, u.Field(description="Total entries analyzed")]
         object_class_distribution: Annotated[
-            mc.DynamicCounts,
+            FlextLdifModelsCollections.DynamicCounts,
             u.Field(description="Distribution of objectClass values across entries"),
         ]
         server_type_distribution: Annotated[
-            mc.DynamicCounts,
+            FlextLdifModelsCollections.DynamicCounts,
             u.Field(description="Distribution of detected server types across entries"),
         ]
 
@@ -164,7 +166,7 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
 
     class ParseResponse(Response):
         entries: Annotated[
-            t.MutableSequenceOf[mde.Entry],
+            t.MutableSequenceOf[FlextLdifModelsDomainsEntries.Entry],
             u.Field(description="Parsed LDIF entries"),
         ]
         detected_server_type: Annotated[
@@ -174,7 +176,7 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
 
     class AclResponse(Response):
         acls: Annotated[
-            t.MutableSequenceOf[mde.Acl],
+            t.MutableSequenceOf[FlextLdifModelsDomainsEntries.Acl],
             u.Field(description="Extracted ACL models"),
         ]
 
@@ -184,7 +186,7 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
             u.Field(description="Whether the ACL granted access"),
         ] = False
         matched_acl: Annotated[
-            mde.Acl | None,
+            FlextLdifModelsDomainsEntries.Acl | None,
             u.Field(description="ACL rule that matched the evaluation"),
         ] = None
         message: Annotated[

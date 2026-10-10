@@ -8,9 +8,9 @@ from __future__ import annotations
 
 from typing import Annotated, Self
 
-from flext_core import m
-from flext_ldif import t, u
-from flext_ldif._models import FlextLdifModelsDomainDN as mdn
+from flext_core import FlextUtilities as u, m
+from flext_ldif import t
+from flext_ldif._models import FlextLdifModelsDomainDN
 from flext_ldif._utilities import FlextLdifUtilitiesCollectionLdif
 
 
@@ -90,7 +90,7 @@ class FlextLdifModelsDomainEntryStatistics(m.FrozenDynamicModel):
         u.Field(description="Count of server transformations applied"),
     ] = 0
     dn_statistics: Annotated[
-        mdn.DNStatistics | None,
+        FlextLdifModelsDomainDN.DNStatistics | None,
         u.Field(description="DN transformation statistics (if applicable)"),
     ] = None
     filters_applied: Annotated[

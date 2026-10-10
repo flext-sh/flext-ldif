@@ -100,7 +100,7 @@ class FlextLdifServersBaseSchema(
         filtered_kwargs = {k: v for k, v in kwargs.items() if k != "_parent_server"}
         instance: Self = super().__new__(cls, **filtered_kwargs)
         if _parent_server is not None:
-            object.__setattr__(instance, "_parent_server", _parent_server)
+            object.__setattr__(instance, "parent_server", _parent_server)
         return instance
 
     def __init__(
@@ -118,7 +118,7 @@ class FlextLdifServersBaseSchema(
         super().__init__()
         self._schema_service = _schema_service
         if _parent_server is not None:
-            object.__setattr__(self, "_parent_server", _parent_server)
+            object.__setattr__(self, "parent_server", _parent_server)
 
     def _init_base_schema(
         self: Self,

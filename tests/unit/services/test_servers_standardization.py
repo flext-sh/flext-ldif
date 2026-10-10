@@ -26,10 +26,12 @@ from flext_ldif.servers._rfc import (
     FlextLdifServersRfcEntry,
 )
 from tests import t, tm
-from tests.unit.services.typings import ServerClass
+from tests.unit.services.typings import TestsFlextLdifServiceTypings
 
 # (server class, canonical identity, priority) — the standardized identity table.
-_STANDARDIZED_SERVERS: tuple[tuple[ServerClass, str, int], ...] = (
+_STANDARDIZED_SERVERS: tuple[
+    tuple[TestsFlextLdifServiceTypings.ServerClass, str, int], ...
+] = (
     (FlextLdifServersRfc, "rfc", 100),
     (FlextLdifServersOid, "oid", 10),
     (FlextLdifServersOud, "oud", 10),
@@ -74,7 +76,7 @@ class TestsFlextLdifServersStandardization:
         _STANDARDIZED_SERVERS,
     )
     def test_constants_expose_expected_canonical_identity(
-        server_cls: ServerClass,
+        server_cls: TestsFlextLdifServiceTypings.ServerClass,
         canonical: str,
         priority: int,
     ) -> None:
@@ -91,7 +93,7 @@ class TestsFlextLdifServersStandardization:
         _STANDARDIZED_SERVERS,
     )
     def test_canonical_name_is_a_registered_alias(
-        server_cls: ServerClass,
+        server_cls: TestsFlextLdifServiceTypings.ServerClass,
         canonical: str,
         priority: int,
     ) -> None:
@@ -114,7 +116,7 @@ class TestsFlextLdifServersStandardization:
     @staticmethod
     @pytest.mark.parametrize("server_cls", [s[0] for s in _STANDARDIZED_SERVERS])
     def test_parse_server_returns_parsed_entry_for_valid_ldif(
-        server_cls: ServerClass,
+        server_cls: TestsFlextLdifServiceTypings.ServerClass,
         valid_ldif: str,
     ) -> None:
         """parse_server yields a successful result carrying the parsed entry."""
@@ -125,7 +127,7 @@ class TestsFlextLdifServersStandardization:
     @staticmethod
     @pytest.mark.parametrize("server_cls", [s[0] for s in _STANDARDIZED_SERVERS])
     def test_parse_input_mirrors_successful_parse(
-        server_cls: ServerClass,
+        server_cls: TestsFlextLdifServiceTypings.ServerClass,
         valid_ldif: str,
     ) -> None:
         """parse_input hands back the same entry list as parse_server's value."""
@@ -135,7 +137,9 @@ class TestsFlextLdifServersStandardization:
 
     @staticmethod
     @pytest.mark.parametrize("server_cls", [s[0] for s in _STANDARDIZED_SERVERS])
-    def test_empty_content_parses_to_no_entries(server_cls: ServerClass) -> None:
+    def test_empty_content_parses_to_no_entries(
+        server_cls: TestsFlextLdifServiceTypings.ServerClass,
+    ) -> None:
         """Empty input is a valid, empty parse -- success with zero entries."""
         entry = server_cls.Entry()
         result = entry.parse_server("")

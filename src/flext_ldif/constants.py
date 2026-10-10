@@ -15,6 +15,12 @@ from flext_ldif._constants import (
     FlextLdifConstantsAclConvertOud,
     FlextLdifConstantsBase,
     FlextLdifConstantsEnums,
+    FlextLdifConstantsServers,
+    FlextLdifConstantsServersBase,
+    FlextLdifConstantsServersOid,
+    FlextLdifConstantsServersOud,
+    FlextLdifConstantsServersRelaxed,
+    FlextLdifConstantsServersRfc,
 )
 
 
@@ -26,15 +32,14 @@ class FlextLdifConstants(FlextCliConstants):
         FlextLdifConstantsEnums,
         FlextLdifConstantsAclConvert,
         FlextLdifConstantsAclConvertOud,
+        FlextLdifConstantsServers,
+        FlextLdifConstantsServersBase,
+        FlextLdifConstantsServersRfc,
+        FlextLdifConstantsServersOid,
+        FlextLdifConstantsServersOud,
+        FlextLdifConstantsServersRelaxed,
     ):
         """LDIF domain constants namespace."""
-
-        @unique
-        class EntryCriteriaMode(StrEnum):
-            """Matching strategy for entry criteria evaluation."""
-
-            ANY = "any"
-            ALL = "all"
 
         @unique
         class SchemaItemKind(StrEnum):

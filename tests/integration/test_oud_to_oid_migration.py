@@ -22,14 +22,13 @@ import pytest
 from flext_ldif import ldif
 from flext_ldif.servers import FlextLdifServersOid, FlextLdifServersOud
 from flext_ldif.services import FlextLdifMigrationPipeline
-from tests import TestsFlextLdifUtilities as u, c, tm
+from tests import c, tm, u
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
     from pathlib import Path
 
-    from flext_ldif._models import FlextLdifModelsDomainEntry as mde
-    from tests import p
+    from tests import m, p
 
 MIN_OUD_ENTRIES = 10
 
@@ -101,7 +100,7 @@ class TestsFlextLdifOudToOidMigration:
         return fixture
 
     @staticmethod
-    def _dn_set(entries: Sequence[mde.Entry]) -> set[str]:
+    def _dn_set(entries: Sequence[m.Entry]) -> set[str]:
         """Collect whitespace-normalized DN values from parsed entries.
 
         Migration canonicalizes optional whitespace after RDN separators

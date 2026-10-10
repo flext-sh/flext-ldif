@@ -47,17 +47,17 @@ class FlextLdifServersBase(
             update={"server_type": self.server_type},
         )
         self._schema_server = schema_server
-        object.__setattr__(self._schema_server, "_parent_server", parent_ref)
+        object.__setattr__(self._schema_server, "parent_server", parent_ref)
         acl_server: FlextLdifServersBaseSchemaAcl = self.Acl().model_copy(
             update={"server_type": self.server_type},
         )
         self._acl_server = acl_server
-        object.__setattr__(self._acl_server, "_parent_server", parent_ref)
+        object.__setattr__(self._acl_server, "parent_server", parent_ref)
         entry_server: FlextLdifServersBaseEntry = self.Entry().model_copy(
             update={"server_type": self.server_type},
         )
         self._entry_server = entry_server
-        object.__setattr__(self._entry_server, "_parent_server", parent_ref)
+        object.__setattr__(self._entry_server, "parent_server", parent_ref)
 
     def __init_subclass__(cls, **kwargs: str | float | bool | None) -> None:
         """Initialize subclass with server_type and priority from Constants.
@@ -141,14 +141,11 @@ class FlextLdifServersBase(
         type(instance).__init__(instance, **filtered_kwargs)
         if cls.auto_execute:
             ldif_text, entries, operation = cls._extract_execute_params(execute_kwargs)
-            result = instance.execute(
+            instance.execute(
                 ldif_text=ldif_text,
                 entries=entries,
                 operation=operation,
             )
-            unwrapped = result.value
-            if isinstance(unwrapped, cls):
-                return unwrapped
         return instance
 
     @overload
@@ -218,10 +215,7 @@ class FlextLdifServersBase(
         self._absorb_positional_args(args, execute_kwargs)
         ldif_text, entries, operation = self._extract_execute_params(execute_kwargs)
         result = self.execute(ldif_text=ldif_text, entries=entries, operation=operation)
-        value = result.unwrap()
-        if isinstance(value, str):
-            return value
-        as_entry: m.Ldif.Entry = u.Ldif.as_entry(value)
+        as_entry: m.Ldif.Entry = u.Ldif.as_entry(result.unwrap())
         return as_entry
 
     @staticmethod

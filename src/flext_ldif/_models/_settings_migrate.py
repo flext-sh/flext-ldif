@@ -12,9 +12,9 @@ from __future__ import annotations
 from collections.abc import MutableMapping
 from typing import Annotated
 
-from flext_core import FlextUtilities as u, m
-from flext_ldif import c, t
-from flext_ldif._models._settings_rules import FlextLdifModelsSettingsRules as msr
+from flext_core import FlextUtilities as u, m, t
+from flext_ldif._constants.base import FlextLdifConstantsBase, FlextLdifConstantsEnums
+from flext_ldif._models._settings_rules import FlextLdifModelsSettingsRules
 
 
 class FlextLdifModelsSettingsMigrate:
@@ -45,7 +45,7 @@ class FlextLdifModelsSettingsMigrate:
             ),
         ] = None
         categorization_rules: Annotated[
-            msr.CategoryRules | None,
+            FlextLdifModelsSettingsRules.CategoryRules | None,
             u.Field(
                 description="Entry categorization rules (enables categorized mode)",
             ),
@@ -57,11 +57,11 @@ class FlextLdifModelsSettingsMigrate:
             ),
         ] = None
         output_files: Annotated[
-            MutableMapping[c.Ldif.Categories, str] | None,
+            MutableMapping[FlextLdifConstantsEnums.Categories, str] | None,
             u.Field(description="Category to filename mapping (categorized mode)"),
         ] = None
         schema_whitelist_rules: Annotated[
-            msr.WhitelistRules | None,
+            FlextLdifModelsSettingsRules.WhitelistRules | None,
             u.Field(description="Allowed schema elements whitelist (categorized mode)"),
         ] = None
         input_filename: Annotated[
@@ -139,7 +139,7 @@ class FlextLdifModelsSettingsMigrate:
                 description="Maximum line width before folding (RFC 2849 recommends "
                 "76). Only used if fold_long_lines=True.",
             ),
-        ] = c.Ldif.DEFAULT_LINE_WIDTH
+        ] = FlextLdifConstantsBase.DEFAULT_LINE_WIDTH
         respect_attribute_order: Annotated[
             bool,
             u.Field(

@@ -3,9 +3,9 @@
 Every assertion exercises observable public contract: rendered ``aci:`` strings,
 ``r[T]`` success/failure outcomes, and public Pydantic model fields
 (``allows``, ``notes``, ``targetscope``, ``subjects``). No private attribute or
-method is touched; the only collaborator observed at a boundary is structlog's
-``capture_logs`` (conversion notes are a logged contract, also mirrored on
-``aci.notes``).
+method is touched; the only collaborator observed at a boundary is the fleet
+logging surface (``u.structlog().testing.capture_logs``; conversion notes are
+a logged contract, also mirrored on ``aci.notes``).
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -16,18 +16,17 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from structlog.testing import capture_logs
 
 from flext_ldif.servers import (
-    FlextLdifServersOidAclAssemble as Asm,
-    FlextLdifServersOidAclConvert as Parser,
-    FlextLdifServersOidAclPipeline as Pipe,
-    FlextLdifServersOidAclRender as Render,
+    FlextLdifServersOidAclAssemble,
+    FlextLdifServersOidAclConvert,
+    FlextLdifServersOidAclPipeline,
+    FlextLdifServersOidAclRender,
 )
-from tests import m, tm, u
+from tests import m, t, tm, u
 
 
-def _acl_entry(attributes: dict[str, list[str]]) -> m.Ldif.Entry:
+def _acl_entry(attributes: t.MappingKV[str, t.StrSequence]) -> m.Ldif.Entry:
     """Build one real entry at the shared ACL test DN.
 
     Returns:
@@ -48,8 +47,12 @@ class TestsFlextLdifOidAclAssemble:
         Returns:
             The resulting ``m.Ldif.AciRule``.
         """
-        rule: m.Ldif.OidAclRule = Parser.parse_oid_acl_line(dn, line).unwrap()
-        aci_rule: m.Ldif.AciRule = Asm.build_aci_rule(rule).unwrap()
+        rule: m.Ldif.OidAclRule = FlextLdifServersOidAclConvert.parse_oid_acl_line(
+            dn, line
+        ).unwrap()
+        aci_rule: m.Ldif.AciRule = FlextLdifServersOidAclAssemble.build_aci_rule(
+            rule
+        ).unwrap()
         return aci_rule
 
     # ---- render_aci_string: AciRule → aci: line ------------------------
@@ -178,7 +181,7 @@ class TestsFlextLdifOidAclAssemble:
         expected: str,
     ) -> None:
         """Test render aci string matches oud oracle."""
-        tm.that(Render.render_aci_string(aci), eq=expected)
+        tm.that(FlextLdifServersOidAclRender.render_aci_string(aci), eq=expected)
 
     # ---- build_aci_rule: parse → build parity --------------------------
 
@@ -245,22 +248,22 @@ class TestsFlextLdifOidAclAssemble:
     @staticmethod
     def test_unknown_permission_token_surfaces_failure() -> None:
         """Test unknown permission token surfaces failure."""
-        rule = Parser.parse_oid_acl_line(
+        rule = FlextLdifServersOidAclConvert.parse_oid_acl_line(
             "cn=users,dc=ctbc",
             'orclaci: access to entry by group="cn=a,dc=ctbc" (bogus)',
         ).unwrap()
 
-        tm.that(Asm.build_aci_rule(rule).failure, eq=True)
+        tm.that(FlextLdifServersOidAclAssemble.build_aci_rule(rule).failure, eq=True)
 
     @staticmethod
     def test_cross_level_perm_grants_nothing_not_failure() -> None:
         # 'read' is an attribute perm; on an entry rule it grants nothing.
         """Test cross level perm grants nothing not failure."""
-        rule = Parser.parse_oid_acl_line(
+        rule = FlextLdifServersOidAclConvert.parse_oid_acl_line(
             "cn=users,dc=ctbc",
             'orclaci: access to entry by group="cn=a,dc=ctbc" (read)',
         ).unwrap()
-        result = Asm.build_aci_rule(rule)
+        result = FlextLdifServersOidAclAssemble.build_aci_rule(rule)
 
         tm.that(result.success, eq=True)
         tm.that(result.unwrap().allows, eq=())
@@ -269,11 +272,11 @@ class TestsFlextLdifOidAclAssemble:
     def test_anyone_with_sensitive_perms_emits_review_note() -> None:
         # 'by * (noread)' on attr complements to write/selfwrite/... for anyone.
         """Test anyone with sensitive perms emits review note."""
-        rule = Parser.parse_oid_acl_line(
+        rule = FlextLdifServersOidAclConvert.parse_oid_acl_line(
             "cn=users,dc=ctbc",
             "orclaci: access to attr=(cn) by * (noread)",
         ).unwrap()
-        aci = Asm.build_aci_rule(rule).unwrap()
+        aci = FlextLdifServersOidAclAssemble.build_aci_rule(rule).unwrap()
 
         tm.that("write" in aci.allows[0].permissions, eq=True)
         tm.that(any("sensitive perms" in note for note in aci.notes), eq=True)
@@ -281,18 +284,18 @@ class TestsFlextLdifOidAclAssemble:
     @staticmethod
     def test_anyone_with_only_read_search_emits_no_sensitive_note() -> None:
         """Test anyone with only read search emits no sensitive note."""
-        rule = Parser.parse_oid_acl_line(
+        rule = FlextLdifServersOidAclConvert.parse_oid_acl_line(
             "cn=users,dc=ctbc",
             "orclaci: access to attr=(cn) by * (read,search)",
         ).unwrap()
-        aci = Asm.build_aci_rule(rule).unwrap()
+        aci = FlextLdifServersOidAclAssemble.build_aci_rule(rule).unwrap()
 
         tm.that(any("sensitive perms" in note for note in aci.notes), eq=False)
 
     @staticmethod
     def test_bindmode_and_bindipfilter_become_authmethod_and_ip() -> None:
         """Test bindmode and bindipfilter become authmethod and ip."""
-        rule = Parser.parse_oid_acl_line(
+        rule = FlextLdifServersOidAclConvert.parse_oid_acl_line(
             "cn=users,dc=ctbc",
             'orclaci: access to entry by group="cn=a,dc=ctbc" '
             "bindmode=(SSL) bindipfilter=(10.0.0.0) (browse,add)",
@@ -300,11 +303,11 @@ class TestsFlextLdifOidAclAssemble:
 
         tm.that(rule.subjects[0].bindmode, eq="SSL")
         tm.that(rule.subjects[0].bindipfilter, eq="10.0.0.0")
-        aci = Asm.build_aci_rule(rule).unwrap()
+        aci = FlextLdifServersOidAclAssemble.build_aci_rule(rule).unwrap()
         tm.that(aci.allows[0].authmethod, eq="SSL")
         tm.that(aci.allows[0].ip, eq="10.0.0.0")
         tm.that(
-            Render.render_aci_string(aci),
+            FlextLdifServersOidAclRender.render_aci_string(aci),
             eq=(
                 'aci: (targetattr="*")(version 3.0; acl "users Entry by a"; '
                 'allow (read, search, add) groupdn="ldap:///cn=a,dc=ctbc" '
@@ -315,12 +318,12 @@ class TestsFlextLdifOidAclAssemble:
     @staticmethod
     def test_added_object_constraint_emits_review_note() -> None:
         """Test added object constraint emits review note."""
-        rule = Parser.parse_oid_acl_line(
+        rule = FlextLdifServersOidAclConvert.parse_oid_acl_line(
             "cn=users,dc=ctbc",
             'orclaci: access to entry by group="cn=a,dc=ctbc" '
             "added_object_constraint=(objectclass=person) (browse)",
         ).unwrap()
-        aci = Asm.build_aci_rule(rule).unwrap()
+        aci = FlextLdifServersOidAclAssemble.build_aci_rule(rule).unwrap()
 
         tm.that(rule.subjects[0].added_object_constraint, eq="objectclass=person")
         tm.that(any("added_object_constraint" in n for n in aci.notes), eq=True)
@@ -328,11 +331,13 @@ class TestsFlextLdifOidAclAssemble:
     @staticmethod
     def test_anyone_at_high_level_container_is_skipped() -> None:
         """Test anyone at high level container is skipped."""
-        rule = Parser.parse_oid_acl_line(
+        rule = FlextLdifServersOidAclConvert.parse_oid_acl_line(
             "dc=ctbc",
             'orclaci: access to entry by * (browse) by group="cn=a,dc=ctbc" (browse)',
         ).unwrap()
-        aci = Asm.build_aci_rule(rule, base_dn="dc=ctbc").unwrap()
+        aci = FlextLdifServersOidAclAssemble.build_aci_rule(
+            rule, base_dn="dc=ctbc"
+        ).unwrap()
 
         tm.that(len(aci.allows), eq=1)
         tm.that(aci.allows[0].subject_type, eq="groupdn")
@@ -341,11 +346,13 @@ class TestsFlextLdifOidAclAssemble:
     @staticmethod
     def test_out_of_scope_dn_is_excluded() -> None:
         """Test out of scope dn is excluded."""
-        rule = Parser.parse_oid_acl_line(
+        rule = FlextLdifServersOidAclConvert.parse_oid_acl_line(
             "cn=users,dc=ctbc",
             'orclaci: access to entry by group="cn=x,dc=other" (browse)',
         ).unwrap()
-        aci = Asm.build_aci_rule(rule, base_dn="dc=ctbc").unwrap()
+        aci = FlextLdifServersOidAclAssemble.build_aci_rule(
+            rule, base_dn="dc=ctbc"
+        ).unwrap()
 
         tm.that(aci.allows, eq=())
         tm.that(any("out of scope" in note for note in aci.notes), eq=True)
@@ -353,11 +360,13 @@ class TestsFlextLdifOidAclAssemble:
     @staticmethod
     def test_regex_dn_converts_to_wildcard_in_scope() -> None:
         """Test regex dn converts to wildcard in scope."""
-        rule = Parser.parse_oid_acl_line(
+        rule = FlextLdifServersOidAclConvert.parse_oid_acl_line(
             "cn=users,dc=ctbc",
             'orclaci: access to entry by group="cn=.*,dc=ctbc" (browse)',
         ).unwrap()
-        aci = Asm.build_aci_rule(rule, base_dn="dc=ctbc").unwrap()
+        aci = FlextLdifServersOidAclAssemble.build_aci_rule(
+            rule, base_dn="dc=ctbc"
+        ).unwrap()
 
         tm.that(len(aci.allows), eq=1)
         tm.that(aci.allows[0].subject_value, eq="cn=*,dc=ctbc")
@@ -365,11 +374,11 @@ class TestsFlextLdifOidAclAssemble:
     @staticmethod
     def test_no_base_dn_skips_scope_filtering() -> None:
         """Test no base dn skips scope filtering."""
-        rule = Parser.parse_oid_acl_line(
+        rule = FlextLdifServersOidAclConvert.parse_oid_acl_line(
             "cn=users,dc=ctbc",
             'orclaci: access to entry by group="cn=x,dc=other" (browse)',
         ).unwrap()
-        aci = Asm.build_aci_rule(rule).unwrap()
+        aci = FlextLdifServersOidAclAssemble.build_aci_rule(rule).unwrap()
 
         tm.that(len(aci.allows), eq=1)
 
@@ -378,7 +387,7 @@ class TestsFlextLdifOidAclAssemble:
     @staticmethod
     def test_multiple_lines_produce_aci_values_without_prefix() -> None:
         """Test multiple lines produce aci values without prefix."""
-        result = Pipe.convert_acl_values(
+        result = FlextLdifServersOidAclPipeline.convert_acl_values(
             "cn=users,dc=ctbc",
             (
                 'orclaci: access to entry by group="cn=a,dc=ctbc" (browse)',
@@ -395,14 +404,16 @@ class TestsFlextLdifOidAclAssemble:
     def test_identical_aci_values_are_deduplicated() -> None:
         """Test identical aci values are deduplicated."""
         line = 'orclaci: access to entry by group="cn=a,dc=ctbc" (browse)'
-        result = Pipe.convert_acl_values("cn=users,dc=ctbc", (line, line))
+        result = FlextLdifServersOidAclPipeline.convert_acl_values(
+            "cn=users,dc=ctbc", (line, line)
+        )
 
         tm.that(len(result.unwrap()), eq=1)
 
     @staticmethod
     def test_deny_only_line_emits_no_value() -> None:
         """Test deny only line emits no value."""
-        result = Pipe.convert_acl_values(
+        result = FlextLdifServersOidAclPipeline.convert_acl_values(
             "cn=users,dc=ctbc",
             ("orclaci: access to entry by * (none)",),
         )
@@ -412,7 +423,7 @@ class TestsFlextLdifOidAclAssemble:
     @staticmethod
     def test_malformed_line_surfaces_failure() -> None:
         """Test malformed line surfaces failure."""
-        result = Pipe.convert_acl_values(
+        result = FlextLdifServersOidAclPipeline.convert_acl_values(
             "cn=users,dc=ctbc",
             ("orclaci: this is not a valid acl",),
         )
@@ -438,7 +449,9 @@ class TestsFlextLdifOidAclFixtureAndEntry:
                 continue
             if not line.startswith(("orclaci:", "orclentrylevelaci:")):
                 continue
-            result = Pipe.convert_acl_values(dn, (line,), base_dn="dc=example,dc=com")
+            result = FlextLdifServersOidAclPipeline.convert_acl_values(
+                dn, (line,), base_dn="dc=example,dc=com"
+            )
             tm.that(result.success, eq=True)
             rules_seen += 1
             values_emitted += len(result.unwrap())
@@ -449,7 +462,7 @@ class TestsFlextLdifOidAclFixtureAndEntry:
     @staticmethod
     def test_out_of_scope_dn_excluded_with_base_dn() -> None:
         """Test out of scope dn excluded with base dn."""
-        result = Pipe.convert_acl_values(
+        result = FlextLdifServersOidAclPipeline.convert_acl_values(
             "cn=users,dc=ctbc",
             ('orclaci: access to entry by group="cn=x,dc=other" (browse)',),
             base_dn="dc=ctbc",
@@ -460,8 +473,8 @@ class TestsFlextLdifOidAclFixtureAndEntry:
     @staticmethod
     def test_conversion_notes_are_surfaced_via_logging() -> None:
         """Test conversion notes are surfaced via logging."""
-        with capture_logs() as captured:
-            Pipe.convert_acl_values(
+        with u.structlog().testing.capture_logs() as captured:
+            FlextLdifServersOidAclPipeline.convert_acl_values(
                 "cn=users,dc=ctbc",
                 (
                     (
@@ -492,7 +505,9 @@ class TestsFlextLdifOidAclFixtureAndEntry:
             "orclaci": ['access to entry by group="cn=a,dc=ctbc" (browse)'],
         })
 
-        converted = Pipe.convert_entry_acls(entry, "oid", "oud").unwrap()
+        converted = FlextLdifServersOidAclPipeline.convert_entry_acls(
+            entry, "oid", "oud"
+        ).unwrap()
         assert converted.attributes is not None
         attrs = converted.attributes.attributes
 
@@ -508,7 +523,9 @@ class TestsFlextLdifOidAclFixtureAndEntry:
             "orclaci": ['access to entry by group="cn=a,dc=ctbc" (browse)'],
         })
 
-        converted = Pipe.convert_entry_acls(entry, "oid", "rfc").unwrap()
+        converted = FlextLdifServersOidAclPipeline.convert_entry_acls(
+            entry, "oid", "rfc"
+        ).unwrap()
         assert converted.attributes is not None
 
         tm.that("orclaci" in converted.attributes.attributes, eq=True)
@@ -518,7 +535,9 @@ class TestsFlextLdifOidAclFixtureAndEntry:
         """Test entry without acl attrs unchanged."""
         entry = _acl_entry({"cn": ["x"], "objectClass": ["top"]})
 
-        converted = Pipe.convert_entry_acls(entry, "oid", "oud").unwrap()
+        converted = FlextLdifServersOidAclPipeline.convert_entry_acls(
+            entry, "oid", "oud"
+        ).unwrap()
         assert converted.attributes is not None
 
         tm.that("aci" not in converted.attributes.attributes, eq=True)
@@ -529,12 +548,17 @@ class TestsFlextLdifOidAclFixtureAndEntry:
         """Test malformed acl surfaces failure."""
         entry = _acl_entry({"orclaci": ["not a valid acl"]})
 
-        tm.that(Pipe.convert_entry_acls(entry, "oid", "oud").failure, eq=True)
+        tm.that(
+            FlextLdifServersOidAclPipeline.convert_entry_acls(
+                entry, "oid", "oud"
+            ).failure,
+            eq=True,
+        )
 
     @staticmethod
     def test_unknown_perm_token_surfaces_failure() -> None:
         """Test unknown perm token surfaces failure."""
-        result = Pipe.convert_acl_values(
+        result = FlextLdifServersOidAclPipeline.convert_acl_values(
             "cn=users,dc=ctbc",
             ('orclaci: access to entry by group="cn=a,dc=ctbc" (bogus)',),
         )

@@ -16,12 +16,12 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldif import m as ldif_m
+from flext_ldif import m
 from flext_ldif.services import FlextLdifParser, FlextLdifServer, FlextLdifWriter
 from tests import c, tm
 
 
-def _has_schema_attrs(entry: ldif_m.Ldif.Entry) -> bool:
+def _has_schema_attrs(entry: m.Ldif.Entry) -> bool:
     """Return True when an entry publicly exposes schema attribute/objectclass keys."""
     if entry.attributes is None:
         return False
@@ -199,9 +199,9 @@ class TestsFlextLdifRfcDockerReal:
     ) -> None:
         """Writing to a directory path fails with a descriptive write error."""
         # Arrange — target an existing directory to force a deterministic failure
-        entry = ldif_m.Ldif.Entry(
-            dn=ldif_m.Ldif.DN(value="cn=test,dc=example,dc=com"),
-            attributes=ldif_m.Ldif.Attributes(
+        entry = m.Ldif.Entry(
+            dn=m.Ldif.DN(value="cn=test,dc=example,dc=com"),
+            attributes=m.Ldif.Attributes(
                 attributes={"cn": ["test"]},
                 attribute_metadata={},
             ),
@@ -301,9 +301,9 @@ class TestsFlextLdifRfcDockerReal:
         # Arrange
         entry_count = 100
         entries = [
-            ldif_m.Ldif.Entry(
-                dn=ldif_m.Ldif.DN(value=f"cn=user{i},ou=people,dc=example,dc=com"),
-                attributes=ldif_m.Ldif.Attributes(
+            m.Ldif.Entry(
+                dn=m.Ldif.DN(value=f"cn=user{i},ou=people,dc=example,dc=com"),
+                attributes=m.Ldif.Attributes(
                     attributes={
                         "cn": [f"user{i}"],
                         "objectClass": ["person", "inetOrgPerson"],
@@ -338,9 +338,9 @@ class TestsFlextLdifRfcDockerReal:
         """Serializing the same entries twice yields identical LDIF text."""
         # Arrange
         entries = [
-            ldif_m.Ldif.Entry(
-                dn=ldif_m.Ldif.DN(value="cn=alice,dc=example,dc=com"),
-                attributes=ldif_m.Ldif.Attributes(
+            m.Ldif.Entry(
+                dn=m.Ldif.DN(value="cn=alice,dc=example,dc=com"),
+                attributes=m.Ldif.Attributes(
                     attributes={"cn": ["alice"], "objectClass": ["person"]},
                     attribute_metadata={},
                 ),

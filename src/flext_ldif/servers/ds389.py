@@ -508,12 +508,13 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             )
             return r[m.Ldif.Entry].ok(processed_entry)
 
+    # The 389DS dialect schema settings are owned by ``Constants`` and bound
+    # here in the owner class body: a nested class body cannot reference the
+    # sibling ``Constants`` while the outer class is still being built.
+    Schema.bind_pattern_settings(
+        attribute_settings=Constants.ATTRIBUTE_PATTERN_SETTINGS,
+        objectclass_settings=Constants.OBJECTCLASS_PATTERN_SETTINGS,
+    )
 
-# The 389DS dialect schema settings are owned by ``Constants`` and bound here
-# because a nested class body cannot reference the not-yet-defined class.
-FlextLdifServersDs389.Schema.bind_pattern_settings(
-    attribute_settings=FlextLdifServersDs389.Constants.ATTRIBUTE_PATTERN_SETTINGS,
-    objectclass_settings=FlextLdifServersDs389.Constants.OBJECTCLASS_PATTERN_SETTINGS,
-)
 
 __all__: list[str] = ["FlextLdifServersDs389"]

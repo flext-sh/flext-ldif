@@ -11,8 +11,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_core import FlextUtilities as u, m
-from flext_ldif import t
+from flext_core import FlextUtilities as u, m, t
 
 
 class FlextLdifModelsSettingsMisc:

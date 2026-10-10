@@ -11,7 +11,7 @@ from collections import Counter
 from flext_ldif import m, p, r, s, t, u
 
 
-class FlextLdifStatistics(s):
+class FlextLdifStatistics(s[m.Ldif.Response]):
     """Statistics service for LDIF processing pipeline."""
 
     @staticmethod

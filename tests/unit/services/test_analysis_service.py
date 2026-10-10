@@ -13,14 +13,17 @@ import pytest
 from tests import c, m, tm, u
 
 if TYPE_CHECKING:
-    from tests import p
+    from tests import p, t
 
 
 class TestsFlextLdifAnalysisService:
     """Cover the observable contract of ``validate_entries`` via the ldif facade."""
 
     @staticmethod
-    def _make_entry(dn: str | None, attrs: dict[str, list[str]] | None) -> m.Ldif.Entry:
+    def _make_entry(
+        dn: str | None,
+        attrs: t.MappingKV[str, t.StrSequence] | None,
+    ) -> m.Ldif.Entry:
         """Build a public ``m.Ldif.Entry`` for a validation case.
 
         Returns:

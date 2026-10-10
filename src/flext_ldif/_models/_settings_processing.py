@@ -12,11 +12,11 @@ from __future__ import annotations
 from typing import Annotated, Self
 
 from flext_core import FlextUtilities as u, m
-from flext_ldif import c
+from flext_ldif._constants.base import FlextLdifConstantsEnums
 from flext_ldif._models._settings_normalization import (
-    FlextLdifModelsSettingsNormalization as msn,
+    FlextLdifModelsSettingsNormalization,
 )
-from flext_ldif.shared import FlextLdifShared
+from flext_ldif._models.base import FlextLdifShared
 
 
 class FlextLdifModelsSettingsProcessing:
@@ -27,7 +27,7 @@ class FlextLdifModelsSettingsProcessing:
 
         @staticmethod
         def _coerce_server_type_value(
-            value: c.Ldif.ServerTypes | str | None,
+            value: FlextLdifConstantsEnums.ServerTypes | str | None,
         ) -> str | None:
 
             if value is None:
@@ -64,11 +64,11 @@ class FlextLdifModelsSettingsProcessing:
             u.Field(description="Migration base DN for OID→OUD ACL scope filtering"),
         ] = ""
         dn_config: Annotated[
-            msn.DnNormalizationConfig | None,
+            FlextLdifModelsSettingsNormalization.DnNormalizationConfig | None,
             u.Field(description="DN normalization configuration"),
         ] = None
         attr_config: Annotated[
-            msn.AttrNormalizationConfig | None,
+            FlextLdifModelsSettingsNormalization.AttrNormalizationConfig | None,
             u.Field(description="Attribute normalization configuration"),
         ] = None
 
@@ -76,8 +76,8 @@ class FlextLdifModelsSettingsProcessing:
         def servers(
             cls,
             *,
-            source_server: str | c.Ldif.ServerTypes | None,
-            target_server: str | c.Ldif.ServerTypes | None,
+            source_server: str | FlextLdifConstantsEnums.ServerTypes | None,
+            target_server: str | FlextLdifConstantsEnums.ServerTypes | None,
             base_dn: str = "",
         ) -> Self:
             """Build processing config keeping model defaults untouched.
@@ -123,8 +123,8 @@ class FlextLdifModelsSettingsProcessing:
         def servers(
             cls,
             *,
-            source_server: str | c.Ldif.ServerTypes | None,
-            target_server: str | c.Ldif.ServerTypes | None,
+            source_server: str | FlextLdifConstantsEnums.ServerTypes | None,
+            target_server: str | FlextLdifConstantsEnums.ServerTypes | None,
             base_dn: str = "",
         ) -> Self:
             """Build transform config for server-to-server conversion only.

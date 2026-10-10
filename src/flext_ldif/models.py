@@ -14,15 +14,21 @@ from typing import Annotated, ClassVar
 
 from flext_cli import FlextCliModels
 
-from flext_ldif import t, u
+from flext_core import FlextUtilities as u
+from flext_ldif import t
 from flext_ldif._models import (
     FlextLdifModelsBases,
     FlextLdifModelsCollections,
+    FlextLdifModelsDomainEntry,
+    FlextLdifModelsDomainEntryChangeOperationValue,
+    FlextLdifModelsDomainEntryControl,
+    FlextLdifModelsDomainEntryStatistics,
     FlextLdifModelsDomainsEntries,
     FlextLdifModelsEvents,
     FlextLdifModelsProcessing,
     FlextLdifModelsResults,
     FlextLdifModelsSettings,
+    FlextLdifNamespace,
 )
 
 
@@ -36,12 +42,17 @@ class FlextLdifModels(FlextCliModels):
 
     class Ldif(
         FlextLdifModelsDomainsEntries,
+        FlextLdifModelsDomainEntry,
         FlextLdifModelsSettings,
         FlextLdifModelsEvents,
         FlextLdifModelsResults,
         FlextLdifModelsCollections,
         FlextLdifModelsProcessing,
         FlextLdifModelsBases,
+        FlextLdifModelsDomainEntryChangeOperationValue,
+        FlextLdifModelsDomainEntryControl,
+        FlextLdifModelsDomainEntryStatistics,
+        FlextLdifNamespace,
     ):
         """LDIF namespace for cross-project access."""
 
@@ -78,6 +89,11 @@ class FlextLdifModels(FlextCliModels):
             append_to_all: Annotated[bool, u.Field()] = False
             bind_ip_filter: Annotated[str, u.Field()] = ""
             constrain_to_added_object: Annotated[str, u.Field()] = ""
+
+    # Top-level facade aliases: the api-freeze contract requires
+    # ``flext_ldif.m.X`` and ``flext_ldif.FlextLdifModels.X`` to be the same
+    # object for every published model.
+    Entry = Ldif.Entry
 
 
 m = FlextLdifModels

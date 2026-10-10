@@ -17,7 +17,7 @@ from typing import Annotated
 from flext_ldif import c, m, p, r, s, t, u
 
 
-class FlextLdifCategorizationRules(s):
+class FlextLdifCategorizationRules(s[m.Ldif.Response]):
     """Categorization configuration fields and rule matching helpers."""
 
     @staticmethod

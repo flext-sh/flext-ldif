@@ -9,7 +9,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from examples import ExamplesFlextLdifUtilities as examples_u, c, m, p
+from examples import ExamplesFlextLdifUtilities, c, m, p
 from flext_ldif import ldif
 
 if TYPE_CHECKING:
@@ -62,7 +62,7 @@ def entry_building_and_processing_workflow() -> None:
     """Run an entry building and processing workflow."""
     api: p.Ldif.LdifClient = ldif
     created: list[m.Ldif.Entry] = [
-        examples_u.create_user_entry(idx, sn="User") for idx in range(2)
+        ExamplesFlextLdifUtilities.create_user_entry(idx, sn="User") for idx in range(2)
     ]
     if not created:
         return

@@ -6,14 +6,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import importlib
+import sys
 
 from packaging.version import Version
 
+from flext_ldif.__version__ import FlextLdifVersion
 from tests import c, tm
 
-version_module = importlib.import_module("flext_ldif.__version__")
-FlextLdifVersion = version_module.FlextLdifVersion
+# The package root shadows `__version__` with the exported version string, so
+# the submodule object is reached through sys.modules; the module-level import
+# above guarantees the submodule is loaded and present in sys.modules.
+version_module = sys.modules["flext_ldif.__version__"]
 
 
 class TestsFlextLdifVersion:

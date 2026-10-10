@@ -31,7 +31,7 @@ class TestsFlextLdifSimpleLdap:
 
     @staticmethod
     def _capture_live_entry(
-        ldap_connection: p.Ldap.Ldap3Connection,
+        ldap_connection: p.Ldap3Connection,
         base_dn: str,
         username: str,
     ) -> m.Ldif.Entry:
@@ -47,7 +47,7 @@ class TestsFlextLdifSimpleLdap:
         ldap_connection.search(
             test_dn,
             "(objectClass=*)",
-            search_scope=c.Ldap.Ldap3SearchScope.BASE.value,
+            search_scope=c.Ldap3SearchScope.BASE.value,
         )
         if ldap_connection.entries:
             ldap_connection.delete(test_dn)
@@ -55,7 +55,7 @@ class TestsFlextLdifSimpleLdap:
         ldap_connection.search(
             test_dn,
             "(objectClass=*)",
-            search_scope=c.Ldap.Ldap3SearchScope.BASE.value,
+            search_scope=c.Ldap3SearchScope.BASE.value,
             attributes=["*"],
         )
         ldap_entry = ldap_connection.entries[0]
@@ -71,7 +71,7 @@ class TestsFlextLdifSimpleLdap:
 
     @staticmethod
     def test_bound_connection_reaches_configured_base_dn(
-        ldap_connection: p.Ldap.Ldap3Connection,
+        ldap_connection: p.Ldap3Connection,
         ldap_container: t.StrMapping,
     ) -> None:
         """A base-scoped search on the configured base DN yields its entry."""
@@ -80,7 +80,7 @@ class TestsFlextLdifSimpleLdap:
         found = ldap_connection.search(
             base_dn,
             "(objectClass=*)",
-            search_scope=c.Ldap.Ldap3SearchScope.BASE.value,
+            search_scope=c.Ldap3SearchScope.BASE.value,
         )
 
         assert ldap_connection.bound
@@ -89,7 +89,7 @@ class TestsFlextLdifSimpleLdap:
 
     def test_entry_create_exposes_attributes_through_public_api(
         self,
-        ldap_connection: p.Ldap.Ldap3Connection,
+        ldap_connection: p.Ldap3Connection,
         ldap_container: t.StrMapping,
         make_test_username: Callable[[str], str],
     ) -> None:
@@ -111,7 +111,7 @@ class TestsFlextLdifSimpleLdap:
 
     def test_write_serializes_entry_to_ldif_content(
         self,
-        ldap_connection: p.Ldap.Ldap3Connection,
+        ldap_connection: p.Ldap3Connection,
         ldap_container: t.StrMapping,
         make_test_username: Callable[[str], str],
     ) -> None:
@@ -135,7 +135,7 @@ class TestsFlextLdifSimpleLdap:
 
     def test_written_entry_roundtrips_through_parse(
         self,
-        ldap_connection: p.Ldap.Ldap3Connection,
+        ldap_connection: p.Ldap3Connection,
         ldap_container: t.StrMapping,
         make_test_username: Callable[[str], str],
     ) -> None:

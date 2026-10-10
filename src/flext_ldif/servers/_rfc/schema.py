@@ -51,7 +51,7 @@ class FlextLdifServersRfcSchema(
         if schema_service is not None:
             object.__setattr__(schema_instance, "_schema_service", schema_service)
         if parent_server_value is not None:
-            object.__setattr__(schema_instance, "_parent_server", parent_server_value)
+            object.__setattr__(schema_instance, "parent_server", parent_server_value)
         if cls.auto_execute:
             attr_def_raw = kwargs.get("attr_definition")
             attr_def: str | None = (

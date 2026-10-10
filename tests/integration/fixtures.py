@@ -125,11 +125,11 @@ def make_test_base_dn(unique_dn_suffix: str) -> Callable[[str], str]:
 
 
 @pytest.fixture
-def ldap_connection(ldap_container: t.JsonMapping) -> Generator[p.Ldap.Ldap3Connection]:
+def ldap_connection(ldap_container: t.JsonMapping) -> Generator[p.Ldap3Connection]:
     """Provide a bound LDAP connection for integration tests.
 
     Yields:
-        Each ``p.Ldap.Ldap3Connection``.
+        Each ``p.Ldap3Connection``.
     """
     server_url = str(ldap_container["server_url"])
     bind_dn = str(ldap_container["bind_dn"])
@@ -155,7 +155,7 @@ def ldap_connection(ldap_container: t.JsonMapping) -> Generator[p.Ldap.Ldap3Conn
 
 @pytest.fixture
 def clean_test_ou(
-    ldap_connection: p.Ldap.Ldap3Connection,
+    ldap_connection: p.Ldap3Connection,
     make_test_base_dn: Callable[[str], str],
 ) -> Generator[str]:
     """Create and clean up an isolated OU for integration tests.
@@ -167,9 +167,9 @@ def clean_test_ou(
     ldap_connection.search(
         test_ou_dn,
         "(objectClass=*)",
-        search_scope=c.Ldap.Ldap3SearchScope.SUBTREE.value,
+        search_scope=c.Ldap3SearchScope.SUBTREE.value,
     )
-    entries: t.SequenceOf[p.Ldap.Ldap3Entry] = list(ldap_connection.entries)
+    entries: t.SequenceOf[p.Ldap3Entry] = list(ldap_connection.entries)
     if entries:
         dns_to_delete: t.StrSequence = [str(entry.entry_dn) for entry in entries]
         for dn in reversed(dns_to_delete):
@@ -179,9 +179,9 @@ def clean_test_ou(
     ldap_connection.search(
         test_ou_dn,
         "(objectClass=*)",
-        search_scope=c.Ldap.Ldap3SearchScope.SUBTREE.value,
+        search_scope=c.Ldap3SearchScope.SUBTREE.value,
     )
-    entries2: t.SequenceOf[p.Ldap.Ldap3Entry] = list(ldap_connection.entries)
+    entries2: t.SequenceOf[p.Ldap3Entry] = list(ldap_connection.entries)
     if entries2:
         dns_to_delete2: t.StrSequence = [str(entry.entry_dn) for entry in entries2]
         for dn in reversed(dns_to_delete2):

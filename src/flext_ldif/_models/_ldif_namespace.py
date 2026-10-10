@@ -7,13 +7,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import m
+from typing import ClassVar
+
+from flext_core import m
 
 
-class LdifNamespace(m.BaseModel):
+class FlextLdifNamespace(m.BaseModel):
     """Open, frozen namespace exposing every ``config/*.yaml`` domain model-less."""
 
-    model_config = m.ConfigDict(extra="allow", frozen=True)
+    model_config: ClassVar[m.SettingsConfigDict] = m.SettingsConfigDict(
+        extra="allow",
+        frozen=True,
+    )
 
 
-__all__: list[str] = ["LdifNamespace"]
+__all__: list[str] = ["FlextLdifNamespace"]

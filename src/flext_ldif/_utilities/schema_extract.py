@@ -8,9 +8,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from flext_cli import u
+
 from flext_core import r
 from flext_ldif import FlextLdifModels, c, p, t
-from flext_ldif._utilities import FlextLdifUtilitiesParser as up
+from flext_ldif._utilities import FlextLdifUtilitiesParser
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -18,6 +20,8 @@ if TYPE_CHECKING:
 
 class FlextLdifUtilitiesSchemaExtract:
     """Extract RFC 4512 schema fields from raw definition strings."""
+
+    logger = u.fetch_logger(__name__)
 
     @staticmethod
     def extract_attribute_flags(attr_definition: str) -> tuple[bool, bool]:
@@ -28,11 +32,11 @@ class FlextLdifUtilitiesSchemaExtract:
         Returns:
             The resulting ``tuple[bool, bool]``.
         """
-        single_value = up.extract_boolean_flag(
+        single_value = FlextLdifUtilitiesParser.extract_boolean_flag(
             attr_definition,
             c.Ldif.SCHEMA_SINGLE_VALUE,
         )
-        no_user_modification = up.extract_boolean_flag(
+        no_user_modification = FlextLdifUtilitiesParser.extract_boolean_flag(
             attr_definition,
             c.Ldif.SCHEMA_NO_USER_MODIFICATION,
         )
@@ -49,9 +53,15 @@ class FlextLdifUtilitiesSchemaExtract:
         Returns:
             The resulting ``tuple[str | None, str | None, str | None]``.
         """
-        equality = up.extract_optional_field(attr_definition, c.Ldif.SCHEMA_EQUALITY)
-        substr = up.extract_optional_field(attr_definition, c.Ldif.SCHEMA_SUBSTR)
-        ordering = up.extract_optional_field(attr_definition, c.Ldif.SCHEMA_ORDERING)
+        equality = FlextLdifUtilitiesParser.extract_optional_field(
+            attr_definition, c.Ldif.SCHEMA_EQUALITY
+        )
+        substr = FlextLdifUtilitiesParser.extract_optional_field(
+            attr_definition, c.Ldif.SCHEMA_SUBSTR
+        )
+        ordering = FlextLdifUtilitiesParser.extract_optional_field(
+            attr_definition, c.Ldif.SCHEMA_ORDERING
+        )
         return (equality, substr, ordering)
 
     @staticmethod
@@ -63,8 +73,12 @@ class FlextLdifUtilitiesSchemaExtract:
         Returns:
             The resulting ``tuple[str | None, str | None]``.
         """
-        sup = up.extract_optional_field(attr_definition, c.Ldif.SCHEMA_SUP)
-        usage = up.extract_optional_field(attr_definition, c.Ldif.SCHEMA_USAGE)
+        sup = FlextLdifUtilitiesParser.extract_optional_field(
+            attr_definition, c.Ldif.SCHEMA_SUP
+        )
+        usage = FlextLdifUtilitiesParser.extract_optional_field(
+            attr_definition, c.Ldif.SCHEMA_USAGE
+        )
         return (sup, usage)
 
     @staticmethod
@@ -138,7 +152,7 @@ class FlextLdifUtilitiesSchemaExtract:
         definition: str,
         definition_label: str,
     ) -> p.Result[tuple[str, str, str | None]]:
-        oid_result = up.extract_oid(definition)
+        oid_result = FlextLdifUtilitiesParser.extract_oid(definition)
         if oid_result.failure:
             error = oid_result.error or "unknown OID extraction error"
             return r[tuple[str, str, str | None]].fail(
@@ -149,13 +163,15 @@ class FlextLdifUtilitiesSchemaExtract:
                 f"RFC {definition_label} parsing failed: unknown result state",
             )
         oid = oid_result.value
-        name_raw = up.extract_optional_field(
+        name_raw = FlextLdifUtilitiesParser.extract_optional_field(
             definition,
             c.Ldif.SCHEMA_NAME,
             default=oid,
         )
         name: str = name_raw if name_raw is not None else oid
-        desc = up.extract_optional_field(definition, c.Ldif.SCHEMA_DESC)
+        desc = FlextLdifUtilitiesParser.extract_optional_field(
+            definition, c.Ldif.SCHEMA_DESC
+        )
         return r[tuple[str, str, str | None]].ok((oid, name, desc))
 
     @staticmethod
@@ -181,7 +197,10 @@ class FlextLdifUtilitiesSchemaExtract:
                 if result.success:
                     try:
                         items.append(model_type.model_validate(result.value))
-                    except c.Ldif.EXC_LDIF_PARSE:
+                    except c.Ldif.EXC_LDIF_PARSE as exc:
+                        FlextLdifUtilitiesSchemaExtract.logger.warning(
+                            f"Skipping unparseable schema item on {line!r}: {exc}",
+                        )
                         continue
         return items
 

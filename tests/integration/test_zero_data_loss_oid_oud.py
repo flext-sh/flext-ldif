@@ -25,7 +25,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from flext_ldif import ldif
-from tests import TestsFlextLdifUtilities as u, c, m, t, tm
+from tests import c, m, t, tm, u
 
 if TYPE_CHECKING:
     from tests import p

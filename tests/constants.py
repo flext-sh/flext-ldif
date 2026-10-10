@@ -7,7 +7,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from enum import StrEnum, unique
 from pathlib import Path
 from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar, Final, Literal
@@ -16,181 +15,22 @@ from flext_tests import FlextTestsConstants
 
 from flext_ldif import FlextLdifConstants
 from tests import m
+from tests._constants_ldap import TestsFlextLdifLdapConstants
 
 if TYPE_CHECKING:
     from tests import t
 
 
-class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
-    """Flat test constants for flext-ldif."""
+class TestsFlextLdifConstants(
+    TestsFlextLdifLdapConstants,
+    FlextTestsConstants,
+    FlextLdifConstants,
+):
+    """Flat test constants for flext-ldif.
 
-    @staticmethod
-    def _server_attribute_cases(
-        server: str,
-    ) -> t.SequenceOf[m.Tests.AttributeTestCase]:
-        """Build the attribute cases of one server from the flat row table.
-
-        Returns:
-            The resulting ``t.SequenceOf[m.Tests.AttributeTestCase]``.
-        """
-        return tuple(
-            TestsFlextLdifConstants._attribute_case(
-                *row[1:3],
-                expected_can_handle=row[3],
-                expected_oid=row[4],
-                expected_name=row[5],
-            )
-            for row in TestsFlextLdifConstants._ATTRIBUTE_CASE_ROWS
-            if row[0] == server
-        )
-
-    @staticmethod
-    def _attribute_case(
-        scenario: str,
-        attr_definition: str,
-        *,
-        expected_can_handle: bool,
-        expected_oid: str | None = None,
-        expected_name: str | None = None,
-    ) -> m.Tests.AttributeTestCase:
-        """Build one attribute can-handle test case from a data row.
-
-        Returns:
-            The resulting ``m.Tests.AttributeTestCase``.
-        """
-        return m.Tests.AttributeTestCase(
-            scenario=scenario,
-            attr_definition=attr_definition,
-            expected_can_handle=expected_can_handle,
-            expected_oid=expected_oid,
-            expected_name=expected_name,
-        )
-
-    _ATTRIBUTE_CASE_ROWS: Final[
-        tuple[tuple[str, str, str, bool, str | None, str | None], ...]
-    ] = (
-        (
-            "ds389",
-            "ds389_oid",
-            (
-                "( 2.16.840.1.113730.3.1.1 NAME 'nsslapd-suffix' "
-                "SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )"
-            ),
-            True,
-            "2.16.840.1.113730.3.1.1",
-            "nsslapd-suffix",
-        ),
-        (
-            "ds389",
-            "nsslapd_prefix",
-            ("( 1.2.3.4 NAME 'nsslapd-port' SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 )"),
-            True,
-            None,
-            "nsslapd-port",
-        ),
-        (
-            "ds389",
-            "nsds_prefix",
-            ("( 1.2.3.4 NAME 'nsds5ReplicaId' SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 )"),
-            True,
-            None,
-            "nsds5ReplicaId",
-        ),
-        (
-            "ds389",
-            "nsuniqueid_prefix",
-            ("( 1.2.3.4 NAME 'nsuniqueid' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"),
-            True,
-            None,
-            "nsuniqueid",
-        ),
-        (
-            "ds389",
-            "standard_rfc",
-            ("( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"),
-            False,
-            None,
-            None,
-        ),
-        (
-            "novell",
-            "novell_oid",
-            (
-                "( 2.16.840.1.113719.1.1.4.1.501 NAME "
-                "'nspmPasswordPolicyDN' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )"
-            ),
-            True,
-            "2.16.840.1.113719.1.1.4.1.501",
-            "nspmPasswordPolicyDN",
-        ),
-        (
-            "novell",
-            "nspm_prefix",
-            (
-                "( 1.2.3.4 NAME 'nspmPasswordPolicy' SYNTAX "
-                "1.3.6.1.4.1.1466.115.121.1.15 )"
-            ),
-            True,
-            None,
-            "nspmPasswordPolicy",
-        ),
-        (
-            "novell",
-            "login_prefix",
-            ("( 1.2.3.4 NAME 'loginDisabled' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 )"),
-            True,
-            None,
-            "loginDisabled",
-        ),
-        (
-            "novell",
-            "dirxml_prefix",
-            (
-                "( 1.2.3.4 NAME 'dirxml-associations' SYNTAX "
-                "1.3.6.1.4.1.1466.115.121.1.15 )"
-            ),
-            True,
-            None,
-            "dirxml-associations",
-        ),
-        (
-            "novell",
-            "standard_rfc",
-            ("( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"),
-            False,
-            None,
-            None,
-        ),
-    )
-
-    # One flat SSOT row table: (server, scenario, definition, can_handle, oid, name).
-    # DS389 and Novell rows share the keyed shape instead of parallel blocks.
-
-    class Ldap:
-        """ldap3 wire constants consumed by the real-directory tests.
-
-        flext-ldif is the base library of the LDAP client, so the client cannot
-        be a declared dependency here (see ``tests.utilities``). These are the
-        ldap3 protocol values the tests pass to the dynamically resolved client,
-        not a second implementation of an owned facade.
-        """
-
-        @unique
-        class Ldap3SearchScope(StrEnum):
-            """ldap3-compatible search scope string values."""
-
-            BASE = "BASE"
-            LEVEL = "LEVEL"
-            SUBTREE = "SUBTREE"
-
-        @unique
-        class Ldap3GetInfo(StrEnum):
-            """ldap3-compatible get-info option string values."""
-
-            ALL = "ALL"
-            DSA = "DSA"
-            NO_INFO = "NO_INFO"
-            SCHEMA = "SCHEMA"
+    The ldap3 wire constants compose in through their focused module so the
+    ``c.Ldap3*`` surface stays unchanged without a second nested namespace.
+    """
 
     class Tests(FlextTestsConstants.Tests):
         """LDIF test constants namespace."""
@@ -495,7 +335,7 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
             "empty_stripped": ("  ", True),
         })
         ENTRIES_DN_DICT_CASES: ClassVar[
-            t.MappingKV[str, tuple[dict[str, str | list[str]], bool]]
+            t.MappingKV[str, tuple[t.MappingKV[str, str | t.StrSequence], bool]]
         ] = MappingProxyType({
             "str_dn": ({"dn": "cn=x,dc=example,dc=com"}, True),
             "list_dn": ({"dn": ["cn=y,dc=example,dc=com"]}, True),
@@ -762,7 +602,53 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
 
         DS389_ATTRIBUTE_TEST_CASES: ClassVar[
             t.SequenceOf[m.Tests.AttributeTestCase]
-        ] = ()
+        ] = (
+            m.Tests.AttributeTestCase(
+                scenario="ds389_oid",
+                attr_definition=(
+                    "( 2.16.840.1.113730.3.1.1 NAME 'nsslapd-suffix' SYNTAX "
+                    "1.3.6.1.4.1.1466.115.121.1.12 )"
+                ),
+                expected_can_handle=True,
+                expected_oid="2.16.840.1.113730.3.1.1",
+                expected_name="nsslapd-suffix",
+            ),
+            m.Tests.AttributeTestCase(
+                scenario="nsslapd_prefix",
+                attr_definition=(
+                    "( 1.2.3.4 NAME 'nsslapd-port' SYNTAX "
+                    "1.3.6.1.4.1.1466.115.121.1.27 )"
+                ),
+                expected_can_handle=True,
+                expected_name="nsslapd-port",
+            ),
+            m.Tests.AttributeTestCase(
+                scenario="nsds_prefix",
+                attr_definition=(
+                    "( 1.2.3.4 NAME 'nsds5ReplicaId' SYNTAX "
+                    "1.3.6.1.4.1.1466.115.121.1.27 )"
+                ),
+                expected_can_handle=True,
+                expected_name="nsds5ReplicaId",
+            ),
+            m.Tests.AttributeTestCase(
+                scenario="nsuniqueid_prefix",
+                attr_definition=(
+                    "( 1.2.3.4 NAME 'nsuniqueid' SYNTAX "
+                    "1.3.6.1.4.1.1466.115.121.1.15 )"
+                ),
+                expected_can_handle=True,
+                expected_name="nsuniqueid",
+            ),
+            m.Tests.AttributeTestCase(
+                scenario="standard_rfc",
+                attr_definition=(
+                    "( 2.5.4.3 NAME 'cn' "
+                    "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+                ),
+                expected_can_handle=False,
+            ),
+        )
 
         DS389_OBJECTCLASS_TEST_CASES: ClassVar[
             t.SequenceOf[m.Tests.ObjectClassTestCase]
@@ -849,7 +735,54 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
 
         NOVELL_ATTRIBUTE_TEST_CASES: ClassVar[
             t.SequenceOf[m.Tests.AttributeTestCase]
-        ] = ()
+        ] = (
+            m.Tests.AttributeTestCase(
+                scenario="novell_oid",
+                attr_definition=(
+                    "( 2.16.840.1.113719.1.1.4.1.501 NAME "
+                    "'nspmPasswordPolicyDN' SYNTAX "
+                    "1.3.6.1.4.1.1466.115.121.1.12 )"
+                ),
+                expected_can_handle=True,
+                expected_oid="2.16.840.1.113719.1.1.4.1.501",
+                expected_name="nspmPasswordPolicyDN",
+            ),
+            m.Tests.AttributeTestCase(
+                scenario="nspm_prefix",
+                attr_definition=(
+                    "( 1.2.3.4 NAME 'nspmPasswordPolicy' SYNTAX "
+                    "1.3.6.1.4.1.1466.115.121.1.15 )"
+                ),
+                expected_can_handle=True,
+                expected_name="nspmPasswordPolicy",
+            ),
+            m.Tests.AttributeTestCase(
+                scenario="login_prefix",
+                attr_definition=(
+                    "( 1.2.3.4 NAME 'loginDisabled' SYNTAX "
+                    "1.3.6.1.4.1.1466.115.121.1.7 )"
+                ),
+                expected_can_handle=True,
+                expected_name="loginDisabled",
+            ),
+            m.Tests.AttributeTestCase(
+                scenario="dirxml_prefix",
+                attr_definition=(
+                    "( 1.2.3.4 NAME 'dirxml-associations' SYNTAX "
+                    "1.3.6.1.4.1.1466.115.121.1.15 )"
+                ),
+                expected_can_handle=True,
+                expected_name="dirxml-associations",
+            ),
+            m.Tests.AttributeTestCase(
+                scenario="standard_rfc",
+                attr_definition=(
+                    "( 2.5.4.3 NAME 'cn' "
+                    "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+                ),
+                expected_can_handle=False,
+            ),
+        )
 
         NOVELL_OBJECTCLASS_TEST_CASES: ClassVar[
             t.SequenceOf[m.Tests.ObjectClassTestCase]
@@ -1036,15 +969,6 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
         STATS_SERVER_TYPES: ClassVar[t.StrSequence] = (RFC, OID)
         STATS_EXPECTED_OBJECTCLASS: ClassVar[str] = "person"
 
-
-_ldif_tests = TestsFlextLdifConstants.Tests
-_ldif_tests.DS389_ATTRIBUTE_TEST_CASES = (
-    TestsFlextLdifConstants._server_attribute_cases(_ldif_tests.DS389)
-)
-_ldif_tests.NOVELL_ATTRIBUTE_TEST_CASES = (
-    TestsFlextLdifConstants._server_attribute_cases(_ldif_tests.NOVELL)
-)
-del _ldif_tests
 
 c = TestsFlextLdifConstants
 

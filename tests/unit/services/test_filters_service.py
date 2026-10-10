@@ -17,7 +17,7 @@ import pytest
 
 from flext_ldif import ldif
 from flext_ldif.services import FlextLdifFilters
-from tests import TestsFlextLdifUtilities as u, c, m, tm
+from tests import c, m, tm, u
 
 if TYPE_CHECKING:
     from tests import t

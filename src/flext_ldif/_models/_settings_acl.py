@@ -11,9 +11,11 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_core import FlextUtilities as u, m
-from flext_ldif import c, t
-from flext_ldif._models.domain_acl import FlextLdifModelsDomainAcl as mdac
+from flext_core import FlextUtilities as u, m, t
+from flext_ldif._constants.base import (
+    FlextLdifConstantsAclConvertOud,
+    FlextLdifConstantsEnums,
+)
 
 
 class FlextLdifModelsSettingsAcl:
@@ -39,14 +41,14 @@ class FlextLdifModelsSettingsAcl:
             "aci: "
         )
         version: Annotated[str, u.Field(description="ACI version")] = (
-            c.Ldif.ACI_VERSION_NUMBER
+            FlextLdifConstantsAclConvertOud.ACI_VERSION_NUMBER
         )
 
     class AciParserConfig(m.Value):
         """Configuration for server-specific ACI parsing."""
 
         server_type: Annotated[
-            c.Ldif.ServerTypes,
+            FlextLdifConstantsEnums.ServerTypes,
             u.Field(..., description="Server type identifier (oid, oud, rfc, etc.)"),
         ]
         aci_prefix: Annotated[str, u.Field(description="ACI line prefix")] = "aci:"
@@ -115,34 +117,3 @@ class FlextLdifModelsSettingsAcl:
             str | None,
             u.Field(description="Action type (allow/deny)"),
         ] = None
-
-    class PermissionMappingConfig(m.Value):
-        """Configuration for permission mapping during ACL conversion.
-
-        Consolidates parameters for
-        FlextLdifConversion._apply_permission_mapping method.
-        Reduces function signature from 6 parameters to 1 model.
-
-        """
-
-        original_acl: Annotated[mdac.Acl, u.Field(description="Original ACL model")]
-        converted_acl: Annotated[
-            mdac.Acl,
-            u.Field(description="Converted ACL model (modified in-place)"),
-        ]
-        orig_perms_dict: Annotated[
-            t.MutableBoolMapping,
-            u.Field(..., description="Original permissions dict"),
-        ]
-        source_server_type: Annotated[
-            c.Ldif.ServerTypes | None,
-            u.Field(description="Source server type"),
-        ] = None
-        target_server_type: Annotated[
-            c.Ldif.ServerTypes | None,
-            u.Field(description="Target server type"),
-        ] = None
-        converted_has_permissions: Annotated[
-            bool,
-            u.Field(description="Whether converted ACL has permissions"),
-        ] = False

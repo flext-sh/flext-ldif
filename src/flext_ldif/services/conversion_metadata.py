@@ -11,7 +11,7 @@ from collections.abc import Mapping
 from flext_ldif import c, m, s, t, u
 
 
-class FlextLdifConversionMetadataMixin(s):
+class FlextLdifConversionMetadataMixin(s[m.Ldif.Response]):
     """Metadata-analysis helpers shared by the conversion facade."""
 
     @staticmethod

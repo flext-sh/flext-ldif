@@ -15,6 +15,7 @@ import struct
 from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar, Final
 
+from flext_ldif._constants.acl_convert_oud import FlextLdifConstantsAclConvertOud
 from flext_ldif._constants.enums import FlextLdifConstantsEnums
 
 if TYPE_CHECKING:
@@ -884,3 +885,10 @@ class FlextLdifConstantsBase:
     UNKNOWN_VALUE: Final[str] = "unknown"
 
     ASCII_THRESHOLD: Final[int] = 127
+
+
+__all__: list[str] = [
+    "FlextLdifConstantsAclConvertOud",
+    "FlextLdifConstantsBase",
+    "FlextLdifConstantsEnums",
+]
