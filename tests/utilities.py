@@ -722,21 +722,18 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
 
         logger: ClassVar[p.Logger] = FlextLdifUtilities.fetch_logger(__name__)
 
-        @staticmethod
+        @classmethod
         def server_attribute_test_cases(
+            cls,
             server: str,
         ) -> t.VariadicTuple[m.Tests.AttributeTestCase]:
             """Construct the selected dialect's attribute cases from constant rows."""
-            return tuple(
-                m.Tests.AttributeTestCase(
-                    scenario=scenario,
-                    attr_definition=definition,
-                    expected_can_handle=can_handle,
-                    expected_oid=oid,
-                    expected_name=name,
+            return cls.attribute_test_cases(
+                tuple(
+                    (scenario, definition, can_handle, oid, name)
+                    for dialect, scenario, definition, can_handle, oid, name in c.ATTRIBUTE_CASE_ROWS
+                    if dialect == server
                 )
-                for dialect, scenario, definition, can_handle, oid, name in c.ATTRIBUTE_CASE_ROWS
-                if dialect == server
             )
 
         @staticmethod
@@ -781,7 +778,9 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
                 m.Tests.EntryTestCase(
                     scenario=scenario,
                     entry_dn=dn,
-                    attributes={key: list(values) for key, values in attributes.items()},
+                    attributes={
+                        key: list(values) for key, values in attributes.items()
+                    },
                     expected_can_handle=can_handle,
                 )
                 for scenario, dn, attributes, can_handle in rows
