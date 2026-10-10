@@ -249,18 +249,36 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
             The resulting ``m.Ldif.SchemaAttribute``.
         """
         fixed_equality, fixed_substr = self._transform_by_matching_rules(attr_data)
+        fixed_name = attr_data.name
+        if ";" in fixed_name:
+            # OUD's schema parser refuses LDAP transfer options inside an
+            # attribute type name (invalidAttributeSyntax): the base type is
+            # declared and the binary transfer is served implicitly for the
+            # certificate/octet-string syntaxes.
+            stripped_name = fixed_name.split(";", 1)[0]
+            FlextLdifServersOudSchema._module_logger.warning(
+                "Stripped transfer option from attribute name",
+                attribute_name=attr_data.name,
+                attribute_oid=attr_data.oid,
+                stripped_name=stripped_name,
+            )
+            fixed_name = stripped_name
         is_boolean = u.Ldif.boolean_attribute(
-            attr_data.name,
+            fixed_name,
             set(FlextLdifServersOudConstants.BOOLEAN_ATTRIBUTES),
         )
         if is_boolean:
             FlextLdifServersOudSchema._module_logger.debug(
                 "Identified boolean attribute",
-                attribute_name=attr_data.name,
+                attribute_name=fixed_name,
                 attribute_oid=attr_data.oid,
             )
         updated_attr = attr_data.model_copy(
-            update={"equality": fixed_equality, "substr": fixed_substr},
+            update={
+                "name": fixed_name,
+                "equality": fixed_equality,
+                "substr": fixed_substr,
+            },
         )
         return self._apply_attribute_oid_metadata(updated_attr)
 
