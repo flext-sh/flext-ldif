@@ -64,7 +64,7 @@ def ldap_container(worker_id: str) -> t.JsonMapping:
     with lock:
         execute_result = docker_control.execute()
         if execute_result.failure:
-            pytest.skip(f"OpenLDAP container unavailable: {execute_result.error}")
+            pytest.fail("OpenLDAP container setup failed after readiness")
         admin_dn, admin_password = u.Tests.get_admin_credentials()
         # Wall-clock deadline: each probe against an unreachable server costs
         # seconds of connect timeout, so counting only the sleeps would let the
@@ -79,11 +79,7 @@ def ldap_container(worker_id: str) -> t.JsonMapping:
             last_error = bind_result.error
             time.sleep(1.0)
         else:
-            pytest.skip(
-                "OpenLDAP container bind not ready"
-                if last_error is None
-                else f"OpenLDAP container bind not ready: {last_error}",
-            )
+            pytest.fail("OpenLDAP bind failed after transport readiness")
     return {
         "server_url": server_url,
         "host": "localhost",
