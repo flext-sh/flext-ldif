@@ -13,10 +13,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_tests import tm
+from tests import tm
 
-from flext_ldif import p
-from flext_ldif.services.server import FlextLdifServer
+from tests import p
+from flext_ldif.services import FlextLdifServer
 
 _SYNTAX_NORMALIZATION_CASES: tuple[tuple[str, str, str], ...] = (
     (

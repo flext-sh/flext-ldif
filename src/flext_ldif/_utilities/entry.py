@@ -8,17 +8,15 @@ from __future__ import annotations
 
 from flext_cli import u
 
-from flext_ldif._utilities._entry_access import FlextLdifEntryAccess
-from flext_ldif._utilities._entry_analysis import FlextLdifEntryAnalysis
-from flext_ldif._utilities._entry_attr_validation import (
-    FlextLdifEntryAttributeValidation,
-)
-from flext_ldif._utilities._entry_boolean import FlextLdifEntryBooleanConversion
-from flext_ldif._utilities._entry_criteria import FlextLdifEntryCriteria
-from flext_ldif._utilities._entry_matching import FlextLdifEntryMatching
-from flext_ldif._utilities._entry_oid_rfc import FlextLdifEntryOidRfcTransforming
-from flext_ldif._utilities._entry_server_rules import FlextLdifEntryServerRules
-from flext_ldif._utilities._entry_validation import FlextLdifEntryValidation
+from flext_ldif._utilities import FlextLdifEntryAccess
+from flext_ldif._utilities import FlextLdifEntryAnalysis
+from flext_ldif._utilities import FlextLdifEntryAttributeValidation
+from flext_ldif._utilities import FlextLdifEntryBooleanConversion
+from flext_ldif._utilities import FlextLdifEntryCriteria
+from flext_ldif._utilities import FlextLdifEntryMatching
+from flext_ldif._utilities import FlextLdifEntryOidRfcTransforming
+from flext_ldif._utilities import FlextLdifEntryServerRules
+from flext_ldif._utilities import FlextLdifEntryValidation
 
 
 class FlextLdifUtilitiesEntry(

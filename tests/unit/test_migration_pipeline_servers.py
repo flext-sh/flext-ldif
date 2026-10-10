@@ -15,11 +15,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
+from tests import tm
 
-from flext_ldif.servers._rfc.server_constants import FlextLdifServersRfcConstants
-from flext_ldif.servers.oid import FlextLdifServersOidConstants
-from flext_ldif.services.migration import FlextLdifMigrationPipeline
+from flext_ldif.servers._rfc import FlextLdifServersRfcConstants
+from flext_ldif.servers import FlextLdifServersOidConstants
+from flext_ldif.services import FlextLdifMigrationPipeline
 from tests import c, m
 
 if TYPE_CHECKING:

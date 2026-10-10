@@ -13,7 +13,8 @@ from __future__ import annotations
 from pathlib import Path
 
 from examples.schema_building import create_entry_or_none, intelligent_schema_building
-from flext_ldif import ldif, m, p, r, t
+from flext_ldif import ldif
+from examples import m, p, r, t
 
 
 def _pipeline_test_entries() -> list[m.Ldif.Entry]:

@@ -25,7 +25,8 @@ from pathlib import Path
 from typing import Final
 
 from flext_core import FlextContext
-from flext_ldif import c, ldif, m, p, r
+from examples import c, m, p, r
+from flext_ldif import ldif
 
 
 class BasicUsageDry:

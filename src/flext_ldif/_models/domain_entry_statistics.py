@@ -11,7 +11,7 @@ from typing import Annotated, Self
 from flext_core import m
 from flext_ldif import t, u
 from flext_ldif._models import FlextLdifModelsDomainDN as mdn
-from flext_ldif._utilities.collection_ldif import FlextLdifUtilitiesCollectionLdif
+from flext_ldif._utilities import FlextLdifUtilitiesCollectionLdif
 
 
 class FlextLdifModelsDomainEntryStatistics(m.FrozenDynamicModel):

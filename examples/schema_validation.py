@@ -10,7 +10,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import ldif, m, p, r, t
+from flext_ldif import ldif
+from examples import m, p, r, t
 
 
 def _append_created_entry(

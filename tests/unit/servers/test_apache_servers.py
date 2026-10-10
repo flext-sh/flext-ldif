@@ -12,9 +12,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
+from tests import tm
 
-from flext_ldif.servers.apache import FlextLdifServersApache
+from flext_ldif.servers import FlextLdifServersApache
 from tests import c, m, u
 
 if TYPE_CHECKING:

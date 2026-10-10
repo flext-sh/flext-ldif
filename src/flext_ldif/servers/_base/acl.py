@@ -10,7 +10,7 @@ from collections.abc import Callable
 from typing import Annotated, ClassVar, Self, override
 
 from flext_ldif import c, m, p, r, s, t, u
-from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
+from flext_ldif.servers._base import FlextLdifServerMethodsMixin
 
 
 class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethodsMixin):

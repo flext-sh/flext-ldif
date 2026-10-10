@@ -7,10 +7,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import FlextTypes as t
-from flext_ldif._protocols import (
-    FlextLdifProtocolsBase as p,
-    FlextLdifProtocolsDomain as pd,
-)
+from flext_ldif import p
+from flext_ldif._protocols import FlextLdifProtocolsDomain as pd
 
 
 class FlextLdifTypesDomain:

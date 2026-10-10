@@ -19,7 +19,7 @@ from typing import Annotated
 from flext_core import m
 from flext_ldif import c, t, u
 from flext_ldif._models import FlextLdifModelsDomainAttributes
-from flext_ldif.shared import FlextLdifShared
+from flext_ldif import FlextLdifShared
 
 
 class FlextLdifModelsDomainMetadata:

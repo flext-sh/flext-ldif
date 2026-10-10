@@ -10,8 +10,8 @@ from collections.abc import MutableMapping
 from typing import ClassVar
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
-from flext_ldif.servers._rfc.schema_values import FlextLdifServersRfcSchemaValuesMixin
+from flext_ldif.servers._base import FlextLdifServersBaseSchema
+from flext_ldif.servers._rfc import FlextLdifServersRfcSchemaValuesMixin
 
 
 class FlextLdifServersRfcSchemaParseMixin(

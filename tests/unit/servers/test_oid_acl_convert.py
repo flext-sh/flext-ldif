@@ -21,10 +21,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
+from tests import tm
 
-from flext_ldif import m
-from flext_ldif.servers.oid import FlextLdifServersOidAclConvert as Parser
+from tests import m
+from flext_ldif.servers import FlextLdifServersOidAclConvert as Parser
 
 if TYPE_CHECKING:
     from tests import t

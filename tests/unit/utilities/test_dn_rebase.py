@@ -14,7 +14,7 @@ from __future__ import annotations
 from typing import cast
 
 import pytest
-from flext_tests import tm
+from tests import tm
 
 from tests import m, t, u
 

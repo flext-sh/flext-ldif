@@ -15,11 +15,11 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from flext_tests import tm
+from tests import tm
 
-from flext_ldif.services.parser import FlextLdifParser
-from flext_ldif.services.server import FlextLdifServer
-from flext_ldif.services.writer import FlextLdifWriter
+from flext_ldif.services import FlextLdifParser
+from flext_ldif.services import FlextLdifServer
+from flext_ldif.services import FlextLdifWriter
 from tests import c, m
 
 

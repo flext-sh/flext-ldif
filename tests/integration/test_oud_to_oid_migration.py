@@ -18,19 +18,19 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
+from tests import tm
 
 from flext_ldif import ldif
-from flext_ldif.servers.oid import FlextLdifServersOid
-from flext_ldif.servers.oud import FlextLdifServersOud
-from flext_ldif.services.migration import FlextLdifMigrationPipeline
+from flext_ldif.servers import FlextLdifServersOid
+from flext_ldif.servers import FlextLdifServersOud
+from flext_ldif.services import FlextLdifMigrationPipeline
 from tests import TestsFlextLdifUtilities as u, c
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
     from pathlib import Path
 
-    from flext_ldif._models.domain_entry import FlextLdifModelsDomainEntry as mde
+    from flext_ldif._models import FlextLdifModelsDomainEntry as mde
     from tests import p
 
 MIN_OUD_ENTRIES = 10

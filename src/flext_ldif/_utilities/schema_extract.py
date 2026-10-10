@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 
 from flext_core import r
 from flext_ldif import FlextLdifModels, c, p, t
-from flext_ldif._utilities.parser import FlextLdifUtilitiesParser as up
+from flext_ldif._utilities import FlextLdifUtilitiesParser as up
 
 if TYPE_CHECKING:
     from collections.abc import Callable

@@ -16,7 +16,8 @@ import uuid
 from typing import TYPE_CHECKING, ClassVar, Final
 
 import pytest
-from flext_tests import FlextTestsFixturesDSLMixin, FlextTestsUtilities, tk, tm
+from flext_tests import FlextTestsFixturesDSLMixin, FlextTestsUtilities
+from tests import tk, tm
 from flext_tests.docker import FlextTestsDocker
 
 from flext_ldif import FlextLdifUtilities

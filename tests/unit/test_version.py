@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import importlib
 
-from flext_tests import tm
+from tests import tm
 from packaging.version import Version
 
 from tests import c

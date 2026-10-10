@@ -12,8 +12,8 @@ from typing import Annotated, Self
 
 from flext_core import FlextUtilities as u, m
 from flext_ldif import c, t
-from flext_ldif._models.base import FlextLdifModelsBases as mb
-from flext_ldif._models.domain_metadata import FlextLdifModelsDomainMetadata
+from flext_ldif._models import FlextLdifModelsBases as mb
+from flext_ldif._models import FlextLdifModelsDomainMetadata
 
 
 class FlextLdifModelsDomainAcl:

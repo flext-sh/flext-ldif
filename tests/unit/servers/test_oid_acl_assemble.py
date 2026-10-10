@@ -16,16 +16,11 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from flext_tests import tm
+from tests import tm
 from structlog.testing import capture_logs
 
-from flext_ldif import m
-from flext_ldif.servers.oid import (
-    FlextLdifServersOidAclAssemble as Asm,
-    FlextLdifServersOidAclConvert as Parser,
-    FlextLdifServersOidAclPipeline as Pipe,
-    FlextLdifServersOidAclRender as Render,
-)
+from tests import m
+from flext_ldif.servers import FlextLdifServersOidAclAssemble as Asm, FlextLdifServersOidAclConvert as Parser, FlextLdifServersOidAclPipeline as Pipe, FlextLdifServersOidAclRender as Render
 from tests import u
 
 

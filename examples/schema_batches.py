@@ -11,7 +11,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from examples.schema_building import object_class_entries
-from flext_ldif import FlextLdif, ldif, m, p, r, t
+from flext_ldif import FlextLdif, ldif
+from examples import m, p, r, t
 
 
 def _core_attribute_entries() -> list[m.Ldif.Entry]:

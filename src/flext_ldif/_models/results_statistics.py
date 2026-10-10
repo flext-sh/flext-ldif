@@ -10,8 +10,8 @@ from typing import Annotated, Self
 
 from flext_core import FlextUtilities as u, m
 from flext_ldif import c, t
-from flext_ldif._models.collections import FlextLdifModelsCollections as mc
-from flext_ldif._models.events import FlextLdifModelsEvents as me
+from flext_ldif._models import FlextLdifModelsCollections as mc
+from flext_ldif._models import FlextLdifModelsEvents as me
 
 
 class FlextLdifModelsResultsStatistics:

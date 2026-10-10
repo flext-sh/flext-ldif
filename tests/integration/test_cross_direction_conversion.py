@@ -17,10 +17,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
+from tests import tm
 
-from flext_ldif.services.conversion import FlextLdifConversion
-from flext_ldif.services.server import FlextLdifServer
+from flext_ldif.services import FlextLdifConversion
+from flext_ldif.services import FlextLdifServer
 from tests import m
 
 if TYPE_CHECKING:

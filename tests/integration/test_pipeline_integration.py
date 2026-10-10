@@ -16,7 +16,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
+from tests import tm
 
 from flext_ldif import ldif
 
@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from collections.abc import MutableMapping, MutableSequence
     from pathlib import Path
 
-    from flext_ldif import m
+    from tests import m
 
     type _Entry = m.Ldif.Entry
     type _Attributes = MutableMapping[str, MutableSequence[str]]

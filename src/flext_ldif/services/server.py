@@ -11,11 +11,11 @@ import inspect
 import pkgutil
 from typing import TYPE_CHECKING, Annotated, ClassVar, Self, TypeGuard, override
 
-from flext_core import r
+from flext_ldif import r
 from flext_ldif import c, p, s, t, u
 
 if TYPE_CHECKING:
-    from flext_ldif.servers.base import FlextLdifServersBase
+    from flext_ldif import FlextLdifServersBase
 
 
 class FlextLdifServer(s):

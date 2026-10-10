@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import override
 
 from flext_ldif import c, m, p, r, t
-from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
+from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
 
 
 class FlextLdifServersOpenldap1Entry(FlextLdifServersRfcEntry):

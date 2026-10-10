@@ -14,7 +14,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import ldif, m, t
+from flext_ldif import ldif
+from examples import m, t
 
 
 def extract_acls_from_entry() -> None:

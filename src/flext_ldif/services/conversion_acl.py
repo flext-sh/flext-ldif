@@ -9,10 +9,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 
 from flext_ldif import c, m, p, r, s, t, u
-from flext_ldif.services.conversion_acl_preserve import (
-    FlextLdifConversionAclPreserveMixin,
-)
-from flext_ldif.services.conversion_support import FlextLdifConversionSupportMixin
+from flext_ldif import FlextLdifConversionAclPreserveMixin
+from flext_ldif import FlextLdifConversionSupportMixin
 
 
 class FlextLdifConversionAclMixin(
