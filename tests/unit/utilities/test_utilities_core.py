@@ -12,6 +12,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
+from examples import ExamplesFlextLdifUtilities
 
 from tests import c, m, t, tm, u
 
@@ -19,6 +20,14 @@ from tests import c, m, t, tm, u
 @pytest.mark.unit
 class TestsFlextLdifUtilitiesCore:
     """Public contract of DN, schema, and server-type LDIF utilities."""
+
+    @staticmethod
+    def test_example_facade_builds_entry_with_supplied_surname() -> None:
+        """The public example facade exposes its shared entry builder."""
+        surname = "Example regression surname"
+        entry = ExamplesFlextLdifUtilities.create_user_entry(7, sn=surname)
+
+        tm.that(entry.attributes["sn"], eq=[surname])
 
     # ---- DN splitting -------------------------------------------------
 

@@ -380,6 +380,7 @@ markers = [
   "discovery: catalog and stream discovery tests",
   "singer: Singer protocol contract tests",
   "requires_engine: native check engine required by this test",
+  "ldap: tests requiring LDAP server",
 ]
 minversion = "8.0"
 python_classes = ["Test*"]

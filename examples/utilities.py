@@ -10,4 +10,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from examples._utilities.base import ExamplesFlextLdifUtilitiesBase
+
+
+class ExamplesFlextLdifUtilities(ExamplesFlextLdifUtilitiesBase):
+    """Compose the shared LDIF example utilities."""
+
+
 __all__: list[str] = ["ExamplesFlextLdifUtilities"]

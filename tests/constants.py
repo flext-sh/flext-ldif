@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING, ClassVar, Final, Literal
 from flext_tests import FlextTestsConstants
 
 from flext_ldif import FlextLdifConstants
+from tests import m
 
 if TYPE_CHECKING:
     from tests import t
@@ -1010,16 +1011,6 @@ class TestsFlextLdifConstants(FlextTestsConstants, FlextLdifConstants):
             ),
         )
 
-        _DS389_CN_KIND_CASES: Final[t.SequenceOf[tuple[str, t.StrSequence]]] = (
-            ("settings", ("nscontainer",)),
-            ("monitor", ("top",)),
-            ("changelog", ("top",)),
-        )
-        _DS389_ATTR_PROBE_CASES: Final[t.SequenceOf[tuple[str, str, str]]] = (
-            ("nsslapd_attribute", "nsslapd-port", "389"),
-            ("nsds_attribute", "nsds5ReplicaId", "1"),
-            ("nsuniqueid_attribute", "nsuniqueid", "12345"),
-        )
         DS389_ENTRY_TEST_CASES: ClassVar[t.SequenceOf[m.Tests.EntryTestCase]] = (
             *(
                 m.Tests.EntryTestCase(
