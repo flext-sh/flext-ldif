@@ -2,7 +2,7 @@
 
 from flext_ldif import m
 from flext_ldif import u
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 

@@ -6,7 +6,7 @@ public API is exercised (``parse_ldif``, ``write``, ``r[T]`` outcomes and the
 public model surface of parse/write responses and entries); no private state,
 no internal collaborator spying, no mock-based testing.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 

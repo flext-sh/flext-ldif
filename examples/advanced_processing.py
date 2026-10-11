@@ -8,7 +8,7 @@ Demonstrates ldif advanced functionality:
 All functionality accessed through ldif facade using direct methods.
 No manual processor creation or conversion loops required.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 

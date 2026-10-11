@@ -3,7 +3,7 @@
 Per AGENTS.md §2.3 (MRO Composition) + §3.1 (200-LOC cap): one of the
 domain-specific Mixins composed into ``FlextLdifServersOudCommentsMixin``.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 

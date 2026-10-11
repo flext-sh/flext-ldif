@@ -22,22 +22,6 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 
-    @override
-    def write(
-        self,
-        entries: t.MutableSequenceOf[m.Ldif.Entry],
-        write_options: m.Ldif.WriteFormatOptions | None = None,
-    ) -> p.Result[str]:
-        """Write entries, sanitizing schema values for OUD acceptance.
-
-        Returns:
-            The resulting ``p.Result[str]``.
-        """
-        return super().write(
-            self._sanitize_schema_carriers(list(entries)),
-            write_options,
-        )
-
     def _sanitize_schema_carriers(
         self,
         entries: t.MutableSequenceOf[m.Ldif.Entry],

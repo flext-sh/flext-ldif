@@ -6,7 +6,7 @@ the observable state of each entry (DN, attribute names, attribute values).
 No private attributes, internal collaborators, or line-coverage pokes are
 touched — only promises the public API makes to its callers.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 

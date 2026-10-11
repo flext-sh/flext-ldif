@@ -8,7 +8,7 @@ Demonstrates ldif ACL-related functionality:
 
 All functionality accessed through ldif facade and FlextLdifAcl service.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 

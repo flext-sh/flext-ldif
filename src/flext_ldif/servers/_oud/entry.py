@@ -2,7 +2,7 @@
 
 Provides OUD-specific servers for schema, ACL, and entry processing.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 

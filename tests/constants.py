@@ -537,6 +537,43 @@ class TestsFlextLdifConstants(
                 expected_name="cn",
             ),
         )
+        APACHE_ATTRIBUTE_CASE_ROWS: ClassVar[t.SequenceOf[t.Tests.AttributeCaseRow]] = (
+            (
+                "apache_oid",
+                (
+                    "( 1.3.6.1.4.1.18060.0.4.1.2.100 NAME 'ads-enabled' SYNTAX "
+                    "1.3.6.1.4.1.1466.115.121.1.7 )"
+                ),
+                True,
+                "1.3.6.1.4.1.18060.0.4.1.2.100",
+                "ads-enabled",
+            ),
+            (
+                "ads_prefix",
+                (
+                    "( 2.16.840.1.113730.3.1.1 NAME 'ads-searchBaseDN' SYNTAX "
+                    "1.3.6.1.4.1.1466.115.121.1.12 )"
+                ),
+                True,
+                "2.16.840.1.113730.3.1.1",
+                "ads-searchBaseDN",
+            ),
+            (
+                "apacheds_name",
+                ("( 1.2.3.4 NAME 'apachedsSystemId' SYNTAX "
+                "1.3.6.1.4.1.1466.115.121.1.15 )"),
+                True,
+                "1.2.3.4",
+                "apachedsSystemId",
+            ),
+            (
+                "standard_rfc",
+                "( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+                False,
+                "2.5.4.3",
+                "cn",
+            ),
+        )
 
         APACHE_OBJECTCLASS_TEST_CASES: ClassVar[
             t.SequenceOf[m.Tests.ObjectClassTestCase]
@@ -559,6 +596,88 @@ class TestsFlextLdifConstants(
                 oc_definition="( 2.5.6.6 NAME 'posixAccount' SUP top STRUCTURAL )",
                 expected_can_handle=False,
                 expected_name="posixAccount",
+            ),
+        )
+        APACHE_OBJECTCLASS_CASE_ROWS: ClassVar[
+            t.SequenceOf[t.Tests.ObjectClassCaseRow]
+        ] = (
+            (
+                "apache_oid",
+                (
+                    "( 1.3.6.1.4.1.18060.0.4.1.3.100 NAME 'ads-directoryService' SUP "
+                    "top "
+                    "STRUCTURAL )"
+                ),
+                True,
+                "1.3.6.1.4.1.18060.0.4.1.3.100",
+                "ads-directoryService",
+                "STRUCTURAL",
+            ),
+            (
+                "ads_name",
+                "( 2.5.6.0 NAME 'ads-base' SUP top ABSTRACT )",
+                True,
+                "2.5.6.0",
+                "ads-base",
+                "ABSTRACT",
+            ),
+            (
+                "standard_rfc",
+                "( 2.5.6.6 NAME 'person' SUP top STRUCTURAL )",
+                False,
+                "2.5.6.6",
+                "person",
+                "STRUCTURAL",
+            ),
+        )
+        APACHE_ENTRY_CASE_ROWS: ClassVar[t.SequenceOf[t.Tests.EntryCaseRow]] = (
+            (
+                "ou_settings",
+                "ou=settings,dc=example,dc=com",
+                {"objectClass": ["organizationalUnit"]},
+                True,
+            ),
+            (
+                "ou_services",
+                "ou=services,dc=example,dc=com",
+                {"objectClass": ["organizationalUnit"]},
+                True,
+            ),
+            (
+                "ou_system",
+                "ou=system,dc=example,dc=com",
+                {"objectClass": ["organizationalUnit"]},
+                True,
+            ),
+            (
+                "ou_partitions",
+                "ou=partitions,dc=example,dc=com",
+                {"objectClass": ["organizationalUnit"]},
+                True,
+            ),
+            (
+                "ads_attribute",
+                "cn=test,dc=example,dc=com",
+                {"ads-enabled": ["TRUE"], "objectClass": ["top"]},
+                True,
+            ),
+            (
+                "apacheds_attribute",
+                "cn=test,dc=example,dc=com",
+                {"apachedsSystemId": ["test"], "objectClass": ["top"]},
+                True,
+            ),
+            (
+                "ads_objectclass",
+                "cn=test,dc=example,dc=com",
+                {"objectClass": ["top", "ads-directory"]},
+                True,
+            ),
+            (
+                "standard_rfc",
+                "cn=user,dc=example,dc=com",
+                {"objectClass": ["person"], "cn": ["user"]},
+                True,
             ),
         )
 
@@ -597,6 +716,25 @@ class TestsFlextLdifConstants(
                 entry_dn="cn=user,dc=example,dc=com",
                 attributes={"objectClass": ["person"], "cn": ["user"]},
                 expected_can_handle=True,
+            ),
+        )
+        DS389_ATTRIBUTE_CASE_ROWS: ClassVar[t.SequenceOf[t.Tests.AttributeCaseRow]] = (
+            (
+                "ds389_oid",
+                (
+                    "( 2.16.840.1.113730.3.1.100 NAME 'nsUniqueId' SYNTAX "
+                    "1.3.6.1.4.1.1466.115.121.1.15 )"
+                ),
+                True,
+                "2.16.840.1.113730.3.1.100",
+                "nsUniqueId",
+            ),
+            (
+                "standard_rfc",
+                "( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+                False,
+                "2.5.4.3",
+                "cn",
             ),
         )
 
@@ -647,6 +785,26 @@ class TestsFlextLdifConstants(
                 expected_can_handle=False,
             ),
         )
+        DS389_OBJECTCLASS_CASE_ROWS: ClassVar[
+            t.SequenceOf[t.Tests.ObjectClassCaseRow]
+        ] = (
+            (
+                "ds389_oid",
+                "( 2.16.840.1.113730.3.2.100 NAME 'nsContainer' SUP top STRUCTURAL )",
+                True,
+                "2.16.840.1.113730.3.2.100",
+                "nsContainer",
+                "STRUCTURAL",
+            ),
+            (
+                "standard_rfc",
+                "( 2.5.6.6 NAME 'person' SUP top STRUCTURAL )",
+                False,
+                "2.5.6.6",
+                "person",
+                "STRUCTURAL",
+            ),
+        )
 
         DS389_OBJECTCLASS_TEST_CASES: ClassVar[
             t.SequenceOf[m.Tests.ObjectClassTestCase]
@@ -678,11 +836,48 @@ class TestsFlextLdifConstants(
             ("monitor", ("top",)),
             ("changelog", ("top",)),
         )
+        DS389_ENTRY_CASE_ROWS: ClassVar[t.SequenceOf[t.Tests.EntryCaseRow]] = (
+            (
+                "ds389_entry",
+                "cn=test,dc=example,dc=com",
+                {"objectClass": ["top", "nsContainer"], "nsUniqueId": ["test-id"]},
+                True,
+            ),
+            (
+                "standard_rfc",
+                "cn=user,dc=example,dc=com",
+                {"objectClass": ["person"], "cn": ["user"]},
+                False,
+            ),
+        )
+
         _DS389_ATTR_PROBE_CASES: Final[t.SequenceOf[tuple[str, str, str]]] = (
             ("nsslapd_attribute", "nsslapd-port", "389"),
             ("nsds_attribute", "nsds5ReplicaId", "1"),
             ("nsuniqueid_attribute", "nsuniqueid", "12345"),
         )
+
+        NOVELL_OBJECTCLASS_CASE_ROWS: ClassVar[
+            t.SequenceOf[t.Tests.ObjectClassCaseRow]
+        ] = (
+            (
+                "novell_oid",
+                "( 2.16.840.1.113719.2.2.6.1 NAME 'ndsPerson' SUP top STRUCTURAL )",
+                True,
+                "2.16.840.1.113719.2.2.6.1",
+                "ndsPerson",
+                "STRUCTURAL",
+            ),
+            (
+                "standard_rfc",
+                "( 2.5.6.6 NAME 'person' SUP top STRUCTURAL )",
+                False,
+                "2.5.6.6",
+                "person",
+                "STRUCTURAL",
+            ),
+        )
+
         DS389_ENTRY_TEST_CASES: ClassVar[t.SequenceOf[m.Tests.EntryTestCase]] = (
             *(
                 m.Tests.EntryTestCase(
@@ -780,6 +975,25 @@ class TestsFlextLdifConstants(
                 expected_can_handle=False,
             ),
         )
+        NOVELL_ATTRIBUTE_CASE_ROWS: ClassVar[t.SequenceOf[t.Tests.AttributeCaseRow]] = (
+            (
+                "novell_oid",
+                (
+                    "( 2.16.840.1.113719.2.2.6.1 NAME 'ndsLoginTime' SYNTAX "
+                    "1.3.6.1.4.1.1466.115.121.1.24 )"
+                ),
+                True,
+                "2.16.840.1.113719.2.2.6.1",
+                "ndsLoginTime",
+            ),
+            (
+                "standard_rfc",
+                "( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+                False,
+                "2.5.4.3",
+                "cn",
+            ),
+        )
 
         NOVELL_OBJECTCLASS_TEST_CASES: ClassVar[
             t.SequenceOf[m.Tests.ObjectClassTestCase]
@@ -802,6 +1016,23 @@ class TestsFlextLdifConstants(
                 scenario="standard_rfc",
                 oc_definition="( 2.5.6.6 NAME 'posixAccount' SUP top STRUCTURAL )",
                 expected_can_handle=False,
+            ),
+        )
+        NOVELL_ENTRY_CASE_ROWS: ClassVar[t.SequenceOf[t.Tests.EntryCaseRow]] = (
+            (
+                "novell_entry",
+                "cn=test,dc=example,dc=com",
+                {
+                    "objectClass": ["top", "ndsPerson"],
+                    "ndsLoginTime": ["20240101000000Z"],
+                },
+                True,
+            ),
+            (
+                "standard_rfc",
+                "cn=user,dc=example,dc=com",
+                {"objectClass": ["person"], "cn": ["user"]},
+                False,
             ),
         )
 

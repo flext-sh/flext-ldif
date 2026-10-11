@@ -7,7 +7,7 @@ This example demonstrates the new structured migration feature that produces
 - Jinja2 header templates
 - Unlimited line width (no line folding)
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 

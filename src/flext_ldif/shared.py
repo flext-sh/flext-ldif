@@ -3,7 +3,7 @@
 This module provides a single class of shared helpers importable by
 models and utilities without circular dependencies.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 

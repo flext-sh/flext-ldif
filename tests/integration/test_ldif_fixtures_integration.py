@@ -6,7 +6,7 @@ observable behavior: the ``r[T]`` outcome, public response models, and the
 public state of parsed ``Entry`` models -- never private attributes or
 internal collaborators.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 

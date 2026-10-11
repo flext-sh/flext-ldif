@@ -10,7 +10,7 @@ groupOfNames)
 Original: 235 lines | DRY Advanced: ~60 lines (75% reduction)
 SRP: Each method does ONE thing, composition handles complexity
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 

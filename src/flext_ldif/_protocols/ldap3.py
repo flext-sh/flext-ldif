@@ -6,7 +6,7 @@ ldap3) and ``flext-LDIF`` (which processes LDIF) share a single definition
 without a cross-dependency.  ``flext-LDAP`` extends the base contracts here
 with ldap3-specific additional members where needed.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 

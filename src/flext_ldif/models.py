@@ -4,7 +4,7 @@ Facade that groups all LDIF model classes for the ``FlextLdifModels``
 namespace.  Every nested class uses real MRO inheritance from its
 internal ``models`` definition — no ``TypeAlias`` for classes.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
