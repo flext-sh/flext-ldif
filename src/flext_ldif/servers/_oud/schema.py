@@ -341,6 +341,15 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
                 "syntax": fixed_syntax,
             },
         )
+        # The declared-name registry feeds the objectClass reference filter:
+        # OUD refuses an objectClass whose MUST/MAY names an attribute the
+        # server does not carry (invalidAttributeSyntax), and the corpus may
+        # reference OID-internal attributes OUD declines.
+        registry = self.__dict__.get("_declared_attribute_names")
+        if registry is None:
+            registry = set()
+            self._declared_attribute_names = registry
+        registry.add(fixed_name.casefold())
         return self._apply_attribute_oid_metadata(updated_attr)
 
     @override
@@ -356,17 +365,33 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
         updates: dict[str, object] = {}
         if oc_data.name and "_" in oc_data.name:
             updates["name"] = oc_data.name.replace("_", "-")
-        if oc_data.must:
-            sanitized_must = [item.replace("_", "-") for item in oc_data.must]
-            if sanitized_must != oc_data.must:
-                updates["must"] = sanitized_must
-        if oc_data.may:
-            sanitized_may = [item.replace("_", "-") for item in oc_data.may]
-            if sanitized_may != oc_data.may:
-                updates["may"] = sanitized_may
+        for role in ("must", "may"):
+            names = getattr(oc_data, role)
+            if not names:
+                continue
+            sanitized = [item.replace("_", "-") for item in names]
+            registry = self.__dict__.get("_declared_attribute_names") or set()
+            declared = [
+                item
+                for item in sanitized
+                if item.casefold() in registry
+            ]
+            if declared != names:
+                dropped = sorted(set(sanitized) - set(declared))
+                FlextLdifServersOudSchema._module_logger.warning(
+                    "Dropped objectClass attribute references the translated "
+                    "corpus does not declare",
+                    objectclass_name=oc_data.name,
+                    objectclass_oid=oc_data.oid,
+                    role=role,
+                    dropped=",".join(dropped),
+                )
+                updates[role] = declared
         if updates:
+            if "name" not in updates and oc_data.name and "_" in oc_data.name:
+                updates["name"] = oc_data.name.replace("_", "-")
             FlextLdifServersOudSchema._module_logger.warning(
-                "Sanitized objectClass name underscores for write",
+                "Sanitized objectClass for the OUD schema writer",
                 objectclass_name=oc_data.name,
                 objectclass_oid=oc_data.oid,
             )
