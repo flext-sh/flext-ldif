@@ -169,7 +169,7 @@ class FlextLdifServersOudTransformMixin:
             return entry_data
         mk = c.Ldif
         original_dn_value = u.to_str(metadata.extensions.get(mk.ORIGINAL_DN_COMPLETE))
-        dn_diff_raw: t.MutableJsonMapping = t.json_dict_adapter().validate_python(
+        dn_diff_raw: t.MutableJsonMapping = u.json_dict_adapter().validate_python(
             metadata.extensions.get(mk.MINIMAL_DIFFERENCES_DN, {}),
         )
         should_restore_dn = (
@@ -198,7 +198,7 @@ class FlextLdifServersOudTransformMixin:
             return entry_data
         original_case_map = metadata.original_attribute_case
         original_attributes: t.MutableJsonMapping = (
-            t.json_dict_adapter().validate_python(
+            u.json_dict_adapter().validate_python(
                 metadata.extensions.get(c.Ldif.ORIGINAL_ATTRIBUTES_COMPLETE, {}),
             )
         )

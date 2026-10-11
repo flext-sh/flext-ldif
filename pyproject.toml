@@ -371,7 +371,6 @@ markers = [
   "performance: performance and benchmark tests",
   "slow: slow-running tests",
   "docker: tests requiring Docker",
-  "ldap: tests using the shared LDAP test container",
   "oracle: tests requiring the shared Oracle database",
   "remote: tests requiring remote/external network services",
   "e2e: end-to-end integration tests",
@@ -381,7 +380,6 @@ markers = [
   "discovery: catalog and stream discovery tests",
   "singer: Singer protocol contract tests",
   "requires_engine: native check engine required by this test",
-  "ldap: tests requiring LDAP server",
 ]
 minversion = "8.0"
 python_classes = ["Test*"]
@@ -496,9 +494,12 @@ runtime-evaluated-base-classes = [
   "flext_ldif.FlextLdifWriter",
   "flext_ldif._models.FlextLdifModelsBases.AclElement",
   "flext_ldif._models.FlextLdifModelsBases.SchemaElement",
+  "flext_ldif._models.FlextLdifModelsDomainEntryChangeOperationValue",
+  "flext_ldif._models.FlextLdifModelsDomainEntryControl",
+  "flext_ldif._models.FlextLdifModelsDomainEntryStatistics",
   "flext_ldif._models.FlextLdifModelsSettings",
+  "flext_ldif._models.FlextLdifNamespace",
   "flext_ldif._models.results.Response",
-  "flext_ldif.m.BaseModel",
   "flext_ldif.s",
   "flext_ldif.servers._base.FlextLdifServersBaseEntry",
   "flext_ldif.servers._base.FlextLdifServersBaseSchema",

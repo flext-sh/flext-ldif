@@ -15,8 +15,10 @@ from flext_core import install_lazy_exports
 if TYPE_CHECKING:
     from flext_ldif._constants.acl_convert import FlextLdifConstantsAclConvert
     from flext_ldif._constants.acl_convert_oud import FlextLdifConstantsAclConvertOud
-    from flext_ldif._constants.base import FlextLdifConstantsBase
-    from flext_ldif._constants.enums import FlextLdifConstantsEnums
+    from flext_ldif._constants.base import (
+        FlextLdifConstantsBase,
+        FlextLdifConstantsEnums,
+    )
     from flext_ldif._constants.servers import (
         FlextLdifConstantsServers,
         FlextLdifConstantsServersBase,
@@ -47,7 +49,7 @@ install_lazy_exports(
         "FlextLdifConstantsAclConvert": ".acl_convert",
         "FlextLdifConstantsAclConvertOud": ".acl_convert_oud",
         "FlextLdifConstantsBase": ".base",
-        "FlextLdifConstantsEnums": ".enums",
+        "FlextLdifConstantsEnums": ".base",
         "FlextLdifConstantsServers": ".servers",
         "FlextLdifConstantsServersBase": ".servers",
         "FlextLdifConstantsServersOid": ".servers",

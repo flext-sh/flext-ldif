@@ -76,10 +76,10 @@ class ExamplesFlextLdifServerMigration:
         """
         sample_file = source_dir / "data_00.ldif"
         detect_result = api.detect_server_type(ldif_content=sample_file.read_text())
-        detection_data: t.JsonMapping = t.json_mapping_adapter().validate_python({})
+        detection_data: t.JsonMapping = u.json_mapping_adapter().validate_python({})
         if detect_result.success:
             detection = detect_result.unwrap()
-            detection_data = t.json_mapping_adapter().validate_python({
+            detection_data = u.json_mapping_adapter().validate_python({
                 "detected_server": detection.detected_server_type,
                 "detection_confidence": detection.confidence,
             })
@@ -158,7 +158,7 @@ class ExamplesFlextLdifServerMigration:
                 f"Migration to RFC failed: {migration_result.error}",
             )
         return r[t.JsonMapping].ok(
-            t.json_mapping_adapter().validate_python({
+            u.json_mapping_adapter().validate_python({
                 "detected_server": detected_server,
                 "confidence": detection.confidence,
                 "patterns_found": detection.patterns_found,
@@ -202,7 +202,7 @@ class ExamplesFlextLdifServerMigration:
             if parse_result.success:
                 parse_response = parse_result.unwrap()
                 entries = parse_response.entries
-                server_result = t.json_mapping_adapter().validate_python({
+                server_result = u.json_mapping_adapter().validate_python({
                     "parsed_successfully": True,
                     "entry_count": len(entries),
                     "server_type": server,
@@ -211,7 +211,7 @@ class ExamplesFlextLdifServerMigration:
                     validate_result = api.validate_entries(entries)
                     if validate_result.success:
                         report = validate_result.unwrap()
-                        server_result = t.json_mapping_adapter().validate_python({
+                        server_result = u.json_mapping_adapter().validate_python({
                             **server_result,
                             "validation_is_valid": report.valid,
                             "validation_valid_entries": report.valid_entries,
@@ -220,7 +220,7 @@ class ExamplesFlextLdifServerMigration:
                         })
                 comparison_results[server] = server_result
             else:
-                comparison_results[server] = t.json_mapping_adapter().validate_python({
+                comparison_results[server] = u.json_mapping_adapter().validate_python({
                     "parsed_successfully": False,
                     "error": parse_result.error,
                     "server_type": server,
@@ -232,7 +232,7 @@ class ExamplesFlextLdifServerMigration:
         )
         total_servers = len(servers)
         return r[t.JsonMapping].ok(
-            t.json_mapping_adapter().validate_python({
+            u.json_mapping_adapter().validate_python({
                 "servers_tested": total_servers,
                 "successful_parses": successful_parses,
                 "success_rate": successful_parses / total_servers
@@ -286,7 +286,7 @@ class ExamplesFlextLdifServerMigration:
         final_stats = final_result.stats
         final_count = final_stats.processed_entries
         return r[t.JsonMapping].ok(
-            t.json_mapping_adapter().validate_python({
+            u.json_mapping_adapter().validate_python({
                 **detection_data,
                 "intermediate_migration": "success",
                 "final_migration": "success",

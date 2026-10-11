@@ -42,20 +42,24 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
             cls,
             server: str,
         ) -> t.VariadicTuple[m.Tests.AttributeTestCase]:
-            """Construct the selected dialect's attribute cases from constant rows.
+            """Copy the selected dialect's canonical attribute cases.
 
             Args:
                 server: The server dialect to construct attribute test cases for.
 
             Returns:
-                A tuple of constructed attribute test cases.
+                A tuple of independent attribute test cases.
             """
-            return cls.attribute_test_cases(
-                tuple(
-                    (scenario, definition, can_handle, oid, name)
-                    for dialect, scenario, definition, can_handle, oid, name in c.ATTRIBUTE_CASE_ROWS
-                    if dialect == server
-                )
+            cases = {
+                c.Tests.APACHE: c.Tests.APACHE_ATTRIBUTE_TEST_CASES,
+                c.Tests.DS389: c.Tests.DS389_ATTRIBUTE_TEST_CASES,
+                c.Tests.NOVELL: c.Tests.NOVELL_ATTRIBUTE_TEST_CASES,
+            }
+            return tuple(
+                case.model_copy(deep=True)
+                for dialect, dialect_cases in cases.items()
+                if dialect == server
+                for case in dialect_cases
             )
 
         @staticmethod
@@ -88,7 +92,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
             """Construct objectClass cases from immutable declaration data.
 
             Args:
-                rows: The sequence of objectClass case rows to construct test cases from.
+                rows: The sequence of objectClass case rows used to construct cases.
 
             Returns:
                 A tuple of constructed objectClass test cases.

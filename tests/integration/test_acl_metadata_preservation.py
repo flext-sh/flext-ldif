@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from flext_ldif import ldif
-from tests import c, t, tm
+from tests import c, t, tm, u
 
 if TYPE_CHECKING:
     from tests import m, p
@@ -47,7 +47,7 @@ class TestsFlextLdifAclMetadataPreservation:
         assert metadata is not None
         extensions = metadata.extensions
         assert extensions is not None
-        extensions_dump: t.JsonMapping = t.json_mapping_adapter().validate_python(
+        extensions_dump: t.JsonMapping = u.json_mapping_adapter().validate_python(
             dict(extensions),
         )
         return extensions_dump
