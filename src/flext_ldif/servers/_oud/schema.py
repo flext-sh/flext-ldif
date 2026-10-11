@@ -161,6 +161,18 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
         """
         if not attr or not attr.oid:
             return r[m.Ldif.SchemaAttribute].ok(attr)
+        if "_" in attr.name:
+            # OUD's schema parser refuses RFC-illegal attribute names
+            # (invalidAttributeSyntax): the underscore maps to the hyphen,
+            # the LDAP-standard letter joiner.
+            sanitized_name = attr.name.replace("_", "-")
+            FlextLdifServersOudSchema._module_logger.warning(
+                "Sanitized attribute name underscores",
+                attribute_name=attr.name,
+                attribute_oid=attr.oid,
+                sanitized_name=sanitized_name,
+            )
+            attr = attr.model_copy(update={"name": sanitized_name})
         normalized_equality, normalized_substr = u.Ldif.normalize_matching_rules(
             attr.equality,
             attr.substr,
@@ -222,6 +234,27 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
         Returns:
             The resulting ``p.Result[m.Ldif.SchemaObjectClass]``.
         """
+        sanitized_oc = oc
+        updates: dict[str, t.Ldif.Scalar | list[str]] = {}
+        if oc.name and "_" in oc.name:
+            updates["name"] = oc.name.replace("_", "-")
+        if oc.must:
+            sanitized_must = [item.replace("_", "-") for item in oc.must]
+            if sanitized_must != oc.must:
+                updates["must"] = sanitized_must
+        if oc.may:
+            sanitized_may = [item.replace("_", "-") for item in oc.may]
+            if sanitized_may != oc.may:
+                updates["may"] = sanitized_may
+        if updates:
+            FlextLdifServersOudSchema._module_logger.warning(
+                "Sanitized objectClass name underscores",
+                objectclass_name=oc.name,
+                objectclass_oid=oc.oid,
+                sanitized_name=updates.get("name", oc.name),
+            )
+            sanitized_oc = oc.model_copy(update=updates)
+            oc = sanitized_oc
         sup_validation = self._validate_objectclass_sup(oc)
         if sup_validation.failure:
             return r[m.Ldif.SchemaObjectClass].from_failure(sup_validation)
