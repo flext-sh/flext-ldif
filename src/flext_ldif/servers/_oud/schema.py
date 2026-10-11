@@ -283,6 +283,8 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
         """
         fixed_equality, fixed_substr = self._transform_by_matching_rules(attr_data)
         fixed_name = attr_data.name
+        if "_" in fixed_name:
+            fixed_name = fixed_name.replace("_", "-")
         if ";" in fixed_name:
             # OUD's schema parser refuses LDAP transfer options inside an
             # attribute type name (invalidAttributeSyntax): the base type is
@@ -340,6 +342,35 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
             },
         )
         return self._apply_attribute_oid_metadata(updated_attr)
+
+    @override
+    def _transform_objectclass_for_write(
+        self,
+        oc_data: m.Ldif.SchemaObjectClass,
+    ) -> m.Ldif.SchemaObjectClass:
+        """Apply OUD-specific objectClass transformations before writing.
+
+        Returns:
+            The resulting ``m.Ldif.SchemaObjectClass``.
+        """
+        updates: dict[str, object] = {}
+        if oc_data.name and "_" in oc_data.name:
+            updates["name"] = oc_data.name.replace("_", "-")
+        if oc_data.must:
+            sanitized_must = [item.replace("_", "-") for item in oc_data.must]
+            if sanitized_must != oc_data.must:
+                updates["must"] = sanitized_must
+        if oc_data.may:
+            sanitized_may = [item.replace("_", "-") for item in oc_data.may]
+            if sanitized_may != oc_data.may:
+                updates["may"] = sanitized_may
+        if updates:
+            FlextLdifServersOudSchema._module_logger.warning(
+                "Sanitized objectClass name underscores for write",
+                objectclass_name=oc_data.name,
+                objectclass_oid=oc_data.oid,
+            )
+        return oc_data.model_copy(update=updates) if updates else oc_data
 
     @staticmethod
     def _validate_attribute_oid(oid: str) -> p.Result[bool]:
