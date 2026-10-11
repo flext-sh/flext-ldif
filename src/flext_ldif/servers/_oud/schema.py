@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import re
 from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
@@ -20,6 +21,122 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
     """Oracle OUD Schema Implementation (RFC 4512 + OUD Extensions)."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
+
+    @override
+    def write(
+        self,
+        entries: t.MutableSequenceOf[m.Ldif.Entry],
+        write_options: m.Ldif.WriteFormatOptions | None = None,
+    ) -> p.Result[str]:
+        """Write entries, sanitizing schema values for OUD acceptance.
+
+        Returns:
+            The resulting ``p.Result[str]``.
+        """
+        return super().write(
+            self._sanitize_schema_carriers(list(entries)),
+            write_options,
+        )
+
+    def _sanitize_schema_carriers(
+        self,
+        entries: t.MutableSequenceOf[m.Ldif.Entry],
+    ) -> t.MutableSequenceOf[m.Ldif.Entry]:
+        """Rewrite schema carrier values into the OUD-acceptable dialect.
+
+        OUD's schema parser refuses LDAP transfer options inside names,
+        RFC-illegal underscores, syntax length qualifiers and NO-USER-
+        MODIFICATION without an operational usage; it also refuses
+        objectClass definitions referencing attributes the corpus does not
+        declare. Every rewrite is deterministic string surgery.
+
+        Returns:
+            The resulting ``t.MutableSequenceOf[m.Ldif.Entry]``.
+        """
+        sanitized: t.MutableSequenceOf[m.Ldif.Entry] = []
+        declared: set[str] = set()
+        prepass: list[tuple[m.Ldif.Entry, list[m.Ldif.ChangeOperation]]] = []
+        for entry in entries:
+            ops = []
+            for op in entry.change_operations:
+                if op.attribute in {"attributetypes", "objectclasses"}:
+                    ops.append(
+                        op.model_copy(
+                            update={
+                                "values": self._strip_names_for_registry(
+                                    op.values,
+                                ),
+                            },
+                        ),
+                    )
+                    declared.update(self._declared_names(op.values))
+                else:
+                    ops.append(op)
+            prepass.append((entry, ops))
+        sanitized_entries: list[m.Ldif.Entry] = []
+        for entry, ops in prepass:
+            new_ops = []
+            for op in ops:
+                if op.attribute in {"attributetypes", "objectclasses"}:
+                    new_ops.append(
+                        op.model_copy(
+                            update={
+                                "values": self._sanitize_schema_values(
+                                    op.values,
+                                ),
+                            },
+                        ),
+                    )
+                else:
+                    new_ops.append(op)
+            sanitized_entries.append(
+                entry.model_copy(update={"change_operations": new_ops}),
+            )
+        sanitized.extend(sanitized_entries)
+        return sanitized
+
+    @staticmethod
+    def _declared_names(
+        values: t.MutableSequenceOf[m.Ldif.ChangeOperationValue],
+    ) -> set[str]:
+        declared = set()
+        for v in values:
+            matched = re.search(r"NAME '([^';]+)'", v.value)
+            if matched:
+                declared.add(matched.group(1).replace("_", "-").casefold())
+        return declared
+
+    @staticmethod
+    def _sanitize_schema_values(
+        values: t.MutableSequenceOf[m.Ldif.ChangeOperationValue],
+    ) -> t.MutableSequenceOf[m.Ldif.ChangeOperationValue]:
+        sanitized: list[m.Ldif.ChangeOperationValue] = []
+        for value in values:
+            raw = value.value
+            updated = raw
+            if re.search(r"NAME '[^']*;[^']*'", updated):
+                updated = re.sub(
+                    r"(NAME '[^';]+);[^']*",
+                    r"\1",
+                    updated,
+                )
+            if "_" in updated:
+                updated = updated.replace("_", "-")
+            updated = re.sub(
+                r"(SYNTAX [\w.]+)\{\d+\}",
+                r"\1",
+                updated,
+            )
+            if (
+                "NO-USER-MODIFICATION" in updated
+                and "USAGE" not in updated
+            ):
+                updated = updated.replace(
+                    "NO-USER-MODIFICATION",
+                    "USAGE directoryOperation NO-USER-MODIFICATION",
+                )
+            sanitized.append(value.model_copy(update={"value": updated}))
+        return sanitized
 
     def __init__(
         self,
@@ -161,6 +278,18 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
         """
         if not attr or not attr.oid:
             return r[m.Ldif.SchemaAttribute].ok(attr)
+        if "_" in attr.name:
+            # OUD's schema parser refuses RFC-illegal attribute names
+            # (invalidAttributeSyntax): the underscore maps to the hyphen,
+            # the LDAP-standard letter joiner.
+            sanitized_name = attr.name.replace("_", "-")
+            FlextLdifServersOudSchema._module_logger.warning(
+                "Sanitized attribute name underscores",
+                attribute_name=attr.name,
+                attribute_oid=attr.oid,
+                sanitized_name=sanitized_name,
+            )
+            attr = attr.model_copy(update={"name": sanitized_name})
         normalized_equality, normalized_substr = u.Ldif.normalize_matching_rules(
             attr.equality,
             attr.substr,
@@ -222,6 +351,27 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
         Returns:
             The resulting ``p.Result[m.Ldif.SchemaObjectClass]``.
         """
+        sanitized_oc = oc
+        updates: dict[str, t.Ldif.Scalar | list[str]] = {}
+        if oc.name and "_" in oc.name:
+            updates["name"] = oc.name.replace("_", "-")
+        if oc.must:
+            sanitized_must = [item.replace("_", "-") for item in oc.must]
+            if sanitized_must != oc.must:
+                updates["must"] = sanitized_must
+        if oc.may:
+            sanitized_may = [item.replace("_", "-") for item in oc.may]
+            if sanitized_may != oc.may:
+                updates["may"] = sanitized_may
+        if updates:
+            FlextLdifServersOudSchema._module_logger.warning(
+                "Sanitized objectClass name underscores",
+                objectclass_name=oc.name,
+                objectclass_oid=oc.oid,
+                sanitized_name=updates.get("name", oc.name),
+            )
+            sanitized_oc = oc.model_copy(update=updates)
+            oc = sanitized_oc
         sup_validation = self._validate_objectclass_sup(oc)
         if sup_validation.failure:
             return r[m.Ldif.SchemaObjectClass].from_failure(sup_validation)
@@ -250,6 +400,8 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
         """
         fixed_equality, fixed_substr = self._transform_by_matching_rules(attr_data)
         fixed_name = attr_data.name
+        if "_" in fixed_name:
+            fixed_name = fixed_name.replace("_", "-")
         if ";" in fixed_name:
             # OUD's schema parser refuses LDAP transfer options inside an
             # attribute type name (invalidAttributeSyntax): the base type is
@@ -306,7 +458,61 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
                 "syntax": fixed_syntax,
             },
         )
+        # The declared-name registry feeds the objectClass reference filter:
+        # OUD refuses an objectClass whose MUST/MAY names an attribute the
+        # server does not carry (invalidAttributeSyntax), and the corpus may
+        # reference OID-internal attributes OUD declines.
+        registry = self.__dict__.get("_declared_attribute_names")
+        if registry is None:
+            registry = set()
+            self._declared_attribute_names = registry
+        registry.add(fixed_name.casefold())
         return self._apply_attribute_oid_metadata(updated_attr)
+
+    @override
+    def _transform_objectclass_for_write(
+        self,
+        oc_data: m.Ldif.SchemaObjectClass,
+    ) -> m.Ldif.SchemaObjectClass:
+        """Apply OUD-specific objectClass transformations before writing.
+
+        Returns:
+            The resulting ``m.Ldif.SchemaObjectClass``.
+        """
+        updates: dict[str, object] = {}
+        if oc_data.name and "_" in oc_data.name:
+            updates["name"] = oc_data.name.replace("_", "-")
+        for role in ("must", "may"):
+            names = getattr(oc_data, role)
+            if not names:
+                continue
+            sanitized = [item.replace("_", "-") for item in names]
+            registry = self.__dict__.get("_declared_attribute_names") or set()
+            declared = [
+                item
+                for item in sanitized
+                if item.casefold() in registry
+            ]
+            if declared != names:
+                dropped = sorted(set(sanitized) - set(declared))
+                FlextLdifServersOudSchema._module_logger.warning(
+                    "Dropped objectClass attribute references the translated "
+                    "corpus does not declare",
+                    objectclass_name=oc_data.name,
+                    objectclass_oid=oc_data.oid,
+                    role=role,
+                    dropped=",".join(dropped),
+                )
+                updates[role] = declared
+        if updates:
+            if "name" not in updates and oc_data.name and "_" in oc_data.name:
+                updates["name"] = oc_data.name.replace("_", "-")
+            FlextLdifServersOudSchema._module_logger.warning(
+                "Sanitized objectClass for the OUD schema writer",
+                objectclass_name=oc_data.name,
+                objectclass_oid=oc_data.oid,
+            )
+        return oc_data.model_copy(update=updates) if updates else oc_data
 
     @staticmethod
     def _validate_attribute_oid(oid: str) -> p.Result[bool]:
