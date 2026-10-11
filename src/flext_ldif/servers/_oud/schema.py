@@ -273,11 +273,37 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
                 attribute_name=fixed_name,
                 attribute_oid=attr_data.oid,
             )
+        fixed_usage = attr_data.usage
+        fixed_no_user_mod = attr_data.no_user_modification
+        if fixed_no_user_mod and not fixed_usage:
+            # OUD refuses NO-USER-MODIFICATION without an explicit operational
+            # usage (invalidAttributeSyntax): directoryOperation is the RFC
+            # 4512-mandated pairing.
+            fixed_usage = "directoryOperation"
+            FlextLdifServersOudSchema._module_logger.warning(
+                "Added operational usage for no-user-modification attribute",
+                attribute_name=fixed_name,
+                attribute_oid=attr_data.oid,
+            )
+        fixed_syntax = attr_data.syntax
+        if fixed_syntax and "{" in fixed_syntax:
+            # OUD's schema modify parser rejects syntax length qualifiers
+            # (invalidAttributeSyntax): the bare syntax OID is declared and
+            # the length guidance is dropped.
+            fixed_syntax = fixed_syntax.split("{", 1)[0]
+            FlextLdifServersOudSchema._module_logger.warning(
+                "Stripped syntax length qualifier",
+                attribute_name=fixed_name,
+                attribute_oid=attr_data.oid,
+                stripped_syntax=fixed_syntax,
+            )
         updated_attr = attr_data.model_copy(
             update={
                 "name": fixed_name,
                 "equality": fixed_equality,
                 "substr": fixed_substr,
+                "usage": fixed_usage,
+                "syntax": fixed_syntax,
             },
         )
         return self._apply_attribute_oid_metadata(updated_attr)
