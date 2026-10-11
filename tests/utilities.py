@@ -15,7 +15,7 @@ from typing import ClassVar
 from flext_tests import FlextTestsUtilities
 
 from flext_ldif import FlextLdifUtilities
-from tests import p
+from tests import c, m, p, t
 from tests._utilities_entries import TestsLdifEntryBuildersMixin
 from tests._utilities_ldap import TestsLdapClientMixin
 from tests._utilities_schema import (
@@ -42,7 +42,14 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
             cls,
             server: str,
         ) -> t.VariadicTuple[m.Tests.AttributeTestCase]:
-            """Construct the selected dialect's attribute cases from constant rows."""
+            """Construct the selected dialect's attribute cases from constant rows.
+
+            Args:
+                server: The server dialect to construct attribute test cases for.
+
+            Returns:
+                A tuple of constructed attribute test cases.
+            """
             return cls.attribute_test_cases(
                 tuple(
                     (scenario, definition, can_handle, oid, name)
@@ -55,7 +62,14 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
         def attribute_test_cases(
             rows: t.SequenceOf[t.Tests.AttributeCaseRow],
         ) -> t.VariadicTuple[m.Tests.AttributeTestCase]:
-            """Construct attribute cases from immutable declaration data."""
+            """Construct attribute cases from immutable declaration data.
+
+            Args:
+                rows: The sequence of attribute case rows to construct test cases from.
+
+            Returns:
+                A tuple of constructed attribute test cases.
+            """
             return tuple(
                 m.Tests.AttributeTestCase(
                     scenario=scenario,
@@ -71,7 +85,14 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
         def objectclass_test_cases(
             rows: t.SequenceOf[t.Tests.ObjectClassCaseRow],
         ) -> t.VariadicTuple[m.Tests.ObjectClassTestCase]:
-            """Construct objectClass cases from immutable declaration data."""
+            """Construct objectClass cases from immutable declaration data.
+
+            Args:
+                rows: The sequence of objectClass case rows to construct test cases from.
+
+            Returns:
+                A tuple of constructed objectClass test cases.
+            """
             return tuple(
                 m.Tests.ObjectClassTestCase(
                     scenario=scenario,
@@ -88,7 +109,14 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
         def entry_test_cases(
             rows: t.SequenceOf[t.Tests.EntryCaseRow],
         ) -> t.VariadicTuple[m.Tests.EntryTestCase]:
-            """Construct entry cases with fresh mutable protocol attributes."""
+            """Construct entry cases with fresh mutable protocol attributes.
+
+            Args:
+                rows: The sequence of entry case rows to construct test cases from.
+
+            Returns:
+                A tuple of constructed entry test cases.
+            """
             return tuple(
                 m.Tests.EntryTestCase(
                     scenario=scenario,

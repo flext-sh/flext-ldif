@@ -36,9 +36,21 @@ if TYPE_CHECKING:
     )
 
 
+from flext_ldif._utilities._entry_analysis import FlextLdifEntryAnalysis
+from flext_ldif._utilities._entry_attr_validation import (
+    FlextLdifEntryAttributeValidation,
+)
+from flext_ldif._utilities._entry_server_rules import FlextLdifEntryServerRules
+from flext_ldif._utilities._entry_validation import FlextLdifEntryValidation
+
+
 class FlextLdifUtilities(
     FlextCliUtilities,
     FlextLdifUtilitiesCollectionLdif,
+    FlextLdifEntryServerRules,
+    FlextLdifEntryAnalysis,
+    FlextLdifEntryAttributeValidation,
+    FlextLdifEntryValidation,
     metaclass=FlextLdifUtilitiesLazyMeta,
 ):
     """Centralized helpers with domain collection behavior under ``Ldif``.
