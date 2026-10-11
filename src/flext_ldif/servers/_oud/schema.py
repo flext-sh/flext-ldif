@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import re
 from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
@@ -20,6 +21,122 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
     """Oracle OUD Schema Implementation (RFC 4512 + OUD Extensions)."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
+
+    @override
+    def write(
+        self,
+        entries: t.MutableSequenceOf[m.Ldif.Entry],
+        write_options: m.Ldif.WriteFormatOptions | None = None,
+    ) -> p.Result[str]:
+        """Write entries, sanitizing schema values for OUD acceptance.
+
+        Returns:
+            The resulting ``p.Result[str]``.
+        """
+        return super().write(
+            self._sanitize_schema_carriers(list(entries)),
+            write_options,
+        )
+
+    def _sanitize_schema_carriers(
+        self,
+        entries: t.MutableSequenceOf[m.Ldif.Entry],
+    ) -> t.MutableSequenceOf[m.Ldif.Entry]:
+        """Rewrite schema carrier values into the OUD-acceptable dialect.
+
+        OUD's schema parser refuses LDAP transfer options inside names,
+        RFC-illegal underscores, syntax length qualifiers and NO-USER-
+        MODIFICATION without an operational usage; it also refuses
+        objectClass definitions referencing attributes the corpus does not
+        declare. Every rewrite is deterministic string surgery.
+
+        Returns:
+            The resulting ``t.MutableSequenceOf[m.Ldif.Entry]``.
+        """
+        sanitized: t.MutableSequenceOf[m.Ldif.Entry] = []
+        declared: set[str] = set()
+        prepass: list[tuple[m.Ldif.Entry, list[m.Ldif.ChangeOperation]]] = []
+        for entry in entries:
+            ops = []
+            for op in entry.change_operations:
+                if op.attribute in {"attributetypes", "objectclasses"}:
+                    ops.append(
+                        op.model_copy(
+                            update={
+                                "values": self._strip_names_for_registry(
+                                    op.values,
+                                ),
+                            },
+                        ),
+                    )
+                    declared.update(self._declared_names(op.values))
+                else:
+                    ops.append(op)
+            prepass.append((entry, ops))
+        sanitized_entries: list[m.Ldif.Entry] = []
+        for entry, ops in prepass:
+            new_ops = []
+            for op in ops:
+                if op.attribute in {"attributetypes", "objectclasses"}:
+                    new_ops.append(
+                        op.model_copy(
+                            update={
+                                "values": self._sanitize_schema_values(
+                                    op.values,
+                                ),
+                            },
+                        ),
+                    )
+                else:
+                    new_ops.append(op)
+            sanitized_entries.append(
+                entry.model_copy(update={"change_operations": new_ops}),
+            )
+        sanitized.extend(sanitized_entries)
+        return sanitized
+
+    @staticmethod
+    def _declared_names(
+        values: t.MutableSequenceOf[m.Ldif.ChangeOperationValue],
+    ) -> set[str]:
+        declared = set()
+        for v in values:
+            matched = re.search(r"NAME '([^';]+)'", v.value)
+            if matched:
+                declared.add(matched.group(1).replace("_", "-").casefold())
+        return declared
+
+    @staticmethod
+    def _sanitize_schema_values(
+        values: t.MutableSequenceOf[m.Ldif.ChangeOperationValue],
+    ) -> t.MutableSequenceOf[m.Ldif.ChangeOperationValue]:
+        sanitized: list[m.Ldif.ChangeOperationValue] = []
+        for value in values:
+            raw = value.value
+            updated = raw
+            if re.search(r"NAME '[^']*;[^']*'", updated):
+                updated = re.sub(
+                    r"(NAME '[^';]+);[^']*",
+                    r"\1",
+                    updated,
+                )
+            if "_" in updated:
+                updated = updated.replace("_", "-")
+            updated = re.sub(
+                r"(SYNTAX [\w.]+)\{\d+\}",
+                r"\1",
+                updated,
+            )
+            if (
+                "NO-USER-MODIFICATION" in updated
+                and "USAGE" not in updated
+            ):
+                updated = updated.replace(
+                    "NO-USER-MODIFICATION",
+                    "USAGE directoryOperation NO-USER-MODIFICATION",
+                )
+            sanitized.append(value.model_copy(update={"value": updated}))
+        return sanitized
 
     def __init__(
         self,
