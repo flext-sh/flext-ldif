@@ -104,7 +104,9 @@ class TestsFlextLdifDs389Servers:
     # objectClass detection + parsing + writing
     # ------------------------------------------------------------------
 
-    @pytest.mark.parametrize("test_case", u.Tests.objectclass_test_cases(c.Tests.DS389_OBJECTCLASS_CASE_ROWS))
+    @pytest.mark.parametrize(
+        "test_case", u.Tests.objectclass_test_cases(c.Tests.DS389_OBJECTCLASS_CASE_ROWS)
+    )
     def test_can_handle_objectclass_matches_expected(
         self,
         test_case: m.Tests.ObjectClassTestCase,
@@ -196,7 +198,9 @@ class TestsFlextLdifDs389Servers:
     # ------------------------------------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize("test_case", u.Tests.entry_test_cases(c.Tests.DS389_ENTRY_CASE_ROWS))
+    @pytest.mark.parametrize(
+        "test_case", u.Tests.entry_test_cases(c.Tests.DS389_ENTRY_CASE_ROWS)
+    )
     def test_entry_can_handle_matches_expected(
         test_case: m.Tests.EntryTestCase,
     ) -> None:
