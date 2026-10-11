@@ -449,6 +449,14 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
                 attribute_oid=attr_data.oid,
                 stripped_syntax=fixed_syntax,
             )
+        if (
+            fixed_name == attr_data.name
+            and fixed_equality == attr_data.equality
+            and fixed_substr == attr_data.substr
+            and fixed_usage == attr_data.usage
+            and fixed_syntax == attr_data.syntax
+        ):
+            return self._apply_attribute_oid_metadata(attr_data)
         updated_attr = attr_data.model_copy(
             update={
                 "name": fixed_name,
