@@ -66,7 +66,7 @@ class FlextLdifParserMetadataBuilders:
         if not isinstance(result, Mapping):
             return FlextLdifParserMetadataBuilders._strict_str_list_view(metadata)
         extensions_metadata: t.MutableJsonMapping = (
-            t.json_dict_adapter().validate_python({
+            u.json_dict_adapter().validate_python({
                 key: u.normalize_to_metadata(value) for key, value in result.items()
             })
         )

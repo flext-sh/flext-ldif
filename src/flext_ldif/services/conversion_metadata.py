@@ -26,7 +26,7 @@ class FlextLdifConversionMetadataMixin(s[m.Ldif.Response]):
                 t.Ldif.MutableMetadataInputMapping]``.
         """
         if bool(original_attribute_case):
-            payload: t.JsonMapping = t.json_mapping_adapter().validate_python({
+            payload: t.JsonMapping = u.json_mapping_adapter().validate_python({
                 "source_case": original_attribute_case,
                 "target_server": target_server_type,
                 "action": "apply_target_conventions",
@@ -80,7 +80,7 @@ class FlextLdifConversionMetadataMixin(s[m.Ldif.Response]):
             spacing = original_format_details.get("dn_spacing")
         if spacing is None:
             return {}
-        payload: t.JsonMapping = t.json_mapping_adapter().validate_python({
+        payload: t.JsonMapping = u.json_mapping_adapter().validate_python({
             "source_dn": spacing,
             "target_server": target_server_type,
             "action": "normalize_for_target",
@@ -108,9 +108,9 @@ class FlextLdifConversionMetadataMixin(s[m.Ldif.Response]):
             boolean_conversions = source_metadata.boolean_conversions
             attr_case_val = source_metadata.original_attribute_case
             format_val: t.JsonMapping = (
-                t.json_mapping_adapter().validate_python({})
+                u.json_mapping_adapter().validate_python({})
                 if source_metadata.original_format_details is None
-                else t.json_mapping_adapter().validate_python(
+                else u.json_mapping_adapter().validate_python(
                     source_metadata.original_format_details.model_dump(
                         mode="json",
                         exclude_none=True,

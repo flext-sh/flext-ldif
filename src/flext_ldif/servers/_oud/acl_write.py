@@ -63,7 +63,7 @@ class FlextLdifServersOudAclWriteMixin(FlextLdifServersOudAclSubjectMixin):
         permissions_value: t.JsonPayload | None = target_perms_dict_raw
         if not isinstance(permissions_value, Mapping):
             return None
-        target_perms_dict = t.json_mapping_adapter().validate_python(permissions_value)
+        target_perms_dict = u.json_mapping_adapter().validate_python(permissions_value)
         perms_data = self._permission_dict_from_extensions(target_perms_dict)
         if not perms_data:
             return None

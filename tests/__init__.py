@@ -62,10 +62,10 @@ install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
-        "TestsFlextLdifSchemaExpectations": ".utilities",
         "TestsFlextLdifConstants": ".constants",
         "TestsFlextLdifModels": ".models",
         "TestsFlextLdifProtocols": ".protocols",
+        "TestsFlextLdifSchemaExpectations": ".utilities",
         "TestsFlextLdifServiceBase": ".base",
         "TestsFlextLdifSettings": ".settings",
         "TestsFlextLdifTypes": ".typings",

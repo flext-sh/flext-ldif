@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from examples import m, p, r, t
+from examples import m, p, r, t, u
 from examples.schema_building import create_entry_or_none, intelligent_schema_building
 from flext_ldif import ldif
 
@@ -127,7 +127,7 @@ class ExamplesFlextLdifSchemaPipeline:
         entries_file = output_dir / "entries.ldif"
         entries_write = api.write_ldif_file(test_entries, entries_file)
         return r[t.JsonMapping].ok(
-            t.json_mapping_adapter().validate_python({
+            u.json_mapping_adapter().validate_python({
                 "schema_entries": len(schema_entries),
                 "schema_valid": schema_valid_entries,
                 "test_entries": len(test_entries),

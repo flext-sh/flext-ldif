@@ -12,17 +12,16 @@ from typing import cast
 class FlextLdifUtilitiesLazyMeta(type):
     """Assemble ``Ldif`` on first class-level access."""
 
-    def __getattr__(cls, name: str) -> type:
+    def __getattr__(cls, name: str) -> object:
         """Assemble and return the ``Ldif`` tree on first class-level access.
 
-        Returns:
-            The resulting ``type``.
+        For all other attributes, delegate to the normal MRO to allow access
+        to inherited classmethods (e.g., TypeAdapter factories from flext-core).
 
-        Raises:
-            AttributeError: If type object.
+        Returns:
+            The resulting ``type`` for ``Ldif``, or the inherited attribute.
         """
         if name == "Ldif":
             build_tree = cls.build_ldif_tree
             return cast("type", build_tree())
-        msg = f"type object {cls.__name__!r} has no attribute {name!r}"
-        raise AttributeError(msg)
+        return super().__getattr__(name)

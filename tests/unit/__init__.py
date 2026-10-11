@@ -14,14 +14,21 @@ from flext_core import install_lazy_exports
 
 if TYPE_CHECKING:
     from tests.unit import servers, services, utilities
+    from tests.unit.typings import TestsFlextLdifUnitTypings
 
 
-__all__: tuple[str, ...] = ("servers", "services", "utilities")
+__all__: tuple[str, ...] = (
+    "TestsFlextLdifUnitTypings",
+    "servers",
+    "services",
+    "utilities",
+)
 
 install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
+        "TestsFlextLdifUnitTypings": ".typings",
         "servers": ".servers",
         "services": ".services",
         "utilities": ".utilities",

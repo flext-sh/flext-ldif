@@ -86,9 +86,9 @@ class FlextLdifServersOudAclExtractMixin:
             The resulting ``t.Ldif.MutableMetadataMapping | None``.
         """
         if isinstance(commented_raw, str):
-            parsed_items = t.json_dict_adapter().validate_json(commented_raw).items()
+            parsed_items = u.json_dict_adapter().validate_json(commented_raw).items()
         elif u.matches_type(commented_raw, dict):
-            parsed_items = t.json_dict_adapter().validate_python(commented_raw).items()
+            parsed_items = u.json_dict_adapter().validate_python(commented_raw).items()
         else:
             return None
         normalized: t.Ldif.MutableMetadataMapping = {}

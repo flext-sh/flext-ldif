@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from examples import m, p, r, t
+from examples import m, p, r, t, u
 from examples.schema_building import object_class_entries
 from flext_ldif import FlextLdif, ldif
 
@@ -147,7 +147,7 @@ class ExamplesFlextLdifSchemaBatches:
             ]),
         }
         return r[t.JsonMapping].ok(
-            t.json_mapping_adapter().validate_python(batch_results),
+            u.json_mapping_adapter().validate_python(batch_results),
         )
 
 

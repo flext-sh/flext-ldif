@@ -29,7 +29,7 @@ class FlextLdifServersBaseSchemaMetadataMixin:
         extensions_raw = extract_method(attr_definition)
         if not isinstance(extensions_raw, Mapping):
             return {}
-        extensions_map: t.MutableJsonMapping = t.json_dict_adapter().validate_python(
+        extensions_map: t.MutableJsonMapping = u.json_dict_adapter().validate_python(
             extensions_raw,
         )
         extracted: t.Ldif.SchemaExtensionsMapping = {}

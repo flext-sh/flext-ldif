@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from examples import m, p, r, t
+from examples import m, p, r, t, u
 from flext_ldif import ldif
 
 
@@ -151,7 +151,7 @@ class ExamplesFlextLdifSchemaValidation:
         analysis["error_analysis"] = ExamplesFlextLdifSchemaValidation._error_analysis(
             validation_report.errors,
         )
-        return r[t.JsonMapping].ok(t.json_mapping_adapter().validate_python(analysis))
+        return r[t.JsonMapping].ok(u.json_mapping_adapter().validate_python(analysis))
 
 
 # Module-level rebinding of the namespace surface: the lazy package export and

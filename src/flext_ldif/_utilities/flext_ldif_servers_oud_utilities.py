@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import c, m, t
+from flext_ldif import c, m
 from flext_ldif.servers._oud import FlextLdifServersOudConstants
 
 
@@ -28,9 +28,7 @@ class FlextLdifServersOudUtilities:
             "version_acl_pattern": constants.ACL_VERSION_ACL_PATTERN,
             "targetattr_pattern": constants.ACL_TARGETATTR_PATTERN,
             "allow_deny_pattern": constants.ACL_ALLOW_DENY_PATTERN,
-            "bind_patterns": t.str_dict_adapter().validate_python(
-                constants.ACL_BIND_PATTERNS,
-            ),
+            "bind_patterns": constants.ACL_BIND_PATTERNS,
             "permission_map": {},
             "special_subjects": {},
             "extra_patterns": {

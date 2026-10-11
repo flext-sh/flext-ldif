@@ -76,7 +76,9 @@ class TestsFlextLdifNovellServers:
     # ── Schema: attribute detection ─────────────────────────────────────
 
     @staticmethod
-    @pytest.mark.parametrize("test_case", c.Tests.NOVELL_ATTRIBUTE_TEST_CASES)
+    @pytest.mark.parametrize(
+        "test_case", u.Tests.server_attribute_test_cases(c.Tests.NOVELL)
+    )
     def test_can_handle_attribute_matches_expected_verdict(
         test_case: m.Tests.AttributeTestCase,
         schema_server: FlextLdifServersNovell.Schema,
@@ -142,7 +144,10 @@ class TestsFlextLdifNovellServers:
     # ── Schema: objectClass detection ───────────────────────────────────
 
     @staticmethod
-    @pytest.mark.parametrize("test_case", c.Tests.NOVELL_OBJECTCLASS_TEST_CASES)
+    @pytest.mark.parametrize(
+        "test_case",
+        u.Tests.objectclass_test_cases(c.Tests.NOVELL_OBJECTCLASS_CASE_ROWS),
+    )
     def test_can_handle_objectclass_matches_expected_verdict(
         test_case: m.Tests.ObjectClassTestCase,
         schema_server: FlextLdifServersNovell.Schema,
@@ -268,7 +273,9 @@ class TestsFlextLdifNovellServers:
     # ── Entry detection ─────────────────────────────────────────────────
 
     @staticmethod
-    @pytest.mark.parametrize("test_case", c.Tests.NOVELL_ENTRY_TEST_CASES)
+    @pytest.mark.parametrize(
+        "test_case", u.Tests.entry_test_cases(c.Tests.NOVELL_ENTRY_CASE_ROWS)
+    )
     def test_can_handle_entry_matches_expected_verdict(
         test_case: m.Tests.EntryTestCase,
         entry_server: FlextLdifServersNovell.Entry,

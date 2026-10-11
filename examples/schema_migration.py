@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from examples import m, p, r, t
+from examples import m, p, r, t, u
 from examples.schema_building import create_entry_or_none
 from flext_ldif import FlextLdif, ldif
 
@@ -167,7 +167,7 @@ class ExamplesFlextLdifSchemaMigration:
             write_result = api.write_ldif_file(migrated_entries, output_file)
             migration_results["output_written"] = write_result.success
         return r[t.JsonMapping].ok(
-            t.json_mapping_adapter().validate_python(migration_results),
+            u.json_mapping_adapter().validate_python(migration_results),
         )
 
 
