@@ -28,7 +28,6 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
         **kwargs: t.Ldif.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> None:
         """Initialize OUD schema server."""
-        self._declared_attribute_names: set[str] = set()
         self._init_base_schema(
             schema_service,
             parent_server,
@@ -346,7 +345,11 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
         # OUD refuses an objectClass whose MUST/MAY names an attribute the
         # server does not carry (invalidAttributeSyntax), and the corpus may
         # reference OID-internal attributes OUD declines.
-        self._declared_attribute_names.add(fixed_name.casefold())
+        registry = self.__dict__.get("_declared_attribute_names")
+        if registry is None:
+            registry = set()
+            self._declared_attribute_names = registry
+        registry.add(fixed_name.casefold())
         return self._apply_attribute_oid_metadata(updated_attr)
 
     @override
@@ -367,10 +370,11 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
             if not names:
                 continue
             sanitized = [item.replace("_", "-") for item in names]
+            registry = self.__dict__.get("_declared_attribute_names") or set()
             declared = [
                 item
                 for item in sanitized
-                if item.casefold() in self._declared_attribute_names
+                if item.casefold() in registry
             ]
             if declared != names:
                 dropped = sorted(set(sanitized) - set(declared))
