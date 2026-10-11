@@ -634,8 +634,7 @@ class TestsFlextLdifConstants(
             m.Tests.AttributeTestCase(
                 scenario="nsuniqueid_prefix",
                 attr_definition=(
-                    "( 1.2.3.4 NAME 'nsuniqueid' SYNTAX "
-                    "1.3.6.1.4.1.1466.115.121.1.15 )"
+                    "( 1.2.3.4 NAME 'nsuniqueid' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
                 ),
                 expected_can_handle=True,
                 expected_name="nsuniqueid",
@@ -643,8 +642,7 @@ class TestsFlextLdifConstants(
             m.Tests.AttributeTestCase(
                 scenario="standard_rfc",
                 attr_definition=(
-                    "( 2.5.4.3 NAME 'cn' "
-                    "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+                    "( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
                 ),
                 expected_can_handle=False,
             ),
@@ -777,8 +775,7 @@ class TestsFlextLdifConstants(
             m.Tests.AttributeTestCase(
                 scenario="standard_rfc",
                 attr_definition=(
-                    "( 2.5.4.3 NAME 'cn' "
-                    "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+                    "( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
                 ),
                 expected_can_handle=False,
             ),
