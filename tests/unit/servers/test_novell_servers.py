@@ -273,9 +273,7 @@ class TestsFlextLdifNovellServers:
     # ── Entry detection ─────────────────────────────────────────────────
 
     @staticmethod
-    @pytest.mark.parametrize(
-        "test_case", u.Tests.entry_test_cases(c.Tests.NOVELL_ENTRY_CASE_ROWS)
-    )
+    @pytest.mark.parametrize("test_case", u.Tests.entry_test_cases(c.Tests.NOVELL_ENTRY_CASE_ROWS))
     def test_can_handle_entry_matches_expected_verdict(
         test_case: m.Tests.EntryTestCase,
         entry_server: FlextLdifServersNovell.Entry,
