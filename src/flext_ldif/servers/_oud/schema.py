@@ -127,7 +127,10 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
                 r"\1",
                 updated,
             )
-            if "NO-USER-MODIFICATION" in updated and "USAGE" not in updated:
+            if (
+                "NO-USER-MODIFICATION" in updated
+                and "USAGE" not in updated
+            ):
                 updated = updated.replace(
                     "NO-USER-MODIFICATION",
                     "USAGE directoryOperation NO-USER-MODIFICATION",
@@ -446,6 +449,14 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
                 attribute_oid=attr_data.oid,
                 stripped_syntax=fixed_syntax,
             )
+        if (
+            fixed_name == attr_data.name
+            and fixed_equality == attr_data.equality
+            and fixed_substr == attr_data.substr
+            and fixed_usage == attr_data.usage
+            and fixed_syntax == attr_data.syntax
+        ):
+            return self._apply_attribute_oid_metadata(attr_data)
         updated_attr = attr_data.model_copy(
             update={
                 "name": fixed_name,
@@ -485,7 +496,11 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
                 continue
             sanitized = [item.replace("_", "-") for item in names]
             registry = self.__dict__.get("_declared_attribute_names") or set()
-            declared = [item for item in sanitized if item.casefold() in registry]
+            declared = [
+                item
+                for item in sanitized
+                if item.casefold() in registry
+            ]
             if declared != names:
                 dropped = sorted(set(sanitized) - set(declared))
                 FlextLdifServersOudSchema._module_logger.warning(
