@@ -10,8 +10,8 @@ from collections.abc import Mapping, MutableMapping
 from typing import ClassVar
 
 from flext_ldif import c, m, p, t, u
-from flext_ldif.servers._oid import FlextLdifServersOidConstants
-from flext_ldif.servers._rfc import FlextLdifServersRfcAcl
+from flext_ldif.servers._oid.server_constants import FlextLdifServersOidConstants
+from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
 
 
 class FlextLdifServersOidAclFormatMixin(FlextLdifServersRfcAcl):

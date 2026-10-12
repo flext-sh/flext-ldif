@@ -12,7 +12,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 from flext_ldif import c, m, t, u
-from flext_ldif.servers._oud import FlextLdifServersOudConstants
+from flext_ldif.servers._oud.server_constants import FlextLdifServersOudConstants
 
 
 class FlextLdifServersOudAclMetadataMixin:

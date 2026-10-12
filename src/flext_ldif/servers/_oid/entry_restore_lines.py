@@ -7,10 +7,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldif import m, t
-from flext_ldif.servers._oid import (
-    FlextLdifServersOidConstants,
-    FlextLdifServersOidEntryParseMixin,
-)
+from flext_ldif.servers._oid import FlextLdifServersOidEntryParseMixin
+from flext_ldif.servers._oid.server_constants import FlextLdifServersOidConstants
 from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
 
 

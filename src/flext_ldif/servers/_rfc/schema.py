@@ -9,10 +9,8 @@ from __future__ import annotations
 from typing import ClassVar, Self, cast, overload, override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._base import (
-    FlextLdifServerMethodsMixin,
-    FlextLdifServersBaseSchema,
-)
+from flext_ldif.servers._base import FlextLdifServerMethodsMixin
+from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
 from flext_ldif.servers._rfc import (
     FlextLdifServersRfcSchemaParseMixin,
     FlextLdifServersRfcSchemaValuesMixin,

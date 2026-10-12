@@ -31,7 +31,9 @@ class FlextLdifServiceBase[TDomainResult](
         # The root facade resolves its exports lazily (PEP 562), so the
         # base/server init cycle stays cut: the server module loads on the
         # first default_factory call, never at import time.
-        instance: FlextLdifServer = flext_ldif.FlextLdifServer.fetch_global_instance()
+        instance: FlextLdifServer = (
+            flext_ldif.services.FlextLdifServer.fetch_global_instance()
+        )
         return instance
 
     _server: p.Ldif.ServerRegistry = u.PrivateAttr(

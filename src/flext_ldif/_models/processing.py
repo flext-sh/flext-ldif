@@ -46,3 +46,6 @@ class FlextLdifModelsProcessing:
             int,
             u.Field(ge=1, description="Maximum thread workers for parallel mode."),
         ] = 4
+
+
+__all__: list[str] = ["FlextLdifModelsProcessing"]

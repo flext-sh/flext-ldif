@@ -11,7 +11,7 @@ from typing import override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._relaxed import FlextLdifServersRelaxedConstants
-from flext_ldif.servers._rfc import FlextLdifServersRfcSchema
+from flext_ldif.servers._rfc.schema import FlextLdifServersRfcSchema
 
 
 class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):

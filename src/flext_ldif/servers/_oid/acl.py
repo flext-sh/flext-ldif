@@ -15,7 +15,7 @@ from flext_ldif.servers._oid import (
     FlextLdifServersOidAclSubjectMixin,
     FlextLdifServersOidAclWriteMixin,
 )
-from flext_ldif.servers._rfc import FlextLdifServersRfcAcl
+from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
 
 
 class FlextLdifServersOidAcl(

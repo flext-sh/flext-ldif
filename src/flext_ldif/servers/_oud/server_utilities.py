@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif._utilities import FlextLdifServersOudUtilities
+from flext_ldif._utilities.flext_ldif_servers_oud_utilities import (
+    FlextLdifServersOudUtilities,
+)
 
 __all__: list[str] = ["FlextLdifServersOudUtilities"]

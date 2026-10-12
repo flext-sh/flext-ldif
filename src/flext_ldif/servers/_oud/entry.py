@@ -12,16 +12,16 @@ from collections.abc import Mapping
 from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._base import FlextLdifServersBaseEntry
+from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
 from flext_ldif.servers._oud import (
-    FlextLdifServersOudConstants,
     FlextLdifServersOudEntryParseMixin,
     FlextLdifServersOudHelpersMixin,
 )
+from flext_ldif.servers._oud.server_constants import FlextLdifServersOudConstants
 from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
 
 if TYPE_CHECKING:
-    from flext_ldif import FlextLdifServersBase
+    from flext_ldif.servers.base import FlextLdifServersBase
 
 
 class FlextLdifServersOudEntry(

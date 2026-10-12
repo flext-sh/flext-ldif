@@ -11,13 +11,13 @@ from typing import ClassVar, Self, cast, overload, override
 from flext_ldif import c, m, p, r, s, t, u
 from flext_ldif.servers._base import (
     FlextLdifServerMethodsMixin,
-    FlextLdifServersBaseEntry,
     FlextLdifServersBaseExecuteParamsMixin,
     FlextLdifServersBaseIoMixin,
     FlextLdifServersBaseMroMixin,
-    FlextLdifServersBaseSchema,
-    FlextLdifServersBaseSchemaAcl,
 )
+from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
+from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
+from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
 
 
 class FlextLdifServersBase(

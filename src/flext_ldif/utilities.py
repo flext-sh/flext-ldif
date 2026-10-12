@@ -83,7 +83,7 @@ from flext_ldif._utilities.validation import FlextLdifUtilitiesValidation
 from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
 
 if TYPE_CHECKING:
-    from flext_ldif._utilities import FlextLdifUtilitiesObjectClass
+    from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
 
 
 from flext_ldif._utilities._entry_analysis import FlextLdifEntryAnalysis

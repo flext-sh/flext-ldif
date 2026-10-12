@@ -10,13 +10,12 @@ import re
 from types import MappingProxyType
 from typing import ClassVar, override
 
-from flext_ldif import FlextLdifServersRfc, c, m, p, r, t, u
-from flext_ldif.servers._rfc import (
-    FlextLdifServersRfcAcl,
-    FlextLdifServersRfcConstants,
-    FlextLdifServersRfcEntry,
-    FlextLdifServersRfcSchema,
-)
+from flext_ldif import c, m, p, r, t, u
+from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
+from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
+from flext_ldif.servers._rfc.schema import FlextLdifServersRfcSchema
+from flext_ldif.servers._rfc.server_constants import FlextLdifServersRfcConstants
+from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 
 class FlextLdifServersOpenldap(FlextLdifServersRfc):

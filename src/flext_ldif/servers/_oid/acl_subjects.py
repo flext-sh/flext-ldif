@@ -12,8 +12,8 @@ from __future__ import annotations
 from typing import ClassVar
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._oid import FlextLdifServersOidConstants
-from flext_ldif.servers._rfc import FlextLdifServersRfcAcl
+from flext_ldif.servers._oid.server_constants import FlextLdifServersOidConstants
+from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
 
 
 class FlextLdifServersOidAclSubjectMixin(FlextLdifServersRfcAcl):

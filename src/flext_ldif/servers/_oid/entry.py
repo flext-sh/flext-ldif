@@ -10,16 +10,14 @@ from typing import ClassVar, override
 
 from flext_ldif import m, p, t, u
 from flext_ldif.servers._oid import (
-    FlextLdifServersOidConstants,
     FlextLdifServersOidEntryNormalizeMixin,
     FlextLdifServersOidEntryParseMixin,
     FlextLdifServersOidEntryRestoreLinesMixin,
     FlextLdifServersOidEntryRestoreMixin,
 )
-from flext_ldif.servers._rfc import (
-    FlextLdifServersRfcConstants,
-    FlextLdifServersRfcEntry,
-)
+from flext_ldif.servers._oid.server_constants import FlextLdifServersOidConstants
+from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
+from flext_ldif.servers._rfc.server_constants import FlextLdifServersRfcConstants
 
 
 class FlextLdifServersOidEntry(

@@ -10,8 +10,8 @@ import re
 from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._oud import FlextLdifServersOudConstants
-from flext_ldif.servers._rfc import FlextLdifServersRfcSchema
+from flext_ldif.servers._oud.server_constants import FlextLdifServersOudConstants
+from flext_ldif.servers._rfc.schema import FlextLdifServersRfcSchema
 
 if TYPE_CHECKING:
     from collections.abc import MutableMapping

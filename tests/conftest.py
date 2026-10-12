@@ -16,4 +16,3 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
     for item in items:
         if "ldap_container" in getattr(item, "fixturenames", ()):
             item.add_marker(pytest.mark.docker)
-            item.add_marker(pytest.mark.ldap)

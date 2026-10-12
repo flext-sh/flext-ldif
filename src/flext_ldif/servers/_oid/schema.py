@@ -10,11 +10,9 @@ from collections.abc import Callable, Mapping
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._oid import (
-    FlextLdifServersOidConstants,
-    FlextLdifServersOidSchemaNormalizeMixin,
-)
-from flext_ldif.servers._rfc import FlextLdifServersRfcSchema
+from flext_ldif.servers._oid import FlextLdifServersOidSchemaNormalizeMixin
+from flext_ldif.servers._oid.server_constants import FlextLdifServersOidConstants
+from flext_ldif.servers._rfc.schema import FlextLdifServersRfcSchema
 
 
 class FlextLdifServersOidSchema(
