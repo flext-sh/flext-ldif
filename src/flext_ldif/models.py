@@ -45,7 +45,7 @@ class FlextLdifModels(FlextCliModels):
     # flext-core's ConfigDict). mypy flags the cross-TypedDict override as
     # [misc]; the class is a namespace holder never instantiated, so only one
     # model_config resolves at runtime via the MRO — no behavioral conflict.
-    class Ldif(  # type: ignore[misc]
+    class Ldif(
         FlextLdifModelsDomainsEntries,
         FlextLdifModelsDomainEntry,
         FlextLdifModelsSettings,

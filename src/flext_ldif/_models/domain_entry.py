@@ -703,13 +703,9 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
                 ok_result: p.Result[Self] = r[Self].ok(entry_instance)
             except c.EXC_BASIC_TYPE as e:
                 error_msg = f"Failed to create Entry: {e}"
-                resolved_error_code = r[Self]._extract_exception_error_code(e)
-                resolved_error_data = r[Self]._extract_exception_error_data(e)
-                return r[Self].create_failure(
+                return r[Self].fail(
                     error_msg,
-                    resolved_error_code,
-                    resolved_error_data,
-                    e,
+                    exception=e,
                 )
             else:
                 return ok_result
