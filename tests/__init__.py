@@ -15,6 +15,16 @@ from flext_core.lazy import install_lazy_exports
 if TYPE_CHECKING:
     from flext_tests import api, d, e, h, r, td, tf, tk, tm, x
 
+    from tests._constants_ldap import TestsFlextLdifLdapConstants
+    from tests._protocols_ldap import TestsFlextLdifLdapProtocols
+    from tests._utilities_entries import TestsLdifEntryBuildersMixin
+    from tests._utilities_ldap import TestsLdapClientMixin
+    from tests._utilities_schema import (
+        PARSE_DISPATCH,
+        TestsSchemaAclAssertionsMixin,
+        assert_field_eq,
+        assert_must_contain,
+    )
     from tests.base import TestsFlextLdifServiceBase, s
     from tests.constants import TestsFlextLdifConstants, c
     from tests.models import TestsFlextLdifModels, m
@@ -29,7 +39,10 @@ if TYPE_CHECKING:
 
 
 __all__: tuple[str, ...] = (
+    "PARSE_DISPATCH",
     "TestsFlextLdifConstants",
+    "TestsFlextLdifLdapConstants",
+    "TestsFlextLdifLdapProtocols",
     "TestsFlextLdifModels",
     "TestsFlextLdifProtocols",
     "TestsFlextLdifSchemaExpectations",
@@ -37,7 +50,12 @@ __all__: tuple[str, ...] = (
     "TestsFlextLdifSettings",
     "TestsFlextLdifTypes",
     "TestsFlextLdifUtilities",
+    "TestsLdapClientMixin",
+    "TestsLdifEntryBuildersMixin",
+    "TestsSchemaAclAssertionsMixin",
     "api",
+    "assert_field_eq",
+    "assert_must_contain",
     "c",
     "d",
     "e",
@@ -59,7 +77,10 @@ install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
+        "PARSE_DISPATCH": "._utilities_schema",
         "TestsFlextLdifConstants": ".constants",
+        "TestsFlextLdifLdapConstants": "._constants_ldap",
+        "TestsFlextLdifLdapProtocols": "._protocols_ldap",
         "TestsFlextLdifModels": ".models",
         "TestsFlextLdifProtocols": ".protocols",
         "TestsFlextLdifSchemaExpectations": ".utilities",
@@ -67,12 +88,16 @@ install_lazy_exports(
         "TestsFlextLdifSettings": ".settings",
         "TestsFlextLdifTypes": ".typings",
         "TestsFlextLdifUtilities": ".utilities",
+        "TestsLdapClientMixin": "._utilities_ldap",
+        "TestsLdifEntryBuildersMixin": "._utilities_entries",
+        "TestsSchemaAclAssertionsMixin": "._utilities_schema",
         "api": "flext_tests",
+        "assert_field_eq": "._utilities_schema",
+        "assert_must_contain": "._utilities_schema",
         "c": ".constants",
         "d": "flext_tests",
         "e": "flext_tests",
         "h": "flext_tests",
-        "integration": ".integration",
         "m": ".models",
         "p": ".protocols",
         "r": "flext_tests",
@@ -83,7 +108,6 @@ install_lazy_exports(
         "tk": "flext_tests",
         "tm": "flext_tests",
         "u": ".utilities",
-        "unit": ".unit",
         "x": "flext_tests",
     }),
     public_exports=__all__,

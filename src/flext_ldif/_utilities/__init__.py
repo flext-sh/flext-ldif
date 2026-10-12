@@ -38,7 +38,6 @@ if TYPE_CHECKING:
     from flext_ldif._utilities._entry_oid_rfc import FlextLdifEntryOidRfcTransforming
     from flext_ldif._utilities._entry_server_rules import FlextLdifEntryServerRules
     from flext_ldif._utilities._entry_validation import FlextLdifEntryValidation
-    from flext_ldif._utilities._lazy_meta import FlextLdifUtilitiesLazyMeta
     from flext_ldif._utilities._metadata_builders import FlextLdifMetadataBuilders
     from flext_ldif._utilities._metadata_entry_stats import FlextLdifMetadataEntryStats
     from flext_ldif._utilities._metadata_json_core import FlextLdifMetadataJsonCore
@@ -78,11 +77,7 @@ if TYPE_CHECKING:
     from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
     from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
     from flext_ldif._utilities.events import FlextLdifUtilitiesEvents
-    from flext_ldif._utilities.flext_ldif_servers_oud_utilities import (
-        FlextLdifServersOudUtilities,
-    )
     from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
-    from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
     from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
     from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
     from flext_ldif._utilities.pipeline import FlextLdifUtilitiesPipeline
@@ -139,7 +134,6 @@ __all__: tuple[str, ...] = (
     "FlextLdifServerConfig",
     "FlextLdifServerDetection",
     "FlextLdifServerTypeResolution",
-    "FlextLdifServersOudUtilities",
     "FlextLdifUtilitiesACL",
     "FlextLdifUtilitiesAttribute",
     "FlextLdifUtilitiesCollectionLdif",
@@ -149,10 +143,8 @@ __all__: tuple[str, ...] = (
     "FlextLdifUtilitiesEntryAttrsNormalization",
     "FlextLdifUtilitiesEntryDnNormalization",
     "FlextLdifUtilitiesEvents",
-    "FlextLdifUtilitiesLazyMeta",
     "FlextLdifUtilitiesMetadata",
     "FlextLdifUtilitiesOID",
-    "FlextLdifUtilitiesObjectClass",
     "FlextLdifUtilitiesParser",
     "FlextLdifUtilitiesPipeline",
     "FlextLdifUtilitiesSchema",
@@ -214,7 +206,6 @@ install_lazy_exports(
         "FlextLdifServerConfig": "._server_config",
         "FlextLdifServerDetection": "._server_detect",
         "FlextLdifServerTypeResolution": "._server_type",
-        "FlextLdifServersOudUtilities": ".flext_ldif_servers_oud_utilities",
         "FlextLdifUtilitiesACL": ".acl",
         "FlextLdifUtilitiesAttribute": ".attribute",
         "FlextLdifUtilitiesCollectionLdif": ".collection_ldif",
@@ -224,10 +215,8 @@ install_lazy_exports(
         "FlextLdifUtilitiesEntryAttrsNormalization": "._transformer_attrs",
         "FlextLdifUtilitiesEntryDnNormalization": "._transformer_dn",
         "FlextLdifUtilitiesEvents": ".events",
-        "FlextLdifUtilitiesLazyMeta": "._lazy_meta",
         "FlextLdifUtilitiesMetadata": ".metadata",
         "FlextLdifUtilitiesOID": ".oid",
-        "FlextLdifUtilitiesObjectClass": ".object_class",
         "FlextLdifUtilitiesParser": ".parser",
         "FlextLdifUtilitiesPipeline": ".pipeline",
         "FlextLdifUtilitiesSchema": ".schema",
