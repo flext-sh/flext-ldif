@@ -16,15 +16,16 @@ class FlextLdifModelsDomainEntryValue(m.Value):
     """Shared RFC 2849 value contract for entry and control payloads.
 
     Owns the ``value`` / ``value_origin`` / ``raw_value`` fields once so the
-    entry value and the control line compose into the ``Ldif`` namespace with a
-    single compatible definition instead of two conflicting sibling overrides.
+    modify-operation value and the control line compose into the ``Ldif``
+    namespace through a single compatible definition instead of two conflicting
+    sibling overrides.
     """
 
     model_config: ClassVar[m.ConfigDict] = m.Value.model_config
 
     value: Annotated[
         str | None,
-        u.Field(description="Decoded value payload"),
+        u.Field(description="Decoded value payload, absent when the spec omits it"),
     ] = None
     value_origin: Annotated[
         c.Ldif.ValueOrigin | None,
@@ -38,15 +39,6 @@ class FlextLdifModelsDomainEntryValue(m.Value):
 
 class FlextLdifModelsDomainEntryChangeOperationValue(FlextLdifModelsDomainEntryValue):
     """Single value captured inside a modify operation block."""
-
-    value: Annotated[
-        str,
-        u.Field(description="Decoded value used by the operation"),
-    ]
-    value_origin: Annotated[
-        c.Ldif.ValueOrigin,
-        u.Field(description="Original LDIF encoding/source for this value"),
-    ] = c.Ldif.ValueOrigin.PLAIN
 
 
 __all__: list[str] = ["FlextLdifModelsDomainEntryChangeOperationValue"]
