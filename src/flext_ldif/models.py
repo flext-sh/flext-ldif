@@ -58,6 +58,9 @@ class FlextLdifModels(FlextCliModels):
     # [misc]; the class is a namespace holder never instantiated, so only one
     # model_config resolves at runtime via the MRO — no behavioral conflict.
     class Ldif(
+        FlextLdifNamespace,
+        FlextLdifModelsBases,
+        FlextLdifModelsCollections,
         FlextLdifModelsDomainsEntries,
         FlextLdifModelsDomainEntry,
         FlextLdifModelsDomainEntryChangeOperation,
@@ -67,17 +70,14 @@ class FlextLdifModels(FlextCliModels):
         FlextLdifModelsDomainAttributes,
         FlextLdifModelsDomainSchema,
         FlextLdifModelsDomainDN,
-        FlextLdifModelsSettings,
-        FlextLdifModelsEvents,
-        FlextLdifModelsResults,
-        FlextLdifModelsResultsStatistics,
-        FlextLdifModelsCollections,
-        FlextLdifModelsProcessing,
-        FlextLdifModelsBases,
         FlextLdifModelsDomainEntryChangeOperationValue,
         FlextLdifModelsDomainEntryControl,
         FlextLdifModelsDomainEntryStatistics,
-        FlextLdifNamespace,
+        FlextLdifModelsEvents,
+        FlextLdifModelsResults,
+        FlextLdifModelsResultsStatistics,
+        FlextLdifModelsSettings,
+        FlextLdifModelsProcessing,
     ):
         """LDIF namespace for cross-project access."""
 

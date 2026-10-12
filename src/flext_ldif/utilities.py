@@ -12,28 +12,74 @@ from typing import TYPE_CHECKING, ClassVar
 from flext_cli import FlextCliUtilities
 
 from flext_ldif import _utilities
-from flext_ldif._utilities import FlextLdifUtilitiesCollectionLdif
+from flext_ldif._utilities.collection_ldif import FlextLdifUtilitiesCollectionLdif
 from flext_ldif._utilities._lazy_meta import FlextLdifUtilitiesLazyMeta
+from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
+from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
+from flext_ldif._utilities.dispatch import FlextLdifUtilitiesDispatch
+from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
+from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
+from flext_ldif._utilities.events import FlextLdifUtilitiesEvents
+from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
+from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
+from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
+from flext_ldif._utilities.pipeline import FlextLdifUtilitiesPipeline
+from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
+from flext_ldif._utilities.server import FlextLdifUtilitiesServer
+from flext_ldif._utilities.transformers import FlextLdifUtilitiesTransformers
+from flext_ldif._utilities.validation import FlextLdifUtilitiesValidation
+from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
+from flext_ldif._utilities._acl_extensions import FlextLdifACLExtensionFormatting
+from flext_ldif._utilities._acl_extract import FlextLdifACLExtraction
+from flext_ldif._utilities._acl_format import FlextLdifACLFormatting
+from flext_ldif._utilities._acl_parse import FlextLdifACLParsing
+from flext_ldif._utilities._acl_permissions import FlextLdifACLPermissions
+from flext_ldif._utilities._dn_chars import FlextLdifDNCharClass
+from flext_ldif._utilities._dn_clean import FlextLdifDNCleaning
+from flext_ldif._utilities._dn_escape import FlextLdifDNEscaping
+from flext_ldif._utilities._dn_normalize import FlextLdifDNNormalization
+from flext_ldif._utilities._dn_parse import FlextLdifDNParsing
+from flext_ldif._utilities._dn_rdn import FlextLdifDNRdnParsing
+from flext_ldif._utilities._dn_rebase import FlextLdifDNRebasing
+from flext_ldif._utilities._dn_transform import FlextLdifDNTransforming
+from flext_ldif._utilities._dn_validate import FlextLdifDNValidation
+from flext_ldif._utilities._entry_access import FlextLdifEntryAccess
+from flext_ldif._utilities._entry_boolean import FlextLdifEntryBooleanConversion
+from flext_ldif._utilities._entry_criteria import FlextLdifEntryCriteria
+from flext_ldif._utilities._entry_matching import FlextLdifEntryMatching
+from flext_ldif._utilities._entry_oid_rfc import FlextLdifEntryOidRfcTransforming
+from flext_ldif._utilities._metadata_builders import FlextLdifMetadataBuilders
+from flext_ldif._utilities._metadata_entry_stats import FlextLdifMetadataEntryStats
+from flext_ldif._utilities._metadata_json_core import FlextLdifMetadataJsonCore
+from flext_ldif._utilities._metadata_match import FlextLdifMetadataMatchDetails
+from flext_ldif._utilities._metadata_name_desc import FlextLdifMetadataNameDescDetails
+from flext_ldif._utilities._metadata_prefix import FlextLdifMetadataPrefixDetails
+from flext_ldif._utilities._metadata_schema_analysis import FlextLdifMetadataSchemaAnalysis
+from flext_ldif._utilities._metadata_syntax_origin import FlextLdifMetadataSyntaxOriginDetails
+from flext_ldif._utilities._metadata_tracking import FlextLdifMetadataTracking
+from flext_ldif._utilities._parser_metadata import FlextLdifParserMetadataBuilders
+from flext_ldif._utilities._parser_record import FlextLdifParserRecord
+from flext_ldif._utilities._parser_records import FlextLdifParserRecordSplitter
+from flext_ldif._utilities._parser_schema_fields import FlextLdifParserSchemaFields
+from flext_ldif._utilities._parser_values import FlextLdifParserValues
+from flext_ldif._utilities._server_config import FlextLdifServerConfig
+from flext_ldif._utilities._server_detect import FlextLdifServerDetection
+from flext_ldif._utilities._server_type import FlextLdifServerTypeResolution
+from flext_ldif._utilities._transformer_attrs import FlextLdifUtilitiesEntryAttrsNormalization
+from flext_ldif._utilities._transformer_dn import FlextLdifUtilitiesEntryDnNormalization
+from flext_ldif._utilities._writer_chars import FlextLdifWriterRfcChars
+from flext_ldif._utilities._writer_fold import FlextLdifWriterLineFolding
+from flext_ldif._utilities._writer_schema import FlextLdifWriterSchemaParts
+from flext_ldif._utilities.schema_build import FlextLdifUtilitiesSchemaBuild
+from flext_ldif._utilities.schema_extract import FlextLdifUtilitiesSchemaExtract
+from flext_ldif._utilities.schema_format import FlextLdifUtilitiesSchemaFormat
+from flext_ldif._utilities.schema_normalize import FlextLdifUtilitiesSchemaNormalize
+from flext_ldif._utilities.schema_parse import FlextLdifUtilitiesSchemaParse
 
 if TYPE_CHECKING:
     from flext_ldif._utilities import (
-        FlextLdifUtilitiesACL,
-        FlextLdifUtilitiesAttribute,
-        FlextLdifUtilitiesDispatch,
-        FlextLdifUtilitiesDN,
-        FlextLdifUtilitiesEntry,
-        FlextLdifUtilitiesEvents,
-        FlextLdifUtilitiesMetadata,
         FlextLdifUtilitiesObjectClass,
-        FlextLdifUtilitiesOID,
-        FlextLdifUtilitiesParser,
-        FlextLdifUtilitiesPipeline,
-        FlextLdifUtilitiesSchema,
-        FlextLdifUtilitiesServer,
-        FlextLdifUtilitiesTransformers,
-        FlextLdifUtilitiesValidation,
-        FlextLdifUtilitiesWriter,
-    )
+        )
 
 
 from flext_ldif._utilities._entry_analysis import FlextLdifEntryAnalysis
@@ -45,12 +91,73 @@ from flext_ldif._utilities._entry_validation import FlextLdifEntryValidation
 
 
 class FlextLdifUtilities(
-    FlextCliUtilities,
+    FlextLdifUtilitiesACL,
+    FlextLdifACLExtraction,
+    FlextLdifACLExtensionFormatting,
+    FlextLdifACLPermissions,
+    FlextLdifACLFormatting,
+    FlextLdifACLParsing,
+    FlextLdifUtilitiesAttribute,
     FlextLdifUtilitiesCollectionLdif,
-    FlextLdifEntryServerRules,
-    FlextLdifEntryAnalysis,
-    FlextLdifEntryAttributeValidation,
+    FlextLdifUtilitiesDispatch,
+    FlextLdifUtilitiesDN,
+    FlextLdifDNCharClass,
+    FlextLdifDNEscaping,
+    FlextLdifDNParsing,
+    FlextLdifDNRdnParsing,
+    FlextLdifDNNormalization,
+    FlextLdifDNValidation,
+    FlextLdifDNCleaning,
+    FlextLdifDNTransforming,
+    FlextLdifDNRebasing,
+    FlextLdifUtilitiesEntry,
+    FlextLdifEntryAccess,
     FlextLdifEntryValidation,
+    FlextLdifEntryAttributeValidation,
+    FlextLdifEntryServerRules,
+    FlextLdifEntryOidRfcTransforming,
+    FlextLdifEntryBooleanConversion,
+    FlextLdifEntryAnalysis,
+    FlextLdifEntryMatching,
+    FlextLdifEntryCriteria,
+    FlextLdifUtilitiesEvents,
+    FlextLdifUtilitiesMetadata,
+    FlextLdifMetadataJsonCore,
+    FlextLdifMetadataEntryStats,
+    FlextLdifMetadataBuilders,
+    FlextLdifMetadataTracking,
+    FlextLdifMetadataPrefixDetails,
+    FlextLdifMetadataNameDescDetails,
+    FlextLdifMetadataSyntaxOriginDetails,
+    FlextLdifMetadataMatchDetails,
+    FlextLdifMetadataSchemaAnalysis,
+    FlextLdifUtilitiesOID,
+    FlextLdifUtilitiesParser,
+    FlextLdifParserRecord,
+    FlextLdifParserRecordSplitter,
+    FlextLdifParserValues,
+    FlextLdifParserSchemaFields,
+    FlextLdifParserMetadataBuilders,
+    FlextLdifUtilitiesPipeline,
+    FlextLdifUtilitiesSchema,
+    FlextLdifUtilitiesSchemaFormat,
+    FlextLdifUtilitiesSchemaExtract,
+    FlextLdifUtilitiesSchemaNormalize,
+    FlextLdifUtilitiesSchemaBuild,
+    FlextLdifUtilitiesSchemaParse,
+    FlextLdifUtilitiesServer,
+    FlextLdifServerConfig,
+    FlextLdifServerDetection,
+    FlextLdifServerTypeResolution,
+    FlextLdifUtilitiesTransformers,
+    FlextLdifUtilitiesEntryDnNormalization,
+    FlextLdifUtilitiesEntryAttrsNormalization,
+    FlextLdifUtilitiesValidation,
+    FlextLdifUtilitiesWriter,
+    FlextLdifWriterSchemaParts,
+    FlextLdifWriterLineFolding,
+    FlextLdifWriterRfcChars,
+    FlextCliUtilities,
     metaclass=FlextLdifUtilitiesLazyMeta,
 ):
     """Centralized helpers with domain collection behavior under ``Ldif``.
