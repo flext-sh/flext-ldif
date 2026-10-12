@@ -39,6 +39,7 @@ class FlextLdifParserRecord:
         newrdn: str | None
         deleteoldrdn: bool | None
         newsuperior: str | None
+        dn_was_base64: bool
 
         def __init__(self) -> None:
             """Initialize an empty record state."""
@@ -62,6 +63,7 @@ class FlextLdifParserRecord:
             self.newrdn: str | None = None
             self.deleteoldrdn: bool | None = None
             self.newsuperior: str | None = None
+            self.dn_was_base64 = False
 
     class _DecodedValue:
         """One decoded LDIF value with its origin and raw payload."""
@@ -127,13 +129,13 @@ class FlextLdifParserRecord:
         }:
             return False
         if key_lower == "newrdn":
-            state.newrdn = value
+            state.newrdn = FlextLdifParserValues.decode_value(value)[0]
             return True
         if key_lower == "deleteoldrdn":
             state.deleteoldrdn = value.lower() in {"1", "true", "yes"}
             return True
         if key_lower == "newsuperior":
-            state.newsuperior = value
+            state.newsuperior = FlextLdifParserValues.decode_value(value)[0]
             return True
         return False
 
@@ -208,7 +210,9 @@ class FlextLdifParserRecord:
             )
             return True
         if key_lower == "dn":
-            state.dn = remainder
+            decoded_dn, origin, _ = FlextLdifParserValues.decode_value(remainder)
+            state.dn = decoded_dn
+            state.dn_was_base64 = origin is c.Ldif.ValueOrigin.BASE64
             return True
         if key_lower == "changetype":
             cls._handle_changetype_line(state, remainder)
@@ -268,6 +272,7 @@ class FlextLdifParserRecord:
                 state.dn.strip(),
                 state.raw_record_lines,
                 state.comments,
+                dn_was_base64=state.dn_was_base64,
             ),
         )
 

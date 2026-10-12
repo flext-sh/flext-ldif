@@ -49,7 +49,7 @@ class TestsFlextLdifApacheServers:
 
     @staticmethod
     @pytest.mark.parametrize(
-        "test_case", u.Tests.attribute_test_cases(c.Tests.APACHE_ATTRIBUTE_CASE_ROWS)
+        "test_case", c.Tests.APACHE_ATTRIBUTE_TEST_CASES, ids=lambda tc: tc.scenario
     )
     def test_schema_attribute_can_handle(
         test_case: m.Tests.AttributeTestCase,
@@ -121,7 +121,7 @@ class TestsFlextLdifApacheServers:
     @staticmethod
     @pytest.mark.parametrize(
         "test_case",
-        u.Tests.objectclass_test_cases(c.Tests.APACHE_OBJECTCLASS_CASE_ROWS),
+        c.Tests.APACHE_OBJECTCLASS_TEST_CASES,
     )
     def test_schema_objectclass_can_handle(
         test_case: m.Tests.ObjectClassTestCase,
@@ -325,7 +325,7 @@ class TestsFlextLdifApacheServers:
 
     @staticmethod
     @pytest.mark.parametrize(
-        "test_case", u.Tests.entry_test_cases(c.Tests.APACHE_ENTRY_CASE_ROWS)
+        "test_case", c.Tests.APACHE_ENTRY_TEST_CASES, ids=lambda tc: tc.scenario
     )
     def test_entry_can_handle(test_case: m.Tests.EntryTestCase) -> None:
         """Test entry detection for various scenarios."""
@@ -353,11 +353,7 @@ class TestsFlextLdifApacheServers:
 
     @pytest.mark.parametrize(
         "test_case",
-        [
-            tc
-            for tc in u.Tests.entry_test_cases(c.Tests.APACHE_ENTRY_CASE_ROWS)
-            if tc.expected_can_handle
-        ],
+        [tc for tc in c.Tests.APACHE_ENTRY_TEST_CASES if tc.expected_can_handle],
     )
     def test_entry_parse_ldif_yields_entry_with_source_dn(
         self,
