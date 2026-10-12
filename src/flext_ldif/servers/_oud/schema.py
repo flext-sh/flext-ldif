@@ -111,10 +111,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
                 r"\1",
                 updated,
             )
-            if (
-                "NO-USER-MODIFICATION" in updated
-                and "USAGE" not in updated
-            ):
+            if "NO-USER-MODIFICATION" in updated and "USAGE" not in updated:
                 updated = updated.replace(
                     "NO-USER-MODIFICATION",
                     "USAGE directoryOperation NO-USER-MODIFICATION",
@@ -480,11 +477,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
                 continue
             sanitized = [item.replace("_", "-") for item in names]
             registry = self.__dict__.get("_declared_attribute_names") or set()
-            declared = [
-                item
-                for item in sanitized
-                if item.casefold() in registry
-            ]
+            declared = [item for item in sanitized if item.casefold() in registry]
             if declared != names:
                 dropped = sorted(set(sanitized) - set(declared))
                 FlextLdifServersOudSchema._module_logger.warning(
