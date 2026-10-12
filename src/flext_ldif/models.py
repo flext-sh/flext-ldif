@@ -17,19 +17,27 @@ from flext_cli import FlextCliModels
 from flext_core import FlextUtilities as u
 from flext_ldif import t
 from flext_ldif._models import (
-    FlextLdifModelsBases,
-    FlextLdifModelsCollections,
-    FlextLdifModelsDomainEntry,
-    FlextLdifModelsDomainEntryChangeOperationValue,
-    FlextLdifModelsDomainEntryControl,
-    FlextLdifModelsDomainEntryStatistics,
-    FlextLdifModelsDomainsEntries,
-    FlextLdifModelsEvents,
     FlextLdifModelsProcessing,
-    FlextLdifModelsResults,
-    FlextLdifModelsSettings,
-    FlextLdifNamespace,
-)
+    )
+from flext_ldif._models.base import FlextLdifModelsBases
+from flext_ldif._models.collections import FlextLdifModelsCollections
+from flext_ldif._models.domain_entry import FlextLdifModelsDomainEntry
+from flext_ldif._models.domain_entry_change_value import FlextLdifModelsDomainEntryChangeOperationValue
+from flext_ldif._models.domain_entry_control import FlextLdifModelsDomainEntryControl
+from flext_ldif._models.domain_entry_statistics import FlextLdifModelsDomainEntryStatistics
+from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries
+from flext_ldif._models.events import FlextLdifModelsEvents
+from flext_ldif._models.results import FlextLdifModelsResults
+from flext_ldif._models.settings import FlextLdifModelsSettings
+from flext_ldif._models._ldif_namespace import FlextLdifNamespace
+from flext_ldif._models.acl_convert import FlextLdifModelsAclConvert
+from flext_ldif._models.domain_acl import FlextLdifModelsDomainAcl
+from flext_ldif._models.domain_attributes import FlextLdifModelsDomainAttributes
+from flext_ldif._models.domain_dn import FlextLdifModelsDomainDN
+from flext_ldif._models.domain_entry_change import FlextLdifModelsDomainEntryChangeOperation
+from flext_ldif._models.domain_metadata import FlextLdifModelsDomainMetadata
+from flext_ldif._models.domain_schema import FlextLdifModelsDomainSchema
+from flext_ldif._models.results_statistics import FlextLdifModelsResultsStatistics
 
 
 class FlextLdifModels(FlextCliModels):
@@ -48,9 +56,17 @@ class FlextLdifModels(FlextCliModels):
     class Ldif(
         FlextLdifModelsDomainsEntries,
         FlextLdifModelsDomainEntry,
+        FlextLdifModelsDomainEntryChangeOperation,
+        FlextLdifModelsDomainMetadata,
+        FlextLdifModelsAclConvert,
+        FlextLdifModelsDomainAcl,
+        FlextLdifModelsDomainAttributes,
+        FlextLdifModelsDomainSchema,
+        FlextLdifModelsDomainDN,
         FlextLdifModelsSettings,
         FlextLdifModelsEvents,
         FlextLdifModelsResults,
+        FlextLdifModelsResultsStatistics,
         FlextLdifModelsCollections,
         FlextLdifModelsProcessing,
         FlextLdifModelsBases,
