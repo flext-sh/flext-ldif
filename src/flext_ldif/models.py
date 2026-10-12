@@ -74,10 +74,10 @@ class FlextLdifModels(FlextCliModels):
         FlextLdifModelsDomainEntryControl,
         FlextLdifModelsDomainEntryStatistics,
         FlextLdifModelsEvents,
+        FlextLdifModelsProcessing,
         FlextLdifModelsResults,
         FlextLdifModelsResultsStatistics,
         FlextLdifModelsSettings,
-        FlextLdifModelsProcessing,
     ):
         """LDIF namespace for cross-project access."""
 

@@ -27,10 +27,16 @@ from flext_ldif._utilities._dn_rebase import FlextLdifDNRebasing
 from flext_ldif._utilities._dn_transform import FlextLdifDNTransforming
 from flext_ldif._utilities._dn_validate import FlextLdifDNValidation
 from flext_ldif._utilities._entry_access import FlextLdifEntryAccess
+from flext_ldif._utilities._entry_analysis import FlextLdifEntryAnalysis
+from flext_ldif._utilities._entry_attr_validation import (
+    FlextLdifEntryAttributeValidation,
+)
 from flext_ldif._utilities._entry_boolean import FlextLdifEntryBooleanConversion
 from flext_ldif._utilities._entry_criteria import FlextLdifEntryCriteria
 from flext_ldif._utilities._entry_matching import FlextLdifEntryMatching
 from flext_ldif._utilities._entry_oid_rfc import FlextLdifEntryOidRfcTransforming
+from flext_ldif._utilities._entry_server_rules import FlextLdifEntryServerRules
+from flext_ldif._utilities._entry_validation import FlextLdifEntryValidation
 from flext_ldif._utilities._lazy_meta import FlextLdifUtilitiesLazyMeta
 from flext_ldif._utilities._metadata_builders import FlextLdifMetadataBuilders
 from flext_ldif._utilities._metadata_entry_stats import FlextLdifMetadataEntryStats
@@ -68,6 +74,7 @@ from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 from flext_ldif._utilities.events import FlextLdifUtilitiesEvents
 from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
+from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
 from flext_ldif._utilities.pipeline import FlextLdifUtilitiesPipeline
@@ -81,17 +88,6 @@ from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif._utilities.transformers import FlextLdifUtilitiesTransformers
 from flext_ldif._utilities.validation import FlextLdifUtilitiesValidation
 from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
-
-if TYPE_CHECKING:
-    from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
-
-
-from flext_ldif._utilities._entry_analysis import FlextLdifEntryAnalysis
-from flext_ldif._utilities._entry_attr_validation import (
-    FlextLdifEntryAttributeValidation,
-)
-from flext_ldif._utilities._entry_server_rules import FlextLdifEntryServerRules
-from flext_ldif._utilities._entry_validation import FlextLdifEntryValidation
 
 
 class FlextLdifUtilities(
@@ -135,6 +131,7 @@ class FlextLdifUtilities(
     FlextLdifMetadataSyntaxOriginDetails,
     FlextLdifMetadataMatchDetails,
     FlextLdifMetadataSchemaAnalysis,
+    FlextLdifUtilitiesObjectClass,
     FlextLdifUtilitiesOID,
     FlextLdifUtilitiesParser,
     FlextLdifParserRecord,
