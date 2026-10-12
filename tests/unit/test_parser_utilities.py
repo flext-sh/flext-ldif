@@ -142,7 +142,7 @@ class TestsFlextLdifParserUtilities:
 
         tm.that(control.control_type, eq=expected_type)
         tm.that(control.criticality, eq=expected_criticality)
-        tm.that(control.value, eq=expected_value)
+        tm.that(control.control_value, eq=expected_value)
 
     # ------------------------------------------------------------------
     # extract_boolean_flag / extract_optional_field

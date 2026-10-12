@@ -22,6 +22,8 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 
+    _declared_attribute_names: set[str] = u.PrivateAttr(default_factory=set)
+
     def _sanitize_schema_carriers(
         self,
         entries: t.MutableSequenceOf[m.Ldif.Entry],
@@ -41,7 +43,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
         declared: set[str] = set()
         prepass: list[tuple[m.Ldif.Entry, list[m.Ldif.ChangeOperation]]] = []
         for entry in entries:
-            ops = []
+            ops: list[m.Ldif.ChangeOperation] = []
             for op in entry.change_operations:
                 if op.attribute in {"attributetypes", "objectclasses"}:
                     ops.append(
@@ -59,7 +61,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
             prepass.append((entry, ops))
         sanitized_entries: list[m.Ldif.Entry] = []
         for entry, ops in prepass:
-            new_ops = []
+            new_ops: list[m.Ldif.ChangeOperation] = []
             for op in ops:
                 if op.attribute in {"attributetypes", "objectclasses"}:
                     new_ops.append(
@@ -83,7 +85,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
     def _declared_names(
         values: t.MutableSequenceOf[m.Ldif.ChangeOperationValue],
     ) -> set[str]:
-        declared = set()
+        declared: set[str] = set()
         for v in values:
             matched = re.search(r"NAME '([^';]+)'", v.value)
             if matched:
@@ -353,7 +355,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
             The resulting ``p.Result[m.Ldif.SchemaObjectClass]``.
         """
         sanitized_oc = oc
-        updates: dict[str, t.Ldif.Scalar | list[str]] = {}
+        updates: t.MutableMappingKV[str, t.Ldif.Scalar | t.MutableSequenceOf[str]] = {}
         if oc.name and "_" in oc.name:
             updates["name"] = oc.name.replace("_", "-")
         if oc.must:
@@ -471,11 +473,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
         # OUD refuses an objectClass whose MUST/MAY names an attribute the
         # server does not carry (invalidAttributeSyntax), and the corpus may
         # reference OID-internal attributes OUD declines.
-        registry = self.__dict__.get("_declared_attribute_names")
-        if registry is None:
-            registry = set()
-            self._declared_attribute_names = registry
-        registry.add(fixed_name.casefold())
+        self._declared_attribute_names.add(fixed_name.casefold())
         return self._apply_attribute_oid_metadata(updated_attr)
 
     @override
@@ -488,7 +486,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
         Returns:
             The resulting ``m.Ldif.SchemaObjectClass``.
         """
-        updates: dict[str, object] = {}
+        updates: t.MutableMappingKV[str, str | t.MutableSequenceOf[str]] = {}
         if oc_data.name and "_" in oc_data.name:
             updates["name"] = oc_data.name.replace("_", "-")
         for role in ("must", "may"):
@@ -496,8 +494,11 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
             if not names:
                 continue
             sanitized = [item.replace("_", "-") for item in names]
-            registry = self.__dict__.get("_declared_attribute_names") or set()
-            declared = [item for item in sanitized if item.casefold() in registry]
+            declared = [
+                item
+                for item in sanitized
+                if item.casefold() in self._declared_attribute_names
+            ]
             if declared != names:
                 dropped = sorted(set(sanitized) - set(declared))
                 FlextLdifServersOudSchema._module_logger.warning(

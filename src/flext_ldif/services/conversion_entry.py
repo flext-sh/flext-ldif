@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated, override
+from typing import override
 
 from flext_ldif import c, m, p, r, s, t, u
 from flext_ldif.servers._oid import FlextLdifServersOidAclPipeline
@@ -29,22 +29,7 @@ class FlextLdifConversionEntryMixin(
     FlextLdifConversionSchemaEntryMixin,
     s[m.Ldif.Response],
 ):
-    """Concrete Entry-model conversion + the conversion state it owns."""
-
-    dn_registry: m.Ldif.DnRegistry = u.Field(
-        default_factory=m.Ldif.DnRegistry,
-        description="DN registry for tracking distinguished names during conversion",
-    )
-    base_dn: Annotated[
-        str | None,
-        u.Field(
-            default=None,
-            description=(
-                "Migration base DN; when set, OID→OUD ACL conversion filters "
-                "out-of-scope bind DNs and high-level-container anyone rules"
-            ),
-        ),
-    ] = None
+    """Concrete Entry-model conversion (state lives on the support mixin)."""
 
     @override
     def _convert_entry(

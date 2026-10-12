@@ -74,8 +74,8 @@ class FlextLdifParserValues:
         return FlextLdifModelsDomainEntryControl(
             control_type=control_type,
             criticality=criticality,
-            value=value,
-            value_origin=value_origin,
+            control_value=value,
+            control_value_origin=value_origin,
             raw_value=raw_value,
         )
 

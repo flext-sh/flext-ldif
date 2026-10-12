@@ -7,12 +7,34 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import Annotated
 
-from flext_ldif import c, m, p, r, s, t
+from flext_ldif import c, m, p, r, s, t, u
 
 
 class FlextLdifConversionSupportMixin(s[m.Ldif.Response]):
-    """Support-check helpers shared by the conversion facade."""
+    """Support-check helpers shared by the conversion facade.
+
+    Owns the conversion state (``dn_registry`` / ``base_dn``) so every mixin the
+    conversion facade composes carries one identical field set; declaring the
+    state on a single child mixin made the sibling bases expose incompatible
+    pydantic ``model_construct`` signatures.
+    """
+
+    dn_registry: m.Ldif.DnRegistry = u.Field(
+        default_factory=m.Ldif.DnRegistry,
+        description="DN registry for tracking distinguished names during conversion",
+    )
+    base_dn: Annotated[
+        str | None,
+        u.Field(
+            default=None,
+            description=(
+                "Migration base DN; when set, OID→OUD ACL conversion filters "
+                "out-of-scope bind DNs and high-level-container anyone rules"
+            ),
+        ),
+    ] = None
 
     @staticmethod
     def _get_schema_from_attribute(server: p.Ldif.ServerServer) -> p.Ldif.SchemaServer:
