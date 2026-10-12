@@ -10,10 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import builtins
-from typing import Self
-
-from flext_core import FlextSettings, t
 from flext_ldif._models._settings_acl import FlextLdifModelsSettingsAcl
 from flext_ldif._models._settings_criteria import FlextLdifModelsSettingsCriteria
 from flext_ldif._models._settings_migrate import FlextLdifModelsSettingsMigrate
@@ -27,7 +23,6 @@ from flext_ldif._models._settings_validation import FlextLdifModelsSettingsValid
 
 
 class FlextLdifModelsSettings(
-    FlextSettings,
     FlextLdifModelsSettingsAcl,
     FlextLdifModelsSettingsNormalization,
     FlextLdifModelsSettingsProcessing,
@@ -39,41 +34,12 @@ class FlextLdifModelsSettings(
 ):
     """Configuration models for LDIF processing.
 
-    MRO carries ``FlextSettings`` FIRST (ENFORCE-042); the class is a namespace
-    holder, never instantiated — nested namespaces resolve via the MRO.
+    Plain namespace holder: the nested configuration models under each mixin
+    are the Pydantic owners. The holder itself is never instantiated, so it
+    must not carry ``FlextSettings`` (whose ``SettingsConfigDict``
+    ``model_config`` is incompatible with the models facade's ``ConfigDict``
+    when composed into the ``Ldif`` namespace MRO).
     """
-
-    # ENFORCE-042 namespace-holder contract: ``FlextSettings`` contributes
-    # namespacing only — instance machinery stays plain object semantics so the
-    # settings singleton/validation machinery cannot leak into instantiated
-    # facade composites (e.g. the ``u`` logging facade).
-    def __new__(cls, *args: t.JsonValue, **kwargs: t.JsonValue) -> Self:
-        _ = args, kwargs
-        return object.__new__(cls)
-
-    def __init__(self, *args: t.JsonValue, **kwargs: t.JsonValue) -> None:
-        _ = self, args, kwargs
-
-    def __setattr__(self, name: str, value: t.JsonValue) -> None:
-        object.__setattr__(self, name, value)
-
-    def __eq__(self, other: builtins.object) -> bool:
-        """Identity equality per the namespace-holder contract.
-
-        Returns:
-            The resulting ``bool``.
-
-        """
-        return object.__eq__(self, other)
-
-    def __hash__(self) -> int:
-        """Identity hash per the namespace-holder contract.
-
-        Returns:
-            The resulting ``int``.
-
-        """
-        return object.__hash__(self)
 
 
 __all__: list[str] = ["FlextLdifModelsSettings"]

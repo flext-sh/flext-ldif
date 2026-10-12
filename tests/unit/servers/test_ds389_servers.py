@@ -105,7 +105,9 @@ class TestsFlextLdifDs389Servers:
     # ------------------------------------------------------------------
 
     @pytest.mark.parametrize(
-        "test_case", c.Tests.DS389_OBJECTCLASS_TEST_CASES, ids=lambda tc: tc.scenario
+        "test_case",
+        u.Tests.objectclass_test_cases(c.Tests.DS389_OBJECTCLASS_CASE_ROWS),
+        ids=lambda tc: tc.scenario,
     )
     def test_can_handle_objectclass_matches_expected(
         self,
@@ -199,7 +201,9 @@ class TestsFlextLdifDs389Servers:
 
     @staticmethod
     @pytest.mark.parametrize(
-        "test_case", c.Tests.DS389_ENTRY_TEST_CASES, ids=lambda tc: tc.scenario
+        "test_case",
+        u.Tests.entry_test_cases(c.Tests.DS389_ENTRY_CASE_ROWS),
+        ids=lambda tc: tc.scenario,
     )
     def test_entry_can_handle_matches_expected(
         test_case: m.Tests.EntryTestCase,

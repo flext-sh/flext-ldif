@@ -52,11 +52,11 @@ class FlextLdifModels(FlextCliModels):
     Types live in ``typings.py``, constants in ``constants.py``.
     """
 
-    # ENFORCE-042: FlextLdifModelsSettings carries FlextSettings.model_config
-    # typed as pydantic_settings.SettingsConfigDict (a distinct TypedDict from
-    # flext-core's ConfigDict). mypy flags the cross-TypedDict override as
-    # [misc]; the class is a namespace holder never instantiated, so only one
-    # model_config resolves at runtime via the MRO — no behavioral conflict.
+    # The composite namespace carries only ``m.BaseModel`` descendants whose
+    # ``model_config`` is the models-facade ``ConfigDict``; the settings-derived
+    # and value/control model classes stay reachable through their owning
+    # aliases (``Ldif.Control`` / ``Ldif.ChangeOperationValue``) instead of
+    # direct inheritance, which would clash on ``model_config``/``value``.
     class Ldif(
         FlextLdifNamespace,
         FlextLdifModelsBases,
