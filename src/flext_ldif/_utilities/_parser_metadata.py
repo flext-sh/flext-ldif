@@ -79,6 +79,8 @@ class FlextLdifParserMetadataBuilders:
         dn: str,
         raw_record_lines: t.MutableSequenceOf[str],
         comments: t.MutableSequenceOf[str],
+        *,
+        dn_was_base64: bool = False,
     ) -> FlextLdifModels.Ldif.ServerMetadata:
         """Build RFC metadata for a parsed LDIF record.
 
@@ -90,6 +92,8 @@ class FlextLdifParserMetadataBuilders:
         metadata.target_server_type = c.Ldif.ServerTypes.RFC
         metadata.original_strings["dn_original"] = dn
         metadata.original_strings["entry_original_ldif"] = "\n".join(raw_record_lines)
+        if dn_was_base64:
+            metadata.extensions[c.Ldif.META_DN_WAS_BASE64] = [True]
         if comments:
             comments_payload: t.JsonValueList = list(comments)
             metadata.extensions["entry_comments"] = comments_payload

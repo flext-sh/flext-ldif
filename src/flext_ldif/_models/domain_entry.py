@@ -485,7 +485,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             attribute_count = len(self.attributes) if self.attributes else 0
             old_context: t.MutableStrMapping = {}
             if self.metadata.validation_results is not None:
-                old_context = u.str_dict_adapter().validate_python(
+                old_context = t.str_dict_adapter().validate_python(
                     self.metadata.validation_results.context,
                 )
             context_payload = self._build_rfc_validation_context(
@@ -494,7 +494,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
                 attribute_count=attribute_count,
                 total_violations=len(violations),
             )
-            payload: t.JsonMapping = u.json_mapping_adapter().validate_python({
+            payload: t.JsonMapping = t.json_mapping_adapter().validate_python({
                 **self._EMPTY_VALIDATION_RESULT_PAYLOAD,
                 "rfc_violations": list(violations),
                 "errors": list[str](),
@@ -567,7 +567,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             Returns:
                 The resulting ``FlextLdifModelsDomainMetadata.ValidationMetadata``.
             """
-            payload: t.JsonMapping = u.json_mapping_adapter().validate_python({
+            payload: t.JsonMapping = t.json_mapping_adapter().validate_python({
                 **cls._EMPTY_VALIDATION_RESULT_PAYLOAD,
                 "rfc_violations": list[str](),
                 "errors": list[str](),
@@ -673,7 +673,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
                     values_list = list(attr_values)
                 attrs_dict[attr_name] = values_list
 
-            validate_payload: t.JsonMapping = u.json_mapping_adapter().validate_python({
+            validate_payload: t.JsonMapping = t.json_mapping_adapter().validate_python({
                 "attributes": attrs_dict,
                 **cls._ATTRIBUTES_VALIDATE_DEFAULTS,
             })

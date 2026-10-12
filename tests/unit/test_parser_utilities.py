@@ -273,6 +273,46 @@ class TestsFlextLdifParserUtilities:
         tm.that(entry.attributes.attributes["objectClass"], eq=["person"])
 
     @staticmethod
+    def test_parse_ldif_record_decodes_base64_dn_to_utf8() -> None:
+        """A ``dn::`` record decodes to its UTF-8 DN and flags the origin.
+
+        Regression: the dn branch stored the raw value-spec (``: <b64>``)
+        without decoding, so every base64 DN (accented production data)
+        failed DN validation and the record was silently dropped.
+        """
+        result = u.Ldif.parse_ldif_record([
+            "dn:: Y249bWFyY2Vsby5hcmHDumpvLGRjPWV4YW1wbGUsZGM9Y29t",
+            "cn: marcelo.araújo",
+            "objectClass: person",
+        ])
+
+        entry = u.Tests.assert_success(result)
+        assert entry.dn is not None
+        assert entry.metadata is not None
+        tm.that(entry.dn.value, eq="cn=marcelo.araújo,dc=example,dc=com")
+        flag = entry.metadata.extensions[c.Ldif.META_DN_WAS_BASE64]
+        assert isinstance(flag, list)
+        tm.that(list(flag), eq=[True])
+
+    @staticmethod
+    def test_parse_ldif_record_preserves_significant_dn_whitespace() -> None:
+        """Decoded DN values keep significant interior whitespace bytes.
+
+        Production dumps carry CNs with trailing tabs/NBSPs inside the
+        base64-encoded DN; the parsed DN must address the same server
+        entry byte-for-byte, never silently normalize it.
+        """
+        result = u.Ldif.parse_ldif_record([
+            "dn:: Y249c3BvdAksZGM9ZXhhbXBsZSxkYz1jb20=",
+            "cn: spot",
+            "objectClass: person",
+        ])
+
+        entry = u.Tests.assert_success(result)
+        assert entry.dn is not None
+        tm.that(entry.dn.value, eq="cn=spot\t,dc=example,dc=com")
+
+    @staticmethod
     def test_parse_ldif_record_fails_without_dn() -> None:
         """Test parse ldif record fails without dn."""
         result = u.Ldif.parse_ldif_record(["cn: alice", "sn: smith"])
