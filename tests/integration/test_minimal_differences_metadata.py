@@ -6,7 +6,7 @@ boolean-conversion metadata payload, verbatim DN preservation, and round-trip
 ``write()`` output. No private attributes, collaborators, or internal call
 spying are touched -- only observable public behavior.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 

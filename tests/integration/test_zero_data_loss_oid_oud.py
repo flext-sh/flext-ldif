@@ -14,7 +14,7 @@ Guarantees under test:
 - Soft-deleted attributes are preserved in ``removed_attributes``.
 - ``restore_original_format`` reproduces the exact original entry text.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 

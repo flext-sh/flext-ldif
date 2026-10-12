@@ -10,7 +10,7 @@ boundary inputs. Every assertion targets observable public behavior only:
 No private attributes, internal collaborators, or implementation data
 structures are inspected.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 

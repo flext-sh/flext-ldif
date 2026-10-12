@@ -88,7 +88,7 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     @overload
-    def parse(
+    def parse_definition(
         definition: str | FlextLdifModels.Ldif.DN | None,
         server_type: str | None = None,
         parse_parts_hook: None = None,
@@ -96,7 +96,7 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     @overload
-    def parse(
+    def parse_definition(
         definition: str | FlextLdifModels.Ldif.DN | None,
         server_type: str | None,
         parse_parts_hook: Callable[[str], t.Ldif.MutableMetadataMapping]
@@ -104,7 +104,7 @@ class FlextLdifUtilitiesDispatch:
     ) -> p.Result[t.Ldif.MutableMetadataMapping]: ...
 
     @staticmethod
-    def parse(
+    def parse_definition(
         definition: str | FlextLdifModels.Ldif.DN | None,
         server_type: str | None = None,
         parse_parts_hook: Callable[[str], t.Ldif.MutableMetadataMapping]
@@ -181,7 +181,7 @@ class FlextLdifUtilitiesDispatch:
                     "validator call requires scalar, not entry sequence",
                 )
             case _ if isinstance(value_or_entries, FlextLdifModels.Ldif.DN):
-                result = FlextLdifUtilitiesValidation.validate_value(
+                result = FlextLdifUtilitiesValidation.validate_ldif_value(
                     value_or_entries.value,
                     *validators,
                 )
@@ -189,7 +189,7 @@ class FlextLdifUtilitiesDispatch:
                 validated_value: t.JsonValue = u.normalize_to_json_value(
                     value_or_entries,
                 )
-                result = FlextLdifUtilitiesValidation.validate_value(
+                result = FlextLdifUtilitiesValidation.validate_ldif_value(
                     validated_value,
                     *validators,
                 )

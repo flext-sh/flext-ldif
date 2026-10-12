@@ -9,14 +9,10 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 from flext_ldif import c, m, t
-from flext_ldif.servers._oid import (
-    FlextLdifServersOidConstants,
-    FlextLdifServersOidEntryBooleanMixin,
-)
-from flext_ldif.servers._rfc import (
-    FlextLdifServersRfcConstants,
-    FlextLdifServersRfcEntry,
-)
+from flext_ldif.servers._oid import FlextLdifServersOidEntryBooleanMixin
+from flext_ldif.servers._oid.server_constants import FlextLdifServersOidConstants
+from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
+from flext_ldif.servers._rfc.server_constants import FlextLdifServersRfcConstants
 
 
 class FlextLdifServersOidEntryRestoreMixin(

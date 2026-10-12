@@ -10,8 +10,8 @@ import re
 from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._oud import FlextLdifServersOudConstants
-from flext_ldif.servers._rfc import FlextLdifServersRfcSchema
+from flext_ldif.servers._oud.server_constants import FlextLdifServersOudConstants
+from flext_ldif.servers._rfc.schema import FlextLdifServersRfcSchema
 
 if TYPE_CHECKING:
     from collections.abc import MutableMapping
@@ -21,22 +21,6 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
     """Oracle OUD Schema Implementation (RFC 4512 + OUD Extensions)."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
-
-    @override
-    def write(
-        self,
-        entries: t.MutableSequenceOf[m.Ldif.Entry],
-        write_options: m.Ldif.WriteFormatOptions | None = None,
-    ) -> p.Result[str]:
-        """Write entries, sanitizing schema values for OUD acceptance.
-
-        Returns:
-            The resulting ``p.Result[str]``.
-        """
-        return super().write(
-            self._sanitize_schema_carriers(list(entries)),
-            write_options,
-        )
 
     def _sanitize_schema_carriers(
         self,
@@ -107,6 +91,26 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
         return declared
 
     @staticmethod
+    def _strip_names_for_registry(
+        values: t.MutableSequenceOf[m.Ldif.ChangeOperationValue],
+    ) -> t.MutableSequenceOf[m.Ldif.ChangeOperationValue]:
+        """Strip NAME declarations from schema values for registry processing.
+
+        Returns a list of ChangeOperationValue with NAME removed from the
+        value string, preserving all other metadata.
+
+        Returns:
+            The resulting ``t.MutableSequenceOf[m.Ldif.ChangeOperationValue]``.
+        """
+        stripped: list[m.Ldif.ChangeOperationValue] = []
+        for value in values:
+            cleaned = re.sub(r"\s*NAME\s+'[^']*'", "", value.value)
+            stripped.append(
+                value.model_copy(update={"value": cleaned}),
+            )
+        return stripped
+
+    @staticmethod
     def _sanitize_schema_values(
         values: t.MutableSequenceOf[m.Ldif.ChangeOperationValue],
     ) -> t.MutableSequenceOf[m.Ldif.ChangeOperationValue]:
@@ -127,10 +131,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
                 r"\1",
                 updated,
             )
-            if (
-                "NO-USER-MODIFICATION" in updated
-                and "USAGE" not in updated
-            ):
+            if "NO-USER-MODIFICATION" in updated and "USAGE" not in updated:
                 updated = updated.replace(
                     "NO-USER-MODIFICATION",
                     "USAGE directoryOperation NO-USER-MODIFICATION",
@@ -496,11 +497,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
                 continue
             sanitized = [item.replace("_", "-") for item in names]
             registry = self.__dict__.get("_declared_attribute_names") or set()
-            declared = [
-                item
-                for item in sanitized
-                if item.casefold() in registry
-            ]
+            declared = [item for item in sanitized if item.casefold() in registry]
             if declared != names:
                 dropped = sorted(set(sanitized) - set(declared))
                 FlextLdifServersOudSchema._module_logger.warning(

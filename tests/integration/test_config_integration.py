@@ -12,7 +12,7 @@ No private attributes, internal collaborators, or line-coverage pokes are used.
 
 Modules tested: flext_ldif (facade), flext_ldif.settings
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 

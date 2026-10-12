@@ -3,7 +3,7 @@
 Per AGENTS.md §2.3 (MRO Composition) + §3.1 (200-LOC cap): one of the
 domain-specific Mixins composed into ``FlextLdifServersOudHelpersMixin``.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
@@ -12,7 +12,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 from flext_ldif import c, m, t, u
-from flext_ldif.servers._oud import FlextLdifServersOudConstants
+from flext_ldif.servers._oud.server_constants import FlextLdifServersOudConstants
 
 
 class FlextLdifServersOudAclMetadataMixin:

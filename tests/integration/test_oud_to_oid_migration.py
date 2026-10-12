@@ -100,7 +100,7 @@ class TestsFlextLdifOudToOidMigration:
         return fixture
 
     @staticmethod
-    def _dn_set(entries: Sequence[m.Entry]) -> set[str]:
+    def _dn_set(entries: Sequence[m.Ldif.Entry]) -> set[str]:
         """Collect whitespace-normalized DN values from parsed entries.
 
         Migration canonicalizes optional whitespace after RDN separators

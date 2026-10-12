@@ -9,7 +9,7 @@ flext-ldif enables validation analysis with ZERO code bloat:
 Original: 246 lines | DRY Advanced: ~50 lines (80% reduction)
 SRP: Dataset generation, validation, analysis - each isolated, composition handles flow
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 

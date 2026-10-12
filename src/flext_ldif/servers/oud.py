@@ -8,19 +8,15 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from flext_ldif import FlextLdifServersRfc
-from flext_ldif.servers._base import (
-    FlextLdifServersBaseEntry,
-    FlextLdifServersBaseSchema,
-    FlextLdifServersBaseSchemaAcl,
-)
-from flext_ldif.servers._oud import (
-    FlextLdifServersOudAcl,
-    FlextLdifServersOudConstants,
-    FlextLdifServersOudEntry,
-    FlextLdifServersOudSchema,
-)
-from flext_ldif.servers._rfc import FlextLdifServersRfcConstants
+from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
+from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
+from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
+from flext_ldif.servers._oud import FlextLdifServersOudAcl
+from flext_ldif.servers._oud.entry import FlextLdifServersOudEntry
+from flext_ldif.servers._oud.schema import FlextLdifServersOudSchema
+from flext_ldif.servers._oud.server_constants import FlextLdifServersOudConstants
+from flext_ldif.servers._rfc.server_constants import FlextLdifServersRfcConstants
+from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 
 class FlextLdifServersOud(FlextLdifServersRfc):

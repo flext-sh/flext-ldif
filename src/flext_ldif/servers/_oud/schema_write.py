@@ -11,7 +11,7 @@ therefore re-serialize ``attributetypes``/``objectclasses`` values through
 the canonical source-parse → target-write cycle; same-server round trips
 restore the original definition bytes unchanged.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 

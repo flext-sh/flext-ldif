@@ -12,7 +12,7 @@ from typing import cast
 class FlextLdifUtilitiesLazyMeta(type):
     """Assemble ``Ldif`` on first class-level access."""
 
-    def __getattr__(cls, name: str) -> object:
+    def __getattr__(cls, name: str) -> type:
         """Assemble and return the ``Ldif`` tree on first class-level access.
 
         For all other attributes, delegate to the normal MRO to allow access
@@ -20,8 +20,10 @@ class FlextLdifUtilitiesLazyMeta(type):
 
         Returns:
             The resulting ``type`` for ``Ldif``, or the inherited attribute.
+
+        Raises:
+            AttributeError: Always.
         """
         if name == "Ldif":
-            build_tree = cls.build_ldif_tree
-            return cast("type", build_tree())
-        return super().__getattr__(name)
+            return cast("type", cls.build_ldif_tree())
+        raise AttributeError(name)

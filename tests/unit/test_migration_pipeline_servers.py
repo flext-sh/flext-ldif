@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from flext_ldif.servers import FlextLdifServersOidConstants
-from flext_ldif.servers._rfc import FlextLdifServersRfcConstants
+from flext_ldif.servers._rfc.server_constants import FlextLdifServersRfcConstants
 from flext_ldif.services import FlextLdifMigrationPipeline
 from tests import c, m, tm
 

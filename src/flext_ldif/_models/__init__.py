@@ -10,24 +10,10 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core import install_lazy_exports
+from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_ldif._models._ldif_namespace import FlextLdifNamespace
-    from flext_ldif._models._settings_acl import FlextLdifModelsSettingsAcl
-    from flext_ldif._models._settings_criteria import FlextLdifModelsSettingsCriteria
-    from flext_ldif._models._settings_migrate import FlextLdifModelsSettingsMigrate
-    from flext_ldif._models._settings_misc import FlextLdifModelsSettingsMisc
-    from flext_ldif._models._settings_normalization import (
-        FlextLdifModelsSettingsNormalization,
-    )
-    from flext_ldif._models._settings_processing import (
-        FlextLdifModelsSettingsProcessing,
-    )
-    from flext_ldif._models._settings_rules import FlextLdifModelsSettingsRules
-    from flext_ldif._models._settings_validation import (
-        FlextLdifModelsSettingsValidation,
-    )
     from flext_ldif._models.acl_convert import FlextLdifModelsAclConvert
     from flext_ldif._models.base import FlextLdifModelsBases
     from flext_ldif._models.collections import FlextLdifModelsCollections
@@ -77,14 +63,6 @@ __all__: tuple[str, ...] = (
     "FlextLdifModelsResults",
     "FlextLdifModelsResultsStatistics",
     "FlextLdifModelsSettings",
-    "FlextLdifModelsSettingsAcl",
-    "FlextLdifModelsSettingsCriteria",
-    "FlextLdifModelsSettingsMigrate",
-    "FlextLdifModelsSettingsMisc",
-    "FlextLdifModelsSettingsNormalization",
-    "FlextLdifModelsSettingsProcessing",
-    "FlextLdifModelsSettingsRules",
-    "FlextLdifModelsSettingsValidation",
     "FlextLdifNamespace",
 )
 
@@ -111,14 +89,6 @@ install_lazy_exports(
         "FlextLdifModelsResults": ".results",
         "FlextLdifModelsResultsStatistics": ".results_statistics",
         "FlextLdifModelsSettings": ".settings",
-        "FlextLdifModelsSettingsAcl": "._settings_acl",
-        "FlextLdifModelsSettingsCriteria": "._settings_criteria",
-        "FlextLdifModelsSettingsMigrate": "._settings_migrate",
-        "FlextLdifModelsSettingsMisc": "._settings_misc",
-        "FlextLdifModelsSettingsNormalization": "._settings_normalization",
-        "FlextLdifModelsSettingsProcessing": "._settings_processing",
-        "FlextLdifModelsSettingsRules": "._settings_rules",
-        "FlextLdifModelsSettingsValidation": "._settings_validation",
         "FlextLdifNamespace": "._ldif_namespace",
     }),
     public_exports=__all__,

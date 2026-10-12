@@ -2,7 +2,7 @@
 
 from flext_ldif import m
 from flext_ldif import u
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
@@ -30,19 +30,19 @@ from flext_ldif._utilities import FlextLdifUtilitiesEntry
 class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
     """Namespace for LDIF entry domain models."""
 
-    EntryStatistics = FlextLdifModelsDomainEntryStatistics
+    type EntryStatistics = FlextLdifModelsDomainEntryStatistics
     """Canonical entry statistics model.
 
     Implementation module: ``domain_entry_statistics``.
     """
 
-    Control = FlextLdifModelsDomainEntryControl
+    type Control = FlextLdifModelsDomainEntryControl
     """Canonical RFC 2849 control line model.
 
     Implementation module: ``domain_entry_control``.
     """
 
-    ChangeOperationValue = FlextLdifModelsDomainEntryChangeOperationValue
+    type ChangeOperationValue = FlextLdifModelsDomainEntryChangeOperationValue
     """Canonical modify-operation value model.
 
     Implementation module: ``domain_entry_change_value``.
@@ -702,7 +702,11 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
                 entry_instance: Self = cls.model_validate(entry_data)
                 ok_result: p.Result[Self] = r[Self].ok(entry_instance)
             except c.EXC_BASIC_TYPE as e:
-                return r[Self].fail(f"Failed to create Entry: {e}", exception=e)
+                error_msg = f"Failed to create Entry: {e}"
+                return r[Self].fail(
+                    error_msg,
+                    exception=e,
+                )
             else:
                 return ok_result
 

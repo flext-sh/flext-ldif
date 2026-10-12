@@ -15,7 +15,7 @@ from flext_core import m
 class FlextLdifNamespace(m.BaseModel):
     """Open, frozen namespace exposing every ``config/*.yaml`` domain model-less."""
 
-    model_config: ClassVar[m.SettingsConfigDict] = m.SettingsConfigDict(
+    model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
         extra="allow",
         frozen=True,
     )

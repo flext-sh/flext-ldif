@@ -21,10 +21,8 @@ from flext_ldif.servers import (
     FlextLdifServersOud,
     FlextLdifServersRfc,
 )
-from flext_ldif.servers._rfc import (
-    FlextLdifServersRfcConstants,
-    FlextLdifServersRfcEntry,
-)
+from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
+from flext_ldif.servers._rfc.server_constants import FlextLdifServersRfcConstants
 from tests import t, tm
 from tests.unit.services.typings import TestsFlextLdifServiceTypings
 

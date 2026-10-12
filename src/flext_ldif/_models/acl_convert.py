@@ -6,7 +6,7 @@ Cohesive home for the OID→OUD ACL conversion model layer (parsed OID rules,
 assembled OUD aci rules, and the subject-matcher parse descriptor). Mirrors the
 ``_constants/acl_convert.py`` SSOT; composed into ``m.Ldif`` via MRO.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 

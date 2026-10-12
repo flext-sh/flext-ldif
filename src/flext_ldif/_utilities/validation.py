@@ -14,7 +14,7 @@ from flext_ldif import p, t
 
 class FlextLdifUtilitiesValidation:
     @staticmethod
-    def validate_value(
+    def validate_ldif_value(
         value: t.JsonValue,
         *validators: p.ValidatorSpec,
     ) -> p.Result[t.JsonValue]:

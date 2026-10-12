@@ -15,7 +15,7 @@ Python 3.13+ Advanced Features:
 Original: 195 lines | DRY Advanced: ~40 lines (80% reduction)
 SRP: Each method does ONE thing, composition handles complexity
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 

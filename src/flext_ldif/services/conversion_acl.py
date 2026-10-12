@@ -8,23 +8,16 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from flext_ldif import (
+from flext_ldif import c, m, p, r, t, u
+from flext_ldif.services.conversion_acl_preserve import (
     FlextLdifConversionAclPreserveMixin,
-    FlextLdifConversionSupportMixin,
-    c,
-    m,
-    p,
-    r,
-    s,
-    t,
-    u,
 )
+from flext_ldif.services.conversion_support import FlextLdifConversionSupportMixin
 
 
 class FlextLdifConversionAclMixin(
     FlextLdifConversionAclPreserveMixin,
     FlextLdifConversionSupportMixin,
-    s[m.Ldif.Response],
     ABC,
 ):
     """ACL-model conversion orchestration (preservation via the parent mixin)."""

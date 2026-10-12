@@ -6,7 +6,7 @@ parse -> write -> parse round-trip. Every assertion targets observable public
 behavior: the `r[T]` outcome of `parse_ldif` / `write`, the parsed entry count,
 and the public `entry.metadata.extensions` mapping state.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 

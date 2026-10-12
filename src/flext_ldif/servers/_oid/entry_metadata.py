@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Mapping, MutableMapping
 
 from flext_ldif import c, m, t, u
-from flext_ldif.servers._oid import FlextLdifServersOidConstants
+from flext_ldif.servers._oid.server_constants import FlextLdifServersOidConstants
 from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
 
 

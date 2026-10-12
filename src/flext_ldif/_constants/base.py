@@ -13,7 +13,7 @@ from __future__ import annotations
 import re
 import struct
 from types import MappingProxyType
-from typing import TYPE_CHECKING, ClassVar, Final
+from typing import TYPE_CHECKING, ClassVar
 
 from flext_ldif._constants.acl_convert_oud import FlextLdifConstantsAclConvertOud
 from flext_ldif._constants.enums import FlextLdifConstantsEnums
@@ -465,7 +465,7 @@ class FlextLdifConstantsBase:
     SERVERS: ClassVar[str] = "ldif_servers"
     """Registry name for the LDIF server registry DSL."""
 
-    RFC_ACL_ATTRIBUTES: Final[t.StrSequence] = (
+    RFC_ACL_ATTRIBUTES: ClassVar[t.StrSequence] = (
         "aci",
         "acl",
         "olcAccess",
@@ -473,7 +473,7 @@ class FlextLdifConstantsBase:
         "aclEntry",
     )
 
-    ALL_DN_VALUED: Final[frozenset[str]] = frozenset((
+    ALL_DN_VALUED: ClassVar[frozenset[str]] = frozenset((
         "member",
         "uniqueMember",
         "owner",
@@ -490,11 +490,11 @@ class FlextLdifConstantsBase:
         "subordinateDn",
     ))
 
-    OID_TRUE: Final[str] = "1"
+    OID_TRUE: ClassVar[str] = "1"
 
-    OID_FALSE: Final[str] = "0"
+    OID_FALSE: ClassVar[str] = "0"
 
-    OID_BOOLEAN_ATTRIBUTES: Final[frozenset[str]] = frozenset({
+    OID_BOOLEAN_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset({
         "orclisenabled",
         "orclaccountlocked",
         "orclpwdmustchange",
@@ -518,32 +518,32 @@ class FlextLdifConstantsBase:
         "pwdallowuserchange",
     })
 
-    OID_TO_RFC_BOOL: Final[t.StrMapping] = MappingProxyType({
+    OID_TO_RFC_BOOL: ClassVar[t.StrMapping] = MappingProxyType({
         OID_TRUE: TRUE_RFC,
         OID_FALSE: FALSE_RFC,
         "true": TRUE_RFC,
         "false": FALSE_RFC,
     })
 
-    RFC_TO_OID_BOOL: Final[t.StrMapping] = MappingProxyType({
+    RFC_TO_OID_BOOL: ClassVar[t.StrMapping] = MappingProxyType({
         TRUE_RFC: OID_TRUE,
         FALSE_RFC: OID_FALSE,
         "true": OID_TRUE,
         "false": OID_FALSE,
     })
 
-    ATTRIBUTE_TRANSFORMATION_OID_TO_RFC: Final[t.StrMapping] = MappingProxyType({
+    ATTRIBUTE_TRANSFORMATION_OID_TO_RFC: ClassVar[t.StrMapping] = MappingProxyType({
         "orclguid": "entryUUID",
         "orclaci": "aci",
         "orclentrylevelaci": "aci",
     })
 
-    ATTRIBUTE_TRANSFORMATION_RFC_TO_OID: Final[t.StrMapping] = MappingProxyType({
+    ATTRIBUTE_TRANSFORMATION_RFC_TO_OID: ClassVar[t.StrMapping] = MappingProxyType({
         "entryUUID": "orclguid",
         "aci": "orclaci",
     })
 
-    ACL_PERMISSION_KEYS: Final[t.StrSequence] = (
+    ACL_PERMISSION_KEYS: ClassVar[t.StrSequence] = (
         "read",
         "write",
         "add",
@@ -557,21 +557,23 @@ class FlextLdifConstantsBase:
         "all",
     )
 
-    VALID_SERVER_TYPES: Final[frozenset[str]] = frozenset(
+    VALID_SERVER_TYPES: ClassVar[frozenset[str]] = frozenset(
         server_type.value for server_type in FlextLdifConstantsEnums.ServerTypes
     )
 
-    DETECTION_PATTERN_ATTR: Final[str] = "DETECTION_PATTERN"
+    DETECTION_PATTERN_ATTR: ClassVar[str] = "DETECTION_PATTERN"
 
-    DETECTION_OID_PATTERN_ATTR: Final[str] = "DETECTION_OID_PATTERN"
+    DETECTION_OID_PATTERN_ATTR: ClassVar[str] = "DETECTION_OID_PATTERN"
 
-    DETECTION_ACTIVE_DIRECTORY_ATTRIBUTE: Final[str] = "samaccountname"
+    DETECTION_ACTIVE_DIRECTORY_ATTRIBUTE: ClassVar[str] = "samaccountname"
 
-    DETECTION_ACTIVE_DIRECTORY_DESCRIPTION: Final[str] = "Active Directory attributes"
+    DETECTION_ACTIVE_DIRECTORY_DESCRIPTION: ClassVar[str] = (
+        "Active Directory attributes"
+    )
 
-    DETECTION_OID_ACL_DESCRIPTION: Final[str] = "Oracle OID ACLs"
+    DETECTION_OID_ACL_DESCRIPTION: ClassVar[str] = "Oracle OID ACLs"
 
-    DETECTION_SCORE_SPECS: Final[
+    DETECTION_SCORE_SPECS: ClassVar[
         tuple[tuple[FlextLdifConstantsEnums.ServerTypes, str, bool], ...]
     ] = (
         (FlextLdifConstantsEnums.ServerTypes.OID, DETECTION_OID_PATTERN_ATTR, True),
@@ -584,7 +586,7 @@ class FlextLdifConstantsBase:
         (FlextLdifConstantsEnums.ServerTypes.APACHE, DETECTION_PATTERN_ATTR, False),
     )
 
-    DETECTION_PATTERN_SPECS: Final[
+    DETECTION_PATTERN_SPECS: ClassVar[
         tuple[tuple[FlextLdifConstantsEnums.ServerTypes, str, str, bool], ...]
     ] = (
         (
@@ -637,15 +639,15 @@ class FlextLdifConstantsBase:
         ),
     )
 
-    PROCESSING_STAGE_NORMALIZE_DN: Final[str] = "normalize_dn"
+    PROCESSING_STAGE_NORMALIZE_DN: ClassVar[str] = "normalize_dn"
 
-    PROCESSING_STAGE_NORMALIZE_ATTRS: Final[str] = "normalize_attrs"
+    PROCESSING_STAGE_NORMALIZE_ATTRS: ClassVar[str] = "normalize_attrs"
 
-    PROCESSING_STAGE_SERVER_TRANSFORM: Final[str] = "server_transform"
+    PROCESSING_STAGE_SERVER_TRANSFORM: ClassVar[str] = "server_transform"
 
-    ENTRY_OPERATION_REMOVE_ATTRIBUTES: Final[str] = "remove_attributes"
+    ENTRY_OPERATION_REMOVE_ATTRIBUTES: ClassVar[str] = "remove_attributes"
 
-    CATEGORY_BUCKET_ORDER: Final[tuple[FlextLdifConstantsEnums.Category, ...]] = (
+    CATEGORY_BUCKET_ORDER: ClassVar[tuple[FlextLdifConstantsEnums.Category, ...]] = (
         FlextLdifConstantsEnums.Category.SCHEMA,
         FlextLdifConstantsEnums.Category.HIERARCHY,
         FlextLdifConstantsEnums.Category.USERS,
@@ -654,7 +656,7 @@ class FlextLdifConstantsBase:
         FlextLdifConstantsEnums.Category.REJECTED,
     )
 
-    CATEGORY_FILTERABLE_BY_BASE_DN: Final[
+    CATEGORY_FILTERABLE_BY_BASE_DN: ClassVar[
         frozenset[FlextLdifConstantsEnums.Category]
     ] = frozenset({
         FlextLdifConstantsEnums.Category.HIERARCHY,
@@ -663,11 +665,11 @@ class FlextLdifConstantsBase:
         FlextLdifConstantsEnums.Category.ACL,
     })
 
-    CATEGORY_VALUES: Final[frozenset[str]] = frozenset(
+    CATEGORY_VALUES: ClassVar[frozenset[str]] = frozenset(
         category.value for category in FlextLdifConstantsEnums.Category
     )
 
-    DEFAULT_CATEGORIZATION_PRIORITY: Final[
+    DEFAULT_CATEGORIZATION_PRIORITY: ClassVar[
         tuple[FlextLdifConstantsEnums.Category, ...]
     ] = (
         FlextLdifConstantsEnums.Category.HIERARCHY,
@@ -676,29 +678,31 @@ class FlextLdifConstantsBase:
         FlextLdifConstantsEnums.Category.ACL,
     )
 
-    CATEGORY_RULE_OBJECTCLASS_FIELDS: Final[t.MappingKV[str, str]] = MappingProxyType({
-        FlextLdifConstantsEnums.Category.HIERARCHY: ("hierarchy_objectclasses"),
-        FlextLdifConstantsEnums.Category.USERS: "user_objectclasses",
-        FlextLdifConstantsEnums.Category.GROUPS: "group_objectclasses",
-    })
+    CATEGORY_RULE_OBJECTCLASS_FIELDS: ClassVar[t.MappingKV[str, str]] = (
+        MappingProxyType({
+            FlextLdifConstantsEnums.Category.HIERARCHY: ("hierarchy_objectclasses"),
+            FlextLdifConstantsEnums.Category.USERS: "user_objectclasses",
+            FlextLdifConstantsEnums.Category.GROUPS: "group_objectclasses",
+        })
+    )
 
-    CATEGORY_RULE_ATTRIBUTE_FIELDS: Final[t.MappingKV[str, str]] = MappingProxyType({
+    CATEGORY_RULE_ATTRIBUTE_FIELDS: ClassVar[t.MappingKV[str, str]] = MappingProxyType({
         FlextLdifConstantsEnums.Category.ACL: "acl_attributes",
     })
 
-    CATEGORY_ATTRIBUTE_MARKER_PREFIX: Final[str] = "attr:"
+    CATEGORY_ATTRIBUTE_MARKER_PREFIX: ClassVar[str] = "attr:"
 
-    DN_PREVIEW_LENGTH: Final[int] = 100
+    DN_PREVIEW_LENGTH: ClassVar[int] = 100
 
-    EMPTY_STR_FROZENSET: Final[frozenset[str]] = frozenset()
+    EMPTY_STR_FROZENSET: ClassVar[frozenset[str]] = frozenset()
 
-    MATCHING_RULES: Final[str] = "matchingRules"
+    MATCHING_RULES: ClassVar[str] = "matchingRules"
 
-    MATCHING_RULE_USE: Final[str] = "matchingRuleUse"
+    MATCHING_RULE_USE: ClassVar[str] = "matchingRuleUse"
 
-    LDAP_SYNTAXES: Final[str] = "ldapSyntaxes"
+    LDAP_SYNTAXES: ClassVar[str] = "ldapSyntaxes"
 
-    SCHEMA_OID_ATTRIBUTE_KEYS: Final[t.StrPairTuple] = (
+    SCHEMA_OID_ATTRIBUTE_KEYS: ClassVar[t.StrPairTuple] = (
         (ATTRIBUTE_TYPES, "attributetypes"),
         (OBJECT_CLASSES, "objectclasses"),
         (MATCHING_RULES, "matchingrules"),
@@ -706,26 +710,26 @@ class FlextLdifConstantsBase:
         (LDAP_SYNTAXES, "ldapsyntaxes"),
     )
 
-    SCHEMA_CATEGORY_ATTRIBUTE_KEYS: Final[frozenset[str]] = frozenset(
+    SCHEMA_CATEGORY_ATTRIBUTE_KEYS: ClassVar[frozenset[str]] = frozenset(
         key_pair[1] for key_pair in SCHEMA_OID_ATTRIBUTE_KEYS
     )
 
-    OID_SCHEMA_DN: Final[str] = "cn=subschemasubentry"
+    OID_SCHEMA_DN: ClassVar[str] = "cn=subschemasubentry"
 
-    RFC_SCHEMA_DN: Final[str] = "cn=schema"
+    RFC_SCHEMA_DN: ClassVar[str] = "cn=schema"
 
-    SCHEMA_DN_MARKERS: Final[frozenset[str]] = frozenset({
+    SCHEMA_DN_MARKERS: ClassVar[frozenset[str]] = frozenset({
         OID_SCHEMA_DN,
         "cn=subschema",
         RFC_SCHEMA_DN,
     })
 
-    SCHEMA_OBJECTCLASS_MARKERS: Final[frozenset[str]] = frozenset({
+    SCHEMA_OBJECTCLASS_MARKERS: ClassVar[frozenset[str]] = frozenset({
         "subschema",
         "subentry",
     })
 
-    WHITELIST_RULE_OID_FIELDS: Final[t.StrSequence] = (
+    WHITELIST_RULE_OID_FIELDS: ClassVar[t.StrSequence] = (
         "allowed_attribute_oids",
         "allowed_objectclass_oids",
         "allowed_matchingrule_oids",
@@ -733,7 +737,7 @@ class FlextLdifConstantsBase:
         "allowed_ldapsyntax_oids",
     )
 
-    WHITELIST_RULE_SCHEMA_ATTRIBUTE_KEYS: Final[tuple[tuple[str, str], ...]] = tuple(
+    WHITELIST_RULE_SCHEMA_ATTRIBUTE_KEYS: ClassVar[tuple[tuple[str, str], ...]] = tuple(
         (field_name, attr_keys[1])
         for field_name, attr_keys in zip(
             WHITELIST_RULE_OID_FIELDS,
@@ -742,15 +746,15 @@ class FlextLdifConstantsBase:
         )
     )
 
-    REJECTION_REASON_NO_CATEGORY_MATCH: Final[str] = "No category match"
+    REJECTION_REASON_NO_CATEGORY_MATCH: ClassVar[str] = "No category match"
 
-    ERR_FAILED_NORMALIZE_RULES: Final[str] = "Failed to normalize rules"
+    ERR_FAILED_NORMALIZE_RULES: ClassVar[str] = "Failed to normalize rules"
 
-    ERR_FAILED_FILTER_ENTRIES: Final[str] = "Failed to filter entries"
+    ERR_FAILED_FILTER_ENTRIES: ClassVar[str] = "Failed to filter entries"
 
-    ERR_SERVER_REGISTRY_UNAVAILABLE: Final[str] = "Server registry not available"
+    ERR_SERVER_REGISTRY_UNAVAILABLE: ClassVar[str] = "Server registry not available"
 
-    ERR_UNKNOWN: Final[str] = "Unknown error"
+    ERR_UNKNOWN: ClassVar[str] = "Unknown error"
 
     BINARY_SYNTAX = "binary"
 
@@ -811,7 +815,7 @@ class FlextLdifConstantsBase:
         "1.3.6.1.4.1.1466.115.121.1.58": "substring_assertion",
     })
 
-    NAME_TO_TYPE_CATEGORY: Final[t.StrMapping] = MappingProxyType({
+    NAME_TO_TYPE_CATEGORY: ClassVar[t.StrMapping] = MappingProxyType({
         "integer": "integer",
         "boolean": "boolean",
         "distinguished_name": "dn",
@@ -878,13 +882,13 @@ class FlextLdifConstantsBase:
         "uui": "string",
     })
 
-    DEFAULT_ENCODING: Final[str] = FlextLdifConstantsEnums.Encoding.UTF8.value
+    DEFAULT_ENCODING: ClassVar[str] = FlextLdifConstantsEnums.Encoding.UTF8.value
 
-    DEFAULT_STRICT_VALIDATION: Final[bool] = True
+    DEFAULT_STRICT_VALIDATION: ClassVar[bool] = True
 
-    UNKNOWN_VALUE: Final[str] = "unknown"
+    UNKNOWN_VALUE: ClassVar[str] = "unknown"
 
-    ASCII_THRESHOLD: Final[int] = 127
+    ASCII_THRESHOLD: ClassVar[int] = 127
 
 
 __all__: list[str] = [

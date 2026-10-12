@@ -5,7 +5,7 @@ its service factories: return values, ``FlextResult`` outcomes, public model
 state, edge cases, invariants, and round-trip idempotence. No private members,
 internal collaborators, or implementation details are exercised.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 

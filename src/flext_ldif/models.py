@@ -4,7 +4,7 @@ Facade that groups all LDIF model classes for the ``FlextLdifModels``
 namespace.  Every nested class uses real MRO inheritance from its
 internal ``models`` definition — no ``TypeAlias`` for classes.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
@@ -16,20 +16,32 @@ from flext_cli import FlextCliModels
 
 from flext_core import FlextUtilities as u
 from flext_ldif import t
-from flext_ldif._models import (
-    FlextLdifModelsBases,
-    FlextLdifModelsCollections,
-    FlextLdifModelsDomainEntry,
-    FlextLdifModelsDomainEntryChangeOperationValue,
-    FlextLdifModelsDomainEntryControl,
-    FlextLdifModelsDomainEntryStatistics,
-    FlextLdifModelsDomainsEntries,
-    FlextLdifModelsEvents,
-    FlextLdifModelsProcessing,
-    FlextLdifModelsResults,
-    FlextLdifModelsSettings,
-    FlextLdifNamespace,
+from flext_ldif._models._ldif_namespace import FlextLdifNamespace
+from flext_ldif._models.acl_convert import FlextLdifModelsAclConvert
+from flext_ldif._models.base import FlextLdifModelsBases
+from flext_ldif._models.collections import FlextLdifModelsCollections
+from flext_ldif._models.domain_acl import FlextLdifModelsDomainAcl
+from flext_ldif._models.domain_attributes import FlextLdifModelsDomainAttributes
+from flext_ldif._models.domain_dn import FlextLdifModelsDomainDN
+from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries
+from flext_ldif._models.domain_entry import FlextLdifModelsDomainEntry
+from flext_ldif._models.domain_entry_change import (
+    FlextLdifModelsDomainEntryChangeOperation,
 )
+from flext_ldif._models.domain_entry_change_value import (
+    FlextLdifModelsDomainEntryChangeOperationValue,
+)
+from flext_ldif._models.domain_entry_control import FlextLdifModelsDomainEntryControl
+from flext_ldif._models.domain_entry_statistics import (
+    FlextLdifModelsDomainEntryStatistics,
+)
+from flext_ldif._models.domain_metadata import FlextLdifModelsDomainMetadata
+from flext_ldif._models.domain_schema import FlextLdifModelsDomainSchema
+from flext_ldif._models.events import FlextLdifModelsEvents
+from flext_ldif._models.processing import FlextLdifModelsProcessing
+from flext_ldif._models.results import FlextLdifModelsResults
+from flext_ldif._models.results_statistics import FlextLdifModelsResultsStatistics
+from flext_ldif._models.settings import FlextLdifModelsSettings
 
 
 class FlextLdifModels(FlextCliModels):
@@ -40,19 +52,32 @@ class FlextLdifModels(FlextCliModels):
     Types live in ``typings.py``, constants in ``constants.py``.
     """
 
+    # ENFORCE-042: FlextLdifModelsSettings carries FlextSettings.model_config
+    # typed as pydantic_settings.SettingsConfigDict (a distinct TypedDict from
+    # flext-core's ConfigDict). mypy flags the cross-TypedDict override as
+    # [misc]; the class is a namespace holder never instantiated, so only one
+    # model_config resolves at runtime via the MRO — no behavioral conflict.
     class Ldif(
+        FlextLdifNamespace,
+        FlextLdifModelsBases,
+        FlextLdifModelsCollections,
         FlextLdifModelsDomainsEntries,
         FlextLdifModelsDomainEntry,
-        FlextLdifModelsSettings,
-        FlextLdifModelsEvents,
-        FlextLdifModelsResults,
-        FlextLdifModelsCollections,
-        FlextLdifModelsProcessing,
-        FlextLdifModelsBases,
+        FlextLdifModelsDomainEntryChangeOperation,
+        FlextLdifModelsDomainMetadata,
+        FlextLdifModelsAclConvert,
+        FlextLdifModelsDomainAcl,
+        FlextLdifModelsDomainAttributes,
+        FlextLdifModelsDomainSchema,
+        FlextLdifModelsDomainDN,
         FlextLdifModelsDomainEntryChangeOperationValue,
         FlextLdifModelsDomainEntryControl,
         FlextLdifModelsDomainEntryStatistics,
-        FlextLdifNamespace,
+        FlextLdifModelsEvents,
+        FlextLdifModelsProcessing,
+        FlextLdifModelsResults,
+        FlextLdifModelsResultsStatistics,
+        FlextLdifModelsSettings,
     ):
         """LDIF namespace for cross-project access."""
 
@@ -93,7 +118,7 @@ class FlextLdifModels(FlextCliModels):
     # Top-level facade aliases: the api-freeze contract requires
     # ``flext_ldif.m.X`` and ``flext_ldif.FlextLdifModels.X`` to be the same
     # object for every published model.
-    Entry = Ldif.Entry
+    type Entry = Ldif.Entry
 
 
 m = FlextLdifModels

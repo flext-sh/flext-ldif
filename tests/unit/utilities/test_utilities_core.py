@@ -27,6 +27,7 @@ class TestsFlextLdifUtilitiesCore:
         surname = "Example regression surname"
         entry = ExamplesFlextLdifUtilities.create_user_entry(7, sn=surname)
 
+        assert entry.attributes is not None
         tm.that(entry.attributes["sn"], eq=[surname])
 
     # ---- DN splitting -------------------------------------------------
@@ -114,7 +115,7 @@ class TestsFlextLdifUtilitiesCore:
     def test_parse_returns_attribute_value_pairs() -> None:
         """Parse yields ordered (attr, value) pairs for every component."""
         parsed: t.MutableStrPairSequence = tm.ok(
-            u.Ldif.parse("cn=John,ou=Users,dc=example"),
+            u.Ldif.parse_definition("cn=John,ou=Users,dc=example"),
         )
         tm.that(list(parsed), eq=[("cn", "John"), ("ou", "Users"), ("dc", "example")])
 
@@ -128,7 +129,7 @@ class TestsFlextLdifUtilitiesCore:
         error_fragment: str,
     ) -> None:
         """Parse returns a failure result describing the malformed input."""
-        tm.fail(u.Ldif.parse(bad_dn), contains=error_fragment)
+        tm.fail(u.Ldif.parse_definition(bad_dn), contains=error_fragment)
 
     @staticmethod
     def test_compare_dns_reports_failure_when_operand_missing() -> None:
