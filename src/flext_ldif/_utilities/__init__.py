@@ -78,6 +78,7 @@ if TYPE_CHECKING:
     from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
     from flext_ldif._utilities.events import FlextLdifUtilitiesEvents
     from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
+    from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
     from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
     from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
     from flext_ldif._utilities.pipeline import FlextLdifUtilitiesPipeline
@@ -145,6 +146,7 @@ __all__: tuple[str, ...] = (
     "FlextLdifUtilitiesEvents",
     "FlextLdifUtilitiesMetadata",
     "FlextLdifUtilitiesOID",
+    "FlextLdifUtilitiesObjectClass",
     "FlextLdifUtilitiesParser",
     "FlextLdifUtilitiesPipeline",
     "FlextLdifUtilitiesSchema",
@@ -217,6 +219,7 @@ install_lazy_exports(
         "FlextLdifUtilitiesEvents": ".events",
         "FlextLdifUtilitiesMetadata": ".metadata",
         "FlextLdifUtilitiesOID": ".oid",
+        "FlextLdifUtilitiesObjectClass": ".object_class",
         "FlextLdifUtilitiesParser": ".parser",
         "FlextLdifUtilitiesPipeline": ".pipeline",
         "FlextLdifUtilitiesSchema": ".schema",
