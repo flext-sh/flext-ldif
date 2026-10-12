@@ -280,7 +280,7 @@ class FlextLdifServersRfcSchema(
             )
             return parsed
 
-        parse_result_raw = u.Ldif.parse(
+        parse_result_raw = u.Ldif.parse_definition(
             definition=attr_definition,
             server_type=server_type,
             parse_parts_hook=parse_parts_hook,
