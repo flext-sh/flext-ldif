@@ -40,7 +40,12 @@ class FlextLdifModels(FlextCliModels):
     Types live in ``typings.py``, constants in ``constants.py``.
     """
 
-    class Ldif(
+    # ENFORCE-042: FlextLdifModelsSettings carries FlextSettings.model_config
+    # typed as pydantic_settings.SettingsConfigDict (a distinct TypedDict from
+    # flext-core's ConfigDict). mypy flags the cross-TypedDict override as
+    # [misc]; the class is a namespace holder never instantiated, so only one
+    # model_config resolves at runtime via the MRO — no behavioral conflict.
+    class Ldif(  # type: ignore[misc]
         FlextLdifModelsDomainsEntries,
         FlextLdifModelsDomainEntry,
         FlextLdifModelsSettings,
@@ -93,7 +98,7 @@ class FlextLdifModels(FlextCliModels):
     # Top-level facade aliases: the api-freeze contract requires
     # ``flext_ldif.m.X`` and ``flext_ldif.FlextLdifModels.X`` to be the same
     # object for every published model.
-    Entry = Ldif.Entry
+    type Entry = Ldif.Entry
 
 
 m = FlextLdifModels

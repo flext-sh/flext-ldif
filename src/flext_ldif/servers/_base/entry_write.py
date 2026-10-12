@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldif import c, m, p, r, t, u
+from flext_ldif._models import FlextLdifModelsDomainEntryStatistics
 from flext_ldif.servers._base import (
     FlextLdifServersEntryLineEmitter,
     FlextLdifServersEntryWriteBodyEmitter,
@@ -135,7 +136,7 @@ class FlextLdifServersEntryWriteContext(FlextLdifServersEntryWriteBodyEmitter):
             or entry.metadata.processing_stats is None
         ):
             return
-        statistics = m.Ldif.EntryStatistics.model_validate(
+        statistics = FlextLdifModelsDomainEntryStatistics.model_validate(
             entry.metadata.processing_stats.model_dump(),
         )
         if statistics.was_rejected:

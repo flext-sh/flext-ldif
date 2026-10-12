@@ -126,7 +126,7 @@ class FlextLdifConstantsServersRfc:
 
     MIME_OID_ENCODING: ClassVar[str] = "1.2.840.113556"
 
-    LDAP_SYNTAXES: ClassVar[t.StrSequence] = (
+    LDAP_SYNTAX_OID_LIST: ClassVar[t.StrSequence] = (
         "1.3.6.1.4.1.1466.115.121.1.12",
         "1.3.6.1.4.1.1466.115.121.1.15",
         "1.3.6.1.4.1.1466.115.121.1.27",

@@ -9,7 +9,10 @@ from __future__ import annotations
 from typing import ClassVar
 
 from flext_ldif import FlextLdifModels, c, p, r, t
-from flext_ldif._models import FlextLdifModelsDomainEntryControl
+from flext_ldif._models import (
+    FlextLdifModelsDomainEntryChangeOperationValue,
+    FlextLdifModelsDomainEntryControl,
+)
 from flext_ldif._utilities import FlextLdifParserMetadataBuilders, FlextLdifParserValues
 
 
@@ -163,7 +166,7 @@ class FlextLdifParserRecord:
             return None
         if state.current_change_operation is not None:
             state.current_change_operation.values.append(
-                FlextLdifModels.Ldif.ChangeOperationValue(
+                FlextLdifModelsDomainEntryChangeOperationValue(
                     value=decoded.value,
                     value_origin=decoded.value_origin,
                     raw_value=decoded.raw_value,

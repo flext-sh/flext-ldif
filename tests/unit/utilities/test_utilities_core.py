@@ -27,6 +27,7 @@ class TestsFlextLdifUtilitiesCore:
         surname = "Example regression surname"
         entry = ExamplesFlextLdifUtilities.create_user_entry(7, sn=surname)
 
+        assert entry.attributes is not None
         tm.that(entry.attributes["sn"], eq=[surname])
 
     # ---- DN splitting -------------------------------------------------

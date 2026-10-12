@@ -11,9 +11,9 @@ from __future__ import annotations
 from collections.abc import Mapping, MutableMapping
 from datetime import datetime
 from types import MappingProxyType
-from typing import Annotated, ClassVar, Self, override
+from typing import Annotated, ClassVar, Self, cast, override
 
-from flext_core import m, u
+from flext_core import FlextResult as FlextResult, m, u
 from flext_ldif import c, p, r, t
 from flext_ldif._models import (
     FlextLdifModelsDomainAttributes,
@@ -30,19 +30,19 @@ from flext_ldif._utilities import FlextLdifUtilitiesEntry
 class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
     """Namespace for LDIF entry domain models."""
 
-    EntryStatistics = FlextLdifModelsDomainEntryStatistics
+    type EntryStatistics = FlextLdifModelsDomainEntryStatistics
     """Canonical entry statistics model.
 
     Implementation module: ``domain_entry_statistics``.
     """
 
-    Control = FlextLdifModelsDomainEntryControl
+    type Control = FlextLdifModelsDomainEntryControl
     """Canonical RFC 2849 control line model.
 
     Implementation module: ``domain_entry_control``.
     """
 
-    ChangeOperationValue = FlextLdifModelsDomainEntryChangeOperationValue
+    type ChangeOperationValue = FlextLdifModelsDomainEntryChangeOperationValue
     """Canonical modify-operation value model.
 
     Implementation module: ``domain_entry_change_value``.
@@ -702,7 +702,16 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
                 entry_instance: Self = cls.model_validate(entry_data)
                 ok_result: p.Result[Self] = r[Self].ok(entry_instance)
             except c.EXC_BASIC_TYPE as e:
-                return r[Self].fail(f"Failed to create Entry: {e}", exception=e)
+                error_msg = f"Failed to create Entry: {e}"
+                resolved_error_code = r[Self]._extract_exception_error_code(e)
+                resolved_error_data = r[Self]._extract_exception_error_data(e)
+                fail_result = r[Self].create_failure(
+                    error_msg,
+                    resolved_error_code,
+                    resolved_error_data,
+                    e,
+                )
+                return fail_result
             else:
                 return ok_result
 

@@ -91,6 +91,26 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
         return declared
 
     @staticmethod
+    def _strip_names_for_registry(
+        values: t.MutableSequenceOf[m.Ldif.ChangeOperationValue],
+    ) -> t.MutableSequenceOf[m.Ldif.ChangeOperationValue]:
+        """Strip NAME declarations from schema values for registry processing.
+
+        Returns a list of ChangeOperationValue with NAME removed from the
+        value string, preserving all other metadata.
+
+        Returns:
+            The resulting ``t.MutableSequenceOf[m.Ldif.ChangeOperationValue]``.
+        """
+        stripped: list[m.Ldif.ChangeOperationValue] = []
+        for value in values:
+            cleaned = re.sub(r"\s*NAME\s+'[^']*'", "", value.value)
+            stripped.append(
+                value.model_copy(update={"value": cleaned}),
+            )
+        return stripped
+
+    @staticmethod
     def _sanitize_schema_values(
         values: t.MutableSequenceOf[m.Ldif.ChangeOperationValue],
     ) -> t.MutableSequenceOf[m.Ldif.ChangeOperationValue]:
