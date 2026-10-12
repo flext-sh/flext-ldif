@@ -11,9 +11,9 @@ from __future__ import annotations
 from collections.abc import Mapping, MutableMapping
 from datetime import datetime
 from types import MappingProxyType
-from typing import Annotated, ClassVar, Self, cast, override
+from typing import Annotated, ClassVar, Self, override
 
-from flext_core import FlextResult as FlextResult, m, u
+from flext_core import m, u
 from flext_ldif import c, p, r, t
 from flext_ldif._models import (
     FlextLdifModelsDomainAttributes,
@@ -705,13 +705,12 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
                 error_msg = f"Failed to create Entry: {e}"
                 resolved_error_code = r[Self]._extract_exception_error_code(e)
                 resolved_error_data = r[Self]._extract_exception_error_data(e)
-                fail_result = r[Self].create_failure(
+                return r[Self].create_failure(
                     error_msg,
                     resolved_error_code,
                     resolved_error_data,
                     e,
                 )
-                return fail_result
             else:
                 return ok_result
 
