@@ -42,6 +42,7 @@ from flext_ldif._models.processing import FlextLdifModelsProcessing
 from flext_ldif._models.results import FlextLdifModelsResults
 from flext_ldif._models.results_statistics import FlextLdifModelsResultsStatistics
 from flext_ldif._models.settings import FlextLdifModelsSettings
+from flext_ldif._models._base_parts import FlextLdifModelsBasesParts
 
 
 class FlextLdifModels(FlextCliModels):
@@ -59,6 +60,7 @@ class FlextLdifModels(FlextCliModels):
     # direct inheritance, which would clash on ``model_config``/``value``.
     class Ldif(
         FlextLdifModelsBases,
+        FlextLdifModelsBasesParts,
         FlextLdifModelsCollections,
         FlextLdifNamespace,
         FlextLdifModelsDomainsEntries,
