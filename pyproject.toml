@@ -661,3 +661,6 @@ constraint-dependencies = ["mypy<2.4.0"]
 environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
 link-mode = "copy"
 override-dependencies = ["flext-ldif"]
+
+[tool.uv.sources.flext-ldif]
+workspace = true
