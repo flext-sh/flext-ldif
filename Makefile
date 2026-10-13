@@ -350,45 +350,77 @@ TOOL_BOOTSTRAP_RESOLVE :=
 _bootstrap_setup_tools:
 	# The lifecycle invokes recursive make through mise, so preserve jobserver FDs.
 	+@set -eu; \
-	bootstrap_stage=host-mise; bootstrap_completed=false; bootstrap_sha=null; bootstrap_git_status=null; \
-	bootstrap_report="$(PROJECT_ROOT)/.reports/setup-operations/tool-bootstrap.json"; \
-	bootstrap_publish_report() { \
-		if mkdir -p "$$(dirname "$$bootstrap_report")"; then :; else return $$?; fi; \
-		if printf '%s\n' '{"root":".","operation":"tool-bootstrap","scope":["."],"candidate_sha":@@SHA@@,"candidate_read_exit_code":@@GIT_EXIT@@,"receipts":[{"root":".","executed":true,"outcome":null,"native_exit_code":@@EXIT@@,"stage":"@@STAGE@@","completed":@@COMPLETE@@,"applicability":"","files":[],"issues":[]}]}' | sed \
-			-e "s/@@SHA@@/$$bootstrap_sha/" \
-			-e "s/@@GIT_EXIT@@/$$bootstrap_git_status/" \
-			-e "s/@@EXIT@@/$$bootstrap_status/" \
-			-e "s/@@STAGE@@/$$bootstrap_stage/" \
-			-e "s/@@COMPLETE@@/$$bootstrap_completed/" > "$$bootstrap_report.pending"; then :; else return $$?; fi; \
-		mv "$$bootstrap_report.pending" "$$bootstrap_report"; \
-	}; \
-	trap 'bootstrap_status=$$?; trap - EXIT; \
-		if bootstrap_publish_report; then :; else \
-			bootstrap_report_status=$$?; \
-			printf "ERROR: bootstrap evidence publication failed (exit %s); original exit %s\n" "$$bootstrap_report_status" "$$bootstrap_status" >&2; \
-			if [ "$$bootstrap_status" -eq 0 ]; then bootstrap_status=$$bootstrap_report_status; fi; \
+	if ! command -v mise >/dev/null 2>&1; then \
+		printf 'ERROR: mise is not installed; install it (https://mise.run) and retry\n' >&2; \
+		exit 2; \
+	fi; \
+	mise_pin=; mise_resolved=0; \
+	if [ -f "$(PROJECT_ROOT)/mise.lock" ]; then \
+		mise_pin="$$( awk 'index($$0, "[[tools.\"github:jdx/mise\"]]") == 1 { inside = 1; next } inside && substr($$0, 1, 1) == "[" { exit } inside && $$1 == "version" { gsub(/[",]/, "", $$3); print $$3; exit }' "$(PROJECT_ROOT)/mise.lock" )"; \
+	fi; \
+	if [ -z "$$mise_pin" ] && [ "$(TOOL_BOOTSTRAP_RESOLVE)" = "1" ]; then \
+		mise -C "$(PROJECT_ROOT)" lock --upgrade --bump; \
+		mise_resolved=1; \
+		mise_pin="$$( awk 'index($$0, "[[tools.\"github:jdx/mise\"]]") == 1 { inside = 1; next } inside && substr($$0, 1, 1) == "[" { exit } inside && $$1 == "version" { gsub(/[",]/, "", $$3); print $$3; exit }' "$(PROJECT_ROOT)/mise.lock" )"; \
+	fi; \
+	if [ -z "$$mise_pin" ]; then \
+		printf 'ERROR: mise.lock pins no github:jdx/mise release; run make upg\n' >&2; \
+		exit 2; \
+	fi; \
+	case "$$(uname -s)/$$(uname -m)" in \
+		Linux/x86_64) mise_platform=linux-x64 ;; \
+		Linux/aarch64) mise_platform=linux-arm64 ;; \
+		Darwin/x86_64) mise_platform=macos-x64 ;; \
+		Darwin/arm64) mise_platform=macos-arm64 ;; \
+		Windows/AMD64) mise_platform=windows-x64 ;; \
+		*) printf 'ERROR: no github:jdx/mise lock platform maps to %s/%s; install mise %s (https://mise.run) and retry\n' "$$(uname -s)" "$$(uname -m)" "$$mise_pin" >&2; exit 2 ;; \
+	esac; \
+	mise_key=url; \
+	mise_url="$$( awk -v section="[tools.\"github:jdx/mise\".\"platforms.$${mise_platform}\"]" -v key="$${mise_key}" \
+	'$$0 == section { inside = 1; next } inside && substr($$0, 1, 1) == "[" { exit } inside && $$1 == key { gsub(/"/, "", $$3); print $$3; exit }' "$(PROJECT_ROOT)/mise.lock" )"; \
+	case "$$mise_url" in \
+		https://github.com/*/releases/download/*) ;; \
+		*) printf 'ERROR: mise.lock has no release URL for github:jdx/mise on %s\n' "$$mise_platform" >&2; exit 2 ;; \
+	esac; \
+	mise_key=checksum; \
+	mise_checksum="$$( awk -v section="[tools.\"github:jdx/mise\".\"platforms.$${mise_platform}\"]" -v key="$${mise_key}" \
+	'$$0 == section { inside = 1; next } inside && substr($$0, 1, 1) == "[" { exit } inside && $$1 == key { gsub(/"/, "", $$3); print $$3; exit }' "$(PROJECT_ROOT)/mise.lock" )"; \
+	case "$$mise_checksum" in \
+		sha256:*) mise_sha256="$${mise_checksum#sha256:}" ;; \
+		*) printf 'ERROR: mise.lock has no sha256 for github:jdx/mise on %s\n' "$$mise_platform" >&2; exit 2 ;; \
+	esac; \
+	mise_bootstrap_root="$${XDG_CACHE_HOME:-$$HOME/.cache}/flext/infra/mise-bootstrap"; \
+	mise_bootstrap_bin="$$mise_bootstrap_root/$$mise_pin/mise"; \
+	if [ ! -x "$$mise_bootstrap_bin" ]; then \
+		printf 'setup: recovering github:jdx/mise %s from the mise.lock release asset for %s\n' "$$mise_pin" "$$mise_platform"; \
+		mise_stage="$$mise_bootstrap_root/$$mise_pin/stage"; \
+		rm -rf "$$mise_stage"; \
+		mkdir -p "$$mise_stage" "$$(dirname "$$mise_bootstrap_bin")"; \
+		curl --proto '=https' --tlsv1.2 -fsSL -o "$$mise_stage/archive" "$$mise_url"; \
+		if command -v sha256sum >/dev/null 2>&1; then \
+			echo "$$mise_sha256  $$mise_stage/archive" | sha256sum -c -; \
+		else \
+			echo "$$mise_sha256  $$mise_stage/archive" | shasum -a 256 -c -; \
 		fi; \
-		exit "$$bootstrap_status"' EXIT; \
-	if bootstrap_candidate="$$(git -C "$(PROJECT_ROOT)" rev-parse --verify HEAD)"; then \
-		bootstrap_git_status=0; \
-		case "$$bootstrap_candidate" in \
-			*[!0-9a-f]*) printf 'ERROR: bootstrap candidate is not a Git object ID\n' >&2; exit 2 ;; \
-		esac; \
-		case "$$
+		tar -xf "$$mise_stage/archive" -C "$$mise_stage"; \
+		mv "$$mise_stage/mise/bin/mise" "$$mise_bootstrap_bin"; \
+		chmod +x "$$mise_bootstrap_bin"; \
+		rm -rf "$$mise_stage"; \
+	fi; \
+	mise_receipt="$$("$$mise_bootstrap_bin" --version | cut -d ' ' -f1)"; \
+	if [ "$$mise_receipt" != "$$mise_pin" ]; then \
+		printf 'ERROR: recovered Mise %s differs from the mise.lock pin %s; delete %s and run make setup\n' "$$mise_receipt" "$$mise_pin" "$$mise_bootstrap_bin" >&2; \
+		exit 2; \
+	fi; \
 	export MISE_SHIMS_DIR="$$mise_bootstrap_root/$$mise_receipt/shims"; \
-	bootstrap_stage=tool-lock; \
 	if [ "$(TOOL_BOOTSTRAP_RESOLVE)" = "1" ] && [ "$$mise_resolved" = "0" ]; then \
 		"$$mise_bootstrap_bin" -C "$(PROJECT_ROOT)" lock --upgrade --bump; \
 	fi; \
-	bootstrap_stage=tool-install; \
 	"$$mise_bootstrap_bin" -C "$(PROJECT_ROOT)" install --locked --yes "python" "github:jdx/mise" "uv" "direnv" "taplo" "aqua:ast-grep/ast-grep" "gitleaks" "aqua:boyter/scc" "node" "github:qltysh/qlty" "github:kucherenko/jscpd" "github:microsoft/waza"; \
-	bootstrap_stage=shims; \
 	"$$mise_bootstrap_bin" reshim; \
 	printf 'setup: mise %s provisioned from mise.lock\n' "$$mise_receipt"; \
 	printf 'setup: entering lifecycle (submodules, environment, hooks) make=%s\n' "$(SELF_MAKE_EXECUTABLE)"; \
-	bootstrap_stage=lifecycle; \
-	"$$mise_bootstrap_bin" -C "$(PROJECT_ROOT)" exec -- env "PATH=$$(dirname "$$mise_bootstrap_bin"):$${MISE_SHIMS_DIR}:$${PATH}" "CI=$(CI)" $(SELF_MAKE) $(TOOL_BOOTSTRAP_LIFECYCLE); \
-	bootstrap_stage=complete; bootstrap_completed=true
+	"$$mise_bootstrap_bin" -C "$(PROJECT_ROOT)" exec -- env "PATH=$$(dirname "$$mise_bootstrap_bin"):$${MISE_SHIMS_DIR}:$${PATH}" "CI=$(CI)" $(SELF_MAKE) $(TOOL_BOOTSTRAP_LIFECYCLE)
 _bootstrap_setup_tools: _builtin_require_network_auth
 
 # UV, not Git attachment or runtime environment selection, owns lock discovery.
