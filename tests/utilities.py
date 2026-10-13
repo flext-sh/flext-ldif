@@ -16,8 +16,8 @@ from flext_tests import FlextTestsUtilities
 
 from flext_ldif import FlextLdifUtilities
 from tests import c, m, p, t
-from tests._utilities_entries import TestsLdifEntryBuildersMixin
-from tests._utilities_ldap import TestsLdapClientMixin
+from tests._utilities_entries import TestsFlextLdifEntryBuildersMixin
+from tests._utilities_ldap import TestsFlextLdifLdapClientMixin
 from tests._utilities_schema import (
     TestsFlextLdifSchemaExpectations,
     TestsSchemaAclAssertionsMixin,
@@ -28,8 +28,8 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
     """Project test utility namespace extension."""
 
     class Tests(
-        TestsLdapClientMixin,
-        TestsLdifEntryBuildersMixin,
+        TestsFlextLdifLdapClientMixin,
+        TestsFlextLdifEntryBuildersMixin,
         TestsSchemaAclAssertionsMixin,
         FlextTestsUtilities.Tests,
     ):
