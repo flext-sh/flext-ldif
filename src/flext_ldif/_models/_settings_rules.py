@@ -24,7 +24,7 @@ class FlextLdifModelsSettingsRules:
         """Rules for entry categorization.
 
         Contains DN patterns and objectClass lists for each category.
-        Replaces dict[str, t.JsonValue] with type-safe Pydantic model.
+        Replaces t.JsonDict with type-safe Pydantic model.
         """
 
         user_dn_patterns: Annotated[
@@ -88,7 +88,7 @@ class FlextLdifModelsSettingsRules:
         """Whitelist rules for entry validation.
 
         Defines blocked objectClasses and validation rules.
-        Replaces dict[str, t.JsonValue] with type-safe Pydantic model.
+        Replaces t.JsonDict with type-safe Pydantic model.
         """
 
         @u.model_validator(mode="before")

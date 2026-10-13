@@ -155,7 +155,7 @@ class FlextLdifModelsDomainDN:
             u.Field(
                 description="Server-specific metadata for preserving original format",
             ),
-        ] = u.Field(default_factory=dict[str, t.JsonValue])
+        ] = u.Field(default_factory=t.JsonDict)
 
         @u.field_validator("value", mode="after")
         @classmethod
