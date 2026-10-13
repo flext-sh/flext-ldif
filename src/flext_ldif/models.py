@@ -16,10 +16,11 @@ from flext_cli import FlextCliModels
 
 from flext_core import FlextUtilities as u
 from flext_ldif import t
-from flext_ldif._models.config import FlextLdifNamespace
+from flext_ldif._models._base_parts import FlextLdifModelsBasesParts
 from flext_ldif._models.acl_convert import FlextLdifModelsAclConvert
 from flext_ldif._models.base import FlextLdifModelsBases
 from flext_ldif._models.collections import FlextLdifModelsCollections
+from flext_ldif._models.config import FlextLdifNamespace
 from flext_ldif._models.domain_acl import FlextLdifModelsDomainAcl
 from flext_ldif._models.domain_attributes import FlextLdifModelsDomainAttributes
 from flext_ldif._models.domain_dn import FlextLdifModelsDomainDN
@@ -42,7 +43,6 @@ from flext_ldif._models.processing import FlextLdifModelsProcessing
 from flext_ldif._models.results import FlextLdifModelsResults
 from flext_ldif._models.results_statistics import FlextLdifModelsResultsStatistics
 from flext_ldif._models.settings import FlextLdifModelsSettings
-from flext_ldif._models._base_parts import FlextLdifModelsBasesParts
 
 
 class FlextLdifModels(FlextCliModels):
