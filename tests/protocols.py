@@ -10,14 +10,42 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_tests import FlextTestsProtocols
 
-from flext_ldif import FlextLdifProtocols
-from tests._protocols_ldap import TestsFlextLdifLdapProtocols
+from flext_ldif import FlextLdifModels, FlextLdifProtocols
 
 if TYPE_CHECKING:
     from pathlib import Path
 
     from flext_ldif.services import FlextLdifMigrationPipeline
     from tests import c, m
+
+
+class TestsFlextLdifLdapProtocols(FlextLdifProtocols):
+    """ldap3 client contracts grouped for composition by the tests facade."""
+
+    @runtime_checkable
+    class Ldap3Server(Protocol):
+        """Opaque ldap3-compatible server handle."""
+
+        @property
+        def name(self) -> str | None:
+            """The configured server name."""
+            ...
+
+    # ── Shared structural contracts (SSOT: flext_ldif._protocols.ldap3) ──
+    type Ldap3Attribute = FlextLdifProtocols.Ldif.Ldap3Attribute
+    type Ldap3Entry = FlextLdifProtocols.Ldif.Ldap3Entry
+    type Ldap3Connection = FlextLdifProtocols.Ldif.Ldap3Connection
+
+    @runtime_checkable
+    class Ldap3EntryAdapter(Protocol):
+        """Structural contract for the ldap3 entry to LDIF entry adapter."""
+
+        def ldap3_to_ldif_entry(
+            self,
+            ldap3_entry: TestsFlextLdifLdapProtocols.Ldap3Entry,
+        ) -> FlextLdifProtocols.Result[FlextLdifModels.Ldif.Entry]:
+            """Convert one ldap3 entry into the LDIF entry model."""
+            ...
 
 
 class TestsFlextLdifProtocols(
@@ -110,4 +138,8 @@ class TestsFlextLdifProtocols(
 
 p = TestsFlextLdifProtocols
 
-__all__: list[str] = ["TestsFlextLdifProtocols", "p"]
+__all__: list[str] = [
+    "TestsFlextLdifLdapProtocols",
+    "TestsFlextLdifProtocols",
+    "p",
+]

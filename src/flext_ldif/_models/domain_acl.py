@@ -12,7 +12,7 @@ from typing import Annotated, Self
 
 from flext_core import FlextUtilities as u, m
 from flext_ldif import c, t
-from flext_ldif._constants.enums import FlextLdifConstantsEnums
+from flext_ldif._constants import FlextLdifConstantsEnums
 from flext_ldif._models import FlextLdifModelsBases, FlextLdifModelsDomainMetadata
 
 

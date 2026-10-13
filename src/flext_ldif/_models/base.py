@@ -1,125 +1,17 @@
 """Base classes for flext-ldif models.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
+src/flext_ldif/_models/base
 SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
-from typing import Annotated
-
-from flext_cli import m, u
-
-from flext_ldif import c, t
-from flext_ldif.shared import FlextLdifShared
+from flext_ldif._models._base_parts import FlextLdifModelsBasesParts, FlextLdifShared
 
 
-class FlextLdifModelsBases:
-    """Facade namespace for all FLEXT-LDIF base model classes.
-
-    Follows AGENTS.md §2: each module organizes domain logic into
-    a single nested class hierarchy using MRO inheritance.
-
-    Usage::
-        from flext_cli import m
-        from flext_ldif import FlextLdifModelsBases
-
-        Base = m.StrictModel
-    """
-
-    class SchemaElement(m.StrictModel):
-        """Base class for all LDAP schema elements (attributes, objectClasses,.
-
-        syntaxes).
-        """
-
-        validation_metadata: Annotated[
-            m.ConfigMap | None,
-            u.Field(
-                description="Validation metadata captured during schema processing.",
-            ),
-        ] = None
-
-        @u.computed_field
-        @property
-        def has_metadata(self) -> bool:
-            """Whether schema element has server metadata."""
-            metadata = getattr(self, "metadata", None)
-            return metadata is not None
-
-        @u.computed_field
-        @property
-        def has_server_extensions(self) -> bool:
-            """Whether element has server-specific extensions."""
-            metadata = getattr(self, "metadata", None)
-            if metadata is None:
-                return False
-            extensions = getattr(metadata, "extensions", None)
-            return bool(extensions)
-
-        @u.computed_field
-        @property
-        def server_type(self) -> str:
-            """The server type from metadata, default to RFC."""
-            metadata = getattr(self, "metadata", None)
-            if metadata is not None:
-                server_type = getattr(metadata, "server_type", None)
-                if server_type is not None:
-                    # Why: pre-check membership instead of exception-driven
-                    # control flow (silent-failure-except-pass) — the "rfc"
-                    # default only applies to a value normalize_server_type
-                    # would actually reject.
-                    server_type_lower = str(server_type).lower().strip()
-                    is_recognized = (
-                        server_type_lower in c.Ldif.SERVER_TYPE_ALIASES
-                        or server_type_lower in c.Ldif.VALID_SERVER_TYPES
-                    )
-                    if is_recognized:
-                        return FlextLdifShared.normalize_server_type(server_type_lower)
-            return "rfc"
-
-    class AclElement(m.StrictModel):
-        """Base class for all ACL-related models."""
-
-        server_type: Annotated[
-            c.Ldif.ServerTypes,
-            u.Field(description="LDAP server type (oid, oud, openldap, rfc, etc.)"),
-        ] = c.Ldif.ServerTypes.RFC
-        validation_violations: Annotated[
-            t.MutableSequenceOf[str],
-            u.Field(
-                default_factory=list,
-                description="Validation violations recorded while normalizing ACL "
-                "data.",
-            ),
-        ] = u.Field(default_factory=list[str])
-        validation_metadata: Annotated[
-            m.ConfigMap | None,
-            u.Field(description="Validation metadata captured during ACL processing."),
-        ] = None
-
-        @u.computed_field
-        @property
-        def has_server_servers(self) -> bool:
-            """Whether element uses server-specific servers."""
-            return str(self.server_type) != "rfc"
-
-        @u.computed_field
-        @property
-        def valid(self) -> bool:
-            """Whether ACL element passed validation."""
-            return not self.validation_violations
-
-        @u.field_validator("server_type", mode="before")
-        @classmethod
-        def _coerce_server_type(
-            cls,
-            value: c.Ldif.ServerTypes | str,
-        ) -> c.Ldif.ServerTypes:
-
-            if isinstance(value, c.Ldif.ServerTypes):
-                return value
-            return FlextLdifShared.normalize_server_type(value)
+class FlextLdifModelsBases(FlextLdifModelsBasesParts):
+    """Facade namespace for all FLEXT-LDIF base model classes."""
 
 
-__all__: list[str] = ["FlextLdifModelsBases"]
+__all__: list[str] = ["FlextLdifModelsBases", "FlextLdifShared"]

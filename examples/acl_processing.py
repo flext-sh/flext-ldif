@@ -36,8 +36,6 @@ class ExamplesFlextLdifAclProcessing:
             return None
         entry = entries[0]
         acl_result = api.extract_acls_from_entry(entry, server_type="openldap")
-        if acl_result.failure:
-            return None
         return entry, acl_result.unwrap()
 
     @staticmethod

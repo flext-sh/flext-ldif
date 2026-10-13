@@ -13,10 +13,10 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_ldif._models._ldif_namespace import FlextLdifNamespace
     from flext_ldif._models.acl_convert import FlextLdifModelsAclConvert
     from flext_ldif._models.base import FlextLdifModelsBases
     from flext_ldif._models.collections import FlextLdifModelsCollections
+    from flext_ldif._models.config import FlextLdifNamespace
     from flext_ldif._models.domain_acl import FlextLdifModelsDomainAcl
     from flext_ldif._models.domain_attributes import FlextLdifModelsDomainAttributes
     from flext_ldif._models.domain_dn import FlextLdifModelsDomainDN
@@ -89,7 +89,7 @@ install_lazy_exports(
         "FlextLdifModelsResults": ".results",
         "FlextLdifModelsResultsStatistics": ".results_statistics",
         "FlextLdifModelsSettings": ".settings",
-        "FlextLdifNamespace": "._ldif_namespace",
+        "FlextLdifNamespace": ".config",
     }),
     public_exports=__all__,
 )

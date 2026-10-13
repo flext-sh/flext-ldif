@@ -15,7 +15,7 @@ from flext_tests import FlextTestsConstants
 
 from flext_ldif import FlextLdifConstants
 from tests import m
-from tests._constants_ldap import TestsFlextLdifLdapConstants
+from tests.constants_ldap import TestsFlextLdifLdapConstants
 
 if TYPE_CHECKING:
     from tests import t

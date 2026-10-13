@@ -15,26 +15,22 @@ from flext_core.lazy import install_lazy_exports
 if TYPE_CHECKING:
     from flext_tests import api, d, e, h, r, td, tf, tk, tm, x
 
-    from tests._constants_ldap import TestsFlextLdifLdapConstants
-    from tests._protocols_ldap import TestsFlextLdifLdapProtocols
-    from tests._utilities_entries import TestsFlextLdifEntryBuildersMixin
-    from tests._utilities_ldap import TestsFlextLdifLdapClientMixin
-    from tests._utilities_schema import (
+    from tests.base import TestsFlextLdifServiceBase, s
+    from tests.constants import TestsFlextLdifConstants, c
+    from tests.constants_ldap import TestsFlextLdifLdapConstants
+    from tests.models import TestsFlextLdifModels, m
+    from tests.protocols import TestsFlextLdifLdapProtocols, TestsFlextLdifProtocols, p
+    from tests.settings import TestsFlextLdifSettings
+    from tests.typings import TestsFlextLdifTypes, t
+    from tests.utilities import TestsFlextLdifUtilities, u
+    from tests.utilities_entries import TestsFlextLdifEntryBuildersMixin
+    from tests.utilities_ldap import TestsFlextLdifLdapClientMixin
+    from tests.utilities_schema import (
         PARSE_DISPATCH,
+        TestsFlextLdifSchemaExpectations,
         TestsSchemaAclAssertionsMixin,
         assert_field_eq,
         assert_must_contain,
-    )
-    from tests.base import TestsFlextLdifServiceBase, s
-    from tests.constants import TestsFlextLdifConstants, c
-    from tests.models import TestsFlextLdifModels, m
-    from tests.protocols import TestsFlextLdifProtocols, p
-    from tests.settings import TestsFlextLdifSettings
-    from tests.typings import TestsFlextLdifTypes, t
-    from tests.utilities import (
-        TestsFlextLdifSchemaExpectations,
-        TestsFlextLdifUtilities,
-        u,
     )
 
 
@@ -77,23 +73,23 @@ install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
-        "PARSE_DISPATCH": "._utilities_schema",
+        "PARSE_DISPATCH": ".utilities_schema",
         "TestsFlextLdifConstants": ".constants",
-        "TestsFlextLdifLdapConstants": "._constants_ldap",
-        "TestsFlextLdifLdapProtocols": "._protocols_ldap",
+        "TestsFlextLdifEntryBuildersMixin": ".utilities_entries",
+        "TestsFlextLdifLdapClientMixin": ".utilities_ldap",
+        "TestsFlextLdifLdapConstants": ".constants_ldap",
+        "TestsFlextLdifLdapProtocols": ".protocols",
         "TestsFlextLdifModels": ".models",
         "TestsFlextLdifProtocols": ".protocols",
-        "TestsFlextLdifSchemaExpectations": ".utilities",
+        "TestsFlextLdifSchemaExpectations": ".utilities_schema",
         "TestsFlextLdifServiceBase": ".base",
         "TestsFlextLdifSettings": ".settings",
         "TestsFlextLdifTypes": ".typings",
         "TestsFlextLdifUtilities": ".utilities",
-        "TestsFlextLdifLdapClientMixin": "._utilities_ldap",
-        "TestsFlextLdifEntryBuildersMixin": "._utilities_entries",
-        "TestsSchemaAclAssertionsMixin": "._utilities_schema",
+        "TestsSchemaAclAssertionsMixin": ".utilities_schema",
         "api": "flext_tests",
-        "assert_field_eq": "._utilities_schema",
-        "assert_must_contain": "._utilities_schema",
+        "assert_field_eq": ".utilities_schema",
+        "assert_must_contain": ".utilities_schema",
         "c": ".constants",
         "d": "flext_tests",
         "e": "flext_tests",

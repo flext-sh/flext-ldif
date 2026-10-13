@@ -10,7 +10,7 @@ import sys
 
 from packaging.version import Version
 
-from flext_ldif.__version__ import FlextLdifVersion
+from flext_ldif import FlextLdifVersion
 from tests import c, tm
 
 # The package root shadows `__version__` with the exported version string, so

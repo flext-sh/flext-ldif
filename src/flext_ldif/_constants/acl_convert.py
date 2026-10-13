@@ -4,7 +4,7 @@ The OID/parse side of the OID→OUD ACL conversion: attribute-kind / target /
 subject enums and every compiled ``re.Pattern`` used to parse an OID
 orclaci/orclentrylevelaci line. The OUD-output taxonomy (permission maps,
 bind-rule keywords, scope rules) lives in the sibling
-``_constants/acl_convert_oud.py``. Consumers import the ``*_RE`` authorities —
+``_constants/_base_parts.py``. Consumers import the ``*_RE`` authorities —
 ``import re`` outside this module is forbidden (AGENTS.md §3.1).
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.

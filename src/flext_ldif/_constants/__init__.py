@@ -14,8 +14,8 @@ from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_ldif._constants.acl_convert import FlextLdifConstantsAclConvert
-    from flext_ldif._constants.acl_convert_oud import FlextLdifConstantsAclConvertOud
     from flext_ldif._constants.base import (
+        FlextLdifConstantsAclConvertOud,
         FlextLdifConstantsBase,
         FlextLdifConstantsEnums,
     )
@@ -47,7 +47,7 @@ install_lazy_exports(
     globals(),
     MappingProxyType({
         "FlextLdifConstantsAclConvert": ".acl_convert",
-        "FlextLdifConstantsAclConvertOud": ".acl_convert_oud",
+        "FlextLdifConstantsAclConvertOud": ".base",
         "FlextLdifConstantsBase": ".base",
         "FlextLdifConstantsEnums": ".base",
         "FlextLdifConstantsServers": ".servers",

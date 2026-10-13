@@ -14,6 +14,19 @@ from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
     from examples.acl_processing import ExamplesFlextLdifAclProcessing, main
+    from examples.advanced_processing import (
+        access_all_utilities,
+        basic_batch_processing,
+        complete_processing_pipeline,
+        parallel_processing,
+        use_dn_utilities,
+        use_encoding_utilities,
+        use_file_utilities,
+        use_ldif_utilities,
+        use_text_utilities,
+        use_time_utilities,
+        use_validation_utilities,
+    )
     from examples.constants import ExamplesFlextLdifConstants
     from examples.models import ExamplesFlextLdifModels
     from examples.protocols import ExamplesFlextLdifProtocols
@@ -34,8 +47,8 @@ if TYPE_CHECKING:
     from examples.schema_pipeline import ExamplesFlextLdifSchemaPipeline
     from examples.schema_validation import ExamplesFlextLdifSchemaValidation
     from examples.typings import ExamplesFlextLdifTypes
-    from examples.utilities import ExamplesFlextLdifUtilities
-    from flext_ldif import c, d, e, h, m, p, r, s, t, u, x
+    from examples.utilities import ExamplesFlextLdifUtilities, u
+    from flext_ldif import c, d, e, h, m, p, r, s, t, x
 
 
 __all__: tuple[str, ...] = (
@@ -50,8 +63,11 @@ __all__: tuple[str, ...] = (
     "ExamplesFlextLdifSchemaValidation",
     "ExamplesFlextLdifTypes",
     "ExamplesFlextLdifUtilities",
+    "access_all_utilities",
+    "basic_batch_processing",
     "batch_schema_operations",
     "c",
+    "complete_processing_pipeline",
     "create_entry_or_none",
     "d",
     "e",
@@ -61,6 +77,7 @@ __all__: tuple[str, ...] = (
     "main",
     "object_class_entries",
     "p",
+    "parallel_processing",
     "parallel_schema_validation",
     "r",
     "railway_schema_pipeline",
@@ -68,6 +85,13 @@ __all__: tuple[str, ...] = (
     "schema_migration_pipeline",
     "t",
     "u",
+    "use_dn_utilities",
+    "use_encoding_utilities",
+    "use_file_utilities",
+    "use_ldif_utilities",
+    "use_text_utilities",
+    "use_time_utilities",
+    "use_validation_utilities",
     "x",
 )
 
@@ -86,8 +110,11 @@ install_lazy_exports(
         "ExamplesFlextLdifSchemaValidation": ".schema_validation",
         "ExamplesFlextLdifTypes": ".typings",
         "ExamplesFlextLdifUtilities": ".utilities",
+        "access_all_utilities": ".advanced_processing",
+        "basic_batch_processing": ".advanced_processing",
         "batch_schema_operations": ".schema_operations",
         "c": "flext_ldif",
+        "complete_processing_pipeline": ".advanced_processing",
         "create_entry_or_none": ".schema_building",
         "d": "flext_ldif",
         "e": "flext_ldif",
@@ -97,13 +124,21 @@ install_lazy_exports(
         "main": ".acl_processing",
         "object_class_entries": ".schema_building",
         "p": "flext_ldif",
+        "parallel_processing": ".advanced_processing",
         "parallel_schema_validation": ".schema_operations",
         "r": "flext_ldif",
         "railway_schema_pipeline": ".schema_operations",
         "s": "flext_ldif",
         "schema_migration_pipeline": ".schema_operations",
         "t": "flext_ldif",
-        "u": "flext_ldif",
+        "u": ".utilities",
+        "use_dn_utilities": ".advanced_processing",
+        "use_encoding_utilities": ".advanced_processing",
+        "use_file_utilities": ".advanced_processing",
+        "use_ldif_utilities": ".advanced_processing",
+        "use_text_utilities": ".advanced_processing",
+        "use_time_utilities": ".advanced_processing",
+        "use_validation_utilities": ".advanced_processing",
         "x": "flext_ldif",
     }),
     public_exports=__all__,
