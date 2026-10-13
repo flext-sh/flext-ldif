@@ -7,14 +7,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping, MutableSequence
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from examples import c, m, p, r, t, u
 from flext_ldif import ldif
-
-if TYPE_CHECKING:
-    from collections.abc import MutableMapping, MutableSequence
 
 
 class ExamplesFlextLdifServerMigration:

@@ -8,14 +8,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Annotated, ClassVar, Self, override
+from collections.abc import MutableMapping
+from typing import Annotated, ClassVar, Self, override
 
 from flext_core import FlextUtilities as u, m
 from flext_ldif import c, p, r, t
 from flext_ldif._utilities import FlextLdifUtilitiesCollectionLdif
-
-if TYPE_CHECKING:
-    from collections.abc import MutableMapping
 
 
 class FlextLdifModelsDomainDN:
@@ -155,7 +153,7 @@ class FlextLdifModelsDomainDN:
             u.Field(
                 description="Server-specific metadata for preserving original format",
             ),
-        ] = u.Field(default_factory=dict[str, t.JsonValue])
+        ] = u.Field(default_factory=t.JsonDict)
 
         @u.field_validator("value", mode="after")
         @classmethod

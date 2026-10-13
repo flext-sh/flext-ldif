@@ -101,6 +101,33 @@ class FlextLdifACLPermissions:
         return {"self_write": "selfwrite"}.get(key, key)
 
     @staticmethod
+    def _normalized_permissions(
+        orig_perms_dict: t.MutableBoolMapping,
+    ) -> t.MutableBoolMapping:
+        """Normalize every permission key through the canonical key map.
+
+        Returns:
+            The resulting ``t.MutableBoolMapping``.
+        """
+        return {
+            FlextLdifACLPermissions.normalize_permission_key(key): value
+            for key, value in orig_perms_dict.items()
+        }
+
+    @staticmethod
+    def _pass_through_permissions(excluded: frozenset[str]) -> set[str]:
+        """Resolve the ACL permission keys that map through unchanged.
+
+        Returns:
+            The resulting ``set[str]``.
+        """
+        mapping_values = {
+            FlextLdifACLPermissions.normalize_permission_key(key)
+            for key in c.Ldif.ACL_PERMISSION_KEYS
+        }
+        return {key for key in mapping_values if key not in excluded}
+
+    @staticmethod
     def map_oid_to_oud_permissions(
         orig_perms_dict: t.MutableBoolMapping,
     ) -> t.MutableBoolMapping:
@@ -109,17 +136,12 @@ class FlextLdifACLPermissions:
         Returns:
             The resulting ``t.MutableBoolMapping``.
         """
-        normalized_orig_perms: t.MutableBoolMapping = {
-            FlextLdifACLPermissions.normalize_permission_key(key): value
-            for key, value in orig_perms_dict.items()
-        }
-        mapping_values = {
-            FlextLdifACLPermissions.normalize_permission_key(key)
-            for key in c.Ldif.ACL_PERMISSION_KEYS
-        }
-        pass_through_perms = {
-            key for key in mapping_values if key not in {"browse", "selfwrite"}
-        }
+        normalized_orig_perms = FlextLdifACLPermissions._normalized_permissions(
+            orig_perms_dict
+        )
+        pass_through_perms = FlextLdifACLPermissions._pass_through_permissions(
+            frozenset({"browse", "selfwrite"}),
+        )
         mapped_perms: t.MutableBoolMapping = {}
         for perm_name, perm_value in normalized_orig_perms.items():
             if perm_name == "browse":
@@ -144,17 +166,12 @@ class FlextLdifACLPermissions:
         Returns:
             The resulting ``t.MutableBoolMapping``.
         """
-        normalized_orig_perms: t.MutableBoolMapping = {
-            FlextLdifACLPermissions.normalize_permission_key(key): value
-            for key, value in orig_perms_dict.items()
-        }
-        mapping_values = {
-            FlextLdifACLPermissions.normalize_permission_key(key)
-            for key in c.Ldif.ACL_PERMISSION_KEYS
-        }
-        pass_through_perms = {
-            key for key in mapping_values if key not in {"read", "search", "browse"}
-        }
+        normalized_orig_perms = FlextLdifACLPermissions._normalized_permissions(
+            orig_perms_dict
+        )
+        pass_through_perms = FlextLdifACLPermissions._pass_through_permissions(
+            frozenset({"read", "search", "browse"}),
+        )
         has_read = normalized_orig_perms.get("read", False)
         has_search = normalized_orig_perms.get("search", False)
         mapped_perms: t.MutableBoolMapping = {}

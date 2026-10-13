@@ -340,8 +340,8 @@ class FlextLdifProtocolsBase(Protocol):
 
         control_type: str
         criticality: bool | None
-        value: str | None
-        value_origin: c.Ldif.ValueOrigin | None
+        control_value: str | None
+        control_value_origin: c.Ldif.ValueOrigin | None
         raw_value: str | None
 
     @runtime_checkable

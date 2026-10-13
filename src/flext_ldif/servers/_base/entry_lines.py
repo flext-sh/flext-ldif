@@ -81,18 +81,18 @@ class FlextLdifServersEntryLineEmitter:
         line = f"control: {control.control_type}"
         if control.criticality is not None:
             line += " true" if control.criticality else " false"
-        if control.value is None:
+        if control.control_value is None:
             return line
-        if control.value_origin == c.Ldif.ValueOrigin.BASE64:
-            encoded_value = control.raw_value or control.value
+        if control.control_value_origin == c.Ldif.ValueOrigin.BASE64:
+            encoded_value = control.raw_value or control.control_value
             return f"{line}:: {encoded_value}"
-        if control.value_origin in {
+        if control.control_value_origin in {
             c.Ldif.ValueOrigin.URL,
             c.Ldif.ValueOrigin.FILE,
         }:
-            url_value = control.raw_value or control.value
+            url_value = control.raw_value or control.control_value
             return f"{line}:< {url_value}"
-        return f"{line}: {control.value}"
+        return f"{line}: {control.control_value}"
 
     def value_origin_and_raw(
         self,

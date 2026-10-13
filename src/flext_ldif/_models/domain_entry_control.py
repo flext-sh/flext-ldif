@@ -13,7 +13,13 @@ from flext_ldif import c
 
 
 class FlextLdifModelsDomainEntryControl(m.Value):
-    """Structured RFC 2849 control line."""
+    """Structured RFC 2849 control line.
+
+    The control payload uses the ``control_`` field convention so the control
+    line and the modify-operation value compose into the ``Ldif`` namespace
+    without an incompatible sibling ``value`` / ``value_origin`` override (the
+    control payload is optional; a modify value is not).
+    """
 
     model_config: ClassVar[m.ConfigDict] = m.Value.model_config
 
@@ -25,8 +31,11 @@ class FlextLdifModelsDomainEntryControl(m.Value):
         bool | None,
         u.Field(description="Optional criticality flag from control line"),
     ] = None
-    value: Annotated[str | None, u.Field(description="Optional control value")] = None
-    value_origin: Annotated[
+    control_value: Annotated[
+        str | None,
+        u.Field(description="Optional control value"),
+    ] = None
+    control_value_origin: Annotated[
         c.Ldif.ValueOrigin | None,
         u.Field(description="Original control value encoding/source"),
     ] = None

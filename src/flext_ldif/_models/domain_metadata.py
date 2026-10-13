@@ -149,7 +149,7 @@ class FlextLdifModelsDomainMetadata:
         extensions: Annotated[
             t.MutableJsonMapping,
             u.Field(description="Non-standard schema extensions"),
-        ] = u.Field(default_factory=dict[str, t.JsonValue])
+        ] = u.Field(default_factory=t.JsonDict)
 
     class ServerMetadata(m.DynamicModel):
         """Universal metadata container for server-specific data preservation.
@@ -193,7 +193,7 @@ class FlextLdifModelsDomainMetadata:
                 description="Extensible metadata storage for server-specific data "
                 "(server-injected validation rules, unconverted attributes, etc.)",
             ),
-        ] = u.Field(default_factory=dict[str, t.JsonValue])
+        ] = u.Field(default_factory=t.JsonDict)
         rfc_violations: Annotated[
             t.MutableSequenceOf[str],
             u.Field(
@@ -219,7 +219,7 @@ class FlextLdifModelsDomainMetadata:
                 description="Map of conversion operation name → human-readable "
                 "description",
             ),
-        ] = u.Field(default_factory=dict[str, t.JsonValue])
+        ] = u.Field(default_factory=t.JsonDict)
         attribute_transformations: Annotated[
             MutableMapping[
                 str,
@@ -241,7 +241,7 @@ class FlextLdifModelsDomainMetadata:
                 description="Preservation of server-proprietary data for round-trip "
                 "conversions",
             ),
-        ] = u.Field(default_factory=dict[str, t.JsonValue])
+        ] = u.Field(default_factory=t.JsonDict)
         original_server_type: Annotated[
             c.Ldif.ServerTypes | None,
             u.Field(
@@ -297,7 +297,7 @@ class FlextLdifModelsDomainMetadata:
                 description="Attributes removed during conversion (was "
                 "entry_metadata.removed_attributes_with_values)",
             ),
-        ] = u.Field(default_factory=dict[str, t.JsonValue])
+        ] = u.Field(default_factory=t.JsonDict)
         original_format_details: Annotated[
             FlextLdifModelsDomainMetadata.FormatDetails | None,
             u.Field(
@@ -327,7 +327,7 @@ class FlextLdifModelsDomainMetadata:
                 "'objectClass', 'cn': 'CN'}. Used to restore original case during "
                 "reverse conversion.",
             ),
-        ] = u.Field(default_factory=dict[str, t.JsonValue])
+        ] = u.Field(default_factory=t.JsonDict)
         schema_servers_applied: Annotated[
             t.MutableSequenceOf[str],
             u.Field(
@@ -342,7 +342,7 @@ class FlextLdifModelsDomainMetadata:
                 description="Boolean conversion tracking: {'orcldasisenabled': "
                 "{'original': '1', 'converted': 'TRUE', 'format': 'OID->RFC'}}",
             ),
-        ] = u.Field(default_factory=dict[str, t.JsonValue])
+        ] = u.Field(default_factory=t.JsonDict)
         minimal_differences: Annotated[
             t.MutableJsonMapping,
             u.Field(
@@ -363,7 +363,7 @@ class FlextLdifModelsDomainMetadata:
                     "'trailing_spaces_removed': True, ...}}"
                 ),
             ),
-        ] = u.Field(default_factory=dict[str, t.JsonValue])
+        ] = u.Field(default_factory=t.JsonDict)
         original_strings: Annotated[
             t.MutableJsonMapping,
             u.Field(
@@ -378,7 +378,7 @@ class FlextLdifModelsDomainMetadata:
                     "'entry_original_ldif': 'dn: cn=test\\ncn: test\\n'}"
                 ),
             ),
-        ] = u.Field(default_factory=dict[str, t.JsonValue])
+        ] = u.Field(default_factory=t.JsonDict)
         conversion_history: Annotated[
             t.MutableSequenceOf[t.MutableStrMapping],
             u.Field(

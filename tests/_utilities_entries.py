@@ -1,7 +1,7 @@
 """Real entry and LDIF fixture-content builders for tests.
 
 Focused utility module split out of ``tests.utilities``; the public surface is
-re-exported through ``tests.utilities`` (see ``TestsLdifEntryBuildersMixin``).
+re-exported through ``tests.utilities`` (see ``TestsFlextLdifEntryBuildersMixin``).
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from collections.abc import MutableMapping
 
 
-class TestsLdifEntryBuildersMixin(FlextTestsFixturesDSLMixin):
+class TestsFlextLdifEntryBuildersMixin(FlextTestsFixturesDSLMixin):
     """Builders for real entry models, LDIF content, and fixture metadata."""
 
     _FIXTURES_ROOT: ClassVar[Path | None] = c.Tests.FIXTURES_DIR
@@ -159,4 +159,4 @@ class TestsLdifEntryBuildersMixin(FlextTestsFixturesDSLMixin):
         return metadata
 
 
-__all__: list[str] = ["TestsLdifEntryBuildersMixin"]
+__all__: list[str] = ["TestsFlextLdifEntryBuildersMixin"]

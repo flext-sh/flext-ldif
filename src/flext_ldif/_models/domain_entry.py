@@ -14,7 +14,7 @@ from types import MappingProxyType
 from typing import Annotated, ClassVar, Self, override
 
 from flext_core import m, u
-from flext_ldif import c, p, r, t
+from flext_ldif import c, e, p, r, t
 from flext_ldif._models import (
     FlextLdifModelsDomainAttributes,
     FlextLdifModelsDomainDN,
@@ -701,12 +701,12 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
                 entry_data = cls._build_entry_data(dn, attributes, metadata)
                 entry_instance: Self = cls.model_validate(entry_data)
                 ok_result: p.Result[Self] = r[Self].ok(entry_instance)
-            except c.EXC_BASIC_TYPE as e:
-                error_msg = f"Failed to create Entry: {e}"
-                return r[Self].fail(
-                    error_msg,
-                    exception=e,
-                )
+            except c.EXC_BASIC_TYPE as exc:
+                # ``fail_operation`` is the typed exception factory: the
+                # method-level ``TResult`` binds through ``result_type`` while
+                # it still attaches the exception's error code and redacted
+                # data, which ``r[Self].fail`` cannot infer for a ``Self``.
+                return e.fail_operation("create Entry", exc, result_type=r[Self])
             else:
                 return ok_result
 

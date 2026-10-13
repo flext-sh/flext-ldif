@@ -519,7 +519,7 @@ from flext_ldif import ldif, t, u
 
 def run_health_check() -> t.JsonMapping:
     """Run comprehensive health check for FLEXT-LDIF."""
-    results: dict[str, t.JsonValue] = {
+    results: t.JsonDict = {
         "status": "healthy",
         "checks": {},
         "warnings": [],

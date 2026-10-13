@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-import flext_ldif.services.server
+import flext_ldif
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif._models.domain_entry_change_value import (
     FlextLdifModelsDomainEntryChangeOperationValue,
@@ -101,7 +101,7 @@ class FlextLdifServersOudSchemaWriteMixin:
             The resulting ``p.Result[t.Pair[p.Ldif.SchemaServer,
                 p.Ldif.SchemaServer]]``.
         """
-        registry = flext_ldif.services.server.FlextLdifServer.fetch_global_instance()
+        registry = flext_ldif.services.FlextLdifServer.fetch_global_instance()
         target_result = registry.server(str(c.Ldif.ServerTypes.OUD.value))
         if target_result.failure:
             return r[t.Pair[p.Ldif.SchemaServer, p.Ldif.SchemaServer]].fail_op(

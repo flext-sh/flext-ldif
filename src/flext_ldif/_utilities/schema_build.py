@@ -50,20 +50,11 @@ class FlextLdifUtilitiesSchemaBuild:
         return parts
 
     @staticmethod
-    def _build_objectclass_parts_from_model(
+    def _append_objectclass_core_parts(
         oc_data: FlextLdifModels.Ldif.SchemaObjectClass,
-    ) -> t.MutableSequenceOf[str]:
-        """Build RFC 4512 objectClass definition parts (extracted to reduce complexity).
-
-        Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
-        """
-        parts: t.MutableSequenceOf[str] = [f"( {oc_data.oid}"]
-        if oc_data.name:
-            parts.append(f"NAME '{oc_data.name}'")
-        if oc_data.desc:
-            parts.append(f"DESC '{oc_data.desc}'")
-        FlextLdifUtilitiesSchemaFormat.build_obsolete_part(oc_data, parts, None)
+        parts: t.MutableSequenceOf[str],
+    ) -> None:
+        """Append SUP, kind, MUST and MAY parts of an objectClass definition."""
         sup_part = FlextLdifUtilitiesSchemaFormat.format_sup_list(oc_data.sup)
         if sup_part:
             parts.append(sup_part)
@@ -79,6 +70,23 @@ class FlextLdifUtilitiesSchemaBuild:
         )
         if may_part:
             parts.append(may_part)
+
+    @staticmethod
+    def _build_objectclass_parts_from_model(
+        oc_data: FlextLdifModels.Ldif.SchemaObjectClass,
+    ) -> t.MutableSequenceOf[str]:
+        """Build RFC 4512 objectClass definition parts (extracted to reduce complexity).
+
+        Returns:
+            The resulting ``t.MutableSequenceOf[str]``.
+        """
+        parts: t.MutableSequenceOf[str] = [f"( {oc_data.oid}"]
+        if oc_data.name:
+            parts.append(f"NAME '{oc_data.name}'")
+        if oc_data.desc:
+            parts.append(f"DESC '{oc_data.desc}'")
+        FlextLdifUtilitiesSchemaFormat.build_obsolete_part(oc_data, parts, None)
+        FlextLdifUtilitiesSchemaBuild._append_objectclass_core_parts(oc_data, parts)
         x_origin_part = FlextLdifUtilitiesSchemaFormat.build_x_origin_part(oc_data)
         if x_origin_part:
             parts.append(x_origin_part)
@@ -192,21 +200,7 @@ class FlextLdifUtilitiesSchemaBuild:
         FlextLdifUtilitiesSchemaFormat.build_obsolete_part(
             oc_data, parts, field_order, restore_position=True
         )
-        sup_part = FlextLdifUtilitiesSchemaFormat.format_sup_list(oc_data.sup)
-        if sup_part:
-            parts.append(sup_part)
-        kind = oc_data.kind or c.Ldif.SchemaKind.STRUCTURAL.value
-        parts.append(kind)
-        must_part = FlextLdifUtilitiesSchemaFormat.format_attribute_list(
-            oc_data.must, "MUST"
-        )
-        if must_part:
-            parts.append(must_part)
-        may_part = FlextLdifUtilitiesSchemaFormat.format_attribute_list(
-            oc_data.may, "MAY"
-        )
-        if may_part:
-            parts.append(may_part)
+        FlextLdifUtilitiesSchemaBuild._append_objectclass_core_parts(oc_data, parts)
         x_origin_part = FlextLdifUtilitiesSchemaFormat.build_x_origin_part(
             oc_data, restore_format=True
         )

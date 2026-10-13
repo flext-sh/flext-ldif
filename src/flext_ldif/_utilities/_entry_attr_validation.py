@@ -42,22 +42,32 @@ class FlextLdifEntryAttributeValidation:
         return f"RFC 4512 § 2.5: option '{option}' has invalid characters"
 
     @staticmethod
+    def _iter_attribute_parts(
+        entry: p.Ldif.EntryValidationSubject,
+    ) -> t.MutableSequenceOf[t.MutableSequenceOf[str]]:
+        """Split each attribute description into base name and options.
+
+        ``entry.attributes`` may be ``None`` when the entry is built with
+        ``model_construct`` (bypasses validation).
+
+        Returns:
+            The resulting ``t.MutableSequenceOf[t.MutableSequenceOf[str]]``.
+        """
+        if entry.attributes is None or not entry.attributes:
+            return []
+        return [attr_desc.split(";") for attr_desc in entry.attributes.attributes]
+
+    @staticmethod
     def validate_attribute_descriptions(
         entry: p.Ldif.EntryValidationSubject,
     ) -> t.MutableSequenceOf[str]:
         """Validate attribute descriptions per RFC 4512 section 2.5.
 
-        Note: entry.attributes may be None when using model_construct (bypasses
-        validation).
-
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
         """
         violations: t.MutableSequenceOf[str] = []
-        if entry.attributes is None or not entry.attributes:
-            return violations
-        for attr_desc in entry.attributes.attributes:
-            parts = attr_desc.split(";")
+        for parts in FlextLdifEntryAttributeValidation._iter_attribute_parts(entry):
             base_violation = FlextLdifEntryAttributeValidation._base_name_violation(
                 parts[0],
             )
@@ -77,17 +87,11 @@ class FlextLdifEntryAttributeValidation:
     ) -> t.MutableSequenceOf[str]:
         """Validate attribute name/option syntax per RFC 4512 section 2.5.1-2.5.2.
 
-        Note: entry.attributes may be None when using model_construct (bypasses
-        validation).
-
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
         """
         violations: t.MutableSequenceOf[str] = []
-        if entry.attributes is None or not entry.attributes:
-            return violations
-        for attr_desc in entry.attributes.attributes:
-            parts = attr_desc.split(";")
+        for parts in FlextLdifEntryAttributeValidation._iter_attribute_parts(entry):
             base_name = parts[0]
             if not c.Ldif.ATTRIBUTE_NAME_RE.match(base_name):
                 violations.append(f"RFC 4512 § 2.5.1: '{base_name}' invalid syntax")

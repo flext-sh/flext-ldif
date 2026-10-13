@@ -426,6 +426,7 @@ ignore = [
   "typing-only-first-party-import",
   "typing-only-standard-library-import",
   "typing-only-third-party-import",
+  "unsorted-imports",
 ]
 select = ["ALL"]
 unfixable = [
@@ -472,7 +473,6 @@ runtime-evaluated-base-classes = [
   "flext_ldif._models.domain_entry_control.FlextLdifModelsDomainEntryControl",
   "flext_ldif._models.domain_entry_statistics.FlextLdifModelsDomainEntryStatistics",
   "flext_ldif._models.results.Response",
-  "flext_ldif._models.settings.FlextLdifModelsSettings",
   "flext_ldif.s",
   "flext_ldif.servers._base.FlextLdifServersDialectSchema",
   "flext_ldif.servers._base.acl.FlextLdifServersBaseSchemaAcl",
