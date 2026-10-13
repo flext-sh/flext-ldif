@@ -20,7 +20,7 @@ from flext_ldif.services import FlextLdifFilters
 from tests import c, m, tm, u
 
 if TYPE_CHECKING:
-    from tests import t
+    from tests import p, t
 
 
 class TestsFlextLdifFiltersService:
@@ -217,15 +217,8 @@ class TestsFlextLdifFiltersService:
     @staticmethod
     def test_drops_schema_value_whose_oid_is_not_whitelisted() -> None:
         """Test drops schema value whose oid is not whitelisted."""
-        entry = u.Tests.create_real_entry(
-            dn=c.Tests.FILTERS_DN_SCHEMA,
-            attributes={
-                c.Tests.FILTERS_SCHEMA_ATTR_KEY: [
-                    c.Tests.FILTERS_ATTR_OID_VALID,
-                    c.Tests.FILTERS_UNWANTED_ATTR_OID,
-                ],
-                c.Tests.NAME_OBJECTCLASS: [c.Tests.NAME_TOP],
-            },
+        entry = TestsFlextLdifFiltersService._schema_entry(
+            [c.Tests.FILTERS_ATTR_OID_VALID, c.Tests.FILTERS_UNWANTED_ATTR_OID],
         )
 
         result = ldif.filter_schema_attribute_values(
@@ -249,15 +242,8 @@ class TestsFlextLdifFiltersService:
     @staticmethod
     def test_accepts_whitelist_rules_model_as_allowed_oids() -> None:
         """Test accepts whitelist rules model as allowed oids."""
-        entry = u.Tests.create_real_entry(
-            dn=c.Tests.FILTERS_DN_SCHEMA,
-            attributes={
-                c.Tests.FILTERS_SCHEMA_ATTR_KEY: [
-                    c.Tests.FILTERS_ATTR_OID_VALID,
-                    c.Tests.FILTERS_UNWANTED_ATTR_OID,
-                ],
-                c.Tests.NAME_OBJECTCLASS: [c.Tests.NAME_TOP],
-            },
+        entry = TestsFlextLdifFiltersService._schema_entry(
+            [c.Tests.FILTERS_ATTR_OID_VALID, c.Tests.FILTERS_UNWANTED_ATTR_OID],
         )
         whitelist_rules = m.Ldif.WhitelistRules.model_validate(
             c.Tests.FILTERS_ALLOWED_OIDS_FULL,
@@ -307,16 +293,27 @@ class TestsFlextLdifFiltersService:
 
     # ── filter_schema_by_oids (fallible r[T] contract) ────────────────────────
 
-    def test_schema_by_oids_keeps_entry_matching_whitelist(self) -> None:
-        """Test schema by oids keeps entry matching whitelist."""
-        entry = self._schema_entry([c.Tests.FILTERS_ATTR_OID_VALID])
+    @staticmethod
+    def _filter_entries_by_allowed_oids(
+        entry: m.Ldif.Entry,
+    ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
+        """Filter one entry against the full allowed-OID whitelist.
+
+        Returns:
+            The resulting ``p.Result[t.MutableSequenceOf[m.Ldif.Entry]]``.
+        """
         whitelist = m.Ldif.WhitelistRules.model_validate(
             c.Tests.FILTERS_ALLOWED_OIDS_FULL,
         )
-
-        result = FlextLdifFilters.filter_schema_by_oids(
+        return FlextLdifFilters.filter_schema_by_oids(
             entries=[entry],
             allowed_oids=whitelist,
+        )
+
+    def test_schema_by_oids_keeps_entry_matching_whitelist(self) -> None:
+        """Test schema by oids keeps entry matching whitelist."""
+        result = self._filter_entries_by_allowed_oids(
+            self._schema_entry([c.Tests.FILTERS_ATTR_OID_VALID]),
         )
 
         tm.that(result.success, eq=True)
@@ -324,14 +321,8 @@ class TestsFlextLdifFiltersService:
 
     def test_schema_by_oids_drops_entry_outside_whitelist(self) -> None:
         """Test schema by oids drops entry outside whitelist."""
-        entry = self._schema_entry([c.Tests.FILTERS_UNWANTED_ATTR_OID])
-        whitelist = m.Ldif.WhitelistRules.model_validate(
-            c.Tests.FILTERS_ALLOWED_OIDS_FULL,
-        )
-
-        result = FlextLdifFilters.filter_schema_by_oids(
-            entries=[entry],
-            allowed_oids=whitelist,
+        result = self._filter_entries_by_allowed_oids(
+            self._schema_entry([c.Tests.FILTERS_UNWANTED_ATTR_OID]),
         )
 
         tm.that(result.success, eq=True)

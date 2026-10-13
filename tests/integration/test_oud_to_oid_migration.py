@@ -118,6 +118,23 @@ class TestsFlextLdifOudToOidMigration:
             if entry.dn is not None
         }
 
+    @staticmethod
+    def _migrate_oud_to_oid(
+        input_dir: Path,
+        output_dir: Path,
+        source_content: str,
+    ) -> None:
+        """Write the OUD source and run the OUD->OID migration pipeline."""
+        (input_dir / "source.ldif").write_text(source_content, encoding="utf-8")
+        pipeline = FlextLdifMigrationPipeline(
+            input_dir=input_dir,
+            output_dir=output_dir,
+            output_filename="migrated.ldif",
+            source_server=c.Ldif.ServerTypes.OUD,
+            target_server=c.Ldif.ServerTypes.OID,
+        )
+        tm.ok(pipeline.execute())
+
     # -- End-to-end migration pipeline ------------------------------------
 
     @staticmethod
@@ -131,19 +148,12 @@ class TestsFlextLdifOudToOidMigration:
         output_dir = tmp_path / "output"
         input_dir.mkdir()
         output_dir.mkdir()
-        (input_dir / "source.ldif").write_text(oud_entries, encoding="utf-8")
-
-        pipeline = FlextLdifMigrationPipeline(
-            input_dir=input_dir,
-            output_dir=output_dir,
-            output_filename="migrated.ldif",
-            source_server=c.Ldif.ServerTypes.OUD,
-            target_server=c.Ldif.ServerTypes.OID,
+        TestsFlextLdifOudToOidMigration._migrate_oud_to_oid(
+            input_dir,
+            output_dir,
+            oud_entries,
         )
 
-        result = pipeline.execute()
-
-        tm.ok(result)
         output_file = output_dir / "migrated.ldif"
         assert output_file.exists(), "Migration did not produce an output file"
         migrated_content = output_file.read_text(encoding="utf-8")
@@ -164,21 +174,11 @@ class TestsFlextLdifOudToOidMigration:
         output_dir = tmp_path / "output"
         input_dir.mkdir()
         output_dir.mkdir()
-        (input_dir / "source.ldif").write_text(source_content, encoding="utf-8")
-
         source_parse = client.parse_ldif(source_content)
         tm.ok(source_parse)
         source_dns = self._dn_set(source_parse.value.entries)
 
-        pipeline = FlextLdifMigrationPipeline(
-            input_dir=input_dir,
-            output_dir=output_dir,
-            output_filename="migrated.ldif",
-            source_server=c.Ldif.ServerTypes.OUD,
-            target_server=c.Ldif.ServerTypes.OID,
-        )
-        result = pipeline.execute()
-        tm.ok(result)
+        self._migrate_oud_to_oid(input_dir, output_dir, source_content)
 
         migrated = (output_dir / "migrated.ldif").read_text(encoding="utf-8")
         migrated_parse = client.parse_ldif(migrated)

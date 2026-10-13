@@ -79,6 +79,23 @@ def _active_logical_lines(ldif_text: str) -> list[str]:
     return logical_lines
 
 
+def _write_oud_phase(api: p.Ldif.LdifClient, parsed: m.Ldif.ParseResponse) -> str:
+    """Write parsed entries through the OUD phase path and return the content.
+
+    Returns:
+        The resulting ``str``.
+    """
+    written = tm.ok(
+        api.write(
+            list(parsed.entries),
+            server_type=c.Ldif.ServerTypes.OUD,
+            format_options=_PHASE_MODIFY_FORMAT_OPTIONS,
+        ),
+    )
+    assert written.content is not None
+    return written.content
+
+
 class TestsFlextLdifOudSchemaPhaseWrite:
     """Exercise the phase-aware OUD schema write path through the public API."""
 
@@ -91,16 +108,7 @@ class TestsFlextLdifOudSchemaPhaseWrite:
             api.parse_ldif(_QUOTED_SCHEMA_SOURCE, server_type=c.Ldif.ServerTypes.OID),
         )
 
-        written = tm.ok(
-            api.write(
-                list(parsed.entries),
-                server_type=c.Ldif.ServerTypes.OUD,
-                format_options=_PHASE_MODIFY_FORMAT_OPTIONS,
-            ),
-        )
-        assert written.content is not None
-
-        logical_lines = _active_logical_lines(written.content)
+        logical_lines = _active_logical_lines(_write_oud_phase(api, parsed))
         schema_lines = [
             line
             for line in logical_lines
@@ -121,36 +129,22 @@ class TestsFlextLdifOudSchemaPhaseWrite:
         parsed = tm.ok(
             api.parse_ldif(_QUOTED_SCHEMA_SOURCE, server_type=c.Ldif.ServerTypes.OID),
         )
-        first = tm.ok(
-            api.write(
-                list(parsed.entries),
-                server_type=c.Ldif.ServerTypes.OUD,
-                format_options=_PHASE_MODIFY_FORMAT_OPTIONS,
-            ),
-        )
-        assert first.content is not None
+        first = _write_oud_phase(api, parsed)
         reparsed = tm.ok(
-            api.parse_ldif(first.content, server_type=c.Ldif.ServerTypes.OUD),
+            api.parse_ldif(first, server_type=c.Ldif.ServerTypes.OUD),
         )
         assert len(reparsed.entries) == len(parsed.entries)
 
-        second = tm.ok(
-            api.write(
-                list(reparsed.entries),
-                server_type=c.Ldif.ServerTypes.OUD,
-                format_options=_PHASE_MODIFY_FORMAT_OPTIONS,
-            ),
-        )
-        assert second.content is not None
+        second = _write_oud_phase(api, reparsed)
 
         first_values = [
             line
-            for line in _active_logical_lines(first.content)
+            for line in _active_logical_lines(first)
             if line.startswith(("attributetypes:", "objectclasses:"))
         ]
         second_values = [
             line
-            for line in _active_logical_lines(second.content)
+            for line in _active_logical_lines(second)
             if line.startswith(("attributetypes:", "objectclasses:"))
         ]
         assert second_values == first_values
@@ -168,16 +162,7 @@ class TestsFlextLdifOudSchemaPhaseWrite:
             ),
         )
 
-        written = tm.ok(
-            api.write(
-                list(parsed.entries),
-                server_type=c.Ldif.ServerTypes.OUD,
-                format_options=_PHASE_MODIFY_FORMAT_OPTIONS,
-            ),
-        )
-        assert written.content is not None
-
-        logical_lines = _active_logical_lines(written.content)
+        logical_lines = _active_logical_lines(_write_oud_phase(api, parsed))
         assert any(
             line.startswith("attributetypes: ( 99.99.99.2 NAME 'matricula'")
             and "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15" in line

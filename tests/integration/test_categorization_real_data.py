@@ -30,7 +30,7 @@ from flext_ldif import ldif
 from tests import c, m, tm, u
 
 if TYPE_CHECKING:
-    from tests import t
+    from tests import p, t
 
 _BASE_DN = "dc=example"
 
@@ -92,6 +92,27 @@ class TestsFlextLdifCategorizationRealData:
         """
         return {e.dn.value for e in entries if e.dn is not None}
 
+    def _categorize_filter_and_split(
+        self,
+        categorization: p.Ldif.CategorizationService,
+        entries: t.MutableSequenceOf[m.Ldif.Entry],
+    ) -> tuple[set[str], set[str], set[str]]:
+        """Validate, categorize, base-DN filter, then split category DN sets.
+
+        Returns:
+            The resulting ``tuple[set[str], set[str], set[str]]``.
+        """
+        validated = categorization.validate_dns(entries)
+        tm.ok(validated)
+        categorized = categorization.categorize_entries(validated.value)
+        tm.ok(categorized)
+        filtered = categorization.filter_by_base_dn(categorized.value)
+        return (
+            self._dns(filtered.get(c.Ldif.Categories.HIERARCHY)),
+            self._dns(filtered.get(c.Ldif.Categories.USERS)),
+            self._dns(filtered.get(c.Ldif.Categories.REJECTED)),
+        )
+
     # -- validate_dns ---------------------------------------------------------
 
     def test_validate_dns_succeeds_and_returns_all_valid_entries(
@@ -149,16 +170,10 @@ class TestsFlextLdifCategorizationRealData:
     ) -> None:
         """Base-DN filtering uses hierarchy, so dc=example2 never matches dc=example."""
         categorization = ldif.categorization(base_dn=_BASE_DN, server_type=c.Tests.OUD)
-        validated = categorization.validate_dns(hierarchy_entries)
-        tm.ok(validated)
-        categorized = categorization.categorize_entries(validated.value)
-        tm.ok(categorized)
-
-        filtered = categorization.filter_by_base_dn(categorized.value)
-
-        hierarchy = self._dns(filtered.get(c.Ldif.Categories.HIERARCHY))
-        users = self._dns(filtered.get(c.Ldif.Categories.USERS))
-        rejected = self._dns(filtered.get(c.Ldif.Categories.REJECTED))
+        hierarchy, users, rejected = self._categorize_filter_and_split(
+            categorization,
+            hierarchy_entries,
+        )
         tm.that(hierarchy, has="dc=example")
         tm.that(hierarchy, has="ou=users,dc=example")
         tm.that(users, has="cn=user1,ou=users,dc=example")
@@ -239,16 +254,10 @@ class TestsFlextLdifCategorizationRealData:
         tm.that(len(entries), eq=6)
 
         categorization = api.categorization(base_dn=_BASE_DN, server_type=c.Tests.OUD)
-        validated = categorization.validate_dns(entries)
-        tm.ok(validated)
-        categorized = categorization.categorize_entries(validated.value)
-        tm.ok(categorized)
-
-        filtered = categorization.filter_by_base_dn(categorized.value)
-
-        hierarchy = self._dns(filtered.get(c.Ldif.Categories.HIERARCHY))
-        users = self._dns(filtered.get(c.Ldif.Categories.USERS))
-        rejected = self._dns(filtered.get(c.Ldif.Categories.REJECTED))
+        hierarchy, users, rejected = self._categorize_filter_and_split(
+            categorization,
+            entries,
+        )
         assert {"dc=example", "ou=users,dc=example"} <= hierarchy
         assert {"cn=admin,ou=users,dc=example", "cn=user1,ou=users,dc=example"} <= users
         assert {"dc=example2", "ou=test,dc=example2"} <= rejected

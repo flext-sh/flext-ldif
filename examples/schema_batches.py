@@ -10,8 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from examples import m, p, r, t, u
-from examples.schema_building import object_class_entries
+from examples import m, object_class_entries, p, r, t, u
 from flext_ldif import FlextLdif, ldif
 
 

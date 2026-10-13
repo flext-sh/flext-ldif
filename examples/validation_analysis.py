@@ -15,13 +15,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from collections.abc import MutableSequence
 
 from examples import m, p, r, t
 from flext_ldif import ldif
-
-if TYPE_CHECKING:
-    from collections.abc import MutableSequence
 
 
 class ExamplesFlextLdifValidationAnalysis:
@@ -36,13 +33,6 @@ class ExamplesFlextLdifValidationAnalysis:
         Returns:
             The resulting ``p.Result[m.Ldif.ValidationResult]``.
         """
-        if not validation_result.valid:
-            error_groups: dict[str, list[str]] = {}
-            for error in validation_result.errors:
-                category = getattr(error, "category", "unknown")
-                if category not in error_groups:
-                    error_groups[category] = []
-                error_groups[category].append(error)
         return r[m.Ldif.ValidationResult].ok(validation_result)
 
     @staticmethod

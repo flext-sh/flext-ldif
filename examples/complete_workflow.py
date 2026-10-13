@@ -5,15 +5,12 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from examples import ExamplesFlextLdifUtilities, c, m, p
 from flext_ldif import ldif
-
-if TYPE_CHECKING:
-    from collections.abc import MutableSequence
 
 
 def complete_ldif_processing_workflow() -> None:

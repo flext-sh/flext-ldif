@@ -14,15 +14,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from examples import ExamplesFlextLdifUtilities, m, p, u
 from flext_ldif import ldif
-
-if TYPE_CHECKING:
-    from collections.abc import MutableSequence
 
 BYTES_PER_UNIT = 1024.0
 

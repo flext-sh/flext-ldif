@@ -17,6 +17,32 @@ if TYPE_CHECKING:
 class FlextLdifWriter(s[m.Ldif.Response]):
     """LDIF writer orchestrator over the server server registry."""
 
+    def _stringify_entries(
+        self,
+        entries: t.MutableSequenceOf[m.Ldif.Entry],
+        *,
+        server_type: str | None,
+        format_options: p.Ldif.WriteFormatOptions | None,
+        failure_action: str,
+        fallback_error: str,
+    ) -> p.Result[str]:
+        """Serialize entries to LDIF text, mapping failures to ``r``.
+
+        Returns:
+            The resulting ``p.Result[str]``.
+        """
+        string_result = self.write_to_string(
+            entries,
+            server_type=server_type,
+            format_options=format_options,
+        )
+        if string_result.failure:
+            return r[str].fail_op(
+                failure_action,
+                string_result.error or fallback_error,
+            )
+        return string_result
+
     def write(
         self,
         entries: t.MutableSequenceOf[m.Ldif.Entry],
@@ -29,19 +55,21 @@ class FlextLdifWriter(s[m.Ldif.Response]):
         Returns:
             The resulting ``p.Result[m.Ldif.WriteResponse]``.
         """
-        string_result = self.write_to_string(
+        content_result = self._stringify_entries(
             entries,
             server_type=server_type,
             format_options=format_options,
+            failure_action="write ldif entries",
+            fallback_error="LDIF writing failed",
         )
-        if string_result.failure:
+        if content_result.failure:
             return r[m.Ldif.WriteResponse].fail_op(
                 "write ldif entries",
-                string_result.error or "LDIF writing failed",
+                content_result.error or "LDIF writing failed",
             )
         return r[m.Ldif.WriteResponse].ok(
             m.Ldif.WriteResponse(
-                content=string_result.value,
+                content=content_result.value,
                 statistics=m.Ldif.Statistics(
                     total_entries=u.count(entries),
                     processed_entries=u.count(entries),
@@ -62,17 +90,19 @@ class FlextLdifWriter(s[m.Ldif.Response]):
         Returns:
             The resulting ``p.Result[m.Ldif.WriteResponse]``.
         """
-        string_result = self.write_to_string(
+        content_result = self._stringify_entries(
             entries,
             server_type=server_type,
             format_options=format_options,
+            failure_action="write ldif file",
+            fallback_error="Failed to generate LDIF content",
         )
-        if string_result.failure:
+        if content_result.failure:
             return r[m.Ldif.WriteResponse].fail_op(
                 "write ldif file",
-                string_result.error or "Failed to generate LDIF content",
+                content_result.error or "Failed to generate LDIF content",
             )
-        ldif_content = string_result.value
+        ldif_content = content_result.value
         write = u.Cli.atomic_write_text_file(path, ldif_content)
         if write.failure:
             return r[m.Ldif.WriteResponse].fail(
