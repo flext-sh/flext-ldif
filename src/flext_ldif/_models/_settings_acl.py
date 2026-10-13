@@ -79,19 +79,19 @@ class FlextLdifModelsSettingsAcl:
         bind_patterns: Annotated[
             t.MutableStrMapping,
             u.Field(description="Mapping of bind type names to regex patterns"),
-        ] = u.Field(default_factory=t.StrDict)
+        ] = u.Field(default_factory=dict)
         permission_map: Annotated[
             t.MutableStrMapping,
             u.Field(description="Permission name normalization map"),
-        ] = u.Field(default_factory=t.StrDict)
+        ] = u.Field(default_factory=dict)
         special_subjects: Annotated[
             t.MutableStrPairMapping,
             u.Field(description="Special subject value mappings"),
-        ] = u.Field(default_factory=dict[str, t.StrPair])
+        ] = u.Field(default_factory=dict)
         extra_patterns: Annotated[
             t.MutableStrMapping,
             u.Field(description="Additional extraction patterns for extensions"),
-        ] = u.Field(default_factory=t.StrDict)
+        ] = u.Field(default_factory=dict)
         default_name: Annotated[
             str,
             u.Field(description="Default ACL name when none found"),

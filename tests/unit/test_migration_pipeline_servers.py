@@ -16,8 +16,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_ldif.servers import FlextLdifServersOidConstants
-from flext_ldif.servers._rfc.server_constants import FlextLdifServersRfcConstants
+from flext_ldif.servers import FlextLdifServersOidConstants, FlextLdifServersRfc
 from flext_ldif.services import FlextLdifMigrationPipeline
 from tests import c, m, tm
 
@@ -184,7 +183,7 @@ class TestsFlextLdifMigrationPipelineServers:
             target_server=c.Ldif.ServerTypes.RFC,
         )
 
-        tm.that(content, has=f"dn: {FlextLdifServersRfcConstants.SCHEMA_DN}")
+        tm.that(content, has=f"dn: {FlextLdifServersRfc.Constants.SCHEMA_DN}")
         tm.that(
             f"dn: {FlextLdifServersOidConstants.SCHEMA_DN_SERVER}" not in content,
             eq=True,

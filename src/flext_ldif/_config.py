@@ -14,7 +14,7 @@ from typing import Annotated
 
 from flext_cli import FlextCliConfig, m
 
-from flext_ldif._models._ldif_namespace import FlextLdifNamespace
+from flext_ldif._models.config import FlextLdifNamespace
 
 
 class FlextLdifConfig(FlextCliConfig):

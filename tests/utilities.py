@@ -1,7 +1,7 @@
 """Test utilities facade with shared helper re-exports.
 
-The focused helper mixins live in ``tests._utilities_ldap``,
-``tests._utilities_entries``, and ``tests._utilities_schema``; this module is
+The focused helper mixins live in ``tests.utilities_ldap``,
+``tests.utilities_entries``, and ``tests.utilities_schema``; this module is
 the stable import surface and re-exports the composed namespace.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
@@ -16,9 +16,9 @@ from flext_tests import FlextTestsUtilities
 
 from flext_ldif import FlextLdifUtilities
 from tests import c, m, p, t
-from tests._utilities_entries import TestsFlextLdifEntryBuildersMixin
-from tests._utilities_ldap import TestsFlextLdifLdapClientMixin
-from tests._utilities_schema import (
+from tests.utilities_entries import TestsFlextLdifEntryBuildersMixin
+from tests.utilities_ldap import TestsFlextLdifLdapClientMixin
+from tests.utilities_schema import (
     TestsFlextLdifSchemaExpectations,
     TestsSchemaAclAssertionsMixin,
 )

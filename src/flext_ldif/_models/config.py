@@ -1,7 +1,7 @@
-"""Ldif namespace module.
+"""Config namespace module for flext-ldif.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
-src/flext_ldif/_models/_ldif_namespace
+src/flext_ldif/_models/config
 SPDX-License-Identifier: MIT
 """
 

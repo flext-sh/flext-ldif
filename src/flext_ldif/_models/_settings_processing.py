@@ -16,7 +16,7 @@ from flext_ldif._constants.base import FlextLdifConstantsEnums
 from flext_ldif._models._settings_normalization import (
     FlextLdifModelsSettingsNormalization,
 )
-from flext_ldif.shared import FlextLdifShared
+from flext_ldif._models.base import FlextLdifShared
 
 
 class FlextLdifModelsSettingsProcessing:
