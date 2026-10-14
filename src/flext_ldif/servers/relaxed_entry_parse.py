@@ -18,10 +18,14 @@ class FlextLdifServersRelaxedEntryParseMixin(FlextLdifServersRfcEntry):
     """Relaxed entry parse side for lenient LDIF processing."""
 
     def normalize_dn(self, dn: str) -> p.Result[str]:
-        """Normalize DN using RFC 4514 compliant utility.
+        """Normalize a DN using the RFC 4514 compliant utility.
+
+        Args:
+            dn: DN string to normalize.
 
         Returns:
-            The resulting ``p.Result[str]``.
+            Result carrying the normalized DN, or a failure.
+
         """
         if not dn or not dn.strip():
             return r[str].fail("DN cannot be empty")
@@ -40,10 +44,14 @@ class FlextLdifServersRelaxedEntryParseMixin(FlextLdifServersRfcEntry):
         self,
         entry_content: str,
     ) -> p.Result[m.Ldif.Entry]:
-        """Parse entry content in relaxed mode (extracted from _parse_content).
+        """Parse one entry block in relaxed mode.
+
+        Args:
+            entry_content: Unfolded entry block text.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Entry]``.
+            Result carrying the parsed entry, or a failure.
+
         """
         dn, attrs = self._scan_relaxed_entry_lines(entry_content)
         if not dn:
@@ -57,9 +65,12 @@ class FlextLdifServersRelaxedEntryParseMixin(FlextLdifServersRfcEntry):
     ) -> tuple[str, MutableMapping[str, t.MutableSequenceOf[str | bytes]]]:
         """Scan relaxed entry content into its DN and raw attribute values.
 
+        Args:
+            entry_content: Entry block text to scan line by line.
+
         Returns:
-            The resulting ``tuple[str, MutableMapping[str,
-                t.MutableSequenceOf[str | bytes]]]``.
+            Pair of the DN and raw attribute names mapped to values.
+
         """
         dn: str = ""
         attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]] = {}
@@ -80,8 +91,13 @@ class FlextLdifServersRelaxedEntryParseMixin(FlextLdifServersRfcEntry):
     ) -> str | None:
         """Absorb one non-comment line; return its DN value for DN lines.
 
+        Args:
+            line: Stripped, non-comment entry line.
+            attrs: Attribute mapping the line appends to.
+
         Returns:
-            The resulting ``str | None``.
+            The DN value when the line is a DN line, else None.
+
         """
         if line.startswith(" ") and attrs:
             cls._fold_relaxed_continuation_line(line, attrs)
@@ -113,10 +129,16 @@ class FlextLdifServersRelaxedEntryParseMixin(FlextLdifServersRfcEntry):
         self,
         ldif_content: str,
     ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
-        """Parse raw LDIF content string into Entry models (internal).
+        """Parse raw LDIF content into entry models.
+
+        Falls back to relaxed parsing when the RFC baseline fails.
+
+        Args:
+            ldif_content: Raw LDIF content text.
 
         Returns:
-            The resulting ``p.Result[t.MutableSequenceOf[m.Ldif.Entry]]``.
+            Result carrying the parsed entries, or a failure.
+
         """
         parent_result = super()._parse_content(ldif_content)
         if parent_result.success:
@@ -143,8 +165,15 @@ class FlextLdifServersRelaxedEntryParseMixin(FlextLdifServersRfcEntry):
     ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
         """Parse raw LDIF content with relaxed record splitting.
 
+        Blank-line-separated blocks are parsed individually; failed blocks
+        are logged and skipped.
+
+        Args:
+            ldif_content: Raw LDIF content text.
+
         Returns:
-            The resulting ``p.Result[t.MutableSequenceOf[m.Ldif.Entry]]``.
+            Result carrying the successfully parsed entries.
+
         """
         entries: t.MutableSequenceOf[m.Ldif.Entry] = []
         raw_entries = ldif_content.strip().split("\n\n")
@@ -175,10 +204,14 @@ class FlextLdifServersRelaxedEntryParseMixin(FlextLdifServersRfcEntry):
 
     @staticmethod
     def _prepare_relaxed_raw_entry(raw_entry: str) -> str | None:
-        """Normalize one raw relaxed LDIF entry block.
+        """Strip the version header from one raw LDIF entry block.
+
+        Args:
+            raw_entry: Raw entry block text.
 
         Returns:
-            The resulting ``str | None``.
+            The block without a leading version line, or None when empty.
+
         """
         if not raw_entry.strip():
             return None
@@ -196,10 +229,15 @@ class FlextLdifServersRelaxedEntryParseMixin(FlextLdifServersRfcEntry):
         entry_dn: str,
         entry_attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]],
     ) -> p.Result[m.Ldif.Entry]:
-        """Parse entry with best-effort approach.
+        """Parse one entry with best-effort relaxed handling.
+
+        Args:
+            entry_dn: Distinguished name of the entry.
+            entry_attrs: Attribute names mapped to raw values.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Entry]``.
+            Result carrying the parsed entry, or a failure.
+
         """
         try:
             return self._parse_relaxed_entry(entry_dn, entry_attrs)
@@ -214,8 +252,13 @@ class FlextLdifServersRelaxedEntryParseMixin(FlextLdifServersRfcEntry):
     ) -> p.Result[m.Ldif.Entry]:
         """Build an entry model from relaxed raw entry components.
 
+        Args:
+            entry_dn: Distinguished name of the entry.
+            entry_attrs: Attribute names mapped to raw values.
+
         Returns:
-            The resulting ``p.Result[m.Ldif.Entry]``.
+            Result carrying the built entry, or a failure.
+
         """
         if not entry_dn or not entry_dn.strip():
             return r[m.Ldif.Entry].fail("Entry DN cannot be empty")
@@ -240,10 +283,14 @@ class FlextLdifServersRelaxedEntryParseMixin(FlextLdifServersRfcEntry):
     def _decode_relaxed_attributes(
         entry_attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]],
     ) -> t.MutableStrSequenceMapping:
-        """Decode relaxed entry attributes to string values.
+        """Decode relaxed entry attribute values to strings.
+
+        Args:
+            entry_attrs: Attribute names mapped to string or byte values.
 
         Returns:
-            The resulting ``t.MutableStrSequenceMapping``.
+            Attribute names mapped to decoded string values.
+
         """
         attr_dict: t.MutableStrSequenceMapping = {}
         for attr_key, attr_value in entry_attrs.items():
@@ -266,10 +313,17 @@ class FlextLdifServersRelaxedEntryParseMixin(FlextLdifServersRfcEntry):
         entry_dn: str,
         entry_attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]],
     ) -> m.Ldif.ServerMetadata:
-        """Build metadata for relaxed entry parsing.
+        """Build relaxed-mode metadata for a parsed entry.
+
+        Preserves the original DN line and objectClass attribute casing.
+
+        Args:
+            entry_dn: Distinguished name of the entry.
+            entry_attrs: Attribute names mapped to raw values.
 
         Returns:
-            The resulting ``m.Ldif.ServerMetadata``.
+            Server metadata for the relaxed parse.
+
         """
         original_attribute_case: t.MutableStrMapping = {}
         for attr_name in entry_attrs:

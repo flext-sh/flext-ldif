@@ -19,10 +19,14 @@ class FlextLdifServerMethodsMixin:
 
     @staticmethod
     def parse_operation_kwarg(kwargs: t.JsonMapping) -> p.Result[str]:
-        """Validate the raw ``operation`` kwarg as a string, propagating failures.
+        """Validate the raw ``operation`` kwarg as a string.
+
+        Args:
+            kwargs: Keyword mapping carrying the operation value.
 
         Returns:
-            The resulting ``p.Result[str]``.
+            Result carrying the operation string, or a failure.
+
         """
         try:
             operation_raw = t.str_adapter().validate_python(kwargs.get("operation"))
@@ -37,16 +41,20 @@ class FlextLdifServerMethodsMixin:
         *,
         force_dispatch: bool = False,
     ) -> t.JsonDict | None:
-        """Validate fields outside the processor key set for super().__call__ dispatch.
+        """Validate fields outside the processor key set for builder dispatch.
 
-        Returns ``None`` when every field is a processor key and no forced
-        dispatch was requested — signalling the caller to skip ``super().__call__``
-        and run the local processor branch instead. Non-processor field values
-        are coerced through ``t.json_value_adapter()`` (caller is responsible
-        for ensuring those values are JsonValue-compatible).
+        Non-processor field values are coerced through the JSON-value adapter;
+        the caller is responsible for supplying JSON-compatible values.
+
+        Args:
+            fields: Fields passed to the callable processor.
+            processor_keys: Keys the local processor consumes itself.
+            force_dispatch: Whether the builder path is forced.
 
         Returns:
-            The resulting ``t.JsonDict | None``.
+            Validated non-processor fields, or None when the local processor
+            branch should run.
+
         """
         if not (force_dispatch or any(key not in processor_keys for key in fields)):
             return None
@@ -60,14 +68,14 @@ class FlextLdifServerMethodsMixin:
     def resolve_parent_server_from_instance(
         instance: FlextLdifServerMethodsMixin,
     ) -> p.Ldif.ServerServer | None:
-        """Get the effective parent server when available.
+        """Resolve the nested parent server of the given server instance.
 
-        Reads the declared ``parent_server`` surface the composed schema, ACL,
-        and entry models expose; the second probe resolves only when the
-        parent itself is a nested server.
+        Args:
+            instance: Server instance to probe for a parent.
 
         Returns:
-            The resulting ``p.Ldif.ServerServer | None``.
+            The parent server bundle, or None when absent or top-level.
+
         """
         parent: p.Ldif.ServerServer | None = getattr(
             instance,
@@ -82,8 +90,12 @@ class FlextLdifServerMethodsMixin:
     def resolve_priority_from_parent(parent: p.Ldif.ServerServer | None) -> int:
         """Resolve priority from the parent server Constants class.
 
+        Args:
+            parent: Parent server bundle, or None.
+
         Returns:
-            The resulting ``int``.
+            The declared priority, or the default 100.
+
         """
         if parent is None:
             return 100
@@ -99,35 +111,42 @@ class FlextLdifServerMethodsMixin:
     def resolve_server_type_from_utilities(server_class: type) -> c.Ldif.ServerTypes:
         """Infer the server type from the utilities namespace.
 
+        Args:
+            server_class: Server class to resolve the type for.
+
         Returns:
-            The resulting ``c.Ldif.ServerTypes``.
+            The resolved server type.
+
         """
         resolved: c.Ldif.ServerTypes = u.Ldif.resolve_parent_server_type(server_class)
         return resolved
 
     def _get_parent_server_safe(self) -> p.Ldif.ServerServer | None:
-        """Get the effective parent server safely.
+        """Return the effective parent server of this instance.
 
         Returns:
-            The resulting ``p.Ldif.ServerServer | None``.
+            The parent server bundle, or None when absent or top-level.
+
         """
         return FlextLdifServerMethodsMixin.resolve_parent_server_from_instance(self)
 
     def _get_priority(self) -> int:
-        """Get server priority from the parent Constants class.
+        """Return this server's priority from the parent Constants class.
 
         Returns:
-            The resulting ``int``.
+            The declared priority, or the default 100.
+
         """
         return FlextLdifServerMethodsMixin.resolve_priority_from_parent(
             self._get_parent_server_safe(),
         )
 
     def _get_server_type(self) -> c.Ldif.ServerTypes:
-        """Resolve server type for the current server class.
+        """Resolve the server type for the current server class.
 
         Returns:
-            The resulting ``c.Ldif.ServerTypes``.
+            The resolved server type.
+
         """
         return FlextLdifServerMethodsMixin.resolve_server_type_from_utilities(
             type(self)
@@ -135,10 +154,14 @@ class FlextLdifServerMethodsMixin:
 
     @staticmethod
     def _narrow_operation(operation: t.JsonValue | None) -> str | None:
-        """Narrow operation field to str or None.
+        """Restrict the operation value to a string or None.
+
+        Args:
+            operation: Raw operation value.
 
         Returns:
-            The resulting ``str | None``.
+            The operation string, or None for any other value.
+
         """
         return operation if isinstance(operation, str) else None
 
@@ -168,11 +191,17 @@ class FlextLdifServerMethodsMixin:
     ) -> T | None:
         """Clone through ``builder`` when builder fields or bindings are present.
 
-        Returns ``None`` when every field is a processor key and no runtime
-        binding was given, signalling the caller to run its processor branch.
+        Args:
+            builder: Builder callable that reconstructs the processor.
+            fields: Fields passed to the callable processor.
+            processor_keys: Keys the local processor consumes itself.
+            server: Optional server registry binding.
+            settings: Optional settings binding.
 
         Returns:
-            The resulting ``T | None``.
+            The built processor, or None when the local processor branch
+            should run.
+
         """
         builder_fields = cls.builder_fields_or_none(
             fields,

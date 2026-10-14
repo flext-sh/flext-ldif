@@ -86,8 +86,15 @@ def assert_field_eq(
 ) -> None:
     """Assert ``getattr(value, field) == expected`` with consistent diagnostic.
 
+    Args:
+        value: Model carrying the field under assertion.
+        field: Field name to compare.
+        expected: Expected value; None skips the assertion.
+        label: Human-readable field label used in the failure message.
+
     Raises:
-        AssertionError: If Expected.
+        AssertionError: If the actual value differs from the expected value.
+
     """
     if expected is None:
         return
@@ -106,8 +113,13 @@ def assert_field_eq(
 def assert_must_contain(serialized: str, must_contain: t.StrSequence) -> None:
     """Assert every fragment in ``must_contain`` appears in ``serialized``.
 
+    Args:
+        serialized: Serialized output text to inspect.
+        must_contain: Fragments required to be present.
+
     Raises:
-        AssertionError: If ``fragment not in serialized``.
+        AssertionError: If a fragment is missing from the serialized output.
+
     """
     for fragment in must_contain:
         if fragment not in serialized:
@@ -124,6 +136,7 @@ class TestsSchemaAclAssertionsMixin:
 
         Returns:
             True when the definition text declares an objectClass kind.
+
         """
         return any(
             kind in schema_def
@@ -141,8 +154,13 @@ class TestsSchemaAclAssertionsMixin:
     ) -> m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass:
         """Parse one schema definition through the kind-matching server method.
 
+        Args:
+            server: Schema server that parses the definition.
+            schema_def: Raw schema definition text.
+
         Returns:
-            The resulting ``m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass``.
+            The parsed attribute or objectClass.
+
         """
         is_objectclass = TestsSchemaAclAssertionsMixin._schema_definition_is_objectclass
         if is_objectclass(schema_def):
@@ -218,8 +236,14 @@ class TestsSchemaAclAssertionsMixin:
     ) -> m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass:
         """Parse schema content and assert the expected properties.
 
+        Args:
+            server: Schema server that parses the definition.
+            schema_def: Raw schema definition text.
+            expectations: Expected observable properties of the parse.
+
         Returns:
-            The resulting ``m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass``.
+            The parsed attribute or objectClass.
+
         """
         value = cls._parse_schema_definition(server, schema_def)
         cls._assert_common_expectations(value, expectations)
@@ -242,20 +266,21 @@ class TestsSchemaAclAssertionsMixin:
     ) -> SchemaNodeT | None:
         """Parse content with a server and unwrap the typed result.
 
+        Args:
+            server: Server that parses the content.
+            content: Raw content text.
+            parse_method: Name of the parse entrypoint to dispatch.
+            expected_type: Expected type of the parsed value.
+            should_succeed: When False, the parse is expected to fail.
+
         Returns:
-            The resulting ``SchemaNodeT | None``.
+            The parsed value, or None when failure was expected.
 
         Raises:
-            AssertionError: If ``method_name is None or not isinstance(server,
-                p.Ldif.SchemaServer)``; or if ``result.failure``; or if Expected; or
-                if ``result.success``.
+            AssertionError: If the parse method is unsupported, the parse
+                outcome contradicts ``should_succeed``, or the parse fails.
+            TypeError: If the parsed value does not match ``expected_type``.
 
-        Raises:
-            TypeError: If ``method_name is None or not isinstance(server,
-                p.Ldif.SchemaServer)``; or if the parsed value does not match
-                ``expected_type``.
-            AssertionError: If ``result.failure``; or if Expected; or
-                if ``result.success``.
         """
         method_name = PARSE_DISPATCH.get(parse_method)
         if method_name is None or not isinstance(server, p.Ldif.SchemaServer):
@@ -295,12 +320,22 @@ class TestsSchemaAclAssertionsMixin:
     ) -> m.Ldif.Acl | None:
         """Parse ACL content and unwrap the resulting model.
 
+        Args:
+            server: ACL server that parses the content.
+            content: Raw ACL content text.
+            expected_type: Expected type of the parsed ACL; None skips the
+                type assertion.
+            should_succeed: When False, the parse is expected to fail.
+            message: Optional failure message override.
+
         Returns:
-            The resulting ``m.Ldif.Acl | None``.
+            The parsed ACL, or None when failure was expected.
 
         Raises:
-            AssertionError: If ``result.failure``; or if Expected; or if
-                ``result.success``.
+            AssertionError: If the parse outcome contradicts
+                ``should_succeed``, the parse fails, or the value type
+                mismatches ``expected_type``.
+
         """
         result = server.parse_server(content)
         if should_succeed is False:
@@ -331,13 +366,22 @@ class TestsSchemaAclAssertionsMixin:
     ) -> str:
         """Write content with a server and unwrap the serialized output.
 
+        Args:
+            server: Server that serializes the data.
+            data: Schema or ACL model to write.
+            write_method: Name of the write entrypoint to dispatch.
+            must_contain: Fragments required in the serialized output.
+            message: Optional failure message override.
+
         Returns:
-            The resulting ``str``.
+            The serialized output text.
 
         Raises:
-            AssertionError: If ``entry is None``; or if ``result.failure``.
-            TypeError: If ``not isinstance(server, server_proto)``; or if ``not
-                isinstance(data, data_cls)``.
+            AssertionError: If the write method is unsupported or the write
+                fails.
+            TypeError: If the server or data does not match the write
+                method's contract.
+
         """
         dispatch: t.MappingKV[
             t.Tests.WriteMethod,
@@ -392,11 +436,18 @@ class TestsSchemaAclAssertionsMixin:
     ) -> str:
         """Write ACL content and unwrap the serialized output.
 
+        Args:
+            server: ACL server that serializes the data.
+            data: ACL model to write.
+            must_contain: Fragments required in the serialized output.
+            message: Optional failure message override.
+
         Returns:
-            The resulting ``str``.
+            The serialized output text.
 
         Raises:
-            AssertionError: If ``result.failure``.
+            AssertionError: If the write fails.
+
         """
         result = server.write(data)
         if result.failure:

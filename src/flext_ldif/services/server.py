@@ -55,6 +55,7 @@ class FlextLdifServer(s[m.Ldif.Response]):
 
         Raises:
             TypeError: If the global singleton belongs to another class.
+
         """
         _ = args, kwargs
         singleton = FlextLdifServer._global_instance
@@ -82,10 +83,14 @@ class FlextLdifServer(s[m.Ldif.Response]):
             FlextLdifServer._discovery_initialized = True
 
     def acl(self, server_type: str) -> p.Ldif.AclServer | None:
-        """Get ACL server for a server type.
+        """Return the ACL server registered for a server type.
+
+        Args:
+            server_type: Registered server type identifier.
 
         Returns:
-            The resulting ``p.Ldif.AclServer | None``.
+            The ACL server, or None when the type is unknown.
+
         """
         server_result = self.server(server_type)
         if server_result.success:
@@ -93,10 +98,14 @@ class FlextLdifServer(s[m.Ldif.Response]):
         return None
 
     def entry(self, server_type: str) -> p.Ldif.EntryServer | None:
-        """Get entry server for a server type.
+        """Return the entry server registered for a server type.
+
+        Args:
+            server_type: Registered server type identifier.
 
         Returns:
-            The resulting ``p.Ldif.EntryServer | None``.
+            The entry server, or None when the type is unknown.
+
         """
         server_result = self.server(server_type)
         if server_result.success:
@@ -109,11 +118,15 @@ class FlextLdifServer(s[m.Ldif.Response]):
     ) -> p.Result[
         t.MappingKV[str, p.Ldif.SchemaServer | p.Ldif.AclServer | p.Ldif.EntryServer]
     ]:
-        """Get all server types for a server.
+        """Resolve the schema, ACL, and entry servers for a server type.
+
+        Args:
+            server_type: Registered server type identifier.
 
         Returns:
-            The resulting ``p.Result[t.MappingKV[str, p.Ldif.SchemaServer |
-                p.Ldif.AclServer | p.Ldif.EntryServer]]``.
+            Result carrying a mapping keyed by ``schema``, ``acl``, and
+            ``entry``, or a failure.
+
         """
         server_result = self.server(server_type)
         if server_result.failure:
@@ -139,10 +152,14 @@ class FlextLdifServer(s[m.Ldif.Response]):
         })
 
     def resolve_base_server(self, server_type: str) -> p.Result[p.Ldif.ServerServer]:
-        """Get base server for a given server type.
+        """Resolve the base server bundle for a server type.
+
+        Args:
+            server_type: Registered server type identifier.
 
         Returns:
-            The resulting ``p.Result[p.Ldif.ServerServer]``.
+            Result carrying the server bundle, or a failure.
+
         """
         return self.server(server_type)
 
@@ -150,10 +167,14 @@ class FlextLdifServer(s[m.Ldif.Response]):
         self,
         server_type: str,
     ) -> p.Result[type[p.Ldif.ServerConstants]]:
-        """Get Constants class from server server.
+        """Resolve the constants class declared by a server bundle.
+
+        Args:
+            server_type: Registered server type identifier.
 
         Returns:
-            The resulting ``p.Result[type[p.Ldif.ServerConstants]]``.
+            Result carrying the server constants, or a failure.
+
         """
         server_result = self.server(server_type)
         if server_result.failure:
@@ -171,10 +192,11 @@ class FlextLdifServer(s[m.Ldif.Response]):
         return r[type[p.Ldif.ServerConstants]].ok(constants)
 
     def summarize_registry(self) -> t.Ldif.MutableMetadataInputMapping:
-        """Get comprehensive registry statistics.
+        """Summarize the registry: server count, bundle classes, priorities.
 
         Returns:
-            The resulting ``t.Ldif.MutableMetadataInputMapping``.
+            Mapping of totals, per-type server class names, and priorities.
+
         """
         server_types = self.list_registered_servers()
         servers_by_server: t.JsonDict = {}
@@ -199,18 +221,26 @@ class FlextLdifServer(s[m.Ldif.Response]):
         return stats
 
     def schema_server(self, server_type: str) -> p.Ldif.SchemaServer | None:
-        """Get schema server for a server type.
+        """Return the schema server registered for a server type.
+
+        Args:
+            server_type: Registered server type identifier.
 
         Returns:
-            The resulting ``p.Ldif.SchemaServer | None``.
+            The schema server, or None when the type is unknown.
+
         """
         return self.resolve_schema_server(server_type)
 
     def resolve_schema_server(self, server_type: str) -> p.Ldif.SchemaServer | None:
-        """Get schema server for a server type.
+        """Return the schema server registered for a server type.
+
+        Args:
+            server_type: Registered server type identifier.
 
         Returns:
-            The resulting ``p.Ldif.SchemaServer | None``.
+            The schema server, or None when the type is unknown.
+
         """
         server_result = self.server(server_type)
         if server_result.success:
@@ -218,18 +248,23 @@ class FlextLdifServer(s[m.Ldif.Response]):
         return None
 
     def list_registered_servers(self) -> t.MutableSequenceOf[str]:
-        """List all registered server types.
+        """List all registered server type identifiers.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            Sorted server type identifiers.
+
         """
         return sorted(self._registered_servers)
 
     def server(self, server_type: str) -> p.Result[p.Ldif.ServerServer]:
-        """Get base server for a server type.
+        """Resolve the base server bundle for a normalized server type.
+
+        Args:
+            server_type: Server type identifier, normalized before lookup.
 
         Returns:
-            The resulting ``p.Result[p.Ldif.ServerServer]``.
+            Result carrying the server bundle, or a failure.
+
         """
         try:
             normalized = u.Ldif.normalize_server_type(server_type)
@@ -285,6 +320,7 @@ class FlextLdifServer(s[m.Ldif.Response]):
 
         Returns:
             True when the member name does not start with an underscore.
+
         """
         return not name.startswith("_")
 
@@ -297,6 +333,7 @@ class FlextLdifServer(s[m.Ldif.Response]):
 
         Returns:
             True when the candidate is a concrete subclass of the base.
+
         """
         return (
             inspect.isclass(candidate)

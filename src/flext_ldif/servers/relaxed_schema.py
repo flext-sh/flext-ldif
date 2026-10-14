@@ -22,6 +22,16 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
         schema_item: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
         original_definition: str,
     ) -> m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass:
+        """Attach relaxed-mode metadata to a parsed schema item.
+
+        Args:
+            schema_item: Attribute or objectClass that was parsed.
+            original_definition: Raw definition text to preserve.
+
+        Returns:
+            The schema item carrying relaxed-source metadata.
+
+        """
         if not schema_item.metadata:
             schema_item.metadata = m.Ldif.ServerMetadata.model_validate({
                 "server_type": self._get_server_type(),
@@ -46,10 +56,15 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
         objectclass: m.Ldif.SchemaObjectClass,
         original_definition: str,
     ) -> m.Ldif.SchemaObjectClass:
-        """Enhance objectClass metadata to indicate relaxed mode parsing.
+        """Attach relaxed-mode metadata to a parsed objectClass.
+
+        Args:
+            objectclass: ObjectClass parsed from the definition.
+            original_definition: Raw definition text to preserve.
 
         Returns:
-            The resulting ``m.Ldif.SchemaObjectClass``.
+            The objectClass carrying relaxed-source metadata.
+
         """
         result = self._enhance_schema_item_metadata(
             schema_item=objectclass,
@@ -64,11 +79,15 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
     def _extract_must_may_from_objectclass(
         oc_definition: str,
     ) -> tuple[t.MutableSequenceOf[str] | None, t.MutableSequenceOf[str] | None]:
-        """Extract MUST and MAY fields from objectClass definition.
+        """Extract the MUST and MAY field lists from an objectClass definition.
+
+        Args:
+            oc_definition: Raw objectClass definition text.
 
         Returns:
-            The resulting ``tuple[t.MutableSequenceOf[str] | None,
-                t.MutableSequenceOf[str] | None]``.
+            Pair of field-name lists for MUST and MAY; either element is None
+            when the corresponding clause is absent.
+
         """
         must = None
         must_match = c.Ldif.SCHEMA_OBJECTCLASS_MUST_RE.search(oc_definition)
@@ -91,10 +110,15 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
         field_match: re.Match[str],
         separator: str,
     ) -> t.MutableSequenceOf[str] | None:
-        """Split a regex-matched schema field into its separator-delimited values.
+        """Split a regex-matched schema field into separator-delimited values.
+
+        Args:
+            field_match: Match whose first or second group holds the value.
+            separator: Delimiter between individual values.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str] | None``.
+            Stripped, trimmed field values, or None when no group captured.
+
         """
         if field_match.group(1):
             field_value = field_match.group(1).strip()
@@ -106,10 +130,17 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
 
     @staticmethod
     def _extract_oid_with_fallback_patterns(definition: str) -> str | None:
-        """Extract OID using multiple fallback patterns for relaxed mode.
+        """Extract the OID from a definition using relaxed fallback patterns.
+
+        Tries the standard OID extraction first, then progressively lenient
+        numeric and alphanumeric patterns.
+
+        Args:
+            definition: Raw schema definition text.
 
         Returns:
-            The resulting ``str | None``.
+            The extracted OID, or None when no pattern matches.
+
         """
         oid_result = u.Ldif.extract_oid(definition)
         if oid_result.success:
@@ -128,10 +159,14 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
 
     @staticmethod
     def _extract_sup_from_objectclass(oc_definition: str) -> str | None:
-        """Extract SUP (superior) field from objectClass definition.
+        """Extract the SUP (superior) class name from an objectClass definition.
+
+        Args:
+            oc_definition: Raw objectClass definition text.
 
         Returns:
-            The resulting ``str | None``.
+            The superior class name, or None when the clause is absent.
+
         """
         sup_match = c.Ldif.SCHEMA_OBJECTCLASS_SUP_RE.search(oc_definition)
         if not sup_match:
@@ -158,10 +193,14 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
         self,
         attr_definition: str | m.Ldif.SchemaAttribute,
     ) -> bool:
-        """Accept any attribute definition in relaxed mode.
+        """Accept any non-empty attribute definition in relaxed mode.
+
+        Args:
+            attr_definition: Raw definition text or a parsed attribute.
 
         Returns:
-            The resulting ``bool``.
+            True when the definition can be handled by this parser.
+
         """
         if not isinstance(attr_definition, str):
             return True
@@ -172,10 +211,14 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
         self,
         oc_definition: str | m.Ldif.SchemaObjectClass,
     ) -> bool:
-        """Accept any objectClass definition in relaxed mode.
+        """Accept any non-empty objectClass definition in relaxed mode.
+
+        Args:
+            oc_definition: Raw definition text or a parsed objectClass.
 
         Returns:
-            The resulting ``bool``.
+            True when the definition can be handled by this parser.
+
         """
         if not isinstance(oc_definition, str):
             return True
@@ -186,10 +229,17 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
         self,
         attr_definition: str,
     ) -> p.Result[m.Ldif.SchemaAttribute]:
-        """Parse attribute with best-effort approach using RFC baseline.
+        """Parse an attribute definition with best-effort relaxed handling.
+
+        Delegates to the RFC baseline first; on failure, falls back to lenient
+        extraction of OID and name.
+
+        Args:
+            attr_definition: Raw attribute definition text.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.SchemaAttribute]``.
+            Result carrying the parsed attribute, or a failure.
+
         """
         if not attr_definition or not attr_definition.strip():
             return r[m.Ldif.SchemaAttribute].fail(
@@ -222,8 +272,15 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
     ) -> p.Result[m.Ldif.SchemaAttribute]:
         """Parse an attribute definition using relaxed fallback rules.
 
+        Builds a minimal attribute from the extracted OID and NAME clause when
+        strict parsing is not possible.
+
+        Args:
+            attr_definition: Raw attribute definition text.
+
         Returns:
-            The resulting ``p.Result[m.Ldif.SchemaAttribute]``.
+            Result carrying the minimally parsed attribute, or a failure.
+
         """
         oid = self._extract_oid_with_fallback_patterns(attr_definition)
         if not oid:
@@ -272,10 +329,17 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
         self,
         oc_definition: str,
     ) -> p.Result[m.Ldif.SchemaObjectClass]:
-        """Parse objectClass with best-effort approach using RFC baseline.
+        """Parse an objectClass definition with best-effort relaxed handling.
+
+        Delegates to the RFC baseline first; on failure, falls back to lenient
+        extraction of the objectClass clauses.
+
+        Args:
+            oc_definition: Raw objectClass definition text.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.SchemaObjectClass]``.
+            Result carrying the parsed objectClass, or a failure.
+
         """
         if not oc_definition or not oc_definition.strip():
             return r[m.Ldif.SchemaObjectClass].fail(
@@ -297,10 +361,17 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
         self,
         oc_definition: str,
     ) -> p.Result[m.Ldif.SchemaObjectClass]:
-        """Parse objectClass with relaxed/best-effort parsing using utilities.
+        """Parse an objectClass definition using relaxed fallback rules.
+
+        Builds a minimal objectClass from the extracted OID, NAME, DESC, SUP,
+        kind, MUST, and MAY clauses.
+
+        Args:
+            oc_definition: Raw objectClass definition text.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.SchemaObjectClass]``.
+            Result carrying the minimally parsed objectClass, or a failure.
+
         """
         oid = self._extract_oid_with_fallback_patterns(oc_definition)
         if not oid:
@@ -351,8 +422,13 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
     ) -> str | None:
         """Return the preserved original-format text for a relaxed schema item.
 
+        Args:
+            schema_data: Attribute or objectClass with relaxed metadata.
+
         Returns:
-            The resulting ``str | None``.
+            The preserved original definition text, or None when the item was
+            not parsed in relaxed mode.
+
         """
         extensions = schema_data.metadata.extensions if schema_data.metadata else None
         source_server = (
@@ -369,10 +445,17 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
 
     @override
     def _write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> p.Result[str]:
-        """Write attribute to RFC format - stringify in relaxed mode.
+        """Write an attribute definition, preserving its original text.
+
+        Delegates to the RFC baseline first; on failure, emits the preserved
+        original-format text or a minimal synthetic definition.
+
+        Args:
+            attr_data: Parsed attribute to serialize.
 
         Returns:
-            The resulting ``p.Result[str]``.
+            Result carrying the attribute definition string, or a failure.
+
         """
         parent_result = super()._write_attribute(attr_data)
         if parent_result.success:
@@ -391,10 +474,17 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
         self,
         oc_data: m.Ldif.SchemaObjectClass,
     ) -> p.Result[str]:
-        """Write objectClass to RFC format - stringify in relaxed mode.
+        """Write an objectClass definition, preserving its original text.
+
+        Delegates to the RFC baseline first; on failure, emits the preserved
+        original-format text or a minimal synthetic definition.
+
+        Args:
+            oc_data: Parsed objectClass to serialize.
 
         Returns:
-            The resulting ``p.Result[str]``.
+            Result carrying the objectClass definition string, or a failure.
+
         """
         parent_result = super()._write_objectclass(oc_data)
         if parent_result.success:

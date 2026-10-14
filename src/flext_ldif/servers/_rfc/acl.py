@@ -100,10 +100,21 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
         settings: p.Ldif.Settings | None = None,
         **fields: t.JsonValue,
     ) -> Self | m.Ldif.Acl | str:
-        """Callable interface - automatic polymorphic processor.
+        """Polymorphic callable interface for parse and write operations.
+
+        When neither server nor settings is supplied, parses ACL text or
+        serializes an ACL model according to the given data and operation.
+
+        Args:
+            data: ACL text to parse or ACL model to serialize.
+            operation: Explicit operation name; inferred from data when None.
+            server: Optional server registry for the configured builder path.
+            settings: Optional settings for the configured builder path.
+            **fields: Additional processor fields.
 
         Returns:
-            The resulting ``Self | m.Ldif.Acl | str``.
+            A configured processor, the parsed ACL, or the serialized text.
+
         """
         processor_fields: t.MutableMappingKV[str, t.JsonValue | m.Ldif.Acl | None] = (
             dict(fields)
@@ -140,39 +151,52 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
 
     @override
     def resolve_acl_attributes(self) -> t.MutableSequenceOf[str]:
-        """Get the RFC ACL attributes.
+        """Return the RFC ACL attribute names.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The RFC-defined ACL attribute names.
+
         """
         return list(c.Ldif.RFC_ACL_ATTRIBUTES)
 
     @override
     def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
-        """Check if this server can handle the ACL definition.
+        """Accept any ACL definition in RFC form.
+
+        Args:
+            acl_line: Raw ACL line text or a parsed ACL.
 
         Returns:
-            The resulting ``bool``.
+            True; the RFC server handles every ACL definition.
+
         """
         _ = acl_line
         return True
 
     @override
     def can_handle_attribute(self, attribute: m.Ldif.SchemaAttribute) -> bool:
-        """Check if server handles schema attributes.
+        """Decline schema attribute handling for the ACL server.
+
+        Args:
+            attribute: Attribute to check.
 
         Returns:
-            The resulting ``bool``.
+            False; schema attributes belong to the schema server.
+
         """
         _ = attribute
         return False
 
     @override
     def can_handle_objectclass(self, objectclass: m.Ldif.SchemaObjectClass) -> bool:
-        """Check if server handles objectclasses.
+        """Decline objectClass handling for the ACL server.
+
+        Args:
+            objectclass: ObjectClass to check.
 
         Returns:
-            The resulting ``bool``.
+            False; objectClasses belong to the schema server.
+
         """
         _ = objectclass
         return False
@@ -183,19 +207,29 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
         _feature_id: str | None,
         _metadata: t.MutableJsonMapping,
     ) -> str:
-        """Convert RFC permission back to server-specific format.
+        """Return the RFC permission unchanged.
+
+        Args:
+            permission: RFC permission name.
+            _feature_id: Unused feature identifier.
+            _metadata: Unused metadata extensions.
 
         Returns:
-            The resulting ``str``.
+            The permission name in RFC form.
+
         """
         return permission
 
     @override
     def _get_feature_fallback(self, _feature_id: str) -> str | None:
-        """Get RFC fallback value for unsupported vendor feature.
+        """Return the RFC fallback value for an unsupported vendor feature.
+
+        Args:
+            _feature_id: Identifier of the unsupported feature.
 
         Returns:
-            The resulting ``str | None``.
+            None; the RFC server provides no vendor feature fallback.
+
         """
         return None
 
@@ -206,17 +240,28 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
     ) -> tuple[str, str | None]:
         """Normalize a server-specific permission to RFC standard.
 
+        Args:
+            permission: Permission name in server-specific form.
+            _metadata: Unused metadata extensions.
+
         Returns:
-            The resulting ``tuple[str, str | None]``.
+            Pair of the RFC permission name and its optional feature id.
+
         """
         return (permission, None)
 
     @override
     def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
-        """Parse RFC-compliant ACL line (implements abstract method).
+        """Parse an RFC-compliant ACL line.
+
+        Wraps the raw line in an ACL model that preserves the original text.
+
+        Args:
+            acl_line: Raw ACL line text.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Acl]``.
+            Result carrying the parsed ACL, or a failure.
+
         """
         if not acl_line or not acl_line.strip():
             return r[m.Ldif.Acl].fail("ACL line must be a non-empty string.")
@@ -246,19 +291,30 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
 
     @override
     def _supports_feature(self, _feature_id: str) -> bool:
-        """Check if this server supports a specific feature.
+        """Report whether a vendor feature is supported.
+
+        Args:
+            _feature_id: Identifier of the feature to check.
 
         Returns:
-            The resulting ``bool``.
+            False; the RFC server supports no vendor-specific features.
+
         """
         return False
 
     @override
     def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
-        """Write ACL to RFC-compliant string format (internal).
+        """Write an ACL to RFC-compliant string format.
+
+        Emits the preserved raw line when present, otherwise a bare
+        attribute-name line.
+
+        Args:
+            acl_data: ACL to serialize.
 
         Returns:
-            The resulting ``p.Result[str]``.
+            Result carrying the ACL text, or a failure.
+
         """
         if acl_data.raw_acl and acl_data.raw_acl.strip():
             return r[str].ok(acl_data.raw_acl)

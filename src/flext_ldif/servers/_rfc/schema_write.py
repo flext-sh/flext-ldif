@@ -21,10 +21,14 @@ class FlextLdifServersRfcSchemaWriteMixin(FlextLdifServersBaseSchema):
         self,
         attr_data: m.Ldif.SchemaAttribute,
     ) -> t.MutableSequenceOf[str]:
-        """Build RFC attribute definition parts.
+        """Build the RFC attribute definition parts for writing.
+
+        Args:
+            attr_data: Attribute to serialize.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            Definition parts joined with spaces to form the definition.
+
         """
         parts: t.MutableSequenceOf[str] = u.Ldif.build_attribute_parts_with_metadata(
             attr_data,
@@ -39,10 +43,14 @@ class FlextLdifServersRfcSchemaWriteMixin(FlextLdifServersBaseSchema):
         self,
         oc_data: m.Ldif.SchemaObjectClass,
     ) -> t.MutableSequenceOf[str]:
-        """Build RFC objectClass definition parts.
+        """Build the RFC objectClass definition parts for writing.
+
+        Args:
+            oc_data: ObjectClass to serialize.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            Definition parts joined with spaces to form the definition.
+
         """
         parts: t.MutableSequenceOf[str] = u.Ldif.build_objectclass_parts_with_metadata(
             oc_data,
@@ -58,10 +66,15 @@ class FlextLdifServersRfcSchemaWriteMixin(FlextLdifServersBaseSchema):
         output_str: str,
         metadata: m.Ldif.ServerMetadata | None,
     ) -> str:
-        """Ensure X-ORIGIN extension is present if in metadata.
+        """Append the X-ORIGIN extension from metadata when missing.
+
+        Args:
+            output_str: Serialized schema definition text.
+            metadata: Metadata that may carry the X-ORIGIN value.
 
         Returns:
-            The resulting ``str``.
+            The definition text with the extension appended when applicable.
+
         """
         result = output_str
         if metadata is not None:
@@ -79,19 +92,27 @@ class FlextLdifServersRfcSchemaWriteMixin(FlextLdifServersBaseSchema):
 
     @staticmethod
     def _post_write_attribute(written_str: str) -> str:
-        """Transform written attribute string (subclass hook).
+        """Apply the final attribute string transformation.
+
+        Args:
+            written_str: Serialized attribute definition text.
 
         Returns:
-            The resulting ``str``.
+            The transformed attribute definition text.
+
         """
         return written_str
 
     @staticmethod
     def _post_write_objectclass(written_str: str) -> str:
-        """Transform written objectClass string (subclass hook).
+        """Apply the final objectClass string transformation.
+
+        Args:
+            written_str: Serialized objectClass definition text.
 
         Returns:
-            The resulting ``str``.
+            The transformed objectClass definition text.
+
         """
         return written_str
 
@@ -100,10 +121,14 @@ class FlextLdifServersRfcSchemaWriteMixin(FlextLdifServersBaseSchema):
         self,
         attr_data: m.Ldif.SchemaAttribute,
     ) -> m.Ldif.SchemaAttribute:
-        """Transform attribute before writing (subclass hook).
+        """Transform an attribute before writing.
+
+        Args:
+            attr_data: Attribute about to be serialized.
 
         Returns:
-            The resulting ``m.Ldif.SchemaAttribute``.
+            The transformed attribute.
+
         """
         return attr_data
 
@@ -112,28 +137,40 @@ class FlextLdifServersRfcSchemaWriteMixin(FlextLdifServersBaseSchema):
         self,
         oc_data: m.Ldif.SchemaObjectClass,
     ) -> m.Ldif.SchemaObjectClass:
-        """Transform objectClass before writing (subclass hook).
+        """Transform an objectClass before writing.
+
+        Args:
+            oc_data: ObjectClass about to be serialized.
 
         Returns:
-            The resulting ``m.Ldif.SchemaObjectClass``.
+            The transformed objectClass.
+
         """
         return oc_data
 
     @override
     def _write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> p.Result[str]:
-        """Write attribute to RFC-compliant string format (internal).
+        """Write an attribute definition to RFC-compliant format.
+
+        Args:
+            attr_data: Attribute to serialize.
 
         Returns:
-            The resulting ``p.Result[str]``.
+            Result carrying the definition string, or a failure.
+
         """
         return self._write_schema_item(attr_data)
 
     @override
     def _write_objectclass(self, oc_data: m.Ldif.SchemaObjectClass) -> p.Result[str]:
-        """Write objectClass to RFC-compliant string format (internal).
+        """Write an objectClass definition to RFC-compliant format.
+
+        Args:
+            oc_data: ObjectClass to serialize.
 
         Returns:
-            The resulting ``p.Result[str]``.
+            Result carrying the definition string, or a failure.
+
         """
         return self._write_schema_item(oc_data)
 
@@ -141,10 +178,14 @@ class FlextLdifServersRfcSchemaWriteMixin(FlextLdifServersBaseSchema):
         self,
         data: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> p.Result[str]:
-        """Write schema item (attribute or objectClass) to RFC-compliant format.
+        """Write a schema item to RFC-compliant format.
+
+        Args:
+            data: Attribute or objectClass to serialize.
 
         Returns:
-            The resulting ``p.Result[str]``.
+            Result carrying the definition string, or a failure.
+
         """
         try:
             return self._write_schema_item_core(data)
@@ -164,10 +205,14 @@ class FlextLdifServersRfcSchemaWriteMixin(FlextLdifServersBaseSchema):
         self,
         data: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> p.Result[str]:
-        """Write schema item after server-specific transforms.
+        """Write a schema item after server-specific transforms.
+
+        Args:
+            data: Attribute or objectClass to serialize.
 
         Returns:
-            The resulting ``p.Result[str]``.
+            Result carrying the definition string, or a failure.
+
         """
         if isinstance(data, m.Ldif.SchemaAttribute):
             attr_transformed = self._transform_attribute_for_write(data)
