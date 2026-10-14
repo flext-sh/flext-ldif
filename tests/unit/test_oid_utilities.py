@@ -37,9 +37,7 @@ class TestsFlextLdifOidUtilities:
         patterns: t.SequenceOf[t.Ldif.RegexPattern],
     ) -> None:
         """Test extract from definition returns leading oid."""
-        result = u.Ldif.extract_from_definition(definition, patterns=patterns)
-
-        value = u.Tests.assert_success(result)
+        value = tm.ok(u.Ldif.extract_from_definition(definition, patterns=patterns))
         tm.that(value, eq=expected_oid)
 
     @staticmethod
@@ -65,11 +63,7 @@ class TestsFlextLdifOidUtilities:
     def test_extract_from_definition_result_is_chainable_on_success() -> None:
         """Test extract from definition result is chainable on success."""
         result = u.Ldif.extract_from_definition("( 1.2.3 NAME 'x' )")
-
-        mapped = result.map(lambda oid: oid.split("."))
-        value = u.Tests.assert_success(mapped)
-
-        tm.that(value, eq=["1", "2", "3"])
+        tm.that(tm.ok(result.map(lambda oid: oid.split("."))), eq=["1", "2", "3"])
 
     @staticmethod
     def test_extract_from_definition_is_idempotent() -> None:
@@ -78,8 +72,7 @@ class TestsFlextLdifOidUtilities:
 
         first = u.Ldif.extract_from_definition(definition)
         second = u.Ldif.extract_from_definition(definition)
-
-        tm.that(u.Tests.assert_success(first), eq=u.Tests.assert_success(second))
+        tm.that(tm.ok(first), eq=tm.ok(second))
 
     @staticmethod
     @pytest.mark.parametrize(
