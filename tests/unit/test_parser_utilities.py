@@ -24,13 +24,21 @@ class TestsFlextLdifParserUtilities:
     @staticmethod
     @pytest.mark.parametrize(
         "definition",
-        ["", "( NAME 'cn' DESC 'no oid' )", "not-an-oid NAME 'x'"],
+        [
+            "",
+            "   ",
+            "( NAME 'cn' DESC 'no oid' )",
+            "not-an-oid NAME 'x'",
+            "prefix ( 1.2.3 NAME 'x' )",
+        ],
     )
     def test_extract_oid_fails_without_leading_oid(definition: str) -> None:
         """Test extract oid fails without leading oid."""
         result = u.Ldif.extract_oid(definition)
 
         u.Tests.assert_failure(result)
+        if not definition:
+            tm.that(result.error, eq=c.Ldif.SCHEMA_OID_EMPTY_ERROR)
 
     @staticmethod
     @pytest.mark.parametrize(

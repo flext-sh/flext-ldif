@@ -419,6 +419,7 @@ extend-safe-fixes = [
 ]
 ignore = [
   "camelcase-imported-as-lowercase",
+  "D",
   "implicit-namespace-package",
   "missing-required-import",
   "missing-trailing-comma",

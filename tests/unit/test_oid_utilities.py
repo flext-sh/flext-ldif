@@ -16,11 +16,15 @@ class TestsFlextLdifOidUtilities:
 
     @staticmethod
     @pytest.mark.parametrize(
+        "patterns", [(c.Ldif.SCHEMA_OID_CAPTURE_RE,), c.Ldif.OID_EXTRACTION_PATTERNS]
+    )
+    @pytest.mark.parametrize(
         ("definition", "expected_oid"),
         [
             ("( 1.2.840.113556.1.4.221 NAME 'x' )", "1.2.840.113556.1.4.221"),
             ("(  2.5.4.3 NAME 'cn' )", "2.5.4.3"),
             ("(1.2.3 NAME 'nospace')", "1.2.3"),
+            ("prefix 9.8.7 ( 1.2.3 NAME 'x' )", "1.2.3"),
             (
                 "attributetypes: ( 0.9.2342.19200300.100.1.1 NAME 'uid' )",
                 "0.9.2342.19200300.100.1.1",
@@ -30,9 +34,10 @@ class TestsFlextLdifOidUtilities:
     def test_extract_from_definition_returns_leading_oid(
         definition: str,
         expected_oid: str,
+        patterns: t.SequenceOf[t.Ldif.RegexPattern],
     ) -> None:
         """Test extract from definition returns leading oid."""
-        result = u.Ldif.extract_from_definition(definition)
+        result = u.Ldif.extract_from_definition(definition, patterns=patterns)
 
         value = u.Tests.assert_success(result)
         tm.that(value, eq=expected_oid)

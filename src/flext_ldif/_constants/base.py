@@ -143,6 +143,7 @@ class FlextLdifConstantsBase:
     )
     SCHEMA_OBJECTCLASS_MUST: ClassVar[str] = "MUST\\s+(?:\\(\\s*([^)]+)\\s*\\)|(\\w+))"
     SCHEMA_OBJECTCLASS_MAY: ClassVar[str] = "MAY\\s+(?:\\(\\s*([^)]+)\\s*\\)|(\\w+))"
+    SCHEMA_VALUE_SEPARATOR: ClassVar[str] = "$"
     ATTRIBUTE_NAME: ClassVar[str] = "^[a-zA-Z][a-zA-Z0-9-]*$"
     ATTRIBUTE_OPTION: ClassVar[str] = ";[a-zA-Z][a-zA-Z0-9-_]*"
     BINARY_CHAR_PATTERN: ClassVar[str] = "[\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\x7f-\\xff]"
