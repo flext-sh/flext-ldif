@@ -2,34 +2,12 @@
 # @flext-owner: flext-infra/config/codegen.yaml + flext-infra/src/flext_infra/templates/project/base/pyproject.toml.j2
 # @flext-adjust: MANAGED=conflict_sections + overwrite_project_keys. CUSTOM=preserve_project_keys and [tool.*] outside conflict_sections. Never edit this projection.
 # @flext-regenerate: make gen
-# @flext-rendered-by: flext-infra 0.12.0
-[build-system]
-build-backend = "hatchling.build"
-requires = ["hatchling"]
 
+# [CUSTOM] name, description, authors, maintainers, scripts, entry-points, classifiers, keywords, license, urls, readme, version, dependencies, optional-dependencies
+# [MANAGED] requires-python
 [project]
-classifiers = [
-  "Development Status :: 3 - Alpha",
-  "Intended Audience :: Developers",
-  "Operating System :: OS Independent",
-  "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.13",
-  "Topic :: Software Development :: Libraries :: Python Modules",
-  "Typing :: Typed",
-]
-dependencies = [
-  "annotated-types>=0.8.0",
-  "beartype>=0.22.9",
-  "dependency-injector>=4.49.1",
-  "flext-cli @ git+https://github.com/flext-sh/flext-cli.git@0.12.0-dev",
-  "flext-core @ git+https://github.com/flext-sh/flext-core.git@0.12.0-dev",
-  "packaging>=26.3",
-  "pydantic>=2.14.1,<3",
-  "pydantic-settings>=2.15.0",
-  "pyyaml>=6.0.3",
-  "structlog>=26.1.0,<27",
-  "typing-extensions>=4.16.0",
-]
+classifiers = ["Development Status :: 3 - Alpha", "Intended Audience :: Developers", "Operating System :: OS Independent", "Programming Language :: Python :: 3 :: Only", "Programming Language :: Python :: 3.13", "Topic :: Software Development :: Libraries :: Python Modules", "Typing :: Typed"]
+dependencies = ["annotated-types>=0.8.0", "beartype>=0.22.9", "dependency-injector>=4.49.1", "flext-cli @ git+https://github.com/flext-sh/flext-cli.git@0.12.0-dev", "flext-core @ git+https://github.com/flext-sh/flext-core.git@0.12.0-dev", "packaging>=26.3", "pydantic>=2.14.1,<3", "pydantic-settings>=2.15.0", "pyyaml>=6.0.3", "structlog>=26.1.0,<27", "typing-extensions>=4.16.0"]
 description = "FLEXT LDIF - Enterprise LDIF Processing Library"
 keywords = ["adapter", "enterprise", "flext", "integration", "typed"]
 license = "MIT"
@@ -46,6 +24,8 @@ name = "FLEXT Team"
 email = "team@flext.sh"
 name = "FLEXT Team"
 
+[project.optional-dependencies]
+
 [project.scripts]
 flext-ldif = "flext_ldif.cli:main"
 
@@ -54,159 +34,81 @@ Documentation = "https://github.com/flext-sh/flext/blob/main/README.md"
 Homepage = "https://github.com/flext-sh/flext"
 Repository = "https://github.com/flext-sh/flext"
 
-[dependency-groups]
-codegen = [
-  "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev",
-]
-dev = [
-  "actionlint-py>=1.7.12.24",
-  "bandit>=1.9.4",
-  "deptry",
-  "editables>=0.6",
-  "flext-tests @ git+https://github.com/flext-sh/flext-tests.git@0.12.0-dev",
-  "hypothesis",
-  "mkdocs",
-  "mkdocs-autorefs",
-  "mkdocs-exclude>=1.0.2",
-  "mkdocs-git-revision-date-localized-plugin>=1.5.4",
-  "mkdocs-material>=9.7.7",
-  "mkdocs-mermaid2-plugin>=1.2.3",
-  "mkdocs-minify-plugin>=0.8.0",
-  "mkdocs-redirects>=1.2.3",
-  "mkdocs-section-index>=0.3.12",
-  "mkdocstrings>=1.0.6",
-  "mkdocstrings-python>=2.0.8",
-  "msgpack-types",
-  "mypy>=2.3.1",
-  "platformdirs>=4.12.0",
-  "pymdown-extensions",
-  "pyrefly>=1.2.0",
-  "pyright>=1.1.411",
-  "pytest>=9.1.1",
-  "pytest-asyncio",
-  "pytest-benchmark",
-  "pytest-cov",
-  "pytest-markdown-docs",
-  "pytest-randomly>=4.1.0",
-  "pytest-reportlog",
-  "pytest-testmon>=2.2.0",
-  "pytest-timeout",
-  "pytest-xdist",
-  "ruff>=0.16.5",
-  "rumdl>=0.2.62",
-  "types-cachetools>=7.0.0.20260713",
-  "types-cffi>=2.1.0.20260827",
-  "types-click>=7.1.8",
-  "types-defusedxml>=0.7.0.20260504",
-  "types-docker>=7.2.0.20260827",
-  "types-grpcio",
-  "types-jsonschema>=4.26.0.20260518",
-  "types-ldap3>=2.9.13.20260827",
-  "types-openpyxl>=3.1.5.20260827",
-  "types-paramiko>=5.0.0.20260724",
-  "types-protobuf>=7.35.1.20260827",
-  "types-psutil>=7.2.2.20260827",
-  "types-psycopg2>=2.9.21.20260724",
-  "types-pyasn1>=0.6.0.20260724",
-  "types-pyopenssl>=24.1.0.20240722",
-  "types-python-dateutil>=2.9.0.20260807",
-  "types-pyyaml>=6.0.12.20260815",
-  "types-redis>=4.6.0.20241004",
-  "types-requests>=2.33.0.20260712",
-  "types-setuptools>=84.0.0.20260812",
-  "types-tabulate>=0.10.0.20260508",
-  "types-toml>=0.10.8.20260518",
-  "vulture>=2.16",
-  "yamlfix>=1.19.1",
-]
+# [MANAGED] build-system
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling"]
 
+# [MANAGED] tool.codespell
 [tool.codespell]
 check-filenames = true
 ignore-words-list = "crate,nd"
 
+# [MANAGED] tool.coverage
 [tool.coverage.report]
-exclude_also = [
-  "if _t.TYPE_CHECKING:",
-  "if TYPE_CHECKING:",
-  "if typing.TYPE_CHECKING:",
-]
+exclude_also = ["if TYPE_CHECKING:", "if _t.TYPE_CHECKING:", "if typing.TYPE_CHECKING:"]
 precision = 2
 show_missing = true
 skip_covered = false
 
 [tool.coverage.run]
+omit = ["*/_protocols/*", "*/dependency_injector/providers.pyx", "*/protocols.py"]
 source = ["src"]
-omit = [
-  "*/dependency_injector/providers.pyx",
-  "*/protocols.py",
-  "*/_protocols/*",
-]
 
+# [MANAGED] tool.deptry
 [tool.deptry]
 known_first_party = ["flext_core", "flext_ldif"]
 pep621_dev_dependency_groups = ["dev"]
 
-[tool.flext.docs]
-package_name = "flext_ldif"
-
-[tool.hatch.metadata]
-allow-direct-references = true
+# [MANAGED] tool.hatch
+[tool.hatch.build.targets.sdist]
+only-include = ["src/flext_ldif"]
 
 [tool.hatch.build.targets.wheel]
-include = ["/src/flext_ldif/**"]
+only-include = ["src/flext_ldif"]
 
 [tool.hatch.build.targets.wheel.sources]
 "src/flext_ldif" = "flext_ldif"
 
-[tool.hatch.build.targets.sdist]
-include = ["/src/flext_ldif/**"]
+[tool.hatch.metadata]
+allow-direct-references = true
 
+# [MANAGED] tool.mypy
 [tool.mypy]
-mypy_path = ["src"]
-plugins = ["pydantic.mypy"]
-disable_error_code = ["prop-decorator", "call-arg"]
-python_version = "3.13"
 allow_redefinition = true
 check_untyped_defs = true
+disable_error_code = ["call-arg", "prop-decorator"]
 explicit_package_bases = true
 extra_checks = true
+follow_imports = "normal"
 follow_untyped_imports = true
 local_partial_types = true
+mypy_path = ["src"]
 namespace_packages = true
 no_implicit_reexport = true
+plugins = ["pydantic.mypy"]
+python_version = "3.13"
 show_traceback = true
 strict_equality = true
 warn_redundant_casts = true
 warn_return_any = true
 warn_unreachable = true
 warn_unused_ignores = true
-follow_imports = "normal"
 
 [[tool.mypy.overrides]]
-module = ["rope.*"]
 follow_untyped_imports = true
+module = ["rope.*"]
 
+# [MANAGED] tool.pydantic-mypy
 [tool.pydantic-mypy]
 init_forbid_extra = true
 init_typed = true
 warn_required_dynamic_aliases = true
 
+# [MANAGED] tool.pyrefly
 [tool.pyrefly]
 disable-project-excludes-heuristics = true
-project-excludes = [
-  "**/.venv/**",
-  "**/__pycache__",
-  "**/__pyrefly_virtual__/**",
-  "**/node_modules",
-  "**/protos/**",
-  "**/site-packages/**",
-  "**/typings/**",
-  "**/vendor/**",
-  "**/venv/**",
-  ".venv/**",
-  "typings/**",
-  "vendor/**",
-]
+project-excludes = ["**/.venv/**", "**/__pycache__", "**/__pyrefly_virtual__/**", "**/node_modules", "**/protos/**", "**/site-packages/**", "**/typings/**", "**/vendor/**", "**/venv/**", ".venv/**", "typings/**", "vendor/**"]
 project-includes = ["examples/**/*.py*", "src/**/*.py*", "tests/**/*.py*"]
 python-version = "3.13"
 search-path = ["src", "."]
@@ -294,31 +196,11 @@ unused-coroutine = "error"
 unused-ignore = "error"
 variance-mismatch = "error"
 
+# [MANAGED] tool.pyright
 [tool.pyright]
-exclude = [
-  "**/.*",
-  "**/.mypy_cache",
-  "**/.pytest_cache",
-  "**/.ruff_cache",
-  "**/.venv",
-  "**/.venv/**",
-  "**/__pycache__",
-  "**/__pyrefly_virtual__/**",
-  "**/dist-packages",
-  "**/dist-packages/**",
-  "**/node_modules",
-  "**/protos/**",
-  "**/site-packages",
-  "**/site-packages/**",
-  "**/venv",
-  "**/venv/**",
-  ".git",
-  ".reports",
-  ".venv",
-  "vendor",
-]
-include = ["src", "tests"]
+exclude = ["**/.*", "**/.mypy_cache", "**/.pytest_cache", "**/.ruff_cache", "**/.venv", "**/.venv/**", "**/__pycache__", "**/__pyrefly_virtual__/**", "**/dist-packages", "**/dist-packages/**", "**/node_modules", "**/protos/**", "**/site-packages", "**/site-packages/**", "**/venv", "**/venv/**", ".git", ".reports", ".venv", "vendor"]
 extraPaths = ["src", "."]
+include = ["examples", "src", "tests"]
 pythonPlatform = "Linux"
 pythonVersion = "3.13"
 reportCallIssue = "error"
@@ -338,66 +220,37 @@ reportUnusedVariable = "error"
 typeCheckingMode = "strict"
 
 [[tool.pyright.executionEnvironments]]
-root = "src"
-extraPaths = ["src"]
-reportPrivateUsage = "error"
-
-[[tool.pyright.executionEnvironments]]
-root = "tests"
 extraPaths = [".", "src"]
 reportPrivateUsage = "error"
+root = "examples"
 
+[[tool.pyright.executionEnvironments]]
+extraPaths = ["src"]
+reportPrivateUsage = "error"
+root = "src"
+
+[[tool.pyright.executionEnvironments]]
+extraPaths = [".", "src"]
+reportPrivateUsage = "error"
+root = "tests"
+
+# [MANAGED] tool.pytest.ini_options
 [tool.pytest.ini_options]
-addopts = [
-  "--benchmark-disable",
-  "--strict-markers",
-  "--markdown-docs",
-  "--durations=10",
-  "--flext-enforce-strict",
-]
-flext_slow_timeout_seconds = "30"
+addopts = ["--benchmark-disable", "--durations=10", "--flext-enforce-strict", "--markdown-docs", "--strict-markers"]
 asyncio_default_fixture_loop_scope = "function"
-filterwarnings = [
-  "error",
-  "module::flext_core._constants.enforcement.FlextMroViolation",
-  "once::pytest.PytestAssertRewriteWarning",
-]
-markers = [
-  "smoke: public-interface smoke tests",
-  "unit: unit tests",
-  "integration: integration tests",
-  "functional: functional behavior tests",
-  "performance: performance and benchmark tests",
-  "slow: slow-running tests",
-  "docker: tests requiring Docker",
-  "oracle: tests requiring the shared Oracle database",
-  "remote: tests requiring remote/external network services",
-  "e2e: end-to-end integration tests",
-  "edge_cases: edge case tests",
-  "stress: stress tests",
-  "resilience: resilience tests",
-  "discovery: catalog and stream discovery tests",
-  "singer: Singer protocol contract tests",
-  "requires_engine: native check engine required by this test",
-]
+filterwarnings = ["error", "module::flext_core._constants.enforcement.FlextMroViolation", "once::pytest.PytestAssertRewriteWarning"]
+flext_slow_timeout_seconds = "30"
+markers = ["discovery: catalog and stream discovery tests", "docker: tests requiring Docker", "e2e: end-to-end integration tests", "edge_cases: edge case tests", "functional: functional behavior tests", "integration: integration tests", "oracle: tests requiring the shared Oracle database", "performance: performance and benchmark tests", "remote: tests requiring remote/external network services", "requires_engine: native check engine required by this test", "resilience: resilience tests", "singer: Singer protocol contract tests", "slow: slow-running tests", "smoke: public-interface smoke tests", "stress: stress tests", "unit: unit tests"]
 minversion = "8.0"
 python_classes = ["Test*"]
 python_files = ["*_test.py", "*_tests.py", "test_*.py"]
 testpaths = ["tests"]
 
+# [MANAGED] tool.ruff
 [tool.ruff]
-extend-exclude = [
-  "**/.archive/**",
-  "**/.agents/aihub-hooks/**",
-  "**/.claude/aihub-hooks/**",
-  "**/.codex/aihub-hooks/**",
-  "**/.cursor/aihub-hooks/**",
-  "**/.gemini/aihub-hooks/**",
-  "**/protos/**",
-]
 fix = false
 line-length = 88
-namespace-packages = ["tests", "examples", "scripts"]
+namespace-packages = ["examples", "scripts", "tests"]
 preview = true
 respect-gitignore = true
 show-fixes = true
@@ -412,129 +265,13 @@ quote-style = "double"
 skip-magic-trailing-comma = false
 
 [tool.ruff.lint]
-extend-safe-fixes = [
-  "camelcase-imported-as-lowercase",
-  "relative-imports",
-  "typing-only-first-party-import",
-]
-ignore = [
-  "camelcase-imported-as-lowercase",
-  "implicit-namespace-package",
-  "missing-required-import",
-  "missing-trailing-comma",
-  "runtime-import-in-type-checking-block",
-  "typing-only-first-party-import",
-  "typing-only-standard-library-import",
-  "typing-only-third-party-import",
-  "unsorted-imports",
-]
+extend-safe-fixes = ["camelcase-imported-as-lowercase", "relative-imports", "typing-only-first-party-import"]
+ignore = ["camelcase-imported-as-lowercase", "implicit-namespace-package", "missing-required-import", "missing-trailing-comma", "runtime-import-in-type-checking-block", "typing-only-first-party-import", "typing-only-standard-library-import", "typing-only-third-party-import", "unsorted-imports"]
 select = ["ALL"]
-unfixable = [
-  "duplicate-value",
-  "multi-value-repeated-key-literal",
-  "multi-value-repeated-key-variable",
-  "outdated-version-block",
-  "p-print",
-  "print",
-  "pytest-duplicate-parametrize-test-cases",
-  "redefined-while-unused",
-  "unused-variable",
-]
+unfixable = ["duplicate-value", "multi-value-repeated-key-literal", "multi-value-repeated-key-variable", "outdated-version-block", "p-print", "print", "pytest-duplicate-parametrize-test-cases", "redefined-while-unused", "unused-variable"]
 
 [tool.ruff.lint.flake8-copyright]
 notice-rgx = "Copyright \\(c\\) \\d{4} \\S[^\\n]*\\. All rights reserved\\."
-
-[tool.ruff.lint.flake8-type-checking]
-runtime-evaluated-base-classes = [
-  "flext_cli.FlextCliConfig",
-  "flext_cli.FlextCliModels.BaseModel",
-  "flext_cli.FlextCliSettings",
-  "flext_cli.m.DynamicModel",
-  "flext_cli.m.FrozenModel",
-  "flext_cli.m.StrictModel",
-  "flext_core.FlextService",
-  "flext_core.FlextSettings",
-  "flext_core.m.ArbitraryTypesModel",
-  "flext_core.m.BaseModel",
-  "flext_core.m.DomainEvent",
-  "flext_core.m.DynamicModel",
-  "flext_core.m.Entity",
-  "flext_core.m.FrozenDynamicModel",
-  "flext_core.m.FrozenModel",
-  "flext_core.m.StrictModel",
-  "flext_core.m.Value",
-  "flext_ldif.FlextLdifModels.BaseModel",
-  "flext_ldif.FlextLdifModels.Value",
-  "flext_ldif.FlextLdifSettings",
-  "flext_ldif._models.FlextLdifModelsBases.AclElement",
-  "flext_ldif._models.FlextLdifModelsBases.SchemaElement",
-  "flext_ldif._models.config.FlextLdifNamespace",
-  "flext_ldif._models.domain_entry_change_value.FlextLdifModelsDomainEntryChangeOperationValue",
-  "flext_ldif._models.domain_entry_control.FlextLdifModelsDomainEntryControl",
-  "flext_ldif._models.domain_entry_statistics.FlextLdifModelsDomainEntryStatistics",
-  "flext_ldif._models.results.Response",
-  "flext_ldif.s",
-  "flext_ldif.servers._base.FlextLdifServersDialectSchema",
-  "flext_ldif.servers._base.acl.FlextLdifServersBaseSchemaAcl",
-  "flext_ldif.servers._base.entry.FlextLdifServersBaseEntry",
-  "flext_ldif.servers._base.schema.FlextLdifServersBaseSchema",
-  "flext_ldif.servers._oid.FlextLdifServersOidAclFormatMixin",
-  "flext_ldif.servers._oid.FlextLdifServersOidAclParseMixin",
-  "flext_ldif.servers._oid.FlextLdifServersOidAclSubjectMixin",
-  "flext_ldif.servers._oid.FlextLdifServersOidAclWriteMixin",
-  "flext_ldif.servers._oid.FlextLdifServersOidEntryBooleanMixin",
-  "flext_ldif.servers._oid.FlextLdifServersOidEntryMetadataMixin",
-  "flext_ldif.servers._oid.FlextLdifServersOidEntryNormalizeMixin",
-  "flext_ldif.servers._oid.FlextLdifServersOidEntryParseMixin",
-  "flext_ldif.servers._oid.FlextLdifServersOidEntryRestoreLinesMixin",
-  "flext_ldif.servers._oid.FlextLdifServersOidEntryRestoreMixin",
-  "flext_ldif.servers._oid.FlextLdifServersOidSchemaNormalizeMixin",
-  "flext_ldif.servers._oid.acl.FlextLdifServersOidAcl",
-  "flext_ldif.servers._oid.entry.FlextLdifServersOidEntry",
-  "flext_ldif.servers._oid.schema.FlextLdifServersOidSchema",
-  "flext_ldif.servers._oud.FlextLdifServersOudAclSubjectMixin",
-  "flext_ldif.servers._oud.FlextLdifServersOudAclWriteMixin",
-  "flext_ldif.servers._oud.FlextLdifServersOudEntryParseMixin",
-  "flext_ldif.servers._rfc.FlextLdifServersRfcEntry",
-  "flext_ldif.servers._rfc.FlextLdifServersRfcSchemaParseMixin",
-  "flext_ldif.servers._rfc.FlextLdifServersRfcSchemaValuesMixin",
-  "flext_ldif.servers._rfc.FlextLdifServersRfcSchemaWriteMixin",
-  "flext_ldif.servers._rfc.acl.FlextLdifServersRfcAcl",
-  "flext_ldif.servers._rfc.schema.FlextLdifServersRfcSchema",
-  "flext_ldif.servers.base.FlextLdifServersBase",
-  "flext_ldif.servers.openldap1_entry.FlextLdifServersOpenldap1Entry",
-  "flext_ldif.servers.relaxed_entry_parse.FlextLdifServersRelaxedEntryParseMixin",
-  "flext_ldif.servers.relaxed_entry_write.FlextLdifServersRelaxedEntryWriteMixin",
-  "flext_ldif.servers.rfc.FlextLdifServersRfc",
-  "flext_ldif.services.FlextLdifAcl",
-  "flext_ldif.services.FlextLdifAnalysis",
-  "flext_ldif.services.FlextLdifCategorization",
-  "flext_ldif.services.FlextLdifConversion",
-  "flext_ldif.services.FlextLdifDetector",
-  "flext_ldif.services.FlextLdifEntries",
-  "flext_ldif.services.FlextLdifParser",
-  "flext_ldif.services.FlextLdifProcessing",
-  "flext_ldif.services.FlextLdifStatistics",
-  "flext_ldif.services.FlextLdifValidation",
-  "flext_ldif.services.FlextLdifWriter",
-  "flext_ldif.services.categorization_filtering.FlextLdifCategorizationFiltering",
-  "flext_ldif.services.categorization_rules.FlextLdifCategorizationRules",
-  "flext_ldif.services.conversion_acl.FlextLdifConversionAclMixin",
-  "flext_ldif.services.conversion_acl_preserve.FlextLdifConversionAclPreserveMixin",
-  "flext_ldif.services.conversion_entry.FlextLdifConversionEntryMixin",
-  "flext_ldif.services.conversion_metadata.FlextLdifConversionMetadataMixin",
-  "flext_ldif.services.conversion_schema.FlextLdifConversionSchemaMixin",
-  "flext_ldif.services.conversion_schema_entry.FlextLdifConversionSchemaEntryMixin",
-  "flext_ldif.services.conversion_support.FlextLdifConversionSupportMixin",
-  "flext_ldif.services.detector_scoring.FlextLdifDetectorScoring",
-  "flext_tests.FlextTestsServiceBase",
-  "flext_tests.FlextTestsSettings",
-  "flext_tests.FlextTestsUtilities.Tests",
-  "pydantic.BaseModel",
-  "tests.models._CanHandleCase",
-  "tests.models._Frozen",
-  "tests.models._SchemaCase",
-]
 
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"
@@ -561,76 +298,26 @@ known-first-party = ["flext_core", "flext_ldif"]
 split-on-trailing-comma = false
 
 [tool.ruff.lint.per-file-ignores]
-"**/.agents/skills/webapp-testing/scripts/with_server.py" = [
-  "subprocess-without-shell-equals-true",
-  "suspicious-subprocess-import",
-]
+"**/.agents/skills/webapp-testing/scripts/with_server.py" = ["subprocess-without-shell-equals-true", "suspicious-subprocess-import"]
 "**/__init__.py" = ["line-too-long", "non-empty-init-module", "unused-import"]
 "**/_config.py" = ["invalid-function-name"]
-"**/bin/**" = [
-  "docstring-missing-exception",
-  "docstring-missing-returns",
-  "import-outside-top-level",
-  "line-too-long",
-  "magic-value-comparison",
-  "missing-copyright-notice",
-  "print",
-  "type-check-without-type-error",
-  "undocumented-public-method",
-  "unused-class-method-argument",
-]
+"**/bin/**" = ["docstring-missing-exception", "docstring-missing-returns", "import-outside-top-level", "line-too-long", "magic-value-comparison", "missing-copyright-notice", "print", "type-check-without-type-error", "undocumented-public-method", "unused-class-method-argument"]
 "**/docx.py" = ["import-outside-top-level"]
 "**/file_test_helpers.py" = ["line-too-long"]
-"**/flext_core/_models/pydantic.py" = [
-  "any-type",
-  "builtin-argument-shadowing",
-  "too-many-arguments",
-]
+"**/flext_core/_models/pydantic.py" = ["any-type", "builtin-argument-shadowing", "too-many-arguments"]
 "**/flextcliutilitiesfiletesthelpersmixin_part_03.py" = ["line-too-long"]
 "**/framework.py" = ["banned-api", "import-outside-top-level"]
 "**/pptx.py" = ["import-outside-top-level"]
 "**/test_public_contracts_cov.py" = ["line-too-long"]
-"**/tests/**" = [
-  "boolean-positional-value-in-call",
-  "boolean-type-hint-positional-argument",
-  "compare-to-empty-string",
-  "import-private-name",
-  "magic-value-comparison",
-  "mutable-class-default",
-  "no-self-use",
-  "private-member-access",
-  "pytest-fixture-autouse",
-  "too-many-public-methods",
-]
+"**/tests/**" = ["boolean-positional-value-in-call", "boolean-type-hint-positional-argument", "compare-to-empty-string", "import-private-name", "magic-value-comparison", "mutable-class-default", "no-self-use", "private-member-access", "pytest-fixture-autouse", "too-many-public-methods"]
 "**/xlsx.py" = ["import-outside-top-level"]
-"scripts/**/*.py" = [
-  "commented-out-code",
-  "line-too-long",
-  "typing-only-first-party-import",
-]
-"src/flext_cli/_utilities/processes.py" = [
-  "subprocess-without-shell-equals-true",
-  "suspicious-subprocess-import",
-]
-"src/flext_cli/_utilities/runtime.py" = [
-  "subprocess-without-shell-equals-true",
-  "suspicious-subprocess-import",
-]
-"src/flext_tests/_utilities/environment.py" = [
-  "start-process-with-partial-path",
-  "subprocess-without-shell-equals-true",
-  "suspicious-subprocess-import",
-]
+"scripts/**/*.py" = ["commented-out-code", "line-too-long", "typing-only-first-party-import"]
+"src/flext_cli/_utilities/processes.py" = ["subprocess-without-shell-equals-true", "suspicious-subprocess-import"]
+"src/flext_cli/_utilities/runtime.py" = ["subprocess-without-shell-equals-true", "suspicious-subprocess-import"]
+"src/flext_tests/_utilities/environment.py" = ["start-process-with-partial-path", "subprocess-without-shell-equals-true", "suspicious-subprocess-import"]
 "tests/**/*.py" = ["assert"]
 "tests/test_snapshot_drill.py" = ["import-private-name"]
-"tests/unit/test_capability_collection.py" = [
-  "line-too-long",
-  "missing-copyright-notice",
-  "start-process-with-partial-path",
-  "subprocess-without-shell-equals-true",
-  "suspicious-subprocess-import",
-  "undocumented-public-method",
-]
+"tests/unit/test_capability_collection.py" = ["line-too-long", "missing-copyright-notice", "start-process-with-partial-path", "subprocess-without-shell-equals-true", "suspicious-subprocess-import", "undocumented-public-method"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
@@ -638,17 +325,20 @@ convention = "google"
 [tool.ruff.lint.pylint]
 allow-dunder-method-names = ["__base__", "__bases__"]
 
+# [MANAGED] tool.tomlsort
 [tool.tomlsort]
 all = true
 in_place = true
-sort_first = ["project", "build-system", "tool", "dependency-groups"]
+sort_first = ["build-system", "dependency-groups", "project", "tool"]
 
+# [MANAGED] tool.vulture
 [tool.vulture]
 exclude = ["*/_protocols/*"]
 min_confidence = 100
 paths = ["src"]
 verbose = false
 
+# [MANAGED] tool.yamlfix
 [tool.yamlfix]
 explicit_start = false
 line_length = 88
@@ -656,7 +346,7 @@ preserve_quotes = true
 section_whitelines = 1
 whitelines = 1
 
-[tool.uv]
-constraint-dependencies = ["mypy<2.4.0"]
-environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
-link-mode = "copy"
+# [MANAGED] dependency-groups
+[dependency-groups]
+codegen = ["flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev"]
+dev = ["actionlint-py>=1.7.12.24", "bandit>=1.9.4", "deptry", "editables>=0.6", "flext-tests @ git+https://github.com/flext-sh/flext-tests.git@0.12.0-dev", "hypothesis", "mkdocs", "mkdocs-autorefs", "mkdocs-exclude>=1.0.2", "mkdocs-git-revision-date-localized-plugin>=1.5.4", "mkdocs-material>=9.7.7", "mkdocs-mermaid2-plugin>=1.2.3", "mkdocs-minify-plugin>=0.8.0", "mkdocs-redirects>=1.2.3", "mkdocs-section-index>=0.3.12", "mkdocstrings>=1.0.6", "mkdocstrings-python>=2.0.8", "msgpack-types", "mypy>=2.3.1", "platformdirs>=4.12.0", "pymdown-extensions", "pyrefly>=1.2.0", "pyright>=1.1.411", "pytest>=9.1.1", "pytest-asyncio", "pytest-benchmark", "pytest-cov", "pytest-markdown-docs", "pytest-randomly>=4.1.0", "pytest-reportlog", "pytest-testmon>=2.2.0", "pytest-timeout", "pytest-xdist", "ruff>=0.16.5", "rumdl>=0.2.62", "types-cachetools>=7.0.0.20260713", "types-cffi>=2.1.0.20260827", "types-click>=7.1.8", "types-defusedxml>=0.7.0.20260504", "types-docker>=7.2.0.20260827", "types-grpcio", "types-jsonschema>=4.26.0.20260518", "types-ldap3>=2.9.13.20260827", "types-openpyxl>=3.1.5.20260827", "types-paramiko>=5.0.0.20260724", "types-protobuf>=7.35.1.20260827", "types-psutil>=7.2.2.20260827", "types-psycopg2>=2.9.21.20260724", "types-pyasn1>=0.6.0.20260724", "types-pyopenssl>=24.1.0.20240722", "types-python-dateutil>=2.9.0.20260807", "types-pyyaml>=6.0.12.20260815", "types-redis>=4.6.0.20241004", "types-requests>=2.33.0.20260712", "types-setuptools>=84.0.0.20260812", "types-tabulate>=0.10.0.20260508", "types-toml>=0.10.8.20260518", "vulture>=2.16", "yamlfix>=1.19.1"]
