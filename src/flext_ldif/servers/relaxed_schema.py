@@ -130,31 +130,14 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
 
     @staticmethod
     def _extract_oid_with_fallback_patterns(definition: str) -> str | None:
-        """Extract the OID from a definition using relaxed fallback patterns.
-
-        Tries the standard OID extraction first, then progressively lenient
-        numeric and alphanumeric patterns.
-
-        Args:
-            definition: Raw schema definition text.
-
-        Returns:
-            The extracted OID, or None when no pattern matches.
-
-        """
+        """Extract an OID using the declared relaxed grammar."""
         oid_result = u.Ldif.extract_oid(definition)
         if oid_result.success:
-            oid_val: str = oid_result.value
-            return oid_val
-        fallback_patterns = (
-            FlextLdifServersRelaxedConstants.OID_NUMERIC_WITH_PAREN_RE,
-            FlextLdifServersRelaxedConstants.OID_NUMERIC_ANYWHERE_RE,
-            FlextLdifServersRelaxedConstants.OID_ALPHANUMERIC_RELAXED_RE,
-        )
-        for pattern in fallback_patterns:
-            oid_match = pattern.search(definition)
-            if oid_match:
-                return str(oid_match.group(1))
+            return oid_result.value
+        for pattern in FlextLdifServersRelaxedConstants.OID_EXTRACTION_PATTERNS[1:]:
+            match = pattern.search(definition)
+            if match:
+                return match.group(1)
         return None
 
     @staticmethod

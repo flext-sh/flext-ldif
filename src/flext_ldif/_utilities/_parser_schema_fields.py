@@ -11,7 +11,7 @@ from flext_ldif import c, p, t
 
 
 class FlextLdifParserSchemaFields:
-    """Extract OIDs and optional fields from schema definition strings."""
+    """Extract optional fields from schema definition strings."""
 
     @staticmethod
     def extract_oid(definition: str) -> p.Result[str]:

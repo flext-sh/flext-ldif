@@ -175,6 +175,10 @@ class FlextLdifConstantsBase:
     )
     SCHEMA_SUBSTR_TOKEN_RE: ClassVar[t.RegexPattern] = re.compile(SCHEMA_SUBSTR_PATTERN)
     SCHEMA_OID_CAPTURE_RE: ClassVar[t.RegexPattern] = re.compile(SCHEMA_OID_CAPTURE)
+    SCHEMA_OID_LEADING_RE: ClassVar[t.RegexPattern] = re.compile(
+        rf"\A\s*{SCHEMA_OID_CAPTURE}",
+    )
+    SCHEMA_OID_EMPTY_ERROR: ClassVar[str] = "Empty definition: cannot extract OID"
     SCHEMA_OBJECTCLASS_KIND_RE: ClassVar[t.RegexPattern] = re.compile(
         SCHEMA_OBJECTCLASS_KIND,
         re.IGNORECASE,
