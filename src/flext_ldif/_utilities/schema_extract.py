@@ -8,7 +8,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_ldif import FlextLdifModels, c, p, r, t, u
+from flext_cli import u
+
+from flext_ldif import FlextLdifModels, c, p, r, t
 from flext_ldif._utilities import FlextLdifUtilitiesParser
 
 if TYPE_CHECKING:

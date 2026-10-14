@@ -18,6 +18,24 @@ from tests import c, m, tm, u
 class TestsFlextLdifParserUtilities:
     """Public-contract behavior of the LDIF parser utilities."""
 
+    @staticmethod
+    @pytest.mark.parametrize(
+        ("must_separator", "may_separator"), [("|", ","), (",", "|")]
+    )
+    def test_schema_field_separators_are_independent(
+        must_separator: str,
+        may_separator: str,
+    ) -> None:
+        """MUST and MAY use their supplied policies independently."""
+        tm.that(
+            u.Ldif.extract_objectclass_must_may(
+                f"MUST ( cn{must_separator}sn ) MAY ( uid{may_separator}mail )",
+                must_separator=must_separator,
+                may_separator=may_separator,
+            ),
+            eq=(["cn", "sn"], ["uid", "mail"]),
+        )
+
     # ------------------------------------------------------------------
     # extract_oid
     # ------------------------------------------------------------------
