@@ -62,6 +62,13 @@ class FlextLdif(
 
         ``registry`` is the service-base field name (the base DSL payload
         feeds it); ``server`` remains the public facade alias.
+
+        Args:
+            server: Public facade alias for the server registry to bind.
+            registry: Service-base field name receiving the registry payload.
+            settings: Legacy settings alias for the runtime settings.
+            runtime_settings: Runtime settings bound onto the facade.
+
         """
         super().__init__()
         resolved_registry = server if server is not None else registry
@@ -79,7 +86,17 @@ class FlextLdif(
         settings: p.Ldif.Settings | None = None,
         **fields: t.JsonValue,
     ) -> Self:
-        """Return a configured facade instance while keeping the DSL alias callable."""
+        """Return a configured facade instance while keeping the DSL alias callable.
+
+        Args:
+            server: Optional server registry to bind on the new instance.
+            settings: Optional runtime settings to bind on the new instance.
+            **fields: Additional DSL field values forwarded to the base.
+
+        Returns:
+            A configured copy of this facade.
+
+        """
         configured = super().__call__(server=server, settings=settings, **fields)
         return cast("Self", configured)
 
@@ -92,8 +109,14 @@ class FlextLdif(
     ) -> p.Ldif.CategorizationService:
         """Create a categorization service bound to the facade registry.
 
+        Args:
+            options: Optional migration options supplying rules and base DN.
+            base_dn: Explicit base DN overriding the options-derived value.
+            server_type: Server flavor used for categorization context.
+
         Returns:
-            The resulting ``p.Ldif.CategorizationService``.
+            The bound categorization service.
+
         """
         resolved_base_dn = (
             base_dn
@@ -133,8 +156,14 @@ class FlextLdif(
     ) -> p.Ldif.Entry:
         """Expose the stateless filter helper through the facade DSL.
 
+        Args:
+            entry: Entry whose attributes are filtered.
+            forbidden_attrs: Attribute names to remove from the entry.
+            forbidden_ocs: objectClass names to remove from the entry.
+
         Returns:
-            The resulting ``p.Ldif.Entry``.
+            The filtered entry.
+
         """
         concrete = u.Ldif.as_entry(entry)
         return FlextLdifFilters.filter_entry_attributes(
@@ -150,8 +179,13 @@ class FlextLdif(
     ) -> p.Ldif.Entry:
         """Expose schema-attribute OID filtering through the facade DSL.
 
+        Args:
+            entry: Entry whose schema attribute values are filtered.
+            allowed_oids: Whitelist rules or OID mapping selecting values to keep.
+
         Returns:
-            The resulting ``p.Ldif.Entry``.
+            The filtered entry.
+
         """
         concrete = u.Ldif.as_entry(entry)
         return FlextLdifFilters.filter_schema_attribute_values(
@@ -168,8 +202,14 @@ class FlextLdif(
     ) -> p.Result[T]:
         """Resolve one registry server with the canonical not-found failure.
 
+        Args:
+            server_type: Server type identifier to resolve.
+            resource_type: Resource name used in the typed not-found failure.
+            lookup: Callable resolving the resource from the registry.
+
         Returns:
-            The resulting ``p.Result[T]``.
+            Typed result carrying the resolved resource or a not-found failure.
+
         """
         server_registry: p.Ldif.ServerRegistry = self._server
         resolved = lookup(server_registry, server_type)
@@ -184,8 +224,12 @@ class FlextLdif(
     def acl(self, server_type: str) -> p.Result[p.Ldif.AclServer]:
         """Expose ACL server lookup through the public facade (ENFORCE-056).
 
+        Args:
+            server_type: Server type identifier to look up.
+
         Returns:
-            The resulting ``p.Result[p.Ldif.AclServer]``.
+            Typed result carrying the ACL server.
+
         """
         return self._resolve_registry_server(
             server_type,
@@ -196,8 +240,12 @@ class FlextLdif(
     def entry(self, server_type: str) -> p.Result[p.Ldif.EntryServer]:
         """Expose entry server lookup through the public facade (ENFORCE-056).
 
+        Args:
+            server_type: Server type identifier to look up.
+
         Returns:
-            The resulting ``p.Result[p.Ldif.EntryServer]``.
+            Typed result carrying the entry server.
+
         """
         return self._resolve_registry_server(
             server_type,
@@ -208,8 +256,12 @@ class FlextLdif(
     def resolve_base_server(self, server_type: str) -> p.Result[p.Ldif.ServerServer]:
         """Expose base server resolution through the public facade.
 
+        Args:
+            server_type: Server type identifier to resolve.
+
         Returns:
-            The resulting ``p.Result[p.Ldif.ServerServer]``.
+            Typed result carrying the base server.
+
         """
         return r[p.Ldif.ServerServer].from_result(
             self._server.resolve_base_server(server_type),
@@ -218,8 +270,12 @@ class FlextLdif(
     def schema_server(self, server_type: str) -> p.Result[p.Ldif.SchemaServer]:
         """Expose schema server lookup through the public facade (ENFORCE-056).
 
+        Args:
+            server_type: Server type identifier to look up.
+
         Returns:
-            The resulting ``p.Result[p.Ldif.SchemaServer]``.
+            Typed result carrying the schema server.
+
         """
         return self._resolve_registry_server(
             server_type,
@@ -230,8 +286,12 @@ class FlextLdif(
     def resolve_schema_server(self, server_type: str) -> p.Result[p.Ldif.SchemaServer]:
         """Expose canonical schema server resolution (ENFORCE-056).
 
+        Args:
+            server_type: Server type identifier to resolve.
+
         Returns:
-            The resulting ``p.Result[p.Ldif.SchemaServer]``.
+            Typed result carrying the resolved schema server.
+
         """
         return self._resolve_registry_server(
             server_type,
@@ -249,9 +309,12 @@ class FlextLdif(
     ]:
         """Expose full server bundle resolution through the public facade.
 
+        Args:
+            server_type: Server type identifier whose bundle is resolved.
+
         Returns:
-            The resulting ``p.Result[t.MappingKV[str, p.Ldif.SchemaServer |
-                p.Ldif.AclServer | p.Ldif.EntryServer]]``.
+            Typed result carrying the schema, ACL, and entry server mapping.
+
         """
         return r[
             t.MappingKV[
@@ -266,8 +329,12 @@ class FlextLdif(
     ) -> p.Result[type[p.Ldif.ServerConstants]]:
         """Expose server constants lookup through the public facade.
 
+        Args:
+            server_type: Server type identifier whose constants are resolved.
+
         Returns:
-            The resulting ``p.Result[type[p.Ldif.ServerConstants]]``.
+            Typed result carrying the server constants class.
+
         """
         return r[type[p.Ldif.ServerConstants]].from_result(
             self._server.resolve_server_constants(server_type),
@@ -277,7 +344,8 @@ class FlextLdif(
         """Expose the normalized registered server list (ENFORCE-056).
 
         Returns:
-            The resulting ``p.Result[t.MutableSequenceOf[str]]``.
+            Typed result carrying the registered server type identifiers.
+
         """
         server_registry: p.Ldif.ServerRegistry = self._server
         return r[t.MutableSequenceOf[str]].ok(server_registry.list_registered_servers())
@@ -286,7 +354,8 @@ class FlextLdif(
         """Expose registry statistics through the public facade (ENFORCE-056).
 
         Returns:
-            The resulting ``p.Result[t.Ldif.MutableMetadataInputMapping]``.
+            Typed result carrying the registry summary mapping.
+
         """
         server_registry: p.Ldif.ServerRegistry = self._server
         return r[t.Ldif.MutableMetadataInputMapping].ok(
@@ -302,8 +371,14 @@ class FlextLdif(
     ) -> p.Ldif.ProcessingPipeline:
         """Create a processing pipeline from explicit config or server pair.
 
+        Args:
+            settings: Optional transform config selecting the pipeline shape.
+            source_server: Source server type when no transform config is given.
+            target_server: Target server type when no transform config is given.
+
         Returns:
-            The resulting ``p.Ldif.ProcessingPipeline``.
+            The constructed processing pipeline.
+
         """
         if settings is not None:
             return FlextLdifProcessingPipeline(transform_config=settings)
@@ -324,8 +399,15 @@ class FlextLdif(
     ) -> p.Ldif.MigrationPipeline:
         """Create a configured migration pipeline bound to the facade runtime.
 
+        Args:
+            input_dir: Optional directory holding the source LDIF files.
+            output_dir: Optional directory receiving the migrated LDIF files.
+            settings: Optional transform config supplying server types.
+            options: Optional migration options supplying the output filename.
+
         Returns:
-            The resulting ``p.Ldif.MigrationPipeline``.
+            The runtime-bound migration pipeline.
+
         """
         process_config = settings.process_config if settings is not None else None
         pipeline = FlextLdifMigrationPipeline(
@@ -355,8 +437,16 @@ class FlextLdif(
     ) -> p.Result[m.Ldif.MigrationPipelineResult]:
         """Migrate LDIF data between servers.
 
+        Args:
+            input_dir: Optional directory holding the source LDIF files.
+            output_dir: Optional directory receiving the migrated LDIF files.
+            source_server: Source server flavor identifier.
+            target_server: Target server flavor identifier.
+            options: Optional migration options forwarded to the pipeline.
+
         Returns:
-            The resulting ``p.Result[m.Ldif.MigrationPipelineResult]``.
+            Typed result carrying the migration pipeline result.
+
         """
         transform_config = m.Ldif.TransformConfig.servers(
             source_server=source_server,
@@ -376,10 +466,15 @@ class FlextLdif(
         entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
         validation_service: p.Ldif.ValidationService | None = None,
     ) -> p.Result[m.Ldif.ValidationResult]:
-        """Validate list of entries.
+        """Validate a sequence of entries or a parse response.
+
+        Args:
+            entries: Entry sequence or parse response to validate.
+            validation_service: Optional validation service overriding self.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.ValidationResult]``.
+            Typed result carrying the validation result.
+
         """
         resolved_validation_service = validation_service or self
         return super().validate_entries(entries, resolved_validation_service)

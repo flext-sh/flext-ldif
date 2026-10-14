@@ -44,22 +44,37 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         acl_service: p.Ldif.AclServer | None = None,
         _parent_server: Self | None = None,
     ) -> None:
-        """Initialize ACL server service with optional DI service injection."""
+        """Initialize the ACL server service with optional DI injection.
+
+        Args:
+            acl_service: Optional ACL server facade injected by the DI container.
+            _parent_server: Optional parent server instance for server-level access.
+
+        """
         super().__init__()
         self._acl_service = acl_service
         if _parent_server is not None:
             object.__setattr__(self, "parent_server", _parent_server)
 
     def resolve_acl_attributes(self) -> t.MutableSequenceOf[str]:
-        """Get ACL attributes for this server."""
+        """Return the ACL attribute names owned by this server flavor.
+
+        Raises:
+            NotImplementedError: Always; concrete server flavors must override.
+
+        """
         msg = "ACL servers must implement resolve_acl_attributes"
         raise NotImplementedError(msg)
 
     def matches_acl_attribute(self, attribute_name: str) -> bool:
-        """Check if attribute is ACL attribute (case-insensitive).
+        """Check whether an attribute name is this server's ACL attribute.
+
+        Args:
+            attribute_name: Attribute name to test.
 
         Returns:
-            The resulting ``bool``.
+            True when the name matches case-insensitively.
+
         """
         all_attrs_lower = {a.lower() for a in self.resolve_acl_attributes()}
         return attribute_name.lower() in all_attrs_lower
@@ -67,10 +82,14 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
     auto_execute: ClassVar[bool] = False
 
     def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
-        """Check if this ACL can be handled after parsing and normalising.
+        """Check whether this server can handle the ACL after normalization.
+
+        Args:
+            acl_line: Raw ACL string or parsed ACL model.
 
         Returns:
-            The resulting ``bool``.
+            True when the normalized ACL is non-empty and dispatchable.
+
         """
         normalized = self._normalize_acl_line(acl_line)
         if not normalized:
@@ -78,16 +97,28 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         return self.can_handle_acl(normalized)
 
     def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
-        """Check if this server can handle the ACL definition."""
+        """Check whether this server can handle the ACL definition.
+
+        Args:
+            acl_line: Raw ACL string or parsed ACL model.
+
+        Raises:
+            NotImplementedError: Always; concrete server flavors must override.
+
+        """
         msg = "ACL servers must implement can_handle_acl"
         raise NotImplementedError(msg)
 
     @staticmethod
     def _normalize_acl_line(acl_line: str | m.Ldif.Acl) -> str | None:
-        """Extract and strip the raw ACL string from any input type.
+        """Extract and strip the raw ACL string from either input type.
+
+        Args:
+            acl_line: Raw ACL string or parsed ACL model.
 
         Returns:
-            The resulting ``str | None``.
+            Stripped raw ACL string, or None when no raw string is available.
+
         """
         if isinstance(acl_line, str):
             return acl_line.strip()
@@ -97,12 +128,28 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         return raw_acl.strip()
 
     def can_handle_attribute(self, attribute: m.Ldif.SchemaAttribute) -> bool:
-        """Check if this ACL server is aware of an attribute definition."""
+        """Check whether this ACL server is aware of an attribute definition.
+
+        Args:
+            attribute: Schema attribute definition to test.
+
+        Raises:
+            NotImplementedError: Always; concrete server flavors must override.
+
+        """
         msg = "ACL servers must implement can_handle_attribute"
         raise NotImplementedError(msg)
 
     def can_handle_objectclass(self, objectclass: m.Ldif.SchemaObjectClass) -> bool:
-        """Check if this ACL server is aware of an objectClass definition."""
+        """Check whether this ACL server is aware of an objectClass definition.
+
+        Args:
+            objectclass: Schema objectClass definition to test.
+
+        Raises:
+            NotImplementedError: Always; concrete server flavors must override.
+
+        """
         msg = "ACL servers must implement can_handle_objectclass"
         raise NotImplementedError(msg)
 
@@ -111,10 +158,15 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         original_format: str,
         extensions: t.Ldif.MetadataInputMapping | None = None,
     ) -> m.Ldif.ServerMetadata:
-        """Create ACL server metadata.
+        """Create server metadata tagged with this server's type.
+
+        Args:
+            original_format: Original ACL format identifier to record.
+            extensions: Optional extra metadata entries merged over the base.
 
         Returns:
-            The resulting ``m.Ldif.ServerMetadata``.
+            Validated server metadata carrying the format and extensions.
+
         """
         all_extensions: t.Ldif.MutableMetadataInputMapping = {
             "original_format": original_format,
@@ -136,10 +188,16 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         operation: str | None = None,
         **kwargs: t.Ldif.Scalar,
     ) -> p.Result[t.Ldif.AclPayload]:
-        """Execute ACL operation with auto-detection: str→parse, Acl→write.
+        """Execute the ACL operation, auto-detecting parse for str, write for Acl.
+
+        Args:
+            data: Raw ACL string or parsed ACL model to process.
+            operation: Explicit operation token ("parse" or "write").
+            kwargs: Extra scalar parameters resolved for data and operation.
 
         Returns:
-            The resulting ``p.Result[t.Ldif.AclPayload]``.
+            Typed result carrying the parsed or written ACL payload.
+
         """
         kwargs_dict: t.MutableJsonMapping = {
             key: t.json_value_adapter().validate_python(u.to_jsonable_python(value))
@@ -159,10 +217,17 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         *,
         use_original_format_as_name: bool = False,
     ) -> p.Result[str]:
-        """Format ACL value for writing, optionally using original format as name.
+        """Format an ACL value for writing, optionally renaming from the original.
+
+        Args:
+            acl_value: Raw ACL value string to format.
+            acl_metadata: Write metadata that may carry the original format.
+            use_original_format_as_name: When True, rewrite the ACL name from the
+                recorded original format using the server's name pattern.
 
         Returns:
-            The resulting ``p.Result[str]``.
+            Typed result carrying the formatted ACL value.
+
         """
         result: p.Result[str]
         if not use_original_format_as_name or not acl_metadata.has_original_format():
@@ -192,26 +257,38 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         return result
 
     def parse_server(self, value: str) -> p.Result[m.Ldif.Acl]:
-        """Parse ACL line to Acl model.
+        """Parse one server-specific ACL line into the canonical Acl model.
+
+        Args:
+            value: Raw ACL line in the server's dialect.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Acl]``.
+            Typed result carrying the parsed ACL model.
+
         """
         return self._parse_acl(value)
 
     def parse_input(self, acl_text: str) -> p.Result[m.Ldif.Acl]:
-        """Compatibility parser entrypoint for direct ACL server consumers.
+        """Parse raw ACL text through the server-specific parser.
+
+        Args:
+            acl_text: Raw ACL text in the server's dialect.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Acl]``.
+            Typed result carrying the parsed ACL model.
+
         """
         return self.parse_server(acl_text)
 
     def write(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
-        """Write Acl model to string format.
+        """Serialize the Acl model back to its string format.
+
+        Args:
+            acl_data: Canonical ACL model to serialize.
 
         Returns:
-            The resulting ``p.Result[str]``.
+            Typed result carrying the serialized ACL string.
+
         """
         return self._write_acl(acl_data)
 
@@ -219,13 +296,17 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
     def _coerce_acl_data(
         value: str | t.JsonValue | m.Ldif.Acl | None,
     ) -> str | m.Ldif.Acl | None:
-        """Coerce generic value to ACL payload union.
+        """Coerce a generic value to the ACL payload union.
+
+        Args:
+            value: String, JSON value, ACL model, or None.
 
         Returns:
-            The resulting ``str | m.Ldif.Acl | None``.
+            The coerced string or ACL model, or None for a None input.
 
         Raises:
-            ValidationError: If a ``c.ValidationError`` is caught.
+            ValidationError: When the value is not a valid ACL model.
+
         """
         if value is None:
             return None
@@ -245,10 +326,14 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
 
     @staticmethod
     def _coerce_operation(value: str) -> str | None:
-        """Coerce operation token to supported ACL operation.
+        """Coerce an operation token to a supported ACL operation.
+
+        Args:
+            value: Candidate operation token.
 
         Returns:
-            The resulting ``str | None``.
+            The normalized token, or None when unsupported.
+
         """
         if value in {"parse", "write"}:
             return value
@@ -256,20 +341,29 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
 
     @staticmethod
     def _detect_operation(operation: str | None, data: str | m.Ldif.Acl) -> str:
-        """Detect operation type from explicit param or data type.
+        """Detect the operation from the explicit token or the data type.
+
+        Args:
+            operation: Explicit operation token, when provided.
+            data: Payload whose type selects the default operation.
 
         Returns:
-            The resulting ``str``.
+            The detected operation token ("parse" or "write").
+
         """
         if operation is not None and operation in {"parse", "write"}:
             return "parse" if operation == "parse" else "write"
         return "parse" if isinstance(data, str) else "write"
 
     def _execute_acl_parse(self, data: str) -> p.Result[t.Ldif.AclPayload]:
-        """Execute ACL parse operation.
+        """Execute the ACL parse operation.
+
+        Args:
+            data: Raw ACL string to parse.
 
         Returns:
-            The resulting ``p.Result[t.Ldif.AclPayload]``.
+            Typed result carrying the parsed ACL payload.
+
         """
         parse_result = self.parse_server(data)
         if parse_result.success:
@@ -277,10 +371,14 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         return r[t.Ldif.AclPayload].fail(parse_result.error or "Parse failed")
 
     def _execute_acl_write(self, data: m.Ldif.Acl) -> p.Result[t.Ldif.AclPayload]:
-        """Execute ACL write operation.
+        """Execute the ACL write operation.
+
+        Args:
+            data: Canonical ACL model to write.
 
         Returns:
-            The resulting ``p.Result[t.Ldif.AclPayload]``.
+            Typed result carrying the written ACL payload.
+
         """
         write_result = self.write(data)
         if write_result.success:
@@ -293,10 +391,15 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         detected_op: str,
         data: str | m.Ldif.Acl,
     ) -> p.Result[t.Ldif.AclPayload]:
-        """Execute parse/write with strongly typed dispatch.
+        """Execute parse or write with strongly typed dispatch.
+
+        Args:
+            detected_op: Operation token selected by detection.
+            data: Payload dispatched to the matching operation.
 
         Returns:
-            The resulting ``p.Result[t.Ldif.AclPayload]``.
+            Typed result carrying the operation's ACL payload.
+
         """
         if detected_op == "parse":
             if not isinstance(data, str):
@@ -317,8 +420,12 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
     ) -> tuple[str | m.Ldif.Acl | None, str | None]:
         """Extract and validate ACL operation parameters from kwargs.
 
+        Args:
+            kwargs: Mutable mapping holding data and operation entries.
+
         Returns:
-            The resulting ``tuple[str | m.Ldif.Acl | None, str | None]``.
+            Tuple of the coerced data payload and normalized operation token.
+
         """
         data_raw = kwargs.get("data")
         data: str | m.Ldif.Acl | None = self._coerce_acl_data(data_raw)
@@ -331,16 +438,25 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         return (data, operation)
 
     def _get_feature_fallback(self, _feature_id: str) -> str | None:
-        """Get RFC fallback value for unsupported vendor feature."""
+        """Return the RFC fallback value for an unsupported vendor feature.
+
+        Args:
+            _feature_id: Identifier of the unsupported vendor feature.
+
+        Raises:
+            NotImplementedError: Always; concrete server flavors must override.
+
+        """
         msg = "ACL servers must implement _get_feature_fallback"
         raise NotImplementedError(msg)
 
     @staticmethod
     def _hook_format_acl_name_pattern() -> p.Result[tuple[t.Ldif.RegexPattern, str]]:
-        """Provide server-specific ACL name pattern matching.
+        """Provide the server-specific ACL name matching pattern.
 
         Returns:
-            The resulting ``p.Result[tuple[t.Ldif.RegexPattern, str]]``.
+            Typed result carrying the name pattern and replacement template.
+
         """
         pattern = c.Ldif.ACL_NAME_QUOTED_RE
         replacement_template = 'acl "{0}"'
@@ -348,15 +464,27 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
 
     @staticmethod
     def _hook_post_parse_acl(acl: m.Ldif.Acl) -> p.Result[m.Ldif.Acl]:
-        """Run hook after parsing an ACL line.
+        """Run the post-parse hook on a freshly parsed ACL.
+
+        Args:
+            acl: ACL model produced by the dialect parser.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Acl]``.
+            Typed result carrying the (possibly adjusted) ACL model.
+
         """
         return r[m.Ldif.Acl].ok(acl)
 
     def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
-        """Parse server-specific ACL definition (internal, required)."""
+        """Parse a server-specific ACL definition (internal, required).
+
+        Args:
+            acl_line: Raw ACL line in the server's dialect.
+
+        Raises:
+            NotImplementedError: Always; concrete server flavors must override.
+
+        """
         msg = "ACL servers must implement _parse_acl"
         raise NotImplementedError(msg)
 
@@ -374,7 +502,8 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
             context: The operation context for the typed failure.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Acl]``.
+            Typed result carrying the parsed ACL model.
+
         """
         try:
             return parser(acl_line)
@@ -395,7 +524,8 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
             context: The operation context for the typed failure.
 
         Returns:
-            The resulting ``p.Result[str]``.
+            Typed result carrying the serialized ACL string.
+
         """
         try:
             return writer(acl_data)
@@ -407,10 +537,15 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         data: str | m.Ldif.Acl | None,
         kwargs: t.JsonMapping,
     ) -> str | m.Ldif.Acl | None:
-        """Resolve data from parameter or kwargs.
+        """Resolve the data payload from the parameter or kwargs.
+
+        Args:
+            data: Explicit data payload, when provided.
+            kwargs: Mapping that may carry a "data" entry.
 
         Returns:
-            The resulting ``str | m.Ldif.Acl | None``.
+            The resolved data payload, or None when absent.
+
         """
         if data is not None:
             return data
@@ -422,21 +557,42 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         operation: str | None,
         kwargs: t.JsonMapping,
     ) -> str | None:
-        """Resolve operation from parameter or kwargs.
+        """Resolve the operation token from the parameter or kwargs.
+
+        Args:
+            operation: Explicit operation token, when provided.
+            kwargs: Mapping that may carry an "operation" entry.
 
         Returns:
-            The resulting ``str | None``.
+            The resolved operation token, or None when absent.
+
         """
         if operation is not None:
             return operation
         return self.parse_operation_kwarg(kwargs).unwrap()
 
     def _supports_feature(self, _feature_id: str) -> bool:
-        """Check if this server supports a specific feature."""
+        """Check whether this server supports a specific vendor feature.
+
+        Args:
+            _feature_id: Identifier of the vendor feature to test.
+
+        Raises:
+            NotImplementedError: Always; concrete server flavors must override.
+
+        """
         msg = "ACL servers must implement _supports_feature"
         raise NotImplementedError(msg)
 
     def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
-        """Write ACL data to RFC-compliant string format (internal)."""
+        """Write ACL data to the RFC-compliant string format (internal).
+
+        Args:
+            acl_data: Canonical ACL model to serialize.
+
+        Raises:
+            NotImplementedError: Always; concrete server flavors must override.
+
+        """
         msg = "ACL servers must implement _write_acl"
         raise NotImplementedError(msg)

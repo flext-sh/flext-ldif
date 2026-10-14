@@ -33,8 +33,14 @@ def _parse_fixture_entries(
 ) -> t.SequenceOf[m.Ldif.Entry]:
     """Parse one fixture's LDIF text into Entry models.
 
+    Args:
+        api: LDIF client used to parse the fixture content.
+        fixture_content: Raw LDIF text loaded from a fixture file.
+        error_msg: Assertion message used when parsing fails.
+
     Returns:
-        The resulting ``t.SequenceOf[m.Ldif.Entry]``.
+        Parsed entries in fixture order.
+
     """
     parse_response: m.Ldif.ParseResponse = u.Tests.assert_success(
         api.parse_ldif(fixture_content),
@@ -46,40 +52,44 @@ def _parse_fixture_entries(
 
 @pytest.fixture
 def api() -> p.Ldif.LdifClient:
-    """Create ldif API instance for testing.
+    """Provide the unified ``ldif()`` client entry point.
 
     Returns:
-        The resulting ``p.Ldif.LdifClient``.
+        A fresh LDIF client bound to the registered server flavors.
+
     """
     return ldif()
 
 
 @pytest.fixture
 def parser() -> FlextLdifParser:
-    """Create ldif parser service for testing.
+    """Provide a parser service instance.
 
     Returns:
-        The resulting ``FlextLdifParser``.
+        A fresh ``FlextLdifParser``.
+
     """
     return FlextLdifParser()
 
 
 @pytest.fixture
 def writer() -> FlextLdifWriter:
-    """Create ldif writer service for testing.
+    """Provide a writer service instance.
 
     Returns:
-        The resulting ``FlextLdifWriter``.
+        A fresh ``FlextLdifWriter``.
+
     """
     return FlextLdifWriter()
 
 
 @pytest.fixture
 def oid_schema_fixture() -> str:
-    """Load OID schema fixture data.
+    """Load the OID schema fixture file.
 
     Returns:
-        The resulting ``str``.
+        Raw OID schema LDIF text.
+
     """
     fixture_content: str = u.Tests.load(c.Tests.OID, c.Tests.SCHEMA)
     return fixture_content
@@ -87,10 +97,11 @@ def oid_schema_fixture() -> str:
 
 @pytest.fixture
 def oid_acl_fixture() -> str:
-    """Load OID ACL fixture data.
+    """Load the OID ACL fixture file.
 
     Returns:
-        The resulting ``str``.
+        Raw OID ACL LDIF text.
+
     """
     fixture_content: str = u.Tests.load(c.Tests.OID, c.Tests.ACL)
     return fixture_content
@@ -98,10 +109,11 @@ def oid_acl_fixture() -> str:
 
 @pytest.fixture
 def oid_entries_fixture() -> str:
-    """Load OID entries fixture data.
+    """Load the OID entries fixture file.
 
     Returns:
-        The resulting ``str``.
+        Raw OID entry LDIF text.
+
     """
     fixture_content: str = u.Tests.load(c.Tests.OID, c.Tests.ENTRIES)
     return fixture_content
@@ -109,10 +121,11 @@ def oid_entries_fixture() -> str:
 
 @pytest.fixture
 def oid_integration_fixture() -> str:
-    """Load OID integration fixture data.
+    """Load the OID integration fixture file.
 
     Returns:
-        The resulting ``str``.
+        Raw OID integration LDIF text combining schema, ACLs, and entries.
+
     """
     fixture_content: str = u.Tests.load(c.Tests.OID, c.Tests.INTEGRATION)
     return fixture_content
@@ -123,10 +136,15 @@ def oid_entries(
     api: p.Ldif.LdifClient,
     oid_entries_fixture: str,
 ) -> t.SequenceOf[m.Ldif.Entry]:
-    """Parse OID entries fixture into Entry models.
+    """Parse the OID entries fixture into Entry models.
+
+    Args:
+        api: LDIF client used to parse the fixture content.
+        oid_entries_fixture: Raw OID entry LDIF text.
 
     Returns:
-        The resulting ``t.SequenceOf[m.Ldif.Entry]``.
+        Parsed OID entries in fixture order.
+
     """
     return _parse_fixture_entries(
         api,
@@ -137,10 +155,11 @@ def oid_entries(
 
 @pytest.fixture
 def oud_schema_fixture() -> str:
-    """Load OUD schema fixture data.
+    """Load the OUD schema fixture file.
 
     Returns:
-        The resulting ``str``.
+        Raw OUD schema LDIF text.
+
     """
     fixture_content: str = u.Tests.load(c.Tests.OUD, c.Tests.SCHEMA)
     return fixture_content
@@ -148,10 +167,11 @@ def oud_schema_fixture() -> str:
 
 @pytest.fixture
 def oud_acl_fixture() -> str:
-    """Load OUD ACL fixture data.
+    """Load the OUD ACL fixture file.
 
     Returns:
-        The resulting ``str``.
+        Raw OUD ACL LDIF text.
+
     """
     fixture_content: str = u.Tests.load(c.Tests.OUD, c.Tests.ACL)
     return fixture_content
@@ -159,10 +179,11 @@ def oud_acl_fixture() -> str:
 
 @pytest.fixture
 def oud_entries_fixture() -> str:
-    """Load OUD entries fixture data.
+    """Load the OUD entries fixture file.
 
     Returns:
-        The resulting ``str``.
+        Raw OUD entry LDIF text.
+
     """
     fixture_content: str = u.Tests.load(c.Tests.OUD, c.Tests.ENTRIES)
     return fixture_content
@@ -170,10 +191,11 @@ def oud_entries_fixture() -> str:
 
 @pytest.fixture
 def oud_integration_fixture() -> str:
-    """Load OUD integration fixture data.
+    """Load the OUD integration fixture file.
 
     Returns:
-        The resulting ``str``.
+        Raw OUD integration LDIF text combining schema, ACLs, and entries.
+
     """
     fixture_content: str = u.Tests.load(c.Tests.OUD, c.Tests.INTEGRATION)
     return fixture_content
@@ -184,10 +206,15 @@ def oud_entries(
     api: p.Ldif.LdifClient,
     oud_entries_fixture: str,
 ) -> t.SequenceOf[m.Ldif.Entry]:
-    """Parse OUD entries fixture into Entry models.
+    """Parse the OUD entries fixture into Entry models.
+
+    Args:
+        api: LDIF client used to parse the fixture content.
+        oud_entries_fixture: Raw OUD entry LDIF text.
 
     Returns:
-        The resulting ``t.SequenceOf[m.Ldif.Entry]``.
+        Parsed OUD entries in fixture order.
+
     """
     return _parse_fixture_entries(
         api,
@@ -198,10 +225,11 @@ def oud_entries(
 
 @pytest.fixture
 def fixtures_dir() -> Path:
-    """Get path to fixtures directory.
+    """Provide the canonical test fixtures directory.
 
     Returns:
-        The resulting ``Path``.
+        Path to the shared fixtures root.
+
     """
     fixtures_root: Path = c.Tests.FIXTURES_DIR
     return fixtures_root
@@ -209,20 +237,22 @@ def fixtures_dir() -> Path:
 
 @pytest.fixture
 def conversion_matrix() -> FlextLdifConversion:
-    """Create FlextLdifConversion instance for conversion tests.
+    """Provide a conversion service for schema conversion tests.
 
     Returns:
-        The resulting ``FlextLdifConversion``.
+        A fresh ``FlextLdifConversion`` instance.
+
     """
     return FlextLdifConversion()
 
 
 @pytest.fixture
 def server() -> p.Ldif.ServerRegistry:
-    """Get FlextLdifServer instance for server management.
+    """Provide the global server registry.
 
     Returns:
-        The resulting ``p.Ldif.ServerRegistry``.
+        The process-wide ``FlextLdifServer`` registry instance.
+
     """
     server_registry: p.Ldif.ServerRegistry = FlextLdifServer.fetch_global_instance()
     return server_registry
@@ -230,10 +260,14 @@ def server() -> p.Ldif.ServerRegistry:
 
 @pytest.fixture
 def oid_server(server: p.Ldif.ServerRegistry) -> p.Ldif.ServerServer:
-    """Get OID server via FlextLdifServer API.
+    """Resolve the registered OID server.
+
+    Args:
+        server: Global server registry.
 
     Returns:
-        The resulting ``p.Ldif.ServerServer``.
+        The registered OID server instance.
+
     """
     server_instance: p.Ldif.ServerServer = u.Tests.assert_success(
         server.server("oid"),
@@ -244,10 +278,14 @@ def oid_server(server: p.Ldif.ServerRegistry) -> p.Ldif.ServerServer:
 
 @pytest.fixture
 def oud_server(server: p.Ldif.ServerRegistry) -> p.Ldif.ServerServer:
-    """Get OUD server via FlextLdifServer API.
+    """Resolve the registered OUD server.
+
+    Args:
+        server: Global server registry.
 
     Returns:
-        The resulting ``p.Ldif.ServerServer``.
+        The registered OUD server instance.
+
     """
     server_instance: p.Ldif.ServerServer = u.Tests.assert_success(
         server.resolve_base_server("oud"),
@@ -258,40 +296,56 @@ def oud_server(server: p.Ldif.ServerRegistry) -> p.Ldif.ServerServer:
 
 @pytest.fixture
 def oid_schema_server(oid_server: p.Ldif.ServerServer) -> p.Ldif.SchemaServer:
-    """Create OID schema server instance for conversion tests.
+    """Provide the OID server's schema facade.
+
+    Args:
+        oid_server: Registered OID server.
 
     Returns:
-        The resulting ``p.Ldif.SchemaServer``.
+        The OID schema server facade.
+
     """
     return oid_server.schema_server
 
 
 @pytest.fixture
 def oud_schema_server(oud_server: p.Ldif.ServerServer) -> p.Ldif.SchemaServer:
-    """Create OUD schema server instance for conversion tests.
+    """Provide the OUD server's schema facade.
+
+    Args:
+        oud_server: Registered OUD server.
 
     Returns:
-        The resulting ``p.Ldif.SchemaServer``.
+        The OUD schema server facade.
+
     """
     return oud_server.schema_server
 
 
 @pytest.fixture
 def oid_acl_server(oid_server: p.Ldif.ServerServer) -> p.Ldif.AclServer:
-    """Create OID ACL server instance for conversion tests.
+    """Provide the OID server's ACL facade.
+
+    Args:
+        oid_server: Registered OID server.
 
     Returns:
-        The resulting ``p.Ldif.AclServer``.
+        The OID ACL server facade.
+
     """
     return oid_server.acl_server
 
 
 @pytest.fixture
 def oud_acl_server(oud_server: p.Ldif.ServerServer) -> p.Ldif.AclServer:
-    """Create OUD ACL server instance for conversion tests.
+    """Provide the OUD server's ACL facade.
+
+    Args:
+        oud_server: Registered OUD server.
 
     Returns:
-        The resulting ``p.Ldif.AclServer``.
+        The OUD ACL server facade.
+
     """
     return oud_server.acl_server
 
@@ -303,8 +357,12 @@ def migration_dirs(tmp_path: Path) -> t.Pair[Path, Path]:
     Both directories are created under ``tmp_path`` so tests get clean
     isolation per pytest invocation.
 
+    Args:
+        tmp_path: Pytest-provided temporary directory.
+
     Returns:
-        The resulting ``t.Pair[Path, Path]``.
+        Tuple of the created input and output directories.
+
     """
     input_dir = tmp_path / "input"
     output_dir = tmp_path / "output"
@@ -322,6 +380,13 @@ def migration_pipeline_factory(
     Defaults to the canonical ``RFC -> RFC`` flow with the migration_dirs
     fixture. Callers override any kwarg (``source_server_type``,
     ``target_server_type``, ``input_dir``, ``output_dir``) to vary the case.
+
+    Args:
+        migration_dirs: Canonical input and output directory pair.
+
+    Returns:
+        Factory callable accepting keyword overrides for the pipeline.
+
     """
     default_input, default_output = migration_dirs
 

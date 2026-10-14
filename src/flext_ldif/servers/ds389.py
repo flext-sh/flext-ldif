@@ -168,10 +168,14 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
         @staticmethod
         def _resolve_acl_targetattr(target: m.Ldif.AclTarget | None) -> str:
-            """Resolve target attributes to formatted string.
+            """Resolve target attributes to a formatted string.
+
+            Args:
+                target: ACL target holding attribute names.
 
             Returns:
-                The resulting ``str``.
+                Space-joined attribute names, or the wildcard attribute.
+
             """
             if target and target.attributes:
                 separator = (
@@ -182,10 +186,14 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
         @staticmethod
         def _resolve_acl_userdn(subject: m.Ldif.AclSubject | None) -> str:
-            """Resolve subject to userdn string.
+            """Resolve the subject to a userdn string.
+
+            Args:
+                subject: ACL subject carrying the subject value.
 
             Returns:
-                The resulting ``str``.
+                The subject value, or the anonymous subject when absent.
+
             """
             if subject and subject.subject_value:
                 subject_value: str = subject.subject_value
@@ -199,8 +207,13 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Detect 389 DS ACI lines.
 
+            Args:
+                acl_line: Raw ACL string or parsed ACL model.
+
             Returns:
-                The resulting ``bool``.
+                True when the line carries the ``aci`` attribute or a version
+                prefix.
+
             """
             normalized = self._normalize_acl_line(acl_line)
             if not normalized:
@@ -220,10 +233,17 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             targetattr: str,
             userdn: str,
         ) -> p.Result[str]:
-            """Build ACI string from components.
+            """Build an ACI string from components.
+
+            Args:
+                acl_name: Name recorded in the ``acl`` clause.
+                permissions: Permission names joined into the ``allow`` clause.
+                targetattr: Target attribute string for the ``targetattr`` clause.
+                userdn: Subject value for the ``userdn`` clause.
 
             Returns:
-                The resulting ``p.Result[str]``.
+                Typed result carrying the serialized ACI string.
+
             """
             version_prefix = FlextLdifServersDs389.Constants.ACL_VERSION_PREFIX
             parts = [version_prefix, f'acl "{acl_name}"']
@@ -256,8 +276,12 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         ) -> t.MutableSequenceOf[str]:
             """Extract permission names from Permissions model flags.
 
+            Args:
+                permissions_data: Permissions model to flatten, or None.
+
             Returns:
-                The resulting ``t.MutableSequenceOf[str]``.
+                Sequence of set permission names.
+
             """
             permissions: t.MutableSequenceOf[str] = []
             if not permissions_data:
@@ -278,10 +302,14 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
         @override
         def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
-            """Parse 389 DS ACI definition.
+            """Parse a 389 DS ACI definition.
+
+            Args:
+                acl_line: Raw ACI line in the 389 DS dialect.
 
             Returns:
-                The resulting ``p.Result[m.Ldif.Acl]``.
+                Typed result carrying the parsed ACL model.
+
             """
             return self._parse_dialect_acl(
                 acl_line,
@@ -291,10 +319,14 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
         @override
         def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
-            """Write ACL data to RFC-compliant string format.
+            """Write ACL data to the 389 DS string format.
+
+            Args:
+                acl_data: Canonical ACL model to serialize.
 
             Returns:
-                The resulting ``p.Result[str]``.
+                Typed result carrying the serialized ACL string.
+
             """
             return self._write_dialect_acl(
                 acl_data,
@@ -305,8 +337,12 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         def _parse_ds389_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
             """Parse 389 DS ACI content into a canonical ACL.
 
+            Args:
+                acl_line: Raw ACI line in the 389 DS dialect.
+
             Returns:
-                The resulting ``p.Result[m.Ldif.Acl]``.
+                Typed result carrying the parsed ACL model.
+
             """
             attr_name, content = u.Ldif.split_acl_line(acl_line)
             _ = attr_name
@@ -359,10 +395,14 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
         @staticmethod
         def _parse_target_attributes(content: str) -> t.MutableSequenceOf[str]:
-            """Parse targetattr clause from 389 DS ACI content.
+            """Parse the targetattr clause from 389 DS ACI content.
+
+            Args:
+                content: ACI content to search.
 
             Returns:
-                The resulting ``t.MutableSequenceOf[str]``.
+                Sequence of targeted attribute names.
+
             """
             target_attr_match = (
                 FlextLdifServersDs389.Constants.ACL_TARGETATTR_RE.search(content)
@@ -377,10 +417,14 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
         @staticmethod
         def _parse_target_dn(content: str) -> str:
-            """Parse target DN clause from 389 DS ACI content.
+            """Parse the target DN clause from 389 DS ACI content.
+
+            Args:
+                content: ACI content to search.
 
             Returns:
-                The resulting ``str``.
+                The target DN, or the wildcard when no clause matches.
+
             """
             target_match = FlextLdifServersDs389.Constants.ACL_TARGET_RE.search(content)
             if not target_match:
@@ -393,10 +437,14 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
         @staticmethod
         def _parse_userdn_subject(content: str) -> str:
-            """Parse userdn subject from 389 DS ACI content.
+            """Parse the userdn subject from 389 DS ACI content.
+
+            Args:
+                content: ACI content to search.
 
             Returns:
-                The resulting ``str``.
+                The first userdn value, or the anonymous subject when absent.
+
             """
             userdn_matches = FlextLdifServersDs389.Constants.ACL_USERDN_RE.findall(
                 content,
@@ -411,8 +459,12 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         def _write_ds389_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
             """Write 389 DS ACL content.
 
+            Args:
+                acl_data: Canonical ACL model to serialize.
+
             Returns:
-                The resulting ``p.Result[str]``.
+                Typed result carrying the serialized ACI string.
+
             """
             if acl_data.raw_acl:
                 acl_str = (
@@ -437,8 +489,14 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         ) -> bool:
             """Detect 389 DS-specific entries.
 
+            Args:
+                entry_dn: DN of the candidate entry.
+                attributes: Entry attributes keyed by attribute name.
+
             Returns:
-                The resulting ``bool``.
+                True when the DN, attribute prefixes, or objectClasses carry
+                389 DS markers.
+
             """
             if not entry_dn:
                 return False
@@ -468,10 +526,14 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             )
 
         def process_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
-            """Normalise 389 DS entries and attach metadata.
+            """Normalize a 389 DS entry and attach metadata.
+
+            Args:
+                entry: Entry model to process.
 
             Returns:
-                The resulting ``p.Result[m.Ldif.Entry]``.
+                Typed result carrying the processed entry.
+
             """
             try:
                 return self._process_ds389_entry(entry)
@@ -486,8 +548,12 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         def _process_ds389_entry(entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
             """Normalize a 389 DS entry and attach metadata.
 
+            Args:
+                entry: Entry model to process.
+
             Returns:
-                The resulting ``p.Result[m.Ldif.Entry]``.
+                Typed result carrying the processed entry.
+
             """
             if not entry.attributes or not entry.dn:
                 return r[m.Ldif.Entry].ok(entry)
