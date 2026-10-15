@@ -12,6 +12,3 @@ class TestsFlextLdifUnitTypings:
     """Unit test typings namespace."""
 
     type PublicSymbol = str
-
-
-__all__: list[str] = ["TestsFlextLdifUnitTypings"]

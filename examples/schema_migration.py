@@ -12,8 +12,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from examples import m, p, r, t, u
-from examples.schema_building import create_entry_or_none
+from examples import create_entry_or_none, m, p, r, t, u
 from flext_ldif import FlextLdif, ldif
 
 _LEGACY_LDIF_FIXTURES: tuple[str, ...] = (

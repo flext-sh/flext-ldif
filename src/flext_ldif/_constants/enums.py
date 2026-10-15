@@ -232,3 +232,6 @@ class FlextLdifConstantsEnums:
         SCHEMA = "schema"
         ACL = "acl"
         REJECTED = "rejected"
+
+
+__all__: list[str] = ["FlextLdifConstantsEnums"]

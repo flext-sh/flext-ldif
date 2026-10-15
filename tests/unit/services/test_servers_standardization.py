@@ -26,7 +26,7 @@ from flext_ldif.servers._rfc import (
     FlextLdifServersRfcEntry,
 )
 from tests import t, tm
-from tests.unit.services.typings import TestsFlextLdifServiceTypings
+from tests.unit.services import TestsFlextLdifServiceTypings
 
 # (server class, canonical identity, priority) — the standardized identity table.
 _STANDARDIZED_SERVERS: tuple[

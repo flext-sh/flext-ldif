@@ -45,3 +45,6 @@ class FlextLdifServersOudUtilities:
             },
         })
         return config
+
+
+__all__: list[str] = ["FlextLdifServersOudUtilities"]

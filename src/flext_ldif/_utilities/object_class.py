@@ -68,3 +68,6 @@ class FlextLdifUtilitiesObjectClass:
         target: FlextLdifModelsDomainSchema.SchemaObjectClass = schema_oc
         if target.kind == schema_constants.auxiliary and (not target.sup):
             target.sup = "top"
+
+
+__all__: list[str] = ["FlextLdifUtilitiesObjectClass"]

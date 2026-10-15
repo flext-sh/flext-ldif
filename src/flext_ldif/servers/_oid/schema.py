@@ -414,3 +414,6 @@ class FlextLdifServersOidSchema(
             },
         )
         return super()._write_attribute(attr_copy)
+
+
+__all__: list[str] = ["FlextLdifServersOidSchema"]

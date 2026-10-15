@@ -440,3 +440,6 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         """Write ACL data to RFC-compliant string format (internal)."""
         msg = "ACL servers must implement _write_acl"
         raise NotImplementedError(msg)
+
+
+__all__: list[str] = ["FlextLdifServersBaseSchemaAcl"]

@@ -10,16 +10,8 @@ import re
 from collections.abc import Callable
 from typing import ClassVar, override
 
-from flext_ldif import (
-    FlextLdifServersOpenldap1Entry,
-    FlextLdifServersRfc,
-    c,
-    m,
-    p,
-    r,
-    t,
-    u,
-)
+from flext_ldif import c, m, p, r, t, u
+from flext_ldif.servers import FlextLdifServersOpenldap1Entry, FlextLdifServersRfc
 from flext_ldif.servers._rfc import (
     FlextLdifServersRfcAcl,
     FlextLdifServersRfcConstants,
@@ -503,3 +495,6 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
 
     class Entry(FlextLdifServersOpenldap1Entry):
         """OpenLDAP 1.x entry server (nested)."""
+
+
+__all__: list[str] = ["FlextLdifServersOpenldap1"]

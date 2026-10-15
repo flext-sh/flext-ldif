@@ -11,3 +11,6 @@ from flext_ldif._constants.servers_base import FlextLdifConstantsServersBase
 
 class FlextLdifServersBaseConstants(FlextLdifConstantsServersBase):
     """Thin inheritor: declarations live in _constants parts."""
+
+
+__all__: list[str] = ["FlextLdifServersBaseConstants"]

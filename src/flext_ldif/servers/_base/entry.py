@@ -378,3 +378,6 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         if write_options is not None:
             entry = self._inject_write_format_options(entry, write_options)
         return self._write_entry(entry)
+
+
+__all__: list[str] = ["FlextLdifServersBaseEntry"]

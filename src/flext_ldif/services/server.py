@@ -11,6 +11,7 @@ from typing import Annotated, ClassVar, Self, TypeGuard, override
 
 from flext_ldif import c, m, p, r, s, t, u
 from flext_ldif.servers import (
+    FlextLdifServersBase,
     ad,
     apache,
     ds389,
@@ -23,7 +24,6 @@ from flext_ldif.servers import (
     rfc,
     tivoli,
 )
-from flext_ldif.servers.base import FlextLdifServersBase
 
 
 class FlextLdifServer(s[m.Ldif.Response]):

@@ -9,18 +9,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Annotated, Final, override
 
-from flext_ldif import (
-    FlextLdifParser,
-    FlextLdifShared,
-    FlextLdifWriter,
-    c,
-    m,
-    p,
-    r,
-    s,
-    t,
-    u,
-)
+from flext_ldif import FlextLdifShared, c, m, p, r, s, t, u
+from flext_ldif.services import FlextLdifParser, FlextLdifWriter
 from flext_ldif.services.pipeline import FlextLdifProcessingPipeline
 
 

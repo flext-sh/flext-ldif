@@ -8,7 +8,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Self, cast, override
 
-from flext_ldif import (
+from flext_ldif import c, e, m, p, r, t, u
+from flext_ldif.services import (
     FlextLdifAcl,
     FlextLdifAnalysis,
     FlextLdifCategorization,
@@ -22,13 +23,6 @@ from flext_ldif import (
     FlextLdifStatistics,
     FlextLdifValidation,
     FlextLdifWriter,
-    c,
-    e,
-    m,
-    p,
-    r,
-    t,
-    u,
 )
 from flext_ldif.services.pipeline import FlextLdifProcessingPipeline
 

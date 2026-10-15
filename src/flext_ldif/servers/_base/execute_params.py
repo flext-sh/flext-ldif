@@ -13,7 +13,7 @@ from flext_ldif import c, m, p, t, u
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_ldif import FlextLdifServersBase
+    from flext_ldif.servers import FlextLdifServersBase
 
 
 class FlextLdifServersBaseExecuteParamsMixin:

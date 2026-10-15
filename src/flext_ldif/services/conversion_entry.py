@@ -14,19 +14,13 @@ from __future__ import annotations
 
 from typing import Annotated, override
 
-from flext_ldif import (
+from flext_ldif import c, m, p, r, s, t, u
+from flext_ldif.servers._oid import FlextLdifServersOidAclPipeline
+from flext_ldif.services import (
     FlextLdifConversionMetadataMixin,
     FlextLdifConversionSchemaEntryMixin,
     FlextLdifConversionSupportMixin,
-    c,
-    m,
-    p,
-    r,
-    s,
-    t,
-    u,
 )
-from flext_ldif.servers._oid import FlextLdifServersOidAclPipeline
 
 
 class FlextLdifConversionEntryMixin(

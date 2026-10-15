@@ -76,3 +76,6 @@ class FlextLdifConstantsServersBase:
     ALIASES: ClassVar[frozenset[str]] = frozenset()
 
     CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset()
+
+
+__all__: list[str] = ["FlextLdifConstantsServersBase"]

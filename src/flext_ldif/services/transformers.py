@@ -8,7 +8,8 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_ldif import FlextLdifConversion, FlextLdifShared, c, m, p, r, s, t, u
+from flext_ldif import FlextLdifShared, c, m, p, r, s, t, u
+from flext_ldif.services import FlextLdifConversion
 
 
 class FlextLdifTransformer(s[m.Ldif.Response]):
@@ -81,3 +82,6 @@ class FlextLdifTransformer(s[m.Ldif.Response]):
             )
             .flat_map(ensure_entry)
         )
+
+
+__all__: list[str] = ["FlextLdifTransformer"]

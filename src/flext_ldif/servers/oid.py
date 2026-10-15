@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_ldif.servers import FlextLdifServersRfc
 from flext_ldif.servers._oid import (
     FlextLdifServersOidAcl,
     FlextLdifServersOidAclAssemble,
@@ -17,7 +18,6 @@ from flext_ldif.servers._oid import (
     FlextLdifServersOidEntry,
     FlextLdifServersOidSchema,
 )
-from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 
 class FlextLdifServersOid(FlextLdifServersRfc):

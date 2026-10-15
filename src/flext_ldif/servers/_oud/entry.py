@@ -21,7 +21,7 @@ from flext_ldif.servers._oud import (
 from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
 
 if TYPE_CHECKING:
-    from flext_ldif import FlextLdifServersBase
+    from flext_ldif.servers import FlextLdifServersBase
 
 
 class FlextLdifServersOudEntry(
@@ -235,3 +235,6 @@ class FlextLdifServersOudEntry(
             ._write_entry(entry_data)
             .map(lambda ldif_text: u.Ldif.finalize_ldif_text([*ldif_parts, ldif_text]))
         )
+
+
+__all__: list[str] = ["FlextLdifServersOudEntry"]

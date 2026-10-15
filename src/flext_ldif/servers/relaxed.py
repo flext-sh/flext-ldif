@@ -8,15 +8,11 @@ from __future__ import annotations
 
 from typing import ClassVar, override
 
-from flext_ldif import (
+from flext_ldif import c, m, p, r, t
+from flext_ldif.servers import (
     FlextLdifServersRelaxedEntry,
     FlextLdifServersRelaxedSchema,
     FlextLdifServersRfc,
-    c,
-    m,
-    p,
-    r,
-    t,
 )
 from flext_ldif.servers._base import (
     FlextLdifServersBaseEntry,

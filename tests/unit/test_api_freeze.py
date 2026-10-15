@@ -19,7 +19,7 @@ import pytest
 
 import flext_ldif
 from tests import tm
-from tests.unit.typings import TestsFlextLdifUnitTypings
+from tests.unit import TestsFlextLdifUnitTypings
 
 if TYPE_CHECKING:
     from tests import t

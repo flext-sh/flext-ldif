@@ -8,7 +8,8 @@ from __future__ import annotations
 
 from typing import ClassVar, override
 
-from flext_ldif import FlextLdifServersRfc, c, m, p, r, t, u
+from flext_ldif import c, m, p, r, t, u
+from flext_ldif.servers import FlextLdifServersRfc
 from flext_ldif.servers._base import FlextLdifServersDialectSchema
 from flext_ldif.servers._rfc import (
     FlextLdifServersRfcAcl,
@@ -464,3 +465,6 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         attribute_settings=Constants.ATTRIBUTE_PATTERN_SETTINGS,
         objectclass_settings=Constants.OBJECTCLASS_PATTERN_SETTINGS,
     )
+
+
+__all__: list[str] = ["FlextLdifServersNovell"]

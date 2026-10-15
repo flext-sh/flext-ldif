@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif import FlextLdifServersRfc
+from flext_ldif.servers import FlextLdifServersRfc
 from flext_ldif.servers._base import (
     FlextLdifServersBaseEntry,
     FlextLdifServersBaseSchema,

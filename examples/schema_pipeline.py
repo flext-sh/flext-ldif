@@ -12,8 +12,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from examples import m, p, r, t, u
-from examples.schema_building import create_entry_or_none, intelligent_schema_building
+from examples import create_entry_or_none, m, p, r, t, u
+from examples.schema_building import intelligent_schema_building
 from flext_ldif import ldif
 
 

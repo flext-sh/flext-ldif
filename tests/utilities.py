@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from flext_tests import FlextTestsUtilities
 
@@ -18,10 +18,10 @@ from flext_ldif import FlextLdifUtilities
 from tests import c, m, p, t
 from tests._utilities_entries import TestsLdifEntryBuildersMixin
 from tests._utilities_ldap import TestsLdapClientMixin
-from tests._utilities_schema import (
-    TestsFlextLdifSchemaExpectations,
-    TestsSchemaAclAssertionsMixin,
-)
+from tests._utilities_schema import TestsSchemaAclAssertionsMixin
+
+if TYPE_CHECKING:
+    from tests._utilities_schema import TestsFlextLdifSchemaExpectations
 
 
 class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
