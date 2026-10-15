@@ -85,6 +85,7 @@ class TestsFlextLdifCrossDirectionConversion:
 
         Returns:
             The resulting ``FlextLdifServer``.
+
         """
         return FlextLdifServer()
 
@@ -95,6 +96,7 @@ class TestsFlextLdifCrossDirectionConversion:
 
         Returns:
             The resulting ``FlextLdifConversion``.
+
         """
         return FlextLdifConversion()
 

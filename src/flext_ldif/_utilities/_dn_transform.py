@@ -43,6 +43,7 @@ class FlextLdifDNTransforming:
 
         Returns:
             The resulting ``str``.
+
         """
         dn_str = FlextLdifDNParsing.resolve_dn_value(value)
         if not dn_str or not source_dn or (not target_dn):
@@ -71,6 +72,7 @@ class FlextLdifDNTransforming:
 
         Returns:
             The resulting ``str``.
+
         """
         return u.to_str(
             c.Ldif.compile_pattern(
@@ -94,6 +96,7 @@ class FlextLdifDNTransforming:
 
         Returns:
             The resulting ``MutableMapping[str, int | t.MutableSequenceOf[str]]``.
+
         """
         directory = Path(str(ldif_dir))
         transformed_files: t.MutableSequenceOf[str] = []

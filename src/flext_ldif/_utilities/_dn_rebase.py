@@ -49,6 +49,7 @@ class FlextLdifDNRebasing:
         Raises:
             ValueError: If Unparseable RDN component (missing attribute=value); or if
                 Unparseable RDN component (empty attribute).
+
         """
         components: list[str] = []
         current: list[str] = []
@@ -100,6 +101,7 @@ class FlextLdifDNRebasing:
         Returns:
             The resulting ``MutableMapping[str, tuple[t.MutableSequenceOf[str],
                 t.MutableSequenceOf[str]]] | None``.
+
         """
         old_rdn = FlextLdifDNRebasing._first_rdn_component(old_dn)
         new_rdn = FlextLdifDNRebasing._first_rdn_component(new_dn)
@@ -137,6 +139,7 @@ class FlextLdifDNRebasing:
         Returns:
             The resulting ``MutableMapping[str, tuple[t.MutableSequenceOf[str],
                 t.MutableSequenceOf[str]]] | None``.
+
         """
         entry_dn = entry.dn
         if entry_dn is None:
@@ -164,6 +167,7 @@ class FlextLdifDNRebasing:
 
         Returns:
             The resulting ``tuple[t.MutableSequenceOf[str], bool]``.
+
         """
         new_values: t.MutableSequenceOf[str] = []
         attr_changed = False
@@ -189,6 +193,7 @@ class FlextLdifDNRebasing:
 
         Returns:
             The resulting ``MutableMapping[str, t.MutableSequenceOf[str]]``.
+
         """
         attr_dict = entry_attrs.attributes
         transform_lowers = {a.lower() for a in attrs_to_transform}
@@ -215,6 +220,7 @@ class FlextLdifDNRebasing:
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
+
         """
         old_lowers = {value.lower() for value in old_values}
         merged = [value for value in merged_values if value.lower() not in old_lowers]
@@ -296,6 +302,7 @@ class FlextLdifDNRebasing:
 
         Returns:
             The resulting ``FlextLdifModels.Ldif.Entry``.
+
         """
         attrs_to_transform = dn_valued_attributes or c.Ldif.ALL_DN_VALUED
         updates: MutableMapping[

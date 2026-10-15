@@ -32,6 +32,7 @@ class FlextLdifWriterLineFolding:
                 pos: Byte offset the current chunk starts at.
                 chunk_end: Byte offset the current chunk was cut at.
                 is_first: Whether the chunk is the unfolded first chunk.
+
             """
             self.line_bytes = line_bytes
             self.pos = pos
@@ -50,6 +51,7 @@ class FlextLdifWriterLineFolding:
 
         Returns:
             The resulting ``int``.
+
         """
         span = width if fold.is_first else width - 1
         return min(fold.pos + span, len(fold.line_bytes))
@@ -63,6 +65,7 @@ class FlextLdifWriterLineFolding:
 
         Returns:
             The resulting ``tuple[str, int]``.
+
         """
         line_bytes = fold.line_bytes
         pos = fold.pos
@@ -88,6 +91,7 @@ class FlextLdifWriterLineFolding:
 
         Returns:
             The resulting ``int``.
+
         """
         prefix_end = separator_index + 1
         while prefix_end < len(chunk) and chunk[prefix_end] in {":", "<"}:
@@ -105,6 +109,7 @@ class FlextLdifWriterLineFolding:
 
         Returns:
             The resulting ``int``.
+
         """
         split_index = max(
             chunk.rfind(c.Ldif.LINE_CONTINUATION_SPACE),
@@ -132,6 +137,7 @@ class FlextLdifWriterLineFolding:
 
         Returns:
             The resulting ``int``.
+
         """
         left_text = chunk[:split_index].rstrip()
         right_text = chunk[split_index + 1 :].lstrip()
@@ -156,6 +162,7 @@ class FlextLdifWriterLineFolding:
 
         Returns:
             The resulting ``tuple[str, int]``.
+
         """
         if fold.chunk_end >= len(fold.line_bytes):
             return (chunk, fold.chunk_end)
@@ -185,6 +192,7 @@ class FlextLdifWriterLineFolding:
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
+
         """
         if not line:
             return [line]

@@ -23,6 +23,7 @@ class FlextLdifUtilitiesSchemaNormalize:
 
         Returns:
             The resulting ``set[str]``.
+
         """
         available: set[str] = set()
         for attr_data in attributes:
@@ -39,6 +40,7 @@ class FlextLdifUtilitiesSchemaNormalize:
 
         Returns:
             The resulting ``bool``.
+
         """
         if not attribute_name or not boolean_attributes:
             return False
@@ -61,6 +63,7 @@ class FlextLdifUtilitiesSchemaNormalize:
 
         Returns:
             The resulting ``str | None``.
+
         """
         if not attribute_name:
             return attribute_name
@@ -76,6 +79,7 @@ class FlextLdifUtilitiesSchemaNormalize:
 
         Returns:
             The resulting ``tuple[str | None, str | None]``.
+
         """
         replacements = kwargs.get("replacements")
         substr_rules_in_equality = kwargs.get("substr_rules_in_equality")
@@ -109,6 +113,7 @@ class FlextLdifUtilitiesSchemaNormalize:
 
         Returns:
             The resulting ``str | None``.
+
         """
         if not name_value:
             return name_value
@@ -137,6 +142,7 @@ class FlextLdifUtilitiesSchemaNormalize:
 
         Returns:
             The resulting ``str | None``.
+
         """
         if not syntax:
             return syntax
@@ -156,6 +162,7 @@ class FlextLdifUtilitiesSchemaNormalize:
 
         Returns:
             The resulting ``str | None``.
+
         """
         if not substr or not invalid_rules:
             return substr

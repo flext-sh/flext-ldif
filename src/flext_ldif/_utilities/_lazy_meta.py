@@ -23,6 +23,7 @@ class FlextLdifUtilitiesLazyMeta(type):
 
         Raises:
             AttributeError: Always.
+
         """
         if name == "Ldif":
             return cast("type", cls.build_ldif_tree())

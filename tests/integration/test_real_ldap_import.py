@@ -40,6 +40,7 @@ def flext_api() -> p.Ldif.LdifClient:
 
     Returns:
         The resulting ``p.Ldif.LdifClient``.
+
     """
     return ldif()
 
@@ -55,6 +56,7 @@ class TestsFlextLdifRealLdapImport:
 
         Returns:
             The resulting ``str``.
+
         """
         assert entry.dn is not None
         return entry.dn.value
@@ -65,6 +67,7 @@ class TestsFlextLdifRealLdapImport:
 
         Returns:
             The resulting ``list[str]``.
+
         """
         return list(u.Ldif.resolve_attribute_values(entry, "objectclass"))
 
@@ -74,6 +77,7 @@ class TestsFlextLdifRealLdapImport:
 
         Returns:
             The resulting ``t.MutableMappingKV[str, list[str]]``.
+
         """
         assert entry.attributes is not None
         return {name: list(values) for name, values in entry.attributes.items()}
@@ -87,6 +91,7 @@ class TestsFlextLdifRealLdapImport:
 
         Returns:
             The resulting ``t.MutableMappingKV[str, list[str]]``.
+
         """
         return {
             name: values
@@ -103,6 +108,7 @@ class TestsFlextLdifRealLdapImport:
 
         Returns:
             The resulting ``p.Ldap3Entry``.
+
         """
         found = ldap_connection.search(
             dn,

@@ -26,6 +26,7 @@ class ExamplesFlextLdifServerMigration:
 
             Returns:
                 The resulting ``str``.
+
             """
             if i % 4 == 0:
                 return (
@@ -70,6 +71,7 @@ class ExamplesFlextLdifServerMigration:
 
         Returns:
             The resulting ``tuple[str, t.JsonMapping]``.
+
         """
         sample_file = source_dir / "data_00.ldif"
         detect_result = api.detect_server_type(ldif_content=sample_file.read_text())
@@ -92,6 +94,7 @@ class ExamplesFlextLdifServerMigration:
 
         Returns:
             The resulting ``tuple[Path, Path, Path]``.
+
         """
         source_dir = base_dir / "source"
         intermediate_dir = base_dir / "intermediate"
@@ -107,6 +110,7 @@ class ExamplesFlextLdifServerMigration:
 
         Returns:
             The resulting ``p.Result[t.JsonMapping]``.
+
         """
         api = ldif()
         mixed_ldif = (
@@ -170,6 +174,7 @@ class ExamplesFlextLdifServerMigration:
 
         Returns:
             The resulting ``p.Result[t.JsonMapping]``.
+
         """
         api = ldif()
         test_ldif = (
@@ -245,6 +250,7 @@ class ExamplesFlextLdifServerMigration:
 
         Returns:
             The resulting ``p.Result[t.JsonMapping]``.
+
         """
         api = ldif()
         workflow_dir = Path("examples/comprehensive_migration")
@@ -301,6 +307,7 @@ class ExamplesFlextLdifServerMigration:
 
         Returns:
             The resulting ``p.Result[m.Ldif.MigrationPipelineResult]``.
+
         """
         api = ldif()
         input_dir = Path("examples/migration_input")

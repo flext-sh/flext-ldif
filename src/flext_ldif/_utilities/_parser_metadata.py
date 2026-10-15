@@ -29,6 +29,7 @@ class FlextLdifParserMetadataBuilders:
 
         Returns:
             The resulting ``t.MutableSequenceOf[str] | None``.
+
         """
         if isinstance(value, list):
             normalized: t.MutableSequenceOf[str] = []
@@ -47,6 +48,7 @@ class FlextLdifParserMetadataBuilders:
 
         Returns:
             The resulting ``t.MutableStrSequenceMapping``.
+
         """
         extensions: t.MutableStrSequenceMapping = {}
         for key, value in mapping.items():
@@ -61,6 +63,7 @@ class FlextLdifParserMetadataBuilders:
 
         Returns:
             The resulting ``t.MutableStrSequenceMapping``.
+
         """
         result: t.JsonMapping | t.JsonValue | None = metadata.get("extensions")
         if not isinstance(result, Mapping):
@@ -86,6 +89,7 @@ class FlextLdifParserMetadataBuilders:
 
         Returns:
             The resulting ``FlextLdifModels.Ldif.ServerMetadata``.
+
         """
         metadata = FlextLdifUtilitiesMetadata.server_metadata_for("rfc")
         metadata.original_server_type = c.Ldif.ServerTypes.RFC
@@ -110,6 +114,7 @@ class FlextLdifParserMetadataBuilders:
 
         Returns:
             The resulting ``FlextLdifModels.Ldif.ServerMetadata | None``.
+
         """
         metadata_extensions = FlextLdifParserSchemaFields.extract_extensions(
             attr_definition,

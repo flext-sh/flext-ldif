@@ -40,6 +40,7 @@ class FlextLdifProcessing(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``p.Result[t.MutableSequenceOf[m.Ldif.ProcessingResult]]``.
+
         """
         payload: t.MutableJsonMapping = (
             options.model_dump(mode="python") if options is not None else {}

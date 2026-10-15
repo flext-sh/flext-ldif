@@ -53,6 +53,7 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWriteMixin):
 
         Returns:
             The resulting ``bool``.
+
         """
         return self.can_handle_acl(acl_line)
 
@@ -62,6 +63,7 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWriteMixin):
 
         Returns:
             The resulting ``bool``.
+
         """
         return line.lower().startswith(
             FlextLdifServersOudConstants.ACL_ACI_PREFIX.lower(),
@@ -73,6 +75,7 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWriteMixin):
 
         Returns:
             The resulting ``bool``.
+
         """
         return line.lower().startswith(
             FlextLdifServersOudConstants.ACL_DS_CFG_PREFIX.lower(),
@@ -86,6 +89,7 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWriteMixin):
 
         Returns:
             The resulting ``bool``.
+
         """
         if not isinstance(acl_line, str):
             acl_model = m.Ldif.Acl.model_validate(acl_line)
@@ -125,6 +129,7 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWriteMixin):
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
+
         """
         return [
             *FlextLdifServersOudConstants.RFC_ACL_ATTRIBUTES,
@@ -149,6 +154,7 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWriteMixin):
 
         Returns:
             The resulting ``p.Result[m.Ldif.Acl]``.
+
         """
         settings = server_utilities.FlextLdifServersOudUtilities.resolve_parser_config()
         result: p.Result[m.Ldif.Acl] = u.Ldif.parse_aci(acl_line, settings)
@@ -187,6 +193,7 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWriteMixin):
 
         Returns:
             The resulting ``p.Result[m.Ldif.Acl]``.
+
         """
         normalized = acl_line.strip()
         # The ``aci`` LDIF attribute carries the bare ACI body without the
@@ -215,6 +222,7 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWriteMixin):
 
         Returns:
             The resulting ``p.Result[m.Ldif.Acl]``.
+
         """
         try:
             server_type_oud: c.Ldif.ServerTypes = c.Ldif.ServerTypes.OUD

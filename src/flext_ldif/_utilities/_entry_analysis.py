@@ -28,6 +28,7 @@ class FlextLdifEntryAnalysis:
 
         Returns:
             The resulting ``t.Ldif.MutableMetadataMapping``.
+
         """
         mk = c.Ldif
         differences: t.Ldif.MutableMetadataMapping = {
@@ -53,6 +54,7 @@ class FlextLdifEntryAnalysis:
 
         Returns:
             The resulting ``t.MutableStrMapping``.
+
         """
         original_attribute_case: t.MutableStrMapping = {}
         for attr_name in entry_attrs:
@@ -75,6 +77,7 @@ class FlextLdifEntryAnalysis:
 
         Returns:
             The resulting ``list[str]``.
+
         """
         if isinstance(attr_values, Sequence) and (
             not isinstance(attr_values, str | bytes)
@@ -101,6 +104,7 @@ class FlextLdifEntryAnalysis:
         Returns:
             The resulting ``tuple[MutableMapping[str, t.Ldif.MutableMetadataMapping],
                 t.Ldif.MutableMetadataMapping]``.
+
         """
         attribute_differences: MutableMapping[str, t.Ldif.MutableMetadataMapping] = {}
         original_attributes_complete: t.Ldif.MutableMetadataMapping = {}
@@ -149,6 +153,7 @@ class FlextLdifEntryAnalysis:
             The resulting ``tuple[t.Ldif.MutableMetadataMapping, MutableMapping[str,
                 t.Ldif.MutableMetadataMapping], t.Ldif.MutableMetadataMapping,
                 t.MutableStrMapping]``.
+
         """
 
         def _default_normalize(value: str) -> str:
@@ -188,6 +193,7 @@ class FlextLdifEntryAnalysis:
 
         Returns:
             The resulting ``t.Ldif.UnconvertedAttributes``.
+
         """
         if not isinstance(value, Mapping):
             return {}

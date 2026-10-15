@@ -13,6 +13,7 @@ from collections.abc import MutableMapping
 from typing import Annotated
 
 from flext_core import FlextUtilities as u, m, t
+
 from flext_ldif._constants.base import FlextLdifConstantsBase, FlextLdifConstantsEnums
 from flext_ldif._models._settings_rules import FlextLdifModelsSettingsRules
 

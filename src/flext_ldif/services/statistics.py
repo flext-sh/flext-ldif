@@ -22,6 +22,7 @@ class FlextLdifStatistics(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``p.Result[m.Ldif.EntriesStatistics]``.
+
         """
         normalized_entries = u.Ldif.as_entries(entries)
         object_class_distribution: Counter[str] = Counter()

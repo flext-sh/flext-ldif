@@ -29,6 +29,7 @@ def _probe_ldap_bind(
 
     Returns:
         The resulting ``p.Result[None]``.
+
     """
     try:
         srv = u.Tests.create_server_from_url(server_url)
@@ -54,6 +55,7 @@ def ldap_container(worker_id: str) -> t.JsonMapping:
 
     Returns:
         The resulting ``t.JsonMapping``.
+
     """
     docker_control = u.Tests.get_docker_control()
     server_url = f"ldap://localhost:{c.Tests.DOCKER_PORT}"
@@ -95,6 +97,7 @@ def unique_dn_suffix(worker_id: str, request: pytest.FixtureRequest) -> str:
 
     Returns:
         The resulting ``str``.
+
     """
     getattr(request, "node", None)
     test_name: t.StrSequence = ()
@@ -130,6 +133,7 @@ def ldap_connection(ldap_container: t.JsonMapping) -> Generator[p.Ldap3Connectio
 
     Yields:
         Each ``p.Ldap3Connection``.
+
     """
     server_url = str(ldap_container["server_url"])
     bind_dn = str(ldap_container["bind_dn"])
@@ -162,6 +166,7 @@ def clean_test_ou(
 
     Yields:
         Each ``str``.
+
     """
     test_ou_dn = make_test_base_dn("FlextLdifTests")
     ldap_connection.search(

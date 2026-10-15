@@ -25,6 +25,7 @@ class FlextLdifMetadataEntryStats:
 
         Returns:
             The resulting ``FlextLdifModelsDomainEntryStatistics``.
+
         """
         copied: FlextLdifModelsDomainEntryStatistics = stats.model_copy(
             update={"category_assigned": category},
@@ -42,6 +43,7 @@ class FlextLdifMetadataEntryStats:
 
         Returns:
             The resulting ``FlextLdifModelsDomainEntryStatistics``.
+
         """
         return stats.mark_filtered(filter_type, passed=passed)
 
@@ -55,6 +57,7 @@ class FlextLdifMetadataEntryStats:
 
         Returns:
             The resulting ``FlextLdifModelsDomainEntryStatistics``.
+
         """
         return stats.mark_rejected(rejection_category, reason)
 
@@ -67,6 +70,7 @@ class FlextLdifMetadataEntryStats:
 
         Returns:
             The resulting ``FlextLdifModels.Ldif.Entry``.
+
         """
         entry_metadata = entry.metadata
         if entry_metadata is None:
@@ -96,6 +100,7 @@ class FlextLdifMetadataEntryStats:
 
         Returns:
             The resulting ``FlextLdifModels.Ldif.Entry``.
+
         """
         processing_stats = (
             entry.metadata.processing_stats if entry.metadata is not None else None

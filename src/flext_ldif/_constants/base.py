@@ -285,6 +285,7 @@ class FlextLdifConstantsBase:
 
         Returns:
             The resulting ``t.RegexPattern``.
+
         """
         flags = 0
         if ignorecase:
@@ -303,6 +304,7 @@ class FlextLdifConstantsBase:
 
         Returns:
             The resulting ``str``.
+
         """
         return re.escape(value)
 

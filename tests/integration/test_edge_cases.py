@@ -39,6 +39,7 @@ class TestsFlextLdifIntegrationEdgeCases:
 
         Returns:
             The resulting ``p.Ldif.LdifClient``.
+
         """
         return ldif()
 

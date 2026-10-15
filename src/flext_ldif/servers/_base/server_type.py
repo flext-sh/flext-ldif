@@ -17,6 +17,7 @@ class FlextLdifServersBaseMroMixin:
 
         Returns:
             The resulting ``str``.
+
         """
         return self._get_server_type_from_mro(type(self))
 
@@ -29,6 +30,7 @@ class FlextLdifServersBaseMroMixin:
 
         Raises:
             AttributeError: If Cannot find PRIORITY in Constants for server class.
+
         """
         for mro_cls in server_class.__mro__:
             if not mro_cls.__name__.startswith(
@@ -53,6 +55,7 @@ class FlextLdifServersBaseMroMixin:
 
         Raises:
             AttributeError: If Cannot find SERVER_TYPE in Constants for server class.
+
         """
         for mro_cls in server_class.__mro__:
             if not mro_cls.__name__.startswith(

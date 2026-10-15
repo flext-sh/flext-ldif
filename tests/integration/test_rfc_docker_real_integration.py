@@ -30,6 +30,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
 
         Returns:
             The resulting ``FlextLdifServer``.
+
         """
         return FlextLdifServer()
 
@@ -40,6 +41,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
 
         Returns:
             The resulting ``FlextLdifParser``.
+
         """
         return FlextLdifParser()
 

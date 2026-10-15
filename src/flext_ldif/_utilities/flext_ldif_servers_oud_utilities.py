@@ -20,6 +20,7 @@ class FlextLdifServersOudUtilities:
 
         Returns:
             The resulting ``m.Ldif.AciParserConfig``.
+
         """
         constants = FlextLdifServersOudConstants
         config: m.Ldif.AciParserConfig = m.Ldif.AciParserConfig.model_validate({

@@ -104,6 +104,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
 
             Returns:
                 The resulting ``bool``.
+
             """
             normalized = self._normalize_acl_line(acl_line)
             if not normalized:
@@ -124,6 +125,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
 
             Returns:
                 The resulting ``p.Result[str]``.
+
             """
             parent_result = super()._write_acl(acl_data)
             if parent_result.success:
@@ -146,6 +148,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
 
             Returns:
                 The resulting ``bool``.
+
             """
             _ = entry_dn
             _ = attributes
@@ -160,6 +163,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
 
             Returns:
                 The resulting ``p.Result[m.Ldif.Entry]``.
+
             """
             str_attrs: t.MutableStrSequenceMapping = {
                 k: [v.decode() if isinstance(v, bytes) else v for v in vals]
@@ -182,6 +186,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
 
             Returns:
                 The resulting ``p.Result[m.Ldif.Entry]``.
+
             """
             if not entry.dn:
                 return r[m.Ldif.Entry].ok(entry)

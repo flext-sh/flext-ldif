@@ -30,6 +30,7 @@ class FlextLdifACLExtensionFormatting:
 
         Returns:
             The resulting ``str``.
+
         """
         has_operator_placeholder = (
             FlextLdifACLExtensionFormatting._OPERATOR_PLACEHOLDER in format_template
@@ -66,6 +67,7 @@ class FlextLdifACLExtensionFormatting:
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
+
         """
         if not extensions:
             return []
@@ -102,6 +104,7 @@ class FlextLdifACLExtensionFormatting:
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
+
         """
         if not extensions:
             return []
@@ -130,6 +133,7 @@ class FlextLdifACLExtensionFormatting:
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
+
         """
         if not extensions:
             return []

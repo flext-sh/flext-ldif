@@ -27,6 +27,7 @@ class FlextLdifServersOudAclSubjectMixin(FlextLdifServersRfcAcl):
 
         Returns:
             The resulting ``str | None``.
+
         """
         if not extensions:
             return None
@@ -39,6 +40,7 @@ class FlextLdifServersOudAclSubjectMixin(FlextLdifServersRfcAcl):
 
         Returns:
             The resulting ``bool``.
+
         """
         return isinstance(value, (str, int, float, bool, list))
 
@@ -47,6 +49,7 @@ class FlextLdifServersOudAclSubjectMixin(FlextLdifServersRfcAcl):
 
         Returns:
             The resulting ``str``.
+
         """
         base_dn, subject_type, subject_value = self._extract_and_resolve_acl_subject(
             acl_data,
@@ -85,6 +88,7 @@ class FlextLdifServersOudAclSubjectMixin(FlextLdifServersRfcAcl):
 
         Returns:
             The resulting ``tuple[str | None, str, str]``.
+
         """
         ext = acl_data.metadata.extensions if acl_data.metadata else None
         base_dn = self._extension_get_str(ext, "base_dn")
@@ -121,6 +125,7 @@ class FlextLdifServersOudAclSubjectMixin(FlextLdifServersRfcAcl):
 
         Returns:
             The resulting ``str``.
+
         """
         subject_value_lower = (subject.subject_value or "").lower() if subject else ""
         source_subject_type_normalized = source_subject_type or ""

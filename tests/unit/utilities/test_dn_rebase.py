@@ -29,6 +29,7 @@ def _entry(
 
     Returns:
         The resulting ``m.Ldif.Entry``.
+
     """
     return m.Ldif.Entry(
         dn=m.Ldif.DN(value=dn),

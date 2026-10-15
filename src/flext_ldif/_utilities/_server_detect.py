@@ -29,6 +29,7 @@ class FlextLdifServerDetection:
 
         Returns:
             The resulting ``bool``.
+
         """
         if detection_string and detection_string in name_lower:
             return True
@@ -49,6 +50,7 @@ class FlextLdifServerDetection:
 
         Returns:
             The resulting ``list[str]``.
+
         """
         if not isinstance(value, str):
             return [value.name] if value.name else []
@@ -76,6 +78,7 @@ class FlextLdifServerDetection:
 
         Returns:
             The resulting ``bool``.
+
         """
         if not definition_text or not settings.match_definition_text:
             return False
@@ -121,6 +124,7 @@ class FlextLdifServerDetection:
 
             Returns:
                 The resulting ``bool``.
+
             """
             return bool(
                 check_value

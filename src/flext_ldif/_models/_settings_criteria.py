@@ -12,6 +12,7 @@ from __future__ import annotations
 from typing import Annotated
 
 from flext_core import FlextUtilities as u, m, t
+
 from flext_ldif._constants.base import FlextLdifConstantsEnums
 
 

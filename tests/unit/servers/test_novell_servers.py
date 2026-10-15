@@ -28,6 +28,7 @@ class TestsFlextLdifNovellServers:
 
         Returns:
             The resulting ``FlextLdifServersNovell``.
+
         """
         return FlextLdifServersNovell()
 
@@ -40,6 +41,7 @@ class TestsFlextLdifNovellServers:
 
         Returns:
             The resulting ``FlextLdifServersNovell.Schema``.
+
         """
         server = novell_server.schema_server
         assert isinstance(server, FlextLdifServersNovell.Schema)
@@ -54,6 +56,7 @@ class TestsFlextLdifNovellServers:
 
         Returns:
             The resulting ``FlextLdifServersNovell.Acl``.
+
         """
         server = novell_server.acl_server
         assert isinstance(server, FlextLdifServersNovell.Acl)
@@ -68,6 +71,7 @@ class TestsFlextLdifNovellServers:
 
         Returns:
             The resulting ``FlextLdifServersNovell.Entry``.
+
         """
         server = novell_server.entry_server
         assert isinstance(server, FlextLdifServersNovell.Entry)

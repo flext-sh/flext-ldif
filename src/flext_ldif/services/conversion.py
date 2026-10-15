@@ -34,6 +34,7 @@ class FlextLdifConversion(FlextLdifConversionEntryMixin, FlextLdifConversionAclM
 
         Returns:
             The resulting ``p.Result[t.Ldif.ConvertedModel]``.
+
         """
         if isinstance(model_instance, m.Ldif.Entry):
             return self._convert_entry(source_server, target_server, model_instance)
@@ -75,6 +76,7 @@ class FlextLdifConversion(FlextLdifConversionEntryMixin, FlextLdifConversionAclM
 
         Returns:
             The resulting ``p.Result[t.Ldif.ConvertedModel]``.
+
         """
         start_time = time.perf_counter()
         source_format = source if isinstance(source, str) else source.server_type

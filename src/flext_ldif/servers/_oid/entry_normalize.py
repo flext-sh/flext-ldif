@@ -24,6 +24,7 @@ class FlextLdifServersOidEntryNormalizeMixin(FlextLdifServersRfcEntry):
 
         Returns:
             The resulting ``tuple[str, bool]``.
+
         """
         new_value = value
         changed = False
@@ -43,6 +44,7 @@ class FlextLdifServersOidEntryNormalizeMixin(FlextLdifServersRfcEntry):
 
         Returns:
             The resulting ``tuple[str, bool]``.
+
         """
         new_value = value
         changed = False
@@ -66,6 +68,7 @@ class FlextLdifServersOidEntryNormalizeMixin(FlextLdifServersRfcEntry):
 
         Returns:
             The resulting ``tuple[str, bool]``.
+
         """
         sup_quoted = c.Ldif.compile_pattern(r"SUP\s+'([^']+)'", ignorecase=False).sub(
             r"SUP \1",
@@ -81,6 +84,7 @@ class FlextLdifServersOidEntryNormalizeMixin(FlextLdifServersRfcEntry):
 
         Returns:
             The resulting ``str``.
+
         """
         equality_map: t.MappingKV[str, str] = {
             "caseIgnoreSubStringsMatch": "caseIgnoreMatch",

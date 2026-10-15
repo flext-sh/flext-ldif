@@ -49,6 +49,7 @@ class FlextLdifEntryValidation:
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
+
         """
         violations: t.MutableSequenceOf[str] = []
         if entry.changetype in {"delete", "moddn", "modrdn"}:
@@ -75,6 +76,7 @@ class FlextLdifEntryValidation:
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
+
         """
         violations: t.MutableSequenceOf[str] = []
         if not entry.changetype:
@@ -98,6 +100,7 @@ class FlextLdifEntryValidation:
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
+
         """
         violations: t.MutableSequenceOf[str] = []
         if entry.changetype:
@@ -134,6 +137,7 @@ class FlextLdifEntryValidation:
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
+
         """
         violations: t.MutableSequenceOf[str] = []
         if entry.changetype:

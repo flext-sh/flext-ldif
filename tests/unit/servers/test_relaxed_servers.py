@@ -34,6 +34,7 @@ def _schema_attribute(
 
     Returns:
         The resulting ``m.Ldif.SchemaAttribute``.
+
     """
     return m.Ldif.SchemaAttribute(
         oid=oid,
@@ -98,6 +99,7 @@ class TestsFlextLdifRelaxed:
 
         Returns:
             The resulting ``FlextLdifServersRelaxedSchema``.
+
         """
         return FlextLdifServersRelaxedSchema()
 
@@ -108,6 +110,7 @@ class TestsFlextLdifRelaxed:
 
         Returns:
             The resulting ``FlextLdifServersRelaxed.Acl``.
+
         """
         return FlextLdifServersRelaxed.Acl()
 
@@ -118,6 +121,7 @@ class TestsFlextLdifRelaxed:
 
         Returns:
             The resulting ``FlextLdifServersRelaxedEntry``.
+
         """
         return FlextLdifServersRelaxedEntry()
 

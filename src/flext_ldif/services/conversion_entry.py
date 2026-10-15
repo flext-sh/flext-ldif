@@ -42,6 +42,7 @@ class FlextLdifConversionEntryMixin(
 
         Returns:
             The resulting ``p.Result[t.Ldif.ConvertedModel]``.
+
         """
         return self._guard_conversion(
             "Entry",
@@ -58,6 +59,7 @@ class FlextLdifConversionEntryMixin(
 
         Returns:
             The resulting ``p.Result[t.Ldif.ConvertedModel]``.
+
         """
         entry_dn = str(entry.dn) if entry.dn else ""
         valid: bool = u.Ldif.validate_dn(entry_dn)
@@ -99,6 +101,7 @@ class FlextLdifConversionEntryMixin(
 
         Returns:
             The resulting ``c.Ldif.ServerTypes``.
+
         """
         if target_server.server_type != c.IDENTIFIER_UNKNOWN:
             return c.Ldif.ServerTypes(
@@ -116,6 +119,7 @@ class FlextLdifConversionEntryMixin(
 
         Returns:
             The resulting ``m.Ldif.Entry``.
+
         """
         metadata_for_analysis: m.Ldif.ServerMetadata | t.MutableJsonMapping | None = (
             entry.metadata
@@ -144,6 +148,7 @@ class FlextLdifConversionEntryMixin(
 
         Returns:
             The resulting ``p.Result[t.Ldif.ConvertedModel]``.
+
         """
         transformed_attributes = u.Ldif.transform_entry_attributes_between_oid_rfc(
             converted_entry,
@@ -185,6 +190,7 @@ class FlextLdifConversionEntryMixin(
 
         Returns:
             The resulting ``m.Ldif.Entry``.
+
         """
         transformed_dn = u.Ldif.transform_schema_dn_between_oid_rfc(
             converted_entry,

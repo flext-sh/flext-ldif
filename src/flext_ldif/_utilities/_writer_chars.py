@@ -18,6 +18,7 @@ class FlextLdifWriterRfcChars:
 
         Returns:
             The resulting ``bool``.
+
         """
         if not value:
             return False

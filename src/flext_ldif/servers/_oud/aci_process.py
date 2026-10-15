@@ -27,6 +27,7 @@ class FlextLdifServersOudAciProcessMixin:
 
         Returns:
             The resulting ``str``.
+
         """
         normalized_aci = aci_value.strip()
         if not normalized_aci.startswith("aci:"):
@@ -78,6 +79,7 @@ class FlextLdifServersOudAciProcessMixin:
 
         Returns:
             The resulting ``p.Result[bool]``.
+
         """
         aci_list: t.MutableSequenceOf[str] = (
             [*aci_values] if isinstance(aci_values, MutableSequence) else [aci_values]
@@ -103,6 +105,7 @@ class FlextLdifServersOudAciProcessMixin:
 
         Returns:
             The resulting ``p.Result[bool]``.
+
         """
         has_macros = bool(c.Ldif.ACI_MACRO_RE.search(aci_value))
         validation_result = FlextLdifServersOudAciProcessMixin._validate_aci_macros(
@@ -132,6 +135,7 @@ class FlextLdifServersOudAciProcessMixin:
 
         Returns:
             The resulting ``p.Result[bool]``.
+
         """
         return r[bool].ok(value=True)
 
@@ -144,6 +148,7 @@ class FlextLdifServersOudAciProcessMixin:
 
         Returns:
             The resulting ``str | None``.
+
         """
         aci_attrs = attrs_dict.get("aci")
         if aci_attrs and u.matches_type(aci_attrs, (list, tuple)):

@@ -25,6 +25,7 @@ class FlextLdifCategorization(FlextLdifCategorizationFiltering, s[m.Ldif.Respons
 
         Returns:
             The resulting ``p.Result[m.Ldif.FlexibleCategories]``.
+
         """
         category_lists: MutableMapping[str, list[m.Ldif.Entry]] = {
             category: [] for category in c.Ldif.CATEGORY_BUCKET_ORDER
@@ -74,6 +75,7 @@ class FlextLdifCategorization(FlextLdifCategorizationFiltering, s[m.Ldif.Respons
 
         Returns:
             The resulting ``tuple[str, str | None]``.
+
         """
         rules_result = self._normalize_rules(rules)
         normalized_rules = rules_result.map_or(None)
@@ -131,6 +133,7 @@ class FlextLdifCategorization(FlextLdifCategorizationFiltering, s[m.Ldif.Respons
 
         Returns:
             The resulting ``p.Result[t.MutableSequenceOf[m.Ldif.Entry]]``.
+
         """
         normalized_entries = u.Ldif.as_entries(entries)
 
@@ -139,6 +142,7 @@ class FlextLdifCategorization(FlextLdifCategorizationFiltering, s[m.Ldif.Respons
 
             Returns:
                 The resulting ``p.Result[m.Ldif.Entry]``.
+
             """
             dn_str = str(entry.dn) if entry.dn else ""
             if not u.Ldif.validate_dn(dn_str):

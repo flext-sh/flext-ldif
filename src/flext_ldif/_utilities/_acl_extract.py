@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import r
+
 from flext_ldif import c, p, t
 
 
@@ -19,6 +20,7 @@ class FlextLdifACLExtraction:
 
         Returns:
             The resulting ``p.Result[str]``.
+
         """
         if match.lastindex is None:
             full_match: str = match.group(0)

@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import r
+
 from flext_ldif import c, p, t
 
 
@@ -24,6 +25,7 @@ class FlextLdifUtilitiesOID:
 
         Returns:
             The resulting ``p.Result[str]``.
+
         """
         if not definition and empty_error:
             return r[str].fail(empty_error)
@@ -65,6 +67,7 @@ class FlextLdifUtilitiesOID:
 
         Returns:
             The resulting ``p.Result[bool]``.
+
         """
         if not oid:
             return r[bool].ok(value=False)

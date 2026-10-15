@@ -25,6 +25,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBaseEntry):
 
         Returns:
             The resulting ``bool``.
+
         """
         return False
 
@@ -34,6 +35,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBaseEntry):
 
         Returns:
             The resulting ``bool``.
+
         """
         return False
 
@@ -43,6 +45,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBaseEntry):
 
         Returns:
             The resulting ``p.Result[m.Ldif.Entry]``.
+
         """
         return r[m.Ldif.Entry].ok(entry)
 
@@ -52,6 +55,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBaseEntry):
 
         Returns:
             The resulting ``p.Result[m.Ldif.Entry]``.
+
         """
         return r[m.Ldif.Entry].ok(entry)
 
@@ -61,6 +65,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBaseEntry):
 
         Returns:
             The resulting ``str``.
+
         """
         if not attr_name:
             return attr_name
@@ -77,6 +82,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBaseEntry):
 
         Returns:
             The resulting ``p.Result[m.Ldif.Entry]``.
+
         """
         parsed: p.Result[m.Ldif.Entry] = u.Ldif.parse_ldif_record(lines)
         return parsed
@@ -91,6 +97,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBaseEntry):
 
         Returns:
             The resulting ``bool``.
+
         """
         if not entry_dn or not entry_dn.strip():
             return False
@@ -106,6 +113,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBaseEntry):
 
         Returns:
             The resulting ``p.Result[t.MutableSequenceOf[m.Ldif.Entry]]``.
+
         """
         if not ldif_content or not ldif_content.strip():
             return r[t.MutableSequenceOf[m.Ldif.Entry]].ok([])
@@ -125,6 +133,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBaseEntry):
 
         Returns:
             The resulting ``p.Result[t.MutableSequenceOf[m.Ldif.Entry]]``.
+
         """
         entries: t.MutableSequenceOf[m.Ldif.Entry] = []
         for record_lines in u.Ldif.split_ldif_records(ldif_content):

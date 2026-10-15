@@ -24,6 +24,7 @@ class FlextLdifParser(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``p.Result[m.Ldif.ParseResponse]``.
+
         """
         effective_type = server_type or self._get_effective_server_type_value()
         if isinstance(value, Path):
@@ -40,6 +41,7 @@ class FlextLdifParser(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``p.Result[m.Ldif.ParseResponse]``.
+
         """
         resolved_path = path
         if not resolved_path.exists() and not resolved_path.is_absolute():
@@ -67,6 +69,7 @@ class FlextLdifParser(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``p.Result[m.Ldif.ParseResponse]``.
+
         """
         effective_server_type = server_type or self._get_effective_server_type_value()
         return r[m.Ldif.ParseResponse].from_result(

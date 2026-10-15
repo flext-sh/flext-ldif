@@ -12,6 +12,7 @@ from types import MappingProxyType
 from typing import Annotated, ClassVar, Self, override
 
 from flext_core import m, u
+
 from flext_ldif import c, e, p, r, t
 from flext_ldif._models import (
     FlextLdifModelsDomainAttributes,
@@ -362,6 +363,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
 
             Returns:
                 The parsed server type, defaulting to RFC.
+
             """
             if isinstance(server_type_value, str):
                 try:

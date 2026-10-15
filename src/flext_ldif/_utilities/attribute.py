@@ -18,6 +18,7 @@ class FlextLdifUtilitiesAttribute:
 
         Returns:
             The resulting ``bool``.
+
         """
         if not attribute_name:
             return False

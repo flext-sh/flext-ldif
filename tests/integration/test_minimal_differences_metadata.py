@@ -35,6 +35,7 @@ class TestsFlextLdifMinimalDifferencesMetadata:
 
         Returns:
             The resulting ``FlextLdifParser``.
+
         """
         return FlextLdifParser()
 
@@ -45,6 +46,7 @@ class TestsFlextLdifMinimalDifferencesMetadata:
 
         Returns:
             The resulting ``p.Ldif.LdifClient``.
+
         """
         return ldif()
 
@@ -55,6 +57,7 @@ class TestsFlextLdifMinimalDifferencesMetadata:
 
         Returns:
             The resulting ``Path``.
+
         """
         return Path(__file__).parent.parent / "fixtures"
 

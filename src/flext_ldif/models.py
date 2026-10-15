@@ -13,8 +13,8 @@ from __future__ import annotations
 from typing import Annotated, ClassVar
 
 from flext_cli import FlextCliModels
-
 from flext_core import FlextUtilities as u
+
 from flext_ldif import t
 from flext_ldif._models._base_parts import FlextLdifModelsBasesParts
 from flext_ldif._models.acl_convert import FlextLdifModelsAclConvert

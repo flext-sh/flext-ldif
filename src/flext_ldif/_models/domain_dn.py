@@ -12,6 +12,7 @@ from collections.abc import MutableMapping
 from typing import Annotated, ClassVar, Self, override
 
 from flext_core import FlextUtilities as u, m
+
 from flext_ldif import c, p, r, t
 from flext_ldif._utilities import FlextLdifUtilitiesCollectionLdif
 
@@ -109,6 +110,7 @@ class FlextLdifModelsDomainDN:
 
             Returns:
                 The resulting ``Self``.
+
             """
             validated: Self = cls.model_validate({
                 "original_dn": dn,
@@ -127,6 +129,7 @@ class FlextLdifModelsDomainDN:
 
             Returns:
                 The resulting ``t.MutableSequenceOf[str]``.
+
             """
             return FlextLdifUtilitiesCollectionLdif.deduplicate_preserve_order(v)
 
@@ -171,6 +174,7 @@ class FlextLdifModelsDomainDN:
 
             Raises:
                 ValueError: If RFC 4514 § 2.3.
+
             """
             if not value:
                 return value
@@ -201,6 +205,7 @@ class FlextLdifModelsDomainDN:
 
             Raises:
                 ValueError: If dn cannot be None.
+
             """
             if dn is None:
                 msg = "dn cannot be None"
@@ -230,6 +235,7 @@ class FlextLdifModelsDomainDN:
 
             Returns:
                 The resulting ``str``.
+
             """
             return dn.lower().replace(" ", "")
 
@@ -243,6 +249,7 @@ class FlextLdifModelsDomainDN:
 
             Returns:
                 The resulting ``str | None``.
+
             """
             normalized = self._normalize_dn(dn)
             value = self._registry.get(normalized)
@@ -253,6 +260,7 @@ class FlextLdifModelsDomainDN:
 
             Returns:
                 The resulting ``str``.
+
             """
             normalized = self._normalize_dn(dn)
             if normalized not in self._case_variants:
@@ -268,6 +276,7 @@ class FlextLdifModelsDomainDN:
 
             Returns:
                 The resulting ``p.Result[bool]``.
+
             """
             inconsistencies: t.MutableSequenceOf[
                 MutableMapping[str, str | int | t.MutableSequenceOf[str]]

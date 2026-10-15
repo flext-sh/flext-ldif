@@ -49,6 +49,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
 
             Returns:
                 A tuple of independent attribute test cases.
+
             """
             cases = {
                 c.Tests.APACHE: c.Tests.APACHE_ATTRIBUTE_TEST_CASES,
@@ -73,6 +74,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
 
             Returns:
                 A tuple of constructed attribute test cases.
+
             """
             return tuple(
                 m.Tests.AttributeTestCase(
@@ -96,6 +98,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
 
             Returns:
                 A tuple of constructed objectClass test cases.
+
             """
             return tuple(
                 m.Tests.ObjectClassTestCase(
@@ -120,6 +123,7 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
 
             Returns:
                 A tuple of constructed entry test cases.
+
             """
             return tuple(
                 m.Tests.EntryTestCase(

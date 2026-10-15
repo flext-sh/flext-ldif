@@ -30,6 +30,7 @@ class FlextLdifUtilitiesSchemaExtract:
 
         Returns:
             The resulting ``tuple[bool, bool]``.
+
         """
         single_value = FlextLdifUtilitiesParser.extract_boolean_flag(
             attr_definition,
@@ -51,6 +52,7 @@ class FlextLdifUtilitiesSchemaExtract:
 
         Returns:
             The resulting ``tuple[str | None, str | None, str | None]``.
+
         """
         equality = FlextLdifUtilitiesParser.extract_optional_field(
             attr_definition, c.Ldif.SCHEMA_EQUALITY
@@ -71,6 +73,7 @@ class FlextLdifUtilitiesSchemaExtract:
 
         Returns:
             The resulting ``tuple[str | None, str | None]``.
+
         """
         sup = FlextLdifUtilitiesParser.extract_optional_field(
             attr_definition, c.Ldif.SCHEMA_SUP
@@ -86,6 +89,7 @@ class FlextLdifUtilitiesSchemaExtract:
 
         Returns:
             The resulting ``tuple[str | None, int | None]``.
+
         """
         syntax_match = c.Ldif.SCHEMA_SYNTAX_LENGTH_RE.search(attr_definition)
         syntax = syntax_match.group(1) if syntax_match else None
@@ -102,6 +106,7 @@ class FlextLdifUtilitiesSchemaExtract:
 
         Returns:
             The resulting ``str``.
+
         """
         kind_match = c.Ldif.SCHEMA_OBJECTCLASS_KIND_RE.search(oc_definition)
         if kind_match is None:
@@ -123,6 +128,7 @@ class FlextLdifUtilitiesSchemaExtract:
         Returns:
             The resulting ``tuple[t.MutableSequenceOf[str] | None,
                 t.MutableSequenceOf[str] | None]``.
+
         """
         must, may = (
             FlextLdifUtilitiesSchemaExtract.split_schema_values(
@@ -144,6 +150,7 @@ class FlextLdifUtilitiesSchemaExtract:
 
         Returns:
             The resulting ``str | None``.
+
         """
         sup_match = c.Ldif.SCHEMA_OBJECTCLASS_SUP_RE.search(oc_definition)
         if not sup_match:
@@ -191,6 +198,7 @@ class FlextLdifUtilitiesSchemaExtract:
 
         Returns:
             The resulting ``t.MutableSequenceOf[SchemaModelT]``.
+
         """
         items: t.MutableSequenceOf[SchemaModelT] = []
         for raw_line in ldif_content.split("\n"):

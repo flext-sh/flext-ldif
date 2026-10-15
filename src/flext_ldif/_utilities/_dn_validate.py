@@ -26,6 +26,7 @@ class FlextLdifDNValidation:
 
         Returns:
             The resulting ``bool``.
+
         """
         i = 0
         while i < len(dn_str) - 1:
@@ -47,6 +48,7 @@ class FlextLdifDNValidation:
 
         Returns:
             The resulting ``int | None``.
+
         """
         hex_escape_length = 2
         if i + hex_escape_length >= len(dn_str):
@@ -96,6 +98,7 @@ class FlextLdifDNValidation:
 
         Returns:
             The resulting ``bool``.
+
         """
         return bool(dn_str and "=" in dn_str)
 
@@ -105,6 +108,7 @@ class FlextLdifDNValidation:
 
         Returns:
             The resulting ``bool``.
+
         """
 
         def is_valid_component(comp: str) -> bool:
@@ -112,6 +116,7 @@ class FlextLdifDNValidation:
 
             Returns:
                 The resulting ``bool``.
+
             """
             if "=" not in comp:
                 return False
@@ -127,6 +132,7 @@ class FlextLdifDNValidation:
 
         Returns:
             The resulting ``bool``.
+
         """
         checks: t.MutableSequenceOf[Callable[[], bool]] = [
             lambda: FlextLdifDNValidation._validate_escape_sequences(dn_str),
@@ -153,6 +159,7 @@ class FlextLdifDNValidation:
 
         Returns:
             The resulting ``bool``.
+
         """
         dn_str = FlextLdifDNParsing.resolve_dn_value(dn)
         if not FlextLdifDNValidation._validate_basic_format(dn_str):

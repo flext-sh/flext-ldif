@@ -58,6 +58,7 @@ class FlextLdifServersOidAclRender:
 
         Returns:
             The resulting ``str``.
+
         """
         grouped = m.Ldif.AciAllowGroups()
         for allow in aci.allows:

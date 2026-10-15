@@ -66,6 +66,7 @@ class TestsFlextLdifOidServers:
 
         Returns:
             The resulting ``p.Ldif.SchemaServer``.
+
         """
         resolved = FlextLdifServer().resolve_schema_server("oid")
         assert resolved is not None

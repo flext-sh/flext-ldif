@@ -44,6 +44,7 @@ class TestsFlextLdifLdifFixturesIntegration:
 
         Returns:
             The resulting ``p.Ldif.LdifClient``.
+
         """
         return ldif
 
@@ -53,6 +54,7 @@ class TestsFlextLdifLdifFixturesIntegration:
 
         Returns:
             The resulting ``Path``.
+
         """
         fixture_path: Path = c.Tests.FIXTURES_DIR / subdir / filename
         return fixture_path

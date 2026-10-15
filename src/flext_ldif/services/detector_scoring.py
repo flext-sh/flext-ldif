@@ -35,6 +35,7 @@ class FlextLdifDetectorScoring(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
+
         """
         types: t.MutableSequenceOf[str] = u.Ldif.resolve_all_server_types()
         return types
@@ -51,6 +52,7 @@ class FlextLdifDetectorScoring(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``t.JsonValue`` (``str`` when well-typed).
+
         """
         return (
             pattern_value.pattern
@@ -66,6 +68,7 @@ class FlextLdifDetectorScoring(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``type[p.Ldif.ServerConstants] | None``.
+
         """
         constants_result: p.Result[type[p.Ldif.ServerConstants]] = (
             self._server.resolve_server_constants(server_type)
@@ -99,6 +102,7 @@ class FlextLdifDetectorScoring(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``t.MutableIntMapping``.
+
         """
         scores: t.MutableIntMapping = dict.fromkeys(self._get_all_server_types(), 0)
         scores[u.Ldif.resolve_server_type_value("GENERIC")] = 1
@@ -115,6 +119,7 @@ class FlextLdifDetectorScoring(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``tuple[str, float]``.
+
         """
         rfc_server_type = c.Ldif.ServerTypes.RFC.value
         if not scores:
@@ -178,6 +183,7 @@ class FlextLdifDetectorScoring(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
+
         """
         patterns: t.MutableSequenceOf[str] = []
         content_lower = content.lower()

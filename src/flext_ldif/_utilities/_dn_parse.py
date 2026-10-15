@@ -24,6 +24,7 @@ class FlextLdifDNParsing:
 
         Returns:
             The resulting ``str``.
+
         """
         if isinstance(dn, str):
             return dn
@@ -35,6 +36,7 @@ class FlextLdifDNParsing:
 
         Returns:
             The resulting ``str``.
+
         """
         try:
             return current + "\\" + next(chars)
@@ -64,6 +66,7 @@ class FlextLdifDNParsing:
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
+
         """
         dn_str = FlextLdifDNParsing.resolve_dn_value(dn)
         if not dn_str:
@@ -93,6 +96,7 @@ class FlextLdifDNParsing:
 
         Returns:
             The resulting ``p.Result[t.MutableStrPairSequence]``.
+
         """
         parsed_pairs: t.MutableStrPairSequence = []
         failure_message: str | None = None
@@ -124,6 +128,7 @@ class FlextLdifDNParsing:
 
         Returns:
             The resulting ``p.Result[t.MutableStrPairSequence]``.
+
         """
         result: p.Result[t.MutableStrPairSequence] = r[t.MutableStrPairSequence].fail(
             "DN cannot be None",

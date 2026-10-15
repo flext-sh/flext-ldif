@@ -30,6 +30,7 @@ class FlextLdifUtilitiesCollectionLdif:
 
             Returns:
                 The resulting ``t.JsonValue | None``.
+
             """
             for elem in items:
                 if predicate(elem):
@@ -44,6 +45,7 @@ class FlextLdifUtilitiesCollectionLdif:
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
+
         """
         seen: set[str] = set()
         result: t.MutableSequenceOf[str] = []
@@ -74,6 +76,7 @@ class FlextLdifUtilitiesCollectionLdif:
 
         Returns:
             The resulting ``str | t.MutableSequenceOf[str] | set[str] | bool``.
+
         """
 
         def normalize_single(v: str) -> str:

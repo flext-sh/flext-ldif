@@ -33,6 +33,7 @@ class TestsFlextLdifAclMetadataPreservation:
 
         Returns:
             The resulting ``p.Ldif.LdifClient``.
+
         """
         return ldif()
 
@@ -42,6 +43,7 @@ class TestsFlextLdifAclMetadataPreservation:
 
         Returns:
             The resulting ``t.JsonMapping``.
+
         """
         metadata = entry.metadata
         assert metadata is not None
@@ -62,6 +64,7 @@ class TestsFlextLdifAclMetadataPreservation:
 
         Returns:
             The resulting ``m.Ldif.Entry``.
+
         """
         result = api.parse_ldif(ldif_text, server_type=server_type)
         tm.ok(result)

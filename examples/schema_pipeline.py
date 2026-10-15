@@ -26,6 +26,7 @@ class ExamplesFlextLdifSchemaPipeline:
 
         Returns:
             The resulting ``list[m.Ldif.Entry]``.
+
         """
         return [
             entry
@@ -67,6 +68,7 @@ class ExamplesFlextLdifSchemaPipeline:
 
         Returns:
             The resulting ``p.Result[t.JsonMapping]``.
+
         """
         api = ldif()
         test_entries = ExamplesFlextLdifSchemaPipeline._pipeline_test_entries()

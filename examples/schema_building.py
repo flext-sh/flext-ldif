@@ -27,6 +27,7 @@ class ExamplesFlextLdifSchemaBuilding:
 
         Returns:
             The resulting ``m.Ldif.Entry | None``.
+
         """
         result = m.Ldif.Entry.create(dn=dn, attributes=attributes)
         return result.unwrap() if result.success else None
@@ -39,6 +40,7 @@ class ExamplesFlextLdifSchemaBuilding:
 
         Returns:
             The resulting ``list[m.Ldif.Entry]``.
+
         """
         entries: list[m.Ldif.Entry] = []
         for name, desc, sup, must_attrs, may_attrs in definitions:
@@ -66,6 +68,7 @@ class ExamplesFlextLdifSchemaBuilding:
 
         Returns:
             The resulting ``p.Result[MutableSequence[m.Ldif.Entry]]``.
+
         """
         schema_entries: list[m.Ldif.Entry] = []
         schema_root = ExamplesFlextLdifSchemaBuilding.create_entry_or_none(

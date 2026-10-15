@@ -92,6 +92,7 @@ class FlextLdifServersRfcSchemaValuesMixin(FlextLdifServersBaseSchema):
 
         Returns:
             The resulting ``p.Result[int]``.
+
         """
         try:
             parsed_int = int(str(json_value))

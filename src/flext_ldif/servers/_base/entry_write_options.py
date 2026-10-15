@@ -65,6 +65,7 @@ class FlextLdifServersEntryWriteOptions:
 
         Returns:
             The resulting ``t.Ldif.MutableMetadataMapping``.
+
         """
         if not entry_data.metadata:
             return {}
@@ -81,6 +82,7 @@ class FlextLdifServersEntryWriteOptions:
 
         Returns:
             The resulting ``set[str]``.
+
         """
         hidden_raw = extensions_data.get(c.Ldif.HIDDEN_ATTRIBUTES)
         if not isinstance(hidden_raw, list):
@@ -96,6 +98,7 @@ class FlextLdifServersEntryWriteOptions:
 
         Returns:
             The resulting ``str | None``.
+
         """
         acl_original_raw = extensions_data.get(c.Ldif.ACL_ORIGINAL_FORMAT)
         if isinstance(acl_original_raw, str):

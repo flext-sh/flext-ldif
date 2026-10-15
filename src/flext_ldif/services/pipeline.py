@@ -70,6 +70,7 @@ class FlextLdifProcessingPipeline(s[t.MutableSequenceOf[m.Ldif.Entry]]):
 
         Returns:
             The resulting ``Self``.
+
         """
         source_server_type = (
             source_server
@@ -99,6 +100,7 @@ class FlextLdifProcessingPipeline(s[t.MutableSequenceOf[m.Ldif.Entry]]):
 
         Returns:
             The resulting ``p.Result[t.MutableSequenceOf[m.Ldif.Entry]]``.
+
         """
         batch = self.entries_input
         if batch is None:
@@ -132,6 +134,7 @@ class FlextLdifProcessingPipeline(s[t.MutableSequenceOf[m.Ldif.Entry]]):
 
         Returns:
             The resulting ``p.Result[m.Cli.PipelineStageResult]``.
+
         """
         transformed_entries: t.MutableSequenceOf[m.Ldif.Entry] = []
         for entry in self._entries:
@@ -154,6 +157,7 @@ class FlextLdifProcessingPipeline(s[t.MutableSequenceOf[m.Ldif.Entry]]):
 
         Returns:
             The resulting ``t.SequenceOf[m.Cli.PipelineStageSpec]``.
+
         """
         stage_order: t.MutableSequenceOf[str] = []
         handlers: t.MutableMappingKV[str, p.Cli.PipelineStage] = {}

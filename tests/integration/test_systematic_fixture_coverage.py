@@ -33,6 +33,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
 
         Returns:
             The resulting ``p.Ldif.LdifClient``.
+
         """
         return ldif()
 
@@ -91,6 +92,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
 
         Returns:
             The resulting ``int``.
+
         """
         parse_result = api.parse_ldif(content)
         tm.ok(parse_result)

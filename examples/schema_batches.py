@@ -23,6 +23,7 @@ class ExamplesFlextLdifSchemaBatches:
 
         Returns:
             The resulting ``list[m.Ldif.Entry]``.
+
         """
         core_attrs: list[m.Ldif.Entry] = []
         core_attribute_definitions: t.SequenceOf[tuple[str, str, str, bool]] = [
@@ -61,6 +62,7 @@ class ExamplesFlextLdifSchemaBatches:
 
         Returns:
             The resulting ``list[m.Ldif.Entry]``.
+
         """
         oc_definitions: t.SequenceOf[tuple[str, str, str, list[str], list[str]]] = [
             ("person", "Person", "top", ["cn", "sn"], ["mail", "telephoneNumber"]),
@@ -97,6 +99,7 @@ class ExamplesFlextLdifSchemaBatches:
 
         Returns:
             The resulting ``tuple[t.MutableMappingKV[str, t.JsonValue], int]``.
+
         """
         batch_results: t.MutableMappingKV[str, t.JsonValue] = {}
         total_schema_entries = 0
@@ -123,6 +126,7 @@ class ExamplesFlextLdifSchemaBatches:
 
         Returns:
             The resulting ``p.Result[t.JsonMapping]``.
+
         """
         api = ldif()
         schema_batches: list[tuple[str, list[m.Ldif.Entry]]] = [

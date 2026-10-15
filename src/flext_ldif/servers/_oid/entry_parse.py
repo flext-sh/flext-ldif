@@ -37,6 +37,7 @@ class FlextLdifServersOidEntryParseMixin(
 
         Returns:
             The resulting ``MutableMapping[str, m.Ldif.AttributeTransformation]``.
+
         """
         original_attr_names: t.MutableStrMapping = {
             normalized.lower(): raw_attr_name
@@ -72,6 +73,7 @@ class FlextLdifServersOidEntryParseMixin(
         Returns:
             The resulting ``tuple[t.MutableSequenceOf[str],
                 t.MutableSequenceOf[t.MutableAttributeMapping]]``.
+
         """
         object_classes_raw = converted_attributes.get("objectClass", [])
         object_classes: t.MutableSequenceOf[str] = list(object_classes_raw)
@@ -150,6 +152,7 @@ class FlextLdifServersOidEntryParseMixin(
 
         Returns:
             The resulting ``set[str]``.
+
         """
         current_attrs: set[str] = set()
         if entry_data.attributes and entry_data.attributes.attributes:
@@ -172,6 +175,7 @@ class FlextLdifServersOidEntryParseMixin(
 
         Returns:
             The resulting ``p.Result[m.Ldif.Entry]``.
+
         """
         _ = original_dn
         if not entry.attributes:
@@ -236,6 +240,7 @@ class FlextLdifServersOidEntryParseMixin(
 
         Returns:
             The resulting ``p.Result[m.Ldif.Entry]``.
+
         """
         try:
             return self._post_parse_oid_entry(entry)
@@ -250,6 +255,7 @@ class FlextLdifServersOidEntryParseMixin(
 
         Returns:
             The resulting ``p.Result[m.Ldif.Entry]``.
+
         """
         if not entry.attributes or not entry.dn:
             return r[m.Ldif.Entry].ok(entry)
@@ -319,6 +325,7 @@ class FlextLdifServersOidEntryParseMixin(
         Returns:
             The resulting ``p.Result[tuple[str, MutableMapping[str,
                 t.MutableSequenceOf[str | bytes]]]]``.
+
         """
         cleaned_dn, _ = u.Ldif.clean_dn_with_statistics(dn)
         normalized_dn = cleaned_dn

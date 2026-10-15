@@ -43,6 +43,7 @@ class ExamplesFlextLdifSchemaMigration:
 
         Returns:
             The resulting ``tuple[Path, Path]`` of source and migrated paths.
+
         """
         migration_dir = Path("examples/schema_migration")
         source_dir = migration_dir / "source"
@@ -64,6 +65,7 @@ class ExamplesFlextLdifSchemaMigration:
 
         Returns:
             The resulting ``list[m.Ldif.Entry]``.
+
         """
         all_entries: list[m.Ldif.Entry] = []
         for ldif_file in source_dir.glob("*.ldif"):
@@ -79,6 +81,7 @@ class ExamplesFlextLdifSchemaMigration:
 
         Returns:
             The resulting ``str``.
+
         """
         entry_dn = ldif_entry.dn
         if entry_dn is None:
@@ -91,6 +94,7 @@ class ExamplesFlextLdifSchemaMigration:
 
         Returns:
             The resulting ``m.Ldif.Entry | None``.
+
         """
         attrs_dict: t.MutableAttributeMapping = {}
         if ldif_entry.attributes is not None:
@@ -114,6 +118,7 @@ class ExamplesFlextLdifSchemaMigration:
         Returns:
             The resulting ``p.Result[t.JsonMapping]``: the per-report counters,
             or the typed failure carrying the validation error.
+
         """
         validation_result = api.validate_entries(entries)
         if not validation_result.success:
@@ -131,6 +136,7 @@ class ExamplesFlextLdifSchemaMigration:
 
         Returns:
             The resulting ``p.Result[t.JsonMapping]``.
+
         """
         api = ldif()
         source_dir, migrated_dir = (

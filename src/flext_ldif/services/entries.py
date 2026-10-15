@@ -92,6 +92,7 @@ class FlextLdifEntries(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``p.Result[m.Ldif.Entry]``.
+
         """
         if not u.Ldif.validate_dn(dn):
             return r[m.Ldif.Entry].fail(f"Invalid DN: {dn}")
@@ -111,6 +112,7 @@ class FlextLdifEntries(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``p.Result[t.MutableSequenceOf[str]]``.
+
         """
         match attribute:
             case str() as value:
@@ -132,6 +134,7 @@ class FlextLdifEntries(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``p.Result[t.MutableStrSequenceMapping]``.
+
         """
         if entry.attributes is None:
             return r[t.MutableStrSequenceMapping].fail("Entry has no attributes")
@@ -146,6 +149,7 @@ class FlextLdifEntries(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``p.Result[str]``.
+
         """
         if isinstance(entry, MutableMapping):
             return FlextLdifEntries._extract_dn_from_dict(entry)
@@ -159,6 +163,7 @@ class FlextLdifEntries(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``p.Result[t.MutableSequenceOf[str]]``.
+
         """
         attributes_result = FlextLdifEntries.resolve_entry_attributes(entry)
         if attributes_result.failure:
@@ -193,6 +198,7 @@ class FlextLdifEntries(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``p.Result[m.Ldif.Entry]``.
+
         """
         if entry.attributes is None:
             return r[m.Ldif.Entry].ok(entry)
@@ -214,6 +220,7 @@ class FlextLdifEntries(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``p.Result[t.MutableSequenceOf[m.Ldif.Entry]]``.
+
         """
         if not self.operation:
             return r[t.MutableSequenceOf[m.Ldif.Entry]].fail("No operation specified")

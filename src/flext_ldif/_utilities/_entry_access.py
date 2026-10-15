@@ -46,6 +46,7 @@ class FlextLdifEntryAccess:
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
+
         """
         return FlextLdifEntryAccess.resolve_attribute_values(
             entry,

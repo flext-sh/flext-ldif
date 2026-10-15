@@ -29,6 +29,7 @@ class FlextLdifDNNormalization:
 
         Returns:
             The resulting ``p.Result[str]``.
+
         """
         result: p.Result[str] = r[str].fail("DN cannot be None")
         if dn is not None:
@@ -118,6 +119,7 @@ class FlextLdifDNNormalization:
 
         Returns:
             The resulting ``p.Result[t.StrPair]``.
+
         """
         norm1_result = FlextLdifDNNormalization.norm(dn1)
         if not norm1_result.success:
@@ -139,6 +141,7 @@ class FlextLdifDNNormalization:
 
         Returns:
             The resulting ``p.Result[int]``.
+
         """
         if not dn1 or not dn2:
             return r[int].fail("Both DNs must be provided for comparison")
@@ -159,6 +162,7 @@ class FlextLdifDNNormalization:
 
         Returns:
             The resulting ``p.Result[int]``.
+
         """
         try:
             return FlextLdifDNNormalization._compare_dns_core(dn1, dn2)

@@ -48,6 +48,7 @@ class FlextLdifCategorizationFiltering(FlextLdifCategorizationRules):
         Returns:
             The resulting ``tuple[t.MutableSequenceOf[m.Ldif.Entry],
                 t.MutableSequenceOf[m.Ldif.Entry]]``.
+
         """
         model_entries: t.MutableSequenceOf[m.Ldif.Entry] = list(entries)
         included: t.MutableSequenceOf[m.Ldif.Entry] = []
@@ -137,6 +138,7 @@ class FlextLdifCategorizationFiltering(FlextLdifCategorizationRules):
 
         Returns:
             The resulting ``m.Ldif.FlexibleCategories``.
+
         """
         if not self.base_dn:
             return categories
@@ -213,6 +215,7 @@ class FlextLdifCategorizationFiltering(FlextLdifCategorizationRules):
 
         Returns:
             The resulting ``p.Result[t.MutableSequenceOf[m.Ldif.Entry]]``.
+
         """
         sw_rules = self._whitelist_rules_with_oid_filters()
         if sw_rules is None:
@@ -245,6 +248,7 @@ class FlextLdifCategorizationFiltering(FlextLdifCategorizationRules):
 
         Returns:
             The resulting ``t.MutableSequenceOf[m.Ldif.Entry]``.
+
         """
         return [
             u.Ldif.update_entry_statistics(

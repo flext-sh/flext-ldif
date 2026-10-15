@@ -24,6 +24,7 @@ class FlextLdifServersOidEntryRestoreLinesMixin(
 
         Returns:
             The resulting ``str``.
+
         """
         if ":" not in original_line:
             return original_line
@@ -44,6 +45,7 @@ class FlextLdifServersOidEntryRestoreLinesMixin(
 
         Returns:
             The resulting ``str``.
+
         """
         if ":" not in original_line:
             return original_line
@@ -70,6 +72,7 @@ class FlextLdifServersOidEntryRestoreLinesMixin(
 
         Returns:
             The resulting ``bool``.
+
         """
         _ = write_empty_values
         if original_line.lower().startswith("dn:"):
@@ -100,6 +103,7 @@ class FlextLdifServersOidEntryRestoreLinesMixin(
 
         Returns:
             The resulting ``set[str]``.
+
         """
         written_attrs: set[str] = set()
         current_attrs = self._get_current_attrs_with_acl_equivalence(entry_data)

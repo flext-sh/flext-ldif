@@ -41,6 +41,7 @@ class FlextLdifConversionAclMixin(
 
         Returns:
             The resulting ``p.Result[t.Ldif.ConvertedModel]``.
+
         """
         return self._guard_conversion(
             "Acl",
@@ -57,6 +58,7 @@ class FlextLdifConversionAclMixin(
 
         Returns:
             The resulting ``p.Result[t.Ldif.ConvertedModel]``.
+
         """
         source_acl = acl.model_copy(deep=True)
         source_server_type: c.Ldif.ServerTypes | None = u.try_(
@@ -105,6 +107,7 @@ class FlextLdifConversionAclMixin(
 
         Returns:
             The resulting ``m.Ldif.Entry``.
+
         """
         entry_metadata = u.Ldif.server_metadata_for(source_server_type)
         entry_metadata.acls = [acl.raw_acl] if acl.raw_acl else list[str]()
@@ -129,6 +132,7 @@ class FlextLdifConversionAclMixin(
 
         Returns:
             The resulting ``p.Result[m.Ldif.Acl]``.
+
         """
         if not isinstance(converted_entry, m.Ldif.Entry):
             return r[m.Ldif.Acl].fail(

@@ -31,6 +31,7 @@ class ExamplesFlextLdifEntryOperations:
 
         Returns:
             The resulting ``p.Result[MutableSequence[m.Ldif.Entry]]``.
+
         """
         return ExamplesFlextLdifEntryOperations.intelligent_builders().map(
             lambda entries: [
@@ -49,6 +50,7 @@ class ExamplesFlextLdifEntryOperations:
 
         Returns:
             The resulting ``p.Result[MutableSequence[m.Ldif.Entry]]``.
+
         """
         api = ldif()
         return ExamplesFlextLdifEntryOperations.advanced_filtering().flat_map(
@@ -61,6 +63,7 @@ class ExamplesFlextLdifEntryOperations:
 
         Returns:
             The resulting ``p.Result[MutableSequence[m.Ldif.Entry]]``.
+
         """
         created_entries: list[m.Ldif.Entry] = []
         people_data: list[tuple[str, str, str, str]] = [

@@ -29,6 +29,7 @@ class FlextLdifShared:
 
         Returns:
             The resulting ``bool``.
+
         """
         _missing_attr = None
         return False
@@ -51,6 +52,7 @@ class FlextLdifShared:
 
         Raises:
             ValueError: If Invalid server type.
+
         """
         server_type_lower = server_type.lower().strip()
         alias_value = c.Ldif.SERVER_TYPE_ALIASES.get(server_type_lower)

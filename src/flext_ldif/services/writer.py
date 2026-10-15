@@ -30,6 +30,7 @@ class FlextLdifWriter(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``p.Result[str]``.
+
         """
         string_result = self.write_to_string(
             entries,
@@ -54,6 +55,7 @@ class FlextLdifWriter(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``p.Result[m.Ldif.WriteResponse]``.
+
         """
         content_result = self._stringify_entries(
             entries,
@@ -89,6 +91,7 @@ class FlextLdifWriter(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``p.Result[m.Ldif.WriteResponse]``.
+
         """
         content_result = self._stringify_entries(
             entries,
@@ -130,6 +133,7 @@ class FlextLdifWriter(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``p.Result[str]``.
+
         """
         effective_server_type = server_type or self._get_effective_server_type_value()
         concrete_options = (

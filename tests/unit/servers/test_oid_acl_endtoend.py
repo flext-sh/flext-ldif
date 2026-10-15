@@ -107,6 +107,7 @@ class TestsFlextLdifOidAclEndToEnd:
 
         Raises:
             AssertionError: If convert_model did not return an Entry with attributes.
+
         """
         entry = u.Tests.orclaci_base_dn_entry(dn="cn=users,dc=ctbc")
         svc = FlextLdifConversion(base_dn="dc=ctbc")

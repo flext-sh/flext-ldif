@@ -18,6 +18,7 @@ class FlextLdifDNCharClass:
 
         Returns:
             The resulting ``bool``.
+
         """
         if not char or len(char) != 1:
             return False
@@ -32,6 +33,7 @@ class FlextLdifDNCharClass:
 
         Returns:
             The resulting ``bool``.
+
         """
         return FlextLdifDNCharClass._is_rfc_char_class(char, c.Ldif.DN_LUTF1_EXCLUDE)
 
@@ -41,6 +43,7 @@ class FlextLdifDNCharClass:
 
         Returns:
             The resulting ``bool``.
+
         """
         return FlextLdifDNCharClass._is_rfc_char_class(char, c.Ldif.DN_SUTF1_EXCLUDE)
 
@@ -50,6 +53,7 @@ class FlextLdifDNCharClass:
 
         Returns:
             The resulting ``bool``.
+
         """
         return FlextLdifDNCharClass._is_rfc_char_class(char, c.Ldif.DN_TUTF1_EXCLUDE)
 
@@ -63,6 +67,7 @@ class FlextLdifDNCharClass:
 
         Returns:
             The resulting ``tuple[bool, t.MutableSequenceOf[str]]``.
+
         """
         errors: t.MutableSequenceOf[str] = []
         if not value:

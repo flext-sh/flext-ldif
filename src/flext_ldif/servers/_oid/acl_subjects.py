@@ -27,6 +27,7 @@ class FlextLdifServersOidAclSubjectMixin(FlextLdifServersRfcAcl):
 
         Returns:
             The resulting ``str | None``.
+
         """
         if not content:
             return None
@@ -45,6 +46,7 @@ class FlextLdifServersOidAclSubjectMixin(FlextLdifServersRfcAcl):
 
         Returns:
             The resulting ``str | None``.
+
         """
         if not metadata or not metadata.extensions:
             return None
@@ -63,6 +65,7 @@ class FlextLdifServersOidAclSubjectMixin(FlextLdifServersRfcAcl):
 
         Returns:
             The resulting ``p.Result[str]``.
+
         """
         try:
             source_subject_type: str = t.str_adapter().validate_python(value)
@@ -79,6 +82,7 @@ class FlextLdifServersOidAclSubjectMixin(FlextLdifServersRfcAcl):
 
         Returns:
             The resulting ``str``.
+
         """
         sc = FlextLdifServersOidConstants
         if (
@@ -117,6 +121,7 @@ class FlextLdifServersOidAclSubjectMixin(FlextLdifServersRfcAcl):
 
         Returns:
             The resulting ``tuple[c.Ldif.AclSubjectType, str]``.
+
         """
         sc = FlextLdifServersOidConstants
         if oid_subject_type == sc.OidAclSubjectType.SELF:
@@ -144,6 +149,7 @@ class FlextLdifServersOidAclSubjectMixin(FlextLdifServersRfcAcl):
 
         Returns:
             The resulting ``str``.
+
         """
         rfc_subject_type = str(rfc_subject.subject_type)
         rfc_subject_value = rfc_subject.subject_value
@@ -197,6 +203,7 @@ class FlextLdifServersOidAclSubjectMixin(FlextLdifServersRfcAcl):
 
         Returns:
             The resulting ``str``.
+
         """
         sc = FlextLdifServersOidConstants
         if (

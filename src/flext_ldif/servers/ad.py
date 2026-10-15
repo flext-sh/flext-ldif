@@ -181,6 +181,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
 
             Returns:
                 The resulting ``bool``.
+
             """
             normalized = self._normalize_acl_line(acl_line)
             if not normalized:
@@ -204,6 +205,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
 
             Returns:
                 The resulting ``p.Result[m.Ldif.Acl]``.
+
             """
             return self._parse_dialect_acl(
                 acl_line,
@@ -217,6 +219,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
 
             Returns:
                 The resulting ``p.Result[str]``.
+
             """
             return self._write_dialect_acl(
                 acl_data,
@@ -229,6 +232,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
 
             Returns:
                 The resulting ``p.Result[m.Ldif.Acl]``.
+
             """
             line = acl_line.strip()
             if not line:
@@ -272,6 +276,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
 
             Returns:
                 The resulting ``p.Result[str]``.
+
             """
             if not (is_base64 and raw_value):
                 return r[str].ok(raw_value)
@@ -300,6 +305,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
 
             Returns:
                 The resulting ``p.Result[str]``.
+
             """
             if not acl_data.raw_acl:
                 return r[str].fail("Active Directory ACL write requires raw_acl value")
@@ -321,6 +327,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
 
             Returns:
                 The resulting ``bool``.
+
             """
             if not entry_dn:
                 return False

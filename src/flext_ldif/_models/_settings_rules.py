@@ -13,6 +13,7 @@ from types import MappingProxyType
 from typing import Annotated, Self
 
 from flext_core import FlextUtilities as u, m, t
+
 from flext_ldif._constants.base import FlextLdifConstantsBase
 from flext_ldif._typings.base import FlextLdifTypesBase
 
@@ -105,6 +106,7 @@ class FlextLdifModelsSettingsRules:
             Returns:
                 The resulting ``t.MappingKV[str, FlextLdifTypesBase.ValueType |
                 frozenset[str] | set[str]]``.
+
             """
             if isinstance(data, cls):
                 return dict(data.model_dump())

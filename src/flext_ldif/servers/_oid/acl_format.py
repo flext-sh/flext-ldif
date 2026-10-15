@@ -25,6 +25,7 @@ class FlextLdifServersOidAclFormatMixin(FlextLdifServersRfcAcl):
 
         Returns:
             The resulting ``str``.
+
         """
         allowed_perms: t.MutableSequenceOf[str] = []
         for perm, allowed in permissions.items():
@@ -44,6 +45,7 @@ class FlextLdifServersOidAclFormatMixin(FlextLdifServersRfcAcl):
 
         Returns:
             The resulting ``str``.
+
         """
         clean_value = FlextLdifServersOidAclFormatMixin.clean_subject_value(
             subject_value,
@@ -78,6 +80,7 @@ class FlextLdifServersOidAclFormatMixin(FlextLdifServersRfcAcl):
 
         Returns:
             The resulting ``str``.
+
         """
         if not attributes or target_dn == "entry":
             return "entry"
@@ -94,6 +97,7 @@ class FlextLdifServersOidAclFormatMixin(FlextLdifServersRfcAcl):
 
         Returns:
             The resulting ``t.MutableBoolMapping``.
+
         """
         if not permissions:
             return {}
@@ -129,6 +133,7 @@ class FlextLdifServersOidAclFormatMixin(FlextLdifServersRfcAcl):
 
         Returns:
             The resulting ``t.MutableConfigurationMapping``.
+
         """
         if isinstance(value, Mapping):
             return {
@@ -153,6 +158,7 @@ class FlextLdifServersOidAclFormatMixin(FlextLdifServersRfcAcl):
 
         Returns:
             The resulting ``str``.
+
         """
         clean_value = subject_value
         if clean_value.startswith("ldap:///"):
@@ -180,6 +186,7 @@ class FlextLdifServersOidAclFormatMixin(FlextLdifServersRfcAcl):
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
+
         """
         if not metadata:
             return []
@@ -200,6 +207,7 @@ class FlextLdifServersOidAclFormatMixin(FlextLdifServersRfcAcl):
 
         Returns:
             The resulting ``t.Ldif.MutableMetadataMapping``.
+
         """
         metadata = m.Ldif.ServerMetadata.model_validate(metadata)
         extensions = getattr(metadata, "extensions", None)
@@ -215,6 +223,7 @@ class FlextLdifServersOidAclFormatMixin(FlextLdifServersRfcAcl):
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
+
         """
         extensions: t.MutableSequenceOf[str] = []
         acl_filter = meta_extensions.get(c.Ldif.ACL_FILTER)

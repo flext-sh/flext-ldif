@@ -24,8 +24,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Final
 
-from examples import c, m, p, r
 from flext_core import FlextContext
+
+from examples import c, m, p, r
 from flext_ldif import ldif
 
 
@@ -60,6 +61,7 @@ class ExamplesFlextLdifBasicUsage:
 
         Returns:
             The resulting ``m.Ldif.Entry``.
+
         """
         return m.Ldif.Entry(
             dn=m.Ldif.DN(value=f"cn=User{index},{cls.BASE_DN}"),
@@ -80,6 +82,7 @@ class ExamplesFlextLdifBasicUsage:
 
         Returns:
             The resulting ``p.Result[str]``.
+
         """
         match source:
             case Path() as path:
@@ -99,6 +102,7 @@ class ExamplesFlextLdifBasicUsage:
 
         Returns:
             The resulting ``p.Result[list[m.Ldif.Entry]]``.
+
         """
         match source:
             case Path() as path:
@@ -121,6 +125,7 @@ class ExamplesFlextLdifBasicUsage:
 
         Returns:
             The resulting ``p.Result[list[m.Ldif.Entry]]``.
+
         """
         entries: list[m.Ldif.Entry] = [cls._build_entry(index) for index in range(10)]
         return ldif.validate_entries(entries).map(lambda _: entries)

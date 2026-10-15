@@ -51,6 +51,7 @@ class FlextLdifServersEntryLineEmitter:
 
         Returns:
             The resulting ``str``.
+
         """
         effective_name = (
             attr_name.lower() if self._normalize_attribute_names else attr_name
@@ -77,6 +78,7 @@ class FlextLdifServersEntryLineEmitter:
 
         Returns:
             The resulting ``str``.
+
         """
         line = f"control: {control.control_type}"
         if control.criticality is not None:
@@ -103,6 +105,7 @@ class FlextLdifServersEntryLineEmitter:
 
         Returns:
             The resulting ``tuple[str | None, str | None]``.
+
         """
         if self._entry.attributes is None:
             return (None, None)
@@ -136,6 +139,7 @@ class FlextLdifServersEntryLineEmitter:
 
         Returns:
             The resulting ``str``.
+
         """
         if not self._use_original_acl_format_as_name:
             return value

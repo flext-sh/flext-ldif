@@ -22,6 +22,7 @@ class FlextLdifServersBaseSchemaMetadataMixin:
 
         Returns:
             The resulting ``t.Ldif.SchemaExtensionsMapping``.
+
         """
         extract_method = getattr(u.Ldif, "extract_extensions", None)
         if extract_method is None or not callable(extract_method):
@@ -57,6 +58,7 @@ class FlextLdifServersBaseSchemaMetadataMixin:
 
         Returns:
             The resulting ``c.Ldif.ServerTypes``.
+
         """
         if not server_type:
             return c.Ldif.ServerTypes.RFC
@@ -75,6 +77,7 @@ class FlextLdifServersBaseSchemaMetadataMixin:
 
         Returns:
             The resulting ``t.MappingKV[str, str | None]``.
+
         """
 
         def optional_oid(key: str) -> str | None:
@@ -101,6 +104,7 @@ class FlextLdifServersBaseSchemaMetadataMixin:
 
         Returns:
             The resulting ``m.Ldif.ServerMetadata | None``.
+
         """
         metadata_extensions = (
             FlextLdifServersBaseSchemaMetadataMixin._extract_metadata_extensions(

@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import override
 
 from flext_core import r
+
 from flext_ldif import c, m, p, t
 
 
@@ -84,6 +85,7 @@ class FlextLdifUtilitiesPipeline:
             Returns:
                 The resulting
                     ``p.Result[t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]]``.
+
             """
             results: t.MutableSequenceOf[
                 FlextLdifUtilitiesPipeline.ValidationResult
@@ -112,6 +114,7 @@ class FlextLdifUtilitiesPipeline:
 
             Returns:
                 The resulting ``str | None``.
+
             """
             component_stripped = component.strip()
             if "=" not in component_stripped:
@@ -169,6 +172,7 @@ class FlextLdifUtilitiesPipeline:
 
             Returns:
                 The resulting ``p.Result[FlextLdifUtilitiesPipeline.ValidationResult]``.
+
             """
             errors: t.MutableSequenceOf[str] = []
             warnings: t.MutableSequenceOf[str] = []

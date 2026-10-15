@@ -9,6 +9,7 @@ from __future__ import annotations
 import string
 
 from flext_core import r
+
 from flext_ldif import FlextLdifModels, c, p, t
 
 
@@ -21,6 +22,7 @@ class FlextLdifDNRdnParsing:
 
         Returns:
             The resulting ``tuple[str, int]``.
+
         """
         if i + 1 < len(rdn):
             next_char = rdn[i + 1]
@@ -42,6 +44,7 @@ class FlextLdifDNRdnParsing:
 
         Returns:
             The resulting ``tuple[str, str, bool, int, bool]``.
+
         """
         current_attr = settings.current_attr
         current_val = settings.current_val
@@ -86,6 +89,7 @@ class FlextLdifDNRdnParsing:
 
         Returns:
             The resulting ``tuple[str, str, bool, int]``.
+
         """
         result = FlextLdifDNRdnParsing._process_rdn_char(char, rdn, position, settings)
         attr, val, in_val, next_pos, _ = result
@@ -97,6 +101,7 @@ class FlextLdifDNRdnParsing:
 
         Returns:
             The resulting ``p.Result[t.MutableStrPairSequence]``.
+
         """
         pairs: t.MutableStrPairSequence = []
         current_attr = ""
@@ -143,6 +148,7 @@ class FlextLdifDNRdnParsing:
 
         Returns:
             The resulting ``p.Result[t.MutableStrPairSequence]``.
+
         """
         result: p.Result[t.MutableStrPairSequence] = r[t.MutableStrPairSequence].fail(
             "RDN must be a non-empty string",

@@ -31,6 +31,7 @@ class FlextLdifUtilitiesSchemaBuild:
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
+
         """
         parts: t.MutableSequenceOf[str] = [f"( {attr_data.oid}"]
         if attr_data.name:
@@ -79,6 +80,7 @@ class FlextLdifUtilitiesSchemaBuild:
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
+
         """
         parts: t.MutableSequenceOf[str] = [f"( {oc_data.oid}"]
         if oc_data.name:
@@ -113,6 +115,7 @@ class FlextLdifUtilitiesSchemaBuild:
         Raises:
             TypeError: If ``not isinstance(data, expected_type)``.
             ValueError: If RFC.
+
         """
         if not isinstance(data, expected_type):
             msg = f"{type_name} must implement {expected_type.__name__}"
@@ -134,6 +137,7 @@ class FlextLdifUtilitiesSchemaBuild:
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
+
         """
         if restore_original:
             original_parts = FlextLdifUtilitiesSchemaFormat.try_restore_original_format(
@@ -179,6 +183,7 @@ class FlextLdifUtilitiesSchemaBuild:
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
+
         """
         original_parts = (
             FlextLdifUtilitiesSchemaFormat.try_restore_objectclass_original_format(
@@ -219,6 +224,7 @@ class FlextLdifUtilitiesSchemaBuild:
 
         Returns:
             The resulting ``bool``.
+
         """
         if metadata is None:
             return False
@@ -271,6 +277,7 @@ class FlextLdifUtilitiesSchemaBuild:
 
         Returns:
             The resulting ``str``.
+
         """
         return FlextLdifUtilitiesSchemaBuild._write_schema_element(
             attr_data,
@@ -285,6 +292,7 @@ class FlextLdifUtilitiesSchemaBuild:
 
         Returns:
             The resulting ``str``.
+
         """
         return FlextLdifUtilitiesSchemaBuild._write_schema_element(
             oc_data,

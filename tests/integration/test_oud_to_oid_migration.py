@@ -43,6 +43,7 @@ class TestsFlextLdifOudToOidMigration:
 
         Returns:
             The resulting ``FlextLdifServersOud``.
+
         """
         return FlextLdifServersOud()
 
@@ -53,6 +54,7 @@ class TestsFlextLdifOudToOidMigration:
 
         Returns:
             The resulting ``FlextLdifServersOid``.
+
         """
         return FlextLdifServersOid()
 
@@ -63,6 +65,7 @@ class TestsFlextLdifOudToOidMigration:
 
         Returns:
             The resulting ``p.Ldif.LdifClient``.
+
         """
         return ldif()
 
@@ -73,6 +76,7 @@ class TestsFlextLdifOudToOidMigration:
 
         Returns:
             The resulting ``str``.
+
         """
         fixture: str = u.Tests.load(c.Tests.OUD, c.Tests.ENTRIES)
         return fixture
@@ -84,6 +88,7 @@ class TestsFlextLdifOudToOidMigration:
 
         Returns:
             The resulting ``str``.
+
         """
         fixture: str = u.Tests.load(c.Tests.OUD, c.Tests.INTEGRATION)
         return fixture
@@ -95,6 +100,7 @@ class TestsFlextLdifOudToOidMigration:
 
         Returns:
             The resulting ``str``.
+
         """
         fixture: str = u.Tests.load(c.Tests.OUD, c.Tests.SCHEMA)
         return fixture
@@ -109,6 +115,7 @@ class TestsFlextLdifOudToOidMigration:
 
         Returns:
             The resulting ``set[str]``.
+
         """
         assert isinstance(entries, list)
         split_re = c.Ldif.DN_SPLIT_OPTIONAL_SPACE_RE

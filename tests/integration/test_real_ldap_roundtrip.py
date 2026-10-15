@@ -44,6 +44,7 @@ def flext_api() -> p.Ldif.LdifClient:
 
     Returns:
         The resulting ``p.Ldif.LdifClient``.
+
     """
     return ldif()
 
@@ -62,6 +63,7 @@ class TestsFlextLdifRealLdapRoundtrip:
 
         Returns:
             The resulting ``t.MutableAttributeMapping``.
+
         """
         assert ldap_connection.search(dn, "(objectClass=*)", attributes=["*"])
         entry = ldap_connection.entries[0]
@@ -85,6 +87,7 @@ class TestsFlextLdifRealLdapRoundtrip:
 
         Returns:
             The resulting ``m.Ldif.Entry``.
+
         """
         write_result = flext_api.write([source_entry])
         tm.ok(write_result)

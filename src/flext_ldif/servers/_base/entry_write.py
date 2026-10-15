@@ -50,6 +50,7 @@ class FlextLdifServersEntryWriteContext(FlextLdifServersEntryWriteBodyEmitter):
 
         Returns:
             The resulting ``FlextLdifServersEntryWriteContext``.
+
         """
         return cls(entry_data, server_type, format_options)
 
@@ -63,6 +64,7 @@ class FlextLdifServersEntryWriteContext(FlextLdifServersEntryWriteBodyEmitter):
 
         Returns:
             The resulting ``p.Result[str] | None``.
+
         """
         entry = self._entry
         if not self._should_restore_original() or entry.metadata is None:
@@ -87,6 +89,7 @@ class FlextLdifServersEntryWriteContext(FlextLdifServersEntryWriteBodyEmitter):
         Returns:
             The resulting ``p.Result[str] | None`` — a failure when the DN is
             missing, otherwise ``None`` to continue writing.
+
         """
         entry = self._entry
         self._emit_rejection_comments(output_lines)
@@ -114,6 +117,7 @@ class FlextLdifServersEntryWriteContext(FlextLdifServersEntryWriteBodyEmitter):
 
         Returns:
             The resulting ``bool``.
+
         """
         entry = self._entry
         if not self._options.restore_original_format or entry.metadata is None:

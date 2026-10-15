@@ -27,6 +27,7 @@ class FlextLdifServersOidSchemaNormalizeMixin(FlextLdifServersRfcSchema):
 
         Returns:
             The resulting ``m.Ldif.SchemaAttribute``.
+
         """
         if attr.syntax:
             attr.syntax = u.Ldif.normalize_syntax_oid(attr.syntax)
@@ -61,6 +62,7 @@ class FlextLdifServersOidSchemaNormalizeMixin(FlextLdifServersRfcSchema):
 
         Returns:
             The resulting ``m.Ldif.SchemaObjectClass``.
+
         """
         original_format_str = (
             str(
@@ -101,6 +103,7 @@ class FlextLdifServersOidSchemaNormalizeMixin(FlextLdifServersRfcSchema):
 
         Returns:
             The resulting ``t.MutableSequenceOf[str] | None``.
+
         """
         if not attr_list:
             return attr_list
@@ -116,6 +119,7 @@ class FlextLdifServersOidSchemaNormalizeMixin(FlextLdifServersRfcSchema):
 
         Returns:
             The resulting ``str | None``.
+
         """
         kind = getattr(oc_data, "kind", None)
         match (kind, original_format_str):
@@ -149,6 +153,7 @@ class FlextLdifServersOidSchemaNormalizeMixin(FlextLdifServersRfcSchema):
 
         Returns:
             The resulting ``str | (t.MutableSequenceOf[str] | None)``.
+
         """
         if not oc_data.sup:
             return None
@@ -183,6 +188,7 @@ class FlextLdifServersOidSchemaNormalizeMixin(FlextLdifServersRfcSchema):
 
         Returns:
             The resulting ``str | None``.
+
         """
         sup_patterns = ("SUP 'top'", "SUP ( top )", "SUP (top)")
         match original_format_str:
@@ -205,6 +211,7 @@ class FlextLdifServersOidSchemaNormalizeMixin(FlextLdifServersRfcSchema):
 
         Returns:
             The resulting ``m.Ldif.SchemaAttribute``.
+
         """
         normalized_equality, normalized_substr = u.Ldif.normalize_matching_rules(
             attr_data.equality,

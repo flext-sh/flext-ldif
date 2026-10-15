@@ -60,6 +60,7 @@ class FlextLdifServersOidAclAssemble:
 
             Returns:
                 The resulting ``p.Result[m.Ldif.AciRule]``.
+
             """
             for subject in self._rule.subjects:
                 if self._found_deny_all:
@@ -82,6 +83,7 @@ class FlextLdifServersOidAclAssemble:
 
             Returns:
                 The resulting ``p.Result[None]``.
+
             """
             is_anyone = subject.subject_type == c.Ldif.OidSubjectKind.ANYONE
             if is_anyone and FlextLdifServersOidAclAssemble.deny_none(
@@ -128,6 +130,7 @@ class FlextLdifServersOidAclAssemble:
 
             Returns:
                 The resulting ``p.Result[None]``.
+
             """
             perms = FlextLdifServersOidAclToOud.convert_permissions(
                 subject.permissions,
@@ -168,6 +171,7 @@ class FlextLdifServersOidAclAssemble:
 
             Returns:
                 The resulting ``m.Ldif.AciRule``.
+
             """
             first_value = self._rule.subjects[0].value if self._rule.subjects else ""
             acl_name = FlextLdifServersOidAclAssemble.generate_acl_name(
@@ -197,6 +201,7 @@ class FlextLdifServersOidAclAssemble:
 
         Returns:
             The resulting ``bool``.
+
         """
         return [perm.lower() for perm in permissions] == [c.Ldif.PERM_NONE]
 
@@ -206,6 +211,7 @@ class FlextLdifServersOidAclAssemble:
 
         Returns:
             The resulting ``str``.
+
         """
         container_match = c.Ldif.CN_EXTRACT_RE.match(dn)
         container = (
@@ -234,6 +240,7 @@ class FlextLdifServersOidAclAssemble:
 
         Returns:
             The resulting ``p.Result[m.Ldif.AciRule]``.
+
         """
         return cls._RuleAssembler(rule, base_dn).assemble()
 

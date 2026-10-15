@@ -40,6 +40,7 @@ class FlextLdifValidation(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``p.Result[bool]``.
+
         """
         return r[bool].from_result(
             u.try_(
@@ -60,6 +61,7 @@ class FlextLdifValidation(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``p.Result[bool]``.
+
         """
         return self.validate_attribute_name(name)
 

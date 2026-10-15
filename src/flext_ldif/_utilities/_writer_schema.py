@@ -66,6 +66,7 @@ class FlextLdifWriterSchemaParts:
 
         Returns:
             The resulting ``str``.
+
         """
         ldif_text = "\n".join(ldif_lines)
         if ldif_text and (not ldif_text.endswith("\n")):

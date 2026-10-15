@@ -32,6 +32,7 @@ class ExamplesFlextLdifValidationAnalysis:
 
         Returns:
             The resulting ``p.Result[m.Ldif.ValidationResult]``.
+
         """
         return r[m.Ldif.ValidationResult].ok(validation_result)
 
@@ -44,6 +45,7 @@ class ExamplesFlextLdifValidationAnalysis:
 
         Returns:
             The resulting ``MutableSequence[m.Ldif.Entry]``.
+
         """
         api = ldif()
         entries: MutableSequence[m.Ldif.Entry] = []
@@ -71,6 +73,7 @@ class ExamplesFlextLdifValidationAnalysis:
 
         Returns:
             The resulting ``p.Result[m.Ldif.ValidationResult]``.
+
         """
         api = ldif()
         entries = ExamplesFlextLdifValidationAnalysis._generate_test_dataset(
@@ -105,6 +108,7 @@ class ExamplesFlextLdifValidationAnalysis:
 
         Returns:
             The resulting ``p.Result[t.MappingKV[str, t.Numeric]]``.
+
         """
         api = ldif()
         entries = ExamplesFlextLdifValidationAnalysis._generate_test_dataset(

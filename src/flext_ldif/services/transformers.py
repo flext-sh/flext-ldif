@@ -48,6 +48,7 @@ class FlextLdifTransformer(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``c.Ldif.ServerTypes``.
+
         """
         if isinstance(server_type, c.Ldif.ServerTypes):
             return server_type
@@ -58,6 +59,7 @@ class FlextLdifTransformer(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``p.Result[m.Ldif.Entry]``.
+
         """
         source_server = self._normalize_server_type(
             self.source_server or c.Ldif.ServerTypes.RFC,

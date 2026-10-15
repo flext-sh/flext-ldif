@@ -35,6 +35,7 @@ class TestsFlextLdifFiltersService:
 
         Returns:
             The resulting ``m.Ldif.Entry``.
+
         """
         return u.Tests.create_real_entry(
             dn=c.Tests.FILTERS_DN_USER,
@@ -58,6 +59,7 @@ class TestsFlextLdifFiltersService:
 
         Returns:
             The resulting ``m.Ldif.Entry``.
+
         """
         entry = u.Tests.create_real_entry(
             dn=c.Tests.FILTERS_DN_BARE,
@@ -301,6 +303,7 @@ class TestsFlextLdifFiltersService:
 
         Returns:
             The resulting ``p.Result[t.MutableSequenceOf[m.Ldif.Entry]]``.
+
         """
         whitelist = m.Ldif.WhitelistRules.model_validate(
             c.Tests.FILTERS_ALLOWED_OIDS_FULL,

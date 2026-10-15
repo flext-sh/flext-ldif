@@ -25,6 +25,7 @@ class FlextLdifEntryBooleanConversion:
 
         Returns:
             The resulting ``Sequence[str | bytes]``.
+
         """
         if isinstance(attr_raw_values, str | bytes):
             return [attr_raw_values]
@@ -36,6 +37,7 @@ class FlextLdifEntryBooleanConversion:
 
         Returns:
             The resulting ``str``.
+
         """
         if isinstance(raw_item, bytes):
             return raw_item.decode(c.Ldif.DEFAULT_ENCODING, errors="replace")
@@ -50,6 +52,7 @@ class FlextLdifEntryBooleanConversion:
 
         Returns:
             The resulting ``str``.
+
         """
         match format_pair:
             case ("0/1", "TRUE/FALSE"):
@@ -74,6 +77,7 @@ class FlextLdifEntryBooleanConversion:
 
         Returns:
             The resulting ``t.MutableStrSequenceMapping``.
+
         """
         result: t.MutableStrSequenceMapping = {}
         format_pair = (source_format, target_format)

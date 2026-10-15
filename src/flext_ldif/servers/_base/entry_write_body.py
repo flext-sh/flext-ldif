@@ -32,6 +32,7 @@ class FlextLdifServersEntryWriteBodyEmitter:
 
         Returns:
             The resulting ``p.Result[str]``.
+
         """
         entry = self._entry
         if entry.change_operations:
@@ -74,6 +75,7 @@ class FlextLdifServersEntryWriteBodyEmitter:
 
         Returns:
             The resulting ``p.Result[str]``.
+
         """
         entry = self._entry
         if entry.newrdn:
@@ -104,6 +106,7 @@ class FlextLdifServersEntryWriteBodyEmitter:
 
         Returns:
             The resulting ``p.Result[str]``.
+
         """
         entry = self._entry
         if hasattr(entry, "attributes") and entry.attributes:
@@ -125,6 +128,7 @@ class FlextLdifServersEntryWriteBodyEmitter:
 
         Returns:
             The resulting ``p.Result[str]``.
+
         """
         effective_changetype = entry_data.changetype or self._options.ldif_changetype
         if effective_changetype in {
