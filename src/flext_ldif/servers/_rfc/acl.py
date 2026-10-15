@@ -321,3 +321,6 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
         if acl_data.name and u.string_non_empty(acl_data.name):
             return r[str].ok(f"{acl_data.name}:")
         return r[str].fail("ACL has no raw_acl or name to write")
+
+
+__all__: list[str] = ["FlextLdifServersRfcAcl"]

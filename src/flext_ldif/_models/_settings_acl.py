@@ -118,3 +118,6 @@ class FlextLdifModelsSettingsAcl:
             str | None,
             u.Field(description="Action type (allow/deny)"),
         ] = None
+
+
+__all__: list[str] = ["FlextLdifModelsSettingsAcl"]

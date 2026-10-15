@@ -144,3 +144,6 @@ class FlextLdifModelsSettingsProcessing:
                     base_dn=base_dn,
                 ),
             )
+
+
+__all__: list[str] = ["FlextLdifModelsSettingsProcessing"]

@@ -344,3 +344,6 @@ class FlextLdifServersRfcSchema(
         if parse_result.failure:
             return parse_result
         return self._hook_post_parse_objectclass(parse_result.value)
+
+
+__all__: list[str] = ["FlextLdifServersRfcSchema"]

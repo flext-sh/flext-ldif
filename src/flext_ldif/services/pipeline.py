@@ -239,3 +239,6 @@ class FlextLdifProcessingPipeline(s[t.MutableSequenceOf[m.Ldif.Entry]]):
                 ],
             ]
         return cli.linear_pipeline(stage_order, handlers) if stage_order else ()
+
+
+__all__: list[str] = ["FlextLdifProcessingPipeline"]

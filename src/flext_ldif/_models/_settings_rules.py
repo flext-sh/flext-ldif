@@ -165,3 +165,6 @@ class FlextLdifModelsSettingsRules:
         def has_oid_filters(self) -> bool:
             """Whether any schema OID whitelist is configured."""
             return any(self.schema_oid_filters.values())
+
+
+__all__: list[str] = ["FlextLdifModelsSettingsRules"]

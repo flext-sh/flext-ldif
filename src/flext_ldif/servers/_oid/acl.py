@@ -28,3 +28,6 @@ class FlextLdifServersOidAcl(
     """Oracle Internet Directory (OID) ACL implementation."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
+
+
+__all__: list[str] = ["FlextLdifServersOidAcl"]

@@ -383,3 +383,6 @@ class FlextLdifModelsSettingsMigrate:
                 "42}.",
             ),
         ] = u.Field(default_factory=dict[str, int])
+
+
+__all__: list[str] = ["FlextLdifModelsSettingsMigrate"]

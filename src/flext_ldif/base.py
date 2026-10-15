@@ -14,7 +14,7 @@ import flext_ldif
 from flext_ldif import FlextLdifSettings, c, m, p, t, u
 
 if TYPE_CHECKING:
-    from flext_ldif.services.server import FlextLdifServer
+    from flext_ldif.services import FlextLdifServer
 
 
 class FlextLdifServiceBase[TDomainResult](

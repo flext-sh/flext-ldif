@@ -160,3 +160,6 @@ class FlextLdifModelsSettingsCriteria:
             t.MutableStrMapping | None,
             u.Field(description="Mapping of attribute names to original case"),
         ] = None
+
+
+__all__: list[str] = ["FlextLdifModelsSettingsCriteria"]

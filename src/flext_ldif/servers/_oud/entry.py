@@ -241,3 +241,6 @@ class FlextLdifServersOudEntry(
             ._write_entry(entry_data)
             .map(lambda ldif_text: u.Ldif.finalize_ldif_text([*ldif_parts, ldif_text]))
         )
+
+
+__all__: list[str] = ["FlextLdifServersOudEntry"]

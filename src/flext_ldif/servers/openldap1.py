@@ -581,3 +581,6 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
 
     class Entry(FlextLdifServersOpenldap1Entry):
         """OpenLDAP 1.x entry server (nested)."""
+
+
+__all__: list[str] = ["FlextLdifServersOpenldap1"]

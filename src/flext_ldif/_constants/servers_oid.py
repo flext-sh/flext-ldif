@@ -395,3 +395,6 @@ class FlextLdifConstantsServersOid:
     PRIORITY: ClassVar[int] = 10
 
     MAX_LOG_LINE_LENGTH: ClassVar[int] = 200
+
+
+__all__: list[str] = ["FlextLdifConstantsServersOid"]

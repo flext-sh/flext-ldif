@@ -16,9 +16,8 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldif import m
 from flext_ldif.services import FlextLdifParser, FlextLdifServer, FlextLdifWriter
-from tests import c, tm
+from tests import c, m, tm
 
 
 def _has_schema_attrs(entry: m.Ldif.Entry) -> bool:

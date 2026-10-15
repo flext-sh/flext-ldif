@@ -596,3 +596,6 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         """
         msg = "ACL servers must implement _write_acl"
         raise NotImplementedError(msg)
+
+
+__all__: list[str] = ["FlextLdifServersBaseSchemaAcl"]

@@ -15,3 +15,6 @@ class FlextLdifServersRfcConstants(
     FlextLdifServersBaseConstants,
 ):
     """Thin inheritor: declarations live in _constants parts."""
+
+
+__all__: list[str] = ["FlextLdifServersRfcConstants"]
