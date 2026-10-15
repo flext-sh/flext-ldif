@@ -58,9 +58,9 @@ class FlextLdifModels(FlextCliModels):
     # aliases (``Ldif.Control`` / ``Ldif.ChangeOperationValue``) instead of
     # direct inheritance, which would clash on ``model_config``/``value``.
     class Ldif(
-        FlextLdifNamespace,
         FlextLdifModelsBases,
         FlextLdifModelsCollections,
+        FlextLdifNamespace,
         FlextLdifModelsDomainsEntries,
         FlextLdifModelsDomainEntry,
         FlextLdifModelsDomainEntryChangeOperation,
