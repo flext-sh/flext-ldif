@@ -18,6 +18,7 @@ class FlextLdifServerConfig:
 
         Returns:
             The resulting ``c.Ldif.ServerTypes``.
+
         """
         return FlextLdifShared.normalize_server_type(server_type)
 
@@ -27,6 +28,7 @@ class FlextLdifServerConfig:
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
+
         """
         return [s.value for s in c.Ldif.ServerTypes.__members__.values()]
 
@@ -50,6 +52,7 @@ class FlextLdifServerConfig:
 
         Returns:
             The resulting ``bool``.
+
         """
         normalized = server_type.lower().strip()
         return normalized in [allowed.lower().strip() for allowed in allowed_types]
@@ -60,6 +63,7 @@ class FlextLdifServerConfig:
 
         Returns:
             The resulting ``int``.
+
         """
         score: int = c.Ldif.ATTRIBUTE_MATCH_SCORE
         return score
@@ -70,6 +74,7 @@ class FlextLdifServerConfig:
 
         Returns:
             The resulting ``float``.
+
         """
         threshold: float = c.Ldif.CONFIDENCE_THRESHOLD
         return threshold
@@ -80,6 +85,7 @@ class FlextLdifServerConfig:
 
         Returns:
             The resulting ``int``.
+
         """
         max_lines: int = c.Ldif.DEFAULT_MAX_LINES
         return max_lines
@@ -92,6 +98,7 @@ class FlextLdifServerConfig:
 
         Returns:
             The resulting ``m.Ldif.ServerValidationRules``.
+
         """
         normalized_server_type = FlextLdifServerConfig.normalize_server_type(
             str(server_type),

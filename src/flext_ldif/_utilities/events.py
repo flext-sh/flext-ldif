@@ -66,6 +66,7 @@ class FlextLdifUtilitiesEvents:
 
         Returns:
             The resulting ``t.MutableJsonMapping``.
+
         """
         filtered_extras: t.MutableJsonMapping = {}
         if not extras:
@@ -100,6 +101,7 @@ class FlextLdifUtilitiesEvents:
 
         Returns:
             The resulting ``FlextLdifModels.Ldif.ConversionEvent``.
+
         """
         aggregate_id = (
             f"{settings.source_format}_to_{settings.target_format}"
@@ -133,6 +135,7 @@ class FlextLdifUtilitiesEvents:
 
         Returns:
             The resulting ``FlextLdifModels.Ldif.DnEvent``.
+
         """
         event: FlextLdifModels.Ldif.DnEvent = (
             FlextLdifModels.Ldif.DnEvent.model_validate({
@@ -158,6 +161,7 @@ class FlextLdifUtilitiesEvents:
 
         Returns:
             The resulting ``FlextLdifModels.Ldif.ConversionEvent``.
+
         """
         event = FlextLdifUtilitiesEvents.create_conversion_event(settings)
         log_context, log_message = (
@@ -183,6 +187,7 @@ class FlextLdifUtilitiesEvents:
 
         Returns:
             The resulting ``FlextLdifModels.Ldif.DnEvent``.
+
         """
         event = FlextLdifUtilitiesEvents.create_dn_event(settings)
         aggregate_id = event.aggregate_id or ""

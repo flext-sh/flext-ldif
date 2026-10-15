@@ -20,6 +20,7 @@ class FlextLdifEntryMatching:
 
         Returns:
             The resulting ``bool``.
+
         """
         if entry.attributes is None:
             return False
@@ -47,6 +48,7 @@ class FlextLdifEntryMatching:
 
         Returns:
             The resulting ``bool``.
+
         """
         if not entry_dn or not attributes:
             return False

@@ -33,6 +33,7 @@ class FlextLdifServersOidEntryBooleanMixin(
         Returns:
             The resulting ``tuple[t.MutableStrSequenceMapping, set[str],
                 MutableMapping[str, t.MutableAttributeMapping]]``.
+
         """
         oid_constants = FlextLdifServersOidConstants
         boolean_attributes = oid_constants.BOOLEAN_ATTRIBUTES
@@ -80,6 +81,7 @@ class FlextLdifServersOidEntryBooleanMixin(
 
         Returns:
             The resulting ``MutableMapping[str, str | t.MutableSequenceOf[str]]``.
+
         """
         oid_constants = FlextLdifServersOidConstants
         return {
@@ -115,6 +117,7 @@ class FlextLdifServersOidEntryBooleanMixin(
 
         Returns:
             The resulting ``tuple[str, bool]``.
+
         """
         if value == "TRUE":
             return (FlextLdifServersOidConstants.ONE_OID, True)
@@ -132,6 +135,7 @@ class FlextLdifServersOidEntryBooleanMixin(
 
         Returns:
             The resulting ``bool``.
+
         """
         mk = c.Ldif
         converted_val = conv_data.get(mk.CONVERSION_CONVERTED_VALUE)
@@ -159,6 +163,7 @@ class FlextLdifServersOidEntryBooleanMixin(
 
         Returns:
             The resulting ``m.Ldif.Entry``.
+
         """
         if not entry_data.attributes:
             return entry_data

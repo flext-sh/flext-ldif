@@ -31,6 +31,7 @@ class TestsFlextLdifStatisticsService:
 
         Returns:
             The resulting ``m.Ldif.Entry``.
+
         """
         entry = u.Tests.create_real_entry(
             dn=dn,
@@ -54,6 +55,7 @@ class TestsFlextLdifStatisticsService:
 
         Returns:
             The resulting ``list[m.Ldif.Entry]``.
+
         """
         server_types = c.Tests.STATS_SERVER_TYPES
         return [

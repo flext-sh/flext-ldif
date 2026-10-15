@@ -29,6 +29,7 @@ class ExamplesFlextLdifAclProcessing:
 
         Returns:
             The resulting ``tuple[m.Ldif.Entry, m.Ldif.AclResponse] | None``.
+
         """
         api = ldif()
         entries = api.parse_ldif(ldif_content).unwrap().entries

@@ -30,6 +30,7 @@ class FlextLdifMetadataPrefixDetails:
                 prefix_pattern: Regex matching the prefix declaration.
                 case_key: Detail key recording the declared case.
                 spacing_key: Detail key recording the declared spacing.
+
             """
             self.marker_present = marker_present
             self.prefix_pattern = prefix_pattern
@@ -63,6 +64,7 @@ class FlextLdifMetadataPrefixDetails:
 
         Returns:
             The resulting ``t.MutableStrMapping``.
+
         """
         details: t.MutableStrMapping = {}
         specs = (

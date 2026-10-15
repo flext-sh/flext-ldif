@@ -29,6 +29,7 @@ class FlextLdifCategorizationRules(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``MutableMapping[str, t.MutableSequenceOf[m.Ldif.Entry]]``.
+
         """
         return {
             c.Ldif.RejectionTrackerKey.INVALID_DN_RFC4514: [],
@@ -119,6 +120,7 @@ class FlextLdifCategorizationRules(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``m.Ldif.CategoryRules``.
+
         """
         validated_rules: m.Ldif.CategoryRules = m.Ldif.CategoryRules.model_validate(
             self.categorization_rules or {},
@@ -172,6 +174,7 @@ class FlextLdifCategorizationRules(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``bool``.
+
         """
         if entry.attributes is None:
             return False
@@ -188,6 +191,7 @@ class FlextLdifCategorizationRules(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``bool``.
+
         """
         priority_classes = frozenset(
             oc.lower() for oc in constants.HIERARCHY_PRIORITY_OBJECTCLASSES
@@ -203,6 +207,7 @@ class FlextLdifCategorizationRules(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
+
         """
         if constants is None:
             return list(c.Ldif.DEFAULT_CATEGORIZATION_PRIORITY)
@@ -220,6 +225,7 @@ class FlextLdifCategorizationRules(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``p.Result[type[p.Ldif.ServerConstants]]``.
+
         """
         registry = self.server_registry or self._server
 
@@ -242,6 +248,7 @@ class FlextLdifCategorizationRules(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``tuple[str, str | None]``.
+
         """
         attribute_marker_prefix = c.Ldif.CATEGORY_ATTRIBUTE_MARKER_PREFIX
         for category in priority_order:
@@ -278,6 +285,7 @@ class FlextLdifCategorizationRules(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``t.MutableFrozensetMapping``.
+
         """
         server_map: MutableMapping[str, frozenset[str] | str] = {
             map_key: frozenset(map_value)
@@ -311,6 +319,7 @@ class FlextLdifCategorizationRules(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``p.Result[m.Ldif.CategoryRules]``.
+
         """
         if isinstance(rules, m.Ldif.CategoryRules):
             return r[m.Ldif.CategoryRules].ok(rules)

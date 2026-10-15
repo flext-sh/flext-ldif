@@ -8,8 +8,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Annotated, Self, override
 
-import flext_ldif
 from flext_core import FlextService
+
+import flext_ldif
 from flext_ldif import FlextLdifSettings, c, m, p, t, u
 
 if TYPE_CHECKING:
@@ -27,6 +28,7 @@ class FlextLdifServiceBase[TDomainResult](
 
         Returns:
             The resulting value.
+
         """
         # The root facade resolves its exports lazily (PEP 562), so the
         # base/server init cycle stays cut: the server module loads on the
@@ -61,6 +63,7 @@ class FlextLdifServiceBase[TDomainResult](
 
         Raises:
             TypeError: If Runtime settings do not satisfy the LDIF settings contract.
+
         """
         resolved = super().settings
         if not isinstance(resolved, p.Ldif.Settings):
@@ -93,6 +96,7 @@ class FlextLdifServiceBase[TDomainResult](
 
         Returns:
             The resulting ``Self``.
+
         """
         # NOTE (multi-agent): mro-i6nq.12 — FlextMixins runtime-bootstrap is now a
         # native Pydantic field; assign directly (validate_assignment enforces type).

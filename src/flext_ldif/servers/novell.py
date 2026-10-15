@@ -135,8 +135,12 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         def splitacl_line(acl_line: str) -> t.StrPair:
             """Split an ACL line into attribute name and payload.
 
+            Args:
+                acl_line: Raw ACL line text.
+
             Returns:
-                The resulting ``t.StrPair``.
+                Pair of the attribute name and the remaining payload.
+
             """
             attr_name, _, remainder = acl_line.partition(":")
             return (attr_name.strip(), remainder.strip())
@@ -145,8 +149,12 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Detect eDirectory ACL values.
 
+            Args:
+                acl_line: Raw ACL line text or a parsed ACL.
+
             Returns:
-                The resulting ``bool``.
+                True when the line targets an eDirectory ACL attribute.
+
             """
             normalized = self._normalize_acl_line(acl_line)
             if not normalized:
@@ -162,10 +170,16 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             rights: t.MutableSequenceOf[str],
             permission_name_map: t.StrMapping,
         ) -> t.MutableBoolMapping:
-            """Build AclPermissions dict from parsed rights list.
+            """Build the permission flags granted by parsed rights.
+
+            Args:
+                rights: Canonical rights parsed from the ACL line.
+                permission_name_map: Mapping of canonical permission names to
+                    their right tokens.
 
             Returns:
-                The resulting ``t.MutableBoolMapping``.
+                Permission flags keyed by canonical permission name.
+
             """
             reverse_map: t.MutableStrMapping = {
                 v: k for k, v in permission_name_map.items()
@@ -187,10 +201,14 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
 
         @override
         def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
-            """Parse eDirectory ACL definition.
+            """Parse an eDirectory ACL definition.
+
+            Args:
+                acl_line: Raw ACL line text.
 
             Returns:
-                The resulting ``p.Result[m.Ldif.Acl]``.
+                Result carrying the parsed ACL, or a failure.
+
             """
             return self._parse_dialect_acl(
                 acl_line,
@@ -200,10 +218,14 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
 
         @override
         def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
-            """Write ACL data to RFC-compliant string format.
+            """Write ACL data in the eDirectory dialect.
+
+            Args:
+                acl_data: ACL to serialize.
 
             Returns:
-                The resulting ``p.Result[str]``.
+                Result carrying the ACL line text, or a failure.
+
             """
             return self._write_dialect_acl(
                 acl_data,
@@ -212,10 +234,14 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             )
 
         def _parse_novell_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
-            """Parse Novell eDirectory ACL content.
+            """Parse Novell eDirectory ACL content into an ACL model.
+
+            Args:
+                acl_line: Raw ACL line text.
 
             Returns:
-                The resulting ``p.Result[m.Ldif.Acl]``.
+                Result carrying the parsed ACL, or a failure.
+
             """
             attr_name, content = self.__class__.splitacl_line(acl_line)
             _ = attr_name
@@ -297,10 +323,14 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
 
         @classmethod
         def _parse_novell_rights(cls, rights_str: str) -> t.MutableSequenceOf[str]:
-            """Parse Novell rights characters into canonical rights.
+            """Map Novell rights characters to canonical rights.
+
+            Args:
+                rights_str: Rights characters from the ACL line.
 
             Returns:
-                The resulting ``t.MutableSequenceOf[str]``.
+                Canonical rights recognized in the string.
+
             """
             rights: t.MutableSequenceOf[str] = []
             for char in rights_str:
@@ -315,8 +345,12 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         ) -> t.MutableSequenceOf[str]:
             """Extract attribute names encoded in rights segments.
 
+            Args:
+                rights: Rights segments parsed from the ACL line.
+
             Returns:
-                The resulting ``t.MutableSequenceOf[str]``.
+                Attribute names that are not permission keywords.
+
             """
             attributes: t.MutableSequenceOf[str] = []
             for right_segment in rights:
@@ -334,8 +368,12 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         def _write_novell_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
             """Write Novell eDirectory ACL content.
 
+            Args:
+                acl_data: ACL to serialize.
+
             Returns:
-                The resulting ``p.Result[str]``.
+                Result carrying the ACL line text, or a failure.
+
             """
             acl_attribute = FlextLdifServersNovell.Constants.ACL_ATTRIBUTE_NAME_WRITE
             if acl_data.raw_acl:
@@ -382,8 +420,13 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         ) -> bool:
             """Detect eDirectory-specific entries.
 
+            Args:
+                entry_dn: Distinguished name of the entry.
+                attributes: Attribute names mapped to their value sequences.
+
             Returns:
-                The resulting ``bool``.
+                True when the entry carries eDirectory markers.
+
             """
             if not entry_dn:
                 return False
@@ -415,10 +458,14 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             """Initialize eDirectory entry server."""
 
         def process_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
-            """Normalise eDirectory entries and expose metadata.
+            """Normalize an eDirectory entry and expose server metadata.
+
+            Args:
+                entry: Entry to normalize.
 
             Returns:
-                The resulting ``p.Result[m.Ldif.Entry]``.
+                Result carrying the normalized entry, or a failure.
+
             """
             if not entry.attributes:
                 return r[m.Ldif.Entry].ok(entry)
@@ -438,8 +485,16 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         ) -> p.Result[m.Ldif.Entry]:
             """Normalize eDirectory entry attributes.
 
+            Adds the server-type marker attribute and preserves objectClass
+            values.
+
+            Args:
+                entry: Entry to normalize.
+                attributes: Entry attribute mapping to rebuild.
+
             Returns:
-                The resulting ``p.Result[m.Ldif.Entry]``.
+                Result carrying the normalized entry, or a failure.
+
             """
             object_classes = attributes.get(c.Ldif.DictKeys.OBJECTCLASS, [])
             processed_attributes: t.MutableStrSequenceMapping = {}

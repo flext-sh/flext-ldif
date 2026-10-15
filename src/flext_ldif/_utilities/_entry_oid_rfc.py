@@ -23,6 +23,7 @@ class FlextLdifEntryOidRfcTransforming:
 
         Returns:
             The resulting ``t.MutableStrSequenceMapping``.
+
         """
         remapped: t.MutableStrSequenceMapping = {}
         for attr_name, values in attributes.items():
@@ -47,6 +48,7 @@ class FlextLdifEntryOidRfcTransforming:
 
         Returns:
             The resulting ``t.MutableStrSequenceMapping | None``.
+
         """
         attributes_model = entry.attributes
         if attributes_model is None or not attributes_model.attributes:
@@ -81,6 +83,7 @@ class FlextLdifEntryOidRfcTransforming:
 
         Returns:
             The resulting ``str | None``.
+
         """
         dn_model = entry.dn
         if dn_model is None:

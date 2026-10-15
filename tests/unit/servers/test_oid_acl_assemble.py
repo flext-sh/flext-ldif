@@ -31,6 +31,7 @@ def _acl_entry(attributes: t.MappingKV[str, t.StrSequence]) -> m.Ldif.Entry:
 
     Returns:
         The resulting ``m.Ldif.Entry``.
+
     """
     return u.Tests.create_real_entry(dn="cn=users,dc=ctbc", attributes=attributes)
 
@@ -46,6 +47,7 @@ class TestsFlextLdifOidAclAssemble:
 
         Returns:
             The resulting ``m.Ldif.AciRule``.
+
         """
         rule: m.Ldif.OidAclRule = FlextLdifServersOidAclConvert.parse_oid_acl_line(
             dn, line

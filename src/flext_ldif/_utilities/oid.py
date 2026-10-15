@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import r
+
 from flext_ldif import c, p, t
 
 
@@ -14,15 +15,24 @@ class FlextLdifUtilitiesOID:
     """OID extraction and validation utilities."""
 
     @staticmethod
-    def extract_from_definition(definition: str) -> p.Result[str]:
+    def extract_from_definition(
+        definition: str,
+        *,
+        patterns: t.SequenceOf[t.Ldif.RegexPattern] = (c.Ldif.SCHEMA_OID_CAPTURE_RE,),
+        empty_error: str = "",
+    ) -> p.Result[str]:
         """Extract OID from schema definition string.
 
         Returns:
             The resulting ``p.Result[str]``.
+
         """
-        match = c.Ldif.SCHEMA_OID_CAPTURE_RE.search(definition)
-        if match:
-            return r[str].ok(match.group(1))
+        if not definition and empty_error:
+            return r[str].fail(empty_error)
+        for pattern in patterns:
+            match = pattern.search(definition)
+            if match:
+                return r[str].ok(match.group(1))
         return r[str].fail(f"missing an OID in definition: {definition!r}")
 
     @staticmethod
@@ -57,6 +67,7 @@ class FlextLdifUtilitiesOID:
 
         Returns:
             The resulting ``p.Result[bool]``.
+
         """
         if not oid:
             return r[bool].ok(value=False)

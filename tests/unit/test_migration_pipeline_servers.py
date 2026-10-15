@@ -44,6 +44,7 @@ class TestsFlextLdifMigrationPipelineServers:
 
         Returns:
             The resulting ``tuple[str, int, t.VariadicTuple[str]]``.
+
         """
         input_dir = tmp_path / "input"
         output_dir = tmp_path / "output"

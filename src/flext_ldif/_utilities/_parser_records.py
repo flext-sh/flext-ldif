@@ -18,6 +18,7 @@ class FlextLdifParserRecordSplitter:
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
+
         """
         lines: t.MutableSequenceOf[str] = []
         current_line: str | None = None
@@ -46,6 +47,7 @@ class FlextLdifParserRecordSplitter:
 
         Returns:
             The resulting ``t.MutableSequenceOf[t.MutableSequenceOf[str]]``.
+
         """
         unfolded_lines = FlextLdifParserRecordSplitter.unfold_lines(ldif_content)
         records: t.MutableSequenceOf[t.MutableSequenceOf[str]] = []

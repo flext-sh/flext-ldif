@@ -345,6 +345,7 @@ class TestsFlextLdifApacheServers:
 
         Returns:
             The resulting ``str``.
+
         """
         ldif = f"dn: {entry_dn}\n"
         for attr, values in attributes.items():

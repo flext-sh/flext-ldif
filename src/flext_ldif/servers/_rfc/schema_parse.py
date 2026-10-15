@@ -33,6 +33,7 @@ class FlextLdifServersRfcSchemaParseMixin(
 
         Returns:
             The resulting ``bool``.
+
         """
         if isinstance(oc_definition, m.Ldif.SchemaObjectClass):
             matches_server_patterns: bool = u.Ldif.matches_server_patterns(
@@ -68,6 +69,7 @@ class FlextLdifServersRfcSchemaParseMixin(
             The resulting ``p.Result[MutableMapping[str,
                 t.MutableSequenceOf[m.Ldif.SchemaAttribute] |
                 t.MutableSequenceOf[m.Ldif.SchemaObjectClass]]]``.
+
         """
         try:
             return self._extract_schemas_from_ldif(
@@ -104,6 +106,7 @@ class FlextLdifServersRfcSchemaParseMixin(
             The resulting ``p.Result[MutableMapping[str,
                 t.MutableSequenceOf[m.Ldif.SchemaAttribute] |
                 t.MutableSequenceOf[m.Ldif.SchemaObjectClass]]]``.
+
         """
         attributes_parsed = u.Ldif.extract_attributes_from_lines(
             ldif_content,
@@ -156,6 +159,7 @@ class FlextLdifServersRfcSchemaParseMixin(
 
         Returns:
             The resulting ``m.Ldif.ServerMetadata``.
+
         """
         server_type = self._get_server_type()
         metadata_extensions[c.Ldif.SCHEMA_SOURCE_SERVER] = server_type
@@ -181,6 +185,7 @@ class FlextLdifServersRfcSchemaParseMixin(
 
         Returns:
             The resulting ``p.Result[m.Ldif.SchemaObjectClass]``.
+
         """
         try:
             return self._parse_rfc_objectclass_core(oc_definition)
@@ -198,6 +203,7 @@ class FlextLdifServersRfcSchemaParseMixin(
 
         Returns:
             The resulting ``p.Result[m.Ldif.SchemaObjectClass]``.
+
         """
         parsed = u.Ldif.parse_objectclass(oc_definition)
         metadata_extensions = self._convert_extensions_for_server(

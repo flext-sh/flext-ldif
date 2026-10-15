@@ -44,6 +44,7 @@ class TestsFlextLdifDnCaseHandling:
 
         Returns:
             The resulting ``m.Ldif.DnRegistry``.
+
         """
         return m.Ldif.DnRegistry()
 

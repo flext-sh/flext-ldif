@@ -37,6 +37,7 @@ def flext_api() -> p.Ldif.LdifClient:
 
     Returns:
         The resulting ``p.Ldif.LdifClient``.
+
     """
     return ldif()
 

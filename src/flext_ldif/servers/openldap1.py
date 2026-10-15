@@ -123,8 +123,12 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         def _has_olc_marker(*texts: str | None) -> bool:
             """Return whether any inspected text carries the olc marker.
 
+            Args:
+                *texts: Texts to inspect; None entries are skipped.
+
             Returns:
-                The resulting ``bool``.
+                True when at least one text contains "olc" case-insensitively.
+
             """
             return any("olc" in text.lower() for text in texts if text)
 
@@ -136,8 +140,13 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         ) -> bool:
             """Match one definition against OpenLDAP 1.x shape, rejecting olc.
 
+            Args:
+                definition: Raw definition string or parsed schema element.
+                definition_re: Pattern the raw string form must match.
+
             Returns:
-                The resulting ``bool``.
+                True when the definition fits the OpenLDAP 1.x dialect.
+
             """
             if isinstance(definition, str):
                 if not definition_re.match(definition):
@@ -153,8 +162,14 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         ) -> p.Result[T]:
             """Strip the OpenLDAP 1.x prefix, parse, and stamp server metadata.
 
+            Args:
+                definition: Raw definition string including the dialect prefix.
+                prefix_re: Pattern matching the dialect prefix to strip.
+                parse: Parser callable invoked on the stripped definition.
+
             Returns:
-                The resulting ``p.Result[T]``.
+                Typed result carrying the parsed element with server metadata.
+
             """
             stripped = prefix_re.sub("", definition).strip()
             metadata = u.Ldif.server_metadata_for(
@@ -169,10 +184,14 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             self,
             attr_definition: str | m.Ldif.SchemaAttribute,
         ) -> bool:
-            """Check if this is an OpenLDAP 1.x attribute.
+            """Check whether this is an OpenLDAP 1.x attribute definition.
+
+            Args:
+                attr_definition: Raw attribute definition or parsed model.
 
             Returns:
-                The resulting ``bool``.
+                True when the attribute fits the OpenLDAP 1.x dialect.
+
             """
             return self._accepts_openldap1_definition(
                 attr_definition,
@@ -184,10 +203,14 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             self,
             oc_definition: str | m.Ldif.SchemaObjectClass,
         ) -> bool:
-            """Check if this is an OpenLDAP 1.x objectClass.
+            """Check whether this is an OpenLDAP 1.x objectClass definition.
+
+            Args:
+                oc_definition: Raw objectClass definition or parsed model.
 
             Returns:
-                The resulting ``bool``.
+                True when the objectClass fits the OpenLDAP 1.x dialect.
+
             """
             return self._accepts_openldap1_definition(
                 oc_definition,
@@ -199,10 +222,15 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             self,
             attr_definition: str,
         ) -> p.Result[m.Ldif.SchemaAttribute]:
-            """Parse attribute definition, strip OpenLDAP1 prefix, and add metadata.
+            """Parse an attribute definition, stripping the OpenLDAP 1.x prefix.
+
+            Args:
+                attr_definition: Raw attribute definition string.
 
             Returns:
-                The resulting ``p.Result[m.Ldif.SchemaAttribute]``.
+                Typed result carrying the parsed attribute with OpenLDAP 1.x
+                metadata.
+
             """
             return self._parse_stripped_openldap1_definition(
                 attr_definition,
@@ -215,10 +243,15 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             self,
             oc_definition: str,
         ) -> p.Result[m.Ldif.SchemaObjectClass]:
-            """Parse objectClass definition and add OpenLDAP1 metadata.
+            """Parse an objectClass definition, stamping OpenLDAP 1.x metadata.
+
+            Args:
+                oc_definition: Raw objectClass definition string.
 
             Returns:
-                The resulting ``p.Result[m.Ldif.SchemaObjectClass]``.
+                Typed result carrying the parsed objectClass with OpenLDAP 1.x
+                metadata.
+
             """
             return self._parse_stripped_openldap1_definition(
                 oc_definition,
@@ -228,10 +261,14 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
 
         @override
         def _write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> p.Result[str]:
-            """Write attribute data to RFC-compliant string format.
+            """Write attribute data to the OpenLDAP 1.x string format.
+
+            Args:
+                attr_data: Canonical attribute model to serialize.
 
             Returns:
-                The resulting ``p.Result[str]``.
+                Typed result carrying the serialized attribute string.
+
             """
             try:
                 return self._write_openldap1_attribute(attr_data)
@@ -243,10 +280,14 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             self,
             oc_data: m.Ldif.SchemaObjectClass,
         ) -> p.Result[str]:
-            """Write objectClass data to RFC-compliant string format.
+            """Write objectClass data to the OpenLDAP 1.x string format.
+
+            Args:
+                oc_data: Canonical objectClass model to serialize.
 
             Returns:
-                The resulting ``p.Result[str]``.
+                Typed result carrying the serialized objectClass string.
+
             """
             try:
                 return self._write_openldap1_objectclass(oc_data)
@@ -257,10 +298,14 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         def _write_openldap1_attribute(
             attr_data: m.Ldif.SchemaAttribute,
         ) -> p.Result[str]:
-            """Write OpenLDAP 1.x attribute definition.
+            """Write one OpenLDAP 1.x attribute definition.
+
+            Args:
+                attr_data: Canonical attribute model to serialize.
 
             Returns:
-                The resulting ``p.Result[str]``.
+                Typed result carrying the ``attributetype`` definition string.
+
             """
             attr_str = f"attributetype ( {attr_data.oid}"
             if attr_data.name:
@@ -280,10 +325,14 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         def _write_openldap1_objectclass(
             oc_data: m.Ldif.SchemaObjectClass,
         ) -> p.Result[str]:
-            """Write OpenLDAP 1.x objectClass definition.
+            """Write one OpenLDAP 1.x objectClass definition.
+
+            Args:
+                oc_data: Canonical objectClass model to serialize.
 
             Returns:
-                The resulting ``p.Result[str]``.
+                Typed result carrying the ``objectclass`` definition string.
+
             """
             kind = oc_data.kind or "STRUCTURAL"
             must: t.MutableSequenceOf[str] = (
@@ -315,10 +364,14 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         @override
         @override
         def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
-            """Check if this is an OpenLDAP 1.x ACL.
+            """Check whether this is an OpenLDAP 1.x ACL line.
+
+            Args:
+                acl_line: Raw ACL string or parsed ACL model.
 
             Returns:
-                The resulting ``bool``.
+                True when the line starts with an ``access to`` clause.
+
             """
             normalized = self._normalize_acl_line(acl_line)
             if not normalized:
@@ -329,10 +382,14 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
 
         @override
         def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
-            """Parse OpenLDAP 1.x ACL definition.
+            """Parse an OpenLDAP 1.x ACL definition.
+
+            Args:
+                acl_line: Raw ACL line in the OpenLDAP 1.x dialect.
 
             Returns:
-                The resulting ``p.Result[m.Ldif.Acl]``.
+                Typed result carrying the parsed ACL model.
+
             """
             try:
                 return self._parse_openldap1_acl(acl_line)
@@ -341,10 +398,14 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
 
         @override
         def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
-            """Write ACL data to RFC-compliant string format.
+            """Write ACL data to the OpenLDAP 1.x string format.
+
+            Args:
+                acl_data: Canonical ACL model to serialize.
 
             Returns:
-                The resulting ``p.Result[str]``.
+                Typed result carrying the serialized ACL string.
+
             """
             try:
                 return self._write_openldap1_acl(acl_data)
@@ -352,10 +413,15 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 return r[str].fail_op("OpenLDAP 1.x ACL write", e)
 
         def _parse_openldap1_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
-            """Parse OpenLDAP 1.x ACL content.
+            """Parse OpenLDAP 1.x ACL content into the canonical model.
+
+            Args:
+                acl_line: Raw ACL line in the OpenLDAP 1.x dialect.
 
             Returns:
-                The resulting ``p.Result[m.Ldif.Acl]``.
+                Typed result carrying the parsed ACL model, or a failure when
+                the mandatory ``to`` clause is missing.
+
             """
             acl_content = self._strip_openldap1_acl_prefix(acl_line)
             to_match = FlextLdifServersOpenldap1.Constants.ACL_TO_BY_RE.match(
@@ -395,10 +461,14 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
 
         @staticmethod
         def _strip_openldap1_acl_prefix(acl_line: str) -> str:
-            """Remove OpenLDAP 1.x ACL attribute prefix.
+            """Remove the OpenLDAP 1.x ACL attribute prefix.
+
+            Args:
+                acl_line: Raw ACL line possibly starting with the prefix.
 
             Returns:
-                The resulting ``str``.
+                The ACL content with any leading ``access`` prefix stripped.
+
             """
             if acl_line.lower().startswith(
                 FlextLdifServersOpenldap1.Constants.ACL_ATTRIBUTE_NAME,
@@ -412,10 +482,14 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         def _parse_openldap1_target(
             what: str,
         ) -> t.StrPair | tuple[str, t.MutableSequenceOf[str]]:
-            """Parse OpenLDAP 1.x target DN and attribute list.
+            """Parse the OpenLDAP 1.x target DN and attribute list.
+
+            Args:
+                what: Target clause following the ``to`` keyword.
 
             Returns:
-                The resulting ``t.StrPair | tuple[str, t.MutableSequenceOf[str]]``.
+                Tuple of the target DN and the targeted attribute list.
+
             """
             target_dn = ""
             target_attrs: t.MutableSequenceOf[str] = []
@@ -435,10 +509,14 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
 
         @staticmethod
         def _openldap1_permissions(first_access: str) -> m.Ldif.AclPermissions:
-            """Build permissions from first OpenLDAP 1.x access token.
+            """Build permissions from the first OpenLDAP 1.x access token.
+
+            Args:
+                first_access: Lowercased access token from the first ``by`` clause.
 
             Returns:
-                The resulting ``m.Ldif.AclPermissions``.
+                Validated ACL permissions derived from the token.
+
             """
             read_perm = FlextLdifServersRfcConstants.PERMISSION_READ
             write_perm = FlextLdifServersRfcConstants.PERMISSION_WRITE
@@ -454,10 +532,14 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
 
         @staticmethod
         def _openldap1_subject_type(first_who: str) -> c.Ldif.AclSubjectType:
-            """Resolve subject type from OpenLDAP 1.x who token.
+            """Resolve the subject type from an OpenLDAP 1.x who token.
+
+            Args:
+                first_who: Who token from the first ``by`` clause.
 
             Returns:
-                The resulting ``c.Ldif.AclSubjectType``.
+                The matching ACL subject type; USER as the fallback.
+
             """
             first_who_lower = first_who.lower().strip()
             if first_who_lower == "self":
@@ -474,8 +556,13 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         def _write_openldap1_acl(acl_data: m.Ldif.Acl) -> p.Result[str]:
             """Write OpenLDAP 1.x ACL content.
 
+            Args:
+                acl_data: Canonical ACL model to serialize.
+
             Returns:
-                The resulting ``p.Result[str]``.
+                Typed result carrying the original raw ACL when recorded,
+                otherwise the reconstructed ``access to`` string.
+
             """
             if acl_data.raw_acl:
                 return r[str].ok(acl_data.raw_acl)

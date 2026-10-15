@@ -44,6 +44,7 @@ class FlextLdifServersOidEntry(
 
         Returns:
             The resulting ``str``.
+
         """
         match attr_name.lower():
             case attr_lower if attr_lower in {
@@ -63,6 +64,7 @@ class FlextLdifServersOidEntry(
 
         Returns:
             The resulting ``p.Result[m.Ldif.Entry]``.
+
         """
         result = super()._parse_entry_from_lines(lines)
         if result.failure:
@@ -92,6 +94,7 @@ class FlextLdifServersOidEntry(
 
         Returns:
             The resulting ``p.Result[str]``.
+
         """
         entry_to_write = self.restore_entry_from_metadata(entry_data)
         return super()._write_entry(entry_to_write)

@@ -23,10 +23,15 @@ class FlextLdifACLParsing:
         rule_value: str,
         special_values: t.MutableStrPairMapping,
     ) -> t.StrPair | None:
-        """Check if rule value matches any special value.
+        """Match a rule value against the special-value table.
+
+        Args:
+            rule_value: Bind rule value to match.
+            special_values: Mapping of value keys to subject pairs.
 
         Returns:
-            The resulting ``t.StrPair | None``.
+            The matched subject pair, or None when no key matches.
+
         """
         for key, value_tuple in dict(special_values).items():
             if (
@@ -42,10 +47,16 @@ class FlextLdifACLParsing:
         subject_type_map: t.MutableStrMapping,
         special_values: t.MutableStrPairMapping,
     ) -> t.StrPair:
-        """Build ACL subject from bind rules using configurable maps.
+        """Build an ACL subject from bind rules using configurable maps.
+
+        Args:
+            bind_rules_data: Bind rules extracted from the ACI content.
+            subject_type_map: Mapping of rule types to subject types.
+            special_values: Mapping of value keys to subject pairs.
 
         Returns:
-            The resulting ``t.StrPair``.
+            Pair of subject type and subject value.
+
         """
         if not bind_rules_data:
             return ("self", "ldap:///self")
@@ -78,10 +89,15 @@ class FlextLdifACLParsing:
         targetattr_str: str | None,
         separator: str = "||",
     ) -> tuple[t.MutableSequenceOf[str], str]:
-        """Parse targetattr string to attributes list and target DN.
+        """Split a targetattr specification into attributes and target DN.
+
+        Args:
+            targetattr_str: Raw targetattr specification text.
+            separator: Delimiter between attribute names.
 
         Returns:
-            The resulting ``tuple[t.MutableSequenceOf[str], str]``.
+            Pair of the attribute list and the target DN.
+
         """
         if not targetattr_str:
             return ([], "*")
@@ -99,8 +115,13 @@ class FlextLdifACLParsing:
     ) -> tuple[t.MutableSequenceOf[str], str]:
         """Extract target attributes and DN from ACI content.
 
+        Args:
+            aci_content: ACI body text without the prefix.
+            settings: Server-specific ACI parser configuration.
+
         Returns:
-            The resulting ``tuple[t.MutableSequenceOf[str], str]``.
+            Pair of the target attribute list and the target DN.
+
         """
         targetattr_extracted = FlextLdifACLExtraction.extract_component(
             aci_content,
@@ -117,10 +138,16 @@ class FlextLdifACLParsing:
         version_pattern: str,
         default_name: str,
     ) -> t.StrPair:
-        """Extract version and ACL name from content.
+        """Extract the ACI version and ACL name from content.
+
+        Args:
+            aci_content: ACI body text without the prefix.
+            version_pattern: Pattern locating the version and name groups.
+            default_name: Name used when the pattern does not match.
 
         Returns:
-            The resulting ``t.StrPair``.
+            Pair of the version string and the ACL name.
+
         """
         version_match = c.Ldif.compile_pattern(version_pattern).search(aci_content)
         version: str = (
@@ -146,10 +173,17 @@ class FlextLdifACLParsing:
         acl_line: str,
         extra_patterns: t.MutableStrMapping,
     ) -> t.Ldif.MutableMetadataInputMapping:
-        """Build metadata extensions dict.
+        """Build metadata extensions for a parsed ACI.
+
+        Args:
+            aci_content: ACI body text without the prefix.
+            version: Extracted ACI version.
+            acl_line: Raw ACI line preserved as the original format.
+            extra_patterns: Named patterns for additional extension fields.
 
         Returns:
-            The resulting ``t.Ldif.MutableMetadataInputMapping``.
+            Extensions mapping with version, original format, and extras.
+
         """
         extensions: t.Ldif.MutableMetadataInputMapping = {
             "version": version,
@@ -157,10 +191,15 @@ class FlextLdifACLParsing:
         }
 
         def extract_extra(_pattern_name: str, pattern: str) -> str | None:
-            """Extract extra field from pattern.
+            """Extract one extra extension field from the ACI content.
+
+            Args:
+                _pattern_name: Name of the extra pattern.
+                pattern: Regular expression to apply.
 
             Returns:
-                The resulting ``str | None``.
+                The extracted field value, or None when absent.
+
             """
             return FlextLdifACLExtraction.extract_component(
                 aci_content,
@@ -187,10 +226,15 @@ class FlextLdifACLParsing:
         aci_content: str,
         settings: m.Ldif.AciParserConfig,
     ) -> tuple[str, str, t.MutableBoolMapping]:
-        """Build subject and permissions from ACI content.
+        """Build the subject and permissions of an ACI.
+
+        Args:
+            aci_content: ACI body text without the prefix.
+            settings: Server-specific ACI parser configuration.
 
         Returns:
-            The resulting ``tuple[str, str, t.MutableBoolMapping]``.
+            Triple of subject type, subject value, and permission flags.
+
         """
         permissions_list = FlextLdifACLExtraction.extract_permissions(
             aci_content,
@@ -222,10 +266,15 @@ class FlextLdifACLParsing:
         acl_line: str,
         settings: m.Ldif.AciParserConfig,
     ) -> p.Result[m.Ldif.Acl]:
-        """Parse ACI line using server-specific settings Model.
+        """Parse an ACI line using server-specific settings.
+
+        Args:
+            acl_line: Raw ACI line text.
+            settings: Server-specific ACI parser configuration.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Acl]``.
+            Result carrying the parsed ACL, or a failure.
+
         """
         valid, aci_content = FlextLdifACLFormatting.validate_aci_format(
             acl_line,

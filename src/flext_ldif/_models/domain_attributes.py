@@ -12,6 +12,7 @@ from collections.abc import KeysView, MutableMapping, ValuesView
 from typing import Annotated, ClassVar, Self
 
 from flext_core import FlextUtilities as u, m
+
 from flext_ldif import c, t
 
 
@@ -77,6 +78,7 @@ class FlextLdifModelsDomainAttributes:
 
             Returns:
                 The resulting ``bool``.
+
             """
             return key in self.attributes
 
@@ -151,6 +153,7 @@ class FlextLdifModelsDomainAttributes:
 
             Returns:
                 The resulting ``KeysView[str]``.
+
             """
             attribute_keys: KeysView[str] = self.attributes.keys()
             return attribute_keys
@@ -173,6 +176,7 @@ class FlextLdifModelsDomainAttributes:
 
             Returns:
                 The resulting ``ValuesView[t.MutableSequenceOf[str]]``.
+
             """
             attribute_values: ValuesView[t.MutableSequenceOf[str]] = (
                 self.attributes.values()

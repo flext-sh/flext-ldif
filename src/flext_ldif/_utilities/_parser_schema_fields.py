@@ -7,11 +7,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import r
+
 from flext_ldif import c, p, t
 
 
 class FlextLdifParserSchemaFields:
-    """Extract OIDs and optional fields from schema definition strings."""
+    """Extract optional fields from schema definition strings."""
 
     @staticmethod
     def extract_oid(definition: str) -> p.Result[str]:
@@ -19,6 +20,7 @@ class FlextLdifParserSchemaFields:
 
         Returns:
             The resulting ``p.Result[str]``.
+
         """
         if not definition:
             return r[str].fail("Empty definition: cannot extract OID")
@@ -37,6 +39,7 @@ class FlextLdifParserSchemaFields:
 
         Returns:
             The resulting ``str | None``.
+
         """
         if not definition:
             return default
@@ -55,6 +58,7 @@ class FlextLdifParserSchemaFields:
 
         Returns:
             The resulting ``bool``.
+
         """
         if not definition:
             return False
@@ -69,6 +73,7 @@ class FlextLdifParserSchemaFields:
 
         Returns:
             The resulting ``t.MutableStrSequenceMapping``.
+
         """
         if not definition:
             return {}

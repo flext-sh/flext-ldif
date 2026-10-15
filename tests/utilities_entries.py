@@ -40,6 +40,7 @@ class TestsFlextLdifEntryBuildersMixin(FlextTestsFixturesDSLMixin):
 
         Returns:
             The resulting ``m.Ldif.Entry``.
+
         """
         entry_id = uuid.uuid4().hex[:8]
         payload_attrs = attributes or {
@@ -65,6 +66,7 @@ class TestsFlextLdifEntryBuildersMixin(FlextTestsFixturesDSLMixin):
 
         Returns:
             The resulting ``m.Ldif.Entry``.
+
         """
         return cls.create_real_entry(
             dn=dn,
@@ -89,6 +91,7 @@ class TestsFlextLdifEntryBuildersMixin(FlextTestsFixturesDSLMixin):
 
         Returns:
             The resulting ``str``.
+
         """
         blocks: list[str] = []
         if include_schema:
@@ -120,6 +123,7 @@ class TestsFlextLdifEntryBuildersMixin(FlextTestsFixturesDSLMixin):
 
         Returns:
             The resulting ``t.SequenceOf[m.Tests.LdifTestData]``.
+
         """
         return [
             m.Tests.LdifTestData(

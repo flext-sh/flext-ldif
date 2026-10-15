@@ -24,6 +24,7 @@ class FlextLdifServersOudAclWriteMixin(FlextLdifServersOudAclSubjectMixin):
 
         Returns:
             The resulting ``p.Result[str]``.
+
         """
         perms = acl_data.permissions or self._permissions_from_extensions(acl_data)
         if not perms:
@@ -47,6 +48,7 @@ class FlextLdifServersOudAclWriteMixin(FlextLdifServersOudAclSubjectMixin):
 
         Returns:
             The resulting ``m.Ldif.AclPermissions | None``.
+
         """
         if acl_data.permissions or not acl_data.metadata:
             return None
@@ -86,6 +88,7 @@ class FlextLdifServersOudAclWriteMixin(FlextLdifServersOudAclSubjectMixin):
 
         Returns:
             The resulting ``t.Ldif.MutableMetadataInputMapping``.
+
         """
         perms_data: t.Ldif.MutableMetadataInputMapping = {}
         for key, val in target_perms_dict.items():
@@ -109,6 +112,7 @@ class FlextLdifServersOudAclWriteMixin(FlextLdifServersOudAclSubjectMixin):
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
+
         """
         sc = FlextLdifServersOudConstants
         ops: t.MutableSequenceOf[str] = [
@@ -150,6 +154,7 @@ class FlextLdifServersOudAclWriteMixin(FlextLdifServersOudAclSubjectMixin):
 
         Returns:
             The resulting ``str``.
+
         """
         target = acl_data.target or self._target_from_extensions(acl_data)
         clause: str = u.Ldif.build_aci_target_clause(
@@ -167,6 +172,7 @@ class FlextLdifServersOudAclWriteMixin(FlextLdifServersOudAclSubjectMixin):
 
         Returns:
             The resulting ``m.Ldif.AclTarget | None``.
+
         """
         if acl_data.target or not acl_data.metadata:
             return None
@@ -203,6 +209,7 @@ class FlextLdifServersOudAclWriteMixin(FlextLdifServersOudAclSubjectMixin):
 
         Returns:
             The resulting ``bool``.
+
         """
         if not acl_data.raw_acl:
             return False
@@ -216,6 +223,7 @@ class FlextLdifServersOudAclWriteMixin(FlextLdifServersOudAclSubjectMixin):
 
         Returns:
             The resulting ``p.Result[str]``.
+
         """
         try:
             return self._write_oud_aci(acl_data)
@@ -233,6 +241,7 @@ class FlextLdifServersOudAclWriteMixin(FlextLdifServersOudAclSubjectMixin):
 
         Returns:
             The resulting ``p.Result[str]``.
+
         """
         sc = FlextLdifServersOudConstants
         extensions: t.Ldif.MutableMetadataMapping | None = (

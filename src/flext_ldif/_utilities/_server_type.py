@@ -10,6 +10,7 @@ import sys
 from typing import TypeIs
 
 from flext_core import r
+
 from flext_ldif import c, p, t
 
 
@@ -26,6 +27,7 @@ class FlextLdifServerTypeResolution:
 
         Returns:
             The resulting ``p.Result[str]``.
+
         """
         for suffix in c.Ldif.CLASS_SUFFIXES:
             if name_without_prefix.endswith(suffix):
@@ -43,6 +45,7 @@ class FlextLdifServerTypeResolution:
 
         Returns:
             The resulting ``c.Ldif.ServerTypes | None``.
+
         """
         if cls_with_constants is None:
             return None
@@ -63,6 +66,7 @@ class FlextLdifServerTypeResolution:
 
         Returns:
             The resulting ``c.Ldif.ServerTypes | None``.
+
         """
         class_name = target_cls.__name__
         if not class_name.startswith("FlextLdifServers"):
@@ -83,6 +87,7 @@ class FlextLdifServerTypeResolution:
 
         Returns:
             The resulting ``type | None``.
+
         """
         qualname_parts = target_cls.__qualname__.split(".")
         if len(qualname_parts) <= 1:
@@ -102,6 +107,7 @@ class FlextLdifServerTypeResolution:
 
         Returns:
             The resulting ``c.Ldif.ServerTypes | None``.
+
         """
         parent_obj = FlextLdifServerTypeResolution._resolve_parent_class(target_cls)
         if parent_obj is not None:
@@ -116,6 +122,7 @@ class FlextLdifServerTypeResolution:
 
         Returns:
             The resulting ``c.Ldif.ServerTypes | None``.
+
         """
         for mro_cls in target_cls.__mro__:
             result = FlextLdifServerTypeResolution.extract_server_type_from_constants(
@@ -131,6 +138,7 @@ class FlextLdifServerTypeResolution:
 
         Returns:
             The resulting ``c.Ldif.ServerTypes | None``.
+
         """
         from_parent = FlextLdifServerTypeResolution._server_type_from_parent(target_cls)
         if from_parent is not None:
@@ -148,6 +156,7 @@ class FlextLdifServerTypeResolution:
 
         Raises:
             AttributeError: Always.
+
         """
         cls = (
             nested_class_instance_or_type

@@ -44,6 +44,7 @@ class TestsFlextLdifCategorizationRealData:
 
         Returns:
             The resulting ``m.Ldif.Entry``.
+
         """
         return m.Ldif.Entry(
             dn=m.Ldif.DN(value=dn),
@@ -59,6 +60,7 @@ class TestsFlextLdifCategorizationRealData:
 
         Returns:
             The resulting ``m.Ldif.Entry``.
+
         """
         return m.Ldif.Entry(
             dn=m.Ldif.DN(value=dn),
@@ -74,6 +76,7 @@ class TestsFlextLdifCategorizationRealData:
 
         Returns:
             The resulting ``t.MutableSequenceOf[m.Ldif.Entry]``.
+
         """
         return [
             self._entry("dc=example", "domain"),
@@ -89,6 +92,7 @@ class TestsFlextLdifCategorizationRealData:
 
         Returns:
             The resulting ``set[str]``.
+
         """
         return {e.dn.value for e in entries if e.dn is not None}
 
@@ -101,6 +105,7 @@ class TestsFlextLdifCategorizationRealData:
 
         Returns:
             The resulting ``tuple[set[str], set[str], set[str]]``.
+
         """
         validated = categorization.validate_dns(entries)
         tm.ok(validated)

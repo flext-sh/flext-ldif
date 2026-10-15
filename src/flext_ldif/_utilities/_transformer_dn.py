@@ -19,6 +19,7 @@ class FlextLdifUtilitiesEntryDnNormalization:
 
         Returns:
             The resulting ``p.Result[bool]``.
+
         """
         components = FlextLdifUtilitiesDN.split(dn_str)
         all_errors: t.MutableSequenceOf[str] = []
@@ -46,6 +47,7 @@ class FlextLdifUtilitiesEntryDnNormalization:
 
         Returns:
             The resulting ``p.Result[FlextLdifModels.Ldif.Entry]``.
+
         """
         if item.dn is None:
             return r[FlextLdifModels.Ldif.Entry].fail("Entry has no DN")

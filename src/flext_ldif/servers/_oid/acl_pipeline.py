@@ -44,6 +44,7 @@ class FlextLdifServersOidAclPipeline:
 
         Returns:
             The resulting ``p.Result[t.StrSequence]``.
+
         """
         values: list[str] = []
         seen: set[str] = set()
@@ -92,6 +93,7 @@ class FlextLdifServersOidAclPipeline:
 
         Returns:
             The resulting ``p.Result[m.Ldif.Entry]``.
+
         """
         if not (
             source_type_norm == c.Ldif.ServerTypes.OID

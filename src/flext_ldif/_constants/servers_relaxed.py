@@ -12,7 +12,7 @@ from __future__ import annotations
 import re
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_ldif._constants import FlextLdifConstantsEnums
+from flext_ldif._constants.base import FlextLdifConstantsBase, FlextLdifConstantsEnums
 
 if TYPE_CHECKING:
     from flext_ldif import t
@@ -32,17 +32,11 @@ class FlextLdifConstantsServersRelaxed:
     OID_PATTERN: ClassVar[t.Ldif.RegexPattern] = re.compile(
         r"\(\s*([0-9a-zA-Z._\-]+)",
     )
-    OID_NUMERIC_WITH_PAREN: ClassVar[str] = "\\(\\s*([0-9]+(?:\\.[0-9]+)+)"
-    OID_NUMERIC_WITH_PAREN_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-        OID_NUMERIC_WITH_PAREN,
-    )
-    OID_NUMERIC_ANYWHERE: ClassVar[str] = "([0-9]+\\.[0-9]+(?:\\.[0-9]+)*)"
-    OID_NUMERIC_ANYWHERE_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-        OID_NUMERIC_ANYWHERE,
-    )
-    OID_ALPHANUMERIC_RELAXED: ClassVar[str] = "\\(\\s*([a-zA-Z0-9._-]+)"
-    OID_ALPHANUMERIC_RELAXED_RE: ClassVar[t.Ldif.RegexPattern] = re.compile(
-        OID_ALPHANUMERIC_RELAXED,
+    OID_EXTRACTION_PATTERNS: ClassVar[t.SequenceOf[t.Ldif.RegexPattern]] = (
+        FlextLdifConstantsBase.SCHEMA_OID_LEADING_RE,
+        re.compile(r"\(\s*([0-9]+(?:\.[0-9]+)+)"),
+        re.compile(r"([0-9]+\.[0-9]+(?:\.[0-9]+)*)"),
+        re.compile(r"\(\s*([a-zA-Z0-9._-]+)"),
     )
     SCHEMA_MUST_SEPARATOR: ClassVar[str] = "$"
     SCHEMA_MAY_SEPARATOR: ClassVar[str] = "$"

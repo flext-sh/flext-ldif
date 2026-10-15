@@ -26,6 +26,7 @@ class FlextLdifServersOudAclExtractMixin:
 
         Returns:
             The resulting ``m.Ldif.Entry``.
+
         """
         if not entry_data.attributes or not acl_attribute_names:
             return entry_data
@@ -71,6 +72,7 @@ class FlextLdifServersOudAclExtractMixin:
 
         Returns:
             The resulting ``t.MutableSequenceOf[str] | str``.
+
         """
         if isinstance(acl_values_raw, list):
             return [u.to_str(item) for item in acl_values_raw]
@@ -84,6 +86,7 @@ class FlextLdifServersOudAclExtractMixin:
 
         Returns:
             The resulting ``t.Ldif.MutableMetadataMapping | None``.
+
         """
         if isinstance(commented_raw, str):
             parsed_items = u.json_dict_adapter().validate_json(commented_raw).items()
@@ -106,6 +109,7 @@ class FlextLdifServersOudAclExtractMixin:
         Returns:
             The resulting ``tuple[t.MutableStrSequenceMapping,
                 t.MutableStrSequenceMapping, set[str]]``.
+
         """
         new_attrs: t.MutableStrSequenceMapping = dict(attributes_dict)
         commented_vals: t.MutableStrSequenceMapping = {}
@@ -133,6 +137,7 @@ class FlextLdifServersOudAclExtractMixin:
 
         Returns:
             The resulting ``m.Ldif.ServerMetadata``.
+
         """
         metadata_typed: m.Ldif.ServerMetadata = metadata
         current_extensions: t.Ldif.MutableMetadataInputMapping = (

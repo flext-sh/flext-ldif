@@ -28,6 +28,7 @@ class FlextLdifServersOudEntryParseMixin(FlextLdifServersRfcEntry):
 
         Returns:
             The resulting ``p.Result[t.MutableSequenceOf[m.Ldif.Entry]]``.
+
         """
         parsed_result = super().parse_server(value)
         if parsed_result.failure:
@@ -69,6 +70,7 @@ class FlextLdifServersOudEntryParseMixin(FlextLdifServersRfcEntry):
 
         Returns:
             The resulting ``p.Result[m.Ldif.Entry]``.
+
         """
         _ = original_dn
         aci_values = FlextLdifServersOudHelpersMixin.find_aci_values(

@@ -18,6 +18,7 @@ class FlextLdifEntryAttributeValidation:
 
         Returns:
             The resulting ``str | None``.
+
         """
         if c.Ldif.ATTRIBUTE_NAME_RE.match(base_attr):
             return None
@@ -31,6 +32,7 @@ class FlextLdifEntryAttributeValidation:
 
         Returns:
             The resulting ``str | None``.
+
         """
         option = raw_option.strip()
         if not option:
@@ -52,6 +54,7 @@ class FlextLdifEntryAttributeValidation:
 
         Returns:
             The resulting ``t.MutableSequenceOf[t.MutableSequenceOf[str]]``.
+
         """
         if entry.attributes is None or not entry.attributes:
             return []
@@ -65,6 +68,7 @@ class FlextLdifEntryAttributeValidation:
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
+
         """
         violations: t.MutableSequenceOf[str] = []
         for parts in FlextLdifEntryAttributeValidation._iter_attribute_parts(entry):
@@ -89,6 +93,7 @@ class FlextLdifEntryAttributeValidation:
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
+
         """
         violations: t.MutableSequenceOf[str] = []
         for parts in FlextLdifEntryAttributeValidation._iter_attribute_parts(entry):
@@ -118,6 +123,7 @@ class FlextLdifEntryAttributeValidation:
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
+
         """
         violations: t.MutableSequenceOf[str] = []
         if entry.attributes is None or not entry.attributes:

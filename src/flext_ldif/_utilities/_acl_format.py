@@ -22,6 +22,7 @@ class FlextLdifACLFormatting:
 
         Returns:
             The resulting ``str``.
+
         """
         if target_attributes:
             return f'(targetattr="{separator.join(target_attributes)}")'
@@ -39,6 +40,7 @@ class FlextLdifACLFormatting:
 
         Returns:
             The resulting ``str``.
+
         """
         cleaned_value = subject_value.replace(", ", ",")
         default_value = f'by dn="{cleaned_value}"'
@@ -56,6 +58,7 @@ class FlextLdifACLFormatting:
 
         Returns:
             The resulting ``tuple[str, bool]``.
+
         """
         if not raw_name or not raw_name.strip():
             return ("", False)
@@ -65,6 +68,7 @@ class FlextLdifACLFormatting:
 
             Returns:
                 The resulting ``str``.
+
             """
             char_ord = ord(char)
             rfc_format = c.Ldif
@@ -128,6 +132,7 @@ class FlextLdifACLFormatting:
 
         Returns:
             The resulting ``t.Ldif.MutableMetadataMapping``.
+
         """
         result: t.Ldif.MutableMetadataMapping = {}
         if settings.line_breaks is not None:
@@ -172,6 +177,7 @@ class FlextLdifACLFormatting:
 
         Returns:
             The resulting ``tuple[bool, str]``.
+
         """
         if not acl_line or not acl_line.strip():
             return (False, "")

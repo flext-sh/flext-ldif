@@ -13,13 +13,14 @@ from __future__ import annotations
 from typing import Annotated, ClassVar
 
 from flext_cli import FlextCliModels
-
 from flext_core import FlextUtilities as u
+
 from flext_ldif import t
-from flext_ldif._models.config import FlextLdifNamespace
+from flext_ldif._models._base_parts import FlextLdifModelsBasesParts
 from flext_ldif._models.acl_convert import FlextLdifModelsAclConvert
 from flext_ldif._models.base import FlextLdifModelsBases
 from flext_ldif._models.collections import FlextLdifModelsCollections
+from flext_ldif._models.config import FlextLdifNamespace
 from flext_ldif._models.domain_acl import FlextLdifModelsDomainAcl
 from flext_ldif._models.domain_attributes import FlextLdifModelsDomainAttributes
 from flext_ldif._models.domain_dn import FlextLdifModelsDomainDN
@@ -58,9 +59,10 @@ class FlextLdifModels(FlextCliModels):
     # aliases (``Ldif.Control`` / ``Ldif.ChangeOperationValue``) instead of
     # direct inheritance, which would clash on ``model_config``/``value``.
     class Ldif(
-        FlextLdifNamespace,
         FlextLdifModelsBases,
+        FlextLdifModelsBasesParts,
         FlextLdifModelsCollections,
+        FlextLdifNamespace,
         FlextLdifModelsDomainsEntries,
         FlextLdifModelsDomainEntry,
         FlextLdifModelsDomainEntryChangeOperation,

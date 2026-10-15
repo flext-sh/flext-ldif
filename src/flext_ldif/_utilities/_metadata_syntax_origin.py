@@ -20,6 +20,7 @@ class FlextLdifMetadataSyntaxOriginDetails:
 
         Returns:
             The resulting ``t.MutableOptionalFeatureFlagMapping``.
+
         """
         details: t.MutableOptionalFeatureFlagMapping = {
             "syntax_quotes": False,
@@ -59,6 +60,7 @@ class FlextLdifMetadataSyntaxOriginDetails:
 
         Returns:
             The resulting ``t.MutableOptionalFeatureFlagMapping``.
+
         """
         details: t.MutableOptionalFeatureFlagMapping = {}
         x_origin_match = c.Ldif.SCHEMA_X_ORIGIN_RE.search(definition)
@@ -90,6 +92,7 @@ class FlextLdifMetadataSyntaxOriginDetails:
 
         Returns:
             The resulting ``MutableMapping[str, bool | int | str | None]``.
+
         """
         details: MutableMapping[str, bool | int | str | None] = {}
         obsolete_match = c.Ldif.SCHEMA_OBSOLETE_RE.search(definition)
@@ -113,6 +116,7 @@ class FlextLdifMetadataSyntaxOriginDetails:
 
         Returns:
             The resulting ``t.MutableStrMapping``.
+
         """
         details: t.MutableStrMapping = {}
         oid_match = c.Ldif.OID_CAPTURE_NUMERIC_RE.search(definition)

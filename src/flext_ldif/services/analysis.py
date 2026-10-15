@@ -23,6 +23,7 @@ class FlextLdifAnalysis(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``tuple[bool, t.MutableSequenceOf[str]]``.
+
         """
         errors: t.MutableSequenceOf[str] = []
         valid = True
@@ -44,6 +45,7 @@ class FlextLdifAnalysis(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``tuple[bool, str, t.MutableSequenceOf[str]]``.
+
         """
         errors: t.MutableSequenceOf[str] = []
         if entry.dn is None:
@@ -65,6 +67,7 @@ class FlextLdifAnalysis(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``tuple[bool, t.MutableSequenceOf[str]]``.
+
         """
         errors: t.MutableSequenceOf[str] = []
         valid = True
@@ -85,6 +88,7 @@ class FlextLdifAnalysis(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``tuple[bool, t.MutableSequenceOf[str]]``.
+
         """
         errors: t.MutableSequenceOf[str] = []
         is_entry_valid = True
@@ -120,6 +124,7 @@ class FlextLdifAnalysis(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``p.Result[m.Ldif.ValidationResult]``.
+
         """
         _ = self
         # Why: mro-4p0t — accept ParseResponse like statistics/categorization services.
@@ -138,6 +143,7 @@ class FlextLdifAnalysis(s[m.Ldif.Response]):
 
             Returns:
                 The resulting ``bool``.
+
             """
             is_entry_valid, entry_errors = FlextLdifAnalysis._validate_single_entry(
                 entry,

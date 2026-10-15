@@ -129,6 +129,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
 
             Returns:
                 The resulting ``bool``.
+
             """
             normalized = self._normalize_acl_line(acl_line)
             if not normalized:
@@ -151,6 +152,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
 
             Returns:
                 The resulting ``p.Result[m.Ldif.Acl]``.
+
             """
             try:
                 attr_name, content = u.Ldif.split_acl_line(acl_line)
@@ -194,6 +196,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
 
             Returns:
                 The resulting ``p.Result[str]``.
+
             """
             return self._write_dialect_acl(
                 acl_data,
@@ -206,6 +209,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
 
             Returns:
                 The resulting ``p.Result[str]``.
+
             """
             acl_attribute = FlextLdifServersTivoli.Constants.ACL_PRIMARY_ATTRIBUTE_NAME
             if acl_data.raw_acl:
@@ -265,6 +269,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
 
             Returns:
                 The resulting ``bool``.
+
             """
             if not entry_dn:
                 return False
@@ -298,6 +303,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
 
             Returns:
                 The resulting ``str``.
+
             """
             return attr_name.lower()
 
@@ -307,6 +313,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
 
             Returns:
                 The resulting ``str``.
+
             """
             norm_result = u.Ldif.norm(entry_dn)
             if norm_result.success:
@@ -319,6 +326,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
 
             Returns:
                 The resulting ``p.Result[m.Ldif.Entry]``.
+
             """
             try:
                 return self._process_tivoli_entry(entry)
@@ -330,6 +338,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
 
             Returns:
                 The resulting ``p.Result[m.Ldif.Entry]``.
+
             """
             if not entry.dn:
                 return r[m.Ldif.Entry].fail(

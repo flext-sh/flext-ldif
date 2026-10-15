@@ -18,6 +18,7 @@ class FlextLdifMetadataMatchDetails:
 
         Returns:
             The resulting ``t.MutableFeatureFlagMapping``.
+
         """
         details: t.MutableFeatureFlagMapping = {}
         equality_match = c.Ldif.SCHEMA_EQUALITY_TOKEN_RE.search(definition)
@@ -61,6 +62,7 @@ class FlextLdifMetadataMatchDetails:
 
         Returns:
             The resulting ``t.MutableFeatureFlagMapping``.
+
         """
         details: t.MutableFeatureFlagMapping = {}
         sup_match = c.Ldif.SCHEMA_SUP_LOOSE_RE.search(definition)
@@ -85,6 +87,7 @@ class FlextLdifMetadataMatchDetails:
 
         Returns:
             The resulting ``t.MutableFeatureFlagMapping``.
+
         """
         details: t.MutableFeatureFlagMapping = {}
         single_value_match = c.Ldif.SCHEMA_SINGLE_VALUE_RE.search(definition)
@@ -106,6 +109,7 @@ class FlextLdifMetadataMatchDetails:
 
         Returns:
             The resulting ``t.MutableStrMapping``.
+
         """
         details: t.MutableStrMapping = {}
         trailing_match = c.Ldif.SCHEMA_TRAILING_PAREN_RE.search(definition)

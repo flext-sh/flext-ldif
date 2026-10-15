@@ -48,6 +48,7 @@ class TestsFlextLdifZeroDataLossOidOud:
 
         Returns:
             The resulting ``p.Ldif.LdifClient``.
+
         """
         return ldif()
 
@@ -58,6 +59,7 @@ class TestsFlextLdifZeroDataLossOidOud:
 
         Returns:
             The resulting ``str``.
+
         """
         fixture: str = u.Tests.load(c.Tests.OID, c.Tests.ENTRIES)
         return fixture
@@ -69,6 +71,7 @@ class TestsFlextLdifZeroDataLossOidOud:
 
         Returns:
             The resulting ``str``.
+
         """
         fixture: str = u.Tests.load(c.Tests.OUD, c.Tests.ENTRIES)
         return fixture

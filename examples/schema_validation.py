@@ -34,6 +34,7 @@ class ExamplesFlextLdifSchemaValidation:
 
         Returns:
             The resulting ``list[m.Ldif.Entry]``.
+
         """
         test_entries: list[m.Ldif.Entry] = []
         for i in range(30):
@@ -104,6 +105,7 @@ class ExamplesFlextLdifSchemaValidation:
 
         Returns:
             The resulting ``str``.
+
         """
         if "schema" in error.lower():
             return "schema"
@@ -117,6 +119,7 @@ class ExamplesFlextLdifSchemaValidation:
 
         Returns:
             The resulting ``t.MutableMappingKV[str, int]``.
+
         """
         error_analysis: t.MutableMappingKV[str, int] = {}
         for error in errors:
@@ -130,6 +133,7 @@ class ExamplesFlextLdifSchemaValidation:
 
         Returns:
             The resulting ``p.Result[t.JsonMapping]``.
+
         """
         api = ldif()
         test_entries = ExamplesFlextLdifSchemaValidation._generate_test_entries()

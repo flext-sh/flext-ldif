@@ -15,7 +15,7 @@ from flext_ldif.servers._rfc.server_constants import FlextLdifServersRfcConstant
 
 
 class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
-    """OID ACL OID ACL parsing."""
+    """OID ACL parsing."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
     OidAclMetadataConfig: ClassVar[type[m.Ldif.OidAclMetadataConfig]] = (
@@ -26,10 +26,14 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
     def _build_oid_acl_metadata(
         settings: m.Ldif.OidAclMetadataConfig,
     ) -> t.Ldif.MutableMetadataMapping:
-        """Build metadata extensions for OID ACL with Oracle-specific features.
+        """Build metadata extensions for an OID ACL.
+
+        Args:
+            settings: OID ACL metadata configuration.
 
         Returns:
-            The resulting ``t.Ldif.MutableMetadataMapping``.
+            Extensions mapping carrying Oracle-specific ACL features.
+
         """
         target_attrs_str: str = (
             u.Ldif.dump_json_payload(list(settings.target_attrs))
@@ -72,10 +76,14 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
     def _extract_oid_target(
         content: str,
     ) -> tuple[str | None, t.MutableSequenceOf[str]]:
-        """Extract target DN and attributes from OID ACL.
+        """Extract the target DN and attributes from an OID ACL.
+
+        Args:
+            content: Raw ACL line text.
 
         Returns:
-            The resulting ``tuple[str | None, t.MutableSequenceOf[str]]``.
+            Pair of the target DN and target attribute names.
+
         """
         target_dn: str | None = None
         attributes: t.MutableSequenceOf[str] = []
@@ -91,10 +99,16 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
 
     @staticmethod
     def _parse_oid_permissions(content: str) -> t.MutableBoolMapping:
-        """Parse OID ACL permissions clause.
+        """Parse the permissions clause of an OID ACL.
+
+        Negative (``no``-prefixed) permissions are recorded as denial flags.
+
+        Args:
+            content: Raw ACL line text.
 
         Returns:
-            The resulting ``t.MutableBoolMapping``.
+            Permission flags keyed by canonical permission name.
+
         """
         permissions: t.MutableBoolMapping = {}
         const = FlextLdifServersOidConstants
@@ -117,10 +131,14 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
 
     @override
     def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
-        """Check if this is an Oracle OID ACL.
+        """Detect whether the definition is an Oracle OID ACL.
+
+        Args:
+            acl_line: Raw ACL line text or a parsed ACL.
 
         Returns:
-            The resulting ``bool``.
+            True when the definition carries OID ACL markers.
+
         """
         can_handle = False
         if not isinstance(acl_line, str):
@@ -141,10 +159,14 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
 
     @override
     def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
-        """Parse Oracle OID ACL string to RFC-compliant internal model.
+        """Parse an Oracle OID ACL line into the internal model.
+
+        Args:
+            acl_line: Raw ACL line text.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Acl]``.
+            Result carrying the parsed ACL, or a failure.
+
         """
         parent_result = super()._parse_acl(acl_line)
         if parent_result.failure:
@@ -169,10 +191,14 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
         return self._parse_oid_specific_acl(acl_line)
 
     def _parse_oid_specific_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
-        """Parse OID-specific ACL format when RFC parser fails.
+        """Parse the OID-specific ACL format when the RFC parser fails.
+
+        Args:
+            acl_line: Raw ACL line text.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Acl]``.
+            Result carrying the parsed ACL, or a failure.
+
         """
         try:
             return self._parse_oid_specific_acl_core(acl_line)
@@ -191,8 +217,12 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
     def _parse_oid_specific_acl_core(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
         """Parse OID-specific ACL data into the canonical ACL model.
 
+        Args:
+            acl_line: Raw ACL line text.
+
         Returns:
-            The resulting ``p.Result[m.Ldif.Acl]``.
+            Result carrying the parsed ACL, or a failure.
+
         """
         target_dn, target_attrs = self._extract_oid_target(acl_line)
         if not target_dn:
@@ -247,8 +277,13 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
     ) -> tuple[str, str]:
         """Detect the OID subject of one ACL line and resolve its value.
 
+        Args:
+            acl_line: Raw ACL line text.
+
         Returns:
-            The resulting ``tuple[str, str | None]``.
+            Pair of the OID subject type and subject value; the self subject
+            is used when no type is detected.
+
         """
         oid_subject_type = self._detect_oid_subject(acl_line)
         if not oid_subject_type:
@@ -279,8 +314,12 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
     def _extract_oid_acl_options(acl_line: str) -> t.MutableMappingKV[str, str | bool]:
         """Extract the optional ACL components of one OID ACL line.
 
+        Args:
+            acl_line: Raw ACL line text.
+
         Returns:
-            The resulting ``t.MutableMappingKV[str, str | bool]``.
+            Mapping of optional component names to their extracted values.
+
         """
         extract = u.Ldif.extract_component
         kls = FlextLdifServersOidConstants
@@ -322,10 +361,15 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
         acl_data: m.Ldif.Acl,
         _acl_line: str,
     ) -> m.Ldif.Acl:
-        """Update ACL with OID server type and metadata.
+        """Stamp the OID server type and metadata onto a parsed ACL.
+
+        Args:
+            acl_data: Parsed ACL to update.
+            _acl_line: Unused raw ACL line text.
 
         Returns:
-            The resulting ``m.Ldif.Acl``.
+            The ACL carrying OID server metadata.
+
         """
         server_type = FlextLdifServersOidConstants.SERVER_TYPE
         updated_metadata = (

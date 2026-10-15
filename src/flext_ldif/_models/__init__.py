@@ -13,8 +13,9 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
+    from flext_ldif._models._base_parts import FlextLdifModelsBasesParts
     from flext_ldif._models.acl_convert import FlextLdifModelsAclConvert
-    from flext_ldif._models.base import FlextLdifModelsBases
+    from flext_ldif._models.base import FlextLdifModelsBases, FlextLdifShared
     from flext_ldif._models.collections import FlextLdifModelsCollections
     from flext_ldif._models.config import FlextLdifNamespace
     from flext_ldif._models.domain_acl import FlextLdifModelsDomainAcl
@@ -46,6 +47,7 @@ if TYPE_CHECKING:
 __all__: tuple[str, ...] = (
     "FlextLdifModelsAclConvert",
     "FlextLdifModelsBases",
+    "FlextLdifModelsBasesParts",
     "FlextLdifModelsCollections",
     "FlextLdifModelsDomainAcl",
     "FlextLdifModelsDomainAttributes",
@@ -64,6 +66,7 @@ __all__: tuple[str, ...] = (
     "FlextLdifModelsResultsStatistics",
     "FlextLdifModelsSettings",
     "FlextLdifNamespace",
+    "FlextLdifShared",
 )
 
 install_lazy_exports(
@@ -72,6 +75,7 @@ install_lazy_exports(
     MappingProxyType({
         "FlextLdifModelsAclConvert": ".acl_convert",
         "FlextLdifModelsBases": ".base",
+        "FlextLdifModelsBasesParts": "._base_parts",
         "FlextLdifModelsCollections": ".collections",
         "FlextLdifModelsDomainAcl": ".domain_acl",
         "FlextLdifModelsDomainAttributes": ".domain_attributes",
@@ -90,6 +94,7 @@ install_lazy_exports(
         "FlextLdifModelsResultsStatistics": ".results_statistics",
         "FlextLdifModelsSettings": ".settings",
         "FlextLdifNamespace": ".config",
+        "FlextLdifShared": ".base",
     }),
     public_exports=__all__,
 )

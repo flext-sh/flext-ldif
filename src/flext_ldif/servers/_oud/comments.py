@@ -38,6 +38,7 @@ class FlextLdifServersOudCommentsMixin(FlextLdifServersOudCommentsAclMixin):
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
+
         """
         if not (write_options and write_options.write_original_entry_as_comment):
             return []
@@ -75,6 +76,7 @@ class FlextLdifServersOudCommentsMixin(FlextLdifServersOudCommentsAclMixin):
 
         Returns:
             The resulting ``set[str]``.
+
         """
         acl_attr_names_to_skip: set[str] = set()
         if not entry.metadata:
@@ -126,6 +128,7 @@ class FlextLdifServersOudCommentsMixin(FlextLdifServersOudCommentsAclMixin):
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
+
         """
         normalized = u.normalize_to_metadata(removed_raw)
         return (
@@ -181,6 +184,7 @@ class FlextLdifServersOudCommentsMixin(FlextLdifServersOudCommentsAclMixin):
 
         Returns:
             The resulting ``set[str]``.
+
         """
         processed_attrs: set[str] = set()
         metadata = entry.metadata

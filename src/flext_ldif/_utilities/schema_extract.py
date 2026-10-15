@@ -10,8 +10,7 @@ from typing import TYPE_CHECKING
 
 from flext_cli import u
 
-from flext_core import r
-from flext_ldif import FlextLdifModels, c, p, t
+from flext_ldif import FlextLdifModels, c, p, r, t
 from flext_ldif._utilities import FlextLdifUtilitiesParser
 
 if TYPE_CHECKING:
@@ -31,6 +30,7 @@ class FlextLdifUtilitiesSchemaExtract:
 
         Returns:
             The resulting ``tuple[bool, bool]``.
+
         """
         single_value = FlextLdifUtilitiesParser.extract_boolean_flag(
             attr_definition,
@@ -52,6 +52,7 @@ class FlextLdifUtilitiesSchemaExtract:
 
         Returns:
             The resulting ``tuple[str | None, str | None, str | None]``.
+
         """
         equality = FlextLdifUtilitiesParser.extract_optional_field(
             attr_definition, c.Ldif.SCHEMA_EQUALITY
@@ -72,6 +73,7 @@ class FlextLdifUtilitiesSchemaExtract:
 
         Returns:
             The resulting ``tuple[str | None, str | None]``.
+
         """
         sup = FlextLdifUtilitiesParser.extract_optional_field(
             attr_definition, c.Ldif.SCHEMA_SUP
@@ -87,6 +89,7 @@ class FlextLdifUtilitiesSchemaExtract:
 
         Returns:
             The resulting ``tuple[str | None, int | None]``.
+
         """
         syntax_match = c.Ldif.SCHEMA_SYNTAX_LENGTH_RE.search(attr_definition)
         syntax = syntax_match.group(1) if syntax_match else None
@@ -103,6 +106,7 @@ class FlextLdifUtilitiesSchemaExtract:
 
         Returns:
             The resulting ``str``.
+
         """
         kind_match = c.Ldif.SCHEMA_OBJECTCLASS_KIND_RE.search(oc_definition)
         if kind_match is None:
@@ -115,23 +119,29 @@ class FlextLdifUtilitiesSchemaExtract:
     @staticmethod
     def extract_objectclass_must_may(
         oc_definition: str,
+        *,
+        must_separator: str = c.Ldif.SCHEMA_VALUE_SEPARATOR,
+        may_separator: str = c.Ldif.SCHEMA_VALUE_SEPARATOR,
     ) -> tuple[t.MutableSequenceOf[str] | None, t.MutableSequenceOf[str] | None]:
         """Extract MUST and MAY attributes from objectClass definition.
 
         Returns:
             The resulting ``tuple[t.MutableSequenceOf[str] | None,
                 t.MutableSequenceOf[str] | None]``.
+
         """
-        must = None
-        must_match = c.Ldif.SCHEMA_OBJECTCLASS_MUST_RE.search(oc_definition)
-        if must_match:
-            must_value = (must_match.group(1) or must_match.group(2)).strip()
-            must = FlextLdifUtilitiesSchemaExtract.split_schema_values(must_value)
-        may = None
-        may_match = c.Ldif.SCHEMA_OBJECTCLASS_MAY_RE.search(oc_definition)
-        if may_match:
-            may_value = (may_match.group(1) or may_match.group(2)).strip()
-            may = FlextLdifUtilitiesSchemaExtract.split_schema_values(may_value)
+        must, may = (
+            FlextLdifUtilitiesSchemaExtract.split_schema_values(
+                match.group(1) or match.group(2),
+                separator=separator,
+            )
+            if (match := pattern.search(oc_definition))
+            else None
+            for pattern, separator in (
+                (c.Ldif.SCHEMA_OBJECTCLASS_MUST_RE, must_separator),
+                (c.Ldif.SCHEMA_OBJECTCLASS_MAY_RE, may_separator),
+            )
+        )
         return (must, may)
 
     @staticmethod
@@ -140,6 +150,7 @@ class FlextLdifUtilitiesSchemaExtract:
 
         Returns:
             The resulting ``str | None``.
+
         """
         sup_match = c.Ldif.SCHEMA_OBJECTCLASS_SUP_RE.search(oc_definition)
         if not sup_match:
@@ -187,6 +198,7 @@ class FlextLdifUtilitiesSchemaExtract:
 
         Returns:
             The resulting ``t.MutableSequenceOf[SchemaModelT]``.
+
         """
         items: t.MutableSequenceOf[SchemaModelT] = []
         for raw_line in ldif_content.split("\n"):
@@ -205,8 +217,12 @@ class FlextLdifUtilitiesSchemaExtract:
         return items
 
     @staticmethod
-    def split_schema_values(value: str) -> t.MutableSequenceOf[str]:
-        return [item.strip() for item in value.strip().split("$")]
+    def split_schema_values(
+        value: str,
+        *,
+        separator: str = c.Ldif.SCHEMA_VALUE_SEPARATOR,
+    ) -> t.MutableSequenceOf[str]:
+        return [item.strip() for item in value.strip().split(separator)]
 
 
 __all__: list[str] = ["FlextLdifUtilitiesSchemaExtract"]

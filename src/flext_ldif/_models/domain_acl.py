@@ -11,6 +11,7 @@ from __future__ import annotations
 from typing import Annotated, Self
 
 from flext_core import FlextUtilities as u, m
+
 from flext_ldif import c, t
 from flext_ldif._constants import FlextLdifConstantsEnums
 from flext_ldif._models import FlextLdifModelsBases, FlextLdifModelsDomainMetadata
@@ -194,6 +195,7 @@ class FlextLdifModelsDomainAcl:
 
             Returns:
                 The resulting ``str``.
+
             """
             server_type_raw = str(self.server_type).lower().strip()
             aliased_server_type = c.Ldif.SERVER_TYPE_ALIASES.get(server_type_raw)
@@ -216,6 +218,7 @@ class FlextLdifModelsDomainAcl:
 
             Returns:
                 The resulting ``Self``.
+
             """
             violations: t.MutableSequenceOf[str] = []
             valid_server_types: frozenset[c.Ldif.ServerTypes] = frozenset({
@@ -353,6 +356,7 @@ class FlextLdifModelsDomainAcl:
 
             Returns:
                 The resulting ``bool``.
+
             """
             return self.original_format is not None and bool(self.original_format)
 

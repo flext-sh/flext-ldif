@@ -36,6 +36,7 @@ class FlextLdifUtilitiesDispatch:
 
         Returns:
             The resulting ``FlextLdifModels.Ldif.Entry``.
+
         """
         validated: FlextLdifModels.Ldif.Entry = (
             FlextLdifModels.Ldif.Entry.model_validate(value)
@@ -52,6 +53,7 @@ class FlextLdifUtilitiesDispatch:
 
         Returns:
             The resulting ``t.MutableSequenceOf[FlextLdifModels.Ldif.Entry]``.
+
         """
         if isinstance(values, FlextLdifModels.Ldif.ParseResponse):
             return values.entries
@@ -66,6 +68,7 @@ class FlextLdifUtilitiesDispatch:
 
         Returns:
             The resulting ``FlextLdifModels.Ldif.Acl``.
+
         """
         validated: FlextLdifModels.Ldif.Acl = FlextLdifModels.Ldif.Acl.model_validate(
             value,
@@ -80,6 +83,7 @@ class FlextLdifUtilitiesDispatch:
 
         Returns:
             The resulting ``t.MutableSequenceOf[FlextLdifModels.Ldif.Acl]``.
+
         """
         validated: t.MutableSequenceOf[FlextLdifModels.Ldif.Acl] = (
             FlextLdifUtilitiesDispatch._ACL_LIST_ADAPTER.validate_python(values)
@@ -153,6 +157,7 @@ class FlextLdifUtilitiesDispatch:
             The resulting
                 ``p.Result[t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]]
                 | p.Result[t.JsonValue] | bool``.
+
         """
         match True:
             case _ if not validators and isinstance(
@@ -206,6 +211,7 @@ class FlextLdifUtilitiesDispatch:
         Returns:
             The resulting
                 ``p.Result[t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]]``.
+
         """
         validation_pipeline = (
             pipeline or FlextLdifUtilitiesPipeline.ValidationPipeline()
@@ -224,6 +230,7 @@ class FlextLdifUtilitiesDispatch:
         Returns:
             The resulting
                 ``TypeGuard[t.MutableSequenceOf[FlextLdifModels.Ldif.Entry]]``.
+
         """
         if isinstance(obj, (str, bytes, FlextLdifModels.Ldif.DN)):
             return False

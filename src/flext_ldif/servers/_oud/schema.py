@@ -37,7 +37,9 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
         declare. Every rewrite is deterministic string surgery.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[m.Ldif.Entry]``.
+            Entries whose schema carrier values are rewritten into the
+            OUD-acceptable dialect.
+
         """
         sanitized: t.MutableSequenceOf[m.Ldif.Entry] = []
         declared: set[str] = set()
@@ -85,6 +87,15 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
     def _declared_names(
         values: t.MutableSequenceOf[m.Ldif.ChangeOperationValue],
     ) -> set[str]:
+        """Collect the attribute names declared by schema change values.
+
+        Args:
+            values: Change operation values carrying NAME declarations.
+
+        Returns:
+            Declared names normalized to the OUD canonical spelling.
+
+        """
         declared: set[str] = set()
         for v in values:
             matched = re.search(r"NAME '([^';]+)'", v.value)
@@ -98,11 +109,13 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
     ) -> t.MutableSequenceOf[m.Ldif.ChangeOperationValue]:
         """Strip NAME declarations from schema values for registry processing.
 
-        Returns a list of ChangeOperationValue with NAME removed from the
-        value string, preserving all other metadata.
+        Args:
+            values: Change operation values to clean.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[m.Ldif.ChangeOperationValue]``.
+            Copies of the values with NAME declarations removed and all other
+            content preserved.
+
         """
         stripped: list[m.Ldif.ChangeOperationValue] = []
         for value in values:
@@ -116,6 +129,20 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
     def _sanitize_schema_values(
         values: t.MutableSequenceOf[m.Ldif.ChangeOperationValue],
     ) -> t.MutableSequenceOf[m.Ldif.ChangeOperationValue]:
+        """Rewrite schema values into the OUD-acceptable dialect.
+
+        Applies the deterministic string surgery described by
+        ``_sanitize_schema_carriers``: transfer options inside names,
+        RFC-illegal underscores, syntax length qualifiers, and
+        NO-USER-MODIFICATION without an operational usage.
+
+        Args:
+            values: Change operation values to sanitize.
+
+        Returns:
+            Copies of the values rewritten for OUD.
+
+        """
         sanitized: list[m.Ldif.ChangeOperationValue] = []
         for value in values:
             raw = value.value
@@ -170,10 +197,15 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
     ]:
         """Extract and parse all schema definitions from LDIF content.
 
+        Args:
+            ldif_content: Raw LDIF content text.
+            validate_dependencies: Whether referenced schema dependencies must
+                be declared.
+
         Returns:
-            The resulting ``p.Result[MutableMapping[str,
-                t.MutableSequenceOf[m.Ldif.SchemaAttribute] |
-                t.MutableSequenceOf[m.Ldif.SchemaObjectClass]]]``.
+            Result carrying schema attributes and objectClasses keyed by
+            definition type, or a failure.
+
         """
         return super().extract_schemas_from_ldif(
             ldif_content,
@@ -186,8 +218,15 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
     ) -> tuple[str | None, str | None]:
         """Apply OUD-specific matching rule transformations.
 
+        Moves SUBSTR-only matching rules declared as EQUALITY to SUBSTR and
+        replaces rules OUD does not support.
+
+        Args:
+            attr_data: Attribute whose matching rules are transformed.
+
         Returns:
-            The resulting ``tuple[str | None, str | None]``.
+            Pair of the corrected EQUALITY and SUBSTR rule names.
+
         """
         fixed_equality = attr_data.equality
         fixed_substr = attr_data.substr
@@ -217,10 +256,14 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
         self,
         attr: m.Ldif.SchemaAttribute,
     ) -> m.Ldif.SchemaAttribute:
-        """Apply OID validation and tracking metadata to attribute.
+        """Record OID validity and format metadata on the attribute.
+
+        Args:
+            attr: Attribute carrying the OID to validate.
 
         Returns:
-            The resulting ``m.Ldif.SchemaAttribute``.
+            The attribute with OID validation extensions applied.
+
         """
         if not attr or not attr.oid:
             return attr
@@ -251,10 +294,14 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
     def _collect_attribute_extensions(
         attr: m.Ldif.SchemaAttribute,
     ) -> t.MutableSequenceOf[str]:
-        """Collect OUD X-* extensions from attribute.
+        """Collect the OUD X-* extensions present on the attribute.
+
+        Args:
+            attr: Attribute to inspect.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            Names of the OUD extension fields that are set.
+
         """
         extensions: t.MutableSequenceOf[str] = []
         if attr.x_origin:
@@ -276,8 +323,15 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
     ) -> p.Result[m.Ldif.SchemaAttribute]:
         """Validate OUD-specific attribute features after RFC parsing.
 
+        Sanitizes RFC-illegal names, normalizes matching rules, and records
+        OID validation metadata.
+
+        Args:
+            attr: Attribute parsed by the RFC baseline.
+
         Returns:
-            The resulting ``p.Result[m.Ldif.SchemaAttribute]``.
+            Result carrying the validated attribute, or a failure.
+
         """
         if not attr or not attr.oid:
             return r[m.Ldif.SchemaAttribute].ok(attr)
@@ -351,8 +405,14 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
     ) -> p.Result[m.Ldif.SchemaObjectClass]:
         """Validate OUD-specific objectClass features after RFC parsing.
 
+        Sanitizes RFC-illegal names and enforces the single-SUP constraint.
+
+        Args:
+            oc: ObjectClass parsed by the RFC baseline.
+
         Returns:
-            The resulting ``p.Result[m.Ldif.SchemaObjectClass]``.
+            Result carrying the validated objectClass, or a failure.
+
         """
         sanitized_oc = oc
         updates: t.MutableMappingKV[str, t.Ldif.Scalar | t.MutableSequenceOf[str]] = {}
@@ -398,8 +458,12 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
     ) -> m.Ldif.SchemaAttribute:
         """Apply OUD-specific attribute transformations before writing.
 
+        Args:
+            attr_data: Attribute to transform.
+
         Returns:
-            The resulting ``m.Ldif.SchemaAttribute``.
+            The attribute rewritten for the OUD schema writer.
+
         """
         fixed_equality, fixed_substr = self._transform_by_matching_rules(attr_data)
         fixed_name = attr_data.name
@@ -483,8 +547,12 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
     ) -> m.Ldif.SchemaObjectClass:
         """Apply OUD-specific objectClass transformations before writing.
 
+        Args:
+            oc_data: ObjectClass to transform.
+
         Returns:
-            The resulting ``m.Ldif.SchemaObjectClass``.
+            The objectClass rewritten for the OUD schema writer.
+
         """
         updates: t.MutableMappingKV[str, str | t.MutableSequenceOf[str]] = {}
         if oc_data.name and "_" in oc_data.name:
@@ -524,8 +592,14 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
     def _validate_attribute_oid(oid: str) -> p.Result[bool]:
         """Validate attribute OID format for OUD.
 
+        Accepts numeric RFC OIDs and the OUD ``-oid`` suffix form.
+
+        Args:
+            oid: OID string to validate.
+
         Returns:
-            The resulting ``p.Result[bool]``.
+            Result carrying True when the OID is valid, or a failure.
+
         """
         oid_validation_result = u.Ldif.validate_format(oid)
         if oid_validation_result.failure:
@@ -548,10 +622,18 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
         self,
         oc: m.Ldif.SchemaObjectClass,
     ) -> p.Result[m.Ldif.SchemaObjectClass]:
-        """Validate ObjectClass OID and SUP OID formats.
+        """Validate objectClass OID and SUP OID formats.
+
+        Records OID validation metadata on the objectClass and checks a
+        dotted-numeric SUP as an OID.
+
+        Args:
+            oc: ObjectClass to validate.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.SchemaObjectClass]``.
+            Result carrying the objectClass with validation metadata, or a
+            failure.
+
         """
         if oc and oc.oid:
             oid_str = oc.oid
@@ -594,10 +676,14 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
 
     @staticmethod
     def _validate_objectclass_sup(oc: m.Ldif.SchemaObjectClass) -> p.Result[bool]:
-        """Validate objectClass SUP constraint for OUD.
+        """Validate the single-SUP constraint OUD imposes on objectClasses.
+
+        Args:
+            oc: ObjectClass whose SUP is checked.
 
         Returns:
-            The resulting ``p.Result[bool]``.
+            Result carrying True when the constraint holds, or a failure.
+
         """
         sup = oc.sup
         if sup:

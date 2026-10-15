@@ -12,6 +12,7 @@ from __future__ import annotations
 from typing import Annotated, Self
 
 from flext_core import FlextUtilities as u, m
+
 from flext_ldif._constants.base import FlextLdifConstantsEnums
 from flext_ldif._models._settings_normalization import (
     FlextLdifModelsSettingsNormalization,
@@ -84,6 +85,7 @@ class FlextLdifModelsSettingsProcessing:
 
             Returns:
                 The resulting ``Self``.
+
             """
             return cls(
                 source_server=source_server,
@@ -131,6 +133,7 @@ class FlextLdifModelsSettingsProcessing:
 
             Returns:
                 The resulting ``Self``.
+
             """
             return cls(
                 normalize_dns=True,

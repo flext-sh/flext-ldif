@@ -143,6 +143,7 @@ class FlextLdifConstantsBase:
     )
     SCHEMA_OBJECTCLASS_MUST: ClassVar[str] = "MUST\\s+(?:\\(\\s*([^)]+)\\s*\\)|(\\w+))"
     SCHEMA_OBJECTCLASS_MAY: ClassVar[str] = "MAY\\s+(?:\\(\\s*([^)]+)\\s*\\)|(\\w+))"
+    SCHEMA_VALUE_SEPARATOR: ClassVar[str] = "$"
     ATTRIBUTE_NAME: ClassVar[str] = "^[a-zA-Z][a-zA-Z0-9-]*$"
     ATTRIBUTE_OPTION: ClassVar[str] = ";[a-zA-Z][a-zA-Z0-9-_]*"
     BINARY_CHAR_PATTERN: ClassVar[str] = "[\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\x7f-\\xff]"
@@ -175,6 +176,10 @@ class FlextLdifConstantsBase:
     )
     SCHEMA_SUBSTR_TOKEN_RE: ClassVar[t.RegexPattern] = re.compile(SCHEMA_SUBSTR_PATTERN)
     SCHEMA_OID_CAPTURE_RE: ClassVar[t.RegexPattern] = re.compile(SCHEMA_OID_CAPTURE)
+    SCHEMA_OID_LEADING_RE: ClassVar[t.RegexPattern] = re.compile(
+        rf"\A\s*{SCHEMA_OID_CAPTURE}",
+    )
+    SCHEMA_OID_EMPTY_ERROR: ClassVar[str] = "Empty definition: cannot extract OID"
     SCHEMA_OBJECTCLASS_KIND_RE: ClassVar[t.RegexPattern] = re.compile(
         SCHEMA_OBJECTCLASS_KIND,
         re.IGNORECASE,
@@ -280,6 +285,7 @@ class FlextLdifConstantsBase:
 
         Returns:
             The resulting ``t.RegexPattern``.
+
         """
         flags = 0
         if ignorecase:
@@ -298,6 +304,7 @@ class FlextLdifConstantsBase:
 
         Returns:
             The resulting ``str``.
+
         """
         return re.escape(value)
 

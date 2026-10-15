@@ -1,7 +1,5 @@
 """Domain Entry model — LDIF entry and entry statistics.
 
-from flext_ldif import m
-from flext_ldif import u
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -14,6 +12,7 @@ from types import MappingProxyType
 from typing import Annotated, ClassVar, Self, override
 
 from flext_core import m, u
+
 from flext_ldif import c, e, p, r, t
 from flext_ldif._models import (
     FlextLdifModelsDomainAttributes,
@@ -51,17 +50,11 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
     class Entry(m.Entity, m.DynamicModel):
         """LDIF entry domain model.
 
-        Implements p.Models.Entry through structural typing.
-        The protocol requires:
-        - dn: str
-        - attributes: FlextLdifModelsDomainAttributes.Attributes
+        Satisfies ``p.Ldif.Entry.Entry`` through structural typing: the
+        ``dn_str`` and ``attributes_dict`` computed fields expose the
+        protocol surface, and ``extra='allow'`` legitimizes dynamic LDIF
+        attributes.
 
-        This model provides these through:
-        - dn field (DN) which has .value property returning str
-        - attributes field (Attributes) which has .attributes property returning
-        FlextLdifModelsDomainsEntries.UnconvertedAttributes
-
-        Inherits DynamicModel to legitimize extra='allow' for LDIF dynamic attributes.
         """
 
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
@@ -148,14 +141,14 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             | t.MutableJsonMapping
             | None,
         ) -> FlextLdifModelsDomainAttributes.Attributes | None:
-            """Convert dict to Attributes instance.
+            """Normalize raw attribute input into the attributes container.
 
-            Allows None to pass through for violation capture in u.model_validator.
-            RFC 2849 § 2 violations (attributes required) are captured in
-            validate_entry_rfc_compliance.
+            None passes through so RFC violation capture can proceed in the
+            model validator.
 
             Returns:
-                The resulting ``FlextLdifModelsDomainAttributes.Attributes | None``.
+                The validated attributes container, or None.
+
             """
             if value is None or isinstance(
                 value, FlextLdifModelsDomainAttributes.Attributes
@@ -173,13 +166,14 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             cls,
             value: FlextLdifModelsDomainDN.DN | t.MutableJsonMapping | str | None,
         ) -> FlextLdifModelsDomainDN.DN | None:
-            """Convert string DN to DN instance.
+            """Normalize raw DN input into a DN instance.
 
-            Allows None to pass through for violation capture in u.model_validator.
-            RFC 2849 § 2 violations are captured in validate_entry_rfc_compliance.
+            None passes through so RFC violation capture can proceed in the
+            model validator.
 
             Returns:
-                The resulting ``FlextLdifModelsDomainDN.DN | None``.
+                The validated DN, or None.
+
             """
             if value is None or isinstance(value, FlextLdifModelsDomainDN.DN):
                 return value
@@ -190,10 +184,11 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
         @u.field_validator("record_kind", mode="before")
         @classmethod
         def coerce_record_kind(cls, value: str) -> c.Ldif.RecordKind:
-            """Accept both enum instances and serialized record kind strings.
+            """Normalize raw input into a record kind value.
 
             Returns:
-                The resulting ``c.Ldif.RecordKind``.
+                The record kind for the given value.
+
             """
             return c.Ldif.RecordKind(value)
 
@@ -210,10 +205,11 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
         @u.field_validator("changetype", mode="before")
         @classmethod
         def coerce_changetype(cls, value: str | None) -> c.Ldif.ChangeType | None:
-            """Accept both enum instances and serialized changetype strings.
+            """Normalize raw input into a changetype value.
 
             Returns:
-                The resulting ``c.Ldif.ChangeType | None``.
+                The changetype for the given value, or None.
+
             """
             return c.Ldif.ChangeType(value) if isinstance(value, str) else value
 
@@ -256,20 +252,22 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
         @u.computed_field
         @property
         def attributes_dict(self) -> t.MutableStrSequenceMapping:
-            """Protocol compliance: p.Ldif.Entry.Entry requires attributes:.
+            """Attribute mapping required by the entry protocol.
 
-            dict[str, list[str]].
+            Returns:
+                Attributes as a name-to-values mapping; empty when absent.
 
-            Returns the attributes as a dict for protocol compatibility.
             """
             return {} if self.attributes is None else self.attributes.attributes
 
         @u.computed_field
         @property
         def dn_str(self) -> str:
-            """Protocol compliance: p.Ldif.Entry.Entry requires dn: str.
+            """String form of the DN required by the entry protocol.
 
-            Returns the DN as a string for protocol compatibility.
+            Returns:
+                The DN value; empty when the DN is absent.
+
             """
             return "" if self.dn is None else self.dn.value
 
@@ -282,9 +280,12 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
         @u.computed_field
         @property
         def unconverted_attributes(self) -> t.Ldif.UnconvertedAttributes:
-            """The unconverted attributes from metadata extensions (read-only view, DRY.
+            """Raw attributes preserved from parsing, before conversion.
 
-            pattern).
+            Returns:
+                Read-only view of the unconverted attributes from metadata
+                extensions; empty when metadata is absent.
+
             """
             empty_attrs: t.Ldif.UnconvertedAttributes = {}
             if self.metadata is None:
@@ -301,22 +302,16 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
         ) -> MutableMapping[
             str, t.JsonValue | datetime | FlextLdifModelsDomainMetadata.ServerMetadata
         ]:
-            """Ensure metadata field is always initialized to a ServerMetadata instance.
+            """Initialize metadata and coerce datetime input before validation.
 
-            Also handles datetime coercion from ISO strings for JSON round-trips.
-            This is necessary because strict=True doesn't auto-coerce strings
-            to datetime.
-
-            Pydantic v2 Context Pattern: Using u.model_validator with mode='before'
-            to initialize fields before field validators run. This validator executes
-            at instantiation time, when the module is fully loaded and
-            FlextLdifModelsDomainsEntries is in scope.
+            Strict mode does not auto-coerce ISO strings to datetimes, so the
+            coercion runs here before field validators execute.
 
             Args:
-                data: Input data for model instantiation
+                data: Input data for model instantiation.
 
             Returns:
-                Modified data with metadata field initialized and datetimes coerced
+                Input data with metadata initialized and datetimes coerced.
 
             """
             data_dict: MutableMapping[
@@ -368,6 +363,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
 
             Returns:
                 The parsed server type, defaulting to RFC.
+
             """
             if isinstance(server_type_value, str):
                 try:
@@ -396,7 +392,8 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             """Keep record_kind aligned with changetype semantics.
 
             Returns:
-                The resulting ``Self``.
+                The entry whose record kind matches its changetype.
+
             """
             target_kind = (
                 c.Ldif.RecordKind.CHANGE
@@ -410,43 +407,45 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
 
         @u.model_validator(mode="after")
         def validate_entry_consistency(self) -> Self:
-            """Validate cross-field consistency in Entry model.
+            """Validate cross-field consistency of the entry.
 
             Notes:
-            - ObjectClass validation is optional - downstream code handles
-            entries without objectClass via rejection or warnings.
-            - Schema entries (dn: cn=schema) are allowed without objectClass
-            as they contain schema definitions, not directory objects.
+                ObjectClass validation is optional; downstream code handles
+                entries without objectClass via rejection or warnings. Schema
+                entries (``dn: cn=schema``) are allowed without objectClass as
+                they contain schema definitions, not directory objects.
 
             Returns:
-            Self (for method chaining)
+                The validated entry, for validator chaining.
 
             """
             return self
 
         @u.model_validator(mode="after")
         def validate_entry_rfc_compliance(self) -> Self:
-            """Validate Entry RFC compliance - capture violations, DON'T reject.
+            """Validate RFC compliance and capture violations without rejecting.
 
-            RFC 2849 § 2: DN and at least one attribute required
-            RFC 4514 § 2.3, 2.4: DN format validation
-            RFC 4512 § 2.5: Attribute name format validation
-
-            Strategy: PRESERVE problematic entries for round-trip conversions,
-            capture violations in validation_metadata for downstream handling.
+            Checks RFC 2849 section 2 (DN and attribute presence), RFC 4514
+            sections 2.3 and 2.4 (DN format), and RFC 4512 section 2.5
+            (attribute name format). Problematic entries are preserved for
+            round-trip handling; violations are stored in validation metadata
+            for downstream processing.
 
             Returns:
-                The resulting ``Self``.
+                The validated entry.
+
             """
             dn_value, violations = self._collect_rfc_violations()
             self._store_rfc_violations(dn_value, violations)
             return self
 
         def _collect_rfc_violations(self) -> tuple[str, t.MutableSequenceOf[str]]:
-            """Collect RFC 2849/4514 violations without rejecting the entry.
+            """Collect RFC violations without rejecting the entry.
 
             Returns:
-                The resulting ``tuple[str, t.MutableSequenceOf[str]]``.
+                Pair of the DN value used for context and the collected
+                violation descriptions.
+
             """
             violations: t.MutableSequenceOf[str] = []
             dn_value = "<None>"
@@ -510,10 +509,12 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
 
         @u.model_validator(mode="after")
         def validate_server_specific_rules(self) -> Self:
-            """Validate Entry using server-injected validation rules.
+            """Validate the entry with server-injected validation rules.
 
             Returns:
-                The resulting ``Self``.
+                The validated entry, with server-specific violations recorded
+                in validation metadata when rules apply.
+
             """
             if (
                 self.metadata is None
@@ -562,10 +563,11 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
         def _empty_validation_results(
             cls,
         ) -> FlextLdifModelsDomainMetadata.ValidationMetadata:
-            """Create empty ValidationMetadata from canonical immutable payload.
+            """Empty validation metadata built from the canonical payload.
 
             Returns:
-                The resulting ``FlextLdifModelsDomainMetadata.ValidationMetadata``.
+                Validation metadata carrying no violations.
+
             """
             payload: t.JsonMapping = t.json_mapping_adapter().validate_python({
                 **cls._EMPTY_VALIDATION_RESULT_PAYLOAD,
@@ -589,10 +591,17 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             attribute_count: int,
             total_violations: int,
         ) -> t.StrMapping:
-            """Build RFC validation context map reusing canonical key constants.
+            """Build the RFC validation context map from canonical keys.
+
+            Args:
+                old_context: Prior context entries to preserve.
+                dn_value: DN string recorded for the validation.
+                attribute_count: Number of attributes on the entry.
+                total_violations: Number of violations collected.
 
             Returns:
-                The resulting ``t.StrMapping``.
+                Context mapping for the validation metadata.
+
             """
             return {
                 **old_context,
@@ -607,10 +616,10 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
         @u.computed_field
         @property
         def has_validation_errors(self) -> bool:
-            """Whether entry has validation errors.
+            """Presence of validation errors in the validation metadata.
 
             Returns:
-            True if entry has validation errors in validation_metadata, False otherwise
+                True when the metadata records validation errors.
 
             """
             return bool(
@@ -622,10 +631,10 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
         @u.computed_field
         @property
         def is_acl_entry(self) -> bool:
-            """Whether entry has Access Control Lists.
+            """Presence of Access Control Lists on the entry.
 
             Returns:
-            True if entry has ACLs, False otherwise
+                True when the metadata carries ACLs.
 
             """
             return bool(self.metadata and self.metadata.acls)
@@ -633,13 +642,13 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
         @u.computed_field
         @property
         def is_schema_entry(self) -> bool:
-            """Whether entry is a schema definition entry.
+            """Schema-definition status of the entry.
 
             Schema entries contain objectClass definitions and are typically
             found in the schema naming context.
 
             Returns:
-            True if entry has objectClasses, False otherwise
+                True when the metadata carries objectClass definitions.
 
             """
             return bool(self.metadata and self.metadata.objectclasses)
@@ -650,17 +659,16 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             attributes: t.MutableAttributeMapping
             | FlextLdifModelsDomainAttributes.Attributes,
         ) -> FlextLdifModelsDomainAttributes.Attributes:
-            """Normalize attributes to Attributes t.JsonValue.
+            """Normalize attribute input into the attributes container.
+
+            An empty attribute mapping is accepted and captured later as an
+            RFC violation in the validation metadata.
 
             Args:
-                attributes: Attributes as dict or Attributes t.JsonValue
+                attributes: Attributes as a mapping or container instance.
 
             Returns:
-                Attributes t.JsonValue with normalized values
-
-            Note:
-                Lenient processing: Empty attributes dict is accepted and will
-                be captured in validation_metadata as RFC violation.
+                The normalized attributes container.
 
             """
             if isinstance(attributes, FlextLdifModelsDomainAttributes.Attributes):
@@ -692,10 +700,16 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             | FlextLdifModelsDomainAttributes.Attributes,
             metadata: FlextLdifModelsDomainMetadata.ServerMetadata | None = None,
         ) -> p.Result[Self]:
-            """Create a validated Entry from canonical domain inputs.
+            """Create a validated entry from canonical domain inputs.
+
+            Args:
+                dn: Distinguished name as string or DN instance.
+                attributes: Attributes as mapping or container instance.
+                metadata: Optional server metadata for the entry.
 
             Returns:
-                The resulting ``p.Result[Self]``.
+                Result carrying the created entry, or a failure.
+
             """
             try:
                 entry_data = cls._build_entry_data(dn, attributes, metadata)
@@ -718,10 +732,16 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             | FlextLdifModelsDomainAttributes.Attributes,
             metadata: FlextLdifModelsDomainMetadata.ServerMetadata | None,
         ) -> t.MappingKV[str, t.JsonPayload]:
-            """Build validated Entry model input.
+            """Build validated entry model input.
+
+            Args:
+                dn: Distinguished name as string or DN instance.
+                attributes: Attributes as mapping or container instance.
+                metadata: Optional server metadata for the entry.
 
             Returns:
-                The resulting ``t.MappingKV[str, t.JsonPayload]``.
+                Model input mapping for entry validation.
+
             """
             entry_data: t.MutableMappingKV[str, t.JsonPayload] = {
                 c.Ldif.DictKeys.DN: FlextLdifModelsDomainDN.DN.from_value(dn),

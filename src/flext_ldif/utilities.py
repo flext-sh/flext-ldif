@@ -207,6 +207,7 @@ class FlextLdifUtilities(
 
         Returns:
             The assembled ``Ldif`` utility namespace class.
+
         """
         bases: list[type] = [
             FlextLdifUtilitiesCollectionLdif.Search,
@@ -225,6 +226,7 @@ class FlextLdifUtilities(
 
         Returns:
             The resulting ``tuple[tuple[str, str], ...]``.
+
         """
         return cls._LAZY_UTILITIES
 

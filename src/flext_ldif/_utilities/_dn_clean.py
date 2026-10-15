@@ -31,6 +31,7 @@ class FlextLdifDNCleaning:
         Returns:
             The resulting ``tuple[str, t.MutableSequenceOf[str], MutableMapping[str,
                 bool | str | t.MutableSequenceOf[str]]]``.
+
         """
         transformations: t.MutableSequenceOf[str] = []
         empty_warnings: t.MutableSequenceOf[str] = []
@@ -127,6 +128,7 @@ class FlextLdifDNCleaning:
 
         Returns:
             The resulting ``FlextLdifModels.Ldif.DNStatistics``.
+
         """
         validation_status_raw = flags.get("validation_status", "")
         validation_status: str = (
@@ -175,6 +177,7 @@ class FlextLdifDNCleaning:
 
         Returns:
             The resulting ``str``.
+
         """
         dn_str = FlextLdifDNParsing.resolve_dn_value(dn)
         if not dn_str:

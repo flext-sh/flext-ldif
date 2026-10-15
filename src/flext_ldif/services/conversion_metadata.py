@@ -24,6 +24,7 @@ class FlextLdifConversionMetadataMixin(s[m.Ldif.Response]):
         Returns:
             The resulting ``t.MutableMappingKV[str,
                 t.Ldif.MutableMetadataInputMapping]``.
+
         """
         if bool(original_attribute_case):
             payload: t.JsonMapping = u.json_mapping_adapter().validate_python({
@@ -46,6 +47,7 @@ class FlextLdifConversionMetadataMixin(s[m.Ldif.Response]):
         Returns:
             The resulting ``t.MutableMappingKV[str,
                 t.Ldif.MutableMetadataInputMapping]``.
+
         """
         if not boolean_conversions:
             return {}
@@ -74,6 +76,7 @@ class FlextLdifConversionMetadataMixin(s[m.Ldif.Response]):
         Returns:
             The resulting ``t.MutableMappingKV[str,
                 t.Ldif.MutableMetadataInputMapping]``.
+
         """
         spacing = original_format_details.get("spacing")
         if spacing is None:
@@ -97,6 +100,7 @@ class FlextLdifConversionMetadataMixin(s[m.Ldif.Response]):
         Returns:
             The resulting ``t.MutableMappingKV[str,
                 t.Ldif.MutableMetadataInputMapping]``.
+
         """
         conversion_analysis: t.MutableMappingKV[
             str,
@@ -156,6 +160,7 @@ class FlextLdifConversionMetadataMixin(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``m.Ldif.Entry``.
+
         """
         get_metadata = u.prop("metadata")
         get_extensions = u.prop("extensions")

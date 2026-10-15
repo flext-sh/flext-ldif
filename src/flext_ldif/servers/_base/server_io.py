@@ -20,6 +20,7 @@ class FlextLdifServersBaseIoMixin:
 
         Returns:
             The resulting ``str``.
+
         """
         return ldif if not ldif or ldif.endswith("\n") else f"{ldif}\n"
 
@@ -31,6 +32,7 @@ class FlextLdifServersBaseIoMixin:
 
         Returns:
             The resulting ``p.Result[m.Ldif.ParseResponse]``.
+
         """
         entry_server = getattr(self, "entry_server", None)
         if entry_server is None:
@@ -87,6 +89,7 @@ class FlextLdifServersBaseIoMixin:
 
         Returns:
             The resulting ``p.Result[str]``.
+
         """
         entry_server = getattr(self, "entry_server", None)
         if not entry_server:
@@ -104,6 +107,7 @@ class FlextLdifServersBaseIoMixin:
 
         Returns:
             The resulting ``p.Result[m.Ldif.Entry]``.
+
         """
         parse_result = self.parse_ldif(ldif_text)
         if not parse_result.success:

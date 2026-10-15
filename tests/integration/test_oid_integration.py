@@ -40,6 +40,7 @@ class TestsFlextLdifOidIntegration:
 
         Returns:
             The resulting ``t.SequenceOf[m.Ldif.Entry]``.
+
         """
         response: m.Ldif.ParseResponse = u.Tests.assert_success(
             api.parse_ldif(content),
@@ -66,6 +67,7 @@ class TestsFlextLdifOidIntegration:
 
         Returns:
             The resulting ``int``.
+
         """
         return len(entry.attributes_dict.get(attribute_name, []))
 
@@ -79,6 +81,7 @@ class TestsFlextLdifOidIntegration:
 
         Returns:
             The resulting ``t.SequenceOf[m.Ldif.Entry]``.
+
         """
         written: m.Ldif.WriteResponse = u.Tests.assert_success(
             api.write(list(entries)),

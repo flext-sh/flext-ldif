@@ -24,6 +24,7 @@ class FlextLdifConversionAclPreserveMixin(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``t.Ldif.MutableMetadataInputMapping``.
+
         """
 
         def to_general_value(value: t.JsonPayload | None) -> t.JsonValue:
@@ -52,6 +53,7 @@ class FlextLdifConversionAclPreserveMixin(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``m.Ldif.Acl``.
+
         """
         original_permissions = original_acl.permissions
         orig_perms_dict: t.MutableBoolMapping = (
@@ -156,6 +158,7 @@ class FlextLdifConversionAclPreserveMixin(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``m.Ldif.Acl``.
+
         """
         original_permissions = original_acl.permissions
         orig_perms_dict: t.MutableBoolMapping = (

@@ -25,6 +25,7 @@ class FlextLdifServersOpenldap1Entry(FlextLdifServersRfcEntry):
 
         Returns:
             The resulting ``bool``.
+
         """
         if not entry_dn:
             return False
@@ -41,6 +42,7 @@ class FlextLdifServersOpenldap1Entry(FlextLdifServersRfcEntry):
 
         Returns:
             The resulting ``p.Result[m.Ldif.Entry]``.
+
         """
         try:
             metadata = entry.metadata or m.Ldif.ServerMetadata(

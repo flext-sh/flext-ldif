@@ -12,11 +12,29 @@ from __future__ import annotations
 
 import pytest
 
-from tests import c, m, tm, u
+from tests import c, p, t, tm, u
 
 
 class TestsFlextLdifParserUtilities:
     """Public-contract behavior of the LDIF parser utilities."""
+
+    @staticmethod
+    @pytest.mark.parametrize(
+        ("must_separator", "may_separator"), [("|", ","), (",", "|")]
+    )
+    def test_schema_field_separators_are_independent(
+        must_separator: str,
+        may_separator: str,
+    ) -> None:
+        """MUST and MAY use their supplied policies independently."""
+        tm.that(
+            u.Ldif.extract_objectclass_must_may(
+                f"MUST ( cn{must_separator}sn ) MAY ( uid{may_separator}mail )",
+                must_separator=must_separator,
+                may_separator=may_separator,
+            ),
+            eq=(["cn", "sn"], ["uid", "mail"]),
+        )
 
     # ------------------------------------------------------------------
     # extract_oid
@@ -24,13 +42,21 @@ class TestsFlextLdifParserUtilities:
     @staticmethod
     @pytest.mark.parametrize(
         "definition",
-        ["", "( NAME 'cn' DESC 'no oid' )", "not-an-oid NAME 'x'"],
+        [
+            "",
+            "   ",
+            "( NAME 'cn' DESC 'no oid' )",
+            "not-an-oid NAME 'x'",
+            "prefix ( 1.2.3 NAME 'x' )",
+        ],
     )
     def test_extract_oid_fails_without_leading_oid(definition: str) -> None:
         """Test extract oid fails without leading oid."""
         result = u.Ldif.extract_oid(definition)
 
         u.Tests.assert_failure(result)
+        if not definition:
+            tm.that(result.error, eq=c.Ldif.SCHEMA_OID_EMPTY_ERROR)
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -57,9 +83,7 @@ class TestsFlextLdifParserUtilities:
     @staticmethod
     def test_parse_attribute_line_fails_without_colon() -> None:
         """Test parse attribute line fails without colon."""
-        result = u.Ldif.parse_attribute_line("cn value")
-
-        u.Tests.assert_failure(result)
+        tm.fail(u.Ldif.parse_attribute_line("cn value"))
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -77,9 +101,7 @@ class TestsFlextLdifParserUtilities:
         expected: tuple[str, str, bool],
     ) -> None:
         """Test parse attribute line splits name value and base64 flag."""
-        result = u.Ldif.parse_attribute_line(line)
-
-        value = u.Tests.assert_success(result)
+        value = tm.ok(u.Ldif.parse_attribute_line(line))
         tm.that(value, eq=expected)
 
     # ------------------------------------------------------------------
@@ -138,7 +160,7 @@ class TestsFlextLdifParserUtilities:
         expected_value: str | None,
     ) -> None:
         """Test build control parses control fields."""
-        control: m.Ldif.Control = u.Ldif.build_control(payload)
+        control: p.Ldif.Control = u.Ldif.build_control(payload)
 
         tm.that(control.control_type, eq=expected_type)
         tm.that(control.criticality, eq=expected_criticality)
@@ -207,20 +229,18 @@ class TestsFlextLdifParserUtilities:
     # unfold_lines
     # ------------------------------------------------------------------
     @staticmethod
-    def test_unfold_lines_merges_continuation_lines() -> None:
-        """Test unfold lines merges continuation lines."""
-        unfolded = u.Ldif.unfold_lines("cn: hello\n world\nsn: last")
-
+    @pytest.mark.parametrize(
+        ("content", "expected"),
+        [
+            ("cn: hello\n world\nsn: last", ["cn: helloworld", "sn: last"]),
+            ("dn: cn=a\n\ndn: cn=b", ["dn: cn=a", "", "dn: cn=b"]),
+        ],
+    )
+    def test_unfold_lines(content: str, expected: t.StrSequence) -> None:
+        """Unfold continuations while preserving record-separating blank lines."""
         # RFC 2849 folding: the single leading space is stripped and the
         # remainder is concatenated verbatim onto the previous line.
-        tm.that(unfolded, eq=["cn: helloworld", "sn: last"])
-
-    @staticmethod
-    def test_unfold_lines_preserves_record_separating_blank() -> None:
-        """Test unfold lines preserves record separating blank."""
-        unfolded = u.Ldif.unfold_lines("dn: cn=a\n\ndn: cn=b")
-
-        tm.that(unfolded, eq=["dn: cn=a", "", "dn: cn=b"])
+        tm.that(u.Ldif.unfold_lines(content), eq=expected)
 
     # ------------------------------------------------------------------
     # split_ldif_records
@@ -259,13 +279,13 @@ class TestsFlextLdifParserUtilities:
     @staticmethod
     def test_parse_ldif_record_builds_entry_from_valid_record() -> None:
         """Test parse ldif record builds entry from valid record."""
-        result = u.Ldif.parse_ldif_record([
-            "dn: cn=alice,dc=example,dc=com",
-            "cn: alice",
-            "objectClass: person",
-        ])
-
-        entry = u.Tests.assert_success(result)
+        entry = tm.ok(
+            u.Ldif.parse_ldif_record([
+                "dn: cn=alice,dc=example,dc=com",
+                "cn: alice",
+                "objectClass: person",
+            ]),
+        )
         assert entry.dn is not None
         assert entry.attributes is not None
         tm.that(entry.dn.value, eq="cn=alice,dc=example,dc=com")
@@ -280,13 +300,13 @@ class TestsFlextLdifParserUtilities:
         without decoding, so every base64 DN (accented production data)
         failed DN validation and the record was silently dropped.
         """
-        result = u.Ldif.parse_ldif_record([
-            "dn:: Y249bWFyY2Vsby5hcmHDumpvLGRjPWV4YW1wbGUsZGM9Y29t",
-            "cn: marcelo.araújo",
-            "objectClass: person",
-        ])
-
-        entry = u.Tests.assert_success(result)
+        entry = tm.ok(
+            u.Ldif.parse_ldif_record([
+                "dn:: Y249bWFyY2Vsby5hcmHDumpvLGRjPWV4YW1wbGUsZGM9Y29t",
+                "cn: marcelo.araújo",
+                "objectClass: person",
+            ]),
+        )
         assert entry.dn is not None
         assert entry.metadata is not None
         tm.that(entry.dn.value, eq="cn=marcelo.araújo,dc=example,dc=com")
@@ -302,20 +322,18 @@ class TestsFlextLdifParserUtilities:
         base64-encoded DN; the parsed DN must address the same server
         entry byte-for-byte, never silently normalize it.
         """
-        result = u.Ldif.parse_ldif_record([
-            "dn:: Y249c3BvdAksZGM9ZXhhbXBsZSxkYz1jb20=",
-            "cn: spot",
-            "objectClass: person",
-        ])
-
-        entry = u.Tests.assert_success(result)
+        entry = tm.ok(
+            u.Ldif.parse_ldif_record([
+                "dn:: Y249c3BvdAksZGM9ZXhhbXBsZSxkYz1jb20=",
+                "cn: spot",
+                "objectClass: person",
+            ]),
+        )
         assert entry.dn is not None
         tm.that(entry.dn.value, eq="cn=spot\t,dc=example,dc=com")
 
     @staticmethod
     def test_parse_ldif_record_fails_without_dn() -> None:
         """Test parse ldif record fails without dn."""
-        result = u.Ldif.parse_ldif_record(["cn: alice", "sn: smith"])
-
-        error = u.Tests.assert_failure(result)
+        error = tm.fail(u.Ldif.parse_ldif_record(["cn: alice", "sn: smith"]))
         tm.that(error, has="DN")

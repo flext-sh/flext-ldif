@@ -121,3 +121,6 @@ class FlextLdifModelsBasesParts:
             if isinstance(value, c.Ldif.ServerTypes):
                 return value
             return FlextLdifShared.normalize_server_type(value)
+
+
+__all__: list[str] = ["FlextLdifModelsBasesParts", "FlextLdifShared"]

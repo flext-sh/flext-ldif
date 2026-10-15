@@ -18,6 +18,7 @@ class FlextLdifAcl(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``bool``.
+
         """
         is_schema: bool = u.Ldif.detects_schema_entry(entry, strict=False)
         return is_schema
@@ -31,6 +32,7 @@ class FlextLdifAcl(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``p.Result[m.Ldif.AclEvaluationResult]``.
+
         """
         required = (
             required_permissions
@@ -107,6 +109,7 @@ class FlextLdifAcl(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``p.Result[m.Ldif.AclResponse]``.
+
         """
         try:
             normalized_server_type = u.Ldif.normalize_server_type(server_type)
@@ -143,6 +146,7 @@ class FlextLdifAcl(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``p.Result[m.Ldif.Acl]``.
+
         """
         try:
             normalized_server_type = u.Ldif.normalize_server_type(server_type)

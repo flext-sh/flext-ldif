@@ -30,10 +30,15 @@ class FlextLdifServersOudTransformMixin:
         entry_data: m.Ldif.Entry,
         write_options: m.Ldif.WriteFormatOptions | None,
     ) -> m.Ldif.Entry:
-        """Apply phase-aware ACL attribute commenting.
+        """Comment out ACL attributes outside ACL-phase writes.
+
+        Args:
+            entry_data: Entry whose ACL attributes may be commented.
+            write_options: Output formatting options controlling phases.
 
         Returns:
-            The resulting ``m.Ldif.Entry``.
+            The entry, with ACL attributes commented when applicable.
+
         """
         if not (write_options and write_options.comment_acl_in_non_acl_phases):
             return entry_data
@@ -52,10 +57,16 @@ class FlextLdifServersOudTransformMixin:
         attr_names: t.MutableSequenceOf[str],
         format_options: m.Ldif.WriteFormatOptions | None,
     ) -> t.MutableSequenceOf[str]:
-        """Determine attribute order based on format options.
+        """Order attribute names according to the format options.
+
+        Args:
+            attr_names: Attribute names in declaration order.
+            format_options: Output formatting options; sorting is applied only
+                when requested.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            Attribute names in output order.
+
         """
         if format_options and format_options.sort_attributes:
             return sorted(attr_names, key=str.lower)
@@ -70,10 +81,16 @@ class FlextLdifServersOudTransformMixin:
             r[t.Ldif.AttributeDict],
         ],
     ) -> p.Result[m.Ldif.Entry]:
-        """Validate and correct RFC syntax issues before writing entry (static helper).
+        """Validate ACI macros and correct RFC syntax before writing.
+
+        Args:
+            entry: Entry about to be written.
+            validate_aci_macros: Validator for ACI macro syntax.
+            correct_rfc_syntax_in_attributes: Corrector for attribute syntax.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Entry]``.
+            Result carrying the corrected entry, or a failure.
+
         """
         attrs_dict_raw: t.MutableStrSequenceMapping = (
             entry.attributes.attributes if entry.attributes else {}
@@ -95,22 +112,31 @@ class FlextLdifServersOudTransformMixin:
 
     @staticmethod
     def _is_schema_entry(entry: m.Ldif.Entry) -> bool:
-        """Check if entry is a schema entry - delegate to utility.
+        """Schema-entry classification of an entry.
+
+        Args:
+            entry: Entry to classify.
 
         Returns:
-            The resulting ``bool``.
+            True when the entry carries schema definitions.
+
         """
         is_schema_entry: bool = u.Ldif.detects_schema_entry(entry, strict=False)
         return is_schema_entry
 
     @staticmethod
     def normalize_acl_dns(entry_data: m.Ldif.Entry) -> m.Ldif.Entry:
-        """Normalize and filter DNs in ACL attribute values (userdn/groupdn inside ACL.
+        """Normalize and filter DNs inside ACL attribute values.
 
-        # strings).
+        Rewrites ``userdn``/``groupdn`` DN references in ACI values against
+        the entry's base DN and drops values that no longer resolve.
+
+        Args:
+            entry_data: Entry whose ACI values are normalized.
 
         Returns:
-            The resulting ``m.Ldif.Entry``.
+            The entry with normalized ACI values.
+
         """
         if not entry_data.attributes or not entry_data.attributes.attributes:
             return entry_data
@@ -143,10 +169,14 @@ class FlextLdifServersOudTransformMixin:
 
     @staticmethod
     def restore_entry_from_metadata(entry_data: m.Ldif.Entry) -> m.Ldif.Entry:
-        """Restore original DN and attributes using generic utilities.
+        """Restore the original DN and attributes from metadata.
+
+        Args:
+            entry_data: Entry whose original form is restored.
 
         Returns:
-            The resulting ``m.Ldif.Entry``.
+            The entry with original DN and attribute names applied.
+
         """
         metadata = entry_data.metadata
         if metadata is None or not metadata.extensions:
@@ -161,8 +191,12 @@ class FlextLdifServersOudTransformMixin:
     def _dn_restored_entry(entry_data: m.Ldif.Entry) -> m.Ldif.Entry:
         """Restore the original DN from entry metadata extensions.
 
+        Args:
+            entry_data: Entry whose original DN is restored.
+
         Returns:
-            The resulting ``m.Ldif.Entry``.
+            The entry with the original DN when differences are recorded.
+
         """
         metadata = entry_data.metadata
         if metadata is None:
@@ -190,8 +224,13 @@ class FlextLdifServersOudTransformMixin:
     ) -> m.Ldif.Entry:
         """Restore original attribute names and values from metadata.
 
+        Args:
+            entry_data: Entry whose original attributes are restored.
+            metadata: Metadata carrying the original names and values.
+
         Returns:
-            The resulting ``m.Ldif.Entry``.
+            The entry with original attribute names and values applied.
+
         """
         attributes = entry_data.attributes
         if attributes is None:
@@ -233,10 +272,17 @@ class FlextLdifServersOudTransformMixin:
         ],
         syntax_corrections: t.MutableSequenceOf[str] | t.MutableStrMapping | None,
     ) -> p.Result[m.Ldif.Entry]:
-        """Apply syntax corrections to entry.
+        """Apply corrected attributes to the entry before writing.
+
+        Args:
+            entry: Entry to correct.
+            corrected_data: Correction payload carrying the corrected
+                attributes.
+            syntax_corrections: Corrections applied, for logging.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Entry]``.
+            Result carrying the corrected entry, or the entry unchanged.
+
         """
         corrected_attrs_raw = corrected_data.get("corrected_attributes")
         if not isinstance(corrected_attrs_raw, Mapping):
@@ -268,10 +314,16 @@ class FlextLdifServersOudTransformMixin:
             r[t.Ldif.AttributeDict],
         ],
     ) -> p.Result[m.Ldif.Entry]:
-        """Correct RFC syntax issues and return entry.
+        """Correct RFC syntax issues in the entry attributes.
+
+        Args:
+            entry: Entry whose attributes are corrected.
+            attrs_dict: Attribute names mapped to value lists.
+            correct_rfc_syntax_in_attributes: Corrector for attribute syntax.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Entry]``.
+            Result carrying the corrected entry, or a failure.
+
         """
         corrected_result = correct_rfc_syntax_in_attributes(attrs_dict)
         if corrected_result.failure:

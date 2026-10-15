@@ -23,6 +23,7 @@ class FlextLdifFilters(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``tuple[bool, bool]``.
+
         """
         key1, key2 = attr_keys
         if key1 not in attrs and key2 not in attrs:
@@ -41,6 +42,7 @@ class FlextLdifFilters(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``t.FrozensetMapping``.
+
         """
         if isinstance(allowed_oids, m.Ldif.WhitelistRules):
             return allowed_oids.schema_oid_filters
@@ -58,6 +60,7 @@ class FlextLdifFilters(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``str | None``.
+
         """
         if not values:
             return None
@@ -81,6 +84,7 @@ class FlextLdifFilters(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``bool``.
+
         """
         attrs = entry.attributes
         if attrs is None:
@@ -108,6 +112,7 @@ class FlextLdifFilters(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``p.Result[t.MutableSequenceOf[m.Ldif.Entry]]``.
+
         """
         try:
             allowed_oid_map = cls._extract_allowed_oids(allowed_oids)
@@ -141,6 +146,7 @@ class FlextLdifFilters(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``m.Ldif.Entry``.
+
         """
         filtered_entry: m.Ldif.Entry = u.Ldif.as_entry(entry)
         if entry.attributes and forbidden_attrs:
@@ -199,6 +205,7 @@ class FlextLdifFilters(s[m.Ldif.Response]):
 
         Returns:
             The resulting ``m.Ldif.Entry``.
+
         """
         concrete: m.Ldif.Entry = u.Ldif.as_entry(entry)
         if concrete.attributes is None:

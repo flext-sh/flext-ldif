@@ -23,6 +23,7 @@ class ExamplesFlextLdifUtilities(FlextLdifUtilities):
 
         Returns:
             The resulting ``m.Ldif.Entry``.
+
         """
         return m.Ldif.Entry(
             dn=m.Ldif.DN(value=f"cn=User{index},ou=People,dc=example,dc=com"),

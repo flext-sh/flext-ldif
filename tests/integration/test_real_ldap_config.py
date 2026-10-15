@@ -39,6 +39,7 @@ class TestsFlextLdifRealLdapConfig:
 
         Returns:
             The resulting ``p.Ldif.LdifClient``.
+
         """
         return ldif()
 
@@ -49,6 +50,7 @@ class TestsFlextLdifRealLdapConfig:
 
         Returns:
             The resulting ``m.Ldif.Entry``.
+
         """
         result = m.Ldif.Entry.create(
             dn="cn=RailwayTest,ou=people,dc=example,dc=com",

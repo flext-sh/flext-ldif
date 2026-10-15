@@ -42,6 +42,7 @@ class FlextLdifDNEscaping:
 
             Returns:
                 The resulting ``str``.
+
             """
             i, char = item
             is_special = char in c.Ldif.DN_ESCAPE_CHARS

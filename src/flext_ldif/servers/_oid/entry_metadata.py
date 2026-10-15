@@ -64,6 +64,7 @@ class FlextLdifServersOidEntryMetadataMixin(FlextLdifServersRfcEntry):
 
         Returns:
             The resulting ``t.MutableJsonMapping | None``.
+
         """
         mk = c.Ldif
         if not (entry_data.metadata and entry_data.metadata.extensions):
@@ -90,6 +91,7 @@ class FlextLdifServersOidEntryMetadataMixin(FlextLdifServersRfcEntry):
 
         Returns:
             The resulting ``t.MutableAttributeMapping | None``.
+
         """
         if not isinstance(value, Mapping):
             return None
@@ -115,6 +117,7 @@ class FlextLdifServersOidEntryMetadataMixin(FlextLdifServersRfcEntry):
 
         Returns:
             The resulting ``MutableMapping[str, t.MutableAttributeMapping]``.
+
         """
         boolean_conversions: MutableMapping[str, t.MutableAttributeMapping] = {}
         conversions_obj = (
@@ -140,6 +143,7 @@ class FlextLdifServersOidEntryMetadataMixin(FlextLdifServersRfcEntry):
 
         Returns:
             The resulting ``t.Ldif.MutableMetadataMapping``.
+
         """
         original_extensions: t.Ldif.MutableMetadataMapping = {}
         if not (original_entry.metadata and original_entry.metadata.extensions):

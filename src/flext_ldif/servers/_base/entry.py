@@ -102,10 +102,16 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         self,
         **kwargs: str | m.Ldif.Entry | t.MutableJsonMapping,
     ) -> p.Result[t.Ldif.EntryPayload]:
-        """Execute entry operation (parse/write).
+        """Execute the entry operation for parse or write input.
+
+        Args:
+            **kwargs: Either ``ldif_content`` to parse or ``entry_model`` to
+                write.
 
         Returns:
-            The resulting ``p.Result[t.Ldif.EntryPayload]``.
+            Result carrying the first parsed entry or the written text; an
+            empty payload when no applicable input is present.
+
         """
         ldif_content = kwargs.get("ldif_content")
         entry_model = kwargs.get("entry_model")
@@ -121,18 +127,26 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         return r[t.Ldif.EntryPayload].ok("")
 
     def parse_server(self, value: str) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
-        """Parse LDIF content string into Entry models.
+        """Parse LDIF content into entry models.
+
+        Args:
+            value: Raw LDIF content text.
 
         Returns:
-            The resulting ``p.Result[t.MutableSequenceOf[m.Ldif.Entry]]``.
+            Result carrying the parsed entries.
+
         """
         return self._parse_content(value)
 
     def parse_input(self, ldif_text: str) -> t.MutableSequenceOf[m.Ldif.Entry] | None:
-        """Compatibility parser entrypoint for direct server consumers.
+        """Parse LDIF text for direct server consumers.
+
+        Args:
+            ldif_text: Raw LDIF content text.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[m.Ldif.Entry] | None``.
+            Parsed entries, or None when parsing fails.
+
         """
         parse_result = self.parse_server(ldif_text)
         return parse_result.unwrap()
@@ -142,10 +156,18 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         entry_dn: str,
         entry_attrs: t.MutableStrSequenceMapping,
     ) -> p.Result[m.Ldif.Entry]:
-        """Parse a single entry from DN and attributes.
+        """Parse a single entry from a DN and its attributes.
+
+        Builds a minimal LDIF record from the DN and attributes, then parses
+        it through the server's content pipeline.
+
+        Args:
+            entry_dn: Distinguished name of the entry.
+            entry_attrs: Attribute names mapped to their value sequences.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Entry]``.
+            Result carrying the parsed entry, or a failure.
+
         """
         attrs_dict = dict(entry_attrs)
         ldif_lines = [f"dn: {entry_dn}"]
@@ -165,10 +187,15 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         entry_data: m.Ldif.Entry | t.MutableSequenceOf[m.Ldif.Entry],
         write_options: m.Ldif.WriteFormatOptions | None = None,
     ) -> p.Result[str]:
-        """Write Entry model(s) to LDIF string format.
+        """Write entry models to an LDIF string.
+
+        Args:
+            entry_data: A single entry or a sequence of entries.
+            write_options: Optional output formatting options.
 
         Returns:
-            The resulting ``p.Result[str]``.
+            Result carrying the LDIF text, or a failure.
+
         """
         if isinstance(entry_data, MutableSequence):
             return self._write_entry_list(entry_data, write_options)
@@ -179,10 +206,15 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         write_options: m.Ldif.WriteFormatOptions | None,
         entry_count: int,
     ) -> t.MutableSequenceOf[str]:
-        """Build header lines based on write options.
+        """Build the header lines requested by the write options.
+
+        Args:
+            write_options: Output formatting options; None emits no headers.
+            entry_count: Number of entries reported in the timestamp header.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            Header lines in output order.
+
         """
         lines: t.MutableSequenceOf[str] = []
         if write_options is None:
@@ -201,10 +233,18 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         self,
         entry_attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]],
     ) -> t.MutableStrSequenceMapping:
-        """Convert raw LDIF attributes to t.MutableStrSequenceMapping format.
+        """Normalize raw LDIF attribute values into canonical form.
+
+        Decodes byte values and maps attribute names to the server's canonical
+        spelling, merging duplicates.
+
+        Args:
+            entry_attrs: Raw attribute names mapped to value sequences that
+                may contain bytes.
 
         Returns:
-            The resulting ``t.MutableStrSequenceMapping``.
+            Canonical attribute mapping with string values.
+
         """
         converted_attrs: t.MutableStrSequenceMapping = {}
         for attr_name, attr_values in entry_attrs.items():
@@ -226,10 +266,15 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         entry: m.Ldif.Entry,
         target_server: str | None = None,
     ) -> m.Ldif.Entry:
-        """Denormalize entry from RFC format to target server format.
+        """Convert an entry from RFC form to the target server's dialect.
+
+        Args:
+            entry: Entry in RFC-normalized form.
+            target_server: Identifier of the target server dialect.
 
         Returns:
-            The resulting ``m.Ldif.Entry``.
+            The converted entry.
+
         """
         _ = target_server
         return entry
@@ -249,10 +294,15 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         dn: str,
         attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]],
     ) -> p.Result[bool]:
-        """Validate raw entry before parsing.
+        """Validate a raw entry before parsing.
+
+        Args:
+            dn: Distinguished name of the raw entry.
+            attrs: Raw attribute names mapped to value sequences.
 
         Returns:
-            The resulting ``p.Result[bool]``.
+            Result carrying True when the entry is acceptable, or a failure.
+
         """
         _ = attrs
         if not dn:
@@ -264,10 +314,15 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         entry: m.Ldif.Entry,
         write_options: m.Ldif.WriteFormatOptions,
     ) -> m.Ldif.Entry:
-        """Inject write format options into entry metadata extensions.
+        """Inject write format options into the entry metadata extensions.
+
+        Args:
+            entry: Entry whose metadata receives the options.
+            write_options: Output formatting options to inject.
 
         Returns:
-            The resulting ``m.Ldif.Entry``.
+            A copy of the entry carrying the options.
+
         """
         format_options_payload = write_options.model_dump(
             mode="json",
@@ -298,10 +353,14 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
 
     @staticmethod
     def _normalize_entry(entry: m.Ldif.Entry) -> m.Ldif.Entry:
-        """Normalize entry to RFC format with metadata tracking.
+        """Normalize an entry to RFC form with metadata tracking.
+
+        Args:
+            entry: Entry in the server's own dialect.
 
         Returns:
-            The resulting ``m.Ldif.Entry``.
+            The RFC-normalized entry.
+
         """
         return entry
 
@@ -322,10 +381,14 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         raise NotImplementedError(msg)
 
     def _write_entry(self, entry_data: m.Ldif.Entry) -> p.Result[str]:
-        """Write Entry model to RFC-compliant LDIF string (internal).
+        """Write an entry model to an RFC-compliant LDIF string.
+
+        Args:
+            entry_data: Entry to serialize.
 
         Returns:
-            The resulting ``p.Result[str]``.
+            Result carrying the LDIF text, or a failure.
+
         """
         context = FlextLdifServersEntryWriteContext.build(
             entry_data,
@@ -346,10 +409,15 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         entries: t.MutableSequenceOf[m.Ldif.Entry],
         write_options: m.Ldif.WriteFormatOptions | None,
     ) -> p.Result[str]:
-        """Write list of entries to LDIF.
+        """Write a sequence of entries to LDIF.
+
+        Args:
+            entries: Entries to serialize in order.
+            write_options: Optional output formatting options.
 
         Returns:
-            The resulting ``p.Result[str]``.
+            Result carrying the joined LDIF text, or a failure.
+
         """
         header_lines = self._build_header_lines(write_options, len(entries))
 
@@ -370,10 +438,15 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         entry: m.Ldif.Entry,
         write_options: m.Ldif.WriteFormatOptions | None,
     ) -> p.Result[str]:
-        """Write single entry to LDIF.
+        """Write one entry to LDIF, applying the write options first.
+
+        Args:
+            entry: Entry to serialize.
+            write_options: Optional output formatting options.
 
         Returns:
-            The resulting ``p.Result[str]``.
+            Result carrying the LDIF text, or a failure.
+
         """
         if write_options is not None:
             entry = self._inject_write_format_options(entry, write_options)

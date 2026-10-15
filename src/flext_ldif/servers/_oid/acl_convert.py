@@ -116,6 +116,7 @@ class FlextLdifServersOidAclConvert:
 
         Returns:
             The resulting ``m.Ldif.OidAclSubject``.
+
         """
         text = subject_str.strip()
         modifiers = cls._subject_modifiers(text)
@@ -177,6 +178,7 @@ class FlextLdifServersOidAclConvert:
 
         Returns:
             The resulting ``p.Result[tuple[str | None, str]]``.
+
         """
         prefix = c.Ldif.FILTER_PREFIX_RE.match(content)
         if prefix is None:
@@ -207,6 +209,7 @@ class FlextLdifServersOidAclConvert:
 
         Returns:
             The resulting ``p.Result[tuple[str, str]]``.
+
         """
         prefixed = cls._strip_acl_prefix(line)
         if prefixed is None:
@@ -230,6 +233,7 @@ class FlextLdifServersOidAclConvert:
 
         Returns:
             The resulting ``p.Result[tuple[str, str, str | None, str]]``.
+
         """
         target = cls._parse_target(content)
         if target is None:
@@ -257,6 +261,7 @@ class FlextLdifServersOidAclConvert:
 
         Returns:
             The resulting ``p.Result[m.Ldif.OidAclRule]``.
+
         """
         line = line.strip()
         header = cls._parse_acl_header(line)

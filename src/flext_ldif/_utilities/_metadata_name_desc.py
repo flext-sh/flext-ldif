@@ -18,6 +18,7 @@ class FlextLdifMetadataNameDescDetails:
 
         Returns:
             The resulting ``t.MutableAttributeMapping``.
+
         """
         details: t.MutableAttributeMapping = {
             "name_format": "single",
@@ -64,6 +65,7 @@ class FlextLdifMetadataNameDescDetails:
 
         Returns:
             The resulting ``t.MutableFeatureFlagMapping``.
+
         """
         details: t.MutableFeatureFlagMapping = {}
         desc_match = c.Ldif.SCHEMA_DESC_LOOSE_RE.search(definition)

@@ -111,6 +111,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
 
         Returns:
             The resulting ``c.Ldif.ServerTypes``.
+
         """
         if isinstance(value, c.Ldif.ServerTypes):
             return value
@@ -129,6 +130,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
 
         Returns:
             The resulting ``p.Result[m.Ldif.MigrationPipelineResult]``.
+
         """
         in_dir = self.input_dir
         out_dir = self.output_dir
@@ -154,6 +156,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
 
         Returns:
             The resulting ``p.Result[t.MutableSequenceOf[m.Ldif.Entry]]``.
+
         """
         source_server = self.source_server_type or self._DEFAULT_SERVER
         target_server = self.target_server_type or self._DEFAULT_SERVER
@@ -185,6 +188,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
 
         Returns:
             The resulting ``p.Result[m.Ldif.MigrationPipelineResult]``.
+
         """
         try:
             return self._migrate_file_core(input_file, output_file)
@@ -204,6 +208,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
 
         Returns:
             The resulting ``p.Result[m.Ldif.MigrationPipelineResult]``.
+
         """
         total_processed = 0
         total_migrated = 0
@@ -243,6 +248,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
 
         Returns:
             The resulting ``p.Result[m.Ldif.MigrationPipelineResult]``.
+
         """
         if not input_file.exists():
             return r[m.Ldif.MigrationPipelineResult].fail(
@@ -290,6 +296,7 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
 
         Returns:
             The resulting ``p.Result[m.Ldif.MigrationPipelineResult]``.
+
         """
         resolved_output_file = output_file
         if resolved_output_file is None and self.output_dir is not None:

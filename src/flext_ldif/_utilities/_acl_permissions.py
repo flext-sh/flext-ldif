@@ -20,10 +20,14 @@ class FlextLdifACLPermissions:
 
     @staticmethod
     def valid_acl_subject_type(value: str) -> TypeIs[c.Ldif.AclSubjectType]:
-        """Type guard to check if a string is a valid ACL subject enum value.
+        """Check whether a string is a valid ACL subject enum value.
+
+        Args:
+            value: Subject type string to check.
 
         Returns:
-            The resulting ``TypeIs[c.Ldif.AclSubjectType]``.
+            True when the string names a known ACL subject type.
+
         """
         return value in FlextLdifACLPermissions._ACL_SUBJECT_TYPE_VALUES
 
@@ -32,10 +36,15 @@ class FlextLdifACLPermissions:
         perm: str,
         permission_map: t.MutableStrMapping | None,
     ) -> str:
-        """Normalize permission name using map if available.
+        """Normalize a permission name through the mapping when available.
+
+        Args:
+            perm: Permission name to normalize.
+            permission_map: Mapping of source to canonical permission names.
 
         Returns:
-            The resulting ``str``.
+            The canonical permission name.
+
         """
         if not permission_map:
             return perm
@@ -49,10 +58,16 @@ class FlextLdifACLPermissions:
         *,
         is_allow: bool,
     ) -> t.MutableBoolMapping:
-        """Process permission list into dictionary.
+        """Fold a permission list into allow/deny flags.
+
+        Args:
+            perm_list: Permission names to process.
+            permission_map: Mapping of source to canonical permission names.
+            is_allow: Whether the flags mark allowance or denial.
 
         Returns:
-            The resulting ``t.MutableBoolMapping``.
+            Permission flags keyed by canonical permission name.
+
         """
         result: t.MutableBoolMapping = {}
         for perm in perm_list:
@@ -70,10 +85,17 @@ class FlextLdifACLPermissions:
         permission_map: t.MutableStrMapping | None = None,
         deny_permissions: t.MutableSequenceOf[str] | None = None,
     ) -> t.MutableBoolMapping:
-        """Build permissions dictionary from allow/deny lists.
+        """Build a permission dictionary from allow and deny lists.
+
+        Args:
+            allow_permissions: Permission names to mark as allowed.
+            permission_map: Mapping of source to canonical permission names.
+            deny_permissions: Permission names to mark as denied.
 
         Returns:
-            The resulting ``t.MutableBoolMapping``.
+            Permission flags keyed by canonical permission name; deny entries
+            override allow entries on collision.
+
         """
         allow_dict: t.MutableBoolMapping = {}
         if allow_permissions:
@@ -93,10 +115,14 @@ class FlextLdifACLPermissions:
 
     @staticmethod
     def normalize_permission_key(key: str) -> str:
-        """Normalize permission key for cross-server ACL mapping.
+        """Normalize a permission key for cross-server ACL mapping.
+
+        Args:
+            key: Permission key to normalize.
 
         Returns:
-            The resulting ``str``.
+            The canonical permission key.
+
         """
         return {"self_write": "selfwrite"}.get(key, key)
 
@@ -106,8 +132,12 @@ class FlextLdifACLPermissions:
     ) -> t.MutableBoolMapping:
         """Normalize every permission key through the canonical key map.
 
+        Args:
+            orig_perms_dict: Permission flags keyed by source names.
+
         Returns:
-            The resulting ``t.MutableBoolMapping``.
+            Permission flags keyed by canonical names.
+
         """
         return {
             FlextLdifACLPermissions.normalize_permission_key(key): value
@@ -118,8 +148,12 @@ class FlextLdifACLPermissions:
     def _pass_through_permissions(excluded: frozenset[str]) -> set[str]:
         """Resolve the ACL permission keys that map through unchanged.
 
+        Args:
+            excluded: Keys dropped from the pass-through set.
+
         Returns:
-            The resulting ``set[str]``.
+            Canonical keys carried over without translation.
+
         """
         mapping_values = {
             FlextLdifACLPermissions.normalize_permission_key(key)
@@ -133,8 +167,15 @@ class FlextLdifACLPermissions:
     ) -> t.MutableBoolMapping:
         """Map OID permission names to OUD permission names.
 
+        Splits ``browse`` into ``read`` and ``search`` and folds ``selfwrite``
+        into ``write``; other keys pass through.
+
+        Args:
+            orig_perms_dict: Permission flags keyed by OID names.
+
         Returns:
-            The resulting ``t.MutableBoolMapping``.
+            Permission flags keyed by OUD names.
+
         """
         normalized_orig_perms = FlextLdifACLPermissions._normalized_permissions(
             orig_perms_dict
@@ -163,8 +204,15 @@ class FlextLdifACLPermissions:
     ) -> t.MutableBoolMapping:
         """Map OUD permission names to OID permission names.
 
+        Combines ``read`` and ``search`` into ``browse``; other keys pass
+        through.
+
+        Args:
+            orig_perms_dict: Permission flags keyed by OUD names.
+
         Returns:
-            The resulting ``t.MutableBoolMapping``.
+            Permission flags keyed by OID names.
+
         """
         normalized_orig_perms = FlextLdifACLPermissions._normalized_permissions(
             orig_perms_dict
@@ -187,10 +235,15 @@ class FlextLdifACLPermissions:
         mapped_perms: t.MutableBoolMapping,
         mapping: t.MutableStrMapping,
     ) -> t.MutableOptionalBoolMapping:
-        """Build permissions dict from a source->mapped key table.
+        """Build a permission dictionary from a source-to-mapped key table.
+
+        Args:
+            mapped_perms: Permission flags keyed by canonical names.
+            mapping: Source keys mapped to canonical keys.
 
         Returns:
-            The resulting ``t.MutableOptionalBoolMapping``.
+            Flags keyed by source name; absent canonical keys map to None.
+
         """
         result: t.MutableOptionalBoolMapping = {}
         for source_key, mapped_key in mapping.items():
@@ -202,10 +255,15 @@ class FlextLdifACLPermissions:
         permissions: t.MutableSequenceOf[str],
         supported: set[str] | frozenset[str],
     ) -> t.MutableSequenceOf[str]:
-        """Filter permissions to only include supported ones.
+        """Filter permissions to the supported set.
+
+        Args:
+            permissions: Permission names to filter.
+            supported: Supported permission names, matched case-insensitively.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            Lowercased permission names present in the supported set.
+
         """
         supported_lower = {s.lower() for s in supported}
         return [perm.lower() for perm in permissions if perm.lower() in supported_lower]

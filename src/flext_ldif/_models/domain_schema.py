@@ -14,6 +14,7 @@ from __future__ import annotations
 from typing import Annotated
 
 from flext_core import FlextUtilities as u
+
 from flext_ldif import c, t
 from flext_ldif._models import FlextLdifModelsBases, FlextLdifModelsDomainMetadata
 
@@ -224,6 +225,7 @@ class FlextLdifModelsDomainSchema:
 
             Raises:
                 ValueError: If OID cannot be empty.
+
             """
             if not v or not v.strip():
                 msg = "OID cannot be empty"

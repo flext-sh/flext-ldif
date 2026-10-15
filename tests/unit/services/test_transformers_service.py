@@ -36,6 +36,7 @@ class TestsFlextLdifTransformersService:
 
         Raises:
             AssertionError: If Expected convert_model to return an Entry with a DN.
+
         """
         entry = u.Tests.create_real_entry(
             dn=c.Tests.ANALYSIS_DN_VALID,
@@ -59,6 +60,7 @@ class TestsFlextLdifTransformersService:
         Raises:
             AssertionError: If Expected identity transformation to preserve DN and
                 attributes.
+
         """
         entry = u.Tests.create_real_entry(
             dn="cn=keep,dc=example,dc=com",
@@ -87,6 +89,7 @@ class TestsFlextLdifTransformersService:
 
         Raises:
             AssertionError: If Expected default transformer to preserve the DN.
+
         """
         entry = u.Tests.create_real_entry(
             dn="cn=default,dc=example,dc=com",
@@ -115,6 +118,7 @@ class TestsFlextLdifTransformersService:
 
         Raises:
             AssertionError: If Expected transformer to return an Entry with attributes.
+
         """
         entry = u.Tests.create_real_entry(
             dn="cn=users,dc=ctbc",
@@ -152,6 +156,7 @@ class TestsFlextLdifTransformersService:
 
         Raises:
             AssertionError: If Expected transformer to return an Entry with attributes.
+
         """
         entry = u.Tests.orclaci_base_dn_entry(dn="cn=users,dc=ctbc")
         transformer = FlextLdifTransformer(
@@ -196,5 +201,6 @@ class TestsFlextLdifTransformersService:
 
         Returns:
             The resulting ``m.Ldif.Entry``.
+
         """
         return u.Tests.assert_success(result)

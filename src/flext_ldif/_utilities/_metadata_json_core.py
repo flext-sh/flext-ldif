@@ -22,6 +22,7 @@ class FlextLdifMetadataJsonCore:
 
         Returns:
             The resulting ``str``.
+
         """
         if value is None:
             return ""
@@ -36,6 +37,7 @@ class FlextLdifMetadataJsonCore:
 
         Returns:
             The resulting ``str``.
+
         """
         if not value:
             return ""
@@ -71,6 +73,7 @@ class FlextLdifMetadataJsonCore:
 
         Returns:
             The resulting ``t.Ldif.MutableMetadataMapping``.
+
         """
         metadata_obj = getattr(model, "validation_metadata", None)
         if metadata_obj is None:

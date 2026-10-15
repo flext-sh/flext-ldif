@@ -28,6 +28,7 @@ class TestsFlextLdifAnalysisService:
 
         Returns:
             The resulting ``m.Ldif.Entry``.
+
         """
         attributes = (
             None

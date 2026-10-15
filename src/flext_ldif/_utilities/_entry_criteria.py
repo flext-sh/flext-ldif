@@ -31,6 +31,7 @@ class FlextLdifEntryCriteria:
 
         Returns:
             The resulting ``bool | None``.
+
         """
         if not configured:
             return None
@@ -46,6 +47,7 @@ class FlextLdifEntryCriteria:
 
         Returns:
             The resulting ``bool | None``.
+
         """
         if resolved_config.is_schema is None:
             return None
@@ -63,6 +65,7 @@ class FlextLdifEntryCriteria:
 
         Returns:
             The resulting ``bool | None``.
+
         """
         if not resolved_config.objectclasses:
             return None
@@ -90,6 +93,7 @@ class FlextLdifEntryCriteria:
 
         Returns:
             The resulting ``bool | None``.
+
         """
         if not entry.attributes:
             return False if configured_attrs else None
@@ -109,6 +113,7 @@ class FlextLdifEntryCriteria:
 
         Returns:
             The resulting ``bool | None``.
+
         """
         return cls._attrs_criterion(
             resolved_config.required_attrs,
@@ -126,6 +131,7 @@ class FlextLdifEntryCriteria:
 
         Returns:
             The resulting ``bool | None``.
+
         """
         return cls._attrs_criterion(
             resolved_config.any_attrs,
@@ -142,6 +148,7 @@ class FlextLdifEntryCriteria:
 
         Returns:
             The resulting ``bool | None``.
+
         """
         if not resolved_config.dn_pattern:
             return None
@@ -163,6 +170,7 @@ class FlextLdifEntryCriteria:
 
         Returns:
             The resulting ``bool``.
+
         """
         resolved_config = (
             settings

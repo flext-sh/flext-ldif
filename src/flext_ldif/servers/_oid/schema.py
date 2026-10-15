@@ -29,7 +29,14 @@ class FlextLdifServersOidSchema(
         parent_server: p.Ldif.SchemaServer | None = None,
         **kwargs: t.Ldif.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> None:
-        """Initialize OID schema server."""
+        """Initialize the OID schema server.
+
+        Args:
+            schema_service: Optional schema facade injected by the DI container.
+            parent_server: Optional parent schema server instance.
+            **kwargs: Scalar and schema-model fields forwarded to the base init.
+
+        """
         self._init_base_schema(
             schema_service,
             parent_server,
@@ -42,7 +49,13 @@ class FlextLdifServersOidSchema(
         attr_data: m.Ldif.SchemaAttribute,
         target_values: t.MutableOptionalStrMapping,
     ) -> None:
-        """Add target metadata to attribute."""
+        """Add target metadata to an attribute.
+
+        Args:
+            attr_data: Attribute model receiving the metadata extensions.
+            target_values: Captured target values to record.
+
+        """
         if not attr_data.metadata:
             return
         if target_values["syntax_oid"]:
@@ -76,8 +89,12 @@ class FlextLdifServersOidSchema(
     ) -> t.MutableOptionalStrMapping:
         """Capture attribute values for metadata tracking.
 
+        Args:
+            attr_data: Attribute model whose values are captured.
+
         Returns:
-            The resulting ``t.MutableOptionalStrMapping``.
+            Mapping of syntax, matching-rule, and name values.
+
         """
         return {
             "syntax_oid": attr_data.syntax or None,
@@ -95,8 +112,14 @@ class FlextLdifServersOidSchema(
     ) -> p.Result[T]:
         """Normalize one parsed schema item, guarding OID hook failures.
 
+        Args:
+            item: Parsed schema item to normalize.
+            normalize: OID-specific normalization callable.
+            item_kind: Item kind used in the typed failure context.
+
         Returns:
-            The resulting ``p.Result[T]``.
+            Typed result carrying the normalized item.
+
         """
         try:
             return r[T].ok(normalize(item))
@@ -114,8 +137,14 @@ class FlextLdifServersOidSchema(
     ) -> p.Result[T]:
         """Run one OID parse step, guarding LDIF parse failures.
 
+        Args:
+            definition: Raw schema definition string.
+            parse: Parser callable invoked on the definition.
+            item_kind: Item kind used in the typed failure context.
+
         Returns:
-            The resulting ``p.Result[T]``.
+            Typed result carrying the parsed item.
+
         """
         try:
             return parse(definition)
@@ -130,10 +159,14 @@ class FlextLdifServersOidSchema(
         self,
         attr: m.Ldif.SchemaAttribute,
     ) -> p.Result[m.Ldif.SchemaAttribute]:
-        """Transform parsed attribute using OID-specific normalizations.
+        """Transform a parsed attribute using OID-specific normalizations.
+
+        Args:
+            attr: Parsed attribute model pending normalization.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.SchemaAttribute]``.
+            Typed result carrying the normalized attribute.
+
         """
         return self._guarded_post_parse(
             attr,
@@ -146,10 +179,14 @@ class FlextLdifServersOidSchema(
         self,
         oc: m.Ldif.SchemaObjectClass,
     ) -> p.Result[m.Ldif.SchemaObjectClass]:
-        """Transform parsed objectClass using OID-specific normalizations.
+        """Transform a parsed objectClass using OID-specific normalizations.
+
+        Args:
+            oc: Parsed objectClass model pending normalization.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.SchemaObjectClass]``.
+            Typed result carrying the normalized objectClass.
+
         """
         return self._guarded_post_parse(
             oc,
@@ -162,10 +199,14 @@ class FlextLdifServersOidSchema(
         self,
         attr_definition: str,
     ) -> p.Result[m.Ldif.SchemaAttribute]:
-        """Parse Oracle OID attribute definition (Phase 1: Normalization).
+        """Parse an Oracle OID attribute definition (Phase 1: Normalization).
+
+        Args:
+            attr_definition: Raw attribute definition string.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.SchemaAttribute]``.
+            Typed result carrying the parsed attribute model.
+
         """
         return self._guarded_parse(
             attr_definition,
@@ -177,10 +218,14 @@ class FlextLdifServersOidSchema(
         self,
         attr_definition: str,
     ) -> p.Result[m.Ldif.SchemaAttribute]:
-        """Parse OID attribute and attach OID metadata.
+        """Parse an OID attribute and attach OID metadata.
+
+        Args:
+            attr_definition: Raw attribute definition string.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.SchemaAttribute]``.
+            Typed result carrying the attribute with OID metadata.
+
         """
         result = super()._parse_attribute(attr_definition)
         if not result.success:
@@ -206,10 +251,14 @@ class FlextLdifServersOidSchema(
         self,
         oc_definition: str,
     ) -> p.Result[m.Ldif.SchemaObjectClass]:
-        """Parse Oracle OID objectClass definition.
+        """Parse an Oracle OID objectClass definition.
+
+        Args:
+            oc_definition: Raw objectClass definition string.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.SchemaObjectClass]``.
+            Typed result carrying the parsed objectClass model.
+
         """
         return self._guarded_parse(
             oc_definition,
@@ -221,10 +270,14 @@ class FlextLdifServersOidSchema(
         self,
         oc_definition: str,
     ) -> p.Result[m.Ldif.SchemaObjectClass]:
-        """Parse OID objectClass and attach OID metadata.
+        """Parse an OID objectClass and attach OID metadata.
+
+        Args:
+            oc_definition: Raw objectClass definition string.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.SchemaObjectClass]``.
+            Typed result carrying the objectClass with OID metadata.
+
         """
         result = super()._parse_objectclass(oc_definition)
         if not result.success:
@@ -248,8 +301,12 @@ class FlextLdifServersOidSchema(
     ) -> m.Ldif.SchemaAttribute:
         """Apply OID-specific attribute transformations before writing.
 
+        Args:
+            attr_data: Canonical attribute model pending write.
+
         Returns:
-            The resulting ``m.Ldif.SchemaAttribute``.
+            The transformed attribute model.
+
         """
         fixed_name = u.Ldif.normalize_name(attr_data.name) or attr_data.name
         fixed_equality = attr_data.equality
@@ -305,8 +362,12 @@ class FlextLdifServersOidSchema(
     ) -> tuple[str | None, str | None, str | None]:
         """Resolve OID-denormalized equality/substr/ordering matching rules.
 
+        Args:
+            attr_copy: Deep copy of the attribute holding source metadata.
+
         Returns:
-            The resulting ``tuple[str | None, str | None, str | None]``.
+            Tuple of the denormalized equality, substr, and ordering rules.
+
         """
         source_rules: t.JsonPayload | None = None
         if attr_copy.metadata and attr_copy.metadata.extensions:
@@ -337,8 +398,13 @@ class FlextLdifServersOidSchema(
     ) -> tuple[str | None, str | None, str | None]:
         """Resolve matching rules from preserved source matching-rule metadata.
 
+        Args:
+            source_rules: Source matching-rule mapping from metadata.
+            attr_copy: Attribute copy supplying fallback values.
+
         Returns:
-            The resulting ``tuple[str | None, str | None, str | None]``.
+            Tuple of the source equality, substr, and ordering rules.
+
         """
         equality_raw = source_rules.get("equality", attr_copy.equality)
         substr_raw = source_rules.get("substr", attr_copy.substr)
@@ -358,8 +424,12 @@ class FlextLdifServersOidSchema(
     ) -> t.JsonPayload | None:
         """Resolve the OID-denormalized syntax OID for writing.
 
+        Args:
+            attr_copy: Attribute copy holding source syntax metadata.
+
         Returns:
-            The resulting ``t.JsonPayload | None``.
+            The source syntax OID when recorded, otherwise the current syntax.
+
         """
         source_syntax: t.JsonPayload | None = None
         if attr_copy.metadata and attr_copy.metadata.extensions:
@@ -378,8 +448,12 @@ class FlextLdifServersOidSchema(
     ) -> m.Ldif.ServerMetadata | None:
         """Strip original-format tracking from metadata before the OID write.
 
+        Args:
+            attr_copy: Attribute copy whose metadata is cleaned.
+
         Returns:
-            The resulting ``m.Ldif.ServerMetadata | None``.
+            Metadata without original-format extensions, or None.
+
         """
         if attr_copy.metadata and attr_copy.metadata.extensions:
             keys_to_remove = {c.Ldif.SCHEMA_ORIGINAL_FORMAT}
@@ -395,10 +469,14 @@ class FlextLdifServersOidSchema(
 
     @override
     def _write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> p.Result[str]:
-        """Write Oracle OID attribute definition (Phase 2: Denormalization).
+        """Write an Oracle OID attribute definition (Phase 2: Denormalization).
+
+        Args:
+            attr_data: Canonical attribute model pending write.
 
         Returns:
-            The resulting ``p.Result[str]``.
+            Typed result carrying the serialized OID attribute string.
+
         """
         attr_copy = attr_data.model_copy(deep=True)
         oid_equality, oid_substr, oid_ordering = self._oid_matching_rules(attr_copy)

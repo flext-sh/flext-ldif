@@ -57,6 +57,7 @@ class FlextLdifServersOidAclToOud:
 
         Returns:
             The resulting ``str``.
+
         """
         if not value:
             return value
@@ -99,6 +100,7 @@ class FlextLdifServersOidAclToOud:
 
         Returns:
             The resulting ``p.Result[tuple[set[str], set[str], bool, bool]]``.
+
         """
         positive_bases: set[str] = set()
         negated_bases: set[str] = set()
@@ -145,6 +147,7 @@ class FlextLdifServersOidAclToOud:
 
         Returns:
             The resulting ``t.StrSequence``.
+
         """
         positive_bases, negated_bases, deny_all, explicit_all = bases
         if positive_bases:
@@ -177,6 +180,7 @@ class FlextLdifServersOidAclToOud:
 
         Returns:
             The resulting ``p.Result[t.StrSequence]``.
+
         """
         perm_map = c.Ldif.ENTRY_PERM_MAP if is_entry else c.Ldif.ATTR_PERM_MAP
         all_perms = c.Ldif.ALL_ENTRY_PERMS if is_entry else c.Ldif.ALL_ATTR_PERMS
@@ -195,6 +199,7 @@ class FlextLdifServersOidAclToOud:
 
         Returns:
             The resulting ``str``.
+
         """
         attr_negation: str = c.Ldif.OUD_ATTR_NEGATION
         attr_or: str = c.Ldif.OUD_ATTR_OR
@@ -225,6 +230,7 @@ class FlextLdifServersOidAclToOud:
 
         Returns:
             The resulting ``str | None``.
+
         """
         acl_scope_base: str = c.Ldif.ACL_SCOPE_BASE
         if rule.acl_type == c.Ldif.AclConvertType.ORCLENTRYLEVELACI:
@@ -248,6 +254,7 @@ class FlextLdifServersOidAclToOud:
 
         Returns:
             The resulting ``p.Result[m.Ldif.AciAllow]``.
+
         """
         kind = subject.subject_type
         value = subject.value

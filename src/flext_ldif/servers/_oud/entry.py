@@ -62,6 +62,7 @@ class FlextLdifServersOudEntry(
 
         Returns:
             The resulting ``bool``.
+
         """
         oud_constants = FlextLdifServersOudConstants
         patterns_config = m.Ldif.ServerPatternsConfig(
@@ -85,6 +86,7 @@ class FlextLdifServersOudEntry(
 
         Returns:
             The resulting ``p.Result[m.Ldif.Entry]``.
+
         """
         entry_attrs_dict: t.MutableStrSequenceMapping = {}
         if isinstance(entry_attrs, Mapping):
@@ -120,6 +122,7 @@ class FlextLdifServersOudEntry(
 
         Returns:
             The resulting ``p.Result[m.Ldif.Entry]``.
+
         """
         attrs_dict: t.MutableStrSequenceMapping = (
             entry.attributes.attributes if entry.attributes is not None else {}
@@ -151,6 +154,7 @@ class FlextLdifServersOudEntry(
         Returns:
             The resulting ``p.Result[t.Pair[bool,
                 t.Ldif.MutableMetadataInputMapping]]``.
+
         """
         has_macros = False
         acl_metadata_extensions: t.Ldif.MutableMetadataInputMapping = {}
@@ -195,6 +199,7 @@ class FlextLdifServersOudEntry(
 
         Returns:
             The resulting ``p.Result[m.Ldif.Entry]``.
+
         """
         return FlextLdifServersOudHelpersMixin.normalize_schema_definitions_for_write(
             entry,
@@ -208,6 +213,7 @@ class FlextLdifServersOudEntry(
 
         Returns:
             The resulting ``p.Result[str]``.
+
         """
         hook_result = self._hook_pre_write_entry(entry_data)
         if hook_result.failure:

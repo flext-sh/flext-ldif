@@ -62,6 +62,7 @@ def _active_logical_lines(ldif_text: str) -> list[str]:
 
     Returns:
         The resulting ``list[str]``.
+
     """
     logical_lines: list[str] = []
     current: str | None = None
@@ -84,6 +85,7 @@ def _write_oud_phase(api: p.Ldif.LdifClient, parsed: m.Ldif.ParseResponse) -> st
 
     Returns:
         The resulting ``str``.
+
     """
     written = tm.ok(
         api.write(

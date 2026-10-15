@@ -85,6 +85,7 @@ class FlextLdifParserRecord:
                 value: The decoded value payload.
                 value_origin: The origin annotation of the payload.
                 raw_value: The raw base64 payload when the value was encoded.
+
             """
             self.value = value
             self.value_origin = value_origin
@@ -125,6 +126,7 @@ class FlextLdifParserRecord:
 
         Returns:
             Whether the field was consumed.
+
         """
         if state.changetype not in {
             c.Ldif.ChangeType.MODDN,
@@ -154,6 +156,7 @@ class FlextLdifParserRecord:
         Returns:
             The attribute name under which the value belongs, or ``None``
             when the line opened a new operation and nothing is stored.
+
         """
         key_lower = key.lower()
         if key_lower in FlextLdifParserRecord._MODIFY_OPS:
@@ -206,6 +209,7 @@ class FlextLdifParserRecord:
 
         Returns:
             Whether the line was consumed as a special record line.
+
         """
         if key_lower == "control":
             state.controls.append(
@@ -256,6 +260,7 @@ class FlextLdifParserRecord:
 
         Returns:
             The resulting ``FlextLdifModels.Ldif.Entry``.
+
         """
         return FlextLdifModels.Ldif.Entry(
             dn=FlextLdifModels.Ldif.DN(value=state.dn.strip()),
@@ -287,6 +292,7 @@ class FlextLdifParserRecord:
 
         Returns:
             The resulting ``p.Result[FlextLdifModels.Ldif.Entry]``.
+
         """
         state = FlextLdifParserRecord._RecordState()
         for raw_line in lines:

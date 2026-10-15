@@ -32,6 +32,7 @@ class FlextLdifServersDialectSchema(FlextLdifServersRfcSchema):
 
         Returns:
             The resulting ``bool``.
+
         """
         matches: bool = u.Ldif.matches_server_patterns(
             value=attr_definition,
@@ -48,6 +49,7 @@ class FlextLdifServersDialectSchema(FlextLdifServersRfcSchema):
 
         Returns:
             The resulting ``bool``.
+
         """
         matches: bool = u.Ldif.matches_server_patterns(
             value=oc_definition,

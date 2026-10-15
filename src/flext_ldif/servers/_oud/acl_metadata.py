@@ -26,6 +26,7 @@ class FlextLdifServersOudAclMetadataMixin:
 
         Returns:
             The resulting ``tuple[str | None, m.Ldif.DnRegistry | None]``.
+
         """
         base_dn: str | None = None
         dn_registry: m.Ldif.DnRegistry | None = None
@@ -74,6 +75,7 @@ class FlextLdifServersOudAclMetadataMixin:
 
         Returns:
             The resulting ``str``.
+
         """
         if entry.metadata and entry.metadata.attribute_transformations:
             for (
@@ -104,6 +106,7 @@ class FlextLdifServersOudAclMetadataMixin:
 
         Returns:
             The resulting ``m.Ldif.Entry``.
+
         """
         if not acl_metadata_extensions:
             return entry
@@ -141,6 +144,7 @@ class FlextLdifServersOudAclMetadataMixin:
 
         Returns:
             The resulting ``str``.
+
         """
         canonical_keys = frozenset(key_map.values())
         final_key = key_map.get(key) or key_map.get(key.lower()) or key
@@ -154,6 +158,7 @@ class FlextLdifServersOudAclMetadataMixin:
 
         Returns:
             The resulting ``t.JsonValue``.
+
         """
         value_dict_inner: t.MutableJsonMapping = {}
         for k, v in value.items():

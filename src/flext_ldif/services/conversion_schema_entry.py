@@ -33,6 +33,7 @@ class FlextLdifConversionSchemaEntryMixin(
 
         Returns:
             The resulting ``str``.
+
         """
         return (
             c.Ldif.ATTRIBUTE_TYPES
@@ -52,6 +53,7 @@ class FlextLdifConversionSchemaEntryMixin(
 
         Returns:
             The resulting ``p.Result[str]``.
+
         """
         schema_field_name = self._schema_field_name_for(schema_item_kind)
         parse_result = (
@@ -87,6 +89,7 @@ class FlextLdifConversionSchemaEntryMixin(
 
         Returns:
             The resulting ``p.Result[str]``.
+
         """
         if schema_item_kind == c.Ldif.SchemaItemKind.ATTRIBUTE:
             if not isinstance(parsed_item, m.Ldif.SchemaAttribute):
@@ -120,6 +123,7 @@ class FlextLdifConversionSchemaEntryMixin(
 
         Returns:
             The resulting ``p.Result[m.Ldif.Entry]``.
+
         """
         if entry.attributes is None or not u.Ldif.detects_schema_entry(entry):
             return r[m.Ldif.Entry].ok(entry)
@@ -154,6 +158,7 @@ class FlextLdifConversionSchemaEntryMixin(
         Returns:
             The resulting ``p.Result[tuple[p.Ldif.SchemaServer,
                 p.Ldif.SchemaServer]]``.
+
         """
         source_schema_result = self._resolve_schema_server(
             source_server,
@@ -183,6 +188,7 @@ class FlextLdifConversionSchemaEntryMixin(
 
         Returns:
             The resulting list of (field name, item kind, values) triples.
+
         """
         schema_field_kinds: t.MappingKV[str, c.Ldif.SchemaItemKind] = {
             c.Ldif.ATTRIBUTE_TYPES.lower(): c.Ldif.SchemaItemKind.ATTRIBUTE,
@@ -207,6 +213,7 @@ class FlextLdifConversionSchemaEntryMixin(
 
         Returns:
             The resulting ``p.Result[tuple[str, list[str]]]``.
+
         """
         attr_name, schema_item_kind, values = field
         converted_values = r[str].traverse(
@@ -233,6 +240,7 @@ class FlextLdifConversionSchemaEntryMixin(
 
         Returns:
             The resulting ``m.Ldif.Entry``.
+
         """
         attributes_model = entry.attributes
         if attributes_model is None:

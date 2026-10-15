@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import Annotated, Self
 
 from flext_core import FlextUtilities as u, m
+
 from flext_ldif import t
 from flext_ldif._models import FlextLdifModelsDomainDN
 from flext_ldif._utilities import FlextLdifUtilitiesCollectionLdif
@@ -168,6 +169,7 @@ class FlextLdifModelsDomainEntryStatistics(m.FrozenDynamicModel):
 
         Returns:
             The resulting ``Self``.
+
         """
         validated: Self = cls.model_validate({"was_parsed": True})
         return validated
@@ -182,6 +184,7 @@ class FlextLdifModelsDomainEntryStatistics(m.FrozenDynamicModel):
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
+
         """
         seen: set[str] = set()
         result: t.MutableSequenceOf[str] = []
@@ -201,6 +204,7 @@ class FlextLdifModelsDomainEntryStatistics(m.FrozenDynamicModel):
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
+
         """
         return FlextLdifUtilitiesCollectionLdif.deduplicate_preserve_order(v)
 
@@ -211,6 +215,7 @@ class FlextLdifModelsDomainEntryStatistics(m.FrozenDynamicModel):
 
         Returns:
             The resulting ``Self``.
+
         """
         errors = [*self.errors, error]
         copy_result: Self = self.model_copy(update={"errors": errors})
@@ -223,6 +228,7 @@ class FlextLdifModelsDomainEntryStatistics(m.FrozenDynamicModel):
 
         Returns:
             The resulting ``Self``.
+
         """
         warnings = [*self.warnings, warning]
         copy_result: Self = self.model_copy(update={"warnings": warnings})
@@ -239,6 +245,7 @@ class FlextLdifModelsDomainEntryStatistics(m.FrozenDynamicModel):
 
         Returns:
             The resulting ``Self``.
+
         """
         filters_applied = [*self.filters_applied, filter_type]
         filter_results = {**self.filter_results, filter_type: passed}
@@ -258,6 +265,7 @@ class FlextLdifModelsDomainEntryStatistics(m.FrozenDynamicModel):
 
         Returns:
             The resulting ``Self``.
+
         """
         copy_result: Self = self.model_copy(
             update={

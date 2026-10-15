@@ -53,6 +53,7 @@ class TestsFlextLdifServersStandardization:
 
         Returns:
             The resulting ``str``.
+
         """
         return (
             "dn: cn=alice,dc=example,dc=com\n"

@@ -54,6 +54,7 @@ class FlextLdifMetadataBuilders:
 
         Returns:
             The resulting ``t.MutableConfigurationMapping``.
+
         """
         result: t.MutableConfigurationMapping = {
             "server_type": server_type,
@@ -74,6 +75,7 @@ class FlextLdifMetadataBuilders:
 
         Returns:
             The resulting ``t.Ldif.MutableMetadataMapping``.
+
         """
         return {"server_type": server_type, "source_server": server_type}
 
@@ -85,6 +87,7 @@ class FlextLdifMetadataBuilders:
 
         Returns:
             The resulting ``t.Ldif.MutableMetadataMapping``.
+
         """
         server_data_dict: t.Ldif.MutableMetadataMapping = {}
         server_data_dict["original_entry_dn"] = settings.original_entry_dn
@@ -108,6 +111,7 @@ class FlextLdifMetadataBuilders:
 
         Returns:
             The resulting ``str``.
+
         """
         original_ldif_parts: t.MutableSequenceOf[str] = []
         if settings.original_dn_line:
@@ -124,6 +128,7 @@ class FlextLdifMetadataBuilders:
 
         Returns:
             The resulting ``FlextLdifModels.Ldif.ServerMetadata``.
+
         """
         server_data_dict = FlextLdifMetadataBuilders._collect_parse_server_data(
             settings,
@@ -150,6 +155,7 @@ class FlextLdifMetadataBuilders:
 
         Returns:
             The resulting ``FlextLdifModels.Ldif.FormatDetails``.
+
         """
         original_dn_line = extra.get("original_dn_line")
         dn_line = str(original_dn_line) if original_dn_line is not None else None
@@ -171,6 +177,7 @@ class FlextLdifMetadataBuilders:
         Returns:
             The resulting ``MutableMapping[str, str | bool | t.MutableSequenceOf[str] |
                 t.MutableAttributeMapping]``.
+
         """
         result: MutableMapping[
             str,

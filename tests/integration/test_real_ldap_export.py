@@ -39,6 +39,7 @@ def flext_api() -> p.Ldif.LdifClient:
 
     Returns:
         The resulting ``p.Ldif.LdifClient``.
+
     """
     return ldif()
 
@@ -56,6 +57,7 @@ class TestsFlextLdifRealLdapExport:
 
         Returns:
             The resulting ``list[m.Ldif.Entry]``.
+
         """
         adapter = u.Tests.create_ldap_entry_adapter()
         entries: list[m.Ldif.Entry] = []
@@ -78,6 +80,7 @@ class TestsFlextLdifRealLdapExport:
 
         Returns:
             The resulting ``t.MappingKV[str, t.MappingKV[str, t.StrSequence]]``.
+
         """
         assert content is not None
         parsed = flext_api.parse_string(content)

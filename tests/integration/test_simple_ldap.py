@@ -42,6 +42,7 @@ class TestsFlextLdifSimpleLdap:
 
         Returns:
             The resulting ``m.Ldif.Entry``.
+
         """
         test_dn = f"cn={username},{base_dn}"
         ldap_connection.search(

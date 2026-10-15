@@ -17,6 +17,7 @@ from collections.abc import MutableMapping
 from typing import Annotated
 
 from flext_core import FlextUtilities as u, m
+
 from flext_ldif import FlextLdifShared, c, t
 from flext_ldif._models import FlextLdifModelsDomainAttributes
 
@@ -406,6 +407,7 @@ class FlextLdifModelsDomainMetadata:
 
             Returns:
                 The resulting ``c.Ldif.ServerTypes``.
+
             """
             if isinstance(value, c.Ldif.ServerTypes):
                 return value

@@ -30,6 +30,7 @@ class FlextLdifServersOidEntryRestoreMixin(
 
         Returns:
             The resulting ``t.MutableStrSequenceMapping``.
+
         """
         mk = c.Ldif
         original_attrs_raw = (
@@ -62,6 +63,7 @@ class FlextLdifServersOidEntryRestoreMixin(
 
         Returns:
             The resulting ``m.Ldif.Entry``.
+
         """
         restored_entry = self._restore_boolean_values_to_oid(entry_data)
         metadata = restored_entry.metadata
@@ -105,6 +107,7 @@ class FlextLdifServersOidEntryRestoreMixin(
 
         Returns:
             The resulting ``tuple[str, t.MutableSequenceOf[str]]``.
+
         """
         if original_attrs:
             for orig_name, orig_values in original_attrs.items():

@@ -47,6 +47,7 @@ class FlextLdifUtilitiesSchemaFormat:
 
         Returns:
             The resulting ``str | None``.
+
         """
         if not attr_data.name:
             return None
@@ -106,6 +107,7 @@ class FlextLdifUtilitiesSchemaFormat:
 
         Returns:
             The resulting ``str | None``.
+
         """
         if not attr_data.metadata:
             return None
@@ -131,6 +133,7 @@ class FlextLdifUtilitiesSchemaFormat:
 
         Returns:
             The resulting ``str | None``.
+
         """
         if not attr_list:
             return None
@@ -147,6 +150,7 @@ class FlextLdifUtilitiesSchemaFormat:
 
         Returns:
             The resulting ``str | None``.
+
         """
         if not sup_value:
             return None
@@ -164,6 +168,7 @@ class FlextLdifUtilitiesSchemaFormat:
 
         Returns:
             The resulting ``t.MutableSequenceOf[str] | None``.
+
         """
         if not attr_data.metadata or not attr_data.metadata.schema_format_details:
             return None
@@ -186,6 +191,7 @@ class FlextLdifUtilitiesSchemaFormat:
 
         Returns:
             The resulting ``t.MutableSequenceOf[str] | None``.
+
         """
         if not restore_original or not oc_data.metadata:
             return None
@@ -208,6 +214,7 @@ class FlextLdifUtilitiesSchemaFormat:
 
         Returns:
             The resulting ``t.MutableSequenceOf[str] | None``.
+
         """
         if not (
             attr_data.metadata

@@ -94,15 +94,12 @@ Available markers:
 
 ### Extract Schema Elements
 
-<!-- pytest-markdown-docs: next-code-block: ignore -->
+```python
+from flext_ldif import u
+from flext_tests import tm
 
-```python notest
-from tests import helpers
-
-attributes = helpers.extract_attributes(schema_content)
-objectclasses = helpers.extract_objectclasses(schema_content)
-oid = helpers.extract_oid(attr_definition)
-name = helpers.extract_name(attr_definition)
+definition = "( 2.5.4.3 NAME 'cn' )"
+tm.that(tm.ok(u.Ldif.extract_from_definition(definition)), eq="2.5.4.3")
 ```
 
 ### Validate Fixtures

@@ -9,6 +9,7 @@ from __future__ import annotations
 import base64
 
 from flext_core import r
+
 from flext_ldif import c, p
 from flext_ldif._models import FlextLdifModelsDomainEntryControl
 
@@ -22,6 +23,7 @@ class FlextLdifParserValues:
 
         Returns:
             The resulting ``tuple[str, c.Ldif.ValueOrigin, str | None]``.
+
         """
         payload = remainder.lstrip()
         if payload.startswith(":"):
@@ -50,6 +52,7 @@ class FlextLdifParserValues:
 
         Returns:
             The resulting ``FlextLdifModelsDomainEntryControl``.
+
         """
         minimum_control_tokens = 2
         control_tokens_with_value = 3
@@ -85,6 +88,7 @@ class FlextLdifParserValues:
 
         Returns:
             The resulting ``p.Result[tuple[str, str, bool]]``.
+
         """
         if ":" not in line:
             return r[tuple[str, str, bool]].fail(

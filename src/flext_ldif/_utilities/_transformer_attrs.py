@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from flext_core import r
+
 from flext_ldif import m, p, t
 
 if TYPE_CHECKING:
@@ -30,6 +31,7 @@ class FlextLdifUtilitiesEntryAttrsNormalization:
 
         Returns:
             The resulting ``p.Result[m.Ldif.Entry]``.
+
         """
         if item.attributes is None:
             return r[m.Ldif.Entry].fail("Entry has no attributes")

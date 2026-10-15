@@ -22,6 +22,7 @@ class FlextLdifEntryServerRules:
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
+
         """
         violations: t.MutableSequenceOf[str] = []
         if not rules.requires_binary_option or not entry.attributes:
@@ -51,6 +52,7 @@ class FlextLdifEntryServerRules:
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
+
         """
         violations: t.MutableSequenceOf[str] = []
         if not rules.requires_naming_attr or not dn_value or (not entry.attributes):
@@ -77,6 +79,7 @@ class FlextLdifEntryServerRules:
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
+
         """
         violations: t.MutableSequenceOf[str] = []
         if not rules.requires_objectclass:
@@ -108,6 +111,7 @@ class FlextLdifEntryServerRules:
 
         Returns:
             The resulting ``FlextLdifModelsSettings.ServerValidationRules | None``.
+
         """
         if isinstance(validation_rules, FlextLdifModelsSettings.ServerValidationRules):
             return validation_rules
