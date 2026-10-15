@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from functools import lru_cache
+
 from flext_cli import FlextCliUtilities
 
 from flext_ldif import _utilities
@@ -85,6 +87,7 @@ from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif._utilities.transformers import FlextLdifUtilitiesTransformers
 from flext_ldif._utilities.validation import FlextLdifUtilitiesValidation
 from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
+from typings import TYPE_CHECKING, ClassVar
 
 
 class FlextLdifUtilities(

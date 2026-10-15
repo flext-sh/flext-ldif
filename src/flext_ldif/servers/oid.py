@@ -18,7 +18,6 @@ from flext_ldif.servers._oid.acl import FlextLdifServersOidAcl
 from flext_ldif.servers._oid.entry import FlextLdifServersOidEntry
 from flext_ldif.servers._oid.schema import FlextLdifServersOidSchema
 from flext_ldif.servers._oid.server_constants import FlextLdifServersOidConstants
-from flext_ldif.servers.rfc import FlextLdifServersRfc
 
 
 class FlextLdifServersOid(FlextLdifServersRfc):
