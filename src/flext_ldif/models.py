@@ -86,9 +86,7 @@ class FlextLdifModels(FlextCliModels):
         # COMPOSITE MODELS — owned by ``_models/composite.py``
         # =================================================================
 
-        Stats: ClassVar[type[FlextCliModels.BaseModel]] = (
-            FlextLdifModelsComposite.Stats
-        )
+        Stats: ClassVar[type[FlextCliModels.BaseModel]] = FlextLdifModelsComposite.Stats
 
         OidAclMetadataConfig: ClassVar[type[FlextCliModels.BaseModel]] = (
             FlextLdifModelsComposite.OidAclMetadataConfig
