@@ -46,7 +46,6 @@ class FlextLdifServersBaseSchemaValuesMixin:
             ValueError,
             KeyError,
             AttributeError,
-            UnicodeDecodeError,
             struct.error,
         ) as exc:
             msg = f"Schema validation failed: {exc}"
