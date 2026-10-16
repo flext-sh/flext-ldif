@@ -133,7 +133,7 @@ class FlextLdifModels(FlextCliModels):
     # Top-level facade aliases: the api-freeze contract requires
     # ``flext_ldif.m.X`` and ``flext_ldif.FlextLdifModels.X`` to be the same
     # object for every published model.
-    type Entry = Ldif.Entry
+    Entry = FlextLdifModelsDomainEntry.Entry
 
 
 m = FlextLdifModels
