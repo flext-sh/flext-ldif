@@ -76,3 +76,6 @@ class FlextLdifModelsSettingsNormalization:
             bool,
             u.Field(description="Remove attributes with empty values"),
         ] = False
+
+
+__all__: list[str] = ["FlextLdifModelsSettingsNormalization"]

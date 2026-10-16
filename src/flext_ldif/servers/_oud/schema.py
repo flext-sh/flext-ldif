@@ -695,3 +695,6 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
                     f"(use AUXILIARY classes for additional features).",
                 )
         return r[bool].ok(value=True)
+
+
+__all__: list[str] = ["FlextLdifServersOudSchema"]

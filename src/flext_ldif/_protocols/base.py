@@ -338,11 +338,30 @@ class FlextLdifProtocolsBase(Protocol):
     class Control(Protocol):
         """Structured LDIF control line."""
 
-        control_type: str
-        criticality: bool | None
-        control_value: str | None
-        control_value_origin: c.Ldif.ValueOrigin | None
-        raw_value: str | None
+        @property
+        def control_type(self) -> str:
+            """Read the unchanged LDAP control identity."""
+            ...
+
+        @property
+        def criticality(self) -> bool | None:
+            """Read the declared criticality flag."""
+            ...
+
+        @property
+        def control_value(self) -> str | None:
+            """Read the optional decoded control value."""
+            ...
+
+        @property
+        def control_value_origin(self) -> c.Ldif.ValueOrigin | None:
+            """Read the optional original encoding."""
+            ...
+
+        @property
+        def raw_value(self) -> str | None:
+            """Read the original serialized control payload."""
+            ...
 
     @runtime_checkable
     class ChangeOperationValue(Protocol):

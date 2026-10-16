@@ -518,3 +518,6 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         attribute_settings=Constants.ATTRIBUTE_PATTERN_SETTINGS,
         objectclass_settings=Constants.OBJECTCLASS_PATTERN_SETTINGS,
     )
+
+
+__all__: list[str] = ["FlextLdifServersNovell"]

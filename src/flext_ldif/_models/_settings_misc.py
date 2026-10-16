@@ -47,3 +47,6 @@ class FlextLdifModelsSettingsMisc:
             t.MutableStrPairSequence,
             u.Field(description="Accumulated (attr, value) pairs"),
         ] = u.Field(default_factory=list[t.StrPair])
+
+
+__all__: list[str] = ["FlextLdifModelsSettingsMisc"]

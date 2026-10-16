@@ -21,9 +21,7 @@ from typing import ClassVar
 
 import flext_ldif
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif._models.domain_entry_change_value import (
-    FlextLdifModelsDomainEntryChangeOperationValue,
-)
+from flext_ldif._models import FlextLdifModelsDomainEntryChangeOperationValue
 
 
 class FlextLdifServersOudSchemaWriteMixin:

@@ -35,3 +35,6 @@ class FlextLdifModelsSettingsValidation:
             bool,
             u.Field(description="Whether server requires objectClass attribute"),
         ] = True
+
+
+__all__: list[str] = ["FlextLdifModelsSettingsValidation"]

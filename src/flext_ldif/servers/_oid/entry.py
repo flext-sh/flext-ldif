@@ -98,3 +98,6 @@ class FlextLdifServersOidEntry(
         """
         entry_to_write = self.restore_entry_from_metadata(entry_data)
         return super()._write_entry(entry_to_write)
+
+
+__all__: list[str] = ["FlextLdifServersOidEntry"]

@@ -158,3 +158,6 @@ class FlextLdifConstantsServersRfc:
     PRIORITY: ClassVar[int] = 100
 
     DEFAULT_PORT: ClassVar[int] = 389
+
+
+__all__: list[str] = ["FlextLdifConstantsServersRfc"]

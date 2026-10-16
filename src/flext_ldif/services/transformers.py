@@ -84,3 +84,6 @@ class FlextLdifTransformer(s[m.Ldif.Response]):
             )
             .flat_map(ensure_entry)
         )
+
+
+__all__: list[str] = ["FlextLdifTransformer"]

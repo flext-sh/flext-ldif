@@ -640,3 +640,6 @@ class FlextLdifServersBaseSchema(
         """
         msg = "Schema servers must implement _transform_objectclass_for_write"
         raise NotImplementedError(msg)
+
+
+__all__: list[str] = ["FlextLdifServersBaseSchema"]
