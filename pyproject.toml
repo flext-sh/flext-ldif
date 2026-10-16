@@ -58,6 +58,7 @@ Repository = "https://github.com/flext-sh/flext"
 
 [dependency-groups]
 dev = [
+  "mkdocstrings-python>=2.0.9",
   "actionlint-py>=1.7.12.24",
   "bandit>=1.9.4",
   "deptry",
@@ -74,7 +75,6 @@ dev = [
   "mkdocs-redirects>=1.2.3",
   "mkdocs-section-index>=0.3.12",
   "mkdocstrings>=1.0.6",
-  "mkdocstrings-python>=2.0.8",
   "msgpack-types",
   "mypy>=2.3.1",
   "platformdirs>=4.12.0",
@@ -146,7 +146,6 @@ omit = [
 
 [tool.deptry]
 known_first_party = ["flext_ldif"]
-optional_dependencies_dev_groups = ["dev"]
 
 [tool.flext.docs]
 package_name = "flext_ldif"
@@ -155,7 +154,7 @@ package_name = "flext_ldif"
 allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
-include = ["/src/flext_ldif/**"]
+only-include = ["src/flext_ldif"]
 
 [tool.hatch.build.targets.wheel.sources]
 "src/flext_ldif" = "flext_ldif"
@@ -164,7 +163,7 @@ include = ["/src/flext_ldif/**"]
 "pyproject.toml" = "flext_ldif/pyproject.toml"
 
 [tool.hatch.build.targets.sdist]
-include = ["/src/flext_ldif/**"]
+only-include = ["src/flext_ldif"]
 
 [tool.hatch.build.targets.sdist.force-include]
 "pyproject.toml" = "pyproject.toml"
@@ -472,12 +471,13 @@ runtime-evaluated-base-classes = [
   "flext_ldif.FlextLdifSettings",
   "flext_ldif._models.FlextLdifModelsBases.AclElement",
   "flext_ldif._models.FlextLdifModelsBases.SchemaElement",
-  "flext_ldif._models.config.FlextLdifNamespace",
-  "flext_ldif._models.domain_entry_change_value.FlextLdifModelsDomainEntryChangeOperationValue",
-  "flext_ldif._models.domain_entry_control.FlextLdifModelsDomainEntryControl",
-  "flext_ldif._models.domain_entry_statistics.FlextLdifModelsDomainEntryStatistics",
+  "flext_ldif._models.FlextLdifModelsDomainEntryChangeOperationValue",
+  "flext_ldif._models.FlextLdifModelsDomainEntryControl",
+  "flext_ldif._models.FlextLdifModelsDomainEntryStatistics",
+  "flext_ldif._models.FlextLdifNamespace",
   "flext_ldif._models.results.Response",
   "flext_ldif.s",
+  "flext_ldif.servers.FlextLdifServersRfc",
   "flext_ldif.servers._base.FlextLdifServersDialectSchema",
   "flext_ldif.servers._base.acl.FlextLdifServersBaseSchemaAcl",
   "flext_ldif.servers._base.entry.FlextLdifServersBaseEntry",

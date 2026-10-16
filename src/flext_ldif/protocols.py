@@ -1,3 +1,4 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
 """LDIF protocol facade.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
