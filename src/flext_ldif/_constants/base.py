@@ -15,10 +15,12 @@ import struct
 from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_ldif._constants._base_parts import (
-    FlextLdifConstantsAclConvertOud,
-    FlextLdifConstantsEnums,
+from flext_ldif._constants._base_parts import FlextLdifConstantsBaseParts
+
+FlextLdifConstantsAclConvertOud = (
+    FlextLdifConstantsBaseParts.FlextLdifConstantsAclConvertOud
 )
+FlextLdifConstantsEnums = FlextLdifConstantsBaseParts.FlextLdifConstantsEnums
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
