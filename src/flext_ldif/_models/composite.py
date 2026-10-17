@@ -56,9 +56,4 @@ class FlextLdifModelsComposite:
     type Entry = FlextLdifModels.Ldif.Entry
 
 
-__all__: list[str] = [
-    "Entry",
-    "FlextLdifModelsComposite",
-    "OidAclMetadataConfig",
-    "Stats",
-]
+__all__: list[str] = ["FlextLdifModelsComposite"]

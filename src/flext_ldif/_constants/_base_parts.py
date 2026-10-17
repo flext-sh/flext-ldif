@@ -217,7 +217,7 @@ class FlextLdifConstantsBaseParts:
 
         @unique
         class ServerMetadataKeys(StrEnum):
-            """Dictionary keys for server metadata and server-specific entry properties."""
+            """Dictionary keys for server metadata and specific entry properties."""
 
             SERVER_TYPE = "server_type"
             IS_CONFIG_ENTRY = "is_config_entry"
@@ -361,7 +361,8 @@ class FlextLdifConstantsBaseParts:
             "delete",
             "proxy",
         )
-        # DN suffixes (relative to base) treated as high-level containers (filter anyone).
+        # DN suffixes (relative to base) treated as high-level containers
+        #  (filter anyone).
         HIGH_LEVEL_CONTAINER_SUFFIXES: ClassVar[t.VariadicTuple[str]] = (
             "",
             "dc=network,",
@@ -371,8 +372,4 @@ class FlextLdifConstantsBaseParts:
         )
 
 
-__all__: list[str] = [
-    "FlextLdifConstantsAclConvertOud",
-    "FlextLdifConstantsBaseParts",
-    "FlextLdifConstantsEnums",
-]
+__all__: list[str] = ["FlextLdifConstantsBaseParts"]
