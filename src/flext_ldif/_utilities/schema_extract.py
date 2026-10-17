@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from flext_cli import u
 
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 class FlextLdifUtilitiesSchemaExtract:
     """Extract RFC 4512 schema fields from raw definition strings."""
 
-    logger = u.fetch_logger(__name__)
+    logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 
     @staticmethod
     def extract_attribute_flags(attr_definition: str) -> tuple[bool, bool]:

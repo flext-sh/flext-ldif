@@ -100,11 +100,13 @@ class FlextLdifModels(FlextCliModels):
         # COMPOSITE MODELS — owned by ``_models/composite.py``
         # =================================================================
 
-        Stats: ClassVar[type[FlextCliModels.BaseModel]] = FlextLdifModelsComposite.Stats
-
-        OidAclMetadataConfig: ClassVar[type[FlextCliModels.BaseModel]] = (
-            FlextLdifModelsComposite.OidAclMetadataConfig
+        Stats: ClassVar[type[FlextLdifModelsComposite.Stats]] = (
+            FlextLdifModelsComposite.Stats
         )
+
+        OidAclMetadataConfig: ClassVar[
+            type[FlextLdifModelsComposite.OidAclMetadataConfig]
+        ] = FlextLdifModelsComposite.OidAclMetadataConfig
 
     # Top-level facade aliases: the api-freeze contract requires
     # ``flext_ldif.m.X`` and ``flext_ldif.FlextLdifModels.X`` to be the same
