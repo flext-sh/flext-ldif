@@ -6,8 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from enum import StrEnum, unique
-
 from flext_cli import FlextCliConstants
 
 from flext_ldif._constants import (
@@ -22,6 +20,7 @@ from flext_ldif._constants import (
     FlextLdifConstantsServersRelaxed,
     FlextLdifConstantsServersRfc,
 )
+from flext_ldif._constants.str_enums import FlextLdifConstantsStrEnums
 
 
 class FlextLdifConstants(FlextCliConstants):
@@ -41,34 +40,15 @@ class FlextLdifConstants(FlextCliConstants):
     ):
         """LDIF domain constants namespace."""
 
-        @unique
-        class SchemaItemKind(StrEnum):
-            """Schema item discriminator used in conversion flows."""
+        SchemaItemKind = FlextLdifConstantsStrEnums.SchemaItemKind
 
-            ATTRIBUTE = "attribute"
-            OBJECTCLASS = "objectclass"
-
-        @unique
-        class NormalizeFallback(StrEnum):
-            """Fallback strategy when DN normalization fails."""
-
-            LOWER = "lower"
-            UPPER = "upper"
-            ORIGINAL = "original"
+        NormalizeFallback = FlextLdifConstantsStrEnums.NormalizeFallback
 
         # OperationalAttributes.IGNORE_SET is owned by
         # ``FlextLdifConstantsBase`` in ``_constants/base.py`` (ENFORCE-079)
         # and resolves through the MRO.
 
-        @unique
-        class LogLevelLower(StrEnum):
-            """Lowercase log-level names for logger dispatch comparisons."""
-
-            DEBUG = "debug"
-            INFO = "info"
-            WARNING = "warning"
-            ERROR = "error"
-            CRITICAL = "critical"
+        LogLevelLower = FlextLdifConstantsStrEnums.LogLevelLower
 
 
 c = FlextLdifConstants

@@ -77,6 +77,9 @@ if TYPE_CHECKING:
     from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
     from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
     from flext_ldif._utilities.events import FlextLdifUtilitiesEvents
+    from flext_ldif._utilities.flext_ldif_servers_oud_utilities import (
+        FlextLdifServersOudUtilities,
+    )
     from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
     from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
     from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
@@ -135,6 +138,7 @@ __all__: tuple[str, ...] = (
     "FlextLdifServerConfig",
     "FlextLdifServerDetection",
     "FlextLdifServerTypeResolution",
+    "FlextLdifServersOudUtilities",
     "FlextLdifUtilitiesACL",
     "FlextLdifUtilitiesAttribute",
     "FlextLdifUtilitiesCollectionLdif",
@@ -208,6 +212,7 @@ install_lazy_exports(
         "FlextLdifServerConfig": "._server_config",
         "FlextLdifServerDetection": "._server_detect",
         "FlextLdifServerTypeResolution": "._server_type",
+        "FlextLdifServersOudUtilities": ".flext_ldif_servers_oud_utilities",
         "FlextLdifUtilitiesACL": ".acl",
         "FlextLdifUtilitiesAttribute": ".attribute",
         "FlextLdifUtilitiesCollectionLdif": ".collection_ldif",
