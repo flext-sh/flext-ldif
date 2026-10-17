@@ -45,7 +45,6 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             c.Ldif.ServerTypes.OPENLDAP1,
             c.Ldif.ServerTypes.RFC,
         })
-        ACL_FORMAT: ClassVar[str] = "access"
         ACL_ATTRIBUTE_NAME: ClassVar[str] = "access"
         ACL_PERMISSION_AUTH: ClassVar[str] = "auth"
         SUPPORTED_PERMISSIONS: ClassVar[frozenset[str]] = (

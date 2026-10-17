@@ -36,9 +36,7 @@ class FlextLdifConstantsServersOid:
         ORCL_CONTAINER_LEVEL_ACL,
     )
 
-    ACL_FORMAT: ClassVar[str] = "orclaci"
-
-    ACL_ATTRIBUTE_NAME: ClassVar[str] = "orclaci"
+    ACL_ATTRIBUTE_NAME: ClassVar[str] = ORCLACI
 
     MATCHING_RULE_TO_RFC: ClassVar[t.StrMapping] = MappingProxyType({
         "caseIgnoreSubStringsMatch": "caseIgnoreSubstringsMatch",
