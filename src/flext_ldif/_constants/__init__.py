@@ -13,26 +13,32 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
+    from flext_ldif._constants._base_parts import FlextLdifConstantsBaseParts
     from flext_ldif._constants.acl_convert import FlextLdifConstantsAclConvert
     from flext_ldif._constants.base import (
         FlextLdifConstantsAclConvertOud,
         FlextLdifConstantsBase,
         FlextLdifConstantsEnums,
     )
-    from flext_ldif._constants.servers import (
-        FlextLdifConstantsServers,
-        FlextLdifConstantsServersBase,
-        FlextLdifConstantsServersOid,
-        FlextLdifConstantsServersOud,
-        FlextLdifConstantsServersRfc,
-    )
+    from flext_ldif._constants.servers import FlextLdifConstantsServers
+    from flext_ldif._constants.servers_base import FlextLdifConstantsServersBase
+    from flext_ldif._constants.servers_oid import FlextLdifConstantsServersOid
+    from flext_ldif._constants.servers_oud import FlextLdifConstantsServersOud
     from flext_ldif._constants.servers_relaxed import FlextLdifConstantsServersRelaxed
+    from flext_ldif._constants.servers_rfc import FlextLdifConstantsServersRfc
+    from flext_ldif._constants.str_enums import (
+        FlextLdifConstantsStrEnums,
+        LogLevelLower,
+        NormalizeFallback,
+        SchemaItemKind,
+    )
 
 
 __all__: tuple[str, ...] = (
     "FlextLdifConstantsAclConvert",
     "FlextLdifConstantsAclConvertOud",
     "FlextLdifConstantsBase",
+    "FlextLdifConstantsBaseParts",
     "FlextLdifConstantsEnums",
     "FlextLdifConstantsServers",
     "FlextLdifConstantsServersBase",
@@ -40,6 +46,10 @@ __all__: tuple[str, ...] = (
     "FlextLdifConstantsServersOud",
     "FlextLdifConstantsServersRelaxed",
     "FlextLdifConstantsServersRfc",
+    "FlextLdifConstantsStrEnums",
+    "LogLevelLower",
+    "NormalizeFallback",
+    "SchemaItemKind",
 )
 
 install_lazy_exports(
@@ -49,13 +59,18 @@ install_lazy_exports(
         "FlextLdifConstantsAclConvert": ".acl_convert",
         "FlextLdifConstantsAclConvertOud": ".base",
         "FlextLdifConstantsBase": ".base",
+        "FlextLdifConstantsBaseParts": "._base_parts",
         "FlextLdifConstantsEnums": ".base",
         "FlextLdifConstantsServers": ".servers",
-        "FlextLdifConstantsServersBase": ".servers",
-        "FlextLdifConstantsServersOid": ".servers",
-        "FlextLdifConstantsServersOud": ".servers",
+        "FlextLdifConstantsServersBase": ".servers_base",
+        "FlextLdifConstantsServersOid": ".servers_oid",
+        "FlextLdifConstantsServersOud": ".servers_oud",
         "FlextLdifConstantsServersRelaxed": ".servers_relaxed",
-        "FlextLdifConstantsServersRfc": ".servers",
+        "FlextLdifConstantsServersRfc": ".servers_rfc",
+        "FlextLdifConstantsStrEnums": ".str_enums",
+        "LogLevelLower": ".str_enums",
+        "NormalizeFallback": ".str_enums",
+        "SchemaItemKind": ".str_enums",
     }),
     public_exports=__all__,
 )

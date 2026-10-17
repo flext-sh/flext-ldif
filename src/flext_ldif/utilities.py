@@ -60,6 +60,7 @@ from flext_ldif._utilities import (
     FlextLdifUtilitiesEntryAttrsNormalization,
     FlextLdifUtilitiesEntryDnNormalization,
     FlextLdifUtilitiesEvents,
+    FlextLdifUtilitiesLazyTree,
     FlextLdifUtilitiesMetadata,
     FlextLdifUtilitiesObjectClass,
     FlextLdifUtilitiesOID,
@@ -80,7 +81,6 @@ from flext_ldif._utilities import (
     FlextLdifWriterSchemaParts,
 )
 from flext_ldif._utilities._lazy_meta import FlextLdifUtilitiesLazyMeta
-from flext_ldif._utilities._lazy_tree import FlextLdifUtilitiesLazyTree
 
 
 class FlextLdifUtilities(

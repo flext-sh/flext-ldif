@@ -14,9 +14,29 @@ from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_ldif._models._base_parts import FlextLdifModelsBasesParts
+    from flext_ldif._models._settings_acl import FlextLdifModelsSettingsAcl
+    from flext_ldif._models._settings_criteria import FlextLdifModelsSettingsCriteria
+    from flext_ldif._models._settings_migrate import FlextLdifModelsSettingsMigrate
+    from flext_ldif._models._settings_misc import FlextLdifModelsSettingsMisc
+    from flext_ldif._models._settings_normalization import (
+        FlextLdifModelsSettingsNormalization,
+    )
+    from flext_ldif._models._settings_processing import (
+        FlextLdifModelsSettingsProcessing,
+    )
+    from flext_ldif._models._settings_rules import FlextLdifModelsSettingsRules
+    from flext_ldif._models._settings_validation import (
+        FlextLdifModelsSettingsValidation,
+    )
     from flext_ldif._models.acl_convert import FlextLdifModelsAclConvert
     from flext_ldif._models.base import FlextLdifModelsBases, FlextLdifShared
     from flext_ldif._models.collections import FlextLdifModelsCollections
+    from flext_ldif._models.composite import (
+        Entry,
+        FlextLdifModelsComposite,
+        OidAclMetadataConfig,
+        Stats,
+    )
     from flext_ldif._models.config import FlextLdifNamespace
     from flext_ldif._models.domain_acl import FlextLdifModelsDomainAcl
     from flext_ldif._models.domain_attributes import FlextLdifModelsDomainAttributes
@@ -45,10 +65,12 @@ if TYPE_CHECKING:
 
 
 __all__: tuple[str, ...] = (
+    "Entry",
     "FlextLdifModelsAclConvert",
     "FlextLdifModelsBases",
     "FlextLdifModelsBasesParts",
     "FlextLdifModelsCollections",
+    "FlextLdifModelsComposite",
     "FlextLdifModelsDomainAcl",
     "FlextLdifModelsDomainAttributes",
     "FlextLdifModelsDomainDN",
@@ -65,18 +87,30 @@ __all__: tuple[str, ...] = (
     "FlextLdifModelsResults",
     "FlextLdifModelsResultsStatistics",
     "FlextLdifModelsSettings",
+    "FlextLdifModelsSettingsAcl",
+    "FlextLdifModelsSettingsCriteria",
+    "FlextLdifModelsSettingsMigrate",
+    "FlextLdifModelsSettingsMisc",
+    "FlextLdifModelsSettingsNormalization",
+    "FlextLdifModelsSettingsProcessing",
+    "FlextLdifModelsSettingsRules",
+    "FlextLdifModelsSettingsValidation",
     "FlextLdifNamespace",
     "FlextLdifShared",
+    "OidAclMetadataConfig",
+    "Stats",
 )
 
 install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
+        "Entry": ".composite",
         "FlextLdifModelsAclConvert": ".acl_convert",
         "FlextLdifModelsBases": ".base",
         "FlextLdifModelsBasesParts": "._base_parts",
         "FlextLdifModelsCollections": ".collections",
+        "FlextLdifModelsComposite": ".composite",
         "FlextLdifModelsDomainAcl": ".domain_acl",
         "FlextLdifModelsDomainAttributes": ".domain_attributes",
         "FlextLdifModelsDomainDN": ".domain_dn",
@@ -93,8 +127,18 @@ install_lazy_exports(
         "FlextLdifModelsResults": ".results",
         "FlextLdifModelsResultsStatistics": ".results_statistics",
         "FlextLdifModelsSettings": ".settings",
+        "FlextLdifModelsSettingsAcl": "._settings_acl",
+        "FlextLdifModelsSettingsCriteria": "._settings_criteria",
+        "FlextLdifModelsSettingsMigrate": "._settings_migrate",
+        "FlextLdifModelsSettingsMisc": "._settings_misc",
+        "FlextLdifModelsSettingsNormalization": "._settings_normalization",
+        "FlextLdifModelsSettingsProcessing": "._settings_processing",
+        "FlextLdifModelsSettingsRules": "._settings_rules",
+        "FlextLdifModelsSettingsValidation": "._settings_validation",
         "FlextLdifNamespace": ".config",
         "FlextLdifShared": ".base",
+        "OidAclMetadataConfig": ".composite",
+        "Stats": ".composite",
     }),
     public_exports=__all__,
 )

@@ -13,7 +13,9 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
+    from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
     from flext_ldif.servers._base.dialect_schema import FlextLdifServersDialectSchema
+    from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
     from flext_ldif.servers._base.entry_lines import FlextLdifServersEntryLineEmitter
     from flext_ldif.servers._base.entry_write import FlextLdifServersEntryWriteContext
     from flext_ldif.servers._base.entry_write_body import (
@@ -26,21 +28,27 @@ if TYPE_CHECKING:
         FlextLdifServersBaseExecuteParamsMixin,
     )
     from flext_ldif.servers._base.mixins import FlextLdifServerMethodsMixin
+    from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
     from flext_ldif.servers._base.schema_metadata import (
         FlextLdifServersBaseSchemaMetadataMixin,
     )
     from flext_ldif.servers._base.schema_values import (
         FlextLdifServersBaseSchemaValuesMixin,
     )
+    from flext_ldif.servers._base.server_constants import FlextLdifServersBaseConstants
     from flext_ldif.servers._base.server_io import FlextLdifServersBaseIoMixin
     from flext_ldif.servers._base.server_type import FlextLdifServersBaseMroMixin
 
 
 __all__: tuple[str, ...] = (
     "FlextLdifServerMethodsMixin",
+    "FlextLdifServersBaseConstants",
+    "FlextLdifServersBaseEntry",
     "FlextLdifServersBaseExecuteParamsMixin",
     "FlextLdifServersBaseIoMixin",
     "FlextLdifServersBaseMroMixin",
+    "FlextLdifServersBaseSchema",
+    "FlextLdifServersBaseSchemaAcl",
     "FlextLdifServersBaseSchemaMetadataMixin",
     "FlextLdifServersBaseSchemaValuesMixin",
     "FlextLdifServersDialectSchema",
@@ -55,9 +63,13 @@ install_lazy_exports(
     globals(),
     MappingProxyType({
         "FlextLdifServerMethodsMixin": ".mixins",
+        "FlextLdifServersBaseConstants": ".server_constants",
+        "FlextLdifServersBaseEntry": ".entry",
         "FlextLdifServersBaseExecuteParamsMixin": ".execute_params",
         "FlextLdifServersBaseIoMixin": ".server_io",
         "FlextLdifServersBaseMroMixin": ".server_type",
+        "FlextLdifServersBaseSchema": ".schema",
+        "FlextLdifServersBaseSchemaAcl": ".acl",
         "FlextLdifServersBaseSchemaMetadataMixin": ".schema_metadata",
         "FlextLdifServersBaseSchemaValuesMixin": ".schema_values",
         "FlextLdifServersDialectSchema": ".dialect_schema",

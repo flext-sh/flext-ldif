@@ -1,3 +1,4 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
 """LDIF Domain Models - Unified Model Aggregation Layer.
 
 Facade that groups all LDIF model classes for the ``FlextLdifModels``
@@ -14,34 +15,38 @@ from typing import ClassVar, TypeAliasType
 
 from flext_cli import FlextCliModels
 
-from flext_ldif._models._base_parts import FlextLdifModelsBasesParts
-from flext_ldif._models.acl_convert import FlextLdifModelsAclConvert
-from flext_ldif._models.base import FlextLdifModelsBases
-from flext_ldif._models.collections import FlextLdifModelsCollections
-from flext_ldif._models.composite import FlextLdifModelsComposite
-from flext_ldif._models.config import FlextLdifNamespace
-from flext_ldif._models.domain_acl import FlextLdifModelsDomainAcl
-from flext_ldif._models.domain_attributes import FlextLdifModelsDomainAttributes
-from flext_ldif._models.domain_dn import FlextLdifModelsDomainDN
-from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries
-from flext_ldif._models.domain_entry import FlextLdifModelsDomainEntry
-from flext_ldif._models.domain_entry_change import (
+from flext_ldif._models import (
+    FlextLdifModelsAclConvert,
+    FlextLdifModelsBases,
+    FlextLdifModelsBasesParts,
+    FlextLdifModelsCollections,
+    FlextLdifModelsComposite,
+    FlextLdifModelsDomainAcl,
+    FlextLdifModelsDomainAttributes,
+    FlextLdifModelsDomainDN,
+    FlextLdifModelsDomainEntry,
     FlextLdifModelsDomainEntryChangeOperation,
-)
-from flext_ldif._models.domain_entry_change_value import (
     FlextLdifModelsDomainEntryChangeOperationValue,
-)
-from flext_ldif._models.domain_entry_control import FlextLdifModelsDomainEntryControl
-from flext_ldif._models.domain_entry_statistics import (
+    FlextLdifModelsDomainEntryControl,
     FlextLdifModelsDomainEntryStatistics,
+    FlextLdifModelsDomainMetadata,
+    FlextLdifModelsDomainSchema,
+    FlextLdifModelsDomainsEntries,
+    FlextLdifModelsEvents,
+    FlextLdifModelsProcessing,
+    FlextLdifModelsResults,
+    FlextLdifModelsResultsStatistics,
+    FlextLdifModelsSettings,
+    FlextLdifModelsSettingsAcl,
+    FlextLdifModelsSettingsCriteria,
+    FlextLdifModelsSettingsMigrate,
+    FlextLdifModelsSettingsMisc,
+    FlextLdifModelsSettingsNormalization,
+    FlextLdifModelsSettingsProcessing,
+    FlextLdifModelsSettingsRules,
+    FlextLdifModelsSettingsValidation,
+    FlextLdifNamespace,
 )
-from flext_ldif._models.domain_metadata import FlextLdifModelsDomainMetadata
-from flext_ldif._models.domain_schema import FlextLdifModelsDomainSchema
-from flext_ldif._models.events import FlextLdifModelsEvents
-from flext_ldif._models.processing import FlextLdifModelsProcessing
-from flext_ldif._models.results import FlextLdifModelsResults
-from flext_ldif._models.results_statistics import FlextLdifModelsResultsStatistics
-from flext_ldif._models.settings import FlextLdifModelsSettings
 
 
 class FlextLdifModels(FlextCliModels):
@@ -61,6 +66,7 @@ class FlextLdifModels(FlextCliModels):
         FlextLdifModelsBases,
         FlextLdifModelsBasesParts,
         FlextLdifModelsCollections,
+        FlextLdifModelsComposite,
         FlextLdifNamespace,
         FlextLdifModelsDomainsEntries,
         FlextLdifModelsDomainEntry,
@@ -79,6 +85,14 @@ class FlextLdifModels(FlextCliModels):
         FlextLdifModelsResults,
         FlextLdifModelsResultsStatistics,
         FlextLdifModelsSettings,
+        FlextLdifModelsSettingsAcl,
+        FlextLdifModelsSettingsNormalization,
+        FlextLdifModelsSettingsProcessing,
+        FlextLdifModelsSettingsCriteria,
+        FlextLdifModelsSettingsRules,
+        FlextLdifModelsSettingsMigrate,
+        FlextLdifModelsSettingsValidation,
+        FlextLdifModelsSettingsMisc,
     ):
         """LDIF namespace for cross-project access."""
 

@@ -38,6 +38,7 @@ if TYPE_CHECKING:
     from flext_ldif._utilities._entry_oid_rfc import FlextLdifEntryOidRfcTransforming
     from flext_ldif._utilities._entry_server_rules import FlextLdifEntryServerRules
     from flext_ldif._utilities._entry_validation import FlextLdifEntryValidation
+    from flext_ldif._utilities._lazy_tree import FlextLdifUtilitiesLazyTree
     from flext_ldif._utilities._metadata_builders import FlextLdifMetadataBuilders
     from flext_ldif._utilities._metadata_entry_stats import FlextLdifMetadataEntryStats
     from flext_ldif._utilities._metadata_json_core import FlextLdifMetadataJsonCore
@@ -148,6 +149,7 @@ __all__: tuple[str, ...] = (
     "FlextLdifUtilitiesEntryAttrsNormalization",
     "FlextLdifUtilitiesEntryDnNormalization",
     "FlextLdifUtilitiesEvents",
+    "FlextLdifUtilitiesLazyTree",
     "FlextLdifUtilitiesMetadata",
     "FlextLdifUtilitiesOID",
     "FlextLdifUtilitiesObjectClass",
@@ -222,6 +224,7 @@ install_lazy_exports(
         "FlextLdifUtilitiesEntryAttrsNormalization": "._transformer_attrs",
         "FlextLdifUtilitiesEntryDnNormalization": "._transformer_dn",
         "FlextLdifUtilitiesEvents": ".events",
+        "FlextLdifUtilitiesLazyTree": "._lazy_tree",
         "FlextLdifUtilitiesMetadata": ".metadata",
         "FlextLdifUtilitiesOID": ".oid",
         "FlextLdifUtilitiesObjectClass": ".object_class",

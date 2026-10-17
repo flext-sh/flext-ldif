@@ -38,9 +38,11 @@ if TYPE_CHECKING:
     from flext_ldif.services.filters import FlextLdifFilters
     from flext_ldif.services.migration import FlextLdifMigrationPipeline
     from flext_ldif.services.parser import FlextLdifParser
+    from flext_ldif.services.pipeline import FlextLdifProcessingPipeline
     from flext_ldif.services.processing import FlextLdifProcessing
     from flext_ldif.services.server import FlextLdifServer
     from flext_ldif.services.statistics import FlextLdifStatistics
+    from flext_ldif.services.transformers import FlextLdifTransformer
     from flext_ldif.services.validation import FlextLdifValidation
     from flext_ldif.services.writer import FlextLdifWriter
 
@@ -66,8 +68,10 @@ __all__: tuple[str, ...] = (
     "FlextLdifMigrationPipeline",
     "FlextLdifParser",
     "FlextLdifProcessing",
+    "FlextLdifProcessingPipeline",
     "FlextLdifServer",
     "FlextLdifStatistics",
+    "FlextLdifTransformer",
     "FlextLdifValidation",
     "FlextLdifWriter",
 )
@@ -96,8 +100,10 @@ install_lazy_exports(
         "FlextLdifMigrationPipeline": ".migration",
         "FlextLdifParser": ".parser",
         "FlextLdifProcessing": ".processing",
+        "FlextLdifProcessingPipeline": ".pipeline",
         "FlextLdifServer": ".server",
         "FlextLdifStatistics": ".statistics",
+        "FlextLdifTransformer": ".transformers",
         "FlextLdifValidation": ".validation",
         "FlextLdifWriter": ".writer",
     }),
