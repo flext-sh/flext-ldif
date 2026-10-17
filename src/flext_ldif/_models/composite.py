@@ -6,31 +6,25 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Annotated, ClassVar
+from typing import Annotated, ClassVar
 
-from flext_cli import FlextCliModels
-from flext_core import FlextUtilities as u
+from flext_cli import m, u
 
 from flext_ldif import t
-
-if TYPE_CHECKING:
-    from flext_ldif.models import FlextLdifModels
 
 
 class FlextLdifModelsComposite:
     """LDIF composite facade models composed into ``m.Ldif``."""
 
-    class Stats(FlextCliModels.BaseModel):
+    class Stats(m.BaseModel):
         """Write statistics for batch content operations."""
 
-        model_config: ClassVar[FlextCliModels.ConfigDict] = FlextCliModels.ConfigDict(
-            validate_default=True
-        )
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(validate_default=True)
         total_entries: Annotated[t.NonNegativeInt, u.Field()] = 0
         successful: Annotated[t.NonNegativeInt, u.Field()] = 0
         failed: Annotated[t.NonNegativeInt, u.Field()] = 0
 
-    class OidAclMetadataConfig(FlextCliModels.BaseModel):
+    class OidAclMetadataConfig(m.BaseModel):
         """Configuration model for OID ACL metadata parsing."""
 
         acl_line: Annotated[str, u.Field()] = ""
@@ -49,11 +43,6 @@ class FlextLdifModelsComposite:
         append_to_all: Annotated[bool, u.Field()] = False
         bind_ip_filter: Annotated[str, u.Field()] = ""
         constrain_to_added_object: Annotated[str, u.Field()] = ""
-
-    # Facade-level composite alias: ``FlextLdifModels.Entry`` resolves to the
-    # composed LDIF namespace entry model, keeping the api-freeze contract
-    # (``flext_ldif.m.Entry`` and ``flext_ldif.FlextLdifModels.Entry`` agree).
-    type Entry = FlextLdifModels.Ldif.Entry
 
 
 __all__: list[str] = ["FlextLdifModelsComposite"]

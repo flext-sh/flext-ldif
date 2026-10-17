@@ -26,12 +26,7 @@ if TYPE_CHECKING:
     from flext_ldif._constants.servers_oud import FlextLdifConstantsServersOud
     from flext_ldif._constants.servers_relaxed import FlextLdifConstantsServersRelaxed
     from flext_ldif._constants.servers_rfc import FlextLdifConstantsServersRfc
-    from flext_ldif._constants.str_enums import (
-        FlextLdifConstantsStrEnums,
-        LogLevelLower,
-        NormalizeFallback,
-        SchemaItemKind,
-    )
+    from flext_ldif._constants.str_enums import FlextLdifConstantsStrEnums
 
 
 __all__: tuple[str, ...] = (
@@ -47,9 +42,6 @@ __all__: tuple[str, ...] = (
     "FlextLdifConstantsServersRelaxed",
     "FlextLdifConstantsServersRfc",
     "FlextLdifConstantsStrEnums",
-    "LogLevelLower",
-    "NormalizeFallback",
-    "SchemaItemKind",
 )
 
 install_lazy_exports(
@@ -68,9 +60,6 @@ install_lazy_exports(
         "FlextLdifConstantsServersRelaxed": ".servers_relaxed",
         "FlextLdifConstantsServersRfc": ".servers_rfc",
         "FlextLdifConstantsStrEnums": ".str_enums",
-        "LogLevelLower": ".str_enums",
-        "NormalizeFallback": ".str_enums",
-        "SchemaItemKind": ".str_enums",
     }),
     public_exports=__all__,
 )
