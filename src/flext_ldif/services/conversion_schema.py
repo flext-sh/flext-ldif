@@ -43,6 +43,10 @@ class FlextLdifConversionSchemaMixin(s[m.Ldif.Response], ABC):
     ) -> p.Result[t.Ldif.ConvertedModel]:
         """Orchestrate schema conversion through an m.Ldif.Entry intermediary.
 
+        The first converted value feeds the target-schema parse; re-validation
+        failures from that parse surface as Result failures (see
+        ``_validate_parsed_schema``).
+
         Returns:
             The resulting ``p.Result[t.Ldif.ConvertedModel]``.
 
@@ -202,13 +206,22 @@ class FlextLdifConversionSchemaMixin(s[m.Ldif.Response], ABC):
     ) -> p.Result[T]:
         """Re-validate a schema parse result into its model (attr / objectclass).
 
+        Schema-model validation failures are parse-boundary failures: a
+        ``c.Ldif.EXC_LDIF_PARSE`` escape from ``model_validate`` becomes an
+        ``r.Fail`` carrying the message and the exception, matching the
+        canonical server-parse boundary in ``servers/_base/schema_values.py``.
+        Exceptions outside that tuple escape unchanged.
+
         Returns:
             The resulting ``p.Result[T]``.
 
         """
         if parse_result.failure:
             return r[T].from_failure(parse_result)
-        return r[T].ok(model_cls.model_validate(parse_result.value))
+        try:
+            return r[T].ok(model_cls.model_validate(parse_result.value))
+        except c.Ldif.EXC_LDIF_PARSE as exc:
+            return r[T].fail(str(exc), exception=exc)
 
 
 __all__: list[str] = ["FlextLdifConversionSchemaMixin"]

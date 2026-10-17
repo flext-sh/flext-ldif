@@ -106,12 +106,14 @@ class FlextLdifServersBaseIoMixin:
         """Execute parse operation.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Entry]``.
+            The resulting ``p.Result[m.Ldif.Entry]``. Failure metadata from
+            the underlying parse (error code, data, exception) is preserved
+            unchanged.
 
         """
         parse_result = self.parse_ldif(ldif_text)
         if not parse_result.success:
-            return r[m.Ldif.Entry].fail(parse_result.error or "Parse failed")
+            return r[m.Ldif.Entry].from_failure(parse_result)
         entries = u.Ldif.as_entries(parse_result.unwrap())
         if not entries:
             return r[m.Ldif.Entry].fail("No entries parsed")

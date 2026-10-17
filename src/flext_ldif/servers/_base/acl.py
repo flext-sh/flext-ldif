@@ -362,13 +362,15 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
             data: Raw ACL string to parse.
 
         Returns:
-            Typed result carrying the parsed ACL payload.
+            Typed result carrying the parsed ACL payload. Failure metadata
+            from the server parse (error code, data, exception) is preserved
+            unchanged.
 
         """
         parse_result = self.parse_server(data)
         if parse_result.success:
             return r[t.Ldif.AclPayload].ok(parse_result.value)
-        return r[t.Ldif.AclPayload].fail(parse_result.error or "Parse failed")
+        return r[t.Ldif.AclPayload].from_failure(parse_result)
 
     def _execute_acl_write(self, data: m.Ldif.Acl) -> p.Result[t.Ldif.AclPayload]:
         """Execute the ACL write operation.
@@ -377,13 +379,15 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
             data: Canonical ACL model to write.
 
         Returns:
-            Typed result carrying the written ACL payload.
+            Typed result carrying the written ACL payload. Failure metadata
+            from the server write (error code, data, exception) is preserved
+            unchanged.
 
         """
         write_result = self.write(data)
         if write_result.success:
             return r[t.Ldif.AclPayload].ok(write_result.value)
-        return r[t.Ldif.AclPayload].fail(write_result.error or "Write failed")
+        return r[t.Ldif.AclPayload].from_failure(write_result)
 
     def _execute_detected_operation(
         self,
