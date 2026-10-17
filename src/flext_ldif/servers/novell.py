@@ -31,7 +31,6 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             "novell_edirectory",
             "rfc",
         ])
-        ACL_FORMAT: ClassVar[str] = "aci"
         ACL_ATTRIBUTE_NAME: ClassVar[str] = "aci"
         OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
             "GUID",

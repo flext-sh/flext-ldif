@@ -29,7 +29,6 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         ALIASES: ClassVar[frozenset[str]] = frozenset(["tivoli", "ibm_tivoli"])
         CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["ibm_tivoli"])
         CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["ibm_tivoli", "rfc"])
-        ACL_FORMAT: ClassVar[str] = "aci"
         ACL_ATTRIBUTE_NAME: ClassVar[str] = "aci"
         OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
             "createTimestamp",

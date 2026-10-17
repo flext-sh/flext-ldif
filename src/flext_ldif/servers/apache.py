@@ -31,7 +31,6 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         ALIASES: ClassVar[frozenset[str]] = frozenset(["apache", "apache_directory"])
         CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["apache"])
         CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["apache", "rfc"])
-        ACL_FORMAT: ClassVar[str] = "aci"
         ACL_ATTRIBUTE_NAME: ClassVar[str] = "aci"
         DETECTION_OID_PATTERN: ClassVar[str] = "1\\.3\\.6\\.1\\.4\\.1\\.18060\\."
         DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([

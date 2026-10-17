@@ -10,16 +10,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated, ClassVar
+from typing import ClassVar, TypeAliasType
 
 from flext_cli import FlextCliModels
-from flext_core import FlextUtilities as u
 
-from flext_ldif import t
 from flext_ldif._models._base_parts import FlextLdifModelsBasesParts
 from flext_ldif._models.acl_convert import FlextLdifModelsAclConvert
 from flext_ldif._models.base import FlextLdifModelsBases
 from flext_ldif._models.collections import FlextLdifModelsCollections
+from flext_ldif._models.composite import FlextLdifModelsComposite
 from flext_ldif._models.config import FlextLdifNamespace
 from flext_ldif._models.domain_acl import FlextLdifModelsDomainAcl
 from flext_ldif._models.domain_attributes import FlextLdifModelsDomainAttributes
@@ -84,43 +83,19 @@ class FlextLdifModels(FlextCliModels):
         """LDIF namespace for cross-project access."""
 
         # =================================================================
-        # COMPOSITE MODELS — defined here, not in models
+        # COMPOSITE MODELS — owned by ``_models/composite.py``
         # =================================================================
 
-        class Stats(FlextCliModels.BaseModel):
-            """Write statistics for batch content operations."""
+        Stats: ClassVar[type[FlextCliModels.BaseModel]] = FlextLdifModelsComposite.Stats
 
-            model_config: ClassVar[FlextCliModels.ConfigDict] = (
-                FlextCliModels.ConfigDict(validate_default=True)
-            )
-            total_entries: Annotated[t.NonNegativeInt, u.Field()] = 0
-            successful: Annotated[t.NonNegativeInt, u.Field()] = 0
-            failed: Annotated[t.NonNegativeInt, u.Field()] = 0
-
-        class OidAclMetadataConfig(FlextCliModels.BaseModel):
-            """Configuration model for OID ACL metadata parsing."""
-
-            acl_line: Annotated[str, u.Field()] = ""
-            oid_subject_type: Annotated[str, u.Field()] = ""
-            rfc_subject_type: Annotated[str, u.Field()] = ""
-            oid_subject_value: Annotated[str, u.Field()] = ""
-            perms_dict: Annotated[t.MutableBoolMapping, u.Field()] = u.Field(
-                default_factory=dict[str, bool],
-            )
-            target_dn: Annotated[str, u.Field()] = "entry"
-            target_attrs: t.MutableSequenceOf[str] = u.Field(default_factory=list[str])
-            acl_filter: Annotated[str, u.Field()] = ""
-            acl_constraint: Annotated[str, u.Field()] = ""
-            bindmode: Annotated[str, u.Field()] = ""
-            deny_group_override: Annotated[bool, u.Field()] = False
-            append_to_all: Annotated[bool, u.Field()] = False
-            bind_ip_filter: Annotated[str, u.Field()] = ""
-            constrain_to_added_object: Annotated[str, u.Field()] = ""
+        OidAclMetadataConfig: ClassVar[type[FlextCliModels.BaseModel]] = (
+            FlextLdifModelsComposite.OidAclMetadataConfig
+        )
 
     # Top-level facade aliases: the api-freeze contract requires
     # ``flext_ldif.m.X`` and ``flext_ldif.FlextLdifModels.X`` to be the same
     # object for every published model.
-    type Entry = Ldif.Entry
+    Entry: ClassVar[TypeAliasType] = FlextLdifModelsComposite.Entry
 
 
 m = FlextLdifModels

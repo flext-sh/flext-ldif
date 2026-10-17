@@ -33,7 +33,6 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         ALIASES: ClassVar[frozenset[str]] = frozenset(["openldap", "openldap2"])
         CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["openldap"])
         CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["openldap", "rfc"])
-        ACL_FORMAT: ClassVar[str] = "olcAccess"
         ACL_ATTRIBUTE_NAME: ClassVar[str] = "olcAccess"
         DETECTION_PATTERN: ClassVar[str] = "\\b(olc[A-Z][a-zA-Z]+|cn=settings)\\b"
         DETECTION_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([

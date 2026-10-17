@@ -1,3 +1,4 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
 """Utility functions for flextldif.
 
 Shared example-workflow helpers for the ``examples`` package: extends the

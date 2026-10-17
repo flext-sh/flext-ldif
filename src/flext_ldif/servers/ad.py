@@ -39,7 +39,6 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             "active_directory",
             "rfc",
         ])
-        ACL_FORMAT: ClassVar[str] = "nTSecurityDescriptor"
         ACL_ATTRIBUTE_NAME: ClassVar[str] = "nTSecurityDescriptor"
         AD_DN_PATTERNS: ClassVar[frozenset[str]] = frozenset([
             "CN=",

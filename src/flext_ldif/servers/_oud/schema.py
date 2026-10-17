@@ -22,8 +22,6 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 
-    _declared_attribute_names: set[str] = u.PrivateAttr(default_factory=set)
-
     def _sanitize_schema_carriers(
         self,
         entries: t.MutableSequenceOf[m.Ldif.Entry],
@@ -533,11 +531,6 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
                 "syntax": fixed_syntax,
             },
         )
-        # The declared-name registry feeds the objectClass reference filter:
-        # OUD refuses an objectClass whose MUST/MAY names an attribute the
-        # server does not carry (invalidAttributeSyntax), and the corpus may
-        # reference OID-internal attributes OUD declines.
-        self._declared_attribute_names.add(fixed_name.casefold())
         return self._apply_attribute_oid_metadata(updated_attr)
 
     @override
@@ -545,13 +538,13 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
         self,
         oc_data: m.Ldif.SchemaObjectClass,
     ) -> m.Ldif.SchemaObjectClass:
-        """Apply OUD-specific objectClass transformations before writing.
+        """Apply OUD syntax transformations without pruning schema references.
 
         Args:
             oc_data: ObjectClass to transform.
 
         Returns:
-            The objectClass rewritten for the OUD schema writer.
+            The objectClass with every MUST/MAY reference retained for validation.
 
         """
         updates: t.MutableMappingKV[str, str | t.MutableSequenceOf[str]] = {}
@@ -562,25 +555,9 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
             if not names:
                 continue
             sanitized = [item.replace("_", "-") for item in names]
-            declared = [
-                item
-                for item in sanitized
-                if item.casefold() in self._declared_attribute_names
-            ]
-            if declared != names:
-                dropped = sorted(set(sanitized) - set(declared))
-                FlextLdifServersOudSchema._module_logger.warning(
-                    "Dropped objectClass attribute references the translated "
-                    "corpus does not declare",
-                    objectclass_name=oc_data.name,
-                    objectclass_oid=oc_data.oid,
-                    role=role,
-                    dropped=",".join(dropped),
-                )
-                updates[role] = declared
+            if sanitized != names:
+                updates[role] = sanitized
         if updates:
-            if "name" not in updates and oc_data.name and "_" in oc_data.name:
-                updates["name"] = oc_data.name.replace("_", "-")
             FlextLdifServersOudSchema._module_logger.warning(
                 "Sanitized objectClass for the OUD schema writer",
                 objectclass_name=oc_data.name,

@@ -29,7 +29,6 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         ALIASES: ClassVar[frozenset[str]] = frozenset(["389ds"])
         CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["389ds"])
         CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["389ds", "rfc"])
-        ACL_FORMAT: ClassVar[str] = "aci"
         ACL_ATTRIBUTE_NAME: ClassVar[str] = "aci"
         OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
             "createTimestamp",
