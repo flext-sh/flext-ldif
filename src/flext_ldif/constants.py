@@ -21,8 +21,8 @@ from flext_ldif._constants import (
     FlextLdifConstantsServersOud,
     FlextLdifConstantsServersRelaxed,
     FlextLdifConstantsServersRfc,
+    FlextLdifConstantsStrEnums,
 )
-from flext_ldif._constants.str_enums import FlextLdifConstantsStrEnums
 
 
 class FlextLdifConstants(FlextCliConstants):

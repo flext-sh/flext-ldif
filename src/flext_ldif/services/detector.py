@@ -8,14 +8,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, override
 
-from flext_ldif import c, m, p, r, s, u
-from flext_ldif.services.detector_scoring import FlextLdifDetectorScoring
+from flext_ldif import c, m, p, r, u
+from flext_ldif.services import FlextLdifDetectorScoring
 
 if TYPE_CHECKING:
     from pathlib import Path
 
 
-class FlextLdifDetector(FlextLdifDetectorScoring, s[m.Ldif.Response]):
+class FlextLdifDetector(FlextLdifDetectorScoring):
     """Detector service composed directly into the LDIF facade via MRO.
 
     Overrides ``_get_effective_server_type_value`` from parser and writer

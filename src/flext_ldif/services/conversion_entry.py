@@ -16,11 +16,11 @@ from typing import override
 
 from flext_ldif import c, m, p, r, s, t, u
 from flext_ldif.servers._oid import FlextLdifServersOidAclPipeline
-from flext_ldif.services.conversion_metadata import FlextLdifConversionMetadataMixin
-from flext_ldif.services.conversion_schema_entry import (
+from flext_ldif.services import (
+    FlextLdifConversionMetadataMixin,
     FlextLdifConversionSchemaEntryMixin,
+    FlextLdifConversionSupportMixin,
 )
-from flext_ldif.services.conversion_support import FlextLdifConversionSupportMixin
 
 
 class FlextLdifConversionEntryMixin(

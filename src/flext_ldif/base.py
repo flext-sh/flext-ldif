@@ -6,55 +6,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Annotated, Self, override
+from typing import Self, override
 
 from flext_core import FlextService
 
-import flext_ldif
-from flext_ldif import FlextLdifSettings, c, m, p, t, u
-
-if TYPE_CHECKING:
-    from flext_ldif.services import FlextLdifServer
+from flext_ldif import FlextLdifSettings, c, m, p, t
 
 
 class FlextLdifServiceBase[TDomainResult](
     FlextService[TDomainResult],
 ):
     """Base class for LDIF services with typed settings helper."""
-
-    @staticmethod
-    def _default_ldif_server() -> p.Ldif.ServerRegistry:
-        """Resolve the shared server lazily (cuts the base/server init cycle).
-
-        Returns:
-            The resulting value.
-
-        """
-        # The root facade resolves its exports lazily (PEP 562), so the
-        # base/server init cycle stays cut: the server module loads on the
-        # first default_factory call, never at import time.
-        instance: FlextLdifServer = (
-            flext_ldif.services.FlextLdifServer.fetch_global_instance()
-        )
-        return instance
-
-    _server: p.Ldif.ServerRegistry = u.PrivateAttr(
-        default_factory=_default_ldif_server,
-    )
-    registry: Annotated[
-        p.Ldif.ServerRegistry | None,
-        u.Field(
-            exclude=True,
-            description="LDIF server registry used directly by service mixins.",
-        ),
-    ] = None
-
-    @override
-    def model_post_init(self, __context: t.JsonMapping | None, /) -> None:
-        """Bind the shared LDIF server registry after Pydantic initialization."""
-        super().model_post_init(__context)
-        if self.registry is not None:
-            self._server = self.registry
 
     @property
     @override
@@ -77,17 +39,20 @@ class FlextLdifServiceBase[TDomainResult](
         server: p.Ldif.ServerRegistry | None = None,
         settings: p.Ldif.Settings | None = None,
         **fields: t.JsonValue,
-    ) -> Self | m.Ldif.Entry | str:
+    ) -> Self | p.Ldif.Entry | str:
         """Return a cloned DSL instance preserving runtime registry/settings.
 
         defaults.
         """
         payload: t.MutableMappingKV[
             str,
-            t.JsonValue | p.Ldif.ServerRegistry | p.Ldif.Settings | None,
+            t.JsonValue | p.Registry | p.Ldif.Settings | None,
         ] = dict(fields)
-        payload["registry"] = self._server if server is None else server
-        payload["runtime_settings"] = settings
+        if server is not None:
+            payload["registry"] = server.registry
+        elif isinstance(self, p.Ldif.RegistryBound):
+            payload["registry"] = self.registry
+        payload["runtime_settings"] = self.settings if settings is None else settings
         instance: Self = type(self).model_validate(payload)
         return instance
 

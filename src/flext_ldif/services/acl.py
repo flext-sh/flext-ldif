@@ -6,10 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import c, m, p, r, s, t, u
+from flext_ldif import c, m, p, r, t, u
+from flext_ldif.services import FlextLdifServer
 
 
-class FlextLdifAcl(s[m.Ldif.Response]):
+class FlextLdifAcl(FlextLdifServer):
     """Direct ACL processing service using flext-core APIs."""
 
     @staticmethod
@@ -115,11 +116,10 @@ class FlextLdifAcl(s[m.Ldif.Response]):
             normalized_server_type = u.Ldif.normalize_server_type(server_type)
         except c.EXC_TYPE_VALIDATION as error:
             return r[m.Ldif.AclResponse].fail(str(error), exception=error)
-        acl_server = self._server.acl(normalized_server_type)
-        if acl_server is None:
-            return r[m.Ldif.AclResponse].fail(
-                f"No ACL server found for server type: {normalized_server_type}",
-            )
+        resolved = self.acl(normalized_server_type)
+        if resolved.failure:
+            return r[m.Ldif.AclResponse].from_failure(resolved)
+        acl_server = resolved.value
         acls: t.MutableSequenceOf[m.Ldif.Acl] = []
         for attribute_name in acl_server.resolve_acl_attributes():
             for acl_value in u.Ldif.resolve_attribute_values(entry, attribute_name):
@@ -152,16 +152,9 @@ class FlextLdifAcl(s[m.Ldif.Response]):
             normalized_server_type = u.Ldif.normalize_server_type(server_type)
         except c.EXC_TYPE_VALIDATION as error:
             return r[m.Ldif.Acl].fail(str(error), exception=error)
-        try:
-            acl_server = self._server.acl(normalized_server_type)
-        except ValueError as error:
-            return r[m.Ldif.Acl].fail(str(error), exception=error)
-        if acl_server is None:
-            return r[m.Ldif.Acl].fail(
-                f"No ACL server found for server type: {normalized_server_type}",
-            )
-
-        return acl_server.parse_server(acl_string)
+        return self.acl(normalized_server_type).flat_map(
+            lambda server: server.parse_server(acl_string)
+        )
 
 
 __all__: list[str] = ["FlextLdifAcl"]

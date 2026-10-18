@@ -14,10 +14,11 @@ import struct
 from collections.abc import MutableMapping
 from typing import Annotated
 
-from flext_ldif import c, m, p, r, s, t, u
+from flext_ldif import c, m, p, r, t, u
+from flext_ldif.services import FlextLdifServer
 
 
-class FlextLdifCategorizationRules(s[m.Ldif.Response]):
+class FlextLdifCategorizationRules(FlextLdifServer):
     """Categorization configuration fields and rule matching helpers."""
 
     @staticmethod
@@ -96,16 +97,6 @@ class FlextLdifCategorizationRules(s[m.Ldif.Response]):
             ),
         ),
     ] = c.Ldif.ServerTypes.RFC.value
-    server_registry: Annotated[
-        p.Ldif.ServerRegistry | None,
-        u.Field(
-            default=None,
-            exclude=True,
-            description=(
-                "Optional server registry override for categorization constants lookup."
-            ),
-        ),
-    ] = None
     rejection_tracker: Annotated[
         t.MutableMappingKV[str, t.MutableSequenceOf[m.Ldif.Entry]],
         u.Field(
@@ -227,16 +218,7 @@ class FlextLdifCategorizationRules(s[m.Ldif.Response]):
             The resulting ``p.Result[type[p.Ldif.ServerConstants]]``.
 
         """
-        registry = self.server_registry or self._server
-
-        def default_registry_error(error: str) -> str:
-            return error or f"Failed to resolve constants for {server_type}"
-
-        return (
-            r[type[p.Ldif.ServerConstants]]
-            .from_result(registry.resolve_server_constants(server_type))
-            .map_error(default_registry_error)
-        )
+        return self.resolve_server_constants(server_type)
 
     @staticmethod
     def _match_entry_to_category(

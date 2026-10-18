@@ -9,10 +9,11 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Annotated
 
-from flext_ldif import c, m, p, r, s, t, u
+from flext_ldif import c, m, p, r, t, u
+from flext_ldif.services import FlextLdifServer
 
 
-class FlextLdifConversionSupportMixin(s[m.Ldif.Response]):
+class FlextLdifConversionSupportMixin(FlextLdifServer):
     """Support-check helpers shared by the conversion facade.
 
     Owns the conversion state (``dn_registry`` / ``base_dn``) so every mixin the

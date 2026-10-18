@@ -40,8 +40,8 @@ def _resolve_schema_server(
 
     """
     schema = registry.resolve_schema_server(server_type)
-    assert schema is not None
-    return schema
+    tm.ok(schema)
+    return schema.value
 
 
 def _assert_definition_roundtrip(
@@ -231,8 +231,7 @@ class TestsFlextLdifCrossDirectionConversion:
         server_registry: FlextLdifServer,
     ) -> None:
         """OID->parse->OID->write is a byte-stable identity for OID-native text."""
-        oid_schema = server_registry.resolve_schema_server("oid")
-        assert oid_schema is not None
+        oid_schema = _resolve_schema_server(server_registry, "oid")
         attr_def = (
             "( 2.16.840.1.113894.1.1.327 NAME 'orclDASUIType' "
             "EQUALITY caseIgnoreSubstringsMatch "
@@ -278,8 +277,7 @@ class TestsFlextLdifCrossDirectionConversion:
         expected: str,
     ) -> None:
         """The parsed public model field carries the canonicalized value."""
-        schema = server_registry.resolve_schema_server(server)
-        assert schema is not None
+        schema = _resolve_schema_server(server_registry, server)
         parse_result = schema.parse_attribute(attr_def)
         tm.ok(parse_result)
         tm.that(str(getattr(parse_result.value, field)), eq=expected)
@@ -289,10 +287,8 @@ class TestsFlextLdifCrossDirectionConversion:
         server_registry: FlextLdifServer,
     ) -> None:
         """OID case variant is canonicalized at parse and not re-emitted by OUD."""
-        oid_schema = server_registry.resolve_schema_server("oid")
-        oud_schema = server_registry.resolve_schema_server("oud")
-        assert oid_schema is not None
-        assert oud_schema is not None
+        oid_schema = _resolve_schema_server(server_registry, "oid")
+        oud_schema = _resolve_schema_server(server_registry, "oud")
         attr_def = (
             "( 2.16.840.1.113894.1.1.600 NAME 'orclMemberRef' "
             "EQUALITY distinguishedNAMEMatch "

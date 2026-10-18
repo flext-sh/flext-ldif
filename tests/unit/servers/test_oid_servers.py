@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif.services import FlextLdifServer
+from flext_ldif import FlextLdif
 from tests import p, tm
 
 _SYNTAX_NORMALIZATION_CASES: tuple[tuple[str, str, str], ...] = (
@@ -68,14 +68,14 @@ class TestsFlextLdifOidServers:
             The resulting ``p.Ldif.SchemaServer``.
 
         """
-        resolved = FlextLdifServer().resolve_schema_server("oid")
-        assert resolved is not None
-        return resolved
+        resolved = FlextLdif().resolve_schema_server("oid")
+        tm.ok(resolved)
+        return resolved.value
 
     @staticmethod
-    def test_resolve_unknown_server_type_returns_none() -> None:
-        """An unknown server type resolves to None, not a fabricated server."""
-        tm.that(FlextLdifServer().resolve_schema_server("does-not-exist"), none=True)
+    def test_resolve_unknown_server_type_returns_failure() -> None:
+        """An unknown server type fails instead of fabricating a server."""
+        tm.fail(FlextLdif().resolve_schema_server("does-not-exist"))
 
     @staticmethod
     @pytest.mark.parametrize(

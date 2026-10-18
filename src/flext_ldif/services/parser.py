@@ -8,10 +8,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_ldif import c, m, p, r, s
+from flext_ldif import c, p, r
+from flext_ldif.services import FlextLdifServer
 
 
-class FlextLdifParser(s[m.Ldif.Response]):
+class FlextLdifParser(FlextLdifServer):
     """LDIF parser orchestrator over the server server registry."""
 
     def parse_ldif(
@@ -19,7 +20,7 @@ class FlextLdifParser(s[m.Ldif.Response]):
         value: str | Path,
         *,
         server_type: str | None = None,
-    ) -> p.Result[m.Ldif.ParseResponse]:
+    ) -> p.Result[p.Ldif.ParseResponse]:
         """Parse LDIF content from string or file.
 
         Returns:
@@ -36,7 +37,7 @@ class FlextLdifParser(s[m.Ldif.Response]):
         path: Path,
         server_type: str | None = None,
         encoding: str = "utf-8",
-    ) -> p.Result[m.Ldif.ParseResponse]:
+    ) -> p.Result[p.Ldif.ParseResponse]:
         """Parse LDIF content from a file path with optional encoding override.
 
         Returns:
@@ -50,21 +51,21 @@ class FlextLdifParser(s[m.Ldif.Response]):
             if candidate_path.exists():
                 resolved_path = candidate_path
         if not resolved_path.exists():
-            return r[m.Ldif.ParseResponse].fail_op(
+            return r[p.Ldif.ParseResponse].fail_op(
                 "resolve ldif path",
                 f"File not found: {path}",
             )
         try:
             content = resolved_path.read_text(encoding=encoding)
         except c.EXC_OS_DECODING as error:
-            return r[m.Ldif.ParseResponse].fail_op("read ldif file", error)
+            return r[p.Ldif.ParseResponse].fail_op("read ldif file", error)
         return self.parse_string(content, server_type=server_type)
 
     def parse_string(
         self,
         content: str,
         server_type: str | None = None,
-    ) -> p.Result[m.Ldif.ParseResponse]:
+    ) -> p.Result[p.Ldif.ParseResponse]:
         """Parse LDIF content from a string through the selected base server.
 
         Returns:
@@ -72,12 +73,8 @@ class FlextLdifParser(s[m.Ldif.Response]):
 
         """
         effective_server_type = server_type or self._get_effective_server_type_value()
-        return r[m.Ldif.ParseResponse].from_result(
-            self._server
-            .server(effective_server_type)
-            .map_error(lambda error: error or "Failed to resolve LDIF server server")
-            .flat_map(lambda server: server.parse_ldif(content))
-            .map_error(lambda error: error or "LDIF parsing failed"),
+        return self.server(effective_server_type).flat_map(
+            lambda server: server.parse_ldif(content)
         )
 
 

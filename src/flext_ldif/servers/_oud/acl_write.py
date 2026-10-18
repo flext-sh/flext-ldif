@@ -10,8 +10,10 @@ from collections.abc import Mapping
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._oud import FlextLdifServersOudAclSubjectMixin
-from flext_ldif.servers._oud.server_constants import FlextLdifServersOudConstants
+from flext_ldif.servers._oud import (
+    FlextLdifServersOudAclSubjectMixin,
+    FlextLdifServersOudConstants,
+)
 
 
 class FlextLdifServersOudAclWriteMixin(FlextLdifServersOudAclSubjectMixin):

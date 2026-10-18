@@ -13,10 +13,13 @@ from typing import Annotated, Self, override
 from flext_cli import cli
 
 from flext_ldif import c, m, p, r, s, t, u
-from flext_ldif.services.transformers import FlextLdifTransformer
+from flext_ldif.services import FlextLdifTransformer
 
 
-class FlextLdifProcessingPipeline(s[t.MutableSequenceOf[m.Ldif.Entry]]):
+class FlextLdifProcessingPipeline(
+    s[t.MutableSequenceOf[m.Ldif.Entry]],
+    m.Ldif.RegistryPortOptions,
+):
     """Full processing pipeline with configuration."""
 
     _DEFAULT_CASE_FOLD: c.Ldif.CaseFoldOption = c.Ldif.CaseFoldOption.NONE
@@ -62,6 +65,8 @@ class FlextLdifProcessingPipeline(s[t.MutableSequenceOf[m.Ldif.Entry]]):
     def for_servers(
         cls,
         *,
+        registry: p.Registry,
+        runtime_settings: p.Ldif.Settings | None = None,
         source_server: str | c.Ldif.ServerTypes,
         target_server: str | c.Ldif.ServerTypes,
         base_dn: str = "",
@@ -92,7 +97,11 @@ class FlextLdifProcessingPipeline(s[t.MutableSequenceOf[m.Ldif.Entry]]):
             target_server=target_server_type,
             base_dn=base_dn,
         )
-        return cls(transform_config=transform_config)
+        return cls(
+            transform_config=transform_config,
+            registry=registry,
+            runtime_settings=runtime_settings,
+        )
 
     @override
     def execute(self) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
@@ -221,6 +230,8 @@ class FlextLdifProcessingPipeline(s[t.MutableSequenceOf[m.Ldif.Entry]]):
                 source_server=source_server,
                 target_server=target_server,
                 base_dn=self._config.process_config.base_dn,
+                registry=self.registry,
+                runtime_settings=self.settings,
             )
             handlers[c.Ldif.PROCESSING_STAGE_SERVER_TRANSFORM] = (
                 lambda _ctx, step=server_transform.apply: self._apply_transformer(

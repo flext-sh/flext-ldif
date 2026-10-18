@@ -171,7 +171,7 @@ class FlextLdifProtocolsBase(Protocol):
             value: str | Path,
             *,
             server_type: str | None = None,
-        ) -> p.Result[m.Ldif.ParseResponse]:
+        ) -> p.Result[FlextLdifProtocolsBase.ParseResponse]:
             """Parse LDIF content from text or file path."""
             ...
 
@@ -180,7 +180,7 @@ class FlextLdifProtocolsBase(Protocol):
             path: Path,
             server_type: str | None = None,
             encoding: str = "utf-8",
-        ) -> p.Result[m.Ldif.ParseResponse]:
+        ) -> p.Result[FlextLdifProtocolsBase.ParseResponse]:
             """Parse LDIF content from a file path."""
             ...
 
@@ -188,7 +188,7 @@ class FlextLdifProtocolsBase(Protocol):
             self,
             content: str,
             server_type: str | None = None,
-        ) -> p.Result[m.Ldif.ParseResponse]:
+        ) -> p.Result[FlextLdifProtocolsBase.ParseResponse]:
             """Parse LDIF content from a raw string."""
             ...
 

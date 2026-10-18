@@ -19,7 +19,6 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-import flext_ldif
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif._models import FlextLdifModelsDomainEntryChangeOperationValue
 
@@ -38,6 +37,8 @@ class FlextLdifServersOudSchemaWriteMixin:
     def normalize_schema_definitions_for_write(
         cls,
         entry: m.Ldif.Entry,
+        *,
+        registry: p.Registry,
     ) -> p.Result[m.Ldif.Entry]:
         """Canonicalize schema definitions through the source→OUD write cycle.
 
@@ -51,7 +52,7 @@ class FlextLdifServersOudSchemaWriteMixin:
         """
         if not cls._carries_schema_definitions(entry):
             return r[m.Ldif.Entry].ok(entry)
-        servers_result = cls._resolve_write_schema_servers(entry)
+        servers_result = cls._resolve_write_schema_servers(entry, registry=registry)
         if servers_result.failure:
             return r[m.Ldif.Entry].from_failure(servers_result)
         source_schema, target_schema = servers_result.value
@@ -90,10 +91,11 @@ class FlextLdifServersOudSchemaWriteMixin:
             or change_operation_names & cls._SCHEMA_DEFINITION_ATTRS,
         )
 
-    @classmethod
+    @staticmethod
     def _resolve_write_schema_servers(
-        cls,
         entry: m.Ldif.Entry,
+        *,
+        registry: p.Registry,
     ) -> p.Result[t.Pair[p.Ldif.SchemaServer, p.Ldif.SchemaServer]]:
         """Resolve (source, target) schema servers for the entry provenance.
 
@@ -102,27 +104,35 @@ class FlextLdifServersOudSchemaWriteMixin:
                 p.Ldif.SchemaServer]]``.
 
         """
-        registry = flext_ldif.services.FlextLdifServer.fetch_global_instance()
-        target_result = registry.server(str(c.Ldif.ServerTypes.OUD.value))
-        if target_result.failure:
-            return r[t.Pair[p.Ldif.SchemaServer, p.Ldif.SchemaServer]].fail_op(
-                "resolve OUD target schema server",
-                target_result.error,
-            )
         source_type: str = (
             entry.metadata.server_type
             if entry.metadata is not None
             else c.Ldif.ServerTypes.OUD.value
         )
-        source_result = registry.server(source_type)
-        if source_result.failure:
+        try:
+            source_type = u.Ldif.normalize_server_type(source_type).value
+        except ValueError as exc:
             return r[t.Pair[p.Ldif.SchemaServer, p.Ldif.SchemaServer]].fail_op(
-                f"resolve source schema server for OUD write from {source_type}",
-                source_result.error,
+                "resolve source schema for OUD write",
+                exc,
             )
+        schemas: t.MutableSequenceOf[p.Ldif.SchemaServer] = []
+        for name in (source_type, c.Ldif.ServerTypes.OUD.value):
+            result = registry.fetch_plugin(c.Ldif.SERVERS, name)
+            if result.failure:
+                return r[t.Pair[p.Ldif.SchemaServer, p.Ldif.SchemaServer]].from_failure(
+                    result
+                )
+            server = result.value
+            if not isinstance(server, p.Ldif.ServerServer):
+                return r[t.Pair[p.Ldif.SchemaServer, p.Ldif.SchemaServer]].fail_op(
+                    "resolve schema for OUD write",
+                    "Stored dialect lacks server capability",
+                )
+            schemas.append(server.schema_server)
         return r[t.Pair[p.Ldif.SchemaServer, p.Ldif.SchemaServer]].ok((
-            source_result.value.schema_server,
-            target_result.value.schema_server,
+            schemas[0],
+            schemas[1],
         ))
 
     @classmethod

@@ -10,12 +10,17 @@ from pathlib import Path
 from typing import Annotated, Final, override
 
 from flext_ldif import FlextLdifShared, c, m, p, r, s, t, u
-from flext_ldif.services.parser import FlextLdifParser
-from flext_ldif.services.pipeline import FlextLdifProcessingPipeline
-from flext_ldif.services.writer import FlextLdifWriter
+from flext_ldif.services import (
+    FlextLdifParser,
+    FlextLdifProcessingPipeline,
+    FlextLdifWriter,
+)
 
 
-class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
+class FlextLdifMigrationPipeline(
+    s[p.Ldif.MigrationPipelineResult],
+    m.Ldif.RegistryPortOptions,
+):
     """Migration Pipeline for Server-to-Server LDIF Migration."""
 
     _DEFAULT_SERVER: Final[c.Ldif.ServerTypes] = c.Ldif.ServerTypes.RFC
@@ -165,10 +170,14 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
                 source_server=source_server,
                 target_server=target_server,
                 base_dn=self.base_dn or "",
+                registry=self.registry,
+                runtime_settings=self.settings,
             )
             return FlextLdifProcessingPipeline(
                 transform_config=pipeline.transform_config,
                 entries_input=entries,
+                registry=self.registry,
+                runtime_settings=self.settings,
             ).execute()
         except c.Ldif.EXC_LDIF_PARSE as e:
             self.logger.exception(
@@ -260,24 +269,21 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
                 f"File migration failed: "
                 f"{read.error or f'unable to read {input_file}'}",
             )
-        parse_result = FlextLdifParser().parse_string(
+        parse_result = FlextLdifParser(
+            registry=self.registry,
+            runtime_settings=self.settings,
+        ).parse_string(
             read.value,
             server_type=self.source_server_type,
         )
         if parse_result.failure:
-            return r[m.Ldif.MigrationPipelineResult].fail_op(
-                "Parse",
-                parse_result.error,
-            )
+            return r[m.Ldif.MigrationPipelineResult].from_failure(parse_result)
         entries_list: t.MutableSequenceOf[m.Ldif.Entry] = list(
             parse_result.value.entries,
         )
         migrate_result = self.migrate_entries(entries_list)
         if migrate_result.failure:
-            return r[m.Ldif.MigrationPipelineResult].fail_op(
-                "Migration",
-                migrate_result.error,
-            )
+            return r[m.Ldif.MigrationPipelineResult].from_failure(migrate_result)
         return self._write_migrated_file(
             input_file,
             output_file,
@@ -306,16 +312,16 @@ class FlextLdifMigrationPipeline(s[m.Ldif.MigrationPipelineResult]):
             return r[m.Ldif.MigrationPipelineResult].fail(
                 "No output file or output_dir specified",
             )
-        write_result = FlextLdifWriter().write_ldif_file(
+        write_result = FlextLdifWriter(
+            registry=self.registry,
+            runtime_settings=self.settings,
+        ).write_ldif_file(
             migrated,
             resolved_output_file,
             server_type=self.target_server_type,
         )
         if write_result.failure:
-            return r[m.Ldif.MigrationPipelineResult].fail_op(
-                "Write",
-                write_result.error,
-            )
+            return r[m.Ldif.MigrationPipelineResult].from_failure(write_result)
         self.logger.debug("Wrote migrated file", output_file=str(resolved_output_file))
         pipeline_result = m.Ldif.MigrationPipelineResult.model_validate({
             "entries": migrated,

@@ -8,41 +8,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_ldif import m, p, r, s, t, u
+from flext_ldif import m, p, r, t, u
+from flext_ldif.services import FlextLdifServer
 
 if TYPE_CHECKING:
     from pathlib import Path
 
 
-class FlextLdifWriter(s[m.Ldif.Response]):
+class FlextLdifWriter(FlextLdifServer):
     """LDIF writer orchestrator over the server server registry."""
-
-    def _stringify_entries(
-        self,
-        entries: t.MutableSequenceOf[m.Ldif.Entry],
-        *,
-        server_type: str | None,
-        format_options: p.Ldif.WriteFormatOptions | None,
-        failure_action: str,
-        fallback_error: str,
-    ) -> p.Result[str]:
-        """Serialize entries to LDIF text, mapping failures to ``r``.
-
-        Returns:
-            The resulting ``p.Result[str]``.
-
-        """
-        string_result = self.write_to_string(
-            entries,
-            server_type=server_type,
-            format_options=format_options,
-        )
-        if string_result.failure:
-            return r[str].fail_op(
-                failure_action,
-                string_result.error or fallback_error,
-            )
-        return string_result
 
     def write(
         self,
@@ -57,18 +31,13 @@ class FlextLdifWriter(s[m.Ldif.Response]):
             The resulting ``p.Result[m.Ldif.WriteResponse]``.
 
         """
-        content_result = self._stringify_entries(
+        content_result = self.write_to_string(
             entries,
             server_type=server_type,
             format_options=format_options,
-            failure_action="write ldif entries",
-            fallback_error="LDIF writing failed",
         )
         if content_result.failure:
-            return r[m.Ldif.WriteResponse].fail_op(
-                "write ldif entries",
-                content_result.error or "LDIF writing failed",
-            )
+            return r[m.Ldif.WriteResponse].from_failure(content_result)
         return r[m.Ldif.WriteResponse].ok(
             m.Ldif.WriteResponse(
                 content=content_result.value,
@@ -93,25 +62,17 @@ class FlextLdifWriter(s[m.Ldif.Response]):
             The resulting ``p.Result[m.Ldif.WriteResponse]``.
 
         """
-        content_result = self._stringify_entries(
+        content_result = self.write_to_string(
             entries,
             server_type=server_type,
             format_options=format_options,
-            failure_action="write ldif file",
-            fallback_error="Failed to generate LDIF content",
         )
         if content_result.failure:
-            return r[m.Ldif.WriteResponse].fail_op(
-                "write ldif file",
-                content_result.error or "Failed to generate LDIF content",
-            )
+            return r[m.Ldif.WriteResponse].from_failure(content_result)
         ldif_content = content_result.value
         write = u.Cli.atomic_write_text_file(path, ldif_content)
         if write.failure:
-            return r[m.Ldif.WriteResponse].fail(
-                f"Failed to write LDIF file {path}: "
-                f"{write.error or 'unknown write error'}",
-            )
+            return r[m.Ldif.WriteResponse].from_failure(write)
         return r[m.Ldif.WriteResponse].ok(
             m.Ldif.WriteResponse(
                 content=ldif_content,
@@ -142,14 +103,9 @@ class FlextLdifWriter(s[m.Ldif.Response]):
             or isinstance(format_options, m.Ldif.WriteFormatOptions)
             else m.Ldif.WriteFormatOptions.model_validate(format_options)
         )
-        write_result = (
-            self._server
-            .server(effective_server_type)
-            .map_error(lambda error: error or "Failed to resolve LDIF server server")
-            .flat_map(lambda server: server.write(entries, concrete_options))
-            .map_error(lambda error: error or "LDIF writing failed")
+        return self.server(effective_server_type).flat_map(
+            lambda server: server.write(entries, concrete_options)
         )
-        return r[str].from_result(write_result)
 
 
 __all__: list[str] = ["FlextLdifWriter"]

@@ -10,7 +10,7 @@ from typing import ClassVar
 
 from flext_ldif import m, p, t, u
 from flext_ldif.servers._oud.server_constants import FlextLdifServersOudConstants
-from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
+from flext_ldif.servers._rfc import FlextLdifServersRfcAcl
 
 
 class FlextLdifServersOudAclSubjectMixin(FlextLdifServersRfcAcl):

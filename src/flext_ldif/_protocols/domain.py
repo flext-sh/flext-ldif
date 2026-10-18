@@ -8,9 +8,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, Protocol, runtime_checkable
 
-if TYPE_CHECKING:
-    from flext_cli import p
+from flext_cli import p
 
+if TYPE_CHECKING:
     from flext_ldif import m, t
     from flext_ldif._protocols import FlextLdifProtocolsBase
 
@@ -28,11 +28,12 @@ class FlextLdifProtocolsDomain(Protocol):
             ...
 
     @runtime_checkable
-    class ServerServer(Protocol):
+    class ServerServer(p.HasModelDump, Protocol):
         """Structured server server contract used by services and tests."""
 
         server_type: ClassVar[str]
         priority: ClassVar[int]
+        Constants: ClassVar[type[FlextLdifProtocolsBase.ServerConstants]]
 
         @property
         def schema_server(self) -> FlextLdifProtocolsDomain.SchemaServer:
@@ -188,7 +189,14 @@ class FlextLdifProtocolsDomain(Protocol):
             ...
 
     @runtime_checkable
-    class ServerRegistry(Protocol):
+    class RegistryBound(Protocol):
+        """Core registry port consumed by runtime-preserving composition."""
+
+        @property
+        def registry(self) -> p.Registry: ...
+
+    @runtime_checkable
+    class ServerRegistry(RegistryBound, Protocol):
         """Registry contract for server-specific servers."""
 
         def server(
@@ -208,25 +216,25 @@ class FlextLdifProtocolsDomain(Protocol):
         def schema_server(
             self,
             server_type: str,
-        ) -> FlextLdifProtocolsDomain.SchemaServer | None:
+        ) -> p.Result[FlextLdifProtocolsDomain.SchemaServer]:
             """Return schema server for a server type."""
             ...
 
         def resolve_schema_server(
             self,
             server_type: str,
-        ) -> FlextLdifProtocolsDomain.SchemaServer | None:
+        ) -> p.Result[FlextLdifProtocolsDomain.SchemaServer]:
             """Resolve schema server for a server type."""
             ...
 
-        def acl(self, server_type: str) -> FlextLdifProtocolsDomain.AclServer | None:
+        def acl(self, server_type: str) -> p.Result[FlextLdifProtocolsDomain.AclServer]:
             """Return ACL server for a server type."""
             ...
 
         def entry(
             self,
             server_type: str,
-        ) -> FlextLdifProtocolsDomain.EntryServer | None:
+        ) -> p.Result[FlextLdifProtocolsDomain.EntryServer]:
             """Return entry server for a server type."""
             ...
 
@@ -251,13 +259,19 @@ class FlextLdifProtocolsDomain(Protocol):
             """Resolve constants class for a server type."""
             ...
 
-        def list_registered_servers(self) -> t.MutableSequenceOf[str]:
+        def list_registered_servers(self) -> p.Result[t.MutableSequenceOf[str]]:
             """Return all registered normalized server types."""
             ...
 
-        def summarize_registry(self) -> t.Ldif.MutableMetadataInputMapping:
+        def summarize_registry(self) -> p.Result[t.Ldif.MutableMetadataInputMapping]:
             """Return registry summary metadata."""
             ...
+
+        def register_server(
+            self, server: FlextLdifProtocolsDomain.ServerServer
+        ) -> p.Result[bool]: ...
+
+        def unregister_server(self, server_type: str) -> p.Result[bool]: ...
 
 
 __all__: list[str] = ["FlextLdifProtocolsDomain"]
