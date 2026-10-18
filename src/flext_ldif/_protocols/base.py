@@ -543,6 +543,26 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
         @property
+        def respect_attribute_order(self) -> bool:
+            """Whether attribute order from metadata should be respected."""
+            ...
+
+        @property
+        def write_hidden_attributes_as_comments(self) -> bool:
+            """Whether hidden attributes should be written as comments."""
+            ...
+
+        @property
+        def write_metadata_as_comments(self) -> bool:
+            """Whether metadata should be written as comments."""
+            ...
+
+        @property
+        def include_version_header(self) -> bool:
+            """Whether version header should be included."""
+            ...
+
+        @property
         def entry_category(self) -> str | None:
             """The migration entry category."""
             ...

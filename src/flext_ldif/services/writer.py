@@ -111,15 +111,33 @@ class FlextLdifWriter(FlextLdifServer):
         batch = (
             entries.entries if isinstance(entries, p.Ldif.ParseResponse) else entries
         )
+        # Convert protocol entries to model entries for server consumption
+        model_entries: t.MutableSequenceOf[m.Ldif.Entry] = [
+            m.Ldif.Entry.model_validate(e) for e in batch
+        ]
+        # Convert protocol format options to model format options
+        model_format_options: m.Ldif.WriteFormatOptions | None = None
+        if format_options is not None:
+            model_format_options = m.Ldif.WriteFormatOptions(
+                line_width=format_options.line_width,
+                sort_attributes=format_options.sort_attributes,
+                base64_encode_binary=format_options.base64_encode_binary,
+                include_dn_comments=format_options.include_dn_comments,
+                restore_original_format=format_options.restore_original_format,
+                respect_attribute_order=format_options.respect_attribute_order,
+                write_hidden_attributes_as_comments=format_options.write_hidden_attributes_as_comments,
+                write_metadata_as_comments=format_options.write_metadata_as_comments,
+                include_version_header=format_options.include_version_header,
+            )
         try:
-            request = m.Ldif.WriteRequest.model_validate({
-                "entries": list(batch),
-                "format_options": format_options,
+            _ = m.Ldif.WriteRequest.model_validate({
+                "entries": model_entries,
+                "format_options": model_format_options,
             })
         except c.EXC_TYPE_VALIDATION as exc:
             return r[str].fail_op("validate LDIF write request", exc)
         return self.server(effective_server_type).flat_map(
-            lambda server: server.write(request.entries, request.format_options)
+            lambda server: server.write(model_entries, model_format_options)
         )
 
 

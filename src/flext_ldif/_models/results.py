@@ -14,6 +14,7 @@ from flext_cli import m, u
 from flext_ldif import c, p, t
 from flext_ldif._models import (
     FlextLdifModelsCollections,
+    FlextLdifModelsDomainsEntries,
     FlextLdifModelsResultsStatistics,
 )
 from flext_ldif._models._settings_migrate import FlextLdifModelsSettingsMigrate
@@ -25,7 +26,7 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
     class WriteRequest(m.ArbitraryTypesModel):
         """One validated write boundary for structural entries and options."""
 
-        entries: t.MutableSequenceOf[p.Ldif.Entry] = u.Field(
+        entries: t.MutableSequenceOf[FlextLdifModelsDomainsEntries.Entry] = u.Field(
             description="Owned LDIF entries supplied for serialization",
         )
         format_options: FlextLdifModelsSettingsMigrate.WriteFormatOptions | None = (
