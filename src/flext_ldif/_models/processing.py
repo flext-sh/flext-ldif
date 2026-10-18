@@ -11,10 +11,24 @@ from typing import Annotated, Literal
 from flext_core import FlextUtilities as u, m
 
 from flext_ldif import t
+from flext_ldif._models._settings_processing import FlextLdifModelsSettingsProcessing
+from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries
 
 
 class FlextLdifModelsProcessing:
     """Processing model namespace."""
+
+    class ProcessingPipelineOptions(m.ArbitraryTypesModel):
+        """Owned input batch and optional transformation configuration."""
+
+        transform_config: FlextLdifModelsSettingsProcessing.TransformConfig | None = u.Field(
+            default=None, exclude=True,
+            description="Transformation configuration for the ordered entry pipeline",
+        )
+        entries_input: t.SequenceOf[FlextLdifModelsDomainsEntries.Entry] | None = u.Field(
+            default=None, exclude=True,
+            description="Entry batch supplied to the processing pipeline",
+        )
 
     class ProcessingResult(m.StrictModel):
         """Result of entry processing (transform or validate operation)."""

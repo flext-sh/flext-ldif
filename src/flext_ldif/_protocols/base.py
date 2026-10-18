@@ -161,14 +161,14 @@ class FlextLdifProtocolsBase(Protocol):
             output_dir: Path | None = None,
             source_server: str = "rfc",
             target_server: str = "rfc",
-            options: m.Ldif.MigrateOptions | None = None,
-        ) -> p.Result[m.Ldif.MigrationPipelineResult]:
+            options: FlextLdifProtocolsBase.MigrationOutputOptions | None = None,
+        ) -> p.Result[FlextLdifProtocolsBase.MigrationPipelineResult]:
             """Run the public LDIF migration pipeline."""
             ...
 
         def parse_ldif(
             self,
-            value: str | Path,
+            value: str | PathLike[str],
             *,
             server_type: str | None = None,
         ) -> p.Result[FlextLdifProtocolsBase.ParseResponse]:
@@ -177,7 +177,7 @@ class FlextLdifProtocolsBase(Protocol):
 
         def parse_ldif_file(
             self,
-            path: Path,
+            path: PathLike[str],
             server_type: str | None = None,
             encoding: str = "utf-8",
         ) -> p.Result[FlextLdifProtocolsBase.ParseResponse]:
@@ -194,29 +194,33 @@ class FlextLdifProtocolsBase(Protocol):
 
         def write(
             self,
-            entries: t.MutableSequenceOf[m.Ldif.Entry],
+            entries: t.SequenceOf[FlextLdifProtocolsBase.Entry]
+            | FlextLdifProtocolsBase.ParseResponse,
             *,
             server_type: str | None = None,
             format_options: FlextLdifProtocolsBase.WriteFormatOptions | None = None,
-        ) -> p.Result[m.Ldif.WriteResponse]:
+        ) -> p.Result[FlextLdifProtocolsBase.WriteResponse]:
             """Write canonical LDIF entries to text response."""
             ...
 
         def write_ldif_file(
             self,
-            entries: t.MutableSequenceOf[m.Ldif.Entry],
-            path: Path,
+            entries: t.SequenceOf[FlextLdifProtocolsBase.Entry]
+            | FlextLdifProtocolsBase.ParseResponse,
+            path: PathLike[str],
             *,
             server_type: str | None = None,
             format_options: FlextLdifProtocolsBase.WriteFormatOptions | None = None,
-        ) -> p.Result[m.Ldif.WriteResponse]:
+        ) -> p.Result[FlextLdifProtocolsBase.WriteResponse]:
             """Write canonical LDIF entries to a file."""
             ...
 
         def write_to_string(
             self,
-            entries: t.MutableSequenceOf[m.Ldif.Entry],
+            entries: t.SequenceOf[FlextLdifProtocolsBase.Entry]
+            | FlextLdifProtocolsBase.ParseResponse,
             server_type: str | None = None,
+            format_options: FlextLdifProtocolsBase.WriteFormatOptions | None = None,
         ) -> p.Result[str]:
             """Write LDIF entries to a string."""
             ...
@@ -783,6 +787,13 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
     @runtime_checkable
+    class MigrationOutputOptions(Protocol):
+        """Output naming capability consumed by migration composition."""
+
+        @property
+        def output_filename(self) -> str | None: ...
+
+    @runtime_checkable
     class MigrationPipelineResult(Protocol):
         """Migration pipeline result contract."""
 
@@ -929,7 +940,7 @@ class FlextLdifProtocolsBase(Protocol):
     class ProcessingPipeline(Protocol):
         """Protocol for LDIF processing pipelines."""
 
-        def execute(self) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]: ...
+        def execute(self) -> p.Result[t.SequenceOf[FlextLdifProtocolsBase.Entry]]: ...
 
     @runtime_checkable
     class MigrationPipeline(Protocol):

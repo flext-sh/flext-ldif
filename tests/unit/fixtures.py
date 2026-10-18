@@ -374,7 +374,7 @@ def migration_dirs(tmp_path: Path) -> t.Pair[Path, Path]:
 @pytest.fixture
 def migration_pipeline_factory(
     migration_dirs: t.Pair[Path, Path],
-    server_registry: p.Ldif.ServerRegistry,
+    server: p.Ldif.ServerRegistry,
 ) -> p.Tests.MigrationPipelineFactory:
     """Return a factory that builds ``FlextLdifMigrationPipeline`` instances.
 
@@ -399,7 +399,7 @@ def migration_pipeline_factory(
         target_server_type: c.Ldif.ServerTypes | str | None = None,
     ) -> p.Ldif.MigrationPipeline:
         return FlextLdifMigrationPipeline(
-            registry=server_registry.registry,
+            registry=server.registry,
             input_dir=input_dir if input_dir is not None else default_input,
             output_dir=output_dir if output_dir is not None else default_output,
             source_server_type=source_server_type or c.Tests.RFC,

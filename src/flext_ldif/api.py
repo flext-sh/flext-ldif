@@ -275,7 +275,7 @@ class FlextLdif(
         input_dir: Path | None = None,
         output_dir: Path | None = None,
         settings: p.Ldif.TransformConfig | None = None,
-        options: m.Ldif.MigrateOptions | None = None,
+        options: p.Ldif.MigrationOutputOptions | None = None,
         runtime_settings: p.Ldif.Settings | None = None,
         **fields: t.ModelInput | Path,
     ) -> p.Ldif.MigrationPipeline:
@@ -316,7 +316,7 @@ class FlextLdif(
         output_dir: Path | None = None,
         source_server: str = c.Ldif.ServerTypes.RFC.value,
         target_server: str = c.Ldif.ServerTypes.RFC.value,
-        options: m.Ldif.MigrateOptions | None = None,
+        options: p.Ldif.MigrationOutputOptions | None = None,
     ) -> p.Result[m.Ldif.MigrationPipelineResult]:
         """Migrate LDIF data between servers.
 

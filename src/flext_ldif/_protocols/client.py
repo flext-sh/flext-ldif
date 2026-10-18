@@ -14,6 +14,7 @@ from flext_ldif import c
 from flext_ldif._protocols import FlextLdifProtocolsBase
 
 if TYPE_CHECKING:
+    from os import PathLike
     from collections.abc import Sequence
     from pathlib import Path
 
@@ -74,14 +75,14 @@ class FlextLdifProtocolsClient(Protocol):
             output_dir: Path | None = None,
             source_server: str = c.Ldif.ServerTypes.RFC.value,
             target_server: str = c.Ldif.ServerTypes.RFC.value,
-            options: m.Ldif.MigrateOptions | None = None,
+            options: FlextLdifProtocolsBase.MigrationOutputOptions | None = None,
         ) -> p.Result[FlextLdifProtocolsBase.MigrationPipelineResult]:
             """Run the public LDIF migration pipeline."""
             ...
 
         def parse_ldif(
             self,
-            value: str | Path,
+            value: str | PathLike[str],
             *,
             server_type: str | None = None,
         ) -> p.Result[FlextLdifProtocolsBase.ParseResponse]:
@@ -90,7 +91,7 @@ class FlextLdifProtocolsClient(Protocol):
 
         def parse_ldif_file(
             self,
-            path: Path,
+            path: PathLike[str],
             server_type: str | None = None,
             encoding: str = "utf-8",
         ) -> p.Result[FlextLdifProtocolsBase.ParseResponse]:
@@ -120,7 +121,7 @@ class FlextLdifProtocolsClient(Protocol):
             self,
             entries: Sequence[FlextLdifProtocolsBase.Entry]
             | FlextLdifProtocolsBase.ParseResponse,
-            path: Path,
+            path: PathLike[str],
             *,
             server_type: str | None = None,
             format_options: FlextLdifProtocolsBase.WriteFormatOptions | None = None,

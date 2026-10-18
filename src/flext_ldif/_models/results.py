@@ -17,10 +17,21 @@ from flext_ldif._models import (
     FlextLdifModelsDomainsEntries,
     FlextLdifModelsResultsStatistics,
 )
+from flext_ldif._models._settings_migrate import FlextLdifModelsSettingsMigrate
 
 
 class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
     """Namespace for LDIF result models."""
+
+    class WriteRequest(m.ArbitraryTypesModel):
+        """One validated write boundary for structural entries and options."""
+
+        entries: t.MutableSequenceOf[FlextLdifModelsDomainsEntries.Entry] = u.Field(
+            description="Owned LDIF entries supplied for serialization",
+        )
+        format_options: FlextLdifModelsSettingsMigrate.WriteFormatOptions | None = u.Field(
+            default=None, description="Optional explicit LDIF formatting options",
+        )
 
     class MigrationPipelineOptions(m.ArbitraryTypesModel):
         """Validated configuration consumed by the migration service."""
