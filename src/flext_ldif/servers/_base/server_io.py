@@ -74,14 +74,11 @@ class FlextLdifServersBaseIoMixin:
 
         def model_to_protocol_parse_response(
             model_response: m.Ldif.ParseResponse,
-        ) -> p.Ldif.ParseResponse:
-            return p.Ldif.ParseResponse(
-                entries=list(model_response.entries),
-                statistics=model_response.statistics,
-                detected_server_type=model_response.detected_server_type,
-            )
+        ) -> m.Ldif.ParseResponse:
+            # Return the model response directly since it's already the correct type
+            return model_response
 
-        parse_response_result: p.Result[p.Ldif.ParseResponse] = (
+        parse_response_result: p.Result[m.Ldif.ParseResponse] = (
             entry_server
             .parse_server(value)
             .map_error(normalize_parse_error)

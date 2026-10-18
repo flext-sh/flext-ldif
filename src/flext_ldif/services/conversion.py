@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import time
 
-from flext_ldif import c, m, p, r, t, u
+from flext_ldif import c, m, p, r, u
 from flext_ldif.services import (
     FlextLdifConversionAclMixin,
     FlextLdifConversionEntryMixin,
@@ -49,13 +49,13 @@ class FlextLdifConversion(FlextLdifConversionEntryMixin, FlextLdifConversionAclM
                 role="Source",
             )
             if source_schema_result.failure:
-                return r[t.Ldif.ConvertedModel].from_failure(source_schema_result)
+                return r[p.Ldif.ConvertedModel].from_failure(source_schema_result)
             target_schema_result = self._resolve_schema_server(
                 target_server,
                 role="Target",
             )
             if target_schema_result.failure:
-                return r[t.Ldif.ConvertedModel].from_failure(target_schema_result)
+                return r[p.Ldif.ConvertedModel].from_failure(target_schema_result)
             return self._convert_schema_model_via_entry(
                 source_server,
                 target_server,
@@ -69,15 +69,15 @@ class FlextLdifConversion(FlextLdifConversionEntryMixin, FlextLdifConversionAclM
         self,
         source: str | p.Ldif.ServerReference | p.Ldif.ServerServer,
         target: str | p.Ldif.ServerReference | p.Ldif.ServerServer,
-        model_instance: m.Ldif.Entry
-        | m.Ldif.SchemaAttribute
-        | m.Ldif.SchemaObjectClass
-        | m.Ldif.Acl,
-    ) -> p.Result[t.Ldif.ConvertedModel]:
+        model_instance: p.Ldif.Entry
+        | p.Ldif.SchemaAttribute
+        | p.Ldif.SchemaObjectClass
+        | p.Ldif.Acl,
+    ) -> p.Result[p.Ldif.ConvertedModel]:
         """Convert a model from a source server format to a target server format.
 
         Returns:
-            The resulting ``p.Result[t.Ldif.ConvertedModel]``.
+            The resulting ``p.Result[p.Ldif.ConvertedModel]``.
 
         """
         start_time = time.perf_counter()
@@ -100,7 +100,7 @@ class FlextLdifConversion(FlextLdifConversionEntryMixin, FlextLdifConversionAclM
                 model_instance,
             )
         except c.Ldif.EXC_LDIF_PARSE as e:
-            result = r[t.Ldif.ConvertedModel].fail_op("Model conversion", e)
+            result = r[p.Ldif.ConvertedModel].fail_op("Model conversion", e)
         duration_ms = (time.perf_counter() - start_time) * 1000.0
         items_converted = 1 if result.success else 0
         items_failed = 0 if result.success else 1

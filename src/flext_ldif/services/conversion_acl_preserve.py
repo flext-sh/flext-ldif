@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import c, m, s, t, u
+from flext_ldif import c, m, p, s, t, u
 
 
 class FlextLdifConversionAclPreserveMixin(s[p.Ldif.Response]):

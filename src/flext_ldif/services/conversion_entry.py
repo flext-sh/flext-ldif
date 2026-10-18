@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_ldif import c, m, p, r, s, t, u
+from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._oid import FlextLdifServersOidAclPipeline
 from flext_ldif.services import (
     FlextLdifConversionMetadataMixin,
@@ -27,7 +27,6 @@ class FlextLdifConversionEntryMixin(
     FlextLdifConversionMetadataMixin,
     FlextLdifConversionSupportMixin,
     FlextLdifConversionSchemaEntryMixin,
-    s[p.Ldif.Response],
 ):
     """Concrete Entry-model conversion (state lives on the support mixin)."""
 
