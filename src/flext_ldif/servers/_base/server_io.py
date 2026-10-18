@@ -92,8 +92,8 @@ class FlextLdifServersBaseIoMixin:
 
     def write(
         self: Self,
-        entries: t.MutableSequenceOf[p.Ldif.Entry],
-        write_options: p.Ldif.WriteFormatOptions | None = None,
+        entries: t.MutableSequenceOf[m.Ldif.Entry],
+        write_options: m.Ldif.WriteFormatOptions | None = None,
     ) -> p.Result[str]:
         """Write Entry models to LDIF text.
 
