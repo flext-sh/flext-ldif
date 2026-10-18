@@ -50,7 +50,7 @@ class FlextLdifServersOudSchemaWriteMixin:
             The resulting ``p.Result[m.Ldif.Entry]``.
 
         """
-        if not cls._carries_schema_definitions(entry):
+        if not cls.carries_schema_definitions(entry):
             return r[m.Ldif.Entry].ok(entry)
         servers_result = cls._resolve_write_schema_servers(entry, registry=registry)
         if servers_result.failure:
@@ -70,7 +70,7 @@ class FlextLdifServersOudSchemaWriteMixin:
         )
 
     @classmethod
-    def _carries_schema_definitions(cls, entry: m.Ldif.Entry) -> bool:
+    def carries_schema_definitions(cls, entry: m.Ldif.Entry) -> bool:
         """Detect schema definition values in attributes or change operations.
 
         Returns:

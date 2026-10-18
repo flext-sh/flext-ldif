@@ -15,7 +15,6 @@ from flext_ldif import FlextLdifModels, FlextLdifProtocols
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from flext_ldif.services import FlextLdifMigrationPipeline
     from tests import c, m
 
 
@@ -131,7 +130,7 @@ class TestsFlextLdifProtocols(
                 output_dir: Path | None = None,
                 source_server_type: c.Ldif.ServerTypes | str | None = None,
                 target_server_type: c.Ldif.ServerTypes | str | None = None,
-            ) -> FlextLdifMigrationPipeline:
+            ) -> FlextLdifProtocols.Ldif.MigrationPipeline:
                 """Provide ``__call__``."""
                 ...
 

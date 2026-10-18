@@ -6,9 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Annotated
 
-from flext_core import FlextUtilities as u, m
+from flext_cli import m, u
 
 from flext_ldif import c, t
 from flext_ldif._models import (
@@ -20,6 +21,55 @@ from flext_ldif._models import (
 
 class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
     """Namespace for LDIF result models."""
+
+    class MigrationPipelineOptions(m.ArbitraryTypesModel):
+        """Validated configuration consumed by the migration service."""
+
+        input_dir: Path | None = u.Field(
+            default=None,
+            exclude=True,
+            description="Input LDIF directory",
+        )
+        output_dir: Path | None = u.Field(
+            default=None,
+            exclude=True,
+            description="Migrated LDIF directory",
+        )
+        output_filename: str | None = u.Field(
+            default=None,
+            exclude=True,
+            description="Single-file output name override",
+        )
+        mode: str | None = u.Field(
+            default=None,
+            exclude=True,
+            description="Migration mode supplied by the caller",
+        )
+        source_server: str | c.Ldif.ServerTypes | None = u.Field(
+            default=None,
+            exclude=True,
+            description="Source dialect input",
+        )
+        target_server: str | c.Ldif.ServerTypes | None = u.Field(
+            default=None,
+            exclude=True,
+            description="Target dialect input",
+        )
+        source_server_type: str | c.Ldif.ServerTypes | None = u.Field(
+            default=None,
+            exclude=True,
+            description="Canonical source dialect",
+        )
+        target_server_type: str | c.Ldif.ServerTypes | None = u.Field(
+            default=None,
+            exclude=True,
+            description="Canonical target dialect",
+        )
+        base_dn: str | None = u.Field(
+            default=None,
+            exclude=True,
+            description="DN scope for ACL migration",
+        )
 
     class MigrationSummary(m.FrozenModel):
         statistics: Annotated[

@@ -120,10 +120,14 @@ class FlextLdif(
         Args:
             server: Optional server registry to bind on the new instance.
             settings: Optional runtime settings to bind on the new instance.
+            registry: Optional core registry replacing the server-derived one.
             **fields: Additional DSL field values forwarded to the base.
 
         Returns:
             A configured copy of this facade.
+
+        Raises:
+            ValueError: If both a server registry and an explicit registry are given.
 
         """
         if server is not None and registry is not None:
@@ -240,6 +244,10 @@ class FlextLdif(
             settings: Optional transform config selecting the pipeline shape.
             source_server: Source server type when no transform config is given.
             target_server: Target server type when no transform config is given.
+            base_dn: Base DN used when building the server-pair transform config.
+            runtime_settings: Optional runtime settings overriding the facade
+                bounds.
+            **fields: Additional pipeline fields forwarded to the constructor.
 
         Returns:
             The constructed processing pipeline.
@@ -278,6 +286,9 @@ class FlextLdif(
             output_dir: Optional directory receiving the migrated LDIF files.
             settings: Optional transform config supplying server types.
             options: Optional migration options supplying the output filename.
+            runtime_settings: Optional runtime settings overriding the facade
+                bounds.
+            **fields: Additional pipeline fields forwarded to the constructor.
 
         Returns:
             The runtime-bound migration pipeline.

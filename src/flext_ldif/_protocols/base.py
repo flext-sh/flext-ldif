@@ -10,13 +10,13 @@ from typing import TYPE_CHECKING, ClassVar, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
     from collections.abc import KeysView, MutableMapping, ValuesView
+    from os import PathLike
     from pathlib import Path
 
-    from flext_ldif import FlextLdifProtocols, c, m, p, t
-    from flext_ldif._models.domain_entry_change_value import (
-        FlextLdifModelsDomainEntryChangeOperationValue,
-    )
-    from flext_ldif._protocols.domain import FlextLdifProtocolsDomain
+    from flext_cli import p
+
+    from flext_ldif import c, m, t
+    from flext_ldif._protocols import FlextLdifProtocolsDomain
 
 
 @runtime_checkable
@@ -151,7 +151,7 @@ class FlextLdifProtocolsBase(Protocol):
         """Protocol for LDIF clients that support CRUD operations."""
 
         @property
-        def settings(self) -> FlextLdifProtocols.Ldif.Settings:
+        def settings(self) -> p.Ldif.Settings:
             """Expose the typed LDIF settings carried by the public facade."""
             ...
 
@@ -377,7 +377,7 @@ class FlextLdifProtocolsBase(Protocol):
 
         operation: c.Ldif.ChangeOperation
         attribute: str
-        values: t.SequenceOf[FlextLdifModelsDomainEntryChangeOperationValue]
+        values: t.SequenceOf[m.Ldif]
 
     @runtime_checkable
     class AclPermissions(Protocol):
@@ -933,9 +933,49 @@ class FlextLdifProtocolsBase(Protocol):
 
     @runtime_checkable
     class MigrationPipeline(Protocol):
-        """Protocol for LDIF migration pipelines."""
+        """Complete public migration operations and read-only configuration."""
 
-        def execute(self) -> p.Result[m.Ldif.MigrationPipelineResult]: ...
+        @property
+        def input_dir(self) -> PathLike[str] | None: ...
+
+        @property
+        def output_dir(self) -> PathLike[str] | None: ...
+
+        @property
+        def output_filename(self) -> str | None: ...
+
+        @property
+        def base_dn(self) -> str | None: ...
+
+        @property
+        def mode(self) -> str | None: ...
+
+        @property
+        def source_server(self) -> str | c.Ldif.ServerTypes | None: ...
+
+        @property
+        def target_server(self) -> str | c.Ldif.ServerTypes | None: ...
+
+        @property
+        def source_server_type(self) -> str | c.Ldif.ServerTypes | None: ...
+
+        @property
+        def target_server_type(self) -> str | c.Ldif.ServerTypes | None: ...
+
+        def execute(
+            self,
+        ) -> p.Result[FlextLdifProtocolsBase.MigrationPipelineResult]: ...
+
+        def migrate_entries(
+            self,
+            entries: t.SequenceOf[FlextLdifProtocolsBase.Entry],
+        ) -> p.Result[t.SequenceOf[FlextLdifProtocolsBase.Entry]]: ...
+
+        def migrate_file(
+            self,
+            input_file: PathLike[str],
+            output_file: PathLike[str] | None = None,
+        ) -> p.Result[FlextLdifProtocolsBase.MigrationPipelineResult]: ...
 
     @runtime_checkable
     class ServerReference(Protocol):

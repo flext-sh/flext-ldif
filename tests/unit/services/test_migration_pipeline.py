@@ -12,18 +12,19 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from pathlib import PurePath
 from typing import TYPE_CHECKING
 
 import pytest
 
 from flext_ldif.services import FlextLdifMigrationPipeline
 from flext_ldif.services.pipeline import FlextLdifProcessingPipeline
-from tests import c, m, tm, u
+from tests import c, m, p, tm, u
 
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from tests import p, t
+    from tests import t
 
 _BASIC_RFC_ENTRY_LDIF = "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n"
 
@@ -43,6 +44,33 @@ class TestsFlextLdifMigrationPipeline:
     """
 
     # ── Initialization contract (public fields) ──────────────────────────
+
+    @staticmethod
+    def test_complete_protocol_accepts_entry_sequences_and_pathlike_files(
+        migration_pipeline_factory: p.Tests.MigrationPipelineFactory,
+        migration_dirs: t.Pair[Path, Path],
+    ) -> None:
+        """The fixture exposes real migration operations through one protocol."""
+        pipeline = migration_pipeline_factory()
+        tm.that(isinstance(pipeline, p.Ldif.MigrationPipeline))
+        entry = u.Tests.create_real_entry(
+            dn=c.Tests.DN_TEST,
+            attributes={"objectClass": ["person"], "cn": ["sequence"]},
+        )
+        tm.ok(pipeline.migrate_entries((entry,)))
+        input_dir, output_dir = migration_dirs
+        input_file = input_dir / "protocol.ldif"
+        output_file = output_dir / "protocol.ldif"
+        input_file.write_text(c.Tests.RFC_SAMPLE_LDIF_BASIC)
+        outcome = tm.ok(
+            pipeline.migrate_file(
+                PurePath(input_file),
+                PurePath(output_file),
+            )
+        )
+        tm.that(output_file.exists())
+        tm.that(outcome.output_files, eq=[str(output_file)])
+        tm.that(outcome.stats.processed_entries, eq=len(outcome.entries))
 
     @staticmethod
     def test_initialization_exposes_supplied_configuration(
@@ -193,7 +221,7 @@ class TestsFlextLdifMigrationPipeline:
         migration_pipeline_factory: p.Tests.MigrationPipelineFactory,
     ) -> None:
         """An empty input directory succeeds with zero total entries."""
-        migration_result: m.Ldif.MigrationPipelineResult = tm.ok(
+        migration_result: p.Ldif.MigrationPipelineResult = tm.ok(
             migration_pipeline_factory().execute(),
         )
         tm.that(migration_result.stats.total_entries, eq=0)
@@ -206,7 +234,7 @@ class TestsFlextLdifMigrationPipeline:
         """An RFC-to-RFC run reports at least one processed entry."""
         input_dir, _ = migration_dirs
         (input_dir / "test.ldif").write_text(c.Tests.RFC_SAMPLE_LDIF_BASIC)
-        migration_result: m.Ldif.MigrationPipelineResult = tm.ok(
+        migration_result: p.Ldif.MigrationPipelineResult = tm.ok(
             migration_pipeline_factory().execute(),
         )
         tm.that(migration_result.stats.processed_entries, gte=1)
@@ -222,7 +250,7 @@ class TestsFlextLdifMigrationPipeline:
             "dn: cn=schema\nobjectClass: top\ncn: schema\n",
         )
         (input_dir / "data.ldif").write_text(_BASIC_RFC_ENTRY_LDIF)
-        migration_result: m.Ldif.MigrationPipelineResult = tm.ok(
+        migration_result: p.Ldif.MigrationPipelineResult = tm.ok(
             migration_pipeline_factory().execute(),
         )
         tm.that(migration_result.stats.total_entries, gte=2)
@@ -235,7 +263,7 @@ class TestsFlextLdifMigrationPipeline:
         """A single unparsable file is skipped; execute() still succeeds."""
         input_dir, _ = migration_dirs
         (input_dir / "bad.ldif").write_bytes(c.Tests.WRITER_INVALID_UTF8_BYTES)
-        migration_result: m.Ldif.MigrationPipelineResult = tm.ok(
+        migration_result: p.Ldif.MigrationPipelineResult = tm.ok(
             migration_pipeline_factory().execute(),
         )
         tm.that(migration_result.stats.total_entries, eq=0)
@@ -256,7 +284,7 @@ class TestsFlextLdifMigrationPipeline:
                 ),
             ),
         ]
-        migrated: t.MutableSequenceOf[m.Ldif.Entry] = tm.ok(
+        migrated: t.SequenceOf[p.Ldif.Entry] = tm.ok(
             migration_pipeline_factory().migrate_entries(entries),
         )
         tm.that(len(migrated), eq=1)
@@ -266,7 +294,7 @@ class TestsFlextLdifMigrationPipeline:
         migration_pipeline_factory: p.Tests.MigrationPipelineFactory,
     ) -> None:
         """migrate_entries([]) succeeds with an empty result."""
-        migrated: t.MutableSequenceOf[m.Ldif.Entry] = tm.ok(
+        migrated: t.SequenceOf[p.Ldif.Entry] = tm.ok(
             migration_pipeline_factory().migrate_entries([]),
         )
         tm.that(migrated, empty=True)
@@ -285,7 +313,7 @@ class TestsFlextLdifMigrationPipeline:
             base_dn="dc=ctbc",
         )
 
-        migrated: t.MutableSequenceOf[m.Ldif.Entry] = u.Tests.assert_success(
+        migrated: t.SequenceOf[p.Ldif.Entry] = u.Tests.assert_success(
             pipeline.migrate_entries([entry]),
         )
         assert migrated[0].attributes is not None
@@ -310,7 +338,7 @@ class TestsFlextLdifMigrationPipeline:
         input_dir, _ = migration_dirs
         input_file = input_dir / "test.ldif"
         input_file.write_text(c.Tests.CONFIG_BASIC_ENTRY)
-        migration_result: m.Ldif.MigrationPipelineResult = tm.ok(
+        migration_result: p.Ldif.MigrationPipelineResult = tm.ok(
             migration_pipeline_factory().migrate_file(input_file),
         )
         tm.that(migration_result.stats.total_entries, gte=1)

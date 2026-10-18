@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import ClassVar
 
 from flext_ldif import m, p, t, u
-from flext_ldif.servers._oud.server_constants import FlextLdifServersOudConstants
+from flext_ldif.servers._oud import FlextLdifServersOudConstants
 from flext_ldif.servers._rfc import FlextLdifServersRfcAcl
 
 

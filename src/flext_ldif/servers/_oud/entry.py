@@ -198,7 +198,7 @@ class FlextLdifServersOudEntry(
             The resulting ``p.Result[m.Ldif.Entry]``.
 
         """
-        if not FlextLdifServersOudHelpersMixin._carries_schema_definitions(entry):
+        if not FlextLdifServersOudHelpersMixin.carries_schema_definitions(entry):
             return r[m.Ldif.Entry].ok(entry)
         if not isinstance(self.parent_server, p.Ldif.RegistryBound):
             return r[m.Ldif.Entry].fail_op(
