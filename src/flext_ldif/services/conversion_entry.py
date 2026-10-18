@@ -27,7 +27,7 @@ class FlextLdifConversionEntryMixin(
     FlextLdifConversionMetadataMixin,
     FlextLdifConversionSupportMixin,
     FlextLdifConversionSchemaEntryMixin,
-    s[m.Ldif.Response],
+    s[p.Ldif.Response],
 ):
     """Concrete Entry-model conversion (state lives on the support mixin)."""
 

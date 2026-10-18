@@ -47,6 +47,7 @@ class FlextLdifUtilitiesDispatch:
     def as_entries(
         values: t.SequenceOf[t.Ldif.EntryLike]
         | FlextLdifModels.Ldif.ParseResponse
+        | p.Ldif.ParseResponse
         | t.ModelInput,
     ) -> t.MutableSequenceOf[FlextLdifModels.Ldif.Entry]:
         """Coerce an entry sequence into canonical LDIF entry models.
@@ -55,8 +56,10 @@ class FlextLdifUtilitiesDispatch:
             The resulting ``t.MutableSequenceOf[FlextLdifModels.Ldif.Entry]``.
 
         """
-        if isinstance(values, FlextLdifModels.Ldif.ParseResponse):
-            return values.entries
+        if isinstance(
+            values, (FlextLdifModels.Ldif.ParseResponse, p.Ldif.ParseResponse)
+        ):
+            return list(values.entries)
         validated: t.MutableSequenceOf[FlextLdifModels.Ldif.Entry] = (
             FlextLdifUtilitiesDispatch._ENTRY_LIST_ADAPTER.validate_python(values)
         )

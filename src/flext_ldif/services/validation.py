@@ -9,10 +9,10 @@ from __future__ import annotations
 import struct
 from typing import Annotated
 
-from flext_ldif import c, m, p, r, s, t, u
+from flext_ldif import c, p, r, s, t, u
 
 
-class FlextLdifValidation(s[m.Ldif.Response]):
+class FlextLdifValidation(s[p.Ldif.Response]):
     """FlextLdifValidation class."""
 
     attribute_names: Annotated[

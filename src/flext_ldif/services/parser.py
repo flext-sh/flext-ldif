@@ -80,11 +80,15 @@ class FlextLdifParser(FlextLdifServer):
             if server_type is None
             else server_type
         )
-        return r[p.Ldif.ParseResponse].from_result(
-            self.server(effective_server_type).flat_map(
-                lambda server: server.parse_ldif(content)
-            )
-        )
+        server_result = self.server(effective_server_type)
+        if server_result.failure:
+            return r[p.Ldif.ParseResponse].from_failure(server_result)
+        server = server_result.value
+        parse_result = server.parse_ldif(content)
+        if parse_result.failure:
+            return r[p.Ldif.ParseResponse].from_failure(parse_result)
+        model_resp = parse_result.value
+        return r[p.Ldif.ParseResponse].ok(model_resp)
 
 
 __all__: list[str] = ["FlextLdifParser"]

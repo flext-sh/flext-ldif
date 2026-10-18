@@ -6,16 +6,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import ItemsView, KeysView, ValuesView
 from typing import TYPE_CHECKING, ClassVar, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
-    from collections.abc import KeysView, MutableMapping, ValuesView
+    from collections.abc import MutableMapping
     from os import PathLike
     from pathlib import Path
 
     from flext_cli import p
 
-    from flext_ldif import c, m, t
+    from flext_ldif import c, t
     from flext_ldif._protocols import FlextLdifProtocolsDomain
 
 
@@ -44,8 +45,42 @@ class FlextLdifProtocolsBase(Protocol):
             ldif_path: Path | None = None,
             ldif_content: str | None = None,
             max_lines: int | None = None,
-        ) -> p.Result[m.Ldif.ServerDetectionResult]:
+        ) -> p.Result[FlextLdifProtocolsBase.ServerDetectionResult]:
             """Detect LDAP server type from LDIF file or content."""
+            ...
+
+    @runtime_checkable
+    class ServerDetectionResult(Protocol):
+        """Server detection result contract."""
+
+        @property
+        def detected_server_type(self) -> c.Ldif.ServerTypes:
+            """LDAP server type detected from LDIF content."""
+            ...
+
+        @property
+        def confidence(self) -> t.DecimalFraction:
+            """Detection confidence score between 0 and 1."""
+            ...
+
+        @property
+        def scores(self) -> t.MutableMapping[str, int]:
+            """Per-server-type detection scores."""
+            ...
+
+        @property
+        def patterns_found(self) -> t.MutableSequenceOf[str]:
+            """Server-identifying patterns found in LDIF."""
+            ...
+
+        @property
+        def detection_error(self) -> str | None:
+            """Error message if detection failed."""
+            ...
+
+        @property
+        def fallback_reason(self) -> str | None:
+            """Reason for using fallback server type."""
             ...
 
     @runtime_checkable
@@ -125,11 +160,11 @@ class FlextLdifProtocolsBase(Protocol):
             target: str
             | FlextLdifProtocolsBase.ServerReference
             | FlextLdifProtocolsDomain.ServerServer,
-            model_instance: m.Ldif.Entry
-            | m.Ldif.SchemaAttribute
-            | m.Ldif.SchemaObjectClass
-            | m.Ldif.Acl,
-        ) -> p.Result[t.Ldif.ConvertedModel]:
+            model_instance: FlextLdifProtocolsBase.Entry
+            | FlextLdifProtocolsBase.SchemaAttribute
+            | FlextLdifProtocolsBase.SchemaObjectClass
+            | FlextLdifProtocolsBase.Acl,
+        ) -> p.Result[FlextLdifProtocolsBase.ConvertedModel]:
             """Convert one LDIF model between server servers."""
             ...
 
@@ -228,7 +263,7 @@ class FlextLdifProtocolsBase(Protocol):
         def validate_entries(
             self,
             entries: t.MutableSequenceOf[FlextLdifProtocolsBase.Entry]
-            | m.Ldif.ParseResponse,
+            | FlextLdifProtocolsBase.ParseResponse,
             validation_service: FlextLdifProtocolsBase.ValidationService | None = None,
         ) -> p.Result[FlextLdifProtocolsBase.ValidationResult]:
             """Validate list of entries."""
@@ -266,17 +301,17 @@ class FlextLdifProtocolsBase(Protocol):
         def process_entries(
             self,
             entries: t.MutableSequenceOf[FlextLdifProtocolsBase.Entry],
-            options: m.Ldif.ProcessEntriesOptions | None = None,
+            options: FlextLdifProtocolsBase.ProcessEntriesOptions | None = None,
             **kwargs: t.JsonValue,
-        ) -> p.Result[t.MutableSequenceOf[m.Ldif.ProcessingResult]]:
+        ) -> p.Result[t.MutableSequenceOf[FlextLdifProtocolsBase.ProcessingResult]]:
             """Process entries through the public facade DSL."""
             ...
 
         def calculate_for_entries(
             self,
             entries: t.MutableSequenceOf[FlextLdifProtocolsBase.Entry]
-            | m.Ldif.ParseResponse,
-        ) -> p.Result[m.Ldif.EntriesStatistics]:
+            | FlextLdifProtocolsBase.ParseResponse,
+        ) -> p.Result[FlextLdifProtocolsBase.EntriesStatistics]:
             """Calculate entry statistics through the public facade DSL."""
             ...
 
@@ -382,9 +417,16 @@ class FlextLdifProtocolsBase(Protocol):
     class ChangeOperation(Protocol):
         """Structured modify block."""
 
-        operation: c.Ldif.ChangeOperation
-        attribute: str
-        values: t.SequenceOf[m.Ldif]
+        @property
+        def operation(self) -> c.Ldif.ChangeOperation: ...
+
+        @property
+        def attribute(self) -> str: ...
+
+        @property
+        def values(
+            self,
+        ) -> t.SequenceOf[FlextLdifProtocolsBase.ChangeOperationValue]: ...
 
     @runtime_checkable
     class AclPermissions(Protocol):
@@ -563,6 +605,32 @@ class FlextLdifProtocolsBase(Protocol):
         warnings: t.MutableSequenceOf[str]
 
     @runtime_checkable
+    class DynamicCounts(Protocol):
+        """Dynamic counter mapping for string->int statistics."""
+
+        def __getitem__(self, key: str) -> int: ...
+        def __len__(self) -> int: ...
+        def __contains__(self, key: str) -> bool: ...
+        def get(self, key: str, default: int | None = None) -> int | None: ...
+        def keys(self) -> KeysView[str]: ...
+        def values(self) -> ValuesView[int]: ...
+        def items(self) -> ItemsView[str, int]: ...
+        def update_count(self, key: str, value: int) -> None: ...
+
+    @runtime_checkable
+    class EntriesStatistics(Protocol):
+        """Aggregate entry processing statistics."""
+
+        @property
+        def total_entries(self) -> int: ...
+
+        @property
+        def object_class_distribution(self) -> FlextLdifProtocolsBase.DynamicCounts: ...
+
+        @property
+        def server_type_distribution(self) -> FlextLdifProtocolsBase.DynamicCounts: ...
+
+    @runtime_checkable
     class ServerMetadata(Protocol):
         """Server-specific metadata persisted on entries, ACLs, and schema items."""
 
@@ -639,7 +707,12 @@ class FlextLdifProtocolsBase(Protocol):
     class Entry(Protocol):
         """Entry model contract used across LDIF services."""
 
-        change_operations: t.MutableSequenceOf[m.Ldif.ChangeOperation]
+        @property
+        def change_operations(
+            self,
+        ) -> t.SequenceOf[FlextLdifProtocolsBase.ChangeOperation]:
+            """The change operations for modify records."""
+            ...
 
         @property
         def dn(self) -> FlextLdifProtocolsBase.DN | None:
@@ -662,7 +735,7 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
         @property
-        def controls(self) -> t.SequenceOf[m.Ldif.Control]:
+        def controls(self) -> t.SequenceOf[FlextLdifProtocolsBase.Control]:
             """The parsed LDIF controls."""
             ...
 
@@ -825,6 +898,25 @@ class FlextLdifProtocolsBase(Protocol):
             ...
 
     @runtime_checkable
+    class AclEvaluationResult(Response, Protocol):
+        """ACL evaluation result contract."""
+
+        @property
+        def granted(self) -> bool:
+            """Whether the ACL granted access."""
+            ...
+
+        @property
+        def matched_acl(self) -> FlextLdifProtocolsBase.Acl | None:
+            """ACL rule that matched the evaluation."""
+            ...
+
+        @property
+        def message(self) -> str:
+            """Human-readable evaluation result message."""
+            ...
+
+    @runtime_checkable
     class WriteResponse(Response, Protocol):
         """Write response payload."""
 
@@ -913,7 +1005,57 @@ class FlextLdifProtocolsBase(Protocol):
     class ModelWithValidationMetadata(Protocol):
         """Model exposing validation metadata for helper updates."""
 
-        validation_metadata: m.ConfigMap | None
+        validation_metadata: FlextLdifProtocolsBase.ConfigMap | None
+
+    @runtime_checkable
+    class ConfigMap(Protocol):
+        """Configuration mapping contract."""
+
+        def __getitem__(self, key: str) -> t.JsonValue: ...
+        def __setitem__(self, key: str, value: t.JsonValue) -> None: ...
+        def __contains__(self, key: str) -> bool: ...
+        def get(self, key: str, default: t.JsonValue | None = None) -> t.JsonValue: ...
+        def keys(self) -> t.KeysView[str]: ...
+        def values(self) -> t.ValuesView[t.JsonValue]: ...
+        def items(self) -> t.ItemsView[str, t.JsonValue]: ...
+
+    @runtime_checkable
+    class FlexibleCategories(Protocol):
+        """Flexible entry categorization result."""
+
+        categorized: t.MappingKV[str, t.MutableSequenceOf[FlextLdifProtocolsBase.Entry]]
+        uncategorized: t.MutableSequenceOf[FlextLdifProtocolsBase.Entry]
+
+    @runtime_checkable
+    class ProcessEntriesOptions(Protocol):
+        """Options for entry processing pipeline."""
+
+        filter_invalid: bool
+        apply_server_rules: bool
+        validate_attributes: bool
+        collect_statistics: bool
+
+    @runtime_checkable
+    class ProcessingResult(Protocol):
+        """Result of processing a single entry."""
+
+        entry: FlextLdifProtocolsBase.Entry
+        success: bool
+        error: str | None
+
+    @runtime_checkable
+    class SchemaItemKind(Protocol):
+        """Schema item kind enumeration."""
+
+        ATTRIBUTE: str
+        OBJECTCLASS: str
+
+    @runtime_checkable
+    class ConvertedModel(Protocol):
+        """Converted LDIF model contract."""
+
+        model_type: str
+        converted_data: t.JsonValue
 
     @runtime_checkable
     class CategorizationService(Protocol):
@@ -921,23 +1063,24 @@ class FlextLdifProtocolsBase(Protocol):
 
         def categorize_entries(
             self,
-            entries: t.MutableSequenceOf[m.Ldif.Entry],
-        ) -> p.Result[m.Ldif.FlexibleCategories]: ...
+            entries: t.MutableSequenceOf[FlextLdifProtocolsBase.Entry],
+        ) -> p.Result[FlextLdifProtocolsBase.FlexibleCategories]: ...
 
         def filter_by_base_dn(
             self,
-            categories: m.Ldif.FlexibleCategories,
-        ) -> m.Ldif.FlexibleCategories: ...
+            categories: FlextLdifProtocolsBase.FlexibleCategories,
+        ) -> FlextLdifProtocolsBase.FlexibleCategories: ...
 
         def validate_dns(
             self,
-            entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
-        ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]: ...
+            entries: t.MutableSequenceOf[FlextLdifProtocolsBase.Entry]
+            | FlextLdifProtocolsBase.ParseResponse,
+        ) -> p.Result[t.MutableSequenceOf[FlextLdifProtocolsBase.Entry]]: ...
 
         def filter_schema_by_oids(
             self,
-            schema_entries: t.MutableSequenceOf[m.Ldif.Entry],
-        ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]: ...
+            schema_entries: t.MutableSequenceOf[FlextLdifProtocolsBase.Entry],
+        ) -> p.Result[t.MutableSequenceOf[FlextLdifProtocolsBase.Entry]]: ...
 
     @runtime_checkable
     class ProcessingPipeline(Protocol):

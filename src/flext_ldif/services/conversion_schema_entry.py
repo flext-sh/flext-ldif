@@ -20,7 +20,7 @@ from flext_ldif.services import FlextLdifConversionSchemaMixin
 
 class FlextLdifConversionSchemaEntryMixin(
     FlextLdifConversionSchemaMixin,
-    s[m.Ldif.Response],
+    s[p.Ldif.Response],
     ABC,
 ):
     """Conversion of schema definitions embedded inside a schema entry."""

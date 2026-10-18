@@ -11,17 +11,17 @@ from collections import Counter
 from flext_ldif import m, p, r, s, t, u
 
 
-class FlextLdifStatistics(s[m.Ldif.Response]):
+class FlextLdifStatistics(s[p.Ldif.Response]):
     """Statistics service for LDIF processing pipeline."""
 
     @staticmethod
     def calculate_for_entries(
-        entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
-    ) -> p.Result[m.Ldif.EntriesStatistics]:
+        entries: t.MutableSequenceOf[p.Ldif.Entry] | p.Ldif.ParseResponse,
+    ) -> p.Result[p.Ldif.EntriesStatistics]:
         """Calculate general-purpose statistics for a list of Entry models.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.EntriesStatistics]``.
+            The resulting ``p.Result[p.Ldif.EntriesStatistics]``.
 
         """
         normalized_entries = u.Ldif.as_entries(entries)
@@ -40,12 +40,12 @@ class FlextLdifStatistics(s[m.Ldif.Response]):
         server_type_model = m.Ldif.DynamicCounts()
         for server_type, count in server_type_distribution.items():
             server_type_model.update_count(server_type, count)
-        entries_stats = m.Ldif.EntriesStatistics(
+        entries_stats: p.Ldif.EntriesStatistics = m.Ldif.EntriesStatistics(
             total_entries=len(normalized_entries),
             object_class_distribution=obj_class_model,
             server_type_distribution=server_type_model,
         )
-        return r[m.Ldif.EntriesStatistics].ok(entries_stats)
+        return r[p.Ldif.EntriesStatistics].ok(entries_stats)
 
 
 __all__: list[str] = ["FlextLdifStatistics"]

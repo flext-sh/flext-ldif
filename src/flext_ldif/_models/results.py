@@ -11,10 +11,9 @@ from typing import Annotated
 
 from flext_cli import m, u
 
-from flext_ldif import c, t
+from flext_ldif import c, p, t
 from flext_ldif._models import (
     FlextLdifModelsCollections,
-    FlextLdifModelsDomainsEntries,
     FlextLdifModelsResultsStatistics,
 )
 from flext_ldif._models._settings_migrate import FlextLdifModelsSettingsMigrate
@@ -26,7 +25,7 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
     class WriteRequest(m.ArbitraryTypesModel):
         """One validated write boundary for structural entries and options."""
 
-        entries: t.MutableSequenceOf[FlextLdifModelsDomainsEntries.Entry] = u.Field(
+        entries: t.MutableSequenceOf[p.Ldif.Entry] = u.Field(
             description="Owned LDIF entries supplied for serialization",
         )
         format_options: FlextLdifModelsSettingsMigrate.WriteFormatOptions | None = (
@@ -110,8 +109,8 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
             ),
             description="Schema content after migration transformation",
         )
-        entries: t.MutableSequenceOf[FlextLdifModelsDomainsEntries.Entry] = u.Field(
-            default_factory=list[FlextLdifModelsDomainsEntries.Entry],
+        entries: t.MutableSequenceOf[p.Ldif.Entry] = u.Field(
+            default_factory=list[p.Ldif.Entry],
             description="Migrated LDIF entries",
         )
         stats: FlextLdifModelsResults.Statistics = u.Field(
@@ -231,7 +230,7 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
 
     class ParseResponse(Response):
         entries: Annotated[
-            t.MutableSequenceOf[FlextLdifModelsDomainsEntries.Entry],
+            t.MutableSequenceOf[p.Ldif.Entry],
             u.Field(description="Parsed LDIF entries"),
         ]
         detected_server_type: Annotated[
@@ -241,17 +240,17 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
 
     class AclResponse(Response):
         acls: Annotated[
-            t.MutableSequenceOf[FlextLdifModelsDomainsEntries.Acl],
+            t.MutableSequenceOf[p.Ldif.Acl],
             u.Field(description="Extracted ACL models"),
         ]
 
-    class AclEvaluationResult(m.Value):
+    class AclEvaluationResult(Response):
         granted: Annotated[
             bool,
             u.Field(description="Whether the ACL granted access"),
         ] = False
         matched_acl: Annotated[
-            FlextLdifModelsDomainsEntries.Acl | None,
+            p.Ldif.Acl | None,
             u.Field(description="ACL rule that matched the evaluation"),
         ] = None
         message: Annotated[

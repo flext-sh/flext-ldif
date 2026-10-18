@@ -184,8 +184,8 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
 
     def write(
         self,
-        entry_data: m.Ldif.Entry | t.MutableSequenceOf[m.Ldif.Entry],
-        write_options: m.Ldif.WriteFormatOptions | None = None,
+        entry_data: p.Ldif.Entry | t.MutableSequenceOf[p.Ldif.Entry],
+        write_options: p.Ldif.WriteFormatOptions | None = None,
     ) -> p.Result[str]:
         """Write entry models to an LDIF string.
 
@@ -311,8 +311,8 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
 
     @staticmethod
     def _inject_write_format_options(
-        entry: m.Ldif.Entry,
-        write_options: m.Ldif.WriteFormatOptions,
+        entry: p.Ldif.Entry,
+        write_options: p.Ldif.WriteFormatOptions,
     ) -> m.Ldif.Entry:
         """Inject write format options into the entry metadata extensions.
 
@@ -324,18 +324,20 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
             A copy of the entry carrying the options.
 
         """
+        # Convert protocol entry to model for internal processing
+        model_entry = m.Ldif.Entry.model_validate(entry)
         format_options_payload = write_options.model_dump(
             mode="json",
             exclude_none=True,
         )
         existing_extensions: t.MutableJsonMapping = (
-            # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: deep-copy the
-            # plain mapping (was model_copy(deep=True)).
-            copy.deepcopy(entry.metadata.extensions) if entry.metadata else {}
+            copy.deepcopy(model_entry.metadata.extensions)
+            if model_entry.metadata
+            else {}
         )
         existing_extensions[c.Ldif.WRITE_FORMAT_OPTIONS] = format_options_payload
-        if entry.metadata:
-            updated_metadata = entry.metadata.model_copy(
+        if model_entry.metadata:
+            updated_metadata = model_entry.metadata.model_copy(
                 update={"extensions": existing_extensions},
             )
         else:
@@ -343,7 +345,9 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
                 server_type=c.Ldif.ServerTypes.RFC,
                 extensions=existing_extensions,
             )
-        copied: m.Ldif.Entry = entry.model_copy(update={"metadata": updated_metadata})
+        copied: m.Ldif.Entry = model_entry.model_copy(
+            update={"metadata": updated_metadata}
+        )
         return copied
 
     def _normalize_attribute_name(self, attr_name: str) -> str:
@@ -352,7 +356,7 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         raise NotImplementedError(msg)
 
     @staticmethod
-    def _normalize_entry(entry: m.Ldif.Entry) -> m.Ldif.Entry:
+    def _normalize_entry(entry: p.Ldif.Entry) -> p.Ldif.Entry:
         """Normalize an entry to RFC form with metadata tracking.
 
         Args:
@@ -380,7 +384,7 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         msg = "Entry servers must implement _parse_entry_from_lines"
         raise NotImplementedError(msg)
 
-    def _write_entry(self, entry_data: m.Ldif.Entry) -> p.Result[str]:
+    def _write_entry(self, entry_data: p.Ldif.Entry) -> p.Result[str]:
         """Write an entry model to an RFC-compliant LDIF string.
 
         Args:
@@ -406,8 +410,8 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
 
     def _write_entry_list(
         self,
-        entries: t.MutableSequenceOf[m.Ldif.Entry],
-        write_options: m.Ldif.WriteFormatOptions | None,
+        entries: t.MutableSequenceOf[p.Ldif.Entry],
+        write_options: p.Ldif.WriteFormatOptions | None,
     ) -> p.Result[str]:
         """Write a sequence of entries to LDIF.
 
@@ -428,15 +432,15 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
                 ldif_output += "\n"
             return ldif_output
 
-        def write_entry(entry: m.Ldif.Entry) -> p.Result[str]:
+        def write_entry(entry: p.Ldif.Entry) -> p.Result[str]:
             return self._write_single_entry(entry, write_options)
 
         return r[str].traverse(entries, write_entry).map(format_output)
 
     def _write_single_entry(
         self,
-        entry: m.Ldif.Entry,
-        write_options: m.Ldif.WriteFormatOptions | None,
+        entry: p.Ldif.Entry,
+        write_options: p.Ldif.WriteFormatOptions | None,
     ) -> p.Result[str]:
         """Write one entry to LDIF, applying the write options first.
 

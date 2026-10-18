@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping
+from collections.abc import ItemsView, KeysView, MutableMapping, ValuesView
 from typing import TYPE_CHECKING, Annotated, ClassVar
 
 # mro-6int (claude-ulw): import m/t/u from upstream flext_cli, not the own
@@ -56,9 +56,17 @@ class FlextLdifModelsCollections:
             fallback_count: int | None = default
             return fallback_count
 
-        def items(self) -> t.MutableSequenceOf[tuple[str, int]]:
+        def keys(self) -> KeysView[str]:
             extra = self._extra()
-            return [(k, self._to_count(v)) for k, v in extra.items()]
+            return extra.keys()
+
+        def values(self) -> ValuesView[int]:
+            extra = self._extra()
+            return ValuesView(extra)
+
+        def items(self) -> ItemsView[str, int]:
+            extra = self._extra()
+            return ItemsView(extra)
 
         def update_count(self, key: str, value: int) -> None:
             setattr(self, key, value)

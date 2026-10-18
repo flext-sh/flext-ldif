@@ -10,7 +10,7 @@ from flext_ldif import m, p, r, s, t, u
 from flext_ldif.services import FlextLdifValidation
 
 
-class FlextLdifAnalysis(s[m.Ldif.Response]):
+class FlextLdifAnalysis(s[p.Ldif.Response]):
     """Service for entry analysis and validation."""
 
     @staticmethod
@@ -117,9 +117,9 @@ class FlextLdifAnalysis(s[m.Ldif.Response]):
 
     def validate_entries(
         self,
-        entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
+        entries: t.MutableSequenceOf[p.Ldif.Entry] | m.Ldif.ParseResponse,
         validation_service: p.Ldif.ValidationService | None = None,
-    ) -> p.Result[m.Ldif.ValidationResult]:
+    ) -> p.Result[p.Ldif.ValidationResult]:
         """Validate LDIF entries against RFC 2849/4512 standards.
 
         Returns:

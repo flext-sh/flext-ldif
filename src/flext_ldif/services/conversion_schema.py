@@ -12,7 +12,7 @@ from collections.abc import Callable
 from flext_ldif import c, m, p, r, s, t, u
 
 
-class FlextLdifConversionSchemaMixin(s[m.Ldif.Response], ABC):
+class FlextLdifConversionSchemaMixin(s[p.Ldif.Response], ABC):
     """Schema-conversion helpers shared by the conversion facade."""
 
     def _resolve_schema_server(

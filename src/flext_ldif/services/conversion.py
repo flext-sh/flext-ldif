@@ -27,15 +27,15 @@ class FlextLdifConversion(FlextLdifConversionEntryMixin, FlextLdifConversionAclM
         self,
         source_server: p.Ldif.ServerServer,
         target_server: p.Ldif.ServerServer,
-        model_instance: m.Ldif.Entry
-        | m.Ldif.SchemaAttribute
-        | m.Ldif.SchemaObjectClass
-        | m.Ldif.Acl,
-    ) -> p.Result[t.Ldif.ConvertedModel]:
+        model_instance: p.Ldif.Entry
+        | p.Ldif.SchemaAttribute
+        | p.Ldif.SchemaObjectClass
+        | p.Ldif.Acl,
+    ) -> p.Result[p.Ldif.ConvertedModel]:
         """DSL: orchestrate model conversion between servers.
 
         Returns:
-            The resulting ``p.Result[t.Ldif.ConvertedModel]``.
+            The resulting ``p.Result[p.Ldif.ConvertedModel]``.
 
         """
         if isinstance(model_instance, m.Ldif.Entry):
