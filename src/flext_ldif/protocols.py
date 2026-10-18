@@ -17,38 +17,6 @@ from flext_ldif._protocols import (
     FlextLdifProtocolsDomain,
     FlextLdifProtocolsLdap3,
     FlextLdifProtocolsValues,
-    # Entry protocols
-    EntryProtocol,
-    ChangeOperationProtocol,
-    ChangeOperationValueProtocol,
-    ControlProtocol,
-    # ACL protocols
-    AclProtocol,
-    AclAllowProtocol,
-    AclPermissionsProtocol,
-    AclResponseProtocol,
-    AclEvaluationResultProtocol,
-    # Server protocols
-    ServerServerProtocol,
-    SchemaServerProtocol,
-    AclServerProtocol,
-    EntryServerProtocol,
-    ServerRegistryProtocol,
-    RegistryBoundProtocol,
-    ServerConstantsProtocol,
-    # Schema protocols
-    SchemaAttributeProtocol,
-    SchemaObjectClassProtocol,
-    SchemaItemKindProtocol,
-    # Dynamic counts
-    DynamicCountsProtocol,
-    # Validation service
-    ValidationServiceProtocol,
-    # Server detection
-    ServerDetectionServiceProtocol,
-    ServerDetectionResultProtocol,
-    # Server resolution
-    ServerResolutionServiceProtocol,
 )
 
 
@@ -71,44 +39,86 @@ class FlextLdifProtocols(FlextCliProtocols):
         """
 
         # Entry protocols
-        Entry: type[EntryProtocol] = EntryProtocol
-        ChangeOperation: type[ChangeOperationProtocol] = ChangeOperationProtocol
-        ChangeOperationValue: type[ChangeOperationValueProtocol] = ChangeOperationValueProtocol
-        Control: type[ControlProtocol] = ControlProtocol
+        Entry: type[FlextLdifProtocolsBase.Entry] = FlextLdifProtocolsBase.Entry
+        ChangeOperation: type[FlextLdifProtocolsBase.ChangeOperation] = (
+            FlextLdifProtocolsBase.ChangeOperation
+        )
+        ChangeOperationValue: type[FlextLdifProtocolsBase.ChangeOperationValue] = (
+            FlextLdifProtocolsBase.ChangeOperationValue
+        )
+        Control: type[FlextLdifProtocolsBase.Control] = FlextLdifProtocolsBase.Control
 
         # ACL protocols
-        Acl: type[AclProtocol] = AclProtocol
-        AclAllow: type[AclAllowProtocol] = AclAllowProtocol
-        AclPermissions: type[AclPermissionsProtocol] = AclPermissionsProtocol
-        AclResponse: type[AclResponseProtocol] = AclResponseProtocol
-        AclEvaluationResult: type[AclEvaluationResultProtocol] = AclEvaluationResultProtocol
+        Acl: type[FlextLdifProtocolsBase.Acl] = FlextLdifProtocolsBase.Acl
+        AclAllow: type[FlextLdifProtocolsBase.AclTarget] = (
+            FlextLdifProtocolsBase.AclTarget
+        )
+        AclPermissions: type[FlextLdifProtocolsBase.AclPermissions] = (
+            FlextLdifProtocolsBase.AclPermissions
+        )
+        AclResponse: type[FlextLdifProtocolsBase.AclResponse] = (
+            FlextLdifProtocolsBase.AclResponse
+        )
+        AclEvaluationResult: type[FlextLdifProtocolsBase.AclEvaluationResult] = (
+            FlextLdifProtocolsBase.AclEvaluationResult
+        )
 
         # Server protocols
-        ServerServer: type[ServerServerProtocol] = ServerServerProtocol
-        SchemaServer: type[SchemaServerProtocol] = SchemaServerProtocol
-        AclServer: type[AclServerProtocol] = AclServerProtocol
-        EntryServer: type[EntryServerProtocol] = EntryServerProtocol
-        ServerRegistry: type[ServerRegistryProtocol] = ServerRegistryProtocol
-        RegistryBound: type[RegistryBoundProtocol] = RegistryBoundProtocol
-        ServerConstants: type[ServerConstantsProtocol] = ServerConstantsProtocol
+        ServerServer: type[FlextLdifProtocolsBase.ServerServer] = (
+            FlextLdifProtocolsBase.ServerServer
+        )
+        SchemaServer: type[FlextLdifProtocolsBase.SchemaServer] = (
+            FlextLdifProtocolsBase.SchemaServer
+        )
+        AclServer: type[FlextLdifProtocolsBase.AclServer] = (
+            FlextLdifProtocolsBase.AclServer
+        )
+        EntryServer: type[FlextLdifProtocolsBase.EntryServer] = (
+            FlextLdifProtocolsBase.EntryServer
+        )
+        ServerRegistry: type[FlextLdifProtocolsBase.ServerRegistry] = (
+            FlextLdifProtocolsBase.ServerRegistry
+        )
+        RegistryBound: type[FlextLdifProtocolsBase.ServerReference] = (
+            FlextLdifProtocolsBase.ServerReference
+        )
+        ServerConstants: type[FlextLdifProtocolsBase.ServerConstants] = (
+            FlextLdifProtocolsBase.ServerConstants
+        )
 
         # Schema protocols
-        SchemaAttribute: type[SchemaAttributeProtocol] = SchemaAttributeProtocol
-        SchemaObjectClass: type[SchemaObjectClassProtocol] = SchemaObjectClassProtocol
-        SchemaItemKind: type[SchemaItemKindProtocol] = SchemaItemKindProtocol
+        SchemaAttribute: type[FlextLdifProtocolsBase.SchemaAttribute] = (
+            FlextLdifProtocolsBase.SchemaAttribute
+        )
+        SchemaObjectClass: type[FlextLdifProtocolsBase.SchemaObjectClass] = (
+            FlextLdifProtocolsBase.SchemaObjectClass
+        )
+        SchemaItemKind: type[FlextLdifProtocolsBase.SchemaItemKind] = (
+            FlextLdifProtocolsBase.SchemaItemKind
+        )
 
         # Dynamic counts
-        DynamicCounts: type[DynamicCountsProtocol] = DynamicCountsProtocol
+        DynamicCounts: type[FlextLdifProtocolsBase.DynamicCounts] = (
+            FlextLdifProtocolsBase.DynamicCounts
+        )
 
         # Validation service
-        ValidationService: type[ValidationServiceProtocol] = ValidationServiceProtocol
+        ValidationService: type[FlextLdifProtocolsBase.ValidationService] = (
+            FlextLdifProtocolsBase.ValidationService
+        )
 
         # Server detection
-        ServerDetectionService: type[ServerDetectionServiceProtocol] = ServerDetectionServiceProtocol
-        ServerDetectionResult: type[ServerDetectionResultProtocol] = ServerDetectionResultProtocol
+        ServerDetectionService: type[FlextLdifProtocolsBase.ServerDetectionService] = (
+            FlextLdifProtocolsBase.ServerDetectionService
+        )
+        ServerDetectionResult: type[FlextLdifProtocolsBase.ServerDetectionResult] = (
+            FlextLdifProtocolsBase.ServerDetectionResult
+        )
 
         # Server resolution
-        ServerResolutionService: type[ServerResolutionServiceProtocol] = ServerResolutionServiceProtocol
+        ServerResolutionService: type[
+            FlextLdifProtocolsBase.ServerResolutionService
+        ] = FlextLdifProtocolsBase.ServerResolutionService
 
 
 p = FlextLdifProtocols
