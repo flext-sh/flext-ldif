@@ -317,7 +317,7 @@ class FlextLdif(
         source_server: str = c.Ldif.ServerTypes.RFC.value,
         target_server: str = c.Ldif.ServerTypes.RFC.value,
         options: p.Ldif.MigrationOutputOptions | None = None,
-    ) -> p.Result[m.Ldif.MigrationPipelineResult]:
+    ) -> p.Result[p.Ldif.MigrationPipelineResult]:
         """Migrate LDIF data between servers.
 
         Args:

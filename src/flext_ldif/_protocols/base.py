@@ -227,13 +227,13 @@ class FlextLdifProtocolsBase(Protocol):
 
         def validate_entries(
             self,
-            entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
+            entries: t.MutableSequenceOf[FlextLdifProtocolsBase.Entry] | m.Ldif.ParseResponse,
             validation_service: FlextLdifProtocolsBase.ValidationService | None = None,
-        ) -> p.Result[m.Ldif.ValidationResult]:
+        ) -> p.Result[FlextLdifProtocolsBase.ValidationResult]:
             """Validate list of entries."""
             ...
 
-        def service_check(self) -> p.Result[m.Ldif.AclResponse]:
+        def service_check(self) -> p.Result[FlextLdifProtocolsBase.AclResponse]:
             """Run the public ACL service wiring check."""
             ...
 
@@ -241,29 +241,29 @@ class FlextLdifProtocolsBase(Protocol):
             self,
             acl_string: str,
             server_type: str,
-        ) -> p.Result[m.Ldif.Acl]:
+        ) -> p.Result[FlextLdifProtocolsBase.Acl]:
             """Parse one ACL string through the public facade DSL."""
             ...
 
         def extract_acls_from_entry(
             self,
-            entry: m.Ldif.Entry,
+            entry: FlextLdifProtocolsBase.Entry,
             server_type: str,
-        ) -> p.Result[m.Ldif.AclResponse]:
+        ) -> p.Result[FlextLdifProtocolsBase.AclResponse]:
             """Extract ACLs from an entry through the public facade DSL."""
             ...
 
         def evaluate_acl_context(
             self,
             acls: t.SequenceOf[t.Ldif.AclLike],
-            required_permissions: m.Ldif.AclPermissions | t.MutableBoolMapping,
-        ) -> p.Result[m.Ldif.AclEvaluationResult]:
+            required_permissions: FlextLdifProtocolsBase.AclPermissions | t.MutableBoolMapping,
+        ) -> p.Result[FlextLdifProtocolsBase.AclEvaluationResult]:
             """Evaluate ACLs through the public facade DSL."""
             ...
 
         def process_entries(
             self,
-            entries: t.MutableSequenceOf[m.Ldif.Entry],
+            entries: t.MutableSequenceOf[FlextLdifProtocolsBase.Entry],
             options: m.Ldif.ProcessEntriesOptions | None = None,
             **kwargs: t.JsonValue,
         ) -> p.Result[t.MutableSequenceOf[m.Ldif.ProcessingResult]]:
@@ -272,7 +272,7 @@ class FlextLdifProtocolsBase(Protocol):
 
         def calculate_for_entries(
             self,
-            entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
+            entries: t.MutableSequenceOf[FlextLdifProtocolsBase.Entry] | m.Ldif.ParseResponse,
         ) -> p.Result[m.Ldif.EntriesStatistics]:
             """Calculate entry statistics through the public facade DSL."""
             ...
