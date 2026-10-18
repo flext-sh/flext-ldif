@@ -264,40 +264,33 @@ class FlextLdifProtocolsBase(Protocol):
         """Migration pipeline result contract."""
 
         @property
-        def migrated_schema(self) -> FlextLdifProtocolsBase.SchemaContent:
-            ...
+        def migrated_schema(self) -> FlextLdifProtocolsBase.SchemaContent: ...
 
         @property
-        def entries(self) -> t.MutableSequenceOf[FlextLdifProtocolsBase.Entry]:
-            ...
+        def entries(self) -> t.MutableSequenceOf[FlextLdifProtocolsBase.Entry]: ...
 
     @runtime_checkable
     class ParseResponse(Protocol):
         """LDIF parse response contract."""
 
         @property
-        def entries(self) -> t.MutableSequenceOf[FlextLdifProtocolsBase.Entry]:
-            ...
+        def entries(self) -> t.MutableSequenceOf[FlextLdifProtocolsBase.Entry]: ...
 
         @property
-        def statistics(self) -> FlextLdifProtocolsBase.Statistics:
-            ...
+        def statistics(self) -> FlextLdifProtocolsBase.Statistics: ...
 
         @property
-        def detected_server_type(self) -> c.Ldif.ServerTypes | None:
-            ...
+        def detected_server_type(self) -> c.Ldif.ServerTypes | None: ...
 
     @runtime_checkable
     class Statistics(Protocol):
         """Statistics contract."""
 
         @property
-        def total_entries(self) -> int:
-            ...
+        def total_entries(self) -> int: ...
 
         @property
-        def processed_entries(self) -> int:
-            ...
+        def processed_entries(self) -> int: ...
 
     @runtime_checkable
     class SchemaContent(Protocol):
@@ -306,14 +299,12 @@ class FlextLdifProtocolsBase(Protocol):
         @property
         def attributes(
             self,
-        ) -> t.MutableSequenceOf[FlextLdifProtocolsBase.SchemaAttribute]:
-            ...
+        ) -> t.MutableSequenceOf[FlextLdifProtocolsBase.SchemaAttribute]: ...
 
         @property
         def object_classes(
             self,
-        ) -> t.MutableSequenceOf[FlextLdifProtocolsBase.SchemaObjectClass]:
-            ...
+        ) -> t.MutableSequenceOf[FlextLdifProtocolsBase.SchemaObjectClass]: ...
 
     @runtime_checkable
     class ValidationResult(Protocol):
@@ -366,16 +357,13 @@ class FlextLdifProtocolsBase(Protocol):
         """Aggregate entry processing statistics."""
 
         @property
-        def total_entries(self) -> int:
-            ...
+        def total_entries(self) -> int: ...
 
         @property
-        def object_class_distribution(self) -> FlextLdifProtocolsBase.DynamicCounts:
-            ...
+        def object_class_distribution(self) -> FlextLdifProtocolsBase.DynamicCounts: ...
 
         @property
-        def server_type_distribution(self) -> FlextLdifProtocolsBase.DynamicCounts:
-            ...
+        def server_type_distribution(self) -> FlextLdifProtocolsBase.DynamicCounts: ...
 
     @runtime_checkable
     class DynamicCounts(Protocol):
@@ -409,8 +397,7 @@ class FlextLdifProtocolsBase(Protocol):
         def filter_by_base_dn(
             self,
             categories: FlextLdifProtocolsBase.FlexibleCategories,
-        ) -> FlextLdifProtocolsBase.FlexibleCategories:
-            ...
+        ) -> FlextLdifProtocolsBase.FlexibleCategories: ...
 
         def validate_dns(
             self,
