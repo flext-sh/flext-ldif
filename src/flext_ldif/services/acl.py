@@ -38,7 +38,6 @@ class FlextLdifAcl(FlextLdifServer):
         if isinstance(required_permissions, m.Ldif.AclPermissions):
             required = required_permissions
         else:
-            # required_permissions is t.MutableBoolMapping (MutableMapping[str, bool])
             mapping: t.MutableBoolMapping = required_permissions  # type: ignore[assignment]
             perms_dict: t.MutableBoolMapping = dict(mapping.items())
             required = m.Ldif.AclPermissions.model_validate(

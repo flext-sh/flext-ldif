@@ -25,7 +25,9 @@ class FlextLdifModelsProcessing:
             u.Field(
                 default=None,
                 exclude=True,
-                description="Transformation configuration for the ordered entry pipeline",
+                description=(
+                    "Transformation configuration for the ordered entry pipeline"
+                ),
             )
         )
         entries_input: t.SequenceOf[FlextLdifModelsDomainsEntries.Entry] | None = (

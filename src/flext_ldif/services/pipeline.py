@@ -30,7 +30,12 @@ class FlextLdifProcessingPipeline(
         target_server: str | c.Ldif.ServerTypes,
         base_dn: str = "",
     ) -> Self:
-        """Construct one configured pipeline with its explicit registry port."""
+        """Construct one configured pipeline with its explicit registry port.
+
+        Returns:
+            A configured ``FlextLdifProcessingPipeline`` instance.
+
+        """
         return cls(
             transform_config=m.Ldif.TransformConfig.servers(
                 source_server=u.Ldif.normalize_server_type(source_server),
@@ -43,7 +48,12 @@ class FlextLdifProcessingPipeline(
 
     @override
     def execute(self) -> p.Result[t.SequenceOf[p.Ldif.Entry]]:
-        """Transform each complete batch before starting the following stage."""
+        """Transform each complete batch before starting the following stage.
+
+        Returns:
+            The resulting ``p.Result[t.SequenceOf[p.Ldif.Entry]]``.
+
+        """
         batch = self.entries_input
         if batch is None:
             return r[t.SequenceOf[p.Ldif.Entry]].fail("No entries provided")
