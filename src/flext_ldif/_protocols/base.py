@@ -227,7 +227,8 @@ class FlextLdifProtocolsBase(Protocol):
 
         def validate_entries(
             self,
-            entries: t.MutableSequenceOf[FlextLdifProtocolsBase.Entry] | m.Ldif.ParseResponse,
+            entries: t.MutableSequenceOf[FlextLdifProtocolsBase.Entry]
+            | m.Ldif.ParseResponse,
             validation_service: FlextLdifProtocolsBase.ValidationService | None = None,
         ) -> p.Result[FlextLdifProtocolsBase.ValidationResult]:
             """Validate list of entries."""
@@ -256,7 +257,8 @@ class FlextLdifProtocolsBase(Protocol):
         def evaluate_acl_context(
             self,
             acls: t.SequenceOf[t.Ldif.AclLike],
-            required_permissions: FlextLdifProtocolsBase.AclPermissions | t.MutableBoolMapping,
+            required_permissions: FlextLdifProtocolsBase.AclPermissions
+            | t.MutableBoolMapping,
         ) -> p.Result[FlextLdifProtocolsBase.AclEvaluationResult]:
             """Evaluate ACLs through the public facade DSL."""
             ...
@@ -272,7 +274,8 @@ class FlextLdifProtocolsBase(Protocol):
 
         def calculate_for_entries(
             self,
-            entries: t.MutableSequenceOf[FlextLdifProtocolsBase.Entry] | m.Ldif.ParseResponse,
+            entries: t.MutableSequenceOf[FlextLdifProtocolsBase.Entry]
+            | m.Ldif.ParseResponse,
         ) -> p.Result[m.Ldif.EntriesStatistics]:
             """Calculate entry statistics through the public facade DSL."""
             ...
