@@ -22,7 +22,9 @@ class FlextLdifProcessingPipeline(
 
     @classmethod
     def for_servers(
-        cls, *, registry: p.Registry,
+        cls,
+        *,
+        registry: p.Registry,
         runtime_settings: p.Ldif.Settings | None = None,
         source_server: str | c.Ldif.ServerTypes,
         target_server: str | c.Ldif.ServerTypes,
@@ -35,7 +37,8 @@ class FlextLdifProcessingPipeline(
                 target_server=u.Ldif.normalize_server_type(target_server),
                 base_dn=base_dn,
             ),
-            registry=registry, runtime_settings=runtime_settings,
+            registry=registry,
+            runtime_settings=runtime_settings,
         )
 
     @override
@@ -48,30 +51,37 @@ class FlextLdifProcessingPipeline(
         process = configuration.process_config
         if configuration.normalize_dns and process is not None:
             options = process.dn_config or m.Ldif.DnNormalizationConfig()
-            result = r.traverse(batch, partial(
-                u.Ldif.normalize_entry_dn,
-                case=(
-                    c.Ldif.CaseFoldOption(options.case_fold)
-                    if options.case_fold is not None else c.Ldif.CaseFoldOption.NONE
+            result = r.traverse(
+                batch,
+                partial(
+                    u.Ldif.normalize_entry_dn,
+                    case=(
+                        c.Ldif.CaseFoldOption(options.case_fold)
+                        if options.case_fold is not None
+                        else c.Ldif.CaseFoldOption.NONE
+                    ),
+                    spaces=(
+                        c.Ldif.SpaceHandlingOption(options.space_handling)
+                        if options.space_handling is not None
+                        else c.Ldif.SpaceHandlingOption.PRESERVE
+                    ),
+                    validate=options.validate_before,
                 ),
-                spaces=(
-                    c.Ldif.SpaceHandlingOption(options.space_handling)
-                    if options.space_handling is not None
-                    else c.Ldif.SpaceHandlingOption.PRESERVE
-                ),
-                validate=options.validate_before,
-            ))
+            )
             if result.failure:
                 return r[t.SequenceOf[p.Ldif.Entry]].from_failure(result)
             batch = result.value
         if configuration.normalize_attrs and process is not None:
             attr_options = process.attr_config or m.Ldif.AttrNormalizationConfig()
-            result = r.traverse(batch, partial(
-                u.Ldif.normalize_entry_attrs,
-                case_fold_names=attr_options.case_fold_names,
-                trim_values=attr_options.trim_values,
-                remove_empty=attr_options.remove_empty,
-            ))
+            result = r.traverse(
+                batch,
+                partial(
+                    u.Ldif.normalize_entry_attrs,
+                    case_fold_names=attr_options.case_fold_names,
+                    trim_values=attr_options.trim_values,
+                    remove_empty=attr_options.remove_empty,
+                ),
+            )
             if result.failure:
                 return r[t.SequenceOf[p.Ldif.Entry]].from_failure(result)
             batch = result.value
@@ -80,7 +90,8 @@ class FlextLdifProcessingPipeline(
                 source_server=u.Ldif.normalize_server_type(process.source_server),
                 target_server=u.Ldif.normalize_server_type(process.target_server),
                 base_dn=process.base_dn,
-                registry=self.registry, runtime_settings=self.settings,
+                registry=self.registry,
+                runtime_settings=self.settings,
             )
             result = r.traverse(batch, transformer.apply)
             if result.failure:

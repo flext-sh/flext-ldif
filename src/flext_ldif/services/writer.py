@@ -32,7 +32,9 @@ class FlextLdifWriter(FlextLdifServer):
             The resulting ``p.Result[p.Ldif.WriteResponse]``.
 
         """
-        batch = entries.entries if isinstance(entries, p.Ldif.ParseResponse) else entries
+        batch = (
+            entries.entries if isinstance(entries, p.Ldif.ParseResponse) else entries
+        )
         content_result = self.write_to_string(
             batch,
             server_type=server_type,
@@ -64,7 +66,9 @@ class FlextLdifWriter(FlextLdifServer):
             The resulting ``p.Result[p.Ldif.WriteResponse]``.
 
         """
-        batch = entries.entries if isinstance(entries, p.Ldif.ParseResponse) else entries
+        batch = (
+            entries.entries if isinstance(entries, p.Ldif.ParseResponse) else entries
+        )
         content_result = self.write_to_string(
             batch,
             server_type=server_type,
@@ -100,12 +104,17 @@ class FlextLdifWriter(FlextLdifServer):
 
         """
         effective_server_type = (
-            self._get_effective_server_type_value() if server_type is None else server_type
+            self._get_effective_server_type_value()
+            if server_type is None
+            else server_type
         )
-        batch = entries.entries if isinstance(entries, p.Ldif.ParseResponse) else entries
+        batch = (
+            entries.entries if isinstance(entries, p.Ldif.ParseResponse) else entries
+        )
         try:
             request = m.Ldif.WriteRequest.model_validate({
-                "entries": list(batch), "format_options": format_options,
+                "entries": list(batch),
+                "format_options": format_options,
             })
         except c.EXC_TYPE_VALIDATION as exc:
             return r[str].fail_op("validate LDIF write request", exc)

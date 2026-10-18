@@ -32,7 +32,9 @@ class FlextLdifParser(FlextLdifServer):
 
         """
         effective_type = (
-            self._get_effective_server_type_value() if server_type is None else server_type
+            self._get_effective_server_type_value()
+            if server_type is None
+            else server_type
         )
         if isinstance(value, str):
             return self.parse_string(value, server_type=effective_type)
@@ -74,7 +76,9 @@ class FlextLdifParser(FlextLdifServer):
 
         """
         effective_server_type = (
-            self._get_effective_server_type_value() if server_type is None else server_type
+            self._get_effective_server_type_value()
+            if server_type is None
+            else server_type
         )
         return r[p.Ldif.ParseResponse].from_result(
             self.server(effective_server_type).flat_map(

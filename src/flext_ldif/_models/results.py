@@ -29,8 +29,11 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
         entries: t.MutableSequenceOf[FlextLdifModelsDomainsEntries.Entry] = u.Field(
             description="Owned LDIF entries supplied for serialization",
         )
-        format_options: FlextLdifModelsSettingsMigrate.WriteFormatOptions | None = u.Field(
-            default=None, description="Optional explicit LDIF formatting options",
+        format_options: FlextLdifModelsSettingsMigrate.WriteFormatOptions | None = (
+            u.Field(
+                default=None,
+                description="Optional explicit LDIF formatting options",
+            )
         )
 
     class MigrationPipelineOptions(m.ArbitraryTypesModel):

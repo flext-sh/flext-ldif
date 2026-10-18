@@ -14,8 +14,8 @@ from flext_ldif import c
 from flext_ldif._protocols import FlextLdifProtocolsBase
 
 if TYPE_CHECKING:
-    from os import PathLike
     from collections.abc import Sequence
+    from os import PathLike
     from pathlib import Path
 
     from flext_ldif import m

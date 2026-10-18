@@ -21,13 +21,19 @@ class FlextLdifModelsProcessing:
     class ProcessingPipelineOptions(m.ArbitraryTypesModel):
         """Owned input batch and optional transformation configuration."""
 
-        transform_config: FlextLdifModelsSettingsProcessing.TransformConfig | None = u.Field(
-            default=None, exclude=True,
-            description="Transformation configuration for the ordered entry pipeline",
+        transform_config: FlextLdifModelsSettingsProcessing.TransformConfig | None = (
+            u.Field(
+                default=None,
+                exclude=True,
+                description="Transformation configuration for the ordered entry pipeline",
+            )
         )
-        entries_input: t.SequenceOf[FlextLdifModelsDomainsEntries.Entry] | None = u.Field(
-            default=None, exclude=True,
-            description="Entry batch supplied to the processing pipeline",
+        entries_input: t.SequenceOf[FlextLdifModelsDomainsEntries.Entry] | None = (
+            u.Field(
+                default=None,
+                exclude=True,
+                description="Entry batch supplied to the processing pipeline",
+            )
         )
 
     class ProcessingResult(m.StrictModel):

@@ -17,6 +17,7 @@ from tests import c, m, tm, u
 
 if TYPE_CHECKING:
     from pathlib import Path
+
     from tests import p
 
 
@@ -240,14 +241,20 @@ class TestsFlextLdifApiServerRegistry:
         )
         options = m.Ldif.WriteFormatOptions()
         request = m.Ldif.WriteRequest.model_validate({
-            "entries": [entry], "format_options": options,
+            "entries": [entry],
+            "format_options": options,
         })
         tm.that(request.entries[0] is entry)
         tm.that(request.format_options is options)
         output = tmp_path / "structural.ldif"
-        tm.ok(api.write_ldif_file(
-            (entry,), PurePath(output), server_type=route, format_options=options,
-        ))
+        tm.ok(
+            api.write_ldif_file(
+                (entry,),
+                PurePath(output),
+                server_type=route,
+                format_options=options,
+            )
+        )
         parsed = api.parse_ldif(PurePath(output), server_type=route).unwrap()
         tm.that(len(parsed.entries), eq=len(request.entries))
         tm.that(parsed.entries[0].dn, eq=entry.dn)
