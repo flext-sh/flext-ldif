@@ -6,8 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 from flext_cli import u
 
+from flext_ldif import p
 from flext_ldif._utilities import (
     FlextLdifEntryAccess,
     FlextLdifEntryAnalysis,
@@ -34,7 +37,7 @@ class FlextLdifUtilitiesEntry(
 ):
     """Entry transformation utilities - pure helper functions."""
 
-    logger = u.fetch_logger(__name__)
+    logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 
 
 __all__: list[str] = ["FlextLdifUtilitiesEntry"]

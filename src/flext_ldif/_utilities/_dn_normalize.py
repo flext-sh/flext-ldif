@@ -147,7 +147,7 @@ class FlextLdifDNNormalization:
             return r[int].fail("Both DNs must be provided for comparison")
         norm_result = FlextLdifDNNormalization._normalize_dns_for_comparison(dn1, dn2)
         if not norm_result.success:
-            return r[int].fail(norm_result.error or "Normalization failed")
+            return r[int].from_failure(norm_result)
         normalized_pair = norm_result.value
         if len(normalized_pair) != c.Ldif.TUPLE_LENGTH_PAIR:
             return r[int].fail("Normalization returned unexpected DN pair")

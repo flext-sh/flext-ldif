@@ -10,10 +10,9 @@ from __future__ import annotations
 
 from typing import Annotated, Self
 
-from flext_core import FlextUtilities as u, m
+from flext_cli import m, u
 
 from flext_ldif import c, t
-from flext_ldif._constants import FlextLdifConstantsEnums
 from flext_ldif._models import FlextLdifModelsBases, FlextLdifModelsDomainMetadata
 
 
@@ -382,11 +381,11 @@ class FlextLdifModelsDomainAcl:
             u.Field(..., description="Original permissions dict"),
         ]
         source_server_type: Annotated[
-            FlextLdifConstantsEnums.ServerTypes | None,
+            c.Ldif.ServerTypes | None,
             u.Field(description="Source server type"),
         ] = None
         target_server_type: Annotated[
-            FlextLdifConstantsEnums.ServerTypes | None,
+            c.Ldif.ServerTypes | None,
             u.Field(description="Target server type"),
         ] = None
         converted_has_permissions: Annotated[

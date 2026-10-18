@@ -27,16 +27,16 @@ class FlextLdifServersBaseIoMixin:
     def parse_ldif(
         self: Self,
         value: str,
-    ) -> p.Result[m.Ldif.ParseResponse]:
+    ) -> p.Result[p.Ldif.ParseResponse]:
         """Parse LDIF text to Entry models.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.ParseResponse]``.
+            The resulting ``p.Result[p.Ldif.ParseResponse]``.
 
         """
         entry_server = getattr(self, "entry_server", None)
         if entry_server is None:
-            return r[m.Ldif.ParseResponse].fail("Entry server not available")
+            return r[p.Ldif.ParseResponse].fail("Entry server not available")
         detected_server = getattr(self, "server_type", None)
         detected_server_type: c.Ldif.ServerTypes | None = None
         if isinstance(detected_server, c.Ldif.ServerTypes):
@@ -72,11 +72,18 @@ class FlextLdifServersBaseIoMixin:
                 detected_server_type=detected_server_type,
             )
 
+        def model_to_protocol_parse_response(
+            model_response: m.Ldif.ParseResponse,
+        ) -> m.Ldif.ParseResponse:
+            # Return the model response directly since it's already the correct type
+            return model_response
+
         parse_response_result: p.Result[m.Ldif.ParseResponse] = (
             entry_server
             .parse_server(value)
             .map_error(normalize_parse_error)
             .map(build_parse_response)
+            .map(model_to_protocol_parse_response)
         )
         return parse_response_result
 
@@ -106,12 +113,14 @@ class FlextLdifServersBaseIoMixin:
         """Execute parse operation.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Entry]``.
+            The resulting ``p.Result[m.Ldif.Entry]``. Failure metadata from
+            the underlying parse (error code, data, exception) is preserved
+            unchanged.
 
         """
         parse_result = self.parse_ldif(ldif_text)
         if not parse_result.success:
-            return r[m.Ldif.Entry].fail(parse_result.error or "Parse failed")
+            return r[m.Ldif.Entry].from_failure(parse_result)
         entries = u.Ldif.as_entries(parse_result.unwrap())
         if not entries:
             return r[m.Ldif.Entry].fail("No entries parsed")

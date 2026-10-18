@@ -207,7 +207,7 @@ class FlextLdifUtilitiesSchemaParse:
             definition_label=c.Ldif.SchemaItemKind.ATTRIBUTE.value,
         )
         if basic_fields.failure:
-            return r[t.Ldif.MutableMetadataMapping].fail(basic_fields.error)
+            return r[t.Ldif.MutableMetadataMapping].from_failure(basic_fields)
         oid, name, desc = basic_fields.value
         syntax, fields = FlextLdifUtilitiesSchemaParse._attribute_syntax_fields(
             attr_definition,

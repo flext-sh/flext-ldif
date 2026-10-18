@@ -1,4 +1,4 @@
-"""Base server execute-parameter extraction and registry registration.
+"""Base server execute-parameter extraction.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -6,18 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-from flext_ldif import c, m, p, t, u
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
-    from flext_ldif.servers.base import FlextLdifServersBase
+from flext_ldif import c, m, t, u
 
 
 class FlextLdifServersBaseExecuteParamsMixin:
-    """Extract validated execute parameters and auto-register server instances."""
+    """Extract validated execute parameters without registry side effects."""
 
     @classmethod
     def _extract_execute_params(
@@ -39,59 +32,6 @@ class FlextLdifServersBaseExecuteParamsMixin:
             cls._extract_entries(kwargs),
             cls._extract_operation(kwargs),
         )
-
-    @staticmethod
-    def _register_in_registry(
-        server_instance: p.Ldif.SchemaServer | FlextLdifServersBase,
-        registry: p.Ldif.ServerRegistry | t.JsonValue,
-    ) -> None:
-        """Register a server instance in the registry."""
-        register_func = FlextLdifServersBaseExecuteParamsMixin._validate_registry(
-            registry,
-        )
-        FlextLdifServersBaseExecuteParamsMixin._perform_registration(
-            register_func,
-            server_instance,
-        )
-
-    @staticmethod
-    def _validate_registry(
-        registry_obj: p.Ldif.ServerRegistry | t.JsonValue,
-    ) -> Callable[[str, p.Ldif.SchemaServer | FlextLdifServersBase], None] | None:
-        """Validate registry has a register_server method.
-
-        Returns:
-            The resulting ``Callable[[str, p.Ldif.SchemaServer | FlextLdifServersBase],
-                None] | None``.
-
-        """
-        method = getattr(registry_obj, "register_server", None)
-        if method is None or not callable(method):
-            return None
-        captured = method
-
-        def typed_register(
-            server_type: str,
-            server: p.Ldif.SchemaServer | FlextLdifServersBase,
-        ) -> None:
-            _ = captured(server_type, server)
-
-        return typed_register
-
-    @staticmethod
-    def _perform_registration(
-        register_func: Callable[[str, p.Ldif.SchemaServer | FlextLdifServersBase], None]
-        | None,
-        instance: p.Ldif.SchemaServer | FlextLdifServersBase,
-    ) -> None:
-        """Execute registration if the instance exposes the required methods."""
-        if register_func is None:
-            return
-        required_methods = ("parse", "write")
-        if all(
-            callable(getattr(instance, method, None)) for method in required_methods
-        ):
-            register_func("auto", instance)
 
     @staticmethod
     def _extract_entries(

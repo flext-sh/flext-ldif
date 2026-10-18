@@ -9,19 +9,16 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, ClassVar, override
+from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
+from flext_ldif.servers._base import FlextLdifServersBaseEntry
 from flext_ldif.servers._oud import (
+    FlextLdifServersOudConstants,
     FlextLdifServersOudEntryParseMixin,
     FlextLdifServersOudHelpersMixin,
 )
-from flext_ldif.servers._oud.server_constants import FlextLdifServersOudConstants
 from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
-
-if TYPE_CHECKING:
-    from flext_ldif.servers.base import FlextLdifServersBase
 
 
 class FlextLdifServersOudEntry(
@@ -45,7 +42,7 @@ class FlextLdifServersOudEntry(
     def __init__(
         self,
         entry_service: p.Ldif.EntryServer | None = None,
-        _parent_server: FlextLdifServersBase | None = None,
+        _parent_server: p.Ldif.ServerServer | None = None,
     ) -> None:
         """Initialize OUD entry server."""
         FlextLdifServersBaseEntry.__init__(self, entry_service, _parent_server=None)
@@ -201,8 +198,16 @@ class FlextLdifServersOudEntry(
             The resulting ``p.Result[m.Ldif.Entry]``.
 
         """
+        if not FlextLdifServersOudHelpersMixin.carries_schema_definitions(entry):
+            return r[m.Ldif.Entry].ok(entry)
+        if not isinstance(self.parent_server, p.Ldif.RegistryBound):
+            return r[m.Ldif.Entry].fail_op(
+                "normalize OUD schema definitions",
+                "Explicit registry-bound parent is required",
+            )
         return FlextLdifServersOudHelpersMixin.normalize_schema_definitions_for_write(
             entry,
+            registry=self.parent_server.registry,
         )
 
     @override
@@ -217,7 +222,7 @@ class FlextLdifServersOudEntry(
         """
         hook_result = self._hook_pre_write_entry(entry_data)
         if hook_result.failure:
-            return r[str].fail_op("Pre-write hook", hook_result.error)
+            return r[str].from_failure(hook_result)
         normalized_entry = hook_result.value
         entry_to_write = FlextLdifServersOudHelpersMixin.restore_entry_from_metadata(
             normalized_entry,

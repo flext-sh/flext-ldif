@@ -8,13 +8,11 @@ from __future__ import annotations
 
 from collections.abc import MutableMapping
 
-from flext_ldif import c, m, p, r, s, t, u
-from flext_ldif.services.categorization_filtering import (
-    FlextLdifCategorizationFiltering,
-)
+from flext_ldif import c, m, p, r, t, u
+from flext_ldif.services import FlextLdifCategorizationFiltering
 
 
-class FlextLdifCategorization(FlextLdifCategorizationFiltering, s[m.Ldif.Response]):
+class FlextLdifCategorization(FlextLdifCategorizationFiltering):
     """LDIF Entry Categorization Service."""
 
     def categorize_entries(

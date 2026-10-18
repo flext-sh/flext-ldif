@@ -8,11 +8,11 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_ldif import FlextLdifShared, c, m, p, r, s, t, u
-from flext_ldif.services.conversion import FlextLdifConversion
+from flext_ldif import FlextLdifShared, c, m, p, r, t, u
+from flext_ldif.services import FlextLdifConversion
 
 
-class FlextLdifTransformer(s[m.Ldif.Response]):
+class FlextLdifTransformer(FlextLdifConversion):
     """Transformer for server-specific conversions."""
 
     source_server: Annotated[
@@ -31,14 +31,6 @@ class FlextLdifTransformer(s[m.Ldif.Response]):
             description="Target server type used for the conversion.",
         ),
     ] = None
-    base_dn: Annotated[
-        str,
-        u.Field(
-            default="",
-            exclude=True,
-            description="Migration base DN forwarded to ACL scope filtering.",
-        ),
-    ] = ""
 
     @staticmethod
     def _normalize_server_type(
@@ -75,15 +67,11 @@ class FlextLdifTransformer(s[m.Ldif.Response]):
                 f"Conversion returned unexpected type: {type(converted).__name__}",
             )
 
-        return (
-            FlextLdifConversion(base_dn=self.base_dn)
-            .convert_model(
-                source=source_server.value,
-                target=target_server.value,
-                model_instance=item,
-            )
-            .flat_map(ensure_entry)
-        )
+        return self.convert_model(
+            source=source_server.value,
+            target=target_server.value,
+            model_instance=item,
+        ).flat_map(ensure_entry)
 
 
 __all__: list[str] = ["FlextLdifTransformer"]

@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 from flext_cli import FlextCliConstants
 
 from flext_ldif._constants import (
@@ -19,8 +21,8 @@ from flext_ldif._constants import (
     FlextLdifConstantsServersOud,
     FlextLdifConstantsServersRelaxed,
     FlextLdifConstantsServersRfc,
+    FlextLdifConstantsStrEnums,
 )
-from flext_ldif._constants.str_enums import FlextLdifConstantsStrEnums
 
 
 class FlextLdifConstants(FlextCliConstants):
@@ -40,7 +42,9 @@ class FlextLdifConstants(FlextCliConstants):
     ):
         """LDIF domain constants namespace."""
 
-        SchemaItemKind = FlextLdifConstantsStrEnums.SchemaItemKind
+        SchemaItemKind: ClassVar[type[FlextLdifConstantsStrEnums.SchemaItemKind]] = (
+            FlextLdifConstantsStrEnums.SchemaItemKind
+        )
 
         NormalizeFallback = FlextLdifConstantsStrEnums.NormalizeFallback
 

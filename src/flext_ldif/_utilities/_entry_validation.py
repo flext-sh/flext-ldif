@@ -89,6 +89,38 @@ class FlextLdifEntryValidation:
         return violations
 
     @staticmethod
+    def _attribute_required(
+        entry: p.Ldif.EntryValidationSubject,
+        attribute_name: str,
+        violation_message: str,
+    ) -> t.MutableSequenceOf[str]:
+        """Require one case-insensitive attribute on a changeless entry.
+
+        Note: entry.attributes may be None when using model_construct (bypasses
+        validation).
+
+        Args:
+            entry: Entry subject carrying parsed attributes.
+            attribute_name: Required attribute name in lowercase.
+            violation_message: RFC citation emitted when the attribute is absent.
+
+        Returns:
+            The resulting ``t.MutableSequenceOf[str]``.
+
+        """
+        violations: t.MutableSequenceOf[str] = []
+        if entry.changetype:
+            return violations
+        if entry.attributes is None or (not entry.attributes):
+            return violations
+        if not any(
+            attr_name.lower() == attribute_name
+            for attr_name in entry.attributes.attributes
+        ):
+            violations.append(violation_message)
+        return violations
+
+    @staticmethod
     def validate_naming_attribute(
         entry: p.Ldif.EntryValidationSubject,
         dn_value: str,
@@ -102,28 +134,21 @@ class FlextLdifEntryValidation:
             The resulting ``t.MutableSequenceOf[str]``.
 
         """
-        violations: t.MutableSequenceOf[str] = []
-        if entry.changetype:
-            return violations
-        if not dn_value or entry.attributes is None or (not entry.attributes):
-            return violations
+        if not dn_value:
+            return []
         first_rdn = (
             dn_value.split(",", maxsplit=1)[0].strip()
             if "," in dn_value
             else dn_value.strip()
         )
         if "=" not in first_rdn:
-            return violations
+            return []
         naming_attr = first_rdn.split("=")[0].strip().lower()
-        has_naming_attr = any(
-            attr_name.lower() == naming_attr
-            for attr_name in entry.attributes.attributes
+        return FlextLdifEntryValidation._attribute_required(
+            entry,
+            naming_attr,
+            f"RFC 4512 § 2.3: Entry SHOULD have Naming attribute '{naming_attr}'",
         )
-        if not has_naming_attr:
-            violations.append(
-                f"RFC 4512 § 2.3: Entry SHOULD have Naming attribute '{naming_attr}'",
-            )
-        return violations
 
     @staticmethod
     def validate_objectclass(
@@ -139,24 +164,17 @@ class FlextLdifEntryValidation:
             The resulting ``t.MutableSequenceOf[str]``.
 
         """
-        violations: t.MutableSequenceOf[str] = []
-        if entry.changetype:
-            return violations
         dn_value_lower = dn_value.lower()
         is_schema_entry = any(
             dn_value_lower.startswith(marker) for marker in c.Ldif.SCHEMA_DN_MARKERS
         )
-        if entry.attributes is None or is_schema_entry or (not entry.attributes):
-            return violations
-        has_objectclass = any(
-            attr_name.lower() == c.Ldif.DictKeys.OBJECTCLASS.lower()
-            for attr_name in entry.attributes.attributes
+        if is_schema_entry:
+            return []
+        return FlextLdifEntryValidation._attribute_required(
+            entry,
+            c.Ldif.DictKeys.OBJECTCLASS.lower(),
+            f"RFC 4512 § 2.4.1: Entry SHOULD have objectClass (DN: {dn_value})",
         )
-        if not has_objectclass:
-            violations.append(
-                f"RFC 4512 § 2.4.1: Entry SHOULD have objectClass (DN: {dn_value})",
-            )
-        return violations
 
 
 __all__: list[str] = ["FlextLdifEntryValidation"]

@@ -7,10 +7,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldif import m, p, r, s, t, u
-from flext_ldif.services.validation import FlextLdifValidation
+from flext_ldif.services import FlextLdifValidation
 
 
-class FlextLdifAnalysis(s[m.Ldif.Response]):
+class FlextLdifAnalysis(s[p.Ldif.Response]):
     """Service for entry analysis and validation."""
 
     @staticmethod
@@ -117,13 +117,13 @@ class FlextLdifAnalysis(s[m.Ldif.Response]):
 
     def validate_entries(
         self,
-        entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
+        entries: t.MutableSequenceOf[p.Ldif.Entry] | p.Ldif.ParseResponse,
         validation_service: p.Ldif.ValidationService | None = None,
-    ) -> p.Result[m.Ldif.ValidationResult]:
+    ) -> p.Result[p.Ldif.ValidationResult]:
         """Validate LDIF entries against RFC 2849/4512 standards.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.ValidationResult]``.
+            The resulting ``p.Result[p.Ldif.ValidationResult]``.
 
         """
         _ = self
@@ -157,7 +157,7 @@ class FlextLdifAnalysis(s[m.Ldif.Response]):
         valid_count = u.count(valid_results)
         total_entries = u.count(normalized_entries)
         invalid_count = total_entries - valid_count
-        return r[m.Ldif.ValidationResult].ok(
+        return r[p.Ldif.ValidationResult].ok(
             m.Ldif.ValidationResult.model_validate({
                 "valid": invalid_count == 0,
                 "total_entries": total_entries,

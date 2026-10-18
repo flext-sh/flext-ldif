@@ -1,4 +1,4 @@
-"""Server server registry using the canonical `p.Registry` DSL.
+"""Dialect lookup and lifecycle over the explicitly injected core registry.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -6,111 +6,108 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import inspect
-from typing import Annotated, ClassVar, Self, TypeGuard, override
-
 from flext_ldif import c, m, p, r, s, t, u
-from flext_ldif.servers import (
-    FlextLdifServersBase,
-    ad,
-    apache,
-    ds389,
-    novell,
-    oid,
-    openldap,
-    openldap1,
-    oud,
-    relaxed,
-    rfc,
-    tivoli,
-)
 
 
-class FlextLdifServer(s[m.Ldif.Response]):
-    """Server server registry using the canonical registry DSL."""
+class FlextLdifServer(s[p.Ldif.Response], m.Ldif.RegistryPortOptions):
+    """Share one dialect registry port through the consuming service MRO."""
 
-    _discovery_initialized: ClassVar[bool] = False
-    _global_instance: ClassVar[FlextLdifServer | None] = None
-    _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
-    _registered_servers: ClassVar[t.MutableMappingKV[str, p.Ldif.ServerServer]] = {}
+    def register_server(self, server: p.Ldif.ServerServer) -> p.Result[bool]:
+        """Register the original dialect object without copying or overwriting.
 
-    dispatcher: Annotated[
-        p.Dispatcher | None,
-        u.Field(
-            default=None,
-            exclude=True,
-            description="Optional dispatcher used to build the registry backend.",
-        ),
-    ] = None
-    _registry: p.Registry = u.PrivateAttr(default_factory=u.build_registry)
-
-    @override
-    def __new__(cls, *args: t.JsonValue, **kwargs: t.JsonValue) -> Self:
-        """Pre-bind the shared singleton before pydantic initialization.
-
-        The inherited service-base ``_server`` private-attribute default
-        resolves ``fetch_global_instance`` during construction; binding the
-        instance in ``__new__`` turns that re-entrant fetch into a return of
-        the instance under construction instead of unbounded recursion.
-
-        Raises:
-            TypeError: If the global singleton belongs to another class.
+        Returns:
+            The registry's registration result; failure for an invalid server
+            capability or a non-canonical dialect name.
 
         """
-        _ = args, kwargs
-        singleton = FlextLdifServer._global_instance
-        if singleton is None:
-            singleton = super().__new__(cls)
-            FlextLdifServer._global_instance = singleton
-            return singleton
-        if not isinstance(singleton, cls):
-            msg = (
-                f"Global FlextLdifServer singleton is {type(singleton).__name__}, "
-                f"not {cls.__name__}"
+        if not isinstance(server, p.Ldif.ServerServer):
+            return r[bool].fail_op("register LDIF server", "Invalid server capability")
+        try:
+            name = u.Ldif.normalize_server_type(server.server_type).value
+        except ValueError as exc:
+            return r[bool].fail_op("register LDIF server", exc)
+        return self.registry.register_plugin(c.Ldif.SERVERS, name, server)
+
+    def unregister_server(self, server_type: str) -> p.Result[bool]:
+        """Remove the actual registry entry so a replacement can be registered.
+
+        Returns:
+            The registry's removal result; failure when the name is not a
+            canonical dialect.
+
+        """
+        try:
+            name = u.Ldif.normalize_server_type(server_type).value
+        except ValueError as exc:
+            return r[bool].fail_op("unregister LDIF server", exc)
+        return self.registry.unregister_plugin(c.Ldif.SERVERS, name)
+
+    def server(self, server_type: str) -> p.Result[p.Ldif.ServerServer]:
+        """Resolve a dialect by canonical name while preserving lookup failures.
+
+        Returns:
+            The registered original dialect instance; failure when the name is
+            invalid or unregistered or the stored value lacks the server
+            capability.
+
+        """
+        try:
+            name = u.Ldif.normalize_server_type(server_type).value
+        except ValueError as exc:
+            return r[p.Ldif.ServerServer].fail_op("resolve LDIF server", exc)
+        result = self.registry.fetch_plugin(c.Ldif.SERVERS, name)
+        if result.failure:
+            return r[p.Ldif.ServerServer].from_failure(result)
+        server = result.value
+        if not isinstance(server, p.Ldif.ServerServer):
+            return r[p.Ldif.ServerServer].fail_op(
+                "resolve LDIF server", "Registered value is not a server capability"
             )
-            raise TypeError(msg)
-        return singleton
+        return r[p.Ldif.ServerServer].ok(server)
 
-    @override
-    def model_post_init(self, __context: t.JsonMapping | None, /) -> None:
-        """Initialize registry and trigger auto-discovery."""
-        super().model_post_init(__context)
-        self._registry = u.build_registry(dispatcher=self.dispatcher)
-        if self._global_instance is None:
-            FlextLdifServer._global_instance = self
-        if not self._discovery_initialized:
-            self._auto_discover()
-            FlextLdifServer._discovery_initialized = True
+    def resolve_base_server(self, server_type: str) -> p.Result[p.Ldif.ServerServer]:
+        """Return the registered original dialect instance."""
+        return self.server(server_type)
 
-    def acl(self, server_type: str) -> p.Ldif.AclServer | None:
-        """Return the ACL server registered for a server type.
-
-        Args:
-            server_type: Registered server type identifier.
+    def acl(self, server_type: str) -> p.Result[p.Ldif.AclServer]:
+        """Resolve the dialect's real ACL implementation.
 
         Returns:
-            The ACL server, or None when the type is unknown.
+            The dialect's ACL implementation; failure when the dialect cannot
+            be resolved.
 
         """
-        server_result = self.server(server_type)
-        if server_result.success:
-            return server_result.value.acl_server
-        return None
+        return self.server(server_type).map(lambda server: server.acl_server)
 
-    def entry(self, server_type: str) -> p.Ldif.EntryServer | None:
-        """Return the entry server registered for a server type.
-
-        Args:
-            server_type: Registered server type identifier.
+    def entry(self, server_type: str) -> p.Result[p.Ldif.EntryServer]:
+        """Resolve the dialect's real entry implementation.
 
         Returns:
-            The entry server, or None when the type is unknown.
+            The dialect's entry implementation; failure when the dialect
+            cannot be resolved.
 
         """
-        server_result = self.server(server_type)
-        if server_result.success:
-            return server_result.value.entry_server
-        return None
+        return self.server(server_type).map(lambda server: server.entry_server)
+
+    def schema_server(self, server_type: str) -> p.Result[p.Ldif.SchemaServer]:
+        """Resolve the dialect's real schema implementation.
+
+        Returns:
+            The dialect's schema implementation; failure when the dialect
+            cannot be resolved.
+
+        """
+        return self.server(server_type).map(lambda server: server.schema_server)
+
+    def resolve_schema_server(self, server_type: str) -> p.Result[p.Ldif.SchemaServer]:
+        """Resolve schema through the same authoritative dialect binding.
+
+        Returns:
+            The dialect's schema implementation; failure when the dialect
+            cannot be resolved.
+
+        """
+        return self.schema_server(server_type)
 
     def resolve_server_bundle(
         self,
@@ -118,278 +115,73 @@ class FlextLdifServer(s[m.Ldif.Response]):
     ) -> p.Result[
         t.MappingKV[str, p.Ldif.SchemaServer | p.Ldif.AclServer | p.Ldif.EntryServer]
     ]:
-        """Resolve the schema, ACL, and entry servers for a server type.
-
-        Args:
-            server_type: Registered server type identifier.
+        """Resolve a coherent component bundle from one fetched dialect.
 
         Returns:
-            Result carrying a mapping keyed by ``schema``, ``acl``, and
-            ``entry``, or a failure.
+            A mapping of ``schema``, ``acl`` and ``entry`` component servers;
+            failure when the dialect cannot be resolved.
 
         """
-        server_result = self.server(server_type)
-        if server_result.failure:
-            return r[
-                t.MappingKV[
-                    str,
-                    p.Ldif.SchemaServer | p.Ldif.AclServer | p.Ldif.EntryServer,
-                ]
-            ].fail_op(
-                "resolve_server_bundle",
-                ValueError(server_result.error or server_type),
-            )
-        base: p.Ldif.ServerServer = server_result.value
-        return r[
-            t.MappingKV[
-                str,
-                p.Ldif.SchemaServer | p.Ldif.AclServer | p.Ldif.EntryServer,
-            ]
-        ].ok({
-            "schema": base.schema_server,
-            "acl": base.acl_server,
-            "entry": base.entry_server,
-        })
-
-    def resolve_base_server(self, server_type: str) -> p.Result[p.Ldif.ServerServer]:
-        """Resolve the base server bundle for a server type.
-
-        Args:
-            server_type: Registered server type identifier.
-
-        Returns:
-            Result carrying the server bundle, or a failure.
-
-        """
-        return self.server(server_type)
+        return self.server(server_type).map(
+            lambda server: {
+                "schema": server.schema_server,
+                "acl": server.acl_server,
+                "entry": server.entry_server,
+            }
+        )
 
     def resolve_server_constants(
         self,
         server_type: str,
     ) -> p.Result[type[p.Ldif.ServerConstants]]:
-        """Resolve the constants class declared by a server bundle.
-
-        Args:
-            server_type: Registered server type identifier.
+        """Read declared constants from the original registered dialect.
 
         Returns:
-            Result carrying the server constants, or a failure.
+            The dialect's declared constants class; failure when the dialect
+            cannot be resolved.
 
         """
-        server_result = self.server(server_type)
-        if server_result.failure:
-            return r[type[p.Ldif.ServerConstants]].from_failure(server_result)
-        base = server_result.value
-        constants: type[p.Ldif.ServerConstants] | None = getattr(
-            type(base),
-            "Constants",
-            None,
-        )
-        if constants is None:
-            return r[type[p.Ldif.ServerConstants]].fail(
-                f"Server {server_type} missing Constants",
-            )
-        return r[type[p.Ldif.ServerConstants]].ok(constants)
+        return self.server(server_type).map(lambda server: server.Constants)
 
-    def summarize_registry(self) -> t.Ldif.MutableMetadataInputMapping:
-        """Summarize the registry: server count, bundle classes, priorities.
+    def list_registered_servers(self) -> p.Result[t.MutableSequenceOf[str]]:
+        """List the authoritative registry without a mirror or class cache.
 
         Returns:
-            Mapping of totals, per-type server class names, and priorities.
+            The sorted canonical dialect names; failure propagated from the
+            registry.
 
         """
-        server_types = self.list_registered_servers()
-        servers_by_server: t.JsonDict = {}
+        return self.registry.list_plugins(c.Ldif.SERVERS).map(sorted)
+
+    def summarize_registry(self) -> p.Result[t.Ldif.MutableMetadataInputMapping]:
+        """Report real stored dialects and fail if any stored value is invalid.
+
+        Returns:
+            A mapping with the dialect count, per-dialect component type names
+            and priorities; failure propagated from listing or resolving.
+
+        """
+        names = self.list_registered_servers()
+        if names.failure:
+            return r[t.Ldif.MutableMetadataInputMapping].from_failure(names)
+        components: t.JsonDict = {}
         priorities: t.JsonDict = {}
-        for st in server_types:
-            base = self.server(st).unwrap()
-            servers_by_server[st] = {
-                "schema": type(base.schema_server).__name__
-                if base.schema_server
-                else None,
-                "acl": type(base.acl_server).__name__ if base.acl_server else None,
-                "entry": type(base.entry_server).__name__
-                if base.entry_server
-                else None,
+        for name in names.value:
+            result = self.server(name)
+            if result.failure:
+                return r[t.Ldif.MutableMetadataInputMapping].from_failure(result)
+            server = result.value
+            components[name] = {
+                "schema": type(server.schema_server).__name__,
+                "acl": type(server.acl_server).__name__,
+                "entry": type(server.entry_server).__name__,
             }
-            priorities[st] = base.priority
-        stats: t.Ldif.MutableMetadataInputMapping = {
-            "total_servers": len(server_types),
-            "servers_by_server": servers_by_server,
+            priorities[name] = server.priority
+        return r[t.Ldif.MutableMetadataInputMapping].ok({
+            "total_servers": len(names.value),
+            "servers_by_server": components,
             "server_priorities": priorities,
-        }
-        return stats
-
-    def schema_server(self, server_type: str) -> p.Ldif.SchemaServer | None:
-        """Return the schema server registered for a server type.
-
-        Args:
-            server_type: Registered server type identifier.
-
-        Returns:
-            The schema server, or None when the type is unknown.
-
-        """
-        return self.resolve_schema_server(server_type)
-
-    def resolve_schema_server(self, server_type: str) -> p.Ldif.SchemaServer | None:
-        """Return the schema server registered for a server type.
-
-        Args:
-            server_type: Registered server type identifier.
-
-        Returns:
-            The schema server, or None when the type is unknown.
-
-        """
-        server_result = self.server(server_type)
-        if server_result.success:
-            return server_result.value.schema_server
-        return None
-
-    def list_registered_servers(self) -> t.MutableSequenceOf[str]:
-        """List all registered server type identifiers.
-
-        Returns:
-            Sorted server type identifiers.
-
-        """
-        return sorted(self._registered_servers)
-
-    def server(self, server_type: str) -> p.Result[p.Ldif.ServerServer]:
-        """Resolve the base server bundle for a normalized server type.
-
-        Args:
-            server_type: Server type identifier, normalized before lookup.
-
-        Returns:
-            Result carrying the server bundle, or a failure.
-
-        """
-        try:
-            normalized = u.Ldif.normalize_server_type(server_type)
-        except ValueError as e:
-            return r[p.Ldif.ServerServer].fail(str(e), exception=e)
-        plugin = self._registered_servers.get(normalized)
-        if plugin is None:
-            return r[p.Ldif.ServerServer].fail(normalized)
-        return r[p.Ldif.ServerServer].ok(plugin)
-
-    def _auto_discover(self) -> None:
-        """Discover and register concrete classes from the server modules."""
-        # mro-0ftd.3.5 (updated): the concrete server modules are declared as
-        # module-level imports so the import law sees them; discovery scans
-        # their members for concrete FlextLdifServersBase subclasses, keeping
-        # the package initializers side-effect-free.
-        for server_module in (
-            ad,
-            apache,
-            ds389,
-            novell,
-            oid,
-            openldap,
-            openldap1,
-            oud,
-            relaxed,
-            rfc,
-            tivoli,
-        ):
-            module_name: str = server_module.__name__
-            for name, obj in inspect.getmembers(server_module):
-                if not self._is_discoverable_server(
-                    name,
-                    obj,
-                    module_name,
-                    FlextLdifServersBase,
-                ):
-                    continue
-                try:
-                    self._register_discovered_server(obj)
-                except c.EXC_ATTR_TYPE as exc:
-                    self._module_logger.warning(
-                        "Server registration failed during discovery",
-                        error=exc,
-                        error_type=type(exc).__name__,
-                        server_class=obj.__name__,
-                        server_module=module_name,
-                    )
-
-    @staticmethod
-    def _is_public_module_member(name: str) -> bool:
-        """Whether a module member name is public (not underscore-private).
-
-        Returns:
-            True when the member name does not start with an underscore.
-
-        """
-        return not name.startswith("_")
-
-    @staticmethod
-    def _is_concrete_server_subclass(
-        candidate: type,
-        base_class: type,
-    ) -> bool:
-        """Whether the candidate is a concrete subclass defined in the module.
-
-        Returns:
-            True when the candidate is a concrete subclass of the base.
-
-        """
-        return (
-            inspect.isclass(candidate)
-            and candidate is not base_class
-            and issubclass(candidate, base_class)
-        )
-
-    @staticmethod
-    def _is_discoverable_server(
-        name: str,
-        candidate: type,
-        module_name: str,
-        base_class: type,
-    ) -> TypeGuard[type[FlextLdifServersBase]]:
-        """Return whether a module member is a concrete server class."""
-        return (
-            FlextLdifServer._is_public_module_member(name)
-            and FlextLdifServer._is_concrete_server_subclass(candidate, base_class)
-            and candidate.__module__ == module_name
-        )
-
-    def _register_discovered_server(
-        self,
-        server_class: type[FlextLdifServersBase],
-    ) -> None:
-        """Instantiate and register one discovered concrete server class."""
-        instance = server_class()
-        server_type = getattr(instance, "server_type", None)
-        if not isinstance(server_type, str):
-            return
-        if not all(
-            getattr(server_class, attr_name, None) is not None
-            for attr_name in ("Schema", "Acl", "Entry")
-        ):
-            return
-        if server_type:
-            self._registered_servers[server_type] = instance
-            self._registry.register_plugin(
-                c.Ldif.SERVERS,
-                server_type,
-                instance,
-                scope=c.RegistrationScope.CLASS,
-            )
-
-    @classmethod
-    def fetch_global_instance(cls) -> FlextLdifServer:
-        """Return the shared registry instance, creating it on first call.
-
-        ``__new__`` pre-binds the singleton, so plain instantiation is safe:
-        the inherited service-base ``_server`` default resolves through this
-        classmethod during construction and returns the instance under
-        construction instead of recursing.
-        """
-        if cls._global_instance is None:
-            cls._global_instance = cls()
-        return cls._global_instance
+        })
 
 
 __all__: list[str] = ["FlextLdifServer"]

@@ -7,16 +7,17 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
+from typing import ClassVar
 
 from flext_cli import u
 
-from flext_ldif import c, t
+from flext_ldif import c, p, t
 
 
 class FlextLdifEntryAnalysis:
     """Analyze differences between original and converted entries."""
 
-    logger = u.fetch_logger(__name__)
+    logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 
     @staticmethod
     def analyze_minimal_differences(

@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import ClassVar, override
 
 from flext_ldif import m, p, r, t, u
-from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
+from flext_ldif.servers._base import FlextLdifServersBaseEntry
 
 
 class FlextLdifServersRfcEntry(FlextLdifServersBaseEntry):

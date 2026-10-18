@@ -14,13 +14,12 @@ from __future__ import annotations
 
 from abc import ABC
 
-from flext_ldif import c, m, p, r, s, t, u
-from flext_ldif.services.conversion_schema import FlextLdifConversionSchemaMixin
+from flext_ldif import c, m, p, r, t, u
+from flext_ldif.services import FlextLdifConversionSchemaMixin
 
 
 class FlextLdifConversionSchemaEntryMixin(
     FlextLdifConversionSchemaMixin,
-    s[m.Ldif.Response],
     ABC,
 ):
     """Conversion of schema definitions embedded inside a schema entry."""

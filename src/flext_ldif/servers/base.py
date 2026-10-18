@@ -11,13 +11,13 @@ from typing import ClassVar, Self, cast, overload, override
 from flext_ldif import c, m, p, r, s, t, u
 from flext_ldif.servers._base import (
     FlextLdifServerMethodsMixin,
+    FlextLdifServersBaseEntry,
     FlextLdifServersBaseExecuteParamsMixin,
     FlextLdifServersBaseIoMixin,
     FlextLdifServersBaseMroMixin,
+    FlextLdifServersBaseSchema,
+    FlextLdifServersBaseSchemaAcl,
 )
-from flext_ldif.servers._base.acl import FlextLdifServersBaseSchemaAcl
-from flext_ldif.servers._base.entry import FlextLdifServersBaseEntry
-from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
 
 
 class FlextLdifServersBase(
@@ -35,13 +35,12 @@ class FlextLdifServersBase(
     server_type: ClassVar[str] = c.Ldif.UNKNOWN_VALUE
     priority: ClassVar[int] = 0
 
-    def __init__(self, **kwargs: t.Ldif.Scalar) -> None:
+    def __init__(
+        self,
+        **kwargs: t.JsonValue | p.Registry | p.Ldif.Settings,
+    ) -> None:
         """Initialize base server and its nested servers."""
-        init_kwargs: t.MutableScalarMapping = {}
-        for key, value in kwargs.items():
-            if isinstance(value, c.PRIMITIVES_TYPES):
-                init_kwargs[key] = value
-        super().__init__()
+        super().__init__(**kwargs)
         parent_ref: FlextLdifServersBase = self
         schema_server: FlextLdifServersBaseSchema = self.Schema().model_copy(
             update={"server_type": self.server_type},
@@ -125,30 +124,6 @@ class FlextLdifServersBase(
         return self.schema_server
 
     auto_execute: ClassVar[bool] = False
-
-    def __new__(cls, **kwargs: t.Ldif.Scalar) -> Self:
-        """Override __new__ to support auto-execute and processor instantiation."""
-        instance: Self = object.__new__(cls)
-        filtered_kwargs: t.MutableConfigValueMapping = {}
-        execute_kwargs: t.MutableMappingKV[
-            str,
-            str | int | bool | t.MutableSequenceOf[m.Ldif.Entry],
-        ] = {}
-        for k, v in kwargs.items():
-            value = v
-            if isinstance(value, (str, float, bool)):
-                filtered_kwargs[k] = value
-            if isinstance(value, (str, int, bool, list)):
-                execute_kwargs[k] = value
-        type(instance).__init__(instance, **filtered_kwargs)
-        if cls.auto_execute:
-            ldif_text, entries, operation = cls._extract_execute_params(execute_kwargs)
-            instance.execute(
-                ldif_text=ldif_text,
-                entries=entries,
-                operation=operation,
-            )
-        return instance
 
     @overload
     def __call__(

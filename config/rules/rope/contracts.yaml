@@ -29,6 +29,144 @@ rules:
     imports: {u: 'from flext_ldif import u', c: 'from flext_ldif import c'}
     bindings:
       u.Ldif.extract_from_definition: flext_ldif._utilities.oid.FlextLdifUtilitiesOID.extract_from_definition
+  - id: ldif-registry-owner-receiver
+    phase: contract-normalization
+    pattern: '${service}._server'
+    goal: '${service}'
+    arguments:
+      service: type=flext_ldif.services.server.FlextLdifServer
+  - id: ldif-api-explicit-instance
+    phase: contract-normalization
+    pattern: '${api}.fetch_global()'
+    goal: '${api}()'
+    arguments:
+      api: name=flext_ldif.api.FlextLdif
+  - id: ldif-server-composition-root
+    phase: contract-normalization
+    pattern: '${service}'
+    goal: 'FlextLdif'
+    arguments:
+      service: name=flext_ldif.services.server.FlextLdifServer
+    call_target: service
+    missing_keywords: [registry]
+    imports: {FlextLdif: 'from flext_ldif import FlextLdif'}
+    bindings: {FlextLdif: flext_ldif.api.FlextLdif}
+  - id: ldif-parser-composition-root
+    phase: contract-normalization
+    pattern: '${service}'
+    goal: 'FlextLdif'
+    arguments:
+      service: name=flext_ldif.services.parser.FlextLdifParser
+    call_target: service
+    missing_keywords: [registry]
+    imports: {FlextLdif: 'from flext_ldif import FlextLdif'}
+    bindings: {FlextLdif: flext_ldif.api.FlextLdif}
+  - id: ldif-writer-composition-root
+    phase: contract-normalization
+    pattern: '${service}'
+    goal: 'FlextLdif'
+    arguments:
+      service: name=flext_ldif.services.writer.FlextLdifWriter
+    call_target: service
+    missing_keywords: [registry]
+    imports: {FlextLdif: 'from flext_ldif import FlextLdif'}
+    bindings: {FlextLdif: flext_ldif.api.FlextLdif}
+  - id: ldif-acl-composition-root
+    phase: contract-normalization
+    pattern: '${service}'
+    goal: 'FlextLdif'
+    arguments:
+      service: name=flext_ldif.services.acl.FlextLdifAcl
+    call_target: service
+    missing_keywords: [registry]
+    imports: {FlextLdif: 'from flext_ldif import FlextLdif'}
+    bindings: {FlextLdif: flext_ldif.api.FlextLdif}
+  - id: ldif-detector-composition-root
+    phase: contract-normalization
+    pattern: '${service}'
+    goal: 'FlextLdif'
+    arguments:
+      service: name=flext_ldif.services.detector.FlextLdifDetector
+    call_target: service
+    missing_keywords: [registry]
+    imports: {FlextLdif: 'from flext_ldif import FlextLdif'}
+    bindings: {FlextLdif: flext_ldif.api.FlextLdif}
+  - id: ldif-conversion-composition-root
+    phase: contract-normalization
+    pattern: '${service}'
+    goal: 'FlextLdif'
+    arguments:
+      service: name=flext_ldif.services.conversion.FlextLdifConversion
+    call_target: service
+    missing_keywords: [registry]
+    imports: {FlextLdif: 'from flext_ldif import FlextLdif'}
+    bindings: {FlextLdif: flext_ldif.api.FlextLdif}
+  - id: ldif-categorization-composition-root
+    phase: contract-normalization
+    pattern: '${service}'
+    goal: 'FlextLdif'
+    arguments:
+      service: name=flext_ldif.services.categorization.FlextLdifCategorization
+    call_target: service
+    missing_keywords: [registry]
+    imports: {FlextLdif: 'from flext_ldif import FlextLdif'}
+    bindings: {FlextLdif: flext_ldif.api.FlextLdif}
+  - id: ldif-transformer-composition-root
+    phase: contract-normalization
+    pattern: '${service}'
+    goal: 'FlextLdif'
+    arguments:
+      service: name=flext_ldif.services.transformers.FlextLdifTransformer
+    call_target: service
+    missing_keywords: [registry]
+    imports: {FlextLdif: 'from flext_ldif import FlextLdif'}
+    bindings: {FlextLdif: flext_ldif.api.FlextLdif}
+  - id: ldif-processing-composition-root
+    phase: contract-normalization
+    pattern: '${service}'
+    goal: 'FlextLdif().processing_pipeline'
+    arguments:
+      service: name=flext_ldif.services.pipeline.FlextLdifProcessingPipeline
+    call_target: service
+    missing_keywords: [registry]
+    imports: {FlextLdif: 'from flext_ldif import FlextLdif'}
+    bindings: {FlextLdif: flext_ldif.api.FlextLdif}
+  - id: ldif-migration-composition-root
+    phase: contract-normalization
+    pattern: '${service}'
+    goal: 'FlextLdif().migration_pipeline'
+    arguments:
+      service: name=flext_ldif.services.migration.FlextLdifMigrationPipeline
+    call_target: service
+    missing_keywords: [registry]
+    imports: {FlextLdif: 'from flext_ldif import FlextLdif'}
+    bindings: {FlextLdif: flext_ldif.api.FlextLdif}
+  - id: ldif-oud-explicit-registry
+    phase: contract-normalization
+    pattern: '${service}()'
+    goal: '${service}(registry=FlextLdif().registry)'
+    arguments:
+      service: name=flext_ldif.servers.oud.FlextLdifServersOud
+    call_target: service
+    missing_keywords: [registry]
+    imports: {FlextLdif: 'from flext_ldif import FlextLdif'}
+    bindings: {FlextLdif: flext_ldif.api.FlextLdif}
+  - id: ldif-server-retire-singleton
+    phase: contract-normalization
+    pattern: '${service}.fetch_global_instance()'
+    goal: 'FlextLdif()'
+    arguments:
+      service: name=flext_ldif.services.server.FlextLdifServer
+    imports: {FlextLdif: 'from flext_ldif import FlextLdif'}
+    bindings: {FlextLdif: flext_ldif.api.FlextLdif}
+  - id: ldif-core-registry-port
+    phase: contract-normalization
+    pattern: '${factory}(registry=${service})'
+    goal: '${factory}(registry=${service}.registry)'
+    arguments:
+      service:
+        - type=flext_ldif.services.server.FlextLdifServer
+        - type=flext_ldif._protocols.domain.FlextLdifProtocolsDomain.ServerRegistry
   - id: ldif-helper-acl
     pattern: '${splitter}(${line})'
     goal: 'u.Ldif.split_acl_line(${line})'

@@ -8,16 +8,16 @@ from __future__ import annotations
 
 from flext_ldif.servers import FlextLdifServersRfc
 from flext_ldif.servers._oid import (
+    FlextLdifServersOidAcl,
     FlextLdifServersOidAclAssemble,
     FlextLdifServersOidAclConvert,
     FlextLdifServersOidAclPipeline,
     FlextLdifServersOidAclRender,
     FlextLdifServersOidAclToOud,
+    FlextLdifServersOidConstants,
+    FlextLdifServersOidEntry,
+    FlextLdifServersOidSchema,
 )
-from flext_ldif.servers._oid.acl import FlextLdifServersOidAcl
-from flext_ldif.servers._oid.entry import FlextLdifServersOidEntry
-from flext_ldif.servers._oid.schema import FlextLdifServersOidSchema
-from flext_ldif.servers._oid.server_constants import FlextLdifServersOidConstants
 
 
 class FlextLdifServersOid(FlextLdifServersRfc):
