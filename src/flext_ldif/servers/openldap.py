@@ -605,7 +605,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             acl_format_rules = validation_rules["acl_format_rules"]
             acl_format_payload: t.JsonDict | None = (
                 {
-                    key: u.normalize_to_metadata(value)
+                    key: u.normalize_to_json_value(value)
                     for key, value in acl_format_rules.items()
                 }
                 if isinstance(acl_format_rules, dict)

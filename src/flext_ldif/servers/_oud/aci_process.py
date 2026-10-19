@@ -64,7 +64,7 @@ class FlextLdifServersOudAciProcessMixin:
             else dict(extensions_value)
         )
         return r[t.Ldif.MutableMetadataInputMapping].ok({
-            raw_key: u.normalize_to_metadata(raw_value)
+            raw_key: u.normalize_to_json_value(raw_value)
             for raw_key, raw_value in acl_ext_raw.items()
         })
 

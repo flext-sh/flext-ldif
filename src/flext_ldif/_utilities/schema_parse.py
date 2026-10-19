@@ -32,7 +32,7 @@ class FlextLdifUtilitiesSchemaParse:
     ) -> t.Ldif.MutableMetadataMapping:
         converted: t.Ldif.MutableMetadataMapping = {}
         for key, raw_value in extensions_raw.items():
-            converted[key] = u.normalize_to_metadata(raw_value)
+            converted[key] = u.normalize_to_json_value(raw_value)
         return converted
 
     @staticmethod

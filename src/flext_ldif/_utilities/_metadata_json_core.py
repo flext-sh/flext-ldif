@@ -55,15 +55,15 @@ class FlextLdifMetadataJsonCore:
         if isinstance(value, Mapping) and isinstance(item_data, Mapping):
             merged_value = dict(
                 t.Cli.JSON_MAPPING_ADAPTER.validate_python({
-                    inner_key: u.normalize_to_metadata(inner_value)
+                    inner_key: u.normalize_to_json_value(inner_value)
                     for inner_key, inner_value in value.items()
                 }),
             )
             for write_option_key, inner_value in item_data.items():
-                merged_value[write_option_key] = u.normalize_to_metadata(inner_value)
+                merged_value[write_option_key] = u.normalize_to_json_value(inner_value)
             metadata[metadata_key] = merged_value
             return
-        metadata[metadata_key] = u.normalize_to_metadata(item_data)
+        metadata[metadata_key] = u.normalize_to_json_value(item_data)
 
     @staticmethod
     def _get_metadata_dict(
@@ -80,7 +80,7 @@ class FlextLdifMetadataJsonCore:
             metadata_obj = FlextLdifModels.Metadata(attributes={})
         if isinstance(metadata_obj, FlextLdifModels.Metadata):
             return {
-                key: u.normalize_to_metadata(value)
+                key: u.normalize_to_json_value(value)
                 for key, value in metadata_obj.attributes.items()
             }
         return {}
@@ -96,7 +96,7 @@ class FlextLdifMetadataJsonCore:
 
         normalized: t.MutableSequenceOf[t.JsonValue] = []
         for item in values:
-            normalized.append(u.normalize_to_metadata(item))
+            normalized.append(u.normalize_to_json_value(item))
         return normalized
 
     @staticmethod
