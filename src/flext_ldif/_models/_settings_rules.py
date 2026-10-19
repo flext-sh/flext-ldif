@@ -12,7 +12,7 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import Annotated, Self
 
-from flext_core import FlextUtilities as u, m, t
+from flext_core import m, t, u
 
 from flext_ldif._constants.base import FlextLdifConstantsBase
 from flext_ldif._typings.base import FlextLdifTypesBase
@@ -30,35 +30,35 @@ class FlextLdifModelsSettingsRules:
 
         user_dn_patterns: Annotated[
             FlextLdifTypesBase.NormalizedStrFrozenset,
-            u.Field(description="DN patterns for user entries (e.g., '*,ou=users,*')"),
+            m.Field(description="DN patterns for user entries (e.g., '*,ou=users,*')"),
         ] = FlextLdifConstantsBase.EMPTY_STR_FROZENSET
         group_dn_patterns: Annotated[
             FlextLdifTypesBase.NormalizedStrFrozenset,
-            u.Field(description="DN patterns for group entries"),
+            m.Field(description="DN patterns for group entries"),
         ] = FlextLdifConstantsBase.EMPTY_STR_FROZENSET
         hierarchy_dn_patterns: Annotated[
             FlextLdifTypesBase.NormalizedStrFrozenset,
-            u.Field(description="DN patterns for organizational hierarchy"),
+            m.Field(description="DN patterns for organizational hierarchy"),
         ] = FlextLdifConstantsBase.EMPTY_STR_FROZENSET
         schema_dn_patterns: Annotated[
             FlextLdifTypesBase.NormalizedStrFrozenset,
-            u.Field(description="DN patterns for schema entries"),
+            m.Field(description="DN patterns for schema entries"),
         ] = FlextLdifConstantsBase.EMPTY_STR_FROZENSET
         user_objectclasses: Annotated[
             FlextLdifTypesBase.NormalizedStrFrozenset,
-            u.Field(description="ObjectClasses identifying user entries"),
+            m.Field(description="ObjectClasses identifying user entries"),
         ] = FlextLdifConstantsBase.EMPTY_STR_FROZENSET
         group_objectclasses: Annotated[
             FlextLdifTypesBase.NormalizedStrFrozenset,
-            u.Field(description="ObjectClasses identifying group entries"),
+            m.Field(description="ObjectClasses identifying group entries"),
         ] = FlextLdifConstantsBase.EMPTY_STR_FROZENSET
         hierarchy_objectclasses: Annotated[
             FlextLdifTypesBase.NormalizedStrFrozenset,
-            u.Field(description="ObjectClasses identifying organizational units"),
+            m.Field(description="ObjectClasses identifying organizational units"),
         ] = FlextLdifConstantsBase.EMPTY_STR_FROZENSET
         acl_attributes: Annotated[
             FlextLdifTypesBase.NormalizedStrFrozenset,
-            u.Field(description="Attribute names containing ACL information"),
+            m.Field(description="Attribute names containing ACL information"),
         ] = FlextLdifConstantsBase.EMPTY_STR_FROZENSET
 
         @u.computed_field
@@ -114,39 +114,39 @@ class FlextLdifModelsSettingsRules:
 
         blocked_objectclasses: Annotated[
             FlextLdifTypesBase.NormalizedStrFrozenset,
-            u.Field(description="ObjectClasses that should be blocked/rejected"),
+            m.Field(description="ObjectClasses that should be blocked/rejected"),
         ] = FlextLdifConstantsBase.EMPTY_STR_FROZENSET
         allowed_objectclasses: Annotated[
             FlextLdifTypesBase.NormalizedStrFrozenset,
-            u.Field(description="ObjectClasses that are explicitly allowed"),
+            m.Field(description="ObjectClasses that are explicitly allowed"),
         ] = FlextLdifConstantsBase.EMPTY_STR_FROZENSET
         required_attributes: Annotated[
             FlextLdifTypesBase.NormalizedStrFrozenset,
-            u.Field(description="Attributes that must be present"),
+            m.Field(description="Attributes that must be present"),
         ] = FlextLdifConstantsBase.EMPTY_STR_FROZENSET
         blocked_attributes: Annotated[
             FlextLdifTypesBase.NormalizedStrFrozenset,
-            u.Field(description="Attributes that should be blocked"),
+            m.Field(description="Attributes that should be blocked"),
         ] = FlextLdifConstantsBase.EMPTY_STR_FROZENSET
         allowed_attribute_oids: Annotated[
             FlextLdifTypesBase.NormalizedStrFrozenset,
-            u.Field(description="OID patterns for allowed schema attributes"),
+            m.Field(description="OID patterns for allowed schema attributes"),
         ] = FlextLdifConstantsBase.EMPTY_STR_FROZENSET
         allowed_objectclass_oids: Annotated[
             FlextLdifTypesBase.NormalizedStrFrozenset,
-            u.Field(description="OID patterns for allowed objectClasses"),
+            m.Field(description="OID patterns for allowed objectClasses"),
         ] = FlextLdifConstantsBase.EMPTY_STR_FROZENSET
         allowed_matchingrule_oids: Annotated[
             FlextLdifTypesBase.NormalizedStrFrozenset,
-            u.Field(description="OID patterns for allowed matchingRules"),
+            m.Field(description="OID patterns for allowed matchingRules"),
         ] = FlextLdifConstantsBase.EMPTY_STR_FROZENSET
         allowed_matchingruleuse_oids: Annotated[
             FlextLdifTypesBase.NormalizedStrFrozenset,
-            u.Field(description="OID patterns for allowed matchingRuleUse definitions"),
+            m.Field(description="OID patterns for allowed matchingRuleUse definitions"),
         ] = FlextLdifConstantsBase.EMPTY_STR_FROZENSET
         allowed_ldapsyntax_oids: Annotated[
             FlextLdifTypesBase.NormalizedStrFrozenset,
-            u.Field(description="OID patterns for allowed ldapSyntaxes definitions"),
+            m.Field(description="OID patterns for allowed ldapSyntaxes definitions"),
         ] = FlextLdifConstantsBase.EMPTY_STR_FROZENSET
 
         @u.computed_field

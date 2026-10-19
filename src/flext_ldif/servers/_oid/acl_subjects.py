@@ -68,7 +68,7 @@ class FlextLdifServersOidAclSubjectMixin(FlextLdifServersRfcAcl):
 
         """
         try:
-            source_subject_type: str = t.str_adapter().validate_python(value)
+            source_subject_type: str = u.str_adapter().validate_python(value)
         except c.ValidationError as exc:
             return r[str].fail(str(exc), exception=exc)
         return r[str].ok(source_subject_type)

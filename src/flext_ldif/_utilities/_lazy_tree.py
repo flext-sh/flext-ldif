@@ -37,7 +37,7 @@ class FlextLdifUtilitiesLazyTree:
     """Own the lazy ``Ldif`` mixin tree of the LDIF utilities facade."""
 
     # NOTE (import discipline): models.py binds the ``u`` namespace while
-    # flext_ldif.models is still mid-init (``u.Field`` runs at class-definition
+    # flext_ldif.models is still mid-init (``m.Field`` runs at class-definition
     # time). Building the full ``Ldif`` mixin tree here would re-enter the partial
     # models module — the ``_utilities`` family evaluates ``FlextLdifModels`` at
     # class level (dispatch.py type adapters) and imports ``m`` from the package

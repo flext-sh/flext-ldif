@@ -159,17 +159,17 @@ class TestsFlextLdifApiServerRegistry:
     @staticmethod
     def test_required_registry_port_is_validated_and_not_serialized() -> None:
         """Services cannot construct infrastructure or accept a loose payload."""
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="registry"):
             FlextLdifServer.model_validate({})
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="registry"):
             m.Ldif.RegistryPortOptions.model_validate({"registry": m.Ldif.Statistics()})
         registry = u.build_registry()
         ports = m.Ldif.RegistryPortOptions(registry=registry)
         tm.that(ports.registry is registry)
         tm.that("registry" not in ports.model_dump())
         tm.that("registry" not in ports.model_json_schema().get("properties", {}))
-        with pytest.raises(ValueError):
-            ports.__setattr__("registry", m.Ldif.Statistics())
+        with pytest.raises(ValueError, match="registry"):
+            ports.registry = m.Ldif.Statistics()
         tm.that(ports.registry is registry)
 
     @staticmethod
@@ -190,7 +190,10 @@ class TestsFlextLdifApiServerRegistry:
         """Registry composition retains the real RFC parse/write implementation."""
         api = FlextLdif()
         route = c.Ldif.ServerTypes.RFC.value
-        source = "dn: cn=person,dc=example,dc=com\nobjectClass: person\ncn: person\nsn: example\n"
+        source = (
+            "dn: cn=person,dc=example,dc=com\n"
+            "objectClass: person\ncn: person\nsn: example\n"
+        )
         parsed = api.parse_string(source, server_type=route).unwrap()
         written = api.write_to_string(
             u.Ldif.as_entries(parsed.entries),
@@ -258,6 +261,68 @@ class TestsFlextLdifApiServerRegistry:
         parsed = api.parse_ldif(PurePath(output), server_type=route).unwrap()
         tm.that(len(parsed.entries), eq=len(request.entries))
         tm.that(parsed.entries[0].dn, eq=entry.dn)
+
+    @staticmethod
+    @pytest.mark.parametrize("comment_acl", [False, True])
+    def test_write_response_preserves_oid_entries_and_phase_options(
+        tmp_path: Path,
+        *,
+        comment_acl: bool,
+    ) -> None:
+        """OID metadata and explicitly selected ACL handling survive file writes."""
+        api = FlextLdif()
+        acl = "access to entry by * (browse)"
+        parsed = api.parse_string(
+            "dn: cn=synthetic\nobjectClass: person\n"
+            f"cn: synthetic\nsn: Sample\norclaci: {acl}\n\n",
+            server_type=c.Ldif.ServerTypes.OID,
+        ).unwrap()
+        tm.that(len(parsed.entries), eq=1)
+        tm.that(parsed.entries[0].attributes_dict["aci"], eq=[acl])
+        output = tmp_path / "converted.ldif"
+        written = api.write_ldif_file(
+            parsed,
+            output,
+            server_type=c.Ldif.ServerTypes.OUD,
+            format_options=m.Ldif.WriteFormatOptions(
+                entry_category=c.Ldif.Categories.USERS,
+                comment_acl_in_non_acl_phases=comment_acl,
+                acl_attribute_names=frozenset({"aci", "orclaci"}),
+            ),
+        ).unwrap()
+        content = output.read_text()
+        tm.that(written.output_path, eq=str(output))
+        tm.that(written.content, eq=content)
+        tm.that(written.statistics.processed_entries, eq=len(parsed.entries))
+        tm.that(acl in content)
+        tm.that(
+            any(line.startswith("aci:") for line in content.splitlines()),
+            eq=not comment_acl,
+        )
+        reparsed = api.parse_ldif(output, server_type=c.Ldif.ServerTypes.OUD).unwrap()
+        tm.that(len(reparsed.entries), eq=len(parsed.entries))
+        tm.that(reparsed.entries[0].dn_str, eq=parsed.entries[0].dn_str)
+        tm.that(reparsed.entries[0].attributes_dict["sn"], eq=["Sample"])
+
+    @staticmethod
+    def test_failed_write_preserves_failure_and_creates_no_file(
+        tmp_path: Path,
+    ) -> None:
+        """An invalid dialect fails both public writers before persisting output."""
+        api = FlextLdif()
+        parsed = api.parse_string(
+            "dn: cn=synthetic\nobjectClass: person\ncn: synthetic\nsn: Sample\n\n",
+            server_type=c.Ldif.ServerTypes.RFC,
+        ).unwrap()
+        tm.that(len(parsed.entries), eq=1)
+        output = tmp_path / "invalid.ldif"
+        tm.fail(api.write(parsed, server_type=c.Tests.SERVER_INVALID_SERVER_TYPE))
+        tm.fail(
+            api.write_ldif_file(
+                parsed, output, server_type=c.Tests.SERVER_INVALID_SERVER_TYPE
+            )
+        )
+        tm.that(output.exists(), eq=False)
 
     @staticmethod
     def test_oud_schema_write_uses_explicit_registry_not_other_apis() -> None:

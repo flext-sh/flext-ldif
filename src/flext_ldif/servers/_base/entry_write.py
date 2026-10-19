@@ -72,7 +72,7 @@ class FlextLdifServersEntryWriteContext(FlextLdifServersEntryWriteBodyEmitter):
         original_strings = entry.metadata.original_strings
         original_ldif_raw = original_strings.get("entry_original_ldif", "")
         try:
-            restored_output: str = t.str_adapter().validate_python(original_ldif_raw)
+            restored_output: str = u.str_adapter().validate_python(original_ldif_raw)
         except c.ValidationError as exc:
             return r[str].fail_op("restore original LDIF text", exc)
         if not restored_output:

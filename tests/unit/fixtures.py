@@ -16,7 +16,6 @@ from flext_ldif.services import (
     FlextLdifMigrationPipeline,
     FlextLdifParser,
     FlextLdifServer,
-    FlextLdifWriter,
 )
 from tests import c, u
 
@@ -73,14 +72,14 @@ def parser() -> FlextLdifParser:
 
 
 @pytest.fixture
-def writer() -> FlextLdifWriter:
-    """Provide a writer service instance.
+def writer(api: p.Ldif.LdifClient) -> p.Ldif.LdifClient:
+    """Provide writing operations from the public, registry-bound facade.
 
     Returns:
-        A fresh ``FlextLdifWriter``.
+        The public client composed with its registered server dialects.
 
     """
-    return FlextLdifWriter()
+    return api
 
 
 @pytest.fixture
@@ -384,6 +383,7 @@ def migration_pipeline_factory(
 
     Args:
         migration_dirs: Canonical input and output directory pair.
+        server: Server provider whose registry is injected into each pipeline.
 
     Returns:
         Factory callable accepting keyword overrides for the pipeline.

@@ -167,7 +167,7 @@ class FlextLdifServersRfcSchemaParseMixin(
             server_type=server_type,
             # Why: mro-4p0t — coerce schema extension values to JsonMapping.
             extensions=(
-                t.json_dict_adapter().validate_python(metadata_extensions)
+                u.json_dict_adapter().validate_python(metadata_extensions)
                 if metadata_extensions
                 else {}
             ),

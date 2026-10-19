@@ -218,7 +218,7 @@ class FlextLdifServersOidEntryParseMixin(
             )
         if attribute_conflicts:
             attribute_conflicts_json: t.JsonValue = (
-                t.Cli.JSON_VALUE_ADAPTER.validate_python([
+                u.Cli.JSON_VALUE_ADAPTER.validate_python([
                     {
                         key: (value if isinstance(value, str) else list(value))
                         for key, value in conflict.items()
@@ -279,12 +279,12 @@ class FlextLdifServersOidEntryParseMixin(
                 converted_attrs,
             )
             converted_attrs_json: t.JsonValueList = list(
-                t.Cli.JSON_LIST_ADAPTER.validate_python(converted_attrs_list),
+                u.Cli.JSON_LIST_ADAPTER.validate_python(converted_attrs_list),
             )
             if boolean_conversions:
                 boolean_conversions_dict: MutableMapping[str, t.JsonValue] = {
                     attr_name: {
-                        conversion_key: t.Cli.JSON_VALUE_ADAPTER.validate_python(
+                        conversion_key: u.Cli.JSON_VALUE_ADAPTER.validate_python(
                             conversion_value,
                         )
                         for conversion_key, conversion_value in conversion_data.items()
@@ -292,7 +292,7 @@ class FlextLdifServersOidEntryParseMixin(
                     for attr_name, conversion_data in boolean_conversions.items()
                 }
                 boolean_conversions_json: t.JsonMapping = (
-                    t.Cli.JSON_MAPPING_ADAPTER.validate_python({
+                    u.Cli.JSON_MAPPING_ADAPTER.validate_python({
                         attr_name: u.normalize_to_json_value(conversion_data)
                         for attr_name, conversion_data in (
                             boolean_conversions_dict.items()

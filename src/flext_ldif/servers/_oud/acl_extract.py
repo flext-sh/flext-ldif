@@ -159,18 +159,18 @@ class FlextLdifServersOudAclExtractMixin:
         hidden_attribute_names.update(attr.lower() for attr in hidden_attrs)
         if hidden_attribute_names:
             current_extensions[c.Ldif.HIDDEN_ATTRIBUTES] = (
-                t.Cli.JSON_VALUE_ADAPTER.validate_python(sorted(hidden_attribute_names))
+                u.Cli.JSON_VALUE_ADAPTER.validate_python(sorted(hidden_attribute_names))
             )
         if commented_acl_values:
             converted_attrs_list: t.MutableSequenceOf[str] = list(
                 commented_acl_values.keys(),
             )
             current_extensions[c.Ldif.CONVERTED_ATTRIBUTES] = (
-                t.Cli.JSON_VALUE_ADAPTER.validate_python(converted_attrs_list)
+                u.Cli.JSON_VALUE_ADAPTER.validate_python(converted_attrs_list)
             )
             current_extensions[c.Ldif.COMMENTED_ATTRIBUTE_VALUES] = (
                 u.Ldif.dump_json_payload({
-                    comment_key: t.Cli.JSON_VALUE_ADAPTER.validate_python(comment_value)
+                    comment_key: u.Cli.JSON_VALUE_ADAPTER.validate_python(comment_value)
                     for comment_key, comment_value in commented_acl_values.items()
                 })
             )
@@ -188,7 +188,7 @@ class FlextLdifServersOudAclExtractMixin:
                 commented_attrs.append(acl_attr)
         if commented_attrs:
             current_extensions[c.Ldif.ACL_COMMENTED_ATTRIBUTES] = (
-                t.Cli.JSON_VALUE_ADAPTER.validate_python(commented_attrs)
+                u.Cli.JSON_VALUE_ADAPTER.validate_python(commented_attrs)
             )
         return m.Ldif.ServerMetadata.model_validate({
             **dict(metadata_typed),

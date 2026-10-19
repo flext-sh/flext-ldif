@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Annotated, Literal
 
-from flext_core import FlextUtilities as u, m
+from flext_core import m
 
 from flext_ldif import t
 from flext_ldif._models._settings_processing import FlextLdifModelsSettingsProcessing
@@ -22,7 +22,7 @@ class FlextLdifModelsProcessing:
         """Owned input batch and optional transformation configuration."""
 
         transform_config: FlextLdifModelsSettingsProcessing.TransformConfig | None = (
-            u.Field(
+            m.Field(
                 default=None,
                 exclude=True,
                 description=(
@@ -31,7 +31,7 @@ class FlextLdifModelsProcessing:
             )
         )
         entries_input: t.SequenceOf[FlextLdifModelsDomainsEntries.Entry] | None = (
-            u.Field(
+            m.Field(
                 default=None,
                 exclude=True,
                 description="Entry batch supplied to the processing pipeline",
@@ -43,11 +43,11 @@ class FlextLdifModelsProcessing:
 
         dn: Annotated[
             str,
-            u.Field(..., description="Distinguished name of the processed entry"),
+            m.Field(..., description="Distinguished name of the processed entry"),
         ]
         attributes: Annotated[
             t.MutableStrSequenceMapping,
-            u.Field(..., description="LDAP attributes as name -> list of values"),
+            m.Field(..., description="LDAP attributes as name -> list of values"),
         ]
 
     class ProcessEntriesOptions(m.StrictModel):
@@ -55,19 +55,19 @@ class FlextLdifModelsProcessing:
 
         processor_name: Annotated[
             Literal["transform", "validate"],
-            u.Field(description="Canonical processor name for entry handling."),
+            m.Field(description="Canonical processor name for entry handling."),
         ]
         parallel: Annotated[
             bool,
-            u.Field(description="Enable thread-pool execution mode."),
+            m.Field(description="Enable thread-pool execution mode."),
         ] = False
         batch_size: Annotated[
             int,
-            u.Field(ge=1, description="Batch size for sequential processing."),
+            m.Field(ge=1, description="Batch size for sequential processing."),
         ] = 100
         max_workers: Annotated[
             int,
-            u.Field(ge=1, description="Maximum thread workers for parallel mode."),
+            m.Field(ge=1, description="Maximum thread workers for parallel mode."),
         ] = 4
 
 

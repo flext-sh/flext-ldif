@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
 from flext_cli import p, t
 
@@ -19,9 +19,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from flext_ldif import m
-
-# NOTE (multi-agent, mro-0ftd.3.7.2): client declarations are the highest
-# private protocol facet and may depend one-way on both base and domain.
+    from flext_ldif._protocols.values import FlextLdifProtocolsValues
 
 
 @runtime_checkable
@@ -49,6 +47,62 @@ class FlextLdifProtocolsClient(Protocol):
         @property
         def ldif(self) -> FlextLdifProtocolsClient.LdifSettings:
             """Namespaced LDIF settings branch."""
+            ...
+
+    @runtime_checkable
+    class ProcessingPipeline(
+        p.Service[t.SequenceOf[FlextLdifProtocolsBase.Entry]], Protocol
+    ):
+        """Runtime-bound entry transformations and their declared configuration."""
+
+        registry: t.Port[p.Registry]
+        runtime_settings: FlextLdifProtocolsClient.Settings | None
+        transform_config: FlextLdifProtocolsValues.TransformConfig | None
+        entries_input: t.SequenceOf[FlextLdifProtocolsBase.Entry] | None
+
+        @classmethod
+        def for_servers(
+            cls,
+            *,
+            registry: p.Registry,
+            runtime_settings: FlextLdifProtocolsClient.Settings | None = None,
+            source_server: str | c.Ldif.ServerTypes,
+            target_server: str | c.Ldif.ServerTypes,
+            base_dn: str = "",
+        ) -> Self:
+            """Construct a pipeline using the supplied registry and dialects."""
+            ...
+
+    @runtime_checkable
+    class MigrationPipeline(
+        p.Service[FlextLdifProtocolsBase.MigrationPipelineResult], Protocol
+    ):
+        """Runtime-bound migration operations and their declared configuration."""
+
+        registry: t.Port[p.Registry]
+        runtime_settings: FlextLdifProtocolsClient.Settings | None
+        input_dir: Path | None
+        output_dir: Path | None
+        output_filename: str | None
+        mode: str | None
+        source_server: str | c.Ldif.ServerTypes | None
+        target_server: str | c.Ldif.ServerTypes | None
+        source_server_type: str | c.Ldif.ServerTypes | None
+        target_server_type: str | c.Ldif.ServerTypes | None
+        base_dn: str | None
+
+        def migrate_entries(
+            self, entries: t.SequenceOf[FlextLdifProtocolsBase.Entry]
+        ) -> p.Result[t.SequenceOf[FlextLdifProtocolsBase.Entry]]:
+            """Migrate the supplied entries through the bound registry."""
+            ...
+
+        def migrate_file(
+            self,
+            input_file: PathLike[str],
+            output_file: PathLike[str] | None = None,
+        ) -> p.Result[FlextLdifProtocolsBase.MigrationPipelineResult]:
+            """Read, migrate and write one file through the public service."""
             ...
 
     @runtime_checkable
@@ -85,7 +139,7 @@ class FlextLdifProtocolsClient(Protocol):
             value: str | PathLike[str],
             *,
             server_type: str | None = None,
-        ) -> p.Result[FlextLdifProtocolsBase.ParseResponse]:
+        ) -> p.Result[m.Ldif.ParseResponse]:
             """Parse LDIF content from text or a file path."""
             ...
 
@@ -94,7 +148,7 @@ class FlextLdifProtocolsClient(Protocol):
             path: PathLike[str],
             server_type: str | None = None,
             encoding: str = "utf-8",
-        ) -> p.Result[FlextLdifProtocolsBase.ParseResponse]:
+        ) -> p.Result[m.Ldif.ParseResponse]:
             """Parse LDIF content from a file path."""
             ...
 
@@ -102,39 +156,36 @@ class FlextLdifProtocolsClient(Protocol):
             self,
             content: str,
             server_type: str | None = None,
-        ) -> p.Result[FlextLdifProtocolsBase.ParseResponse]:
+        ) -> p.Result[m.Ldif.ParseResponse]:
             """Parse LDIF content from a raw string."""
             ...
 
         def write(
             self,
-            entries: Sequence[FlextLdifProtocolsBase.Entry]
-            | FlextLdifProtocolsBase.ParseResponse,
+            entries: Sequence[m.Ldif.Entry] | m.Ldif.ParseResponse,
             *,
             server_type: str | None = None,
-            format_options: FlextLdifProtocolsBase.WriteFormatOptions | None = None,
-        ) -> p.Result[FlextLdifProtocolsBase.WriteResponse]:
+            format_options: m.Ldif.WriteFormatOptions | None = None,
+        ) -> p.Result[m.Ldif.WriteResponse]:
             """Write canonical LDIF entries to a response."""
             ...
 
         def write_ldif_file(
             self,
-            entries: Sequence[FlextLdifProtocolsBase.Entry]
-            | FlextLdifProtocolsBase.ParseResponse,
+            entries: Sequence[m.Ldif.Entry] | m.Ldif.ParseResponse,
             path: PathLike[str],
             *,
             server_type: str | None = None,
-            format_options: FlextLdifProtocolsBase.WriteFormatOptions | None = None,
-        ) -> p.Result[FlextLdifProtocolsBase.WriteResponse]:
+            format_options: m.Ldif.WriteFormatOptions | None = None,
+        ) -> p.Result[m.Ldif.WriteResponse]:
             """Write canonical LDIF entries to a file."""
             ...
 
         def write_to_string(
             self,
-            entries: Sequence[FlextLdifProtocolsBase.Entry]
-            | FlextLdifProtocolsBase.ParseResponse,
+            entries: Sequence[m.Ldif.Entry] | m.Ldif.ParseResponse,
             server_type: str | None = None,
-            format_options: FlextLdifProtocolsBase.WriteFormatOptions | None = None,
+            format_options: m.Ldif.WriteFormatOptions | None = None,
         ) -> p.Result[str]:
             """Write canonical LDIF entries to text."""
             ...
@@ -173,16 +224,16 @@ class FlextLdifProtocolsClient(Protocol):
             acls: Sequence[FlextLdifProtocolsBase.Acl],
             required_permissions: FlextLdifProtocolsBase.AclPermissions
             | t.MutableBoolMapping,
-        ) -> p.Result[m.Ldif.AclEvaluationResult]:
+        ) -> p.Result[FlextLdifProtocolsBase.AclEvaluationResult]:
             """Evaluate ACLs against the required permissions."""
             ...
 
         def process_entries(
             self,
             entries: Sequence[FlextLdifProtocolsBase.Entry],
-            options: m.Ldif.ProcessEntriesOptions | None = None,
+            options: FlextLdifProtocolsBase.ProcessEntriesOptions | None = None,
             **kwargs: t.JsonValue,
-        ) -> p.Result[Sequence[m.Ldif.ProcessingResult]]:
+        ) -> p.Result[Sequence[FlextLdifProtocolsBase.ProcessingResult]]:
             """Process entries through the public facade."""
             ...
 
@@ -190,7 +241,7 @@ class FlextLdifProtocolsClient(Protocol):
             self,
             entries: Sequence[FlextLdifProtocolsBase.Entry]
             | FlextLdifProtocolsBase.ParseResponse,
-        ) -> p.Result[m.Ldif.EntriesStatistics]:
+        ) -> p.Result[FlextLdifProtocolsBase.EntriesStatistics]:
             """Calculate aggregate entry statistics."""
             ...
 

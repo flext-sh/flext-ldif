@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_ldif import FlextLdifShared, c, m, p, r, t, u
+from flext_ldif import FlextLdifShared, c, m, p, r, t
 from flext_ldif.services import FlextLdifConversion
 
 
@@ -17,7 +17,7 @@ class FlextLdifTransformer(FlextLdifConversion):
 
     source_server: Annotated[
         str | c.Ldif.ServerTypes | None,
-        u.Field(
+        m.Field(
             default=None,
             exclude=True,
             description="Source server type used for the conversion.",
@@ -25,7 +25,7 @@ class FlextLdifTransformer(FlextLdifConversion):
     ] = None
     target_server: Annotated[
         str | c.Ldif.ServerTypes | None,
-        u.Field(
+        m.Field(
             default=None,
             exclude=True,
             description="Target server type used for the conversion.",

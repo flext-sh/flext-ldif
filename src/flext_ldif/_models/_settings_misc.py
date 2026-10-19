@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_core import FlextUtilities as u, m, t
+from flext_core import m, t
 
 
 class FlextLdifModelsSettingsMisc:
@@ -20,33 +20,33 @@ class FlextLdifModelsSettingsMisc:
     class LogContextExtras(m.Value):
         """Extra context fields for structured event logging."""
 
-        user_id: Annotated[str | None, u.Field(description="User identifier")] = None
-        session_id: Annotated[str | None, u.Field(description="Session identifier")] = (
+        user_id: Annotated[str | None, m.Field(description="User identifier")] = None
+        session_id: Annotated[str | None, m.Field(description="Session identifier")] = (
             None
         )
-        request_id: Annotated[str | None, u.Field(description="Request identifier")] = (
+        request_id: Annotated[str | None, m.Field(description="Request identifier")] = (
             None
         )
-        component: Annotated[str | None, u.Field(description="Component name")] = None
+        component: Annotated[str | None, m.Field(description="Component name")] = None
         correlation_id: Annotated[
             str | None,
-            u.Field(description="Correlation identifier"),
+            m.Field(description="Correlation identifier"),
         ] = None
-        trace_id: Annotated[str | None, u.Field(description="Trace identifier")] = None
+        trace_id: Annotated[str | None, m.Field(description="Trace identifier")] = None
 
     class RdnProcessingConfig(m.ArbitraryTypesModel):
         """Mutable state for RDN character-by-character parsing."""
 
-        current_attr: Annotated[str, u.Field(description="Current attribute name")] = ""
-        current_val: Annotated[str, u.Field(description="Current value")] = ""
+        current_attr: Annotated[str, m.Field(description="Current attribute name")] = ""
+        current_val: Annotated[str, m.Field(description="Current value")] = ""
         in_value: Annotated[
             bool,
-            u.Field(description="Whether parser is inside the value portion"),
+            m.Field(description="Whether parser is inside the value portion"),
         ] = False
         pairs: Annotated[
             t.MutableStrPairSequence,
-            u.Field(description="Accumulated (attr, value) pairs"),
-        ] = u.Field(default_factory=list[t.StrPair])
+            m.Field(description="Accumulated (attr, value) pairs"),
+        ] = m.Field(default_factory=list[t.StrPair])
 
 
 __all__: list[str] = ["FlextLdifModelsSettingsMisc"]

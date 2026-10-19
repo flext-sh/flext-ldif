@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_core import FlextUtilities as u, m, t
+from flext_core import m, t
 
 from flext_ldif._constants.base import FlextLdifConstantsEnums
 
@@ -24,49 +24,49 @@ class FlextLdifModelsSettingsCriteria:
 
         oid_pattern: Annotated[
             str,
-            u.Field(description="Regex pattern used for schema OID detection"),
+            m.Field(description="Regex pattern used for schema OID detection"),
         ] = ""
 
         dn_patterns: Annotated[
             tuple[t.StrSequence, ...],
-            u.Field(
+            m.Field(
                 description="Tuple of DN pattern tuples - entry matches if ALL "
                 "patterns in ANY tuple match",
             ),
         ] = ()
         attr_prefixes: Annotated[
             t.StrSequence | frozenset[str],
-            u.Field(description="Attribute name prefixes to check"),
+            m.Field(description="Attribute name prefixes to check"),
         ] = ()
         attr_names: Annotated[
             frozenset[str] | set[str],
-            u.Field(description="Set of attribute names that indicate this server"),
+            m.Field(description="Set of attribute names that indicate this server"),
         ] = frozenset()
         keyword_patterns: Annotated[
             t.StrSequence,
-            u.Field(description="Keywords to search in attribute names"),
+            m.Field(description="Keywords to search in attribute names"),
         ] = ()
         detection_string: Annotated[
             str | None,
-            u.Field(description="Optional substring used for server name matching"),
+            m.Field(description="Optional substring used for server name matching"),
         ] = None
         name_regex: Annotated[
             str | None,
-            u.Field(
+            m.Field(
                 description="Optional regex used to extract schema names from raw "
                 "definitions",
             ),
         ] = None
         use_prefix_match: Annotated[
             bool,
-            u.Field(
+            m.Field(
                 description="Whether detection names match by prefix instead of exact "
                 "value",
             ),
         ] = False
         match_definition_text: Annotated[
             bool,
-            u.Field(
+            m.Field(
                 description="Whether raw definition text should be scanned for "
                 "detection markers",
             ),
@@ -90,27 +90,27 @@ class FlextLdifModelsSettingsCriteria:
 
         objectclasses: Annotated[
             t.MutableSequenceOf[str] | None,
-            u.Field(description="Required objectClasses"),
+            m.Field(description="Required objectClasses"),
         ] = None
         objectclass_mode: Annotated[
             FlextLdifConstantsEnums.EntryCriteriaMode,
-            u.Field(description='"any" (has any) or "all" (has all)'),
+            m.Field(description='"any" (has any) or "all" (has all)'),
         ] = FlextLdifConstantsEnums.EntryCriteriaMode.ANY
         required_attrs: Annotated[
             t.MutableSequenceOf[str] | None,
-            u.Field(description="All of these attributes must exist"),
+            m.Field(description="All of these attributes must exist"),
         ] = None
         any_attrs: Annotated[
             t.MutableSequenceOf[str] | None,
-            u.Field(description="At least one of these attributes must exist"),
+            m.Field(description="At least one of these attributes must exist"),
         ] = None
         dn_pattern: Annotated[
             str | None,
-            u.Field(description="Regex pattern that DN must match"),
+            m.Field(description="Regex pattern that DN must match"),
         ] = None
         is_schema: Annotated[
             bool | None,
-            u.Field(
+            m.Field(
                 description="If set, entry must (True) or must not (False) be schema",
             ),
         ] = None
@@ -134,31 +134,31 @@ class FlextLdifModelsSettingsCriteria:
 
         server_type: Annotated[
             FlextLdifConstantsEnums.ServerTypes,
-            u.Field(
+            m.Field(
                 ...,
                 description="Server type performing the parse (oid, oud, rfc, etc.)",
             ),
         ]
         original_entry_dn: Annotated[
             str,
-            u.Field(..., description="Original DN as parsed from LDIF"),
+            m.Field(..., description="Original DN as parsed from LDIF"),
         ]
-        cleaned_dn: Annotated[str, u.Field(..., description="Cleaned/normalized DN")]
+        cleaned_dn: Annotated[str, m.Field(..., description="Cleaned/normalized DN")]
         original_dn_line: Annotated[
             str | None,
-            u.Field(description="Original DN line from LDIF (with folding if present)"),
+            m.Field(description="Original DN line from LDIF (with folding if present)"),
         ] = None
         original_attr_lines: Annotated[
             t.MutableSequenceOf[str] | None,
-            u.Field(description="Original attribute lines from LDIF"),
+            m.Field(description="Original attribute lines from LDIF"),
         ] = None
         dn_was_base64: Annotated[
             bool,
-            u.Field(description="Whether DN was base64 encoded"),
+            m.Field(description="Whether DN was base64 encoded"),
         ] = False
         original_attribute_case: Annotated[
             t.MutableStrMapping | None,
-            u.Field(description="Mapping of attribute names to original case"),
+            m.Field(description="Mapping of attribute names to original case"),
         ] = None
 
 

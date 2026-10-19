@@ -9,7 +9,9 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import ClassVar
 
-from flext_ldif import FlextLdifModels, c, t
+from flext_cli import u
+
+from flext_ldif import c, m, t
 from flext_ldif._utilities import (
     FlextLdifMetadataMatchDetails,
     FlextLdifMetadataNameDescDetails,
@@ -119,7 +121,7 @@ class FlextLdifMetadataSchemaAnalysis:
         for extractor in extractors:
             extracted_raw = extractor(definition)
             for write_option_key, value in extracted_raw.items():
-                combined[write_option_key] = t.Cli.JSON_VALUE_ADAPTER.validate_python(
+                combined[write_option_key] = u.Cli.JSON_VALUE_ADAPTER.validate_python(
                     value,
                 )
         field_order, field_positions = (
@@ -145,11 +147,11 @@ class FlextLdifMetadataSchemaAnalysis:
     def _build_schema_format_model(
         definition: str,
         combined: t.Ldif.MutableMetadataMapping,
-    ) -> FlextLdifModels.Ldif.SchemaFormatDetails:
+    ) -> m.Ldif.SchemaFormatDetails:
         """Build SchemaFormatDetails model from combined details.
 
         Returns:
-            The resulting ``FlextLdifModels.Ldif.SchemaFormatDetails``.
+            The resulting ``m.Ldif.SchemaFormatDetails``.
 
         """
         known_fields = {
@@ -169,22 +171,20 @@ class FlextLdifMetadataSchemaAnalysis:
                 known_field_values[write_option_key] = value
             else:
                 extension_kwargs[write_option_key] = value
-        details: FlextLdifModels.Ldif.SchemaFormatDetails = (
-            FlextLdifModels.Ldif.SchemaFormatDetails.model_validate({
-                **known_field_values,
-                "extensions": extension_kwargs,
-            })
-        )
+        details: m.Ldif.SchemaFormatDetails = m.Ldif.SchemaFormatDetails.model_validate({
+            **known_field_values,
+            "extensions": extension_kwargs,
+        })
         return details
 
     @staticmethod
     def analyze_schema_formatting(
         definition: str,
-    ) -> FlextLdifModels.Ldif.SchemaFormatDetails:
+    ) -> m.Ldif.SchemaFormatDetails:
         """Analyze schema definition to extract ALL formatting details.
 
         Returns:
-            The resulting ``FlextLdifModels.Ldif.SchemaFormatDetails``.
+            The resulting ``m.Ldif.SchemaFormatDetails``.
 
         """
         combined = FlextLdifMetadataSchemaAnalysis._extract_all_schema_details(
@@ -197,14 +197,14 @@ class FlextLdifMetadataSchemaAnalysis:
 
     @staticmethod
     def preserve_schema_formatting(
-        metadata: FlextLdifModels.Ldif.ServerMetadata,
+        metadata: m.Ldif.ServerMetadata,
         definition: str,
     ) -> None:
         """Preserve complete schema formatting details for round-trip."""
         formatting_details = FlextLdifMetadataSchemaAnalysis.analyze_schema_formatting(
             definition,
         )
-        target: FlextLdifModels.Ldif.ServerMetadata = metadata
+        target: m.Ldif.ServerMetadata = metadata
         target.schema_format_details = formatting_details
 
 

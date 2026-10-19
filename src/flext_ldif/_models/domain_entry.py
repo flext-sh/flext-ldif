@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from collections.abc import Mapping, MutableMapping
 from datetime import datetime
-from types import MappingProxyType
 from typing import Annotated, ClassVar, Self, override
 
 from flext_core import m, u
@@ -29,19 +28,19 @@ from flext_ldif._utilities import FlextLdifUtilitiesEntry
 class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
     """Namespace for LDIF entry domain models."""
 
-    type EntryStatistics = FlextLdifModelsDomainEntryStatistics
+    EntryStatistics = FlextLdifModelsDomainEntryStatistics
     """Canonical entry statistics model.
 
     Implementation module: ``domain_entry_statistics``.
     """
 
-    type Control = FlextLdifModelsDomainEntryControl
+    Control = FlextLdifModelsDomainEntryControl
     """Canonical RFC 2849 control line model.
 
     Implementation module: ``domain_entry_control``.
     """
 
-    type ChangeOperationValue = FlextLdifModelsDomainEntryChangeOperationValue
+    ChangeOperationValue = FlextLdifModelsDomainEntryChangeOperationValue
     """Canonical modify-operation value model.
 
     Implementation module: ``domain_entry_change_value``.
@@ -64,9 +63,6 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             extra="allow",
         )
         _DATETIME_FIELDS: ClassVar[t.StrPair] = ("created_at", "updated_at")
-        _ATTRIBUTES_VALIDATE_DEFAULTS: ClassVar[t.MappingKV[str, t.JsonValue]] = (
-            MappingProxyType({"attribute_metadata": {}, "metadata": None})
-        )
         _VALIDATION_RULES_KEY: ClassVar[str] = "validation_rules"
         _VALIDATION_SERVER_TYPE_KEY: ClassVar[str] = "validation_server_type"
         _VALIDATION_CONTEXT_VALIDATOR_KEY: ClassVar[str] = "validator"
@@ -76,19 +72,9 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
         _VALIDATION_CONTEXT_RFC_COMPLIANCE_NAME: ClassVar[str] = (
             "validate_entry_rfc_compliance"
         )
-        _EMPTY_VALIDATION_RESULT_PAYLOAD: ClassVar[
-            t.MappingKV[str, t.JsonValue | t.SequenceOf[str]]
-        ] = MappingProxyType({
-            "rfc_violations": (),
-            "errors": (),
-            "warnings": (),
-            "context": {},
-            "server_specific_violations": (),
-            "validation_server_type": None,
-        })
         dn: Annotated[
             FlextLdifModelsDomainDN.DN | None,
-            u.Field(
+            m.Field(
                 description=(
                     "Distinguished Name of the entry (REQUIRED per RFC 2849 § 2). "
                     "Allows None for RFC violation capture. Coerced from str via "
@@ -98,7 +84,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
         ]
         attributes: Annotated[
             FlextLdifModelsDomainAttributes.Attributes | None,
-            u.Field(
+            m.Field(
                 description=(
                     "Entry attributes container (REQUIRED per RFC 2849 § 2). Allows "
                     "None for RFC violation capture. Coerced from "
@@ -109,7 +95,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
         ]
         record_kind: Annotated[
             c.Ldif.RecordKind,
-            u.Field(
+            m.Field(
                 description=(
                     "Whether this Entry represents LDIF content or an LDIF change "
                     "record."
@@ -118,16 +104,16 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
         ] = c.Ldif.RecordKind.CONTENT
         controls: Annotated[
             t.SequenceOf[FlextLdifModelsDomainEntryControl],
-            u.Field(description="RFC 2849 control lines associated with the record"),
-        ] = u.Field(default_factory=tuple)
+            m.Field(description="RFC 2849 control lines associated with the record"),
+        ] = m.Field(default_factory=tuple)
         change_operations: Annotated[
             t.MutableSequenceOf[
                 FlextLdifModelsDomainEntryChangeOperation.ChangeOperation
             ],
-            u.Field(
+            m.Field(
                 description="Structured modify operation blocks for changetype=modify",
             ),
-        ] = u.Field(
+        ] = m.Field(
             default_factory=list[
                 FlextLdifModelsDomainEntryChangeOperation.ChangeOperation
             ],
@@ -194,7 +180,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
 
         changetype: Annotated[
             c.Ldif.ChangeType | None,
-            u.Field(
+            m.Field(
                 description=(
                     "Change operation type per RFC 2849 § 5.7 "
                     "(add/delete/modify/moddn/modrdn)"
@@ -215,25 +201,25 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
 
         newrdn: Annotated[
             str | None,
-            u.Field(description="RFC 2849 newrdn field for moddn/modrdn records"),
+            m.Field(description="RFC 2849 newrdn field for moddn/modrdn records"),
         ] = None
         deleteoldrdn: Annotated[
             bool | None,
-            u.Field(description="RFC 2849 deleteoldrdn field for moddn/modrdn records"),
+            m.Field(description="RFC 2849 deleteoldrdn field for moddn/modrdn records"),
         ] = None
         newsuperior: Annotated[
             str | None,
-            u.Field(description="RFC 2849 newsuperior field for moddn/modrdn records"),
+            m.Field(description="RFC 2849 newsuperior field for moddn/modrdn records"),
         ] = None
         raw_record_lines: Annotated[
             t.MutableSequenceOf[str],
-            u.Field(
+            m.Field(
                 description="Original unfolded LDIF lines for loss-aware round-trip",
             ),
-        ] = u.Field(default_factory=list[str])
+        ] = m.Field(default_factory=list[str])
         metadata: Annotated[
             FlextLdifModelsDomainMetadata.ServerMetadata | None,
-            u.Field(
+            m.Field(
                 description=(
                     "Server-specific metadata for processing data, ACLs, "
                     "statistics, validation (non-RFC data)"
@@ -242,7 +228,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
         ] = None
         validation_metadata: Annotated[
             m.ConfigMap | None,
-            u.Field(
+            m.Field(
                 description=(
                     "Validation metadata captured during parsing and transformation."
                 ),
@@ -478,32 +464,28 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             dn_value: str,
             violations: t.MutableSequenceOf[str],
         ) -> None:
-            """Persist collected violations into validation metadata."""
+            """Persist RFC findings in the canonical validation metadata model."""
             if not violations or self.metadata is None:
                 return
-            attribute_count = len(self.attributes) if self.attributes else 0
-            old_context: t.MutableStrMapping = {}
-            if self.metadata.validation_results is not None:
-                old_context = t.str_dict_adapter().validate_python(
-                    self.metadata.validation_results.context,
-                )
-            context_payload = self._build_rfc_validation_context(
-                old_context=old_context,
-                dn_value=dn_value,
-                attribute_count=attribute_count,
-                total_violations=len(violations),
-            )
-            payload: t.JsonMapping = t.json_mapping_adapter().validate_python({
-                **self._EMPTY_VALIDATION_RESULT_PAYLOAD,
-                "rfc_violations": list(violations),
-                "errors": list[str](),
-                "warnings": list[str](),
-                "server_specific_violations": list[str](),
-                "context": context_payload,
-            })
+            previous = self.metadata.validation_results
+            context = {
+                **({} if previous is None else previous.context),
+                self._VALIDATION_CONTEXT_VALIDATOR_KEY: (
+                    self._VALIDATION_CONTEXT_RFC_COMPLIANCE_NAME
+                ),
+                self._VALIDATION_CONTEXT_DN_KEY: dn_value,
+                self._VALIDATION_CONTEXT_ATTRIBUTE_COUNT_KEY: str(
+                    len(self.attributes) if self.attributes else 0
+                ),
+                self._VALIDATION_CONTEXT_TOTAL_VIOLATIONS_KEY: str(len(violations)),
+            }
             self.metadata.validation_results = (
-                FlextLdifModelsDomainMetadata.ValidationMetadata.model_validate(
-                    payload,
+                FlextLdifModelsDomainMetadata.ValidationMetadata(
+                    rfc_violations=list(violations),
+                    errors=[],
+                    warnings=[],
+                    server_specific_violations=[],
+                    context=context,
                 )
             )
 
@@ -546,72 +528,31 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             if not server_violations:
                 return self
             if self.metadata.validation_results is None:
-                self.metadata.validation_results = self._empty_validation_results()
-            updated_validation_results = self.metadata.validation_results.model_copy(
-                update={
-                    "server_specific_violations": server_violations,
-                    "validation_server_type": self.metadata.server_type,
-                },
+                self.metadata.validation_results = (
+                    FlextLdifModelsDomainMetadata.ValidationMetadata(
+                        rfc_violations=[],
+                        errors=[],
+                        warnings=[],
+                        context={},
+                        server_specific_violations=[],
+                    )
+                )
+            previous = self.metadata.validation_results
+            updated_validation_results = (
+                FlextLdifModelsDomainMetadata.ValidationMetadata(
+                    rfc_violations=previous.rfc_violations,
+                    errors=previous.errors,
+                    warnings=previous.warnings,
+                    context=previous.context,
+                    server_specific_violations=server_violations,
+                    validation_server_type=self.metadata.server_type,
+                )
             )
             self.metadata.validation_results = updated_validation_results
             ext_violations: t.JsonValueList = list(server_violations)
             # mro-wgwh.5 (agent: kimi-coder) — extensions is a plain mapping now.
             self.metadata.extensions["server_specific_violations"] = ext_violations
             return self
-
-        @classmethod
-        def _empty_validation_results(
-            cls,
-        ) -> FlextLdifModelsDomainMetadata.ValidationMetadata:
-            """Empty validation metadata built from the canonical payload.
-
-            Returns:
-                Validation metadata carrying no violations.
-
-            """
-            payload: t.JsonMapping = t.json_mapping_adapter().validate_python({
-                **cls._EMPTY_VALIDATION_RESULT_PAYLOAD,
-                "rfc_violations": list[str](),
-                "errors": list[str](),
-                "warnings": list[str](),
-                "server_specific_violations": list[str](),
-            })
-            validated: FlextLdifModelsDomainMetadata.ValidationMetadata = (
-                FlextLdifModelsDomainMetadata.ValidationMetadata.model_validate(
-                    payload,
-                )
-            )
-            return validated
-
-        @classmethod
-        def _build_rfc_validation_context(
-            cls,
-            old_context: t.StrMapping,
-            dn_value: str,
-            attribute_count: int,
-            total_violations: int,
-        ) -> t.StrMapping:
-            """Build the RFC validation context map from canonical keys.
-
-            Args:
-                old_context: Prior context entries to preserve.
-                dn_value: DN string recorded for the validation.
-                attribute_count: Number of attributes on the entry.
-                total_violations: Number of violations collected.
-
-            Returns:
-                Context mapping for the validation metadata.
-
-            """
-            return {
-                **old_context,
-                cls._VALIDATION_CONTEXT_VALIDATOR_KEY: (
-                    cls._VALIDATION_CONTEXT_RFC_COMPLIANCE_NAME
-                ),
-                cls._VALIDATION_CONTEXT_DN_KEY: dn_value,
-                cls._VALIDATION_CONTEXT_ATTRIBUTE_COUNT_KEY: str(attribute_count),
-                cls._VALIDATION_CONTEXT_TOTAL_VIOLATIONS_KEY: str(total_violations),
-            }
 
         @u.computed_field
         @property
@@ -681,16 +622,11 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
                     values_list = list(attr_values)
                 attrs_dict[attr_name] = values_list
 
-            validate_payload: t.JsonMapping = t.json_mapping_adapter().validate_python({
-                "attributes": attrs_dict,
-                **cls._ATTRIBUTES_VALIDATE_DEFAULTS,
-            })
-            validated: FlextLdifModelsDomainAttributes.Attributes = (
-                FlextLdifModelsDomainAttributes.Attributes.model_validate(
-                    validate_payload
-                )
+            return FlextLdifModelsDomainAttributes.Attributes(
+                attributes=attrs_dict,
+                attribute_metadata={},
+                metadata=None,
             )
-            return validated
 
         @classmethod
         def create(
@@ -712,8 +648,11 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
 
             """
             try:
-                entry_data = cls._build_entry_data(dn, attributes, metadata)
-                entry_instance: Self = cls.model_validate(entry_data)
+                entry_instance = cls(
+                    dn=FlextLdifModelsDomainDN.DN.from_value(dn),
+                    attributes=cls._normalize_attributes(attributes),
+                    metadata=metadata,
+                )
                 ok_result: p.Result[Self] = r[Self].ok(entry_instance)
             except c.EXC_BASIC_TYPE as exc:
                 # ``fail_operation`` is the typed exception factory: the
@@ -723,33 +662,6 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
                 return e.fail_operation("create Entry", exc, result_type=r[Self])
             else:
                 return ok_result
-
-        @classmethod
-        def _build_entry_data(
-            cls,
-            dn: str | FlextLdifModelsDomainDN.DN,
-            attributes: t.MutableAttributeMapping
-            | FlextLdifModelsDomainAttributes.Attributes,
-            metadata: FlextLdifModelsDomainMetadata.ServerMetadata | None,
-        ) -> t.MappingKV[str, t.JsonPayload]:
-            """Build validated entry model input.
-
-            Args:
-                dn: Distinguished name as string or DN instance.
-                attributes: Attributes as mapping or container instance.
-                metadata: Optional server metadata for the entry.
-
-            Returns:
-                Model input mapping for entry validation.
-
-            """
-            entry_data: t.MutableMappingKV[str, t.JsonPayload] = {
-                c.Ldif.DictKeys.DN: FlextLdifModelsDomainDN.DN.from_value(dn),
-                c.Ldif.DictKeys.ATTRIBUTES: cls._normalize_attributes(attributes),
-            }
-            if metadata is not None:
-                entry_data["metadata"] = metadata
-            return entry_data
 
 
 __all__: list[str] = ["FlextLdifModelsDomainEntry"]

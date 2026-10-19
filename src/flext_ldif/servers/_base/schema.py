@@ -31,7 +31,7 @@ class FlextLdifServersBaseSchema(
 
     server_type: Annotated[
         str,
-        u.Field(
+        m.Field(
             description=(
                 "Server type identifier (e.g., 'oid', 'oud', 'openldap', 'rfc')"
             ),
@@ -39,11 +39,11 @@ class FlextLdifServersBaseSchema(
     ] = "rfc"
     priority: Annotated[
         int,
-        u.Field(description="Server priority (lower number = higher priority)"),
+        m.Field(description="Server priority (lower number = higher priority)"),
     ] = 0
     parent_server: Annotated[
         Self | None,
-        u.Field(
+        m.Field(
             exclude=True,
             repr=False,
             description="Reference to parent server instance for server-level access",
@@ -51,7 +51,7 @@ class FlextLdifServersBaseSchema(
     ] = None
     attr_definition: Annotated[
         str | None,
-        u.Field(
+        m.Field(
             exclude=True,
             repr=False,
             description="Attribute definition for auto-execute pattern",
@@ -59,7 +59,7 @@ class FlextLdifServersBaseSchema(
     ] = None
     oc_definition: Annotated[
         str | None,
-        u.Field(
+        m.Field(
             exclude=True,
             repr=False,
             description="ObjectClass definition for auto-execute pattern",
@@ -67,7 +67,7 @@ class FlextLdifServersBaseSchema(
     ] = None
     attr_model: Annotated[
         m.Ldif.SchemaAttribute | None,
-        u.Field(
+        m.Field(
             exclude=True,
             repr=False,
             description="SchemaAttribute model for auto-execute pattern",
@@ -75,7 +75,7 @@ class FlextLdifServersBaseSchema(
     ] = None
     oc_model: Annotated[
         m.Ldif.SchemaObjectClass | None,
-        u.Field(
+        m.Field(
             exclude=True,
             repr=False,
             description="SchemaObjectClass model for auto-execute pattern",
@@ -83,7 +83,7 @@ class FlextLdifServersBaseSchema(
     ] = None
     operation: Annotated[
         str | None,
-        u.Field(
+        m.Field(
             exclude=True,
             repr=False,
             description="Operation type for auto-execute pattern",
@@ -224,7 +224,7 @@ class FlextLdifServersBaseSchema(
             Typed result carrying the parsed model or written string.
 
         """
-        json_value_adapter = t.json_value_adapter()
+        json_value_adapter = u.json_value_adapter()
         kwargs_dict: t.MutableJsonMapping = {
             key: json_value_adapter.validate_python(u.to_jsonable_python(value))
             for key, value in kwargs.items()
@@ -241,7 +241,7 @@ class FlextLdifServersBaseSchema(
     def parse_server(
         self,
         value: str,
-    ) -> p.Result[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
+    ) -> p.Result[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass]:
         """Parse a schema definition (attribute or objectClass).
 
         Args:
@@ -256,7 +256,7 @@ class FlextLdifServersBaseSchema(
     def parse_input(
         self,
         schema_text: str,
-    ) -> p.Result[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
+    ) -> p.Result[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass]:
         """Compatibility parser entrypoint for direct schema server consumers.
 
         Args:
@@ -268,7 +268,7 @@ class FlextLdifServersBaseSchema(
         """
         return self.parse_server(schema_text)
 
-    def parse_attribute(self, definition: str) -> p.Result[m.Ldif.SchemaAttribute]:
+    def parse_attribute(self, definition: str) -> p.Result[p.Ldif.SchemaAttribute]:
         """Parse an attribute definition (public API).
 
         Args:
@@ -278,9 +278,13 @@ class FlextLdifServersBaseSchema(
             Typed result carrying the parsed attribute model.
 
         """
-        return self._parse_attribute(definition)
+        result = self._parse_attribute(definition)
+        if result.failure:
+            return r[p.Ldif.SchemaAttribute].from_failure(result)
+        payload: p.Ldif.SchemaAttribute = result.unwrap()
+        return r[p.Ldif.SchemaAttribute].ok(payload)
 
-    def parse_objectclass(self, definition: str) -> p.Result[m.Ldif.SchemaObjectClass]:
+    def parse_objectclass(self, definition: str) -> p.Result[p.Ldif.SchemaObjectClass]:
         """Parse an objectClass definition (public API).
 
         Args:
@@ -290,12 +294,16 @@ class FlextLdifServersBaseSchema(
             Typed result carrying the parsed objectClass model.
 
         """
-        return self._parse_objectclass(definition)
+        result = self._parse_objectclass(definition)
+        if result.failure:
+            return r[p.Ldif.SchemaObjectClass].from_failure(result)
+        payload: p.Ldif.SchemaObjectClass = result.unwrap()
+        return r[p.Ldif.SchemaObjectClass].ok(payload)
 
     def route_parse(
         self,
         definition: str,
-    ) -> p.Result[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
+    ) -> p.Result[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass]:
         """Route a schema definition to the appropriate parse method.
 
         Args:
@@ -306,28 +314,30 @@ class FlextLdifServersBaseSchema(
 
         """
         if self._is_objectclass_schema_type(definition):
-            oc_result = self._parse_objectclass(definition)
+            oc_result = self.parse_objectclass(definition)
             if oc_result.failure:
                 return r[
-                    m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass
+                    p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass
                 ].from_failure(oc_result)
-            parsed_objectclass = m.Ldif.SchemaObjectClass.model_validate(
-                oc_result.unwrap(),
+            parsed_objectclass: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass = (
+                oc_result.unwrap()
             )
-            return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].ok(
-                parsed_objectclass,
+            return r[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass].ok(
+                parsed_objectclass
             )
-        attr_result = self._parse_attribute(definition)
+        attr_result = self.parse_attribute(definition)
         if attr_result.failure:
-            return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].from_failure(
+            return r[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass].from_failure(
                 attr_result,
             )
-        parsed_attribute = m.Ldif.SchemaAttribute.model_validate(attr_result.unwrap())
-        return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].ok(parsed_attribute)
+        parsed_attribute: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass = (
+            attr_result.unwrap()
+        )
+        return r[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass].ok(parsed_attribute)
 
     def write(
         self,
-        model: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        model: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
     ) -> p.Result[str]:
         """Write a schema model to its string format.
 
@@ -338,14 +348,17 @@ class FlextLdifServersBaseSchema(
             Typed result carrying the serialized schema string.
 
         """
-        try:
-            attribute_model = m.Ldif.SchemaAttribute.model_validate(model)
-        except c.EXC_BASIC_TYPE:
-            objectclass_model = m.Ldif.SchemaObjectClass.model_validate(model)
+        if isinstance(model, p.Ldif.SchemaObjectClass):
+            objectclass_model = m.Ldif.SchemaObjectClass.model_validate(
+                model, from_attributes=True
+            )
             return self.write_objectclass(objectclass_model)
+        attribute_model = m.Ldif.SchemaAttribute.model_validate(
+            model, from_attributes=True
+        )
         return self.write_attribute(attribute_model)
 
-    def write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> p.Result[str]:
+    def write_attribute(self, attr_data: p.Ldif.SchemaAttribute) -> p.Result[str]:
         """Write an attribute to the RFC-compliant string format (public API).
 
         Args:
@@ -355,10 +368,12 @@ class FlextLdifServersBaseSchema(
             Typed result carrying the serialized attribute string.
 
         """
-        validated_attr = m.Ldif.SchemaAttribute.model_validate(attr_data)
+        validated_attr = m.Ldif.SchemaAttribute.model_validate(
+            attr_data, from_attributes=True
+        )
         return self._write_attribute(validated_attr)
 
-    def write_objectclass(self, oc_data: m.Ldif.SchemaObjectClass) -> p.Result[str]:
+    def write_objectclass(self, oc_data: p.Ldif.SchemaObjectClass) -> p.Result[str]:
         """Write an objectClass to the RFC-compliant string format (public API).
 
         Args:
@@ -368,7 +383,9 @@ class FlextLdifServersBaseSchema(
             Typed result carrying the serialized objectClass string.
 
         """
-        validated_oc = m.Ldif.SchemaObjectClass.model_validate(oc_data)
+        validated_oc = m.Ldif.SchemaObjectClass.model_validate(
+            oc_data, from_attributes=True
+        )
         return self._write_objectclass(validated_oc)
 
     @staticmethod

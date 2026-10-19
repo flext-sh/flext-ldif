@@ -27,16 +27,16 @@ class FlextLdifServersBaseIoMixin:
     def parse_ldif(
         self: Self,
         value: str,
-    ) -> p.Result[p.Ldif.ParseResponse]:
+    ) -> p.Result[m.Ldif.ParseResponse]:
         """Parse LDIF text to Entry models.
 
         Returns:
-            The resulting ``p.Result[p.Ldif.ParseResponse]``.
+            The resulting ``p.Result[m.Ldif.ParseResponse]``.
 
         """
         entry_server = getattr(self, "entry_server", None)
         if entry_server is None:
-            return r[p.Ldif.ParseResponse].fail("Entry server not available")
+            return r[m.Ldif.ParseResponse].fail("Entry server not available")
         detected_server = getattr(self, "server_type", None)
         detected_server_type: c.Ldif.ServerTypes | None = None
         if isinstance(detected_server, c.Ldif.ServerTypes):
@@ -49,41 +49,25 @@ class FlextLdifServersBaseIoMixin:
             except ValueError:
                 detected_server_type = None
 
-        def normalize_parse_error(error: str) -> str:
-            return error or "Entry parsing failed"
-
         def build_parse_response(
-            parsed_entries: t.Ldif.EntrySequence,
+            parsed_entries: t.MutableSequenceOf[m.Ldif.Entry],
         ) -> m.Ldif.ParseResponse:
-            domain_entries = u.Ldif.as_entries(parsed_entries)
-            for entry in domain_entries:
+            for entry in parsed_entries:
                 if entry.metadata and detected_server_type is not None:
-                    entry.metadata = entry.metadata.model_copy(
-                        update={"original_server_type": detected_server_type},
-                    )
+                    entry.metadata.original_server_type = detected_server_type
             statistics = m.Ldif.Statistics(
-                total_entries=len(domain_entries),
-                processed_entries=len(domain_entries),
+                total_entries=len(parsed_entries),
+                processed_entries=len(parsed_entries),
                 detected_server_type=detected_server_type,
             )
             return m.Ldif.ParseResponse(
-                entries=[entry.model_copy(deep=True) for entry in domain_entries],
+                entries=parsed_entries,
                 statistics=statistics,
                 detected_server_type=detected_server_type,
             )
 
-        def model_to_protocol_parse_response(
-            model_response: m.Ldif.ParseResponse,
-        ) -> m.Ldif.ParseResponse:
-            # Return the model response directly since it's already the correct type
-            return model_response
-
         parse_response_result: p.Result[m.Ldif.ParseResponse] = (
-            entry_server
-            .parse_server(value)
-            .map_error(normalize_parse_error)
-            .map(build_parse_response)
-            .map(model_to_protocol_parse_response)
+            entry_server.parse_server(value).map(build_parse_response)
         )
         return parse_response_result
 

@@ -21,16 +21,16 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
     """Base class for entry processing servers - satisfies Entry (structural typing)."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
-    server_type: Annotated[str, u.Field(description="Server type identifier")] = (
+    server_type: Annotated[str, m.Field(description="Server type identifier")] = (
         "unknown"
     )
     priority: Annotated[
         int,
-        u.Field(description="Server priority (lower number = higher priority)"),
+        m.Field(description="Server priority (lower number = higher priority)"),
     ] = 0
     parent_server: Annotated[
         Self | None,
-        u.Field(
+        m.Field(
             exclude=True,
             repr=False,
             description="Reference to parent server instance for server-level access",
@@ -61,7 +61,7 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         )
         if isinstance(format_options_raw, Mapping):
             try:
-                normalized_payload = t.Cli.JSON_MAPPING_ADAPTER.validate_python(
+                normalized_payload = u.Cli.JSON_MAPPING_ADAPTER.validate_python(
                     format_options_raw,
                 )
                 serialized = u.Cli.json_dumps(dict(normalized_payload)).unwrap()

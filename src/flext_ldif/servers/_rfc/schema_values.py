@@ -42,7 +42,7 @@ class FlextLdifServersRfcSchemaValuesMixin(FlextLdifServersBaseSchema):
         if value is None:
             return {}
         try:
-            validated: t.MutableJsonMapping = t.json_dict_adapter().validate_python(
+            validated: t.MutableJsonMapping = u.json_dict_adapter().validate_python(
                 value,
             )
         except c.ValidationError as exc:

@@ -178,7 +178,7 @@ class FlextLdifServersBase(
         ] = {}
         ldif_text_raw = fields.get("ldif_text")
         if ldif_text_raw is not None:
-            validated_ldif_text: str = t.str_adapter().validate_python(ldif_text_raw)
+            validated_ldif_text: str = u.str_adapter().validate_python(ldif_text_raw)
             execute_kwargs["ldif_text"] = validated_ldif_text
         entries_raw = fields.get("entries")
         if entries_raw is not None:
@@ -188,7 +188,7 @@ class FlextLdifServersBase(
             execute_kwargs["entries"] = validated_entries
         operation_raw = fields.get("operation")
         if operation_raw is not None:
-            validated_operation: str = t.str_adapter().validate_python(operation_raw)
+            validated_operation: str = u.str_adapter().validate_python(operation_raw)
             execute_kwargs["operation"] = validated_operation
         self._absorb_positional_args(args, execute_kwargs)
         ldif_text, entries, operation = self._extract_execute_params(execute_kwargs)

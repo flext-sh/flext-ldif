@@ -42,7 +42,7 @@ class FlextLdifCategorizationRules(FlextLdifServer):
         m.Ldif.CategoryRules
         | MutableMapping[str, str | t.MutableSequenceOf[str] | None]
         | None,
-        u.Field(
+        m.Field(
             default=None,
             exclude=True,
             description="Optional categorization rules applied before server defaults.",
@@ -50,7 +50,7 @@ class FlextLdifCategorizationRules(FlextLdifServer):
     ] = None
     schema_whitelist_rules: Annotated[
         m.Ldif.WhitelistRules | None,
-        u.Field(
+        m.Field(
             default=None,
             exclude=True,
             description=(
@@ -60,7 +60,7 @@ class FlextLdifCategorizationRules(FlextLdifServer):
     ] = None
     forbidden_attributes: Annotated[
         t.MutableSequenceOf[str] | None,
-        u.Field(
+        m.Field(
             default=None,
             exclude=True,
             description=(
@@ -70,7 +70,7 @@ class FlextLdifCategorizationRules(FlextLdifServer):
     ] = None
     forbidden_objectclasses: Annotated[
         t.MutableSequenceOf[str] | None,
-        u.Field(
+        m.Field(
             default=None,
             exclude=True,
             description=(
@@ -81,7 +81,7 @@ class FlextLdifCategorizationRules(FlextLdifServer):
     ] = None
     base_dn: Annotated[
         str | None,
-        u.Field(
+        m.Field(
             default=None,
             exclude=True,
             description="Base DN filter applied after categorization when provided.",
@@ -89,7 +89,7 @@ class FlextLdifCategorizationRules(FlextLdifServer):
     ] = None
     server_type: Annotated[
         str,
-        u.Field(
+        m.Field(
             default=c.Ldif.ServerTypes.RFC.value,
             exclude=True,
             description=(
@@ -99,12 +99,12 @@ class FlextLdifCategorizationRules(FlextLdifServer):
     ] = c.Ldif.ServerTypes.RFC.value
     rejection_tracker: Annotated[
         t.MutableMappingKV[str, t.MutableSequenceOf[m.Ldif.Entry]],
-        u.Field(
+        m.Field(
             default_factory=_build_rejection_tracker,
             exclude=True,
             description="Tracks rejected entries by rejection reason.",
         ),
-    ] = u.Field(default_factory=_build_rejection_tracker)
+    ] = m.Field(default_factory=_build_rejection_tracker)
 
     def _normalize_initial_category_rules(self) -> m.Ldif.CategoryRules:
         """Normalize initial categorization rules into the canonical model.
