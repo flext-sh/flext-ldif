@@ -233,7 +233,7 @@ class FlextLdifUtilitiesSchemaParse:
             "metadata_extensions": extensions_converted,
             "syntax_validation": syntax_validation_converted,
         }
-        parsed_dict = dict(t.Cli.JSON_MAPPING_ADAPTER.validate_python(payload))
+        parsed_dict = dict(u.Cli.JSON_MAPPING_ADAPTER.validate_python(payload))
         return r[t.Ldif.MutableMetadataMapping].ok(parsed_dict)
 
     @staticmethod
@@ -331,7 +331,7 @@ class FlextLdifUtilitiesSchemaParse:
             FlextLdifUtilitiesSchemaParse._convert_metadata_extensions(extensions_raw)
         )
         return dict(
-            t.Cli.JSON_MAPPING_ADAPTER.validate_python({
+            u.Cli.JSON_MAPPING_ADAPTER.validate_python({
                 "oid": oid,
                 "name": name,
                 "desc": desc,
