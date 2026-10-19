@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
     from flext_cli import p
 
-    from flext_ldif import c, t
+    from flext_ldif import c, m, t
     from flext_ldif._protocols import FlextLdifProtocolsDomain
 
 
@@ -298,8 +298,16 @@ class FlextLdifProtocolsBase:
         ) -> p.Result[str]: ...
 
     @runtime_checkable
-    class AclServer(ServerServer, Protocol):
-        """ACL server protocol."""
+    class AclServer(Protocol):
+        """ACL parsing, serialization, and attribute discovery contract."""
+
+        def resolve_acl_attributes(self) -> t.MutableSequenceOf[str]: ...
+
+        def parse_server(self, value: str) -> p.Result[m.Ldif.Acl]: ...
+
+        def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool: ...
+
+        def write(self, acl_data: m.Ldif.Acl) -> p.Result[str]: ...
 
     @runtime_checkable
     class EntryServer(ServerServer, Protocol):
@@ -608,7 +616,7 @@ class FlextLdifProtocolsBase:
     class ServerResolutionService(Protocol):
         """Contract for server registry resolution and model conversion."""
 
-        def acl(self, server_type: str) -> p.Result[FlextLdifProtocolsDomain.AclServer]:
+        def acl(self, server_type: str) -> p.Result[FlextLdifProtocolsBase.AclServer]:
             """Resolve ACL server by server type via the facade DSL."""
             ...
 
@@ -643,7 +651,7 @@ class FlextLdifProtocolsBase:
             t.MappingKV[
                 str,
                 FlextLdifProtocolsBase.SchemaServer
-                | FlextLdifProtocolsDomain.AclServer
+                | FlextLdifProtocolsBase.AclServer
                 | FlextLdifProtocolsDomain.EntryServer,
             ]
         ]:

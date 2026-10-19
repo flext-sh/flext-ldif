@@ -384,6 +384,7 @@ def migration_pipeline_factory(
 
     Args:
         migration_dirs: Canonical input and output directory pair.
+        server: Server provider whose registry is injected into each pipeline.
 
     Returns:
         Factory callable accepting keyword overrides for the pipeline.

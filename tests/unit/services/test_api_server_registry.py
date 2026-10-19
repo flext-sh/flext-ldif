@@ -159,17 +159,17 @@ class TestsFlextLdifApiServerRegistry:
     @staticmethod
     def test_required_registry_port_is_validated_and_not_serialized() -> None:
         """Services cannot construct infrastructure or accept a loose payload."""
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="registry"):
             FlextLdifServer.model_validate({})
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="registry"):
             m.Ldif.RegistryPortOptions.model_validate({"registry": m.Ldif.Statistics()})
         registry = u.build_registry()
         ports = m.Ldif.RegistryPortOptions(registry=registry)
         tm.that(ports.registry is registry)
         tm.that("registry" not in ports.model_dump())
         tm.that("registry" not in ports.model_json_schema().get("properties", {}))
-        with pytest.raises(ValueError):
-            ports.__setattr__("registry", m.Ldif.Statistics())
+        with pytest.raises(ValueError, match="registry"):
+            ports.registry = m.Ldif.Statistics()
         tm.that(ports.registry is registry)
 
     @staticmethod
@@ -190,7 +190,10 @@ class TestsFlextLdifApiServerRegistry:
         """Registry composition retains the real RFC parse/write implementation."""
         api = FlextLdif()
         route = c.Ldif.ServerTypes.RFC.value
-        source = "dn: cn=person,dc=example,dc=com\nobjectClass: person\ncn: person\nsn: example\n"
+        source = (
+            "dn: cn=person,dc=example,dc=com\n"
+            "objectClass: person\ncn: person\nsn: example\n"
+        )
         parsed = api.parse_string(source, server_type=route).unwrap()
         written = api.write_to_string(
             u.Ldif.as_entries(parsed.entries),

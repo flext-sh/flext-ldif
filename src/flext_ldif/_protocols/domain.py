@@ -41,7 +41,7 @@ class FlextLdifProtocolsDomain(Protocol):
             ...
 
         @property
-        def acl_server(self) -> FlextLdifProtocolsDomain.AclServer:
+        def acl_server(self) -> FlextLdifProtocolsBase.AclServer:
             """ACL server implementation."""
             ...
 
@@ -60,26 +60,6 @@ class FlextLdifProtocolsDomain(Protocol):
             write_options: m.Ldif.WriteFormatOptions | None = None,
         ) -> p.Result[str]:
             """Write canonical entries through the server's entry implementation."""
-            ...
-
-    @runtime_checkable
-    class AclServer(Protocol):
-        """ACL server contract."""
-
-        def resolve_acl_attributes(self) -> t.MutableSequenceOf[str]:
-            """Return this server's ACL entry attributes in extraction order."""
-            ...
-
-        def parse_server(self, value: str) -> p.Result[m.Ldif.Acl]:
-            """Parse an ACL line into an ACL model."""
-            ...
-
-        def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
-            """Check if this server can handle an ACL line."""
-            ...
-
-        def write(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
-            """Serialize an ACL model."""
             ...
 
     @runtime_checkable
@@ -163,7 +143,7 @@ class FlextLdifProtocolsDomain(Protocol):
             """Resolve schema server for a server type."""
             ...
 
-        def acl(self, server_type: str) -> p.Result[FlextLdifProtocolsDomain.AclServer]:
+        def acl(self, server_type: str) -> p.Result[FlextLdifProtocolsBase.AclServer]:
             """Return ACL server for a server type."""
             ...
 
@@ -181,7 +161,7 @@ class FlextLdifProtocolsDomain(Protocol):
             t.MappingKV[
                 str,
                 FlextLdifProtocolsBase.SchemaServer
-                | FlextLdifProtocolsDomain.AclServer
+                | FlextLdifProtocolsBase.AclServer
                 | FlextLdifProtocolsDomain.EntryServer,
             ]
         ]:
