@@ -58,6 +58,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
 
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
             strict=True,
+            use_enum_values=False,
             validate_default=True,
             validate_assignment=True,
             extra="allow",

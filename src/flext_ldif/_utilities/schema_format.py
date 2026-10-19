@@ -56,13 +56,9 @@ class FlextLdifUtilitiesSchemaFormat:
         schema_details = attr_data.metadata.schema_format_details
         if not schema_details:
             return f"NAME '{attr_data.name}'"
-        name_format = getattr(schema_details, "name_format", "single")
-        name_values_ = getattr(schema_details, "name_values", [])
-        name_values: t.MutableSequenceOf[str] = (
-            [str(v) for v in name_values_] if u.list_like(name_values_) else []
-        )
-        if name_format == "multiple" and name_values:
-            names_str = " ".join(f"'{n}'" for n in name_values)
+        if len(schema_details.name_values) > 1:
+            names = [attr_data.name, *schema_details.name_values[1:]]
+            names_str = " ".join(f"'{name}'" for name in names)
             return f"NAME ( {names_str} )"
         return f"NAME '{attr_data.name}'"
 
