@@ -1,4 +1,5 @@
 Infra:
   codegen:
     repository:
+      examples_module: examples.complete_workflow
       namespace_scan_dirs: []

@@ -254,8 +254,48 @@ class FlextLdifProtocolsBase:
         ) -> p.Result[str]: ...
 
     @runtime_checkable
-    class SchemaServer(ServerServer, Protocol):
-        """Schema server protocol."""
+    class SchemaServer(Protocol):
+        """Public schema parsing and serialization contract."""
+
+        def parse_server(
+            self, value: str
+        ) -> p.Result[
+            FlextLdifProtocolsBase.SchemaAttribute
+            | FlextLdifProtocolsBase.SchemaObjectClass
+        ]: ...
+
+        def parse_input(
+            self, schema_text: str
+        ) -> p.Result[
+            FlextLdifProtocolsBase.SchemaAttribute
+            | FlextLdifProtocolsBase.SchemaObjectClass
+        ]: ...
+
+        def parse_attribute(
+            self, definition: str
+        ) -> p.Result[FlextLdifProtocolsBase.SchemaAttribute]: ...
+
+        def parse_objectclass(
+            self, definition: str
+        ) -> p.Result[FlextLdifProtocolsBase.SchemaObjectClass]: ...
+
+        def can_handle_attribute(self, attr_definition: str) -> bool: ...
+
+        def can_handle_objectclass(self, oc_definition: str) -> bool: ...
+
+        def write(
+            self,
+            model: FlextLdifProtocolsBase.SchemaAttribute
+            | FlextLdifProtocolsBase.SchemaObjectClass,
+        ) -> p.Result[str]: ...
+
+        def write_attribute(
+            self, attr_data: FlextLdifProtocolsBase.SchemaAttribute
+        ) -> p.Result[str]: ...
+
+        def write_objectclass(
+            self, oc_data: FlextLdifProtocolsBase.SchemaObjectClass
+        ) -> p.Result[str]: ...
 
     @runtime_checkable
     class AclServer(ServerServer, Protocol):
@@ -321,6 +361,15 @@ class FlextLdifProtocolsBase:
 
         @property
         def name(self) -> str: ...
+
+        @property
+        def sup(self) -> str | t.SequenceOf[str] | None: ...
+
+        @property
+        def must(self) -> t.SequenceOf[str] | None: ...
+
+        @property
+        def may(self) -> t.SequenceOf[str] | None: ...
 
     @runtime_checkable
     class SchemaItemKind(Protocol):
@@ -577,13 +626,13 @@ class FlextLdifProtocolsBase:
 
         def schema_server(
             self, server_type: str
-        ) -> p.Result[FlextLdifProtocolsDomain.SchemaServer]:
+        ) -> p.Result[FlextLdifProtocolsBase.SchemaServer]:
             """Resolve schema server by server type via the facade DSL."""
             ...
 
         def resolve_schema_server(
             self, server_type: str
-        ) -> p.Result[FlextLdifProtocolsDomain.SchemaServer]:
+        ) -> p.Result[FlextLdifProtocolsBase.SchemaServer]:
             """Resolve schema server by server type via the facade DSL."""
             ...
 
@@ -593,7 +642,7 @@ class FlextLdifProtocolsBase:
         ) -> p.Result[
             t.MappingKV[
                 str,
-                FlextLdifProtocolsDomain.SchemaServer
+                FlextLdifProtocolsBase.SchemaServer
                 | FlextLdifProtocolsDomain.AclServer
                 | FlextLdifProtocolsDomain.EntryServer,
             ]

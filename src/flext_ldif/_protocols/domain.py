@@ -36,7 +36,7 @@ class FlextLdifProtocolsDomain(Protocol):
         Constants: ClassVar[type[FlextLdifProtocolsBase.ServerConstants]]
 
         @property
-        def schema_server(self) -> FlextLdifProtocolsDomain.SchemaServer:
+        def schema_server(self) -> FlextLdifProtocolsBase.SchemaServer:
             """The schema server implementation."""
             ...
 
@@ -60,70 +60,6 @@ class FlextLdifProtocolsDomain(Protocol):
             write_options: m.Ldif.WriteFormatOptions | None = None,
         ) -> p.Result[str]:
             """Write canonical entries through the server's entry implementation."""
-            ...
-
-    @runtime_checkable
-    class SchemaServer(Protocol):
-        """Schema server contract.
-
-        ``acl_server`` was removed — it had zero workspace consumers
-        (per AGENTS.md §3.5 + STRICT YAGNI). Server-level ``acl_server``
-        access lives on the parent ``Server`` protocol above, where the
-        actual entry-conversion code reads it.
-        """
-
-        def parse_server(
-            self,
-            value: str,
-        ) -> p.Result[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
-            """Parse a schema definition into a schema item."""
-            ...
-
-        def parse_input(
-            self,
-            schema_text: str,
-        ) -> p.Result[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
-            """Parse a schema definition (compatibility entrypoint)."""
-            ...
-
-        def parse_attribute(self, definition: str) -> p.Result[m.Ldif.SchemaAttribute]:
-            """Parse an attributeType definition."""
-            ...
-
-        def parse_objectclass(
-            self,
-            definition: str,
-        ) -> p.Result[m.Ldif.SchemaObjectClass]:
-            """Parse an objectClass definition."""
-            ...
-
-        def can_handle_attribute(
-            self,
-            attr_definition: str | m.Ldif.SchemaAttribute,
-        ) -> bool:
-            """Check if this server can handle a schema attribute."""
-            ...
-
-        def can_handle_objectclass(
-            self,
-            oc_definition: str | m.Ldif.SchemaObjectClass,
-        ) -> bool:
-            """Check if this server can handle a schema objectClass."""
-            ...
-
-        def write(
-            self,
-            model: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
-        ) -> p.Result[str]:
-            """Serialize a schema item."""
-            ...
-
-        def write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> p.Result[str]:
-            """Serialize an attributeType definition."""
-            ...
-
-        def write_objectclass(self, oc_data: m.Ldif.SchemaObjectClass) -> p.Result[str]:
-            """Serialize an objectClass definition."""
             ...
 
     @runtime_checkable
@@ -216,14 +152,14 @@ class FlextLdifProtocolsDomain(Protocol):
         def schema_server(
             self,
             server_type: str,
-        ) -> p.Result[FlextLdifProtocolsDomain.SchemaServer]:
+        ) -> p.Result[FlextLdifProtocolsBase.SchemaServer]:
             """Return schema server for a server type."""
             ...
 
         def resolve_schema_server(
             self,
             server_type: str,
-        ) -> p.Result[FlextLdifProtocolsDomain.SchemaServer]:
+        ) -> p.Result[FlextLdifProtocolsBase.SchemaServer]:
             """Resolve schema server for a server type."""
             ...
 
@@ -244,7 +180,7 @@ class FlextLdifProtocolsDomain(Protocol):
         ) -> p.Result[
             t.MappingKV[
                 str,
-                FlextLdifProtocolsDomain.SchemaServer
+                FlextLdifProtocolsBase.SchemaServer
                 | FlextLdifProtocolsDomain.AclServer
                 | FlextLdifProtocolsDomain.EntryServer,
             ]
