@@ -26,11 +26,11 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
     class WriteRequest(m.ArbitraryTypesModel):
         """One validated write boundary for structural entries and options."""
 
-        entries: t.MutableSequenceOf[FlextLdifModelsDomainsEntries.Entry] = u.Field(
+        entries: t.MutableSequenceOf[FlextLdifModelsDomainsEntries.Entry] = m.Field(
             description="Owned LDIF entries supplied for serialization",
         )
         format_options: FlextLdifModelsSettingsMigrate.WriteFormatOptions | None = (
-            u.Field(
+            m.Field(
                 default=None,
                 description="Optional explicit LDIF formatting options",
             )
@@ -39,47 +39,47 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
     class MigrationPipelineOptions(m.ArbitraryTypesModel):
         """Validated configuration consumed by the migration service."""
 
-        input_dir: Path | None = u.Field(
+        input_dir: Path | None = m.Field(
             default=None,
             exclude=True,
             description="Input LDIF directory",
         )
-        output_dir: Path | None = u.Field(
+        output_dir: Path | None = m.Field(
             default=None,
             exclude=True,
             description="Migrated LDIF directory",
         )
-        output_filename: str | None = u.Field(
+        output_filename: str | None = m.Field(
             default=None,
             exclude=True,
             description="Single-file output name override",
         )
-        mode: str | None = u.Field(
+        mode: str | None = m.Field(
             default=None,
             exclude=True,
             description="Migration mode supplied by the caller",
         )
-        source_server: str | c.Ldif.ServerTypes | None = u.Field(
+        source_server: str | c.Ldif.ServerTypes | None = m.Field(
             default=None,
             exclude=True,
             description="Source dialect input",
         )
-        target_server: str | c.Ldif.ServerTypes | None = u.Field(
+        target_server: str | c.Ldif.ServerTypes | None = m.Field(
             default=None,
             exclude=True,
             description="Target dialect input",
         )
-        source_server_type: str | c.Ldif.ServerTypes | None = u.Field(
+        source_server_type: str | c.Ldif.ServerTypes | None = m.Field(
             default=None,
             exclude=True,
             description="Canonical source dialect",
         )
-        target_server_type: str | c.Ldif.ServerTypes | None = u.Field(
+        target_server_type: str | c.Ldif.ServerTypes | None = m.Field(
             default=None,
             exclude=True,
             description="Canonical target dialect",
         )
-        base_dn: str | None = u.Field(
+        base_dn: str | None = m.Field(
             default=None,
             exclude=True,
             description="DN scope for ACL migration",
@@ -88,37 +88,37 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
     class MigrationSummary(m.FrozenModel):
         statistics: Annotated[
             FlextLdifModelsResults.StatisticsSummary | None,
-            u.Field(description="Aggregated statistics summary for the migration"),
+            m.Field(description="Aggregated statistics summary for the migration"),
         ] = None
         entry_count: Annotated[
             int,
-            u.Field(description="Total entries in migration result"),
+            m.Field(description="Total entries in migration result"),
         ] = 0
         output_files: Annotated[
             int,
-            u.Field(description="Number of output files generated"),
+            m.Field(description="Number of output files generated"),
         ] = 0
         is_empty: Annotated[
             bool,
-            u.Field(description="Whether the migration produced no output"),
+            m.Field(description="Whether the migration produced no output"),
         ] = True
 
     class MigrationPipelineResult(m.FrozenModel):
-        migrated_schema: FlextLdifModelsCollections.SchemaContent = u.Field(
+        migrated_schema: FlextLdifModelsCollections.SchemaContent = m.Field(
             default_factory=lambda: FlextLdifModelsCollections.SchemaContent(
                 attributes=[], object_classes=[]
             ),
             description="Schema content after migration transformation",
         )
-        entries: t.MutableSequenceOf[p.Ldif.Entry] = u.Field(
+        entries: t.MutableSequenceOf[p.Ldif.Entry] = m.Field(
             default_factory=list[p.Ldif.Entry],
             description="Migrated LDIF entries",
         )
-        stats: FlextLdifModelsResults.Statistics = u.Field(
+        stats: FlextLdifModelsResults.Statistics = m.Field(
             default_factory=FlextLdifModelsResultsStatistics.Statistics,
             description="Migration processing statistics",
         )
-        output_files: t.MutableSequenceOf[str] = u.Field(
+        output_files: t.MutableSequenceOf[str] = m.Field(
             default_factory=list[str],
             description="Output file paths produced by the migration pipeline.",
         )
@@ -158,18 +158,18 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
     class ValidationResult(m.FrozenModel):
         valid: Annotated[
             bool,
-            u.Field(description="Whether all entries passed validation"),
+            m.Field(description="Whether all entries passed validation"),
         ]
-        total_entries: t.NonNegativeInt = u.Field(description="Total entries validated")
-        valid_entries: t.NonNegativeInt = u.Field(
+        total_entries: t.NonNegativeInt = m.Field(description="Total entries validated")
+        valid_entries: t.NonNegativeInt = m.Field(
             description="Entries that passed validation",
         )
-        invalid_entries: t.NonNegativeInt = u.Field(
+        invalid_entries: t.NonNegativeInt = m.Field(
             description="Entries that failed validation",
         )
         errors: Annotated[
             t.MutableSequenceOf[str],
-            u.Field(description="Validation error messages"),
+            m.Field(description="Validation error messages"),
         ]
 
         @u.computed_field
@@ -183,26 +183,26 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
     class ServerDetectionResult(m.FrozenModel):
         detected_server_type: Annotated[
             c.Ldif.ServerTypes,
-            u.Field(description="LDAP server type detected from LDIF content"),
+            m.Field(description="LDAP server type detected from LDIF content"),
         ]
-        confidence: t.DecimalFraction = u.Field(
+        confidence: t.DecimalFraction = m.Field(
             description="Detection confidence score between 0 and 1",
         )
         scores: Annotated[
             FlextLdifModelsCollections.DynamicCounts,
-            u.Field(description="Per-server-type detection scores"),
+            m.Field(description="Per-server-type detection scores"),
         ]
         patterns_found: Annotated[
             t.MutableSequenceOf[str],
-            u.Field(description="Server-identifying patterns found in LDIF"),
+            m.Field(description="Server-identifying patterns found in LDIF"),
         ]
         detection_error: Annotated[
             str | None,
-            u.Field(description="Error message if detection failed"),
+            m.Field(description="Error message if detection failed"),
         ] = None
         fallback_reason: Annotated[
             str | None,
-            u.Field(description="Reason for using fallback server type"),
+            m.Field(description="Reason for using fallback server type"),
         ] = None
 
         @u.computed_field
@@ -213,60 +213,60 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
             return confidence >= threshold
 
     class EntriesStatistics(m.Value):
-        total_entries: Annotated[int, u.Field(description="Total entries analyzed")]
+        total_entries: Annotated[int, m.Field(description="Total entries analyzed")]
         object_class_distribution: Annotated[
             FlextLdifModelsCollections.DynamicCounts,
-            u.Field(description="Distribution of objectClass values across entries"),
+            m.Field(description="Distribution of objectClass values across entries"),
         ]
         server_type_distribution: Annotated[
             FlextLdifModelsCollections.DynamicCounts,
-            u.Field(description="Distribution of detected server types across entries"),
+            m.Field(description="Distribution of detected server types across entries"),
         ]
 
     class Response(m.Value):
         statistics: Annotated[
             FlextLdifModelsResults.Statistics,
-            u.Field(description="Canonical LDIF service statistics payload"),
+            m.Field(description="Canonical LDIF service statistics payload"),
         ]
 
     class ParseResponse(Response):
         entries: Annotated[
             t.MutableSequenceOf[p.Ldif.Entry],
-            u.Field(description="Parsed LDIF entries"),
+            m.Field(description="Parsed LDIF entries"),
         ]
         detected_server_type: Annotated[
             c.Ldif.ServerTypes | None,
-            u.Field(description="LDAP server type detected during parsing"),
+            m.Field(description="LDAP server type detected during parsing"),
         ] = None
 
     class AclResponse(Response):
         acls: Annotated[
             t.MutableSequenceOf[p.Ldif.Acl],
-            u.Field(description="Extracted ACL models"),
+            m.Field(description="Extracted ACL models"),
         ]
 
     class AclEvaluationResult(Response):
         granted: Annotated[
             bool,
-            u.Field(description="Whether the ACL granted access"),
+            m.Field(description="Whether the ACL granted access"),
         ] = False
         matched_acl: Annotated[
             p.Ldif.Acl | None,
-            u.Field(description="ACL rule that matched the evaluation"),
+            m.Field(description="ACL rule that matched the evaluation"),
         ] = None
         message: Annotated[
             str,
-            u.Field(description="Human-readable evaluation result message"),
+            m.Field(description="Human-readable evaluation result message"),
         ] = ""
 
     class WriteResponse(Response):
         content: Annotated[
             str | None,
-            u.Field(description="Serialized LDIF content string"),
+            m.Field(description="Serialized LDIF content string"),
         ] = None
         output_path: Annotated[
             str | None,
-            u.Field(
+            m.Field(
                 description="Target file path when the write operation persisted "
                 "content",
             ),

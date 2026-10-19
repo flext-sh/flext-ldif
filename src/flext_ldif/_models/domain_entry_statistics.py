@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Annotated, Self
 
-from flext_core import FlextUtilities as u, m
+from flext_core import m, u
 
 from flext_ldif import t
 from flext_ldif._models import FlextLdifModelsDomainDN
@@ -32,95 +32,95 @@ class FlextLdifModelsDomainEntryStatistics(m.FrozenDynamicModel):
 
     was_parsed: Annotated[
         bool,
-        u.Field(description="Entry was successfully parsed from LDIF"),
+        m.Field(description="Entry was successfully parsed from LDIF"),
     ] = True
     was_validated: Annotated[
         bool,
-        u.Field(description="Entry passed validation checks"),
+        m.Field(description="Entry passed validation checks"),
     ] = False
     was_filtered: Annotated[
         bool,
-        u.Field(description="Entry was filtered by rules (base DN, schema, etc.)"),
+        m.Field(description="Entry was filtered by rules (base DN, schema, etc.)"),
     ] = False
     was_written: Annotated[
         bool,
-        u.Field(description="Entry was written to output LDIF"),
+        m.Field(description="Entry was written to output LDIF"),
     ] = False
     was_rejected: Annotated[
         bool,
-        u.Field(description="Entry was rejected during processing"),
+        m.Field(description="Entry was rejected during processing"),
     ] = False
     rejection_category: Annotated[
         str | None,
-        u.Field(description="Rejection category (use RejectionCategory constants)"),
+        m.Field(description="Rejection category (use RejectionCategory constants)"),
     ] = None
     rejection_reason: Annotated[
         str | None,
-        u.Field(description="Human-readable rejection reason"),
+        m.Field(description="Human-readable rejection reason"),
     ] = None
     attributes_added: Annotated[
         t.MutableSequenceOf[str],
-        u.Field(description="Attribute names added during processing"),
+        m.Field(description="Attribute names added during processing"),
     ]
     attributes_removed: Annotated[
         t.MutableSequenceOf[str],
-        u.Field(description="Attribute names removed during processing"),
+        m.Field(description="Attribute names removed during processing"),
     ]
     attributes_modified: Annotated[
         t.MutableSequenceOf[str],
-        u.Field(description="Attribute names modified during processing"),
+        m.Field(description="Attribute names modified during processing"),
     ]
     attributes_filtered: Annotated[
         t.MutableSequenceOf[str],
-        u.Field(description="Attribute names filtered by whitelist/blacklist"),
+        m.Field(description="Attribute names filtered by whitelist/blacklist"),
     ]
     objectclasses_original: Annotated[
         t.MutableSequenceOf[str],
-        u.Field(description="Original objectClass values"),
+        m.Field(description="Original objectClass values"),
     ]
     objectclasses_final: Annotated[
         t.MutableSequenceOf[str],
-        u.Field(description="Final objectClass values after transformation"),
+        m.Field(description="Final objectClass values after transformation"),
     ]
     servers_applied: Annotated[
         t.MutableSequenceOf[str],
-        u.Field(description="List of server types applied to this entry"),
+        m.Field(description="List of server types applied to this entry"),
     ]
     server_transformations: Annotated[
         int,
-        u.Field(description="Count of server transformations applied"),
+        m.Field(description="Count of server transformations applied"),
     ] = 0
     dn_statistics: Annotated[
         FlextLdifModelsDomainDN.DNStatistics | None,
-        u.Field(description="DN transformation statistics (if applicable)"),
+        m.Field(description="DN transformation statistics (if applicable)"),
     ] = None
     filters_applied: Annotated[
         t.MutableSequenceOf[str],
-        u.Field(description="List of filters applied (use FilterType constants)"),
+        m.Field(description="List of filters applied (use FilterType constants)"),
     ]
     filter_results: Annotated[
         t.MutableBoolMapping,
-        u.Field(description="Filter results: {filter_name: passed}"),
+        m.Field(description="Filter results: {filter_name: passed}"),
     ]
     errors: Annotated[
         t.MutableSequenceOf[str],
-        u.Field(
+        m.Field(
             description="Error messages (use ErrorCategory constants for keys)",
         ),
     ]
     warnings: Annotated[
         t.MutableSequenceOf[str],
-        u.Field(description="Warning messages"),
+        m.Field(description="Warning messages"),
     ]
     category_assigned: Annotated[
         str | None,
-        u.Field(
+        m.Field(
             description="Category assigned (schema, hierarchy, users, groups, acl)",
         ),
     ] = None
     category_confidence: Annotated[
         float,
-        u.Field(
+        m.Field(
             ge=0.0,
             le=1.0,
             description="Confidence score for category assignment",

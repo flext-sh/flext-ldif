@@ -21,18 +21,18 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
     acl_attribute_name: ClassVar[str] = "acl"
     server_type: Annotated[
         str,
-        u.Field(
+        m.Field(
             description="Server type identifier (e.g., 'oid', 'oud', 'openldap', "
             "'rfc')",
         ),
     ] = "rfc"
     priority: Annotated[
         int,
-        u.Field(description="Server priority (lower number = higher priority)"),
+        m.Field(description="Server priority (lower number = higher priority)"),
     ] = 0
     parent_server: Annotated[
         Self | None,
-        u.Field(
+        m.Field(
             exclude=True,
             repr=False,
             description="Reference to parent server instance for server-level access",
@@ -200,7 +200,7 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
 
         """
         kwargs_dict: t.MutableJsonMapping = {
-            key: t.json_value_adapter().validate_python(u.to_jsonable_python(value))
+            key: u.json_value_adapter().validate_python(u.to_jsonable_python(value))
             for key, value in kwargs.items()
         }
         data = self._resolve_data(data, kwargs_dict)

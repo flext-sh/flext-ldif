@@ -16,7 +16,7 @@ from __future__ import annotations
 from collections.abc import MutableMapping
 from typing import Annotated
 
-from flext_core import FlextUtilities as u, m
+from flext_core import m, u
 
 from flext_ldif import FlextLdifShared, c, t
 from flext_ldif._models import FlextLdifModelsDomainAttributes
@@ -33,27 +33,27 @@ class FlextLdifModelsDomainMetadata:
 
         rfc_violations: Annotated[
             t.MutableSequenceOf[str],
-            u.Field(description="RFC violations detected during validation"),
+            m.Field(description="RFC violations detected during validation"),
         ]
         errors: Annotated[
             t.MutableSequenceOf[str],
-            u.Field(description="Validation errors that occurred"),
+            m.Field(description="Validation errors that occurred"),
         ]
         warnings: Annotated[
             t.MutableSequenceOf[str],
-            u.Field(description="Non-fatal validation warnings"),
+            m.Field(description="Non-fatal validation warnings"),
         ]
         context: Annotated[
             t.MutableStrMapping,
-            u.Field(description="Validation context information"),
+            m.Field(description="Validation context information"),
         ]
         server_specific_violations: Annotated[
             t.MutableSequenceOf[str],
-            u.Field(description="Server-specific validation violations"),
+            m.Field(description="Server-specific validation violations"),
         ]
         validation_server_type: Annotated[
             c.Ldif.ServerTypes | None,
-            u.Field(description="Server type used for validation"),
+            m.Field(description="Server type used for validation"),
         ] = None
 
     class WriteOptions(m.FrozenModel):
@@ -64,27 +64,27 @@ class FlextLdifModelsDomainMetadata:
 
         format: Annotated[
             str | None,
-            u.Field(description="LDIF format variant (rfc2849, extended, etc.)"),
+            m.Field(description="LDIF format variant (rfc2849, extended, etc.)"),
         ] = None
         base_dn: Annotated[
             str | None,
-            u.Field(description="Base DN for relative DN conversions"),
+            m.Field(description="Base DN for relative DN conversions"),
         ] = None
         hidden_attrs: Annotated[
             t.MutableSequenceOf[str],
-            u.Field(description="Attributes to exclude from output"),
-        ] = u.Field(default_factory=list[str])
+            m.Field(description="Attributes to exclude from output"),
+        ] = m.Field(default_factory=list[str])
         sort_entries: Annotated[
             bool,
-            u.Field(description="Whether to sort entries in output"),
+            m.Field(description="Whether to sort entries in output"),
         ] = False
         include_comments: Annotated[
             bool,
-            u.Field(description="Whether to include comment lines"),
+            m.Field(description="Whether to include comment lines"),
         ] = False
         base64_encode_binary: Annotated[
             bool,
-            u.Field(description="Whether to base64 encode binary attributes"),
+            m.Field(description="Whether to base64 encode binary attributes"),
         ] = False
 
     class FormatDetails(m.FrozenModel):
@@ -95,23 +95,23 @@ class FlextLdifModelsDomainMetadata:
 
         dn_line: Annotated[
             str | None,
-            u.Field(description="Original DN line formatting"),
+            m.Field(description="Original DN line formatting"),
         ] = None
         syntax: Annotated[
             str | None,
-            u.Field(description="Original attribute syntax information"),
+            m.Field(description="Original attribute syntax information"),
         ] = None
         encoding: Annotated[
             c.Ldif.Encoding | None,
-            u.Field(description="Original encoding (utf-8, etc.)"),
+            m.Field(description="Original encoding (utf-8, etc.)"),
         ] = None
         spacing: Annotated[
             str | None,
-            u.Field(description="Original spacing/indentation"),
+            m.Field(description="Original spacing/indentation"),
         ] = None
         trailing_info: Annotated[
             str | None,
-            u.Field(description="Trailing comments or metadata"),
+            m.Field(description="Trailing comments or metadata"),
         ] = None
 
     class SchemaFormatDetails(m.FrozenModel):
@@ -122,35 +122,35 @@ class FlextLdifModelsDomainMetadata:
 
         original_string_complete: Annotated[
             str | None,
-            u.Field(
+            m.Field(
                 description="Complete original schema definition string for perfect "
                 "round-trip",
             ),
         ] = None
         quotes: Annotated[
             str | None,
-            u.Field(description="Quoting style used in schema definition"),
+            m.Field(description="Quoting style used in schema definition"),
         ] = None
         spacing: Annotated[
             str | None,
-            u.Field(description="Spacing around schema fields"),
+            m.Field(description="Spacing around schema fields"),
         ] = None
         field_order: Annotated[
             t.MutableSequenceOf[str],
-            u.Field(description="Original order of schema fields"),
-        ] = u.Field(default_factory=list[str])
+            m.Field(description="Original order of schema fields"),
+        ] = m.Field(default_factory=list[str])
         x_origin: Annotated[
             str | None,
-            u.Field(description="X-ORIGIN value from schema"),
+            m.Field(description="X-ORIGIN value from schema"),
         ] = None
         x_ordered: Annotated[
             t.MutableSequenceOf[str],
-            u.Field(description="X-ORDERED field values"),
-        ] = u.Field(default_factory=list[str])
+            m.Field(description="X-ORDERED field values"),
+        ] = m.Field(default_factory=list[str])
         extensions: Annotated[
             t.MutableJsonMapping,
-            u.Field(description="Non-standard schema extensions"),
-        ] = u.Field(default_factory=dict)
+            m.Field(description="Non-standard schema extensions"),
+        ] = m.Field(default_factory=dict)
 
     class ServerMetadata(m.DynamicModel):
         """Universal metadata container for server-specific data preservation.
@@ -182,7 +182,7 @@ class FlextLdifModelsDomainMetadata:
 
         server_type: Annotated[
             c.Ldif.ServerTypes,
-            u.Field(
+            m.Field(
                 ...,
                 description="Type of server this metadata represents (ServerTypes enum "
                 "or literal)",
@@ -190,25 +190,25 @@ class FlextLdifModelsDomainMetadata:
         ]
         extensions: Annotated[
             t.MutableJsonMapping,
-            u.Field(
+            m.Field(
                 description="Extensible metadata storage for server-specific data "
                 "(server-injected validation rules, unconverted attributes, etc.)",
             ),
-        ] = u.Field(default_factory=dict)
+        ] = m.Field(default_factory=dict)
         rfc_violations: Annotated[
             t.MutableSequenceOf[str],
-            u.Field(
+            m.Field(
                 description="RFC violations detected (e.g., 'RFC 2849 §2: DN "
                 "required')",
             ),
-        ] = u.Field(default_factory=list[str])
+        ] = m.Field(default_factory=list[str])
         rfc_warnings: Annotated[
             t.MutableSequenceOf[str],
-            u.Field(
+            m.Field(
                 description="Non-fatal RFC warnings (e.g., unusual but valid "
                 "formatting)",
             ),
-        ] = u.Field(default_factory=list[str])
+        ] = m.Field(default_factory=list[str])
         # mro-wgwh.5 (agent: kimi) — U17: open-ended metadata containers are plain
         # t.MutableJsonMapping fields; the DynamicMetadata/EntryMetadata model wrappers
         # (getters/dump/helpers on declaration-only facets) are removed in this wave.
@@ -216,21 +216,21 @@ class FlextLdifModelsDomainMetadata:
         # create_for factory moved to u.Ldif.server_metadata_for (U17).
         conversion_notes: Annotated[
             t.MutableJsonMapping,
-            u.Field(
+            m.Field(
                 description="Map of conversion operation name → human-readable "
                 "description",
             ),
-        ] = u.Field(default_factory=dict)
+        ] = m.Field(default_factory=dict)
         attribute_transformations: Annotated[
             MutableMapping[
                 str,
                 FlextLdifModelsDomainAttributes.AttributeTransformation,
             ],
-            u.Field(
+            m.Field(
                 description="Per-attribute transformation audit trail captured during "
                 "conversion.",
             ),
-        ] = u.Field(
+        ] = m.Field(
             default_factory=dict[
                 str,
                 FlextLdifModelsDomainAttributes.AttributeTransformation,
@@ -238,115 +238,115 @@ class FlextLdifModelsDomainMetadata:
         )
         server_specific_data: Annotated[
             t.MutableJsonMapping,
-            u.Field(
+            m.Field(
                 description="Preservation of server-proprietary data for round-trip "
                 "conversions",
             ),
-        ] = u.Field(default_factory=dict)
+        ] = m.Field(default_factory=dict)
         original_server_type: Annotated[
             c.Ldif.ServerTypes | None,
-            u.Field(
+            m.Field(
                 description="Source LDAP server type (e.g., 'oid', 'oud', 'ad', "
                 "'openldap')",
             ),
         ] = None
         target_server_type: Annotated[
             c.Ldif.ServerTypes | None,
-            u.Field(
+            m.Field(
                 description="Target LDAP server type (e.g., 'oid', 'oud', 'ad', "
                 "'openldap')",
             ),
         ] = None
         acls: Annotated[
             t.MutableSequenceOf[str],
-            u.Field(
+            m.Field(
                 description="Access Control Lists extracted from entry attributes "
                 "during parsing",
             ),
-        ] = u.Field(default_factory=list[str])
+        ] = m.Field(default_factory=list[str])
         objectclasses: Annotated[
             t.MutableSequenceOf[str],
-            u.Field(
+            m.Field(
                 description="ObjectClass definitions for schema validation (not RFC "
                 "LDIF data)",
             ),
-        ] = u.Field(default_factory=list[str])
+        ] = m.Field(default_factory=list[str])
         validation_results: Annotated[
             FlextLdifModelsDomainMetadata.ValidationMetadata | None,
-            u.Field(
+            m.Field(
                 description="Validation results with RFC violations, errors, warnings, "
                 "and context",
             ),
         ] = None
         processing_stats: Annotated[
             m.BaseModel | None,
-            u.Field(
+            m.Field(
                 description="Complete statistics tracking for entry transformations "
                 "(accepts EntryStatistics)",
             ),
         ] = None
         write_options: Annotated[
             FlextLdifModelsDomainMetadata.WriteOptions | None,
-            u.Field(
+            m.Field(
                 description="Writer configuration including format, base DN, hidden "
                 "attributes, sorting, and comments",
             ),
         ] = None
         removed_attributes: Annotated[
             t.MutableJsonMapping,
-            u.Field(
+            m.Field(
                 description="Attributes removed during conversion (was "
                 "entry_metadata.removed_attributes_with_values)",
             ),
-        ] = u.Field(default_factory=dict)
+        ] = m.Field(default_factory=dict)
         original_format_details: Annotated[
             FlextLdifModelsDomainMetadata.FormatDetails | None,
-            u.Field(
+            m.Field(
                 description="Original formatting details for round-trip preservation "
                 "(DN line, syntax, encoding, spacing)",
             ),
         ] = None
         schema_format_details: Annotated[
             (FlextLdifModelsDomainMetadata.SchemaFormatDetails | None),
-            u.Field(
+            m.Field(
                 description="Schema formatting details for round-trip preservation",
             ),
         ] = None
         soft_delete_markers: Annotated[
             t.MutableSequenceOf[str],
-            u.Field(
+            m.Field(
                 description="Attributes soft-deleted during conversion (can be "
                 "restored). Different from removed_attributes: these are "
                 "intentionally hidden for target server but preserved for "
                 "reverse conversion.",
             ),
-        ] = u.Field(default_factory=list[str])
+        ] = m.Field(default_factory=list[str])
         original_attribute_case: Annotated[
             t.MutableJsonMapping,
-            u.Field(
+            m.Field(
                 description="Original case of attribute names: {'objectclass': "
                 "'objectClass', 'cn': 'CN'}. Used to restore original case during "
                 "reverse conversion.",
             ),
-        ] = u.Field(default_factory=dict)
+        ] = m.Field(default_factory=dict)
         schema_servers_applied: Annotated[
             t.MutableSequenceOf[str],
-            u.Field(
+            m.Field(
                 description="List of schema servers applied during parsing: "
                 "['matching_rule_normalization', 'syntax_oid_conversion', "
                 "'schema_dn_server']",
             ),
-        ] = u.Field(default_factory=list[str])
+        ] = m.Field(default_factory=list[str])
         boolean_conversions: Annotated[
             t.MutableJsonMapping,
-            u.Field(
+            m.Field(
                 description="Boolean conversion tracking: {'orcldasisenabled': "
                 "{'original': '1', 'converted': 'TRUE', 'format': 'OID->RFC'}}",
             ),
-        ] = u.Field(default_factory=dict)
+        ] = m.Field(default_factory=dict)
         minimal_differences: Annotated[
             t.MutableJsonMapping,
-            u.Field(
+            m.Field(
                 description=(
                     "Complete minimal differences tracking for zero data loss: "
                     "{'dn': {'has_differences': True, 'original': 'cn=test, "
@@ -364,10 +364,10 @@ class FlextLdifModelsDomainMetadata:
                     "'trailing_spaces_removed': True, ...}}"
                 ),
             ),
-        ] = u.Field(default_factory=dict)
+        ] = m.Field(default_factory=dict)
         original_strings: Annotated[
             t.MutableJsonMapping,
-            u.Field(
+            m.Field(
                 description=(
                     "Complete preservation of original strings before ANY "
                     "conversion: {'dn_original': 'cn=test, dc=example;', "
@@ -379,10 +379,10 @@ class FlextLdifModelsDomainMetadata:
                     "'entry_original_ldif': 'dn: cn=test\\ncn: test\\n'}"
                 ),
             ),
-        ] = u.Field(default_factory=dict)
+        ] = m.Field(default_factory=dict)
         conversion_history: Annotated[
             t.MutableSequenceOf[t.MutableStrMapping],
-            u.Field(
+            m.Field(
                 default_factory=list[t.MutableStrMapping],
                 description=(
                     "Complete conversion history for audit trail: [{'step': "
@@ -395,7 +395,7 @@ class FlextLdifModelsDomainMetadata:
                     "'server_type': 'rfc', 'operation': 'normalize'}, ...]"
                 ),
             ),
-        ] = u.Field(default_factory=list[t.MutableStrMapping])
+        ] = m.Field(default_factory=list[t.MutableStrMapping])
 
         @u.field_validator("server_type", mode="before")
         @classmethod

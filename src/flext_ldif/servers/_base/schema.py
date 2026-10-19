@@ -31,7 +31,7 @@ class FlextLdifServersBaseSchema(
 
     server_type: Annotated[
         str,
-        u.Field(
+        m.Field(
             description=(
                 "Server type identifier (e.g., 'oid', 'oud', 'openldap', 'rfc')"
             ),
@@ -39,11 +39,11 @@ class FlextLdifServersBaseSchema(
     ] = "rfc"
     priority: Annotated[
         int,
-        u.Field(description="Server priority (lower number = higher priority)"),
+        m.Field(description="Server priority (lower number = higher priority)"),
     ] = 0
     parent_server: Annotated[
         Self | None,
-        u.Field(
+        m.Field(
             exclude=True,
             repr=False,
             description="Reference to parent server instance for server-level access",
@@ -51,7 +51,7 @@ class FlextLdifServersBaseSchema(
     ] = None
     attr_definition: Annotated[
         str | None,
-        u.Field(
+        m.Field(
             exclude=True,
             repr=False,
             description="Attribute definition for auto-execute pattern",
@@ -59,7 +59,7 @@ class FlextLdifServersBaseSchema(
     ] = None
     oc_definition: Annotated[
         str | None,
-        u.Field(
+        m.Field(
             exclude=True,
             repr=False,
             description="ObjectClass definition for auto-execute pattern",
@@ -67,7 +67,7 @@ class FlextLdifServersBaseSchema(
     ] = None
     attr_model: Annotated[
         m.Ldif.SchemaAttribute | None,
-        u.Field(
+        m.Field(
             exclude=True,
             repr=False,
             description="SchemaAttribute model for auto-execute pattern",
@@ -75,7 +75,7 @@ class FlextLdifServersBaseSchema(
     ] = None
     oc_model: Annotated[
         m.Ldif.SchemaObjectClass | None,
-        u.Field(
+        m.Field(
             exclude=True,
             repr=False,
             description="SchemaObjectClass model for auto-execute pattern",
@@ -83,7 +83,7 @@ class FlextLdifServersBaseSchema(
     ] = None
     operation: Annotated[
         str | None,
-        u.Field(
+        m.Field(
             exclude=True,
             repr=False,
             description="Operation type for auto-execute pattern",
@@ -224,7 +224,7 @@ class FlextLdifServersBaseSchema(
             Typed result carrying the parsed model or written string.
 
         """
-        json_value_adapter = t.json_value_adapter()
+        json_value_adapter = u.json_value_adapter()
         kwargs_dict: t.MutableJsonMapping = {
             key: json_value_adapter.validate_python(u.to_jsonable_python(value))
             for key, value in kwargs.items()

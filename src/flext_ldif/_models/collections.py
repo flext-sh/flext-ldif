@@ -75,17 +75,17 @@ class FlextLdifModelsCollections:
             extra = self.__pydantic_extra__
             if extra is None:
                 return {}
-            data: t.MutableJsonMapping = t.json_dict_adapter().validate_python(extra)
+            data: t.MutableJsonMapping = u.json_dict_adapter().validate_python(extra)
             return data
 
     class SchemaContent(m.FrozenModel):
         attributes: Annotated[
             t.MutableSequenceOf[FlextLdifModelsDomainsEntries.SchemaAttribute],
-            u.Field(description="Schema attribute definitions extracted from LDIF"),
+            m.Field(description="Schema attribute definitions extracted from LDIF"),
         ]
         object_classes: Annotated[
             t.MutableSequenceOf[FlextLdifModelsDomainsEntries.SchemaObjectClass],
-            u.Field(description="Schema object class definitions extracted from LDIF"),
+            m.Field(description="Schema object class definitions extracted from LDIF"),
         ]
 
     class FlexibleCategories(m.DynamicModel):
@@ -93,8 +93,8 @@ class FlextLdifModelsCollections:
             MutableMapping[
                 str, t.MutableSequenceOf[FlextLdifModelsDomainsEntries.Entry]
             ],
-            u.Field(description="Category name to grouped LDIF entries mapping."),
-        ] = u.Field(
+            m.Field(description="Category name to grouped LDIF entries mapping."),
+        ] = m.Field(
             default_factory=dict[
                 str, t.MutableSequenceOf[FlextLdifModelsDomainsEntries.Entry]
             ]

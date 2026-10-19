@@ -27,7 +27,7 @@ class FlextLdifMetadataJsonCore:
         if value is None:
             return ""
         payload_json: str = FlextLdifModels.Cli.CliNormalizedJson(
-            t.Cli.JSON_VALUE_ADAPTER.validate_python(u.to_jsonable_python(value)),
+            u.Cli.JSON_VALUE_ADAPTER.validate_python(u.to_jsonable_python(value)),
         ).model_dump_json()
         return payload_json
 

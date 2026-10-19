@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import Annotated, Self
 
-from flext_core import FlextUtilities as u, m
+from flext_core import m
 
 from flext_ldif._constants.base import FlextLdifConstantsEnums
 from flext_ldif._models._settings_normalization import (
@@ -42,35 +42,35 @@ class FlextLdifModelsSettingsProcessing:
 
         batch_size: Annotated[
             int,
-            u.Field(description="Number of entries to process per batch"),
+            m.Field(description="Number of entries to process per batch"),
         ] = 100
         timeout_seconds: Annotated[
             int,
-            u.Field(description="Maximum processing time in seconds"),
+            m.Field(description="Maximum processing time in seconds"),
         ] = 300
         max_retries: Annotated[
             int,
-            u.Field(description="Maximum retry attempts on failure"),
+            m.Field(description="Maximum retry attempts on failure"),
         ] = 3
         source_server: Annotated[
             NormalizedServerTypeValue,
-            u.Field(description="Source LDAP server type identifier"),
+            m.Field(description="Source LDAP server type identifier"),
         ] = None
         target_server: Annotated[
             NormalizedServerTypeValue,
-            u.Field(description="Target LDAP server type identifier"),
+            m.Field(description="Target LDAP server type identifier"),
         ] = None
         base_dn: Annotated[
             str,
-            u.Field(description="Migration base DN for OID→OUD ACL scope filtering"),
+            m.Field(description="Migration base DN for OID→OUD ACL scope filtering"),
         ] = ""
         dn_config: Annotated[
             FlextLdifModelsSettingsNormalization.DnNormalizationConfig | None,
-            u.Field(description="DN normalization configuration"),
+            m.Field(description="DN normalization configuration"),
         ] = None
         attr_config: Annotated[
             FlextLdifModelsSettingsNormalization.AttrNormalizationConfig | None,
-            u.Field(description="Attribute normalization configuration"),
+            m.Field(description="Attribute normalization configuration"),
         ] = None
 
         @classmethod
@@ -98,27 +98,27 @@ class FlextLdifModelsSettingsProcessing:
 
         fail_fast: Annotated[
             bool,
-            u.Field(description="Stop on first transformation error"),
+            m.Field(description="Stop on first transformation error"),
         ] = False
         preserve_order: Annotated[
             bool,
-            u.Field(description="Preserve original entry ordering"),
+            m.Field(description="Preserve original entry ordering"),
         ] = True
         track_changes: Annotated[
             bool,
-            u.Field(description="Track attribute-level changes for audit"),
+            m.Field(description="Track attribute-level changes for audit"),
         ] = False
         normalize_dns: Annotated[
             bool,
-            u.Field(description="Normalize DNs during transformation"),
+            m.Field(description="Normalize DNs during transformation"),
         ] = False
         normalize_attrs: Annotated[
             bool,
-            u.Field(description="Normalize attributes during transformation"),
+            m.Field(description="Normalize attributes during transformation"),
         ] = False
         process_config: Annotated[
             FlextLdifModelsSettingsProcessing.ProcessConfig | None,
-            u.Field(description="Processing configuration for batch operations"),
+            m.Field(description="Processing configuration for batch operations"),
         ] = None
 
         @classmethod

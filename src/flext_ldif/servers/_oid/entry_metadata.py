@@ -81,7 +81,7 @@ class FlextLdifServersOidEntryMetadataMixin(FlextLdifServersRfcEntry):
         )
         if not isinstance(boolean_conversions_obj, Mapping):
             return None
-        return t.json_dict_adapter().validate_python(boolean_conversions_obj)
+        return u.json_dict_adapter().validate_python(boolean_conversions_obj)
 
     @staticmethod
     def _typed_conversion_entry(
@@ -95,7 +95,7 @@ class FlextLdifServersOidEntryMetadataMixin(FlextLdifServersRfcEntry):
         """
         if not isinstance(value, Mapping):
             return None
-        value_metadata: t.MutableJsonMapping = t.json_dict_adapter().validate_python(
+        value_metadata: t.MutableJsonMapping = u.json_dict_adapter().validate_python(
             value,
         )
         typed_dict: t.MutableAttributeMapping = {}

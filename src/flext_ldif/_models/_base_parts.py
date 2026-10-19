@@ -36,7 +36,7 @@ class FlextLdifModelsBasesParts:
 
         validation_metadata: Annotated[
             m.ConfigMap | None,
-            u.Field(
+            m.Field(
                 description="Validation metadata captured during schema processing.",
             ),
         ] = None
@@ -84,19 +84,19 @@ class FlextLdifModelsBasesParts:
 
         server_type: Annotated[
             c.Ldif.ServerTypes,
-            u.Field(description="LDAP server type (oid, oud, openldap, rfc, etc.)"),
+            m.Field(description="LDAP server type (oid, oud, openldap, rfc, etc.)"),
         ] = c.Ldif.ServerTypes.RFC
         validation_violations: Annotated[
             t.MutableSequenceOf[str],
-            u.Field(
+            m.Field(
                 default_factory=list,
                 description="Validation violations recorded while normalizing ACL "
                 "data.",
             ),
-        ] = u.Field(default_factory=list[str])
+        ] = m.Field(default_factory=list[str])
         validation_metadata: Annotated[
             m.ConfigMap | None,
-            u.Field(description="Validation metadata captured during ACL processing."),
+            m.Field(description="Validation metadata captured during ACL processing."),
         ] = None
 
         @u.computed_field

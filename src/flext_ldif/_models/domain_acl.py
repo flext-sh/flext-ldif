@@ -29,50 +29,50 @@ class FlextLdifModelsDomainAcl:
         - Compound permissions (all)
         """
 
-        read: Annotated[bool, u.Field(description="Read permission")] = False
-        write: Annotated[bool, u.Field(description="Write permission")] = False
-        add: Annotated[bool, u.Field(description="Add permission")] = False
-        delete: Annotated[bool, u.Field(description="Delete permission")] = False
-        search: Annotated[bool, u.Field(description="Search permission")] = False
-        compare: Annotated[bool, u.Field(description="Compare permission")] = False
+        read: Annotated[bool, m.Field(description="Read permission")] = False
+        write: Annotated[bool, m.Field(description="Write permission")] = False
+        add: Annotated[bool, m.Field(description="Add permission")] = False
+        delete: Annotated[bool, m.Field(description="Delete permission")] = False
+        search: Annotated[bool, m.Field(description="Search permission")] = False
+        compare: Annotated[bool, m.Field(description="Compare permission")] = False
         self_write: Annotated[
             bool,
-            u.Field(description="Self-write permission (OID, OUD)"),
+            m.Field(description="Self-write permission (OID, OUD)"),
         ] = False
         proxy: Annotated[
             bool,
-            u.Field(description="Proxy permission (OID, OUD, 389DS)"),
+            m.Field(description="Proxy permission (OID, OUD, 389DS)"),
         ] = False
         browse: Annotated[
             bool,
-            u.Field(description="Browse permission (OID) - maps to read+search"),
+            m.Field(description="Browse permission (OID) - maps to read+search"),
         ] = False
         auth: Annotated[
             bool,
-            u.Field(description="Auth permission (OID) - authentication access"),
+            m.Field(description="Auth permission (OID) - authentication access"),
         ] = False
         all: Annotated[
             bool,
-            u.Field(description="All permissions (compound permission)"),
+            m.Field(description="All permissions (compound permission)"),
         ] = False
         no_write: Annotated[
             bool,
-            u.Field(description="Deny write permission (OID)"),
+            m.Field(description="Deny write permission (OID)"),
         ] = False
-        no_add: Annotated[bool, u.Field(description="Deny add permission (OID)")] = (
+        no_add: Annotated[bool, m.Field(description="Deny add permission (OID)")] = (
             False
         )
         no_delete: Annotated[
             bool,
-            u.Field(description="Deny delete permission (OID)"),
+            m.Field(description="Deny delete permission (OID)"),
         ] = False
         no_browse: Annotated[
             bool,
-            u.Field(description="Deny browse permission (OID)"),
+            m.Field(description="Deny browse permission (OID)"),
         ] = False
         no_self_write: Annotated[
             bool,
-            u.Field(description="Deny self-write permission (OID)"),
+            m.Field(description="Deny self-write permission (OID)"),
         ] = False
 
         @staticmethod
@@ -119,10 +119,10 @@ class FlextLdifModelsDomainAcl:
     class AclTarget(m.ArbitraryTypesModel):
         """ACL target specification."""
 
-        target_dn: Annotated[str, u.Field(..., description="Target DN pattern")]
+        target_dn: Annotated[str, m.Field(..., description="Target DN pattern")]
         attributes: Annotated[
             t.MutableSequenceOf[str],
-            u.Field(description="Target attributes"),
+            m.Field(description="Target attributes"),
         ]
 
     class AclSubject(m.ArbitraryTypesModel):
@@ -130,9 +130,9 @@ class FlextLdifModelsDomainAcl:
 
         subject_type: Annotated[
             c.Ldif.AclSubjectType,
-            u.Field(..., description="Subject type (user, group, etc.)"),
+            m.Field(..., description="Subject type (user, group, etc.)"),
         ]
-        subject_value: Annotated[str, u.Field(..., description="Subject value/pattern")]
+        subject_value: Annotated[str, m.Field(..., description="Subject value/pattern")]
 
     class Acl(FlextLdifModelsBases.AclElement):
         """Universal ACL model for all LDAP server types.
@@ -146,30 +146,30 @@ class FlextLdifModelsDomainAcl:
         - has_server_servers computed field
         """
 
-        name: Annotated[str, u.Field(description="ACL name")] = ""
+        name: Annotated[str, m.Field(description="ACL name")] = ""
         target: Annotated[
             FlextLdifModelsDomainAcl.AclTarget | None,
-            u.Field(description="ACL target specification"),
+            m.Field(description="ACL target specification"),
         ] = None
         subject: Annotated[
             FlextLdifModelsDomainAcl.AclSubject | None,
-            u.Field(description="ACL subject specification"),
+            m.Field(description="ACL subject specification"),
         ] = None
         permissions: Annotated[
             FlextLdifModelsDomainAcl.AclPermissions | None,
-            u.Field(description="ACL permission flags"),
+            m.Field(description="ACL permission flags"),
         ] = None
         raw_line: Annotated[
             str,
-            u.Field(description="Original raw ACL line from LDIF"),
+            m.Field(description="Original raw ACL line from LDIF"),
         ] = ""
         raw_acl: Annotated[
             str,
-            u.Field(description="Original ACL string from LDIF"),
+            m.Field(description="Original ACL string from LDIF"),
         ] = ""
         metadata: Annotated[
             FlextLdifModelsDomainMetadata.ServerMetadata | None,
-            u.Field(description="Server-specific metadata for ACL processing"),
+            m.Field(description="Server-specific metadata for ACL processing"),
         ] = None
 
         @classmethod
@@ -290,19 +290,19 @@ class FlextLdifModelsDomainAcl:
 
         original_format: Annotated[
             str | None,
-            u.Field(description="Original ACL string format from source server"),
+            m.Field(description="Original ACL string format from source server"),
         ] = None
         source_server: Annotated[
             str | None,
-            u.Field(description="Server type that parsed this ACL"),
+            m.Field(description="Server type that parsed this ACL"),
         ] = None
         name_sanitized: Annotated[
             bool,
-            u.Field(description="True if ACL name was sanitized during processing"),
+            m.Field(description="True if ACL name was sanitized during processing"),
         ] = False
         original_name_raw: Annotated[
             str | None,
-            u.Field(description="Original ACL name before sanitization"),
+            m.Field(description="Original ACL name before sanitization"),
         ] = None
 
         @classmethod
@@ -370,27 +370,27 @@ class FlextLdifModelsDomainAcl:
 
         original_acl: Annotated[
             FlextLdifModelsDomainAcl.Acl,
-            u.Field(description="Original ACL model"),
+            m.Field(description="Original ACL model"),
         ]
         converted_acl: Annotated[
             FlextLdifModelsDomainAcl.Acl,
-            u.Field(description="Converted ACL model (modified in-place)"),
+            m.Field(description="Converted ACL model (modified in-place)"),
         ]
         orig_perms_dict: Annotated[
             t.MutableBoolMapping,
-            u.Field(..., description="Original permissions dict"),
+            m.Field(..., description="Original permissions dict"),
         ]
         source_server_type: Annotated[
             c.Ldif.ServerTypes | None,
-            u.Field(description="Source server type"),
+            m.Field(description="Source server type"),
         ] = None
         target_server_type: Annotated[
             c.Ldif.ServerTypes | None,
-            u.Field(description="Target server type"),
+            m.Field(description="Target server type"),
         ] = None
         converted_has_permissions: Annotated[
             bool,
-            u.Field(description="Whether converted ACL has permissions"),
+            m.Field(description="Whether converted ACL has permissions"),
         ] = False
 
 

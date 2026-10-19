@@ -88,7 +88,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
         })
         dn: Annotated[
             FlextLdifModelsDomainDN.DN | None,
-            u.Field(
+            m.Field(
                 description=(
                     "Distinguished Name of the entry (REQUIRED per RFC 2849 § 2). "
                     "Allows None for RFC violation capture. Coerced from str via "
@@ -98,7 +98,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
         ]
         attributes: Annotated[
             FlextLdifModelsDomainAttributes.Attributes | None,
-            u.Field(
+            m.Field(
                 description=(
                     "Entry attributes container (REQUIRED per RFC 2849 § 2). Allows "
                     "None for RFC violation capture. Coerced from "
@@ -109,7 +109,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
         ]
         record_kind: Annotated[
             c.Ldif.RecordKind,
-            u.Field(
+            m.Field(
                 description=(
                     "Whether this Entry represents LDIF content or an LDIF change "
                     "record."
@@ -118,16 +118,16 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
         ] = c.Ldif.RecordKind.CONTENT
         controls: Annotated[
             t.SequenceOf[FlextLdifModelsDomainEntryControl],
-            u.Field(description="RFC 2849 control lines associated with the record"),
-        ] = u.Field(default_factory=tuple)
+            m.Field(description="RFC 2849 control lines associated with the record"),
+        ] = m.Field(default_factory=tuple)
         change_operations: Annotated[
             t.MutableSequenceOf[
                 FlextLdifModelsDomainEntryChangeOperation.ChangeOperation
             ],
-            u.Field(
+            m.Field(
                 description="Structured modify operation blocks for changetype=modify",
             ),
-        ] = u.Field(
+        ] = m.Field(
             default_factory=list[
                 FlextLdifModelsDomainEntryChangeOperation.ChangeOperation
             ],
@@ -194,7 +194,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
 
         changetype: Annotated[
             c.Ldif.ChangeType | None,
-            u.Field(
+            m.Field(
                 description=(
                     "Change operation type per RFC 2849 § 5.7 "
                     "(add/delete/modify/moddn/modrdn)"
@@ -215,25 +215,25 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
 
         newrdn: Annotated[
             str | None,
-            u.Field(description="RFC 2849 newrdn field for moddn/modrdn records"),
+            m.Field(description="RFC 2849 newrdn field for moddn/modrdn records"),
         ] = None
         deleteoldrdn: Annotated[
             bool | None,
-            u.Field(description="RFC 2849 deleteoldrdn field for moddn/modrdn records"),
+            m.Field(description="RFC 2849 deleteoldrdn field for moddn/modrdn records"),
         ] = None
         newsuperior: Annotated[
             str | None,
-            u.Field(description="RFC 2849 newsuperior field for moddn/modrdn records"),
+            m.Field(description="RFC 2849 newsuperior field for moddn/modrdn records"),
         ] = None
         raw_record_lines: Annotated[
             t.MutableSequenceOf[str],
-            u.Field(
+            m.Field(
                 description="Original unfolded LDIF lines for loss-aware round-trip",
             ),
-        ] = u.Field(default_factory=list[str])
+        ] = m.Field(default_factory=list[str])
         metadata: Annotated[
             FlextLdifModelsDomainMetadata.ServerMetadata | None,
-            u.Field(
+            m.Field(
                 description=(
                     "Server-specific metadata for processing data, ACLs, "
                     "statistics, validation (non-RFC data)"
@@ -242,7 +242,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
         ] = None
         validation_metadata: Annotated[
             m.ConfigMap | None,
-            u.Field(
+            m.Field(
                 description=(
                     "Validation metadata captured during parsing and transformation."
                 ),
@@ -484,7 +484,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             attribute_count = len(self.attributes) if self.attributes else 0
             old_context: t.MutableStrMapping = {}
             if self.metadata.validation_results is not None:
-                old_context = t.str_dict_adapter().validate_python(
+                old_context = u.str_dict_adapter().validate_python(
                     self.metadata.validation_results.context,
                 )
             context_payload = self._build_rfc_validation_context(
@@ -493,7 +493,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
                 attribute_count=attribute_count,
                 total_violations=len(violations),
             )
-            payload: t.JsonMapping = t.json_mapping_adapter().validate_python({
+            payload: t.JsonMapping = u.json_mapping_adapter().validate_python({
                 **self._EMPTY_VALIDATION_RESULT_PAYLOAD,
                 "rfc_violations": list(violations),
                 "errors": list[str](),
@@ -569,7 +569,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
                 Validation metadata carrying no violations.
 
             """
-            payload: t.JsonMapping = t.json_mapping_adapter().validate_python({
+            payload: t.JsonMapping = u.json_mapping_adapter().validate_python({
                 **cls._EMPTY_VALIDATION_RESULT_PAYLOAD,
                 "rfc_violations": list[str](),
                 "errors": list[str](),
@@ -681,7 +681,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
                     values_list = list(attr_values)
                 attrs_dict[attr_name] = values_list
 
-            validate_payload: t.JsonMapping = t.json_mapping_adapter().validate_python({
+            validate_payload: t.JsonMapping = u.json_mapping_adapter().validate_python({
                 "attributes": attrs_dict,
                 **cls._ATTRIBUTES_VALIDATE_DEFAULTS,
             })

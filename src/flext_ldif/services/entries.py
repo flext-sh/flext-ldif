@@ -17,7 +17,7 @@ class FlextLdifEntries(s[p.Ldif.Response]):
 
     entries: Annotated[
         t.MutableSequenceOf[m.Ldif.Entry],
-        u.Field(
+        m.Field(
             default_factory=list,
             exclude=True,
             description="Entries processed when the configured operation runner is "
@@ -26,7 +26,7 @@ class FlextLdifEntries(s[p.Ldif.Response]):
     ]
     operation: Annotated[
         str | None,
-        u.Field(
+        m.Field(
             default=None,
             exclude=True,
             description="Configured entry operation executed by "
@@ -35,7 +35,7 @@ class FlextLdifEntries(s[p.Ldif.Response]):
     ]
     attributes_to_remove: Annotated[
         t.MutableSequenceOf[str],
-        u.Field(
+        m.Field(
             default_factory=list,
             exclude=True,
             description=(

@@ -29,7 +29,7 @@ class FlextLdifServerMethodsMixin:
 
         """
         try:
-            operation_raw = t.str_adapter().validate_python(kwargs.get("operation"))
+            operation_raw = u.str_adapter().validate_python(kwargs.get("operation"))
         except c.ValidationError as exc:
             return r[str].fail(str(exc), exception=exc)
         return r[str].ok(operation_raw)
@@ -59,7 +59,7 @@ class FlextLdifServerMethodsMixin:
         if not (force_dispatch or any(key not in processor_keys for key in fields)):
             return None
         return {
-            key: t.json_value_adapter().validate_python(value)
+            key: u.json_value_adapter().validate_python(value)
             for key, value in fields.items()
             if key not in processor_keys
         }

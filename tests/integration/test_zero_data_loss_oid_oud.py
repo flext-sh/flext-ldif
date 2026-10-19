@@ -20,6 +20,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
 import pytest
@@ -138,11 +139,8 @@ class TestsFlextLdifZeroDataLossOidOud:
 
         for entry in result.value.entries:
             assert entry.metadata is not None
-            # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: validate the
-            # plain mapping.
-            dn_diff: t.MutableJsonMapping = t.json_dict_adapter().validate_python(
-                entry.metadata.minimal_differences.get("dn", {}),
-            )
+            dn_diff = entry.metadata.minimal_differences.get("dn", {})
+            assert isinstance(dn_diff, Mapping)
             if bool(dn_diff.get("has_differences", False)):
                 tm.that(entry.metadata.original_strings, has="dn_original")
 
@@ -166,19 +164,15 @@ orclIsEnabled: 1
         result = api.parse_ldif(oid_boolean_entry, server_type=c.Tests.OID)
         tm.ok(result)
 
-        tracked_conversions: list[t.MutableJsonMapping] = []
+        tracked_conversions: list[t.JsonMapping] = []
         for entry in result.value.entries:
             metadata = entry.metadata
             if metadata is None:
                 continue
-            converted: t.MutableJsonMapping = t.json_dict_adapter().validate_python(
-                metadata.extensions[c.Ldif.CONVERTED_ATTRIBUTES],
-            )
-            boolean_conversions: t.MutableJsonMapping = (
-                t.json_dict_adapter().validate_python(
-                    converted[c.Ldif.CONVERSION_BOOLEAN_CONVERSIONS],
-                )
-            )
+            converted = metadata.extensions[c.Ldif.CONVERTED_ATTRIBUTES]
+            assert isinstance(converted, Mapping)
+            boolean_conversions = converted[c.Ldif.CONVERSION_BOOLEAN_CONVERSIONS]
+            assert isinstance(boolean_conversions, Mapping)
             tracked_conversions.append(boolean_conversions)
 
         assert tracked_conversions, (
@@ -187,9 +181,8 @@ orclIsEnabled: 1
 
         for boolean_conversions in tracked_conversions:
             for raw in boolean_conversions.values():
-                conversion: t.MutableJsonMapping = (
-                    t.json_dict_adapter().validate_python(raw)
-                )
+                conversion = raw
+                assert isinstance(conversion, Mapping)
                 tm.that(conversion, has="original")
                 tm.that(conversion, has="converted")
                 tm.that(conversion.get(c.Ldif.ORIGINAL_FORMAT), eq="1/0")

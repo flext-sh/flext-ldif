@@ -67,7 +67,7 @@ class FlextLdifUtilitiesSchemaParse:
         result_dict: t.Ldif.MutableMetadataMapping = {}
         for key, val in syntax_extensions.items():
             if val is not None:
-                result_dict[key] = t.Cli.JSON_VALUE_ADAPTER.validate_python(val)
+                result_dict[key] = u.Cli.JSON_VALUE_ADAPTER.validate_python(val)
         return result_dict
 
     @staticmethod

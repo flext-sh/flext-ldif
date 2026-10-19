@@ -12,6 +12,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -19,7 +20,7 @@ import pytest
 
 from flext_ldif import ldif
 from flext_ldif.services import FlextLdifParser
-from tests import c, m, t, tm
+from tests import c, m, tm
 
 if TYPE_CHECKING:
     from tests import p
@@ -184,20 +185,13 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         tm.ok(result)
         metadata = result.value.entries[0].metadata
         assert metadata is not None
-        # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: validate plain
-        # mappings.
-        converted: t.MutableJsonMapping = t.json_dict_adapter().validate_python(
-            metadata.extensions[c.Ldif.CONVERTED_ATTRIBUTES],
-        )
-        boolean_conversions: t.MutableJsonMapping = (
-            t.json_dict_adapter().validate_python(
-                converted[c.Ldif.CONVERSION_BOOLEAN_CONVERSIONS],
-            )
-        )
+        converted = metadata.extensions[c.Ldif.CONVERTED_ATTRIBUTES]
+        assert isinstance(converted, Mapping)
+        boolean_conversions = converted[c.Ldif.CONVERSION_BOOLEAN_CONVERSIONS]
+        assert isinstance(boolean_conversions, Mapping)
         tm.that(boolean_conversions, has=attribute)
-        entry_conversion: t.MutableJsonMapping = t.json_dict_adapter().validate_python(
-            boolean_conversions[attribute],
-        )
+        entry_conversion = boolean_conversions[attribute]
+        assert isinstance(entry_conversion, Mapping)
         tm.that(entry_conversion[c.Ldif.CONVERSION_ORIGINAL_VALUE], eq=[raw_value])
         tm.that(
             entry_conversion[c.Ldif.CONVERSION_CONVERTED_VALUE],

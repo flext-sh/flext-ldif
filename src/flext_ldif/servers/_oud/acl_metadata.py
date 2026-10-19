@@ -163,9 +163,9 @@ class FlextLdifServersOudAclMetadataMixin:
         value_dict_inner: t.MutableJsonMapping = {}
         for k, v in value.items():
             value_dict_inner[k] = (
-                v if u.primitive(v) else t.Cli.JSON_VALUE_ADAPTER.validate_python(v)
+                v if u.primitive(v) else u.Cli.JSON_VALUE_ADAPTER.validate_python(v)
             )
-        return t.Cli.JSON_VALUE_ADAPTER.validate_python(value_dict_inner)
+        return u.Cli.JSON_VALUE_ADAPTER.validate_python(value_dict_inner)
 
     @staticmethod
     def process_parsed_acl_extensions(
@@ -183,7 +183,7 @@ class FlextLdifServersOudAclMetadataMixin:
                 current_extensions[final_key] = value
             elif isinstance(value, c.SEQUENCE_PAIR_TYPES):
                 current_extensions[final_key] = (
-                    t.Cli.JSON_VALUE_ADAPTER.validate_python([
+                    u.Cli.JSON_VALUE_ADAPTER.validate_python([
                         item if item is None or u.primitive(item) else str(item)
                         for item in value
                     ])

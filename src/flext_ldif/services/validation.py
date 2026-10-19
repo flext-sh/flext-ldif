@@ -9,7 +9,7 @@ from __future__ import annotations
 import struct
 from typing import Annotated
 
-from flext_ldif import c, p, r, s, t, u
+from flext_ldif import c, m, p, r, s, t, u
 
 
 class FlextLdifValidation(s[p.Ldif.Response]):
@@ -17,21 +17,21 @@ class FlextLdifValidation(s[p.Ldif.Response]):
 
     attribute_names: Annotated[
         t.MutableSequenceOf[str],
-        u.Field(
+        m.Field(
             default_factory=list,
             description="Attribute names to validate against RFC 4512",
         ),
-    ] = u.Field(default_factory=list[str])
+    ] = m.Field(default_factory=list[str])
     objectclass_names: Annotated[
         t.MutableSequenceOf[str],
-        u.Field(
+        m.Field(
             default_factory=list,
             description="Object class names to validate against RFC 4512",
         ),
-    ] = u.Field(default_factory=list[str])
+    ] = m.Field(default_factory=list[str])
     max_attr_value_length: Annotated[
         int | None,
-        u.Field(description="Maximum allowed attribute value length for validation"),
+        m.Field(description="Maximum allowed attribute value length for validation"),
     ] = None
 
     @staticmethod

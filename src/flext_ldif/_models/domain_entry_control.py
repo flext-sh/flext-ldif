@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Annotated, ClassVar
 
-from flext_core import FlextUtilities as u, m
+from flext_core import m
 
 from flext_ldif import c
 
@@ -26,23 +26,23 @@ class FlextLdifModelsDomainEntryControl(m.Value):
 
     control_type: Annotated[
         str,
-        u.Field(description="LDAP control OID or descriptor"),
+        m.Field(description="LDAP control OID or descriptor"),
     ]
     criticality: Annotated[
         bool | None,
-        u.Field(description="Optional criticality flag from control line"),
+        m.Field(description="Optional criticality flag from control line"),
     ] = None
     control_value: Annotated[
         str | None,
-        u.Field(description="Optional control value"),
+        m.Field(description="Optional control value"),
     ] = None
     control_value_origin: Annotated[
         c.Ldif.ValueOrigin | None,
-        u.Field(description="Original control value encoding/source"),
+        m.Field(description="Original control value encoding/source"),
     ] = None
     raw_value: Annotated[
         str | None,
-        u.Field(description="Original serialized control payload"),
+        m.Field(description="Original serialized control payload"),
     ] = None
 
 

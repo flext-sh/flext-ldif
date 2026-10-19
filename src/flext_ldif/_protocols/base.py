@@ -12,9 +12,7 @@ from typing import TYPE_CHECKING, ClassVar, Protocol, runtime_checkable
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from flext_cli import p
-
-    from flext_ldif import c, m, t
+    from flext_ldif import c, m, p, t
 
 
 class FlextLdifProtocolsBase:
@@ -259,25 +257,19 @@ class FlextLdifProtocolsBase:
 
         def parse_server(
             self, value: str
-        ) -> p.Result[
-            FlextLdifProtocolsBase.SchemaAttribute
-            | FlextLdifProtocolsBase.SchemaObjectClass
-        ]: ...
+        ) -> p.Result[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]: ...
 
         def parse_input(
             self, schema_text: str
-        ) -> p.Result[
-            FlextLdifProtocolsBase.SchemaAttribute
-            | FlextLdifProtocolsBase.SchemaObjectClass
-        ]: ...
+        ) -> p.Result[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]: ...
 
         def parse_attribute(
             self, definition: str
-        ) -> p.Result[FlextLdifProtocolsBase.SchemaAttribute]: ...
+        ) -> p.Result[m.Ldif.SchemaAttribute]: ...
 
         def parse_objectclass(
             self, definition: str
-        ) -> p.Result[FlextLdifProtocolsBase.SchemaObjectClass]: ...
+        ) -> p.Result[m.Ldif.SchemaObjectClass]: ...
 
         def can_handle_attribute(self, attr_definition: str) -> bool: ...
 
@@ -285,16 +277,15 @@ class FlextLdifProtocolsBase:
 
         def write(
             self,
-            model: FlextLdifProtocolsBase.SchemaAttribute
-            | FlextLdifProtocolsBase.SchemaObjectClass,
+            model: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
         ) -> p.Result[str]: ...
 
         def write_attribute(
-            self, attr_data: FlextLdifProtocolsBase.SchemaAttribute
+            self, attr_data: m.Ldif.SchemaAttribute
         ) -> p.Result[str]: ...
 
         def write_objectclass(
-            self, oc_data: FlextLdifProtocolsBase.SchemaObjectClass
+            self, oc_data: m.Ldif.SchemaObjectClass
         ) -> p.Result[str]: ...
 
     @runtime_checkable
@@ -513,7 +504,7 @@ class FlextLdifProtocolsBase:
         """Parsed LDIF batch response."""
 
         @property
-        def entries(self) -> t.SequenceOf[FlextLdifProtocolsBase.Entry]: ...
+        def entries(self) -> t.SequenceOf[m.Ldif.Entry]: ...
 
         @property
         def detected_server_type(self) -> str | None: ...
@@ -549,7 +540,7 @@ class FlextLdifProtocolsBase:
         """Migration pipeline result contract."""
 
         @property
-        def entries(self) -> t.SequenceOf[FlextLdifProtocolsBase.Entry]: ...
+        def entries(self) -> t.SequenceOf[m.Ldif.Entry]: ...
 
         @property
         def stats(self) -> FlextLdifProtocolsBase.Statistics: ...
@@ -631,24 +622,23 @@ class FlextLdifProtocolsBase:
 
         def categorize_entries(
             self,
-            entries: t.MutableSequenceOf[FlextLdifProtocolsBase.Entry],
-        ) -> p.Result[FlextLdifProtocolsBase.FlexibleCategories]: ...
+            entries: t.MutableSequenceOf[m.Ldif.Entry],
+        ) -> p.Result[m.Ldif.FlexibleCategories]: ...
 
         def filter_by_base_dn(
             self,
-            categories: FlextLdifProtocolsBase.FlexibleCategories,
-        ) -> FlextLdifProtocolsBase.FlexibleCategories: ...
+            categories: m.Ldif.FlexibleCategories,
+        ) -> m.Ldif.FlexibleCategories: ...
 
         def validate_dns(
             self,
-            entries: t.MutableSequenceOf[FlextLdifProtocolsBase.Entry]
-            | FlextLdifProtocolsBase.ParseResponse,
-        ) -> p.Result[t.MutableSequenceOf[FlextLdifProtocolsBase.Entry]]: ...
+            entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
+        ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]: ...
 
         def filter_schema_by_oids(
             self,
-            schema_entries: t.MutableSequenceOf[FlextLdifProtocolsBase.Entry],
-        ) -> p.Result[t.MutableSequenceOf[FlextLdifProtocolsBase.Entry]]: ...
+            schema_entries: t.MutableSequenceOf[m.Ldif.Entry],
+        ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]: ...
 
     @runtime_checkable
     class WriteFormatOptions(Protocol):

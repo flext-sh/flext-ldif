@@ -27,14 +27,12 @@ class FlextLdifConversionMetadataMixin(s[p.Ldif.Response]):
 
         """
         if bool(original_attribute_case):
-            payload: t.JsonMapping = u.json_mapping_adapter().validate_python({
+            payload: t.Ldif.MutableMetadataInputMapping = {
                 "source_case": original_attribute_case,
                 "target_server": target_server_type,
                 "action": "apply_target_conventions",
-            })
-            # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: validate the
-            # mapping directly instead of a model round-trip.
-            return {"attribute_case": t.json_dict_adapter().validate_python(payload)}
+            }
+            return {"attribute_case": payload}
         return {}
 
     @staticmethod
@@ -55,20 +53,17 @@ class FlextLdifConversionMetadataMixin(s[p.Ldif.Response]):
         for attr_name, conv_info in boolean_conversions.items():
             source_format = ""
             if isinstance(conv_info, Mapping):
-                conv_info_dict: t.MutableJsonMapping = (
-                    t.json_dict_adapter().validate_python(conv_info)
-                )
-                source_format = str(conv_info_dict.get("format", "") or "")
-            result[f"boolean_{attr_name}"] = t.json_dict_adapter().validate_python({
+                source_format = str(conv_info.get("format", "") or "")
+            result[f"boolean_{attr_name}"] = {
                 "source_format": source_format,
                 "target_server": target_server_type,
                 "action": "convert_to_target_format",
-            })
+            }
         return result
 
     @staticmethod
     def _analyze_dn_format(
-        original_format_details: t.MappingKV[str, t.JsonPayload | None],
+        original_format_details: t.JsonMapping,
         target_server_type: str,
     ) -> t.MutableMappingKV[str, t.Ldif.MutableMetadataInputMapping]:
         """Analyze DN spacing for target compatibility.
@@ -83,12 +78,12 @@ class FlextLdifConversionMetadataMixin(s[p.Ldif.Response]):
             spacing = original_format_details.get("dn_spacing")
         if spacing is None:
             return {}
-        payload: t.JsonMapping = u.json_mapping_adapter().validate_python({
+        payload: t.Ldif.MutableMetadataInputMapping = {
             "source_dn": spacing,
             "target_server": target_server_type,
             "action": "normalize_for_target",
-        })
-        return {"dn_format": t.json_dict_adapter().validate_python(payload)}
+        }
+        return {"dn_format": payload}
 
     @staticmethod
     def _analyze_metadata_for_conversion(
@@ -111,15 +106,9 @@ class FlextLdifConversionMetadataMixin(s[p.Ldif.Response]):
         if isinstance(source_metadata, m.Ldif.ServerMetadata):
             boolean_conversions = source_metadata.boolean_conversions
             attr_case_val = source_metadata.original_attribute_case
+            format_details = source_metadata.original_format_details
             format_val: t.JsonMapping = (
-                u.json_mapping_adapter().validate_python({})
-                if source_metadata.original_format_details is None
-                else u.json_mapping_adapter().validate_python(
-                    source_metadata.original_format_details.model_dump(
-                        mode="json",
-                        exclude_none=True,
-                    ),
-                )
+                {} if format_details is None else {"spacing": format_details.spacing}
             )
         else:
             boolean_conversions = u.Cli.json_as_mapping(

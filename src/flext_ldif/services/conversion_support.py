@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Annotated
 
-from flext_ldif import c, m, p, r, t, u
+from flext_ldif import c, m, p, r, t
 from flext_ldif.services import FlextLdifServer
 
 
@@ -22,13 +22,13 @@ class FlextLdifConversionSupportMixin(FlextLdifServer):
     pydantic ``model_construct`` signatures.
     """
 
-    dn_registry: m.Ldif.DnRegistry = u.Field(
+    dn_registry: m.Ldif.DnRegistry = m.Field(
         default_factory=m.Ldif.DnRegistry,
         description="DN registry for tracking distinguished names during conversion",
     )
     base_dn: Annotated[
         str | None,
-        u.Field(
+        m.Field(
             default=None,
             description=(
                 "Migration base DN; when set, OID→OUD ACL conversion filters "
