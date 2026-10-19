@@ -166,7 +166,7 @@ rules:
     arguments:
       service:
         - type=flext_ldif.services.server.FlextLdifServer
-        - type=flext_ldif._protocols.domain.FlextLdifProtocolsDomain.ServerRegistry
+        - type=flext_ldif._protocols.base.FlextLdifProtocolsBase.ServerRegistry
   - id: ldif-helper-acl
     pattern: '${splitter}(${line})'
     goal: 'u.Ldif.split_acl_line(${line})'
