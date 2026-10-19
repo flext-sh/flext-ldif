@@ -102,7 +102,7 @@ class FlextLdifServersOudAclWriteMixin(FlextLdifServersOudAclSubjectMixin):
                 str_list: t.JsonValueList = [
                     item for item in val if isinstance(item, str)
                 ]
-                perms_data[key] = u.normalize_to_metadata(str_list)
+                perms_data[key] = u.normalize_to_json_value(str_list)
         return perms_data
 
     @staticmethod
@@ -189,7 +189,7 @@ class FlextLdifServersOudAclWriteMixin(FlextLdifServersOudAclSubjectMixin):
             if isinstance(json_value, Mapping):
                 continue
             if self._scalar_or_list_value(json_value):
-                target_data[raw_key] = u.normalize_to_metadata(json_value)
+                target_data[raw_key] = u.normalize_to_json_value(json_value)
         if not target_data:
             return None
         attrs_raw = target_data.get("attributes")

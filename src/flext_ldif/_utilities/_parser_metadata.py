@@ -70,7 +70,7 @@ class FlextLdifParserMetadataBuilders:
             return FlextLdifParserMetadataBuilders._strict_str_list_view(metadata)
         extensions_metadata: t.MutableJsonMapping = (
             u.json_dict_adapter().validate_python({
-                key: u.normalize_to_metadata(value) for key, value in result.items()
+                key: u.normalize_to_json_value(value) for key, value in result.items()
             })
         )
         return FlextLdifParserMetadataBuilders._strict_str_list_view(

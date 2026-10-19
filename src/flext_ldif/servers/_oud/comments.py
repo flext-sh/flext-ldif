@@ -130,7 +130,7 @@ class FlextLdifServersOudCommentsMixin(FlextLdifServersOudCommentsAclMixin):
             The resulting ``t.MutableSequenceOf[str]``.
 
         """
-        normalized = u.normalize_to_metadata(removed_raw)
+        normalized = u.normalize_to_json_value(removed_raw)
         return (
             [u.to_str(v) for v in t.json_list_adapter().validate_python(normalized)]
             if u.matches_type(normalized, list)

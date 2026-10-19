@@ -134,7 +134,7 @@ class FlextLdifServersBaseSchemaMetadataMixin:
         extensions_typed: t.Ldif.MutableMetadataMapping = {}
         for key, val in metadata_extensions.items():
             if val is not None:
-                extensions_typed[key] = u.normalize_to_metadata(val)
+                extensions_typed[key] = u.normalize_to_json_value(val)
         metadata = m.Ldif.ServerMetadata(
             server_type=resolved_server_type,
             extensions=extensions_typed or {},

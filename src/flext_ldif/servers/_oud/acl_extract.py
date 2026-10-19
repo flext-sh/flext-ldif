@@ -96,7 +96,7 @@ class FlextLdifServersOudAclExtractMixin:
             return None
         normalized: t.Ldif.MutableMetadataMapping = {}
         for raw_key, raw_value in parsed_items:
-            normalized[raw_key] = u.normalize_to_metadata(raw_value)
+            normalized[raw_key] = u.normalize_to_json_value(raw_value)
         return normalized
 
     @staticmethod

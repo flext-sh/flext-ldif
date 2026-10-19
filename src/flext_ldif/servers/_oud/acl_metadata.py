@@ -67,7 +67,7 @@ class FlextLdifServersOudAclMetadataMixin:
         for src_key, dest_key in FlextLdifServersOudConstants.ACL_KEY_MAP.items():
             value_raw = acl_extensions.get(src_key)
             if value_raw is not None:
-                acl_metadata_extensions[dest_key] = u.normalize_to_metadata(value_raw)
+                acl_metadata_extensions[dest_key] = u.normalize_to_json_value(value_raw)
 
     @staticmethod
     def resolve_original_acl_attr(entry: m.Ldif.Entry) -> str:
