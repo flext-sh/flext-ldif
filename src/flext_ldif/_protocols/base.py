@@ -243,7 +243,7 @@ class FlextLdifProtocolsBase:
         @property
         def entry_server(self) -> FlextLdifProtocolsBase.EntryServer: ...
 
-        def parse_ldif(self, value: str) -> p.Result[p.Ldif.ParseResponse]: ...
+        def parse_ldif(self, value: str) -> p.Result[m.Ldif.ParseResponse]: ...
 
         def write(
             self,
@@ -508,6 +508,16 @@ class FlextLdifProtocolsBase:
 
         @property
         def detected_server_type(self) -> str | None: ...
+
+    @runtime_checkable
+    class WriteResponse(Response, Protocol):
+        """Serialized LDIF content and optional persisted output location."""
+
+        @property
+        def content(self) -> str | None: ...
+
+        @property
+        def output_path(self) -> str | None: ...
 
     @runtime_checkable
     class ValidationResult(Protocol):
@@ -796,7 +806,7 @@ class FlextLdifProtocolsBase:
             value: str | Path,
             *,
             server_type: str | None = None,
-        ) -> p.Result[FlextLdifProtocolsBase.ParseResponse]:
+        ) -> p.Result[m.Ldif.ParseResponse]:
             """Parse LDIF content from text or file path."""
             ...
 
@@ -805,7 +815,7 @@ class FlextLdifProtocolsBase:
             path: Path,
             server_type: str | None = None,
             encoding: str = "utf-8",
-        ) -> p.Result[FlextLdifProtocolsBase.ParseResponse]:
+        ) -> p.Result[m.Ldif.ParseResponse]:
             """Parse LDIF content from a file path."""
             ...
 
@@ -813,39 +823,36 @@ class FlextLdifProtocolsBase:
             self,
             content: str,
             server_type: str | None = None,
-        ) -> p.Result[FlextLdifProtocolsBase.ParseResponse]:
+        ) -> p.Result[m.Ldif.ParseResponse]:
             """Parse LDIF content from a raw string."""
             ...
 
         def write(
             self,
-            entries: t.SequenceOf[FlextLdifProtocolsBase.Entry]
-            | FlextLdifProtocolsBase.ParseResponse,
+            entries: t.SequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
             *,
             server_type: str | None = None,
-            format_options: FlextLdifProtocolsBase.WriteFormatOptions | None = None,
-        ) -> p.Result[FlextLdifProtocolsBase.WriteResponse]:
+            format_options: m.Ldif.WriteFormatOptions | None = None,
+        ) -> p.Result[m.Ldif.WriteResponse]:
             """Write canonical LDIF entries to text response."""
             ...
 
         def write_ldif_file(
             self,
-            entries: t.SequenceOf[FlextLdifProtocolsBase.Entry]
-            | FlextLdifProtocolsBase.ParseResponse,
+            entries: t.SequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
             path: Path,
             *,
             server_type: str | None = None,
-            format_options: FlextLdifProtocolsBase.WriteFormatOptions | None = None,
-        ) -> p.Result[FlextLdifProtocolsBase.WriteResponse]:
+            format_options: m.Ldif.WriteFormatOptions | None = None,
+        ) -> p.Result[m.Ldif.WriteResponse]:
             """Write canonical LDIF entries to a file."""
             ...
 
         def write_to_string(
             self,
-            entries: t.SequenceOf[FlextLdifProtocolsBase.Entry]
-            | FlextLdifProtocolsBase.ParseResponse,
+            entries: t.SequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
             server_type: str | None = None,
-            format_options: FlextLdifProtocolsBase.WriteFormatOptions | None = None,
+            format_options: m.Ldif.WriteFormatOptions | None = None,
         ) -> p.Result[str]:
             """Write LDIF entries to a string."""
             ...

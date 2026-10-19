@@ -77,7 +77,7 @@ class FlextLdifConversionSupportMixin(FlextLdifServer):
         """
         if isinstance(server_or_type, str):
             server_type_str: str = server_or_type
-            resolved_result = self._server.resolve_base_server(server_type_str)
+            resolved_result = self.resolve_base_server(server_type_str)
             if resolved_result.failure:
                 error_msg = (
                     f"Unknown server type: {server_or_type}: {resolved_result.error}"
@@ -87,7 +87,7 @@ class FlextLdifConversionSupportMixin(FlextLdifServer):
             return resolved
         if isinstance(server_or_type, p.Ldif.ServerServer):
             return server_or_type
-        resolved_from_ref = self._server.resolve_base_server(server_or_type.server_type)
+        resolved_from_ref = self.resolve_base_server(server_or_type.server_type)
         if resolved_from_ref.failure:
             error_msg = (
                 f"Unknown server type: {server_or_type.server_type}: "
@@ -128,7 +128,7 @@ class FlextLdifConversionSupportMixin(FlextLdifServer):
             "acl": 0,
             "entry": 0,
         }
-        concrete_server = self._server.resolve_base_server(
+        concrete_server = self.resolve_base_server(
             server if isinstance(server, str) else server.server_type,
         ).map_or(None)
         if concrete_server is None:

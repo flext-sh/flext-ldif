@@ -9,7 +9,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from flext_ldif import c, m, p, r, t, u
+from flext_ldif import m, p, r, t, u
 from flext_ldif.services import FlextLdifServer
 
 if TYPE_CHECKING:
@@ -21,19 +21,19 @@ class FlextLdifWriter(FlextLdifServer):
 
     def write(
         self,
-        entries: t.SequenceOf[p.Ldif.Entry] | p.Ldif.ParseResponse,
+        entries: t.SequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
         *,
         server_type: str | None = None,
-        format_options: p.Ldif.WriteFormatOptions | None = None,
-    ) -> p.Result[p.Ldif.WriteResponse]:
+        format_options: m.Ldif.WriteFormatOptions | None = None,
+    ) -> p.Result[m.Ldif.WriteResponse]:
         """Write entries to LDIF text and return canonical write metadata.
 
         Returns:
-            The resulting ``p.Result[p.Ldif.WriteResponse]``.
+            The resulting ``p.Result[m.Ldif.WriteResponse]``.
 
         """
         batch = (
-            entries.entries if isinstance(entries, p.Ldif.ParseResponse) else entries
+            entries.entries if isinstance(entries, m.Ldif.ParseResponse) else entries
         )
         content_result = self.write_to_string(
             batch,
@@ -41,8 +41,8 @@ class FlextLdifWriter(FlextLdifServer):
             format_options=format_options,
         )
         if content_result.failure:
-            return r[p.Ldif.WriteResponse].from_failure(content_result)
-        return r[p.Ldif.WriteResponse].ok(
+            return r[m.Ldif.WriteResponse].from_failure(content_result)
+        return r[m.Ldif.WriteResponse].ok(
             m.Ldif.WriteResponse(
                 content=content_result.value,
                 statistics=m.Ldif.Statistics(
@@ -54,20 +54,20 @@ class FlextLdifWriter(FlextLdifServer):
 
     def write_ldif_file(
         self,
-        entries: t.SequenceOf[p.Ldif.Entry] | p.Ldif.ParseResponse,
+        entries: t.SequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
         path: PathLike[str],
         *,
         server_type: str | None = None,
-        format_options: p.Ldif.WriteFormatOptions | None = None,
-    ) -> p.Result[p.Ldif.WriteResponse]:
+        format_options: m.Ldif.WriteFormatOptions | None = None,
+    ) -> p.Result[m.Ldif.WriteResponse]:
         """Write entries to an LDIF file and return canonical write metadata.
 
         Returns:
-            The resulting ``p.Result[p.Ldif.WriteResponse]``.
+            The resulting ``p.Result[m.Ldif.WriteResponse]``.
 
         """
         batch = (
-            entries.entries if isinstance(entries, p.Ldif.ParseResponse) else entries
+            entries.entries if isinstance(entries, m.Ldif.ParseResponse) else entries
         )
         content_result = self.write_to_string(
             batch,
@@ -75,12 +75,12 @@ class FlextLdifWriter(FlextLdifServer):
             format_options=format_options,
         )
         if content_result.failure:
-            return r[p.Ldif.WriteResponse].from_failure(content_result)
+            return r[m.Ldif.WriteResponse].from_failure(content_result)
         ldif_content = content_result.value
         write = u.Cli.atomic_write_text_file(Path(path), ldif_content)
         if write.failure:
-            return r[p.Ldif.WriteResponse].from_failure(write)
-        return r[p.Ldif.WriteResponse].ok(
+            return r[m.Ldif.WriteResponse].from_failure(write)
+        return r[m.Ldif.WriteResponse].ok(
             m.Ldif.WriteResponse(
                 content=ldif_content,
                 output_path=str(path),
@@ -93,9 +93,9 @@ class FlextLdifWriter(FlextLdifServer):
 
     def write_to_string(
         self,
-        entries: t.SequenceOf[p.Ldif.Entry] | p.Ldif.ParseResponse,
+        entries: t.SequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
         server_type: str | None = None,
-        format_options: p.Ldif.WriteFormatOptions | None = None,
+        format_options: m.Ldif.WriteFormatOptions | None = None,
     ) -> p.Result[str]:
         """Write entries to LDIF text through the selected base server.
 
@@ -109,35 +109,14 @@ class FlextLdifWriter(FlextLdifServer):
             else server_type
         )
         batch = (
-            entries.entries if isinstance(entries, p.Ldif.ParseResponse) else entries
+            entries.entries if isinstance(entries, m.Ldif.ParseResponse) else entries
         )
-        # Convert protocol entries to model entries for server consumption
-        model_entries: t.MutableSequenceOf[m.Ldif.Entry] = [
-            m.Ldif.Entry.model_validate(e) for e in batch
-        ]
-        # Convert protocol format options to model format options
-        model_format_options: m.Ldif.WriteFormatOptions | None = None
-        if format_options is not None:
-            model_format_options = m.Ldif.WriteFormatOptions(
-                line_width=format_options.line_width,
-                sort_attributes=format_options.sort_attributes,
-                base64_encode_binary=format_options.base64_encode_binary,
-                include_dn_comments=format_options.include_dn_comments,
-                restore_original_format=format_options.restore_original_format,
-                respect_attribute_order=format_options.respect_attribute_order,
-                write_hidden_attributes_as_comments=format_options.write_hidden_attributes_as_comments,
-                write_metadata_as_comments=format_options.write_metadata_as_comments,
-                include_version_header=format_options.include_version_header,
-            )
-        try:
-            _ = m.Ldif.WriteRequest.model_validate({
-                "entries": model_entries,
-                "format_options": model_format_options,
-            })
-        except c.EXC_TYPE_VALIDATION as exc:
-            return r[str].fail_op("validate LDIF write request", exc)
+        request = m.Ldif.WriteRequest(
+            entries=list(batch),
+            format_options=format_options,
+        )
         return self.server(effective_server_type).flat_map(
-            lambda server: server.write(model_entries, model_format_options)
+            lambda server: server.write(request.entries, request.format_options)
         )
 
 
