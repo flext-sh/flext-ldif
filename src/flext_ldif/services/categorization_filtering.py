@@ -112,11 +112,16 @@ class FlextLdifCategorizationFiltering(FlextLdifCategorizationRules):
                 and schema_whitelist_rules is not None
             ):
                 filtered = [
-                    FlextLdifFilters.filter_schema_attribute_values(
-                        entry,
-                        schema_whitelist_rules,
-                    )
+                    filtered_entry
                     for entry in filtered
+                    for filtered_entry in (
+                        FlextLdifFilters.filter_schema_attribute_values(
+                            entry,
+                            schema_whitelist_rules,
+                        ),
+                    )
+                    if not filtered_entry.is_change_record
+                    or filtered_entry.change_operations
                 ]
             if has_attribute_filters:
                 filtered = [

@@ -209,9 +209,9 @@ class FlextLdif(
 
     @staticmethod
     def filter_schema_attribute_values(
-        entry: p.Ldif.Entry,
+        entry: m.Ldif.Entry,
         allowed_oids: m.Ldif.WhitelistRules | t.FrozensetMapping,
-    ) -> p.Ldif.Entry:
+    ) -> m.Ldif.Entry:
         """Expose schema-attribute OID filtering through the facade DSL.
 
         Args:
@@ -222,9 +222,8 @@ class FlextLdif(
             The filtered entry.
 
         """
-        concrete = u.Ldif.as_entry(entry)
         return FlextLdifFilters.filter_schema_attribute_values(
-            entry=concrete,
+            entry=entry,
             allowed_oids=allowed_oids,
         )
 
