@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import errno
 from typing import TYPE_CHECKING
 from uuid import uuid4
 
@@ -229,7 +230,10 @@ class TestsFlextLdifWriterService:
             server_type=c.Tests.RFC,
         )
 
-        tm.fail(result, has="Failed to write LDIF file")
+        tm.fail(result, has=str(blocking_file))
+        with pytest.raises(FileExistsError):
+            result.unwrap()
+        tm.that(blocking_file.read_text(encoding="utf-8"), eq="x")
 
     def test_write_ldif_file_fails_when_target_is_a_directory(
         self,
@@ -246,7 +250,13 @@ class TestsFlextLdifWriterService:
             server_type=c.Tests.RFC,
         )
 
-        tm.fail(result, has="Failed to write LDIF file")
+        tm.fail(result, has=str(directory_target))
+        with pytest.raises(
+            OSError, match="atomic destination is not a regular file"
+        ) as failure:
+            result.unwrap()
+        tm.that(failure.value.errno, eq=errno.EINVAL)
+        tm.that(directory_target.is_dir(), eq=True)
 
     @pytest.mark.parametrize("server_type", [c.Tests.RFC, "oud"])
     def test_rejection_comments_are_opt_in_and_cannot_inject_entries(
