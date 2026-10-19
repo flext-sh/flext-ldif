@@ -253,7 +253,8 @@ class FlextLdifConstantsBase:
         r"NAME\s+(\()?\s*([\"']?)([^\"'()]+)([\"']?)(\s*\))?",
     )
     SCHEMA_NAME_MULTIPLE_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"NAME\s+\(\s*([\"'])([^\"']+)([\"'])\s+([\"'])([^\"']+)([\"'])",
+        r"\bNAME\s+\(\s*(?:[\"'][^\"']+[\"']\s*)+\)",
+        re.IGNORECASE,
     )
     QUOTED_SPACE_QUOTE_RE: ClassVar[t.RegexPattern] = re.compile(r"[\"']\s+([\"'])")
     LDIF_ATTR_TYPES_PREFIX_RE: ClassVar[t.RegexPattern] = re.compile(
