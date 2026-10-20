@@ -87,7 +87,7 @@ class TestsFlextLdifUtilitiesCore:
     )
     def test_validate_accepts_wellformed_dns(dn: str) -> None:
         """Well-formed DNs (including hex escapes) validate as True."""
-        tm.that(u.Ldif.validate(dn), eq=True)
+        tm.ok(u.Ldif.validate(dn))
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -107,7 +107,7 @@ class TestsFlextLdifUtilitiesCore:
     )
     def test_validate_rejects_malformed_dns(dn: str) -> None:
         """Empty attrs, empty components, and bad escapes validate as False."""
-        tm.that(u.Ldif.validate(dn), eq=False)
+        tm.fail(u.Ldif.validate(dn))
 
     # ---- DN parsing / comparison -------------------------------------
 
@@ -158,7 +158,7 @@ class TestsFlextLdifUtilitiesCore:
         forward: int = tm.ok(u.Ldif.compare_dns("cn=alpha,dc=x", "cn=beta,dc=x"))
         backward: int = tm.ok(u.Ldif.compare_dns("cn=beta,dc=x", "cn=alpha,dc=x"))
         tm.that(forward, eq=-backward)
-        tm.that(forward < 0, eq=True)
+        tm.ok(forward < 0)
 
     # ---- DN value escaping -------------------------------------------
 
@@ -175,7 +175,7 @@ class TestsFlextLdifUtilitiesCore:
     def test_esc_encodes_reserved_comma() -> None:
         """A reserved comma is escaped away so it can't act as a separator."""
         escaped = u.Ldif.esc("Test, Value")
-        tm.that("," not in escaped.replace("\\,", ""), eq=True)
+        tm.ok("," not in escaped.replace("\\,", ""))
         tm.that(escaped, eq="Test\\2c Value")
 
     @staticmethod
@@ -189,8 +189,8 @@ class TestsFlextLdifUtilitiesCore:
     def test_clean_dn_removes_padding_around_equals_and_commas() -> None:
         """clean_dn collapses stray whitespace around '=' and separators."""
         cleaned = u.Ldif.clean_dn("  cn = John  ,  ou = Users  ,  dc = example  ")
-        tm.that(" = " not in cleaned, eq=True)
-        tm.that(" , " not in cleaned, eq=True)
+        tm.ok(" = " not in cleaned)
+        tm.ok(" , " not in cleaned)
 
     @staticmethod
     def test_clean_dn_is_idempotent() -> None:
@@ -367,8 +367,8 @@ class TestsFlextLdifUtilitiesCoreSchemaAndLdif:
     @staticmethod
     def test_matches_recognizes_allowed_server_type() -> None:
         """Matches is True only when the type is among the allowed set."""
-        tm.that(u.Ldif.matches("oid", "oid", "oud"), eq=True)
-        tm.that(u.Ldif.matches("ad", "oid", "oud"), eq=False)
+        tm.ok(u.Ldif.matches("oid", "oid", "oud"))
+        tm.fail(u.Ldif.matches("ad", "oid", "oud"))
 
     @staticmethod
     @pytest.mark.parametrize(

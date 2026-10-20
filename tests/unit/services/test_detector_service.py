@@ -62,7 +62,7 @@ class TestsFlextLdifDetectorService:
 
         tm.that(detection, is_=m.Ldif.ServerDetectionResult)
         tm.that(detection.detected_server_type, none=False)
-        tm.that(detection.confidence >= c.Tests.DETECTOR_CONFIDENCE_THRESHOLD, eq=True)
+        tm.ok(detection.confidence >= c.Tests.DETECTOR_CONFIDENCE_THRESHOLD)
 
     @staticmethod
     def test_detect_from_string_returns_detection_result(
@@ -84,7 +84,7 @@ class TestsFlextLdifDetectorService:
         detection: m.Ldif.ServerDetectionResult = u.Tests.assert_success(result)
 
         generic_server_type = u.Ldif.resolve_server_type_value("GENERIC")
-        tm.that(bool(detection.detected_server_type), eq=True)
+        tm.ok(bool(detection.detected_server_type))
         tm.that(detection.scores[generic_server_type], eq=1)
         tm.that(detection.patterns_found, eq=[])
 
@@ -96,7 +96,7 @@ class TestsFlextLdifDetectorService:
         result = api.detect_server_type(ldif_content=c.Tests.DETECTOR_OID_SNIPPET)
         detection: m.Ldif.ServerDetectionResult = u.Tests.assert_success(result)
 
-        tm.that(any("ACL" in pattern for pattern in detection.patterns_found), eq=True)
+        tm.ok(any("ACL" in pattern for pattern in detection.patterns_found))
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -133,7 +133,7 @@ class TestsFlextLdifDetectorService:
         detection: m.Ldif.ServerDetectionResult = u.Tests.assert_success(result)
 
         tm.that(detection, is_=m.Ldif.ServerDetectionResult)
-        tm.that(0.0 <= detection.confidence <= 1.0, eq=True)
+        tm.ok(0.0 <= detection.confidence <= 1.0)
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -156,7 +156,7 @@ class TestsFlextLdifDetectorService:
         )
 
         tm.that(detection, is_=m.Ldif.ServerDetectionResult)
-        tm.that(bool(detection.detected_server_type), eq=True)
+        tm.ok(bool(detection.detected_server_type))
 
     @staticmethod
     def test_detect_is_idempotent_for_same_content(
@@ -183,7 +183,7 @@ class TestsFlextLdifDetectorService:
         )
         server_type = u.Tests.assert_success(result)
 
-        tm.that(bool(server_type), eq=True)
+        tm.ok(bool(server_type))
 
     @staticmethod
     def test_resolve_effective_server_type_without_input_falls_back_to_rfc(

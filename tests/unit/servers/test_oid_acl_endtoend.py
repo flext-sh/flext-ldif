@@ -97,7 +97,7 @@ class TestsFlextLdifOidAclEndToEnd:
 
         # Public contract: the OID source ACL attribute is consumed, not passed
         # through, and a single equivalent OUD ``aci`` value is emitted.
-        tm.that(source_attr not in attrs, eq=True)
+        tm.ok(source_attr not in attrs)
         tm.that(attrs["aci"], eq=[expected_aci])
 
     @staticmethod

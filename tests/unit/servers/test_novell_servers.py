@@ -89,7 +89,7 @@ class TestsFlextLdifNovellServers:
     ) -> None:
         """Novell attribute definitions are recognised, RFC ones are not."""
         result = schema_server.can_handle_attribute(test_case.attr_definition)
-        tm.that(result is test_case.expected_can_handle, eq=True)
+        tm.ok(result is test_case.expected_can_handle)
 
     # ── Schema: attribute parsing ───────────────────────────────────────
 
@@ -158,7 +158,7 @@ class TestsFlextLdifNovellServers:
     ) -> None:
         """Novell objectClass definitions are recognised, RFC ones are not."""
         result = schema_server.can_handle_objectclass(test_case.oc_definition)
-        tm.that(result is test_case.expected_can_handle, eq=True)
+        tm.ok(result is test_case.expected_can_handle)
 
     # ── Schema: objectClass parsing ─────────────────────────────────────
 
@@ -243,7 +243,7 @@ class TestsFlextLdifNovellServers:
         acl_server: FlextLdifServersNovell.Acl,
     ) -> None:
         """ACL recognition keys off the ``acl``/``inheritedacl`` attribute name."""
-        tm.that(acl_server.can_handle(acl_line) is expected, eq=True)
+        tm.ok(acl_server.can_handle(acl_line) is expected)
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -271,8 +271,8 @@ class TestsFlextLdifNovellServers:
     ) -> None:
         """Splitting an ACL line yields the trimmed attribute name and payload."""
         attr_name, payload = FlextLdifServersNovell.Acl.splitacl_line(acl_line)
-        tm.that(attr_name == expected_name, eq=True)
-        tm.that(payload == expected_payload, eq=True)
+        tm.ok(attr_name == expected_name)
+        tm.ok(payload == expected_payload)
 
     # ── Entry detection ─────────────────────────────────────────────────
 
@@ -288,7 +288,7 @@ class TestsFlextLdifNovellServers:
     ) -> None:
         """Novell entries (by DN marker, attribute, or objectClass) are detected."""
         result = entry_server.can_handle(test_case.entry_dn, test_case.attributes)
-        tm.that(result is test_case.expected_can_handle, eq=True)
+        tm.ok(result is test_case.expected_can_handle)
 
     @staticmethod
     def test_can_handle_entry_rejects_empty_dn(
@@ -315,8 +315,8 @@ class TestsFlextLdifNovellServers:
         assert isinstance(processed, m.Ldif.Entry)
         tm.not_none(processed.attributes)
         attributes = processed.attributes.attributes
-        tm.that(attributes["cn"] == ["user"], eq=True)
-        tm.that(attributes["objectClass"] == ["ndsperson"], eq=True)
+        tm.ok(attributes["cn"] == ["user"])
+        tm.ok(attributes["objectClass"] == ["ndsperson"])
         tm.that(
             attributes[c.Ldif.ServerMetadataKeys.SERVER_TYPE]
             == [FlextLdifServersNovell.Constants.SERVER_TYPE],
@@ -335,4 +335,4 @@ class TestsFlextLdifNovellServers:
         processed: m.Ldif.Entry = tm.ok(entry_server.process_entry(entry))
         assert isinstance(processed, m.Ldif.Entry)
         tm.not_none(processed.attributes)
-        tm.that(dict(processed.attributes.attributes) == {}, eq=True)
+        tm.ok(dict(processed.attributes.attributes) == {})

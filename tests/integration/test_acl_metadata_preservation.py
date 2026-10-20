@@ -144,8 +144,8 @@ class TestsFlextLdifAclMetadataPreservation:
         )
         extensions = self._extensions(self._parse_single(api, ldif_text, c.Tests.OID))
         tm.that(extensions.get(c.Ldif.ACL_BINDMODE), eq="Simple")
-        tm.that(extensions.get(c.Ldif.ACL_DENY_GROUP_OVERRIDE), eq=True)
-        tm.that(extensions.get(c.Ldif.ACL_APPEND_TO_ALL), eq=True)
+        tm.ok(extensions.get(c.Ldif.ACL_DENY_GROUP_OVERRIDE))
+        tm.ok(extensions.get(c.Ldif.ACL_APPEND_TO_ALL))
         tm.that(
             extensions.get(c.Ldif.ACL_BIND_IP_FILTER),
             eq="orclipaddress=192.168.1.*",
@@ -290,7 +290,7 @@ class TestsFlextLdifAclMetadataPreservation:
         reparsed = self._parse_single(api, written, c.Tests.OID)
         extensions = self._extensions(reparsed)
         tm.that(extensions.get(c.Ldif.ACL_BINDMODE), eq="Simple")
-        tm.that(extensions.get(c.Ldif.ACL_DENY_GROUP_OVERRIDE), eq=True)
+        tm.ok(extensions.get(c.Ldif.ACL_DENY_GROUP_OVERRIDE))
 
     def test_oud_aci_survives_round_trip(self, api: p.Ldif.LdifClient) -> None:
         """OUD ACI metadata is identical after a write/re-parse round-trip."""

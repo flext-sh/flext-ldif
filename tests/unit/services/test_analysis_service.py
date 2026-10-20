@@ -49,7 +49,7 @@ class TestsFlextLdifAnalysisService:
         )
         result = api.validate_entries([entry])
         val_result = u.Tests.assert_success(result)
-        tm.that(val_result.valid, eq=True)
+        tm.ok(val_result.valid)
         tm.that(val_result.total_entries, eq=1)
         tm.that(val_result.valid_entries, eq=1)
         tm.that(val_result.invalid_entries, eq=0)
@@ -65,7 +65,7 @@ class TestsFlextLdifAnalysisService:
         tm.that(val_result.total_entries, eq=0)
         tm.that(val_result.valid_entries, eq=0)
         tm.that(val_result.invalid_entries, eq=0)
-        tm.that(val_result.valid, eq=True)
+        tm.ok(val_result.valid)
 
     @staticmethod
     def test_validate_entries_accepts_parse_response_input(
@@ -78,7 +78,7 @@ class TestsFlextLdifAnalysisService:
         val_result = u.Tests.assert_success(result)
         tm.that(val_result.total_entries, eq=2)
         tm.that(val_result.valid_entries, eq=2)
-        tm.that(val_result.valid, eq=True)
+        tm.ok(val_result.valid)
 
     def test_validate_entries_invalid_attr_name_reports_error(
         self,
@@ -91,10 +91,10 @@ class TestsFlextLdifAnalysisService:
         )
         result = api.validate_entries([entry])
         val_result = u.Tests.assert_success(result)
-        tm.that(val_result.valid, eq=False)
+        tm.fail(val_result.valid)
         tm.that(val_result.invalid_entries, eq=1)
         tm.that(val_result.valid_entries, eq=0)
-        tm.that(len(val_result.errors) > 0, eq=True)
+        tm.ok(len(val_result.errors) > 0)
 
     def test_validate_entries_none_attributes_reports_invalid(
         self,
@@ -104,9 +104,9 @@ class TestsFlextLdifAnalysisService:
         entry = self._make_entry(c.Tests.ANALYSIS_DN_VALID, None)
         result = api.validate_entries([entry])
         val_result = u.Tests.assert_success(result)
-        tm.that(val_result.valid, eq=False)
+        tm.fail(val_result.valid)
         tm.that(val_result.invalid_entries, eq=1)
-        tm.that(len(val_result.errors) > 0, eq=True)
+        tm.ok(len(val_result.errors) > 0)
 
     def test_validate_entries_mixed_batch_counts_each_side(
         self,
@@ -126,7 +126,7 @@ class TestsFlextLdifAnalysisService:
         tm.that(val_result.total_entries, eq=2)
         tm.that(val_result.valid_entries, eq=1)
         tm.that(val_result.invalid_entries, eq=1)
-        tm.that(val_result.valid, eq=False)
+        tm.fail(val_result.valid)
 
     def test_validate_entries_order_independent_for_mixed_batch(
         self,
@@ -162,7 +162,7 @@ class TestsFlextLdifAnalysisService:
         entry = self._make_entry(c.Tests.ANALYSIS_DN_VALID, {"objectClass": [oc_name]})
         result = api.validate_entries([entry])
         val_result = u.Tests.assert_success(result)
-        tm.that(val_result.valid, eq=True)
+        tm.ok(val_result.valid)
         tm.that(val_result.valid_entries, eq=1)
 
     def test_validate_entries_empty_dn_reports_invalid(
@@ -173,9 +173,9 @@ class TestsFlextLdifAnalysisService:
         entry = self._make_entry("", {"objectClass": ["person"]})
         result = api.validate_entries([entry])
         val_result = u.Tests.assert_success(result)
-        tm.that(val_result.valid, eq=False)
+        tm.fail(val_result.valid)
         tm.that(val_result.invalid_entries, eq=1)
-        tm.that(len(val_result.errors) > 0, eq=True)
+        tm.ok(len(val_result.errors) > 0)
 
     def test_validate_entries_invalid_objectclass_name_reports_invalid(
         self,
@@ -188,9 +188,9 @@ class TestsFlextLdifAnalysisService:
         )
         result = api.validate_entries([entry])
         val_result = u.Tests.assert_success(result)
-        tm.that(val_result.valid, eq=False)
+        tm.fail(val_result.valid)
         tm.that(val_result.invalid_entries, eq=1)
-        tm.that(len(val_result.errors) > 0, eq=True)
+        tm.ok(len(val_result.errors) > 0)
 
     def test_validate_entries_none_dn_reports_invalid(
         self,
@@ -200,6 +200,6 @@ class TestsFlextLdifAnalysisService:
         entry = self._make_entry(None, {})
         result = api.validate_entries([entry])
         val_result = u.Tests.assert_success(result)
-        tm.that(val_result.valid, eq=False)
+        tm.fail(val_result.valid)
         tm.that(val_result.invalid_entries, eq=1)
-        tm.that(len(val_result.errors) > 0, eq=True)
+        tm.ok(len(val_result.errors) > 0)

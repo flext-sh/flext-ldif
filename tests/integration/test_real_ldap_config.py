@@ -149,7 +149,7 @@ class TestsFlextLdifRealLdapConfig:
 
         tm.ok(result)
         validation = result.value
-        tm.that(validation.valid, eq=True)
+        tm.ok(validation.valid)
         tm.that(validation.total_entries, eq=1)
         tm.that(validation.errors, eq=[])
 

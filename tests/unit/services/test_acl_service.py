@@ -43,7 +43,7 @@ class TestsFlextLdifAclService:
         """Test evaluate empty acls denies access."""
         result = svc.evaluate_acl_context([], {})
         eval_result = u.Tests.assert_success(result)
-        tm.that(eval_result.granted, eq=False)
+        tm.fail(eval_result.granted)
 
     @staticmethod
     def test_evaluate_no_permissions_required_grants_access(
@@ -54,7 +54,7 @@ class TestsFlextLdifAclService:
         permissions_dict = dict(c.Tests.ACL_PERMISSIONS_EMPTY)
         result = svc.evaluate_acl_context([acl], permissions_dict)
         eval_result = u.Tests.assert_success(result)
-        tm.that(eval_result.granted, eq=True)
+        tm.ok(eval_result.granted)
 
     @staticmethod
     def test_evaluate_with_dict_permissions_read_only(
@@ -64,7 +64,7 @@ class TestsFlextLdifAclService:
         permissions_dict = dict(c.Tests.ACL_PERMISSIONS_READ_ONLY)
         result = svc.evaluate_acl_context([], permissions_dict)
         eval_result = u.Tests.assert_success(result)
-        tm.that(eval_result.granted, eq=False)
+        tm.fail(eval_result.granted)
 
     @staticmethod
     def test_evaluate_with_acl_permissions_model(svc: p.Ldif.LdifClient) -> None:
@@ -72,7 +72,7 @@ class TestsFlextLdifAclService:
         perms = m.Ldif.AclPermissions(read=True)
         result = svc.evaluate_acl_context([], perms)
         eval_result = u.Tests.assert_success(result)
-        tm.that(eval_result.granted, eq=False)
+        tm.fail(eval_result.granted)
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -90,7 +90,7 @@ class TestsFlextLdifAclService:
     ) -> None:
         """Test parse acl string failure cases."""
         result = svc.parse_acl_string(acl_string, server_type)
-        tm.that(bool(scenario), eq=True)
+        tm.ok(bool(scenario))
         tm.fail(result)
 
     @staticmethod
@@ -118,7 +118,7 @@ class TestsFlextLdifAclService:
     ) -> None:
         """Test parse acl string parametrized."""
         result = svc.parse_acl_string(acl_string, server_type)
-        tm.that(bool(scenario), eq=True)
+        tm.ok(bool(scenario))
         u.Tests.assert_success(result)
 
     @staticmethod
@@ -173,7 +173,7 @@ class TestsFlextLdifAclService:
         required = m.Ldif.AclPermissions(read=True)
         result = svc.evaluate_acl_context([acl], required)
         eval_result = u.Tests.assert_success(result)
-        tm.that(eval_result.granted, eq=True)
+        tm.ok(eval_result.granted)
 
     @staticmethod
     def test_evaluate_acl_denies_when_no_acl_matches_permissions(
@@ -184,7 +184,7 @@ class TestsFlextLdifAclService:
         required = m.Ldif.AclPermissions(read=True)
         result = svc.evaluate_acl_context([acl], required)
         eval_result = u.Tests.assert_success(result)
-        tm.that(eval_result.granted, eq=False)
+        tm.fail(eval_result.granted)
 
     @staticmethod
     def test_evaluate_acl_with_null_permissions_denies(
@@ -195,7 +195,7 @@ class TestsFlextLdifAclService:
         required = m.Ldif.AclPermissions(read=True)
         result = svc.evaluate_acl_context([acl], required)
         eval_result = u.Tests.assert_success(result)
-        tm.that(eval_result.granted, eq=False)
+        tm.fail(eval_result.granted)
 
     @staticmethod
     def test_extract_acls_from_entry_with_failed_parse(

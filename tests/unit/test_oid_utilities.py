@@ -117,4 +117,4 @@ class TestsFlextLdifOidUtilities:
             c.Tests.EXACT_OID_1_2_3_RE,
         )
 
-        tm.that(result, eq=True)
+        tm.ok(result)

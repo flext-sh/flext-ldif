@@ -61,7 +61,7 @@ class TestsFlextLdifApacheServers:
         schema_server = server.schema_server
         assert isinstance(schema_server, FlextLdifServersApache.Schema)
         result = schema_server.can_handle_attribute(test_case.attr_definition)
-        tm.that(result is test_case.expected_can_handle, eq=True)
+        tm.ok(result is test_case.expected_can_handle)
 
     @staticmethod
     def test_schema_attribute_parse_success() -> None:
@@ -84,7 +84,7 @@ class TestsFlextLdifApacheServers:
         tm.that(attr_data.name, eq="ads-enabled")
         tm.that(attr_data.desc, eq="Enable flag")
         tm.that(attr_data.syntax, eq="1.3.6.1.4.1.1466.115.121.1.7")
-        tm.that(attr_data.single_value is True, eq=True)
+        tm.ok(attr_data.single_value is True)
 
     @staticmethod
     def test_schema_attribute_parse_with_syntax_length() -> None:
@@ -133,7 +133,7 @@ class TestsFlextLdifApacheServers:
         schema_server = server.schema_server
         assert isinstance(schema_server, FlextLdifServersApache.Schema)
         result = schema_server.can_handle_objectclass(test_case.oc_definition)
-        tm.that(result is test_case.expected_can_handle, eq=True)
+        tm.ok(result is test_case.expected_can_handle)
 
     @staticmethod
     def test_schema_objectclass_parse_structural() -> None:
@@ -245,7 +245,7 @@ class TestsFlextLdifApacheServers:
         acl_server = server.acl_server
         assert isinstance(acl_server, FlextLdifServersApache.Acl)
         acl_line = "access to * by * read"
-        tm.that(acl_server.can_handle_acl(acl_line) is False, eq=True)
+        tm.ok(acl_server.can_handle_acl(acl_line) is False)
 
     @staticmethod
     def test_acl_can_handle_empty_line() -> None:
@@ -253,7 +253,7 @@ class TestsFlextLdifApacheServers:
         server = FlextLdifServersApache()
         acl_server = server.acl_server
         assert isinstance(acl_server, FlextLdifServersApache.Acl)
-        tm.that(acl_server.can_handle_acl("") is False, eq=True)
+        tm.ok(acl_server.can_handle_acl("") is False)
 
     @staticmethod
     def test_acl_parse_success() -> None:
@@ -337,7 +337,7 @@ class TestsFlextLdifApacheServers:
         entry_server = server.entry_server
         assert isinstance(entry_server, FlextLdifServersApache.Entry)
         result = entry_server.can_handle(test_case.entry_dn, test_case.attributes)
-        tm.that(result is test_case.expected_can_handle, eq=True)
+        tm.ok(result is test_case.expected_can_handle)
 
     @staticmethod
     def _build_ldif(entry_dn: str, attributes: t.StrSequenceMapping) -> str:
@@ -373,7 +373,7 @@ class TestsFlextLdifApacheServers:
         entry_server = server.entry_server
         ldif = self._build_ldif(test_case.entry_dn, test_case.attributes)
         result = entry_server.parse_server(ldif)
-        tm.that(result.success, eq=True)
+        tm.ok(result.success)
         entries = result.unwrap()
         tm.that(len(entries), eq=1)
         entry_dn = entries[0].dn

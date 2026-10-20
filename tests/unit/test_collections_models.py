@@ -35,7 +35,7 @@ class TestsFlextLdifCollectionsModels:
         })
 
         tm.that(len(counts), eq=3)
-        tm.that(c.Ldif.Category.USERS.value in counts, eq=True)
+        tm.ok(c.Ldif.Category.USERS.value in counts)
         tm.that(counts[c.Ldif.Category.USERS.value], eq=3)
         tm.that(counts[c.Ldif.Category.GROUPS.value], eq=2)
         tm.that(counts[c.Ldif.Category.SCHEMA.value], eq=0)
@@ -86,7 +86,7 @@ class TestsFlextLdifCollectionsModels:
         users_entries = categories[c.Ldif.Category.USERS.value]
 
         tm.that(users_entries, eq=[])
-        tm.that(c.Ldif.Category.USERS.value in categories, eq=True)
+        tm.ok(c.Ldif.Category.USERS.value in categories)
 
     def test_flexible_categories_setitem_copies_entries(self) -> None:
         """Test flexible categories setitem copies entries."""
@@ -147,7 +147,7 @@ class TestsFlextLdifCollectionsModels:
         tm.that(rule.acl_type, eq="orclaci")
         tm.that(rule.target_type, eq="entry")
         tm.that(rule.target_attrs, eq="*")
-        tm.that(rule.target_filter is None, eq=True)
+        tm.ok(rule.target_filter is None)
         tm.that(len(rule.subjects), eq=1)
         tm.that(rule.subjects[0].subject_type, eq="group")
         tm.that(rule.subjects[0].permissions, eq=("add", "delete", "browse"))
@@ -170,7 +170,7 @@ class TestsFlextLdifCollectionsModels:
 
         tm.that(aci.targetattr, eq="*")
         tm.that(aci.targetscope, eq="base")
-        tm.that(aci.targetfilter is None, eq=True)
+        tm.ok(aci.targetfilter is None)
         tm.that(len(aci.allows), eq=1)
         tm.that(aci.allows[0].subject_type, eq="groupdn")
         tm.that(aci.allows[0].permissions, eq=("read", "search", "add", "delete"))

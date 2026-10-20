@@ -32,7 +32,7 @@ class TestsFlextLdifParserService:
         parsed: m.Ldif.ParseResponse = u.Tests.assert_success(result)
 
         tm.that(parsed, is_=m.Ldif.ParseResponse)
-        tm.that(len(parsed.entries) > 0, eq=True)
+        tm.ok(len(parsed.entries) > 0)
 
     @staticmethod
     def test_parse_ldif_file_resolves_relative_path_from_src_root(
@@ -51,7 +51,7 @@ class TestsFlextLdifParserService:
             src_file.unlink(missing_ok=True)
 
         parsed = u.Tests.assert_success(result)
-        tm.that(len(parsed.entries) > 0, eq=True)
+        tm.ok(len(parsed.entries) > 0)
 
     @staticmethod
     def test_parse_ldif_file_returns_failure_when_path_is_missing(

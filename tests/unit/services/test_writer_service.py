@@ -59,9 +59,9 @@ class TestsFlextLdifWriterService:
             error_msg=f"writing must succeed for {scenario}",
         )
 
-        tm.that(c.Tests.WRITER_OUTPUT_REGEX.search(content) is not None, eq=True)
+        tm.ok(c.Tests.WRITER_OUTPUT_REGEX.search(content) is not None)
         for dn in self._dns():
-            tm.that(f"dn: {dn}" in content, eq=True)
+            tm.ok(f"dn: {dn}" in content)
 
     def test_write_to_string_is_idempotent_for_identical_input(
         self,
@@ -109,8 +109,8 @@ class TestsFlextLdifWriterService:
             ),
         )
 
-        tm.that(content.startswith("dn: cn=writer-fold-target"), eq=True)
-        tm.that("\n " in content, eq=True)
+        tm.ok(content.startswith("dn: cn=writer-fold-target"))
+        tm.ok("\n " in content)
 
     # ── write: WriteResponse contract ────────────────────────────────────
 
@@ -123,10 +123,10 @@ class TestsFlextLdifWriterService:
 
         payload = u.Tests.assert_success(writer.write(entries, server_type=c.Tests.RFC))
 
-        tm.that(payload.content is not None, eq=True)
+        tm.ok(payload.content is not None)
         tm.not_none(payload.content)
         for dn in self._dns():
-            tm.that(f"dn: {dn}" in payload.content, eq=True)
+            tm.ok(f"dn: {dn}" in payload.content)
         tm.that(payload.statistics.total_entries, eq=len(entries))
         tm.that(payload.statistics.processed_entries, eq=len(entries))
         tm.that(payload.output_path, eq=None)
@@ -167,13 +167,13 @@ class TestsFlextLdifWriterService:
             writer.write_ldif_file(entries, output_file, server_type=c.Tests.RFC),
         )
 
-        tm.that(output_file.exists(), eq=True)
+        tm.ok(output_file.exists())
         tm.that(payload.output_path, eq=str(output_file))
         tm.that(payload.statistics.total_entries, eq=len(entries))
         # Every entry the caller handed in must be serialized to disk.
         persisted = output_file.read_text(encoding="utf-8")
         for dn in self._dns():
-            tm.that(f"dn: {dn}" in persisted, eq=True)
+            tm.ok(f"dn: {dn}" in persisted)
 
     # ── error paths: r[T] failure contract ───────────────────────────────
 
@@ -212,7 +212,7 @@ class TestsFlextLdifWriterService:
         )
 
         tm.fail(result, has="Invalid server type")
-        tm.that(output_file.exists(), eq=False)
+        tm.fail(output_file.exists())
 
     def test_write_ldif_file_fails_when_parent_is_not_a_directory(
         self,
@@ -256,7 +256,7 @@ class TestsFlextLdifWriterService:
         ) as failure:
             result.unwrap()
         tm.that(failure.value.errno, eq=errno.EINVAL)
-        tm.that(directory_target.is_dir(), eq=True)
+        tm.ok(directory_target.is_dir())
 
     @pytest.mark.parametrize("server_type", [c.Tests.RFC, "oud"])
     def test_rejection_comments_are_opt_in_and_cannot_inject_entries(

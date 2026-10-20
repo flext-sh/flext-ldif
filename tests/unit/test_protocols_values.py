@@ -16,7 +16,7 @@ class TestsFlextLdifProtocolsValues:
     def _assert_protocols(value: m.Value, *, transform: bool, process: bool) -> None:
         tm.that(isinstance(value, p.Ldif.TransformConfig), eq=transform)
         tm.that(isinstance(value, p.Ldif.ProcessConfig), eq=process)
-        tm.that(isinstance(value, p.Ldif.AciAllow), eq=False)
+        tm.fail(isinstance(value, p.Ldif.AciAllow))
 
     def test_models_satisfy_only_their_value_protocols(self) -> None:
         """Test server-to-server config models satisfy only their own protocols."""

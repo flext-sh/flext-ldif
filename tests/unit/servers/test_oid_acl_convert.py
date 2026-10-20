@@ -160,7 +160,7 @@ class TestsFlextLdifOidAclConvert:
         """Test malformed line fails with descriptive error."""
         result = FlextLdifServersOidAclConvert.parse_oid_acl_line(_DN, line)
 
-        tm.that(result.failure, eq=True)
+        tm.ok(result.failure)
         tm.fail(result, has=error_fragment)
 
     # ------------------------------------------------------------------ #

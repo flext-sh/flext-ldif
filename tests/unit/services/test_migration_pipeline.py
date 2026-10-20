@@ -217,7 +217,7 @@ class TestsFlextLdifMigrationPipeline:
         nonexistent_output = tmp_path / "nonexistent"
         (input_dir / "test.ldif").write_text(_BASIC_RFC_ENTRY_LDIF)
         tm.ok(migration_pipeline_factory(output_dir=nonexistent_output).execute())
-        tm.that(nonexistent_output.exists(), eq=True)
+        tm.ok(nonexistent_output.exists())
 
     @staticmethod
     def test_execute_with_empty_input_reports_zero_entries(

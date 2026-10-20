@@ -152,7 +152,7 @@ class TestsFlextLdifApiFreeze:
         symbol: TestsFlextLdifUnitTypings.PublicSymbol,
     ) -> None:
         """Every public name shows up in ``dir()`` for interactive discovery."""
-        tm.that(symbol in dir(flext_ldif), eq=True)
+        tm.ok(symbol in dir(flext_ldif))
 
     @staticmethod
     @pytest.mark.parametrize("symbol", CLASS_SYMBOLS)
@@ -160,7 +160,7 @@ class TestsFlextLdifApiFreeze:
         symbol: TestsFlextLdifUnitTypings.PublicSymbol,
     ) -> None:
         """Every ``FlextLdif*`` public name is a class consumers can use."""
-        tm.that(inspect.isclass(getattr(flext_ldif, symbol)), eq=True)
+        tm.ok(inspect.isclass(getattr(flext_ldif, symbol)))
 
     @staticmethod
     @pytest.mark.parametrize(("alias", "owner"), FACADE_ALIAS_OWNERS)
@@ -197,7 +197,7 @@ class TestsFlextLdifApiFreeze:
         symbol: TestsFlextLdifUnitTypings.PublicSymbol,
     ) -> None:
         """Implementation classes never appear in the advertised surface."""
-        tm.that(symbol in flext_ldif.__all__, eq=False)
+        tm.fail(symbol in flext_ldif.__all__)
 
     @staticmethod
     @pytest.mark.parametrize("symbol", PRIVATE_ROOT_SYMBOLS)

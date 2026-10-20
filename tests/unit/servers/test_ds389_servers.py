@@ -54,7 +54,7 @@ class TestsFlextLdifDs389Servers:
         )
         first = server.can_handle_attribute(definition)
         second = server.can_handle_attribute(definition)
-        tm.that(first, eq=True)
+        tm.ok(first)
         tm.that(second, eq=first)
 
     def test_parse_attribute_exposes_public_properties(self) -> None:
@@ -221,7 +221,7 @@ class TestsFlextLdifDs389Servers:
         """An empty DN with no DS389 markers is not claimed by the server."""
         entry_server = FlextLdifServersDs389().entry_server
         empty_attrs: t.MutableStrSequenceMapping = {}
-        tm.that(entry_server.can_handle("", empty_attrs), eq=False)
+        tm.fail(entry_server.can_handle("", empty_attrs))
 
     # ------------------------------------------------------------------
     # ACL detection

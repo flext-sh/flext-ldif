@@ -198,9 +198,9 @@ class TestsFlextLdifOidAclAssemble:
         tm.that(len(aci.allows), eq=1)
         tm.that(aci.allows[0].subject_type, eq="groupdn")
         tm.that(aci.allows[0].permissions, eq=("read", "search", "add"))
-        tm.that(aci.targetscope is None, eq=True)
+        tm.ok(aci.targetscope is None)
         tm.that(aci.acl_name, eq="users Entry by admins")
-        tm.that(any("default-deny" in note for note in aci.notes), eq=True)
+        tm.ok(any("default-deny" in note for note in aci.notes))
 
     def test_anyone_attr_rule_pins_targetscope_base(self) -> None:
         """Test anyone attr rule pins targetscope base."""
@@ -222,7 +222,7 @@ class TestsFlextLdifOidAclAssemble:
         )
 
         tm.that(aci.allows, eq=())
-        tm.that(any("dead code" in note for note in aci.notes), eq=True)
+        tm.ok(any("dead code" in note for note in aci.notes))
 
     def test_guidattr_dropped_with_note_other_subject_survives(self) -> None:
         """Test guidattr dropped with note other subject survives."""
@@ -234,7 +234,7 @@ class TestsFlextLdifOidAclAssemble:
 
         tm.that(len(aci.allows), eq=1)
         tm.that(aci.allows[0].subject_type, eq="groupdn")
-        tm.that(any("guidattr" in note for note in aci.notes), eq=True)
+        tm.ok(any("guidattr" in note for note in aci.notes))
 
     def test_two_perm_groups_append_plus_count_to_acl_name(self) -> None:
         """Test two perm groups append plus count to acl name."""
@@ -245,7 +245,7 @@ class TestsFlextLdifOidAclAssemble:
         )
 
         tm.that(len(aci.allows), eq=2)
-        tm.that(aci.acl_name.endswith("(+1)"), eq=True)
+        tm.ok(aci.acl_name.endswith("(+1)"))
 
     @staticmethod
     def test_unknown_permission_token_surfaces_failure() -> None:
@@ -255,7 +255,7 @@ class TestsFlextLdifOidAclAssemble:
             'orclaci: access to entry by group="cn=a,dc=ctbc" (bogus)',
         ).unwrap()
 
-        tm.that(FlextLdifServersOidAclAssemble.build_aci_rule(rule).failure, eq=True)
+        tm.ok(FlextLdifServersOidAclAssemble.build_aci_rule(rule).failure)
 
     @staticmethod
     def test_cross_level_perm_grants_nothing_not_failure() -> None:
@@ -267,7 +267,7 @@ class TestsFlextLdifOidAclAssemble:
         ).unwrap()
         result = FlextLdifServersOidAclAssemble.build_aci_rule(rule)
 
-        tm.that(result.success, eq=True)
+        tm.ok(result.success)
         tm.that(result.unwrap().allows, eq=())
 
     @staticmethod
@@ -280,8 +280,8 @@ class TestsFlextLdifOidAclAssemble:
         ).unwrap()
         aci = FlextLdifServersOidAclAssemble.build_aci_rule(rule).unwrap()
 
-        tm.that("write" in aci.allows[0].permissions, eq=True)
-        tm.that(any("sensitive perms" in note for note in aci.notes), eq=True)
+        tm.ok("write" in aci.allows[0].permissions)
+        tm.ok(any("sensitive perms" in note for note in aci.notes))
 
     @staticmethod
     def test_anyone_with_only_read_search_emits_no_sensitive_note() -> None:
@@ -292,7 +292,7 @@ class TestsFlextLdifOidAclAssemble:
         ).unwrap()
         aci = FlextLdifServersOidAclAssemble.build_aci_rule(rule).unwrap()
 
-        tm.that(any("sensitive perms" in note for note in aci.notes), eq=False)
+        tm.fail(any("sensitive perms" in note for note in aci.notes))
 
     @staticmethod
     def test_bindmode_and_bindipfilter_become_authmethod_and_ip() -> None:
@@ -328,7 +328,7 @@ class TestsFlextLdifOidAclAssemble:
         aci = FlextLdifServersOidAclAssemble.build_aci_rule(rule).unwrap()
 
         tm.that(rule.subjects[0].added_object_constraint, eq="objectclass=person")
-        tm.that(any("added_object_constraint" in n for n in aci.notes), eq=True)
+        tm.ok(any("added_object_constraint" in n for n in aci.notes))
 
     @staticmethod
     def test_anyone_at_high_level_container_is_skipped() -> None:
@@ -343,7 +343,7 @@ class TestsFlextLdifOidAclAssemble:
 
         tm.that(len(aci.allows), eq=1)
         tm.that(aci.allows[0].subject_type, eq="groupdn")
-        tm.that(any("high-level container" in note for note in aci.notes), eq=True)
+        tm.ok(any("high-level container" in note for note in aci.notes))
 
     @staticmethod
     def test_out_of_scope_dn_is_excluded() -> None:
@@ -357,7 +357,7 @@ class TestsFlextLdifOidAclAssemble:
         ).unwrap()
 
         tm.that(aci.allows, eq=())
-        tm.that(any("out of scope" in note for note in aci.notes), eq=True)
+        tm.ok(any("out of scope" in note for note in aci.notes))
 
     @staticmethod
     def test_regex_dn_converts_to_wildcard_in_scope() -> None:
@@ -399,8 +399,8 @@ class TestsFlextLdifOidAclAssemble:
 
         values = result.unwrap()
         tm.that(len(values), eq=2)
-        tm.that(all(not v.startswith("aci: ") for v in values), eq=True)
-        tm.that(values[0].startswith('(targetattr="*")'), eq=True)
+        tm.ok(all(not v.startswith("aci: ") for v in values))
+        tm.ok(values[0].startswith('(targetattr="*")'))
 
     @staticmethod
     def test_identical_aci_values_are_deduplicated() -> None:
@@ -430,7 +430,7 @@ class TestsFlextLdifOidAclAssemble:
             ("orclaci: this is not a valid acl",),
         )
 
-        tm.that(result.failure, eq=True)
+        tm.ok(result.failure)
 
 
 class TestsFlextLdifOidAclFixtureAndEntry:
@@ -454,7 +454,7 @@ class TestsFlextLdifOidAclFixtureAndEntry:
             result = FlextLdifServersOidAclPipeline.convert_acl_values(
                 dn, (line,), base_dn="dc=example,dc=com"
             )
-            tm.that(result.success, eq=True)
+            tm.ok(result.success)
             rules_seen += 1
             values_emitted += len(result.unwrap())
 
@@ -513,10 +513,10 @@ class TestsFlextLdifOidAclFixtureAndEntry:
         tm.not_none(converted.attributes)
         attrs = converted.attributes.attributes
 
-        tm.that("orclaci" not in attrs, eq=True)
-        tm.that("aci" in attrs, eq=True)
+        tm.ok("orclaci" not in attrs)
+        tm.ok("aci" in attrs)
         tm.that(len(attrs["aci"]), eq=1)
-        tm.that(attrs["aci"][0].startswith('(targetattr="*")'), eq=True)
+        tm.ok(attrs["aci"][0].startswith('(targetattr="*")'))
 
     @staticmethod
     def test_non_oid_to_oud_passes_through_unchanged() -> None:
@@ -530,7 +530,7 @@ class TestsFlextLdifOidAclFixtureAndEntry:
         ).unwrap()
         tm.not_none(converted.attributes)
 
-        tm.that("orclaci" in converted.attributes.attributes, eq=True)
+        tm.ok("orclaci" in converted.attributes.attributes)
 
     @staticmethod
     def test_entry_without_acl_attrs_unchanged() -> None:
@@ -542,8 +542,8 @@ class TestsFlextLdifOidAclFixtureAndEntry:
         ).unwrap()
         tm.not_none(converted.attributes)
 
-        tm.that("aci" not in converted.attributes.attributes, eq=True)
-        tm.that("cn" in converted.attributes.attributes, eq=True)
+        tm.ok("aci" not in converted.attributes.attributes)
+        tm.ok("cn" in converted.attributes.attributes)
 
     @staticmethod
     def test_malformed_acl_surfaces_failure() -> None:
@@ -565,4 +565,4 @@ class TestsFlextLdifOidAclFixtureAndEntry:
             ('orclaci: access to entry by group="cn=a,dc=ctbc" (bogus)',),
         )
 
-        tm.that(result.failure, eq=True)
+        tm.ok(result.failure)

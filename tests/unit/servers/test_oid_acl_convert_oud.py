@@ -95,7 +95,7 @@ class TestsFlextLdifOidAclConvertOud:
             self._subject(kind, value)
         )
 
-        tm.that(result.failure, eq=True)
+        tm.ok(result.failure)
         tm.that(result.error, contains="manual review")
 
     # -- convert_permissions ----------------------------------------------
@@ -138,7 +138,7 @@ class TestsFlextLdifOidAclConvertOud:
             permissions, is_entry=False
         )
 
-        tm.that(result.failure, eq=True)
+        tm.ok(result.failure)
 
     # -- resolve_targetattr ---------------------------------------------------
 
@@ -175,7 +175,7 @@ class TestsFlextLdifOidAclConvertOud:
             has_anyone_subject=False,
         )
 
-        tm.that(scope is None, eq=True)
+        tm.ok(scope is None)
 
     def test_scope_orclaci_with_anyone_is_base(self) -> None:
         """Test scope orclaci with anyone is base."""
@@ -234,5 +234,5 @@ class TestsFlextLdifOidAclConvertOud:
         """Test high level containers are base relative and case folded."""
         containers = FlextLdifServersOidAclToOud.high_level_containers("dc=CTBC")
 
-        tm.that("dc=ctbc" in containers, eq=True)
-        tm.that("dc=network,dc=ctbc" in containers, eq=True)
+        tm.ok("dc=ctbc" in containers)
+        tm.ok("dc=network,dc=ctbc" in containers)

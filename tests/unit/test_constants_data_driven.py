@@ -61,13 +61,13 @@ class TestsFlextLdifConstantsDataDriven:
         """Test common fixture servers are a subset of schema servers."""
         common: frozenset[str] = frozenset(c.Tests.FIXTURE_SERVERS_COMMON)
         schema: frozenset[str] = frozenset(c.Tests.FIXTURE_SERVERS_SCHEMA)
-        tm.that(common.issubset(schema), eq=True)
+        tm.ok(common.issubset(schema))
 
     @staticmethod
     def test_rfc_belongs_to_schema_servers_only() -> None:
         """Test rfc belongs to schema servers only."""
-        tm.that(c.Tests.RFC in c.Tests.FIXTURE_SERVERS_SCHEMA, eq=True)
-        tm.that(c.Tests.RFC in c.Tests.FIXTURE_SERVERS_COMMON, eq=False)
+        tm.ok(c.Tests.RFC in c.Tests.FIXTURE_SERVERS_SCHEMA)
+        tm.fail(c.Tests.RFC in c.Tests.FIXTURE_SERVERS_COMMON)
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -116,8 +116,8 @@ class TestsFlextLdifConstantsDataDriven:
         # A valid single LDIF record starts with its DN line and terminates
         # with a blank-line record separator.
         """Test edge case ldif constants are well formed records."""
-        tm.that(content.startswith(expected_dn_prefix), eq=True)
-        tm.that(content.endswith("\n\n"), eq=True)
+        tm.ok(content.startswith(expected_dn_prefix))
+        tm.ok(content.endswith("\n\n"))
 
     @staticmethod
     def test_non_ascii_regex_flags_unicode_but_not_pure_ascii_fixture() -> None:
@@ -128,8 +128,8 @@ class TestsFlextLdifConstantsDataDriven:
         ascii_hit = c.Tests.EDGE_CASE_NON_ASCII_REGEX.search(
             c.Tests.EDGE_CASE_DEEP_DN_LDIF,
         )
-        tm.that(unicode_hit is not None, eq=True)
-        tm.that(ascii_hit is None, eq=True)
+        tm.ok(unicode_hit is not None)
+        tm.ok(ascii_hit is None)
 
     @staticmethod
     def test_large_multivalue_fixture_has_expected_member_cardinality() -> None:
@@ -138,4 +138,4 @@ class TestsFlextLdifConstantsDataDriven:
         # The inline fixture carries exactly five members, below the
         # generated-fixture threshold used for on-disk large cases.
         tm.that(member_count, eq=5)
-        tm.that(member_count < c.Tests.EDGE_CASE_MIN_MULTIVALUE_COUNT, eq=True)
+        tm.ok(member_count < c.Tests.EDGE_CASE_MIN_MULTIVALUE_COUNT)

@@ -58,7 +58,7 @@ class TestsFlextLdifProcessingService:
         )
         tm.that(len(processed), eq=len(entries))
         processed_dns = {item.dn for item in processed}
-        tm.that(processed_dns == set(c.Tests.PROCESSING_VALID_DNS), eq=True)
+        tm.ok(processed_dns == set(c.Tests.PROCESSING_VALID_DNS))
 
     def test_process_entries_supports_kwargs_option_payload(
         self,

@@ -171,7 +171,7 @@ class TestsFlextLdifRfcDockerReal:
         result = FlextLdifParser(registry=FlextLdif().registry).parse_ldif_file(source)
 
         # Assert — outcome is well-formed; success and failure are exclusive
-        assert result.success != result.failure
+        tm.fail(result.success != result)
         if result.success:
             assert result.unwrap().entries
         else:
@@ -244,7 +244,7 @@ class TestsFlextLdifRfcDockerReal:
             result = FlextLdifParser(registry=FlextLdif().registry).parse_ldif_file(
                 ldif_file
             )
-            assert result.success != result.failure
+            tm.fail(result.success != result)
             if result.success:
                 assert all(
                     entry.dn is not None and isinstance(entry.dn.value, str)

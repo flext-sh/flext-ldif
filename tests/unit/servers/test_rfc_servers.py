@@ -52,14 +52,14 @@ class TestsFlextLdifRfcServers:
         acl = FlextLdifServersRfc.Acl()
         tm.that(acl.resolve_acl_attributes(), eq=list(c.Ldif.RFC_ACL_ATTRIBUTES))
         for attribute_name in c.Ldif.RFC_ACL_ATTRIBUTES:
-            tm.that(acl.matches_acl_attribute(attribute_name.upper()), eq=True)
+            tm.ok(acl.matches_acl_attribute(attribute_name.upper()))
 
     @classmethod
     def test_rfc_acl_ignores_schema_definitions(cls) -> None:
         """The RFC ACL server is not aware of schema definitions."""
         acl = FlextLdifServersRfc.Acl()
-        tm.that(acl.can_handle_attribute(cls._parsed_attribute()), eq=False)
-        tm.that(acl.can_handle_objectclass(cls._parsed_objectclass()), eq=False)
+        tm.fail(acl.can_handle_attribute(cls._parsed_attribute()))
+        tm.fail(acl.can_handle_objectclass(cls._parsed_objectclass()))
 
     @staticmethod
     def test_rfc_acl_round_trips_raw_acl() -> None:
@@ -74,8 +74,8 @@ class TestsFlextLdifRfcServers:
     def test_rfc_entry_ignores_schema_definitions(cls) -> None:
         """The RFC entry server is not aware of schema definitions."""
         entry = FlextLdifServersRfc.Entry()
-        tm.that(entry.can_handle_attribute(cls._parsed_attribute()), eq=False)
-        tm.that(entry.can_handle_objectclass(cls._parsed_objectclass()), eq=False)
+        tm.fail(entry.can_handle_attribute(cls._parsed_attribute()))
+        tm.fail(entry.can_handle_objectclass(cls._parsed_objectclass()))
 
     @classmethod
     def test_rfc_entry_parses_and_writes_record(cls) -> None:
@@ -83,7 +83,7 @@ class TestsFlextLdifRfcServers:
         entry = FlextLdifServersRfc.Entry()
         entries = entry.parse_server(cls.LDIF_RECORD).unwrap()
         tm.that(len(entries), eq=1)
-        tm.that(entries[0].dn is not None, eq=True)
+        tm.ok(entries[0].dn is not None)
         written = entry.write(entries[0]).unwrap()
         tm.that(written, has="cn=alice,dc=example,dc=com")
         tm.that(written, has="alice")

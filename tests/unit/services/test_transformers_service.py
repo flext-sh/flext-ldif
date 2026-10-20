@@ -140,7 +140,7 @@ class TestsFlextLdifTransformersService:
             raise AssertionError(msg)
         attrs = converted.attributes.attributes
 
-        tm.that("orclaci" not in attrs, eq=True)
+        tm.ok("orclaci" not in attrs)
         tm.that(
             attrs["aci"],
             eq=[

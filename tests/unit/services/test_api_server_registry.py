@@ -322,7 +322,7 @@ class TestsFlextLdifApiServerRegistry:
                 parsed, output, server_type=c.Tests.SERVER_INVALID_SERVER_TYPE
             )
         )
-        tm.that(output.exists(), eq=False)
+        tm.fail(output.exists())
 
     @staticmethod
     def test_oud_schema_write_uses_explicit_registry_not_other_apis() -> None:

@@ -140,14 +140,14 @@ class TestsFlextLdifRelaxed:
         definition, should_succeed = definition_data
         result = schema_server.parse_attribute(definition)
         if should_succeed:
-            _ = tm.that(result.success, eq=True)
+            _ = tm.ok(result.success)
             parsed = result.value
             if scenario in {
                 c.Tests.RELAXED_PARSE_VALID,
                 c.Tests.RELAXED_PARSE_MALFORMED,
             }:
                 tm.not_none(parsed.oid)
-                tm.that(parsed.metadata is not None, eq=True)
+                tm.ok(parsed.metadata is not None)
                 tm.not_none(parsed.metadata)
                 tm.that(
                     (
@@ -158,7 +158,7 @@ class TestsFlextLdifRelaxed:
                     eq=True,
                 )
         else:
-            _ = tm.that(result.failure, eq=True)
+            _ = tm.ok(result.failure)
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -174,10 +174,7 @@ class TestsFlextLdifRelaxed:
         """Test parse_objectclass with various scenarios."""
         definition, should_succeed = definition_data
         result = schema_server.parse_objectclass(definition)
-        if should_succeed:
-            _ = tm.that(result.success, eq=True)
-        else:
-            _ = tm.that(result.failure, eq=True)
+        _ = tm.ok(result.success) if should_succeed else tm.ok(result.failure)
 
     @staticmethod
     def test_parse_attribute_stores_original_definition(
@@ -257,7 +254,7 @@ class TestsFlextLdifRelaxed:
     ) -> None:
         """normalize_dn returns the whitespace-normalized DN on success."""
         result = entry_server.normalize_dn(raw_dn)
-        tm.that(result.success, eq=True)
+        tm.ok(result.success)
         tm.that(tm.ok(result), eq=normalized)
 
     @staticmethod
@@ -273,7 +270,7 @@ class TestsFlextLdifRelaxed:
     ) -> None:
         """normalize_dn surfaces a failure r[T] for unrecoverable DNs."""
         result = entry_server.normalize_dn(bad_dn)
-        tm.that(result.failure, eq=True)
+        tm.ok(result.failure)
         tm.that(result.error, has=[error_fragment])
 
     @staticmethod
@@ -352,7 +349,7 @@ class TestsFlextLdifRelaxed:
         definition: str,
     ) -> None:
         """Relaxed is the last-resort handler: can_handle_attribute is always True."""
-        tm.that(schema_server.can_handle_attribute(definition), eq=True)
+        tm.ok(schema_server.can_handle_attribute(definition))
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -365,7 +362,7 @@ class TestsFlextLdifRelaxed:
         definition: str,
     ) -> None:
         """Relaxed is the last-resort handler: can_handle_objectclass is always True."""
-        tm.that(schema_server.can_handle_objectclass(definition), eq=True)
+        tm.ok(schema_server.can_handle_objectclass(definition))
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -379,7 +376,7 @@ class TestsFlextLdifRelaxed:
         attributes: t.MutableStrSequenceMapping,
     ) -> None:
         """Relaxed entry server claims every entry, well-formed or not."""
-        tm.that(entry_server.can_handle(entry_dn, attributes), eq=True)
+        tm.ok(entry_server.can_handle(entry_dn, attributes))
 
     @staticmethod
     @pytest.mark.parametrize(

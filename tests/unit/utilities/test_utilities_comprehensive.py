@@ -125,7 +125,7 @@ class TestsFlextLdifUtilitiesComprehensive:
         """Norm yields a success result carrying the normalized DN string."""
         result = u.Ldif.norm("CN=Admin,DC=Example")
 
-        tm.that(result.success, eq=True)
+        tm.ok(result.success)
         tm.that(result.value, eq="cn=Admin,dc=Example")
 
     @staticmethod
@@ -133,7 +133,7 @@ class TestsFlextLdifUtilitiesComprehensive:
         """An empty DN yields a failure result with an explanatory message."""
         result = u.Ldif.norm("")
 
-        tm.that(result.failure, eq=True)
+        tm.ok(result.failure)
         tm.not_none(result.error)
         tm.that(result.error.lower(), has="empty")
 
@@ -144,7 +144,7 @@ class TestsFlextLdifUtilitiesComprehensive:
         """parse_dn yields the (attr, value) pairs in DN order on success."""
         result = u.Ldif.parse_dn("cn=admin,dc=example,dc=com")
 
-        tm.that(result.success, eq=True)
+        tm.ok(result.success)
         tm.that(result.value, eq=[("cn", "admin"), ("dc", "example"), ("dc", "com")])
 
     @staticmethod
@@ -152,7 +152,7 @@ class TestsFlextLdifUtilitiesComprehensive:
         """A DN missing the '=' separator fails rather than silently parsing."""
         result = u.Ldif.parse_dn("no-equals")
 
-        tm.that(result.failure, eq=True)
+        tm.ok(result.failure)
         tm.not_none(result.error)
 
     @staticmethod
@@ -160,7 +160,7 @@ class TestsFlextLdifUtilitiesComprehensive:
         """parse_rdn yields the single (attr, value) pair for a lone RDN."""
         result = u.Ldif.parse_rdn("cn=admin")
 
-        tm.that(result.success, eq=True)
+        tm.ok(result.success)
         tm.that(result.value, eq=[("cn", "admin")])
 
     # --- line folding / unfolding --------------------------------------

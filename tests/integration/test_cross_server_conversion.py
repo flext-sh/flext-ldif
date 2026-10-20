@@ -241,10 +241,10 @@ class TestsFlextLdifCrossServerConversion:
         A full-featured server resolves every kind.
         """
         supported = conversion_matrix.resolve_supported_conversions(oud_server)
-        tm.that(supported["attribute"], eq=True)
-        tm.that(supported["objectClass"], eq=True)
-        tm.that(supported["acl"], eq=True)
-        tm.that(supported["entry"], eq=True)
+        tm.ok(supported["attribute"])
+        tm.ok(supported["objectClass"])
+        tm.ok(supported["acl"])
+        tm.ok(supported["entry"])
 
     @staticmethod
     def test_attribute_converts_oud_to_oid_rendering_oracle_identity(

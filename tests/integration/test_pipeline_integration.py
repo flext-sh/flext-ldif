@@ -165,7 +165,7 @@ class TestsFlextLdifPipelineIntegration:
 
         result = ldif().parse_ldif(missing)
 
-        tm.that(result.success, eq=False)
+        tm.fail(result.success)
         tm.not_none(result.error)
         tm.that(result.error.lower(), has="not found")
 
