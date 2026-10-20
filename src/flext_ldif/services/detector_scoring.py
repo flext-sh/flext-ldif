@@ -72,7 +72,7 @@ class FlextLdifDetectorScoring(FlextLdifServer):
 
         """
         constants_result: p.Result[type[p.Ldif.ServerConstants]] = (
-            self._server.resolve_server_constants(server_type)
+            self.resolve_server_constants(server_type)
         )
         if constants_result.success:
             constants: type[p.Ldif.ServerConstants] = constants_result.value

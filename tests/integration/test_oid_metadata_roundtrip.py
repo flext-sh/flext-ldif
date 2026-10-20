@@ -56,6 +56,6 @@ class TestsFlextLdifOidMetadataRoundtrip:
         converted = tm.ok(
             api.parse_ldif(written.content, server_type=c.Ldif.ServerTypes.OUD),
         )
-        assert len(converted.entries) == len(parsed.entries)
-        assert converted.entries[0].dn_str == entry.dn_str
-        assert converted.entries[0].attributes_dict["sn"] == ["Sample"]
+        tm.that(len(converted.entries), eq=len(parsed.entries))
+        tm.that(converted.entries[0].dn_str, eq=entry.dn_str)
+        tm.that(converted.entries[0].attributes_dict["sn"], eq=["Sample"])

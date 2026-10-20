@@ -202,10 +202,10 @@ acl_line = "orclaci: access to entry by * (browse)"
 
     result = server.parse(acl_line)
 
-    assert result.success
+    tm.ok(result.success)
     acl = result.unwrap()
     assert isinstance(acl, FlextLdifModels.Acl)  # ← Tests Acl return type
-    assert acl.server_type == "oid"
+    tm.that(acl.server_type, eq="oid")
 
 **Total Tests**: ~50+ test methods using parse()
 

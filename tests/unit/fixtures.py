@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_ldif import ldif
+from flext_ldif import FlextLdif, ldif
 from flext_ldif.services import (
     FlextLdifConversion,
     FlextLdifMigrationPipeline,
@@ -68,7 +68,7 @@ def parser() -> FlextLdifParser:
         A fresh ``FlextLdifParser``.
 
     """
-    return FlextLdifParser()
+    return FlextLdifParser(registry=FlextLdif().registry)
 
 
 @pytest.fixture
@@ -242,7 +242,7 @@ def conversion_matrix() -> FlextLdifConversion:
         A fresh ``FlextLdifConversion`` instance.
 
     """
-    return FlextLdifConversion()
+    return FlextLdifConversion(registry=FlextLdif().registry)
 
 
 @pytest.fixture
@@ -253,7 +253,9 @@ def server() -> p.Ldif.ServerRegistry:
         The process-wide ``FlextLdifServer`` registry instance.
 
     """
-    server_registry: p.Ldif.ServerRegistry = FlextLdifServer.fetch_global_instance()
+    server_registry: p.Ldif.ServerRegistry = FlextLdifServer(
+        registry=FlextLdif().registry
+    )
     return server_registry
 
 

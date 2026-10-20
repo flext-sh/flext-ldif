@@ -194,9 +194,9 @@ description: Administrator account
 def test_ldif_parsing():
 api = ldif()
 result = api.parse_string(create_test_ldif())
-assert result.success
+tm.ok(result.success)
 entries = result.unwrap()
-assert len(entries) == 2
+tm.that(len(entries), eq=2)
 
 ### Memory Usage Testing
 
@@ -218,7 +218,7 @@ def test_memory_usage() -> None:
 
     api = ldif()
     result = api.parse_file("test_data.ldif")
-    assert result.success
+    tm.ok(result.success)
 
     final_memory = process.memory_info().rss
     memory_increase = final_memory - initial_memory

@@ -266,7 +266,7 @@ class TestsFlextLdifIntegrationEdgeCases:
         tm.ok(write_result)
         written = write_result.value.content
         assert written is not None
-        assert not written.strip() or written.strip() == "version: 1"
+        assert written.strip() in {"", "version: 1"}
 
     @staticmethod
     def test_single_entry_roundtrip_preserves_dn_and_value(

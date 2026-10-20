@@ -196,7 +196,7 @@ class TestsFlextLdifErrorRecovery:
         tm.ok(result)
         entry = result.unwrap().entries[0]
         assert entry.attributes is not None
-        tm.that(entry.attributes.attributes["description"], eq=["café, naïve, résumé"])
+        assert entry.attributes.attributes["description"] == ["café, naïve, résumé"]
 
     # ------------------------------------------------------------------
     # Graceful degradation: malformed input never raises; it produces a
@@ -237,7 +237,7 @@ class TestsFlextLdifErrorRecovery:
         tm.ok(result)
         entry = result.unwrap().entries[0]
         assert entry.attributes is not None
-        tm.that(set(entry.attributes.attributes), eq={"cn", "sn"})
+        assert set(entry.attributes.attributes) == {"cn", "sn"}
 
     @staticmethod
     def test_dn_only_entry_parses_with_empty_attributes(

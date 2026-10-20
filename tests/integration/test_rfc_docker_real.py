@@ -16,6 +16,7 @@ from pathlib import Path
 
 import pytest
 
+from flext_ldif import FlextLdif
 from flext_ldif.services import FlextLdifParser, FlextLdifServer, FlextLdifWriter
 from tests import c, m, tm
 
@@ -42,7 +43,7 @@ class TestsFlextLdifRfcDockerReal:
             The resulting ``FlextLdifServer``.
 
         """
-        return FlextLdifServer()
+        return FlextLdifServer(registry=FlextLdif().registry)
 
     @staticmethod
     @pytest.fixture
@@ -81,7 +82,7 @@ class TestsFlextLdifRfcDockerReal:
             pytest.skip(f"Fixture not available: {source}")
 
         # Act
-        result = FlextLdifParser().parse_ldif_file(source)
+        result = FlextLdifParser(registry=FlextLdif().registry).parse_ldif_file(source)
 
         # Assert — public r[T] contract + public model state
         tm.ok(result)
@@ -102,7 +103,7 @@ class TestsFlextLdifRfcDockerReal:
             pytest.skip(f"Fixture not available: {source}")
 
         # Act
-        result = FlextLdifParser().parse_ldif_file(source)
+        result = FlextLdifParser(registry=FlextLdif().registry).parse_ldif_file(source)
 
         # Assert
         tm.ok(result)
@@ -117,7 +118,7 @@ class TestsFlextLdifRfcDockerReal:
             pytest.skip(f"Fixture not available: {source}")
 
         # Act
-        result = FlextLdifParser().parse_ldif_file(source)
+        result = FlextLdifParser(registry=FlextLdif().registry).parse_ldif_file(source)
 
         # Assert
         tm.ok(result)
@@ -141,7 +142,7 @@ class TestsFlextLdifRfcDockerReal:
         )
 
         # Act
-        result = FlextLdifParser().parse_ldif_file(source)
+        result = FlextLdifParser(registry=FlextLdif().registry).parse_ldif_file(source)
 
         # Assert
         tm.ok(result)
@@ -167,10 +168,10 @@ class TestsFlextLdifRfcDockerReal:
             pytest.skip(f"Fixture not available: {source}")
 
         # Act
-        result = FlextLdifParser().parse_ldif_file(source)
+        result = FlextLdifParser(registry=FlextLdif().registry).parse_ldif_file(source)
 
         # Assert — outcome is well-formed; success and failure are exclusive
-        assert result.success is not result.failure
+        assert result.success != result.failure
         if result.success:
             assert result.unwrap().entries
         else:
@@ -187,7 +188,7 @@ class TestsFlextLdifRfcDockerReal:
         missing = tmp_path / "does_not_exist.ldif"
 
         # Act
-        result = FlextLdifParser().parse_ldif_file(missing)
+        result = FlextLdifParser(registry=FlextLdif().registry).parse_ldif_file(missing)
 
         # Assert
         tm.fail(result)
@@ -209,7 +210,7 @@ class TestsFlextLdifRfcDockerReal:
         )
 
         # Act
-        result = FlextLdifWriter().write_ldif_file(
+        result = FlextLdifWriter(registry=FlextLdif().registry).write_ldif_file(
             [entry],
             tmp_path,
             server_type=c.Tests.RFC,
@@ -218,7 +219,7 @@ class TestsFlextLdifRfcDockerReal:
         # Assert
         tm.fail(result)
         assert result.error is not None
-        tm.that(result.error, has="Failed to write LDIF file")
+        tm.that(result.error, has="atomic_write_text_file")
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -240,8 +241,10 @@ class TestsFlextLdifRfcDockerReal:
 
         # Act / Assert
         for ldif_file in ldif_files:
-            result = FlextLdifParser().parse_ldif_file(ldif_file)
-            assert result.success is not result.failure
+            result = FlextLdifParser(registry=FlextLdif().registry).parse_ldif_file(
+                ldif_file
+            )
+            assert result.success != result.failure
             if result.success:
                 assert all(
                     entry.dn is not None and isinstance(entry.dn.value, str)
@@ -264,7 +267,9 @@ class TestsFlextLdifRfcDockerReal:
         source = fixtures_dir / c.Tests.OID / "oid_entries_fixtures.ldif"
         if not source.exists():
             pytest.skip(f"Fixture not available: {source}")
-        parse_result = FlextLdifParser().parse_ldif_file(source)
+        parse_result = FlextLdifParser(registry=FlextLdif().registry).parse_ldif_file(
+            source
+        )
         if not parse_result.success:
             pytest.skip(f"Source fixture unparseable: {parse_result.error}")
         original_entries = parse_result.unwrap().entries
@@ -274,13 +279,15 @@ class TestsFlextLdifRfcDockerReal:
         output_file = tmp_path / "roundtrip.ldif"
 
         # Act
-        write_result = FlextLdifWriter().write_ldif_file(
+        write_result = FlextLdifWriter(registry=FlextLdif().registry).write_ldif_file(
             original_entries,
             output_file,
             server_type=c.Tests.OID,
         )
         tm.ok(write_result)
-        reparse_result = FlextLdifParser().parse_ldif_file(output_file)
+        reparse_result = FlextLdifParser(registry=FlextLdif().registry).parse_ldif_file(
+            output_file
+        )
 
         # Assert — round-trip invariant on the public DN contract
         tm.that(write_result.unwrap().output_path, eq=str(output_file))
@@ -318,7 +325,7 @@ class TestsFlextLdifRfcDockerReal:
         output_file = tmp_path / "large_output.ldif"
 
         # Act
-        result = FlextLdifWriter(registry=server_registry).write_ldif_file(
+        result = FlextLdifWriter(registry=server_registry.registry).write_ldif_file(
             entries,
             output_file,
             server_type=c.Tests.RFC,
@@ -347,7 +354,7 @@ class TestsFlextLdifRfcDockerReal:
                 ),
             ),
         ]
-        writer = FlextLdifWriter(registry=server_registry)
+        writer = FlextLdifWriter(registry=server_registry.registry)
 
         # Act
         first = writer.write_to_string(entries, server_type=c.Tests.RFC)

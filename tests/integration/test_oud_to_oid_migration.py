@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_ldif import ldif
+from flext_ldif import FlextLdif, ldif
 from flext_ldif.servers import FlextLdifServersOid, FlextLdifServersOud
 from flext_ldif.services import FlextLdifMigrationPipeline
 from tests import c, tm, u
@@ -45,7 +45,7 @@ class TestsFlextLdifOudToOidMigration:
             The resulting ``FlextLdifServersOud``.
 
         """
-        return FlextLdifServersOud()
+        return FlextLdifServersOud(registry=FlextLdif().registry)
 
     @staticmethod
     @pytest.fixture
@@ -139,6 +139,7 @@ class TestsFlextLdifOudToOidMigration:
             output_filename="migrated.ldif",
             source_server=c.Ldif.ServerTypes.OUD,
             target_server=c.Ldif.ServerTypes.OID,
+            registry=FlextLdif().registry,
         )
         tm.ok(pipeline.execute())
 

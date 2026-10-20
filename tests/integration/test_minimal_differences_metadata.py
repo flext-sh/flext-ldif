@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_ldif import ldif
+from flext_ldif import FlextLdif, ldif
 from flext_ldif.services import FlextLdifParser
 from tests import c, m, tm
 
@@ -38,7 +38,7 @@ class TestsFlextLdifMinimalDifferencesMetadata:
             The resulting ``FlextLdifParser``.
 
         """
-        return FlextLdifParser()
+        return FlextLdifParser(registry=FlextLdif().registry)
 
     @staticmethod
     @pytest.fixture

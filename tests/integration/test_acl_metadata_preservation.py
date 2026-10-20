@@ -256,7 +256,7 @@ class TestsFlextLdifAclMetadataPreservation:
             "cn: test\n"
         )
         extensions = self._extensions(self._parse_single(api, ldif_text, c.Tests.OUD))
-        assert extensions.get(c.Ldif.ACL_TARGETATTR_FILTERS) == "add=cn:(cn=admin)"
+        tm.that(extensions.get(c.Ldif.ACL_TARGETATTR_FILTERS), eq="add=cn:(cn=admin)")
         tm.that(
             extensions.get(c.Ldif.ACL_TARGET_CONTROL),
             eq="1.3.6.1.4.1.42.2.27.9.5.2",
@@ -311,5 +311,5 @@ class TestsFlextLdifAclMetadataPreservation:
 
         reparsed = self._parse_single(api, written, c.Tests.OUD)
         extensions = self._extensions(reparsed)
-        assert extensions.get(c.Ldif.ACL_TARGETATTR_FILTERS) == "add=cn:(cn=admin)"
+        tm.that(extensions.get(c.Ldif.ACL_TARGETATTR_FILTERS), eq="add=cn:(cn=admin)")
         tm.that(extensions.get(c.Ldif.ACL_BIND_IP_FILTER), eq="192.168.1.0/24")
