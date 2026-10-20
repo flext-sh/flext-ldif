@@ -47,14 +47,14 @@ class TestsFlextLdifOudIntegration:
     def _attrs(entry: m.Ldif.Entry) -> m.Ldif.Attributes:
         """Return an entry's attributes, asserting the public field is present."""
         attributes = entry.attributes
-        assert attributes is not None
+        tm.not_none(attributes)
         return attributes
 
     @staticmethod
     def _dn_value(entry: m.Ldif.Entry) -> str:
         """Return an entry's DN string via the public DN model."""
         dn = entry.dn
-        assert dn is not None
+        tm.not_none(dn)
         return dn.value
 
     @classmethod
@@ -160,7 +160,7 @@ class TestsFlextLdifOudIntegration:
             error_msg="Writing ACL entries must succeed",
         )
         written_content = written.content
-        assert written_content is not None
+        tm.not_none(written_content)
         reparsed: m.Ldif.ParseResponse = u.Tests.assert_success(
             api.parse_ldif(written_content),
         )
@@ -285,7 +285,7 @@ class TestsFlextLdifOudIntegration:
             api.write(parsed.entries),
         )
         written_content = written.content
-        assert written_content is not None
+        tm.not_none(written_content)
         reparsed: m.Ldif.ParseResponse = u.Tests.assert_success(
             api.parse_ldif(written_content),
         )
@@ -320,4 +320,4 @@ class TestsFlextLdifOudIntegration:
         tm.that(self._dn_value(entry), eq="cn=OracleContext,dc=example,dc=com")
         tm.that(attributes.get("orclVersion"), eq=["90600"])
         tm.that(attributes.get("objectClass"), eq=["top", "orclContext"])
-        assert entry.metadata is not None
+        tm.not_none(entry.metadata)

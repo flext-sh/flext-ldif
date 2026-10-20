@@ -94,7 +94,7 @@ def _write_oud_phase(api: p.Ldif.LdifClient, parsed: m.Ldif.ParseResponse) -> st
             format_options=_PHASE_MODIFY_FORMAT_OPTIONS,
         ),
     )
-    assert written.content is not None
+    tm.not_none(written.content)
     return written.content
 
 

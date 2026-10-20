@@ -51,9 +51,9 @@ class TestsFlextLdifErrorRecovery:
         response = result.unwrap()
         tm.that(len(response.entries), eq=1)
         entry = response.entries[0]
-        assert entry.dn is not None
+        tm.not_none(entry.dn)
         tm.that(entry.dn.value, eq="cn=Test,dc=example,dc=com")
-        assert entry.attributes is not None
+        tm.not_none(entry.attributes)
         tm.that(set(entry.attributes.attributes), eq={"objectClass", "cn", "sn"})
 
     @staticmethod
@@ -92,7 +92,7 @@ class TestsFlextLdifErrorRecovery:
         tm.ok(result)
         entries = result.unwrap().entries
         tm.that(len(entries), eq=1)
-        assert entries[0].dn is not None
+        tm.not_none(entries[0].dn)
         tm.that(entries[0].dn.value, eq=expected_dn)
 
     # ------------------------------------------------------------------
@@ -113,7 +113,7 @@ class TestsFlextLdifErrorRecovery:
 
         tm.ok(result)
         entry = result.unwrap().entries[0]
-        assert entry.attributes is not None
+        tm.not_none(entry.attributes)
         tm.that(
             entry.attributes.attributes["mail"],
             eq=["a@example.com", "b@example.com", "c@example.com"],
@@ -130,7 +130,7 @@ class TestsFlextLdifErrorRecovery:
 
         tm.ok(result)
         entry = result.unwrap().entries[0]
-        assert entry.attributes is not None
+        tm.not_none(entry.attributes)
         tm.that(entry.attributes.attributes["description"], eq=[""])
 
     @staticmethod
@@ -147,7 +147,7 @@ class TestsFlextLdifErrorRecovery:
 
         tm.ok(result)
         entry = result.unwrap().entries[0]
-        assert entry.attributes is not None
+        tm.not_none(entry.attributes)
         tm.that(entry.attributes.attributes["description"], eq=["abcd"])
 
     @staticmethod
@@ -163,7 +163,7 @@ class TestsFlextLdifErrorRecovery:
 
         tm.ok(result)
         entry = result.unwrap().entries[0]
-        assert entry.attributes is not None
+        tm.not_none(entry.attributes)
         tm.that(entry.attributes.attributes["description"], eq=[long_value])
 
     @staticmethod
@@ -180,7 +180,7 @@ class TestsFlextLdifErrorRecovery:
 
         tm.ok(result)
         entry = result.unwrap().entries[0]
-        assert entry.attributes is not None
+        tm.not_none(entry.attributes)
         tm.that(entry.attributes.attributes, has="jpegPhoto")
 
     @staticmethod
@@ -195,7 +195,7 @@ class TestsFlextLdifErrorRecovery:
 
         tm.ok(result)
         entry = result.unwrap().entries[0]
-        assert entry.attributes is not None
+        tm.not_none(entry.attributes)
         assert entry.attributes.attributes["description"] == ["café, naïve, résumé"]
 
     # ------------------------------------------------------------------
@@ -236,7 +236,7 @@ class TestsFlextLdifErrorRecovery:
 
         tm.ok(result)
         entry = result.unwrap().entries[0]
-        assert entry.attributes is not None
+        tm.not_none(entry.attributes)
         assert set(entry.attributes.attributes) == {"cn", "sn"}
 
     @staticmethod
@@ -252,7 +252,7 @@ class TestsFlextLdifErrorRecovery:
         entries = result.unwrap().entries
         tm.that(len(entries), eq=1)
         entry = entries[0]
-        assert entry.dn is not None
+        tm.not_none(entry.dn)
         tm.that(entry.dn.value, eq="cn=Minimal,dc=example,dc=com")
 
     @staticmethod
@@ -346,16 +346,16 @@ class TestsFlextLdifErrorRecovery:
         written = api.write(original)
         tm.ok(written)
         serialized = written.unwrap().content
-        assert serialized is not None
+        tm.not_none(serialized)
 
         second = api.parse_ldif(serialized)
         tm.ok(second)
         reparsed = second.unwrap().entries
 
         tm.that(len(reparsed), eq=len(original))
-        assert original[0].dn is not None
-        assert reparsed[0].dn is not None
+        tm.not_none(original[0].dn)
+        tm.not_none(reparsed[0].dn)
         tm.that(reparsed[0].dn.value, eq=original[0].dn.value)
-        assert original[0].attributes is not None
-        assert reparsed[0].attributes is not None
+        tm.not_none(original[0].attributes)
+        tm.not_none(reparsed[0].attributes)
         tm.that(reparsed[0].attributes.attributes, eq=original[0].attributes.attributes)

@@ -82,7 +82,7 @@ class TestsFlextLdifRealLdapExport:
             The resulting ``t.MappingKV[str, t.MappingKV[str, t.StrSequence]]``.
 
         """
-        assert content is not None
+        tm.not_none(content)
         parsed = flext_api.parse_string(content)
         tm.ok(parsed)
         return {

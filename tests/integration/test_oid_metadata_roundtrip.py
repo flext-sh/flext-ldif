@@ -36,7 +36,7 @@ class TestsFlextLdifOidMetadataRoundtrip:
         )
         parsed = tm.ok(api.parse_ldif(source, server_type=c.Ldif.ServerTypes.OID))
         entry = parsed.entries[0]
-        assert entry.metadata is not None
+        tm.not_none(entry.metadata)
         assert entry.metadata.server_type is c.Ldif.ServerTypes.OID
         serialized = entry.metadata.model_dump(warnings="error")
         assert serialized["server_type"] is c.Ldif.ServerTypes.OID

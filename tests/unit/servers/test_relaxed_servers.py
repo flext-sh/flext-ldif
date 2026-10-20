@@ -146,9 +146,9 @@ class TestsFlextLdifRelaxed:
                 c.Tests.RELAXED_PARSE_VALID,
                 c.Tests.RELAXED_PARSE_MALFORMED,
             }:
-                assert parsed.oid is not None
+                tm.not_none(parsed.oid)
                 tm.that(parsed.metadata is not None, eq=True)
-                assert parsed.metadata is not None
+                tm.not_none(parsed.metadata)
                 tm.that(
                     (
                         parsed.metadata.extensions.get("schema_source_server")
@@ -186,7 +186,7 @@ class TestsFlextLdifRelaxed:
         """Test parse_attribute stores original definition for recovery."""
         original = "( 1.2.3.4 NAME 'test' SYNTAX 1.2.3 )"
         parsed: m.Ldif.SchemaAttribute = tm.ok(schema_server.parse_attribute(original))
-        assert parsed.metadata is not None
+        tm.not_none(parsed.metadata)
         tm.that(parsed.metadata.extensions.get("original_format"), eq=original)
 
     @staticmethod
@@ -302,7 +302,7 @@ class TestsFlextLdifRelaxed:
                 schema_server.parse_objectclass(bad_input)
             )
             parsed = tm.ok(objectclass_result)
-        assert parsed.metadata is not None
+        tm.not_none(parsed.metadata)
         ext = parsed.metadata.extensions
         tm.that(
             ext.get("original_format") is not None

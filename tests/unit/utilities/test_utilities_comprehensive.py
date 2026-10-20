@@ -134,7 +134,7 @@ class TestsFlextLdifUtilitiesComprehensive:
         result = u.Ldif.norm("")
 
         tm.that(result.failure, eq=True)
-        assert result.error is not None
+        tm.not_none(result.error)
         tm.that(result.error.lower(), has="empty")
 
     # --- DN parsing (r[T]) ---------------------------------------------
@@ -153,7 +153,7 @@ class TestsFlextLdifUtilitiesComprehensive:
         result = u.Ldif.parse_dn("no-equals")
 
         tm.that(result.failure, eq=True)
-        assert result.error is not None
+        tm.not_none(result.error)
 
     @staticmethod
     def test_parse_rdn_returns_single_component() -> None:

@@ -46,9 +46,9 @@ class TestsFlextLdifAclMetadataPreservation:
 
         """
         metadata = entry.metadata
-        assert metadata is not None
+        tm.not_none(metadata)
         extensions = metadata.extensions
-        assert extensions is not None
+        tm.not_none(extensions)
         extensions_dump: t.JsonMapping = u.json_mapping_adapter().validate_python(
             dict(extensions),
         )
@@ -265,9 +265,9 @@ class TestsFlextLdifAclMetadataPreservation:
         tm.that(extensions.get(c.Ldif.ACL_BIND_IP_FILTER), eq="192.168.1.0/24")
         tm.that(extensions.get(c.Ldif.ACL_BIND_DNS), eq="*.example.com")
         tm.that(extensions.get(c.Ldif.ACL_BIND_DAYOFWEEK), eq="Mon,Tue,Wed")
-        assert extensions.get(c.Ldif.ACL_BIND_TIMEOFDAY) is not None
+        tm.not_none(extensions.get(c.Ldif.ACL_BIND_TIMEOFDAY))
         tm.that(extensions.get(c.Ldif.ACL_AUTHMETHOD), eq="ssl")
-        assert extensions.get(c.Ldif.ACL_SSF) is not None
+        tm.not_none(extensions.get(c.Ldif.ACL_SSF))
 
     # -- Round-trip preservation (parse -> write -> parse) ----------------
 
@@ -285,7 +285,7 @@ class TestsFlextLdifAclMetadataPreservation:
         write_result = api.write([entry], server_type=c.Tests.OID)
         tm.ok(write_result)
         written = write_result.unwrap().content
-        assert written is not None
+        tm.not_none(written)
 
         reparsed = self._parse_single(api, written, c.Tests.OID)
         extensions = self._extensions(reparsed)
@@ -307,7 +307,7 @@ class TestsFlextLdifAclMetadataPreservation:
         write_result = api.write([entry], server_type=c.Tests.OUD)
         tm.ok(write_result)
         written = write_result.unwrap().content
-        assert written is not None
+        tm.not_none(written)
 
         reparsed = self._parse_single(api, written, c.Tests.OUD)
         extensions = self._extensions(reparsed)

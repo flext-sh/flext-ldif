@@ -286,8 +286,8 @@ class TestsFlextLdifParserUtilities:
                 "objectClass: person",
             ]),
         )
-        assert entry.dn is not None
-        assert entry.attributes is not None
+        tm.not_none(entry.dn)
+        tm.not_none(entry.attributes)
         tm.that(entry.dn.value, eq="cn=alice,dc=example,dc=com")
         tm.that(entry.attributes.attributes["cn"], eq=["alice"])
         tm.that(entry.attributes.attributes["objectClass"], eq=["person"])
@@ -307,8 +307,8 @@ class TestsFlextLdifParserUtilities:
                 "objectClass: person",
             ]),
         )
-        assert entry.dn is not None
-        assert entry.metadata is not None
+        tm.not_none(entry.dn)
+        tm.not_none(entry.metadata)
         tm.that(entry.dn.value, eq="cn=marcelo.araújo,dc=example,dc=com")
         flag = entry.metadata.extensions[c.Ldif.META_DN_WAS_BASE64]
         assert isinstance(flag, list)
@@ -329,7 +329,7 @@ class TestsFlextLdifParserUtilities:
                 "objectClass: person",
             ]),
         )
-        assert entry.dn is not None
+        tm.not_none(entry.dn)
         tm.that(entry.dn.value, eq="cn=spot\t,dc=example,dc=com")
 
     @staticmethod

@@ -30,13 +30,13 @@ def _assert_acl_roundtrip(
         acl_line,
         expected_type=m.Ldif.Acl,
     )
-    assert acl_model is not None
+    tm.not_none(acl_model)
     assert isinstance(acl_model, m.Ldif.Acl)
     roundtrip_result = u.Tests.acl_parse_and_unwrap(
         acl_server,
         acl_model.raw_acl or str(acl_model),
     )
-    assert roundtrip_result is not None
+    tm.not_none(roundtrip_result)
 
 
 class TestsFlextLdifApacheServers:
@@ -78,7 +78,7 @@ class TestsFlextLdifApacheServers:
             parse_method="parse_attribute",
             expected_type=m.Ldif.SchemaAttribute,
         )
-        assert attr_data is not None
+        tm.not_none(attr_data)
         assert isinstance(attr_data, m.Ldif.SchemaAttribute)
         tm.that(attr_data.oid, eq="1.3.6.1.4.1.18060.0.4.1.2.100")
         tm.that(attr_data.name, eq="ads-enabled")
@@ -101,7 +101,7 @@ class TestsFlextLdifApacheServers:
             parse_method="parse_attribute",
             expected_type=m.Ldif.SchemaAttribute,
         )
-        assert attr_data is not None
+        tm.not_none(attr_data)
         assert isinstance(attr_data, m.Ldif.SchemaAttribute)
         tm.that(attr_data.syntax, eq="1.3.6.1.4.1.1466.115.121.1.15")
         tm.that(attr_data.length, eq=256)
@@ -151,7 +151,7 @@ class TestsFlextLdifApacheServers:
             parse_method="parse_objectclass",
             expected_type=m.Ldif.SchemaObjectClass,
         )
-        assert oc_data is not None
+        tm.not_none(oc_data)
         assert isinstance(oc_data, m.Ldif.SchemaObjectClass)
         tm.that(oc_data.oid, eq="1.3.6.1.4.1.18060.0.4.1.3.100")
         tm.that(oc_data.name, eq="ads-directoryService")
@@ -180,7 +180,7 @@ class TestsFlextLdifApacheServers:
             parse_method="parse_objectclass",
             expected_type=m.Ldif.SchemaObjectClass,
         )
-        assert oc_data is not None
+        tm.not_none(oc_data)
         assert isinstance(oc_data, m.Ldif.SchemaObjectClass)
         tm.that(oc_data.kind, eq="AUXILIARY")
 
@@ -196,7 +196,7 @@ class TestsFlextLdifApacheServers:
             parse_method="parse_objectclass",
             expected_type=m.Ldif.SchemaObjectClass,
         )
-        assert oc_data is not None
+        tm.not_none(oc_data)
         assert isinstance(oc_data, m.Ldif.SchemaObjectClass)
         tm.that(oc_data.kind, eq="ABSTRACT")
 
@@ -266,7 +266,7 @@ class TestsFlextLdifApacheServers:
             acl_line,
             expected_type=m.Ldif.Acl,
         )
-        assert acl_data is not None
+        tm.not_none(acl_data)
         assert isinstance(acl_data, m.Ldif.Acl)
         tm.that(acl_data.resolve_acl_format(), eq=c.Ldif.DEFAULT_ACL_FORMAT)
         tm.that(acl_data.server_type, eq=c.Ldif.ServerTypes.APACHE)
@@ -282,7 +282,7 @@ class TestsFlextLdifApacheServers:
             acl_line,
             expected_type=m.Ldif.Acl,
         )
-        assert acl_data is not None
+        tm.not_none(acl_data)
         assert isinstance(acl_data, m.Ldif.Acl)
 
     @staticmethod
@@ -377,5 +377,5 @@ class TestsFlextLdifApacheServers:
         entries = result.unwrap()
         tm.that(len(entries), eq=1)
         entry_dn = entries[0].dn
-        assert entry_dn is not None
+        tm.not_none(entry_dn)
         tm.that(entry_dn.value, eq=test_case.entry_dn)

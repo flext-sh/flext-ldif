@@ -166,7 +166,7 @@ class TestsFlextLdifOidServers:
         """A definition lacking an OID yields a failed result, not a success."""
         result = schema.parse_attribute("garbage not valid")
         tm.that(result.success, eq=False)
-        assert result.error is not None
+        tm.not_none(result.error)
         tm.that(result.error, has="OID")
 
     @staticmethod

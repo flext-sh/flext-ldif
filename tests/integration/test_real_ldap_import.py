@@ -58,7 +58,7 @@ class TestsFlextLdifRealLdapImport:
             The resulting ``str``.
 
         """
-        assert entry.dn is not None
+        tm.not_none(entry.dn)
         return entry.dn.value
 
     @staticmethod
@@ -79,7 +79,7 @@ class TestsFlextLdifRealLdapImport:
             The resulting ``t.MutableMappingKV[str, list[str]]``.
 
         """
-        assert entry.attributes is not None
+        tm.not_none(entry.attributes)
         return {name: list(values) for name, values in entry.attributes.items()}
 
     @classmethod

@@ -60,7 +60,7 @@ class TestsFlextLdifConfigIntegration:
         values: list[str] = []
         for entry in entries:
             dn = entry.dn
-            assert dn is not None
+            tm.not_none(dn)
             values.append(dn.value)
         return values
 

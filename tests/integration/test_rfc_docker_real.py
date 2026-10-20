@@ -89,7 +89,7 @@ class TestsFlextLdifRfcDockerReal:
         entries = result.unwrap().entries
         assert entries, "fixture yielded no entries"
         for entry in entries:
-            assert entry.dn is not None
+            tm.not_none(entry.dn)
             assert entry.dn.value, "entry exposes empty DN via public API"
 
     @staticmethod
@@ -192,7 +192,7 @@ class TestsFlextLdifRfcDockerReal:
 
         # Assert
         tm.fail(result)
-        assert result.error is not None
+        tm.not_none(result.error)
         tm.that(result.error, has="File not found")
 
     @staticmethod
@@ -218,7 +218,7 @@ class TestsFlextLdifRfcDockerReal:
 
         # Assert
         tm.fail(result)
-        assert result.error is not None
+        tm.not_none(result.error)
         tm.that(result.error, has="atomic_write_text_file")
 
     @staticmethod

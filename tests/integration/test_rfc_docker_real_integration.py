@@ -201,7 +201,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
         result = parser.parse_ldif_file(Path("/nonexistent/file.ldif"))
 
         tm.fail(result)
-        assert result.error is not None
+        tm.not_none(result.error)
         with pytest.raises(RuntimeError):
             result.unwrap()
 
@@ -229,7 +229,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
                 server_type=c.Tests.RFC,
             )
             if not result.success:
-                assert result.error is not None
+                tm.not_none(result.error)
                 assert (
                     "Permission denied" in result.error
                     or "LDIF write failed" in result.error

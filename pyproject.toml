@@ -315,14 +315,10 @@ variance-mismatch = "error"
 [tool.pyright]
 exclude = [
   "**/*.bak",
-  "**/*.bak/**",
   "**/*.egg-info/**",
   "**/*.orig",
-  "**/*.orig/**",
   "**/*.rej",
-  "**/*.rej/**",
   "**/*.swp",
-  "**/*.swp/**",
   "**/.*",
   "**/.agents-sync-home/**",
   "**/.agents/**",
@@ -404,6 +400,7 @@ reportUnusedFunction = "error"
 reportUnusedImport = "error"
 reportUnusedVariable = "error"
 typeCheckingMode = "strict"
+useLibraryCodeForTypes = true
 
 [[tool.pyright.executionEnvironments]]
 extraPaths = [".", "src"]
@@ -419,7 +416,6 @@ root = "src"
 extraPaths = [".", "src"]
 reportPrivateUsage = "error"
 root = "tests"
-
 
 [tool.pytest.ini_options]
 addopts = [

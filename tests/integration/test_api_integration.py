@@ -52,8 +52,8 @@ class TestsFlextLdifApiIntegration:
         entries = result.value.entries
         tm.that(len(entries), eq=expected_entries)
         for entry in entries:
-            assert entry.dn is not None
-            assert entry.attributes is not None
+            tm.not_none(entry.dn)
+            tm.not_none(entry.attributes)
             assert entry.dn.value
             assert entry.attributes.attributes
 
@@ -85,7 +85,7 @@ class TestsFlextLdifApiIntegration:
         # Assert
         tm.ok(result)
         (entry,) = result.value.entries
-        assert entry.attributes is not None
+        tm.not_none(entry.attributes)
         tm.that(entry.attributes.attributes[c.Tests.NAME_CN], eq=["a", "b"])
 
     @staticmethod
@@ -106,8 +106,8 @@ class TestsFlextLdifApiIntegration:
         tm.that(len(reparsed.value.entries), eq=len(entries))
         reparsed_dn = reparsed.value.entries[0].dn
         original_dn = entries[0].dn
-        assert reparsed_dn is not None
-        assert original_dn is not None
+        tm.not_none(reparsed_dn)
+        tm.not_none(original_dn)
         tm.that(reparsed_dn.value, eq=original_dn.value)
 
     # ------------------------------------------------------------------
@@ -131,8 +131,8 @@ class TestsFlextLdifApiIntegration:
         )
 
         # Assert
-        assert entry.dn is not None
-        assert entry.attributes is not None
+        tm.not_none(entry.dn)
+        tm.not_none(entry.attributes)
         tm.that(entry.dn.value, eq=c.Tests.RFC_TEST_DN)
         tm.that(
             entry.attributes.attributes[c.Tests.NAME_CN],
@@ -220,8 +220,8 @@ class TestsFlextLdifApiIntegration:
         tm.ok(result2)
         dn1 = result1.value.entries[0].dn
         dn2 = result2.value.entries[0].dn
-        assert dn1 is not None
-        assert dn2 is not None
+        tm.not_none(dn1)
+        tm.not_none(dn2)
         tm.that(dn1.value, eq=dn2.value)
 
     # ------------------------------------------------------------------

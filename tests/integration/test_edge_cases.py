@@ -265,7 +265,7 @@ class TestsFlextLdifIntegrationEdgeCases:
         write_result = api.write(result.value.entries)
         tm.ok(write_result)
         written = write_result.value.content
-        assert written is not None
+        tm.not_none(written)
         assert written.strip() in {"", "version: 1"}
 
     @staticmethod
@@ -279,7 +279,7 @@ class TestsFlextLdifIntegrationEdgeCases:
         write_result = api.write(result.value.entries)
         tm.ok(write_result)
         content = write_result.value.content
-        assert content is not None
+        tm.not_none(content)
 
         roundtrip = api.parse_ldif(content)
         tm.ok(roundtrip)
@@ -306,7 +306,7 @@ class TestsFlextLdifIntegrationEdgeCases:
         write_result = api.write(result.value.entries)
         tm.ok(write_result)
         content = write_result.value.content
-        assert content is not None
+        tm.not_none(content)
 
         roundtrip = api.parse_ldif(content)
         tm.ok(roundtrip)

@@ -87,7 +87,7 @@ class TestsFlextLdifOidIntegration:
             api.write(list(entries)),
             error_msg="writing OID entries failed",
         )
-        assert written.content is not None
+        tm.not_none(written.content)
         return cls._entries(api, written.content)
 
     # ----------------------------------------------------------------- schema

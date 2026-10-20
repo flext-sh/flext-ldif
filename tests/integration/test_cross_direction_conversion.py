@@ -339,7 +339,7 @@ class TestsFlextLdifCrossDirectionConversion:
         assert isinstance(result.value, m.Ldif.Entry)
 
         converted = result.value
-        assert converted.attributes is not None
+        tm.not_none(converted.attributes)
         attribute = converted.attributes.attributes["attributeTypes"][0]
         objectclass = converted.attributes.attributes["objectClasses"][0]
         tm.that(attribute, has="SUBSTR caseIgnoreSubstringsMatch")
@@ -375,7 +375,7 @@ class TestsFlextLdifCrossDirectionConversion:
         assert isinstance(result.value, m.Ldif.Entry)
 
         converted = result.value
-        assert converted.attributes is not None
+        tm.not_none(converted.attributes)
         attribute = converted.attributes.attributes["attributeTypes"][0]
         tm.that(attribute, has="caseIgnoreMatch")
         tm.that(attribute, lacks="accessDirectiveMatch")

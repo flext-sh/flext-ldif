@@ -90,7 +90,7 @@ class TestsFlextLdifFiltersService:
             [],
         )
 
-        assert result.attributes is not None
+        tm.not_none(result.attributes)
         remaining = set(result.attributes.attributes)
         tm.that(remaining.isdisjoint(c.Tests.FILTERS_FORBIDDEN_ATTRS), eq=True)
         # Non-forbidden attributes survive untouched.
@@ -108,7 +108,7 @@ class TestsFlextLdifFiltersService:
             list(c.Tests.FILTERS_FORBIDDEN_OCS_ORDERED),
         )
 
-        assert result.attributes is not None
+        tm.not_none(result.attributes)
         ocs = result.attributes.attributes.get(c.Tests.NAME_OBJECTCLASS, [])
         for forbidden_oc in c.Tests.FILTERS_FORBIDDEN_OCS_ORDERED:
             tm.that(forbidden_oc not in ocs, eq=True)
@@ -131,7 +131,7 @@ class TestsFlextLdifFiltersService:
             list(c.Tests.FILTERS_FORBIDDEN_OCS_ORDERED),
         )
 
-        assert result.attributes is not None
+        tm.not_none(result.attributes)
         tm.that(c.Tests.NAME_OBJECTCLASS not in result.attributes.attributes, eq=True)
 
     @staticmethod
@@ -139,10 +139,10 @@ class TestsFlextLdifFiltersService:
         regular_entry: m.Ldif.Entry,
     ) -> None:
         """Test empty forbidden lists preserve entry identity."""
-        assert regular_entry.attributes is not None
+        tm.not_none(regular_entry.attributes)
         result = ldif.filter_entry_attributes(regular_entry, [], [])
 
-        assert result.attributes is not None
+        tm.not_none(result.attributes)
         tm.that(
             result.attributes.attributes == regular_entry.attributes.attributes,
             eq=True,
@@ -157,8 +157,8 @@ class TestsFlextLdifFiltersService:
         once = ldif.filter_entry_attributes(regular_entry, forbidden, [])
         twice = ldif.filter_entry_attributes(once, forbidden, [])
 
-        assert once.attributes is not None
-        assert twice.attributes is not None
+        tm.not_none(once.attributes)
+        tm.not_none(twice.attributes)
         tm.that(twice.attributes.attributes == once.attributes.attributes, eq=True)
 
     @staticmethod
@@ -212,7 +212,7 @@ class TestsFlextLdifFiltersService:
             {attr_key.lower(): frozenset({allowed_oid})},
         )
 
-        assert result.attributes is not None
+        tm.not_none(result.attributes)
         attr_vals = result.attributes.attributes.get(attr_key, [])
         tm.that(raw_oid in attr_vals, eq=True)
 
@@ -232,7 +232,7 @@ class TestsFlextLdifFiltersService:
             },
         )
 
-        assert result.attributes is not None
+        tm.not_none(result.attributes)
         attr_vals = result.attributes.attributes.get(
             c.Tests.FILTERS_SCHEMA_ATTR_KEY,
             [],
@@ -253,7 +253,7 @@ class TestsFlextLdifFiltersService:
 
         result = ldif.filter_schema_attribute_values(entry, whitelist_rules)
 
-        assert result.attributes is not None
+        tm.not_none(result.attributes)
         attr_vals = result.attributes.attributes.get(
             c.Tests.FILTERS_SCHEMA_ATTR_KEY,
             [],
@@ -277,7 +277,7 @@ class TestsFlextLdifFiltersService:
             {c.Tests.FILTERS_SCHEMA_ATTR_KEY.lower(): frozenset()},
         )
 
-        assert result.attributes is not None
+        tm.not_none(result.attributes)
         tm.that(
             c.Tests.FILTERS_SCHEMA_ATTR_KEY not in result.attributes.attributes,
             eq=True,

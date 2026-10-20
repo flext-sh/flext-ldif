@@ -478,7 +478,7 @@ class TestErrorRecovery:
         malformed = "dn: invalid-dn-format\ncn: test\n"
         result = api.parse(malformed)
         # Verify graceful handling
-        assert result is not None
+        tm.not_none(result)
 ```
 
 ❌ **DON'T**: Only test happy path

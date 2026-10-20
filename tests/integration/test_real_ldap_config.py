@@ -166,7 +166,7 @@ class TestsFlextLdifRealLdapConfig:
         result = flext_api.parse_ldif(missing)
 
         tm.fail(result)
-        assert result.error is not None
+        tm.not_none(result.error)
         tm.that(result.error.lower(), has="not found")
 
     @staticmethod

@@ -124,7 +124,7 @@ class TestsFlextLdifWriterService:
         payload = u.Tests.assert_success(writer.write(entries, server_type=c.Tests.RFC))
 
         tm.that(payload.content is not None, eq=True)
-        assert payload.content is not None
+        tm.not_none(payload.content)
         for dn in self._dns():
             tm.that(f"dn: {dn}" in payload.content, eq=True)
         tm.that(payload.statistics.total_entries, eq=len(entries))
@@ -288,9 +288,9 @@ class TestsFlextLdifWriterService:
         original_text = original.content
         disabled_text = without_comments.content
         enabled_text = with_comments.content
-        assert original_text is not None
-        assert disabled_text is not None
-        assert enabled_text is not None
+        tm.not_none(original_text)
+        tm.not_none(disabled_text)
+        tm.not_none(enabled_text)
         tm.that(disabled_text, eq=original_text)
         accepted_output = u.Tests.assert_success(
             writer.write([entry], server_type=server_type, format_options=enabled),
@@ -304,10 +304,10 @@ class TestsFlextLdifWriterService:
             return [line for line in text.splitlines() if not line.startswith("#")]
 
         tm.that(active_lines(enabled_text), eq=active_lines(original_text))
-        assert entry.metadata is not None
+        tm.not_none(entry.metadata)
         assert entry.metadata.processing_stats is None
-        assert rejected.metadata is not None
-        assert rejected.metadata.processing_stats is not None
+        tm.not_none(rejected.metadata)
+        tm.not_none(rejected.metadata.processing_stats)
         assert (
             rejected.metadata.processing_stats.model_dump()["rejection_reason"]
             == reason
@@ -321,8 +321,8 @@ class TestsFlextLdifWriterService:
             mark_rejected=("base_dn_filter", "Outside requested base"),
         )
         updated = u.Ldif.update_entry_statistics(rejected, category="rejected")
-        assert updated.metadata is not None
-        assert updated.metadata.processing_stats is not None
+        tm.not_none(updated.metadata)
+        tm.not_none(updated.metadata.processing_stats)
         stats = updated.metadata.processing_stats.model_dump()
         assert stats["was_rejected"] is True
         tm.that(stats["rejection_reason"], eq="Outside requested base")
@@ -349,7 +349,7 @@ class TestsFlextLdifWriterService:
                 format_options=m.Ldif.WriteFormatOptions(write_rejection_reasons=True),
             ),
         )
-        assert response.content is not None
+        tm.not_none(response.content)
         assert (
             f"# Rejection reason: DN not under base DN: {base_dn}" in response.content
         )
