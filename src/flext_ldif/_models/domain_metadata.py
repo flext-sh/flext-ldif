@@ -16,7 +16,7 @@ from __future__ import annotations
 from collections.abc import MutableMapping
 from typing import Annotated
 
-from flext_core import m, u
+from flext_core import m
 
 from flext_ldif import FlextLdifShared, c, t
 from flext_ldif._models import FlextLdifModelsDomainAttributes
@@ -401,7 +401,7 @@ class FlextLdifModelsDomainMetadata:
             ),
         ] = m.Field(default_factory=list[t.MutableStrMapping])
 
-        @u.field_validator("server_type", mode="before")
+        @m.field_validator("server_type", mode="before")
         @classmethod
         def _coerce_server_type(
             cls,

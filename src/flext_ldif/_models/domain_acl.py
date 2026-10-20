@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import Annotated, Self
 
-from flext_cli import m, u
+from flext_cli import m
 
 from flext_ldif import c, t
 from flext_ldif._models import FlextLdifModelsBases, FlextLdifModelsDomainMetadata
@@ -205,7 +205,7 @@ class FlextLdifModelsDomainAcl:
             )
             return f"{canonical_server_type}_acl"
 
-        @u.model_validator(mode="after")
+        @m.model_validator(mode="after")
         def validate_acl_format(self) -> Self:
             """Validate ACL format - capture violations in metadata, DON'T reject.
 

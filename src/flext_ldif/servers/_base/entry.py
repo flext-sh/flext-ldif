@@ -84,16 +84,19 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         attributes: t.MutableStrSequenceMapping,
     ) -> bool:
         """Check if this server can handle the entry."""
+        del attributes, entry_dn
         msg = "Entry servers must implement can_handle"
         raise NotImplementedError(msg)
 
     def can_handle_attribute(self, attribute: m.Ldif.SchemaAttribute) -> bool:
         """Check if this server can handle a schema attribute."""
+        del attribute
         msg = "Entry servers must implement can_handle_attribute"
         raise NotImplementedError(msg)
 
     def can_handle_objectclass(self, objectclass: m.Ldif.SchemaObjectClass) -> bool:
         """Check if this server can handle a schema objectClass."""
+        del objectclass
         msg = "Entry servers must implement can_handle_objectclass"
         raise NotImplementedError(msg)
 
@@ -281,11 +284,13 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
 
     def _hook_post_parse_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
         """Run hook after parsing an entry."""
+        del entry
         msg = "Entry servers must implement _hook_post_parse_entry"
         raise NotImplementedError(msg)
 
     def _hook_pre_write_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
         """Run hook before writing an entry."""
+        del entry
         msg = "Entry servers must implement _hook_pre_write_entry"
         raise NotImplementedError(msg)
 
@@ -348,6 +353,7 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
 
     def _normalize_attribute_name(self, attr_name: str) -> str:
         """Normalize attribute name to the server's canonical form."""
+        del attr_name
         msg = "Entry servers must implement _normalize_attribute_name"
         raise NotImplementedError(msg)
 
@@ -369,6 +375,7 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         ldif_content: str,
     ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
         """Parse raw LDIF content string into Entry models (internal)."""
+        del ldif_content
         msg = "Entry servers must implement _parse_content"
         raise NotImplementedError(msg)
 
@@ -377,6 +384,7 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         lines: t.MutableSequenceOf[str],
     ) -> p.Result[m.Ldif.Entry]:
         """Parse one unfolded LDIF record into an Entry model."""
+        del lines
         msg = "Entry servers must implement _parse_entry_from_lines"
         raise NotImplementedError(msg)
 

@@ -161,6 +161,7 @@ class FlextLdifServersRfcSchema(
             ValueError: If ``result.failure``.
 
         """
+        del fields, server, settings
         configured = FlextLdifServerMethodsMixin.dispatch_builder(
             super().__call__,
             fields,
@@ -198,6 +199,7 @@ class FlextLdifServersRfcSchema(
             The resulting ``bool``.
 
         """
+        del attr_definition
         return True
 
     @override
@@ -211,6 +213,7 @@ class FlextLdifServersRfcSchema(
             The resulting ``bool``.
 
         """
+        del oc_definition
         return True
 
     def create_metadata(
@@ -242,6 +245,7 @@ class FlextLdifServersRfcSchema(
             The resulting ``bool``.
 
         """
+        del _attribute
         return False
 
     @staticmethod
@@ -254,6 +258,7 @@ class FlextLdifServersRfcSchema(
             The resulting ``bool``.
 
         """
+        del _objectclass
         return False
 
     @override

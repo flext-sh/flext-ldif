@@ -24,7 +24,7 @@ class FlextLdifProtocolsDomain(Protocol):
 
         def __call__(self, item: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
             """Transform one entry and return the canonical result container."""
-            ...
+            del item
 
 
 __all__: list[str] = ["FlextLdifProtocolsDomain"]

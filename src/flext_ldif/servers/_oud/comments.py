@@ -27,6 +27,7 @@ class FlextLdifServersOudCommentsMixin(FlextLdifServersOudCommentsAclMixin):
         comment_type: str,
     ) -> None:
         """Add comment for attribute transformation."""
+        del _transformation
         comment_lines.append(f"# [{comment_type}] {attr_name}: transformation applied")
 
     @staticmethod

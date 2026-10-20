@@ -56,6 +56,7 @@ class FlextLdifMetadataBuilders:
             The resulting ``t.MutableConfigurationMapping``.
 
         """
+        del _original_acl_format
         result: t.MutableConfigurationMapping = {
             "server_type": server_type,
             "source_server": server_type,

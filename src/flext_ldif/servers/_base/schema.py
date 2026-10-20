@@ -107,6 +107,7 @@ class FlextLdifServersBaseSchema(
             The constructed instance.
 
         """
+        del _schema_service
         filtered_kwargs = {k: v for k, v in kwargs.items() if k != "_parent_server"}
         instance: Self = super().__new__(cls, **filtered_kwargs)
         if _parent_server is not None:
@@ -186,6 +187,7 @@ class FlextLdifServersBaseSchema(
             NotImplementedError: Always; concrete server flavors must override.
 
         """
+        del attr_definition
         msg = "Schema servers must implement can_handle_attribute"
         raise NotImplementedError(msg)
 
@@ -202,6 +204,7 @@ class FlextLdifServersBaseSchema(
             NotImplementedError: Always; concrete server flavors must override.
 
         """
+        del oc_definition
         msg = "Schema servers must implement can_handle_objectclass"
         raise NotImplementedError(msg)
 
@@ -486,6 +489,7 @@ class FlextLdifServersBaseSchema(
             NotImplementedError: Always; concrete server flavors must override.
 
         """
+        del attr
         msg = "Schema servers must implement _hook_post_parse_attribute"
         raise NotImplementedError(msg)
 
@@ -539,6 +543,7 @@ class FlextLdifServersBaseSchema(
             NotImplementedError: Always; concrete server flavors must override.
 
         """
+        del attr_definition
         msg = "Schema servers must implement _parse_attribute"
         raise NotImplementedError(msg)
 
@@ -555,6 +560,7 @@ class FlextLdifServersBaseSchema(
             NotImplementedError: Always; concrete server flavors must override.
 
         """
+        del oc_definition
         msg = "Schema servers must implement _parse_objectclass"
         raise NotImplementedError(msg)
 
@@ -610,6 +616,7 @@ class FlextLdifServersBaseSchema(
             NotImplementedError: Always; concrete server flavors must override.
 
         """
+        del attr_data
         msg = "Schema servers must implement _write_attribute"
         raise NotImplementedError(msg)
 
@@ -623,6 +630,7 @@ class FlextLdifServersBaseSchema(
             NotImplementedError: Always; concrete server flavors must override.
 
         """
+        del oc_data
         msg = "Schema servers must implement _write_objectclass"
         raise NotImplementedError(msg)
 
@@ -639,6 +647,7 @@ class FlextLdifServersBaseSchema(
             NotImplementedError: Always; concrete server flavors must override.
 
         """
+        del attr_data
         msg = "Schema servers must implement _transform_attribute_for_write"
         raise NotImplementedError(msg)
 
@@ -655,6 +664,7 @@ class FlextLdifServersBaseSchema(
             NotImplementedError: Always; concrete server flavors must override.
 
         """
+        del oc_data
         msg = "Schema servers must implement _transform_objectclass_for_write"
         raise NotImplementedError(msg)
 

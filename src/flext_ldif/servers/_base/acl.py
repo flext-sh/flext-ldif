@@ -106,6 +106,7 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
             NotImplementedError: Always; concrete server flavors must override.
 
         """
+        del acl_line
         msg = "ACL servers must implement can_handle_acl"
         raise NotImplementedError(msg)
 
@@ -137,6 +138,7 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
             NotImplementedError: Always; concrete server flavors must override.
 
         """
+        del attribute
         msg = "ACL servers must implement can_handle_attribute"
         raise NotImplementedError(msg)
 
@@ -150,6 +152,7 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
             NotImplementedError: Always; concrete server flavors must override.
 
         """
+        del objectclass
         msg = "ACL servers must implement can_handle_objectclass"
         raise NotImplementedError(msg)
 
@@ -451,6 +454,7 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
             NotImplementedError: Always; concrete server flavors must override.
 
         """
+        del _feature_id
         msg = "ACL servers must implement _get_feature_fallback"
         raise NotImplementedError(msg)
 
@@ -489,6 +493,7 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
             NotImplementedError: Always; concrete server flavors must override.
 
         """
+        del acl_line
         msg = "ACL servers must implement _parse_acl"
         raise NotImplementedError(msg)
 
@@ -585,6 +590,7 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
             NotImplementedError: Always; concrete server flavors must override.
 
         """
+        del _feature_id
         msg = "ACL servers must implement _supports_feature"
         raise NotImplementedError(msg)
 
@@ -598,6 +604,7 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
             NotImplementedError: Always; concrete server flavors must override.
 
         """
+        del acl_data
         msg = "ACL servers must implement _write_acl"
         raise NotImplementedError(msg)
 

@@ -71,7 +71,7 @@ class FlextLdifProtocolsClient(Protocol):
             base_dn: str = "",
         ) -> Self:
             """Construct a pipeline using the supplied registry and dialects."""
-            ...
+            del base_dn, registry, runtime_settings, source_server, target_server
 
     @runtime_checkable
     class MigrationPipeline(
@@ -95,7 +95,7 @@ class FlextLdifProtocolsClient(Protocol):
             self, entries: t.SequenceOf[FlextLdifProtocolsBase.Entry]
         ) -> p.Result[t.SequenceOf[FlextLdifProtocolsBase.Entry]]:
             """Migrate the supplied entries through the bound registry."""
-            ...
+            del entries
 
         def migrate_file(
             self,
@@ -103,7 +103,7 @@ class FlextLdifProtocolsClient(Protocol):
             output_file: PathLike[str] | None = None,
         ) -> p.Result[FlextLdifProtocolsBase.MigrationPipelineResult]:
             """Read, migrate and write one file through the public service."""
-            ...
+            del input_file, output_file
 
     @runtime_checkable
     class Client(
@@ -132,7 +132,7 @@ class FlextLdifProtocolsClient(Protocol):
             options: FlextLdifProtocolsBase.MigrationOutputOptions | None = None,
         ) -> p.Result[FlextLdifProtocolsBase.MigrationPipelineResult]:
             """Run the public LDIF migration pipeline."""
-            ...
+            del input_dir, options, output_dir, source_server, target_server
 
         def parse_ldif(
             self,
@@ -141,7 +141,7 @@ class FlextLdifProtocolsClient(Protocol):
             server_type: str | None = None,
         ) -> p.Result[m.Ldif.ParseResponse]:
             """Parse LDIF content from text or a file path."""
-            ...
+            del server_type, value
 
         def parse_ldif_file(
             self,
@@ -150,7 +150,7 @@ class FlextLdifProtocolsClient(Protocol):
             encoding: str = "utf-8",
         ) -> p.Result[m.Ldif.ParseResponse]:
             """Parse LDIF content from a file path."""
-            ...
+            del encoding, path, server_type
 
         def parse_string(
             self,
@@ -158,7 +158,7 @@ class FlextLdifProtocolsClient(Protocol):
             server_type: str | None = None,
         ) -> p.Result[m.Ldif.ParseResponse]:
             """Parse LDIF content from a raw string."""
-            ...
+            del content, server_type
 
         def write(
             self,
@@ -168,7 +168,7 @@ class FlextLdifProtocolsClient(Protocol):
             format_options: m.Ldif.WriteFormatOptions | None = None,
         ) -> p.Result[m.Ldif.WriteResponse]:
             """Write canonical LDIF entries to a response."""
-            ...
+            del entries, format_options, server_type
 
         def write_ldif_file(
             self,
@@ -179,7 +179,7 @@ class FlextLdifProtocolsClient(Protocol):
             format_options: m.Ldif.WriteFormatOptions | None = None,
         ) -> p.Result[m.Ldif.WriteResponse]:
             """Write canonical LDIF entries to a file."""
-            ...
+            del entries, format_options, path, server_type
 
         def write_to_string(
             self,
@@ -188,7 +188,7 @@ class FlextLdifProtocolsClient(Protocol):
             format_options: m.Ldif.WriteFormatOptions | None = None,
         ) -> p.Result[str]:
             """Write canonical LDIF entries to text."""
-            ...
+            del entries, format_options, server_type
 
         def validate_entries(
             self,
@@ -197,7 +197,7 @@ class FlextLdifProtocolsClient(Protocol):
             validation_service: FlextLdifProtocolsBase.ValidationService | None = None,
         ) -> p.Result[FlextLdifProtocolsBase.ValidationResult]:
             """Validate a canonical entry batch."""
-            ...
+            del entries, validation_service
 
         def service_check(self) -> p.Result[FlextLdifProtocolsBase.AclResponse]:
             """Run the public ACL service wiring check."""
@@ -209,7 +209,7 @@ class FlextLdifProtocolsClient(Protocol):
             server_type: str,
         ) -> p.Result[FlextLdifProtocolsBase.Acl]:
             """Parse one ACL string."""
-            ...
+            del acl_string, server_type
 
         def extract_acls_from_entry(
             self,
@@ -217,7 +217,7 @@ class FlextLdifProtocolsClient(Protocol):
             server_type: str,
         ) -> p.Result[FlextLdifProtocolsBase.AclResponse]:
             """Extract ACLs from one canonical entry."""
-            ...
+            del entry, server_type
 
         @staticmethod
         def evaluate_acl_context(
@@ -226,7 +226,7 @@ class FlextLdifProtocolsClient(Protocol):
             | t.MutableBoolMapping,
         ) -> p.Result[FlextLdifProtocolsBase.AclEvaluationResult]:
             """Evaluate ACLs against the required permissions."""
-            ...
+            del acls, required_permissions
 
         def process_entries(
             self,
@@ -235,7 +235,7 @@ class FlextLdifProtocolsClient(Protocol):
             **kwargs: t.JsonValue,
         ) -> p.Result[Sequence[FlextLdifProtocolsBase.ProcessingResult]]:
             """Process entries through the public facade."""
-            ...
+            del entries, kwargs, options
 
         def calculate_for_entries(
             self,
@@ -243,7 +243,7 @@ class FlextLdifProtocolsClient(Protocol):
             | FlextLdifProtocolsBase.ParseResponse,
         ) -> p.Result[FlextLdifProtocolsBase.EntriesStatistics]:
             """Calculate aggregate entry statistics."""
-            ...
+            del entries
 
 
 __all__: list[str] = ["FlextLdifProtocolsClient"]

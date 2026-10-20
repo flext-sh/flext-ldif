@@ -22,6 +22,7 @@ class FlextLdifConversionSchemaMixin(s[p.Ldif.Response], ABC):
         role: str,
     ) -> p.Result[p.Ldif.SchemaServer]:
         """Resolve the schema server for a concrete server endpoint."""
+        del role, server_or_type
         raise NotImplementedError
 
     @abstractmethod
@@ -32,6 +33,7 @@ class FlextLdifConversionSchemaMixin(s[p.Ldif.Response], ABC):
         entry: m.Ldif.Entry,
     ) -> p.Result[t.Ldif.ConvertedModel]:
         """Convert an entry through the concrete conversion facade."""
+        del entry, source_server, target_server
 
     def _convert_schema_model_via_entry(
         self,

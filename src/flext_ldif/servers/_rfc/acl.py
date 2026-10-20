@@ -220,6 +220,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
             The permission name in RFC form.
 
         """
+        del _feature_id, _metadata
         return permission
 
     @override
@@ -233,6 +234,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
             None; the RFC server provides no vendor feature fallback.
 
         """
+        del _feature_id
         return None
 
     @staticmethod
@@ -250,6 +252,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
             Pair of the RFC permission name and its optional feature id.
 
         """
+        del _metadata
         return (permission, None)
 
     @override
@@ -302,6 +305,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
             False; the RFC server supports no vendor-specific features.
 
         """
+        del _feature_id
         return False
 
     @override

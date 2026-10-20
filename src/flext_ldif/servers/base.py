@@ -66,6 +66,7 @@ class FlextLdifServersBase(
                 None``; or if ``priority_value is None``.
 
         """
+        del kwargs
         super().__init_subclass__()
         constants_class = getattr(cls, "Constants", None)
         if constants_class is None:

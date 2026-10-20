@@ -10,7 +10,7 @@ from collections.abc import Mapping, MutableMapping
 from datetime import datetime
 from typing import Annotated, ClassVar, Self, override
 
-from flext_core import m, u
+from flext_core import m
 
 from flext_ldif import c, e, p, r, t
 from flext_ldif._models import (
@@ -79,7 +79,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
                 description=(
                     "Distinguished Name of the entry (REQUIRED per RFC 2849 § 2). "
                     "Allows None for RFC violation capture. Coerced from str via "
-                    "u.field_validator - PROTOCOL COMPATIBLE with p.Ldif.Entry.Entry"
+                    "m.field_validator - PROTOCOL COMPATIBLE with p.Ldif.Entry.Entry"
                 ),
             ),
         ]
@@ -89,7 +89,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
                 description=(
                     "Entry attributes container (REQUIRED per RFC 2849 § 2). Allows "
                     "None for RFC violation capture. Coerced from "
-                    "dict[str, list[str]] via u.field_validator - PROTOCOL "
+                    "dict[str, list[str]] via m.field_validator - PROTOCOL "
                     "COMPATIBLE with p.Ldif.Entry.Entry"
                 ),
             ),
@@ -120,7 +120,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             ],
         )
 
-        @u.field_validator("attributes", mode="before")
+        @m.field_validator("attributes", mode="before")
         @classmethod
         def coerce_attributes_from_dict(
             cls,
@@ -147,7 +147,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
                 })
             return FlextLdifModelsDomainAttributes.Attributes.model_validate(value)
 
-        @u.field_validator("dn", mode="before")
+        @m.field_validator("dn", mode="before")
         @classmethod
         def coerce_dn_from_string(
             cls,
@@ -168,7 +168,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
                 return FlextLdifModelsDomainDN.DN.model_validate(value)
             return FlextLdifModelsDomainDN.DN(value=value, metadata={})
 
-        @u.field_validator("record_kind", mode="before")
+        @m.field_validator("record_kind", mode="before")
         @classmethod
         def coerce_record_kind(cls, value: str) -> c.Ldif.RecordKind:
             """Normalize raw input into a record kind value.
@@ -189,7 +189,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             ),
         ] = None
 
-        @u.field_validator("changetype", mode="before")
+        @m.field_validator("changetype", mode="before")
         @classmethod
         def coerce_changetype(cls, value: str | None) -> c.Ldif.ChangeType | None:
             """Normalize raw input into a changetype value.
@@ -236,7 +236,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             ),
         ] = None
 
-        @u.computed_field
+        @m.computed_field
         @property
         def attributes_dict(self) -> t.MutableStrSequenceMapping:
             """Attribute mapping required by the entry protocol.
@@ -247,7 +247,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             """
             return {} if self.attributes is None else self.attributes.attributes
 
-        @u.computed_field
+        @m.computed_field
         @property
         def dn_str(self) -> str:
             """String form of the DN required by the entry protocol.
@@ -258,13 +258,13 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             """
             return "" if self.dn is None else self.dn.value
 
-        @u.computed_field
+        @m.computed_field
         @property
         def is_change_record(self) -> bool:
             """True when the entry represents an LDIF change record."""
             return bool(self.changetype) or self.record_kind == c.Ldif.RecordKind.CHANGE
 
-        @u.computed_field
+        @m.computed_field
         @property
         def unconverted_attributes(self) -> t.Ldif.UnconvertedAttributes:
             """Raw attributes preserved from parsing, before conversion.
@@ -281,7 +281,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             result = self.metadata.extensions.get("unconverted_attributes")
             return FlextLdifUtilitiesEntry.normalize_unconverted_attributes(result)
 
-        @u.model_validator(mode="before")
+        @m.model_validator(mode="before")
         @classmethod
         def ensure_metadata_initialized(
             cls,
@@ -372,6 +372,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             Uses self.__dict__ assignment to bypass validate_assignment=True
             and prevent infinite re-validation recursion (Pydantic v2 pattern).
             """
+            del context
             if self.metadata is None:
                 self.metadata = (
                     FlextLdifModelsDomainMetadata.ServerMetadata.model_validate({
@@ -379,7 +380,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
                     })
                 )
 
-        @u.model_validator(mode="after")
+        @m.model_validator(mode="after")
         def validate_entry_consistency(self) -> Self:
             """Validate cross-field consistency of the entry.
 
@@ -395,7 +396,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             """
             return self
 
-        @u.model_validator(mode="after")
+        @m.model_validator(mode="after")
         def validate_entry_rfc_compliance(self) -> Self:
             """Validate RFC compliance and capture violations without rejecting.
 
@@ -477,7 +478,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
                 )
             )
 
-        @u.model_validator(mode="after")
+        @m.model_validator(mode="after")
         def validate_server_specific_rules(self) -> Self:
             """Validate the entry with server-injected validation rules.
 
@@ -542,7 +543,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             self.metadata.extensions["server_specific_violations"] = ext_violations
             return self
 
-        @u.computed_field
+        @m.computed_field
         @property
         def has_validation_errors(self) -> bool:
             """Presence of validation errors in the validation metadata.
@@ -557,7 +558,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
                 and self.metadata.validation_results.errors,
             )
 
-        @u.computed_field
+        @m.computed_field
         @property
         def is_acl_entry(self) -> bool:
             """Presence of Access Control Lists on the entry.
@@ -568,7 +569,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             """
             return bool(self.metadata and self.metadata.acls)
 
-        @u.computed_field
+        @m.computed_field
         @property
         def is_schema_entry(self) -> bool:
             """Schema-definition status of the entry.

@@ -9,7 +9,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Annotated, ClassVar
 
-from flext_cli import m, u
+from flext_cli import m
 
 from flext_ldif import c, p, t
 from flext_ldif._models import (
@@ -123,12 +123,12 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
             description="Output file paths produced by the migration pipeline.",
         )
 
-        @u.computed_field
+        @m.computed_field
         @property
         def entry_count(self) -> int:
             return len(self.entries)
 
-        @u.computed_field
+        @m.computed_field
         @property
         def is_empty(self) -> bool:
             has_schema = (
@@ -136,7 +136,7 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
             )
             return not has_schema and self.stats.total_entries == 0
 
-        @u.computed_field
+        @m.computed_field
         @property
         def migration_summary(self) -> FlextLdifModelsResults.MigrationSummary:
             return FlextLdifModelsResults.MigrationSummary(
@@ -150,7 +150,7 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
                 and self.stats.total_entries == 0,
             )
 
-        @u.computed_field
+        @m.computed_field
         @property
         def output_file_count(self) -> int:
             return len(self.output_files)
@@ -172,7 +172,7 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
             m.Field(description="Validation error messages"),
         ]
 
-        @u.computed_field
+        @m.computed_field
         @property
         def success_rate(self) -> float:
             if self.total_entries == 0:
@@ -205,7 +205,7 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
             m.Field(description="Reason for using fallback server type"),
         ] = None
 
-        @u.computed_field
+        @m.computed_field
         @property
         def is_confident(self) -> bool:
             confidence: float = self.confidence

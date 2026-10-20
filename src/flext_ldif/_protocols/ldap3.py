@@ -48,7 +48,7 @@ class FlextLdifProtocolsLdap3(Protocol):
             attribute_name: str,
         ) -> FlextLdifProtocolsLdap3.Ldap3Attribute:
             """Return one ldap3 attribute object by attribute name."""
-            ...
+            del attribute_name
 
     @runtime_checkable
     class Ldap3Attribute(Protocol):

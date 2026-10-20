@@ -201,6 +201,7 @@ class FlextLdifACLParsing:
                 The extracted field value, or None when absent.
 
             """
+            del _pattern_name
             return FlextLdifACLExtraction.extract_component(
                 aci_content,
                 pattern,

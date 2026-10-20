@@ -371,6 +371,7 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
             The ACL carrying OID server metadata.
 
         """
+        del _acl_line
         server_type = FlextLdifServersOidConstants.SERVER_TYPE
         updated_metadata = (
             acl_data.metadata.model_copy(update={"server_type": server_type})

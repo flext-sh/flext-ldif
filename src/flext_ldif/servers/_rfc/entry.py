@@ -27,6 +27,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBaseEntry):
             The resulting ``bool``.
 
         """
+        del attribute
         return False
 
     @override
@@ -37,6 +38,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBaseEntry):
             The resulting ``bool``.
 
         """
+        del objectclass
         return False
 
     @override
