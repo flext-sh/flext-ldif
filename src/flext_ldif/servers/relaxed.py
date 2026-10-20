@@ -45,17 +45,18 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             return self.can_handle_acl(acl_line)
 
         @override
-        def can_handle_acl(self, acl_line: str | m.Ldif.Acl | t.JsonValue) -> bool:
+        def can_handle_acl(self, _acl_line: str | m.Ldif.Acl | t.JsonValue) -> bool:
             """Accept any ACL line in relaxed mode.
 
             Returns:
                 The resulting ``bool``.
 
             """
+            del _acl_line
             return True
 
         @override
-        def can_handle_attribute(self, attribute: m.Ldif.SchemaAttribute) -> bool:
+        def can_handle_attribute(self, _attribute: m.Ldif.SchemaAttribute) -> bool:
             """Check if this ACL server should be aware of a specific attribute.
 
             definition.
@@ -64,10 +65,13 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 The resulting ``bool``.
 
             """
+            del _attribute
             return True
 
         @override
-        def can_handle_objectclass(self, objectclass: m.Ldif.SchemaObjectClass) -> bool:
+        def can_handle_objectclass(
+            self, _objectclass: m.Ldif.SchemaObjectClass
+        ) -> bool:
             """Check if this ACL server should be aware of a specific objectClass.
 
             definition.
@@ -76,6 +80,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 The resulting ``bool``.
 
             """
+            del _objectclass
             return True
 
         @override

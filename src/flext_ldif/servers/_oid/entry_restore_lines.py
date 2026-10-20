@@ -65,8 +65,6 @@ class FlextLdifServersOidEntryRestoreLinesMixin(
         original_line: str,
         current_attrs: set[str],
         write_options: m.Ldif.WriteFormatOptions | None,
-        *,
-        write_empty_values: bool,
     ) -> bool:
         """Check if original line should be skipped during restoration.
 
@@ -111,7 +109,6 @@ class FlextLdifServersOidEntryRestoreLinesMixin(
                 original_line,
                 current_attrs,
                 write_options,
-                write_empty_values=True,
             ):
                 continue
             if ":" in original_line:

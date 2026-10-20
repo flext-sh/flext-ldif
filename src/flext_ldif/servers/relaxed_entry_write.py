@@ -19,8 +19,8 @@ class FlextLdifServersRelaxedEntryWriteMixin(FlextLdifServersRfcEntry):
     @override
     def can_handle(
         self,
-        entry_dn: str,
-        attributes: t.MutableStrSequenceMapping,
+        _entry_dn: str,
+        _attributes: t.MutableStrSequenceMapping,
     ) -> bool:
         """Accept any entry in relaxed mode.
 
@@ -28,26 +28,29 @@ class FlextLdifServersRelaxedEntryWriteMixin(FlextLdifServersRfcEntry):
             The resulting ``bool``.
 
         """
+        del _entry_dn, _attributes
         return True
 
     @override
-    def can_handle_attribute(self, attribute: m.Ldif.SchemaAttribute) -> bool:
+    def can_handle_attribute(self, _attribute: m.Ldif.SchemaAttribute) -> bool:
         """Check if this Entry server has special attribute handling.
 
         Returns:
             The resulting ``bool``.
 
         """
+        del _attribute
         return True
 
     @override
-    def can_handle_objectclass(self, objectclass: m.Ldif.SchemaObjectClass) -> bool:
+    def can_handle_objectclass(self, _objectclass: m.Ldif.SchemaObjectClass) -> bool:
         """Check if this Entry server has special objectClass handling.
 
         Returns:
             The resulting ``bool``.
 
         """
+        del _objectclass
         return True
 
     @staticmethod

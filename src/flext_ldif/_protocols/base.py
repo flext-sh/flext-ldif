@@ -22,11 +22,11 @@ class FlextLdifProtocolsBase:
     class ValidationService(Protocol):
         """Contract for entry validation helpers."""
 
-        def validate_attribute_name(self, name: str) -> p.Result[bool]:
+        def validate_attribute_name(self, name: str) -> p.Result[bool]:  # ruff: ignore[no-self-use]
             """Return whether the attribute name is valid."""
             del name
 
-        def validate_objectclass_name(self, name: str) -> p.Result[bool]:
+        def validate_objectclass_name(self, name: str) -> p.Result[bool]:  # ruff: ignore[no-self-use]
             """Return whether the objectClass name is valid."""
             del name
 
@@ -34,7 +34,7 @@ class FlextLdifProtocolsBase:
     class ServerDetectionService(Protocol):
         """Contract for LDIF server type detection helpers."""
 
-        def detect_server_type(
+        def detect_server_type(  # ruff: ignore[no-self-use]
             self,
             ldif_path: Path | None = None,
             ldif_content: str | None = None,
@@ -688,35 +688,35 @@ class FlextLdifProtocolsBase:
     class ServerResolutionService(Protocol):
         """Contract for server registry resolution and model conversion."""
 
-        def acl(self, server_type: str) -> p.Result[FlextLdifProtocolsBase.AclServer]:
+        def acl(self, server_type: str) -> p.Result[FlextLdifProtocolsBase.AclServer]:  # ruff: ignore[no-self-use]
             """Resolve ACL server by server type via the facade DSL."""
             del server_type
 
-        def entry(
+        def entry(  # ruff: ignore[no-self-use]
             self, server_type: str
         ) -> p.Result[FlextLdifProtocolsBase.EntryServer]:
             """Resolve entry server by server type via the facade DSL."""
             del server_type
 
-        def resolve_base_server(
+        def resolve_base_server(  # ruff: ignore[no-self-use]
             self, server_type: str
         ) -> p.Result[FlextLdifProtocolsBase.ServerServer]:
             """Resolve base server by server type via the facade DSL."""
             del server_type
 
-        def schema_server(
+        def schema_server(  # ruff: ignore[no-self-use]
             self, server_type: str
         ) -> p.Result[FlextLdifProtocolsBase.SchemaServer]:
             """Resolve schema server by server type via the facade DSL."""
             del server_type
 
-        def resolve_schema_server(
+        def resolve_schema_server(  # ruff: ignore[no-self-use]
             self, server_type: str
         ) -> p.Result[FlextLdifProtocolsBase.SchemaServer]:
             """Resolve schema server by server type via the facade DSL."""
             del server_type
 
-        def resolve_server_bundle(
+        def resolve_server_bundle(  # ruff: ignore[no-self-use]
             self,
             server_type: str,
         ) -> p.Result[
@@ -730,7 +730,7 @@ class FlextLdifProtocolsBase:
             """Resolve schema/acl/entry bundle by server type via the facade DSL."""
             del server_type
 
-        def resolve_server_constants(
+        def resolve_server_constants(  # ruff: ignore[no-self-use]
             self,
             server_type: str,
         ) -> p.Result[type[FlextLdifProtocolsBase.ServerConstants]]:
@@ -745,14 +745,14 @@ class FlextLdifProtocolsBase:
             """Return registry summary metadata via the facade DSL."""
             ...
 
-        def resolve_supported_conversions(
+        def resolve_supported_conversions(  # ruff: ignore[no-self-use]
             self,
             server: FlextLdifProtocolsBase.ServerReference | str,
         ) -> t.MappingKV[str, bool]:
             """Return supported conversion categories for a server server."""
             del server
 
-        def convert_model(
+        def convert_model(  # ruff: ignore[no-self-use]
             self,
             source: str
             | FlextLdifProtocolsBase.ServerReference
@@ -768,7 +768,7 @@ class FlextLdifProtocolsBase:
             """Convert one LDIF model between server servers."""
             del model_instance, source, target
 
-        def resolve_effective_server_type(
+        def resolve_effective_server_type(  # ruff: ignore[no-self-use]
             self,
             ldif_path: Path | None = None,
             ldif_content: str | None = None,
@@ -790,7 +790,7 @@ class FlextLdifProtocolsBase:
             """Expose the typed LDIF settings carried by the public facade."""
             ...
 
-        def migrate(
+        def migrate(  # ruff: ignore[no-self-use]
             self,
             input_dir: Path | None = None,
             output_dir: Path | None = None,
@@ -801,7 +801,7 @@ class FlextLdifProtocolsBase:
             """Run the public LDIF migration pipeline."""
             del input_dir, options, output_dir, source_server, target_server
 
-        def parse_ldif(
+        def parse_ldif(  # ruff: ignore[no-self-use]
             self,
             value: str | Path,
             *,
@@ -810,7 +810,7 @@ class FlextLdifProtocolsBase:
             """Parse LDIF content from text or file path."""
             del server_type, value
 
-        def parse_ldif_file(
+        def parse_ldif_file(  # ruff: ignore[no-self-use]
             self,
             path: Path,
             server_type: str | None = None,
@@ -819,7 +819,7 @@ class FlextLdifProtocolsBase:
             """Parse LDIF content from a file path."""
             del encoding, path, server_type
 
-        def parse_string(
+        def parse_string(  # ruff: ignore[no-self-use]
             self,
             content: str,
             server_type: str | None = None,
@@ -827,7 +827,7 @@ class FlextLdifProtocolsBase:
             """Parse LDIF content from a raw string."""
             del content, server_type
 
-        def write(
+        def write(  # ruff: ignore[no-self-use]
             self,
             entries: t.SequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
             *,
@@ -837,7 +837,7 @@ class FlextLdifProtocolsBase:
             """Write canonical LDIF entries to text response."""
             del entries, format_options, server_type
 
-        def write_ldif_file(
+        def write_ldif_file(  # ruff: ignore[no-self-use]
             self,
             entries: t.SequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
             path: Path,
@@ -848,7 +848,7 @@ class FlextLdifProtocolsBase:
             """Write canonical LDIF entries to a file."""
             del entries, format_options, path, server_type
 
-        def write_to_string(
+        def write_to_string(  # ruff: ignore[no-self-use]
             self,
             entries: t.SequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
             server_type: str | None = None,
@@ -857,7 +857,7 @@ class FlextLdifProtocolsBase:
             """Write LDIF entries to a string."""
             del entries, format_options, server_type
 
-        def validate_entries(
+        def validate_entries(  # ruff: ignore[no-self-use]
             self,
             entries: t.MutableSequenceOf[FlextLdifProtocolsBase.Entry]
             | FlextLdifProtocolsBase.ParseResponse,
@@ -870,7 +870,7 @@ class FlextLdifProtocolsBase:
             """Run the public ACL service wiring check."""
             ...
 
-        def parse_acl_string(
+        def parse_acl_string(  # ruff: ignore[no-self-use]
             self,
             acl_string: str,
             server_type: str,
@@ -878,7 +878,7 @@ class FlextLdifProtocolsBase:
             """Parse one ACL string through the public facade DSL."""
             del acl_string, server_type
 
-        def extract_acls_from_entry(
+        def extract_acls_from_entry(  # ruff: ignore[no-self-use]
             self,
             entry: FlextLdifProtocolsBase.Entry,
             server_type: str,
@@ -886,7 +886,7 @@ class FlextLdifProtocolsBase:
             """Extract ACLs from an entry through the public facade DSL."""
             del entry, server_type
 
-        def evaluate_acl_context(
+        def evaluate_acl_context(  # ruff: ignore[no-self-use]
             self,
             acls: t.SequenceOf[t.Ldif.AclLike],
             required_permissions: FlextLdifProtocolsBase.AclPermissions
@@ -895,7 +895,7 @@ class FlextLdifProtocolsBase:
             """Evaluate ACLs through the public facade DSL."""
             del acls, required_permissions
 
-        def process_entries(
+        def process_entries(  # ruff: ignore[no-self-use]
             self,
             entries: t.MutableSequenceOf[FlextLdifProtocolsBase.Entry],
             options: FlextLdifProtocolsBase.ProcessEntriesOptions | None = None,
@@ -904,7 +904,7 @@ class FlextLdifProtocolsBase:
             """Process entries through the public facade DSL."""
             del entries, kwargs, options
 
-        def calculate_for_entries(
+        def calculate_for_entries(  # ruff: ignore[no-self-use]
             self,
             entries: t.MutableSequenceOf[FlextLdifProtocolsBase.Entry]
             | FlextLdifProtocolsBase.ParseResponse,
@@ -942,7 +942,7 @@ class FlextLdifProtocolsBase:
             """The underlying attribute mapping."""
             ...
 
-        def get(
+        def get(  # ruff: ignore[no-self-use]
             self,
             key: str,
             default: t.MutableSequenceOf[str] | None = None,
@@ -1036,11 +1036,11 @@ class FlextLdifProtocolsBase:
             """Reset all registered DN state."""
             ...
 
-        def resolve_canonical_dn(self, dn: str) -> str | None:
+        def resolve_canonical_dn(self, dn: str) -> str | None:  # ruff: ignore[no-self-use]
             """Return canonical DN casing when known."""
             del dn
 
-        def register_dn(self, dn: str, *, force: bool = False) -> str:
+        def register_dn(self, dn: str, *, force: bool = False) -> str:  # ruff: ignore[no-self-use]
             """Register and return canonical DN casing."""
             del dn, force
 

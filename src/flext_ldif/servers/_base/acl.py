@@ -96,7 +96,7 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
             return False
         return self.can_handle_acl(normalized)
 
-    def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
+    def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:  # ruff: ignore[no-self-use]
         """Check whether this server can handle the ACL definition.
 
         Args:
@@ -128,7 +128,7 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
             return None
         return raw_acl.strip()
 
-    def can_handle_attribute(self, attribute: m.Ldif.SchemaAttribute) -> bool:
+    def can_handle_attribute(self, attribute: m.Ldif.SchemaAttribute) -> bool:  # ruff: ignore[no-self-use]
         """Check whether this ACL server is aware of an attribute definition.
 
         Args:
@@ -142,7 +142,7 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         msg = "ACL servers must implement can_handle_attribute"
         raise NotImplementedError(msg)
 
-    def can_handle_objectclass(self, objectclass: m.Ldif.SchemaObjectClass) -> bool:
+    def can_handle_objectclass(self, objectclass: m.Ldif.SchemaObjectClass) -> bool:  # ruff: ignore[no-self-use]
         """Check whether this ACL server is aware of an objectClass definition.
 
         Args:
@@ -444,7 +444,7 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         )
         return (data, operation)
 
-    def _get_feature_fallback(self, _feature_id: str) -> str | None:
+    def _get_feature_fallback(self, _feature_id: str) -> str | None:  # ruff: ignore[no-self-use]
         """Return the RFC fallback value for an unsupported vendor feature.
 
         Args:
@@ -483,7 +483,7 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         """
         return r[m.Ldif.Acl].ok(acl)
 
-    def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
+    def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:  # ruff: ignore[no-self-use]
         """Parse a server-specific ACL definition (internal, required).
 
         Args:
@@ -580,7 +580,7 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
             return operation
         return self.parse_operation_kwarg(kwargs).unwrap()
 
-    def _supports_feature(self, _feature_id: str) -> bool:
+    def _supports_feature(self, _feature_id: str) -> bool:  # ruff: ignore[no-self-use]
         """Check whether this server supports a specific vendor feature.
 
         Args:
@@ -594,7 +594,7 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         msg = "ACL servers must implement _supports_feature"
         raise NotImplementedError(msg)
 
-    def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
+    def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:  # ruff: ignore[no-self-use]
         """Write ACL data to the RFC-compliant string format (internal).
 
         Args:

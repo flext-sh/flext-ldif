@@ -20,7 +20,6 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
 
     def __new__(
         cls,
-        acl_service: p.Ldif.AclServer | None = None,
         parent_server: Self | None = None,
         **kwargs: t.Ldif.Scalar | m.Ldif.Acl,
     ) -> Self:
@@ -55,7 +54,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
         self,
         acl_service: p.Ldif.AclServer | None = None,
         parent_server: Self | None = None,
-        **kwargs: t.Ldif.Scalar | m.Ldif.Acl,
+        **_kwargs: t.Ldif.Scalar | m.Ldif.Acl,
     ) -> None:
         """Initialize RFC ACL server service."""
         acl_service_typed: p.Ldif.AclServer | None = (
@@ -66,6 +65,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
             acl_service=acl_service_typed,
             _parent_server=None,
         )
+        del _kwargs
         if parent_server is not None:
             object.__setattr__(self, "parent_server", parent_server)
 
@@ -160,42 +160,45 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
         return list(c.Ldif.RFC_ACL_ATTRIBUTES)
 
     @override
-    def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
+    def can_handle_acl(self, _acl_line: str | m.Ldif.Acl) -> bool:
         """Accept any ACL definition in RFC form.
 
         Args:
-            acl_line: Raw ACL line text or a parsed ACL.
+            _acl_line: Raw ACL line text or a parsed ACL.
 
         Returns:
             True; the RFC server handles every ACL definition.
 
         """
+        del _acl_line
         return True
 
     @override
-    def can_handle_attribute(self, attribute: m.Ldif.SchemaAttribute) -> bool:
+    def can_handle_attribute(self, _attribute: m.Ldif.SchemaAttribute) -> bool:
         """Decline schema attribute handling for the ACL server.
 
         Args:
-            attribute: Attribute to check.
+            _attribute: Attribute to check.
 
         Returns:
             False; schema attributes belong to the schema server.
 
         """
+        del _attribute
         return False
 
     @override
-    def can_handle_objectclass(self, objectclass: m.Ldif.SchemaObjectClass) -> bool:
+    def can_handle_objectclass(self, _objectclass: m.Ldif.SchemaObjectClass) -> bool:
         """Decline objectClass handling for the ACL server.
 
         Args:
-            objectclass: ObjectClass to check.
+            _objectclass: ObjectClass to check.
 
         Returns:
             False; objectClasses belong to the schema server.
 
         """
+        del _objectclass
         return False
 
     @staticmethod

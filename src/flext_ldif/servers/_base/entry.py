@@ -78,6 +78,7 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
                 return validated
         return None
 
+    @override
     def can_handle(
         self,
         entry_dn: str,
@@ -88,12 +89,14 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         msg = "Entry servers must implement can_handle"
         raise NotImplementedError(msg)
 
+    @override
     def can_handle_attribute(self, attribute: m.Ldif.SchemaAttribute) -> bool:
         """Check if this server can handle a schema attribute."""
         del attribute
         msg = "Entry servers must implement can_handle_attribute"
         raise NotImplementedError(msg)
 
+    @override
     def can_handle_objectclass(self, objectclass: m.Ldif.SchemaObjectClass) -> bool:
         """Check if this server can handle a schema objectClass."""
         del objectclass
@@ -267,13 +270,11 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
     @staticmethod
     def _denormalize_entry(
         entry: m.Ldif.Entry,
-        target_server: str | None = None,
     ) -> m.Ldif.Entry:
         """Convert an entry from RFC form to the target server's dialect.
 
         Args:
             entry: Entry in RFC-normalized form.
-            target_server: Identifier of the target server dialect.
 
         Returns:
             The converted entry.
@@ -281,12 +282,14 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         """
         return entry
 
+    @override
     def _hook_post_parse_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
         """Run hook after parsing an entry."""
         del entry
         msg = "Entry servers must implement _hook_post_parse_entry"
         raise NotImplementedError(msg)
 
+    @override
     def _hook_pre_write_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
         """Run hook before writing an entry."""
         del entry
@@ -308,6 +311,7 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
             Result carrying True when the entry is acceptable, or a failure.
 
         """
+        del attrs
         if not dn:
             return r[bool].fail("DN cannot be empty")
         return r[bool].ok(value=True)
@@ -349,6 +353,7 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         copied: m.Ldif.Entry = entry.model_copy(update={"metadata": updated_metadata})
         return copied
 
+    @override
     def _normalize_attribute_name(self, attr_name: str) -> str:
         """Normalize attribute name to the server's canonical form."""
         del attr_name
@@ -368,6 +373,7 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         """
         return entry
 
+    @override
     def _parse_content(
         self,
         ldif_content: str,
@@ -377,6 +383,7 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         msg = "Entry servers must implement _parse_content"
         raise NotImplementedError(msg)
 
+    @override
     def _parse_entry_from_lines(
         self,
         lines: t.MutableSequenceOf[str],

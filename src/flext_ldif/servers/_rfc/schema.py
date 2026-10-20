@@ -161,7 +161,6 @@ class FlextLdifServersRfcSchema(
             ValueError: If ``result.failure``.
 
         """
-        del fields, server, settings
         configured = FlextLdifServerMethodsMixin.dispatch_builder(
             super().__call__,
             fields,

@@ -174,6 +174,7 @@ class FlextLdifServersBaseSchema(
 
     auto_execute: ClassVar[bool] = False
 
+    @override
     def can_handle_attribute(
         self,
         attr_definition: str | m.Ldif.SchemaAttribute,
@@ -191,6 +192,7 @@ class FlextLdifServersBaseSchema(
         msg = "Schema servers must implement can_handle_attribute"
         raise NotImplementedError(msg)
 
+    @override
     def can_handle_objectclass(
         self,
         oc_definition: str | m.Ldif.SchemaObjectClass,
@@ -476,6 +478,7 @@ class FlextLdifServersBaseSchema(
             return r[t.Ldif.SchemaConversionValue].fail(error_msg)
         return r[t.Ldif.SchemaConversionValue].fail("No write parameter provided")
 
+    @override
     def _hook_post_parse_attribute(
         self,
         attr: m.Ldif.SchemaAttribute,
@@ -526,8 +529,10 @@ class FlextLdifServersBaseSchema(
             Typed result carrying the validation outcome.
 
         """
+        del attributes, available_attrs
         return r[bool].ok(value=True)
 
+    @override
     def _parse_attribute(
         self,
         attr_definition: str,
@@ -545,6 +550,7 @@ class FlextLdifServersBaseSchema(
         msg = "Schema servers must implement _parse_attribute"
         raise NotImplementedError(msg)
 
+    @override
     def _parse_objectclass(
         self,
         oc_definition: str,
@@ -604,6 +610,7 @@ class FlextLdifServersBaseSchema(
             raise AssertionError(msg)
         return result
 
+    @override
     def _write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> p.Result[str]:
         """Write attribute data to the RFC-compliant string format (internal).
 
@@ -618,6 +625,7 @@ class FlextLdifServersBaseSchema(
         msg = "Schema servers must implement _write_attribute"
         raise NotImplementedError(msg)
 
+    @override
     def _write_objectclass(self, oc_data: m.Ldif.SchemaObjectClass) -> p.Result[str]:
         """Write objectClass data to the RFC-compliant string format (internal).
 
@@ -632,6 +640,7 @@ class FlextLdifServersBaseSchema(
         msg = "Schema servers must implement _write_objectclass"
         raise NotImplementedError(msg)
 
+    @override
     def _transform_attribute_for_write(
         self,
         attr_data: m.Ldif.SchemaAttribute,
@@ -649,6 +658,7 @@ class FlextLdifServersBaseSchema(
         msg = "Schema servers must implement _transform_attribute_for_write"
         raise NotImplementedError(msg)
 
+    @override
     def _transform_objectclass_for_write(
         self,
         oc_data: m.Ldif.SchemaObjectClass,
