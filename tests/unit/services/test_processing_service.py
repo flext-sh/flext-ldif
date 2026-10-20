@@ -10,7 +10,8 @@ from typing import TYPE_CHECKING, Literal
 
 import pytest
 
-from flext_ldif.services.pipeline import FlextLdifProcessingPipeline
+from flext_ldif import FlextLdif
+from flext_ldif.services import FlextLdifProcessingPipeline
 from tests import c, m, tm, u
 
 if TYPE_CHECKING:
