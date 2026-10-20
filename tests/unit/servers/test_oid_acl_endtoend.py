@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from flext_ldif import FlextLdif
 from flext_ldif.services import FlextLdifConversion
 from tests import c, m, tm, u
 
@@ -110,7 +111,7 @@ class TestsFlextLdifOidAclEndToEnd:
 
         """
         entry = u.Tests.orclaci_base_dn_entry(dn="cn=users,dc=ctbc")
-        svc = FlextLdifConversion(base_dn="dc=ctbc")
+        svc = FlextLdifConversion(registry=FlextLdif().registry, base_dn="dc=ctbc")
 
         converted = u.Tests.assert_success(
             svc.convert_model(c.Ldif.ServerTypes.OID, c.Ldif.ServerTypes.OUD, entry),

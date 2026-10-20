@@ -178,7 +178,7 @@ def test_e2e_ldif_processing_workflow(tmp_path):
         str(input_file),
         str(output_file),
     ])
-    assert rc == 0
+    tm.that(rc, eq=0)
     assert output_file.exists()
 ```
 
@@ -235,7 +235,7 @@ def test_large_file_processing_performance():
 
     assert len(result) > 0
     assert processing_time < 30.0  # Max 30 seconds for 10k entries
-    assert len(result) == 10000
+    tm.that(len(result), eq=10000)
 ```
 
 ## Test Fixtures and Utilities

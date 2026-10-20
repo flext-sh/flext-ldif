@@ -120,7 +120,7 @@ def test_conversion_oid_to_oud(
     """Test conversion from OID to OUD."""
     # Use os servers diretamente
     result = conversion_service.convert(oid_server, oud_server, entry)
-    assert result.success
+    tm.ok(result.success)
 ```
 
 ---

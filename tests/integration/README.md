@@ -378,7 +378,7 @@ def test_roundtrip(self, api: ldif) -> None:
     entries2 = parse2.unwrap()
 
     # Validate preservation
-    assert len(entries1) == len(entries2)
+    tm.that(len(entries1), eq=len(entries2))
 ```
 
 ❌ **DON'T**: Only test individual operations
@@ -400,9 +400,9 @@ def test_attributes(self, api: ldif) -> None:
     entries = result.unwrap()
 
     # Validate specific attributes
-    assert entries[0].dn == expected_dn
+    tm.that(entries[0].dn, eq=expected_dn)
     assert "mail" in entries[0].attributes
-    assert entries[0].attributes["mail"] == expected_values
+    tm.that(entries[0].attributes["mail"], eq=expected_values)
 ```
 
 ❌ **DON'T**: Only count entries
@@ -411,7 +411,7 @@ def test_attributes(self, api: ldif) -> None:
 def test_entries(self, api: ldif) -> None:
     result = api.parse(ldif_content)
     entries = result.unwrap()
-    assert len(entries) == 5  # Doesn't validate content
+    tm.that(len(entries), eq=5) # Doesn't validate content
 ```
 
 ### 4. Use Parametrization for Server Compatibility

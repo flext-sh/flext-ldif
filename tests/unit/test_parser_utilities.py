@@ -268,12 +268,12 @@ class TestsFlextLdifParserUtilities:
             "description: schema change",
             "-",
         ]).unwrap()
-        assert entry.changetype == c.Ldif.ChangeType.MODIFY
-        assert entry.record_kind == c.Ldif.RecordKind.CHANGE
-        assert len(entry.change_operations) == 1
+        tm.that(entry.changetype, eq=c.Ldif.ChangeType.MODIFY)
+        tm.that(entry.record_kind, eq=c.Ldif.RecordKind.CHANGE)
+        tm.that(len(entry.change_operations), eq=1)
         operation = entry.change_operations[0]
-        assert operation.attribute == "description"
-        assert [value.value for value in operation.values] == ["schema change"]
+        tm.that(operation.attribute, eq="description")
+        tm.that([value.value for value in operation.values], eq=["schema change"])
         assert "add" not in entry.attributes_dict
 
     @staticmethod

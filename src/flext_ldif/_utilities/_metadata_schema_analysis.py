@@ -159,6 +159,7 @@ class FlextLdifMetadataSchemaAnalysis:
             "quotes",
             "spacing",
             "field_order",
+            "name_values",
             "x_origin",
             "x_ordered",
         }
@@ -171,11 +172,12 @@ class FlextLdifMetadataSchemaAnalysis:
                 known_field_values[write_option_key] = value
             else:
                 extension_kwargs[write_option_key] = value
-        details: m.Ldif.SchemaFormatDetails = m.Ldif.SchemaFormatDetails.model_validate({
-            **known_field_values,
-            "extensions": extension_kwargs,
-        })
-        return details
+        return m.Ldif.SchemaFormatDetails.model_validate(
+            {
+                **known_field_values,
+                "extensions": extension_kwargs,
+            },
+        )
 
     @staticmethod
     def analyze_schema_formatting(

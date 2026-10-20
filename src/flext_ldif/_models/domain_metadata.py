@@ -139,6 +139,10 @@ class FlextLdifModelsDomainMetadata:
             t.MutableSequenceOf[str],
             m.Field(description="Original order of schema fields"),
         ] = m.Field(default_factory=list[str])
+        name_values: Annotated[
+            t.MutableSequenceOf[str],
+            m.Field(description="Primary schema name followed by its declared aliases"),
+        ] = m.Field(default_factory=list[str])
         x_origin: Annotated[
             str | None,
             m.Field(description="X-ORIGIN value from schema"),

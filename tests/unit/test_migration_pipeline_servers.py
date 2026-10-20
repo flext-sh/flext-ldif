@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from flext_ldif import FlextLdif
 from flext_ldif.servers import FlextLdifServersOidConstants, FlextLdifServersRfc
 from flext_ldif.services import FlextLdifMigrationPipeline
 from tests import c, m, tm
@@ -223,6 +224,7 @@ class TestsFlextLdifMigrationPipelineServers:
         output_dir.mkdir()
 
         pipeline = FlextLdifMigrationPipeline(
+            registry=FlextLdif().registry,
             input_dir=missing_input,
             output_dir=output_dir,
             output_filename="migrated.ldif",

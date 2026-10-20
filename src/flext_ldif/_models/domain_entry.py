@@ -58,6 +58,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
 
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
             strict=True,
+            use_enum_values=False,
             validate_default=True,
             validate_assignment=True,
             extra="allow",
@@ -305,6 +306,11 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
                 t.JsonValue | datetime | FlextLdifModelsDomainMetadata.ServerMetadata,
             ] = dict(data)
             cls._coerce_datetime_fields(data_dict)
+            data_dict["record_kind"] = (
+                c.Ldif.RecordKind.CHANGE
+                if data_dict.get("changetype")
+                else c.Ldif.RecordKind.CONTENT
+            )
             if data_dict.get("metadata") is None:
                 # mro-wgwh.5 (agent: kimi-coder) — create_for removed from the model
                 # (U17); models validate directly at this internal boundary.
@@ -372,24 +378,6 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
                         "server_type": c.Ldif.ServerTypes.RFC,
                     })
                 )
-
-        @u.model_validator(mode="after")
-        def normalize_record_kind(self) -> Self:
-            """Keep record_kind aligned with changetype semantics.
-
-            Returns:
-                The entry whose record kind matches its changetype.
-
-            """
-            target_kind = (
-                c.Ldif.RecordKind.CHANGE
-                if self.changetype
-                else c.Ldif.RecordKind.CONTENT
-            )
-            if self.record_kind != target_kind:
-                normalized: Self = self.model_copy(update={"record_kind": target_kind})
-                return normalized
-            return self
 
         @u.model_validator(mode="after")
         def validate_entry_consistency(self) -> Self:

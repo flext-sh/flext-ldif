@@ -135,7 +135,7 @@ class TestsFlextLdifOudSchemaPhaseWrite:
         reparsed = tm.ok(
             api.parse_ldif(first, server_type=c.Ldif.ServerTypes.OUD),
         )
-        assert len(reparsed.entries) == len(parsed.entries)
+        tm.that(len(reparsed.entries), eq=len(parsed.entries))
 
         second = _write_oud_phase(api, reparsed)
 
@@ -149,7 +149,7 @@ class TestsFlextLdifOudSchemaPhaseWrite:
             for line in _active_logical_lines(second)
             if line.startswith(("attributetypes:", "objectclasses:"))
         ]
-        assert second_values == first_values
+        tm.that(second_values, eq=first_values)
         assert not [line for line in second_values if "SYNTAX '" in line]
 
     @staticmethod

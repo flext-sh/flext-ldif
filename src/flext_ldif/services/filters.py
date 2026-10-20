@@ -28,7 +28,8 @@ class FlextLdifFilters(s[p.Ldif.Response]):
         key1, key2 = attr_keys
         if key1 not in attrs and key2 not in attrs:
             return (False, True)
-        oid = cls._extract_oid_from_schema_attr(attrs.get(key1, attrs.get(key2, [])))
+        values = attrs.get(key1, attrs.get(key2, []))
+        oid = cls._extract_oid_from_schema_attr(values[0]) if values else None
         if oid and allowed_set and (oid not in allowed_set):
             return (True, False)
         return (True, True)
@@ -54,7 +55,7 @@ class FlextLdifFilters(s[p.Ldif.Response]):
     @classmethod
     def _extract_oid_from_schema_attr(
         cls,
-        values: t.MutableSequenceOf[str],
+        value: str,
     ) -> str | None:
         """Extract OID from schema attribute value.
 
@@ -62,9 +63,6 @@ class FlextLdifFilters(s[p.Ldif.Response]):
             The resulting ``str | None``.
 
         """
-        if not values:
-            return None
-        value = values[0] if values else ""
         value = value.strip()
         if value.startswith("("):
             parts = value[1:].strip().split()
@@ -198,20 +196,17 @@ class FlextLdifFilters(s[p.Ldif.Response]):
     @classmethod
     def filter_schema_attribute_values(
         cls,
-        entry: m.Ldif.Entry | p.Ldif.Entry,
+        entry: m.Ldif.Entry,
         allowed_oids: m.Ldif.WhitelistRules | t.FrozensetMapping,
     ) -> m.Ldif.Entry:
-        """Filter individual OID values within schema entry attributes.
+        """Filter schema OIDs in content attributes and structured modify values.
 
         Returns:
             The resulting ``m.Ldif.Entry``.
 
         """
-        concrete: m.Ldif.Entry = u.Ldif.as_entry(entry)
-        if concrete.attributes is None:
-            return concrete
         allowed_value_oids = cls._extract_allowed_oids(allowed_oids)
-        attrs_dict = concrete.attributes.attributes
+        attrs_dict = entry.attributes_dict
         updated_attrs: t.MutableMappingKV[str, list[str]] = {
             k: list(v) for k, v in attrs_dict.items()
         }
@@ -224,7 +219,7 @@ class FlextLdifFilters(s[p.Ldif.Response]):
             filtered: list[str] = [
                 value
                 for value in original
-                if (oid := cls._extract_oid_from_schema_attr([value])) is None
+                if (oid := cls._extract_oid_from_schema_attr(value)) is None
                 or oid in oid_set
             ]
             if filtered != original:
@@ -233,16 +228,58 @@ class FlextLdifFilters(s[p.Ldif.Response]):
                 updated_attrs[attr_name] = filtered
             else:
                 del updated_attrs[attr_name]
+        operations: list[m.Ldif.ChangeOperation] = []
+        for operation in entry.change_operations:
+            oid_set = allowed_value_oids.get(operation.attribute.casefold())
+            if oid_set is None:
+                operations.append(operation)
+                continue
+            values = [
+                value
+                for value in operation.values
+                if (oid := cls._extract_oid_from_schema_attr(value.value)) is None
+                or oid in oid_set
+            ]
+            if values == operation.values:
+                operations.append(operation)
+                continue
+            changed = True
+            if values:
+                operations.append(
+                    m.Ldif.ChangeOperation(
+                        operation=operation.operation,
+                        attribute=operation.attribute,
+                        values=values,
+                    ),
+                )
         if not changed:
-            return concrete
-        copied: m.Ldif.Entry = concrete.model_copy(
-            update={
-                "attributes": m.Ldif.Attributes.model_validate({
-                    "attributes": updated_attrs,
-                }),
-            },
+            return entry
+        return m.Ldif.Entry(
+            dn=entry.dn,
+            attributes=(
+                m.Ldif.Attributes(
+                    attributes=updated_attrs,
+                    attribute_metadata=entry.attributes.attribute_metadata,
+                    metadata=entry.attributes.metadata,
+                )
+                if entry.attributes is not None
+                else None
+            ),
+            record_kind=entry.record_kind,
+            controls=entry.controls,
+            changetype=entry.changetype,
+            change_operations=operations,
+            newrdn=entry.newrdn,
+            deleteoldrdn=entry.deleteoldrdn,
+            newsuperior=entry.newsuperior,
+            raw_record_lines=entry.raw_record_lines,
+            metadata=entry.metadata,
+            validation_metadata=entry.validation_metadata,
+            unique_id=entry.unique_id,
+            created_at=entry.created_at,
+            updated_at=entry.updated_at,
+            version=entry.version,
         )
-        return copied
 
 
 __all__: list[str] = ["FlextLdifFilters"]

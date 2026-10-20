@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from flext_ldif import FlextLdif
 from flext_ldif.services import FlextLdifMigrationPipeline
 from flext_ldif.services.pipeline import FlextLdifProcessingPipeline
 from tests import c, m, p, tm, u
@@ -170,6 +171,7 @@ class TestsFlextLdifMigrationPipeline:
     def test_execute_fails_without_input_dir() -> None:
         """execute() returns failure naming input_dir when none was configured."""
         pipeline = FlextLdifMigrationPipeline(
+            registry=FlextLdif().registry,
             source_server_type=c.Tests.OID,
             target_server_type=c.Tests.OUD,
         )
@@ -182,6 +184,7 @@ class TestsFlextLdifMigrationPipeline:
         """execute() returns failure naming output_dir when none was configured."""
         input_dir, _ = migration_dirs
         pipeline = FlextLdifMigrationPipeline(
+            registry=FlextLdif().registry,
             input_dir=input_dir,
             source_server_type=c.Tests.OID,
             target_server_type=c.Tests.OUD,
@@ -308,6 +311,7 @@ class TestsFlextLdifMigrationPipeline:
         """
         entry = u.Tests.orclaci_base_dn_entry(dn="cn=users,dc=ctbc")
         pipeline = FlextLdifMigrationPipeline(
+            registry=FlextLdif().registry,
             source_server_type="oid",
             target_server_type="oud",
             base_dn="dc=ctbc",
@@ -371,7 +375,7 @@ class TestsFlextLdifMigrationPipeline:
                 input_file,
                 output_file=output_as_directory,
             ),
-            has="Write failed",
+            has="atomic_write_text_file",
         )
 
     @staticmethod
@@ -401,6 +405,7 @@ class TestsFlextLdifMigrationPipelineFileAndProcessing:
         input_file = input_dir / "test.ldif"
         input_file.write_text(c.Tests.RFC_SAMPLE_LDIF_BASIC)
         pipeline = FlextLdifMigrationPipeline(
+            registry=FlextLdif().registry,
             source_server_type=c.Tests.RFC,
             target_server_type=c.Tests.RFC,
         )
@@ -412,7 +417,7 @@ class TestsFlextLdifMigrationPipelineFileAndProcessing:
     def test_processing_execute_fails_without_entries() -> None:
         """Processing execute() fails when no entry batch was provided."""
         tm.fail(
-            FlextLdifProcessingPipeline(transform_config=None).execute(),
+            FlextLdifProcessingPipeline(registry=FlextLdif().registry, transform_config=None).execute(),
             has="No entries provided",
         )
 
@@ -425,6 +430,7 @@ class TestsFlextLdifMigrationPipelineFileAndProcessing:
         )
         tm.ok(
             FlextLdifProcessingPipeline(
+                registry=FlextLdif().registry,
                 transform_config=None,
                 entries_input=[entry],
             ).execute(),
@@ -445,6 +451,7 @@ class TestsFlextLdifMigrationPipelineFileAndProcessing:
         )
         tm.ok(
             FlextLdifProcessingPipeline(
+                registry=FlextLdif().registry,
                 transform_config=transform_config,
                 entries_input=[],
             ).execute(),

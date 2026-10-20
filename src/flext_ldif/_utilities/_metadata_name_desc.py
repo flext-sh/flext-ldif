@@ -34,7 +34,11 @@ class FlextLdifMetadataNameDescDetails:
         name_value = name_match.group(3)
         name_quote_end = name_match.group(4) or ""
         multiple_match = c.Ldif.SCHEMA_NAME_MULTIPLE_RE.search(definition)
-        name_section = definition[name_match.start() : name_match.end() + 50]
+        name_section = (
+            multiple_match.group(0)
+            if multiple_match is not None
+            else name_match.group(0)
+        )
         if multiple_match or (has_parens and " " in name_value):
             all_name_matches = c.Ldif.QUOTED_NAME_TRIPLE_RE.findall(name_section)
             details.update({

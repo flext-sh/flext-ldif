@@ -46,7 +46,7 @@ class TestsFlextLdifParserService:
         src_file.write_text(c.Tests.RFC_SAMPLE_LDIF_BASIC, encoding="utf-8")
 
         try:
-            result = api.parse_ldif_file(Path(temp_name), server_type=c.Tests.RFC)
+            result = api.parse_ldif_file(src_file, server_type=c.Tests.RFC)
         finally:
             src_file.unlink(missing_ok=True)
 

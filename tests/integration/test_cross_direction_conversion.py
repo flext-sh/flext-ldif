@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from flext_ldif import FlextLdif
 from flext_ldif.services import FlextLdifConversion, FlextLdifServer
 from tests import m, tm
 
@@ -87,7 +88,7 @@ class TestsFlextLdifCrossDirectionConversion:
             The resulting ``FlextLdifServer``.
 
         """
-        return FlextLdifServer()
+        return FlextLdifServer(registry=FlextLdif().registry)
 
     @staticmethod
     @pytest.fixture
@@ -98,7 +99,7 @@ class TestsFlextLdifCrossDirectionConversion:
             The resulting ``FlextLdifConversion``.
 
         """
-        return FlextLdifConversion()
+        return FlextLdifConversion(registry=FlextLdif().registry)
 
     # ------------------------------------------------------------------
     # Attribute definition conversion (server parse in source, write target)

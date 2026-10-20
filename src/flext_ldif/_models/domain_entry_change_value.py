@@ -16,7 +16,7 @@ from flext_ldif import c
 class FlextLdifModelsDomainEntryChangeOperationValue(m.Value):
     """Single value captured inside a modify operation block."""
 
-    model_config: ClassVar[m.ConfigDict] = m.Value.model_config
+    model_config: ClassVar[m.ConfigDict] = m.ConfigDict(use_enum_values=False)
 
     value: Annotated[
         str,

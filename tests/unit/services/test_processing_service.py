@@ -142,6 +142,7 @@ class TestsFlextLdifProcessingService:
         )
 
         result = FlextLdifProcessingPipeline(
+            registry=FlextLdif().registry,
             transform_config=config,
             entries_input=[entry],
         ).execute()

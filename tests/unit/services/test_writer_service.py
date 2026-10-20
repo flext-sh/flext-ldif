@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import errno
 from typing import TYPE_CHECKING
 from uuid import uuid4
 
@@ -229,7 +230,10 @@ class TestsFlextLdifWriterService:
             server_type=c.Tests.RFC,
         )
 
-        tm.fail(result, has="Failed to write LDIF file")
+        tm.fail(result, has=str(blocking_file))
+        with pytest.raises(FileExistsError):
+            result.unwrap()
+        tm.that(blocking_file.read_text(encoding="utf-8"), eq="x")
 
     def test_write_ldif_file_fails_when_target_is_a_directory(
         self,
@@ -246,7 +250,13 @@ class TestsFlextLdifWriterService:
             server_type=c.Tests.RFC,
         )
 
-        tm.fail(result, has="Failed to write LDIF file")
+        tm.fail(result, has=str(directory_target))
+        with pytest.raises(
+            OSError, match="atomic destination is not a regular file"
+        ) as failure:
+            result.unwrap()
+        tm.that(failure.value.errno, eq=errno.EINVAL)
+        tm.that(directory_target.is_dir(), eq=True)
 
     @pytest.mark.parametrize("server_type", [c.Tests.RFC, "oud"])
     def test_rejection_comments_are_opt_in_and_cannot_inject_entries(
@@ -281,11 +291,11 @@ class TestsFlextLdifWriterService:
         assert original_text is not None
         assert disabled_text is not None
         assert enabled_text is not None
-        assert disabled_text == original_text
+        tm.that(disabled_text, eq=original_text)
         accepted_output = u.Tests.assert_success(
             writer.write([entry], server_type=server_type, format_options=enabled),
         )
-        assert accepted_output.content == original_text
+        tm.that(accepted_output.content, eq=original_text)
         assert "# Rejection category: base_dn_filter" in enabled_text
         for line in reason.splitlines():
             assert f"# Rejection reason: {line}" in enabled_text
@@ -293,7 +303,7 @@ class TestsFlextLdifWriterService:
         def active_lines(text: str) -> list[str]:
             return [line for line in text.splitlines() if not line.startswith("#")]
 
-        assert active_lines(enabled_text) == active_lines(original_text)
+        tm.that(active_lines(enabled_text), eq=active_lines(original_text))
         assert entry.metadata is not None
         assert entry.metadata.processing_stats is None
         assert rejected.metadata is not None
@@ -315,8 +325,8 @@ class TestsFlextLdifWriterService:
         assert updated.metadata.processing_stats is not None
         stats = updated.metadata.processing_stats.model_dump()
         assert stats["was_rejected"] is True
-        assert stats["rejection_reason"] == "Outside requested base"
-        assert stats["category_assigned"] == "rejected"
+        tm.that(stats["rejection_reason"], eq="Outside requested base")
+        tm.that(stats["category_assigned"], eq="rejected")
 
     @staticmethod
     def test_base_dn_rejection_is_preserved_in_export(
@@ -331,7 +341,7 @@ class TestsFlextLdifWriterService:
         })
         filtered = categorizer.filter_by_base_dn(categories)
         rejected = filtered.get(c.Ldif.Categories.REJECTED, [])
-        assert len(rejected) == 1
+        tm.that(len(rejected), eq=1)
         response = u.Tests.assert_success(
             writer.write(
                 list(rejected),
