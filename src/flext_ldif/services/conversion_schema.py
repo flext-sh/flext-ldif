@@ -15,6 +15,7 @@ from flext_ldif import c, m, p, r, s, t, u
 class FlextLdifConversionSchemaMixin(s[p.Ldif.Response], ABC):
     """Schema-conversion helpers shared by the conversion facade."""
 
+    @abstractmethod
     def _resolve_schema_server(
         self,
         server_or_type: p.Ldif.ServerReference | p.Ldif.ServerServer | str,
@@ -22,8 +23,7 @@ class FlextLdifConversionSchemaMixin(s[p.Ldif.Response], ABC):
         role: str,
     ) -> p.Result[p.Ldif.SchemaServer]:
         """Resolve the schema server for a concrete server endpoint."""
-        del role, server_or_type
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def _convert_entry(
