@@ -38,7 +38,7 @@ class FlextLdifAcl(FlextLdifServer):
         if isinstance(required_permissions, m.Ldif.AclPermissions):
             required = required_permissions
         else:
-            mapping: t.MutableBoolMapping = required_permissions  # type: ignore[assignment]
+            mapping: t.MutableBoolMapping = required_permissions
             perms_dict: t.MutableBoolMapping = dict(mapping.items())
             required = m.Ldif.AclPermissions.model_validate(
                 m.Ldif.AclPermissions.filter_rfc_compliant_permissions(perms_dict),
