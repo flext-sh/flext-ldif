@@ -417,7 +417,7 @@ class TestsFlextLdifMigrationPipelineFileAndProcessing:
     def test_processing_execute_fails_without_entries() -> None:
         """Processing execute() fails when no entry batch was provided."""
         tm.fail(
-            FlextLdifProcessingPipeline(transform_config=None).execute(),
+            FlextLdifProcessingPipeline(registry=FlextLdif().registry, transform_config=None).execute(),
             has="No entries provided",
         )
 
@@ -430,6 +430,7 @@ class TestsFlextLdifMigrationPipelineFileAndProcessing:
         )
         tm.ok(
             FlextLdifProcessingPipeline(
+                registry=FlextLdif().registry,
                 transform_config=None,
                 entries_input=[entry],
             ).execute(),
@@ -450,6 +451,7 @@ class TestsFlextLdifMigrationPipelineFileAndProcessing:
         )
         tm.ok(
             FlextLdifProcessingPipeline(
+                registry=FlextLdif().registry,
                 transform_config=transform_config,
                 entries_input=[],
             ).execute(),
