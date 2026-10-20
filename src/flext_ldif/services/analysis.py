@@ -126,7 +126,6 @@ class FlextLdifAnalysis(s[p.Ldif.Response]):
             The resulting ``p.Result[p.Ldif.ValidationResult]``.
 
         """
-        _ = self
         # Why: mro-4p0t — accept ParseResponse like statistics/categorization services.
 
         normalized_entries = u.Ldif.as_entries(entries)

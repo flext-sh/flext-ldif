@@ -151,8 +151,6 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 The resulting ``bool``.
 
             """
-            _ = entry_dn
-            _ = attributes
             return True
 
         def _parse_entry(

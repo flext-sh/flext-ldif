@@ -177,7 +177,6 @@ class FlextLdifServersOidEntryParseMixin(
             The resulting ``p.Result[m.Ldif.Entry]``.
 
         """
-        _ = original_dn
         if not entry.attributes:
             return r[m.Ldif.Entry].ok(entry)
         normalized_attrs = entry.attributes.attributes

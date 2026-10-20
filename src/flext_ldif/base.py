@@ -76,7 +76,6 @@ class FlextLdifServiceBase[TDomainResult](
 
     def _get_effective_server_type_value(self) -> str:
         """Return the default server type used by parser and writer services."""
-        _ = self
         default_server_type: str = c.Ldif.ServerTypes.RFC.value
         return default_server_type
 

@@ -526,8 +526,6 @@ class FlextLdifServersBaseSchema(
             Typed result carrying the validation outcome.
 
         """
-        _ = attributes
-        _ = available_attrs
         return r[bool].ok(value=True)
 
     def _parse_attribute(

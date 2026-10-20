@@ -10,7 +10,7 @@ from typing import ClassVar
 
 from flext_cli import u
 
-from flext_ldif import FlextLdifModels, p, t
+from flext_ldif import FlextLdifModels, p
 
 
 class FlextLdifMetadataTracking:
@@ -40,15 +40,6 @@ class FlextLdifMetadataTracking:
             attr_name=attr_name,
             format_direction=format_direction,
         )
-
-    @staticmethod
-    def store_minimal_differences(
-        metadata: FlextLdifModels.Ldif.ServerMetadata,
-        **extra: t.Ldif.Scalar,
-    ) -> None:
-        """Store minimal differences in metadata for delta tracking."""
-        _ = metadata
-        _ = extra
 
 
 __all__: list[str] = ["FlextLdifMetadataTracking"]

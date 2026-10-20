@@ -25,7 +25,6 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
         **kwargs: t.Ldif.Scalar | m.Ldif.Acl,
     ) -> Self:
         """Override __new__ to support auto-execute and processor instantiation."""
-        _ = acl_service
         instance: Self = super().__new__(cls)
         auto_execute_kwargs = {"data", "operation", "parent_server", "_parent_server"}
         _ = {k: v for k, v in kwargs.items() if k not in auto_execute_kwargs}
@@ -59,7 +58,6 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
         **kwargs: t.Ldif.Scalar | m.Ldif.Acl,
     ) -> None:
         """Initialize RFC ACL server service."""
-        _ = kwargs
         acl_service_typed: p.Ldif.AclServer | None = (
             acl_service if acl_service is not None else None
         )
@@ -172,7 +170,6 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
             True; the RFC server handles every ACL definition.
 
         """
-        _ = acl_line
         return True
 
     @override
@@ -186,7 +183,6 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
             False; schema attributes belong to the schema server.
 
         """
-        _ = attribute
         return False
 
     @override
@@ -200,7 +196,6 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
             False; objectClasses belong to the schema server.
 
         """
-        _ = objectclass
         return False
 
     @staticmethod

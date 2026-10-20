@@ -74,7 +74,6 @@ class FlextLdifServersOidEntryRestoreLinesMixin(
             The resulting ``bool``.
 
         """
-        _ = write_empty_values
         if original_line.lower().startswith("dn:"):
             return True
         if original_line.strip().startswith("#"):

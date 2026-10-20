@@ -279,7 +279,6 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
             The converted entry.
 
         """
-        _ = target_server
         return entry
 
     def _hook_post_parse_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
@@ -309,7 +308,6 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
             Result carrying True when the entry is acceptable, or a failure.
 
         """
-        _ = attrs
         if not dn:
             return r[bool].fail("DN cannot be empty")
         return r[bool].ok(value=True)
