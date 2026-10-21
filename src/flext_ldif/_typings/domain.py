@@ -23,6 +23,7 @@ class FlextLdifTypesDomain:
     type SchemaObjectClassLike = FlextLdifProtocols.Ldif.SchemaObjectClass
     type SchemaItem = SchemaAttributeLike | SchemaObjectClassLike
     type AclLike = FlextLdifProtocols.Ldif.Acl
+    type AclAttributeNames = frozenset[str]
     type AclSequence = t.MutableSequenceOf[AclLike]
     type ConvertedModel = EntryLike | SchemaItem | AclLike
     type SchemaConversionValue = SchemaItem | str

@@ -24,15 +24,15 @@ class FlextLdifServersOudCommentsAclMixin:
         comments: t.MutableSequenceOf[str],
         original_attr: str,
         attr_name: str,
-        acl_values: t.MutableSequenceOf[str] | str | m.Ldif.Acl,
+        acl_values: t.SequenceOf[str],
     ) -> None:
         """Add TRANSFORMED and SKIP_TO_04 comments for ACL values."""
-        values = acl_values if isinstance(acl_values, list) else [str(acl_values)]
-        for v in values:
-            comments.extend([
-                f"# [TRANSFORMED] {original_attr}: {v}",
-                f"# [SKIP_TO_04] {attr_name}: {v}",
-            ])
+        for value in acl_values:
+            for text in (
+                f"[TRANSFORMED] {original_attr}: {value}",
+                f"[SKIP_TO_04] {attr_name}: {value}",
+            ):
+                comments.extend(f"# {line}" for line in text.splitlines())
 
     @staticmethod
     def _collect_acl_from_extensions(

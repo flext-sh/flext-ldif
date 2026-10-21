@@ -290,16 +290,16 @@ class TestsFlextLdifApiServerRegistry:
                 acl_attribute_names=frozenset({"aci", "orclaci"}),
             ),
         ).unwrap()
-        content = output.read_text()
+        content = tm.not_none(output.read_text())
         tm.that(written.output_path, eq=str(output))
         tm.that(written.content, eq=content)
         tm.that(written.statistics.processed_entries, eq=len(parsed.entries))
-        tm.that(acl in content)
+        tm.that(content, has=acl)
         tm.that(
             any(line.startswith("aci:") for line in content.splitlines()),
             eq=not comment_acl,
         )
-        reparsed = api.parse_ldif(output, server_type=c.Ldif.ServerTypes.OUD).unwrap()
+        reparsed = tm.ok(api.parse_ldif(output, server_type=c.Ldif.ServerTypes.OUD))
         tm.that(len(reparsed.entries), eq=len(parsed.entries))
         tm.that(reparsed.entries[0].dn_str, eq=parsed.entries[0].dn_str)
         tm.that(reparsed.entries[0].attributes_dict["sn"], eq=["Sample"])

@@ -6,12 +6,39 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import sys
+
 from flext_ldif import ldif, settings
-from tests import p, tm
+from tests import m, p, tm, u
 
 
 class TestsFlextLdifClientContract:
     """The public facade structurally satisfies ``p.Ldif.LdifClient``."""
+
+    @staticmethod
+    def test_uppercase_namespace_reads_existing_nested_environment_keys() -> None:
+        """Existing environment keys configure the actual uppercase settings field."""
+        encoding = "latin-1"
+        result = tm.ok(
+            u.Cli.run(
+                (
+                    sys.executable,
+                    "-c",
+                    "from flext_ldif import ldif, settings; "
+                    "client = ldif(); "
+                    "assert client.settings.Ldif is settings.Ldif; "
+                    "print(client.settings.Ldif.ldif_encoding, "
+                    "client.settings.Ldif.ldif_strict_validation)",
+                ),
+                options=m.Cli.ProcessOptions(
+                    env={
+                        "FLEXT_LDIF_LDIF__LDIF_ENCODING": encoding,
+                        "FLEXT_LDIF_LDIF__LDIF_STRICT_VALIDATION": "false",
+                    },
+                ),
+            ),
+        )
+        tm.that(result.stdout, eq=f"{encoding} False\n")
 
     @staticmethod
     def test_facade_satisfies_ldif_client() -> None:

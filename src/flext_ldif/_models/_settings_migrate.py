@@ -288,7 +288,7 @@ class FlextLdifModelsSettingsMigrate:
             ),
         ] = None
         acl_attribute_names: Annotated[
-            frozenset[str],
+            t.Ldif.AclAttributeNames,
             m.Field(
                 description="Set of ACL attribute names (e.g., {'orclaci', "
                 "'orclentrylevelaci'}). Used to identify ACL attributes.",
