@@ -93,9 +93,9 @@ class FlextLdifModelsSettingsCriteria:
             m.Field(description="Required objectClasses"),
         ] = None
         objectclass_mode: Annotated[
-            c.EntryCriteriaMode,
+            c.Ldif.EntryCriteriaMode,
             m.Field(description='"any" (has any) or "all" (has all)'),
-        ] = c.EntryCriteriaMode.ANY
+        ] = c.Ldif.EntryCriteriaMode.ANY
         required_attrs: Annotated[
             t.MutableSequenceOf[str] | None,
             m.Field(description="All of these attributes must exist"),
@@ -133,17 +133,16 @@ class FlextLdifModelsSettingsCriteria:
         """
 
         server_type: Annotated[
-            c.ServerTypes,
+            c.Ldif.ServerTypes,
             m.Field(
-                ...,
                 description="Server type performing the parse (oid, oud, rfc, etc.)",
             ),
         ]
         original_entry_dn: Annotated[
             str,
-            m.Field(..., description="Original DN as parsed from LDIF"),
+            m.Field(description="Original DN as parsed from LDIF"),
         ]
-        cleaned_dn: Annotated[str, m.Field(..., description="Cleaned/normalized DN")]
+        cleaned_dn: Annotated[str, m.Field(description="Cleaned/normalized DN")]
         original_dn_line: Annotated[
             str | None,
             m.Field(description="Original DN line from LDIF (with folding if present)"),

@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping
 from typing import Annotated
 
 from flext_core import m
@@ -58,7 +57,7 @@ class FlextLdifModelsSettingsMigrate:
             ),
         ] = None
         output_files: Annotated[
-            MutableMapping[FlextLdifConstantsEnums.Categories, str] | None,
+            t.MutableMappingKV[c.Ldif.Categories, str] | None,
             m.Field(description="Category to filename mapping (categorized mode)"),
         ] = None
         schema_whitelist_rules: Annotated[
@@ -140,7 +139,7 @@ class FlextLdifModelsSettingsMigrate:
                 description="Maximum line width before folding (RFC 2849 recommends "
                 "76). Only used if fold_long_lines=True.",
             ),
-        ] = c.DEFAULT_LINE_WIDTH
+        ] = c.Ldif.DEFAULT_LINE_WIDTH
         respect_attribute_order: Annotated[
             bool,
             m.Field(

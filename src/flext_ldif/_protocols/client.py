@@ -8,9 +8,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
-from flext_cli import p
+from flext_cli import p, t
 
-from flext_ldif import c, t
+from flext_ldif import c
 from flext_ldif._protocols import FlextLdifProtocolsBase, FlextLdifProtocolsValues
 
 if TYPE_CHECKING:
