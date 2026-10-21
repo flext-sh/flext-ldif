@@ -24,11 +24,13 @@ class TestsFlextLdifClientContract:
                 (
                     sys.executable,
                     "-c",
-                    "from flext_ldif import ldif, settings; "
-                    "client = ldif(); "
-                    "assert client.settings.Ldif is settings.Ldif; "
-                    "print(client.settings.Ldif.ldif_encoding, "
-                    "client.settings.Ldif.ldif_strict_validation)",
+                    (
+                        "from flext_ldif import ldif, settings; "
+                        "client = ldif(); "
+                        "assert client.settings.Ldif is settings.Ldif; "
+                        "print(client.settings.Ldif.ldif_encoding, "
+                        "client.settings.Ldif.ldif_strict_validation)"
+                    ),
                 ),
                 options=m.Cli.ProcessOptions(
                     env={
